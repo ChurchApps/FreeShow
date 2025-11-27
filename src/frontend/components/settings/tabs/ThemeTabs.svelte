@@ -19,8 +19,8 @@
 
         return names.sort((a, b) => {
             if (a.id === "default" || b.id === "default") return 1
-            let nameA = a.default ? translateText(`themes.${a.name.slice(a.name.indexOf(".") + 1, a.name.length - 2)}`) : a.name
-            let nameB = b.default ? translateText(`themes.${b.name.slice(b.name.indexOf(".") + 1, b.name.length - 2)}`) : b.name
+            let nameA = a.default ? translateText(`themes.${a.name.slice(a.name.indexOf(".") + 1, a.name.length - 2)}`) : a.name || ""
+            let nameB = b.default ? translateText(`themes.${b.name.slice(b.name.indexOf(".") + 1, b.name.length - 2)}`) : b.name || ""
             return nameA.localeCompare(nameB)
         })
     }
@@ -65,7 +65,7 @@
     let edit: any
 </script>
 
-<Tabs id="theme" tabs={themeNames} value={$theme} class="context #theme" on:open={(e) => theme.set(e.detail)} on:create={createTheme} let:tab>
+<Tabs id="theme" tabs={themeNames} value={$theme} class="context #theme" on:open={e => theme.set(e.detail)} on:create={createTheme} let:tab>
     {#if $theme === tab.id}<Icon id="check" size={0.7} right white />{/if}
-    <HiddenInput style="text-align: center;" value={translateText(tab.name)} id={"theme_" + tab.id} on:edit={(e) => updateTheme(e.detail.value, null, "name")} bind:edit />
+    <HiddenInput style="text-align: center;" value={translateText(tab.name)} id={"theme_" + tab.id} on:edit={e => updateTheme(e.detail.value, null, "name")} bind:edit />
 </Tabs>

@@ -241,7 +241,7 @@
         editEvent = $popupData.event
         actionData = { id: "start_show", data: { id: $popupData.showId } }
 
-        popupData.update((a) => {
+        popupData.update(a => {
             delete a.showId
             return a
         })
@@ -251,7 +251,7 @@
     function updatePopup(event) {
         if ($popupData.showId) return
 
-        popupData.update((a) => {
+        popupData.update(a => {
             a.event = event
             return a
         })
@@ -269,19 +269,19 @@
 
 {#if selectedType === "event"}
     <InputRow>
-        <MaterialTextInput label="calendar.name" value={editEvent.name} on:input={(e) => (editEvent.name = e.detail)} autofocus={!editEvent.name} />
-        <MaterialColorInput label="calendar.color" style="min-width: 200px;max-width: 200px;" value={editEvent.color || ""} on:input={(e) => (editEvent.color = e.detail)} noLabel />
+        <MaterialTextInput label="calendar.name" value={editEvent.name} on:input={e => (editEvent.name = e.detail)} autofocus={!editEvent.name} />
+        <MaterialColorInput label="calendar.color" style="min-width: 200px;max-width: 200px;" value={editEvent.color || ""} on:input={e => (editEvent.color = e.detail)} noLabel />
     </InputRow>
 
     {#if showMore}
-        <MaterialTextInput label="calendar.location" value={editEvent.location || ""} on:input={(e) => (editEvent.location = e.detail)} />
-        <MaterialTextInput label="calendar.notes" value={editEvent.notes || ""} on:input={(e) => (editEvent.notes = e.detail)} />
+        <MaterialTextInput label="calendar.location" value={editEvent.location || ""} on:input={e => (editEvent.location = e.detail)} />
+        <MaterialTextInput label="calendar.notes" value={editEvent.notes || ""} on:input={e => (editEvent.notes = e.detail)} />
     {/if}
 
     <MaterialButton class="popup-options {showMore ? 'active' : ''}" icon="options" iconSize={1.3} title={showMore ? "actions.close" : "create_show.more_options"} on:click={() => (showMore = !showMore)} white />
 
     {#if showMore}
-        <MaterialToggleSwitch label="calendar.time" style="margin-top: 10px;" checked={editEvent.time} defaultValue={true} on:change={(e) => (editEvent.time = e.detail)} />
+        <MaterialToggleSwitch label="calendar.time" style="margin-top: 10px;" checked={editEvent.time} defaultValue={true} on:change={e => (editEvent.time = e.detail)} />
     {/if}
 {:else if selectedType === "action"}
     {#if actionSelector !== null}
@@ -291,7 +291,7 @@
             actionId={actionData?.id || ""}
             existingActions={actionData?.id ? [actionData.id] : []}
             actionValue={actionData?.data || {}}
-            on:change={(e) => {
+            on:change={e => {
                 changeAction(e)
                 actionSelector = null
             }}
@@ -310,35 +310,35 @@
 {#if !actionSelector}
     <!-- TODO: update totime if fromtime is newer -->
     <InputRow style="margin-top: {showMore ? 0 : 10}px;">
-        <MaterialDatePicker label="calendar.from_date" style="flex: 1;" value={editEvent.isoFrom || ""} on:change={(e) => (editEvent.isoFrom = e.detail)} />
-        <MaterialTimePicker label="calendar.from_time" style="width: 200px;" disabled={!editEvent.time} value={editEvent.fromTime || ""} on:input={(e) => (editEvent.fromTime = e.detail)} on:change={() => updateTime("from")} />
+        <MaterialDatePicker label="calendar.from_date" style="flex: 1;" value={editEvent.isoFrom || ""} on:change={e => (editEvent.isoFrom = e.detail)} />
+        <MaterialTimePicker label="calendar.from_time" style="width: 200px;" disabled={!editEvent.time} value={editEvent.fromTime || ""} on:input={e => (editEvent.fromTime = e.detail)} on:change={() => updateTime("from")} />
     </InputRow>
     {#if selectedType === "event"}
         <InputRow>
-            <MaterialDatePicker label="calendar.to_date" style="flex: 1;" value={editEvent.isoTo || ""} on:change={(e) => (editEvent.isoTo = e.detail)} />
-            <MaterialTimePicker label="calendar.to_time" style="width: 200px;" disabled={!editEvent.time} value={editEvent.toTime || ""} on:input={(e) => (editEvent.toTime = e.detail)} on:change={() => updateTime("to")} />
+            <MaterialDatePicker label="calendar.to_date" style="flex: 1;" value={editEvent.isoTo || ""} on:change={e => (editEvent.isoTo = e.detail)} />
+            <MaterialTimePicker label="calendar.to_time" style="width: 200px;" disabled={!editEvent.time} value={editEvent.toTime || ""} on:input={e => (editEvent.toTime = e.detail)} on:change={() => updateTime("to")} />
         </InputRow>
     {/if}
 
-    <MaterialToggleSwitch label="calendar.repeat" style="margin-top: 10px;" disabled={!!editEvent.group} checked={editEvent.repeat} on:change={(e) => (editEvent.repeat = e.detail)} />
+    <MaterialToggleSwitch label="calendar.repeat" style="margin-top: 10px;" disabled={!!editEvent.group} checked={editEvent.repeat} on:change={e => (editEvent.repeat = e.detail)} />
 
     {#if editEvent.repeat}
         <InputRow style="background-color: var(--primary-darker);border-radius: 4px;">
             <span style="display: flex;align-items: center;font-size: 0.9em;padding: 0 10px;"><T id="calendar.repeat_every" /></span>
-            <MaterialNumberInput label="edit.count" disabled={!!editEvent.group} style="width: 80px;" value={editEvent.repeatData.count} min={1} on:change={(e) => (editEvent.repeatData.count = e.detail)} />
-            <MaterialDropdown label="edit.interval" disabled={!!editEvent.group} style="width: 100px;" options={repeats} value={editEvent.repeatData.type} on:change={(e) => (editEvent.repeatData.type = e.detail)} />
+            <MaterialNumberInput label="edit.count" disabled={!!editEvent.group} style="width: 80px;" value={editEvent.repeatData.count} min={1} on:change={e => (editEvent.repeatData.count = e.detail)} />
+            <MaterialDropdown label="edit.interval" disabled={!!editEvent.group} style="width: 100px;" options={repeats} value={editEvent.repeatData.type} on:change={e => (editEvent.repeatData.type = e.detail)} />
             <!-- TODO: select weekdays? -->
             <!-- {#if selectedRepeat.id === "week"}
                 <span style="display: flex;align-items: center;padding: 0 10px;"><T id="calendar.repeat_on" /></span>
                 <Dropdown style="width: 100px;" options={weekdays} value={selectedWeekday.name} on:click={(e) => (selectedWeekday = e.detail)} />
             {/if} -->
             <span style="display: flex;align-items: center;font-size: 0.9em;padding: 0 10px;"><T id="calendar.repeat_until" /></span>
-            <MaterialDropdown label="calendar.type" disabled={!!editEvent.group} style="width: 130px;" options={endings} value={editEvent.repeatData.ending} on:change={(e) => (editEvent.repeatData.ending = e.detail)} />
+            <MaterialDropdown label="calendar.type" disabled={!!editEvent.group} style="width: 130px;" options={endings} value={editEvent.repeatData.ending} on:change={e => (editEvent.repeatData.ending = e.detail)} />
 
             {#if editEvent.repeatData.ending === "date"}
-                <MaterialDatePicker label="calendar.to_date" style="flex: 0;" disabled={!!editEvent.group} value={editEvent.repeatData.endingDate} on:change={(e) => (editEvent.repeatData.endingDate = e.detail)} />
+                <MaterialDatePicker label="calendar.to_date" style="flex: 0;" disabled={!!editEvent.group} value={editEvent.repeatData.endingDate} on:change={e => (editEvent.repeatData.endingDate = e.detail)} />
             {:else if editEvent.repeatData.ending === "after"}
-                <MaterialNumberInput label="edit.count" disabled={!!editEvent.group} style="width: 80px;" value={editEvent.repeatData.afterRepeats} min={1} on:change={(e) => (editEvent.repeatData.afterRepeats = e.detail)} />
+                <MaterialNumberInput label="edit.count" disabled={!!editEvent.group} style="width: 80px;" value={editEvent.repeatData.afterRepeats} min={1} on:change={e => (editEvent.repeatData.afterRepeats = e.detail)} />
                 <span style="display: flex;align-items: center;padding: 0 10px;"><T id="calendar.ending_times" /></span>
             {/if}
         </InputRow>

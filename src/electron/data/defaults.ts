@@ -83,7 +83,7 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
         churchApps: {
             syncCategories: ["song"]
         }
-    },
+    }
 }
 
 export const defaultSyncedSettings: { [key in SaveListSyncedSettings]: any } = {

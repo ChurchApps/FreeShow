@@ -92,7 +92,7 @@ const keys = [
     "Tonality",
     "Language",
     "IsAudioFileEnabled",
-    "Tempo",
+    "Tempo"
 ]
 export function convertVideopsalm(data: any) {
     const categoryId = createCategory("VideoPsalm")
@@ -146,7 +146,7 @@ export function convertVideopsalm(data: any) {
                 author: song.Author || "",
                 composer: song.Composer || "",
                 copyright: song.Copyright || "",
-                CCLI: song.CCLI || "",
+                CCLI: song.CCLI || ""
             }
             if (show.meta.number !== undefined) show.quickAccess = { number: show.meta.number }
             if (show.meta.CCLI) show = setQuickAccessMetadata(show, "CCLI", show.meta.CCLI)
@@ -197,7 +197,7 @@ function parseContent(content: string): VideoPsalm | null {
 
 const removeKeys = ["Body", "Background", "Footer", "Header", "Version"]
 function removeStyle(s: string) {
-    if (!removeKeys.find((key) => s.includes(`{${key}:`))) return s
+    if (!removeKeys.find(key => s.includes(`{${key}:`))) return s
 
     let openCount = 0
     let closeCount = 0
@@ -222,7 +222,7 @@ function fixText(s: string, i: number) {
 
     let textContent = s.slice(openingIndex, closingIndex)
     let keyword: string | undefined = ""
-    while ((keyword = keys.find((a) => textContent.includes(a)))) {
+    while ((keyword = keys.find(a => textContent.includes(a)))) {
         const index = textContent.indexOf(keyword)
         // obfusticate keyword
         keyword = keyword.slice(0, 1) + "[[==]]" + keyword.slice(1)
@@ -265,18 +265,18 @@ function createSlides({ Verses, Sequence }: Song) {
         let sequenceKey = sequence[i]
         if (sequenceKey) {
             // find next if already matching
-            if (sequences[sequenceKey]) sequenceKey = sequence.find((key) => !sequences[key]) || ""
+            if (sequences[sequenceKey]) sequenceKey = sequence.find(key => !sequences[key]) || ""
             if (sequenceKey) sequences[sequenceKey] = id
         }
         layout.push({ id })
 
         const lines: any[] = []
-        verse.Text.split("<br>").forEach((text) => {
+        verse.Text.split("<br>").forEach(text => {
             const line: any = { align: "", text: [] }
 
             const chords: any[] = []
             let newText = ""
-            text.split("]").forEach((t) => {
+            text.split("]").forEach(t => {
                 let chordStart = t.indexOf("[")
                 if (chordStart < 0) chordStart = t.length
 
@@ -311,7 +311,7 @@ function createSlides({ Verses, Sequence }: Song) {
             color: null,
             settings: {},
             notes: "",
-            items,
+            items
         }
         const globalGroup = sequenceKey ? VPgroups[sequenceKey.replace(/[0-9]/g, "")] : "verse"
         if (get(groups)[globalGroup]) slides[id].globalGroup = globalGroup
@@ -320,7 +320,7 @@ function createSlides({ Verses, Sequence }: Song) {
     let notes = ""
     if (sequence.length >= layout.length) {
         layout = []
-        sequence.forEach((group) => {
+        sequence.forEach(group => {
             if (sequences[group]) layout.push({ id: sequences[group] })
         })
     } else if (sequence.length > 1) notes = sequence.join(", ")

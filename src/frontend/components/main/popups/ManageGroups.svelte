@@ -17,7 +17,7 @@
         // remove default tag if name is changed (used for translation)
         // WIP undo won't work here...
         if (key === "name" && $groups[id].default) {
-            groups.update((a) => {
+            groups.update(a => {
                 delete a[id].default
 
                 return a
@@ -69,14 +69,14 @@
 
 <div style="min-width: calc(100vw - var(--navigation-width) * 2 - 51px);">
     {#if showMore}
-        <MaterialToggleSwitch style="margin-bottom: 10px;" label="settings.auto_group_numbers" checked={$groupNumbers} defaultValue={true} on:change={(e) => groupNumbers.set(e.detail)} />
+        <MaterialToggleSwitch style="margin-bottom: 10px;" label="settings.auto_group_numbers" checked={$groupNumbers} defaultValue={true} on:change={e => groupNumbers.set(e.detail)} />
     {/if}
 
     {#if g.length}
         {#each g as group}
             <InputRow>
-                <MaterialTextInput label="inputs.name" style="flex: 1;" value={group.name} on:change={(e) => changeGroup(e.detail, group.id)} />
-                <MaterialColorInput label="edit.color" noLabel style="flex: 0;min-width: 200px;" value={group.color} on:input={(e) => changeGroup(e.detail, group.id, "color")} />
+                <MaterialTextInput label="inputs.name" style="flex: 1;" value={group.name} on:change={e => changeGroup(e.detail, group.id)} />
+                <MaterialColorInput label="edit.color" noLabel style="flex: 0;min-width: 200px;" value={group.color} on:input={e => changeGroup(e.detail, group.id, "color")} />
                 <MaterialPopupButton
                     label="groups.group_shortcut"
                     style="width: 28%;"
@@ -87,10 +87,10 @@
                     popupId="assign_shortcut"
                     data={{
                         revert: $activePopup,
-                        existingShortcuts: g.filter((a) => a.id !== group.id && a.shortcut).map((a) => a.shortcut),
+                        existingShortcuts: g.filter(a => a.id !== group.id && a.shortcut).map(a => a.shortcut),
                         mode: "global_group"
                     }}
-                    on:change={(e) => changeGroup(e.detail, group.id, "shortcut")}
+                    on:change={e => changeGroup(e.detail, group.id, "shortcut")}
                     allowEmpty
                 />
                 <!-- template -->
@@ -106,7 +106,7 @@
                             action: "select_template",
                             revert: $activePopup
                         }}
-                        on:change={(e) => changeGroup(e.detail, group.id, "template")}
+                        on:change={e => changeGroup(e.detail, group.id, "template")}
                         allowEmpty
                     />
                 {/if}

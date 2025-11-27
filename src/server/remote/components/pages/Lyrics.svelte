@@ -30,7 +30,7 @@
     }
 </script>
 
-<div on:click={click} on:keydown={(e) => e.key === "Enter" && click(e)} bind:this={lyricsScroll} class="lyrics" role="button" tabindex="0">
+<div on:click={click} on:keydown={e => e.key === "Enter" && click(e)} bind:this={lyricsScroll} class="lyrics" role="button" tabindex="0">
     {#each layout || [] as layoutSlide, i (layoutSlide.id ? `${layoutSlide.id}-${i}` : `layout-${i}`)}
         {#if !layoutSlide.disabled}
             <span style="padding: 5px;{$outSlide === i ? 'background-color: rgba(0 0 0 / 0.6);' : ''}">

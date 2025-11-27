@@ -19,40 +19,38 @@ function cdataString(data: any): string {
 
 function createSlides({ slide, slide2 }: any) {
     const slides: any = {}
-    const layout: any[] = [];
+    const layout: any[] = []
 
-    [
-        cdataString(slide),
-        cdataString(slide2)
-    ].forEach(s => s
-        .split("<slide>")
-        .filter((a) => Boolean(a.trim()))
-        .map((lines) =>
-            lines
-                .replace(/<BR>/gi, "<br>")
-                .split("<br>")
-                .map((line) => line.trim())
-                .filter((a) => Boolean(a.trim()))
-        )
-        .forEach((lines: string[]) => {
-            const id: string = uid()
-            layout.push({ id })
+    ;[cdataString(slide), cdataString(slide2)].forEach(s =>
+        s
+            .split("<slide>")
+            .filter(a => Boolean(a.trim()))
+            .map(lines =>
+                lines
+                    .replace(/<BR>/gi, "<br>")
+                    .split("<br>")
+                    .map(line => line.trim())
+                    .filter(a => Boolean(a.trim()))
+            )
+            .forEach((lines: string[]) => {
+                const id: string = uid()
+                layout.push({ id })
 
-            const items = [
-                {
-                    style: DEFAULT_ITEM_STYLE,
-                    lines: lines.map((text: any) => ({ align: "", text: [{ style: "", value: text.trim() }] })),
-                },
-            ]
+                const items = [
+                    {
+                        style: DEFAULT_ITEM_STYLE,
+                        lines: lines.map((text: any) => ({ align: "", text: [{ style: "", value: text.trim() }] }))
+                    }
+                ]
 
-            slides[id] = {
-                group: "",
-                color: null,
-                settings: {},
-                notes: "",
-                items,
-            }
-        })
+                slides[id] = {
+                    group: "",
+                    color: null,
+                    settings: {},
+                    notes: "",
+                    items
+                }
+            })
     )
 
     return { slides, layout }
@@ -92,11 +90,11 @@ export function convertVerseVIEW(data: any) {
                 const songNum = cdataString(song.subcat)
 
                 show.meta = initializeMetadata({
-                    number: Number.isNaN(songNum) ? String(songNum) : '',
+                    number: Number.isNaN(songNum) ? String(songNum) : "",
                     title: cdataString(song.name),
                     author: cdataString(song.author),
                     publisher: cdataString(song.copyright),
-                    copyright: cdataString(song.copyright),
+                    copyright: cdataString(song.copyright)
                     // CCLI: null,
                     // year: song.year,
                 })

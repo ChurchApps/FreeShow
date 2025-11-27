@@ -71,7 +71,7 @@ async function loadSlideContent(slideId) {
 // Preload adjacent slides for smoother navigation
 function preloadAdjacentSlides() {
     const preloadIndexes = [currentIndex - 1, currentIndex + 1]
-    preloadIndexes.forEach((index) => {
+    preloadIndexes.forEach(index => {
         if (index >= 0 && index < slideIds.length) {
             const slideId = slideIds[index]
             if (!slideContentCache.has(slideId)) {
@@ -100,7 +100,7 @@ async function updateSlideContent(newSlideId, newIndex) {
             paused: currentVideo.paused,
             muted: currentVideo.muted,
             loop: currentVideo.loop,
-            volume: currentVideo.volume,
+            volume: currentVideo.volume
         }
     }
 
@@ -121,11 +121,11 @@ async function updateSlideContent(newSlideId, newIndex) {
         const slideItems = document.querySelectorAll(".slide-item")
 
         // Remove old slide items
-        slideItems.forEach((item) => item.remove())
+        slideItems.forEach(item => item.remove())
 
         // Add new slide items from the new content
         const newSlideItems = tempDiv.querySelectorAll(".slide-item")
-        newSlideItems.forEach((item) => {
+        newSlideItems.forEach(item => {
             slideContainer.appendChild(item.cloneNode(true))
         })
     } else {
@@ -141,10 +141,10 @@ async function updateSlideContent(newSlideId, newIndex) {
                 newVideo.muted = videoState.muted
                 newVideo.volume = videoState.volume
                 if (!videoState.paused) {
-                    newVideo.play().catch((err) => {})
+                    newVideo.play().catch(err => {})
                 }
             } else {
-                newVideo.play().catch((err) => {})
+                newVideo.play().catch(err => {})
             }
         }
     }
@@ -157,7 +157,7 @@ async function updateSlideContent(newSlideId, newIndex) {
     window.history.pushState(
         {
             slideId: newSlideId,
-            index: newIndex,
+            index: newIndex
         },
         "",
         newUrl
@@ -167,7 +167,7 @@ async function updateSlideContent(newSlideId, newIndex) {
     setTimeout(preloadAdjacentSlides, 100)
 
     // Start timer for new slide if it has nextTimer configured
-    fetchSlideTimerInfo(newSlideId).then((timerDuration) => {
+    fetchSlideTimerInfo(newSlideId).then(timerDuration => {
         if (timerDuration > 0) {
             // Update the global timer duration for the new slide
             nextTimer = timerDuration
@@ -247,7 +247,7 @@ document.addEventListener("DOMContentLoaded", function () {
     window.history.replaceState(
         {
             slideId: slideIds[currentIndex],
-            index: currentIndex,
+            index: currentIndex
         },
         "",
         window.location.href

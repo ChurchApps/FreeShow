@@ -39,7 +39,7 @@
     }
 
     const receiveBlackmagic: any = {
-        RECEIVE_STREAM: (data) => {
+        RECEIVE_STREAM: data => {
             //  || data.frame?.type !== "frame"
             if (data.id !== screen.id || !data.frame.video) return
             loaded = true
@@ -50,7 +50,7 @@
             // WIP play audio? (data.audio.data ...)
 
             frame = data.frame.video
-        },
+        }
     }
 
     receive(BLACKMAGIC, receiveBlackmagic, screen.id)

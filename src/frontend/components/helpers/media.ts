@@ -139,7 +139,7 @@ export async function getSlideThumbnail(data: API_slide_thumbnail, extraOutData:
 
 // convert to base64
 async function toDataURL(url: string): Promise<string> {
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
         const xhr = new XMLHttpRequest()
 
         xhr.onload = () => {
@@ -239,7 +239,7 @@ export async function getMediaInfo(path: string): Promise<{ codecs: string[]; mi
 
     if (JSON.stringify(get(media)[path]?.info) === JSON.stringify(info)) return info
 
-    media.update((a) => {
+    media.update(a => {
         if (!a[path]) a[path] = {}
         a[path].info = info
         return a
@@ -254,7 +254,7 @@ export async function isVideoSupported(path: string) {
 
     // HEVC (H.265) / Timecode
     const unsupportedCodecs = /(hevc|hvc1|ap4h|tmcd)/i
-    const isUnsupported = info.codecs.length && info.codecs.every((codec) => unsupportedCodecs.test(codec))
+    const isUnsupported = info.codecs.length && info.codecs.every(codec => unsupportedCodecs.test(codec))
 
     // not reliable:
     // const isSupported = MediaSource.isTypeSupported(info.mimeCodec)
@@ -266,7 +266,7 @@ export async function isVideoSupported(path: string) {
 export function setMediaTracks(data: { path: string; tracks: Subtitle[] }) {
     const path: string = data.path || ""
 
-    media.update((a) => {
+    media.update(a => {
         if (!a[path]) a[path] = {}
         a[path].tracks = data.tracks
         return a
@@ -277,12 +277,12 @@ export function enableSubtitle(video: HTMLVideoElement, languageId: string) {
     if (!video) return
     const tracks = [...(video.textTracks || [])]
 
-    const enabled = tracks.find((a) => a.mode !== "disabled")
+    const enabled = tracks.find(a => a.mode !== "disabled")
     if (enabled) enabled.mode = "disabled"
 
     if (!languageId) return
 
-    const newTrack = tracks.find((a) => a.language === languageId)
+    const newTrack = tracks.find(a => a.language === languageId)
     if (newTrack) newTrack.mode = "showing"
 }
 
@@ -308,7 +308,7 @@ export function getMediaStyle(mediaObj: MediaStyle | undefined, currentStyle: St
 
     if (!mediaObj && !currentStyle) return mediaStyle
 
-    Object.keys(mediaStyle).forEach((key) => {
+    Object.keys(mediaStyle).forEach(key => {
         if (!mediaObj?.[key]) return
         mediaStyle[key] = mediaObj[key]
     })
@@ -374,7 +374,7 @@ function hashCode(str: string) {
 }
 
 export function thumbnailLoaded(data: { input: string; output: string; size: number }) {
-    loadedMediaThumbnails.update((a) => {
+    loadedMediaThumbnails.update(a => {
         a[getThumbnailId(data)] = data.output
         return a
     })
@@ -416,7 +416,7 @@ export async function checkThatMediaExists(path: string, iteration = 1): Promise
 
 const cachedDurations: { [key: string]: number } = {}
 export function getVideoDuration(path: string): Promise<number> {
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
         if (cachedDurations[path]) {
             resolve(cachedDurations[path])
             return
@@ -463,16 +463,14 @@ export function captureCanvas(data: { input: string; output: string; size: any; 
     const mediaElem = document.createElement(isImage ? "img" : "video")
 
     mediaElem.addEventListener(isImage ? "load" : "loadeddata", async () => {
-        const currentMediaSize = isImage
-            ? { width: (mediaElem as HTMLImageElement).naturalWidth, height: (mediaElem as HTMLImageElement).naturalHeight }
-            : { width: (mediaElem as HTMLVideoElement).videoWidth, height: (mediaElem as HTMLVideoElement).videoHeight }
+        const currentMediaSize = isImage ? { width: (mediaElem as HTMLImageElement).naturalWidth, height: (mediaElem as HTMLImageElement).naturalHeight } : { width: (mediaElem as HTMLVideoElement).videoWidth, height: (mediaElem as HTMLVideoElement).videoHeight }
         const newSize = getNewSize(currentMediaSize, data.size || {})
         canvas.width = newSize.width
         canvas.height = newSize.height
 
         // seek video
         if (!isImage) {
-            ; (mediaElem as HTMLVideoElement).currentTime = (mediaElem as HTMLVideoElement).duration * (data.seek ?? 0.5)
+            ;(mediaElem as HTMLVideoElement).currentTime = (mediaElem as HTMLVideoElement).duration * (data.seek ?? 0.5)
             await wait(400)
         }
 
@@ -484,7 +482,7 @@ export function captureCanvas(data: { input: string; output: string; size: any; 
     })
 
     // this should not get called becaues the file is checked existing, but here in case
-    mediaElem.addEventListener("error", (err) => {
+    mediaElem.addEventListener("error", err => {
         if (!mediaElem.src || completed) return
 
         console.error("Could not load media:", err)
@@ -544,7 +542,7 @@ function getNewSize(contentSize: { width: number; height: number }, newSize: { w
 // CROP
 
 export function cropImageToBase64(imagePath: string, crop: Partial<Cropping> | undefined): Promise<string> {
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
         if (!crop) return resolve("")
         if (!crop.bottom && !crop.left && !crop.right && !crop.top) return resolve("")
 
@@ -583,7 +581,7 @@ export async function downloadOnlineMedia(url: string) {
 
     // Check license before downloading (for content providers like APlay)
     if (mediaData?.contentFile?.mediaId && mediaData?.contentFile?.providerId && !mediaData?.licenseChecked) {
-        media.update((m) => {
+        media.update(m => {
             if (!m[url]) m[url] = {}
             m[url].licenseChecked = true
             return m
@@ -594,7 +592,7 @@ export async function downloadOnlineMedia(url: string) {
             mediaId: mediaData.contentFile.mediaId
         })
         if (pingbackUrl) {
-            media.update((m) => {
+            media.update(m => {
                 if (!m[url]) m[url] = {}
                 if (!m[url].contentFile) m[url].contentFile = {}
                 m[url].contentFile.pingbackUrl = pingbackUrl
@@ -613,7 +611,7 @@ export async function getMediaFileFromClipboard(e: ClipboardEvent): Promise<stri
     const items = e.clipboardData?.items
     if (!items) return null
 
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
         for (const item of items) {
             if (!item.type.startsWith("image/")) continue
 
@@ -621,7 +619,7 @@ export async function getMediaFileFromClipboard(e: ClipboardEvent): Promise<stri
             if (!file) return resolve(null)
 
             const reader = new FileReader()
-            reader.onload = async (event) => {
+            reader.onload = async event => {
                 // base64 image data
                 const dataUrl = event.target?.result as string
                 const compressed = await compressImage(dataUrl)
@@ -633,7 +631,7 @@ export async function getMediaFileFromClipboard(e: ClipboardEvent): Promise<stri
 }
 
 function compressImage(dataUrl: string, maxWidth = 1920, maxHeight = 1080, quality = 0.8): Promise<string> {
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
         const img = new Image()
 
         img.onload = () => {

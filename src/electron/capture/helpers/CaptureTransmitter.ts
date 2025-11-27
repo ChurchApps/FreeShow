@@ -61,7 +61,7 @@ export class CaptureTransmitter {
                 timer: setInterval(() => this.handleChannelInterval(captureId, key), interval),
                 lastImage: Buffer.from([]),
                 imageIsSame: false,
-                lastCheck: 0,
+                lastCheck: 0
             }
         }
     }
@@ -144,22 +144,22 @@ export class CaptureTransmitter {
     }
 
     static sendToStageOutputs(msg: any, excludeId = "") {
-        ;[...new Set(this.stageWindows)].forEach((id) => id !== excludeId && OutputHelper.Send.sendToWindow(id, msg))
+        ;[...new Set(this.stageWindows)].forEach(id => id !== excludeId && OutputHelper.Send.sendToWindow(id, msg))
     }
 
     static sendToRequested(msg: any) {
         const newList: string[] = []
 
-            ;[...new Set(this.requestList)].forEach((dataString: string) => {
-                const data: { id: string; previewId: string } = JSON.parse(dataString)
+        ;[...new Set(this.requestList)].forEach((dataString: string) => {
+            const data: { id: string; previewId: string } = JSON.parse(dataString)
 
-                if (data.previewId !== msg.data?.id) {
-                    newList.push(JSON.stringify(data))
-                    return
-                }
+            if (data.previewId !== msg.data?.id) {
+                newList.push(JSON.stringify(data))
+                return
+            }
 
-                OutputHelper.Send.sendToWindow(data.id, msg)
-            })
+            OutputHelper.Send.sendToWindow(data.id, msg)
+        })
 
         this.requestList = newList
     }
@@ -208,7 +208,7 @@ export class CaptureTransmitter {
     }
 
     static removeAllChannels(captureId: string) {
-        Object.keys(this.channels).forEach((key) => {
+        Object.keys(this.channels).forEach(key => {
             if (key.includes(captureId)) this.removeChannel(captureId, key)
         })
     }

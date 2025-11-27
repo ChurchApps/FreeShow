@@ -6,7 +6,7 @@ import { getExtension } from "../../helpers/media"
 const cache: any = {}
 
 export async function loadFromUnsplash(query = ""): Promise<any[]> {
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
         if (cache[query]) return resolve(cache[query])
 
         let url: string = "https://api.unsplash.com/search/photos/?client_id=" + getKey("unsplash") + "&content_filter=high&per_page=30&query="
@@ -14,9 +14,9 @@ export async function loadFromUnsplash(query = ""): Promise<any[]> {
 
         let results: any = []
         fetch(url)
-            .then((response) => response.json())
-            .then((data) => {
-                results = data.results.map((media) => {
+            .then(response => response.json())
+            .then(data => {
+                results = data.results.map(media => {
                     const path = media.urls.full || media.urls.regular
                     return { path, previewUrl: media.urls.thumb, name: media.alt_description, extension: getExtension(path), credits: getUnsplashCredits(media) }
                 })
@@ -26,7 +26,7 @@ export async function loadFromUnsplash(query = ""): Promise<any[]> {
                 // let img = { path, favourite: a.favourite === true, name, extension: p.extension, audio: a.audio === true }
                 return resolve(results)
             })
-            .catch((error) => {
+            .catch(error => {
                 console.error(error)
                 return resolve([])
             })
@@ -44,6 +44,6 @@ function getUnsplashCredits(media) {
         artistUrl: "https://unsplash.com/@" + media.user.username + UTM,
         downloadUrl: media.links.download,
         trigger_download: media.links.download_location,
-        homepage: "https://unsplash.com/" + UTM,
+        homepage: "https://unsplash.com/" + UTM
     }
 }

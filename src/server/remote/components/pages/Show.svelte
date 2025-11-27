@@ -89,7 +89,7 @@
         if ($outShow && showId === $outShow.id && layoutId === $outShow.settings.activeLayout && index === slideNum) {
             // reveal lines if it exists
             const ref = GetLayout($activeShow, $activeShow?.settings?.activeLayout)
-            const revealExists = $activeShow.slides[ref[index]?.id]?.items?.find((item) => item.lineReveal || item.clickReveal)
+            const revealExists = $activeShow.slides[ref[index]?.id]?.items?.find(item => item.lineReveal || item.clickReveal)
             if (revealExists) {
                 send("API:next_slide") // , { onlyCurrentReveal: true }
             }
@@ -141,7 +141,7 @@
         </div>
     {:else}
         <div bind:this={scrollElem} class="scroll" style="background-color: var(--primary-darker);scroll-behavior: smooth;">
-            <Slides {dictionary} {scrollElem} on:click={(e) => playSlide(e.detail)} outSlide={slideNum} />
+            <Slides {dictionary} {scrollElem} on:click={e => playSlide(e.detail)} outSlide={slideNum} />
         </div>
 
         {#if $activeShow.id === $outShow?.id || !$isCleared.all}
@@ -173,7 +173,7 @@
         {:else}
             <div class="buttons">
                 {#if layouts.length > 1}
-                    {@const currentLayout = layouts.find((a) => a.id == $activeShow.settings?.activeLayout)}
+                    {@const currentLayout = layouts.find(a => a.id == $activeShow.settings?.activeLayout)}
                     <Dropdown value={currentLayout?.name || "—"} options={layouts} on:click={changeLayout} style="width: 100%;" up />
                 {/if}
 
@@ -260,11 +260,21 @@
         scrollbar-width: thin; /* Firefox */
         scrollbar-color: rgb(255 255 255 / 0.3) rgb(255 255 255 / 0.05);
     }
-    .scroll::-webkit-scrollbar { width: 8px; height: 8px; }
+    .scroll::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
     .scroll::-webkit-scrollbar-track,
-    .scroll::-webkit-scrollbar-corner { background: rgb(255 255 255 / 0.05); }
-    .scroll::-webkit-scrollbar-thumb { background: rgb(255 255 255 / 0.3); border-radius: 8px; }
-    .scroll::-webkit-scrollbar-thumb:hover { background: rgb(255 255 255 / 0.5); }
+    .scroll::-webkit-scrollbar-corner {
+        background: rgb(255 255 255 / 0.05);
+    }
+    .scroll::-webkit-scrollbar-thumb {
+        background: rgb(255 255 255 / 0.3);
+        border-radius: 8px;
+    }
+    .scroll::-webkit-scrollbar-thumb:hover {
+        background: rgb(255 255 255 / 0.5);
+    }
 
     @media screen and (max-width: 1000px) {
         .scroll {

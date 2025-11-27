@@ -14,10 +14,10 @@
     $: currentOutput = getFirstActiveOutput($outputs)
 
     const receiveBMD: any = {
-        GET_DEVICES: (msg) => {
+        GET_DEVICES: msg => {
             if (!msg || sources.length) return
 
-            sources = JSON.parse(msg).map((a) => ({ id: a.deviceHandle, name: a.displayName || a.modelName, data: { displayModes: a.inputDisplayModes } }))
+            sources = JSON.parse(msg).map(a => ({ id: a.deviceHandle, name: a.displayName || a.modelName, data: { displayModes: a.inputDisplayModes } }))
         }
     }
 
@@ -32,7 +32,7 @@
     {#each sources as screen}
         <BmdStream
             {screen}
-            on:click={(e) => {
+            on:click={e => {
                 if ($outLocked || e.ctrlKey || e.metaKey) return
                 if (currentOutput?.out?.background?.id === screen.id) clearBackground()
                 else setOutput("background", { id: screen.id, type: "blackmagic" })

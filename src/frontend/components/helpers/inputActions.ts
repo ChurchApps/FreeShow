@@ -9,7 +9,7 @@ export function selectTextOnFocus(node: HTMLInputElement | HTMLTextAreaElement) 
     return {
         destroy() {
             node.removeEventListener("focus", handleFocus)
-        },
+        }
     }
 }
 
@@ -24,6 +24,6 @@ export function blurOnEscape(node: any) {
     return {
         destroy() {
             node.removeEventListener("keydown", handleKey)
-        },
+        }
     }
 }

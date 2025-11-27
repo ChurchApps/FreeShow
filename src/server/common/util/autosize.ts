@@ -121,7 +121,7 @@ export default function autosize(elem: HTMLElement, { type, textQuery, defaultFo
         cloned.style.alignItems = "center"
 
         for (let elemHide of cloned.querySelectorAll(".hideFromAutosize")) {
-            ; (elemHide as HTMLElement).style.display = "none"
+            ;(elemHide as HTMLElement).style.display = "none"
         }
 
         elem.after(cloned)

@@ -18,7 +18,7 @@ export function importProject(files: { content: string; name?: string; extension
 
         // add overlays
         if (overlays) {
-            overlayStores.update((a) => {
+            overlayStores.update(a => {
                 Object.entries(overlays).forEach(([id, overlay]: any) => {
                     // create new or replace existing
                     a[id] = overlay
@@ -29,7 +29,7 @@ export function importProject(files: { content: string; name?: string; extension
 
         // add effects
         if (effects) {
-            effectsStores.update((a) => {
+            effectsStores.update(a => {
                 Object.entries(effects).forEach(([id, effect]: any) => {
                     // create new or replace existing
                     a[id] = effect
@@ -40,7 +40,7 @@ export function importProject(files: { content: string; name?: string; extension
 
         // add actions
         if (actions) {
-            actionsStores.update((a) => {
+            actionsStores.update(a => {
                 Object.entries(actions).forEach(([id, action]: any) => {
                     // create new or replace existing
                     a[id] = action
@@ -51,7 +51,7 @@ export function importProject(files: { content: string; name?: string; extension
 
         // get media data
         if (media) {
-            mediaStores.update((a) => {
+            mediaStores.update(a => {
                 Object.entries(media).forEach(([path, data]: any) => {
                     a[path] = { ...(a[path] || {}), ...data }
                 })
@@ -85,7 +85,7 @@ export function addToProject(type: ShowType, filePaths: string[]) {
 
     const projectShows = get(projects)[currentProject]?.shows || []
 
-    const newProjectItems = filePaths.map((filePath) => {
+    const newProjectItems = filePaths.map(filePath => {
         const name: string = getFileName(filePath)
         if (!type) type = getMediaType(getExtension(filePath))
 

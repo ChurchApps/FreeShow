@@ -22,29 +22,7 @@ import { getPresentationApplications, presentationControl, startSlideshow } from
 import { closeServers, startServers, updateServerData } from "../servers"
 import { apiReturnData, emitOSC, startWebSocketAndRest, stopApiListener } from "../utils/api"
 import { closeMain } from "../utils/close"
-import {
-    bundleMediaFiles,
-    getDataFolderPath,
-    getDataFolderRoot,
-    getFileInfo,
-    getFolderContent,
-    getFoldersContent,
-    getMediaCodec,
-    getMediaTracks,
-    getPaths,
-    getSimularPaths,
-    getTempPaths,
-    loadFile,
-    loadShows,
-    locateMediaFile,
-    openInSystem,
-    readExifData,
-    readFile,
-    selectFiles,
-    selectFilesDialog,
-    selectFolder,
-    writeFile
-} from "../utils/files"
+import { bundleMediaFiles, getDataFolderPath, getDataFolderRoot, getFileInfo, getFolderContent, getFoldersContent, getMediaCodec, getMediaTracks, getPaths, getSimularPaths, getTempPaths, loadFile, loadShows, locateMediaFile, openInSystem, readExifData, readFile, selectFiles, selectFilesDialog, selectFolder, writeFile } from "../utils/files"
 import { LyricSearch } from "../utils/LyricSearch"
 import { closeMidiInPorts, getMidiInputs, getMidiOutputs, receiveMidi, sendMidi } from "../utils/midi"
 import { deleteShows, deleteShowsNotIndexed, getAllShows, getEmptyShows, refreshAllShows } from "../utils/shows"
@@ -53,7 +31,7 @@ import checkForUpdates from "../utils/updater"
 
 export const mainResponses: MainResponses = {
     // DEV
-    [Main.LOG]: (data) => console.info(data),
+    [Main.LOG]: data => console.info(data),
     [Main.IS_DEV]: () => !isProd,
     [Main.GET_TEMP_PATHS]: () => getTempPaths(),
     // APP
@@ -82,38 +60,38 @@ export const mainResponses: MainResponses = {
     [Main.MAXIMIZED]: () => !!getMainWindow()?.isMaximized(),
     [Main.MINIMIZE]: () => getMainWindow()?.minimize(),
     [Main.FULLSCREEN]: () => getMainWindow()?.setFullScreen(!getMainWindow()?.isFullScreen()),
-    [Main.SPELLCHECK]: (a) => correctSpelling(a),
+    [Main.SPELLCHECK]: a => correctSpelling(a),
     /// //////////////////////
-    [Main.SAVE]: (a) => save(a),
+    [Main.SAVE]: a => save(a),
     [Main.BACKUPS]: () => getBackups(),
-    [Main.DELETE_BACKUP]: (data) => deleteBackup(data),
-    [Main.IMPORT]: (data) => startImport(data),
-    [Main.BIBLE]: (data) => loadScripture(data),
-    [Main.SHOW]: (data) => loadShow(data),
+    [Main.DELETE_BACKUP]: data => deleteBackup(data),
+    [Main.IMPORT]: data => startImport(data),
+    [Main.BIBLE]: data => loadScripture(data),
+    [Main.SHOW]: data => loadShow(data),
     // MAIN
     [Main.SHOWS]: () => loadShows(),
     [Main.AUTO_UPDATE]: () => checkForUpdates(),
-    [Main.URL]: (data) => openURL(data),
-    [Main.LANGUAGE]: (data) => setGlobalMenu(data.strings),
+    [Main.URL]: data => openURL(data),
+    [Main.LANGUAGE]: data => setGlobalMenu(data.strings),
     [Main.GET_PATHS]: () => getPaths(),
     [Main.DATA_PATH]: () => getDataFolderRoot(),
-    [Main.UPDATE_DATA_PATH]: (data) => {
+    [Main.UPDATE_DATA_PATH]: data => {
         config.set("dataPath", data.newPath)
         createStores(data.oldPath)
     },
-    [Main.LOG_ERROR]: (data) => logError(data),
+    [Main.LOG_ERROR]: data => logError(data),
     [Main.OPEN_LOG]: () => openInSystem(_store.ERROR_LOG?.path || ""),
     [Main.OPEN_CACHE]: () => openInSystem(getThumbnailFolderPath(), true),
     [Main.OPEN_APPDATA]: () => openInSystem(appDataPath, true),
-    [Main.OPEN_FOLDER_PATH]: (folderPath) => openInSystem(folderPath, true),
+    [Main.OPEN_FOLDER_PATH]: folderPath => openInSystem(folderPath, true),
     [Main.OPEN_NOW_PLAYING]: () => openNowPlaying(),
-    [Main.GET_STORE_VALUE]: (data) => getStoreValue(data),
-    [Main.SET_STORE_VALUE]: (data) => setStoreValue(data),
+    [Main.GET_STORE_VALUE]: data => getStoreValue(data),
+    [Main.SET_STORE_VALUE]: data => setStoreValue(data),
     // SHOWS
-    [Main.DELETE_SHOWS]: (data) => deleteShows(data),
-    [Main.DELETE_SHOWS_NI]: (data) => deleteShowsNotIndexed(data),
+    [Main.DELETE_SHOWS]: data => deleteShows(data),
+    [Main.DELETE_SHOWS_NI]: data => deleteShowsNotIndexed(data),
     [Main.REFRESH_SHOWS]: () => refreshAllShows(),
-    [Main.GET_EMPTY_SHOWS]: (data) => getEmptyShows(data),
+    [Main.GET_EMPTY_SHOWS]: data => getEmptyShows(data),
     [Main.FULL_SHOWS_LIST]: () => getAllShows(),
     // OUTPUT
     [Main.GET_SCREENS]: () => getScreens(),
@@ -121,69 +99,70 @@ export const mainResponses: MainResponses = {
     [Main.GET_DISPLAYS]: () => screen.getAllDisplays(),
     [Main.OUTPUT]: (_, e) => (e.sender.id === getMainWindow()?.webContents.id ? "false" : "true"),
     // MEDIA
-    [Main.DOES_MEDIA_EXIST]: (data) => doesMediaExist(data),
-    [Main.GET_THUMBNAIL]: (data) => getThumbnail(data),
-    [Main.SAVE_IMAGE]: (data) => saveImage(data),
-    [Main.PDF_TO_IMAGE]: (data) => pdfToImage(data),
-    [Main.READ_EXIF]: (data) => readExifData(data),
-    [Main.MEDIA_CODEC]: (data) => getMediaCodec(data),
-    [Main.MEDIA_TRACKS]: (data) => getMediaTracks(data),
-    [Main.DOWNLOAD_LESSONS_MEDIA]: (data) => downloadLessonsMedia(data),
-    [Main.MEDIA_DOWNLOAD]: (data) => downloadMedia(data),
-    [Main.MEDIA_IS_DOWNLOADED]: async (data) => await checkIfMediaDownloaded(data),
-    [Main.NOW_PLAYING]: (data) => setPlayingState(data),
+    [Main.DOES_MEDIA_EXIST]: data => doesMediaExist(data),
+    [Main.GET_THUMBNAIL]: data => getThumbnail(data),
+    [Main.SAVE_IMAGE]: data => saveImage(data),
+    [Main.PDF_TO_IMAGE]: data => pdfToImage(data),
+    [Main.READ_EXIF]: data => readExifData(data),
+    [Main.MEDIA_CODEC]: data => getMediaCodec(data),
+    [Main.MEDIA_TRACKS]: data => getMediaTracks(data),
+    [Main.DOWNLOAD_LESSONS_MEDIA]: data => downloadLessonsMedia(data),
+    [Main.MEDIA_DOWNLOAD]: data => downloadMedia(data),
+    [Main.MEDIA_IS_DOWNLOADED]: async data => await checkIfMediaDownloaded(data),
+    [Main.NOW_PLAYING]: data => setPlayingState(data),
     [Main.NOW_PLAYING_UNSET]: () => unsetPlayingAudio(),
     // [Main.MEDIA_BASE64]: (data) => storeMedia(data),
-    [Main.CAPTURE_SLIDE]: (data) => captureSlide(data),
+    [Main.CAPTURE_SLIDE]: data => captureSlide(data),
     [Main.ACCESS_CAMERA_PERMISSION]: () => getPermission("camera"),
     [Main.ACCESS_MICROPHONE_PERMISSION]: () => getPermission("microphone"),
     [Main.ACCESS_SCREEN_PERMISSION]: () => getPermission("screen"),
     // PPT
-    [Main.LIBREOFFICE_CONVERT]: (data) => libreConvert(data),
+    [Main.LIBREOFFICE_CONVERT]: data => libreConvert(data),
     [Main.SLIDESHOW_GET_APPS]: () => getPresentationApplications(),
-    [Main.START_SLIDESHOW]: (data) => startSlideshow(data),
-    [Main.PRESENTATION_CONTROL]: (data) => presentationControl(data),
+    [Main.START_SLIDESHOW]: data => startSlideshow(data),
+    [Main.PRESENTATION_CONTROL]: data => presentationControl(data),
     // SERVERS
-    [Main.START]: (data) => startServers(data),
+    [Main.START]: data => startServers(data),
     [Main.STOP]: () => closeServers(),
-    [Main.SERVER_DATA]: (data) => updateServerData(data),
+    [Main.SERVER_DATA]: data => updateServerData(data),
     // WebSocket / REST / OSC
-    [Main.WEBSOCKET_START]: (port) => startWebSocketAndRest(port),
+    [Main.WEBSOCKET_START]: port => startWebSocketAndRest(port),
     [Main.WEBSOCKET_STOP]: () => stopApiListener(),
-    [Main.API_TRIGGER]: (data) => apiReturnData(data),
-    [Main.EMIT_OSC]: (data) => emitOSC(data),
+    [Main.API_TRIGGER]: data => apiReturnData(data),
+    [Main.EMIT_OSC]: data => emitOSC(data),
     // MIDI
     [Main.GET_MIDI_OUTPUTS]: () => getMidiOutputs(),
     [Main.GET_MIDI_INPUTS]: () => getMidiInputs(),
-    [Main.SEND_MIDI]: (data) => {
+    [Main.SEND_MIDI]: data => {
         sendMidi(data)
     },
-    [Main.RECEIVE_MIDI]: (data) => receiveMidi(data),
-    [Main.CLOSE_MIDI]: (data) => closeMidiInPorts(data.id),
+    [Main.RECEIVE_MIDI]: data => receiveMidi(data),
+    [Main.CLOSE_MIDI]: data => closeMidiInPorts(data.id),
     // LYRICS
-    [Main.GET_LYRICS]: (data) => getLyrics(data),
-    [Main.SEARCH_LYRICS]: (data) => searchLyrics(data),
+    [Main.GET_LYRICS]: data => getLyrics(data),
+    [Main.SEARCH_LYRICS]: data => searchLyrics(data),
     // FILES
-    [Main.RESTORE]: (data) => restoreFiles(data),
-    [Main.SYSTEM_OPEN]: (data) => openInSystem(data),
-    [Main.LOCATE_MEDIA_FILE]: (data) => locateMediaFile(data),
-    [Main.GET_SIMILAR]: (data) => getSimularPaths(data),
+    [Main.RESTORE]: data => restoreFiles(data),
+    [Main.RECORDER]: data => saveRecording(data),
+    [Main.SYSTEM_OPEN]: data => openInSystem(data),
+    [Main.LOCATE_MEDIA_FILE]: data => locateMediaFile(data),
+    [Main.GET_SIMILAR]: data => getSimularPaths(data),
     [Main.BUNDLE_MEDIA_FILES]: () => bundleMediaFiles(),
-    [Main.FILE_INFO]: (data) => getFileInfo(data),
-    [Main.READ_FOLDER]: (data) => getFolderContent(data),
-    [Main.READ_FOLDERS]: (data) => getFoldersContent(data),
-    [Main.READ_FILE]: (data) => ({ content: readFile(data.path) }),
-    [Main.OPEN_FOLDER]: (data) => selectFolder(data),
-    [Main.OPEN_FILE]: (data) => selectFiles(data),
+    [Main.FILE_INFO]: data => getFileInfo(data),
+    [Main.READ_FOLDER]: data => getFolderContent(data),
+    [Main.READ_FOLDERS]: data => getFoldersContent(data),
+    [Main.READ_FILE]: data => ({ content: readFile(data.path) }),
+    [Main.OPEN_FOLDER]: data => selectFolder(data),
+    [Main.OPEN_FILE]: data => selectFiles(data),
     // Provider-based routing
-    [Main.PROVIDER_LOAD_SERVICES]: async (data) => {
+    [Main.PROVIDER_LOAD_SERVICES]: async data => {
         await ContentProviderRegistry.loadServices(data.providerId)
     },
-    [Main.PROVIDER_DISCONNECT]: (data) => {
+    [Main.PROVIDER_DISCONNECT]: data => {
         ContentProviderRegistry.disconnect(data.providerId, data.scope)
         return { success: true }
     },
-    [Main.PROVIDER_STARTUP_LOAD]: async (data) => {
+    [Main.PROVIDER_STARTUP_LOAD]: async data => {
         await ContentProviderRegistry.startupLoad(data.providerId, data.scope || "", data.data)
     },
     // Content Library
@@ -198,7 +177,7 @@ export const mainResponses: MainResponses = {
             }
         })
     },
-    [Main.GET_CONTENT_LIBRARY]: async (data) => {
+    [Main.GET_CONTENT_LIBRARY]: async data => {
         const provider = ContentProviderRegistry.getProvider(data.providerId)
         if (!provider?.getContentLibrary) {
             console.error(`Provider ${data.providerId} does not support content library`)
@@ -206,7 +185,7 @@ export const mainResponses: MainResponses = {
         }
         return await provider.getContentLibrary()
     },
-    [Main.GET_PROVIDER_CONTENT]: async (data) => {
+    [Main.GET_PROVIDER_CONTENT]: async data => {
         const provider = ContentProviderRegistry.getProvider(data.providerId)
         if (!provider?.getContent) {
             console.error(`Provider ${data.providerId} does not support getContent`)
@@ -214,7 +193,7 @@ export const mainResponses: MainResponses = {
         }
         return await provider.getContent(data.key)
     },
-    [Main.CHECK_MEDIA_LICENSE]: async (data) => {
+    [Main.CHECK_MEDIA_LICENSE]: async data => {
         const provider = ContentProviderRegistry.getProvider(data.providerId)
         if (!provider?.checkMediaLicense) {
             console.error(`Provider ${data.providerId} does not support checkMediaLicense`)
@@ -332,17 +311,17 @@ function getPermission(id: "camera" | "microphone" | "screen") {
 }
 
 function getScreens(type: "window" | "screen" = "screen"): Promise<{ name: string; id: string }[]> {
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
         desktopCapturer
             .getSources({ types: [type] })
-            .then((sources) => {
+            .then(sources => {
                 let screens: { name: string; id: string }[] = []
-                sources.map((source) => screens.push({ name: source.name, id: source.id }))
+                sources.map(source => screens.push({ name: source.name, id: source.id }))
                 if (type === "window") screens = addFreeShowWindows(screens, sources)
 
                 resolve(screens)
             })
-            .catch((err) => {
+            .catch(err => {
                 console.error("Could not get screens:", err)
                 resolve([])
             })
@@ -350,16 +329,16 @@ function getScreens(type: "window" | "screen" = "screen"): Promise<{ name: strin
 
     function addFreeShowWindows(screens: { name: string; id: string }[], sources: DesktopCapturerSource[]) {
         const windows: BrowserWindow[] = []
-        OutputHelper.getAllOutputs().forEach((output) => {
+        OutputHelper.getAllOutputs().forEach(output => {
             if (output.window) windows.push(output.window)
         })
-            ;[mainWindow!, ...windows].forEach((window) => {
-                const mediaId = window?.getMediaSourceId()
-                const windowsAlreadyExists = sources.find((a) => a.id === mediaId)
-                if (windowsAlreadyExists) return
+        ;[mainWindow!, ...windows].forEach(window => {
+            const mediaId = window?.getMediaSourceId()
+            const windowsAlreadyExists = sources.find(a => a.id === mediaId)
+            if (windowsAlreadyExists) return
 
-                screens.push({ name: window?.getTitle(), id: mediaId })
-            })
+            screens.push({ name: window?.getTitle(), id: mediaId })
+        })
 
         return screens
     }
@@ -368,11 +347,11 @@ function getScreens(type: "window" | "screen" = "screen"): Promise<{ name: strin
 // RECORDER
 // only open once per session
 let systemOpened = false
-export function saveRecording(_: Electron.IpcMainEvent, msg: any) {
+export function saveRecording(data: { blob: ArrayBuffer; name: string }) {
     const folder = getDataFolderPath("recordings")
-    const filePath = path.join(folder, msg.name)
+    const filePath = path.join(folder, data.name)
 
-    const buffer = Buffer.from(msg.blob)
+    const buffer = Buffer.from(data.blob)
     writeFile(filePath, buffer)
 
     if (!systemOpened) {
@@ -399,11 +378,15 @@ export function logError(log: ErrorLog, key: "main" | "renderer" | "request" = "
 }
 
 const ERROR_FILTER = [
-    "ENOENT: no such file or directory" // file/folder does not exist
+    "ENOENT: no such file or directory", // file/folder does not exist
+    "::internal::", // internal errors (v8 / partition_alloc)
+    "crash_reporter::DumpWithoutCrashing", // chromium crashes
+    "ERR_INTERNET_DISCONNECTED", // internet disconnected
+    "First argument to DataView constructor must be an ArrayBuffer" // mp4box issue
 ]
 export function catchErrors() {
-    process.on("uncaughtException", (err) => {
-        if (ERROR_FILTER.find((a) => err.message.includes(a))) return
+    process.on("uncaughtException", err => {
+        if (ERROR_FILTER.find(a => err.message.includes(a))) return
         logError(createLog(err), "main")
     })
 }
@@ -422,15 +405,16 @@ export function createLog(err: Error) {
 
 export function autoErrorReport() {
     if (!isProd) return
+    if (config.get("autoErrorReporting") === false) return
 
     Sentry.init({
         dsn: "https://5d1069c3cb6faaa6e7ad0d9dc0145361@o4510419080445952.ingest.us.sentry.io/4510419082346496",
         beforeSend(event) {
             // filter out known non-critical errors
             const errorMessage = event.exception?.values?.[0]?.value || ""
-            const shouldFilter = ERROR_FILTER.some((filter) => errorMessage.includes(filter))
+            const shouldFilter = ERROR_FILTER.some(filter => errorMessage.includes(filter))
             return shouldFilter ? null : event
-        },
+        }
     })
 }
 

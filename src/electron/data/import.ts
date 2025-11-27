@@ -3,8 +3,7 @@ import protobufjs from "protobufjs"
 import upath from "upath"
 // @ts-ignore (strange Rollup TS build problem, suddenly not realizing that the decleration exists)
 import MDBReader from "mdb-reader"
-import SqliteToJson from "sqlite-to-json"
-import sqlite3 from "sqlite3"
+import Database from "better-sqlite3"
 // @ts-ignore
 import WordExtractor from "word-extractor"
 import { ToMain } from "../../types/IPC/ToMain"
@@ -46,24 +45,24 @@ const specialImports = {
     sqlite: async (files: string[]) => {
         const data: FileData[] = []
 
-        await Promise.all(files.map(sqlToFile))
+        for (const filePath of files) {
+            try {
+                const db = new Database(filePath, { readonly: true })
+                const tables: { [key: string]: any[] } = {}
 
-        function sqlToFile(filePath: string) {
-            const exporter = new SqliteToJson({
-                client: new sqlite3.Database(filePath)
-            })
+                // Get all table names
+                const tableNames = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'").all() as { name: string }[]
 
-            return new Promise((resolve) => {
-                exporter.all((err: Error, all: any) => {
-                    if (err) {
-                        console.error(err)
-                        return
-                    }
+                // Get all data from each table
+                for (const { name } of tableNames) {
+                    tables[name] = db.prepare(`SELECT * FROM \`${name}\``).all()
+                }
 
-                    data.push({ content: all })
-                    resolve(true)
-                })
-            })
+                db.close()
+                data.push({ content: tables })
+            } catch (err) {
+                console.error(err)
+            }
         }
 
         return data
@@ -71,7 +70,7 @@ const specialImports = {
     mdb: async (files: string[]) => {
         const data: FileData[] = []
 
-        await Promise.all(files.map(async (filePath) => await mdbToFile(filePath)))
+        await Promise.all(files.map(async filePath => await mdbToFile(filePath)))
 
         async function mdbToFile(filePath: string) {
             const buffer = await readFileBufferAsync(filePath)
@@ -99,11 +98,11 @@ export async function importShow(id: string, files: string[] | null, importSetti
     let importId = id
     let data: (FileData | string)[] = []
 
-    const sqliteFile = id === "openlp" && files.find((a) => a.endsWith(".sqlite"))
-    if (sqliteFile) files = files.filter((a) => a.endsWith(".sqlite"))
+    const sqliteFile = id === "openlp" && files.find(a => a.endsWith(".sqlite"))
+    if (sqliteFile) files = files.filter(a => a.endsWith(".sqlite"))
     if (id === "easyworship" || id === "softprojector" || sqliteFile) importId = "sqlite"
-    const mdbFile = id === "mediashout" && files.find((a) => a.endsWith(".mdb"))
-    if (mdbFile) files = files.filter((a) => a.endsWith(".mdb"))
+    const mdbFile = id === "mediashout" && files.find(a => a.endsWith(".mdb"))
+    if (mdbFile) files = files.filter(a => a.endsWith(".mdb"))
     if (mdbFile) importId = "mdb"
 
     if (id === "freeshow_project") {
@@ -117,7 +116,7 @@ export async function importShow(id: string, files: string[] | null, importSetti
 
     if (id === "songbeamer") {
         const encoding = importSettings.encoding
-        const fileContents = await Promise.all(files.map(async (file) => await readFile(file, encoding)))
+        const fileContents = await Promise.all(files.map(async file => await readFile(file, encoding)))
         const custom = {
             files: fileContents,
             length: fileContents.length,
@@ -131,7 +130,7 @@ export async function importShow(id: string, files: string[] | null, importSetti
     }
 
     const zip = ["zip", "probundle", "vpc", "qsp"]
-    const zipFiles = files.filter((a) => zip.includes(a.slice(a.lastIndexOf(".") + 1).toLowerCase()))
+    const zipFiles = files.filter(a => zip.includes(a.slice(a.lastIndexOf(".") + 1).toLowerCase()))
     if (zipFiles.length) {
         data = decompress(zipFiles)
         if (data.length) {
@@ -149,7 +148,7 @@ export async function importShow(id: string, files: string[] | null, importSetti
         // TXT | FreeShow | ProPresenter | VidoePsalm | OpenLP | OpenSong | XML Bible | Lessons.church
         for (let i = 0; i < files.length; i += BATCH_SIZE) {
             const batch = files.slice(i, i + BATCH_SIZE)
-            const batchData = await Promise.all(batch.map((file) => readFile(file)))
+            const batchData = await Promise.all(batch.map(file => readFile(file)))
             data.push(...batchData)
         }
     }
@@ -158,7 +157,7 @@ export async function importShow(id: string, files: string[] | null, importSetti
 
     // auto detect version
     if (id === "BIBLE") {
-        data = (data as FileData[]).map((file) => ({ ...file, type: detectFileType(file.content as string) }))
+        data = (data as FileData[]).map(file => ({ ...file, type: detectFileType(file.content as string) }))
     }
 
     sendToMain(ToMain.IMPORT2, { channel: id, data })
@@ -191,18 +190,18 @@ async function importProject(files: string[]) {
     const zipFiles: string[] = []
     const jsonFiles: string[] = []
     await Promise.all(
-        files.map(async (file) => {
+        files.map(async file => {
             const zip = await isZip(file)
             if (zip) zipFiles.push(file)
             else jsonFiles.push(file)
         })
     )
 
-    const data: FileData[] = await Promise.all(jsonFiles.map(async (file) => await readFile(file)))
+    const data: FileData[] = await Promise.all(jsonFiles.map(async file => await readFile(file)))
 
     const importFolder = getDataFolderPath("imports", "Projects")
 
-    zipFiles.forEach((zipFile) => {
+    zipFiles.forEach(zipFile => {
         const dataFile = extractZipDataAndMedia(zipFile, importFolder)
         if (dataFile) data.push(dataFile)
     })
@@ -222,18 +221,18 @@ async function importTemplate(files: string[]) {
     const zipFiles: string[] = []
     const jsonFiles: string[] = []
     await Promise.all(
-        files.map(async (file) => {
+        files.map(async file => {
             const zip = await isZip(file)
             if (zip) zipFiles.push(file)
             else jsonFiles.push(file)
         })
     )
 
-    const data: FileData[] = await Promise.all(jsonFiles.map(async (file) => await readFile(file)))
+    const data: FileData[] = await Promise.all(jsonFiles.map(async file => await readFile(file)))
 
     const importFolder = getDataFolderPath("imports", "Templates")
 
-    zipFiles.forEach((zipFile) => {
+    zipFiles.forEach(zipFile => {
         const dataFile = extractZipDataAndMedia(zipFile, importFolder)
         if (dataFile) data.push(dataFile)
     })
@@ -245,7 +244,7 @@ async function importTemplate(files: string[]) {
 
 function extractZipDataAndMedia(filePath: string, importFolder: string) {
     const zipData: FileData[] = decompress([filePath], true)
-    const dataFile = zipData.find((a) => a.name === "data.json")
+    const dataFile = zipData.find(a => a.name === "data.json")
     if (!dataFile) return
 
     let content = dataFile.content as string
@@ -260,7 +259,7 @@ function extractZipDataAndMedia(filePath: string, importFolder: string) {
         const extension = upath.extname(rawPath)
         const fileName = upath.basename(rawPath)
         const hashedFileName = `${upath.basename(rawPath, extension)}__${filePathHashCode(rawPath)}${extension}`
-        const file = zipData.find((a) => a.name === hashedFileName || a.name === fileName)?.content
+        const file = zipData.find(a => a.name === hashedFileName || a.name === fileName)?.content
 
         // get file path hash to prevent the same file importing multiple times
         // this also ensures files with the same name don't get overwritten
@@ -285,7 +284,7 @@ function extractZipDataAndMedia(filePath: string, importFolder: string) {
 
         const pathVariants = [oldPath, windowsPath, unixPath, escapedWindowsPath]
 
-        pathVariants.forEach((variant) => {
+        pathVariants.forEach(variant => {
             // convert \ to \\
             const escapedPattern = variant.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&")
             const replacementPath = escapeJSON(newPath)

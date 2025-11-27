@@ -23,14 +23,14 @@
 
     const typeOrder = { number: 1, text: 2 }
     $: sortedVariables = sortByName(keysToID($variables), "name", true).sort((a, b) => typeOrder[a.type] - typeOrder[b.type])
-    $: filteredVariablesTags = sortedVariables.filter((a) => !$activeVariableTagFilter.length || (a.tags?.length && !$activeVariableTagFilter.find((tagId) => !a.tags?.includes(tagId))))
-    $: filteredVariablesSearch = searchValue.length > 1 ? filteredVariablesTags.filter((a) => a.name.toLowerCase().includes(searchValue.toLowerCase())) : filteredVariablesTags
+    $: filteredVariablesTags = sortedVariables.filter(a => !$activeVariableTagFilter.length || (a.tags?.length && !$activeVariableTagFilter.find(tagId => !a.tags?.includes(tagId))))
+    $: filteredVariablesSearch = searchValue.length > 1 ? filteredVariablesTags.filter(a => a.name.toLowerCase().includes(searchValue.toLowerCase())) : filteredVariablesTags
 
     function updateVariable(e: any, id: string, key: string) {
         let value = e?.target?.value ?? e
         if (key === "enabled") value = e?.detail || false
 
-        variables.update((a) => {
+        variables.update(a => {
             a[id][key] = value
 
             return a
@@ -49,10 +49,10 @@
         text_set: "variables.text_set"
     }
 
-    $: numberVariables = filteredVariablesSearch.filter((a) => a.type === "number")
-    $: randomNumberVariables = filteredVariablesSearch.filter((a) => a.type === "random_number")
-    $: textSetVariables = filteredVariablesSearch.filter((a) => a.type === "text_set")
-    $: otherVariables = filteredVariablesSearch.filter((a) => a.type !== "number" && a.type !== "random_number" && a.type !== "text_set")
+    $: numberVariables = filteredVariablesSearch.filter(a => a.type === "number")
+    $: randomNumberVariables = filteredVariablesSearch.filter(a => a.type === "random_number")
+    $: textSetVariables = filteredVariablesSearch.filter(a => a.type === "text_set")
+    $: otherVariables = filteredVariablesSearch.filter(a => a.type !== "number" && a.type !== "random_number" && a.type !== "text_set")
 
     const minDefault = 0
     const maxDefault = 1000
@@ -79,18 +79,7 @@
                         </div>
 
                         <div class="bigNumber">
-                            <NumberInput
-                                title={translateText("variables.value")}
-                                style="width: 100%;"
-                                value={number}
-                                {min}
-                                {max}
-                                step={stepSize}
-                                decimals={1}
-                                fixed={number.toString().includes(".") ? 1 : 0}
-                                buttons={false}
-                                on:change={(e) => updateVariable(e.detail, variable.id, "number")}
-                            />
+                            <NumberInput title={translateText("variables.value")} style="width: 100%;" value={number} {min} {max} step={stepSize} decimals={1} fixed={number.toString().includes(".") ? 1 : 0} buttons={false} on:change={e => updateVariable(e.detail, variable.id, "number")} />
                         </div>
 
                         <span style="justify-content: center;padding: 5px;width: 100%;">
@@ -114,17 +103,7 @@
                         </div>
 
                         <div class="inputs">
-                            <NumberInput
-                                title={translateText("variables.step")}
-                                style="flex: 1;"
-                                value={stepSize}
-                                min={0.1}
-                                step={1}
-                                decimals={1}
-                                fixed={stepSize.toString().includes(".") ? 1 : 0}
-                                on:change={(e) => updateVariable(e.detail, variable.id, "step")}
-                                buttons={false}
-                            />
+                            <NumberInput title={translateText("variables.step")} style="flex: 1;" value={stepSize} min={0.1} step={1} decimals={1} fixed={stepSize.toString().includes(".") ? 1 : 0} on:change={e => updateVariable(e.detail, variable.id, "step")} buttons={false} />
                             <!-- <NumberInput
                                 title={translateText("variables.default_value")}
                                 style="flex: 1;"
@@ -216,8 +195,8 @@
 
                         <span style="gap: 5px;width: 70%;">
                             {#if variable.type === "text"}
-                                <TextInput placeholder={translateText("variables.value") || ""} value={variable.text || ""} on:change={(e) => updateVariable(e, variable.id, "text")} />
-                                <MaterialToggleSwitch label="" checked={variable.enabled ?? true} style="padding: 8px;height: 35px;" on:change={(e) => updateVariable(e, variable.id, "enabled")} />
+                                <TextInput placeholder={translateText("variables.value") || ""} value={variable.text || ""} on:change={e => updateVariable(e, variable.id, "text")} />
+                                <MaterialToggleSwitch label="" checked={variable.enabled ?? true} style="padding: 8px;height: 35px;" on:change={e => updateVariable(e, variable.id, "enabled")} />
                             {/if}
                         </span>
                     </div>
@@ -253,15 +232,7 @@
                         <span style="gap: 5px;width: 70%;">
                             <p style="display: flex;flex: 1;">
                                 <span style="color: var(--secondary);">#</span>
-                                <NumberInput
-                                    title={translateText("variables.set_number")}
-                                    style="width: 40px;"
-                                    value={activeSet + 1}
-                                    min={1}
-                                    max={variable.textSets?.length ?? 1}
-                                    on:change={(e) => updateVariable(e.detail - 1, variable.id, "activeTextSet")}
-                                    buttons={false}
-                                />
+                                <NumberInput title={translateText("variables.set_number")} style="width: 40px;" value={activeSet + 1} min={1} max={variable.textSets?.length ?? 1} on:change={e => updateVariable(e.detail - 1, variable.id, "activeTextSet")} buttons={false} />
                                 <span style="font-size: 0.8em;opacity: 0.5;">/{variable.textSets?.length || 1}</span>
                             </p>
 

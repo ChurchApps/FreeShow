@@ -43,7 +43,7 @@
 
     $: lines = createVirtualBreaks(clone(item?.lines || []), outputStyle?.skipVirtualBreaks)
     $: if (linesStart !== null && linesEnd !== null && lines.length) {
-        lines = lines.filter((a) => a.text.filter((a) => a.value !== undefined)?.length)
+        lines = lines.filter(a => a.text.filter(a => a.value !== undefined)?.length)
 
         // show last possible lines if no text at current line
         if (!lines[linesStart]) {
@@ -157,12 +157,12 @@
 
             let html = ""
             let index = 0
-            line.text.forEach((text) => {
+            line.text.forEach(text => {
                 let value = text.value.trim().replaceAll("\n", "") || ""
 
                 let letters = value.split("")
-                letters.forEach((letter) => {
-                    let chordIndex = chords.findIndex((a) => a.pos === index)
+                letters.forEach(letter => {
+                    let chordIndex = chords.findIndex(a => a.pos === index)
                     if (chordIndex >= 0) {
                         html += `<span class="chord">${chords[chordIndex].key}</span>`
                         chords.splice(chordIndex, 1)
@@ -218,16 +218,7 @@
     $: chordsStyle = `--chord-size: ${chordLines.length ? (fontSize || cssFontSize) * (chordFontSize / 100) : "undefined"}px;--chord-color: ${stageItem?.chords?.color || stageItem?.chordsData?.color || item?.chords?.color || "#FF851B"};`
 </script>
 
-<div
-    class="align"
-    class:isStage
-    class:scrolling={!isStage && item?.scrolling?.type}
-    class:topBottomScrolling={!isStage && item?.scrolling?.type === "top_bottom"}
-    class:bottomTopScrolling={!isStage && item?.scrolling?.type === "bottom_top"}
-    class:leftRightScrolling={!isStage && item?.scrolling?.type === "left_right"}
-    class:rightLeftScrolling={!isStage && item?.scrolling?.type === "right_left"}
-    style="--scrollSpeed: {item?.scrolling?.speed ?? 30}s;{style ? item?.align : null}"
->
+<div class="align" class:isStage class:scrolling={!isStage && item?.scrolling?.type} class:topBottomScrolling={!isStage && item?.scrolling?.type === "top_bottom"} class:bottomTopScrolling={!isStage && item?.scrolling?.type === "bottom_top"} class:leftRightScrolling={!isStage && item?.scrolling?.type === "left_right"} class:rightLeftScrolling={!isStage && item?.scrolling?.type === "right_left"} style="--scrollSpeed: {item?.scrolling?.speed ?? 30}s;{style ? item?.align : null}">
     <div class="lines" style="{style ? lineStyleBox : ''}{smallFontSize || customFontSize !== null ? '--font-size: ' + (smallFontSize ? (-1.1 * $slidesOptions.columns + 10) * 5 : customFontSize) + 'px;' : ''}{textAnimation}{chordsStyle}">
         {#each renderedLines as line, i}
             {#if (linesStart === null || linesEnd === null || (i >= linesStart && i < linesEnd)) && (!maxLines || (maxLinesInvert ? i > lines.length - maxLines - 1 : i < maxLines))}
@@ -238,24 +229,10 @@
                 {/if}
 
                 <!-- class:height={!line.text[0]?.value.length} -->
-                <div
-                    class="break"
-                    class:reveal={(centerPreview || isStage) && item?.lineReveal && revealed < i}
-                    class:smallFontSize={smallFontSize || customFontSize || textAnimation.includes("font-size")}
-                    style="{style ? lineStyle : ''}{style ? line.align : ''}{item?.list?.enabled && line.text?.reduce((value, t) => (value += t.value || ''), '')?.length ? listStyle : ''}{item?.list?.enabled
-                        ? `color: ${getStyles(line.text[0].style).color || ''};`
-                        : ''}"
-                >
+                <div class="break" class:reveal={(centerPreview || isStage) && item?.lineReveal && revealed < i} class:smallFontSize={smallFontSize || customFontSize || textAnimation.includes("font-size")} style="{style ? lineStyle : ''}{style ? line.align : ''}{item?.list?.enabled && line.text?.reduce((value, t) => (value += t.value || ''), '')?.length ? listStyle : ''}{item?.list?.enabled ? `color: ${getStyles(line.text[0].style).color || ''};` : ''}">
                     {#each line.text || [] as text, ti}
                         {@const value = text.value?.replaceAll("\n", "<br>") || "<br>"}
-                        <span
-                            class="textContainer"
-                            style="{style ? getCustomStyle(text.style) : ''}{customStyle}{text.customType?.includes('disableTemplate') ? text.style : ''}{fontSize
-                                ? `;font-size: ${fontSize * (text.customType?.includes('disableTemplate') && !text.customType?.includes('jw') ? customTypeRatio : 1)}px;`
-                                : style
-                                  ? getCustomFontSize(text.style, outputStyle)
-                                  : ''}"
-                        >
+                        <span class="textContainer" style="{style ? getCustomStyle(text.style) : ''}{customStyle}{text.customType?.includes('disableTemplate') ? text.style : ''}{fontSize ? `;font-size: ${fontSize * (text.customType?.includes('disableTemplate') && !text.customType?.includes('jw') ? customTypeRatio : 1)}px;` : style ? getCustomFontSize(text.style, outputStyle) : ''}">
                             {@html getTextValue(value, i, ti, updateDynamic)}
                         </span>
                     {/each}

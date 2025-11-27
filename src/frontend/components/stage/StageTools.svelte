@@ -74,7 +74,7 @@
         const activeItems = $activeStage.items?.length ? $activeStage.items : Object.keys($stageShows[stageId].items)
         let textStyles: { [key: string]: string } = {}
         let itemStyles: { [key: string]: string } = {}
-        activeItems.forEach((key) => {
+        activeItems.forEach(key => {
             let item = $stageShows[stageId].items[key]
             const styles = getStyles(item.style)
 
@@ -151,7 +151,7 @@
 
         let itemStyles: { [key: string]: string } = {}
 
-        activeItems.forEach((itemId) => {
+        activeItems.forEach(itemId => {
             let item = $stageShows[stageId]?.items?.[itemId] || {}
             let style = item.style
             // if (Array.isArray(style)) style = style[0]

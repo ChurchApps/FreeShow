@@ -32,7 +32,7 @@ export function playRecording(recording: Recording, { showId, layoutId }, startI
         if (startIndex === 0) {
             const playing = get(playingAudio)[audioPath]?.audio
             if (playing) {
-                playingAudio.update((a) => {
+                playingAudio.update(a => {
                     a[audioPath].audio.currentTime = 0
                     a[audioPath].paused = false
                     return a
@@ -96,7 +96,7 @@ function startAudioListener(path: string) {
     audioPathListener = path
     if (audioListener) return
 
-    audioListener = playingAudio.subscribe((a) => {
+    audioListener = playingAudio.subscribe(a => {
         const audio = a[audioPathListener]?.audio
         // let audio = a[get(activeSlideRecording)?.audioPath]?.audio
         if (!audio || !get(activeSlideRecording)) return
@@ -112,7 +112,7 @@ function startBackgroundListener() {
     // this might not get correct output if background is not playing in first output..
     const activeOutputId = getFirstActiveOutput()?.id || ""
 
-    backgroundListener = videosTime.subscribe((a) => {
+    backgroundListener = videosTime.subscribe(a => {
         const time = a[activeOutputId]
         if (!time || !get(activeSlideRecording)) return
 
@@ -125,7 +125,7 @@ function checkTimeDifference(currentTime: number) {
 
     // find closest sequence
     let addedTime = 0
-    const sequenceIndex = get(activeSlideRecording).sequence.findIndex((sequence) => {
+    const sequenceIndex = get(activeSlideRecording).sequence.findIndex(sequence => {
         addedTime += sequence.time
         return addedTime > currentTime
     })
@@ -161,7 +161,7 @@ export function getClosestRecordingSlide(ref, slideIndex: number) {
 
     const closest = getClosestIndexes(activeRec.index, activeRec.sequence.length)
 
-    const findFirstWithSameSlideIndex = closest.find((i) => activeRec.sequence[i].slideRef.index === slideIndex)
+    const findFirstWithSameSlideIndex = closest.find(i => activeRec.sequence[i].slideRef.index === slideIndex)
     if (!findFirstWithSameSlideIndex) return
 
     const recording: Recording = _show(ref.showId).layouts([ref.layoutId]).get("recording")[0]?.[0]
@@ -169,6 +169,8 @@ export function getClosestRecordingSlide(ref, slideIndex: number) {
 
     const index = findFirstWithSameSlideIndex
     playRecording(recording, activeRec.ref, index)
+
+    if (!get(activeSlideRecording)) return
 
     // change time of playing audio
     const audioPath = get(activeSlideRecording).audioPath
@@ -220,7 +222,7 @@ function playAudioTrack(path: string, index: number, recording: Recording) {
     if (!playing) return
 
     const recordingTime: number = recording.sequence.slice(0, index).reduce((time, value) => (time += value.time), 0)
-    playingAudio.update((a) => {
+    playingAudio.update(a => {
         const newTime = recordingTime / 1000
         if (newTime > a[path].audio.duration) return a
 

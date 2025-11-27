@@ -6,7 +6,7 @@ export const defaultThemes: { [key: string]: Themes } = {
         default: true,
         font: {
             family: "",
-            size: "1em",
+            size: "1em"
         },
         colors: {
             primary: "#242832",
@@ -19,15 +19,15 @@ export const defaultThemes: { [key: string]: Themes } = {
             secondary: "#F0008C",
             "secondary-opacity": "rgba(240, 0, 140, 0.5)",
             hover: "rgb(255 255 255 / 0.05)",
-            focus: "rgb(255 255 255 / 0.1)",
-        },
+            focus: "rgb(255 255 255 / 0.1)"
+        }
     },
     dark: {
         name: "dark",
         default: true,
         font: {
             family: "monospace",
-            size: "1.1em",
+            size: "1.1em"
         },
         colors: {
             primary: "#242832",
@@ -40,15 +40,15 @@ export const defaultThemes: { [key: string]: Themes } = {
             secondary: "#E64934",
             "secondary-opacity": "rgb(230 73 52 / 0.5)",
             hover: "rgb(255 255 255 / 0.05)",
-            focus: "rgb(255 255 255 / 0.1)",
-        },
+            focus: "rgb(255 255 255 / 0.1)"
+        }
     },
     light: {
         name: "light",
         default: true,
         font: {
             family: "",
-            size: "1em",
+            size: "1em"
         },
         colors: {
             primary: "#DADDE2",
@@ -61,15 +61,15 @@ export const defaultThemes: { [key: string]: Themes } = {
             secondary: "#F0008C",
             "secondary-opacity": "rgb(230 52 156 / 0.5)",
             hover: "rgb(0 0 0 / 0.05)",
-            focus: "rgb(0 0 0 / 0.1)",
-        },
+            focus: "rgb(0 0 0 / 0.1)"
+        }
     },
     white: {
         name: "white",
         default: true,
         font: {
             family: "Trebuchet MS",
-            size: "1em",
+            size: "1em"
         },
         colors: {
             primary: "#242832",
@@ -82,15 +82,15 @@ export const defaultThemes: { [key: string]: Themes } = {
             secondary: "#fbe1fe",
             "secondary-opacity": "rgba(251, 225, 254, 0.5)",
             hover: "rgb(255 255 255 / 0.05)",
-            focus: "rgb(255 255 255 / 0.1)",
-        },
+            focus: "rgb(255 255 255 / 0.1)"
+        }
     },
     black: {
         name: "black",
         default: true,
         font: {
             family: "",
-            size: "1em",
+            size: "1em"
         },
         colors: {
             primary: "#000000",
@@ -103,14 +103,14 @@ export const defaultThemes: { [key: string]: Themes } = {
             secondary: "#FF2E2E",
             "secondary-opacity": "rgb(255 46 46 / 0.5)",
             hover: "rgb(255 255 255 / 0.2)",
-            focus: "rgb(255 255 255 / 0.3)",
-        },
+            focus: "rgb(255 255 255 / 0.3)"
+        }
     },
     blue: {
         name: "Blue",
         font: {
             family: "Trebuchet MS",
-            size: "1em",
+            size: "1em"
         },
         colors: {
             primary: "#323743",
@@ -123,14 +123,14 @@ export const defaultThemes: { [key: string]: Themes } = {
             secondary: "#338BFF",
             "secondary-opacity": "rgba(51, 139, 255, 0.5)",
             hover: "rgb(255 255 255 / 0.05)",
-            focus: "rgb(255 255 255 / 0.1)",
-        },
+            focus: "rgb(255 255 255 / 0.1)"
+        }
     },
     sea: {
         name: "Sea",
         font: {
             family: "Georgia",
-            size: "1em",
+            size: "1em"
         },
         colors: {
             primary: "#D5DFF1",
@@ -143,14 +143,14 @@ export const defaultThemes: { [key: string]: Themes } = {
             secondary: "#007DB3",
             "secondary-opacity": "rgb(0 125 179 / 0.5)",
             hover: "rgb(0 0 0 / 0.05)",
-            focus: "rgb(0 0 0 / 0.1)",
-        },
+            focus: "rgb(0 0 0 / 0.1)"
+        }
     },
     aqua: {
         name: "Aqua",
         font: {
             family: "sans-serif",
-            size: "1em",
+            size: "1em"
         },
         colors: {
             primary: "#202020",
@@ -163,14 +163,14 @@ export const defaultThemes: { [key: string]: Themes } = {
             secondary: "#00ffbe",
             "secondary-opacity": "rgb(0 255 190 / 0.5)",
             hover: "rgb(255 255 255 / 0.2)",
-            focus: "rgb(255 255 255 / 0.3)",
-        },
+            focus: "rgb(255 255 255 / 0.3)"
+        }
     },
     papyrus: {
         name: "Papyrus",
         font: {
             family: "Papyrus",
-            size: "0.9em",
+            size: "0.9em"
         },
         colors: {
             primary: "#EAC6A4",
@@ -183,14 +183,14 @@ export const defaultThemes: { [key: string]: Themes } = {
             secondary: "#000361",
             "secondary-opacity": "rgb(0 3 97 / 0.5)",
             hover: "rgb(234 198 164 / 0.2)",
-            focus: "rgb(234 198 164 / 0.3)",
-        },
+            focus: "rgb(234 198 164 / 0.3)"
+        }
     },
     terminal: {
         name: "Terminal",
         font: {
             family: "monospace",
-            size: "1em",
+            size: "1em"
         },
         colors: {
             primary: "#202020",
@@ -203,7 +203,7 @@ export const defaultThemes: { [key: string]: Themes } = {
             secondary: "#00FF00",
             "secondary-opacity": "rgb(58 210 255 / 0.5)",
             hover: "rgb(255 255 255 / 0.2)",
-            focus: "rgb(255 255 255 / 0.3)",
-        },
-    },
+            focus: "rgb(255 255 255 / 0.3)"
+        }
+    }
 }

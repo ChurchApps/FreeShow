@@ -45,4 +45,4 @@
     }
 </script>
 
-<EditValues sections={currentSlideFilterSections} item={filterData} on:change={(e) => valueChanged(e.detail)} />
+<EditValues sections={currentSlideFilterSections} item={filterData} on:change={e => valueChanged(e.detail)} />

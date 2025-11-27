@@ -67,12 +67,7 @@
                 {#if values.length}
                     <div class="values">
                         {#each values as value, i}
-                            <Button
-                                style="gap: 10px;font-size: 1em;color: {value.color || 'unset'};{i > 0 && values[i - 1]?.type !== value.type ? 'border-top: 2px solid var(--primary-lighter);' : ''}"
-                                active={i === selectedIndex}
-                                on:click={(e) => selectQuicksearchValue(value, e.ctrlKey || e.metaKey)}
-                                bold={false}
-                            >
+                            <Button style="gap: 10px;font-size: 1em;color: {value.color || 'unset'};{i > 0 && values[i - 1]?.type !== value.type ? 'border-top: 2px solid var(--primary-lighter);' : ''}" active={i === selectedIndex} on:click={e => selectQuicksearchValue(value, e.ctrlKey || e.metaKey)} bold={false}>
                                 <Icon id={value.icon || value.type} />
                                 <p data-title={value.name}>
                                     {value.name}

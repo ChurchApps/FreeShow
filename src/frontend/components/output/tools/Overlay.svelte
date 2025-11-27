@@ -13,15 +13,15 @@
     //   currentOutput = outs.find((output) => output.out?.overlays)
     // }
 
-    $: activeEffects = currentOutput?.out?.effects?.map((id) => ({ id, ...$effects[id] })) || []
-    $: activeOverlays = currentOutput?.out?.overlays?.map((id) => ({ id, ...$overlays[id] })) || []
+    $: activeEffects = currentOutput?.out?.effects?.map(id => ({ id, ...$effects[id] })) || []
+    $: activeOverlays = currentOutput?.out?.overlays?.map(id => ({ id, ...$overlays[id] })) || []
 
     function removeEffect(id: string) {
         if ($outLocked || !currentOutput.out?.effects) return
 
         setOutput(
             "effects",
-            currentOutput.out.effects.filter((a) => a !== id)
+            currentOutput.out.effects.filter(a => a !== id)
         )
     }
 
@@ -30,7 +30,7 @@
 
         setOutput(
             "overlays",
-            currentOutput.out.overlays.filter((a) => a !== id)
+            currentOutput.out.overlays.filter(a => a !== id)
         )
     }
 

@@ -10,7 +10,7 @@
 
     $: show = $activeShow
 
-    $: if (show?.id.includes("http")) download()
+    $: if (show?.id?.includes("http")) download()
     async function download() {
         show!.id = await downloadOnlineMedia(show!.id)
     }

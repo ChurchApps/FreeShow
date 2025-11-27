@@ -5,10 +5,10 @@ import { send } from "../../utils/request"
 import { getAllNormalOutputs } from "./output"
 
 export function updateVideoTime(time: number) {
-    const activeOutputIds = getAllNormalOutputs().map((a) => a.id)
+    const activeOutputIds = getAllNormalOutputs().map(a => a.id)
 
     const timeValues: { [key: string]: number } = {}
-    activeOutputIds.forEach((id) => {
+    activeOutputIds.forEach(id => {
         timeValues[id] = time
     })
 
@@ -16,11 +16,11 @@ export function updateVideoTime(time: number) {
 }
 
 export function updateVideoData(data: any) {
-    const activeOutputIds = getAllNormalOutputs().map((a) => a.id)
-    const backgroundOutputId = activeOutputIds.find((id) => getLayersFromId(id).includes("background")) || activeOutputIds[0]
+    const activeOutputIds = getAllNormalOutputs().map(a => a.id)
+    const backgroundOutputId = activeOutputIds.find(id => getLayersFromId(id).includes("background")) || activeOutputIds[0]
 
     const dataValues: any = {}
-    activeOutputIds.forEach((id) => {
+    activeOutputIds.forEach(id => {
         dataValues[id] = { ...data, muted: id !== backgroundOutputId ? true : data.muted }
     })
 
@@ -34,16 +34,18 @@ function getLayersFromId(id: string) {
 }
 
 export function getFirstOutputIdWithAudableBackground(outputIds: string[] = [], _updater: any = null) {
-    if (!outputIds.length) outputIds = getAllNormalOutputs().map((a) => a.id)
+    if (!outputIds.length) outputIds = getAllNormalOutputs().map(a => a.id)
 
-    return outputIds.find(id => {
-        const output = get(outputs)[id]
-        if (!output || output.stageOutput) return false
+    return (
+        outputIds.find(id => {
+            const output = get(outputs)[id]
+            if (!output || output.stageOutput) return false
 
-        const style = get(styles)[output.style || ""]
-        let layers = style?.layers
-        if (!Array.isArray(layers)) layers = ["background"]
+            const style = get(styles)[output.style || ""]
+            let layers = style?.layers
+            if (!Array.isArray(layers)) layers = ["background"]
 
-        return layers.includes("background") && style?.volume !== 0
-    }) || null
+            return layers.includes("background") && style?.volume !== 0
+        }) || null
+    )
 }

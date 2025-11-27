@@ -112,7 +112,7 @@ const animations = {
 
 function removePreviousKeys(array: string[] | undefined, key: string | undefined) {
     if (!array || !key) return []
-    return array.filter((a) => !a.includes(key))
+    return array.filter(a => !a.includes(key))
 }
 
 // function randomNumBetween(min = 0, max) {

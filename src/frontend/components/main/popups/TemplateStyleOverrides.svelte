@@ -44,12 +44,12 @@
     }
 
     function updateOverride(id: string, key: keyof TemplateStyleOverride, value: string | boolean) {
-        const next = overrides.map((override) => (override.id === id ? { ...override, [key]: value } : override))
+        const next = overrides.map(override => (override.id === id ? { ...override, [key]: value } : override))
         commit(next)
     }
 
     function toggleOverrideFlag(id: string, key: FormatToggleKey) {
-        const target = overrides.find((override) => override.id === id)
+        const target = overrides.find(override => override.id === id)
         if (!target) return
 
         const active = !!target[key]
@@ -57,7 +57,7 @@
     }
 
     function removeOverride(id: string) {
-        const next = overrides.filter((override) => override.id !== id)
+        const next = overrides.filter(override => override.id !== id)
         commit(next)
     }
 </script>
@@ -70,8 +70,8 @@
             {#each overrides as override (override.id)}
                 <div class="overrideRow">
                     <InputRow style="background-color: var(--primary-darker);padding: 8px;border-radius: 6px;">
-                        <MaterialTextInput style="flex: 2 1 240px;min-width: 200px;" label="edit.style_override_pattern" value={override.pattern} on:change={(e) => updateOverride(override.id, "pattern", e.detail)} autofocus={!override.pattern} />
-                        <MaterialColorInput style="flex: 0 0 190px;min-width: 170px;" label="edit.text_color" value={override.color || ""} allowEmpty on:change={(e) => updateOverride(override.id, "color", e.detail)} noLabel />
+                        <MaterialTextInput style="flex: 2 1 240px;min-width: 200px;" label="edit.style_override_pattern" value={override.pattern} on:change={e => updateOverride(override.id, "pattern", e.detail)} autofocus={!override.pattern} />
+                        <MaterialColorInput style="flex: 0 0 190px;min-width: 170px;" label="edit.text_color" value={override.color || ""} allowEmpty on:change={e => updateOverride(override.id, "color", e.detail)} noLabel />
 
                         <div class="toggles">
                             {#each formatOptions as option}

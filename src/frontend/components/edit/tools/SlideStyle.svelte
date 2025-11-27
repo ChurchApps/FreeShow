@@ -76,7 +76,7 @@
         <MaterialColorInput
             label="edit.background_color"
             value={settings.color}
-            on:input={(e) => {
+            on:input={e => {
                 settings.color = e.detail
                 update()
             }}
@@ -93,7 +93,7 @@
                 name={$templates[settings.template || ""]?.name}
                 popupId="select_template"
                 icon="templates"
-                on:change={(e) => {
+                on:change={e => {
                     settings.template = e.detail
                     update()
                 }}

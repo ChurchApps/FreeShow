@@ -59,7 +59,7 @@ async function convertDynamicValues(data: NowPlayingData) {
 
     const metadata = await getAudioMetadata(data.filePath)
 
-    dynamicValues.forEach((value) => {
+    dynamicValues.forEach(value => {
         data.format = data.format.replaceAll(value, replaceValue(value))
     })
 
@@ -83,7 +83,7 @@ async function convertDynamicValues(data: NowPlayingData) {
 
                 if (!doesPathExist(coverFilePath)) return ""
                 const pngBuffer = readFile(coverFilePath)
-                const base64String = Buffer.from(pngBuffer).toString('base64')
+                const base64String = Buffer.from(pngBuffer).toString("base64")
                 return pngBuffer ? `data:image/png;base64,${base64String}` : ""
             case "{duration}":
             case "{duration_s}":
@@ -99,7 +99,6 @@ async function convertDynamicValues(data: NowPlayingData) {
         }
     }
 }
-
 
 // same as frontend function
 function getArtist(metadata: ICommonTagsResult) {
@@ -150,7 +149,7 @@ export function openNowPlaying() {
 async function getAudioMetadata(filePath: string): Promise<ICommonTagsResult | null> {
     if (!filePath) return null
 
-    return new Promise(async (resolve) => {
+    return new Promise(async resolve => {
         try {
             const metadata = (await parseFile(filePath))?.common
             if (!metadata) {

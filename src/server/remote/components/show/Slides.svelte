@@ -75,7 +75,7 @@
 <div class="grid" on:touchstart={touchstart} on:touchmove={touchmove} on:touchend={touchend}>
     {#if layoutSlides.length}
         {#if layoutSlides.length < 10 || loadingStarted}
-            {#each layoutSlides as slide, i (`${$activeShow?.id || 'show'}-${slide.id || 'slide'}-${i}`)}
+            {#each layoutSlides as slide, i (`${$activeShow?.id || "show"}-${slide.id || "slide"}-${i}`)}
                 <Slide
                     {resolution}
                     media={$activeShow?.media}

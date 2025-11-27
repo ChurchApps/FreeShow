@@ -6,38 +6,7 @@ import type { DropData, Selected, Variable } from "../../../types/Main"
 import { clearAudio } from "../../audio/audioFading"
 import { AudioPlayer } from "../../audio/audioPlayer"
 import { AudioPlaylist } from "../../audio/audioPlaylist"
-import {
-    activeDrawerTab,
-    activeEdit,
-    activePage,
-    activeProject,
-    activeTimers,
-    audioPlaylists,
-    draw,
-    drawSettings,
-    drawTool,
-    folders,
-    gain,
-    groupNumbers,
-    groups,
-    media,
-    openScripture,
-    outLocked,
-    outputs,
-    overlays,
-    playingAudio,
-    playingMetronome,
-    projects,
-    refreshEditSlide,
-    selected,
-    showsCache,
-    sortedShowsList,
-    special,
-    styles,
-    timers,
-    variables,
-    volume
-} from "../../stores"
+import { activeDrawerTab, activeEdit, activePage, activeProject, activeTimers, audioPlaylists, draw, drawSettings, drawTool, folders, gain, groupNumbers, groups, media, openScripture, outLocked, outputs, overlays, playingAudio, playingMetronome, projects, refreshEditSlide, selected, showsCache, sortedShowsList, special, styles, timers, variables, volume } from "../../stores"
 import { newToast } from "../../utils/common"
 import { send } from "../../utils/request"
 import { getDynamicValue } from "../edit/scripts/itemHelpers"
@@ -82,7 +51,7 @@ export function gotoGroup(dataGroupId: string) {
     if (!currentShowId) return
 
     const showRef = getLayoutRef(currentShowId)
-    const groupIds = showRef.map((a) => a.id)
+    const groupIds = showRef.map(a => a.id)
     const showGroups = groupIds.length ? _show(currentShowId).slides(groupIds).get() : []
     if (!showGroups.length) return
 
@@ -90,7 +59,7 @@ export function gotoGroup(dataGroupId: string) {
     Object.keys(get(groups)).forEach((groupId: string) => {
         if (groupId !== dataGroupId) return
 
-        showGroups.forEach((slide) => {
+        showGroups.forEach(slide => {
             if (slide.globalGroup === groupId) globalGroupIds.push(slide.id)
         })
     })
@@ -146,8 +115,8 @@ export function selectSlideByName(name: string) {
     // group numbers
     const groupNums: { [key: string]: number } = {}
     slides = slides
-        .filter((a) => a.group)
-        .map((a) => {
+        .filter(a => a.group)
+        .map(a => {
             if (!groupNums[a.group]) groupNums[a.group] = 0
             groupNums[a.group]++
 
@@ -164,7 +133,7 @@ export function selectSlideByName(name: string) {
     const showRef = getLayoutRef()
     if (!showRef) return newToast("toast.midi_no_show")
 
-    const index = showRef.findIndex((a) => a.id === sortedSlides[0].id)
+    const index = showRef.findIndex(a => a.id === sortedSlides[0].id)
     const slideRef = showRef[index]
     if (!slideRef) return
 
@@ -230,12 +199,12 @@ export function toggleLock(data: API_output_lock) {
 }
 // similar to PreviewOutputs.svelte
 function toggleOutputLock(outputId: string, value: boolean) {
-    outputs.update((a) => {
+    outputs.update(a => {
         if (!a[outputId]?.enabled) return a
 
         a[outputId].active = value
 
-        const activeList = Object.values(a).filter((o) => !o.stageOutput && o.enabled && o.active === true)
+        const activeList = Object.values(a).filter(o => !o.stageOutput && o.enabled && o.active === true)
         if (!activeList.length) {
             a[outputId].active = true
             newToast("toast.one_output")
@@ -268,7 +237,7 @@ export function startPlaylistByName(name: string) {
 export function editTimer(data: API_edit_timer) {
     if (!data?.id || !data.key || data.value === undefined) return
 
-    timers.update((a) => {
+    timers.update(a => {
         if (!a[data.id]) return a
 
         if (data.key === "start" || data.key === "end") data.value = Number(data.value)
@@ -341,7 +310,7 @@ function getVariables() {
     return keysToID(get(variables))
 }
 function updateVariable(value: any, id: string, key: string) {
-    variables.update((a) => {
+    variables.update(a => {
         if (a[id]) a[id][key] = value
         return a
     })
@@ -358,12 +327,12 @@ export function getTimersDetailed() {
     const allTimers = get(timers)
     const activeTimersList = get(activeTimers)
 
-    return keysToID(allTimers).map((timer) => ({
+    return keysToID(allTimers).map(timer => ({
         ...timer,
         name: timer.name || "",
-        isActive: activeTimersList.some((activeTimer) => activeTimer.id === timer.id),
-        currentTime: activeTimersList.find((activeTimer) => activeTimer.id === timer.id)?.currentTime,
-        paused: activeTimersList.find((activeTimer) => activeTimer.id === timer.id)?.paused
+        isActive: activeTimersList.some(activeTimer => activeTimer.id === timer.id),
+        currentTime: activeTimersList.find(activeTimer => activeTimer.id === timer.id)?.currentTime,
+        paused: activeTimersList.find(activeTimer => activeTimer.id === timer.id)?.paused
     }))
 }
 
@@ -374,8 +343,8 @@ export function pauseTimerById(id: string) {
     if (!timer) return
 
     // Set the specific timer to paused (similar to pauseAllTimers but for one timer)
-    activeTimers.update((active) => {
-        const timerIndex = active.findIndex((a) => a.id === id)
+    activeTimers.update(active => {
+        const timerIndex = active.findIndex(a => a.id === id)
         if (timerIndex >= 0) {
             active[timerIndex].paused = true
         }
@@ -402,8 +371,8 @@ export function stopTimerById(id: string) {
 
     // Remove from active timers completely (this stops and resets the timer)
     // This is the same as the existing resetTimer function
-    activeTimers.update((a) => {
-        return a.filter((activeTimer) => activeTimer.id !== id)
+    activeTimers.update(a => {
+        return a.filter(activeTimer => activeTimer.id !== id)
     })
 }
 
@@ -422,7 +391,7 @@ export function stopTimerByName(name: string) {
 
 export async function changeShowLayout(data: API_layout) {
     await loadShows([data.showId])
-    showsCache.update((a) => {
+    showsCache.update(a => {
         if (!a[data.showId]?.layouts[data.layoutId]) return a
 
         a[data.showId].settings.activeLayout = data.layoutId
@@ -455,8 +424,8 @@ export async function rearrangeGroups(data: API_rearrange) {
     const pos = trigger === "end" ? 1 : 0
 
     const ref = getLayoutRef(data.showId)
-    const dragIndex = ref.find((a) => a.type === "parent" && a.index === data.from)?.layoutIndex
-    let dropIndex = (ref.find((a) => a.type === "parent" && a.index === data.to + pos)?.layoutIndex || 0) - pos
+    const dragIndex = ref.find(a => a.type === "parent" && a.index === data.from)?.layoutIndex
+    let dropIndex = (ref.find(a => a.type === "parent" && a.index === data.to + pos)?.layoutIndex || 0) - pos
     if (isNaN(dropIndex) || dropIndex < 0) dropIndex = ref.length
 
     const drag: Selected = { id: "slide", data: [{ index: dragIndex, showId: data.showId }] }
@@ -541,9 +510,9 @@ export function playMedia(data: API_media) {
 export function videoSeekTo(data: API_seek) {
     if (get(outLocked)) return
 
-    const activeOutputIds = getAllActiveOutputs().map((a) => a.id)
+    const activeOutputIds = getAllActiveOutputs().map(a => a.id)
     const timeValues: any = {}
-    activeOutputIds.forEach((id) => {
+    activeOutputIds.forEach(id => {
         timeValues[id] = data.seconds
     })
 
@@ -592,8 +561,8 @@ export function timerSeekTo(data: API_seek) {
     const time = data.seconds
     if (!currentTimer) return
 
-    activeTimers.update((a) => {
-        const index = a.findIndex((timer) => timer.id === timerId)
+    activeTimers.update(a => {
+        const index = a.findIndex(timer => timer.id === timerId)
         if (index < 0) a.push({ ...currentTimer, id: timerId, currentTime: time, paused: true })
         else {
             a[index].currentTime = time
@@ -610,7 +579,7 @@ export function toggleLogSongUsage(data: API_toggle_specific) {
     if ((data.value as any) === "false") data.value = false // from Companion
 
     const newValue = data.value !== undefined ? !!data.value : !get(special).logSongUsage
-    special.update((a) => {
+    special.update(a => {
         a.logSongUsage = newValue
         return a
     })
@@ -632,9 +601,9 @@ export function sortByClosestMatch(array: any[], value: string, key = "name") {
     const normalizedValue = normalize(value)
 
     // Filter: keep if name or any alias includes the value
-    array = array.filter((a) => {
+    array = array.filter(a => {
         const keyMatch = a[key] && normalize(a[key]).includes(normalizedValue)
-        const aliasMatch = Array.isArray(a.aliases) && a.aliases.some((alias) => normalize(alias).includes(normalizedValue))
+        const aliasMatch = Array.isArray(a.aliases) && a.aliases.some(alias => normalize(alias).includes(normalizedValue))
         return keyMatch || aliasMatch
     })
 
@@ -667,7 +636,7 @@ export function sortByClosestMatch(array: any[], value: string, key = "name") {
         return { score: bestScore, alias: isAlias ? bestSource : undefined }
     }
 
-    array = array.map((item) => {
+    array = array.map(item => {
         const { score, alias } = getSimilarityScoreAndSource(item)
         return {
             ...item,
@@ -769,7 +738,7 @@ export async function getPDFThumbnails({ path }: API_media) {
 
 export function changeDrawZoom(data: API_draw_zoom) {
     const size = data.size || 100
-    drawSettings.update((a) => {
+    drawSettings.update(a => {
         a.zoom.size = size
         return a
     })
@@ -791,8 +760,8 @@ export function addToProject(data: API_add_to_project) {
     // open altered project in the app
     activeProject.set(data.projectId)
 
-    projects.update((a) => {
-        if (!a[data.projectId]?.shows || a[data.projectId].shows.find((item) => item.id === data.id)) return a
+    projects.update(a => {
+        if (!a[data.projectId]?.shows || a[data.projectId].shows.find(item => item.id === data.id)) return a
         a[data.projectId].shows.push({ ...(data.data || {}), id: data.id })
         return a
     })

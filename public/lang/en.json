@@ -1309,6 +1309,7 @@
         "auto_locate_missing_media_files": "Auto locate missing media files",
         "popup_before_close": "Enable close confirmation popup",
         "log_song_usage": "Log song usage to a file",
+        "auto_error_reporting": "Auto error reporting",
         "disable_hardware_acceleration": "Disable hardware acceleration",
         "restart_for_change": "You have to restart the program for the change to take effect!",
         "font": "Font",

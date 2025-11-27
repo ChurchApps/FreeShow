@@ -63,16 +63,7 @@
 
 <!-- background={transparentOutput && template.items?.length ? "transparent" : backgroundColor}
 checkered={template.items?.length > 0 && transparentOutput} -->
-<Zoomed
-    background={!preview || template.items?.length ? template.settings?.backgroundColor || (preview ? "var(--primary);" : "transparent") : template.color || "var(--primary);"}
-    {checkered}
-    border={!preview && checkered}
-    {resolution}
-    style={width && height ? getStyleResolution(resolution, width, height, "fit", { zoom }) : ""}
-    bind:ratio
-    hideOverflow={!edit}
-    center={edit ? zoom >= 1 : false}
->
+<Zoomed background={!preview || template.items?.length ? template.settings?.backgroundColor || (preview ? "var(--primary);" : "transparent") : template.color || "var(--primary);"} {checkered} border={!preview && checkered} {resolution} style={width && height ? getStyleResolution(resolution, width, height, "fit", { zoom }) : ""} bind:ratio hideOverflow={!edit} center={edit ? zoom >= 1 : false}>
     <!-- background -->
     <!-- WIP !altKeyPressed &&  -->
     {#if thumbnailPath}

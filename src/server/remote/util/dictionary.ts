@@ -1,6 +1,6 @@
 export const DEFAULT_DICTIONARY = {
     main: {
-        unnamed: "Unnamed",
+        unnamed: "Unnamed"
     },
     empty: {
         general: "Nothing here",
@@ -12,37 +12,37 @@ export const DEFAULT_DICTIONARY = {
         backgrounds: "No backgrounds in show",
         groups: "No groups",
         events: "No events",
-        text: "Type something",
+        text: "Type something"
     },
     new: {
         show: "New show",
-        project: "New project",
+        project: "New project"
     },
     tabs: {
-        scripture: "Scriptures",
+        scripture: "Scriptures"
     },
     category: {
-        favourites: "Favourites",
+        favourites: "Favourites"
     },
     scripture: {
         collections: "Collections",
         bibles_section: "Bibles",
-        api_section: "API",
+        api_section: "API"
     },
     titlebar: {
-        edit: "Edit",
+        edit: "Edit"
     },
     settings: {
-        add: "Add",
+        add: "Add"
     },
     actions: {
         rename: "Rename",
         delete: "Delete",
         done: "Done",
-        back: "Back",
+        back: "Back"
     },
     tools: {
-        groups: "Groups",
+        groups: "Groups"
     },
     remote: {
         projects: "Projects",
@@ -58,15 +58,15 @@ export const DEFAULT_DICTIONARY = {
         submit: "Submit",
         password: "Password",
         wrong_password: "Wrong password",
-        quick_play: "Quick play",
+        quick_play: "Quick play"
     },
     clear: {
-        all: "Clear all",
+        all: "Clear all"
     },
     media: {
-        play: "Play",
+        play: "Play"
     },
     context: {
-        addToProject: "Add to project",
-    },
+        addToProject: "Add to project"
+    }
 }

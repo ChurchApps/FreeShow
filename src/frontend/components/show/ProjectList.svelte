@@ -29,7 +29,7 @@
     let startLoading: boolean = tree.length < 50
     onMount(() => {
         // remove any deleted opened folders (and remove duplicates)
-        openedFolders.set([...new Set($openedFolders.filter((id) => $folders[id]))])
+        openedFolders.set([...new Set($openedFolders.filter(id => $folders[id]))])
 
         setTimeout(() => (startLoading = true), 20)
     })
@@ -39,9 +39,9 @@
     function checkFolders() {
         foldersWithoutContent = []
         // only check opened folders
-        $openedFolders.forEach((folderId) => {
-            if (Object.values($projects).find((a) => a.parent === folderId)) return
-            if (Object.values($folders).find((a) => a.parent === folderId)) return
+        $openedFolders.forEach(folderId => {
+            if (Object.values($projects).find(a => a.parent === folderId)) return
+            if (Object.values($folders).find(a => a.parent === folderId)) return
 
             foldersWithoutContent.push(folderId)
         })
@@ -51,7 +51,7 @@
     $: if (tree) checkArchivedCount()
     function checkArchivedCount() {
         archivedCount = {}
-        tree.forEach((project) => {
+        tree.forEach(project => {
             if (project.type === "folder" || !project.archived) return
 
             if (!archivedCount[project.parent]) {
@@ -67,7 +67,7 @@
         splittedTree = [[]]
         let rootProjects: Tree[] = []
 
-        tree.forEach((a) => {
+        tree.forEach(a => {
             if (a.parent === "/" && a.type !== "folder") {
                 rootProjects.push(a)
                 return
@@ -82,7 +82,7 @@
             splittedTree.push([{ id: "ROOT" } as any, ...rootProjects])
         }
 
-        splittedTree = splittedTree.filter((a) => a.length)
+        splittedTree = splittedTree.filter(a => a.length)
     }
 
     let editActive = false
@@ -108,7 +108,7 @@
 
         // set last used
         showRecentlyUsedProjects.set(false)
-        projects.update((a) => {
+        projects.update(a => {
             if (a[id]) a[id].used = Date.now()
             return a
         })
@@ -189,30 +189,18 @@
                                 <!-- , path: project.path -->
                                 <SelectElem id={project.type || "project"} data={{ type: project.type || "project", id: project.id }} draggable trigger="column" borders="center">
                                     {#if project.type === "folder" && (project.parent === "/" || shown)}
-                                        <MaterialButton
-                                            style="width: 100%;padding: 0.22rem 0.65rem;"
-                                            on:click={(e) => toggleFolder(e, project, opened)}
-                                            class="folder {readOnly ? 'context #folder_readonly' : 'context #folder__projects'}"
-                                            isActive={pathToActive.includes(project.id)}
-                                            tab
-                                        >
+                                        <MaterialButton style="width: 100%;padding: 0.22rem 0.65rem;" on:click={e => toggleFolder(e, project, opened)} class="folder {readOnly ? 'context #folder_readonly' : 'context #folder__projects'}" isActive={pathToActive.includes(project.id)} tab>
                                             <Icon id={opened ? "folderOpen" : "folder"} white />
-                                            <HiddenInput value={project.name} id={"folder_" + project.id} on:edit={(e) => renameFolder(project.id, e.detail.value)} bind:edit={editActive} allowEdit={!isReadOnly} />
+                                            <HiddenInput value={project.name} id={"folder_" + project.id} on:edit={e => renameFolder(project.id, e.detail.value)} bind:edit={editActive} allowEdit={!isReadOnly} />
 
                                             {#if projectsCount}
                                                 <span class="count">{projectsCount}</span>
                                             {/if}
                                         </MaterialButton>
                                     {:else if project.id && shown && isArchivedShown}
-                                        <MaterialButton
-                                            style="width: 100%;padding: 0.08rem 0.65rem;font-weight: normal;"
-                                            on:click={(e) => open(e, project.id)}
-                                            class="context #project_button{readOnly ? '_readonly' : ''}"
-                                            isActive={$activeProject === project.id}
-                                            tab
-                                        >
+                                        <MaterialButton style="width: 100%;padding: 0.08rem 0.65rem;font-weight: normal;" on:click={e => open(e, project.id)} class="context #project_button{readOnly ? '_readonly' : ''}" isActive={$activeProject === project.id} tab>
                                             <Icon id={$projects[project.id]?.archived ? "archive" : "project"} white={$projects[project.id]?.archived} />
-                                            <HiddenInput value={project.name} id={"project_" + project.id} on:edit={(e) => rename(project.id, e.detail.value)} bind:edit={editActive} allowEdit={!isReadOnly} />
+                                            <HiddenInput value={project.name} id={"project_" + project.id} on:edit={e => rename(project.id, e.detail.value)} bind:edit={editActive} allowEdit={!isReadOnly} />
                                         </MaterialButton>
                                     {/if}
                                 </SelectElem>
@@ -238,12 +226,7 @@
                                 <!-- padding: 5px 0; -->
                                 <div class:indented={project.parent !== "/"} style="margin-inline-start: {8 * ((project.index || 0) + 1)}px;display: flex;align-items: center;flex-direction: column;">
                                     <p style="opacity: 0.5;padding-bottom: 5px;"><T id="empty.general" /></p>
-                                    <MaterialButton
-                                        icon="add"
-                                        style="width: 100%;padding: 0.12rem 0.65rem;background-color: var(--primary-darkest);"
-                                        on:click={() => history({ id: "UPDATE", newData: { replace: { parent: project.id } }, location: { page: "show", id: "project" } })}
-                                        title="new.project"
-                                    >
+                                    <MaterialButton icon="add" style="width: 100%;padding: 0.12rem 0.65rem;background-color: var(--primary-darkest);" on:click={() => history({ id: "UPDATE", newData: { replace: { parent: project.id } }, location: { page: "show", id: "project" } })} title="new.project">
                                         {#if !$labelsDisabled}<p><T id="new.project" /></p>{/if}
                                     </MaterialButton>
                                 </div>

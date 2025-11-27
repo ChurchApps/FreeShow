@@ -18,7 +18,7 @@ export function historyAwait(s: string[], obj: History) {
         .then(() => {
             history(obj)
         })
-        .catch((e) => {
+        .catch(e => {
             console.error(e)
         })
 }
@@ -55,7 +55,7 @@ export function history(obj: History, shouldUndo: null | boolean = null) {
                         .slides([obj.location.slide!])
                         .items(obj.location.items)
                         .lines(obj.location.lines! || [])
-                        .set(obj.newData.style),
+                        .set(obj.newData.style)
                 }
                 // CSS text style
                 // if (obj.newData?.style?.key === "text-style" && old.style.values?.[0]?.[0]) old.style.values = old.style.values[0]
@@ -69,7 +69,7 @@ export function history(obj: History, shouldUndo: null | boolean = null) {
                     style: _show(showID)
                         .slides([obj.location?.slide || ""])
                         .items(obj.location.items)
-                        .set(obj.newData.style),
+                        .set(obj.newData.style)
                 }
 
                 // remove templates because slide has manual updates
@@ -79,14 +79,14 @@ export function history(obj: History, shouldUndo: null | boolean = null) {
                 old = {
                     style: _show(showID)
                         .slides([obj.location?.slide || ""])
-                        .set({ key: "settings", value: obj.newData.style }),
+                        .set({ key: "settings", value: obj.newData.style })
                 }
                 break
             case "slide":
                 old = {
                     slides: _show(showID).set({ key: "slides", value: obj.newData.slides }),
                     layout: _show(showID).layouts([obj.location.layout!]).set({ key: "slides", value: obj.newData.layout })[0]?.value,
-                    media: _show(showID).set({ key: "media", value: obj.newData.media || _show(showID).get("media") }),
+                    media: _show(showID).set({ key: "media", value: obj.newData.media || _show(showID).get("media") })
                 }
                 break
 
@@ -97,7 +97,7 @@ export function history(obj: History, shouldUndo: null | boolean = null) {
                     _show(showID)
                         .media()
                         .get()
-                        .forEach((media) => {
+                        .forEach(media => {
                             if (media.id === obj.newData.id) bgid = media.key
                         })
 
@@ -119,7 +119,7 @@ export function history(obj: History, shouldUndo: null | boolean = null) {
                             const existing = _show(showID)
                                 .media()
                                 .get()
-                                .find((a) => a.path === obj.newData.path)
+                                .find(a => a.path === obj.newData.path)
                             if (existing) bgid = existing.key
                         }
                         if (!bgid) bgid = _show(showID).media().add(obj.newData)
@@ -139,7 +139,7 @@ export function history(obj: History, shouldUndo: null | boolean = null) {
                     _show(showID)
                         .media()
                         .get()
-                        .forEach((media) => {
+                        .forEach(media => {
                             if (media.path === obj.newData.path) audioId = media.key
                         })
                 }
@@ -208,7 +208,7 @@ export function history(obj: History, shouldUndo: null | boolean = null) {
     // }
 
     if (shouldUndo) {
-        redoHistory.update((rh) => {
+        redoHistory.update(rh => {
             rh.push(obj)
 
             // delete oldest if more than set value
@@ -220,12 +220,7 @@ export function history(obj: History, shouldUndo: null | boolean = null) {
         undoHistory.update((uh: any) => {
             // if id and location is equal push new data to previous stored
             // not: project | newProject | newFolder | addShowToProject | slide
-            if (
-                shouldUndo === null &&
-                (override.includes(obj.id) || obj.location?.override) &&
-                uh[uh.length - 1]?.id === obj.id &&
-                JSON.stringify(Object.values(uh[uh.length - 1]?.location || {})) === JSON.stringify(Object.values(obj.location || {}))
-            ) {
+            if (shouldUndo === null && (override.includes(obj.id) || obj.location?.override) && uh[uh.length - 1]?.id === obj.id && JSON.stringify(Object.values(uh[uh.length - 1]?.location || {})) === JSON.stringify(Object.values(obj.location || {}))) {
                 // override, but keep previousData!!!
                 const newestData = obj.newData
                 if (newestData?.previousData) newestData.previousData = uh[uh.length - 1].newData.previousData
@@ -269,7 +264,7 @@ export function historyNew(type: HistoryTypes, value: any) {
     }
 
     const historyValue: HistoryNew = { version: 1, time: Date.now(), type, value }
-    undoHistory.update((a) => {
+    undoHistory.update(a => {
         a.push(historyValue)
         return a
     })
@@ -280,7 +275,7 @@ export const undo = () => {
     if (document.activeElement?.classList?.contains("edit") && !document.activeElement?.closest(".editItem")) return
 
     let lastUndo: any
-    undoHistory.update((uh) => {
+    undoHistory.update(uh => {
         lastUndo = uh.pop()!
         return uh
     })
@@ -295,7 +290,7 @@ export const undo = () => {
             createStore(lastUndo.value.id, lastUndo.value.oldValue, lastUndo.value.key, false)
         }
 
-        redoHistory.update((rh) => {
+        redoHistory.update(rh => {
             rh.push(lastUndo)
             return rh
         })
@@ -316,7 +311,7 @@ export const redo = () => {
     if (document.activeElement?.classList?.contains("edit") && !document.activeElement?.closest(".editItem")) return
 
     let lastRedo: any
-    redoHistory.update((rh) => {
+    redoHistory.update(rh => {
         lastRedo = rh.pop()!
         return rh
     })
@@ -331,7 +326,7 @@ export const redo = () => {
             deleteStore(lastRedo.value.id, lastRedo.value.key, false)
         }
 
-        undoHistory.update((a) => {
+        undoHistory.update(a => {
             // a[a.length - 1].time = Date.now()
             lastRedo.time = Date.now()
             a.push(lastRedo)

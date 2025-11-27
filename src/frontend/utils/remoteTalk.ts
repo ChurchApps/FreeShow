@@ -128,7 +128,7 @@ export const receiveREMOTE: any = {
 
             if (currentOut !== currentId) return
         }
-        if (id.length && msg.id) {
+        if (id?.length && msg.id) {
             setConnectedState("REMOTE", msg.id, "active", id)
         }
 
@@ -145,8 +145,8 @@ export const receiveREMOTE: any = {
         msg.data = removeDeleted(keysToID(clone(get(projects))))
 
         // get names
-        msg.data.forEach((project) => {
-            project.shows.forEach((show) => {
+        msg.data.forEach(project => {
+            project.shows.forEach(show => {
                 if (show.type === "overlay") show.name = get(overlays)[show.id]?.name || translateText("main.unnamed")
             })
 
@@ -173,9 +173,9 @@ export const receiveREMOTE: any = {
         if (bookKey && !chapterKey) {
             try {
                 const bookData = await jsonBible.getBook(bookKey)
-                const mapped = (bookData.data.chapters || []).map((c) => ({
+                const mapped = (bookData.data.chapters || []).map(c => ({
                     number: c.number,
-                    keyName: c.number,
+                    keyName: c.number
                 }))
                 msg.data.bibleUpdate = { kind: "chapters", id, bookIndex, chapters: mapped }
             } catch (error) {
@@ -190,10 +190,10 @@ export const receiveREMOTE: any = {
                 const bookData = await jsonBible.getBook(bookKey)
                 const chapterData = await bookData.getChapter(chapterKey)
                 const versesData = chapterData.data.verses
-                const mappedVerses = versesData.map((v) => ({
+                const mappedVerses = versesData.map(v => ({
                     number: v.number,
                     text: v.text,
-                    keyName: v.number,
+                    keyName: v.number
                 }))
                 msg.data.bibleUpdate = { kind: "verses", id, bookIndex, chapterIndex, verses: mappedVerses }
             } catch (error) {
@@ -204,11 +204,11 @@ export const receiveREMOTE: any = {
         }
 
         const books = jsonBible.data.books
-        const mappedBooks = (books || []).map((b) => ({
+        const mappedBooks = (books || []).map(b => ({
             name: b.name,
             number: b.number,
             keyName: b.id,
-            chapters: [],
+            chapters: []
         }))
         msg.data.bible = { books: mappedBooks }
         return msg
@@ -264,7 +264,7 @@ export const receiveREMOTE: any = {
                     verseNumber: typeof ref.verse === "object" ? ref.verse.number : ref.verse,
                     reference: `${ref.book}.${ref.chapter}.${typeof ref.verse === "object" ? ref.verse.number : ref.verse}`,
                     referenceFull: ref.reference || "",
-                    verseText: typeof ref.verse === "object" ? ref.verse.text : (ref.text || "")
+                    verseText: typeof ref.verse === "object" ? ref.verse.text : ref.text || ""
                 }))
 
                 // Apply book filter if provided
@@ -300,9 +300,7 @@ export async function initializeRemote(id: string) {
 
     // Get current output state
     const currentOutput = getFirstActiveOutput()
-    const styleRes = currentOutput?.style ?
-        get(styles)[currentOutput?.style]?.aspectRatio || get(styles)[currentOutput?.style]?.resolution :
-        null
+    const styleRes = currentOutput?.style ? get(styles)[currentOutput?.style]?.aspectRatio || get(styles)[currentOutput?.style]?.resolution : null
 
     const outSlide = currentOutput?.out?.slide
     const out: any = {
@@ -338,15 +336,15 @@ export async function convertBackgrounds(show: Show, noLoad = false, init = fals
 
     show = clone(show)
     const mediaIds: string[] = []
-    show.layouts[show.settings?.activeLayout]?.slides.forEach((a) => {
+    show.layouts[show.settings?.activeLayout]?.slides.forEach(a => {
         if (a.background) mediaIds.push(a.background)
-        Object.values(a.children || {}).forEach((child) => {
+        Object.values(a.children || {}).forEach(child => {
             if (child.background) mediaIds.push(child.background)
         })
     })
 
     await Promise.all(
-        mediaIds.map(async (id) => {
+        mediaIds.map(async id => {
             let path = show.media[id]?.path || show.media[id]?.id || ""
             const cloudId = get(driveData).mediaId
             if (cloudId && cloudId !== "default") path = show.media[id]?.cloud?.[cloudId] || path

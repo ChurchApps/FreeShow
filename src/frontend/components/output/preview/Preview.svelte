@@ -32,7 +32,7 @@
     let currentOutput: any = {}
     $: currentOutput = outputId ? $outputs[outputId] || {} : {}
 
-    $: allOutputsWithBackground = allActiveOutputs.filter((id) => $outputs[id]?.out?.background)
+    $: allOutputsWithBackground = allActiveOutputs.filter(id => $outputs[id]?.out?.background)
     $: backgroundOutputId = getFirstOutputIdWithAudableBackground(allOutputsWithBackground) || allOutputsWithBackground[0] || outputId
     $: currentBgOutput = backgroundOutputId ? $outputs[backgroundOutputId] || null : null
 
@@ -59,7 +59,7 @@
         if ((outSlide?.id || $activeShow) && !e.ctrlKey && !e.metaKey && !$outLocked) {
             // play slide with custom shortcut key
             let layoutRef = getLayoutRef(outSlide?.id || "active")
-            let slideShortcutMatch = layoutRef.findIndex((ref) => ref.data?.actions?.slide_shortcut?.key === e.key)
+            let slideShortcutMatch = layoutRef.findIndex(ref => ref.data?.actions?.slide_shortcut?.key === e.key)
             if (slideShortcutMatch > -1 && !e.altKey && !e.shiftKey) {
                 playSlideAtIndex(slideShortcutMatch)
                 e.preventDefault()
@@ -93,7 +93,7 @@
             if ($special.autoLetterShortcut) {
                 const isSpecial = [".", ",", "-", "+", "/", "*", "<", ">", "|", "\\", "¨", "'"].includes(e.key)
                 if (e.key.trim().length === 1 && isNaN(e.key as any) && !isSpecial) {
-                    const firstLetterMatch = layoutRef.findIndex((ref) => {
+                    const firstLetterMatch = layoutRef.findIndex(ref => {
                         const slide = _show().get("slides")?.[ref.id]
                         const slideText = formatSearch(getSlideText(slide)).replace(/\d+/g, "").trim()
                         return slideText[0]?.toLowerCase() === e.key.toLowerCase()
@@ -117,7 +117,7 @@
     function actionKeyActivate(key: string) {
         let actionTriggered = false
 
-        Object.values($actions).forEach((action) => {
+        Object.values($actions).forEach(action => {
             // can become [object Object] in some rare cases
             if (typeof action.keypressActivate !== "string") return
             if (action.keypressActivate.toUpperCase() === key) {
@@ -134,14 +134,14 @@
         if (!currentShowId) return
 
         let showRef = getLayoutRef(currentShowId)
-        let groupIds = showRef.map((a) => a.id)
+        let groupIds = showRef.map(a => a.id)
         let showGroups = groupIds.length ? _show(currentShowId).slides(groupIds).get() : []
         if (!showGroups.length) return
 
         let globalGroupIds: string[] = []
         Object.entries($groups).forEach(([groupId, group]) => {
             if (!group.shortcut || group.shortcut.toLowerCase() !== e.key.toLowerCase()) return
-            showGroups.forEach((slide) => {
+            showGroups.forEach(slide => {
                 if (slide.globalGroup === groupId) globalGroupIds.push(slide.id)
             })
         })
@@ -163,13 +163,7 @@
     let autoChange = true
     $: if (outputId) autoChange = true
     $: if (autoChange && ($outputs || $overlayTimers || $activeTimers || $playingMetronome)) {
-        let active = getActiveClear(
-            !isOutCleared("transition"),
-            Object.keys($playingAudio).length || $playingMetronome,
-            !isOutCleared("overlays") || !isOutCleared("effects"),
-            !isOutCleared("slide") && (outputSlideHasContent(currentOutput) || isOutCleared("background")),
-            !isOutCleared("background")
-        )
+        let active = getActiveClear(!isOutCleared("transition"), Object.keys($playingAudio).length || $playingMetronome, !isOutCleared("overlays") || !isOutCleared("effects"), !isOutCleared("slide") && (outputSlideHasContent(currentOutput) || isOutCleared("background")), !isOutCleared("background"))
         if (active !== activeClear) activeClear = active
     }
     // enable autochange again if active has no value
@@ -269,7 +263,7 @@
 
     {#if $activePage === "show"}
         <div class="section" style="margin-top: 2px;">
-            <ClearButtons bind:autoChange activeClear={updatedActiveClear} on:update={(e) => (activeClear = e.detail)} />
+            <ClearButtons bind:autoChange activeClear={updatedActiveClear} on:update={e => (activeClear = e.detail)} />
 
             {#if updatedActiveClear === "background"}
                 <MediaControls currentOutput={currentBgOutput} outputId={backgroundOutputId} />

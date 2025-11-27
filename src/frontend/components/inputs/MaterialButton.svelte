@@ -68,7 +68,7 @@
     }
 
     function handleAnimationEnd(id) {
-        ripples = ripples.filter((r) => r.id !== id)
+        ripples = ripples.filter(r => r.id !== id)
     }
 </script>
 

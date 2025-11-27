@@ -34,7 +34,7 @@
         let name = data.name
         if (!name) name = id
 
-        playerVideos.update((a) => {
+        playerVideos.update(a => {
             a[currentId] = { id, name, type: active as any }
             return a
         })
@@ -42,6 +42,6 @@
 </script>
 
 {#if !editId}
-    <MaterialTextInput label="inputs.name" value={data.name} on:change={(e) => (data.name = e.detail)} autofocus={!data.name} />
+    <MaterialTextInput label="inputs.name" value={data.name} on:change={e => (data.name = e.detail)} autofocus={!data.name} />
 {/if}
-<MaterialTextInput label="inputs.video_id" value={data.id || ""} placeholder="X-AJdKty74M" on:change={(e) => (data.id = e.detail)} />
+<MaterialTextInput label="inputs.video_id" value={data.id || ""} placeholder="X-AJdKty74M" on:change={e => (data.id = e.detail)} />

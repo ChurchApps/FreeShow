@@ -28,13 +28,13 @@
         style="width: 100%;"
         title={path}
         bold={false}
-        on:click={(e) => {
+        on:click={e => {
             if ($outLocked || e.ctrlKey || e.metaKey || e.shiftKey) return
 
             if (playlist) AudioPlaylist.start(active || "", path, { pauseIfPlaying: true })
             else AudioPlayer.start(path, { name }, { playMultiple: e.altKey })
         }}
-        on:dblclick={(e) => {
+        on:dblclick={e => {
             if (e.ctrlKey || e.metaKey || e.shiftKey) return
             addProjectItem({ id: path, name, type: "audio" })
         }}
@@ -43,11 +43,7 @@
             {#await AudioPlayer.getDuration(path)}
                 <Icon id="music" white right />
             {:then duration}
-                <Icon
-                    id={$playingAudio[path]?.paused === true ? "play" : $playingAudio[path]?.paused === false ? "pause" : $media[path]?.favourite === true && active !== "favourites" ? "star" : AudioPlayer.getAudioType(path, duration)}
-                    white={$playingAudio[path]?.paused === true || (!$playingAudio[path] && ($media[path]?.favourite !== true || active === "favourites"))}
-                    right
-                />
+                <Icon id={$playingAudio[path]?.paused === true ? "play" : $playingAudio[path]?.paused === false ? "pause" : $media[path]?.favourite === true && active !== "favourites" ? "star" : AudioPlayer.getAudioType(path, duration)} white={$playingAudio[path]?.paused === true || (!$playingAudio[path] && ($media[path]?.favourite !== true || active === "favourites"))} right />
             {/await}
             <p>{name.slice(0, name.lastIndexOf("."))}</p>
         </span>

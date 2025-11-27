@@ -46,5 +46,5 @@ class ImageBufferAdjustment {
 }
 
 export default {
-    ImageBufferAdjustment,
+    ImageBufferAdjustment
 }

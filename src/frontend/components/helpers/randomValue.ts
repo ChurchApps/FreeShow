@@ -3,7 +3,7 @@ import { randomNumberVariable, variables } from "../../stores"
 import { newToast, wait } from "../../utils/common"
 
 function updateVariable(id: string, key: string, value: any) {
-    variables.update((a) => {
+    variables.update(a => {
         a[id][key] = value
         return a
     })
@@ -52,7 +52,7 @@ export function setRandomValue(id: string) {
             }
             randomIndex -= range.count
         }
-    } while (variable.eachNumberOnce && randomValue && variable.setLog?.find((a) => a.name === randomValue!.name && a.number === randomValue!.number) && loopStop < 50000)
+    } while (variable.eachNumberOnce && randomValue && variable.setLog?.find(a => a.name === randomValue!.name && a.number === randomValue!.number) && loopStop < 50000)
 
     if (!randomValue) return
 
@@ -66,7 +66,7 @@ const steps = 15
 let lastNums: number[] = []
 async function animateValue(id: string, chars: number, finalValue: { name: string; number: number }, currentStep = 0) {
     if (currentStep === 0) {
-        randomNumberVariable.update((a) => {
+        randomNumberVariable.update(a => {
             a[id] = true
             return a
         })
@@ -76,16 +76,16 @@ async function animateValue(id: string, chars: number, finalValue: { name: strin
 
     for (let i = 0; i < steps; i++) {
         let randomNumber = start
-            ;[...Array(chars - currentStep)].forEach((_, step) => {
-                // never display the same int twice in a row
-                let num = -1
-                do {
-                    num = Math.floor(Math.random() * 10) // 0-9
-                } while (lastNums[step] === num)
+        ;[...Array(chars - currentStep)].forEach((_, step) => {
+            // never display the same int twice in a row
+            let num = -1
+            do {
+                num = Math.floor(Math.random() * 10) // 0-9
+            } while (lastNums[step] === num)
 
-                lastNums[step] = num
-                randomNumber += num
-            })
+            lastNums[step] = num
+            randomNumber += num
+        })
 
         updateVariable(id, "number", Number(randomNumber))
 
@@ -100,14 +100,14 @@ async function animateValue(id: string, chars: number, finalValue: { name: strin
     lastNums = []
     setRandom(id, finalValue)
 
-    randomNumberVariable.update((a) => {
+    randomNumberVariable.update(a => {
         delete a[id]
         return a
     })
 }
 
 function setRandom(id: string, finalValue: { name: string; number: number }) {
-    variables.update((a) => {
+    variables.update(a => {
         a[id].number = finalValue.number
         a[id].setName = finalValue.name
 
@@ -125,7 +125,7 @@ export function getSetChars(sets: { name: string; minValue?: number; maxValue?: 
     let chars = 1
     if (!sets) return 4
 
-    sets.forEach((a) => {
+    sets.forEach(a => {
         const minChars = (a.minValue ?? 1).toString().length
         const maxChars = (a.maxValue ?? 1000).toString().length
         if (minChars > chars) chars = minChars

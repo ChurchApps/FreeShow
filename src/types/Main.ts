@@ -8,6 +8,7 @@ export interface Config {
     bounds: Electron.Rectangle
     dataPath: string | null
     disableHardwareAcceleration: boolean | null
+    autoErrorReporting?: boolean
 }
 
 export interface OS {
@@ -175,6 +176,7 @@ export interface MediaStyle {
     tracks?: Subtitle[]
     subtitle?: string
     tags?: string[] // media tags
+    name?: string // display name for content provider media (encrypted videos)
     contentFile?: any // ContentFile from content provider (imported type would create circular dependency)
     licenseChecked?: boolean // whether license has been checked for this media
     cropping?: Partial<Cropping>

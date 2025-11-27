@@ -13,4 +13,4 @@
     }
 </script>
 
-<MaterialMultiChoice options={styleTypes} on:click={(e) => selectStyle(e.detail)} />
+<MaterialMultiChoice options={styleTypes} on:click={e => selectStyle(e.detail)} />

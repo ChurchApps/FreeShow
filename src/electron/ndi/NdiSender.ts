@@ -8,9 +8,9 @@ import util from "./vingester-util"
 let warned = false
 const loadGrandiose = async () => {
     try {
-        return await import('grandiose')
+        return await import("grandiose")
     } catch (err) {
-        if (!warned) console.warn('NDI not available:', err.message)
+        if (!warned) console.warn("NDI not available:", err.message)
         warned = true
         return null
     }
@@ -56,7 +56,7 @@ export class NdiSender {
             this.NDI[id].sender = await grandiose.send({
                 name: this.NDI[id].name,
                 clockVideo: false,
-                clockAudio: false,
+                clockAudio: false
             })
         } catch (err) {
             console.error("Could not create NDI sender:", err)
@@ -77,7 +77,7 @@ export class NdiSender {
                 this.NDI[id].previousStatus = newStatus
 
                 if (this.NDI[id].status === "connected") {
-                    Object.keys(CaptureTransmitter.channels).forEach((key) => {
+                    Object.keys(CaptureTransmitter.channels).forEach(key => {
                         if (key.includes("ndi")) {
                             // force an instant check / output refresh when reconnected
                             CaptureTransmitter.channels[key].lastCheck = 999
@@ -134,7 +134,7 @@ export class NdiSender {
 
             /*  the data itself  */
             fourCC,
-            data: buffer,
+            data: buffer
         }
 
         try {
@@ -156,7 +156,7 @@ export class NdiSender {
 
     static bytesForFloat32 = 4
     static async sendAudioBufferNDI(buffer: Buffer, { sampleRate, channelCount }: { sampleRate: number; channelCount: number }) {
-        if (this.ndiDisabled || !Object.values(this.NDI).find((a) => a?.sendAudio)) return
+        if (this.ndiDisabled || !Object.values(this.NDI).find(a => a?.sendAudio)) return
 
         const ndiAudioBuffer = convertPCMtoPlanarFloat32(buffer, channelCount)
         if (!ndiAudioBuffer) return
@@ -177,10 +177,10 @@ export class NdiSender {
 
             /*  the data itself  */
             fourCC: grandiose.FOURCC_FLTp,
-            data: ndiAudioBuffer,
+            data: ndiAudioBuffer
         }
 
-        Object.values(this.NDI).forEach((data) => {
+        Object.values(this.NDI).forEach(data => {
             if (!data?.sendAudio || !data?.sender) return
 
             try {

@@ -44,7 +44,7 @@
         if (!edit) return
 
         console.log(e)
-        activeStage.update((ae) => {
+        activeStage.update(ae => {
             if (e.shiftKey) {
                 if (ae.items.includes(id)) {
                     if (e.target.closest(".line")) ae.items.splice(ae.items.indexOf(id), 1)
@@ -80,7 +80,7 @@
 
         if ((e.key === "Backspace" || e.key === "Delete") && $activeStage.items.includes(id) && !document.activeElement?.closest(".stage_item") && !document.activeElement?.closest(".edit")) {
             // TODO: history??
-            stageShows.update((a) => {
+            stageShows.update(a => {
                 delete a[$activeStage.id!].items[id]
                 return a
             })
@@ -92,7 +92,7 @@
         if (e.target.closest(".stageTools") || e.target.closest(".contextMenu") || $activePopup) return
 
         if ((edit && !e.shiftKey && e.target.closest(".stage_item")?.id !== id && $activeStage.items.includes(id) && !e.target.closest(".stage_item")) || e.target.closest(".panel")) {
-            activeStage.update((ae) => {
+            activeStage.update(ae => {
                 ae.items = []
                 return ae
             })
@@ -164,7 +164,7 @@
     let firstTimerId = ""
     $: if (!item.timer?.id || id.includes("first_active_timer")) {
         firstTimerId = $activeTimers[0]?.id
-        if (!firstTimerId) firstTimerId = sortByName(keysToID($timers)).find((timer) => timer.type !== "counter")?.id || ""
+        if (!firstTimerId) firstTimerId = sortByName(keysToID($timers)).find(timer => timer.type !== "counter")?.id || ""
     } else firstTimerId = ""
 
     let itemStyle = ""
@@ -208,7 +208,7 @@
 
     // conditions
     function removeConditions() {
-        stageShows.update((a) => {
+        stageShows.update(a => {
             if (!a[$activeStage.id!]?.items?.[id]?.conditions) return a
             delete a[$activeStage.id!].items[id].conditions
             return a
@@ -282,10 +282,7 @@
                 {/if}
 
                 {#if item.currentOutput?.showLabel}
-                    <div
-                        class="label"
-                        style="position: absolute;top: unset;bottom: 10px;left: 50%;transform: translateX(-50%);pointer-events: none;font-size: 28px;background-color: rgba(0, 0, 0, 0.5);padding: 2px 6px;border-radius: 12px;height: 46px;width: 180px;display: flex;justify-content: center;align-items: center;"
-                    >
+                    <div class="label" style="position: absolute;top: unset;bottom: 10px;left: 50%;transform: translateX(-50%);pointer-events: none;font-size: 28px;background-color: rgba(0, 0, 0, 0.5);padding: 2px 6px;border-radius: 12px;height: 46px;width: 180px;display: flex;justify-content: center;align-items: center;">
                         <p>{$outputs[outputWindowId]?.name || $allOutputs[outputWindowId]?.name || ""}</p>
                     </div>
                 {/if}
@@ -303,17 +300,7 @@
                 <!-- refresh to update auto sizes -->
                 <!-- refresh auto size if changing stage layout with #key made item unmovable .. -->
                 {#key currentSlide?.id || currentSlide?.index}
-                    <SlideText
-                        {currentSlide}
-                        {slideOffset}
-                        stageItem={item}
-                        chords={typeof item.chords === "boolean" ? item.chords : item.chords?.enabled}
-                        ref={{ type: "stage", id }}
-                        autoSize={item.auto !== false}
-                        {fontSize}
-                        {textStyle}
-                        style={item.type ? item.keepStyle : false}
-                    />
+                    <SlideText {currentSlide} {slideOffset} stageItem={item} chords={typeof item.chords === "boolean" ? item.chords : item.chords?.enabled} ref={{ type: "stage", id }} autoSize={item.auto !== false} {fontSize} {textStyle} style={item.type ? item.keepStyle : false} />
                 {/key}
             {:else if item.type === "slide_notes" || id.includes("notes")}
                 <SlideNotes {currentSlide} {slideOffset} autoSize={item.auto !== false ? autoSize : fontSize} />

@@ -135,8 +135,8 @@ self.addEventListener("fetch", function (event) {
                         status: 503,
                         statusText: "Service Unavailable",
                         headers: new Headers({
-                            "Content-Type": "text/html",
-                        }),
+                            "Content-Type": "text/html"
+                        })
                     })
                 }
             })

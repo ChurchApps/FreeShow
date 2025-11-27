@@ -16,7 +16,7 @@
         .sort((a, b) => a.name?.localeCompare(b.name))
 
     function updateValue(id: string) {
-        categories.update((a) => {
+        categories.update(a => {
             if (!a[selectedCategory]) return a
 
             a[selectedCategory].action = id
@@ -32,7 +32,7 @@
 <p class="tip"><T id="category.action_tip" /></p>
 
 <div style="min-height: {open ? 350 : 0}px;">
-    <MaterialDropdown bind:open label="midi.start_action" options={actionOptions.map((a) => ({ label: a.name, value: a.id }))} value={currentAction} allowEmpty on:change={(e) => updateValue(e.detail)} />
+    <MaterialDropdown bind:open label="midi.start_action" options={actionOptions.map(a => ({ label: a.name, value: a.id }))} value={currentAction} allowEmpty on:change={e => updateValue(e.detail)} />
 </div>
 
 <style>

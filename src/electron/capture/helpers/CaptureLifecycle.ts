@@ -19,7 +19,7 @@ export class CaptureLifecycle {
 
         if (output.captureOptions) {
             const captureOpts = output.captureOptions?.options || {}
-            Object.keys(toggle).map((key) => {
+            Object.keys(toggle).map(key => {
                 // turn off capture
                 if (captureOpts[key] && !toggle[key]) CaptureTransmitter.stopChannel(id, key)
                 // set capture on/off
@@ -28,7 +28,7 @@ export class CaptureLifecycle {
             output.captureOptions.options = captureOpts
         }
 
-        if (!output.captureOptions?.options || !Object.values(output.captureOptions.options).filter((a) => a).length || output.captureOptions.window.isDestroyed()) return
+        if (!output.captureOptions?.options || !Object.values(output.captureOptions.options).filter(a => a).length || output.captureOptions.window.isDestroyed()) return
 
         CaptureHelper.updateFramerate(id)
         CaptureHelper.Transmitter.startTransmitting(id)
@@ -59,7 +59,7 @@ export class CaptureLifecycle {
 
     // STOP
     static stopAllCaptures() {
-        OutputHelper.getAllOutputs().forEach((output) => {
+        OutputHelper.getAllOutputs().forEach(output => {
             if (output.captureOptions) this.stopCapture(output.id)
         })
     }

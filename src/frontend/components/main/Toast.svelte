@@ -16,7 +16,7 @@
 
     function startTimer() {
         // clear some early
-        if (clearEarly.find((c) => messages[0] === c.if && messages.find((a) => a === c.when))) {
+        if (clearEarly.find(c => messages[0] === c.if && messages.find(a => a === c.when))) {
             if (currentTimer) clearTimeout(currentTimer)
             currentTimer = null
             removeCurrent()
@@ -32,7 +32,7 @@
     }
 
     function removeCurrent() {
-        toastMessages.update((a) => {
+        toastMessages.update(a => {
             a.shift()
             return a
         })

@@ -246,5 +246,5 @@ export const isoLanguages = [
     { code: "yi", name: "Yiddish", nativeName: "ייִדיש", flag: "" },
     { code: "yo", name: "Yoruba", nativeName: "Yorùbá", flag: "🇳🇬" },
     { code: "za", name: "Zhuang", nativeName: "Saɯ cueŋƅ", flag: "🇨🇳" },
-    { code: "zu", name: "Zulu", nativeName: "isiZulu", flag: "🇿🇦" },
+    { code: "zu", name: "Zulu", nativeName: "isiZulu", flag: "🇿🇦" }
 ]

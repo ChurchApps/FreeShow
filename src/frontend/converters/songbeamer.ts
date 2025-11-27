@@ -51,7 +51,7 @@ const songbeamerMetadata = {
     tempo: 0,
     key: "",
     chords: [] as SongbeamerChord[][],
-    verse_order: [] as { group: string; groupNumber: number | null }[],
+    verse_order: [] as { group: string; groupNumber: number | null }[]
 }
 
 function getGroupId(group: string | null, groupNumber: number | null): string | null {
@@ -71,7 +71,7 @@ export function convertSongbeamerFiles({ files = [], category = "Songbeamer", tr
     const settings: ImportSettings = {
         category,
         encoding,
-        translationMethod,
+        translationMethod
     }
 
     const tempShows: { id: string; show: Show }[] = []
@@ -85,7 +85,7 @@ export function convertSongbeamerFiles({ files = [], category = "Songbeamer", tr
         const show = convertSongbeamerFileToShow(name, content, settings)
         tempShows.push({
             id: uid(),
-            show,
+            show
         })
     })
     setTempShows(tempShows)
@@ -120,7 +120,7 @@ function convertSongbeamerFileToShow(name: string, text: string, settings: Impor
         composer: metadata.composer,
         publisher: metadata.publisher,
         copyright: metadata.copyright,
-        CCLI: metadata.ccli,
+        CCLI: metadata.ccli
     }
     if (show.meta.number !== undefined) show.quickAccess = { number: show.meta.number }
     if (show.meta.CCLI) show = setQuickAccessMetadata(show, "CCLI", show.meta.CCLI)
@@ -152,7 +152,7 @@ function convertSongbeamerFileToShow(name: string, text: string, settings: Impor
 }
 
 function getTags(tags: string[]) {
-    return tags.map((tag) => getOrCreateTag(tag.trim()))
+    return tags.map(tag => getOrCreateTag(tag.trim()))
 }
 function getOrCreateTag(name: string) {
     // get existing with same name
@@ -246,7 +246,7 @@ function parseMetadata(text: string, encoding: BufferEncoding = "utf8") {
                     metadata.chords[chordLine].push({
                         x: parseFloat(chordParts[0]),
                         line: chordLine,
-                        key: chordParts[2],
+                        key: chordParts[2]
                     })
                 }
                 break
@@ -281,7 +281,7 @@ function convertChord(chord: SongbeamerChord): Chords {
     return {
         id: uid(5),
         pos,
-        key,
+        key
     }
 }
 
@@ -310,7 +310,7 @@ const SongbeamerGroups: { [key: string]: string } = {
     teil: "Tag",
     part: "Tag",
     chor: "Tag",
-    solo: "Tag",
+    solo: "Tag"
 }
 const SongbeamerGlobalGroups: { [key: string]: string } = {
     Intro: "intro",
@@ -322,7 +322,7 @@ const SongbeamerGlobalGroups: { [key: string]: string } = {
     Break: "break",
     "Pre-Outro": "pre_outro",
     Outro: "outro",
-    Tag: "tag",
+    Tag: "tag"
 }
 function slideTagToGroup(line: string): { group: string | null; globalGroup: string | null; groupNumber: number | null } {
     if (line.charAt(0) === "#") {
@@ -417,7 +417,7 @@ function parseSongbeamerSlides(sections: string[], metadata: typeof songbeamerMe
             let currentLineLanguage = language
             const line: SongbeamerLine = {
                 text: "",
-                chords: songbeamerChords,
+                chords: songbeamerChords
             }
 
             // parse markers beginning with # at the start of a line (e.g. #C)
@@ -474,24 +474,24 @@ function parseSongbeamerSlides(sections: string[], metadata: typeof songbeamerMe
 function createMultilineTextbox(songbeamerSlide: SongbeamerSlide): Item {
     const textbox: Item = {
         style: DEFAULT_ITEM_STYLE,
-        lines: [],
+        lines: []
     }
     let lineCount = 0
-    songbeamerSlide.lines.map((lines) => {
+    songbeamerSlide.lines.map(lines => {
         if (lines.length > lineCount) {
             lineCount = lines.length
         }
     })
     for (let lineIndex = 0; lineIndex < lineCount; ++lineIndex) {
-        songbeamerSlide.lines.map((lines) => {
+        songbeamerSlide.lines.map(lines => {
             const line: Line = {
                 align: "",
                 text: [
                     {
                         style: "",
-                        value: "",
-                    },
-                ],
+                        value: ""
+                    }
+                ]
             }
             if (lineIndex < lines.length) {
                 line.text[0].value = lines[lineIndex].text
@@ -515,7 +515,7 @@ function createMultilineTextbox(songbeamerSlide: SongbeamerSlide): Item {
 }
 function createTextboxForLanguage(songbeamerSlide: SongbeamerSlide, language: number): Item {
     const textbox: Item = {
-        style: DEFAULT_ITEM_STYLE,
+        style: DEFAULT_ITEM_STYLE
     }
     if (language < 0 || language >= songbeamerSlide.lines.length) {
         return textbox
@@ -527,9 +527,9 @@ function createTextboxForLanguage(songbeamerSlide: SongbeamerSlide, language: nu
             text: [
                 {
                     style: "",
-                    value: lineText,
-                },
-            ],
+                    value: lineText
+                }
+            ]
         }
         if (songbeamerChords) {
             const chords: Chords[] = []
@@ -546,11 +546,7 @@ function createTextboxForLanguage(songbeamerSlide: SongbeamerSlide, language: nu
     return textbox
 }
 
-function createSlidesMultipleLanguagesPerSlide(
-    songbeamerSlides: SongbeamerSlide[],
-    metadata: typeof songbeamerMetadata,
-    translationMethod: TranslationMethod
-): { slides: { [key: ID]: Slide }; layout: SlideData[]; groupSlides: Map<string, SlideData> } {
+function createSlidesMultipleLanguagesPerSlide(songbeamerSlides: SongbeamerSlide[], metadata: typeof songbeamerMetadata, translationMethod: TranslationMethod): { slides: { [key: ID]: Slide }; layout: SlideData[]; groupSlides: Map<string, SlideData> } {
     const slides: { [key: ID]: Slide } = {}
     const layout: SlideData[] = []
     const groupSlides: Map<string, SlideData> = new Map()
@@ -573,7 +569,7 @@ function createSlidesMultipleLanguagesPerSlide(
             color: null,
             settings: {},
             notes: "",
-            items: [],
+            items: []
         }
         switch (translationMethod) {
             case TranslationMethod.MultiLine:
@@ -657,9 +653,9 @@ function createSlidesForLanguage(songbeamerSlides: SongbeamerSlide[], language: 
                 text: [
                     {
                         style: "",
-                        value: lineText,
-                    },
-                ],
+                        value: lineText
+                    }
+                ]
             }
             if (songbeamerChords) {
                 const chords: Chords[] = []
@@ -681,9 +677,9 @@ function createSlidesForLanguage(songbeamerSlides: SongbeamerSlide[], language: 
             items: [
                 {
                     style: DEFAULT_ITEM_STYLE,
-                    lines: lineObjects,
-                },
-            ],
+                    lines: lineObjects
+                }
+            ]
         }
 
         if (!isChildSlide && songbeamerSlide.globalGroup !== null) {
@@ -741,7 +737,7 @@ function createSlides(songbeamerSlides: SongbeamerSlide[], metadata: typeof song
             layouts.push({
                 name: "",
                 notes: "",
-                slides: createLayoutFromVerseOrder(metadata, slidesMultiLang.groupSlides) || slidesMultiLang.layout,
+                slides: createLayoutFromVerseOrder(metadata, slidesMultiLang.groupSlides) || slidesMultiLang.layout
             })
             break
 
@@ -753,7 +749,7 @@ function createSlides(songbeamerSlides: SongbeamerSlide[], metadata: typeof song
                     id: uid(),
                     name: `Language ${language + 1}`,
                     notes: "",
-                    slides: createLayoutFromVerseOrder(metadata, groupSlides) || languageLayout,
+                    slides: createLayoutFromVerseOrder(metadata, groupSlides) || languageLayout
                 })
             }
             break

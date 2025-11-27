@@ -43,7 +43,7 @@
     $: if (showId) fixBrokenMedia()
     function fixBrokenMedia() {
         if (!currentShow) return
-        showsCache.update((a) => {
+        showsCache.update(a => {
             Object.entries(currentShow.layouts || {}).forEach(([layoutId, layout]) => {
                 layout.slides.forEach((slide, i) => {
                     let backgroundId = slide.background
@@ -101,7 +101,7 @@
             }
 
             // get item click reveal
-            const clickRevealItems = (showSlide?.items || []).filter((a) => a.clickReveal)
+            const clickRevealItems = (showSlide?.items || []).filter(a => a.clickReveal)
             const isRevealed = clickRevealItems.length ? !!outSlide?.itemClickReveal : true
             let itemClickReveal = false
             if (outSlide && outSlide.id === showId && outSlide.layout === activeLayout && outSlide.index === index && clickRevealItems.length) {
@@ -110,7 +110,7 @@
             }
 
             // get lines reveal
-            const linesRevealItems = (showSlide?.items || []).filter((a) => a.lineReveal)
+            const linesRevealItems = (showSlide?.items || []).filter(a => a.lineReveal)
             let revealCount = outSlide?.revealCount ?? 0
             if (outSlide && outSlide.id === showId && outSlide.layout === activeLayout && outSlide.index === index && linesRevealItems.length && isRevealed) {
                 revealCount++
@@ -149,7 +149,7 @@
     let endIndex: null | number = null
     $: {
         if (layoutSlides.length) {
-            let index = layoutSlides.findIndex((a) => a.end === true && a.disabled !== true)
+            let index = layoutSlides.findIndex(a => a.end === true && a.disabled !== true)
             if (index >= 0) endIndex = index
             else endIndex = null
         } else endIndex = null
@@ -175,14 +175,16 @@
 
         let capitalized = false
         let slides = _show(showId).get("slides") || {}
-        Object.keys(slides).forEach((slideId) => {
+        Object.keys(slides).forEach(slideId => {
             let slide = slides[slideId]
 
-            slide.items.forEach((item) => {
+            slide.items.forEach(item => {
                 if (!item.lines) return
 
-                item.lines.forEach((line) => {
-                    line?.text.forEach((text) => {
+                item.lines.forEach(line => {
+                    if (!Array.isArray(line?.text)) return
+
+                    line.text.forEach(text => {
                         let newValue = capitalize(text.value)
                         if (text.value !== newValue) capitalized = true
                         text.value = newValue
@@ -193,19 +195,19 @@
 
         if (!capitalized) return
 
-        showsCache.update((a) => {
+        showsCache.update(a => {
             a[showId].slides = slides
             return a
         })
 
         function capitalize(value: string) {
-            $special.capitalize_words.split(",").forEach((word) => {
+            $special.capitalize_words.split(",").forEach(word => {
                 let newWord = word.trim()
                 if (!newWord.length) return
 
                 // match whole words, respecting Unicode letters (accented characters)
                 const regEx = new RegExp(`(?<!\\p{L})${newWord.toLowerCase()}(?!\\p{L})`, "giu")
-                value = value.replace(regEx, (match) => {
+                value = value.replace(regEx, match => {
                     // always capitalize: newWord.charAt(0).toUpperCase() + newWord.slice(1)
                     // use the input case styling (meaning all uppercase/lowercase also works)
                     // but don't change anything if the text is already fully uppercase
@@ -250,7 +252,7 @@
     let activeSlides: any[] = []
     $: {
         activeSlides = []
-        activeOutputs.forEach((a) => {
+        activeOutputs.forEach(a => {
             let currentOutput = $outputs[a]
             if (!currentOutput || currentOutput.stageOutput) return
 
@@ -280,7 +282,7 @@
             }
 
             // lines reveal
-            const linesRevealItems = (showSlide?.items || []).filter((a) => a.lineReveal)
+            const linesRevealItems = (showSlide?.items || []).filter(a => a.lineReveal)
             if (linesRevealItems.length) {
                 lineIndex = getFewestOutputLinesReveal($outputs) - 1
                 maxLines = getItemWithMostLines({ items: linesRevealItems })
@@ -412,7 +414,7 @@
         let media: HTMLImageElement | HTMLVideoElement = new Image()
         if (isVideo) media = document.createElement("video")
 
-        return new Promise((resolve) => {
+        return new Promise(resolve => {
             let hasLoaded = false
             if (isVideo) media.onloadeddata = onLoaded
             else media.onload = onLoaded
@@ -466,25 +468,7 @@
                     {#if layoutSlides.length}
                         {#each layoutSlides as slide, i}
                             {#if (loaded || i < lazyLoader) && currentShow?.slides?.[slide.id] && (mode === "grid" || mode === "groups" || !slide.disabled) && (mode !== "groups" || currentShow.slides[slide.id].group !== null || activeSlides[i] !== undefined)}
-                                <Slide
-                                    {showId}
-                                    slide={currentShow.slides[slide.id]}
-                                    show={currentShow}
-                                    {layoutSlides}
-                                    layoutSlide={slide}
-                                    index={i}
-                                    color={slide.color}
-                                    output={activeSlides[i]}
-                                    active={activeSlides[i] !== undefined}
-                                    {endIndex}
-                                    list={!gridMode}
-                                    columns={$slidesOptions.columns}
-                                    icons
-                                    {altKeyPressed}
-                                    disableThumbnails={isLessons && !loaded}
-                                    centerPreview
-                                    on:click={(e) => slideClick(e, i)}
-                                />
+                                <Slide {showId} slide={currentShow.slides[slide.id]} show={currentShow} {layoutSlides} layoutSlide={slide} index={i} color={slide.color} output={activeSlides[i]} active={activeSlides[i] !== undefined} {endIndex} list={!gridMode} columns={$slidesOptions.columns} icons {altKeyPressed} disableThumbnails={isLessons && !loaded} centerPreview on:click={e => slideClick(e, i)} />
                             {/if}
                         {/each}
                     {:else}

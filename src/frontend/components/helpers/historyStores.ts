@@ -1,6 +1,6 @@
-import type { Writable } from "svelte/store";
+import type { Writable } from "svelte/store"
 import { get } from "svelte/store"
-import type { StoreKey } from "../../stores";
+import type { StoreKey } from "../../stores"
 import { $ } from "../../stores"
 import { clone } from "./array"
 import { historyNew } from "./history"
@@ -49,7 +49,7 @@ export function createStoreHistory<T extends StoreKey>(id: T, initialValue: any,
     if (key) {
         if (!get($[id])) return
 
-        $[id].update((a) => {
+        $[id].update(a => {
             a[key] = initialValue
             return a
         })
@@ -61,7 +61,7 @@ export function createStoreHistory<T extends StoreKey>(id: T, initialValue: any,
 export function updateStoreHistory<T extends StoreKey>(id: T, key: string, value: StoreItem<T>) {
     if (!get($[id])) return
 
-    $[id].update((a) => {
+    $[id].update(a => {
         a[key] = value
         return a
     })
@@ -70,7 +70,7 @@ export function updateStoreHistory<T extends StoreKey>(id: T, key: string, value
 export function deleteStoreHistory<T extends StoreKey>(id: T, key: string) {
     if (!get($[id])) return
 
-    $[id].update((a) => {
+    $[id].update(a => {
         delete a[key]
         return a
     })

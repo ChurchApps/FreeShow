@@ -16,7 +16,7 @@
 
     let loading = true
     const receiveNDI = {
-        RECEIVE_LIST: (msg) => {
+        RECEIVE_LIST: msg => {
             loading = false
             if (!msg || sources.length) return
 
@@ -37,7 +37,7 @@
     {#each sources as screen}
         <NDIStream
             {screen}
-            on:click={(e) => {
+            on:click={e => {
                 if ($outLocked || e.ctrlKey || e.metaKey) return
                 if (currentOutput?.out?.background?.id === screen.id) clearBackground()
                 else setOutput("background", { id: screen.id, type: "ndi" })

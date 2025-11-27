@@ -22,7 +22,7 @@
 
     // selection
     let selection: null | { start: number; end: number }[] = null
-    const unsubscribe = activeEdit.subscribe((a) => {
+    const unsubscribe = activeEdit.subscribe(a => {
         if (!a.items.length) selection = null
     })
     onDestroy(unsubscribe)
@@ -32,7 +32,7 @@
 
         // set focus to textbox if only one without content
         if (allSlideItems.length === 1 && item && !getItemText(item).length && !$activeEdit.items.length) {
-            activeEdit.update((a) => ({ ...(a || {}), items: [0] }))
+            activeEdit.update(a => ({ ...(a || {}), items: [0] }))
             const elem = document.querySelector(".editItem")?.querySelector(".edit")
             if (elem) (elem as HTMLElement).focus()
         }
@@ -75,7 +75,7 @@
             let editElem = document.querySelector(".editArea")?.querySelectorAll(".editItem")?.[$activeEdit.items[0]]?.querySelector(".edit")
             if (!editElem) return
 
-            let selectedLine = selection.findIndex((a) => a.start !== undefined)
+            let selectedLine = selection.findIndex(a => a.start !== undefined)
             if (selectedLine > -1 && selection[selectedLine]) setCaret(editElem, { line: selectedLine, pos: selection[selectedLine].end })
         }, 10)
     }
@@ -266,7 +266,7 @@
 
         // only same type
         let currentType = id || allSlideItems[allItems[0]].type || "text"
-        allItems = allItems.filter((index) => (allSlideItems[index].type || "text") === currentType)
+        allItems = allItems.filter(index => (allSlideItems[index].type || "text") === currentType)
 
         if (input.id === "nowrap") input = { ...input, id: "style", key: "white-space", value: input.value ? "nowrap" : undefined }
 
@@ -303,7 +303,7 @@
                 let currentItemIndexes = currentItems.map((_item, i) => i)
 
                 // only same type
-                currentItemIndexes = currentItemIndexes.filter((index) => (currentItems[index].type || "text") === currentType)
+                currentItemIndexes = currentItemIndexes.filter(index => (currentItems[index].type || "text") === currentType)
                 slideItems.push(currentItemIndexes)
             })
         }
@@ -317,32 +317,32 @@
         slides.forEach((slide, i) => {
             if (!slideItems[i].length) return
             values[slide] = []
-            slideItems[i].forEach((i) => getNewItemValues(clone(showSlides[slide]?.items?.[i] || allSlideItems[i]), slide))
+            slideItems[i].forEach(i => getNewItemValues(clone(showSlides[slide]?.items?.[i] || allSlideItems[i]), slide))
         })
 
         function getNewItemValues(currentSlideItem: Item, slideId: string) {
             if (!currentSlideItem) return
 
             let selected = selection
-            if (!selected?.length || !selected?.filter((a) => a.start !== a.end).length) {
+            if (!selected?.length || !selected?.filter(a => a.start !== a.end).length) {
                 selected = []
-                currentSlideItem.lines?.forEach((line) => {
+                currentSlideItem.lines?.forEach(line => {
                     selected!.push({ start: 0, end: getLineText(line).length })
                 })
             }
 
             if (input.key === "text-align") {
                 let newAligns: any[] = []
-                currentSlideItem.lines?.forEach((_a, line) => {
-                    if (!selection?.length || selection[line]?.start !== undefined) newAligns.push(`${input.key}: ${input.value};`)
-                    else newAligns.push(currentSlideItem.lines![line].align)
+                currentSlideItem.lines?.forEach((line, linePos) => {
+                    if (!selection?.length || selection[linePos]?.start !== undefined) newAligns.push(`${input.key}: ${input.value};`)
+                    else newAligns.push(line.align)
                 })
                 values[slideId].push(newAligns)
             } else if (currentSlideItem.lines) {
                 if (input.id.includes("CSS")) {
-                    values[slideId].push(addStyle(selected, currentSlideItem, input.value).lines!.map((a) => a.text))
+                    values[slideId].push(addStyle(selected, currentSlideItem, input.value).lines!.map(a => a.text))
                 } else {
-                    values[slideId].push(aligns ? addStyleString(currentSlideItem.align || "", [input.key, input.value]) : addStyle(selected, clone(currentSlideItem), [input.key, input.value]).lines!.map((a) => a.text))
+                    values[slideId].push(aligns ? addStyleString(currentSlideItem.align || "", [input.key, input.value]) : addStyle(selected, clone(currentSlideItem), [input.key, input.value]).lines!.map(a => a.text))
                 }
             } else {
                 if (input.id.includes("CSS")) {
@@ -381,7 +381,7 @@
                 let allValues: any = Object.values(values)[0]
                 let currentValue: any = allValues[i] ?? allValues[0]
                 // some textboxes don't have lines, this will break things, so make sure it has lines!
-                if (currentItems[i].lines && typeof currentValue === "string") currentValue = allValues.find((a) => typeof a !== "string") || allValues[0]
+                if (currentItems[i].lines && typeof currentValue === "string") currentValue = allValues.find(a => typeof a !== "string") || allValues[0]
 
                 if (input.key === "align-items") currentItems[i].align = currentValue
                 else if (currentType !== "text") currentItems[i].style = currentValue

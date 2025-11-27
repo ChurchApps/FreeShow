@@ -50,22 +50,7 @@
 </script>
 
 {#if select}
-    <svg
-        class={$$props.class}
-        class:flip
-        class:white
-        class:right
-        class:fill
-        class:select
-        on:click={click}
-        on:keydown={triggerClickOnEnterSpace}
-        tabindex={0}
-        role="button"
-        style="{$$props.style || ''};min-width: {width}"
-        {width}
-        {height}
-        viewBox="0 0 {box} {box}"
-    >
+    <svg class={$$props.class} class:flip class:white class:right class:fill class:select on:click={click} on:keydown={triggerClickOnEnterSpace} tabindex={0} role="button" style="{$$props.style || ''};min-width: {width}" {width} {height} viewBox="0 0 {box} {box}">
         {#if !white && colorMid && colorEnd && colorStart}
             <defs>
                 <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">

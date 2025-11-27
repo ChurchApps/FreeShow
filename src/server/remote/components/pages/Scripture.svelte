@@ -10,20 +10,21 @@
     import { dictionary, isCleared, scriptureCache, scriptures, scriptureSearchResults, scriptureViewList, outSlide, outShow } from "../../util/stores"
     import Clear from "../show/Clear.svelte"
     import ScriptureContent from "./ScriptureContent.svelte"
+    import { sanitizeVerseText } from "../../../../common/scripture/sanitizeVerseText"
 
     export let tablet: boolean = false
     export let triggerScriptureSearch: boolean = false
 
     let collectionId = localStorage.collectionId || ""
     let openedScripture = localStorage.scripture || ""
-    
+
     function checkScriptureExists(scriptureId: string, collId: string): boolean {
         if (!scriptureId || Object.keys($scriptures).length === 0) return false
         return !!($scriptures[scriptureId] || (collId && $scriptures[collId]))
     }
-    
+
     $: scripturesLoaded = Object.keys($scriptures).length > 0
-    
+
     // Validate stored scripture ID and reset if invalid (prevents infinite loading on first launch)
     $: if (scripturesLoaded && openedScripture && !checkScriptureExists(openedScripture, collectionId)) {
         openedScripture = ""
@@ -31,12 +32,12 @@
         localStorage.removeItem("scripture")
         localStorage.removeItem("collectionId")
     }
-    
+
     // Request scripture data only if it exists in store
     $: if (openedScripture && checkScriptureExists(openedScripture, collectionId) && !$scriptureCache[openedScripture]) {
         send("GET_SCRIPTURE", { id: openedScripture })
     }
-    
+
     let depthBeforeSearch = 0
     let depth = 0
     let scriptureContentRef: any
@@ -57,11 +58,12 @@
     }
 
     const iconForScripture = (item: any) => (item.api ? "scripture_alt" : item.collection ? "collection" : "scripture")
-    const sortByName = (list: any[]) => list.slice().sort((a: any, b: any) => {
-        const nameA = (a.customName || a.name || "").toLowerCase()
-        const nameB = (b.customName || b.name || "").toLowerCase()
-        return nameA.localeCompare(nameB)
-    })
+    const sortByName = (list: any[]) =>
+        list.slice().sort((a: any, b: any) => {
+            const nameA = (a.customName || a.name || "").toLowerCase()
+            const nameB = (b.customName || b.name || "").toLowerCase()
+            return nameA.localeCompare(nameB)
+        })
 
     function selectScripture(scripture: any) {
         const collection = scripture.collection
@@ -70,11 +72,11 @@
     }
 
     $: scriptureEntries = keysToID($scriptures).map((a: any) => ({ ...a, icon: iconForScripture(a) }))
-    $: favoritesList = sortByName(scriptureEntries.filter((a) => a.favorite))
-    $: favoriteIds = new Set(favoritesList.map((a) => a.id))
-    $: collectionList = sortByName(scriptureEntries.filter((a) => a.collection && !favoriteIds.has(a.id)))
-    $: localBibles = sortByName(scriptureEntries.filter((a) => !a.collection && !a.api && !favoriteIds.has(a.id)))
-    $: apiBibles = sortByName(scriptureEntries.filter((a) => !a.collection && a.api && !favoriteIds.has(a.id)))
+    $: favoritesList = sortByName(scriptureEntries.filter(a => a.favorite))
+    $: favoriteIds = new Set(favoritesList.map(a => a.id))
+    $: collectionList = sortByName(scriptureEntries.filter(a => a.collection && !favoriteIds.has(a.id)))
+    $: localBibles = sortByName(scriptureEntries.filter(a => !a.collection && !a.api && !favoriteIds.has(a.id)))
+    $: apiBibles = sortByName(scriptureEntries.filter(a => !a.collection && a.api && !favoriteIds.has(a.id)))
 
     type ScriptureSection = {
         id: string
@@ -83,12 +85,7 @@
         apiDividerIndex?: number
     }
 
-    $: scriptureSections = [
-        favoritesList.length ? { id: "favorites", labelKey: "category.favourites", items: favoritesList } : null,
-        collectionList.length ? { id: "collections", labelKey: "scripture.collections", items: collectionList } : null,
-        localBibles.length || apiBibles.length
-            ? { id: "local", labelKey: "scripture.bibles_section", items: [...localBibles, ...apiBibles], apiDividerIndex: localBibles.length } : null
-    ].filter((section): section is ScriptureSection => Boolean(section))
+    $: scriptureSections = [favoritesList.length ? { id: "favorites", labelKey: "category.favourites", items: favoritesList } : null, collectionList.length ? { id: "collections", labelKey: "scripture.collections", items: collectionList } : null, localBibles.length || apiBibles.length ? { id: "local", labelKey: "scripture.bibles_section", items: [...localBibles, ...apiBibles], apiDividerIndex: localBibles.length } : null].filter((section): section is ScriptureSection => Boolean(section))
 
     function isActiveScripture(scripture: any): boolean {
         if (!scripture) return false
@@ -140,22 +137,22 @@
     let searchResults: SearchItem[] = []
     let searchResult: SearchItem = { reference: "", referenceFull: "", verseText: "" }
     let isApiBible = false
-    
+
     // Track failed chapter requests to prevent infinite retries
     const failedChapterRequests = new Set<string>()
-    
+
     // Clear failed requests when search changes or scripture changes
     $: if (searchValue || openedScripture) {
         if (searchValue.trim() === "") {
             failedChapterRequests.clear()
         }
     }
-    
+
     $: isApiBible = openedScripture && $scriptures[openedScripture]?.api === true
     $: updateSearch(searchValue, $scriptureCache, openedScripture, isApiBible)
     $: handleApiSearchResults($scriptureSearchResults, searchValue, openedScripture)
     $: updateSearchResultsWithLoadedVerses($scriptureCache, searchResults, openedScripture)
-    
+
     // Auto-focus search input when search is opened
     $: if (openScriptureSearch) {
         focusSearchInput()
@@ -286,7 +283,7 @@
         const search = formatBookSearch(value)
 
         // First try exact matches and common abbreviations
-        const exactMatch = books.find((book) => {
+        const exactMatch = books.find(book => {
             const bookName = formatBookSearch(book.name)
             if (bookName === search) return true
 
@@ -300,7 +297,7 @@
         if (exactMatch) return exactMatch
 
         // Then try partial matches (book name starts with search)
-        return books.find((book) => formatBookSearch(book.name).startsWith(search))
+        return books.find(book => formatBookSearch(book.name).startsWith(search))
     }
 
     function findChapter(book: any, value: string): any {
@@ -322,7 +319,7 @@
     function parseCombinedQuery(query: string, books: any[]): { textTerm: string; book: any | null } {
         const trimmed = query.trim()
         const words = trimmed.split(/\s+/)
-        
+
         if (words.length < 2) {
             return { textTerm: trimmed, book: null }
         }
@@ -333,7 +330,10 @@
             const singleWord = words[i]
             const book = findBook(books, singleWord)
             if (book) {
-                const textTerm = words.filter((_, idx) => idx !== i).join(' ').trim()
+                const textTerm = words
+                    .filter((_, idx) => idx !== i)
+                    .join(" ")
+                    .trim()
                 if (textTerm.length >= 2) {
                     return { textTerm, book }
                 }
@@ -344,7 +344,10 @@
                 const twoWords = `${words[i]} ${words[i + 1]}`
                 const book2 = findBook(books, twoWords)
                 if (book2) {
-                    const textTerm = words.filter((_, idx) => idx !== i && idx !== i + 1).join(' ').trim()
+                    const textTerm = words
+                        .filter((_, idx) => idx !== i && idx !== i + 1)
+                        .join(" ")
+                        .trim()
                     if (textTerm.length >= 2) {
                         return { textTerm, book: book2 }
                     }
@@ -356,7 +359,10 @@
                 const threeWords = `${words[i]} ${words[i + 1]} ${words[i + 2]}`
                 const book3 = findBook(books, threeWords)
                 if (book3) {
-                    const textTerm = words.filter((_, idx) => idx !== i && idx !== i + 1 && idx !== i + 2).join(' ').trim()
+                    const textTerm = words
+                        .filter((_, idx) => idx !== i && idx !== i + 1 && idx !== i + 2)
+                        .join(" ")
+                        .trim()
                     if (textTerm.length >= 2) {
                         return { textTerm, book: book3 }
                     }
@@ -368,7 +374,7 @@
     }
 
     type RawSearchHit = { book: any; chapter: any; verse: any; reference: string; referenceFull: string; verseText: string }
-    
+
     /**
      * Searches for text in verse content, optionally limited to a specific book.
      */
@@ -377,17 +383,18 @@
         const searchLower = searchTerm.toLowerCase()
         const booksToSearch = filterBook ? [filterBook] : books
 
-        booksToSearch.forEach((book) => {
+        booksToSearch.forEach(book => {
             book.chapters?.forEach((chapter: any) => {
                 chapter.verses?.forEach((verse: any) => {
-                    if (verse.text.toLowerCase().includes(searchLower)) {
+                    const verseContent = sanitizeVerseText(verse.text || "")
+                    if (verseContent.toLowerCase().includes(searchLower)) {
                         results.push({
                             book: book,
                             chapter: chapter,
                             verse: verse,
                             reference: `${book.number}.${chapter.number}.${verse.number}`,
                             referenceFull: `${book.name} ${chapter.number}:${verse.number}`,
-                            verseText: verse.text
+                            verseText: verseContent
                         })
                     }
                 })
@@ -412,7 +419,7 @@
         // Then use API search only for text content searches
         if (isApi) {
             const scripture = scriptureCache[openedScriptureId]
-            
+
             if (!scripture?.books) {
                 // Books not loaded yet, use API search as fallback
                 const referenceMatch = searchVal.match(/^(.+?)\s+(\d+)(?:[:.,]\s*(\d+)|\s+(\d+))?(?:-(\d+))?/)
@@ -423,7 +430,7 @@
 
             const books = scripture.books
             const referenceMatch = searchVal.match(/^(.+?)\s+(\d+)(?:[:.,]\s*(\d+)|\s+(\d+))?(?:-(\d+))?/)
-            
+
             if (referenceMatch) {
                 const [, bookPart, chapterPart, versePart1, versePart2] = referenceMatch
                 const versePart = versePart1 || versePart2
@@ -433,7 +440,7 @@
                     const chapterNumber = parseInt(chapterPart, 10)
                     const verseNumber = versePart ? parseInt(versePart, 10) : null
                     const chapter = findChapter(book, chapterPart)
-                    
+
                     if (chapter) {
                         if (versePart) {
                             // Specific verse found in cache
@@ -442,7 +449,7 @@
                                 searchResult = {
                                     reference: `${book.number}.${chapterNumber}.${verse.number}`,
                                     referenceFull: `${book.name} ${chapterNumber}:${verse.number}`,
-                                    verseText: verse.text
+                                    verseText: sanitizeVerseText(verse.text || "")
                                 }
                                 searchResults = [searchResult]
                                 return
@@ -453,7 +460,7 @@
                                 searchResults = chapter.verses.map((verse: any) => ({
                                     reference: `${book.number}.${chapterNumber}.${verse.number}`,
                                     referenceFull: `${book.name} ${chapterNumber}:${verse.number}`,
-                                    verseText: verse.text
+                                    verseText: sanitizeVerseText(verse.text || "")
                                 }))
                                 if (searchResults.length > 0) {
                                     searchResult = searchResults[0]
@@ -462,15 +469,15 @@
                             }
                         }
                     }
-                    
+
                     // Book found but chapter/verse data not in cache
                     // Check if chapter number is reasonable (most books don't have > 150 chapters)
                     const isReasonableChapter = chapterNumber > 0 && chapterNumber <= 150
-                    
+
                     if (isReasonableChapter) {
                         // Construct reference and request data
                         const requestKey = `${openedScriptureId}:${book.keyName}:${chapterNumber}`
-                        
+
                         if (verseNumber) {
                             searchResult = {
                                 reference: `${book.number}.${chapterNumber}.${verseNumber}`,
@@ -478,15 +485,15 @@
                                 verseText: ""
                             }
                             searchResults = [searchResult]
-                            
+
                             // Only send request if we haven't already failed on this chapter
                             if (book.keyName && !failedChapterRequests.has(requestKey)) {
-                                send("GET_SCRIPTURE", { 
-                                    id: openedScriptureId, 
-                                    bookKey: book.keyName, 
-                                    chapterKey: chapterNumber, 
-                                    bookIndex: book.number - 1, 
-                                    chapterIndex: chapterNumber - 1 
+                                send("GET_SCRIPTURE", {
+                                    id: openedScriptureId,
+                                    bookKey: book.keyName,
+                                    chapterKey: chapterNumber,
+                                    bookIndex: book.number - 1,
+                                    chapterIndex: chapterNumber - 1
                                 })
                             }
                             return
@@ -497,15 +504,15 @@
                                 verseText: ""
                             }
                             searchResults = [searchResult]
-                            
+
                             // Only send request if we haven't already failed on this chapter
                             if (book.keyName && !failedChapterRequests.has(requestKey)) {
-                                send("GET_SCRIPTURE", { 
-                                    id: openedScriptureId, 
-                                    bookKey: book.keyName, 
-                                    chapterKey: chapterNumber, 
-                                    bookIndex: book.number - 1, 
-                                    chapterIndex: chapterNumber - 1 
+                                send("GET_SCRIPTURE", {
+                                    id: openedScriptureId,
+                                    bookKey: book.keyName,
+                                    chapterKey: chapterNumber,
+                                    bookIndex: book.number - 1,
+                                    chapterIndex: chapterNumber - 1
                                 })
                             }
                             return
@@ -516,12 +523,12 @@
 
             // Try combined text + book search
             const combinedQuery = parseCombinedQuery(searchVal, books)
-            
+
             if (combinedQuery.book && combinedQuery.textTerm.length >= 3) {
                 // Search filtered to specific book
-                send("SEARCH_SCRIPTURE", { 
-                    id: openedScriptureId, 
-                    searchTerm: combinedQuery.textTerm, 
+                send("SEARCH_SCRIPTURE", {
+                    id: openedScriptureId,
+                    searchTerm: combinedQuery.textTerm,
                     searchType: "text",
                     bookFilter: combinedQuery.book.number
                 })
@@ -560,7 +567,7 @@
                             searchResult = {
                                 reference: `${book.number}.${chapter.number}.${verse.number}`,
                                 referenceFull: `${book.name} ${chapter.number}:${verse.number}`,
-                                verseText: verse.text
+                                verseText: sanitizeVerseText(verse.text || "")
                             }
                             searchResults = [searchResult]
                             return
@@ -571,7 +578,7 @@
                             chapter.verses?.map((verse: any) => ({
                                 reference: `${book.number}.${chapter.number}.${verse.number}`,
                                 referenceFull: `${book.name} ${chapter.number}:${verse.number}`,
-                                verseText: verse.text
+                                verseText: sanitizeVerseText(verse.text || "")
                             })) || []
                         if (searchResults.length > 0) {
                             searchResult = searchResults[0]
@@ -584,17 +591,17 @@
 
         // Try combined text + book search
         const combinedQuery = parseCombinedQuery(searchVal, books)
-        
+
         if (combinedQuery.book && combinedQuery.textTerm.length >= 2) {
             // Search filtered to specific book
             const textResults = searchInBible(books, combinedQuery.textTerm, combinedQuery.book)
-            searchResults = textResults.map((r) => ({ reference: r.reference, referenceFull: r.referenceFull, verseText: r.verseText }))
+            searchResults = textResults.map(r => ({ reference: r.reference, referenceFull: r.referenceFull, verseText: r.verseText }))
         } else {
             // Regular text search across all books
             const textResults = searchInBible(books, searchVal)
-            searchResults = textResults.map((r) => ({ reference: r.reference, referenceFull: r.referenceFull, verseText: r.verseText }))
+            searchResults = textResults.map(r => ({ reference: r.reference, referenceFull: r.referenceFull, verseText: r.verseText }))
         }
-        
+
         if (searchResults.length > 0) {
             searchResult = searchResults[0]
         } else {
@@ -627,7 +634,7 @@
                 const verseNum = typeof verseNumbers[0] === "object" ? verseNumbers[0].number : verseNumbers[0]
                 const reference = `${apiResults.book}.${apiResults.chapter}.${verseNum}`
                 const referenceFull = apiResults.bookName ? `${apiResults.bookName} ${apiResults.chapter}:${verseNum}` : reference
-                
+
                 // For reference search, we'll need to load the verse text separately
                 // For now, just create the reference
                 searchResult = {
@@ -642,17 +649,17 @@
             let results = (apiResults.results || []).map((r: any) => ({
                 reference: r.reference,
                 referenceFull: r.referenceFull || r.reference,
-                verseText: r.verseText || ""
+                verseText: sanitizeVerseText(r.verseText || "")
             }))
-            
+
             // Apply book filter if provided
             if (apiResults.bookFilter) {
                 results = results.filter((r: any) => {
-                    const parts = r.reference.split('.')
+                    const parts = r.reference.split(".")
                     return parts.length > 0 && parseInt(parts[0], 10) === apiResults.bookFilter
                 })
             }
-            
+
             searchResults = results
             searchResult = results.length > 0 ? results[0] : { reference: "", referenceFull: "", verseText: "" }
         }
@@ -663,7 +670,7 @@
         if (!ref) return
 
         // Parse reference: "book.chapter.verse"
-        const parts = ref.split('.')
+        const parts = ref.split(".")
         const bookNum = parseInt(parts[0], 10)
         const chapterNum = parseInt(parts[1], 10)
         const verseNum = parts[2] ? parseInt(parts[2], 10) : 0
@@ -703,35 +710,35 @@
     // Also validates and removes invalid references (non-existent chapters/verses)
     function updateSearchResultsWithLoadedVerses(cache: any, results: SearchItem[], scriptureId: string) {
         if (!results.length || !scriptureId) return
-        
+
         const scripture = cache[scriptureId]
         if (!scripture?.books) return
-        
+
         const validResults: SearchItem[] = []
         let updated = false
-        
+
         for (const result of results) {
             if (result.verseText) {
                 validResults.push(result)
                 continue
             }
-            
-            const parts = result.reference.split('.')
+
+            const parts = result.reference.split(".")
             if (parts.length !== 3) {
                 validResults.push(result)
                 continue
             }
-            
+
             const bookIndex = parseInt(parts[0], 10) - 1
             const chapterNumber = parseInt(parts[1], 10)
             const verseNumber = parseInt(parts[2], 10)
-            
+
             const book = scripture.books[bookIndex]
             if (!book?.chapters) {
                 validResults.push(result)
                 continue
             }
-            
+
             const chapter = book.chapters[chapterNumber - 1]
             if (!chapter) {
                 // Chapter doesn't exist - mark as failed and remove this result
@@ -740,13 +747,13 @@
                 updated = true
                 continue
             }
-            
+
             if (!chapter.verses) {
                 // Verses not loaded yet - keep the result
                 validResults.push(result)
                 continue
             }
-            
+
             if (chapter.verses.length === 0) {
                 // Empty verses array from failed API request - mark as failed and remove
                 const requestKey = `${scriptureId}:${book.keyName}:${chapterNumber}`
@@ -754,29 +761,29 @@
                 updated = true
                 continue
             }
-            
+
             const verse = chapter.verses[verseNumber - 1]
             if (!verse) {
                 // Verse doesn't exist - remove this result
                 updated = true
                 continue
             }
-            
+
             if (verse.text) {
                 updated = true
                 validResults.push({
                     reference: result.reference,
                     referenceFull: result.referenceFull,
-                    verseText: verse.text
+                    verseText: sanitizeVerseText(verse.text || "")
                 })
             } else {
                 validResults.push(result)
             }
         }
-        
+
         if (updated) {
             searchResults = validResults
-            
+
             if (searchResult.reference) {
                 const updatedResult = validResults.find(r => r.reference === searchResult.reference)
                 if (updatedResult) {
@@ -812,14 +819,7 @@
         <div class="search-scroll" style="flex: 1; overflow-y: auto; margin: 0.5rem 0;">
             {#if searchResults.length > 0}
                 {#each searchResults.slice(0, 20) as result}
-                    <div
-                        class="verse"
-                        role="button"
-                        tabindex="0"
-                        on:click={() => playSearchVerse(result.reference)}
-                        on:keydown={(e) => (e.key === "Enter" ? playSearchVerse(result.reference) : null)}
-                        style="margin-bottom: 0.5rem; cursor: pointer; padding: 0.5rem; border: 1px solid #333; border-radius: 0.25rem;"
-                    >
+                    <div class="verse" role="button" tabindex="0" on:click={() => playSearchVerse(result.reference)} on:keydown={e => (e.key === "Enter" ? playSearchVerse(result.reference) : null)} style="margin-bottom: 0.5rem; cursor: pointer; padding: 0.5rem; border: 1px solid #333; border-radius: 0.25rem;">
                         <b style="color: white;">{result.referenceFull}</b>
                         <span style="display: block; margin-top: 0.25rem;">{@html highlightSearchTerm(result.verseText, searchValue)}</span>
                     </div>
@@ -912,13 +912,7 @@
                             {#if section.apiDividerIndex !== undefined && index === section.apiDividerIndex}
                                 <div class="api-divider">{translate("scripture.api_section", $dictionary)}</div>
                             {/if}
-                            <Button
-                                on:click={() => selectScripture(scripture)}
-                                title={scripture.customName || scripture.name}
-                                bold={false}
-                                class="scripture-item"
-                                active={isActiveScripture(scripture)}
-                            >
+                            <Button on:click={() => selectScripture(scripture)} title={scripture.customName || scripture.name} bold={false} class="scripture-item" active={isActiveScripture(scripture)}>
                                 <Icon id={scripture.icon} right />
                                 <p>{scripture.customName || scripture.name}</p>
                                 {#if scripture.collection?.versions?.length}
@@ -1098,7 +1092,6 @@
     .controls-section :global(.clearAll) {
         border-radius: 0 !important;
     }
-
 
     .input {
         width: 100%;
@@ -1305,7 +1298,6 @@
             width: 1.4em !important;
             height: 1.4em !important;
         }
-
 
         .input {
             padding: 14px 20px;

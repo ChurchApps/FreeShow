@@ -41,11 +41,11 @@ export function createData(paths: MainFilePaths) {
 
     setExampleOverlays()
 
-    folders.update((a) => {
+    folders.update(a => {
         a.default = { name: translateText("example.meetings"), parent: "/" }
         return a
     })
-    projects.update((a) => {
+    projects.update(a => {
         a.default = {
             name: translateText("example.example"),
             created: new Date("2022-01-01").getTime(),
@@ -56,12 +56,12 @@ export function createData(paths: MainFilePaths) {
     })
 
     setExampleTemplates()
-    mediaFolders.update((a) => {
+    mediaFolders.update(a => {
         a.pictures = { name: "category.pictures", icon: "folder", path: paths.pictures, default: true }
         a.videos = { name: "category.videos", icon: "folder", path: paths.videos, default: true }
         return a
     })
-    audioFolders.update((a) => {
+    audioFolders.update(a => {
         a.music = { name: "category.music", icon: "folder", path: paths.music, default: true }
         return a
     })
@@ -70,13 +70,13 @@ export function createData(paths: MainFilePaths) {
 
     // translate names set in defaults.ts
     if (get(outputs).default?.name === "Primary") {
-        outputs.update((a) => {
+        outputs.update(a => {
             a.default.name = translateText("theme.primary")
             return a
         })
     }
     if (get(variables).default?.name === "Counter") {
-        variables.update((a) => {
+        variables.update(a => {
             a.default.name = translateText("variables.number")
             return a
         })
@@ -90,7 +90,7 @@ const randomNumber = (from: number, to: number): number => Math.floor(Math.rando
 // OVERLAYS
 
 export function setExampleEffects() {
-    special.update((a) => {
+    special.update(a => {
         delete a.deletedEffects
         return a
     })
@@ -102,7 +102,7 @@ function createDefaultEffects() {
     const deletedIds = get(special).deletedEffects || []
     const defaultEffects = getDefaultEffects()
 
-    Object.keys(defaultEffects).forEach((id) => {
+    Object.keys(defaultEffects).forEach(id => {
         if (deletedIds.includes(id)) delete defaultEffects[id]
     })
 
@@ -165,7 +165,7 @@ function getDefaultEffects() {
 }
 
 export function setExampleOverlays() {
-    special.update((a) => {
+    special.update(a => {
         delete a.deletedOverlays
         return a
     })
@@ -177,7 +177,7 @@ function createDefaultOverlays() {
     const deletedIds = get(special).deletedOverlays || []
     const defaultOverlays = getDefaultOverlays()
 
-    Object.keys(defaultOverlays).forEach((id) => {
+    Object.keys(defaultOverlays).forEach(id => {
         if (deletedIds.includes(id)) delete defaultOverlays[id]
     })
 
@@ -206,11 +206,7 @@ function getDefaultOverlays() {
         color: "red",
         category: "visuals",
         // TODO: create box
-        items: [
-            { style: "top:35px;left:36.5px;height:1008.21px;width:1847.62px;border:4px solid white;" },
-            { style: "top:80px;left:80px;height:40px;width:40px;background-color:red;border-radius:50%;" },
-            { style: "top:80px;left:140px;height:40px;width:100px;", lines: [{ align: "", text: [{ value: "REC", style: "font-size:40px;" }] }] }
-        ]
+        items: [{ style: "top:35px;left:36.5px;height:1008.21px;width:1847.62px;border:4px solid white;" }, { style: "top:80px;left:80px;height:40px;width:40px;background-color:red;border-radius:50%;" }, { style: "top:80px;left:140px;height:40px;width:100px;", lines: [{ align: "", text: [{ value: "REC", style: "font-size:40px;" }] }] }]
     }
     a.clock = {
         isDefault: true,
@@ -296,12 +292,12 @@ function getDefaultOverlays() {
 // TEMPLATES
 
 export function setExampleTemplates() {
-    special.update((a) => {
+    special.update(a => {
         delete a.deletedTemplates
         return a
     })
 
-    templateCategories.update((a) => {
+    templateCategories.update(a => {
         a.scripture = { default: true, name: "category.scripture", icon: "scripture" }
         return a
     })
@@ -314,7 +310,7 @@ function createDefaultTemplates() {
     const deletedIds = get(special).deletedTemplates || []
     const defaultTemplates = getDefaultTemplates()
 
-    Object.keys(defaultTemplates).forEach((id) => {
+    Object.keys(defaultTemplates).forEach(id => {
         if (deletedIds.includes(id)) delete defaultTemplates[id]
     })
 
@@ -960,7 +956,7 @@ export function createDefaultShow() {
 }
 
 export function createDoubleTemplate() {
-    templates.update((a) => {
+    templates.update(a => {
         a.double = {
             isDefault: true,
             name: "Double",
@@ -1005,8 +1001,8 @@ const templateIds = ["metadata", "message", "header", "text", "big", "default", 
 function getDeletedTemplates() {
     if (get(special).deletedTemplates) return
 
-    const deletedIds = templateIds.filter((id) => !get(templates)[id])
-    special.update((a) => {
+    const deletedIds = templateIds.filter(id => !get(templates)[id])
+    special.update(a => {
         a.deletedTemplates = deletedIds
         return a
     })
@@ -1016,8 +1012,8 @@ const overlayIds = ["watermark", "visual", "clock", "clock_analog", "name", "rou
 function getDeletedOverlays() {
     if (get(special).deletedOverlays) return
 
-    const deletedIds = overlayIds.filter((id) => !get(overlays)[id])
-    special.update((a) => {
+    const deletedIds = overlayIds.filter(id => !get(overlays)[id])
+    special.update(a => {
         a.deletedOverlays = deletedIds
         return a
     })
@@ -1027,8 +1023,8 @@ const effectIds = ["ocean", "spotlights", "rain", "fireworks"]
 function getDeletedEffects() {
     if (get(special).deletedEffects) return
 
-    const deletedIds = effectIds.filter((id) => !get(effects)[id])
-    special.update((a) => {
+    const deletedIds = effectIds.filter(id => !get(effects)[id])
+    special.update(a => {
         a.deletedEffects = deletedIds
         return a
     })

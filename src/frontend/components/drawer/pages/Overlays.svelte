@@ -30,9 +30,7 @@
     $: resolution = getResolution(null, { $outputs, $styles })
 
     let filteredOverlays: (Overlay & { id: string })[] = []
-    $: filteredOverlays = sortByName(
-        keysToID($overlays).filter((s) => (active === "all" && !$overlayCategories[s?.category || ""]?.isArchive) || active === s.category || (active === "unlabeled" && (s.category === null || !$overlayCategories[s.category])))
-    )
+    $: filteredOverlays = sortByName(keysToID($overlays).filter(s => (active === "all" && !$overlayCategories[s?.category || ""]?.isArchive) || active === s.category || (active === "unlabeled" && (s.category === null || !$overlayCategories[s.category]))))
 
     // search
     $: if (filteredOverlays || searchValue !== undefined) filterSearch()
@@ -40,7 +38,7 @@
     let fullFilteredOverlays: (Overlay & { id: string })[] = []
     function filterSearch() {
         fullFilteredOverlays = clone(filteredOverlays)
-        if (searchValue.length > 1) fullFilteredOverlays = fullFilteredOverlays.filter((a) => filter(a.name || "").includes(filter(searchValue)))
+        if (searchValue.length > 1) fullFilteredOverlays = fullFilteredOverlays.filter(a => filter(a.name || "").includes(filter(searchValue)))
     }
 
     let nextScrollTimeout: NodeJS.Timeout | null = null
@@ -61,12 +59,12 @@
     let preloader = true
     onMount(() => setTimeout(() => (preloader = false), 20))
 
-    $: overlayWithNonExistentCategory = active === "unlabeled" && filteredOverlays.some((s) => s.category)
+    $: overlayWithNonExistentCategory = active === "unlabeled" && filteredOverlays.some(s => s.category)
     function createNonExistentCategories() {
-        const nonexistentCategories = [...new Set(filteredOverlays.map((s) => s.category))].filter((c) => c && !$overlayCategories[c]) as string[]
+        const nonexistentCategories = [...new Set(filteredOverlays.map(s => s.category))].filter(c => c && !$overlayCategories[c]) as string[]
 
-        overlayCategories.update((a) => {
-            nonexistentCategories.forEach((id) => {
+        overlayCategories.update(a => {
+            nonexistentCategories.forEach(id => {
                 if (a[id]) return
                 a[id] = { name: translateText("main.unnamed") }
             })
@@ -101,13 +99,13 @@
                                 color={overlay.color}
                                 {resolution}
                                 showPlayOnHover
-                                on:click={(e) => {
+                                on:click={e => {
                                     if ($outLocked || e.ctrlKey || e.metaKey) return
                                     if (e.target?.closest(".edit") || e.target?.closest(".icons")) return
 
                                     setOutput("overlays", overlay.id, true)
                                 }}
-                                on:dblclick={(e) => {
+                                on:dblclick={e => {
                                     if (e.ctrlKey || e.metaKey) return
                                     if (e.target?.closest(".edit") || e.target?.closest(".icons")) return
 

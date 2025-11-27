@@ -6,24 +6,7 @@ import { removeDuplicates } from "../components/helpers/array"
 import { getContrast } from "../components/helpers/color"
 import { getActiveOutputs, toggleOutputs } from "../components/helpers/output"
 import { sendMain } from "../IPC/main"
-import {
-    activeTriggerFunction,
-    autosave,
-    currentWindow,
-    disabledServers,
-    drawer,
-    errorHasOccurred,
-    focusedArea,
-    os,
-    outputs,
-    quickSearchActive,
-    resized,
-    serverData,
-    theme,
-    themes,
-    toastMessages,
-    version
-} from "../stores"
+import { activeTriggerFunction, autosave, currentWindow, disabledServers, drawer, errorHasOccurred, focusedArea, os, outputs, quickSearchActive, resized, serverData, theme, themes, toastMessages, version } from "../stores"
 import { convertAutosave } from "../values/autosave"
 import { send } from "./request"
 import { save } from "./save"
@@ -47,7 +30,7 @@ export function newToast(msg: string) {
 
 // async wait (instead of timeouts)
 export function wait(ms: number) {
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
         setTimeout(() => {
             resolve("ended")
         }, Number(ms))
@@ -56,7 +39,7 @@ export function wait(ms: number) {
 
 // wait until input value is true
 export async function waitUntilValueIsDefined(value: () => any, intervalTime = 50, timeoutValue = 5000) {
-    return new Promise(async (resolve) => {
+    return new Promise(async resolve => {
         let currentValue = await value()
         if (currentValue) resolve(currentValue)
 
@@ -140,17 +123,15 @@ export const ERROR_FILTER = [
     "Failed to construct 'ImageData'", // invalid image size
     "Failed to load because no supported source was found.", // media file doesn't exists
     "The element has no supported sources.", // audio error
-    "The play() request was interrupted by a call to pause().", // video transitions
-    "The play() request was interrupted because the media was removed from the document.", // video transitions
-    "The play() request was interrupted because video-only background media was paused to save power.", // video issue
+    "The play() request was interrupted", // video transition "issue"
     "Failed to fetch", // probably offline
     "Uncaught IndexSizeError: Failed to execute 'setStart' on 'Range'", // caret update/reset (pos larger than content)
     "Uncaught IndexSizeError: Failed to execute 'setEnd' on 'Range'", // caret update/reset (pos larger than content)
-    " is not defined\n    at eval", // inputting text into number input
+    " is not defined\n    at eval" // inputting text into number input
 ]
 export function logerror(err) {
     const msg = err.type === "unhandledrejection" ? err.reason?.message : err.message
-    if (!msg || ERROR_FILTER.find((a) => msg.includes(a))) return
+    if (!msg || ERROR_FILTER.find(a => msg.includes(a))) return
 
     const log: ErrorLog = {
         time: new Date(),
@@ -159,7 +140,7 @@ export function logerror(err) {
         type: err.type,
         source: err.type === "unhandledrejection" ? "See stack" : `${err.filename} - ${err.lineno}:${err.colno}`,
         message: msg,
-        stack: err.reason?.stack || err.error?.stack,
+        stack: err.reason?.stack || err.error?.stack
     }
 
     errorHasOccurred.set(true) // always show close popup if this has happened (so the user can choose to not save)
@@ -249,7 +230,7 @@ export function throttle(id: string, value: any, callback: (v: any) => void, max
     }, 1000 / maxUpdatesPerSecond)
 }
 
-const limited: Record<string, { timeout: NodeJS.Timeout; pending: ((v: boolean) => void) }> = {}
+const limited: Record<string, { timeout: NodeJS.Timeout; pending: (v: boolean) => void }> = {}
 export function hasNewerUpdate(id: string, maxUpdatesMs = 0): Promise<boolean> {
     // resolve any existing updates as false as there is a newer one
     if (limited[id]) {
@@ -257,13 +238,13 @@ export function hasNewerUpdate(id: string, maxUpdatesMs = 0): Promise<boolean> {
         limited[id].pending(true)
     }
 
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
         limited[id] = {
             timeout: setTimeout(() => {
                 delete limited[id]
                 resolve(false)
             }, maxUpdatesMs),
-            pending: resolve,
+            pending: resolve
         }
     })
 }

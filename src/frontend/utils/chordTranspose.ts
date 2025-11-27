@@ -16,7 +16,7 @@ const ENHARMONIC: Record<string, string> = {
     "D#": "Eb",
     "F#": "Gb",
     "G#": "Ab",
-    "A#": "Bb",
+    "A#": "Bb"
 }
 
 function normalizeRoot(root: string, preferSharps: boolean): string {
@@ -71,11 +71,10 @@ export function transposeText(text: string, step: number): string {
     return text.replace(chordInBrackets, (match, p1) => {
         // Chord notation uses: note names (A-G), accidentals (b#♭♯), numbers, and specific extensions
         // If it's longer than 8 chars or contains letters other than standard chord notation, likely not a chord
-        if (p1.length > 8 || /[a-z]{4,}/i.test(p1.replace(/^[A-G][b#♭♯]?(maj|min|aug|dim|sus|add)/i, ''))) {
+        if (p1.length > 8 || /[a-z]{4,}/i.test(p1.replace(/^[A-G][b#♭♯]?(maj|min|aug|dim|sus|add)/i, ""))) {
             return match // Return unchanged if it looks like a section label
         }
 
         return "[" + transposeFullChord(p1, step, preferSharps) + "]"
     })
 }
-

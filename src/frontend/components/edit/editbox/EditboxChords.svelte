@@ -69,7 +69,7 @@
 
             let html = ""
             let currentIndex = 0
-            line.text.forEach((text) => {
+            line.text.forEach(text => {
                 if (!text.value) {
                     html += "<br>"
                     return
@@ -78,8 +78,8 @@
                 let value = text.value.replaceAll("\n", "").replaceAll("&nbsp;", " ") || ""
 
                 let letters = value.split("")
-                letters.forEach((letter) => {
-                    let chordIndex = chords.findIndex((a) => a.pos === currentIndex)
+                letters.forEach(letter => {
+                    let chordIndex = chords.findIndex(a => a.pos === currentIndex)
                     if (chordIndex >= 0) {
                         let chord = chords[chordIndex]
                         chordButtons.push({ item, showRef: ref, itemIndex: index, chord, lineIndex: i })

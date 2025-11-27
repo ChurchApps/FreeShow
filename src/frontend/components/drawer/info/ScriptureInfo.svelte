@@ -44,12 +44,12 @@
 
     // auto change template based on number of bibles (if default)
     $: if (activeScriptureId || templateId || biblesContent.length) setTimeout(checkTemplate, 100)
-    $: isDefault = templateId.includes("scripture") && !templateId.includes("LT")
+    $: isDefault = typeof templateId === "string" ? templateId.includes("scripture") && !templateId.includes("LT") : false
     function checkTemplate() {
         if (!isDefault || !biblesContent.length) return
 
         let newTemplateId = "scripture_" + biblesContent.length
-        scriptureSettings.update((a) => {
+        scriptureSettings.update(a => {
             a.template = $templates[newTemplateId] ? newTemplateId : "scripture"
             return a
         })
@@ -60,10 +60,10 @@
         else slides = [[]]
     }
 
-    $: showVersion = biblesContent.find((a) => a?.attributionRequired) || $scriptureSettings.showVersion
+    $: showVersion = biblesContent.find(a => a?.attributionRequired) || $scriptureSettings.showVersion
 
     function update(id: string, value: any) {
-        scriptureSettings.update((a) => {
+        scriptureSettings.update(a => {
             a[id] = value
             return a
         })
@@ -81,9 +81,9 @@
     function getDefaultText() {
         let text = ""
 
-        Object.keys(textKeys).forEach((key) => {
+        Object.keys(textKeys).forEach(key => {
             let isEnabled = $scriptureSettings[key]
-            if (key === "showVersion" && biblesContent.find((a) => a?.attributionRequired)) isEnabled = true
+            if (key === "showVersion" && biblesContent.find(a => a?.attributionRequired)) isEnabled = true
             if (isEnabled) {
                 if (text.length) text += "\n"
                 text += textKeys[key]
@@ -176,64 +176,55 @@
     <div class="settings border">
         <!-- Template -->
         <InputRow style="margin-bottom: 10px;">
-            <MaterialPopupButton
-                label="info.template"
-                disabled={!!styleScriptureTemplate}
-                value={templateId}
-                name={$templates[templateId]?.name}
-                popupId="select_template"
-                icon="templates"
-                on:change={(e) => update("template", e.detail)}
-                allowEmpty={!isDefault}
-            />
+            <MaterialPopupButton label="info.template" disabled={!!styleScriptureTemplate} value={templateId} name={$templates[templateId]?.name} popupId="select_template" icon="templates" on:change={e => update("template", e.detail)} allowEmpty={!isDefault} />
             {#if templateId && $templates[templateId]}
                 <MaterialButton title="titlebar.edit" icon="edit" on:click={editTemplate} />
             {/if}
         </InputRow>
 
         <!-- {#if $scriptureSettings.versesOnIndividualLines || sorted.length > 1} -->
-        <MaterialToggleSwitch label="scripture.verses_on_individual_lines" checked={$scriptureSettings.versesOnIndividualLines} defaultValue={false} on:change={(e) => update("versesOnIndividualLines", e.detail)} />
+        <MaterialToggleSwitch label="scripture.verses_on_individual_lines" checked={$scriptureSettings.versesOnIndividualLines} defaultValue={false} on:change={e => update("versesOnIndividualLines", e.detail)} />
         <!-- {/if} -->
 
         <!-- Long verses -->
         <InputRow arrow={$scriptureSettings.splitLongVerses} bind:open={longVersesMenuOpened}>
-            <MaterialToggleSwitch label="scripture.divide_long_verses" style="width: 100%;" checked={$scriptureSettings.splitLongVerses} defaultValue={false} on:change={(e) => update("splitLongVerses", e.detail)} />
+            <MaterialToggleSwitch label="scripture.divide_long_verses" style="width: 100%;" checked={$scriptureSettings.splitLongVerses} defaultValue={false} on:change={e => update("splitLongVerses", e.detail)} />
         </InputRow>
         {#if $scriptureSettings.splitLongVerses && longVersesMenuOpened}
-            <MaterialToggleSwitch label="scripture.split_long_verses_suffix" checked={$scriptureSettings.splitLongVersesSuffix} defaultValue={false} on:change={(e) => update("splitLongVersesSuffix", e.detail)} />
-            <MaterialNumberInput label="edit.size" value={$scriptureSettings.longVersesChars || 100} defaultValue={100} min={50} on:change={(e) => update("longVersesChars", e.detail)} />
+            <MaterialToggleSwitch label="scripture.split_long_verses_suffix" checked={$scriptureSettings.splitLongVersesSuffix} defaultValue={false} on:change={e => update("splitLongVersesSuffix", e.detail)} />
+            <MaterialNumberInput label="edit.size" value={$scriptureSettings.longVersesChars || 100} defaultValue={100} min={50} on:change={e => update("longVersesChars", e.detail)} />
         {/if}
 
         <!-- Verse numbers -->
         <InputRow arrow={$scriptureSettings.verseNumbers} bind:open={verseMenuOpened}>
-            <MaterialToggleSwitch label="scripture.verse_numbers" style="width: 100%;" checked={$scriptureSettings.verseNumbers} defaultValue={false} on:change={(e) => update("verseNumbers", e.detail)} />
+            <MaterialToggleSwitch label="scripture.verse_numbers" style="width: 100%;" checked={$scriptureSettings.verseNumbers} defaultValue={false} on:change={e => update("verseNumbers", e.detail)} />
         </InputRow>
         {#if $scriptureSettings.verseNumbers && verseMenuOpened}
-            <MaterialColorInput label="edit.color" value={$scriptureSettings.numberColor || "#919191"} defaultValue="#919191" on:change={(e) => update("numberColor", e.detail)} />
-            <MaterialNumberInput label="edit.size (%)" value={$scriptureSettings.numberSize || 50} defaultValue={50} on:change={(e) => update("numberSize", e.detail)} />
+            <MaterialColorInput label="edit.color" value={$scriptureSettings.numberColor || "#919191"} defaultValue="#919191" on:change={e => update("numberColor", e.detail)} />
+            <MaterialNumberInput label="edit.size (%)" value={$scriptureSettings.numberSize || 50} defaultValue={50} on:change={e => update("numberSize", e.detail)} />
         {/if}
 
         <!-- Red Jesus -->
         {#if $scriptureSettings.redJesus || containsJesusWords}
             <InputRow arrow={$scriptureSettings.redJesus} bind:open={redMenuOpened}>
-                <MaterialToggleSwitch label="scripture.red_jesus" style="width: 100%;" checked={$scriptureSettings.redJesus} defaultValue={false} on:change={(e) => update("redJesus", e.detail)} />
+                <MaterialToggleSwitch label="scripture.red_jesus" style="width: 100%;" checked={$scriptureSettings.redJesus} defaultValue={false} on:change={e => update("redJesus", e.detail)} />
             </InputRow>
         {/if}
         {#if $scriptureSettings.redJesus && redMenuOpened}
-            <MaterialColorInput label="edit.color" value={$scriptureSettings.jesusColor || "#FF4136"} defaultValue="#FF4136" on:change={(e) => update("jesusColor", e.detail)} />
+            <MaterialColorInput label="edit.color" value={$scriptureSettings.jesusColor || "#FF4136"} defaultValue="#FF4136" on:change={e => update("jesusColor", e.detail)} />
         {/if}
 
         <!-- Reference options -->
         <InputRow style="margin-top: 10px;" arrow bind:open={referenceMenuOpened}>
-            <MaterialToggleSwitch label="scripture.reference" style="width: 100%;" checked={$scriptureSettings.showVerse} defaultValue={true} on:change={(e) => update("showVerse", e.detail)} />
+            <MaterialToggleSwitch label="scripture.reference" style="width: 100%;" checked={$scriptureSettings.showVerse} defaultValue={true} on:change={e => update("showVerse", e.detail)} />
         </InputRow>
         <InputRow arrow bind:open={referenceMenuOpened}>
-            <MaterialToggleSwitch label="scripture.version" disabled={!!biblesContent.find((a) => a?.attributionRequired)} style="width: 100%;" checked={showVersion} defaultValue={false} on:change={(e) => update("showVersion", e.detail)} />
+            <MaterialToggleSwitch label="scripture.version" disabled={!!biblesContent.find(a => a?.attributionRequired)} style="width: 100%;" checked={showVersion} defaultValue={false} on:change={e => update("showVersion", e.detail)} />
         </InputRow>
 
         {#if referenceMenuOpened}
             {#if showVersion || (showVersion && $scriptureSettings.showVerse) || ($scriptureSettings.showVerse && customText.trim() !== "[reference]")}
-                <MaterialTextarea label="tools.layout" value={customText} rows={2} on:change={(e) => update("customText", e.detail)} />
+                <MaterialTextarea label="tools.layout" value={customText} rows={2} on:change={e => update("customText", e.detail)} />
             {/if}
 
             <!-- {#if $scriptureSettings.showVerse}
@@ -245,16 +236,16 @@
 
             {#if showVersion || $scriptureSettings.showVerse}
                 <!-- {#if !$scriptureSettings.firstSlideReference} -->
-                <MaterialToggleSwitch label="scripture.combine_with_text" checked={$scriptureSettings.combineWithText} defaultValue={false} on:change={(e) => update("combineWithText", e.detail)} />
+                <MaterialToggleSwitch label="scripture.combine_with_text" checked={$scriptureSettings.combineWithText} defaultValue={false} on:change={e => update("combineWithText", e.detail)} />
                 {#if $scriptureSettings.combineWithText}
-                    <MaterialToggleSwitch label="scripture.reference_at_bottom" checked={$scriptureSettings.referenceAtBottom} defaultValue={false} on:change={(e) => update("referenceAtBottom", e.detail)} />
+                    <MaterialToggleSwitch label="scripture.reference_at_bottom" checked={$scriptureSettings.referenceAtBottom} defaultValue={false} on:change={e => update("referenceAtBottom", e.detail)} />
                 {/if}
                 <!-- {/if} -->
 
                 <!-- <br /> -->
                 <!-- WIP Unwanted: -->
                 {#if !$scriptureSettings.combineWithText}
-                    <MaterialToggleSwitch label="edit.invert_items" checked={$scriptureSettings.invertItems} defaultValue={false} on:change={(e) => update("invertItems", e.detail)} />
+                    <MaterialToggleSwitch label="edit.invert_items" checked={$scriptureSettings.invertItems} defaultValue={false} on:change={e => update("invertItems", e.detail)} />
                 {/if}
             {/if}
         {/if}
@@ -262,7 +253,7 @@
 </div>
 
 <InputRow>
-    <Button on:click={(e) => createScriptureShow(e.altKey)} style="width: 100%;" disabled={!selectedVerses.length} dark center>
+    <Button on:click={e => createScriptureShow(e.altKey)} style="width: 100%;" disabled={!selectedVerses.length} dark center>
         <Icon id="slide" right />
         <T id="new.show_convert" />
         <!-- {#if slides.length > 1}
@@ -273,7 +264,7 @@
     <Button
         title={translateText("popup.scripture_show")}
         on:click={() => {
-            const showVersion = biblesContent.find((a) => a?.attributionRequired) || $scriptureSettings.showVersion
+            const showVersion = biblesContent.find(a => a?.attributionRequired) || $scriptureSettings.showVersion
             popupData.set({ showVersion })
             activePopup.set("scripture_show")
         }}

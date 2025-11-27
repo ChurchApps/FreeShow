@@ -5,32 +5,7 @@
     import type { Item, Media, Show, Slide, SlideData } from "../../../types/Show"
     import { sendMain } from "../../IPC/main"
     import { removeTagsAndContent } from "../../show/slides"
-    import {
-        activeEdit,
-        activePage,
-        activeTimers,
-        activeTriggerFunction,
-        audioFolders,
-        checkedFiles,
-        driveData,
-        effects,
-        focusMode,
-        fullColors,
-        groups,
-        media,
-        mediaFolders,
-        outputs,
-        overlays,
-        refreshListBoxes,
-        refreshSlideThumbnails,
-        showsCache,
-        slidesOptions,
-        slideTimers,
-        special,
-        styles,
-        textEditActive
-    } from "../../stores"
-    import { triggerClickOnEnterSpace } from "../../utils/clickable"
+    import { activeEdit, activePage, activeTimers, activeTriggerFunction, audioFolders, checkedFiles, driveData, effects, focusMode, fullColors, groups, media, mediaFolders, outputs, overlays, refreshListBoxes, refreshSlideThumbnails, showsCache, slidesOptions, slideTimers, special, styles, textEditActive } from "../../stores"
     import { newToast, wait } from "../../utils/common"
     import { translateText } from "../../utils/language"
     import { getAccess } from "../../utils/profile"
@@ -110,7 +85,7 @@
         if (!background || !bg?.path) return
 
         let mediaId = layoutSlide.background!
-        let folders = Object.values($mediaFolders).map((a) => a.path!)
+        let folders = Object.values($mediaFolders).map(a => a.path!)
         locateFile(mediaId, bg.path, folders, bg)
     }
 
@@ -119,9 +94,9 @@
     $: if (audioIds.length) setTimeout(locateAudio)
     function locateAudio() {
         let showMedia = $showsCache[showId]?.media
-        let folders = Object.values($audioFolders).map((a) => a.path!)
+        let folders = Object.values($audioFolders).map(a => a.path!)
 
-        audioIds.forEach((audioId) => {
+        audioIds.forEach(audioId => {
             let audio = showMedia[audioId]
             if (!audio?.path) return
             locateFile(audioId, audio.path, folders, audio)
@@ -156,7 +131,7 @@
         if (!checkCloud || !$showsCache[showId]?.media?.[fileId] || $showsCache[showId].media[fileId].cloud?.[cloudId] === path) return
 
         // set cloud path to path
-        showsCache.update((a) => {
+        showsCache.update(a => {
             let media = a[showId].media[fileId]
             if (!media.cloud) a[showId].media[fileId].cloud = {}
             a[showId].media[fileId].cloud![cloudId] = path
@@ -177,7 +152,7 @@
     $: if (bgPath && !disableThumbnails) setTimeout(loadBackground)
     let thumbnailPath = ""
     async function loadBackground() {
-        if (bgPath.includes("http")) return download()
+        if (typeof bgPath === "string" && bgPath.includes("http")) return download()
 
         if (isLessons) {
             thumbnailPath = getThumbnailPath(bgPath, mediaSize.slideSize)
@@ -313,7 +288,7 @@
     let updater = 0
     onMount(() => {
         const interval = setInterval(() => {
-            if (itemsList.find((a) => a.conditions)) updater++
+            if (itemsList.find(a => a.conditions)) updater++
         }, 3000)
 
         return () => {
@@ -322,12 +297,7 @@
     })
 </script>
 
-<div
-    class="main"
-    class:active
-    class:focused
-    style="{output?.color ? 'outline: 2px solid ' + getOutputColor(output.color) + ';' : ''}width: {viewMode === 'grid' || viewMode === 'simple' || viewMode === 'groups' || noQuickEdit ? 100 / columns : 100}%;"
->
+<div class="main" class:active class:focused style="{output?.color ? 'outline: 2px solid ' + getOutputColor(output.color) + ';' : ''}width: {viewMode === 'grid' || viewMode === 'simple' || viewMode === 'groups' || noQuickEdit ? 100 / columns : 100}%;">
     <!-- group box -->
     {#if $fullColors}
         <div class="group_box" style="background-color: {color};" />
@@ -338,29 +308,11 @@
         <Actions {columns} {index} actions={layoutSlide.actions || {}} />
     {/if}
     <!-- content -->
-    <div
-        class="slide context #{isLocked ? 'default' : $focusMode ? 'slideFocus' : name === null ? 'slideChild' : 'slide'}"
-        class:disabled={layoutSlide.disabled}
-        class:afterEnd={endIndex !== null && index > endIndex}
-        {style}
-        tabindex={0}
-        role="button"
-        on:click
-        on:keydown={triggerClickOnEnterSpace}
-    >
+    <div class="slide context #{isLocked ? 'default' : $focusMode ? 'slideFocus' : name === null ? 'slideChild' : 'slide'}" class:disabled={layoutSlide.disabled} class:afterEnd={endIndex !== null && index > endIndex} {style} role="none" on:click>
         <div class="hover overlay" />
         <!-- <DropArea id="slide" hoverTimeout={0} file> -->
         <div style="width: 100%;height: 100%;">
-            <SelectElem
-                style={colorStyle}
-                id="slide"
-                data={{ index, showId }}
-                draggable={!$focusMode && !isLocked}
-                shiftRange={layoutSlides.map((_, index) => ({ index, showId }))}
-                onlyRightClickSelect={$focusMode}
-                selectable={!isLocked}
-                trigger={list ? "column" : "row"}
-            >
+            <SelectElem style={colorStyle} id="slide" data={{ index, showId }} draggable={!$focusMode && !isLocked} shiftRange={layoutSlides.map((_, index) => ({ index, showId }))} onlyRightClickSelect={$focusMode} selectable={!isLocked} trigger={list ? "column" : "row"}>
                 <!-- TODO: tab select on enter -->
                 {#if viewMode === "lyrics" && !noQuickEdit}
                     <!-- border-bottom: 1px dashed {color}; -->
@@ -370,11 +322,7 @@
                     </div>
                 {/if}
                 <Zoomed
-                    background={slide.items?.length && (viewMode !== "lyrics" || noQuickEdit)
-                        ? transparentOutput || $special.transparentSlides
-                            ? "var(--primary);"
-                            : slide.settings?.color || currentStyle.background || "black"
-                        : (viewMode !== "lyrics" || noQuickEdit ? color : "") || "transparent"}
+                    background={slide.items?.length && (viewMode !== "lyrics" || noQuickEdit) ? (transparentOutput || $special.transparentSlides ? "var(--primary);" : slide.settings?.color || currentStyle.background || "black") : (viewMode !== "lyrics" || noQuickEdit ? color : "") || "transparent"}
                     checkered={viewMode !== "lyrics" && slide.items?.length > 0 && (transparentOutput || $special.transparentSlides) && !bg}
                     let:ratio
                     {resolution}
@@ -387,17 +335,7 @@
                     {#if !altKeyPressed && bg && (viewMode !== "lyrics" || noQuickEdit) && (background || layers.includes("background"))}
                         {#key $refreshSlideThumbnails}
                             <div class="background" style="zoom: {1 / ratio};{slideFilter}" class:ghost={!background}>
-                                <MediaLoader
-                                    name={translateText("error.load")}
-                                    ghost={!background}
-                                    path={bgPath}
-                                    {thumbnailPath}
-                                    cameraGroup={bg.cameraGroup || ""}
-                                    type={bg.type !== "player" ? bg.type : null}
-                                    {mediaStyle}
-                                    bind:duration
-                                    getDuration
-                                />
+                                <MediaLoader name={translateText("error.load")} ghost={!background} path={bgPath} {thumbnailPath} cameraGroup={bg.cameraGroup || ""} type={bg.type !== "player" ? bg.type : null} {mediaStyle} bind:duration getDuration />
                                 <!-- loadFullImage={!!(bg.path || bg.id)} -->
                             </div>
                         {/key}

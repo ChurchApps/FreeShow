@@ -51,7 +51,7 @@
 
         // LISTEN
         let firstOutputId = getActiveOutputs($outputs, false, true, true)[0]
-        outputListenerUnsubscribe = outputs.subscribe((a) => {
+        outputListenerUnsubscribe = outputs.subscribe(a => {
             let outSlide = a[firstOutputId]?.out?.slide
             // clear output to stop recording
             if (started && currentSequence.length && !outSlide) return stopRecording()
@@ -164,7 +164,7 @@
     //     history({ id: "UPDATE", newData: { key: "layouts", subkey: activeLayout, data: layout }, oldData: { id: showId }, location: { page: "show", id: "show_layout" } })
     // }
     function setSpecialValue(key: string, value: any) {
-        special.update((a) => {
+        special.update(a => {
             a[key] = value
             return a
         })
@@ -176,7 +176,7 @@
 
         let childIndex = -1
         if (layoutSlide.parent) {
-            childIndex = showSlides[layoutSlide.parent.id]?.children?.findIndex((id) => id === layoutSlide.id) ?? -1
+            childIndex = showSlides[layoutSlide.parent.id]?.children?.findIndex(id => id === layoutSlide.id) ?? -1
             layoutSlide = layoutSlide.parent
         }
 
@@ -229,7 +229,7 @@
 <div class="padding">
     {#if settingsOpened && recordingData}
         <div class="settings">
-            <MaterialToggleSwitch label="recording.use_duration" checked={useDurationTime} defaultValue={true} on:change={(e) => setSpecialValue("useDurationTime", e.detail)} />
+            <MaterialToggleSwitch label="recording.use_duration" checked={useDurationTime} defaultValue={true} on:change={e => setSpecialValue("useDurationTime", e.detail)} />
         </div>
     {:else if recordingData}
         {#if recordingPlaying}
@@ -267,7 +267,7 @@
 
                     {#if useDurationTime ? i < recordingData.sequence.length - 1 : i > 0}
                         {#key recordingData}
-                            <NumberInput style="width: 100px;min-width: 100px;" buttons={false} value={getTime(i)} inputMultiplier={0.001} fixed={2} step={500} max={10000000} on:change={(e) => updateTime(e, i)} />
+                            <NumberInput style="width: 100px;min-width: 100px;" buttons={false} value={getTime(i)} inputMultiplier={0.001} fixed={2} step={500} max={10000000} on:change={e => updateTime(e, i)} />
                         {/key}
                     {:else}
                         <NumberInput disabled style="width: 100px;min-width: 100px;" buttons={false} fixed={2} value={0} />

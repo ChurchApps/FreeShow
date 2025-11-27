@@ -26,6 +26,7 @@ export async function save(data: SaveData) {
     // save to files
     Object.entries(_store).forEach(storeData as any)
     function storeData([key, store]: [keyof typeof _store, any]) {
+        if (!isValidJSON((data as any)[key])) return
         if (!(data as any)[key] || checkIfMatching(store.store, (data as any)[key])) return
 
         store.clear()
@@ -38,7 +39,7 @@ export async function save(data: SaveData) {
     const scriptureFolderPath = getDataFolderPath("scriptures")
     if (data.scripturesCache) Object.entries(data.scripturesCache).forEach(saveScripture)
     function saveScripture([id, value]: [string, Bible]) {
-        if (!value) return
+        if (!value || !isValidJSON(value)) return
         const filePath: string = path.join(scriptureFolderPath, value.name + ".fsb")
         writeFile(filePath, JSON.stringify([id, value]), id)
     }
@@ -46,7 +47,7 @@ export async function save(data: SaveData) {
     const showsPath = getDataFolderPath("shows")
     // rename shows
     if (data.renamedShows) {
-        const renamedShows = data.renamedShows.filter(({ id }: { id: string }) => !data.deletedShows?.find((a) => a.id === id))
+        const renamedShows = data.renamedShows.filter(({ id }: { id: string }) => !data.deletedShows?.find(a => a.id === id))
         renameShows(renamedShows, showsPath)
         // rename should be sync, but sometimes it might not be finished right away
         // so add some extra wait time just in case
@@ -56,7 +57,7 @@ export async function save(data: SaveData) {
     // shows
     if (data.showsCache) Object.entries(data.showsCache).forEach(saveShow)
     function saveShow([id, value]: [string, any]) {
-        if (!value) return
+        if (!value || !isValidJSON(value)) return
         const filePath: string = path.join(showsPath, String(value.name || id) + ".show")
         writeFile(filePath, JSON.stringify([id, value]), id)
     }
@@ -93,4 +94,13 @@ export async function save(data: SaveData) {
 // a few keys might not be placed in the same order in JS object vs store file
 function checkIfMatching(a: object, b: object): boolean {
     return JSON.stringify(Object.entries(a).sort()) === JSON.stringify(Object.entries(b).sort())
+}
+
+function isValidJSON(object: any) {
+    try {
+        JSON.stringify(object)
+        return true
+    } catch {
+        return false
+    }
 }

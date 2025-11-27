@@ -1,14 +1,14 @@
 export function getIndexes<T>(array: T): number[] {
     if (!Array.isArray(array)) return []
-    return array.map((a) => a.index).sort((a, b) => b - a)
+    return array.map(a => a.index).sort((a, b) => b - a)
 }
 
 export function mover<T>(array: T, selected: number[], pos: number) {
     if (!Array.isArray(array)) return array
 
-    const moved = [] as T;
-        const newArray = [] as T;
-        let newPos: number = pos || 0
+    const moved = [] as T
+    const newArray = [] as T
+    let newPos: number = pos || 0
 
     array.forEach((a, i) => {
         if (!Array.isArray(moved) || !Array.isArray(newArray)) return

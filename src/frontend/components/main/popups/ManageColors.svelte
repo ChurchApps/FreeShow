@@ -7,10 +7,10 @@
     function changeColor(e, key = "") {
         let color = e.detail || e.target?.value
 
-        if (color.includes("gradient")) key = defaultGradients.find((a) => a.value === color) ? "disabledColorsGradient" : "customColorsGradient"
-        else key = defaultColors.find((a) => a.value === color) ? "disabledColors" : "customColors"
+        if (color.includes("gradient")) key = defaultGradients.find(a => a.value === color) ? "disabledColorsGradient" : "customColorsGradient"
+        else key = defaultColors.find(a => a.value === color) ? "disabledColors" : "customColors"
 
-        special.update((a) => {
+        special.update(a => {
             let colors = a[key] || []
 
             let existing = colors.indexOf(color)

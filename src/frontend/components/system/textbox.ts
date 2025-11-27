@@ -37,8 +37,8 @@ export function moveBox(e: any, mouse: TMouse, ratio: number, active: (number | 
         const xItems = isResizing ? [directionId.includes("e") ? itemElem.offsetWidth : 0] : [0, itemElem.offsetWidth / 2, itemElem.offsetWidth]
         const yItems = isResizing ? [directionId.includes("s") ? itemElem.offsetHeight : 0] : [0, itemElem.offsetHeight / 2, itemElem.offsetHeight]
 
-            // get other items pos
-            ;[...(itemElem.closest(".slide").querySelectorAll(".item") || [])].filter((a) => !a.closest(".preview")).forEach(getItemLines)
+        // get other items pos
+        ;[...(itemElem.closest(".slide").querySelectorAll(".item") || [])].filter(a => !a.closest(".preview")).forEach(getItemLines)
 
         function getItemLines(item: HTMLElement, i: number) {
             let id: number | string = i
@@ -47,7 +47,7 @@ export function moveBox(e: any, mouse: TMouse, ratio: number, active: (number | 
 
             const style = getStyles(item.getAttribute("style"))
             const styleNumbers: { [key: string]: number } = {}
-            Object.entries(style).map((s) => (styleNumbers[s[0]] = Number(s[1].replace(/[^-0-9\.]+/g, ""))))
+            Object.entries(style).map(s => (styleNumbers[s[0]] = Number(s[1].replace(/[^-0-9\.]+/g, ""))))
             xLines.push(styleNumbers.left, styleNumbers.left + styleNumbers.width / 2, styleNumbers.left + styleNumbers.width)
             yLines.push(styleNumbers.top, styleNumbers.top + styleNumbers.height / 2, styleNumbers.top + styleNumbers.height)
         }
@@ -65,17 +65,14 @@ export function moveBox(e: any, mouse: TMouse, ratio: number, active: (number | 
     function checkMatch(allLines: number[], items: number[], id: string, margin: number, isCenter = false) {
         const side = id.includes("x") ? "left" : "top"
 
-        const mousePos =
-            side === "left"
-                ? (e.clientX - itemElem.closest(".slide")?.offsetLeft - (itemElem.closest(".editArea") || itemElem.closest(".stageArea"))?.closest(".center")?.offsetLeft) / ratio
-                : (e.clientY - itemElem.closest(".slide")?.offsetTop - (itemElem.closest(".editArea") || itemElem.closest(".stageArea"))?.closest(".center")?.offsetTop) / ratio
+        const mousePos = side === "left" ? (e.clientX - itemElem.closest(".slide")?.offsetLeft - (itemElem.closest(".editArea") || itemElem.closest(".stageArea"))?.closest(".center")?.offsetLeft) / ratio : (e.clientY - itemElem.closest(".slide")?.offsetTop - (itemElem.closest(".editArea") || itemElem.closest(".stageArea"))?.closest(".center")?.offsetTop) / ratio
 
         const getNumber = (pos: any) => Number(pos?.toString().replace(/[^-0-9\.]+/g, ""))
         const boxPos = getNumber(styles[side])
 
         allLines.forEach((linePos: number) => {
             const mouseMatch = mousePos > linePos - margin && mousePos < linePos + margin
-            const boxMatch: undefined | number = items.find((i) => boxPos > linePos - i - margin && boxPos < linePos - i + margin)
+            const boxMatch: undefined | number = items.find(i => boxPos > linePos - i - margin && boxPos < linePos - i + margin)
 
             // snapping resize
             if (isResizing && !isCenter && mouseMatch === true) {
@@ -105,7 +102,7 @@ export function moveBox(e: any, mouse: TMouse, ratio: number, active: (number | 
                 .replaceAll(",", "")
                 .includes(id + String(linePos))
             if (boxMatch !== undefined && !linesInclude) lines = [...lines, [id, linePos]]
-            else if (boxMatch === undefined && linesInclude) lines = lines.filter((m) => m.join("") !== id + String(linePos))
+            else if (boxMatch === undefined && linesInclude) lines = lines.filter(m => m.join("") !== id + String(linePos))
         })
     }
 

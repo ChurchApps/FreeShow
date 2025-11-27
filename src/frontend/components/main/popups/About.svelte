@@ -16,7 +16,7 @@
         "Express (Web framework)": "https://expressjs.com/",
         "NDI® SDK (IP-streaming)": "https://ndi.video/",
         "CAPTION.Ninja (Live captions)": "https://caption.ninja/",
-        "Google Translate (Localization)": "https://translate.google.com/",
+        "Google Translate (Localization)": "https://translate.google.com/"
     }
 </script>
 

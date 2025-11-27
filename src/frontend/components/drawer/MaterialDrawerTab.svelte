@@ -44,7 +44,7 @@
         if (category.openTrigger) category.openTrigger(id, shift)
         if (shift) return
 
-        drawerTabsData.update((a) => {
+        drawerTabsData.update(a => {
             a[drawerId].activeSubTab = parentId || id
             if (isSubmenu) a[drawerId].activeSubmenu = id
             return a
@@ -74,11 +74,11 @@
     $: submenuOpened = openedSubmenus.includes(id)
 
     function openSubMenu() {
-        drawerTabsData.update((a) => {
+        drawerTabsData.update(a => {
             if (!a[drawerId]) return a
             let opened = clone(openedSubmenus)
 
-            let existingIndex = opened.findIndex((menuId) => menuId === id) ?? -1
+            let existingIndex = opened.findIndex(menuId => menuId === id) ?? -1
             if (existingIndex < 0) opened.push(id)
             else {
                 opened.splice(existingIndex, 1)

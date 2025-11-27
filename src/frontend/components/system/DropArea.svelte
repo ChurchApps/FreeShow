@@ -83,7 +83,7 @@
 <div
     class="droparea"
     class:hover
-    on:drop|preventDefault={(e) => {
+    on:drop|preventDefault={e => {
         let files = getFiles(e)
         if (files.length) selected.set({ id: "files", data: files })
         fileOver = false
@@ -92,7 +92,7 @@
 
         if (validateDrop(id, $selected.id, true) || files.length) ondrop(e, id)
     }}
-    on:dragover|preventDefault={(e) => {
+    on:dragover|preventDefault={e => {
         if (file && e.dataTransfer?.items[0]?.kind === "file") fileOver = true
     }}
     on:dragenter={enter}

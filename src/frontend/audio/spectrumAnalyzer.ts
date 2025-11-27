@@ -138,9 +138,7 @@ export class SpectrumAnalyzer {
 
             // Apply light smoothing to frequency data (AudioAnalyser already has smoothing)
             for (let i = 0; i < this.frequencyData.length; i++) {
-                this.smoothedFrequencyData[i] =
-                    this.smoothingFactor * this.frequencyData[i] +
-                    (1 - this.smoothingFactor) * this.smoothedFrequencyData[i]
+                this.smoothedFrequencyData[i] = this.smoothingFactor * this.frequencyData[i] + (1 - this.smoothingFactor) * this.smoothedFrequencyData[i]
             }
 
             // Trigger callback for reactive updates

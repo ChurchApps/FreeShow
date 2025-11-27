@@ -4,7 +4,7 @@
     import type { Project } from "../../../../../types/Projects"
     import { Show } from "../../../../../types/Show"
     import { sendMain } from "../../../../IPC/main"
-    import { activePopup, activeProject, projects, showsCache, special } from "../../../../stores"
+    import { activePopup, activeProject, projects, shows, showsCache, special } from "../../../../stores"
     import { translateText } from "../../../../utils/language"
     import { send } from "../../../../utils/request"
     import { exportProject } from "../../../export/project"
@@ -33,8 +33,8 @@
     }
     function filterFormats(exportFormats) {
         return clone(exportFormats)
-            .filter((a) => !(excludedFormats[exportType] || []).find((id) => id === a.id))
-            .map((a) => {
+            .filter(a => !(excludedFormats[exportType] || []).find(id => id === a.id))
+            .map(a => {
                 a.name = translateText(a.name)
                 a.icon = `./import-logos/${formatIcons[a.id]}.webp`
                 return a
@@ -49,8 +49,8 @@
         image: "jpg"
     }
 
-    $: typeName = exportTypes.find((a) => a.id === exportType)?.name || ""
-    $: formatName = exportFormats.find((a) => a.id === exportFormat)?.name || ""
+    $: typeName = exportTypes.find(a => a.id === exportType)?.name || ""
+    $: formatName = exportFormats.find(a => a.id === exportFormat)?.name || ""
 
     ///
 
@@ -91,7 +91,7 @@
                     notes: "",
                     created: previewShow.timestamps.created,
                     parent: "/",
-                    shows: showIds.map((id) => ({ type: "show", id }))
+                    shows: showIds.map(id => ({ type: "show", id }))
                 }
             }
 
@@ -109,7 +109,8 @@
             loading = false
         } else {
             const options = exportFormat === "pdf" ? (pdfOptions.chordSheet ? { ...pdfOptions, chordSheet: true } : pdfOptions) : {}
-            send(EXPORT, ["GENERATE"], { type: exportFormat, showIds, options })
+            const showNames = showIds.map(id => $shows[id]?.name || "")
+            send(EXPORT, ["GENERATE"], { type: exportFormat, showIds, showNames, options })
         }
 
         activePopup.set(null)
@@ -119,7 +120,7 @@
 
     function setSpecial(e: any, key: string) {
         let value = e.detail
-        special.update((a) => {
+        special.update(a => {
             a[key] = value
             return a
         })
@@ -135,13 +136,13 @@
 {#if !exportType}
     <p style="margin-bottom: 10px;"><T id="export.option_type" /></p>
 
-    <MaterialMultiChoice options={exportTypesList} on:click={(e) => (exportType = e.detail)} />
+    <MaterialMultiChoice options={exportTypesList} on:click={e => (exportType = e.detail)} />
 {:else if !exportFormat}
     <MaterialButton class="popup-back" icon="back" iconSize={1.3} title="actions.back" on:click={() => (exportType = "")} />
 
     <p style="margin-bottom: 10px;"><T id="export.option_format" /></p>
 
-    <MaterialMultiChoice options={filterFormats(exportFormats)} on:click={(e) => (exportFormat = e.detail)} />
+    <MaterialMultiChoice options={filterFormats(exportFormats)} on:click={e => (exportFormat = e.detail)} />
 {:else}
     <MaterialButton class="popup-back" icon="back" iconSize={1.3} title="actions.back" on:click={() => (exportFormat = "")} />
 
@@ -157,7 +158,7 @@
         <HRule />
         <PdfExport bind:pdfOptions {previewShow} />
     {:else if exportFormat === "project"}
-        <MaterialToggleSwitch label="export.include_media" style="margin-top: 20px;" checked={$special.projectIncludeMedia ?? true} defaultValue={true} on:change={(e) => setSpecial(e, "projectIncludeMedia")} />
+        <MaterialToggleSwitch label="export.include_media" style="margin-top: 20px;" checked={$special.projectIncludeMedia ?? true} defaultValue={true} on:change={e => setSpecial(e, "projectIncludeMedia")} />
     {/if}
 
     {#if loading}
@@ -166,14 +167,7 @@
         </Center>
     {/if}
 
-    <MaterialButton
-        variant="contained"
-        style="margin-top: 20px;"
-        icon="export"
-        info={showIds.length > 1 && exportFormat !== "project" ? showIds.length.toString() : ""}
-        disabled={exportType === "project" ? !$projects[$activeProject || ""]?.shows?.length : !showIds.length && exportType !== "all_shows"}
-        on:click={exportClick}
-    >
+    <MaterialButton variant="contained" style="margin-top: 20px;" icon="export" info={showIds.length > 1 && exportFormat !== "project" ? showIds.length.toString() : ""} disabled={exportType === "project" ? !$projects[$activeProject || ""]?.shows?.length : !showIds.length && exportType !== "all_shows"} on:click={exportClick}>
         <T id="export.export" />
     </MaterialButton>
 {/if}

@@ -42,7 +42,7 @@ export function convertPowerpoint(files: any[]) {
             // loadAllFonts(contentPaths)
             const fonts = getAllFontNames(contentPaths)
 
-            const slides = slideOrder.map((key) => convertSlide("ppt/" + key, content))
+            const slides = slideOrder.map(key => convertSlide("ppt/" + key, content))
             if (!slides.length) {
                 alertMessage.set('This format is unsupported, try using an online "PPT to TXT converter".')
                 return
@@ -96,7 +96,7 @@ function getAllFontNames(contentPaths: Record<string, string>) {
 
 function spaceOnUppercase(str: string) {
     // should not have space if there are multiple uppercase in a row (e.g., "PT Sans" not "P T Sans")
-    return str.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/([A-Z])([A-Z][a-z])/g, '$1 $2')
+    return str.replace(/([a-z])([A-Z])/g, "$1 $2").replace(/([A-Z])([A-Z][a-z])/g, "$1 $2")
 }
 
 function createSlides(slides: { items: Item[]; bg: string; notes: string }[]) {
@@ -124,7 +124,7 @@ function createSlides(slides: { items: Item[]; bg: string; notes: string }[]) {
     return { slidesObj, layouts }
 }
 
-type PlaceholderItem = (Item & { placeholder?: { type: string; idx?: string } })
+type PlaceholderItem = Item & { placeholder?: { type: string; idx?: string } }
 
 function convertSlide(key: string, content: any) {
     const slideContent = content[key]
@@ -188,13 +188,22 @@ function getRelations(content: any, path: string) {
 function getNotes(relations: any, content: any): string {
     const slideNotesRelationId = relations.find(a => a.$.Target.includes("notesSlide"))?.$.Target || ""
     const slideNotesRelation = content[slideNotesRelationId.replace("..", "ppt")]
-    return slideNotesRelation?.["p:notes"]?.["p:cSld"]?.[0]["p:spTree"]?.[0]["p:sp"]?.map(sp => {
-        const body = sp["p:txBody"]?.[0]
-        if (!body) return null
-        return body["a:p"]?.map(p => {
-            return (p["a:r"] || []).map(r => r["a:t"]?.[0] || "").join("")
-        }).join("\n") || ""
-    }).filter(a => a !== null).join("\n") || ""
+    return (
+        slideNotesRelation?.["p:notes"]?.["p:cSld"]?.[0]["p:spTree"]?.[0]["p:sp"]
+            ?.map(sp => {
+                const body = sp["p:txBody"]?.[0]
+                if (!body) return null
+                return (
+                    body["a:p"]
+                        ?.map(p => {
+                            return (p["a:r"] || []).map(r => r["a:t"]?.[0] || "").join("")
+                        })
+                        .join("\n") || ""
+                )
+            })
+            .filter(a => a !== null)
+            .join("\n") || ""
+    )
 }
 
 function mergeItems(slideItems: PlaceholderItem[], layoutItems: PlaceholderItem[], masterItems: PlaceholderItem[]) {
@@ -220,7 +229,7 @@ function mergeItems(slideItems: PlaceholderItem[], layoutItems: PlaceholderItem[
 
 function resolveColor(colorNode, clrSchemes) {
     if (!colorNode) return null
-    // typeof colorNode === "string" ? colorNode : 
+    // typeof colorNode === "string" ? colorNode :
     const scheme = colorNode["a:schemeClr"]?.[0].$.val
     let hex = ""
     if (scheme) {
@@ -288,7 +297,7 @@ function extractItemsFromTree(slideTree, relations, content, clrSchemes, layoutI
                 // split each text[] into line[] if there are line breaks
                 const lineBreaks = paragraph["a:br"] || []
                 if (lineBreaks.length) {
-                    line.text.forEach(a => {
+                    line.text?.forEach(a => {
                         lines.push({ ...line, text: [a] })
                     })
                 }
@@ -326,7 +335,7 @@ function extractItemsFromTree(slideTree, relations, content, clrSchemes, layoutI
                 placeholder,
                 style: getItemStyle(textItem, clrSchemes),
                 type: "text",
-                decoration: masterItems.length ? false : true,
+                decoration: masterItems.length ? false : true
             })
         }
     }
@@ -437,10 +446,10 @@ function extractItemsFromTree(slideTree, relations, content, clrSchemes, layoutI
     //             })
     //         })
 
-    //         convertedItems.push({ 
-    //             style: getItemStyle(tableItem), 
-    //             type: "table", 
-    //             table 
+    //         convertedItems.push({
+    //             style: getItemStyle(tableItem),
+    //             type: "table",
+    //             table
     //         })
     //     }
     // }
@@ -480,7 +489,7 @@ function findEmbeddedMediaNodes(slideTree: any) {
             for (const [_k, v] of Object.entries<any>(obj.$)) {
                 if (typeof v === "string" && /^rId\d+/i.test(v)) {
                     // prefer the parent if it looks like a shape/pic (has p:spPr or p:pic)
-                    const chosen = (parent && (parent["p:spPr"] || parent["p:pic"] || parent["p:nvSpPr"])) ? parent : obj
+                    const chosen = parent && (parent["p:spPr"] || parent["p:pic"] || parent["p:nvSpPr"]) ? parent : obj
                     nodes.push({ node: chosen, embedId: v })
                     break
                 }
@@ -555,18 +564,18 @@ function getItemStyle(item: any, clrSchemes: any, svgStyled = false) {
     }
 
     let border = ""
-    if (!svgStyled && spPr['a:ln']?.[0]?.["a:solidFill"]) {
+    if (!svgStyled && spPr["a:ln"]?.[0]?.["a:solidFill"]) {
         let stroke = "none"
         let strokeWidth = 0
         let strokeDasharray = ""
         // let strokeLinecap = ""
 
-        const ln = spPr['a:ln'][0]
-        stroke = resolveColor(ln['a:solidFill']?.[0], clrSchemes) || "#000"
-        strokeWidth = ln.$?.w ? parseInt(ln.$.w, 10) / 12700 * 0.02 : 1 // EMUs → pt → px-ish
+        const ln = spPr["a:ln"][0]
+        stroke = resolveColor(ln["a:solidFill"]?.[0], clrSchemes) || "#000"
+        strokeWidth = ln.$?.w ? (parseInt(ln.$.w, 10) / 12700) * 0.02 : 1 // EMUs → pt → px-ish
 
         // Dash style
-        const dashVal = ln['a:prstDash']?.[0]?.$?.val
+        const dashVal = ln["a:prstDash"]?.[0]?.$?.val
         if (dashVal && dashVal !== "solid") {
             if (dashVal === "dash") strokeDasharray = "4,2"
             else if (dashVal === "dot") strokeDasharray = "1,2"
@@ -610,7 +619,7 @@ function emuToPixels({ x = 0, y = 0, cx = 0, cy = 0 }, slideWidth = 1920, slideH
         left: Math.round((x / currentSlideSize.width) * slideWidth),
         top: Math.round((y / currentSlideSize.height) * slideHeight),
         width: Math.round((cx / currentSlideSize.width) * slideWidth),
-        height: Math.round((cy / currentSlideSize.height) * slideHeight),
+        height: Math.round((cy / currentSlideSize.height) * slideHeight)
     }
 }
 
@@ -628,7 +637,7 @@ function paragraphToLine(paragraph, placeholder, layoutItems, masterItems, clrSc
     textRuns.forEach((textRun: any) => {
         const style = textRun["a:rPr"]?.[0] || {}
         // let listStyle = lstStyle["a:defRPr"]?.[0] || {}
-        const value = (textRun["a:t"]?.[0] || "")
+        const value = textRun["a:t"]?.[0] || ""
         // if (bulletStyle) value = `${bulletStyle} ${value}`
         const textStyle = getTextStyle(style, placeholder, layoutItems, masterItems, clrSchemes)
         if (bulletChar) line.text.push({ style: `${textStyle}font-size: ${ptToPx(bulletSize)}px;padding-left: 28px;padding-right: 47px;`, value: bulletChar })
@@ -644,7 +653,7 @@ function getBullet(lineStyle: any, lineIndex: number) {
 
     const bulletAutoNum = lineStyle["a:buAutoNum"]?.[0].$?.type
     if (bulletAutoNum) {
-        if (bulletAutoNum === "arabicPeriod") return (lineIndex + 1) + "."
+        if (bulletAutoNum === "arabicPeriod") return lineIndex + 1 + "."
         if (bulletAutoNum === "alphaLcPeriod") return String.fromCharCode(97 + lineIndex) + "."
         if (bulletAutoNum === "alphaUcPeriod") return String.fromCharCode(65 + lineIndex) + "."
         if (bulletAutoNum === "romanLcPeriod") return toRoman(lineIndex + 1).toLowerCase() + "."
@@ -726,7 +735,8 @@ function getInheritedProperty(prop: string, placeholder: any, layoutItemsRaw: an
         // Check bullet/level default properties
         const lstStyle = body?.["a:lstStyle"]?.[0]
         if (lstStyle) {
-            for (const lvl of Object.values<any>(lstStyle)) { // a:lvl1pPr, a:lvl2pPr, etc
+            for (const lvl of Object.values<any>(lstStyle)) {
+                // a:lvl1pPr, a:lvl2pPr, etc
                 const defRPr = lvl[0]?.["a:defRPr"]?.[0]
                 if (defRPr) {
                     if (prop === "b" && defRPr.$?.b) return defRPr.$.b
@@ -763,7 +773,7 @@ function getInheritedProperty(prop: string, placeholder: any, layoutItemsRaw: an
 }
 
 function ptToPx(pt: number): number {
-    const px = Math.round(pt * 96 / 72) // 1pt = 1.333px
+    const px = Math.round((pt * 96) / 72) // 1pt = 1.333px
     return px * 2.01 // convert to FS size
 }
 
@@ -776,22 +786,22 @@ function getAlignment(algn: string) {
 // SVG
 
 function pptShapeToNormalizedSvg(shape, clrSchemes) {
-    const spPr = shape['p:spPr']?.[0]
+    const spPr = shape["p:spPr"]?.[0]
     if (!spPr) return null
     const prstGeom = spPr["a:prstGeom"]?.[0].$?.prst
     // if (!prstGeom || prstGeom === "rect") return null
 
-    const xfrm = spPr['a:xfrm']?.[0]
-    const off = xfrm?.['a:off']?.[0]?.$ || {}
-    const ext = xfrm?.['a:ext']?.[0]?.$ || {}
+    const xfrm = spPr["a:xfrm"]?.[0]
+    const off = xfrm?.["a:off"]?.[0]?.$ || {}
+    const ext = xfrm?.["a:ext"]?.[0]?.$ || {}
     if (!off || !ext) return null
 
     // Fill color and opacity
-    const fill = resolveColor(spPr['a:solidFill']?.[0], clrSchemes) || "none"
+    const fill = resolveColor(spPr["a:solidFill"]?.[0], clrSchemes) || "none"
     let fillOpacity = 1
-    const schemeClr = spPr['a:solidFill']?.[0]?.['a:schemeClr']?.[0]
-    if (schemeClr?.['a:alpha']?.[0]?.$?.val) {
-        fillOpacity = parseInt(schemeClr['a:alpha'][0].$.val, 10) / 100000
+    const schemeClr = spPr["a:solidFill"]?.[0]?.["a:schemeClr"]?.[0]
+    if (schemeClr?.["a:alpha"]?.[0]?.$?.val) {
+        fillOpacity = parseInt(schemeClr["a:alpha"][0].$.val, 10) / 100000
     }
 
     // ---- LINE SUPPORT ----
@@ -802,13 +812,13 @@ function pptShapeToNormalizedSvg(shape, clrSchemes) {
     let strokeLinejoin = ""
     let strokeMiterlimit = 0
 
-    if (spPr['a:ln']?.[0]?.["a:solidFill"]) {
-        const ln = spPr['a:ln'][0]
-        stroke = resolveColor(ln['a:solidFill']?.[0], clrSchemes) || ""
-        strokeWidth = ln.$?.w ? parseInt(ln.$.w, 10) / 12700 * 0.02 : 1 // EMUs → pt → px-ish
+    if (spPr["a:ln"]?.[0]?.["a:solidFill"]) {
+        const ln = spPr["a:ln"][0]
+        stroke = resolveColor(ln["a:solidFill"]?.[0], clrSchemes) || ""
+        strokeWidth = ln.$?.w ? (parseInt(ln.$.w, 10) / 12700) * 0.02 : 1 // EMUs → pt → px-ish
 
         // Dash style
-        const dashVal = ln['a:prstDash']?.[0]?.$?.val
+        const dashVal = ln["a:prstDash"]?.[0]?.$?.val
         if (dashVal && dashVal !== "solid") {
             if (dashVal === "dash") strokeDasharray = "4,2"
             else if (dashVal === "dot") strokeDasharray = "1,2"
@@ -817,13 +827,13 @@ function pptShapeToNormalizedSvg(shape, clrSchemes) {
         }
 
         // Line cap
-        if (ln.$?.cap === "round" || ln['a:round']) strokeLinecap = "round"
+        if (ln.$?.cap === "round" || ln["a:round"]) strokeLinecap = "round"
         else if (ln.$?.cap === "square") strokeLinecap = "square"
 
         // Line join
-        if (ln.$?.join === "round" || ln['a:round']) strokeLinejoin = "round"
-        else if (ln.$?.join === "bevel" || ln['a:bevel']) strokeLinejoin = "bevel"
-        else if (ln.$?.join === "miter" || ln['a:miter']) {
+        if (ln.$?.join === "round" || ln["a:round"]) strokeLinejoin = "round"
+        else if (ln.$?.join === "bevel" || ln["a:bevel"]) strokeLinejoin = "bevel"
+        else if (ln.$?.join === "miter" || ln["a:miter"]) {
             strokeLinejoin = "miter"
             strokeMiterlimit = ln.$?.miterLim ? parseFloat(ln.$.miterLim) : 4
         }
@@ -861,7 +871,7 @@ function pptShapeToNormalizedSvg(shape, clrSchemes) {
 
     if (!prstGeom) {
         // custom shape
-        const customPath = spPr['a:custGeom']?.[0]?.['a:pathLst']?.[0]?.['a:path']?.[0]
+        const customPath = spPr["a:custGeom"]?.[0]?.["a:pathLst"]?.[0]?.["a:path"]?.[0]
         if (customPath) {
             const customShape = getCustomShapePath(customPath)
             if (customShape && customShape.pathData) {
@@ -889,9 +899,9 @@ function pptShapeToNormalizedSvg(shape, clrSchemes) {
 
     // Get adjustment value (default 50000 if missing)
     let adj = 50000
-    const avLst = spPr['a:prstGeom']?.[0]['a:avLst']?.[0]
-    if (avLst?.['a:gd']) {
-        const valStr = avLst['a:gd'][0]?.$?.fmla
+    const avLst = spPr["a:prstGeom"]?.[0]["a:avLst"]?.[0]
+    if (avLst?.["a:gd"]) {
+        const valStr = avLst["a:gd"][0]?.$?.fmla
         if (valStr && valStr.startsWith("val")) {
             adj = parseFloat(valStr.split(" ")[1])
         }
@@ -899,7 +909,7 @@ function pptShapeToNormalizedSvg(shape, clrSchemes) {
 
     const path = getPresetShapePath(prstGeom, x1, y1, width, height, adj)
 
-    // viewBox="0 0 1 1" 
+    // viewBox="0 0 1 1"
     return `<svg data-shape="${prstGeom}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${vbWidth} ${vbHeight}" style="position: absolute;">
         <path ${svgAttributes} d="${path}"></path>
     </svg>`

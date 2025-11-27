@@ -34,7 +34,7 @@
     $: style = match !== null ? `background: linear-gradient(to right, var(--primary-lighter) ${match}%, transparent ${match}%);` : ""
 
     function setNotFound(id: string) {
-        notFound.update((a) => {
+        notFound.update(a => {
             a.show.push(id)
             return a
         })
@@ -80,14 +80,14 @@
         // set active show
         let pos = index
         if (index === null && $activeProject !== null) {
-            let i = $projects[$activeProject]?.shows?.findIndex((p) => p.id === id) ?? -1
+            let i = $projects[$activeProject]?.shows?.findIndex(p => p.id === id) ?? -1
             if (i > -1) pos = i
         }
 
         let newShow: any = { id, type }
 
         if ($focusMode) {
-            let inProject = $projects[$activeProject || ""]?.shows?.find((p) => p.id === id)
+            let inProject = $projects[$activeProject || ""]?.shows?.find(p => p.id === id)
             if (inProject) {
                 activeFocus.set({ id, index: pos ?? undefined })
                 return
@@ -125,7 +125,7 @@
 
         if (type === "show" && $showsCache[id] && $showsCache[id].layouts[$showsCache[id].settings.activeLayout]?.slides?.length) {
             let layoutRef = getLayoutRef()
-            let firstEnabledIndex = layoutRef.findIndex((a) => !a.data.disabled)
+            let firstEnabledIndex = layoutRef.findIndex(a => !a.data.disabled)
             updateOut("active", firstEnabledIndex, layoutRef, !e.detail.alt)
 
             let slide = currentOutput.out?.slide || null
@@ -178,7 +178,7 @@
         // only highlight if the set layout is outputted
         if (activeOutput && show.layoutInfo?.name) {
             const outputId = getActiveOutputs($outputs, true, true, true)[0]
-            const selectedLayoutId = Object.entries($showsCache[id]?.layouts).find(([_id, a]) => a.name === show.layoutInfo.name)?.[0]
+            const selectedLayoutId = Object.entries($showsCache[id]?.layouts || {}).find(([_id, a]) => a.name === show.layoutInfo.name)?.[0]
             if ($outputs[outputId]?.out?.slide?.layout !== selectedLayoutId) activeOutput = null
         }
     }
@@ -187,15 +187,7 @@
 </script>
 
 <div id="show_{id}" class="main" class:played={show.played}>
-    <MaterialButton
-        on:click={click}
-        on:dblclick={doubleClick}
-        {isActive}
-        showOutline={outline}
-        class="context {$$props.class}{readOnly ? '_readonly' : ''}"
-        style="font-weight: normal;--outline-color: {activeOutput || 'var(--secondary)'};{$notFound.show?.includes(id) ? 'background-color: rgb(255 0 0 / 0.2);' : ''}{style}{$$props.style || ''}"
-        tab
-    >
+    <MaterialButton on:click={click} on:dblclick={doubleClick} {isActive} showOutline={outline} class="context {$$props.class}{readOnly ? '_readonly' : ''}" style="font-weight: normal;--outline-color: {activeOutput || 'var(--secondary)'};{$notFound.show?.includes(id) ? 'background-color: rgb(255 0 0 / 0.2);' : ''}{style}{$$props.style || ''}" tab>
         <div class="row">
             <span class="cell" style="max-width: calc(100% {showNumber ? '- var(--number-width)' : ''} - var(--modified-width, 0px));">
                 {#if icon || show.locked}

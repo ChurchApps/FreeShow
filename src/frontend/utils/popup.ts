@@ -156,13 +156,13 @@ export function waitForPopupData(popupId: Popups): Promise<any> {
     popupData.set({ ...get(popupData), id: "", value: "" })
     activePopup.set(popupId)
 
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
         // check that popup is still active
         const interval = setInterval(() => {
             if (get(activePopup) !== popupId) finish(undefined)
         }, 1000)
 
-        const unsubscribe = popupData.subscribe((a) => {
+        const unsubscribe = popupData.subscribe(a => {
             if (a.id !== popupId) return
             activePopup.set(null)
             finish(a.value)
@@ -184,6 +184,6 @@ export async function confirmCustom(prompt: string) {
 
 export async function promptCustom(prompt: string) {
     popupData.set({ prompt, textInput: true })
-    const data = await waitForPopupData("confirm") || ""
+    const data = (await waitForPopupData("confirm")) || ""
     return data as string
 }

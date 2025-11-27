@@ -41,24 +41,24 @@
 
         if (show) {
             let refs = _show().layouts().ref()
-            refs.forEach((slides) => {
-                layoutBackgrounds.push(...slides.map((a) => a.data.background).filter((a) => a !== undefined))
+            refs.forEach(slides => {
+                layoutBackgrounds.push(...slides.map(a => a.data.background).filter(a => a !== undefined))
                 layoutAudio.push(
                     ...slides
-                        .map((a) => a.data.audio)
-                        .filter((a) => a !== undefined)
+                        .map(a => a.data.audio)
+                        .filter(a => a !== undefined)
                         .flat()
                 )
                 layoutMics.push(
                     ...slides
-                        .map((a) => a.data.mics)
-                        .filter((a) => a !== undefined)
+                        .map(a => a.data.mics)
+                        .filter(a => a !== undefined)
                         .flat()
                 )
                 layoutActions.push(
                     ...slides
-                        .map((a) => a.data.actions?.slideActions)
-                        .filter((a) => a !== undefined)
+                        .map(a => a.data.actions?.slideActions)
+                        .filter(a => a !== undefined)
                         .flat()
                 )
             })
@@ -68,7 +68,7 @@
     let bgs: (Media & { count: number })[] = []
     $: if (layoutBackgrounds.length) {
         let tempBackgrounds: { [key: string]: Media & { count: number } } = {}
-        layoutBackgrounds.forEach((a) => {
+        layoutBackgrounds.forEach(a => {
             if (!show.media?.[a]) return
 
             let path: string = show.media[a].path || show.media[a].id || ""
@@ -87,7 +87,7 @@
     let audio: (Media & { count: number })[] = []
     $: if (layoutAudio.length) {
         let tempAudio: { [key: string]: Media & { count: number } } = {}
-        layoutAudio.forEach((a) => {
+        layoutAudio.forEach(a => {
             if (!show.media?.[a]) return
 
             let path = show.media[a].path!
@@ -107,7 +107,7 @@
     let mics: { id: string; name: string; count: number }[] = []
     $: if (layoutMics.length) {
         let tempMics: { [key: string]: { id: string; name: string; count: number } } = {}
-        layoutMics.forEach((a) => {
+        layoutMics.forEach(a => {
             let id = a.id
 
             if (tempMics[id]) tempMics[id].count++
@@ -132,7 +132,7 @@
             return
         }
 
-        showsCache.update((a) => {
+        showsCache.update(a => {
             let bgs = a[$activeShow!.id].media
             if (!bgs[id]) return a // old media
             if (value) delete bgs[id][key]
@@ -144,9 +144,9 @@
     let actions: SlideAction[] = []
     $: if (layoutActions.length) {
         actions = []
-        layoutActions.forEach((action) => {
+        layoutActions.forEach(action => {
             // check if another exact exists
-            if (actions.find((a) => JSON.stringify(a) === JSON.stringify(action))) return
+            if (actions.find(a => JSON.stringify(a) === JSON.stringify(action))) return
 
             actions.push(action)
         })
@@ -155,17 +155,17 @@
     let similarBgs: { path: string; name: string }[] = []
     $: if (bgs.length) getSimularPaths()
     function getSimularPaths() {
-        if (!bgs.filter((a) => !a.path?.includes("http") && !a.path?.includes("data:")).length) return
+        if (!bgs.filter(a => !a.path?.includes("http") && !a.path?.includes("data:")).length) return
 
-        requestMain(Main.GET_SIMILAR, { paths: bgs.map((a) => a.path || "") }, (data) => {
-            similarBgs = data.filter((a) => isMediaExtension(getExtension(a.path))).slice(0, 3)
+        requestMain(Main.GET_SIMILAR, { paths: bgs.map(a => a.path || "") }, data => {
+            similarBgs = data.filter(a => isMediaExtension(getExtension(a.path))).slice(0, 3)
         })
     }
 
     let newPaths: { [key: string]: string } = {}
     $: if (bgs) loadBackgrounds()
     function loadBackgrounds() {
-        bgs.forEach(async (background) => {
+        bgs.forEach(async background => {
             let path = background.path || ""
             let newBgPath = await loadThumbnail(path, mediaSize.small)
 

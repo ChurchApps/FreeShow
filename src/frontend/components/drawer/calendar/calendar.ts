@@ -94,7 +94,7 @@ export async function createSlides(currentEvents: any[], showId = "") {
             textLength += event.name.length / 1.5 + (event.notes?.length || 0) / 5
         })
 
-        const lines: any[] = values.map((a) => ({ align: "text-align:start;", text: a }))
+        const lines: any[] = values.map(a => ({ align: "text-align:start;", text: a }))
         const items: any[] = [{ style: itemStyle, align: "", lines }]
 
         // TODO: split in half if lines.length > 8
@@ -254,9 +254,9 @@ export function getSelectedEvents(selectedDays: number[] = get(activeDays)) {
     })
 
     // sort
-    tempEvents = tempEvents.map(sortDayAndOnlyKeepNormalEvents).filter((a) => a.events.length)
+    tempEvents = tempEvents.map(sortDayAndOnlyKeepNormalEvents).filter(a => a.events.length)
     function sortDayAndOnlyKeepNormalEvents(temp) {
-        temp.events = temp.events.filter((a) => a.type === "event").sort(sortByTime)
+        temp.events = temp.events.filter(a => a.type === "event").sort(sortByTime)
         return temp
     }
 

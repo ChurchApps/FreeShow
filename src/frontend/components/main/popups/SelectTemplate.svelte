@@ -18,7 +18,7 @@
     let allowEmpty = !!$popupData.allowEmpty
 
     $: hideIds = $popupData.hideIds || []
-    $: sortedTemplates = sortByName(keysToID($templates).filter((a) => !hideIds.includes(a.id)))
+    $: sortedTemplates = sortByName(keysToID($templates).filter(a => !hideIds.includes(a.id)))
 
     $: defaultTemplates = clone(sortedTemplates)
     $: if (defaultTemplates) search()
@@ -30,7 +30,7 @@
     let types: { value: string; label: string }[] = []
     let values: { value: string; label: string }[] = []
     if (id === "scripture") {
-        const scriptureTemplateTypes = Object.values($scriptures).find((a) => a.collection)
+        const scriptureTemplateTypes = Object.values($scriptures).find(a => a.collection)
             ? [
                   { value: "", label: translateText("example.default (1)") },
                   { value: "_2", label: "2" },
@@ -42,13 +42,13 @@
         const currentStyle = $styles[$activeStyle]
 
         types = scriptureTemplateTypes
-        values = scriptureTemplateTypes.map((a) => currentStyle?.["templateScripture" + a.value] || "")
+        values = scriptureTemplateTypes.map(a => currentStyle?.["templateScripture" + a.value] || "")
     }
 
     let selectedType = types[0]?.value || ""
 
     $: customTypes = types.length > 1
-    $: value = customTypes ? values[types.findIndex((a) => a.value === selectedType)] || "" : active
+    $: value = customTypes ? values[types.findIndex(a => a.value === selectedType)] || "" : active
 
     let searchedTemplates = clone(defaultTemplates)
     let searchValue = ""
@@ -68,7 +68,7 @@
         // reset if search value changed
         // if (!searchValue.includes(previousSearchValue)) currentTemplatesList = clone(defaultTemplates)
 
-        searchedTemplates = currentTemplatesList.filter((a) => formatSearch(a.name || "").includes(searchValue))
+        searchedTemplates = currentTemplatesList.filter(a => formatSearch(a.name || "").includes(searchValue))
 
         // previousSearchValue = searchValue
     }
@@ -113,10 +113,10 @@
     <MaterialButton class="popup-back" icon="back" iconSize={1.3} title="actions.back" on:click={() => activePopup.set(revert)} />
 {/if}
 
-<MaterialTextInput label="main.search" value="" on:input={(e) => search(e.detail)} autofocus />
+<MaterialTextInput label="main.search" value="" on:input={e => search(e.detail)} autofocus />
 
 {#if customTypes}
-    <MaterialDropdown label="songbeamer_import.translations" options={types} value={selectedType} on:change={(e) => (selectedType = e.detail)} />
+    <MaterialDropdown label="songbeamer_import.translations" options={types} value={selectedType} on:change={e => (selectedType = e.detail)} />
 {/if}
 
 <div style="position: relative;height: 100%;width: calc(100vw - (var(--navigation-width) + 20px) * 2);margin-top: 10px;overflow-y: auto;">

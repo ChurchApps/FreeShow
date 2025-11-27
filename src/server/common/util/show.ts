@@ -32,7 +32,7 @@ export function getLayoutRef(currentShow: Show, layoutId: string = "") {
                 layoutIndex,
                 id: childId,
                 parent: { id: layoutSlide.id, index, layoutIndex: layoutIndex - jndex - 1 },
-                data: layoutSlide.children?.[childId] || {},
+                data: layoutSlide.children?.[childId] || {}
             })
         })
     })
@@ -57,15 +57,15 @@ export function getGroupName({ show, showId }: { show: Show; showId: string }, s
 
     // different slides with same name
     let currentSlide = show.slides?.[slideID] || {}
-    let allSlidesWithSameGroup = slides.filter((a) => a.group === currentSlide.group)
-    let currentIndex = allSlidesWithSameGroup.findIndex((a) => a.id === slideID)
+    let allSlidesWithSameGroup = slides.filter(a => a.group === currentSlide.group)
+    let currentIndex = allSlidesWithSameGroup.findIndex(a => a.id === slideID)
     let currentGroupNumber = allSlidesWithSameGroup.length > 1 ? " " + (currentIndex + 1) : ""
     name += currentGroupNumber
 
     // same group - count
     let layoutRef = getLayoutRef(show, showId)
-    let allGroupLayoutSlides = layoutRef.filter((a) => a.id === slideID)
-    let currentGroupLayoutIndex = allGroupLayoutSlides.findIndex((a) => a.layoutIndex === layoutIndex)
+    let allGroupLayoutSlides = layoutRef.filter(a => a.id === slideID)
+    let currentGroupLayoutIndex = allGroupLayoutSlides.findIndex(a => a.layoutIndex === layoutIndex)
     let currentLayoutNumberHTML = allGroupLayoutSlides.length > 1 ? '<span class="group_count">' + (currentGroupLayoutIndex + 1) + "</span>" : ""
     let currentLayoutNumber = allGroupLayoutSlides.length > 1 ? " (" + (currentGroupLayoutIndex + 1) + ")" : ""
     name += addHTML ? currentLayoutNumberHTML : currentLayoutNumber
@@ -78,8 +78,10 @@ export function createVirtualBreaks(lines: Line[], skip: boolean = false) {
     if (!lines?.length) return []
 
     const replaceWith = skip ? "" : "<br>"
-    lines.forEach(a => {
-        a.text.forEach(text => {
+    lines.forEach(line => {
+        if (!Array.isArray(line?.text)) return
+
+        line.text.forEach(text => {
             text.value = replaceVirtualBreaks(text.value, replaceWith)
         })
     })

@@ -40,7 +40,7 @@
     $: sortedItems = sortItemsByType(Object.values(stageShow.items || {}) as any)
 
     // check slide text state
-    $: slideTextItems = Object.values(stageShow.items || {}).filter((a) => a.type === "slide_text")
+    $: slideTextItems = Object.values(stageShow.items || {}).filter(a => a.type === "slide_text")
 
     const resolution = { width: 1920, height: 1080 }
     const halfWidth = resolution.width * 0.5
@@ -53,7 +53,9 @@
         if (!stageId) return
 
         let itemId = uid(5)
-        stageShows.update((a) => {
+        stageShows.update(a => {
+            if (!a[stageId]?.items) return a
+
             let style = DEFAULT_STYLE
             if (smallItems.includes(itemType) || textValue) {
                 const width = resolution.width * 0.45
@@ -79,7 +81,7 @@
 
         // select item
         if (Object.keys($stageShows[stageId]?.items).length > 1) {
-            activeStage.update((a) => {
+            activeStage.update(a => {
                 a.items = [itemId]
                 return a
             })
@@ -122,8 +124,8 @@
     const excludeValues = ["project_", "time_", "audio_", "meta_", "slide_text_previous", "slide_text_next"]
     const ref = { type: "stage" }
     const dynamicValues = getDynamicIds()
-        .filter((id) => !excludeValues.find((v) => id.includes(v))) // || id.startsWith("project_")
-        .map((id) => ({ value: `{${id}}`, label: `{${id}}`, data: replaceDynamicValues(`{${id}}`, ref).slice(0, 20) }))
+        .filter(id => !excludeValues.find(v => id.includes(v))) // || id.startsWith("project_")
+        .map(id => ({ value: `{${id}}`, label: `{${id}}`, data: replaceDynamicValues(`{${id}}`, ref).slice(0, 20) }))
 </script>
 
 <div class="tools">
@@ -150,7 +152,7 @@
                 {#if !$labelsDisabled}{translateText("items.text")}{/if}
             </MaterialButton>
 
-            <MaterialDropdown label="actions.dynamic_values" options={dynamicValues} value="" style="border: 1px solid var(--primary-lighter);" on:change={(e) => addItem("text", e.detail)} onlyArrow />
+            <MaterialDropdown label="actions.dynamic_values" options={dynamicValues} value="" style="border: 1px solid var(--primary-lighter);" on:change={e => addItem("text", e.detail)} onlyArrow />
         </InputRow>
     </div>
 
@@ -175,7 +177,7 @@
             <div
                 class="items {invertedItemList.length > 1 ? 'context #items_list_item_stage' : ''}"
                 style="display: flex;flex-direction: column;"
-                on:mousedown={(e) => {
+                on:mousedown={e => {
                     if (e.button !== 2) return
                     // select on right click for context menu
                     const itemId = (e.target?.closest(".item_button")?.id || "").slice(1)
@@ -193,9 +195,9 @@
                         style="width: 100%;justify-content: space-between;padding: 2px 8px;"
                         isActive={$activeStage.items.includes(id)}
                         tab
-                        on:click={(e) => {
+                        on:click={e => {
                             selected.set({ id: null, data: [] })
-                            activeStage.update((ae) => {
+                            activeStage.update(ae => {
                                 if (e.detail.ctrl) {
                                     if (ae.items.includes(id)) ae.items.splice(ae.items.indexOf(id), 1)
                                     else ae.items.push(id)

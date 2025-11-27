@@ -11,13 +11,13 @@ export function trackEvent(eventName: string, params?: any) {
 
     const payload = {
         client_id: clientId,
-        events: [{ name: eventName, params: params || {} }],
+        events: [{ name: eventName, params: params || {} }]
     }
 
     fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(payload)
     })
 }
 

@@ -10,7 +10,7 @@
     import Tabs from "../../input/Tabs.svelte"
     import HiddenInput from "../../inputs/HiddenInput.svelte"
 
-    $: profilesList = [{ id: "", color: "", name: translateText("profile.admin") }, ...sortByName(keysToID($profiles).filter((a) => a.id !== "admin"))]
+    $: profilesList = [{ id: "", color: "", name: translateText("profile.admin") }, ...sortByName(keysToID($profiles).filter(a => a.id !== "admin"))]
 
     // set id after deletion
     $: if (profileId !== "" && !$profiles[profileId]) profileId = ""
@@ -33,7 +33,7 @@
         if (!currentId) currentId = profileId || "default"
 
         // create a profile if nothing exists
-        profiles.update((a) => {
+        profiles.update(a => {
             if (!a[currentId]) a[currentId] = clone(currentProfile)
 
             return a
@@ -60,7 +60,7 @@
     let edit: any
 </script>
 
-<Tabs id="profile" tabs={profilesList} value={$selectedProfile || ""} newLabel="new.profile" class="context #profile_tab" on:open={(e) => selectedProfile.set(e.detail)} on:create={createProfile} let:tab>
+<Tabs id="profile" tabs={profilesList} value={$selectedProfile || ""} newLabel="new.profile" class="context #profile_tab" on:open={e => selectedProfile.set(e.detail)} on:create={createProfile} let:tab>
     {#if !tab.id}
         <Icon id="admin" right white />
     {:else}
@@ -68,5 +68,5 @@
     {/if}
 
     {#if $activeProfile === tab.id}<Icon id="check" size={0.7} white right />{/if}
-    <HiddenInput value={tab.name} id={"profile_" + tab.id} on:edit={(e) => updateProfile(e.detail.value, "name", tab.id)} bind:edit />
+    <HiddenInput value={tab.name} id={"profile_" + tab.id} on:edit={e => updateProfile(e.detail.value, "name", tab.id)} bind:edit />
 </Tabs>

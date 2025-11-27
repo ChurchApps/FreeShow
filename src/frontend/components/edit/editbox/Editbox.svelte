@@ -37,7 +37,7 @@
 
         const rightClick: boolean = e.button === 2 || e.buttons === 2 || ($os.platform === "darwin" && e.ctrlKey)
 
-        activeEdit.update((ae) => {
+        activeEdit.update(ae => {
             if (rightClick) {
                 if (ae.items.includes(index)) return ae
                 ae.items = [index]
@@ -93,7 +93,7 @@
             if ($activeEdit.items.length) {
                 // give time so output don't clear
                 setTimeout(() => {
-                    activeEdit.update((a) => {
+                    activeEdit.update(a => {
                         a.items = []
                         return a
                     })
@@ -118,7 +118,7 @@
 
         // timeout to allow CSS to update selected items first if any
         setTimeout(() => {
-            activeEdit.update((ae) => {
+            activeEdit.update(ae => {
                 ae.items = []
                 return ae
             })
@@ -189,11 +189,7 @@ bind:offsetWidth={width} -->
     class:isDisabledVariable
     class:chords={chordsMode}
     class:isOptimized
-    style="{plain
-        ? 'width: 100%;'
-        : `${getCustomStyle(item.style || '', customOutputId)}; outline: ${3 / ratio}px solid rgb(255 255 255 / 0.2);z-index: ${index + 1 + ($activeEdit.items.includes(index) ? 100 : 0)};${filter ? 'filter: ' + filter + ';' : ''}${
-              backdropFilter ? 'backdrop-filter: ' + backdropFilter + ';' : ''
-          }`}{cssVariables}{fixedWidth}"
+    style="{plain ? 'width: 100%;' : `${getCustomStyle(item.style || '', customOutputId)}; outline: ${3 / ratio}px solid rgb(255 255 255 / 0.2);z-index: ${index + 1 + ($activeEdit.items.includes(index) ? 100 : 0)};${filter ? 'filter: ' + filter + ';' : ''}${backdropFilter ? 'backdrop-filter: ' + backdropFilter + ';' : ''}`}{cssVariables}{fixedWidth}"
     data-index={index}
     on:mousedown={mousedown}
 >

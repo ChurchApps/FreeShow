@@ -22,7 +22,7 @@
     $: currentId = $activeEdit.id!
     $: if (currentId) update()
     let Slide = clone($templates[currentId])
-    const unsubscribe = templates.subscribe((a) => clone((Slide = a[currentId])))
+    const unsubscribe = templates.subscribe(a => clone((Slide = a[currentId])))
     onDestroy(unsubscribe)
 
     let newStyles: { [key: string]: string | number } = {}
@@ -40,13 +40,13 @@
 
         let items = Slide.items
         let values: string[] = []
-        active.forEach((id) => {
+        active.forEach(id => {
             let item = items[id]
             let styles = getStyles(item.style)
             let textStyles = ""
 
             Object.entries(newStyles).forEach(([key, value]) => (styles[key] = value.toString()))
-            Object.entries(styles).forEach((obj) => (textStyles += obj[0] + ":" + obj[1] + ";"))
+            Object.entries(styles).forEach(obj => (textStyles += obj[0] + ":" + obj[1] + ";"))
 
             // TODO: move multiple!
             values.push(textStyles)

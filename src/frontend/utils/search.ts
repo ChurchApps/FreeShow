@@ -23,7 +23,7 @@ export function tokenize(str: string): string[] {
 
 // check if all old tokens are still in new tokens
 export function isRefinement(newTokens: string[], oldTokens: string[]): boolean {
-    return oldTokens.length ? oldTokens.every((token) => newTokens.includes(token)) : false
+    return oldTokens.length ? oldTokens.every(token => newTokens.includes(token)) : false
 }
 
 export function showSearch(searchValue: string, shows: ShowList[]) {
@@ -32,7 +32,7 @@ export function showSearch(searchValue: string, shows: ShowList[]) {
     // fix invalid regular expression
     searchValue = searchValue.replace(/([.?*+^$[\]\\(){}|-])/g, "\\$1")
 
-    shows.forEach((s) => {
+    shows.forEach(s => {
         // don't search show if archived
         const isArchived = get(categories)[s.category || ""]?.isArchive
         if (isArchived && get(drawerTabsData).shows?.activeSubTab !== s.category) return
@@ -44,7 +44,7 @@ export function showSearch(searchValue: string, shows: ShowList[]) {
 
     // change all values relative to the highest value
     const highestValue = newShows[0]?.match || 0
-    newShows = newShows.map((a) => ({ ...a, originalMatch: a.match, match: ((a.match || 0) / highestValue) * 100 }))
+    newShows = newShows.map(a => ({ ...a, originalMatch: a.match, match: ((a.match || 0) / highestValue) * 100 }))
 
     return newShows
 }
@@ -135,13 +135,13 @@ function calculateContentIncludesScore(cache: string, search: string, noShortWor
 function removeShortWords(value: string) {
     return value
         .split(" ")
-        .filter((a) => a.length > 2)
+        .filter(a => a.length > 2)
         .join(" ")
 }
 
 function matchWords(text: string, value: string): number {
     const words = value.split(" ").filter(Boolean)
-    const matchCount = words.filter((word) => text.includes(word)).length
+    const matchCount = words.filter(word => text.includes(word)).length
 
     // value between 0 and 1
     return matchCount / words.length

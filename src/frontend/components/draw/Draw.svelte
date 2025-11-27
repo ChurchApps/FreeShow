@@ -24,22 +24,9 @@
 {:else if $draw !== null}
     {#if tool === "focus"}
         <!-- can't fade out, because Svelte bug will make it stay forever if tabs changed from Draw while active -->
-        <div
-            class="focus"
-            style="left: {x}px;top: {y}px;opacity: {settings?.opacity};border-radius: {settings?.radius}%;width: {settings?.size}px;height: {settings?.size}px;box-shadow: 0 0 0 50000px {settings?.color}{settings?.glow
-                ? `, inset 0 0 ${settings?.size / 3}px ${settings?.color}`
-                : ''};"
-            in:fade={{ duration: 150 }}
-        />
+        <div class="focus" style="left: {x}px;top: {y}px;opacity: {settings?.opacity};border-radius: {settings?.radius}%;width: {settings?.size}px;height: {settings?.size}px;box-shadow: 0 0 0 50000px {settings?.color}{settings?.glow ? `, inset 0 0 ${settings?.size / 3}px ${settings?.color}` : ''};" in:fade={{ duration: 150 }} />
     {:else if tool === "pointer"}
-        <div
-            class="point"
-            class:hollow={settings?.hollow === true}
-            style="left: {x}px;top: {y}px;--color: {settings?.color};border-radius: {settings?.radius}%;opacity: {settings?.opacity};width: {settings?.size}px;height: {settings?.size}px;{settings?.glow
-                ? `box-shadow: 0 0 ${settings?.size / 5}px ${settings?.size / 20}px ${settings?.color}`
-                : ''}"
-            in:fade={{ duration: 100 }}
-        />
+        <div class="point" class:hollow={settings?.hollow === true} style="left: {x}px;top: {y}px;--color: {settings?.color};border-radius: {settings?.radius}%;opacity: {settings?.opacity};width: {settings?.size}px;height: {settings?.size}px;{settings?.glow ? `box-shadow: 0 0 ${settings?.size / 5}px ${settings?.size / 20}px ${settings?.color}` : ''}" in:fade={{ duration: 100 }} />
     {:else if tool === "particles"}
         <Particles {settings} />
     {/if}

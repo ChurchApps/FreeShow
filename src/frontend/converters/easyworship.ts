@@ -142,7 +142,7 @@ function createSlides({ words }: Words) {
     // convert ascii decimals to chars
     words = decodeString(words)
     // replace special encoded chars
-    Object.keys(replaceCodes).forEach((key) => {
+    Object.keys(replaceCodes).forEach(key => {
         words = words.replaceAll(key, replaceCodes[key])
     })
 
@@ -193,7 +193,7 @@ function createSlides({ words }: Words) {
                 slideLines.shift()
             } else {
                 let found = false
-                Object.keys(get(groups)).forEach((key) => {
+                Object.keys(get(groups)).forEach(key => {
                     const g = get(groups)[key]
                     if (
                         g.default &&

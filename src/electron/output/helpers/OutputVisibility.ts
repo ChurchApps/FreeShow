@@ -19,7 +19,7 @@ export class OutputVisibility {
         toApp(OUTPUT, { channel: "OUTPUT_STATE", data: newStates })
     }
 
-    static toggleOutput(output: (Output & { id: string }), state: boolean, force?: boolean, autoStartup?: boolean, autoPosition?: boolean) {
+    static toggleOutput(output: Output & { id: string }, state: boolean, force?: boolean, autoStartup?: boolean, autoPosition?: boolean) {
         if (!output?.id) return false
 
         let window: BrowserWindow = OutputHelper.getOutput(output.id)?.window

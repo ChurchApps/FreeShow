@@ -29,7 +29,7 @@
         if (!currentId) currentId = styleId || "default"
 
         // create a style if nothing exists
-        styles.update((a) => {
+        styles.update(a => {
             if (!a[currentId]) a[currentId] = clone(currentStyle)
 
             return a
@@ -78,7 +78,7 @@
     let edit: any
 </script>
 
-<Tabs id="style" tabs={stylesList} value={styleId} newLabel="new.style" class="context #style" on:open={(e) => activeStyle.set(e.detail)} on:create={createStyle} let:tab>
-    {#if Object.values($outputs).find((a) => a.style === tab.id)}<Icon id="check" size={0.7} white right />{/if}
-    <HiddenInput value={tab.name} id={"style_" + tab.id} on:edit={(e) => updateStyle(e.detail.value, "name", tab.id)} bind:edit />
+<Tabs id="style" tabs={stylesList} value={styleId} newLabel="new.style" class="context #style" on:open={e => activeStyle.set(e.detail)} on:create={createStyle} let:tab>
+    {#if Object.values($outputs).find(a => a.style === tab.id)}<Icon id="check" size={0.7} white right />{/if}
+    <HiddenInput value={tab.name} id={"style_" + tab.id} on:edit={e => updateStyle(e.detail.value, "name", tab.id)} bind:edit />
 </Tabs>

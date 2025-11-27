@@ -26,13 +26,13 @@ export class PKCEHelper {
     static generateCodeVerifier(): string {
         const buffer = Buffer.alloc(32)
         randomFillSync(buffer)
-        return buffer.toString('base64url')
+        return buffer.toString("base64url")
     }
 
     static generateCodeChallenge(verifier: string): string {
-        const hash = createHash('sha256')
+        const hash = createHash("sha256")
         hash.update(verifier)
-        return hash.digest().toString('base64url')
+        return hash.digest().toString("base64url")
     }
 }
 
@@ -74,19 +74,13 @@ export class OAuth2Helper<TAuthData extends BaseAuthData = BaseAuthData> {
             if (error) {
                 const errorMsg = error_description || error
                 res.send(this.getErrorHtml(errorMsg as string))
-                this.rejectAuth?.(new ContentProviderError(
-                    ContentProviderErrorType.AUTHENTICATION_FAILED,
-                    `Authorization failed: ${errorMsg}`
-                ))
+                this.rejectAuth?.(new ContentProviderError(ContentProviderErrorType.AUTHENTICATION_FAILED, `Authorization failed: ${errorMsg}`))
                 return
             }
 
             if (!code) {
                 res.send(this.getErrorHtml("No authorization code received"))
-                this.rejectAuth?.(new ContentProviderError(
-                    ContentProviderErrorType.AUTHENTICATION_FAILED,
-                    "No authorization code received"
-                ))
+                this.rejectAuth?.(new ContentProviderError(ContentProviderErrorType.AUTHENTICATION_FAILED, "No authorization code received"))
                 return
             }
 
@@ -95,7 +89,6 @@ export class OAuth2Helper<TAuthData extends BaseAuthData = BaseAuthData> {
 
             res.send(this.getSuccessHtml())
             this.resolveAuth?.(tokens)
-
         } catch (error) {
             console.error("OAuth callback error:", error)
             res.send(this.getErrorHtml("Authentication failed"))
@@ -109,7 +102,7 @@ export class OAuth2Helper<TAuthData extends BaseAuthData = BaseAuthData> {
     async refreshAccessToken(refreshToken: string, scope: string): Promise<TAuthData | null> {
         return new Promise((resolve, reject) => {
             const params = new URLSearchParams({
-                grant_type: 'refresh_token',
+                grant_type: "refresh_token",
                 refresh_token: refreshToken,
                 client_id: this.config.clientId,
                 client_secret: this.config.clientSecret,
@@ -118,16 +111,13 @@ export class OAuth2Helper<TAuthData extends BaseAuthData = BaseAuthData> {
 
             const url = new URL(this.config.tokenUrl)
             const headers = {
-                'Content-Type': 'application/x-www-form-urlencoded',
+                "Content-Type": "application/x-www-form-urlencoded"
             }
             const content = Object.fromEntries(params.entries())
 
             httpsRequest(url.hostname, url.pathname, "POST", headers, content, (err, result) => {
                 if (err) {
-                    reject(new ContentProviderError(
-                        ContentProviderErrorType.TOKEN_EXPIRED,
-                        `Token refresh failed: ${err.message}`
-                    ))
+                    reject(new ContentProviderError(ContentProviderErrorType.TOKEN_EXPIRED, `Token refresh failed: ${err.message}`))
                     return
                 }
 
@@ -142,10 +132,7 @@ export class OAuth2Helper<TAuthData extends BaseAuthData = BaseAuthData> {
                         scope
                     } as TAuthData)
                 } catch (error) {
-                    reject(new ContentProviderError(
-                        ContentProviderErrorType.NETWORK_ERROR,
-                        `Token refresh failed: ${error.message}`
-                    ))
+                    reject(new ContentProviderError(ContentProviderErrorType.NETWORK_ERROR, `Token refresh failed: ${error.message}`))
                 }
             })
         })
@@ -156,7 +143,7 @@ export class OAuth2Helper<TAuthData extends BaseAuthData = BaseAuthData> {
      */
     private buildAuthUrl(scope: string): string {
         const params = new URLSearchParams({
-            response_type: 'code',
+            response_type: "code",
             client_id: this.config.clientId,
             redirect_uri: this.config.redirectUri,
             scope,
@@ -166,8 +153,8 @@ export class OAuth2Helper<TAuthData extends BaseAuthData = BaseAuthData> {
         if (this.config.usePKCE) {
             this.codeVerifier = PKCEHelper.generateCodeVerifier()
             const codeChallenge = PKCEHelper.generateCodeChallenge(this.codeVerifier)
-            params.append('code_challenge', codeChallenge)
-            params.append('code_challenge_method', 'S256')
+            params.append("code_challenge", codeChallenge)
+            params.append("code_challenge_method", "S256")
         }
 
         return `${this.config.authUrl}?${params.toString()}`
@@ -179,7 +166,7 @@ export class OAuth2Helper<TAuthData extends BaseAuthData = BaseAuthData> {
     private async exchangeCodeForTokens(code: string): Promise<TAuthData> {
         return new Promise((resolve, reject) => {
             const params = new URLSearchParams({
-                grant_type: 'authorization_code',
+                grant_type: "authorization_code",
                 code,
                 redirect_uri: this.config.redirectUri,
                 client_id: this.config.clientId,
@@ -187,21 +174,18 @@ export class OAuth2Helper<TAuthData extends BaseAuthData = BaseAuthData> {
             })
 
             if (this.config.usePKCE && this.codeVerifier) {
-                params.append('code_verifier', this.codeVerifier)
+                params.append("code_verifier", this.codeVerifier)
             }
 
             const url = new URL(this.config.tokenUrl)
             const headers = {
-                'Content-Type': 'application/x-www-form-urlencoded',
+                "Content-Type": "application/x-www-form-urlencoded"
             }
             const content = Object.fromEntries(params.entries())
 
             httpsRequest(url.hostname, url.pathname, "POST", headers, content, (err, result) => {
                 if (err) {
-                    reject(new ContentProviderError(
-                        ContentProviderErrorType.AUTHENTICATION_FAILED,
-                        `Token exchange failed: ${err.message}`
-                    ))
+                    reject(new ContentProviderError(ContentProviderErrorType.AUTHENTICATION_FAILED, `Token exchange failed: ${err.message}`))
                     return
                 }
 
@@ -216,10 +200,7 @@ export class OAuth2Helper<TAuthData extends BaseAuthData = BaseAuthData> {
                         scope: data.scope
                     } as TAuthData)
                 } catch (error) {
-                    reject(new ContentProviderError(
-                        ContentProviderErrorType.AUTHENTICATION_FAILED,
-                        `Token exchange failed: ${error.message}`
-                    ))
+                    reject(new ContentProviderError(ContentProviderErrorType.AUTHENTICATION_FAILED, `Token exchange failed: ${error.message}`))
                 }
             })
         })

@@ -9,7 +9,7 @@
     const effectId = $activeEdit?.id || ""
 
     function selectEffect(data: any) {
-        effects.update((a) => {
+        effects.update(a => {
             a[effectId].items.push(data)
             return a
         })

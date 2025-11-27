@@ -72,7 +72,7 @@
         if (!items.length) return []
 
         items
-            .filter((item) => (item.type || "text") === "text" && (!item.bindings?.length || item.bindings.includes("stage")))
+            .filter(item => (item.type || "text") === "text" && (!item.bindings?.length || item.bindings.includes("stage")))
             .forEach((item, i) => {
                 if (itemNumber && itemNumber - 1 !== i) return
 

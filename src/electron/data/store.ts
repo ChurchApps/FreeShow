@@ -3,7 +3,7 @@
 // https://www.npmjs.com/package/electron-store
 
 import Store from "electron-store"
-import { renameSync, statSync } from "fs"
+import { mkdirSync, renameSync, statSync } from "fs"
 import path from "path"
 import type { Event } from "../../types/Calendar"
 import type { History } from "../../types/History"
@@ -13,11 +13,12 @@ import type { Themes } from "../../types/Settings"
 import type { Overlays, Templates, TrimmedShows } from "../../types/Show"
 import type { StageLayouts } from "../../types/Stage"
 import type { ContentProviderId } from "../contentProviders/base/types"
-import { sendMain } from "../IPC/main"
+import { sendMain, sendToMain } from "../IPC/main"
 import { dataFolderNames, deleteFile, doesPathExist, getDataFolderPath, getDataFolderRoot, getDefaultDataFolderRoot, readFile, readFolder } from "../utils/files"
 import { clone } from "../utils/helpers"
 import "./contentProviders"
 import { defaultConfig, defaultSettings, defaultSyncedSettings } from "./defaults"
+import { ToMain } from "../../types/IPC/ToMain"
 
 // NOTE: defaults will always replace the keys with any in the default when they are removed
 
@@ -44,7 +45,7 @@ export const storeFilesData = {
     ERROR_LOG: { fileName: "error_log", portable: false, defaults: {} as { renderer?: ErrorLog[]; main?: ErrorLog[]; request?: ErrorLog[] } },
 
     DRIVE_API_KEY: { fileName: "DRIVE_API_KEY", portable: false, defaults: {} as any },
-    ACCESS: { fileName: "ACCESS", portable: false, defaults: { contentProviders: {} as { [key in ContentProviderId]?: any } } },
+    ACCESS: { fileName: "ACCESS", portable: false, defaults: { contentProviders: {} as { [key in ContentProviderId]?: any } } }
 }
 
 export const appDataPath = path.dirname(config.path)
@@ -89,15 +90,33 @@ function checkStores(dataPath: string) {
 export let _store: { [key in keyof typeof storeFilesData]?: Store<any> } = {}
 
 export function createStores(previousLocation?: string | null, setup: boolean = false) {
-    const configFolderPath = getDataFolderPath("userData")
+    let configFolderPath = getDataFolderPath("userData")
+
+    if (!doesPathExist(configFolderPath)) {
+        try {
+            mkdirSync(configFolderPath, { recursive: true })
+        } catch (err) {
+            if (previousLocation) {
+                configFolderPath = previousLocation
+            } else {
+                config.set("dataPath", "")
+                configFolderPath = getDataFolderPath("userData")
+            }
+
+            config.set("dataPath", configFolderPath)
+            sendMain(Main.DATA_PATH, configFolderPath)
+            sendToMain(ToMain.ALERT, "Error: No permission to folder!")
+        }
+    }
+    if (previousLocation === configFolderPath) previousLocation = ""
 
     Object.entries(storeFilesData).forEach(([key, data]) => {
         _store[key as keyof typeof storeFilesData] = new Store({
             name: data.fileName,
             defaults: data.defaults,
             cwd: data.portable ? configFolderPath : undefined,
-            serialize: (data as any).minify ? (v) => JSON.stringify(v) : undefined,
-            accessPropertiesByDotNotation: key === "MEDIA" ? false : true,
+            serialize: (data as any).minify ? v => JSON.stringify(v) : undefined,
+            accessPropertiesByDotNotation: key === "MEDIA" ? false : true
         })
 
         // move user data files to data/Config folder if not already
@@ -108,7 +127,7 @@ export function createStores(previousLocation?: string | null, setup: boolean = 
 // ----- GET STORE -----
 
 export function getStore(id: "config"): Config
-export function getStore<T extends keyof typeof storeFilesData>(id: T): typeof storeFilesData[T]["defaults"]
+export function getStore<T extends keyof typeof storeFilesData>(id: T): (typeof storeFilesData)[T]["defaults"]
 export function getStore<T extends keyof typeof storeFilesData | "config">(id: T) {
     if (id === "config") return config.store
 
@@ -151,11 +170,18 @@ function moveStore(key: keyof typeof storeFilesData, previousLocation: string, s
     const fileData = readFile(filePathOld)
     if (!fileData) return
 
-    store.clear()
-    store.set(JSON.parse(fileData))
+    try {
+        store.clear()
+        store.set(JSON.parse(fileData))
+
+        console.info(`Moved ${storeFilesData[key].fileName}.json to data folder`)
+    } catch (err) {
+        console.error("Could not read the " + filePathOld + ".json settings file, probably wrong JSON format!", err)
+        // auto delete files that can't be parsed!
+        deleteFile(filePathOld)
+    }
 
     // deleteFile(filePathOld) // keep old file for now
-    console.info(`Moved ${storeFilesData[key].fileName}.json to data folder`)
 }
 
 // move pre 1.5.3 data path & config
@@ -191,7 +217,7 @@ function moveShowsToDataFolder(oldShowsPath: string) {
     const files = readFolder(oldShowsPath)
     const showsFolderPath = getDataFolderPath("shows")
 
-    files.forEach((file) => {
+    files.forEach(file => {
         if (!file.endsWith(".show")) return
 
         const oldPath = path.join(oldShowsPath, file)

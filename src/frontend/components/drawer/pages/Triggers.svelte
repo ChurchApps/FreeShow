@@ -16,7 +16,7 @@
     const readOnly = profile.triggers === "read"
 
     $: sortedTriggers = sortByName(keysToID($triggers))
-    $: filteredTriggersSearch = searchValue.length > 1 ? sortedTriggers.filter((a) => a.name.toLowerCase().includes(searchValue.toLowerCase())) : sortedTriggers
+    $: filteredTriggersSearch = searchValue.length > 1 ? sortedTriggers.filter(a => a.name.toLowerCase().includes(searchValue.toLowerCase())) : sortedTriggers
 
     let status = { id: "", type: "" }
     async function buttonClick(id) {
@@ -59,7 +59,7 @@
                     style="flex: 1;padding: 0;"
                     class="context #trigger{readOnly ? '_readonly' : ''}"
                     title={formatTriggerValue(trigger.value)}
-                    on:click={(e) => {
+                    on:click={e => {
                         if (e.ctrlKey || e.metaKey) return
                         buttonClick(trigger.id)
                     }}

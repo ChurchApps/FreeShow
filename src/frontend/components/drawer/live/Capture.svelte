@@ -48,7 +48,7 @@
     function capture() {
         navigator.mediaDevices
             .getUserMedia(constraints)
-            .then((stream) => {
+            .then(stream => {
                 if (!videoElem) return
 
                 streams.push(stream)
@@ -77,19 +77,7 @@
         <track kind="captions" />
     </video>
 {:else}
-    <Card
-        mediaData={JSON.stringify(constraints)}
-        class="context #screen_card"
-        {loaded}
-        outlineColor={findMatchingOut(screen.id, $outputs)}
-        active={findMatchingOut(screen.id, $outputs) !== null}
-        on:click
-        title={screen.name}
-        label={screen.name}
-        icon={screen.id.includes("screen") ? "screen" : "window"}
-        white={!screen.id.includes("screen")}
-        showPlayOnHover
-    >
+    <Card mediaData={JSON.stringify(constraints)} class="context #screen_card" {loaded} outlineColor={findMatchingOut(screen.id, $outputs)} active={findMatchingOut(screen.id, $outputs) !== null} on:click title={screen.name} label={screen.name} icon={screen.id.includes("screen") ? "screen" : "window"} white={!screen.id.includes("screen")} showPlayOnHover>
         <SelectElem style="display: flex;" id="screen" data={{ id: screen.id, type: "screen", name: screen.name }} draggable>
             <canvas bind:this={canvas} />
             {#if !loaded}

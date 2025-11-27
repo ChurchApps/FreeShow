@@ -8,10 +8,7 @@
     let slideWidth: number = 0
     let slideHeight: number = 0
     let ratio: number = 1
-    $: ratio = Math.min(
-        slideWidth / (resolution?.width || 1920),
-        slideHeight / (resolution?.height || 1080)
-    )
+    $: ratio = Math.min(slideWidth / (resolution?.width || 1920), slideHeight / (resolution?.height || 1080))
 
     // dynamic resolution
     if (dynamicResolution) resolution = { width: window.innerWidth, height: window.innerHeight }

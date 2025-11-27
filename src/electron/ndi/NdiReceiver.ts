@@ -5,9 +5,9 @@ import { OutputHelper } from "../output/OutputHelper"
 let warned = false
 const loadGrandiose = async () => {
     try {
-        return await import('grandiose')
+        return await import("grandiose")
     } catch (err) {
-        if (!warned) console.warn('NDI not available:', err.message)
+        if (!warned) console.warn("NDI not available:", err.message)
         warned = true
         return null
     }
@@ -57,8 +57,8 @@ export class NdiReceiver {
         const grandiose = await loadGrandiose()
         if (!grandiose) return []
 
-        const finder: any = await (grandiose).find({ showLocalSources: true })
-        return new Promise<any[]>((resolve) => {
+        const finder: any = await grandiose.find({ showLocalSources: true })
+        return new Promise<any[]>(resolve => {
             // without the interval it only finds one source: https://github.com/emanspeaks/grandiose/commit/271cd73b5269ab827155a1a944c15d3b5fe4d564
             let previousLength = 0
             this.findSourcesInterval = setInterval(() => {
@@ -81,7 +81,10 @@ export class NdiReceiver {
             }
 
             const receiver = this.allActiveReceivers[source.id]
-            if (!receiver?.video) { delete this.allActiveReceivers[source.id]; return }
+            if (!receiver?.video) {
+                delete this.allActiveReceivers[source.id]
+                return
+            }
 
             // For NDI-HX sources, start continuous reception for thumbnail generation
             if (!this.NDI_RECEIVERS[source.id]) {
@@ -101,8 +104,8 @@ export class NdiReceiver {
                     rawFrame = await receiver.video(50)
                     break
                 } catch (err: any) {
-                    const msg = err.message || ''
-                    if (msg.includes('Non-video data received')) {
+                    const msg = err.message || ""
+                    if (msg.includes("Non-video data received")) {
                         if (attempt < 2) continue
                         return
                     }
@@ -123,10 +126,10 @@ export class NdiReceiver {
     }
 
     private static handleError(err: any, consecutiveErrors: number): { shouldContinue: boolean; delay: number; newErrorCount: number } {
-        const msg = err.message || ''
+        const msg = err.message || ""
 
-        if (msg.includes('Non-video data received')) return { shouldContinue: true, delay: 0, newErrorCount: Math.max(0, consecutiveErrors - 1) }
-        if (msg.includes('No video data received')) return { shouldContinue: true, delay: 1, newErrorCount: consecutiveErrors }
+        if (msg.includes("Non-video data received")) return { shouldContinue: true, delay: 0, newErrorCount: Math.max(0, consecutiveErrors - 1) }
+        if (msg.includes("No video data received")) return { shouldContinue: true, delay: 1, newErrorCount: consecutiveErrors }
 
         const newCount = consecutiveErrors + 1
         return {
@@ -136,7 +139,7 @@ export class NdiReceiver {
         }
     }
 
-    private static updateAdaptiveDelay(processingTime: number, processingTimes: number[], currentDelay: number): { newTimes: number[], newDelay: number } {
+    private static updateAdaptiveDelay(processingTime: number, processingTimes: number[], currentDelay: number): { newTimes: number[]; newDelay: number } {
         processingTimes.push(processingTime)
         if (processingTimes.length > 10) processingTimes.shift()
 
@@ -284,6 +287,6 @@ export class NdiReceiver {
         Object.keys(this.NDI_RECEIVERS).forEach(id => {
             if (this.NDI_RECEIVERS[id]) this.NDI_RECEIVERS[id].shouldStop = true
         })
-        setTimeout(() => this.NDI_RECEIVERS = {}, 100)
+        setTimeout(() => (this.NDI_RECEIVERS = {}), 100)
     }
 }

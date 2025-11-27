@@ -45,7 +45,7 @@ export class ShowObj implements Show {
         this.timestamps = {
             created,
             modified: null,
-            used: null,
+            used: null
         }
         this.quickAccess = {}
         this.meta = {}

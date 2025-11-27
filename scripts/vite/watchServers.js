@@ -8,9 +8,9 @@ const servers = ["remote", "stage", "controller", "output_stream"]
 const viteConfig = "config/building/vite.config.servers.mjs"
 const processes = []
 
-servers.forEach((server) => {
+servers.forEach(server => {
     console.log(`Starting watch for ${server}...`)
-    
+
     const watchProcess = spawn("npx", ["vite", "build", "--config", viteConfig, "--watch"], {
         stdio: "inherit",
         shell: true,
@@ -21,11 +21,11 @@ servers.forEach((server) => {
             VITE_SERVER_ID: server
         }
     })
-    
-    watchProcess.on("error", (err) => {
+
+    watchProcess.on("error", err => {
         console.error(`Failed to watch ${server}:`, err)
     })
-    
+
     processes.push(watchProcess)
 })
 

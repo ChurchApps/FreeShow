@@ -3,5 +3,11 @@ printWidth: 500
 tabWidth: 4
 semi: false
 singleQuote: false
-bracketSameLine: true
 arrowParens: "avoid"
+
+plugins:
+    - "prettier-plugin-svelte"
+overrides:
+    - files: "*.svelte"
+      options:
+          parser: "svelte"

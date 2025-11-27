@@ -80,13 +80,13 @@
         .label {
             display: none;
         }
-        
+
         .tabs {
             padding: 2px;
             border-radius: 8px 8px 0 0;
             gap: 2px;
         }
-        
+
         .tabs :global(button) {
             padding: 0.3rem 0.4rem;
             min-height: 16px;

@@ -69,7 +69,7 @@
     function removeStyle(key: string) {
         iconClicked = setTimeout(() => (iconClicked = null), 50)
 
-        media.update((a) => {
+        media.update(a => {
             if (!a[cam.id]) return a
 
             if (key === "filters") {
@@ -91,7 +91,7 @@
     function removeFromStartup(cameraId: string) {
         iconClicked = setTimeout(() => (iconClicked = null), 50)
 
-        const newCameraIds = startupCameras.filter((id) => id !== cameraId)
+        const newCameraIds = startupCameras.filter(id => id !== cameraId)
         cameraManager.setStartupCameras(newCameraIds)
     }
 </script>

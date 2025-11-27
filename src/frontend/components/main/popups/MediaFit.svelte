@@ -63,8 +63,8 @@
 
 {#if showMore}
     <div class="options">
-        <MaterialNumberInput label="edit.blur" value={currentData.blurAmount ?? 6} defaultValue={6} max={50} on:change={(e) => customUpdate("blurAmount", e.detail)} />
-        <MaterialNumberInput label="edit.opacity" value={(currentData.blurOpacity || 0.3) * 100} defaultValue={30} min={1} max={100} on:change={(e) => customUpdate("blurOpacity", e.detail / 100)} />
+        <MaterialNumberInput label="edit.blur" value={currentData.blurAmount ?? 6} defaultValue={6} max={50} on:change={e => customUpdate("blurAmount", e.detail)} />
+        <MaterialNumberInput label="edit.opacity" value={(currentData.blurOpacity || 0.3) * 100} defaultValue={30} min={1} max={100} on:change={e => customUpdate("blurOpacity", e.detail / 100)} />
     </div>
 {/if}
 

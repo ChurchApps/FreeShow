@@ -118,6 +118,7 @@ export enum Main {
     CLOSE_MIDI = "CLOSE_MIDI",
     GET_LYRICS = "GET_LYRICS",
     SEARCH_LYRICS = "SEARCH_LYRICS",
+    RECORDER = "RECORDER",
     RESTORE = "RESTORE",
     SYSTEM_OPEN = "SYSTEM_OPEN",
     LOCATE_MEDIA_FILE = "LOCATE_MEDIA_FILE",
@@ -164,7 +165,7 @@ export interface MainSendPayloads {
     [Main.OUTPUT]: "true" | "false"
     [Main.DOES_MEDIA_EXIST]: { path: string; creationTime?: number; noCache?: boolean }
     [Main.GET_THUMBNAIL]: { input: string; size: number }
-    [Main.SAVE_IMAGE]: { path?: string; base64?: string; filePath?: string[]; format?: "png" | "jpg" }
+    [Main.SAVE_IMAGE]: { base64?: string; filePath?: string[]; format?: "png" | "jpg" }
     [Main.PDF_TO_IMAGE]: { filePath: string }
     [Main.READ_EXIF]: { id: string }
     [Main.MEDIA_CODEC]: { path: string }
@@ -191,6 +192,7 @@ export interface MainSendPayloads {
     [Main.GET_LYRICS]: { song: LyricSearchResult }
     [Main.SEARCH_LYRICS]: { artist: string; title: string }
     [Main.RESTORE]?: { folder: string }
+    [Main.RECORDER]: { blob: ArrayBuffer; name: string }
     [Main.SYSTEM_OPEN]: string
 
     [Main.LOCATE_MEDIA_FILE]: { fileName: string; splittedPath: string[]; folders: string[]; ref: { showId: string; mediaId: string; cloudId: string } }
@@ -223,7 +225,7 @@ export interface MainReturnPayloads {
     [Main.CHECK_RAM_USAGE]: { total: number; free: number; performanceMode: boolean }
     ///
     // [Main.SAVE]: { closeWhenFinished: boolean; customTriggers: any } | Promise<void>
-    [Main.BACKUPS]: { path: string; name: string, date: number; size: number }[]
+    [Main.BACKUPS]: { path: string; name: string; date: number; size: number }[]
     [Main.SHOWS]: TrimmedShows
     // STORES
     [Main.SYNCED_SETTINGS]: { [key in SaveListSyncedSettings]: any }
