@@ -3,15 +3,16 @@
 
 import type { Rectangle } from "electron"
 import { BrowserWindow, Menu, app, ipcMain, powerSaveBlocker, protocol, screen } from "electron"
-import { AUDIO, CLOUD, EXPORT, MAIN, NDI, OUTPUT, RECORDER, STARTUP } from "../types/Channels"
+import { AUDIO, CLOUD, EXPORT, MAIN, NDI, OUTPUT, STARTUP } from "../types/Channels"
 import { Main } from "../types/IPC/Main"
 import type { Dictionary } from "../types/Settings"
 import { receiveAudio } from "./audio/receiveAudio"
 import { cloudConnect } from "./cloud/cloud"
 import { startExport } from "./data/export"
+import { registerProtectedProtocol } from "./data/protected"
 import { config, setupStores } from "./data/store"
 import { receiveMain, sendMain } from "./IPC/main"
-import { autoErrorReport, saveRecording } from "./IPC/responsesMain"
+import { autoErrorReport } from "./IPC/responsesMain"
 import { receiveNDI } from "./ndi/talk"
 import { OutputHelper } from "./output/OutputHelper"
 import { callClose, exitApp, saveAndClose } from "./utils/close"
@@ -19,7 +20,6 @@ import { isWithinDisplayBounds, mainWindowInitialize, openDevTools, parseCommand
 import { template } from "./utils/menuTemplate"
 import { spellcheck } from "./utils/spellcheck"
 import { loadingOptions, mainOptions } from "./utils/windowOptions"
-import { registerProtectedProtocol } from "./data/protected"
 
 // ----- STARTUP -----
 
@@ -312,7 +312,6 @@ ipcMain.on(MAIN, receiveMain)
 ipcMain.on(OUTPUT, OutputHelper.receiveOutput)
 ipcMain.on(EXPORT, startExport)
 ipcMain.on(CLOUD, cloudConnect)
-ipcMain.on(RECORDER, saveRecording)
 ipcMain.on(NDI, receiveNDI)
 ipcMain.on(AUDIO, receiveAudio)
 

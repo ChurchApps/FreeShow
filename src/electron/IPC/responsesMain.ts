@@ -143,6 +143,7 @@ export const mainResponses: MainResponses = {
     [Main.SEARCH_LYRICS]: data => searchLyrics(data),
     // FILES
     [Main.RESTORE]: data => restoreFiles(data),
+    [Main.RECORDER]: data => saveRecording(data),
     [Main.SYSTEM_OPEN]: data => openInSystem(data),
     [Main.LOCATE_MEDIA_FILE]: data => locateMediaFile(data),
     [Main.GET_SIMILAR]: data => getSimularPaths(data),
@@ -346,11 +347,11 @@ function getScreens(type: "window" | "screen" = "screen"): Promise<{ name: strin
 // RECORDER
 // only open once per session
 let systemOpened = false
-export function saveRecording(_: Electron.IpcMainEvent, msg: any) {
+export function saveRecording(data: { blob: ArrayBuffer; name: string }) {
     const folder = getDataFolderPath("recordings")
-    const filePath = path.join(folder, msg.name)
+    const filePath = path.join(folder, data.name)
 
-    const buffer = Buffer.from(msg.blob)
+    const buffer = Buffer.from(data.blob)
     writeFile(filePath, buffer)
 
     if (!systemOpened) {

@@ -118,6 +118,7 @@ export enum Main {
     CLOSE_MIDI = "CLOSE_MIDI",
     GET_LYRICS = "GET_LYRICS",
     SEARCH_LYRICS = "SEARCH_LYRICS",
+    RECORDER = "RECORDER",
     RESTORE = "RESTORE",
     SYSTEM_OPEN = "SYSTEM_OPEN",
     LOCATE_MEDIA_FILE = "LOCATE_MEDIA_FILE",
@@ -191,6 +192,7 @@ export interface MainSendPayloads {
     [Main.GET_LYRICS]: { song: LyricSearchResult }
     [Main.SEARCH_LYRICS]: { artist: string; title: string }
     [Main.RESTORE]?: { folder: string }
+    [Main.RECORDER]: { blob: ArrayBuffer; name: string }
     [Main.SYSTEM_OPEN]: string
 
     [Main.LOCATE_MEDIA_FILE]: { fileName: string; splittedPath: string[]; folders: string[]; ref: { showId: string; mediaId: string; cloudId: string } }
