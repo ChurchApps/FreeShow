@@ -4,11 +4,11 @@
     "editor.detectIndentation": false,
     "editor.formatOnSave": true,
     "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "prettier.trailingComma": "none",
+    "prettier.printWidth": 500,
     "prettier.singleQuote": false,
     "prettier.semi": false,
+    "prettier.arrowParens": "avoid",
     "typescript.preferences.quoteStyle": "double",
-    "typescript.preferences.importModuleSpecifier": "non-relative",
-    "[typescript]": {
-        "editor.defaultFormatter": "vscode.typescript-language-features"
-    }
+    "typescript.preferences.importModuleSpecifier": "non-relative"
 }

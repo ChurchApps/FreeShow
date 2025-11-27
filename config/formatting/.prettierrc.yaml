@@ -3,5 +3,4 @@ printWidth: 500
 tabWidth: 4
 semi: false
 singleQuote: false
-bracketSameLine: true
 arrowParens: "avoid"
