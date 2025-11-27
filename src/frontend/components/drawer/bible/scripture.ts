@@ -911,6 +911,13 @@ function findHtmlSplitIndex(text: string, capacity: number) {
         const idx = slice.lastIndexOf(char)
         if (idx > splitIndex) splitIndex = idx
     })
+    if (splitIndex === -1) {
+        // Look ahead a little so we prefer the next whitespace instead of cutting through a word
+        const nextBreak = text.slice(capacity).search(/[ \n\t\-,]/)
+        if (nextBreak >= 0 && nextBreak <= 20) {
+            splitIndex = capacity + nextBreak
+        }
+    }
     let breakPos = splitIndex === -1 ? capacity : splitIndex + 1
     breakPos = adjustSplitIndexForBracket(text, breakPos)
     return Math.max(0, breakPos)
