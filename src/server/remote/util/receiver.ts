@@ -1,7 +1,35 @@
 import type { Item, Show } from "../../../types/Show"
+import { sanitizeVerseText } from "../../../common/scripture/sanitizeVerseText"
 import { setError, translate } from "./helpers"
 import { send } from "./socket"
 import { _, _get, _set, _update, currentScriptureState, overlays, scriptures, scriptureCache } from "./stores"
+
+function sanitizeBiblePayload(bible: any) {
+    if (!bible || !Array.isArray(bible.books)) return bible
+
+    const books = bible.books.map((book: any) => ({
+        ...book,
+        chapters: Array.isArray(book.chapters)
+            ? book.chapters.map((chapter: any) => ({
+                ...chapter,
+                verses: sanitizeChapterVerses(chapter.verses)
+            }))
+            : book.chapters
+    }))
+
+    return { ...bible, books }
+}
+
+function sanitizeChapterVerses(verses: any) {
+    if (!Array.isArray(verses)) return verses
+
+    return verses.map((verse: any, index: number) => {
+        const sanitizedVerse = { ...verse }
+        sanitizedVerse.number = sanitizedVerse.number || index + 1
+        sanitizedVerse.text = sanitizeVerseText(sanitizedVerse.text || sanitizedVerse.value || "")
+        return sanitizedVerse
+    })
+}
 
 export type ReceiverKey = keyof typeof receiver
 export const receiver = {
@@ -165,7 +193,7 @@ export const receiver = {
         if (!data) return
 
         if (data.bible) {
-            _update("scriptureCache", data.id, data.bible)
+            _update("scriptureCache", data.id, sanitizeBiblePayload(data.bible))
             return
         }
 
@@ -204,7 +232,7 @@ export const receiver = {
                 const chapter = chaptersArr[chapterIndex] || { verses: [] }
                 chapter.verses = (verses || []).map((v: any, i: number) => ({
                     number: v.number || i + 1,
-                    text: v.text || v.value || ""
+                    text: sanitizeVerseText(v.text || v.value || "")
                 }))
                 chaptersArr[chapterIndex] = chapter
                 book.chapters = chaptersArr
@@ -245,7 +273,7 @@ export const receiver = {
             const chapter = chaptersArr[chapterIndex] || { verses: [] }
             chapter.verses = (verses || []).map((v: any, i: number) => ({
                 number: v.number || i + 1,
-                text: v.text || v.value || ""
+                text: sanitizeVerseText(v.text || v.value || "")
             }))
             chaptersArr[chapterIndex] = chapter
             book.chapters = chaptersArr
