@@ -3,8 +3,7 @@ import protobufjs from "protobufjs"
 import upath from "upath"
 // @ts-ignore (strange Rollup TS build problem, suddenly not realizing that the decleration exists)
 import MDBReader from "mdb-reader"
-import SqliteToJson from "sqlite-to-json"
-import sqlite3 from "sqlite3"
+import Database from "better-sqlite3"
 // @ts-ignore
 import WordExtractor from "word-extractor"
 import { ToMain } from "../../types/IPC/ToMain"
@@ -46,24 +45,24 @@ const specialImports = {
     sqlite: async (files: string[]) => {
         const data: FileData[] = []
 
-        await Promise.all(files.map(sqlToFile))
+        for (const filePath of files) {
+            try {
+                const db = new Database(filePath, { readonly: true })
+                const tables: { [key: string]: any[] } = {}
 
-        function sqlToFile(filePath: string) {
-            const exporter = new SqliteToJson({
-                client: new sqlite3.Database(filePath)
-            })
+                // Get all table names
+                const tableNames = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'").all() as { name: string }[]
 
-            return new Promise(resolve => {
-                exporter.all((err: Error, all: any) => {
-                    if (err) {
-                        console.error(err)
-                        return
-                    }
+                // Get all data from each table
+                for (const { name } of tableNames) {
+                    tables[name] = db.prepare(`SELECT * FROM \`${name}\``).all()
+                }
 
-                    data.push({ content: all })
-                    resolve(true)
-                })
-            })
+                db.close()
+                data.push({ content: tables })
+            } catch (err) {
+                console.error(err)
+            }
         }
 
         return data
