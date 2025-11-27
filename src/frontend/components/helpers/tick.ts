@@ -100,7 +100,7 @@ const Timer: any = function (this: any, callback: (id: string) => void, delay: n
 
     function update() {
         slideTimers.update(a => {
-            a[timerId] = { ...a, ...options, start }
+            a[timerId] = { ...options, start }
             return a
         })
     }
@@ -114,7 +114,7 @@ function sliderTime(id: any) {
     if (options.sliderTimer || !options.timer || options.paused || !options.autoPlay) return
 
     options.sliderTimer = setTimeout(() => {
-        options = clone(get(slideTimers)[id])
+        options = clone(get(slideTimers)[id]) /// DEBUG
         if (!options || !options.sliderTimer || !options.timer || options.paused) return
 
         slideTimers.update(a => {
