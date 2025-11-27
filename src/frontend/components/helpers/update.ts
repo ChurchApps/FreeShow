@@ -11,7 +11,7 @@ export function updateStore(storeId: StoreKey, data: StoreData, options: any = {
     let oldData: StoreData = clone(data)
     oldData.value = undefined
 
-    $[storeId].update((a) => {
+    $[storeId].update(a => {
         const split: any = splitKeys(a, data, options)
 
         oldData = split.old

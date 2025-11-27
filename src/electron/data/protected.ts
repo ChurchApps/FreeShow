@@ -84,7 +84,7 @@ async function getReadStream(input: string, maxRedirects = 5): Promise<NodeJS.Re
 
     return new Promise((resolve, reject) => {
         const client = input.startsWith("https://") ? https : http
-        const req = client.get(input, (res) => {
+        const req = client.get(input, res => {
             // handle redirects (basic)
             if (res.statusCode && res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
                 if (maxRedirects <= 0) {
@@ -96,7 +96,9 @@ async function getReadStream(input: string, maxRedirects = 5): Promise<NodeJS.Re
 
                 // close current response
                 res.destroy()
-                getReadStream(loc, maxRedirects - 1).then(resolve).catch(reject)
+                getReadStream(loc, maxRedirects - 1)
+                    .then(resolve)
+                    .catch(reject)
                 return
             }
 
@@ -133,7 +135,7 @@ const CACHE_TTL = 1000 * 60 * 5 // 5 minutes
 const PROTOCOL_SCHEME = "freeshow-protected"
 
 export function registerProtectedProtocol() {
-    protocol.handle(PROTOCOL_SCHEME, async (request) => {
+    protocol.handle(PROTOCOL_SCHEME, async request => {
         try {
             const parsed = new URL(request.url)
             const entryId = parsed.hostname || parsed.pathname.replace(/^\//, "")
@@ -166,15 +168,7 @@ export function registerProtectedProtocol() {
     })
 }
 
-export function registerProtectedMediaFile({
-    filePath,
-    providerId,
-    mimeType
-}: {
-    filePath: string
-    providerId: ContentProviderId
-    mimeType?: string
-}): string | null {
+export function registerProtectedMediaFile({ filePath, providerId, mimeType }: { filePath: string; providerId: ContentProviderId; mimeType?: string }): string | null {
     if (!filePath || !providerId) return null
 
     const entryId = path.basename(filePath)

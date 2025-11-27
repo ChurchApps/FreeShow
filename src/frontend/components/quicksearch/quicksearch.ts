@@ -1,41 +1,7 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
 import { sendMain } from "../../IPC/main"
-import {
-    actions,
-    activeEdit,
-    activePage,
-    activePopup,
-    activeProject,
-    activeShow,
-    activeStage,
-    activeStyle,
-    alertMessage,
-    categories,
-    companion,
-    currentOutputSettings,
-    disabledServers,
-    focusMode,
-    folders,
-    groups,
-    openToolsTab,
-    outputs,
-    overlays,
-    profiles,
-    projects,
-    projectView,
-    quickSearchActive,
-    refreshEditSlide,
-    selectedProfile,
-    settingsTab,
-    showRecentlyUsedProjects,
-    showsCache,
-    slidesOptions,
-    sortedShowsList,
-    stageShows,
-    styles,
-    textEditActive
-} from "../../stores"
+import { actions, activeEdit, activePage, activePopup, activeProject, activeShow, activeStage, activeStyle, alertMessage, categories, companion, currentOutputSettings, disabledServers, focusMode, folders, groups, openToolsTab, outputs, overlays, profiles, projects, projectView, quickSearchActive, refreshEditSlide, selectedProfile, settingsTab, showRecentlyUsedProjects, showsCache, slidesOptions, sortedShowsList, stageShows, styles, textEditActive } from "../../stores"
 import { triggerFunction } from "../../utils/common"
 import { translateText } from "../../utils/language"
 import { getAccess } from "../../utils/profile"
@@ -134,13 +100,16 @@ export function quicksearch(searchValue: string) {
     if (shouldReturn()) return trimValues()
 
     // shows
-    const shows = showSearch(searchValue, get(sortedShowsList).filter(a => !get(categories)[a.category || ""]?.isArchive))
+    const shows = showSearch(
+        searchValue,
+        get(sortedShowsList).filter(a => !get(categories)[a.category || ""]?.isArchive)
+    )
     addValues(shows, "show", "slide")
 
     return trimValues()
 
     function addValues(items: any[], type: keyof typeof triggerActions, icon = "") {
-        const newValues: QuickSearchValue[] = items.map((a) => ({ type, icon: a.icon || icon, id: a.id, name: a.name, color: a.color, data: a.data || null, aliasMatch: a.aliasMatch || null }))
+        const newValues: QuickSearchValue[] = items.map(a => ({ type, icon: a.icon || icon, id: a.id, name: a.name, color: a.color, data: a.data || null, aliasMatch: a.aliasMatch || null }))
         values.push(...newValues)
     }
 }
@@ -365,7 +334,7 @@ export function selectQuicksearchValue(value: QuickSearchValue, control: boolean
 
 // HELPERS
 
-const translateNames = (array: any[]) => array.map((a) => ({ ...a, name: translateText(a.name) })).map(translateAliases)
+const translateNames = (array: any[]) => array.map(a => ({ ...a, name: translateText(a.name) })).map(translateAliases)
 
 function translateAliases(options: any) {
     options.aliases = (options.aliases || []).map(translateText)
@@ -490,7 +459,7 @@ const popups = [
     { id: "effect", name: "new.effect", icon: "add", data: { drawerTab: "effects" } },
     { id: "template", name: "new.template", icon: "add", data: { drawerTab: "templates" } },
     // logs
-    { id: "error_log", name: "actions.open_error_log", icon: "document", data: { settingsTab: "other" }, aliases: ["-Freeze"] },
+    { id: "error_log", name: "actions.open_error_log", icon: "document", data: { settingsTab: "other" }, aliases: ["-Freeze"] }
 ]
 
 function getPopups() {
@@ -502,40 +471,14 @@ const settings = [
         id: "general",
         name: "settings.general",
         icon: "general",
-        aliases: [
-            "settings.language",
-            "settings.use24hClock",
-            "settings.disable_labels",
-            "settings.default_project_name",
-            "settings.startup_projects_list",
-            "settings.auto_output",
-            "settings.hide_cursor_in_output",
-            "settings.clear_media_when_finished",
-            "settings.capitalize_words",
-            "settings.transparent_slides",
-            "settings.full_colors",
-            "settings.slide_number_keys",
-            "settings.auto_shortcut_first_letter"
-        ]
+        aliases: ["settings.language", "settings.use24hClock", "settings.disable_labels", "settings.default_project_name", "settings.startup_projects_list", "settings.auto_output", "settings.hide_cursor_in_output", "settings.clear_media_when_finished", "settings.capitalize_words", "settings.transparent_slides", "settings.full_colors", "settings.slide_number_keys", "settings.auto_shortcut_first_letter"]
     },
     { id: "display_settings", name: "settings.display_settings", icon: "display_settings", aliases: ["settings.active_style", "settings.output_screen", "settings.always_on_top", "NDI®", "-Livestream", "-Stage", "-HDMI"] },
     {
         id: "styles",
         name: "settings.styles",
         icon: "styles",
-        aliases: [
-            "-Looks",
-            "edit.background_color",
-            "edit.background_media",
-            "popup.transition",
-            "edit.media_fit",
-            "settings.aspect_ratio",
-            "settings.active_layers",
-            "settings.lines",
-            "settings.override_with_template",
-            "settings.override_scripture_with_template",
-            "meta.display_metadata"
-        ]
+        aliases: ["-Looks", "edit.background_color", "edit.background_media", "popup.transition", "edit.media_fit", "settings.aspect_ratio", "settings.active_layers", "settings.lines", "settings.override_with_template", "settings.override_scripture_with_template", "meta.display_metadata"]
     },
     { id: "connection", name: "settings.connection", icon: "connection", aliases: ["Planning Center", "ChurchApps", "-Network", "-LAN"] },
     {

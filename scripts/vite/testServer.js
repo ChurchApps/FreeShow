@@ -27,7 +27,7 @@ const buildProcess = spawn("npx", ["vite", "build", "--config", viteConfig], {
     }
 })
 
-buildProcess.on("close", (code) => {
+buildProcess.on("close", code => {
     if (code !== 0) {
         console.error("Build failed with code:", code)
         process.exit(code)
@@ -58,7 +58,7 @@ buildProcess.on("close", (code) => {
     }
 })
 
-buildProcess.on("error", (err) => {
+buildProcess.on("error", err => {
     console.error("Failed to start build process:", err)
     process.exit(1)
 })

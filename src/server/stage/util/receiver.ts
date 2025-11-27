@@ -27,7 +27,7 @@ export const receiver = {
 
         const nameQuery = urlParams.get("name")
         if (nameQuery) {
-            let matchingLayout = data.find((a) => a.name.replaceAll(" ", "").toLowerCase() === nameQuery.toLowerCase())
+            let matchingLayout = data.find(a => a.name.replaceAll(" ", "").toLowerCase() === nameQuery.toLowerCase())
             if (matchingLayout) {
                 openLayout(matchingLayout.id)
                 return
@@ -74,7 +74,7 @@ export const receiver = {
     },
 
     REQUEST_STREAM: (data: any) => {
-        stream.update((a) => {
+        stream.update(a => {
             a[data.alpha ? "alpha" : "default"] = data.stream
             return a
         })
@@ -92,15 +92,15 @@ export const receiver = {
         _set("selectedLayout", "")
     },
     LANGUAGE: (data: any) => {
-        _.dictionary.update((a) => {
-            Object.keys(a).forEach((i) => {
-                Object.keys(a[i] || {}).forEach((j) => {
+        _.dictionary.update(a => {
+            Object.keys(a).forEach(i => {
+                Object.keys(a[i] || {}).forEach(j => {
                     if (data.strings[i]?.[j] && a[i]) a[i]![j] = data.strings[i][j]
                 })
             })
             return a
         })
-    },
+    }
 
     /////
 

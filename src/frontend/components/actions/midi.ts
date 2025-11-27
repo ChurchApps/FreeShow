@@ -23,7 +23,7 @@ export function midiInListen() {
             return
         }
 
-        action.shows.forEach(async (show) => {
+        action.shows.forEach(async show => {
             if (!get(shows)[show.id]) return
 
             await loadShows([show.id])
@@ -31,12 +31,12 @@ export function midiInListen() {
             // check that current show actually has this MIDI receive action
             const layouts: Layout[] = _show(show.id).layouts().get()
             let found = false
-            layouts.forEach((layout) => {
-                layout.slides.forEach((slide) => {
+            layouts.forEach(layout => {
+                layout.slides.forEach(slide => {
                     if (slide.actions?.receiveMidi === id) found = true
 
                     if (slide.children) {
-                        Object.values(slide.children).forEach((child) => {
+                        Object.values(slide.children).forEach(child => {
                             if (child.actions?.receiveMidi === id) found = true
                         })
                     }
@@ -45,7 +45,7 @@ export function midiInListen() {
 
             if (!found) {
                 // remove from midi
-                actions.update((a) => {
+                actions.update(a => {
                     delete a[id]
                     return a
                 })
@@ -132,8 +132,8 @@ export function receivedMidi(msg) {
         await loadShows([id])
         const refs = _show(id).layouts().ref()
 
-        refs.forEach((ref) => {
-            ref.forEach((slideRef) => {
+        refs.forEach(ref => {
+            ref.forEach(slideRef => {
                 if (slidePlayed) return
 
                 const receiveMidi = slideRef.data.actions?.receiveMidi

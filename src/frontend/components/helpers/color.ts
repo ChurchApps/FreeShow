@@ -109,7 +109,7 @@ export function generateLightRandomColor() {
     const b = Math.floor(Math.random() * (256 - minBrightness)) + minBrightness
 
     // RGB to hex
-    const toHex = (c) => {
+    const toHex = c => {
         const hex = c.toString(16)
         return hex.length === 1 ? "0" + hex : hex
     }
@@ -179,7 +179,7 @@ export function splitGradientValue(gradientStr: string) {
     const normalizeColor = (str: string) => {
         const rgbMatch = str.match(/^rgb\(([^)]+)\)$/i)
         if (!rgbMatch) return str.trim()
-        const vals = rgbMatch[1].split(/[\s,]+/).map((s) => s.trim())
+        const vals = rgbMatch[1].split(/[\s,]+/).map(s => s.trim())
         return vals.length === 3 ? `rgba(${vals.join(",")}, 1)` : `rgba(${vals.join(",")})`
     }
 
@@ -195,7 +195,7 @@ export function splitGradientValue(gradientStr: string) {
 
     // Auto-assign positions if missing
     const total = result.colors.length
-    const hasAllPositions = result.colors.every((c) => c.pos !== null)
+    const hasAllPositions = result.colors.every(c => c.pos !== null)
     if (!hasAllPositions) {
         for (let i = 0; i < total; i++) {
             if (result.colors[i].pos === null) {
@@ -217,7 +217,9 @@ export function splitGradientValue(gradientStr: string) {
 
 export function hexToHSL(H: string) {
     // Convert hex to HSL (returns {h, s, l})
-    let r = 0; let g = 0; let b = 0
+    let r = 0
+    let g = 0
+    let b = 0
     if (H.length === 4) {
         r = parseInt(H[1] + H[1], 16)
         g = parseInt(H[2] + H[2], 16)
@@ -227,9 +229,15 @@ export function hexToHSL(H: string) {
         g = parseInt(H.substring(3, 5), 16)
         b = parseInt(H.substring(5, 7), 16)
     }
-    r /= 255; g /= 255; b /= 255
-    const cmin = Math.min(r, g, b); const cmax = Math.max(r, g, b); const delta = cmax - cmin
-    let h = 0; let s = 0; let l = (cmax + cmin) / 2
+    r /= 255
+    g /= 255
+    b /= 255
+    const cmin = Math.min(r, g, b)
+    const cmax = Math.max(r, g, b)
+    const delta = cmax - cmin
+    let h = 0
+    let s = 0
+    let l = (cmax + cmin) / 2
     if (delta === 0) h = 0
     else if (cmax === r) h = ((g - b) / delta) % 6
     else if (cmax === g) h = (b - r) / delta + 2
@@ -243,18 +251,40 @@ export function hexToHSL(H: string) {
 }
 
 export function hslToHex(h: number, s: number, l: number) {
-    s /= 100; l /= 100
+    s /= 100
+    l /= 100
     const c = (1 - Math.abs(2 * l - 1)) * s
-    const x = c * (1 - Math.abs((h / 60) % 2 - 1))
+    const x = c * (1 - Math.abs(((h / 60) % 2) - 1))
     const m = l - c / 2
-    let r = 0; let g = 0; let b = 0
+    let r = 0
+    let g = 0
+    let b = 0
 
-    if (h >= 0 && h < 60) { r = c; g = x; b = 0 }
-    else if (h >= 60 && h < 120) { r = x; g = c; b = 0 }
-    else if (h >= 120 && h < 180) { r = 0; g = c; b = x }
-    else if (h >= 180 && h < 240) { r = 0; g = x; b = c }
-    else if (h >= 240 && h < 300) { r = x; g = 0; b = c }
-    else { r = c; g = 0; b = x }
+    if (h >= 0 && h < 60) {
+        r = c
+        g = x
+        b = 0
+    } else if (h >= 60 && h < 120) {
+        r = x
+        g = c
+        b = 0
+    } else if (h >= 120 && h < 180) {
+        r = 0
+        g = c
+        b = x
+    } else if (h >= 180 && h < 240) {
+        r = 0
+        g = x
+        b = c
+    } else if (h >= 240 && h < 300) {
+        r = x
+        g = 0
+        b = c
+    } else {
+        r = c
+        g = 0
+        b = x
+    }
 
     const toHex = (v: number) => {
         const hex = Math.round((v + m) * 255).toString(16)

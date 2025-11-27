@@ -44,7 +44,7 @@ export async function listFolders(pageSize = 20, sort = "modified") {
             q: "mimeType='application/vnd.google-apps.folder'",
             fields: "nextPageToken, files(id, name, modifiedTime)",
             supportsAllDrives: true,
-            includeItemsFromAllDrives: true,
+            includeItemsFromAllDrives: true
         })
     } catch (err) {
         console.error(err)
@@ -74,7 +74,7 @@ export async function listFiles(pageSize = 50, query = "") {
             q: query,
             fields: "nextPageToken, files(id, name, mimeType)",
             supportsAllDrives: true,
-            includeItemsFromAllDrives: true,
+            includeItemsFromAllDrives: true
         })
     } catch (err) {
         console.error(err)
@@ -89,7 +89,7 @@ export const types = {
     png: "image/png",
     json: "application/json",
     txt: "application/txt",
-    folder: "application/vnd.google-apps.folder",
+    folder: "application/vnd.google-apps.folder"
 }
 
 export function createFile(parent: string, { type, name }: { type: keyof typeof types; name: string }, body: string) {
@@ -170,7 +170,7 @@ export async function downloadFile(fileId: string): Promise<any> {
 
     // https://developers.google.com/drive/api/guides/manage-downloads#node.js
 
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
         driveClient!.files.get({ fileId, alt: "media", supportsAllDrives: true }, (err, res) => {
             if (err) {
                 console.error("The API returned an error:", err)
@@ -205,10 +205,12 @@ export async function syncDataDrive(data: DriveData) {
     let bibles: { [key: string]: BibleCategories } | null = null
 
     // CONFIGS
-    await Promise.all(Object.entries(storeFilesData).map(([id, data]) => {
-        if (!data.portable) return
-        syncStores(id as keyof typeof _store)
-    }))
+    await Promise.all(
+        Object.entries(storeFilesData).map(([id, data]) => {
+            if (!data.portable) return
+            syncStores(id as keyof typeof _store)
+        })
+    )
 
     // SCRIPTURE
     if (bibles === null) bibles = getStore("SYNCED_SETTINGS")?.scriptures
@@ -230,10 +232,10 @@ export async function syncDataDrive(data: DriveData) {
         const storeData: any = store.store
         const name = id + ".json"
 
-        let driveFileId = files.find((a) => a.name === name)?.id || ""
+        let driveFileId = files.find(a => a.name === name)?.id || ""
 
         // pre 1.5.3
-        if (!driveFileId && id === "STAGE") driveFileId = files.find((a) => a.name === "STAGE_SHOWS.json")?.id || ""
+        if (!driveFileId && id === "STAGE") driveFileId = files.find(a => a.name === "STAGE_SHOWS.json")?.id || ""
 
         const driveFile = await getFile(driveFileId)
 
@@ -251,7 +253,7 @@ export async function syncDataDrive(data: DriveData) {
             const project = () => ({
                 projects: combineFiles(driveContent?.projects, storeData.projects, newest),
                 folders: combineFiles(driveContent?.folders, storeData.folders, newest),
-                projectTemplates: combineFiles(driveContent?.projectTemplates, storeData.projectTemplates, newest),
+                projectTemplates: combineFiles(driveContent?.projectTemplates, storeData.projectTemplates, newest)
             })
             const combined = id === "PROJECTS" ? project() : combineFiles(driveContent, storeData, newest)
 
@@ -307,12 +309,12 @@ export async function syncDataDrive(data: DriveData) {
 
     async function syncBibles() {
         const localBibles: string[] = Object.values(bibles!)
-            .filter((a) => !a.api && !a.collection)
-            .map((a) => a.name + ".fsb")
+            .filter(a => !a.api && !a.collection)
+            .map(a => a.name + ".fsb")
 
         if (!localBibles.length) return
 
-        let driveBiblesFolderId = files.find((a) => a.name === "Bibles")?.id
+        let driveBiblesFolderId = files.find(a => a.name === "Bibles")?.id
 
         // create bible folder
         if (!driveBiblesFolderId) {
@@ -330,7 +332,7 @@ export async function syncDataDrive(data: DriveData) {
         await Promise.all(localBibles.map(syncBible))
 
         async function syncBible(name: string) {
-            const driveFileId = driveBibles?.find((a) => a.name === name)?.id || ""
+            const driveFileId = driveBibles?.find(a => a.name === name)?.id || ""
 
             const driveFile = await getFile(driveFileId)
 
@@ -381,7 +383,7 @@ export async function syncDataDrive(data: DriveData) {
         if (DEBUG) console.info("Method:", data.method)
 
         const name = SHOWS_CONTENT + ".json"
-        const driveFileId = files.find((a) => a.name === name)?.id || ""
+        const driveFileId = files.find(a => a.name === name)?.id || ""
 
         const driveFile = await getFile(driveFileId)
         // download shows
@@ -549,7 +551,7 @@ function combineFiles(cloudContent: any, localContent: any, newest: string) {
     const content = (newest === "cloud" ? cloudContent : localContent) || {}
     const olderContent = (newest === "cloud" ? localContent : cloudContent) || {}
 
-    Object.keys(olderContent).forEach((id) => {
+    Object.keys(olderContent).forEach(id => {
         const olderIsNewer = (content[id]?.modified || 0) < (olderContent[id]?.modified || 0)
         if (!content[id] || olderIsNewer) content[id] = olderContent[id]
     })

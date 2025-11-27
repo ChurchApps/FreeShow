@@ -155,7 +155,7 @@ export function save(closeWhenFinished = false, customTriggers: SaveActions = {}
         eqPresets: get(eqPresets),
         effectsLibrary: get(effectsLibrary),
         special: get(special),
-        contentProviderData: get(contentProviderData),
+        contentProviderData: get(contentProviderData)
     }
 
     // settings exclusive to the local machine (path names that shouldn't be synced with cloud)
@@ -266,7 +266,7 @@ export function unsavedUpdater() {
     const s = { ...saveList, folders, projects, showsCache, stageShows, deletedShows, renamedShows }
 
     let initialized = false
-    Object.keys(s).forEach((id) => {
+    Object.keys(s).forEach(id => {
         if (!s[id]) return
 
         s[id].subscribe((a: any) => {
@@ -299,13 +299,13 @@ export function unsavedUpdater() {
 
 const customSavedListener = {
     showsCache: (data: Shows) => {
-        Object.keys(data).forEach((id) => {
+        Object.keys(data).forEach(id => {
             if (!data[id]?.slides) return
 
             delete (data[id] as any).timestamps
             delete (data[id] as any).settings
 
-            Object.values(data[id].slides).forEach((slide) => {
+            Object.values(data[id].slides).forEach(slide => {
                 delete slide.id
             })
         })
@@ -313,8 +313,8 @@ const customSavedListener = {
         return data
     },
     projects: (data: Projects) => {
-        removeDeleted(keysToID(data)).forEach((a) => {
-            data[a.id].shows?.map((show) => {
+        removeDeleted(keysToID(data)).forEach(a => {
+            data[a.id].shows?.map(show => {
                 delete show.layout
             })
         })

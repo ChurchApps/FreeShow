@@ -10,7 +10,7 @@ export function xml2json(xmlString: string, removeBreaks = false) {
     let xmlData: any = xmlParser(xmlString, removeBreaks)
 
     const X = {
-        toObj: (xml) => {
+        toObj: xml => {
             if (xml.nodeType === 1) {
                 let o: any = {}
 
@@ -99,10 +99,10 @@ export function xml2json(xmlString: string, removeBreaks = false) {
 
             return jsonValue + (name && ":") + o.toString()
         },
-        innerXml: (node) => {
+        innerXml: node => {
             if ("innerHTML" in node) return node.innerHTML
 
-            const asXml = (n) => {
+            const asXml = n => {
                 if (n.nodeType === 1) {
                     let s = ""
                     s += "<" + n.nodeName
@@ -126,10 +126,10 @@ export function xml2json(xmlString: string, removeBreaks = false) {
             for (let c = node.firstChild; c; c = c.nextSibling) fullString += asXml(c)
             return fullString
         },
-        escape: (txt) => {
+        escape: txt => {
             return txt.replace(/[\\]/g, "\\\\").replace(/[\"]/g, '\\"').replace(/[\n]/g, "\\n").replace(/[\r]/g, "\\r")
         },
-        removeWhite: (e) => {
+        removeWhite: e => {
             e.normalize()
             for (let n = e.firstChild; n; ) {
                 if (n.nodeType === 3) {
@@ -152,7 +152,7 @@ export function xml2json(xmlString: string, removeBreaks = false) {
                 }
             }
             return e
-        },
+        }
     }
 
     // document node

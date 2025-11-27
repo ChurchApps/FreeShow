@@ -63,8 +63,8 @@ export function deleteFolder(filePath: string) {
 }
 
 export function doesPathExistAsync(filePath: string): Promise<boolean> {
-    return new Promise((resolve) => {
-        fs.access(filePath, (err) => {
+    return new Promise(resolve => {
+        fs.access(filePath, err => {
             if (err) resolve(false)
             resolve(true)
         })
@@ -72,7 +72,7 @@ export function doesPathExistAsync(filePath: string): Promise<boolean> {
 }
 
 export function readFileAsync(filePath: string, encoding: BufferEncoding = "utf8"): Promise<string> {
-    return new Promise((resolve) =>
+    return new Promise(resolve =>
         fs.readFile(filePath, (err, buffer) => {
             if (err) console.error(err)
             resolve(err ? "" : buffer.toString(encoding))
@@ -81,7 +81,7 @@ export function readFileAsync(filePath: string, encoding: BufferEncoding = "utf8
 }
 
 export function readFileBufferAsync(filePath: string): Promise<Buffer> {
-    return new Promise((resolve) =>
+    return new Promise(resolve =>
         fs.readFile(filePath, (err, buffer) => {
             if (err) console.error(err)
             resolve(err ? Buffer.of(0) : buffer)
@@ -90,7 +90,7 @@ export function readFileBufferAsync(filePath: string): Promise<Buffer> {
 }
 
 export function readFolderAsync(filePath: string): Promise<string[]> {
-    return new Promise((resolve) =>
+    return new Promise(resolve =>
         fs.readdir(filePath, (err, files) => {
             if (err) console.error(err)
             resolve(err ? [] : files)
@@ -102,8 +102,8 @@ export async function writeFileAsync(filePath: string, content: string | NodeJS.
     // don't know if it's necessary to check the file
     if (await fileContentMatchesAsync(content, filePath)) return false
 
-    return new Promise((resolve) => {
-        fs.writeFile(filePath, content, (err) => {
+    return new Promise(resolve => {
+        fs.writeFile(filePath, content, err => {
             actionComplete(err, "Error when writing to file")
             if (err && id) sendToMain(ToMain.SHOW2, { error: "no_write", err, id })
             resolve(!err)
@@ -126,14 +126,14 @@ export function writeFile(filePath: string, content: string | NodeJS.ArrayBuffer
 }
 
 export function deleteFile(filePath: string) {
-    fs.unlink(filePath, (err) => actionComplete(err, "Could not delete file"))
+    fs.unlink(filePath, err => actionComplete(err, "Could not delete file"))
 }
 
 export function renameFile(filePath: string, oldName: string, newName: string) {
     const oldPath = path.join(filePath, oldName)
     const newPath = path.join(filePath, newName)
 
-    fs.rename(oldPath, newPath, (err) => actionComplete(err, "Could not rename file"))
+    fs.rename(oldPath, newPath, err => actionComplete(err, "Could not rename file"))
 }
 
 export function getFileStats(filePath: string, disableLog = false) {
@@ -147,7 +147,7 @@ export function getFileStats(filePath: string, disableLog = false) {
 }
 
 export function getFileStatsAsync(filePath: string): Promise<null | Stats> {
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
         fs.stat(filePath, (err, stats) => {
             if (err) return resolve(null)
             resolve(stats)
@@ -165,7 +165,10 @@ export function makeDir(folderPath: string) {
 }
 
 export function getValidFileName(filePath: string) {
-    return filePath.replace(/[/\\?%*:|"<>]/g, "").replace(/\s+/g, " ").trim()
+    return filePath
+        .replace(/[/\\?%*:|"<>]/g, "")
+        .replace(/\s+/g, " ")
+        .trim()
 }
 
 // SELECT DIALOGS
@@ -197,7 +200,7 @@ export function selectFolderDialog(title = "", defaultPath = ""): string {
 export function openInSystem(filePath: string, openFolder = false) {
     if (!doesPathExist(filePath)) return sendToMain(ToMain.ALERT, "This does not exist!")
 
-    if (openFolder) shell.openPath(filePath).catch((err) => console.error("Could not open system folder: " + String(err)))
+    if (openFolder) shell.openPath(filePath).catch(err => console.error("Could not open system folder: " + String(err)))
     else shell.showItemInFolder(filePath)
 }
 
@@ -328,7 +331,7 @@ export function getFolderContent(data: { path: string; disableThumbnails?: boole
     const filesInFolders: FileData[] = []
     const folderFiles: { [key: string]: FileData[] } = {}
     if (data.listFilesInFolders) {
-        const folders: FileData[] = files.filter((a) => a.folder)
+        const folders: FileData[] = files.filter(a => a.folder)
         if (folders.length < 15) folders.forEach(getFilesInFolder)
     }
 
@@ -374,7 +377,7 @@ export async function getFoldersContent(paths: { path: string }[]) {
 
 export function getSimularPaths(data: { paths: string[] }) {
     const parentFolderPathNames = data.paths.map(getParentFolderName)
-    const allFilePaths = parentFolderPathNames.map((parentPath: string) => readFolder(parentPath).map((a) => join(parentPath, a)))
+    const allFilePaths = parentFolderPathNames.map((parentPath: string) => readFolder(parentPath).map(a => join(parentPath, a)))
     const filteredFilePaths = [...new Set(allFilePaths.flat())]
 
     let similarArray: [{ path: string; name: string }, number][] = []
@@ -383,7 +386,7 @@ export function getSimularPaths(data: { paths: string[] }) {
 
         filteredFilePaths.forEach((filePath: string) => {
             const name = parse(filePath).name
-            if (data.paths.includes(filePath) || similarArray.find((a) => a[0].name.includes(name))) return
+            if (data.paths.includes(filePath) || similarArray.find(a => a[0].name.includes(name))) return
 
             const match = similarity(originalFileName, name)
             if (match < 0.5) return
@@ -393,7 +396,7 @@ export function getSimularPaths(data: { paths: string[] }) {
     })
 
     similarArray = similarArray.sort((a, b) => b[1] - a[1])
-    const sortedSimularArray = similarArray.slice(0, 10).map((a) => a[0])
+    const sortedSimularArray = similarArray.slice(0, 10).map(a => a[0])
 
     return sortedSimularArray
 }
@@ -465,7 +468,7 @@ export function getFileInfo(filePath: string) {
 
 // READ EXIF
 export function readExifData({ id }: { id: string }): Promise<{ id: string; exif: ExifData }> {
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
         try {
             new ExifImage({ image: id }, (err, exifData) => {
                 actionComplete(err, "Error getting EXIF data")
@@ -485,7 +488,7 @@ export async function getMediaCodec(data: { path: string }) {
 async function extractCodecInfo(data: { path: string }): Promise<{ path: string; codecs: string[]; mimeType: string; mimeCodec: string }> {
     const MP4Box = require("mp4box")
 
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
         try {
             const buffer = fs.readFileSync(data.path)
             const uint8Array = new Uint8Array(buffer)
@@ -493,7 +496,7 @@ async function extractCodecInfo(data: { path: string }): Promise<{ path: string;
 
             const mp4boxfile = MP4Box.createFile()
             mp4boxfile.onError = (err: Error) => console.error("MP4Box error:", err)
-            mp4boxfile.onReady = (info: { tracks: { codec: string }[];[key: string]: any }) => {
+            mp4boxfile.onReady = (info: { tracks: { codec: string }[]; [key: string]: any }) => {
                 const codecs = info.tracks.map((track: { codec: string }) => track.codec)
                 const mimeType = getMimeType(data.path)
                 const mimeCodec = `${mimeType}; codecs="${codecs.join(", ")}"`
@@ -537,7 +540,7 @@ async function extractSubtitles(data: { path: string }): Promise<{ path: string;
         return { ...data, tracks: [] }
     }
 
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
         const mp4boxfile = MP4Box.createFile()
         mp4boxfile.onError = (e: Error) => console.error("MP4Box error:", e)
         mp4boxfile.onReady = (info: any) => {
@@ -560,7 +563,7 @@ async function extractSubtitles(data: { path: string }): Promise<{ path: string;
 
                 mp4boxfile.onSamples = (_id: number, _user: any, samples: { data: BufferSource; cts: number; duration: number }[]) => {
                     let index = 1
-                    samples.forEach((sample) => {
+                    samples.forEach(sample => {
                         const utf8Decoder = new TextDecoder("utf-8")
                         let subtitleText = utf8Decoder.decode(sample.data).trim()
                         // remove any non-printable characters (excluding line breaks)
@@ -631,7 +634,7 @@ export async function locateMediaFile({ fileName, splittedPath, folders, ref }: 
         const files = await readFolderAsync(folderPath)
 
         await Promise.all(
-            files.map(async (name) => {
+            files.map(async name => {
                 const currentFilePath: string = path.join(folderPath, name)
                 const isFolder = await checkIsFolder(currentFilePath)
 
@@ -648,7 +651,7 @@ export async function locateMediaFile({ fileName, splittedPath, folders, ref }: 
         if (matches.length) return
 
         await Promise.all(
-            currentFolderFolders.map(async (folderName) => {
+            currentFolderFolders.map(async folderName => {
                 await searchInFolder(folderName, level + 1)
                 if (matches.length) return
             })
@@ -678,7 +681,7 @@ export async function locateMediaFile({ fileName, splittedPath, folders, ref }: 
 }
 
 async function checkIsFolder(filePath: string): Promise<boolean> {
-    return new Promise((resolve) =>
+    return new Promise(resolve =>
         fs.stat(filePath, (err, stats) => {
             resolve(err ? false : stats.isDirectory())
         })
@@ -697,8 +700,8 @@ export function bundleMediaFiles() {
 
     let showsList = readFolder(showsPath)
     showsList = showsList
-        .filter((name) => name.toLowerCase().endsWith(".show")) // only .show files
-        .filter((trimmedName) => trimmedName) // remove files with no name
+        .filter(name => name.toLowerCase().endsWith(".show")) // only .show files
+        .filter(trimmedName => trimmedName) // remove files with no name
 
     let allMediaFiles: string[] = []
 
@@ -711,7 +714,7 @@ export function bundleMediaFiles() {
         if (!show) return
 
         // media backgrounds & audio
-        Object.values(show.media).forEach((media) => {
+        Object.values(show.media).forEach(media => {
             const mediaPath = media.path || media.id
             if (mediaPath) allMediaFiles.push(mediaPath)
         })
@@ -730,14 +733,14 @@ export function bundleMediaFiles() {
     const outputPath = getDataFolderPath("mediaBundle")
 
     // copy media files
-    allMediaFiles.forEach((mediaPath) => {
+    allMediaFiles.forEach(mediaPath => {
         const fileName = path.basename(mediaPath)
         const newPath = path.join(outputPath, fileName)
 
         // don't copy if it's already copied
         if (doesPathExist(newPath)) return
 
-        fs.copyFile(mediaPath, newPath, (err) => {
+        fs.copyFile(mediaPath, newPath, err => {
             if (err) console.error("Could not copy: " + mediaPath + "! File might not exist.")
         })
     })
@@ -767,9 +770,9 @@ export function loadShows(returnShows = false) {
     }
 
     filesInFolder = filesInFolder
-        .filter((name) => name.toLowerCase().endsWith(".show"))
-        .map((name) => name.slice(0, -5)) // remove .show extension
-        .filter((trimmedName) => trimmedName) // remove files with no name
+        .filter(name => name.toLowerCase().endsWith(".show"))
+        .map(name => name.slice(0, -5)) // remove .show extension
+        .filter(trimmedName => trimmedName) // remove files with no name
 
     for (const name of filesInFolder) checkShow(name)
     function checkShow(name: string) {
@@ -834,7 +837,7 @@ export function getShowsFromIds(showIds: string[]) {
     const cachedShows = getStore("SHOWS")
     const showsPath = getDataFolderPath("shows")
 
-    showIds.forEach((id) => {
+    showIds.forEach(id => {
         const cachedShow = cachedShows[id]
         if (!cachedShow) return
 
@@ -858,7 +861,7 @@ const FIXES = {
         // wait to ensure output settings have loaded in the app!
         setTimeout(() => {
             toApp(OUTPUT, { channel: "UPDATE_OUTPUTS_DATA", data: { key: "kioskMode", value: false, autoSave: true } })
-            OutputHelper.getAllOutputs().forEach((output) => output.window.setKiosk(false))
+            OutputHelper.getAllOutputs().forEach(output => output.window.setKiosk(false))
         }, 1000)
     },
     OPEN_APPDATA_SETTINGS: () => {
@@ -874,8 +877,8 @@ function specialCaseFixer() {
     if (!doesPathExist(defaultDataFolder)) return
 
     const files: string[] = readFolder(defaultDataFolder)
-    files.forEach((fileName) => {
-        const matchFound = Object.keys(FIXES).find((key) => fileName.includes(key))
+    files.forEach(fileName => {
+        const matchFound = Object.keys(FIXES).find(key => fileName.includes(key))
         if (matchFound) FIXES[matchFound as keyof typeof FIXES]()
     })
 }

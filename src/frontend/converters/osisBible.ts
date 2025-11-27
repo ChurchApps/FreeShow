@@ -6,19 +6,19 @@ import { setActiveScripture } from "./bible"
 import { xml2json } from "./xml"
 
 export function convertOSISBible(data: any[]) {
-    data.forEach((bible) => {
+    data.forEach(bible => {
         const obj = XMLtoObject(bible.content)
         if (!obj.name) obj.name = bible.name
         obj.name = formatToFileName(obj.name)
 
         const id = uid()
         // create folder & file
-        scripturesCache.update((a) => {
+        scripturesCache.update(a => {
             a[id] = obj
             return a
         })
 
-        scriptures.update((a) => {
+        scriptures.update(a => {
             a[id] = { name: obj.name, id }
             return a
         })
@@ -35,7 +35,7 @@ function XMLtoObject(xml: string) {
         const bookId = book["@osisID"]
         const name = book["@name"] || defaultNames[bookId]
         const abbreviation = book["@abbr"]
-        const bookNumber = (Object.keys(defaultNames).findIndex((a) => a === bookId) ?? bookIndex) + 1
+        const bookNumber = (Object.keys(defaultNames).findIndex(a => a === bookId) ?? bookIndex) + 1
         const chapters: Chapter[] = []
 
         if (!Array.isArray(book.chapter)) book.chapter = [book.chapter]

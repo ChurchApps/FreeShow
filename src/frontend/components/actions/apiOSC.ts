@@ -11,12 +11,12 @@ const oscActions = {
     // },
     slide: {
         next: () => ({ action: "next_slide" }),
-        previous: () => ({ action: "previous_slide" }),
+        previous: () => ({ action: "previous_slide" })
     },
     show: {
         _id: (id: string) => ({
             // open: () => ({ action: "id_select_show", id }),
-            start: () => ({ action: "start_show", id }),
+            start: () => ({ action: "start_show", id })
             // slide: () => ({
             //     next: () => ({ action: "next_slide", id }),
             //     previous: () => ({ action: "previous_slide", id }),
@@ -24,7 +24,7 @@ const oscActions = {
             //     //     start: () => ({ action: "id_select_slide", id, slideId }),
             //     // }),
             // }),
-        }),
+        })
     },
     clear: {
         all: () => ({ action: "clear_all" }),
@@ -32,14 +32,14 @@ const oscActions = {
         slide: () => ({ action: "clear_slide" }),
         overlays: () => ({ action: "clear_overlays" }),
         audio: () => ({ action: "clear_audio" }),
-        next_timer: () => ({ action: "clear_next_timer" }),
+        next_timer: () => ({ action: "clear_next_timer" })
     },
     timer: {
         _id: (id: string) => ({
-            start: () => ({ action: "id_start_timer", id }),
+            start: () => ({ action: "id_start_timer", id })
         }),
-        stop: () => ({ action: "stop_timers" }),
-    },
+        stop: () => ({ action: "stop_timers" })
+    }
 }
 
 // data: { action: string, ... }

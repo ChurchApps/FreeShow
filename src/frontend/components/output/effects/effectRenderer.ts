@@ -1,62 +1,7 @@
-import type {
-    AssetItem,
-    AuroraItem,
-    BloomItem,
-    BubbleItem,
-    CircleItem,
-    CityItem,
-    CycleItem,
-    EffectDefinition,
-    EffectFunction,
-    EffectInit,
-    EffectItem,
-    EffectType,
-    FireworkItem,
-    FogItem,
-    GalaxyItem,
-    GrassItem,
-    LensFlareItem,
-    LightningItem,
-    RainbowItem,
-    RainItem,
-    RayItem,
-    RectangleItem,
-    ShapeItem,
-    Side,
-    SnowItem,
-    SpotlightItem,
-    StarItem,
-    SunItem,
-    TriangleItem,
-    WaveItem
-} from "../../../../types/Effects"
+import type { AssetItem, AuroraItem, BloomItem, BubbleItem, CircleItem, CityItem, CycleItem, EffectDefinition, EffectFunction, EffectInit, EffectItem, EffectType, FireworkItem, FogItem, GalaxyItem, GrassItem, LensFlareItem, LightningItem, RainbowItem, RainItem, RayItem, RectangleItem, ShapeItem, Side, SnowItem, SpotlightItem, StarItem, SunItem, TriangleItem, WaveItem } from "../../../../types/Effects"
 import { createNoise2D } from "./simplex-noise"
 
-const effectTypes: readonly EffectType[] = [
-    "circle",
-    "rectangle",
-    "triangle",
-    "wave",
-    "bubbles",
-    "stars",
-    "galaxy",
-    "rain",
-    "snow",
-    "sun",
-    "lens_flare",
-    "spotlight",
-    "aurora",
-    "bloom",
-    "fog",
-    "city",
-    "rays",
-    "fireworks",
-    "cycle",
-    "grass",
-    "lightning",
-    "rainbow",
-    "asset"
-] as const
+const effectTypes: readonly EffectType[] = ["circle", "rectangle", "triangle", "wave", "bubbles", "stars", "galaxy", "rain", "snow", "sun", "lens_flare", "spotlight", "aurora", "bloom", "fog", "city", "rays", "fireworks", "cycle", "grass", "lightning", "rainbow", "asset"] as const
 // type EffectType = (typeof effectTypes)[number]
 
 export class EffectRender {
@@ -114,7 +59,7 @@ export class EffectRender {
     }
 
     private setItems(items: EffectItem[]) {
-        this.items = items.filter((a) => !a.hidden)
+        this.items = items.filter(a => !a.hidden)
     }
 
     updateItems(items: EffectItem[], _noFrameChange = false) {
@@ -457,7 +402,7 @@ export class EffectRender {
         this.ctx.globalAlpha = 1
 
         if (item.nebula) {
-            const positionedNebula = nebula.map((a) => ({ ...a, x: centerX + a.offsetX, y: centerY + a.offsetY }))
+            const positionedNebula = nebula.map(a => ({ ...a, x: centerX + a.offsetX, y: centerY + a.offsetY }))
             this.drawStaticNebula(positionedNebula)
         }
     }
@@ -1291,7 +1236,10 @@ export class EffectRender {
                 // modern syntax with spaces
                 if (parts.includes("/")) {
                     const [rgbPart] = parts.split("/")
-                    const [r, g, b] = rgbPart.trim().split(/\s+/).map((n: string) => parseFloat(n))
+                    const [r, g, b] = rgbPart
+                        .trim()
+                        .split(/\s+/)
+                        .map((n: string) => parseFloat(n))
                     return `rgba(${r},${g},${b},${opacity})`
                 } else {
                     const [r, g, b] = parts.split(",").map((n: string) => parseFloat(n.trim()))
@@ -1893,7 +1841,7 @@ export class EffectRender {
                 if (hex.length === 3)
                     hex = hex
                         .split("")
-                        .map((ch) => ch + ch)
+                        .map(ch => ch + ch)
                         .join("")
                 const num = parseInt(hex, 16)
                 return { r: (num >> 16) & 255, g: (num >> 8) & 255, b: num & 255, a: 1 }

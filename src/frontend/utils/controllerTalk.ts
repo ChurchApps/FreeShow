@@ -22,7 +22,7 @@ export const receiveCONTROLLER = {
                 clearSlide()
                 justCleared = setTimeout(() => (justCleared = null), 2000)
             },
-            clear_painting: () => clearPainting(),
+            clear_painting: () => clearPainting()
         }
 
         if (actions[data.id]) actions[data.id]()
@@ -58,19 +58,19 @@ export const receiveCONTROLLER = {
     },
     GET_OUTPUT_ID: () => {
         return { channel: "GET_OUTPUT_ID", data: get(serverData)?.output_stream?.outputId || getFirstOutput()?.id }
-    },
+    }
 }
 
 function clearPainting() {
     paintCache.set([])
 
-    drawSettings.update((a) => {
+    drawSettings.update(a => {
         if (!a.paint) a.paint = { color: "#ffffff", size: 10, threed: false, dots: false, hold: true }
         a.paint.clear = true
         return a
     })
     setTimeout(() => {
-        drawSettings.update((a) => {
+        drawSettings.update(a => {
             delete a.paint.clear
             return a
         })

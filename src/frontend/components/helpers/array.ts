@@ -3,7 +3,7 @@ import { translateText } from "../../utils/language"
 // check if array has any data
 export function arrayHasData<T>(array: T, data: any): boolean {
     if (!Array.isArray(array)) return false
-    return array.find((a) => JSON.stringify(a) === JSON.stringify(data)) !== undefined
+    return array.find(a => JSON.stringify(a) === JSON.stringify(data)) !== undefined
 }
 
 // remove duplicates from array (only lowest level)
@@ -42,7 +42,7 @@ export function moveToPos<T>(array: T, oldPos: number, newPos: number) {
 export function sortByName<T extends Record<string, any>>(arr: T[], key: keyof T = "name", numberSort = true) {
     if (!Array.isArray(arr)) return []
     return arr
-        .filter((a) => typeof a[key] === "string")
+        .filter(a => typeof a[key] === "string")
         .sort((a, b) => {
             if (!numberSort) return a[key].localeCompare(b[key])
 
@@ -121,10 +121,9 @@ export function sortByNameAndNumber<T extends Record<string, any>>(array: T[], d
 
         if (aToken.suffix !== bToken.suffix) return aToken.suffix.localeCompare(bToken.suffix) * dir
 
-        return ((a.name || "").localeCompare(b.name || "")) * dir
+        return (a.name || "").localeCompare(b.name || "") * dir
     })
 }
-
 
 // sort object by name and numbers any location (file names)
 export function sortFilenames<T extends Record<string, any>>(filenames: T[]) {
@@ -159,13 +158,13 @@ export function keysToID<T extends Record<string, any>>(object: T): (T[keyof T] 
 
 // remove values in array object where key is value
 export function removeValues<T extends Record<string, any>>(object: T[], key: keyof T, value: any) {
-    return object.filter((o) => o[key] !== value)
+    return object.filter(o => o[key] !== value)
 }
 
 // remove deleted values (used by cloud sync)
 export function removeDeleted<T extends Record<string, any>>(object: T[]) {
     if (!Array.isArray(object)) return object
-    return object.filter((o) => !o.deleted)
+    return object.filter(o => !o.deleted)
 }
 
 // remove every duplicated values in object
@@ -220,7 +219,7 @@ export function clone<T>(object: T): T {
 export function shuffleArray(array) {
     for (let i = array.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1))
-            ;[array[i], array[j]] = [array[j], array[i]]
+        ;[array[i], array[j]] = [array[j], array[i]]
     }
 
     return array
@@ -234,7 +233,7 @@ export function getChangedKeys(current: any[], previous: any[]) {
         const prevItem = previous[index] || {}
         const keys = new Set([...Object.keys(item), ...Object.keys(prevItem)])
 
-        keys.forEach((key) => {
+        keys.forEach(key => {
             if (item[key] !== prevItem[key]) {
                 changedKeys.push({ key, index })
             }
@@ -244,13 +243,12 @@ export function getChangedKeys(current: any[], previous: any[]) {
     return changedKeys
 }
 
-
-export function rangeSelect(e: any, currentlySelected: (number | string)[], newSelection: (number | string)): (number | string)[] {
+export function rangeSelect(e: any, currentlySelected: (number | string)[], newSelection: number | string): (number | string)[] {
     if (!e.ctrlKey && !e.metaKey && !e.shiftKey) return [newSelection]
 
     if (e.ctrlKey || e.metaKey) {
         if (currentlySelected.includes(newSelection)) {
-            return currentlySelected.filter((id) => id !== newSelection)
+            return currentlySelected.filter(id => id !== newSelection)
         } else {
             return [...currentlySelected, newSelection]
         }

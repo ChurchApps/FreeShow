@@ -20,7 +20,7 @@ export const GetLayout = (showID: null | ID = null, layoutID: null | ID = null):
     if (!layoutID) layoutID = currentShow?.settings?.activeLayout
     const layoutSlides: SlideData[] = []
     if (currentShow?.layouts) {
-        currentShow.layouts[layoutID]?.slides?.forEach((ls) => {
+        currentShow.layouts[layoutID]?.slides?.forEach(ls => {
             if (ls && currentShow.slides[ls.id]) {
                 const slide: Slide = currentShow.slides[ls.id]
                 const newLS = { ...ls }

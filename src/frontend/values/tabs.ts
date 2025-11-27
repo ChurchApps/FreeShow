@@ -8,5 +8,5 @@ export const drawerTabs = {
     scripture: { name: "tabs.scripture", icon: "scripture" },
     calendar: { name: "tabs.calendar", icon: "calendar" },
 
-    functions: { name: "tabs.functions", icon: "functions" },
+    functions: { name: "tabs.functions", icon: "functions" }
 }

@@ -7,7 +7,7 @@ function movePreload() {
     // copy preload.ts to public
     const preloadPath = join(rootPath, "src", "electron", "preload.ts")
     const newPreloadPath = join(rootPath, "public", "preload.ts")
-    copyFile(preloadPath, newPreloadPath, (err) => {
+    copyFile(preloadPath, newPreloadPath, err => {
         if (err) console.error("Error copying preload file:", err)
     })
 

@@ -1,6 +1,6 @@
 /**
  * Multichannel Audio Support
- * 
+ *
  * This module provides dynamic multichannel audio detection and configuration
  * for the FreeShow audio system. It handles up to 8 channels (7.1 surround sound)
  * and automatically detects system capabilities.
@@ -33,7 +33,7 @@ export class AudioMultichannel {
 
                 // Try constraints as fallback
                 const constraints = audioTracks[0].getConstraints()
-                if (constraints.channelCount && typeof constraints.channelCount === 'number') {
+                if (constraints.channelCount && typeof constraints.channelCount === "number") {
                     console.log(`MediaStream constraints suggest ${constraints.channelCount} channels`)
                     return Math.min(constraints.channelCount, maxChannels)
                 }
@@ -75,13 +75,8 @@ export class AudioMultichannel {
      * Enhanced channel detection that works after audio starts playing
      * Uses an AnalyserNode to detect actual audio content
      */
-    static detectActiveChannelCount(
-        audioContext: AudioContext,
-        source: AudioNode,
-        sourceId: string,
-        maxChannels: number
-    ): Promise<number> {
-        return new Promise((resolve) => {
+    static detectActiveChannelCount(audioContext: AudioContext, source: AudioNode, sourceId: string, maxChannels: number): Promise<number> {
+        return new Promise(resolve => {
             if (!source) {
                 resolve(this.DEFAULT_CHANNELS)
                 return
@@ -121,7 +116,8 @@ export class AudioMultichannel {
                         // Check if this channel has significant audio content
                         let hasContent = false
                         for (let j = 0; j < dataArray.length; j++) {
-                            if (dataArray[j] > 10) { // Threshold for "significant" audio
+                            if (dataArray[j] > 10) {
+                                // Threshold for "significant" audio
                                 hasContent = true
                                 break
                             }
@@ -144,7 +140,6 @@ export class AudioMultichannel {
                     console.log(`Runtime analysis detected ${detectedChannels} active channels in source ${sourceId}`)
                     resolve(Math.min(detectedChannels, maxChannels))
                 }, 1000) // Wait 1 second for audio to stabilize
-
             } catch (err) {
                 console.warn("Could not perform runtime channel detection:", err)
                 resolve(this.DEFAULT_CHANNELS)
@@ -155,12 +150,7 @@ export class AudioMultichannel {
     /**
      * Legacy method - kept for compatibility but now returns a Promise
      */
-    static detectActiveChannelCountLegacy(
-        audioContext: AudioContext,
-        source: AudioNode,
-        sourceId: string,
-        maxChannels: number
-    ): number {
+    static detectActiveChannelCountLegacy(audioContext: AudioContext, source: AudioNode, sourceId: string, maxChannels: number): number {
         if (!source) return this.DEFAULT_CHANNELS
 
         try {
@@ -186,7 +176,6 @@ export class AudioMultichannel {
                 // This is a conservative approach - in real use, we'd need more sophisticated detection
                 return Math.min(audioContext.destination.maxChannelCount, maxChannels)
             }
-
         } catch (err) {
             console.warn("Could not detect active channel count:", err)
         }
@@ -211,11 +200,7 @@ export class AudioMultichannel {
     /**
      * Get current channel information
      */
-    static getChannelInfo(
-        audioContext: AudioContext,
-        currentChannels: number,
-        maxChannels: number
-    ): MultichannelInfo {
+    static getChannelInfo(audioContext: AudioContext, currentChannels: number, maxChannels: number): MultichannelInfo {
         return {
             currentChannels,
             maxSupportedChannels: this.getMaxSupportedChannels(audioContext, maxChannels),
@@ -314,7 +299,7 @@ export class AudioMultichannel {
                 const osc = audioContext.createOscillator()
                 const gain = audioContext.createGain()
 
-                osc.frequency.value = 440 + (i * 110) // Different frequency per channel
+                osc.frequency.value = 440 + i * 110 // Different frequency per channel
                 gain.gain.value = 0.1 // Low volume
 
                 osc.connect(gain)
@@ -337,7 +322,6 @@ export class AudioMultichannel {
 
             console.log(`✅ ${channelCount}-channel test successful`)
             return true
-
         } catch (err) {
             console.warn(`❌ ${channelCount}-channel test failed:`, err)
             return false

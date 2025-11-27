@@ -123,5 +123,3 @@ export function getVariable(data: { id?: string; name?: string }) {
 
     return null
 }
-
-

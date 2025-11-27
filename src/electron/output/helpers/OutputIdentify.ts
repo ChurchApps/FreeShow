@@ -13,7 +13,7 @@ export class OutputIdentify {
         const activeWindows: BrowserWindow[] = screens.map(this.createIdentifyScreen)
 
         setTimeout(() => {
-            activeWindows.forEach((window) => {
+            activeWindows.forEach(window => {
                 window.destroy()
             })
             this.identifyActive = false

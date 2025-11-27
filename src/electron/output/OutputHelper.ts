@@ -33,7 +33,7 @@ export class OutputHelper {
             IDENTIFY_SCREENS: (data: { bounds: Rectangle }[]) => OutputHelper.Identify.identifyScreens(data),
             // PREVIEW_BOUNDS: (data) => OutputHelper.Bounds.setPreviewBounds(data),
 
-            FOCUS: (data: { id: string }) => OutputHelper.Lifecycle.focusOutput(data.id),
+            FOCUS: (data: { id: string }) => OutputHelper.Lifecycle.focusOutput(data.id)
         }
 
         if (msg.channel.includes("MAIN")) return toApp(OUTPUT, msg)

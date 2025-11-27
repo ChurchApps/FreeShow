@@ -17,31 +17,7 @@ export interface Effect {
 }
 
 // | "rain_screen"
-export type EffectType =
-    | "circle"
-    | "rectangle"
-    | "triangle"
-    | "wave"
-    | "bubbles"
-    | "stars"
-    | "galaxy"
-    | "rain"
-    | "snow"
-    | "sun"
-    | "lens_flare"
-    | "spotlight"
-    | "aurora"
-    | "bloom"
-    | "fog"
-    | "city"
-    | "rays"
-    | "fireworks"
-    | "cycle"
-    | "grass"
-    | "mountains"
-    | "lightning"
-    | "rainbow"
-    | "asset"
+export type EffectType = "circle" | "rectangle" | "triangle" | "wave" | "bubbles" | "stars" | "galaxy" | "rain" | "snow" | "sun" | "lens_flare" | "spotlight" | "aurora" | "bloom" | "fog" | "city" | "rays" | "fireworks" | "cycle" | "grass" | "mountains" | "lightning" | "rainbow" | "asset"
 export interface EffectItem<T extends EffectType = EffectType> {
     type: T
     hidden?: boolean

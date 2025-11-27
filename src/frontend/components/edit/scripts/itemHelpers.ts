@@ -18,14 +18,14 @@ export const DEFAULT_ITEM_STYLE = "top:120px;left:50px;height:840px;width:1820px
 
 function getDefaultStyles(type: ItemType, templateItems: Item[] | null = null) {
     // Get position styles from template or use default from boxes.ts
-    const positionStyle = templateItems?.find((a) => (a.type || "text") === type)?.style || DEFAULT_ITEM_STYLE
+    const positionStyle = templateItems?.find(a => (a.type || "text") === type)?.style || DEFAULT_ITEM_STYLE
 
     // Get default styles from boxes configuration
     const boxDefaults = itemBoxes[type]?.sections?.font?.inputs?.flat() || []
     let styleString = positionStyle
 
     // Add default font styles if they exist
-    boxDefaults.forEach((def) => {
+    boxDefaults.forEach(def => {
         if (def.type === "toggle" || def.type === "radio") return
         if (def.key && def.value) {
             styleString += `${def.key}:${def.value};`
@@ -163,7 +163,7 @@ export function rearrangeItems(type: string, startIndex: number = get(activeEdit
         history({ id: "UPDATE", newData: { data: items, key: "items" }, oldData: { id: get(activeEdit).id }, location: { page: "edit", id: get(activeEdit).type, override: "rearrange_items" } })
     }
 
-    activeEdit.update((a) => {
+    activeEdit.update(a => {
         // update selected edit item, because it has changed!
         // could set to selected: startIndex, but that's confusing because selected is always in front!
         a.items = []
@@ -177,7 +177,7 @@ export function rearrangeStageItems(type: string, itemId: string = get(activeSta
     let items = getSortedStageItems()
     if (!items?.length || !itemId) return
 
-    let startIndex = items.findIndex((a) => a.id === itemId)
+    let startIndex = items.findIndex(a => a.id === itemId)
     if (startIndex < 0) return
 
     const currentItem = items.splice(startIndex, 1)[0]
@@ -190,12 +190,12 @@ export function rearrangeStageItems(type: string, itemId: string = get(activeSta
     items = [...items.slice(0, startIndex), currentItem, ...items.slice(startIndex)]
     if (!items?.length || items.length < 2) return
 
-    stageShows.update((a) => {
-        a[get(activeStage).id!].itemOrder = items.map((item) => item.id)
+    stageShows.update(a => {
+        a[get(activeStage).id!].itemOrder = items.map(item => item.id)
         return a
     })
 
-    activeStage.update((a) => {
+    activeStage.update(a => {
         a.items = []
         return a
     })
@@ -211,14 +211,14 @@ export function getSortedStageItems(stageId = get(activeStage).id, _updater: any
     const itemOrder = stageShow.itemOrder || Object.keys(stageShow.items)
     // if ((stageShow.itemOrder || [])?.length !== Object.keys(stageShow.items).length) {
     if (!stageShow.itemOrder) {
-        stageShows.update((a) => {
+        stageShows.update(a => {
             a[stageId].itemOrder = itemOrder
             return a
         })
     }
 
     const sortedItems: (StageItem & { id: string })[] = []
-    itemOrder.forEach((itemId) => {
+    itemOrder.forEach(itemId => {
         const item = stageShow.items[itemId]
         if (!item) return
         sortedItems.push({ ...item, id: itemId })
@@ -229,15 +229,15 @@ export function getSortedStageItems(stageId = get(activeStage).id, _updater: any
 
 export function updateSortedStageItems() {
     const stageId = get(activeStage).id || ""
-    stageShows.update((a) => {
+    stageShows.update(a => {
         const stageLayout = a[stageId]
         const currentItemIds = Object.keys(stageLayout.items)
         let itemOrder = stageLayout.itemOrder || currentItemIds
 
         // remove items not existing anymore
-        itemOrder = itemOrder.filter((id) => currentItemIds.includes(id))
+        itemOrder = itemOrder.filter(id => currentItemIds.includes(id))
         // add any new items
-        const newItems = currentItemIds.filter((id) => !itemOrder.includes(id))
+        const newItems = currentItemIds.filter(id => !itemOrder.includes(id))
 
         a[stageId].itemOrder = [...itemOrder, ...newItems]
         return a
@@ -251,7 +251,7 @@ export function shouldItemBeShown(item: Item, allItems: Item[] = [], { outputId,
     if (type === "stage") allItems = getTempItems(item, allItems)
 
     if (!allItems.length) allItems = [item]
-    const slideItems = allItems.filter((a) => !a?.bindings?.length || a.bindings.includes(outputId))
+    const slideItems = allItems.filter(a => !a?.bindings?.length || a.bindings.includes(outputId))
     const itemsText = slideItems.reduce((value, currentItem) => (value += getItemText(currentItem)), "")
     // set dynamic values
     // const ref = { showId: get(activeShow)?.id, layoutId: _show().get("settings.activeLayout"), slideIndex: get(activeEdit).slide, type: get(activePage) === "stage" ? "stage" : get(activeEdit).type || "show", id: get(activeEdit).id }
@@ -348,7 +348,7 @@ export function checkConditionValue(cVal: ConditionValue, itemsText: string, typ
 
 export function getFirstActiveTimer() {
     let firstTimerId = get(activeTimers)[0]?.id
-    if (!firstTimerId) firstTimerId = sortByName(keysToID(get(timers))).find((timer) => timer.type !== "counter")?.id || ""
+    if (!firstTimerId) firstTimerId = sortByName(keysToID(get(timers))).find(timer => timer.type !== "counter")?.id || ""
 
     return firstTimerId
 }
@@ -368,7 +368,7 @@ function isTimerRunning(timerId: string) {
         return value > 0
     }
 
-    return !!get(activeTimers).find((a) => a.id === timerId)
+    return !!get(activeTimers).find(a => a.id === timerId)
 }
 
 export function _getVariableValue(dynamicId: string) {

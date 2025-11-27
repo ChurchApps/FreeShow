@@ -10,17 +10,7 @@ const mc = (id: string) => sendToMain(ToMain.MENU, id)
 export function template(strings: Dictionary): any {
     const appMenu = {
         label: app.name,
-        submenu: [
-            { label: strings.main?.about || "About", role: "about" },
-            { type: "separator" },
-            { role: "services" },
-            { type: "separator" },
-            { role: "hide" },
-            { role: "hideOthers" },
-            { role: "unhide" },
-            { type: "separator" },
-            { label: strings.main?.quit || "Quit", role: "quit" }
-        ]
+        submenu: [{ label: strings.main?.about || "About", role: "about" }, { type: "separator" }, { role: "services" }, { type: "separator" }, { role: "hide" }, { role: "hideOthers" }, { role: "unhide" }, { type: "separator" }, { label: strings.main?.quit || "Quit", role: "quit" }]
     }
 
     const fileMenu = {
@@ -46,16 +36,16 @@ export function template(strings: Dictionary): any {
             { label: strings.actions?.paste || "Paste", click: () => mc("paste") }, // , accelerator: "CmdOrCtrl+V"
             ...(isMac
                 ? [
-                    // { label: lang.actions?.pasteAndMatchStyle || "Paste And Match Style", role: "pasteAndMatchStyle", click: () => mc("paste") },
-                    { label: strings.actions?.delete || "Delete", click: () => mc("delete") },
-                    // WIP: these shortcuts (CMD+A) not working in the MAC file selector modal
-                    { label: strings.actions?.selectAll || "Select All", click: () => mc("selectAll") } //   , accelerator: "CmdOrCtrl+A"
-                ]
+                      // { label: lang.actions?.pasteAndMatchStyle || "Paste And Match Style", role: "pasteAndMatchStyle", click: () => mc("paste") },
+                      { label: strings.actions?.delete || "Delete", click: () => mc("delete") },
+                      // WIP: these shortcuts (CMD+A) not working in the MAC file selector modal
+                      { label: strings.actions?.selectAll || "Select All", click: () => mc("selectAll") } //   , accelerator: "CmdOrCtrl+A"
+                  ]
                 : [
-                    { label: strings.actions?.delete || "Delete", click: () => mc("delete") },
-                    { type: "separator" },
-                    { label: strings.actions?.selectAll || "Select All", click: () => mc("selectAll") } //   , accelerator: "CmdOrCtrl+A"
-                ])
+                      { label: strings.actions?.delete || "Delete", click: () => mc("delete") },
+                      { type: "separator" },
+                      { label: strings.actions?.selectAll || "Select All", click: () => mc("selectAll") } //   , accelerator: "CmdOrCtrl+A"
+                  ])
         ]
     }
 

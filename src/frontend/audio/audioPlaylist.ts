@@ -43,7 +43,7 @@ export class AudioPlaylist {
     static update(id: string, key: string, value: any) {
         if (!get(audioPlaylists)[id]) return
 
-        audioPlaylists.update((a) => {
+        audioPlaylists.update(a => {
             a[id][key] = value
             return a
         })
@@ -113,7 +113,7 @@ export class AudioPlaylist {
         const songs = getSongs()
         if (!songs.length) return
 
-        const currentSongIndex = songs.findIndex((a) => a === (audioPath || previousPath))
+        const currentSongIndex = songs.findIndex(a => a === (audioPath || previousPath))
         let nextSong = songs[currentSongIndex + (audioPath ? 0 : 1)]
 
         if (!nextSong && data.loop) nextSong = songs[0]
@@ -132,7 +132,7 @@ export class AudioPlaylist {
         // prevent playing the same song twice (while it's fading) to stop duplicate audio
         if (Object.keys(playingAudio).includes(nextSong)) return
 
-        activePlaylist.update((a) => {
+        activePlaylist.update(a => {
             a.active = nextSong
             return a
         })
@@ -150,7 +150,7 @@ export class AudioPlaylist {
             const mode = playlist.mode
             if (mode === "shuffle") songsList = shuffleArray(songsList)
 
-            activePlaylist.update((a) => {
+            activePlaylist.update(a => {
                 a.songs = songsList
                 return a
             })

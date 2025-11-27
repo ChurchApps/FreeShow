@@ -66,7 +66,7 @@ export function getStageItemId(itemId: string) {
 
 export function stageItemToItem(item: StageItem) {
     const newItem: Item = {
-        style: item?.style || "",
+        style: item?.style || ""
     }
     if (!item) return newItem
 

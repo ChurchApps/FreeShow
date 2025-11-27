@@ -58,7 +58,7 @@ export let currentScriptureState: Writable<CurrentScriptureState> = writable({
     scriptureId: "",
     bookId: -1,
     chapterId: -1,
-    activeVerses: [],
+    activeVerses: []
 })
 
 export let overlays: Writable<Overlays> = writable({})

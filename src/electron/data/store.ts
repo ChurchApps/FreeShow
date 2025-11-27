@@ -45,7 +45,7 @@ export const storeFilesData = {
     ERROR_LOG: { fileName: "error_log", portable: false, defaults: {} as { renderer?: ErrorLog[]; main?: ErrorLog[]; request?: ErrorLog[] } },
 
     DRIVE_API_KEY: { fileName: "DRIVE_API_KEY", portable: false, defaults: {} as any },
-    ACCESS: { fileName: "ACCESS", portable: false, defaults: { contentProviders: {} as { [key in ContentProviderId]?: any } } },
+    ACCESS: { fileName: "ACCESS", portable: false, defaults: { contentProviders: {} as { [key in ContentProviderId]?: any } } }
 }
 
 export const appDataPath = path.dirname(config.path)
@@ -109,8 +109,8 @@ export function createStores(previousLocation?: string | null, setup: boolean = 
             name: data.fileName,
             defaults: data.defaults,
             cwd: data.portable ? configFolderPath : undefined,
-            serialize: (data as any).minify ? (v) => JSON.stringify(v) : undefined,
-            accessPropertiesByDotNotation: key === "MEDIA" ? false : true,
+            serialize: (data as any).minify ? v => JSON.stringify(v) : undefined,
+            accessPropertiesByDotNotation: key === "MEDIA" ? false : true
         })
 
         // move user data files to data/Config folder if not already
@@ -121,7 +121,7 @@ export function createStores(previousLocation?: string | null, setup: boolean = 
 // ----- GET STORE -----
 
 export function getStore(id: "config"): Config
-export function getStore<T extends keyof typeof storeFilesData>(id: T): typeof storeFilesData[T]["defaults"]
+export function getStore<T extends keyof typeof storeFilesData>(id: T): (typeof storeFilesData)[T]["defaults"]
 export function getStore<T extends keyof typeof storeFilesData | "config">(id: T) {
     if (id === "config") return config.store
 
@@ -211,7 +211,7 @@ function moveShowsToDataFolder(oldShowsPath: string) {
     const files = readFolder(oldShowsPath)
     const showsFolderPath = getDataFolderPath("shows")
 
-    files.forEach((file) => {
+    files.forEach(file => {
         if (!file.endsWith(".show")) return
 
         const oldPath = path.join(oldShowsPath, file)

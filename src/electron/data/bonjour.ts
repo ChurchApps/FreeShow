@@ -25,7 +25,7 @@ export function publishPort(name: string, port: number) {
             type: "freeshow",
             protocol: "udp",
             port,
-            txt: customData,
+            txt: customData
         })
     } catch (err) {
         // Likely no permission on macOS (System Settings > Privacy & Security > Network Access)

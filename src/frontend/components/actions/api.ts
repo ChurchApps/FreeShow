@@ -22,26 +22,7 @@ import { clearAll, clearBackground, clearDrawing, clearOverlay, clearOverlays, c
 import { formatText } from "../show/formatTextEditor"
 import { getPlainEditorText } from "../show/getTextEditor"
 import { runActionByName, runActionId, toggleAction } from "./actions"
-import {
-    getOutput,
-    getOutputGroupName,
-    getOutputSlideText,
-    getPlayingAudioData,
-    getPlayingAudioDuration,
-    getPlayingAudioTime,
-    getPlayingPlaylist,
-    getPlayingVideoDuration,
-    getPlayingVideoTime,
-    getPlaylists,
-    getProject,
-    getProjects,
-    getShow,
-    getShowLayout,
-    getShows,
-    getSlide,
-    getVariable,
-    getVariables
-} from "./apiGet"
+import { getOutput, getOutputGroupName, getOutputSlideText, getPlayingAudioData, getPlayingAudioDuration, getPlayingAudioTime, getPlayingPlaylist, getPlayingVideoDuration, getPlayingVideoTime, getPlaylists, getProject, getProjects, getShow, getShowLayout, getShows, getSlide, getVariable, getVariables } from "./apiGet"
 import {
     addGroup,
     addToProject,

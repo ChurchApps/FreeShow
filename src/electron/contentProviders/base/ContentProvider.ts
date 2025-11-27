@@ -124,14 +124,14 @@ export abstract class ContentProvider<TScope extends string = string, TAuthData 
     protected isTokenExpired(): boolean {
         if (!this.access) return true
         const now = Date.now() / 1000
-        return (this.access.created_at + this.access.expires_in) <= now
+        return this.access.created_at + this.access.expires_in <= now
     }
 
     /**
      * Sets up common Express routes for OAuth authentication
      */
     protected setupAuthRoutes(): void {
-        this.app.get(`${this.config.authPath || '/auth/complete'}`, (req, res) => {
+        this.app.get(`${this.config.authPath || "/auth/complete"}`, (req, res) => {
             this.handleAuthCallback(req, res)
         })
     }

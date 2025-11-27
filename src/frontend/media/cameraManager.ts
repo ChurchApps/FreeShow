@@ -91,7 +91,7 @@ class CameraManager {
         try {
             const devices = await navigator.mediaDevices.enumerateDevices()
             const cameraList = devices
-                .filter(device => device.kind === 'videoinput')
+                .filter(device => device.kind === "videoinput")
                 .map(device => ({
                     name: device.label || `Camera ${device.deviceId.slice(0, 8)}`,
                     id: device.deviceId,
@@ -132,13 +132,13 @@ class CameraManager {
             const stream = await navigator.mediaDevices.getUserMedia(cameraProperties)
 
             // Create a hidden video element to keep the stream active
-            const videoElement = document.createElement('video')
-            videoElement.style.position = 'absolute'
-            videoElement.style.opacity = '0'
-            videoElement.style.pointerEvents = 'none'
-            videoElement.style.zIndex = '-1'
-            videoElement.style.width = '1px'
-            videoElement.style.height = '1px'
+            const videoElement = document.createElement("video")
+            videoElement.style.position = "absolute"
+            videoElement.style.opacity = "0"
+            videoElement.style.pointerEvents = "none"
+            videoElement.style.zIndex = "-1"
+            videoElement.style.width = "1px"
+            videoElement.style.height = "1px"
             videoElement.muted = true
             videoElement.srcObject = stream
             document.body.appendChild(videoElement)
@@ -154,7 +154,7 @@ class CameraManager {
 
             // Listen for stream end to retry
             stream.getTracks().forEach(track => {
-                track.addEventListener('ended', () => {
+                track.addEventListener("ended", () => {
                     console.warn(`Camera ${camera.name} stream ended, will retry...`)
                     this.retryCameraWarming(camera)
                 })
@@ -190,7 +190,7 @@ class CameraManager {
         }, delay)
     }
 
-    private async retryCameraWarming(camera: CameraData, retryCount = 0, lastError = '') {
+    private async retryCameraWarming(camera: CameraData, retryCount = 0, lastError = "") {
         if (!this.activeCameras.has(camera.id)) return
 
         this.cleanupCamera(camera.id)
@@ -275,7 +275,7 @@ class CameraManager {
         for (const camera of this.activeCameras.values()) {
             if (this.failed.includes(camera.id)) return
 
-            if (!camera.stream || !camera.stream.active || camera.stream.getTracks().some(track => track.readyState === 'ended')) {
+            if (!camera.stream || !camera.stream.active || camera.stream.getTracks().some(track => track.readyState === "ended")) {
                 console.warn(`Camera ${camera.name} stream is not active, restarting...`)
                 await this.retryCameraWarming({ id: camera.id, name: camera.name, group: camera.groupId })
             }
@@ -287,6 +287,6 @@ class CameraManager {
 export const cameraManager = new CameraManager()
 
 // Cleanup on page unload
-window.addEventListener('beforeunload', () => {
+window.addEventListener("beforeunload", () => {
     cameraManager.cleanupAllCameras()
 })

@@ -11,9 +11,9 @@ function sanitizeBiblePayload(bible: any) {
         ...book,
         chapters: Array.isArray(book.chapters)
             ? book.chapters.map((chapter: any) => ({
-                ...chapter,
-                verses: sanitizeChapterVerses(chapter.verses)
-            }))
+                  ...chapter,
+                  verses: sanitizeChapterVerses(chapter.verses)
+              }))
             : book.chapters
     }))
 
@@ -46,9 +46,9 @@ export const receiver = {
         } else setError(data)
     },
     LANGUAGE: (data: any) => {
-        _.dictionary.update((a) => {
-            Object.keys(a).forEach((i) => {
-                Object.keys(a[i] || {}).forEach((j) => {
+        _.dictionary.update(a => {
+            Object.keys(a).forEach(i => {
+                Object.keys(a[i] || {}).forEach(j => {
                     if (data.strings[i]?.[j] && a[i]) a[i]![j] = data.strings[i][j]
                 })
             })
@@ -66,7 +66,7 @@ export const receiver = {
     /////
 
     SHOWS: (data: any) => {
-        const shows = Object.keys(data).map((id) => ({ id, ...data[id] }))
+        const shows = Object.keys(data).map(id => ({ id, ...data[id] }))
         _set("shows", shows)
         if (_get("quickPlay")) _set("activeTab", "shows")
     },
@@ -180,11 +180,9 @@ export const receiver = {
             // Sanitize, dedupe and sort verses to make "latest" deterministic
             activeVerses: (() => {
                 const raw = Array.isArray(source.activeVerses) ? source.activeVerses : []
-                const nums: number[] = raw
-                    .map((v: any) => parseInt(v, 10))
-                    .filter((n: number): n is number => Number.isFinite(n) && n > 0)
+                const nums: number[] = raw.map((v: any) => parseInt(v, 10)).filter((n: number): n is number => Number.isFinite(n) && n > 0)
                 return Array.from(new Set<number>(nums)).sort((a: number, b: number) => a - b)
-            })(),
+            })()
         }
 
         currentScriptureState.set(normalized)
@@ -204,7 +202,7 @@ export const receiver = {
             const { id, bookIndex, chapters } = update
             if (!id || typeof bookIndex !== "number" || !Array.isArray(chapters)) return
 
-            scriptureCache.update((cache) => {
+            scriptureCache.update(cache => {
                 const bible = cache[id] || { books: [] as any[] }
                 const books = Array.isArray(bible.books) ? bible.books : []
                 const book = books[bookIndex] || {}
@@ -224,7 +222,7 @@ export const receiver = {
             const { id, bookIndex, chapterIndex, verses } = update
             if (!id || typeof bookIndex !== "number" || typeof chapterIndex !== "number" || !Array.isArray(verses)) return
 
-            scriptureCache.update((cache) => {
+            scriptureCache.update(cache => {
                 const bible = cache[id] || { books: [] as any[] }
                 const books = Array.isArray(bible.books) ? bible.books : []
                 const book = books[bookIndex] || { chapters: [] as any[] }
@@ -246,7 +244,7 @@ export const receiver = {
         const { id, bookIndex, chapters } = data || {}
         if (!id || typeof bookIndex !== "number" || !Array.isArray(chapters)) return
 
-        scriptureCache.update((cache) => {
+        scriptureCache.update(cache => {
             const bible = cache[id] || { books: [] as any[] }
             const books = Array.isArray(bible.books) ? bible.books : []
             const book = books[bookIndex] || {}
@@ -265,7 +263,7 @@ export const receiver = {
         const { id, bookIndex, chapterIndex, verses } = data || {}
         if (!id || typeof bookIndex !== "number" || typeof chapterIndex !== "number" || !Array.isArray(verses)) return
 
-        scriptureCache.update((cache) => {
+        scriptureCache.update(cache => {
             const bible = cache[id] || { books: [] as any[] }
             const books = Array.isArray(bible.books) ? bible.books : []
             const book = books[bookIndex] || { chapters: [] as any[] }
@@ -324,7 +322,7 @@ export const receiver = {
         send("SHOW", data.id)
         _set("active", { id: data.id, type: "show" })
         _set("activeTab", "show")
-    },
+    }
 }
 
 function getShowFromItems(items: Item[], nextSlideItems: Item[] | undefined) {
@@ -332,7 +330,7 @@ function getShowFromItems(items: Item[], nextSlideItems: Item[] | undefined) {
         name: "",
         settings: {
             activeLayout: "default",
-            template: null,
+            template: null
         },
         category: null,
         timestamps: { created: 0, modified: null, used: null },
@@ -344,10 +342,10 @@ function getShowFromItems(items: Item[], nextSlideItems: Item[] | undefined) {
                 color: "",
                 settings: {},
                 notes: "",
-                items: items,
-            },
+                items: items
+            }
         },
-        layouts: { default: { name: "", notes: "", slides: [{ id: "one" }] } },
+        layouts: { default: { name: "", notes: "", slides: [{ id: "one" }] } }
     }
 
     if (nextSlideItems) {
@@ -356,7 +354,7 @@ function getShowFromItems(items: Item[], nextSlideItems: Item[] | undefined) {
             color: "",
             settings: {},
             notes: "",
-            items: nextSlideItems,
+            items: nextSlideItems
         }
         show.layouts.default.slides.push({ id: "two" })
     }

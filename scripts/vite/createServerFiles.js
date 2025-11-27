@@ -10,7 +10,7 @@ const viteConfig = "config/building/vite.config.servers.mjs"
 // Build each server sequentially
 let hasError = false
 
-servers.forEach((server) => {
+servers.forEach(server => {
     console.log(`\nBuilding ${server}...`)
 
     const result = spawnSync("npx", ["vite", "build", "--config", viteConfig], {

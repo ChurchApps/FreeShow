@@ -42,7 +42,7 @@ export class OutputBounds {
     }
 
     static alignWithScreens() {
-        OutputHelper.getKeys().forEach((outputId) => {
+        OutputHelper.getKeys().forEach(outputId => {
             const output = OutputHelper.getOutput(outputId)
             if (output.boundsLocked) return
 
