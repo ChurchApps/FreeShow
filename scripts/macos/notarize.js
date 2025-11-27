@@ -10,7 +10,7 @@ exports.default = async function notarizing(context) {
     const appName = context.packager.appInfo.productFilename
 
     return await notarize({
-        appBundleId: "app.freeshow",
+        appBundleId: "com.joinamazing.aplay-pro",
         appPath: `${appOutDir}/${appName}.app`,
         appleId: process.env.APPLE_ID,
         appleIdPassword: process.env.APPLE_APP_SPECIFIC_PASSWORD,

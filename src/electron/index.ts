@@ -51,7 +51,7 @@ config.set("loaded", true)
 if (!config.get("loaded")) console.error("Could not get stored data!")
 
 // info
-console.info("Starting FreeShow...")
+console.info("Starting APlay Pro...")
 if (!isProd) console.info("Building app! (This may take 20-90 seconds)")
 
 // set application menu

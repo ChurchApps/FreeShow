@@ -1,8 +1,8 @@
-name: freeshow
+name: aplay-pro
 version: 1.4.9
-title: FreeShow
-summary: FreeShow
-description: Show song lyrics and more for free!
+title: APlay Pro
+summary: APlay Pro
+description: APlay Pro is a user-friendly presenter software customized for Amazing Life.
 platforms:
     amd64:
         build-on: amd64

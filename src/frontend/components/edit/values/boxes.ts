@@ -525,33 +525,31 @@ export const itemBoxes: Box2 = {
     slide_tracker: {
         icon: "percentage",
         sections: {
-            ...nonTextboxTextStyle({
-                inputs: [
-                    [
-                        {
-                            id: "tracker.type",
-                            type: "dropdown",
-                            value: "number",
-                            values: {
-                                label: "clock.type",
-                                options: [
-                                    { value: "number", label: "variables.number" },
-                                    { value: "bar", label: "edit.progress_bar" },
-                                    { value: "group", label: "tools.groups" }
-                                ],
-                                style: "flex: 4;"
-                            }
-                        },
-                        {
-                            id: "tracker.accent",
-                            type: "color",
-                            value: "#F0008C",
-                            values: {
-                                label: "edit.accent_color",
-                                allowEmpty: true,
-                                noLabel: true,
-                                style: "flex: 1;"
-                            }
+            ...(nonTextboxTextStyle({
+                inputs: [[
+                    {
+                        id: "tracker.type",
+                        type: "dropdown",
+                        value: "number",
+                        values: {
+                            label: "clock.type",
+                            options: [
+                                { value: "number", label: "variables.number" },
+                                { value: "bar", label: "edit.progress_bar" },
+                                { value: "group", label: "tools.groups" }
+                            ],
+                            style: "flex: 4;"
+                        }
+                    },
+                    {
+                        id: "tracker.accent",
+                        type: "color",
+                        value: "#54EB77",
+                        values: {
+                            label: "edit.accent_color",
+                            allowEmpty: true,
+                            noLabel: true,
+                            style: "flex: 1;"
                         }
                     ],
                     [{ type: "checkbox", id: "tracker.childProgress", value: false, values: { label: "edit.sub_indexes" } }],

@@ -39,7 +39,7 @@ function mainApp() {
         output: {
             sourcemap: !production,
             format: "iife",
-            name: "freeshow",
+            name: "aplay-pro",
             file: "public/build/bundle.js",
         },
         plugins: [

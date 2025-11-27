@@ -1,6 +1,6 @@
-appId: app.freeshow
-productName: FreeShow
-artifactName: FreeShow-${version}-${arch}.${ext}
+appId: com.joinamazing.aplay-pro
+productName: APlayPro
+artifactName: APlay-Pro-${version}-${arch}.${ext}
 
 # WIDEVINE
 # Use castlabs electron builds to get widevine support
@@ -21,26 +21,26 @@ extraResources:
 
 # windows
 
-win:
-    target: NSIS
-    icon: build/public/icon.png
-    azureSignOptions:
-        publisherName: Live Church Solutions
-        endpoint: https://wus2.codesigning.azure.net/
-        certificateProfileName: FreeShow
-        codeSigningAccountName: FreeShow
+# win:
+#     target: NSIS
+#     icon: build/public/icon.png
+#     azureSignOptions:
+#         publisherName: Live Church Solutions
+#         endpoint: https://wus2.codesigning.azure.net/
+#         certificateProfileName: FreeShow
+#         codeSigningAccountName: FreeShow
 
 # linux
 
-linux:
-    asarUnpack:
-        - node_modules/grandiose/**
-    category: AudioVideo
-    target:
-        - AppImage
-        - deb
-        - rpm
-    icon: build/public
+# linux:
+#     asarUnpack:
+#         - node_modules/grandiose/**
+#     category: AudioVideo
+#     target:
+#         - AppImage
+#         - deb
+#         - rpm
+#     icon: build/public
 
 # macos
 

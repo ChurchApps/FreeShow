@@ -190,7 +190,7 @@ function getDefaultOverlays() {
     a.watermark = {
         isDefault: true,
         name: translateText("example.watermark"),
-        color: "#F0008C",
+        color: "#54EB77",
         category: "notice",
         items: [
             {

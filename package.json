@@ -1,11 +1,11 @@
 {
-    "name": "freeshow",
-    "version": "1.5.4",
+    "name": "aplay-pro",
+    "version": "1.0.0-beta2",
     "private": true,
     "main": "build/electron/index.js",
-    "description": "Show song lyrics and more for free!",
-    "repository": "git@github.com:ChurchApps/FreeShow.git",
-    "author": "ChurchApps <support@livecs.org>",
+    "description": "APlay Pro is a user-friendly presenter software customized for Amazing Life.",
+    "repository": "git@github.com:Tech-Mission-Solutions/aplay-pro.git",
+    "author": "AmazingLife",
     "license": "GPL-3.0",
     "scripts": {
         "postinstall": "electron-builder install-app-deps",

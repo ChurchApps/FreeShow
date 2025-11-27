@@ -29,7 +29,7 @@
 </script>
 
 <div class="profiles">
-    <h1>FreeShow</h1>
+    <h1>APlay Pro</h1>
     <p><T id="profile.choose_profile" /></p>
 
     <div class="flex">
