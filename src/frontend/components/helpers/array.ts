@@ -93,6 +93,8 @@ export function sortObjectNumbers<T extends Record<string, any>>(object: T[], ke
 
 // sort quick access numbers with optional prefixes/suffixes; blanks always go last
 export function sortByNameAndNumber<T extends Record<string, any>>(array: T[], direction: "asc" | "desc" = "asc") {
+    if (!Array.isArray(array)) return []
+
     const dir = direction === "asc" ? 1 : -1
 
     const parseToken = (value: string | undefined) => {
