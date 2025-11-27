@@ -44,7 +44,7 @@
     // encode using btoa()
     const blockedWords = ["ZnVjaw==", "Yml0Y2g=", "bmlnZ2E="]
     const blockedArtists = ["R2hvc3Q=", "R2VuZXNpcw==", "QUMvREM=", "RGlzdHVyYmVk", "Qm9iIFJpdmVycw==", "Q2FyeSBBbm4gSGVhcnN0"]
-    let listenerIdSearch = receiveMain(Main.SEARCH_LYRICS, (data) => {
+    let listenerIdSearch = receiveMain(Main.SEARCH_LYRICS, data => {
         data = filterBadArtists(data)
 
         if (!data.length) {
@@ -55,11 +55,11 @@
         loading = false
         songs = data
     })
-    let listenerIdLyrics = receiveMain(Main.GET_LYRICS, (data) => {
+    let listenerIdLyrics = receiveMain(Main.GET_LYRICS, data => {
         loading = false
 
         // filter out songs with bad words
-        blockedWords.forEach((eWord) => {
+        blockedWords.forEach(eWord => {
             let word = atob(eWord)
             if (data.lyrics.includes(word)) data.lyrics = ""
         })
@@ -80,8 +80,8 @@
 
     function filterBadArtists(data: LyricSearchResult[]) {
         return data.filter(
-            (a) =>
-                !blockedArtists.find((eArtist) => {
+            a =>
+                !blockedArtists.find(eArtist => {
                     const artist = atob(eArtist)
                     return a.artist && a.artist === artist
                 }) && !($special.blockedArtists || []).includes(a.artist)
@@ -97,7 +97,7 @@
     function blockArtist(artist: string) {
         const undo = tempBlocked.includes(artist)
 
-        special.update((a) => {
+        special.update(a => {
             if (!a.blockedArtists) a.blockedArtists = []
 
             if (undo) {
@@ -145,7 +145,7 @@
                     {#each songs as song}
                         {@const blocked = tempBlocked.includes(song.artist)}
                         <tr
-                            on:click={(e) => {
+                            on:click={e => {
                                 if (e.target?.closest("button") || e.target?.closest("path")) return
                                 getLyrics(song)
                             }}

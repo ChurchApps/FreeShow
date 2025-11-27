@@ -51,7 +51,7 @@
         let slideItems = _show(showId).slides([slideId]).items().get()[0] || []
 
         // has to be textbox item!
-        let newItem = slideItems.find((a) => (a.type || "text") === "text")
+        let newItem = slideItems.find(a => (a.type || "text") === "text")
         if (!newItem) return
 
         newItem = clone(newItem)

@@ -72,8 +72,8 @@
     <div style="display: flex;justify-content: space-between;margin-top: 20px;">
         <div style="width: 200px;" data-title={translateText("actions.custom_key")}>
             <InputRow>
-                <MaterialNumberInput disabled={active.outputResolutionAsRatio} label="screen.width" value={active.width || 16} min={1} max={100} on:change={(e) => setAspectRatio({ width: e.detail, height: active.height || 9 })} />
-                <MaterialNumberInput disabled={active.outputResolutionAsRatio} label="screen.height" value={active.height || 9} min={1} max={100} on:change={(e) => setAspectRatio({ height: e.detail, width: active.width || 16 })} />
+                <MaterialNumberInput disabled={active.outputResolutionAsRatio} label="screen.width" value={active.width || 16} min={1} max={100} on:change={e => setAspectRatio({ width: e.detail, height: active.height || 9 })} />
+                <MaterialNumberInput disabled={active.outputResolutionAsRatio} label="screen.height" value={active.height || 9} min={1} max={100} on:change={e => setAspectRatio({ height: e.detail, width: active.width || 16 })} />
             </InputRow>
         </div>
 
@@ -85,29 +85,16 @@
             </div>
         {/if}
 
-        <MaterialDropdown
-            style="width: 200px;"
-            label="edit.position"
-            disabled={active.outputResolutionAsRatio}
-            options={alignOptions}
-            value={active.alignPosition || "center"}
-            on:change={(e) => setAspectRatio({ ...active, alignPosition: e.detail })}
-        />
+        <MaterialDropdown style="width: 200px;" label="edit.position" disabled={active.outputResolutionAsRatio} options={alignOptions} value={active.alignPosition || "center"} on:change={e => setAspectRatio({ ...active, alignPosition: e.detail })} />
     </div>
 {/if}
 
-<MaterialToggleSwitch
-    style="margin-top: {showMore ? 10 : 20}px;"
-    label="settings.output_resolution_ratio"
-    checked={active.outputResolutionAsRatio}
-    defaultValue={false}
-    on:change={(e) => setAspectRatio({ ...active, outputResolutionAsRatio: e.detail })}
-/>
+<MaterialToggleSwitch style="margin-top: {showMore ? 10 : 20}px;" label="settings.output_resolution_ratio" checked={active.outputResolutionAsRatio} defaultValue={false} on:change={e => setAspectRatio({ ...active, outputResolutionAsRatio: e.detail })} />
 
 {#if showMore}
     <HRule />
 
-    <MaterialNumberInput label="settings.font_size_ratio" value={active.fontSizeRatio ?? 100} min={10} max={500} step={10} on:change={(e) => setAspectRatio({ ...active, fontSizeRatio: e.detail })} />
+    <MaterialNumberInput label="settings.font_size_ratio" value={active.fontSizeRatio ?? 100} min={10} max={500} step={10} on:change={e => setAspectRatio({ ...active, fontSizeRatio: e.detail })} />
 {/if}
 
 <style>

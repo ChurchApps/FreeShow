@@ -17,12 +17,12 @@
     let currentOutputs = clone($outputs)
     $: {
         let newOutputs = clone(updatedOutputs)
-        Object.values(newOutputs).map((a) => {
+        Object.values(newOutputs).map(a => {
             delete a.out
             return a
         })
         let currOutputs = clone(currentOutputs)
-        Object.values(currOutputs).map((a) => {
+        Object.values(currOutputs).map(a => {
             delete a.out
             return a
         })
@@ -37,7 +37,7 @@
     let outputsList: Output[] = []
     $: outputsList = sortObject(sortByName(keysToID(currentOutputs)), "stageOutput")
 
-    $: if (outputsList.length && (!$currentOutputSettings || !currentOutputs[$currentOutputSettings])) currentOutputSettings.set(outputsList.find((a) => a.enabled)?.id || outputsList[0].id || "")
+    $: if (outputsList.length && (!$currentOutputSettings || !currentOutputs[$currentOutputSettings])) currentOutputSettings.set(outputsList.find(a => a.enabled)?.id || outputsList[0].id || "")
 
     let currentOutput: Output | null = null
     $: if ($currentOutputSettings) currentOutput = { id: $currentOutputSettings, ...currentOutputs[$currentOutputSettings] }
@@ -56,7 +56,7 @@
             if (value) {
                 newToast("toast.output_capture_enabled")
 
-                const enabledOutputs = Object.values($outputs).filter((a) => a.enabled && !a.stageOutput)
+                const enabledOutputs = Object.values($outputs).filter(a => a.enabled && !a.stageOutput)
                 if (enabledOutputs.length > 1) {
                     updateOutput("transparent", true)
                     updateOutput("invisible", true)
@@ -84,7 +84,7 @@
 
             if (key === "ndi") {
                 if (!value) {
-                    ndiData.update((a) => {
+                    ndiData.update(a => {
                         delete a[outputId]
                         return a
                     })
@@ -177,10 +177,10 @@
         </MaterialButton>
     {/if} -->
 
-<Tabs id="output" tabs={outputsList} value={$currentOutputSettings || ""} newLabel="settings.new_output" class="context #output_screen" on:open={(e) => currentOutputSettings.set(e.detail)} on:create={createOutput} let:tab>
+<Tabs id="output" tabs={outputsList} value={$currentOutputSettings || ""} newLabel="settings.new_output" class="context #output_screen" on:open={e => currentOutputSettings.set(e.detail)} on:create={createOutput} let:tab>
     {#if tab.stageOutput}<Icon id="stage" right />{/if}
     {#if tab.enabled !== false}<Icon id="check" size={0.7} white right />{/if}
-    <HiddenInput value={tab.name} id={"output_" + tab.id} on:edit={(e) => updateOutput("name", e.detail.value, tab.id)} bind:edit />
+    <HiddenInput value={tab.name} id={"output_" + tab.id} on:edit={e => updateOutput("name", e.detail.value, tab.id)} bind:edit />
 
     {#if tab.color}
         <div class="color" style="--color: {tab.color};"></div>

@@ -13,7 +13,7 @@
         // don't update until overlay display click has finished
         setTimeout(() => {
             // WIP history
-            overlays.update((a) => {
+            overlays.update(a => {
                 delete a[overlayId][actionId]
                 return a
             })

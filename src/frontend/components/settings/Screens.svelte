@@ -31,7 +31,7 @@
 
     // find matching screen
     $: if (!currentScreen.screen && screens.length) {
-        let match = screens.find((screen) => JSON.stringify(screen.bounds) === JSON.stringify(currentScreen.bounds))
+        let match = screens.find(screen => JSON.stringify(screen.bounds) === JSON.stringify(currentScreen.bounds))
         if (match?.id) {
             outputs.update((a: any) => {
                 a[screenId!].screen = match.id.toString()
@@ -115,7 +115,7 @@
         let alreadySelected = $outputs[screenId]?.screen === e.detail.id.toString()
 
         let bounds = e.detail.bounds
-        outputs.update((a) => {
+        outputs.update(a => {
             if (!a[screenId]) return a
 
             a[screenId].bounds = { x: bounds.x, y: bounds.y, width: bounds.width, height: bounds.height }
@@ -142,7 +142,7 @@
     function lockScreen() {
         if (!screenId) return
 
-        outputs.update((a) => {
+        outputs.update(a => {
             if (!a[screenId]) return a
 
             a[screenId].boundsLocked = !a[screenId].boundsLocked
@@ -161,7 +161,7 @@
     function updateCropping(value: string | number, side: string) {
         if (!screenId) return
 
-        outputs.update((a) => {
+        outputs.update(a => {
             if (!a[screenId].cropping) {
                 if (currentScreen.style && $styles[currentScreen.style]?.cropping) a[screenId].cropping = clone($styles[currentScreen.style].cropping)
                 else a[screenId].cropping = { top: 0, right: 0, bottom: 0, left: 0 }
@@ -173,7 +173,7 @@
     }
     function getCroppedStyle(cropping) {
         let style = ""
-        Object.keys(cropping).forEach((key) => {
+        Object.keys(cropping).forEach(key => {
             if (cropping[key]) style += `padding-${key}: ${cropping[key] * previewSize}px;`
         })
         return style
@@ -184,7 +184,7 @@
     function updateBlending(value: string | number, side: string) {
         if (!screenId) return
 
-        outputs.update((a) => {
+        outputs.update(a => {
             if (!a[screenId].blending) a[screenId].blending = { left: 0, right: 0, rotate: 90, opacity: 50, centered: false, offset: 0 }
             a[screenId].blending![side] = Number(value)
             return a
@@ -207,23 +207,16 @@
 
     <p class="tip"><T id="screen.cropping_tip" /></p>
 
-    <MaterialNumberInput label="screen.top" value={cropping.top || 0} defaultValue={0} max={currentScreen.bounds?.height * 0.9 - (cropping.bottom || 0)} on:change={(e) => updateCropping(e.detail, "top")} />
-    <MaterialNumberInput label="screen.right" value={cropping.right || 0} defaultValue={0} max={currentScreen.bounds?.width * 0.9 - (cropping.left || 0)} on:change={(e) => updateCropping(e.detail, "right")} />
-    <MaterialNumberInput label="screen.bottom" value={cropping.bottom || 0} defaultValue={0} max={currentScreen.bounds?.height * 0.9 - (cropping.top || 0)} on:change={(e) => updateCropping(e.detail, "bottom")} />
-    <MaterialNumberInput label="screen.left" value={cropping.left || 0} defaultValue={0} max={currentScreen.bounds?.width * 0.9 - (cropping.right || 0)} on:change={(e) => updateCropping(e.detail, "left")} />
+    <MaterialNumberInput label="screen.top" value={cropping.top || 0} defaultValue={0} max={currentScreen.bounds?.height * 0.9 - (cropping.bottom || 0)} on:change={e => updateCropping(e.detail, "top")} />
+    <MaterialNumberInput label="screen.right" value={cropping.right || 0} defaultValue={0} max={currentScreen.bounds?.width * 0.9 - (cropping.left || 0)} on:change={e => updateCropping(e.detail, "right")} />
+    <MaterialNumberInput label="screen.bottom" value={cropping.bottom || 0} defaultValue={0} max={currentScreen.bounds?.height * 0.9 - (cropping.top || 0)} on:change={e => updateCropping(e.detail, "bottom")} />
+    <MaterialNumberInput label="screen.left" value={cropping.left || 0} defaultValue={0} max={currentScreen.bounds?.width * 0.9 - (cropping.right || 0)} on:change={e => updateCropping(e.detail, "left")} />
 
     <!-- preview -->
     <div class="preview" style="margin-top: 20px;">
         <div class="border" style="width: {currentScreen.bounds?.width * previewSize}px;height: {currentScreen.bounds?.height * previewSize}px;">
             <div class="cropped" style={getCroppedStyle(cropping)}>
-                <div
-                    class="previewWindow"
-                    style="aspect-ratio: {currentScreen.bounds?.width} / {currentScreen.bounds?.height};max-height: {(currentScreen.bounds?.height - (cropping.top || 0) - (cropping.bottom || 0)) * previewSize}px;max-width: {(currentScreen.bounds
-                        ?.width -
-                        (cropping.left || 0) -
-                        (cropping.right || 0)) *
-                        previewSize}px;"
-                ></div>
+                <div class="previewWindow" style="aspect-ratio: {currentScreen.bounds?.width} / {currentScreen.bounds?.height};max-height: {(currentScreen.bounds?.height - (cropping.top || 0) - (cropping.bottom || 0)) * previewSize}px;max-width: {(currentScreen.bounds?.width - (cropping.left || 0) - (cropping.right || 0)) * previewSize}px;"></div>
             </div>
         </div>
     </div>
@@ -232,14 +225,14 @@
 
     <p class="tip"><T id="screen.edge_blending_tip" /></p>
 
-    <MaterialNumberInput label="screen.left" value={blending.left || 0} defaultValue={0} max={500} on:change={(e) => updateBlending(e.detail, "left")} />
-    <MaterialNumberInput label="screen.right" value={blending.right || 0} defaultValue={0} max={100} on:change={(e) => updateBlending(e.detail, "right")} />
-    <MaterialRadialPicker label="edit.rotation" disabled={!blending.left && !blending.right} value={blending.rotate ?? 90} on:change={(e) => updateBlending(e.detail, "rotate")} />
-    <MaterialNumberInput label="edit.opacity" disabled={!blending.left && !blending.right} value={blending.opacity ?? 50} defaultValue={50} max={100} step={5} on:change={(e) => updateBlending(e.detail, "opacity")} />
+    <MaterialNumberInput label="screen.left" value={blending.left || 0} defaultValue={0} max={500} on:change={e => updateBlending(e.detail, "left")} />
+    <MaterialNumberInput label="screen.right" value={blending.right || 0} defaultValue={0} max={100} on:change={e => updateBlending(e.detail, "right")} />
+    <MaterialRadialPicker label="edit.rotation" disabled={!blending.left && !blending.right} value={blending.rotate ?? 90} on:change={e => updateBlending(e.detail, "rotate")} />
+    <MaterialNumberInput label="edit.opacity" disabled={!blending.left && !blending.right} value={blending.opacity ?? 50} defaultValue={50} max={100} step={5} on:change={e => updateBlending(e.detail, "opacity")} />
 
-    <MaterialToggleSwitch label="screen.centered" disabled={!blending.left && !blending.right} checked={blending.centered} defaultValue={false} on:change={(e) => updateBlending(e.detail, "centered")} />
+    <MaterialToggleSwitch label="screen.centered" disabled={!blending.left && !blending.right} checked={blending.centered} defaultValue={false} on:change={e => updateBlending(e.detail, "centered")} />
     {#if (blending.left || blending.right) && blending.centered}
-        <MaterialNumberInput label="edit.offset" value={blending.offset || 0} defaultValue={0} min={-50} max={50} on:change={(e) => updateBlending(e.detail, "offset")} />
+        <MaterialNumberInput label="edit.offset" value={blending.offset || 0} defaultValue={0} min={-50} max={50} on:change={e => updateBlending(e.detail, "offset")} />
     {/if}
 
     <!-- preview -->
@@ -256,14 +249,7 @@
     {/if}
 
     <p class="tip"><T id="settings.{currentScreen.boundsLocked ? 'output_locked' : 'select_display'}" /></p>
-    <MaterialButton
-        variant="outlined"
-        style="width: 100%;"
-        icon="edit"
-        disabled={currentScreen.boundsLocked}
-        on:click={() => activePopup.set("change_output_values")}
-        title={activateOutput ? "popup.change_output_values" : "settings.manual_input_hint"}
-    >
+    <MaterialButton variant="outlined" style="width: 100%;" icon="edit" disabled={currentScreen.boundsLocked} on:click={() => activePopup.set("change_output_values")} title={activateOutput ? "popup.change_output_values" : "settings.manual_input_hint"}>
         <p><T id={activateOutput ? "settings.manual_input_hint" : "popup.change_output_values"} /></p>
     </MaterialButton>
 
@@ -285,15 +271,12 @@
             <!-- + (!activateOutput && showMore ? -50 : 80) -->
             <div class="screens" style="transform: translate(-{totalScreensWidth}px, -{totalScreensHeight}px)">
                 <!-- {#if !currentScreen.screen || !screens.find((a) => a.id.toString() === currentScreen.screen)} -->
-                <div
-                    style="position: absolute;width: {currentScreen.bounds?.width}px;height: {currentScreen.bounds?.height}px;inset-inline-start: {currentScreen.bounds?.x - (minPosX ? minPosX : 0)}px;top: {currentScreen.bounds?.y -
-                        (minPosY ? minPosY : 0)}px;"
-                >
+                <div style="position: absolute;width: {currentScreen.bounds?.width}px;height: {currentScreen.bounds?.height}px;inset-inline-start: {currentScreen.bounds?.x - (minPosX ? minPosX : 0)}px;top: {currentScreen.bounds?.y - (minPosY ? minPosY : 0)}px;">
                     {#if currentScreen.screen}
-                        <span style="z-index: 2;position: absolute;top: 50%;left: 50%;transform: translate(-50%, -50%);">{screens.findIndex((a) => JSON.stringify(currentScreen.bounds) === JSON.stringify(a.bounds)) + 1 || ""}</span>
+                        <span style="z-index: 2;position: absolute;top: 50%;left: 50%;transform: translate(-50%, -50%);">{screens.findIndex(a => JSON.stringify(currentScreen.bounds) === JSON.stringify(a.bounds)) + 1 || ""}</span>
                     {/if}
                     <!-- Current screen position -->
-                    <div class="screen noClick" style="width: 100%;height: 100%;{currentScreen.screen && screens.find((a) => a.id.toString() === currentScreen.screen) ? 'opacity: 1;' : ''}"></div>
+                    <div class="screen noClick" style="width: 100%;height: 100%;{currentScreen.screen && screens.find(a => a.id.toString() === currentScreen.screen) ? 'opacity: 1;' : ''}"></div>
                     {#if !activateOutput}
                         <MaterialButton class="lock" on:click={lockScreen} title="preview.{currentScreen.boundsLocked ? '_unlock' : '_lock'}" red={currentScreen.boundsLocked}>
                             <Icon id={currentScreen.boundsLocked ? "locked" : "unlocked"} size={1.1} white={currentScreen.boundsLocked} />

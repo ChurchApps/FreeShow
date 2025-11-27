@@ -105,7 +105,7 @@
     // only update if new ID! Previous is removed, but output should not update until a new value is set
     let currentIds: string[] = []
     let currentOut: { [key: string]: any } = {}
-    $: if (Object.keys(currentlyTransitioning).find((id) => !currentIds.includes(id))) updateOut()
+    $: if (Object.keys(currentlyTransitioning).find(id => !currentIds.includes(id))) updateOut()
     function updateOut() {
         currentOut = clone(currentlyTransitioning)
         currentIds = Object.keys(currentlyTransitioning)

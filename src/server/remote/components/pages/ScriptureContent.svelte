@@ -67,10 +67,10 @@
     $: currentVerse = activeVerse > 0 ? String(activeVerse) : ""
 
     // Update displayed indices from main app state (what's currently on output)
-    const unsubscribeScripture = currentScriptureState.subscribe((state) => {
+    const unsubscribeScripture = currentScriptureState.subscribe(state => {
         if (!state) return
         if (state.scriptureId && state.scriptureId !== id) return
-        
+
         const bookIndex = state.bookId
         const chapterIndex = state.chapterId
         const verseList = state.activeVerses
@@ -91,7 +91,7 @@
     const colors = ["", "#f17d46", "#ffd17c", "#8cdfff", "#8888ff", "#ff97f2", "#ffdce7", "#88ffa9", "#ffd3b6"]
 
     export function getColorCode(books: any[], bookId: number | string) {
-        let bookIndex = typeof bookId === "number" ? bookId : books.findIndex((a) => a.id === bookId)
+        let bookIndex = typeof bookId === "number" ? bookId : books.findIndex(a => a.id === bookId)
 
         if (books.length === colorCodesFull.length) return colors[colorCodesFull[bookIndex]]
         else if (books.length === colorCodesNT.length) return colors[colorCodesNT[bookIndex]]
@@ -116,11 +116,11 @@
 
     function playScripture(verseNumber: number) {
         if (activeBook < 0 || activeChapter < 0 || verseNumber <= 0) return
-        
+
         const book = books[activeBook]
         const chapter = chapters[activeChapter]
         if (!book || !chapter) return
-        
+
         const bookNumber = book.number ?? activeBook + 1
         const chapterNumber = chapter.number ?? activeChapter + 1
         send("API:start_scripture", { id, reference: `${bookNumber}.${chapterNumber}.${verseNumber}` })
@@ -146,7 +146,7 @@
     // Navigate to verse depth from search - handles data loading progressively
     export function navigateToVerse(bookNum: number, chapterNum: number) {
         const bookIndex = books.findIndex((b: any) => {
-            const bNum = typeof b?.number === 'string' ? parseInt(b.number, 10) : b?.number
+            const bNum = typeof b?.number === "string" ? parseInt(b.number, 10) : b?.number
             return (bNum ?? 0) === bookNum
         })
         if (bookIndex >= 0) {
@@ -156,7 +156,7 @@
 
             let chapterIndex = chapters.findIndex((c: any) => {
                 if (!c) return false
-                const cNum = typeof c.number === 'string' ? parseInt(c.number, 10) : c.number
+                const cNum = typeof c.number === "string" ? parseInt(c.number, 10) : c.number
                 return cNum === chapterNum
             })
             if (chapterIndex < 0) {
@@ -192,16 +192,16 @@
         if (!versesContainer || verseNum <= 0) return
 
         // Find the verse button with the specified verse number
-        const verseButtons = versesContainer.querySelectorAll('.verse-button')
+        const verseButtons = versesContainer.querySelectorAll(".verse-button")
         for (let i = 0; i < verseButtons.length; i++) {
             const button = verseButtons[i] as HTMLElement
-            const verseSpan = button.querySelector('span')
+            const verseSpan = button.querySelector("span")
             if (verseSpan && Number(verseSpan.textContent?.trim()) === verseNum) {
                 // Scroll the container to show the button
                 const containerRect = versesContainer.getBoundingClientRect()
                 const buttonRect = button.getBoundingClientRect()
-                const scrollTop = versesContainer.scrollTop + (buttonRect.top - containerRect.top) - (containerRect.height / 2) + (buttonRect.height / 2)
-                versesContainer.scrollTo({ top: scrollTop, behavior: 'smooth' })
+                const scrollTop = versesContainer.scrollTop + (buttonRect.top - containerRect.top) - containerRect.height / 2 + buttonRect.height / 2
+                versesContainer.scrollTo({ top: scrollTop, behavior: "smooth" })
                 break
             }
         }
@@ -231,7 +231,7 @@
         const chapterNumber = parseInt(chapterStr, 10)
         const verseNumber = parseInt(verseStr, 10)
 
-        const bookIndex = books.findIndex((book) => {
+        const bookIndex = books.findIndex(book => {
             if (book.name.toLowerCase() === bookName.toLowerCase().trim()) {
                 return true
             }
@@ -308,18 +308,18 @@
         // Wait for DOM to update, then scroll
         setTimeout(() => {
             if (!versesContainer) return
-            
+
             // Find the verse button with the displayed verse number
-            const verseButtons = versesContainer.querySelectorAll('.verse-button')
+            const verseButtons = versesContainer.querySelectorAll(".verse-button")
             for (let i = 0; i < verseButtons.length; i++) {
                 const button = verseButtons[i] as HTMLElement
-                const verseSpan = button.querySelector('span')
+                const verseSpan = button.querySelector("span")
                 if (verseSpan && Number(verseSpan.textContent?.trim()) === displayedVerseNumber) {
                     // Scroll the container to show the button
                     const containerRect = versesContainer.getBoundingClientRect()
                     const buttonRect = button.getBoundingClientRect()
-                    const scrollTop = versesContainer.scrollTop + (buttonRect.top - containerRect.top) - (containerRect.height / 2) + (buttonRect.height / 2)
-                    versesContainer.scrollTo({ top: scrollTop, behavior: 'smooth' })
+                    const scrollTop = versesContainer.scrollTop + (buttonRect.top - containerRect.top) - containerRect.height / 2 + buttonRect.height / 2
+                    versesContainer.scrollTo({ top: scrollTop, behavior: "smooth" })
                     break
                 }
             }
@@ -334,19 +334,19 @@
         if (displayedBookIndex >= 0 && displayedChapterIndex >= 0 && displayedVerseNumber > 0) {
             const displayedBook = books[displayedBookIndex]
             if (!displayedBook) return
-            
+
             const bookNumber = displayedBook.number ?? displayedBookIndex + 1
             const displayedChapters = displayedBook.chapters || []
             const displayedChapter = displayedChapters[displayedChapterIndex]
             if (!displayedChapter) return
-            
+
             const chapterNumber = displayedChapter.number ?? displayedChapterIndex + 1
-            
+
             // Use loaded verses if available, otherwise increment verse number
             if (activeBook === displayedBookIndex && activeChapter === displayedChapterIndex && verses.length > 0) {
                 const verseNumbers: number[] = verses.map((v: any, i: number) => {
                     const num = v?.number ?? i + 1
-                    return typeof num === 'string' ? parseInt(num, 10) : num
+                    return typeof num === "string" ? parseInt(num, 10) : num
                 })
                 const currentIndex = verseNumbers.indexOf(displayedVerseNumber)
                 if (currentIndex >= 0 && currentIndex < verseNumbers.length - 1) {
@@ -364,19 +364,19 @@
         if (displayedBookIndex >= 0 && displayedChapterIndex >= 0 && displayedVerseNumber > 0) {
             const displayedBook = books[displayedBookIndex]
             if (!displayedBook) return
-            
+
             const bookNumber = displayedBook.number ?? displayedBookIndex + 1
             const displayedChapters = displayedBook.chapters || []
             const displayedChapter = displayedChapters[displayedChapterIndex]
             if (!displayedChapter) return
-            
+
             const chapterNumber = displayedChapter.number ?? displayedChapterIndex + 1
-            
+
             // Use loaded verses if available, otherwise decrement verse number
             if (activeBook === displayedBookIndex && activeChapter === displayedChapterIndex && verses.length > 0) {
                 const verseNumbers: number[] = verses.map((v: any, i: number) => {
                     const num = v?.number ?? i + 1
-                    return typeof num === 'string' ? parseInt(num, 10) : num
+                    return typeof num === "string" ? parseInt(num, 10) : num
                 })
                 const currentIndex = verseNumbers.indexOf(displayedVerseNumber)
                 if (currentIndex > 0) {
@@ -443,7 +443,7 @@
                                 activeVerse = 0
                                 depth++
                             }}
-                            on:keydown={(e) =>
+                            on:keydown={e =>
                                 e.key === "Enter" &&
                                 (() => {
                                     activeBook = i
@@ -488,7 +488,7 @@
                             }
                             depth++
                         }}
-                        on:keydown={(e) =>
+                        on:keydown={e =>
                             e.key === "Enter" &&
                             (() => {
                                 const previousChapter = activeChapter
@@ -521,7 +521,7 @@
                     {@const verseNumber = Number(verse.number) || i + 1}
                     {@const isDisplayed = activeBook === displayedBookIndex && activeChapter === displayedChapterIndex && verseNumber === displayedVerseNumber}
                     {@const isActive = activeVerse === verseNumber}
-                    <button type="button" class="verse-button" on:click={() => playScripture(verseNumber)} on:keydown={(e) => e.key === "Enter" && playScripture(verseNumber)} class:active={isActive} class:displayed={isDisplayed}>
+                    <button type="button" class="verse-button" on:click={() => playScripture(verseNumber)} on:keydown={e => e.key === "Enter" && playScripture(verseNumber)} class:active={isActive} class:displayed={isDisplayed}>
                         <span style="width: 100%;height: 100%;color: var(--secondary);font-weight: bold;">
                             {verseNumber}
                         </span>
@@ -731,7 +731,7 @@
     }
 
     .grid .verses.list .displayed::after {
-        content: '';
+        content: "";
         position: absolute;
         left: -4px; /* Start a bit before the verse number */
         right: -4px;

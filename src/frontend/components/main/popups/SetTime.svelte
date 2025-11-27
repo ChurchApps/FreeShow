@@ -43,7 +43,7 @@
             else delete slideItems[i].actions[action]
         })
 
-        let actions = indexes.map((i) => slideItems[i].actions)
+        let actions = indexes.map(i => slideItems[i].actions)
 
         if (type === "overlay" || type === "template") {
             history({

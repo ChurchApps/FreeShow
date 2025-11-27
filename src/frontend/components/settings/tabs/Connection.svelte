@@ -49,7 +49,7 @@
     function toggleServer(e: any, id: string) {
         let value = e.detail
 
-        disabledServers.update((a) => {
+        disabledServers.update(a => {
             a[id] = !value
             return a
         })
@@ -61,7 +61,7 @@
 
         if (id === "output_stream") {
             if ($serverData?.output_stream?.outputId && !$outputs[$serverData.output_stream.outputId]) {
-                serverData.update((a) => {
+                serverData.update(a => {
                     delete a.output_stream.outputId
                     return a
                 })
@@ -74,7 +74,7 @@
     function toggleCompanion(e: any) {
         let value = e.detail
 
-        companion.update((a) => {
+        companion.update(a => {
             a.enabled = value
             return a
         })
@@ -116,9 +116,9 @@
         if (!$providerConnections[providerId]) {
             sendMain(Main.PROVIDER_LOAD_SERVICES, { providerId })
         } else {
-            requestMain(Main.PROVIDER_DISCONNECT, { providerId }, (a) => {
+            requestMain(Main.PROVIDER_DISCONNECT, { providerId }, a => {
                 if (!a.success) return
-                providerConnections.update((c) => {
+                providerConnections.update(c => {
                     c[providerId] = false
                     return c
                 })
@@ -133,7 +133,7 @@
     }
 
     function updateProvider(id: ContentProviderId, key: string, value: any) {
-        contentProviderData.update((a) => {
+        contentProviderData.update(a => {
             if (!a[id]) a[id] = {}
             a[id][key] = value
             return a
@@ -189,7 +189,7 @@
         {#if server.id === "companion"}
             <MaterialToggleSwitch label="" checked={$companion?.enabled === true} on:change={toggleCompanion} />
         {:else}
-            <MaterialToggleSwitch label="" checked={server.enabledByDefault ? $disabledServers[server.id] !== true : $disabledServers[server.id] === false} on:change={(e) => toggleServer(e, server.id)} />
+            <MaterialToggleSwitch label="" checked={server.enabledByDefault ? $disabledServers[server.id] !== true : $disabledServers[server.id] === false} on:change={e => toggleServer(e, server.id)} />
         {/if}
     </InputRow>
 {/each}
@@ -231,7 +231,7 @@
             <T id="cloud.sync" />
         </MaterialButton>
     </InputRow>
-    <MaterialToggleSwitch label="Always use local instance of songs" checked={$contentProviderData.planningcenter?.localAlways} defaultValue={false} on:change={(e) => updateProvider("planningcenter", "localAlways", e.detail)} />
+    <MaterialToggleSwitch label="Always use local instance of songs" checked={$contentProviderData.planningcenter?.localAlways} defaultValue={false} on:change={e => updateProvider("planningcenter", "localAlways", e.detail)} />
 {:else if $providerConnections.churchApps}
     <!-- ChurchApps connected -->
     <Title label="Content Provider: ChurchApps" icon="list" />

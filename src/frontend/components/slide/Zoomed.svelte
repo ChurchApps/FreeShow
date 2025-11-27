@@ -47,7 +47,7 @@
     onMount(() => {
         if (!slideElem) return
 
-        resizeObserver = new ResizeObserver((entries) => {
+        resizeObserver = new ResizeObserver(entries => {
             for (const entry of entries) {
                 const { width, height } = entry.contentRect
                 if (slideWidth !== width || slideHeight !== height) {
@@ -111,18 +111,7 @@
 </script>
 
 <div id={outputId} class:center class:disabled class="zoomed" style="width: 100%;height: 100%;{outline ? `border: 2px solid ${outline};` : ''}{alignStyle}" bind:offsetWidth={elemWidth} bind:offsetHeight={elemHeight}>
-    <div
-        bind:this={slideElem}
-        class="slide"
-        class:landscape={resolution.width / resolution.height > elemWidth / elemHeight}
-        class:hideOverflow
-        class:disableStyle
-        class:showMirror
-        class:relative
-        class:checkered
-        class:border
-        style="{$$props.style || ''}background-color: {background};transition: {backgroundDuration}ms background-color;{aspectRatio ? `aspect-ratio: ${resolution.width}/${resolution.height};${croppedStyle}` : ''};"
-    >
+    <div bind:this={slideElem} class="slide" class:landscape={resolution.width / resolution.height > elemWidth / elemHeight} class:hideOverflow class:disableStyle class:showMirror class:relative class:checkered class:border style="{$$props.style || ''}background-color: {background};transition: {backgroundDuration}ms background-color;{aspectRatio ? `aspect-ratio: ${resolution.width}/${resolution.height};${croppedStyle}` : ''};">
         {#if zoom}
             <span class="zoom" style="zoom: {ratio};{drawZoom === 1 ? '' : `transform: scale(${drawZoom});position: absolute;width: 100%;height: 100%;` + ($draw ? `inset-inline-start: ${drawX}%;top: ${drawY}%;` : '')}">
                 <slot {ratio} />

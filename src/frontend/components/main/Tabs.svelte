@@ -25,14 +25,14 @@
         checkOverflow()
     }
 
-    $: firstOverflowIndex = Object.values(tabs).findIndex((a) => a.overflow)
+    $: firstOverflowIndex = Object.values(tabs).findIndex(a => a.overflow)
     export let overflowHidden = true
 
     onMount(checkOverflow)
 
     function checkOverflow() {
         // show overflow if active is in overflow
-        if (active && Object.keys(tabs).find((id) => id === active && tabs[id].overflow)) {
+        if (active && Object.keys(tabs).find(id => id === active && tabs[id].overflow)) {
             overflowHidden = false
         }
     }

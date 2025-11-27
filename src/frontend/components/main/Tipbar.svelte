@@ -28,7 +28,7 @@
     function close() {
         isClosed = true
 
-        special.update((a) => {
+        special.update(a => {
             a[`${key}_closed`] = Date.now()
             return a
         })
@@ -37,7 +37,7 @@
     function interact() {
         isClosed = true
 
-        special.update((a) => {
+        special.update(a => {
             a[`${key}_interacted`] = Date.now()
             return a
         })

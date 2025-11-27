@@ -54,11 +54,11 @@
                 quickAccess.metadata[key] = values[key]
             }
 
-            showsCache.update((a) => {
+            showsCache.update(a => {
                 a[$activeShow!.id].quickAccess = quickAccess
                 return a
             })
-            shows.update((a) => {
+            shows.update(a => {
                 a[$activeShow!.id].quickAccess = quickAccess
                 return a
             })
@@ -91,7 +91,7 @@
     }
 
     $: slideBackgrounds = Object.values(currentShow?.layouts)
-        .map((a) => a.slides.map((a) => a.background).filter(Boolean))
+        .map(a => a.slides.map(a => a.background).filter(Boolean))
         .flat()
 
     $: metadataDisplay = metadata.display || "never"
@@ -117,65 +117,41 @@
                 {@const autofillValue = shouldAutofill ? autofillValues[key]?.() || "" : ""}
                 {@const numberStored = key === "number" && currentShow?.quickAccess?.number}
 
-                <MaterialTextInput {label} style={numberStored ? "border-bottom: 1px solid var(--secondary);" : ""} {value} autofill={autofillValue} on:change={(e) => changeValue(e.detail, key)} />
+                <MaterialTextInput {label} style={numberStored ? "border-bottom: 1px solid var(--secondary);" : ""} {value} autofill={autofillValue} on:change={e => changeValue(e.detail, key)} />
             {/each}
         </div>
     {/if}
 
     {#if slideBackgrounds.length}
         <div style="padding: 10px;">
-            <MaterialToggleSwitch label="meta.auto_media" data="EXIF from .JPEG" checked={metadata.autoMedia || false} defaultValue={false} on:change={(e) => updateMetadata(e, "autoMedia")} />
+            <MaterialToggleSwitch label="meta.auto_media" data="EXIF from .JPEG" checked={metadata.autoMedia || false} defaultValue={false} on:change={e => updateMetadata(e, "autoMedia")} />
         </div>
     {/if}
 
     <!-- message -->
     <HRule title="meta.message" />
     <div style="padding: 10px;">
-        <MaterialTextarea label="meta.message_tip" class="context #meta_message" value={message.text || ""} rows={2} on:change={(e) => updateData({ ...message, text: e.detail }, "message")} />
+        <MaterialTextarea label="meta.message_tip" class="context #meta_message" value={message.text || ""} rows={2} on:change={e => updateData({ ...message, text: e.detail }, "message")} />
     </div>
 
     <!-- styling -->
     <HRule title="edit.style" />
     <div style="padding: 10px;">
         <InputRow>
-            <MaterialToggleSwitch label="meta.override_output" checked={metadata.override || false} defaultValue={false} style="width: 100%;" on:change={(e) => updateMetadata(e, "override")} />
+            <MaterialToggleSwitch label="meta.override_output" checked={metadata.override || false} defaultValue={false} style="width: 100%;" on:change={e => updateMetadata(e, "override")} />
             {#if !metadata.override}
                 <MaterialButton icon="edit" title="menu.edit" on:click={editMetadataStyle} />
             {/if}
         </InputRow>
 
         {#if metadata.override}
-            <MaterialPopupButton
-                label="meta.display_metadata"
-                value={metadataDisplay}
-                defaultValue="never"
-                name={metadataDisplayValues.find((a) => a.id === metadataDisplay)?.name || ""}
-                popupId="metadata_display"
-                icon="info"
-                on:change={(e) => updateMetadata(e, "display")}
-            />
+            <MaterialPopupButton label="meta.display_metadata" value={metadataDisplay} defaultValue="never" name={metadataDisplayValues.find(a => a.id === metadataDisplay)?.name || ""} popupId="metadata_display" icon="info" on:change={e => updateMetadata(e, "display")} />
 
             {#if metadataDisplay !== "never"}
-                <MaterialPopupButton
-                    label="meta.meta_template"
-                    value={(metadata.template ? metadata.template : outputShowSettings.metadataTemplate) || "metadata"}
-                    defaultValue="metadata"
-                    name={$templates[(metadata.template ? metadata.template : outputShowSettings.metadataTemplate) || "metadata"]?.name}
-                    popupId="select_template"
-                    icon="templates"
-                    on:change={(e) => updateMetadata(e, "template")}
-                />
+                <MaterialPopupButton label="meta.meta_template" value={(metadata.template ? metadata.template : outputShowSettings.metadataTemplate) || "metadata"} defaultValue="metadata" name={$templates[(metadata.template ? metadata.template : outputShowSettings.metadataTemplate) || "metadata"]?.name} popupId="select_template" icon="templates" on:change={e => updateMetadata(e, "template")} />
             {/if}
 
-            <MaterialPopupButton
-                label="meta.message_template"
-                value={(message.template ? message.template : outputShowSettings.messageTemplate) || "message"}
-                defaultValue="message"
-                name={$templates[(message.template ? message.template : outputShowSettings.messageTemplate) || "message"]?.name}
-                popupId="select_template"
-                icon="templates"
-                on:change={updateMessageTemplate}
-            />
+            <MaterialPopupButton label="meta.message_template" value={(message.template ? message.template : outputShowSettings.messageTemplate) || "message"} defaultValue="message" name={$templates[(message.template ? message.template : outputShowSettings.messageTemplate) || "message"]?.name} popupId="select_template" icon="templates" on:change={updateMessageTemplate} />
         {/if}
     </div>
 

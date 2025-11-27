@@ -20,7 +20,7 @@
         mediaData = {}
         codecInfo = {}
 
-        requestMain(Main.FILE_INFO, $activeShow?.id, (data) => {
+        requestMain(Main.FILE_INFO, $activeShow?.id, data => {
             if (!data) return
             mediaData = { ...data.stat, extension: data.extension }
             if (!name) name = removeExtension(getFileName(data.path))
@@ -54,7 +54,7 @@
     let settingsOpened = false
 
     function updateSpecial(value: any, key: string, allowEmpty = false) {
-        special.update((a) => {
+        special.update(a => {
             if (!allowEmpty && !value) delete a[key]
             else a[key] = value
 
@@ -71,8 +71,8 @@
     <div class="scroll">
         {#if settingsOpened}
             <main style="overflow-x: hidden;padding: 10px;">
-                <MaterialToggleSwitch label="settings.clear_media_when_finished" checked={$special.clearMediaOnFinish ?? true} defaultValue={true} on:change={(e) => updateSpecial(e.detail, "clearMediaOnFinish", true)} />
-                <MaterialToggleSwitch label="settings.auto_locate_missing_media_files" checked={$special.autoLocateMedia ?? true} defaultValue={true} on:change={(e) => updateSpecial(e.detail, "autoLocateMedia", true)} />
+                <MaterialToggleSwitch label="settings.clear_media_when_finished" checked={$special.clearMediaOnFinish ?? true} defaultValue={true} on:change={e => updateSpecial(e.detail, "clearMediaOnFinish", true)} />
+                <MaterialToggleSwitch label="settings.auto_locate_missing_media_files" checked={$special.autoLocateMedia ?? true} defaultValue={true} on:change={e => updateSpecial(e.detail, "autoLocateMedia", true)} />
             </main>
         {:else if $activeShow?.type === "video" || $activeShow?.type === "image"}
             <InfoMetadata title={name} {info} />

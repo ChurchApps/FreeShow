@@ -95,7 +95,7 @@
     function updateItem() {
         if (obj.contextElem?.classList.contains("stage_item")) {
             const stageId = $activeStage.id || ""
-            stageShows.update((a) => {
+            stageShows.update(a => {
                 if (!a[stageId]?.items[itemIndex]) return a
                 a[stageId].items[itemIndex].conditions = conditions
                 return a
@@ -107,19 +107,19 @@
         if (itemIndex === undefined) return
 
         if (isOverlay) {
-            overlays.update((a) => {
+            overlays.update(a => {
                 if (!a[edit.id!]?.items?.[itemIndex]) return a
                 a[edit.id!].items[itemIndex].conditions = conditions
                 return a
             })
         } else if (isTemplate) {
-            templates.update((a) => {
+            templates.update(a => {
                 if (!a[edit.id!]?.items?.[itemIndex]) return a
                 a[edit.id!].items[itemIndex].conditions = conditions
                 return a
             })
         } else {
-            showsCache.update((a) => {
+            showsCache.update(a => {
                 if (!a[showId]?.slides?.[slideId]?.items?.[itemIndex]) return a
                 a[showId].slides[slideId].items[itemIndex].conditions = conditions
                 return a
@@ -241,18 +241,11 @@
                                                 <MaterialButton variant="outlined" icon="delete" title="actions.delete" style="padding: 8px;border-radius: 50%;" on:click={() => deleteContent(a, b, c, d)} />
                                             </div>
                                             <div class="copy">
-                                                <MaterialButton
-                                                    variant="outlined"
-                                                    showOutline={JSON.stringify(CONTENT) === JSON.stringify(clipboard)}
-                                                    icon="copy"
-                                                    title="actions.copy"
-                                                    style="padding: 8px;border-radius: 50%;"
-                                                    on:click={() => copyContent(CONTENT)}
-                                                />
+                                                <MaterialButton variant="outlined" showOutline={JSON.stringify(CONTENT) === JSON.stringify(clipboard)} icon="copy" title="actions.copy" style="padding: 8px;border-radius: 50%;" on:click={() => copyContent(CONTENT)} />
                                             </div>
                                         {/if}
 
-                                        <ConditionsBox input={CONTENT} on:change={(e) => updateContent(e.detail.key, e.detail.value, a, b, c, d)} />
+                                        <ConditionsBox input={CONTENT} on:change={e => updateContent(e.detail.key, e.detail.value, a, b, c, d)} />
                                     </div>
                                 {/each}
 
@@ -300,7 +293,7 @@
     </div>
 
     <FloatingInputs style={addMoreOuter ? "" : "border: none;"} round>
-        <MaterialZoom hidden={!addMoreOuter} columns={zoom} min={0.5} max={1.5} defaultValue={1} addValue={-0.1} on:change={(e) => (zoom = e.detail)} />
+        <MaterialZoom hidden={!addMoreOuter} columns={zoom} min={0.5} max={1.5} defaultValue={1} addValue={-0.1} on:change={e => (zoom = e.detail)} />
     </FloatingInputs>
 </div>
 

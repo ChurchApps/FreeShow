@@ -36,9 +36,7 @@
     $: if ($templates || active || $templateCategories) updateTemplates()
 
     function updateTemplates() {
-        filteredTemplates = sortByName(
-            keysToID(clone($templates)).filter((s) => (active === "all" && !$templateCategories[s?.category || ""]?.isArchive) || active === s.category || (active === "unlabeled" && (s.category === null || !$templateCategories[s.category])))
-        )
+        filteredTemplates = sortByName(keysToID(clone($templates)).filter(s => (active === "all" && !$templateCategories[s?.category || ""]?.isArchive) || active === s.category || (active === "unlabeled" && (s.category === null || !$templateCategories[s.category]))))
 
         filterSearch()
     }
@@ -48,7 +46,7 @@
     const filter = (s: string) => s.toLowerCase().replace(/[.,\/#!?$%\^&\*;:{}=\-_`~()]/g, "")
     function filterSearch() {
         fullFilteredTemplates = clone(filteredTemplates)
-        if (searchValue.length > 1) fullFilteredTemplates = fullFilteredTemplates.filter((a) => filter(a.name).includes(filter(searchValue)))
+        if (searchValue.length > 1) fullFilteredTemplates = fullFilteredTemplates.filter(a => filter(a.name).includes(filter(searchValue)))
     }
 
     let nextScrollTimeout: NodeJS.Timeout | null = null
@@ -71,12 +69,12 @@
 
     const ignoreDefault = ["metadata", "message", "double"]
 
-    $: templateWithNonExistentCategory = active === "unlabeled" && filteredTemplates.some((s) => s.category)
+    $: templateWithNonExistentCategory = active === "unlabeled" && filteredTemplates.some(s => s.category)
     function createNonExistentCategories() {
-        const nonexistentCategories = [...new Set(filteredTemplates.map((s) => s.category))].filter((c) => c && !$templateCategories[c]) as string[]
+        const nonexistentCategories = [...new Set(filteredTemplates.map(s => s.category))].filter(c => c && !$templateCategories[c]) as string[]
 
-        templateCategories.update((a) => {
-            nonexistentCategories.forEach((id) => {
+        templateCategories.update(a => {
+            nonexistentCategories.forEach(id => {
                 if (a[id]) return
                 a[id] = { name: translateText("main.unnamed") }
             })
@@ -106,7 +104,7 @@
                             icon={template.isDefault ? "protected" : null}
                             color={template.color}
                             {resolution}
-                            on:click={(e) => {
+                            on:click={e => {
                                 if (e.target?.closest(".edit") || e.target?.closest(".icons")) return
                                 if (!$activeShow || ($activeShow?.type || "show") !== "show" || e.ctrlKey || e.metaKey) return
 

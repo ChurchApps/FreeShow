@@ -51,7 +51,7 @@
     $: if (type) requestData()
     function requestData() {
         if (type === "input") {
-            requestMain(Main.GET_MIDI_INPUTS, undefined, (data) => {
+            requestMain(Main.GET_MIDI_INPUTS, undefined, data => {
                 if (!data.length) return
                 inputs = data
                 if (!midi.input) midi.input = data[0]?.name
@@ -59,7 +59,7 @@
                 setInitialData()
             })
         } else {
-            requestMain(Main.GET_MIDI_OUTPUTS, undefined, (data) => {
+            requestMain(Main.GET_MIDI_OUTPUTS, undefined, data => {
                 if (!data.length) return
                 outputs = data
                 if (!midi.output) midi.output = data[0]?.name
@@ -76,7 +76,7 @@
         setTimeout(() => setValues("note", 0), 50)
     }
 
-    let listenerId = receiveToMain(ToMain.RECEIVE_MIDI2, (data) => {
+    let listenerId = receiveToMain(ToMain.RECEIVE_MIDI2, data => {
         if (!autoValues || !data) return
         if (data.id === $popupData.id && data.type === midi.type) {
             midi.values = data.values
@@ -107,9 +107,9 @@
 
 {#if type !== "emitter"}
     {#if type === "input"}
-        <MaterialDropdown label="midi.input" value={midi.input || ""} options={inputs.map((a) => ({ value: a.name, label: a.name }))} on:change={(e) => setMidi("input", e.detail)} />
+        <MaterialDropdown label="midi.input" value={midi.input || ""} options={inputs.map(a => ({ value: a.name, label: a.name }))} on:change={e => setMidi("input", e.detail)} />
     {:else}
-        <MaterialDropdown label="midi.output" value={midi.output || ""} options={outputs.map((a) => ({ value: a.name, label: a.name }))} on:change={(e) => setMidi("output", e.detail)} />
+        <MaterialDropdown label="midi.output" value={midi.output || ""} options={outputs.map(a => ({ value: a.name, label: a.name }))} on:change={e => setMidi("output", e.detail)} />
     {/if}
 
     {#if type !== "output" && !simple}
@@ -126,20 +126,14 @@
 {/if}
 
 {#if type !== "emitter"}
-    <MaterialDropdown label="midi.type" disabled={noActionOrDefaultValues && type !== "output" && !playSlide} value={midi.type || "noteon"} options={types} on:change={(e) => setMidi("type", e.detail)} />
+    <MaterialDropdown label="midi.type" disabled={noActionOrDefaultValues && type !== "output" && !playSlide} value={midi.type || "noteon"} options={types} on:change={e => setMidi("type", e.detail)} />
 {/if}
 
 {#if midi.type === "control"}
-    <MaterialNumberInput label="midi.controller" value={midi.values?.controller || 0} max={127} on:change={(e) => setValues("controller", e.detail)} />
-    <MaterialNumberInput label="variables.value" value={midi.values?.value || 0} max={127} on:change={(e) => setValues("value", e.detail)} />
+    <MaterialNumberInput label="midi.controller" value={midi.values?.controller || 0} max={127} on:change={e => setValues("controller", e.detail)} />
+    <MaterialNumberInput label="variables.value" value={midi.values?.value || 0} max={127} on:change={e => setValues("value", e.detail)} />
 {:else}
-    <MaterialNumberInput
-        label="midi.note <span style='color: var(--text);opacity: 0.5;font-weight: normal;font-size: 0.8em;margin-left: 10px;'>{midiToNote(midi.values?.note ?? 0)}</span>"
-        disabled={noActionOrDefaultValues && type !== "output" && !playSlide}
-        value={midi.values?.note || 0}
-        max={127}
-        on:change={(e) => setValues("note", e.detail)}
-    />
+    <MaterialNumberInput label="midi.note <span style='color: var(--text);opacity: 0.5;font-weight: normal;font-size: 0.8em;margin-left: 10px;'>{midiToNote(midi.values?.note ?? 0)}</span>" disabled={noActionOrDefaultValues && type !== "output" && !playSlide} value={midi.values?.note || 0} max={127} on:change={e => setValues("note", e.detail)} />
 
     {#if (!noActionOrDefaultValues && firstActionId?.includes("index_")) || type === "output" || type === "emitter" || playSlide}
         {#if type === "input"}
@@ -149,7 +143,7 @@
                 </p>
             </InputRow>
         {/if}
-        <MaterialNumberInput label="midi.velocity" value={midi.values?.velocity ?? (type === "input" ? -1 : 0)} min={type === "input" ? -1 : 0} max={127} on:change={(e) => setValues("velocity", e.detail)} />
+        <MaterialNumberInput label="midi.velocity" value={midi.values?.velocity ?? (type === "input" ? -1 : 0)} min={type === "input" ? -1 : 0} max={127} on:change={e => setValues("velocity", e.detail)} />
     {/if}
 {/if}
-<MaterialNumberInput label="midi.channel" disabled={noActionOrDefaultValues && type !== "output" && !playSlide} value={midi.values?.channel ?? 1} min={1} max={16} on:change={(e) => setValues("channel", e.detail)} />
+<MaterialNumberInput label="midi.channel" disabled={noActionOrDefaultValues && type !== "output" && !playSlide} value={midi.values?.channel ?? 1} min={1} max={16} on:change={e => setValues("channel", e.detail)} />

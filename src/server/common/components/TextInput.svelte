@@ -31,7 +31,10 @@
         border-radius: 8px;
         padding: 8px 12px;
         outline-offset: -2px;
-        transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+        transition:
+            border-color 0.2s ease,
+            box-shadow 0.2s ease,
+            background-color 0.2s ease;
     }
     input::placeholder {
         color: var(--text);

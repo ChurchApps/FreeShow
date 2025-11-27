@@ -31,7 +31,7 @@
         if (readOnly) return
 
         let name = e.detail.value
-        stageShows.update((a) => {
+        stageShows.update(a => {
             a[id].name = name
             return a
         })
@@ -43,22 +43,14 @@
     // { $activeTimers, $variables, $playingAudio, $playingAudioPaths, videoTime }
     let updater = 0
     const updaterInterval = setInterval(() => {
-        if (stageItems.some((a) => a.conditions)) updater++
+        if (stageItems.some(a => a.conditions)) updater++
     }, 1000)
     onDestroy(() => clearInterval(updaterInterval))
 </script>
 
 <!-- WIP duplicate of StageLayout.svelte (pretty much) -->
 <div class="main" class:active style="width: {100 / columns}%" class:list>
-    <div
-        class="slide context #stage_slide{readOnly ? '_readonly' : ''}"
-        class:disabled={layout.disabled}
-        style={layout.settings.color ? `background-color: ${layout.settings.color};` : ""}
-        tabindex={0}
-        role="button"
-        on:click
-        on:keydown={triggerClickOnEnterSpace}
-    >
+    <div class="slide context #stage_slide{readOnly ? '_readonly' : ''}" class:disabled={layout.disabled} style={layout.settings.color ? `background-color: ${layout.settings.color};` : ""} tabindex={0} role="button" on:click on:keydown={triggerClickOnEnterSpace}>
         <div style="width: 100%;">
             <SelectElem id="stage" data={{ id }} {selectable}>
                 <Zoomed background={layout.items.length ? "black" : "transparent"} style="width: 100%;" {resolution} id={stageOutputId} isStage disableStyle center bind:ratio>

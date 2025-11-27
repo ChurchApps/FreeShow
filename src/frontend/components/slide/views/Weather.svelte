@@ -40,7 +40,7 @@
                 let dayIndex = currentTime.getDay() === 0 ? 7 : currentTime.getDay()
                 const dayname = translateText(i < 2 ? `calendar.${i === 0 ? "today" : "tomorrow"}` : `weekday.${dayIndex}`)
                 const isoTime = toGlobalISO(a)
-                let timedata = weather.properties.timeseries.find((a) => a.time === isoTime)
+                let timedata = weather.properties.timeseries.find(a => a.time === isoTime)
                 if (timedata && i === 0) timedata = weather.properties.timeseries[0]
                 if (!timedata) return null
 

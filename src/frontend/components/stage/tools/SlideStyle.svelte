@@ -22,12 +22,12 @@
     // flash on update
     // password
 
-    $: outputsList = sortByName(keysToID($outputs).filter((a) => !a.stageOutput)).map((a) => ({ value: a.id, label: a.name }))
+    $: outputsList = sortByName(keysToID($outputs).filter(a => !a.stageOutput)).map(a => ({ value: a.id, label: a.name }))
 </script>
 
 <div class="tools">
     <div>
-        <MaterialDropdown label="stage.source_output" options={outputsList} value={settings.output || ""} on:change={(e) => updateStageSettings(e.detail, "output")} allowEmpty />
+        <MaterialDropdown label="stage.source_output" options={outputsList} value={settings.output || ""} on:change={e => updateStageSettings(e.detail, "output")} allowEmpty />
     </div>
 
     <div>
@@ -38,11 +38,11 @@
             </span>
         </div>
 
-        <MaterialColorInput label="edit.background_color" value={settings.color || "#000000"} defaultValue="#000000" on:input={(e) => updateStageSettings(e.detail, "color")} />
+        <MaterialColorInput label="edit.background_color" value={settings.color || "#000000"} defaultValue="#000000" on:input={e => updateStageSettings(e.detail, "color")} />
 
-        <MaterialCheckbox label="stage.labels" checked={settings.labels} on:change={(e) => updateStageSettings(e.detail, "labels")} />
+        <MaterialCheckbox label="stage.labels" checked={settings.labels} on:change={e => updateStageSettings(e.detail, "labels")} />
         {#if settings.labels}
-            <MaterialColorInput label="stage.label_color" value={settings.labelColor || "#ac9c35"} defaultValue={"#ac9c35"} on:input={(e) => updateStageSettings(e.detail, "labelColor")} />
+            <MaterialColorInput label="stage.label_color" value={settings.labelColor || "#ac9c35"} defaultValue={"#ac9c35"} on:input={e => updateStageSettings(e.detail, "labelColor")} />
         {/if}
     </div>
 </div>

@@ -14,7 +14,7 @@
     navigator.mediaDevices?.enumerateDevices()?.then(function (devices) {
         if (!devices) return
 
-        devices.forEach((d) => {
+        devices.forEach(d => {
             if (d.kind !== "audioinput") return
 
             if (!mics[d.groupId]) mics[d.groupId] = {}

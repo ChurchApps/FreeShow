@@ -49,8 +49,8 @@
 
         // find out which key has changed
         let _changedKeys = getChangedKeys(
-            items.filter((a) => !a.hidden),
-            previousItems.filter((a) => !a.hidden)
+            items.filter(a => !a.hidden),
+            previousItems.filter(a => !a.hidden)
         )
 
         if (!edit && $activePage === "edit" && $activeEdit.type === "effect") {
@@ -63,7 +63,7 @@
             return
         }
 
-        const changedKeys = _changedKeys.filter((a) => a.key !== "x" && a.key !== "y" && a.key !== "offset")
+        const changedKeys = _changedKeys.filter(a => a.key !== "x" && a.key !== "y" && a.key !== "offset")
 
         if (_changedKeys.length && !changedKeys.length && !$currentWindow) return
 
@@ -107,7 +107,7 @@
         const x = Math.max(0, mouseX / parentSlide.clientWidth)
         const y = Math.max(0, mouseY / parentSlide.clientHeight)
 
-        effects.update((a) => {
+        effects.update(a => {
             const item: any = a[effect.id!].items[movedIndex]
 
             if (basicMove.includes(item.type)) {

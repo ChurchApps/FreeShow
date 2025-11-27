@@ -32,7 +32,7 @@
     const mediaExtensions = [...videoExtensions, ...imageExtensions, ...audioExtensions]
     onMount(async () => {
         const files = await requestMain(Main.READ_FOLDER, { path })
-        folderFiles = sortByName(files.files.filter((a) => mediaExtensions.includes(a.extension)).map((a) => ({ path: a.path, name: a.name, type: getMediaType(a.extension), thumbnail: a.thumbnailPath })))
+        folderFiles = sortByName(files.files.filter(a => mediaExtensions.includes(a.extension)).map(a => ({ path: a.path, name: a.name, type: getMediaType(a.extension), thumbnail: a.thumbnailPath })))
 
         // get total time
         let total = 0
@@ -81,19 +81,7 @@
     {#if folderFiles.length}
         {#each folderFiles as file}
             {@const outputted = file.type === "audio" ? [AudioPlayer.getPlaying(file.path), $playingAudio][0] : findMatchingOut(file.path, $outputs)}
-            <Card
-                resolution={{ width: 16, height: 9 }}
-                width={25}
-                outlineColor={typeof outputted === "string" ? outputted : null}
-                active={file.type === "audio" ? !!outputted : outputted !== null}
-                label={file.name}
-                title={file.path}
-                icon={file.type === "audio" ? "music" : file.type}
-                white={file.type !== "video"}
-                showPlayOnHover
-                checkered={file.type !== "audio"}
-                on:click={() => playMedia(file)}
-            >
+            <Card resolution={{ width: 16, height: 9 }} width={25} outlineColor={typeof outputted === "string" ? outputted : null} active={file.type === "audio" ? !!outputted : outputted !== null} label={file.name} title={file.path} icon={file.type === "audio" ? "music" : file.type} white={file.type !== "video"} showPlayOnHover checkered={file.type !== "audio"} on:click={() => playMedia(file)}>
                 <!-- icons -->
                 <div class="icons">
                     {#if file.type === "image" && timer}
@@ -144,7 +132,7 @@
         <MaterialButton
             disabled={!folderFiles.length}
             on:click={() => {
-                popupData.set({ type: "folder", value: timer, totalTime, count: folderFiles.filter((a) => a.type === "image").length })
+                popupData.set({ type: "folder", value: timer, totalTime, count: folderFiles.filter(a => a.type === "image").length })
                 activePopup.set("next_timer")
             }}
             title="popup.next_timer{totalTime !== 0 ? `: ${totalTime}s` : ''}"

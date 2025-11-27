@@ -33,11 +33,11 @@
 
     function updateEvents() {
         let startFromDate = enableStartDate ? combineDateAndTime(startDate, startTime) : getXDaysFromToday(Number(startDaysFromToday || 0))
-        let eventsList = keysToID($events).filter((a) => a.type === "event" && new Date(a.to) >= startFromDate)
+        let eventsList = keysToID($events).filter(a => a.type === "event" && new Date(a.to) >= startFromDate)
 
         if (justOneDay) {
             let tomorrow = new Date(startFromDate).setHours(24, 0, 0, 0)
-            eventsList = eventsList.filter((a) => new Date(a.from).getTime() <= tomorrow)
+            eventsList = eventsList.filter(a => new Date(a.from).getTime() <= tomorrow)
         }
 
         eventsList = eventsList.sort(sortByTime)

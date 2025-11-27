@@ -23,7 +23,7 @@
     let fullFilteredEffects: any[] = []
     function filterSearch() {
         fullFilteredEffects = clone(filteredEffects)
-        if (searchValue.length > 1) fullFilteredEffects = fullFilteredEffects.filter((a) => filter(a.name).includes(filter(searchValue)))
+        if (searchValue.length > 1) fullFilteredEffects = fullFilteredEffects.filter(a => filter(a.name).includes(filter(searchValue)))
     }
 
     // HOVER
@@ -63,13 +63,13 @@
                     icon={effect.isDefault ? "protected" : null}
                     color={effect.color}
                     showPlayOnHover
-                    on:click={(e) => {
+                    on:click={e => {
                         if ($outLocked || e.ctrlKey || e.metaKey) return
                         if (e.target?.closest(".edit") || e.target?.closest(".icons")) return
 
                         setOutput("effects", effect.id, true)
                     }}
-                    on:mouseenter={(e) => mouseenter(e, i)}
+                    on:mouseenter={e => mouseenter(e, i)}
                     on:mouseleave={() => (hover = null)}
                 >
                     <!-- icons -->

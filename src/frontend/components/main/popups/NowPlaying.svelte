@@ -12,7 +12,7 @@
     }
 
     function updateSpecial(key: string, value: any) {
-        special.update((a) => {
+        special.update(a => {
             a[key] = value
             return a
         })
@@ -92,7 +92,7 @@
 <div style="height: 20px;"></div>
 
 <!-- label="actions.format" -->
-<MaterialTextarea label="NowPlaying.txt" value={format} rows={8} on:change={(e) => updateSpecial("nowPlayingFormat", e.detail)} />
+<MaterialTextarea label="NowPlaying.txt" value={format} rows={8} on:change={e => updateSpecial("nowPlayingFormat", e.detail)} />
 
 <style>
     .title {

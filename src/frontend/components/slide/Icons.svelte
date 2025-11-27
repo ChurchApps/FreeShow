@@ -76,7 +76,7 @@
     function resetTimer() {
         if (!hasAccess()) return
 
-        activeTimers.update((a) => {
+        activeTimers.update(a => {
             a = a.filter((_a, i) => !timer.includes(i))
             return a
         })

@@ -29,7 +29,7 @@
 
 <div class="editor-container">
     <Textarea bind:value />
-    
+
     {#if showTransposeButtons}
         <div class="transpose-buttons">
             <Button on:click={transposeUp} title={translate("edit.transpose_up", $dictionary)} dark>

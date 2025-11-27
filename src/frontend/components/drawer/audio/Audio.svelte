@@ -41,18 +41,7 @@
     $: isDefault = ["all", "favourites", "effects_library", "microphones", "audio_streams", "metronome"].includes(active || "")
     $: rootPath = isDefault || playlist ? "" : active !== null ? $audioFolders[active]?.path || "" : ""
     $: path = isDefault || playlist ? "" : rootPath
-    $: name =
-        active === "all"
-            ? "category.all"
-            : active === "favourites"
-              ? "category.favourites"
-              : active === "effects_library"
-                ? "category.sound_effects"
-                : rootPath === path
-                  ? active !== "microphones" && active !== "audio_streams" && active !== "metronome" && active !== null
-                      ? $audioFolders[active]?.name || ""
-                      : ""
-                  : splitPath(path).name
+    $: name = active === "all" ? "category.all" : active === "favourites" ? "category.favourites" : active === "effects_library" ? "category.sound_effects" : rootPath === path ? (active !== "microphones" && active !== "audio_streams" && active !== "metronome" && active !== null ? $audioFolders[active]?.name || "" : "") : splitPath(path).name
 
     // get list of files & folders
     let prevActive: null | string = null
@@ -65,7 +54,7 @@
                     let name = p.name
                     return { path, favourite: a.favourite === true, name, extension: p.extension, audio: a.audio === true }
                 })
-                .filter((a) => a.favourite === true && a.audio === true)
+                .filter(a => a.favourite === true && a.audio === true)
 
             // filterFiles()
             scrollElem?.scrollTo(0, 0)
@@ -78,7 +67,7 @@
             if (active !== prevActive) {
                 prevActive = active
                 files = []
-                Object.values($audioFolders).forEach((data) => sendMain(Main.READ_FOLDER, { path: data.path!, disableThumbnails: true }))
+                Object.values($audioFolders).forEach(data => sendMain(Main.READ_FOLDER, { path: data.path!, disableThumbnails: true }))
             }
         } else if (path.length) {
             if (path !== prevActive) {
@@ -95,24 +84,24 @@
     let filesInFolders: { id: string; name: string }[] = []
     let folderFiles: { [key: string]: string[] } = {}
 
-    let listenerId = receiveMain(Main.READ_FOLDER, (data) => {
+    let listenerId = receiveMain(Main.READ_FOLDER, data => {
         filesInFolders = sortByName(data.filesInFolders || [])
 
         if (active !== "all" && data.path !== path) return
 
-        files.push(...data.files.filter((file) => getMediaType(file.extension) === "audio" || (active !== "all" && file.folder)))
+        files.push(...data.files.filter(file => getMediaType(file.extension) === "audio" || (active !== "all" && file.folder)))
         files = sortByName(files).sort((a, b) => (a.folder === b.folder ? 0 : a.folder ? -1 : 1))
 
-        files = files.map((a) => ({ ...a, path: a.folder ? a.path : a.path }))
+        files = files.map(a => ({ ...a, path: a.folder ? a.path : a.path }))
 
         // set valid files in folder
         folderFiles = {}
-        Object.keys(data.folderFiles).forEach((path) => {
-            folderFiles[path] = data.folderFiles[path].filter((file) => file.folder || getMediaType(file.extension) === "audio")
+        Object.keys(data.folderFiles).forEach(path => {
+            folderFiles[path] = data.folderFiles[path].filter(file => file.folder || getMediaType(file.extension) === "audio")
         })
 
         // remove folders with no content
-        files = files.filter((a) => !a.folder || !folderFiles[a.path] || folderFiles[a.path].length > 0)
+        files = files.filter(a => !a.folder || !folderFiles[a.path] || folderFiles[a.path].length > 0)
 
         // filterFiles()
         scrollElem?.scrollTo(0, 0)
@@ -125,7 +114,7 @@
     let fullFilteredFiles: any[] = []
     function filterSearch() {
         fullFilteredFiles = clone(files)
-        if (searchValue.length > 1) fullFilteredFiles = [...fullFilteredFiles, ...filesInFolders].filter((a) => filter(a.name).includes(filter(searchValue)))
+        if (searchValue.length > 1) fullFilteredFiles = [...fullFilteredFiles, ...filesInFolders].filter(a => filter(a.name).includes(filter(searchValue)))
 
         // scroll to top
         document.querySelector("svelte-virtual-list-viewport")?.scrollTo(0, 0)
@@ -164,7 +153,7 @@
 
     function createPlaylist(e: ClickEvent) {
         let playlistName = ""
-        let files = fullFilteredFiles.filter((a) => !a.folder)
+        let files = fullFilteredFiles.filter(a => !a.folder)
         if (selectedFiles.length) files = selectedFiles
 
         if (e.detail.ctrl) {
@@ -175,16 +164,16 @@
         }
 
         let playlistId = uid()
-        audioPlaylists.update((a) => {
+        audioPlaylists.update(a => {
             a[playlistId] = {
                 name: playlistName,
-                songs: files.map((a) => a.path)
+                songs: files.map(a => a.path)
             }
 
             return a
         })
 
-        drawerTabsData.update((a) => {
+        drawerTabsData.update(a => {
             a.audio.activeSubTab = playlistId
             return a
         })
@@ -198,7 +187,7 @@
     $: if ($selectAllAudio) selectAll()
     function selectAll() {
         let data = (playlist ? playlist.songs : fullFilteredFiles)
-            .filter((a) => (playlist ? true : a.extension))
+            .filter(a => (playlist ? true : a.extension))
             .map((file, index) => {
                 if (playlist) return { path: file, name: getFileName(file), index }
                 return { path: file.path, name: file.name, index: -1 }
@@ -226,8 +215,8 @@
             <Metronome />
         {:else if playlist && playlistSettings}
             <div class="settings">
-                <MaterialNumberInput label="settings.audio_crossfade (s)" value={playlist?.crossfade || 0} max={30} step={0.5} on:change={(e) => AudioPlaylist.update(active || "", "crossfade", e.detail)} />
-                <MaterialNumberInput label="settings.playlist_volume (%)" value={Number(((playlist?.volume || 1) * 100).toFixed(2))} min={1} max={100} on:change={(e) => AudioPlaylist.update(active || "", "volume", e.detail / 100)} />
+                <MaterialNumberInput label="settings.audio_crossfade (s)" value={playlist?.crossfade || 0} max={30} step={0.5} on:change={e => AudioPlaylist.update(active || "", "crossfade", e.detail)} />
+                <MaterialNumberInput label="settings.playlist_volume (%)" value={Number(((playlist?.volume || 1) * 100).toFixed(2))} min={1} max={100} on:change={e => AudioPlaylist.update(active || "", "volume", e.detail / 100)} />
             </div>
 
             <!-- <CombinedInput>
@@ -257,7 +246,7 @@
                 {#key path}
                     {#each fullFilteredFiles as file}
                         {#if file.folder}
-                            <Folder name={file.name} path={file.path} mode="list" on:open={(e) => (path = e.detail)} />
+                            <Folder name={file.name} path={file.path} mode="list" on:open={e => (path = e.detail)} />
                         {:else}
                             <AudioFile path={file.path} name={file.name} {active} />
                         {/if}
@@ -361,7 +350,7 @@
     {/if}
 
     <!-- only show if audio content -->
-    {#if fullFilteredFiles.filter((a) => !a.folder)?.length}
+    {#if fullFilteredFiles.filter(a => !a.folder)?.length}
         <FloatingInputs onlyOne>
             <MaterialButton title="new.playlist" on:click={createPlaylist}>
                 <Icon size={1.2} id="playlist_create" />

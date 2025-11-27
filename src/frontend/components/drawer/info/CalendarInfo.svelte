@@ -23,7 +23,7 @@
     let settingsOpened = false
 
     function updateSpecial(value, key) {
-        special.update((a) => {
+        special.update(a => {
             a[key] = value
             return a
         })
@@ -45,7 +45,7 @@
 
 {#if settingsOpened}
     <main style="flex: 1;overflow-x: hidden;padding: 10px;">
-        <MaterialDropdown label="calendar.first_day" options={firstWeekDayOptions} value={$special.firstDayOfWeek || "1"} on:change={(e) => updateSpecial(e.detail, "firstDayOfWeek")} />
+        <MaterialDropdown label="calendar.first_day" options={firstWeekDayOptions} value={$special.firstDayOfWeek || "1"} on:change={e => updateSpecial(e.detail, "firstDayOfWeek")} />
     </main>
 {:else if type === "event"}
     {#if $activeDays.length > 1}

@@ -64,6 +64,6 @@
         </Center>
     {/if}
 {:else}
-    <MaterialTextInput label="inputs.name" value={currentTrigger.name} on:change={(e) => updateValue(e, "name")} autofocus={!currentTrigger.name} />
-    <MaterialTextInput label="variables.value" value={currentTrigger.value} on:change={(e) => updateValue(e, "value")} />
+    <MaterialTextInput label="inputs.name" value={currentTrigger.name} on:change={e => updateValue(e, "name")} autofocus={!currentTrigger.name} />
+    <MaterialTextInput label="variables.value" value={currentTrigger.value} on:change={e => updateValue(e, "value")} />
 {/if}

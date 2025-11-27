@@ -2,26 +2,7 @@
     import { onMount } from "svelte"
     import type { MediaStyle } from "../../../../types/Main"
     import type { ItemType } from "../../../../types/Show"
-    import {
-        activeEdit,
-        activePage,
-        activePopup,
-        activeShow,
-        activeTriggerFunction,
-        alertMessage,
-        driveData,
-        focusMode,
-        labelsDisabled,
-        media,
-        outputs,
-        overlays,
-        refreshEditSlide,
-        showsCache,
-        special,
-        styles,
-        templates,
-        textEditActive
-    } from "../../../stores"
+    import { activeEdit, activePage, activePopup, activeShow, activeTriggerFunction, alertMessage, driveData, focusMode, labelsDisabled, media, outputs, overlays, refreshEditSlide, showsCache, special, styles, templates, textEditActive } from "../../../stores"
     import { transposeText } from "../../../utils/chordTranspose"
     import { triggerFunction } from "../../../utils/common"
     import { translateText } from "../../../utils/language"
@@ -134,14 +115,14 @@
 
         let items = currentShow?.slides[ref[$activeEdit.slide!]?.id].items
         let values: string[] = []
-        active.forEach((id) => {
+        active.forEach(id => {
             let item = items[id]
             if (item) {
                 let styles = getStyles(item.style)
                 let textStyles = ""
 
                 Object.entries(newStyles).forEach(([key, value]) => (styles[key] = value.toString()))
-                Object.entries(styles).forEach((obj) => (textStyles += obj[0] + ":" + obj[1] + ";"))
+                Object.entries(styles).forEach(obj => (textStyles += obj[0] + ":" + obj[1] + ";"))
 
                 values.push(textStyles)
             }
@@ -167,7 +148,7 @@
         updateTimeout = setTimeout(resetAutoSize, 3000)
 
         function resetAutoSize() {
-            showsCache.update((a) => {
+            showsCache.update(a => {
                 if (!a[currentShowId]?.slides?.[slideId]?.items?.[activeItems[0] || 0]?.autoFontSize) return a
 
                 delete a[currentShowId].slides[slideId].items[activeItems[0] || 0].autoFontSize
@@ -277,7 +258,7 @@
         setTimeout(() => {
             // set focus to textbox if only one
             if (Slide?.items.length === 1 && !$activeEdit.items.length && $activeTriggerFunction !== "slide_notes") {
-                activeEdit.update((a) => ({ ...(a || {}), items: [0] }))
+                activeEdit.update(a => ({ ...(a || {}), items: [0] }))
                 const elem = document.querySelector(".editItem")?.querySelector(".edit")
                 if (elem) {
                     elem.addEventListener("focus", () => setCaretAtEnd(elem))
@@ -349,16 +330,7 @@
     <div class="parent" class:noOverflow={zoom >= 1} bind:this={scrollElem} bind:offsetWidth={width} bind:offsetHeight={height}>
         {#if Slide}
             <DropArea id="edit" file>
-                <Zoomed
-                    background={(transparentOutput || $special.transparentSlides) && !background ? "transparent" : background ? "black" : Slide?.settings?.color || currentStyle.background || "black"}
-                    {checkered}
-                    border={checkered}
-                    {resolution}
-                    style={widthOrHeight}
-                    bind:ratio
-                    {hideOverflow}
-                    center={zoom >= 1}
-                >
+                <Zoomed background={(transparentOutput || $special.transparentSlides) && !background ? "transparent" : background ? "black" : Slide?.settings?.color || currentStyle.background || "black"} {checkered} border={checkered} {resolution} style={widthOrHeight} bind:ratio {hideOverflow} center={zoom >= 1}>
                     <!-- <div class="chordsButton" style="zoom: {1 / ratio};">
                         <Button on:click={toggleChords}>
                             <Icon id="chords" white={!chordsMode} />

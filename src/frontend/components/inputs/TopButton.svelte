@@ -30,7 +30,7 @@
         function updateEditItem() {
             return // more annoying than helpful
             // set to show if: media has been opened AND show has not been opened AND it's not locked
-            if ($activeEdit.id && (!$editHistory.find((a) => $activeEdit.id === a.edit?.id) || $editHistory.find((a) => $activeShow?.id === a.show?.id))) return
+            if ($activeEdit.id && (!$editHistory.find(a => $activeEdit.id === a.edit?.id) || $editHistory.find(a => $activeShow?.id === a.show?.id))) return
             if ($shows[$activeShow?.id || ""]?.locked) return
 
             openEdit()
@@ -43,14 +43,7 @@
 </script>
 
 <!-- border-top-left-radius: 12px;border-top-right-radius: 12px; -->
-<MaterialButton
-    style="border-radius: 0;border-bottom: 2px solid var(--primary);{label ? 'padding: 0.3em 1.2em;' : ''}"
-    title={translateText(`menu._title_${id}${$special.numberKeys ? "" : ` [${keys[id]}]`}`, $dictionary)}
-    isActive={$activePage === id}
-    {disabled}
-    on:click={openPage}
-    {red}
->
+<MaterialButton style="border-radius: 0;border-bottom: 2px solid var(--primary);{label ? 'padding: 0.3em 1.2em;' : ''}" title={translateText(`menu._title_${id}${$special.numberKeys ? "" : ` [${keys[id]}]`}`, $dictionary)} isActive={$activePage === id} {disabled} on:click={openPage} {red}>
     <Icon {id} size={1.5} white={$activePage === id} />
     {#if label}<span><T id="menu.{id}" /></span>{/if}
 </MaterialButton>

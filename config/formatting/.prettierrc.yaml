@@ -4,3 +4,10 @@ tabWidth: 4
 semi: false
 singleQuote: false
 arrowParens: "avoid"
+
+plugins:
+    - "prettier-plugin-svelte"
+overrides:
+    - files: "*.svelte"
+      options:
+          parser: "svelte"

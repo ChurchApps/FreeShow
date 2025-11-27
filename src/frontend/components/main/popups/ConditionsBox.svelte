@@ -50,17 +50,17 @@
     const elementOptions = {
         timer: [{ value: "", label: translateText("stage.first_active_timer") }, ...convertToOptions($timers)],
         variable: getVariables(),
-        dynamicValue: getDynamicIds(true).map((a) => ({ value: a, label: a }))
+        dynamicValue: getDynamicIds(true).map(a => ({ value: a, label: a }))
     }
     export function convertToOptions(object) {
-        const options = Object.keys(object).map((id) => ({ value: id, label: object[id].name }))
+        const options = Object.keys(object).map(id => ({ value: id, label: object[id].name }))
         return sortByName(options, "label")
     }
 
     function getVariables() {
         const variablesList = getVariablesIds()
 
-        return variablesList.map((id) => {
+        return variablesList.map(id => {
             let name = id.replace("$", "").replace("variable_set_", "Set: ").replaceAll("__", ": ").replaceAll("_", " ")
             name = name[0].toUpperCase() + name.slice(1)
             return { value: id, label: name }
@@ -79,22 +79,22 @@
     {#each Object.entries(conditionValues) as [conditionId, condition]}
         {#if (conditionId === "element" || input.element) && (conditionId !== "data" || !noData.includes(operatorId))}
             {@const options = conditionId === "operator" ? operatorOptions : conditionId === "data" && customData[elementId] ? customData[elementId] : condition}
-            {@const value = options.find((a) => a.value === input[conditionId]) || options[0]}
+            {@const value = options.find(a => a.value === input[conditionId]) || options[0]}
             {@const label = conditionId === "operator" ? "actions.mode" : conditionId === "data" ? "variables.value" : "sort.type"}
 
             {#if conditionId !== "data" || options.length > 1}
-                <MaterialDropdown {label} {options} value={conditionId === "element" ? input[conditionId] : value?.value} on:change={(e) => setValue(conditionId, e)} />
+                <MaterialDropdown {label} {options} value={conditionId === "element" ? input[conditionId] : value?.value} on:change={e => setValue(conditionId, e)} />
             {/if}
 
             {#if conditionId === "element" && elementOptions[value.value]}
-                <MaterialDropdown label="tools.item" options={elementOptions[value.value]} value={input.elementId} on:change={(e) => setValue("elementId", e)} />
+                <MaterialDropdown label="tools.item" options={elementOptions[value.value]} value={input.elementId} on:change={e => setValue("elementId", e)} />
             {/if}
 
             {#if conditionId === "data"}
                 {#if value.value === "value"}
-                    <MaterialTextInput label="variables.value" placeholder={translateText("conditions.empty")} value={typeof input.value === "string" ? input.value : ""} on:change={(e) => setValue("value", e)} />
+                    <MaterialTextInput label="variables.value" placeholder={translateText("conditions.empty")} value={typeof input.value === "string" ? input.value : ""} on:change={e => setValue("value", e)} />
                 {:else if value.value === "seconds"}
-                    <MaterialNumberInput label="timer.seconds" value={typeof input.seconds === "number" ? input.seconds : 0} max={800000} on:change={(e) => setValue("seconds", e)} />
+                    <MaterialNumberInput label="timer.seconds" value={typeof input.seconds === "number" ? input.seconds : 0} max={800000} on:change={e => setValue("seconds", e)} />
                 {/if}
             {/if}
         {/if}

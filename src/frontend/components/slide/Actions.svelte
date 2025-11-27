@@ -31,7 +31,7 @@
         e.preventDefault()
 
         let slideActions = clone(actions.slideActions)
-        let actionIndex = slideActions.findIndex((a) => a.id === id || getActionTriggerId(a.triggers?.[0]) === id)
+        let actionIndex = slideActions.findIndex(a => a.id === id || getActionTriggerId(a.triggers?.[0]) === id)
         if (actionIndex < 0) return
         slideActions.splice(actionIndex, 1)
 
@@ -98,13 +98,7 @@
             {@const customName = getActionName(actionId, actionValue) || (action.name !== translateText(customData.name) ? action.name : "")}
 
             <div class="button {customData.red ? '' : 'white'}">
-                <Button
-                    style="padding: 3px;{getCustomStyle(specialData)}"
-                    redHover
-                    title="{translateText('actions.remove')}: <b>{translateText(customData.name)}</b>{action.name && action.name !== translateText(customData.name) ? `\n${action.name}` : ''}"
-                    {zoom}
-                    on:click={(e) => deleteSlideAction(e, action.id || actionId)}
-                >
+                <Button style="padding: 3px;{getCustomStyle(specialData)}" redHover title="{translateText('actions.remove')}: <b>{translateText(customData.name)}</b>{action.name && action.name !== translateText(customData.name) ? `\n${action.name}` : ''}" {zoom} on:click={e => deleteSlideAction(e, action.id || actionId)}>
                     {#if customName}<p>{customName}</p>{/if}
                     <Icon id={customData.icon || "actions"} size={0.9} white />
                 </Button>

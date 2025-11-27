@@ -12,26 +12,7 @@
     export let brighterHover = false
 </script>
 
-<button
-    data-title={title}
-    id={$$props.id}
-    data-testid={$$props["data-testid"]}
-    style="{outlineColor ? 'outline-offset: -2px;outline: 2px solid ' + outlineColor + ' !important;' : ''}{$$props.style || ''}"
-    class:active
-    class:outline
-    class:center
-    class:border
-    class:bold
-    class:dark
-    class:red
-    class:redHover
-    class:brighterHover
-    class={$$props.class}
-    on:click
-    on:dblclick
-    disabled={$$props.disabled}
-    tabindex={active ? -1 : 0}
->
+<button data-title={title} id={$$props.id} data-testid={$$props["data-testid"]} style="{outlineColor ? 'outline-offset: -2px;outline: 2px solid ' + outlineColor + ' !important;' : ''}{$$props.style || ''}" class:active class:outline class:center class:border class:bold class:dark class:red class:redHover class:brighterHover class={$$props.class} on:click on:dblclick disabled={$$props.disabled} tabindex={active ? -1 : 0}>
     <slot />
 </button>
 

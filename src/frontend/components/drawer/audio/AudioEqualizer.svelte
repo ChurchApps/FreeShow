@@ -63,7 +63,7 @@
         // No need to initialize here to avoid audio interruption
 
         // Subscribe to config changes
-        equalizerConfigUnsubscribe = equalizerConfig.subscribe((config) => {
+        equalizerConfigUnsubscribe = equalizerConfig.subscribe(config => {
             bands = clone(config.bands)
             enabled = config.enabled
         })
@@ -293,7 +293,7 @@
 
         // update preset
         selectedPreset = "custom"
-        eqPresets.update((a) => {
+        eqPresets.update(a => {
             a[selectedPreset] = {
                 name: translateText("sort.custom"),
                 bands: clone(bands)
@@ -307,7 +307,7 @@
                 const match = name.match(new RegExp(`^${label} (\\d+)$`))
                 return match ? parseInt(match[1], 10) : null
             })
-            .filter((num) => num !== null)
+            .filter(num => num !== null)
         customName = label + " " + (existingWithDefaultName.length + 1).toString()
     }
 
@@ -481,7 +481,7 @@
     }
     // value of "default" & "custom" should always be first, then alphabetical order
     $: presetOptions = keysToID(presets)
-        .map((a) => ({ label: a.name, value: a.id }))
+        .map(a => ({ label: a.name, value: a.id }))
         .sort((a, b) => {
             if (a.value === "default" || a.value === "custom") return -1
             if (b.value === "default" || b.value === "custom") return 1
@@ -493,12 +493,12 @@
         const preset = presets[value]
         if (!preset) return
 
-        special.update((a) => {
+        special.update(a => {
             a.selectedEQPreset = selectedPreset
             return a
         })
 
-        bands = clone(preset.bands.map((band) => ({ ...band })))
+        bands = clone(preset.bands.map(band => ({ ...band })))
         updateBands()
     }
 
@@ -510,7 +510,7 @@
         const id = uid(5)
 
         // Save current bands as a new preset
-        eqPresets.update((a) => {
+        eqPresets.update(a => {
             a[id] = {
                 name,
                 bands: clone(bands)
@@ -524,7 +524,7 @@
     }
 
     function deletePreset() {
-        eqPresets.update((a) => {
+        eqPresets.update(a => {
             delete a[selectedPreset]
             return a
         })
@@ -536,10 +536,10 @@
 <div class="equalizer-container" style="--accent: #5295ad;" class:disabled bind:this={containerElement}>
     <MaterialToggleSwitch label="settings.enabled" checked={enabled} on:change={handleEnableChange} />
     <InputRow>
-        <MaterialDropdown label="audio.preset" value={selectedPreset} options={presetOptions} defaultValue="default" on:change={(e) => selectPreset(e.detail)} disabled={!enabled} />
+        <MaterialDropdown label="audio.preset" value={selectedPreset} options={presetOptions} defaultValue="default" on:change={e => selectPreset(e.detail)} disabled={!enabled} />
 
         {#if selectedPreset === "custom"}
-            <MaterialTextInput label="inputs.name" value={customName} on:change={(e) => (customName = e.detail)} />
+            <MaterialTextInput label="inputs.name" value={customName} on:change={e => (customName = e.detail)} />
             <MaterialButton icon="save" title="actions.save" on:click={saveCustomPreset} />
         {:else if selectedPreset !== "default"}
             <MaterialButton icon="delete" title="actions.delete" on:click={deletePreset} white />
@@ -647,20 +647,7 @@
         {#each bands as band, i}
             <div class="band-control" class:dragging={draggedBandIndex === i} style="left: {getFreqX(band.frequency) - 15}px;">
                 <!-- Gain Handle -->
-                <div
-                    class="gain-handle"
-                    class:high-pass={band.type === "highpass"}
-                    class:low-pass={band.type === "lowpass"}
-                    style="top: {getGainY(band.gain) - 10}px;"
-                    on:mousedown={(e) => handleMouseDown(e, i)}
-                    on:wheel={(e) => handleWheel(e, i)}
-                    role="slider"
-                    tabindex="0"
-                    aria-label="Band {i + 1} gain control"
-                    aria-valuenow={band.gain}
-                    aria-valuemin={minGain}
-                    aria-valuemax={maxGain}
-                >
+                <div class="gain-handle" class:high-pass={band.type === "highpass"} class:low-pass={band.type === "lowpass"} style="top: {getGainY(band.gain) - 10}px;" on:mousedown={e => handleMouseDown(e, i)} on:wheel={e => handleWheel(e, i)} role="slider" tabindex="0" aria-label="Band {i + 1} gain control" aria-valuenow={band.gain} aria-valuemin={minGain} aria-valuemax={maxGain}>
                     <div class="handle-inner" style="background-color: {bandColors[i]}{draggedBandIndex === i ? 90 : 10}; color: {bandColors[i]}; border: 2px solid {bandColors[i]}90;">
                         {i + 1}
                     </div>

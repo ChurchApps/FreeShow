@@ -16,7 +16,7 @@
 
     // && !$editHistory.length
     $: editDisabled = $activeEdit.id && ($activeEdit.type || "show") !== "show" ? false : $activeShow && ($activeShow?.type || "show") === "show" ? isLocked : $activeShow?.type === "pdf" || !$activeShow?.id
-    $: physicalOutputWindows = Object.values($outputs).filter((a) => a.enabled && !a.invisible)
+    $: physicalOutputWindows = Object.values($outputs).filter(a => a.enabled && !a.invisible)
 
     let confirm = false
     let disableClick = false
@@ -79,15 +79,7 @@
             <TopButton id="settings" hideLabel />
         {/if}
 
-        <Button
-            id="output_window_button"
-            title={translateText(`menu.${$outputDisplay ? (confirm ? "again_confirm" : "_title_display_stop") : "_title_display"} [Ctrl+O]`, $dictionary)}
-            style={$outputDisplay || disableClick ? "" : "border-bottom: 2px solid var(--secondary);"}
-            on:click={toggleOutput}
-            class="context #output display {$outputDisplay ? 'on' : 'off'}"
-            red={$outputDisplay}
-            disabled={(!$outputDisplay && !physicalOutputWindows.length) || disableClick}
-        >
+        <Button id="output_window_button" title={translateText(`menu.${$outputDisplay ? (confirm ? "again_confirm" : "_title_display_stop") : "_title_display"} [Ctrl+O]`, $dictionary)} style={$outputDisplay || disableClick ? "" : "border-bottom: 2px solid var(--secondary);"} on:click={toggleOutput} class="context #output display {$outputDisplay ? 'on' : 'off'}" red={$outputDisplay} disabled={(!$outputDisplay && !physicalOutputWindows.length) || disableClick}>
             {#if $outputDisplay}
                 {#if confirm}
                     <Icon id="close" size={1.6} white />

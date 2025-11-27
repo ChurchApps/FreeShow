@@ -86,28 +86,28 @@
 
     /////
 
-    $: projectsList = sortByName(keysToID($folders).filter((a) => a.name && a.parent === "/"))
+    $: projectsList = sortByName(keysToID($folders).filter(a => a.name && a.parent === "/"))
     $: projectsAccess = currentProfile.access.projects || {}
 
-    $: showsCategoryList = sortByName(keysToID($categories)).filter((a) => a.name && !a.isArchive) //  && !a.default
+    $: showsCategoryList = sortByName(keysToID($categories)).filter(a => a.name && !a.isArchive) //  && !a.default
     $: showsCategoryAccess = currentProfile.access.shows || {}
 
-    $: overlayCategoryList = sortByName(keysToID($overlayCategories)).filter((a) => a.name)
+    $: overlayCategoryList = sortByName(keysToID($overlayCategories)).filter(a => a.name)
     $: overlayCategoryAccess = currentProfile.access.overlays || {}
 
-    $: templateCategoryList = sortByName(keysToID($templateCategories)).filter((a) => a.name)
+    $: templateCategoryList = sortByName(keysToID($templateCategories)).filter(a => a.name)
     $: templateCategoryAccess = currentProfile.access.templates || {}
 
     const functions: string[] = ["actions", "timers", "variables", "triggers"]
-    $: functionsList = functions.map((id) => ({ id, name: `tabs.${id}` }))
+    $: functionsList = functions.map(id => ({ id, name: `tabs.${id}` }))
     $: functionsAccess = currentProfile.access.functions || {}
 
-    $: stageList = sortByName(keysToID($stageShows)).filter((a) => a.name)
+    $: stageList = sortByName(keysToID($stageShows)).filter(a => a.name)
     $: stageAccess = currentProfile.access.stage || {}
 
     // "display_settings" (can change position still), "connection" (can use still)
     const tabs: SettingsTabs[] = ["general", "display_settings", "styles", "connection", "files", "profiles", "theme", "other"]
-    $: settingsList = tabs.map((id) => ({ id, name: `settings.${id}` }))
+    $: settingsList = tabs.map(id => ({ id, name: `settings.${id}` }))
     $: settingsAccess = currentProfile.access.settings || {}
 
     ///
@@ -130,13 +130,13 @@
     function setAdminPassword(e: any) {
         const password = e.detail
 
-        profiles.update((a) => {
+        profiles.update(a => {
             a.admin = { name: "", color: "", image: "", password: password ? encodePassword(password) : "", access: {} }
             return a
         })
     }
 
-    $: profilesList = Object.keys($profiles).filter((a) => a !== "admin")
+    $: profilesList = Object.keys($profiles).filter(a => a !== "admin")
 </script>
 
 {#if $activeProfile !== profileId && profilesList.length}
@@ -156,12 +156,12 @@
 {:else}
     {#each ACCESS_LISTS as a}
         <InputRow arrow={!!a.list?.length}>
-            <MaterialMultiButtons label={a.label} icon={a.icon} value={a.access.global || "write"} options={a.options} on:click={(e) => updateAccess(a.id, "global", e.detail)} />
+            <MaterialMultiButtons label={a.label} icon={a.icon} value={a.access.global || "write"} options={a.options} on:click={e => updateAccess(a.id, "global", e.detail)} />
 
             <div slot="menu">
                 {#each a.list as item}
                     <InputRow>
-                        <MaterialMultiButtons label={item.name} value={getAccessLevel(a.access, item.id)} options={getInputs(a.access.global, a.id)} on:click={(e) => updateAccess(a.id, item.id, e.detail)} noLabels />
+                        <MaterialMultiButtons label={item.name} value={getAccessLevel(a.access, item.id)} options={getInputs(a.access.global, a.id)} on:click={e => updateAccess(a.id, item.id, e.detail)} noLabels />
                     </InputRow>
                 {/each}
             </div>

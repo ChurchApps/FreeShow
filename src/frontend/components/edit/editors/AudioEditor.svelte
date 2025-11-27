@@ -10,7 +10,7 @@
         if (!containerElem) return
 
         const bars = containerElem.querySelectorAll(".wave-bar")
-        bars.forEach((bar) => {
+        bars.forEach(bar => {
             ;(bar as HTMLElement).style.height = "0"
         })
     }
