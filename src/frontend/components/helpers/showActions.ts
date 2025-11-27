@@ -1230,7 +1230,7 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
     const currentShow = _show(showId).get()
     if (type === "show" && !currentShow) return ""
 
-    const customIds = ["slide_text_current", "active_layers", "active_styles"]
+    const customIds = ["slide_text_current", "active_layers", "active_styles", "log_song_usage"]
     ;[...getDynamicIds(), ...customIds].forEach(dynamicId => {
         let textHasValue = text.includes(dynamicValueText(dynamicId))
         if (dynamicId.includes("$") && text.includes(dynamicValueText(dynamicId.replace("$", "variable_")))) textHasValue = true
@@ -1333,6 +1333,8 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
             const outputStyleIds = activeOutputIds.map(oId => get(outputs)[oId].style || "").filter(Boolean)
             const outputStyleNames = outputStyleIds.map(styleId => get(styles)[styleId]?.name).filter(Boolean)
             return outputStyleNames.sort((a, b) => a.localeCompare(b)).join(", ")
+        } else if (dynamicId === "log_song_usage") {
+            return get(special).logSongUsage ? "true" : "false"
         }
 
         if (!dynamicValues[dynamicId]) return ""
