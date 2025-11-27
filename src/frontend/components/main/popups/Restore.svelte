@@ -51,7 +51,7 @@
         deletingPath = path
         undoTimeout = setTimeout(() => {
             sendMain(Main.DELETE_BACKUP, { path })
-            backupsList = backupsList.filter((b) => b.path !== path)
+            backupsList = backupsList.filter(b => b.path !== path)
             clear()
         }, 5000)
 

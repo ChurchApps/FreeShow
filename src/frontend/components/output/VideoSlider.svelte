@@ -54,7 +54,7 @@
         if (!toOutput) return
 
         let timeValues: any = {}
-        activeOutputIds.forEach((id) => {
+        activeOutputIds.forEach(id => {
             timeValues[id] = videoTime
         })
 
@@ -70,7 +70,7 @@
             videoTime = Number(value)
             if (toOutput) {
                 let timeValues: any = {}
-                activeOutputIds.forEach((id) => {
+                activeOutputIds.forEach(id => {
                     timeValues[id] = videoTime
                 })
 
@@ -90,7 +90,7 @@
         if (!toOutput) return
 
         let dataValues: any = {}
-        activeOutputIds.forEach((id) => {
+        activeOutputIds.forEach(id => {
             dataValues[id] = { ...videoData, muted: id !== unmutedId ? true : videoData.muted }
         })
 
@@ -101,7 +101,7 @@
 </script>
 
 <svelte:window
-    on:mouseup={(e) => {
+    on:mouseup={e => {
         if (!e.target?.closest(".slider") && movePause) pauseAtMove(false)
     }}
 />

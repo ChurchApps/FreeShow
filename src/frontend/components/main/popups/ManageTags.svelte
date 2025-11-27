@@ -29,13 +29,13 @@
 
         tags = sortByName(keysToID(get(store[type]())))
 
-        emptyTag = !!tags.find((a) => !a.name)
+        emptyTag = !!tags.find(a => !a.name)
     }
 
     function createTag() {
         if (emptyTag) return
 
-        store[type]().update((a) => {
+        store[type]().update(a => {
             a[uid(5)] = { name: "", color: "#ffffff" }
             return a
         })
@@ -44,7 +44,7 @@
     }
 
     function deleteTag(tagId: string) {
-        store[type]().update((a) => {
+        store[type]().update(a => {
             delete a[tagId]
             return a
         })
@@ -56,7 +56,7 @@
     }
 
     function updateKey(value: string, tagId: string, key: string) {
-        store[type]().update((a) => {
+        store[type]().update(a => {
             a[tagId][key] = value
             return a
         })
@@ -70,8 +70,8 @@
         {#key tags}
             {#each tags as tag}
                 <InputRow>
-                    <MaterialTextInput label="inputs.name" value={tag.name} on:change={(e) => updateKey(e.detail, tag.id, "name")} autofocus={!tag.name} />
-                    <MaterialColorInput label="edit.color" value={tag.color} style="min-width: 200px;max-width: 200px;" on:change={(e) => updateKey(e.detail, tag.id, "color")} noLabel />
+                    <MaterialTextInput label="inputs.name" value={tag.name} on:change={e => updateKey(e.detail, tag.id, "name")} autofocus={!tag.name} />
+                    <MaterialColorInput label="edit.color" value={tag.color} style="min-width: 200px;max-width: 200px;" on:change={e => updateKey(e.detail, tag.id, "color")} noLabel />
                     <MaterialButton icon="delete" title="actions.delete" on:click={() => deleteTag(tag.id)} white />
                 </InputRow>
             {/each}

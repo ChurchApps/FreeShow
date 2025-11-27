@@ -111,11 +111,11 @@
                 })
 
             let index = 0
-            line.text.forEach((text) => {
+            line.text.forEach(text => {
                 let value = text.value.trim().replaceAll("\n", "") || "."
 
                 let letters = value.split("")
-                letters.forEach((letter) => {
+                letters.forEach(letter => {
                     let chordIndex = chords.findIndex((a: any) => a.pos === index)
                     if (chordIndex >= 0) {
                         html += `<span class="chord">${chords[chordIndex].key}</span>`
@@ -192,7 +192,7 @@
         transposed[showId] = amountTransposed
         localStorage.transposed = JSON.stringify(transposed)
 
-        item.lines?.forEach((line) => {
+        item.lines?.forEach(line => {
             if (!line.chords?.length || !line.text) return
 
             let chords = JSON.parse(JSON.stringify(line.chords || []))

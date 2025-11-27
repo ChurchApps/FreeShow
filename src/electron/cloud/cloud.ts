@@ -40,5 +40,5 @@ const cloudHelpers = {
 
         const changes = await syncDataDrive(data)
         return { changes }
-    },
+    }
 }

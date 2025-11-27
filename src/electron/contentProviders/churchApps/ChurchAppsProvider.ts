@@ -144,7 +144,7 @@ export class ChurchAppsProvider extends ContentProvider<ChurchAppsScopes, Church
                             if (seenUrls.has(url)) return
                             seenUrls.add(url)
 
-                            const isVideo = url.endsWith('.mp4') || url.includes('/file.mp4')
+                            const isVideo = url.endsWith(".mp4") || url.includes("/file.mp4")
 
                             files.push({
                                 url,

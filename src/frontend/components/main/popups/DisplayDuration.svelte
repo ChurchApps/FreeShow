@@ -13,8 +13,8 @@
         currentValue = value
 
         // WIP history
-        ;(isEffect ? effects : overlays).update((a) => {
-            ids.forEach((id) => {
+        ;(isEffect ? effects : overlays).update(a => {
+            ids.forEach(id => {
                 if (!value) delete a[id].displayDuration
                 else a[id].displayDuration = value
             })

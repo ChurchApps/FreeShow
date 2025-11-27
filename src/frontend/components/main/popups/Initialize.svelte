@@ -24,7 +24,7 @@
     })
 
     function create() {
-        requestMain(Main.GET_PATHS, undefined, (a) => createData(a))
+        requestMain(Main.GET_PATHS, undefined, a => createData(a))
 
         sendMain(Main.REFRESH_SHOWS)
 
@@ -61,8 +61,8 @@
     <p style="margin-bottom: 10px;font-style: italic;font-size: 0.8em;opacity: 0.5;"><T id="setup.change_later" />:</p>
 
     <InputRow>
-        <MaterialDropdown style="width: 50%;" label={languageLabel} value={$language} options={getLanguageList()} on:change={(e) => setLanguage(e.detail)} flags />
-        <MaterialToggleSwitch style="width: 50%;" label="settings.use24hClock" checked={$timeFormat === "24"} on:change={(e) => timeFormat.set(e.detail ? "24" : "12")} />
+        <MaterialDropdown style="width: 50%;" label={languageLabel} value={$language} options={getLanguageList()} on:change={e => setLanguage(e.detail)} flags />
+        <MaterialToggleSwitch style="width: 50%;" label="settings.use24hClock" checked={$timeFormat === "24"} on:change={e => timeFormat.set(e.detail ? "24" : "12")} />
     </InputRow>
 
     <MaterialFolderPicker PICK_ID="DATA_SHOWS" label={translateText("settings.data_location", $dictionary)} value={$dataPath} on:change={updateDataPath} openButton={false} />

@@ -25,7 +25,7 @@ const setValues = {
     },
     kioskMode: (value: boolean, window: BrowserWindow) => {
         window.setKiosk(value)
-    },
+    }
 }
 
 export class OutputValues {

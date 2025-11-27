@@ -19,7 +19,7 @@
         }
 
         // Wait for the element to be in the DOM
-        await new Promise((resolve) => setTimeout(resolve, 100))
+        await new Promise(resolve => setTimeout(resolve, 100))
 
         if (liteYTElem) {
             // Auto-activate if autoplay is enabled

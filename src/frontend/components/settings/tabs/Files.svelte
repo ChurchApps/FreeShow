@@ -20,7 +20,7 @@
     import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
 
     function updateSpecial(value, key) {
-        special.update((a) => {
+        special.update(a => {
             if (!value) delete a[key]
             else a[key] = value
 
@@ -122,14 +122,14 @@
         if (!value) return
 
         // mainFolderId: It seems the character length is 33 for drive folders and 44 for files.
-        driveData.update((a) => {
+        driveData.update(a => {
             a[key] = value
             return a
         })
     }
 
     function toggleData(checked: boolean, key, invert = false) {
-        driveData.update((a) => {
+        driveData.update(a => {
             a[key] = invert ? !checked : checked
             return a
         })
@@ -163,7 +163,7 @@
 </script>
 
 <MaterialDropdown label="settings.autosave{autosaveInfo}" value={$autosave} defaultValue="15min" options={autosaveList} on:change={updateAutosave} />
-<MaterialDropdown label="settings.auto_backup{autoBackupInfo}" value={autoBackup} defaultValue="weekly" options={autobackupList} on:change={(e) => updateSpecial(e.detail, "autoBackup")} />
+<MaterialDropdown label="settings.auto_backup{autoBackupInfo}" value={autoBackup} defaultValue="weekly" options={autobackupList} on:change={e => updateSpecial(e.detail, "autoBackup")} />
 
 <MaterialFolderPicker label="settings.data_location" value={$dataPath} on:change={updateDataPath} />
 
@@ -181,16 +181,12 @@
 
 <MaterialMediaPicker label="cloud.google_drive_api" title="cloud.select_key" value={validKeys ? translateText("cloud.update_key") : ""} filter={{ name: "Key file", extensions: ["json"] }} icon="key" on:change={receiveKeysFile} allowEmpty />
 <!-- better name: "Read only" -->
-<MaterialToggleSwitch label="cloud.disable_upload" checked={$driveData.disableUpload} defaultValue={false} on:change={(e) => toggleData(e.detail, "disableUpload")} />
+<MaterialToggleSwitch label="cloud.disable_upload" checked={$driveData.disableUpload} defaultValue={false} on:change={e => toggleData(e.detail, "disableUpload")} />
 
 {#if validKeys}
-    <MaterialToggleSwitch label="cloud.enable" checked={!$driveData.disabled} defaultValue={true} on:change={(e) => toggleData(e.detail, "disabled", true)} />
+    <MaterialToggleSwitch label="cloud.enable" checked={!$driveData.disabled} defaultValue={true} on:change={e => toggleData(e.detail, "disabled", true)} />
     <!-- <MaterialTextInput label="cloud.media_id" value={$driveData?.mediaId || "default"} defaultValue="default" on:change={(e) => updateValue(e.detail, "mediaId")} /> -->
-    <MaterialTextInput
-        label="cloud.main_folder{$driveData?.mainFolderId ? `<span style="margin-left: 10px;font-size: 0.7em;opacity: 0.5;color: var(--text);">drive.google.com/drive/folders/</span>` : ''}"
-        value={$driveData?.mainFolderId || ""}
-        on:change={(e) => updateValue(e.detail, "mainFolderId")}
-    />
+    <MaterialTextInput label="cloud.main_folder{$driveData?.mainFolderId ? `<span style="margin-left: 10px;font-size: 0.7em;opacity: 0.5;color: var(--text);">drive.google.com/drive/folders/</span>` : ''}" value={$driveData?.mainFolderId || ""} on:change={e => updateValue(e.detail, "mainFolderId")} />
 
     <!-- TODO: media folder -->
     <!-- <div>

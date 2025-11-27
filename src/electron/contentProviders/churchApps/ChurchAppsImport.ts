@@ -27,7 +27,7 @@ export class ChurchAppsImport {
             api: "doing",
             authenticated: true,
             scope: "plans",
-            endpoint: "/plans/presenter",
+            endpoint: "/plans/presenter"
         })
 
         if (!SERVICE_PLANS[0]?.id) return
@@ -48,7 +48,7 @@ export class ChurchAppsImport {
             api: "doing",
             authenticated: false,
             scope: "plans",
-            endpoint: `/planItems/presenter/${plan.churchId}/${plan.id}`,
+            endpoint: `/planItems/presenter/${plan.churchId}/${plan.id}`
         })
 
         if (!planItems?.length) return
@@ -59,7 +59,7 @@ export class ChurchAppsImport {
                 id: uid(5),
                 name: pi.label || "",
                 scheduleLength: pi.seconds,
-                notes: pi.description || "",
+                notes: pi.description || ""
             })
 
             for (const child of pi.children) {
@@ -86,7 +86,7 @@ export class ChurchAppsImport {
             created: new Date(plan.serviceDate).getTime(),
             folderId: "",
             folderName: "",
-            items: projectItems,
+            items: projectItems
         }
 
         if (Object.keys(projectData).length) this.projects.push(projectData)
@@ -99,7 +99,7 @@ export class ChurchAppsImport {
                 api: "content",
                 authenticated: false,
                 scope: "plans",
-                endpoint: "/arrangementKeys/presenter/" + churchId + "/" + arrangementId,
+                endpoint: "/arrangementKeys/presenter/" + churchId + "/" + arrangementId
             })
         } catch (err) {
             console.error("ERROR!!", err)
@@ -117,7 +117,7 @@ export class ChurchAppsImport {
 
         const sections: any[] = []
         const lines = lyrics.split("\n")
-        lines.forEach((line) => {
+        lines.forEach(line => {
             if (line.startsWith("[") && line.endsWith("]")) {
                 const label = line.slice(1, -1)
                 sections.push({ label, lyrics: "" })
@@ -134,7 +134,7 @@ export class ChurchAppsImport {
         const slides: { [key: string]: Slide } = {}
         const layoutSlides: SlideData[] = []
 
-        SECTIONS.forEach((section) => {
+        SECTIONS.forEach(section => {
             const linesPerPage = 2
             const pages: { lines: string[] }[] = []
             let allLines = section.lyrics.split("\n")
@@ -152,9 +152,9 @@ export class ChurchAppsImport {
                         style: itemStyle,
                         lines: page.lines.map((a: string) => ({
                             align: "",
-                            text: [{ style: "", value: a }],
-                        })),
-                    },
+                            text: [{ style: "", value: a }]
+                        }))
+                    }
                 ]
 
                 slides[slideId] = {
@@ -163,7 +163,7 @@ export class ChurchAppsImport {
                     color: null,
                     settings: {},
                     notes: "",
-                    items,
+                    items
                 }
                 layoutSlides.push({ id: slideId })
             })
@@ -177,7 +177,7 @@ export class ChurchAppsImport {
             copyright: "",
             CCLI: "",
             key: SONG_DETAILS.keySignature || "",
-            BPM: SONG_DETAILS.bpm || "",
+            BPM: SONG_DETAILS.bpm || ""
         }
 
         const layoutId = uid()
@@ -187,22 +187,22 @@ export class ChurchAppsImport {
             timestamps: {
                 created: new Date(SONG.dateAdded).getTime() || Date.now(),
                 modified: new Date(SONG.dateAdded).getTime() || null,
-                used: null,
+                used: null
             },
             meta: metadata,
             settings: {
                 activeLayout: layoutId,
-                template: null,
+                template: null
             },
             layouts: {
                 [layoutId]: {
                     name: "Default",
                     notes: SONG.notes || "",
-                    slides: layoutSlides,
-                },
+                    slides: layoutSlides
+                }
             },
             slides,
-            media: {},
+            media: {}
         }
 
         const showId = ARRANGEMENT.freeShowId || `chumssong_${ARRANGEMENT_KEY.id}`
@@ -219,7 +219,7 @@ export class ChurchAppsImport {
             copyright: "",
             CCLI: "",
             key: "",
-            BPM: "",
+            BPM: ""
         }
 
         const layoutId = uid()
@@ -233,11 +233,11 @@ export class ChurchAppsImport {
                 [layoutId]: {
                     name: "Default",
                     notes: description || "",
-                    slides: layoutSlides,
-                },
+                    slides: layoutSlides
+                }
             },
             slides,
-            media: {},
+            media: {}
         }
 
         const showId = `chumsshow_${id}`

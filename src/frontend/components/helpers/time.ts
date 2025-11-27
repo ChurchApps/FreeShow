@@ -123,13 +123,13 @@ const intervals = [
     { label: "day", seconds: 86400 },
     { label: "hour", seconds: 3600 },
     { label: "minute", seconds: 60 },
-    { label: "second", seconds: 1 },
+    { label: "second", seconds: 1 }
 ]
 
 export function timeAgo(time: number) {
     if (!time) return ""
     const seconds = Math.floor((Date.now() - time) / 1000)
-    const interval: any = intervals.find((i) => i.seconds < seconds)
+    const interval: any = intervals.find(i => i.seconds < seconds)
     if (!interval) return "just now"
     const count = Math.floor(seconds / interval.seconds)
     return `${count} ${interval.label}${count !== 1 ? "s" : ""} ago`

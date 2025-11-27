@@ -43,7 +43,7 @@
 
     $: if ($activeEdit) updateEditHistory()
     function updateEditHistory() {
-        editHistory.update((a) => {
+        editHistory.update(a => {
             if (!$activeEdit.id && currentShowId && !$shows[currentShowId]) return a
 
             let edit: any = { edit: clone($activeEdit) }
@@ -76,7 +76,7 @@
             let ids: string[] = []
             a = a
                 .reverse()
-                .filter((a) => {
+                .filter(a => {
                     if (ids.includes(a.id)) return false
                     ids.push(a.id)
                     return true

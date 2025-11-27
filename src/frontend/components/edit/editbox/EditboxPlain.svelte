@@ -123,7 +123,7 @@
 <div class="actions">
     <!-- localization -->
     {#if item?.language}
-        <div data-title={isoLanguages.find((a) => a.code === item.language)?.name || item.language} class="actionButton" style="zoom: {1 / ratio};left: 0;inset-inline-end: unset;">
+        <div data-title={isoLanguages.find(a => a.code === item.language)?.name || item.language} class="actionButton" style="zoom: {1 / ratio};left: 0;inset-inline-end: unset;">
             <span style="padding: 5px;z-index: 3;font-size: 0;">
                 <Icon id="translate" white />
             </span>
@@ -211,7 +211,7 @@
     {/each}
 
     <!-- gradient -->
-    {#if item?.lines?.find((a) => a.text?.find((a) => a.style?.includes("-gradient")))}
+    {#if item?.lines?.find(a => a.text?.find(a => a.style?.includes("-gradient")))}
         <div data-title={translateText("popup.color_gradient")} class="actionButton" style="zoom: {1 / ratio};left: 0;inset-inline-end: unset;">
             <span style="padding: 5px;z-index: 3;font-size: 0;">
                 <Icon id="color" white />

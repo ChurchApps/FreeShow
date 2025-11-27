@@ -37,7 +37,7 @@ export function setShow(id: string, value: "delete" | Show): Show {
         }
     }
 
-    showsCache.update((a) => {
+    showsCache.update(a => {
         previousValue = a[id]
         if (value === "delete") delete a[id]
         else if (value) {
@@ -49,14 +49,14 @@ export function setShow(id: string, value: "delete" | Show): Show {
         return a
     })
 
-    shows.update((a) => {
+    shows.update(a => {
         if (value === "delete") delete a[id]
         else if (!a[id] && value) {
             a[id] = {
                 name: value.name,
                 category: value.category,
                 timestamps: value.timestamps,
-                quickAccess: value.quickAccess || {},
+                quickAccess: value.quickAccess || {}
             }
 
             if (value.origin) a[id].origin = value.origin
@@ -70,7 +70,7 @@ export function setShow(id: string, value: "delete" | Show): Show {
     console.info("SHOW UPDATED: ", id, value)
 
     if (value && value !== "delete") {
-        cachedShowsData.update((a) => {
+        cachedShowsData.update(a => {
             const customId = getShowCacheId(id, get(showsCache)[id])
             a[customId] = updateCachedShow(id, value)
             return a
@@ -90,9 +90,9 @@ export async function loadShows(s: string[], deleting = false) {
     const savedBeforeLoading: boolean = !deleting && get(saved)
 
     const notLoaded: string[] = []
-    s.forEach((id) => {
+    s.forEach(id => {
         if (!get(shows)[id]) {
-            notFound.update((a) => {
+            notFound.update(a => {
                 a.show.push(id)
                 return a
             })
@@ -103,41 +103,43 @@ export async function loadShows(s: string[], deleting = false) {
 
     if (!notLoaded.length) return
 
-    await Promise.all(notLoaded.map(async showId => {
-        await requestMain(Main.SHOW, { name: get(shows)[showId].name, id: showId }, (data) => {
-            if (data.error || !data.content) {
-                notFound.update((a) => {
-                    a.show.push(data.id)
-                    return a
-                })
-                return
-            }
-
-            // has been loaded in the meantime
-            if (get(showsCache)[data.id]) return
-
-            // remove from not found
-            if (get(notFound).show.includes(data.id)) {
-                notFound.update((a) => {
-                    a.show.splice(a.show.indexOf(data.id), 1)
-                    return a
-                })
-            }
-
-            // might have been saved wrongly
-            if (typeof data.content[1] === "string") {
-                try {
-                    data.content[1] = JSON.parse(data.content[1])
-                    if (data.content[1]?.[1]?.name) data.content[1] = data.content[1][1]
-                } catch (err) {
+    await Promise.all(
+        notLoaded.map(async showId => {
+            await requestMain(Main.SHOW, { name: get(shows)[showId].name, id: showId }, data => {
+                if (data.error || !data.content) {
+                    notFound.update(a => {
+                        a.show.push(data.id)
+                        return a
+                    })
                     return
                 }
-            }
 
-            const show = fixShowIssues(data.content[1])
-            setShow(data.id || data.content[0], show)
+                // has been loaded in the meantime
+                if (get(showsCache)[data.id]) return
+
+                // remove from not found
+                if (get(notFound).show.includes(data.id)) {
+                    notFound.update(a => {
+                        a.show.splice(a.show.indexOf(data.id), 1)
+                        return a
+                    })
+                }
+
+                // might have been saved wrongly
+                if (typeof data.content[1] === "string") {
+                    try {
+                        data.content[1] = JSON.parse(data.content[1])
+                        if (data.content[1]?.[1]?.name) data.content[1] = data.content[1][1]
+                    } catch (err) {
+                        return
+                    }
+                }
+
+                const show = fixShowIssues(data.content[1])
+                setShow(data.id || data.content[0], show)
+            })
         })
-    }))
+    )
 
     if (savedBeforeLoading) {
         setTimeout(() => saved.set(true), 100)
@@ -151,10 +153,10 @@ export function saveTextCache(id: string, show: Show) {
     if (!show?.slides || show?.reference?.type || get(categories)[show.category || ""]?.isArchive) return
 
     const txt = Object.values(show.slides)
-        .flatMap((slide) => slide?.items)
-        .flatMap((item) => item?.lines || [])
-        .flatMap((line) => line?.text || [])
-        .map((text) => text?.value)
+        .flatMap(slide => slide?.items)
+        .flatMap(item => item?.lines || [])
+        .flatMap(line => line?.text || [])
+        .map(text => text?.value)
         .join(" ")
         .toLowerCase()
     // .replace(/[^a-z0-9 ]+/g, "")

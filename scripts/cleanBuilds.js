@@ -15,7 +15,7 @@ restoreDevelopmentHTML()
 function deleteFolderRecursive(folderPath) {
     if (!existsSync(folderPath)) return
 
-    readdirSync(folderPath).forEach((file) => {
+    readdirSync(folderPath).forEach(file => {
         const path = join(folderPath, file)
         const isFolder = lstatSync(path).isDirectory()
         if (isFolder) return deleteFolderRecursive(path)

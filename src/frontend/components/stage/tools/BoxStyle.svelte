@@ -20,8 +20,7 @@
     $: type = item?.type || ""
     $: {
         if (activeItemId.includes("tracker")) type = "slide_tracker"
-        else if (item?.type === "slide_text" || item?.type === "slide_notes" || item?.type === "variable" || activeItemId.includes("text") || activeItemId.includes("slide") || activeItemId.includes("notes") || activeItemId.includes("variable"))
-            type = "text"
+        else if (item?.type === "slide_text" || item?.type === "slide_notes" || item?.type === "variable" || activeItemId.includes("text") || activeItemId.includes("slide") || activeItemId.includes("notes") || activeItemId.includes("variable")) type = "text"
         else if (activeItemId.includes("clock")) type = "clock"
         else if (activeItemId.includes("timer")) type = "timer"
     }
@@ -166,7 +165,7 @@
 
         // only update changed value
         let styles: { [key: string]: string } = {}
-        activeItemIds.forEach((itemId) => {
+        activeItemIds.forEach(itemId => {
             let item = stageItems[itemId]
             if (!item || (!$activeStage.items?.length && item.type !== updateType)) return
 

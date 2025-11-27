@@ -1,4 +1,3 @@
-
 import { get } from "svelte/store"
 import type { Popups } from "../../../../types/Main"
 import type { DrawerTabIds } from "../../../../types/Tabs"
@@ -9,23 +8,20 @@ import { hexToRgb } from "../../helpers/color"
 
 // Add opacity to each color stop in the gradient (hex, rgb, and rgba)
 export function addOpacityToGradient(gradientValue: string, alpha: number) {
-    return gradientValue.replace(
-        /(#[0-9a-fA-F]{3,8}|rgba?\(\s*\d+\s*,\s*\d+\s*,\s*\d+(?:\s*,\s*\d*\.?\d+)?\s*\))/g,
-        (color) => {
-            if (color.startsWith("#")) {
-                const rgb = hexToRgb(color)
-                if (rgb) {
-                    return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha})`
-                }
+    return gradientValue.replace(/(#[0-9a-fA-F]{3,8}|rgba?\(\s*\d+\s*,\s*\d+\s*,\s*\d+(?:\s*,\s*\d*\.?\d+)?\s*\))/g, color => {
+        if (color.startsWith("#")) {
+            const rgb = hexToRgb(color)
+            if (rgb) {
+                return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha})`
             }
-            // Match rgb or rgba and replace with new alpha
-            const nums = color.match(/\d+\.?\d*/g)
-            if (nums && nums.length >= 3) {
-                return `rgba(${nums[0]}, ${nums[1]}, ${nums[2]}, ${alpha})`
-            }
-            return color
         }
-    )
+        // Match rgb or rgba and replace with new alpha
+        const nums = color.match(/\d+\.?\d*/g)
+        if (nums && nums.length >= 3) {
+            return `rgba(${nums[0]}, ${nums[1]}, ${nums[2]}, ${alpha})`
+        }
+        return color
+    })
 }
 
 // Get the first rgb(a) alpha value from a gradient string
@@ -101,7 +97,7 @@ export function openDrawer(id: string, openPopup = false) {
     else if (id === drawerPageId) id = "all"
 
     if (id) {
-        drawerTabsData.update((a) => {
+        drawerTabsData.update(a => {
             if (!a[drawerPageId]) a[drawerPageId] = { enabled: true, activeSubTab: null }
             a[drawerPageId].activeSubTab = id
 

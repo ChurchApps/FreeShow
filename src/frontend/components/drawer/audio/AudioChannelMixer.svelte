@@ -12,7 +12,7 @@
     $: channelData = $audioChannelsData[channelId] || {}
 
     function updateData(key: string, value: any) {
-        audioChannelsData.update((a) => {
+        audioChannelsData.update(a => {
             if (!a[channelId]) a[channelId] = {}
             a[channelId][key] = value
             return a
@@ -66,7 +66,7 @@
         </div>
 
         <div class="input" style="position: relative;">
-            <NumberInput style="width: 60px;" disabled={muted} value={volumeValue * 100} min={0} max={allowGaining ? 125 : 100} on:change={(e) => setVolume(e.detail / 100)} buttons={false} />
+            <NumberInput style="width: 60px;" disabled={muted} value={volumeValue * 100} min={0} max={allowGaining ? 125 : 100} on:change={e => setVolume(e.detail / 100)} buttons={false} />
             <span style="position: absolute;right: 0;bottom: 5px;transform: translateX(-7px);pointer-events: none;color: var(--secondary);font-weight: bold;font-size: 0.7em;">%</span>
         </div>
 

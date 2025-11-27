@@ -33,7 +33,7 @@
 
         if ($selected.id !== id) selected.set({ id, data: [data] })
         else if (!arrayHasData($selected.data, data)) {
-            selected.update((s) => {
+            selected.update(s => {
                 if (!Array.isArray(s.data)) s.data = []
                 s.data = [...s.data, data]
                 return s
@@ -82,13 +82,13 @@
 
         let slideData = slideRef.map(({ index, id }) => {
             let layout
-            if (id) layout = currentLayoutRef.find((a) => a.id === id) || {}
+            if (id) layout = currentLayoutRef.find(a => a.id === id) || {}
             else if (index !== undefined) layout = currentLayoutRef[index] || {}
 
             let layoutMedia: { [key: string]: Media } = {}
             if (layout.data?.background) layoutMedia[layout.data.background] = currentMedia[layout.data?.background]
             if (layout.data?.audio) {
-                layout.data.audio.forEach((audioId) => {
+                layout.data.audio.forEach(audioId => {
                     layoutMedia[audioId] = currentMedia[audioId]
                 })
             }
@@ -96,7 +96,7 @@
             return { slide: clone(currentSlides[layout.id]), layoutData: layout.data, media: layoutMedia }
         })
 
-        return slideData.filter((a) => a.slide)
+        return slideData.filter(a => a.slide)
     }
 
     // TOUCH SCREEN: synthesize a minimal mouse-like event and reuse mousedown logic
@@ -157,8 +157,8 @@
             let lastSelected = $selected.data[$selected.data.length - 1]
             if (!lastSelected) return
 
-            let lastSelectedIndex: number = shiftRange.length ? shiftRange.findLastIndex((a) => searchKeys.find((key) => lastSelected[key] !== undefined && lastSelected[key] === a[key])) : lastSelected.index || 0
-            let newIndex: number = shiftRange.length ? shiftRange.findIndex((a) => searchKeys.find((key) => data[key] !== undefined && data[key] === a[key])) : data.index || 0
+            let lastSelectedIndex: number = shiftRange.length ? shiftRange.findLastIndex(a => searchKeys.find(key => lastSelected[key] !== undefined && lastSelected[key] === a[key])) : lastSelected.index || 0
+            let newIndex: number = shiftRange.length ? shiftRange.findIndex(a => searchKeys.find(key => data[key] !== undefined && data[key] === a[key])) : data.index || 0
             let lowestNumber = Math.min(lastSelectedIndex, newIndex) + 1
             let highestNumber = Math.max(lastSelectedIndex, newIndex) - 1
 
@@ -169,28 +169,28 @@
                     .map((_, idx) => start + idx)
             }
 
-            let dataBetween = selectedBetween.map((index) => (shiftRange.length ? shiftRange[index] : { index }))
+            let dataBetween = selectedBetween.map(index => (shiftRange.length ? shiftRange[index] : { index }))
             let allNewData = [...$selected.data, ...dataBetween, data]
 
             let keys = Object.keys(data)
             // add all previous keys to new data
             if (shiftRange) {
                 allNewData = allNewData
-                    .map((data) => {
+                    .map(data => {
                         let newData: any = {}
-                        keys.forEach((key) => {
+                        keys.forEach(key => {
                             newData[key] = data[key]
                         })
                         return newData
                     })
-                    .filter((a) => a)
+                    .filter(a => a)
             }
 
             // remove duplicates
             let alreadyAdded: string[] = []
-            newData = allNewData.filter((data) => {
+            newData = allNewData.filter(data => {
                 let dataString = JSON.stringify(data)
-                if (alreadyAdded.find((a) => JSON.stringify(a) === dataString)) return false
+                if (alreadyAdded.find(a => JSON.stringify(a) === dataString)) return false
 
                 alreadyAdded.push(dataString)
                 return true
@@ -210,7 +210,7 @@
                 const currentScripture = $scriptures[data]
                 if (activeScripture && currentScripture && !!activeScripture.api === !!currentScripture.api) {
                     // Get all scriptures of the same type
-                    const allScriptureIds = Object.keys($scriptures).filter((scriptureId) => {
+                    const allScriptureIds = Object.keys($scriptures).filter(scriptureId => {
                         const scripture = $scriptures[scriptureId]
                         return scripture && !!scripture.api === !!activeScripture.api
                     })
@@ -245,7 +245,7 @@
                 if (!selectMultiple || rightClick) return
 
                 // remove currently selected
-                newData = $selected.data.filter((a) => JSON.stringify(a) !== JSON.stringify(data))
+                newData = $selected.data.filter(a => JSON.stringify(a) !== JSON.stringify(data))
             } else if (selectMultiple) {
                 // && $selected.id === id
                 let selectedData = $selected.data ?? []
@@ -322,19 +322,7 @@
     }}
 />
 
-<div
-    {id}
-    data-item={JSON.stringify(data)}
-    {draggable}
-    style={$$props.style}
-    class="selectElem {$$props.class || ''}"
-    class:fill
-    class:isSelected={selectable && $selected.id === id && arrayHasData($selected.data, data)}
-    bind:this={elem}
-    on:mouseenter={enter}
-    on:mousedown={mousedown}
-    on:dragstart={(e) => mousedown(e, true)}
->
+<div {id} data-item={JSON.stringify(data)} {draggable} style={$$props.style} class="selectElem {$$props.class || ''}" class:fill class:isSelected={selectable && $selected.id === id && arrayHasData($selected.data, data)} bind:this={elem} on:mouseenter={enter} on:mousedown={mousedown} on:dragstart={e => mousedown(e, true)}>
     <!-- on:mouseup={mouseup}
     on:contextmenu={contextmenu} -->
     <!-- TODO: validateDrop(id, $selected.id, true) -->

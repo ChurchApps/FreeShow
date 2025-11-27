@@ -23,7 +23,7 @@
 
     function updateCustom(name: string, e: any) {
         let value = e.detail
-        let index = customMetadataValues.findIndex((a) => a === name)
+        let index = customMetadataValues.findIndex(a => a === name)
         if (index < 0) return
 
         customMetadataValues[index] = value
@@ -31,7 +31,7 @@
     }
 
     function removeCustom(name: string) {
-        let index = customMetadataValues.findIndex((a) => a === name)
+        let index = customMetadataValues.findIndex(a => a === name)
         if (index < 0) return
 
         customMetadataValues.splice(index, 1)
@@ -47,7 +47,7 @@
         customMetadata.set({ ...$customMetadata, custom: customMetadataValues })
     }
 
-    $: emptyEntry = customMetadataValues.find((a) => a === "") !== undefined
+    $: emptyEntry = customMetadataValues.find(a => a === "") !== undefined
 </script>
 
 <!-- <p style="opacity: 0.6;font-size: 0.9em;text-align: center;padding-bottom: 10px;"><T id="tips.global_options" /></p> -->
@@ -62,7 +62,7 @@
 
 {#each customMetadataValues as name}
     <InputRow>
-        <MaterialTextInput label="inputs.name" value={name} on:change={(e) => updateCustom(name, e)} autofocus={!name} />
+        <MaterialTextInput label="inputs.name" value={name} on:change={e => updateCustom(name, e)} autofocus={!name} />
         <MaterialButton icon="delete" on:click={() => removeCustom(name)} white />
     </InputRow>
 {/each}

@@ -10,14 +10,14 @@
 
     let activeTabs: SettingsTabs[] = []
     $: profile = $profiles[$activeProfile || ""]
-    $: if (profile) activeTabs = clone(tabs).filter((tabId) => profile.access.settings?.[tabId] !== "none")
+    $: if (profile) activeTabs = clone(tabs).filter(tabId => profile.access.settings?.[tabId] !== "none")
     else activeTabs = clone(tabs)
 
     function keydown(e: KeyboardEvent) {
         if (e.target?.closest(".edit") || e.ctrlKey || e.metaKey) return
 
         let nextTab = -1
-        let currentTabIndex = activeTabs.findIndex((tab) => tab === $settingsTab)
+        let currentTabIndex = activeTabs.findIndex(tab => tab === $settingsTab)
 
         if (e.key === "ArrowDown") {
             e.preventDefault()

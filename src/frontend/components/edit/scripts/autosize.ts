@@ -121,7 +121,7 @@ export default function autosize(elem: HTMLElement, { type, textQuery, defaultFo
         if (cloned.querySelector(".edit")) (cloned.querySelector(".edit") as HTMLElement).style.justifyContent = "center"
 
         for (const elemHide of Array.from(cloned.querySelectorAll(".hideFromAutosize"))) {
-            ; (elemHide as HTMLElement).style.display = "none"
+            ;(elemHide as HTMLElement).style.display = "none"
         }
 
         elem.after(cloned)

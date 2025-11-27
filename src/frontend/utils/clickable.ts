@@ -6,7 +6,7 @@ export function triggerClickOnEnterSpace(event: KeyboardEvent) {
 
         event.preventDefault()
         event.stopPropagation()
-            ; (event.currentTarget as HTMLElement).click()
+        ;(event.currentTarget as HTMLElement).click()
     }
 }
 

@@ -114,12 +114,12 @@
 
     function getEvents(day: Date, currentEvents: any[], type: string) {
         let events: any[] = []
-        currentEvents.forEach((a) => {
+        currentEvents.forEach(a => {
             let eventIsAtDayOrGoingThrough = a.to ? isBetween(new Date(a.from), new Date(a.to), copyDate(day)) : isSameDay(new Date(a.from), day)
             if (eventIsAtDayOrGoingThrough) events.push(a)
         })
         events.sort(sortByTime)
-        events = events.filter((a) => a.type === type)
+        events = events.filter(a => a.type === type)
 
         return events
     }
@@ -134,7 +134,7 @@
     }
 
     function toggleCurrentDay(day: Date) {
-        activeDays.update((a) => {
+        activeDays.update(a => {
             let alreadySelected = a.includes(day.getTime())
             if (!alreadySelected) return [...a, day.getTime()]
 
@@ -217,14 +217,7 @@
 
                 {#each week as day}
                     {@const dayEvents = getEvents(day, currentEvents, active || "event")}
-                    <div
-                        class="day"
-                        class:today={isSameDay(day, today)}
-                        class:faded={day.getMonth() !== month || day.getFullYear() !== year}
-                        class:active={$activeDays?.includes(copyDate(day).getTime())}
-                        on:mousedown={(e) => dayClick(e, day)}
-                        on:mousemove={(e) => move(e, day)}
-                    >
+                    <div class="day" class:today={isSameDay(day, today)} class:faded={day.getMonth() !== month || day.getFullYear() !== year} class:active={$activeDays?.includes(copyDate(day).getTime())} on:mousedown={e => dayClick(e, day)} on:mousemove={e => move(e, day)}>
                         <!-- // isSameDay(day, new Date($activeDays[0]))} -->
                         <span style="font-size: 1.5em;font-weight: 600;">{day.getDate()}</span>
                         <span class="events">

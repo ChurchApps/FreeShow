@@ -7,12 +7,7 @@ export class LyricSearch {
         const cacheKey = artist + title
         if (lyricsSearchCache.has(cacheKey)) return lyricsSearchCache.get(cacheKey)!
 
-        const results = await Promise.all([
-            LyricSearch.searchGenius(artist, title),
-            LyricSearch.searchUltimateGuitar(artist, title),
-            LyricSearch.searchLetras(title),
-            LyricSearch.searchHymnary(title),
-        ])
+        const results = await Promise.all([LyricSearch.searchGenius(artist, title), LyricSearch.searchUltimateGuitar(artist, title), LyricSearch.searchLetras(title), LyricSearch.searchHymnary(title)])
         const joinedResults: LyricSearchResult[] = results.flat()
 
         lyricsSearchCache.set(cacheKey, joinedResults)
@@ -73,7 +68,7 @@ export class LyricSearch {
             key: geniusResult.id.toString(),
             artist: geniusResult.artist.name,
             title: geniusResult.title,
-            originalQuery,
+            originalQuery
         } as LyricSearchResult
     }
 
@@ -109,7 +104,7 @@ export class LyricSearch {
             key: hymnaryResult[4],
             artist: hymnaryResult[6],
             title: hymnaryResult[0],
-            originalQuery,
+            originalQuery
         } as LyricSearchResult
     }
 
@@ -135,7 +130,7 @@ export class LyricSearch {
             key: `${letrasResult.dns}/${letrasResult.url}`,
             artist: letrasResult.art,
             title: letrasResult.txt,
-            originalQuery,
+            originalQuery
         } as LyricSearchResult
     }
 
@@ -162,7 +157,7 @@ export class LyricSearch {
             const lines = result.split("\n")
             const newLines: string[] = []
             lines.pop() // remove source
-            lines.forEach((line) => {
+            lines.forEach(line => {
                 const contents = line.replace(/^\d+\s+/gm, "").trim() // remove leading numbers
                 newLines.push(contents)
             })
@@ -214,7 +209,7 @@ export class LyricSearch {
             key: ultimateGuitarResult.tab_url || ultimateGuitarResult.url || "",
             artist: ultimateGuitarResult.artist_name || ultimateGuitarResult.artist || "",
             title: ultimateGuitarResult.song_name || ultimateGuitarResult.title || "",
-            originalQuery,
+            originalQuery
         } as LyricSearchResult
     }
 

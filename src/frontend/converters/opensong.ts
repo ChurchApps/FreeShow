@@ -91,7 +91,7 @@ function createSlides({ lyrics, presentation, backgrounds }: Song) {
     const slideRef: any = {}
     let slideOrder: string[] = []
 
-    lyrics.split("\n\n").forEach((slide) => {
+    lyrics.split("\n\n").forEach(slide => {
         const groupText = slide.trim()
         let group = groupText
             .split("\n")
@@ -118,7 +118,7 @@ function createSlides({ lyrics, presentation, backgrounds }: Song) {
             chordData
                 .slice(1)
                 .split(" ")
-                .forEach((letter) => {
+                .forEach(letter => {
                     pos++
                     if (letter === "") return
                     chords.push({ id: uid(5), pos, key: letter })
@@ -156,14 +156,14 @@ function createSlides({ lyrics, presentation, backgrounds }: Song) {
     if (presentation) slideOrder = presentation.split(" ")
     if (slideOrder.length) {
         layout = []
-        slideOrder.forEach((group) => {
+        slideOrder.forEach(group => {
             const id = slideRef[group]
             if (id) layout.push({ id })
         })
     }
 
     if (!layout.length) {
-        layout = Object.keys(slides).map((id) => ({ id }))
+        layout = Object.keys(slides).map(id => ({ id }))
     }
 
     // add backgrounds
@@ -206,19 +206,19 @@ function XMLtoObject(xml: string) {
 }
 
 export function convertOpenSongBible(data: any[]) {
-    data.forEach((bible) => {
+    data.forEach(bible => {
         const obj = XMLtoBible(bible.content)
         obj.name = bible.name || ""
         obj.name = formatToFileName(obj.name)
 
         const id = uid()
         // create folder & file
-        scripturesCache.update((a) => {
+        scripturesCache.update(a => {
             a[id] = obj
             return a
         })
 
-        scriptures.update((a) => {
+        scriptures.update(a => {
             a[id] = { name: obj.name, id }
             return a
         })
@@ -236,30 +236,30 @@ function XMLtoBible(xml: string) {
     const booksObj = getChildren(xmlDoc, "b")
     const books: Book[] = []
 
-        ;[...booksObj].forEach((book: any, i: number) => {
-            let length = 0
-            const name = book.getAttribute("n")
-            const number = i + 1
-            const chapters: Chapter[] = []
+    ;[...booksObj].forEach((book: any, i: number) => {
+        let length = 0
+        const name = book.getAttribute("n")
+        const number = i + 1
+        const chapters: Chapter[] = []
 
-                ;[...getChildren(book, "c")].forEach((chapter: any) => {
-                    const chapterNumber = chapter.getAttribute("n")
-                    const verses: Verse[] = []
+        ;[...getChildren(book, "c")].forEach((chapter: any) => {
+            const chapterNumber = chapter.getAttribute("n")
+            const verses: Verse[] = []
 
-                        ;[...getChildren(chapter, "v")].forEach((verse: any) => {
-                            const text = verse.innerHTML
-                                .toString()
-                                .replace(/\[\d+\] /g, "") // remove [1], not [text]
-                                .trim()
-                            length += text.length
-                            if (text.length) verses.push({ number: verse.getAttribute("n"), text })
-                        })
+            ;[...getChildren(chapter, "v")].forEach((verse: any) => {
+                const text = verse.innerHTML
+                    .toString()
+                    .replace(/\[\d+\] /g, "") // remove [1], not [text]
+                    .trim()
+                length += text.length
+                if (text.length) verses.push({ number: verse.getAttribute("n"), text })
+            })
 
-                    chapters.push({ number: chapterNumber, verses })
-                })
-
-            if (length) books.push({ name, number, chapters })
+            chapters.push({ number: chapterNumber, verses })
         })
+
+        if (length) books.push({ name, number, chapters })
+    })
 
     return { name: "", metadata: { copyright: "" }, books } as Bible
 }
@@ -276,7 +276,7 @@ function HTMLtoObject(content: string) {
     content = content.replaceAll('<div class="heading">', '<span class="heading">')
     const slideGroups = content.split('<span class="heading">').slice(1)
     let lyrics = ""
-    slideGroups.forEach((group) => {
+    slideGroups.forEach(group => {
         const linesEnd = group.lastIndexOf("<br/>")
         const g = group.slice(0, linesEnd)
         const lines = group.indexOf("<table") > -1 ? g.split("<table").slice(1) : g.split('class="lyrics">').slice(1)
@@ -284,10 +284,10 @@ function HTMLtoObject(content: string) {
         const groupName = group.slice(0, group.indexOf(divs ? "</div>" : "</span>")).trim()
         lyrics += `[${groupName}]\n`
 
-        lines.forEach((line) => {
+        lines.forEach(line => {
             const sections = line.indexOf('class="lyrics">') > -1 ? line.split('class="lyrics">').slice(1) : [line]
 
-            sections.forEach((section) => {
+            sections.forEach(section => {
                 const text = section.slice(0, section.indexOf("</td>"))
                 lyrics += text
             })

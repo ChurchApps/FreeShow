@@ -69,7 +69,7 @@
 
     $: isScripture = outputContent?.id === "temp"
     $: isMetronome = $playingMetronome && !Object.keys($playingAudio).length
-    $: isTimer = !output.out?.transition && !Object.values($overlayTimers).find((a) => a.outputId === outputId) && Object.keys($activeTimers).length
+    $: isTimer = !output.out?.transition && !Object.values($overlayTimers).find(a => a.outputId === outputId) && Object.keys($activeTimers).length
 
     $: slideCleared = isOutCleared("slide", $outputs)
 
@@ -120,23 +120,11 @@
     <span class="group">
         {#if outputContent?.type !== "pdf" && outputContent?.type !== "ppt"}
             <div class="combinedButton">
-                <MaterialButton
-                    style="padding: 0.3em 0.6em;{styleBackground ? 'opacity: 0.5;cursor: default;' : ''}"
-                    disabled={($outLocked || backgroundCleared) && !styleBackground}
-                    title={$outLocked || backgroundCleared ? "" : "clear.background [F1]"}
-                    on:click={() => clear("background")}
-                    red
-                >
+                <MaterialButton style="padding: 0.3em 0.6em;{styleBackground ? 'opacity: 0.5;cursor: default;' : ''}" disabled={($outLocked || backgroundCleared) && !styleBackground} title={$outLocked || backgroundCleared ? "" : "clear.background [F1]"} on:click={() => clear("background")} red>
                     <Icon id="background" size={1.2} white />
                 </MaterialButton>
                 {#if !allCleared}
-                    <MaterialButton
-                        style="padding: {activeClear === 'background' ? 0 : 2}px !important;min-height: 15px;"
-                        isActive={activeClear === "background"}
-                        disabled={backgroundCleared}
-                        on:click={() => openPreview("background")}
-                        title="preview.background"
-                    >
+                    <MaterialButton style="padding: {activeClear === 'background' ? 0 : 2}px !important;min-height: 15px;" isActive={activeClear === "background"} disabled={backgroundCleared} on:click={() => openPreview("background")} title="preview.background">
                         {#if activeClear === "background"}
                             <Icon style="opacity: 0.8;" id="expand" size={0.7} white />
                         {/if}
@@ -163,13 +151,7 @@
         {/if}
 
         <div class="combinedButton">
-            <MaterialButton
-                style="padding: 0.3em 0.6em;{lockedOverlay ? 'opacity: 0.5;cursor: default;' : ''}"
-                disabled={$outLocked || (overlayCleared && effectsCleared)}
-                title={lockedOverlay ? "" : "clear.overlays [F3]"}
-                on:click={() => clear("overlays")}
-                red
-            >
+            <MaterialButton style="padding: 0.3em 0.6em;{lockedOverlay ? 'opacity: 0.5;cursor: default;' : ''}" disabled={$outLocked || (overlayCleared && effectsCleared)} title={lockedOverlay ? "" : "clear.overlays [F3]"} on:click={() => clear("overlays")} red>
                 <Icon id="overlays" size={1.2} white />
             </MaterialButton>
             {#if !allCleared}
@@ -196,23 +178,11 @@
 
         {#if outputContent?.type !== "pdf"}
             <div class="combinedButton">
-                <MaterialButton
-                    style="padding: 0.3em 0.6em;{isTimer ? 'opacity: 0.9;' : ''}"
-                    disabled={$outLocked || (slideTimerCleared && activeClear !== "nextTimer")}
-                    title="{isTimer ? 'actions.stop_timers' : `clear.${Object.keys($overlayTimers).length ? 'timer' : 'nextTimer'}`}{presentationControllersKeysDisabled() ? ' [F5]' : ''}"
-                    on:click={() => (isTimer ? activeTimers.set([]) : clear("nextTimer"))}
-                    red
-                >
+                <MaterialButton style="padding: 0.3em 0.6em;{isTimer ? 'opacity: 0.9;' : ''}" disabled={$outLocked || (slideTimerCleared && activeClear !== "nextTimer")} title="{isTimer ? 'actions.stop_timers' : `clear.${Object.keys($overlayTimers).length ? 'timer' : 'nextTimer'}`}{presentationControllersKeysDisabled() ? ' [F5]' : ''}" on:click={() => (isTimer ? activeTimers.set([]) : clear("nextTimer"))} red>
                     <Icon id={isTimer ? "timer" : "clock"} size={1.2} white />
                 </MaterialButton>
                 {#if !allCleared}
-                    <MaterialButton
-                        style="padding: 2px !important;min-height: 15px;"
-                        isActive={activeClear === "nextTimer"}
-                        disabled={slideTimerCleared && activeClear !== "nextTimer"}
-                        on:click={() => openPreview("nextTimer")}
-                        title="preview.nextTimer"
-                    >
+                    <MaterialButton style="padding: 2px !important;min-height: 15px;" isActive={activeClear === "nextTimer"} disabled={slideTimerCleared && activeClear !== "nextTimer"} on:click={() => openPreview("nextTimer")} title="preview.nextTimer">
                         {#if activeClear === "nextTimer"}
                             <Icon style="opacity: 0.8;" id="expand" size={0.7} white />
                         {/if}

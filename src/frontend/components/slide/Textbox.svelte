@@ -69,7 +69,7 @@
 
     $: lines = clone(item?.lines)
     $: if (linesStart !== null && linesEnd !== null && lines?.length) {
-        lines = lines.filter((a) => a.text.filter((a) => a.value !== undefined)?.length)
+        lines = lines.filter(a => a.text.filter(a => a.value !== undefined)?.length)
 
         // show last possible lines if no text at current line
         if (!lines[linesStart]) {
@@ -264,7 +264,7 @@
         if (!reference?.data) return 1
         if (reference.data.translations) return Number(reference.data.translations) || 1
         const versionList = typeof reference.data.version === "string" ? reference.data.version.split("+") : []
-        return versionList.filter((value) => value.trim().length).length || 1
+        return versionList.filter(value => value.trim().length).length || 1
     }
 
     // AUTO SIZE
@@ -307,7 +307,7 @@
         if (isStage) {
             let text = stageItem?.lines?.[0]?.text || []
             if (!Array.isArray(text) || !text.length) return 1
-            const verseItemText = text.filter((a) => a.customType?.includes("disableTemplate")) || []
+            const verseItemText = text.filter(a => a.customType?.includes("disableTemplate")) || []
             if (!verseItemText.length) return 1
             const verseItemSize = Number(getStyles(verseItemText[0]?.style, true)?.["font-size"] || "") || 0
             const stageFontSize = Number(getStyles(stageItem?.style, true)?.["font-size"] || "") || 100
@@ -316,7 +316,7 @@
 
         let text = item?.lines?.[0]?.text || []
         if (!Array.isArray(text) || !text.length) return 1
-        const verseItemText = text.filter((a) => a.customType?.includes("disableTemplate")) || []
+        const verseItemText = text.filter(a => a.customType?.includes("disableTemplate")) || []
         if (!verseItemText.length) return 1
         const verseItemSize = Number(getStyles(verseItemText[0]?.style, true)?.["font-size"] || "") || 0
         return verseItemSize ? verseItemSize / 100 || 1 : 1
@@ -366,11 +366,11 @@
 
             let text = item?.lines?.[0]?.text || []
             if (!Array.isArray(text)) text = []
-            const itemText = text.filter((a) => !a.customType?.includes("disableTemplate")) || []
+            const itemText = text.filter(a => !a.customType?.includes("disableTemplate")) || []
             let itemFontSize = Number(getStyles(itemText[0]?.style, true)?.["font-size"] || "") || 100
 
             // get scripture verse ratio
-            const verseItemText = text.filter((a) => a.customType?.includes("disableTemplate")) || []
+            const verseItemText = text.filter(a => a.customType?.includes("disableTemplate")) || []
             const verseItemSize = Number(getStyles(verseItemText[0]?.style, true)?.["font-size"] || "") || 0
             customTypeRatio = verseItemSize / 100 || 1
 
@@ -484,19 +484,19 @@
         if (isStage || itemIndex < 0 || $currentWindow || ref.id === "scripture") return
 
         if (ref.type === "overlay") {
-            overlays.update((a) => {
+            overlays.update(a => {
                 if (!a[ref.id]?.items?.[itemIndex]) return a
                 a[ref.id].items[itemIndex].autoFontSize = fontSize
                 return a
             })
         } else if (ref.type === "template") {
-            templates.update((a) => {
+            templates.update(a => {
                 if (!a[ref.id]?.items?.[itemIndex]) return a
                 a[ref.id].items[itemIndex].autoFontSize = fontSize
                 return a
             })
         } else if (ref.showId) {
-            showsCache.update((a) => {
+            showsCache.update(a => {
                 if (!a[ref.showId!]?.slides?.[ref.id]?.items?.[itemIndex]) return a
 
                 a[ref.showId!].slides[ref.id].items[itemIndex].autoFontSize = fontSize
@@ -513,7 +513,7 @@
         chordLines = []
         if (!Array.isArray(item?.lines)) return
 
-        item.lines.forEach((line) => {
+        item.lines.forEach(line => {
             if (!line.chords?.length || !line.text) return
             chordLines.push(line.chords)
         })
@@ -593,33 +593,7 @@
     on:mouseup={release}
 >
     {#if lines}
-        <TextboxLines
-            {item}
-            {slideIndex}
-            {isMirrorItem}
-            {key}
-            {smallFontSize}
-            {animationStyle}
-            {dynamicValues}
-            {isStage}
-            {customFontSize}
-            {outputStyle}
-            {ref}
-            {style}
-            {customStyle}
-            {stageItem}
-            {chords}
-            {linesStart}
-            {linesEnd}
-            fontSize={smallFontSize ? 20 : fontSize}
-            {customTypeRatio}
-            {maxLines}
-            {maxLinesInvert}
-            {centerPreview}
-            {revealed}
-            styleOverrides={templateStyleOverrides}
-            on:updateAutoSize={calculateAutosize}
-        />
+        <TextboxLines {item} {slideIndex} {isMirrorItem} {key} {smallFontSize} {animationStyle} {dynamicValues} {isStage} {customFontSize} {outputStyle} {ref} {style} {customStyle} {stageItem} {chords} {linesStart} {linesEnd} fontSize={smallFontSize ? 20 : fontSize} {customTypeRatio} {maxLines} {maxLinesInvert} {centerPreview} {revealed} styleOverrides={templateStyleOverrides} on:updateAutoSize={calculateAutosize} />
     {:else}
         <SlideItems {item} {slideIndex} {preview} {isTemplatePreview} {mirror} {isMirrorItem} {ratio} {disableListTransition} {smallFontSize} {ref} {fontSize} {outputId} />
     {/if}

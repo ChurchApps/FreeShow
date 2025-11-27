@@ -57,11 +57,11 @@
     let scrollTimeout: number | null = null
     let lastSlideNumber = -1
     let lastAutoScrollTime = 0
-    
+
     // Detect manual scrolling - disable auto-scroll temporarily
     function handleScroll() {
         if (!scrollElem || slideView !== "lyrics") return
-        
+
         // If scroll happens more than 300ms after auto-scroll, it's user scroll
         if (Date.now() - lastAutoScrollTime > 300) {
             userScrolled = true
@@ -73,7 +73,7 @@
             }, 4000) as unknown as number
         }
     }
-    
+
     // Auto-scroll to current slide
     $: {
         if (scrollElem && outNumber !== null && slideView === "lyrics" && scrollRaf === null && outNumber !== lastSlideNumber) {
@@ -85,20 +85,20 @@
                     scrollTimeout = null
                 }
             }
-            
+
             // Auto-scroll if user hasn't manually scrolled
             if (!userScrolled) {
                 const elem = scrollElem
                 const targetSlide = outNumber
                 lastSlideNumber = targetSlide
-                
+
                 scrollRaf = requestAnimationFrame(() => {
                     if (!elem || userScrolled) {
                         scrollRaf = null
                         return
                     }
                     const offset = (elem.children[targetSlide] as HTMLElement)?.offsetTop - elem.offsetTop - 5
-                    elem.scrollTo({ top: offset - 50, behavior: 'smooth' })
+                    elem.scrollTo({ top: offset - 50, behavior: "smooth" })
                     lastAutoScrollTime = Date.now()
                     scrollRaf = null
                 }) as unknown as number
@@ -210,7 +210,7 @@
         if ($outShow && showId === $outShow.id && layoutId === $outShow.settings.activeLayout && index === outNumber) {
             // reveal lines if it exists
             const ref = GetLayout($activeShow, $activeShow?.settings?.activeLayout)
-            const revealExists = $activeShow.slides[ref[index]?.id]?.items?.find((item) => item.lineReveal || item.clickReveal)
+            const revealExists = $activeShow.slides[ref[index]?.id]?.items?.find(item => item.lineReveal || item.clickReveal)
             if (revealExists) {
                 send("API:next_slide")
             }
@@ -419,13 +419,7 @@
                     {#if slideView === "lyrics"}
                         {#each GetLayout($activeShow, $activeShow?.settings?.activeLayout) as layoutSlide, i}
                             {#if !layoutSlide.disabled}
-                                <span
-                                    style="padding: 5px;{$outShow?.id === $activeShow.id && outNumber === i ? 'background-color: rgba(0 0 0 / 0.6);' : ''}"
-                                    role="button"
-                                    tabindex="0"
-                                    on:click={() => playSlide(i)}
-                                    on:keydown={(e) => (e.key === "Enter" ? playSlide(i) : null)}
-                                >
+                                <span style="padding: 5px;{$outShow?.id === $activeShow.id && outNumber === i ? 'background-color: rgba(0 0 0 / 0.6);' : ''}" role="button" tabindex="0" on:click={() => playSlide(i)} on:keydown={e => (e.key === "Enter" ? playSlide(i) : null)}>
                                     <span class="group" style="opacity: 0.6;font-size: 0.8em;display: flex;justify-content: center;position: relative;">
                                         <span style="left: 0;position: absolute;">{i + 1}</span>
                                         <span>{$activeShow.slides[layoutSlide.id].group === null ? "" : getName($activeShow.slides[layoutSlide.id].group || "", layoutSlide.id, i)}</span>
@@ -449,7 +443,7 @@
                             {/if}
                         {/each}
                     {:else}
-                        <Slides {dictionary} {scrollElem} on:click={(e) => playSlide(e.detail)} outSlide={outNumber} columns={3} />
+                        <Slides {dictionary} {scrollElem} on:click={e => playSlide(e.detail)} outSlide={outNumber} columns={3} />
                     {/if}
                 </div>
 

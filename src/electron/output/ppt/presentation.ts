@@ -9,7 +9,7 @@ import { OutputValues } from "../helpers/OutputValues"
 // from "slideshow" - "connector.js"
 const connectors = {
     darwin: ["Keynote", "Keynote 5", "Keynote 6", "PowerPoint"], // , "PowerPoint 2011", "PowerPoint 2016"
-    win32: ["PowerPoint"], // , "PowerPoint 2010", "PowerPoint 2013"
+    win32: ["PowerPoint"] // , "PowerPoint 2010", "PowerPoint 2013"
 }
 
 export function getPresentationApplications() {
@@ -26,7 +26,7 @@ export async function startSlideshow(data: { path: string; program: string }) {
     await initPresentation(data.path, data.program.toLowerCase().replaceAll(" ", ""))
 
     if (alwaysOnTopDisabled.length) return
-    OutputHelper.getAllOutputs().forEach((output) => {
+    OutputHelper.getAllOutputs().forEach(output => {
         if (output.window.isAlwaysOnTop()) {
             OutputValues.updateValue({ id: output.id, key: "alwaysOnTop", value: false })
             alwaysOnTopDisabled.push(output.id)
@@ -46,7 +46,7 @@ function stopSlideshow() {
         // .then(() => currentSlideshow!.close())
         // .then(() => currentSlideshow!.quit())
         .then(end)
-        .catch((err) => {
+        .catch(err => {
             if (err !== "still no running slideshow" && err !== "still no active presentation") {
                 console.error("Error when closing:", err)
             }
@@ -66,7 +66,7 @@ function stopSlideshow() {
         openedPresentation = ""
 
         setTimeout(() => {
-            alwaysOnTopDisabled.forEach((id) => {
+            alwaysOnTopDisabled.forEach(id => {
                 OutputValues.updateValue({ id, key: "alwaysOnTop", value: true })
             })
             alwaysOnTopDisabled = []
@@ -95,9 +95,9 @@ async function initPresentation(path: string, program = "powerpoint") {
     try {
         currentSlideshow = new Slideshow(program, isProd)
 
-            // Fix encoding to allow non-English characters.
-            ; (currentSlideshow as any).connector.c.stdin.setEncoding('latin1')
-            ; (currentSlideshow as any).connector.c.stdout.setEncoding('latin1')
+        // Fix encoding to allow non-English characters.
+        ;(currentSlideshow as any).connector.c.stdin.setEncoding("latin1")
+        ;(currentSlideshow as any).connector.c.stdout.setEncoding("latin1")
     } catch (err) {
         if ((err as Error).message.includes("unsupported platform")) {
             sendToMain(ToMain.ALERT, "Presentation app could not start, try opening it manually!")
@@ -190,7 +190,7 @@ const presentationActions = {
     first: () => currentSlideshow!.first(),
     last: () => currentSlideshow!.last(),
     // goto: (index: number) => currentSlideshow!.goto(index),
-    stop: () => stopSlideshow(),
+    stop: () => stopSlideshow()
 }
 
 export async function presentationControl(data: { action: string }) {

@@ -5,11 +5,11 @@ import { translateText } from "../../../utils/language"
 import { loadShows } from "../../helpers/setShow"
 
 export async function getAllProjectItems(projectShows: ProjectShowRef[]) {
-    const showIds: string[] = projectShows.filter((a) => (a.type || "show") === "show").map((a) => a.id)
+    const showIds: string[] = projectShows.filter(a => (a.type || "show") === "show").map(a => a.id)
     await loadShows(showIds)
 
     // get names & icons
-    projectShows = projectShows.map((a) => {
+    projectShows = projectShows.map(a => {
         // same icon as ShowButton.svelte
         if ((a.type || "show") === "show") {
             const show = get(showsCache)[a.id] || {}

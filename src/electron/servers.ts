@@ -35,7 +35,7 @@ const ioServers: { [key in ServerName]?: Server } = {}
 createServers()
 function createServers() {
     const serverList = Object.keys(serverPorts) as ServerName[]
-    serverList.forEach((id) => {
+    serverList.forEach(id => {
         const app = express()
         const server = http.createServer(app)
 
@@ -114,7 +114,7 @@ export function closeServers() {
 
 function createBridge(id: ServerName, server: ServerValues) {
     // RECEIVE CONNECTION FROM CLIENT
-    server.io.on("connection", (socket) => {
+    server.io.on("connection", socket => {
         if (Object.keys(server.connections).length >= server.max) {
             server.io.emit(id, { channel: "ERROR", id: "overLimit", data: server.max })
             socket.disconnect()
@@ -198,5 +198,5 @@ const device: { [key: string]: RegExp } = {
     Zebra: /TC70|TC55/i
 }
 export function getOS(ua: string) {
-    return Object.keys(device).find((v) => ua.match(device[v])) || "Unknown"
+    return Object.keys(device).find(v => ua.match(device[v])) || "Unknown"
 }

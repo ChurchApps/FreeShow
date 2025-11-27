@@ -28,8 +28,8 @@ const defaultMedia = splitIntoRows([
         }
     },
     { id: "fit", type: "dropdown", value: "", values: { label: "media.fit", defaultValue: "", options: [{ value: "", label: "themes.default" }, ...mediaFitOptions] } },
-    { id: "flipped", type: "checkbox", value: false, values: { label: "media.flip_horizontally", } },
-    { id: "flippedY", type: "checkbox", value: false, values: { label: "media.flip_vertically", } }
+    { id: "flipped", type: "checkbox", value: false, values: { label: "media.flip_horizontally" } },
+    { id: "flippedY", type: "checkbox", value: false, values: { label: "media.flip_vertically" } }
 ])
 
 export const mediaBoxes: { [key in MediaType]?: BoxContent2 } = {
@@ -43,7 +43,7 @@ export const mediaBoxes: { [key in MediaType]?: BoxContent2 } = {
                 alwaysOpen: true,
                 inputs: splitIntoRows([
                     { id: "speed", type: "number", value: 1, values: { label: "media.speed", min: 0.1, max: 15, step: 0.1, showSlider: true } },
-                    { id: "volume", type: "number", value: 100, values: { label: "media.volume", max: 100, showSlider: true, } },
+                    { id: "volume", type: "number", value: 100, values: { label: "media.volume", max: 100, showSlider: true } },
                     { id: "fromTime", type: "number", value: 0, values: { label: "inputs.start", max: 100000, showSlider: true } },
                     { id: "toTime", type: "number", value: 0, values: { label: "inputs.end", max: 100000, showSlider: true } }
                 ])
@@ -67,10 +67,10 @@ export const mediaBoxes: { [key in MediaType]?: BoxContent2 } = {
             default: {
                 inputs: splitIntoRows([
                     { id: "fit", type: "dropdown", value: "", values: { label: "media.fit", defaultValue: "", options: [{ value: "", label: "themes.default" }, ...mediaFitOptionsNoBlur] } },
-                    { id: "flipped", type: "checkbox", value: false, values: { label: "media.flip_horizontally", } },
-                    { id: "flippedY", type: "checkbox", value: false, values: { label: "media.flip_vertically", } }
+                    { id: "flipped", type: "checkbox", value: false, values: { label: "media.flip_horizontally" } },
+                    { id: "flippedY", type: "checkbox", value: false, values: { label: "media.flip_vertically" } }
                 ])
-            },
+            }
         }
     }
 }
@@ -95,7 +95,7 @@ export const audioSections: { [key: string]: EditBoxSection } = {
                 }
             },
             // { id: "speed", type: "number", value: 1, values: { label: "media.speed", min: 0.1, max: 15, step: 0.1, showSlider: true } },
-            { id: "volume", type: "number", value: 1, multiplier: 100, values: { label: "media.volume", min: 1, max: 100, showSlider: true, } },
+            { id: "volume", type: "number", value: 1, multiplier: 100, values: { label: "media.volume", min: 1, max: 100, showSlider: true } },
             { id: "fromTime", type: "number", value: 0, values: { label: "inputs.start", max: 100000, showSlider: true } },
             { id: "toTime", type: "number", value: 0, values: { label: "inputs.end", max: 100000, showSlider: true } }
         ])

@@ -223,7 +223,7 @@ export interface MainReturnPayloads {
     [Main.CHECK_RAM_USAGE]: { total: number; free: number; performanceMode: boolean }
     ///
     // [Main.SAVE]: { closeWhenFinished: boolean; customTriggers: any } | Promise<void>
-    [Main.BACKUPS]: { path: string; name: string, date: number; size: number }[]
+    [Main.BACKUPS]: { path: string; name: string; date: number; size: number }[]
     [Main.SHOWS]: TrimmedShows
     // STORES
     [Main.SYNCED_SETTINGS]: { [key in SaveListSyncedSettings]: any }

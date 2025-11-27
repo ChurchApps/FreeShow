@@ -34,7 +34,7 @@ export const DEFAULT_PCO_DATA: PCOAuthData = {
     token_type: "Bearer",
     created_at: 0,
     expires_in: 0,
-    scope: "services",
+    scope: "services"
 }
 
 const app = express()
@@ -79,7 +79,7 @@ function pcoAuthenticate(scope: PCOScopes): Promise<PCOAuthData> {
 
     app.use(express.json())
 
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
         app.get(path, (req, res) => {
             const code = req.query.code?.toString() || ""
             console.info(`OAuth code received: ${code}`)
@@ -137,7 +137,7 @@ function hasExpired(access: PCOAuthData): boolean {
 }
 
 function refreshToken(access: PCOAuthData): Promise<PCOAuthData> {
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
         if (!access?.refresh_token) {
             console.warn("No refresh token available, cannot refresh PCO OAuth token")
             return resolve(null)

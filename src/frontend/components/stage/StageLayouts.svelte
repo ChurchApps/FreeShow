@@ -17,11 +17,11 @@
     const profile = getAccess("stage")
     const readOnly = profile.global === "read"
 
-    $: sortedStageSlides = sortByName(keysToID($stageShows)).filter((a) => profile[a.id] !== "none")
+    $: sortedStageSlides = sortByName(keysToID($stageShows)).filter(a => profile[a.id] !== "none")
 
     $: if ($activeStage.id === null && Object.keys($stageShows).length) setActiveStage()
     function setActiveStage() {
-        let activeStageOutput = Object.values($outputs).find((a) => a.enabled && a.stageOutput)?.stageOutput
+        let activeStageOutput = Object.values($outputs).find(a => a.enabled && a.stageOutput)?.stageOutput
         let firstStageLayout = activeStageOutput || sortedStageSlides[0]?.id
         activeStage.set({ id: firstStageLayout, items: [] })
     }
@@ -33,7 +33,7 @@
         // CHANGE STAGE LAYOUT
 
         let nextTab = -1
-        let currentTabIndex = sortedStageSlides.findIndex((a) => a.id === $activeStage.id)
+        let currentTabIndex = sortedStageSlides.findIndex(a => a.id === $activeStage.id)
 
         if (e.key === "ArrowDown") {
             nextTab = Math.min(sortedStageSlides.length - 1, currentTabIndex + 1)
@@ -53,7 +53,7 @@
             if (!scrollElem) return
             const index = Math.max(
                 0,
-                [...(scrollElem.querySelector(".grid")?.children || [])].findIndex((a) => a?.classList.contains("active"))
+                [...(scrollElem.querySelector(".grid")?.children || [])].findIndex(a => a?.classList.contains("active"))
             )
             offset = ((scrollElem.querySelector(".grid")?.children?.[index] as HTMLElement)?.offsetTop || 5) - 80
         }, 10)
@@ -71,9 +71,9 @@
                         id={show.id}
                         layout={show}
                         active={$activeStage.id === show.id}
-                        on:click={(e) => {
+                        on:click={e => {
                             if (!e.ctrlKey && !e.metaKey && !document.activeElement?.closest(".edit"))
-                                activeStage.update((as) => {
+                                activeStage.update(as => {
                                     as.id = show.id
                                     return as
                                 })

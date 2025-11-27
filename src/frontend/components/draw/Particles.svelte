@@ -28,12 +28,7 @@
 </script>
 
 {#each particles as p}
-    <div
-        class="particle"
-        style="--color: {settings.color || '#1e1eb4'};opacity: {settings.opacity || 0.8};border-radius: {settings.radius}%;top: {p.y}px;left: {p.x}px;height: {p.size}px;width: {p.size}px;"
-        class:glow={settings.glow === true}
-        class:hollow={settings.hollow === true}
-    />
+    <div class="particle" style="--color: {settings.color || '#1e1eb4'};opacity: {settings.opacity || 0.8};border-radius: {settings.radius}%;top: {p.y}px;left: {p.x}px;height: {p.size}px;width: {p.size}px;" class:glow={settings.glow === true} class:hollow={settings.hollow === true} />
 {/each}
 
 <style>

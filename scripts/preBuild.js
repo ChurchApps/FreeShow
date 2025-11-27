@@ -12,7 +12,7 @@ deleteFolderRecursive(buildElectronPath)
 function deleteFolderRecursive(folderPath) {
     if (!existsSync(folderPath)) return
 
-    readdirSync(folderPath).forEach((file) => {
+    readdirSync(folderPath).forEach(file => {
         const path = join(folderPath, file)
         const isFolder = lstatSync(path).isDirectory()
         if (isFolder) return deleteFolderRecursive(path)
@@ -48,7 +48,7 @@ function getPdfWorkerFile() {
     const originPath = join(__dirname, "..", "node_modules", "pdfjs-dist", "build", workerName)
     const outputPath = join(__dirname, "..", "public", "assets", workerName)
 
-    copyFile(originPath, outputPath, (err) => {
+    copyFile(originPath, outputPath, err => {
         if (err) console.error("Could not copy PDF worker file:", err)
     })
 }

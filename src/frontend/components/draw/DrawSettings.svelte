@@ -62,14 +62,14 @@
     $: tool = $drawTool
 
     const update = (value: any, key: string) => {
-        drawSettings.update((a) => {
+        drawSettings.update(a => {
             a[tool][key] = value
             return a
         })
     }
 
     function reset() {
-        drawSettings.update((a) => {
+        drawSettings.update(a => {
             a[tool] = clone(defaults[tool] || {})
             return a
         })
@@ -78,7 +78,7 @@
     // $: if (!Object.keys($drawSettings[tool] || {}).length) reset()
     $: if (tool) adddMissingSettings()
     function adddMissingSettings() {
-        drawSettings.update((a) => {
+        drawSettings.update(a => {
             if (!a[tool]) a[tool] = clone(defaults[tool])
             else {
                 Object.entries(defaults[tool]).forEach(([key, value]) => {
@@ -105,15 +105,15 @@
 
         {#if !hidden}
             {#if key === "color"}
-                <MaterialColorInput label="edit.color" {value} on:change={(e) => update(e.detail, key)} />
+                <MaterialColorInput label="edit.color" {value} on:change={e => update(e.detail, key)} />
             {:else if key === "opacity"}
-                <MaterialNumberInput label="edit.opacity" value={value * 10} min={1} max={10} on:change={(e) => update(e.detail / 10, key)} />
+                <MaterialNumberInput label="edit.opacity" value={value * 10} min={1} max={10} on:change={e => update(e.detail / 10, key)} />
             {:else if key === "radius"}
-                <MaterialNumberInput label="draw.radius" value={value * 2} max={100} on:change={(e) => update(e.detail / 2, key)} />
+                <MaterialNumberInput label="draw.radius" value={value * 2} max={100} on:change={e => update(e.detail / 2, key)} />
             {:else if key === "size"}
-                <MaterialNumberInput label="edit.size" {value} min={1} max={2000} step={10} defaultValue={tool === "zoom" ? 100 : null} on:change={(e) => update(e.detail, key)} />
+                <MaterialNumberInput label="edit.size" {value} min={1} max={2000} step={10} defaultValue={tool === "zoom" ? 100 : null} on:change={e => update(e.detail, key)} />
             {:else if key !== "clear"}
-                <MaterialCheckbox label="draw.{key}" checked={value} on:change={(e) => update(e.detail, key)} />
+                <MaterialCheckbox label="draw.{key}" checked={value} on:change={e => update(e.detail, key)} />
             {/if}
         {/if}
     {/each}

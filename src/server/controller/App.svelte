@@ -16,7 +16,7 @@
     let aspectRatio = 16 / 9
     let thumbnailBackground: string = ""
 
-    socket.on("CONTROLLER", (msg) => {
+    socket.on("CONTROLLER", msg => {
         if (msg.channel !== "OUTPUT_FRAME") console.log("MESSAGE:", msg)
         switch (msg.channel) {
             case "OUTPUT_FRAME":

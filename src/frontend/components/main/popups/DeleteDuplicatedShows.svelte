@@ -53,7 +53,7 @@
         data.forEach(({ ids }) => {
             let keepId = ""
 
-            ids.forEach((id) => {
+            ids.forEach(id => {
                 let show = $shows[id]
                 if (!show) return
 
@@ -68,7 +68,7 @@
                 if (first > second) keepId = id
             })
 
-            ids = ids.filter((id) => id !== keepId)
+            ids = ids.filter(id => id !== keepId)
             deleteIds.push(...ids)
         })
 
@@ -83,7 +83,7 @@
         data.forEach(({ ids }) => {
             let keepId = ""
 
-            ids.forEach((id) => {
+            ids.forEach(id => {
                 let show = $shows[id]
                 if (!show) return
 
@@ -96,7 +96,7 @@
                 if (show.timestamps?.created < compareShow.timestamps?.created) keepId = id
             })
 
-            ids = ids.filter((id) => id !== keepId)
+            ids = ids.filter(id => id !== keepId)
             deleteIds.push(...ids)
         })
 
@@ -121,7 +121,7 @@
         await loadShows(ids)
 
         // loading = false
-        ids.forEach((id) => {
+        ids.forEach(id => {
             let show = $showsCache[id]
             let text = getShowText(show)
             loadedTexts.push(text)
@@ -160,7 +160,7 @@
     }
 
     function deleteShows(ids: string[]) {
-        let data = ids.map((id) => ({ id }))
+        let data = ids.map(id => ({ id }))
         history({ id: "SHOWS", oldData: { data }, location: { page: "drawer" } })
     }
 
@@ -168,7 +168,7 @@
         if (!show) return ""
 
         let texts: string[] = []
-        Object.values(show.slides || {}).forEach((slide) => {
+        Object.values(show.slides || {}).forEach(slide => {
             texts.push(getSlideText(slide))
         })
 

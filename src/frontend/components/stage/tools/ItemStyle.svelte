@@ -71,7 +71,7 @@
 
         // only update changed value
         let styles: { [key: string]: string } = {}
-        activeItemIds.forEach((itemId) => {
+        activeItemIds.forEach(itemId => {
             let item = stageItems[itemId]
             if (!item) return
 

@@ -1,27 +1,6 @@
 import { get } from "svelte/store"
 import type { Media } from "../../../types/Show"
-import {
-    actions,
-    actionTags,
-    activeActionTagFilter,
-    activeEdit,
-    activeMediaTagFilter,
-    activeTagFilter,
-    activeVariableTagFilter,
-    contextData,
-    drawerTabsData,
-    globalTags,
-    groups,
-    media,
-    mediaTags,
-    outputs,
-    overlays,
-    selected,
-    shows,
-    sorted,
-    variables,
-    variableTags
-} from "../../stores"
+import { actions, actionTags, activeActionTagFilter, activeEdit, activeMediaTagFilter, activeTagFilter, activeVariableTagFilter, contextData, drawerTabsData, globalTags, groups, media, mediaTags, outputs, overlays, selected, shows, sorted, variables, variableTags } from "../../stores"
 import { translateText } from "../../utils/language"
 import { drawerTabs } from "../../values/tabs"
 import { actionData } from "../actions/actionData"
@@ -39,7 +18,7 @@ const loadActions = {
     enabled_drawer_tabs: (items: ContextMenuItem[]) => {
         const tabsToRemove = 2
         const tabs = keysToID(clone(drawerTabs)).slice(tabsToRemove)
-        items = tabs.map((a) => {
+        items = tabs.map(a => {
             const enabled = get(drawerTabsData)[a.id]?.enabled !== false
             return { id: a.id, label: a.name, icon: a.icon, iconColor: "var(--secondary)", enabled }
         })
@@ -50,55 +29,55 @@ const loadActions = {
     // TAGS
     tag_set: () => {
         const selectedShowTags = get(shows)[get(selected).data[0]?.id]?.quickAccess?.tags || []
-        const sortedTags: (ContextMenuItem | "SEPARATOR")[] = sortObject(sortByName(keysToID(get(globalTags))), "color").map((a) => ({ ...a, label: a.name, enabled: selectedShowTags.includes(a.id), translate: false }))
+        const sortedTags: (ContextMenuItem | "SEPARATOR")[] = sortObject(sortByName(keysToID(get(globalTags))), "color").map(a => ({ ...a, label: a.name, enabled: selectedShowTags.includes(a.id), translate: false }))
         const create = { label: "popup.manage_tags", icon: "edit", iconColor: "#97c7ff", id: "create" }
         if (sortedTags.length) sortedTags.push("SEPARATOR")
         sortedTags.push(create)
         return sortedTags
     },
     tag_filter: () => {
-        const sortedTags = sortObject(sortByName(keysToID(get(globalTags))), "color").map((a) => ({ ...a, label: a.name, enabled: get(activeTagFilter).includes(a.id), translate: false }))
+        const sortedTags = sortObject(sortByName(keysToID(get(globalTags))), "color").map(a => ({ ...a, label: a.name, enabled: get(activeTagFilter).includes(a.id), translate: false }))
         setContextData("tags", sortedTags.length)
         return sortedTags
     },
     media_tag_set: () => {
         const selectedTags = get(media)[get(selected).data[0]?.path]?.tags || []
-        const sortedTags: (ContextMenuItem | "SEPARATOR")[] = sortObject(sortByName(keysToID(get(mediaTags))), "color").map((a) => ({ ...a, label: a.name, enabled: selectedTags.includes(a.id), translate: false }))
+        const sortedTags: (ContextMenuItem | "SEPARATOR")[] = sortObject(sortByName(keysToID(get(mediaTags))), "color").map(a => ({ ...a, label: a.name, enabled: selectedTags.includes(a.id), translate: false }))
         const create = { label: "popup.manage_tags", icon: "edit", iconColor: "#97c7ff", id: "create" }
         if (sortedTags.length) sortedTags.push("SEPARATOR")
         sortedTags.push(create)
         return sortedTags
     },
     media_tag_filter: () => {
-        const sortedTags = sortObject(sortByName(keysToID(get(mediaTags))), "color").map((a) => ({ ...a, label: a.name, enabled: get(activeMediaTagFilter).includes(a.id), translate: false }))
+        const sortedTags = sortObject(sortByName(keysToID(get(mediaTags))), "color").map(a => ({ ...a, label: a.name, enabled: get(activeMediaTagFilter).includes(a.id), translate: false }))
         setContextData("media_tags", sortedTags.length)
         return sortedTags
     },
     action_tag_set: () => {
         const selectedTags = get(actions)[get(selected).data[0]?.id]?.tags || []
-        const sortedTags: (ContextMenuItem | "SEPARATOR")[] = sortObject(sortByName(keysToID(get(actionTags))), "color").map((a) => ({ ...a, label: a.name, enabled: selectedTags.includes(a.id), translate: false }))
+        const sortedTags: (ContextMenuItem | "SEPARATOR")[] = sortObject(sortByName(keysToID(get(actionTags))), "color").map(a => ({ ...a, label: a.name, enabled: selectedTags.includes(a.id), translate: false }))
         const create = { label: "popup.manage_tags", icon: "edit", iconColor: "#97c7ff", id: "create" }
         if (sortedTags.length) sortedTags.push("SEPARATOR")
         sortedTags.push(create)
         return sortedTags
     },
     action_tag_filter: () => {
-        let sortedTags = sortObject(sortByName(keysToID(get(actionTags))), "color").map((a) => ({ ...a, label: a.name, enabled: get(activeActionTagFilter).includes(a.id), translate: false }))
-        if (get(activeActionTagFilter).length) sortedTags = sortedTags.filter((a) => a.id !== get(drawerTabsData).functions?.activeSubmenu)
+        let sortedTags = sortObject(sortByName(keysToID(get(actionTags))), "color").map(a => ({ ...a, label: a.name, enabled: get(activeActionTagFilter).includes(a.id), translate: false }))
+        if (get(activeActionTagFilter).length) sortedTags = sortedTags.filter(a => a.id !== get(drawerTabsData).functions?.activeSubmenu)
         setContextData("action_tags", sortedTags.length)
         return sortedTags
     },
     variable_tag_set: () => {
         const selectedTags = get(variables)[get(selected).data[0]?.id]?.tags || []
-        const sortedTags: (ContextMenuItem | "SEPARATOR")[] = sortObject(sortByName(keysToID(get(variableTags))), "color").map((a) => ({ ...a, label: a.name, enabled: selectedTags.includes(a.id), translate: false }))
+        const sortedTags: (ContextMenuItem | "SEPARATOR")[] = sortObject(sortByName(keysToID(get(variableTags))), "color").map(a => ({ ...a, label: a.name, enabled: selectedTags.includes(a.id), translate: false }))
         const create = { label: "popup.manage_tags", icon: "edit", iconColor: "#97c7ff", id: "create" }
         if (sortedTags.length) sortedTags.push("SEPARATOR")
         sortedTags.push(create)
         return sortedTags
     },
     variable_tag_filter: () => {
-        let sortedTags = sortObject(sortByName(keysToID(get(variableTags))), "color").map((a) => ({ ...a, label: a.name, enabled: get(activeVariableTagFilter).includes(a.id), translate: false }))
-        sortedTags = sortedTags.filter((a) => a.id !== get(drawerTabsData).functions?.activeSubmenu)
+        let sortedTags = sortObject(sortByName(keysToID(get(variableTags))), "color").map(a => ({ ...a, label: a.name, enabled: get(activeVariableTagFilter).includes(a.id), translate: false }))
+        sortedTags = sortedTags.filter(a => a.id !== get(drawerTabsData).functions?.activeSubmenu)
         setContextData("variable_tags", sortedTags.length)
         return sortedTags
     },
@@ -234,7 +213,7 @@ const loadActions = {
         if (mics.length) {
             if (mediaList.length) mediaList.push("SEPARATOR")
             const micItems = sortByName(
-                mics.map((mic) => ({
+                mics.map(mic => ({
                     id: mic.id,
                     label: mic.name,
                     translate: false,
@@ -250,7 +229,7 @@ const loadActions = {
         if (slideActions.length) {
             if (mediaList.length) mediaList.push("SEPARATOR")
             const actionItems = sortByName(
-                slideActions.map((action) => {
+                slideActions.map(action => {
                     const triggerId = getActionTriggerId(action.triggers?.[0])
                     const customData = actionData[triggerId] || {}
                     const actionValue = action?.actionValues?.[triggerId] || action?.actionValues?.[action.triggers?.[0]] || {}
@@ -272,11 +251,11 @@ const loadActions = {
         return [{ label: "empty.general", disabled: true }]
     },
     keys: () => {
-        return keys.map((key) => ({ id: key, label: key, translate: false }))
+        return keys.map(key => ({ id: key, label: key, translate: false }))
     },
     chord_list: (items: ContextMenuItem[]) => {
-        keys.forEach((key) => {
-            chordTypes.forEach((adder) => {
+        keys.forEach(key => {
+            chordTypes.forEach(adder => {
                 items.push({ id: key + adder, label: key + adder, translate: false })
             })
         })
@@ -284,9 +263,9 @@ const loadActions = {
         return items
     },
     bind_slide: (_items, isItem = false) => {
-        const outputList: any[] = sortByName(keysToID(get(outputs)).filter((a) => !a.stageOutput))
+        const outputList: any[] = sortByName(keysToID(get(outputs)).filter(a => !a.stageOutput))
 
-        let contextOutputList: (ContextMenuItem | "SEPARATOR")[] = outputList.map((a) => ({ id: a.id, label: a.name, translate: false }))
+        let contextOutputList: (ContextMenuItem | "SEPARATOR")[] = outputList.map(a => ({ id: a.id, label: a.name, translate: false }))
         const isOverlay = get(activeEdit).type === "overlay"
         // overlay items does not show up in stage view anyway
         if (isItem && !isOverlay) contextOutputList.push("SEPARATOR", { id: "stage", label: "menu.stage" })
@@ -302,7 +281,7 @@ const loadActions = {
             currentBindings = currentSlide.data?.bindings || []
         }
 
-        contextOutputList = contextOutputList.map((a) => {
+        contextOutputList = contextOutputList.map(a => {
             if (typeof a !== "string" && currentBindings.includes(a.id!)) a.enabled = true
             return a
         })
@@ -315,7 +294,7 @@ const loadActions = {
 }
 
 function setContextData(key: string, data: boolean | string | number) {
-    contextData.update((a) => {
+    contextData.update(a => {
         a[key] = data
         return a
     })
@@ -352,7 +331,7 @@ export function loadItems(id: string): [string, ContextMenuItem | "SEPARATOR"][]
     if (!loadActions[id]) return []
 
     const items: (ContextMenuItem | "SEPARATOR")[] = loadActions[id]([])
-    const menuItems: [string, ContextMenuItem | "SEPARATOR"][] = items.map((a) => [a === "SEPARATOR" ? a : id, a])
+    const menuItems: [string, ContextMenuItem | "SEPARATOR"][] = items.map(a => [a === "SEPARATOR" ? a : id, a])
 
     return menuItems
 }

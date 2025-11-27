@@ -121,7 +121,7 @@ function startApp() {
     createMain()
 
     // prevent display sleeping
-    powerSaveBlockerId = powerSaveBlocker.start('prevent-display-sleep')
+    powerSaveBlockerId = powerSaveBlocker.start("prevent-display-sleep")
 }
 
 function requestHeaders() {

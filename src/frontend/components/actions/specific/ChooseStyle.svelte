@@ -19,8 +19,8 @@
         { value: "all", label: translateText("actions.all_outputs") },
         { value: "specific", label: translateText("actions.specific_outputs") }
     ]
-    let outputsList = getList($outputs).filter((a) => !a.stageOutput)
-    let stylesList = getList($styles).map((a) => ({ value: a.id, label: a.name }))
+    let outputsList = getList($outputs).filter(a => !a.stageOutput)
+    let stylesList = getList($styles).map(a => ({ value: a.id, label: a.name }))
 
     function getList(list) {
         return sortByName(keysToID(list))
@@ -46,12 +46,12 @@
     }
 </script>
 
-<MaterialDropdown label="settings.display_settings" options={outputsOptions} value={styleOutputs.type} on:change={(e) => updateStyle("styleOutputs", { type: e.detail, outputs: styleOutputs.outputs || {} })} />
+<MaterialDropdown label="settings.display_settings" options={outputsOptions} value={styleOutputs.type} on:change={e => updateStyle("styleOutputs", { type: e.detail, outputs: styleOutputs.outputs || {} })} />
 
 {#if styleOutputs.type === "specific"}
     {#each outputsList as output}
-        <MaterialDropdown label={output.name} options={stylesList} value={styleOutputs.outputs[output.id]} on:change={(e) => setOutputStyle(output.id, e.detail)} allowEmpty />
+        <MaterialDropdown label={output.name} options={stylesList} value={styleOutputs.outputs[output.id]} on:change={e => setOutputStyle(output.id, e.detail)} allowEmpty />
     {/each}
 {:else}
-    <MaterialDropdown label="edit.style" options={stylesList} value={styleId} on:change={(e) => updateStyle("outputStyle", e.detail)} allowEmpty />
+    <MaterialDropdown label="edit.style" options={stylesList} value={styleId} on:change={e => updateStyle("outputStyle", e.detail)} allowEmpty />
 {/if}

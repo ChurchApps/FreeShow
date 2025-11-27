@@ -40,7 +40,7 @@ export class AmazingLifeConnect {
 
         // Set up the auth callback route
         if (!this.routeSetup) {
-            this.app.get('/auth/complete', (req, res) => {
+            this.app.get("/auth/complete", (req, res) => {
                 this.handleAuthCallback(req, res)
             })
             this.routeSetup = true

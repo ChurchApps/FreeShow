@@ -16,18 +16,18 @@
     // sort shows in alphabeticly order
     let showsSorted: any
     $: {
-        showsSorted = $shows.filter((s) => s.private !== true).sort((a: any, b: any) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0))
+        showsSorted = $shows.filter(s => s.private !== true).sort((a: any, b: any) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0))
     }
     let filteredShows: any[] = []
     let filteredStored: any
     $: filteredStored = showsSorted
 
     export let firstMatch: null | string = null
-    
+
     // Performance: Limit visible items to prevent browser crash with large lists
     const MAX_VISIBLE_ITEMS = 500
     let visibleShows: any[] = []
-    
+
     // Debounce search for better performance
     let searchTimeout: number | null = null
     $: {
@@ -43,7 +43,7 @@
 
     function findMatches() {
         if (!filteredStored) return
-        
+
         filteredShows = []
         filteredStored.forEach((s: any) => {
             let match = search(s)
@@ -54,7 +54,7 @@
         firstMatch = filteredShows[0]?.id || null
         updateVisibleShows()
     }
-    
+
     function updateVisibleShows() {
         // Limit visible items to prevent DOM overload
         if (!filteredShows || filteredShows.length === 0) {
@@ -63,7 +63,7 @@
         }
         visibleShows = filteredShows.slice(0, MAX_VISIBLE_ITEMS)
     }
-    
+
     $: if (filteredShows !== undefined) updateVisibleShows()
 
     $: sva = formatSearch(searchValue).split(" ")
@@ -93,7 +93,7 @@
         })
 
         let sum = 0
-        let hasZero = match.some((m) => {
+        let hasZero = match.some(m => {
             sum += m
             return m === 0
         })
@@ -172,7 +172,7 @@
     let scrollElem: HTMLDivElement | undefined
     $: activeShowId = $activeShow?.id
     $: if (activeShowId && scrollElem && scrollElem.scrollTop < 10) {
-        let activeElement = [...scrollElem.children].find((a) => a.id === activeShowId) as HTMLDivElement | undefined
+        let activeElement = [...scrollElem.children].find(a => a.id === activeShowId) as HTMLDivElement | undefined
         scrollElem.scrollTo(0, (activeElement?.offsetTop || 0) - 50 - 80)
     }
 
@@ -188,7 +188,7 @@
                 <div class="scroll show-list" bind:this={scrollElem}>
                     {#each visibleShows as show (show.id)}
                         {#if searchValue.length <= 1 || show.match}
-                            <ShowButton on:click={(e) => openShow(e.detail)} activeShow={$activeShow} show={show} data={dateToString(show.timestamps?.created, true)} match={show.match || null} />
+                            <ShowButton on:click={e => openShow(e.detail)} activeShow={$activeShow} {show} data={dateToString(show.timestamps?.created, true)} match={show.match || null} />
                         {/if}
                     {/each}
                     {#if filteredShows.length > MAX_VISIBLE_ITEMS}
@@ -370,7 +370,8 @@
         align-items: center !important;
         justify-content: center !important;
         gap: 0.5em;
-        background: linear-gradient(var(--background), var(--background)) padding-box,
+        background:
+            linear-gradient(var(--background), var(--background)) padding-box,
             linear-gradient(160deg, #8000f0 0%, #9000f0 10%, #b300f0 20%, #d100db 35%, var(--secondary) 100%) border-box !important;
         border: 2px solid transparent !important;
         transition: 0.4s filter ease;
@@ -380,13 +381,15 @@
     }
 
     :global(.floating-add-button:not(:disabled):hover) {
-        background: linear-gradient(var(--background), var(--background)) padding-box,
+        background:
+            linear-gradient(var(--background), var(--background)) padding-box,
             linear-gradient(160deg, #8000f0 0%, #9000f0 10%, #b300f0 20%, #d100db 35%, var(--secondary) 100%) border-box !important;
         filter: hue-rotate(15deg);
     }
 
     :global(.floating-add-button:not(:disabled):active) {
-        background: linear-gradient(var(--background), var(--background)) padding-box,
+        background:
+            linear-gradient(var(--background), var(--background)) padding-box,
             linear-gradient(160deg, #8000f0 0%, #9000f0 10%, #b300f0 20%, #d100db 35%, var(--secondary) 100%) border-box !important;
         filter: hue-rotate(30deg);
     }

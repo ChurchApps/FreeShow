@@ -11,7 +11,7 @@
     }
     const setValue = {
         splash: () => {
-            special.update((a) => {
+            special.update(a => {
                 a.splashText = text
                 return a
             })

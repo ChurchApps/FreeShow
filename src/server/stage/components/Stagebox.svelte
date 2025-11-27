@@ -79,7 +79,7 @@
     let firstTimerId: string = ""
     $: if (item.type === "timer" || id.includes("first_active_timer")) {
         firstTimerId = $activeTimers[0]?.id
-        if (!firstTimerId) firstTimerId = sortByName(keysToID($timers)).find((timer) => timer.type !== "counter")?.id || ""
+        if (!firstTimerId) firstTimerId = sortByName(keysToID($timers)).find(timer => timer.type !== "counter")?.id || ""
     }
 
     let itemStyle: string = ""
@@ -104,12 +104,7 @@
 
 <!-- style + (id.includes("current_output") ? "" : newSizes) -->
 <!-- {show.settings.autoStretch === false ? '' : newSizes} -->
-<div
-    class="item"
-    class:border={stageLayout?.settings.labels}
-    class:isDisabledVariable
-    style="{itemStyle}{id.includes('slide') && !id.includes('tracker') ? '' : textStyle}{newSizes}--labelColor: {stageLayout?.settings?.labelColor || '#d0a853'};{fixedWidth}"
->
+<div class="item" class:border={stageLayout?.settings.labels} class:isDisabledVariable style="{itemStyle}{id.includes('slide') && !id.includes('tracker') ? '' : textStyle}{newSizes}--labelColor: {stageLayout?.settings?.labelColor || '#d0a853'};{fixedWidth}">
     {#if stageLayout?.settings.labels}
         <div class="label">{item.label || ""}</div>
     {/if}
@@ -129,19 +124,7 @@
                 {#if currentSlide}
                     {#key item || currentSlide}
                         <!-- autoStage={show.settings.autoStretch !== false} -->
-                        <SlideText
-                            {currentSlide}
-                            {slideOffset}
-                            stageItem={item}
-                            show={stageLayout}
-                            {resolution}
-                            chords={typeof item.chords === "boolean" ? item.chords : item.chords?.enabled}
-                            autoSize={item.auto !== false}
-                            {fontSize}
-                            autoStage
-                            {textStyle}
-                            style={item.type ? item.keepStyle : false}
-                        />
+                        <SlideText {currentSlide} {slideOffset} stageItem={item} show={stageLayout} {resolution} chords={typeof item.chords === "boolean" ? item.chords : item.chords?.enabled} autoSize={item.auto !== false} {fontSize} autoStage {textStyle} style={item.type ? item.keepStyle : false} />
                     {/key}
                 {/if}
             {:else if item.type === "slide_notes" || id.includes("notes")}

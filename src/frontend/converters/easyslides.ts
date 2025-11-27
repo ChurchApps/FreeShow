@@ -66,7 +66,7 @@ function createSlides(song: Song) {
 
     lyrics = lyrics.replace(/\[\d+\]/g, "\n\n").replaceAll("\n\n\n", "\n\n")
     const slideLines = lyrics.split("\n\n").filter(Boolean)
-    slideLines.forEach((slideLine) => {
+    slideLines.forEach(slideLine => {
         const lines = slideLine.split("\n").filter(Boolean)
         let group = "verse"
         if (lines[0].includes("[") && lines[0].includes("]")) {
@@ -80,8 +80,8 @@ function createSlides(song: Song) {
         const items = [
             {
                 style: DEFAULT_ITEM_STYLE,
-                lines: lines.map((text: any) => ({ align: "", text: [{ style: "", value: text.trim() }] })),
-            },
+                lines: lines.map((text: any) => ({ align: "", text: [{ style: "", value: text.trim() }] }))
+            }
         ]
 
         slides[id] = {
@@ -89,7 +89,7 @@ function createSlides(song: Song) {
             color: null,
             settings: {},
             notes: "",
-            items,
+            items
         }
 
         let globalGroup = getGlobalGroup(group)

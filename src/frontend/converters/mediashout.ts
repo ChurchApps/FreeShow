@@ -104,7 +104,7 @@ export function convertMediaShout(data: any) {
 
         let cues = xml2json(content)?.MediaShout5_Document?.Cues
         if (!Array.isArray(cues)) cues = [cues]
-        const cues2: any[] = cues.map((a) => Object.values(a))?.flat(2)
+        const cues2: any[] = cues.map(a => Object.values(a))?.flat(2)
 
         cues2.forEach((song: MediaShout5Song) => {
             if (!song) return
@@ -136,7 +136,7 @@ function convertToShow(song: MediaShout5Song, { name, categoryId }) {
         title: name,
         author: song.Author,
         copyright: song.Copyright,
-        CCLI: song.CCLI,
+        CCLI: song.CCLI
     })
 
     return show
@@ -149,19 +149,19 @@ function convertToSlides(song: MediaShout5Song) {
 
     let elements = song.Content?.Element
     if (!Array.isArray(elements)) elements = [elements]
-    elements.forEach((element) => {
+    elements.forEach(element => {
         if (!element.Text) return
         slides[uid()] = newSlide({ group: "", globalGroup: "verse", items: [convertItem(element.Text)] })
     })
 
-    layout.slides = Object.keys(slides).map((id) => ({ id }))
+    layout.slides = Object.keys(slides).map(id => ({ id }))
 
     return { slides, layout, media }
 }
 function convertItem(text: string) {
     const newItem: Item = {
         style: DEFAULT_ITEM_STYLE,
-        lines: text.split("\n").map(getLine),
+        lines: text.split("\n").map(getLine)
     }
 
     return newItem
@@ -215,7 +215,7 @@ interface MDBVerse {
 }
 
 function mdbConvert(content: MDBContents, categoryId: string) {
-    const songs = content.Songs.map((song) => getSong(song, content, categoryId))
+    const songs = content.Songs.map(song => getSong(song, content, categoryId))
     return songs
 }
 
@@ -231,7 +231,7 @@ function getSong(song: MDBSong, content: MDBContents, categoryId: string) {
         title: song.Title,
         author: song.Author,
         copyright: song.Copyright,
-        CCLI: song.CCLI,
+        CCLI: song.CCLI
     }
 
     const DBnum = song.Record
@@ -262,7 +262,7 @@ function convertToSlidesMDB(verses: MDBVerse[]) {
     const layout: Layout = { name: translateText("example.default"), slides: [], notes: "" }
     const media: any = {}
 
-    verses.forEach((verse) => {
+    verses.forEach(verse => {
         const isRTF = verse.Type === 102
         if (!verse.Text || isRTF) return
         // const text = RTFToText(verse.Text)
@@ -270,7 +270,7 @@ function convertToSlidesMDB(verses: MDBVerse[]) {
         slides[uid()] = newSlide({ group: "", globalGroup: "verse", items: [convertItem(text)] })
     })
 
-    layout.slides = Object.keys(slides).map((id) => ({ id }))
+    layout.slides = Object.keys(slides).map(id => ({ id }))
 
     return { slides, layout, media }
 }

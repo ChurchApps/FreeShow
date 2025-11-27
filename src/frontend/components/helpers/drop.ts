@@ -66,7 +66,7 @@ export async function ondrop(e: any, id: string) {
     if (dropActions[id]) {
         const dropData = { drag: sel, drop: dropdata }
 
-        const hist = await dropActions[id](dropData, h, keys) as History | undefined
+        const hist = (await dropActions[id](dropData, h, keys)) as History | undefined
         if (hist && hist.id) history(hist)
         deselect()
         return
@@ -76,15 +76,15 @@ export async function ondrop(e: any, id: string) {
 }
 
 export async function projectDropFolders(filePaths: string[], index = -1) {
-    const stats = await Promise.all(filePaths.map(async (path) => await requestMain(Main.FILE_INFO, path)))
-    const folders = stats.filter((a) => a?.folder)
+    const stats = await Promise.all(filePaths.map(async path => await requestMain(Main.FILE_INFO, path)))
+    const folders = stats.filter(a => a?.folder)
     if (!folders.length) return
 
     const projectId = get(activeProject)
     if (!projectId) return
 
     const currentProjectItems = get(projects)[projectId]?.shows || []
-    const newProjectItems: ProjectShowRef[] = folders.map((a) => ({ type: "folder", id: a!.path, name: getFileName(a!.path) }))
+    const newProjectItems: ProjectShowRef[] = folders.map(a => ({ type: "folder", id: a!.path, name: getFileName(a!.path) }))
 
     const data = addToPos(currentProjectItems, newProjectItems, index < 0 ? currentProjectItems.length : index)
     history({ id: "UPDATE", newData: { key: "shows", data }, oldData: { id: projectId }, location: { page: "show", id: "project_ref" } })

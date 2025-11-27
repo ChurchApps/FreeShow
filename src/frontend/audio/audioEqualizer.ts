@@ -63,7 +63,7 @@ export class AudioEqualizer {
 
         this.filterNodes = []
 
-        this.config.bands.forEach((band) => {
+        this.config.bands.forEach(band => {
             const filter = this.audioContext!.createBiquadFilter()
             this.updateFilterFromBand(filter, band)
             this.filterNodes.push(filter)
@@ -148,7 +148,7 @@ export class AudioEqualizer {
                 }
             })
 
-            console.log('EQ bands updated - all filters refreshed')
+            console.log("EQ bands updated - all filters refreshed")
         }
     }
 
@@ -194,7 +194,7 @@ export class AudioEqualizer {
                 }
             })
 
-            console.log(`Equalizer ${enabled ? 'enabled' : 'disabled'} - filters updated immediately`)
+            console.log(`Equalizer ${enabled ? "enabled" : "disabled"} - filters updated immediately`)
         }
     }
 
@@ -277,7 +277,7 @@ export class EqualizerCalculations {
     static calculateCombinedResponse(bands: EQBand[], frequency: number): number {
         let totalGain = 0
 
-        bands.forEach((band) => {
+        bands.forEach(band => {
             totalGain += this.calculateBandResponse(band, frequency)
         })
 
@@ -286,8 +286,8 @@ export class EqualizerCalculations {
     }
 
     // Generate frequency response curve data points
-    static generateResponseCurve(bands: EQBand[], numPoints = 300, minFreq = 20, maxFreq = 20000): { frequency: number, response: number }[] {
-        const points: { frequency: number, response: number }[] = []
+    static generateResponseCurve(bands: EQBand[], numPoints = 300, minFreq = 20, maxFreq = 20000): { frequency: number; response: number }[] {
+        const points: { frequency: number; response: number }[] = []
 
         for (let i = 0; i <= numPoints; i++) {
             // Logarithmic frequency scale
@@ -313,10 +313,13 @@ let globalEqualizer: AudioEqualizer | null = null
 let audioContext: AudioContext | null = null
 
 // Connected audio sources
-const connectedSources = new Map<string, {
-    source: AudioNode,
-    outputNode: AudioNode
-}>()
+const connectedSources = new Map<
+    string,
+    {
+        source: AudioNode
+        outputNode: AudioNode
+    }
+>()
 
 // Initialize the audio equalizer system
 export async function initializeEqualizer(externalAudioContext?: AudioContext, onEqualizerReinitialized?: () => void): Promise<void> {
@@ -332,7 +335,7 @@ export async function initializeEqualizer(externalAudioContext?: AudioContext, o
         }
 
         // Resume context if it's suspended (required by some browsers)
-        if (audioContext.state === 'suspended') {
+        if (audioContext.state === "suspended") {
             await audioContext.resume()
         }
 
@@ -437,7 +440,7 @@ export function connectAudioToEqualizer(id: string, audio: HTMLAudioElement | Me
         console.error(`Failed to connect audio ${id} to equalizer:`, err)
         return null
     }
-}// Disconnect audio from equalizer
+} // Disconnect audio from equalizer
 export function disconnectAudioFromEqualizer(id: string) {
     const connection = connectedSources.get(id)
     if (connection) {
@@ -583,14 +586,14 @@ export function reconnectAllAudioSources() {
     console.warn("Note: For full effect, restart audio playback after changing EQ enable/disable state")
 
     // For a complete solution, we would need to:
-    // 1. Track original audio elements/streams  
+    // 1. Track original audio elements/streams
     // 2. Disconnect all current connections
     // 3. Reconnect through the EQ with new enabled state
     // This is complex due to integration with AudioAnalyser
 
     // For now, log the state change for debugging
     if (globalEqualizer) {
-        console.log(`EQ is now ${globalEqualizer.getConfig().enabled ? 'enabled' : 'disabled'}`)
+        console.log(`EQ is now ${globalEqualizer.getConfig().enabled ? "enabled" : "disabled"}`)
     }
 }
 

@@ -70,7 +70,7 @@
         if (!layoutSlides.length) return layoutId
 
         let seed = `${layoutId}:`
-        layoutSlides.forEach((layoutSlide) => {
+        layoutSlides.forEach(layoutSlide => {
             const slide = show.slides?.[layoutSlide.id]
             const slideChildren = Array.isArray(slide?.children) ? (slide?.children as string[]) : []
             const children = slideChildren.join(",")
@@ -113,12 +113,12 @@
         if (cached && cached.layoutSeed === layoutSeed && cached.groupSeed === groupSeed) return cached
 
         const parentChildrenMap = new Map<string, string[]>()
-        layoutRef.forEach((ref) => {
+        layoutRef.forEach(ref => {
             if (ref.type === "parent" && Array.isArray(ref.children)) parentChildrenMap.set(ref.id, ref.children)
         })
 
         const showData = { show: show as Show, showId }
-        const layoutGroups: LayoutGroupInfo[] = layoutRef.map((entry) => {
+        const layoutGroups: LayoutGroupInfo[] = layoutRef.map(entry => {
             const ref = entry.parent || entry
             const slide = slides[ref.id]
             if (!slide) return { name: "—", oneLetterName: "—", index: ref.layoutIndex, child: 0 }

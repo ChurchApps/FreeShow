@@ -11,7 +11,7 @@
         if (e.target?.closest(".edit") || e.ctrlKey || e.metaKey) return
 
         let nextTab = -1
-        let currentTabIndex = tools.findIndex((tab) => tab === $drawTool)
+        let currentTabIndex = tools.findIndex(tab => tab === $drawTool)
 
         if (e.key === "ArrowDown") {
             nextTab = Math.min(tools.length - 1, currentTabIndex + 1)

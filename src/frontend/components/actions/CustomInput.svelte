@@ -67,7 +67,7 @@
     if (inputId === "camera") getCameras()
     async function getCameras() {
         const cameraList = await cameraManager.getCamerasList()
-        cameras = sortByName(cameraList).map((a) => ({ label: a.name, id: a.id, groupId: a.group }))
+        cameras = sortByName(cameraList).map(a => ({ label: a.name, id: a.id, groupId: a.group }))
     }
 
     let screens: { name: string; id: string }[] = []
@@ -80,7 +80,7 @@
     }
 
     function convertToOptions(a) {
-        const options = Object.keys(a).map((id) => ({ value: id, label: a[id].name }))
+        const options = Object.keys(a).map(id => ({ value: id, label: a[id].name }))
         return sortByName(options, "label")
     }
 
@@ -88,16 +88,16 @@
         id_select_project: () => convertToOptions($projects),
         id_select_group: () =>
             sortByName(
-                Object.keys($groups).map((id) => ({ value: id, label: getGlobalGroupName(id) })),
+                Object.keys($groups).map(id => ({ value: id, label: getGlobalGroupName(id) })),
                 "label"
             ),
         clear_overlay: () => [...convertToOptions($overlays), ...convertToOptions($effects)],
         id_start_effect: () => convertToOptions($effects),
         id_select_overlay: () => convertToOptions($overlays),
         id_select_stage_layout: () => convertToOptions($stageShows),
-        normal_outputs: () => [{ value: "", label: translateText("actions.all_outputs") }, ...sortByName(keysToID($outputs).filter((a) => !a.stageOutput)).map((a) => ({ value: a.id, label: a.name }), "label")],
+        normal_outputs: () => [{ value: "", label: translateText("actions.all_outputs") }, ...sortByName(keysToID($outputs).filter(a => !a.stageOutput)).map(a => ({ value: a.id, label: a.name }), "label")],
         output_lock: () => [{ value: "", label: translateText("preview.lock") }, { value: "all", label: translateText("actions.all_outputs") }, ...getOptions.normal_outputs().slice(1)],
-        stage_outputs: () => [{ value: "", label: translateText("actions.all_outputs") }, ...sortByName(keysToID($outputs).filter((a) => a.stageOutput)).map((a) => ({ value: a.id, label: a.name }), "label")],
+        stage_outputs: () => [{ value: "", label: translateText("actions.all_outputs") }, ...sortByName(keysToID($outputs).filter(a => a.stageOutput)).map(a => ({ value: a.id, label: a.name }), "label")],
         start_audio_stream: () => convertToOptions($audioStreams),
         start_playlist: () => convertToOptions($audioPlaylists),
         id_select_output_style: () => [{ value: null, label: "—" }, ...convertToOptions($styles)],
@@ -106,7 +106,7 @@
         variable: () => convertToOptions($variables), // .map((a) => ({...a, type: $variables[a.id]?.type}))
         start_trigger: () => convertToOptions($triggers),
         // WIP remove all actions that reference this action and so on - to prevent infinite loop
-        run_action: () => convertToOptions($actions).filter((a) => a.label && a.value !== mainId),
+        run_action: () => convertToOptions($actions).filter(a => a.label && a.value !== mainId),
         set_template: () => convertToOptions($templates),
         toggle_output: () => convertToOptions($outputs)
     }
@@ -116,48 +116,48 @@
 
 {#if inputId === "output_style" || value?.outputStyle || value?.styleOutputs}
     <!-- deprecated -->
-    <ChooseStyle value={value || {}} on:change={(e) => updateValue("", e)} />
+    <ChooseStyle value={value || {}} on:change={e => updateValue("", e)} />
 {:else if inputId === "change_output_style"}
-    <MaterialDropdown label="stage.output" options={getOptions.normal_outputs()} value={value?.outputId || ""} on:change={(e) => updateValue("outputId", e.detail)} />
-    <MaterialDropdown label="edit.style" options={getOptions.change_output_style()} value={value?.styleId} on:change={(e) => updateValue("styleId", e.detail)} allowEmpty />
+    <MaterialDropdown label="stage.output" options={getOptions.normal_outputs()} value={value?.outputId || ""} on:change={e => updateValue("outputId", e.detail)} />
+    <MaterialDropdown label="edit.style" options={getOptions.change_output_style()} value={value?.styleId} on:change={e => updateValue("styleId", e.detail)} allowEmpty />
 {:else if inputId === "stage_output_layout"}
-    <MaterialDropdown label="stage.output" options={getOptions.stage_outputs()} value={value?.outputId || ""} on:change={(e) => updateValue("outputId", e.detail)} />
-    <MaterialDropdown label="stage.stage_layout" options={getOptions.id_select_stage_layout()} value={value?.stageLayoutId} on:change={(e) => updateValue("stageLayoutId", e.detail)} />
+    <MaterialDropdown label="stage.output" options={getOptions.stage_outputs()} value={value?.outputId || ""} on:change={e => updateValue("outputId", e.detail)} />
+    <MaterialDropdown label="stage.stage_layout" options={getOptions.id_select_stage_layout()} value={value?.stageLayoutId} on:change={e => updateValue("stageLayoutId", e.detail)} />
 {:else if inputId === "camera"}
     <MaterialDropdown
         label="items.camera"
-        options={cameras.map((a) => ({ value: a.id, label: a.label }))}
+        options={cameras.map(a => ({ value: a.id, label: a.label }))}
         value={value?.id}
-        on:change={(e) => {
-            const cam = cameras.find((a) => a.id === e.detail)
+        on:change={e => {
+            const cam = cameras.find(a => a.id === e.detail)
             updateValue("", cam)
         }}
     />
 {:else if inputId === "screen"}
     <MaterialDropdown
         label="items.screen"
-        options={screens.map((a) => ({ value: a.id, label: a.name }))}
+        options={screens.map(a => ({ value: a.id, label: a.name }))}
         value={value?.id}
-        on:change={(e) => {
-            const screen = screens.find((a) => a.id === e.detail)
+        on:change={e => {
+            const screen = screens.find(a => a.id === e.detail)
             updateValue("", screen)
         }}
     />
 {:else if inputId === "midi"}
     <!-- deprecated -->
-    <MidiValues value={value?.midi || {}} type="output" on:change={(e) => updateValue("midi", e)} />
+    <MidiValues value={value?.midi || {}} type="output" on:change={e => updateValue("midi", e)} />
 {:else if inputId === "metronome"}
-    <MetronomeInputs values={value || { tempo: 120, beats: 4 }} on:change={(e) => updateValue("", e)} action />
+    <MetronomeInputs values={value || { tempo: 120, beats: 4 }} on:change={e => updateValue("", e)} action />
 {:else if inputId === "variable"}
-    <VariableInputs {value} on:update={(e) => updateValue(e.detail?.key, e.detail?.value)} />
+    <VariableInputs {value} on:update={e => updateValue(e.detail?.key, e.detail?.value)} />
 {:else if inputId === "toggle_action"}
-    <MaterialDropdown label="popup.action" options={getOptions.run_action()} value={value?.id} on:change={(e) => updateValue("id", e.detail)} />
+    <MaterialDropdown label="popup.action" options={getOptions.run_action()} value={value?.id} on:change={e => updateValue("id", e.detail)} />
     <MaterialDropdown label="variables.value" options={stateOptions} value={typeof value?.value === "boolean" ? (value.value ? "on" : "off") : ""} on:change={textStateChange} />
 {:else if inputId === "rest"}
     <!-- deprecated -->
-    <RestValues value={value || {}} on:change={(e) => updateValue("", e)} />
+    <RestValues value={value || {}} on:change={e => updateValue("", e)} />
 {:else if inputId === "emitter"}
-    <ChooseEmitter value={value || {}} on:change={(e) => updateValue("", e)} />
+    <ChooseEmitter value={value || {}} on:change={e => updateValue("", e)} />
 {:else if inputId === "start_show"}
     <MaterialButton variant="outlined" style="width: 100%;" on:click={openSelectShow}>
         {#if value?.id}
@@ -167,30 +167,30 @@
         {/if}
     </MaterialButton>
 {:else if inputId === "draw_zoom"}
-    <MaterialNumberInput label="edit.size" value={value?.size || 100} min={1} max={2000} step={10} defaultValue={100} on:change={(e) => updateValue("size", e)} />
-    <MaterialNumberInput label="edit.x (%)" value={value?.x ?? 50} max={100} defaultValue={50} on:change={(e) => updateValue("x", e)} />
-    <MaterialNumberInput label="edit.y (%)" value={value?.y ?? 50} max={100} defaultValue={50} on:change={(e) => updateValue("y", e)} />
+    <MaterialNumberInput label="edit.size" value={value?.size || 100} min={1} max={2000} step={10} defaultValue={100} on:change={e => updateValue("size", e)} />
+    <MaterialNumberInput label="edit.x (%)" value={value?.x ?? 50} max={100} defaultValue={50} on:change={e => updateValue("x", e)} />
+    <MaterialNumberInput label="edit.y (%)" value={value?.y ?? 50} max={100} defaultValue={50} on:change={e => updateValue("y", e)} />
 {:else if inputId === "number"}
     <!-- action wait (seconds) -->
-    <MaterialNumberInput label="timer.seconds" value={value?.number || 0} step={0.5} on:change={(e) => updateValue("number", e)} />
+    <MaterialNumberInput label="timer.seconds" value={value?.number || 0} step={0.5} on:change={e => updateValue("number", e)} />
 {:else if inputId === "index"}
     <!-- run by index -->
-    <MaterialNumberInput label="variables.value" value={value?.index || 0} on:change={(e) => updateValue("index", e)} />
+    <MaterialNumberInput label="variables.value" value={value?.index || 0} on:change={e => updateValue("index", e)} />
 {:else if inputId === "strval"}
     <!-- run by name -->
-    <MaterialTextInput label="inputs.name" value={value?.value || ""} on:change={(e) => updateValue("value", e)} />
+    <MaterialTextInput label="inputs.name" value={value?.value || ""} on:change={e => updateValue("value", e)} />
 {:else if inputId === "toggle"}
     <MaterialDropdown label="variables.value" options={stateOptions} value={typeof value?.value === "boolean" ? (value.value ? "on" : "off") : ""} on:change={textStateChange} />
 {:else if inputId === "output_lock"}
-    <MaterialDropdown label="stage.output" options={getOptions.output_lock()} value={value?.outputId || ""} on:change={(e) => updateValue("outputId", e.detail)} />
+    <MaterialDropdown label="stage.output" options={getOptions.output_lock()} value={value?.outputId || ""} on:change={e => updateValue("outputId", e.detail)} />
     <MaterialDropdown label="variables.value" options={stateOptions} value={typeof value?.value === "boolean" ? (value.value ? "on" : "off") : ""} on:change={textStateChange} />
 {:else if inputId === "id"}
     {#if options.length || getOptions[actionId]}
-        <MaterialDropdown label="variables.value" {options} value={value?.id} on:change={(e) => updateValue("id", e.detail)} />
+        <MaterialDropdown label="variables.value" {options} value={value?.id} on:change={e => updateValue("id", e.detail)} />
     {/if}
 {:else if inputId === "volume"}
     <!-- gain can also be set -->
-    <MaterialNumberInput label="variables.value" value={Number(((value?.volume ?? 1) * 100).toFixed(2))} min={0} max={100} on:change={(e) => updateValue("volume", e.detail / 100)} />
+    <MaterialNumberInput label="variables.value" value={Number(((value?.volume ?? 1) * 100).toFixed(2))} min={0} max={100} on:change={e => updateValue("volume", e.detail / 100)} />
 {:else if inputId === "transition"}
     <!-- transition -->
 {:else if inputId === "variable"}

@@ -12,7 +12,7 @@
     function changeAction(actionId: string) {
         // don't update until overlay display click has finished
         setTimeout(() => {
-            effects.update((a) => {
+            effects.update(a => {
                 delete a[effectId][actionId]
                 return a
             })

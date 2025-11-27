@@ -115,7 +115,7 @@ export async function getWeather(data: Weather): Promise<TmetAPI | null> {
 
     return new Promise((resolve: (value: TmetAPI | null) => void) => {
         fetch(query)
-            .then((response) => {
+            .then(response => {
                 if (!response.ok) {
                     console.error(`HTTP error: ${response.status}`)
                     resolve(null)
@@ -128,7 +128,7 @@ export async function getWeather(data: Weather): Promise<TmetAPI | null> {
                 resolve(weatherData)
                 cachedWeatherData[queryKey] = { time: Date.now(), data: weatherData }
             })
-            .catch((error) => {
+            .catch(error => {
                 console.error("Fetch error:", error)
                 resolve(null)
             })

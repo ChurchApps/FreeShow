@@ -31,7 +31,7 @@
     let showAudioIcon = false
 
     // let initialDelay = 0
-    socket.on("OUTPUT_STREAM", (msg) => {
+    socket.on("OUTPUT_STREAM", msg => {
         switch (msg.channel) {
             case "STREAM":
                 frames++

@@ -54,7 +54,7 @@ export function importShow(files: { content: string; name?: string; extension?: 
         try {
             const showData = JSON.parse(content)
             if (Array.isArray(showData)) {
-                [id, show] = showData
+                ;[id, show] = showData
             } else {
                 id = uid()
                 show = showData
@@ -66,7 +66,7 @@ export function importShow(files: { content: string; name?: string; extension?: 
             try {
                 const showData = JSON.parse(content)
                 if (Array.isArray(showData)) {
-                    [id, show] = showData
+                    ;[id, show] = showData
                 } else {
                     id = uid()
                     show = showData
@@ -118,13 +118,13 @@ export function importTemplate(files: { content: string; name?: string; extensio
 export function importFromClipboard() {
     navigator.clipboard
         .readText()
-        .then((text) => {
+        .then(text => {
             let activeCategory = get(drawerTabsData).shows?.activeSubTab
             if (activeCategory === "all" || activeCategory === "unlabeled") activeCategory = null
 
             convertText({ text, noFormatting: true, category: activeCategory })
         })
-        .catch((err) => {
+        .catch(err => {
             console.error("Failed to read clipboard contents: ", err)
         })
 }
@@ -135,7 +135,7 @@ export function importSpecific(data: { content: string; name?: string; extension
     data.forEach(({ content }) => {
         content = JSON.parse(content)
 
-        store.update((a) => {
+        store.update(a => {
             a[uid()] = content
             return a
         })
@@ -185,14 +185,14 @@ export function fixShowIssues(show: Show) {
         }
     })
 
-    Object.values<Slide>(show.slides).forEach((slide) => {
+    Object.values<Slide>(show.slides).forEach(slide => {
         // fix undefined items issue
-        slide.items = slide.items?.filter((item) => item !== undefined && item !== null) || []
+        slide.items = slide.items?.filter(item => item !== undefined && item !== null) || []
 
         // fix undefined lines issue
-        slide.items.forEach((item) => {
+        slide.items.forEach(item => {
             if (!item.lines) return
-            item.lines = item.lines.filter((line) => line !== undefined)
+            item.lines = item.lines.filter(line => line !== undefined)
         })
     })
 

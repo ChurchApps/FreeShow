@@ -155,7 +155,7 @@ export const captionLanguages = [
     { id: "ve-ZA", name: "Venda (South Africa)" },
     { id: "vi-VN", name: "Vietnamese (Vietnam)" },
     { id: "xh-ZA", name: "Xhosa (South Africa)" },
-    { id: "zu-ZA", name: "Zulu (South Africa)" },
+    { id: "zu-ZA", name: "Zulu (South Africa)" }
 ]
 
 // https://github.com/mozilla/translate - MPL 2.0 - Mozilla
@@ -178,5 +178,5 @@ export const captionTranslateLanguages = [
     { id: "pt", name: "Portuguese" },
     { id: "ru", name: "Russian" },
     { id: "es", name: "Spanish" },
-    { id: "uk", name: "Ukrainian" },
+    { id: "uk", name: "Ukrainian" }
 ]

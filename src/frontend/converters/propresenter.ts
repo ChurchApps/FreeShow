@@ -29,7 +29,7 @@ export function convertProPresenter(data: any) {
         }
 
         if (Array.isArray(song.data)) {
-            song.data.forEach((songData) => {
+            song.data.forEach(songData => {
                 newData.push({ content: songData, name, extension: "jsonbundle" })
             })
         }
@@ -68,7 +68,7 @@ export function convertProPresenter(data: any) {
             show.name = checkName(song.name === "Untitled" ? name : song.name || song.title || name, showId)
 
             // propresenter often uses the same id for duplicated songs
-            const existingShow = get(shows)[showId] || tempShows.find((a) => a.id === showId)?.show
+            const existingShow = get(shows)[showId] || tempShows.find(a => a.id === showId)?.show
             if (existingShow && existingShow.name !== (song.name || name)) showId = uid()
 
             let converted: any = {}
@@ -188,7 +188,7 @@ function convertJSONToSlides(song: any) {
     if (initialSlidesList.length) slidesList = initialSlidesList
     if (slidesList.length) {
         layoutSlides = []
-        slidesList.forEach((label) => {
+        slidesList.forEach(label => {
             if (slidesRef[label]) layoutSlides.push({ id: slidesRef[label] })
         })
     }
@@ -214,7 +214,7 @@ function convertToSlides(song: any, extension: string) {
 
     const backgrounds: any = []
 
-    slideGroups.forEach((group) => {
+    slideGroups.forEach(group => {
         let groupSlides = group
         if (extension === "pro4") groupSlides = [groupSlides]
         if (extension === "pro5") groupSlides = groupSlides.slides.RVDisplaySlide
@@ -223,7 +223,7 @@ function convertToSlides(song: any, extension: string) {
         if (!groupSlides?.length) return
 
         let slideIndex = -1
-        groupSlides.forEach((slide) => {
+        groupSlides.forEach(slide => {
             const items = getSlideItems(slide)
             // console.log(slide, items)
             if (!items?.length) return
@@ -292,7 +292,7 @@ function getSlideItems(slide: any) {
 
     let elements: any = null
     if (slide.displayElements) elements = slide.displayElements
-    else elements = slide.array.find((a) => a["@rvXMLIvarName"] === "displayElements")
+    else elements = slide.array.find(a => a["@rvXMLIvarName"] === "displayElements")
     if (!elements) return []
 
     if (!elements.RVTextElement) {
@@ -303,12 +303,12 @@ function getSlideItems(slide: any) {
 
     const textElement = elements.RVTextElement
     let itemStrings = elements.RVTextElement.NSString
-    if (!itemStrings && Array.isArray(textElement)) itemStrings = textElement.map((a) => a.NSString)
+    if (!itemStrings && Array.isArray(textElement)) itemStrings = textElement.map(a => a.NSString)
     if (!itemStrings) itemStrings = [elements.RVTextElement["@RTFData"]]
     else if (itemStrings["#text"]) itemStrings = [itemStrings]
 
-    const rtf = itemStrings.find((a) => a["@rvXMLIvarName"] === "RTFData")
-    const plain = itemStrings.find((a) => a["@rvXMLIvarName"] === "PlainText")
+    const rtf = itemStrings.find(a => a["@rvXMLIvarName"] === "RTFData")
+    const plain = itemStrings.find(a => a["@rvXMLIvarName"] === "PlainText")
     // rtf includes line breaks
     if (rtf) itemStrings = [rtf]
     else if (plain) itemStrings = [plain]
@@ -349,12 +349,12 @@ function makeParentSlide(slide, { label, color = "" }) {
 
 function arrangeLayouts(arrangements, sequences) {
     const layouts: Layout[] = []
-    arrangements.forEach((arrangement) => {
+    arrangements.forEach(arrangement => {
         let groupIds = arrangement.array?.NSString || []
         if (!Array.isArray(groupIds)) groupIds = [groupIds]
         if (!groupIds.length) return
 
-        const slides: any[] = groupIds.map((groupID) => ({ id: sequences[groupID] }))
+        const slides: any[] = groupIds.map(groupID => ({ id: sequences[groupID] }))
         layouts.push({ id: arrangement["@uuid"], name: arrangement["@name"], notes: "", slides })
     })
 
@@ -493,7 +493,7 @@ function RTFToText(input: string) {
     // Clean up remaining formatting artifacts
     newInput = newInput.replace(/\s+/g, " ").trim()
 
-    const splitted = newInput.split("__BREAK__").filter((a) => a.trim())
+    const splitted = newInput.split("__BREAK__").filter(a => a.trim())
     return splitted.join("\n").trim()
 }
 
@@ -588,8 +588,8 @@ function convertProToSlides(song: any) {
         tempArrangements.push({ groups: Object.keys(tempGroups), name: "" })
     }
 
-    const slidesWithoutGroup = Object.keys(tempSlides).filter((id) => !Object.values(tempGroups).find((a) => a.slides.includes(id)))
-    if (slidesWithoutGroup.length) slidesWithoutGroup.forEach((id) => createSlide(id))
+    const slidesWithoutGroup = Object.keys(tempSlides).filter(id => !Object.values(tempGroups).find(a => a.slides.includes(id)))
+    if (slidesWithoutGroup.length) slidesWithoutGroup.forEach(id => createSlide(id))
 
     tempArrangements.forEach(createLayout)
     function createLayout({ name = "", groups: arrGroups }: any) {
@@ -599,7 +599,7 @@ function convertProToSlides(song: any) {
     function createSlides(arrGroups: string[]) {
         const layoutSlides: any[] = []
 
-        arrGroups.forEach((groupId) => {
+        arrGroups.forEach(groupId => {
             const group = tempGroups[groupId]
             if (!group) return
 
@@ -686,14 +686,14 @@ function getArrangements(arrangements: any) {
     if (!arrangements) return []
 
     const newArrangements: any = []
-    arrangements.forEach((arr) => {
+    arrangements.forEach(arr => {
         newArrangements.push({
             name: arr.name,
-            groups: arr.groupIdentifiers?.map((a) => a.string) || []
+            groups: arr.groupIdentifiers?.map(a => a.string) || []
         })
     })
 
-    return newArrangements.filter((a) => a.groups.length)
+    return newArrangements.filter(a => a.groups.length)
 }
 
 function getGroups(cueGroups) {
@@ -704,7 +704,7 @@ function getGroups(cueGroups) {
         newGroups[group.uuid.string] = {
             name: group.name,
             color: getColorValue(group.color),
-            slides: cueIdentifiers?.map((a) => a.string) || []
+            slides: cueIdentifiers?.map(a => a.string) || []
         }
     })
 
@@ -714,14 +714,14 @@ function getGroups(cueGroups) {
 function getSlides(cues: any) {
     const slides: any = {}
 
-    cues.forEach((slide) => {
-        const baseSlide = slide.actions.find((a) => a.slide?.presentation)?.slide?.presentation?.baseSlide || {}
+    cues.forEach(slide => {
+        const baseSlide = slide.actions.find(a => a.slide?.presentation)?.slide?.presentation?.baseSlide || {}
         if (!baseSlide) return
 
         slides[slide.uuid.string] = {
             name: slide.name,
             disabled: !slide.isEnabled,
-            media: slide.actions.find((a) => a.media?.element)?.media?.element?.url?.absoluteString,
+            media: slide.actions.find(a => a.media?.element)?.media?.element?.url?.absoluteString,
             backgroundColor: getColorValue(baseSlide.backgroundColor),
             size: baseSlide.size,
             items: baseSlide.elements?.map(getItem) || []

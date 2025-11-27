@@ -24,7 +24,7 @@ export function importBibles(data: any[]) {
         const success: { [key: string]: number } = {}
         const unsupported: { [key: string]: number } = {}
 
-        data.forEach((file) => {
+        data.forEach(file => {
             let type = file.type
             if (type === "fsb" || !type) type = "freeshow"
 
@@ -79,14 +79,14 @@ export function importFSB(data: any[]) {
         const id: string = bible[0] || uid()
         bible = bible[1] || bible
 
-        scripturesCache.update((a) => {
+        scripturesCache.update(a => {
             a[id] = bible
             return a
         })
 
         name = formatToFileName(bible.name || name)
 
-        scriptures.update((a) => {
+        scriptures.update(a => {
             a[id] = { name, id }
             return a
         })
@@ -96,7 +96,7 @@ export function importFSB(data: any[]) {
 }
 
 export function setActiveScripture(tabId: string) {
-    drawerTabsData.update((a) => {
+    drawerTabsData.update(a => {
         a.scripture = { ...a.scripture, activeSubTab: tabId }
         return a
     })

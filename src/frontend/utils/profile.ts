@@ -7,7 +7,7 @@ export function getAccess(id: string) {
 
 export function openProfileByName(profileName: string) {
     if (!profileName) return
-    if (profileName.toLowerCase() === 'admin') {
+    if (profileName.toLowerCase() === "admin") {
         activeProfile.set("")
         return
     }
@@ -28,4 +28,4 @@ export function checkPassword(password: string, encoded: string) {
     return encoded === encrypt(password)
 }
 const k = "bw46feskw4"
-const encrypt = (text) => Array.from(text, (char: string, i) => ('0' + (char.charCodeAt(0) ^ k.charCodeAt(i % k.length)).toString(16)).slice(-2)).join('')
+const encrypt = text => Array.from(text, (char: string, i) => ("0" + (char.charCodeAt(0) ^ k.charCodeAt(i % k.length)).toString(16)).slice(-2)).join("")

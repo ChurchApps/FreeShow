@@ -34,13 +34,13 @@
 
         // create the new order of items based on the DOM structure
         const newItems = Array.from(sortableList.children)
-            .map((child) => {
+            .map(child => {
                 const id = child.getAttribute("id")
                 return id ? items[parseInt(id)] : null
             })
             .filter(Boolean)
 
-        const dropIndex = Array.from(sortableList.children).findIndex((child) => child.getAttribute("id") === String(dragIndex))
+        const dropIndex = Array.from(sortableList.children).findIndex(child => child.getAttribute("id") === String(dragIndex))
 
         dispatch("end", { dragIndex, dropIndex, item: items[dragIndex], items: newItems })
 

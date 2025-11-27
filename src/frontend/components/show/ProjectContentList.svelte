@@ -33,9 +33,9 @@
         let time = tree.length * 0.5 + 20
         setTimeout(() => {
             if (!scrollElem) return
-            const projectElements = [...(scrollElem.querySelectorAll(".listSection") || [])].map((a) => a?.querySelectorAll("button") || [])
-            const flattened = projectElements.flatMap((item) => Array.from(item))
-            const activeProjectItem = flattened.findLast((a) => a?.classList.contains("isActive"))
+            const projectElements = [...(scrollElem.querySelectorAll(".listSection") || [])].map(a => a?.querySelectorAll("button") || [])
+            const flattened = projectElements.flatMap(item => Array.from(item))
+            const activeProjectItem = flattened.findLast(a => a?.classList.contains("isActive"))
             if (!activeProjectItem) return
 
             offset = Math.max(0, ((activeProjectItem.closest("#show") as HTMLElement)?.offsetTop || 0) + scrollElem.offsetTop - ($drawer.height < 400 ? 120 : 20))
@@ -50,13 +50,13 @@
     function findShowInProject() {
         if (!$projects[$activeProject!]?.shows) return
 
-        let i = $projects[$activeProject!].shows.findIndex((p) => p.id === $activeShow?.id)
+        let i = $projects[$activeProject!].shows.findIndex(p => p.id === $activeShow?.id)
         let pos: number = i > -1 ? i : ($activeShow?.index ?? -1)
 
         // ($activeShow?.type !== "video" && $activeShow?.type !== "image")
         if (pos < 0 || $activeShow?.index === pos) return
 
-        activeShow.update((a) => {
+        activeShow.update(a => {
             a!.index = pos
             return a
         })
@@ -75,11 +75,11 @@
     }
 
     $: activeProjectParent = $activeProject ? $projects[$activeProject]?.parent : ""
-    $: projectReadOnly = readOnly || profile[activeProjectParent] === "read" || tree.find((a) => a.id === activeProjectParent)?.readOnly
+    $: projectReadOnly = readOnly || profile[activeProjectParent] === "read" || tree.find(a => a.id === activeProjectParent)?.readOnly
 
     $: projectItemsList = $projects[$activeProject || ""]?.shows || []
 
-    $: lessVisibleSection = projectItemsList.length > 10 || projectItemsList.some((a) => a.type === "section")
+    $: lessVisibleSection = projectItemsList.length > 10 || projectItemsList.some(a => a.type === "section")
 
     let splittedProjectsList: { color: string; items: ProjectShowRef[] }[] = []
     $: if (projectItemsList) splitProjectItemsToSections()
@@ -100,10 +100,10 @@
 
     onMount(() => {
         // convert section times in title to actual times
-        projects.update((a) => {
+        projects.update(a => {
             if (!a[$activeProject || ""]?.shows) return a
 
-            a[$activeProject!].shows = a[$activeProject!].shows.map((item) => {
+            a[$activeProject!].shows = a[$activeProject!].shows.map(item => {
                 if (item.type !== "section") return item
 
                 // prefixed clock time, like "12:00 Title"
@@ -131,7 +131,7 @@
     let closestTime = 0
     $: {
         closestTime = 0
-        projectItemsList?.find((a) => {
+        projectItemsList?.find(a => {
             const timeLeft = getTimeUntilClock(a.data?.time, today)
             if (timeLeft > 0 && (!closestTime || timeLeft < closestTime)) closestTime = timeLeft
         })
@@ -158,10 +158,8 @@
                                     <MaterialButton
                                         isActive={$focusMode ? $activeFocus.id === show.id : $activeShow?.id === show.id}
                                         class="section {projectReadOnly ? '' : `context #project_section__project ${show.color ? 'color-border' : ''}`}"
-                                        style="{borderRadiusStyle}justify-content: left;background-color: var(--primary-darkest);border-top: 1px solid var(--primary-lighter);padding: 0.1em 1em;{$fullColors
-                                            ? `background-color: ${show.color || 'var(--primary-darker)'} !important;color: ${getContrast(show.color || '')};`
-                                            : `border-bottom: 1px solid ${show.color || 'transparent'} !important;`}"
-                                        on:click={(e) => {
+                                        style="{borderRadiusStyle}justify-content: left;background-color: var(--primary-darkest);border-top: 1px solid var(--primary-lighter);padding: 0.1em 1em;{$fullColors ? `background-color: ${show.color || 'var(--primary-darker)'} !important;color: ${getContrast(show.color || '')};` : `border-bottom: 1px solid ${show.color || 'transparent'} !important;`}"
+                                        on:click={e => {
                                             if (e.detail.ctrl) return
                                             if ($focusMode) activeFocus.set({ id: show.id, index, type: show.type })
                                             else activeShow.set({ ...show, index })

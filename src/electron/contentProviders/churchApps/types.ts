@@ -23,7 +23,6 @@ export type ChurchAppsRequestData = {
 export const CHURCHAPPS_API_URL = "https://api.churchapps.org"
 export const CHURCHAPPS_APP_URL = "https://admin.b1.church"
 
-
 // export const DEFAULT_CHURCHAPPS_DATA: ChurchAppsAuthData = {
 //     access_token: "",
 //     refresh_token: "",

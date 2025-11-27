@@ -84,11 +84,21 @@
         scrollbar-width: thin; /* Firefox */
         scrollbar-color: rgb(255 255 255 / 0.3) rgb(255 255 255 / 0.05);
     }
-    .grid::-webkit-scrollbar { width: 8px; height: 8px; }
+    .grid::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
     .grid::-webkit-scrollbar-track,
-    .grid::-webkit-scrollbar-corner { background: rgb(255 255 255 / 0.05); }
-    .grid::-webkit-scrollbar-thumb { background: rgb(255 255 255 / 0.3); border-radius: 8px; }
-    .grid::-webkit-scrollbar-thumb:hover { background: rgb(255 255 255 / 0.5); }
+    .grid::-webkit-scrollbar-corner {
+        background: rgb(255 255 255 / 0.05);
+    }
+    .grid::-webkit-scrollbar-thumb {
+        background: rgb(255 255 255 / 0.3);
+        border-radius: 8px;
+    }
+    .grid::-webkit-scrollbar-thumb:hover {
+        background: rgb(255 255 255 / 0.5);
+    }
 
     /* one page */
     .grid :global(.overlay) {

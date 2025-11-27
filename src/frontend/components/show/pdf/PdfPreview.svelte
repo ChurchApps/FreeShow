@@ -143,7 +143,7 @@
                 {/if}
             </div>
 
-            <div class="slide" style={transparentOutput ? "" : `background-color: ${currentStyle.background};`} tabindex={0} role="button" on:click={(e) => outputPdf(e, i)} on:keydown={triggerClickOnEnterSpace}>
+            <div class="slide" style={transparentOutput ? "" : `background-color: ${currentStyle.background};`} tabindex={0} role="button" on:click={e => outputPdf(e, i)} on:keydown={triggerClickOnEnterSpace}>
                 <canvas bind:this={canvases[i]} />
             </div>
         </div>
@@ -182,7 +182,7 @@
 
         <div class="divider"></div>
 
-        <MaterialZoom columns={$slidesOptions.columns} on:change={(e) => slidesOptions.set({ ...$slidesOptions, columns: e.detail })} />
+        <MaterialZoom columns={$slidesOptions.columns} on:change={e => slidesOptions.set({ ...$slidesOptions, columns: e.detail })} />
     </FloatingInputs>
 {/if}
 

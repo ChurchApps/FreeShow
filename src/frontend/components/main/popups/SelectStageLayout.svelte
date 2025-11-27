@@ -12,7 +12,7 @@
 
     const profile = getAccess("stage")
 
-    let stageLayouts = sortByName(keysToID($stageShows)).filter((a) => profile[a.id] !== "none" && Object.values($stageShows[a.id]?.items).some((a) => a.currentOutput?.source !== $currentOutputSettings))
+    let stageLayouts = sortByName(keysToID($stageShows)).filter(a => profile[a.id] !== "none" && Object.values($stageShows[a.id]?.items).some(a => a.currentOutput?.source !== $currentOutputSettings))
 
     let active = $popupData.active || ""
 

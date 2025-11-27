@@ -33,7 +33,7 @@
 
     const PICK_ID = uid()
     const dispatch = createEventDispatcher()
-    let listenerId = receiveToMain(ToMain.OPEN_FILE2, (data) => {
+    let listenerId = receiveToMain(ToMain.OPEN_FILE2, data => {
         if (data.id !== PICK_ID || data.channel !== "MEDIA" || !data.files?.length) return
 
         dispatch("change", multiple ? data.files : data.files[0])
@@ -60,7 +60,7 @@
         class="input edit button-trigger"
         role="button"
         tabindex={disabled ? undefined : 0}
-        on:click={(e) => {
+        on:click={e => {
             if (e.target?.closest(".remove")) return
             pickMedia()
         }}

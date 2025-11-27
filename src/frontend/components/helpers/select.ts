@@ -4,7 +4,7 @@ import { selected } from "../../stores"
 import { removeDuplicates } from "./array"
 
 export function select(id: SelectIds, data: any) {
-    selected.update((sel) => {
+    selected.update(sel => {
         if (!Array.isArray(data)) data = [data]
         if (sel.id === id) sel.data = removeDuplicates([...sel.data, ...data])
         else sel = { id, data }

@@ -37,17 +37,17 @@
         let ref = _show()
             .layouts("active")
             .ref()[0]
-            .filter((a) => !a.data.disabled)
+            .filter(a => !a.data.disabled)
         let total = ref.reduce((value, slide) => (value += Number(slide.data.nextTimer || 0)), 0)
 
         totalTime = total ? (total > 59 ? joinTime(secondsToTime(total)) : total + "s") : "0s"
 
-        isTranslated = !!layoutSlides.find((a) =>
+        isTranslated = !!layoutSlides.find(a =>
             _show()
                 .slides([a.id])
                 .get("items")
                 .flat()
-                .find((a) => a?.language)
+                .find(a => a?.language)
         )
     }
 
@@ -68,7 +68,7 @@
         history({ id: "UPDATE", newData: { key: "layouts", keys: [currentLayout], subkey: "name", data: newName }, oldData: { id: showId }, location: { page: "show", id: "show_key" } })
 
         if ($projects[$activeProject!]?.shows?.[$activeShow?.index ?? -1]?.layout === currentLayout) {
-            projects.update((a) => {
+            projects.update(a => {
                 a[$activeProject!].shows[$activeShow!.index!].layoutInfo = { name: newName }
                 return a
             })
@@ -78,7 +78,7 @@
     function setLayout(id: string, layoutInfo) {
         if (!$showsCache[showId]) return
 
-        showsCache.update((s) => {
+        showsCache.update(s => {
             s[showId].settings.activeLayout = id
             return s
         })
@@ -86,7 +86,7 @@
         // set active layout in project
         if (sortedLayouts?.length < 2) return
         if (($activeShow?.type === undefined || $activeShow?.type === "show") && $activeShow?.index !== undefined && $activeProject && $projects[$activeProject]?.shows?.[$activeShow.index]) {
-            projects.update((a) => {
+            projects.update(a => {
                 a[$activeProject!].shows[$activeShow!.index!].layout = id
                 a[$activeProject!].shows[$activeShow!.index!].layoutInfo = layoutInfo
                 return a
@@ -144,7 +144,7 @@
         if (!currentShow.metadata?.autoMedia && metadataText.length) {
             const divider = "; " // currentStyle.metadataDivider
             const text = metadataValues
-                .filter((a) => a?.length)
+                .filter(a => a?.length)
                 .join(divider)
                 .replaceAll("<br>", " ")
             notes = { text: text, id: "metadata", title: "tools.metadata", icon: "info", tab: "metadata" }
@@ -164,7 +164,7 @@
 {/if}
 
 {#if referenceType === "lessons"}
-    <MaterialZoom hidden columns={$slidesOptions.columns} on:change={(e) => slidesOptions.set({ ...$slidesOptions, columns: e.detail })} />
+    <MaterialZoom hidden columns={$slidesOptions.columns} on:change={e => slidesOptions.set({ ...$slidesOptions, columns: e.detail })} />
 {:else if layoutSlides.length}
     <FloatingInputs arrow={!isLocked} bottom={notesVisible ? bottomHeight : 10} let:open>
         <div slot="menu">
@@ -239,7 +239,7 @@
             <div class="divider"></div>
         {/if}
 
-        <MaterialZoom hidden={!open} columns={$slidesOptions.columns} on:change={(e) => slidesOptions.set({ ...$slidesOptions, columns: e.detail })} />
+        <MaterialZoom hidden={!open} columns={$slidesOptions.columns} on:change={e => slidesOptions.set({ ...$slidesOptions, columns: e.detail })} />
 
         <MaterialButton class="context #slideViews" title="show.change_view: show.{$slidesOptions.mode} [Ctrl+Shift+V]" on:click={changeSlidesView}>
             <Icon size={1.3} id={$slidesOptions.mode} white={$slidesOptions.mode === "grid"} />

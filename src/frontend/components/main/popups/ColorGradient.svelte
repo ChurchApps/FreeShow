@@ -61,12 +61,12 @@
 <div class="preview" style="background: {newValue};"></div>
 
 <InputRow>
-    <MaterialDropdown label="sort.type" value={activeType} options={types} on:change={(e) => (activeType = e.detail)} />
+    <MaterialDropdown label="sort.type" value={activeType} options={types} on:change={e => (activeType = e.detail)} />
 
     {#if activeType === "radial-gradient"}
-        <MaterialDropdown label="color.shape" value={activeShape} options={shapes} on:change={(e) => (activeShape = e.detail)} />
+        <MaterialDropdown label="color.shape" value={activeShape} options={shapes} on:change={e => (activeShape = e.detail)} />
     {:else}
-        <MaterialRadialPicker label="color.angle" value={parsedValue.deg} on:change={(e) => (parsedValue.deg = e.detail)} />
+        <MaterialRadialPicker label="color.angle" value={parsedValue.deg} on:change={e => (parsedValue.deg = e.detail)} />
     {/if}
 </InputRow>
 
@@ -77,9 +77,9 @@
         {@const nextPos = parsedValue.colors[i + 1]?.pos || 100}
 
         <InputRow>
-            <MaterialColorInput style="min-width: 50%;" label="edit.color" value={colorPart.color} on:input={(e) => (colorPart.color = e.detail)} />
+            <MaterialColorInput style="min-width: 50%;" label="edit.color" value={colorPart.color} on:input={e => (colorPart.color = e.detail)} />
             <!-- WIP also change background opacity -->
-            <MaterialNumberInput label="settings.position" value={pos} min={prevPos} max={nextPos} on:change={(e) => (colorPart.pos = e.detail)} currentProgress={pos} showSlider />
+            <MaterialNumberInput label="settings.position" value={pos} min={prevPos} max={nextPos} on:change={e => (colorPart.pos = e.detail)} currentProgress={pos} showSlider />
             {#if i > 0}
                 <MaterialButton icon="up" on:click={() => moveUp(i)} />
             {/if}

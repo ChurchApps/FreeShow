@@ -30,16 +30,7 @@
     }
 </script>
 
-<div
-    style={$$props.style || null}
-    class="checkboxfield {center ? 'centered' : ''} {disabled ? 'disabled' : ''}"
-    data-title={translateText(title || label)}
-    role="checkbox"
-    aria-checked={checkedValue}
-    tabindex={disabled ? undefined : 0}
-    on:click={toggle}
-    on:keydown={onKeyDown}
->
+<div style={$$props.style || null} class="checkboxfield {center ? 'centered' : ''} {disabled ? 'disabled' : ''}" data-title={translateText(title || label)} role="checkbox" aria-checked={checkedValue} tabindex={disabled ? undefined : 0} on:click={toggle} on:keydown={onKeyDown}>
     <div class="background" />
     <div class="hover" />
 

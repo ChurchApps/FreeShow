@@ -13,17 +13,7 @@
 // Base classes and types
 export { ContentProvider, ContentProviderFactory } from "./base/ContentProvider"
 export { OAuth2Helper, PKCEHelper } from "./base/OAuth2Helper"
-export {
-    ContentProviderError,
-    ContentProviderErrorType,
-    type ContentProviderSongData,
-    type ContentProviderServicePlan,
-    type ContentProviderPlanItem,
-    type ContentProviderService,
-    type LoadServicesOptions,
-    type ExportDataOptions,
-    type ContentProviderStatus
-} from "./base/types"
+export { ContentProviderError, ContentProviderErrorType, type ContentProviderSongData, type ContentProviderServicePlan, type ContentProviderPlanItem, type ContentProviderService, type LoadServicesOptions, type ExportDataOptions, type ContentProviderStatus } from "./base/types"
 
 // Provider implementations (simplified versions for now)
 export { ChurchAppsProvider, type ChurchAppsScopes, type ChurchAppsAuthData } from "./churchApps/ChurchAppsProvider"

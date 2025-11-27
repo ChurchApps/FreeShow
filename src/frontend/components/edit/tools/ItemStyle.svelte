@@ -124,7 +124,7 @@
             values[slide] = []
 
             // loop through all items
-            slideItems[i].forEach((itemIndex) => {
+            slideItems[i].forEach(itemIndex => {
                 let currentSlideItem = showSlides[slide]?.items?.[itemIndex] || allSlideItems[itemIndex]
                 if (!currentSlideItem) return
 

@@ -72,7 +72,7 @@ export const _ = {
     layout,
     mediaCache,
     playingAudioData,
-    playingAudioTime,
+    playingAudioTime
 }
 
 /////

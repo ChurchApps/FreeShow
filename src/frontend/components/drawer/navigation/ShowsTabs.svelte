@@ -16,8 +16,8 @@
     $: activeSubTab = $drawerTabsData.shows?.activeSubTab || ""
 
     $: categoriesList = keysToID($categories)
-    $: unarchivedCategoriesList = categoriesList.filter((a) => !a.isArchive && profile[a.id] !== "none")
-    $: archivedCategoriesList = categoriesList.filter((a) => a.isArchive)
+    $: unarchivedCategoriesList = categoriesList.filter(a => !a.isArchive && profile[a.id] !== "none")
+    $: archivedCategoriesList = categoriesList.filter(a => a.isArchive)
 
     let currentShows: TrimmedShow[] = []
     $: if ($shows) updateShows()
@@ -26,10 +26,10 @@
         currentShows = Object.values($shows)
     }
 
-    $: allVisibleShows = currentShows.filter((a) => a && !a.private && profile[a.category || ""] !== "none")
-    $: unarchivedShows = allVisibleShows.filter((a) => a.category === null || !$categories[a.category]?.isArchive)
+    $: allVisibleShows = currentShows.filter(a => a && !a.private && profile[a.category || ""] !== "none")
+    $: unarchivedShows = allVisibleShows.filter(a => a.category === null || !$categories[a.category]?.isArchive)
     // $: archivedShows = currentShows.filter((a) => a.category !== null && $categories[a.category]?.isArchive)
-    $: uncategorizedShowsLength = unarchivedShows.filter((a) => a.category === null || !$categories[a.category]).length
+    $: uncategorizedShowsLength = unarchivedShows.filter(a => a.category === null || !$categories[a.category]).length
     // $: lockedShowsLength = allVisibleShows.filter((a) => a.locked).length
     // $: songNumberShowsLength = allVisibleShows.filter((a) => a.quickAccess?.number).length
 
@@ -60,7 +60,7 @@
 
     function updateName(e: any) {
         const { id, value } = e.detail
-        categories.update((a) => {
+        categories.update(a => {
             if (a[id].default) delete a[id].default
             a[id].name = value
             return a

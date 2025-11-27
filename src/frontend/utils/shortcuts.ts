@@ -19,35 +19,7 @@ import { importFromClipboard } from "../converters/importHelpers"
 import { addSection } from "../converters/project"
 import { requestMain, sendMain } from "../IPC/main"
 import { changeSlidesView } from "../show/slides"
-import {
-    activeDrawerTab,
-    activeEdit,
-    activeFocus,
-    activePage,
-    activePopup,
-    activeSlideRecording,
-    activeStage,
-    contextActive,
-    drawer,
-    focusedArea,
-    focusMode,
-    guideActive,
-    media,
-    os,
-    outLocked,
-    outputs,
-    outputSlideCache,
-    quickSearchActive,
-    refreshEditSlide,
-    selected,
-    showsCache,
-    special,
-    spellcheck,
-    styles,
-    topContextActive,
-    videosData,
-    volume
-} from "../stores"
+import { activeDrawerTab, activeEdit, activeFocus, activePage, activePopup, activeSlideRecording, activeStage, contextActive, drawer, focusedArea, focusMode, guideActive, media, os, outLocked, outputs, outputSlideCache, quickSearchActive, refreshEditSlide, selected, showsCache, special, spellcheck, styles, topContextActive, videosData, volume } from "../stores"
 import { audioExtensions, imageExtensions, videoExtensions } from "../values/extensions"
 import { drawerTabs } from "../values/tabs"
 import { activeShow } from "./../stores"
@@ -60,7 +32,7 @@ const menus: TopViews[] = ["show", "edit", "stage", "draw", "settings"]
 const ctrlKeys = {
     a: () => selectAll(),
     c: () => copy(),
-    f: () => shouldOpenReplace() ? activePopup.set("find_replace") : null,
+    f: () => (shouldOpenReplace() ? activePopup.set("find_replace") : null),
     v: () => paste(),
     // give time for drawer to not toggle
     d: () => setTimeout(() => duplicate(get(selected))),
@@ -68,7 +40,7 @@ const ctrlKeys = {
     e: () => activePopup.set("export"),
     i: (e: KeyboardEvent) => (e.altKey ? importFromClipboard() : activePopup.set("import")),
     n: () => createNew(),
-    h: () => get(activeDrawerTab) === "scripture" ? "" : activePopup.set("history"),
+    h: () => (get(activeDrawerTab) === "scripture" ? "" : activePopup.set("history")),
     m: () => volume.set(get(volume) ? 0 : 1),
     o: () => toggleOutputs(),
     s: () => save(),
@@ -80,15 +52,15 @@ const ctrlKeys = {
 }
 
 const shiftCtrlKeys = {
-    d: () => get(activePage) === "show" && get(activeShow) && (get(activeShow)?.type || "show") === "show" ? activePopup.set("next_timer") : "",
+    d: () => (get(activePage) === "show" && get(activeShow) && (get(activeShow)?.type || "show") === "show" ? activePopup.set("next_timer") : ""),
     // t: () => activePopup.set("translate"),
     f: () => menuClick("focus_mode"),
     n: () => activePopup.set("show"),
-    v: () => changeSlidesView(),
+    v: () => changeSlidesView()
 }
 
 const altKeys = {
-    Enter: () => get(activePage) === "show" ? menuClick("cut_in_half", true, null, null, null, get(selected)) : null,
+    Enter: () => (get(activePage) === "show" ? menuClick("cut_in_half", true, null, null, null, get(selected)) : null)
 }
 
 export const disablePopupClose = ["initialize", "cloud_method"]
@@ -114,7 +86,7 @@ const keys = {
 
         // blur focused elements
         if (document.activeElement !== document.body) {
-            ; (document.activeElement as HTMLElement).blur()
+            ;(document.activeElement as HTMLElement).blur()
 
             if (!popupId && get(selected).id) setTimeout(() => selected.set({ id: null, data: [] }))
             return
@@ -131,7 +103,7 @@ const keys = {
     Delete: () => deleteAction(get(selected), "remove"),
     Backspace: () => keys.Delete(),
     // give time so it don't clear slide
-    F2: () => get(focusMode) ? null : setTimeout(() => menuClick("rename", true, null, null, null, get(selected))),
+    F2: () => (get(focusMode) ? null : setTimeout(() => menuClick("rename", true, null, null, null, get(selected)))),
     // default menu "togglefullscreen" role not working in production on Windows/Linux
     F11: () => (get(os).platform !== "darwin" ? sendMain(Main.FULLSCREEN) : null)
 }
@@ -433,9 +405,9 @@ export function togglePlayingMedia(e: Event | null = null, back = false) {
             // play / pause video
             // WIP duplicate of MediaControls.svelte
             const dataValues: any = {}
-            const activeOutputIds = getAllNormalOutputs().map((a) => a.id)
+            const activeOutputIds = getAllNormalOutputs().map(a => a.id)
             const videoData = get(videosData)[currentOutput?.id || ""] || {}
-            activeOutputIds.forEach((id) => {
+            activeOutputIds.forEach(id => {
                 dataValues[id] = { ...videoData, muted: id !== currentOutput?.id ? true : videoData.muted, paused: !videoData.paused }
             })
 
@@ -468,13 +440,13 @@ export async function playFolder(path: string, back = false) {
 
     const mediaExtensions = [...videoExtensions, ...imageExtensions, ...audioExtensions]
     const files = await requestMain(Main.READ_FOLDER, { path })
-    const folderFiles = sortByName(files.files.filter((a) => mediaExtensions.includes(a.extension)).map((a) => ({ path: a.path, name: a.name, type: getMediaType(a.extension), thumbnail: a.thumbnailPath })))
+    const folderFiles = sortByName(files.files.filter(a => mediaExtensions.includes(a.extension)).map(a => ({ path: a.path, name: a.name, type: getMediaType(a.extension), thumbnail: a.thumbnailPath })))
     if (!folderFiles.length) return
 
-    const mediaFiles = folderFiles.filter((a) => a.type !== "audio")
-    const playingIndex = mediaFiles.findIndex((a) => a.path === currentlyPlaying)
+    const mediaFiles = folderFiles.filter(a => a.type !== "audio")
+    const playingIndex = mediaFiles.findIndex(a => a.path === currentlyPlaying)
     const newMedia = back ? (mediaFiles[playingIndex - 1] ?? mediaFiles[mediaFiles.length - 1]) : (mediaFiles[playingIndex + 1] ?? mediaFiles[0])
-    const allFilesIndex = folderFiles.findIndex((a) => a.path === newMedia.path)
+    const allFilesIndex = folderFiles.findIndex(a => a.path === newMedia.path)
 
     // skip and play audio file
     if (!back && folderFiles[allFilesIndex - 1]?.type === "audio") {

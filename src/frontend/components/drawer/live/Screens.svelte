@@ -21,7 +21,7 @@
     <Capture
         bind:streams
         {screen}
-        on:click={(e) => {
+        on:click={e => {
             if ($outLocked || e.ctrlKey || e.metaKey) return
             if (currentOutput?.out?.background?.id === screen.id) clearBackground()
             else setOutput("background", { id: screen.id, type: "screen" })

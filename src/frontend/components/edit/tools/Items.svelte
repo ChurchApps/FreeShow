@@ -121,7 +121,7 @@
             <div
                 class="items {invertedItemList.length > 1 ? 'context #items_list_item' : ''}"
                 style="display: flex;flex-direction: column;"
-                on:mousedown={(e) => {
+                on:mousedown={e => {
                     if (e.button !== 2) return
                     // select on right click for context menu
                     const index = Number((e.target?.closest(".item_button")?.id || "").slice(1))
@@ -140,9 +140,9 @@
                         style="width: 100%;justify-content: space-between;padding: 2px 8px;"
                         isActive={$activeEdit.items.includes(index)}
                         tab
-                        on:click={(e) => {
+                        on:click={e => {
                             selected.set({ id: null, data: [] })
-                            activeEdit.update((ae) => {
+                            activeEdit.update(ae => {
                                 if (e.detail.ctrl) {
                                     if (ae.items.includes(index)) ae.items.splice(ae.items.indexOf(index), 1)
                                     else ae.items.push(index)

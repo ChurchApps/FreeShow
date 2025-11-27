@@ -64,8 +64,8 @@
     let showInvertedChords = false
 </script>
 
-<MaterialToggleSwitch label="actions.roman_keys" checked={chordData.romanKeysActive} on:change={(e) => (chordData.romanKeysActive = e.detail)} />
-<MaterialTextInput label="actions.custom_key" value={chordData.custom} defaultValue="" on:input={(e) => (chordData.custom = e.detail)} />
+<MaterialToggleSwitch label="actions.roman_keys" checked={chordData.romanKeysActive} on:change={e => (chordData.romanKeysActive = e.detail)} />
+<MaterialTextInput label="actions.custom_key" value={chordData.custom} defaultValue="" on:input={e => (chordData.custom = e.detail)} />
 
 <div class="chords" style="margin: 10px 0;">
     <div class="list">

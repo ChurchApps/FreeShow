@@ -4,26 +4,7 @@
     import { Main } from "../../../../types/IPC/Main"
     import type { ClickEvent } from "../../../../types/Main"
     import { destroyMain, receiveMain, requestMain, sendMain } from "../../../IPC/main"
-    import {
-        activeEdit,
-        activeFocus,
-        activeMediaTagFilter,
-        activePopup,
-        activeShow,
-        drawerTabsData,
-        focusMode,
-        labelsDisabled,
-        media,
-        mediaFolders,
-        mediaOptions,
-        outLocked,
-        outputs,
-        popupData,
-        providerConnections,
-        selectAllMedia,
-        selected,
-        sorted
-    } from "../../../stores"
+    import { activeEdit, activeFocus, activeMediaTagFilter, activePopup, activeShow, drawerTabsData, focusMode, labelsDisabled, media, mediaFolders, mediaOptions, outLocked, outputs, popupData, providerConnections, selectAllMedia, selected, sorted } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { clone, sortByName, sortFilenames } from "../../helpers/array"
@@ -57,8 +38,8 @@
     let files: File[] = []
 
     let specialTabs = ["online", "screens", "cameras"]
-    $: isProviderSection = contentProviders.some((p) => p.providerId === active)
-    $: notFolders = ["all", ...specialTabs, ...contentProviders.map((p) => p.providerId)]
+    $: isProviderSection = contentProviders.some(p => p.providerId === active)
+    $: notFolders = ["all", ...specialTabs, ...contentProviders.map(p => p.providerId)]
     $: rootPath = notFolders.includes(active || "") ? "" : active !== null ? $mediaFolders[active]?.path || "" : ""
     $: path = notFolders.includes(active || "") ? "" : rootPath
 
@@ -79,7 +60,7 @@
     function setSubSubTab(id: string) {
         if (!active) return
 
-        drawerTabsData.update((a) => {
+        drawerTabsData.update(a => {
             if (!a.media) a.media = { enabled: true, activeSubTab: active }
             if (!a.media.openedSubSubTab) a.media.openedSubSubTab = {}
             a.media.openedSubSubTab[active] = id
@@ -94,14 +75,14 @@
     let contentProviders: { providerId: ContentProviderId; displayName: string; hasContentLibrary: boolean }[] = []
     $: if ($providerConnections) getProviders()
     function getProviders() {
-        requestMain(Main.GET_CONTENT_PROVIDERS).then((allProviders) => {
-            contentProviders = allProviders.filter((p) => p.hasContentLibrary && $providerConnections[p.providerId])
+        requestMain(Main.GET_CONTENT_PROVIDERS).then(allProviders => {
+            contentProviders = allProviders.filter(p => p.hasContentLibrary && $providerConnections[p.providerId])
         })
     }
 
     $: if ($providerConnections) {
-        requestMain(Main.GET_CONTENT_PROVIDERS).then((allProviders) => {
-            contentProviders = allProviders.filter((p) => p.hasContentLibrary && $providerConnections[p.providerId])
+        requestMain(Main.GET_CONTENT_PROVIDERS).then(allProviders => {
+            contentProviders = allProviders.filter(p => p.hasContentLibrary && $providerConnections[p.providerId])
         })
     }
 
@@ -131,7 +112,7 @@
                         let name = p.name
                         return { path, favourite: a.favourite === true, name, extension: p.extension, audio: a.audio === true }
                     })
-                    .filter((a) => a.favourite === true && a.audio !== true)
+                    .filter(a => a.favourite === true && a.audio !== true)
             )
 
             filterFiles()
@@ -161,20 +142,20 @@
     let filesInFolders: File[] = []
     let folderFiles: { [key: string]: string[] } = {}
 
-    let listenerId = receiveMain(Main.READ_FOLDER, (data) => {
+    let listenerId = receiveMain(Main.READ_FOLDER, data => {
         filesInFolders = sortFilenames(data.filesInFolders || [])
 
         if (active !== "all" && data.path !== path) return
 
-        files.push(...(data.files.filter((file) => file.folder || isMediaExtension(file.extension)) as any))
+        files.push(...(data.files.filter(file => file.folder || isMediaExtension(file.extension)) as any))
         files = sortFilenames(files).sort((a, b) => (a.folder === b.folder ? 0 : a.folder ? -1 : 1))
 
-        files = files.map((a) => ({ ...a, path: a.folder ? a.path : a.path }))
+        files = files.map(a => ({ ...a, path: a.folder ? a.path : a.path }))
 
         // set valid files in folder
         folderFiles = {}
-        Object.keys(data.folderFiles).forEach((path) => {
-            folderFiles[path] = data.folderFiles[path].filter((file) => file.folder || isMediaExtension(file.extension))
+        Object.keys(data.folderFiles).forEach(path => {
+            folderFiles[path] = data.folderFiles[path].filter(file => file.folder || isMediaExtension(file.extension))
         })
 
         filterFiles()
@@ -203,16 +184,16 @@
         if (active === "online" || active === "screens" || active === "cameras" || isProviderSection) return
 
         // filter files
-        if (activeView === "all") filteredFiles = files.filter((a) => active !== "all" || !a.folder)
-        else filteredFiles = files.filter((a) => (activeView === "folder" && active !== "all" && a.folder) || (!a.folder && activeView === getMediaType(a.extension)))
+        if (activeView === "all") filteredFiles = files.filter(a => active !== "all" || !a.folder)
+        else filteredFiles = files.filter(a => (activeView === "folder" && active !== "all" && a.folder) || (!a.folder && activeView === getMediaType(a.extension)))
 
         // filter by tag
         if ($activeMediaTagFilter.length) {
-            filteredFiles = filteredFiles.filter((a) => !a.folder && $media[a.path]?.tags?.length && !$activeMediaTagFilter.find((tagId) => !$media[a.path].tags!.includes(tagId)))
+            filteredFiles = filteredFiles.filter(a => !a.folder && $media[a.path]?.tags?.length && !$activeMediaTagFilter.find(tagId => !$media[a.path].tags!.includes(tagId)))
         }
 
         // remove folders with no content
-        filteredFiles = filteredFiles.filter((a) => !a.folder || !folderFiles[a.path] || folderFiles[a.path].length > 0)
+        filteredFiles = filteredFiles.filter(a => !a.folder || !folderFiles[a.path] || folderFiles[a.path].length > 0)
 
         // reset arrow selector
         loadAllFiles(filteredFiles)
@@ -224,8 +205,8 @@
     }
 
     function loadAllFiles(f: File[]) {
-        allFiles = [...f.filter((a) => !a.folder).map((a) => a.path)]
-        if ($activeShow !== null && allFiles.includes($activeShow.id)) activeFile = allFiles.findIndex((a) => a === $activeShow!.id)
+        allFiles = [...f.filter(a => !a.folder).map(a => a.path)]
+        if ($activeShow !== null && allFiles.includes($activeShow.id)) activeFile = allFiles.findIndex(a => a === $activeShow!.id)
         else activeFile = null
         content = allFiles.length
     }
@@ -235,7 +216,7 @@
     let fullFilteredFiles: File[] = []
     function filterSearch() {
         fullFilteredFiles = clone(filteredFiles)
-        if (searchValue.length > 1) fullFilteredFiles = [...fullFilteredFiles, ...filesInFolders].filter((a) => filter(a.name).includes(filter(searchValue)))
+        if (searchValue.length > 1) fullFilteredFiles = [...fullFilteredFiles, ...filesInFolders].filter(a => filter(a.name).includes(filter(searchValue)))
 
         // scroll to top
         document.querySelector("svelte-virtual-list-viewport")?.scrollTo(0, 0)
@@ -294,7 +275,7 @@
                 if ($focusMode) activeFocus.set({ id: file.path, type: getMediaType(file.extension) })
                 else activeShow.set({ id: file.path, name: file.name, type: getMediaType(file.extension) })
 
-                activeFile = filteredFiles.findIndex((a) => a.path === file.path)
+                activeFile = filteredFiles.findIndex(a => a.path === file.path)
                 if (activeFile < 0) activeFile = null
             }
         }
@@ -316,7 +297,7 @@
     function goForward() {
         if (lastPaths.length) {
             path = lastPaths.pop() || rootPath
-            lastPaths = lastPaths.filter((a) => a.includes(path))
+            lastPaths = lastPaths.filter(a => a.includes(path))
         }
     }
 
@@ -345,8 +326,8 @@
     $: if ($selectAllMedia) selectAll()
     function selectAll() {
         let data = sortedFiles
-            .filter((a) => a.extension)
-            .map((file) => {
+            .filter(a => a.extension)
+            .map(file => {
                 let type = getMediaType(file.extension)
                 return { name: file.name, path: file.path, type }
             })
@@ -448,33 +429,17 @@
                     {#if $mediaOptions.mode === "grid"}
                         <MediaGrid items={sortedFiles} columns={$mediaOptions.columns} let:item>
                             {#if item.folder}
-                                <Folder name={item.name} path={item.path} mode={$mediaOptions.mode} folderPreview={sortedFiles.length < 20} on:open={(e) => (path = e.detail)} />
+                                <Folder name={item.name} path={item.path} mode={$mediaOptions.mode} folderPreview={sortedFiles.length < 20} on:open={e => (path = e.detail)} />
                             {:else}
-                                <Media
-                                    credits={item.credits || {}}
-                                    name={item.name || ""}
-                                    path={item.path}
-                                    thumbnailPath={item.previewUrl || ($mediaOptions.columns < 3 ? "" : item.thumbnailPath)}
-                                    type={getMediaType(item.extension)}
-                                    shiftRange={sortedFiles.map((a) => ({ ...a, type: getMediaType(a.extension), name: removeExtension(a.name) }))}
-                                    {active}
-                                />
+                                <Media credits={item.credits || {}} name={item.name || ""} path={item.path} thumbnailPath={item.previewUrl || ($mediaOptions.columns < 3 ? "" : item.thumbnailPath)} type={getMediaType(item.extension)} shiftRange={sortedFiles.map(a => ({ ...a, type: getMediaType(a.extension), name: removeExtension(a.name) }))} {active} />
                             {/if}
                         </MediaGrid>
                     {:else}
                         <VirtualList items={sortedFiles} let:item={file}>
                             {#if file.folder}
-                                <Folder name={file.name} path={file.path} mode={$mediaOptions.mode} on:open={(e) => (path = e.detail)} />
+                                <Folder name={file.name} path={file.path} mode={$mediaOptions.mode} on:open={e => (path = e.detail)} />
                             {:else}
-                                <Media
-                                    credits={file.credits || {}}
-                                    thumbnail={$mediaOptions.mode !== "list"}
-                                    name={file.name || ""}
-                                    path={file.path}
-                                    type={getMediaType(file.extension)}
-                                    shiftRange={sortedFiles.map((a) => ({ ...a, type: getMediaType(a.extension), name: removeExtension(a.name) }))}
-                                    {active}
-                                />
+                                <Media credits={file.credits || {}} thumbnail={$mediaOptions.mode !== "list"} name={file.name || ""} path={file.path} type={getMediaType(file.extension)} shiftRange={sortedFiles.map(a => ({ ...a, type: getMediaType(a.extension), name: removeExtension(a.name) }))} {active} />
                             {/if}
                         </VirtualList>
                     {/if}
@@ -494,7 +459,7 @@
 
 {#if isProviderSection}
     <FloatingInputs onlyOne>
-        <MaterialZoom columns={$mediaOptions.columns} defaultValue={5} on:change={(e) => mediaOptions.set({ ...$mediaOptions, columns: e.detail })} />
+        <MaterialZoom columns={$mediaOptions.columns} defaultValue={5} on:change={e => mediaOptions.set({ ...$mediaOptions, columns: e.detail })} />
     </FloatingInputs>
 {:else if active === "online"}
     {#if onlineTab === "youtube" || onlineTab === "vimeo"}
@@ -525,7 +490,7 @@
 
             <MaterialButton
                 on:click={() =>
-                    mediaOptions.update((a) => {
+                    mediaOptions.update(a => {
                         a.mode = slidesViews[$mediaOptions.mode]
                         return a
                     })}
@@ -536,11 +501,11 @@
         </FloatingInputs>
     {/if}
 
-    <MaterialZoom hidden columns={$mediaOptions.columns} defaultValue={5} on:change={(e) => mediaOptions.set({ ...$mediaOptions, columns: e.detail })} />
+    <MaterialZoom hidden columns={$mediaOptions.columns} defaultValue={5} on:change={e => mediaOptions.set({ ...$mediaOptions, columns: e.detail })} />
 {:else if active === "screens" || active === "cameras"}
     <!-- nothing -->
 
-    <MaterialZoom hidden columns={$mediaOptions.columns} defaultValue={5} on:change={(e) => mediaOptions.set({ ...$mediaOptions, columns: e.detail })} />
+    <MaterialZoom hidden columns={$mediaOptions.columns} defaultValue={5} on:change={e => mediaOptions.set({ ...$mediaOptions, columns: e.detail })} />
 {:else}
     {#if active !== "all" && active !== "favourites" && rootPath !== path}
         <FloatingInputs side="left">
@@ -580,11 +545,11 @@
             </MaterialButton>
         {/if}
 
-        <MaterialZoom hidden={!open} columns={$mediaOptions.columns} defaultValue={5} on:change={(e) => mediaOptions.set({ ...$mediaOptions, columns: e.detail })} />
+        <MaterialZoom hidden={!open} columns={$mediaOptions.columns} defaultValue={5} on:change={e => mediaOptions.set({ ...$mediaOptions, columns: e.detail })} />
 
         <MaterialButton
             on:click={() =>
-                mediaOptions.update((a) => {
+                mediaOptions.update(a => {
                     a.mode = slidesViews[$mediaOptions.mode]
                     return a
                 })}

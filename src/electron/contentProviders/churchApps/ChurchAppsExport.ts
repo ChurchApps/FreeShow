@@ -68,7 +68,7 @@ export class ChurchAppsExport {
     private static getAllFreeShowSongIds(data: ChurchAppsStartupLoadData): string[] {
         const shows = data.shows
         const selectedCategories = data.categories || ["song"]
-        return Object.keys(shows).filter((key) => selectedCategories.includes(shows[key].category || ""))
+        return Object.keys(shows).filter(key => selectedCategories.includes(shows[key].category || ""))
     }
 
     private static getChurchAppsSongData(freeShowIds: string[], data: ChurchAppsStartupLoadData): ChurchAppsSongData[] {
@@ -97,8 +97,8 @@ export class ChurchAppsExport {
                     songData.lyrics += `[${slide.group}]\n`
                     currentGroup = slide.group
                 }
-                slide.items.forEach((item) => {
-                    item.lines?.forEach((line) => {
+                slide.items.forEach(item => {
+                    item.lines?.forEach(line => {
                         songData.lyrics += line.text?.[0]?.value + "\n" || ""
                     })
                 })

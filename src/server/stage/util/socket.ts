@@ -12,10 +12,10 @@ export function initSocket() {
         send("LAYOUTS")
     })
 
-    socket.on("STAGE", (msg) => {
+    socket.on("STAGE", msg => {
         let key = msg.channel as ReceiverKey
         if (!receiver[key]) {
-            if (!requestChannels.find((a) => msg.channel.includes(a))) console.log("Unhandled message:", msg)
+            if (!requestChannels.find(a => msg.channel.includes(a))) console.log("Unhandled message:", msg)
             return
         }
 
@@ -36,7 +36,7 @@ export async function awaitRequest(channel: string, data: any = null) {
     // LISTENER
     const waitingTimeout = 3000
     let timeout: NodeJS.Timeout | null = null
-    const returnData: any = await new Promise((resolve) => {
+    const returnData: any = await new Promise(resolve => {
         timeout = setTimeout(() => done(null), waitingTimeout)
 
         socket.on("STAGE", receiver)

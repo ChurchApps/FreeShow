@@ -9,11 +9,11 @@ import { getExtension } from "../utils/files"
 export function decompress(files: string[], asBuffer = false) {
     const data: { content: Buffer | string; name: string; extension: string }[] = []
 
-    files.forEach((file) => {
+    files.forEach(file => {
         const zip = new AdmZip(file)
         const zipEntries = zip.getEntries()
 
-        zipEntries.forEach((zipEntry) => {
+        zipEntries.forEach(zipEntry => {
             let content: Buffer | string
             try {
                 content = zipEntry.getData()
@@ -40,7 +40,7 @@ export function decompress(files: string[], asBuffer = false) {
 export function isZip(path: string): Promise<boolean> {
     const initialBuffer = Buffer.alloc(4)
 
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
         fs.open(path, "r", (openError, fd) => {
             if (openError) {
                 console.error(openError)
@@ -49,7 +49,7 @@ export function isZip(path: string): Promise<boolean> {
 
             fs.read(fd, initialBuffer, 0, 4, 0, (readError, _bytesRead, buffer) => {
                 if (readError) {
-                    fs.close(fd, (closeError) => {
+                    fs.close(fd, closeError => {
                         console.error(closeError || readError)
                         resolve(false)
                     })

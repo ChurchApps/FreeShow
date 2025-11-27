@@ -85,18 +85,10 @@
 </script>
 
 <span class="group">
-    <MaterialButton
-        title="preview._previous_slide [Arrow Left]"
-        disabled={$outLocked || (!$activeSlideRecording && (outSlide?.id === "temp" || (outSlide ? (outSlide.index || 0) < 1 && (linesIndex || 0) < 1 : !layoutLength)))}
-        on:click={() => previewShortcuts.ArrowLeft({ preview: true })}
-    >
+    <MaterialButton title="preview._previous_slide [Arrow Left]" disabled={$outLocked || (!$activeSlideRecording && (outSlide?.id === "temp" || (outSlide ? (outSlide.index || 0) < 1 && (linesIndex || 0) < 1 : !layoutLength)))} on:click={() => previewShortcuts.ArrowLeft({ preview: true })}>
         <Icon id="previous" size={1.2} />
     </MaterialButton>
-    <MaterialButton
-        title="preview._next_slide [Arrow Right]"
-        disabled={$outLocked || (!$activeSlideRecording && (outSlide?.id === "temp" || (outSlide ? (outSlide.index || 0) + 1 >= length && (linesIndex || 0) + 1 >= (maxLines || 0) : !layoutLength)))}
-        on:click={() => previewShortcuts.ArrowRight({ preview: true, key: "ArrowRight" })}
-    >
+    <MaterialButton title="preview._next_slide [Arrow Right]" disabled={$outLocked || (!$activeSlideRecording && (outSlide?.id === "temp" || (outSlide ? (outSlide.index || 0) + 1 >= length && (linesIndex || 0) + 1 >= (maxLines || 0) : !layoutLength)))} on:click={() => previewShortcuts.ArrowRight({ preview: true, key: "ArrowRight" })}>
         <Icon id="next" size={1.2} />
     </MaterialButton>
 
