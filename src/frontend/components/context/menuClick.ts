@@ -1683,6 +1683,8 @@ const clickActions = {
 
         if (obj.sel?.id === "profile") {
             obj.sel.data.forEach(({ id }) => {
+                if (!get(profiles)[id]) return
+
                 const currentProfile = clone(get(profiles)[id])
                 currentProfile.access = {}
 
