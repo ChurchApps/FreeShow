@@ -45,7 +45,7 @@ extraResources:
 # macos
 
 mac:
-    icon: build/public/icon.png
+    icon: build/public/icon.icns
     target:
         - target: dmg
           arch:
@@ -71,6 +71,13 @@ afterSign: scripts/macos/notarize.js
 
 dmg:
     background: build/public/dmg.png
+    icon: build/public/icon.icns
+    iconSize: 80
+    window:
+      x: 100
+      y: 100
+      width: 512
+      height: 384
     sign: false
     contents:
         - x: 140
