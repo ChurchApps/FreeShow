@@ -26,7 +26,7 @@ export const getStyles = (str: string | null | undefined, removeTxt = false) => 
 }
 
 export function getFilters(filter: string | undefined) {
-    if (!filter) return null
+    if (typeof filter !== "string") return {}
 
     const styles: StringObject = {}
     filter.split(" ").forEach((s) => {

@@ -178,7 +178,7 @@
         // only highlight if the set layout is outputted
         if (activeOutput && show.layoutInfo?.name) {
             const outputId = getActiveOutputs($outputs, true, true, true)[0]
-            const selectedLayoutId = Object.entries($showsCache[id]?.layouts).find(([_id, a]) => a.name === show.layoutInfo.name)?.[0]
+            const selectedLayoutId = Object.entries($showsCache[id]?.layouts || {}).find(([_id, a]) => a.name === show.layoutInfo.name)?.[0]
             if ($outputs[outputId]?.out?.slide?.layout !== selectedLayoutId) activeOutput = null
         }
     }

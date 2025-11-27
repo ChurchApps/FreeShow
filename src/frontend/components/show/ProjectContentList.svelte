@@ -87,6 +87,9 @@
         splittedProjectsList = []
 
         projectItemsList.forEach((a, index) => {
+            // Cannot create property 'index' on string 'uid'
+            if (typeof a !== "object") return
+
             if (a.type === "section" && (a.color || projectItemsList[index - 1]?.type === "section")) splittedProjectsList.push({ color: a.color || "", items: [] })
             if (!splittedProjectsList.at(-1)) splittedProjectsList.push({ color: "", items: [] })
 

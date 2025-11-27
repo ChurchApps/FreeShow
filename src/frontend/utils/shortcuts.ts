@@ -353,7 +353,7 @@ export const previewShortcuts = {
         const outSlide = currentOutput?.out?.slide || get(outputSlideCache)[outputId] || {}
 
         e.preventDefault()
-        if (outSlide.id !== currentShow?.id || (currentShow && outSlide.layout !== get(showsCache)[currentShow.id || ""].settings.activeLayout)) {
+        if (outSlide.id !== currentShow?.id || (currentShow && outSlide.layout !== get(showsCache)[currentShow.id || ""]?.settings.activeLayout)) {
             if (get(activeSlideRecording)) stopSlideRecording()
             nextSlideIndividual(e, true)
         } else {

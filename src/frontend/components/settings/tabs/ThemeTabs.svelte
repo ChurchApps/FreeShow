@@ -19,8 +19,8 @@
 
         return names.sort((a, b) => {
             if (a.id === "default" || b.id === "default") return 1
-            let nameA = a.default ? translateText(`themes.${a.name.slice(a.name.indexOf(".") + 1, a.name.length - 2)}`) : a.name
-            let nameB = b.default ? translateText(`themes.${b.name.slice(b.name.indexOf(".") + 1, b.name.length - 2)}`) : b.name
+            let nameA = a.default ? translateText(`themes.${a.name.slice(a.name.indexOf(".") + 1, a.name.length - 2)}`) : a.name || ""
+            let nameB = b.default ? translateText(`themes.${b.name.slice(b.name.indexOf(".") + 1, b.name.length - 2)}`) : b.name || ""
             return nameA.localeCompare(nameB)
         })
     }

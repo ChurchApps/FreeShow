@@ -314,6 +314,7 @@
         return selectedVerses
 
         function getVerseId(verseRef: number | string) {
+            if (!verseRef) return 1
             return Number(verseRef.toString().split("_")[0])
         }
     }

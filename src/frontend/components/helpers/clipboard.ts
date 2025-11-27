@@ -802,7 +802,9 @@ const deleteActions = {
         if (!activePlaylist) return
 
         audioPlaylists.update((a) => {
-            const songs = clone(a[activePlaylist]?.songs || [])
+            if (!a[activePlaylist]) return a
+
+            const songs = clone(a[activePlaylist].songs || [])
             data.forEach((song) => {
                 const currentSongIndex = songs.findIndex((path) => path === song.path)
                 if (currentSongIndex >= 0) songs.splice(currentSongIndex, 1)

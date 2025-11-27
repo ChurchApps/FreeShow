@@ -54,6 +54,8 @@
 
         let itemId = uid(5)
         stageShows.update((a) => {
+            if (!a[stageId]?.items) return a
+
             let style = DEFAULT_STYLE
             if (smallItems.includes(itemType) || textValue) {
                 const width = resolution.width * 0.45

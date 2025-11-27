@@ -44,7 +44,7 @@
 
     // auto change template based on number of bibles (if default)
     $: if (activeScriptureId || templateId || biblesContent.length) setTimeout(checkTemplate, 100)
-    $: isDefault = templateId.includes("scripture") && !templateId.includes("LT")
+    $: isDefault = typeof templateId === "string" ? templateId.includes("scripture") && !templateId.includes("LT") : false
     function checkTemplate() {
         if (!isDefault || !biblesContent.length) return
 

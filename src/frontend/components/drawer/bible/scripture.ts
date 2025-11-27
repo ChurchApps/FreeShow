@@ -291,6 +291,7 @@ export function getMergedAttribution(biblesContent: BibleContent[]) {
 }
 
 function getVerseId(verseRef: number | string) {
+    if (!verseRef) return 1
     return Number(verseRef.toString().split("_")[0])
 }
 
@@ -651,7 +652,7 @@ export function getScriptureSlides({ biblesContent, selectedChapters, selectedVe
         }
 
         const referenceDivider = get(scriptureSettings).referenceDivider || ":"
-        let text = customText
+        let text = customText || ""
         if (!showVersion && !showVerse) return
         text = text.replaceAll(textKeys.showVersion, showVersion ? versions : "")
         text = text.replaceAll(textKeys.showVerse, showVerse ? books + " " + chapterNumber + referenceDivider + range : "")

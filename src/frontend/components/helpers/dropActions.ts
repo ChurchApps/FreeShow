@@ -375,7 +375,7 @@ export const dropActions = {
             const templateId: string = drop.data
             if (!mediaPath || !templateId) return
 
-            if (!files[drop.id].includes(getExtension(mediaPath))) return
+            if (!files[drop.id]?.includes(getExtension(mediaPath))) return
 
             const templateSettings = get(templates)[templateId]?.settings || {}
             const newData = { key: "settings", data: { ...templateSettings, backgroundPath: mediaPath } }

@@ -144,8 +144,9 @@ export function importSpecific(data: { content: string; name?: string; extension
     newToast("main.finished")
 }
 
-export function fixShowIssues(show) {
+export function fixShowIssues(show: Show) {
     if (!show.slides) show.slides = {}
+    if (!show.settings) show.settings = { activeLayout: Object.keys(show.layouts)[0] || "", template: null }
 
     // remove unused children slides
     const allUsedSlides: string[] = Object.keys(show.slides).reduce((ids: string[], slideId: string) => {
@@ -185,8 +186,11 @@ export function fixShowIssues(show) {
     })
 
     Object.values<Slide>(show.slides).forEach((slide) => {
+        // fix undefined items issue
+        slide.items = slide.items?.filter((item) => item !== undefined && item !== null) || []
+
         // fix undefined lines issue
-        slide.items?.forEach((item) => {
+        slide.items.forEach((item) => {
             if (!item.lines) return
             item.lines = item.lines.filter((line) => line !== undefined)
         })

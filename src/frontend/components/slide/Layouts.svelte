@@ -76,6 +76,8 @@
     }
 
     function setLayout(id: string, layoutInfo) {
+        if (!$showsCache[showId]) return
+
         showsCache.update((s) => {
             s[showId].settings.activeLayout = id
             return s

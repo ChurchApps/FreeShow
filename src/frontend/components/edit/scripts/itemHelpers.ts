@@ -251,7 +251,7 @@ export function shouldItemBeShown(item: Item, allItems: Item[] = [], { outputId,
     if (type === "stage") allItems = getTempItems(item, allItems)
 
     if (!allItems.length) allItems = [item]
-    const slideItems = allItems.filter((a) => !a.bindings?.length || a.bindings.includes(outputId))
+    const slideItems = allItems.filter((a) => !a?.bindings?.length || a.bindings.includes(outputId))
     const itemsText = slideItems.reduce((value, currentItem) => (value += getItemText(currentItem)), "")
     // set dynamic values
     // const ref = { showId: get(activeShow)?.id, layoutId: _show().get("settings.activeLayout"), slideIndex: get(activeEdit).slide, type: get(activePage) === "stage" ? "stage" : get(activeEdit).type || "show", id: get(activeEdit).id }

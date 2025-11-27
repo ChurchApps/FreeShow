@@ -34,6 +34,7 @@
         if ($selected.id !== id) selected.set({ id, data: [data] })
         else if (!arrayHasData($selected.data, data)) {
             selected.update((s) => {
+                if (!Array.isArray(s.data)) s.data = []
                 s.data = [...s.data, data]
                 return s
             })

@@ -128,7 +128,7 @@ export const receiveREMOTE: any = {
 
             if (currentOut !== currentId) return
         }
-        if (id.length && msg.id) {
+        if (id?.length && msg.id) {
             setConnectedState("REMOTE", msg.id, "active", id)
         }
 

@@ -174,7 +174,7 @@ export function setOutput(type: string, data: any, toggle = false, outputId = ""
             }
 
             let outData = a[id].out?.[type] || null
-            if ((type === "overlays" || type === "effects") && data.length) {
+            if ((type === "overlays" || type === "effects") && data?.length) {
                 if (!Array.isArray(data)) data = [data]
                 if (toggle && i === 0) toggleState = outData?.includes(data[0])
                 if (toggle && toggleState) outData.splice(outData.indexOf(data[0]), 1)
