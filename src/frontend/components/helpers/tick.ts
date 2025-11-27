@@ -114,7 +114,7 @@ function sliderTime(id: any) {
     if (options.sliderTimer || !options.timer || options.paused || !options.autoPlay) return
 
     options.sliderTimer = setTimeout(() => {
-        options = clone(get(slideTimers)[id]) /// DEBUG
+        options = clone(get(slideTimers)[id])
         if (!options || !options.sliderTimer || !options.timer || options.paused) return
 
         slideTimers.update(a => {
