@@ -191,8 +191,11 @@
             <MaterialToggleSwitch label="scripture.divide_long_verses" style="width: 100%;" checked={$scriptureSettings.splitLongVerses} defaultValue={false} on:change={e => update("splitLongVerses", e.detail)} />
         </InputRow>
         {#if $scriptureSettings.splitLongVerses && longVersesMenuOpened}
-            <MaterialToggleSwitch label="scripture.split_long_verses_suffix" checked={$scriptureSettings.splitLongVersesSuffix} defaultValue={false} on:change={e => update("splitLongVersesSuffix", e.detail)} />
-            <MaterialNumberInput label="edit.size" value={$scriptureSettings.longVersesChars || 100} defaultValue={100} min={50} on:change={e => update("longVersesChars", e.detail)} />
+            <!-- Sub-items for long verses options -->
+            <div class="sub-items">
+                <MaterialToggleSwitch label="scripture.split_long_verses_suffix" checked={$scriptureSettings.splitLongVersesSuffix} defaultValue={false} on:change={e => update("splitLongVersesSuffix", e.detail)} />
+                <MaterialNumberInput label="edit.size" value={$scriptureSettings.longVersesChars || 100} defaultValue={100} min={50} on:change={e => update("longVersesChars", e.detail)} />
+            </div>
         {/if}
 
         <!-- Verse numbers -->
@@ -200,8 +203,11 @@
             <MaterialToggleSwitch label="scripture.verse_numbers" style="width: 100%;" checked={$scriptureSettings.verseNumbers} defaultValue={false} on:change={e => update("verseNumbers", e.detail)} />
         </InputRow>
         {#if $scriptureSettings.verseNumbers && verseMenuOpened}
-            <MaterialColorInput label="edit.color" value={$scriptureSettings.numberColor || "#919191"} defaultValue="#919191" on:change={e => update("numberColor", e.detail)} />
-            <MaterialNumberInput label="edit.size (%)" value={$scriptureSettings.numberSize || 50} defaultValue={50} on:change={e => update("numberSize", e.detail)} />
+            <!-- Sub-items for verse number options -->
+            <div class="sub-items">
+                <MaterialColorInput label="edit.color" value={$scriptureSettings.numberColor || "#919191"} defaultValue="#919191" on:change={e => update("numberColor", e.detail)} />
+                <MaterialNumberInput label="edit.size (%)" value={$scriptureSettings.numberSize || 50} defaultValue={50} on:change={e => update("numberSize", e.detail)} />
+            </div>
         {/if}
 
         <!-- Red Jesus -->
@@ -211,7 +217,10 @@
             </InputRow>
         {/if}
         {#if $scriptureSettings.redJesus && redMenuOpened}
-            <MaterialColorInput label="edit.color" value={$scriptureSettings.jesusColor || "#FF4136"} defaultValue="#FF4136" on:change={e => update("jesusColor", e.detail)} />
+            <!-- Sub-items for red Jesus options -->
+            <div class="sub-items">
+                <MaterialColorInput label="edit.color" value={$scriptureSettings.jesusColor || "#FF4136"} defaultValue="#FF4136" on:change={e => update("jesusColor", e.detail)} />
+            </div>
         {/if}
 
         <!-- Reference options -->
@@ -223,31 +232,34 @@
         </InputRow>
 
         {#if referenceMenuOpened}
-            {#if showVersion || (showVersion && $scriptureSettings.showVerse) || ($scriptureSettings.showVerse && customText.trim() !== "[reference]")}
-                <MaterialTextarea label="tools.layout" value={customText} rows={2} on:change={e => update("customText", e.detail)} />
-            {/if}
-
-            <!-- {#if $scriptureSettings.showVerse}
-                <CombinedInput>
-                    <p><T id="meta.text_divider" /></p>
-                    <TextInput value={$scriptureSettings.referenceDivider || ":"} on:change={(e) => update("referenceDivider", getTextValue(e))} />
-                </CombinedInput>
-            {/if} -->
-
-            {#if showVersion || $scriptureSettings.showVerse}
-                <!-- {#if !$scriptureSettings.firstSlideReference} -->
-                <MaterialToggleSwitch label="scripture.combine_with_text" checked={$scriptureSettings.combineWithText} defaultValue={false} on:change={e => update("combineWithText", e.detail)} />
-                {#if $scriptureSettings.combineWithText}
-                    <MaterialToggleSwitch label="scripture.reference_at_bottom" checked={$scriptureSettings.referenceAtBottom} defaultValue={false} on:change={e => update("referenceAtBottom", e.detail)} />
+            <!-- Sub-items for reference options -->
+            <div class="sub-items">
+                {#if showVersion || (showVersion && $scriptureSettings.showVerse) || ($scriptureSettings.showVerse && customText.trim() !== "[reference]")}
+                    <MaterialTextarea label="tools.layout" value={customText} rows={2} on:change={e => update("customText", e.detail)} />
                 {/if}
-                <!-- {/if} -->
 
-                <!-- <br /> -->
-                <!-- WIP Unwanted: -->
-                {#if !$scriptureSettings.combineWithText}
-                    <MaterialToggleSwitch label="edit.invert_items" checked={$scriptureSettings.invertItems} defaultValue={false} on:change={e => update("invertItems", e.detail)} />
+                <!-- {#if $scriptureSettings.showVerse}
+                    <CombinedInput>
+                        <p><T id="meta.text_divider" /></p>
+                        <TextInput value={$scriptureSettings.referenceDivider || ":"} on:change={(e) => update("referenceDivider", getTextValue(e))} />
+                    </CombinedInput>
+                {/if} -->
+
+                {#if showVersion || $scriptureSettings.showVerse}
+                    <!-- {#if !$scriptureSettings.firstSlideReference} -->
+                    <MaterialToggleSwitch label="scripture.combine_with_text" checked={$scriptureSettings.combineWithText} defaultValue={false} on:change={e => update("combineWithText", e.detail)} />
+                    {#if $scriptureSettings.combineWithText}
+                        <MaterialToggleSwitch label="scripture.reference_at_bottom" checked={$scriptureSettings.referenceAtBottom} defaultValue={false} on:change={e => update("referenceAtBottom", e.detail)} />
+                    {/if}
+                    <!-- {/if} -->
+
+                    <!-- <br /> -->
+                    <!-- WIP Unwanted: -->
+                    {#if !$scriptureSettings.combineWithText}
+                        <MaterialToggleSwitch label="edit.invert_items" checked={$scriptureSettings.invertItems} defaultValue={false} on:change={e => update("invertItems", e.detail)} />
+                    {/if}
                 {/if}
-            {/if}
+            </div>
         {/if}
     </div>
 </div>
@@ -299,6 +311,25 @@
         /* position: absolute; */
         width: 160%;
         inset-inline-end: 0;
+    }
+
+    /* Sub-items styling: indent and darker background to visually nest under parent */
+    .sub-items {
+        padding-left: 15px;
+        background: rgba(0, 0, 0, 0.15);
+        border-left: 2px solid var(--secondary);
+    }
+    .sub-items :global(.togglefield),
+    .sub-items :global(.numberfield),
+    .sub-items :global(.colorfield),
+    .sub-items :global(.textareafield) {
+        background: transparent;
+    }
+    .sub-items :global(.togglefield .background),
+    .sub-items :global(.numberfield .background),
+    .sub-items :global(.colorfield .background),
+    .sub-items :global(.textareafield .background) {
+        background: transparent;
     }
 
     .attributionString {
