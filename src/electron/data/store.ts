@@ -96,7 +96,13 @@ export function createStores(previousLocation?: string | null, setup: boolean = 
         try {
             mkdirSync(configFolderPath, { recursive: true })
         } catch (err) {
-            configFolderPath = previousLocation || getDefaultDataFolderRoot()
+            if (previousLocation) {
+                configFolderPath = previousLocation
+            } else {
+                config.set("dataPath", "")
+                configFolderPath = getDataFolderPath("userData")
+            }
+
             config.set("dataPath", configFolderPath)
             sendMain(Main.DATA_PATH, configFolderPath)
             sendToMain(ToMain.ALERT, "Error: No permission to folder!")

@@ -97,7 +97,7 @@ export function xml2json(xmlString: string, removeBreaks = false) {
 
             if (typeof o === "string") return jsonValue + (name && ":") + '"' + o.toString() + '"'
 
-            return jsonValue + (name && ":") + o.toString()
+            return jsonValue + (name && ":") + o?.toString()
         },
         innerXml: node => {
             if ("innerHTML" in node) return node.innerHTML

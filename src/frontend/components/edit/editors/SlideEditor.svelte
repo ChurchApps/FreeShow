@@ -312,7 +312,7 @@
 
 <svelte:window on:keydown={keydown} on:keyup={keyup} on:blur={blurred} on:paste={paste} />
 
-{#if template}
+{#if template && !chordsMode && !widthOrHeight.includes("height") && !$focusMode && !isLocked}
     <div class="default" data-title={translateText(`info.template: ${$templates[template]?.name || "—"}`)}>
         <MaterialButton
             style="border-radius: 50%;"
