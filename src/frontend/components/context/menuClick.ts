@@ -166,7 +166,7 @@ const clickActions = {
     paste: (obj: ObjData) => paste(null, {}, obj.contextElem),
     // view
     // help
-    docs: () => sendMain(Main.URL, "https://freeshow.app/docs"),
+    docs: () => sendMain(Main.URL, "https://joinamazing.com/downloads"),
     shortcuts: () => activePopup.set("shortcuts"),
     about: () => activePopup.set("about"),
     quick_search: () => quickSearchActive.set(true),

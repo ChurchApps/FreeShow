@@ -56,7 +56,7 @@
     {:else if Object.keys($shows).length < 20}
         <!-- shows up for new users (can be found in "About" menu) -->
         <p style="padding-top: 30px">
-            <Link url="https://freeshow.app/docs">
+            <Link url="https://joinamazing.com">
                 <T id="main.docs" />
                 <Icon id="launch" white />
             </Link>

@@ -5,9 +5,9 @@ export function checkForUpdates(currentVersion: string) {
     if (get(isDev) || get(alertUpdates) === false) return
     const includeBeta = currentVersion.includes("beta") || get(special).betaVersionAlert
 
-    fetch("https://api.github.com/repos/ChurchApps/freeshow/releases")
-        .then(response => response.json())
-        .then(data => {
+    fetch("https://api.github.com/repos/Tech-Mission-Solutions/aplay-pro/releases")
+        .then((response) => response.json())
+        .then((data) => {
             if (get(activePopup) !== null) return
 
             const latestAll = data.filter((a: any) => a.draft === false)[0]

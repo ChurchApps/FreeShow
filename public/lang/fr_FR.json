@@ -58,7 +58,7 @@
         "libraries": "Bibliothèques utilisées",
         "thanks": "Merci à",
         "new_update": "Nouvelle mise à jour disponible",
-        "download": "Redémarrez l'application pour mettre à jour, ou rendez-vous sur freeshow.app pour télécharger manuellement",
+        "download": "Redémarrez l'application pour mettre à jour, ou rendez-vous sur joinamazing.com/downloads pour télécharger manuellement",
         "changes": "Quoi de neuf"
     },
     "tooltip": {
@@ -488,7 +488,7 @@
         "manage_tags": "Gérer les tags",
         "sync_categories": "Synchroniser les catégories",
         "effect_items": "Éléments d'effet",
-        "initialize": "Bienvenue sur FreeShow",
+        "initialize": "Bienvenue sur APlay Pro",
         "unsaved": "Vous n'avez pas encore sauvergardé ! Êtes-vous sur de vouloir quitter ?",
         "cancel": "Annuler",
         "continue": "Continuer",

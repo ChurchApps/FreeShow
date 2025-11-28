@@ -66,7 +66,7 @@ export function template(strings: Dictionary): any {
         submenu: [
             { label: strings.popup?.quick_search || "Quick search", click: () => mc("quick_search") },
             { label: strings.popup?.shortcuts || "Shortcuts", click: () => mc("shortcuts") },
-            { label: strings.main?.docs || "Docs", click: () => openURL("https://freeshow.app/docs") },
+            { label: strings.main?.docs || "Docs", click: () => openURL("https://joinamazing.com/downloads") },
             { label: strings.guide?.start || "Quick start guide", click: () => mc("quick_start_guide") },
             { label: strings.main?.about || "About", click: () => mc("about") }
         ]

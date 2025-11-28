@@ -58,7 +58,7 @@
         "libraries": "Biblioteker brukt",
         "thanks": "Takk til",
         "new_update": "Ny oppdatering tilgjengelig",
-        "download": "Start programmet på nytt for å oppdatere, eller gå til freeshow.app for å laste ned manuellt",
+        "download": "Start programmet på nytt for å oppdatere, eller gå til joinamazing.com/downloads for å laste ned manuellt",
         "changes": "Hva er nytt"
     },
     "tooltip": {
@@ -488,7 +488,7 @@
         "manage_tags": "Behandle etiketter",
         "sync_categories": "Synkroniser kategorier",
         "effect_items": "Effekt elementer",
-        "initialize": "Velkommen til FreeShow",
+        "initialize": "Velkommen til APlay Pro",
         "unsaved": "Er du sikkert på at du vil avslutte?",
         "cancel": "Avbryt",
         "continue": "Fortsett",
