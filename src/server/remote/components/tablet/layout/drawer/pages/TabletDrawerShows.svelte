@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import { shows, dictionary, activeShow, activeCategory, categories } from "../../../../../util/stores"
-    import { translate } from "../../../../../util/helpers"
+    import { translate, formatRelativeDate } from "../../../../../util/helpers"
     import { send } from "../../../../../util/socket"
     import { _set } from "../../../../../util/stores"
     import MaterialButton from "../../../../MaterialButton.svelte"
@@ -75,20 +75,6 @@
             sortType = type
             sortDirection = type === "modified" ? "desc" : "asc"
         }
-    }
-
-    function formatDate(timestamp: number) {
-        if (!timestamp) return ""
-        const date = new Date(timestamp)
-        const now = new Date()
-        const diff = now.getTime() - date.getTime()
-        const days = Math.floor(diff / (1000 * 60 * 60 * 24))
-
-        if (days === 0) return "Today"
-        if (days === 1) return "Yesterday"
-        if (days < 7) return `${days} days ago`
-
-        return date.toLocaleDateString(undefined, { month: "short", day: "numeric", year: date.getFullYear() !== now.getFullYear() ? "numeric" : undefined })
     }
 
     function getIcon(show: any) {
@@ -170,7 +156,7 @@
                                                 <span class="number">{show.quickAccess?.number || show.meta?.number || ""}</span>
                                             {/if}
 
-                                            <span class="date">{formatDate(show.timestamps?.modified || show.timestamps?.created || 0)}</span>
+                                            <span class="date">{formatRelativeDate(show.timestamps?.modified || show.timestamps?.created || 0)}</span>
                                         </span>
                                     </div>
                                 </MaterialButton>

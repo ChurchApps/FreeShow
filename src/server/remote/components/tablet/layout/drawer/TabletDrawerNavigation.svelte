@@ -1,6 +1,6 @@
 <script lang="ts">
     import { categories, shows, activeCategory, dictionary, scriptures, openedScripture, collectionId, actions, actionTags, variables, variableTags, activeActionTagFilter, activeVariableTagFilter, functionsSubTab, timers, triggers, overlays, overlayCategories, activeOverlayCategory } from "../../../../util/stores"
-    import { translate } from "../../../../util/helpers"
+    import { translate, keysToID, sortByName } from "../../../../util/helpers"
     import { _set } from "../../../../util/stores"
     import Button from "../../../../../common/components/Button.svelte"
     import Icon from "../../../../../common/components/Icon.svelte"
@@ -8,27 +8,32 @@
 
     export let id: string
 
+    // Generic category list builder - reduces duplication between shows/overlays
+    type CategoryData = {
+        categoriesList: any[]
+        unarchivedCategories: any[]
+        archivedCategories: any[]
+        allItems: any[]
+        unarchivedItems: any[]
+        uncategorizedCount: number
+    }
+
+    function buildCategoryData(items: any[], categoriesObj: Record<string, any>): CategoryData {
+        const categoriesList = keysToID(categoriesObj)
+        const unarchivedCategories = categoriesList.filter(a => !a.isArchive)
+        const archivedCategories = categoriesList.filter(a => a.isArchive)
+        const allItems = items.filter(a => a && !a.private)
+        const unarchivedItems = allItems.filter(a => a.category === null || !categoriesObj[a.category]?.isArchive)
+        const uncategorizedCount = unarchivedItems.filter(a => a.category === null || !categoriesObj[a.category]).length
+        return { categoriesList, unarchivedCategories, archivedCategories, allItems, unarchivedItems, uncategorizedCount }
+    }
+
     // Shows tab logic
-    $: categoriesList = Object.keys($categories).map(k => ({ id: k, ...$categories[k] }))
-    $: unarchivedCategoriesList = categoriesList.filter(a => !a.isArchive)
-    $: archivedCategoriesList = categoriesList.filter(a => a.isArchive)
-
-    $: currentShows = $shows || []
-    $: allVisibleShows = currentShows.filter(a => a && !a.private)
-    $: unarchivedShows = allVisibleShows.filter(a => a.category === null || !$categories[a.category]?.isArchive)
-    $: uncategorizedShowsLength = unarchivedShows.filter(a => a.category === null || !$categories[a.category]).length
-
+    $: showsData = buildCategoryData($shows || [], $categories)
     $: active = $activeCategory || "all"
 
     // Overlays tab logic
-    $: overlayCategoriesList = Object.keys($overlayCategories).map(k => ({ id: k, ...$overlayCategories[k] }))
-    $: unarchivedOverlayCategoriesList = overlayCategoriesList.filter(a => !a.isArchive)
-    $: archivedOverlayCategoriesList = overlayCategoriesList.filter(a => a.isArchive)
-
-    $: allOverlays = Object.values($overlays || {}).filter(a => a)
-    $: unarchivedOverlays = allOverlays.filter(a => a.category === null || !$overlayCategories[a.category]?.isArchive)
-    $: uncategorizedOverlaysLength = unarchivedOverlays.filter(a => a.category === null || !$overlayCategories[a.category]).length
-
+    $: overlaysData = buildCategoryData(Object.values($overlays || {}), $overlayCategories)
     $: activeOverlay = $activeOverlayCategory || "all"
 
     function setOverlayCategory(catId: string) {
@@ -36,17 +41,24 @@
     }
 
     // Scripture tab logic
-    $: scriptureEntries = Object.keys($scriptures).map(k => ({ id: k, ...$scriptures[k], icon: $scriptures[k].api ? "scripture_alt" : $scriptures[k].collection ? "collection" : "scripture" }))
-
-    function sortScriptures(list: any[]) {
-        return list.sort((a, b) => (a.customName || a.name || "").localeCompare(b.customName || b.name || ""))
-    }
-
-    $: favoritesList = sortScriptures(scriptureEntries.filter(a => a.favorite))
+    $: scriptureEntries = keysToID($scriptures).map((a: any) => ({ ...a, icon: a.api ? "scripture_alt" : a.collection ? "collection" : "scripture" }))
+    $: favoritesList = sortByName(
+        scriptureEntries.filter(a => a.favorite),
+        "name"
+    )
     $: favoriteIds = new Set(favoritesList.map(a => a.id))
-    $: collectionList = sortScriptures(scriptureEntries.filter(a => a.collection && !favoriteIds.has(a.id)))
-    $: localBibles = sortScriptures(scriptureEntries.filter(a => !a.collection && !a.api && !favoriteIds.has(a.id)))
-    $: apiBibles = sortScriptures(scriptureEntries.filter(a => !a.collection && a.api && !favoriteIds.has(a.id)))
+    $: collectionList = sortByName(
+        scriptureEntries.filter(a => a.collection && !favoriteIds.has(a.id)),
+        "name"
+    )
+    $: localBibles = sortByName(
+        scriptureEntries.filter(a => !a.collection && !a.api && !favoriteIds.has(a.id)),
+        "name"
+    )
+    $: apiBibles = sortByName(
+        scriptureEntries.filter(a => !a.collection && a.api && !favoriteIds.has(a.id)),
+        "name"
+    )
 
     $: scriptureSections = [
         { id: "favorites", label: "category.favourites", items: favoritesList },
@@ -58,37 +70,29 @@
         _set("activeCategory", catId)
     }
 
-    function sortByName(list: any[]) {
-        return [...list].sort((a, b) => (a.name || "").localeCompare(b.name || ""))
-    }
-
     // Functions tab logic
     $: actionsTagsOnly = Object.values($actions).map(a => a.tags || [])
     $: variablesTagsOnly = Object.values($variables).map(a => a.tags || [])
     $: timersCount = Object.keys($timers).length
     $: triggersCount = Object.keys($triggers).length
 
-    function keysToID(obj: any) {
-        return Object.keys(obj).map(key => ({ id: key, ...obj[key] }))
-    }
+    $: sortedActionTags = sortByName(keysToID($actionTags), "name")
+        .sort((a, b) => String(a.color || "").localeCompare(String(b.color || "")))
+        .map(a => ({
+            ...a,
+            label: a.name,
+            icon: "tag",
+            count: actionsTagsOnly.filter(b => b.includes(a.id)).length
+        }))
 
-    function sortObject(list: any[], key: string) {
-        return list.sort((a, b) => (a[key] || "").localeCompare(b[key] || ""))
-    }
-
-    $: sortedActions = sortObject(sortByName(keysToID($actionTags)), "color").map(a => ({
-        ...a,
-        label: a.name,
-        icon: "tag",
-        count: actionsTagsOnly.filter(b => b.includes(a.id)).length
-    }))
-
-    $: sortedVariables = sortObject(sortByName(keysToID($variableTags)), "color").map(a => ({
-        ...a,
-        label: a.name,
-        icon: "tag",
-        count: variablesTagsOnly.filter(b => b.includes(a.id)).length
-    }))
+    $: sortedVariableTags = sortByName(keysToID($variableTags), "name")
+        .sort((a, b) => String(a.color || "").localeCompare(String(b.color || "")))
+        .map(a => ({
+            ...a,
+            label: a.name,
+            icon: "tag",
+            count: variablesTagsOnly.filter(b => b.includes(a.id)).length
+        }))
 
     function setFunctionsSubTab(tab: string) {
         functionsSubTab.set(tab)
@@ -108,26 +112,26 @@
                         <Icon id="all" size={1} white={active === "all"} />
                         <p style="margin: 5px;">{translate("category.all", $dictionary)}</p>
                     </div>
-                    <span class="count">{unarchivedShows.length}</span>
+                    <span class="count">{showsData.unarchivedItems.length}</span>
                 </MaterialButton>
 
-                {#if uncategorizedShowsLength}
+                {#if showsData.uncategorizedCount}
                     <MaterialButton class="tab {active === 'unlabeled' ? 'active' : ''}" on:click={() => setCategory("unlabeled")} style="width: 100%; font-weight: normal; padding: 0.2em 0.8em;" isActive={active === "unlabeled"} tab>
                         <div style="max-width: 85%;" data-title={translate("category.unlabeled", $dictionary)}>
                             <Icon id="noIcon" size={1} white={active === "unlabeled"} />
                             <p style="margin: 5px;">{translate("category.unlabeled", $dictionary)}</p>
                         </div>
-                        <span class="count">{uncategorizedShowsLength}</span>
+                        <span class="count">{showsData.uncategorizedCount}</span>
                     </MaterialButton>
                 {/if}
             </div>
 
             <!-- Categories Section -->
-            {#if unarchivedCategoriesList.length}
+            {#if showsData.unarchivedCategories.length}
                 <div class="section">
                     <div class="title">{translate("guide_title.categories", $dictionary)}</div>
-                    {#each sortByName(unarchivedCategoriesList) as cat}
-                        {@const count = allVisibleShows.filter(s => s.category === cat.id).length}
+                    {#each sortByName(showsData.unarchivedCategories, "name") as cat}
+                        {@const count = showsData.allItems.filter(s => s.category === cat.id).length}
                         <MaterialButton class="tab {active === cat.id ? 'active' : ''}" on:click={() => setCategory(cat.id)} style="width: 100%; font-weight: normal; padding: 0.2em 0.8em;" isActive={active === cat.id} tab>
                             <div style="max-width: 85%;" data-title={translate(cat.name, $dictionary) || cat.name}>
                                 <Icon id={cat.icon || "folder"} size={1} white={active === cat.id} />
@@ -140,14 +144,14 @@
             {/if}
 
             <!-- Archived Categories Section -->
-            {#if archivedCategoriesList.length}
+            {#if showsData.archivedCategories.length}
                 <div class="section">
                     <div class="separator">
                         <div class="sepLabel">{translate("actions.archive_title", $dictionary)}</div>
                         <hr />
                     </div>
-                    {#each sortByName(archivedCategoriesList) as cat}
-                        {@const count = allVisibleShows.filter(s => s.category === cat.id).length}
+                    {#each sortByName(showsData.archivedCategories, "name") as cat}
+                        {@const count = showsData.allItems.filter(s => s.category === cat.id).length}
                         <MaterialButton class="tab {active === cat.id ? 'active' : ''}" on:click={() => setCategory(cat.id)} style="width: 100%; font-weight: normal; padding: 0.2em 0.8em;" isActive={active === cat.id} tab>
                             <div style="max-width: 85%;" data-title={translate(cat.name, $dictionary) || cat.name}>
                                 <Icon id={cat.icon || "folder"} size={1} white={active === cat.id} />
@@ -181,7 +185,7 @@
                     <span class="count">{Object.keys($actions).length}</span>
                 </MaterialButton>
 
-                {#each sortedActions as tag}
+                {#each sortedActionTags as tag}
                     <MaterialButton
                         class="tab {$functionsSubTab === 'actions' && $activeActionTagFilter.includes(tag.id) ? 'active' : ''}"
                         on:click={() => {
@@ -233,7 +237,7 @@
                     <span class="count">{Object.keys($variables).length}</span>
                 </MaterialButton>
 
-                {#each sortedVariables as tag}
+                {#each sortedVariableTags as tag}
                     <MaterialButton
                         class="tab {$functionsSubTab === 'variables' && $activeVariableTagFilter.includes(tag.id) ? 'active' : ''}"
                         on:click={() => {
@@ -274,26 +278,26 @@
                         <Icon id="all" size={1} white={activeOverlay === "all"} />
                         <p style="margin: 5px;">{translate("category.all", $dictionary)}</p>
                     </div>
-                    <span class="count">{unarchivedOverlays.length}</span>
+                    <span class="count">{overlaysData.unarchivedItems.length}</span>
                 </MaterialButton>
 
-                {#if uncategorizedOverlaysLength}
+                {#if overlaysData.uncategorizedCount}
                     <MaterialButton class="tab {activeOverlay === 'unlabeled' ? 'active' : ''}" on:click={() => setOverlayCategory("unlabeled")} style="width: 100%; font-weight: normal; padding: 0.2em 0.8em;" isActive={activeOverlay === "unlabeled"} tab>
                         <div style="max-width: 85%;" data-title={translate("category.unlabeled", $dictionary)}>
                             <Icon id="noIcon" size={1} white={activeOverlay === "unlabeled"} />
                             <p style="margin: 5px;">{translate("category.unlabeled", $dictionary)}</p>
                         </div>
-                        <span class="count">{uncategorizedOverlaysLength}</span>
+                        <span class="count">{overlaysData.uncategorizedCount}</span>
                     </MaterialButton>
                 {/if}
             </div>
 
             <!-- Categories Section -->
-            {#if unarchivedOverlayCategoriesList.length}
+            {#if overlaysData.unarchivedCategories.length}
                 <div class="section">
                     <div class="title">{translate("guide_title.categories", $dictionary)}</div>
-                    {#each sortByName(unarchivedOverlayCategoriesList) as cat}
-                        {@const count = allOverlays.filter(s => s.category === cat.id).length}
+                    {#each sortByName(overlaysData.unarchivedCategories, "name") as cat}
+                        {@const count = overlaysData.allItems.filter(s => s.category === cat.id).length}
                         <MaterialButton class="tab {activeOverlay === cat.id ? 'active' : ''}" on:click={() => setOverlayCategory(cat.id)} style="width: 100%; font-weight: normal; padding: 0.2em 0.8em;" isActive={activeOverlay === cat.id} tab>
                             <div style="max-width: 85%;" data-title={translate(cat.name, $dictionary) || cat.name}>
                                 <Icon id={cat.icon || "folder"} size={1} white={activeOverlay === cat.id} />
@@ -306,14 +310,14 @@
             {/if}
 
             <!-- Archived Categories Section -->
-            {#if archivedOverlayCategoriesList.length}
+            {#if overlaysData.archivedCategories.length}
                 <div class="section">
                     <div class="separator">
                         <div class="sepLabel">{translate("actions.archive_title", $dictionary)}</div>
                         <hr />
                     </div>
-                    {#each sortByName(archivedOverlayCategoriesList) as cat}
-                        {@const count = allOverlays.filter(s => s.category === cat.id).length}
+                    {#each sortByName(overlaysData.archivedCategories, "name") as cat}
+                        {@const count = overlaysData.allItems.filter(s => s.category === cat.id).length}
                         <MaterialButton class="tab {activeOverlay === cat.id ? 'active' : ''}" on:click={() => setOverlayCategory(cat.id)} style="width: 100%; font-weight: normal; padding: 0.2em 0.8em;" isActive={activeOverlay === cat.id} tab>
                             <div style="max-width: 85%;" data-title={translate(cat.name, $dictionary) || cat.name}>
                                 <Icon id={cat.icon || "folder"} size={1} white={activeOverlay === cat.id} />

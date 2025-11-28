@@ -243,46 +243,7 @@ export const receiver = {
             })
         }
     },
-    SCRIPTURE_CHAPTERS: (data: any) => {
-        const { id, bookIndex, chapters } = data || {}
-        if (!id || typeof bookIndex !== "number" || !Array.isArray(chapters)) return
-
-        scriptureCache.update(cache => {
-            const bible = cache[id] || { books: [] as any[] }
-            const books = Array.isArray(bible.books) ? bible.books : []
-            const book = books[bookIndex] || {}
-            book.chapters = (chapters || []).map((c: any) => ({
-                number: c.number,
-                keyName: c.keyName,
-                verses: []
-            }))
-            books[bookIndex] = book
-            cache[id] = { ...bible, books }
-            return cache
-        })
-    },
-
-    SCRIPTURE_VERSES: (data: any) => {
-        const { id, bookIndex, chapterIndex, verses } = data || {}
-        if (!id || typeof bookIndex !== "number" || typeof chapterIndex !== "number" || !Array.isArray(verses)) return
-
-        scriptureCache.update(cache => {
-            const bible = cache[id] || { books: [] as any[] }
-            const books = Array.isArray(bible.books) ? bible.books : []
-            const book = books[bookIndex] || { chapters: [] as any[] }
-            const chaptersArr = Array.isArray(book.chapters) ? book.chapters : []
-            const chapter = chaptersArr[chapterIndex] || { verses: [] }
-            chapter.verses = (verses || []).map((v: any, i: number) => ({
-                number: v.number || i + 1,
-                text: sanitizeVerseText(v.text || v.value || "")
-            }))
-            chaptersArr[chapterIndex] = chapter
-            book.chapters = chaptersArr
-            books[bookIndex] = book
-            cache[id] = { ...bible, books }
-            return cache
-        })
-    },
+    // SCRIPTURE_CHAPTERS and SCRIPTURE_VERSES are handled by GET_SCRIPTURE's bibleUpdate handling
     SEARCH_SCRIPTURE: (data: any) => {
         // Store search results for the search component to use
         if (data.searchResults !== undefined) {
