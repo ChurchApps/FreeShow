@@ -23,16 +23,17 @@
         return [...items].sort((a, b) => (a.name || "").localeCompare(b.name || ""))
     }
 
-    function buildTree(parent = "/", index = 0, path = "", _updater: any = null): TreeItem[] {
+    // OPTIMIZED: Pass snapshots of folders/projects to avoid repeated store reads during recursion
+    function buildTree(foldersSnapshot: Record<string, any>, projectsSnapshot: any[], parent = "/", index = 0, path = ""): TreeItem[] {
         const tree: TreeItem[] = []
 
         // Get folders in this parent
-        const folderEntries = Object.entries($folders || {})
-            .filter(([, folder]: [string, any]) => !folder.deleted && (folder.parent === parent || (parent === "/" && !$folders[folder.parent])))
+        const folderEntries = Object.entries(foldersSnapshot)
+            .filter(([, folder]: [string, any]) => !folder.deleted && (folder.parent === parent || (parent === "/" && !foldersSnapshot[folder.parent])))
             .map(([folderId, folder]: [string, any]) => ({ ...folder, id: folderId, type: "folder" as const }))
 
         // Get projects in this parent
-        const projectEntries = ($projects || []).filter((p: any) => p.parent === parent || (parent === "/" && !$folders[p.parent])).map((p: any) => ({ ...p, type: "project" as const }))
+        const projectEntries = projectsSnapshot.filter((p: any) => p.parent === parent || (parent === "/" && !foldersSnapshot[p.parent])).map((p: any) => ({ ...p, type: "project" as const }))
 
         // Sort and combine
         const sortedFolders = sortByName(folderEntries)
@@ -50,7 +51,8 @@
                 path: path
             })
 
-            const children = buildTree(item.id, index + 1, itemPath)
+            // Pass snapshots to recursive calls instead of re-reading stores
+            const children = buildTree(foldersSnapshot, projectsSnapshot, item.id, index + 1, itemPath)
             tree.push(...children)
         })
 
@@ -69,7 +71,8 @@
         return tree
     }
 
-    $: tree = buildTree("/", 0, "", { $projects })
+    // Build tree with store snapshots - only rebuilds when $folders or $projects change
+    $: tree = buildTree($folders || {}, $projects || [])
 
     // Split tree into sections (root folders and their children)
     $: splittedTree = (() => {

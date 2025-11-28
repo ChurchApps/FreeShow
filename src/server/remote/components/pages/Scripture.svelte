@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { tick, createEventDispatcher } from "svelte"
+    import { tick, createEventDispatcher, onDestroy } from "svelte"
     import Button from "../../../common/components/Button.svelte"
     import Center from "../../../common/components/Center.svelte"
     import Icon from "../../../common/components/Icon.svelte"
@@ -17,6 +17,19 @@
     export let searchValueFromDrawer: string = ""
 
     const dispatch = createEventDispatcher<{ "search-clear": void }>()
+
+    // Debounce helper for search
+    let searchDebounceTimer: ReturnType<typeof setTimeout> | null = null
+    const SEARCH_DEBOUNCE_MS = 150
+
+    function debounceSearch(fn: () => void) {
+        if (searchDebounceTimer) clearTimeout(searchDebounceTimer)
+        searchDebounceTimer = setTimeout(fn, SEARCH_DEBOUNCE_MS)
+    }
+
+    onDestroy(() => {
+        if (searchDebounceTimer) clearTimeout(searchDebounceTimer)
+    })
 
     function checkScriptureExists(scriptureId: string, collId: string): boolean {
         if (!scriptureId || Object.keys($scriptures).length === 0) return false
@@ -82,12 +95,17 @@
         }
     }
 
-    $: scriptureEntries = keysToID($scriptures).map((a: any) => ({ ...a, icon: iconForScripture(a) }))
-    $: favoritesList = sortByName(scriptureEntries.filter(a => a.favorite))
+    // LAZY COMPUTATION: Only compute scripture lists when picker is shown (no scripture opened)
+    // This prevents expensive filtering/sorting when user is already browsing a bible
+    $: showScripturePicker = !tablet && !$openedScripture && scripturesLoaded
+    $: scriptureEntries = showScripturePicker || (tablet && !$openedScripture) 
+        ? keysToID($scriptures).map((a: any) => ({ ...a, icon: iconForScripture(a) })) 
+        : []
+    $: favoritesList = scriptureEntries.length ? sortByName(scriptureEntries.filter(a => a.favorite)) : []
     $: favoriteIds = new Set(favoritesList.map(a => a.id))
-    $: collectionList = sortByName(scriptureEntries.filter(a => a.collection && !favoriteIds.has(a.id)))
-    $: localBibles = sortByName(scriptureEntries.filter(a => !a.collection && !a.api && !favoriteIds.has(a.id)))
-    $: apiBibles = sortByName(scriptureEntries.filter(a => !a.collection && a.api && !favoriteIds.has(a.id)))
+    $: collectionList = scriptureEntries.length ? sortByName(scriptureEntries.filter(a => a.collection && !favoriteIds.has(a.id))) : []
+    $: localBibles = scriptureEntries.length ? sortByName(scriptureEntries.filter(a => !a.collection && !a.api && !favoriteIds.has(a.id))) : []
+    $: apiBibles = scriptureEntries.length ? sortByName(scriptureEntries.filter(a => !a.collection && a.api && !favoriteIds.has(a.id))) : []
 
     type ScriptureSection = {
         id: string
@@ -132,6 +150,7 @@
     function closeSearch(skipExternalDispatch: boolean = false) {
         openScriptureSearch = false
         searchValue = ""
+        debouncedSearchValue = "" // Clear debounced value immediately
         // Clear search results
         searchResults = []
         searchResult = { reference: "", referenceFull: "", verseText: "" }
@@ -156,6 +175,7 @@
 
     let openScriptureSearch = false
     let searchValue = ""
+    let debouncedSearchValue = "" // Actual value used for search (debounced)
     let searchInput: HTMLInputElement | null = null
     type SearchItem = { reference: string; referenceFull: string; verseText: string }
     let searchResults: SearchItem[] = []
@@ -168,15 +188,21 @@
     const failedChapterRequests = new Set<string>()
 
     // Clear failed requests when search changes or scripture changes
-    $: if (searchValue || $openedScripture) {
-        if (searchValue.trim() === "") {
+    $: if (debouncedSearchValue || $openedScripture) {
+        if (debouncedSearchValue.trim() === "") {
             failedChapterRequests.clear()
         }
     }
 
+    // Debounce search value changes to prevent freezing on rapid typing
+    $: debounceSearch(() => {
+        debouncedSearchValue = searchValue
+    })
+
     $: isApiBible = !!($openedScripture && $scriptures[$openedScripture]?.api === true)
-    $: updateSearch(searchValue, $scriptureCache, $openedScripture, isApiBible)
-    $: handleApiSearchResults($scriptureSearchResults, searchValue, $openedScripture)
+    // Use debounced value for actual search - prevents blocking UI on every keystroke
+    $: updateSearch(debouncedSearchValue, $scriptureCache, $openedScripture, isApiBible)
+    $: handleApiSearchResults($scriptureSearchResults, debouncedSearchValue, $openedScripture)
     $: updateSearchResultsWithLoadedVerses($scriptureCache, searchResults, $openedScripture)
 
     // Auto-focus search input when search is opened
