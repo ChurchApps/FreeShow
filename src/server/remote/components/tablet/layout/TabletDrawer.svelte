@@ -12,6 +12,9 @@
     const defaultHeight = 400
     const maxHeight = 800
 
+    // Tab configuration - single source of truth
+    const DRAWER_TABS = ["shows", "media", "audio", "overlays", "templates", "scripture", "calendar", "functions"] as const
+
     $: height = $drawer.height ?? defaultHeight
 
     let move = false
@@ -142,102 +145,20 @@
 <div class="drawer" class:resizing={isResizing} style="height: {height}px">
     <div class="top context #drawer_top" on:pointerdown={onPointerDown}>
         <span class="tabs">
-            <MaterialButton
-                id="shows"
-                style="border-radius: 0; border-bottom: 2px solid var(--primary); padding: 0.2em 0.8em;"
-                isActive={$activeDrawerTab === "shows"}
-                on:click={e => {
-                    e.stopPropagation()
-                    openDrawerTab("shows")
-                }}
-            >
-                <Icon id="shows" size={1.3} white={$activeDrawerTab === "shows"} />
-                <span>{translate("tabs.shows", $dictionary)}</span>
-            </MaterialButton>
-            <MaterialButton
-                id="media"
-                style="border-radius: 0; border-bottom: 2px solid var(--primary); padding: 0.2em 0.8em;"
-                isActive={$activeDrawerTab === "media"}
-                on:click={e => {
-                    e.stopPropagation()
-                    openDrawerTab("media")
-                }}
-            >
-                <Icon id="media" size={1.3} white={$activeDrawerTab === "media"} />
-                <span>{translate("tabs.media", $dictionary)}</span>
-            </MaterialButton>
-            <MaterialButton
-                id="audio"
-                style="border-radius: 0; border-bottom: 2px solid var(--primary); padding: 0.2em 0.8em;"
-                isActive={$activeDrawerTab === "audio"}
-                on:click={e => {
-                    e.stopPropagation()
-                    openDrawerTab("audio")
-                }}
-            >
-                <Icon id="audio" size={1.3} white={$activeDrawerTab === "audio"} />
-                <span>{translate("tabs.audio", $dictionary)}</span>
-            </MaterialButton>
-            <MaterialButton
-                id="overlays"
-                style="border-radius: 0; border-bottom: 2px solid var(--primary); padding: 0.2em 0.8em;"
-                isActive={$activeDrawerTab === "overlays"}
-                on:click={e => {
-                    e.stopPropagation()
-                    openDrawerTab("overlays")
-                }}
-            >
-                <Icon id="overlays" size={1.3} white={$activeDrawerTab === "overlays"} />
-                <span>{translate("tabs.overlays", $dictionary)}</span>
-            </MaterialButton>
-            <MaterialButton
-                id="templates"
-                style="border-radius: 0; border-bottom: 2px solid var(--primary); padding: 0.2em 0.8em;"
-                isActive={$activeDrawerTab === "templates"}
-                on:click={e => {
-                    e.stopPropagation()
-                    openDrawerTab("templates")
-                }}
-            >
-                <Icon id="templates" size={1.3} white={$activeDrawerTab === "templates"} />
-                <span>{translate("tabs.templates", $dictionary)}</span>
-            </MaterialButton>
-            <MaterialButton
-                id="scripture"
-                style="border-radius: 0; border-bottom: 2px solid var(--primary); padding: 0.2em 0.8em;"
-                isActive={$activeDrawerTab === "scripture"}
-                on:click={e => {
-                    e.stopPropagation()
-                    openDrawerTab("scripture")
-                }}
-            >
-                <Icon id="scripture" size={1.3} white={$activeDrawerTab === "scripture"} />
-                <span>{translate("tabs.scripture", $dictionary)}</span>
-            </MaterialButton>
-            <MaterialButton
-                id="calendar"
-                style="border-radius: 0; border-bottom: 2px solid var(--primary); padding: 0.2em 0.8em;"
-                isActive={$activeDrawerTab === "calendar"}
-                on:click={e => {
-                    e.stopPropagation()
-                    openDrawerTab("calendar")
-                }}
-            >
-                <Icon id="calendar" size={1.3} white={$activeDrawerTab === "calendar"} />
-                <span>{translate("tabs.calendar", $dictionary)}</span>
-            </MaterialButton>
-            <MaterialButton
-                id="functions"
-                style="border-radius: 0; border-bottom: 2px solid var(--primary); padding: 0.2em 0.8em;"
-                isActive={$activeDrawerTab === "functions"}
-                on:click={e => {
-                    e.stopPropagation()
-                    openDrawerTab("functions")
-                }}
-            >
-                <Icon id="functions" size={1.3} white={$activeDrawerTab === "functions"} />
-                <span>{translate("tabs.functions", $dictionary)}</span>
-            </MaterialButton>
+            {#each DRAWER_TABS as tabId}
+                <MaterialButton
+                    id={tabId}
+                    style="border-radius: 0; border-bottom: 2px solid var(--primary); padding: 0.2em 0.8em;"
+                    isActive={$activeDrawerTab === tabId}
+                    on:click={e => {
+                        e.stopPropagation()
+                        openDrawerTab(tabId)
+                    }}
+                >
+                    <Icon id={tabId} size={1.3} white={$activeDrawerTab === tabId} />
+                    <span>{translate(`tabs.${tabId}`, $dictionary)}</span>
+                </MaterialButton>
+            {/each}
         </span>
 
         <div class="right-controls">

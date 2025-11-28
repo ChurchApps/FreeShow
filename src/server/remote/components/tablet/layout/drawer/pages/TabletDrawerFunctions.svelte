@@ -1,24 +1,11 @@
 <script lang="ts">
     import { onDestroy } from "svelte"
     import { dictionary, actions, actionTags, activeActionTagFilter, variables, activeVariableTagFilter, timers, triggers, activeTimers, runningActions, functionsSubTab } from "../../../../../util/stores"
-    import { translate } from "../../../../../util/helpers"
+    import { translate, keysToID, sortByName, formatTime } from "../../../../../util/helpers"
     import { send } from "../../../../../util/socket"
     import Button from "../../../../../../common/components/Button.svelte"
     import Icon from "../../../../../../common/components/Icon.svelte"
     import Center from "../../../../../../common/components/Center.svelte"
-
-    // Helper functions
-    function keysToID(obj: any) {
-        return Object.keys(obj).map(key => ({ id: key, ...obj[key] }))
-    }
-
-    function sortByName(list: any[], key = "name", lowercase = false) {
-        return [...list].sort((a, b) => {
-            const aVal = lowercase ? (a[key] || "").toLowerCase() : a[key] || ""
-            const bVal = lowercase ? (b[key] || "").toLowerCase() : b[key] || ""
-            return aVal.localeCompare(bVal)
-        })
-    }
 
     // Actions
     $: sortedActions = sortByName(keysToID($actions), "name", true)
@@ -61,15 +48,6 @@
 
     function resetTimer(timerId: string) {
         send("API:id_stop_timer", { id: timerId })
-    }
-
-    function formatTime(seconds: number): string {
-        seconds = Math.abs(Math.floor(seconds))
-        const h = Math.floor(seconds / 3600)
-        const m = Math.floor((seconds % 3600) / 60)
-        const s = seconds % 60
-        if (h > 0) return `${h}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`
-        return `${m}:${s.toString().padStart(2, "0")}`
     }
 
     // Variables
