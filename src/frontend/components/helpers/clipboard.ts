@@ -883,12 +883,14 @@ const deleteActions = {
     // "remove"
     show: (data: any) => {
         if (!get(activeProject)) return
-        const projectItems = get(projects)[get(activeProject)!].shows
+        const projectItems = get(projects)[get(activeProject)!]?.shows || []
         const indexes: number[] = []
 
         // don't remove private shows
         data.forEach(({ index }) => {
             const projectRef = projectItems[index]
+            if (!projectRef) return
+
             if (projectRef.type === "show" || projectRef.type === undefined) {
                 const isPrivate = _show(projectRef.id).get("private")
                 if (isPrivate) return
