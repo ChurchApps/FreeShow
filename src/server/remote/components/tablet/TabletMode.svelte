@@ -1,5 +1,4 @@
 <script lang="ts">
-    import TabletTop from "./layout/TabletTop.svelte"
     import TabletLeft from "./layout/TabletLeft.svelte"
     import TabletCenter from "./layout/TabletCenter.svelte"
     import TabletRight from "./layout/TabletRight.svelte"
@@ -11,10 +10,6 @@
 </script>
 
 <div class="column">
-    {#if !isFullscreen}
-        <TabletTop />
-    {/if}
-    
     <div class="row">
         {#if !isFullscreen}
             <Resizeable id="leftPanelTablet">

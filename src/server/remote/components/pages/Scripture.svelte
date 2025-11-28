@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { tick } from "svelte"
+    import { tick, createEventDispatcher } from "svelte"
     import Button from "../../../common/components/Button.svelte"
     import Center from "../../../common/components/Center.svelte"
     import Icon from "../../../common/components/Icon.svelte"
@@ -7,13 +7,16 @@
     import { keysToID } from "../../../common/util/helpers"
     import { translate } from "../../util/helpers"
     import { send } from "../../util/socket"
-    import { dictionary, isCleared, scriptureCache, scriptures, scriptureSearchResults, scriptureViewList, outSlide, outShow, openedScripture, collectionId } from "../../util/stores"
+    import { dictionary, isCleared, scriptureCache, scriptures, scriptureSearchResults, scriptureViewList, scriptureWrapText, outSlide, outShow, openedScripture, collectionId } from "../../util/stores"
     import Clear from "../show/Clear.svelte"
     import ScriptureContent from "./ScriptureContent.svelte"
     import { sanitizeVerseText } from "../../../../common/scripture/sanitizeVerseText"
+    import ScriptureContentTablet from "./ScriptureContentTablet.svelte"
 
     export let tablet: boolean = false
-    export let triggerScriptureSearch: boolean = false
+    export let searchValueFromDrawer: string = ""
+
+    const dispatch = createEventDispatcher<{ "search-clear": void }>()
 
     function checkScriptureExists(scriptureId: string, collId: string): boolean {
         if (!scriptureId || Object.keys($scriptures).length === 0) return false
@@ -117,14 +120,12 @@
 
     // SEARCH
 
-    $: if (triggerScriptureSearch) triggerSearch()
-    function triggerSearch() {
+    function openSearchPanel() {
         depthBeforeSearch = depth
         openScriptureSearch = true
-        triggerScriptureSearch = false
     }
 
-    function closeSearch() {
+    function closeSearch(skipExternalDispatch: boolean = false) {
         openScriptureSearch = false
         searchValue = ""
         // Clear search results
@@ -139,6 +140,14 @@
         } else {
             depth = depthBeforeSearch
         }
+
+        if (usingExternalSearch) {
+            if (!skipExternalDispatch) {
+                awaitingExternalClear = true
+                dispatch("search-clear")
+            }
+            usingExternalSearch = false
+        }
     }
 
     let openScriptureSearch = false
@@ -148,6 +157,8 @@
     let searchResults: SearchItem[] = []
     let searchResult: SearchItem = { reference: "", referenceFull: "", verseText: "" }
     let isApiBible = false
+    let usingExternalSearch = false
+    let awaitingExternalClear = false
 
     // Track failed chapter requests to prevent infinite retries
     const failedChapterRequests = new Set<string>()
@@ -159,13 +170,36 @@
         }
     }
 
-    $: isApiBible = $openedScripture && $scriptures[$openedScripture]?.api === true
+    $: isApiBible = !!($openedScripture && $scriptures[$openedScripture]?.api === true)
     $: updateSearch(searchValue, $scriptureCache, $openedScripture, isApiBible)
     $: handleApiSearchResults($scriptureSearchResults, searchValue, $openedScripture)
     $: updateSearchResultsWithLoadedVerses($scriptureCache, searchResults, $openedScripture)
 
     // Auto-focus search input when search is opened
-    $: if (openScriptureSearch) {
+    $: if (tablet) {
+        const trimmedExternal = (searchValueFromDrawer || "").trim()
+        if (trimmedExternal) {
+            if (!awaitingExternalClear) {
+                if (!openScriptureSearch) {
+                    openSearchPanel()
+                }
+                usingExternalSearch = true
+                if (searchValue !== trimmedExternal) {
+                    searchValue = trimmedExternal
+                }
+            }
+        } else {
+            awaitingExternalClear = false
+            if (usingExternalSearch) {
+                usingExternalSearch = false
+                if (openScriptureSearch) {
+                    closeSearch(true)
+                }
+            }
+        }
+    }
+
+    $: if (openScriptureSearch && !usingExternalSearch) {
         focusSearchInput()
     }
 
@@ -818,13 +852,23 @@
     }
 </script>
 
-{#if openScriptureSearch}
+{#if openScriptureSearch && !tablet}
     <div style="height: 100%; display: flex; flex-direction: column;">
         <div class="search-bar-row">
-            <button class="header-action" aria-label="Back" on:click={closeSearch}>
+            <button class="header-action" aria-label="Back" on:click={() => closeSearch()}>
                 <Icon id="back" size={1.2} />
             </button>
-            <input type="text" class="input search-input" placeholder="Search" bind:value={searchValue} bind:this={searchInput} />
+            {#if usingExternalSearch}
+                <div class="external-search-pill" title={searchValue}>
+                    <Icon id="search" size={1} />
+                    <div class="pill-text">
+                        <span>{searchValue}</span>
+                        <small>Use the drawer search to edit</small>
+                    </div>
+                </div>
+            {:else}
+                <input type="text" class="input search-input" placeholder="Search" bind:value={searchValue} bind:this={searchInput} />
+            {/if}
         </div>
 
         <div class="search-scroll" style="flex: 1; overflow-y: auto; margin: 0.5rem 0;">
@@ -866,7 +910,7 @@
                     {/if}
                 </div>
             </div>
-            <button class="header-action" aria-label="Search scripture" on:click={() => (openScriptureSearch = true)}>
+            <button class="header-action" aria-label="Search scripture" on:click={openSearchPanel}>
                 <Icon id="search" size={1.5} />
             </button>
         </div>
@@ -879,21 +923,51 @@
         {:else if checkScriptureExists(openedScripture, collectionId)}
 =======
         {#if $scriptureCache[$openedScripture]}
-            <ScriptureContent {tablet} id={$collectionId || $openedScripture} scripture={$scriptureCache[$openedScripture]} bind:depth bind:currentBook bind:currentChapter bind:currentVerse bind:this={scriptureContentRef} />
+            {#if tablet}
+                {#if searchValue.trim() && searchResults.length > 0}
+                    <!-- Search Results for Tablet Mode -->
+                    <div class="tablet-search-results">
+                        {#each searchResults.slice(0, 50) as result}
+                            <div class="verse search-result" role="button" tabindex="0" on:click={() => playSearchVerse(result.reference)} on:keydown={e => (e.key === "Enter" ? playSearchVerse(result.reference) : null)}>
+                                <b style="color: white;">{result.referenceFull}</b>
+                                <span style="display: block; margin-top: 0.25rem;">{@html highlightSearchTerm(result.verseText, searchValue)}</span>
+                            </div>
+                        {/each}
+                        {#if searchResults.length > 50}
+                            <p style="text-align: center; color: #666; font-size: 0.8em; margin: 0.5rem 0;">
+                                Showing first 50 of {searchResults.length} results
+                            </p>
+                        {/if}
+                    </div>
+                {:else if searchValue.trim() && searchResults.length === 0}
+                    <div style="flex: 1; display: flex; justify-content: center; align-items: center; opacity: 0.5;">
+                        No results found for "{searchValue}"
+                    </div>
+                {:else}
+                    <ScriptureContentTablet id={$collectionId || $openedScripture} scripture={$scriptureCache[$openedScripture]} bind:currentBook bind:currentChapter bind:currentVerse bind:this={scriptureContentRef} />
+                {/if}
+            {:else}
+                <ScriptureContent id={$collectionId || $openedScripture} scripture={$scriptureCache[$openedScripture]} bind:depth bind:currentBook bind:currentChapter bind:currentVerse bind:this={scriptureContentRef} />
+            {/if}
             
             {#if tablet}
-                <div class="tablet-controls">
-                    <Button style="border-radius: 50%; width: 45px; height: 45px; box-shadow: 0 2px 10px rgba(0,0,0,0.3); padding: 0;" on:click={() => scriptureContentRef?.backward()} center dark title="Previous">
+                <div class="floating-controls-container">
+                    <Button on:click={() => scriptureContentRef?.backward()} center dark class="floating-control-button" title="Previous">
                         <Icon id="previous" white size={1.2} />
                     </Button>
-                    <Button style="border-radius: 50%; width: 45px; height: 45px; box-shadow: 0 2px 10px rgba(0,0,0,0.3); padding: 0;" on:click={() => scriptureContentRef?.forward()} center dark title="Next">
+                    <Button on:click={() => scriptureContentRef?.forward()} center dark class="floating-control-button" title="Next">
                         <Icon id="next" white size={1.2} />
                     </Button>
-                    <Button style="border-radius: 50%; width: 45px; height: 45px; box-shadow: 0 2px 10px rgba(0,0,0,0.3); padding: 0;" on:click={() => scriptureContentRef?.playScripture()} center dark title="Play/Update">
+                    <Button on:click={() => scriptureContentRef?.playScripture()} center dark class="floating-control-button" title="Play/Update">
                         <Icon id="play" white size={1.2} />
                     </Button>
-                    <div style="width: 1px; height: 30px; background: rgba(255,255,255,0.2); margin: 0 5px;"></div>
-                    <Button style="border-radius: 50%; width: 45px; height: 45px; box-shadow: 0 2px 10px rgba(0,0,0,0.3); padding: 0;" on:click={() => scriptureViewList.set(!$scriptureViewList)} center dark title={$scriptureViewList ? "Grid View" : "List View"}>
+                    <div class="floating-divider" aria-hidden="true"></div>
+                    {#if $scriptureViewList}
+                        <Button on:click={() => scriptureWrapText.set(!$scriptureWrapText)} center dark class="floating-control-button" title={$scriptureWrapText ? "Single Line" : "Wrap Text"}>
+                            <Icon id={$scriptureWrapText ? "noWrap" : "wrap"} white size={1.2} />
+                        </Button>
+                    {/if}
+                    <Button on:click={() => scriptureViewList.set(!$scriptureViewList)} center dark class="floating-control-button" title={$scriptureViewList ? "Grid View" : "List View"}>
                         <Icon id={$scriptureViewList ? "grid" : "list"} white size={1.2} />
                     </Button>
                 </div>
@@ -1183,6 +1257,34 @@
         opacity: 0.4;
     }
 
+    .external-search-pill {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        background-color: rgb(0 0 0 / 0.2);
+        color: var(--text);
+        padding: 0.5rem 0.75rem;
+        border-radius: 6px;
+        min-height: 40px;
+    }
+    .pill-text {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        min-width: 0;
+    }
+    .pill-text span {
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .pill-text small {
+        font-size: 0.7em;
+        opacity: 0.6;
+    }
+
     /* FreeShow UI scrollbar */
     .search-scroll,
     .bible {
@@ -1398,18 +1500,73 @@
             min-height: auto !important;
         }
     }
-    .tablet-controls {
-        position: absolute;
-        bottom: 0;
-        right: 0;
-        z-index: 100;
+    /* Floating controls - matching main frontend FloatingInputs style */
+    .floating-controls-container {
+        --size: 40px;
+        --padding: 12px;
+        --background: rgba(25, 25, 35, 0.85);
+
         display: flex;
-        gap: 10px;
         align-items: center;
-        background-color: var(--primary-darkest);
-        padding: 5px;
-        border-radius: 12px 0 0 0;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+        height: var(--size);
+        background-color: var(--background);
+        border: 1px solid var(--primary-lighter);
+        box-shadow: 1px 1px 6px rgb(0 0 0 / 0.4);
+        border-radius: var(--size);
+        backdrop-filter: blur(3px);
+        overflow: hidden;
+        z-index: 199;
+
+        /* Only float in tablet mode - position set via media query */
+        position: absolute;
+        bottom: var(--padding);
+        right: var(--padding);
+    }
+
+    :global(.floating-control-button) {
+        background-color: transparent !important;
+        height: calc(var(--size) - 2px) !important;
+        padding: 0 12px !important;
+        border-radius: 0 !important;
+        border: none !important;
+        box-shadow: none !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+
+    :global(.floating-control-button:hover) {
+        background: rgb(255 255 255 / 0.1) !important;
+    }
+
+    :global(.floating-control-button:active) {
+        background: rgb(255 255 255 / 0.15) !important;
+    }
+
+    .floating-divider {
+        height: 100%;
+        width: 1px;
+        background-color: var(--primary-lighter);
+    }
+
+    /* Tablet Search Results */
+    .tablet-search-results {
+        flex: 1;
+        overflow-y: auto;
+        padding: 0.5rem;
+    }
+
+    .tablet-search-results .search-result {
+        margin-bottom: 0.5rem;
+        cursor: pointer;
+        padding: 0.75rem;
+        border: 1px solid var(--primary-lighter);
+        border-radius: 0.25rem;
+        background-color: var(--primary-darker);
+    }
+
+    .tablet-search-results .search-result:hover {
+        background-color: var(--primary);
     }
 
 </style>

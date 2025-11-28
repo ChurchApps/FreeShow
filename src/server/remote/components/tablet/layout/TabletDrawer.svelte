@@ -3,6 +3,7 @@
     import { drawer, activeDrawerTab, dictionary } from "../../../util/stores"
     import { translate } from "../../../util/helpers"
     import Button from "../../../../common/components/Button.svelte"
+    import MaterialButton from "../../MaterialButton.svelte"
     import TabletDrawerNavigation from "./drawer/TabletDrawerNavigation.svelte"
     import TabletDrawerContent from "./drawer/TabletDrawerContent.svelte"
     import Resizeable from "./drawer/Resizeable.svelte"
@@ -16,18 +17,33 @@
     let move = false
     let startY = 0
     let startHeight = 0
+    let isDragging = false
 
     function onPointerDown(e: PointerEvent) {
+        // Don't start resize if clicking on tabs or search
+        if ((e.target as HTMLElement).closest('.tabs') || (e.target as HTMLElement).closest('.search-container')) return
+        
         move = true
+        isDragging = false
         startY = e.clientY
         startHeight = height
+        
+        // Capture pointer for touch
+        const target = e.currentTarget as HTMLElement
+        target.setPointerCapture?.(e.pointerId)
+        
         window.addEventListener("pointermove", onPointerMove)
         window.addEventListener("pointerup", onPointerUp)
+        window.addEventListener("pointercancel", onPointerUp)
     }
 
     function onPointerMove(e: PointerEvent) {
         if (!move) return
+        e.preventDefault()
+        
         const delta = startY - e.clientY
+        if (Math.abs(delta) > 5) isDragging = true
+        
         let newHeight = startHeight + delta
         
         if (newHeight < minHeight) newHeight = minHeight
@@ -36,10 +52,66 @@
         drawer.update(d => ({ ...d, height: newHeight }))
     }
 
-    function onPointerUp() {
+    function onPointerUp(e: PointerEvent) {
+        const target = e.currentTarget as HTMLElement
+        target?.releasePointerCapture?.(e.pointerId)
         move = false
         window.removeEventListener("pointermove", onPointerMove)
         window.removeEventListener("pointerup", onPointerUp)
+        window.removeEventListener("pointercancel", onPointerUp)
+    }
+
+    // Dock button with drag-to-resize
+    let dockDragging = false
+    let dockStartY = 0
+    let dockStartHeight = 0
+
+    function onDockPointerDown(e: PointerEvent) {
+        e.stopPropagation()
+        dockDragging = false
+        dockStartY = e.clientY
+        dockStartHeight = height
+        
+        const target = e.currentTarget as HTMLElement
+        target.setPointerCapture?.(e.pointerId)
+        
+        window.addEventListener("pointermove", onDockPointerMove)
+        window.addEventListener("pointerup", onDockPointerUp)
+        window.addEventListener("pointercancel", onDockPointerUp)
+    }
+
+    function onDockPointerMove(e: PointerEvent) {
+        const delta = dockStartY - e.clientY
+        
+        // Start dragging after threshold
+        if (Math.abs(delta) > 10) {
+            dockDragging = true
+        }
+        
+        if (dockDragging) {
+            e.preventDefault()
+            let newHeight = dockStartHeight + delta
+            
+            if (newHeight < minHeight) newHeight = minHeight
+            if (newHeight > maxHeight) newHeight = maxHeight
+            
+            drawer.update(d => ({ ...d, height: newHeight }))
+        }
+    }
+
+    function onDockPointerUp(e: PointerEvent) {
+        const target = e.currentTarget as HTMLElement
+        target?.releasePointerCapture?.(e.pointerId)
+        
+        // If we didn't drag, treat as toggle click
+        if (!dockDragging) {
+            toggleDrawer()
+        }
+        
+        dockDragging = false
+        window.removeEventListener("pointermove", onDockPointerMove)
+        window.removeEventListener("pointerup", onDockPointerUp)
+        window.removeEventListener("pointercancel", onDockPointerUp)
     }
 
     function toggleDrawer() {
@@ -51,8 +123,12 @@
     }
 
     let searchValue = ""
-    let searchActive = false
     let searchElem: HTMLInputElement | undefined
+
+    function clearDrawerSearch() {
+        searchValue = ""
+        searchElem?.focus()
+    }
 
     function openDrawerTab(tab: string) {
         activeDrawerTab.set(tab)
@@ -63,94 +139,111 @@
 </script>
 
 <div class="drawer" style="height: {height}px">
-    <div class="top context #drawer_top" on:pointerdown={onPointerDown} on:click={toggleDrawer} on:keydown={(e) => e.key === "Enter" && toggleDrawer()} role="button" tabindex="0">
+    <div class="top context #drawer_top" on:pointerdown={onPointerDown}>
         <span class="tabs">
-            <Button 
-                class="tab {$activeDrawerTab === 'shows' ? 'active' : ''}" 
+            <MaterialButton 
+                id="shows"
+                style="border-radius: 0; border-bottom: 2px solid var(--primary); padding: 0.2em 0.8em;"
+                isActive={$activeDrawerTab === 'shows'}
                 on:click={(e) => { e.stopPropagation(); openDrawerTab('shows') }}
             >
-                <Icon id="shows" size={1.2} white={$activeDrawerTab === 'shows'} />
+                <Icon id="shows" size={1.3} white={$activeDrawerTab === 'shows'} />
                 <span>{translate("tabs.shows", $dictionary)}</span>
-            </Button>
-            <Button 
-                class="tab {$activeDrawerTab === 'media' ? 'active' : ''}" 
+            </MaterialButton>
+            <MaterialButton 
+                id="media"
+                style="border-radius: 0; border-bottom: 2px solid var(--primary); padding: 0.2em 0.8em;"
+                isActive={$activeDrawerTab === 'media'}
                 on:click={(e) => { e.stopPropagation(); openDrawerTab('media') }}
             >
-                <Icon id="media" size={1.2} white={$activeDrawerTab === 'media'} />
+                <Icon id="media" size={1.3} white={$activeDrawerTab === 'media'} />
                 <span>{translate("tabs.media", $dictionary)}</span>
-            </Button>
-            <Button 
-                class="tab {$activeDrawerTab === 'audio' ? 'active' : ''}" 
+            </MaterialButton>
+            <MaterialButton 
+                id="audio"
+                style="border-radius: 0; border-bottom: 2px solid var(--primary); padding: 0.2em 0.8em;"
+                isActive={$activeDrawerTab === 'audio'}
                 on:click={(e) => { e.stopPropagation(); openDrawerTab('audio') }}
             >
-                <Icon id="audio" size={1.2} white={$activeDrawerTab === 'audio'} />
+                <Icon id="audio" size={1.3} white={$activeDrawerTab === 'audio'} />
                 <span>{translate("tabs.audio", $dictionary)}</span>
-            </Button>
-            <Button 
-                class="tab {$activeDrawerTab === 'overlays' ? 'active' : ''}" 
+            </MaterialButton>
+            <MaterialButton 
+                id="overlays"
+                style="border-radius: 0; border-bottom: 2px solid var(--primary); padding: 0.2em 0.8em;"
+                isActive={$activeDrawerTab === 'overlays'}
                 on:click={(e) => { e.stopPropagation(); openDrawerTab('overlays') }}
             >
-                <Icon id="overlays" size={1.2} white={$activeDrawerTab === 'overlays'} />
+                <Icon id="overlays" size={1.3} white={$activeDrawerTab === 'overlays'} />
                 <span>{translate("tabs.overlays", $dictionary)}</span>
-            </Button>
-            <Button 
-                class="tab {$activeDrawerTab === 'templates' ? 'active' : ''}" 
+            </MaterialButton>
+            <MaterialButton 
+                id="templates"
+                style="border-radius: 0; border-bottom: 2px solid var(--primary); padding: 0.2em 0.8em;"
+                isActive={$activeDrawerTab === 'templates'}
                 on:click={(e) => { e.stopPropagation(); openDrawerTab('templates') }}
             >
-                <Icon id="templates" size={1.2} white={$activeDrawerTab === 'templates'} />
+                <Icon id="templates" size={1.3} white={$activeDrawerTab === 'templates'} />
                 <span>{translate("tabs.templates", $dictionary)}</span>
-            </Button>
-            <Button 
-                class="tab {$activeDrawerTab === 'scripture' ? 'active' : ''}" 
+            </MaterialButton>
+            <MaterialButton 
+                id="scripture"
+                style="border-radius: 0; border-bottom: 2px solid var(--primary); padding: 0.2em 0.8em;"
+                isActive={$activeDrawerTab === 'scripture'}
                 on:click={(e) => { e.stopPropagation(); openDrawerTab('scripture') }}
             >
-                <Icon id="scripture" size={1.2} white={$activeDrawerTab === 'scripture'} />
+                <Icon id="scripture" size={1.3} white={$activeDrawerTab === 'scripture'} />
                 <span>{translate("tabs.scripture", $dictionary)}</span>
-            </Button>
-            <Button 
-                class="tab {$activeDrawerTab === 'calendar' ? 'active' : ''}" 
+            </MaterialButton>
+            <MaterialButton 
+                id="calendar"
+                style="border-radius: 0; border-bottom: 2px solid var(--primary); padding: 0.2em 0.8em;"
+                isActive={$activeDrawerTab === 'calendar'}
                 on:click={(e) => { e.stopPropagation(); openDrawerTab('calendar') }}
             >
-                <Icon id="calendar" size={1.2} white={$activeDrawerTab === 'calendar'} />
+                <Icon id="calendar" size={1.3} white={$activeDrawerTab === 'calendar'} />
                 <span>{translate("tabs.calendar", $dictionary)}</span>
-            </Button>
-            <Button 
-                class="tab {$activeDrawerTab === 'functions' ? 'active' : ''}" 
+            </MaterialButton>
+            <MaterialButton 
+                id="functions"
+                style="border-radius: 0; border-bottom: 2px solid var(--primary); padding: 0.2em 0.8em;"
+                isActive={$activeDrawerTab === 'functions'}
                 on:click={(e) => { e.stopPropagation(); openDrawerTab('functions') }}
             >
-                <Icon id="functions" size={1.2} white={$activeDrawerTab === 'functions'} />
+                <Icon id="functions" size={1.3} white={$activeDrawerTab === 'functions'} />
                 <span>{translate("tabs.functions", $dictionary)}</span>
-            </Button>
+            </MaterialButton>
         </span>
 
-        <input 
-            bind:this={searchElem} 
-            class:hidden={!searchActive && !searchValue.length} 
-            class="search edit" 
-            type="text" 
-            placeholder={translate("main.search...", $dictionary)} 
-            bind:value={searchValue} 
-            on:click={(e) => e.stopPropagation()}
-        />
-        
-        {#if !searchActive && !searchValue.length}
-            <Button class="search-btn" on:click={(e) => { e.stopPropagation(); searchActive = true; setTimeout(() => searchElem?.focus(), 100) }}>
-                <Icon id="search" size={1.4} white />
-            </Button>
-        {:else}
-            <div class="clearSearch">
-                <Button
-                    style="height: 100%;"
-                    on:click={(e) => {
-                        e.stopPropagation()
-                        searchValue = ""
-                        searchElem?.focus()
-                    }}
-                >
-                    <Icon id="clear" white />
-                </Button>
+        <div class="right-controls">
+            <div class="search-container">
+                <Icon id="search" size={1.2} white />
+                <input 
+                    bind:this={searchElem} 
+                    class="search edit" 
+                    type="text" 
+                    placeholder={translate("main.search", $dictionary)} 
+                    bind:value={searchValue} 
+                    on:click={(e) => e.stopPropagation()}
+                />
+                {#if searchValue.length}
+                    <Button
+                        class="clear-btn"
+                        on:click={(e) => {
+                            e.stopPropagation()
+                            searchValue = ""
+                            searchElem?.focus()
+                        }}
+                    >
+                        <Icon id="clear" size={1} white />
+                    </Button>
+                {/if}
             </div>
-        {/if}
+
+            <button class="dock-btn" on:pointerdown={onDockPointerDown} title={height > minHeight ? 'Minimize drawer (drag to resize)' : 'Expand drawer (drag to resize)'}>
+                <Icon id={height > minHeight ? 'down' : 'up'} size={1.4} white />
+            </button>
+        </div>
     </div>
     
     <div class="content">
@@ -159,7 +252,7 @@
         </Resizeable>
 
         <div class="main-content">
-            <TabletDrawerContent id={$activeDrawerTab} {searchValue} />
+            <TabletDrawerContent id={$activeDrawerTab} {searchValue} on:search-clear={clearDrawerSearch} />
         </div>
     </div>
 </div>
@@ -179,46 +272,98 @@
     }
 
     .top {
+        position: relative;
         height: 40px;
         width: 100%;
         display: flex;
         justify-content: space-between;
         align-items: center;
         background-color: var(--primary);
-        border-top: 4px solid var(--primary-lighter);
         cursor: ns-resize;
-        padding: 0 10px;
+        padding: 0;
+        padding-right: 10px;
+        touch-action: none;
+        -webkit-tap-highlight-color: transparent;
+        
+        box-shadow: 0 -1.8px 8px rgb(0 0 0 / 0.2);
+        z-index: 1;
+    }
+    
+    .top::after {
+        content: "";
+        background-color: var(--primary-lighter);
+        position: absolute;
+        top: 0;
+        width: 100%;
+        left: 0;
+        height: 4px;
+        cursor: ns-resize;
     }
 
     .tabs {
         display: flex;
         height: 100%;
+        overflow-x: auto;
+        overflow-y: hidden;
     }
 
     .tabs :global(button) {
         height: 100%;
-        border-radius: 0;
-        padding: 0 15px;
-        background: transparent;
-        border-bottom: 2px solid transparent;
+        gap: 5px;
     }
 
-    .tabs :global(button.active) {
-        border-bottom: 2px solid var(--secondary);
-        background-color: rgba(255,255,255,0.05);
+    .tabs :global(button.isActive) {
+        border-bottom: 2px solid var(--secondary) !important;
+    }
+
+    .right-controls {
+        display: flex;
+        align-items: center;
+        height: 100%;
+        flex-shrink: 0;
+        position: relative;
+    }
+
+    .search-container {
+        display: flex;
+        align-items: center;
+        background-color: rgb(0 0 0 / 0.2);
+        border-radius: 4px;
+        padding: 0 10px;
+        height: 28px;
+        gap: 8px;
+        margin-right: 5px;
     }
 
     .search {
-        background-color: rgba(0,0,0,0.2);
-        color: white;
+        background: transparent;
+        color: var(--text);
+        font-size: inherit;
+        font-family: inherit;
         border: none;
-        border-radius: 4px;
-        padding: 5px 10px;
-        width: 200px;
+        padding: 0;
+        width: 120px;
+        height: 100%;
+    }
+    
+    .search:focus {
+        outline: none;
+    }
+    
+    .search::placeholder {
+        color: inherit;
+        opacity: 0.5;
     }
 
-    .hidden {
-        display: none;
+    .search-container :global(.clear-btn) {
+        padding: 2px;
+        min-width: auto;
+        height: auto;
+        opacity: 0.7;
+    }
+
+    .search-container :global(.clear-btn:hover) {
+        opacity: 1;
     }
 
     .content {
@@ -234,9 +379,38 @@
         flex-direction: column;
         overflow: hidden;
     }
-    
-    .clearSearch {
+
+    .right-controls :global(.dock-btn) {
+        height: 100%;
+        padding: 0 12px;
+        border-radius: 0;
+        flex-shrink: 0;
+    }
+
+    .dock-btn {
         display: flex;
         align-items: center;
+        justify-content: center;
+        height: 100%;
+        min-width: 48px;
+        padding: 0 12px;
+        border: none;
+        background: transparent;
+        cursor: ns-resize;
+        touch-action: none;
+        -webkit-tap-highlight-color: transparent;
+        color: var(--text);
+    }
+
+    .dock-btn:hover {
+        background-color: rgb(255 255 255 / 0.05);
+    }
+
+    .dock-btn:active {
+        background-color: rgb(255 255 255 / 0.1);
+    }
+
+    .dock-btn .drag-handle {
+        display: none;
     }
 </style>

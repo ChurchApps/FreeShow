@@ -4,7 +4,7 @@
     import { GetLayout, getNextSlide, nextSlide } from "../../../util/output"
     import { send } from "../../../util/socket"
     import { _set } from "../../../util/stores"
-    import Center from "../../../../common/components/Center.svelte"
+
     import Slide from "../../show/Slide.svelte"
     import Clear from "../../show/Clear.svelte"
     import Button from "../../../../common/components/Button.svelte"
@@ -36,13 +36,15 @@
 </script>
 
 <div class="right-panel">
-    {#if !$isCleared.all}
+
         <div class="top flex">
-            {#if $outShow && layout}
-                <div class="outSlides">
+            <div class="outSlides">
+                {#if $isCleared.all}
+                    <div style="width: 100%; aspect-ratio: 16/9; background-color: black; border-radius: 4px; border: 1px solid #333;"></div>
+                {:else if $outShow && layout}
                     <Slide outSlide={outNumber} {transition} preview />
-                </div>
-            {/if}
+                {/if}
+            </div>
 
             <div class="buttons">
                 {#key outNumber}
@@ -84,9 +86,7 @@
                 {/if}
             </div>
         {/if}
-    {:else}
-        <Center faded>{translate("remote.no_output", $dictionary)}</Center>
-    {/if}
+
 </div>
 
 <style>
