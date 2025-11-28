@@ -25,7 +25,7 @@
     {:else if id === "audio"}
         <TabletDrawerAudio />
     {:else if id === "overlays"}
-        <TabletDrawerOverlays />
+        <TabletDrawerOverlays {searchValue} />
     {:else if id === "templates"}
         <TabletDrawerTemplates />
     {:else if id === "scripture"}
