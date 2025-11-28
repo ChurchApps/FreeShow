@@ -4,13 +4,16 @@
     import TabletRight from "./layout/TabletRight.svelte"
     import TabletDrawer from "./layout/TabletDrawer.svelte"
     import Resizeable from "./layout/drawer/Resizeable.svelte"
+    import { drawer } from "../../util/stores"
 
     // FULLSCREEN
     let isFullscreen: boolean = false
+
+    $: drawerHeight = $drawer.height ?? 300
 </script>
 
 <div class="column">
-    <div class="row">
+    <div class="row" style="height: calc(100% - {drawerHeight}px);">
         {#if !isFullscreen}
             <Resizeable id="leftPanelTablet">
                 <div class="left">
@@ -47,8 +50,9 @@
 
     .row {
         display: flex;
-        flex: 1;
+        flex: none;
         overflow: hidden;
+        will-change: height;
     }
 
     .left, .right {
