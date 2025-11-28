@@ -315,7 +315,9 @@
 {/if}
 
 {#if dataInputs && (dataOpened || dataMenuOpened)}
-    <CustomInput {mainId} inputId={input} actionIndex={actionNameIndex} value={actionValue} actionId={getActionTriggerId(actionId)} on:change={e => changeAction({ id: actionId, actionValue: e.detail })} list />
+    <div class="menu-indent">
+        <CustomInput {mainId} inputId={input} actionIndex={actionNameIndex} value={actionValue} actionId={getActionTriggerId(actionId)} on:change={e => changeAction({ id: actionId, actionValue: e.detail })} list />
+    </div>
 {/if}
 
 {#if mode === "slide" && getActionTriggerId(actionId) === "run_action" && $categories[_show().get().category]?.action}
@@ -358,5 +360,12 @@
     }
     .buttons :global(button:not(.active):nth-child(odd)) {
         background-color: rgb(0 0 20 / 0.08) !important;
+    }
+
+    .menu-indent {
+        display: flex;
+        flex-direction: column;
+
+        border-left: 4px solid var(--primary-lighter);
     }
 </style>

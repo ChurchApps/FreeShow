@@ -52,5 +52,7 @@
     .menu {
         display: flex;
         flex-direction: column;
+
+        border-left: 4px solid var(--primary-lighter);
     }
 </style>

@@ -189,29 +189,38 @@
         <!-- Long verses -->
         <InputRow arrow={$scriptureSettings.splitLongVerses} bind:open={longVersesMenuOpened}>
             <MaterialToggleSwitch label="scripture.divide_long_verses" style="width: 100%;" checked={$scriptureSettings.splitLongVerses} defaultValue={false} on:change={e => update("splitLongVerses", e.detail)} />
+
+            <svelte:fragment slot="menu">
+                {#if $scriptureSettings.splitLongVerses}
+                    <MaterialToggleSwitch label="scripture.split_long_verses_suffix" checked={$scriptureSettings.splitLongVersesSuffix} defaultValue={false} on:change={e => update("splitLongVersesSuffix", e.detail)} />
+                    <MaterialNumberInput label="edit.size" value={$scriptureSettings.longVersesChars || 100} defaultValue={100} min={50} on:change={e => update("longVersesChars", e.detail)} />
+                {/if}
+            </svelte:fragment>
         </InputRow>
-        {#if $scriptureSettings.splitLongVerses && longVersesMenuOpened}
-            <MaterialToggleSwitch label="scripture.split_long_verses_suffix" checked={$scriptureSettings.splitLongVersesSuffix} defaultValue={false} on:change={e => update("splitLongVersesSuffix", e.detail)} />
-            <MaterialNumberInput label="edit.size" value={$scriptureSettings.longVersesChars || 100} defaultValue={100} min={50} on:change={e => update("longVersesChars", e.detail)} />
-        {/if}
 
         <!-- Verse numbers -->
         <InputRow arrow={$scriptureSettings.verseNumbers} bind:open={verseMenuOpened}>
             <MaterialToggleSwitch label="scripture.verse_numbers" style="width: 100%;" checked={$scriptureSettings.verseNumbers} defaultValue={false} on:change={e => update("verseNumbers", e.detail)} />
+
+            <svelte:fragment slot="menu">
+                {#if $scriptureSettings.verseNumbers}
+                    <MaterialColorInput label="edit.color" value={$scriptureSettings.numberColor || "#919191"} defaultValue="#919191" on:change={e => update("numberColor", e.detail)} />
+                    <MaterialNumberInput label="edit.size (%)" value={$scriptureSettings.numberSize || 50} defaultValue={50} on:change={e => update("numberSize", e.detail)} />
+                {/if}
+            </svelte:fragment>
         </InputRow>
-        {#if $scriptureSettings.verseNumbers && verseMenuOpened}
-            <MaterialColorInput label="edit.color" value={$scriptureSettings.numberColor || "#919191"} defaultValue="#919191" on:change={e => update("numberColor", e.detail)} />
-            <MaterialNumberInput label="edit.size (%)" value={$scriptureSettings.numberSize || 50} defaultValue={50} on:change={e => update("numberSize", e.detail)} />
-        {/if}
 
         <!-- Red Jesus -->
         {#if $scriptureSettings.redJesus || containsJesusWords}
             <InputRow arrow={$scriptureSettings.redJesus} bind:open={redMenuOpened}>
                 <MaterialToggleSwitch label="scripture.red_jesus" style="width: 100%;" checked={$scriptureSettings.redJesus} defaultValue={false} on:change={e => update("redJesus", e.detail)} />
+
+                <svelte:fragment slot="menu">
+                    {#if $scriptureSettings.redJesus}
+                        <MaterialColorInput label="edit.color" value={$scriptureSettings.jesusColor || "#FF4136"} defaultValue="#FF4136" on:change={e => update("jesusColor", e.detail)} />
+                    {/if}
+                </svelte:fragment>
             </InputRow>
-        {/if}
-        {#if $scriptureSettings.redJesus && redMenuOpened}
-            <MaterialColorInput label="edit.color" value={$scriptureSettings.jesusColor || "#FF4136"} defaultValue="#FF4136" on:change={e => update("jesusColor", e.detail)} />
         {/if}
 
         <!-- Reference options -->
@@ -220,35 +229,35 @@
         </InputRow>
         <InputRow arrow bind:open={referenceMenuOpened}>
             <MaterialToggleSwitch label="scripture.version" disabled={!!biblesContent.find(a => a?.attributionRequired)} style="width: 100%;" checked={showVersion} defaultValue={false} on:change={e => update("showVersion", e.detail)} />
-        </InputRow>
 
-        {#if referenceMenuOpened}
-            {#if showVersion || (showVersion && $scriptureSettings.showVerse) || ($scriptureSettings.showVerse && customText.trim() !== "[reference]")}
-                <MaterialTextarea label="tools.layout" value={customText} rows={2} on:change={e => update("customText", e.detail)} />
-            {/if}
+            <svelte:fragment slot="menu">
+                {#if showVersion || (showVersion && $scriptureSettings.showVerse) || ($scriptureSettings.showVerse && customText.trim() !== "[reference]")}
+                    <MaterialTextarea label="tools.layout" value={customText} rows={2} on:change={e => update("customText", e.detail)} />
+                {/if}
 
-            <!-- {#if $scriptureSettings.showVerse}
+                <!-- {#if $scriptureSettings.showVerse}
                 <CombinedInput>
                     <p><T id="meta.text_divider" /></p>
                     <TextInput value={$scriptureSettings.referenceDivider || ":"} on:change={(e) => update("referenceDivider", getTextValue(e))} />
                 </CombinedInput>
             {/if} -->
 
-            {#if showVersion || $scriptureSettings.showVerse}
-                <!-- {#if !$scriptureSettings.firstSlideReference} -->
-                <MaterialToggleSwitch label="scripture.combine_with_text" checked={$scriptureSettings.combineWithText} defaultValue={false} on:change={e => update("combineWithText", e.detail)} />
-                {#if $scriptureSettings.combineWithText}
-                    <MaterialToggleSwitch label="scripture.reference_at_bottom" checked={$scriptureSettings.referenceAtBottom} defaultValue={false} on:change={e => update("referenceAtBottom", e.detail)} />
-                {/if}
-                <!-- {/if} -->
+                {#if showVersion || $scriptureSettings.showVerse}
+                    <!-- {#if !$scriptureSettings.firstSlideReference} -->
+                    <MaterialToggleSwitch label="scripture.combine_with_text" checked={$scriptureSettings.combineWithText} defaultValue={false} on:change={e => update("combineWithText", e.detail)} />
+                    {#if $scriptureSettings.combineWithText}
+                        <MaterialToggleSwitch label="scripture.reference_at_bottom" checked={$scriptureSettings.referenceAtBottom} defaultValue={false} on:change={e => update("referenceAtBottom", e.detail)} />
+                    {/if}
+                    <!-- {/if} -->
 
-                <!-- <br /> -->
-                <!-- WIP Unwanted: -->
-                {#if !$scriptureSettings.combineWithText}
-                    <MaterialToggleSwitch label="edit.invert_items" checked={$scriptureSettings.invertItems} defaultValue={false} on:change={e => update("invertItems", e.detail)} />
+                    <!-- <br /> -->
+                    <!-- WIP Unwanted: -->
+                    {#if !$scriptureSettings.combineWithText}
+                        <MaterialToggleSwitch label="edit.invert_items" checked={$scriptureSettings.invertItems} defaultValue={false} on:change={e => update("invertItems", e.detail)} />
+                    {/if}
                 {/if}
-            {/if}
-        {/if}
+            </svelte:fragment>
+        </InputRow>
     </div>
 </div>
 
