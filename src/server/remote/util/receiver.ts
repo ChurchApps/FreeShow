@@ -2,7 +2,7 @@ import type { Item, Show } from "../../../types/Show"
 import { sanitizeVerseText } from "../../../common/scripture/sanitizeVerseText"
 import { setError, translate } from "./helpers"
 import { send } from "./socket"
-import { _, _get, _set, _update, currentScriptureState, overlays, scriptures, scriptureCache } from "./stores"
+import { _, _get, _set, _update, currentScriptureState, overlays, scriptures, scriptureCache, timers, triggers, activeTimers, runningActions } from "./stores"
 
 function sanitizeBiblePayload(bible: any) {
     if (!bible || !Array.isArray(bible.books)) return bible
@@ -303,6 +303,18 @@ export const receiver = {
     },
     VARIABLE_TAGS: (data: any) => {
         _set("variableTags", data)
+    },
+    TIMERS: (data: any) => {
+        timers.set(data)
+    },
+    TRIGGERS: (data: any) => {
+        triggers.set(data)
+    },
+    ACTIVE_TIMERS: (data: any) => {
+        activeTimers.set(data)
+    },
+    RUNNING_ACTIONS: (data: any) => {
+        runningActions.set(data)
     },
 
     /////

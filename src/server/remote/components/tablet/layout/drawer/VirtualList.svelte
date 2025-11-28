@@ -194,21 +194,4 @@
     svelte-virtual-list-row {
         overflow: hidden;
     }
-
-    /* Scrollbar styling */
-    svelte-virtual-list-viewport::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
-    }
-    svelte-virtual-list-viewport::-webkit-scrollbar-track,
-    svelte-virtual-list-viewport::-webkit-scrollbar-corner {
-        background: rgb(255 255 255 / 0.05);
-    }
-    svelte-virtual-list-viewport::-webkit-scrollbar-thumb {
-        background: rgb(255 255 255 / 0.3);
-        border-radius: 8px;
-    }
-    svelte-virtual-list-viewport::-webkit-scrollbar-thumb:hover {
-        background: rgb(255 255 255 / 0.5);
-    }
 </style>

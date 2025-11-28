@@ -12,7 +12,7 @@ import { updateOut } from "../components/helpers/showActions"
 import { _show } from "../components/helpers/shows"
 import { clearAll } from "../components/output/clear"
 import { REMOTE } from "./../../types/Channels"
-import { activePage, activeProject, activeShow, categories, connections, dictionary, driveData, folders, language, openedFolders, outLocked, overlays, projects, remotePassword, scriptures, shows, showsCache, styles } from "./../stores"
+import { actions, actionTags, activePage, activeProject, activeShow, activeTimers, categories, connections, dictionary, driveData, folders, language, openedFolders, outLocked, overlays, projects, remotePassword, runningActions, scriptures, shows, showsCache, styles, timers, triggers, variableTags, variables } from "./../stores"
 import { lastClickTime } from "./common"
 import { translateText } from "./language"
 import { send } from "./request"
@@ -330,6 +330,16 @@ export async function initializeRemote(id: string) {
     send(REMOTE, ["OVERLAYS"], get(overlays))
     send(REMOTE, ["SCRIPTURE"], get(scriptures))
     send(REMOTE, ["CATEGORIES"], get(categories))
+
+    // Send functions data
+    send(REMOTE, ["ACTIONS"], get(actions))
+    send(REMOTE, ["ACTION_TAGS"], get(actionTags))
+    send(REMOTE, ["VARIABLES"], get(variables))
+    send(REMOTE, ["VARIABLE_TAGS"], get(variableTags))
+    send(REMOTE, ["TIMERS"], get(timers))
+    send(REMOTE, ["TRIGGERS"], get(triggers))
+    send(REMOTE, ["ACTIVE_TIMERS"], get(activeTimers))
+    send(REMOTE, ["RUNNING_ACTIONS"], get(runningActions))
 }
 
 export async function convertBackgrounds(show: Show, noLoad = false, init = false) {

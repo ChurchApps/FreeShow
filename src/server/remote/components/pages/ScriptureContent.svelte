@@ -618,24 +618,6 @@
 
         position: relative;
         scroll-behavior: smooth;
-        /* FreeShow UI scrollbar */
-        scrollbar-width: thin; /* Firefox */
-        scrollbar-color: rgb(255 255 255 / 0.3) rgb(255 255 255 / 0.05);
-    }
-    .grid div::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
-    }
-    .grid div::-webkit-scrollbar-track,
-    .grid div::-webkit-scrollbar-corner {
-        background: rgb(255 255 255 / 0.05);
-    }
-    .grid div::-webkit-scrollbar-thumb {
-        background: rgb(255 255 255 / 0.3);
-        border-radius: 8px;
-    }
-    .grid div::-webkit-scrollbar-thumb:hover {
-        background: rgb(255 255 255 / 0.5);
     }
 
     .grid .books {
@@ -660,24 +642,6 @@
         flex-direction: column;
         flex-wrap: nowrap;
         padding: 0 12px 0 8px;
-        /* FreeShow UI scrollbar styling (desktop) */
-        scrollbar-width: thin; /* Firefox */
-        scrollbar-color: rgb(255 255 255 / 0.3) rgb(255 255 255 / 0.05);
-    }
-    .grid .verses.list::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
-    }
-    .grid .verses.list::-webkit-scrollbar-track,
-    .grid .verses.list::-webkit-scrollbar-corner {
-        background: rgb(255 255 255 / 0.05);
-    }
-    .grid .verses.list::-webkit-scrollbar-thumb {
-        background: rgb(255 255 255 / 0.3);
-        border-radius: 8px;
-    }
-    .grid .verses.list::-webkit-scrollbar-thumb:hover {
-        background: rgb(255 255 255 / 0.5);
     }
 
     .grid .verse-button,
