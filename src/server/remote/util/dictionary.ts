@@ -51,7 +51,17 @@ export const DEFAULT_DICTIONARY = {
         camera: "Camera",
         countdown: "Countdowns",
         timer: "Timers",
-        other: "Other"
+        other: "Other",
+        notice: "Notice",
+        visuals: "Visuals",
+        info: "Info",
+        scripture: "Scripture",
+        events: "Events",
+        pictures: "Pictures",
+        videos: "Videos",
+        music: "Music",
+        offers: "Offers",
+        sound_effects: "Sound effects"
     },
     show: {
         name: "Name"

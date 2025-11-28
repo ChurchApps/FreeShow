@@ -83,6 +83,8 @@ export let currentScriptureState: Writable<CurrentScriptureState> = writable({
 })
 
 export let overlays: Writable<Overlays> = writable({})
+export let overlayCategories: Writable<{ [key: string]: any }> = writable({})
+export let activeOverlayCategory: Writable<string> = writable("all")
 
 export let mediaCache: Writable<any> = writable({})
 export let textCache: Writable<any> = writable({})
@@ -130,6 +132,9 @@ export const _ = {
   openedScripture,
   collectionId,
   currentScriptureState,
+  overlays,
+  overlayCategories,
+  activeOverlayCategory,
   mediaCache,
   textCache,
   groupsCache,

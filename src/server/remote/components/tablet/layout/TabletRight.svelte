@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { dictionary, isCleared, outLayout, outShow, outSlide } from "../../../util/stores"
+    import { dictionary, isCleared, outLayout, outShow, outSlide, outData, overlays } from "../../../util/stores"
     import { translate } from "../../../util/helpers"
     import { GetLayout, getNextSlide, nextSlide } from "../../../util/output"
     import { send } from "../../../util/socket"
@@ -9,6 +9,8 @@
     import Clear from "../../show/Clear.svelte"
     import Button from "../../../../common/components/Button.svelte"
     import Icon from "../../../../common/components/Icon.svelte"
+    import Textbox from "../../show/Textbox.svelte"
+    import Zoomed from "../../show/Zoomed.svelte"
 
     $: outNumber = $outSlide ?? -1
     let transition: any = { type: "fade", duration: 500 }
@@ -16,6 +18,16 @@
     $: layout = $outShow ? GetLayout($outShow, $outLayout) : null
     $: totalSlides = layout ? layout.length : 0
     $: outShowName = $outShow?.name || translate("remote.no_show_selected", $dictionary) || "—"
+
+    // Resolution for overlay scaling
+    const resolution = { width: 1920, height: 1080 }
+
+    // Get active overlay IDs from outData
+    $: activeOverlayIds = $outData?.overlays || []
+    // Get the actual overlay objects for active overlays
+    $: activeOverlayItems = activeOverlayIds
+        .map(id => ({ id, overlay: $overlays[id] }))
+        .filter(({ overlay }) => overlay)
 
     function openOutShow() {
         const showId = $outShow?.id
@@ -39,11 +51,33 @@
 
         <div class="top flex">
             <div class="outSlides">
-                {#if $isCleared.all}
-                    <div style="width: 100%; aspect-ratio: 16/9; background-color: black; border-radius: 4px; border: 1px solid #333;"></div>
-                {:else if $outShow && layout}
-                    <Slide outSlide={outNumber} {transition} preview />
-                {/if}
+                <div class="output-preview-wrapper">
+                    {#if $isCleared.all && !activeOverlayItems.length}
+                        <div class="empty-preview"></div>
+                    {:else}
+                        <div class="preview-container">
+                            <!-- Base slide -->
+                            {#if !$isCleared.slide && $outShow && layout}
+                                <Slide outSlide={outNumber} {transition} preview />
+                            {:else}
+                                <div class="black-background"></div>
+                            {/if}
+                            
+                            <!-- Active overlays on top -->
+                            {#if activeOverlayItems.length}
+                                <div class="overlays-layer">
+                                    <Zoomed {resolution} background="transparent">
+                                        {#each activeOverlayItems as { overlay }}
+                                            {#each overlay.items || [] as item}
+                                                <Textbox {item} />
+                                            {/each}
+                                        {/each}
+                                    </Zoomed>
+                                </div>
+                            {/if}
+                        </div>
+                    {/if}
+                </div>
             </div>
 
             <div class="buttons">
@@ -110,6 +144,47 @@
     .outSlides {
         display: flex;
         width: 100%;
+    }
+
+    .output-preview-wrapper {
+        width: 100%;
+        aspect-ratio: 16/9;
+        position: relative;
+    }
+
+    .empty-preview {
+        width: 100%;
+        height: 100%;
+        background-color: black;
+        border-radius: 4px;
+        border: 1px solid #333;
+    }
+
+    .preview-container {
+        width: 100%;
+        height: 100%;
+        position: relative;
+        overflow: hidden;
+        border-radius: 4px;
+    }
+
+    .black-background {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: black;
+    }
+
+    .overlays-layer {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 10;
     }
 
     .controls {

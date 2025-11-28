@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { categories, shows, activeCategory, dictionary, scriptures, openedScripture, collectionId, actions, actionTags, variables, variableTags, activeActionTagFilter, activeVariableTagFilter, functionsSubTab, timers, triggers } from "../../../../util/stores"
+    import { categories, shows, activeCategory, dictionary, scriptures, openedScripture, collectionId, actions, actionTags, variables, variableTags, activeActionTagFilter, activeVariableTagFilter, functionsSubTab, timers, triggers, overlays, overlayCategories, activeOverlayCategory } from "../../../../util/stores"
     import { translate } from "../../../../util/helpers"
     import { _set } from "../../../../util/stores"
     import Button from "../../../../../common/components/Button.svelte"
@@ -19,6 +19,21 @@
     $: uncategorizedShowsLength = unarchivedShows.filter(a => a.category === null || !$categories[a.category]).length
 
     $: active = $activeCategory || "all"
+
+    // Overlays tab logic
+    $: overlayCategoriesList = Object.keys($overlayCategories).map(k => ({ id: k, ...$overlayCategories[k] }))
+    $: unarchivedOverlayCategoriesList = overlayCategoriesList.filter(a => !a.isArchive)
+    $: archivedOverlayCategoriesList = overlayCategoriesList.filter(a => a.isArchive)
+
+    $: allOverlays = Object.values($overlays || {}).filter(a => a)
+    $: unarchivedOverlays = allOverlays.filter(a => a.category === null || !$overlayCategories[a.category]?.isArchive)
+    $: uncategorizedOverlaysLength = unarchivedOverlays.filter(a => a.category === null || !$overlayCategories[a.category]).length
+
+    $: activeOverlay = $activeOverlayCategory || "all"
+
+    function setOverlayCategory(catId: string) {
+        activeOverlayCategory.set(catId)
+    }
 
     // Scripture tab logic
     $: scriptureEntries = Object.keys($scriptures).map(k => ({ id: k, ...$scriptures[k], icon: $scriptures[k].api ? "scripture_alt" : $scriptures[k].collection ? "collection" : "scripture" }))
@@ -273,6 +288,90 @@
                     <span class="count">{triggersCount}</span>
                 </MaterialButton>
             </div>
+        </div>
+    {:else if id === "overlays"}
+        <div class="tabSection">
+            <!-- All & Unlabeled Section -->
+            <div class="section">
+                <MaterialButton 
+                    class="tab {activeOverlay === 'all' ? 'active' : ''}" 
+                    on:click={() => setOverlayCategory('all')}
+                    style="width: 100%; font-weight: normal; padding: 0.2em 0.8em;"
+                    isActive={activeOverlay === 'all'}
+                    tab
+                >
+                    <div style="max-width: 85%;" data-title={translate("category.all", $dictionary)}>
+                        <Icon id="all" size={1} white={activeOverlay === 'all'} />
+                        <p style="margin: 5px;">{translate("category.all", $dictionary)}</p>
+                    </div>
+                    <span class="count">{unarchivedOverlays.length}</span>
+                </MaterialButton>
+                
+                {#if uncategorizedOverlaysLength}
+                    <MaterialButton 
+                        class="tab {activeOverlay === 'unlabeled' ? 'active' : ''}" 
+                        on:click={() => setOverlayCategory('unlabeled')}
+                        style="width: 100%; font-weight: normal; padding: 0.2em 0.8em;"
+                        isActive={activeOverlay === 'unlabeled'}
+                        tab
+                    >
+                        <div style="max-width: 85%;" data-title={translate("category.unlabeled", $dictionary)}>
+                            <Icon id="noIcon" size={1} white={activeOverlay === 'unlabeled'} />
+                            <p style="margin: 5px;">{translate("category.unlabeled", $dictionary)}</p>
+                        </div>
+                        <span class="count">{uncategorizedOverlaysLength}</span>
+                    </MaterialButton>
+                {/if}
+            </div>
+
+            <!-- Categories Section -->
+            {#if unarchivedOverlayCategoriesList.length}
+                <div class="section">
+                    <div class="title">{translate("guide_title.categories", $dictionary)}</div>
+                    {#each sortByName(unarchivedOverlayCategoriesList) as cat}
+                        {@const count = allOverlays.filter(s => s.category === cat.id).length}
+                        <MaterialButton 
+                            class="tab {activeOverlay === cat.id ? 'active' : ''}" 
+                            on:click={() => setOverlayCategory(cat.id)}
+                            style="width: 100%; font-weight: normal; padding: 0.2em 0.8em;"
+                            isActive={activeOverlay === cat.id}
+                            tab
+                        >
+                            <div style="max-width: 85%;" data-title={translate(cat.name, $dictionary) || cat.name}>
+                                <Icon id={cat.icon || "folder"} size={1} white={activeOverlay === cat.id} />
+                                <p style="margin: 5px;">{translate(cat.name, $dictionary) || cat.name}</p>
+                            </div>
+                            <span class="count">{count}</span>
+                        </MaterialButton>
+                    {/each}
+                </div>
+            {/if}
+
+            <!-- Archived Categories Section -->
+            {#if archivedOverlayCategoriesList.length}
+                <div class="section">
+                    <div class="separator">
+                        <div class="sepLabel">{translate("actions.archive_title", $dictionary)}</div>
+                        <hr />
+                    </div>
+                    {#each sortByName(archivedOverlayCategoriesList) as cat}
+                        {@const count = allOverlays.filter(s => s.category === cat.id).length}
+                        <MaterialButton 
+                            class="tab {activeOverlay === cat.id ? 'active' : ''}" 
+                            on:click={() => setOverlayCategory(cat.id)}
+                            style="width: 100%; font-weight: normal; padding: 0.2em 0.8em;"
+                            isActive={activeOverlay === cat.id}
+                            tab
+                        >
+                            <div style="max-width: 85%;" data-title={translate(cat.name, $dictionary) || cat.name}>
+                                <Icon id={cat.icon || "folder"} size={1} white={activeOverlay === cat.id} />
+                                <p style="margin: 5px;">{translate(cat.name, $dictionary) || cat.name}</p>
+                            </div>
+                            <span class="count">{count}</span>
+                        </MaterialButton>
+                    {/each}
+                </div>
+            {/if}
         </div>
     {:else if id === "scripture"}
         <div class="tabSection">
