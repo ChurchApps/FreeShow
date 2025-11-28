@@ -16,7 +16,9 @@
 
       main {
         /* background-color: var(--primary); */
-        background-color: #001E17;
+        background-image: url("./assets/startup.png");
+        background-size: cover;
+        background-position: top left;
         /* background: linear-gradient(140deg, #28276d 20%, #150f30); */
         width: 100%;
         height: 100%;
@@ -30,21 +32,6 @@
         -webkit-app-region: drag;
 
         overflow: hidden;
-      }
-
-      img {
-        height: calc(100% - var(--loader-height));
-        width: 42%;
-        object-fit: cover;
-        object-position: top left;
-
-        left: 0;
-        /* max-width: 40%; */
-        position: absolute;
-        top: var(--loader-height);
-
-        border-bottom-left-radius: var(--radius);
-        border-top-right-radius: var(--radius);
       }
 
       .text {
@@ -127,12 +114,12 @@
       <span></span>
     </div>
 
-    <main>
-      <img src="./assets/startup.webp" alt="Loading..." draggable="false" />
-
-      <div class="text">
-        <h1>APlay Pro</h1>
-        <p class="v">v<span class="version">1.0.0</span></p>
+    <main style="position: relative">
+      <div class="text" style="position: absolute; bottom: 80px; right: -30px">
+        <!-- <h1>APlay Pro</h1> -->
+        <p class="v" style="color: white">
+          v<span class="version">1.0.0</span>
+        </p>
       </div>
     </main>
 
