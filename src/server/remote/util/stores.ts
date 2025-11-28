@@ -2,7 +2,7 @@ import { get, Writable, writable } from "svelte/store"
 import type { Bible } from "../../../types/Bible"
 import type { OutData } from "../../../types/Output"
 import type { Dictionary } from "../../../types/Settings"
-import type { Overlays, Show, TrimmedShow } from "../../../types/Show"
+import type { Overlays, Show, ShowList } from "../../../types/Show"
 import type { BibleCategories } from "../../../types/Tabs"
 import { clone } from "../../common/util/helpers"
 import { __update, DeepKey, DeepNested, Inferred, Nested } from "../../common/util/stores"
@@ -24,11 +24,14 @@ export let quickPlay = writable(false)
 export let createShow: Writable<boolean | string> = writable(false)
 export let showSearchValue = writable("")
 export let activeTab = writable("shows")
+export let activeDrawerTab = writable("shows")
+export let activeCategory = writable("all")
+export let drawer: Writable<{ height: number; stored: number | null; autoclosed: boolean }> = writable({ height: 300, stored: null, autoclosed: false })
 export let outputMode: Writable<"slide" | "lyrics"> = writable("slide")
 
 export let active: Writable<ProjectShowRef> = writable({ id: "", type: "show" })
 export let activeShow: Writable<Show | null> = writable(null)
-export let shows: Writable<TrimmedShow[]> = writable([])
+export let shows: Writable<ShowList[]> = writable([])
 export let outData: Writable<OutData> = writable({})
 export let outSlide: Writable<number | null> = writable(null)
 export let outLayout: Writable<string | null> = writable(null)
@@ -45,7 +48,19 @@ export let projects: Writable<any[]> = writable([])
 export let project: Writable<string> = writable("")
 
 export let scriptures: Writable<{ [key: string]: BibleCategories }> = writable({})
+export let categories: Writable<{ [key: string]: any }> = writable({})
+export let resized: Writable<{ [key: string]: number }> = writable({})
 export let scriptureViewList = writable(false)
+export let openedScripture = writable(localStorage.getItem("scripture") || "")
+export let collectionId = writable(localStorage.getItem("collectionId") || "")
+
+export let actions: Writable<{ [key: string]: any }> = writable({})
+export let actionTags: Writable<{ [key: string]: any }> = writable({})
+export let variables: Writable<{ [key: string]: any }> = writable({})
+export let variableTags: Writable<{ [key: string]: any }> = writable({})
+
+export let activeActionTagFilter: Writable<string[]> = writable([])
+export let activeVariableTagFilter: Writable<string[]> = writable([])
 
 export type CurrentScriptureState = {
     scriptureId: string
@@ -83,6 +98,9 @@ export const _ = {
     isConnected,
     quickPlay,
     activeTab,
+    activeDrawerTab,
+    activeCategory,
+    drawer,
     outputMode,
     active,
     activeShow,
@@ -101,6 +119,10 @@ export const _ = {
     projects,
     project,
     scriptures,
+    categories,
+    resized,
+    openedScripture,
+    collectionId,
     currentScriptureState,
     mediaCache,
     textCache,
@@ -109,7 +131,13 @@ export const _ = {
     playingAudioData,
     playingAudioTime,
     pdfPages,
-    scriptureSearchResults
+    scriptureSearchResults,
+    actions,
+    actionTags,
+    variables,
+    variableTags,
+    activeActionTagFilter,
+    activeVariableTagFilter
 }
 
 /////
