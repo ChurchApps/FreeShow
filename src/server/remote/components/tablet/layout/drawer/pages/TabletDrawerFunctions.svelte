@@ -14,8 +14,8 @@
 
     function sortByName(list: any[], key = "name", lowercase = false) {
         return [...list].sort((a, b) => {
-            const aVal = lowercase ? (a[key] || "").toLowerCase() : (a[key] || "")
-            const bVal = lowercase ? (b[key] || "").toLowerCase() : (b[key] || "")
+            const aVal = lowercase ? (a[key] || "").toLowerCase() : a[key] || ""
+            const bVal = lowercase ? (b[key] || "").toLowerCase() : b[key] || ""
             return aVal.localeCompare(bVal)
         })
     }
@@ -34,7 +34,9 @@
 
     // Force re-render every second to update timer displays
     let tick = 0
-    const interval = setInterval(() => { tick++ }, 1000)
+    const interval = setInterval(() => {
+        tick++
+    }, 1000)
     onDestroy(() => clearInterval(interval))
 
     function getCurrentTimerValue(timer: any, _tick: number) {
@@ -113,9 +115,9 @@
     async function activateTrigger(triggerId: string) {
         triggerStatus[triggerId] = "pending"
         triggerStatus = triggerStatus
-        
+
         send("API:start_trigger", { id: triggerId })
-        
+
         // Auto-clear status after 2 seconds
         setTimeout(() => {
             if (triggerStatus[triggerId] === "pending") {
@@ -133,11 +135,7 @@
             <div class="actions">
                 {#each filteredActionsTags as action}
                     <div class="action" class:running={$runningActions.includes(action.id)}>
-                        <Button
-                            on:click={() => runAction(action)}
-                            style="width: 100%; justify-content: space-between; text-align: start;"
-                            dark
-                        >
+                        <Button on:click={() => runAction(action)} style="width: 100%; justify-content: space-between; text-align: start;" dark>
                             <span style="display: flex; align-items: center; gap: 8px;">
                                 {#if action.shows?.length}
                                     <Icon id="slide" />
@@ -172,7 +170,6 @@
                 <p style="opacity: 0.5;">{translate("empty.general", $dictionary)}</p>
             </Center>
         {/if}
-
     {:else if $functionsSubTab === "timer"}
         <!-- Timers Content -->
         {#if sortedTimers.length}
@@ -184,15 +181,11 @@
                     {@const isCountingDown = (timer.start || 0) > (timer.end || 0)}
                     {@const minValue = Math.min(timer.start || 0, timer.end || 0)}
                     {@const maxValue = Math.max(timer.start || 0, timer.end || 0)}
-                    {@const totalDuration = isCountingDown ? (timer.start || 0) : (timer.end || 0)}
+                    {@const totalDuration = isCountingDown ? timer.start || 0 : timer.end || 0}
 
                     <div class="timer" class:outline={$activeTimers.find(a => a.id === timer.id)}>
                         <div class="timer-left">
-                            <Button 
-                                disabled={timer.type !== "counter"} 
-                                on:click={() => playPauseTimer(timer.id)}
-                                style="padding: 8px;"
-                            >
+                            <Button disabled={timer.type !== "counter"} on:click={() => playPauseTimer(timer.id)} style="padding: 8px;">
                                 <Icon id={isPlaying ? "pause" : "play"} white={!isPlaying} />
                             </Button>
                             <span class="time">
@@ -201,15 +194,7 @@
                         </div>
 
                         {#if timer.type === "counter"}
-                            <input 
-                                type="range" 
-                                class="timer-slider"
-                                class:invert={isCountingDown}
-                                value={currentValue}
-                                min={minValue}
-                                max={maxValue}
-                                disabled
-                            />
+                            <input type="range" class="timer-slider" class:invert={isCountingDown} value={currentValue} min={minValue} max={maxValue} disabled />
                         {/if}
 
                         <div class="timer-right">
@@ -219,11 +204,7 @@
                                 </span>
                             {/if}
                             {#if timer.type === "counter"}
-                                <Button 
-                                    on:click={() => resetTimer(timer.id)} 
-                                    disabled={!$activeTimers.find(a => a.id === timer.id)}
-                                    style="padding: 8px;"
-                                >
+                                <Button on:click={() => resetTimer(timer.id)} disabled={!$activeTimers.find(a => a.id === timer.id)} style="padding: 8px;">
                                     <Icon id="stop" white={!isPlaying} />
                                 </Button>
                             {/if}
@@ -236,7 +217,6 @@
                 <p style="opacity: 0.5;">{translate("empty.timers", $dictionary)}</p>
             </Center>
         {/if}
-
     {:else if $functionsSubTab === "variables"}
         <!-- Variables Content -->
         {#if filteredVariablesTags.length}
@@ -266,20 +246,10 @@
                                 </span>
 
                                 <div class="buttons">
-                                    <Button 
-                                        on:click={() => decrementVariable(variable)} 
-                                        disabled={number <= min}
-                                        style="flex: 1;"
-                                        dark
-                                    >
+                                    <Button on:click={() => decrementVariable(variable)} disabled={number <= min} style="flex: 1;" dark>
                                         <Icon id="remove" size={2} white />
                                     </Button>
-                                    <Button 
-                                        on:click={() => incrementVariable(variable)} 
-                                        disabled={number >= max}
-                                        style="flex: 1;"
-                                        dark
-                                    >
+                                    <Button on:click={() => incrementVariable(variable)} disabled={number >= max} style="flex: 1;" dark>
                                         <Icon id="add" size={2} white />
                                     </Button>
                                 </div>
@@ -310,22 +280,13 @@
                 <p style="opacity: 0.5;">{translate("empty.general", $dictionary)}</p>
             </Center>
         {/if}
-
     {:else if $functionsSubTab === "triggers"}
         <!-- Triggers Content -->
         {#if sortedTriggers.length}
             <div class="triggers" class:center={sortedTriggers.length <= 10}>
                 {#each sortedTriggers as trigger}
-                    <div 
-                        class="trigger" 
-                        class:pending={triggerStatus[trigger.id] === "pending"}
-                        class:success={triggerStatus[trigger.id] === "success"}
-                        class:error={triggerStatus[trigger.id] === "error"}
-                    >
-                        <Button
-                            on:click={() => activateTrigger(trigger.id)}
-                            style="width: 100%; height: 100%; padding: 5px;"
-                        >
+                    <div class="trigger" class:pending={triggerStatus[trigger.id] === "pending"} class:success={triggerStatus[trigger.id] === "success"} class:error={triggerStatus[trigger.id] === "error"}>
+                        <Button on:click={() => activateTrigger(trigger.id)} style="width: 100%; height: 100%; padding: 5px;">
                             <p>
                                 {trigger.name || translate("main.unnamed", $dictionary)}
                             </p>
@@ -419,7 +380,8 @@
         outline-offset: -2px;
     }
 
-    .timer-left, .timer-right {
+    .timer-left,
+    .timer-right {
         display: flex;
         align-items: center;
         gap: 5px;

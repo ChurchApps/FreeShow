@@ -391,8 +391,6 @@
         }
     }
 
-
-
     // TEXT FORMATTING
 
     function formatBibleText(text: string | undefined) {
@@ -530,16 +528,7 @@
                             {formatBibleText(verse.text || verse.value)}
                         </button>
                     {:else}
-                        <span
-                            id={verseNumber.toString()}
-                            role="button"
-                            tabindex="0"
-                            on:mousedown={() => playScripture(verseNumber)}
-                            on:keydown={e => e.key === "Enter" && playScripture(verseNumber)}
-                            class:active={isActive}
-                            class:displayed={isDisplayed}
-                            class:output={isDisplayed}
-                        >
+                        <span id={verseNumber.toString()} role="button" tabindex="0" on:mousedown={() => playScripture(verseNumber)} on:keydown={e => e.key === "Enter" && playScripture(verseNumber)} class:active={isActive} class:displayed={isDisplayed} class:output={isDisplayed}>
                             {verseNumber}
                         </span>
                     {/if}

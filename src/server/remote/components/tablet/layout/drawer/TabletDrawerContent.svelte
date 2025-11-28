@@ -8,7 +8,7 @@
     import TabletDrawerCalendar from "./pages/TabletDrawerCalendar.svelte"
     import TabletDrawerFunctions from "./pages/TabletDrawerFunctions.svelte"
     import Scripture from "../../../pages/Scripture.svelte"
-    
+
     export let id: string
     export let searchValue: string
 
