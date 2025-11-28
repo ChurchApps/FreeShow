@@ -10,9 +10,13 @@ import { receiveREMOTE } from "./remoteTalk"
 import { receiveSTAGE } from "./stageTalk"
 
 export function filterObjectArray(object: any, keys: string[], filter: null | string = null) {
-    return Object.entries(object)
-        .map(([id, a]: any) => ({ id, ...keys.reduce((o, key) => ({ ...o, [key]: a[key] }), {}) }))
-        .filter((a: any) => (filter ? a[filter] : true))
+    return (
+        Object.entries(object)
+            // sometimes object value can be undefined
+            .filter(([_id, a]: any) => a)
+            .map(([id, a]: any) => ({ id, ...keys.reduce((o, key) => ({ ...o, [key]: a[key] }), {}) }))
+            .filter((a: any) => (filter ? a[filter] : true))
+    )
 }
 export function arrayToObject(array: any[], key = "id") {
     return array.reduce((o, a) => ({ ...o, [a[key]]: a }), {})

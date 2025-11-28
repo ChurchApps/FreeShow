@@ -116,7 +116,10 @@ export async function exportProject(project: Project, projectId: string) {
             if (!get(media)[path]) return
 
             const data = clone(get(media)[path])
+
             // delete data.info
+            delete data.creationTime // no need to transport this
+
             mediaData[path] = data
         })
         if (Object.keys(mediaData).length) projectData.media = mediaData

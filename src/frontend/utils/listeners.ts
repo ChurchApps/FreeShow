@@ -190,6 +190,8 @@ export function storeSubscriber() {
                 if (!connection.active) return
 
                 const currentData = data[connection.active]
+                if (!currentData) return
+
                 if (!currentData.settings.resolution?.width) currentData.settings.resolution = { width: 1920, height: 1080 }
                 return currentData
             })
