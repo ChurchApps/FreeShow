@@ -150,6 +150,9 @@ export const receiver = {
     SCRIPTURE: (data: any) => {
         scriptures.set(data)
     },
+    CATEGORIES: (data: any) => {
+        _.categories.set(data)
+    },
     ACTIVE_SCRIPTURE: (data: any) => {
         const source: any = data?.api || data?.bible || data || {}
         const scriptureId: string = String(source.scriptureId || source.id || "")
@@ -288,6 +291,18 @@ export const receiver = {
     },
     OVERLAYS: (data: any) => {
         overlays.set(data)
+    },
+    ACTIONS: (data: any) => {
+        _set("actions", data)
+    },
+    ACTION_TAGS: (data: any) => {
+        _set("actionTags", data)
+    },
+    VARIABLES: (data: any) => {
+        _set("variables", data)
+    },
+    VARIABLE_TAGS: (data: any) => {
+        _set("variableTags", data)
     },
 
     /////

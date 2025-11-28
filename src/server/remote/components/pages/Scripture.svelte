@@ -7,7 +7,7 @@
     import { keysToID } from "../../../common/util/helpers"
     import { translate } from "../../util/helpers"
     import { send } from "../../util/socket"
-    import { dictionary, isCleared, scriptureCache, scriptures, scriptureSearchResults, scriptureViewList, outSlide, outShow } from "../../util/stores"
+    import { dictionary, isCleared, scriptureCache, scriptures, scriptureSearchResults, scriptureViewList, outSlide, outShow, openedScripture, collectionId } from "../../util/stores"
     import Clear from "../show/Clear.svelte"
     import ScriptureContent from "./ScriptureContent.svelte"
     import { sanitizeVerseText } from "../../../../common/scripture/sanitizeVerseText"
@@ -15,41 +15,12 @@
     export let tablet: boolean = false
     export let triggerScriptureSearch: boolean = false
 
-    let collectionId = localStorage.collectionId || ""
-    let openedScripture = localStorage.scripture || ""
-
     function checkScriptureExists(scriptureId: string, collId: string): boolean {
         if (!scriptureId || Object.keys($scriptures).length === 0) return false
         return !!($scriptures[scriptureId] || (collId && $scriptures[collId]))
     }
 
     $: scripturesLoaded = Object.keys($scriptures).length > 0
-
-    // Validate stored scripture ID and reset if invalid (prevents infinite loading on first launch)
-    $: if (scripturesLoaded && openedScripture && !checkScriptureExists(openedScripture, collectionId)) {
-        openedScripture = ""
-        collectionId = ""
-        localStorage.removeItem("scripture")
-        localStorage.removeItem("collectionId")
-    }
-
-    // Get all versions if this is a collection
-    $: collectionVersions = ((collectionId && $scriptures[collectionId]?.collection?.versions) || []) as string[]
-    $: allScriptureIds = (collectionVersions.length > 0 ? collectionVersions : openedScripture ? [openedScripture] : []) as string[]
-    $: isCollection = collectionVersions.length > 1
-
-    // Request scripture data for all versions in a collection
-    function loadCollectionScriptures(ids: string[]) {
-        ids.forEach(scriptureId => {
-            if (scriptureId && !$scriptureCache[scriptureId]) {
-                send("GET_SCRIPTURE", { id: scriptureId })
-            }
-        })
-    }
-    $: if (allScriptureIds.length > 0) loadCollectionScriptures(allScriptureIds)
-
-    // Build array of all scriptures with their data for collections
-    $: allScripturesData = allScriptureIds
         .map(sid => ({
             id: sid,
             data: $scriptureCache[sid],
@@ -65,8 +36,8 @@
     let currentVerse = ""
 
     function openScripture(id: string, collection: string = "") {
-        openedScripture = id
-        collectionId = collection
+        openedScripture.set(id)
+        collectionId.set(collection)
         // reset browsing state when switching between bibles (API/local)
         depth = 0
         currentBook = ""
@@ -90,6 +61,22 @@
         openScripture(collection ? collection.versions[0] : id, collection ? id : "")
     }
 
+
+    function autoOpenDefaultScripture() {
+        // Priority: favorites > local bibles > collections > api bibles
+        const defaultScripture = favoritesList[0] || localBibles[0] || collectionList[0] || apiBibles[0]
+        if (defaultScripture) {
+            selectScripture(defaultScripture)
+            // Auto-navigate to Genesis 1:1 (first book, first chapter) in tablet mode
+            setTimeout(() => {
+                if (scriptureContentRef?.navigateToVerse) {
+                    scriptureContentRef.navigateToVerse(1, 1)
+                }
+            }, 100)
+        }
+    }
+
+
     $: scriptureEntries = keysToID($scriptures).map((a: any) => ({ ...a, icon: iconForScripture(a) }))
     $: favoritesList = sortByName(scriptureEntries.filter(a => a.favorite))
     $: favoriteIds = new Set(favoritesList.map(a => a.id))
@@ -104,12 +91,17 @@
         apiDividerIndex?: number
     }
 
-    $: scriptureSections = [favoritesList.length ? { id: "favorites", labelKey: "category.favourites", items: favoritesList } : null, collectionList.length ? { id: "collections", labelKey: "scripture.collections", items: collectionList } : null, localBibles.length || apiBibles.length ? { id: "local", labelKey: "scripture.bibles_section", items: [...localBibles, ...apiBibles], apiDividerIndex: localBibles.length } : null].filter((section): section is ScriptureSection => Boolean(section))
+    $: scriptureSections = ([favoritesList.length ? { id: "favorites", labelKey: "category.favourites", items: favoritesList } : null, collectionList.length ? { id: "collections", labelKey: "scripture.collections", items: collectionList } : null, localBibles.length || apiBibles.length ? { id: "local", labelKey: "scripture.bibles_section", items: [...localBibles, ...apiBibles], apiDividerIndex: localBibles.length } : null] as (ScriptureSection | null)[]).filter((section): section is ScriptureSection => Boolean(section))
+
+    // Auto-open default scripture in tablet mode when none is selected
+    $: if (tablet && scripturesLoaded && !$openedScripture && scriptureEntries.length > 0) {
+        autoOpenDefaultScripture()
+    }
 
     function isActiveScripture(scripture: any): boolean {
         if (!scripture) return false
-        if (scripture.collection) return collectionId === scripture.id
-        return !collectionId && openedScripture === scripture.id
+        if (scripture.collection) return $collectionId === scripture.id
+        return !$collectionId && $openedScripture === scripture.id
     }
 
     function next() {
@@ -141,8 +133,8 @@
         scriptureSearchResults.set(null)
         // Restore depth to where user was before search
         // Only reset if scripture data isn't loaded
-        if (openedScripture && !$scriptureCache[openedScripture]) {
-            send("GET_SCRIPTURE", { id: openedScripture })
+        if ($openedScripture && !$scriptureCache[$openedScripture]) {
+            send("GET_SCRIPTURE", { id: $openedScripture })
             depth = 0
         } else {
             depth = depthBeforeSearch
@@ -161,16 +153,16 @@
     const failedChapterRequests = new Set<string>()
 
     // Clear failed requests when search changes or scripture changes
-    $: if (searchValue || openedScripture) {
+    $: if (searchValue || $openedScripture) {
         if (searchValue.trim() === "") {
             failedChapterRequests.clear()
         }
     }
 
-    $: isApiBible = openedScripture && $scriptures[openedScripture]?.api === true
-    $: updateSearch(searchValue, $scriptureCache, openedScripture, isApiBible)
-    $: handleApiSearchResults($scriptureSearchResults, searchValue, openedScripture)
-    $: updateSearchResultsWithLoadedVerses($scriptureCache, searchResults, openedScripture)
+    $: isApiBible = $openedScripture && $scriptures[$openedScripture]?.api === true
+    $: updateSearch(searchValue, $scriptureCache, $openedScripture, isApiBible)
+    $: handleApiSearchResults($scriptureSearchResults, searchValue, $openedScripture)
+    $: updateSearchResultsWithLoadedVerses($scriptureCache, searchResults, $openedScripture)
 
     // Auto-focus search input when search is opened
     $: if (openScriptureSearch) {
@@ -855,38 +847,64 @@
             {/if}
         </div>
     </div>
-{:else if openedScripture && (checkScriptureExists(openedScripture, collectionId) || !scripturesLoaded)}
-    <div class="header-bar" class:has-ref={!!depth}>
-        <button class="header-action" aria-label="Back" on:click={() => (depth ? scriptureContentRef?.goBack?.() : openScripture(""))}>
-            <Icon id="back" size={1.5} />
-        </button>
-        <div class="header-center">
-            <h2 class="header-title">
-                {$scriptures[collectionId || openedScripture]?.customName || $scriptures[collectionId || openedScripture]?.name || ""}
-            </h2>
-            <div class="header-ref">
-                {#if depth}
-                    {#if currentBook}{currentBook}{/if}
-                    {#if currentChapter}
-                        {currentChapter}{#if +currentVerse > 0}:{currentVerse}{/if}
+{:else if tablet || ($openedScripture && (checkScriptureExists($openedScripture, $collectionId) || !scripturesLoaded))}
+    {#if !tablet}
+        <div class="header-bar" class:has-ref={!!depth}>
+            <button class="header-action" aria-label="Back" on:click={() => (depth ? scriptureContentRef?.goBack?.() : openScripture(""))}>
+                <Icon id="back" size={1.5} />
+            </button>
+            <div class="header-center">
+                <h2 class="header-title">
+                    {$scriptures[$collectionId || $openedScripture]?.customName || $scriptures[$collectionId || $openedScripture]?.name || ""}
+                </h2>
+                <div class="header-ref">
+                    {#if depth}
+                        {#if currentBook}{currentBook}{/if}
+                        {#if currentChapter}
+                            {currentChapter}{#if +currentVerse > 0}:{currentVerse}{/if}
+                        {/if}
                     {/if}
-                {/if}
+                </div>
             </div>
+            <button class="header-action" aria-label="Search scripture" on:click={() => (openScriptureSearch = true)}>
+                <Icon id="search" size={1.5} />
+            </button>
         </div>
-        <button class="header-action" aria-label="Search scripture" on:click={() => (openScriptureSearch = true)}>
-            <Icon id="search" size={1.5} />
-        </button>
-    </div>
+    {/if}
 
     <div class="bible">
+<<<<<<< HEAD
         {#if $scriptureCache[openedScripture]}
             <ScriptureContent id={collectionId || openedScripture} scripture={$scriptureCache[openedScripture]} scriptures={allScripturesData} {isCollection} bind:depth bind:currentBook bind:currentChapter bind:currentVerse bind:this={scriptureContentRef} />
         {:else if checkScriptureExists(openedScripture, collectionId)}
+=======
+        {#if $scriptureCache[$openedScripture]}
+            <ScriptureContent {tablet} id={$collectionId || $openedScripture} scripture={$scriptureCache[$openedScripture]} bind:depth bind:currentBook bind:currentChapter bind:currentVerse bind:this={scriptureContentRef} />
+            
+            {#if tablet}
+                <div class="tablet-controls">
+                    <Button style="border-radius: 50%; width: 45px; height: 45px; box-shadow: 0 2px 10px rgba(0,0,0,0.3); padding: 0;" on:click={() => scriptureContentRef?.backward()} center dark title="Previous">
+                        <Icon id="previous" white size={1.2} />
+                    </Button>
+                    <Button style="border-radius: 50%; width: 45px; height: 45px; box-shadow: 0 2px 10px rgba(0,0,0,0.3); padding: 0;" on:click={() => scriptureContentRef?.forward()} center dark title="Next">
+                        <Icon id="next" white size={1.2} />
+                    </Button>
+                    <Button style="border-radius: 50%; width: 45px; height: 45px; box-shadow: 0 2px 10px rgba(0,0,0,0.3); padding: 0;" on:click={() => scriptureContentRef?.playScripture()} center dark title="Play/Update">
+                        <Icon id="play" white size={1.2} />
+                    </Button>
+                    <div style="width: 1px; height: 30px; background: rgba(255,255,255,0.2); margin: 0 5px;"></div>
+                    <Button style="border-radius: 50%; width: 45px; height: 45px; box-shadow: 0 2px 10px rgba(0,0,0,0.3); padding: 0;" on:click={() => scriptureViewList.set(!$scriptureViewList)} center dark title={$scriptureViewList ? "Grid View" : "List View"}>
+                        <Icon id={$scriptureViewList ? "grid" : "list"} white size={1.2} />
+                    </Button>
+                </div>
+            {/if}
+        {:else if checkScriptureExists($openedScripture, $collectionId)}
+>>>>>>> 895e25ef (Redo Tablet Mode)
             <Loading />
         {/if}
     </div>
 
-    {#if showControlsBar}
+    {#if showControlsBar && !tablet}
         <div class="controls-section">
             {#if showPrevNext}
                 <div class="navigation-buttons">
@@ -916,7 +934,7 @@
             {/if}
         </div>
     {/if}
-{:else if scriptureEntries.length}
+{:else if !tablet && scriptureEntries.length}
     <h2 class="header">
         {translate("tabs.scripture", $dictionary)}
     </h2>
@@ -944,7 +962,7 @@
             {/each}
         </div>
     </div>
-{:else}
+{:else if !tablet}
     <Center faded>{translate("empty.general", $dictionary)}</Center>
 {/if}
 
@@ -1045,6 +1063,15 @@
     .bible {
         flex: 1;
         overflow-y: hidden;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+    }
+    .bible :global(.grid),
+    .bible :global(.list) {
+        flex: 1;
+        height: 100%;
+        position: relative;
     }
 
     .verse {
@@ -1057,6 +1084,8 @@
     .verse:hover {
         background-color: var(--primary-darker);
     }
+
+
 
     /* Controls section */
     .controls-section {
@@ -1106,6 +1135,19 @@
 
     .controls-section .buttons {
         border-radius: 0;
+    }
+
+    .controls-section .buttons :global(button) {
+        flex: 1;
+        padding: 0.75rem 1rem !important;
+        font-size: 1em !important;
+        min-height: 48px !important;
+        border-radius: 0 !important;
+    }
+
+    .buttons {
+        display: flex;
+        width: 100%;
     }
 
     .controls-section :global(.clearAll) {
@@ -1356,4 +1398,18 @@
             min-height: auto !important;
         }
     }
+    .tablet-controls {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        z-index: 100;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        background-color: var(--primary-darkest);
+        padding: 5px;
+        border-radius: 12px 0 0 0;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    }
+
 </style>

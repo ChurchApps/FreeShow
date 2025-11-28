@@ -1,6 +1,7 @@
 export const DEFAULT_DICTIONARY = {
     main: {
-        unnamed: "Unnamed"
+        unnamed: "Unnamed",
+        "search...": "Search..."
     },
     empty: {
         general: "Nothing here",
@@ -19,10 +20,40 @@ export const DEFAULT_DICTIONARY = {
         project: "New project"
     },
     tabs: {
-        scripture: "Scriptures"
+        shows: "Shows",
+        media: "Media",
+        overlays: "Overlays",
+        audio: "Audio",
+        scripture: "Scriptures",
+        calendar: "Calendar",
+        templates: "Templates",
+        functions: "Functions"
+    },
+    guide_title: {
+        categories: "Categories"
     },
     category: {
-        favourites: "Favourites"
+        favourites: "Favourites",
+        all: "All",
+        unlabeled: "Unlabeled",
+        song: "Songs",
+        bible: "Bibles",
+        image: "Images",
+        video: "Videos",
+        audio: "Audio",
+        presentation: "Presentations",
+        web: "Web",
+        camera: "Camera",
+        countdown: "Countdowns",
+        timer: "Timers",
+        other: "Other"
+    },
+    show: {
+        name: "Name"
+    },
+    info: {
+        modified: "Date Modified",
+        created: "Date Created"
     },
     scripture: {
         collections: "Collections",
@@ -39,7 +70,8 @@ export const DEFAULT_DICTIONARY = {
         rename: "Rename",
         delete: "Delete",
         done: "Done",
-        back: "Back"
+        back: "Back",
+        archive_title: "Archive"
     },
     tools: {
         groups: "Groups"
