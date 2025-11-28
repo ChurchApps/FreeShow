@@ -21,9 +21,9 @@
     $: filteredShows = ($shows || []).filter((s: any) => {
         // Category filter
         if (active === "all") {
-             if (s.private) return false
-             // Check if category is archived
-             if (s.category && $categories[s.category]?.isArchive) return false
+            if (s.private) return false
+            // Check if category is archived
+            if (s.category && $categories[s.category]?.isArchive) return false
         } else if (active === "unlabeled") {
             if (s.category && $categories[s.category]) return false
         } else {
@@ -83,24 +83,24 @@
         const now = new Date()
         const diff = now.getTime() - date.getTime()
         const days = Math.floor(diff / (1000 * 60 * 60 * 24))
-        
+
         if (days === 0) return "Today"
         if (days === 1) return "Yesterday"
         if (days < 7) return `${days} days ago`
-        
-        return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined })
+
+        return date.toLocaleDateString(undefined, { month: "short", day: "numeric", year: date.getFullYear() !== now.getFullYear() ? "numeric" : undefined })
     }
 
     function getIcon(show: any) {
         if (show.private) return "private"
         if (show.locked) return "locked"
-        
+
         // Check for special types if available
         // Assuming show object structure matches what we expect
         if (show.category && $categories[show.category]) {
             return $categories[show.category].icon || null
         }
-        
+
         return "noIcon"
     }
 
@@ -120,46 +120,31 @@
             {#if $shows.length < 10 || loadingStarted}
                 {#if sortedShows.length}
                     <div class="sort-header" role="group">
-                        <MaterialButton 
-                            style="flex: 1; justify-content: flex-start;"
-                            isActive={sortType === 'name'}
-                            on:click={() => toggleSort('name')}
-                            title={translate("show.name", $dictionary)}
-                        >
+                        <MaterialButton style="flex: 1; justify-content: flex-start;" isActive={sortType === "name"} on:click={() => toggleSort("name")} title={translate("show.name", $dictionary)}>
                             <p>{translate("show.name", $dictionary)}</p>
-                            {#if sortType === 'name'}
+                            {#if sortType === "name"}
                                 <span class="sort-indicator">
-                                    <Icon id={sortDirection === 'asc' ? 'arrow_down' : 'arrow_up'} size={1.3} white />
+                                    <Icon id={sortDirection === "asc" ? "arrow_down" : "arrow_up"} size={1.3} white />
                                 </span>
                             {/if}
                         </MaterialButton>
-                        
+
                         {#if showWithNumber}
-                            <MaterialButton 
-                                style="min-width: var(--number-width); justify-content: center;"
-                                isActive={sortType === 'number'}
-                                on:click={() => toggleSort('number')}
-                                title="Number"
-                            >
+                            <MaterialButton style="min-width: var(--number-width); justify-content: center;" isActive={sortType === "number"} on:click={() => toggleSort("number")} title="Number">
                                 <p>#</p>
-                                {#if sortType === 'number'}
+                                {#if sortType === "number"}
                                     <span class="sort-indicator">
-                                        <Icon id={sortDirection === 'asc' ? 'arrow_down' : 'arrow_up'} size={1.3} white />
+                                        <Icon id={sortDirection === "asc" ? "arrow_down" : "arrow_up"} size={1.3} white />
                                     </span>
                                 {/if}
                             </MaterialButton>
                         {/if}
 
-                        <MaterialButton 
-                            style="min-width: var(--modified-width); justify-content: center;"
-                            isActive={sortType === 'modified'}
-                            on:click={() => toggleSort('modified')}
-                            title={translate("info.modified", $dictionary)}
-                        >
+                        <MaterialButton style="min-width: var(--modified-width); justify-content: center;" isActive={sortType === "modified"} on:click={() => toggleSort("modified")} title={translate("info.modified", $dictionary)}>
                             <p>{translate("info.modified", $dictionary)}</p>
-                            {#if sortType === 'modified'}
+                            {#if sortType === "modified"}
                                 <span class="sort-indicator">
-                                    <Icon id={sortDirection === 'asc' ? 'arrow_down' : 'arrow_up'} size={1.3} white />
+                                    <Icon id={sortDirection === "asc" ? "arrow_down" : "arrow_up"} size={1.3} white />
                                 </span>
                             {/if}
                         </MaterialButton>
@@ -168,25 +153,13 @@
                     <div class="list">
                         <VirtualList items={sortedShows} let:item={show} itemHeight={36} activeIndex={searchValue.length ? -1 : sortedShows.findIndex(a => a.id === $activeShow?.id)}>
                             <div class="show-wrapper">
-                                <MaterialButton 
-                                    class="show-item" 
-                                    style="width: 100%; justify-content: space-between; padding: 0.15em 0.8em; font-weight: normal; --outline-color: var(--secondary);"
-                                    isActive={$activeShow?.id === show.id}
-                                    tab
-                                    on:click={() => openShow(show)}
-                                >
+                                <MaterialButton class="show-item" style="width: 100%; justify-content: space-between; padding: 0.15em 0.8em; font-weight: normal; --outline-color: var(--secondary);" isActive={$activeShow?.id === show.id} tab on:click={() => openShow(show)}>
                                     <div class="row">
                                         <span class="cell" style="max-width: calc(100% {showWithNumber ? '- var(--number-width)' : ''} - var(--modified-width, 0px));">
-                                            <Icon 
-                                                id={show.played ? "check" : getIcon(show)} 
-                                                custom={!show.played && getIcon(show) !== "private" && getIcon(show) !== "locked" && getIcon(show) !== "noIcon"} 
-                                                box={24} 
-                                                white={show.played} 
-                                                right 
-                                            />
-                                            
+                                            <Icon id={show.played ? "check" : getIcon(show)} custom={!show.played && getIcon(show) !== "private" && getIcon(show) !== "locked" && getIcon(show) !== "noIcon"} box={24} white={show.played} right />
+
                                             <span class="name">{show.name}</span>
-                                            
+
                                             {#if show.layoutInfo?.name}
                                                 <span class="layout">{show.layoutInfo.name}</span>
                                             {/if}
@@ -259,7 +232,7 @@
         border-radius: 0;
         gap: 5px;
     }
-    
+
     .sort-header :global(button:not(:last-child)) {
         border-right: 1px solid var(--primary-lighter) !important;
     }

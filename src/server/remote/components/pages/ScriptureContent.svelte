@@ -435,8 +435,6 @@
         }
     }
 
-
-
     // TEXT FORMATTING
 
     function formatBibleText(text: string | undefined) {

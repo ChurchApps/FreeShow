@@ -21,17 +21,17 @@
 
     function onPointerDown(e: PointerEvent) {
         // Don't start resize if clicking on tabs or search
-        if ((e.target as HTMLElement).closest('.tabs') || (e.target as HTMLElement).closest('.search-container')) return
-        
+        if ((e.target as HTMLElement).closest(".tabs") || (e.target as HTMLElement).closest(".search-container")) return
+
         move = true
         isResizing = true
         startY = e.clientY
         startHeight = height
-        
+
         // Capture pointer for touch
         const target = e.currentTarget as HTMLElement
         target.setPointerCapture?.(e.pointerId)
-        
+
         window.addEventListener("pointermove", onPointerMove)
         window.addEventListener("pointerup", onPointerUp)
         window.addEventListener("pointercancel", onPointerUp)
@@ -40,13 +40,13 @@
     function onPointerMove(e: PointerEvent) {
         if (!move) return
         e.preventDefault()
-        
+
         const delta = startY - e.clientY
         let newHeight = startHeight + delta
-        
+
         if (newHeight < minHeight) newHeight = minHeight
         if (newHeight > maxHeight) newHeight = maxHeight
-        
+
         drawer.update(d => ({ ...d, height: newHeight }))
     }
 
@@ -71,10 +71,10 @@
         isResizing = true
         dockStartY = e.clientY
         dockStartHeight = height
-        
+
         const target = e.currentTarget as HTMLElement
         target.setPointerCapture?.(e.pointerId)
-        
+
         window.addEventListener("pointermove", onDockPointerMove)
         window.addEventListener("pointerup", onDockPointerUp)
         window.addEventListener("pointercancel", onDockPointerUp)
@@ -82,19 +82,19 @@
 
     function onDockPointerMove(e: PointerEvent) {
         const delta = dockStartY - e.clientY
-        
+
         // Start dragging after threshold
         if (Math.abs(delta) > 10) {
             dockDragging = true
         }
-        
+
         if (dockDragging) {
             e.preventDefault()
             let newHeight = dockStartHeight + delta
-            
+
             if (newHeight < minHeight) newHeight = minHeight
             if (newHeight > maxHeight) newHeight = maxHeight
-            
+
             drawer.update(d => ({ ...d, height: newHeight }))
         }
     }
@@ -102,12 +102,12 @@
     function onDockPointerUp(e: PointerEvent) {
         const target = e.currentTarget as HTMLElement
         target?.releasePointerCapture?.(e.pointerId)
-        
+
         // If we didn't drag, treat as toggle click
         if (!dockDragging) {
             toggleDrawer()
         }
-        
+
         dockDragging = false
         isResizing = false
         window.removeEventListener("pointermove", onDockPointerMove)
@@ -142,76 +142,100 @@
 <div class="drawer" class:resizing={isResizing} style="height: {height}px">
     <div class="top context #drawer_top" on:pointerdown={onPointerDown}>
         <span class="tabs">
-            <MaterialButton 
+            <MaterialButton
                 id="shows"
                 style="border-radius: 0; border-bottom: 2px solid var(--primary); padding: 0.2em 0.8em;"
-                isActive={$activeDrawerTab === 'shows'}
-                on:click={(e) => { e.stopPropagation(); openDrawerTab('shows') }}
+                isActive={$activeDrawerTab === "shows"}
+                on:click={e => {
+                    e.stopPropagation()
+                    openDrawerTab("shows")
+                }}
             >
-                <Icon id="shows" size={1.3} white={$activeDrawerTab === 'shows'} />
+                <Icon id="shows" size={1.3} white={$activeDrawerTab === "shows"} />
                 <span>{translate("tabs.shows", $dictionary)}</span>
             </MaterialButton>
-            <MaterialButton 
+            <MaterialButton
                 id="media"
                 style="border-radius: 0; border-bottom: 2px solid var(--primary); padding: 0.2em 0.8em;"
-                isActive={$activeDrawerTab === 'media'}
-                on:click={(e) => { e.stopPropagation(); openDrawerTab('media') }}
+                isActive={$activeDrawerTab === "media"}
+                on:click={e => {
+                    e.stopPropagation()
+                    openDrawerTab("media")
+                }}
             >
-                <Icon id="media" size={1.3} white={$activeDrawerTab === 'media'} />
+                <Icon id="media" size={1.3} white={$activeDrawerTab === "media"} />
                 <span>{translate("tabs.media", $dictionary)}</span>
             </MaterialButton>
-            <MaterialButton 
+            <MaterialButton
                 id="audio"
                 style="border-radius: 0; border-bottom: 2px solid var(--primary); padding: 0.2em 0.8em;"
-                isActive={$activeDrawerTab === 'audio'}
-                on:click={(e) => { e.stopPropagation(); openDrawerTab('audio') }}
+                isActive={$activeDrawerTab === "audio"}
+                on:click={e => {
+                    e.stopPropagation()
+                    openDrawerTab("audio")
+                }}
             >
-                <Icon id="audio" size={1.3} white={$activeDrawerTab === 'audio'} />
+                <Icon id="audio" size={1.3} white={$activeDrawerTab === "audio"} />
                 <span>{translate("tabs.audio", $dictionary)}</span>
             </MaterialButton>
-            <MaterialButton 
+            <MaterialButton
                 id="overlays"
                 style="border-radius: 0; border-bottom: 2px solid var(--primary); padding: 0.2em 0.8em;"
-                isActive={$activeDrawerTab === 'overlays'}
-                on:click={(e) => { e.stopPropagation(); openDrawerTab('overlays') }}
+                isActive={$activeDrawerTab === "overlays"}
+                on:click={e => {
+                    e.stopPropagation()
+                    openDrawerTab("overlays")
+                }}
             >
-                <Icon id="overlays" size={1.3} white={$activeDrawerTab === 'overlays'} />
+                <Icon id="overlays" size={1.3} white={$activeDrawerTab === "overlays"} />
                 <span>{translate("tabs.overlays", $dictionary)}</span>
             </MaterialButton>
-            <MaterialButton 
+            <MaterialButton
                 id="templates"
                 style="border-radius: 0; border-bottom: 2px solid var(--primary); padding: 0.2em 0.8em;"
-                isActive={$activeDrawerTab === 'templates'}
-                on:click={(e) => { e.stopPropagation(); openDrawerTab('templates') }}
+                isActive={$activeDrawerTab === "templates"}
+                on:click={e => {
+                    e.stopPropagation()
+                    openDrawerTab("templates")
+                }}
             >
-                <Icon id="templates" size={1.3} white={$activeDrawerTab === 'templates'} />
+                <Icon id="templates" size={1.3} white={$activeDrawerTab === "templates"} />
                 <span>{translate("tabs.templates", $dictionary)}</span>
             </MaterialButton>
-            <MaterialButton 
+            <MaterialButton
                 id="scripture"
                 style="border-radius: 0; border-bottom: 2px solid var(--primary); padding: 0.2em 0.8em;"
-                isActive={$activeDrawerTab === 'scripture'}
-                on:click={(e) => { e.stopPropagation(); openDrawerTab('scripture') }}
+                isActive={$activeDrawerTab === "scripture"}
+                on:click={e => {
+                    e.stopPropagation()
+                    openDrawerTab("scripture")
+                }}
             >
-                <Icon id="scripture" size={1.3} white={$activeDrawerTab === 'scripture'} />
+                <Icon id="scripture" size={1.3} white={$activeDrawerTab === "scripture"} />
                 <span>{translate("tabs.scripture", $dictionary)}</span>
             </MaterialButton>
-            <MaterialButton 
+            <MaterialButton
                 id="calendar"
                 style="border-radius: 0; border-bottom: 2px solid var(--primary); padding: 0.2em 0.8em;"
-                isActive={$activeDrawerTab === 'calendar'}
-                on:click={(e) => { e.stopPropagation(); openDrawerTab('calendar') }}
+                isActive={$activeDrawerTab === "calendar"}
+                on:click={e => {
+                    e.stopPropagation()
+                    openDrawerTab("calendar")
+                }}
             >
-                <Icon id="calendar" size={1.3} white={$activeDrawerTab === 'calendar'} />
+                <Icon id="calendar" size={1.3} white={$activeDrawerTab === "calendar"} />
                 <span>{translate("tabs.calendar", $dictionary)}</span>
             </MaterialButton>
-            <MaterialButton 
+            <MaterialButton
                 id="functions"
                 style="border-radius: 0; border-bottom: 2px solid var(--primary); padding: 0.2em 0.8em;"
-                isActive={$activeDrawerTab === 'functions'}
-                on:click={(e) => { e.stopPropagation(); openDrawerTab('functions') }}
+                isActive={$activeDrawerTab === "functions"}
+                on:click={e => {
+                    e.stopPropagation()
+                    openDrawerTab("functions")
+                }}
             >
-                <Icon id="functions" size={1.3} white={$activeDrawerTab === 'functions'} />
+                <Icon id="functions" size={1.3} white={$activeDrawerTab === "functions"} />
                 <span>{translate("tabs.functions", $dictionary)}</span>
             </MaterialButton>
         </span>
@@ -219,18 +243,11 @@
         <div class="right-controls">
             <div class="search-container">
                 <Icon id="search" size={1.2} white />
-                <input 
-                    bind:this={searchElem} 
-                    class="search edit" 
-                    type="text" 
-                    placeholder={translate("main.search", $dictionary)} 
-                    bind:value={searchValue} 
-                    on:click={(e) => e.stopPropagation()}
-                />
+                <input bind:this={searchElem} class="search edit" type="text" placeholder={translate("main.search", $dictionary)} bind:value={searchValue} on:click={e => e.stopPropagation()} />
                 {#if searchValue.length}
                     <Button
                         class="clear-btn"
-                        on:click={(e) => {
+                        on:click={e => {
                             e.stopPropagation()
                             searchValue = ""
                             searchElem?.focus()
@@ -241,12 +258,12 @@
                 {/if}
             </div>
 
-            <button class="dock-btn" on:pointerdown={onDockPointerDown} title={height > minHeight ? 'Minimize drawer (drag to resize)' : 'Expand drawer (drag to resize)'}>
-                <Icon id={height > minHeight ? 'down' : 'up'} size={1.4} white />
+            <button class="dock-btn" on:pointerdown={onDockPointerDown} title={height > minHeight ? "Minimize drawer (drag to resize)" : "Expand drawer (drag to resize)"}>
+                <Icon id={height > minHeight ? "down" : "up"} size={1.4} white />
             </button>
         </div>
     </div>
-    
+
     <div class="content">
         <Resizeable id="leftPanelDrawer">
             <TabletDrawerNavigation id={$activeDrawerTab} />
@@ -268,7 +285,7 @@
         z-index: 100;
         display: flex;
         flex-direction: column;
-        box-shadow: 0 -2px 10px rgba(0,0,0,0.3);
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.3);
         will-change: height;
     }
 
@@ -291,11 +308,11 @@
         touch-action: none;
         -webkit-tap-highlight-color: transparent;
         box-sizing: border-box;
-        
+
         box-shadow: 0 -1.8px 8px rgb(0 0 0 / 0.2);
         z-index: 1;
     }
-    
+
     .top::after {
         content: "";
         background-color: var(--primary-lighter);
@@ -352,11 +369,11 @@
         width: 120px;
         height: 100%;
     }
-    
+
     .search:focus {
         outline: none;
     }
-    
+
     .search::placeholder {
         color: inherit;
         opacity: 0.5;

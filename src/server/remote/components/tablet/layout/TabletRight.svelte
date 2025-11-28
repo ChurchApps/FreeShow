@@ -25,9 +25,7 @@
     // Get active overlay IDs from outData
     $: activeOverlayIds = $outData?.overlays || []
     // Get the actual overlay objects for active overlays
-    $: activeOverlayItems = activeOverlayIds
-        .map(id => ({ id, overlay: $overlays[id] }))
-        .filter(({ overlay }) => overlay)
+    $: activeOverlayItems = activeOverlayIds.map(id => ({ id, overlay: $overlays[id] })).filter(({ overlay }) => overlay)
 
     function openOutShow() {
         const showId = $outShow?.id
@@ -48,79 +46,77 @@
 </script>
 
 <div class="right-panel">
+    <div class="top flex">
+        <div class="outSlides">
+            <div class="output-preview-wrapper">
+                {#if $isCleared.all && !activeOverlayItems.length}
+                    <div class="empty-preview"></div>
+                {:else}
+                    <div class="preview-container">
+                        <!-- Base slide -->
+                        {#if !$isCleared.slide && $outShow && layout}
+                            <Slide outSlide={outNumber} {transition} preview />
+                        {:else}
+                            <div class="black-background"></div>
+                        {/if}
 
-        <div class="top flex">
-            <div class="outSlides">
-                <div class="output-preview-wrapper">
-                    {#if $isCleared.all && !activeOverlayItems.length}
-                        <div class="empty-preview"></div>
-                    {:else}
-                        <div class="preview-container">
-                            <!-- Base slide -->
-                            {#if !$isCleared.slide && $outShow && layout}
-                                <Slide outSlide={outNumber} {transition} preview />
-                            {:else}
-                                <div class="black-background"></div>
-                            {/if}
-                            
-                            <!-- Active overlays on top -->
-                            {#if activeOverlayItems.length}
-                                <div class="overlays-layer">
-                                    <Zoomed {resolution} background="transparent">
-                                        {#each activeOverlayItems as { overlay }}
-                                            {#each overlay.items || [] as item}
-                                                <Textbox {item} />
-                                            {/each}
+                        <!-- Active overlays on top -->
+                        {#if activeOverlayItems.length}
+                            <div class="overlays-layer">
+                                <Zoomed {resolution} background="transparent">
+                                    {#each activeOverlayItems as { overlay }}
+                                        {#each overlay.items || [] as item}
+                                            <Textbox {item} />
                                         {/each}
-                                    </Zoomed>
-                                </div>
-                            {/if}
-                        </div>
-                    {/if}
-                </div>
-            </div>
-
-            <div class="buttons">
-                {#key outNumber}
-                    <Clear outSlide={outNumber} tablet />
-                {/key}
-            </div>
-
-            {#if $outShow && layout}
-                <div class="controls">
-                    <div class="nav-buttons">
-                        <Button on:click={() => send("API:previous_slide")} disabled={outNumber <= 0} variant="outlined" center compact>
-                            <Icon id="previous" size={1.5} />
-                        </Button>
-                        <span class="counter">{outNumber + 1}/{totalSlides}</span>
-                        <Button on:click={() => send("API:next_slide")} disabled={outNumber + 1 >= totalSlides} variant="outlined" center compact>
-                            <Icon id="next" size={1.5} />
-                        </Button>
+                                    {/each}
+                                </Zoomed>
+                            </div>
+                        {/if}
                     </div>
+                {/if}
+            </div>
+        </div>
 
-                    {#if $outShow}
-                        <button class="current-show-label" type="button" on:click={openOutShow} on:keydown={handleLabelKeydown}>
-                            <span class="label-text">{outShowName}</span>
-                        </button>
-                    {:else}
-                        <div class="current-show-label disabled">
-                            <span class="label-text">{outShowName}</span>
-                        </div>
-                    {/if}
-                </div>
-            {/if}
+        <div class="buttons">
+            {#key outNumber}
+                <Clear outSlide={outNumber} tablet />
+            {/key}
         </div>
 
         {#if $outShow && layout}
-            <div class="outSlides">
-                {#if $outShow && $outLayout && nextSlide(layout, outNumber) && getNextSlide($outShow, outNumber, $outLayout)}
-                    <Slide outSlide={nextSlide(layout, outNumber) || 0} {transition} preview />
+            <div class="controls">
+                <div class="nav-buttons">
+                    <Button on:click={() => send("API:previous_slide")} disabled={outNumber <= 0} variant="outlined" center compact>
+                        <Icon id="previous" size={1.5} />
+                    </Button>
+                    <span class="counter">{outNumber + 1}/{totalSlides}</span>
+                    <Button on:click={() => send("API:next_slide")} disabled={outNumber + 1 >= totalSlides} variant="outlined" center compact>
+                        <Icon id="next" size={1.5} />
+                    </Button>
+                </div>
+
+                {#if $outShow}
+                    <button class="current-show-label" type="button" on:click={openOutShow} on:keydown={handleLabelKeydown}>
+                        <span class="label-text">{outShowName}</span>
+                    </button>
                 {:else}
-                    <div style="display: flex;align-items: center;justify-content: center;flex: 1;opacity: 0.5;padding: 20px 0;">{translate("remote.end", $dictionary)}</div>
+                    <div class="current-show-label disabled">
+                        <span class="label-text">{outShowName}</span>
+                    </div>
                 {/if}
             </div>
         {/if}
+    </div>
 
+    {#if $outShow && layout}
+        <div class="outSlides">
+            {#if $outShow && $outLayout && nextSlide(layout, outNumber) && getNextSlide($outShow, outNumber, $outLayout)}
+                <Slide outSlide={nextSlide(layout, outNumber) || 0} {transition} preview />
+            {:else}
+                <div style="display: flex;align-items: center;justify-content: center;flex: 1;opacity: 0.5;padding: 20px 0;">{translate("remote.end", $dictionary)}</div>
+            {/if}
+        </div>
+    {/if}
 </div>
 
 <style>

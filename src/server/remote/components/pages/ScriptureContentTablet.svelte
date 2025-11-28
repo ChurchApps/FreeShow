@@ -73,12 +73,12 @@
         hasAutoNavigated = true
         activeBook = 0
         activeChapter = 0
-        
+
         const bookObj: any = books[0]
         if (bookObj?.keyName && !(bookObj?.chapters?.length > 0)) {
             send("GET_SCRIPTURE", { id, bookKey: bookObj.keyName, bookIndex: 0 })
         }
-        
+
         const bookChapters = bookObj?.chapters || []
         if (bookChapters.length > 0) {
             const chapterObj: any = bookChapters[0]
@@ -97,11 +97,11 @@
         if (!scrollElem) return
         const activeEl = scrollElem.querySelector(".isActive") as HTMLElement
         if (!activeEl) return
-        
+
         const selectedElemTop = activeEl.offsetTop || 0
         const visibleElemPos = selectedElemTop - scrollElem.scrollTop
         if (visibleElemPos > 0 && visibleElemPos < scrollElem.offsetHeight) return
-        
+
         scrollElem.scrollTo(0, Math.max(0, selectedElemTop - 70))
     }
 
@@ -109,11 +109,11 @@
         if (!scrollElem || verseNum <= 0) return
         const activeEl = scrollElem.querySelector(".isActive") as HTMLElement
         if (!activeEl) return
-        
+
         const selectedElemTop = activeEl.offsetTop || 0
         const visibleElemPos = selectedElemTop - scrollElem.scrollTop
         if (visibleElemPos > 0 && visibleElemPos < scrollElem.offsetHeight) return
-        
+
         scrollElem.scrollTo(0, Math.max(0, selectedElemTop - 70))
     }
 
@@ -432,16 +432,7 @@
                         {@const isDisplayed = activeBook === displayedBookIndex && activeChapter === displayedChapterIndex && verseNumber === displayedVerseNumber}
                         {@const text = formatBibleText(verse.text || verse.value, true)}
 
-                        <span
-                            id={String(verseNumber)}
-                            class="verse"
-                            class:isActive
-                            class:isDisplayed
-                            class:wrapText={$scriptureWrapText}
-                            on:click={() => handleVerseClick(verseNumber)}
-                            on:dblclick={() => handleVerseClick(verseNumber)}
-                            role="none"
-                        >
+                        <span id={String(verseNumber)} class="verse" class:isActive class:isDisplayed class:wrapText={$scriptureWrapText} on:click={() => handleVerseClick(verseNumber)} on:dblclick={() => handleVerseClick(verseNumber)} role="none">
                             <span class="v">{verseNumber}</span>
                             {#if $scriptureViewList}
                                 {@html text}

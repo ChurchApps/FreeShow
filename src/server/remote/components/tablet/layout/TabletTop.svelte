@@ -14,21 +14,13 @@
     </span>
     <span class="middle-buttons">
         <!-- Show Mode -->
-        <Button 
-            class="top-button {$activeTab === 'show' ? 'active' : ''}" 
-            on:click={() => activeTab.set('show')}
-            title={translate("mode.show", $dictionary)}
-        >
+        <Button class="top-button {$activeTab === 'show' ? 'active' : ''}" on:click={() => activeTab.set("show")} title={translate("mode.show", $dictionary)}>
             <Icon id="play" size={1.6} white />
             <span class="label">{translate("mode.show", $dictionary)}</span>
         </Button>
 
         <!-- Edit Mode -->
-        <Button 
-            class="top-button {$activeTab === 'edit' ? 'active' : ''}" 
-            on:click={() => activeTab.set('edit')}
-            title={translate("mode.edit", $dictionary)}
-        >
+        <Button class="top-button {$activeTab === 'edit' ? 'active' : ''}" on:click={() => activeTab.set("edit")} title={translate("mode.edit", $dictionary)}>
             <Icon id="edit" size={1.6} white />
             <span class="label">{translate("mode.edit", $dictionary)}</span>
         </Button>
@@ -47,7 +39,7 @@
         min-height: 40px;
         height: 40px;
         background-color: var(--primary);
-        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
     }
 
     .top span {
@@ -89,7 +81,7 @@
 
     :global(.top-button:hover) {
         opacity: 1;
-        background-color: rgba(255,255,255,0.05);
+        background-color: rgba(255, 255, 255, 0.05);
     }
 
     :global(.top-button.active) {

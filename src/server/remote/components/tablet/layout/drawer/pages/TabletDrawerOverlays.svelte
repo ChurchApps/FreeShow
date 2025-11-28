@@ -46,9 +46,7 @@
     })
 
     // Sort overlays by name
-    $: sortedOverlays = [...filteredOverlays].sort((a, b) => 
-        (a.name || "").localeCompare(b.name || "")
-    )
+    $: sortedOverlays = [...filteredOverlays].sort((a, b) => (a.name || "").localeCompare(b.name || ""))
 
     // Toggle overlay on/off
     function toggleOverlay(overlayId: string) {
@@ -86,29 +84,20 @@
                         {#each sortedOverlays as overlay}
                             {@const isActive = isOverlayActive(overlay.id)}
                             <div class="overlay-card" class:active={isActive}>
-                                <MaterialButton
-                                    style="width: 100%; height: 100%; padding: 0; flex-direction: column; border-radius: 8px; overflow: hidden;"
-                                    isActive={isActive}
-                                    on:click={() => toggleOverlay(overlay.id)}
-                                    title={overlay.name || translate("main.unnamed", $dictionary)}
-                                >
+                                <MaterialButton style="width: 100%; height: 100%; padding: 0; flex-direction: column; border-radius: 8px; overflow: hidden;" {isActive} on:click={() => toggleOverlay(overlay.id)} title={overlay.name || translate("main.unnamed", $dictionary)}>
                                     <div class="preview">
-                                        <Zoomed 
-                                            {resolution} 
-                                            background={overlay.items?.length ? "var(--primary);" : overlay.color || "var(--primary);"} 
-                                            checkered={!!overlay.items?.length}
-                                        >
+                                        <Zoomed {resolution} background={overlay.items?.length ? "var(--primary);" : overlay.color || "var(--primary);"} checkered={!!overlay.items?.length}>
                                             {#each overlay.items || [] as item}
                                                 <Textbox {item} />
                                             {/each}
                                         </Zoomed>
-                                        
+
                                         <!-- Play/Stop icon overlay -->
                                         <div class="overlay-icon" class:visible={isActive}>
                                             <Icon id={isActive ? "clear" : "play"} size={2} white />
                                         </div>
                                     </div>
-                                    
+
                                     <div class="label">
                                         {#if overlay.isDefault}
                                             <Icon id="protected" size={0.9} white />

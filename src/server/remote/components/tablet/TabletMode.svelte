@@ -34,7 +34,7 @@
             </Resizeable>
         {/if}
     </div>
-    
+
     <TabletDrawer />
 </div>
 
@@ -55,7 +55,8 @@
         will-change: height;
     }
 
-    .left, .right {
+    .left,
+    .right {
         display: flex;
         flex-direction: column;
         overflow: hidden;

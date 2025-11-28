@@ -64,7 +64,6 @@
         openScripture(collection ? collection.versions[0] : id, collection ? id : "")
     }
 
-
     function autoOpenDefaultScripture() {
         // Priority: favorites > local bibles > collections > api bibles
         const defaultScripture = favoritesList[0] || localBibles[0] || collectionList[0] || apiBibles[0]
@@ -78,7 +77,6 @@
             }, 100)
         }
     }
-
 
     $: scriptureEntries = keysToID($scriptures).map((a: any) => ({ ...a, icon: iconForScripture(a) }))
     $: favoritesList = sortByName(scriptureEntries.filter(a => a.favorite))
@@ -94,7 +92,9 @@
         apiDividerIndex?: number
     }
 
-    $: scriptureSections = ([favoritesList.length ? { id: "favorites", labelKey: "category.favourites", items: favoritesList } : null, collectionList.length ? { id: "collections", labelKey: "scripture.collections", items: collectionList } : null, localBibles.length || apiBibles.length ? { id: "local", labelKey: "scripture.bibles_section", items: [...localBibles, ...apiBibles], apiDividerIndex: localBibles.length } : null] as (ScriptureSection | null)[]).filter((section): section is ScriptureSection => Boolean(section))
+    $: scriptureSections = ([favoritesList.length ? { id: "favorites", labelKey: "category.favourites", items: favoritesList } : null, collectionList.length ? { id: "collections", labelKey: "scripture.collections", items: collectionList } : null, localBibles.length || apiBibles.length ? { id: "local", labelKey: "scripture.bibles_section", items: [...localBibles, ...apiBibles], apiDividerIndex: localBibles.length } : null] as (ScriptureSection | null)[]).filter(
+        (section): section is ScriptureSection => Boolean(section)
+    )
 
     // Auto-open default scripture in tablet mode when none is selected
     $: if (tablet && scripturesLoaded && !$openedScripture && scriptureEntries.length > 0) {
@@ -949,7 +949,7 @@
             {:else}
                 <ScriptureContent id={$collectionId || $openedScripture} scripture={$scriptureCache[$openedScripture]} bind:depth bind:currentBook bind:currentChapter bind:currentVerse bind:this={scriptureContentRef} />
             {/if}
-            
+
             {#if tablet}
                 <div class="floating-controls-container">
                     <Button on:click={() => scriptureContentRef?.backward()} center dark class="floating-control-button" title="Previous">
@@ -1158,8 +1158,6 @@
     .verse:hover {
         background-color: var(--primary-darker);
     }
-
-
 
     /* Controls section */
     .controls-section {
@@ -1568,5 +1566,4 @@
     .tablet-search-results .search-result:hover {
         background-color: var(--primary);
     }
-
 </style>

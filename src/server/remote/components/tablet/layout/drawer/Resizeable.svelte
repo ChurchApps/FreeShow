@@ -61,7 +61,7 @@
     function pointerdown(e: PointerEvent) {
         if (!conditions[side](e)) return
         e.preventDefault()
-        
+
         // Capture pointer for touch devices
         const target = e.target as HTMLElement
         target.setPointerCapture?.(e.pointerId)
@@ -72,7 +72,7 @@
             offset: side === "top" || side === "bottom" ? window.innerHeight - width - e.clientY : window.innerWidth - width - e.clientX,
             target: e.target
         }
-        
+
         window.addEventListener("pointermove", pointermove)
         window.addEventListener("pointerup", pointerup)
         window.addEventListener("pointercancel", pointerup)

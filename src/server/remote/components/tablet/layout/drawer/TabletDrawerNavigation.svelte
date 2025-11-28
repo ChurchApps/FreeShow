@@ -37,7 +37,7 @@
 
     // Scripture tab logic
     $: scriptureEntries = Object.keys($scriptures).map(k => ({ id: k, ...$scriptures[k], icon: $scriptures[k].api ? "scripture_alt" : $scriptures[k].collection ? "collection" : "scripture" }))
-    
+
     function sortScriptures(list: any[]) {
         return list.sort((a, b) => (a.customName || a.name || "").localeCompare(b.customName || b.name || ""))
     }
@@ -67,7 +67,7 @@
     $: variablesTagsOnly = Object.values($variables).map(a => a.tags || [])
     $: timersCount = Object.keys($timers).length
     $: triggersCount = Object.keys($triggers).length
-    
+
     function keysToID(obj: any) {
         return Object.keys(obj).map(key => ({ id: key, ...obj[key] }))
     }
@@ -103,30 +103,18 @@
         <div class="tabSection">
             <!-- All & Unlabeled Section -->
             <div class="section">
-                <MaterialButton 
-                    class="tab {active === 'all' ? 'active' : ''}" 
-                    on:click={() => setCategory('all')}
-                    style="width: 100%; font-weight: normal; padding: 0.2em 0.8em;"
-                    isActive={active === 'all'}
-                    tab
-                >
+                <MaterialButton class="tab {active === 'all' ? 'active' : ''}" on:click={() => setCategory("all")} style="width: 100%; font-weight: normal; padding: 0.2em 0.8em;" isActive={active === "all"} tab>
                     <div style="max-width: 85%;" data-title={translate("category.all", $dictionary)}>
-                        <Icon id="all" size={1} white={active === 'all'} />
+                        <Icon id="all" size={1} white={active === "all"} />
                         <p style="margin: 5px;">{translate("category.all", $dictionary)}</p>
                     </div>
                     <span class="count">{unarchivedShows.length}</span>
                 </MaterialButton>
-                
+
                 {#if uncategorizedShowsLength}
-                    <MaterialButton 
-                        class="tab {active === 'unlabeled' ? 'active' : ''}" 
-                        on:click={() => setCategory('unlabeled')}
-                        style="width: 100%; font-weight: normal; padding: 0.2em 0.8em;"
-                        isActive={active === 'unlabeled'}
-                        tab
-                    >
+                    <MaterialButton class="tab {active === 'unlabeled' ? 'active' : ''}" on:click={() => setCategory("unlabeled")} style="width: 100%; font-weight: normal; padding: 0.2em 0.8em;" isActive={active === "unlabeled"} tab>
                         <div style="max-width: 85%;" data-title={translate("category.unlabeled", $dictionary)}>
-                            <Icon id="noIcon" size={1} white={active === 'unlabeled'} />
+                            <Icon id="noIcon" size={1} white={active === "unlabeled"} />
                             <p style="margin: 5px;">{translate("category.unlabeled", $dictionary)}</p>
                         </div>
                         <span class="count">{uncategorizedShowsLength}</span>
@@ -140,13 +128,7 @@
                     <div class="title">{translate("guide_title.categories", $dictionary)}</div>
                     {#each sortByName(unarchivedCategoriesList) as cat}
                         {@const count = allVisibleShows.filter(s => s.category === cat.id).length}
-                        <MaterialButton 
-                            class="tab {active === cat.id ? 'active' : ''}" 
-                            on:click={() => setCategory(cat.id)}
-                            style="width: 100%; font-weight: normal; padding: 0.2em 0.8em;"
-                            isActive={active === cat.id}
-                            tab
-                        >
+                        <MaterialButton class="tab {active === cat.id ? 'active' : ''}" on:click={() => setCategory(cat.id)} style="width: 100%; font-weight: normal; padding: 0.2em 0.8em;" isActive={active === cat.id} tab>
                             <div style="max-width: 85%;" data-title={translate(cat.name, $dictionary) || cat.name}>
                                 <Icon id={cat.icon || "folder"} size={1} white={active === cat.id} />
                                 <p style="margin: 5px;">{translate(cat.name, $dictionary) || cat.name}</p>
@@ -166,13 +148,7 @@
                     </div>
                     {#each sortByName(archivedCategoriesList) as cat}
                         {@const count = allVisibleShows.filter(s => s.category === cat.id).length}
-                        <MaterialButton 
-                            class="tab {active === cat.id ? 'active' : ''}" 
-                            on:click={() => setCategory(cat.id)}
-                            style="width: 100%; font-weight: normal; padding: 0.2em 0.8em;"
-                            isActive={active === cat.id}
-                            tab
-                        >
+                        <MaterialButton class="tab {active === cat.id ? 'active' : ''}" on:click={() => setCategory(cat.id)} style="width: 100%; font-weight: normal; padding: 0.2em 0.8em;" isActive={active === cat.id} tab>
                             <div style="max-width: 85%;" data-title={translate(cat.name, $dictionary) || cat.name}>
                                 <Icon id={cat.icon || "folder"} size={1} white={active === cat.id} />
                                 <p style="margin: 5px;">{translate(cat.name, $dictionary) || cat.name}</p>
@@ -188,30 +164,36 @@
             <!-- Actions Section -->
             <div class="section">
                 <div class="title">{translate("tabs.actions", $dictionary)}</div>
-                <MaterialButton 
-                    class="tab {$functionsSubTab === 'actions' && $activeActionTagFilter.length === 0 ? 'active' : ''}" 
-                    on:click={() => { setFunctionsSubTab('actions'); activeActionTagFilter.set([]) }}
+                <MaterialButton
+                    class="tab {$functionsSubTab === 'actions' && $activeActionTagFilter.length === 0 ? 'active' : ''}"
+                    on:click={() => {
+                        setFunctionsSubTab("actions")
+                        activeActionTagFilter.set([])
+                    }}
                     style="width: 100%; font-weight: normal; padding: 0.2em 0.8em;"
-                    isActive={$functionsSubTab === 'actions' && $activeActionTagFilter.length === 0}
+                    isActive={$functionsSubTab === "actions" && $activeActionTagFilter.length === 0}
                     tab
                 >
                     <div style="max-width: 85%;" data-title={translate("category.all", $dictionary)}>
-                        <Icon id="actions" size={1} white={$functionsSubTab === 'actions' && $activeActionTagFilter.length === 0} />
+                        <Icon id="actions" size={1} white={$functionsSubTab === "actions" && $activeActionTagFilter.length === 0} />
                         <p style="margin: 5px;">{translate("category.all", $dictionary)}</p>
                     </div>
                     <span class="count">{Object.keys($actions).length}</span>
                 </MaterialButton>
-                
+
                 {#each sortedActions as tag}
-                    <MaterialButton 
-                        class="tab {$functionsSubTab === 'actions' && $activeActionTagFilter.includes(tag.id) ? 'active' : ''}" 
-                        on:click={() => { setFunctionsSubTab('actions'); activeActionTagFilter.set([tag.id]) }}
+                    <MaterialButton
+                        class="tab {$functionsSubTab === 'actions' && $activeActionTagFilter.includes(tag.id) ? 'active' : ''}"
+                        on:click={() => {
+                            setFunctionsSubTab("actions")
+                            activeActionTagFilter.set([tag.id])
+                        }}
                         style="width: 100%; font-weight: normal; padding: 0.2em 0.8em;"
-                        isActive={$functionsSubTab === 'actions' && $activeActionTagFilter.includes(tag.id)}
+                        isActive={$functionsSubTab === "actions" && $activeActionTagFilter.includes(tag.id)}
                         tab
                     >
                         <div style="max-width: 85%;" data-title={tag.label}>
-                            <Icon id="tag" size={1} style={!($functionsSubTab === 'actions' && $activeActionTagFilter.includes(tag.id)) && tag.color ? `fill: ${tag.color}` : ""} white={$functionsSubTab === 'actions' && $activeActionTagFilter.includes(tag.id)} />
+                            <Icon id="tag" size={1} style={!($functionsSubTab === "actions" && $activeActionTagFilter.includes(tag.id)) && tag.color ? `fill: ${tag.color}` : ""} white={$functionsSubTab === "actions" && $activeActionTagFilter.includes(tag.id)} />
                             <p style="margin: 5px;">{tag.label}</p>
                         </div>
                         <span class="count">{tag.count}</span>
@@ -222,15 +204,9 @@
             <!-- Timers Section -->
             <div class="section">
                 <div class="title">{translate("tabs.timers", $dictionary)}</div>
-                <MaterialButton 
-                    class="tab {$functionsSubTab === 'timer' ? 'active' : ''}" 
-                    on:click={() => setFunctionsSubTab('timer')}
-                    style="width: 100%; font-weight: normal; padding: 0.2em 0.8em;"
-                    isActive={$functionsSubTab === 'timer'}
-                    tab
-                >
+                <MaterialButton class="tab {$functionsSubTab === 'timer' ? 'active' : ''}" on:click={() => setFunctionsSubTab("timer")} style="width: 100%; font-weight: normal; padding: 0.2em 0.8em;" isActive={$functionsSubTab === "timer"} tab>
                     <div style="max-width: 85%;" data-title={translate("category.all", $dictionary)}>
-                        <Icon id="timer" size={1} white={$functionsSubTab === 'timer'} />
+                        <Icon id="timer" size={1} white={$functionsSubTab === "timer"} />
                         <p style="margin: 5px;">{translate("category.all", $dictionary)}</p>
                     </div>
                     <span class="count">{timersCount}</span>
@@ -240,30 +216,36 @@
             <!-- Variables Section -->
             <div class="section">
                 <div class="title">{translate("tabs.variables", $dictionary)}</div>
-                <MaterialButton 
-                    class="tab {$functionsSubTab === 'variables' && $activeVariableTagFilter.length === 0 ? 'active' : ''}" 
-                    on:click={() => { setFunctionsSubTab('variables'); activeVariableTagFilter.set([]) }}
+                <MaterialButton
+                    class="tab {$functionsSubTab === 'variables' && $activeVariableTagFilter.length === 0 ? 'active' : ''}"
+                    on:click={() => {
+                        setFunctionsSubTab("variables")
+                        activeVariableTagFilter.set([])
+                    }}
                     style="width: 100%; font-weight: normal; padding: 0.2em 0.8em;"
-                    isActive={$functionsSubTab === 'variables' && $activeVariableTagFilter.length === 0}
+                    isActive={$functionsSubTab === "variables" && $activeVariableTagFilter.length === 0}
                     tab
                 >
                     <div style="max-width: 85%;" data-title={translate("category.all", $dictionary)}>
-                        <Icon id="variable" size={1} white={$functionsSubTab === 'variables' && $activeVariableTagFilter.length === 0} />
+                        <Icon id="variable" size={1} white={$functionsSubTab === "variables" && $activeVariableTagFilter.length === 0} />
                         <p style="margin: 5px;">{translate("category.all", $dictionary)}</p>
                     </div>
                     <span class="count">{Object.keys($variables).length}</span>
                 </MaterialButton>
 
                 {#each sortedVariables as tag}
-                    <MaterialButton 
-                        class="tab {$functionsSubTab === 'variables' && $activeVariableTagFilter.includes(tag.id) ? 'active' : ''}" 
-                        on:click={() => { setFunctionsSubTab('variables'); activeVariableTagFilter.set([tag.id]) }}
+                    <MaterialButton
+                        class="tab {$functionsSubTab === 'variables' && $activeVariableTagFilter.includes(tag.id) ? 'active' : ''}"
+                        on:click={() => {
+                            setFunctionsSubTab("variables")
+                            activeVariableTagFilter.set([tag.id])
+                        }}
                         style="width: 100%; font-weight: normal; padding: 0.2em 0.8em;"
-                        isActive={$functionsSubTab === 'variables' && $activeVariableTagFilter.includes(tag.id)}
+                        isActive={$functionsSubTab === "variables" && $activeVariableTagFilter.includes(tag.id)}
                         tab
                     >
                         <div style="max-width: 85%;" data-title={tag.label}>
-                            <Icon id="tag" size={1} style={!($functionsSubTab === 'variables' && $activeVariableTagFilter.includes(tag.id)) && tag.color ? `fill: ${tag.color}` : ""} white={$functionsSubTab === 'variables' && $activeVariableTagFilter.includes(tag.id)} />
+                            <Icon id="tag" size={1} style={!($functionsSubTab === "variables" && $activeVariableTagFilter.includes(tag.id)) && tag.color ? `fill: ${tag.color}` : ""} white={$functionsSubTab === "variables" && $activeVariableTagFilter.includes(tag.id)} />
                             <p style="margin: 5px;">{tag.label}</p>
                         </div>
                         <span class="count">{tag.count}</span>
@@ -274,15 +256,9 @@
             <!-- Triggers Section -->
             <div class="section">
                 <div class="title">{translate("tabs.triggers", $dictionary)}</div>
-                <MaterialButton 
-                    class="tab {$functionsSubTab === 'triggers' ? 'active' : ''}" 
-                    on:click={() => setFunctionsSubTab('triggers')}
-                    style="width: 100%; font-weight: normal; padding: 0.2em 0.8em;"
-                    isActive={$functionsSubTab === 'triggers'}
-                    tab
-                >
+                <MaterialButton class="tab {$functionsSubTab === 'triggers' ? 'active' : ''}" on:click={() => setFunctionsSubTab("triggers")} style="width: 100%; font-weight: normal; padding: 0.2em 0.8em;" isActive={$functionsSubTab === "triggers"} tab>
                     <div style="max-width: 85%;" data-title={translate("category.all", $dictionary)}>
-                        <Icon id="trigger" size={1} white={$functionsSubTab === 'triggers'} />
+                        <Icon id="trigger" size={1} white={$functionsSubTab === "triggers"} />
                         <p style="margin: 5px;">{translate("category.all", $dictionary)}</p>
                     </div>
                     <span class="count">{triggersCount}</span>
@@ -293,30 +269,18 @@
         <div class="tabSection">
             <!-- All & Unlabeled Section -->
             <div class="section">
-                <MaterialButton 
-                    class="tab {activeOverlay === 'all' ? 'active' : ''}" 
-                    on:click={() => setOverlayCategory('all')}
-                    style="width: 100%; font-weight: normal; padding: 0.2em 0.8em;"
-                    isActive={activeOverlay === 'all'}
-                    tab
-                >
+                <MaterialButton class="tab {activeOverlay === 'all' ? 'active' : ''}" on:click={() => setOverlayCategory("all")} style="width: 100%; font-weight: normal; padding: 0.2em 0.8em;" isActive={activeOverlay === "all"} tab>
                     <div style="max-width: 85%;" data-title={translate("category.all", $dictionary)}>
-                        <Icon id="all" size={1} white={activeOverlay === 'all'} />
+                        <Icon id="all" size={1} white={activeOverlay === "all"} />
                         <p style="margin: 5px;">{translate("category.all", $dictionary)}</p>
                     </div>
                     <span class="count">{unarchivedOverlays.length}</span>
                 </MaterialButton>
-                
+
                 {#if uncategorizedOverlaysLength}
-                    <MaterialButton 
-                        class="tab {activeOverlay === 'unlabeled' ? 'active' : ''}" 
-                        on:click={() => setOverlayCategory('unlabeled')}
-                        style="width: 100%; font-weight: normal; padding: 0.2em 0.8em;"
-                        isActive={activeOverlay === 'unlabeled'}
-                        tab
-                    >
+                    <MaterialButton class="tab {activeOverlay === 'unlabeled' ? 'active' : ''}" on:click={() => setOverlayCategory("unlabeled")} style="width: 100%; font-weight: normal; padding: 0.2em 0.8em;" isActive={activeOverlay === "unlabeled"} tab>
                         <div style="max-width: 85%;" data-title={translate("category.unlabeled", $dictionary)}>
-                            <Icon id="noIcon" size={1} white={activeOverlay === 'unlabeled'} />
+                            <Icon id="noIcon" size={1} white={activeOverlay === "unlabeled"} />
                             <p style="margin: 5px;">{translate("category.unlabeled", $dictionary)}</p>
                         </div>
                         <span class="count">{uncategorizedOverlaysLength}</span>
@@ -330,13 +294,7 @@
                     <div class="title">{translate("guide_title.categories", $dictionary)}</div>
                     {#each sortByName(unarchivedOverlayCategoriesList) as cat}
                         {@const count = allOverlays.filter(s => s.category === cat.id).length}
-                        <MaterialButton 
-                            class="tab {activeOverlay === cat.id ? 'active' : ''}" 
-                            on:click={() => setOverlayCategory(cat.id)}
-                            style="width: 100%; font-weight: normal; padding: 0.2em 0.8em;"
-                            isActive={activeOverlay === cat.id}
-                            tab
-                        >
+                        <MaterialButton class="tab {activeOverlay === cat.id ? 'active' : ''}" on:click={() => setOverlayCategory(cat.id)} style="width: 100%; font-weight: normal; padding: 0.2em 0.8em;" isActive={activeOverlay === cat.id} tab>
                             <div style="max-width: 85%;" data-title={translate(cat.name, $dictionary) || cat.name}>
                                 <Icon id={cat.icon || "folder"} size={1} white={activeOverlay === cat.id} />
                                 <p style="margin: 5px;">{translate(cat.name, $dictionary) || cat.name}</p>
@@ -356,13 +314,7 @@
                     </div>
                     {#each sortByName(archivedOverlayCategoriesList) as cat}
                         {@const count = allOverlays.filter(s => s.category === cat.id).length}
-                        <MaterialButton 
-                            class="tab {activeOverlay === cat.id ? 'active' : ''}" 
-                            on:click={() => setOverlayCategory(cat.id)}
-                            style="width: 100%; font-weight: normal; padding: 0.2em 0.8em;"
-                            isActive={activeOverlay === cat.id}
-                            tab
-                        >
+                        <MaterialButton class="tab {activeOverlay === cat.id ? 'active' : ''}" on:click={() => setOverlayCategory(cat.id)} style="width: 100%; font-weight: normal; padding: 0.2em 0.8em;" isActive={activeOverlay === cat.id} tab>
                             <div style="max-width: 85%;" data-title={translate(cat.name, $dictionary) || cat.name}>
                                 <Icon id={cat.icon || "folder"} size={1} white={activeOverlay === cat.id} />
                                 <p style="margin: 5px;">{translate(cat.name, $dictionary) || cat.name}</p>
@@ -409,7 +361,7 @@
         <!-- Other tabs - simple placeholder -->
         <div class="tabs">
             <Button class="tab active">
-                <Icon id={id} size={1.2} />
+                <Icon {id} size={1.2} />
                 <span>{translate(`tabs.${id}`, $dictionary)}</span>
             </Button>
         </div>
@@ -442,7 +394,7 @@
         display: flex;
         flex-direction: column;
         overflow: hidden;
-        
+
         /* align to left */
         margin-left: 0;
         border-top-left-radius: 0;

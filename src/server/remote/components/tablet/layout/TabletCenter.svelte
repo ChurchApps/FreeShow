@@ -15,9 +15,9 @@
     import { getGroupName } from "../../../../common/util/show"
 
     // Logic from TabletMode.svelte
-    
+
     $: outNumber = $outSlide ?? -1
-    
+
     // Slide View / Grid View toggle
     const slidesViews: any = { grid: "lyrics", lyrics: "grid" }
     let slideView: string = "grid"
@@ -82,7 +82,7 @@
     function changeLayout(layoutId: string) {
         send("API:change_layout", { showId: $activeShow?.id, layoutId })
     }
-    
+
     let scrollElem: HTMLElement | undefined
     let scrollRaf: number | null = null
     let userScrolled = false
