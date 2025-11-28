@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
-    import type { Item, OutSlide, SlideData } from "../../../../types/Show"
+    import type { Item, OutSlide, SlideData, Transition } from "../../../../types/Show"
     import { showsCache } from "../../../stores"
     import { shouldItemBeShown } from "../../edit/scripts/itemHelpers"
     import { clone } from "../../helpers/array"
@@ -43,6 +43,28 @@
     let currentItems: Item[] = []
     let current: any = {}
     let show = false
+
+    // Track items that are unchanged between slides and have no transition (to avoid redraw flicker)
+    let persistentItems: Item[] = []
+    let persistentItemIndexes: number[] = []
+
+    // Check if a transition is "meaningful" (not none and duration > 0)
+    function hasRealTransition(itemTransition: Transition | undefined, globalTrans: Transition | undefined): boolean {
+        // Item-level transition takes priority
+        const trans = itemTransition || globalTrans
+        if (!trans) return false
+        // If type is "none" or duration is 0/undefined, no real transition
+        if (trans.type === "none") return false
+        if (!trans.duration || trans.duration === 0) return false
+        return true
+    }
+
+    // Compare two items to see if their visible content is identical
+    function itemsAreEqual(oldItem: Item | undefined, newItem: Item | undefined): boolean {
+        if (!oldItem || !newItem) return false
+        // Compare the full serialized content (lines, style, etc.)
+        return JSON.stringify(oldItem) === JSON.stringify(newItem)
+    }
     // maintain a hidden workload that primes autosize results ahead of the visible reveal
     let precomputeTargets: { item: Item; index: number; key: string }[] = []
     let precomputePending = new Set<string>()
@@ -134,6 +156,9 @@
         if (!currentSlideItems?.length) {
             scheduleAutoSizePrecompute([])
             currentItems = []
+            // Clear persistent items when no slide content
+            persistentItems = []
+            persistentItemIndexes = []
             current = {
                 outSlide: clone(outSlide),
                 slideData: clone(slideData),
@@ -163,10 +188,61 @@
         let currentTransitionDuration = transitionEnabled ? (itemTransitionDuration ?? currentTransition?.duration ?? 0) : 0
         let waitToShow = currentTransitionDuration * 0.5
 
+        // Identify items that are unchanged and have no real transition (to skip redraw)
+        const newPersistentIndexes: number[] = []
+        const newPersistentItems: Item[] = []
+        const transitioningItems: Item[] = []
+        const transitioningIndexes: number[] = []
+
+        // First, check if ANY item on the slide has a real transition
+        // If so, all items should animate together (no persistent items)
+        const slideHasAnyTransition = currentSlide.items.some((item: Item) => {
+            const itemTrans = item.actions?.transition
+            return hasRealTransition(itemTrans, currentTransition)
+        })
+
+        currentSlide.items.forEach((newItem: Item, newIndex: number) => {
+            // Find matching old item by index (position-based matching for slides)
+            const oldItem = currentItems[newIndex]
+
+            // Item is persistent only if:
+            // 1. Content is unchanged AND
+            // 2. No real transition on this item AND
+            // 3. No other item on the slide has a transition (so whole slide animates together)
+            if (itemsAreEqual(oldItem, newItem) && !slideHasAnyTransition) {
+                newPersistentIndexes.push(newIndex)
+                newPersistentItems.push(clone(newItem))
+            } else {
+                // Item needs to be re-rendered (changed, has transition, or another item has transition)
+                transitioningIndexes.push(newIndex)
+                transitioningItems.push(clone(newItem))
+            }
+        })
+
+        // Update persistent items (these won't flash)
+        persistentItemIndexes = newPersistentIndexes
+        persistentItems = newPersistentItems
+
         // between
         if (currentItems.length && currentSlide.items.length) transitioningBetween = true
 
         if (timeout) clearTimeout(timeout)
+
+        // If all items are persistent (unchanged), skip the show/hide cycle entirely
+        if (transitioningItems.length === 0 && persistentItems.length > 0) {
+            // Just update the context without triggering transitions
+            current = {
+                outSlide: clone(outSlide),
+                slideData: clone(slideData),
+                currentSlide: clone(currentSlide),
+                lines: clone(lines),
+                currentStyle: clone(currentStyle)
+            }
+            // Keep currentItems in sync but don't toggle show
+            currentItems = clone(currentSlide.items || [])
+            transitioningBetween = false
+            return
+        }
 
         // wait for between to update out transition
         timeout = setTimeout(() => {
@@ -174,6 +250,8 @@
 
             // wait for previous items to start fading out (svelte will keep them until the transition is done!)
             timeout = setTimeout(() => {
+                // Only include items that need transitioning in currentItems
+                // Persistent items are rendered separately
                 currentItems = clone(currentSlide.items || [])
                 current = {
                     outSlide: clone(outSlide),
@@ -197,11 +275,53 @@
     }
 </script>
 
-<!-- Updating this with another "store" causes svelte transition bug! -->
+<!-- Persistent items: unchanged content with no transition, rendered outside {#key} to avoid flicker -->
+{#each persistentItems as item, idx}
+    {@const index = persistentItemIndexes[idx]}
+    {#if shouldItemBeShown(item, currentItems, showItemRef, updater) && (!item.clickReveal || current.outSlide?.itemClickReveal)}
+        <Textbox
+            backdropFilter={current.slideData?.["backdrop-filter"] || ""}
+            disableListTransition={mirror}
+            chords={item.chords?.enabled}
+            animationStyle={animationData.style || {}}
+            {item}
+            transition={null}
+            {ratio}
+            {outputId}
+            ref={{ showId: current.outSlide?.id, slideId: current.currentSlide?.id, id: current.currentSlide?.id || "", layoutId: current.outSlide?.layout }}
+            linesStart={current.lines?.[currentLineId || ""]?.[item.lineReveal ? "linesStart" : "start"]}
+            linesEnd={current.lines?.[currentLineId || ""]?.[item.lineReveal ? "linesEnd" : "end"]}
+            clickRevealed={!!current.lines?.[currentLineId || ""]?.clickRevealed}
+            outputStyle={current.currentStyle}
+            {mirror}
+            {preview}
+            slideIndex={current.outSlide?.index}
+            {styleIdOverride}
+            autoSizeKey={createAutoSizeKey(item, index)}
+        />
+    {/if}
+{/each}
+
+<!-- Transitioning items: changed content or items with transitions, rendered inside {#key} for proper animation -->
 {#key show}
     {#each currentItems as item, index}
-        {#if show && shouldItemBeShown(item, currentItems, showItemRef, updater) && (!item.clickReveal || current.outSlide?.itemClickReveal)}
-            <SlideItemTransition {preview} {transitionEnabled} {transitioningBetween} globalTransition={transition} currentSlide={current.currentSlide} {item} outSlide={current.outSlide} lines={current.lines} currentStyle={current.currentStyle} let:customSlide let:customItem let:customLines let:customOut let:transition>
+        {#if show && !persistentItemIndexes.includes(index) && shouldItemBeShown(item, currentItems, showItemRef, updater) && (!item.clickReveal || current.outSlide?.itemClickReveal)}
+            <SlideItemTransition
+                {preview}
+                {transitionEnabled}
+                {transitioningBetween}
+                globalTransition={transition}
+                currentSlide={current.currentSlide}
+                {item}
+                outSlide={current.outSlide}
+                lines={current.lines}
+                currentStyle={current.currentStyle}
+                let:customSlide
+                let:customItem
+                let:customLines
+                let:customOut
+                let:transition
+            >
                 <!-- filter={current.slideData?.filterEnabled?.includes("foreground") ? current.slideData?.filter : ""} -->
                 <!-- backdropFilter={current.slideData?.filterEnabled?.includes("foreground") ? current.slideData?.["backdrop-filter"] : ""} -->
                 <Textbox
