@@ -1,18 +1,18 @@
+import Database from "better-sqlite3"
 import path, { join } from "path"
 import protobufjs from "protobufjs"
 import upath from "upath"
 // @ts-ignore (strange Rollup TS build problem, suddenly not realizing that the decleration exists)
 import MDBReader from "mdb-reader"
-import Database from "better-sqlite3"
 // @ts-ignore
 import WordExtractor from "word-extractor"
 import { ToMain } from "../../types/IPC/ToMain"
 import { sendToMain } from "../IPC/main"
 import { pptToShow } from "../output/ppt/pptToShow"
-import { doesPathExist, getDataFolderPath, getExtension, readFileAsync, readFileBufferAsync, writeFile } from "../utils/files"
+import { doesPathExist, getDataFolderPath, getExtension, readFileAsync, readFileBufferAsync } from "../utils/files"
 import { detectFileType } from "./bibleDetecter"
 import { filePathHashCode } from "./thumbnails"
-import { decompress, isZip } from "./zip"
+import { decompressZip, decompressZipStream, isZip } from "./zip"
 
 type FileData = { content: Buffer | string | object; name?: string; extension?: string }
 
@@ -132,7 +132,7 @@ export async function importShow(id: string, files: string[] | null, importSetti
     const zip = ["zip", "probundle", "vpc", "qsp"]
     const zipFiles = files.filter(a => zip.includes(a.slice(a.lastIndexOf(".") + 1).toLowerCase()))
     if (zipFiles.length) {
-        data = decompress(zipFiles)
+        data = await decompressZip(zipFiles)
         if (data.length) {
             for (const fileData of data) {
                 const customContent = await checkSpecial(fileData as FileData)
@@ -201,10 +201,10 @@ async function importProject(files: string[]) {
 
     const importFolder = getDataFolderPath("imports", "Projects")
 
-    zipFiles.forEach(zipFile => {
-        const dataFile = extractZipDataAndMedia(zipFile, importFolder)
+    for (const zipFile of zipFiles) {
+        const dataFile = await extractZipDataAndMedia(zipFile, importFolder)
         if (dataFile) data.push(dataFile)
-    })
+    }
 
     // remove folder if no files stored
     // if (!readFolder(importFolder).length) deleteFolder(importFolder)
@@ -232,26 +232,27 @@ async function importTemplate(files: string[]) {
 
     const importFolder = getDataFolderPath("imports", "Templates")
 
-    zipFiles.forEach(zipFile => {
-        const dataFile = extractZipDataAndMedia(zipFile, importFolder)
+    for (const zipFile of zipFiles) {
+        const dataFile = await extractZipDataAndMedia(zipFile, importFolder)
         if (dataFile) data.push(dataFile)
-    })
+    }
 
     sendToMain(ToMain.IMPORT2, { channel: "freeshow_template", data })
 }
 
 /// ZIP ///
 
-function extractZipDataAndMedia(filePath: string, importFolder: string) {
-    const zipData: FileData[] = decompress([filePath], true)
-    const dataFile = zipData.find(a => a.name === "data.json")
+async function extractZipDataAndMedia(filePath: string, importFolder: string) {
+    const initialData = await decompressZip([filePath])
+    const dataFile = initialData.find(a => a.name === "data.json")
     if (!dataFile) return
 
     let content = dataFile.content as string
     const dataContent = JSON.parse(content)
 
-    // write files
+    const filePathMap = new Map<string, string>()
     const replacedMedia: { [key: string]: string } = {}
+
     dataContent.files?.forEach((rawPath: string) => {
         // check if path already exists on the system
         if (doesPathExist(rawPath)) return
@@ -259,7 +260,6 @@ function extractZipDataAndMedia(filePath: string, importFolder: string) {
         const extension = upath.extname(rawPath)
         const fileName = upath.basename(rawPath)
         const hashedFileName = `${upath.basename(rawPath, extension)}__${filePathHashCode(rawPath)}${extension}`
-        const file = zipData.find(a => a.name === hashedFileName || a.name === fileName)?.content
 
         // get file path hash to prevent the same file importing multiple times
         // this also ensures files with the same name don't get overwritten
@@ -267,12 +267,18 @@ function extractZipDataAndMedia(filePath: string, importFolder: string) {
         const pathHash = `${upath.basename(rawPath, ext)}_${filePathHashCode(upath.toUnix(rawPath))}${ext}`
         const newMediaPath = upath.join(importFolder, pathHash)
 
-        if (!file) return
         replacedMedia[rawPath] = newMediaPath
 
         if (doesPathExist(newMediaPath)) return
-        // @ts-ignore
-        writeFile(newMediaPath, file)
+
+        // map input name to output path for file extraction
+        filePathMap.set(hashedFileName, newMediaPath)
+        filePathMap.set(fileName, newMediaPath)
+    })
+
+    // extract files directly to their final paths
+    await decompressZipStream(filePath, true, {
+        getOutputPath: (fileName: string) => filePathMap.get(fileName)
     })
 
     // replace files
