@@ -3,7 +3,7 @@
         "welcome": "Vítejte",
         "quit": "Zavřít",
         "docs": "Dokumentace",
-        "about": "O Freeshow",
+        "about": "O APlayPro",
         "unnamed": "Nezařazené",
         "drop": "Pusťte zde",
         "search": "Vyhledat",
@@ -58,7 +58,7 @@
         "libraries": "Použité knihovny",
         "thanks": "Poděkování",
         "new_update": "Nové aktualizace jsou k dispozici",
-        "download": "Pro aktualizaci restartuj aplikaci, nebo na webu freeshow.app stáhni novou verzi.",
+        "download": "Pro aktualizaci restartuj aplikaci, nebo na webu joinamazing.com/downloads stáhni novou verzi.",
         "changes": "Co je nového?"
     },
     "tooltip": {
@@ -489,8 +489,8 @@
         "manage_tags": "Spravovat štítky",
         "sync_categories": "Vybrat kategorie k synchronizaci",
         "effect_items": "Efektové předměty",
-        "initialize": "Vítejte ve FreeShow",
-        "unsaved": "Opustit FreeShow?",
+        "initialize": "Vítejte ve APlay Pro",
+        "unsaved": "Opustit APlay Pro?",
         "cancel": "Zrušit",
         "continue": "Pokračovat",
         "reset_all": "Resetovat vše",

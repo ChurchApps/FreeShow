@@ -22,13 +22,13 @@
 
 <div style="text-align: center;">
     <div class="logo">
-        <img style="height: 35px;" src="./import-logos/freeshow.webp" alt="FreeShow-logo" draggable={false} />
+        <img style="height: 35px;" src="./import-logos/aplay-pro.webp" alt="FreeShow-logo" draggable={false} />
         <h1 style="color: var(--text);font-size: 1.7em;">APlay Pro</h1>
     </div>
 
     <p style="font-size: 0.8em;margin-top: 2px;">
         <span style="opacity: 0.8;">v{$version} -</span>
-        <Link url={"https://freeshow.app/?v" + $version}>
+        <Link url={"https://joinamazing.com/downloads?v" + $version}>
             <T id="about.check_updates" />
         </Link>
     </p>
@@ -44,24 +44,24 @@
     <div class="text">
         <div>
             ● <T id="about.more" />
-            <Link url="https://churchapps.org/">ChurchApps</Link>
+            <Link url="https://joinamazing.com/">Amazing Life</Link>
         </div>
-        <div>
+        <!-- <div>
             ● <T id="about.report" />
-            <Link url="https://github.com/ChurchApps/FreeShow/issues">GitHub Issues</Link>
-        </div>
-        <div>
+            <Link url="https://github.com/Tech-Mission-Solutions/aplay-pro/issues">GitHub Issues</Link>
+        </div> -->
+        <!-- <div>
             ● <T id="about.translate" />
             <Link url="https://app.transifex.com/nettbiter/freeshow/">Transifex</Link>
-        </div>
+        </div> -->
         <!-- <div>
             ● <T id="about.mail" />
             <Link url="mailto:dev@freeshow.app">dev@freeshow.app</Link>
         </div> -->
-        <div>
+        <!-- <div>
             ● <T id="about.support" />!
             <Link url="https://churchapps.org/partner#give">churchapps.org/partner</Link>
-        </div>
+        </div> -->
     </div>
 
     <hr />

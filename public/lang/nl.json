@@ -58,7 +58,7 @@
         "libraries": "Bibliotheken gebruikt",
         "thanks": "Met dank aan",
         "new_update": "Nieuwe update beschikbaar",
-        "download": "Start de applicatie opnieuw om te updaten, of ga naar freeshow.app om handmatig te downloaden",
+        "download": "Start de applicatie opnieuw om te updaten, of ga naar joinamazing.com/downloads om handmatig te downloaden",
         "changes": "Wat is nieuw"
     },
     "tooltip": {
@@ -488,7 +488,7 @@
         "manage_tags": "Labels beheren",
         "sync_categories": "Categorieën synchroniseren",
         "effect_items": "Effecten",
-        "initialize": "Welkom bij FreeShow",
+        "initialize": "Welkom bij APlay Pro",
         "unsaved": "Weet je zeker dat je wilt afsluiten?",
         "cancel": "Annuleren",
         "continue": "Doorgaan",

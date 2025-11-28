@@ -1,6 +1,6 @@
 {
     "name": "aplay-pro",
-    "version": "1.0.0-beta5",
+    "version": "1.0.0-beta7",
     "private": true,
     "main": "build/electron/index.js",
     "description": "APlay Pro is a user-friendly presenter software customized for Amazing Life.",

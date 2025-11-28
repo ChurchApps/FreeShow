@@ -58,7 +58,7 @@
         "libraries": "使用的库",
         "thanks": "鸣谢：",
         "new_update": "有更新可用...",
-        "download": "重启应用程序进行更新，或前往 freeshow.app 手动下载",
+        "download": "重启应用程序进行更新，或前往 joinamazing.com/downloads 手动下载",
         "changes": "更新<br>"
     },
     "tooltip": {
@@ -488,7 +488,7 @@
         "manage_tags": "管理标签",
         "sync_categories": "同步分类",
         "effect_items": "效果元素",
-        "initialize": "欢迎使用 FreeShow",
+        "initialize": "欢迎使用 APlay Pro",
         "unsaved": "您确定要退出吗？",
         "cancel": "取消",
         "continue": "继续",

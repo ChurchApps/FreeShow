@@ -108,7 +108,7 @@
         const params = new URLSearchParams()
 
         // Add origin parameter for Electron apps to fix Error 153
-        params.append("origin", "https://freeshow.app")
+        params.append("origin", "https://joinamazing.com")
 
         if (opts.playerVars) {
             Object.entries(opts.playerVars).forEach(([key, value]) => {

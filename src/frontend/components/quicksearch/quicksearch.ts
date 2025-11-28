@@ -578,11 +578,11 @@ const faq = [
     { id: "https://freeshow.app/docs/items#click-reveal", name: "Click reveal", icon: "help" },
     { id: "https://freeshow.app/docs/editing#virtual-line-breaks-virtual-breaks", name: "Virtual breaks", icon: "help", aliases: ["-Line breaks"] },
     // GitHub
-    { id: "https://github.com/ChurchApps/FreeShow/issues/693#issuecomment-2255167635", name: "Delete Slide vs Remove Group", icon: "help", aliases: ["-Delete group vs remove slide"] },
-    { id: "https://github.com/ChurchApps/FreeShow/issues/1175#issuecomment-2581935274", name: "Custom Bible Version", icon: "help", aliases: ["-Missing scripture", "-Missing Bible"] },
-    { id: "https://github.com/ChurchApps/FreeShow/issues/178", name: "Video Loop Behaviour", icon: "help", aliases: ["-Video looping"] },
-    { id: "https://github.com/ChurchApps/FreeShow/issues/1123", name: "Unsupported Video Codec", icon: "help", aliases: ["-Video dont play", "-Video not playing", "-MOV", "-MP4"] },
-    { id: "https://github.com/ChurchApps/FreeShow/issues/251", name: "Embed PowerPoint/Google Slides", icon: "help", aliases: ["-PowerPoint online", "-Google Presentations"] },
+    // { id: "https://github.com/ChurchApps/FreeShow/issues/693#issuecomment-2255167635", name: "Delete Slide vs Remove Group", icon: "help", aliases: ["-Delete group vs remove slide"] },
+    // { id: "https://github.com/ChurchApps/FreeShow/issues/1175#issuecomment-2581935274", name: "Custom Bible Version", icon: "help", aliases: ["-Missing scripture", "-Missing Bible"] },
+    // { id: "https://github.com/ChurchApps/FreeShow/issues/178", name: "Video Loop Behaviour", icon: "help", aliases: ["-Video looping"] },
+    // { id: "https://github.com/ChurchApps/FreeShow/issues/1123", name: "Unsupported Video Codec", icon: "help", aliases: ["-Video dont play", "-Video not playing", "-MOV", "-MP4"] },
+    // { id: "https://github.com/ChurchApps/FreeShow/issues/251", name: "Embed PowerPoint/Google Slides", icon: "help", aliases: ["-PowerPoint online", "-Google Presentations"] },
     // Videos (Garry B Jr.)
     { id: "https://youtu.be/1A4GUMu-pdA", name: "Silent Communication for Media Leaders", icon: "youtube" },
     { id: "https://youtu.be/L_e_bZzu7ec", name: "Bold Color Labels with High Contrast Mode", icon: "youtube" },

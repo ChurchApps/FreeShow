@@ -136,14 +136,14 @@
 {:else}
     <div on:mousedown={mousedown}>
         {#if id === "companion"}
-            <Link url="https://freeshow.app/api">
+            <!-- <Link url="https://freeshow.app/api">
                 API Docs
                 <Icon id="launch" white />
             </Link>
             <Link url="https://freeshow.app/docs/companion">
                 Bitfocus Companion Connection
                 <Icon id="launch" white />
-            </Link>
+            </Link> -->
         {:else}
             <p><T id="settings.connect" />:</p>
             <Link {url}>

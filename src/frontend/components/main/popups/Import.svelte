@@ -128,7 +128,7 @@
                 <p>{translateText(format.name)}</p>
 
                 <div class="freeshow">
-                    <img style="height: 18px;padding: 0;" src="./import-logos/freeshow.webp" alt="APlay Pro-logo" draggable={false} />
+                    <img style="height: 18px;padding: 0;" src="./import-logos/aplay-pro.webp" alt="APlay Pro-logo" draggable={false} />
                 </div>
             </MaterialButton>
         {/each}
