@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { createEventDispatcher } from "svelte"
     import TabletDrawerShows from "./pages/TabletDrawerShows.svelte"
     import TabletDrawerMedia from "./pages/TabletDrawerMedia.svelte"
     import TabletDrawerAudio from "./pages/TabletDrawerAudio.svelte"
@@ -10,6 +11,10 @@
     
     export let id: string
     export let searchValue: string
+
+    const dispatch = createEventDispatcher()
+
+    const handleScriptureSearchClear = () => dispatch("search-clear")
 </script>
 
 <div class="main">
@@ -25,7 +30,7 @@
         <TabletDrawerTemplates />
     {:else if id === "scripture"}
         <div style="height: 100%; overflow: hidden; display: flex; flex-direction: column;">
-            <Scripture tablet />
+            <Scripture tablet searchValueFromDrawer={searchValue} on:search-clear={handleScriptureSearchClear} />
         </div>
     {:else if id === "calendar"}
         <TabletDrawerCalendar />

@@ -7,9 +7,12 @@
     export let side: "left" | "right" | "top" | "bottom" = "left"
 
     const DEFAULT_WIDTH = 260
+    // Visual handle stays thin, but touch target is larger
+    const VISUAL_HANDLE = 4
+    const TOUCH_TARGET = 20 // Invisible larger touch area
 
     let width: number = DEFAULT_WIDTH
-    let handleWidth = 4
+    let handleWidth = VISUAL_HANDLE
     export let maxWidth: number = DEFAULT_WIDTH * 2.2
     export let minWidth: number = handleWidth
 
@@ -31,12 +34,51 @@
     $: handleWidth = width <= 8 ? 6 : 4
 
     const conditions = {
-        left: (e: any) => e.target.closest(".panel")?.offsetWidth - e.offsetX <= handleWidth,
-        right: (e: any) => e.clientX < e.target.closest(".panel")?.offsetLeft + handleWidth && e.offsetX <= handleWidth && e.offsetX >= 0,
-        top: (e: any) => e.clientY < e.target.closest(".panel")?.offsetTop + handleWidth && e.offsetY <= handleWidth && e.offsetY >= 0,
-        bottom: (e: any) => e.clientY < e.target.closest(".panel")?.offsetTop + e.target.closest(".panel")?.offsetParent.offsetTop + handleWidth && e.offsetY <= handleWidth && e.offsetY >= 0
+        left: (e: any) => {
+            const panel = e.target.closest(".panel")
+            if (!panel) return false
+            const panelWidth = panel.offsetWidth
+            // Larger invisible touch area for easier grabbing
+            return panelWidth - e.offsetX <= TOUCH_TARGET
+        },
+        right: (e: any) => {
+            const panel = e.target.closest(".panel")
+            if (!panel) return false
+            return e.clientX < panel.offsetLeft + TOUCH_TARGET && e.offsetX <= TOUCH_TARGET && e.offsetX >= 0
+        },
+        top: (e: any) => {
+            const panel = e.target.closest(".panel")
+            if (!panel) return false
+            return e.clientY < panel.offsetTop + TOUCH_TARGET && e.offsetY <= TOUCH_TARGET && e.offsetY >= 0
+        },
+        bottom: (e: any) => {
+            const panel = e.target.closest(".panel")
+            if (!panel || !panel.offsetParent) return false
+            return e.clientY < panel.offsetTop + panel.offsetParent.offsetTop + TOUCH_TARGET && e.offsetY <= TOUCH_TARGET && e.offsetY >= 0
+        }
     }
 
+    function pointerdown(e: PointerEvent) {
+        if (!conditions[side](e)) return
+        e.preventDefault()
+        
+        // Capture pointer for touch devices
+        const target = e.target as HTMLElement
+        target.setPointerCapture?.(e.pointerId)
+
+        mouse = {
+            x: e.clientX,
+            y: e.clientY,
+            offset: side === "top" || side === "bottom" ? window.innerHeight - width - e.clientY : window.innerWidth - width - e.clientX,
+            target: e.target
+        }
+        
+        window.addEventListener("pointermove", pointermove)
+        window.addEventListener("pointerup", pointerup)
+        window.addEventListener("pointercancel", pointerup)
+    }
+
+    // Legacy mouse support
     function mousedown(e: any) {
         if (!conditions[side](e)) return
 
@@ -63,6 +105,23 @@
         if (width > maxWidth) return maxWidth
         move = true
         return width
+    }
+
+    function pointermove(e: PointerEvent) {
+        if (mouse) {
+            e.preventDefault()
+            width = getWidth(widths[side](e))
+        }
+    }
+
+    function pointerup(e: PointerEvent) {
+        const target = e.target as HTMLElement
+        target.releasePointerCapture?.(e.pointerId)
+        mouse = null
+        move = false
+        window.removeEventListener("pointermove", pointermove)
+        window.removeEventListener("pointerup", pointerup)
+        window.removeEventListener("pointercancel", pointerup)
     }
 
     function mousemove(e: any) {
@@ -102,7 +161,7 @@
 
 <svelte:window on:mouseup={mouseup} on:mousemove={mousemove} />
 
-<div {id} style="{side === 'left' || side === 'right' ? 'width' : 'height'}: {width}px; --handle-width: {handleWidth}px" class="panel bar_{side}" class:zero={width <= handleWidth} on:mousedown={mousedown} on:click={click}>
+<div {id} style="{side === 'left' || side === 'right' ? 'width' : 'height'}: {width}px; --handle-width: {handleWidth}px" class="panel bar_{side}" class:zero={width <= handleWidth} on:pointerdown={pointerdown} on:mousedown={mousedown} on:click={click}>
     {#if width <= handleWidth}
         <Icon id="arrow_right" size={1.3} white />
     {/if}
@@ -174,5 +233,11 @@
         top: 0;
         height: var(--handle-width);
         cursor: ns-resize;
+    }
+
+    /* Touch-friendly - larger invisible hit area, visual stays thin */
+    div {
+        touch-action: none;
+        -webkit-tap-highlight-color: transparent;
     }
 </style>

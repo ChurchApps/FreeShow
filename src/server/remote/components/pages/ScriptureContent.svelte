@@ -3,11 +3,10 @@
     import Loading from "../../../common/components/Loading.svelte"
     import { onDestroy } from "svelte"
     import { send } from "../../util/socket"
-    import { currentScriptureState, scriptureViewList, outShow, outSlide, resized } from "../../util/stores"
+    import { currentScriptureState, scriptureViewList, outShow, outSlide } from "../../util/stores"
 
     export let id: string
     export let scripture: Bible
-    export let tablet: boolean = false
     export let currentBook: string = ""
     export let currentChapter: string = ""
     export let currentVerse: string = ""
@@ -28,14 +27,14 @@
 
     $: books = scripture?.books || []
     $: chapters = books[activeBook]?.chapters || []
-    $: if (depth === 1 || (tablet && activeBook >= 0)) {
+    $: if (depth === 1) {
         const bookObj: any = books[activeBook]
         if (bookObj?.keyName && !(bookObj?.chapters?.length > 0)) {
             send("GET_SCRIPTURE", { id, bookKey: bookObj.keyName, bookIndex: activeBook })
         }
     }
     $: verses = chapters[activeChapter]?.verses || []
-    $: if (depth === 2 || (tablet && activeChapter >= 0)) {
+    $: if (depth === 2) {
         const bookObj: any = books[activeBook]
         const chapterObj: any = chapters[activeChapter]
         if (bookObj?.keyName && chapterObj?.keyName && !(chapterObj?.verses?.length > 0)) {
@@ -84,30 +83,6 @@
         unsubscribeScripture()
     })
 
-    // Auto-navigate to Genesis 1:1 in tablet mode when scripture loads
-    let hasAutoNavigated = false
-    $: if (tablet && books.length > 0 && !hasAutoNavigated && activeBook === -1) {
-        hasAutoNavigated = true
-        // Navigate to first book (Genesis), first chapter
-        activeBook = 0
-        activeChapter = 0
-        
-        // Request chapter data if not loaded
-        const bookObj: any = books[0]
-        if (bookObj?.keyName && !(bookObj?.chapters?.length > 0)) {
-            send("GET_SCRIPTURE", { id, bookKey: bookObj.keyName, bookIndex: 0 })
-        }
-        
-        // Request verse data if chapter is already loaded
-        const chapters = bookObj?.chapters || []
-        if (chapters.length > 0) {
-            const chapterObj: any = chapters[0]
-            if (bookObj?.keyName && chapterObj?.keyName && !(chapterObj?.verses?.length > 0)) {
-                send("GET_SCRIPTURE", { id, bookKey: bookObj.keyName, chapterKey: chapterObj.keyName, bookIndex: 0, chapterIndex: 0 })
-            }
-        }
-    }
-
     // COLORS
 
     const colorCodesFull = [1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 6, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 8]
@@ -138,9 +113,8 @@
 
     // OUTPUT
 
-    export function playScripture(verseNumber?: number) {
-        const vNum = verseNumber || displayedVerseNumber
-        if (activeBook < 0 || activeChapter < 0 || vNum <= 0) return
+    function playScripture(verseNumber: number) {
+        if (activeBook < 0 || activeChapter < 0 || verseNumber <= 0) return
 
         const book = books[activeBook]
         const chapter = chapters[activeChapter]
@@ -148,7 +122,7 @@
 
         const bookNumber = book.number ?? activeBook + 1
         const chapterNumber = chapter.number ?? activeChapter + 1
-        send("API:start_scripture", { id, reference: `${bookNumber}.${chapterNumber}.${vNum}` })
+        send("API:start_scripture", { id, reference: `${bookNumber}.${chapterNumber}.${verseNumber}` })
     }
 
     // NAVIGATION
@@ -448,17 +422,17 @@
 
 <!-- Header handled by parent -->
 
-<!-- LIST/GRID MODE -->
-<div class={$scriptureViewList ? "list" : "grid"}>
-    {#if depth === 0 || tablet || $scriptureViewList}
-        <div class="books" class:center={!books?.length}>
+<!-- GRID MODE -->
+<div class="grid">
+    {#if depth === 0}
+        <div class="books">
             {#if books?.length}
                 {#key books}
                     {#each books as book, i (book.number || i)}
                         <!-- this uses index instead of number! -->
                         {@const bookUiId = i + 1}
                         {@const color = getColorCode(books, i)}
-                        {@const name = $scriptureViewList ? book.name : getShortName(book.name, i)}
+                        {@const name = getShortName(book.name, i)}
 
                         <span
                             id={bookUiId.toString()}
@@ -468,7 +442,7 @@
                                 activeBook = i
                                 activeChapter = -1
                                 activeVerse = 0
-                                if (!tablet && !$scriptureViewList) depth++
+                                depth++
                             }}
                             on:keydown={e =>
                                 e.key === "Enter" &&
@@ -476,12 +450,12 @@
                                     activeBook = i
                                     activeChapter = -1
                                     activeVerse = 0
-                                    if (!tablet && !$scriptureViewList) depth++
+                                    depth++
                                 })()}
                             class:active={activeBook === i}
                             class:displayed={i === displayedBookIndex}
                             class:output={i === displayedBookIndex}
-                            style="{color ? `border-${$scriptureViewList ? 'left' : 'bottom'}: 2px solid ${color};` : ''}{$scriptureViewList ? '' : 'border-radius: 2px;'}"
+                            style="color: {color};"
                             title={book.name}
                         >
                             {name}
@@ -491,21 +465,32 @@
             {:else}
                 <Loading />
             {/if}
-
         </div>
     {/if}
 
-    <div class="content">
-        {#if depth === 1 || tablet || $scriptureViewList}
-            <div class="chapters context #scripture_chapter" style="text-align: center;" class:center={!chapters?.length}>
-                {#if chapters?.length}
-                    {#each chapters as chapter, i (chapter.number || i)}
-                        {@const chapterUiId = Number(chapter.number) || i + 1}
-                        <span
-                            id={chapterUiId.toString()}
-                            role="button"
-                            tabindex="0"
-                            on:mousedown={() => {
+    {#if depth === 1}
+        <div class="chapters context #scripture_chapter" style="text-align: center;" class:center={!chapters?.length}>
+            {#if chapters?.length}
+                {#each chapters as chapter, i (chapter.number || i)}
+                    {@const chapterUiId = Number(chapter.number) || i + 1}
+                    <span
+                        id={chapterUiId.toString()}
+                        role="button"
+                        tabindex="0"
+                        on:mousedown={() => {
+                            const previousChapter = activeChapter
+                            activeChapter = i
+                            activeBook = i >= 0 ? activeBook : -1
+                            if (i === displayedChapterIndex && activeBook === displayedBookIndex && displayedVerseNumber > 0) {
+                                activeVerse = displayedVerseNumber
+                            } else if (previousChapter !== i) {
+                                activeVerse = 0
+                            }
+                            depth++
+                        }}
+                        on:keydown={e =>
+                            e.key === "Enter" &&
+                            (() => {
                                 const previousChapter = activeChapter
                                 activeChapter = i
                                 activeBook = i >= 0 ? activeBook : -1
@@ -514,120 +499,104 @@
                                 } else if (previousChapter !== i) {
                                     activeVerse = 0
                                 }
-                                if (!tablet && !$scriptureViewList) depth++
-                            }}
-                            on:keydown={e =>
-                                e.key === "Enter" &&
-                                (() => {
-                                    const previousChapter = activeChapter
-                                    activeChapter = i
-                                    activeBook = i >= 0 ? activeBook : -1
-                                    if (i === displayedChapterIndex && activeBook === displayedBookIndex && displayedVerseNumber > 0) {
-                                        activeVerse = displayedVerseNumber
-                                    } else if (previousChapter !== i) {
-                                        activeVerse = 0
-                                    }
-                                    if (!tablet && !$scriptureViewList) depth++
-                                })()}
-                            class:active={activeChapter === i}
-                            class:displayed={activeBook === displayedBookIndex && i === displayedChapterIndex}
-                            class:output={activeBook === displayedBookIndex && i === displayedChapterIndex}
-                        >
-                            {chapterUiId}
-                        </span>
-                    {/each}
-                {:else}
-                    <Loading />
-                {/if}
-            </div>
-        {/if}
+                                depth++
+                            })()}
+                        class:active={activeChapter === i}
+                        class:displayed={activeBook === displayedBookIndex && i === displayedChapterIndex}
+                        class:output={activeBook === displayedBookIndex && i === displayedChapterIndex}
+                    >
+                        {chapterUiId}
+                    </span>
+                {/each}
+            {:else}
+                <Loading />
+            {/if}
+        </div>
+    {/if}
 
-        {#if depth === 2 || tablet || $scriptureViewList}
-            <div bind:this={versesContainer} class="verses context #scripture_verse" class:center={!verses.length} class:big={verses.length > 100} class:list={$scriptureViewList}>
-                {#if verses.length}
-                    {#each verses as verse, i (verse.number || i)}
-                        {@const verseNumber = Number(verse.number) || i + 1}
-                        {@const isDisplayed = activeBook === displayedBookIndex && activeChapter === displayedChapterIndex && verseNumber === displayedVerseNumber}
-                        {@const isActive = activeVerse === verseNumber}
-                        
-                        {#if tablet && i === Math.max(0, verses.length - 6)}
-                            <div style="float: right; width: 220px; height: 80px;"></div>
-                        {/if}
+    {#if depth === 2}
+        <div bind:this={versesContainer} class="verses context #scripture_verse" class:center={!verses.length} class:big={verses.length > 100} class:list={$scriptureViewList}>
+            {#if verses.length}
+                {#each verses as verse, i (verse.number || i)}
+                    {@const verseNumber = Number(verse.number) || i + 1}
+                    {@const isDisplayed = activeBook === displayedBookIndex && activeChapter === displayedChapterIndex && verseNumber === displayedVerseNumber}
+                    {@const isActive = activeVerse === verseNumber}
 
-                        {#if $scriptureViewList}
-                            <button type="button" class="verse-button" on:click={() => playScripture(verseNumber)} on:keydown={e => e.key === "Enter" && playScripture(verseNumber)} class:active={isActive} class:displayed={isDisplayed}>
-                                <span style="width: 100%;height: 100%;color: var(--secondary);font-weight: bold;">
-                                    {verseNumber}
-                                </span>
-                                {formatBibleText(verse.text || verse.value)}
-                            </button>
-                        {:else}
-                            <span
-                                id={verseNumber.toString()}
-                                role="button"
-                                tabindex="0"
-                                on:mousedown={() => playScripture(verseNumber)}
-                                on:keydown={e => e.key === "Enter" && playScripture(verseNumber)}
-                                class:active={isActive}
-                                class:displayed={isDisplayed}
-                                class:output={isDisplayed}
-                            >
+                    {#if $scriptureViewList}
+                        <button type="button" class="verse-button" on:click={() => playScripture(verseNumber)} on:keydown={e => e.key === "Enter" && playScripture(verseNumber)} class:active={isActive} class:displayed={isDisplayed}>
+                            <span style="width: 100%;height: 100%;color: var(--secondary);font-weight: bold;">
                                 {verseNumber}
                             </span>
-                        {/if}
-                    {/each}
-                {:else}
-                    <Loading />
-                {/if}
-            </div>
-        {/if}
-    </div>
+                            {formatBibleText(verse.text || verse.value)}
+                        </button>
+                    {:else}
+                        <span
+                            id={verseNumber.toString()}
+                            role="button"
+                            tabindex="0"
+                            on:mousedown={() => playScripture(verseNumber)}
+                            on:keydown={e => e.key === "Enter" && playScripture(verseNumber)}
+                            class:active={isActive}
+                            class:displayed={isDisplayed}
+                            class:output={isDisplayed}
+                        >
+                            {verseNumber}
+                        </span>
+                    {/if}
+                {/each}
+            {:else}
+                <Loading />
+            {/if}
+        </div>
+    {/if}
 </div>
 
 <style>
-    /* LIST MODE */
-
-    .list {
-        display: flex !important;
-        flex-direction: row !important;
-        width: 100%;
-        height: 100%;
-    }
-    .list .content {
-        display: flex;
-        flex-direction: row;
-        flex: 1;
-    }
-
     /* GRID MODE */
 
     .grid {
         display: flex;
         flex-direction: column;
         height: 100%;
-        width: 100%;
-        margin: 0;
-        padding: 0;
-    }
-    .grid .books {
-        border-bottom: 2px solid var(--primary-lighter);
-    }
-    .grid .chapters {
-        border-inline-end: 2px solid var(--primary-lighter);
     }
 
-    .grid .books,
-    .grid .content {
-        flex-direction: row;
-        height: 50%;
-    }
-    .grid .content {
+    .grid div {
         display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+        overflow-x: hidden;
+        align-content: flex-start;
+
+        position: relative;
+        scroll-behavior: smooth;
+        /* FreeShow UI scrollbar */
+        scrollbar-width: thin; /* Firefox */
+        scrollbar-color: rgb(255 255 255 / 0.3) rgb(255 255 255 / 0.05);
+    }
+    .grid div::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+    .grid div::-webkit-scrollbar-track,
+    .grid div::-webkit-scrollbar-corner {
+        background: rgb(255 255 255 / 0.05);
+    }
+    .grid div::-webkit-scrollbar-thumb {
+        background: rgb(255 255 255 / 0.3);
+        border-radius: 8px;
+    }
+    .grid div::-webkit-scrollbar-thumb:hover {
+        background: rgb(255 255 255 / 0.5);
+    }
+
+    .grid .books {
+        flex-direction: row;
+        height: 100%;
     }
     .grid .chapters,
     .grid .verses {
         flex-direction: row;
-        width: 50%;
+        height: 100%;
     }
 
     .grid .books,
@@ -635,140 +604,136 @@
     .grid .verses {
         flex-wrap: wrap;
         align-content: normal;
+        gap: 0;
     }
 
-    /* COMMON */
-
-    .books, .chapters, .verses {
-        display: flex;
-        overflow-y: auto;
-        overflow-x: hidden;
-        align-content: flex-start;
-        position: relative;
-        scroll-behavior: smooth;
-        padding: 0;
-        margin: 0;
-        /* FreeShow UI scrollbar */
-        scrollbar-width: thin;
+    .grid .verses.list {
+        flex-direction: column;
+        flex-wrap: nowrap;
+        padding: 0 12px 0 8px;
+        /* FreeShow UI scrollbar styling (desktop) */
+        scrollbar-width: thin; /* Firefox */
         scrollbar-color: rgb(255 255 255 / 0.3) rgb(255 255 255 / 0.05);
     }
-
-    /* Scrollbar styling */
-    ::-webkit-scrollbar {
+    .grid .verses.list::-webkit-scrollbar {
         width: 8px;
         height: 8px;
     }
-    ::-webkit-scrollbar-track,
-    ::-webkit-scrollbar-corner {
+    .grid .verses.list::-webkit-scrollbar-track,
+    .grid .verses.list::-webkit-scrollbar-corner {
         background: rgb(255 255 255 / 0.05);
     }
-    ::-webkit-scrollbar-thumb {
+    .grid .verses.list::-webkit-scrollbar-thumb {
         background: rgb(255 255 255 / 0.3);
         border-radius: 8px;
     }
-    ::-webkit-scrollbar-thumb:hover {
+    .grid .verses.list::-webkit-scrollbar-thumb:hover {
         background: rgb(255 255 255 / 0.5);
     }
 
+    .grid .verse-button,
     .grid span {
-        display: inline-block;
-        text-align: center;
-        vertical-align: middle;
-        min-width: 40px;
-        width: auto;
-        flex: none;
-        font-weight: 600;
-        cursor: pointer;
-        padding: 2px 6px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-    .grid .books span {
-        min-width: 52px;
-    }
-
-    .grid .verses {
-        color: var(--secondary);
-        font-weight: bold;
-        display: block;
-    }
-    .grid .verses span {
-        color: var(--secondary);
-        font-weight: bold;
-    }
-
-    /* List specific styling */
-    .list .books {
-        width: auto;
-        flex-direction: column;
-        min-width: 150px;
-    }
-    .list .chapters {
-        width: auto;
-        flex-direction: column;
-        min-width: 80px;
-    }
-    .list .verses {
-        flex: 1;
-        flex-direction: column;
-    }
-
-    .list span {
-        padding: 4px 10px;
-        cursor: pointer;
-    }
-    
-    .list .verse-button {
         display: flex;
-        align-items: flex-start;
-        justify-content: flex-start;
-        padding: 10px;
+        justify-content: center;
+        align-items: center;
+        font-size: 1.3em;
+        font-weight: 600;
+        /* min-width: 40px; */
+        min-width: 50px;
+        flex: 1;
+        padding: 0;
+        margin: 0;
+    }
+    .grid .verses.list .verse-button {
+        align-items: unset;
+        justify-content: unset;
+        padding: 10px 0;
         gap: 12px;
+    }
+
+    .grid .verses.list .verse-button span {
+        flex-shrink: 0;
+        min-width: 40px;
+    }
+    .verse-button {
+        display: flex;
+        align-items: unset;
+        justify-content: unset;
+        padding: 10px 0;
         background: transparent;
         border: none;
         color: var(--text);
         font: inherit;
         text-align: left;
         cursor: pointer;
-        width: 100%;
     }
-    .list .verse-button span {
-        flex-shrink: 0;
-        min-width: 40px;
-        width: 40px !important;
+    .grid .verses.list span {
+        max-width: 50px;
     }
 
-    /* Active/Hover states */
-    span.active,
-    .verse-button.active {
-        background-color: var(--focus);
+    .grid .books span {
+        font-weight: bold;
+        /* min-width: 52px; */
+        /* min-width: 82px; */
+        /* min-width: 33%; */
+        min-width: 25%;
     }
-    span:hover:not(.active),
-    .verse-button:hover:not(.active) {
+    /* Make interactive book/chapter items show pointer cursor like verse buttons */
+    .grid .books span,
+    .grid .chapters span {
+        cursor: pointer;
+    }
+
+    .grid .chapters span,
+    .grid .verses .verse-button span {
+        font-weight: bold;
+    }
+    .grid .big span {
+        min-width: 40px;
+    }
+
+    .grid .verses {
+        color: var(--secondary);
+        font-weight: bold;
+    }
+
+    .grid div .verse-button:hover {
         background-color: var(--hover);
     }
 
-    /* Highlight currently displayed scripture */
-    .output, .displayed {
+    .grid .active {
+        background-color: var(--focus);
+    }
+    /* Highlight currently displayed scripture elements */
+    .grid .books .output,
+    .grid .chapters .output {
         background-color: var(--focus);
         box-shadow: inset 0 0 0 2px var(--secondary);
         border-radius: 6px;
     }
-    .list .displayed {
+    /* Highlight currently displayed verse - works across all translations */
+    .grid .verses .displayed {
+        position: relative;
+        background-color: var(--focus);
+        box-shadow: inset 0 0 0 2px var(--secondary);
+        border-radius: 6px;
+    }
+
+    .grid .verses.list .displayed {
         background-color: transparent;
         box-shadow: none;
-        position: relative;
     }
-    .list .displayed::after {
+
+    .grid .verses.list .displayed::after {
         content: "";
         position: absolute;
-        left: 0;
-        right: 0;
+        left: -4px; /* Start a bit before the verse number */
+        right: -4px;
         top: 0;
         bottom: 0;
         background-color: var(--focus);
         box-shadow: inset 0 0 0 2px var(--secondary);
+        border-radius: 6px;
         z-index: -1;
     }
 </style>

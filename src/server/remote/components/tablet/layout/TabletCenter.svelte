@@ -4,7 +4,7 @@
     import { GetLayout } from "../../../util/output"
     import { send } from "../../../util/socket"
     import { _set } from "../../../util/stores"
-    import Center from "../../../../common/components/Center.svelte"
+
     import Slides from "../../show/Slides.svelte"
     import ShowContent from "../../pages/ShowContent.svelte"
     import AddGroups from "../../pages/AddGroups.svelte"
@@ -220,16 +220,18 @@
                             <Icon id="groups" right />
                             {translate("tools.groups", $dictionary)}
                         </Button>
-
-                        <Button on:click={() => (editOpened = true)} variant="outlined" center class="toolButton">
-                            <Icon id="edit" right />
-                            {translate("titlebar.edit", $dictionary)}
-                        </Button>
                     </div>
                 </div>
+
+                <!-- Floating Edit Button -->
+                <Button class="floating-edit-btn" on:click={() => (editOpened = true)} title={translate("titlebar.edit", $dictionary)}>
+                    <Icon id="edit" size={1.5} white />
+                </Button>
             {/if}
         {:else}
-            <Center faded>{translate("empty.show", $dictionary)}</Center>
+            <div style="flex: 1; display: flex; justify-content: center; align-items: center; opacity: 0.5; padding-bottom: 20%;">
+                {translate("empty.show", $dictionary)}
+            </div>
         {/if}
     {:else}
         <ShowContent tablet />
@@ -302,5 +304,27 @@
         border-radius: 8px;
         padding: 0.6em 1em !important;
         min-height: auto !important;
+    }
+
+    /* Floating Edit Button */
+    :global(.floating-edit-btn) {
+        position: absolute !important;
+        bottom: 80px;
+        right: 20px;
+        width: 56px;
+        height: 56px;
+        border-radius: 50% !important;
+        background-color: var(--secondary) !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10;
+        padding: 0 !important;
+    }
+
+    :global(.floating-edit-btn:hover) {
+        background-color: var(--secondary-opacity) !important;
+        transform: scale(1.05);
     }
 </style>
