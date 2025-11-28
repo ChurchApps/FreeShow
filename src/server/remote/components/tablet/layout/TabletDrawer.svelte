@@ -17,14 +17,14 @@
     let move = false
     let startY = 0
     let startHeight = 0
-    let isDragging = false
+    let isResizing = false
 
     function onPointerDown(e: PointerEvent) {
         // Don't start resize if clicking on tabs or search
         if ((e.target as HTMLElement).closest('.tabs') || (e.target as HTMLElement).closest('.search-container')) return
         
         move = true
-        isDragging = false
+        isResizing = true
         startY = e.clientY
         startHeight = height
         
@@ -42,8 +42,6 @@
         e.preventDefault()
         
         const delta = startY - e.clientY
-        if (Math.abs(delta) > 5) isDragging = true
-        
         let newHeight = startHeight + delta
         
         if (newHeight < minHeight) newHeight = minHeight
@@ -56,6 +54,7 @@
         const target = e.currentTarget as HTMLElement
         target?.releasePointerCapture?.(e.pointerId)
         move = false
+        isResizing = false
         window.removeEventListener("pointermove", onPointerMove)
         window.removeEventListener("pointerup", onPointerUp)
         window.removeEventListener("pointercancel", onPointerUp)
@@ -69,6 +68,7 @@
     function onDockPointerDown(e: PointerEvent) {
         e.stopPropagation()
         dockDragging = false
+        isResizing = true
         dockStartY = e.clientY
         dockStartHeight = height
         
@@ -109,6 +109,7 @@
         }
         
         dockDragging = false
+        isResizing = false
         window.removeEventListener("pointermove", onDockPointerMove)
         window.removeEventListener("pointerup", onDockPointerUp)
         window.removeEventListener("pointercancel", onDockPointerUp)
@@ -138,7 +139,7 @@
     }
 </script>
 
-<div class="drawer" style="height: {height}px">
+<div class="drawer" class:resizing={isResizing} style="height: {height}px">
     <div class="top context #drawer_top" on:pointerdown={onPointerDown}>
         <span class="tabs">
             <MaterialButton 
@@ -268,7 +269,11 @@
         display: flex;
         flex-direction: column;
         box-shadow: 0 -2px 10px rgba(0,0,0,0.3);
-        transition: height 0.1s;
+        will-change: height;
+    }
+
+    .drawer:not(.resizing) {
+        transition: height 0.15s ease-out;
     }
 
     .top {
@@ -282,8 +287,10 @@
         cursor: ns-resize;
         padding: 0;
         padding-right: 10px;
+        padding-top: 4px; /* Account for ::after resize handle visual offset */
         touch-action: none;
         -webkit-tap-highlight-color: transparent;
+        box-sizing: border-box;
         
         box-shadow: 0 -1.8px 8px rgb(0 0 0 / 0.2);
         z-index: 1;
@@ -408,9 +415,5 @@
 
     .dock-btn:active {
         background-color: rgb(255 255 255 / 0.1);
-    }
-
-    .dock-btn .drag-handle {
-        display: none;
     }
 </style>
