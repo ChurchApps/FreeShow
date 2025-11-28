@@ -2,7 +2,6 @@
 // Export as TXT or PDF
 // When exporting as PDF we create a new window and capture its content
 
-import AdmZip from "adm-zip"
 import { BrowserWindow, ipcMain } from "electron"
 import fs, { type WriteFileOptions } from "fs"
 import { basename, extname, join } from "path"
@@ -16,6 +15,7 @@ import { doesPathExist, getDataFolderPath, getShowsFromIds, getTimePointString, 
 import { getAllShows } from "../utils/shows"
 import { exportOptions } from "../utils/windowOptions"
 import { filePathHashCode } from "./thumbnails"
+import { compressToZip } from "./zip"
 
 // SHOW: .show, PROJECT: .project, BIBLE: .fsb
 const customJSONExtensions = {
@@ -264,27 +264,10 @@ export function exportProject(data: { type: "project"; name: string; file: any }
         return
     }
 
-    // create archive
-    const zip = new AdmZip()
-
-    // copy files
-    files.forEach(path => {
-        try {
-            // file might not exist
-            const extension = extname(path)
-            const hashedFileName = `${basename(path, extension)}__${filePathHashCode(path)}${extension}`
-            zip.addLocalFile(path, "", hashedFileName)
-        } catch (err) {
-            console.error("Could not add a file to project:", err)
-        }
+    // create archive with hashed filenames
+    compressWithMedia(files, data.file, data.name, ".project", exportFolder, (path, extension) => {
+        return `${basename(path, extension)}__${filePathHashCode(path)}${extension}`
     })
-
-    // add project file
-    zip.addFile("data.json", Buffer.from(JSON.stringify(data.file)))
-
-    const outputPath = join(exportFolder, data.name)
-    const filePath = getUniquePath(outputPath, ".project")
-    zip.writeZip(filePath, err => doneWritingFile(err, exportFolder))
 }
 
 // ----- TEMPLATE -----
@@ -301,25 +284,25 @@ export function exportTemplate(data: { file: { template: Template; files?: strin
         return
     }
 
-    // create archive
-    const zip = new AdmZip()
+    // create archive with original filenames
+    compressWithMedia(files, data.file, data.name, customJSONExtensions.TEMPLATE, exportFolder, path => basename(path))
+}
 
-    // copy files
-    files.forEach(path => {
-        try {
-            // file might not exist
-            zip.addLocalFile(path)
-        } catch (err) {
-            console.error("Could not add a file to project:", err)
-        }
-    })
+function compressWithMedia(files: string[], fileData: any, name: string, extension: string, exportFolder: string, getFileName: (path: string, ext: string) => string) {
+    const entries = files
+        .filter(path => fs.existsSync(path))
+        .map(path => ({
+            name: getFileName(path, extname(path)),
+            content: fs.readFileSync(path)
+        }))
 
-    // add project file
-    zip.addFile("data.json", Buffer.from(JSON.stringify(data.file)))
+    entries.push({ name: "data.json", content: Buffer.from(JSON.stringify(fileData)) })
 
-    const outputPath = join(exportFolder, data.name)
-    const filePath = getUniquePath(outputPath, customJSONExtensions.TEMPLATE)
-    zip.writeZip(filePath, err => doneWritingFile(err, exportFolder))
+    const filePath = getUniquePath(join(exportFolder, name), extension)
+
+    compressToZip(entries, filePath)
+        .then(() => doneWritingFile(null, exportFolder))
+        .catch(err => doneWritingFile(err, exportFolder))
 }
 
 // ----- HELPERS -----

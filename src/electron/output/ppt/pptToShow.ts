@@ -1,12 +1,12 @@
-import AdmZip from "adm-zip"
 import path from "path"
 import { parseStringPromise } from "xml2js"
 import { toApp } from "../.."
 import { MAIN } from "../../../types/Channels"
-import { createFolder, getDataFolderPath, writeFile } from "../../utils/files"
+import { decompressZipStream } from "../../data/zip"
+import { createFolder, getDataFolderPath } from "../../utils/files"
 
-// Extract .pptx contents directly from the ZIP using adm-zip and convert XML files to JSON
-// using xml2js. Media and fonts are written to disk and referenced in json.contentPaths
+// Extract .pptx contents (zip) and convert XML files to JSON using xml2js.
+// Media and fonts are streamed directly to disk to avoid OOM with large embedded videos.
 export async function pptToShow(filePath: string) {
     try {
         console.info("Starting PPT importing (zip -> xml2js) ...")
@@ -15,8 +15,16 @@ export async function pptToShow(filePath: string) {
         const importsFolder = getDataFolderPath("imports", "PowerPoint")
         const contentFolder = createFolder(path.join(importsFolder, fileName))
 
-        const zip = new AdmZip(filePath)
-        const entries = zip.getEntries()
+        // Decompress with streaming: media/fonts go directly to disk, XML/other files buffered in memory
+        const entries = await decompressZipStream(filePath, true, {
+            getOutputPath: (fileName: string) => {
+                if (fileName.startsWith("ppt/media/") || fileName.startsWith("ppt/fonts/")) {
+                    const mediaName = path.basename(fileName)
+                    return path.join(contentFolder, mediaName)
+                }
+                return undefined
+            }
+        })
 
         const json: any = {}
         const contentPaths: { [key: string]: string } = {}
@@ -24,39 +32,19 @@ export async function pptToShow(filePath: string) {
         // Process entries sequentially to avoid flooding the event loop / CPU with many
         // concurrent xml2js parses for large presentations.
         for (const entry of entries) {
-            if (entry.isDirectory) continue
-            const entryName = entry.entryName
+            const entryName = entry.name
 
-            // media and fonts: extract directly to disk and reference via contentPaths
+            // media and fonts: already written to disk, just store the path reference
             if (entryName.startsWith("ppt/media/") || entryName.startsWith("ppt/fonts/")) {
-                const mediaName = path.basename(entryName)
-                const mediaPath = path.join(contentFolder, mediaName)
-                try {
-                    // extractEntryTo writes the entry directly to disk without buffering the whole
-                    // file into memory (avoids OOM with very large embedded videos)
-                    // targetPath is a directory; maintainEntryPath=false ensures the file is
-                    // written into the contentFolder and not nested by its original path.
-                    zip.extractEntryTo(entryName, contentFolder, false, true)
-                    contentPaths[entryName] = mediaPath
-                } catch (err) {
-                    console.error("Failed to extract media entry to disk", entryName, mediaPath, err)
-                    // last resort: try to read into memory (may fail if OOM)
-                    try {
-                        const data = entry.getData()
-                        writeFile(mediaPath, data)
-                        contentPaths[entryName] = mediaPath
-                    } catch (err2) {
-                        console.error("Fallback write also failed for", mediaPath, err2)
-                    }
-                }
+                // content is the file path when written to disk
+                contentPaths[entryName] = entry.content as string
                 continue
             }
 
             // XML files (and rels) -> parse to JSON using xml2js
             if (entryName.endsWith(".xml") || entryName.endsWith(".rels")) {
-                const xmlText = entry.getData().toString("utf8")
+                const xmlText = typeof entry.content === "string" ? entry.content : (entry.content as Buffer).toString("utf8")
                 try {
-                    // explicitArray: false, mergeAttrs: true,
                     const parsed: any = await parseStringPromise(xmlText, { trim: true })
                     json[entryName] = parsed
                 } catch (err: any) {
@@ -67,13 +55,8 @@ export async function pptToShow(filePath: string) {
                 continue
             }
 
-            // other files (binary or text) - store raw buffer for now
-            try {
-                const data = entry.getData()
-                json[entryName] = data
-            } catch (err) {
-                console.error("Failed to read entry", entryName, err)
-            }
+            // other files (binary or text) - store raw buffer
+            json[entryName] = entry.content
         }
 
         json.contentPaths = contentPaths
