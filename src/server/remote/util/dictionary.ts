@@ -13,7 +13,8 @@ export const DEFAULT_DICTIONARY = {
         backgrounds: "No backgrounds in show",
         groups: "No groups",
         events: "No events",
-        text: "Type something"
+        text: "Type something",
+        timers: "No timers"
     },
     new: {
         show: "New show",
@@ -27,7 +28,11 @@ export const DEFAULT_DICTIONARY = {
         scripture: "Scriptures",
         calendar: "Calendar",
         templates: "Templates",
-        functions: "Functions"
+        functions: "Functions",
+        actions: "Actions",
+        timers: "Timers",
+        variables: "Variables",
+        triggers: "Triggers"
     },
     guide_title: {
         categories: "Categories"
@@ -85,6 +90,7 @@ export const DEFAULT_DICTIONARY = {
         lyrics: "Lyrics",
         end: "End",
         no_output: "No output",
+        no_content: "No content",
         remember: "Remember me",
         loading: "Loading...",
         submit: "Submit",

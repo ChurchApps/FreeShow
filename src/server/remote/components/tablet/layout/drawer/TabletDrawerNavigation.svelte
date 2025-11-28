@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { categories, shows, activeCategory, dictionary, scriptures, openedScripture, collectionId, actions, actionTags, variables, variableTags, activeActionTagFilter, activeVariableTagFilter } from "../../../../util/stores"
+    import { categories, shows, activeCategory, dictionary, scriptures, openedScripture, collectionId, actions, actionTags, variables, variableTags, activeActionTagFilter, activeVariableTagFilter, functionsSubTab, timers, triggers } from "../../../../util/stores"
     import { translate } from "../../../../util/helpers"
     import { _set } from "../../../../util/stores"
     import Button from "../../../../../common/components/Button.svelte"
@@ -50,6 +50,8 @@
     // Functions tab logic
     $: actionsTagsOnly = Object.values($actions).map(a => a.tags || [])
     $: variablesTagsOnly = Object.values($variables).map(a => a.tags || [])
+    $: timersCount = Object.keys($timers).length
+    $: triggersCount = Object.keys($triggers).length
     
     function keysToID(obj: any) {
         return Object.keys(obj).map(key => ({ id: key, ...obj[key] }))
@@ -72,6 +74,13 @@
         icon: "tag",
         count: variablesTagsOnly.filter(b => b.includes(a.id)).length
     }))
+
+    function setFunctionsSubTab(tab: string) {
+        functionsSubTab.set(tab)
+        // Clear tag filters when switching to a non-action/variable tab
+        if (tab !== "actions") activeActionTagFilter.set([])
+        if (tab !== "variables") activeVariableTagFilter.set([])
+    }
 </script>
 
 <div class="main">
@@ -163,29 +172,31 @@
         <div class="tabSection">
             <!-- Actions Section -->
             <div class="section">
+                <div class="title">{translate("tabs.actions", $dictionary)}</div>
                 <MaterialButton 
-                    class="tab {$activeActionTagFilter.length === 0 ? 'active' : ''}" 
-                    on:click={() => activeActionTagFilter.set([])}
+                    class="tab {$functionsSubTab === 'actions' && $activeActionTagFilter.length === 0 ? 'active' : ''}" 
+                    on:click={() => { setFunctionsSubTab('actions'); activeActionTagFilter.set([]) }}
                     style="width: 100%; font-weight: normal; padding: 0.2em 0.8em;"
-                    isActive={$activeActionTagFilter.length === 0}
+                    isActive={$functionsSubTab === 'actions' && $activeActionTagFilter.length === 0}
                     tab
                 >
-                    <div style="max-width: 85%;" data-title={translate("tabs.actions", $dictionary)}>
-                        <Icon id="actions" size={1} white={$activeActionTagFilter.length === 0} />
-                        <p style="margin: 5px;">{translate("tabs.actions", $dictionary)}</p>
+                    <div style="max-width: 85%;" data-title={translate("category.all", $dictionary)}>
+                        <Icon id="actions" size={1} white={$functionsSubTab === 'actions' && $activeActionTagFilter.length === 0} />
+                        <p style="margin: 5px;">{translate("category.all", $dictionary)}</p>
                     </div>
+                    <span class="count">{Object.keys($actions).length}</span>
                 </MaterialButton>
                 
                 {#each sortedActions as tag}
                     <MaterialButton 
-                        class="tab {$activeActionTagFilter.includes(tag.id) ? 'active' : ''}" 
-                        on:click={() => activeActionTagFilter.set([tag.id])}
-                        style="width: 100%; font-weight: normal; padding: 0.2em 0.8em; padding-left: 1.5em;"
-                        isActive={$activeActionTagFilter.includes(tag.id)}
+                        class="tab {$functionsSubTab === 'actions' && $activeActionTagFilter.includes(tag.id) ? 'active' : ''}" 
+                        on:click={() => { setFunctionsSubTab('actions'); activeActionTagFilter.set([tag.id]) }}
+                        style="width: 100%; font-weight: normal; padding: 0.2em 0.8em;"
+                        isActive={$functionsSubTab === 'actions' && $activeActionTagFilter.includes(tag.id)}
                         tab
                     >
                         <div style="max-width: 85%;" data-title={tag.label}>
-                            <Icon id="tag" size={1} style={!$activeActionTagFilter.includes(tag.id) && tag.color ? `fill: ${tag.color}` : ""} white={$activeActionTagFilter.includes(tag.id)} />
+                            <Icon id="tag" size={1} style={!($functionsSubTab === 'actions' && $activeActionTagFilter.includes(tag.id)) && tag.color ? `fill: ${tag.color}` : ""} white={$functionsSubTab === 'actions' && $activeActionTagFilter.includes(tag.id)} />
                             <p style="margin: 5px;">{tag.label}</p>
                         </div>
                         <span class="count">{tag.count}</span>
@@ -195,44 +206,49 @@
 
             <!-- Timers Section -->
             <div class="section">
+                <div class="title">{translate("tabs.timers", $dictionary)}</div>
                 <MaterialButton 
-                    class="tab" 
-                    on:click={() => {}}
+                    class="tab {$functionsSubTab === 'timer' ? 'active' : ''}" 
+                    on:click={() => setFunctionsSubTab('timer')}
                     style="width: 100%; font-weight: normal; padding: 0.2em 0.8em;"
+                    isActive={$functionsSubTab === 'timer'}
                     tab
                 >
-                    <div style="max-width: 85%;" data-title={translate("tabs.timers", $dictionary)}>
-                        <Icon id="timer" size={1} />
-                        <p style="margin: 5px;">{translate("tabs.timers", $dictionary)}</p>
+                    <div style="max-width: 85%;" data-title={translate("category.all", $dictionary)}>
+                        <Icon id="timer" size={1} white={$functionsSubTab === 'timer'} />
+                        <p style="margin: 5px;">{translate("category.all", $dictionary)}</p>
                     </div>
+                    <span class="count">{timersCount}</span>
                 </MaterialButton>
             </div>
 
             <!-- Variables Section -->
             <div class="section">
-                 <MaterialButton 
-                    class="tab {$activeVariableTagFilter.length === 0 ? 'active' : ''}" 
-                    on:click={() => activeVariableTagFilter.set([])}
+                <div class="title">{translate("tabs.variables", $dictionary)}</div>
+                <MaterialButton 
+                    class="tab {$functionsSubTab === 'variables' && $activeVariableTagFilter.length === 0 ? 'active' : ''}" 
+                    on:click={() => { setFunctionsSubTab('variables'); activeVariableTagFilter.set([]) }}
                     style="width: 100%; font-weight: normal; padding: 0.2em 0.8em;"
-                    isActive={$activeVariableTagFilter.length === 0}
+                    isActive={$functionsSubTab === 'variables' && $activeVariableTagFilter.length === 0}
                     tab
                 >
-                    <div style="max-width: 85%;" data-title={translate("tabs.variables", $dictionary)}>
-                        <Icon id="variable" size={1} white={$activeVariableTagFilter.length === 0} />
-                        <p style="margin: 5px;">{translate("tabs.variables", $dictionary)}</p>
+                    <div style="max-width: 85%;" data-title={translate("category.all", $dictionary)}>
+                        <Icon id="variable" size={1} white={$functionsSubTab === 'variables' && $activeVariableTagFilter.length === 0} />
+                        <p style="margin: 5px;">{translate("category.all", $dictionary)}</p>
                     </div>
+                    <span class="count">{Object.keys($variables).length}</span>
                 </MaterialButton>
 
                 {#each sortedVariables as tag}
                     <MaterialButton 
-                        class="tab {$activeVariableTagFilter.includes(tag.id) ? 'active' : ''}" 
-                        on:click={() => activeVariableTagFilter.set([tag.id])}
-                        style="width: 100%; font-weight: normal; padding: 0.2em 0.8em; padding-left: 1.5em;"
-                        isActive={$activeVariableTagFilter.includes(tag.id)}
+                        class="tab {$functionsSubTab === 'variables' && $activeVariableTagFilter.includes(tag.id) ? 'active' : ''}" 
+                        on:click={() => { setFunctionsSubTab('variables'); activeVariableTagFilter.set([tag.id]) }}
+                        style="width: 100%; font-weight: normal; padding: 0.2em 0.8em;"
+                        isActive={$functionsSubTab === 'variables' && $activeVariableTagFilter.includes(tag.id)}
                         tab
                     >
                         <div style="max-width: 85%;" data-title={tag.label}>
-                            <Icon id="tag" size={1} style={!$activeVariableTagFilter.includes(tag.id) && tag.color ? `fill: ${tag.color}` : ""} white={$activeVariableTagFilter.includes(tag.id)} />
+                            <Icon id="tag" size={1} style={!($functionsSubTab === 'variables' && $activeVariableTagFilter.includes(tag.id)) && tag.color ? `fill: ${tag.color}` : ""} white={$functionsSubTab === 'variables' && $activeVariableTagFilter.includes(tag.id)} />
                             <p style="margin: 5px;">{tag.label}</p>
                         </div>
                         <span class="count">{tag.count}</span>
@@ -242,16 +258,19 @@
 
             <!-- Triggers Section -->
             <div class="section">
+                <div class="title">{translate("tabs.triggers", $dictionary)}</div>
                 <MaterialButton 
-                    class="tab" 
-                    on:click={() => {}}
+                    class="tab {$functionsSubTab === 'triggers' ? 'active' : ''}" 
+                    on:click={() => setFunctionsSubTab('triggers')}
                     style="width: 100%; font-weight: normal; padding: 0.2em 0.8em;"
+                    isActive={$functionsSubTab === 'triggers'}
                     tab
                 >
-                    <div style="max-width: 85%;" data-title={translate("tabs.triggers", $dictionary)}>
-                        <Icon id="trigger" size={1} />
-                        <p style="margin: 5px;">{translate("tabs.triggers", $dictionary)}</p>
+                    <div style="max-width: 85%;" data-title={translate("category.all", $dictionary)}>
+                        <Icon id="trigger" size={1} white={$functionsSubTab === 'triggers'} />
+                        <p style="margin: 5px;">{translate("category.all", $dictionary)}</p>
                     </div>
+                    <span class="count">{triggersCount}</span>
                 </MaterialButton>
             </div>
         </div>
@@ -306,23 +325,6 @@
         overflow-y: auto;
         overflow-x: hidden;
         background-color: var(--primary-darker);
-    }
-
-    /* Scrollbar styling */
-    .main::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
-    }
-    .main::-webkit-scrollbar-track,
-    .main::-webkit-scrollbar-corner {
-        background: rgb(255 255 255 / 0.05);
-    }
-    .main::-webkit-scrollbar-thumb {
-        background: rgb(255 255 255 / 0.3);
-        border-radius: 8px;
-    }
-    .main::-webkit-scrollbar-thumb:hover {
-        background: rgb(255 255 255 / 0.5);
     }
 
     .tabSection {
