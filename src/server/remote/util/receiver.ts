@@ -127,14 +127,11 @@ export const receiver = {
     PROJECTS: (data: any) => {
         if (!_get("isConnected")) return
 
-        _set("projects", data)
-        // newest first
-        _set(
-            "projects",
-            _get("projects").sort((a, b) => b.created - a.created)
-        )
+        // Sort once before setting to avoid double store update
+        const sortedProjects = [...data].sort((a: any, b: any) => b.created - a.created)
+        _set("projects", sortedProjects)
 
-        const project = data.find((a: any) => a.id === _get("project"))
+        const project = sortedProjects.find((a: any) => a.id === _get("project"))
         if (project) _set("activeProject", project)
     },
     PROJECT: (data: any) => {

@@ -18,6 +18,15 @@
         uncategorizedCount: number
     }
 
+    const EMPTY_CATEGORY_DATA: CategoryData = {
+        categoriesList: [],
+        unarchivedCategories: [],
+        archivedCategories: [],
+        allItems: [],
+        unarchivedItems: [],
+        uncategorizedCount: 0
+    }
+
     function buildCategoryData(items: any[], categoriesObj: Record<string, any>): CategoryData {
         const categoriesList = keysToID(categoriesObj)
         const unarchivedCategories = categoriesList.filter(a => !a.isArchive)
@@ -28,71 +37,72 @@
         return { categoriesList, unarchivedCategories, archivedCategories, allItems, unarchivedItems, uncategorizedCount }
     }
 
-    // Shows tab logic
-    $: showsData = buildCategoryData($shows || [], $categories)
+    // LAZY COMPUTATION - Only compute data for active tab to prevent freeze on tab switch
+    // Shows tab logic - only computed when shows tab is active
+    $: showsData = id === "shows" ? buildCategoryData($shows || [], $categories) : EMPTY_CATEGORY_DATA
     $: active = $activeCategory || "all"
 
-    // Overlays tab logic
-    $: overlaysData = buildCategoryData(Object.values($overlays || {}), $overlayCategories)
+    // Overlays tab logic - only computed when overlays tab is active
+    $: overlaysData = id === "overlays" ? buildCategoryData(Object.values($overlays || {}), $overlayCategories) : EMPTY_CATEGORY_DATA
     $: activeOverlay = $activeOverlayCategory || "all"
 
     function setOverlayCategory(catId: string) {
         activeOverlayCategory.set(catId)
     }
 
-    // Scripture tab logic
-    $: scriptureEntries = keysToID($scriptures).map((a: any) => ({ ...a, icon: a.api ? "scripture_alt" : a.collection ? "collection" : "scripture" }))
-    $: favoritesList = sortByName(
+    // Scripture tab logic - only computed when scripture tab is active
+    $: scriptureEntries = id === "scripture" ? keysToID($scriptures).map((a: any) => ({ ...a, icon: a.api ? "scripture_alt" : a.collection ? "collection" : "scripture" })) : []
+    $: favoritesList = id === "scripture" ? sortByName(
         scriptureEntries.filter(a => a.favorite),
         "name"
-    )
+    ) : []
     $: favoriteIds = new Set(favoritesList.map(a => a.id))
-    $: collectionList = sortByName(
+    $: collectionList = id === "scripture" ? sortByName(
         scriptureEntries.filter(a => a.collection && !favoriteIds.has(a.id)),
         "name"
-    )
-    $: localBibles = sortByName(
+    ) : []
+    $: localBibles = id === "scripture" ? sortByName(
         scriptureEntries.filter(a => !a.collection && !a.api && !favoriteIds.has(a.id)),
         "name"
-    )
-    $: apiBibles = sortByName(
+    ) : []
+    $: apiBibles = id === "scripture" ? sortByName(
         scriptureEntries.filter(a => !a.collection && a.api && !favoriteIds.has(a.id)),
         "name"
-    )
+    ) : []
 
-    $: scriptureSections = [
+    $: scriptureSections = id === "scripture" ? [
         { id: "favorites", label: "category.favourites", items: favoritesList },
         { id: "collections", label: "scripture.collections", items: collectionList },
         { id: "local", label: "scripture.bibles_section", items: [...localBibles, ...apiBibles] }
-    ].filter(s => s.items.length > 0)
+    ].filter(s => s.items.length > 0) : []
 
     function setCategory(catId: string) {
         _set("activeCategory", catId)
     }
 
-    // Functions tab logic
-    $: actionsTagsOnly = Object.values($actions).map(a => a.tags || [])
-    $: variablesTagsOnly = Object.values($variables).map(a => a.tags || [])
-    $: timersCount = Object.keys($timers).length
-    $: triggersCount = Object.keys($triggers).length
+    // Functions tab logic - only computed when functions tab is active
+    $: actionsTagsOnly = id === "functions" ? Object.values($actions).map(a => a.tags || []) : []
+    $: variablesTagsOnly = id === "functions" ? Object.values($variables).map(a => a.tags || []) : []
+    $: timersCount = id === "functions" ? Object.keys($timers).length : 0
+    $: triggersCount = id === "functions" ? Object.keys($triggers).length : 0
 
-    $: sortedActionTags = sortByName(keysToID($actionTags), "name")
+    $: sortedActionTags = id === "functions" ? sortByName(keysToID($actionTags), "name")
         .sort((a, b) => String(a.color || "").localeCompare(String(b.color || "")))
         .map(a => ({
             ...a,
             label: a.name,
             icon: "tag",
             count: actionsTagsOnly.filter(b => b.includes(a.id)).length
-        }))
+        })) : []
 
-    $: sortedVariableTags = sortByName(keysToID($variableTags), "name")
+    $: sortedVariableTags = id === "functions" ? sortByName(keysToID($variableTags), "name")
         .sort((a, b) => String(a.color || "").localeCompare(String(b.color || "")))
         .map(a => ({
             ...a,
             label: a.name,
             icon: "tag",
             count: variablesTagsOnly.filter(b => b.includes(a.id)).length
-        }))
+        })) : []
 
     function setFunctionsSubTab(tab: string) {
         functionsSubTab.set(tab)
