@@ -489,7 +489,7 @@ const slideDrop = {
         } else if (drag.id === "camera") data[0].type = "camera"
         else if (drag.id === "screen") data[0].type = "screen"
         else if (drag.id === "ndi") data[0].type = "ndi"
-        else if (!data[0].name) data[0].name = data[0].path
+        else if (!data[0]?.name) data[0].name = data[0].path
 
         let center = drop.center
         if (drag.id === "files" && drop.index !== undefined) center = true
@@ -753,7 +753,7 @@ const slideDrop = {
         const layoutId: string = _show().get("settings.activeLayout")
 
         const slides: { [key: string]: Slide } = clone(get(showsCache)[get(activeShow)?.id || ""]?.slides)
-        let layout: any[] = _show().layouts([layoutId]).slides().get()[0]
+        let layout: any[] = _show().layouts([layoutId]).slides().get()[0] || []
 
         if (drop.index === undefined) drop.index = layout.length
         let newIndex: number = drop.index

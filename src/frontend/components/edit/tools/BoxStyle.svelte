@@ -288,7 +288,7 @@
         let showSlides = $showsCache[$activeShow?.id || ""]?.slides || {}
 
         // get all selected slides
-        if (slides[0] && $selected.id === "slide") {
+        if (slides[0] && $selected.id === "slide" && Array.isArray($selected.data)) {
             let selectedSlides = $selected.data.filter(({ index }) => index !== $activeEdit.slide!)
             slides.push(...selectedSlides.map(({ index }) => ref[index]?.id))
 

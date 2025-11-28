@@ -725,7 +725,9 @@ const deleteActions = {
         }
 
         const layout = data.layout || _show().get("settings.activeLayout")
-        const slide = data.slideId || getLayoutRef()[data.slide].id
+        const slide = data.slideId || getLayoutRef()[data.slide]?.id
+        if (!slide) return
+
         history({
             id: "deleteItem",
             location: {

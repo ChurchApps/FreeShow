@@ -164,7 +164,10 @@ function initialize(id: ServerName, socket: Socket) {
         } else if (msg.channel === "OUTPUT_FRAME") {
             const window = OutputHelper.getOutput(msg.data.outputId)?.window
             if (!window || window.isDestroyed()) return
+
             const frame = await CaptureHelper.captureBase64Frame(window)
+            if (!window.isDestroyed()) return
+
             const bounds = window.getBounds()
             toServer(id, { channel: "OUTPUT_FRAME", data: { frame, width: bounds.width, height: bounds.height } })
         } else if (msg) {

@@ -491,11 +491,12 @@ export function previousSlide(e: any, customOutputId?: string) {
     }
 
     // let layout: SlideData[] = GetLayout(slide ? slide.id : null, slide ? slide.layout : null)
-    let layout = _show(slide ? slide.id : "active")
-        .layouts(slide ? [slide.layout] : "active")
-        .ref()[0]
+    let layout =
+        _show(slide ? slide.id : "active")
+            .layouts(slide ? [slide.layout] : "active")
+            .ref()[0] || []
     let activeLayout: string = _show(slide ? slide.id : "active").get("settings.activeLayout")
-    let index: number | null = slide?.index !== undefined ? slide.index - 1 : layout ? layout.length - 1 : null
+    let index: number | null = slide?.index !== undefined ? slide.index - 1 : layout.length ? layout.length - 1 : null
     if (index === null) {
         if (currentShow?.type === "section" || !get(showsCache)[currentShow?.id || ""]) goToPreviousProjectItem()
         return
@@ -511,7 +512,7 @@ export function previousSlide(e: any, customOutputId?: string) {
 
     // open previous project item if next has been opened and previous is still active when going back
     const slideIndex: number = slide?.index || 0
-    let isLastSlide: boolean = layout && slide ? slideIndex >= layout.filter((a, i) => i < slideIndex || !a?.data?.disabled).length - 1 && !layout[slideIndex]?.data?.end : false
+    let isLastSlide: boolean = layout.length && slide ? slideIndex >= layout.filter((a, i) => i < slideIndex || !a?.data?.disabled).length - 1 && !layout[slideIndex]?.data?.end : false
     const showSlide: Slide | null =
         _show(slide ? slide.id : "active")
             .slides([layout[index]?.id])
@@ -519,7 +520,7 @@ export function previousSlide(e: any, customOutputId?: string) {
     const isLastLine = slide?.line === undefined || !amountOfLinesToShow || !showSlide || slide.line >= Math.ceil(getItemWithMostLines(showSlide) / amountOfLinesToShow) - 1
 
     // skip disabled slides if clicking previous when another show is selected and no enabled slide is before
-    const isFirstSlide: boolean = slide && layout ? layout.filter(a => !a?.data?.disabled).findIndex(a => a.layoutIndex === slide?.index) === 0 : false
+    const isFirstSlide: boolean = slide && layout.length ? layout.filter(a => !a?.data?.disabled).findIndex(a => a.layoutIndex === slide?.index) === 0 : false
 
     const currentShowSlide: Slide | null =
         _show(slide ? slide.id : "active")
@@ -551,7 +552,7 @@ export function previousSlide(e: any, customOutputId?: string) {
         slide = null
         layout = getLayoutRef()
         activeLayout = activeShowLayout
-        index = (layout?.length || 0) - 1
+        index = (layout.length || 0) - 1
     }
 
     let line: number = linesIndex || 0

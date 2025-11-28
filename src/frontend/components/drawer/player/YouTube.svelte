@@ -60,7 +60,7 @@
                 if (!data) return
                 // console.log(player.playerInfo.videoData) // title | author
                 title = data.title
-                let noName = !$playerVideos[playerId].name || $playerVideos[playerId].name.includes($playerVideos[playerId].id)
+                let noName = !$playerVideos[playerId]?.name || $playerVideos[playerId].name.includes($playerVideos[playerId].id)
                 if (title && noName) {
                     playerVideos.update(a => {
                         a[playerId].name = title

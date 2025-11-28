@@ -952,6 +952,7 @@ const clickActions = {
         if (obj.sel?.id === "slide") {
             showsCache.update(a => {
                 obj.sel!.data.forEach(b => {
+                    if (!b) return
                     const ref = getLayoutRef()?.[b.index] || {}
                     const slides = a[get(activeShow)!.id].layouts?.[a[get(activeShow)!.id]?.settings?.activeLayout]?.slides
                     if (!slides) return
@@ -996,6 +997,7 @@ const clickActions = {
     editSlideText: obj => {
         if (obj.sel.id === "slide") {
             const slide = obj.sel.data[0]
+            if (!slide) return
             activeEdit.set({ slide: slide.index, items: [], showId: slide.showId })
             activePage.set("edit")
             setTimeout(() => selected.set({ id: null, data: [] }))
@@ -1007,6 +1009,7 @@ const clickActions = {
 
         if (obj.sel.id === "slide") {
             const slide = obj.sel.data[0]
+            if (!slide) return
             activeEdit.set({ slide: slide.index, items: [], showId: slide.showId || get(activeShow)?.id })
             activePage.set("edit")
             setTimeout(() => selected.set({ id: null, data: [] }))

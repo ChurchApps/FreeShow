@@ -154,7 +154,7 @@ export async function getActiveScripturesContent() {
             selected[0].push(...Array.from({ length: includeCount }, (_, i) => getVerseId(selected[0][selected[0].length - 1]) + (i + 1)))
             // remove selected not in range of min to max verse number
             const minVerseNumber = 1
-            const maxVerseNumber = Chapters[0] ? (Chapters[0].data.verses[Chapters[0].data.verses.length - 1].number ?? Chapters[0].data.verses.length) : 1
+            const maxVerseNumber = Chapters[0] ? (Chapters[0].data.verses[Chapters[0].data.verses.length - 1]?.number ?? Chapters[0].data.verses.length) : 1
             selected[0] = selected[0].filter(v => {
                 const id = getVerseId(v)
                 if (isNaN(id)) return true
@@ -171,7 +171,7 @@ export async function getActiveScripturesContent() {
                 verses.forEach(v => {
                     const { id, subverse } = getVerseIdParts(v)
 
-                    const text = sanitizeVerseText(Chapters[i].getVerse(id).getHTML())
+                    const text = sanitizeVerseText(Chapters[i]?.getVerse(id).getHTML())
                     const splittedVerses = getSplittedVerses({ [id]: text })
 
                     const newVerseId = id + (subverse ? `_${subverse}` : "")

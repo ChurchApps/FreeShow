@@ -191,7 +191,7 @@ export function getItemStyleAtPos(lines: Line[], pos: null | { start: number; en
         lines[i]?.text?.some(text => {
             // if (pos) console.log(currentPos, pos[i].end, currentPos <= pos[i].end, currentPos + text.value.length >= pos[i].end)
             if (pos?.[i] && currentPos <= pos[i].end && currentPos + text.value.length >= pos[i].end) {
-                style = text.style
+                style = text.style || ""
                 return true
             }
 
@@ -343,13 +343,13 @@ export function setCaret(element: any, { line = 0, pos = 0 }, toEnd = false) {
     const startElem = lineElem.childNodes[childElem].childNodes[0]
     const endElem = lastEndChild.childNodes[0]
 
-    let offset = pos - currentTextLength
-    if (offset > startElem.length) offset = startElem.length
-    if (endElem && currentEndTextLength > endElem.length) currentEndTextLength = endElem.length
-
-    range.setStart(startElem, offset)
-    if (toEnd) range.setEnd(endElem, currentEndTextLength)
-    else range.collapse(true)
+    const offset = pos - currentTextLength
+    const safeStartOffset = Math.max(0, Math.min(startElem.length, offset))
+    range.setStart(startElem, safeStartOffset)
+    if (toEnd) {
+        const safeEndOffset = Math.max(0, Math.min(currentEndTextLength, endElem?.length ?? 0))
+        range.setEnd(endElem, safeEndOffset)
+    } else range.collapse(true)
 
     sel?.removeAllRanges()
     sel?.addRange(range)

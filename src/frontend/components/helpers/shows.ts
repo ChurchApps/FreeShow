@@ -22,7 +22,7 @@ export function _show(id = "active") {
             if (!a) return null
             if (key) {
                 const double = key.split(".")
-                if (double.length > 1) a = shows[id][double[0]][double[1]]
+                if (double.length > 1) a = shows[id][double[0]]?.[double[1]]
                 else a = shows[id][key]
             }
             return a

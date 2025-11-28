@@ -163,7 +163,7 @@ function convertJSONToSlides(song: any) {
     let slidesList: string[] = []
     const slidesRef: any = {}
 
-    song.verses.forEach(([text, label]) => {
+    song.verses?.forEach(([text, label]) => {
         if (!text) return
 
         const id: string = uid()

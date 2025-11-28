@@ -131,7 +131,11 @@ function startDownload(data: DownloadFile) {
     const file = data.file
     const url = file.url
 
-    if (!url) return next()
+    if (!url) {
+        currentlyDownloading--
+        initDownload()
+        return
+    }
 
     makeDir(path.dirname(data.path))
     const fileStream = fs.createWriteStream(data.path)

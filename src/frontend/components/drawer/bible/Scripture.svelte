@@ -104,7 +104,7 @@
 
     function updateSplitted(verses: Verse[] | null, _updater: any) {
         if (!verses) return []
-        if (!$scriptureSettings.splitLongVerses) return verses.map(verse => ({ ...verse, id: verse.number.toString() + (verse.endNumber ? "-" + verse.endNumber : "") }))
+        if (!$scriptureSettings.splitLongVerses) return verses.map(verse => ({ ...verse, id: (verse.number || "").toString() + (verse.endNumber ? "-" + verse.endNumber : "") }))
 
         const chars = Number($scriptureSettings.longVersesChars || 100)
         const newVerses: (Verse & { id: string })[] = []
