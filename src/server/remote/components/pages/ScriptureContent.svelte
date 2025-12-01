@@ -7,10 +7,29 @@
 
     export let id: string
     export let scripture: Bible
+    export let scriptures: { id: string; data: any; name: string }[] = []
+    export let isCollection: boolean = false
     export let tablet: boolean = false
     export let currentBook: string = ""
     export let currentChapter: string = ""
     export let currentVerse: string = ""
+
+    // Generate dynamic colors for Bible versions that match FreeShow's theme
+    function getVersionColor(index: number): string {
+        const goldenAngle = 137.508
+        const baseHue = 330 // FreeShow's pink
+        const hue = (baseHue + index * goldenAngle) % 360
+        const saturation = 75
+        const lightness = 65
+        return `hsl(${hue}, ${saturation}%, ${lightness}%)`
+    }
+
+    function getVersionBgColor(index: number): string {
+        const goldenAngle = 137.508
+        const baseHue = 330
+        const hue = (baseHue + index * goldenAngle) % 360
+        return `hsla(${hue}, 70%, 50%, 0.12)`
+    }
 
     let activeBook = -1
     let activeChapter = -1
@@ -33,6 +52,17 @@
         if (bookObj?.keyName && !(bookObj?.chapters?.length > 0)) {
             send("GET_SCRIPTURE", { id, bookKey: bookObj.keyName, bookIndex: activeBook })
         }
+        // Also load book data for all scriptures in collection
+        if (isCollection && scriptures.length > 1) {
+            scriptures.forEach(scr => {
+                if (scr.id === id) return // Skip primary, already loading
+                const scrBooks = scr.data?.books || []
+                const scrBook = scrBooks[activeBook]
+                if (scrBook?.keyName && !(scrBook?.chapters?.length > 0)) {
+                    send("GET_SCRIPTURE", { id: scr.id, bookKey: scrBook.keyName, bookIndex: activeBook })
+                }
+            })
+        }
     }
     $: verses = chapters[activeChapter]?.verses || []
     $: if (depth === 2) {
@@ -40,6 +70,19 @@
         const chapterObj: any = chapters[activeChapter]
         if (bookObj?.keyName && chapterObj?.keyName && !(chapterObj?.verses?.length > 0)) {
             send("GET_SCRIPTURE", { id, bookKey: bookObj.keyName, chapterKey: chapterObj.keyName, bookIndex: activeBook, chapterIndex: activeChapter })
+        }
+        // Also load chapter data for all scriptures in collection
+        if (isCollection && scriptures.length > 1) {
+            scriptures.forEach(scr => {
+                if (scr.id === id) return // Skip primary, already loading
+                const scrBooks = scr.data?.books || []
+                const scrBook = scrBooks[activeBook]
+                const scrChapters = scrBook?.chapters || []
+                const scrChapter = scrChapters[activeChapter]
+                if (scrBook?.keyName && scrChapter?.keyName && !(scrChapter?.verses?.length > 0)) {
+                    send("GET_SCRIPTURE", { id: scr.id, bookKey: scrBook.keyName, chapterKey: scrChapter.keyName, bookIndex: activeBook, chapterIndex: activeChapter })
+                }
+            })
         }
     }
     // Auto-advance to verse depth once data loads (for search navigation)
@@ -515,17 +558,32 @@
     {/if}
 
     {#if depth === 2}
-        <div bind:this={versesContainer} class="verses context #scripture_verse" class:center={!verses.length} class:big={verses.length > 100} class:list={$scriptureViewList}>
+        <div bind:this={versesContainer} class="verses context #scripture_verse" class:center={!verses.length} class:big={verses.length > 100} class:list={$scriptureViewList} class:collection-list={isCollection && $scriptureViewList}>
             {#if verses.length}
                 {#each verses as verse, i (verse.number || i)}
                     {@const verseNumber = Number(verse.number) || i + 1}
                     {@const isDisplayed = activeBook === displayedBookIndex && activeChapter === displayedChapterIndex && verseNumber === displayedVerseNumber}
                     {@const isActive = activeVerse === verseNumber}
-                    <button type="button" class="verse-button" on:click={() => playScripture(verseNumber)} on:keydown={e => e.key === "Enter" && playScripture(verseNumber)} class:active={isActive} class:displayed={isDisplayed}>
-                        <span style="width: 100%;height: 100%;color: var(--secondary);font-weight: bold;">
+                    <button type="button" class="verse-button" class:collection-verse={isCollection && $scriptureViewList} on:click={() => playScripture(verseNumber)} on:keydown={e => e.key === "Enter" && playScripture(verseNumber)} class:active={isActive} class:displayed={isDisplayed}>
+                        <span class="verse-num" style="color: var(--secondary);font-weight: bold;">
                             {verseNumber}
                         </span>
-                        {#if $scriptureViewList}{formatBibleText(verse.text || verse.value)}{/if}
+                        {#if $scriptureViewList}
+                            {#if isCollection}
+                                <!-- Show all scriptures, even if only one has loaded -->
+                                <div class="collection-versions">
+                                    {#each scriptures as scr, scrIndex}
+                                        {@const scrVerse = scr.data?.books?.[activeBook]?.chapters?.[activeChapter]?.verses?.[i]}
+                                        {@const verseText = scrVerse?.text || scrVerse?.value || ""}
+                                        <div class="version-item" style="--version-color: {getVersionColor(scrIndex)}; --version-bg: {getVersionBgColor(scrIndex)}">
+                                            <span class="version-text">{verseText ? formatBibleText(verseText) : "..."}</span>
+                                        </div>
+                                    {/each}
+                                </div>
+                            {:else}
+                                {formatBibleText(verse.text || verse.value)}
+                            {/if}
+                        {/if}
                     </button>
                 {/each}
             {:else}
@@ -741,5 +799,84 @@
         box-shadow: inset 0 0 0 2px var(--secondary);
         border-radius: 6px;
         z-index: -1;
+    }
+
+    /* Collection multi-version display - needs high specificity to override grid styles */
+    .grid .verses.list.collection-list {
+        flex-direction: column !important;
+        flex-wrap: nowrap !important;
+        align-content: flex-start !important;
+    }
+
+    .grid .verses.list.collection-list .verse-button.collection-verse {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        justify-content: flex-start !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 100% !important;
+        height: auto !important;
+        min-height: 0 !important;
+        flex: 0 0 auto !important;
+        flex-grow: 0 !important;
+        flex-shrink: 0 !important;
+        padding: 10px 12px !important;
+        gap: 6px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .grid .verses.list.collection-list .verse-button.collection-verse .verse-num {
+        width: auto !important;
+        max-width: none !important;
+        height: auto !important;
+        min-width: 30px !important;
+        flex: none !important;
+        flex-shrink: 0 !important;
+    }
+
+    .grid .verses.list.collection-list .collection-versions {
+        display: flex !important;
+        flex-direction: column !important;
+        flex: none !important;
+        gap: 4px;
+        width: 100%;
+        max-width: 100% !important;
+    }
+
+    .grid .verses.list.collection-list .version-item {
+        display: block !important;
+        flex: none !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        height: auto !important;
+        padding: 6px 10px 6px 12px !important;
+        border-left: 4px solid var(--version-color, var(--secondary));
+        background: var(--version-bg, transparent);
+        border-radius: 0 6px 6px 0;
+        line-height: 1.3;
+    }
+
+    .grid .verses.list.collection-list .version-item .version-text {
+        display: block !important;
+        max-width: none !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        font-size: 0.95em;
+        font-weight: normal;
+        white-space: normal !important;
+        word-wrap: break-word !important;
+        overflow-wrap: break-word !important;
+    }
+
+    /* Override the 50px max-width for spans in collection list */
+    .grid .verses.list.collection-list span {
+        max-width: none !important;
+    }
+
+    .grid .verses.list.collection-list .verse-num {
+        max-width: 50px !important;
+        min-width: 30px !important;
+        flex-shrink: 0 !important;
     }
 </style>
