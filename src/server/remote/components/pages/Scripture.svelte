@@ -7,13 +7,16 @@
     import { keysToID } from "../../../common/util/helpers"
     import { translate } from "../../util/helpers"
     import { send } from "../../util/socket"
-    import { dictionary, isCleared, scriptureCache, scriptures, scriptureSearchResults, scriptureViewList, scriptureWrapText, outSlide, outShow, openedScripture, collectionId } from "../../util/stores"
+    import { dictionary, isCleared, scriptureCache, scriptures, scriptureSearchResults, scriptureViewList, scriptureWrapText, outSlide, outShow, openedScripture, collectionId, selectedTranslationIndex } from "../../util/stores"
     import Clear from "../show/Clear.svelte"
     import ScriptureContent from "./ScriptureContent.svelte"
     import { sanitizeVerseText } from "../../../../common/scripture/sanitizeVerseText"
     import ScriptureContentTablet from "./ScriptureContentTablet.svelte"
 
     export let tablet: boolean = false
+    
+    // Set default to list mode in tablet
+    $: if (tablet) scriptureViewList.set(true)
     export let searchValueFromDrawer: string = ""
 
     const dispatch = createEventDispatcher<{ "search-clear": void }>()
@@ -47,15 +50,65 @@
         .filter(s => s.data)
 
     $: isCollection = !!($collectionId && $scriptures[$collectionId]?.collection)
+    
+    // Filter to only collection versions when viewing a collection
+    function getScriptureData(versionId: string) {
+        return allScripturesData.find(s => s.id === versionId) || {
+            id: versionId,
+            data: $scriptureCache[versionId],
+            name: ($scriptures[versionId]?.customName || $scriptures[versionId]?.name || versionId) as string
+        }
+    }
+    
+    $: collectionScripturesData = isCollection && $collectionId
+        ? ($scriptures[$collectionId]?.collection?.versions || []).map(getScriptureData).filter(s => s.id)
+        : allScripturesData
+
+    // Toggle through translations in collection: null (all) -> 0 -> 1 -> ... -> null
+    function toggleTranslation() {
+        if (!isCollection || collectionScripturesData.length <= 1) return
+        
+        const currentIndex = $selectedTranslationIndex
+        if (currentIndex === null) {
+            // Start with first translation
+            selectedTranslationIndex.set(0)
+        } else if (currentIndex >= collectionScripturesData.length - 1) {
+            // Wrap back to all
+            selectedTranslationIndex.set(null)
+        } else {
+            // Next translation
+            selectedTranslationIndex.set(currentIndex + 1)
+        }
+    }
+    
+    // Get button title for translation toggle
+    $: translationButtonTitle = isCollection && collectionScripturesData.length > 1
+        ? $selectedTranslationIndex === null 
+            ? "All Translations"
+            : `${collectionScripturesData[$selectedTranslationIndex]?.name || "Translation"} (${$selectedTranslationIndex + 1}/${collectionScripturesData.length})`
+        : ""
 
     // Validate stored scripture ID and reset if invalid (prevents infinite loading on first launch)
     $: if (scripturesLoaded && $openedScripture && !checkScriptureExists($openedScripture, $collectionId)) {
         openScripture("", "")
     }
 
-    // Request scripture data only if it exists in store
-    $: if ($openedScripture && checkScriptureExists($openedScripture, $collectionId) && !$scriptureCache[$openedScripture]) {
-        send("GET_SCRIPTURE", { id: $openedScripture })
+    // Request scripture data for opened scripture and all collection versions
+    $: if ($openedScripture && checkScriptureExists($openedScripture, $collectionId)) {
+        // Load primary scripture
+        if (!$scriptureCache[$openedScripture]) {
+            send("GET_SCRIPTURE", { id: $openedScripture })
+        }
+        
+        // Load all collection versions if viewing a collection
+        if (isCollection && $collectionId) {
+            const versions = $scriptures[$collectionId]?.collection?.versions || []
+            versions.forEach((versionId: string) => {
+                if (versionId !== $openedScripture && !$scriptureCache[versionId]) {
+                    send("GET_SCRIPTURE", { id: versionId })
+                }
+            })
+        }
     }
 
     let depthBeforeSearch = 0
@@ -73,6 +126,8 @@
         currentBook = ""
         currentChapter = ""
         currentVerse = ""
+        // Reset translation selection when switching collections
+        selectedTranslationIndex.set(null)
         localStorage.setItem("scripture", id)
         localStorage.setItem("collectionId", collection)
     }
@@ -979,10 +1034,10 @@
                         No results found for "{searchValue}"
                     </div>
                 {:else}
-                    <ScriptureContentTablet id={$collectionId || $openedScripture} scripture={$scriptureCache[$openedScripture]} bind:currentBook bind:currentChapter bind:currentVerse bind:this={scriptureContentRef} />
+                    <ScriptureContentTablet id={$collectionId || $openedScripture} scripture={$scriptureCache[$openedScripture]} scriptures={collectionScripturesData} {isCollection} selectedTranslationIndex={$selectedTranslationIndex} bind:currentBook bind:currentChapter bind:currentVerse bind:this={scriptureContentRef} />
                 {/if}
             {:else}
-                <ScriptureContent id={$collectionId || $openedScripture} scripture={$scriptureCache[$openedScripture]} scriptures={allScripturesData} {isCollection} bind:depth bind:currentBook bind:currentChapter bind:currentVerse bind:this={scriptureContentRef} />
+                <ScriptureContent id={$collectionId || $openedScripture} scripture={$scriptureCache[$openedScripture]} scriptures={collectionScripturesData} {isCollection} bind:depth bind:currentBook bind:currentChapter bind:currentVerse bind:this={scriptureContentRef} />
             {/if}
 
             {#if tablet}
@@ -997,6 +1052,11 @@
                         <Icon id="play" white size={1.2} />
                     </Button>
                     <div class="floating-divider" aria-hidden="true"></div>
+                    {#if isCollection && collectionScripturesData.length > 1 && $scriptureViewList}
+                        <Button on:click={toggleTranslation} center dark class="floating-control-button" title={translationButtonTitle}>
+                            <Icon id="refresh" white size={1.2} />
+                        </Button>
+                    {/if}
                     {#if $scriptureViewList}
                         <Button on:click={() => scriptureWrapText.set(!$scriptureWrapText)} center dark class="floating-control-button" title={$scriptureWrapText ? "Single Line" : "Wrap Text"}>
                             <Icon id={$scriptureWrapText ? "noWrap" : "wrap"} white size={1.2} />

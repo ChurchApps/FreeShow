@@ -7,6 +7,9 @@
 
     export let id: string
     export let scripture: Bible
+    export let scriptures: { id: string; data: any; name: string }[] = []
+    export let isCollection: boolean = false
+    export let selectedTranslationIndex: number | null = null // null = all, number = specific translation index
     export let currentBook: string = ""
     export let currentChapter: string = ""
     export let currentVerse: string = ""
@@ -27,26 +30,59 @@
 
     $: books = scripture?.books || []
     $: chapters = books[activeBook]?.chapters || []
+    
+    // Helper: Load collection scripture data if needed
+    function loadCollectionScripture(scrId: string, bookIndex: number, chapterIndex?: number) {
+        if (scrId === id || !isCollection || scriptures.length <= 1) return
+        
+        const scr = scriptures.find(s => s.id === scrId)
+        if (!scr) return
+        
+        const scrBooks = scr.data?.books || []
+        const scrBook = scrBooks[bookIndex]
+        if (!scrBook?.keyName) return
+        
+        if (chapterIndex !== undefined) {
+            // Load chapter data
+            const scrChapters = scrBook?.chapters || []
+            const scrChapter = scrChapters[chapterIndex]
+            if (scrChapter?.keyName && !(scrChapter?.verses?.length > 0)) {
+                send("GET_SCRIPTURE", { id: scrId, bookKey: scrBook.keyName, chapterKey: scrChapter.keyName, bookIndex, chapterIndex })
+            }
+        } else {
+            // Load book data
+            if (!(scrBook?.chapters?.length > 0)) {
+                send("GET_SCRIPTURE", { id: scrId, bookKey: scrBook.keyName, bookIndex })
+            }
+        }
+    }
+    
     $: if (activeBook >= 0) {
         const bookObj: any = books[activeBook]
         if (bookObj?.keyName && !(bookObj?.chapters?.length > 0)) {
             send("GET_SCRIPTURE", { id, bookKey: bookObj.keyName, bookIndex: activeBook })
         }
+        // Load book data for all collection scriptures
+        if (isCollection) {
+            scriptures.forEach(scr => loadCollectionScripture(scr.id, activeBook))
+        }
     }
+    
     $: verses = chapters[activeChapter]?.verses || []
-    $: if (activeChapter >= 0) {
+    $: if (activeChapter >= 0 && activeBook >= 0) {
         const bookObj: any = books[activeBook]
         const chapterObj: any = chapters[activeChapter]
         if (bookObj?.keyName && chapterObj?.keyName && !(chapterObj?.verses?.length > 0)) {
             send("GET_SCRIPTURE", { id, bookKey: bookObj.keyName, chapterKey: chapterObj.keyName, bookIndex: activeBook, chapterIndex: activeChapter })
         }
+        // Load chapter data for all collection scriptures
+        if (isCollection) {
+            scriptures.forEach(scr => loadCollectionScripture(scr.id, activeBook, activeChapter))
+        }
     }
 
     $: currentBook = books[activeBook]?.name || ""
-    $: currentChapter = (() => {
-        const num = chapters[activeChapter]?.number
-        return num !== undefined && num !== null ? String(num) : ""
-    })()
+    $: currentChapter = chapters[activeChapter]?.number != null ? String(chapters[activeChapter].number) : ""
     $: currentVerse = activeVerse > 0 ? String(activeVerse) : ""
 
     // Update displayed indices from main app state (what's currently on output)
@@ -57,7 +93,9 @@
         const bookIndex = state.bookId
         const chapterIndex = state.chapterId
         const verseList = state.activeVerses
-        const latestVerse = Array.isArray(verseList) && verseList.length > 0 ? parseInt(String(verseList[verseList.length - 1]), 10) : 0
+        const latestVerse = Array.isArray(verseList) && verseList.length > 0 
+            ? parseInt(String(verseList[verseList.length - 1]), 10) 
+            : 0
 
         if (Number.isInteger(bookIndex) && bookIndex >= 0) displayedBookIndex = bookIndex
         if (Number.isInteger(chapterIndex) && chapterIndex >= 0) displayedChapterIndex = chapterIndex
@@ -91,22 +129,10 @@
     // Autoscroll to active items
     $: if (activeBook >= 0) setTimeout(() => scrollToActive(booksScrollElem))
     $: if (activeChapter >= 0) setTimeout(() => scrollToActive(chaptersScrollElem))
-    $: if (activeVerse > 0) setTimeout(() => scrollToActiveVerse(versesScrollElem, activeVerse))
+    $: if (activeVerse > 0) setTimeout(() => scrollToActive(versesScrollElem, activeVerse))
 
-    function scrollToActive(scrollElem: HTMLElement | null) {
+    function scrollToActive(scrollElem: HTMLElement | null, _verseNum?: number) {
         if (!scrollElem) return
-        const activeEl = scrollElem.querySelector(".isActive") as HTMLElement
-        if (!activeEl) return
-
-        const selectedElemTop = activeEl.offsetTop || 0
-        const visibleElemPos = selectedElemTop - scrollElem.scrollTop
-        if (visibleElemPos > 0 && visibleElemPos < scrollElem.offsetHeight) return
-
-        scrollElem.scrollTo(0, Math.max(0, selectedElemTop - 70))
-    }
-
-    function scrollToActiveVerse(scrollElem: HTMLElement | null, verseNum: number) {
-        if (!scrollElem || verseNum <= 0) return
         const activeEl = scrollElem.querySelector(".isActive") as HTMLElement
         if (!activeEl) return
 
@@ -127,6 +153,30 @@
         if (books.length === colorCodesFull.length) return colors[colorCodesFull[bookIndex]]
         else if (books.length === colorCodesNT.length) return colors[colorCodesNT[bookIndex]]
         return ""
+    }
+
+    // Generate dynamic colors for Bible versions that match FreeShow's theme
+    // Uses HSL to create evenly distributed, vibrant colors on dark background
+    function getVersionColor(index: number): string {
+        // Start with FreeShow's secondary pink (330°), then distribute other hues evenly
+        // Offset each subsequent color by golden angle (~137.5°) for good visual separation
+        const goldenAngle = 137.508
+        const baseHue = 330 // FreeShow's pink
+        const hue = (baseHue + index * goldenAngle) % 360
+
+        // High saturation (70-85%) and medium-high lightness (60-70%) for vibrant colors on dark bg
+        const saturation = 75
+        const lightness = 65
+
+        return `hsl(${hue}, ${saturation}%, ${lightness}%)`
+    }
+
+    // Generate a subtle background color (same hue but very transparent)
+    function getVersionBgColor(index: number): string {
+        const goldenAngle = 137.508
+        const baseHue = 330
+        const hue = (baseHue + index * goldenAngle) % 360
+        return `hsla(${hue}, 70%, 50%, 0.12)`
     }
 
     // NAMES - matching ScriptureContent.svelte
@@ -169,26 +219,27 @@
         // In tablet mode, we don't navigate by depth
     }
 
-    export function navigateToVerse(bookNum: number, chapterNum: number) {
-        const bookIndex = books.findIndex((b: any) => {
-            const bNum = typeof b?.number === "string" ? parseInt(b.number, 10) : b?.number
-            return (bNum ?? 0) === bookNum
-        })
-        if (bookIndex >= 0) {
-            activeBook = bookIndex
-            const bookObj: any = books[bookIndex]
-            const bookChapters = bookObj?.chapters || []
+    function getBookNumber(book: any): number {
+        return typeof book?.number === "string" ? parseInt(book.number, 10) : (book?.number ?? 0)
+    }
+    
+    function getChapterNumber(chapter: any): number {
+        return typeof chapter?.number === "string" ? parseInt(chapter.number, 10) : (chapter?.number ?? 0)
+    }
 
-            let chapterIndex = bookChapters.findIndex((c: any) => {
-                if (!c) return false
-                const cNum = typeof c.number === "string" ? parseInt(c.number, 10) : c.number
-                return cNum === chapterNum
-            })
-            if (chapterIndex < 0) {
-                chapterIndex = Math.max(0, chapterNum - 1)
-            }
-            activeChapter = chapterIndex
+    export function navigateToVerse(bookNum: number, chapterNum: number) {
+        const bookIndex = books.findIndex((b: any) => getBookNumber(b) === bookNum)
+        if (bookIndex < 0) return
+        
+        activeBook = bookIndex
+        const bookObj: any = books[bookIndex]
+        const bookChapters = bookObj?.chapters || []
+
+        let chapterIndex = bookChapters.findIndex((c: any) => c && getChapterNumber(c) === chapterNum)
+        if (chapterIndex < 0) {
+            chapterIndex = Math.max(0, chapterNum - 1)
         }
+        activeChapter = chapterIndex
     }
 
     export function scrollToVerse(verseNum: number) {
@@ -217,7 +268,8 @@
     }
 
     function parseScriptureReference(reference: string): { bookIndex: number; chapterIndex: number; verseNumber: number } | null {
-        if (!reference || !books || books.length === 0) return null
+        if (!reference || !books?.length) return null
+        
         const match = reference.match(/^(.+?)\s+(\d+)(?:[:.,]\s*(\d+)|\s+(\d+))?(?:-\d+)?$/)
         if (!match) return null
 
@@ -227,12 +279,13 @@
 
         const chapterNumber = parseInt(chapterStr, 10)
         const verseNumber = parseInt(verseStr, 10)
+        const normalizedBookName = bookName.toLowerCase().trim()
 
         const bookIndex = books.findIndex(book => {
-            if (book.name.toLowerCase() === bookName.toLowerCase().trim()) return true
-            const normalizedBookName = bookName.toLowerCase().trim()
-            const normalizedScriptureName = book.name.toLowerCase()
-            return normalizedScriptureName.includes(normalizedBookName) || normalizedBookName.includes(normalizedScriptureName)
+            const normalizedName = book.name.toLowerCase()
+            return normalizedName === normalizedBookName 
+                || normalizedName.includes(normalizedBookName) 
+                || normalizedBookName.includes(normalizedName)
         })
 
         if (bookIndex === -1) return null
@@ -432,10 +485,35 @@
                         {@const isDisplayed = activeBook === displayedBookIndex && activeChapter === displayedChapterIndex && verseNumber === displayedVerseNumber}
                         {@const text = formatBibleText(verse.text || verse.value, true)}
 
-                        <span id={String(verseNumber)} class="verse" class:isActive class:isDisplayed class:wrapText={$scriptureWrapText} on:click={() => handleVerseClick(verseNumber)} on:dblclick={() => handleVerseClick(verseNumber)} role="none">
+                        <span id={String(verseNumber)} class="verse" class:isActive class:isDisplayed class:wrapText={$scriptureWrapText} class:collection-verse={isCollection && $scriptureViewList && selectedTranslationIndex === null} on:click={() => handleVerseClick(verseNumber)} on:dblclick={() => handleVerseClick(verseNumber)} role="none">
                             <span class="v">{verseNumber}</span>
                             {#if $scriptureViewList}
-                                {@html text}
+                                {#if isCollection}
+                                    {#if selectedTranslationIndex === null}
+                                        <!-- Show all translations with colors -->
+                                        <div class="collection-versions">
+                                            {#each scriptures as scr, scrIndex}
+                                                {@const scrVerse = scr.data?.books?.[activeBook]?.chapters?.[activeChapter]?.verses?.[i]}
+                                                {@const verseText = scrVerse?.text || scrVerse?.value}
+                                                <div class="version-item" style="--version-color: {getVersionColor(scrIndex)}; --version-bg: {getVersionBgColor(scrIndex)}">
+                                                    {#if verseText}
+                                                        <span class="version-text">{@html formatBibleText(verseText, true)}</span>
+                                                    {:else}
+                                                        <span class="version-text">...</span>
+                                                    {/if}
+                                                </div>
+                                            {/each}
+                                        </div>
+                                    {:else}
+                                        <!-- Show single translation as normal (no colors) -->
+                                        {@const selectedScr = scriptures[selectedTranslationIndex]}
+                                        {@const selectedVerse = selectedScr?.data?.books?.[activeBook]?.chapters?.[activeChapter]?.verses?.[i]}
+                                        {@const selectedText = selectedVerse?.text || selectedVerse?.value || ""}
+                                        {@html formatBibleText(selectedText, true) || "..."}
+                                    {/if}
+                                {:else}
+                                    {@html text}
+                                {/if}
                             {/if}
                         </span>
                     {/each}
@@ -607,5 +685,48 @@
     .main div::-webkit-scrollbar-thumb {
         background: rgb(255 255 255 / 0.2);
         border-radius: 3px;
+    }
+
+    /* Collection multi-version display */
+    .verse.collection-verse {
+        display: block !important;
+        flex: none !important;
+        height: auto !important;
+        min-height: 0 !important;
+        padding: 2px 10px 2px 0 !important;
+        margin: 0 !important;
+        white-space: normal !important;
+        overflow: visible !important;
+        text-overflow: unset !important;
+    }
+
+    .collection-versions {
+        display: block !important;
+        width: 100%;
+        padding: 0 !important;
+        margin: 2px 0 0 0 !important;
+    }
+
+    .version-item {
+        display: block !important;
+        padding: 3px 6px 3px 8px !important;
+        margin: 0 0 2px 0 !important;
+        border-left: 4px solid var(--version-color, var(--secondary));
+        background: var(--version-bg, transparent);
+        border-radius: 0 4px 4px 0;
+        line-height: 1.2;
+    }
+
+    .version-item:last-child {
+        margin-bottom: 0 !important;
+    }
+
+    .version-text {
+        display: inline !important;
+        font-size: 0.9em;
+        line-height: 1.2;
+        font-weight: normal;
+        padding: 0 !important;
+        margin: 0 !important;
     }
 </style>
