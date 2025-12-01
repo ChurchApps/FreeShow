@@ -121,7 +121,7 @@
 
     .submenu {
         min-width: 150px;
-        max-height: 300px;
+        max-height: 350px;
         overflow: auto;
         position: absolute;
         transform: translate(100%, -14px);

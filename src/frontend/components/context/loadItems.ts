@@ -87,7 +87,8 @@ const loadActions = {
     sort_media: (items: ContextMenuItem[]) => sortItems(items, "media"),
     slide_groups: (items: ContextMenuItem[]) => {
         const selectedIndex = get(selected).data[0]?.index
-        const slideRef = getLayoutRef()?.[selectedIndex] || {}
+        const ref = getLayoutRef()
+        const slideRef = ref[selectedIndex] || {}
         const currentSlide = _show().get("slides")?.[slideRef.id]
         if (!currentSlide) return []
 
@@ -103,8 +104,56 @@ const loadActions = {
         })
 
         if (!isParent && !items.length) return [{ label: "empty.general", disabled: true }]
-        // , icon: "remove"
-        return [...(isParent ? [{ id: "none", label: "main.none", enabled: noGroup, style: "opacity: 0.8;" }] : []), ...sortItemsByLabel(items)]
+
+        const textContent = getSlideText(currentSlide).trim()
+        const hasText = textContent.length > 0
+
+        // SUGGESTIONS
+        let suggested: ContextMenuItem[] = []
+        // Verse always (if it exists)
+        let verseIndex = items.findIndex(a => a.id === "verse")
+        // if (verseIndex !== -1) suggested.push(items.splice(verseIndex, 1)[0]) // remove from main list
+        if (verseIndex !== -1) suggested.push(items[verseIndex])
+        if (hasText) {
+            // Chorus if text
+            let chorusIndex = items.findIndex(a => a.id === "chorus")
+            if (chorusIndex !== -1) suggested.push(items[chorusIndex])
+        }
+        if (selectedIndex === 0) {
+            // Intro if first slide
+            let introIndex = items.findIndex(a => a.id === "intro")
+            if (introIndex !== -1) suggested.push(items[introIndex])
+        } else if (selectedIndex === ref.length - 1) {
+            // Outro if last slide
+            let outroIndex = items.findIndex(a => a.id === "outro")
+            if (outroIndex !== -1) suggested.push(items[outroIndex])
+        } else if (!hasText) {
+            // Break if no text (and not first/last)
+            let breakIndex = items.findIndex(a => a.id === "break")
+            if (breakIndex !== -1) suggested.push(items[breakIndex])
+        } else if (textContent.length < 20) {
+            // Tag if short text (and not first/last)
+            let tagIndex = items.findIndex(a => a.id === "tag")
+            if (tagIndex !== -1) suggested.push(items[tagIndex])
+        } else if (selectedIndex > 4) {
+            // Bridge if after slide 4 (and none of the above)
+            let bridgeIndex = items.findIndex(a => a.id === "bridge")
+            if (bridgeIndex !== -1) suggested.push(items[bridgeIndex])
+        }
+
+        const parentGroup = _show().get("slides")?.[slideRef?.parent?.id || ""]?.globalGroup || ""
+        if (!isParent && parentGroup) {
+            // use parent group if it's global
+            let groupIndex = items.findIndex(a => a.id === parentGroup)
+            if (groupIndex !== -1) {
+                // move itself to start of suggested list if it exists
+                let suggestedIndex = suggested.findIndex(a => a.id === parentGroup)
+                if (suggestedIndex !== -1) suggested.splice(suggestedIndex, 1)[0]
+                suggested.unshift(items[groupIndex])
+            }
+        }
+
+        return [...(suggested.length ? [...suggested.map(a => ({ ...a, icon: "autofill" })), "SEPARATOR"] : []), ...sortItemsByLabel(items), ...(isParent ? ["SEPARATOR", { id: "none", label: "main.none", enabled: noGroup, style: "opacity: 0.8;" }] : [])]
     },
     actions: () => {
         const slideRef = getLayoutRef()?.[get(selected).data[0]?.index]
