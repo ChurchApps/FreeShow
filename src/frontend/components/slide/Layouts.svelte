@@ -78,9 +78,10 @@
     function setLayout(id: string, layoutInfo) {
         if (!$showsCache[showId]) return
 
-        showsCache.update(s => {
-            s[showId].settings.activeLayout = id
-            return s
+        showsCache.update(a => {
+            if (!a[showId].settings) a[showId].settings = { activeLayout: "", template: null }
+            a[showId].settings.activeLayout = id
+            return a
         })
 
         // set active layout in project

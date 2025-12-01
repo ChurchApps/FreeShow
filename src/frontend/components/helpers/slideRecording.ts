@@ -209,6 +209,8 @@ export function updateSlideRecording(state: "next" | "previous") {
 
     playRecording(recording, ref, Math.min(recording.sequence.length - 1, Math.max(0, index)))
 
+    if (!get(activeSlideRecording)) return
+
     // change time of playing audio
     const audioPath = get(activeSlideRecording).audioPath
     if (audioPath) playAudioTrack(audioPath, index, recording)

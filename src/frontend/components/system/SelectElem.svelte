@@ -177,10 +177,13 @@
             if (shiftRange) {
                 allNewData = allNewData
                     .map(data => {
+                        if (!data) return null
+
                         let newData: any = {}
                         keys.forEach(key => {
                             newData[key] = data[key]
                         })
+
                         return newData
                     })
                     .filter(a => a)

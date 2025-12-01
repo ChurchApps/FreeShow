@@ -37,6 +37,8 @@
         if (id === "theme") {
             const theme = $themes[tabId]
             const colors = theme.colors
+            if (!colors) return ""
+
             // font-family: ${theme.font.family};
             return `background-color: ${colors["primary-darker"]};color: ${colors.secondary};font-family: sans-serif;`
         }

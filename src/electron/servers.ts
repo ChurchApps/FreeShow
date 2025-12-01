@@ -127,7 +127,7 @@ function createBridge(id: ServerName, server: ServerValues) {
     // SEND DATA FROM APP TO CLIENT
     ioServers[id] = server.io
     ipcMain.on(id, (_e: IpcMainEvent, msg: Message) => {
-        if (msg.id) server.io.to(msg.id).emit(id, msg)
+        if (msg?.id) server.io.to(msg.id).emit(id, msg)
         else server.io.emit(id, msg)
     })
 }

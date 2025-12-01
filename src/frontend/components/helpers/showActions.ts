@@ -89,6 +89,7 @@ export function swichProjectItem(pos: number, id: string) {
     if (projectLayout) {
         if (!get(showsCache)[id].layouts[projectLayout]) projectLayout = Object.keys(get(showsCache)[id].layouts)[0]
         showsCache.update(a => {
+            if (!a[id].settings) a[id].settings = { activeLayout: "", template: null }
             a[id].settings.activeLayout = projectLayout
             return a
         })
@@ -98,7 +99,7 @@ export function swichProjectItem(pos: number, id: string) {
     if (Object.keys(get(showsCache)[id].layouts)?.length > 1) {
         projects.update(a => {
             if (Object.keys(get(showsCache)[id].layouts)?.length < 2) delete a[get(activeProject)!].shows[pos].layout
-            else a[get(activeProject)!].shows[pos].layout = get(showsCache)[id].settings.activeLayout
+            else a[get(activeProject)!].shows[pos].layout = get(showsCache)[id].settings?.activeLayout || ""
             return a
         })
     }
@@ -231,7 +232,7 @@ export function nextSlide(e: any, start = false, end = false, loop = false, bypa
     if (isLastSlide && !itemsRevealed) isLastSlide = false
 
     // lines reveal
-    const linesRevealItems = (showSlide?.items || []).filter(a => a.lineReveal)
+    const linesRevealItems = (showSlide?.items || []).filter(a => a?.lineReveal)
     const shouldLinesReveal = !!linesRevealItems.length
     const maxRevealLines = getItemWithMostLines({ items: linesRevealItems })
     const currentReveal = slide?.revealCount ?? 0
@@ -534,7 +535,7 @@ export function previousSlide(e: any, customOutputId?: string) {
     if (isFirstSlide && !clickRevealEnded) isLastSlide = false
 
     // lines reveal
-    const linesRevealItems = ((slide?.revealCount ? currentShowSlide?.items : showSlide?.items) || []).filter(a => a.lineReveal)
+    const linesRevealItems = ((slide?.revealCount ? currentShowSlide?.items : showSlide?.items) || []).filter(a => a?.lineReveal)
     const shouldLinesReveal = !!linesRevealItems.length
     let currentReveal = slide?.revealCount || 0
     const revealEnded = !shouldLinesReveal || currentReveal === 0
@@ -976,6 +977,7 @@ export function changeOutputStyle(data: API_output_style) {
     const outputIds = data.outputId ? [data.outputId] : getAllNormalOutputs().map(a => a.id)
     outputs.update(a => {
         outputIds.forEach(outputId => {
+            if (!a[outputId]) return
             a[outputId].style = data.styleId || ""
         })
         return a
@@ -1056,7 +1058,7 @@ export function checkNextAfterMedia(endedId: string, type: "media" | "audio" | "
             if (!layoutSlide.data?.audio?.find(id => allMediaIds.includes(id))) return false
         }
     } else if (type === "timer") {
-        const slide = _show(slideOut.id).get("slides")[layoutSlide.id]
+        const slide = _show(slideOut.id).get("slides")?.[layoutSlide.id]
         const slideTimer = slide?.items?.find(a => a.type === "timer" && (a.timer?.id || a.timerId) === endedId)
         if (!slideTimer) return false
     }
@@ -1093,7 +1095,7 @@ export function playSlideTimers({ showId = "active", slideId = "", overlayIds = 
     const items = [...slideItems, ...allOverlayItems]
 
     items.forEach(item => {
-        if (item.type !== "timer") return
+        if (item?.type !== "timer") return
         const timerId = item.timer?.id || item.timerId || ""
         playPauseGlobal(timerId, get(timers)[timerId], true)
     })

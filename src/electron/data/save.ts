@@ -26,13 +26,14 @@ export async function save(data: SaveData) {
     // save to files
     Object.entries(_store).forEach(storeData as any)
     function storeData([key, store]: [keyof typeof _store, any]) {
-        if (!isValidJSON((data as any)[key])) return
-        if (!(data as any)[key] || checkIfMatching(store.store, (data as any)[key])) return
+        const newData = (data as any)[key]
+        if (!newData || !isValidJSON(newData)) return
+        if (checkIfMatching(store.store, newData)) return
 
         store.clear()
-        store.set((data as any)[key])
+        store.set(newData)
 
-        if (reset) sendMain(key as Main, (data as any)[key])
+        if (reset) sendMain(key as Main, newData)
     }
 
     // scriptures
@@ -92,8 +93,14 @@ export async function save(data: SaveData) {
 }
 
 // a few keys might not be placed in the same order in JS object vs store file
-function checkIfMatching(a: object, b: object): boolean {
-    return JSON.stringify(Object.entries(a).sort()) === JSON.stringify(Object.entries(b).sort())
+function checkIfMatching(a: any, b: any): boolean {
+    try {
+        if (!a || !b || typeof a !== "object" || typeof b !== "object") return false
+        return JSON.stringify(Object.entries(a).sort()) === JSON.stringify(Object.entries(b).sort())
+    } catch (err) {
+        console.warn("Failed to compare store data:", err)
+        return false
+    }
 }
 
 function isValidJSON(object: any) {

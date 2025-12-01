@@ -37,6 +37,8 @@
         return `${(size / (1024 * 1024 * 1024)).toFixed(2)} GB`
     }
 
+    // WIP deleting multiple folders should be possible without having to wait 5 seconds for each
+
     let deletingPath: string | null = null
     let undoTimeout: NodeJS.Timeout | null = null
     function deleteBackup(path: string) {

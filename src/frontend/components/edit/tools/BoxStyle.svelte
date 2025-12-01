@@ -177,6 +177,7 @@
         if (input.id.includes(".")) {
             let splitted = input.id.split(".")
             let item = getSelectedItem()
+            if (!item) return
 
             input.id = splitted[0]
             value = item[splitted[0]] || {}

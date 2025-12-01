@@ -123,7 +123,7 @@
         let outputId: string = getActiveOutputs($outputs, false, true, true)[0]
         let currentOutput = $outputs[outputId] || {}
 
-        if (type === "show" && $showsCache[id] && $showsCache[id].layouts[$showsCache[id].settings.activeLayout]?.slides?.length) {
+        if (type === "show" && $showsCache[id]?.settings && $showsCache[id].layouts[$showsCache[id].settings.activeLayout]?.slides?.length) {
             let layoutRef = getLayoutRef()
             let firstEnabledIndex = layoutRef.findIndex(a => !a.data.disabled)
             updateOut("active", firstEnabledIndex, layoutRef, !e.detail.alt)

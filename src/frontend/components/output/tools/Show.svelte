@@ -28,6 +28,7 @@
 
         if (slide?.layout && $showsCache[slide.id]) {
             showsCache.update(a => {
+                if (!a[slide.id].settings) a[slide.id].settings = { activeLayout: "", template: null }
                 a[slide.id].settings.activeLayout = slide.layout!
                 return a
             })

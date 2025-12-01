@@ -133,7 +133,13 @@ export function getStore<T extends keyof typeof storeFilesData | "config">(id: T
 
     const storeId = id as keyof typeof storeFilesData
     if (!_store[storeId]) throw new Error(`Store with key ${id} does not exist.`)
-    return _store[storeId]!.store
+
+    try {
+        return _store[storeId]!.store
+    } catch (err) {
+        console.error(`Could not get store data for ${id}:`, err)
+        return storeFilesData[storeId].defaults
+    }
 }
 
 // GET STORE VALUE (used in special cases - currently only some "config" keys)

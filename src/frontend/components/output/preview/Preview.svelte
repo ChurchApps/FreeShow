@@ -140,7 +140,8 @@
 
         let globalGroupIds: string[] = []
         Object.entries($groups).forEach(([groupId, group]) => {
-            if (!group.shortcut || group.shortcut.toLowerCase() !== e.key.toLowerCase()) return
+            if (typeof group.shortcut !== "string" || group.shortcut.toLowerCase() !== e.key.toLowerCase()) return
+
             showGroups.forEach(slide => {
                 if (slide.globalGroup === groupId) globalGroupIds.push(slide.id)
             })

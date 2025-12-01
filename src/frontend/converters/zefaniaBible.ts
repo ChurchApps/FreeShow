@@ -31,6 +31,9 @@ function XMLtoObject(xml: string) {
     const bible = xml2json(xml, true)?.XMLBIBLE || {}
     const books: Book[] = []
 
+    if (!bible.BIBLEBOOK) return { name: "", books } as Bible
+
+    if (!Array.isArray(bible.BIBLEBOOK)) bible.BIBLEBOOK = [bible.BIBLEBOOK]
     bible.BIBLEBOOK.forEach((book: any) => {
         if (!book) return
         const name = book["@bname"]

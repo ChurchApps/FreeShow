@@ -540,7 +540,7 @@ export const _updaters = {
 
 function updateTransparentColors(id: string) {
     themes.update(a => {
-        Object.entries(a[id].colors).forEach(([subId, color]: any) => {
+        Object.entries(a[id]?.colors || {}).forEach(([subId, color]: any) => {
             if (!converts[subId]) return
             const transparentColors: any[] = converts[subId]
 

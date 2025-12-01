@@ -13,7 +13,7 @@ import { ToMain } from "../../types/IPC/ToMain"
 import type { FileData, MainFilePaths, Subtitle } from "../../types/Main"
 import type { Show, TrimmedShows } from "../../types/Show"
 import { imageExtensions, mimeTypes, videoExtensions } from "../data/media"
-import { _store, config, getStore } from "../data/store"
+import { _store, appDataPath, config, getStore } from "../data/store"
 import { createThumbnail } from "../data/thumbnails"
 import { sendMain, sendToMain } from "../IPC/main"
 import { OutputHelper } from "../output/OutputHelper"
@@ -221,7 +221,9 @@ export const dataFolderNames = {
 
 // Documents/FreeShow
 export function getDefaultDataFolderRoot() {
-    const documentsPath = app.getPath("documents")
+    const documentsPath = getMediaFolderPath("documents")
+    if (!documentsPath) return appDataPath
+
     const appFolderName = "FreeShow"
     return createFolder(path.join(documentsPath, appFolderName))
 }
@@ -283,13 +285,21 @@ export function loadFile(filePath: string, contentId = "") {
 
 export function getPaths() {
     const paths: MainFilePaths = {
-        // documents: app.getPath("documents"),
-        pictures: app.getPath("pictures"),
-        videos: app.getPath("videos"),
-        music: app.getPath("music")
+        // documents: getMediaFolderPath("documents"),
+        pictures: getMediaFolderPath("pictures"),
+        videos: getMediaFolderPath("videos"),
+        music: getMediaFolderPath("music")
     }
 
     return paths
+}
+function getMediaFolderPath(name: Parameters<typeof app.getPath>[0]): string {
+    try {
+        return app.getPath(name)
+    } catch (err) {
+        console.warn(`Failed to get '${name}' path:`, err)
+        return ""
+    }
 }
 
 const tempPaths = ["temp"]
@@ -493,6 +503,7 @@ async function extractCodecInfo(data: { path: string }): Promise<{ path: string;
             const buffer = fs.readFileSync(data.path)
             const uint8Array = new Uint8Array(buffer)
             const arrayBuffer: any = uint8Array.buffer.slice(uint8Array.byteOffset, uint8Array.byteOffset + uint8Array.byteLength)
+            if (!arrayBuffer) return resolve({ ...data, codecs: [], mimeType: getMimeType(data.path), mimeCodec: "" })
 
             const mp4boxfile = MP4Box.createFile()
             mp4boxfile.onError = (err: Error) => console.error("MP4Box error:", err)
@@ -539,6 +550,8 @@ async function extractSubtitles(data: { path: string }): Promise<{ path: string;
         console.error(err)
         return { ...data, tracks: [] }
     }
+
+    if (!arrayBuffer) return { ...data, tracks: [] }
 
     return new Promise(resolve => {
         const mp4boxfile = MP4Box.createFile()
@@ -714,7 +727,7 @@ export function bundleMediaFiles() {
         if (!show) return
 
         // media backgrounds & audio
-        Object.values(show.media).forEach(media => {
+        Object.values(show.media || {}).forEach(media => {
             const mediaPath = media.path || media.id
             if (mediaPath) allMediaFiles.push(mediaPath)
         })
@@ -799,8 +812,12 @@ export function loadShows(returnShows = false) {
     if (returnShows) return newCachedShows
 
     // save this (for cloud sync)
-    _store.SHOWS?.clear()
-    _store.SHOWS?.set(newCachedShows)
+    try {
+        _store.SHOWS?.clear()
+        _store.SHOWS?.set(newCachedShows)
+    } catch (err) {
+        console.warn("Failed to save shows cache:", err)
+    }
 
     return newCachedShows
 }

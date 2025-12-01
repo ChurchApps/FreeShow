@@ -70,6 +70,8 @@ function combine(item: Item): Item {
 
 // add new style to string and remove old
 export function addStyleString(oldStyle: string, style: any[]): string {
+    if (!oldStyle) return ""
+
     let array: string[] = oldStyle.split(";")
     // remove last if empty
     if (!array[array.length - 1].length) array.pop()
@@ -259,7 +261,7 @@ export function getSlideText(slide: Slide) {
 }
 
 // get text of item.text...
-export function getItemText(item: Item): string {
+export function getItemText(item: Item | null): string {
     let text = ""
     if (!item?.lines) return ""
 
@@ -310,7 +312,7 @@ export function setCaret(element: any, { line = 0, pos = 0 }, toEnd = false) {
     let childElem = -1
     let currentTextLength = 0
     lineElem.childNodes.forEach((elem, i) => {
-        if (childElem >= 0) return
+        if (!elem || childElem >= 0) return
         if (pos <= currentTextLength + elem.innerText.length) {
             childElem = i
             return
@@ -321,7 +323,7 @@ export function setCaret(element: any, { line = 0, pos = 0 }, toEnd = false) {
     // pasted on non-existent line
     if (childElem < 0) {
         childElem = lineElem.childNodes.length - 1
-        pos = lineElem.childNodes[childElem].innerText.length
+        pos = lineElem.childNodes[childElem]?.innerText.length ?? 0
         currentTextLength = 0
     }
 
@@ -335,7 +337,7 @@ export function setCaret(element: any, { line = 0, pos = 0 }, toEnd = false) {
 
     // get end child elem
     const lastEndChild = lastLineElem.childNodes[lastLineElem.childNodes.length - 1]
-    let currentEndTextLength = lastEndChild.innerText.length
+    let currentEndTextLength = lastEndChild?.innerText.length ?? 0
 
     const breakElem = lastEndChild.childNodes[0]?.nodeName === "BR"
     if (line === 0 && breakElem) return

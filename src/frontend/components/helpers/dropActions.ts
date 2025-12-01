@@ -253,7 +253,7 @@ export const dropActions = {
 
                 const showId = drag.showId || drag.data[0]?.showId || get(activeShow)?.id || ""
                 const slides: { [key: string]: Slide } = _show(showId).get().slides
-                let layout = _show(showId).layouts("active").get()[0].slides
+                let layout = _show(showId).layouts("active").get()[0]?.slides || []
                 const oldData = clone({ slides, layout })
                 const ref = getLayoutRef(showId)
 
@@ -594,7 +594,7 @@ const slideDrop = {
         let ref = getLayoutRef(showId)
 
         const slides: { [key: string]: Slide } = _show(showId).get().slides
-        const oldLayout = _show(showId).layouts("active").get()[0].slides
+        const oldLayout = _show(showId).layouts("active").get()[0]?.slides || []
         history.oldData = clone({ layout: oldLayout, slides })
 
         // end of layout

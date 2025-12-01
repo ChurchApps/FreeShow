@@ -173,6 +173,8 @@ export function fixShowIssues(show: Show) {
             return
         }
 
+        if (!Array.isArray(slide.items)) slide.items = []
+
         // check & fix looping items bug
         if (slide.items?.length < 30) return
 

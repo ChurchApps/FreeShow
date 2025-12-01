@@ -29,7 +29,7 @@ export function convertPowerpoint(files: any[]) {
 
             const presentationData = content["ppt/presentation.xml"]?.["p:presentation"] || {}
             const relations = content["ppt/_rels/presentation.xml.rels"]?.Relationships?.Relationship || []
-            const slideOrder = presentationData["p:sldIdLst"]?.[0]["p:sldId"]?.map(a => relations.find(r => r.$.Id === a.$?.["r:id"])?.$?.Target)
+            const slideOrder = (presentationData["p:sldIdLst"]?.[0]["p:sldId"] || []).map(a => relations.find(r => r.$.Id === a.$?.["r:id"])?.$?.Target)
 
             // sort by number in name to ensure correct slide order (ppt/slides/slide1.xml)
             // const slideKeys = sortByNameNumber(Object.keys(content).filter((a) => a.includes("ppt/slides/slide")))

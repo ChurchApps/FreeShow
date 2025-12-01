@@ -15,6 +15,8 @@
         // WIP history
         ;(isEffect ? effects : overlays).update(a => {
             ids.forEach(id => {
+                if (!a[id]) return
+
                 if (!value) delete a[id].displayDuration
                 else a[id].displayDuration = value
             })

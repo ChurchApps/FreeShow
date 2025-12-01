@@ -178,8 +178,8 @@
         }, time)
     }
     function setVolume(volume: number) {
-        if (!video) return
-        video.volume = volume
+        if (!video || !isFinite(volume) || isNaN(volume)) return
+        video.volume = Math.max(0, Math.min(1, volume))
     }
 
     // AUDIO

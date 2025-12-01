@@ -514,13 +514,15 @@ const clickActions = {
         if ((obj.sel.id !== "show" && obj.sel.id !== "show_drawer" && obj.sel.id !== "player" && obj.sel.id !== "media" && obj.sel.id !== "audio") || !get(activeProject)) return
 
         if (obj.sel.id === "player") obj.sel.data = obj.sel.data.map((id: string) => ({ id, type: "player" }))
-        else if (obj.sel.id === "audio") obj.sel.data = obj.sel.data.map(({ path, name }) => ({ id: path, name, type: "audio" }))
+        else if (obj.sel.id === "audio") obj.sel.data = obj.sel.data.filter(a => a.path).map(({ path, name }) => ({ id: path, name, type: "audio" }))
         else if (obj.sel.id === "media")
-            obj.sel.data = obj.sel.data.map(({ path, name }) => ({
-                id: path,
-                name,
-                type: getMediaType(path.slice(path.lastIndexOf(".") + 1, path.length))
-            }))
+            obj.sel.data = obj.sel.data
+                .filter(a => a.path)
+                .map(({ path, name }) => ({
+                    id: path,
+                    name,
+                    type: getMediaType(path.slice(path.lastIndexOf(".") + 1, path.length))
+                }))
 
         projects.update(a => {
             if (!a[get(activeProject)!]?.shows) return a
@@ -864,6 +866,7 @@ const clickActions = {
         })
         shows.update(a => {
             obj.sel!.data.forEach(b => {
+                if (!a[b.id]) return
                 if (a[b.id].private) delete a[b.id].private
                 else a[b.id].private = true
             })
@@ -903,6 +906,8 @@ const clickActions = {
 
             indexes.forEach(index => {
                 if (!a[projectId].shows[index]) return
+                if (typeof a[projectId].shows[index] !== "object") return
+
                 a[projectId].shows[index].played = newState
             })
 
@@ -1965,7 +1970,7 @@ export async function format(id: string, obj: ObjData, data: any = null) {
 
     // async update
     for (const slide of slideIds) {
-        const slideItems: Item[] = _show().slides([slide]).items(get(activeEdit).items).get()[0]
+        const slideItems: Item[] = _show().slides([slide]).items(get(activeEdit).items).get()[0] || []
         const newData: any = { style: { values: [] } }
 
         const newItems: Item[] = []

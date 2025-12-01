@@ -231,7 +231,7 @@
 
     function toggleChapter(e: any, id: string) {
         if (e.ctrlKey || e.metaKey) {
-            if (activeReference.chapters.find(cid => cid.toString() === id)) {
+            if (activeReference.chapters.find(cid => cid?.toString() === id)) {
                 // remove chapter
                 const newChapters = activeReference.chapters.filter(cid => cid.toString() !== id)
                 const newVerses = activeReference.verses.filter((_, i) => i < newChapters.length)
@@ -389,7 +389,7 @@
         setTimeout(() => (isSelected = false), 20)
 
         const keys = e.ctrlKey || e.metaKey || e.shiftKey
-        if (keys || !selectedVerses[selectedVerses.length - 1]?.find(a => a.toString() === verseNumber || a === getVerseId(verseNumber))) {
+        if (keys || !selectedVerses[selectedVerses.length - 1]?.find(a => a && (a.toString() === verseNumber || a === getVerseId(verseNumber)))) {
             selectedVerses[selectedVerses.length - 1] = scriptureRangeSelect(e, selectedVerses[selectedVerses.length - 1], verseNumber, splittedVerses)
         }
 

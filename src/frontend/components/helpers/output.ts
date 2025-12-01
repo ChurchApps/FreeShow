@@ -1181,7 +1181,7 @@ export function getOutputLines(outSlide: OutSlide, styleLines = 0) {
     // if the value is 3 & 2 lines, with slide text of 6 lines, the center will not match, but I probably can't do anything about that
 
     // lines reveal
-    const linesRevealItems = (showSlide?.items || []).filter(a => a.lineReveal)
+    const linesRevealItems = (showSlide?.items || []).filter(a => a?.lineReveal)
     const currentReveal = outSlide.revealCount ?? 0
     let linesStart: number | null = null
     let linesEnd: number | null = null

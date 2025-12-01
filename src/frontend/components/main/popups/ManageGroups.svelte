@@ -82,7 +82,7 @@
                     style="width: 28%;"
                     id={group.id}
                     value={group.shortcut}
-                    name={(group.shortcut || "").toUpperCase()}
+                    name={typeof group.shortcut === "string" ? group.shortcut.toUpperCase() : ""}
                     icon="shortcut"
                     popupId="assign_shortcut"
                     data={{

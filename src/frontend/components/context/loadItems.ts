@@ -88,7 +88,7 @@ const loadActions = {
     slide_groups: (items: ContextMenuItem[]) => {
         const selectedIndex = get(selected).data[0]?.index
         const slideRef = getLayoutRef()?.[selectedIndex] || {}
-        const currentSlide = _show().get("slides")[slideRef.id]
+        const currentSlide = _show().get("slides")?.[slideRef.id]
         if (!currentSlide) return []
 
         const currentGroup: string = currentSlide.globalGroup || ""

@@ -393,7 +393,7 @@
                 if (lineText === "\n") lineText = ""
                 if (plain && !lineText && !style) {
                     style = item.lines?.[i - 1]?.text[0]?.style || ""
-                    newLines[pos].align = newLines[pos - 1].align || ""
+                    newLines[pos].align = newLines[pos - 1]?.align || ""
                 }
 
                 // remove custom font size
@@ -555,6 +555,7 @@
         let newLines: any[] = []
         let pastingIndex = -1
         sel.forEach((lineSel, lineIndex) => {
+            if (!lines[lineIndex]) return
             if (lineSel.start === undefined && (!emptySelection || lineIndex < sel.length - 1)) {
                 newLines.push(lines[lineIndex])
                 return

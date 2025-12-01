@@ -57,12 +57,12 @@ export function createData(paths: MainFilePaths) {
 
     setExampleTemplates()
     mediaFolders.update(a => {
-        a.pictures = { name: "category.pictures", icon: "folder", path: paths.pictures, default: true }
-        a.videos = { name: "category.videos", icon: "folder", path: paths.videos, default: true }
+        if (paths.pictures) a.pictures = { name: "category.pictures", icon: "folder", path: paths.pictures, default: true }
+        if (paths.videos) a.videos = { name: "category.videos", icon: "folder", path: paths.videos, default: true }
         return a
     })
     audioFolders.update(a => {
-        a.music = { name: "category.music", icon: "folder", path: paths.music, default: true }
+        if (paths.music) a.music = { name: "category.music", icon: "folder", path: paths.music, default: true }
         return a
     })
 

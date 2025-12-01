@@ -1024,6 +1024,8 @@ const deleteActions = {
 const duplicateActions = {
     event: (data: any) => {
         const event = clone(get(events)[data.id])
+        if (!event) return
+
         event.name += " 2"
         event.repeat = false
         delete event.group
@@ -1072,6 +1074,8 @@ const duplicateActions = {
         if (!layoutId) return
 
         const newLayout = clone(get(showsCache)[get(activeShow)!.id].layouts[layoutId])
+        if (!newLayout) return
+
         newLayout.name += " 2"
         history({ id: "UPDATE", newData: { key: "layouts", subkey: uid(), data: newLayout }, oldData: { id: get(activeShow)?.id }, location: { page: "show", id: "show_layout" } })
     },

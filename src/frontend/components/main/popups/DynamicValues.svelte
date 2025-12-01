@@ -166,7 +166,7 @@
             let lines = items[edit.items?.[0]]?.lines || []
             if (isStage) lines = items?.lines || []
 
-            lines[caret.line].text?.forEach(text => {
+            lines[caret.line]?.text?.forEach(text => {
                 if (replaced) return
 
                 let value = text.value

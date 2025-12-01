@@ -80,12 +80,16 @@ export function sortObject<T extends Record<string, any>>(object: T[], key: keyo
         if (a.default === true) textA = translateText(textA) || textA.slice(textA.indexOf("."))
         if (b.default === true) textB = translateText(textB) || textB.slice(textB.indexOf("."))
 
+        if (typeof textA !== "string") textA = ""
+        if (typeof textB !== "string") textB = ""
+
         return textA.localeCompare(textB)
     })
 }
 
 // sort objects in array numerically
 export function sortObjectNumbers<T extends Record<string, any>>(object: T[], key: keyof T, reverse = false) {
+    if (!Array.isArray(object)) return []
     return object.sort((a, b) => {
         return reverse ? b[key] - a[key] : a[key] - b[key]
     })
