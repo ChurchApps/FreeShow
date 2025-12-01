@@ -14,9 +14,9 @@ export let dictionary: Writable<Dictionary> = writable(clone(DEFAULT_DICTIONARY)
 export let errors: Writable<string[]> = writable([])
 
 export let password = writable({
-  required: true,
-  remember: false,
-  stored: ""
+    required: true,
+    remember: false,
+    stored: ""
 })
 
 export let isConnected = writable(false)
@@ -70,17 +70,17 @@ export let activeVariableTagFilter: Writable<string[]> = writable([])
 export let functionsSubTab: Writable<string> = writable("actions")
 
 export type CurrentScriptureState = {
-  scriptureId: string
-  bookId: number
-  chapterId: number
-  activeVerses: number[]
+    scriptureId: string
+    bookId: number
+    chapterId: number
+    activeVerses: number[]
 }
 
 export let currentScriptureState: Writable<CurrentScriptureState> = writable({
-  scriptureId: "",
-  bookId: -1,
-  chapterId: -1,
-  activeVerses: []
+    scriptureId: "",
+    bookId: -1,
+    chapterId: -1,
+    activeVerses: []
 })
 
 export let overlays: Writable<Overlays> = writable({})
@@ -105,63 +105,63 @@ export let scriptureSearchResults: Writable<any> = writable(null)
 /////
 
 export const _ = {
-  dictionary,
-  errors,
-  password,
-  isConnected,
-  quickPlay,
-  activeTab,
-  activeDrawerTab,
-  activeCategory,
-  drawer,
-  outputMode,
-  active,
-  activeShow,
-  shows,
-  outData,
-  outSlide,
-  outLayout,
-  styleRes,
-  outShow,
-  layout,
-  isCleared,
-  projectsOpened,
-  activeProject,
-  folders,
-  openedFolders,
-  projects,
-  project,
-  scriptures,
-  categories,
-  resized,
-  openedScripture,
-  collectionId,
-  currentScriptureState,
-  overlays,
-  overlayCategories,
-  activeOverlayCategory,
-  templates,
-  templateCategories,
-  activeTemplateCategory,
-  mediaCache,
-  textCache,
-  groupsCache,
-  scriptureCache,
-  playingAudioData,
-  playingAudioTime,
-  pdfPages,
-  scriptureSearchResults,
-  actions,
-  actionTags,
-  variables,
-  variableTags,
-  timers,
-  triggers,
-  activeTimers,
-  runningActions,
-  activeActionTagFilter,
-  activeVariableTagFilter,
-  functionsSubTab
+    dictionary,
+    errors,
+    password,
+    isConnected,
+    quickPlay,
+    activeTab,
+    activeDrawerTab,
+    activeCategory,
+    drawer,
+    outputMode,
+    active,
+    activeShow,
+    shows,
+    outData,
+    outSlide,
+    outLayout,
+    styleRes,
+    outShow,
+    layout,
+    isCleared,
+    projectsOpened,
+    activeProject,
+    folders,
+    openedFolders,
+    projects,
+    project,
+    scriptures,
+    categories,
+    resized,
+    openedScripture,
+    collectionId,
+    currentScriptureState,
+    overlays,
+    overlayCategories,
+    activeOverlayCategory,
+    templates,
+    templateCategories,
+    activeTemplateCategory,
+    mediaCache,
+    textCache,
+    groupsCache,
+    scriptureCache,
+    playingAudioData,
+    playingAudioTime,
+    pdfPages,
+    scriptureSearchResults,
+    actions,
+    actionTags,
+    variables,
+    variableTags,
+    timers,
+    triggers,
+    activeTimers,
+    runningActions,
+    activeActionTagFilter,
+    activeVariableTagFilter,
+    functionsSubTab
 }
 
 /////
@@ -170,14 +170,14 @@ type Stores = typeof _
 type StoreId = keyof typeof _
 
 export function _get<ID extends StoreId>(id: ID) {
-  const value = get(_[id] as any) as Inferred<Stores[ID]>
-  return clone(value)
+    const value = get(_[id] as any) as Inferred<Stores[ID]>
+    return clone(value)
 }
 
 export function _set<ID extends StoreId, V extends Inferred<Stores[ID]>>(id: ID, value: V) {
-  if (!_[id]) return console.log("Invalid store ID")
-  // @ts-ignore
-  _[id].set(value)
+    if (!_[id]) return console.log("Invalid store ID")
+    // @ts-ignore
+    _[id].set(value)
 }
 
 type UpdateKey<ID extends StoreId> = keyof Inferred<Stores[ID]> | DeepKey<Inferred<Stores[ID]>>
@@ -188,7 +188,7 @@ type UpdateValue<ID extends StoreId, K> = K extends [string, string] ? DeepNeste
  * @param value any
  */
 export function _update<ID extends StoreId, K extends UpdateKey<ID>>(id: ID, key: K, value: UpdateValue<ID, K>) {
-  if (!_[id]) return console.log("Invalid store ID")
+    if (!_[id]) return console.log("Invalid store ID")
 
-  _[id].update((a: any) => __update(a, key as any, value))
+    _[id].update((a: any) => __update(a, key as any, value))
 }

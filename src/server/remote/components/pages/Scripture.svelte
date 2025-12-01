@@ -14,7 +14,7 @@
     import ScriptureContentTablet from "./ScriptureContentTablet.svelte"
 
     export let tablet: boolean = false
-    
+
     // Set default to list mode in tablet
     $: if (tablet) scriptureViewList.set(true)
     export let searchValueFromDrawer: string = ""
@@ -50,24 +50,24 @@
         .filter(s => s.data)
 
     $: isCollection = !!($collectionId && $scriptures[$collectionId]?.collection)
-    
+
     // Filter to only collection versions when viewing a collection
     function getScriptureData(versionId: string) {
-        return allScripturesData.find(s => s.id === versionId) || {
-            id: versionId,
-            data: $scriptureCache[versionId],
-            name: ($scriptures[versionId]?.customName || $scriptures[versionId]?.name || versionId) as string
-        }
+        return (
+            allScripturesData.find(s => s.id === versionId) || {
+                id: versionId,
+                data: $scriptureCache[versionId],
+                name: ($scriptures[versionId]?.customName || $scriptures[versionId]?.name || versionId) as string
+            }
+        )
     }
-    
-    $: collectionScripturesData = isCollection && $collectionId
-        ? ($scriptures[$collectionId]?.collection?.versions || []).map(getScriptureData).filter(s => s.id)
-        : allScripturesData
+
+    $: collectionScripturesData = isCollection && $collectionId ? ($scriptures[$collectionId]?.collection?.versions || []).map(getScriptureData).filter(s => s.id) : allScripturesData
 
     // Toggle through translations in collection: null (all) -> 0 -> 1 -> ... -> null
     function toggleTranslation() {
         if (!isCollection || collectionScripturesData.length <= 1) return
-        
+
         const currentIndex = $selectedTranslationIndex
         if (currentIndex === null) {
             // Start with first translation
@@ -80,13 +80,9 @@
             selectedTranslationIndex.set(currentIndex + 1)
         }
     }
-    
+
     // Get button title for translation toggle
-    $: translationButtonTitle = isCollection && collectionScripturesData.length > 1
-        ? $selectedTranslationIndex === null 
-            ? "All Translations"
-            : `${collectionScripturesData[$selectedTranslationIndex]?.name || "Translation"} (${$selectedTranslationIndex + 1}/${collectionScripturesData.length})`
-        : ""
+    $: translationButtonTitle = isCollection && collectionScripturesData.length > 1 ? ($selectedTranslationIndex === null ? "All Translations" : `${collectionScripturesData[$selectedTranslationIndex]?.name || "Translation"} (${$selectedTranslationIndex + 1}/${collectionScripturesData.length})`) : ""
 
     // Validate stored scripture ID and reset if invalid (prevents infinite loading on first launch)
     $: if (scripturesLoaded && $openedScripture && !checkScriptureExists($openedScripture, $collectionId)) {
@@ -99,7 +95,7 @@
         if (!$scriptureCache[$openedScripture]) {
             send("GET_SCRIPTURE", { id: $openedScripture })
         }
-        
+
         // Load all collection versions if viewing a collection
         if (isCollection && $collectionId) {
             const versions = $scriptures[$collectionId]?.collection?.versions || []
@@ -163,9 +159,7 @@
     // LAZY COMPUTATION: Only compute scripture lists when picker is shown (no scripture opened)
     // This prevents expensive filtering/sorting when user is already browsing a bible
     $: showScripturePicker = !tablet && !$openedScripture && scripturesLoaded
-    $: scriptureEntries = showScripturePicker || (tablet && !$openedScripture) 
-        ? keysToID($scriptures).map((a: any) => ({ ...a, icon: iconForScripture(a) })) 
-        : []
+    $: scriptureEntries = showScripturePicker || (tablet && !$openedScripture) ? keysToID($scriptures).map((a: any) => ({ ...a, icon: iconForScripture(a) })) : []
     $: favoritesList = scriptureEntries.length ? sortByName(scriptureEntries.filter(a => a.favorite)) : []
     $: favoriteIds = new Set(favoritesList.map(a => a.id))
     $: collectionList = scriptureEntries.length ? sortByName(scriptureEntries.filter(a => a.collection && !favoriteIds.has(a.id))) : []

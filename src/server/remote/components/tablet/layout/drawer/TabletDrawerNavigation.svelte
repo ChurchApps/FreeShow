@@ -60,29 +60,44 @@
 
     // Scripture tab logic - only computed when scripture tab is active
     $: scriptureEntries = id === "scripture" ? keysToID($scriptures).map((a: any) => ({ ...a, icon: a.api ? "scripture_alt" : a.collection ? "collection" : "scripture" })) : []
-    $: favoritesList = id === "scripture" ? sortByName(
-        scriptureEntries.filter(a => a.favorite),
-        "name"
-    ) : []
+    $: favoritesList =
+        id === "scripture"
+            ? sortByName(
+                  scriptureEntries.filter(a => a.favorite),
+                  "name"
+              )
+            : []
     $: favoriteIds = new Set(favoritesList.map(a => a.id))
-    $: collectionList = id === "scripture" ? sortByName(
-        scriptureEntries.filter(a => a.collection && !favoriteIds.has(a.id)),
-        "name"
-    ) : []
-    $: localBibles = id === "scripture" ? sortByName(
-        scriptureEntries.filter(a => !a.collection && !a.api && !favoriteIds.has(a.id)),
-        "name"
-    ) : []
-    $: apiBibles = id === "scripture" ? sortByName(
-        scriptureEntries.filter(a => !a.collection && a.api && !favoriteIds.has(a.id)),
-        "name"
-    ) : []
+    $: collectionList =
+        id === "scripture"
+            ? sortByName(
+                  scriptureEntries.filter(a => a.collection && !favoriteIds.has(a.id)),
+                  "name"
+              )
+            : []
+    $: localBibles =
+        id === "scripture"
+            ? sortByName(
+                  scriptureEntries.filter(a => !a.collection && !a.api && !favoriteIds.has(a.id)),
+                  "name"
+              )
+            : []
+    $: apiBibles =
+        id === "scripture"
+            ? sortByName(
+                  scriptureEntries.filter(a => !a.collection && a.api && !favoriteIds.has(a.id)),
+                  "name"
+              )
+            : []
 
-    $: scriptureSections = id === "scripture" ? [
-        { id: "favorites", label: "category.favourites", items: favoritesList },
-        { id: "collections", label: "scripture.collections", items: collectionList },
-        { id: "local", label: "scripture.bibles_section", items: [...localBibles, ...apiBibles] }
-    ].filter(s => s.items.length > 0) : []
+    $: scriptureSections =
+        id === "scripture"
+            ? [
+                  { id: "favorites", label: "category.favourites", items: favoritesList },
+                  { id: "collections", label: "scripture.collections", items: collectionList },
+                  { id: "local", label: "scripture.bibles_section", items: [...localBibles, ...apiBibles] }
+              ].filter(s => s.items.length > 0)
+            : []
 
     function setCategory(catId: string) {
         _set("activeCategory", catId)
@@ -94,23 +109,29 @@
     $: timersCount = id === "functions" ? Object.keys($timers).length : 0
     $: triggersCount = id === "functions" ? Object.keys($triggers).length : 0
 
-    $: sortedActionTags = id === "functions" ? sortByName(keysToID($actionTags), "name")
-        .sort((a, b) => String(a.color || "").localeCompare(String(b.color || "")))
-        .map(a => ({
-            ...a,
-            label: a.name,
-            icon: "tag",
-            count: actionsTagsOnly.filter(b => b.includes(a.id)).length
-        })) : []
+    $: sortedActionTags =
+        id === "functions"
+            ? sortByName(keysToID($actionTags), "name")
+                  .sort((a, b) => String(a.color || "").localeCompare(String(b.color || "")))
+                  .map(a => ({
+                      ...a,
+                      label: a.name,
+                      icon: "tag",
+                      count: actionsTagsOnly.filter(b => b.includes(a.id)).length
+                  }))
+            : []
 
-    $: sortedVariableTags = id === "functions" ? sortByName(keysToID($variableTags), "name")
-        .sort((a, b) => String(a.color || "").localeCompare(String(b.color || "")))
-        .map(a => ({
-            ...a,
-            label: a.name,
-            icon: "tag",
-            count: variablesTagsOnly.filter(b => b.includes(a.id)).length
-        })) : []
+    $: sortedVariableTags =
+        id === "functions"
+            ? sortByName(keysToID($variableTags), "name")
+                  .sort((a, b) => String(a.color || "").localeCompare(String(b.color || "")))
+                  .map(a => ({
+                      ...a,
+                      label: a.name,
+                      icon: "tag",
+                      count: variablesTagsOnly.filter(b => b.includes(a.id)).length
+                  }))
+            : []
 
     function setFunctionsSubTab(tab: string) {
         functionsSubTab.set(tab)

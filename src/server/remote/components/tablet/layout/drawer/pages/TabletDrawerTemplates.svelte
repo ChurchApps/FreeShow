@@ -61,7 +61,7 @@
                         <div class="template-card">
                             <MaterialButton style="width: 100%; height: 100%; padding: 0; flex-direction: column; border-radius: 8px; overflow: hidden;" on:click={() => clickTemplate(template.id)} title={template.name || translate("main.unnamed", $dictionary)}>
                                 <div class="preview">
-                                    <Zoomed center {resolution} background={template.items?.length ? (template.settings?.backgroundColor || "var(--primary);") : (template.color || "var(--primary);")} checkered={!!template.items?.length && !template.settings?.backgroundColor}>
+                                    <Zoomed center {resolution} background={template.items?.length ? template.settings?.backgroundColor || "var(--primary);" : template.color || "var(--primary);"} checkered={!!template.items?.length && !template.settings?.backgroundColor}>
                                         {#each template.items || [] as item}
                                             <Textbox {item} />
                                         {/each}

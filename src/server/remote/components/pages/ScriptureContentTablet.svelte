@@ -30,18 +30,18 @@
 
     $: books = scripture?.books || []
     $: chapters = books[activeBook]?.chapters || []
-    
+
     // Helper: Load collection scripture data if needed
     function loadCollectionScripture(scrId: string, bookIndex: number, chapterIndex?: number) {
         if (scrId === id || !isCollection || scriptures.length <= 1) return
-        
+
         const scr = scriptures.find(s => s.id === scrId)
         if (!scr) return
-        
+
         const scrBooks = scr.data?.books || []
         const scrBook = scrBooks[bookIndex]
         if (!scrBook?.keyName) return
-        
+
         if (chapterIndex !== undefined) {
             // Load chapter data
             const scrChapters = scrBook?.chapters || []
@@ -56,7 +56,7 @@
             }
         }
     }
-    
+
     $: if (activeBook >= 0) {
         const bookObj: any = books[activeBook]
         if (bookObj?.keyName && !(bookObj?.chapters?.length > 0)) {
@@ -67,7 +67,7 @@
             scriptures.forEach(scr => loadCollectionScripture(scr.id, activeBook))
         }
     }
-    
+
     $: verses = chapters[activeChapter]?.verses || []
     $: if (activeChapter >= 0 && activeBook >= 0) {
         const bookObj: any = books[activeBook]
@@ -93,9 +93,7 @@
         const bookIndex = state.bookId
         const chapterIndex = state.chapterId
         const verseList = state.activeVerses
-        const latestVerse = Array.isArray(verseList) && verseList.length > 0 
-            ? parseInt(String(verseList[verseList.length - 1]), 10) 
-            : 0
+        const latestVerse = Array.isArray(verseList) && verseList.length > 0 ? parseInt(String(verseList[verseList.length - 1]), 10) : 0
 
         if (Number.isInteger(bookIndex) && bookIndex >= 0) displayedBookIndex = bookIndex
         if (Number.isInteger(chapterIndex) && chapterIndex >= 0) displayedChapterIndex = chapterIndex
@@ -222,7 +220,7 @@
     function getBookNumber(book: any): number {
         return typeof book?.number === "string" ? parseInt(book.number, 10) : (book?.number ?? 0)
     }
-    
+
     function getChapterNumber(chapter: any): number {
         return typeof chapter?.number === "string" ? parseInt(chapter.number, 10) : (chapter?.number ?? 0)
     }
@@ -230,7 +228,7 @@
     export function navigateToVerse(bookNum: number, chapterNum: number) {
         const bookIndex = books.findIndex((b: any) => getBookNumber(b) === bookNum)
         if (bookIndex < 0) return
-        
+
         activeBook = bookIndex
         const bookObj: any = books[bookIndex]
         const bookChapters = bookObj?.chapters || []
@@ -269,7 +267,7 @@
 
     function parseScriptureReference(reference: string): { bookIndex: number; chapterIndex: number; verseNumber: number } | null {
         if (!reference || !books?.length) return null
-        
+
         const match = reference.match(/^(.+?)\s+(\d+)(?:[:.,]\s*(\d+)|\s+(\d+))?(?:-\d+)?$/)
         if (!match) return null
 
@@ -283,9 +281,7 @@
 
         const bookIndex = books.findIndex(book => {
             const normalizedName = book.name.toLowerCase()
-            return normalizedName === normalizedBookName 
-                || normalizedName.includes(normalizedBookName) 
-                || normalizedBookName.includes(normalizedName)
+            return normalizedName === normalizedBookName || normalizedName.includes(normalizedBookName) || normalizedBookName.includes(normalizedName)
         })
 
         if (bookIndex === -1) return null
