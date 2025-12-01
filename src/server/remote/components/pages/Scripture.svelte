@@ -33,10 +33,29 @@
         localStorage.removeItem("collectionId")
     }
 
-    // Request scripture data only if it exists in store
-    $: if (openedScripture && checkScriptureExists(openedScripture, collectionId) && !$scriptureCache[openedScripture]) {
-        send("GET_SCRIPTURE", { id: openedScripture })
+    // Get all versions if this is a collection
+    $: collectionVersions = ((collectionId && $scriptures[collectionId]?.collection?.versions) || []) as string[]
+    $: allScriptureIds = (collectionVersions.length > 0 ? collectionVersions : openedScripture ? [openedScripture] : []) as string[]
+    $: isCollection = collectionVersions.length > 1
+
+    // Request scripture data for all versions in a collection
+    function loadCollectionScriptures(ids: string[]) {
+        ids.forEach(scriptureId => {
+            if (scriptureId && !$scriptureCache[scriptureId]) {
+                send("GET_SCRIPTURE", { id: scriptureId })
+            }
+        })
     }
+    $: if (allScriptureIds.length > 0) loadCollectionScriptures(allScriptureIds)
+
+    // Build array of all scriptures with their data for collections
+    $: allScripturesData = allScriptureIds
+        .map(sid => ({
+            id: sid,
+            data: $scriptureCache[sid],
+            name: ($scriptures[sid]?.customName || $scriptures[sid]?.name || sid) as string
+        }))
+        .filter(s => s.data)
 
     let depthBeforeSearch = 0
     let depth = 0
@@ -861,7 +880,7 @@
 
     <div class="bible">
         {#if $scriptureCache[openedScripture]}
-            <ScriptureContent id={collectionId || openedScripture} scripture={$scriptureCache[openedScripture]} bind:depth bind:currentBook bind:currentChapter bind:currentVerse bind:this={scriptureContentRef} />
+            <ScriptureContent id={collectionId || openedScripture} scripture={$scriptureCache[openedScripture]} scriptures={allScripturesData} {isCollection} bind:depth bind:currentBook bind:currentChapter bind:currentVerse bind:this={scriptureContentRef} />
         {:else if checkScriptureExists(openedScripture, collectionId)}
             <Loading />
         {/if}
