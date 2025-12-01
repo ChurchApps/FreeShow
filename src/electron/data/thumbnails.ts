@@ -10,6 +10,7 @@ import type { Resolution } from "../../types/Settings"
 import { requestToMain, sendToMain } from "../IPC/main"
 import { OutputHelper } from "../output/OutputHelper"
 import { createFolder, deleteFile, doesPathExist, doesPathExistAsync, getDataFolderPath, getFileStatsAsync, makeDir } from "../utils/files"
+import { appDataPath } from "./store"
 import { waitUntilValueIsDefined } from "../utils/helpers"
 import { captureOptions } from "../utils/windowOptions"
 import { imageExtensions, videoExtensions } from "./media"
@@ -98,15 +99,23 @@ async function generateThumbnail(data: Thumbnail) {
         generationFinished()
     }
 }
-
 let thumbnailFolderPath = ""
 export function getThumbnailFolderPath() {
     if (thumbnailFolderPath) return thumbnailFolderPath
 
-    const folderPath: string = path.join(app.getPath("temp"), "freeshow-cache")
-    if (!doesPathExist(folderPath)) makeDir(folderPath)
-    thumbnailFolderPath = folderPath
+    // use app data path for cache, fallback to temp if appData is not available
+    let folderPath: string
+    try {
+        folderPath = path.join(appDataPath, "media-cache")
+        if (!doesPathExist(folderPath)) makeDir(folderPath)
+    } catch (err) {
+        // fallback to temp directory if app data path is not accessible
+        // temp folder is periodically deleted on macOS
+        folderPath = path.join(app.getPath("temp"), "freeshow-cache")
+        if (!doesPathExist(folderPath)) makeDir(folderPath)
+    }
 
+    thumbnailFolderPath = folderPath
     return folderPath
 }
 
