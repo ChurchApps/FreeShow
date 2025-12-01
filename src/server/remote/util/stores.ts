@@ -87,6 +87,10 @@ export let overlays: Writable<Overlays> = writable({})
 export let overlayCategories: Writable<{ [key: string]: any }> = writable({})
 export let activeOverlayCategory: Writable<string> = writable("all")
 
+export let templates: Writable<{ [key: string]: any }> = writable({})
+export let templateCategories: Writable<{ [key: string]: any }> = writable({})
+export let activeTemplateCategory: Writable<string> = writable("all")
+
 export let mediaCache: Writable<any> = writable({})
 export let textCache: Writable<any> = writable({})
 export let groupsCache: Writable<any> = writable({})
@@ -136,6 +140,9 @@ export const _ = {
   overlays,
   overlayCategories,
   activeOverlayCategory,
+  templates,
+  templateCategories,
+  activeTemplateCategory,
   mediaCache,
   textCache,
   groupsCache,

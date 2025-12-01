@@ -253,6 +253,12 @@ export const receiver = {
     OVERLAY_CATEGORIES: (data: any) => {
         _set("overlayCategories", data)
     },
+    TEMPLATES: (data: any) => {
+        _set("templates", data)
+    },
+    TEMPLATE_CATEGORIES: (data: any) => {
+        _set("templateCategories", data)
+    },
     ACTIONS: (data: any) => {
         _set("actions", data)
     },

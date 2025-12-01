@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import { shows, dictionary, activeShow, activeCategory, categories } from "../../../../../util/stores"
-    import { translate, formatRelativeDate } from "../../../../../util/helpers"
+    import { translate, dateToString } from "../../../../../util/helpers"
     import { send } from "../../../../../util/socket"
     import { _set } from "../../../../../util/stores"
     import MaterialButton from "../../../../MaterialButton.svelte"
@@ -14,6 +14,12 @@
     // Sorting state
     let sortType = "name"
     let sortDirection = "asc"
+
+    // Helper: get timestamp for a show based on current sort type (matching frontend logic)
+    function getShowTimestamp(show: any): number {
+        const type = sortType === "modified" ? "modified" : sortType === "created" ? "created" : sortType === "used" ? "used" : "modified"
+        return show.timestamps?.[type] || show.timestamps?.modified || show.timestamps?.created || 0
+    }
 
     $: active = $activeCategory || "all"
 
@@ -156,7 +162,7 @@
                                                 <span class="number">{show.quickAccess?.number || show.meta?.number || ""}</span>
                                             {/if}
 
-                                            <span class="date">{formatRelativeDate(show.timestamps?.modified || show.timestamps?.created || 0)}</span>
+                                            <span class="date">{dateToString(getShowTimestamp(show), true)}</span>
                                         </span>
                                     </div>
                                 </MaterialButton>

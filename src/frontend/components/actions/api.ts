@@ -200,6 +200,7 @@ export const API_ACTIONS = {
     rearrange_groups: (data: API_rearrange) => rearrangeGroups(data),
     add_group: (data: API_group) => addGroup(data),
     set_template: (data: API_id) => setTemplate(data.id),
+    apply_template: (data: API_id) => setTemplate(data.id),
     transpose_show_up: (data: API_id) => formatText(transposeText(getPlainEditorText(data.id), 1), data.id),
     transpose_show_down: (data: API_id) => formatText(transposeText(getPlainEditorText(data.id), -1), data.id),
 

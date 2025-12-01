@@ -86,7 +86,7 @@
                             <div class="overlay-card" class:active={isActive}>
                                 <MaterialButton style="width: 100%; height: 100%; padding: 0; flex-direction: column; border-radius: 8px; overflow: hidden;" {isActive} on:click={() => toggleOverlay(overlay.id)} title={overlay.name || translate("main.unnamed", $dictionary)}>
                                     <div class="preview">
-                                        <Zoomed {resolution} background={overlay.items?.length ? "var(--primary);" : overlay.color || "var(--primary);"} checkered={!!overlay.items?.length}>
+                                        <Zoomed center {resolution} background={overlay.items?.length ? "var(--primary);" : overlay.color || "var(--primary);"} checkered={!!overlay.items?.length}>
                                             {#each overlay.items || [] as item}
                                                 <Textbox {item} />
                                             {/each}
@@ -100,7 +100,7 @@
 
                                     <div class="label">
                                         {#if overlay.isDefault}
-                                            <Icon id="protected" size={0.9} white />
+                                            <Icon id="protected" style="opacity: 0.6; margin-inline-start: 3px; position: absolute; left: 0;" size={0.6} white />
                                         {/if}
                                         <span class="name">{overlay.name || translate("main.unnamed", $dictionary)}</span>
                                     </div>
@@ -143,14 +143,16 @@
     }
 
     .overlay-card {
-        width: calc(33.333% - 6px);
+        width: calc(20% - 6.4px);
         min-width: 120px;
-        aspect-ratio: 16/9;
+        /* aspect-ratio: 16/9; */
         border-radius: 8px;
         overflow: hidden;
         position: relative;
         background-color: var(--primary);
         transition: outline 0.15s ease;
+        display: flex;
+        flex-direction: column;
     }
 
     .overlay-card.active {
@@ -169,7 +171,8 @@
     .preview {
         position: relative;
         width: 100%;
-        flex: 1;
+        /* flex: 1; */
+        aspect-ratio: 16/9;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -196,41 +199,52 @@
     }
 
     .label {
+        position: relative;
         display: flex;
         align-items: center;
-        justify-content: center;
-        gap: 5px;
-        padding: 6px 8px;
-        background-color: var(--primary-darker);
+        background-color: var(--primary-darkest);
+
+        font-size: 0.8em;
+        /* font-weight: bold; */
+
+        height: 25px;
+        flex: 1;
+
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        overflow: hidden;
+
         width: 100%;
-        min-height: 28px;
+        text-align: center;
+        padding: 4px 5px;
+        padding-bottom: 3px;
     }
 
     .name {
-        font-size: 0.85em;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        max-width: 100%;
+        width: 100%;
+        margin: 0 5px;
         text-align: center;
+        overflow-x: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 
     /* Responsive grid */
     @media (max-width: 600px) {
         .overlay-card {
-            width: calc(50% - 4px);
+            width: calc(33.333% - 6px);
         }
     }
 
     @media (min-width: 900px) {
         .overlay-card {
-            width: calc(25% - 6px);
+            width: calc(16.666% - 6.7px);
         }
     }
 
     @media (min-width: 1200px) {
         .overlay-card {
-            width: calc(20% - 6.4px);
+            width: calc(12.5% - 7px);
         }
     }
 </style>

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { categories, shows, activeCategory, dictionary, scriptures, openedScripture, collectionId, actions, actionTags, variables, variableTags, activeActionTagFilter, activeVariableTagFilter, functionsSubTab, timers, triggers, overlays, overlayCategories, activeOverlayCategory } from "../../../../util/stores"
+    import { categories, shows, activeCategory, dictionary, scriptures, openedScripture, collectionId, actions, actionTags, variables, variableTags, activeActionTagFilter, activeVariableTagFilter, functionsSubTab, timers, triggers, overlays, overlayCategories, activeOverlayCategory, templates, templateCategories, activeTemplateCategory } from "../../../../util/stores"
     import { translate, keysToID, sortByName } from "../../../../util/helpers"
     import { _set } from "../../../../util/stores"
     import Button from "../../../../../common/components/Button.svelte"
@@ -48,6 +48,14 @@
 
     function setOverlayCategory(catId: string) {
         activeOverlayCategory.set(catId)
+    }
+
+    // Templates tab logic - only computed when templates tab is active
+    $: templatesData = id === "templates" ? buildCategoryData(Object.values($templates || {}), $templateCategories) : EMPTY_CATEGORY_DATA
+    $: activeTemplate = $activeTemplateCategory || "all"
+
+    function setTemplateCategory(catId: string) {
+        activeTemplateCategory.set(catId)
     }
 
     // Scripture tab logic - only computed when scripture tab is active
@@ -331,6 +339,66 @@
                         <MaterialButton class="tab {activeOverlay === cat.id ? 'active' : ''}" on:click={() => setOverlayCategory(cat.id)} style="width: 100%; font-weight: normal; padding: 0.2em 0.8em;" isActive={activeOverlay === cat.id} tab>
                             <div style="max-width: 85%;" data-title={translate(cat.name, $dictionary) || cat.name}>
                                 <Icon id={cat.icon || "folder"} size={1} white={activeOverlay === cat.id} />
+                                <p style="margin: 5px;">{translate(cat.name, $dictionary) || cat.name}</p>
+                            </div>
+                            <span class="count">{count}</span>
+                        </MaterialButton>
+                    {/each}
+                </div>
+            {/if}
+        </div>
+    {:else if id === "templates"}
+        <div class="tabSection">
+            <!-- All & Unlabeled Section -->
+            <div class="section">
+                <MaterialButton class="tab {activeTemplate === 'all' ? 'active' : ''}" on:click={() => setTemplateCategory("all")} style="width: 100%; font-weight: normal; padding: 0.2em 0.8em;" isActive={activeTemplate === "all"} tab>
+                    <div style="max-width: 85%;" data-title={translate("category.all", $dictionary)}>
+                        <Icon id="all" size={1} white={activeTemplate === "all"} />
+                        <p style="margin: 5px;">{translate("category.all", $dictionary)}</p>
+                    </div>
+                    <span class="count">{templatesData.unarchivedItems.length}</span>
+                </MaterialButton>
+
+                {#if templatesData.uncategorizedCount}
+                    <MaterialButton class="tab {activeTemplate === 'unlabeled' ? 'active' : ''}" on:click={() => setTemplateCategory("unlabeled")} style="width: 100%; font-weight: normal; padding: 0.2em 0.8em;" isActive={activeTemplate === "unlabeled"} tab>
+                        <div style="max-width: 85%;" data-title={translate("category.unlabeled", $dictionary)}>
+                            <Icon id="noIcon" size={1} white={activeTemplate === "unlabeled"} />
+                            <p style="margin: 5px;">{translate("category.unlabeled", $dictionary)}</p>
+                        </div>
+                        <span class="count">{templatesData.uncategorizedCount}</span>
+                    </MaterialButton>
+                {/if}
+            </div>
+
+            <!-- Categories Section -->
+            {#if templatesData.unarchivedCategories.length}
+                <div class="section">
+                    <div class="title">{translate("guide_title.categories", $dictionary)}</div>
+                    {#each sortByName(templatesData.unarchivedCategories, "name") as cat}
+                        {@const count = templatesData.allItems.filter(s => s.category === cat.id).length}
+                        <MaterialButton class="tab {activeTemplate === cat.id ? 'active' : ''}" on:click={() => setTemplateCategory(cat.id)} style="width: 100%; font-weight: normal; padding: 0.2em 0.8em;" isActive={activeTemplate === cat.id} tab>
+                            <div style="max-width: 85%;" data-title={translate(cat.name, $dictionary) || cat.name}>
+                                <Icon id={cat.icon || "folder"} size={1} white={activeTemplate === cat.id} />
+                                <p style="margin: 5px;">{translate(cat.name, $dictionary) || cat.name}</p>
+                            </div>
+                            <span class="count">{count}</span>
+                        </MaterialButton>
+                    {/each}
+                </div>
+            {/if}
+
+            <!-- Archived Categories Section -->
+            {#if templatesData.archivedCategories.length}
+                <div class="section">
+                    <div class="separator">
+                        <div class="sepLabel">{translate("actions.archive_title", $dictionary)}</div>
+                        <hr />
+                    </div>
+                    {#each sortByName(templatesData.archivedCategories, "name") as cat}
+                        {@const count = templatesData.allItems.filter(s => s.category === cat.id).length}
+                        <MaterialButton class="tab {activeTemplate === cat.id ? 'active' : ''}" on:click={() => setTemplateCategory(cat.id)} style="width: 100%; font-weight: normal; padding: 0.2em 0.8em;" isActive={activeTemplate === cat.id} tab>
+                            <div style="max-width: 85%;" data-title={translate(cat.name, $dictionary) || cat.name}>
+                                <Icon id={cat.icon || "folder"} size={1} white={activeTemplate === cat.id} />
                                 <p style="margin: 5px;">{translate(cat.name, $dictionary) || cat.name}</p>
                             </div>
                             <span class="count">{count}</span>

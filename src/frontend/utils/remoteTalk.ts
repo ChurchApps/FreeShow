@@ -12,7 +12,7 @@ import { updateOut } from "../components/helpers/showActions"
 import { _show } from "../components/helpers/shows"
 import { clearAll } from "../components/output/clear"
 import { REMOTE } from "./../../types/Channels"
-import { actions, actionTags, activePage, activeProject, activeShow, activeTimers, categories, connections, dictionary, driveData, folders, language, openedFolders, outLocked, overlayCategories, overlays, projects, remotePassword, runningActions, scriptures, shows, showsCache, styles, timers, triggers, variableTags, variables } from "./../stores"
+import { actions, actionTags, activePage, activeProject, activeShow, activeTimers, categories, connections, dictionary, driveData, folders, language, openedFolders, outLocked, overlayCategories, overlays, projects, remotePassword, runningActions, scriptures, shows, showsCache, styles, templateCategories, templates, timers, triggers, variableTags, variables } from "./../stores"
 import { lastClickTime } from "./common"
 import { translateText } from "./language"
 import { send } from "./request"
@@ -331,6 +331,8 @@ export async function initializeRemote(id: string) {
     send(REMOTE, ["OVERLAY_CATEGORIES"], get(overlayCategories))
     send(REMOTE, ["SCRIPTURE"], get(scriptures))
     send(REMOTE, ["CATEGORIES"], get(categories))
+    send(REMOTE, ["TEMPLATES"], get(templates))
+    send(REMOTE, ["TEMPLATE_CATEGORIES"], get(templateCategories))
 
     // Send functions data
     send(REMOTE, ["ACTIONS"], get(actions))
