@@ -8,6 +8,7 @@ import path from "path"
 import type { Event } from "../../types/Calendar"
 import type { History } from "../../types/History"
 import { Main } from "../../types/IPC/Main"
+import { ToMain } from "../../types/IPC/ToMain"
 import type { Config, ErrorLog, Media } from "../../types/Main"
 import type { Themes } from "../../types/Settings"
 import type { Overlays, Templates, TrimmedShows } from "../../types/Show"
@@ -18,7 +19,6 @@ import { dataFolderNames, deleteFile, doesPathExist, getDataFolderPath, getDataF
 import { clone } from "../utils/helpers"
 import "./contentProviders"
 import { defaultConfig, defaultSettings, defaultSyncedSettings } from "./defaults"
-import { ToMain } from "../../types/IPC/ToMain"
 
 // NOTE: defaults will always replace the keys with any in the default when they are removed
 
@@ -90,38 +90,88 @@ function checkStores(dataPath: string) {
 export let _store: { [key in keyof typeof storeFilesData]?: Store<any> } = {}
 
 export function createStores(previousLocation?: string | null, setup: boolean = false) {
-    let configFolderPath = getDataFolderPath("userData")
-
-    if (!doesPathExist(configFolderPath)) {
-        try {
-            mkdirSync(configFolderPath, { recursive: true })
-        } catch (err) {
-            if (previousLocation) {
-                configFolderPath = previousLocation
-            } else {
-                config.set("dataPath", "")
-                configFolderPath = getDataFolderPath("userData")
-            }
-
-            config.set("dataPath", configFolderPath)
-            sendMain(Main.DATA_PATH, configFolderPath)
-            sendToMain(ToMain.ALERT, "Error: No permission to folder!")
-        }
-    }
+    const configFolderPath = getWritableConfigPath(previousLocation, setup)
+    if (!configFolderPath) return
     if (previousLocation === configFolderPath) previousLocation = ""
 
     Object.entries(storeFilesData).forEach(([key, data]) => {
-        _store[key as keyof typeof storeFilesData] = new Store({
+        const createStoreConfig = (useCwd: boolean) => ({
             name: data.fileName,
             defaults: data.defaults,
-            cwd: data.portable ? configFolderPath : undefined,
-            serialize: (data as any).minify ? v => JSON.stringify(v) : undefined,
+            cwd: useCwd && data.portable ? configFolderPath : undefined,
+            serialize: (data as any).minify ? (v: any) => JSON.stringify(v) : undefined,
             accessPropertiesByDotNotation: key === "MEDIA" ? false : true
         })
 
-        // move user data files to data/Config folder if not already
-        if (previousLocation && data.portable) moveStore(key as keyof typeof storeFilesData, previousLocation, setup)
+        try {
+            _store[key as keyof typeof storeFilesData] = new Store(createStoreConfig(true))
+
+            // move user data files to data/Config folder if not already
+            if (previousLocation && data.portable) moveStore(key as keyof typeof storeFilesData, previousLocation, setup)
+        } catch (err) {
+            console.error(`Failed to create store for ${key} with cwd:`, err)
+
+            // try again at app data location
+            try {
+                _store[key as keyof typeof storeFilesData] = new Store(createStoreConfig(false))
+                console.log(`Created store for ${key} without custom cwd`)
+            } catch (fallbackErr) {
+                console.error(`Failed to create store for ${key} even without cwd:`, fallbackErr)
+            }
+        }
     })
+}
+
+function getWritableConfigPath(previousLocation?: string | null, setup: boolean = false): string | null {
+    let configFolderPath = getDataFolderPath("userData")
+
+    if (doesPathExist(configFolderPath)) return configFolderPath
+
+    try {
+        // try to create "Config" folder at current path
+        if (!configFolderPath) throw new Error("No config folder path")
+        mkdirSync(configFolderPath, { recursive: true })
+    } catch (err) {
+        sendToMain(ToMain.ALERT, "Error: No permission to create folder!")
+
+        // in setup previous path is the app data path
+        if (setup && previousLocation) return previousLocation
+
+        // fallback to previous (often the default data path), or default data path
+        const dataFolderPath = previousLocation || getDefaultDataFolderRoot()
+        if (dataFolderPath) {
+            config.set("dataPath", dataFolderPath)
+            sendMain(Main.DATA_PATH, dataFolderPath)
+        }
+
+        configFolderPath = getDataFolderPath("userData")
+
+        if (doesPathExist(configFolderPath)) return configFolderPath
+
+        try {
+            if (!configFolderPath) throw new Error("No config folder path")
+            mkdirSync(configFolderPath, { recursive: true })
+        } catch (err) {
+            // fallback to app data path
+            config.set("dataPath", appDataPath)
+            sendMain(Main.DATA_PATH, appDataPath)
+
+            configFolderPath = getDataFolderPath("userData")
+
+            if (doesPathExist(configFolderPath)) return configFolderPath
+
+            try {
+                if (!configFolderPath) throw new Error("No config folder path")
+                mkdirSync(configFolderPath, { recursive: true })
+            } catch (err) {
+                console.error("Could not get a writable data folder", err)
+                sendToMain(ToMain.ALERT, "Error: No permission to create data folder! Try installing as administrator.")
+                return null
+            }
+        }
+    }
+
+    return configFolderPath
 }
 
 // ----- GET STORE -----

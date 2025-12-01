@@ -27,6 +27,8 @@ function actionComplete(err: Error | null, actionFailedMessage: string) {
 // GENERAL
 
 export function doesPathExist(filePath: string): boolean {
+    if (!filePath) return false
+
     try {
         return fs.existsSync(filePath)
     } catch (err) {
