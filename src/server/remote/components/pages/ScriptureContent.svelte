@@ -563,7 +563,6 @@
                     {@const verseNumber = Number(verse.number) || i + 1}
                     {@const isDisplayed = activeBook === displayedBookIndex && activeChapter === displayedChapterIndex && verseNumber === displayedVerseNumber}
                     {@const isActive = activeVerse === verseNumber}
-                    
                     {#if tablet && i === Math.max(0, verses.length - 6)}
                         <div style="float: right; width: 220px; height: 80px;"></div>
                     {/if}
@@ -595,7 +594,6 @@
             {/if}
         </div>
     {/if}
-    </div>
 </div>
 
 <style>

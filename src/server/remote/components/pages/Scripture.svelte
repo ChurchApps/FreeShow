@@ -37,12 +37,26 @@
     }
 
     $: scripturesLoaded = Object.keys($scriptures).length > 0
+
+    $: allScripturesData = Object.keys($scriptures)
         .map(sid => ({
             id: sid,
             data: $scriptureCache[sid],
             name: ($scriptures[sid]?.customName || $scriptures[sid]?.name || sid) as string
         }))
         .filter(s => s.data)
+
+    $: isCollection = !!($collectionId && $scriptures[$collectionId]?.collection)
+
+    // Validate stored scripture ID and reset if invalid (prevents infinite loading on first launch)
+    $: if (scripturesLoaded && $openedScripture && !checkScriptureExists($openedScripture, $collectionId)) {
+        openScripture("", "")
+    }
+
+    // Request scripture data only if it exists in store
+    $: if ($openedScripture && checkScriptureExists($openedScripture, $collectionId) && !$scriptureCache[$openedScripture]) {
+        send("GET_SCRIPTURE", { id: $openedScripture })
+    }
 
     let depthBeforeSearch = 0
     let depth = 0
@@ -943,11 +957,6 @@
     {/if}
 
     <div class="bible">
-<<<<<<< HEAD
-        {#if $scriptureCache[openedScripture]}
-            <ScriptureContent id={collectionId || openedScripture} scripture={$scriptureCache[openedScripture]} scriptures={allScripturesData} {isCollection} bind:depth bind:currentBook bind:currentChapter bind:currentVerse bind:this={scriptureContentRef} />
-        {:else if checkScriptureExists(openedScripture, collectionId)}
-=======
         {#if $scriptureCache[$openedScripture]}
             {#if tablet}
                 {#if searchValue.trim() && searchResults.length > 0}
@@ -973,7 +982,7 @@
                     <ScriptureContentTablet id={$collectionId || $openedScripture} scripture={$scriptureCache[$openedScripture]} bind:currentBook bind:currentChapter bind:currentVerse bind:this={scriptureContentRef} />
                 {/if}
             {:else}
-                <ScriptureContent id={$collectionId || $openedScripture} scripture={$scriptureCache[$openedScripture]} bind:depth bind:currentBook bind:currentChapter bind:currentVerse bind:this={scriptureContentRef} />
+                <ScriptureContent id={$collectionId || $openedScripture} scripture={$scriptureCache[$openedScripture]} scriptures={allScripturesData} {isCollection} bind:depth bind:currentBook bind:currentChapter bind:currentVerse bind:this={scriptureContentRef} />
             {/if}
 
             {#if tablet}
@@ -999,7 +1008,6 @@
                 </div>
             {/if}
         {:else if checkScriptureExists($openedScripture, $collectionId)}
->>>>>>> 895e25ef (Redo Tablet Mode)
             <Loading />
         {/if}
     </div>
