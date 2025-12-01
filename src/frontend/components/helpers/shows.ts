@@ -279,7 +279,7 @@ export function _show(id = "active") {
                         const linesDefined = !!lines?.length
                         showsCache.update(a => {
                             if (!a[id]) return a
-                            if (!slideIds.length) slideIds = Object.keys(a[id].layouts)
+                            if (!slideIds.length) slideIds = Object.keys(a[id].layouts || {})
                             slideIds.forEach(slideId => {
                                 if (!a[id].slides[slideId]) return
                                 if (!indexesDefined) indexes = a[id].slides[slideId].items.map((_: any, i: number) => i)

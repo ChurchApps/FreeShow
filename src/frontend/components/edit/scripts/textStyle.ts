@@ -70,7 +70,7 @@ function combine(item: Item): Item {
 
 // add new style to string and remove old
 export function addStyleString(oldStyle: string, style: any[]): string {
-    if (!oldStyle) return ""
+    if (!oldStyle) return style[1] !== null ? style.join(":") + ";" : ""
 
     let array: string[] = oldStyle.split(";")
     // remove last if empty
