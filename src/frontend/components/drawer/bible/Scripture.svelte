@@ -884,7 +884,8 @@
                             {#each splittedVerses as content}
                                 {@const { id, subverse, endNumber } = getVerseIdParts(content.id)}
                                 {@const showSplitSuffix = $scriptureSettings.splitLongVersesSuffix}
-                                {@const verseLabel = buildVerseLabel(id, subverse, endNumber, showSplitSuffix)}
+                                {@const showSuffixInPicker = $scriptureMode === "grid" ? true : showSplitSuffix}
+                                {@const verseLabel = buildVerseLabel(id, subverse, endNumber, showSuffixInPicker)}
                                 {@const isActive = activeReference.verses[activeReference.verses.length - 1]?.find(vid => vid.toString() === content.id || vid.toString() === id.toString())}
                                 {@const text = formatBibleText(content.text, true)}
                                 {@const collectionVerses = isCollection && $scriptureMode !== "grid" ? getCollectionVerses(id) : []}
@@ -904,11 +905,7 @@
                                     on:dblclick={e => (isActiveInOutput && !e.ctrlKey && !e.metaKey ? false : playScripture())}
                                     role="none"
                                 >
-                                    <span class="v" style={endNumber && subverse && showSplitSuffix ? "width: 60px;" : ""}>
-                                        {verseLabel.base}
-                                        <!-- WIP style position not very good -->
-                                        {#if verseLabel.suffix}<span style="padding: 0;color: var(--text);opacity: 0.5;font-size: 0.8em;">{verseLabel.suffix}</span>{/if}
-                                    </span>
+                                    <span class="v" style={endNumber && subverse && showSuffixInPicker ? "width: 60px;" : ""}>{verseLabel.base}{#if verseLabel.suffix}<span style="padding: 0;color: var(--text);opacity: 0.5;font-size: 0.8em;">{verseLabel.suffix}</span>{/if}</span>
 
                                     {#if $scriptureMode !== "grid"}
                                         {#if isCollection && collectionVerses.length > 1}
