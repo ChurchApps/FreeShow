@@ -355,6 +355,7 @@
     "inputs": {
         "name": "Name",
         "url": "URL",
+        "group": "Group",
         "method": "Method",
         "contentType": "Content Type",
         "payload": "Payload",

@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onDestroy } from "svelte"
     import { NDI } from "../../../../types/Channels"
-    import { outLocked, outputs } from "../../../stores"
+    import { outLocked, outputs, special } from "../../../stores"
     import { destroy, receive, send } from "../../../utils/request"
     import { getFirstActiveOutput, setOutput } from "../../helpers/output"
     import T from "../../helpers/T.svelte"
@@ -24,8 +24,10 @@
         }
     }
 
+    $: groups = $special?.ndiInputGroups || ""
+
     receive(NDI, receiveNDI, "NDI_CAPTURE")
-    send(NDI, ["RECEIVE_LIST"])
+    $: send(NDI, ["RECEIVE_LIST"], { groups })
     onDestroy(() => destroy(NDI, "NDI_CAPTURE"))
 </script>
 

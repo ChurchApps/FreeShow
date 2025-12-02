@@ -1,8 +1,9 @@
 <script lang="ts">
-    import { activeRecording, currentRecordingStream, drawerTabsData } from "../../../stores"
+    import { activeRecording, currentRecordingStream, drawerTabsData, special } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
+    import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
     import { mediaRecorderIsPaused, stopMediaRecorder, toggleMediaRecorder } from "./recorder"
 
     $: active = $drawerTabsData.media?.openedSubSubTab?.screens || "screens"
@@ -15,6 +16,14 @@
 
     let paused = false
     $: paused ? videoElem?.pause() : videoElem?.play()
+
+    function updateSpecial(key: string, value: any) {
+        special.update(a => {
+            if (!value) delete a[key]
+            else a[key] = value
+            return a
+        })
+    }
 </script>
 
 {#if $activeRecording}
@@ -47,6 +56,10 @@
 {:else if active === "screens" || active === "windows"}
     <div class="scroll" style="padding: 10px;">
         <T id="empty.recording" />
+    </div>
+{:else if active === "ndi"}
+    <div class="scroll" style="padding: 10px;">
+        <MaterialTextInput label="inputs.group" title="settings.comma_seperated" value={$special?.ndiInputGroups || ""} placeholder="public" on:change={e => updateSpecial("ndiInputGroups", e.detail)} />
     </div>
 {/if}
 
