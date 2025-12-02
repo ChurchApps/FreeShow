@@ -12,7 +12,7 @@ export async function receiveNDI(e: Electron.IpcMainEvent, msg: Message) {
 }
 
 export const ndiResponses = {
-    RECEIVE_LIST: async () => await NdiReceiver.findStreamsNDI(),
+    RECEIVE_LIST: async (data: { groups?: string }) => await NdiReceiver.findStreamsNDI(data),
     RECEIVE_STREAM: (data: { source: { name: string; urlAddress: string; id: string } }) => NdiReceiver.receiveStreamFrameNDI(data),
     CAPTURE_STREAM: (data: { source: { name: string; urlAddress: string; id: string }; outputId: string }) => NdiReceiver.captureStreamNDI(data),
     CAPTURE_DESTROY: (data: { id: string; outputId?: string }) => NdiReceiver.stopReceiversNDI(data),

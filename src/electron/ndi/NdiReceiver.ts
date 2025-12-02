@@ -50,14 +50,14 @@ export class NdiReceiver {
         }
     }
 
-    static async findStreamsNDI(): Promise<{ name: string; urlAddress: string }[]> {
+    static async findStreamsNDI(data: { groups?: string }): Promise<{ name: string; urlAddress: string }[]> {
         if (this.ndiDisabled) return []
         if (this.findSourcesInterval) clearInterval(this.findSourcesInterval)
 
         const grandiose = await loadGrandiose()
         if (!grandiose) return []
 
-        const finder: any = await grandiose.find({ showLocalSources: true })
+        const finder: any = await grandiose.find({ showLocalSources: true, groups: data.groups || "" })
         return new Promise<any[]>(resolve => {
             // without the interval it only finds one source: https://github.com/emanspeaks/grandiose/commit/271cd73b5269ab827155a1a944c15d3b5fe4d564
             let previousLength = 0
