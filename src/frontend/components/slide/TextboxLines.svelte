@@ -208,11 +208,13 @@
     }
 
     // UPDATE DYNAMIC VALUES e.g. {time_} EVERY SECOND
+    // & update instantly when variables or item change
     let updateDynamic = 0
-    $: if ($variables) updateDynamic++
-    const dynamicInterval = setInterval(() => {
+    $: if ($variables || item) setTimeout(update)
+    const dynamicInterval = setInterval(update, 1000)
+    function update() {
         updateDynamic++
-    }, 1000)
+    }
 
     $: chordFontSize = chordLines.length ? stageItem?.chords?.size || stageItem?.chordsData?.size || item?.chords?.size || 50 : 0
     $: chordsStyle = `--chord-size: ${chordLines.length ? (fontSize || cssFontSize) * (chordFontSize / 100) : "undefined"}px;--chord-color: ${stageItem?.chords?.color || stageItem?.chordsData?.color || item?.chords?.color || "#FF851B"};`
