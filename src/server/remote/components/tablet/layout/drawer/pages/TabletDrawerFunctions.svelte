@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onDestroy } from "svelte"
+    import { onDestroy, onMount } from "svelte"
     import { dictionary, actions, actionTags, activeActionTagFilter, variables, activeVariableTagFilter, timers, triggers, activeTimers, runningActions, functionsSubTab } from "../../../../../util/stores"
     import { translate, keysToID, sortByName, formatTime } from "../../../../../util/helpers"
     import { send } from "../../../../../util/socket"
@@ -25,6 +25,10 @@
         tick++
     }, 1000)
     onDestroy(() => clearInterval(interval))
+
+    onMount(() => {
+        send("GET_FUNCTIONS")
+    })
 
     function getCurrentTimerValue(timer: any, _tick: number) {
         const activeTimer = $activeTimers.find(a => a.id === timer.id)
@@ -122,7 +126,7 @@
                                 {:else}
                                     <Icon id="actions" />
                                 {/if}
-                                <p style="font-size: 1em; font-weight: normal;">
+                                <p style="font-size: 1em; font-weight: normal; color: var(--text);">
                                     {action.name || translate("main.unnamed", $dictionary)}
                                 </p>
                             </span>
@@ -290,7 +294,7 @@
         flex-direction: column;
         flex: 1;
         overflow-y: auto;
-        background-color: var(--primary-darker);
+        background-color: var(--primary-darkest);
         padding: 5px;
     }
 
@@ -549,6 +553,8 @@
 
     .trigger p {
         font-size: 1em;
+        font-weight: normal;
+        color: var(--text);
         width: 100%;
         height: 100%;
         white-space: normal;

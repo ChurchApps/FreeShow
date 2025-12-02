@@ -48,7 +48,7 @@ export let projects: Writable<any[]> = writable([])
 export let project: Writable<string> = writable("")
 
 export let scriptures: Writable<{ [key: string]: BibleCategories }> = writable({})
-export let selectedTranslationIndex: Writable<number | null> = writable(null) // null = all, number = specific translation index
+export let selectedTranslationIndex: Writable<number | null> = writable(0) // null = all, number = specific translation index
 export let categories: Writable<{ [key: string]: any }> = writable({})
 export let resized: Writable<{ [key: string]: number }> = writable({})
 export let scriptureViewList = writable(false)

@@ -15,6 +15,6 @@
         flex-direction: column;
         flex: 1;
         overflow-y: auto;
-        background-color: var(--primary-darker);
+        background-color: var(--primary-darkest);
     }
 </style>

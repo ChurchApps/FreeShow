@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { onMount } from "svelte"
     import type { Template } from "../../../../../../../types/Show"
     import Icon from "../../../../../../common/components/Icon.svelte"
     import Center from "../../../../../../common/components/Center.svelte"
@@ -46,10 +47,22 @@
 
     // Handle template click
     function clickTemplate(templateId: string) {
-        send("API:apply_template", { id: templateId })
+        send("API:set_template", { id: templateId })
     }
 
     const ignoreDefault = ["metadata", "message", "double"]
+
+    let isLoading = true
+    onMount(() => {
+        send("GET_TEMPLATES")
+
+        // Fallback to stop loading if no data comes in
+        setTimeout(() => {
+            isLoading = false
+        }, 1000)
+    })
+
+    $: if (templatesList.length > 0) isLoading = false
 </script>
 
 <div class="scroll-container">
@@ -57,7 +70,7 @@
         {#if templatesList.length}
             {#if sortedTemplates.length}
                 <div class="grid">
-                    {#each sortedTemplates as template}
+                    {#each sortedTemplates as template (template.id)}
                         <div class="template-card">
                             <MaterialButton style="width: 100%; height: 100%; padding: 0; flex-direction: column; border-radius: 8px; overflow: hidden;" on:click={() => clickTemplate(template.id)} title={template.name || translate("main.unnamed", $dictionary)}>
                                 <div class="preview">
@@ -81,6 +94,8 @@
             {:else}
                 <Center faded>{translate("empty.search", $dictionary)}</Center>
             {/if}
+        {:else if isLoading}
+            <Center faded>{translate("remote.loading", $dictionary)}</Center>
         {:else}
             <Center faded>{translate("empty.general", $dictionary)}</Center>
         {/if}
@@ -98,7 +113,7 @@
         display: flex;
         flex-direction: column;
         height: 100%;
-        background-color: var(--primary-darker);
+        background-color: var(--primary-darkest);
         padding-bottom: 60px;
     }
 

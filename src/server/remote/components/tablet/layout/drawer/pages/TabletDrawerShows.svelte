@@ -193,7 +193,7 @@
         flex-direction: column;
         height: 100%;
         overflow: hidden;
-        background-color: var(--primary-darker);
+        background-color: var(--primary-darkest);
 
         --number-width: 100px;
         --modified-width: 220px;

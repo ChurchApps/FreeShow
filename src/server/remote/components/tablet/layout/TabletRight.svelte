@@ -64,7 +64,7 @@
                         {#if activeOverlayItems.length}
                             <div class="overlays-layer">
                                 <Zoomed {resolution} background="transparent">
-                                    {#each activeOverlayItems as { overlay }}
+                                    {#each activeOverlayItems as { id, overlay } (id)}
                                         {#each overlay.items || [] as item}
                                             <Textbox {item} />
                                         {/each}

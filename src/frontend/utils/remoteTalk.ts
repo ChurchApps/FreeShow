@@ -284,6 +284,27 @@ export const receiveREMOTE: any = {
         }
 
         return msg
+    },
+    GET_OVERLAYS: (msg: any) => {
+        msg.data = { overlays: get(overlays), categories: get(overlayCategories) }
+        return msg
+    },
+    GET_TEMPLATES: (msg: any) => {
+        msg.data = { templates: get(templates), categories: get(templateCategories) }
+        return msg
+    },
+    GET_FUNCTIONS: (msg: any) => {
+        msg.data = {
+            actions: get(actions),
+            actionTags: get(actionTags),
+            variables: get(variables),
+            variableTags: get(variableTags),
+            timers: get(timers),
+            triggers: get(triggers),
+            activeTimers: get(activeTimers),
+            runningActions: get(runningActions)
+        }
+        return msg
     }
 }
 
@@ -327,22 +348,8 @@ export async function initializeRemote(id: string) {
     sendData(REMOTE, { id, channel: "OUT_DATA" })
 
     // Send additional data
-    send(REMOTE, ["OVERLAYS"], get(overlays))
-    send(REMOTE, ["OVERLAY_CATEGORIES"], get(overlayCategories))
     send(REMOTE, ["SCRIPTURE"], get(scriptures))
     send(REMOTE, ["CATEGORIES"], get(categories))
-    send(REMOTE, ["TEMPLATES"], get(templates))
-    send(REMOTE, ["TEMPLATE_CATEGORIES"], get(templateCategories))
-
-    // Send functions data
-    send(REMOTE, ["ACTIONS"], get(actions))
-    send(REMOTE, ["ACTION_TAGS"], get(actionTags))
-    send(REMOTE, ["VARIABLES"], get(variables))
-    send(REMOTE, ["VARIABLE_TAGS"], get(variableTags))
-    send(REMOTE, ["TIMERS"], get(timers))
-    send(REMOTE, ["TRIGGERS"], get(triggers))
-    send(REMOTE, ["ACTIVE_TIMERS"], get(activeTimers))
-    send(REMOTE, ["RUNNING_ACTIONS"], get(runningActions))
 }
 
 export async function convertBackgrounds(show: Show, noLoad = false, init = false) {

@@ -61,7 +61,6 @@
         bottom: 10px;
         right: 10px;
         display: flex;
-        flex-direction: column;
         gap: 4px;
         z-index: 10;
     }

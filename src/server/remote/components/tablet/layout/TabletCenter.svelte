@@ -36,6 +36,18 @@
     function setText() {
         textValue = $textCache[$activeShow?.id || ""]
     }
+    function cancel() {
+        editOpened = false
+        reset()
+    }
+
+    function save() {
+        editOpened = false
+        if ($textCache[$activeShow?.id || ""] === textValue) return
+
+        send("API:set_plain_text", { id: $activeShow?.id, value: textValue })
+    }
+
     function done() {
         if (addGroups) {
             addGroups = false
@@ -47,11 +59,6 @@
             addGroups = false
             return
         }
-
-        editOpened = false
-        if ($textCache[$activeShow?.id || ""] === textValue) return
-
-        send("API:set_plain_text", { id: $activeShow?.id, value: textValue })
     }
 
     function getName(group: string, layoutSlideId: string, index: number) {
@@ -139,95 +146,109 @@
             }
         }
     }
+    $: layoutSlides = $activeShow ? GetLayout($activeShow, $activeShow?.settings?.activeLayout) : []
 </script>
 
 <div class="center-panel">
     {#if ($active.type || "show") === "show"}
         {#if $activeShow}
-            {#if groupsOpened || editOpened}
-                {#if groupsOpened}
-                    {#if addGroups}
-                        <AddGroups show={$activeShow} on:added={() => (addGroups = false)} />
+            <div style="flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden;">
+                {#if groupsOpened || editOpened}
+                    {#if groupsOpened}
+                        {#if addGroups}
+                            <AddGroups show={$activeShow} on:added={() => (addGroups = false)} />
+                        {:else}
+                            <GroupsEdit show={$activeShow} />
+                        {/if}
                     {:else}
-                        <GroupsEdit show={$activeShow} />
+                        <TextEdit bind:value={textValue} />
                     {/if}
                 {:else}
-                    <TextEdit bind:value={textValue} />
-                {/if}
-
-                <div class="buttons edit-buttons" style="position: relative; z-index: 2;">
-                    {#if groupsOpened && !addGroups}
-                        <Button on:click={() => (addGroups = true)} variant="outlined" style="width: 100%;" center>
-                            <Icon id="add" right />
-                            {translate("settings.add", $dictionary)}
-                        </Button>
-                    {/if}
-
-                    <Button on:click={done} dark style="width: 100%;" center class="done-button">
-                        <Icon id={addGroups ? "back" : "check"} right />
-                        {translate(`actions.${addGroups ? "back" : "done"}`, $dictionary)}
-                    </Button>
-                </div>
-            {:else}
-                <div bind:this={scrollElem} on:scroll={handleScroll} class="scroll" style="flex: 1;min-height: 0;overflow-y: auto;background-color: var(--primary-darkest);scroll-behavior: smooth;display: flex;flex-direction: column;">
-                    {#if slideView === "lyrics"}
-                        {#each GetLayout($activeShow, $activeShow?.settings?.activeLayout) as layoutSlide, i}
-                            {#if !layoutSlide.disabled}
-                                <span style="padding: 5px;{$outShow?.id === $activeShow.id && outNumber === i ? 'background-color: rgba(0 0 0 / 0.6);' : ''}" role="button" tabindex="0" on:click={() => playSlide(i)} on:keydown={e => (e.key === "Enter" ? playSlide(i) : null)}>
-                                    <span class="group" style="opacity: 0.6;font-size: 0.8em;display: flex;justify-content: center;position: relative;">
-                                        <span style="left: 0;position: absolute;">{i + 1}</span>
-                                        <span>{$activeShow.slides[layoutSlide.id].group === null ? "" : getName($activeShow.slides[layoutSlide.id].group || "", layoutSlide.id, i)}</span>
+                    <div bind:this={scrollElem} on:scroll={handleScroll} class="scroll" style="flex: 1;min-height: 0;overflow-y: auto;background-color: var(--primary-darkest);scroll-behavior: smooth;display: flex;flex-direction: column;">
+                        {#if slideView === "lyrics"}
+                            {#each layoutSlides as layoutSlide, i (layoutSlide.id)}
+                                {#if !layoutSlide.disabled}
+                                    <span style="padding: 5px;{$outShow?.id === $activeShow.id && outNumber === i ? 'background-color: rgba(0 0 0 / 0.6);' : ''}" role="button" tabindex="0" on:click={() => playSlide(i)} on:keydown={e => (e.key === "Enter" ? playSlide(i) : null)}>
+                                        <span class="group" style="opacity: 0.6;font-size: 0.8em;display: flex;justify-content: center;position: relative;">
+                                            <span style="left: 0;position: absolute;">{i + 1}</span>
+                                            <span>{$activeShow.slides[layoutSlide.id].group === null ? "" : getName($activeShow.slides[layoutSlide.id].group || "", layoutSlide.id, i)}</span>
+                                        </span>
+                                        {#each $activeShow.slides[layoutSlide.id].items as item}
+                                            {#if item.lines}
+                                                <div class="lyric" style="font-size: 1.1em;text-align: center;">
+                                                    {#each item.lines as line}
+                                                        <div class="break">
+                                                            {#each line.text || [] as text}
+                                                                <span>{@html text.value}</span>
+                                                            {/each}
+                                                        </div>
+                                                    {/each}
+                                                </div>
+                                            {:else}
+                                                <span style="opacity: 0.5;">—</span>
+                                            {/if}
+                                        {/each}
                                     </span>
-                                    {#each $activeShow.slides[layoutSlide.id].items as item}
-                                        {#if item.lines}
-                                            <div class="lyric" style="font-size: 1.1em;text-align: center;">
-                                                {#each item.lines as line}
-                                                    <div class="break">
-                                                        {#each line.text || [] as text}
-                                                            <span>{@html text.value}</span>
-                                                        {/each}
-                                                    </div>
-                                                {/each}
-                                            </div>
-                                        {:else}
-                                            <span style="opacity: 0.5;">—</span>
-                                        {/if}
-                                    {/each}
-                                </span>
-                            {/if}
-                        {/each}
-                    {:else}
-                        <Slides {dictionary} {scrollElem} on:click={e => playSlide(e.detail)} outSlide={outNumber} columns={3} />
-                    {/if}
-                </div>
+                                {/if}
+                            {/each}
+                        {:else}
+                            <Slides {dictionary} {scrollElem} on:click={e => playSlide(e.detail)} outSlide={outNumber} columns={3} />
+                        {/if}
+                    </div>
+                {/if}
+            </div>
 
-                <div class="layouts">
-                    <div style="display: flex;">
+            <div class="layouts">
+                <div style="display: flex;">
+                    {#if !groupsOpened && !editOpened}
                         {#each Object.keys($activeShow.layouts || {}) as id}
                             {@const layout = $activeShow.layouts[id]}
                             <Button on:click={() => changeLayout(id)} active={$activeShow.settings?.activeLayout === id}>
                                 {layout.name}
                             </Button>
                         {/each}
-                    </div>
+                    {/if}
+                </div>
 
-                    <div class="buttons">
+                <div class="buttons">
+                    {#if groupsOpened}
+                        {#if !addGroups}
+                            <Button on:click={() => (addGroups = true)} variant="outlined" center>
+                                <Icon id="add" />
+                                {translate("settings.add", $dictionary)}
+                            </Button>
+                        {/if}
+
+                        <Button on:click={done} dark center class="done-button">
+                            <Icon id={addGroups ? "back" : "check"} />
+                            {translate(`actions.${addGroups ? "back" : "done"}`, $dictionary)}
+                        </Button>
+                    {:else if editOpened}
+                        <Button on:click={cancel} variant="outlined" center>
+                            <Icon id="close" />
+                            {translate("actions.cancel", $dictionary)}
+                        </Button>
+                        <Button on:click={save} dark center>
+                            <Icon id="save" />
+                            {translate("actions.save", $dictionary)}
+                        </Button>
+                    {:else}
                         <Button class="context #slideViews" on:click={() => (slideView = slidesViews[slideView])} variant="outlined">
                             <Icon size={1.3} id={slideView} white />
                         </Button>
 
                         <Button on:click={() => (groupsOpened = true)} variant="outlined" center class="toolButton">
-                            <Icon id="groups" right />
+                            <Icon id="groups" />
                             {translate("tools.groups", $dictionary)}
                         </Button>
-                    </div>
-                </div>
 
-                <!-- Floating Edit Button -->
-                <Button class="floating-edit-btn" on:click={() => (editOpened = true)} title={translate("titlebar.edit", $dictionary)}>
-                    <Icon id="edit" size={1.5} white />
-                </Button>
-            {/if}
+                        <Button on:click={() => (editOpened = true)} variant="outlined" center class="toolButton">
+                            <Icon id="edit" />
+                            {translate("titlebar.edit", $dictionary)}
+                        </Button>
+                    {/if}
+                </div>
+            </div>
         {:else}
             <div style="flex: 1; display: flex; justify-content: center; align-items: center; opacity: 0.5; padding-bottom: 20%;">
                 {translate("empty.show", $dictionary)}
@@ -262,14 +283,12 @@
     .layouts {
         display: flex;
         justify-content: space-between;
-
         background-color: var(--primary-darkest);
         border-radius: 0;
         padding: 4px;
         margin: 0;
         gap: 4px;
         min-height: 60px;
-
         font-size: 0.95em;
         margin-top: auto;
     }
@@ -283,27 +302,5 @@
         border-radius: 8px;
         padding: 0.6em 1em !important;
         min-height: auto !important;
-    }
-
-    /* Floating Edit Button */
-    :global(.floating-edit-btn) {
-        position: absolute !important;
-        bottom: 80px;
-        right: 20px;
-        width: 56px;
-        height: 56px;
-        border-radius: 50% !important;
-        background-color: var(--secondary) !important;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 10;
-        padding: 0 !important;
-    }
-
-    :global(.floating-edit-btn:hover) {
-        background-color: var(--secondary-opacity) !important;
-        transform: scale(1.05);
     }
 </style>

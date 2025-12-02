@@ -284,6 +284,25 @@ export const receiver = {
         runningActions.set(data)
     },
 
+    GET_OVERLAYS: (data: any) => {
+        overlays.set(data.overlays)
+        _set("overlayCategories", data.categories)
+    },
+    GET_TEMPLATES: (data: any) => {
+        _set("templates", data.templates)
+        _set("templateCategories", data.categories)
+    },
+    GET_FUNCTIONS: (data: any) => {
+        _set("actions", data.actions)
+        _set("actionTags", data.actionTags)
+        _set("variables", data.variables)
+        _set("variableTags", data.variableTags)
+        timers.set(data.timers)
+        triggers.set(data.triggers)
+        activeTimers.set(data.activeTimers)
+        runningActions.set(data.runningActions)
+    },
+
     /////
 
     "API:get_thumbnail": (data: any) => {

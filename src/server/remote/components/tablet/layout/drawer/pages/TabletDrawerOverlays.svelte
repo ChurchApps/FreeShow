@@ -67,53 +67,58 @@
     }
 
     // Loading state
-    let loadingStarted = false
+    let isLoading = true
     onMount(() => {
-        loadingStarted = true
         // Request current state
         send("API:get_cleared")
+        send("GET_OVERLAYS")
+
+        // Fallback to stop loading if no data comes in (or it's just empty)
+        setTimeout(() => {
+            isLoading = false
+        }, 1000)
     })
+
+    $: if (overlaysList.length > 0) isLoading = false
 </script>
 
 <div class="scroll-container">
     <div class="column">
         {#if overlaysList.length}
-            {#if overlaysList.length < 20 || loadingStarted}
-                {#if sortedOverlays.length}
-                    <div class="grid">
-                        {#each sortedOverlays as overlay}
-                            {@const isActive = isOverlayActive(overlay.id)}
-                            <div class="overlay-card" class:active={isActive}>
-                                <MaterialButton style="width: 100%; height: 100%; padding: 0; flex-direction: column; border-radius: 8px; overflow: hidden;" {isActive} on:click={() => toggleOverlay(overlay.id)} title={overlay.name || translate("main.unnamed", $dictionary)}>
-                                    <div class="preview">
-                                        <Zoomed center {resolution} background={overlay.items?.length ? "var(--primary);" : overlay.color || "var(--primary);"} checkered={!!overlay.items?.length}>
-                                            {#each overlay.items || [] as item}
-                                                <Textbox {item} />
-                                            {/each}
-                                        </Zoomed>
+            {#if sortedOverlays.length}
+                <div class="grid">
+                    {#each sortedOverlays as overlay (overlay.id)}
+                        {@const isActive = isOverlayActive(overlay.id)}
+                        <div class="overlay-card" class:active={isActive}>
+                            <MaterialButton style="width: 100%; height: 100%; padding: 0; flex-direction: column; border-radius: 8px; overflow: hidden;" {isActive} on:click={() => toggleOverlay(overlay.id)} title={overlay.name || translate("main.unnamed", $dictionary)}>
+                                <div class="preview">
+                                    <Zoomed center {resolution} background={overlay.items?.length ? "var(--primary);" : overlay.color || "var(--primary);"} checkered={!!overlay.items?.length}>
+                                        {#each overlay.items || [] as item}
+                                            <Textbox {item} />
+                                        {/each}
+                                    </Zoomed>
 
-                                        <!-- Play/Stop icon overlay -->
-                                        <div class="overlay-icon" class:visible={isActive}>
-                                            <Icon id={isActive ? "clear" : "play"} size={2} white />
-                                        </div>
+                                    <!-- Play/Stop icon overlay -->
+                                    <div class="overlay-icon" class:visible={isActive}>
+                                        <Icon id={isActive ? "clear" : "play"} size={2} white />
                                     </div>
+                                </div>
 
-                                    <div class="label">
-                                        {#if overlay.isDefault}
-                                            <Icon id="protected" style="opacity: 0.6; margin-inline-start: 3px; position: absolute; left: 0;" size={0.6} white />
-                                        {/if}
-                                        <span class="name">{overlay.name || translate("main.unnamed", $dictionary)}</span>
-                                    </div>
-                                </MaterialButton>
-                            </div>
-                        {/each}
-                    </div>
-                {:else}
-                    <Center faded>{translate("empty.search", $dictionary)}</Center>
-                {/if}
+                                <div class="label">
+                                    {#if overlay.isDefault}
+                                        <Icon id="protected" style="opacity: 0.6; margin-inline-start: 3px; position: absolute; left: 0;" size={0.6} white />
+                                    {/if}
+                                    <span class="name">{overlay.name || translate("main.unnamed", $dictionary)}</span>
+                                </div>
+                            </MaterialButton>
+                        </div>
+                    {/each}
+                </div>
             {:else}
-                <Center faded>{translate("remote.loading", $dictionary)}</Center>
+                <Center faded>{translate("empty.search", $dictionary)}</Center>
             {/if}
+        {:else if isLoading}
+            <Center faded>{translate("remote.loading", $dictionary)}</Center>
         {:else}
             <Center faded>{translate("empty.general", $dictionary)}</Center>
         {/if}
@@ -131,7 +136,7 @@
         display: flex;
         flex-direction: column;
         height: 100%;
-        background-color: var(--primary-darker);
+        background-color: var(--primary-darkest);
         padding-bottom: 60px;
     }
 

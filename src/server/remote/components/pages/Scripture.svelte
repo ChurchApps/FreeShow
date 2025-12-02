@@ -7,7 +7,7 @@
     import { keysToID } from "../../../common/util/helpers"
     import { translate } from "../../util/helpers"
     import { send } from "../../util/socket"
-    import { dictionary, isCleared, scriptureCache, scriptures, scriptureSearchResults, scriptureViewList, scriptureWrapText, outSlide, outShow, openedScripture, collectionId, selectedTranslationIndex } from "../../util/stores"
+    import { dictionary, isCleared, scriptureCache, scriptures, scriptureSearchResults, scriptureViewList, outSlide, outShow, openedScripture, collectionId, selectedTranslationIndex } from "../../util/stores"
     import Clear from "../show/Clear.svelte"
     import ScriptureContent from "./ScriptureContent.svelte"
     import { sanitizeVerseText } from "../../../../common/scripture/sanitizeVerseText"
@@ -64,7 +64,7 @@
 
     $: collectionScripturesData = isCollection && $collectionId ? ($scriptures[$collectionId]?.collection?.versions || []).map(getScriptureData).filter(s => s.id) : allScripturesData
 
-    // Toggle through translations in collection: null (all) -> 0 -> 1 -> ... -> null
+    // Toggle through translations in collection: 0 -> 1 -> ... -> null (all) -> 0
     function toggleTranslation() {
         if (!isCollection || collectionScripturesData.length <= 1) return
 
@@ -123,7 +123,7 @@
         currentChapter = ""
         currentVerse = ""
         // Reset translation selection when switching collections
-        selectedTranslationIndex.set(null)
+        selectedTranslationIndex.set(0)
         localStorage.setItem("scripture", id)
         localStorage.setItem("collectionId", collection)
     }
@@ -1042,22 +1042,13 @@
                     <Button on:click={() => scriptureContentRef?.forward()} center dark class="floating-control-button" title="Next">
                         <Icon id="next" white size={1.2} />
                     </Button>
-                    <Button on:click={() => scriptureContentRef?.playScripture()} center dark class="floating-control-button" title="Play/Update">
-                        <Icon id="play" white size={1.2} />
-                    </Button>
-                    <div class="floating-divider" aria-hidden="true"></div>
-                    {#if isCollection && collectionScripturesData.length > 1 && $scriptureViewList}
+                    {#if isCollection && collectionScripturesData.length > 1}
                         <Button on:click={toggleTranslation} center dark class="floating-control-button" title={translationButtonTitle}>
                             <Icon id="refresh" white size={1.2} />
                         </Button>
                     {/if}
-                    {#if $scriptureViewList}
-                        <Button on:click={() => scriptureWrapText.set(!$scriptureWrapText)} center dark class="floating-control-button" title={$scriptureWrapText ? "Single Line" : "Wrap Text"}>
-                            <Icon id={$scriptureWrapText ? "noWrap" : "wrap"} white size={1.2} />
-                        </Button>
-                    {/if}
                     <Button on:click={() => scriptureViewList.set(!$scriptureViewList)} center dark class="floating-control-button" title={$scriptureViewList ? "Grid View" : "List View"}>
-                        <Icon id={$scriptureViewList ? "grid" : "list"} white size={1.2} />
+                        <Icon id={$scriptureViewList ? "list" : "grid"} white size={1.2} />
                     </Button>
                 </div>
             {/if}
@@ -1627,12 +1618,6 @@
 
     :global(.floating-control-button:active) {
         background: rgb(255 255 255 / 0.15) !important;
-    }
-
-    .floating-divider {
-        height: 100%;
-        width: 1px;
-        background-color: var(--primary-lighter);
     }
 
     /* Tablet Search Results */

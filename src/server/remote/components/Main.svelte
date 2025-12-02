@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { onMount } from "svelte"
     import type { TabsObj } from "../../../types/Tabs"
     import Button from "../../common/components/Button.svelte"
     import Icon from "../../common/components/Icon.svelte"
@@ -90,37 +91,48 @@
         newShowText = ""
         createShow.set(false)
     }
+
+    let isTablet = false
+    onMount(() => {
+        const media = window.matchMedia("(min-width: 1000px)")
+        isTablet = media.matches
+        const listener = (e: MediaQueryListEvent) => (isTablet = e.matches)
+        media.addEventListener("change", listener)
+        return () => media.removeEventListener("change", listener)
+    })
 </script>
 
 <svelte:window on:keydown={keydown} />
 
-<section class="tabletMode">
-    <TabletMode />
-</section>
-
-<section class="phoneMode justify">
-    <div class="content">
-        {#if tab === "shows"}
-            <Shows />
-        {:else if tab === "scripture"}
-            <Scripture />
-        {:else if tab === "project"}
-            <Project />
-        {:else if tab === "show"}
-            {#if ($active.type || "show") === "show"}
-                <Show />
-            {:else}
-                <ShowContent />
+{#if isTablet}
+    <section class="tabletMode">
+        <TabletMode />
+    </section>
+{:else}
+    <section class="phoneMode justify">
+        <div class="content">
+            {#if tab === "shows"}
+                <Shows />
+            {:else if tab === "scripture"}
+                <Scripture />
+            {:else if tab === "project"}
+                <Project />
+            {:else if tab === "show"}
+                {#if ($active.type || "show") === "show"}
+                    <Show />
+                {:else}
+                    <ShowContent />
+                {/if}
+            {:else if tab === "slide"}
+                <Slide />
+            {:else if tab === "lyrics"}
+                <Lyrics />
             {/if}
-        {:else if tab === "slide"}
-            <Slide />
-        {:else if tab === "lyrics"}
-            <Lyrics />
-        {/if}
-    </div>
+        </div>
 
-    <Tabs {tabs} bind:active={tab} disabled={tabsDisabled} on:double={double} noTopRadius={(tab === "show" && ($activeShow?.id === $outShow?.id || !$isCleared.all)) || tab === "slide" || tab === "shows" || tab === "scripture"} />
-</section>
+        <Tabs {tabs} bind:active={tab} disabled={tabsDisabled} on:double={double} noTopRadius={(tab === "show" && ($activeShow?.id === $outShow?.id || !$isCleared.all)) || tab === "slide" || tab === "shows" || tab === "scripture"} />
+    </section>
+{/if}
 
 {#if $createShow}
     <div class="fullscreen">
@@ -162,8 +174,7 @@
         display: flex;
     }
     .tabletMode {
-        display: none;
-
+        display: flex;
         height: 100%;
         justify-content: space-between;
     }
@@ -181,15 +192,5 @@
         flex-direction: column;
         padding: 16px;
         gap: 16px;
-    }
-
-    /* tablet & computers */
-    @media only screen and (min-width: 1000px) {
-        .phoneMode {
-            display: none;
-        }
-        .tabletMode {
-            display: flex;
-        }
     }
 </style>
