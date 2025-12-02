@@ -1177,6 +1177,11 @@
 
         font-weight: 600;
     }
+    .grid .verses .v span {
+        display: inline;
+        flex: none;
+        min-width: 0;
+    }
     .grid .books span {
         min-width: 52px;
     }
