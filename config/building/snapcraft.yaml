@@ -48,6 +48,7 @@ apps:
         plugs:
             - alsa
             - audio-playback
+            - avahi-control
             - browser-support
             - camera
             - desktop
