@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import { popupData, storedChordsData } from "../../../stores"
+    import { popupData, special, storedChordsData } from "../../../stores"
     import { chordTensions, chordTypes, keys, keysInverted, romanKeys } from "../../edit/values/chords"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -62,9 +62,29 @@
     }
 
     let showInvertedChords = false
+
+    // German Notation
+
+    $: germanNotation = !!$special?.germanNotation
+    function updateSpecial(key: string, value: any) {
+        special.update(s => {
+            s[key] = value
+            return s
+        })
+    }
+
+    let showMore = false
+
+    $: keysList = (showInvertedChords ? keysInverted : keys).map(a => (germanNotation ? (a === "B" ? "H" : a === "B♭" ? "B" : a) : a))
 </script>
 
+<MaterialButton class="popup-options {showMore ? 'active' : ''}" icon="options" iconSize={1.3} title={showMore ? "actions.close" : "create_show.more_options"} on:click={() => (showMore = !showMore)} white />
+
 <MaterialToggleSwitch label="actions.roman_keys" checked={chordData.romanKeysActive} on:change={e => (chordData.romanKeysActive = e.detail)} />
+{#if showMore}
+    <MaterialToggleSwitch label="German notation (H/B)" checked={germanNotation} on:change={e => updateSpecial("germanNotation", e.detail)} />
+{/if}
+
 <MaterialTextInput label="actions.custom_key" value={chordData.custom} defaultValue="" on:input={e => (chordData.custom = e.detail)} />
 
 <div class="chords" style="margin: 10px 0;">
@@ -79,7 +99,7 @@
                 <Icon id="arrow_{showInvertedChords ? 'up' : 'down'}" size={1.1} white={!showInvertedChords} />
                 <T id="actions.chord_key" />
             </p>
-            {#each showInvertedChords ? keysInverted : keys as key}
+            {#each keysList as key}
                 <MaterialButton showOutline={chordData.key === key} disabled={!!chordData.custom} on:click={() => updateData("key", key)}>{key}</MaterialButton>
             {/each}
         {/if}
@@ -117,7 +137,7 @@
                 <Icon id="arrow_{showInvertedChords ? 'up' : 'down'}" size={1.1} white={!showInvertedChords} />
                 <T id="actions.chord_bass" />
             </p>
-            {#each showInvertedChords ? keysInverted : keys as bass}
+            {#each keysList as bass}
                 <MaterialButton showOutline={chordData.bass === bass} disabled={!!chordData.custom} on:click={() => updateData("bass", bass)}>{bass}</MaterialButton>
             {/each}
         </div>

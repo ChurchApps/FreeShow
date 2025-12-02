@@ -243,10 +243,9 @@
                 if (historyText === linesText) return
             }
 
+            // only reset caret when lines are added/removed, not when line content changes
             let lastChangedLine = EditboxHelper.determineCaretLine(item?.lines || [], newLines)
-            if (lastChangedLine > -1) setCaretDelayed(lastChangedLine, 0)
-
-            // create new history store, when passing 15 steps
+            if (lastChangedLine > -1 && (item?.lines || []).length !== newLines.length) setCaretDelayed(lastChangedLine, 0) // create new history store, when passing 15 steps
             updates++
             if (updates >= 15) {
                 HISTORY_UPDATE_KEY++
