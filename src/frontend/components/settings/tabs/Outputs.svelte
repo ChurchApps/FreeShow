@@ -5,7 +5,7 @@
     import { Option } from "../../../../types/Main"
     import type { Output } from "../../../../types/Output"
     import { AudioAnalyser } from "../../../audio/audioAnalyser"
-    import { activePage, activeStage, activeStyle, currentOutputSettings, ndiData, os, outputDisplay, outputs, settingsTab, stageShows, styles, toggleOutputEnabled } from "../../../stores"
+    import { activePage, activePopup, activeStage, activeStyle, alertMessage, currentOutputSettings, ndiData, os, outputDisplay, outputs, settingsTab, stageShows, styles, toggleOutputEnabled } from "../../../stores"
     import { newToast } from "../../../utils/common"
     import { translateText } from "../../../utils/language"
     import { destroy, receive, send } from "../../../utils/request"
@@ -20,6 +20,7 @@
     import MaterialDropdown from "../../inputs/MaterialDropdown.svelte"
     import MaterialPopupButton from "../../inputs/MaterialPopupButton.svelte"
     import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
+    import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
 
     let outputsList: Output[] = []
     $: outputsList = sortObject(sortByName(keysToID($outputs)), "stageOutput")
@@ -178,6 +179,11 @@
             if (value) AudioAnalyser.recorderActivate()
             else AudioAnalyser.recorderDeactivate()
         }
+
+        if (key === "name" || key === "groups") {
+            alertMessage.set("settings.restart_for_change")
+            activePopup.set("alert")
+        }
     }
 
     const framerates = [
@@ -307,7 +313,12 @@
 
 {#if currentOutput?.ndi}
     <MaterialToggleSwitch label="preview.audio" checked={currentOutput.ndiData?.audio} defaultValue={false} on:change={e => updateNdiData(e.detail, "audio")} />
-    <MaterialDropdown label="settings.frame_rate" value={currentOutput?.ndiData?.framerate || "30"} defaultValue="30" options={framerates} on:change={e => updateNdiData(e.detail, "framerate")} />
+    <MaterialDropdown label="settings.frame_rate" value={currentOutput.ndiData?.framerate || "30"} defaultValue="30" options={framerates} on:change={e => updateNdiData(e.detail, "framerate")} />
+
+    <InputRow>
+        <MaterialTextInput label="inputs.name" value={currentOutput.ndiData?.name || `FreeShow NDI${currentOutput.name ? ` - ${currentOutput.name}` : ""}`} defaultValue={`FreeShow NDI${currentOutput.name ? ` - ${currentOutput.name}` : ""}`} on:change={e => updateNdiData(e.detail, "name")} />
+        <MaterialTextInput label="inputs.group" title="settings.comma_seperated" value={currentOutput.ndiData?.groups || ""} placeholder="public" on:change={e => updateNdiData(e.detail, "groups")} />
+    </InputRow>
 {/if}
 
 <!-- Blackmagic -->

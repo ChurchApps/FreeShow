@@ -6,7 +6,7 @@ import type { Output } from "../Output"
 
 const setValues = {
     ndi: async (value: boolean, window: BrowserWindow, id: string) => {
-        if (value) await NdiSender.createSenderNDI(id, window.getTitle())
+        if (value) await NdiSender.createSenderNDI(id, NdiSender.initNameNDI(undefined, window.getTitle()))
         else NdiSender.stopSenderNDI(id)
 
         setValues.capture({ key: "ndi", value }, window, id)

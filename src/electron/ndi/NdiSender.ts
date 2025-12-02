@@ -25,7 +25,7 @@ const loadGrandiose = async () => {
 export class NdiSender {
     static ndiDisabled = false // isLinux && os.arch() !== "x64" && os.arch() !== "ia32"
     static timeStart = BigInt(Date.now()) * BigInt(1e6) - process.hrtime.bigint()
-    static NDI: { [key: string]: { name: string; status?: string; previousStatus?: string; sender?: any; timer?: NodeJS.Timeout; sendAudio?: boolean } } = {}
+    static NDI: { [key: string]: { name: string; groups?: string; status?: string; previousStatus?: string; sender?: any; timer?: NodeJS.Timeout; sendAudio?: boolean } } = {}
 
     static stopSenderNDI(id: string) {
         if (!this.NDI[id]?.timer) return
@@ -42,11 +42,15 @@ export class NdiSender {
         delete this.NDI[id]
     }
 
-    static async createSenderNDI(id: string, title = "") {
+    static initNameNDI(name?: string, outputName?: string) {
+        return name || `FreeShow NDI${outputName ? ` - ${outputName}` : ""}`
+    }
+
+    static async createSenderNDI(id: string, name = "", groups?: string) {
         if (this.ndiDisabled || this.NDI[id]) return
 
-        this.NDI[id] = { name: `FreeShow NDI${title ? ` - ${title}` : ""}` }
-        console.info("NDI - creating sender: " + this.NDI[id].name)
+        this.NDI[id] = { name, groups }
+        console.info("NDI - creating sender: " + this.NDI[id].name, groups ? `; In group: ${groups}` : "")
 
         try {
             const grandiose = await loadGrandiose()
@@ -55,6 +59,7 @@ export class NdiSender {
             /* eslint @typescript-eslint/await-thenable: 0 */
             this.NDI[id].sender = await grandiose.send({
                 name: this.NDI[id].name,
+                groups: this.NDI[id].groups,
                 clockVideo: false,
                 clockAudio: false
             })

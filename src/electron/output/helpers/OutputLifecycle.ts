@@ -38,7 +38,7 @@ export class OutputLifecycle {
 
         // NDI
         if (output.ndi) {
-            await NdiSender.createSenderNDI(id, output.name)
+            await NdiSender.createSenderNDI(id, NdiSender.initNameNDI(output.ndiData?.name, output.name), output.ndiData?.groups)
             if (output.ndiData) setDataNDI({ id, ...output.ndiData })
         }
     }
