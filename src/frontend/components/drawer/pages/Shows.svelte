@@ -236,6 +236,7 @@
     }
 
     let activeIsSearch = true
+    $: if (searchValue.length < 2) activeIsSearch = true
     function mouseup() {
         activeIsSearch = document.activeElement?.classList.contains("search") || false
     }
