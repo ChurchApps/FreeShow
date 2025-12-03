@@ -102,11 +102,15 @@ function createDefaultEffects() {
     const deletedIds = get(special).deletedEffects || []
     const defaultEffects = getDefaultEffects()
 
-    Object.keys(defaultEffects).forEach(id => {
-        if (deletedIds.includes(id)) delete defaultEffects[id]
-    })
+    effects.update(a => {
+        Object.keys(defaultEffects).forEach(id => {
+            // if deleted or exists, skip
+            if (deletedIds.includes(id) || a[id]) return
+            a[id] = defaultEffects[id]
+        })
 
-    effects.set({ ...get(effects), ...defaultEffects })
+        return a
+    })
 }
 
 function getDefaultEffects() {
@@ -177,11 +181,15 @@ function createDefaultOverlays() {
     const deletedIds = get(special).deletedOverlays || []
     const defaultOverlays = getDefaultOverlays()
 
-    Object.keys(defaultOverlays).forEach(id => {
-        if (deletedIds.includes(id)) delete defaultOverlays[id]
-    })
+    overlays.update(a => {
+        Object.keys(defaultOverlays).forEach(id => {
+            // if deleted or exists, skip
+            if (deletedIds.includes(id) || a[id]) return
+            a[id] = defaultOverlays[id]
+        })
 
-    overlays.set({ ...get(overlays), ...defaultOverlays })
+        return a
+    })
 }
 
 function getDefaultOverlays() {
@@ -310,11 +318,15 @@ function createDefaultTemplates() {
     const deletedIds = get(special).deletedTemplates || []
     const defaultTemplates = getDefaultTemplates()
 
-    Object.keys(defaultTemplates).forEach(id => {
-        if (deletedIds.includes(id)) delete defaultTemplates[id]
-    })
+    templates.update(a => {
+        Object.keys(defaultTemplates).forEach(id => {
+            // if deleted or exists, skip
+            if (deletedIds.includes(id) || a[id]) return
+            a[id] = defaultTemplates[id]
+        })
 
-    templates.set({ ...get(templates), ...defaultTemplates })
+        return a
+    })
 }
 
 function getDefaultTemplates() {
