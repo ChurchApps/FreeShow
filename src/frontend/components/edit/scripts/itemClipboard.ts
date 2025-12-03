@@ -179,6 +179,7 @@ export async function setBoxStyle(styles: StyleClipboard[], slides: any, type: I
             items.push(i)
 
             const currentStyle = styles[i] || styles[0]
+            if (!currentStyle) return
 
             let newStyle = ""
             Object.entries(currentStyle.style).forEach(([key, value]) => {
@@ -251,6 +252,7 @@ export async function setItemStyle(styles: StyleClipboard[], slides: any) {
             items.push(i)
 
             const style = styles[i] || styles[0]
+            if (!style) return
 
             // get new style
             let newStyle = ""

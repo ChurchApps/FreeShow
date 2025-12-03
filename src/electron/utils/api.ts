@@ -170,7 +170,13 @@ export function emitOSC(msg: { signal: any; data: string }) {
 
         OSC_SENDER.send(message)
         // ensure message is sent
-        setTimeout(() => OSC_SENDER.close(), 100)
+        setTimeout(() => {
+            try {
+                OSC_SENDER.close()
+            } catch (err) {
+                // already closed
+            }
+        }, 100)
     }
 }
 

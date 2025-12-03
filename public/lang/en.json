@@ -1274,6 +1274,7 @@
         "disable_labels": "Disable labels",
         "group_numbers": "Group numbers",
         "auto_group_numbers": "Auto assign group numbers",
+        "shortcuts_on_slides": "Display shortcuts on slides",
         "transparent_slides": "Transparent slide preview",
         "full_colors": "High contrast group colors",
         "next_item_on_last_slide": "Arrow left/right changes project item on first/last slide",

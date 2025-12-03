@@ -1,11 +1,15 @@
 <script lang="ts">
-    import { activeShow, shows, templates } from "../../stores"
+    import type { Output } from "../../../types/Output"
+    import type { Show } from "../../../types/Show"
+    import { activeShow, groups, outputs, showsCache, special, templates } from "../../stores"
     import { translateText } from "../../utils/language"
     import { actionData } from "../actions/actionData"
     import { getActionName, getActionTriggerId } from "../actions/actions"
     import { clone } from "../helpers/array"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
+    import { getFirstActiveOutput } from "../helpers/output"
+    import { getLayoutRef } from "../helpers/show"
     import Button from "../inputs/Button.svelte"
 
     export let columns: number
@@ -13,7 +17,56 @@
     export let templateId = ""
     export let actions: any
 
-    $: currentShow = $shows[$activeShow?.id || ""] || {}
+    $: showId = $activeShow?.id || ""
+    $: currentShow = $showsCache[showId] || {}
+
+    // highlight slide shortcut or next group shortcut
+    $: shortcut = getNextShortcut(actions, currentShow, getFirstActiveOutput($outputs))
+
+    function getNextShortcut(actions: any, show: Show, output?: Output & { id: string }): string {
+        // slide shortcut
+        if (actions.slide_shortcut?.key) return actions.slide_shortcut.key
+
+        // don't show group shortcut
+        if (!$special.groupShortcutPreview) return ""
+
+        const outSlide = output?.out?.slide
+        // output is from another show
+        if (outSlide && (outSlide?.id !== showId || outSlide?.layout !== show?.settings?.activeLayout)) return ""
+
+        const ref = getLayoutRef(showId)
+        const refSlide = ref[index] || {}
+        const currentSlideGroup = refSlide.type === "parent" ? show.slides?.[refSlide.id]?.globalGroup : null
+        const shortcut = ($groups[currentSlideGroup || ""]?.shortcut || "").toUpperCase()
+        if (!shortcut) return ""
+
+        // check if group shortcut is in use as slide shortcut
+        const isSlideShortcut = ref.some(a => {
+            const slideShortcut = (a.data?.actions?.slide_shortcut?.key || "").toUpperCase()
+            return slideShortcut === shortcut
+        })
+        if (isSlideShortcut) return ""
+
+        // find first group after the current output index
+        const outIndex = outSlide?.index ?? -1
+        let nextGroupIndex = ref.findIndex(a => {
+            let slideGroup = show.slides?.[a.id]?.globalGroup
+            if (!slideGroup || slideGroup !== currentSlideGroup) return false
+            return a.layoutIndex > outIndex
+        })
+
+        // if no group after index, get the first
+        if (nextGroupIndex === -1) {
+            nextGroupIndex = ref.findIndex(a => {
+                let slideGroup = show.slides?.[a.id]?.globalGroup
+                return slideGroup && slideGroup === currentSlideGroup
+            })
+        }
+
+        if (nextGroupIndex !== index) return ""
+
+        return shortcut
+    }
 
     function changeAction(id: string, save = true) {
         if (templateId || currentShow.locked) return
@@ -69,10 +122,10 @@
 </script>
 
 <div class="icons" style="zoom: {zoom};">
-    {#if actions.slide_shortcut?.key}
+    {#if shortcut}
         <div class="button white" style="border: 1px solid var(--secondary);">
             <Button style="padding: 3px;" redHover title={translateText("actions.remove: actions.play_with_shortcut")} {zoom} on:click={() => changeAction("slide_shortcut")}>
-                <p style="font-weight: bold;text-transform: capitalize;padding: 0 4px;font-size: 1.2em;">{actions.slide_shortcut.key}</p>
+                <p style="font-weight: bold;text-transform: capitalize;padding: 0 4px;font-size: 1.2em;">{shortcut}</p>
             </Button>
         </div>
     {/if}
