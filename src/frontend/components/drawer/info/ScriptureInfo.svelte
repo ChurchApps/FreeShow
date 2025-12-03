@@ -17,7 +17,7 @@
     import Media from "../../output/layers/Media.svelte"
     import Textbox from "../../slide/Textbox.svelte"
     import Zoomed from "../../slide/Zoomed.svelte"
-    import { createScriptureShow, getActiveScripturesContent, getMergedAttribution, getScriptureSlides, textKeys } from "../bible/scripture"
+    import { createScriptureShow, getActiveScripturesContent, getMergedAttribution, getScriptureSlidesNew, textKeys } from "../bible/scripture"
 
     let biblesContent: BibleContent[] = []
     let selectedChapters: number[] = []
@@ -56,7 +56,8 @@
     }
 
     $: {
-        if (selectedVerses.length || $scriptureSettings) slides = getScriptureSlides({ biblesContent, selectedChapters, selectedVerses }, true)
+        // if (selectedVerses.length || $scriptureSettings) slides = getScriptureSlides({ biblesContent, selectedChapters, selectedVerses }, true)
+        if (selectedVerses.length || $scriptureSettings) slides = getScriptureSlidesNew({ biblesContent, selectedChapters, selectedVerses }, true)
         else slides = [[]]
     }
 

@@ -4,16 +4,17 @@ import type { CustomBibleListContent } from "json-bible/lib/api/ApiBible"
 import { stripMarkdown } from "json-bible/lib/markdown"
 import { get } from "svelte/store"
 import { uid } from "uid"
+import { sanitizeVerseText } from "../../../../common/scripture/sanitizeVerseText"
 import { Main } from "../../../../types/IPC/Main"
 import type { BibleContent } from "../../../../types/Scripture"
 import type { Item, Show } from "../../../../types/Show"
 import { ShowObj } from "../../../classes/Show"
-import { sanitizeVerseText } from "../../../../common/scripture/sanitizeVerseText"
 import { createCategory } from "../../../converters/importHelpers"
 import { requestMain } from "../../../IPC/main"
 import { splitTextContentInHalf } from "../../../show/slides"
 import { activePopup, activeProject, activeScripture, drawerTabsData, media, notFound, outLocked, overlays, popupData, scriptureHistory, scriptures, scripturesCache, scriptureSettings, styles, templates } from "../../../stores"
 import { trackScriptureUsage } from "../../../utils/analytics"
+import { TemplateHelper } from "../../../utils/templates"
 import { getKey } from "../../../values/keys"
 import { customActionActivation } from "../../actions/actions"
 import { getItemText } from "../../edit/scripts/textStyle"
@@ -430,6 +431,156 @@ export function buildFullReferenceRange(chapters: (number | string)[], versesPer
     return joinRange(normalized)
 }
 
+// return array with length of slidesCount containing the content with splitted verses
+function splitContent(content: BibleContent[]): BibleContent[][] {
+    const perSlide = get(scriptureSettings).versesPerSlide || 3
+    const totalVerses = content[0]?.activeVerses[0]?.length || 0
+    const slidesCount = Math.ceil(totalVerses / perSlide)
+    const splitContent: BibleContent[][] = []
+
+    for (let i = 0; i < slidesCount; i++) {
+        const slideVerses = content[0].activeVerses[0].slice(i * perSlide, (i + 1) * perSlide)
+
+        // Create a new BibleContent array for each slide with only the verses for that slide
+        const slideContent: BibleContent[] = content.map(bible => {
+            // Filter each chapter's verses object to only include the current slide's verses
+            const filteredVerses = bible.verses.map(chapterVerses => {
+                const filtered: { [key: string]: string } = {}
+                slideVerses.forEach(verseId => {
+                    const key = String(verseId)
+                    if (key in chapterVerses) {
+                        filtered[key] = chapterVerses[key]
+                    }
+                })
+                return filtered
+            })
+
+            return {
+                ...bible,
+                verses: filteredVerses,
+                activeVerses: [slideVerses]
+            }
+        })
+
+        splitContent.push(slideContent)
+    }
+
+    return splitContent
+}
+
+export function getScriptureSlidesNew(data: any, onlyOne = false, disableReference = false) {
+    const templateId = getScriptureTemplateId()
+    const _template = new TemplateHelper(templateId)
+
+    // use old formatting if old scripture template type
+    if (!_template.getPlainText().includes("{scripture_")) return getScriptureSlides(data, onlyOne, disableReference)
+
+    const biblesContent = data.biblesContent as BibleContent[]
+    const selectedChapters = data.selectedChapters as number[]
+    const selectedVerses = data.selectedVerses as (number | string)[][]
+
+    const perSlide = get(scriptureSettings).versesPerSlide || 3
+    const slidesCount = Math.ceil(selectedVerses[0]?.length / perSlide)
+
+    const slides = _template.createSlides(slidesCount)
+    let slidesString = JSON.stringify(slides)
+
+    console.log(slides)
+
+    const splittedSlidesContent = onlyOne ? [biblesContent] : splitContent(biblesContent)
+    console.log(splittedSlidesContent)
+
+    for (let i = 0; i < splittedSlidesContent.length; i++) {
+        const currentSlideContent = splittedSlidesContent[i]
+        for (let j = 0; j < currentSlideContent.length; j++) {
+            const bible = currentSlideContent[j]
+            const versesText = bible.verses[0] || {}
+            const verseNumbers = get(scriptureSettings).verseNumbers
+
+            const verseText = bible.activeVerses[0]
+                .map(v => {
+                    let text = versesText[v] || ""
+                    if (verseNumbers) {
+                        const { id, subverse, endNumber } = getVerseIdParts(v)
+                        const showSuffix = get(scriptureSettings).splitLongVersesSuffix
+                        const showBaseNumber = !subverse || subverse === 1 || showSuffix
+
+                        let verseNumberValue = ""
+                        if (showBaseNumber) verseNumberValue = `${id}${endNumber ? "-" + endNumber : ""}`
+                        if (showSuffix && subverse) verseNumberValue += getVersePartLetter(Number(subverse))
+
+                        text = `<number>${verseNumberValue}</number> ${text}`
+                    }
+                    return text
+                })
+                .join(" ")
+            console.log(bible, versesText, verseText)
+
+            const verses = buildFullReferenceRange(bible.chapters, bible.activeVerses)
+            const reference = `${bible.book} ${verses}`.trim()
+            if (j === 0) {
+                slidesString = slidesString.replaceAll(`{scripture_reference}`, reference)
+                slidesString = slidesString.replaceAll("{scripture_text}", verseText)
+                slidesString = slidesString.replaceAll("{scripture_verses}", verses)
+            }
+            slidesString = slidesString.replaceAll(`{scripture${j + 1}_reference}`, reference)
+            slidesString = slidesString.replaceAll(`{scripture${j + 1}_text}`, verseText)
+            slidesString = slidesString.replaceAll(`{scripture${j + 1}_verses}`, verses)
+        }
+    }
+
+    slidesString = slidesString.replaceAll("{scripture_name}", biblesContent[0]?.version || "")
+    slidesString = slidesString.replaceAll("{scripture_book}", biblesContent[0]?.book || "")
+    slidesString = slidesString.replaceAll("{scripture_chapter}", selectedChapters[0]?.toString() || "")
+
+    const fullVerses = buildFullReferenceRange(selectedChapters, selectedVerses)
+    const fullReference = `${biblesContent[0]?.book} ${fullVerses}`.trim()
+    slidesString = slidesString.replaceAll("{scripture_reference_full}", fullReference)
+
+    // metadata
+    // slidesString = slidesString.replaceAll("{scripture_metadata_copyright}", biblesContent[0]?.metadata?.copyright || "")
+    for (const [key, value] of Object.entries(biblesContent[0]?.metadata || {})) {
+        slidesString = slidesString.replaceAll(`{scripture_metadata_${key.toLowerCase()}}`, value as string)
+    }
+
+    const newSlides: Item[][] = JSON.parse(slidesString)
+
+    newSlides.forEach(slide => {
+        slide.forEach(item => {
+            item.lines?.forEach(line => {
+                if (!line?.text) return
+
+                // Extract verse numbers from text and split into separate text objects
+                const newTextArray: any[] = []
+                line.text.forEach((textObj, i) => {
+                    const parts = (textObj.value || "").split(/<number>(.*?)<\/number>/g)
+
+                    let size = get(scriptureSettings).numberSize || 50
+                    if (i === 0) size *= 1.2
+                    const verseNumberStyle = `;font-size: ${size}px;color: ${get(scriptureSettings).numberColor || "#919191"};text-shadow: none;`
+
+                    parts.forEach((part, i) => {
+                        if (!part) return
+
+                        // Odd indices are the captured verse numbers
+                        if (i % 2 === 1) {
+                            newTextArray.push({ ...textObj, value: part + " ", style: textObj.style + verseNumberStyle, customType: "disableTemplate" })
+                        } else {
+                            newTextArray.push({ ...textObj, value: part })
+                        }
+                    })
+                })
+
+                line.text = newTextArray
+            })
+        })
+    })
+
+    // WIP return more details, like slide group name
+    return newSlides
+}
+
+// DEPRECATED
 export function getScriptureSlides({ biblesContent, selectedChapters, selectedVerses }: { biblesContent: BibleContent[]; selectedChapters: number[]; selectedVerses: (number | string)[][] }, onlyOne = false, disableReference = false) {
     const slides: Item[][] = [[]]
 

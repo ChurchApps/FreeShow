@@ -18,12 +18,15 @@
     const caret = $popupData.caret || {}
     onMount(() => popupData.set({}))
 
+    let mode: null | "scripture" = null
+    if ($activeEdit.type === "template") mode = "scripture" // WIP (showing in all templates currently)
+
     const hidden: string[] = $special.disabledDynamicValues || []
 
     const values = getValues()
 
     function getValues() {
-        let list = getDynamicIds().map(id => ({ id }))
+        let list = getDynamicIds(false, mode).map(id => ({ id }))
 
         const isStage = $activePage === "stage"
         const stageHidden = ["slide_text_previous", "slide_text_next"]
@@ -31,7 +34,7 @@
 
         let separatorId = ""
         // the ones that can have a custom name should be first (to prevent it from overwriting a category)
-        const separators = ["$", "timer_", "meta_", "rss_", "project_", "time_", "show_", "slide_text_", "video_", "audio_"]
+        const separators = ["scripture_", "$", "timer_", "meta_", "rss_", "project_", "time_", "show_", "slide_text_", "video_", "audio_"]
 
         let newList: { [key: string]: typeof list } = {}
         list.forEach(value => {
@@ -50,6 +53,7 @@
     }
 
     function getTitle(id: string) {
+        if (id === "scripture_") return "tabs.scripture"
         if (id === "time_") return "timer.time"
         if (id === "project_") return "guide_title.project"
         if (id === "show_") return "guide_title.show"
@@ -200,7 +204,7 @@
     }
 
     // custom ref
-    const ref = { showId: $activeShow?.id, layoutId: _show().get("settings.activeLayout"), slideIndex: $activeEdit.slide, type: $activePage === "stage" ? "stage" : $activeEdit.type || "show", id: $activeEdit.id }
+    const ref = { showId: $activeShow?.id, layoutId: _show().get("settings.activeLayout"), slideIndex: $activeEdit.slide, type: $activePage === "stage" ? "stage" : $activeEdit.type || "show", id: $activeEdit.id, mode }
 
     // UPDATE DYNAMIC VALUES e.g. {time_} EVERY SECOND
     let updateDynamic = 0
