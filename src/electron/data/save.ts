@@ -6,7 +6,7 @@ import type { SaveData } from "../../types/Save"
 import { currentlyDeletedShows } from "../cloud/drive"
 import { startBackup } from "../data/backup"
 import { defaultSettings, defaultSyncedSettings } from "../data/defaults"
-import { _store } from "../data/store"
+import { _store, safeStoreSet } from "../data/store"
 import { sendMain, sendToMain } from "../IPC/main"
 import { deleteFile, doesPathExist, getDataFolderPath, parseShow, readFile, writeFile } from "../utils/files"
 import { clone, wait } from "../utils/helpers"
@@ -24,14 +24,15 @@ export async function save(data: SaveData) {
     }
 
     // save to files
-    Object.entries(_store).forEach(storeData as any)
-    function storeData([key, store]: [keyof typeof _store, any]) {
+    for (const entry of Object.entries(_store)) {
+        await storeData(entry as any)
+    }
+    async function storeData([key, store]: [keyof typeof _store, any]) {
         const newData = (data as any)[key]
         if (!newData || !isValidJSON(newData)) return
         if (checkIfMatching(store.store, newData)) return
 
-        store.clear()
-        store.set(newData)
+        await safeStoreSet(store, newData, key)
 
         if (reset) sendMain(key as Main, newData)
     }

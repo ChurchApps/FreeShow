@@ -16,7 +16,7 @@ import type { StageLayouts } from "../../types/Stage"
 import type { ContentProviderId } from "../contentProviders/base/types"
 import { sendMain, sendToMain } from "../IPC/main"
 import { dataFolderNames, deleteFile, doesPathExist, getDataFolderPath, getDataFolderRoot, getDefaultDataFolderRoot, readFile, readFolder } from "../utils/files"
-import { clone } from "../utils/helpers"
+import { clone, wait } from "../utils/helpers"
 import "./contentProviders"
 import { defaultConfig, defaultSettings, defaultSyncedSettings } from "./defaults"
 
@@ -172,6 +172,30 @@ function getWritableConfigPath(previousLocation?: string | null, setup: boolean 
     }
 
     return configFolderPath
+}
+
+// ----- SET STORE -----
+
+// store file, retry if failed
+export async function safeStoreSet(store: any, newData: any, key: string): Promise<void> {
+    for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+            store.clear()
+            store.set(newData)
+            await wait(100)
+            return
+        } catch (err: any) {
+            const isLastAttempt = attempt === 2
+            // Windows permission error, likely due to permission set to read-only
+            if ((err?.code === "EPERM" || err?.message?.includes("EPERM")) && !isLastAttempt) {
+                await wait(200 * Math.pow(2, attempt))
+            } else {
+                console.error(`Failed to save ${key}:`, err)
+                sendToMain(ToMain.ALERT, `Failed to save ${key}. Please check file permissions or try running as administrator.`)
+                return
+            }
+        }
+    }
 }
 
 // ----- GET STORE -----
