@@ -12,7 +12,7 @@ import { updateOut } from "../components/helpers/showActions"
 import { _show } from "../components/helpers/shows"
 import { clearAll } from "../components/output/clear"
 import { REMOTE } from "./../../types/Channels"
-import { activePage, activeProject, activeShow, connections, dictionary, driveData, folders, language, openedFolders, outLocked, overlays, projects, remotePassword, scriptures, shows, showsCache, styles } from "./../stores"
+import { actions, actionTags, activePage, activeProject, activeShow, activeTimers, categories, connections, dictionary, driveData, folders, language, openedFolders, outLocked, overlayCategories, overlays, projects, remotePassword, runningActions, scriptures, shows, showsCache, styles, templateCategories, templates, timers, triggers, variableTags, variables } from "./../stores"
 import { lastClickTime } from "./common"
 import { translateText } from "./language"
 import { send } from "./request"
@@ -284,6 +284,27 @@ export const receiveREMOTE: any = {
         }
 
         return msg
+    },
+    GET_OVERLAYS: (msg: any) => {
+        msg.data = { overlays: get(overlays), categories: get(overlayCategories) }
+        return msg
+    },
+    GET_TEMPLATES: (msg: any) => {
+        msg.data = { templates: get(templates), categories: get(templateCategories) }
+        return msg
+    },
+    GET_FUNCTIONS: (msg: any) => {
+        msg.data = {
+            actions: get(actions),
+            actionTags: get(actionTags),
+            variables: get(variables),
+            variableTags: get(variableTags),
+            timers: get(timers),
+            triggers: get(triggers),
+            activeTimers: get(activeTimers),
+            runningActions: get(runningActions)
+        }
+        return msg
     }
 }
 
@@ -327,8 +348,8 @@ export async function initializeRemote(id: string) {
     sendData(REMOTE, { id, channel: "OUT_DATA" })
 
     // Send additional data
-    send(REMOTE, ["OVERLAYS"], get(overlays))
     send(REMOTE, ["SCRIPTURE"], get(scriptures))
+    send(REMOTE, ["CATEGORIES"], get(categories))
 }
 
 export async function convertBackgrounds(show: Show, noLoad = false, init = false) {

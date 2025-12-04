@@ -465,7 +465,7 @@
 <!-- Header handled by parent -->
 
 <!-- GRID MODE -->
-<div class="grid" class:tablet>
+<div class="grid">
     {#if depth === 0}
         <div class="books">
             {#if books?.length}
@@ -510,7 +510,6 @@
         </div>
     {/if}
 
-    <!-- <div class="content"> -->
     {#if depth === 1}
         <div class="chapters context #scripture_chapter" style="text-align: center;" class:center={!chapters?.length}>
             {#if chapters?.length}
@@ -557,13 +556,17 @@
         </div>
     {/if}
 
-    {#if depth === 2}
+    {#if depth === 2 || tablet || $scriptureViewList}
         <div bind:this={versesContainer} class="verses context #scripture_verse" class:center={!verses.length} class:big={verses.length > 100} class:list={$scriptureViewList} class:collection-list={isCollection && $scriptureViewList}>
             {#if verses.length}
                 {#each verses as verse, i (verse.number || i)}
                     {@const verseNumber = Number(verse.number) || i + 1}
                     {@const isDisplayed = activeBook === displayedBookIndex && activeChapter === displayedChapterIndex && verseNumber === displayedVerseNumber}
                     {@const isActive = activeVerse === verseNumber}
+                    {#if tablet && i === Math.max(0, verses.length - 6)}
+                        <div style="float: right; width: 220px; height: 80px;"></div>
+                    {/if}
+
                     <button type="button" class="verse-button" class:collection-verse={isCollection && $scriptureViewList} on:click={() => playScripture(verseNumber)} on:keydown={e => e.key === "Enter" && playScripture(verseNumber)} class:active={isActive} class:displayed={isDisplayed}>
                         <span class="verse-num" style="color: var(--secondary);font-weight: bold;">
                             {verseNumber}
@@ -591,11 +594,6 @@
             {/if}
         </div>
     {/if}
-    <!-- </div> -->
-
-    <!-- {#if bibles[0].copyright}
-        <copy>{bibles[0].copyright}</copy>
-    {/if} -->
 </div>
 
 <style>
@@ -605,12 +603,6 @@
         display: flex;
         flex-direction: column;
         height: 100%;
-    }
-    .grid.tablet .books {
-        border-bottom: 2px solid var(--primary-lighter);
-    }
-    .grid.tablet .chapters {
-        border-inline-end: 2px solid var(--primary-lighter);
     }
 
     .grid div {
@@ -622,27 +614,8 @@
 
         position: relative;
         scroll-behavior: smooth;
-        /* FreeShow UI scrollbar */
-        scrollbar-width: thin; /* Firefox */
-        scrollbar-color: rgb(255 255 255 / 0.3) rgb(255 255 255 / 0.05);
-    }
-    .grid div::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
-    }
-    .grid div::-webkit-scrollbar-track,
-    .grid div::-webkit-scrollbar-corner {
-        background: rgb(255 255 255 / 0.05);
-    }
-    .grid div::-webkit-scrollbar-thumb {
-        background: rgb(255 255 255 / 0.3);
-        border-radius: 8px;
-    }
-    .grid div::-webkit-scrollbar-thumb:hover {
-        background: rgb(255 255 255 / 0.5);
     }
 
-    /* .grid .content */
     .grid .books {
         flex-direction: row;
         height: 100%;
@@ -651,15 +624,6 @@
     .grid .verses {
         flex-direction: row;
         height: 100%;
-    }
-
-    /* .grid.tablet .content */
-    .grid.tablet .books {
-        height: 50%;
-    }
-    .grid.tablet .chapters,
-    .grid.tablet .verses {
-        width: 50%;
     }
 
     .grid .books,
@@ -674,24 +638,6 @@
         flex-direction: column;
         flex-wrap: nowrap;
         padding: 0 12px 0 8px;
-        /* FreeShow UI scrollbar styling (desktop) */
-        scrollbar-width: thin; /* Firefox */
-        scrollbar-color: rgb(255 255 255 / 0.3) rgb(255 255 255 / 0.05);
-    }
-    .grid .verses.list::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
-    }
-    .grid .verses.list::-webkit-scrollbar-track,
-    .grid .verses.list::-webkit-scrollbar-corner {
-        background: rgb(255 255 255 / 0.05);
-    }
-    .grid .verses.list::-webkit-scrollbar-thumb {
-        background: rgb(255 255 255 / 0.3);
-        border-radius: 8px;
-    }
-    .grid .verses.list::-webkit-scrollbar-thumb:hover {
-        background: rgb(255 255 255 / 0.5);
     }
 
     .grid .verse-button,
@@ -701,7 +647,6 @@
         align-items: center;
         font-size: 1.3em;
         font-weight: 600;
-
         /* min-width: 40px; */
         min-width: 50px;
         flex: 1;
