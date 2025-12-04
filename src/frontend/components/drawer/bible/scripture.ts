@@ -136,6 +136,7 @@ export async function getActiveScripturesContent() {
             const attributionRequired = !!scriptureData?.attributionRequired
 
             const bookName = Book.name
+            const bookAbbr = Book.getAbbreviation()
             const selectedChapters = active?.chapters.map(c => Number(c)) || []
             const Chapters = await Promise.all(selectedChapters.map(c => Book.getChapter(c)))
 
@@ -185,7 +186,7 @@ export async function getActiveScripturesContent() {
 
             // const reference = Chapter.getVerse(selectedVerses[0]).getReference()
 
-            return { id, isApi: scriptureData.api, version, metadata, book: bookName, bookId: active?.book || "", chapters: selectedChapters, verses: allVersesText, activeVerses: selectedVerses, attributionString, attributionRequired } as BibleContent
+            return { id, isApi: scriptureData.api, version, metadata, book: bookName, bookAbbr, bookId: active?.book || "", chapters: selectedChapters, verses: allVersesText, activeVerses: selectedVerses, attributionString, attributionRequired } as BibleContent
         })
     )
 }
@@ -233,9 +234,14 @@ export async function playScripture() {
     const attributionString = getMergedAttribution(biblesContent, attributions)
     const includeCount = 3
 
+    const templateId = getScriptureTemplateId()
+    const _template = new TemplateHelper(templateId)
+
+    const settings = { backgroundColor: _template.getSetting("backgroundColor") }
+
     const tempItems: Item[] = slides[0] || []
     const categoryId = get(drawerTabsData).scripture?.activeSubTab || ""
-    setOutput("slide", { id: "temp", categoryId, tempItems, previousSlides: getPreviousSlides(), nextSlides: getNextSlides(), attributionString, translations: biblesContent.length })
+    setOutput("slide", { id: "temp", categoryId, tempItems, previousSlides: getPreviousSlides(), nextSlides: getNextSlides(), attributionString, translations: biblesContent.length, settings })
 
     // track
     const reference = `${biblesContent[0].book} ${fullReferenceRange || biblesContent[0].chapters[0]}`.trim()
@@ -245,9 +251,7 @@ export async function playScripture() {
         if (name || apiId) trackScriptureUsage(name, apiId, reference)
     })
 
-    const templateId = getScriptureTemplateId()
-    const template = get(templates)[templateId] || {}
-    const templateBackground = template.settings?.backgroundPath
+    const templateBackground = _template.getSetting("backgroundPath")
 
     // play template background
     if (!templateBackground) return
@@ -608,6 +612,7 @@ export function getScriptureSlidesNew(data: any, onlyOne = false, disableReferen
     const bibleVersions = biblesContent.map(a => (a?.version || "").replace(/\([^)]*\)/g, "").trim())
     const mergedNames = bibleVersions.join(" + ")
     const mergedBooks = removeDuplicates(biblesContent.map(a => a.book)).join(" / ")
+    const mergedBooksAbbr = removeDuplicates(biblesContent.map(a => a.bookAbbr)).join(" / ")
 
     const attributions: string[] = []
 
@@ -618,11 +623,13 @@ export function getScriptureSlidesNew(data: any, onlyOne = false, disableReferen
 
         slidesString = slidesString.replaceAll(`{scripture${i}_name}`, bibleVersions[i - 1] || "")
         slidesString = slidesString.replaceAll(`{scripture${i}_book}`, biblesContent[i - 1]?.book || "")
+        slidesString = slidesString.replaceAll(`{scripture${i}_book_abbr}`, biblesContent[i - 1]?.bookAbbr || "")
         slidesString = slidesString.replaceAll(`{scripture${i}_chapter}`, selectedChapters[i - 1]?.toString() || "")
     }
 
     slidesString = slidesString.replaceAll("{scripture_name}", mergedNames)
     slidesString = slidesString.replaceAll("{scripture_book}", mergedBooks)
+    slidesString = slidesString.replaceAll("{scripture_book_abbr}", mergedBooksAbbr)
     slidesString = slidesString.replaceAll("{scripture_chapter}", selectedChapters[0]?.toString() || "")
 
     slidesString = slidesString.replaceAll("{scripture_reference_full}", fullReference)

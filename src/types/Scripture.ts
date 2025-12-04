@@ -4,6 +4,7 @@ export interface BibleContent {
     version: string
     metadata: { [key: string]: string }
     book: string
+    bookAbbr: string
     bookId: string
     chapters: number[]
     verses: { [key: string]: string }[]

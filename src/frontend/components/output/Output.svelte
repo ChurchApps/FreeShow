@@ -253,7 +253,7 @@
     $: cropping = currentOutput.cropping || currentStyle.cropping
 
     // values
-    $: backgroundColor = currentOutput.transparent ? "transparent" : styleTemplate?.settings?.backgroundColor || currentSlide?.settings?.color || currentStyle.background || "black"
+    $: backgroundColor = currentOutput.transparent ? "transparent" : styleTemplate?.settings?.backgroundColor || currentSlide?.settings?.color || currentStyle.background || slide?.settings?.backgroundColor || "black"
     $: messageText = $showsCache[slide?.id || ""]?.message?.text?.replaceAll("\n", "<br>") || ""
     // metadata display
     $: firstActiveSlideIndex = currentLayout.findIndex(a => !a.data.disabled)

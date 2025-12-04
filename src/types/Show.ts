@@ -522,6 +522,7 @@ export interface OutSlide {
     index?: number
     tempItems?: Item[]
     previousSlides?: Item[][]
+    settings?: any // settings for temp (e.g. scripture background color)
     nextSlides?: Item[][]
     line?: number // styles limit lines
     revealCount?: number // reveal one by one line
