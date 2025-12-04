@@ -54,9 +54,11 @@ export function showSearchFilter(searchValue: string, show: ShowList) {
 
     // WIP tag search?
 
-    // Priority 0: Number Exact Match
+    // Priority 0: Song Number Exact Match (supports alphanumeric like "MP133")
     const songNumber: string = show.quickAccess?.number || ""
-    if (songNumber && Number(songNumber) === Number(searchValue)) return 100
+    const formattedSongNumber = formatSearch(songNumber, true)
+    const formattedSearchValue = formatSearch(searchValue, true)
+    if (songNumber && formattedSongNumber === formattedSearchValue) return 100
     // Priority 0.5: CCLI Exact Match
     const songId = show.quickAccess?.metadata?.CCLI || ""
     if (songId.toString() === searchValue) return 100
@@ -65,7 +67,6 @@ export function showSearchFilter(searchValue: string, show: ShowList) {
     const showNameWithNumber = songNumber + showName
 
     // Priority 1: Title Exact Match
-    const formattedSearchValue = formatSearch(searchValue, true)
     if (formattedSearchValue === showName || formattedSearchValue === showNameWithNumber) return 100
 
     // Priority 1.5: Title Word Start Match
