@@ -113,8 +113,13 @@
     }
 
     // Get verses for all scriptures in a collection
-    function getCollectionVerses(verseNumber: number): { id: string; name: string; text: string }[] {
+    function getCollectionVerses(verseId: string | number): { id: string; name: string; text: string }[] {
         if (!isCollection) return []
+
+        const { id } = getVerseIdParts(verseId)
+        // WIP this needs to get the subparts of the verses!!
+        // like the updateSplitted function does
+
         return activeScriptures
             .map(scriptureId => {
                 const scriptureData = data[scriptureId]
@@ -124,7 +129,7 @@
                 let verseText = ""
                 if (scriptureData?.chapterData) {
                     try {
-                        const verse = scriptureData.chapterData.getVerse(verseNumber)
+                        const verse = scriptureData.chapterData.getVerse(id)
                         verseText = verse?.getHTML?.() || verse?.data?.text || ""
                     } catch {
                         // Verse might not exist in this translation
@@ -888,7 +893,7 @@
                                 {@const verseLabel = buildVerseLabel(id, subverse, endNumber, showSuffixInPicker)}
                                 {@const isActive = activeReference.verses[activeReference.verses.length - 1]?.find(vid => vid.toString() === content.id || vid.toString() === id.toString())}
                                 {@const text = formatBibleText(content.text, true)}
-                                {@const collectionVerses = isCollection && $scriptureMode !== "grid" ? getCollectionVerses(id) : []}
+                                {@const collectionVerses = false && isCollection && $scriptureMode !== "grid" ? getCollectionVerses(content.id) : []}
 
                                 <!-- custom drag -->
                                 <span
@@ -905,7 +910,9 @@
                                     on:dblclick={e => (isActiveInOutput && !e.ctrlKey && !e.metaKey ? false : playScripture())}
                                     role="none"
                                 >
-                                    <span class="v" style={endNumber && subverse && showSuffixInPicker ? "width: 60px;" : ""}>{verseLabel.base}{#if verseLabel.suffix}<span style="padding: 0;color: var(--text);opacity: 0.5;font-size: 0.8em;">{verseLabel.suffix}</span>{/if}</span>
+                                    <span class="v" style={endNumber && subverse && showSuffixInPicker ? "width: 60px;" : ""}
+                                        >{verseLabel.base}{#if verseLabel.suffix}<span style="padding: 0;color: var(--text);opacity: 0.5;font-size: 0.8em;">{verseLabel.suffix}</span>{/if}</span
+                                    >
 
                                     {#if $scriptureMode !== "grid"}
                                         {#if isCollection && collectionVerses.length > 1}

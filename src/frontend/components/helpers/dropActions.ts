@@ -12,7 +12,7 @@ import { getAccess } from "../../utils/profile"
 import { audioExtensions, imageExtensions, mediaExtensions, presentationExtensions, videoExtensions } from "../../values/extensions"
 import { actionData } from "../actions/actionData"
 import { addSlideAction, getActionTriggerId } from "../actions/actions"
-import { getActiveScripturesContent, getReferenceText, getScriptureShow, getScriptureSlides } from "../drawer/bible/scripture"
+import { getActiveScripturesContent, getReferenceText, getScriptureShow, getScriptureSlidesNew } from "../drawer/bible/scripture"
 import { addItem, DEFAULT_ITEM_STYLE } from "../edit/scripts/itemHelpers"
 import { clone, removeDuplicates } from "./array"
 import { projectDropFolders } from "./drop"
@@ -735,11 +735,11 @@ const slideDrop = {
         const selectedChapters = biblesContent[0].chapters
         const selectedVerses = biblesContent[0].activeVerses
 
-        let newSlides: any[] = getScriptureSlides({ biblesContent, selectedChapters, selectedVerses })
+        const { slides: scriptureSlides, groupNames } = getScriptureSlidesNew({ biblesContent, selectedChapters, selectedVerses })
         const slideTemplate: string = get(scriptureSettings).verseNumbers ? "" : get(scriptureSettings).template || ""
-        newSlides = newSlides.map(items => {
+        let newSlides = scriptureSlides.map((items, i) => {
             const referenceText = getReferenceText(biblesContent)
-            return { group: referenceText, color: null, settings: { template: slideTemplate }, notes: "", items }
+            return { group: groupNames[i] || referenceText, color: null, settings: { template: slideTemplate }, notes: "", items }
         })
 
         // set to correct order
@@ -761,7 +761,7 @@ const slideDrop = {
 
         newSlides.forEach(slide => {
             const id = uid()
-            delete slide.id
+            delete (slide as any).id
             slides[id] = slide
 
             let parent: any = ref[newIndex - 1] || { index: -1 }

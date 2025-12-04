@@ -314,6 +314,22 @@ export function setExampleTemplates() {
     createDoubleTemplate()
 }
 
+export function setDefaultScriptureTemplates() {
+    const templatesList = getDefaultScriptureTemplates()
+
+    special.update(a => {
+        a.deletedTemplates = (get(special).deletedTemplates || []).filter(id => !Object.keys(templatesList).includes(id))
+        return a
+    })
+
+    templateCategories.update(a => {
+        a.scripture = { default: true, name: "category.scripture", icon: "scripture" }
+        return a
+    })
+
+    templates.set({ ...get(templates), ...templatesList })
+}
+
 function createDefaultTemplates() {
     const deletedIds = get(special).deletedTemplates || []
     const defaultTemplates = getDefaultTemplates()
@@ -690,165 +706,6 @@ function getDefaultTemplates() {
         ]
     }
 
-    // scripture
-    a.scripture = {
-        isDefault: true,
-        name: translateText("category.scripture"),
-        color: "#876543",
-        category: "scripture",
-        items: [
-            {
-                // auto: true,
-                style: "top: 30px;left: 30px;width: 1860px;height: 865px;background-color: rgb(0 0 0 / 0.4);border-radius: 20px;padding: 25px;",
-                align: "",
-                lines: [{ align: "text-align: left;", text: [{ value: "1", style: "font-size: 80px;" }] }]
-            },
-            {
-                style: "top: 900px;left: 30px;width: 1860px;height: 150px;opacity: 0.8;",
-                align: "",
-                lines: [{ align: "", text: [{ value: "Meta", style: "font-size: 50px;" }] }]
-            }
-        ]
-    }
-    a.scripture_2 = {
-        isDefault: true,
-        name: translateText("category.scripture 2"),
-        color: "#876543",
-        category: "scripture",
-        items: [
-            {
-                // auto: true,
-                style: "top: 40px;left: 30px;width: 1860px;height: 400px;background-color: rgb(0 0 0 / 0.4);border-radius: 20px;padding: 25px;border-width: 1px;border-color: #cccccc;",
-                align: "",
-                lines: [{ align: "text-align: left;", text: [{ value: "1", style: "font-size: 70px;" }] }]
-            },
-            {
-                // auto: true,
-                style: "top: 475px;left: 30px;width: 1860px;height: 400px;background-color: rgb(0 0 0 / 0.4);border-radius: 20px;padding: 25px;border-width: 1px;border-color: #cccccc;",
-                align: "",
-                lines: [{ align: "text-align: left;", text: [{ value: "2", style: "font-size: 70px;" }] }]
-            },
-            {
-                style: "top: 900px;left: 30px;width: 1860px;height: 150px;opacity: 0.8;",
-                align: "",
-                lines: [{ align: "", text: [{ value: "Meta", style: "font-size: 50px;" }] }]
-            }
-        ]
-    }
-    a.scripture_3 = {
-        isDefault: true,
-        name: translateText("category.scripture 3"),
-        color: "#876543",
-        category: "scripture",
-        items: [
-            {
-                // auto: true,
-                style: "top: 40px;left: 30px;width: 1860px;height: 250px;background-color: rgb(0 0 0 / 0.4);border-radius: 20px;padding: 25px;border-width: 1px;border-color: #cccccc;",
-                align: "",
-                lines: [{ align: "text-align: left;", text: [{ value: "1", style: "font-size: 60px;" }] }]
-            },
-            {
-                // auto: true,
-                style: "top: 320px;left: 30px;width: 1860px;height: 250px;background-color: rgb(0 0 0 / 0.4);border-radius: 20px;padding: 25px;border-width: 1px;border-color: #cccccc;",
-                align: "",
-                lines: [{ align: "text-align: left;", text: [{ value: "2", style: "font-size: 60px;" }] }]
-            },
-            {
-                // auto: true,
-                style: "top: 600px;left: 30px;width: 1860px;height: 250px;background-color: rgb(0 0 0 / 0.4);border-radius: 20px;padding: 25px;border-width: 1px;border-color: #cccccc;",
-                align: "",
-                lines: [{ align: "text-align: left;", text: [{ value: "3", style: "font-size: 60px;" }] }]
-            },
-            {
-                style: "top: 900px;left: 30px;width: 1860px;height: 150px;opacity: 0.8;",
-                align: "",
-                lines: [{ align: "", text: [{ value: "Meta", style: "font-size: 50px;" }] }]
-            }
-        ]
-    }
-    a.scripture_4 = {
-        isDefault: true,
-        name: translateText("category.scripture 4"),
-        color: "#876543",
-        category: "scripture",
-        items: [
-            {
-                // auto: true,
-                style: "top: 40px;left: 30px;width: 1860px;height: 200px;background-color: rgb(0 0 0 / 0.4);border-radius: 20px;padding: 25px;border-width: 1px;border-color: #cccccc;",
-                align: "",
-                lines: [{ align: "text-align: left;", text: [{ value: "1", style: "font-size: 60px;" }] }]
-            },
-            {
-                // auto: true,
-                style: "top: 250px;left: 30px;width: 1860px;height: 200px;background-color: rgb(0 0 0 / 0.4);border-radius: 20px;padding: 25px;border-width: 1px;border-color: #cccccc;",
-                align: "",
-                lines: [{ align: "text-align: left;", text: [{ value: "2", style: "font-size: 60px;" }] }]
-            },
-            {
-                // auto: true,
-                style: "top: 460px;left: 30px;width: 1860px;height: 200px;background-color: rgb(0 0 0 / 0.4);border-radius: 20px;padding: 25px;border-width: 1px;border-color: #cccccc;",
-                align: "",
-                lines: [{ align: "text-align: left;", text: [{ value: "3", style: "font-size: 60px;" }] }]
-            },
-            {
-                // auto: true,
-                style: "top: 670px;left: 30px;width: 1860px;height: 200px;background-color: rgb(0 0 0 / 0.4);border-radius: 20px;padding: 25px;border-width: 1px;border-color: #cccccc;",
-                align: "",
-                lines: [{ align: "text-align: left;", text: [{ value: "4", style: "font-size: 60px;" }] }]
-            },
-            {
-                style: "top: 900px;left: 30px;width: 1860px;height: 150px;opacity: 0.8;",
-                align: "",
-                lines: [{ align: "", text: [{ value: "Meta", style: "font-size: 50px;" }] }]
-            }
-        ]
-    }
-    a.scriptureLT = {
-        isDefault: true,
-        name: translateText("category.scripture Lower Third"),
-        color: "#876543",
-        category: "scripture",
-        items: [
-            {
-                style: "left:30px;top:765px;width:1860px;height:238px;border-radius:20px;padding:25px;background-color:#FFFFFF;",
-                align: "",
-                lines: [{ align: "text-align: left;", text: [{ value: "1", style: "font-size: 80px;color:#000000;text-shadow:0px 0px 0px #000000;" }] }],
-                auto: true
-            },
-            {
-                style: "left:1442px;top:960px;width:448px;height:88px;background-color:#ff851b;padding:3px;border-radius:10px;",
-                align: "",
-                lines: [{ align: "", text: [{ value: "Meta", style: "text-shadow:0px 0px 0px #000000;font-size:40px;" }] }],
-                auto: true
-            }
-        ]
-    }
-    a.scriptureLT_2 = {
-        isDefault: true,
-        name: translateText("category.scripture Lower Third 2"),
-        color: "#876543",
-        category: "scripture",
-        items: [
-            {
-                style: "left:30px;top:765px;width:1860px;height:120px;border-radius:20px;padding:25px;background-color:#FFFFFF;",
-                align: "",
-                lines: [{ align: "text-align: left;", text: [{ value: "1", style: "font-size: 80px;color:#000000;text-shadow:0px 0px 0px #000000;" }] }],
-                auto: true
-            },
-            {
-                style: "left:30px;top:885px;width:1860px;height:120px;border-radius:20px;padding:25px;background-color:#DDDDDD;",
-                align: "",
-                lines: [{ align: "text-align: left;", text: [{ value: "2", style: "font-size: 80px;color:#000000;text-shadow:0px 0px 0px #000000;" }] }],
-                auto: true
-            },
-            {
-                style: "left:1442px;top:960px;width:448px;height:88px;background-color:#ff851b;padding:3px;border-radius:10px;",
-                align: "",
-                lines: [{ align: "", text: [{ value: "Meta", style: "text-shadow:0px 0px 0px #000000;font-size:40px;" }] }],
-                auto: true
-            }
-        ]
-    }
     // blue theme
     a.blueHeader = {
         isDefault: true,
@@ -919,6 +776,300 @@ function getDefaultTemplates() {
                     { align: "text-align: left", text: [{ value: "Bullet 2", style: "font-size: 100px;font-weight: bold;line-height:1.2em;" }] },
                     { align: "text-align: left", text: [{ value: "Bullet 3", style: "font-size: 100px;font-weight: bold;line-height:1.2em;" }] }
                 ]
+            }
+        ]
+    }
+
+    return { ...a, ...getDefaultScriptureTemplates() }
+}
+
+function getDefaultScriptureTemplates() {
+    const a: Record<string, Template> = {}
+
+    // scripture
+    a.scripture = {
+        isDefault: true,
+        name: translateText("category.scripture"),
+        color: "#876543",
+        category: "scripture",
+        settings: { mode: "scripture", styleOverrides: [{ id: "brackets", pattern: "/\[.*?\]/", color: "#DDDDDD" }] },
+        items: [
+            {
+                // auto: true,
+                style: "top: 30px;left: 30px;width: 1860px;height: 865px;background-color: rgb(0 0 0 / 0.4);border-radius: 20px;padding: 25px;",
+                align: "",
+                lines: [
+                    {
+                        align: "text-align: left;",
+                        text: [
+                            { value: "{scripture_number} ", style: "font-size: 40px;color: rgb(255 255 255 / 0.6);" },
+                            { value: "{scripture_text}", style: "font-size: 80px;" }
+                        ]
+                    }
+                ]
+            },
+            {
+                style: "top: 900px;left: 30px;width: 1860px;height: 150px;opacity: 0.8;",
+                align: "",
+                lines: [
+                    { align: "", text: [{ value: "{scripture_reference}", style: "font-size: 55px;" }] },
+                    { align: "", text: [{ value: "{scripture_name}", style: "font-size: 40px;" }] }
+                ]
+            }
+        ]
+    }
+    a.scripture_2 = {
+        isDefault: true,
+        name: translateText("category.scripture 2"),
+        color: "#876543",
+        category: "scripture",
+        settings: { mode: "scripture" },
+        items: [
+            {
+                // auto: true,
+                style: "top: 40px;left: 30px;width: 1860px;height: 400px;background-color: rgb(0 0 0 / 0.4);border-radius: 20px;padding: 25px;border-width: 1px;border-color: #cccccc;",
+                align: "",
+                lines: [
+                    {
+                        align: "text-align: left;",
+                        text: [
+                            { value: "{scripture1_number} ", style: "font-size: 35px;color: rgb(255 255 255 / 0.6);" },
+                            { value: "{scripture1_text}", style: "font-size: 70px;" }
+                        ]
+                    }
+                ]
+            },
+            {
+                // auto: true,
+                style: "top: 475px;left: 30px;width: 1860px;height: 400px;background-color: rgb(0 0 0 / 0.4);border-radius: 20px;padding: 25px;border-width: 1px;border-color: #cccccc;",
+                align: "",
+                lines: [
+                    {
+                        align: "text-align: left;",
+                        text: [
+                            { value: "{scripture2_number} ", style: "font-size: 35px;color: rgb(255 255 255 / 0.6);" },
+                            { value: "{scripture2_text}", style: "font-size: 70px;" }
+                        ]
+                    }
+                ]
+            },
+            {
+                style: "top: 900px;left: 30px;width: 1860px;height: 150px;opacity: 0.8;",
+                align: "",
+                lines: [
+                    { align: "", text: [{ value: "{scripture_reference}", style: "font-size: 55px;" }] },
+                    { align: "", text: [{ value: "{scripture_name}", style: "font-size: 40px;" }] }
+                ]
+            }
+        ]
+    }
+    a.scripture_3 = {
+        isDefault: true,
+        name: translateText("category.scripture 3"),
+        color: "#876543",
+        category: "scripture",
+        settings: { mode: "scripture" },
+        items: [
+            {
+                // auto: true,
+                style: "top: 40px;left: 30px;width: 1860px;height: 250px;background-color: rgb(0 0 0 / 0.4);border-radius: 20px;padding: 25px;border-width: 1px;border-color: #cccccc;",
+                align: "",
+                lines: [
+                    {
+                        align: "text-align: left;",
+                        text: [
+                            { value: "{scripture1_number} ", style: "font-size: 30px;color: rgb(255 255 255 / 0.6);" },
+                            { value: "{scripture1_text}", style: "font-size: 60px;" }
+                        ]
+                    }
+                ]
+            },
+            {
+                // auto: true,
+                style: "top: 320px;left: 30px;width: 1860px;height: 250px;background-color: rgb(0 0 0 / 0.4);border-radius: 20px;padding: 25px;border-width: 1px;border-color: #cccccc;",
+                align: "",
+                lines: [
+                    {
+                        align: "text-align: left;",
+                        text: [
+                            { value: "{scripture2_number} ", style: "font-size: 30px;color: rgb(255 255 255 / 0.6);" },
+                            { value: "{scripture2_text}", style: "font-size: 60px;" }
+                        ]
+                    }
+                ]
+            },
+            {
+                // auto: true,
+                style: "top: 600px;left: 30px;width: 1860px;height: 250px;background-color: rgb(0 0 0 / 0.4);border-radius: 20px;padding: 25px;border-width: 1px;border-color: #cccccc;",
+                align: "",
+                lines: [
+                    {
+                        align: "text-align: left;",
+                        text: [
+                            { value: "{scripture3_number} ", style: "font-size: 30px;color: rgb(255 255 255 / 0.6);" },
+                            { value: "{scripture3_text}", style: "font-size: 60px;" }
+                        ]
+                    }
+                ]
+            },
+            {
+                style: "top: 900px;left: 30px;width: 1860px;height: 150px;opacity: 0.8;",
+                align: "",
+                lines: [
+                    { align: "", text: [{ value: "{scripture_reference}", style: "font-size: 55px;" }] },
+                    { align: "", text: [{ value: "{scripture_name}", style: "font-size: 40px;" }] }
+                ]
+            }
+        ]
+    }
+    a.scripture_4 = {
+        isDefault: true,
+        name: translateText("category.scripture 4"),
+        color: "#876543",
+        category: "scripture",
+        settings: { mode: "scripture" },
+        items: [
+            {
+                // auto: true,
+                style: "top: 40px;left: 30px;width: 1860px;height: 200px;background-color: rgb(0 0 0 / 0.4);border-radius: 20px;padding: 25px;border-width: 1px;border-color: #cccccc;",
+                align: "",
+                lines: [
+                    {
+                        align: "text-align: left;",
+                        text: [
+                            { value: "{scripture1_number} ", style: "font-size: 30px;color: rgb(255 255 255 / 0.6);" },
+                            { value: "{scripture1_text}", style: "font-size: 60px;" }
+                        ]
+                    }
+                ]
+            },
+            {
+                // auto: true,
+                style: "top: 250px;left: 30px;width: 1860px;height: 200px;background-color: rgb(0 0 0 / 0.4);border-radius: 20px;padding: 25px;border-width: 1px;border-color: #cccccc;",
+                align: "",
+                lines: [
+                    {
+                        align: "text-align: left;",
+                        text: [
+                            { value: "{scripture2_number} ", style: "font-size: 30px;color: rgb(255 255 255 / 0.6);" },
+                            { value: "{scripture2_text}", style: "font-size: 60px;" }
+                        ]
+                    }
+                ]
+            },
+            {
+                // auto: true,
+                style: "top: 460px;left: 30px;width: 1860px;height: 200px;background-color: rgb(0 0 0 / 0.4);border-radius: 20px;padding: 25px;border-width: 1px;border-color: #cccccc;",
+                align: "",
+                lines: [
+                    {
+                        align: "text-align: left;",
+                        text: [
+                            { value: "{scripture3_number} ", style: "font-size: 30px;color: rgb(255 255 255 / 0.6);" },
+                            { value: "{scripture3_text}", style: "font-size: 60px;" }
+                        ]
+                    }
+                ]
+            },
+            {
+                // auto: true,
+                style: "top: 670px;left: 30px;width: 1860px;height: 200px;background-color: rgb(0 0 0 / 0.4);border-radius: 20px;padding: 25px;border-width: 1px;border-color: #cccccc;",
+                align: "",
+                lines: [
+                    {
+                        align: "text-align: left;",
+                        text: [
+                            { value: "{scripture4_number} ", style: "font-size: 30px;color: rgb(255 255 255 / 0.6);" },
+                            { value: "{scripture4_text}", style: "font-size: 60px;" }
+                        ]
+                    }
+                ]
+            },
+            {
+                style: "top: 900px;left: 30px;width: 1860px;height: 150px;opacity: 0.8;",
+                align: "",
+                lines: [
+                    { align: "", text: [{ value: "{scripture_reference}", style: "font-size: 55px;" }] },
+                    { align: "", text: [{ value: "{scripture_name}", style: "font-size: 40px;" }] }
+                ]
+            }
+        ]
+    }
+    a.scriptureLT = {
+        isDefault: true,
+        name: translateText("category.scripture Lower Third"),
+        color: "#876543",
+        category: "scripture",
+        settings: { mode: "scripture" },
+        items: [
+            {
+                style: "left:30px;top:765px;width:1860px;height:238px;border-radius:20px;padding:25px;background-color:#FFFFFF;",
+                align: "",
+                lines: [
+                    {
+                        align: "text-align: left;",
+                        text: [
+                            { value: "{scripture_number} ", style: "font-size: 40px;color: rgb(255 255 255 / 0.6);text-shadow:0px 0px 0px #000000;" },
+                            { value: "{scripture_text}", style: "font-size: 80px;color:#000000;text-shadow:0px 0px 0px #000000;" }
+                        ]
+                    }
+                ],
+                auto: true
+            },
+            {
+                style: "left:1442px;top:960px;width:448px;height:88px;background-color:#ff851b;padding:3px;border-radius:10px;",
+                align: "",
+                lines: [
+                    { align: "", text: [{ value: "{scripture_reference}", style: "text-shadow:0px 0px 0px #000000;font-size:40px;" }] },
+                    { align: "", text: [{ value: "{scripture_name}", style: "text-shadow:0px 0px 0px #000000;font-size:30px;" }] }
+                ],
+                auto: true
+            }
+        ]
+    }
+    a.scriptureLT_2 = {
+        isDefault: true,
+        name: translateText("category.scripture Lower Third 2"),
+        color: "#876543",
+        category: "scripture",
+        settings: { mode: "scripture" },
+        items: [
+            {
+                style: "left:30px;top:765px;width:1860px;height:120px;border-radius:20px;padding:25px;background-color:#FFFFFF;",
+                align: "",
+                lines: [
+                    {
+                        align: "text-align: left;",
+                        text: [
+                            { value: "{scripture1_number} ", style: "font-size: 40px;color:rgb(255 255 255 / 0.6);text-shadow:0px 0px 0px #000000;" },
+                            { value: "{scripture1_text}", style: "font-size: 80px;color:#000000;text-shadow:0px 0px 0px #000000;" }
+                        ]
+                    }
+                ],
+                auto: true
+            },
+            {
+                style: "left:30px;top:885px;width:1860px;height:120px;border-radius:20px;padding:25px;background-color:#DDDDDD;",
+                align: "",
+                lines: [
+                    {
+                        align: "text-align: left;",
+                        text: [
+                            { value: "{scripture2_number} ", style: "font-size: 40px;color:rgb(255 255 255 / 0.6);text-shadow:0px 0px 0px #000000;" },
+                            { value: "{scripture2_text}", style: "font-size: 80px;color:#000000;text-shadow:0px 0px 0px #000000;" }
+                        ]
+                    }
+                ],
+                auto: true
+            },
+            {
+                style: "left:1442px;top:960px;width:448px;height:88px;background-color:#ff851b;padding:3px;border-radius:10px;",
+                align: "",
+                lines: [
+                    { align: "", text: [{ value: "{scripture_reference}", style: "text-shadow:0px 0px 0px #000000;font-size:40px;" }] },
+                    { align: "", text: [{ value: "{scripture_name}", style: "text-shadow:0px 0px 0px #000000;font-size:30px;" }] }
+                ],
+                auto: true
             }
         ]
     }

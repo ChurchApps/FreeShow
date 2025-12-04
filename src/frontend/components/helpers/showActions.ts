@@ -1142,11 +1142,11 @@ const customTriggers = {
 // DYNAMIC VALUES
 
 export const dynamicValueText = (id: string) => `{${id}}`
-export function getDynamicIds(noVariables = false) {
+export function getDynamicIds(noVariables = false, mode: null | "scripture" = null): string[] {
     const mainValues = Object.keys(dynamicValues)
     const metaValues = Object.keys(getCustomMetadata()).map(id => `meta_${id.replaceAll(" ", "_").toLowerCase()}`)
 
-    const mergedValues = [...mainValues, ...metaValues]
+    const mergedValues = [...(mode === "scripture" ? Object.keys(scriptureDynamicValues) : []), ...mainValues, ...metaValues]
     if (noVariables) return mergedValues
 
     const timersList = sortByName(Object.values(get(timers)))
@@ -1218,7 +1218,7 @@ export function getVariableValue(dynamicId: string, ref: any = null) {
     return ""
 }
 
-export function replaceDynamicValues(text: string, { showId, layoutId, slideIndex, type, id }: any, _updater = 0) {
+export function replaceDynamicValues(text: string, { showId, layoutId, slideIndex, type, id, mode }: any, _updater = 0) {
     const isOutputWin = isOutputWindow()
 
     if (type === "stage") {
@@ -1234,7 +1234,7 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
     if (type === "show" && !currentShow) return ""
 
     const customIds = ["slide_text_current", "active_layers", "active_styles", "log_song_usage"]
-    ;[...getDynamicIds(), ...customIds].forEach(dynamicId => {
+    ;[...getDynamicIds(false, mode), ...customIds].forEach(dynamicId => {
         let textHasValue = text.includes(dynamicValueText(dynamicId))
         if (dynamicId.includes("$") && text.includes(dynamicValueText(dynamicId.replace("$", "variable_")))) textHasValue = true
         if (!textHasValue) return
@@ -1340,6 +1340,10 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
             return get(special).logSongUsage ? "true" : "false"
         }
 
+        if (scriptureDynamicValues[dynamicId]) {
+            return scriptureDynamicValues[dynamicId]() || ""
+        }
+
         if (!dynamicValues[dynamicId]) return ""
 
         const value = (dynamicValues[dynamicId]({ show, ref, slideIndex, layout, projectRef, outSlide, videoTime, videoDuration, audioTime, audioDuration, audioPath }) ?? "").toString()
@@ -1438,6 +1442,25 @@ const dynamicValues = {
     audio_countdown: ({ audioTime, audioDuration }) => joinTime(secondsToTime(audioDuration > 0 ? audioDuration - audioTime : 0)),
     audio_duration: ({ audioDuration }) => joinTime(secondsToTime(audioDuration)),
     audio_volume: () => AudioPlayer.getVolume() * 100
+}
+
+// placeholder values
+const scriptureDynamicValues = {
+    scripture_text: () => "In the beginning...",
+    scripture_book: () => "Genesis",
+    // scripture_book_abbr: () => "Gen",
+    scripture_verses: () => "1",
+    scripture_chapter: () => "1",
+    scripture_reference: () => "Genesis 1:1", // current slide only
+    scripture_reference_full: () => "Genesis 1:1-3", // across all slides
+    scripture_name: () => "King James Version", // version
+    // scripture_name_abbr: () => "KJV",
+    // chapter_verses, book_chapters
+    // add number for collections scripture1_
+
+    // not replaced directly, but the style is used:
+    scripture_number: () => "1",
+    scripture_red_jesus: () => "Words"
 }
 
 export function getVariableNameId(name: string) {
