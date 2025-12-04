@@ -8,6 +8,7 @@ import { getShowCacheId, updateCachedShow, updateCachedShows, updateShowsList } 
 import {
     $,
     actions,
+    actionTags,
     activeProject,
     activeScripture,
     activeShow,
@@ -35,21 +36,26 @@ import {
     openedFolders,
     outputs,
     outputSlideCache,
+    overlayCategories,
     overlays,
     playerVideos,
     playingAudio,
     projects,
     refreshSlideThumbnails,
+    runningActions,
     scriptures,
     shows,
     showsCache,
     special,
     stageShows,
     styles,
+    templateCategories,
     templates,
     timeFormat,
     timers,
     transitionData,
+    triggers,
+    variableTags,
     variables,
     volume
 } from "../stores"
@@ -109,6 +115,7 @@ export function storeSubscriber() {
         if (await hasNewerUpdate("LISTENER_TEMPLATES", 50)) return
 
         send(OUTPUT, ["TEMPLATES"], data)
+        send(REMOTE, ["TEMPLATES"], data)
 
         // set all loaded shows to false, so show style can be updated from template again
         cachedShowsData.update(a => {
@@ -124,11 +131,21 @@ export function storeSubscriber() {
         //     if (get(showsCache)[id]?.settings?.template === id) // set false
         // });
     })
+    templateCategories.subscribe(async data => {
+        if (await hasNewerUpdate("LISTENER_TEMPLATE_CATEGORIES", 50)) return
+
+        send(REMOTE, ["TEMPLATE_CATEGORIES"], data)
+    })
     overlays.subscribe(async data => {
         if (await hasNewerUpdate("LISTENER_OVERLAYS", 50)) return
 
         send(OUTPUT, ["OVERLAYS"], data)
         send(REMOTE, ["OVERLAYS"], data)
+    })
+    overlayCategories.subscribe(async data => {
+        if (await hasNewerUpdate("LISTENER_OVERLAY_CATEGORIES", 50)) return
+
+        send(REMOTE, ["OVERLAY_CATEGORIES"], data)
     })
 
     events.subscribe(data => {
@@ -145,7 +162,7 @@ export function storeSubscriber() {
         // Debounce and filter ACTIVE_SCRIPTURE to avoid sending partial states (book-only/chapter-only)
         if (await hasNewerUpdate("LISTENER_ACTIVE_SCRIPTURE", 120)) return
 
-        const source: any = (data && (data.api || data.bible)) || data || {}
+        const source: any = (data && ((data as any).api || (data as any).bible)) || data || {}
         const hasBook = source.bookId !== undefined && source.bookId !== null
         const hasChapter = source.chapterId !== undefined && source.chapterId !== null
         const hasVerses = Array.isArray(source.activeVerses) && source.activeVerses.length > 0
@@ -190,6 +207,8 @@ export function storeSubscriber() {
                 if (!connection.active) return
 
                 const currentData = data[connection.active]
+                if (!currentData) return
+
                 if (!currentData.settings.resolution?.width) currentData.settings.resolution = { width: 1920, height: 1080 }
                 return currentData
             })
@@ -260,15 +279,28 @@ export function storeSubscriber() {
 
         // STAGE
         send(STAGE, ["TIMERS"], data)
+
+        // REMOTE
+        send(REMOTE, ["TIMERS"], data)
     })
     activeTimers.subscribe(data => {
         send(OUTPUT, ["ACTIVE_TIMERS"], data)
+
+        // REMOTE
+        send(REMOTE, ["ACTIVE_TIMERS"], data)
     })
     variables.subscribe(data => {
         send(OUTPUT, ["VARIABLES"], data)
 
         // STAGE
         send(STAGE, ["VARIABLES"], data)
+
+        // REMOTE
+        send(REMOTE, ["VARIABLES"], data)
+    })
+    variableTags.subscribe(data => {
+        // REMOTE
+        send(REMOTE, ["VARIABLE_TAGS"], data)
     })
 
     special.subscribe(data => {
@@ -337,7 +369,24 @@ export function storeSubscriber() {
 
     //
 
-    actions.subscribe(midiInListen)
+    actions.subscribe(data => {
+        midiInListen()
+
+        // REMOTE
+        send(REMOTE, ["ACTIONS"], data)
+    })
+    actionTags.subscribe(data => {
+        // REMOTE
+        send(REMOTE, ["ACTION_TAGS"], data)
+    })
+    triggers.subscribe(data => {
+        // REMOTE
+        send(REMOTE, ["TRIGGERS"], data)
+    })
+    runningActions.subscribe(data => {
+        // REMOTE
+        send(REMOTE, ["RUNNING_ACTIONS"], data)
+    })
 
     activeShow.subscribe(data => {
         if (!data?.id) return

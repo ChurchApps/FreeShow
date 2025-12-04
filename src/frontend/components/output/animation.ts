@@ -49,7 +49,7 @@ const animations = {
             } else {
                 // zoom
                 key = "transform"
-                const backgroundType = background.type || getMediaType(getExtension(background.id))
+                const backgroundType = background ? background.type || getMediaType(getExtension(background.id)) : "image"
                 const isVideo = backgroundType === "video"
                 initialValue = isVideo ? "transform-origin: center;transform: scale(1);" : "transform: scale(1.3);"
                 const randomScale = 1.1 + Math.random() * 0.4 // 1.1 to 1.5

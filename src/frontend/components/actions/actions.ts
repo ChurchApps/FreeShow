@@ -76,7 +76,7 @@ export async function runAction(action, { midiIndex = -1, slideIndex = -1 } = {}
                 .layouts(outputRef?.layout ? [outputRef.layout] : "active")
                 .ref()[0]
             if (layoutRef) {
-                const overlayIds = layoutRef[slideIndex].data?.overlays
+                const overlayIds = layoutRef[slideIndex]?.data?.overlays || []
                 triggerData = { overlayIds }
             }
         } else if (actionId === "send_midi" && triggerData.midi) triggerData = triggerData.midi
@@ -200,9 +200,11 @@ const namedObjects = {
     start_playlist: () => get(audioPlaylists),
     id_select_stage_layout: () => get(stageShows)
 }
-export function getActionName(actionId: string, actionValue: any) {
+export function getActionName(actionId: string, actionValue: any): string {
+    if (!actionValue) return ""
+
     if (actionId === "change_output_style") {
-        return get(styles)[actionValue.outputStyle]?.name
+        return get(styles)[actionValue.outputStyle]?.name || ""
     }
 
     if (actionId === "start_metronome") {
@@ -212,10 +214,10 @@ export function getActionName(actionId: string, actionValue: any) {
     }
 
     if (actionId === "change_volume") {
-        return Number(actionValue.volume || 1) * 100
+        return (Number(actionValue.volume || 1) * 100).toString()
     }
 
-    if (!namedObjects[actionId]) return
+    if (!namedObjects[actionId]) return ""
 
-    return namedObjects[actionId]()[actionValue.id]?.name
+    return namedObjects[actionId]()[actionValue.id]?.name || ""
 }

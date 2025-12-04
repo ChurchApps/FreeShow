@@ -252,8 +252,17 @@ export function loadShow(msg: { id: string; name: string }) {
     return show
 }
 
-export function getMachineId() {
-    return machineIdSync() as string
+export function getMachineId(): string {
+    try {
+        return machineIdSync()
+    } catch (err) {
+        console.warn("Could not get machine ID:", err)
+
+        // fallback to a hash of hostname + username + platform
+        const crypto = require("crypto")
+        const fallbackId = `${os.hostname()}-${os.userInfo().username}-${os.platform()}`
+        return crypto.createHash("sha256").update(fallbackId).digest("hex")
+    }
 }
 
 function getVersion() {

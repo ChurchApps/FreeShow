@@ -91,7 +91,7 @@ function getItems(items: Item[]) {
 const br = "||__$BREAK$__||"
 
 function replaceValues(text: string, revert = false) {
-    if (!text) return ""
+    if (typeof text !== "string") return ""
 
     if (revert) return text.replaceAll(br, "\n")
     return text.replaceAll("\n", br)

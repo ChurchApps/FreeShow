@@ -321,6 +321,8 @@ const triggerActions = {
 }
 
 export function selectQuicksearchValue(value: QuickSearchValue, control: boolean) {
+    if (!value) return
+
     if (!triggerActions[value.type]) {
         console.error("Unknown Quick search type:", value.type)
         return

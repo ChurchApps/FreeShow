@@ -22,7 +22,7 @@ export function _show(id = "active") {
             if (!a) return null
             if (key) {
                 const double = key.split(".")
-                if (double.length > 1) a = shows[id][double[0]][double[1]]
+                if (double.length > 1) a = shows[id][double[0]]?.[double[1]]
                 else a = shows[id][key]
             }
             return a
@@ -279,7 +279,7 @@ export function _show(id = "active") {
                         const linesDefined = !!lines?.length
                         showsCache.update(a => {
                             if (!a[id]) return a
-                            if (!slideIds.length) slideIds = Object.keys(a[id].layouts)
+                            if (!slideIds.length) slideIds = Object.keys(a[id].layouts || {})
                             slideIds.forEach(slideId => {
                                 if (!a[id].slides[slideId]) return
                                 if (!indexesDefined) indexes = a[id].slides[slideId].items.map((_: any, i: number) => i)
@@ -451,7 +451,7 @@ export function _show(id = "active") {
                 showsCache.update(a => {
                     if (!a[id]) return a
                     if (layoutIds === "active") layoutIds = [shows[id].settings.activeLayout]
-                    else if (!layoutIds.length) layoutIds = Object.keys(shows[id].layouts)
+                    else if (!layoutIds.length) layoutIds = Object.keys(shows[id]?.layouts || {})
                     layoutIds.forEach((layoutId: any) => {
                         if (!a[id].layouts[layoutId]) return
                         prev.push({ key, value: a[id].layouts[layoutId][key] })
@@ -514,7 +514,7 @@ export function _show(id = "active") {
                         if (!a[id]) return a
 
                         if (layoutIds === "active") layoutIds = [shows[id].settings.activeLayout]
-                        else if (!layoutIds.length) layoutIds = Object.keys(shows[id].layouts)
+                        else if (!layoutIds.length) layoutIds = Object.keys(shows[id]?.layouts || {})
                         const indexesDefined = !!indexes?.length
                         layoutIds.forEach((layoutId: any, i: number) => {
                             if (i === 0) prev[i] = []
@@ -543,9 +543,11 @@ export function _show(id = "active") {
                         if (!a[id]) return a
 
                         if (layoutIds === "active") layoutIds = [shows[id].settings.activeLayout]
-                        else if (!layoutIds.length) layoutIds = Object.keys(shows[id].layouts)
+                        else if (!layoutIds.length) layoutIds = Object.keys(shows[id]?.layouts || {})
                         const indexesDefined = !!indexes?.length
                         layoutIds.forEach((layoutId: any) => {
+                            if (!a[id].layouts?.[layoutId]) return
+
                             let slides: any[] = a[id].layouts[layoutId].slides
                             if (parent !== null) slides = slides[parent].children || []
                             if (addToIndex < 0) addToIndex = slides.length
@@ -584,7 +586,7 @@ export function _show(id = "active") {
                     showsCache.update(a => {
                         if (!a[id]) return a
                         if (layoutIds === "active") layoutIds = [shows[id].settings.activeLayout]
-                        else if (!layoutIds.length) layoutIds = Object.keys(shows[id].layouts || {})
+                        else if (!layoutIds.length) layoutIds = Object.keys(shows[id]?.layouts || {})
                         layoutIds.forEach((layoutId: any, i: number) => {
                             prev[layoutId] = { indexes: [], layouts: [] }
                             if (!indexes[i]?.length && deleteAll) indexes[i] = Object.keys(shows[id].layouts[layoutId]?.slides || {})
@@ -644,6 +646,7 @@ export function _show(id = "active") {
         media: (mediaIds: string[] = []) => ({
             /** Get media */
             get: () => {
+                if (!shows[id]?.media) return []
                 const a: any[] = []
                 if (!mediaIds.length) mediaIds = Object.keys(shows[id].media)
                 mediaIds.forEach(mediaId => {

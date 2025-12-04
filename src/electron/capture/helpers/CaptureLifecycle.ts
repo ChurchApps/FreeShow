@@ -39,8 +39,12 @@ export class CaptureLifecycle {
         async function captureFrame() {
             if (!output?.captureOptions?.window || output.captureOptions.window.isDestroyed()) return
 
-            const image = await output.captureOptions.window.webContents.capturePage()
-            processFrame(image)
+            try {
+                const image = await output.captureOptions.window.webContents.capturePage()
+                processFrame(image)
+            } catch (error) {
+                console.warn(`Capture failed for output ${id}:`, error)
+            }
 
             if (!output.captureOptions) return
 
@@ -66,8 +70,7 @@ export class CaptureLifecycle {
 
     static stopCapture(id: string) {
         const output = OutputHelper.getOutput(id)
-        const capture = output.captureOptions
-
+        const capture = output?.captureOptions
         if (!capture) return
 
         CaptureHelper.Transmitter.removeAllChannels(id)

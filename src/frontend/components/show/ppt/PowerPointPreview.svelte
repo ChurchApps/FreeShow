@@ -100,7 +100,7 @@
                 <Icon id="refresh" />
             </Button>
             <p style="white-space: normal;overflow: auto;padding: 3px 8px;">
-                <b>{$presentationData.info?.titles[$presentationData.stat?.position - 1] || ""}</b>
+                <b>{$presentationData.info?.titles?.[$presentationData.stat?.position - 1] || ""}</b>
                 <span style="padding-inline-start: 10px;">{$presentationData.info?.notes[$presentationData.stat?.position - 1] || ""}</span>
             </p>
         </div>

@@ -419,7 +419,7 @@ export const _updaters = {
             if (get(activeShow)?.index !== undefined && get(activeProject) && get(projects)[get(activeProject)!]?.shows?.[get(activeShow)!.index!]) {
                 projects.update(a => {
                     a[get(activeProject)!].shows[get(activeShow)!.index!].layout = subkey
-                    a[get(activeProject)!].shows[get(activeShow)!.index!].layoutInfo = { name: _show(id).get("layouts")[subkey]?.name || "" }
+                    a[get(activeProject)!].shows[get(activeShow)!.index!].layoutInfo = { name: _show(id).get("layouts")?.[subkey]?.name || "" }
                     return a
                 })
             }
@@ -540,7 +540,7 @@ export const _updaters = {
 
 function updateTransparentColors(id: string) {
     themes.update(a => {
-        Object.entries(a[id].colors).forEach(([subId, color]: any) => {
+        Object.entries(a[id]?.colors || {}).forEach(([subId, color]: any) => {
             if (!converts[subId]) return
             const transparentColors: any[] = converts[subId]
 

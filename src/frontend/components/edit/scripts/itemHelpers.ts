@@ -231,6 +231,8 @@ export function updateSortedStageItems() {
     const stageId = get(activeStage).id || ""
     stageShows.update(a => {
         const stageLayout = a[stageId]
+        if (!stageLayout) return a
+
         const currentItemIds = Object.keys(stageLayout.items)
         let itemOrder = stageLayout.itemOrder || currentItemIds
 

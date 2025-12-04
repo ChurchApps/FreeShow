@@ -73,6 +73,7 @@
         profile: () => {
             profiles.update(a => {
                 selection.data.forEach(({ id }) => {
+                    if (!a[id]) return
                     a[id].color = value
                 })
 

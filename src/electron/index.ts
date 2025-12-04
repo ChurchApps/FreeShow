@@ -154,7 +154,7 @@ const MIN_WINDOW_SIZE = 400
 const DEFAULT_WINDOW_SIZE = { width: 800, height: 600 }
 function createMain() {
     if (RECORD_STARTUP_TIME) console.time("Main window")
-    const bounds: Rectangle = config.get("bounds")
+    const bounds: Rectangle = windowBounds.get()
     const screenBounds: Rectangle = screen.getPrimaryDisplay().bounds
 
     const options: Electron.BrowserWindowConstructorOptions = {
@@ -245,13 +245,33 @@ function setMainListeners() {
     mainWindow.on("maximize", () => config.set("maximized", true))
     mainWindow.on("unmaximize", () => config.set("maximized", false))
 
-    mainWindow.on("resize", () => config.set("bounds", mainWindow?.getBounds()))
-    mainWindow.on("move", () => config.set("bounds", mainWindow?.getBounds()))
+    mainWindow.on("resize", windowBounds.save)
+    mainWindow.on("move", windowBounds.save)
 
     mainWindow.on("close", callClose)
     mainWindow.once("closed", exitApp)
 
     mainWindow.webContents.on("context-menu", (_, a) => spellcheck(a))
+}
+
+const windowBounds = {
+    get(): Rectangle {
+        try {
+            const bounds = config.get("bounds")
+            if (bounds?.width && bounds?.height) return bounds as Rectangle
+        } catch (err) {
+            console.warn("Failed to load saved bounds:", err)
+        }
+        return { x: 0, y: 0, width: 0, height: 0 }
+    },
+    save() {
+        if (mainWindow?.isDestroyed()) return
+        try {
+            config.set("bounds", mainWindow!.getBounds())
+        } catch (err) {
+            console.warn("Failed to save window bounds:", err)
+        }
+    }
 }
 
 export function maximizeMain() {

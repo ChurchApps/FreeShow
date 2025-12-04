@@ -32,6 +32,8 @@ function XMLtoObject(xml: string) {
     const books: Book[] = []
 
     bible.div?.forEach((book, bookIndex) => {
+        if (!book) return
+
         const bookId = book["@osisID"]
         const name = book["@name"] || defaultNames[bookId]
         const abbreviation = book["@abbr"]
@@ -40,11 +42,15 @@ function XMLtoObject(xml: string) {
 
         if (!Array.isArray(book.chapter)) book.chapter = [book.chapter]
         book.chapter.forEach((chapter: any, chapterIndex: number) => {
+            if (!chapter) return
+
             const chapterNumber = chapter["@osisID"].split(".")?.[1] ?? chapterIndex + 1
             const verses: Verse[] = []
 
             if (!Array.isArray(chapter.verse)) chapter.verse = [chapter.verse]
             chapter.verse.forEach((verse: any, verseIndex: number) => {
+                if (!verse) return
+
                 let text = verse["#text"] || ""
                 text = text.replace(/<q(?:\s+xmlns="[^"]*")?\s+who="Jesus"\s+marker="">(.*?)<\/q>/g, '<span class="wj">$1</span>')
 

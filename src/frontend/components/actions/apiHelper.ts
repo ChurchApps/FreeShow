@@ -111,6 +111,8 @@ export async function selectSlideByIndex(data: API_slide_index) {
     outputSlide(showRef, data)
 }
 export function selectSlideByName(name: string) {
+    if (typeof name !== "string") return
+
     let slides = _show().slides().get()
     // group numbers
     const groupNums: { [key: string]: number } = {}

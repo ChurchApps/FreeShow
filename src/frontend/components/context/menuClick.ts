@@ -514,13 +514,15 @@ const clickActions = {
         if ((obj.sel.id !== "show" && obj.sel.id !== "show_drawer" && obj.sel.id !== "player" && obj.sel.id !== "media" && obj.sel.id !== "audio") || !get(activeProject)) return
 
         if (obj.sel.id === "player") obj.sel.data = obj.sel.data.map((id: string) => ({ id, type: "player" }))
-        else if (obj.sel.id === "audio") obj.sel.data = obj.sel.data.map(({ path, name }) => ({ id: path, name, type: "audio" }))
+        else if (obj.sel.id === "audio") obj.sel.data = obj.sel.data.filter(a => a.path).map(({ path, name }) => ({ id: path, name, type: "audio" }))
         else if (obj.sel.id === "media")
-            obj.sel.data = obj.sel.data.map(({ path, name }) => ({
-                id: path,
-                name,
-                type: getMediaType(path.slice(path.lastIndexOf(".") + 1, path.length))
-            }))
+            obj.sel.data = obj.sel.data
+                .filter(a => a.path)
+                .map(({ path, name }) => ({
+                    id: path,
+                    name,
+                    type: getMediaType(path.slice(path.lastIndexOf(".") + 1, path.length))
+                }))
 
         projects.update(a => {
             if (!a[get(activeProject)!]?.shows) return a
@@ -864,6 +866,7 @@ const clickActions = {
         })
         shows.update(a => {
             obj.sel!.data.forEach(b => {
+                if (!a[b.id]) return
                 if (a[b.id].private) delete a[b.id].private
                 else a[b.id].private = true
             })
@@ -903,6 +906,8 @@ const clickActions = {
 
             indexes.forEach(index => {
                 if (!a[projectId].shows[index]) return
+                if (typeof a[projectId].shows[index] !== "object") return
+
                 a[projectId].shows[index].played = newState
             })
 
@@ -952,6 +957,7 @@ const clickActions = {
         if (obj.sel?.id === "slide") {
             showsCache.update(a => {
                 obj.sel!.data.forEach(b => {
+                    if (!b) return
                     const ref = getLayoutRef()?.[b.index] || {}
                     const slides = a[get(activeShow)!.id].layouts?.[a[get(activeShow)!.id]?.settings?.activeLayout]?.slides
                     if (!slides) return
@@ -996,6 +1002,7 @@ const clickActions = {
     editSlideText: obj => {
         if (obj.sel.id === "slide") {
             const slide = obj.sel.data[0]
+            if (!slide) return
             activeEdit.set({ slide: slide.index, items: [], showId: slide.showId })
             activePage.set("edit")
             setTimeout(() => selected.set({ id: null, data: [] }))
@@ -1007,6 +1014,7 @@ const clickActions = {
 
         if (obj.sel.id === "slide") {
             const slide = obj.sel.data[0]
+            if (!slide) return
             activeEdit.set({ slide: slide.index, items: [], showId: slide.showId || get(activeShow)?.id })
             activePage.set("edit")
             setTimeout(() => selected.set({ id: null, data: [] }))
@@ -1683,6 +1691,8 @@ const clickActions = {
 
         if (obj.sel?.id === "profile") {
             obj.sel.data.forEach(({ id }) => {
+                if (!get(profiles)[id]) return
+
                 const currentProfile = clone(get(profiles)[id])
                 currentProfile.access = {}
 
@@ -1960,7 +1970,7 @@ export async function format(id: string, obj: ObjData, data: any = null) {
 
     // async update
     for (const slide of slideIds) {
-        const slideItems: Item[] = _show().slides([slide]).items(get(activeEdit).items).get()[0]
+        const slideItems: Item[] = _show().slides([slide]).items(get(activeEdit).items).get()[0] || []
         const newData: any = { style: { values: [] } }
 
         const newItems: Item[] = []

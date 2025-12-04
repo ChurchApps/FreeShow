@@ -25,41 +25,41 @@
     ]
 
     const types = [
-        { id: "change", name: "$:animate.change:$" },
-        // { id: "set", name: "$:animate.set:$" },
-        { id: "wait", name: "$:animate.wait:$" }
+        { id: "change", name: translateText("animate.change") },
+        // { id: "set", name: translateText("animate.set") },
+        { id: "wait", name: translateText("animate.wait") }
     ]
     const ids = [
-        { id: "text", name: "$:animate.text:$" },
-        { id: "item", name: "$:animate.item:$" },
-        { id: "background", name: "$:animate.background:$" }
+        { id: "text", name: translateText("animate.text") },
+        { id: "item", name: translateText("animate.item") },
+        { id: "background", name: translateText("animate.background") }
     ]
     // const setIds = [
     //     { id: "text", name: "$:animate.text:$" },
     //     { id: "item", name: "$:animate.item:$" },
     // ]
     const backgroundKeys = [
-        { id: "zoom", name: "$:actions.zoom:$" }
+        { id: "zoom", name: translateText("actions.zoom") }
         // TODO: "speed" - video playback speed
         // { id: "filter", name: "$:edit.filters:$" },
     ]
     const textKeys = [
         // TEXT
-        { id: "font-size", data: { extension: "px" }, name: "$:edit.size:$" },
+        { id: "font-size", data: { extension: "px" }, name: translateText("edit.size") },
 
-        { id: "line-height", values: { max: 10, step: 0.1, decimals: 1, inputMultiplier: 10 }, data: { extension: "em" }, name: "$:edit.line_height:$" },
-        { id: "letter-spacing", values: { max: 100, min: -1000 }, data: { extension: "px" }, name: "$:edit.letter_spacing:$" },
-        { id: "word-spacing", values: { min: -100 }, data: { extension: "px" }, name: "$:edit.word_spacing:$" }
+        { id: "line-height", values: { max: 10, step: 0.1, decimals: 1, inputMultiplier: 10 }, data: { extension: "em" }, name: translateText("edit.line_height") },
+        { id: "letter-spacing", values: { max: 100, min: -1000 }, data: { extension: "px" }, name: translateText("edit.letter_spacing") },
+        { id: "word-spacing", values: { min: -100 }, data: { extension: "px" }, name: translateText("edit.word_spacing") }
     ]
     const itemKeys = [
-        { id: "left", values: { min: -100000, max: 100000 }, data: { extension: "px" }, name: "$:edit.x:$" },
-        { id: "top", values: { min: -100000, max: 100000 }, data: { extension: "px" }, name: "$:edit.y:$" },
-        { id: "width", values: { min: -100000, max: 100000 }, data: { extension: "px" }, name: "$:edit.width:$" },
-        { id: "height", values: { min: -100000, max: 100000 }, data: { extension: "px" }, name: "$:edit.height:$" },
+        { id: "left", values: { min: -100000, max: 100000 }, data: { extension: "px" }, name: translateText("edit.x") },
+        { id: "top", values: { min: -100000, max: 100000 }, data: { extension: "px" }, name: translateText("edit.y") },
+        { id: "width", values: { min: -100000, max: 100000 }, data: { extension: "px" }, name: translateText("edit.width") },
+        { id: "height", values: { min: -100000, max: 100000 }, data: { extension: "px" }, name: translateText("edit.height") },
 
-        { id: "rotate", values: { max: 360 }, data: { extension: "deg" }, name: "$:edit.rotation:$" },
-        { id: "opacity", values: { max: 1, step: 0.1, decimals: 1, inputMultiplier: 10 }, name: "$:edit.opacity:$" },
-        { id: "border-radius", values: { step: 10, max: 500, inputMultiplier: 0.1 }, data: { extension: "px" }, name: "$:edit.corner_radius:$" }
+        { id: "rotate", values: { max: 360 }, data: { extension: "deg" }, name: translateText("edit.rotation") },
+        { id: "opacity", values: { max: 1, step: 0.1, decimals: 1, inputMultiplier: 10 }, name: translateText("edit.opacity") },
+        { id: "border-radius", values: { step: 10, max: 500, inputMultiplier: 0.1 }, data: { extension: "px" }, name: translateText("edit.corner_radius") }
     ]
 
     const DEFAULT_ANIMATION: AnimationAction = { type: "change", duration: 3, id: "text", key: "font-size", extension: "px" }

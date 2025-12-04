@@ -39,6 +39,112 @@
     // timeout is to load drawer tab "instantly", before loading scripture
     $: setTimeout(() => loadScripture(previewBibleId), 10)
 
+    // Load all scriptures in collection for multi-version display
+    $: if (isCollection) {
+        activeScriptures.forEach(id => {
+            if (id && !data[id]) {
+                loadScriptureForCollection(id)
+            }
+        })
+    }
+
+    async function loadScriptureForCollection(id: string) {
+        if (!id || data[id]) return
+        try {
+            const jsonBible = await loadJsonBible(id)
+            data[id] = { bibleData: jsonBible }
+            data = data // trigger reactivity
+        } catch (err) {
+            console.error("Error loading collection scripture:", id, err)
+        }
+    }
+
+    // Load book/chapter data for all collection scriptures when navigating
+    async function loadCollectionBookChapter() {
+        if (!isCollection || !activeReference.book || !activeReference.chapters.length) return
+
+        for (const scriptureId of activeScriptures) {
+            if (scriptureId === previewBibleId) continue // already loaded by main flow
+            if (!data[scriptureId]?.bibleData) continue
+
+            try {
+                // Load book if not loaded
+                if (!data[scriptureId].bookData) {
+                    data[scriptureId].bookData = await data[scriptureId].bibleData!.getBook(activeReference.book)
+                }
+                // Load chapter if not loaded
+                if (!data[scriptureId].chapterData && data[scriptureId].bookData) {
+                    data[scriptureId].chapterData = await data[scriptureId].bookData!.getChapter(Number(activeReference.chapters[0]))
+                }
+                data = data // trigger reactivity
+            } catch (err) {
+                console.error("Error loading collection book/chapter:", scriptureId, err)
+            }
+        }
+    }
+
+    // Trigger loading book/chapter for all collection scriptures when reference changes
+    $: if (isCollection && activeReference.book && activeReference.chapters.length) {
+        loadCollectionBookChapter()
+    }
+
+    // Generate dynamic colors for Bible versions that match FreeShow's theme
+    // Uses HSL to create evenly distributed, vibrant colors on dark background
+    function getVersionColor(index: number): string {
+        // Start with FreeShow's secondary pink (330°), then distribute other hues evenly
+        // Offset each subsequent color by golden angle (~137.5°) for good visual separation
+        const goldenAngle = 137.508
+        const baseHue = 330 // FreeShow's pink
+        const hue = (baseHue + index * goldenAngle) % 360
+
+        // High saturation (70-85%) and medium-high lightness (60-70%) for vibrant colors on dark bg
+        const saturation = 75
+        const lightness = 65
+
+        return `hsl(${hue}, ${saturation}%, ${lightness}%)`
+    }
+
+    // Generate a subtle background color (same hue but very transparent)
+    function getVersionBgColor(index: number): string {
+        const goldenAngle = 137.508
+        const baseHue = 330
+        const hue = (baseHue + index * goldenAngle) % 360
+        return `hsla(${hue}, 70%, 50%, 0.12)`
+    }
+
+    // Get verses for all scriptures in a collection
+    function getCollectionVerses(verseId: string | number): { id: string; name: string; text: string }[] {
+        if (!isCollection) return []
+
+        const { id } = getVerseIdParts(verseId)
+        // WIP this needs to get the subparts of the verses!!
+        // like the updateSplitted function does
+
+        return activeScriptures
+            .map(scriptureId => {
+                const scriptureData = data[scriptureId]
+                const scriptureMeta = $scriptures[scriptureId]
+
+                // Get verse from chapterData
+                let verseText = ""
+                if (scriptureData?.chapterData) {
+                    try {
+                        const verse = scriptureData.chapterData.getVerse(id)
+                        verseText = verse?.getHTML?.() || verse?.data?.text || ""
+                    } catch {
+                        // Verse might not exist in this translation
+                    }
+                }
+
+                return {
+                    id: scriptureId,
+                    name: scriptureMeta?.customName || scriptureMeta?.name || scriptureId,
+                    text: verseText
+                }
+            })
+            .filter(v => v.text)
+    }
+
     $: isActiveInOutput = outputIsScripture($outputs)
 
     type Reference = {
@@ -104,7 +210,7 @@
 
     function updateSplitted(verses: Verse[] | null, _updater: any) {
         if (!verses) return []
-        if (!$scriptureSettings.splitLongVerses) return verses.map(verse => ({ ...verse, id: verse.number.toString() + (verse.endNumber ? "-" + verse.endNumber : "") }))
+        if (!$scriptureSettings.splitLongVerses) return verses.map(verse => ({ ...verse, id: (verse.number || "").toString() + (verse.endNumber ? "-" + verse.endNumber : "") }))
 
         const chars = Number($scriptureSettings.longVersesChars || 100)
         const newVerses: (Verse & { id: string })[] = []
@@ -130,7 +236,7 @@
 
     function toggleChapter(e: any, id: string) {
         if (e.ctrlKey || e.metaKey) {
-            if (activeReference.chapters.find(cid => cid.toString() === id)) {
+            if (activeReference.chapters.find(cid => cid?.toString() === id)) {
                 // remove chapter
                 const newChapters = activeReference.chapters.filter(cid => cid.toString() !== id)
                 const newVerses = activeReference.verses.filter((_, i) => i < newChapters.length)
@@ -288,7 +394,7 @@
         setTimeout(() => (isSelected = false), 20)
 
         const keys = e.ctrlKey || e.metaKey || e.shiftKey
-        if (keys || !selectedVerses[selectedVerses.length - 1]?.find(a => a.toString() === verseNumber || a === getVerseId(verseNumber))) {
+        if (keys || !selectedVerses[selectedVerses.length - 1]?.find(a => a && (a.toString() === verseNumber || a === getVerseId(verseNumber)))) {
             selectedVerses[selectedVerses.length - 1] = scriptureRangeSelect(e, selectedVerses[selectedVerses.length - 1], verseNumber, splittedVerses)
         }
 
@@ -783,9 +889,11 @@
                             {#each splittedVerses as content}
                                 {@const { id, subverse, endNumber } = getVerseIdParts(content.id)}
                                 {@const showSplitSuffix = $scriptureSettings.splitLongVersesSuffix}
-                                {@const verseLabel = buildVerseLabel(id, subverse, endNumber, showSplitSuffix)}
+                                {@const showSuffixInPicker = $scriptureMode === "grid" ? true : showSplitSuffix}
+                                {@const verseLabel = buildVerseLabel(id, subverse, endNumber, showSuffixInPicker)}
                                 {@const isActive = activeReference.verses[activeReference.verses.length - 1]?.find(vid => vid.toString() === content.id || vid.toString() === id.toString())}
                                 {@const text = formatBibleText(content.text, true)}
+                                {@const collectionVerses = false && isCollection && $scriptureMode !== "grid" ? getCollectionVerses(content.id) : []}
 
                                 <!-- custom drag -->
                                 <span
@@ -793,6 +901,7 @@
                                     class="verse"
                                     class:showAllText={$resized.rightPanelDrawer <= 5}
                                     class:isActive
+                                    class:collection-verse={isCollection && $scriptureMode !== "grid"}
                                     data-title="{text}<br><br>{translateText('tooltip.scripture')}"
                                     draggable="true"
                                     on:mousedown={e => openVerse(updateVersesSelection(e, content.id))}
@@ -801,14 +910,23 @@
                                     on:dblclick={e => (isActiveInOutput && !e.ctrlKey && !e.metaKey ? false : playScripture())}
                                     role="none"
                                 >
-                                    <span class="v" style={endNumber && subverse && showSplitSuffix ? "width: 60px;" : ""}>
-                                        {verseLabel.base}
-                                        <!-- WIP style position not very good -->
-                                        {#if verseLabel.suffix}<span style="padding: 0;color: var(--text);opacity: 0.5;font-size: 0.8em;">{verseLabel.suffix}</span>{/if}
-                                    </span>
+                                    <span class="v" style={endNumber && subverse && showSuffixInPicker ? "width: 60px;" : ""}
+                                        >{verseLabel.base}{#if verseLabel.suffix}<span style="padding: 0;color: var(--text);opacity: 0.5;font-size: 0.8em;">{verseLabel.suffix}</span>{/if}</span
+                                    >
 
                                     {#if $scriptureMode !== "grid"}
-                                        {@html text}
+                                        {#if isCollection && collectionVerses.length > 1}
+                                            <!-- Show all versions for collections -->
+                                            <div class="collection-versions">
+                                                {#each collectionVerses as cv, cvIndex}
+                                                    <div class="version-item" style="--version-color: {getVersionColor(cvIndex)}; --version-bg: {getVersionBgColor(cvIndex)}">
+                                                        <span class="version-text">{@html formatBibleText(cv.text, true)}</span>
+                                                    </div>
+                                                {/each}
+                                            </div>
+                                        {:else}
+                                            {@html text}
+                                        {/if}
                                     {/if}
                                 </span>
                             {/each}
@@ -1066,6 +1184,11 @@
 
         font-weight: 600;
     }
+    .grid .verses .v span {
+        display: inline;
+        flex: none;
+        min-width: 0;
+    }
     .grid .books span {
         min-width: 52px;
     }
@@ -1073,5 +1196,48 @@
     .grid .verses {
         color: var(--secondary);
         font-weight: bold;
+    }
+
+    /* Collection multi-version display */
+    .verse.collection-verse {
+        display: block !important;
+        flex: none !important;
+        height: auto !important;
+        min-height: 0 !important;
+        padding: 2px 10px 2px 0 !important;
+        margin: 0 !important;
+        white-space: normal !important;
+        overflow: visible !important;
+        text-overflow: unset !important;
+    }
+
+    .collection-versions {
+        display: block !important;
+        width: 100%;
+        padding: 0 !important;
+        margin: 2px 0 0 0 !important;
+    }
+
+    .version-item {
+        display: block !important;
+        padding: 3px 6px 3px 8px !important;
+        margin: 0 0 2px 0 !important;
+        border-left: 4px solid var(--version-color, var(--secondary));
+        background: var(--version-bg, transparent);
+        border-radius: 0 4px 4px 0;
+        line-height: 1.2;
+    }
+
+    .version-item:last-child {
+        margin-bottom: 0 !important;
+    }
+
+    .version-text {
+        display: inline !important;
+        font-size: 0.9em;
+        line-height: 1.2;
+        font-weight: normal;
+        padding: 0 !important;
+        margin: 0 !important;
     }
 </style>

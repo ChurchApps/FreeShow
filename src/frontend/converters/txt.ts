@@ -94,7 +94,7 @@ export function convertText({ name = "", origin = "", category = null, text, noF
 
     // get ccli
     let ccli = ""
-    if (!Object.keys(plainTextMetadata).length && sections[sections.length - 1].includes("www.ccli.com")) {
+    if (!Object.keys(plainTextMetadata).length && sections[sections.length - 1]?.includes("www.ccli.com")) {
         ccli = sections.pop()!
     }
 
@@ -103,7 +103,7 @@ export function convertText({ name = "", origin = "", category = null, text, noF
     // find chorus phrase
     const patterns = findPatterns(sections)
     sections = patterns.sections
-    labeled = patterns.indexes.map((a, i) => ({ type: a, text: sections[i] }))
+    labeled = patterns.indexes.map((a, i) => ({ type: a, text: sections[i] || "" }))
     labeled = checkRepeats(labeled)
 
     if (!name) name = plainTextMetadata.title || trimNameFromString(labeled[0].text)
@@ -341,6 +341,7 @@ function createSlides(labeled: { type: string; text: string }[], noFormatting) {
 
         // split slide notes from text ("---")
         const slideTextAndNotes = slideText.split("---")
+        if (!slideTextAndNotes[0]) return
 
         while (new Set(slideTextAndNotes[0].split("")).size === 1 && slideTextAndNotes[0][0] === "-") slideTextAndNotes.shift()
         let allLines: string[] = [slideTextAndNotes.shift() || ""]

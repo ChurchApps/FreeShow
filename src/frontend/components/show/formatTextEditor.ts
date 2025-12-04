@@ -403,6 +403,8 @@ function groupSlides(slides: Slide[]) {
     let currentIndex = -1
 
     slides.forEach((slide, i) => {
+        if (!slide) return
+
         if (i === 0 && !slide.group) {
             slide.group = "Verse"
             slide.globalGroup = "verse"

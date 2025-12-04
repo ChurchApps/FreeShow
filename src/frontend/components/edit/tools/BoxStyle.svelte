@@ -177,6 +177,7 @@
         if (input.id.includes(".")) {
             let splitted = input.id.split(".")
             let item = getSelectedItem()
+            if (!item) return
 
             input.id = splitted[0]
             value = item[splitted[0]] || {}
@@ -288,7 +289,7 @@
         let showSlides = $showsCache[$activeShow?.id || ""]?.slides || {}
 
         // get all selected slides
-        if (slides[0] && $selected.id === "slide") {
+        if (slides[0] && $selected.id === "slide" && Array.isArray($selected.data)) {
             let selectedSlides = $selected.data.filter(({ index }) => index !== $activeEdit.slide!)
             slides.push(...selectedSlides.map(({ index }) => ref[index]?.id))
 

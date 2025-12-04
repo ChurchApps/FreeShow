@@ -41,7 +41,7 @@
         mediaItemPath = media[backgroundId]?.path || ""
     }
 
-    $: shouldAutoUpdate = item.src?.includes("NowPlayingCover")
+    $: shouldAutoUpdate = typeof item.src === "string" && item.src.includes("NowPlayingCover")
 
     let updater = 0
     let updateInterval: NodeJS.Timeout | null = null
@@ -56,7 +56,7 @@
     $: if (item?.type === "media") getMediaItemPath()
     async function getMediaItemPath() {
         mediaItemPath = ""
-        if (!item.src) return getCustomPath()
+        if (typeof item.src !== "string") return getCustomPath()
 
         if (shouldAutoUpdate) {
             mediaItemPath = item.src

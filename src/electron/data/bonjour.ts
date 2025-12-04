@@ -1,8 +1,15 @@
-import Bonjour from "bonjour-service"
+import Bonjour, { type Bonjour as BonjourInstance } from "bonjour-service"
 import crypto from "crypto"
 import os from "os"
 
-const bonjour = new Bonjour()
+let bonjour: BonjourInstance | null = null
+try {
+    bonjour = new Bonjour()
+} catch (err) {
+    // likely no permission on macOS (System Settings > Privacy & Security > Network Access)
+    console.warn("Bonjour: Failed to initialize:", err.message)
+}
+
 const ip = getLocalIP()
 
 const instanceID = crypto.randomBytes(3).toString("hex")
@@ -10,6 +17,7 @@ const hostname = os.hostname()
 
 // broadcast port over LAN
 export function publishPort(name: string, port: number) {
+    if (!bonjour) return
     if (!ip) {
         console.warn(`Bonjour: Skipping publish for ${name} - no network interface available`)
         return
@@ -28,16 +36,17 @@ export function publishPort(name: string, port: number) {
             txt: customData
         })
     } catch (err) {
-        // Likely no permission on macOS (System Settings > Privacy & Security > Network Access)
-        console.warn(`Bonjour: Failed to publish ${name} on port ${port}:`, err instanceof Error ? err.message : err)
+        console.warn(`Bonjour: Failed to publish ${name} on port ${port}:`, err.message)
     }
 }
 
 export function unpublishPorts() {
+    if (!bonjour) return
+
     try {
         bonjour.unpublishAll()
     } catch (err) {
-        console.warn("Bonjour: Failed to unpublish ports:", err instanceof Error ? err.message : err)
+        console.warn("Bonjour: Failed to unpublish ports:", err.message)
     }
 }
 

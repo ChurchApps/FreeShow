@@ -856,10 +856,12 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
         item.lines?.forEach((line, j) => {
             const templateLine = templateItem?.lines?.[j] || templateItem?.lines?.[0]
 
+            const hasDynamicValue = templateLine?.text?.some(text => text.value?.includes("{"))
+
             line.align = templateLine?.align || ""
             line.text?.forEach((text, k) => {
                 const templateText = templateLine?.text?.[k] || templateLine?.text?.[0]
-                if (!text.customType?.includes("disableTemplate")) {
+                if (!text.customType?.includes("disableTemplate") && !templateText?.value?.includes("{scripture_number}")) {
                     let style = templateText?.style || ""
 
                     // add original text color, if template is not clicked & slide text has multiple colors
@@ -875,7 +877,7 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
                 const firstChar = templateText?.value?.[0] || ""
 
                 // add dynamic values
-                if (!text.value?.length && firstChar === "{" && templateItem?.lines?.[j]) {
+                if (!text.value?.length && hasDynamicValue && templateItem?.lines?.[j]) {
                     text.value = templateText!.value
                 }
 
@@ -1020,7 +1022,12 @@ function getSlideItemsFromTemplate(templateSettings: TemplateSettings) {
 function removeTextValue(items: Item[]) {
     items.forEach(item => {
         if (!item.lines) return
-        item.lines = item.lines.map(line => ({ align: line.align, text: [{ style: line.text?.[0]?.style, value: getTemplateText(line.text?.[0]?.value) }] }))
+        item.lines = item.lines.map(line => {
+            const hasDynamicValue = line.text?.some(text => text.value?.includes("{"))
+
+            if (hasDynamicValue) return { align: line.align, text: line.text }
+            return { align: line.align, text: [{ style: line.text?.[0]?.style, value: "" }] }
+        })
     })
 
     return items
@@ -1181,7 +1188,7 @@ export function getOutputLines(outSlide: OutSlide, styleLines = 0) {
     // if the value is 3 & 2 lines, with slide text of 6 lines, the center will not match, but I probably can't do anything about that
 
     // lines reveal
-    const linesRevealItems = (showSlide?.items || []).filter(a => a.lineReveal)
+    const linesRevealItems = (showSlide?.items || []).filter(a => a?.lineReveal)
     const currentReveal = outSlide.revealCount ?? 0
     let linesStart: number | null = null
     let linesEnd: number | null = null

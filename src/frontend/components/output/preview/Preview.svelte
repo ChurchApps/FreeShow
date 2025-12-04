@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { actions, activePage, activePopup, activeShow, activeTimers, groups, guideActive, outLocked, outputs, overlayTimers, playingAudio, playingMetronome, resized, slideTimers, special } from "../../../stores"
+    import { actions, activePage, activePopup, activeShow, activeTimers, contextActive, groups, guideActive, outLocked, outputs, overlayTimers, playingAudio, playingMetronome, resized, slideTimers, special } from "../../../stores"
     import { DEFAULT_WIDTH, isDarkTheme } from "../../../utils/common"
     import { formatSearch } from "../../../utils/search"
     import { previewCtrlShortcuts, previewShortcuts } from "../../../utils/shortcuts"
@@ -39,6 +39,7 @@
     let numberKeyTimeout: NodeJS.Timeout | null = null
     let previousNumberKey = ""
     function keydown(e: KeyboardEvent) {
+        if ($contextActive) return
         if ($guideActive || $activePopup === "assign_shortcut") return
         if ((e.ctrlKey || e.metaKey || e.altKey) && previewCtrlShortcuts[e.key]) {
             e.preventDefault()
@@ -140,7 +141,8 @@
 
         let globalGroupIds: string[] = []
         Object.entries($groups).forEach(([groupId, group]) => {
-            if (!group.shortcut || group.shortcut.toLowerCase() !== e.key.toLowerCase()) return
+            if (typeof group.shortcut !== "string" || group.shortcut.toLowerCase() !== e.key.toLowerCase()) return
+
             showGroups.forEach(slide => {
                 if (slide.globalGroup === groupId) globalGroupIds.push(slide.id)
             })

@@ -420,7 +420,7 @@
                 disabled={!action.name}
                 style="margin-top: 10px;"
                 {id}
-                name={(action.keypressActivate || "").toUpperCase()}
+                name={typeof action.keypressActivate === "string" ? action.keypressActivate.toUpperCase() : ""}
                 value={action.keypressActivate}
                 icon="shortcut"
                 popupId="assign_shortcut"

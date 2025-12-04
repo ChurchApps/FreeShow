@@ -200,7 +200,13 @@
     $: pathString = path.replace(rootPath, "").replace(name, "").replaceAll("\\", "/").split("/").filter(Boolean).join("/")
 
     let updater = 1
-    $: if (active) setTimeout(() => updater++, 500)
+    $: if (active) {
+        setTimeout(update, 500)
+        setTimeout(update, 2000) // double check
+    }
+    function update() {
+        updater++
+    }
 </script>
 
 <svelte:window on:keydown={keydown} />

@@ -17,7 +17,7 @@
     import { isConditionMet } from "../scripts/itemHelpers"
     import { getItemText } from "../scripts/textStyle"
 
-    export let item: Item
+    export let item: Item | null
     export let index: number
     export let ratio: number
 
@@ -197,7 +197,7 @@
 
     <!-- actions -->
     {#each actions as action}
-        {@const actionValue = action.direct ? item[action.id] : item.actions?.[action.id]}
+        {@const actionValue = item ? (action.direct ? item[action.id] : item.actions?.[action.id]) : null}
         {#if actionValue}
             <div data-title={action ? translateText(action.label) : ""} class="actionButton" style="zoom: {1 / ratio};left: 0;inset-inline-end: unset;">
                 <Button on:click={() => (action.direct ? removeItemValue(action.id) : removeAction(action.id))} redHover>

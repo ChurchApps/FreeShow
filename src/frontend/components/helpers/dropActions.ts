@@ -12,7 +12,7 @@ import { getAccess } from "../../utils/profile"
 import { audioExtensions, imageExtensions, mediaExtensions, presentationExtensions, videoExtensions } from "../../values/extensions"
 import { actionData } from "../actions/actionData"
 import { addSlideAction, getActionTriggerId } from "../actions/actions"
-import { getActiveScripturesContent, getReferenceText, getScriptureShow, getScriptureSlides } from "../drawer/bible/scripture"
+import { getActiveScripturesContent, getReferenceText, getScriptureShow, getScriptureSlidesNew } from "../drawer/bible/scripture"
 import { addItem, DEFAULT_ITEM_STYLE } from "../edit/scripts/itemHelpers"
 import { clone, removeDuplicates } from "./array"
 import { projectDropFolders } from "./drop"
@@ -253,7 +253,7 @@ export const dropActions = {
 
                 const showId = drag.showId || drag.data[0]?.showId || get(activeShow)?.id || ""
                 const slides: { [key: string]: Slide } = _show(showId).get().slides
-                let layout = _show(showId).layouts("active").get()[0].slides
+                let layout = _show(showId).layouts("active").get()[0]?.slides || []
                 const oldData = clone({ slides, layout })
                 const ref = getLayoutRef(showId)
 
@@ -489,7 +489,7 @@ const slideDrop = {
         } else if (drag.id === "camera") data[0].type = "camera"
         else if (drag.id === "screen") data[0].type = "screen"
         else if (drag.id === "ndi") data[0].type = "ndi"
-        else if (!data[0].name) data[0].name = data[0].path
+        else if (!data[0]?.name) data[0].name = data[0].path
 
         let center = drop.center
         if (drag.id === "files" && drop.index !== undefined) center = true
@@ -594,7 +594,7 @@ const slideDrop = {
         let ref = getLayoutRef(showId)
 
         const slides: { [key: string]: Slide } = _show(showId).get().slides
-        const oldLayout = _show(showId).layouts("active").get()[0].slides
+        const oldLayout = _show(showId).layouts("active").get()[0]?.slides || []
         history.oldData = clone({ layout: oldLayout, slides })
 
         // end of layout
@@ -735,11 +735,11 @@ const slideDrop = {
         const selectedChapters = biblesContent[0].chapters
         const selectedVerses = biblesContent[0].activeVerses
 
-        let newSlides: any[] = getScriptureSlides({ biblesContent, selectedChapters, selectedVerses })
+        const { slides: scriptureSlides, groupNames } = getScriptureSlidesNew({ biblesContent, selectedChapters, selectedVerses })
         const slideTemplate: string = get(scriptureSettings).verseNumbers ? "" : get(scriptureSettings).template || ""
-        newSlides = newSlides.map(items => {
+        let newSlides = scriptureSlides.map((items, i) => {
             const referenceText = getReferenceText(biblesContent)
-            return { group: referenceText, color: null, settings: { template: slideTemplate }, notes: "", items }
+            return { group: groupNames[i] || referenceText, color: null, settings: { template: slideTemplate }, notes: "", items }
         })
 
         // set to correct order
@@ -753,7 +753,7 @@ const slideDrop = {
         const layoutId: string = _show().get("settings.activeLayout")
 
         const slides: { [key: string]: Slide } = clone(get(showsCache)[get(activeShow)?.id || ""]?.slides)
-        let layout: any[] = _show().layouts([layoutId]).slides().get()[0]
+        let layout: any[] = _show().layouts([layoutId]).slides().get()[0] || []
 
         if (drop.index === undefined) drop.index = layout.length
         let newIndex: number = drop.index
@@ -761,7 +761,7 @@ const slideDrop = {
 
         newSlides.forEach(slide => {
             const id = uid()
-            delete slide.id
+            delete (slide as any).id
             slides[id] = slide
 
             let parent: any = ref[newIndex - 1] || { index: -1 }

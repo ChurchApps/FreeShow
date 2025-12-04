@@ -522,6 +522,8 @@ export const historyActions = ({ obj, undo = null }: any) => {
                                     const firstChildId = currentSlide.children[0]
                                     const newChildren = clone(currentSlide.children.slice(1))
 
+                                    if (!a[showId].slides[firstChildId]) return
+
                                     // make parent
                                     a[showId].slides[firstChildId].globalGroup = currentSlide.globalGroup
                                     a[showId].slides[firstChildId].group = currentSlide.group
@@ -899,6 +901,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
                     show.slides[id].items = clone(newItems)
 
+                    if (!show.slides[id].settings) show.slides[id].settings = {}
                     // TemplateSettings / updateSlideFromTemplate()
                     // if (slideTemplate.settings?.resolution) show.slides[id].settings.resolution = slideTemplate.settings?.resolution
                     if (slideTemplate.settings?.backgroundColor) show.slides[id].settings.color = slideTemplate.settings?.backgroundColor

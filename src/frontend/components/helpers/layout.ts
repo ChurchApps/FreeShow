@@ -5,7 +5,7 @@ import type { Slide, SlideData } from "../../../types/Show"
 
 export function getCurrentLayout() {
     const slides: { [key: string]: Slide } = clone(_show().get().slides)
-    const layout: SlideData[] = _show().layouts("active").get()[0].slides
+    const layout: SlideData[] = _show().layouts("active").get()[0]?.slides || []
     return clone({ slides, layout })
 }
 

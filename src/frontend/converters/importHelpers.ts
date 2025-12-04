@@ -145,8 +145,14 @@ export function importSpecific(data: { content: string; name?: string; extension
 }
 
 export function fixShowIssues(show: Show) {
+    if (typeof show.name !== "string") show.name = ""
+    if (!show.category) show.category = null
     if (!show.slides) show.slides = {}
+    if (!show.layouts) show.layouts = {}
     if (!show.settings) show.settings = { activeLayout: Object.keys(show.layouts)[0] || "", template: null }
+    if (!show.timestamps) show.timestamps = { created: 0, modified: 0, used: 0 }
+    if (!show.meta) show.meta = {}
+    if (!show.media) show.media = {}
 
     // remove unused children slides
     const allUsedSlides: string[] = Object.keys(show.slides).reduce((ids: string[], slideId: string) => {
@@ -166,6 +172,8 @@ export function fixShowIssues(show: Show) {
             delete show.slides[slideId]
             return
         }
+
+        if (!Array.isArray(slide.items)) slide.items = []
 
         // check & fix looping items bug
         if (slide.items?.length < 30) return

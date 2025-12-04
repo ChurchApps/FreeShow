@@ -45,6 +45,7 @@ export class OutputBounds {
         OutputHelper.getKeys().forEach(outputId => {
             const output = OutputHelper.getOutput(outputId)
             if (output.boundsLocked) return
+            if (!output.window || output.window.isDestroyed()) return
 
             const wBounds = output.window.getBounds()
             const centerLeft = wBounds.x + wBounds.width / 2

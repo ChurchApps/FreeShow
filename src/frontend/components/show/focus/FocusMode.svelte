@@ -112,6 +112,7 @@
     }
 
     function getId(text: string) {
+        if (typeof text !== "string") return ""
         return text.replace(/[^a-zA-Z0-9]+/g, "")
     }
 

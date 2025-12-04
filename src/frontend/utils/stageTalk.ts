@@ -127,6 +127,8 @@ export const receiveSTAGE = {
         if (!stageId) return
 
         const stageLayout = get(stageShows)[stageId]
+        if (!stageLayout) return
+
         const outputId = stageLayout.settings.output || getFirstOutput()?.id
         const outSlideId = get(outputs)[outputId]?.out?.slide?.id
 

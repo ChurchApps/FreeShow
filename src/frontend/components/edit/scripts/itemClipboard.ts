@@ -87,7 +87,7 @@ export function getSlideStyle(): StyleClipboard {
 
 export function getFilterStyle(): StyleClipboard {
     const ref = getLayoutRef()
-    const slideData = ref[get(activeEdit).slide!].data
+    const slideData = ref[get(activeEdit).slide!]?.data || {}
 
     const filterKeys = ["backdrop-filter", "filter"]
 
@@ -112,6 +112,8 @@ export async function setBoxStyle(styles: StyleClipboard[], slides: any, type: I
     }
 
     function updateSlideStyle(slide) {
+        if (!slide || !get(activeShow)) return
+
         const items: number[] = []
         const values: any[] = []
 
@@ -147,7 +149,7 @@ export async function setBoxStyle(styles: StyleClipboard[], slides: any, type: I
             //     location: { page: "edit", show: get(activeShow)!, slide: slide.id, items },
             // })
             showsCache.update(a => {
-                ;(a[get(activeShow)!.id].slides[slide.id || ""]?.items || [])
+                ;(a[get(activeShow)!.id]?.slides[slide.id || ""]?.items || [])
                     .filter((_, i) => items.includes(i))
                     .forEach(item => {
                         item.lines?.forEach(line => {
@@ -177,6 +179,7 @@ export async function setBoxStyle(styles: StyleClipboard[], slides: any, type: I
             items.push(i)
 
             const currentStyle = styles[i] || styles[0]
+            if (!currentStyle) return
 
             let newStyle = ""
             Object.entries(currentStyle.style).forEach(([key, value]) => {
@@ -249,6 +252,7 @@ export async function setItemStyle(styles: StyleClipboard[], slides: any) {
             items.push(i)
 
             const style = styles[i] || styles[0]
+            if (!style) return
 
             // get new style
             let newStyle = ""

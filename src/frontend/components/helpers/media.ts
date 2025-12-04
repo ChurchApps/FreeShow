@@ -462,6 +462,9 @@ export function captureCanvas(data: { input: string; output: string; size: any; 
     const isImage = imageExtensions.includes(data.extension)
     const mediaElem = document.createElement(isImage ? "img" : "video")
 
+    // set crossOrigin to prevent canvas tainting
+    ;(mediaElem as any).crossOrigin = "anonymous"
+
     mediaElem.addEventListener(isImage ? "load" : "loadeddata", async () => {
         const currentMediaSize = isImage ? { width: (mediaElem as HTMLImageElement).naturalWidth, height: (mediaElem as HTMLImageElement).naturalHeight } : { width: (mediaElem as HTMLVideoElement).videoWidth, height: (mediaElem as HTMLVideoElement).videoHeight }
         const newSize = getNewSize(currentMediaSize, data.size || {})
@@ -548,6 +551,9 @@ export function cropImageToBase64(imagePath: string, crop: Partial<Cropping> | u
 
         const img = new Image()
 
+        // set crossOrigin to prevent canvas tainting
+        img.crossOrigin = "anonymous"
+
         // needed if loading from local path
         img.src = encodeFilePath(imagePath)
         img.onload = () => {
@@ -633,6 +639,9 @@ export async function getMediaFileFromClipboard(e: ClipboardEvent): Promise<stri
 function compressImage(dataUrl: string, maxWidth = 1920, maxHeight = 1080, quality = 0.8): Promise<string> {
     return new Promise(resolve => {
         const img = new Image()
+
+        // set crossOrigin to prevent canvas tainting
+        img.crossOrigin = "anonymous"
 
         img.onload = () => {
             let { width, height } = img

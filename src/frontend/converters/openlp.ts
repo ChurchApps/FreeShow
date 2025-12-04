@@ -162,7 +162,7 @@ function formatText(text: string) {
 
 // WIP import song books as categories
 function sqliteConvert(content: any) {
-    const songs: any[] = content.songs.map(song => getSong(song, content))
+    const songs: any[] = (content?.songs || []).map(song => getSong(song, content))
 
     return songs
 }

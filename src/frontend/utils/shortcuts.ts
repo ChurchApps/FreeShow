@@ -100,7 +100,7 @@ const keys = {
             else if (get(selected).id) selected.set({ id: null, data: [] })
         }, 20)
     },
-    Delete: () => deleteAction(get(selected), "remove"),
+    Delete: () => (get(contextActive) ? null : deleteAction(get(selected), "remove")),
     Backspace: () => keys.Delete(),
     // give time so it don't clear slide
     F2: () => (get(focusMode) ? null : setTimeout(() => menuClick("rename", true, null, null, null, get(selected)))),
@@ -306,6 +306,8 @@ export const previewShortcuts = {
         previousSlideIndividual(e)
     },
     " ": (e: KeyboardEvent) => {
+        if (get(contextActive)) return
+
         const currentShow = get(focusMode) ? get(activeFocus) : get(activeShow)
         if (currentShow?.type === "ppt") return
         if (currentShow?.type === "pdf") {

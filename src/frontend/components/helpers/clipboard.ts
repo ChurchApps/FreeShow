@@ -725,7 +725,9 @@ const deleteActions = {
         }
 
         const layout = data.layout || _show().get("settings.activeLayout")
-        const slide = data.slideId || getLayoutRef()[data.slide].id
+        const slide = data.slideId || getLayoutRef()[data.slide]?.id
+        if (!slide) return
+
         history({
             id: "deleteItem",
             location: {
@@ -883,12 +885,14 @@ const deleteActions = {
     // "remove"
     show: (data: any) => {
         if (!get(activeProject)) return
-        const projectItems = get(projects)[get(activeProject)!].shows
+        const projectItems = get(projects)[get(activeProject)!]?.shows || []
         const indexes: number[] = []
 
         // don't remove private shows
         data.forEach(({ index }) => {
             const projectRef = projectItems[index]
+            if (!projectRef) return
+
             if (projectRef.type === "show" || projectRef.type === undefined) {
                 const isPrivate = _show(projectRef.id).get("private")
                 if (isPrivate) return
@@ -1020,6 +1024,8 @@ const deleteActions = {
 const duplicateActions = {
     event: (data: any) => {
         const event = clone(get(events)[data.id])
+        if (!event) return
+
         event.name += " 2"
         event.repeat = false
         delete event.group
@@ -1068,6 +1074,8 @@ const duplicateActions = {
         if (!layoutId) return
 
         const newLayout = clone(get(showsCache)[get(activeShow)!.id].layouts[layoutId])
+        if (!newLayout) return
+
         newLayout.name += " 2"
         history({ id: "UPDATE", newData: { key: "layouts", subkey: uid(), data: newLayout }, oldData: { id: get(activeShow)?.id }, location: { page: "show", id: "show_layout" } })
     },

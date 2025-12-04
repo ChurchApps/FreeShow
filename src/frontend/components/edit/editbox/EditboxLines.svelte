@@ -243,10 +243,9 @@
                 if (historyText === linesText) return
             }
 
+            // only reset caret when lines are added/removed, not when line content changes
             let lastChangedLine = EditboxHelper.determineCaretLine(item?.lines || [], newLines)
-            if (lastChangedLine > -1) setCaretDelayed(lastChangedLine, 0)
-
-            // create new history store, when passing 15 steps
+            if (lastChangedLine > -1 && (item?.lines || []).length !== newLines.length) setCaretDelayed(lastChangedLine, 0) // create new history store, when passing 15 steps
             updates++
             if (updates >= 15) {
                 HISTORY_UPDATE_KEY++
@@ -393,7 +392,7 @@
                 if (lineText === "\n") lineText = ""
                 if (plain && !lineText && !style) {
                     style = item.lines?.[i - 1]?.text[0]?.style || ""
-                    newLines[pos].align = newLines[pos - 1].align || ""
+                    newLines[pos].align = newLines[pos - 1]?.align || ""
                 }
 
                 // remove custom font size
@@ -555,6 +554,7 @@
         let newLines: any[] = []
         let pastingIndex = -1
         sel.forEach((lineSel, lineIndex) => {
+            if (!lines[lineIndex]) return
             if (lineSel.start === undefined && (!emptySelection || lineIndex < sel.length - 1)) {
                 newLines.push(lines[lineIndex])
                 return

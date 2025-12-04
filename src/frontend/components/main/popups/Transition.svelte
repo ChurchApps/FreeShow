@@ -175,7 +175,7 @@
     if (isItem) {
         if ($activeEdit.type === "overlay") slideItems = $overlays[$activeEdit.id || ""]?.items || []
         else if ($activeEdit.type === "template") slideItems = $templates[$activeEdit.id || ""]?.items || []
-        else slideItems = _show().get("slides")[slideRef.id]?.items || []
+        else slideItems = _show().get("slides")?.[slideRef.id]?.items || []
     }
     let firstItem = slideItems[$activeEdit.items[0]] || {}
     $: slideItemTransition = isItem ? clone(firstItem.actions?.transition || $transitionData.text || clone(DEFAULT_TRANSITIONS.text)) : {}

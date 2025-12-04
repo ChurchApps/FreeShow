@@ -88,50 +88,26 @@
         }
 
         /* Match FreeShow main app scrollbar */
-        :global(::-webkit-scrollbar) {
+        ::-webkit-scrollbar {
             width: 8px;
             height: 8px;
         }
-        :global(::-webkit-scrollbar-track),
-        :global(::-webkit-scrollbar-corner) {
+        ::-webkit-scrollbar-track,
+        ::-webkit-scrollbar-corner {
             background: rgb(255 255 255 / 0.05);
         }
-        :global(::-webkit-scrollbar-thumb) {
-            background: rgb(255 255 255 / 0.3);
-        }
-        :global(::-webkit-scrollbar-thumb:hover) {
-            background: rgb(255 255 255 / 0.5);
-        }
-
-        .scrollbar-styled {
-            scrollbar-width: thin; /* Firefox */
-            scrollbar-color: rgb(255 255 255 / 0.3) rgb(255 255 255 / 0.05);
-        }
-        .scrollbar-styled::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-        .scrollbar-styled::-webkit-scrollbar-track,
-        .scrollbar-styled::-webkit-scrollbar-corner {
-            background: rgb(255 255 255 / 0.05);
-        }
-        .scrollbar-styled::-webkit-scrollbar-thumb {
+        ::-webkit-scrollbar-thumb {
             background: rgb(255 255 255 / 0.3);
             border-radius: 8px;
         }
-        .scrollbar-styled::-webkit-scrollbar-thumb:hover {
+        ::-webkit-scrollbar-thumb:hover {
             background: rgb(255 255 255 / 0.5);
         }
 
-        @media (pointer: coarse) {
-            .scrollbar-styled {
-                scrollbar-width: thick; /* Firefox */
-                padding-inline-end: 12px;
-            }
-            .scrollbar-styled::-webkit-scrollbar {
-                width: 18px;
-                height: 18px;
-            }
+        /* Firefox scrollbar */
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: rgb(255 255 255 / 0.3) rgb(255 255 255 / 0.05);
         }
 
         h1 {

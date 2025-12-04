@@ -19,7 +19,7 @@
         } else if (a.channel === "NEXT") {
             index++
             if (shows.length > index) exportPDF()
-            else send(EXPORT, ["DONE"], { name: shows[index - 1].name })
+            else send(EXPORT, ["DONE"], { name: shows[index - 1]?.name || "" })
         }
     })
 
@@ -63,7 +63,7 @@
 
     let index = 0
     function exportPDF() {
-        setTimeout(() => send(EXPORT, ["EXPORT"], { type: "pdf", name: shows[index].name }), 20 * (pages + 1) + 400)
+        setTimeout(() => send(EXPORT, ["EXPORT"], { type: "pdf", name: shows[index]?.name || "" }), 20 * (pages + 1) + 400)
     }
 
     $: pages = shows.length ? Math.ceil(layoutSlides[shows[0].id!].length / options.grid[1] / (options.type === "default" ? 1 : options.type !== "text" ? options.grid[0] : 1.5)) : 0
@@ -237,7 +237,7 @@
 </script>
 
 <main class:flow={options.type === "slides"} class:chord-sheet={options.type === "chordSheet"}>
-    {#if shows.length}
+    {#if shows.length && shows[index]}
         {#if options.type === "chordSheet"}
             <!-- Chord Sheet Export - Professional layout -->
             <div class="page chord-sheet-page" style="padding: {options.margin || 20}px; --font-size: {options.fontSize || 12}px; --chord-font-size: {options.chordFontSize || 10}px; font-size: {options.fontSize || 12}px; line-height: {options.spacing || 1.5};">

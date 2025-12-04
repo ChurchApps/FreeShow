@@ -264,6 +264,8 @@ export function setCaret(element: any, { line = 0, pos = 0 }) {
     let childElem = -1
     let currentTextLength = 0
     lineElem.childNodes.forEach((elem: any, i: number) => {
+        if (!elem) return
+
         currentTextLength += elem.innerText.length
         if (pos <= currentTextLength && childElem < 0) childElem = i
     })
@@ -324,6 +326,8 @@ export function createRange2(node: any, selection: { start: number; end: number 
             let pos: null | number = 0
             if (br.childNodes.length) {
                 new Array(...br.childNodes).forEach((text: any) => {
+                    if (!text) return
+
                     pos += text.innerText.length
                     if (!started && pos !== null && pos >= a.start) {
                         started = true

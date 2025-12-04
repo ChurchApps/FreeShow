@@ -110,7 +110,7 @@
             }
 
             // get lines reveal
-            const linesRevealItems = (showSlide?.items || []).filter(a => a.lineReveal)
+            const linesRevealItems = (showSlide?.items || []).filter(a => a?.lineReveal)
             let revealCount = outSlide?.revealCount ?? 0
             if (outSlide && outSlide.id === showId && outSlide.layout === activeLayout && outSlide.index === index && linesRevealItems.length && isRevealed) {
                 revealCount++
@@ -282,7 +282,7 @@
             }
 
             // lines reveal
-            const linesRevealItems = (showSlide?.items || []).filter(a => a.lineReveal)
+            const linesRevealItems = (showSlide?.items || []).filter(a => a?.lineReveal)
             if (linesRevealItems.length) {
                 lineIndex = getFewestOutputLinesReveal($outputs) - 1
                 maxLines = getItemWithMostLines({ items: linesRevealItems })

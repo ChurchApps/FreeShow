@@ -89,6 +89,7 @@ export function swichProjectItem(pos: number, id: string) {
     if (projectLayout) {
         if (!get(showsCache)[id].layouts[projectLayout]) projectLayout = Object.keys(get(showsCache)[id].layouts)[0]
         showsCache.update(a => {
+            if (!a[id].settings) a[id].settings = { activeLayout: "", template: null }
             a[id].settings.activeLayout = projectLayout
             return a
         })
@@ -98,7 +99,7 @@ export function swichProjectItem(pos: number, id: string) {
     if (Object.keys(get(showsCache)[id].layouts)?.length > 1) {
         projects.update(a => {
             if (Object.keys(get(showsCache)[id].layouts)?.length < 2) delete a[get(activeProject)!].shows[pos].layout
-            else a[get(activeProject)!].shows[pos].layout = get(showsCache)[id].settings.activeLayout
+            else a[get(activeProject)!].shows[pos].layout = get(showsCache)[id].settings?.activeLayout || ""
             return a
         })
     }
@@ -107,7 +108,7 @@ export function swichProjectItem(pos: number, id: string) {
 export function getItemWithMostLines(slide: Slide | { items: Item[] }) {
     let amount = 0
     slide.items?.forEach(item => {
-        const lines: number = item.lines?.filter(line => line.text.filter(text => text.value.length)?.length)?.length || 0
+        const lines: number = item.lines?.filter(line => line.text?.filter(text => text.value.length)?.length)?.length || 0
         if (lines > amount) amount = lines
     })
     return amount
@@ -231,7 +232,7 @@ export function nextSlide(e: any, start = false, end = false, loop = false, bypa
     if (isLastSlide && !itemsRevealed) isLastSlide = false
 
     // lines reveal
-    const linesRevealItems = (showSlide?.items || []).filter(a => a.lineReveal)
+    const linesRevealItems = (showSlide?.items || []).filter(a => a?.lineReveal)
     const shouldLinesReveal = !!linesRevealItems.length
     const maxRevealLines = getItemWithMostLines({ items: linesRevealItems })
     const currentReveal = slide?.revealCount ?? 0
@@ -491,11 +492,12 @@ export function previousSlide(e: any, customOutputId?: string) {
     }
 
     // let layout: SlideData[] = GetLayout(slide ? slide.id : null, slide ? slide.layout : null)
-    let layout = _show(slide ? slide.id : "active")
-        .layouts(slide ? [slide.layout] : "active")
-        .ref()[0]
+    let layout =
+        _show(slide ? slide.id : "active")
+            .layouts(slide ? [slide.layout] : "active")
+            .ref()[0] || []
     let activeLayout: string = _show(slide ? slide.id : "active").get("settings.activeLayout")
-    let index: number | null = slide?.index !== undefined ? slide.index - 1 : layout ? layout.length - 1 : null
+    let index: number | null = slide?.index !== undefined ? slide.index - 1 : layout.length ? layout.length - 1 : null
     if (index === null) {
         if (currentShow?.type === "section" || !get(showsCache)[currentShow?.id || ""]) goToPreviousProjectItem()
         return
@@ -511,7 +513,7 @@ export function previousSlide(e: any, customOutputId?: string) {
 
     // open previous project item if next has been opened and previous is still active when going back
     const slideIndex: number = slide?.index || 0
-    let isLastSlide: boolean = layout && slide ? slideIndex >= layout.filter((a, i) => i < slideIndex || !a?.data?.disabled).length - 1 && !layout[slideIndex]?.data?.end : false
+    let isLastSlide: boolean = layout.length && slide ? slideIndex >= layout.filter((a, i) => i < slideIndex || !a?.data?.disabled).length - 1 && !layout[slideIndex]?.data?.end : false
     const showSlide: Slide | null =
         _show(slide ? slide.id : "active")
             .slides([layout[index]?.id])
@@ -519,7 +521,7 @@ export function previousSlide(e: any, customOutputId?: string) {
     const isLastLine = slide?.line === undefined || !amountOfLinesToShow || !showSlide || slide.line >= Math.ceil(getItemWithMostLines(showSlide) / amountOfLinesToShow) - 1
 
     // skip disabled slides if clicking previous when another show is selected and no enabled slide is before
-    const isFirstSlide: boolean = slide && layout ? layout.filter(a => !a?.data?.disabled).findIndex(a => a.layoutIndex === slide?.index) === 0 : false
+    const isFirstSlide: boolean = slide && layout.length ? layout.filter(a => !a?.data?.disabled).findIndex(a => a.layoutIndex === slide?.index) === 0 : false
 
     const currentShowSlide: Slide | null =
         _show(slide ? slide.id : "active")
@@ -533,7 +535,7 @@ export function previousSlide(e: any, customOutputId?: string) {
     if (isFirstSlide && !clickRevealEnded) isLastSlide = false
 
     // lines reveal
-    const linesRevealItems = ((slide?.revealCount ? currentShowSlide?.items : showSlide?.items) || []).filter(a => a.lineReveal)
+    const linesRevealItems = ((slide?.revealCount ? currentShowSlide?.items : showSlide?.items) || []).filter(a => a?.lineReveal)
     const shouldLinesReveal = !!linesRevealItems.length
     let currentReveal = slide?.revealCount || 0
     const revealEnded = !shouldLinesReveal || currentReveal === 0
@@ -551,7 +553,7 @@ export function previousSlide(e: any, customOutputId?: string) {
         slide = null
         layout = getLayoutRef()
         activeLayout = activeShowLayout
-        index = (layout?.length || 0) - 1
+        index = (layout.length || 0) - 1
     }
 
     let line: number = linesIndex || 0
@@ -975,6 +977,7 @@ export function changeOutputStyle(data: API_output_style) {
     const outputIds = data.outputId ? [data.outputId] : getAllNormalOutputs().map(a => a.id)
     outputs.update(a => {
         outputIds.forEach(outputId => {
+            if (!a[outputId]) return
             a[outputId].style = data.styleId || ""
         })
         return a
@@ -1055,7 +1058,7 @@ export function checkNextAfterMedia(endedId: string, type: "media" | "audio" | "
             if (!layoutSlide.data?.audio?.find(id => allMediaIds.includes(id))) return false
         }
     } else if (type === "timer") {
-        const slide = _show(slideOut.id).get("slides")[layoutSlide.id]
+        const slide = _show(slideOut.id).get("slides")?.[layoutSlide.id]
         const slideTimer = slide?.items?.find(a => a.type === "timer" && (a.timer?.id || a.timerId) === endedId)
         if (!slideTimer) return false
     }
@@ -1092,7 +1095,7 @@ export function playSlideTimers({ showId = "active", slideId = "", overlayIds = 
     const items = [...slideItems, ...allOverlayItems]
 
     items.forEach(item => {
-        if (item.type !== "timer") return
+        if (item?.type !== "timer") return
         const timerId = item.timer?.id || item.timerId || ""
         playPauseGlobal(timerId, get(timers)[timerId], true)
     })
@@ -1139,11 +1142,11 @@ const customTriggers = {
 // DYNAMIC VALUES
 
 export const dynamicValueText = (id: string) => `{${id}}`
-export function getDynamicIds(noVariables = false) {
+export function getDynamicIds(noVariables = false, mode: null | "scripture" = null): string[] {
     const mainValues = Object.keys(dynamicValues)
     const metaValues = Object.keys(getCustomMetadata()).map(id => `meta_${id.replaceAll(" ", "_").toLowerCase()}`)
 
-    const mergedValues = [...mainValues, ...metaValues]
+    const mergedValues = [...(mode === "scripture" ? Object.keys(scriptureDynamicValues) : []), ...mainValues, ...metaValues]
     if (noVariables) return mergedValues
 
     const timersList = sortByName(Object.values(get(timers)))
@@ -1215,7 +1218,7 @@ export function getVariableValue(dynamicId: string, ref: any = null) {
     return ""
 }
 
-export function replaceDynamicValues(text: string, { showId, layoutId, slideIndex, type, id }: any, _updater = 0) {
+export function replaceDynamicValues(text: string, { showId, layoutId, slideIndex, type, id, mode }: any, _updater = 0) {
     const isOutputWin = isOutputWindow()
 
     if (type === "stage") {
@@ -1231,7 +1234,7 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
     if (type === "show" && !currentShow) return ""
 
     const customIds = ["slide_text_current", "active_layers", "active_styles", "log_song_usage"]
-    ;[...getDynamicIds(), ...customIds].forEach(dynamicId => {
+    ;[...getDynamicIds(false, mode), ...customIds].forEach(dynamicId => {
         let textHasValue = text.includes(dynamicValueText(dynamicId))
         if (dynamicId.includes("$") && text.includes(dynamicValueText(dynamicId.replace("$", "variable_")))) textHasValue = true
         if (!textHasValue) return
@@ -1337,6 +1340,10 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
             return get(special).logSongUsage ? "true" : "false"
         }
 
+        if (scriptureDynamicValues[dynamicId]) {
+            return scriptureDynamicValues[dynamicId]() || ""
+        }
+
         if (!dynamicValues[dynamicId]) return ""
 
         const value = (dynamicValues[dynamicId]({ show, ref, slideIndex, layout, projectRef, outSlide, videoTime, videoDuration, audioTime, audioDuration, audioPath }) ?? "").toString()
@@ -1435,6 +1442,25 @@ const dynamicValues = {
     audio_countdown: ({ audioTime, audioDuration }) => joinTime(secondsToTime(audioDuration > 0 ? audioDuration - audioTime : 0)),
     audio_duration: ({ audioDuration }) => joinTime(secondsToTime(audioDuration)),
     audio_volume: () => AudioPlayer.getVolume() * 100
+}
+
+// placeholder values
+const scriptureDynamicValues = {
+    scripture_text: () => "In the beginning...",
+    scripture_book: () => "Genesis",
+    scripture_book_abbr: () => "Gen",
+    scripture_verses: () => "1",
+    scripture_chapter: () => "1",
+    scripture_reference: () => "Genesis 1:1", // current slide only
+    scripture_reference_full: () => "Genesis 1:1-3", // across all slides
+    scripture_name: () => "King James Version", // version
+    // scripture_name_abbr: () => "KJV",
+    // chapter_verses, book_chapters
+    // add number for collections scripture1_
+
+    // not replaced directly, but the style is used:
+    scripture_number: () => "1",
+    scripture_red_jesus: () => "Words"
 }
 
 export function getVariableNameId(name: string) {

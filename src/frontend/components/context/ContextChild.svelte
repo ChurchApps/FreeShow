@@ -11,6 +11,7 @@
     export let id: string
     export let menu: ContextMenuItem = contextMenuItems[id]
     export let translate = 0
+    export let highlightedPath: string[] = []
 
     export let side: "right" | "left" = $localeDirection === "rtl" ? "left" : "right"
     $: transform = side === "right" ? "100%" : "-100%"
@@ -19,6 +20,15 @@
     let elem: HTMLDivElement
     let timeout: NodeJS.Timeout | null = null
     let duration = 200
+
+    $: highlighted = highlightedPath.length > 0 && highlightedPath[0] === id
+
+    // auto-open if highlighted item is in this submenu
+    $: if (highlighted) open = true
+    else if (highlightedPath.length > 0) open = false
+
+    // Get the remaining path for nested items
+    $: childHighlightedPath = highlightedPath.length > 0 && highlightedPath[0] === id ? highlightedPath.slice(1) : []
 
     function onMouseOver(e: any) {
         if (elem.contains(e.target)) {
@@ -65,7 +75,7 @@
 
 <svelte:window on:mouseover={onMouseOver} />
 
-<div bind:this={elem} class="item" class:open on:click={click} tabindex={0} on:keydown={keydown} role="menuitem">
+<div bind:this={elem} class="item" class:open class:highlighted on:click={click} tabindex={0} on:keydown={keydown} role="menuitem">
     <span style="display: flex;gap: 10px;justify-content: space-between;width: 100%;">
         <div class="left" style="display: flex;align-items: center;gap: 15px;">
             {#if menu?.icon}<Icon style="opacity: 0.7;color: {(topBar ? '' : menu.iconColor) || 'var(--text)'};" id={menu.icon} white />{/if}
@@ -84,16 +94,20 @@
                 {#each menu.items as itemId}
                     {#if itemId === "SEPARATOR"}
                         <hr />
+                    {:else if contextMenuItems[itemId]?.items}
+                        <svelte:self id={itemId} {contextElem} {side} {translate} {topBar} highlightedPath={childHighlightedPath} />
                     {:else if itemId.includes("LOAD_")}
                         {#each loadItems(itemId.slice(5, itemId.length)) as [id, menu]}
-                            {#if id === "SEPARATOR" || menu === "SEPARATOR"}
+                            {#if menu === "SEPARATOR"}
                                 <hr />
                             {:else}
-                                <ContextItem {id} {contextElem} {menu} disabled={menu.disabled === true} {topBar} />
+                                {@const itemActualId = menu.id || id}
+                                {@const isHighlighted = childHighlightedPath.length > 0 && childHighlightedPath[0] === itemActualId}
+                                <ContextItem {id} {contextElem} {menu} disabled={menu.disabled === true} {topBar} highlighted={isHighlighted} />
                             {/if}
                         {/each}
                     {:else}
-                        <ContextItem id={itemId} {contextElem} {topBar} />
+                        <ContextItem id={itemId} {contextElem} {topBar} highlighted={childHighlightedPath.length > 0 && childHighlightedPath[0] === itemId} />
                     {/if}
                 {/each}
             {/if}
@@ -112,6 +126,12 @@
         background-color: rgb(0 0 0 / 0.2);
     }
 
+    .item.highlighted {
+        background-color: rgb(0 0 0 / 0.2);
+        outline: 2px solid var(--secondary);
+        outline-offset: -2px;
+    }
+
     hr {
         margin: 8px 0;
         height: 1px;
@@ -121,7 +141,7 @@
 
     .submenu {
         min-width: 150px;
-        max-height: 300px;
+        max-height: 350px;
         overflow: auto;
         position: absolute;
         transform: translate(100%, -14px);

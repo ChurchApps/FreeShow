@@ -127,7 +127,7 @@ function createBridge(id: ServerName, server: ServerValues) {
     // SEND DATA FROM APP TO CLIENT
     ioServers[id] = server.io
     ipcMain.on(id, (_e: IpcMainEvent, msg: Message) => {
-        if (msg.id) server.io.to(msg.id).emit(id, msg)
+        if (msg?.id) server.io.to(msg.id).emit(id, msg)
         else server.io.emit(id, msg)
     })
 }
@@ -164,7 +164,10 @@ function initialize(id: ServerName, socket: Socket) {
         } else if (msg.channel === "OUTPUT_FRAME") {
             const window = OutputHelper.getOutput(msg.data.outputId)?.window
             if (!window || window.isDestroyed()) return
+
             const frame = await CaptureHelper.captureBase64Frame(window)
+            if (!window.isDestroyed()) return
+
             const bounds = window.getBounds()
             toServer(id, { channel: "OUTPUT_FRAME", data: { frame, width: bounds.width, height: bounds.height } })
         } else if (msg) {
