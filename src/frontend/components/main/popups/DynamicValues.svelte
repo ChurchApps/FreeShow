@@ -19,7 +19,7 @@
     onMount(() => popupData.set({}))
 
     let mode: null | "scripture" = null
-    if ($activeEdit.type === "template") mode = "scripture" // WIP (showing in all templates currently)
+    if ($activePage === "edit" && $activeEdit.type === "template" && ($templates[$activeEdit.id || ""]?.settings?.mode === "scripture" || $templates[$activeEdit.id || ""]?.category === "scripture")) mode = "scripture"
 
     const hidden: string[] = $special.disabledDynamicValues || []
 
@@ -34,7 +34,7 @@
 
         let separatorId = ""
         // the ones that can have a custom name should be first (to prevent it from overwriting a category)
-        const separators = ["scripture_", "$", "timer_", "meta_", "rss_", "project_", "time_", "show_", "slide_text_", "video_", "audio_"]
+        const separators = ["$", "timer_", "meta_", "rss_", "project_", "time_", "show_", "slide_text_", "video_", "audio_", "scripture_"]
 
         let newList: { [key: string]: typeof list } = {}
         list.forEach(value => {

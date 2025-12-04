@@ -2,10 +2,12 @@
     import type { BibleContent } from "../../../../types/Scripture"
     import type { Item } from "../../../../types/Show"
     import { activeDrawerTab, activeEdit, activePage, activePopup, activeScripture, activeStyle, drawerTabsData, outputs, popupData, scriptureSettings, styles, templates } from "../../../stores"
+    import { setDefaultScriptureTemplates } from "../../../utils/createData"
     import { translateText } from "../../../utils/language"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { getAllNormalOutputs, getFirstActiveOutput } from "../../helpers/output"
+    import FloatingInputs from "../../input/FloatingInputs.svelte"
     import InputRow from "../../input/InputRow.svelte"
     import Button from "../../inputs/Button.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
@@ -17,7 +19,7 @@
     import Media from "../../output/layers/Media.svelte"
     import Textbox from "../../slide/Textbox.svelte"
     import Zoomed from "../../slide/Zoomed.svelte"
-    import { createScriptureShow, getActiveScripturesContent, getMergedAttribution, getScriptureSlidesNew, textKeys } from "../bible/scripture"
+    import { createScriptureShow, getActiveScripturesContent, getMergedAttribution, getScriptureSlidesNew, textKeys, useOldScriptureSystem } from "../bible/scripture"
 
     let biblesContent: BibleContent[] = []
     let selectedChapters: number[] = []
@@ -57,7 +59,7 @@
 
     $: {
         // if (selectedVerses.length || $scriptureSettings) slides = getScriptureSlides({ biblesContent, selectedChapters, selectedVerses }, true)
-        if (selectedVerses.length || $scriptureSettings) slides = getScriptureSlidesNew({ biblesContent, selectedChapters, selectedVerses }, true)
+        if (selectedVerses.length || $scriptureSettings) slides = getScriptureSlidesNew({ biblesContent, selectedChapters, selectedVerses }, true).slides
         else slides = [[]]
     }
 
@@ -151,9 +153,20 @@
 
     $: onlyOneNormalOutput = getAllNormalOutputs().length === 1
     $: styleScriptureTemplate = onlyOneNormalOutput ? $styles[styleId]?.templateScripture : ""
+
+    $: useOldSystem = useOldScriptureSystem(templateId)
+    function convertToNew() {
+        setDefaultScriptureTemplates()
+        update("template", "scripture")
+    }
+
+    let expanded = false
+    function toggleSection() {
+        expanded = !expanded
+    }
 </script>
 
-<div class="scroll split">
+<div class="scroll split" style={useOldSystem ? "" : "padding-bottom: 46px;"}>
     <Zoomed style="width: 100%;" {background}>
         {#if selectedVerses.length}
             {#if templateBackground}
@@ -183,107 +196,138 @@
             {/if}
         </InputRow>
 
-        <!-- {#if $scriptureSettings.versesOnIndividualLines || sorted.length > 1} -->
-        <MaterialToggleSwitch label="scripture.verses_on_individual_lines" checked={$scriptureSettings.versesOnIndividualLines} defaultValue={false} on:change={e => update("versesOnIndividualLines", e.detail)} />
-        <!-- {/if} -->
+        {#if useOldSystem}
+            <p style="margin-bottom: 10px;font-size: 0.9rem;opacity: 0.7;white-space: normal;">You are using an outdated scripture template!</p>
+            <MaterialButton variant="outlined" style="margin-bottom: 10px;" on:click={convertToNew}>Convert template to new system</MaterialButton>
+        {/if}
 
-        <!-- Long verses -->
-        <InputRow arrow={$scriptureSettings.splitLongVerses} bind:open={longVersesMenuOpened}>
-            <MaterialToggleSwitch label="scripture.divide_long_verses" style="width: 100%;" checked={$scriptureSettings.splitLongVerses} defaultValue={false} on:change={e => update("splitLongVerses", e.detail)} />
+        <div class="title">
+            <MaterialButton style="width: 100%;padding: 8px 12px;" on:click={() => toggleSection()}>
+                <span style="display: flex;gap: 8px;align-items: center;">
+                    <Icon id="options" white />
+                    <p>{translateText("edit.options")}</p>
+                </span>
 
-            <svelte:fragment slot="menu">
-                {#if $scriptureSettings.splitLongVerses}
-                    <MaterialToggleSwitch label="scripture.split_long_verses_suffix" checked={$scriptureSettings.splitLongVersesSuffix} defaultValue={false} on:change={e => update("splitLongVersesSuffix", e.detail)} />
-                    <MaterialNumberInput label="edit.size" value={$scriptureSettings.longVersesChars || 100} defaultValue={100} min={50} on:change={e => update("longVersesChars", e.detail)} />
-                {/if}
-            </svelte:fragment>
-        </InputRow>
+                <Icon id="arrow_back_modern" class="arrow {expanded ? 'open' : ''}" size={0.6} style="opacity: 0.5;" white />
+            </MaterialButton>
+        </div>
 
-        <!-- Verse numbers -->
-        <InputRow arrow={$scriptureSettings.verseNumbers} bind:open={verseMenuOpened}>
-            <MaterialToggleSwitch label="scripture.verse_numbers" style="width: 100%;" checked={$scriptureSettings.verseNumbers} defaultValue={false} on:change={e => update("verseNumbers", e.detail)} />
-
-            <svelte:fragment slot="menu">
-                {#if $scriptureSettings.verseNumbers}
-                    <MaterialColorInput label="edit.color" value={$scriptureSettings.numberColor || "#919191"} defaultValue="#919191" on:change={e => update("numberColor", e.detail)} />
-                    <MaterialNumberInput label="edit.size (%)" value={$scriptureSettings.numberSize || 50} defaultValue={50} on:change={e => update("numberSize", e.detail)} />
-                {/if}
-            </svelte:fragment>
-        </InputRow>
-
-        <!-- Red Jesus -->
-        {#if $scriptureSettings.redJesus || containsJesusWords}
-            <InputRow arrow={$scriptureSettings.redJesus} bind:open={redMenuOpened}>
-                <MaterialToggleSwitch label="scripture.red_jesus" style="width: 100%;" checked={$scriptureSettings.redJesus} defaultValue={false} on:change={e => update("redJesus", e.detail)} />
+        {#if expanded}
+            <!-- Verse numbers -->
+            <InputRow arrow={useOldSystem && $scriptureSettings.verseNumbers} bind:open={verseMenuOpened}>
+                <MaterialToggleSwitch label="scripture.verse_numbers" style="width: 100%;" checked={$scriptureSettings.verseNumbers} defaultValue={false} on:change={e => update("verseNumbers", e.detail)} />
 
                 <svelte:fragment slot="menu">
-                    {#if $scriptureSettings.redJesus}
-                        <MaterialColorInput label="edit.color" value={$scriptureSettings.jesusColor || "#FF4136"} defaultValue="#FF4136" on:change={e => update("jesusColor", e.detail)} />
+                    {#if $scriptureSettings.verseNumbers}
+                        <MaterialColorInput label="edit.color" value={$scriptureSettings.numberColor || "#919191"} defaultValue="#919191" on:change={e => update("numberColor", e.detail)} />
+                        <MaterialNumberInput label="edit.size (%)" value={$scriptureSettings.numberSize || 50} defaultValue={50} on:change={e => update("numberSize", e.detail)} />
                     {/if}
                 </svelte:fragment>
             </InputRow>
-        {/if}
 
-        <!-- Reference options -->
-        <InputRow style="margin-top: 10px;" arrow bind:open={referenceMenuOpened}>
-            <MaterialToggleSwitch label="scripture.reference" style="width: 100%;" checked={$scriptureSettings.showVerse} defaultValue={true} on:change={e => update("showVerse", e.detail)} />
-        </InputRow>
-        <InputRow arrow bind:open={referenceMenuOpened}>
-            <MaterialToggleSwitch label="scripture.version" disabled={!!biblesContent.find(a => a?.attributionRequired)} style="width: 100%;" checked={showVersion} defaultValue={false} on:change={e => update("showVersion", e.detail)} />
+            <!-- {#if $scriptureSettings.versesOnIndividualLines || sorted.length > 1} -->
+            <MaterialToggleSwitch label="scripture.verses_on_individual_lines" checked={$scriptureSettings.versesOnIndividualLines} defaultValue={false} on:change={e => update("versesOnIndividualLines", e.detail)} />
+            <!-- {/if} -->
 
-            <svelte:fragment slot="menu">
-                {#if showVersion || (showVersion && $scriptureSettings.showVerse) || ($scriptureSettings.showVerse && customText.trim() !== "[reference]")}
-                    <MaterialTextarea label="tools.layout" value={customText} rows={2} on:change={e => update("customText", e.detail)} />
-                {/if}
+            <!-- Long verses -->
+            <InputRow arrow={$scriptureSettings.splitLongVerses} bind:open={longVersesMenuOpened}>
+                <MaterialToggleSwitch label="scripture.divide_long_verses" style="width: 100%;" checked={$scriptureSettings.splitLongVerses} defaultValue={false} on:change={e => update("splitLongVerses", e.detail)} />
 
-                <!-- {#if $scriptureSettings.showVerse}
+                <svelte:fragment slot="menu">
+                    {#if $scriptureSettings.splitLongVerses}
+                        <MaterialToggleSwitch label="scripture.split_long_verses_suffix" checked={$scriptureSettings.splitLongVersesSuffix} defaultValue={false} on:change={e => update("splitLongVersesSuffix", e.detail)} />
+                        <MaterialNumberInput label="edit.size" value={$scriptureSettings.longVersesChars || 100} defaultValue={100} min={50} on:change={e => update("longVersesChars", e.detail)} />
+                    {/if}
+                </svelte:fragment>
+            </InputRow>
+
+            <!-- Red Jesus -->
+            {#if $scriptureSettings.redJesus || containsJesusWords}
+                <InputRow arrow={useOldSystem && $scriptureSettings.redJesus} bind:open={redMenuOpened}>
+                    <MaterialToggleSwitch label="scripture.red_jesus" style="width: 100%;" checked={$scriptureSettings.redJesus} defaultValue={false} on:change={e => update("redJesus", e.detail)} />
+
+                    <svelte:fragment slot="menu">
+                        {#if $scriptureSettings.redJesus}
+                            <MaterialColorInput label="edit.color" value={$scriptureSettings.jesusColor || "#FF4136"} defaultValue="#FF4136" on:change={e => update("jesusColor", e.detail)} />
+                        {/if}
+                    </svelte:fragment>
+                </InputRow>
+            {/if}
+
+            <!-- Reference options -->
+            {#if useOldSystem}
+                <InputRow style="margin-top: 10px;" arrow bind:open={referenceMenuOpened}>
+                    <MaterialToggleSwitch label="scripture.reference" style="width: 100%;" checked={$scriptureSettings.showVerse} defaultValue={true} on:change={e => update("showVerse", e.detail)} />
+                </InputRow>
+                <InputRow arrow bind:open={referenceMenuOpened}>
+                    <MaterialToggleSwitch label="scripture.version" disabled={!!biblesContent.find(a => a?.attributionRequired)} style="width: 100%;" checked={showVersion} defaultValue={false} on:change={e => update("showVersion", e.detail)} />
+
+                    <svelte:fragment slot="menu">
+                        {#if showVersion || (showVersion && $scriptureSettings.showVerse) || ($scriptureSettings.showVerse && customText.trim() !== "[reference]")}
+                            <MaterialTextarea label="tools.layout" value={customText} rows={2} on:change={e => update("customText", e.detail)} />
+                        {/if}
+
+                        <!-- {#if $scriptureSettings.showVerse}
                 <CombinedInput>
                     <p><T id="meta.text_divider" /></p>
                     <TextInput value={$scriptureSettings.referenceDivider || ":"} on:change={(e) => update("referenceDivider", getTextValue(e))} />
                 </CombinedInput>
             {/if} -->
 
-                {#if showVersion || $scriptureSettings.showVerse}
-                    <!-- {#if !$scriptureSettings.firstSlideReference} -->
-                    <MaterialToggleSwitch label="scripture.combine_with_text" checked={$scriptureSettings.combineWithText} defaultValue={false} on:change={e => update("combineWithText", e.detail)} />
-                    {#if $scriptureSettings.combineWithText}
-                        <MaterialToggleSwitch label="scripture.reference_at_bottom" checked={$scriptureSettings.referenceAtBottom} defaultValue={false} on:change={e => update("referenceAtBottom", e.detail)} />
-                    {/if}
-                    <!-- {/if} -->
+                        {#if showVersion || $scriptureSettings.showVerse}
+                            <!-- {#if !$scriptureSettings.firstSlideReference} -->
+                            <MaterialToggleSwitch label="scripture.combine_with_text" checked={$scriptureSettings.combineWithText} defaultValue={false} on:change={e => update("combineWithText", e.detail)} />
+                            {#if $scriptureSettings.combineWithText}
+                                <MaterialToggleSwitch label="scripture.reference_at_bottom" checked={$scriptureSettings.referenceAtBottom} defaultValue={false} on:change={e => update("referenceAtBottom", e.detail)} />
+                            {/if}
+                            <!-- {/if} -->
 
-                    <!-- <br /> -->
-                    <!-- WIP Unwanted: -->
-                    {#if !$scriptureSettings.combineWithText}
-                        <MaterialToggleSwitch label="edit.invert_items" checked={$scriptureSettings.invertItems} defaultValue={false} on:change={e => update("invertItems", e.detail)} />
-                    {/if}
-                {/if}
-            </svelte:fragment>
-        </InputRow>
+                            <!-- <br /> -->
+                            <!-- WIP Unwanted: -->
+                            {#if !$scriptureSettings.combineWithText}
+                                <MaterialToggleSwitch label="edit.invert_items" checked={$scriptureSettings.invertItems} defaultValue={false} on:change={e => update("invertItems", e.detail)} />
+                            {/if}
+                        {/if}
+                    </svelte:fragment>
+                </InputRow>
+            {:else}
+                <!-- new -->
+                <MaterialNumberInput label="scripture.max_verses" style="margin-top: 10px;" value={$scriptureSettings.versesPerSlide} defaultValue={3} min={1} max={100} on:change={e => update("versesPerSlide", e.detail)} hideWhenZero />
+            {/if}
+        {/if}
     </div>
 </div>
 
-<InputRow>
-    <Button on:click={e => createScriptureShow(e.altKey)} style="width: 100%;" disabled={!selectedVerses.length} dark center>
-        <Icon id="slide" right />
-        <T id="new.show_convert" />
-        <!-- {#if slides.length > 1}
+{#if useOldSystem}
+    <InputRow>
+        <Button on:click={e => createScriptureShow(e.altKey)} style="width: 100%;" disabled={!selectedVerses.length} dark center>
+            <Icon id="slide" right />
+            <T id="new.show_convert" />
+            <!-- {#if slides.length > 1}
             <span style="opacity: 0.5;margin-inline-start: 0.5em;">({slides.length})</span>
         {/if} -->
-    </Button>
+        </Button>
 
-    <Button
-        title={translateText("popup.scripture_show")}
-        on:click={() => {
-            const showVersion = biblesContent.find(a => a?.attributionRequired) || $scriptureSettings.showVersion
-            popupData.set({ showVersion })
-            activePopup.set("scripture_show")
-        }}
-        dark
-        center
-    >
-        <Icon id="options" white />
-    </Button>
-</InputRow>
+        <Button
+            title={translateText("popup.scripture_show")}
+            on:click={() => {
+                const showVersion = biblesContent.find(a => a?.attributionRequired) || $scriptureSettings.showVersion
+                popupData.set({ showVersion })
+                activePopup.set("scripture_show")
+            }}
+            dark
+            center
+        >
+            <Icon id="options" white />
+        </Button>
+    </InputRow>
+{:else}
+    <FloatingInputs onlyOne>
+        <MaterialButton icon="slide" on:click={() => createScriptureShow()}>
+            <T id="new.show_convert" />
+        </MaterialButton>
+    </FloatingInputs>
+{/if}
 
 <style>
     .scroll {
@@ -320,5 +364,37 @@
         font-size: 28px;
         font-style: italic;
         opacity: 0.7;
+    }
+
+    /* title */
+
+    .title {
+        background-color: var(--primary-darker);
+        border-bottom: 1px solid var(--primary-lighter);
+
+        border-top-left-radius: 10px;
+        border-top-right-radius: 10px;
+        overflow: hidden;
+    }
+    .title p {
+        font-weight: 500;
+        font-size: 0.8rem;
+        opacity: 0.8;
+    }
+
+    .title :global(button) {
+        display: flex;
+        justify-content: space-between;
+
+        /* when disabled */
+        opacity: 1;
+    }
+
+    .title :global(svg.arrow) {
+        transition: 0.1s transform ease;
+        transform: rotate(180deg);
+    }
+    .title :global(svg.arrow.open) {
+        transform: rotate(-90deg);
     }
 </style>

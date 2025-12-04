@@ -317,7 +317,7 @@
         <MaterialButton
             style="border-radius: 50%;"
             on:click={() => {
-                activeEdit.set({ type: "template", id: currentShow.settings.template || "", items: [] })
+                activeEdit.set({ type: "template", id: template, items: [] })
                 activePage.set("edit")
             }}
         >

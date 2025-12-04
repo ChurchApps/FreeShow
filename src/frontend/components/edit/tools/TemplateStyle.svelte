@@ -45,9 +45,19 @@
     $: overlayList = sortByName(keysToID($overlays))
         .filter(a => a.name)
         .map(a => ({ value: a.id, label: a.name }))
+
+    const modes = [
+        { value: "default", label: translateText("example.default") },
+        { value: "scripture", label: translateText("tabs.scripture") }
+    ]
+    $: mode = template.settings?.mode || "default"
 </script>
 
 <div class="tools">
+    <div>
+        <MaterialDropdown label="actions.mode" options={modes} value={mode} defaultValue="default" on:change={e => setValue(e.detail, "mode")} />
+    </div>
+
     <div>
         <MaterialColorInput
             label="edit.background_color"

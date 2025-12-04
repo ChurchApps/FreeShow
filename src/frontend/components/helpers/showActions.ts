@@ -1446,18 +1446,21 @@ const dynamicValues = {
 
 // placeholder values
 const scriptureDynamicValues = {
-    scripture_text: () => "In the beginning God created the heavens and the earth.",
+    scripture_text: () => "In the beginning...",
     scripture_book: () => "Genesis",
     // scripture_book_abbr: () => "Gen",
-    // scripture_verse: () => "1", // remove
     scripture_verses: () => "1",
     scripture_chapter: () => "1",
-    scripture_reference: () => "Genesis 1:1",
-    scripture_reference_full: () => "Genesis 1:1-3",
-    scripture_name: () => "King James Version",
+    scripture_reference: () => "Genesis 1:1", // current slide only
+    scripture_reference_full: () => "Genesis 1:1-3", // across all slides
+    scripture_name: () => "King James Version", // version
     // scripture_name_abbr: () => "KJV",
-    scripture_metadata_copyright: () => ""
     // chapter_verses, book_chapters
+    // add number for collections scripture1_
+
+    // not replaced directly, but the style is used:
+    scripture_number: () => "1",
+    scripture_red_jesus: () => "Words"
 }
 
 export function getVariableNameId(name: string) {

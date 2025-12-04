@@ -482,6 +482,7 @@ export interface TemplateStyleOverride {
     uppercase?: boolean
 }
 export interface TemplateSettings {
+    mode?: "default" | "scripture"
     resolution?: Resolution
     backgroundColor?: string
     backgroundPath?: string

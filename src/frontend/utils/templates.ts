@@ -36,11 +36,15 @@ export class TemplateHelper {
         })
     }
 
+    getSetting<K extends keyof NonNullable<Template["settings"]>>(key: K): NonNullable<Template["settings"]>[K] | undefined {
+        return this.template.settings?.[key]
+    }
+
     // used for scripture slides
-    createSlides(count: number = 1, isChild: boolean = false): Item[][] {
+    createSlides(count: number = 1, skipFirst: boolean = false): Item[][] {
         const slides: Item[][] = []
 
-        if (this.template.settings?.firstSlideTemplate && !isChild) {
+        if (this.template.settings?.firstSlideTemplate && !skipFirst) {
             const firstSlideTemplate = new TemplateHelper(this.template.settings.firstSlideTemplate)
             slides.push(firstSlideTemplate.createSlides(1, true)[0])
         }
