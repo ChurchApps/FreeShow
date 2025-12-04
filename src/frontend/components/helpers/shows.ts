@@ -646,6 +646,7 @@ export function _show(id = "active") {
         media: (mediaIds: string[] = []) => ({
             /** Get media */
             get: () => {
+                if (!shows[id]?.media) return []
                 const a: any[] = []
                 if (!mediaIds.length) mediaIds = Object.keys(shows[id].media)
                 mediaIds.forEach(mediaId => {

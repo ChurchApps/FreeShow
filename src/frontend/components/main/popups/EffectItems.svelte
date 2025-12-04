@@ -10,6 +10,7 @@
 
     function selectEffect(data: any) {
         effects.update(a => {
+            if (!a[effectId]) return a
             a[effectId].items.push(data)
             return a
         })

@@ -76,7 +76,7 @@ export async function runAction(action, { midiIndex = -1, slideIndex = -1 } = {}
                 .layouts(outputRef?.layout ? [outputRef.layout] : "active")
                 .ref()[0]
             if (layoutRef) {
-                const overlayIds = layoutRef[slideIndex].data?.overlays
+                const overlayIds = layoutRef[slideIndex]?.data?.overlays || []
                 triggerData = { overlayIds }
             }
         } else if (actionId === "send_midi" && triggerData.midi) triggerData = triggerData.midi
