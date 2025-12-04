@@ -122,13 +122,14 @@
         currentAutoSizeTimeout = setTimeout(() => {
             let itemFontSize = Number(getStyles(item?.style, true)?.["font-size"] || "") || 100
 
+            const type = item?.textFit || "growToFit"
             let defaultFontSize = itemFontSize
-            let maxFontSize = item?.textFit === "growToFit" ? itemFontSize : 0
+            let maxFontSize = type ? itemFontSize : 0
 
             const isTextItem = item?.type === "slide_text" || (item?.type || "text") === "text"
             if (!isTextItem) maxFontSize = 0
 
-            size = autosize(alignElem, { type: item?.textFit || "growToFit", textQuery: ".autoFontSize", defaultFontSize, maxFontSize })
+            size = autosize(alignElem, { type, textQuery: ".autoFontSize", defaultFontSize, maxFontSize })
             currentAutoSizeTimeout = null
         }, 20)
     }
@@ -301,7 +302,7 @@
                     <!-- refresh to update auto sizes -->
                     <!-- refresh auto size if changing stage layout with #key made item unmovable .. -->
                     {#key currentSlide?.id || currentSlide?.index}
-                        <SlideText {currentSlide} {slideOffset} stageItem={item} chords={typeof item.chords === "boolean" ? item.chords : item.chords?.enabled} ref={{ type: "stage", id }} autoSize={item.auto !== false} {fontSize} {textStyle} style={item.type ? item.keepStyle : false} />
+                        <SlideText {currentSlide} {slideOffset} stageItem={item} chords={typeof item.chords === "boolean" ? item.chords : item.chords?.enabled} ref={{ type: "stage", id }} autoSize={item.textFit !== "none" && item.auto !== false} {fontSize} {textStyle} style={item.type ? item.keepStyle : false} />
                     {/key}
                 {:else if item.type === "slide_notes" || id.includes("notes")}
                     <SlideNotes {currentSlide} {slideOffset} autoSize={item.auto !== false ? autoSize : fontSize} />

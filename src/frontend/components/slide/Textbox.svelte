@@ -358,6 +358,8 @@
 
             defaultFontSize = itemFontSize
             if (type === "growToFit" && itemFontSize !== 100) maxFontSize = itemFontSize
+
+            console.log(1, type, maxFontSize, defaultFontSize)
         } else {
             if (isTextItem && !item.auto) {
                 fontSize = 0
@@ -582,6 +584,7 @@
     class:white={key && !lines?.length}
     class:key
     class:isStage
+    class:stageNoAuto={isStage && !stageAutoSize}
     class:isDisabledVariable
     class:noTransition
     class:chords={chordLines.length}
@@ -617,6 +620,11 @@
     .item.isStage {
         width: 100%;
         height: 100%;
+    }
+    .item.stageNoAuto,
+    .item.stageNoAuto :global(.break),
+    .item.stageNoAuto :global(span.textContainer) {
+        font-size: unset;
     }
 
     .item.reveal {
