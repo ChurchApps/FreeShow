@@ -158,7 +158,7 @@ const PRESENTATION_KEYS_PREV = ["ArrowLeft", "PageUp"]
 
 // this will go to next for each slide (better for multiple outputs with "Specific outputs")
 export function nextSlideIndividual(e: any, start = false, end = false) {
-    getActiveOutputs(get(outputs), true, false, true).forEach((id) => nextSlide(e, start, end, false, false, id, false, true))
+    getActiveOutputs(get(outputs), true, false, true).forEach(id => nextSlide(e, start, end, false, false, id, false, true))
 }
 
 export function nextSlide(e: any, start = false, end = false, loop = false, bypassLock = false, customOutputId = "", nextAfterMedia = false, advanceThroughProject: boolean = false) {
