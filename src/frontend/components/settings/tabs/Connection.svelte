@@ -103,8 +103,8 @@
         { id: "remote", name: "RemoteShow", icon: "connection", enabledByDefault: true },
         { id: "stage", name: "StageShow", icon: "stage", enabledByDefault: true },
         { id: "controller", name: "ControlShow", icon: "connection", enabledByDefault: false },
-        // $special.optimizedMode &&
-        ...($disabledServers.output_stream !== false ? [] : [{ id: "output_stream", name: "OutputShow", icon: "stage", enabledByDefault: false }]),
+        // ...(($special.optimizedMode && $disabledServers.output_stream !== false) ? [] : [{ id: "output_stream", name: "OutputShow", icon: "stage", enabledByDefault: false }]),
+        { id: "output_stream", name: "OutputShow", icon: "stage", enabledByDefault: false },
         // Bitfocus Companion (WebSocket/REST)
         { id: "companion", name: "API", icon: "companion", enabledByDefault: false, url: "https://freeshow.app/docs/companion" }
         // { id: "rest", name: "REST Listener", icon: "companion", enabledByDefault: false, url: "https://freeshow.app/docs/api" },

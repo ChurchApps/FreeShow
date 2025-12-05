@@ -770,6 +770,7 @@
         "start_playlist": "Start playlist",
         "playlist_next": "Next track in playlist",
         "start_metronome": "Start metronome",
+        "start_audio_effect": "Start audio effect",
         "id_start_timer": "Start timer",
         "start_slide_timers": "Start timers on active slide",
         "id_select_output_style": "Select output style",

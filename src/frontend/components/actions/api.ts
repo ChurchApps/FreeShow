@@ -265,6 +265,7 @@ export const API_ACTIONS = {
     name_start_playlist: (data: API_strval) => startPlaylistByName(data.value), // BC
     playlist_next: () => AudioPlaylist.next(), // BC
     start_metronome: (data: API_metronome) => startMetronome(data),
+    start_audio_effect: (data: API_media) => playAudio(data),
 
     // TIMERS
     // control timer time
