@@ -100,7 +100,7 @@
         stage_outputs: () => [{ value: "", label: translateText("actions.all_outputs") }, ...sortByName(keysToID($outputs).filter((a) => a.stageOutput)).map((a) => ({ value: a.id, label: a.name }), "label")],
         start_audio_stream: () => convertToOptions($audioStreams),
         start_playlist: () => convertToOptions($audioPlaylists),
-        start_audio_effect: () => $effectsLibrary.map((a) => ({ value: a.path, label: a.name })),
+        start_audio_effect: () => $effectsLibrary.map(a => ({ value: a.path, label: a.name })),
         id_select_output_style: () => [{ value: null, label: "—" }, ...convertToOptions($styles)],
         change_output_style: () => convertToOptions($styles),
         id_start_timer: () => convertToOptions($timers),
@@ -168,11 +168,11 @@
         {/if}
     </MaterialButton>
 {:else if inputId === "draw_zoom"}
-    <MaterialNumberInput label="edit.size" value={value?.size || 100} min={1} max={2000} step={10} defaultValue={100} on:change={(e) => updateValue("size", e)} />
-    <MaterialNumberInput label="edit.x (%)" value={value?.x ?? 50} max={100} defaultValue={50} on:change={(e) => updateValue("x", e)} />
-    <MaterialNumberInput label="edit.y (%)" value={value?.y ?? 50} max={100} defaultValue={50} on:change={(e) => updateValue("y", e)} />
+    <MaterialNumberInput label="edit.size" value={value?.size || 100} min={1} max={2000} step={10} defaultValue={100} on:change={e => updateValue("size", e)} />
+    <MaterialNumberInput label="edit.x (%)" value={value?.x ?? 50} max={100} defaultValue={50} on:change={e => updateValue("x", e)} />
+    <MaterialNumberInput label="edit.y (%)" value={value?.y ?? 50} max={100} defaultValue={50} on:change={e => updateValue("y", e)} />
 {:else if inputId === "audio_effects"}
-    <MaterialDropdown label="actions.start_audio_effect" options={getOptions.start_audio_effect()} value={value?.path} on:change={(e) => updateValue("path", e.detail)} />
+    <MaterialDropdown label="actions.start_audio_effect" options={getOptions.start_audio_effect()} value={value?.path} on:change={e => updateValue("path", e.detail)} />
 {:else if inputId === "number"}
     <!-- action wait (seconds) -->
     <MaterialNumberInput label="timer.seconds" value={value?.number || 0} step={0.5} on:change={(e) => updateValue("number", e)} />

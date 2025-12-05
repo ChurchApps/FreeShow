@@ -133,9 +133,9 @@ export class AudioPlaylist {
         if (Object.keys(playingAudio).includes(nextSong)) return
 
         let nextIndex = startIndex > -1 ? startIndex : (get(activePlaylist).index ?? -1) + 1
-        if (playlist.songs[nextIndex] !== nextSong) nextIndex = songs.findIndex((a) => a === nextSong)
+        if (playlist.songs[nextIndex] !== nextSong) nextIndex = songs.findIndex(a => a === nextSong)
 
-        activePlaylist.update((a) => {
+        activePlaylist.update(a => {
             a.active = nextSong
             a.index = nextIndex
             return a
