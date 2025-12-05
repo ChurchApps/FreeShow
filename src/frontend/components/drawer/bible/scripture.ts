@@ -1341,8 +1341,9 @@ export function getScriptureShow(biblesContent: BibleContent[] | null) {
 
     // template data
     const scriptureTemplateId = getScriptureTemplateId() || ""
-    const template = clone(get(templates)[scriptureTemplateId])
-    const backgroundPath = template?.settings?.backgroundPath
+    const _template = new TemplateHelper(scriptureTemplateId)
+    const backgroundColor = _template.getSetting("backgroundColor")
+    const backgroundPath = _template.getSetting("backgroundPath")
     const media = {}
     const backgroundId = uid(5)
     if (backgroundPath) media[backgroundId] = { path: backgroundPath, loop: true, muted: true }
@@ -1353,7 +1354,10 @@ export function getScriptureShow(biblesContent: BibleContent[] | null) {
         const id = uid()
         const referenceText = getReferenceText(biblesContent)
 
-        slides2[id] = { group: groupNames[i] || referenceText, color: null, settings: {}, notes: "", items }
+        let settings: any = {}
+        if (backgroundColor) settings.color = backgroundColor
+
+        slides2[id] = { group: groupNames[i] || referenceText, color: null, settings, notes: "", items }
         const l: any = { id }
 
         if (backgroundId && i === 0) l.background = backgroundId
@@ -1361,7 +1365,7 @@ export function getScriptureShow(biblesContent: BibleContent[] | null) {
         layouts.push(l)
     })
 
-    const firstSlideTemplateId = template?.settings?.firstSlideTemplate || ""
+    const firstSlideTemplateId = _template.getSetting("firstSlideTemplate")
     if (firstSlideTemplateId) {
         const firstLayoutId = layouts[0]?.id
         if (firstLayoutId && slides2[firstLayoutId]) {

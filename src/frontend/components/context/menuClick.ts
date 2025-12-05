@@ -1204,8 +1204,10 @@ const clickActions = {
             //     location: { page: "edit", show: get(activeShow)!, slide: slideRef.id, items, override: "itemaction_" + slideRef.id + "_items_" + items.join(",") }
             // })
             showsCache.update(a => {
+                if (!a[get(activeShow)?.id || ""]?.slides?.[slideRef.id]?.items) return a
+
                 items.forEach(itemIndex => {
-                    a[get(activeShow)?.id || ""].slides[slideRef.id].items[itemIndex][id] = newState
+                    a[get(activeShow)!.id].slides[slideRef.id].items[itemIndex][id] = newState
                 })
                 return a
             })

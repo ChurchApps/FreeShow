@@ -4,6 +4,7 @@
     import { activeDrawerTab, activeEdit, activePage, activePopup, activeScripture, activeStyle, drawerTabsData, outputs, popupData, scriptureSettings, styles, templates } from "../../../stores"
     import { setDefaultScriptureTemplates } from "../../../utils/createData"
     import { translateText } from "../../../utils/language"
+    import { confirmCustom } from "../../../utils/popup"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { getAllNormalOutputs, getFirstActiveOutput } from "../../helpers/output"
@@ -155,7 +156,12 @@
     $: styleScriptureTemplate = onlyOneNormalOutput ? $styles[styleId]?.templateScripture : ""
 
     $: useOldSystem = useOldScriptureSystem(templateId)
-    function convertToNew() {
+    $: usingDefault = templateId.includes("scripture")
+    async function convertToNew() {
+        if (!usingDefault) {
+            if (!(await confirmCustom("This will apply the default template, and convert that to the new format. Your current template will not change.<br>You can use it as an example to adapt your existing templates. Continue?"))) return
+        }
+
         setDefaultScriptureTemplates()
         update("template", "scripture")
     }
@@ -198,7 +204,13 @@
 
         {#if useOldSystem}
             <p style="margin-bottom: 10px;font-size: 0.9rem;opacity: 0.7;white-space: normal;">You are using an outdated scripture template!</p>
-            <MaterialButton variant="outlined" style="margin-bottom: 10px;" on:click={convertToNew}>Convert template to new system</MaterialButton>
+            <MaterialButton variant="outlined" style="margin-bottom: 10px;" on:click={convertToNew}>
+                {#if usingDefault}
+                    Convert template to new system
+                {:else}
+                    Switch to new scripture system
+                {/if}
+            </MaterialButton>
         {/if}
 
         <div class="title">

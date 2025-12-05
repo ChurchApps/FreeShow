@@ -30,6 +30,8 @@ import type { API_add_to_project, API_create_project, API_draw_zoom, API_edit_ti
 
 // WIP combine with click() in ShowButton.svelte
 export function selectShowByName(name: string) {
+    if (typeof name !== "string") return
+
     const shows = get(sortedShowsList)
     if (name.includes("{")) name = getDynamicValue(name)
     const sortedShows = sortByClosestMatch(shows, name)
