@@ -1384,7 +1384,7 @@ export function getScriptureShow(biblesContent: BibleContent[] | null) {
 
     // create first slide reference
     // const itemIndex = get(scriptureSettings)?.invertItems ? 1 : 0
-    const textboxes = slides[0].filter((a) => (a.type || "text") === "text" && a.lines?.length)
+    const textboxes = slides[0].filter(a => (a.type || "text") === "text" && a.lines?.length)
     if (useOldSystem && get(scriptureSettings).firstSlideReference && textboxes[0]?.lines?.[0]?.text?.[0]) {
         const textboxesClone = clone(textboxes)
 
