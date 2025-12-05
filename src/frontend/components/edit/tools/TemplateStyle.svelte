@@ -13,6 +13,7 @@
     import MaterialFilePicker from "../../inputs/MaterialFilePicker.svelte"
     import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
     import MaterialPopupButton from "../../inputs/MaterialPopupButton.svelte"
+    import { convertToScriptureTemplate, hasScripturePlaceholders, getCurrentStrategyName, getStrategyCount, canUndoConversion, getOriginalItems, clearConversionState } from "../scripts/convertScriptureTemplate"
 
     $: templateId = $activeEdit?.id || ""
     $: template = $templates[templateId] || {}
@@ -51,11 +52,99 @@
         { value: "scripture", label: translateText("tabs.scripture") }
     ]
     $: mode = template.settings?.mode || "default"
+
+    // Scripture template conversion
+    $: isScriptureMode = mode === "scripture"
+    $: alreadyConverted = template ? hasScripturePlaceholders(template) : false
+    $: strategyCount = getStrategyCount()
+
+    // Local state to trigger reactivity when conversion state changes
+    let conversionTrigger = 0
+    $: currentStrategy = templateId && conversionTrigger >= 0 ? getCurrentStrategyName(templateId) : ""
+    $: canUndo = templateId && conversionTrigger >= 0 ? canUndoConversion(templateId) : false
+
+    function handleConvertTemplate() {
+        if (!template || !templateId) return
+
+        // Convert the template (cycle strategy if already converted)
+        const converted = convertToScriptureTemplate(templateId, template, alreadyConverted)
+
+        // Save the converted template
+        history({
+            id: "UPDATE",
+            newData: { key: "items", data: converted.items },
+            oldData: { id: templateId },
+            location: { page: "edit", id: "template_items", override: templateId + "_convert" }
+        })
+
+        // Also update settings if needed
+        if (converted.settings && JSON.stringify(converted.settings) !== JSON.stringify(template.settings)) {
+            history({
+                id: "UPDATE",
+                newData: { key: "settings", data: converted.settings },
+                oldData: { id: templateId },
+                location: { page: "edit", id: "template_settings", override: templateId + "_convert_settings" }
+            })
+        }
+
+        // Trigger reactivity update for strategy name
+        conversionTrigger++
+    }
+
+    function handleUndoConversion() {
+        if (!templateId) return
+
+        const originalItems = getOriginalItems(templateId)
+        if (!originalItems) return
+
+        // Restore original items
+        history({
+            id: "UPDATE",
+            newData: { key: "items", data: originalItems },
+            oldData: { id: templateId },
+            location: { page: "edit", id: "template_items", override: templateId + "_undo_convert" }
+        })
+
+        // Clear the conversion state
+        clearConversionState(templateId)
+
+        // Trigger reactivity update
+        conversionTrigger++
+    }
 </script>
 
 <div class="tools">
     <div>
         <MaterialDropdown label="actions.mode" options={modes} value={mode} defaultValue="default" on:change={e => setValue(e.detail, "mode")} />
+
+        {#if isScriptureMode}
+            <div class="convert-section">
+                <div class="convert-buttons">
+                    <MaterialButton
+                        variant="outlined"
+                        icon={alreadyConverted ? "refresh" : "stars"}
+                        style="flex: 1;"
+                        on:click={handleConvertTemplate}
+                        title={alreadyConverted ? `Try different conversion (${currentStrategy})` : "Auto-convert to scripture template"}
+                    >
+                        {alreadyConverted ? `Retry (${currentStrategy})` : "Auto-Convert"}
+                    </MaterialButton>
+                    {#if canUndo && alreadyConverted}
+                        <MaterialButton
+                            variant="outlined"
+                            icon="undo"
+                            on:click={handleUndoConversion}
+                            title="Undo conversion and restore original items"
+                        >
+                            Undo
+                        </MaterialButton>
+                    {/if}
+                </div>
+                {#if alreadyConverted}
+                    <p class="hint">Click Retry to try a different conversion strategy ({strategyCount} available)</p>
+                {/if}
+            </div>
+        {/if}
     </div>
 
     <div>
@@ -153,5 +242,21 @@
         font-weight: 500;
         font-size: 0.8rem;
         opacity: 0.8;
+    }
+
+    .convert-section {
+        margin-top: 8px;
+    }
+
+    .convert-buttons {
+        display: flex;
+        gap: 8px;
+    }
+
+    .hint {
+        font-size: 0.7rem;
+        opacity: 0.6;
+        margin-top: 4px;
+        text-align: center;
     }
 </style>
