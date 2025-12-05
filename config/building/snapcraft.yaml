@@ -5,7 +5,7 @@ summary: Show song lyrics and more for free!
 description: A dynamic, user-friendly, and open-source presenter built for all of your presentations.
 contact:
     - dev@freeshow.app
-license: gpl-3.0+
+license: GPL-3.0-or-later
 donation:
     - https://churchapps.org/partner
 issues:
