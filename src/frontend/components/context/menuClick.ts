@@ -1203,10 +1203,10 @@ const clickActions = {
             //     newData: { style: { key: id, values: [newState] } },
             //     location: { page: "edit", show: get(activeShow)!, slide: slideRef.id, items, override: "itemaction_" + slideRef.id + "_items_" + items.join(",") }
             // })
-            showsCache.update((a) => {
+            showsCache.update(a => {
                 if (!a[get(activeShow)?.id || ""]?.slides?.[slideRef.id]?.items) return a
 
-                items.forEach((itemIndex) => {
+                items.forEach(itemIndex => {
                     a[get(activeShow)!.id].slides[slideRef.id].items[itemIndex][id] = newState
                 })
                 return a
