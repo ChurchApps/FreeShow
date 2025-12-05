@@ -49,6 +49,11 @@
         else selection = getSelectionRange() // range
     }
 
+    function mousedown(e: any) {
+        // store if going to a text input in the tools
+        if (e.target.closest(".tools")) getTextSelection(e)
+    }
+
     function keyup(e: KeyboardEvent) {
         if (e.key.includes("Arrow") || e.key.toUpperCase() === "A") getTextSelection(e)
     }
@@ -473,7 +478,7 @@
     })
 </script>
 
-<svelte:window on:keyup={keyup} on:keydown={keydown} on:mouseup={getTextSelection} />
+<svelte:window on:keyup={keyup} on:keydown={keydown} on:mouseup={getTextSelection} on:mousedown={mousedown} />
 
 {#if loaded}
     <EditValues sections={boxSections} {item} {styles} {customValues} on:change={updateValue2} />

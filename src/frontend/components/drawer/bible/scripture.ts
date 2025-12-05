@@ -12,7 +12,7 @@ import { ShowObj } from "../../../classes/Show"
 import { createCategory } from "../../../converters/importHelpers"
 import { requestMain } from "../../../IPC/main"
 import { splitTextContentInHalf } from "../../../show/slides"
-import { activePopup, activeProject, activeScripture, drawerTabsData, media, notFound, outLocked, overlays, popupData, scriptureHistory, scriptures, scripturesCache, scriptureSettings, styles, templates } from "../../../stores"
+import { activeProject, activeScripture, drawerTabsData, media, notFound, outLocked, overlays, scriptureHistory, scriptures, scripturesCache, scriptureSettings, styles, templates } from "../../../stores"
 import { trackScriptureUsage } from "../../../utils/analytics"
 import { TemplateHelper } from "../../../utils/templates"
 import { getKey } from "../../../values/keys"
@@ -1278,7 +1278,7 @@ export function formatBibleText(text: string | undefined, redJesus = false) {
 
 // CREATE SHOW/SLIDES
 
-export async function createScriptureShow(showPopup = false) {
+export async function createScriptureShow() {
     const biblesContent = await getActiveScripturesContent()
     if (!biblesContent?.length) return
 
@@ -1286,15 +1286,6 @@ export async function createScriptureShow(showPopup = false) {
     // const verseRange = joinRange(selectedVerses)
     // if (!verseRange) return
     if (!selectedVerses[0]?.length) return
-
-    // force the popup when attribution or version settings must be confirmed
-    const requiresVersionPopup = !!(biblesContent.find(a => a?.attributionRequired) || get(scriptureSettings).showVersion)
-    // if (!bypassPopup && (showPopup || requiresVersionPopup)) {
-    if (showPopup) {
-        popupData.set({ showVersion: requiresVersionPopup, create: true })
-        activePopup.set("scripture_show")
-        return
-    }
 
     const show = getScriptureShow(biblesContent)
     if (!show) return
@@ -1305,12 +1296,15 @@ export async function createScriptureShow(showPopup = false) {
 export function getScriptureShow(biblesContent: BibleContent[] | null) {
     if (!biblesContent?.length) return null
 
+    const templateId = getScriptureTemplateId()
+    const useOldSystem = useOldScriptureSystem(templateId)
+
     const selectedChapters = biblesContent[0]?.chapters || []
     const selectedVerses = biblesContent?.[0]?.activeVerses || []
 
     let slides: Item[][] = [[]]
     let groupNames: string[] = []
-    if (selectedVerses.length || get(scriptureSettings)) {
+    if (selectedVerses.length) {
         const data = getScriptureSlidesNew({ biblesContent, selectedChapters, selectedVerses })
         slides = data.slides
         groupNames = data.groupNames
@@ -1321,7 +1315,7 @@ export function getScriptureShow(biblesContent: BibleContent[] | null) {
     // create first slide reference
     // const itemIndex = get(scriptureSettings)?.invertItems ? 1 : 0
     const textboxes = slides[0].filter(a => (a.type || "text") === "text" && a.lines?.length)
-    if (get(scriptureSettings).firstSlideReference && textboxes[0]?.lines?.[0]?.text?.[0]) {
+    if (useOldSystem && get(scriptureSettings).firstSlideReference && textboxes[0]?.lines?.[0]?.text?.[0]) {
         const textboxesClone = clone(textboxes)
 
         // remove reference item
