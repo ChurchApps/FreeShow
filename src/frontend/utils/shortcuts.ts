@@ -389,6 +389,7 @@ function createNew() {
     }
 }
 
+// WIP this only works if opened in preview!
 export function togglePlayingMedia(e: Event | null = null, back = false) {
     if (get(outLocked)) return
     // if ($focusMode || e.target?.closest(".edit") || e.target?.closest("input")) return

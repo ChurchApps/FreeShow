@@ -158,10 +158,10 @@ const PRESENTATION_KEYS_PREV = ["ArrowLeft", "PageUp"]
 
 // this will go to next for each slide (better for multiple outputs with "Specific outputs")
 export function nextSlideIndividual(e: any, start = false, end = false) {
-    getActiveOutputs(get(outputs), true, false, true).forEach(id => nextSlide(e, start, end, false, false, id))
+    getActiveOutputs(get(outputs), true, false, true).forEach(id => nextSlide(e, start, end, false, false, id, false, true))
 }
 
-export function nextSlide(e: any, start = false, end = false, loop = false, bypassLock = false, customOutputId = "", nextAfterMedia = false) {
+export function nextSlide(e: any, start = false, end = false, loop = false, bypassLock = false, customOutputId = "", nextAfterMedia = false, advanceThroughProject: boolean = false) {
     if (get(outLocked) && !bypassLock) return
     // blur to remove tab highlight from slide after clicked, and using arrows
     if (document.activeElement?.closest(".slide") && !document.activeElement?.closest(".edit")) (document.activeElement as HTMLElement).blur()
@@ -209,7 +209,7 @@ export function nextSlide(e: any, start = false, end = false, loop = false, bypa
     const isFirstLine = (slide?.line || 0) === 0
     const nextProjectItem = get(projects)[get(activeProject) || ""]?.shows?.[(currentShow?.index ?? -2) + 1]?.id
     const isPreviousProjectItem = slide?.id === nextProjectItem && isFirstSlide && isFirstLine
-    if (isPreviousProjectItem && e?.key !== " ") {
+    if (isPreviousProjectItem && e?.key !== " " && advanceThroughProject) {
         goToNextProjectItem()
         return
     }
@@ -245,13 +245,13 @@ export function nextSlide(e: any, start = false, end = false, loop = false, bypa
     const isNotLooping = loop && slide?.index !== undefined && !layout?.[slideIndex]?.data?.end
     if ((isNotLooping || nextAfterMedia) && bypassLock && slide && isLastSlide) {
         // check if it is last slide (& that slide does not loop to start)
-        goToNextShowInProject(slide, customOutputId)
+        if (advanceThroughProject) goToNextShowInProject(slide, customOutputId)
         return
     }
 
     // go to beginning if live mode & ctrl | no output | last slide active
     if (currentShow && (start || !slide || e?.ctrlKey || (isLastSlide && (currentShow.id !== slide?.id || get(showsCache)[currentShow.id]?.settings.activeLayout !== slide.layout)))) {
-        if (currentShow?.type === "section" || !get(showsCache)[currentShow.id] || !getLayoutRef(currentShow.id).length) return goToNextProjectItem()
+        if ((currentShow?.type === "section" || !get(showsCache)[currentShow.id] || !getLayoutRef(currentShow.id).length) && advanceThroughProject) return goToNextProjectItem()
 
         const id = loop ? slide?.id : currentShow.id
         if (!id) return
@@ -293,7 +293,7 @@ export function nextSlide(e: any, start = false, end = false, loop = false, bypa
         if (get(special).nextItemOnLastSlide === false && !get(focusMode)) return
 
         if (PRESENTATION_KEYS_NEXT.includes(e?.key)) {
-            goToNextProjectItem(e.key)
+            if (advanceThroughProject) goToNextProjectItem(e.key)
 
             // skip right to next slide without requiring "double" input in focus mode
             if (get(focusMode)) setTimeout(() => nextSlideIndividual(e), 20)
