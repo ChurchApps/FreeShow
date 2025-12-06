@@ -44,10 +44,46 @@
         }
 
         let sel = window.getSelection()
+        
+        // Check if the selection is actually inside a .edit element (textbox)
+        // If not, don't update the selection (preserves previously captured selection)
+        if (sel && sel.anchorNode) {
+            const anchorElement = sel.anchorNode.nodeType === Node.TEXT_NODE 
+                ? sel.anchorNode.parentElement 
+                : sel.anchorNode as Element
+            if (!anchorElement?.closest(".edit")) {
+                return
+            }
+        }
 
         if (sel?.type === "None") selection = null
         else selection = getSelectionRange() // range
     }
+
+    // Store selection when clicking on tools, before focus moves to the input
+    // This preserves the text selection so styles can be applied to selected text only
+    // Using capture phase to ensure we get the selection before the input steals focus
+    function mousedownCapture(e: any) {
+        if (e.target.closest(".editTools")) {
+            // Capture the selection immediately before it's lost due to focus change
+            let sel = window.getSelection()
+            if (sel && sel.type !== "None" && sel.toString().length > 0) {
+                const range = getSelectionRange()
+                // Only store if we got a valid selection with actual content
+                if (range && range.some(r => r.start !== undefined && r.end !== undefined && r.start !== r.end)) {
+                    selection = range
+                }
+            }
+        }
+    }
+
+    // Register mousedown with capture phase to catch selection before focus changes
+    onMount(() => {
+        window.addEventListener("mousedown", mousedownCapture, true) // capture phase
+    })
+    onDestroy(() => {
+        window.removeEventListener("mousedown", mousedownCapture, true)
+    })
 
     function mousedown(e: any) {
         // store if going to a text input in the tools
