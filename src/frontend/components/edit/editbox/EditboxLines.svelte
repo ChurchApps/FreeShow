@@ -406,8 +406,12 @@
                 // GET CHORDS
                 let storedChords = child.getAttribute("data-chords")
                 if (storedChords) {
-                    storedChords = JSON.parse(storedChords)
-                    lineChords.push(...storedChords)
+                    try {
+                        storedChords = JSON.parse(storedChords)
+                        lineChords.push(...storedChords)
+                    } catch (err) {
+                        return
+                    }
                 }
             })
 

@@ -321,7 +321,7 @@
 
         let values: { [key: string]: any[] } = {}
         slides.forEach((slide, i) => {
-            if (!slideItems[i].length) return
+            if (!slideItems[i]?.length) return
             values[slide] = []
             slideItems[i].forEach(i => getNewItemValues(clone(showSlides[slide]?.items?.[i] || allSlideItems[i]), slide))
         })

@@ -132,7 +132,7 @@ export function updateSettings(data: any) {
 
     // theme
     let currentTheme = get(themes)[data.theme]
-    if (currentTheme) {
+    if (currentTheme?.colors) {
         // update colors (pre 0.9.2 or 1.4.9)
         const pre092 = currentTheme.colors.secondary?.toLowerCase() === "#e6349c"
         const pre149 = currentTheme.colors.primary?.toLowerCase() === "#292c36"
@@ -186,8 +186,8 @@ export function restartOutputs(specificId = "") {
 export function updateThemeValues(themeValues: Themes) {
     if (!themeValues) return
 
-    Object.entries(themeValues.colors).forEach(([key, value]) => document.documentElement.style.setProperty("--" + key, value))
-    Object.entries(themeValues.font).forEach(([key, value]) => {
+    Object.entries(themeValues.colors || {}).forEach(([key, value]) => document.documentElement.style.setProperty("--" + key, value))
+    Object.entries(themeValues.font || {}).forEach(([key, value]) => {
         if (key === "family" && (!value || value === "sans-serif")) value = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif'
         document.documentElement.style.setProperty("--font-" + key, value)
     })

@@ -540,6 +540,8 @@ const pasteActions = {
         }
 
         const ref = getLayoutRef()[get(activeEdit).slide!]
+        if (!ref) return
+
         const items: any[] = []
         data.forEach(item => {
             items.push(clone(item))
