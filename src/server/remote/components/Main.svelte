@@ -6,9 +6,13 @@
     import Tabs from "../../common/components/Tabs.svelte"
     import Textarea from "../../common/components/Textarea.svelte"
     import TextInput from "../../common/components/TextInput.svelte"
+    import Center from "../../common/components/Center.svelte"
+    import Loading from "../../common/components/Loading.svelte"
     import { translate } from "../util/helpers"
     import { send } from "../util/socket"
     import { _set, active, activeProject, activeShow, activeTab, createShow, dictionary, isCleared, outShow, projects, projectsOpened, scriptures, shows } from "../util/stores"
+
+    // Phone mode components (always loaded - small footprint)
     import Lyrics from "./pages/Lyrics.svelte"
     import Project from "./pages/Project.svelte"
     import Scripture from "./pages/Scripture.svelte"
@@ -16,19 +20,20 @@
     import ShowContent from "./pages/ShowContent.svelte"
     import Shows from "./pages/Shows.svelte"
     import Slide from "./pages/Slide.svelte"
-    import TabletMode from "./tablet/TabletMode.svelte"
+
+    // Tablet mode component (lazy-loaded for performance)
+    let TabletMode: any = null
 
     $: tab = $activeTab
     $: if (tab) _set("activeTab", tab)
 
     let tabs: TabsObj = {}
     $: tabs = {
-        shows: { name: translate("remote.shows", $dictionary), icon: "search" }, // shows
+        shows: { name: translate("remote.shows", $dictionary), icon: "search" },
         scripture: { name: translate("tabs.scripture", $dictionary), icon: "scripture" },
         project: { name: translate("remote.project", $dictionary), icon: "project" },
         show: { name: translate("remote.show", $dictionary), icon: "show" },
-        slide: { name: translate("remote.slide", $dictionary), icon: "display_settings" } // slide
-        // lyrics: { name: translate("remote.lyrics", $dictionary), icon: "lyrics" },
+        slide: { name: translate("remote.slide", $dictionary), icon: "display_settings" }
     }
     $: tabsDisabled = {
         shows: $shows.length,
@@ -39,19 +44,14 @@
         lyrics: $outShow
     }
 
-    // keyboard shortcuts
     function keydown(e: KeyboardEvent) {
         if ((e.target as HTMLElement)?.closest("textarea") || (e.target as HTMLElement)?.closest("input")) return
-
         if ([" ", "Arrow", "Page"].includes(e.key)) e.preventDefault()
-
-        // WIP keyboard shortcuts same as main app
         if ([" ", "ArrowRight", "PageDown"].includes(e.key)) send("API:next_slide")
         else if (["ArrowLeft", "PageUp"].includes(e.key)) send("API:previous_slide")
         else if (e.key === "Escape") send("API:clear_all")
     }
 
-    // click when focused
     function double(e: any) {
         let id = e.detail
         if (id === "shows") {
@@ -68,7 +68,6 @@
     let newShowText = ""
     let previousCreateShow = false
     $: {
-        // Set initial name when dialog opens with a string value
         if ($createShow && typeof $createShow === "string" && !previousCreateShow) {
             newShowName = $createShow
         }
@@ -79,9 +78,7 @@
             newShowFinish()
             return
         }
-
         send("API:create_show", { text: newShowText, name: newShowName })
-        // WIP open show
         newShowFinish()
     }
     const updateName = (e: any) => (newShowName = e.target?.value)
@@ -93,20 +90,41 @@
     }
 
     let isTablet = false
+    let tabletLoading = false
+
     onMount(() => {
         const media = window.matchMedia("(min-width: 1000px)")
         isTablet = media.matches
-        const listener = (e: MediaQueryListEvent) => (isTablet = e.matches)
+        const listener = (e: MediaQueryListEvent) => {
+            isTablet = e.matches
+            if (e.matches && !TabletMode) loadTabletMode()
+        }
         media.addEventListener("change", listener)
+
+        // Load tablet components if needed
+        if (isTablet) loadTabletMode()
+
         return () => media.removeEventListener("change", listener)
     })
+
+    async function loadTabletMode() {
+        if (TabletMode || tabletLoading) return
+        tabletLoading = true
+        const module = await import("./tablet/TabletMode.svelte")
+        TabletMode = module.default
+        tabletLoading = false
+    }
 </script>
 
 <svelte:window on:keydown={keydown} />
 
 {#if isTablet}
     <section class="tabletMode">
-        <TabletMode />
+        {#if TabletMode}
+            <svelte:component this={TabletMode} />
+        {:else}
+            <Center><Loading /></Center>
+        {/if}
     </section>
 {:else}
     <section class="phoneMode justify">

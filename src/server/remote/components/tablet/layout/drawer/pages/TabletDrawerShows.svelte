@@ -41,6 +41,11 @@
         return s.name.toLowerCase().includes(searchValue.toLowerCase())
     })
 
+    // Scroll to top when search changes
+    $: if (searchValue.length > 1) {
+        setTimeout(() => document.querySelector("svelte-virtual-list-viewport")?.scrollTo(0, 0))
+    }
+
     // Sort shows
     $: sortedShows = [...filteredShows].sort((a: any, b: any) => {
         let valA = a[sortType]
@@ -98,7 +103,7 @@
 
     $: showWithNumber = filteredShows.some((a: any) => a.quickAccess?.number || a.meta?.number)
 
-    // Loading state - match main frontend Shows.svelte behavior
+    // Loading state 
     // open tab instantly before loading content
     let loadingStarted: boolean = false
     onMount(() => {

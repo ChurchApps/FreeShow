@@ -250,7 +250,7 @@
                 </div>
             </div>
         {:else}
-            <div style="flex: 1; display: flex; justify-content: center; align-items: center; opacity: 0.5; padding-bottom: 20%;">
+            <div style="flex: 1; display: flex; justify-content: center; align-items: center; opacity: 0.5;">
                 {translate("empty.show", $dictionary)}
             </div>
         {/if}
