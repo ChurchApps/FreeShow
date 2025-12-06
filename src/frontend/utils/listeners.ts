@@ -177,6 +177,9 @@ export function storeSubscriber() {
         // used for stage mirror data
         send(OUTPUT, ["ALL_OUTPUTS"], data)
 
+        // REMOTE
+        send(REMOTE, ["OUTPUTS"], data)
+
         // let it update properly
         setTimeout(() => {
             sendData(REMOTE, { channel: "OUT" })
@@ -253,6 +256,7 @@ export function storeSubscriber() {
     // used by stage output
     media.subscribe((data) => {
         send(OUTPUT, ["MEDIA"], data)
+        send(REMOTE, ["MEDIA"], data)
     })
     outputSlideCache.subscribe(async (a) => {
         if (await hasNewerUpdate("LISTENER_SLIDE_CACHE", 50)) return
@@ -309,12 +313,14 @@ export function storeSubscriber() {
 
     volume.subscribe((data) => {
         send(OUTPUT, ["VOLUME"], data)
+        send(REMOTE, ["VOLUME"], data)
     })
     gain.subscribe((data) => {
         send(OUTPUT, ["GAIN"], data)
     })
     audioChannelsData.subscribe((data) => {
         send(OUTPUT, ["AUDIO_CHANNELS_DATA"], data)
+        send(REMOTE, ["AUDIO_CHANNELS_DATA"], data)
     })
 
     equalizerConfig.subscribe((data) => {
@@ -354,7 +360,9 @@ export function storeSubscriber() {
 
     // dynamic values
     playingAudio.subscribe(() => {
-        send(OUTPUT, ["PLAYING_AUDIO"], AudioPlayer.getAllPlaying())
+        const playing = AudioPlayer.getAllPlaying()
+        send(OUTPUT, ["PLAYING_AUDIO"], playing)
+        send(REMOTE, ["PLAYING_AUDIO"], playing)
     })
     audioData.subscribe((a) => {
         send(OUTPUT, ["AUDIO_DATA"], a)
@@ -453,7 +461,8 @@ const initalOutputData = {
     CUSTOM_CREDITS: "customMessageCredits",
 
     // received by Output
-    VOLUME: "volume"
+    VOLUME: "volume",
+    AUDIO_CHANNELS_DATA: "audioChannelsData"
 }
 
 export function sendInitialOutputData() {

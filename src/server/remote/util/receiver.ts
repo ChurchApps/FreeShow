@@ -2,7 +2,7 @@ import type { Item, Show } from "../../../types/Show"
 import { sanitizeVerseText } from "../../../common/scripture/sanitizeVerseText"
 import { setError, translate } from "./helpers"
 import { send } from "./socket"
-import { _, _get, _set, _update, currentScriptureState, overlays, scriptures, scriptureCache, timers, triggers, activeTimers, runningActions } from "./stores"
+import { _, _get, _set, _update, currentScriptureState, overlays, scriptures, scriptureCache, timers, triggers, activeTimers, runningActions, mixer } from "./stores"
 
 function sanitizeBiblePayload(bible: any) {
     if (!bible || !Array.isArray(bible.books)) return bible
@@ -301,6 +301,88 @@ export const receiver = {
         triggers.set(data.triggers)
         activeTimers.set(data.activeTimers)
         runningActions.set(data.runningActions)
+    },
+    GET_AUDIO: (data: any) => {
+        _set("audio", data)
+    },
+    GET_MIXER: (data: any) => {
+        _set("mixer", data)
+    },
+    MEDIA: (data: any) => {
+        if (!data) {
+            _set("audio", {})
+            return
+        }
+
+        const audioFiles: any = {}
+        
+        // Handle if data is an object of media items
+        if (typeof data === "object" && !Array.isArray(data)) {
+            Object.keys(data).forEach(id => {
+                const item = data[id]
+                // Check various ways audio might be identified
+                if (item && (
+                    item.type === "audio" || 
+                    item.audioPath || 
+                    item.path?.match(/\.(mp3|wav|ogg|m4a|flac|aac|wma)$/i)
+                )) {
+                    audioFiles[id] = {
+                        id,
+                        name: item.name || item.path?.split(/[\/\\]/).pop() || id,
+                        path: item.path || item.audioPath || id,
+                        ...item
+                    }
+                }
+            })
+        }
+        
+        _set("audio", audioFiles)
+    },
+    VOLUME: (data: any) => {
+        mixer.update((prev: any) => {
+            const current = prev || {}
+            return {
+                ...current,
+                main: {
+                    ...current.main,
+                    volume: data
+                }
+            }
+        })
+    },
+    OUTPUTS: (data: any) => {
+        mixer.update((prev: any) => {
+            const current = prev || {}
+            const currentOutputs = current.outputs || {}
+            
+            // Merge new data with existing outputs to preserve volume/mute state if not present in update
+            const newOutputs = { ...currentOutputs }
+            Object.keys(data).forEach(id => {
+                newOutputs[id] = { ...(newOutputs[id] || {}), ...data[id] }
+            })
+
+            return {
+                ...current,
+                outputs: newOutputs
+            }
+        })
+    },
+    AUDIO_CHANNELS_DATA: (data: any) => {
+        mixer.update((prev: any) => {
+            const current = prev || { main: {}, outputs: {} }
+            const { main, ...outs } = data
+
+            const outputs = { ...current.outputs }
+            Object.keys(outs).forEach(id => {
+                if (outputs[id]) outputs[id] = { ...outputs[id], ...outs[id] }
+            })
+
+            return {
+                ...current,
+                main: { ...current.main, ...main },
+                outputs
+            }
+        })
     },
 
     /////

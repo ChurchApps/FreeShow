@@ -12,9 +12,9 @@
     const defaultHeight = 400
     const maxHeight = 800
 
-    // Tab configuration - single source of truth
+    // Tab configuration
     // const DRAWER_TABS = ["shows", "media", "audio", "overlays", "templates", "scripture", "calendar", "functions"] as const
-    const DRAWER_TABS = ["shows", "overlays", "templates", "scripture", "functions"] as const
+    const DRAWER_TABS = ["shows", "audio", "overlays", "templates", "scripture", "functions"] as const
 
     $: height = $drawer.height ?? defaultHeight
 
@@ -226,7 +226,7 @@
         cursor: ns-resize;
         padding: 0;
         padding-right: 10px;
-        padding-top: 4px; /* Account for ::after resize handle visual offset */
+        padding-top: 4px; 
         touch-action: none;
         -webkit-tap-highlight-color: transparent;
         box-sizing: border-box;

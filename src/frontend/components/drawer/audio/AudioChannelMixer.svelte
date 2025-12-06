@@ -23,7 +23,7 @@
 
     const allowGaining = false // $special.allowGaining || false
     function setVolume(e: any) {
-        let value = e.target?.value || e
+        let value = Number(e.target?.value || e)
 
         if (channelId !== "main") {
             updateData("volume", value)
@@ -43,7 +43,7 @@
         volume.set(newVolume)
         gain.set(newGain)
 
-        AudioPlayer.updateVolume()
+        updateData("volume", value)
     }
 
     // 25% / 200 = 0.125

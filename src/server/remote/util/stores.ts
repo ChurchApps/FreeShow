@@ -102,6 +102,9 @@ export let playingAudioTime: Writable<number> = writable(0)
 export let pdfPages: Writable<{ [key: string]: string[] }> = writable({})
 export let scriptureSearchResults: Writable<any> = writable(null)
 
+export let audio: Writable<{ [key: string]: any }> = writable({})
+export let mixer: Writable<any> = writable(null)
+
 /////
 
 export const _ = {
@@ -151,6 +154,8 @@ export const _ = {
     playingAudioTime,
     pdfPages,
     scriptureSearchResults,
+    audio,
+    mixer,
     actions,
     actionTags,
     variables,
