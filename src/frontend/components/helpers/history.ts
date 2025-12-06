@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
 import type { History, HistoryNew, HistoryTypes } from "../../../types/History"
-import { activePage, driveData, historyCacheCount, undoHistory } from "../../stores"
+import { activePage, driveData, historyCacheCount, isDev, undoHistory } from "../../stores"
 import { redoHistory } from "./../../stores"
 import { clone } from "./array"
 import { historyActions } from "./historyActions"
@@ -246,6 +246,8 @@ export function history(obj: History, shouldUndo: null | boolean = null) {
         deselect()
     }
 
+    if (!get(isDev)) return
+
     console.info("UNDO: ", [...get(undoHistory)])
     console.info("REDO: ", [...get(redoHistory)])
 }
@@ -301,7 +303,7 @@ export const undo = () => {
     lastUndo!.oldData = clone(lastUndo!.newData)
     lastUndo!.newData = oldData
 
-    console.info("UNDO", [...get(undoHistory)], [...get(redoHistory)])
+    if (get(isDev)) console.info("UNDO", [...get(undoHistory)], [...get(redoHistory)])
 
     history(lastUndo!, true)
 }
@@ -339,7 +341,7 @@ export const redo = () => {
     lastRedo!.oldData = clone(lastRedo!.newData)
     lastRedo!.newData = oldData
 
-    console.info("REDO", [...get(undoHistory)], [...get(redoHistory)])
+    if (get(isDev)) console.info("REDO", [...get(undoHistory)], [...get(redoHistory)])
 
     history(lastRedo!, false)
 }

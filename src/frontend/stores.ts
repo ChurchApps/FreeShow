@@ -187,7 +187,7 @@ export const dynamicValueData: Writable<{ [key: string]: any }> = writable({})
 // HISTORY
 export const undoHistory: Writable<(History | HistoryNew)[]> = writable([])
 export const redoHistory: Writable<(History | HistoryNew)[]> = writable([])
-export const historyCacheCount: Writable<number> = writable(250)
+export const historyCacheCount: Writable<number> = writable(75)
 export const usageLog: Writable<any> = writable({ all: [] })
 
 // SHOW
