@@ -251,6 +251,9 @@
         return clone($templates[resolvedTemplateId]?.settings?.styleOverrides || [])
     })()
 
+    // Balance text: read from template settings (default: false/disabled)
+    $: balanceText = resolvedTemplateId ? $templates[resolvedTemplateId]?.settings?.balanceText === true : false
+
     // convert translation metadata into the suffix used by templateScripture_* settings
     function buildScriptureTranslationKey(reference: any) {
         const translationCount = getScriptureTranslationCount(reference)
@@ -596,7 +599,7 @@
     on:mouseup={release}
 >
     {#if lines}
-        <TextboxLines {item} {slideIndex} {isMirrorItem} {key} {smallFontSize} {animationStyle} {dynamicValues} {isStage} {customFontSize} {outputStyle} {ref} {style} {customStyle} {stageItem} {chords} {linesStart} {linesEnd} fontSize={smallFontSize ? 20 : fontSize} {customTypeRatio} {maxLines} {maxLinesInvert} {centerPreview} {revealed} styleOverrides={templateStyleOverrides} on:updateAutoSize={calculateAutosize} />
+        <TextboxLines {item} {slideIndex} {isMirrorItem} {key} {smallFontSize} {animationStyle} {dynamicValues} {isStage} {customFontSize} {outputStyle} {ref} {style} {customStyle} {stageItem} {chords} {linesStart} {linesEnd} fontSize={smallFontSize ? 20 : fontSize} {customTypeRatio} {maxLines} {maxLinesInvert} {centerPreview} {revealed} styleOverrides={templateStyleOverrides} {balanceText} on:updateAutoSize={calculateAutosize} />
     {:else}
         <SlideItems {item} {slideIndex} {preview} {isTemplatePreview} {mirror} {isMirrorItem} {ratio} {disableListTransition} {smallFontSize} {ref} {fontSize} {outputId} />
     {/if}

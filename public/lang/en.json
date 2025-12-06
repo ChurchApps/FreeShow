@@ -957,6 +957,7 @@
         "max_lines_per_slide": "Max lines per slide",
         "break_long_lines": "Break long lines",
         "break_long_lines_tip": "Break line if longer than the set words",
+        "balance_text": "Balance text lines",
         "style_overrides_tip": "Automatically restyle matching words.",
         "style_override_pattern": "Word or /regex/",
         "skip_virtual_breaks": "Skip virtual breaks",

@@ -490,6 +490,7 @@ export interface TemplateSettings {
     firstSlideTemplate?: string
     maxLinesPerSlide?: number // auto break slides if more than set lines
     breakLongLines?: number // auto break lines if longer than set words
+    balanceText?: boolean // balance long lines of text across multiple lines
     actions?: any[]
     styleOverrides?: TemplateStyleOverride[]
 }
