@@ -7,6 +7,7 @@
     import { history } from "../../helpers/history"
     import Icon from "../../helpers/Icon.svelte"
     import InputRow from "../../input/InputRow.svelte"
+    import MaterialCheckbox from "../../inputs/MaterialCheckbox.svelte"
     import MaterialColorInput from "../../inputs/MaterialColorInput.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialDropdown from "../../inputs/MaterialDropdown.svelte"
@@ -86,6 +87,7 @@
 
         <MaterialNumberInput label="edit.max_lines_per_slide" value={settings?.maxLinesPerSlide || 0} max={100} on:change={e => setValue(e, "maxLinesPerSlide")} />
         <MaterialNumberInput label="edit.break_long_lines_tip" value={settings?.breakLongLines || 0} max={100} on:change={e => setValue(e, "breakLongLines")} />
+        <MaterialCheckbox label="edit.balance_text" checked={settings.balanceText || false} on:change={e => setValue(e.detail, "balanceText")} />
     </div>
 
     <div>

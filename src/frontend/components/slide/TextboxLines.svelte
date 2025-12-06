@@ -40,6 +40,7 @@
     export let centerPreview = false
     export let revealed = -1
     export let styleOverrides: TemplateStyleOverride[] = []
+    export let balanceText = false // balance long lines across multiple lines
 
     $: lines = createVirtualBreaks(clone(item?.lines || []), outputStyle?.skipVirtualBreaks)
     $: if (linesStart !== null && linesEnd !== null && lines.length) {
@@ -232,7 +233,7 @@
                 {/if}
 
                 <!-- class:height={!line.text[0]?.value.length} -->
-                <div class="break" class:reveal={(centerPreview || isStage) && item?.lineReveal && revealed < i} class:smallFontSize={smallFontSize || customFontSize || textAnimation.includes("font-size")} style="{style ? lineStyle : ''}{style ? line.align : ''}{item?.list?.enabled && line.text?.reduce((value, t) => (value += t.value || ''), '')?.length ? listStyle : ''}{item?.list?.enabled ? `color: ${getStyles(line.text[0]?.style).color || ''};` : ''}">
+                <div class="break" class:balanceText class:reveal={(centerPreview || isStage) && item?.lineReveal && revealed < i} class:smallFontSize={smallFontSize || customFontSize || textAnimation.includes("font-size")} style="{style ? lineStyle : ''}{style ? line.align : ''}{item?.list?.enabled && line.text?.reduce((value, t) => (value += t.value || ''), '')?.length ? listStyle : ''}{item?.list?.enabled ? `color: ${getStyles(line.text[0]?.style).color || ''};` : ''}">
                     {#each line.text || [] as text, ti}
                         {@const value = text.value?.replaceAll("\n", "<br>") || "<br>"}
                         <span class="textContainer" style="{style ? getCustomStyle(text.style) : ''}{customStyle}{text.customType?.includes('disableTemplate') ? text.style : ''}{fontSize ? `;font-size: ${fontSize * (text.customType?.includes('disableTemplate') && !text.customType?.includes('jw') ? customTypeRatio : 1)}px;` : style ? getCustomFontSize(text.style, outputStyle) : ''}">
@@ -281,6 +282,10 @@
         overflow-wrap: break-word;
         /* line-break: after-white-space;
     -webkit-line-break: after-white-space; */
+    }
+
+    .break.balanceText {
+        text-wrap: balance;
     }
 
     .lines .break.reveal {
