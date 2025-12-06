@@ -22,7 +22,7 @@ export enum Main {
     // DEV
     LOG = "LOG",
     IS_DEV = "IS_DEV",
-    GET_TEMP_PATHS = "GET_TEMP_PATHS",
+    GET_CACHE_PATH = "GET_CACHE_PATH",
     // APP
     VERSION = "VERSION",
     GET_OS = "GET_OS",
@@ -216,7 +216,7 @@ export interface MainSendPayloads {
 export interface MainReturnPayloads {
     // DEV
     [Main.IS_DEV]: boolean
-    [Main.GET_TEMP_PATHS]: { [key: string]: string }
+    [Main.GET_CACHE_PATH]: string
     // APP
     [Main.VERSION]: string
     [Main.GET_OS]: OS
