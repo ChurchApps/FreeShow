@@ -108,6 +108,7 @@
     let closingMenuTimeout: NodeJS.Timeout | null = null
     $: if ($contextActive === false) startCloseTimer()
     function startCloseTimer() {
+        if (!highlighted.id) return
         if (contextElem) {
             lastTriggeredTime = Date.now()
             lastTriggeredElem = contextElem

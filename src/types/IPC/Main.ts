@@ -265,7 +265,7 @@ export interface MainReturnPayloads {
     [Main.MEDIA_TRACKS]: Promise<{ path: string; tracks: Subtitle[] }>
     [Main.MEDIA_IS_DOWNLOADED]: Promise<{ path: string; buffer: Buffer | null; protectedUrl?: string | null } | null>
     // [Main.MEDIA_BASE64]: { id: string; content: string }[]
-    [Main.CAPTURE_SLIDE]: Promise<{ base64: string } | undefined>
+    [Main.CAPTURE_SLIDE]: Promise<{ base64: string } | null>
     [Main.SLIDESHOW_GET_APPS]: string[]
     [Main.GET_MIDI_OUTPUTS]: { name: string }[]
     [Main.GET_MIDI_INPUTS]: { name: string }[]

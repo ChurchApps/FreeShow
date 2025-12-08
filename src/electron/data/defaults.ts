@@ -136,8 +136,7 @@ export const defaultSyncedSettings: { [key in SaveListSyncedSettings]: any } = {
         verseNumbers: false,
         showVersion: false,
         showVerse: true,
-        referenceDivider: ":",
-        showAllVersions: false
+        referenceDivider: ":"
     },
     groups: defaultGroups,
     midiIn: {},

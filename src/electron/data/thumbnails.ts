@@ -296,7 +296,7 @@ function saveToDisk(savePath: string, image: NativeImage, nextOnFinished = true,
 
 /// // CAPTURE SLIDE /////
 
-export function captureSlide(data: { output: { [key: string]: Output }; resolution: Resolution }): Promise<{ base64: string } | undefined> {
+export function captureSlide(data: { output: { [key: string]: Output }; resolution: Resolution }): Promise<{ base64: string } | null> {
     return new Promise(resolve => {
         const outSlide = Object.values(data.output)[0].out?.slide
         const OUTPUT_ID = "capture" + String(outSlide?.id) + String(outSlide?.layout) + String(outSlide?.index)
@@ -310,11 +310,15 @@ export function captureSlide(data: { output: { [key: string]: Output }; resoluti
         window.on("ready-to-show", () => {
             // send correct output data after load
             setTimeout(() => {
+                if (window.isDestroyed()) return resolve(null)
+
                 window.webContents.send(OUTPUT, { channel: "OUTPUTS", data: data.output })
                 // WIP mute videos
 
                 // wait for content load
                 setTimeout(async () => {
+                    if (window.isDestroyed()) return resolve(null)
+
                     const page = await window.capturePage()
                     const base64 = page.toDataURL({ scaleFactor: 1 })
                     resolve({ base64 })
