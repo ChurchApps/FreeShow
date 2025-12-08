@@ -1360,7 +1360,8 @@
     },
     "output": {
         "state_inactive": "Inactive",
-        "state_locked": "Locked"
+        "state_locked": "Locked",
+        "disabled_layers": "Disabled layers"
     },
     "profile": {
         "profiles_hint": "Create multiple profiles/roles to limit certain users access to control/edit chosen parts of the program.",

@@ -116,20 +116,20 @@ aria-label={fullscreen ? "Exit fullscreen preview" : "Toggle fullscreen preview"
             <PreviewOutput outputId={output.id} {disableTransitions} disabled={outs.length > 1 && !fullscreen && !output?.active} {fullscreen} />
 
             <!-- icons -->
-            {#if !fullscreen}
+            {#if !fullscreen && layers.length < 3}
                 <div class="icons">
                     {#if !layers.includes("background")}
-                        <div class="icon" data-title={translateText("<b>actions.remove_layers:</b> preview.background")}>
+                        <div class="icon" data-title={translateText("<b>output.disabled_layers:</b> preview.background")}>
                             <Icon id="media_off" size={0.8} white />
                         </div>
                     {/if}
                     {#if !layers.includes("slide")}
-                        <div class="icon" data-title={translateText("<b>actions.remove_layers:</b> preview.slide")}>
+                        <div class="icon" data-title={translateText("<b>output.disabled_layers:</b> preview.slide")}>
                             <Icon id="shows_off" size={0.8} white />
                         </div>
                     {/if}
                     {#if !layers.includes("overlays")}
-                        <div class="icon" data-title={translateText("<b>actions.remove_layers:</b> preview.overlays")}>
+                        <div class="icon" data-title={translateText("<b>output.disabled_layers:</b> preview.overlays")}>
                             <Icon id="overlays_off" size={0.8} white />
                         </div>
                     {/if}
