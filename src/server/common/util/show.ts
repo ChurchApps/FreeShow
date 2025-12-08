@@ -51,7 +51,10 @@ export function getGroupName({ show, showId }: { show: Show; showId: string }, s
     // sort by order when just one layout
     let slides = keysToID(clone(show.slides || {}))
     if (Object.keys(show.layouts || {}).length < 2) {
-        let layoutSlides = Object.values(show.layouts || {})[0]?.slides?.map(({ id }) => id) || []
+        let layoutSlides =
+            Object.values(show.layouts || {})[0]
+                ?.slides?.filter(Boolean)
+                ?.map(({ id }) => id) || []
         slides = slides.sort((a, b) => layoutSlides.indexOf(a.id) - layoutSlides.indexOf(b.id))
     }
 

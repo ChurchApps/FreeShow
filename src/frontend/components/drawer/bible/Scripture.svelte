@@ -128,16 +128,16 @@
                 // Get verse from chapterData
                 let verseText = ""
                 let supportsSplit = false
-                
+
                 if (scriptureData?.chapterData) {
                     try {
                         const verse = scriptureData.chapterData.getVerse(id)
                         const fullText = verse?.getHTML?.() || verse?.data?.text || ""
-                        
+
                         // If this is a split verse, try to split the text
                         if (isSplit && fullText) {
                             const splitParts = splitText(fullText, chars)
-                            
+
                             // Check if splitting actually occurred (more than 1 part)
                             if (splitParts.length > 1) {
                                 supportsSplit = true
@@ -208,15 +208,15 @@
     // Check if any translation in collection supports splitting for verses
     function checkCollectionSplitSupport(): { [verseNumber: number]: number } {
         if (!isCollection || !$scriptureSettings.splitLongVerses || !verses) return {}
-        
+
         const chars = Number($scriptureSettings.longVersesChars || 100)
         const splitCounts: { [verseNumber: number]: number } = {}
-        
+
         // Check all translations in collection
         activeScriptures.forEach(scriptureId => {
             const scriptureData = data[scriptureId]
             if (!scriptureData?.chapterData) return
-            
+
             verses.forEach(verse => {
                 try {
                     const verseObj = scriptureData.chapterData?.getVerse(verse.number)
@@ -234,12 +234,12 @@
                 }
             })
         })
-        
+
         return splitCounts
     }
-    
+
     $: collectionSplitCounts = isCollection && $scriptureSettings.splitLongVerses ? checkCollectionSplitSupport() : {}
-    
+
     let splittedVerses: (Verse & { id: string })[] = []
     $: splittedVerses = updateSplitted(verses, $scriptureSettings, collectionSplitCounts)
 
@@ -278,10 +278,10 @@
 
             // If in collection, check if any translation supports splitting for this verse
             const maxSplits = collectionSplitCounts[verse.number] || newVerseStrings.length
-            
+
             // Create split structure based on max splits needed across all translations
             const numParts = Math.max(newVerseStrings.length, maxSplits)
-            
+
             if (numParts > 1) {
                 // Create split parts - use preview translation's text for each part
                 for (let i = 0; i < numParts; i++) {
@@ -463,7 +463,7 @@
         previousSelection = clone(selectedVerses[selectedVerses.length - 1])
 
         isSelected = true
-        setTimeout(() => (isSelected = false), 20)
+        setTimeout(() => (isSelected = false), 100)
 
         const keys = e.ctrlKey || e.metaKey || e.shiftKey
         if (keys || !selectedVerses[selectedVerses.length - 1]?.find(a => a && (a.toString() === verseNumber || a === getVerseId(verseNumber)))) {
@@ -965,7 +965,7 @@
                                 {@const verseLabel = buildVerseLabel(id, subverse, endNumber, showSuffixInPicker)}
                                 {@const isActive = activeReference.verses[activeReference.verses.length - 1]?.find(vid => vid.toString() === content.id || vid.toString() === id.toString())}
                                 {@const text = formatBibleText(content.text, true)}
-                                {@const collectionVerses = ($scriptureSettings.showAllVersions !== false) && isCollection && $scriptureMode !== "grid" ? getCollectionVerses(content.id) : []}
+                                {@const collectionVerses = $scriptureSettings.showAllVersions !== false && isCollection && $scriptureMode !== "grid" ? getCollectionVerses(content.id) : []}
 
                                 <!-- custom drag -->
                                 <span
@@ -1043,10 +1043,10 @@
                     {#if isCollection}
                         <label style="display: flex; align-items: center; gap: 5px; cursor: pointer; font-size: 0.9em; opacity: 0.8; user-select: none; margin-left: 5px;" title="Show all versions">
                             <span>Show all</span>
-                            <input 
-                                type="checkbox" 
+                            <input
+                                type="checkbox"
                                 checked={$scriptureSettings.showAllVersions !== false}
-                                on:change={(e) => {
+                                on:change={e => {
                                     const checked = e.currentTarget.checked
                                     scriptureSettings.update(s => ({ ...s, showAllVersions: checked }))
                                 }}

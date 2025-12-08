@@ -86,7 +86,10 @@ export function getGroupName({ show, showId }: { show: Show; showId: string }, s
     // sort by order when just one layout
     let slides = keysToID(clone(show.slides || {}))
     if (Object.keys(show.layouts || {}).length < 2) {
-        const layoutSlides = Object.values(show.layouts || {})[0]?.slides?.map(({ id }) => id) || []
+        const layoutSlides =
+            Object.values(show.layouts || {})[0]
+                ?.slides?.filter(Boolean)
+                ?.map(({ id }) => id) || []
         slides = slides.sort((a, b) => layoutSlides.indexOf(a.id) - layoutSlides.indexOf(b.id))
     }
 
@@ -242,7 +245,10 @@ export function updateCachedShow(showId: string, show: Show, layoutId = "") {
     // sort by order when just one layout
     let showSlides = keysToID(clone(show.slides || {}))
     if (Object.keys(show.layouts || {}).length < 2) {
-        const layoutSlides = Object.values(show.layouts || {})[0]?.slides?.map(({ id }) => id) || []
+        const layoutSlides =
+            Object.values(show.layouts || {})[0]
+                ?.slides?.filter(Boolean)
+                ?.map(({ id }) => id) || []
         showSlides = showSlides.sort((a, b) => layoutSlides.indexOf(a.id) - layoutSlides.indexOf(b.id))
     }
 

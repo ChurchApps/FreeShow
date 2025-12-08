@@ -443,8 +443,7 @@ export function buildFullReferenceRange(chapters: (number | string)[], versesPer
 }
 
 // return array with length of slidesCount containing the content with splitted verses
-function splitContent(content: BibleContent[]): BibleContent[][] {
-    const perSlide = get(scriptureSettings).versesPerSlide || 3
+function splitContent(content: BibleContent[], perSlide: number): BibleContent[][] {
     const allVerses = content[0]?.activeVerses.flat() || []
 
     const totalVerses = allVerses.length
@@ -501,15 +500,18 @@ export function getScriptureSlidesNew(data: any, onlyOne = false, disableReferen
     const selectedChapters = data.selectedChapters as number[]
     const selectedVerses = data.selectedVerses as (number | string)[][]
 
-    const perSlide = get(scriptureSettings).versesPerSlide || 3
+    let perSlide = get(scriptureSettings).versesPerSlide || 3
     // Count total verses across all chapters
     const totalVerses = selectedVerses.reduce((sum, chapterVerses) => sum + (chapterVerses?.length || 0), 0)
     const slidesCount = onlyOne ? 1 : Math.ceil(totalVerses / perSlide)
 
+    // divide evenly if two slides
+    if (slidesCount === 2) perSlide = Math.ceil(totalVerses / 2)
+
     const slides = _template.createSlides(slidesCount, onlyOne)
     let slidesString = JSON.stringify(slides)
 
-    const splittedSlidesContent = onlyOne ? [biblesContent] : splitContent(biblesContent)
+    const splittedSlidesContent = onlyOne ? [biblesContent] : splitContent(biblesContent, perSlide)
 
     const verseNumbers = get(scriptureSettings).verseNumbers
     const versesOnIndividualLines = get(scriptureSettings).versesOnIndividualLines

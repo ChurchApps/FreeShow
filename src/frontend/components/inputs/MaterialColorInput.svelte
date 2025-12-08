@@ -61,6 +61,7 @@
     }
 
     function colorUpdate(color: string) {
+        if (typeof color !== "string") return "#000000"
         if (editMode) return color
 
         hexValue = color

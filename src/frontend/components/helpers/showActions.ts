@@ -1378,11 +1378,11 @@ const dynamicValues = {
     // project
     project_section: ({ outSlide }) => {
         const active = getActiveProjectSection({ outSlide })
-        return active?.name || get(shows)[active?.id || ""]?.name
+        return active?.name || ""
     },
     project_section_next: ({ outSlide }) => {
         const active = getActiveProjectSection({ outSlide }, true)
-        return active?.name || get(shows)[active?.id || ""]?.name
+        return active?.name || ""
     },
     project_section_time: () => getActiveProjectSection()?.data?.time || "00:00",
     project_section_time_next: () => getActiveProjectSection({}, true)?.data?.time || "00:00",
@@ -1484,7 +1484,7 @@ function getActiveProjectSection(data: any = {}, next = false): ProjectShowRef |
         const showId = data.outSlide?.id
         const showIndex = project.shows.findIndex(a => a.id === showId)
         if (next) return project.shows.find((a, i) => i > showIndex && a.type === "section") || null
-        return project.shows[showIndex] || null
+        return project.shows.findLast((a, i) => i <= showIndex && a.type === "section") || null
     }
 
     const active = getClosestProjectSectionByTime()
@@ -1501,7 +1501,7 @@ function getClosestProjectSectionByTime() {
     let closestUpcommingId = ""
     project.shows.forEach(a => {
         const time = a.data?.time
-        if (!time) return
+        if (!time || a.type !== "section") return
 
         const timeUntil = getTimeUntilClock(time)
         if (timeUntil < 0 && (!closestPassedTime || timeUntil > closestPassedTime)) {

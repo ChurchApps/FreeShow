@@ -1,18 +1,22 @@
 <script lang="ts">
     import type { BibleContent } from "../../../../types/Scripture"
     import type { Item } from "../../../../types/Show"
-    import { activeDrawerTab, activeEdit, activePage, activePopup, activeScripture, activeStyle, drawerTabsData, outputs, popupData, scriptureSettings, styles, templates } from "../../../stores"
+    import { activeEdit, activePage, activePopup, activeScripture, activeStyle, drawerTabsData, outputs, popupData, scriptureSettings, styles, templates } from "../../../stores"
     import { setDefaultScriptureTemplates } from "../../../utils/createData"
     import { translateText } from "../../../utils/language"
     import { confirmCustom } from "../../../utils/popup"
+    import { mediaExtensions } from "../../../values/extensions"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
+    import { clone } from "../../helpers/array"
+    import { history } from "../../helpers/history"
     import { getAllNormalOutputs, getFirstActiveOutput } from "../../helpers/output"
     import FloatingInputs from "../../input/FloatingInputs.svelte"
     import InputRow from "../../input/InputRow.svelte"
     import Button from "../../inputs/Button.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialColorInput from "../../inputs/MaterialColorInput.svelte"
+    import MaterialFilePicker from "../../inputs/MaterialFilePicker.svelte"
     import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
     import MaterialPopupButton from "../../inputs/MaterialPopupButton.svelte"
     import MaterialTextarea from "../../inputs/MaterialTextarea.svelte"
@@ -123,7 +127,7 @@
             return
         }
 
-        activeDrawerTab.set("templates")
+        // activeDrawerTab.set("templates")
         // closeDrawer()
         // drawerTabsData.update(a => {
         //     a.template.activeSubTab = "all"
@@ -170,6 +174,17 @@
     function toggleSection() {
         expanded = !expanded
     }
+
+    function setTemplateSettings(key: string, value: any) {
+        if (!templateId) return
+
+        let settings = template.settings || {}
+        settings[key] = value
+
+        let newData = { key: "settings", data: clone(settings) }
+
+        history({ id: "UPDATE", newData, oldData: { id: templateId }, location: { page: "edit", id: "template_settings", override: templateId } })
+    }
 </script>
 
 <div class="scroll split" style={useOldSystem ? "" : "padding-bottom: 46px;"}>
@@ -195,12 +210,19 @@
     <!-- settings -->
     <div class="settings border">
         <!-- Template -->
-        <InputRow style="margin-bottom: 10px;">
-            <MaterialPopupButton label="info.template" disabled={!!styleScriptureTemplate} value={templateId} name={$templates[templateId]?.name} popupId="select_template" icon="templates" on:change={e => update("template", e.detail)} allowEmpty={!isDefault} />
-            {#if templateId && $templates[templateId]}
+        <InputRow style={templateBackground ? "" : "margin-bottom: 10px;"}>
+            <MaterialPopupButton label="info.template" disabled={!!styleScriptureTemplate} value={templateId} name={template?.name} popupId="select_template" icon="templates" on:change={e => update("template", e.detail)} allowEmpty={!isDefault} />
+            {#if templateId && template}
                 <MaterialButton title="titlebar.edit" icon="edit" on:click={editTemplate} />
             {/if}
         </InputRow>
+
+        <!-- Template Settings - Quick Edit -->
+        {#if templateBackground}
+            <InputRow style="margin-bottom: 10px;border-left: 4px solid var(--primary-lighter);">
+                <MaterialFilePicker label="edit.background_media" value={templateBackground} filter={{ name: "Media files", extensions: mediaExtensions }} on:change={e => setTemplateSettings("backgroundPath", e.detail)} />
+            </InputRow>
+        {/if}
 
         {#if useOldSystem}
             <p style="margin-bottom: 10px;font-size: 0.9rem;opacity: 0.7;white-space: normal;">You are using an outdated scripture template!</p>
