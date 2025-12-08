@@ -8,16 +8,20 @@ import { getExtension } from "../utils/files"
 // https://www.npmjs.com/package/yazl (compression)
 // https://www.npmjs.com/package/yauzl (decompression)
 
-export function compressToZip(entries: { name: string; content: Buffer | string }[], outputPath: string): Promise<void> {
+export function compressToZip(entries: { name: string; content?: Buffer | string; filePath?: string }[], outputPath: string): Promise<void> {
     return new Promise((resolve, reject) => {
         const zipfile = new yazl.ZipFile()
 
         entries.forEach(entry => {
             try {
-                const buffer = typeof entry.content === "string" ? Buffer.from(entry.content, "utf-8") : entry.content
-                zipfile.addBuffer(buffer, entry.name)
+                if (entry.filePath) {
+                    zipfile.addFile(entry.filePath, entry.name)
+                } else if (entry.content) {
+                    const buffer = typeof entry.content === "string" ? Buffer.from(entry.content, "utf-8") : entry.content
+                    zipfile.addBuffer(buffer, entry.name)
+                }
             } catch (err) {
-                console.error(`Error adding buffer to zip: ${entry.name}`, err)
+                console.error(`Error adding to zip: ${entry.name}`, err)
             }
         })
 

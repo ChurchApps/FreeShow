@@ -50,10 +50,16 @@ export async function loadJsonBible(id: string) {
         }
     }
 
-    if (scriptureData?.collection) throw new Error("Collections must load one at a time")
+    if (scriptureData?.collection) {
+        console.warn("Collections must load one at a time")
+        return null
+    }
 
     const localBible = await getLocalBible(id)
-    if (!localBible?.books) throw new Error("Local Bible not found")
+    if (!localBible?.books) {
+        console.warn("Local Bible not found")
+        return null
+    }
 
     // load custom book names for local bibles (as many xml names are missing or in English)
     localBible.books = localBible.books.map(a => ({ ...a, name: (a as any).customName || a.name }))
@@ -125,70 +131,74 @@ export async function getActiveScripturesContent() {
 
     const currentScriptures = selectedScriptureData.collection?.versions || [tabId]
 
-    return await Promise.all(
-        currentScriptures.map(async id => {
-            const BibleData = await loadJsonBible(id)
-            const Book = await BibleData.getBook(active?.book)
+    return (await Promise.all(
+        currentScriptures
+            .map(async id => {
+                const BibleData = await loadJsonBible(id)
+                if (!BibleData) return null
 
-            const scriptureData = get(scriptures)[id]
-            const version = scriptureData?.customName || scriptureData?.name || ""
-            const attributionString = scriptureData?.attributionString || ""
-            const attributionRequired = !!scriptureData?.attributionRequired
+                const Book = await BibleData.getBook(active?.book)
 
-            const bookName = Book.name
-            const bookAbbr = Book.getAbbreviation()
-            const selectedChapters = active?.chapters.map(c => Number(c)) || []
-            const Chapters = await Promise.all(selectedChapters.map(c => Book.getChapter(c)))
+                const scriptureData = get(scriptures)[id]
+                const version = scriptureData?.customName || scriptureData?.name || ""
+                const attributionString = scriptureData?.attributionString || ""
+                const attributionRequired = !!scriptureData?.attributionRequired
 
-            const metadata = BibleData.data.metadata || {}
-            Object.entries(scriptureData?.metadata || {}).forEach(([key, value]) => {
-                metadata[key] = value
-            })
-            if (scriptureData?.copyright) metadata.copyright = scriptureData.copyright
-            if (scriptureData?.name && !metadata.title) metadata.title = scriptureData.name
+                const bookName = Book.name
+                const bookAbbr = Book.getAbbreviation()
+                const selectedChapters = active?.chapters.map(c => Number(c)) || []
+                const Chapters = await Promise.all(selectedChapters.map(c => Book.getChapter(c)))
 
-            // WIP custom verse number offset per scripture (for collections)
+                const metadata = BibleData.data.metadata || {}
+                Object.entries(scriptureData?.metadata || {}).forEach(([key, value]) => {
+                    metadata[key] = value
+                })
+                if (scriptureData?.copyright) metadata.copyright = scriptureData.copyright
+                if (scriptureData?.name && !metadata.title) metadata.title = scriptureData.name
 
-            // add the three prior and next verse numbers to selected for the stage display next slide
-            const selected = clone(selectedVerses)
-            const includeCount = 3
-            selected[0].unshift(...Array.from({ length: includeCount }, (_, i) => getVerseId(selected[0][0]) - (i + 1)).reverse())
-            selected[0].push(...Array.from({ length: includeCount }, (_, i) => getVerseId(selected[0][selected[0].length - 1]) + (i + 1)))
-            // remove selected not in range of min to max verse number
-            const minVerseNumber = 1
-            const maxVerseNumber = Chapters[0] ? (Chapters[0].data.verses[Chapters[0].data.verses.length - 1]?.number ?? Chapters[0].data.verses.length) : 1
-            selected[0] = selected[0].filter(v => {
-                const id = getVerseId(v)
-                if (isNaN(id)) return true
-                return id >= minVerseNumber && id <= maxVerseNumber
-            })
+                // WIP custom verse number offset per scripture (for collections)
 
-            const splitLongVerses = get(scriptureSettings).splitLongVerses
-            const allVersesText: { [key: string]: string }[] = []
-            selected.forEach((verses, i) => {
-                const versesText: { [key: string]: string } = {}
-
-                // WIP if 1_1, 1_2, 1_3 all add up to over the splitted verse length combined, then merge into "1"
-
-                verses.forEach(v => {
-                    const { id, subverse } = getVerseIdParts(v)
-
-                    const text = sanitizeVerseText(Chapters[i]?.getVerse(id).getHTML())
-                    const splittedVerses = getSplittedVerses({ [id]: text })
-
-                    const newVerseId = id + (subverse ? `_${subverse}` : "")
-                    if (splitLongVerses && splittedVerses[newVerseId]) versesText[v] = splittedVerses[newVerseId]
-                    else versesText[v] = text
+                // add the three prior and next verse numbers to selected for the stage display next slide
+                const selected = clone(selectedVerses)
+                const includeCount = 3
+                selected[0].unshift(...Array.from({ length: includeCount }, (_, i) => getVerseId(selected[0][0]) - (i + 1)).reverse())
+                selected[0].push(...Array.from({ length: includeCount }, (_, i) => getVerseId(selected[0][selected[0].length - 1]) + (i + 1)))
+                // remove selected not in range of min to max verse number
+                const minVerseNumber = 1
+                const maxVerseNumber = Chapters[0] ? (Chapters[0].data.verses[Chapters[0].data.verses.length - 1]?.number ?? Chapters[0].data.verses.length) : 1
+                selected[0] = selected[0].filter(v => {
+                    const id = getVerseId(v)
+                    if (isNaN(id)) return true
+                    return id >= minVerseNumber && id <= maxVerseNumber
                 })
 
-                allVersesText.push(versesText)
+                const splitLongVerses = get(scriptureSettings).splitLongVerses
+                const allVersesText: { [key: string]: string }[] = []
+                selected.forEach((verses, i) => {
+                    const versesText: { [key: string]: string } = {}
+
+                    // WIP if 1_1, 1_2, 1_3 all add up to over the splitted verse length combined, then merge into "1"
+
+                    verses.forEach(v => {
+                        const { id, subverse } = getVerseIdParts(v)
+
+                        const text = sanitizeVerseText(Chapters[i]?.getVerse(id).getHTML())
+                        const splittedVerses = getSplittedVerses({ [id]: text })
+
+                        const newVerseId = id + (subverse ? `_${subverse}` : "")
+                        if (splitLongVerses && splittedVerses[newVerseId]) versesText[v] = splittedVerses[newVerseId]
+                        else versesText[v] = text
+                    })
+
+                    allVersesText.push(versesText)
+                })
+
+                // const reference = Chapter.getVerse(selectedVerses[0]).getReference()
+
+                return { id, isApi: scriptureData.api, version, metadata, book: bookName, bookAbbr, bookId: active?.book || "", chapters: selectedChapters, verses: allVersesText, activeVerses: selectedVerses, attributionString, attributionRequired } as BibleContent
             })
-
-            // const reference = Chapter.getVerse(selectedVerses[0]).getReference()
-
-            return { id, isApi: scriptureData.api, version, metadata, book: bookName, bookAbbr, bookId: active?.book || "", chapters: selectedChapters, verses: allVersesText, activeVerses: selectedVerses, attributionString, attributionRequired } as BibleContent
-        })
-    )
+            .filter(Boolean)
+    )) as BibleContent[]
 }
 
 // OUTPUT

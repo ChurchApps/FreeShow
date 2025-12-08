@@ -52,6 +52,8 @@
         if (!id || data[id]) return
         try {
             const jsonBible = await loadJsonBible(id)
+            if (!jsonBible) return
+
             data[id] = { bibleData: jsonBible }
             data = data // trigger reactivity
         } catch (err) {
@@ -256,6 +258,8 @@
 
         try {
             const jsonBible = await loadJsonBible(id)
+            if (!jsonBible) return
+
             data[id] = { bibleData: jsonBible }
         } catch (err) {
             console.error(err)

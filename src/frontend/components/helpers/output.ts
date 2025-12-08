@@ -1055,6 +1055,8 @@ export function sortItemsByType(items: Item[]) {
     const sortedItems: { [key: string]: Item[] } = {}
 
     items.forEach(item => {
+        if (!item) return
+
         const type = item.type || "text"
         if (!sortedItems[type]) sortedItems[type] = []
 
