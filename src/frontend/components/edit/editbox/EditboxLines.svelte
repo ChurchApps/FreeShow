@@ -739,6 +739,9 @@
         text-align: center;
         justify-content: center;
         /* align-items: center; */
+
+        /* balanced breaking, looks much cleaner */
+        text-wrap: balance;
     }
     .edit.hidden {
         visibility: hidden;

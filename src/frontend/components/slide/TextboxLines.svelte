@@ -281,6 +281,9 @@
         overflow-wrap: break-word;
         /* line-break: after-white-space;
     -webkit-line-break: after-white-space; */
+
+        /* balanced breaking, looks much cleaner */
+        text-wrap: balance;
     }
 
     .lines .break.reveal {
