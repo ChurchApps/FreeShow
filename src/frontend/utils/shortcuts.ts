@@ -389,18 +389,26 @@ function createNew() {
     }
 }
 
-// WIP this only works if opened in preview!
-export function togglePlayingMedia(e: Event | null = null, back = false) {
+// this only works if opened in preview - if not api
+export function togglePlayingMedia(e: Event | null = null, back = false, api = false) {
     if (get(outLocked)) return
     // if ($focusMode || e.target?.closest(".edit") || e.target?.closest("input")) return
-    const item = get(focusMode) ? get(activeFocus) : get(activeShow)
+    let item = get(focusMode) ? get(activeFocus) : get(activeShow)
+
+    const currentOutput = getFirstActiveOutput()
+    const currentlyPlaying = currentOutput?.out?.background?.path
+
+    if (api) {
+        // get playing audio
+        let audioId = AudioPlayer.getAllPlaying(false)[0]
+        if (audioId) item = { id: audioId, type: "audio" }
+        else if (currentlyPlaying) item = { id: currentlyPlaying, type: "video" }
+    }
 
     const type: ShowType | undefined = item?.type
     if (!item || !type) return
     e?.preventDefault()
 
-    const currentOutput = getFirstActiveOutput()
-    const currentlyPlaying = currentOutput?.out?.background?.path
     const alreadyPlaying = currentlyPlaying === item.id
 
     if (type === "video" || type === "image" || type === "player") {

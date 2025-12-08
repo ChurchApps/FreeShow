@@ -6,7 +6,7 @@ import type { DropData, Selected, Variable } from "../../../types/Main"
 import { clearAudio } from "../../audio/audioFading"
 import { AudioPlayer } from "../../audio/audioPlayer"
 import { AudioPlaylist } from "../../audio/audioPlaylist"
-import { activeDrawerTab, activeEdit, activePage, activeProject, activeTimers, audioPlaylists, draw, drawSettings, drawTool, folders, gain, groupNumbers, groups, media, openScripture, outLocked, outputs, overlays, playingAudio, playingMetronome, projects, refreshEditSlide, selected, showsCache, sortedShowsList, special, styles, timers, variables, volume } from "../../stores"
+import { activeDrawerTab, activeEdit, activePage, activeProject, activeTimers, audioPlaylists, draw, drawSettings, drawTool, folders, groupNumbers, groups, media, openScripture, outLocked, outputs, overlays, playingAudio, playingMetronome, projects, refreshEditSlide, selected, showsCache, sortedShowsList, special, styles, timers, variables, volume } from "../../stores"
 import { newToast } from "../../utils/common"
 import { send } from "../../utils/request"
 import { getDynamicValue } from "../edit/scripts/itemHelpers"
@@ -544,15 +544,16 @@ export function audioSeekTo(data: API_seek) {
 }
 
 let unmutedValue = 1
-export function updateVolumeValues(value: number | undefined | "local", changeGain = false) {
+export function updateVolumeValues(value: number | undefined | "local") {
     // api mute(unmute)
     if (value === undefined) {
         value = get(volume) ? 0 : unmutedValue
         if (!value) unmutedValue = get(volume)
     }
 
-    if (changeGain) gain.set(Number(Number(value).toFixed(2)))
-    else volume.set(Number(Number(value).toFixed(2)))
+    volume.set(Number(Number(value).toFixed(2)))
+
+    AudioPlayer.updateVolume()
 }
 
 // TIMERS
