@@ -10,6 +10,7 @@
     export let id = ""
     export let disabled = false
     export let center = false
+    export let small = false
 
     $: checkedValue = !!checked
 
@@ -30,7 +31,7 @@
     }
 </script>
 
-<div style={$$props.style || null} class="checkboxfield {center ? 'centered' : ''} {disabled ? 'disabled' : ''}" data-title={translateText(title || label)} role="checkbox" aria-checked={checkedValue} tabindex={disabled ? undefined : 0} on:click={toggle} on:keydown={onKeyDown}>
+<div style={$$props.style || null} class="checkboxfield {center ? 'centered' : ''} {disabled ? 'disabled' : ''}" class:small data-title={translateText(title || label)} role="checkbox" aria-checked={checkedValue} tabindex={disabled ? undefined : 0} on:click={toggle} on:keydown={onKeyDown}>
     <div class="background" />
     <div class="hover" />
 
@@ -72,6 +73,9 @@
         opacity: 0.35;
         cursor: not-allowed;
     }
+    .checkboxfield.small {
+        padding: 4px;
+    }
 
     .background {
         position: absolute;
@@ -103,6 +107,10 @@
         overflow: hidden;
         max-width: 100px; */
     }
+    .small .checkbox-label {
+        gap: 3px;
+        font-size: 0.8em;
+    }
 
     .custom-checkbox {
         width: 20px;
@@ -116,6 +124,10 @@
         flex-shrink: 0;
 
         margin: 0 5px;
+    }
+    .small .custom-checkbox {
+        width: 16px;
+        height: 16px;
     }
 
     .checkboxfield:has(.hidden-input:checked) .custom-checkbox {
@@ -136,6 +148,12 @@
         top: 3px;
 
         margin: 0 5px;
+    }
+    .checkboxfield.small:has(.hidden-input:checked) .custom-checkbox::after {
+        width: 5px;
+        height: 10px;
+        left: 5px;
+        top: 1px;
     }
 
     .underline {
