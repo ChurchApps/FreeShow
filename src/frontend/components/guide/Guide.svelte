@@ -41,10 +41,39 @@
         const width = window.innerWidth
         flip = bounds.x > width * 0.7
 
-        let top = ""
-        if (bounds.y + bounds.height <= 25 + 40) top = `top: ${bounds.y + bounds.height}px;` + ($os.platform === "win32" ? "transform: translateY(-25px);" : "")
+        // Check if element is at the top of the screen (needs extra offset to avoid top bars)
+        const isAtTop = bounds.y < 100
+        const extraOffset = isAtTop ? 50 : 0
 
-        currentStyle = `left: ${bounds.x}px;top: ${Math.max(top ? 0 : 70, bounds.y)}px;width: ${bounds.width}px;height: ${bounds.height}px;`
+        // Account for platform-specific top bars
+        // Mac: system menu bar (~30px outside window)
+        // Windows: menu bar (25px inside window)
+        const platformOffset = $os.platform === "darwin" ? 30 : $os.platform === "win32" ? 25 : 0
+        const minTopPosition = 70 + platformOffset
+        // Use less aggressive translateY to avoid top bars
+        const baseTranslateY = $os.platform === "darwin" ? -50 : $os.platform === "win32" ? -60 : -70
+        const translateY = baseTranslateY + extraOffset
+
+        let top = ""
+        if (bounds.y + bounds.height <= 25 + 40) {
+            top = `top: ${bounds.y + bounds.height}px;`
+            if ($os.platform === "win32") {
+                const winTranslateY = isAtTop ? 25 : -25
+                top += `transform: translateY(${winTranslateY}px);`
+            } else if ($os.platform === "darwin") {
+                top += `transform: translateY(${translateY}px);`
+            }
+        } else {
+            // Override CSS translateY to prevent text box from going behind top bars
+            if ($os.platform === "darwin" || $os.platform === "win32") {
+                top = `transform: translateY(${translateY}px);`
+            } else if (isAtTop) {
+                // Apply extra offset for elements at top on Linux/other platforms
+                top = `transform: translateY(${translateY}px);`
+            }
+        }
+
+        currentStyle = `left: ${bounds.x}px;top: ${Math.max(top && top.includes("top:") ? 0 : minTopPosition, bounds.y)}px;width: ${bounds.width}px;height: ${bounds.height}px;`
         if (flip) currentTextStyle = `max-width: ${bounds.right}px;${top}`
         else currentTextStyle = `max-width: ${width - bounds.left}px;${top}`
     }
