@@ -113,12 +113,12 @@
     }
 
     // Get verses for all scriptures in a collection
-    function getCollectionVerses(verseId: string | number): { id: string; name: string; text: string }[] {
+    function getCollectionVerses(verseId: string | number): { id: string; name: string; text: string; isSplit: boolean }[] {
         if (!isCollection) return []
 
-        const { id } = getVerseIdParts(verseId)
-        // WIP this needs to get the subparts of the verses!!
-        // like the updateSplitted function does
+        const { id, subverse } = getVerseIdParts(verseId)
+        const isSplit = subverse > 0
+        const chars = isSplit ? Number($scriptureSettings.longVersesChars || 100) : 0
 
         return activeScriptures
             .map(scriptureId => {
@@ -127,10 +127,32 @@
 
                 // Get verse from chapterData
                 let verseText = ""
+                let supportsSplit = false
+                
                 if (scriptureData?.chapterData) {
                     try {
                         const verse = scriptureData.chapterData.getVerse(id)
-                        verseText = verse?.getHTML?.() || verse?.data?.text || ""
+                        const fullText = verse?.getHTML?.() || verse?.data?.text || ""
+                        
+                        // If this is a split verse, try to split the text
+                        if (isSplit && fullText) {
+                            const splitParts = splitText(fullText, chars)
+                            
+                            // Check if splitting actually occurred (more than 1 part)
+                            if (splitParts.length > 1) {
+                                supportsSplit = true
+                                // subverse is 1-indexed, array is 0-indexed
+                                const partIndex = subverse - 1
+                                verseText = splitParts[partIndex] || ""
+                            } else {
+                                // Verse doesn't support splitting (too short or can't be split)
+                                // Show full text on both parts
+                                supportsSplit = false
+                                verseText = fullText
+                            }
+                        } else {
+                            verseText = fullText
+                        }
                     } catch {
                         // Verse might not exist in this translation
                     }
@@ -139,7 +161,8 @@
                 return {
                     id: scriptureId,
                     name: scriptureMeta?.customName || scriptureMeta?.name || scriptureId,
-                    text: verseText
+                    text: verseText,
+                    isSplit: supportsSplit
                 }
             })
             .filter(v => v.text)
@@ -182,8 +205,43 @@
     // category color / abbreviation data
     $: booksData = currentBibleData?.bibleData?.getBooksData() || []
 
+    // Check if any translation in collection supports splitting for verses
+    function checkCollectionSplitSupport(): { [verseNumber: number]: number } {
+        if (!isCollection || !$scriptureSettings.splitLongVerses || !verses) return {}
+        
+        const chars = Number($scriptureSettings.longVersesChars || 100)
+        const splitCounts: { [verseNumber: number]: number } = {}
+        
+        // Check all translations in collection
+        activeScriptures.forEach(scriptureId => {
+            const scriptureData = data[scriptureId]
+            if (!scriptureData?.chapterData) return
+            
+            verses.forEach(verse => {
+                try {
+                    const verseObj = scriptureData.chapterData?.getVerse(verse.number)
+                    if (!verseObj) return
+                    const fullText = verseObj?.getHTML?.() || verseObj?.data?.text || ""
+                    if (fullText) {
+                        const splitParts = splitText(fullText, chars)
+                        if (splitParts.length > 1) {
+                            // Track the maximum number of splits needed for this verse
+                            splitCounts[verse.number] = Math.max(splitCounts[verse.number] || 0, splitParts.length)
+                        }
+                    }
+                } catch {
+                    // Verse might not exist in this translation
+                }
+            })
+        })
+        
+        return splitCounts
+    }
+    
+    $: collectionSplitCounts = isCollection && $scriptureSettings.splitLongVerses ? checkCollectionSplitSupport() : {}
+    
     let splittedVerses: (Verse & { id: string })[] = []
-    $: splittedVerses = updateSplitted(verses, $scriptureSettings)
+    $: splittedVerses = updateSplitted(verses, $scriptureSettings, collectionSplitCounts)
 
     let apiError = false
 
@@ -208,7 +266,7 @@
         openBook()
     }
 
-    function updateSplitted(verses: Verse[] | null, _updater: any) {
+    function updateSplitted(verses: Verse[] | null, _updater: any, collectionSplitCounts: { [verseNumber: number]: number } = {}) {
         if (!verses) return []
         if (!$scriptureSettings.splitLongVerses) return verses.map(verse => ({ ...verse, id: (verse.number || "").toString() + (verse.endNumber ? "-" + verse.endNumber : "") }))
 
@@ -218,9 +276,23 @@
             const newVerseStrings = splitText(verse.text, chars)
             const end = verse.endNumber ? `-${verse.endNumber}` : ""
 
-            for (let i = 0; i < newVerseStrings.length; i++) {
-                const key = newVerseStrings.length === 1 ? "" : `_${i + 1}`
-                newVerses.push({ ...verse, id: verse.number + key + end, text: newVerseStrings[i] })
+            // If in collection, check if any translation supports splitting for this verse
+            const maxSplits = collectionSplitCounts[verse.number] || newVerseStrings.length
+            
+            // Create split structure based on max splits needed across all translations
+            const numParts = Math.max(newVerseStrings.length, maxSplits)
+            
+            if (numParts > 1) {
+                // Create split parts - use preview translation's text for each part
+                for (let i = 0; i < numParts; i++) {
+                    const key = `_${i + 1}`
+                    // Use the corresponding split part if available, otherwise use the full text
+                    const text = newVerseStrings[i] || (i === 0 ? newVerseStrings[0] || verse.text : "")
+                    newVerses.push({ ...verse, id: verse.number + key + end, text })
+                }
+            } else {
+                // No splitting needed
+                newVerses.push({ ...verse, id: (verse.number || "").toString() + end, text: newVerseStrings[0] || verse.text })
             }
         })
 
@@ -893,7 +965,7 @@
                                 {@const verseLabel = buildVerseLabel(id, subverse, endNumber, showSuffixInPicker)}
                                 {@const isActive = activeReference.verses[activeReference.verses.length - 1]?.find(vid => vid.toString() === content.id || vid.toString() === id.toString())}
                                 {@const text = formatBibleText(content.text, true)}
-                                {@const collectionVerses = false && isCollection && $scriptureMode !== "grid" ? getCollectionVerses(content.id) : []}
+                                {@const collectionVerses = ($scriptureSettings.showAllVersions !== false) && isCollection && $scriptureMode !== "grid" ? getCollectionVerses(content.id) : []}
 
                                 <!-- custom drag -->
                                 <span
@@ -920,7 +992,12 @@
                                             <div class="collection-versions">
                                                 {#each collectionVerses as cv, cvIndex}
                                                     <div class="version-item" style="--version-color: {getVersionColor(cvIndex)}; --version-bg: {getVersionBgColor(cvIndex)}">
-                                                        <span class="version-text">{@html formatBibleText(cv.text, true)}</span>
+                                                        <span class="version-text">
+                                                            {#if cv.isSplit}
+                                                                <span style="opacity: 0.6; font-size: 0.85em; margin: 0; padding: 0;">(split)</span>
+                                                            {/if}
+                                                            {@html formatBibleText(cv.text, true)}
+                                                        </span>
                                                     </div>
                                                 {/each}
                                             </div>
@@ -963,6 +1040,20 @@
 
                 {#key data}
                     {reference}
+                    {#if isCollection}
+                        <label style="display: flex; align-items: center; gap: 5px; cursor: pointer; font-size: 0.9em; opacity: 0.8; user-select: none; margin-left: 5px;" title="Show all versions">
+                            <span>Show all</span>
+                            <input 
+                                type="checkbox" 
+                                checked={$scriptureSettings.showAllVersions !== false}
+                                on:change={(e) => {
+                                    const checked = e.currentTarget.checked
+                                    scriptureSettings.update(s => ({ ...s, showAllVersions: checked }))
+                                }}
+                                style="cursor: pointer; margin: 0;"
+                            />
+                        </label>
+                    {/if}
 
                     <!-- WIP had some issues with selecting multiple verses -->
                     <!-- !NaN = temp solution to split long verses -->
