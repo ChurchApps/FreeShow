@@ -140,6 +140,8 @@ export function _show(id = "active") {
 
                     if (!slideIds.length) slideIds = Object.keys(a[id].slides)
                     slideIds.forEach(slideId => {
+                        if (!a[id].slides) return
+
                         slides.ids.push(slideId)
                         slides.slides.push(a[id].slides[slideId])
                         delete a[id].slides[slideId]

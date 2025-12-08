@@ -1961,6 +1961,7 @@ export async function format(id: string, obj: ObjData, data: any = null) {
             .get()
             .map(a => a.id)
     } else if (obj.sel?.id?.includes("slide")) {
+        if (!Array.isArray(obj.sel.data)) return
         slideIds = obj.sel.data.map(a => ref[a.index].id)
     } else {
         slideIds = [

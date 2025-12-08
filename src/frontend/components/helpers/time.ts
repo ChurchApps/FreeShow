@@ -111,6 +111,8 @@ export function changeTime(date: string | Date, time: string | Date) {
 
 export function combineDateAndTime(date: string | Date, time: string) {
     date = new Date(date)
+    if (typeof time !== "string") return date
+
     const splittedDate = splitDate(date)
     const splittedTime = { hours: Number(time.slice(0, 2)), minutes: Number(time.slice(3, 5)) }
 
