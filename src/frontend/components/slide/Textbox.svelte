@@ -330,6 +330,9 @@
         }, 200)
         previousItem = newItem
 
+        // TEMP FIX for auto size sometimes not sized properly in show slides
+        if (!preview && !isStage) await wait(70)
+
         let type = item?.textFit || "shrinkToFit"
 
         let defaultFontSize
@@ -464,7 +467,7 @@
         if (isStage || preview) return false
         const type = item?.type || "text"
         if (type !== "text") return false
-        if (!item?.auto || item?.textFit === "none") return false
+        if (!item?.auto || (item?.textFit || "none") === "none") return false
         // if we already have an autosized font available, no need to hide
         if (item?.autoFontSize) return false
         return true

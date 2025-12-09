@@ -641,7 +641,7 @@ function getDefaultTemplates() {
             {
                 style: "top: 820px;left: 50px;width: 1820px;height: 220px;",
                 align: "",
-                auto: true,
+                textFit: "shrinkToFit",
                 lines: [{ align: "", text: [{ value: "1", style: "font-size: 70px;font-weight: bold;text-transform:uppercase;" }] }]
             }
         ]
@@ -655,7 +655,7 @@ function getDefaultTemplates() {
             {
                 style: "top: 820px;left: 50px;width: 1820px;height: 220px;background-color: #FFFFFF;border-radius:20px;padding:25px;border-color: #000000;border-style: solid;border-width: 5px;",
                 align: "",
-                auto: true,
+                textFit: "shrinkToFit",
                 lines: [{ align: "", text: [{ value: "1", style: "color: #000000;font-size: 70px;font-weight: bold;text-shadow: 0px 0px 0px #000000;" }] }]
             }
         ]
@@ -670,7 +670,7 @@ function getDefaultTemplates() {
                 style: "top: 820px;left: 50px;width: 1820px;height: 220px;background: linear-gradient(340deg, rgba(16,28,65) 0%, rgba(18,75,135) 40%, rgba(68,135,196) 76%, rgba(107,212,240) 100%);padding: 25px;border-color: #000000;border-style: solid;border-width: 5px;",
                 actions: { transition: { type: "none", duration: 0, easing: "linear" } },
                 align: "",
-                auto: true,
+                textFit: "shrinkToFit",
                 lines: [{ align: "text-align: left;", text: [{ value: "1", style: "font-size: 80px;font-weight: bold;text-shadow: 0px 0px 0px #000000;" }] }]
             }
         ]
@@ -685,7 +685,7 @@ function getDefaultTemplates() {
                 style: "top: 820px;left: 50px;width: 1820px;height: 220px;background: linear-gradient(340deg, rgb(154, 12, 114) 0%, rgb(108, 4, 129) 20%, rgb(105, 33, 193) 40%, rgba(33,88,193,1) 80%, rgb(14, 177, 174) 100%);padding: 25px;border-color: #000000;border-style: solid;border-width: 5px;",
                 actions: { transition: { type: "none", duration: 0, easing: "linear" } },
                 align: "",
-                auto: true,
+                textFit: "shrinkToFit",
                 lines: [{ align: "text-align: left;", text: [{ value: "1", style: "font-size: 80px;font-weight: bold;text-shadow: 0px 0px 0px #000000;" }] }]
             }
         ]
@@ -700,7 +700,7 @@ function getDefaultTemplates() {
                 style: "top: 820px;left: 50px;width: 1820px;height: 220px;background: linear-gradient(340deg, rgba(199,213,255) 0%, rgba(219,187,245) 34%, rgba(137,224,226) 76%, rgba(189,254,220) 100%);padding: 25px;border-color: #000000;border-style: solid;border-width: 5px;",
                 actions: { transition: { type: "none", duration: 0, easing: "linear" } },
                 align: "",
-                auto: true,
+                textFit: "shrinkToFit",
                 lines: [{ align: "text-align: left;", text: [{ value: "1", style: "font-size: 80px;font-weight: bold;text-shadow: 0px 0px 0px #000000;color: #000000;" }] }]
             }
         ]
@@ -831,7 +831,7 @@ function getDefaultScriptureTemplates() {
         },
         items: [
             {
-                // auto: true,
+                // textFit: "shrinkToFit",
                 style: "top: 30px;left: 30px;width: 1860px;height: 865px;background-color: rgb(0 0 0 / 0.4);border-radius: 20px;padding: 25px;",
                 align: "",
                 lines: [
@@ -862,7 +862,7 @@ function getDefaultScriptureTemplates() {
         settings: { mode: "scripture" },
         items: [
             {
-                // auto: true,
+                // textFit: "shrinkToFit",
                 style: "top: 40px;left: 30px;width: 1860px;height: 400px;background-color: rgb(0 0 0 / 0.4);border-radius: 20px;padding: 25px;border-width: 1px;border-color: #cccccc;",
                 align: "",
                 lines: [
@@ -876,7 +876,7 @@ function getDefaultScriptureTemplates() {
                 ]
             },
             {
-                // auto: true,
+                // textFit: "shrinkToFit",
                 style: "top: 475px;left: 30px;width: 1860px;height: 400px;background-color: rgb(0 0 0 / 0.4);border-radius: 20px;padding: 25px;border-width: 1px;border-color: #cccccc;",
                 align: "",
                 lines: [
@@ -907,7 +907,7 @@ function getDefaultScriptureTemplates() {
         settings: { mode: "scripture" },
         items: [
             {
-                // auto: true,
+                // textFit: "shrinkToFit",
                 style: "top: 40px;left: 30px;width: 1860px;height: 250px;background-color: rgb(0 0 0 / 0.4);border-radius: 20px;padding: 25px;border-width: 1px;border-color: #cccccc;",
                 align: "",
                 lines: [
@@ -921,7 +921,7 @@ function getDefaultScriptureTemplates() {
                 ]
             },
             {
-                // auto: true,
+                // textFit: "shrinkToFit",
                 style: "top: 320px;left: 30px;width: 1860px;height: 250px;background-color: rgb(0 0 0 / 0.4);border-radius: 20px;padding: 25px;border-width: 1px;border-color: #cccccc;",
                 align: "",
                 lines: [
@@ -935,7 +935,7 @@ function getDefaultScriptureTemplates() {
                 ]
             },
             {
-                // auto: true,
+                // textFit: "shrinkToFit",
                 style: "top: 600px;left: 30px;width: 1860px;height: 250px;background-color: rgb(0 0 0 / 0.4);border-radius: 20px;padding: 25px;border-width: 1px;border-color: #cccccc;",
                 align: "",
                 lines: [
@@ -966,7 +966,7 @@ function getDefaultScriptureTemplates() {
         settings: { mode: "scripture" },
         items: [
             {
-                // auto: true,
+                // textFit: "shrinkToFit",
                 style: "top: 40px;left: 30px;width: 1860px;height: 200px;background-color: rgb(0 0 0 / 0.4);border-radius: 20px;padding: 25px;border-width: 1px;border-color: #cccccc;",
                 align: "",
                 lines: [
@@ -980,7 +980,7 @@ function getDefaultScriptureTemplates() {
                 ]
             },
             {
-                // auto: true,
+                // textFit: "shrinkToFit",
                 style: "top: 250px;left: 30px;width: 1860px;height: 200px;background-color: rgb(0 0 0 / 0.4);border-radius: 20px;padding: 25px;border-width: 1px;border-color: #cccccc;",
                 align: "",
                 lines: [
@@ -994,7 +994,7 @@ function getDefaultScriptureTemplates() {
                 ]
             },
             {
-                // auto: true,
+                // textFit: "shrinkToFit",
                 style: "top: 460px;left: 30px;width: 1860px;height: 200px;background-color: rgb(0 0 0 / 0.4);border-radius: 20px;padding: 25px;border-width: 1px;border-color: #cccccc;",
                 align: "",
                 lines: [
@@ -1008,7 +1008,7 @@ function getDefaultScriptureTemplates() {
                 ]
             },
             {
-                // auto: true,
+                // textFit: "shrinkToFit",
                 style: "top: 670px;left: 30px;width: 1860px;height: 200px;background-color: rgb(0 0 0 / 0.4);border-radius: 20px;padding: 25px;border-width: 1px;border-color: #cccccc;",
                 align: "",
                 lines: [
