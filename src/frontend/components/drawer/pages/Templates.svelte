@@ -36,7 +36,7 @@
     $: if ($templates || active || $templateCategories) updateTemplates()
 
     function updateTemplates() {
-        filteredTemplates = sortByName(keysToID(clone($templates)).filter(s => (active === "all" && !$templateCategories[s?.category || ""]?.isArchive) || active === s.category || (active === "unlabeled" && (s.category === null || !$templateCategories[s.category]))))
+        filteredTemplates = sortByName(keysToID(clone($templates)).filter(s => (active === "all" && !$templateCategories[s?.category || ""]?.isArchive) || active === s.category || (active === "unlabeled" && (s.category === null || !$templateCategories[s.category])))).filter(a => a?.settings?.mode !== "text")
 
         filterSearch()
     }

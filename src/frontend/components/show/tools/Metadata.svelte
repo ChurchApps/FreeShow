@@ -77,8 +77,8 @@
     }
 
     function updateData(data, key) {
-        let override = "show#" + $activeShow!.id + "_" + key
-        history({ id: "UPDATE", newData: { data, key }, oldData: { id: $activeShow!.id }, location: { page: "show", id: "show_key", override } })
+        let override = "show#" + ($activeShow?.id || "") + "_" + key
+        history({ id: "UPDATE", newData: { data, key }, oldData: { id: $activeShow?.id || "" }, location: { page: "show", id: "show_key", override } })
     }
 
     // AUTOFILL

@@ -7,7 +7,7 @@ import type { MediaStyle, Subtitle } from "../../../types/Main"
 import type { Cropping, Styles } from "../../../types/Settings"
 import type { ShowType } from "../../../types/Show"
 import { requestMain, sendMain } from "../../IPC/main"
-import { loadedMediaThumbnails, media, tempPath } from "../../stores"
+import { cachePath, loadedMediaThumbnails, media } from "../../stores"
 import { newToast, wait, waitUntilValueIsDefined } from "../../utils/common"
 import { audioExtensions, imageExtensions, mediaExtensions, presentationExtensions, videoExtensions } from "../../values/extensions"
 import type { API_media, API_slide_thumbnail } from "../actions/api"
@@ -328,7 +328,7 @@ export async function loadThumbnail(input: string, size: number) {
     if (!isLocalFile(input)) return input
 
     // already encoded (this could cause an infinite loop)
-    if (input.includes("freeshow-cache")) return input
+    if (input.includes("freeshow-cache") || input.includes("media-cache")) return input
 
     const loadedPath = get(loadedMediaThumbnails)[getThumbnailId({ input, size })]
     if (loadedPath) return loadedPath
@@ -345,12 +345,12 @@ export function getThumbnailPath(input: string, size: number) {
     if (!isLocalFile(input)) return input
 
     // already encoded
-    if (input.includes("freeshow-cache")) return input
+    if (input.includes("freeshow-cache") || input.includes("media-cache")) return input
 
     const loadedPath = get(loadedMediaThumbnails)[getThumbnailId({ input, size })]
     if (loadedPath) return loadedPath
 
-    const encodedPath: string = joinPath([get(tempPath), "freeshow-cache", getThumbnailFileName(hashCode(input))])
+    const encodedPath: string = joinPath([get(cachePath), getThumbnailFileName(hashCode(input))])
     return encodedPath
 
     function getThumbnailFileName(path: string) {
@@ -473,7 +473,8 @@ export function captureCanvas(data: { input: string; output: string; size: any; 
 
         // seek video
         if (!isImage) {
-            ;(mediaElem as HTMLVideoElement).currentTime = (mediaElem as HTMLVideoElement).duration * (data.seek ?? 0.5)
+            const seekTime = (mediaElem as HTMLVideoElement).duration * (data.seek ?? 0.5)
+            ;(mediaElem as HTMLVideoElement).currentTime = isFinite(seekTime) ? seekTime : 3
             await wait(400)
         }
 
@@ -582,6 +583,7 @@ export async function downloadOnlineMedia(url: string) {
     const mediaData = get(media)[url]
     const downloadedPath = await requestMain(Main.MEDIA_IS_DOWNLOADED, { url, contentFile: mediaData?.contentFile })
 
+    if (downloadedPath?.isDownloading) return url
     if (downloadedPath?.protectedUrl) return downloadedPath.protectedUrl
     if (downloadedPath?.path) return downloadedPath.path
 

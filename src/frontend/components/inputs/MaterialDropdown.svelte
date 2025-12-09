@@ -6,11 +6,11 @@
     import { dictionary } from "../../stores"
     import { translateText } from "../../utils/language"
     import { formatSearch } from "../../utils/search"
+    import { newDropdown } from "../edit/scripts/edit"
     import Icon from "../helpers/Icon.svelte"
     import InputRow from "../input/InputRow.svelte"
     import MaterialButton from "./MaterialButton.svelte"
     import MaterialTextInput from "./MaterialTextInput.svelte"
-    import { newDropdown } from "../edit/scripts/edit"
 
     export let label: string
     export let value: string
@@ -24,6 +24,7 @@
     export let onlyArrow = false
 
     export let addNew: string | null = null
+    export let allowDeleting = false
 
     const dispatch = createEventDispatcher()
     export let open = false
@@ -73,7 +74,9 @@
 
     // SELECT
 
-    function selectOption(optionValue: string) {
+    function selectOption(e: any, optionValue: string) {
+        if (e?.target?.closest(".delete-button")) return
+
         value = optionValue
         open = false
         dispatch("change", value)
@@ -96,7 +99,7 @@
             if (searchValue && event.key === " ") return
 
             if (open && highlightedIndex >= 0) {
-                selectOption(options[highlightedIndex].value)
+                selectOption(null, options[highlightedIndex].value)
             } else {
                 toggleDropdown(true)
             }
@@ -320,7 +323,7 @@
 
     {#if allowEmpty && hasValue}
         <div class="remove">
-            <MaterialButton on:click={() => selectOption("")} title="clear.general" white>
+            <MaterialButton on:click={() => selectOption(null, "")} title="clear.general" white>
                 <Icon id="close" white />
             </MaterialButton>
         </div>
@@ -342,18 +345,31 @@
     {#if open}
         <ul style="max-height: {maxHeight}px" class="dropdown" role="listbox" tabindex="-1" bind:this={scrollElem} transition:flyFade>
             {#if allowEmpty}
-                <li style="opacity: 0.5;font-style: italic;" role="option" aria-selected={!value} class:selected={!value} class:highlighted={highlightedIndex < 0} on:click={() => selectOption("")}>
+                <li style="opacity: 0.5;font-style: italic;" role="option" aria-selected={!value} class:selected={!value} class:highlighted={highlightedIndex < 0} on:click={() => selectOption(null, "")}>
                     {translateText("main.none")}
                 </li>
             {/if}
 
             {#each options as option, i}
-                <li style="{option.data ? 'justify-content: space-between;' : ''}{option.style || ''}" role="option" aria-selected={option.value === value} class:selected={option.value === value} class:highlighted={i === highlightedIndex} on:click={() => selectOption(option.value)}>
+                <li style="{option.data ? 'justify-content: space-between;' : ''}{option.style || ''}" role="option" aria-selected={option.value === value} class:selected={option.value === value} class:highlighted={i === highlightedIndex} on:click={e => selectOption(e, option.value)}>
                     {#if option.prefix}<span class="prefix">{option.prefix}</span>{/if}
                     {option.label || "—"}
 
                     {#if option.data}
                         <div class="data" data-title={option.data}>{option.data}</div>
+                    {/if}
+
+                    {#if allowDeleting && option.value !== value}
+                        <MaterialButton
+                            label="actions.delete"
+                            class="delete-button"
+                            style="position: absolute;right: 2px;width: 40px;"
+                            icon="delete"
+                            on:click={() => {
+                                dispatch("delete", option.value)
+                            }}
+                            red
+                        />
                     {/if}
                 </li>
             {/each}

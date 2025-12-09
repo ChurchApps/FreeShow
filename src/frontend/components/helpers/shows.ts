@@ -140,6 +140,8 @@ export function _show(id = "active") {
 
                     if (!slideIds.length) slideIds = Object.keys(a[id].slides)
                     slideIds.forEach(slideId => {
+                        if (!a[id].slides) return
+
                         slides.ids.push(slideId)
                         slides.slides.push(a[id].slides[slideId])
                         delete a[id].slides[slideId]
@@ -285,10 +287,10 @@ export function _show(id = "active") {
                                 if (!indexesDefined) indexes = a[id].slides[slideId].items.map((_: any, i: number) => i)
                                 indexes.forEach((index, i) => {
                                     prev.values.push([])
-                                    if (!linesDefined) lines = Object.keys(a[id].slides[slideId].items[index].lines || [])
+                                    if (!linesDefined) lines = Object.keys(a[id].slides[slideId].items[index]?.lines || [])
                                     lines.forEach((line, lineIndex) => {
                                         if (key) {
-                                            if (a[id].slides[slideId].items[index].lines?.[line]) {
+                                            if (a[id].slides[slideId].items[index]?.lines?.[line]) {
                                                 // console.log(a[id].slides[slideId].items[index].lines[line], key, values, i)
                                                 // console.log(lines, line, key, a[id].slides[slideId].items[index].lines[line][key], i, lineIndex, values, values[i]?.[lineIndex])
                                                 // console.log(a[id].slides[slideId].items[index].lines[line].text?.[0]?.style)
@@ -298,7 +300,7 @@ export function _show(id = "active") {
                                                     a[id].slides[slideId].items[index].lines![line][key] = values[i] ? (values[i][lineIndex] !== undefined ? values[i][lineIndex] : values[i][0]) : values[0][0]
                                                 } else prev.values[prev.values.length - 1].push(null)
                                             } else prev.values[prev.values.length - 1].push(null)
-                                        } else if (a[id].slides[slideId].items[index].lines) {
+                                        } else if (a[id].slides[slideId].items[index]?.lines) {
                                             prev.values[prev.values.length - 1].push(a[id].slides[slideId].items[index] ? clone(a[id].slides[slideId].items[index].lines![line]) : null)
                                             a[id].slides[slideId].items[index].lines![line] = values[i] ? (values[i][lineIndex] !== undefined ? values[i][lineIndex] : values[i][0]) : values[0][0]
                                         }
@@ -339,9 +341,9 @@ export function _show(id = "active") {
                             slideIds.forEach(slideId => {
                                 indexes.forEach(index => {
                                     if (!shows[id].slides[slideId]) return
-                                    if (!linesDefined) lines = Object.keys(shows[id].slides[slideId].items[index].lines || [])
+                                    if (!linesDefined) lines = Object.keys(shows[id].slides[slideId].items[index]?.lines || [])
                                     lines.forEach(line => {
-                                        if (!a[id].slides[slideId].items[index].lines) return
+                                        if (!a[id].slides[slideId].items[index]?.lines) return
                                         prev.lineIndexes.push(line)
                                         prev.items.push(a[id].slides[slideId].items[index].lines![line])
                                         delete a[id].slides[slideId].items[index].lines![line]

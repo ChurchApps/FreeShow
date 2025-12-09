@@ -289,11 +289,11 @@ export function exportTemplate(data: { file: { template: Template; files?: strin
 }
 
 function compressWithMedia(files: string[], fileData: any, name: string, extension: string, exportFolder: string, getFileName: (path: string, ext: string) => string) {
-    const entries = files
-        .filter(path => fs.existsSync(path))
-        .map(path => ({
-            name: getFileName(path, extname(path)),
-            content: fs.readFileSync(path)
+    const entries: { name: string; content?: Buffer | string; filePath?: string }[] = files
+        .filter(filePath => fs.existsSync(filePath))
+        .map(filePath => ({
+            name: getFileName(filePath, extname(filePath)),
+            filePath
         }))
 
     entries.push({ name: "data.json", content: Buffer.from(JSON.stringify(fileData)) })

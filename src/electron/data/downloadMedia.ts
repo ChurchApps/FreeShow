@@ -273,7 +273,7 @@ export function downloadMedia({ url, contentFile }: { url: string; contentFile?:
 
             fileStream.on("finish", async () => {
                 fileStream.close()
-                downloadCount++
+                downloading.splice(downloading.indexOf(url), 1)
                 console.info(`Finished downloading file: ${url}`)
             })
         })
@@ -304,6 +304,9 @@ export function downloadMedia({ url, contentFile }: { url: string; contentFile?:
 export async function checkIfMediaDownloaded({ url, contentFile }: { url: string; contentFile?: any }) {
     if (!url?.includes("http")) return null
 
+    // still being downloaded
+    if (downloading.includes(url)) return { path: url, buffer: null, isDownloading: true }
+
     const outputPath = getMediaThumbnailPath(url, contentFile)
     if (!doesPathExist(outputPath)) return null
 
@@ -329,7 +332,7 @@ export async function checkIfMediaDownloaded({ url, contentFile }: { url: string
         }
     }
 
-    return { path: outputPath, buffer: null, protectedUrl: null }
+    return { path: outputPath, buffer: null }
 }
 
 function getMediaThumbnailPath(url: string, contentFile?: any) {

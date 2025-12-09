@@ -355,6 +355,7 @@
     "inputs": {
         "name": "Navn",
         "url": "URL",
+        "group": "Gruppe",
         "method": "Metode",
         "contentType": "Innholdstype",
         "payload": "Datalast",
@@ -399,7 +400,8 @@
         "offers": "Kollekt",
         "notice": "Merk",
         "visuals": "Visuelt",
-        "action_tip": "En handling som utføres hver gang et show med denne kategorien blir presentert."
+        "action_tip": "En handling som utføres hver gang et show med denne kategorien blir presentert.",
+        "create_nonexistent": "Opprett ikke-eksisterende kategorier"
     },
     "groups": {
         "current": "Gjeldende",
@@ -433,6 +435,7 @@
         "variable": "Variabel",
         "trigger": "Utløser",
         "audio_stream": "Lydstrøm",
+        "now_playing": "Spilles nå fil",
         "aspect_ratio": "Endre sideforhold",
         "max_lines": "Sett maks linjer",
         "transition": "Overgang",
@@ -446,6 +449,7 @@
         "choose_output": "Velg utgangstype",
         "choose_style": "Velg forhåndsinnstilt stil",
         "change_output_values": "Endre verdier for utgangsskjerm",
+        "output_selector": "Utgangsvelger",
         "choose_chord": "Velg akkord",
         "set_time": "Sett tid",
         "assign_shortcut": "Angi hurtigtast",
@@ -484,6 +488,7 @@
         "manage_colors": "Behandle farger",
         "manage_metadata": "Behandle metadata",
         "manage_dynamic_values": "Behandle dynamiske verdier",
+        "template_style_overrides": "Overstyr stiler",
         "choose_camera": "Velg kamera",
         "manage_tags": "Behandle etiketter",
         "sync_categories": "Synkroniser kategorier",
@@ -492,6 +497,7 @@
         "unsaved": "Er du sikkert på at du vil avslutte?",
         "cancel": "Avbryt",
         "continue": "Fortsett",
+        "restore": "Gjenopprett sikkerhetskopi",
         "reset_all": "Tilbakestill alt",
         "reset_all_confirm": "Er du sikker på at du vil tilbakestille alt?",
         "reset_all_action": "Dette vil tilbakestille hele programmet, men ikke slette .show-filene i \"Shows\"-mappen din.",
@@ -764,6 +770,7 @@
         "start_playlist": "Start spilleliste",
         "playlist_next": "Neste låt i spilleliste",
         "start_metronome": "Start metronom",
+        "start_audio_effect": "Start lydeffekt",
         "id_start_timer": "Start tidtaker",
         "start_slide_timers": "Start tidtakere på aktivt lysbilde",
         "id_select_output_style": "Velg utgangsstil",
@@ -950,6 +957,8 @@
         "max_lines_per_slide": "Maks linjer per lysbilde",
         "break_long_lines": "Del opp lange linjer",
         "break_long_lines_tip": "Del opp linje hvis den er lengre enn angitt ord",
+        "style_overrides_tip": "Endre stil på spesifikke ord automatisk.",
+        "style_override_pattern": "Ord eller /regex/",
         "skip_virtual_breaks": "Hopp over virtuelle linjeskift",
         "media_fit": "Tilpass medier",
         "cropping": "Beskjæring",
@@ -990,8 +999,8 @@
         "_title_top": "Juster til toppen",
         "_title_bottom": "Juster til bunnen",
         "align_center": "Midtstilt",
-        "align_start": "Start",
-        "align_end": "Slutt",
+        "align_start": "Topp",
+        "align_end": "Bunn",
         "outline": "Strek",
         "shadow": "Skygge",
         "shadow_inset": "Innfelt skygge",
@@ -1209,7 +1218,8 @@
         "source_output": "Utgangskilde",
         "auto_stretch": "Strekk ut innhold automatisk",
         "labels": "Vis etiketter",
-        "label_color": "Etikettfarge"
+        "label_color": "Etikettfarge",
+        "create_stage_output": "Opprett scene-utgang"
     },
     "settings": {
         "general": "Generelt",
@@ -1265,6 +1275,7 @@
         "disable_labels": "Deaktiver etiketter",
         "group_numbers": "Gruppenummer",
         "auto_group_numbers": "Angi gruppe-nummer automatisk",
+        "shortcuts_on_slides": "Vis snarveier på lysbilder",
         "transparent_slides": "Gjennomsiktig forhåndsvisning av lysbilde",
         "full_colors": "Gruppefarger med høy kontrast",
         "next_item_on_last_slide": "Pil venstre/høyre endrer prosjekt-element på første/siste lysbilde",
@@ -1297,15 +1308,11 @@
         "add": "Legg til",
         "remove": "Fjern",
         "change_name": "Endre navn",
-        "show_location": "Show-plassering",
         "data_location": "Data-plassering",
-        "user_data_location": "Lagre bruker-innstillinger i 'Data-plassering'",
-        "user_data_location_confirm": "Bare fortsett om du vet hva du gjør. Endre plassering for brukerdata?",
-        "user_data_exists": "Fant eksisterende data på egendefinert plassering, vil du overskrive det?",
-        "user_data_yes": "Ja, behold nåværende data",
-        "user_data_no": "Nei, importer eksisterende data",
         "auto_locate_missing_media_files": "Erstatt manglende medie-filer automatisk",
         "popup_before_close": "Aktiver popup for bekreftelse av lukking",
+        "log_song_usage": "Logg sang-bruk til en fil",
+        "auto_error_reporting": "Automatisk feilrapportering",
         "disable_hardware_acceleration": "Deaktiver maskinvareakselerasjon",
         "restart_for_change": "Du må starte programmet på nytt for at endringen skal tre i kraft!",
         "font": "Skrift",
@@ -1353,7 +1360,8 @@
     },
     "output": {
         "state_inactive": "Inaktiv",
-        "state_locked": "Låst"
+        "state_locked": "Låst",
+        "disabled_layers": "Deaktiverte lag"
     },
     "profile": {
         "profiles_hint": "Opprett flere profiler/roller for å redusere tilgang til å kontrollere/redigere valgte deler av programmet.",
@@ -1415,6 +1423,7 @@
         "verse_numbers": "Versnummer",
         "verses_on_individual_lines": "Vers på enkeltlinjer",
         "divide_long_verses": "Del opp lange vers",
+        "split_long_verses_suffix": "Vis bokstavsuffiks",
         "version": "Vis versjon",
         "reference": "Vis referanse",
         "split_reference": "Del opp referanse",
@@ -1422,6 +1431,7 @@
         "first_slide_reference": "Referanse på første lysbilde",
         "reference_at_bottom": "Flytt til bunn",
         "red_jesus": "Jesus ord i rødt",
+        "show_all": "Vis alle",
         "search": "Søk i Bibelen"
     },
     "filter": {

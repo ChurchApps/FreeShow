@@ -1,17 +1,22 @@
 <script lang="ts">
     import type { BibleContent } from "../../../../types/Scripture"
     import type { Item } from "../../../../types/Show"
-    import { activeDrawerTab, activeEdit, activePage, activePopup, activeScripture, activeStyle, drawerTabsData, outputs, popupData, scriptureSettings, styles, templates } from "../../../stores"
+    import { activeEdit, activePage, activePopup, activeScripture, activeStyle, drawerTabsData, outputs, popupData, scriptureSettings, settingsTab, styles, templates } from "../../../stores"
     import { setDefaultScriptureTemplates } from "../../../utils/createData"
     import { translateText } from "../../../utils/language"
+    import { confirmCustom } from "../../../utils/popup"
+    import { mediaExtensions } from "../../../values/extensions"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
+    import { clone } from "../../helpers/array"
+    import { history } from "../../helpers/history"
     import { getAllNormalOutputs, getFirstActiveOutput } from "../../helpers/output"
     import FloatingInputs from "../../input/FloatingInputs.svelte"
     import InputRow from "../../input/InputRow.svelte"
     import Button from "../../inputs/Button.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialColorInput from "../../inputs/MaterialColorInput.svelte"
+    import MaterialFilePicker from "../../inputs/MaterialFilePicker.svelte"
     import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
     import MaterialPopupButton from "../../inputs/MaterialPopupButton.svelte"
     import MaterialTextarea from "../../inputs/MaterialTextarea.svelte"
@@ -118,11 +123,12 @@
     function editTemplate() {
         if (styleScriptureTemplate) {
             activeStyle.set(styleId)
+            settingsTab.set("styles")
             activePage.set("settings")
             return
         }
 
-        activeDrawerTab.set("templates")
+        // activeDrawerTab.set("templates")
         // closeDrawer()
         // drawerTabsData.update(a => {
         //     a.template.activeSubTab = "all"
@@ -154,8 +160,13 @@
     $: onlyOneNormalOutput = getAllNormalOutputs().length === 1
     $: styleScriptureTemplate = onlyOneNormalOutput ? $styles[styleId]?.templateScripture : ""
 
-    $: useOldSystem = useOldScriptureSystem(templateId)
-    function convertToNew() {
+    $: useOldSystem = useOldScriptureSystem(templateId, $templates) && !styleScriptureTemplate
+    $: usingDefault = templateId.includes("scripture")
+    async function convertToNew() {
+        if (!usingDefault) {
+            if (!(await confirmCustom("This will apply the default template, and convert that to the new format. Your current template will not change.<br>You can use it as an example to adapt your existing templates. Continue?"))) return
+        }
+
         setDefaultScriptureTemplates()
         update("template", "scripture")
     }
@@ -163,6 +174,17 @@
     let expanded = false
     function toggleSection() {
         expanded = !expanded
+    }
+
+    function setTemplateSettings(key: string, value: any) {
+        if (!templateId) return
+
+        let settings = template.settings || {}
+        settings[key] = value
+
+        let newData = { key: "settings", data: clone(settings) }
+
+        history({ id: "UPDATE", newData, oldData: { id: templateId }, location: { page: "edit", id: "template_settings", override: templateId } })
     }
 </script>
 
@@ -189,16 +211,29 @@
     <!-- settings -->
     <div class="settings border">
         <!-- Template -->
-        <InputRow style="margin-bottom: 10px;">
-            <MaterialPopupButton label="info.template" disabled={!!styleScriptureTemplate} value={templateId} name={$templates[templateId]?.name} popupId="select_template" icon="templates" on:change={e => update("template", e.detail)} allowEmpty={!isDefault} />
-            {#if templateId && $templates[templateId]}
+        <InputRow style={templateBackground ? "" : "margin-bottom: 10px;"}>
+            <MaterialPopupButton label="info.template" disabled={!!styleScriptureTemplate} value={templateId} name={template?.name} popupId="select_template" icon="templates" on:change={e => update("template", e.detail)} allowEmpty={!isDefault} />
+            {#if (templateId && template) || styleScriptureTemplate}
                 <MaterialButton title="titlebar.edit" icon="edit" on:click={editTemplate} />
             {/if}
         </InputRow>
 
+        <!-- Template Settings - Quick Edit -->
+        {#if templateBackground}
+            <InputRow style="margin-bottom: 10px;border-left: 4px solid var(--primary-lighter);">
+                <MaterialFilePicker label="edit.background_media" value={templateBackground} filter={{ name: "Media files", extensions: mediaExtensions }} on:change={e => setTemplateSettings("backgroundPath", e.detail)} />
+            </InputRow>
+        {/if}
+
         {#if useOldSystem}
             <p style="margin-bottom: 10px;font-size: 0.9rem;opacity: 0.7;white-space: normal;">You are using an outdated scripture template!</p>
-            <MaterialButton variant="outlined" style="margin-bottom: 10px;" on:click={convertToNew}>Convert template to new system</MaterialButton>
+            <MaterialButton variant="outlined" style="margin-bottom: 10px;" on:click={convertToNew}>
+                {#if usingDefault}
+                    Convert template to new system
+                {:else}
+                    Switch to new scripture system
+                {/if}
+            </MaterialButton>
         {/if}
 
         <div class="title">
@@ -300,7 +335,7 @@
 
 {#if useOldSystem}
     <InputRow>
-        <Button on:click={e => createScriptureShow(e.altKey)} style="width: 100%;" disabled={!selectedVerses.length} dark center>
+        <Button on:click={createScriptureShow} style="width: 100%;" disabled={!selectedVerses.length} dark center>
             <Icon id="slide" right />
             <T id="new.show_convert" />
             <!-- {#if slides.length > 1}
@@ -323,7 +358,7 @@
     </InputRow>
 {:else}
     <FloatingInputs onlyOne>
-        <MaterialButton icon="slide" on:click={() => createScriptureShow()}>
+        <MaterialButton icon="slide" title="new.show_convert [Ctrl+N]" on:click={() => createScriptureShow()}>
             <T id="new.show_convert" />
         </MaterialButton>
     </FloatingInputs>

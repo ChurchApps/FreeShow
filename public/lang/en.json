@@ -770,6 +770,7 @@
         "start_playlist": "Start playlist",
         "playlist_next": "Next track in playlist",
         "start_metronome": "Start metronome",
+        "start_audio_effect": "Start audio effect",
         "id_start_timer": "Start timer",
         "start_slide_timers": "Start timers on active slide",
         "id_select_output_style": "Select output style",
@@ -1359,7 +1360,8 @@
     },
     "output": {
         "state_inactive": "Inactive",
-        "state_locked": "Locked"
+        "state_locked": "Locked",
+        "disabled_layers": "Disabled layers"
     },
     "profile": {
         "profiles_hint": "Create multiple profiles/roles to limit certain users access to control/edit chosen parts of the program.",
@@ -1429,6 +1431,7 @@
         "first_slide_reference": "Reference on first slide",
         "reference_at_bottom": "Move to bottom",
         "red_jesus": "Jesus words in red",
+        "show_all": "Show all",
         "search": "Search in the Bible"
     },
     "filter": {

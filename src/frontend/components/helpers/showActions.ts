@@ -82,7 +82,7 @@ export function selectProjectShow(select: number | "next" | "previous") {
 }
 
 export function swichProjectItem(pos: number, id: string) {
-    if (!get(showsCache)[id]?.layouts || !get(projects)[get(activeProject)!]?.shows || get(focusMode)) return
+    if (!get(showsCache)[id]?.layouts || !get(projects)[get(activeProject)!]?.shows?.[pos] || get(focusMode)) return
     let projectLayout: string = get(projects)[get(activeProject)!].shows[pos].layout || ""
 
     // set active layout from project if it exists
@@ -108,7 +108,7 @@ export function swichProjectItem(pos: number, id: string) {
 export function getItemWithMostLines(slide: Slide | { items: Item[] }) {
     let amount = 0
     slide.items?.forEach(item => {
-        const lines: number = item.lines?.filter(line => line.text?.filter(text => text.value.length)?.length)?.length || 0
+        const lines: number = item?.lines?.filter(line => line.text?.filter(text => text.value.length)?.length)?.length || 0
         if (lines > amount) amount = lines
     })
     return amount
@@ -158,10 +158,10 @@ const PRESENTATION_KEYS_PREV = ["ArrowLeft", "PageUp"]
 
 // this will go to next for each slide (better for multiple outputs with "Specific outputs")
 export function nextSlideIndividual(e: any, start = false, end = false) {
-    getActiveOutputs(get(outputs), true, false, true).forEach(id => nextSlide(e, start, end, false, false, id))
+    getActiveOutputs(get(outputs), true, false, true).forEach(id => nextSlide(e, start, end, false, false, id, false, true))
 }
 
-export function nextSlide(e: any, start = false, end = false, loop = false, bypassLock = false, customOutputId = "", nextAfterMedia = false) {
+export function nextSlide(e: any, start = false, end = false, loop = false, bypassLock = false, customOutputId = "", nextAfterMedia = false, advanceThroughProject: boolean = false) {
     if (get(outLocked) && !bypassLock) return
     // blur to remove tab highlight from slide after clicked, and using arrows
     if (document.activeElement?.closest(".slide") && !document.activeElement?.closest(".edit")) (document.activeElement as HTMLElement).blur()
@@ -209,7 +209,7 @@ export function nextSlide(e: any, start = false, end = false, loop = false, bypa
     const isFirstLine = (slide?.line || 0) === 0
     const nextProjectItem = get(projects)[get(activeProject) || ""]?.shows?.[(currentShow?.index ?? -2) + 1]?.id
     const isPreviousProjectItem = slide?.id === nextProjectItem && isFirstSlide && isFirstLine
-    if (isPreviousProjectItem && e?.key !== " ") {
+    if (isPreviousProjectItem && e?.key !== " " && advanceThroughProject) {
         goToNextProjectItem()
         return
     }
@@ -245,13 +245,13 @@ export function nextSlide(e: any, start = false, end = false, loop = false, bypa
     const isNotLooping = loop && slide?.index !== undefined && !layout?.[slideIndex]?.data?.end
     if ((isNotLooping || nextAfterMedia) && bypassLock && slide && isLastSlide) {
         // check if it is last slide (& that slide does not loop to start)
-        goToNextShowInProject(slide, customOutputId)
+        if (advanceThroughProject) goToNextShowInProject(slide, customOutputId)
         return
     }
 
     // go to beginning if live mode & ctrl | no output | last slide active
     if (currentShow && (start || !slide || e?.ctrlKey || (isLastSlide && (currentShow.id !== slide?.id || get(showsCache)[currentShow.id]?.settings.activeLayout !== slide.layout)))) {
-        if (currentShow?.type === "section" || !get(showsCache)[currentShow.id] || !getLayoutRef(currentShow.id).length) return goToNextProjectItem()
+        if ((currentShow?.type === "section" || !get(showsCache)[currentShow.id] || !getLayoutRef(currentShow.id).length) && advanceThroughProject) return goToNextProjectItem()
 
         const id = loop ? slide?.id : currentShow.id
         if (!id) return
@@ -293,7 +293,7 @@ export function nextSlide(e: any, start = false, end = false, loop = false, bypa
         if (get(special).nextItemOnLastSlide === false && !get(focusMode)) return
 
         if (PRESENTATION_KEYS_NEXT.includes(e?.key)) {
-            goToNextProjectItem(e.key)
+            if (advanceThroughProject) goToNextProjectItem(e.key)
 
             // skip right to next slide without requiring "double" input in focus mode
             if (get(focusMode)) setTimeout(() => nextSlideIndividual(e), 20)
@@ -1378,11 +1378,11 @@ const dynamicValues = {
     // project
     project_section: ({ outSlide }) => {
         const active = getActiveProjectSection({ outSlide })
-        return active?.name || get(shows)[active?.id || ""]?.name
+        return active?.name || ""
     },
     project_section_next: ({ outSlide }) => {
         const active = getActiveProjectSection({ outSlide }, true)
-        return active?.name || get(shows)[active?.id || ""]?.name
+        return active?.name || ""
     },
     project_section_time: () => getActiveProjectSection()?.data?.time || "00:00",
     project_section_time_next: () => getActiveProjectSection({}, true)?.data?.time || "00:00",
@@ -1453,6 +1453,7 @@ const scriptureDynamicValues = {
     scripture_chapter: () => "1",
     scripture_reference: () => "Genesis 1:1", // current slide only
     scripture_reference_full: () => "Genesis 1:1-3", // across all slides
+    scripture_reference_last: () => "", // full reference, only on last slide
     scripture_name: () => "King James Version", // version
     // scripture_name_abbr: () => "KJV",
     // chapter_verses, book_chapters
@@ -1484,7 +1485,7 @@ function getActiveProjectSection(data: any = {}, next = false): ProjectShowRef |
         const showId = data.outSlide?.id
         const showIndex = project.shows.findIndex(a => a.id === showId)
         if (next) return project.shows.find((a, i) => i > showIndex && a.type === "section") || null
-        return project.shows[showIndex] || null
+        return project.shows.findLast((a, i) => i <= showIndex && a.type === "section") || null
     }
 
     const active = getClosestProjectSectionByTime()
@@ -1501,7 +1502,7 @@ function getClosestProjectSectionByTime() {
     let closestUpcommingId = ""
     project.shows.forEach(a => {
         const time = a.data?.time
-        if (!time) return
+        if (!time || a.type !== "section") return
 
         const timeUntil = getTimeUntilClock(time)
         if (timeUntil < 0 && (!closestPassedTime || timeUntil > closestPassedTime)) {

@@ -5,7 +5,7 @@
     import MaterialColorInput from "../../inputs/MaterialColorInput.svelte"
 
     function changeColor(e, key = "") {
-        let color = e.detail || e.target?.value
+        let color = e.detail || e.target?.value || ""
 
         if (color.includes("gradient")) key = defaultGradients.find(a => a.value === color) ? "disabledColorsGradient" : "customColorsGradient"
         else key = defaultColors.find(a => a.value === color) ? "disabledColors" : "customColors"

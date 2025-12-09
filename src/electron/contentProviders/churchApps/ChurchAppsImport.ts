@@ -30,7 +30,7 @@ export class ChurchAppsImport {
             endpoint: "/plans/presenter"
         })
 
-        if (!SERVICE_PLANS[0]?.id) return
+        if (!SERVICE_PLANS?.[0]?.id) return
 
         await Promise.all(
             SERVICE_PLANS.map(async (plan: any) => {

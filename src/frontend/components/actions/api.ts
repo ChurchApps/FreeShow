@@ -102,7 +102,7 @@ type API_id = { id: string }
 export type API_id_optional = { id?: string }
 type API_index = { index: number }
 type API_strval = { value: string }
-type API_volume = { volume?: number; gain?: number } // no values will mute/unmute
+type API_volume = { volume?: number } // no values will mute/unmute
 export type API_id_index = { id: string; index: number }
 export type API_slide = { showId?: string | "active"; slideId?: string }
 export type API_slide_index = { showId?: string; layoutId?: string; index: number }
@@ -227,7 +227,7 @@ export const API_ACTIONS = {
     start_camera: (data: API_camera) => startCamera(data),
     start_screen: (data: API_screen) => startScreen(data),
     play_media: (data: API_media) => playMedia(data),
-    toggle_playing_media: () => togglePlayingMedia(),
+    toggle_playing_media: () => togglePlayingMedia(null, false, true),
     video_seekto: (data: API_seek) => videoSeekTo(data), // BC
     // play / pause playing
 
@@ -259,12 +259,13 @@ export const API_ACTIONS = {
     pause_audio: (data: API_media) => pauseAudio(data),
     stop_audio: (data: API_media) => stopAudio(data),
     audio_seekto: (data: API_seek) => audioSeekTo(data), // BC
-    change_volume: (data: API_volume) => updateVolumeValues(data.volume ?? data.gain, data.gain !== undefined), // BC
+    change_volume: (data: API_volume) => updateVolumeValues(data.volume), // BC
     start_audio_stream: (data: API_id) => AudioPlayer.start(data.id, { name: "" }),
     start_playlist: (data: API_id) => AudioPlaylist.start(data.id),
     name_start_playlist: (data: API_strval) => startPlaylistByName(data.value), // BC
     playlist_next: () => AudioPlaylist.next(), // BC
     start_metronome: (data: API_metronome) => startMetronome(data),
+    start_audio_effect: (data: API_media) => playAudio(data),
 
     // TIMERS
     // control timer time

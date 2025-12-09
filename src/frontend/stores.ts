@@ -135,7 +135,7 @@ export const sortedShowsList: Writable<ShowList[]> = writable([])
 export const cachedShowsData: Writable<any> = writable({})
 export const quickTextCache: Writable<{ name: string; text: string; fromSearch?: boolean }> = writable({ name: "", text: "" })
 export const loadedMediaThumbnails: Writable<{ [key: string]: string }> = writable({})
-export const tempPath: Writable<string> = writable("")
+export const cachePath: Writable<string> = writable("")
 export const scriptureHistory: Writable<any[]> = writable([])
 export const actionHistory: Writable<{ action: string; data: any; time: number; count: number }[]> = writable([])
 export const audioData: Writable<{ [key: string]: { metadata: ICommonTagsResult } }> = writable({})
@@ -187,7 +187,7 @@ export const dynamicValueData: Writable<{ [key: string]: any }> = writable({})
 // HISTORY
 export const undoHistory: Writable<(History | HistoryNew)[]> = writable([])
 export const redoHistory: Writable<(History | HistoryNew)[]> = writable([])
-export const historyCacheCount: Writable<number> = writable(250)
+export const historyCacheCount: Writable<number> = writable(75)
 export const usageLog: Writable<any> = writable({ all: [] })
 
 // SHOW
@@ -235,7 +235,7 @@ export const audioFolders: Writable<Categories> = writable({}) // {default}
 export const audioStreams: Writable<{ [key: string]: AudioStream }> = writable({}) // {}
 export const audioPlaylists: Writable<{ [key: string]: Playlist }> = writable({}) // {}
 export const volume: Writable<number> = writable(1) // 1
-export const gain: Writable<number> = writable(1) // 1
+export const gain: Writable<number> = writable(1) // DEPRECATED - only use volume
 export const audioChannelsData: Writable<{ [key: string]: AudioChannelData }> = writable({}) // {}
 export const metronome: Writable<API_metronome> = writable({}) // {}
 export const effectsLibrary: Writable<{ path: string; name: string }[]> = writable([]) // []

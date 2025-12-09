@@ -786,13 +786,49 @@ function getDefaultTemplates() {
 function getDefaultScriptureTemplates() {
     const a: Record<string, Template> = {}
 
+    // text
+    a.brackets = {
+        isDefault: true,
+        name: "Brackets",
+        color: "#515151",
+        category: "scripture",
+        settings: { mode: "text" },
+        items: [
+            {
+                style: DEFAULT_ITEM_STYLE,
+                align: "",
+                lines: [{ align: "", text: [{ value: "[Brackets]", style: "font-style: italic;color: rgb(255 255 255 / 0.6);" }] }]
+            }
+        ]
+    }
+    a.parentheses = {
+        isDefault: true,
+        name: "Parentheses",
+        color: "#515151",
+        category: "scripture",
+        settings: { mode: "text" },
+        items: [
+            {
+                style: DEFAULT_ITEM_STYLE,
+                align: "",
+                lines: [{ align: "", text: [{ value: "(Parentheses)", style: "font-weight: normal;color: rgb(255 255 255 / 0.8);" }] }]
+            }
+        ]
+    }
+
     // scripture
     a.scripture = {
         isDefault: true,
         name: translateText("category.scripture"),
         color: "#876543",
         category: "scripture",
-        settings: { mode: "scripture", styleOverrides: [{ id: "brackets", pattern: "/\[.*?\]/", color: "#DDDDDD" }] },
+        settings: {
+            mode: "scripture",
+            styleOverrides: [
+                { id: "brackets", pattern: "/\\[(.*?)\\]/", templateId: "brackets" },
+                { id: "parentheses", pattern: "/\\((.*?)\\)/", templateId: "parentheses" }
+            ]
+        },
         items: [
             {
                 // auto: true,

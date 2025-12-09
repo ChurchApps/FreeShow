@@ -304,16 +304,6 @@ function getMediaFolderPath(name: Parameters<typeof app.getPath>[0]): string {
     }
 }
 
-const tempPaths = ["temp"]
-export function getTempPaths() {
-    const paths: { [key: string]: string } = {}
-    tempPaths.forEach((pathId: string) => {
-        paths[pathId] = app.getPath(pathId as "temp")
-    })
-
-    return paths
-}
-
 // READ_FOLDER
 export function getFolderContent(data: { path: string; disableThumbnails?: boolean; listFilesInFolders?: boolean }) {
     const folderPath: string = data.path

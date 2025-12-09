@@ -210,7 +210,8 @@
     // UPDATE DYNAMIC VALUES e.g. {time_} EVERY SECOND
     // & update instantly when variables or item change
     let updateDynamic = 0
-    $: if ($variables || item) setTimeout(update)
+    $: if ($variables) setTimeout(update)
+    $: if ($outputs) setTimeout(update, isStage ? 250 : 0) // time with auto size
     const dynamicInterval = setInterval(update, 1000)
     function update() {
         updateDynamic++
@@ -280,6 +281,9 @@
         overflow-wrap: break-word;
         /* line-break: after-white-space;
     -webkit-line-break: after-white-space; */
+
+        /* balanced breaking, looks much cleaner */
+        text-wrap: balance;
     }
 
     .lines .break.reveal {

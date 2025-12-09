@@ -16,25 +16,8 @@
     let ip = "localhost"
 
     onMount(async () => {
-        getIP(await requestMain(Main.IP))
+        ip = (await requestMain(Main.IP))[0]
     })
-
-    function getIP(nets: any) {
-        let results: any = {}
-        for (const name of Object.keys(nets)) {
-            for (const net of nets[name]) {
-                // Skip over non-IPv4 and internal (i.e. 127.0.0.1) addresses
-                // 'IPv4' is in Node <= 17, from 18 it's a number 4 or 6
-                const familyV4Value = typeof net.family === "string" ? "IPv4" : 4
-                if (net.family === familyV4Value && !net.internal) {
-                    if (!results[name]) results[name] = []
-                    results[name].push(net.address)
-                }
-            }
-        }
-
-        ip = results["en0"]?.[0] || results["eth0"]?.[0] || results["Wi-Fi"]?.[0] || Object.values(results)[0]?.[0] || "localhost"
-    }
 
     // WIP reset in popups
     // function reset() {
@@ -103,8 +86,8 @@
         { id: "remote", name: "RemoteShow", icon: "connection", enabledByDefault: true },
         { id: "stage", name: "StageShow", icon: "stage", enabledByDefault: true },
         { id: "controller", name: "ControlShow", icon: "connection", enabledByDefault: false },
-        // $special.optimizedMode &&
-        ...($disabledServers.output_stream !== false ? [] : [{ id: "output_stream", name: "OutputShow", icon: "stage", enabledByDefault: false }]),
+        // ...(($special.optimizedMode && $disabledServers.output_stream !== false) ? [] : [{ id: "output_stream", name: "OutputShow", icon: "stage", enabledByDefault: false }]),
+        { id: "output_stream", name: "OutputShow", icon: "stage", enabledByDefault: false },
         // Bitfocus Companion (WebSocket/REST)
         { id: "companion", name: "API", icon: "companion", enabledByDefault: false, url: "https://freeshow.app/docs/companion" }
         // { id: "rest", name: "REST Listener", icon: "companion", enabledByDefault: false, url: "https://freeshow.app/docs/api" },
@@ -255,9 +238,10 @@
         <MaterialButton on:click={() => contentProviderConnect("amazinglife")} style="flex: 1;border-bottom: 2px solid var(--connected) !important;" icon="logout">
             <T id="settings.disconnect_from" replace={["APlay"]} />
         </MaterialButton>
-        <MaterialButton icon="cloud_sync" on:click={syncContentProvider}>
+        <!-- Nothing to sync yet -->
+        <!-- <MaterialButton icon="cloud_sync" on:click={syncContentProvider}>
             <T id="cloud.sync" />
-        </MaterialButton>
+        </MaterialButton> -->
     </InputRow>
 {/if}
 

@@ -6,16 +6,16 @@ import { checkStartupActions } from "../components/actions/actions"
 import { getTimeFromInterval } from "../components/helpers/time"
 import { requestMain, requestMainMultiple, sendMain, sendMainMultiple } from "../IPC/main"
 import { cameraManager } from "../media/cameraManager"
-import { activePopup, alertMessage, contentProviderData, currentWindow, deviceId, isDev, language, loaded, loadedState, os, scriptures, shows, special, tempPath, version, windowState } from "../stores"
+import { activePopup, alertMessage, cachePath, contentProviderData, currentWindow, deviceId, isDev, language, loaded, loadedState, os, scriptures, shows, special, version, windowState } from "../stores"
 import { startTracking } from "./analytics"
 import { wait, waitUntilValueIsDefined } from "./common"
+import { getDefaultElements } from "./createData"
 import { setLanguage } from "./language"
 import { storeSubscriber } from "./listeners"
 import { openProfileByName } from "./profile"
 import { receiveOUTPUTasOUTPUT, remoteListen, setupMainReceivers } from "./receivers"
 import { destroy, receive, send } from "./request"
 import { save, unsavedUpdater } from "./save"
-import { getDefaultElements } from "./createData"
 
 let initialized = false
 let startupProfile = ""
@@ -112,7 +112,8 @@ function autoBackup() {
 export function contentProviderSync() {
     const providers = [
         { providerId: "planningcenter" as ContentProviderId, scope: "services" },
-        { providerId: "churchApps" as ContentProviderId, scope: "plans", data: { shows: get(shows), categories: get(contentProviderData).churchApps?.syncCategories || [] } }
+        { providerId: "churchApps" as ContentProviderId, scope: "plans", data: { shows: get(shows), categories: get(contentProviderData).churchApps?.syncCategories || [] } },
+        { providerId: "amazinglife" as ContentProviderId, scope: "openid profile email" }
     ]
 
     providers.forEach(({ providerId, scope, data }) => {
@@ -125,7 +126,7 @@ function getMainData() {
         [Main.VERSION]: a => version.set(a),
         [Main.IS_DEV]: a => isDev.set(a),
         [Main.GET_OS]: a => os.set(a),
-        [Main.GET_TEMP_PATHS]: a => tempPath.set(a.temp),
+        [Main.GET_CACHE_PATH]: a => cachePath.set(a),
         [Main.DEVICE_ID]: a => deviceId.set(a),
         [Main.MAXIMIZED]: a => windowState.set({ ...windowState, maximized: a })
     })

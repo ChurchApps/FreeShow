@@ -106,7 +106,7 @@ export function convertText({ name = "", origin = "", category = null, text, noF
     labeled = patterns.indexes.map((a, i) => ({ type: a, text: sections[i] || "" }))
     labeled = checkRepeats(labeled)
 
-    if (!name) name = plainTextMetadata.title || trimNameFromString(labeled[0].text)
+    if (!name) name = plainTextMetadata.title || trimNameFromString(labeled[0]?.text)
 
     const layoutID: string = uid()
     const show: Show = new ShowObj(false, category, layoutID)
@@ -368,6 +368,7 @@ function createSlides(labeled: { type: string; text: string }[], noFormatting) {
             if (!addedChildren[activeGroup.id]) addedChildren[activeGroup.id] = []
             addedChildren[activeGroup.id].push(...[id, ...children])
         } else {
+            if (!slides[id]) return
             if (children.length) slides[id].children = children
 
             layouts.push({ id })

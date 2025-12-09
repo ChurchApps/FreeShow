@@ -59,6 +59,8 @@
     // else backgroundColor = template.settings?.backgroundColor || currentStyle.background || "black"
 
     $: checkered = (!preview || template.items?.length > 0) && !template.settings?.backgroundColor && !thumbnailPath
+
+    $: mode = template?.settings?.mode || "default"
 </script>
 
 <!-- background={transparentOutput && template.items?.length ? "transparent" : backgroundColor}
@@ -73,7 +75,7 @@ checkered={template.items?.length > 0 && transparentOutput} -->
     {/if}
 
     <!-- slide content -->
-    {#if edit}
+    {#if edit && mode !== "text"}
         <Snaplines bind:lines bind:newStyles bind:mouse {ratio} {active} />
         {#each template.items as item, index}
             <Editbox ref={{ type: "template", id: templateId }} {item} {index} {ratio} bind:mouse />

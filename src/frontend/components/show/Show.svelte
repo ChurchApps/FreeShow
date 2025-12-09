@@ -43,6 +43,7 @@
                 <PdfPreview {show} index={show.index || 0} />
             {/key}
         {:else if show.type === "ppt"}
+            <!-- DEPRECATED -->
             <PowerPointPreview {show} />
         {:else if show.type === "camera"}
             <HoverButton

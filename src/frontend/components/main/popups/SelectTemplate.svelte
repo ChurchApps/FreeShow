@@ -18,7 +18,7 @@
     let allowEmpty = !!$popupData.allowEmpty
 
     $: hideIds = $popupData.hideIds || []
-    $: sortedTemplates = sortByName(keysToID($templates).filter(a => !hideIds.includes(a.id)))
+    $: sortedTemplates = sortByName(keysToID($templates).filter(a => !hideIds.includes(a.id) && a?.settings?.mode !== "text"))
 
     $: defaultTemplates = clone(sortedTemplates)
     $: if (defaultTemplates) search()

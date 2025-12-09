@@ -26,6 +26,7 @@ import { activeShow } from "./../stores"
 import { hideDisplay, isOutputWindow, togglePanels } from "./common"
 import { send } from "./request"
 import { save } from "./save"
+import { createScriptureShow } from "../components/drawer/bible/scripture"
 
 const menus: TopViews[] = ["show", "edit", "stage", "draw", "settings"]
 
@@ -383,23 +384,33 @@ function createNew() {
     else if (["action", "variable", "trigger"].includes(selectId)) activePopup.set(selectId as any)
     else if (get(activePage) === "edit") addItem("text")
     else if (get(activePage) === "stage") history({ id: "UPDATE", location: { page: "stage", id: "stage" } })
+    else if (get(activePage) === "show" && get(activeDrawerTab) === "scripture") createScriptureShow()
     else {
         console.info("CREATE NEW:", selectId)
         activePopup.set("show")
     }
 }
 
-export function togglePlayingMedia(e: Event | null = null, back = false) {
+// this only works if opened in preview - if not api
+export function togglePlayingMedia(e: Event | null = null, back = false, api = false) {
     if (get(outLocked)) return
     // if ($focusMode || e.target?.closest(".edit") || e.target?.closest("input")) return
-    const item = get(focusMode) ? get(activeFocus) : get(activeShow)
+    let item = get(focusMode) ? get(activeFocus) : get(activeShow)
+
+    const currentOutput = getFirstActiveOutput()
+    const currentlyPlaying = currentOutput?.out?.background?.path
+
+    if (api) {
+        // get playing audio
+        let audioId = AudioPlayer.getAllPlaying(false)[0]
+        if (audioId) item = { id: audioId, type: "audio" }
+        else if (currentlyPlaying) item = { id: currentlyPlaying, type: "video" }
+    }
 
     const type: ShowType | undefined = item?.type
     if (!item || !type) return
     e?.preventDefault()
 
-    const currentOutput = getFirstActiveOutput()
-    const currentlyPlaying = currentOutput?.out?.background?.path
     const alreadyPlaying = currentlyPlaying === item.id
 
     if (type === "video" || type === "image" || type === "player") {

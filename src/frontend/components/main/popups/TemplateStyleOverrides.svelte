@@ -1,30 +1,25 @@
 <script lang="ts">
     import { get } from "svelte/store"
     import { uid } from "uid"
-    import type { TemplateStyleOverride } from "../../../../types/Show"
-    import { popupData, templates } from "../../../stores"
-    import { clone } from "../../helpers/array"
+    import type { Template, TemplateStyleOverride } from "../../../../types/Show"
+    import { activeEdit, activePage, activePopup, popupData, templates } from "../../../stores"
+    import { translateText } from "../../../utils/language"
+    import { DEFAULT_ITEM_STYLE } from "../../edit/scripts/itemHelpers"
+    import { clone, keysToID, sortByName } from "../../helpers/array"
     import { history } from "../../helpers/history"
-    import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import InputRow from "../../input/InputRow.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
-    import MaterialColorInput from "../../inputs/MaterialColorInput.svelte"
+    import MaterialDropdown from "../../inputs/MaterialDropdown.svelte"
     import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
+    import { TemplateHelper } from "../../../utils/templates"
+    import Center from "../../system/Center.svelte"
 
     const initialData = get(popupData)
     let templateId: string = initialData.templateId || ""
 
     $: template = $templates[templateId] || {}
     $: overrides = clone(template.settings?.styleOverrides || [])
-
-    type FormatToggleKey = "bold" | "italic" | "underline" | "uppercase"
-    const formatOptions: { key: FormatToggleKey; label: string; icon: string }[] = [
-        { key: "bold", label: "edit._title_bold", icon: "bold" },
-        { key: "italic", label: "edit._title_italic", icon: "italic" },
-        { key: "underline", label: "edit._title_underline", icon: "underline" },
-        { key: "uppercase", label: "edit.uppercase", icon: "capitalize" }
-    ]
 
     // push the updated override list back through history so undo still works
     function commit(nextOverrides: TemplateStyleOverride[]) {
@@ -39,7 +34,7 @@
 
     // add a fresh empty rule the user can fill in
     function addOverride() {
-        const next: TemplateStyleOverride[] = [...overrides, { id: uid(6), pattern: "", color: "", bold: false, italic: false, underline: false, uppercase: false }]
+        const next: TemplateStyleOverride[] = [...overrides, { id: uid(6), pattern: "", templateId: "" }]
         commit(next)
     }
 
@@ -48,128 +43,82 @@
         commit(next)
     }
 
-    function toggleOverrideFlag(id: string, key: FormatToggleKey) {
-        const target = overrides.find(override => override.id === id)
-        if (!target) return
-
-        const active = !!target[key]
-        updateOverride(id, key, !active)
-    }
-
     function removeOverride(id: string) {
         const next = overrides.filter(override => override.id !== id)
         commit(next)
     }
-</script>
 
-<div class="popupRoot">
-    <p class="tip"><T id="edit.style_overrides_tip" /></p>
+    $: templatesList = sortByName(
+        keysToID($templates)
+            .filter(a => a.settings?.mode === "text")
+            .map(a => ({ value: a.id, label: a.name, style: new TemplateHelper(a.id).getTextStyle() + ";font-size: unset;" })),
+        "value"
+    )
 
-    <section class="list">
-        {#if overrides.length}
-            {#each overrides as override (override.id)}
-                <div class="overrideRow">
-                    <InputRow style="background-color: var(--primary-darker);padding: 8px;border-radius: 6px;">
-                        <MaterialTextInput style="flex: 2 1 240px;min-width: 200px;" label="edit.style_override_pattern" value={override.pattern} on:change={e => updateOverride(override.id, "pattern", e.detail)} autofocus={!override.pattern} />
-                        <MaterialColorInput style="flex: 0 0 190px;min-width: 170px;" label="edit.text_color" value={override.color || ""} allowEmpty on:change={e => updateOverride(override.id, "color", e.detail)} noLabel />
+    function createTemplate(e: any) {
+        const templateId = uid()
+        const name = e.detail
 
-                        <div class="toggles">
-                            {#each formatOptions as option}
-                                {@const isActive = !!override[option.key]}
-                                <MaterialButton class="toggleButton" title={option.label} aria-pressed={isActive ? "true" : "false"} on:click={() => toggleOverrideFlag(override.id, option.key)}>
-                                    <Icon id={option.icon} size={1.2} white />
-                                    <div class="highlight" class:active={isActive}></div>
-                                </MaterialButton>
-                            {/each}
-                        </div>
+        const newTemplate = {
+            name,
+            color: null,
+            category: null,
+            settings: { mode: "text" },
+            items: [{ style: clone(DEFAULT_ITEM_STYLE), lines: [{ text: [{ style: "", value: name || translateText("example.text") }] }] }]
+        } as Template
 
-                        <MaterialButton icon="delete" title="actions.delete" style="flex: 0 0 52px;min-width: 52px;" on:click={() => removeOverride(override.id)} white />
-                    </InputRow>
-                </div>
-            {/each}
-        {:else}
-            <div class="empty">
-                <T id="empty.general" />
-            </div>
-        {/if}
-    </section>
+        // history({ id: "UPDATE", newData: defaultTemplate, oldData: {id: templateId}, location: { page: "drawer", id: "template" } })
+        templates.update(a => {
+            a[templateId] = newTemplate
+            return a
+        })
 
-    <MaterialButton variant="outlined" icon="add" style="width: 100%;" on:click={addOverride}>
-        <T id="settings.add" />
-    </MaterialButton>
-</div>
-
-<style>
-    .popupRoot {
-        display: flex;
-        flex-direction: column;
-        gap: 15px;
-        width: clamp(500px, 75vw, 900px);
-        max-height: 80vh;
-        overflow-y: auto;
+        return templateId
     }
 
+    function editTemplate(templateId?: string) {
+        activeEdit.set({ type: "template", id: templateId, items: [] })
+        activePage.set("edit")
+        activePopup.set(null)
+    }
+
+    function deleteTemplate(templateId: string) {
+        history({ id: "UPDATE", newData: { id: templateId }, location: { page: "edit", id: "template" } })
+    }
+</script>
+
+<section style="width: clamp(500px, 75vw, 900px);">
+    <p class="tip"><T id="edit.style_overrides_tip" /></p>
+
+    {#if overrides.length}
+        {#each overrides as override (override.id)}
+            <InputRow>
+                <MaterialTextInput label="edit.style_override_pattern" style="flex: 4;" value={override.pattern} on:change={e => updateOverride(override.id, "pattern", e.detail)} autofocus={!override.pattern} />
+
+                <MaterialDropdown label="formats.template" style="flex: 2;border-left: 3px solid var(--primary-lighter) !important;" options={templatesList} value={override.templateId || ""} on:change={e => updateOverride(override.id, "templateId", e.detail)} on:new={e => updateOverride(override.id, "templateId", createTemplate(e))} addNew="new.template" on:delete={e => deleteTemplate(e.detail)} allowDeleting />
+                {#if override.templateId && $templates[override.templateId]}
+                    <MaterialButton title="titlebar.edit" icon="edit" on:click={() => editTemplate(override.templateId)} white />
+                {/if}
+
+                <MaterialButton icon="delete" title="actions.delete" style="border-left: 3px solid var(--primary-lighter) !important;" on:click={() => removeOverride(override.id)} white />
+            </InputRow>
+        {/each}
+    {:else}
+        <Center faded style="margin: 20px 0;">
+            <T id="empty.general" />
+        </Center>
+    {/if}
+
+    <MaterialButton variant="outlined" icon="add" style="width: 100%;margin-top: 10px;" on:click={addOverride}>
+        <T id="settings.add" />
+    </MaterialButton>
+</section>
+
+<style>
     .tip {
         margin-bottom: 10px;
 
         opacity: 0.7;
         font-size: 0.8em;
-    }
-
-    .list {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        flex: 1 1 auto;
-        overflow: visible;
-    }
-
-    .overrideRow {
-        display: flex;
-        flex-direction: column;
-    }
-    .overrideRow :global(.row) {
-        align-items: stretch;
-        gap: 8px;
-        flex-wrap: nowrap;
-    }
-    .overrideRow :global(.textfield) {
-        min-height: 50px;
-    }
-
-    .toggles {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        padding: 0 4px;
-        flex: 1 1 320px;
-        min-height: 50px;
-    }
-    .toggles :global(.toggleButton) {
-        flex: 1;
-        min-width: 64px;
-        padding: 0.5rem 0.75rem;
-    }
-
-    .highlight {
-        position: absolute;
-        bottom: 5px;
-        left: 50%;
-        transform: translateX(-50%);
-        height: 2px;
-        width: 80%;
-        background-color: var(--primary-lighter);
-        transition: 0.2s background-color ease;
-    }
-    .highlight.active {
-        background-color: var(--secondary);
-        box-shadow: 0 0 3px rgb(255 255 255 / 0.2);
-    }
-
-    .empty {
-        padding: 20px;
-        text-align: center;
-        opacity: 0.6;
     }
 </style>

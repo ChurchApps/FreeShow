@@ -103,7 +103,7 @@ export interface Item {
     id?: string
     lines?: Line[]
     list?: List
-    auto?: boolean
+    auto?: boolean // DEPRECATED - use textFit
     textFit?: AutosizeTypes // auto size text fix option (default: shrinkToFit)
     autoFontSize?: number // only used to store the calculated auto size text size
     style: string
@@ -475,14 +475,10 @@ export interface Template {
 export interface TemplateStyleOverride {
     id: string
     pattern: string
-    color?: string
-    bold?: boolean
-    italic?: boolean
-    underline?: boolean
-    uppercase?: boolean
+    templateId?: string
 }
 export interface TemplateSettings {
-    mode?: "default" | "scripture"
+    mode?: "default" | "scripture" | "text"
     resolution?: Resolution
     backgroundColor?: string
     backgroundPath?: string

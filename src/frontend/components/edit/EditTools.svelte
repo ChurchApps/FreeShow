@@ -42,8 +42,19 @@
     // is not template or overlay
     $: isShow = !activeId
     $: tabs.filters.remove = !isShow // TODO: set filters in template / overlay ? ( && $activeEdit.type !== "template")
-    $: tabs.slide.remove = !isShow && $activeEdit.type !== "template"
+    $: tabs.slide.remove = (!isShow && $activeEdit.type !== "template") || templateTextMode
     $: if ((tabs.slide.remove && active === "slide") || (tabs.filters.remove && active === "filters")) active = item ? "text" : "items"
+
+    $: templateTextMode = $activeEdit.type === "template" && $templates[activeId]?.settings?.mode === "text"
+    $: if (templateTextMode) {
+        tabs.item.remove = true
+        tabs.items.remove = true
+        // tabs.slide.remove = true
+    } else {
+        tabs.item.remove = false
+        tabs.items.remove = false
+        // tabs.slide.remove = false
+    }
 
     $: showIsActive = $activeShow && ($activeShow.type === undefined || $activeShow.type === "show")
     $: editSlideSelected = $activeEdit.slide !== null && $activeEdit.slide !== undefined
@@ -214,8 +225,8 @@
         }
 
         let ref = getLayoutRef()
-        let slide = ref[activeSlide].id
-        if (!slide) return
+        let slideId = ref[activeSlide]?.id
+        if (!slideId) return
 
         storedEditMenuState.set({})
 
@@ -223,7 +234,7 @@
             history({
                 id: "setStyle",
                 newData: { style: { key: "style", values: [DEFAULT_ITEM_STYLE] } },
-                location: { page: "edit", show: $activeShow!, slide, items: $activeEdit.items }
+                location: { page: "edit", show: $activeShow!, slide: slideId, items: $activeEdit.items }
             })
             return
         }
@@ -241,9 +252,9 @@
         if (active === "slide") {
             history({
                 id: "slideStyle",
-                oldData: { style: _show().slides([slide]).get("settings")[0] },
+                oldData: { style: _show().slides([slideId]).get("settings")[0] },
                 newData: { style: {} },
-                location: { page: "edit", show: $activeShow!, slide }
+                location: { page: "edit", show: $activeShow!, slide: slideId }
             })
             return
         }
@@ -271,7 +282,7 @@
                 location: {
                     page: "edit",
                     show: $activeShow!,
-                    slide,
+                    slide: slideId,
                     items: $activeEdit.items
                 }
             })
@@ -285,7 +296,7 @@
             history({
                 id: "setItems",
                 newData: { style: { key, values: [undefined] } },
-                location: { page: "edit", show: $activeShow!, slide, items: $activeEdit.items, id: key }
+                location: { page: "edit", show: $activeShow!, slide: slideId, items: $activeEdit.items, id: key }
             })
         })
 

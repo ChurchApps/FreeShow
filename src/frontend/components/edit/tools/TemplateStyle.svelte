@@ -49,6 +49,7 @@
     const modes = [
         { value: "default", label: translateText("example.default") },
         { value: "scripture", label: translateText("tabs.scripture") }
+        // { value: "text", label: translateText("edit.text") } // hidden
     ]
     $: mode = template.settings?.mode || "default"
 </script>
@@ -115,6 +116,21 @@
                     <MaterialButton title="titlebar.edit" icon="edit" on:click={() => editTemplate(settings.firstSlideTemplate || "")} />
                 {/if} -->
         </InputRow>
+
+        <!-- <InputRow>
+            <MaterialPopupButton
+                label="edit.different_last_template"
+                value={settings.lastSlideTemplate}
+                name={$templates[settings.lastSlideTemplate || ""]?.name}
+                popupId="select_template"
+                icon="templates"
+                on:change={e => {
+                    settings.lastSlideTemplate = e.detail
+                    update()
+                }}
+                allowEmpty
+            />
+        </InputRow> -->
 
         <MaterialButton
             variant="outlined"

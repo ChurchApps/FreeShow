@@ -346,10 +346,10 @@ export function setCaret(element: any, { line = 0, pos = 0 }, toEnd = false) {
     const endElem = lastEndChild.childNodes[0]
 
     // If startElem is a BR element, set caret before it and not inside it
-    if (startElem.nodeName === "BR") {
+    if (startElem?.nodeName === "BR") {
         const parentSpan = lineElem.childNodes[childElem]
         range.setStart(parentSpan, 0)
-    } else {
+    } else if (startElem) {
         const offset = pos - currentTextLength
         const startElemLength = startElem.length ?? startElem.textContent?.length ?? 0
         const safeStartOffset = Math.max(0, Math.min(startElemLength, offset))

@@ -36,6 +36,15 @@ export class TemplateHelper {
         })
     }
 
+    getItemStyle() {
+        const textbox = this.getTextboxItems()[0]
+        return textbox?.style || ""
+    }
+    getTextStyle() {
+        const textbox = this.getTextboxItems()[0]
+        return textbox?.lines?.[0]?.text?.[0]?.style || ""
+    }
+
     getSetting<K extends keyof NonNullable<Template["settings"]>>(key: K): NonNullable<Template["settings"]>[K] | undefined {
         return this.template.settings?.[key]
     }

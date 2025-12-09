@@ -3,7 +3,7 @@
     import { OUTPUT } from "../../../types/Channels"
     import type { Styles } from "../../../types/Settings"
     import type { Item, Slide, TemplateStyleOverride, Transition } from "../../../types/Show"
-    import { activeFocus, activeShow, currentWindow, focusMode, groups, outputs, overlays, showsCache, styles, templates, variables } from "../../stores"
+    import { currentWindow, groups, outputs, overlays, scriptureSettings, showsCache, styles, templates, variables } from "../../stores"
     import { wait } from "../../utils/common"
     import { send } from "../../utils/request"
     import autosize from "../edit/scripts/autosize"
@@ -156,7 +156,7 @@
     let slideData: Slide | null = null
     let groupTemplateId = ""
     let resolvedTemplateId = ""
-    let scriptureReferenceTemplateId = ""
+    let scriptureSettingsTemplateId = ""
     let showReference: any = null
     let isScriptureContext = false
     let scriptureTranslationKey = ""
@@ -193,9 +193,9 @@
         return translationTemplate || outputStyle.templateScripture || ""
     })()
     // fall back to the template captured when the scripture show was created
-    $: scriptureReferenceTemplateId = (() => {
-        if (!isScriptureContext || !ref?.showId) return ""
-        return showReference?.data?.templateId || ""
+    $: scriptureSettingsTemplateId = (() => {
+        if (ref?.id === "scripture" || ref?.showId === "temp") return $scriptureSettings.template || ""
+        return ""
     })()
     // track whether this textbox belongs to the first slide for the active layout
     let isFirstLayoutSlide = false
@@ -239,7 +239,7 @@
         if (styleResolved) return styleResolved
 
         // finally fall back to the template captured when the scripture show was generated
-        const scriptureResolved = resolveTemplate(scriptureReferenceTemplateId)
+        const scriptureResolved = resolveTemplate(scriptureSettingsTemplateId)
         if (scriptureResolved) return scriptureResolved
 
         return ""
@@ -274,7 +274,7 @@
     let previousItem = "{}"
     $: newItem = JSON.stringify(item)
     $: if (newItem !== previousItem) autoSizeReady = false
-    $: if (newItem !== lastRenderedSignature) {
+    $: if (newItem !== lastRenderedSignature && (item?.auto || (item?.textFit && item?.textFit !== "none"))) {
         fontSize = item?.autoFontSize || 0
         lastRenderedSignature = newItem
         hideUntilAutosized = shouldHideUntilAutoSizeCompletes()
@@ -283,17 +283,7 @@
     $: if ($variables) setTimeout(calculateAutosize)
 
     // recalculate auto size if output template is different than show template
-    $: currentShowTemplateId = (() => {
-        let showId = ref?.showId || ""
-
-        if (!showId) {
-            if ($focusMode && $activeFocus.id && $showsCache[$activeFocus.id]) showId = $activeFocus.id
-            else if ($activeShow?.id && (!$activeShow.type || $activeShow.type === "show")) showId = $activeShow.id
-        }
-
-        if (!showId) return ""
-        return $showsCache[showId]?.settings?.template || ""
-    })()
+    $: currentShowTemplateId = $showsCache[ref.showId || ""]?.settings?.template || ""
     // let outputTemplateAutoSize = false
     $: outputSlide = getFirstActiveOutput($outputs)?.out?.slide
     $: if (item?.type === "slide_tracker" && outputSlide) setTimeout(calculateAutosize) // overlay progress update
@@ -358,10 +348,8 @@
 
             defaultFontSize = itemFontSize
             if (type === "growToFit" && itemFontSize !== 100) maxFontSize = itemFontSize
-
-            console.log(1, type, maxFontSize, defaultFontSize)
         } else {
-            if (isTextItem && !item.auto) {
+            if (isTextItem && (!item.auto || (item?.textFit || "none") === "none")) {
                 fontSize = 0
                 return
             }
@@ -476,7 +464,7 @@
         if (isStage || preview) return false
         const type = item?.type || "text"
         if (type !== "text") return false
-        if (!item?.auto) return false
+        if (!item?.auto || item?.textFit === "none") return false
         // if we already have an autosized font available, no need to hide
         if (item?.autoFontSize) return false
         return true

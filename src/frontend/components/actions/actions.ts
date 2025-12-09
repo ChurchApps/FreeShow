@@ -26,6 +26,7 @@ export function runActionByName(name: string) {
     runAction(sortedActions[0])
 }
 
+const loopPrevention = { actionId: "", count: 0, timeout: null as NodeJS.Timeout | null }
 export async function runAction(action, { midiIndex = -1, slideIndex = -1 } = {}, isCategoryAction = false) {
     // console.log(action)
     if (!action) return
@@ -33,6 +34,20 @@ export async function runAction(action, { midiIndex = -1, slideIndex = -1 } = {}
 
     const actionTriggers = action.triggers || []
     if (!actionTriggers.length) return
+
+    // prevent infinite loops
+    // if it's run more than once every 10ms it's probably looping
+    if (loopPrevention.actionId === action.id) {
+        loopPrevention.count++
+        if (loopPrevention.count > 10) return
+    } else {
+        loopPrevention.actionId = action.id
+        if (loopPrevention.timeout) clearTimeout(loopPrevention.timeout)
+        loopPrevention.timeout = setTimeout(() => {
+            loopPrevention.actionId = ""
+            loopPrevention.count = 0
+        }, 100)
+    }
 
     const actionValues = action.actionValues || {}
 

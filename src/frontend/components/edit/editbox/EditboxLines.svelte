@@ -323,7 +323,7 @@
     let alignElem: HTMLElement | undefined
     let loopStop: NodeJS.Timeout | null = null
     function getCustomAutoSize() {
-        if (isTyping || !loaded || !alignElem || (!item.auto && !item.textFit)) return
+        if (isTyping || !loaded || !alignElem || (!item.auto && (!item.textFit || item.textFit === "none"))) return
 
         if (loopStop) return
         loopStop = setTimeout(() => (loopStop = null), 200)
@@ -406,8 +406,12 @@
                 // GET CHORDS
                 let storedChords = child.getAttribute("data-chords")
                 if (storedChords) {
-                    storedChords = JSON.parse(storedChords)
-                    lineChords.push(...storedChords)
+                    try {
+                        storedChords = JSON.parse(storedChords)
+                        lineChords.push(...storedChords)
+                    } catch (err) {
+                        return
+                    }
                 }
             })
 
@@ -735,6 +739,9 @@
         text-align: center;
         justify-content: center;
         /* align-items: center; */
+
+        /* balanced breaking, looks much cleaner */
+        text-wrap: balance;
     }
     .edit.hidden {
         visibility: hidden;

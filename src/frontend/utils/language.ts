@@ -20,7 +20,9 @@ const defaultPath = "./lang/en.json"
 // WIP right to left
 // const dir = derived(language, ($locale) => ($locale === "ar" ? "rtl" : "ltr"))
 
+let loadingLocale = ""
 function setLanguage(locale = "", init = false) {
+    console.log(locale)
     if (!locale) {
         // locale = getLocaleFromHostname(/^(.*?)\./) || getLocaleFromPathname(/^\/(.*?)\//) || getLocaleFromNavigator() || getLocaleFromHash('lang') || 'en';
         // locale = window.navigator.userLanguage || window.navigator.language || 'en';
@@ -36,15 +38,19 @@ function setLanguage(locale = "", init = false) {
     const rtlLanguages = ["ar", "fa", "he", "ur"]
     localeDirection.set(rtlLanguages.includes(locale) ? "rtl" : "ltr")
 
+    loadingLocale = locale
     const url = defaultPath.replace("en", locale)
     fetch(url)
         .then(response => response.json())
         .then(returnedFile)
 
     async function returnedFile(messages: Dictionary) {
+        if (loadingLocale !== locale) return
+
         // replace any missing keys in dictionary with fallback english string
         if (locale !== "en") {
             const defaultStrings = await (await fetch(defaultPath)).json()
+            if (loadingLocale !== locale) return
 
             Object.keys(defaultStrings).forEach(key => {
                 if (!messages[key]) messages[key] = defaultStrings[key]
@@ -55,9 +61,6 @@ function setLanguage(locale = "", init = false) {
                 }
             })
         }
-
-        // a new language might have loaded
-        if (init && get(language) !== "en" && get(language) !== locale) return
 
         dictionary.set(messages)
         if (init || !isMainWindow()) return
@@ -70,6 +73,7 @@ function setLanguage(locale = "", init = false) {
         // send(REMOTE, ["LANGUAGE"], msg)
         // wait until loaded
         setTimeout(() => {
+            if (loadingLocale !== locale) return
             send(OUTPUT, ["LANGUAGE"], locale)
         }, 3000)
     }

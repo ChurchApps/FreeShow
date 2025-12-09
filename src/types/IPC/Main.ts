@@ -2,7 +2,6 @@ import type { Display } from "electron"
 import type { ExifData } from "exif"
 import type { Stats } from "fs"
 import type { Bible } from "json-bible/lib/Bible"
-import type os from "os"
 import type { ContentFile, ContentLibraryCategory, ContentProviderId } from "../../electron/contentProviders/base/types"
 import type { _store } from "../../electron/data/store"
 import type { ErrorLog, FileData, LessonsData, LyricSearchResult, MainFilePaths, Media, OS, Subtitle } from "../Main"
@@ -22,7 +21,7 @@ export enum Main {
     // DEV
     LOG = "LOG",
     IS_DEV = "IS_DEV",
-    GET_TEMP_PATHS = "GET_TEMP_PATHS",
+    GET_CACHE_PATH = "GET_CACHE_PATH",
     // APP
     VERSION = "VERSION",
     GET_OS = "GET_OS",
@@ -216,12 +215,12 @@ export interface MainSendPayloads {
 export interface MainReturnPayloads {
     // DEV
     [Main.IS_DEV]: boolean
-    [Main.GET_TEMP_PATHS]: { [key: string]: string }
+    [Main.GET_CACHE_PATH]: string
     // APP
     [Main.VERSION]: string
     [Main.GET_OS]: OS
     [Main.DEVICE_ID]: string
-    [Main.IP]: NodeJS.Dict<os.NetworkInterfaceInfo[]>
+    [Main.IP]: string[]
     [Main.CHECK_RAM_USAGE]: { total: number; free: number; performanceMode: boolean }
     ///
     // [Main.SAVE]: { closeWhenFinished: boolean; customTriggers: any } | Promise<void>
@@ -263,9 +262,9 @@ export interface MainReturnPayloads {
     [Main.READ_EXIF]: Promise<{ id: string; exif: ExifData }>
     [Main.MEDIA_CODEC]: Promise<{ path: string; codecs: string[]; mimeType: string; mimeCodec: string }>
     [Main.MEDIA_TRACKS]: Promise<{ path: string; tracks: Subtitle[] }>
-    [Main.MEDIA_IS_DOWNLOADED]: Promise<{ path: string; buffer: Buffer | null; protectedUrl?: string | null } | null>
+    [Main.MEDIA_IS_DOWNLOADED]: Promise<{ path: string; buffer: Buffer | null; protectedUrl?: string | null; isDownloading?: boolean } | null>
     // [Main.MEDIA_BASE64]: { id: string; content: string }[]
-    [Main.CAPTURE_SLIDE]: Promise<{ base64: string } | undefined>
+    [Main.CAPTURE_SLIDE]: Promise<{ base64: string } | null>
     [Main.SLIDESHOW_GET_APPS]: string[]
     [Main.GET_MIDI_OUTPUTS]: { name: string }[]
     [Main.GET_MIDI_INPUTS]: { name: string }[]
