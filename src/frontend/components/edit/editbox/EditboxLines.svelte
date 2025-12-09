@@ -323,7 +323,7 @@
     let alignElem: HTMLElement | undefined
     let loopStop: NodeJS.Timeout | null = null
     function getCustomAutoSize() {
-        if (isTyping || !loaded || !alignElem || (!item.auto && !item.textFit)) return
+        if (isTyping || !loaded || !alignElem || (!item.auto && (!item.textFit || item.textFit === "none"))) return
 
         if (loopStop) return
         loopStop = setTimeout(() => (loopStop = null), 200)

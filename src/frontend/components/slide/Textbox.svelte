@@ -274,7 +274,7 @@
     let previousItem = "{}"
     $: newItem = JSON.stringify(item)
     $: if (newItem !== previousItem) autoSizeReady = false
-    $: if (newItem !== lastRenderedSignature) {
+    $: if (newItem !== lastRenderedSignature && (item?.auto || (item?.textFit && item?.textFit !== "none"))) {
         fontSize = item?.autoFontSize || 0
         lastRenderedSignature = newItem
         hideUntilAutosized = shouldHideUntilAutoSizeCompletes()
@@ -348,10 +348,8 @@
 
             defaultFontSize = itemFontSize
             if (type === "growToFit" && itemFontSize !== 100) maxFontSize = itemFontSize
-
-            console.log(1, type, maxFontSize, defaultFontSize)
         } else {
-            if (isTextItem && !item.auto) {
+            if (isTextItem && (!item.auto || (item?.textFit || "none") === "none")) {
                 fontSize = 0
                 return
             }
@@ -466,7 +464,7 @@
         if (isStage || preview) return false
         const type = item?.type || "text"
         if (type !== "text") return false
-        if (!item?.auto) return false
+        if (!item?.auto || item?.textFit === "none") return false
         // if we already have an autosized font available, no need to hide
         if (item?.autoFontSize) return false
         return true
