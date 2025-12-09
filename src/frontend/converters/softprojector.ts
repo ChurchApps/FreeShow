@@ -60,7 +60,11 @@ export function convertSoftProjector(data: any) {
 
         show.meta = {
             number: song.number || "",
-            title: song.title || ""
+            title: song.title || "",
+            author: song.words || "",
+            composer: song.music || "",
+            note: song.notes || "",
+            key: song.tune || ""
         }
         if (show.meta.number !== undefined) show.quickAccess = { number: show.meta.number }
 
