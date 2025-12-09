@@ -583,6 +583,7 @@ export async function downloadOnlineMedia(url: string) {
     const mediaData = get(media)[url]
     const downloadedPath = await requestMain(Main.MEDIA_IS_DOWNLOADED, { url, contentFile: mediaData?.contentFile })
 
+    if (downloadedPath?.isDownloading) return url
     if (downloadedPath?.protectedUrl) return downloadedPath.protectedUrl
     if (downloadedPath?.path) return downloadedPath.path
 
