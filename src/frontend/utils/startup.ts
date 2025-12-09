@@ -112,7 +112,8 @@ function autoBackup() {
 export function contentProviderSync() {
     const providers = [
         { providerId: "planningcenter" as ContentProviderId, scope: "services" },
-        { providerId: "churchApps" as ContentProviderId, scope: "plans", data: { shows: get(shows), categories: get(contentProviderData).churchApps?.syncCategories || [] } }
+        { providerId: "churchApps" as ContentProviderId, scope: "plans", data: { shows: get(shows), categories: get(contentProviderData).churchApps?.syncCategories || [] } },
+        { providerId: "amazinglife" as ContentProviderId, scope: "openid profile email" }
     ]
 
     providers.forEach(({ providerId, scope, data }) => {
