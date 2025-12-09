@@ -36,6 +36,7 @@ import {
     projects,
     refreshEditSlide,
     scriptures,
+    scriptureSettings,
     selectAllAudio,
     selectAllMedia,
     selected,
@@ -67,6 +68,7 @@ import { select } from "./select"
 import { loadShows } from "./setShow"
 import { checkName, getLayoutRef } from "./show"
 import { _show } from "./shows"
+import { confirmCustom } from "../../utils/popup"
 
 export function copy(clip: Clipboard | null = null, getData = true, shouldDuplicate = false) {
     let copyData: Clipboard | null = clip
@@ -417,12 +419,16 @@ const copyActions = {
 
         const sortedData = data.sort((a, b) => (a.index < b.index ? -1 : 1))
 
-        let ids = sortedData.map(a => {
-            // get layout
-            if (a.index !== undefined) layouts.push(ref[a.index].data)
+        let ids = sortedData
+            .map(a => {
+                if (!ref[a.index]) return ""
 
-            return a.id || (a.index !== undefined ? ref[a.index].id : "")
-        })
+                // get layout
+                if (a.index !== undefined) layouts.push(ref[a.index].data)
+
+                return a.id || (a.index !== undefined ? ref[a.index].id : "")
+            })
+            .filter(Boolean)
 
         if (fullGroup) {
             // select all children of group
@@ -834,7 +840,36 @@ const deleteActions = {
     player: (data: any) => historyDelete("UPDATE", data, { updater: "player_video" }),
     overlay: (data: any) => historyDelete("UPDATE", data, { updater: "overlay" }),
     effect: (data: any) => historyDelete("UPDATE", data, { updater: "effect" }),
-    template: (data: any) => historyDelete("UPDATE", data, { updater: "template" }),
+    template: async (data: any) => {
+        const ids = data.map(id => id)
+
+        // check if template is used anywhere
+        // STYLES
+        let styleTemplates: string[] = []
+        Object.values(get(styles)).forEach(a => {
+            if (a.template) styleTemplates.push(a.template)
+            if (a.templateScripture) styleTemplates.push(a.templateScripture)
+        })
+        if (ids.some(id => styleTemplates.includes(id))) {
+            if (!(await confirmCustom(translateText("This template is in use by Styles.<br>popup.delete_show_confirmation?")))) return
+        }
+        // SCRIPTURE
+        if (ids.includes(get(scriptureSettings).template)) {
+            if (!(await confirmCustom(translateText("This template is in use by Scripture.<br>popup.delete_show_confirmation?")))) return
+        }
+        // TEMPLATE (First slide template)
+        let firstSlideTemplateIds: string[] = []
+        Object.values(get(templates)).forEach(a => {
+            if (a.settings?.firstSlideTemplate) firstSlideTemplateIds.push(a.settings.firstSlideTemplate)
+        })
+        if (ids.some(id => firstSlideTemplateIds.includes(id))) {
+            if (!(await confirmCustom(translateText('This template is in use by Templates as "First slide template".<br>popup.delete_show_confirmation?"')))) return
+        }
+        // SHOWS (skip)
+        // Style overwrites (not relevant as it's not in the global list)
+
+        historyDelete("UPDATE", data, { updater: "template" })
+    },
     category_scripture: (data: any) => {
         scriptures.update(a => {
             data.forEach((id: string) => {

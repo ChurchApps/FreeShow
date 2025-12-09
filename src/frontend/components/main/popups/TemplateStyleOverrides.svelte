@@ -13,6 +13,7 @@
     import MaterialDropdown from "../../inputs/MaterialDropdown.svelte"
     import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
     import { TemplateHelper } from "../../../utils/templates"
+    import Center from "../../system/Center.svelte"
 
     const initialData = get(popupData)
     let templateId: string = initialData.templateId || ""
@@ -41,14 +42,6 @@
         const next = overrides.map(override => (override.id === id ? { ...override, [key]: value } : override))
         commit(next)
     }
-
-    // function toggleOverrideFlag(id: string, key: FormatToggleKey) {
-    //     const target = overrides.find(override => override.id === id)
-    //     if (!target) return
-
-    //     const active = !!target[key]
-    //     updateOverride(id, key, !active)
-    // }
 
     function removeOverride(id: string) {
         const next = overrides.filter(override => override.id !== id)
@@ -94,61 +87,38 @@
     }
 </script>
 
-<div class="popupRoot">
+<section style="width: clamp(500px, 75vw, 900px);">
     <p class="tip"><T id="edit.style_overrides_tip" /></p>
 
-    <section class="list">
-        {#if overrides.length}
-            {#each overrides as override (override.id)}
-                <InputRow style="background-color: var(--primary-darker);padding: 8px;border-radius: 6px;">
-                    <MaterialTextInput label="edit.style_override_pattern" style="flex: 4;" value={override.pattern} on:change={e => updateOverride(override.id, "pattern", e.detail)} autofocus={!override.pattern} />
+    {#if overrides.length}
+        {#each overrides as override (override.id)}
+            <InputRow>
+                <MaterialTextInput label="edit.style_override_pattern" style="flex: 4;" value={override.pattern} on:change={e => updateOverride(override.id, "pattern", e.detail)} autofocus={!override.pattern} />
 
-                    <MaterialDropdown label="formats.template" style="flex: 2;margin-left: 8px;" options={templatesList} value={override.templateId || ""} on:change={e => updateOverride(override.id, "templateId", e.detail)} on:new={e => updateOverride(override.id, "templateId", createTemplate(e))} addNew="new.template" on:delete={e => deleteTemplate(e.detail)} allowDeleting />
-                    {#if override.templateId && $templates[override.templateId]}
-                        <MaterialButton title="titlebar.edit" icon="edit" on:click={() => editTemplate(override.templateId)} white />
-                    {/if}
+                <MaterialDropdown label="formats.template" style="flex: 2;border-left: 3px solid var(--primary-lighter) !important;" options={templatesList} value={override.templateId || ""} on:change={e => updateOverride(override.id, "templateId", e.detail)} on:new={e => updateOverride(override.id, "templateId", createTemplate(e))} addNew="new.template" on:delete={e => deleteTemplate(e.detail)} allowDeleting />
+                {#if override.templateId && $templates[override.templateId]}
+                    <MaterialButton title="titlebar.edit" icon="edit" on:click={() => editTemplate(override.templateId)} white />
+                {/if}
 
-                    <MaterialButton icon="delete" title="actions.delete" style="margin-left: 8px;" on:click={() => removeOverride(override.id)} white />
-                </InputRow>
-            {/each}
-        {:else}
-            <div class="empty">
-                <T id="empty.general" />
-            </div>
-        {/if}
-    </section>
+                <MaterialButton icon="delete" title="actions.delete" style="border-left: 3px solid var(--primary-lighter) !important;" on:click={() => removeOverride(override.id)} white />
+            </InputRow>
+        {/each}
+    {:else}
+        <Center faded style="margin: 20px 0;">
+            <T id="empty.general" />
+        </Center>
+    {/if}
 
-    <MaterialButton variant="outlined" icon="add" style="width: 100%;" on:click={addOverride}>
+    <MaterialButton variant="outlined" icon="add" style="width: 100%;margin-top: 10px;" on:click={addOverride}>
         <T id="settings.add" />
     </MaterialButton>
-</div>
+</section>
 
 <style>
-    .popupRoot {
-        display: flex;
-        flex-direction: column;
-        gap: 15px;
-        width: clamp(500px, 75vw, 900px);
-    }
-
     .tip {
         margin-bottom: 10px;
 
         opacity: 0.7;
         font-size: 0.8em;
-    }
-
-    .list {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        flex: 1 1 auto;
-        overflow: visible;
-    }
-
-    .empty {
-        padding: 20px;
-        text-align: center;
-        opacity: 0.6;
     }
 </style>

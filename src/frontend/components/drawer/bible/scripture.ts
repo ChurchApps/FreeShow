@@ -494,7 +494,7 @@ function splitContent(content: BibleContent[], perSlide: number): BibleContent[]
 }
 
 // use old formatting if old scripture template type
-export function useOldScriptureSystem(templateId: string) {
+export function useOldScriptureSystem(templateId: string, _updater: any = null) {
     const _template = new TemplateHelper(templateId)
 
     return !_template.getPlainText().includes("{scripture_")

@@ -128,7 +128,9 @@
             }
         })
 
-        let slideId = ref[$activeEdit.slide!].id
+        let slideId = ref[$activeEdit.slide || ""]?.id
+        if (!slideId) return
+
         let activeItems = [...active]
 
         let historyShow = $activeShow

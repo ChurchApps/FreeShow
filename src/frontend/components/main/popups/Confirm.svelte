@@ -6,7 +6,7 @@
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
 
-    let prompt = $popupData.prompt || ""
+    $: prompt = $popupData.prompt || ""
     let textInput = !!$popupData.textInput
 
     function keydown(e: KeyboardEvent) {

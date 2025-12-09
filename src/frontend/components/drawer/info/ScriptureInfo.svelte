@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { BibleContent } from "../../../../types/Scripture"
     import type { Item } from "../../../../types/Show"
-    import { activeEdit, activePage, activePopup, activeScripture, activeStyle, drawerTabsData, outputs, popupData, scriptureSettings, styles, templates } from "../../../stores"
+    import { activeEdit, activePage, activePopup, activeScripture, activeStyle, drawerTabsData, outputs, popupData, scriptureSettings, settingsTab, styles, templates } from "../../../stores"
     import { setDefaultScriptureTemplates } from "../../../utils/createData"
     import { translateText } from "../../../utils/language"
     import { confirmCustom } from "../../../utils/popup"
@@ -123,6 +123,7 @@
     function editTemplate() {
         if (styleScriptureTemplate) {
             activeStyle.set(styleId)
+            settingsTab.set("styles")
             activePage.set("settings")
             return
         }
@@ -159,7 +160,7 @@
     $: onlyOneNormalOutput = getAllNormalOutputs().length === 1
     $: styleScriptureTemplate = onlyOneNormalOutput ? $styles[styleId]?.templateScripture : ""
 
-    $: useOldSystem = useOldScriptureSystem(templateId)
+    $: useOldSystem = useOldScriptureSystem(templateId, $templates) && !styleScriptureTemplate
     $: usingDefault = templateId.includes("scripture")
     async function convertToNew() {
         if (!usingDefault) {
@@ -212,7 +213,7 @@
         <!-- Template -->
         <InputRow style={templateBackground ? "" : "margin-bottom: 10px;"}>
             <MaterialPopupButton label="info.template" disabled={!!styleScriptureTemplate} value={templateId} name={template?.name} popupId="select_template" icon="templates" on:change={e => update("template", e.detail)} allowEmpty={!isDefault} />
-            {#if templateId && template}
+            {#if (templateId && template) || styleScriptureTemplate}
                 <MaterialButton title="titlebar.edit" icon="edit" on:click={editTemplate} />
             {/if}
         </InputRow>

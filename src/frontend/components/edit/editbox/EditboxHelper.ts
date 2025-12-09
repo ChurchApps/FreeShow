@@ -42,8 +42,10 @@ export class EditboxHelper {
     }
 
     static splitCrlf(line: Line) {
+        if (!line?.text?.length) return []
+
         const result: Line[] = []
-        let newLine = { ...line }
+        let newLine = clone(line)
         newLine.text = []
 
         line.text?.forEach(text => {
@@ -52,13 +54,15 @@ export class EditboxHelper {
             newLine.text.push({ style: text.style, value: parts[0] })
             if (parts.length > 1) {
                 for (let i = 1; i < parts.length; i++) {
-                    result.push(newLine)
-                    newLine = { ...line }
+                    result.push(clone(newLine))
+                    newLine = clone(line)
+
                     newLine.text = [{ style: text.style, value: parts[i] }]
                 }
             }
         })
         result.push(newLine)
+
         return result
     }
 

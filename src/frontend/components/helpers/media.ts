@@ -473,7 +473,8 @@ export function captureCanvas(data: { input: string; output: string; size: any; 
 
         // seek video
         if (!isImage) {
-            ;(mediaElem as HTMLVideoElement).currentTime = (mediaElem as HTMLVideoElement).duration * (data.seek ?? 0.5)
+            const seekTime = (mediaElem as HTMLVideoElement).duration * (data.seek ?? 0.5)
+            ;(mediaElem as HTMLVideoElement).currentTime = isFinite(seekTime) ? seekTime : 3
             await wait(400)
         }
 
