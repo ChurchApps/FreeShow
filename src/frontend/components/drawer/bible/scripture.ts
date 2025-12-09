@@ -523,8 +523,14 @@ export function getScriptureSlidesNew(data: any, onlyOne = false, disableReferen
 
     const splittedSlidesContent = onlyOne ? [biblesContent] : splitContent(biblesContent, perSlide)
 
-    const verseNumbers = get(scriptureSettings).verseNumbers
+    let verseNumbers = get(scriptureSettings).verseNumbers
     const versesOnIndividualLines = get(scriptureSettings).versesOnIndividualLines
+
+    // hide verse number if just one verse selected and a reference is showing the verse
+    const hasVerseReference = /\{scripture1?_(reference|verse)/.test(slidesString)
+    if (totalVerses === 1 && hasVerseReference) {
+        verseNumbers = false
+    }
 
     // extra styles
     let verseNumberSize = 50 // get(scriptureSettings).numberSize || 50 // %
@@ -1426,7 +1432,7 @@ export function getScriptureShow(biblesContent: BibleContent[] | null) {
     // const templateId = get(scriptureSettings).combineWithText ? false : scriptureTemplateId || false
     // , get(scriptureSettings).verseNumbers ? false : templateId
     // this can be set to private - to only add to project and not in drawer, because it's mostly not used again
-    const show: Show = new ShowObj(false, categoryId, layoutID, new Date().getTime())
+    const show: Show = new ShowObj(false, categoryId, layoutID, new Date().getTime(), templateId)
 
     Object.keys(biblesContent[0].metadata || {}).forEach(key => {
         if (key.startsWith("@")) return
@@ -1453,8 +1459,7 @@ export function getScriptureShow(biblesContent: BibleContent[] | null) {
             book: biblesContent[0].bookId ?? biblesContent[0].book,
             chapter: biblesContent[0].chapters[0],
             verses: biblesContent[0].activeVerses,
-            attributionString: biblesContent[0].attributionString,
-            templateId: scriptureTemplateId
+            attributionString: biblesContent[0].attributionString
         }
     }
 

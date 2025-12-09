@@ -357,7 +357,7 @@
     </InputRow>
 {:else}
     <FloatingInputs onlyOne>
-        <MaterialButton icon="slide" on:click={() => createScriptureShow()}>
+        <MaterialButton icon="slide" title="new.show_convert [Ctrl+N]" on:click={() => createScriptureShow()}>
             <T id="new.show_convert" />
         </MaterialButton>
     </FloatingInputs>

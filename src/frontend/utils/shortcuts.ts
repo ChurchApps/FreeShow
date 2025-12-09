@@ -26,6 +26,7 @@ import { activeShow } from "./../stores"
 import { hideDisplay, isOutputWindow, togglePanels } from "./common"
 import { send } from "./request"
 import { save } from "./save"
+import { createScriptureShow } from "../components/drawer/bible/scripture"
 
 const menus: TopViews[] = ["show", "edit", "stage", "draw", "settings"]
 
@@ -383,6 +384,7 @@ function createNew() {
     else if (["action", "variable", "trigger"].includes(selectId)) activePopup.set(selectId as any)
     else if (get(activePage) === "edit") addItem("text")
     else if (get(activePage) === "stage") history({ id: "UPDATE", location: { page: "stage", id: "stage" } })
+    else if (get(activePage) === "show" && get(activeDrawerTab) === "scripture") createScriptureShow()
     else {
         console.info("CREATE NEW:", selectId)
         activePopup.set("show")

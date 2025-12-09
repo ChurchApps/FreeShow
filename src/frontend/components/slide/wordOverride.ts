@@ -1,4 +1,5 @@
 import type { TemplateStyleOverride } from "../../../types/Show"
+import { TemplateHelper } from "../../utils/templates"
 
 // split the rendered text so template rules can restyle matching chunks
 export function applyStyleOverrides(baseLines: any[], overrides: TemplateStyleOverride[]) {
@@ -81,11 +82,24 @@ function splitSegment(segment: any, regex: RegExp, override: TemplateStyleOverri
 }
 
 function mergeOverrideStyles(baseStyle: string, override: TemplateStyleOverride) {
-    let style = baseStyle || ""
-    if (override.color) style += `color: ${override.color};`
-    if (override.bold) style += "font-weight: 700;"
-    if (override.italic) style += "font-style: italic;"
-    if (override.underline) style += "text-decoration: underline;"
-    if (override.uppercase) style += "text-transform: uppercase;"
-    return style
+    if (!override.templateId) return baseStyle || ""
+
+    const _template = new TemplateHelper(override.templateId)
+
+    const templateStyle = _template.getTextStyle()
+    if (!templateStyle) return baseStyle || ""
+
+    const fontSize = getRelativeFontSize(baseStyle, templateStyle)
+
+    return templateStyle + (fontSize ? ` font-size: ${fontSize};` : "")
+}
+
+function getRelativeFontSize(baseStyle: string, templateStyle: string) {
+    let templateFontSize = templateStyle.match(/font-size:\s*(\d+)px/)
+    let baseFontSize = baseStyle.match(/font-size:\s*(\d+)px/)
+    if (!templateFontSize && !baseFontSize) return 100
+    if (!templateFontSize) return Number(baseFontSize![1])
+
+    let percentageDiff = Number(templateFontSize[1]) / Number(baseFontSize![1])
+    return Number(baseFontSize![1]) * percentageDiff
 }

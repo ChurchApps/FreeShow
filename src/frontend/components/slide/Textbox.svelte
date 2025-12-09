@@ -3,7 +3,7 @@
     import { OUTPUT } from "../../../types/Channels"
     import type { Styles } from "../../../types/Settings"
     import type { Item, Slide, TemplateStyleOverride, Transition } from "../../../types/Show"
-    import { activeFocus, activeShow, currentWindow, focusMode, groups, outputs, overlays, showsCache, styles, templates, variables } from "../../stores"
+    import { currentWindow, groups, outputs, overlays, scriptureSettings, showsCache, styles, templates, variables } from "../../stores"
     import { wait } from "../../utils/common"
     import { send } from "../../utils/request"
     import autosize from "../edit/scripts/autosize"
@@ -156,7 +156,7 @@
     let slideData: Slide | null = null
     let groupTemplateId = ""
     let resolvedTemplateId = ""
-    let scriptureReferenceTemplateId = ""
+    let scriptureSettingsTemplateId = ""
     let showReference: any = null
     let isScriptureContext = false
     let scriptureTranslationKey = ""
@@ -193,9 +193,9 @@
         return translationTemplate || outputStyle.templateScripture || ""
     })()
     // fall back to the template captured when the scripture show was created
-    $: scriptureReferenceTemplateId = (() => {
-        if (!isScriptureContext || !ref?.showId) return ""
-        return showReference?.data?.templateId || ""
+    $: scriptureSettingsTemplateId = (() => {
+        if (ref?.id === "scripture" || ref?.showId === "temp") return $scriptureSettings.template || ""
+        return ""
     })()
     // track whether this textbox belongs to the first slide for the active layout
     let isFirstLayoutSlide = false
@@ -239,7 +239,7 @@
         if (styleResolved) return styleResolved
 
         // finally fall back to the template captured when the scripture show was generated
-        const scriptureResolved = resolveTemplate(scriptureReferenceTemplateId)
+        const scriptureResolved = resolveTemplate(scriptureSettingsTemplateId)
         if (scriptureResolved) return scriptureResolved
 
         return ""
@@ -283,17 +283,7 @@
     $: if ($variables) setTimeout(calculateAutosize)
 
     // recalculate auto size if output template is different than show template
-    $: currentShowTemplateId = (() => {
-        let showId = ref?.showId || ""
-
-        if (!showId) {
-            if ($focusMode && $activeFocus.id && $showsCache[$activeFocus.id]) showId = $activeFocus.id
-            else if ($activeShow?.id && (!$activeShow.type || $activeShow.type === "show")) showId = $activeShow.id
-        }
-
-        if (!showId) return ""
-        return $showsCache[showId]?.settings?.template || ""
-    })()
+    $: currentShowTemplateId = $showsCache[ref.showId || ""]?.settings?.template || ""
     // let outputTemplateAutoSize = false
     $: outputSlide = getFirstActiveOutput($outputs)?.out?.slide
     $: if (item?.type === "slide_tracker" && outputSlide) setTimeout(calculateAutosize) // overlay progress update

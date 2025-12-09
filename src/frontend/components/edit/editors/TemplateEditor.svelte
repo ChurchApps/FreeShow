@@ -87,6 +87,8 @@
 
     $: resolution = getResolution(null, { $outputs, $styles })
     $: widthOrHeight = getStyleResolution(resolution, width, height, "fit", { zoom })
+
+    $: mode = Slide?.settings?.mode || "default"
 </script>
 
 {#if Slide?.isDefault}
@@ -109,7 +111,7 @@
         {/if}
     </div>
 
-    {#if !widthOrHeight.includes("height")}
+    {#if !widthOrHeight.includes("height") && mode !== "text"}
         <FloatingInputs side="center">
             {#each shortcutItems as item}
                 <MaterialButton title="settings.add: items.{item.id}" on:click={() => addItem(item.id, null, {}, translateText("example.text"))}>

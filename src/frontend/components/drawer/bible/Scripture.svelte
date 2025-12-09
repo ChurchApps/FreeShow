@@ -707,6 +707,8 @@
 
         if (!e.ctrlKey && !e.metaKey) return
 
+        // Ctrl+N Converts to show (shortcuts.ts)
+
         // Refresh
         if (e.key === "r") {
             if (!isActiveInOutput) return

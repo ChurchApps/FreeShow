@@ -42,8 +42,19 @@
     // is not template or overlay
     $: isShow = !activeId
     $: tabs.filters.remove = !isShow // TODO: set filters in template / overlay ? ( && $activeEdit.type !== "template")
-    $: tabs.slide.remove = !isShow && $activeEdit.type !== "template"
+    $: tabs.slide.remove = (!isShow && $activeEdit.type !== "template") || templateTextMode
     $: if ((tabs.slide.remove && active === "slide") || (tabs.filters.remove && active === "filters")) active = item ? "text" : "items"
+
+    $: templateTextMode = $activeEdit.type === "template" && $templates[activeId]?.settings?.mode === "text"
+    $: if (templateTextMode) {
+        tabs.item.remove = true
+        tabs.items.remove = true
+        // tabs.slide.remove = true
+    } else {
+        tabs.item.remove = false
+        tabs.items.remove = false
+        // tabs.slide.remove = false
+    }
 
     $: showIsActive = $activeShow && ($activeShow.type === undefined || $activeShow.type === "show")
     $: editSlideSelected = $activeEdit.slide !== null && $activeEdit.slide !== undefined

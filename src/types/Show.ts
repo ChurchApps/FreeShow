@@ -475,14 +475,10 @@ export interface Template {
 export interface TemplateStyleOverride {
     id: string
     pattern: string
-    color?: string
-    bold?: boolean
-    italic?: boolean
-    underline?: boolean
-    uppercase?: boolean
+    templateId?: string
 }
 export interface TemplateSettings {
-    mode?: "default" | "scripture"
+    mode?: "default" | "scripture" | "text"
     resolution?: Resolution
     backgroundColor?: string
     backgroundPath?: string
