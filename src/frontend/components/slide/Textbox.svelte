@@ -333,6 +333,8 @@
         // TEMP FIX for auto size sometimes not sized properly in show slides
         if (!preview && !isStage) await wait(70)
 
+        let type = item?.textFit || "shrinkToFit"
+
         let defaultFontSize
         let maxFontSize
 
