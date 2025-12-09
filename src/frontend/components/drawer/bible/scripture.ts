@@ -518,7 +518,24 @@ export function getScriptureSlidesNew(data: any, onlyOne = false, disableReferen
     // divide evenly if two slides
     if (slidesCount === 2) perSlide = Math.ceil(totalVerses / 2)
 
-    const slides = _template.createSlides(slidesCount, onlyOne)
+    let slides = _template.createSlides(slidesCount, onlyOne)
+
+    // {scripture_reference_last} only on last slide
+    slides = slides.map((items, index) => {
+        return items.map(item => {
+            if (index === slides.length - 1) return item
+
+            // remove entire line with last
+            const lastRefIndex =
+                item.lines?.findIndex(line => {
+                    return line.text?.some(textObj => textObj.value?.includes("{scripture_reference_last}"))
+                }) || -1
+            if (lastRefIndex > -1) item.lines?.splice(lastRefIndex, 1)
+
+            return item
+        })
+    })
+
     let slidesString = JSON.stringify(slides)
 
     const splittedSlidesContent = onlyOne ? [biblesContent] : splitContent(biblesContent, perSlide)
@@ -674,6 +691,7 @@ export function getScriptureSlidesNew(data: any, onlyOne = false, disableReferen
     slidesString = slidesString.replaceAll("{scripture_chapter}", selectedChapters[0]?.toString() || "")
 
     slidesString = slidesString.replaceAll("{scripture_reference_full}", fullReference)
+    slidesString = slidesString.replaceAll("{scripture_reference_last}", fullReference)
 
     // metadata, uses the default "meta_" values
     for (const [key, value] of Object.entries(biblesContent[0]?.metadata || {})) {

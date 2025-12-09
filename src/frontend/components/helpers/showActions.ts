@@ -1453,6 +1453,7 @@ const scriptureDynamicValues = {
     scripture_chapter: () => "1",
     scripture_reference: () => "Genesis 1:1", // current slide only
     scripture_reference_full: () => "Genesis 1:1-3", // across all slides
+    scripture_reference_last: () => "", // full reference, only on last slide
     scripture_name: () => "King James Version", // version
     // scripture_name_abbr: () => "KJV",
     // chapter_verses, book_chapters
