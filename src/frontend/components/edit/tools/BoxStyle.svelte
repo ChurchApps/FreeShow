@@ -119,7 +119,7 @@
 
     $: if (box?.sections?.font) {
         setBoxInputValue(box, "font", "font-size", "disabled", item?.textFit !== "none")
-        setBoxInputValue(box, "font", "textFit", "value", item?.textFit || "growToFit")
+        setBoxInputValue(box, "font", "textFit", "value", item?.textFit || "growToFit") // other items (like clock, timer)
         // setBoxInputValue(box2, "font", "auto", "value", item.auto ?? true)
     }
 
@@ -128,6 +128,8 @@
         // setBoxInputValue(box2, "default", "textFit", "hidden", !item?.auto)
         setBoxInputValue(box, "text", "nowrap", "value", !!styles["white-space"]?.includes("nowrap"))
         setBoxInputValue(box, "lines", "specialStyle.lineRadius", "hidden", !item?.specialStyle?.lineRadius && !item?.specialStyle?.lineBg)
+
+        setBoxInputValue(box, "default", "textFit", "value", item?.auto ? "shrinkToFit" : "none") // text items
     }
 
     $: if (id === "media" && item) {

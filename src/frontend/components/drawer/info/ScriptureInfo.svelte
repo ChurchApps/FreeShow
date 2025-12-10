@@ -226,8 +226,10 @@
             </InputRow>
         {/if}
 
-        {#if useOldSystem}
+        {#if useOldSystem || (styleScriptureTemplate ? useOldScriptureSystem(styleScriptureTemplate) : false)}
             <p style="margin-bottom: 10px;font-size: 0.9rem;opacity: 0.7;white-space: normal;">You are using an outdated scripture template!</p>
+        {/if}
+        {#if useOldSystem}
             <MaterialButton variant="outlined" style="margin-bottom: 10px;" on:click={convertToNew}>
                 {#if usingDefault}
                     Convert template to new system

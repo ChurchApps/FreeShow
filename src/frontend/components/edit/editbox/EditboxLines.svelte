@@ -312,18 +312,17 @@
 
     // update auto size
     let loaded = false
-    $: isAuto = item?.auto
-    $: textFit = item?.textFit
+    $: isAuto = item?.auto || (item?.textFit || "none") !== "none"
     $: textArray = Array.isArray(item?.lines?.[0]?.text) ? item.lines[0].text : []
     $: itemText = textArray.filter(a => !a.customType?.includes("disableTemplate")) || []
     $: itemFontSize = Number(getStyles((ref.type === "stage" ? item : itemText[0])?.style, true)?.["font-size"] || "")
-    $: if (isAuto || textFit || itemFontSize || textChanged) getCustomAutoSize()
+    $: if (isAuto || itemFontSize || textChanged) getCustomAutoSize()
 
     let autoSize = 0
     let alignElem: HTMLElement | undefined
     let loopStop: NodeJS.Timeout | null = null
     function getCustomAutoSize() {
-        if (isTyping || !loaded || !alignElem || (!item.auto && (!item.textFit || item.textFit === "none"))) return
+        if (isTyping || !loaded || !alignElem || !isAuto) return
 
         if (loopStop) return
         loopStop = setTimeout(() => (loopStop = null), 200)

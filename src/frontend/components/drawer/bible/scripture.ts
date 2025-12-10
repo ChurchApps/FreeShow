@@ -816,7 +816,7 @@ export function getScriptureSlides({ biblesContent, selectedChapters, selectedVe
         const currentTemplate = templateTextItems[bibleIndex] || templateTextItems[0]
         const itemStyle = currentTemplate?.style || "top: 150px;left: 50px;width: 1820px;height: 780px;"
         const itemAlignStyle = currentTemplate?.align || ""
-        const alignStyle = currentTemplate?.lines?.[1]?.align || currentTemplate?.lines?.[0]?.align || "text-align: start;"
+        const alignStyle = currentTemplate?.lines?.[1]?.align ?? currentTemplate?.lines?.[0]?.align ?? "text-align: start;"
         const textStyle = currentTemplate?.lines?.[1]?.text?.[0]?.style || currentTemplate?.lines?.[0]?.text?.[0]?.style || "font-size: 80px;"
 
         const emptyItem = { align: itemAlignStyle, lines: [{ text: [], align: alignStyle }], style: itemStyle, specialStyle: currentTemplate?.specialStyle || {}, actions: currentTemplate?.actions || {} } // scrolling, bindings

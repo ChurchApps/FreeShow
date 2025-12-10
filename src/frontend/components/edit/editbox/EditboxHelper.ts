@@ -81,7 +81,7 @@ export class EditboxHelper {
 
                 if (start > -1 && currentIndex >= start) {
                     if (!secondLines.length) secondLines.push({ align: line.align, text: [] })
-                    const pos = sel[i].start - textPos
+                    const pos = start - textPos
                     if (pos > 0)
                         firstLines[firstLines.length - 1].text.push({
                             style: text.style,

@@ -274,7 +274,7 @@
     let previousItem = "{}"
     $: newItem = JSON.stringify(item)
     $: if (newItem !== previousItem) autoSizeReady = false
-    $: if (newItem !== lastRenderedSignature && (item?.auto || (item?.textFit && item?.textFit !== "none"))) {
+    $: if (newItem !== lastRenderedSignature && (item?.auto || (item?.textFit || "none") !== "none")) {
         fontSize = item?.autoFontSize || 0
         lastRenderedSignature = newItem
         hideUntilAutosized = shouldHideUntilAutoSizeCompletes()
@@ -333,26 +333,25 @@
         // TEMP FIX for auto size sometimes not sized properly in show slides
         if (!preview && !isStage) await wait(70)
 
-        let type = item?.textFit || "shrinkToFit"
-
         let defaultFontSize
         let maxFontSize
 
         const isTextItem = (item.type || "text") === "text"
         const isDynamic = isTextItem && getItemText(isStage ? stageItem : item).includes("{")
+        let textFit = item.textFit || (item.auto ? (isTextItem ? "shrinkToFit" : "growToFit") : "none")
 
         if (isStage) {
             // wait for text content to populate if dynamic value
             if (isDynamic) await wait(10)
-            if (stageItem?.type !== "text") type = stageItem?.textFit || "growToFit"
+            if (stageItem?.type !== "text") textFit = stageItem?.textFit || "growToFit"
 
             // const textItem = isTextItem ? item?.lines?.[0]?.text || [] : stageItem
             let itemFontSize = Number(getStyles(stageItem?.style, true)?.["font-size"] || "") || 100
 
             defaultFontSize = itemFontSize
-            if (type === "growToFit" && itemFontSize !== 100) maxFontSize = itemFontSize
+            if (textFit === "growToFit" && itemFontSize !== 100) maxFontSize = itemFontSize
         } else {
-            if (isTextItem && (!item.auto || (item?.textFit || "none") === "none")) {
+            if (isTextItem && textFit === "none") {
                 fontSize = 0
                 return
             }
@@ -368,7 +367,7 @@
             customTypeRatio = verseItemSize / 100 || 1
 
             defaultFontSize = itemFontSize
-            if (type === "growToFit" && isTextItem) maxFontSize = itemFontSize
+            if (textFit === "growToFit" && isTextItem) maxFontSize = itemFontSize
         }
 
         let elem = itemElem
@@ -394,7 +393,7 @@
             elem = elem.querySelector(".align") as HTMLElement
             textQuery = ".lines .break span"
         } else {
-            type = "growToFit"
+            textFit = "growToFit"
             if (item.type === "slide_tracker") textQuery = ".progress div"
         }
         // not working due to stage SlideText "loading" elem?
@@ -404,7 +403,7 @@
         // }
 
         fontSize = autosize(elem, {
-            type,
+            type: textFit,
             textQuery,
             defaultFontSize,
             maxFontSize
