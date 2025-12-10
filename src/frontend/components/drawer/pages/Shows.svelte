@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { onMount } from "svelte"
     // import VirtualList from "@sveltejs/svelte-virtual-list"
     // import VirtualList from "./VirtualList2.svelte"
     import type { ShowList } from "../../../../types/Show"
@@ -236,13 +237,14 @@
     }
 
     let activeIsSearch = true
-    $: if (searchValue.length < 2) activeIsSearch = true
-    function mouseup() {
-        activeIsSearch = document.activeElement?.classList.contains("search") || false
-    }
+    onMount(() => {
+        const searchInput = document.querySelector(".drawer")?.querySelector(".search")
+        searchInput?.addEventListener("focus", () => (activeIsSearch = true))
+        searchInput?.addEventListener("blur", () => (activeIsSearch = false))
+    })
 </script>
 
-<svelte:window on:keydown={keydown} on:mouseup={mouseup} />
+<svelte:window on:keydown={keydown} />
 
 <Autoscroll style="overflow-y: auto;flex: 1;">
     <!-- bind:this={listElem} -->

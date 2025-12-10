@@ -232,7 +232,13 @@
                 {/if}
 
                 <!-- class:height={!line.text[0]?.value.length} -->
-                <div class="break" class:reveal={(centerPreview || isStage) && item?.lineReveal && revealed < i} class:smallFontSize={smallFontSize || customFontSize || textAnimation.includes("font-size")} style="{style ? lineStyle : ''}{style ? line.align : ''}{item?.list?.enabled && line.text?.reduce((value, t) => (value += t.value || ''), '')?.length ? listStyle : ''}{item?.list?.enabled ? `color: ${getStyles(line.text[0]?.style).color || ''};` : ''}">
+                <div
+                    class="break"
+                    class:normalWrap={isStage ? stageItem.style.includes("justify") || stageItem.style.includes("nowrap") : line.align.includes("justify") || JSON.stringify(line).includes("nowrap")}
+                    class:reveal={(centerPreview || isStage) && item?.lineReveal && revealed < i}
+                    class:smallFontSize={smallFontSize || customFontSize || textAnimation.includes("font-size")}
+                    style="{style ? lineStyle : ''}{style ? line.align : ''}{item?.list?.enabled && line.text?.reduce((value, t) => (value += t.value || ''), '')?.length ? listStyle : ''}{item?.list?.enabled ? `color: ${getStyles(line.text[0]?.style).color || ''};` : ''}"
+                >
                     {#each line.text || [] as text, ti}
                         {@const value = text.value?.replaceAll("\n", "<br>") || "<br>"}
                         <span class="textContainer" style="{style ? getCustomStyle(text.style) : ''}{customStyle}{text.customType?.includes('disableTemplate') ? text.style : ''}{fontSize ? `;font-size: ${fontSize * (text.customType?.includes('disableTemplate') && !text.customType?.includes('jw') ? customTypeRatio : 1)}px;` : style ? getCustomFontSize(text.style, outputStyle) : ''}">
@@ -284,6 +290,11 @@
 
         /* balanced breaking, looks much cleaner */
         text-wrap: balance;
+    }
+
+    /* normal wrap if "Text on one line (nowrap)" or Justify aligned */
+    .break.normalWrap {
+        text-wrap: unset;
     }
 
     .lines .break.reveal {

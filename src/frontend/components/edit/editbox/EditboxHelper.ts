@@ -137,7 +137,10 @@ export class EditboxHelper {
             const align = (line.align || "").replaceAll(lineStyleBg, "").replaceAll(lineStyleRadius, "") + ";"
             currentStyle += align + lineStyleBg + lineStyleRadius // + line.chords?.map((a) => a.key)
             const style = align || lineStyleBg || lineStyleRadius || listStyle ? 'style="' + align + lineStyleBg + lineStyleRadius + listStyle + '"' : ""
-            html += `<div class="break" ${plain ? "" : style}>`
+
+            const normalWrap = align.includes("justify") || JSON.stringify(line).includes("nowrap")
+
+            html += `<div class="break ${normalWrap ? "normalWrap" : ""}" ${plain ? "" : style}>`
 
             // fix removing all text in a line
             if (i === 0 && line.text?.[0]?.style) firstTextStyleArchive = line.text?.[0]?.style || ""

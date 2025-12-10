@@ -53,7 +53,7 @@
     // get the selected category
     if ($drawerTabsData.shows?.activeSubTab && $categories[$drawerTabsData.shows.activeSubTab]) selectedCategory = cats.find(a => a.id === $drawerTabsData.shows.activeSubTab)
     // get the category from the active show
-    else if ($shows[$activeShow?.id || ""]?.category) selectedCategory = cats.find(a => a.id === $shows[$activeShow?.id || ""]?.category)
+    else if ($shows[$activeShow?.id || ""]?.category && $categories[$shows[$activeShow!.id].category!]) selectedCategory = cats.find(a => a.id === $shows[$activeShow?.id || ""]?.category)
     // set to "Songs" if it exists & nothing else if selected
     else if ($categories.song) selectedCategory = cats.find(a => a.id === "song")
     // otherwise set to first category
@@ -70,14 +70,26 @@
     $: resolvedCreateOptions = clone(createOptions).map((a: any) => {
         if (a.id === "text") a.colored = values.text.length
         if (a.id === "web") a.disabled = !values.name?.trim()
+
+        if (a.id === "empty") {
+            if (values.text.length) {
+                // don't create empty if there's text
+                a.name = translateText("new.show")
+                a.title = translateText("new.show [Ctrl+Enter]")
+            } else {
+                a.name = translateText("create_show.empty")
+                a.title = translateText("new.empty_show [Ctrl+Enter]")
+            }
+        }
+
         return a
     })
 
     let selectedOption = ""
     function selectOption(id: string) {
         if (id === "empty") {
-            values.text = ""
-            values.origin = ""
+            // values.text = ""
+            // values.origin = ""
             textToShow()
         } else {
             selectedOption = id

@@ -355,6 +355,7 @@
     "inputs": {
         "name": "Naam",
         "url": "URL",
+        "group": "Groep",
         "method": "Methode",
         "contentType": "Content Type",
         "payload": "Payload",
@@ -399,7 +400,8 @@
         "offers": "Collectes",
         "notice": "Mededelingen",
         "visuals": "Beeldmaterialen",
-        "action_tip": "Een actie die wordt geactiveerd, telkens wanneer een show met deze categorie wordt gepresenteerd."
+        "action_tip": "Een actie die wordt geactiveerd, telkens wanneer een show met deze categorie wordt gepresenteerd.",
+        "create_nonexistent": "Niet-bestaande categorieën maken"
     },
     "groups": {
         "current": "Huidig",
@@ -433,6 +435,7 @@
         "variable": "Variabele",
         "trigger": "Trigger",
         "audio_stream": "Audio stream",
+        "now_playing": "Nu het afspelen van bestand",
         "aspect_ratio": "Beeldverhouding wijzigen",
         "max_lines": "Max. aantal regels instellen",
         "transition": "Overgang",
@@ -446,6 +449,7 @@
         "choose_output": "Kies uitvoertype",
         "choose_style": "Voorkeursstijl kiezen",
         "change_output_values": "Uitvoerwaarden wijzigen",
+        "output_selector": "Uitvoerkiezer",
         "choose_chord": "Akkoorden kiezen",
         "set_time": "Tijd instellen",
         "assign_shortcut": "Snelkoppeling toewijzen",
@@ -484,6 +488,7 @@
         "manage_colors": "Beheer kleuren",
         "manage_metadata": "Metadata beheren",
         "manage_dynamic_values": "Dynamische waarden beheren",
+        "template_style_overrides": "Stijl overschrijven",
         "choose_camera": "Kies camera",
         "manage_tags": "Labels beheren",
         "sync_categories": "Categorieën synchroniseren",
@@ -492,6 +497,7 @@
         "unsaved": "Weet je zeker dat je wilt afsluiten?",
         "cancel": "Annuleren",
         "continue": "Doorgaan",
+        "restore": "Backup herstellen",
         "reset_all": "Alles opnieuw instellen",
         "reset_all_confirm": "Weet je zeker dat je alles opnieuw wil instellen?",
         "reset_all_action": "Hierdoor wordt het hele programma opnieuw ingesteld, maar worden de .show-bestanden in uw map \"Shows\" niet verwijderd.",
@@ -764,6 +770,7 @@
         "start_playlist": "Afspeellijst starten",
         "playlist_next": "Volgend nummer in afspeellijst",
         "start_metronome": "Metronoom starten",
+        "start_audio_effect": "Start audio-effect",
         "id_start_timer": "Start timer",
         "start_slide_timers": "Start timers op actieve dia",
         "id_select_output_style": "Selecteer uitvoerstijl",
@@ -950,6 +957,8 @@
         "max_lines_per_slide": "Max. regels per dia",
         "break_long_lines": "Breek lange lijnen",
         "break_long_lines_tip": "Regel onderbreken als deze langer is dan de ingestelde woorden",
+        "style_overrides_tip": "Automatisch aanpassende woorden opnieuw stylen.",
+        "style_override_pattern": "Woord of /regex/",
         "skip_virtual_breaks": "Virtuele pauzes overslaan",
         "media_fit": "Media passend",
         "cropping": "Bijsnijden",
@@ -990,8 +999,8 @@
         "_title_top": "Bovenkant uitlijnen",
         "_title_bottom": "Onderkant uitlijnen",
         "align_center": "Gecentreerd",
-        "align_start": "Start",
-        "align_end": "Eind",
+        "align_start": "Top",
+        "align_end": "Onderkant",
         "outline": "Uitlijnen",
         "shadow": "Schaduw",
         "shadow_inset": "Schaduw inzet",
@@ -1209,7 +1218,8 @@
         "source_output": "Bron output",
         "auto_stretch": "Inhoud automatisch uitrekken",
         "labels": "Labels tonen",
-        "label_color": "Labelkleur"
+        "label_color": "Labelkleur",
+        "create_stage_output": "Maak stage uitvoer"
     },
     "settings": {
         "general": "Algemeen",
@@ -1265,6 +1275,7 @@
         "disable_labels": "Schakel labels uit",
         "group_numbers": "Groepsnummers",
         "auto_group_numbers": "Groepsnummers automatisch toewijzen",
+        "shortcuts_on_slides": "Snelkoppelingen weergeven op dia's",
         "transparent_slides": "Transparant dia voorbeeld",
         "full_colors": "Groepskleuren met hoog contrast",
         "next_item_on_last_slide": "Pijl naar links/rechts verandert projectitem op eerste/laatste dia",
@@ -1297,15 +1308,11 @@
         "add": "Toevoegen",
         "remove": "Verwijderen",
         "change_name": "Naam wijzigen",
-        "show_location": "Showlocatie",
         "data_location": "Datalocatie",
-        "user_data_location": "Gebruikersinstellingen opslaan op datalocatie",
-        "user_data_location_confirm": "Ga alleen door als je weet wat je doet. Gebruikersgegevenslocatie wijzigen?",
-        "user_data_exists": "Er zijn bestaande gegevens op de aangepaste locatie gevonden. Wilt u deze overschrijven?",
-        "user_data_yes": "Ja, behoud huidige gegevens",
-        "user_data_no": "Nee, importeer bestaande gegevens",
         "auto_locate_missing_media_files": "Automatisch ontbrekende mediabestanden lokaliseren",
         "popup_before_close": "Pop-up voor bevestiging van sluiten inschakelen",
+        "log_song_usage": "Log lied gebruik naar een bestand",
+        "auto_error_reporting": "Auto fout rapportage",
         "disable_hardware_acceleration": "Hardwareversnelling uitschakelen",
         "restart_for_change": "U moet het programma opnieuw opstarten om de wijziging door te voeren.",
         "font": "Lettertype",
@@ -1353,7 +1360,8 @@
     },
     "output": {
         "state_inactive": "Inactief",
-        "state_locked": "Vergrendeld"
+        "state_locked": "Vergrendeld",
+        "disabled_layers": "Uitgeschakelde lagen"
     },
     "profile": {
         "profiles_hint": "Maak meerdere profielen/rollen aan om de toegang van bepaalde gebruikers tot het beheren/bewerken van bepaalde onderdelen van het programma te beperken.",
@@ -1415,6 +1423,7 @@
         "verse_numbers": "Versnummers",
         "verses_on_individual_lines": "Verzen op afzonderlijke regels",
         "divide_long_verses": "Lange verzen splitsen",
+        "split_long_verses_suffix": "Toon letter achtervoegsel",
         "version": "Toon versie",
         "reference": "Toon referentie",
         "split_reference": "Split referentie",
@@ -1422,6 +1431,7 @@
         "first_slide_reference": "Referentie op eerste dia",
         "reference_at_bottom": "Verplaats naar beneden",
         "red_jesus": "Jezus woorden in rood",
+        "show_all": "Toon alles",
         "search": "Zoek in de Bijbel"
     },
     "filter": {

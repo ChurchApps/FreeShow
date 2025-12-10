@@ -1141,17 +1141,23 @@ const customTriggers = {
 
 // DYNAMIC VALUES
 
+const commonOnly = ["slide_text_", "time_str", "project_section_time"]
 export const dynamicValueText = (id: string) => `{${id}}`
-export function getDynamicIds(noVariables = false, mode: null | "scripture" = null): string[] {
-    const mainValues = Object.keys(dynamicValues)
-    const metaValues = Object.keys(getCustomMetadata()).map(id => `meta_${id.replaceAll(" ", "_").toLowerCase()}`)
+export function getDynamicIds(noVariables = false, mode: null | "scripture" = null, showAll: boolean = true): string[] {
+    const mainValues = Object.keys(dynamicValues).filter(id => (showAll ? true : !commonOnly.find(cId => id.startsWith(cId))))
+    const metaValues = showAll ? Object.keys(getCustomMetadata()).map(id => `meta_${id.replaceAll(" ", "_").toLowerCase()}`) : []
 
     const mergedValues = [...(mode === "scripture" ? Object.keys(scriptureDynamicValues) : []), ...mainValues, ...metaValues]
     if (noVariables) return mergedValues
 
-    const timersList = sortByName(Object.values(get(timers)))
+    const timersList: string[] = []
+    sortByName(Object.values(get(timers)))
         .filter(a => a.name)
-        .map(({ name }) => `timer_${getVariableNameId(name)}`)
+        .forEach(({ name }) => {
+            timersList.push(`timer_${getVariableNameId(name)}`)
+            if (showAll) timersList.push(`timer_m_${getVariableNameId(name)}`)
+            if (showAll) timersList.push(`timer_s_${getVariableNameId(name)}`)
+        })
 
     const rssValues = sortByName(get(special).dynamicRSS || [])
         .filter(a => a.name)
@@ -1236,37 +1242,66 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
     const customIds = ["slide_text_current", "active_layers", "active_styles", "log_song_usage"]
     ;[...getDynamicIds(false, mode), ...customIds].forEach(dynamicId => {
         let textHasValue = text.includes(dynamicValueText(dynamicId))
-        if (dynamicId.includes("$") && text.includes(dynamicValueText(dynamicId.replace("$", "variable_")))) textHasValue = true
+        if (dynamicId.startsWith("$") && text.includes(dynamicValueText(dynamicId.replace("$", "variable_")))) textHasValue = true
         if (!textHasValue) return
 
         const newValue = getDynamicValueText(dynamicId, currentShow)
         text = text.replaceAll(dynamicValueText(dynamicId), newValue)
 
         // $ = variable_
-        if (dynamicId.includes("$")) text = text.replaceAll(dynamicValueText(dynamicId.replace("$", "variable_")), newValue)
+        if (dynamicId.startsWith("$")) text = text.replaceAll(dynamicValueText(dynamicId.replace("$", "variable_")), newValue)
     })
 
     return text
 
     function getDynamicValueText(dynamicId: string, show: Show | object): string {
         // VARIABLE
-        if (dynamicId.includes("variable_set_") || dynamicId.includes("$") || dynamicId.includes("variable_")) {
+        if (dynamicId.startsWith("variable_set_") || dynamicId.startsWith("$") || dynamicId.startsWith("variable_")) {
             return getVariableValue(dynamicId, { showId, layoutId, slideIndex, type, id: dynamicId })
         }
 
-        if (dynamicId.includes("timer_")) {
-            const nameId = dynamicId.slice(6)
+        if (dynamicId.startsWith("timer_")) {
+            let min = dynamicId.startsWith("timer_m_")
+            let sec = dynamicId.startsWith("timer_s_")
+            const nameId = dynamicId.slice(min || sec ? 8 : 6)
             const timer = keysToID(get(timers)).find(a => getVariableNameId(a.name) === nameId)
-            if (!timer) return "00:00"
+            if (!timer) return min || sec ? "00" : "00:00"
 
             const today = new Date()
             const currentTime = getCurrentTimerValue(timer, { id: timer.id }, today)
-            const timeValue = joinTimeBig(typeof currentTime === "number" ? currentTime : 0)
 
+            const overflow = !!timer.overflow
+            const isOverflowing = getTimerOverflow()
+
+            if ((min || sec) && isOverflowing) {
+                if (min || !overflow) return "00"
+                return (currentTime < 0 ? "" : "-") + currentTime.toString().padStart(2, "0")
+            }
+            if (min) {
+                return currentTime >= 60
+                    ? Math.floor(currentTime / 60)
+                          .toString()
+                          .padStart(2, "0")
+                    : "00"
+            }
+            if (sec) return (currentTime % 60).toString().padStart(2, "0")
+
+            const timeValue = joinTimeBig(typeof currentTime === "number" ? currentTime : 0)
+            if (isOverflowing) return `-${timeValue}`
             return timeValue
+
+            function getTimerOverflow() {
+                if (!timer?.overflow) return false
+                if (currentTime < 0) return true
+                if (timer.type !== "counter") return false
+                let start = timer.start || 0
+                let end = timer.end || 0
+                if (start < end) return currentTime > end
+                return currentTime < end
+            }
         }
 
-        if (dynamicId.includes("rss_")) {
+        if (dynamicId.startsWith("rss_")) {
             const nameId = dynamicId.slice(4)
             const rss = get(special).dynamicRSS?.find(a => getVariableNameId(a.name) === nameId)
             if (!rss) return ""
@@ -1276,7 +1311,7 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
 
         let outputId: string = getWindowOutputId()
 
-        if (dynamicId.includes("video_") && isOutputWin) {
+        if (dynamicId.startsWith("video_") && isOutputWin) {
             send(OUTPUT, ["MAIN_REQUEST_VIDEO_DATA"], { id: outputId })
         }
 
@@ -1295,7 +1330,7 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
         if (!show) show = {}
 
         // META
-        if (dynamicId.includes("meta_")) {
+        if (dynamicId.startsWith("meta_")) {
             const key = dynamicId.slice(5).replaceAll("_", " ")
             if (!Object.keys(show)) return ""
             let customKey = get(customMetadata).custom.find(a => a.toLowerCase() === key) || key

@@ -188,7 +188,8 @@
     }
 </script>
 
-<div class="scroll split" style={useOldSystem ? "" : "padding-bottom: 46px;"}>
+<!-- scripture is for focusedArea -->
+<div class="scroll split scripture" style={useOldSystem ? "" : "padding-bottom: 46px;"}>
     <Zoomed style="width: 100%;" {background}>
         {#if selectedVerses.length}
             {#if templateBackground}

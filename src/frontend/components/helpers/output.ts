@@ -854,7 +854,11 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
         ] as string[]
 
         item.lines?.forEach((line, j) => {
-            const templateLine = templateItem?.lines?.[j] || templateItem?.lines?.[0]
+            let templateLine = templateItem?.lines?.[j] || templateItem?.lines?.[0]
+            if (!templateLine) return
+
+            // remove empty text parts (if not completely empty)
+            if (templateLine.text.some(a => a?.value?.trim().length)) templateLine.text = templateLine.text.filter(a => a?.value?.trim().length)
 
             const hasDynamicValue = templateLine?.text?.some(text => text.value?.includes("{"))
 

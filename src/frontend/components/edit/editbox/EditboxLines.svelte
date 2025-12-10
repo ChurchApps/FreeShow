@@ -739,12 +739,17 @@
         text-align: center;
         justify-content: center;
         /* align-items: center; */
-
-        /* balanced breaking, looks much cleaner */
-        text-wrap: balance;
     }
     .edit.hidden {
         visibility: hidden;
+    }
+
+    .edit :global(.break) {
+        /* balanced breaking, looks much cleaner */
+        text-wrap: balance;
+    }
+    .edit :global(.break.normalWrap) {
+        text-wrap: unset;
     }
 
     /* .edit.tallLines {

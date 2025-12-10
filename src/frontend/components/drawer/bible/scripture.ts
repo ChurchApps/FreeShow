@@ -780,7 +780,7 @@ export function getScriptureSlidesNew(data: any, onlyOne = false, disableReferen
                         // Add text objects after the key
                         newLineText.push(...line.text.slice(keyIndex + 1))
 
-                        line.text = newLineText.filter(a => a.value)
+                        line.text = newLineText.filter(a => a.value?.trim())
                     })
                 })
             })
