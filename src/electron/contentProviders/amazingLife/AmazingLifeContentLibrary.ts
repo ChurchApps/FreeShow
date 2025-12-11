@@ -98,7 +98,8 @@ export class AmazingLifeContentLibrary {
 
                         // Fetch libraries for each product in the module
                         if (module.products && Array.isArray(module.products)) {
-                            const productPromises = module.products.map((product: any) => this.fetchProductLibraries(product.productId, product.title, product.image, headers))
+                            const visibleProducts = module.products.filter((product: any) => !product.isHidden)
+                            const productPromises = visibleProducts.map((product: any) => this.fetchProductLibraries(product.productId, product.title, product.image, headers))
 
                             const productResults = await Promise.all(productPromises)
                             moduleCategory.children = productResults.filter((p): p is ContentLibraryCategory => p !== null)
