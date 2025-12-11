@@ -92,10 +92,9 @@ export class AmazingLifeProvider extends ContentProvider<AmazingLifeScopes, Amaz
     /**
      * Determines if a specific URL should be encrypted
      */
-<<<<<<< HEAD
-    shouldEncrypt(_url: string, pingbackUrl?: string): boolean {
-        // Only encrypt if this has a pingback URL (indicating licensed content)
-        return !!pingbackUrl
+    shouldEncrypt(_url: string, _pingbackUrl?: string): boolean {
+        // Encrypt all AmazingLife content
+        return true
     }
 
     /**
