@@ -528,6 +528,7 @@ export function getScriptureSlidesNew(data: any, onlyOne = false, disableReferen
                 line.text = line.text.filter((a) => a.value?.trim())
                 return line
             })
+
             if (index === slides.length - 1) return item
 
             // remove entire line with last
