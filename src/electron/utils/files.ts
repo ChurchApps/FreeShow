@@ -767,6 +767,7 @@ export function loadShows(returnShows = false) {
 
     const cachedShows = getStore("SHOWS") || {}
     const newCachedShows: TrimmedShows = {}
+    const textCache: { [key: string]: string } = {}
 
     // create a map for quick lookup of cached shows by name
     const cachedShowNames = new Map<string, string>()
@@ -799,6 +800,17 @@ export function loadShows(returnShows = false) {
 
         const trimmedShow = trimShow({ ...show[1], name })
         if (trimmedShow) newCachedShows[id] = trimmedShow
+
+        // cache text content
+        const txt = getTextCacheString(show[1])
+        if (txt) textCache[id] = txt
+    }
+
+    // send updated text cache
+    if (Object.keys(textCache).length) {
+        const cache = getStore("CACHE")
+        cache.text = { ...cache.text, ...textCache }
+        sendMain(Main.CACHE, cache)
     }
 
     if (returnShows) return newCachedShows
@@ -812,6 +824,19 @@ export function loadShows(returnShows = false) {
     }
 
     return newCachedShows
+}
+
+// same as frontend setShow.ts
+function getTextCacheString(show: Show) {
+    if (!show?.slides || show?.reference?.type) return ""
+
+    return Object.values(show.slides)
+        .flatMap((slide) => slide?.items)
+        .flatMap((item) => item?.lines || [])
+        .flatMap((line) => line?.text || [])
+        .map((text) => text?.value || "")
+        .join(" ")
+        .toLowerCase()
 }
 
 export function parseShow(jsonData: string) {

@@ -152,11 +152,22 @@ export function saveTextCache(id: string, show: Show) {
     // don't cache scripture/calendar shows text or archived categories
     if (!show?.slides || show?.reference?.type || get(categories)[show.category || ""]?.isArchive) return
 
-    const txt = Object.values(show.slides)
+    const txt = getTextCacheString(show)
+    tempCache[id] = txt
+
+    // prevent rapid updates
+    if (updateTimeout) clearTimeout(updateTimeout)
+    updateTimeout = setTimeout(() => {
+        textCache.set({ ...get(textCache), ...tempCache })
+        tempCache = {}
+    }, 1000)
+}
+function getTextCacheString(show: Show) {
+    return Object.values(show.slides)
         .flatMap((slide) => slide?.items)
         .flatMap((item) => item?.lines || [])
         .flatMap((line) => line?.text || [])
-        .map((text) => text?.value)
+        .map((text) => text?.value || "")
         .join(" ")
         .toLowerCase()
     // .replace(/[^a-z0-9 ]+/g, "")
@@ -166,15 +177,6 @@ export function saveTextCache(id: string, show: Show) {
     // txt = Buffer.from(txt).toString("base64")
     // Buffer.from(encode, 'base64').toString('utf-8')
     // window.atob(encode)
-
-    tempCache[id] = txt
-
-    // prevent rapid updates
-    if (updateTimeout) clearTimeout(updateTimeout)
-    updateTimeout = setTimeout(() => {
-        textCache.set({ ...get(textCache), ...tempCache })
-        tempCache = {}
-    }, 1000)
 }
 
 export function setQuickAccessMetadata(show: ShowObj, key: string, value: string) {

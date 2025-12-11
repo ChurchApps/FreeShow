@@ -426,6 +426,11 @@
         const keys = e.ctrlKey || e.metaKey || e.shiftKey
         if (keys || !selectedVerses[selectedVerses.length - 1]?.find((a) => a && (a.toString() === verseNumber || a === getVerseId(verseNumber)))) {
             selectedVerses[selectedVerses.length - 1] = scriptureRangeSelect(e, selectedVerses[selectedVerses.length - 1], verseNumber, splittedVerses)
+
+            // deselecting a verse
+            if (!selectedVerses[selectedVerses.length - 1]?.find((id) => id.toString() === verseNumber)) {
+                previousSelection = clone(selectedVerses[selectedVerses.length - 1])
+            }
         }
 
         // drop action (create slide/show from drag&drop)

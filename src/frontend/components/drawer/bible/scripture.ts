@@ -523,6 +523,12 @@ export function getScriptureSlidesNew(data: any, onlyOne = false, disableReferen
     // {scripture_reference_last} only on last slide
     slides = slides.map((items, index) => {
         return items.map((item) => {
+            // remove empty text objects
+            item.lines = item.lines?.map((line) => {
+                line.text = line.text.filter((a) => a.value?.trim())
+                return line
+            })
+
             if (index === slides.length - 1) return item
 
             // remove entire line with last
@@ -767,9 +773,9 @@ export function getScriptureSlidesNew(data: any, onlyOne = false, disableReferen
                                 if (isSameVersePart) {
                                     newLineText.push({ ...keyTextObj, value: " " })
                                 } else if (!isConsecutive) {
-                                    newLineText.push({ ...keyTextObj, value: "\n" })
+                                    newLineText.push({ ...keyTextObj, value: "<br><br>", style: keyTextObj.style + ";line-height: 0.1em;" })
                                 } else {
-                                    newLineText.push({ ...keyTextObj, value: versesOnIndividualLines ? "\n" : " " })
+                                    newLineText.push({ ...keyTextObj, value: versesOnIndividualLines ? "<br>" : " " })
                                 }
                             }
                         })
@@ -780,7 +786,7 @@ export function getScriptureSlidesNew(data: any, onlyOne = false, disableReferen
                         // Add text objects after the key
                         newLineText.push(...line.text.slice(keyIndex + 1))
 
-                        line.text = newLineText.filter((a) => a.value?.trim())
+                        line.text = newLineText.filter((a) => a.value !== "")
                     })
                 })
             })
@@ -1531,11 +1537,9 @@ export function moveSelection(lengths: { book: number; chapters: number; verses:
 
     if (!moveLeft) {
         // ---- MOVE RIGHT ----
-        console.log(lastVerse, maxVerses)
         if (lastVerse < maxVerses) {
             // Just move within the same chapter
             const newStart = firstVerse + verseCount
-            console.log(newStart, maxVerses)
             if (newStart <= maxVerses) {
                 // return plain verse numbers (strip subverse parts)
                 verses = Array.from({ length: verseCount }, (_, i) => newStart + i).filter((v) => v <= maxVerses)
@@ -1630,6 +1634,9 @@ export function swapPreviewBible(collectionId: string) {
 // Custom range selection for scripture verses that handles split verses (e.g., "1_1", "5_2")
 export function scriptureRangeSelect(e: any, currentlySelected: (number | string)[], newSelection: number | string, availableVerses: { id: string }[]): (number | string)[] {
     if (!e.ctrlKey && !e.metaKey && !e.shiftKey) return [newSelection]
+
+    currentlySelected = currentlySelected.map((id) => id.toString())
+    newSelection = newSelection.toString()
 
     if (e.ctrlKey || e.metaKey) {
         if (currentlySelected.includes(newSelection)) {

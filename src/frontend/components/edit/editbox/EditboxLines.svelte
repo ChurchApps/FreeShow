@@ -12,7 +12,7 @@
     import { _show } from "../../helpers/shows"
     import { getStyles } from "../../helpers/style"
     import autosize from "../scripts/autosize"
-    import { getLineText, getSelectionRange, setCaret } from "../scripts/textStyle"
+    import { getItemText, getLineText, getSelectionRange, setCaret } from "../scripts/textStyle"
     import EditboxChords from "./EditboxChords.svelte"
     import { EditboxHelper } from "./EditboxHelper"
 
@@ -643,7 +643,7 @@
 {#if item?.lines}
     <!-- TODO: remove align..... -->
     <div bind:this={alignElem} class="align" class:chords={chordsMode} class:plain style={plain ? null : item.align || null}>
-        {#if item.lines?.length < 2 && !item.lines?.[0]?.text?.[0]?.value?.length}
+        {#if item.lines?.length < 2 && !getItemText(item).length}
             <span class="placeholder">
                 <p>
                     {#if chordsMode}

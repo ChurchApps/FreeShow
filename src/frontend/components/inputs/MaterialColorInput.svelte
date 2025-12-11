@@ -27,6 +27,8 @@
     function getHexValue(value: string) {
         if (typeof value !== "string") return "#000000"
 
+        opacity = 100
+
         if (value.includes("gradient")) {
             if (!pickerOpen) opacity = getGradientOpacity(value) * 100
             return value
@@ -169,6 +171,12 @@
     let opacity = 100
     let updated: NodeJS.Timeout | null = null
     let gotUpdate = false
+    // don't update if value just changed
+    $: if (value) remount()
+    function remount() {
+        mounted = false
+        setTimeout(() => (mounted = true))
+    }
     $: if (opacity) opacityChanged()
     function opacityChanged() {
         if (!allowOpacity || !mounted) return
