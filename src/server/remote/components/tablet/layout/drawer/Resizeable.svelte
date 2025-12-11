@@ -147,7 +147,7 @@
     function storeValue() {
         if (!loaded) return
 
-        resized.update(a => {
+        resized.update((a) => {
             a[id] = width
             return a
         })

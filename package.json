@@ -1,6 +1,6 @@
 {
     "name": "freeshow",
-    "version": "1.5.5-beta.2",
+    "version": "1.5.5",
     "private": true,
     "main": "build/electron/index.js",
     "description": "Show song lyrics and more for free!",
@@ -75,7 +75,7 @@
         "@typescript-eslint/eslint-plugin": "^5.62.0",
         "@typescript-eslint/parser": "^5.62.0",
         "cross-env": "^7.0.3",
-        "electron": "^37.7.0",
+        "electron": "^37.10.3",
         "electron-builder": "^26.0.19",
         "eslint": "^8.57.1",
         "eslint-config-prettier": "^8.10.2",

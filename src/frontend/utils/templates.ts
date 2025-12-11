@@ -24,13 +24,13 @@ export class TemplateHelper {
     }
 
     getTextboxItems() {
-        return this.getItems().filter(a => {
+        return this.getItems().filter((a) => {
             if (getItemText(a).includes("{")) return false
             return a.lines
         })
     }
     getNonTextboxItems() {
-        return this.getItems().filter(a => {
+        return this.getItems().filter((a) => {
             if (getItemText(a).includes("{")) return true
             return !a.lines && a.type !== "text"
         })

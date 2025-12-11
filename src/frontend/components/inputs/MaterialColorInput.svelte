@@ -27,6 +27,8 @@
     function getHexValue(value: string) {
         if (typeof value !== "string") return "#000000"
 
+        opacity = 100
+
         if (value.includes("gradient")) {
             if (!pickerOpen) opacity = getGradientOpacity(value) * 100
             return value
@@ -155,13 +157,13 @@
     $: disabledColors = $special.disabledColors || []
     $: disabledGradientColors = $special.disabledColorsGradient || []
 
-    $: customColors = ($special.customColors || []).map(value => ({ name: "", value }))
+    $: customColors = ($special.customColors || []).map((value) => ({ name: "", value }))
     $: colorsList = editMode ? [...defaultColors, "BREAK", ...customColors] : [...defaultColors, ...customColors]
-    $: if (!editMode) colorsList = colorsList.filter(a => !disabledColors.includes(a.value))
+    $: if (!editMode) colorsList = colorsList.filter((a) => !disabledColors.includes(a.value))
 
-    $: customGradients = ($special.customColorsGradient || []).map(value => ({ name: "", value }))
+    $: customGradients = ($special.customColorsGradient || []).map((value) => ({ name: "", value }))
     $: gradientColorsList = editMode ? [...defaultGradients, "BREAK", ...customGradients] : [...defaultGradients, ...customGradients]
-    $: if (!editMode) gradientColorsList = gradientColorsList.filter(a => !disabledGradientColors.includes(a.value))
+    $: if (!editMode) gradientColorsList = gradientColorsList.filter((a) => !disabledGradientColors.includes(a.value))
 
     // OPACITY
 
@@ -169,6 +171,12 @@
     let opacity = 100
     let updated: NodeJS.Timeout | null = null
     let gotUpdate = false
+    // don't update if value just changed
+    $: if (value) remount()
+    function remount() {
+        mounted = false
+        setTimeout(() => (mounted = true))
+    }
     $: if (opacity) opacityChanged()
     function opacityChanged() {
         if (!allowOpacity || !mounted) return
@@ -212,7 +220,7 @@
             <div class="pickerContent">
                 {#if selectedMode === "gradient"}
                     {#each gradientColorsList as color}
-                        {@const isCustom = editMode && customGradients.find(a => a.value === color.value)}
+                        {@const isCustom = editMode && customGradients.find((a) => a.value === color.value)}
 
                         {#if color === "BREAK"}
                             <div style="display: block;margin: 10px;width: 100%;"></div>
@@ -229,7 +237,7 @@
 
                     {#if allowOpacity}
                         <div class="opacity">
-                            <MaterialNumberInput label="edit.opacity" value={Math.round(opacity)} min={1} max={100} on:change={e => (opacity = Math.round(e.detail))} showSlider />
+                            <MaterialNumberInput label="edit.opacity" value={Math.round(opacity)} min={1} max={100} on:change={(e) => (opacity = Math.round(e.detail))} showSlider />
                         </div>
                     {/if}
 
@@ -238,7 +246,7 @@
                         on:click={() => {
                             popupData.set({
                                 value: hexValue,
-                                trigger: newValue => {
+                                trigger: (newValue) => {
                                     selectColor(newValue)
                                     if (editMode) setTimeout(() => activePopup.set("manage_colors"))
                                 }
@@ -266,7 +274,7 @@
                         </div>
                     {/if}
                     {#each colorsList as color}
-                        {@const isCustom = editMode && customColors.find(a => a.value === color.value)}
+                        {@const isCustom = editMode && customColors.find((a) => a.value === color.value)}
 
                         {#if color === "BREAK"}
                             <div style="display: block;margin: 10px;width: 100%;"></div>
@@ -283,7 +291,7 @@
 
                     {#if allowOpacity}
                         <div class="opacity">
-                            <MaterialNumberInput label="edit.opacity" value={Math.round(opacity)} min={1} max={100} on:change={e => (opacity = Math.round(e.detail))} showSlider />
+                            <MaterialNumberInput label="edit.opacity" value={Math.round(opacity)} min={1} max={100} on:change={(e) => (opacity = Math.round(e.detail))} showSlider />
                         </div>
                     {/if}
 

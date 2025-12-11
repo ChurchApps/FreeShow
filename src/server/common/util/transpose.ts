@@ -87,7 +87,7 @@ export function hasChords(text: string): boolean {
     if (!matches) return false
 
     // Check if any match looks like a chord (not a section label)
-    return matches.some(match => {
+    return matches.some((match) => {
         const content = match.slice(1, -1) // Remove brackets
         // Section labels typically have more than 3 characters and contain lowercase letters
         // that aren't part of chord notation

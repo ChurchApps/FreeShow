@@ -57,7 +57,7 @@ export function shouldItemBeShown(item: Item, allItems: Item[] = [], { outputId,
     if (type === "stage") allItems = getTempItems(item, allItems)
 
     if (!allItems.length) allItems = [item]
-    const slideItems = allItems.filter(a => !a.bindings?.length || a.bindings.includes(outputId))
+    const slideItems = allItems.filter((a) => !a.bindings?.length || a.bindings.includes(outputId))
     const itemsText = slideItems.reduce((value, currentItem) => (value += getItemText(currentItem)), "")
     // set dynamic values
     // const ref = { showId: get(activeShow)?.id, layoutId: _show().get("settings.activeLayout"), slideIndex: get(activeEdit).slide, type: get(activePage) === "stage" ? "stage" : get(activeEdit).type || "show", id: get(activeEdit).id }
@@ -99,10 +99,10 @@ function isConditionMet(condition: Condition | undefined, itemsText: string) {
     }
 
     // outerOr
-    const conditionMet = condition.some(outerAnd => {
-        return outerAnd.every(innerOr => {
-            return innerOr.some(innerAnd => {
-                return innerAnd.every(content => {
+    const conditionMet = condition.some((outerAnd) => {
+        return outerAnd.every((innerOr) => {
+            return innerOr.some((innerAnd) => {
+                return innerAnd.every((content) => {
                     return checkConditionValue(content, itemsText)
                 })
             })
@@ -151,7 +151,7 @@ function checkConditionValue(cVal: ConditionValue, itemsText: string) {
 
 export function getFirstActiveTimer() {
     let firstTimerId = get(activeTimers)[0]?.id
-    if (!firstTimerId) firstTimerId = sortByName(keysToID(get(timers))).find(timer => timer.type !== "counter")?.id || ""
+    if (!firstTimerId) firstTimerId = sortByName(keysToID(get(timers))).find((timer) => timer.type !== "counter")?.id || ""
 
     return firstTimerId
 }
@@ -171,7 +171,7 @@ function isTimerRunning(timerId: string) {
         return value > 0
     }
 
-    return get(activeTimers).some(a => a.id === timerId)
+    return get(activeTimers).some((a) => a.id === timerId)
 }
 
 export function _getVariableValue(dynamicId: string) {
@@ -204,7 +204,7 @@ function getSetChars(sets: { name: string; minValue?: number; maxValue?: number 
     let chars = 1
     if (!sets) return 4
 
-    sets.forEach(a => {
+    sets.forEach((a) => {
         const minChars = (a.minValue ?? 1).toString().length
         const maxChars = (a.maxValue ?? 1000).toString().length
         if (minChars > chars) chars = minChars
@@ -217,7 +217,7 @@ function getSetChars(sets: { name: string; minValue?: number; maxValue?: number 
 function getVariableValue(dynamicId: string, ref: any = null) {
     if (dynamicId.includes("variable_set_")) {
         const nameId = dynamicId.slice(13)
-        const variable = Object.values<Variable>(get(variables)).find(a => getVariableNameId(a.name) === nameId)
+        const variable = Object.values<Variable>(get(variables)).find((a) => getVariableNameId(a.name) === nameId)
         if (variable?.type !== "random_number") return ""
 
         return variable.setName || ""
@@ -225,11 +225,11 @@ function getVariableValue(dynamicId: string, ref: any = null) {
 
     if (dynamicId.includes("$") || dynamicId.includes("variable_")) {
         const nameId = dynamicId.includes("$") ? dynamicId.slice(1) : dynamicId.slice(9)
-        let variable = Object.values<Variable>(get(variables)).find(a => getVariableNameId(a.name) === nameId)
+        let variable = Object.values<Variable>(get(variables)).find((a) => getVariableNameId(a.name) === nameId)
 
         if (!variable && nameId.includes("__")) {
             const textSetId = nameId.slice(0, nameId.indexOf("__"))
-            variable = Object.values<Variable>(get(variables)).find(a => getVariableNameId(a.name) === textSetId)
+            variable = Object.values<Variable>(get(variables)).find((a) => getVariableNameId(a.name) === textSetId)
         }
         if (!variable) return ""
 
@@ -238,7 +238,7 @@ function getVariableValue(dynamicId: string, ref: any = null) {
         if (variable.type === "text_set") {
             const currentSet = variable.textSets?.[variable.activeTextSet ?? 0] || {}
             const setId = nameId.slice(nameId.indexOf("__") + 2)
-            const setName = variable.textSetKeys?.find(name => getVariableNameId(name) === setId) || ""
+            const setName = variable.textSetKeys?.find((name) => getVariableNameId(name) === setId) || ""
             return currentSet[setName] || ""
         }
 

@@ -21,16 +21,16 @@ function createSlides({ slide, slide2 }: any) {
     const slides: any = {}
     const layout: any[] = []
 
-    ;[cdataString(slide), cdataString(slide2)].forEach(s =>
+    ;[cdataString(slide), cdataString(slide2)].forEach((s) =>
         s
             .split("<slide>")
-            .filter(a => Boolean(a.trim()))
-            .map(lines =>
+            .filter((a) => Boolean(a.trim()))
+            .map((lines) =>
                 lines
                     .replace(/<BR>/gi, "<br>")
                     .split("<br>")
-                    .map(line => line.trim())
-                    .filter(a => Boolean(a.trim()))
+                    .map((line) => line.trim())
+                    .filter((a) => Boolean(a.trim()))
             )
             .forEach((lines: string[]) => {
                 const id: string = uid()

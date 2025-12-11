@@ -50,11 +50,11 @@ export const _updaters = {
             if (!outputId) return
 
             // get first stage layout
-            const stageOutput = sortByName(keysToID(get(stageShows))).filter(a => a.id !== id)[0] || null
+            const stageOutput = sortByName(keysToID(get(stageShows))).filter((a) => a.id !== id)[0] || null
             if (!stageOutput) return
 
             // set to new stage output
-            outputs.update(a => {
+            outputs.update((a) => {
                 a[outputId].stageOutput = stageOutput.id
                 return a
             })
@@ -65,7 +65,7 @@ export const _updaters = {
         store: projects,
         empty: EMPTY_PROJECT,
         cloudCombine: true,
-        initialize: data => {
+        initialize: (data) => {
             return replaceEmptyValues(data, { name: getProjectName(), created: Date.now(), modified: Date.now(), used: Date.now() })
         },
         select: (id: string, { data }: any, initializing: boolean) => {
@@ -73,14 +73,14 @@ export const _updaters = {
 
             // remove active show index
             if (get(activeShow) !== null) {
-                activeShow.update(a => {
+                activeShow.update((a) => {
                     delete a!.index
                     return a
                 })
             }
 
             // open parent folders if closed
-            openedFolders.update(a => {
+            openedFolders.update((a) => {
                 let parentFolder = data.parent
                 while (parentFolder !== "/" && get(folders)[parentFolder]) {
                     if (!a.includes(parentFolder)) a.push(parentFolder)
@@ -106,12 +106,12 @@ export const _updaters = {
         store: folders,
         empty: EMPTY_PROJECT_FOLDER,
         cloudCombine: true,
-        initialize: data => {
+        initialize: (data) => {
             return replaceEmptyValues(data, { created: Date.now(), modified: Date.now() })
         },
         select: (id: string, { data, changed }: any, initializing: boolean) => {
             // open parent folders if closed
-            openedFolders.update(a => {
+            openedFolders.update((a) => {
                 let parentFolder = data.parent
                 while (parentFolder !== "/" && get(folders)[parentFolder]) {
                     if (!a.includes(parentFolder)) a.push(parentFolder)
@@ -129,8 +129,8 @@ export const _updaters = {
             if (!changed) return
 
             // add back projects & folders inside
-            projects.update(a => addBackParents(a, "project"))
-            folders.update(a => addBackParents(a, "folder"))
+            projects.update((a) => addBackParents(a, "project"))
+            folders.update((a) => addBackParents(a, "folder"))
 
             function addBackParents(items: any, type: "project" | "folder") {
                 changed[type]?.forEach((a: any) => {
@@ -142,7 +142,7 @@ export const _updaters = {
         deselect: (id: string) => {
             // remove folder from opened folders
             if (get(openedFolders).includes(id)) {
-                openedFolders.update(a => {
+                openedFolders.update((a) => {
                     a.splice(a.indexOf(id), 1)
                     return a
                 })
@@ -153,8 +153,8 @@ export const _updaters = {
             if (!parentId) return
 
             const parents: any = { project: [], folder: [] }
-            projects.update(a => findAllParents(a, "project"))
-            folders.update(a => findAllParents(a, "folder"))
+            projects.update((a) => findAllParents(a, "project"))
+            folders.update((a) => findAllParents(a, "folder"))
 
             return parents
 
@@ -189,7 +189,7 @@ export const _updaters = {
     section: {
         store: projects,
         empty: EMPTY_SECTION,
-        initialize: data => {
+        initialize: (data) => {
             return replaceEmptyValues(data, { id: uid(5) })
         },
         select: (_id: string, data: any) => {
@@ -340,7 +340,7 @@ export const _updaters = {
             // add to current(stored) project
             const showRef: any = { id, type: "show" }
             if (data.remember?.project && get(projects)[data.remember.project]?.shows) {
-                projects.update(p => {
+                projects.update((p) => {
                     if (data.remember.index !== undefined && p[data.remember.project].shows.length > data.remember.index) {
                         p[data.remember.project].shows = addToPos(p[data.remember.project].shows, [{ id }], data.remember.index)
                         showRef.index = data.remember.index
@@ -364,7 +364,7 @@ export const _updaters = {
             saveTextCache(id, data.data)
 
             // update shows list (same as showsCache, but with less data)
-            shows.update(a => {
+            shows.update((a) => {
                 a[id] = { name: data.data.name, category: data.data.category, timestamps: data.data.timestamps, quickAccess: data.data.quickAccess || {} }
                 if (data.data.origin) a[id].origin = data.data.origin
                 if (data.data.private) a[id].private = true
@@ -376,7 +376,7 @@ export const _updaters = {
             // open selected drawer tab
             const activeCategory = get(drawerTabsData).shows?.activeSubTab
             if (activeCategory !== "all" && activeCategory !== "unlabeled") {
-                drawerTabsData.update(a => {
+                drawerTabsData.update((a) => {
                     a.shows = { enabled: true, activeSubTab: data.data.category }
                     return a
                 })
@@ -384,8 +384,8 @@ export const _updaters = {
 
             // remove from "not found" (should not be nessesary)
             setTimeout(() => {
-                notFound.update(a => {
-                    if (a.show.includes(id)) a.show = a.show.filter(showId => showId !== id)
+                notFound.update((a) => {
+                    if (a.show.includes(id)) a.show = a.show.filter((showId) => showId !== id)
                     return a
                 })
             }, 10)
@@ -395,14 +395,14 @@ export const _updaters = {
 
             // remove from stored project
             if (data.remember?.project && get(projects)[data.remember.project]?.shows) {
-                projects.update(a => {
-                    a[data.remember.project].shows = a[data.remember.project].shows.filter(showRef => showRef.id !== id)
+                projects.update((a) => {
+                    a[data.remember.project].shows = a[data.remember.project].shows.filter((showRef) => showRef.id !== id)
                     return a
                 })
             }
 
             // update shows list (same as showsCache, but with less data)
-            shows.update(a => {
+            shows.update((a) => {
                 delete a[id]
                 return a
             })
@@ -417,7 +417,7 @@ export const _updaters = {
 
             // set active layout in project
             if (get(activeShow)?.index !== undefined && get(activeProject) && get(projects)[get(activeProject)!]?.shows?.[get(activeShow)!.index!]) {
-                projects.update(a => {
+                projects.update((a) => {
                     a[get(activeProject)!].shows[get(activeShow)!.index!].layout = subkey
                     a[get(activeProject)!].shows[get(activeShow)!.index!].layoutInfo = { name: _show(id).get("layouts")?.[subkey]?.name || "" }
                     return a
@@ -430,7 +430,7 @@ export const _updaters = {
         deselect: (id: string, { subkey }: any) => {
             if (_show(id).get("settings.activeLayout") !== subkey) return
 
-            const firstLayoutId = Object.keys(get(showsCache)[id].layouts).filter(layoutId => layoutId !== subkey)[0]
+            const firstLayoutId = Object.keys(get(showsCache)[id].layouts).filter((layoutId) => layoutId !== subkey)[0]
             if (firstLayoutId) _show(id).set({ key: "settings.activeLayout", value: firstLayoutId })
         }
     },
@@ -457,7 +457,7 @@ export const _updaters = {
         select: (id: string, data: any, initializing: boolean) => {
             // TODO: remove default if name change; if (a[obj.location!.theme!].default) groupValue
             if (data.key === "name" && get(themes)[id].default) {
-                themes.update(a => {
+                themes.update((a) => {
                     delete a[id].default
                     return a
                 })
@@ -504,16 +504,16 @@ export const _updaters = {
         },
         deselect: () => {
             setTimeout(() => {
-                const allNormalOutputs = Object.keys(get(outputs)).filter(outputId => {
+                const allNormalOutputs = Object.keys(get(outputs)).filter((outputId) => {
                     const output = get(outputs)[outputId]
                     return !output.stageOutput
                 })
 
                 if (allNormalOutputs.length > 0) {
                     // enable if no enabled
-                    const allEnabled = allNormalOutputs.filter(id => get(outputs)[id].enabled)
+                    const allEnabled = allNormalOutputs.filter((id) => get(outputs)[id].enabled)
                     if (!allEnabled.length) {
-                        outputs.update(a => {
+                        outputs.update((a) => {
                             a[allNormalOutputs[0]].enabled = true
                             return a
                         })
@@ -522,7 +522,7 @@ export const _updaters = {
                 }
 
                 // create output if no normal outputs (in case stage outputs are still active)
-                outputs.update(a => {
+                outputs.update((a) => {
                     a.default = { enabled: true, active: true, name: translateText("theme.primary"), color: "#F0008C", bounds: { x: 0, y: 0, width: 1920, height: 1080 }, screen: null, style: "default", show: {} }
                     return a
                 })
@@ -539,7 +539,7 @@ export const _updaters = {
 }
 
 function updateTransparentColors(id: string) {
-    themes.update(a => {
+    themes.update((a) => {
         Object.entries(a[id]?.colors || {}).forEach(([subId, color]: any) => {
             if (!converts[subId]) return
             const transparentColors: any[] = converts[subId]
@@ -587,15 +587,15 @@ function replaceEmptyValues(object: any, replacer: any) {
 }
 
 export const projectReplacers = [
-    { id: "DD", title: translateText("calendar.day"), value: date => addZero(date.getDate()) },
-    { id: "MM", title: translateText("calendar.month"), value: date => addZero(date.getMonth() + 1) },
-    { id: "YY", title: translateText("calendar.year"), value: date => date.getFullYear().toString().slice(-2) },
-    { id: "YYYY", title: "Full year", value: date => date.getFullYear() },
-    { id: "hh", title: "Hours", value: date => date.getHours() },
-    { id: "mm", title: "Minutes", value: date => date.getMinutes() },
-    { id: "weeknum", title: "Week number", value: date => getWeekNumber(date) },
-    { id: "weekday", title: "Weekday", value: date => getWeekday(date.getDay(), get(dictionary), true) },
-    { id: "monthname", title: "Name of month", value: date => getMonthName(date.getMonth(), get(dictionary), true) }
+    { id: "DD", title: translateText("calendar.day"), value: (date) => addZero(date.getDate()) },
+    { id: "MM", title: translateText("calendar.month"), value: (date) => addZero(date.getMonth() + 1) },
+    { id: "YY", title: translateText("calendar.year"), value: (date) => date.getFullYear().toString().slice(-2) },
+    { id: "YYYY", title: "Full year", value: (date) => date.getFullYear() },
+    { id: "hh", title: "Hours", value: (date) => date.getHours() },
+    { id: "mm", title: "Minutes", value: (date) => date.getMinutes() },
+    { id: "weeknum", title: "Week number", value: (date) => getWeekNumber(date) },
+    { id: "weekday", title: "Weekday", value: (date) => getWeekday(date.getDay(), get(dictionary), true) },
+    { id: "monthname", title: "Name of month", value: (date) => getMonthName(date.getMonth(), get(dictionary), true) }
 ]
 const DEFAULT_PROJECT_NAME = "{DD}.{MM}.{YY}"
 export function getDefaultProjectName() {
@@ -628,7 +628,7 @@ export function getProjectName(updater = get(special)) {
     let name = updater.default_project_name ?? getDefaultProjectName()
 
     const date = new Date()
-    projectReplacers.forEach(a => {
+    projectReplacers.forEach((a) => {
         name = name.replaceAll(`{${a.id}}`, a.value(date))
     })
 
@@ -637,10 +637,10 @@ export function getProjectName(updater = get(special)) {
 
 function clearOverlayOutput(slideId: string) {
     if (!isOutCleared("overlays")) {
-        outputs.update(a => {
+        outputs.update((a) => {
             Object.entries(a).forEach(([id, output]) => {
                 if (output.out?.overlays?.includes(slideId)) {
-                    a[id].out!.overlays = a[id].out!.overlays!.filter(overlayId => overlayId !== slideId)
+                    a[id].out!.overlays = a[id].out!.overlays!.filter((overlayId) => overlayId !== slideId)
                 }
             })
             return a
@@ -649,7 +649,7 @@ function clearOverlayOutput(slideId: string) {
 }
 
 export function setDrawerTabData(tabId, data) {
-    drawerTabsData.update(a => {
+    drawerTabsData.update((a) => {
         if (!a[tabId]) a[tabId] = { enabled: true, activeSubTab: "" }
         a[tabId].activeSubTab = data
 

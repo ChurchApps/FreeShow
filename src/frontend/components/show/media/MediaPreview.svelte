@@ -10,9 +10,10 @@
 
     $: show = $activeShow
 
-    $: if (show?.id?.includes("http")) download()
+    $: path = show?.id || ""
+    $: if (path.includes("http")) download()
     async function download() {
-        show!.id = await downloadOnlineMedia(show!.id)
+        path = await downloadOnlineMedia(path)
     }
 
     $: outputId = getActiveOutputs($outputs)[0]
@@ -20,7 +21,7 @@
     $: currentStyle = getCurrentStyle($styles, currentOutput.style)
 
     let mediaStyle: MediaStyle = {}
-    $: mediaData = $media[show?.id || ""] || {}
+    $: mediaData = $media[path] || {}
     $: if (show) mediaStyle = getMediaStyle(mediaData, currentStyle)
 
     $: mediaStyleString = `width: 100%;height: 100%;object-fit: ${mediaStyle.fit === "blur" ? "contain" : mediaStyle.fit || "contain"};filter: ${mediaStyle.filter || ""};transform: scale(${mediaStyle.flipped ? "-1" : "1"}, ${mediaStyle.flippedY ? "-1" : "1"});`
@@ -33,7 +34,7 @@
         {#if show.type === "video" || show.type === "player"}
             <VideoShow {show} {mediaStyle} />
         {:else}
-            <div id={show.id} class="media context #media_preview" style="flex: 1;overflow: hidden;">
+            <div id={path} class="media context #media_preview" style="flex: 1;overflow: hidden;">
                 <HoverButton
                     icon="play"
                     size={10}
@@ -43,13 +44,13 @@
                         const type = mediaData.videoType
                         if (type === "foreground" || type !== "background") clearSlide()
 
-                        setOutput("background", { path: show?.id, ...mediaStyle })
+                        setOutput("background", { path, ...mediaStyle })
                     }}
                 >
                     {#if mediaStyle.fit === "blur"}
-                        <Image style={mediaStyleBlurString} src={show.id} alt="" />
+                        <Image style={mediaStyleBlurString} src={path} alt="" />
                     {/if}
-                    <Image style={mediaStyleString} src={show.id} alt={show.name || ""} />
+                    <Image style={mediaStyleString} src={path} alt={show.name || ""} />
                 </HoverButton>
             </div>
         {/if}

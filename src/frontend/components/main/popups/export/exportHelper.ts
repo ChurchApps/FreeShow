@@ -25,7 +25,7 @@ export const getShowIdsFromType = {
     project: (onlyShows = true) => {
         if (!get(activeProject)) return
 
-        const projectShows = (get(projects)[get(activeProject)!]?.shows || []).filter(a => (onlyShows ? (a?.type || "show") === "show" : true))
+        const projectShows = (get(projects)[get(activeProject)!]?.shows || []).filter((a) => (onlyShows ? (a?.type || "show") === "show" : true))
         return projectShows.map(({ id }) => id)
     },
     selected_shows: () => {

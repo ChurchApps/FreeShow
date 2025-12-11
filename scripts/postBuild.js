@@ -10,20 +10,20 @@ function getAllJSFiles(dirPath, arrayOfFiles) {
 
     if (!arrayOfFiles) arrayOfFiles = []
 
-    files.forEach(file => {
+    files.forEach((file) => {
         const isFolder = statSync(join(dirPath, file)).isDirectory()
 
         if (isFolder) arrayOfFiles = getAllJSFiles(join(dirPath, file), arrayOfFiles)
         else arrayOfFiles.push(join(dirPath, file))
     })
 
-    return arrayOfFiles.filter(filePath => /\.js$/.exec(filePath))
+    return arrayOfFiles.filter((filePath) => /\.js$/.exec(filePath))
 }
 
 function deleteFolderRecursive(folderPath) {
     if (!existsSync(folderPath)) return
 
-    readdirSync(folderPath).forEach(file => {
+    readdirSync(folderPath).forEach((file) => {
         const path = join(folderPath, file)
         const isFolder = lstatSync(path).isDirectory()
         if (isFolder) return deleteFolderRecursive(path)
@@ -52,7 +52,7 @@ function copyPublicFolderAndMinify(folderPath, destinationPath) {
         // if (/\.html$/.exec(curPath)) return minifyHTML(curPath, newPath)
         // if (/\.css$/.exec(curPath)) return minifyCSS(curPath, newPath)
 
-        if (/\.png|\.ico|\.icns|\.html|\.css|\.ttf|\.woff|\.woff2|\.json$/.exec(curPath)) {
+        if (/\.png|\.ico|\.icns|\.html|\.css|\.ttf|\.woff|\.woff2|\.json|\.svg$/.exec(curPath)) {
             const fileContent = readFileSync(curPath)
             writeFileSync(newPath, fileContent)
         }
@@ -87,17 +87,17 @@ const minifyJSOptions = {
 }
 
 function minifyJSFiles(filePaths) {
-    filePaths.forEach(filePath => minifyJS(filePath))
+    filePaths.forEach((filePath) => minifyJS(filePath))
 }
 
 function minifyJS(filePath, newPath = "") {
     const unminified = readFileSync(filePath, "utf8")
 
     Terser.minify(unminified, minifyJSOptions)
-        .then(minified => {
+        .then((minified) => {
             writeFileSync(newPath || filePath, minified.code)
         })
-        .catch(err => {
+        .catch((err) => {
             process.emitWarning(err)
             process.abort()
         })
@@ -158,7 +158,7 @@ function renameOpusBuild() {
     const electronMajorVersion = electronVersion.split(".")[0] + "." + electronVersion.split(".")[1]
     const newName = `electron-v${electronMajorVersion}-${folders[0].slice(folders[0].indexOf("napi"))}`
 
-    rename(join(prebuildDir, folders[0]), join(prebuildDir, newName), err => {
+    rename(join(prebuildDir, folders[0]), join(prebuildDir, newName), (err) => {
         if (err) console.error("Error renaming folder:", err)
     })
 }

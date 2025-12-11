@@ -23,7 +23,7 @@ export function getBoxStyle(item: Item): StyleClipboard {
     if (!item) return { keys: {}, style: {} }
 
     // skip scripture verse numbers (customType)
-    const normalText = item.lines?.[0]?.text?.filter(a => !a.customType) || []
+    const normalText = item.lines?.[0]?.text?.filter((a) => !a.customType) || []
     const style = normalText[0]?.style || item.style
     const linesAlign = item.lines?.[0]?.align || ""
 
@@ -33,7 +33,7 @@ export function getBoxStyle(item: Item): StyleClipboard {
     const newStyles: { [key: string]: number | string } = getStyles(style)
 
     // remove any item keys (used for other items than textbox)
-    itemKeys.forEach(key => {
+    itemKeys.forEach((key) => {
         if (newStyles[key]) delete newStyles[key]
     })
 
@@ -49,7 +49,7 @@ export function getItemStyle(item: Item): StyleClipboard {
     const newStyles = getStyles(style)
 
     // only keep item keys
-    Object.keys(newStyles).forEach(key => {
+    Object.keys(newStyles).forEach((key) => {
         if (!itemKeys.includes(key)) delete newStyles[key]
     })
 
@@ -92,7 +92,7 @@ export function getFilterStyle(): StyleClipboard {
     const filterKeys = ["backdrop-filter", "filter"]
 
     const keys: { [key: string]: number | string } = {}
-    filterKeys.forEach(key => {
+    filterKeys.forEach((key) => {
         keys[key] = slideData[key] || ""
     })
 
@@ -124,7 +124,7 @@ export async function setBoxStyle(styles: StyleClipboard[], slides: any, type: I
         const style = styles[0]
 
         // item keys
-        Object.keys(style.keys).forEach(key => {
+        Object.keys(style.keys).forEach((key) => {
             const value = style.keys[key]
             history({
                 id: "setItems",
@@ -148,11 +148,11 @@ export async function setBoxStyle(styles: StyleClipboard[], slides: any, type: I
             //     newData: { style: { key: "align", values: [style.linesAlign] } },
             //     location: { page: "edit", show: get(activeShow)!, slide: slide.id, items },
             // })
-            showsCache.update(a => {
+            showsCache.update((a) => {
                 ;(a[get(activeShow)!.id]?.slides[slide.id || ""]?.items || [])
                     .filter((_, i) => items.includes(i))
-                    .forEach(item => {
-                        item.lines?.forEach(line => {
+                    .forEach((item) => {
+                        item.lines?.forEach((line) => {
                             line.align = style.linesAlign!
                         })
                     })
@@ -201,10 +201,10 @@ export async function setBoxStyle(styles: StyleClipboard[], slides: any, type: I
 
             if (!item.lines) return
 
-            const newLines = item.lines.map(line => {
+            const newLines = item.lines.map((line) => {
                 if (!line.text) return
 
-                return line.text.map(text => {
+                return line.text.map((text) => {
                     // don't style scripture verses
                     if (text.customType && !text.customType.includes("jw")) return text
 
@@ -308,9 +308,9 @@ export function getItemKeys(isBox = false) {
     // replace just item style or just box style if not textbox
     let itemKeys: string[] = []
 
-    Object.values(itemSections).forEach(values => {
+    Object.values(itemSections).forEach((values) => {
         itemKeys.push(
-            ...values.inputs.flat().map(a => {
+            ...values.inputs.flat().map((a) => {
                 const key = a.id === "style" ? a.key : a.id
                 return key || ""
             })
@@ -320,18 +320,18 @@ export function getItemKeys(isBox = false) {
     // gradient
     if (!isBox) itemKeys.push("background")
 
-    if (isBox) itemKeys = itemKeys.filter(a => !itemAndBoxKeys.includes(a))
+    if (isBox) itemKeys = itemKeys.filter((a) => !itemAndBoxKeys.includes(a))
     return itemKeys
 }
 
 function getSpecialBoxValues(item: Item) {
     const keyValues: any = {}
     const inputIds = Object.values(itemBoxes[item.type || "text"]?.sections || {})
-        .map(a => a.inputs.flat())
+        .map((a) => a.inputs.flat())
         .flat()
         .map(({ id }) => id)
 
-    inputIds.forEach(id => {
+    inputIds.forEach((id) => {
         if (id === "style") return
 
         if (id.includes(".")) id = id.slice(0, id.indexOf("."))

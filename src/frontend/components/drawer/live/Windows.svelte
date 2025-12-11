@@ -25,7 +25,7 @@
     let fullFilteredWindows: { id: string; name: string }[] = []
     function filterSearch() {
         fullFilteredWindows = clone(windows)
-        if (searchValue.length > 1) fullFilteredWindows = fullFilteredWindows.filter(a => filter(a.name).includes(searchValue))
+        if (searchValue.length > 1) fullFilteredWindows = fullFilteredWindows.filter((a) => filter(a.name).includes(searchValue))
     }
 
     $: currentOutput = getFirstActiveOutput($outputs)
@@ -37,7 +37,7 @@
             <Capture
                 bind:streams
                 screen={window}
-                on:click={e => {
+                on:click={(e) => {
                     if ($outLocked || e.ctrlKey || e.metaKey) return
                     if (currentOutput?.out?.background?.id === window.id) clearBackground()
                     else setOutput("background", { id: window.id, type: "screen" })

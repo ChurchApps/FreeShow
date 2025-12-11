@@ -41,7 +41,7 @@
     let updater = 0
     const updaterInterval = setInterval(() => {
         if (isClearing) return
-        if (currentItems.find(a => a.conditions)) updater++
+        if (currentItems.find((a) => a.conditions)) updater++
     }, 300)
     onDestroy(() => clearInterval(updaterInterval))
 </script>

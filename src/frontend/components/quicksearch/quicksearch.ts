@@ -102,14 +102,14 @@ export function quicksearch(searchValue: string) {
     // shows
     const shows = showSearch(
         searchValue,
-        get(sortedShowsList).filter(a => !get(categories)[a.category || ""]?.isArchive)
+        get(sortedShowsList).filter((a) => !get(categories)[a.category || ""]?.isArchive)
     )
     addValues(shows, "show", "slide")
 
     return trimValues()
 
     function addValues(items: any[], type: keyof typeof triggerActions, icon = "") {
-        const newValues: QuickSearchValue[] = items.map(a => ({ type, icon: a.icon || icon, id: a.id, name: a.name, color: a.color, data: a.data || null, aliasMatch: a.aliasMatch || null }))
+        const newValues: QuickSearchValue[] = items.map((a) => ({ type, icon: a.icon || icon, id: a.id, name: a.name, color: a.color, data: a.data || null, aliasMatch: a.aliasMatch || null }))
         values.push(...newValues)
     }
 }
@@ -336,7 +336,7 @@ export function selectQuicksearchValue(value: QuickSearchValue, control: boolean
 
 // HELPERS
 
-const translateNames = (array: any[]) => array.map(a => ({ ...a, name: translateText(a.name) })).map(translateAliases)
+const translateNames = (array: any[]) => array.map((a) => ({ ...a, name: translateText(a.name) })).map(translateAliases)
 
 function translateAliases(options: any) {
     options.aliases = (options.aliases || []).map(translateText)

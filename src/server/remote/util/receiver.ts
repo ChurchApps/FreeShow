@@ -46,9 +46,9 @@ export const receiver = {
         } else setError(data)
     },
     LANGUAGE: (data: any) => {
-        _.dictionary.update(a => {
-            Object.keys(a).forEach(i => {
-                Object.keys(a[i] || {}).forEach(j => {
+        _.dictionary.update((a) => {
+            Object.keys(a).forEach((i) => {
+                Object.keys(a[i] || {}).forEach((j) => {
                     if (data.strings[i]?.[j] && a[i]) a[i]![j] = data.strings[i][j]
                 })
             })
@@ -66,7 +66,7 @@ export const receiver = {
     /////
 
     SHOWS: (data: any) => {
-        const shows = Object.keys(data).map(id => ({ id, ...data[id] }))
+        const shows = Object.keys(data).map((id) => ({ id, ...data[id] }))
         _set("shows", shows)
         if (_get("quickPlay")) _set("activeTab", "shows")
     },
@@ -202,7 +202,7 @@ export const receiver = {
             const { id, bookIndex, chapters } = update
             if (!id || typeof bookIndex !== "number" || !Array.isArray(chapters)) return
 
-            scriptureCache.update(cache => {
+            scriptureCache.update((cache) => {
                 const bible = cache[id] || { books: [] as any[] }
                 const books = Array.isArray(bible.books) ? bible.books : []
                 const book = books[bookIndex] || {}
@@ -222,7 +222,7 @@ export const receiver = {
             const { id, bookIndex, chapterIndex, verses } = update
             if (!id || typeof bookIndex !== "number" || typeof chapterIndex !== "number" || !Array.isArray(verses)) return
 
-            scriptureCache.update(cache => {
+            scriptureCache.update((cache) => {
                 const bible = cache[id] || { books: [] as any[] }
                 const books = Array.isArray(bible.books) ? bible.books : []
                 const book = books[bookIndex] || { chapters: [] as any[] }

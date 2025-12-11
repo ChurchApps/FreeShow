@@ -29,7 +29,7 @@
             return
         }
 
-        popupData.set({ ...(data || {}), active: value, id, trigger: value => dispatch("change", value) })
+        popupData.set({ ...(data || {}), active: value, id, trigger: (value) => dispatch("change", value) })
         activePopup.set(popupId)
     }
 
@@ -69,7 +69,7 @@
         class="input edit button-trigger"
         role="button"
         tabindex={disabled ? undefined : 0}
-        on:click={e => {
+        on:click={(e) => {
             if (e.target?.closest(".remove")) return
             openPopup()
         }}

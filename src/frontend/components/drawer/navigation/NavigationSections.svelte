@@ -14,14 +14,14 @@
     export let sections: any[]
     export let active: string
 
-    $: if (sections.length && (!active || !sections.flat().find(a => a.id === active))) {
-        const flat = sections.flat().filter(a => a && a !== "SEPARATOR" && a.id !== "SEPARATOR" && a.id !== "TITLE")
+    $: if (sections.length && (!active || !sections.flat().find((a) => a.id === active))) {
+        const flat = sections.flat().filter((a) => a && a !== "SEPARATOR" && a.id !== "SEPARATOR" && a.id !== "TITLE")
         if (flat.length) setSubTab(flat[0].id)
     }
 
     function setSubTab(tabId: string) {
         const drawerId = $activeDrawerTab
-        drawerTabsData.update(a => {
+        drawerTabsData.update((a) => {
             a[drawerId] = { activeSubTab: tabId, enabled: a[drawerId]?.enabled !== false }
             return a
         })
@@ -41,18 +41,18 @@
         if ($activeEdit.items.length) return
         if (e.target?.closest(".edit") || !(e.ctrlKey || e.metaKey)) return
 
-        const flatSections = sections.flat().filter(a => !a.hidden)
+        const flatSections = sections.flat().filter((a) => !a.hidden)
 
         // Ctrl + Arrow Up/Down = change active drawer sub tab
         if (e.key === "ArrowDown") {
-            let index = flatSections.findIndex(a => a.id === active)
+            let index = flatSections.findIndex((a) => a.id === active)
             let nextIndex = index + 1
 
             while (nextIndex < flatSections.length && notATab(flatSections[nextIndex])) nextIndex++
 
             if (nextIndex < flatSections.length) setSubTab(flatSections[nextIndex].id)
         } else if (e.key === "ArrowUp") {
-            let index = flatSections.findIndex(a => a.id === active)
+            let index = flatSections.findIndex((a) => a.id === active)
             let nextIndex = index - 1
 
             while (nextIndex >= 0 && notATab(flatSections[nextIndex])) nextIndex--

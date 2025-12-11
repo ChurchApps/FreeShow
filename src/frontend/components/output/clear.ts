@@ -36,7 +36,7 @@ function storeCache() {
 
     const activeOutputs = getAllActiveOutputs()
 
-    outputCache.update(a => {
+    outputCache.update((a) => {
         // only store active outputs
         activeOutputs.forEach(({ id }) => {
             const out = get(outputs)[id]?.out
@@ -44,7 +44,7 @@ function storeCache() {
         })
 
         // audio
-        a.playingAudioData = AudioPlayer.getAllPlaying().map(path => {
+        a.playingAudioData = AudioPlayer.getAllPlaying().map((path) => {
             const playing = get(playingAudio)[path]
             return { path, metadata: { name: playing.name }, options: { startAt: playing.audio?.currentTime || 0 } }
         })
@@ -59,8 +59,8 @@ export function restoreOutput() {
 
     const activeOutputIds = getAllActiveOutputs().map(({ id }) => id)
 
-    outputs.update(a => {
-        Object.keys(get(outputCache)).forEach(id => {
+    outputs.update((a) => {
+        Object.keys(get(outputCache)).forEach((id) => {
             if (id.includes("playing")) return
             // restore only selected outputs
             if (!activeOutputIds.includes(id) || !a[id]) return
@@ -72,7 +72,7 @@ export function restoreOutput() {
 
     // audio
     if (get(outputCache).playingAudioData) {
-        get(outputCache).playingAudioData.forEach(data => {
+        get(outputCache).playingAudioData.forEach((data) => {
             AudioPlayer.start(data.path, data.metadata, data.options)
         })
     }
@@ -84,17 +84,17 @@ export function restoreOutput() {
 export function clearBackground(specificOutputId = "") {
     const outputIds = specificOutputId ? [specificOutputId] : getAllActiveOutputs().map(({ id }) => id)
 
-    outputIds.forEach(outputId => {
+    outputIds.forEach((outputId) => {
         // clearVideo()
         setOutput("background", null, false, outputId)
         clearPlayingVideo(outputId)
 
         // WIP this does not clear time properly
-        videosData.update(a => {
+        videosData.update((a) => {
             delete a[outputId]
             return a
         })
-        videosTime.update(a => {
+        videosTime.update((a) => {
             delete a[outputId]
             return a
         })
@@ -110,7 +110,7 @@ export function clearSlide(shouldClearAll = false) {
         // store position
         const slideCache: { [key: string]: OutSlide } = {}
         const activeOutputs = getAllActiveOutputs()
-        activeOutputs.forEach(output => {
+        activeOutputs.forEach((output) => {
             const slide = output?.out?.slide || null
             if (!slide?.id || slide.index === undefined) return
 
@@ -136,16 +136,16 @@ export function clearSlide(shouldClearAll = false) {
 export function clearOverlay(overlayId: string) {
     const activeOutputs = getAllActiveOutputs()
 
-    activeOutputs.forEach(output => {
+    activeOutputs.forEach((output) => {
         let outOverlays = output?.out?.overlays || []
-        outOverlays = outOverlays.filter(id => id !== overlayId)
-        lockedOverlays.set(get(lockedOverlays).filter(id => id !== overlayId))
+        outOverlays = outOverlays.filter((id) => id !== overlayId)
+        lockedOverlays.set(get(lockedOverlays).filter((id) => id !== overlayId))
 
         setOutput("overlays", outOverlays, false, output.id)
 
         // clear effects
         let outEffects: string[] = output?.out?.effects || []
-        outEffects = outEffects.filter(id => id !== overlayId)
+        outEffects = outEffects.filter((id) => id !== overlayId)
         setOutput("effects", outEffects, false, output.id)
     })
 }
@@ -153,9 +153,9 @@ export function clearOverlay(overlayId: string) {
 export function clearOverlays(specificOutputId = "") {
     const outputIds = specificOutputId ? [specificOutputId] : getAllActiveOutputs().map(({ id }) => id)
 
-    outputIds.forEach(outputId => {
+    outputIds.forEach((outputId) => {
         let outOverlays = clone(get(outputs)[outputId]?.out?.overlays || [])
-        outOverlays = outOverlays.filter(id => get(overlays)[id]?.locked)
+        outOverlays = outOverlays.filter((id) => get(overlays)[id]?.locked)
         setOutput("overlays", outOverlays, false, outputId)
         lockedOverlays.set(outOverlays)
 
@@ -172,15 +172,15 @@ export function clearTimers(specificOutputId = "", clearOverlayTimers = true) {
     setOutput("transition", null, false, specificOutputId)
 
     const outputIds = specificOutputId ? [specificOutputId] : getAllActiveOutputs().map(({ id }) => id)
-    Object.keys(get(slideTimers)).forEach(id => {
+    Object.keys(get(slideTimers)).forEach((id) => {
         if (outputIds.includes(id)) get(slideTimers)[id].timer?.clear()
     })
 
     if (!clearOverlayTimers) return
 
     // clear overlay/effect timers
-    outputIds.forEach(outputId => {
-        Object.values(get(overlayTimers)).forEach(a => {
+    outputIds.forEach((outputId) => {
+        Object.values(get(overlayTimers)).forEach((a) => {
             if (a.outputId === outputId) {
                 clearTimeout(a.timer)
                 clearOverlayTimer(a.outputId, a.overlayId)
@@ -190,7 +190,7 @@ export function clearTimers(specificOutputId = "", clearOverlayTimers = true) {
 }
 
 export function clearDrawing() {
-    drawSettings.update(a => {
+    drawSettings.update((a) => {
         if (!a.paint) return a
         a.paint.clear = true
         return a

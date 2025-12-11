@@ -22,12 +22,11 @@ const defaultPath = "./lang/en.json"
 
 let loadingLocale = ""
 function setLanguage(locale = "", init = false) {
-    console.log(locale)
     if (!locale) {
         // locale = getLocaleFromHostname(/^(.*?)\./) || getLocaleFromPathname(/^\/(.*?)\//) || getLocaleFromNavigator() || getLocaleFromHash('lang') || 'en';
         // locale = window.navigator.userLanguage || window.navigator.language || 'en';
         locale = window.navigator.language
-        Object.keys(replace).forEach(key => {
+        Object.keys(replace).forEach((key) => {
             if (replace[key].includes(locale)) locale = key
         })
     }
@@ -41,7 +40,7 @@ function setLanguage(locale = "", init = false) {
     loadingLocale = locale
     const url = defaultPath.replace("en", locale)
     fetch(url)
-        .then(response => response.json())
+        .then((response) => response.json())
         .then(returnedFile)
 
     async function returnedFile(messages: Dictionary) {
@@ -52,10 +51,10 @@ function setLanguage(locale = "", init = false) {
             const defaultStrings = await (await fetch(defaultPath)).json()
             if (loadingLocale !== locale) return
 
-            Object.keys(defaultStrings).forEach(key => {
+            Object.keys(defaultStrings).forEach((key) => {
                 if (!messages[key]) messages[key] = defaultStrings[key]
                 else {
-                    Object.keys(defaultStrings[key]).forEach(stringId => {
+                    Object.keys(defaultStrings[key]).forEach((stringId) => {
                         if (!(messages[key]![stringId] || "").trim()) messages[key]![stringId] = defaultStrings[key][stringId]
                     })
                 }
@@ -99,16 +98,16 @@ export { setLanguage }
 
 // Chinese, Japanese, and Korean should use full width brackets: "（" / "）"
 const fullWidth = ["zh", "ja", "ko"]
-export const getLeftParenthesis = () => (fullWidth.find(id => get(language).includes(id)) ? "（" : "(")
-export const getRightParenthesis = () => (fullWidth.find(id => get(language).includes(id)) ? "）" : ")")
+export const getLeftParenthesis = () => (fullWidth.find((id) => get(language).includes(id)) ? "（" : "(")
+export const getRightParenthesis = () => (fullWidth.find((id) => get(language).includes(id)) ? "）" : ")")
 
 // dropdown selector
 export function getLanguageList() {
-    let options: DropdownOptions = Object.keys(languages).map(id => ({ label: languages[id], value: id }))
+    let options: DropdownOptions = Object.keys(languages).map((id) => ({ label: languages[id], value: id }))
     options = sortByName(options, "label")
 
     // add flags after sorting
-    options = options.map(a => ({ ...a, prefix: languageFlags[a.value] || "" }))
+    options = options.map((a) => ({ ...a, prefix: languageFlags[a.value] || "" }))
 
     return options
 }

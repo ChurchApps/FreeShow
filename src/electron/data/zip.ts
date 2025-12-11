@@ -12,7 +12,7 @@ export function compressToZip(entries: { name: string; content?: Buffer | string
     return new Promise((resolve, reject) => {
         const zipfile = new yazl.ZipFile()
 
-        entries.forEach(entry => {
+        entries.forEach((entry) => {
             try {
                 if (entry.filePath) {
                     zipfile.addFile(entry.filePath, entry.name)
@@ -35,13 +35,13 @@ export function compressToZip(entries: { name: string; content?: Buffer | string
             resolve()
         })
 
-        writeStream.on("error", err => {
+        writeStream.on("error", (err) => {
             console.error(err)
             sendToMain(ToMain.ALERT, `Failed to create zip file: ${outputPath}`)
             reject(err)
         })
 
-        zipfile.outputStream.on("error", err => {
+        zipfile.outputStream.on("error", (err) => {
             console.error(err)
             reject(err)
         })
@@ -136,7 +136,7 @@ function streamToDisk(readStream: NodeJS.ReadableStream, outputPath: string, nam
         zipfile.readEntry()
     })
 
-    writeStream.on("error", err => {
+    writeStream.on("error", (err) => {
         console.error("Failed to write file to disk:", outputPath, err)
         zipfile.readEntry()
     })
@@ -159,7 +159,7 @@ function bufferInMemory(readStream: NodeJS.ReadableStream, name: string, extensi
         zipfile.readEntry()
     })
 
-    readStream.on("error", err => {
+    readStream.on("error", (err) => {
         console.error(err)
         zipfile.readEntry()
     })
@@ -168,7 +168,7 @@ function bufferInMemory(readStream: NodeJS.ReadableStream, name: string, extensi
 export function isZip(path: string): Promise<boolean> {
     const initialBuffer = Buffer.alloc(4)
 
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
         fs.open(path, "r", (openError, fd) => {
             if (openError) {
                 console.error(openError)
@@ -177,7 +177,7 @@ export function isZip(path: string): Promise<boolean> {
 
             fs.read(fd, initialBuffer, 0, 4, 0, (readError, _bytesRead, buffer) => {
                 if (readError) {
-                    fs.close(fd, closeError => {
+                    fs.close(fd, (closeError) => {
                         console.error(closeError || readError)
                         resolve(false)
                     })

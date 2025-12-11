@@ -6,10 +6,10 @@
     import MaterialCheckbox from "../../inputs/MaterialCheckbox.svelte"
 
     const mappedCategories = keysToID($categories)
-        .filter(a => !a.isArchive && a.name)
-        .map(category => {
+        .filter((a) => !a.isArchive && a.name)
+        .map((category) => {
             const name = category.default ? translateText(category.name) || category.name : category.name
-            const count = Object.values($shows).filter(show => show.category === category.id).length
+            const count = Object.values($shows).filter((show) => show.category === category.id).length
             return { id: category.id, name, icon: category.icon, count }
         })
 
@@ -18,11 +18,11 @@
     $: currentlySelected = $contentProviderData.churchApps?.syncCategories || []
 
     function toggleCategory(id: string) {
-        contentProviderData.update(a => {
+        contentProviderData.update((a) => {
             if (currentlySelected.indexOf(id) === -1) {
                 a.churchApps = { ...a.churchApps, syncCategories: [...currentlySelected, id] }
             } else {
-                a.churchApps = { ...a.churchApps, syncCategories: currentlySelected.filter(c => c !== id) }
+                a.churchApps = { ...a.churchApps, syncCategories: currentlySelected.filter((c) => c !== id) }
             }
 
             return a

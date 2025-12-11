@@ -43,8 +43,8 @@
     }
 
     $: overlayList = sortByName(keysToID($overlays))
-        .filter(a => a.name)
-        .map(a => ({ value: a.id, label: a.name }))
+        .filter((a) => a.name)
+        .map((a) => ({ value: a.id, label: a.name }))
 
     const modes = [
         { value: "default", label: translateText("example.default") },
@@ -56,14 +56,14 @@
 
 <div class="tools">
     <div>
-        <MaterialDropdown label="actions.mode" options={modes} value={mode} defaultValue="default" on:change={e => setValue(e.detail, "mode")} />
+        <MaterialDropdown label="actions.mode" options={modes} value={mode} defaultValue="default" on:change={(e) => setValue(e.detail, "mode")} />
     </div>
 
     <div>
         <MaterialColorInput
             label="edit.background_color"
             value={settings.backgroundColor}
-            on:input={e => {
+            on:input={(e) => {
                 settings.backgroundColor = e.detail
                 update()
             }}
@@ -72,7 +72,7 @@
         />
 
         <InputRow>
-            <MaterialFilePicker label="edit.background_media" value={settings.backgroundPath} filter={{ name: "Media files", extensions: mediaExtensions }} on:change={e => setValue(e, "backgroundPath")} allowEmpty />
+            <MaterialFilePicker label="edit.background_media" value={settings.backgroundPath} filter={{ name: "Media files", extensions: mediaExtensions }} on:change={(e) => setValue(e, "backgroundPath")} allowEmpty />
             <!-- {#if settings.backgroundPath}<MaterialButton title="titlebar.edit" icon="edit" on:click={editBackgroundImage} />{/if} -->
         </InputRow>
     </div>
@@ -85,8 +85,8 @@
             </span>
         </div>
 
-        <MaterialNumberInput label="edit.max_lines_per_slide" value={settings?.maxLinesPerSlide || 0} max={100} on:change={e => setValue(e, "maxLinesPerSlide")} />
-        <MaterialNumberInput label="edit.break_long_lines_tip" value={settings?.breakLongLines || 0} max={100} on:change={e => setValue(e, "breakLongLines")} />
+        <MaterialNumberInput label="edit.max_lines_per_slide" value={settings?.maxLinesPerSlide || 0} max={100} on:change={(e) => setValue(e, "maxLinesPerSlide")} />
+        <MaterialNumberInput label="edit.break_long_lines_tip" value={settings?.breakLongLines || 0} max={100} on:change={(e) => setValue(e, "breakLongLines")} />
     </div>
 
     <div>
@@ -97,7 +97,7 @@
             </span>
         </div>
 
-        <MaterialDropdown label="edit.overlay_content" options={overlayList} value={settings.overlayId || ""} on:change={e => setValue(e.detail, "overlayId")} allowEmpty />
+        <MaterialDropdown label="edit.overlay_content" options={overlayList} value={settings.overlayId || ""} on:change={(e) => setValue(e.detail, "overlayId")} allowEmpty />
 
         <InputRow>
             <MaterialPopupButton
@@ -106,7 +106,7 @@
                 name={$templates[settings.firstSlideTemplate || ""]?.name}
                 popupId="select_template"
                 icon="templates"
-                on:change={e => {
+                on:change={(e) => {
                     settings.firstSlideTemplate = e.detail
                     update()
                 }}

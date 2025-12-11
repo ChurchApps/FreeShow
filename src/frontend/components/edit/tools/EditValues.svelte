@@ -78,7 +78,7 @@
         if (!style) return ""
 
         // sort alphabetically
-        let split = style.split(";").filter(a => a)
+        let split = style.split(";").filter((a) => a)
         let sorted = split.sort((a, b) => a.localeCompare(b))
         style = sorted.join(";") + ";"
 
@@ -116,7 +116,7 @@
 
         if (input.valueIndex !== undefined) {
             if (sections[sectionId]) {
-                const allKeyValues = sections[sectionId]?.inputs.flat().filter(a => a.key === input.key)
+                const allKeyValues = sections[sectionId]?.inputs.flat().filter((a) => a.key === input.key)
                 const sortedKeys = allKeyValues.sort((a, b) => a.valueIndex! - b.valueIndex!)
 
                 let currentValue = styles[input.key || ""] || ""
@@ -158,7 +158,7 @@
 
         input.values.value = value
         const inputKey = `${input.id}${input.key || ""}${input.valueIndex || ""}`
-        throttle(inputKey, clone(input), value => dispatch("change", value), 20)
+        throttle(inputKey, clone(input), (value) => dispatch("change", value), 20)
 
         input.values.value = e.detail
     }
@@ -169,7 +169,7 @@
         let allInputsToCheck: EditInput2[] = []
         let filterOut: string[] = []
 
-        sections[id].inputs.flat().forEach(input => {
+        sections[id].inputs.flat().forEach((input) => {
             if (filterOut.includes(input.key || "")) return
             if (input.type === "radio") filterOut.push(input.key || "")
             allInputsToCheck.push(input)
@@ -195,7 +195,7 @@
 
     function resetSection(id: string) {
         sections[id].inputs.forEach((inputRow, rowIndex) => {
-            inputRow.forEach(input => {
+            inputRow.forEach((input) => {
                 const customDefaultValue = sections[id].defaultValues?.[rowIndex]
                 if (isDefaultValue(input, customDefaultValue)) return
 
@@ -220,7 +220,7 @@
         if (activeIndex < 0) {
             if (sections[id].expandAutoValue) {
                 Object.entries(sections[id].expandAutoValue).forEach(([key, value]) => {
-                    const input = clone(sections[id].inputs.flat().find(a => a.id === key || a.key === key))
+                    const input = clone(sections[id].inputs.flat().find((a) => a.id === key || a.key === key))
                     if (!input) return
 
                     if (input.valueIndex !== undefined) {
@@ -245,9 +245,9 @@
     ///
 
     const optionsLists = {
-        timers: getSortedTimers($timers, { showHours: item?.timer?.showHours !== false, firstActive: isStage }).map(a => ({ value: a.id, label: a.name, data: a.extraInfo })),
-        actions: sortByName(keysToID($actions)).map(a => ({ value: a.id, label: a.name || "" })),
-        outputWindows: sortByName(keysToID($outputs).filter(a => a.stageOutput !== $activeStage.id)).map(a => ({ value: a.id, label: a.name || "" }))
+        timers: getSortedTimers($timers, { showHours: item?.timer?.showHours !== false, firstActive: isStage }).map((a) => ({ value: a.id, label: a.name, data: a.extraInfo })),
+        actions: sortByName(keysToID($actions)).map((a) => ({ value: a.id, label: a.name || "" })),
+        outputWindows: sortByName(keysToID($outputs).filter((a) => a.stageOutput !== $activeStage.id)).map((a) => ({ value: a.id, label: a.name || "" }))
     }
     function getOptions(options: string | any[]): any[] {
         if (typeof options === "string") return optionsLists[options] || []
@@ -304,7 +304,7 @@
                                 {@const values = getValues(input)}
 
                                 {#if input.type === "fontDropdown"}
-                                    <MaterialFontDropdown label={values.label} {value} style={values.style} fontStyleValue={input.styleValue} on:change={e => changed(e, input)} on:fontStyle={e => changed(e, { ...input, key: "font" })} enableFontStyles />
+                                    <MaterialFontDropdown label={values.label} {value} style={values.style} fontStyleValue={input.styleValue} on:change={(e) => changed(e, input)} on:fontStyle={(e) => changed(e, { ...input, key: "font" })} enableFontStyles />
                                 {:else if input.type === "toggle"}
                                     <MaterialButton style="min-width: 50px;flex: 1;" title={values.label} on:click={() => toggle(input)}>
                                         <Icon id={values.icon} size={1.2} white />
@@ -316,11 +316,11 @@
                                         <div class="highlight radio" class:active={value === input.value}></div>
                                     </MaterialButton>
                                 {:else if input.type === "textarea"}
-                                    <MaterialTextarea label={values.label} {value} on:change={e => changed(e, input, id)} />
+                                    <MaterialTextarea label={values.label} {value} on:change={(e) => changed(e, input, id)} />
                                 {:else if input.type === "media"}
-                                    <MaterialFilePicker label={(value ? values.label : "") || "edit.choose_media"} {value} filter={{ name: "Media files", extensions: mediaExtensions }} on:change={e => changed(e, input, id)} autoTrigger={$activeEdit.type !== "template"} allowEmpty />
+                                    <MaterialFilePicker label={(value ? values.label : "") || "edit.choose_media"} {value} filter={{ name: "Media files", extensions: mediaExtensions }} on:change={(e) => changed(e, input, id)} autoTrigger={$activeEdit.type !== "template"} allowEmpty />
                                 {:else if input.type === "popup"}
-                                    <MaterialPopupButton {...values} {value} on:change={e => changed(e, input, id)} allowEmpty />
+                                    <MaterialPopupButton {...values} {value} on:change={(e) => changed(e, input, id)} allowEmpty />
                                 {:else if input.type === "tip"}
                                     <p class="tip">
                                         {#if values.label}{translateText(values.label)}{/if}
@@ -328,7 +328,7 @@
                                         {#if input.values?.subtext.includes("<a href=")}<Icon id="launch" white />{/if}
                                     </p>
                                 {:else}
-                                    <Input input={{ type: input.type, ...values, value }} on:change={e => changed(e, input, id)} />
+                                    <Input input={{ type: input.type, ...values, value }} on:change={(e) => changed(e, input, id)} />
                                 {/if}
                             {/if}
                         {/each}

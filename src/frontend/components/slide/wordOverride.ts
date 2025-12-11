@@ -3,16 +3,16 @@ import { TemplateHelper } from "../../utils/templates"
 
 // split the rendered text so template rules can restyle matching chunks
 export function applyStyleOverrides(baseLines: any[], overrides: TemplateStyleOverride[]) {
-    return baseLines.map(line => {
+    return baseLines.map((line) => {
         if (!Array.isArray(line?.text)) return line
 
-        let segments = line.text.map(segment => ({ ...segment }))
-        overrides.forEach(override => {
+        let segments = line.text.map((segment) => ({ ...segment }))
+        overrides.forEach((override) => {
             const regex = buildOverrideRegex(override)
             if (!regex) return
 
             const nextSegments: any[] = []
-            segments.forEach(segment => {
+            segments.forEach((segment) => {
                 nextSegments.push(...splitSegment(segment, regex, override))
             })
             segments = nextSegments

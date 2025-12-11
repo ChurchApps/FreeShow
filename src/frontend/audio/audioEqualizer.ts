@@ -63,7 +63,7 @@ export class AudioEqualizer {
 
         this.filterNodes = []
 
-        this.config.bands.forEach(band => {
+        this.config.bands.forEach((band) => {
             const filter = this.audioContext!.createBiquadFilter()
             this.updateFilterFromBand(filter, band)
             this.filterNodes.push(filter)
@@ -211,7 +211,7 @@ export class AudioEqualizer {
 
     // Cleanup
     public dispose() {
-        this.filterNodes.forEach(node => {
+        this.filterNodes.forEach((node) => {
             try {
                 node.disconnect()
             } catch (err) {
@@ -277,7 +277,7 @@ export class EqualizerCalculations {
     static calculateCombinedResponse(bands: EQBand[], frequency: number): number {
         let totalGain = 0
 
-        bands.forEach(band => {
+        bands.forEach((band) => {
             totalGain += this.calculateBandResponse(band, frequency)
         })
 
@@ -475,7 +475,7 @@ export function disconnectAudioSourceFromEqualizer(id: string) {
 // Update all equalizer bands
 export function updateEqualizerBands(bands: EQBand[]) {
     // Update store immediately (this ensures UI changes are reflected)
-    equalizerConfig.update(config => ({
+    equalizerConfig.update((config) => ({
         ...config,
         bands: [...bands]
     }))
@@ -489,7 +489,7 @@ export function updateEqualizerBands(bands: EQBand[]) {
 // Update individual band gain (for real-time adjustments)
 export function updateEqualizerBandGain(bandIndex: number, gain: number) {
     // Update store immediately (this ensures UI changes are reflected)
-    equalizerConfig.update(config => {
+    equalizerConfig.update((config) => {
         const newBands = [...config.bands]
         if (newBands[bandIndex]) {
             newBands[bandIndex].gain = gain
@@ -509,7 +509,7 @@ export function updateEqualizerBandGain(bandIndex: number, gain: number) {
 // Update a single equalizer band
 export function updateEqualizerBand(bandIndex: number, band: EQBand) {
     // Update store immediately (this ensures UI changes are reflected)
-    equalizerConfig.update(config => {
+    equalizerConfig.update((config) => {
         const newBands = [...config.bands]
         if (bandIndex >= 0 && bandIndex < newBands.length) {
             newBands[bandIndex] = { ...band }
@@ -529,7 +529,7 @@ export function updateEqualizerBand(bandIndex: number, band: EQBand) {
 // Enable/disable equalizer
 export function setEqualizerEnabled(enabled: boolean) {
     // Update store immediately (this ensures UI changes are reflected)
-    equalizerConfig.update(config => ({
+    equalizerConfig.update((config) => ({
         ...config,
         enabled
     }))

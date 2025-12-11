@@ -157,7 +157,7 @@ export class LyricSearch {
             const lines = result.split("\n")
             const newLines: string[] = []
             lines.pop() // remove source
-            lines.forEach(line => {
+            lines.forEach((line) => {
                 const contents = line.replace(/^\d+\s+/gm, "").trim() // remove leading numbers
                 newLines.push(contents)
             })

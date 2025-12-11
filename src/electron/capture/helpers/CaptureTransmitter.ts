@@ -144,7 +144,7 @@ export class CaptureTransmitter {
     }
 
     static sendToStageOutputs(msg: any, excludeId = "") {
-        ;[...new Set(this.stageWindows)].forEach(id => id !== excludeId && OutputHelper.Send.sendToWindow(id, msg))
+        ;[...new Set(this.stageWindows)].forEach((id) => id !== excludeId && OutputHelper.Send.sendToWindow(id, msg))
     }
 
     static sendToRequested(msg: any) {
@@ -208,7 +208,7 @@ export class CaptureTransmitter {
     }
 
     static removeAllChannels(captureId: string) {
-        Object.keys(this.channels).forEach(key => {
+        Object.keys(this.channels).forEach((key) => {
             if (key.includes(captureId)) this.removeChannel(captureId, key)
         })
     }

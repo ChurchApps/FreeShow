@@ -297,7 +297,7 @@ function moveShowsToDataFolder(oldShowsPath: string) {
     const files = readFolder(oldShowsPath)
     const showsFolderPath = getDataFolderPath("shows")
 
-    files.forEach(file => {
+    files.forEach((file) => {
         if (!file.endsWith(".show")) return
 
         const oldPath = path.join(oldShowsPath, file)

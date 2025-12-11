@@ -75,7 +75,7 @@
     let updater = 0
     const updaterInterval = setInterval(() => {
         if (isClearing) return
-        if (currentItems.find(a => a.conditions)) updater++
+        if (currentItems.find((a) => a.conditions)) updater++
     }, 300)
     onDestroy(() => clearInterval(updaterInterval))
 
@@ -172,14 +172,14 @@
         scheduleAutoSizePrecompute(currentSlide.items)
 
         // get any items with no transition between the two slides
-        let oldItemTransition = currentItems.find(a => a.actions?.transition)?.actions?.transition
-        let newItemTransition = currentSlide.items.find(a => a.actions?.transition)?.actions?.transition
+        let oldItemTransition = currentItems.find((a) => a.actions?.transition)?.actions?.transition
+        let newItemTransition = currentSlide.items.find((a) => a.actions?.transition)?.actions?.transition
         let itemTransitionDuration: number | null = null
         if (oldItemTransition && JSON.stringify(oldItemTransition) === JSON.stringify(newItemTransition)) {
             itemTransitionDuration = oldItemTransition.duration ?? null
             if (oldItemTransition.type === "none") itemTransitionDuration = 0
             // find any item that should have no transition!
-            else if (currentSlide.items.find(a => a.actions?.transition?.duration === 0 || a.actions?.transition?.type === "none")) itemTransitionDuration = 0
+            else if (currentSlide.items.find((a) => a.actions?.transition?.duration === 0 || a.actions?.transition?.type === "none")) itemTransitionDuration = 0
         }
 
         let currentTransition = transition.between || transition.in || transition
@@ -306,22 +306,7 @@
 {#key show}
     {#each currentItems as item, index}
         {#if show && !persistentItemIndexes.includes(index) && shouldItemBeShown(item, currentItems, showItemRef, updater) && (!item.clickReveal || current.outSlide?.itemClickReveal)}
-            <SlideItemTransition
-                {preview}
-                {transitionEnabled}
-                {transitioningBetween}
-                globalTransition={transition}
-                currentSlide={current.currentSlide}
-                {item}
-                outSlide={current.outSlide}
-                lines={current.lines}
-                currentStyle={current.currentStyle}
-                let:customSlide
-                let:customItem
-                let:customLines
-                let:customOut
-                let:transition
-            >
+            <SlideItemTransition {preview} {transitionEnabled} {transitioningBetween} globalTransition={transition} currentSlide={current.currentSlide} {item} outSlide={current.outSlide} lines={current.lines} currentStyle={current.currentStyle} let:customSlide let:customItem let:customLines let:customOut let:transition>
                 <!-- filter={current.slideData?.filterEnabled?.includes("foreground") ? current.slideData?.filter : ""} -->
                 <!-- backdropFilter={current.slideData?.filterEnabled?.includes("foreground") ? current.slideData?.["backdrop-filter"] : ""} -->
                 <Textbox

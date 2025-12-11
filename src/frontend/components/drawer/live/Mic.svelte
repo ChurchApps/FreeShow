@@ -82,7 +82,7 @@
         navigator.mediaDevices
             .getUserMedia({ audio: { deviceId: { exact: mic.id } } })
             .then(handleSuccess)
-            .catch(err => {
+            .catch((err) => {
                 console.error(err)
                 if (err.name === "NotReadableError") {
                     sendMain(Main.ACCESS_MICROPHONE_PERMISSION)
@@ -94,7 +94,7 @@
     }
 
     onDestroy(() => {
-        audioStream?.getAudioTracks().forEach(track => track.stop())
+        audioStream?.getAudioTracks().forEach((track) => track.stop())
         if (retryTimeout) clearTimeout(retryTimeout)
     })
 
@@ -110,7 +110,7 @@
             if (!context) return
             AudioMicrophone.start(mic.id, { name: mic.name }, { pauseIfPlaying: true })
         }}
-        on:dblclick={e => {
+        on:dblclick={(e) => {
             if (e.ctrlKey || e.metaKey) return
 
             if ($focusMode) activeFocus.set({ id: mic.id, type: "audio" })

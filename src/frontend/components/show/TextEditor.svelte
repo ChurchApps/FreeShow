@@ -30,13 +30,13 @@
         formatText(transposeText(text, -1))
     }
 
-    $: showHasChords = Object.values(currentShow?.slides || {}).find(a => a.items?.find(a => a.lines?.find(a => a.chords)))
+    $: showHasChords = Object.values(currentShow?.slides || {}).find((a) => a.items?.find((a) => a.lines?.find((a) => a.chords)))
 </script>
 
-<Notes disabled={currentShow?.locked} style="padding: 30px;font-size: {$textEditZoom / 8}em;" placeholder={getQuickExample()} value={text} on:change={e => formatText(e.detail)} on:keydown={keydown} />
+<Notes disabled={currentShow?.locked} style="padding: 30px;font-size: {$textEditZoom / 8}em;" placeholder={getQuickExample()} value={text} on:change={(e) => formatText(e.detail)} on:keydown={keydown} />
 
 <FloatingInputs arrow let:open>
-    <MaterialZoom hidden={!open} columns={$textEditZoom / 10} min={0.5} max={2} defaultValue={1} addValue={-0.1} on:change={e => textEditZoom.set(e.detail * 10)} />
+    <MaterialZoom hidden={!open} columns={$textEditZoom / 10} min={0.5} max={2} defaultValue={1} addValue={-0.1} on:change={(e) => textEditZoom.set(e.detail * 10)} />
 
     {#if open}
         <div class="divider"></div>

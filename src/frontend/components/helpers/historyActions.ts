@@ -67,7 +67,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                 if (changed) data.changed = changed
             }
 
-            updater.store.update(a => {
+            updater.store.update((a) => {
                 if (deleting) return revertOrDeleteElement(a)
                 return updateElement(a)
             })
@@ -76,7 +76,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
             // update small shows cache
             if (obj.location?.id === "show_key" && key === "quickAccess") {
-                shows.update(a => {
+                shows.update((a) => {
                     if (!a[id]) return a
                     if (deleting && data.previousData) a[id].quickAccess = data.previousData
                     else a[id].quickAccess = data.data
@@ -115,7 +115,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                 if (keys) {
                     // if just keys, but no "key"
                     const currentData = {}
-                    keys.forEach(currentKey => {
+                    keys.forEach((currentKey) => {
                         currentData[currentKey] = clone(a[currentKey])
 
                         if (previousData) {
@@ -150,7 +150,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                 } else if (keys) {
                     // if just keys, but no "key"
                     data.previousData = {}
-                    keys.forEach(currentKey => {
+                    keys.forEach((currentKey) => {
                         data.previousData[currentKey] = a[currentKey]
                         const replacerValue = data.data[currentKey] || data.data
                         a[currentKey] = replacerValue
@@ -178,7 +178,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
                     keyData[id][key] = keyData[id][key].map((value, i) => {
                         if (indexes?.length && !indexes.includes(i)) return value
-                        const currentIndex = indexes.findIndex(a => a === i)
+                        const currentIndex = indexes.findIndex((a) => a === i)
                         const replacerValue = Array.isArray(newValue) ? newValue[currentIndex] : newValue
 
                         if (subkey) {
@@ -189,13 +189,13 @@ export const historyActions = ({ obj, undo = null }: any) => {
                         return replacerValue
                     })
 
-                    keyData[id][key] = keyData[id][key].filter(a => a !== undefined)
+                    keyData[id][key] = keyData[id][key].filter((a) => a !== undefined)
 
                     return keyData
                 }
 
                 if (keys?.length) {
-                    keys.forEach(currentKey => {
+                    keys.forEach((currentKey) => {
                         let replacerValue = typeof newValue === "string" || newValue?.[currentKey] === undefined || keyData.dataIsArray ? newValue : newValue[currentKey]
                         if (index === -1 && !Array.isArray(replacerValue)) replacerValue = [replacerValue]
 
@@ -264,9 +264,9 @@ export const historyActions = ({ obj, undo = null }: any) => {
                     showsList[i].show.name = name
 
                     // if renaming to another newly deleted show (with same name) - don't delete!
-                    const deletedIndex = get(deletedShows).findIndex(a => a.name === name)
+                    const deletedIndex = get(deletedShows).findIndex((a) => a.name === name)
                     if (deletedIndex > -1) {
-                        deletedShows.update(a => {
+                        deletedShows.update((a) => {
                             a.splice(deletedIndex, 1)
                             return a
                         })
@@ -284,12 +284,12 @@ export const historyActions = ({ obj, undo = null }: any) => {
             // load shows cache (to save in undo history)
             if (deleting && showsList.length < 20) {
                 await loadShows(
-                    showsList.map(a => a.id),
+                    showsList.map((a) => a.id),
                     true
                 )
             }
 
-            showsCache.update(a => {
+            showsCache.update((a) => {
                 showsList.forEach(({ show, id }, i: number) => {
                     if (deleting) {
                         if (replace && show) {
@@ -331,7 +331,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                 return a
             })
 
-            shows.update(a => {
+            shows.update((a) => {
                 showsList.forEach(({ show, id }, i) => {
                     if (deleting && !replace) {
                         // store show
@@ -349,7 +349,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                     if (!show) return
 
                     // remove from deleted when restored
-                    deletedShows.set(get(deletedShows).filter(deleted => deleted.id !== id))
+                    deletedShows.set(get(deletedShows).filter((deleted) => deleted.id !== id))
 
                     // return if old show is modified after new show
                     const oldModified = a[id]?.timestamps?.modified || 0
@@ -385,9 +385,9 @@ export const historyActions = ({ obj, undo = null }: any) => {
             const renamedIds = Object.keys(rename)
             if (renamedIds.length) {
                 // renaming multiple times
-                const newRenamed = get(renamedShows).filter(a => !renamedIds.includes(a.id))
-                const newRenamedList = keysToID(rename).map(a => {
-                    const previous = get(renamedShows).find(r => r.id === a.id)
+                const newRenamed = get(renamedShows).filter((a) => !renamedIds.includes(a.id))
+                const newRenamedList = keysToID(rename).map((a) => {
+                    const previous = get(renamedShows).find((r) => r.id === a.id)
                     if (!previous) return a
                     return { ...a, oldName: previous.oldName }
                 })
@@ -423,7 +423,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                     const projectItems = get(projects)[get(activeProject)!]?.shows || []
                     let newShows = projectItems
                     showsList.forEach(({ id }) => {
-                        newShows = newShows.filter(a => a.id !== id)
+                        newShows = newShows.filter((a) => a.id !== id)
                     })
                     if (showsList.length < projectItems.length) {
                         history({ id: "UPDATE", newData: { key: "shows", data: newShows }, oldData: { id: get(activeProject) }, location: { page: "show", id: "project_key" } })
@@ -499,14 +499,14 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
                 if (deleting) {
                     // update layout
-                    showsCache.update(a => {
+                    showsCache.update((a) => {
                         if (!a[showId]?.layouts?.[layout]) return a
 
                         const layoutSlides = a[showId].layouts[layout].slides
                         let newSlides = clone(layoutSlides).filter((layoutSlide, layoutSlideIndex) => (slideIndex !== undefined ? layoutSlideIndex !== slideIndex : layoutSlide.id !== slideId))
 
                         if (type === "delete") {
-                            Object.keys(a[showId].slides).forEach(currentSlideId => {
+                            Object.keys(a[showId].slides).forEach((currentSlideId) => {
                                 const currentSlide = a[showId].slides[currentSlideId]
 
                                 if (currentSlideId !== slideId) {
@@ -531,7 +531,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                                     a[showId].slides[firstChildId].children = newChildren
 
                                     // add to layout
-                                    newSlides = clone(layoutSlides).map(layoutSlideRef => {
+                                    newSlides = clone(layoutSlides).map((layoutSlideRef) => {
                                         if (layoutSlideRef.id !== slideId) return layoutSlideRef
 
                                         // clone layout data
@@ -582,7 +582,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
                         // find existing
                         const existingBackgrounds = _show(showId).get("media")
-                        const existingId = Object.keys(existingBackgrounds).find(mediaId => existingBackgrounds[mediaId].path === background.path)
+                        const existingId = Object.keys(existingBackgrounds).find((mediaId) => existingBackgrounds[mediaId].path === background.path)
                         if (existingId) id = existingId
 
                         const bgId = existingId ? id : _show(showId).media().add(background, id)
@@ -599,9 +599,9 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
                         // set to correct index
                         const updatedRef = _show(showId).layouts([layout]).ref()[0] || []
-                        index = updatedRef.find(a => a.id === layoutValue.id)?.layoutIndex ?? index
+                        index = updatedRef.find((a) => a.id === layoutValue.id)?.layoutIndex ?? index
                     } else if (slide.oldChild) {
-                        const parent = ref.find(a => a.children?.includes(slide.oldChild))
+                        const parent = ref.find((a) => a.children?.includes(slide.oldChild))
                         if (parent) {
                             let newChildren = clone(_show(showId).slides([parent.id]).get()[0]?.children || [])
                             let oldIndex = newChildren.indexOf(slide.oldChild)
@@ -649,13 +649,13 @@ export const historyActions = ({ obj, undo = null }: any) => {
             if (deleting) {
                 if (type === "delete" || type === "delete_group") {
                     _show(showId)
-                        .slides(data.data.map(a => a.id))
+                        .slides(data.data.map((a) => a.id))
                         .remove()
                 }
             } else {
                 // move edit index
                 setTimeout(() => {
-                    activeEdit.update(a => {
+                    activeEdit.update((a) => {
                         a.slide = index
                         return a
                     })
@@ -717,7 +717,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
                 const parent = ref[index - 1]?.parent || ref[index - 1]
                 if (!parent || data.replace?.parent) return
-                ref.forEach(slide => {
+                ref.forEach((slide) => {
                     if (slide.id === parent.id && slide.layoutIndex < index) count++
                 })
 
@@ -772,7 +772,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
             }
 
             // update cached show
-            cachedShowsData.update(a => {
+            cachedShowsData.update((a) => {
                 const customId = getShowCacheId(data.remember.showId, null, data.remember.layout)
                 if (a[customId]?.template?.slidesUpdated) a[customId].template.slidesUpdated = true
                 return a
@@ -786,8 +786,8 @@ export const historyActions = ({ obj, undo = null }: any) => {
             function splitToMaxLines(maxLines: number) {
                 let itemIndex = -1
                 // find match
-                let slideMatch = ref.find(slideRef => {
-                    itemIndex = slides[slideRef.id]?.items?.findIndex(a => (a.lines?.length || 0) > maxLines) ?? -1
+                let slideMatch = ref.find((slideRef) => {
+                    itemIndex = slides[slideRef.id]?.items?.findIndex((a) => (a.lines?.length || 0) > maxLines) ?? -1
                     return itemIndex > -1
                 })
 
@@ -800,8 +800,8 @@ export const historyActions = ({ obj, undo = null }: any) => {
                     ref = _show(data.remember.showId).layouts([data.remember.layout]).ref()[0] || []
                     slides = get(showsCache)[data.remember.showId]?.slides || {}
                     // find match
-                    slideMatch = ref.find(slideRef => {
-                        itemIndex = slides[slideRef.id]?.items?.findIndex(a => (a.lines?.length || 0) > maxLines) ?? -1
+                    slideMatch = ref.find((slideRef) => {
+                        itemIndex = slides[slideRef.id]?.items?.findIndex((a) => (a.lines?.length || 0) > maxLines) ?? -1
                         return itemIndex > -1
                     })
                 }
@@ -836,7 +836,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                         const isChild = slide.group === null
                         let globalGroup = slide.globalGroup
                         if (isChild) {
-                            const parent = Object.values(show.slides || {}).find(a => a.children?.includes(id))
+                            const parent = Object.values(show.slides || {}).find((a) => a.children?.includes(id))
                             globalGroup = parent?.globalGroup
                         }
                         if (globalGroup && get(groups)[globalGroup]?.template) {
@@ -867,7 +867,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
                     // roll items around
                     const newTemplate = data.previousData.template !== data.id
-                    if (shiftItems && !slide.settings?.template && !newTemplate) slide.items = [...slide.items.slice(1), slide.items[0]].filter(a => a)
+                    if (shiftItems && !slide.settings?.template && !newTemplate) slide.items = [...slide.items.slice(1), slide.items[0]].filter((a) => a)
 
                     // shift items to any template textbox with matching "name" (content), if any
                     if (!shiftItems && newTemplate && !slide.settings?.template && slideTemplate.items?.length > 1) {
@@ -887,7 +887,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                     if (changeOverflowItems) {
                         const templateItemCount = getItemsCountByType(slideTemplate.items)
                         const slideItemCount = getItemsCountByType(newItems)
-                        newItems = newItems.filter(a => {
+                        newItems = newItems.filter((a) => {
                             const type = a.type || "text"
                             if (templateItemCount[type] - slideItemCount[type] >= 0) return true
                             if (type === "text" && !isEmptyOrSpecial(a)) return true
@@ -910,9 +910,9 @@ export const historyActions = ({ obj, undo = null }: any) => {
                     const firstTemplateForUpdate = isFirst && firstSlideTemplateId && (appliedFirstOverride || slide.settings?.template === firstSlideTemplateId) ? firstSlideTemplateId : undefined
                     show.slides[id] = updateSlideFromTemplate(show.slides[id], slideTemplate, isFirst, changeOverflowItems, firstTemplateForUpdate)
 
-                    const slideRefs = ref.filter(a => a.id === id)
+                    const slideRefs = ref.filter((a) => a.id === id)
                     const oldTemplate = get(templates)[previousTemplateId || ""] || {}
-                    slideRefs.forEach(slideRef => {
+                    slideRefs.forEach((slideRef) => {
                         // set custom values
                         const newLayoutData = updateLayoutsFromTemplate(show.layouts, show.media, slideTemplate, oldTemplate, data.remember.layout, slideRef, templateMode, changeOverflowItems)
 
@@ -924,7 +924,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                 // don't update if show has not changed
                 if (obj.save === false && JSON.stringify(show) === previousShow) return
 
-                showsCache.update(a => {
+                showsCache.update((a) => {
                     a[data.remember.showId] = show
                     return a
                 })
@@ -958,7 +958,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
             else obj.newData = clone(data)
 
             function updateLayoutSlides() {
-                showsCache.update(a => {
+                showsCache.update((a) => {
                     if (!a[data.remember.showId]) return a
                     const layoutSlides: SlideData[] = a[data.remember.showId].layouts?.[data.remember.layout].slides || []
 
@@ -975,7 +975,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                         const children = a[data.remember.showId].slides[l.id]?.children
                         if (!children?.length) return
                         if (!l.children) l.children = {}
-                        children.forEach(child => {
+                        children.forEach((child) => {
                             currentIndex++
                             l.children![child] = updateValues(l.children![child] || {}, currentIndex)
                         })
@@ -988,7 +988,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
             function updateValues(l: any, currentIndex = -1) {
                 const indexes: number[] = data.indexes || []
-                const valueIndex: number = indexes.findIndex(a => a === currentIndex)
+                const valueIndex: number = indexes.findIndex((a) => a === currentIndex)
                 if (currentIndex >= 0 && indexes.length && valueIndex < 0) return l
 
                 const keys: string[] = data.keys || [data.key]
@@ -1089,13 +1089,13 @@ function filterIndexes(data: any, subkey = "", { indexes, keys }) {
 
         filteredData = data.filter((_, i) => indexes.includes(i))
 
-        if (subkey) filteredData = filteredData.map(a => a[subkey])
+        if (subkey) filteredData = filteredData.map((a) => a[subkey])
     }
 
     if (keys?.length) {
         filteredData = {}
 
-        keys.forEach(key => {
+        keys.forEach((key) => {
             if (subkey) filteredData[key] = data[key]?.[subkey] === undefined ? data[key] : data[key][subkey]
             else filteredData[key] = data[key]
         })

@@ -16,7 +16,7 @@
     // sort shows in alphabeticly order
     let showsSorted: any
     $: {
-        showsSorted = $shows.filter(s => s.private !== true).sort((a: any, b: any) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0))
+        showsSorted = $shows.filter((s) => s.private !== true).sort((a: any, b: any) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0))
     }
     let filteredShows: any[] = []
     let filteredStored: any
@@ -93,7 +93,7 @@
         })
 
         let sum = 0
-        let hasZero = match.some(m => {
+        let hasZero = match.some((m) => {
             sum += m
             return m === 0
         })
@@ -172,7 +172,7 @@
     let scrollElem: HTMLDivElement | undefined
     $: activeShowId = $activeShow?.id
     $: if (activeShowId && scrollElem && scrollElem.scrollTop < 10) {
-        let activeElement = [...scrollElem.children].find(a => a.id === activeShowId) as HTMLDivElement | undefined
+        let activeElement = [...scrollElem.children].find((a) => a.id === activeShowId) as HTMLDivElement | undefined
         scrollElem.scrollTo(0, (activeElement?.offsetTop || 0) - 50 - 80)
     }
 
@@ -188,7 +188,7 @@
                 <div class="scroll show-list" bind:this={scrollElem}>
                     {#each visibleShows as show (show.id)}
                         {#if searchValue.length <= 1 || show.match}
-                            <ShowButton on:click={e => openShow(e.detail)} activeShow={$activeShow} {show} data={dateToString(show.timestamps?.created, true)} match={show.match || null} />
+                            <ShowButton on:click={(e) => openShow(e.detail)} activeShow={$activeShow} {show} data={dateToString(show.timestamps?.created, true)} match={show.match || null} />
                         {/if}
                     {/each}
                     {#if filteredShows.length > MAX_VISIBLE_ITEMS}

@@ -11,9 +11,9 @@
     export let disableTransitions = false
 
     // export let resolution: Resolution
-    $: outs = sortObject(sortByName(keysToID($outputs).filter(a => a.enabled)), "stageOutput")
+    $: outs = sortObject(sortByName(keysToID($outputs).filter((a) => a.enabled)), "stageOutput")
     // hide from preview if omre than one output is "enabled", and no non hidden output is "active"
-    $: if (outs.length > 1 && !keysToID($outputs).filter(a => outs.find(({ id }) => a.id === id) && !a.active && !a.hideFromPreview).length) outs = outs.filter(a => !a.hideFromPreview)
+    $: if (outs.length > 1 && !keysToID($outputs).filter((a) => outs.find(({ id }) => a.id === id) && !a.active && !a.hideFromPreview).length) outs = outs.filter((a) => !a.hideFromPreview)
 
     let fullscreen = false
     let fullscreenId = ""

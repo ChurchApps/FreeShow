@@ -69,7 +69,7 @@
 
     $: lines = clone(item?.lines)
     $: if (linesStart !== null && linesEnd !== null && lines?.length) {
-        lines = lines.filter(a => a.text.filter(a => a.value !== undefined)?.length)
+        lines = lines.filter((a) => a.text.filter((a) => a.value !== undefined)?.length)
 
         // show last possible lines if no text at current line
         if (!lines[linesStart]) {
@@ -264,7 +264,7 @@
         if (!reference?.data) return 1
         if (reference.data.translations) return Number(reference.data.translations) || 1
         const versionList = typeof reference.data.version === "string" ? reference.data.version.split("+") : []
-        return versionList.filter(value => value.trim().length).length || 1
+        return versionList.filter((value) => value.trim().length).length || 1
     }
 
     // AUTO SIZE
@@ -274,7 +274,7 @@
     let previousItem = "{}"
     $: newItem = JSON.stringify(item)
     $: if (newItem !== previousItem) autoSizeReady = false
-    $: if (newItem !== lastRenderedSignature && (item?.auto || (item?.textFit && item?.textFit !== "none"))) {
+    $: if (newItem !== lastRenderedSignature && (item?.auto || (item?.textFit || "none") !== "none")) {
         fontSize = item?.autoFontSize || 0
         lastRenderedSignature = newItem
         hideUntilAutosized = shouldHideUntilAutoSizeCompletes()
@@ -297,7 +297,7 @@
         if (isStage) {
             let text = stageItem?.lines?.[0]?.text || []
             if (!Array.isArray(text) || !text.length) return 1
-            const verseItemText = text.filter(a => a.customType?.includes("disableTemplate")) || []
+            const verseItemText = text.filter((a) => a.customType?.includes("disableTemplate")) || []
             if (!verseItemText.length) return 1
             const verseItemSize = Number(getStyles(verseItemText[0]?.style, true)?.["font-size"] || "") || 0
             const stageFontSize = Number(getStyles(stageItem?.style, true)?.["font-size"] || "") || 100
@@ -306,7 +306,7 @@
 
         let text = item?.lines?.[0]?.text || []
         if (!Array.isArray(text) || !text.length) return 1
-        const verseItemText = text.filter(a => a.customType?.includes("disableTemplate")) || []
+        const verseItemText = text.filter((a) => a.customType?.includes("disableTemplate")) || []
         if (!verseItemText.length) return 1
         const verseItemSize = Number(getStyles(verseItemText[0]?.style, true)?.["font-size"] || "") || 0
         return verseItemSize ? verseItemSize / 100 || 1 : 1
@@ -330,42 +330,44 @@
         }, 200)
         previousItem = newItem
 
-        let type = item?.textFit || "shrinkToFit"
+        // TEMP FIX for auto size sometimes not sized properly in show slides
+        if (!preview && !isStage) await wait(70)
 
         let defaultFontSize
         let maxFontSize
 
         const isTextItem = (item.type || "text") === "text"
         const isDynamic = isTextItem && getItemText(isStage ? stageItem : item).includes("{")
+        let textFit = item.textFit || (item.auto ? (isTextItem ? "shrinkToFit" : "growToFit") : "none")
 
         if (isStage) {
             // wait for text content to populate if dynamic value
             if (isDynamic) await wait(10)
-            if (stageItem?.type !== "text") type = stageItem?.textFit || "growToFit"
+            if (stageItem?.type !== "text") textFit = stageItem?.textFit || "growToFit"
 
             // const textItem = isTextItem ? item?.lines?.[0]?.text || [] : stageItem
             let itemFontSize = Number(getStyles(stageItem?.style, true)?.["font-size"] || "") || 100
 
             defaultFontSize = itemFontSize
-            if (type === "growToFit" && itemFontSize !== 100) maxFontSize = itemFontSize
+            if (textFit === "growToFit" && itemFontSize !== 100) maxFontSize = itemFontSize
         } else {
-            if (isTextItem && (!item.auto || (item?.textFit || "none") === "none")) {
+            if (isTextItem && textFit === "none") {
                 fontSize = 0
                 return
             }
 
             let text = item?.lines?.[0]?.text || []
             if (!Array.isArray(text)) text = []
-            const itemText = text.filter(a => !a.customType?.includes("disableTemplate")) || []
+            const itemText = text.filter((a) => !a.customType?.includes("disableTemplate")) || []
             let itemFontSize = Number(getStyles(itemText[0]?.style, true)?.["font-size"] || "") || 100
 
             // get scripture verse ratio
-            const verseItemText = text.filter(a => a.customType?.includes("disableTemplate")) || []
+            const verseItemText = text.filter((a) => a.customType?.includes("disableTemplate")) || []
             const verseItemSize = Number(getStyles(verseItemText[0]?.style, true)?.["font-size"] || "") || 0
             customTypeRatio = verseItemSize / 100 || 1
 
             defaultFontSize = itemFontSize
-            if (type === "growToFit" && isTextItem) maxFontSize = itemFontSize
+            if (textFit === "growToFit" && isTextItem) maxFontSize = itemFontSize
         }
 
         let elem = itemElem
@@ -391,7 +393,7 @@
             elem = elem.querySelector(".align") as HTMLElement
             textQuery = ".lines .break span"
         } else {
-            type = "growToFit"
+            textFit = "growToFit"
             if (item.type === "slide_tracker") textQuery = ".progress div"
         }
         // not working due to stage SlideText "loading" elem?
@@ -401,7 +403,7 @@
         // }
 
         fontSize = autosize(elem, {
-            type,
+            type: textFit,
             textQuery,
             defaultFontSize,
             maxFontSize
@@ -464,7 +466,7 @@
         if (isStage || preview) return false
         const type = item?.type || "text"
         if (type !== "text") return false
-        if (!item?.auto || item?.textFit === "none") return false
+        if (!item?.auto || (item?.textFit || "none") === "none") return false
         // if we already have an autosized font available, no need to hide
         if (item?.autoFontSize) return false
         return true
@@ -474,19 +476,19 @@
         if (isStage || itemIndex < 0 || $currentWindow || ref.id === "scripture") return
 
         if (ref.type === "overlay") {
-            overlays.update(a => {
+            overlays.update((a) => {
                 if (!a[ref.id]?.items?.[itemIndex]) return a
                 a[ref.id].items[itemIndex].autoFontSize = fontSize
                 return a
             })
         } else if (ref.type === "template") {
-            templates.update(a => {
+            templates.update((a) => {
                 if (!a[ref.id]?.items?.[itemIndex]) return a
                 a[ref.id].items[itemIndex].autoFontSize = fontSize
                 return a
             })
         } else if (ref.showId) {
-            showsCache.update(a => {
+            showsCache.update((a) => {
                 if (!a[ref.showId!]?.slides?.[ref.id]?.items?.[itemIndex]) return a
 
                 a[ref.showId!].slides[ref.id].items[itemIndex].autoFontSize = fontSize
@@ -503,7 +505,7 @@
         chordLines = []
         if (!Array.isArray(item?.lines)) return
 
-        item.lines.forEach(line => {
+        item.lines.forEach((line) => {
             if (!line.chords?.length || !line.text) return
             chordLines.push(line.chords)
         })

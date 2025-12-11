@@ -113,10 +113,10 @@ export class AudioAnalyser {
         return this.getActiveAudio() || this.getActiveVideos() || this.sendOutputShowAudio()
     }
     private static getActiveAudio() {
-        return !!Object.values(get(playingAudio)).filter(a => !a.paused).length
+        return !!Object.values(get(playingAudio)).filter((a) => !a.paused).length
     }
     private static getActiveVideos() {
-        return !!Object.values(get(playingVideos)).filter(a => !a.paused && !a.muted).length
+        return !!Object.values(get(playingVideos)).filter((a) => !a.paused && !a.muted).length
     }
     private static sendOutputShowAudio() {
         return get(disabledServers).output_stream === false && get(serverData)?.output_stream?.sendAudio
@@ -201,7 +201,7 @@ export class AudioAnalyser {
     }
 
     private static reconnectAllSources() {
-        Object.keys(this.sources).forEach(id => {
+        Object.keys(this.sources).forEach((id) => {
             try {
                 const source = this.sources[id]
                 if (!source) return
@@ -286,7 +286,7 @@ export class AudioAnalyser {
         this.recorder = new MediaRecorder(this.destNode!.stream, {
             mimeType: 'audio/webm; codecs="opus"'
         })
-        this.recorder.addEventListener("dataavailable", async ev => {
+        this.recorder.addEventListener("dataavailable", async (ev) => {
             const arrayBuffer = await ev.data.arrayBuffer()
             const uint8Array = new Uint8Array(arrayBuffer)
             // , audioDelay: 0, channels: this.channels, frameRate: this.recorderFrameRate
@@ -319,7 +319,7 @@ export class AudioAnalyser {
         if (isOutputWindow()) outputList = [Object.values(get(outputs))[0]]
 
         // any outputs with ndi audio enabled
-        if (outputList.find(a => a.enabled && a.ndi && a.ndiData?.audio)) return true
+        if (outputList.find((a) => a.enabled && a.ndi && a.ndiData?.audio)) return true
         return false
     }
 

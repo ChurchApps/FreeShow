@@ -43,7 +43,7 @@
                 ...$categories[key]
             })),
             "name"
-        ).map(cat => ({
+        ).map((cat) => ({
             id: cat.id,
             name: cat.name
         }))
@@ -51,11 +51,11 @@
 
     let selectedCategory: any = cats[0]
     // get the selected category
-    if ($drawerTabsData.shows?.activeSubTab && $categories[$drawerTabsData.shows.activeSubTab]) selectedCategory = cats.find(a => a.id === $drawerTabsData.shows.activeSubTab)
+    if ($drawerTabsData.shows?.activeSubTab && $categories[$drawerTabsData.shows.activeSubTab]) selectedCategory = cats.find((a) => a.id === $drawerTabsData.shows.activeSubTab)
     // get the category from the active show
-    else if ($shows[$activeShow?.id || ""]?.category) selectedCategory = cats.find(a => a.id === $shows[$activeShow?.id || ""]?.category)
+    else if ($shows[$activeShow?.id || ""]?.category && $categories[$shows[$activeShow!.id].category!]) selectedCategory = cats.find((a) => a.id === $shows[$activeShow?.id || ""]?.category)
     // set to "Songs" if it exists & nothing else if selected
-    else if ($categories.song) selectedCategory = cats.find(a => a.id === "song")
+    else if ($categories.song) selectedCategory = cats.find((a) => a.id === "song")
     // otherwise set to first category
     else if (cats.length > 1) selectedCategory = cats[1]
 
@@ -70,21 +70,33 @@
     $: resolvedCreateOptions = clone(createOptions).map((a: any) => {
         if (a.id === "text") a.colored = values.text.length
         if (a.id === "web") a.disabled = !values.name?.trim()
+
+        if (a.id === "empty") {
+            if (values.text.length) {
+                // don't create empty if there's text
+                a.name = translateText("new.show")
+                a.title = translateText("new.show [Ctrl+Enter]")
+            } else {
+                a.name = translateText("create_show.empty")
+                a.title = translateText("new.empty_show [Ctrl+Enter]")
+            }
+        }
+
         return a
     })
 
     let selectedOption = ""
     function selectOption(id: string) {
         if (id === "empty") {
-            values.text = ""
-            values.origin = ""
+            // values.text = ""
+            // values.origin = ""
             textToShow()
         } else {
             selectedOption = id
 
             // look for existing shows with the same title
             if (values.name) {
-                const exists = Object.values($shows).find(a => a?.name?.toLowerCase() === values.name.toLowerCase())
+                const exists = Object.values($shows).find((a) => a?.name?.toLowerCase() === values.name.toLowerCase())
                 if (exists) newToast("create_show.exists")
             }
         }
@@ -123,7 +135,7 @@
         let text = values.text
         if (typeof text !== "string") text = ""
 
-        let sections = text.split("\n\n").filter(a => a.length)
+        let sections = text.split("\n\n").filter((a) => a.length)
 
         // let metaData: string = ""
         // if (sections[1] && sections[0]?.split("\n").length < 3) metaData = sections.splice(0, 1)[0]
@@ -184,7 +196,7 @@
 
         cats.push({ id, name })
         cats = cats
-        selectedCategory = cats.find(a => a.id === id)
+        selectedCategory = cats.find((a) => a.id === id)
     }
 </script>
 
@@ -192,11 +204,11 @@
 
 {#if !selectedOption}
     <List bottom={20}>
-        <MaterialTextInput id="name" label="show.name" autofocus value={values.name} autofill={values.name ? "" : getName(values)} on:input={e => changeValue(e, "name")} />
-        <MaterialDropdown label="show.category" value={selectedCategory?.id} options={cats.map(a => ({ label: translateText(a.name || "main.unnamed"), value: a.id }))} on:change={e => (selectedCategory = cats.find(a => a.id === e.detail))} addNew="new.category" on:new={addNewCategory} />
+        <MaterialTextInput id="name" label="show.name" autofocus value={values.name} autofill={values.name ? "" : getName(values)} on:input={(e) => changeValue(e, "name")} />
+        <MaterialDropdown label="show.category" value={selectedCategory?.id} options={cats.map((a) => ({ label: translateText(a.name || "main.unnamed"), value: a.id }))} on:change={(e) => (selectedCategory = cats.find((a) => a.id === e.detail))} addNew="new.category" on:new={addNewCategory} />
     </List>
 
-    <MaterialMultiChoice options={resolvedCreateOptions} on:click={e => selectOption(e.detail)} />
+    <MaterialMultiChoice options={resolvedCreateOptions} on:click={(e) => selectOption(e.detail)} />
 {:else}
     <MaterialButton class="popup-back" icon="back" iconSize={1.3} title="actions.back" on:click={() => (selectedOption = "")} />
 {/if}
@@ -206,14 +218,14 @@
         {#if Number($splitLines)}<span class="state">{$splitLines}</span>{/if}
     </MaterialButton>
 
-    <MaterialTextarea label="create_show.quick_lyrics" placeholder={getQuickExample()} value={values.text} autofocus={!values.text} rows={showMore ? 6 : Math.max(6, Math.min(12, values.text.split("\n").length))} on:input={e => changeValue(e)} />
+    <MaterialTextarea label="create_show.quick_lyrics" placeholder={getQuickExample()} value={values.text} autofocus={!values.text} rows={showMore ? 6 : Math.max(6, Math.min(12, values.text.split("\n").length))} on:input={(e) => changeValue(e)} />
     <!-- WIP buttons for paste / format(remove chords, remove empty lines), etc. -->
 
     {#if showMore}
         <List top={5}>
-            <MaterialToggleSwitch label="create_show.auto_groups" checked={$special.autoGroups !== false} defaultValue={true} on:change={e => special.set({ ...$special, autoGroups: e.detail })} />
-            <MaterialToggleSwitch label="create_show.format_new_show" checked={$formatNewShow} defaultValue={false} on:change={e => formatNewShow.set(e.detail)} />
-            <MaterialNumberInput label="create_show.split_lines" value={$splitLines} max={100} on:change={e => splitLines.set(e.detail)} hideWhenZero />
+            <MaterialToggleSwitch label="create_show.auto_groups" checked={$special.autoGroups !== false} defaultValue={true} on:change={(e) => special.set({ ...$special, autoGroups: e.detail })} />
+            <MaterialToggleSwitch label="create_show.format_new_show" checked={$formatNewShow} defaultValue={false} on:change={(e) => formatNewShow.set(e.detail)} />
+            <MaterialNumberInput label="create_show.split_lines" value={$splitLines} max={100} on:change={(e) => splitLines.set(e.detail)} hideWhenZero />
         </List>
     {/if}
 

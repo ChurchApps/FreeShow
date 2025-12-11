@@ -69,7 +69,7 @@
 
     $: isScripture = outputContent?.id === "temp"
     $: isMetronome = $playingMetronome && !Object.keys($playingAudio).length
-    $: isTimer = !output.out?.transition && !Object.values($overlayTimers).find(a => a.outputId === outputId) && Object.keys($activeTimers).length
+    $: isTimer = !output.out?.transition && !Object.values($overlayTimers).find((a) => a.outputId === outputId) && Object.keys($activeTimers).length
 
     $: slideCleared = isOutCleared("slide", $outputs)
 

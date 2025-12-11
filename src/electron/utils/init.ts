@@ -49,7 +49,7 @@ export function waitForBundle() {
     const CHECK_INTERVAL = 2 // every 2 seconds
     let tries = 0
 
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
         const interval = setInterval(() => {
             // Check if bundle file exists - old Rollup code, only production build for Vite
             if (doesPathExist(BUNDLE_PATH)) {

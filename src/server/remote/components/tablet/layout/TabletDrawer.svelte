@@ -51,7 +51,7 @@
         if (newHeight < minHeight) newHeight = minHeight
         if (newHeight > maxHeight) newHeight = maxHeight
 
-        drawer.update(d => ({ ...d, height: newHeight }))
+        drawer.update((d) => ({ ...d, height: newHeight }))
     }
 
     function onPointerUp(e: PointerEvent) {
@@ -99,7 +99,7 @@
             if (newHeight < minHeight) newHeight = minHeight
             if (newHeight > maxHeight) newHeight = maxHeight
 
-            drawer.update(d => ({ ...d, height: newHeight }))
+            drawer.update((d) => ({ ...d, height: newHeight }))
         }
     }
 
@@ -121,9 +121,9 @@
 
     function toggleDrawer() {
         if (height > minHeight) {
-            drawer.update(d => ({ ...d, height: minHeight, stored: height }))
+            drawer.update((d) => ({ ...d, height: minHeight, stored: height }))
         } else {
-            drawer.update(d => ({ ...d, height: $drawer.stored || defaultHeight }))
+            drawer.update((d) => ({ ...d, height: $drawer.stored || defaultHeight }))
         }
     }
 
@@ -151,7 +151,7 @@
                     id={tabId}
                     style="border-radius: 0; border-bottom: 2px solid var(--primary); padding: 0.2em 0.8em;"
                     isActive={$activeDrawerTab === tabId}
-                    on:click={e => {
+                    on:click={(e) => {
                         e.stopPropagation()
                         openDrawerTab(tabId)
                     }}
@@ -165,11 +165,11 @@
         <div class="right-controls">
             <div class="search-container">
                 <Icon id="search" size={1.2} white />
-                <input bind:this={searchElem} class="search edit" type="text" placeholder={translate("main.search", $dictionary)} bind:value={searchValue} on:click={e => e.stopPropagation()} />
+                <input bind:this={searchElem} class="search edit" type="text" placeholder={translate("main.search", $dictionary)} bind:value={searchValue} on:click={(e) => e.stopPropagation()} />
                 {#if searchValue.length}
                     <Button
                         class="clear-btn"
-                        on:click={e => {
+                        on:click={(e) => {
                             e.stopPropagation()
                             searchValue = ""
                             searchElem?.focus()

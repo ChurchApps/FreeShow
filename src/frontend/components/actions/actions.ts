@@ -60,8 +60,8 @@ export async function runAction(action, { midiIndex = -1, slideIndex = -1 } = {}
 
     // remove from active (timeout to show outline)
     setTimeout(() => {
-        runningActions.update(a => {
-            const currentIndex = a.findIndex(id => action.id === id)
+        runningActions.update((a) => {
+            const currentIndex = a.findIndex((id) => action.id === id)
             if (currentIndex < 0) return a
             a.splice(currentIndex, 1)
             return a
@@ -105,7 +105,7 @@ export async function runAction(action, { midiIndex = -1, slideIndex = -1 } = {}
 
         // add to history
         // WIP add source (Action/Event/Remote/API)
-        actionHistory.update(a => {
+        actionHistory.update((a) => {
             const time = Date.now()
 
             const previous = clone(a[0] || {})
@@ -130,7 +130,7 @@ export async function runAction(action, { midiIndex = -1, slideIndex = -1 } = {}
 export function toggleAction(data: API_toggle) {
     if (!data.id) return
 
-    actions.update(a => {
+    actions.update((a) => {
         if (!a[data.id]) return a
 
         const previousValue = a[data.id].enabled ?? true
@@ -146,7 +146,7 @@ export function checkStartupActions() {
 
 export function customActionActivation(id: string, specificActivation: any = null) {
     let actionTriggered = false
-    Object.keys(get(actions)).forEach(actionId => {
+    Object.keys(get(actions)).forEach((actionId) => {
         const action = get(actions)[actionId]
 
         if (action.customActivation !== id || action.enabled === false) return
@@ -180,7 +180,7 @@ export function addSlideAction(slideIndex: number, actionId: string, actionValue
     const data = actionData[actionId]
     const canAddMultiple = data?.canAddMultiple || allowMultiple
 
-    const existingIndex = slideActions.slideActions.findIndex(a => a.triggers?.[0] === actionId)
+    const existingIndex = slideActions.slideActions.findIndex((a) => a.triggers?.[0] === actionId)
     if (canAddMultiple || existingIndex < 0) slideActions.slideActions.push(action)
     else slideActions.slideActions[existingIndex] = action
 
@@ -188,7 +188,7 @@ export function addSlideAction(slideIndex: number, actionId: string, actionValue
 }
 
 export function slideHasAction(slideActions: any, key: string) {
-    return slideActions?.slideActions?.find(a => a.triggers?.includes(key))
+    return slideActions?.slideActions?.find((a) => a.triggers?.includes(key))
 }
 
 export function getActionIcon(id: string) {

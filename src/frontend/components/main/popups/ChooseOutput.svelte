@@ -13,4 +13,4 @@
     }
 </script>
 
-<MaterialMultiChoice options={outputTypes} on:click={e => selectOutput(e.detail)} />
+<MaterialMultiChoice options={outputTypes} on:click={(e) => selectOutput(e.detail)} />

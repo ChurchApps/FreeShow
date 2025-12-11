@@ -39,7 +39,7 @@
         open = typeof force === "boolean" && value ? force : !open
         if (open) setTimeout(calculateMaxHeight)
 
-        if (open && value) highlightedIndex = options.findIndex(o => o.value === value)
+        if (open && value) highlightedIndex = options.findIndex((o) => o.value === value)
         else highlightedIndex = -1
     }
 
@@ -132,13 +132,13 @@
         event.preventDefault()
         if (event.key === "Backspace") {
             searchValue = ""
-            highlightedIndex = options.findIndex(o => o.value === value)
+            highlightedIndex = options.findIndex((o) => o.value === value)
             scrollToHighlighted()
         } else if (event.key.length === 1) {
             searchValue = formatSearch(searchValue + event.key, true)
 
-            let activeIndex = options.findIndex(a => formatSearch(a.label, true).startsWith(searchValue))
-            if (activeIndex < 0) activeIndex = options.findIndex(a => formatSearch(a.label, true).includes(searchValue))
+            let activeIndex = options.findIndex((a) => formatSearch(a.label, true).startsWith(searchValue))
+            if (activeIndex < 0) activeIndex = options.findIndex((a) => formatSearch(a.label, true).includes(searchValue))
             if (activeIndex < 0) return
 
             // enter to select
@@ -154,7 +154,7 @@
         if (disabled || nextScrollTimeout || !ctrl) return
         e.preventDefault()
 
-        let index = options.findIndex(a => a.value === value)
+        let index = options.findIndex((a) => a.value === value)
         if (e.deltaY > 0) {
             // scroll down
             index = Math.min(options.length - 1, index + 1)
@@ -235,7 +235,7 @@
         }
     }
 
-    $: selected = options.find(o => o.value === value)
+    $: selected = options.find((o) => o.value === value)
 
     // let renderedOptions: typeof options = []
     // $: if (open) {
@@ -295,7 +295,7 @@
         data-title="{translateText(label)}{selected ? `: <b>${selected.label || '—'}</b>` : ''}"
         role="button"
         tabindex={disabled ? undefined : 0}
-        on:click={e => {
+        on:click={(e) => {
             if (e.target?.closest(".remove")) return
             toggleDropdown()
         }}
@@ -351,7 +351,7 @@
             {/if}
 
             {#each options as option, i}
-                <li style="{option.data ? 'justify-content: space-between;' : ''}{option.style || ''}" role="option" aria-selected={option.value === value} class:selected={option.value === value} class:highlighted={i === highlightedIndex} on:click={e => selectOption(e, option.value)}>
+                <li style="{option.data ? 'justify-content: space-between;' : ''}{option.style || ''}" role="option" aria-selected={option.value === value} class:selected={option.value === value} class:highlighted={i === highlightedIndex} on:click={(e) => selectOption(e, option.value)}>
                     {#if option.prefix}<span class="prefix">{option.prefix}</span>{/if}
                     {option.label || "—"}
 
@@ -390,7 +390,7 @@
     {#if addNew && addNewTextbox}
         <div class="dropdown">
             <InputRow>
-                <MaterialTextInput label="inputs.name" value={newValue} autofocus on:input={e => (newValue = e.detail)} on:keydown={keydown} />
+                <MaterialTextInput label="inputs.name" value={newValue} autofocus on:input={(e) => (newValue = e.detail)} on:keydown={keydown} />
                 <MaterialButton disabled={!newValue.length} title={addNew} on:click={createNewEvent}>
                     <Icon id="check" size={1.2} white />
                 </MaterialButton>

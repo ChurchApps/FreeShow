@@ -30,7 +30,7 @@
 
 {#if cams.length}
     {#each cams as cam}
-        <Cam {cam} on:click={e => click(e.detail, cam)} style={getStyle(cam.id, $media)} {showPlayOnHover} />
+        <Cam {cam} on:click={(e) => click(e.detail, cam)} style={getStyle(cam.id, $media)} {showPlayOnHover} />
     {/each}
 {:else}
     <Center faded>

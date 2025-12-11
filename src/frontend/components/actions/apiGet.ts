@@ -118,7 +118,7 @@ export function getVariable(data: { id?: string; name?: string }) {
     }
 
     if (data.name) {
-        return keysToID(get(variables)).find(a => a.name === data.name) || null
+        return keysToID(get(variables)).find((a) => a.name === data.name) || null
     }
 
     return null

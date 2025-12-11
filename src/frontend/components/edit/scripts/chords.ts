@@ -17,7 +17,7 @@ export function addChords(item: Item, showRef, itemIndex, line = 0, pos = 0, key
     // get first empty
     newLines[line]
         .chords!.sort((a, b) => a.pos - b.pos)
-        .forEach(chord => {
+        .forEach((chord) => {
             if (chord.pos === pos) pos++
         })
 
@@ -36,8 +36,8 @@ export function loadChords(item: Item) {
     const chordsList: string[] = []
     if (!item) return chordsList
 
-    item.lines?.forEach(line => {
-        line.chords?.forEach(chord => {
+    item.lines?.forEach((line) => {
+        line.chords?.forEach((chord) => {
             chordsList.push(chord.key)
         })
     })
@@ -56,7 +56,7 @@ export function getUsedChords(slide: Slide) {
 
 export function isChordLine(text: string) {
     const words = text.trim().split(/\s+/)
-    return words.every(word => /^[A-G][#b]?m?\d?(7|9|13)?$/.test(word))
+    return words.every((word) => /^[A-G][#b]?m?\d?(7|9|13)?$/.test(word))
     // text.trim().match(/^[A-G][#b]?m?\d?7?\s+.*$/)
 }
 

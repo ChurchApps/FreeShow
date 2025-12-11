@@ -164,6 +164,6 @@ export class OutputLifecycle {
     }
 
     static async closeAllOutputs() {
-        await Promise.all(OutputHelper.getKeys().map(async id => await this.removeOutput(id)))
+        await Promise.all(OutputHelper.getKeys().map(async (id) => await this.removeOutput(id)))
     }
 }

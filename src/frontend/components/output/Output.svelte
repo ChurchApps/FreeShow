@@ -54,8 +54,8 @@
 
     $: effectsIds = clone(out.effects || [])
     $: allEffects = $effects
-    $: effectsUnderSlide = effectsIds.filter(id => allEffects[id]?.placeUnderSlide === true)
-    $: effectsOverSlide = effectsIds.filter(id => !allEffects[id]?.placeUnderSlide)
+    $: effectsUnderSlide = effectsIds.filter((id) => allEffects[id]?.placeUnderSlide === true)
+    $: effectsOverSlide = effectsIds.filter((id) => !allEffects[id]?.placeUnderSlide)
 
     // don't update when layer content changes, only when refreshing or adding/removing layer
     // currentOutput is set to refresh state when changed in preview
@@ -105,8 +105,8 @@
     let storedOverlayIds = ""
     let storedOverlays = ""
     $: if (JSON.stringify(overlayIds) !== storedOverlayIds) updateOutData("overlays")
-    $: outOverlays = out.overlays?.filter(id => !clonedOverlays?.[id]?.placeUnderSlide) || []
-    $: outUnderlays = out.overlays?.filter(id => clonedOverlays?.[id]?.placeUnderSlide) || []
+    $: outOverlays = out.overlays?.filter((id) => !clonedOverlays?.[id]?.placeUnderSlide) || []
+    $: outUnderlays = out.overlays?.filter((id) => clonedOverlays?.[id]?.placeUnderSlide) || []
 
     // layout & slide data
     let currentLayout: LayoutRef[] = []
@@ -256,8 +256,8 @@
     $: backgroundColor = currentOutput.transparent ? "transparent" : styleTemplate?.settings?.backgroundColor || currentSlide?.settings?.color || currentStyle.background || slide?.settings?.backgroundColor || "black"
     $: messageText = $showsCache[slide?.id || ""]?.message?.text?.replaceAll("\n", "<br>") || ""
     // metadata display
-    $: firstActiveSlideIndex = currentLayout.findIndex(a => !a.data.disabled)
-    $: lastActiveSlideIndex = currentLayout.length - 1 - [...currentLayout].reverse().findIndex(a => !a.data.disabled)
+    $: firstActiveSlideIndex = currentLayout.findIndex((a) => !a.data.disabled)
+    $: lastActiveSlideIndex = currentLayout.length - 1 - [...currentLayout].reverse().findIndex((a) => !a.data.disabled)
     $: displayMetadata = metadata.value?.length && (metadata.display === "always" || (metadata.display?.includes("first") && (slide?.index === firstActiveSlideIndex || slide?.index === 0)) || (metadata.display?.includes("last") && (slide?.index === lastActiveSlideIndex || slide?.index === currentLayout.length - 1)))
     // background image
     $: styleBackground = currentStyle?.clearStyleBackgroundOnText && (slide || background) ? "" : currentStyle?.backgroundImage || ""

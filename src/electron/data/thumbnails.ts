@@ -39,7 +39,7 @@ export async function doesMediaExist(data: { path: string; creationTime?: number
 // delete thumbnail cache
 const sizes = [900, 500, 250, 100]
 function deleteThumbnails(filePath: string) {
-    sizes.forEach(size => {
+    sizes.forEach((size) => {
         const outputPath = getThumbnailPath(filePath, size)
         if (doesPathExist(outputPath)) deleteFile(outputPath)
     })
@@ -269,7 +269,7 @@ function parseSize(sizeStr: string): ResizeOptions {
     const sizeRegex = /(\d+|\?)x(\d+|\?)/g
     const sizeResult = sizeRegex.exec(sizeStr)
     if (sizeResult) {
-        const sizeValues = sizeResult.map(x => (x === "?" ? null : Number.parseInt(x, 10)))
+        const sizeValues = sizeResult.map((x) => (x === "?" ? null : Number.parseInt(x, 10)))
 
         if (sizeValues[1]) size.width = sizeValues[1] || 0
         if (sizeValues[2]) size.height = sizeValues[2] || 0
@@ -288,7 +288,7 @@ function saveToDisk(savePath: string, image: NativeImage, nextOnFinished = true,
     if (format === "jpg") img = image.toJPEG(jpegQuality)
     else img = image.toPNG() // higher file size, but supports transparent images
 
-    fs.writeFile(savePath, img, err => {
+    fs.writeFile(savePath, img, (err) => {
         if (!err) exists.push(savePath)
         if (nextOnFinished) generationFinished()
     })
@@ -297,7 +297,7 @@ function saveToDisk(savePath: string, image: NativeImage, nextOnFinished = true,
 /// // CAPTURE SLIDE /////
 
 export function captureSlide(data: { output: { [key: string]: Output }; resolution: Resolution }): Promise<{ base64: string } | null> {
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
         const outSlide = Object.values(data.output)[0].out?.slide
         const OUTPUT_ID = "capture" + String(outSlide?.id) + String(outSlide?.layout) + String(outSlide?.index)
         if (OutputHelper.getOutput(OUTPUT_ID)) return

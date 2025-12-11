@@ -37,7 +37,7 @@
     onMount(() => {
         if (!mainElem) return
 
-        resizeObserver = new ResizeObserver(entries => {
+        resizeObserver = new ResizeObserver((entries) => {
             for (const entry of entries) {
                 const { width: w, height: h } = entry.contentRect
                 if (width !== w || height !== h) {

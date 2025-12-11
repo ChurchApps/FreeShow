@@ -44,7 +44,7 @@
         if (!edit) return
 
         console.log(e)
-        activeStage.update(ae => {
+        activeStage.update((ae) => {
             if (e.shiftKey) {
                 if (ae.items.includes(id)) {
                     if (e.target.closest(".line")) ae.items.splice(ae.items.indexOf(id), 1)
@@ -80,7 +80,7 @@
 
         if ((e.key === "Backspace" || e.key === "Delete") && $activeStage.items.includes(id) && !document.activeElement?.closest(".stage_item") && !document.activeElement?.closest(".edit")) {
             // TODO: history??
-            stageShows.update(a => {
+            stageShows.update((a) => {
                 delete a[$activeStage.id!].items[id]
                 return a
             })
@@ -92,7 +92,7 @@
         if (e.target.closest(".stageTools") || e.target.closest(".contextMenu") || $activePopup) return
 
         if ((edit && !e.shiftKey && e.target.closest(".stage_item")?.id !== id && $activeStage.items.includes(id) && !e.target.closest(".stage_item")) || e.target.closest(".panel")) {
-            activeStage.update(ae => {
+            activeStage.update((ae) => {
                 ae.items = []
                 return ae
             })
@@ -165,7 +165,7 @@
     let firstTimerId = ""
     $: if (!item?.timer?.id || id.includes("first_active_timer")) {
         firstTimerId = $activeTimers[0]?.id
-        if (!firstTimerId) firstTimerId = sortByName(keysToID($timers)).find(timer => timer.type !== "counter")?.id || ""
+        if (!firstTimerId) firstTimerId = sortByName(keysToID($timers)).find((timer) => timer.type !== "counter")?.id || ""
     } else firstTimerId = ""
 
     let itemStyle = ""
@@ -209,7 +209,7 @@
 
     // conditions
     function removeConditions() {
-        stageShows.update(a => {
+        stageShows.update((a) => {
             if (!a[$activeStage.id!]?.items?.[id]?.conditions) return a
             delete a[$activeStage.id!].items[id].conditions
             return a

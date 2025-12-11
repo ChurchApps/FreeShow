@@ -41,7 +41,7 @@
         if (!shortcut) return ""
 
         // check if group shortcut is in use as slide shortcut
-        const isSlideShortcut = ref.some(a => {
+        const isSlideShortcut = ref.some((a) => {
             const slideShortcut = (a.data?.actions?.slide_shortcut?.key || "").toUpperCase()
             return slideShortcut === shortcut
         })
@@ -49,7 +49,7 @@
 
         // find first group after the current output index
         const outIndex = outSlide?.index ?? -1
-        let nextGroupIndex = ref.findIndex(a => {
+        let nextGroupIndex = ref.findIndex((a) => {
             let slideGroup = show.slides?.[a.id]?.globalGroup
             if (!slideGroup || slideGroup !== currentSlideGroup) return false
             return a.layoutIndex > outIndex
@@ -57,7 +57,7 @@
 
         // if no group after index, get the first
         if (nextGroupIndex === -1) {
-            nextGroupIndex = ref.findIndex(a => {
+            nextGroupIndex = ref.findIndex((a) => {
                 let slideGroup = show.slides?.[a.id]?.globalGroup
                 return slideGroup && slideGroup === currentSlideGroup
             })
@@ -84,7 +84,7 @@
         e.preventDefault()
 
         let slideActions = clone(actions.slideActions)
-        let actionIndex = slideActions.findIndex(a => a.id === id || getActionTriggerId(a.triggers?.[0]) === id)
+        let actionIndex = slideActions.findIndex((a) => a.id === id || getActionTriggerId(a.triggers?.[0]) === id)
         if (actionIndex < 0) return
         slideActions.splice(actionIndex, 1)
 
@@ -151,7 +151,7 @@
             {@const customName = getActionName(actionId, actionValue) || (action.name !== translateText(customData.name) ? action.name : "")}
 
             <div class="button {customData.red ? '' : 'white'}">
-                <Button style="padding: 3px;{getCustomStyle(specialData)}" redHover title="{translateText('actions.remove')}: <b>{translateText(customData.name)}</b>{action.name && action.name !== translateText(customData.name) ? `\n${action.name}` : ''}" {zoom} on:click={e => deleteSlideAction(e, action.id || actionId)}>
+                <Button style="padding: 3px;{getCustomStyle(specialData)}" redHover title="{translateText('actions.remove')}: <b>{translateText(customData.name)}</b>{action.name && action.name !== translateText(customData.name) ? `\n${action.name}` : ''}" {zoom} on:click={(e) => deleteSlideAction(e, action.id || actionId)}>
                     {#if customName}<p>{customName}</p>{/if}
                     <Icon id={customData.icon || "actions"} size={0.9} white />
                 </Button>

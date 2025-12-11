@@ -30,7 +30,7 @@ export function newToast(msg: string) {
 
 // async wait (instead of timeouts)
 export function wait(ms: number) {
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
         setTimeout(() => {
             resolve("ended")
         }, Number(ms))
@@ -39,7 +39,7 @@ export function wait(ms: number) {
 
 // wait until input value is true
 export async function waitUntilValueIsDefined(value: () => any, intervalTime = 50, timeoutValue = 5000) {
-    return new Promise(async resolve => {
+    return new Promise(async (resolve) => {
         let currentValue = await value()
         if (currentValue) resolve(currentValue)
 
@@ -131,7 +131,7 @@ export const ERROR_FILTER = [
 ]
 export function logerror(err) {
     const msg = err.type === "unhandledrejection" ? err.reason?.message : err.message
-    if (!msg || ERROR_FILTER.find(a => msg.includes(a))) return
+    if (!msg || ERROR_FILTER.find((a) => msg.includes(a))) return
 
     const log: ErrorLog = {
         time: new Date(),
@@ -238,7 +238,7 @@ export function hasNewerUpdate(id: string, maxUpdatesMs = 0): Promise<boolean> {
         limited[id].pending(true)
     }
 
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
         limited[id] = {
             timeout: setTimeout(() => {
                 delete limited[id]

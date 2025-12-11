@@ -28,7 +28,7 @@
         if (!currentId) currentId = styleId || "default"
 
         // create a style if nothing exists
-        styles.update(a => {
+        styles.update((a) => {
             if (!a[currentId]) a[currentId] = clone(currentStyle)
 
             return a
@@ -42,7 +42,7 @@
     // pre v0.8.4: generate styles from old output "show" formatting
     if (!Object.keys($styles).length) createStylesFromOutputs()
     function createStylesFromOutputs() {
-        Object.keys($outputs).forEach(outputId => {
+        Object.keys($outputs).forEach((outputId) => {
             let output = $outputs[outputId]
 
             let currentOutputStyle = output.show || {}
@@ -50,7 +50,7 @@
 
             currentOutputStyle.name = output.name
 
-            styles.update(a => {
+            styles.update((a) => {
                 a[uid()] = currentOutputStyle
 
                 return a
@@ -96,7 +96,7 @@
     $: aspectRatio = currentStyle.aspectRatio || defaultAspectRatio
     $: maxLines = Number(currentStyle.lines || 0)
     $: metadataDisplay = currentStyle.displayMetadata || "never"
-    $: textTransitionData = transitionTypes.find(a => a.id === currentStyle.transition?.text?.type)
+    $: textTransitionData = transitionTypes.find((a) => a.id === currentStyle.transition?.text?.type)
 
     $: bgImage = currentStyle.backgroundImage
     function editBackgroundImage() {
@@ -105,7 +105,7 @@
     }
 
     $: transitionLabel = textTransitionData?.name || ""
-    $: mediaFitLabel = mediaFitOptions.find(a => a.value === mediaFit)?.label || ""
+    $: mediaFitLabel = mediaFitOptions.find((a) => a.value === mediaFit)?.label || ""
     $: aspectRatioLabel = aspectRatio.outputResolutionAsRatio ? "settings.output_resolution_ratio" : `${aspectRatio.width}:${aspectRatio.height}`
 
     const layerOptions = [
@@ -142,7 +142,7 @@
 
     // METADATA
 
-    $: metadataDisplayLabel = metadataDisplayValues.find(a => a.id === metadataDisplay)?.name || ""
+    $: metadataDisplayLabel = metadataDisplayValues.find((a) => a.id === metadataDisplay)?.name || ""
     const defaultDivider = "; "
     $: metadataDividerValue = currentStyle.metadataDivider === undefined ? defaultDivider : currentStyle.metadataDivider
     $: metadataTemplate = currentStyle.metadataTemplate || "metadata"
@@ -152,10 +152,10 @@
         updateStyle(e.value, e.key)
     }
 
-    $: normalOutputs = Object.values($outputs).filter(a => a.enabled && !a.stageOutput)
+    $: normalOutputs = Object.values($outputs).filter((a) => a.enabled && !a.stageOutput)
     function useStyle() {
-        outputs.update(a => {
-            Object.keys(a).forEach(outputId => {
+        outputs.update((a) => {
+            Object.keys(a).forEach((outputId) => {
                 let output = a[outputId]
                 if (output.stageOutput || !output.enabled) return
 
@@ -172,39 +172,39 @@
     </MaterialButton>
 {/if}
 
-<MaterialColorInput label="edit.background_color{templateBackground ? ' <span style="color: var(--text);opacity: 0.5;font-weight: normal;font-size: 0.6em;">settings.overrided_value<span>' : ''}" value={currentStyle.background || "#000000"} defaultValue="#000000" on:input={e => updateStyle(e, "background")} />
+<MaterialColorInput label="edit.background_color{templateBackground ? ' <span style="color: var(--text);opacity: 0.5;font-weight: normal;font-size: 0.6em;">settings.overrided_value<span>' : ''}" value={currentStyle.background || "#000000"} defaultValue="#000000" on:input={(e) => updateStyle(e, "background")} />
 
 <InputRow arrow={!!(currentStyle.backgroundImage && (currentStyle.clearStyleBackgroundOnText || activeLayers.includes("slide")))}>
-    <MaterialFilePicker label="edit.background_media{templateBackgroundImage && bgImage ? ' <span style="color: var(--text);opacity: 0.5;font-weight: normal;">settings.overrided_value<span>' : ''}" value={bgImage} filter={{ name: "Media files", extensions: mediaExtensions }} on:change={e => updateStyle(e, "backgroundImage")} allowEmpty />
+    <MaterialFilePicker label="edit.background_media{templateBackgroundImage && bgImage ? ' <span style="color: var(--text);opacity: 0.5;font-weight: normal;">settings.overrided_value<span>' : ''}" value={bgImage} filter={{ name: "Media files", extensions: mediaExtensions }} on:change={(e) => updateStyle(e, "backgroundImage")} allowEmpty />
     {#if bgImage}
         <MaterialButton title="titlebar.edit" icon="edit" on:click={editBackgroundImage} />
     {/if}
 
     <div slot="menu">
-        <MaterialToggleSwitch label="settings.clear_style_background_on_text" checked={currentStyle.clearStyleBackgroundOnText} defaultValue={false} on:change={e => updateStyle(e.detail, "clearStyleBackgroundOnText")} />
+        <MaterialToggleSwitch label="settings.clear_style_background_on_text" checked={currentStyle.clearStyleBackgroundOnText} defaultValue={false} on:change={(e) => updateStyle(e.detail, "clearStyleBackgroundOnText")} />
     </div>
 </InputRow>
 
-<MaterialPopupButton label="popup.transition" id="style" value={currentStyle.transition} name={transitionLabel} popupId="transition" icon="transition" on:change={e => updateStyle(e.detail || "", "transition")} allowEmpty />
-<MaterialPopupButton label="edit.media_fit" value={mediaFit} defaultValue="contain" name={mediaFitLabel} popupId="media_fit" icon="media_fit" data={{ updateCustom, styleId }} on:change={e => updateStyle(e.detail, "fit")} />
-<MaterialPopupButton label="settings.aspect_ratio" value={aspectRatio} defaultValue={defaultAspectRatio} name={aspectRatioLabel} popupId="aspect_ratio" icon="aspect_ratio" on:change={e => updateStyle(e.detail, "aspectRatio")} />
+<MaterialPopupButton label="popup.transition" id="style" value={currentStyle.transition} name={transitionLabel} popupId="transition" icon="transition" on:change={(e) => updateStyle(e.detail || "", "transition")} allowEmpty />
+<MaterialPopupButton label="edit.media_fit" value={mediaFit} defaultValue="contain" name={mediaFitLabel} popupId="media_fit" icon="media_fit" data={{ updateCustom, styleId }} on:change={(e) => updateStyle(e.detail, "fit")} />
+<MaterialPopupButton label="settings.aspect_ratio" value={aspectRatio} defaultValue={defaultAspectRatio} name={aspectRatioLabel} popupId="aspect_ratio" icon="aspect_ratio" on:change={(e) => updateStyle(e.detail, "aspectRatio")} />
 
-<MaterialToggleButtons label="settings.active_layers" value={activeLayers} options={layerOptions} on:change={e => updateStyle(e.detail, "layers")} />
+<MaterialToggleButtons label="settings.active_layers" value={activeLayers} options={layerOptions} on:change={(e) => updateStyle(e.detail, "layers")} />
 <!-- WIP toggle meta -->
 
 <!-- Background -->
 <Title label="preview.background" icon="background" />
 
-<MaterialNumberInput label="media.volume (%)" disabled={!activeLayers.includes("background")} value={currentStyle.volume ?? 100} defaultValue={100} max={100} on:change={e => updateStyle(e.detail, "volume")} />
+<MaterialNumberInput label="media.volume (%)" disabled={!activeLayers.includes("background")} value={currentStyle.volume ?? 100} defaultValue={100} max={100} on:change={(e) => updateStyle(e.detail, "volume")} />
 
 <!-- Slide -->
 <Title label="preview.slide" icon="slide" />
 
-<MaterialPopupButton label="settings.lines" disabled={!activeLayers.includes("slide")} value={maxLines} name={maxLines.toString()} popupId="max_lines" icon="lines" data={{ styleId }} on:change={e => updateStyle(e.detail, "lines")} allowEmpty />
+<MaterialPopupButton label="settings.lines" disabled={!activeLayers.includes("slide")} value={maxLines} name={maxLines.toString()} popupId="max_lines" icon="lines" data={{ styleId }} on:change={(e) => updateStyle(e.detail, "lines")} allowEmpty />
 
 <InputRow>
     <!-- WIP doubleClick ?? -->
-    <MaterialPopupButton label="settings.override_with_template" disabled={!activeLayers.includes("slide")} value={templateOverride} name={$templates[templateOverride]?.name} popupId="select_template" icon="templates" on:change={e => updateStyle(e.detail, "template")} allowEmpty />
+    <MaterialPopupButton label="settings.override_with_template" disabled={!activeLayers.includes("slide")} value={templateOverride} name={$templates[templateOverride]?.name} popupId="select_template" icon="templates" on:change={(e) => updateStyle(e.detail, "template")} allowEmpty />
     {#if templateOverride && $templates[templateOverride]}
         <MaterialButton title="titlebar.edit" icon="edit" on:click={() => editTemplate(templateOverride)} />
     {/if}
@@ -220,15 +220,15 @@
 <!-- Overlays -->
 <Title label="preview.overlays (tools.metadata)" icon="overlays" />
 
-<MaterialPopupButton label="meta.display_metadata" disabled={!activeLayers.includes("overlays")} value={metadataDisplay} defaultValue="never" name={metadataDisplayLabel} popupId="metadata_display" icon="info" on:change={e => updateStyle(e.detail, "displayMetadata")} />
+<MaterialPopupButton label="meta.display_metadata" disabled={!activeLayers.includes("overlays")} value={metadataDisplay} defaultValue="never" name={metadataDisplayLabel} popupId="metadata_display" icon="info" on:change={(e) => updateStyle(e.detail, "displayMetadata")} />
 
 {#if (currentStyle.displayMetadata || "never") !== "never"}
-    <MaterialTextInput label="meta.text_divider" disabled={!activeLayers.includes("overlays")} value={metadataDividerValue} defaultValue={defaultDivider} on:change={e => updateStyle(e.detail, "metadataDivider")}></MaterialTextInput>
-    <MaterialPopupButton label="meta.meta_template" disabled={!activeLayers.includes("overlays")} value={metadataTemplate} defaultValue="metadata" name={$templates[metadataTemplate]?.name} popupId="select_template" icon="templates" on:change={e => updateStyle(e.detail, "metadataTemplate")} />
+    <MaterialTextInput label="meta.text_divider" disabled={!activeLayers.includes("overlays")} value={metadataDividerValue} defaultValue={defaultDivider} on:change={(e) => updateStyle(e.detail, "metadataDivider")}></MaterialTextInput>
+    <MaterialPopupButton label="meta.meta_template" disabled={!activeLayers.includes("overlays")} value={metadataTemplate} defaultValue="metadata" name={$templates[metadataTemplate]?.name} popupId="select_template" icon="templates" on:change={(e) => updateStyle(e.detail, "metadataTemplate")} />
     <!-- <CombinedInput>
         <p><T id="meta.metadata_layout" /></p>
         <TextInput value={currentStyle.metadataLayout || DEFAULT_META_LAYOUT} on:change={(e) => updateStyle(e, "metadataLayout")} on:keydown={keydown} />
     </CombinedInput> -->
 {/if}
 
-<MaterialPopupButton label="meta.message_template" disabled={!activeLayers.includes("overlays")} value={messageTemplate} defaultValue="message" name={$templates[messageTemplate]?.name} popupId="select_template" icon="templates" on:change={e => updateStyle(e.detail, "messageTemplate")} />
+<MaterialPopupButton label="meta.message_template" disabled={!activeLayers.includes("overlays")} value={messageTemplate} defaultValue="message" name={$templates[messageTemplate]?.name} popupId="select_template" icon="templates" on:change={(e) => updateStyle(e.detail, "messageTemplate")} />

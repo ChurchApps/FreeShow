@@ -37,7 +37,7 @@ export function setShow(id: string, value: "delete" | Show): Show {
         }
     }
 
-    showsCache.update(a => {
+    showsCache.update((a) => {
         previousValue = a[id]
         if (value === "delete") delete a[id]
         else if (value) {
@@ -49,7 +49,7 @@ export function setShow(id: string, value: "delete" | Show): Show {
         return a
     })
 
-    shows.update(a => {
+    shows.update((a) => {
         if (value === "delete") delete a[id]
         else if (!a[id] && value) {
             a[id] = {
@@ -70,7 +70,7 @@ export function setShow(id: string, value: "delete" | Show): Show {
     console.info("SHOW UPDATED: ", id, value)
 
     if (value && value !== "delete") {
-        cachedShowsData.update(a => {
+        cachedShowsData.update((a) => {
             const customId = getShowCacheId(id, get(showsCache)[id])
             a[customId] = updateCachedShow(id, value)
             return a
@@ -90,9 +90,9 @@ export async function loadShows(s: string[], deleting = false) {
     const savedBeforeLoading: boolean = !deleting && get(saved)
 
     const notLoaded: string[] = []
-    s.forEach(id => {
+    s.forEach((id) => {
         if (!get(shows)[id]) {
-            notFound.update(a => {
+            notFound.update((a) => {
                 a.show.push(id)
                 return a
             })
@@ -104,10 +104,10 @@ export async function loadShows(s: string[], deleting = false) {
     if (!notLoaded.length) return
 
     await Promise.all(
-        notLoaded.map(async showId => {
-            await requestMain(Main.SHOW, { name: get(shows)[showId].name, id: showId }, data => {
+        notLoaded.map(async (showId) => {
+            await requestMain(Main.SHOW, { name: get(shows)[showId].name, id: showId }, (data) => {
                 if (data.error || !data.content) {
-                    notFound.update(a => {
+                    notFound.update((a) => {
                         a.show.push(data.id)
                         return a
                     })
@@ -119,7 +119,7 @@ export async function loadShows(s: string[], deleting = false) {
 
                 // remove from not found
                 if (get(notFound).show.includes(data.id)) {
-                    notFound.update(a => {
+                    notFound.update((a) => {
                         a.show.splice(a.show.indexOf(data.id), 1)
                         return a
                     })
@@ -152,11 +152,22 @@ export function saveTextCache(id: string, show: Show) {
     // don't cache scripture/calendar shows text or archived categories
     if (!show?.slides || show?.reference?.type || get(categories)[show.category || ""]?.isArchive) return
 
-    const txt = Object.values(show.slides)
-        .flatMap(slide => slide?.items)
-        .flatMap(item => item?.lines || [])
-        .flatMap(line => line?.text || [])
-        .map(text => text?.value)
+    const txt = getTextCacheString(show)
+    tempCache[id] = txt
+
+    // prevent rapid updates
+    if (updateTimeout) clearTimeout(updateTimeout)
+    updateTimeout = setTimeout(() => {
+        textCache.set({ ...get(textCache), ...tempCache })
+        tempCache = {}
+    }, 1000)
+}
+function getTextCacheString(show: Show) {
+    return Object.values(show.slides)
+        .flatMap((slide) => slide?.items)
+        .flatMap((item) => item?.lines || [])
+        .flatMap((line) => line?.text || [])
+        .map((text) => text?.value || "")
         .join(" ")
         .toLowerCase()
     // .replace(/[^a-z0-9 ]+/g, "")
@@ -166,15 +177,6 @@ export function saveTextCache(id: string, show: Show) {
     // txt = Buffer.from(txt).toString("base64")
     // Buffer.from(encode, 'base64').toString('utf-8')
     // window.atob(encode)
-
-    tempCache[id] = txt
-
-    // prevent rapid updates
-    if (updateTimeout) clearTimeout(updateTimeout)
-    updateTimeout = setTimeout(() => {
-        textCache.set({ ...get(textCache), ...tempCache })
-        tempCache = {}
-    }, 1000)
 }
 
 export function setQuickAccessMetadata(show: ShowObj, key: string, value: string) {

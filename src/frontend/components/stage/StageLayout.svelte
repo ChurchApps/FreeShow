@@ -45,12 +45,12 @@
         let items = $stageShows[$activeStage.id!].items
         let newData: { [key: string]: string } = {}
 
-        active.forEach(id => {
+        active.forEach((id) => {
             let styles = getStyles(items[id].style)
             Object.entries(newStyles).forEach(([key, value]) => (styles[key] = value.toString()))
 
             let textStyles = ""
-            Object.entries(styles).forEach(obj => (textStyles += obj[0] + ":" + obj[1] + ";"))
+            Object.entries(styles).forEach((obj) => (textStyles += obj[0] + ":" + obj[1] + ";"))
 
             // TODO: move multiple!
             newData[id] = textStyles
@@ -73,7 +73,7 @@
     $: layout = $stageShows[stageLayoutId || ""] || {}
 
     // get video time (pre 1.4.0)
-    $: if ($currentWindow === "output" && Object.keys(layout.items || {}).some(id => id.includes("video"))) requestVideoData()
+    $: if ($currentWindow === "output" && Object.keys(layout.items || {}).some((id) => id.includes("video"))) requestVideoData()
     let interval: NodeJS.Timeout | null = null
     function requestVideoData() {
         if (interval) return
@@ -124,7 +124,7 @@
     // { $activeTimers, $variables, $playingAudio, $playingAudioPaths, videoTime }
     let updater = 0
     const updaterInterval = setInterval(() => {
-        if (stageItems.some(a => a.conditions)) updater++
+        if (stageItems.some((a) => a.conditions)) updater++
     }, 500)
     onDestroy(() => clearInterval(updaterInterval))
 
@@ -135,7 +135,7 @@
 
     // stage output
 
-    $: hasStageOutput = edit && Object.values($outputs).some(a => a.stageOutput && (a.enabled || a.stageOutput === stageLayoutId))
+    $: hasStageOutput = edit && Object.values($outputs).some((a) => a.stageOutput && (a.enabled || a.stageOutput === stageLayoutId))
 
     function createStageOutput() {
         toggleOutputEnabled.set(true)

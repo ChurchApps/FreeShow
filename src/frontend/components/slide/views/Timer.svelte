@@ -73,16 +73,11 @@
         if (currentTime < 0) return true
         if (timer.type !== "counter") return false
 
-        let start: number = timer.start!
-        let end: number = timer.end!
+        let start = timer.start || 0
+        let end = timer.end || 0
 
-        if (start < end) {
-            if (time + offset > end) return true
-            return false
-        }
-
-        if (time - offset < end) return true
-        return false
+        if (start < end) return time + offset > end
+        return time - offset < end
     }
 
     function openInDrawer() {

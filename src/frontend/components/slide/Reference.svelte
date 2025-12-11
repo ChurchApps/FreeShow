@@ -34,7 +34,7 @@
         let collection = data.collection
         if (!collection || !show) return
 
-        let scriptureId = $scriptures[collection] ? collection : Object.values($scriptures).find(a => a.id === collection)
+        let scriptureId = $scriptures[collection] ? collection : Object.values($scriptures).find((a) => a.id === collection)
         if (!scriptureId) return
 
         openScripture.set(show.reference!.data)

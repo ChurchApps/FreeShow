@@ -8,7 +8,7 @@
     import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
 
     function setMethod(method: "download" | "upload") {
-        driveData.update(a => {
+        driveData.update((a) => {
             a.initializeMethod = method
             return a
         })
@@ -19,7 +19,7 @@
     function updateValue(value: string, key: string) {
         if (value === undefined) return
 
-        driveData.update(a => {
+        driveData.update((a) => {
             a[key] = value
             return a
         })
@@ -41,10 +41,10 @@
     </MaterialButton>
 </div>
 
-<MaterialToggleSwitch label="cloud.enable_custom_folder_id" checked={customFolderEnabled} defaultValue={false} on:change={e => (customFolderEnabled = e.detail)} />
+<MaterialToggleSwitch label="cloud.enable_custom_folder_id" checked={customFolderEnabled} defaultValue={false} on:change={(e) => (customFolderEnabled = e.detail)} />
 
 {#if customFolderEnabled}
-    <MaterialTextInput label="cloud.main_folder{$driveData?.mainFolderId ? `<span style="margin-left: 10px;font-size: 0.7em;opacity: 0.5;color: var(--text);">drive.google.com/drive/folders/</span>` : ''}" value={$driveData?.mainFolderId || ""} defaultValue="" on:change={e => updateValue(e.detail, "mainFolderId")} />
+    <MaterialTextInput label="cloud.main_folder{$driveData?.mainFolderId ? `<span style="margin-left: 10px;font-size: 0.7em;opacity: 0.5;color: var(--text);">drive.google.com/drive/folders/</span>` : ''}" value={$driveData?.mainFolderId || ""} defaultValue="" on:change={(e) => updateValue(e.detail, "mainFolderId")} />
 {/if}
 
 <style>

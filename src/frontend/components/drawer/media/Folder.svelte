@@ -18,13 +18,13 @@
 
     // WIP this creates one listener per individual folder...
     $: if (folderPreview && mode === "grid" && path && !$special.optimizedMode) {
-        requestMain(Main.READ_FOLDER, { path, disableThumbnails: true }, data => {
+        requestMain(Main.READ_FOLDER, { path, disableThumbnails: true }, (data) => {
             if (data.path !== path) return
 
             fileCount = 0
-            let filtered = data.files.filter(file => isMediaExtension(file.extension))
+            let filtered = data.files.filter((file) => isMediaExtension(file.extension))
             fileCount = filtered.length
-            files = filtered.slice(0, 4).map(a => {
+            files = filtered.slice(0, 4).map((a) => {
                 a.path = getThumbnailPath(a.path, mediaSize.drawerSize)
                 return a
             })

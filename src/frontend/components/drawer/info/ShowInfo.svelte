@@ -25,7 +25,7 @@
 
     $: category = show?.category ? ($categories[show.category]?.name ?? "error.not_found") || "main.unnamed" : "main.none"
 
-    $: tags = sortByName(keysToID($globalTags).filter(a => show?.quickAccess?.tags?.includes(a.id))).map(({ name }) => name)
+    $: tags = sortByName(keysToID($globalTags).filter((a) => show?.quickAccess?.tags?.includes(a.id))).map(({ name }) => name)
 
     let words = 0
     let allLines: Line[][]
@@ -39,9 +39,9 @@
 
     function getWords() {
         words = 0
-        allLines.forEach(lines => {
-            lines.forEach(line => {
-                line?.text?.forEach(text => (words += text.value.split(" ").length))
+        allLines.forEach((lines) => {
+            lines.forEach((line) => {
+                line?.text?.forEach((text) => (words += text.value.split(" ").length))
             })
         })
     }

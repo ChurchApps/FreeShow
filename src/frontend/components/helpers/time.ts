@@ -131,7 +131,7 @@ const intervals = [
 export function timeAgo(time: number) {
     if (!time) return ""
     const seconds = Math.floor((Date.now() - time) / 1000)
-    const interval: any = intervals.find(i => i.seconds < seconds)
+    const interval: any = intervals.find((i) => i.seconds < seconds)
     if (!interval) return "just now"
     const count = Math.floor(seconds / interval.seconds)
     return `${count} ${interval.label}${count !== 1 ? "s" : ""} ago`

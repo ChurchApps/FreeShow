@@ -41,7 +41,7 @@
         // WIP captions...
 
         setTimeout(() => {
-            player.getVideoTitle().then(t => {
+            player.getVideoTitle().then((t) => {
                 title = t
             })
         }, 1000)
@@ -102,7 +102,7 @@
         if (!loaded && !seeking) return
 
         videoData.paused = paused
-        if (preview) player.getCurrentTime(time => (videoTime = time.duration))
+        if (preview) player.getCurrentTime((time) => (videoTime = time.duration))
     }
 
     // update volume based on global slider value

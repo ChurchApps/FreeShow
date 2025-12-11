@@ -25,7 +25,7 @@
     async function loadApiBibles() {
         try {
             let bibleList = await getApiBiblesList()
-            bibleList = bibleList.map(a => {
+            bibleList = bibleList.map((a) => {
                 const bible = customBibleData(a)
                 if (bible.description && (bible.description.toLowerCase() === "common" || bible.name.includes(bible.description))) bible.description = ""
                 return bible
@@ -36,7 +36,7 @@
             // if it needs attribution, it's probably more in demand!
             bibleList = sortByName(bibleList).sort((a, b) => ((b.attributionRequired || b.attributionString) as any) - ((a.attributionRequired || a.attributionString) as any))
             let newSorted: any[] = []
-            bibleList.forEach(bible => {
+            bibleList.forEach((bible) => {
                 newSorted.push(bible)
                 let found = false
                 if (bible.countryList?.includes(langCode)) found = true
@@ -61,10 +61,10 @@
     let searchedBibles: CustomBibleListContent[] = []
     let searchedRecommendedBibles: CustomBibleListContent[] = []
     $: searchedBibles = bibles
-    $: searchedRecommendedBibles = recommended.map(a => ({ ...a, name: a.nameLocal || a.name }))
+    $: searchedRecommendedBibles = recommended.map((a) => ({ ...a, name: a.nameLocal || a.name }))
 
     function toggleScripture(bible: CustomBibleListContent) {
-        scriptures.update(a => {
+        scriptures.update((a) => {
             const id = bible.sourceKey
             const existingId = Object.entries(a).find(([_key, value]: any) => value.id === id)?.[0]
 
@@ -84,8 +84,8 @@
             return
         }
 
-        searchedBibles = bibles.filter(a => value.split(" ").find(value => a.name.toLowerCase().includes(value)))
-        searchedRecommendedBibles = recommended.filter(a => value.split(" ").find(value => a.name.toLowerCase().includes(value)))
+        searchedBibles = bibles.filter((a) => value.split(" ").find((value) => a.name.toLowerCase().includes(value)))
+        searchedRecommendedBibles = recommended.filter((a) => value.split(" ").find((value) => a.name.toLowerCase().includes(value)))
     }
 
     let searchActive = false
@@ -135,7 +135,7 @@
         <div class="list">
             {#if searchedRecommendedBibles.length}
                 {#each searchedRecommendedBibles as bible}
-                    <MaterialButton icon="scripture_alt" on:click={() => toggleScripture(bible)} isActive={!!Object.values($scriptures).find(a => a.id === bible.sourceKey)}>
+                    <MaterialButton icon="scripture_alt" on:click={() => toggleScripture(bible)} isActive={!!Object.values($scriptures).find((a) => a.id === bible.sourceKey)}>
                         {bible.name}
                         {#if bible.description}
                             <span class="description" data-title={bible.description}>{bible.description}</span>
@@ -148,7 +148,7 @@
             {#if bibles.length}
                 {#if searchedBibles.length}
                     {#each searchedBibles as bible}
-                        <MaterialButton icon="scripture_alt" on:click={() => toggleScripture(bible)} isActive={!!Object.values($scriptures).find(a => a.id === bible.sourceKey)}>
+                        <MaterialButton icon="scripture_alt" on:click={() => toggleScripture(bible)} isActive={!!Object.values($scriptures).find((a) => a.id === bible.sourceKey)}>
                             {bible.name}
                             {#if bible.description}
                                 <span class="description" data-title={bible.description}>{bible.description}</span>
@@ -186,7 +186,7 @@
         <T id="scripture.local" />
     </MaterialButton>
 {:else}
-    <MaterialMultiChoice options={importTypes} on:click={e => (importType = e.detail)} />
+    <MaterialMultiChoice options={importTypes} on:click={(e) => (importType = e.detail)} />
 {/if}
 
 <style>

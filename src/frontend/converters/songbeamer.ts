@@ -152,7 +152,7 @@ function convertSongbeamerFileToShow(name: string, text: string, settings: Impor
 }
 
 function getTags(tags: string[]) {
-    return tags.map(tag => getOrCreateTag(tag.trim()))
+    return tags.map((tag) => getOrCreateTag(tag.trim()))
 }
 function getOrCreateTag(name: string) {
     // get existing with same name
@@ -477,13 +477,13 @@ function createMultilineTextbox(songbeamerSlide: SongbeamerSlide): Item {
         lines: []
     }
     let lineCount = 0
-    songbeamerSlide.lines.map(lines => {
+    songbeamerSlide.lines.map((lines) => {
         if (lines.length > lineCount) {
             lineCount = lines.length
         }
     })
     for (let lineIndex = 0; lineIndex < lineCount; ++lineIndex) {
-        songbeamerSlide.lines.map(lines => {
+        songbeamerSlide.lines.map((lines) => {
             const line: Line = {
                 align: "",
                 text: [

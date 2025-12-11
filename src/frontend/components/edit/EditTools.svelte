@@ -98,7 +98,7 @@
         else if ($activeEdit.type === "template") allSlideItems = clone($templates[activeId]?.items || [])
         else allSlideItems = editSlideSelected && activeIsShow && ref.length > activeSlide ? clone(_show().slides([ref[activeSlide]?.id]).get("items")[0] || []) : []
     }
-    const getItemsByIndex = (array: number[]): Item[] => array.map(i => allSlideItems[i])
+    const getItemsByIndex = (array: number[]): Item[] => array.map((i) => allSlideItems[i])
 
     // select active items or all items
     $: items = $activeEdit.items.length ? getItemsByIndex($activeEdit.items.sort((a, b) => a - b)) : allSlideItems
@@ -112,7 +112,7 @@
     function copyStyle() {
         const styles = getItemsStyle()
 
-        copyPasteEdit.update(a => {
+        copyPasteEdit.update((a) => {
             a[type] = styles
             return a
         })
@@ -121,7 +121,7 @@
     }
 
     function clearClipboard() {
-        copyPasteEdit.update(a => {
+        copyPasteEdit.update((a) => {
             delete a[type]
             return a
         })
@@ -129,7 +129,7 @@
 
     function getItemsStyle(_updater: any = null) {
         if (!items?.length) return [getCurrentStyle()]
-        return items.map(item => getCurrentStyle(item))
+        return items.map((item) => getCurrentStyle(item))
     }
 
     function getCurrentStyle(item: Item | null = null) {
@@ -171,7 +171,7 @@
             if (active === "slide") return setSlideStyle(styles[0], slides)
             if (active === "filters") {
                 let indexes: number[] = []
-                if (applyToFollowing) indexes = ref.map((_, i) => i).filter(a => a >= activeSlide)
+                if (applyToFollowing) indexes = ref.map((_, i) => i).filter((a) => a >= activeSlide)
                 else if (applyToAll) indexes = ref.map((_, i) => i)
                 else indexes = [activeSlide]
 
@@ -212,7 +212,7 @@
                     if (!a[$activeEdit.id!]?.items[i]?.lines) return
 
                     a[$activeEdit.id!].items[i].lines.forEach((line: Line) => {
-                        line.text?.forEach(text => {
+                        line.text?.forEach((text) => {
                             text.style = ""
                         })
                     })
@@ -262,10 +262,10 @@
         if (active !== "text") return
 
         let values: any = []
-        items.forEach(item => {
+        items.forEach((item) => {
             if (item.lines) {
-                let text = item.lines.map(a => {
-                    return a.text.map(a => {
+                let text = item.lines.map((a) => {
+                    return a.text.map((a) => {
                         a.style = ""
                         return a
                     })
@@ -292,7 +292,7 @@
         // reset timer/icon/media/mirror etc. style
         if (item && item[item.type || ""]) deleteKeys = [item.type!]
 
-        deleteKeys.forEach(key => {
+        deleteKeys.forEach((key) => {
             history({
                 id: "setItems",
                 newData: { style: { key, values: [undefined] } },
@@ -319,7 +319,7 @@
 
             let values: string[] = []
 
-            selectedItems.forEach(index => {
+            selectedItems.forEach((index) => {
                 let item = allSlideItems[index]
                 if (!item) return
 

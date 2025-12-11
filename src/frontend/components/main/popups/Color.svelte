@@ -33,7 +33,7 @@
 
     const actions = {
         slide: () => {
-            selection.data.forEach(a => {
+            selection.data.forEach((a) => {
                 let ref: any = a.id ? { id: a.id } : getLayoutRef()[a.index]
                 if (!ref) return
 
@@ -47,22 +47,22 @@
         },
         group: () => actions.slide(),
         overlay: () => {
-            selection.data.forEach(id => {
+            selection.data.forEach((id) => {
                 history({ id: "UPDATE", newData: { key: "color", data: value }, oldData: { id }, location: { page: "drawer", id: "overlay_color", override: "color" } })
             })
         },
         template: () => {
-            selection.data.forEach(id => {
+            selection.data.forEach((id) => {
                 history({ id: "UPDATE", newData: { key: "color", data: value }, oldData: { id }, location: { page: "drawer", id: "template_color", override: "color" } })
             })
         },
         effect: () => {
-            selection.data.forEach(id => {
+            selection.data.forEach((id) => {
                 history({ id: "UPDATE", newData: { key: "color", data: value }, oldData: { id }, location: { page: "drawer", id: "effect_key", override: "color" } })
             })
         },
         output: () => {
-            outputs.update(a => {
+            outputs.update((a) => {
                 selection.data.forEach(({ id }) => {
                     a[id].color = value
                 })
@@ -71,7 +71,7 @@
             })
         },
         profile: () => {
-            profiles.update(a => {
+            profiles.update((a) => {
                 selection.data.forEach(({ id }) => {
                     if (!a[id]) return
                     a[id].color = value
@@ -81,7 +81,7 @@
             })
         },
         tag: () => {
-            globalTags.update(a => {
+            globalTags.update((a) => {
                 let id = selection.data[0]?.id || ""
                 if (a[id]) a[id].color = value
 
@@ -89,7 +89,7 @@
             })
         },
         show: () => {
-            projects.update(a => {
+            projects.update((a) => {
                 if (!a[$activeProject || ""]?.shows) return a
 
                 a[$activeProject || ""].shows[selection.data[0].index].color = value

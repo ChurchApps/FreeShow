@@ -18,7 +18,7 @@
 
     $: showId = $activeShow?.id || ""
     $: allShowGroups = getSlideGroups(showId, $showsCache, $cachedShowsData)
-    $: showGroups = allShowGroups.filter(a => a.group !== ".")
+    $: showGroups = allShowGroups.filter((a) => a.group !== ".")
 
     $: currentShow = $showsCache[showId]
 
@@ -62,7 +62,7 @@
                             role="button"
                             tabindex="0"
                             style="border-bottom: 2px solid {slide.color};{$fullColors ? '' : `color: ${slide.color};`}"
-                            on:click={e => {
+                            on:click={(e) => {
                                 if (isLocked) {
                                     alertMessage.set(currentShow?.locked ? "show.locked_info" : "profile.locked")
                                     activePopup.set("alert")
@@ -75,7 +75,7 @@
                                     selected.set({ id: null, data: [] })
                                 }
                             }}
-                            on:keydown={createKeydownHandler(e => {
+                            on:keydown={createKeydownHandler((e) => {
                                 if (isLocked) {
                                     alertMessage.set(currentShow?.locked ? "show.locked_info" : "profile.locked")
                                     activePopup.set("alert")
@@ -117,7 +117,7 @@
                                 role="button"
                                 tabindex="0"
                                 style="border-bottom: 2px solid {slide.color};{$fullColors ? '' : `color: ${slide.color};`}"
-                                on:click={e => {
+                                on:click={(e) => {
                                     if (isLocked) {
                                         alertMessage.set(currentShow?.locked ? "show.locked_info" : "profile.locked")
                                         activePopup.set("alert")
@@ -129,7 +129,7 @@
                                         history({ id: "SLIDES", newData: { data: [{ ...slide, id: uid() }] } })
                                     }
                                 }}
-                                on:keydown={createKeydownHandler(e => {
+                                on:keydown={createKeydownHandler((e) => {
                                     if (isLocked) {
                                         alertMessage.set(currentShow?.locked ? "show.locked_info" : "profile.locked")
                                         activePopup.set("alert")

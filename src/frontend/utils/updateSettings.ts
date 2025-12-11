@@ -137,7 +137,7 @@ export function updateSettings(data: any) {
         const pre092 = currentTheme.colors.secondary?.toLowerCase() === "#e6349c"
         const pre149 = currentTheme.colors.primary?.toLowerCase() === "#292c36"
         if (data.theme === "default" && (pre092 || pre149)) {
-            themes.update(a => {
+            themes.update((a) => {
                 a.default = clone(defaultThemes.default)
                 currentTheme = a.default
                 return a
@@ -161,7 +161,7 @@ export function restartOutputs(specificId = "") {
     const time = clone(videosTime)
 
     const allOutputs = keysToID(get(outputs))
-    const outputIds = specificId ? [specificId] : allOutputs.filter(a => a.enabled).map(({ id }) => id)
+    const outputIds = specificId ? [specificId] : allOutputs.filter((a) => a.enabled).map(({ id }) => id)
 
     outputIds.forEach((id: string) => {
         const output: Output = get(outputs)[id]
@@ -224,7 +224,7 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
     },
     lockedOverlays: (v: any) => {
         // only get locked overlays
-        v = v.filter(id => get(overlays)[id]?.locked === true)
+        v = v.filter((id) => get(overlays)[id]?.locked === true)
 
         lockedOverlays.set(v)
 
@@ -330,7 +330,7 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
 
         // DEPRECATED (migrate)
         if (v.pcoLocalAlways) {
-            contentProviderData.update(a => ({ ...a, planningcenter: { localAlways: true } }))
+            contentProviderData.update((a) => ({ ...a, planningcenter: { localAlways: true } }))
             delete v.pcoLocalAlways
         }
 

@@ -43,7 +43,7 @@ export class AudioPlaylist {
     static update(id: string, key: string, value: any) {
         if (!get(audioPlaylists)[id]) return
 
-        audioPlaylists.update(a => {
+        audioPlaylists.update((a) => {
             a[id][key] = value
             return a
         })
@@ -113,7 +113,7 @@ export class AudioPlaylist {
         const songs = getSongs()
         if (!songs.length) return
 
-        const currentSongIndex = songs.findIndex(a => a === (audioPath || previousPath))
+        const currentSongIndex = songs.findIndex((a) => a === (audioPath || previousPath))
         let nextSong = songs[currentSongIndex + (audioPath ? 0 : 1)]
 
         if (!nextSong && data.loop) nextSong = songs[0]
@@ -133,9 +133,9 @@ export class AudioPlaylist {
         if (Object.keys(playingAudio).includes(nextSong)) return
 
         let nextIndex = startIndex > -1 ? startIndex : (get(activePlaylist).index ?? -1) + 1
-        if (playlist.songs[nextIndex] !== nextSong) nextIndex = songs.findIndex(a => a === nextSong)
+        if (playlist.songs[nextIndex] !== nextSong) nextIndex = songs.findIndex((a) => a === nextSong)
 
-        activePlaylist.update(a => {
+        activePlaylist.update((a) => {
             a.active = nextSong
             a.index = nextIndex
             return a
@@ -154,7 +154,7 @@ export class AudioPlaylist {
             const mode = playlist.mode
             if (mode === "shuffle") songsList = shuffleArray(songsList)
 
-            activePlaylist.update(a => {
+            activePlaylist.update((a) => {
                 a.songs = songsList
                 return a
             })

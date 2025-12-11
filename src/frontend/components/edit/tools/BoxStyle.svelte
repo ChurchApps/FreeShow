@@ -22,7 +22,7 @@
 
     // selection
     let selection: null | { start: number; end: number }[] = null
-    const unsubscribe = activeEdit.subscribe(a => {
+    const unsubscribe = activeEdit.subscribe((a) => {
         if (!a.items.length) selection = null
     })
     onDestroy(unsubscribe)
@@ -32,7 +32,7 @@
 
         // set focus to textbox if only one without content
         if (allSlideItems.length === 1 && item && !getItemText(item).length && !$activeEdit.items.length) {
-            activeEdit.update(a => ({ ...(a || {}), items: [0] }))
+            activeEdit.update((a) => ({ ...(a || {}), items: [0] }))
             const elem = document.querySelector(".editItem")?.querySelector(".edit")
             if (elem) (elem as HTMLElement).focus()
         }
@@ -80,7 +80,7 @@
             let editElem = document.querySelector(".editArea")?.querySelectorAll(".editItem")?.[$activeEdit.items[0]]?.querySelector(".edit")
             if (!editElem) return
 
-            let selectedLine = selection.findIndex(a => a.start !== undefined)
+            let selectedLine = selection.findIndex((a) => a.start !== undefined)
             if (selectedLine > -1 && selection[selectedLine]) setCaret(editElem, { line: selectedLine, pos: selection[selectedLine].end })
         }, 10)
     }
@@ -119,7 +119,7 @@
 
     $: if (box?.sections?.font) {
         setBoxInputValue(box, "font", "font-size", "disabled", item?.textFit !== "none")
-        setBoxInputValue(box, "font", "textFit", "value", item?.textFit || "growToFit")
+        setBoxInputValue(box, "font", "textFit", "value", item?.textFit || "growToFit") // other items (like clock, timer)
         // setBoxInputValue(box2, "font", "auto", "value", item.auto ?? true)
     }
 
@@ -128,6 +128,10 @@
         // setBoxInputValue(box2, "default", "textFit", "hidden", !item?.auto)
         setBoxInputValue(box, "text", "nowrap", "value", !!styles["white-space"]?.includes("nowrap"))
         setBoxInputValue(box, "lines", "specialStyle.lineRadius", "hidden", !item?.specialStyle?.lineRadius && !item?.specialStyle?.lineBg)
+
+        setBoxInputValue(box, "default", "textFit", "value", item?.auto ? "shrinkToFit" : "none") // text items
+        // WIP disabled auto size -- don't disable if all text is selected
+        // setBoxInputValue(box, "default", "font-size", "disabled", selection?.length)
     }
 
     $: if (id === "media" && item) {
@@ -262,6 +266,12 @@
         let input = e.detail
         console.log("BOX INPUT:", input)
 
+        // does not work for partial text when auto size is enabled
+        // WIP doesn't need to show if disabled works correctly
+        if (id === "text" && input.key === "font-size" && selection?.length && item?.textFit !== "none") {
+            newToast("edit.auto_size settings.enabled!")
+        }
+
         let allItems: number[] = $activeEdit.items
         // update all items if nothing is selected
         if (!allItems.length) allSlideItems.forEach((_item, i) => allItems.push(i))
@@ -272,7 +282,7 @@
 
         // only same type
         let currentType = id || allSlideItems[allItems[0]].type || "text"
-        allItems = allItems.filter(index => (allSlideItems[index].type || "text") === currentType)
+        allItems = allItems.filter((index) => (allSlideItems[index].type || "text") === currentType)
 
         if (input.id === "nowrap") input = { ...input, id: "style", key: "white-space", value: input.value ? "nowrap" : undefined }
 
@@ -309,7 +319,7 @@
                 let currentItemIndexes = currentItems.map((_item, i) => i)
 
                 // only same type
-                currentItemIndexes = currentItemIndexes.filter(index => (currentItems[index].type || "text") === currentType)
+                currentItemIndexes = currentItemIndexes.filter((index) => (currentItems[index].type || "text") === currentType)
                 slideItems.push(currentItemIndexes)
             })
         }
@@ -323,16 +333,16 @@
         slides.forEach((slide, i) => {
             if (!slideItems[i]?.length) return
             values[slide] = []
-            slideItems[i].forEach(i => getNewItemValues(clone(showSlides[slide]?.items?.[i] || allSlideItems[i]), slide))
+            slideItems[i].forEach((i) => getNewItemValues(clone(showSlides[slide]?.items?.[i] || allSlideItems[i]), slide))
         })
 
         function getNewItemValues(currentSlideItem: Item, slideId: string) {
             if (!currentSlideItem) return
 
             let selected = selection
-            if (!selected?.length || !selected?.filter(a => a.start !== a.end).length) {
+            if (!selected?.length || !selected?.filter((a) => a.start !== a.end).length) {
                 selected = []
-                currentSlideItem.lines?.forEach(line => {
+                currentSlideItem.lines?.forEach((line) => {
                     selected!.push({ start: 0, end: getLineText(line).length })
                 })
             }
@@ -346,9 +356,9 @@
                 values[slideId].push(newAligns)
             } else if (currentSlideItem.lines) {
                 if (input.id.includes("CSS")) {
-                    values[slideId].push(addStyle(selected, currentSlideItem, input.value).lines!.map(a => a.text))
+                    values[slideId].push(addStyle(selected, currentSlideItem, input.value).lines!.map((a) => a.text))
                 } else {
-                    values[slideId].push(aligns ? addStyleString(currentSlideItem.align || "", [input.key, input.value]) : addStyle(selected, clone(currentSlideItem), [input.key, input.value]).lines!.map(a => a.text))
+                    values[slideId].push(aligns ? addStyleString(currentSlideItem.align || "", [input.key, input.value]) : addStyle(selected, clone(currentSlideItem), [input.key, input.value]).lines!.map((a) => a.text))
                 }
             } else {
                 if (input.id.includes("CSS")) {
@@ -387,7 +397,7 @@
                 let allValues: any = Object.values(values)[0]
                 let currentValue: any = allValues[i] ?? allValues[0]
                 // some textboxes don't have lines, this will break things, so make sure it has lines!
-                if (currentItems[i].lines && typeof currentValue === "string") currentValue = allValues.find(a => typeof a !== "string") || allValues[0]
+                if (currentItems[i].lines && typeof currentValue === "string") currentValue = allValues.find((a) => typeof a !== "string") || allValues[0]
 
                 if (input.key === "align-items") currentItems[i].align = currentValue
                 else if (currentType !== "text") currentItems[i].style = currentValue

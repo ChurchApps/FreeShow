@@ -72,7 +72,7 @@
     // $: currentOutput = $outputs[outputId]
 
     // background output
-    $: outputId = getFirstOutputIdWithAudableBackground(allActiveOutputs) || allActiveOutputs.find(id => $outputs[id]?.out?.background) || allActiveOutputs[0]
+    $: outputId = getFirstOutputIdWithAudableBackground(allActiveOutputs) || allActiveOutputs.find((id) => $outputs[id]?.out?.background) || allActiveOutputs[0]
     $: currentOutput = outputId ? $outputs[outputId] || null : null
 
     // outBackground.subscribe(backgroundChanged)
@@ -153,7 +153,7 @@
             // let analyser = await getAnalyser(video)
             // if (!analyser) return
 
-            playingVideos.update(a => {
+            playingVideos.update((a) => {
                 a.push({ id: showId, location: "preview" })
                 return a
             })
@@ -213,7 +213,7 @@
         let value = e.detail.value
         if (subtitleIndex === undefined || !value) return
 
-        media.update(a => {
+        media.update((a) => {
             if (!a[showId]?.tracks?.[subtitleIndex]) return a
             a[showId].tracks[subtitleIndex].name = value
             if (a[showId].tracks[subtitleIndex].lang.length !== 2) a[showId].tracks[subtitleIndex].lang = value.replaceAll(" ", "_").toLowerCase()
@@ -234,7 +234,7 @@
 
         content = formatVTT(content)
 
-        media.update(a => {
+        media.update((a) => {
             if (!a[showId]) a[showId] = {}
             if (!a[showId].tracks) a[showId].tracks = []
 
@@ -251,7 +251,7 @@
     function setActiveSubtitle(e: any, lang: string) {
         if (e.target?.closest(".edit")) return
 
-        media.update(a => {
+        media.update((a) => {
             if (!a[showId]) a[showId] = {}
             if (a[showId].subtitle === lang) {
                 a[showId].subtitle = ""
@@ -268,10 +268,10 @@
 
     // TODO: history
     function addMarker() {
-        videoMarkers.update(a => {
+        videoMarkers.update((a) => {
             const newMarker = { name: "", time: Math.floor(videoTime || 0) }
 
-            if (a[showId]?.find(a => a.time === newMarker.time)) return a
+            if (a[showId]?.find((a) => a.time === newMarker.time)) return a
 
             if (!a[showId]) a[showId] = []
             a[showId].push(newMarker)
@@ -279,7 +279,7 @@
             // sort by time
             a[showId] = a[showId].sort((a, b) => a.time - b.time)
 
-            let markerIndex = a[showId].findIndex(a => a.time === newMarker.time)
+            let markerIndex = a[showId].findIndex((a) => a.time === newMarker.time)
             activeRename.set("marker_" + markerIndex)
 
             return a
@@ -290,7 +290,7 @@
         let currentMarker = e.detail?.id?.slice("marker_".length)
         if (currentMarker === undefined) return
 
-        videoMarkers.update(a => {
+        videoMarkers.update((a) => {
             a[showId][currentMarker].name = e.detail.value
 
             return a
@@ -323,7 +323,7 @@
 {#key showId}
     <div id={showId} class="media context #media_preview" style="flex: 1;overflow: hidden;">
         <!-- TODO: info about: CTRL click to play at current pos -->
-        <HoverButton icon="play" size={10} on:click={e => playVideo(e.ctrlKey || e.metaKey ? videoTime : 0)}>
+        <HoverButton icon="play" size={10} on:click={(e) => playVideo(e.ctrlKey || e.metaKey ? videoTime : 0)}>
             {#if type === "player"}
                 <Player id={showId} bind:videoData bind:videoTime preview />
             {:else}
@@ -373,7 +373,7 @@
             {#if tracks.length}
                 <div class="scroll">
                     {#each tracks as track, i}
-                        <MaterialButton id={i.toString()} style="font-weight: normal;" isActive={subtitle === track.lang} class="context #video_subtitle{track.embedded ? '_embedded' : ''}" on:click={e => setActiveSubtitle(e, track.lang)}>
+                        <MaterialButton id={i.toString()} style="font-weight: normal;" isActive={subtitle === track.lang} class="context #video_subtitle{track.embedded ? '_embedded' : ''}" on:click={(e) => setActiveSubtitle(e, track.lang)}>
                             {#if playingInOutput}
                                 <p style="padding: 5px;">{track.name}</p>
                             {:else}
