@@ -8,6 +8,7 @@
     import { getBlending } from "./components/helpers/output"
     import { checkTimers, startEventTimer, startTimer } from "./components/helpers/timerTick"
     import Loader from "./components/main/Loader.svelte"
+    import MediaDownloadProgress from "./components/main/MediaDownloadProgress.svelte"
     import MenuBar from "./components/main/MenuBar.svelte"
     import Popup from "./components/main/Popup.svelte"
     import ProfileSelector from "./components/main/ProfileSelector.svelte"
@@ -79,6 +80,7 @@
             <Toast />
             <Recorder />
             <Guide />
+            <MediaDownloadProgress />
 
             <MainLayout />
         {:else}

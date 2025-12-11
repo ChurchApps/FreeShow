@@ -39,7 +39,47 @@ import { convertSongbeamerFiles } from "../converters/songbeamer"
 import { convertTexts } from "../converters/txt"
 import { convertVerseVIEW } from "../converters/verseview"
 import { convertVideopsalm } from "../converters/videopsalm"
-import { activeEdit, activePage, activePopup, activeProject, activeShow, activeTimers, alertMessage, audioData, contentProviderData, currentOutputSettings, dataPath, driveKeys, events, folders, lessonsLoaded, media, outputs, overlays, popupData, presentationData, projects, projectTemplates, projectView, providerConnections, redoHistory, shows, showsCache, spellcheck, stageShows, templates, textCache, theme, themes, timers, undoHistory, usageLog, variables, windowState } from "../stores"
+import {
+    activeEdit,
+    activePage,
+    activePopup,
+    activeProject,
+    activeShow,
+    activeTimers,
+    alertMessage,
+    audioData,
+    contentProviderData,
+    currentOutputSettings,
+    dataPath,
+    driveKeys,
+    events,
+    folders,
+    lessonsLoaded,
+    media,
+    mediaDownloads,
+    outputs,
+    overlays,
+    popupData,
+    presentationData,
+    projects,
+    projectTemplates,
+    projectView,
+    providerConnections,
+    redoHistory,
+    shows,
+    showsCache,
+    spellcheck,
+    stageShows,
+    templates,
+    textCache,
+    theme,
+    themes,
+    timers,
+    undoHistory,
+    usageLog,
+    variables,
+    windowState
+} from "../stores"
 import { newToast } from "../utils/common"
 import { confirmCustom } from "../utils/popup"
 import { initializeClosing, saveComplete } from "../utils/save"
@@ -194,6 +234,23 @@ export const mainResponses: MainResponses = {
     [ToMain.CAPTURE_CANVAS]: (data) => captureCanvas(data),
     [ToMain.LESSONS_DONE]: (data) => lessonsLoaded.set({ ...get(lessonsLoaded), [data.showId]: data.status }),
     [ToMain.IMAGES_TO_SHOW]: (data) => createImageShow(data),
+    [ToMain.MEDIA_DOWNLOAD_PROGRESS]: (data) => {
+        mediaDownloads.update((downloads) => {
+            const newDownloads = new Map(downloads)
+            if (data.status === "complete" || data.status === "error") {
+                // Remove completed/errored downloads after a short delay
+                setTimeout(() => {
+                    mediaDownloads.update((d) => {
+                        const updated = new Map(d)
+                        updated.delete(data.url)
+                        return updated
+                    })
+                }, 2000)
+            }
+            newDownloads.set(data.url, { progress: data.progress, total: data.total, status: data.status })
+            return newDownloads
+        })
+    },
     [ToMain.AUDIO_METADATA]: (data) => {
         audioData.update((a) => {
             a[data.filePath] = { metadata: data.metadata }

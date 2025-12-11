@@ -252,14 +252,24 @@ export function downloadMedia({ url, contentFile }: { url: string; contentFile?:
                 fs.unlink(outputPath, (err) => err && console.error(err))
 
                 console.error(`Failed to download file, status code: ${String(res.statusCode)}`)
+                sendToMain(ToMain.MEDIA_DOWNLOAD_PROGRESS, { url, progress: 0, total: 0, status: "error" })
                 return
             }
+
+            // track download progress
+            const totalSize = parseInt(res.headers["content-length"] || "0", 10)
+            let downloadedSize = 0
+            res.on("data", (chunk) => {
+                downloadedSize += chunk.length
+                if (totalSize > 0) sendToMain(ToMain.MEDIA_DOWNLOAD_PROGRESS, { url, progress: downloadedSize, total: totalSize, status: "downloading" })
+            })
 
             res.pipe(fileStream)
 
             res.on("error", (err) => {
                 fileStream.close()
                 console.error(`Response error: ${err.message}`)
+                sendToMain(ToMain.MEDIA_DOWNLOAD_PROGRESS, { url, progress: 0, total: 0, status: "error" })
 
                 retry()
             })
@@ -267,6 +277,7 @@ export function downloadMedia({ url, contentFile }: { url: string; contentFile?:
             fileStream.on("error", (err1) => {
                 fs.unlink(outputPath, (err2) => err2 && console.error(err2))
                 console.error(`File error: ${err1.message}`)
+                sendToMain(ToMain.MEDIA_DOWNLOAD_PROGRESS, { url, progress: 0, total: 0, status: "error" })
 
                 retry()
             })
@@ -275,11 +286,13 @@ export function downloadMedia({ url, contentFile }: { url: string; contentFile?:
                 fileStream.close()
                 downloading.splice(downloading.indexOf(url), 1)
                 console.info(`Finished downloading file: ${url}`)
+                sendToMain(ToMain.MEDIA_DOWNLOAD_PROGRESS, { url, progress: totalSize, total: totalSize, status: "complete" })
             })
         })
         .on("error", (err) => {
             fileStream.close()
             console.error(`Request error: ${err.message}`)
+            sendToMain(ToMain.MEDIA_DOWNLOAD_PROGRESS, { url, progress: 0, total: 0, status: "error" })
 
             retry()
         })

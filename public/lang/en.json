@@ -205,6 +205,7 @@
         "blur_fill": "Blur fill",
         "cover": "Cover",
         "online": "Online",
+        "downloading": "Downloading",
         "recommended": "Recommended",
         "bundle_media_files": "Bundle all media files",
         "bundle_media_files_tip": "Copy the media files from all shows into one folder"
