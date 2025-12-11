@@ -113,7 +113,7 @@
         //     updateStyles()
         // }, CHANGE_POS_TIME)
 
-        let items = currentShow?.slides[ref[$activeEdit.slide!]?.id].items
+        let items = currentShow?.slides[ref[$activeEdit.slide || 0]?.id].items
         let values: string[] = []
         active.forEach(id => {
             let item = items[id]
@@ -128,7 +128,7 @@
             }
         })
 
-        let slideId = ref[$activeEdit.slide || ""]?.id
+        let slideId = ref[$activeEdit.slide || 0]?.id
         if (!slideId) return
 
         let activeItems = [...active]
