@@ -14,6 +14,7 @@
     import FloatingInputs from "../../input/FloatingInputs.svelte"
     import InputRow from "../../input/InputRow.svelte"
     import Button from "../../inputs/Button.svelte"
+    import Link from "../../inputs/Link.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialColorInput from "../../inputs/MaterialColorInput.svelte"
     import MaterialFilePicker from "../../inputs/MaterialFilePicker.svelte"
@@ -227,7 +228,9 @@
         {/if}
 
         {#if useOldSystem || (styleScriptureTemplate ? useOldScriptureSystem(styleScriptureTemplate) : false)}
-            <p style="margin-bottom: 10px;font-size: 0.9rem;opacity: 0.7;white-space: normal;">You are using an outdated scripture template!</p>
+            <p style="margin-bottom: 10px;font-size: 0.9rem;opacity: 0.7;white-space: normal;">
+                You are using an outdated scripture template! - <Link url="https://freeshow.app/docs/scripture#template">Read more</Link>
+            </p>
         {/if}
         {#if useOldSystem}
             <MaterialButton variant="outlined" style="margin-bottom: 10px;" on:click={convertToNew}>

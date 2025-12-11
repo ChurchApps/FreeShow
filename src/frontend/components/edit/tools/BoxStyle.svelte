@@ -130,6 +130,8 @@
         setBoxInputValue(box, "lines", "specialStyle.lineRadius", "hidden", !item?.specialStyle?.lineRadius && !item?.specialStyle?.lineBg)
 
         setBoxInputValue(box, "default", "textFit", "value", item?.auto ? "shrinkToFit" : "none") // text items
+        // WIP disabled auto size -- don't disable if all text is selected
+        // setBoxInputValue(box, "default", "font-size", "disabled", selection?.length)
     }
 
     $: if (id === "media" && item) {
@@ -263,6 +265,12 @@
     function updateValue(e: any) {
         let input = e.detail
         console.log("BOX INPUT:", input)
+
+        // does not work for partial text when auto size is enabled
+        // WIP doesn't need to show if disabled works correctly
+        if (id === "text" && input.key === "font-size" && selection?.length && item?.textFit !== "none") {
+            newToast("edit.auto_size settings.enabled!")
+        }
 
         let allItems: number[] = $activeEdit.items
         // update all items if nothing is selected
