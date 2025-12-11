@@ -66,7 +66,7 @@
 
     function updatePort(e: any) {
         port = e.detail
-        ports.update(a => {
+        ports.update((a) => {
             a[id] = port
             return a
         })
@@ -77,8 +77,8 @@
     // output
     $: outputsList = getList(clone($outputs))
     function getList(outputs) {
-        let list = keysToID(outputs).filter(a => a.enabled === true)
-        return sortByName(list).map(a => ({ label: a.name, value: a.id }))
+        let list = keysToID(outputs).filter((a) => a.enabled === true)
+        return sortByName(list).map((a) => ({ label: a.name, value: a.id }))
     }
 
     function toggleAudio(e: any) {
@@ -90,7 +90,7 @@
     function updateData(e: any, key: string) {
         let value = e.detail ?? e
 
-        serverData.update(a => {
+        serverData.update((a) => {
             if (!a[id]) a[id] = {}
             a[id][key] = value
 
@@ -101,7 +101,7 @@
     }
 
     function updateSpecial(key: string, value: any) {
-        special.update(a => {
+        special.update((a) => {
             a[key] = value
             return a
         })
@@ -114,14 +114,14 @@
 
 {#if options}
     <div class="reserved" class:isReserved>
-        <MaterialNumberInput label="settings.port" value={port} defaultValue={RESERVED_PORTS[id]?.[0]} min={1025} max={65535} on:change={e => updatePort(e)} />
+        <MaterialNumberInput label="settings.port" value={port} defaultValue={RESERVED_PORTS[id]?.[0]} min={1025} max={65535} on:change={(e) => updatePort(e)} />
     </div>
 
     {#if id === "remote"}
         <MaterialTextInput label="remote.password" value={$remotePassword} on:change={setRemotePassword} />
     {:else if id === "output_stream"}
         <!-- {#if enableOutputSelector} -->
-        <MaterialDropdown label="midi.output" options={outputsList} value={$serverData?.output_stream?.outputId || ""} on:change={e => updateData(e.detail, "outputId")} allowEmpty />
+        <MaterialDropdown label="midi.output" options={outputsList} value={$serverData?.output_stream?.outputId || ""} on:change={(e) => updateData(e.detail, "outputId")} allowEmpty />
         <!-- {/if} -->
 
         <MaterialToggleSwitch label="preview.audio" checked={$serverData?.output_stream?.sendAudio} defaultValue={false} on:change={toggleAudio} />
@@ -130,8 +130,8 @@
     {#if id !== "companion"}
         <hr />
 
-        <MaterialNumberInput label="settings.max_connections" value={$maxConnections} max={100} on:change={e => maxConnections.set(e.detail)} />
-        <MaterialToggleSwitch label="settings.use_hostname" checked={$special.connectionHostname} defaultValue={false} on:change={e => updateSpecial("connectionHostname", e.detail)} />
+        <MaterialNumberInput label="settings.max_connections" value={$maxConnections} max={100} on:change={(e) => maxConnections.set(e.detail)} />
+        <MaterialToggleSwitch label="settings.use_hostname" checked={$special.connectionHostname} defaultValue={false} on:change={(e) => updateSpecial("connectionHostname", e.detail)} />
     {/if}
 {:else}
     <div on:mousedown={mousedown}>

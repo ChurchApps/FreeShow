@@ -39,7 +39,7 @@ export function handleKeydown(e: KeyboardEvent, contextActive: boolean, searchQu
         if (!menuElement) return null
 
         // Find the actual item element (not parent submenu)
-        const targetElement = Array.from(menuElement.querySelectorAll(".highlighted")).find(el => el instanceof HTMLElement && !el.querySelector(".submenu")) as HTMLElement | undefined
+        const targetElement = Array.from(menuElement.querySelectorAll(".highlighted")).find((el) => el instanceof HTMLElement && !el.querySelector(".submenu")) as HTMLElement | undefined
 
         if (targetElement) targetElement.click()
         return null
@@ -62,7 +62,7 @@ export function handleKeydown(e: KeyboardEvent, contextActive: boolean, searchQu
 export function flattenMenuItems(menuIds: string[], contextMenuItems: { [key: string]: ContextMenuItem }, path: string[] = []): FlatMenuItem[] {
     const items: FlatMenuItem[] = []
 
-    menuIds.forEach(id => {
+    menuIds.forEach((id) => {
         if (id === "SEPARATOR") return
 
         // Handle LOAD_ items
@@ -88,7 +88,7 @@ export function flattenMenuItems(menuIds: string[], contextMenuItems: { [key: st
         const currentPath = [...path, id]
 
         // Skip parent items that only contain LOAD_ children
-        const hasOnlyLoadItems = menuItem.items?.every(item => item === "SEPARATOR" || item.includes("LOAD_"))
+        const hasOnlyLoadItems = menuItem.items?.every((item) => item === "SEPARATOR" || item.includes("LOAD_"))
         if (!hasOnlyLoadItems) {
             items.push({
                 id,
@@ -114,21 +114,21 @@ export function searchMenuItems(query: string, flatMenuItems: FlatMenuItem[], tr
     if (!query) return { id: null, path: [] }
 
     const lowerQuery = formatSearch(query, true)
-    const enabledItems = flatMenuItems.filter(item => !item.disabled)
+    const enabledItems = flatMenuItems.filter((item) => !item.disabled)
 
     // WIP this doesn't get the actual replaced text from ContextItem.svelte
 
     // Find best match - exact match first, then prefix, then partial
     const match =
-        enabledItems.find(item => {
+        enabledItems.find((item) => {
             const label = formatSearch(translateText(item.label, dictionary), true)
             return label === lowerQuery
         }) ||
-        enabledItems.find(item => {
+        enabledItems.find((item) => {
             const label = formatSearch(translateText(item.label, dictionary), true)
             return label.startsWith(lowerQuery)
         }) ||
-        enabledItems.find(item => {
+        enabledItems.find((item) => {
             const label = formatSearch(translateText(item.label, dictionary), true)
             return label.includes(lowerQuery)
         })

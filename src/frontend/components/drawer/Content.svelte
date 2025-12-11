@@ -30,8 +30,8 @@
     $: if (id !== "media" || active) stopStreams()
 
     function stopStreams() {
-        streams.forEach(stream => {
-            stream.getTracks().forEach(track => {
+        streams.forEach((stream) => {
+            stream.getTracks().forEach((track) => {
                 track.enabled = false
                 track.stop()
             })

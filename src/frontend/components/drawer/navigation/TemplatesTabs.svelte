@@ -14,12 +14,12 @@
     $: activeSubTab = $drawerTabsData.templates?.activeSubTab || ""
 
     $: categoriesList = keysToID($templateCategories)
-    $: unarchivedCategoriesList = categoriesList.filter(a => !a.isArchive && profile[a.id] !== "none")
-    $: archivedCategoriesList = categoriesList.filter(a => a.isArchive)
+    $: unarchivedCategoriesList = categoriesList.filter((a) => !a.isArchive && profile[a.id] !== "none")
+    $: archivedCategoriesList = categoriesList.filter((a) => a.isArchive)
 
-    $: allVisibleTemplates = Object.values($templates).filter(a => a && profile[a.category || ""] !== "none" && a?.settings?.mode !== "text")
-    $: unarchivedTemplates = allVisibleTemplates.filter(a => a.category === null || !$templateCategories[a.category]?.isArchive)
-    $: uncategorizedTemplatesLength = unarchivedTemplates.filter(a => a.category === null || !$templateCategories[a.category]).length
+    $: allVisibleTemplates = Object.values($templates).filter((a) => a && profile[a.category || ""] !== "none" && a?.settings?.mode !== "text")
+    $: unarchivedTemplates = allVisibleTemplates.filter((a) => a.category === null || !$templateCategories[a.category]?.isArchive)
+    $: uncategorizedTemplatesLength = unarchivedTemplates.filter((a) => a.category === null || !$templateCategories[a.category]).length
 
     let sections: any[] = []
     $: sections = [
@@ -44,7 +44,7 @@
 
     function updateName(e: any) {
         const { id, value } = e.detail
-        templateCategories.update(a => {
+        templateCategories.update((a) => {
             if (a[id].default) delete a[id].default
             a[id].name = value
             return a

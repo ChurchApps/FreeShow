@@ -29,7 +29,7 @@
 
     // Store ContentFile object and display name for later use (license check, convert to show, etc.)
     $: if (contentFileData && contentProvider && path) {
-        media.update(m => {
+        media.update((m) => {
             if (!m[path]) m[path] = {}
             m[path].contentFile = { ...contentFileData, providerId: contentProvider }
             m[path].name = name
@@ -119,7 +119,7 @@
         if (videoType === "foreground") clearSlide()
 
         // get style per output
-        getAllActiveOutputs().forEach(output => {
+        getAllActiveOutputs().forEach((output) => {
             const currentOutputStyle = $styles[output.style || ""]
             const currentMediaStyle = getMediaStyle($media[path], currentOutputStyle)
             setOutput("background", { path, type, loop, muted, startAt: 0, ...currentMediaStyle, ignoreLayer: videoType === "foreground" }, false, output.id)
@@ -127,7 +127,7 @@
 
         // unsplash requires the download to be triggered when using their images
         if (credits && credits.type === "unsplash" && credits.trigger_download) {
-            fetch(credits.trigger_download + "?client_id=" + getKey("unsplash"), { method: "GET" }).catch(err => console.error("Could not trigger download:", err))
+            fetch(credits.trigger_download + "?client_id=" + getKey("unsplash"), { method: "GET" }).catch((err) => console.error("Could not trigger download:", err))
             customMessageCredits.set(`Photo by ${credits.artist} on Unsplash`)
         } else {
             customMessageCredits.set("")
@@ -143,7 +143,7 @@
     }
 
     // Memoized output and style computation
-    const currentOutput = derived(outputs, $outputs => getFirstActiveOutput($outputs))
+    const currentOutput = derived(outputs, ($outputs) => getFirstActiveOutput($outputs))
     const currentStyle = derived([currentOutput, styles], ([$currentOutput, $styles]) => $styles[$currentOutput?.style || ""] || {})
 
     // Memoized media style computation
@@ -172,7 +172,7 @@
     function removeStyle(key: string) {
         iconClicked = setTimeout(() => (iconClicked = null), 50)
 
-        media.update(a => {
+        media.update((a) => {
             if (!a[path]) return a
 
             if (key === "filters") {
@@ -192,7 +192,7 @@
     }
 </script>
 
-<SelectElem id="media" class="context #media_card" data={{ name, path, type }} {shiftRange} draggable fill>
+<SelectElem id="media" class="context #media_card" data={{ name, path, type, contentProvider }} {shiftRange} draggable fill>
     <Card
         resolution={{ width: 16, height: 9 }}
         {loaded}

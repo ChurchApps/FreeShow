@@ -15,7 +15,7 @@ export function getPlainEditorText(showId = "", allowEmpty = false) {
 
     let text = ""
 
-    ref.forEach(refSlide => {
+    ref.forEach((refSlide) => {
         const id = refSlide.id
         const slide = slides[id]
         if (!slide) return
@@ -23,7 +23,7 @@ export function getPlainEditorText(showId = "", allowEmpty = false) {
         const slideData: any = { id, items: slide.items, text: "", ref: refSlide }
         let data = getItems(slide.items)
 
-        if (slide.group !== null && (data.hasTextboxItem || allowEmpty || slide.children?.find(childId => getSlideText(slides[childId]).length))) {
+        if (slide.group !== null && (data.hasTextboxItem || allowEmpty || slide.children?.find((childId) => getSlideText(slides[childId]).length))) {
             const groupId = "[" + (replaceValues(slide.group, true) || "—") + "]"
             text += groupId + "\n"
             slideData.text += groupId + "\n"
@@ -60,16 +60,16 @@ function getItems(items: Item[]) {
             plainText += textboxId + "\n"
         }
 
-        const filteredLines = item.lines?.filter(line => line.text?.filter(lineText => lineText.value.length).length) || []
+        const filteredLines = item.lines?.filter((line) => line.text?.filter((lineText) => lineText.value.length).length) || []
         filteredLines.forEach((line, lineIndex) => {
             let tempText = ""
-            line.text?.forEach(txt => {
+            line.text?.forEach((txt) => {
                 tempText += txt.value
             })
 
             // chords (from last in line to first)
             const sortedChords = line.chords?.sort((a, b) => b.pos - a.pos) || []
-            sortedChords.forEach(chord => {
+            sortedChords.forEach((chord) => {
                 while (!tempText[chord.pos]) tempText += " "
                 tempText = tempText.slice(0, chord.pos) + `[${chord.key}]` + tempText.slice(chord.pos)
             })

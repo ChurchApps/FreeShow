@@ -89,7 +89,7 @@
         if ($outShow && showId === $outShow.id && layoutId === $outShow.settings.activeLayout && index === slideNum) {
             // reveal lines if it exists
             const ref = GetLayout($activeShow, $activeShow?.settings?.activeLayout)
-            const revealExists = $activeShow.slides[ref[index]?.id]?.items?.find(item => item.lineReveal || item.clickReveal)
+            const revealExists = $activeShow.slides[ref[index]?.id]?.items?.find((item) => item.lineReveal || item.clickReveal)
             if (revealExists) {
                 send("API:next_slide") // , { onlyCurrentReveal: true }
             }
@@ -141,7 +141,7 @@
         </div>
     {:else}
         <div bind:this={scrollElem} class="scroll" style="background-color: var(--primary-darker);scroll-behavior: smooth;">
-            <Slides {dictionary} {scrollElem} on:click={e => playSlide(e.detail)} outSlide={slideNum} />
+            <Slides {dictionary} {scrollElem} on:click={(e) => playSlide(e.detail)} outSlide={slideNum} />
         </div>
 
         {#if $activeShow.id === $outShow?.id || !$isCleared.all}
@@ -173,7 +173,7 @@
         {:else}
             <div class="buttons">
                 {#if layouts.length > 1}
-                    {@const currentLayout = layouts.find(a => a.id == $activeShow.settings?.activeLayout)}
+                    {@const currentLayout = layouts.find((a) => a.id == $activeShow.settings?.activeLayout)}
                     <Dropdown value={currentLayout?.name || "—"} options={layouts} on:click={changeLayout} style="width: 100%;" up />
                 {/if}
 

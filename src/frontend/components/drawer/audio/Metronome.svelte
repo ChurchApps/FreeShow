@@ -46,8 +46,8 @@
 
 {#if options}
     <div class="settings">
-        <MaterialNumberInput label="media.volume" value={Number(((values.volume || 1) * 100).toFixed(2))} min={1} max={300} on:change={e => updateValue("volume", e.detail / 100)} showSlider sliderValues={{ max: 100 }} />
-        <MaterialDropdown label="audio.custom_output" style="margin-top: 5px;" options={audioOutputs} value={values.audioOutput || ""} on:change={e => updateValue("audioOutput", e.detail)} allowEmpty />
+        <MaterialNumberInput label="media.volume" value={Number(((values.volume || 1) * 100).toFixed(2))} min={1} max={300} on:change={(e) => updateValue("volume", e.detail / 100)} showSlider sliderValues={{ max: 100 }} />
+        <MaterialDropdown label="audio.custom_output" style="margin-top: 5px;" options={audioOutputs} value={values.audioOutput || ""} on:change={(e) => updateValue("audioOutput", e.detail)} allowEmpty />
     </div>
 {:else}
     <div class="settings" style="display: flex;gap: 10px;">
@@ -60,7 +60,7 @@
         <div style="flex: 1;">
             <MetronomeInputs
                 {values}
-                on:change={e => {
+                on:change={(e) => {
                     values = e.detail
                     updateMetronome(values)
                 }}

@@ -61,8 +61,8 @@ export function convertOpenLP(data: any) {
 
         show.meta = {
             title: song.meta_title || show.name,
-            author: song.authors?.find(a => a.type?.includes("words"))?.name || "",
-            artist: song.authors?.find(a => a.type?.includes("music"))?.name || "",
+            author: song.authors?.find((a) => a.type?.includes("words"))?.name || "",
+            artist: song.authors?.find((a) => a.type?.includes("music"))?.name || "",
             CCLI: song.ccli || "",
             copyright: song.copyright || ""
         }
@@ -89,12 +89,12 @@ const OLPgroups: any = { V: "verse", C: "chorus", P: "pre_chorus", B: "bridge", 
 function createSlides({ verseOrder, lyrics }: Song) {
     const slides: any = {}
     let layout: any[] = []
-    const sequence: string[] = verseOrder.split(" ").filter(a => a)
+    const sequence: string[] = verseOrder.split(" ").filter((a) => a)
     const sequences: any = {}
 
     // split into multiple sub slides (https://github.com/ChurchApps/FreeShow/issues/1743)
     const slidesList: ((typeof lyrics)[number] & { isChild: boolean })[] = []
-    lyrics.forEach(lyricSlide => {
+    lyrics.forEach((lyricSlide) => {
         const currentSlides = lyricSlide.lines.join("__BREAK__").split(/<p\s*style=["']page-break-after:\s*always;["']\s*\/?>/i)
         currentSlides.forEach((slideData, i) => {
             const mergedLines = slideData.trim().split("__BREAK__").filter(Boolean)
@@ -103,7 +103,7 @@ function createSlides({ verseOrder, lyrics }: Song) {
         })
     })
 
-    slidesList.forEach(verse => {
+    slidesList.forEach((verse) => {
         if (!verse.lines) return
 
         const id: string = uid()
@@ -144,7 +144,7 @@ function createSlides({ verseOrder, lyrics }: Song) {
 
     if (sequence.length) {
         const newLayout: any[] = []
-        sequence.forEach(group => {
+        sequence.forEach((group) => {
             if (sequences[group]) newLayout.push({ id: sequences[group] })
         })
         if (newLayout.length) layout = newLayout
@@ -162,7 +162,7 @@ function formatText(text: string) {
 
 // WIP import song books as categories
 function sqliteConvert(content: any) {
-    const songs: any[] = (content?.songs || []).map(song => getSong(song, content))
+    const songs: any[] = (content?.songs || []).map((song) => getSong(song, content))
 
     return songs
 }
@@ -186,8 +186,8 @@ function getSong(song: any, content: any) {
     function getAuthors() {
         let authors: any[] = []
 
-        const currentSongAuthors = content.authors_songs.filter(a => a.song_id === song.id)
-        authors = currentSongAuthors.map(a => ({ name: content.authors.find(author => author.id === a.author_id)?.display_name || "", type: a.author_type || "words" }))
+        const currentSongAuthors = content.authors_songs.filter((a) => a.song_id === song.id)
+        authors = currentSongAuthors.map((a) => ({ name: content.authors.find((author) => author.id === a.author_id)?.display_name || "", type: a.author_type || "words" }))
 
         return authors
     }
@@ -198,7 +198,7 @@ function getSong(song: any, content: any) {
         lyrics = lyrics.song?.lyrics?.verse || []
         if (!Array.isArray(lyrics)) lyrics = [lyrics]
 
-        lyrics = lyrics.map(a => {
+        lyrics = lyrics.map((a) => {
             const { lines, chords } = extractChordLines(a["#cdata"] || "")
             return { name: a["@type"] + a["@label"], lines, chords }
         })
@@ -215,7 +215,7 @@ function XMLtoObject(xml: string) {
     let lyrics = song.lyrics || {}
     const properties = song.properties || {}
 
-    const notes = song["#comment"] || (Array.isArray(properties.comments) ? properties.comments?.map(comment => comment["#text"] || "").join("\n") : typeof properties.comments?.comment === "string" ? properties.comments.comment : typeof properties.comments === "string" ? properties.comments : "") || ""
+    const notes = song["#comment"] || (Array.isArray(properties.comments) ? properties.comments?.map((comment) => comment["#text"] || "").join("\n") : typeof properties.comments?.comment === "string" ? properties.comments.comment : typeof properties.comments === "string" ? properties.comments : "") || ""
 
     const newSong: Song = {
         title: getTitle(),
@@ -246,7 +246,7 @@ function XMLtoObject(xml: string) {
         if (!Array.isArray(currentSongAuthors)) currentSongAuthors = [currentSongAuthors]
 
         let authors: any[] = []
-        authors = currentSongAuthors.map(author => ({ name: author["#text"] || "", type: author["@type"] || "words" }))
+        authors = currentSongAuthors.map((author) => ({ name: author["#text"] || "", type: author["@type"] || "words" }))
 
         return authors
     }
@@ -266,7 +266,7 @@ function XMLtoObject(xml: string) {
         lyrics = song.lyrics?.verse || []
         if (!Array.isArray(lyrics)) lyrics = [lyrics]
 
-        lyrics = lyrics.map(a => {
+        lyrics = lyrics.map((a) => {
             const { lines, chords } = getLines(a.lines || "")
             return { name: a["@name"], lines, chords }
         })
@@ -311,7 +311,7 @@ function extractChordLines(lines: string) {
             const lineChords: Chords[] = []
 
             // WIP duplicate of VideoPsalm
-            lineText.split("]").forEach(t => {
+            lineText.split("]").forEach((t) => {
                 let chordStart = t.indexOf("[")
                 if (chordStart < 0) chordStart = t.length
 

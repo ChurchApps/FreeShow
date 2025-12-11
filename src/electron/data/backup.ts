@@ -83,13 +83,13 @@ export function getBackups() {
     const files = readFolder(backupsFolder)
 
     let backups: { path: string; name: string; date: number; size: number }[] = []
-    files.forEach(name => {
+    files.forEach((name) => {
         const filePath = path.resolve(backupsFolder, name)
         const stat = getFileStats(filePath)
         if (!stat?.folder) return
 
         let size = 0
-        readFolder(filePath).forEach(fileName => {
+        readFolder(filePath).forEach((fileName) => {
             const fileStat = getFileStats(path.resolve(filePath, fileName))
             if (fileStat) size += fileStat.stat.size
         })
@@ -118,7 +118,7 @@ export function restoreFiles(data?: { folder: string }) {
 
     if (data?.folder) {
         const backupsFolder = getDataFolderPath("backups", data.folder)
-        files = readFolder(backupsFolder).map(name => path.join(backupsFolder, name))
+        files = readFolder(backupsFolder).map((name) => path.join(backupsFolder, name))
     } else {
         const initialPath = getDataFolderPath("backups")
         files = selectFilesDialog("", { name: "FreeShow Backup Files", extensions: ["json"] }, true, initialPath)
@@ -143,7 +143,7 @@ export function restoreFiles(data?: { folder: string }) {
             return
         }
 
-        const storeId = portableStoreFiles.find(a => filePath.includes(a))
+        const storeId = portableStoreFiles.find((a) => filePath.includes(a))
 
         if (!storeId) return
         restoreStore(filePath, storeId as keyof typeof _store)

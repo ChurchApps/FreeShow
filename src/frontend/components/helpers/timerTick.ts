@@ -22,7 +22,7 @@ let timeout: NodeJS.Timeout | null = null
 let customInterval = INTERVAL
 export function startTimer() {
     if (!isMainWindow()) return
-    if (!get(activeTimers).filter(a => a.paused !== true).length || timeout) return
+    if (!get(activeTimers).filter((a) => a.paused !== true).length || timeout) return
 
     if (timeout) clearTimeout(timeout)
     timeout = setTimeout(() => {
@@ -106,7 +106,7 @@ function convertShowToAction() {
 
     let updated = false
     const allEvents = get(events)
-    Object.keys(allEvents).forEach(eventId => {
+    Object.keys(allEvents).forEach((eventId) => {
         const newEvent = allEvents[eventId]
         if (newEvent.type !== "show") return
 
@@ -127,7 +127,7 @@ export function startEventTimer() {
     convertShowToAction()
 
     const currentTime: Date = new Date()
-    let actionEvents: Event[] = Object.values(get(events)).filter(a => {
+    let actionEvents: Event[] = Object.values(get(events)).filter((a) => {
         const eventTime: Date = new Date(a.from)
         return a.type === "action" && currentTime.getTime() - INTERVAL < eventTime.getTime()
     })

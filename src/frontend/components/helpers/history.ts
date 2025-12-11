@@ -18,7 +18,7 @@ export function historyAwait(s: string[], obj: History) {
         .then(() => {
             history(obj)
         })
-        .catch(e => {
+        .catch((e) => {
             console.error(e)
         })
 }
@@ -97,7 +97,7 @@ export function history(obj: History, shouldUndo: null | boolean = null) {
                     _show(showID)
                         .media()
                         .get()
-                        .forEach(media => {
+                        .forEach((media) => {
                             if (media.id === obj.newData.id) bgid = media.key
                         })
 
@@ -119,7 +119,7 @@ export function history(obj: History, shouldUndo: null | boolean = null) {
                             const existing = _show(showID)
                                 .media()
                                 .get()
-                                .find(a => a.path === obj.newData.path)
+                                .find((a) => a.path === obj.newData.path)
                             if (existing) bgid = existing.key
                         }
                         if (!bgid) bgid = _show(showID).media().add(obj.newData)
@@ -139,7 +139,7 @@ export function history(obj: History, shouldUndo: null | boolean = null) {
                     _show(showID)
                         .media()
                         .get()
-                        .forEach(media => {
+                        .forEach((media) => {
                             if (media.path === obj.newData.path) audioId = media.key
                         })
                 }
@@ -208,7 +208,7 @@ export function history(obj: History, shouldUndo: null | boolean = null) {
     // }
 
     if (shouldUndo) {
-        redoHistory.update(rh => {
+        redoHistory.update((rh) => {
             rh.push(obj)
 
             // delete oldest if more than set value
@@ -266,7 +266,7 @@ export function historyNew(type: HistoryTypes, value: any) {
     }
 
     const historyValue: HistoryNew = { version: 1, time: Date.now(), type, value }
-    undoHistory.update(a => {
+    undoHistory.update((a) => {
         a.push(historyValue)
         return a
     })
@@ -277,7 +277,7 @@ export const undo = () => {
     if (document.activeElement?.classList?.contains("edit") && !document.activeElement?.closest(".editItem")) return
 
     let lastUndo: any
-    undoHistory.update(uh => {
+    undoHistory.update((uh) => {
         lastUndo = uh.pop()!
         return uh
     })
@@ -292,7 +292,7 @@ export const undo = () => {
             createStore(lastUndo.value.id, lastUndo.value.oldValue, lastUndo.value.key, false)
         }
 
-        redoHistory.update(rh => {
+        redoHistory.update((rh) => {
             rh.push(lastUndo)
             return rh
         })
@@ -313,7 +313,7 @@ export const redo = () => {
     if (document.activeElement?.classList?.contains("edit") && !document.activeElement?.closest(".editItem")) return
 
     let lastRedo: any
-    redoHistory.update(rh => {
+    redoHistory.update((rh) => {
         lastRedo = rh.pop()!
         return rh
     })
@@ -328,7 +328,7 @@ export const redo = () => {
             deleteStore(lastRedo.value.id, lastRedo.value.key, false)
         }
 
-        undoHistory.update(a => {
+        undoHistory.update((a) => {
             // a[a.length - 1].time = Date.now()
             lastRedo.time = Date.now()
             a.push(lastRedo)

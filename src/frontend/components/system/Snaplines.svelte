@@ -61,13 +61,13 @@
         if (styles.height) styles.height = DEFAULT_BOUNDS.height * (Number(styles.height) / height)
 
         // finalize values
-        Object.keys(styles).forEach(key => {
+        Object.keys(styles).forEach((key) => {
             if (styles[key] === undefined || styles[key].toString().includes("px") || styles[key].toString().includes("deg")) return
             if (key === "width" || key === "height") styles[key] = Math.max(16 / ratio, Number(styles[key]))
             styles[key] = Number(styles[key]).toFixed(2) + "px"
         })
 
-        throttle("EDIT_ITEM_MOVE", styles, value => (newStyles = value), 50)
+        throttle("EDIT_ITEM_MOVE", styles, (value) => (newStyles = value), 50)
     }
 
     function mouseup() {

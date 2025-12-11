@@ -58,11 +58,11 @@
     $: {
         // style hash
         let s = ""
-        clone(item?.lines)?.forEach(line => {
+        clone(item?.lines)?.forEach((line) => {
             let align = (line.align || "").replaceAll(lineStyleBg, "").replaceAll(lineStyleRadius, "") + ";"
             s += align + lineStyleBg + lineStyleRadius // + line.chords?.map((a) => a.key)
             console.assert(Array.isArray(line?.text), "Text is not an array!")
-            line?.text?.forEach(a => {
+            line?.text?.forEach((a) => {
                 s += EditboxHelper.getTextStyle(a)
             })
         })
@@ -75,7 +75,7 @@
     let previousChords = ""
     $: {
         // chords updated! (needed to save chords so they don't get reset when changing the lines)
-        let newChords = JSON.stringify(item?.lines?.map(a => a.chords?.map(a => a.key)))
+        let newChords = JSON.stringify(item?.lines?.map((a) => a.chords?.map((a) => a.key)))
         if (previousChords !== newChords) {
             previousChords = newChords
             getStyle()
@@ -226,7 +226,7 @@
         if ($activeEdit.type === "overlay") overlays.update(setNewLines)
         else if ($activeEdit.type === "template") templates.update(setNewLines)
         else if (ref.type === "stage") {
-            stageShows.update(a => {
+            stageShows.update((a) => {
                 if (!a[$activeStage.id!]?.items?.[ref.id]) return a
                 a[$activeStage.id!].items[ref.id].lines = newLines
                 return a
@@ -257,12 +257,12 @@
 
             // fix lineBg/Radius style
             if (lineStyleBg) {
-                newLines.forEach(line => {
+                newLines.forEach((line) => {
                     line.align = (line.align || "").replace(lineStyleBg, "")
                 })
             }
             if (lineStyleRadius) {
-                newLines.forEach(line => {
+                newLines.forEach((line) => {
                     line.align = (line.align || "").replace(lineStyleRadius, "")
                 })
             }
@@ -314,7 +314,7 @@
     let loaded = false
     $: isAuto = item?.auto || (item?.textFit || "none") !== "none"
     $: textArray = Array.isArray(item?.lines?.[0]?.text) ? item.lines[0].text : []
-    $: itemText = textArray.filter(a => !a.customType?.includes("disableTemplate")) || []
+    $: itemText = textArray.filter((a) => !a.customType?.includes("disableTemplate")) || []
     $: itemFontSize = Number(getStyles((ref.type === "stage" ? item : itemText[0])?.style, true)?.["font-size"] || "")
     $: if (isAuto || itemFontSize || textChanged) getCustomAutoSize()
 
@@ -422,8 +422,8 @@
                 if (pos > 0 && JSON.stringify(newLines[pos].chords) === JSON.stringify(newLines[pos - 1].chords)) {
                     let breakPoint = newLines[pos - 1].text.reduce((textLength, text) => (textLength += text.value.length), 0)
 
-                    newLines[pos - 1].chords = newLines[pos - 1].chords!.filter(a => a.pos < breakPoint)
-                    newLines[pos].chords = newLines[pos].chords!.filter(a => a.pos >= breakPoint).map(a => ({ ...a, pos: a.pos - breakPoint }))
+                    newLines[pos - 1].chords = newLines[pos - 1].chords!.filter((a) => a.pos < breakPoint)
+                    newLines[pos].chords = newLines[pos].chords!.filter((a) => a.pos >= breakPoint).map((a) => ({ ...a, pos: a.pos - breakPoint }))
                 }
             }
         })
@@ -433,7 +433,7 @@
         if (updateHTML) {
             // get caret pos
             let sel = getSelectionRange()
-            let lineIndex = sel.findIndex(a => a?.start !== undefined)
+            let lineIndex = sel.findIndex((a) => a?.start !== undefined)
             if (lineIndex >= 0) {
                 let caret = { line: lineIndex || 0, pos: sel[lineIndex]?.start || 0 }
 
@@ -465,7 +465,7 @@
 
             // set to last caret pos (if backspace)
             let sel = getSelectionRange()
-            let currentLine = sel.findIndex(a => a?.start !== undefined)
+            let currentLine = sel.findIndex((a) => a?.start !== undefined)
             let deleteKey = currentLine === lastCaretPos.line
             if (!caret && (item.lines || []).length > newLines.length) {
                 if (deleteKey) {
@@ -506,7 +506,7 @@
     let lastCaretPos: { line: number; pos: number; lineLength: number } = { line: -1, pos: -1, lineLength: 0 }
     function storeCurrentCaretPos() {
         let sel = getSelectionRange()
-        let caretLineIndex = sel.findIndex(line => line.start !== undefined)
+        let caretLineIndex = sel.findIndex((line) => line.start !== undefined)
         if (caretLineIndex > -1) lastCaretPos = { line: caretLineIndex, pos: sel[caretLineIndex]?.start ?? -1, lineLength: getHTMLLineText(caretLineIndex).length }
     }
 
@@ -551,7 +551,7 @@
             sel = [...Array(linesLength)].map((_, i) => (i === lastCaretPos.line ? { start: lastCaretPos.pos, end: lastCaretPos.pos } : ({} as any)))
         }
         let caret = { line: 0, pos: 0 }
-        let emptySelection = !sel.filter(a => Object.keys(a).length).length
+        let emptySelection = !sel.filter((a) => Object.keys(a).length).length
 
         let lines: Line[] = getNewLines()
         let newLines: any[] = []
@@ -576,7 +576,7 @@
             let linePos = 0
             let pasteOverflow = 0
             // move multi line select to one line
-            lines[lineIndex].text?.forEach(text => {
+            lines[lineIndex].text?.forEach((text) => {
                 let value = text.value
                 let newLinePos = linePos + value.length
                 if (newLinePos < lineSel.start || linePos > lineSel.end) {

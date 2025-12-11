@@ -89,7 +89,7 @@ export function createRepeatedEvents(event: Event, onlyMissing = false) {
         // find existing event at this date!
         let exists = false
         if (onlyMissing) {
-            Object.values(get(events)).forEach(currentEvent => {
+            Object.values(get(events)).forEach((currentEvent) => {
                 if (currentEvent.group !== event.group) return
                 if (currentEvent.from !== newEvent.from || currentEvent.to !== newEvent.to) return
 
@@ -129,7 +129,7 @@ export function updateEventData(editEvent: any, stored: any, { type, action }: a
     if (data.to.getTime() - data.from.getTime() <= 0) data.to = data.from
 
     const keysToRemove = ["id", "isoFrom", "isoTo", "fromTime", "toTime"]
-    keysToRemove.forEach(key => {
+    keysToRemove.forEach((key) => {
         delete data[key]
         delete oldData[key]
     })

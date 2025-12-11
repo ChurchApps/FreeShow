@@ -143,7 +143,7 @@
                     </div>
 
                     <div class="list">
-                        <VirtualList items={sortedShows} let:item={show} itemHeight={36} activeIndex={searchValue.length ? -1 : sortedShows.findIndex(a => a.id === $activeShow?.id)}>
+                        <VirtualList items={sortedShows} let:item={show} itemHeight={36} activeIndex={searchValue.length ? -1 : sortedShows.findIndex((a) => a.id === $activeShow?.id)}>
                             <div class="show-wrapper">
                                 <MaterialButton class="show-item" style="width: 100%; justify-content: space-between; padding: 0.15em 0.8em; font-weight: normal; --outline-color: var(--secondary);" isActive={$activeShow?.id === show.id} tab on:click={() => openShow(show)}>
                                     <div class="row">

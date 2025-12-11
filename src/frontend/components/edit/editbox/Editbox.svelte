@@ -37,7 +37,7 @@
 
         const rightClick: boolean = e.button === 2 || e.buttons === 2 || ($os.platform === "darwin" && e.ctrlKey)
 
-        activeEdit.update(ae => {
+        activeEdit.update((ae) => {
             if (rightClick) {
                 if (ae.items.includes(index)) return ae
                 ae.items = [index]
@@ -93,7 +93,7 @@
             if ($activeEdit.items.length) {
                 // give time so output don't clear
                 setTimeout(() => {
-                    activeEdit.update(a => {
+                    activeEdit.update((a) => {
                         a.items = []
                         return a
                     })
@@ -118,7 +118,7 @@
 
         // timeout to allow CSS to update selected items first if any
         setTimeout(() => {
-            activeEdit.update(ae => {
+            activeEdit.update((ae) => {
                 ae.items = []
                 return ae
             })

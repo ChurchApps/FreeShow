@@ -79,7 +79,7 @@
     let firstTimerId: string = ""
     $: if (item.type === "timer" || id.includes("first_active_timer")) {
         firstTimerId = $activeTimers[0]?.id
-        if (!firstTimerId) firstTimerId = sortByName(keysToID($timers)).find(timer => timer.type !== "counter")?.id || ""
+        if (!firstTimerId) firstTimerId = sortByName(keysToID($timers)).find((timer) => timer.type !== "counter")?.id || ""
     }
 
     let itemStyle: string = ""

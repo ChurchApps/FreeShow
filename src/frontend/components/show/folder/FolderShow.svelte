@@ -32,7 +32,7 @@
     const mediaExtensions = [...videoExtensions, ...imageExtensions, ...audioExtensions]
     onMount(async () => {
         const files = await requestMain(Main.READ_FOLDER, { path })
-        folderFiles = sortByName(files.files.filter(a => mediaExtensions.includes(a.extension)).map(a => ({ path: a.path, name: a.name, type: getMediaType(a.extension), thumbnail: a.thumbnailPath })))
+        folderFiles = sortByName(files.files.filter((a) => mediaExtensions.includes(a.extension)).map((a) => ({ path: a.path, name: a.name, type: getMediaType(a.extension), thumbnail: a.thumbnailPath })))
 
         // get total time
         let total = 0
@@ -132,7 +132,7 @@
         <MaterialButton
             disabled={!folderFiles.length}
             on:click={() => {
-                popupData.set({ type: "folder", value: timer, totalTime, count: folderFiles.filter(a => a.type === "image").length })
+                popupData.set({ type: "folder", value: timer, totalTime, count: folderFiles.filter((a) => a.type === "image").length })
                 activePopup.set("next_timer")
             }}
             title="popup.next_timer{totalTime !== 0 ? `: ${totalTime}s` : ''}"

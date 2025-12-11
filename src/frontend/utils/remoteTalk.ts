@@ -145,8 +145,8 @@ export const receiveREMOTE: any = {
         msg.data = removeDeleted(keysToID(clone(get(projects))))
 
         // get names
-        msg.data.forEach(project => {
-            project.shows.forEach(show => {
+        msg.data.forEach((project) => {
+            project.shows.forEach((show) => {
                 if (show.type === "overlay") show.name = get(overlays)[show.id]?.name || translateText("main.unnamed")
             })
 
@@ -173,7 +173,7 @@ export const receiveREMOTE: any = {
         if (bookKey && !chapterKey) {
             try {
                 const bookData = await jsonBible.getBook(bookKey)
-                const mapped = (bookData.data.chapters || []).map(c => ({
+                const mapped = (bookData.data.chapters || []).map((c) => ({
                     number: c.number,
                     keyName: c.number
                 }))
@@ -190,7 +190,7 @@ export const receiveREMOTE: any = {
                 const bookData = await jsonBible.getBook(bookKey)
                 const chapterData = await bookData.getChapter(chapterKey)
                 const versesData = chapterData.data.verses
-                const mappedVerses = versesData.map(v => ({
+                const mappedVerses = versesData.map((v) => ({
                     number: v.number,
                     text: v.text,
                     keyName: v.number
@@ -204,7 +204,7 @@ export const receiveREMOTE: any = {
         }
 
         const books = jsonBible.data.books
-        const mappedBooks = (books || []).map(b => ({
+        const mappedBooks = (books || []).map((b) => ({
             name: b.name,
             number: b.number,
             keyName: b.id,
@@ -357,15 +357,15 @@ export async function convertBackgrounds(show: Show, noLoad = false, init = fals
 
     show = clone(show)
     const mediaIds: string[] = []
-    show.layouts[show.settings?.activeLayout]?.slides.forEach(a => {
+    show.layouts[show.settings?.activeLayout]?.slides.forEach((a) => {
         if (a.background) mediaIds.push(a.background)
-        Object.values(a.children || {}).forEach(child => {
+        Object.values(a.children || {}).forEach((child) => {
             if (child.background) mediaIds.push(child.background)
         })
     })
 
     await Promise.all(
-        mediaIds.map(async id => {
+        mediaIds.map(async (id) => {
             let path = show.media[id]?.path || show.media[id]?.id || ""
             const cloudId = get(driveData).mediaId
             if (cloudId && cloudId !== "default") path = show.media[id]?.cloud?.[cloudId] || path

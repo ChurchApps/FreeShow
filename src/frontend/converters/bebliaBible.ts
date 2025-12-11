@@ -6,19 +6,19 @@ import { setActiveScripture } from "./bible"
 import { xml2json } from "./xml"
 
 export function convertBebliaBible(data: any[]) {
-    data.forEach(bible => {
+    data.forEach((bible) => {
         const obj = convertToBible(xml2json(bible.content))
         if (!obj.name) obj.name = bible.name
         obj.name = formatToFileName(obj.name)
 
         const id = uid()
         // create folder & file
-        scripturesCache.update(a => {
+        scripturesCache.update((a) => {
             a[id] = obj
             return a
         })
 
-        scriptures.update(a => {
+        scriptures.update((a) => {
             a[id] = { name: obj.name, id }
             return a
         })
@@ -40,7 +40,7 @@ function convertToBible(content: any) {
     else if (!Array.isArray(testaments)) testaments = [testaments]
     const books: Book[] = []
 
-    testaments.forEach(a => {
+    testaments.forEach((a) => {
         books.push(...getBooks(a.book))
     })
     bible.books = books
@@ -53,7 +53,7 @@ function getBooks(oldBooks: any[]) {
 
     if (!Array.isArray(oldBooks)) oldBooks = [oldBooks]
     // console.log("Books:", oldBooks)
-    oldBooks.forEach(book => {
+    oldBooks.forEach((book) => {
         const currentBook = {
             number: book["@number"],
             name: book["@name"] || defaultBibleBookNames[book["@number"]],
@@ -71,7 +71,7 @@ function getChapters(oldChapters: any[]) {
 
     if (!Array.isArray(oldChapters)) oldChapters = [oldChapters]
     // console.log("Chapters:", oldChapters)
-    oldChapters.forEach(chapter => {
+    oldChapters.forEach((chapter) => {
         const currentChapter = {
             number: chapter["@number"],
             verses: getVerses(chapter.verse || [])
@@ -88,7 +88,7 @@ function getVerses(oldVerses: any[]) {
 
     if (!Array.isArray(oldVerses)) oldVerses = [oldVerses]
     // console.log("Verses:", oldVerses)
-    oldVerses.forEach(verse => {
+    oldVerses.forEach((verse) => {
         const currentVerse = {
             number: verse["@number"],
             text: verse["#text"]

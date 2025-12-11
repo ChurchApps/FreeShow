@@ -94,7 +94,7 @@
         event: translateText("timer.event")
     }
     $: if (timer.event && eventList.length) updateEventName()
-    const updateEventName = () => (timerNames.event = eventList.find(a => a.id === timer.event)?.name)
+    const updateEventName = () => (timerNames.event = eventList.find((a) => a.id === timer.event)?.name)
 
     function changeName(e: any) {
         let newName = e.detail
@@ -106,7 +106,7 @@
 
         // set unique timer name
         let count = 1
-        while (Object.values($timers).find(a => a.name === newName + (count > 1 ? ` ${count}` : ""))) {
+        while (Object.values($timers).find((a) => a.name === newName + (count > 1 ? ` ${count}` : ""))) {
             count++
         }
         newName = newName + (count > 1 ? ` ${count}` : "")
@@ -130,7 +130,7 @@
             created = true
         }
 
-        timers.update(a => {
+        timers.update((a) => {
             a[id] = getNewTimer()
             return a
         })
@@ -174,7 +174,7 @@
 </script>
 
 {#if (!currentTimer?.id || created) && !chosenType}
-    <MaterialMultiChoice options={timerTypes} on:click={e => (chosenType = timer.type = e.detail)} />
+    <MaterialMultiChoice options={timerTypes} on:click={(e) => (chosenType = timer.type = e.detail)} />
 {:else}
     {#if created}
         <MaterialButton class="popup-back" icon="back" iconSize={1.3} title="actions.back" on:click={() => (chosenType = "")} />
@@ -197,9 +197,9 @@
                 </p>
 
                 <div>
-                    <MaterialNumberInput label="timer.minutes" value={timer.start === undefined ? 5 : getMinutes(timer.start)} padLength={2} max={MAX_MINUTES} on:change={e => (timer.start = getSeconds(timer.start || 0) + Number(e.detail) * 60)} />
+                    <MaterialNumberInput label="timer.minutes" value={timer.start === undefined ? 5 : getMinutes(timer.start)} padLength={2} max={MAX_MINUTES} on:change={(e) => (timer.start = getSeconds(timer.start || 0) + Number(e.detail) * 60)} />
                     <span style="padding: 0 10px;font-size: 3em;font-weight: bold;line-height: 1.7;">:</span>
-                    <MaterialNumberInput label="timer.seconds" value={timer.start === undefined ? 0 : getSeconds(timer.start)} padLength={2} max={59} on:change={e => (timer.start = getMinutes(timer.start ?? 300) * 60 + Number(e.detail))} />
+                    <MaterialNumberInput label="timer.seconds" value={timer.start === undefined ? 0 : getSeconds(timer.start)} padLength={2} max={59} on:change={(e) => (timer.start = getMinutes(timer.start ?? 300) * 60 + Number(e.detail))} />
                 </div>
             </div>
             <div class="timerbox">
@@ -215,9 +215,9 @@
                 </p>
 
                 <div>
-                    <MaterialNumberInput label="timer.minutes" value={timer.end === undefined ? 5 : getMinutes(timer.end)} padLength={2} max={MAX_MINUTES} on:change={e => (timer.end = getSeconds(timer.end || 0) + Number(e.detail) * 60)} />
+                    <MaterialNumberInput label="timer.minutes" value={timer.end === undefined ? 5 : getMinutes(timer.end)} padLength={2} max={MAX_MINUTES} on:change={(e) => (timer.end = getSeconds(timer.end || 0) + Number(e.detail) * 60)} />
                     <span style="padding: 0 10px;font-size: 3em;font-weight: bold;line-height: 1.7;">:</span>
-                    <MaterialNumberInput label="timer.seconds" value={timer.end === undefined ? 0 : getSeconds(timer.end)} padLength={2} max={59} on:change={e => (timer.end = getMinutes(timer.end ?? 300) * 60 + Number(e.detail))} />
+                    <MaterialNumberInput label="timer.seconds" value={timer.end === undefined ? 0 : getSeconds(timer.end)} padLength={2} max={59} on:change={(e) => (timer.end = getMinutes(timer.end ?? 300) * 60 + Number(e.detail))} />
                 </div>
             </div>
         </div>
@@ -263,15 +263,15 @@
     {/if}
 
     <InputRow arrow>
-        <MaterialToggleSwitch label="timer.overflow" style="width: 100%;" checked={timer.overflow} defaultValue={false} on:change={e => (timer.overflow = e.detail)} />
+        <MaterialToggleSwitch label="timer.overflow" style="width: 100%;" checked={timer.overflow} defaultValue={false} on:change={(e) => (timer.overflow = e.detail)} />
 
         <div slot="menu">
-            <MaterialColorInput label="timer.overflow_color" disabled={!timer.overflow} value={timer.overflowColor || "#FF4136"} defaultValue="#FF4136" on:input={e => (timer.overflowColor = e.detail)} />
+            <MaterialColorInput label="timer.overflow_color" disabled={!timer.overflow} value={timer.overflowColor || "#FF4136"} defaultValue="#FF4136" on:input={(e) => (timer.overflowColor = e.detail)} />
 
-            <MaterialToggleSwitch label="timer.overflow_blink" disabled={!timer.overflow} checked={timer.overflowBlink} defaultValue={false} on:change={e => (timer.overflowBlink = e.detail)} />
+            <MaterialToggleSwitch label="timer.overflow_blink" disabled={!timer.overflow} checked={timer.overflowBlink} defaultValue={false} on:change={(e) => (timer.overflowBlink = e.detail)} />
             {#if timer.overflowBlink}
                 <!-- conditions.seconds -->
-                <MaterialNumberInput label="timer.overflow_blink_offset" disabled={!timer.overflow} value={timer.overflowBlinkOffset || 0} defaultValue={0} max={Math.abs((timer.start ?? 300) - (timer.end || 0))} on:change={e => (timer.overflowBlinkOffset = e.detail)} />
+                <MaterialNumberInput label="timer.overflow_blink_offset" disabled={!timer.overflow} value={timer.overflowBlinkOffset || 0} defaultValue={0} max={Math.abs((timer.start ?? 300) - (timer.end || 0))} on:change={(e) => (timer.overflowBlinkOffset = e.detail)} />
             {/if}
         </div>
     </InputRow>

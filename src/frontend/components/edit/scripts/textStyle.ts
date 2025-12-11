@@ -7,7 +7,7 @@ export function addStyle(selection: { start: number; end: number }[], item: Item
         const newText: any[] = []
         let pos = 0
         if (selection[i]?.start !== undefined) {
-            line.text?.forEach(text => {
+            line.text?.forEach((text) => {
                 const length: number = text.value.length
                 let from = 0
                 let to = length
@@ -40,7 +40,7 @@ export function addStyle(selection: { start: number; end: number }[], item: Item
 
 // combine duplicate styles
 function combine(item: Item): Item {
-    item.lines?.forEach(line => {
+    item.lines?.forEach((line) => {
         const a = [...(line.text || [])]
         for (let i = 0; i < a.length; i++) {
             if (a[i + 1]) {
@@ -82,7 +82,7 @@ export function addStyleString(oldStyle: string, style: any[]): string {
 
     // remove font if changing family
     if (style[0] === "font-family") {
-        array = array.filter(a => !a.includes("font:"))
+        array = array.filter((a) => !a.includes("font:"))
     }
 
     // add new style
@@ -91,7 +91,7 @@ export function addStyleString(oldStyle: string, style: any[]): string {
         array.unshift(style.join(":"))
 
         // place any font-family at the start (before font, just so the dropdown knows the font)
-        const fontFamilyIndex = array.findIndex(a => a.includes("font-family"))
+        const fontFamilyIndex = array.findIndex((a) => a.includes("font-family"))
         array.unshift(array.splice(fontFamilyIndex, 1)[0])
     } else if (style[1] !== null) array.push(style.join(":"))
 
@@ -114,7 +114,7 @@ export function addFilterString(oldFilter: string, filter: any[]): string {
     if (filter[1] !== null) array.push(filter.join("(") + ")")
 
     // transform perspective has to be first
-    const perspectiveIndex = array.findIndex(a => a.includes("perspective"))
+    const perspectiveIndex = array.findIndex((a) => a.includes("perspective"))
     if (perspectiveIndex >= 0) {
         const value = array.splice(perspectiveIndex, 1)[0]
         if (!value.includes("(0px)")) array = [value, ...array]
@@ -190,7 +190,7 @@ export function getItemStyleAtPos(lines: Line[], pos: null | { start: number; en
     let style = ""
     ;(pos || lines).forEach((_a: any, i: number) => {
         let currentPos = 0
-        lines[i]?.text?.some(text => {
+        lines[i]?.text?.some((text) => {
             // if (pos) console.log(currentPos, pos[i].end, currentPos <= pos[i].end, currentPos + text.value.length >= pos[i].end)
             if (pos?.[i] && currentPos <= pos[i].end && currentPos + text.value.length >= pos[i].end) {
                 style = text.style || ""
@@ -203,7 +203,7 @@ export function getItemStyleAtPos(lines: Line[], pos: null | { start: number; en
     })
 
     // filter out empty lines
-    lines = lines.filter(a => a.text.length)
+    lines = lines.filter((a) => a.text.length)
 
     if (!style.length && lines.length) style = lines[lines.length - 1].text[lines[lines.length - 1].text.length - 1]?.style || ""
 
@@ -230,11 +230,11 @@ export function getTextLines(slide: Slide | { items: Item[] }) {
         if (i > 0) lines.push("")
 
         let fullText = ""
-        item.lines?.forEach(line => {
+        item.lines?.forEach((line) => {
             if (!Array.isArray(line?.text)) return
 
             let lineText = ""
-            line.text.forEach(content => {
+            line.text.forEach((content) => {
                 // remove any dynamic values
                 lineText += content.value.replace(/\{[^}]*\}/g, "")
             })
@@ -246,7 +246,7 @@ export function getTextLines(slide: Slide | { items: Item[] }) {
         if (!fullText.length) lines.pop()
     })
 
-    return lines.map(a => replaceVirtualBreaks(a))
+    return lines.map((a) => replaceVirtualBreaks(a))
 }
 
 // get text of slides
@@ -265,11 +265,11 @@ export function getItemText(item: Item | null): string {
     let text = ""
     if (!item?.lines) return ""
 
-    item.lines.forEach(line => {
+    item.lines.forEach((line) => {
         console.assert(Array.isArray(line?.text), "Text is not an array!")
         if (!Array.isArray(line?.text)) return
 
-        line.text.forEach(content => {
+        line.text.forEach((content) => {
             text += content.value
         })
     })
@@ -281,10 +281,10 @@ export function getItemTextArray(item: Item): string[] {
     const text: string[] = []
     if (!item?.lines) return []
 
-    item.lines.forEach(line => {
+    item.lines.forEach((line) => {
         if (!Array.isArray(line?.text)) return
 
-        line.text.forEach(content => {
+        line.text.forEach((content) => {
             text.push(content.value)
         })
     })
@@ -294,7 +294,7 @@ export function getItemTextArray(item: Item): string[] {
 
 export function getLineText(line: Line): string {
     let text = ""
-    line?.text?.forEach(content => {
+    line?.text?.forEach((content) => {
         text += content.value
     })
     return text

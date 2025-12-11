@@ -85,7 +85,7 @@
         if (!background || !bg?.path) return
 
         let mediaId = layoutSlide.background!
-        let folders = Object.values($mediaFolders).map(a => a.path!)
+        let folders = Object.values($mediaFolders).map((a) => a.path!)
         locateFile(mediaId, bg.path, folders, bg)
     }
 
@@ -94,9 +94,9 @@
     $: if (audioIds.length) setTimeout(locateAudio)
     function locateAudio() {
         let showMedia = $showsCache[showId]?.media
-        let folders = Object.values($audioFolders).map(a => a.path!)
+        let folders = Object.values($audioFolders).map((a) => a.path!)
 
-        audioIds.forEach(audioId => {
+        audioIds.forEach((audioId) => {
             let audio = showMedia[audioId]
             if (!audio?.path) return
             locateFile(audioId, audio.path, folders, audio)
@@ -131,7 +131,7 @@
         if (!checkCloud || !$showsCache[showId]?.media?.[fileId] || $showsCache[showId].media[fileId].cloud?.[cloudId] === path) return
 
         // set cloud path to path
-        showsCache.update(a => {
+        showsCache.update((a) => {
             let media = a[showId].media[fileId]
             if (!media.cloud) a[showId].media[fileId].cloud = {}
             a[showId].media[fileId].cloud![cloudId] = path
@@ -288,7 +288,7 @@
     let updater = 0
     onMount(() => {
         const interval = setInterval(() => {
-            if (itemsList.find(a => a.conditions)) updater++
+            if (itemsList.find((a) => a.conditions)) updater++
         }, 3000)
 
         return () => {

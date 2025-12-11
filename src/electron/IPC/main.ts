@@ -48,7 +48,7 @@ export async function requestToMain<ID extends ToMain, R = Awaited<ToMainReturnP
     // LISTENER
     const waitingTimeout = 15000
     let timeout: NodeJS.Timeout | null = null
-    const returnData: R = await new Promise(resolve => {
+    const returnData: R = await new Promise((resolve) => {
         timeout = setTimeout(() => {
             if (!isProd) console.error(`IPC Message Timed Out: ${id}`)
         }, waitingTimeout)

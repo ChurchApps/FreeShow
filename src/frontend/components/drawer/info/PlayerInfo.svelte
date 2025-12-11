@@ -19,7 +19,7 @@
         // { label: "info.download", value: $photoApiCredits.downloadUrl, type: "url" },
     ]
 
-    $: isPlayingYoutube = getAllNormalOutputs().find(output => {
+    $: isPlayingYoutube = getAllNormalOutputs().find((output) => {
         const bg = output.out?.background
         return bg?.type === "player" && $playerVideos[bg?.id || ""]?.type === "youtube"
     })

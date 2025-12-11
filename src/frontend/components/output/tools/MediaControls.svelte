@@ -60,7 +60,7 @@
     $: activeOutputIds = getActiveOutputs($outputs, true, true, true)
     const sendToOutput = () => {
         let dataValues: any = {}
-        activeOutputIds.forEach(id => {
+        activeOutputIds.forEach((id) => {
             dataValues[id] = { ...videoData, muted: id !== outputId ? true : videoData.muted }
         })
 

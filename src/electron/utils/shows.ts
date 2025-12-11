@@ -6,7 +6,7 @@ import { deleteFile, getDataFolderPath, parseShow, readFile, readFileAsync, read
 
 export function getAllShows() {
     const showsPath = getDataFolderPath("shows")
-    const filesInFolder: string[] = readFolder(showsPath).filter(a => a.includes(".show") && a.length > 5)
+    const filesInFolder: string[] = readFolder(showsPath).filter((a) => a.includes(".show") && a.length > 5)
     return filesInFolder
 }
 
@@ -43,15 +43,15 @@ export function trimShow(showCache: Show) {
 // let hasContent = !!Object.values(show.slides).find((slide) => slide.items.find((item) => item.lines?.find((line) => line.text?.find((text) => text.value?.length))))
 
 function showHasLayoutContent(show: Show) {
-    return !!Object.values(show.layouts || {}).find(layout => layout.slides.length)
+    return !!Object.values(show.layouts || {}).find((layout) => layout.slides.length)
 }
 
 export function getShowTextContent(show: Show) {
     let textContent = ""
-    Object.values(show.slides || {}).forEach(slide => {
-        slide.items.forEach(item => {
-            item.lines?.forEach(line => {
-                line.text?.forEach(text => {
+    Object.values(show.slides || {}).forEach((slide) => {
+        slide.items.forEach((item) => {
+            item.lines?.forEach((line) => {
+                line.text?.forEach((text) => {
                     textContent += text.value
                 })
             })

@@ -19,7 +19,7 @@
     function updateOutput(key: string, value: any) {
         if (!currentOutput) return
 
-        outputs.update(a => {
+        outputs.update((a) => {
             if (key.includes(".")) {
                 let split = key.split(".")
                 a[currentOutput!.id][split[0]][split[1]] = value
@@ -52,7 +52,7 @@
         {/if}
 
         <!-- This also makes the output never "auto position" itself if there is just 1 output and 1 extra screen -->
-        <MaterialToggleSwitch label="settings.allow_main_screen" checked={currentOutput?.allowMainScreen} defaultValue={false} on:change={e => updateOutput("allowMainScreen", e.detail)} />
+        <MaterialToggleSwitch label="settings.allow_main_screen" checked={currentOutput?.allowMainScreen} defaultValue={false} on:change={(e) => updateOutput("allowMainScreen", e.detail)} />
     {/if}
 </div>
 
@@ -61,16 +61,16 @@
         <HRule title="settings.position" />
 
         <InputRow>
-            <MaterialNumberInput label="edit.x (px)" value={currentOutput?.bounds?.x || 0} min={-10000} on:change={e => updateBounds("x", e.detail)} />
-            <MaterialNumberInput label="edit.y (px)" value={currentOutput?.bounds?.y || 0} min={-10000} on:change={e => updateBounds("y", e.detail)} />
+            <MaterialNumberInput label="edit.x (px)" value={currentOutput?.bounds?.x || 0} min={-10000} on:change={(e) => updateBounds("x", e.detail)} />
+            <MaterialNumberInput label="edit.y (px)" value={currentOutput?.bounds?.y || 0} min={-10000} on:change={(e) => updateBounds("y", e.detail)} />
         </InputRow>
     {/if}
 
     <HRule title="edit.size" />
 
     <InputRow>
-        <MaterialNumberInput label="edit.width (px)" disabled={!!currentOutput?.forcedResolution} value={currentOutput?.bounds?.width || 0} min={40} on:change={e => updateBounds("width", e.detail)} />
-        <MaterialNumberInput label="edit.height (px)" disabled={!!currentOutput?.forcedResolution} value={currentOutput?.bounds?.height || 0} min={40} on:change={e => updateBounds("height", e.detail)} />
+        <MaterialNumberInput label="edit.width (px)" disabled={!!currentOutput?.forcedResolution} value={currentOutput?.bounds?.width || 0} min={40} on:change={(e) => updateBounds("width", e.detail)} />
+        <MaterialNumberInput label="edit.height (px)" disabled={!!currentOutput?.forcedResolution} value={currentOutput?.bounds?.height || 0} min={40} on:change={(e) => updateBounds("height", e.detail)} />
     </InputRow>
 {/if}
 

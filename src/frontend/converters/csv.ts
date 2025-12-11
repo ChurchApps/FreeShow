@@ -18,7 +18,7 @@ export function convertCSV(data: any) {
     const tempShows: any[] = []
 
     setTimeout(() => {
-        data.forEach(file => {
+        data.forEach((file) => {
             const name: string = file.name
             const content: string = file.content
 
@@ -28,7 +28,7 @@ export function convertCSV(data: any) {
                 const items: Item[] = []
 
                 const fields = parseCSVLine(csvLine)
-                fields.forEach(text => {
+                fields.forEach((text) => {
                     const line = { align: "", text: [{ value: text, style: "" }] }
                     items.push({ lines: [line], style: DEFAULT_ITEM_STYLE })
                 })
@@ -51,7 +51,7 @@ function createShow({ slides, name }) {
     let show = new ShowObj(false, category, layoutID)
 
     // remove empty slides
-    slides = slides.filter(a => a.items.length)
+    slides = slides.filter((a) => a.items.length)
 
     const layouts = getLayout(slides)
     const newSlides: any = {}

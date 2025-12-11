@@ -86,7 +86,7 @@ export async function pcoRequest(data: PCORequestData, attempt = 0): Promise<any
 
     const headers = { Authorization: `Bearer ${PCO_ACCESS.access_token}` }
 
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
         httpsRequest(PCO_API_URL, apiPath, "GET", headers, {}, (err, result) => {
             if (err) {
                 // handle rate limit
@@ -174,7 +174,7 @@ async function processAllServiceTypes(serviceTypes: ServiceType[]): Promise<any>
     const downloadableMedia: LessonsData[] = []
 
     await Promise.all(
-        serviceTypes.map(async serviceType => {
+        serviceTypes.map(async (serviceType) => {
             const servicePlans = await fetchServicePlans(serviceType)
             if (!servicePlans || !servicePlans.length) return
 
@@ -319,12 +319,12 @@ async function processSongItem(item: ProjectItem, itemsEndpoint: string) {
 
 function getOrderedSections(sections: SongSection[], sequence: any[]): SongSection[] {
     const sectionMap: { [key: string]: SongSection } = {}
-    sections.forEach(section => {
+    sections.forEach((section) => {
         sectionMap[section.label] = section
     })
 
     const orderedSections: SongSection[] = []
-    sequence.forEach(label => {
+    sequence.forEach((label) => {
         if (sectionMap[label]) {
             orderedSections.push(sectionMap[label])
         }
@@ -415,7 +415,7 @@ const itemStyle = "left:50px;top:120px;width:1820px;height:840px;"
 function getShow(SONG_DATA: any, SONG: any, SECTIONS: any[]) {
     const slides: { [key: string]: Slide } = {}
     const layoutSlides: SlideData[] = []
-    SECTIONS.forEach(section => {
+    SECTIONS.forEach((section) => {
         const slideId = uid()
 
         const items = [
@@ -480,7 +480,7 @@ async function getMediaStreamUrl(endpoint: string): Promise<string> {
     const apiPath = `/services/v${PCO_API_version}/${endpoint}`
     const headers = { Authorization: `Bearer ${PCO_ACCESS.access_token}` }
 
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
         httpsRequest(PCO_API_URL, apiPath, "POST", headers, {}, (err, result) => {
             if (err) {
                 console.error("Could not get media stream URL:", err)

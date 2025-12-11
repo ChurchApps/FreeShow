@@ -6,7 +6,7 @@ export function clone<T>(object: T): T {
 
 // async wait (instead of timeouts)
 export function wait(ms: number) {
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
         setTimeout(() => {
             resolve("ended")
         }, Number(ms))
@@ -15,7 +15,7 @@ export function wait(ms: number) {
 
 // wait until input value is true
 export function waitUntilValueIsDefined(value: () => any, intervalTime = 50, timeoutValue = 5000) {
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
         let currentValue = value()
         if (currentValue) resolve(currentValue)
 

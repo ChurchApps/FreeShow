@@ -30,7 +30,7 @@
         loading = true
         error = null
         try {
-            requestMain(Main.GET_CONTENT_LIBRARY, { providerId }, data => {
+            requestMain(Main.GET_CONTENT_LIBRARY, { providerId }, (data) => {
                 library = data
                 loading = false
             })
@@ -66,7 +66,7 @@
         loading = true
         error = null
         try {
-            requestMain(Main.GET_PROVIDER_CONTENT, { providerId, key }, data => {
+            requestMain(Main.GET_PROVIDER_CONTENT, { providerId, key }, (data) => {
                 content = data
                 loading = false
             })
@@ -86,8 +86,8 @@
     $: showBackButton = currentPath.length > 0 || currentCategory !== null
 
     const filter = (s: string) => s.toLowerCase().replace(/[.,\/#!?$%\^&\*;:{}=\-_`~() ]/g, "")
-    $: filteredCategories = searchValue.length > 1 ? categories.filter(cat => filter(cat.name).includes(filter(searchValue))) : categories
-    $: filteredContent = searchValue.length > 1 ? content.filter(item => filter(item.name || "").includes(filter(searchValue))) : content
+    $: filteredCategories = searchValue.length > 1 ? categories.filter((cat) => filter(cat.name).includes(filter(searchValue))) : categories
+    $: filteredContent = searchValue.length > 1 ? content.filter((item) => filter(item.name || "").includes(filter(searchValue))) : content
 </script>
 
 <div class="content-library">
@@ -100,7 +100,7 @@
             <div class="divider"></div>
 
             <p style="opacity: 0.8;display: flex;align-items: center;padding: 0 15px;">
-                <span style="opacity: 0.3;font-size: 0.9em;max-width: 500px;overflow: hidden;direction: rtl;">{currentPath.length ? "/" : ""}{currentPath.map(a => a.name)?.join("/")}</span>
+                <span style="opacity: 0.3;font-size: 0.9em;max-width: 500px;overflow: hidden;direction: rtl;">{currentPath.length ? "/" : ""}{currentPath.map((a) => a.name)?.join("/")}</span>
                 {currentCategory?.name || ""}
             </p>
         </FloatingInputs>

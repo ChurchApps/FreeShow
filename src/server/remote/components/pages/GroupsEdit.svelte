@@ -12,7 +12,7 @@
     $: groups = $groupsCache[show.id!] || []
     $: activeLayout = show.settings?.activeLayout
     $: layoutGroups = show.layouts?.[activeLayout]?.slides
-        .map(a => {
+        .map((a) => {
             // let slide = show.slides[a.id] || {}
             // if (slide.group === null) return
 

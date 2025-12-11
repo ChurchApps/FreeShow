@@ -47,7 +47,7 @@
 
             // get selected ids
             let ids: string[] = []
-            $selected.data.forEach(a => {
+            $selected.data.forEach((a) => {
                 const id = a.id || ref[a.index]?.id
                 ids.push(id)
             })
@@ -56,15 +56,15 @@
             ids = [...new Set(ids)]
 
             // remove children if parent is selected
-            ids.map(id => {
+            ids.map((id) => {
                 const slide = _show().slides([id]).get()[0]
-                if (slide.children?.length) ids = ids.filter(id => !slide.children.includes(id))
+                if (slide.children?.length) ids = ids.filter((id) => !slide.children.includes(id))
             })
 
             // get slide refs
             let refs: any[] = []
-            ids.forEach(id => {
-                refs.push(ref.find(a => a.id === id))
+            ids.forEach((id) => {
+                refs.push(ref.find((a) => a.id === id))
             })
 
             // sort by last index first
@@ -73,7 +73,7 @@
             // WIP index might become incorrect when multiple slides are renamed at once (if index changes)
 
             // TODO: history (x3)
-            refs.forEach(ref => {
+            refs.forEach((ref) => {
                 const slideId = ref.id
 
                 // remove global group if active
@@ -120,7 +120,7 @@
             })
         },
         group: () => {
-            $selected.data.forEach(a => {
+            $selected.data.forEach((a) => {
                 const slideId = a.id
 
                 // remove global group if active
@@ -149,8 +149,8 @@
         },
         audio_effect: () => {
             let selectedPath = $selected.data?.[0]?.path
-            effectsLibrary.update(a => {
-                let index = a.findIndex(a => a.path === selectedPath)
+            effectsLibrary.update((a) => {
+                let index = a.findIndex((a) => a.path === selectedPath)
                 if (index > -1) a[index].name = groupName
                 return a
             })
@@ -166,7 +166,7 @@
             })
 
             // update in drawer real time
-            customScriptureBooks.update(a => {
+            customScriptureBooks.update((a) => {
                 if (!a[scriptureId]) a[scriptureId] = []
                 a[scriptureId][bookIndex] = groupName
                 return a
@@ -201,7 +201,7 @@
     </ul>
 {/if}
 
-<MaterialTextInput label="inputs.name" value={groupName} on:change={e => (groupName = e.detail)} autoselect />
+<MaterialTextInput label="inputs.name" value={groupName} on:change={(e) => (groupName = e.detail)} autoselect />
 
 <MaterialButton variant="contained" style="margin-top: 20px;" icon="edit" on:click={rename}>
     <T id="actions.rename" />

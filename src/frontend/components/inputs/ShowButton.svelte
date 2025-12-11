@@ -34,7 +34,7 @@
     $: style = match !== null ? `background: linear-gradient(to right, var(--primary-lighter) ${match}%, transparent ${match}%);` : ""
 
     function setNotFound(id: string) {
-        notFound.update(a => {
+        notFound.update((a) => {
             a.show.push(id)
             return a
         })
@@ -80,14 +80,14 @@
         // set active show
         let pos = index
         if (index === null && $activeProject !== null) {
-            let i = $projects[$activeProject]?.shows?.findIndex(p => p.id === id) ?? -1
+            let i = $projects[$activeProject]?.shows?.findIndex((p) => p.id === id) ?? -1
             if (i > -1) pos = i
         }
 
         let newShow: any = { id, type }
 
         if ($focusMode) {
-            let inProject = $projects[$activeProject || ""]?.shows?.find(p => p.id === id)
+            let inProject = $projects[$activeProject || ""]?.shows?.find((p) => p.id === id)
             if (inProject) {
                 activeFocus.set({ id, index: pos ?? undefined })
                 return
@@ -125,7 +125,7 @@
 
         if (type === "show" && $showsCache[id]?.settings && $showsCache[id].layouts[$showsCache[id].settings.activeLayout]?.slides?.length) {
             let layoutRef = getLayoutRef()
-            let firstEnabledIndex = layoutRef.findIndex(a => !a.data.disabled)
+            let firstEnabledIndex = layoutRef.findIndex((a) => !a.data.disabled)
             updateOut("active", firstEnabledIndex, layoutRef, !e.detail.alt)
 
             let slide = currentOutput.out?.slide || null

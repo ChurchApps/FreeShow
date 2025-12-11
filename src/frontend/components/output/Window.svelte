@@ -24,13 +24,13 @@
     onMount(() => {
         navigator.mediaDevices
             .getUserMedia(constraints)
-            .then(stream => {
+            .then((stream) => {
                 if (!videoElem) return
 
                 videoElem.srcObject = stream
                 videoElem.onloadedmetadata = loaded
             })
-            .catch(err => {
+            .catch((err) => {
                 console.error(err.name + ": " + err.message)
             })
     })
@@ -38,7 +38,7 @@
     onDestroy(stopStream)
     function stopStream() {
         if (!videoElem) return
-        ;(videoElem.srcObject as MediaStream)?.getTracks()?.forEach(track => track.stop())
+        ;(videoElem.srcObject as MediaStream)?.getTracks()?.forEach((track) => track.stop())
         videoElem.srcObject = null
     }
 

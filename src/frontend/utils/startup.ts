@@ -23,7 +23,7 @@ let startupProfile = ""
 export function startup() {
     window.api.receive(
         STARTUP,
-        msg => {
+        (msg) => {
             if (initialized || msg.channel !== "TYPE") return
             initialized = true // only call this once per window
             destroy(STARTUP, "startup")
@@ -67,7 +67,7 @@ async function startupMain() {
     contentProviderSync()
 
     // custom alert
-    if (get(language) === "no" && !get(activePopup) && !Object.values(get(scriptures)).find(a => ["eea18ccd2ca05dde-01", "7bcaa2f2e77739d5-01"].includes(a.id || "")) && Math.random() < 0.4) {
+    if (get(language) === "no" && !get(activePopup) && !Object.values(get(scriptures)).find((a) => ["eea18ccd2ca05dde-01", "7bcaa2f2e77739d5-01"].includes(a.id || "")) && Math.random() < 0.4) {
         alertMessage.set('Bibel 2011 Bokmål/Nynorsk er nå tilgjengelig som API i "Bibel"-menyen!')
         activePopup.set("alert")
     }
@@ -98,7 +98,7 @@ function autoBackup() {
     const minTimeToBackup = getTimeFromInterval(interval)
 
     if (now - lastBackup > minTimeToBackup) {
-        special.update(a => {
+        special.update((a) => {
             // subtract one hour from time to keep it relatively the same with each backup
             a.autoBackupPrevious = now - 3600000
             return a
@@ -123,12 +123,12 @@ export function contentProviderSync() {
 
 function getMainData() {
     requestMainMultiple({
-        [Main.VERSION]: a => version.set(a),
-        [Main.IS_DEV]: a => isDev.set(a),
-        [Main.GET_OS]: a => os.set(a),
-        [Main.GET_CACHE_PATH]: a => cachePath.set(a),
-        [Main.DEVICE_ID]: a => deviceId.set(a),
-        [Main.MAXIMIZED]: a => windowState.set({ ...windowState, maximized: a })
+        [Main.VERSION]: (a) => version.set(a),
+        [Main.IS_DEV]: (a) => isDev.set(a),
+        [Main.GET_OS]: (a) => os.set(a),
+        [Main.GET_CACHE_PATH]: (a) => cachePath.set(a),
+        [Main.DEVICE_ID]: (a) => deviceId.set(a),
+        [Main.MAXIMIZED]: (a) => windowState.set({ ...windowState, maximized: a })
     })
 }
 

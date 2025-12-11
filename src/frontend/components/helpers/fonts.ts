@@ -19,15 +19,15 @@ export async function getFontsList() {
     const localFonts = await window.queryLocalFonts()
 
     const families: { [key: string]: FontData[] } = {}
-    localFonts.forEach(font => {
+    localFonts.forEach((font) => {
         if (!families[font.family]) families[font.family] = []
         families[font.family].push(font)
     })
 
     const fontFamilies: Family[] = []
 
-    Object.values(families).forEach(familyFonts => {
-        let newFamilyFonts = familyFonts.filter(a => {
+    Object.values(families).forEach((familyFonts) => {
+        let newFamilyFonts = familyFonts.filter((a) => {
             // remove styles that can already be changed
             return !commonStyles.includes(a.style)
         })
@@ -35,7 +35,7 @@ export async function getFontsList() {
         if (!newFamilyFonts.length) newFamilyFonts = [familyFonts[0]]
 
         const previousStyleNames: string[] = []
-        const fonts: Font[] = newFamilyFonts.map(a => {
+        const fonts: Font[] = newFamilyFonts.map((a) => {
             let style = a.style
 
             let fontName = a.fullName
@@ -51,7 +51,7 @@ export async function getFontsList() {
             }
         })
 
-        let defaultIndex = newFamilyFonts.findIndex(a => a.style.toLowerCase().includes("regular") || a.style.toLowerCase().includes("normal"))
+        let defaultIndex = newFamilyFonts.findIndex((a) => a.style.toLowerCase().includes("regular") || a.style.toLowerCase().includes("normal"))
         if (defaultIndex < 0) defaultIndex = 0
 
         fontFamilies.push({
@@ -113,7 +113,7 @@ function getFontName(value: string) {
 
 export async function getSystemFontsList() {
     // { family: "CMGSans", default: 0, fonts: [{ name: "CMGSans", path: "", style: "", css: "font: 1em 'CMGSans'" }] }
-    const fonts: Family[] = defaultFonts.map(name => {
+    const fonts: Family[] = defaultFonts.map((name) => {
         const css = `font: 1em ${getFontName(name)}`
         return { family: name, default: 0, fonts: [{ name, path: "", style: "", css }] }
     })
@@ -121,13 +121,13 @@ export async function getSystemFontsList() {
     const loadedFonts = await getFontsList()
     if (!loadedFonts.length) return []
 
-    return addFonts(fonts, loadedFonts).map(a => ({ label: a.family, value: a.family, style: a.fonts[a.default]?.css || (a.family ? `font-family: ${a.family};` : "") }))
+    return addFonts(fonts, loadedFonts).map((a) => ({ label: a.family, value: a.family, style: a.fonts[a.default]?.css || (a.family ? `font-family: ${a.family};` : "") }))
 }
 export function getFontStyleList(font: string) {
     if (!cachedFonts.length) return { fontStyles: [], defaultValue: "" }
 
-    const family = cachedFonts.find(a => a.family === font)
-    const fontStyles = (family?.fonts || []).map(a => ({
+    const family = cachedFonts.find((a) => a.family === font)
+    const fontStyles = (family?.fonts || []).map((a) => ({
         value: a.css
             ?.replace(/^font:\s*(.*);$/, "$1")
             .replace("1em", "100px")
@@ -139,7 +139,7 @@ export function getFontStyleList(font: string) {
     const defaultValue = fontStyles[family?.default || 0]?.value || ""
 
     const existingValues: string[] = [defaultValue]
-    const filteredFontStyles = fontStyles.filter(a => {
+    const filteredFontStyles = fontStyles.filter((a) => {
         if (a.value === defaultValue) return true
         if (existingValues.includes(a.value)) return false
         existingValues.push(a.value)
@@ -151,7 +151,7 @@ export function getFontStyleList(font: string) {
 
 function addFonts(fonts: Family[], newFonts: Family[]) {
     // join and remove duplicates
-    fonts = fonts.filter(font1 => !newFonts.find(font2 => font2.family === font1.family))
+    fonts = fonts.filter((font1) => !newFonts.find((font2) => font2.family === font1.family))
     fonts = [...newFonts, ...fonts]
     // sort
     fonts = fonts.sort((a, b) => a.family.localeCompare(b.family))
@@ -166,7 +166,7 @@ function addFonts(fonts: Family[], newFonts: Family[]) {
 
 // PPT import
 export function loadCustomFonts(fonts: { name: string; path: string }[]) {
-    fonts.forEach(font => {
+    fonts.forEach((font) => {
         // try loading from Google Fonts
         const link = document.createElement("link")
         link.rel = "stylesheet"

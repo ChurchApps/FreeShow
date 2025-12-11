@@ -30,7 +30,7 @@ export function httpsRequest(hostname: string, path: string, method: "POST" | "G
     }
 
     try {
-        const request = https.request(options, response => {
+        const request = https.request(options, (response) => {
             let data = ""
 
             response.on("data", (chunk: Buffer | string) => {
@@ -55,13 +55,13 @@ export function httpsRequest(hostname: string, path: string, method: "POST" | "G
                 }
             })
 
-            response.on("error", err => {
+            response.on("error", (err) => {
                 console.error("Response error:", err)
                 cb(err, null)
             })
         })
 
-        request.on("error", err => {
+        request.on("error", (err) => {
             console.error("Request error:", err)
             cb(err, null)
         })

@@ -82,7 +82,7 @@ export class NdiSender {
                 this.NDI[id].previousStatus = newStatus
 
                 if (this.NDI[id].status === "connected") {
-                    Object.keys(CaptureTransmitter.channels).forEach(key => {
+                    Object.keys(CaptureTransmitter.channels).forEach((key) => {
                         if (key.includes("ndi")) {
                             // force an instant check / output refresh when reconnected
                             CaptureTransmitter.channels[key].lastCheck = 999
@@ -161,7 +161,7 @@ export class NdiSender {
 
     static bytesForFloat32 = 4
     static async sendAudioBufferNDI(buffer: Buffer, { sampleRate, channelCount }: { sampleRate: number; channelCount: number }) {
-        if (this.ndiDisabled || !Object.values(this.NDI).find(a => a?.sendAudio)) return
+        if (this.ndiDisabled || !Object.values(this.NDI).find((a) => a?.sendAudio)) return
 
         const ndiAudioBuffer = convertPCMtoPlanarFloat32(buffer, channelCount)
         if (!ndiAudioBuffer) return
@@ -185,7 +185,7 @@ export class NdiSender {
             data: ndiAudioBuffer
         }
 
-        Object.values(this.NDI).forEach(data => {
+        Object.values(this.NDI).forEach((data) => {
             if (!data?.sendAudio || !data?.sender) return
 
             try {

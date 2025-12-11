@@ -12,7 +12,7 @@ export function newSlideTimer(timerId: string, duration: number, folderPath = ""
         get(slideTimers)[timerId]?.timer?.clear()
     }
 
-    slideTimers.update(a => {
+    slideTimers.update((a) => {
         a[timerId] = { time: 0, paused: true, sliderTimer: null, autoPlay: true, max: duration, timer: new Timer(timerEnded, duration * 1000, timerId), data: folderPath }
         return a
     })
@@ -26,12 +26,12 @@ export function newSlideTimer(timerId: string, duration: number, folderPath = ""
 
         const data = get(slideTimers)[id].data || ""
 
-        outputs.update(a => {
+        outputs.update((a) => {
             if (a[id]?.out) a[id].out.transition = null
             return a
         })
 
-        slideTimers.update(a => {
+        slideTimers.update((a) => {
             delete a[id]
             return a
         })
@@ -62,7 +62,7 @@ const Timer: any = function (this: any, callback: (id: string) => void, delay: n
         clearTimeout(options.sliderTimer)
         timeout = null
         options.sliderTimer = null
-        slideTimers.update(a => {
+        slideTimers.update((a) => {
             delete a[timerId]
             return a
         })
@@ -99,7 +99,7 @@ const Timer: any = function (this: any, callback: (id: string) => void, delay: n
     }
 
     function update() {
-        slideTimers.update(a => {
+        slideTimers.update((a) => {
             a[timerId] = { ...options, start }
             return a
         })
@@ -117,7 +117,7 @@ function sliderTime(id: any) {
         options = clone(get(slideTimers)[id])
         if (!options || !options.sliderTimer || !options.timer || options.paused) return
 
-        slideTimers.update(a => {
+        slideTimers.update((a) => {
             if (!options.remaining || !options.start) return a
 
             const remaining = options.remaining - (Date.now() - options.start)

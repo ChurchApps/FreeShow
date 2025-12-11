@@ -54,7 +54,7 @@
         }
         // Also load book data for all scriptures in collection
         if (isCollection && scriptures.length > 1) {
-            scriptures.forEach(scr => {
+            scriptures.forEach((scr) => {
                 if (scr.id === id) return // Skip primary, already loading
                 const scrBooks = scr.data?.books || []
                 const scrBook = scrBooks[activeBook]
@@ -73,7 +73,7 @@
         }
         // Also load chapter data for all scriptures in collection
         if (isCollection && scriptures.length > 1) {
-            scriptures.forEach(scr => {
+            scriptures.forEach((scr) => {
                 if (scr.id === id) return // Skip primary, already loading
                 const scrBooks = scr.data?.books || []
                 const scrBook = scrBooks[activeBook]
@@ -110,7 +110,7 @@
     $: currentVerse = activeVerse > 0 ? String(activeVerse) : ""
 
     // Update displayed indices from main app state (what's currently on output)
-    const unsubscribeScripture = currentScriptureState.subscribe(state => {
+    const unsubscribeScripture = currentScriptureState.subscribe((state) => {
         if (!state) return
         if (state.scriptureId && state.scriptureId !== id) return
 
@@ -134,7 +134,7 @@
     const colors = ["", "#f17d46", "#ffd17c", "#8cdfff", "#8888ff", "#ff97f2", "#ffdce7", "#88ffa9", "#ffd3b6"]
 
     export function getColorCode(books: any[], bookId: number | string) {
-        let bookIndex = typeof bookId === "number" ? bookId : books.findIndex(a => a.id === bookId)
+        let bookIndex = typeof bookId === "number" ? bookId : books.findIndex((a) => a.id === bookId)
 
         if (books.length === colorCodesFull.length) return colors[colorCodesFull[bookIndex]]
         else if (books.length === colorCodesNT.length) return colors[colorCodesNT[bookIndex]]
@@ -274,7 +274,7 @@
         const chapterNumber = parseInt(chapterStr, 10)
         const verseNumber = parseInt(verseStr, 10)
 
-        const bookIndex = books.findIndex(book => {
+        const bookIndex = books.findIndex((book) => {
             if (book.name.toLowerCase() === bookName.toLowerCase().trim()) {
                 return true
             }
@@ -486,7 +486,7 @@
                                 activeVerse = 0
                                 depth++
                             }}
-                            on:keydown={e =>
+                            on:keydown={(e) =>
                                 e.key === "Enter" &&
                                 (() => {
                                     activeBook = i
@@ -530,7 +530,7 @@
                             }
                             depth++
                         }}
-                        on:keydown={e =>
+                        on:keydown={(e) =>
                             e.key === "Enter" &&
                             (() => {
                                 const previousChapter = activeChapter
@@ -567,7 +567,7 @@
                         <div style="float: right; width: 220px; height: 80px;"></div>
                     {/if}
 
-                    <button type="button" class="verse-button" class:collection-verse={isCollection && $scriptureViewList} on:click={() => playScripture(verseNumber)} on:keydown={e => e.key === "Enter" && playScripture(verseNumber)} class:active={isActive} class:displayed={isDisplayed}>
+                    <button type="button" class="verse-button" class:collection-verse={isCollection && $scriptureViewList} on:click={() => playScripture(verseNumber)} on:keydown={(e) => e.key === "Enter" && playScripture(verseNumber)} class:active={isActive} class:displayed={isDisplayed}>
                         <span class="verse-num" style="color: var(--secondary);font-weight: bold;">
                             {verseNumber}
                         </span>

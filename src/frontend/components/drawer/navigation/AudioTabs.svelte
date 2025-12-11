@@ -22,7 +22,7 @@
     $: activeSubTab = $drawerTabsData.audio?.activeSubTab || ""
 
     $: foldersList = keysToID($audioFolders)
-    $: favoritesListLength = Object.values($media).filter(a => a.audio && a.favourite).length
+    $: favoritesListLength = Object.values($media).filter((a) => a.audio && a.favourite).length
     $: effectsLength = $effectsLibrary.length
     $: audioStreamsLength = Object.keys($audioStreams).length
 
@@ -31,8 +31,8 @@
     $: if (foldersList.length) {
         requestMain(
             Main.READ_FOLDERS,
-            foldersList?.map(a => ({ path: a.path || "" })),
-            data => {
+            foldersList?.map((a) => ({ path: a.path || "" })),
+            (data) => {
                 console.log(data)
 
                 const newFolderLengths: { [key: string]: number } = {}
@@ -46,7 +46,7 @@
     }
     function countFiles(files: FileData[]) {
         let count = 0
-        files.forEach(file => {
+        files.forEach((file) => {
             if (file.folder) count++
             else if (audioExtensions.includes(file.extension)) {
                 allCount++
@@ -75,7 +75,7 @@
         if (!Object.keys(playlistUpdater).length) return []
 
         let playlists = sortObject(keysToID(playlistUpdater), "name")
-        playlists = playlists.map(a => {
+        playlists = playlists.map((a) => {
             const count = a.songs?.length
             return { id: a.id, label: a.name, icon: "playlist", count, onDoubleClick: () => AudioPlaylist.start(a.id) }
         })
@@ -85,7 +85,7 @@
     }
 
     function convertToButton(categories: any[], lengths: { [key: string]: number }) {
-        return sortObject(categories, "name").map(a => {
+        return sortObject(categories, "name").map((a) => {
             return { id: a.id, label: a.name, icon: a.icon, count: lengths[a.path] }
         })
     }
@@ -94,7 +94,7 @@
     function addFolder() {
         sendMain(Main.OPEN_FOLDER, { channel: PICK_ID })
     }
-    let listenerId = receiveToMain(ToMain.OPEN_FOLDER2, data => {
+    let listenerId = receiveToMain(ToMain.OPEN_FOLDER2, (data) => {
         if (data.channel !== PICK_ID || !data.path) return
         addDrawerFolder(data, "audio")
     })
@@ -104,14 +104,14 @@
         const { id, value } = e.detail
 
         if ($audioPlaylists[id]) {
-            audioPlaylists.update(a => {
+            audioPlaylists.update((a) => {
                 a[id].name = value
                 return a
             })
             return
         }
 
-        audioFolders.update(a => {
+        audioFolders.update((a) => {
             if (a[id].default) delete a[id].default
             a[id].name = value
             return a
@@ -120,12 +120,12 @@
 
     function createPlaylist() {
         let playlistId = uid()
-        audioPlaylists.update(a => {
+        audioPlaylists.update((a) => {
             a[playlistId] = { name: "", songs: [] }
             return a
         })
 
-        drawerTabsData.update(a => {
+        drawerTabsData.update((a) => {
             a.audio.activeSubTab = playlistId
             return a
         })

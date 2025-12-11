@@ -64,7 +64,7 @@ export function convertText({ name = "", origin = "", category = null, text, noF
     sections.forEach((section, i) => {
         const lines = section.split("\n")
         const newLines: string[] = []
-        lines.forEach(line => {
+        lines.forEach((line) => {
             if (!line.includes("=")) {
                 newLines.push(line)
                 return
@@ -77,7 +77,7 @@ export function convertText({ name = "", origin = "", category = null, text, noF
                 return
             }
 
-            const metadataKey = Object.keys(metadataKeys).find(key => key.toLowerCase().replaceAll(" ", "") === metaKey || translateText("meta." + key).toLowerCase() === metaKey)
+            const metadataKey = Object.keys(metadataKeys).find((key) => key.toLowerCase().replaceAll(" ", "") === metaKey || translateText("meta." + key).toLowerCase() === metaKey)
             if (!metadataKey) {
                 // create slide with unknown metadata
                 // newLines.push(line)
@@ -385,7 +385,7 @@ function createSlides(labeled: { type: string; text: string }[], noFormatting) {
                 // replace values
                 items = items
                     // .filter((a) => !a.type || a.type === "text" || a.lines)
-                    .map(item => {
+                    .map((item) => {
                         item.lines?.forEach((_, index) => {
                             item.lines![index].text[0].style = activeItems?.[0]?.lines?.[0]?.text?.[0]?.style || ""
                         })
@@ -398,15 +398,15 @@ function createSlides(labeled: { type: string; text: string }[], noFormatting) {
             if (!textLength) items = []
 
             // extract chords (chordpro)
-            items = items.map(item => {
-                item.lines?.forEach(line => {
+            items = items.map((item) => {
+                item.lines?.forEach((line) => {
                     const chords: Chords[] = []
                     let letterIndex = 0
                     let isChord = false
 
-                    line?.text?.forEach(text => {
+                    line?.text?.forEach((text) => {
                         let newValue = ""
-                        text.value?.split("").forEach(char => {
+                        text.value?.split("").forEach((char) => {
                             if ((char === "[" || char === "]") && !text.value.slice(0, -2).includes(":")) {
                                 isChord = char === "["
                                 if (isChord) chords.push({ id: uid(5), pos: letterIndex, key: "" })
@@ -459,7 +459,7 @@ function removeSlideDuplicates(slides: { [key: string]: Slide }, layouts: SlideD
         let text = getSlideText(slide)
         text += slide.children?.reduce((value, childId) => (value += getSlideText(slides[childId])), "") || ""
 
-        const exists = Object.keys(slideTextCache).find(id => slideTextCache[id] === text)
+        const exists = Object.keys(slideTextCache).find((id) => slideTextCache[id] === text)
         if (exists) replaceSlides[slideId] = exists
         else slideTextCache[slideId] = text
     })
@@ -482,7 +482,7 @@ function linesToItems(lines: string) {
     let slideLines: string[] = lines.split("\n")
 
     // remove custom ChordPro styling
-    slideLines = slideLines.filter(a => !a.startsWith("{") && !a.endsWith("}"))
+    slideLines = slideLines.filter((a) => !a.startsWith("{") && !a.endsWith("}"))
 
     const items: Item[] = linesToTextboxes(slideLines)
 
@@ -491,7 +491,7 @@ function linesToItems(lines: string) {
 
 function checkRepeats(labeled: { type: string; text: string }[]) {
     const newLabels: { type: string; text: string }[] = []
-    labeled.forEach(a => {
+    labeled.forEach((a) => {
         const match = a.text.match(/\nx[0-9]/)
         if (match !== null && match.index !== undefined) {
             const repeatNumber = a.text.slice(match.index + 2, match.index + 4).replace(/[A-Z]/gi, "")
@@ -553,7 +553,7 @@ function fixText(text: string, formatText: boolean): string {
     let lines: string[] = text.split("\n")
 
     if (formatText) {
-        lines = lines.map(line => {
+        lines = lines.map((line) => {
             line = line.trim()
             // make first char uppercase
             line = (line[0]?.toUpperCase() || "") + line.slice(1, line.length)
@@ -569,7 +569,7 @@ function fixText(text: string, formatText: boolean): string {
     // remove first line if it's a label
     if (findGroupMatch(label)) lines = lines.slice(1, lines.length)
 
-    text = lines.filter(a => a).join("\n")
+    text = lines.filter((a) => a).join("\n")
 
     return text
 }
@@ -594,7 +594,7 @@ function findPatterns(sections: string[]) {
     function countMatchingSections(section: string, i: number) {
         similarCount[i] = { matches: [], count: 0 }
 
-        const alreadyCounted = similarCount.find(a => a.matches.includes(i))
+        const alreadyCounted = similarCount.find((a) => a.matches.includes(i))
         if (alreadyCounted) {
             similarCount[i] = alreadyCounted
             return
@@ -612,9 +612,9 @@ function findPatterns(sections: string[]) {
 
     function getIndexes(similar: { matches: number[]; count: 0 }, i: number): string {
         // let lines = sections[i].split("\n")
-        const splitted: string[] = sections[i].split("\n").filter(a => a.length)
+        const splitted: string[] = sections[i].split("\n").filter((a) => a.length)
         const length: number = sections[i].replaceAll("\n", "").length
-        const find = stored.find(a => similarity(a.text, sections[i]) > similarityNum)
+        const find = stored.find((a) => similarity(a.text, sections[i]) > similarityNum)
 
         // TODO: repeat x6
         // TODO: labels in text

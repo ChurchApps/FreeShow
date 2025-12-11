@@ -78,7 +78,7 @@
 
         // if drawer is closed when searching, set category to "all"
         if (e === null && ["shows", "overlays", "templates", "media", "audio"].includes($activeDrawerTab)) {
-            drawerTabsData.update(a => {
+            drawerTabsData.update((a) => {
                 a[$activeDrawerTab].activeSubTab = "all"
                 return a
             })
@@ -120,7 +120,7 @@
     const removeWhitespace = (v: string) =>
         v
             .split(" ")
-            .filter(n => n)
+            .filter((n) => n)
             .join(" ")
     function search() {
         if (storeHeight === null && $drawer.height > minHeight) return

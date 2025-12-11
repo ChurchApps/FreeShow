@@ -59,7 +59,7 @@ async function convertDynamicValues(data: NowPlayingData) {
 
     const metadata = await getAudioMetadata(data.filePath)
 
-    dynamicValues.forEach(value => {
+    dynamicValues.forEach((value) => {
         data.format = data.format.replaceAll(value, replaceValue(value))
     })
 
@@ -149,7 +149,7 @@ export function openNowPlaying() {
 async function getAudioMetadata(filePath: string): Promise<ICommonTagsResult | null> {
     if (!filePath) return null
 
-    return new Promise(async resolve => {
+    return new Promise(async (resolve) => {
         try {
             const metadata = (await parseFile(filePath))?.common
             if (!metadata) {

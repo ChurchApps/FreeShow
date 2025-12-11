@@ -23,7 +23,7 @@ export class NdiReceiver {
     static sendToOutputs: string[] = []
 
     private static async createReceiver(source: { name: string; urlAddress: string }, lowbandwidth = false) {
-        while (this.isCreatingReceiver) await new Promise(resolve => setTimeout(resolve, 50))
+        while (this.isCreatingReceiver) await new Promise((resolve) => setTimeout(resolve, 50))
         this.isCreatingReceiver = true
 
         try {
@@ -58,7 +58,7 @@ export class NdiReceiver {
         if (!grandiose) return []
 
         const finder: any = await grandiose.find({ showLocalSources: true, groups: data.groups || "" })
-        return new Promise<any[]>(resolve => {
+        return new Promise<any[]>((resolve) => {
             // without the interval it only finds one source: https://github.com/emanspeaks/grandiose/commit/271cd73b5269ab827155a1a944c15d3b5fe4d564
             let previousLength = 0
             this.findSourcesInterval = setInterval(() => {
@@ -164,7 +164,7 @@ export class NdiReceiver {
             try {
                 // Skip this iteration if another fetch is already in progress for this receiver
                 if (receiverData.fetchInProgress) {
-                    await new Promise(resolve => setTimeout(resolve, 8))
+                    await new Promise((resolve) => setTimeout(resolve, 8))
                     continue
                 }
 
@@ -180,7 +180,7 @@ export class NdiReceiver {
                         processingTimes = result.newTimes
                         adaptiveDelay = result.newDelay
 
-                        await new Promise(resolve => setTimeout(resolve, adaptiveDelay))
+                        await new Promise((resolve) => setTimeout(resolve, adaptiveDelay))
                         continue
                     }
                 } finally {
@@ -196,7 +196,7 @@ export class NdiReceiver {
                     return
                 }
 
-                await new Promise(resolve => setTimeout(resolve, delay))
+                await new Promise((resolve) => setTimeout(resolve, delay))
             }
         }
     }
@@ -208,7 +208,7 @@ export class NdiReceiver {
             try {
                 // If another fetch is in progress, wait a short while and skip
                 if (receiverData.fetchInProgress) {
-                    await new Promise(resolve => setTimeout(resolve, 50))
+                    await new Promise((resolve) => setTimeout(resolve, 50))
                     continue
                 }
 
@@ -219,7 +219,7 @@ export class NdiReceiver {
                         this.sendBuffer(sourceId, rawFrame)
                         consecutiveErrors = 0
                         // Slower rate for thumbnails - every 500ms
-                        await new Promise(resolve => setTimeout(resolve, 500))
+                        await new Promise((resolve) => setTimeout(resolve, 500))
                         continue
                     }
                 } finally {
@@ -234,7 +234,7 @@ export class NdiReceiver {
                     return
                 }
 
-                await new Promise(resolve => setTimeout(resolve, delay))
+                await new Promise((resolve) => setTimeout(resolve, delay))
             }
         }
     }
@@ -243,7 +243,7 @@ export class NdiReceiver {
         if (!frame) return
         const msg = { channel: "RECEIVE_STREAM", data: { id, frame, time: Date.now() } }
         toApp(NDI, msg)
-        this.sendToOutputs.forEach(outputId => OutputHelper.Send.sendToWindow(outputId, msg, NDI))
+        this.sendToOutputs.forEach((outputId) => OutputHelper.Send.sendToWindow(outputId, msg, NDI))
     }
 
     static async captureStreamNDI({ source, outputId }: { source: { name: string; urlAddress: string; id: string }; outputId: string }) {
@@ -259,14 +259,14 @@ export class NdiReceiver {
         if (this.NDI_RECEIVERS[source.id]) {
             this.NDI_RECEIVERS[source.id].shouldStop = true
             // Brief delay to let thumbnail loop exit cleanly
-            await new Promise(resolve => setTimeout(resolve, 100))
+            await new Promise((resolve) => setTimeout(resolve, 100))
         }
 
         // Start full capture loop
         this.NDI_RECEIVERS[source.id] = { frameRate: 0.1, isReceiving: true, shouldStop: false }
         const receiverData = this.NDI_RECEIVERS[source.id]
 
-        this.frameLoop(source.id, receiver, receiverData).catch(err => {
+        this.frameLoop(source.id, receiver, receiverData).catch((err) => {
             console.error(`NDI reception error for ${source.id}:`, err)
             this.stopReceiversNDI({ id: source.id })
         })
@@ -284,7 +284,7 @@ export class NdiReceiver {
             return
         }
 
-        Object.keys(this.NDI_RECEIVERS).forEach(id => {
+        Object.keys(this.NDI_RECEIVERS).forEach((id) => {
             if (this.NDI_RECEIVERS[id]) this.NDI_RECEIVERS[id].shouldStop = true
         })
         setTimeout(() => (this.NDI_RECEIVERS = {}), 100)

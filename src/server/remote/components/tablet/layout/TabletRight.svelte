@@ -25,7 +25,7 @@
     // Get active overlay IDs from outData
     $: activeOverlayIds = $outData?.overlays || []
     // Get the actual overlay objects for active overlays
-    $: activeOverlayItems = activeOverlayIds.map(id => ({ id, overlay: $overlays[id] })).filter(({ overlay }) => overlay)
+    $: activeOverlayItems = activeOverlayIds.map((id) => ({ id, overlay: $overlays[id] })).filter(({ overlay }) => overlay)
 
     function openOutShow() {
         const showId = $outShow?.id

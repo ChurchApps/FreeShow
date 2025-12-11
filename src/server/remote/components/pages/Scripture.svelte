@@ -42,19 +42,19 @@
     $: scripturesLoaded = Object.keys($scriptures).length > 0
 
     $: allScripturesData = Object.keys($scriptures)
-        .map(sid => ({
+        .map((sid) => ({
             id: sid,
             data: $scriptureCache[sid],
             name: ($scriptures[sid]?.customName || $scriptures[sid]?.name || sid) as string
         }))
-        .filter(s => s.data)
+        .filter((s) => s.data)
 
     $: isCollection = !!($collectionId && $scriptures[$collectionId]?.collection)
 
     // Filter to only collection versions when viewing a collection
     function getScriptureData(versionId: string) {
         return (
-            allScripturesData.find(s => s.id === versionId) || {
+            allScripturesData.find((s) => s.id === versionId) || {
                 id: versionId,
                 data: $scriptureCache[versionId],
                 name: ($scriptures[versionId]?.customName || $scriptures[versionId]?.name || versionId) as string
@@ -62,7 +62,7 @@
         )
     }
 
-    $: collectionScripturesData = isCollection && $collectionId ? ($scriptures[$collectionId]?.collection?.versions || []).map(getScriptureData).filter(s => s.id) : allScripturesData
+    $: collectionScripturesData = isCollection && $collectionId ? ($scriptures[$collectionId]?.collection?.versions || []).map(getScriptureData).filter((s) => s.id) : allScripturesData
 
     // Toggle through translations in collection: 0 -> 1 -> ... -> null (all) -> 0
     function toggleTranslation() {
@@ -160,11 +160,11 @@
     // This prevents expensive filtering/sorting when user is already browsing a bible
     $: showScripturePicker = !tablet && !$openedScripture && scripturesLoaded
     $: scriptureEntries = showScripturePicker || (tablet && !$openedScripture) ? keysToID($scriptures).map((a: any) => ({ ...a, icon: iconForScripture(a) })) : []
-    $: favoritesList = scriptureEntries.length ? sortByName(scriptureEntries.filter(a => a.favorite)) : []
-    $: favoriteIds = new Set(favoritesList.map(a => a.id))
-    $: collectionList = scriptureEntries.length ? sortByName(scriptureEntries.filter(a => a.collection && !favoriteIds.has(a.id))) : []
-    $: localBibles = scriptureEntries.length ? sortByName(scriptureEntries.filter(a => !a.collection && !a.api && !favoriteIds.has(a.id))) : []
-    $: apiBibles = scriptureEntries.length ? sortByName(scriptureEntries.filter(a => !a.collection && a.api && !favoriteIds.has(a.id))) : []
+    $: favoritesList = scriptureEntries.length ? sortByName(scriptureEntries.filter((a) => a.favorite)) : []
+    $: favoriteIds = new Set(favoritesList.map((a) => a.id))
+    $: collectionList = scriptureEntries.length ? sortByName(scriptureEntries.filter((a) => a.collection && !favoriteIds.has(a.id))) : []
+    $: localBibles = scriptureEntries.length ? sortByName(scriptureEntries.filter((a) => !a.collection && !a.api && !favoriteIds.has(a.id))) : []
+    $: apiBibles = scriptureEntries.length ? sortByName(scriptureEntries.filter((a) => !a.collection && a.api && !favoriteIds.has(a.id))) : []
 
     type ScriptureSection = {
         id: string
@@ -417,7 +417,7 @@
         const search = formatBookSearch(value)
 
         // First try exact matches and common abbreviations
-        const exactMatch = books.find(book => {
+        const exactMatch = books.find((book) => {
             const bookName = formatBookSearch(book.name)
             if (bookName === search) return true
 
@@ -431,7 +431,7 @@
         if (exactMatch) return exactMatch
 
         // Then try partial matches (book name starts with search)
-        return books.find(book => formatBookSearch(book.name).startsWith(search))
+        return books.find((book) => formatBookSearch(book.name).startsWith(search))
     }
 
     function findChapter(book: any, value: string): any {
@@ -517,7 +517,7 @@
         const searchLower = searchTerm.toLowerCase()
         const booksToSearch = filterBook ? [filterBook] : books
 
-        booksToSearch.forEach(book => {
+        booksToSearch.forEach((book) => {
             book.chapters?.forEach((chapter: any) => {
                 chapter.verses?.forEach((verse: any) => {
                     const verseContent = sanitizeVerseText(verse.text || "")
@@ -729,11 +729,11 @@
         if (combinedQuery.book && combinedQuery.textTerm.length >= 2) {
             // Search filtered to specific book
             const textResults = searchInBible(books, combinedQuery.textTerm, combinedQuery.book)
-            searchResults = textResults.map(r => ({ reference: r.reference, referenceFull: r.referenceFull, verseText: r.verseText }))
+            searchResults = textResults.map((r) => ({ reference: r.reference, referenceFull: r.referenceFull, verseText: r.verseText }))
         } else {
             // Regular text search across all books
             const textResults = searchInBible(books, searchVal)
-            searchResults = textResults.map(r => ({ reference: r.reference, referenceFull: r.referenceFull, verseText: r.verseText }))
+            searchResults = textResults.map((r) => ({ reference: r.reference, referenceFull: r.referenceFull, verseText: r.verseText }))
         }
 
         if (searchResults.length > 0) {
@@ -919,7 +919,7 @@
             searchResults = validResults
 
             if (searchResult.reference) {
-                const updatedResult = validResults.find(r => r.reference === searchResult.reference)
+                const updatedResult = validResults.find((r) => r.reference === searchResult.reference)
                 if (updatedResult) {
                     searchResult = updatedResult
                 } else if (!searchResult.verseText) {
@@ -963,7 +963,7 @@
         <div class="search-scroll" style="flex: 1; overflow-y: auto; margin: 0.5rem 0;">
             {#if searchResults.length > 0}
                 {#each searchResults.slice(0, 20) as result}
-                    <div class="verse" role="button" tabindex="0" on:click={() => playSearchVerse(result.reference)} on:keydown={e => (e.key === "Enter" ? playSearchVerse(result.reference) : null)} style="margin-bottom: 0.5rem; cursor: pointer; padding: 0.5rem; border: 1px solid #333; border-radius: 0.25rem;">
+                    <div class="verse" role="button" tabindex="0" on:click={() => playSearchVerse(result.reference)} on:keydown={(e) => (e.key === "Enter" ? playSearchVerse(result.reference) : null)} style="margin-bottom: 0.5rem; cursor: pointer; padding: 0.5rem; border: 1px solid #333; border-radius: 0.25rem;">
                         <b style="color: white;">{result.referenceFull}</b>
                         <span style="display: block; margin-top: 0.25rem;">{@html highlightSearchTerm(result.verseText, searchValue)}</span>
                     </div>
@@ -1012,7 +1012,7 @@
                     <!-- Search Results for Tablet Mode -->
                     <div class="tablet-search-results">
                         {#each searchResults.slice(0, 50) as result}
-                            <div class="verse search-result" role="button" tabindex="0" on:click={() => playSearchVerse(result.reference)} on:keydown={e => (e.key === "Enter" ? playSearchVerse(result.reference) : null)}>
+                            <div class="verse search-result" role="button" tabindex="0" on:click={() => playSearchVerse(result.reference)} on:keydown={(e) => (e.key === "Enter" ? playSearchVerse(result.reference) : null)}>
                                 <b style="color: white;">{result.referenceFull}</b>
                                 <span style="display: block; margin-top: 0.25rem;">{@html highlightSearchTerm(result.verseText, searchValue)}</span>
                             </div>

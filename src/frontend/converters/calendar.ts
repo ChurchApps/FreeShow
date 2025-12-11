@@ -43,10 +43,10 @@ export function convertCalendar(data: any) {
         const icaEvents: VEvent[] = object.VCALENDAR?.[0]?.VEVENT || []
         if (!icaEvents.length) return
 
-        const newEvents: Event[] = icaEvents.map(event => {
+        const newEvents: Event[] = icaEvents.map((event) => {
             let fullDay = false
-            const startKey: string = Object.keys(event).find(a => a.includes("DTSTART")) || ""
-            const endKey: string = Object.keys(event).find(a => a.includes("DTEND")) || ""
+            const startKey: string = Object.keys(event).find((a) => a.includes("DTSTART")) || ""
+            const endKey: string = Object.keys(event).find((a) => a.includes("DTEND")) || ""
 
             let startDate: string = event[startKey] || ""
             let endDate: string = event[endKey] || ""
@@ -89,7 +89,7 @@ export function convertCalendar(data: any) {
             // get repeats
             if (event.RRULE) {
                 const repeatData: { FREQ?: string; WKST?: "MO" | "SU"; UNTIL?: string; INTERVAL?: number; BYDAY?: string; COUNT?: string } = {}
-                event.RRULE.split(";").forEach(rule => {
+                event.RRULE.split(";").forEach((rule) => {
                     const ruleData = rule.split("=")
                     repeatData[ruleData[0]] = ruleData[1]
                 })
@@ -127,8 +127,8 @@ export function convertCalendar(data: any) {
 
         // add events
         // TODO: history ?
-        events.update(a => {
-            newEvents.forEach(event => {
+        events.update((a) => {
+            newEvents.forEach((event) => {
                 const id: string = event.id || uid()
                 delete event.id
                 a[id] = event

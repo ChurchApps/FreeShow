@@ -54,27 +54,27 @@ export type MainResponses = {
 
 export const mainResponses: MainResponses = {
     // STORES
-    [ToMain.SAVE2]: a => saveComplete(a),
-    [Main.SETTINGS]: a => updateSettings(a),
-    [Main.SYNCED_SETTINGS]: a => updateSyncedSettings(a),
-    [Main.SHOWS]: async a => {
+    [ToMain.SAVE2]: (a) => saveComplete(a),
+    [Main.SETTINGS]: (a) => updateSettings(a),
+    [Main.SYNCED_SETTINGS]: (a) => updateSyncedSettings(a),
+    [Main.SHOWS]: async (a) => {
         const difference = Object.keys(a).length - Object.keys(get(shows)).length
         if (difference < 15 && Object.keys(get(shows)).length && difference > 0) {
             // get new shows & cache their content
-            const newShowIds = Object.keys(a).filter(id => !get(shows)[id])
+            const newShowIds = Object.keys(a).filter((id) => !get(shows)[id])
             await loadShows(newShowIds)
-            newShowIds.forEach(id => saveTextCache(id, get(showsCache)[id]))
+            newShowIds.forEach((id) => saveTextCache(id, get(showsCache)[id]))
         }
 
         shows.set(a)
     },
-    [Main.STAGE]: a => stageShows.set(a),
-    [Main.PROJECTS]: a => {
+    [Main.STAGE]: (a) => stageShows.set(a),
+    [Main.PROJECTS]: (a) => {
         const projectsList = a.projects || {}
 
         // remove "Mark as played" on startup
-        Object.values(projectsList).forEach(project => {
-            project?.shows?.forEach(item => {
+        Object.values(projectsList).forEach((project) => {
+            project?.shows?.forEach((item) => {
                 delete item.played
             })
         })
@@ -83,31 +83,31 @@ export const mainResponses: MainResponses = {
         folders.set(a.folders || {})
         projectTemplates.set(a.projectTemplates || {})
     },
-    [Main.OVERLAYS]: a => overlays.set(a),
-    [Main.TEMPLATES]: a => templates.set(a),
-    [Main.EVENTS]: a => events.set(a),
-    [Main.MEDIA]: a => media.set(a),
-    [Main.THEMES]: a => {
+    [Main.OVERLAYS]: (a) => overlays.set(a),
+    [Main.TEMPLATES]: (a) => templates.set(a),
+    [Main.EVENTS]: (a) => events.set(a),
+    [Main.MEDIA]: (a) => media.set(a),
+    [Main.THEMES]: (a) => {
         themes.set(Object.keys(a).length ? a : clone(defaultThemes))
 
         // update if themes are loaded after settings
         if (get(theme) !== "default") updateThemeValues(get(themes)[get(theme)])
     },
-    [Main.DRIVE_API_KEY]: a => driveKeys.set(a),
-    [Main.HISTORY]: a => {
+    [Main.DRIVE_API_KEY]: (a) => driveKeys.set(a),
+    [Main.HISTORY]: (a) => {
         undoHistory.set(a.undo || [])
         redoHistory.set(a.redo || [])
     },
-    [Main.CACHE]: a => {
+    [Main.CACHE]: (a) => {
         textCache.set(a.text || {})
     },
-    [Main.USAGE]: a => usageLog.set(a),
+    [Main.USAGE]: (a) => usageLog.set(a),
 
     // MAIN
-    [ToMain.MENU]: a => menuClick(a),
-    [ToMain.API]: async a => await API_ACTIONS[a.action]?.(a.data),
-    [Main.DATA_PATH]: a => dataPath.set(a),
-    [ToMain.ALERT]: a => {
+    [ToMain.MENU]: (a) => menuClick(a),
+    [ToMain.API]: async (a) => await API_ACTIONS[a.action]?.(a.data),
+    [Main.DATA_PATH]: (a) => dataPath.set(a),
+    [ToMain.ALERT]: (a) => {
         alertMessage.set(a || "")
 
         if (a === "error.display") {
@@ -120,11 +120,11 @@ export const mainResponses: MainResponses = {
 
         activePopup.set("alert")
     },
-    [ToMain.TOAST]: a => newToast(a),
-    [ToMain.SPELL_CHECK]: a => spellcheck.set(a),
-    [Main.CLOSE]: a => initializeClosing(a ?? false),
-    [ToMain.RECEIVE_MIDI2]: a => receivedMidi(a),
-    [Main.DELETE_SHOWS]: a => {
+    [ToMain.TOAST]: (a) => newToast(a),
+    [ToMain.SPELL_CHECK]: (a) => spellcheck.set(a),
+    [Main.CLOSE]: (a) => initializeClosing(a ?? false),
+    [ToMain.RECEIVE_MIDI2]: (a) => receivedMidi(a),
+    [Main.DELETE_SHOWS]: (a) => {
         if (!a.deleted.length) {
             newToast("toast.delete_shows_empty")
             return
@@ -133,7 +133,7 @@ export const mainResponses: MainResponses = {
         alertMessage.set("<h3>Deleted " + a.deleted.length + " files</h3><br>● " + a.deleted.join("<br>● "))
         activePopup.set("alert")
     },
-    [ToMain.REFRESH_SHOWS2]: a => {
+    [ToMain.REFRESH_SHOWS2]: (a) => {
         const oldCount = Object.keys(get(shows)).length
         const newCount = Object.keys(a).length
 
@@ -164,11 +164,11 @@ export const mainResponses: MainResponses = {
 
         newToast("settings.restore_finished")
     },
-    [Main.LOCATE_MEDIA_FILE]: data => {
+    [Main.LOCATE_MEDIA_FILE]: (data) => {
         if (!data) return
         let prevPath = ""
 
-        showsCache.update(a => {
+        showsCache.update((a) => {
             const mediaData = a[data.ref.showId].media[data.ref.mediaId]
             if (data.ref.cloudId) {
                 if (!mediaData.cloud) a[data.ref.showId].media[data.ref.mediaId].cloud = {}
@@ -185,26 +185,26 @@ export const mainResponses: MainResponses = {
         // sometimes when lagging the image will be "replaced" even when it exists
         if (prevPath !== data.path) newToast("toast.media_replaced")
     },
-    [Main.MEDIA_TRACKS]: data => setMediaTracks(data),
-    [ToMain.API_TRIGGER2]: data => triggerAction(data),
-    [ToMain.PRESENTATION_STATE]: data => presentationData.set(data),
+    [Main.MEDIA_TRACKS]: (data) => setMediaTracks(data),
+    [ToMain.API_TRIGGER2]: (data) => triggerAction(data),
+    [ToMain.PRESENTATION_STATE]: (data) => presentationData.set(data),
     // TOP BAR
-    [Main.MAXIMIZED]: data => windowState.set({ ...windowState, maximized: data }),
+    [Main.MAXIMIZED]: (data) => windowState.set({ ...windowState, maximized: data }),
     // MEDIA CACHE
-    [ToMain.CAPTURE_CANVAS]: data => captureCanvas(data),
-    [ToMain.LESSONS_DONE]: data => lessonsLoaded.set({ ...get(lessonsLoaded), [data.showId]: data.status }),
-    [ToMain.IMAGES_TO_SHOW]: data => createImageShow(data),
-    [ToMain.AUDIO_METADATA]: data => {
-        audioData.update(a => {
+    [ToMain.CAPTURE_CANVAS]: (data) => captureCanvas(data),
+    [ToMain.LESSONS_DONE]: (data) => lessonsLoaded.set({ ...get(lessonsLoaded), [data.showId]: data.status }),
+    [ToMain.IMAGES_TO_SHOW]: (data) => createImageShow(data),
+    [ToMain.AUDIO_METADATA]: (data) => {
+        audioData.update((a) => {
             a[data.filePath] = { metadata: data.metadata }
             return a
         })
     },
 
     // Companion dynamic value variables
-    [ToMain.GET_DYNAMIC_VALUES]: data => {
+    [ToMain.GET_DYNAMIC_VALUES]: (data) => {
         const variableData: { [key: string]: string } = {}
-        data.forEach(key => {
+        data.forEach((key) => {
             variableData[key] = getDynamicValue(key).replaceAll("<br>", "\n")
         })
 
@@ -222,7 +222,7 @@ export const mainResponses: MainResponses = {
             const timeValue = `${currentTime < 0 ? "-" : ""}${joinTimeBig(typeof currentTime === "number" ? currentTime : 0)}`
             variableData[`timer_${labelId}`] = timeValue
             variableData[`timer_${labelId}_seconds`] = currentTime.toString()
-            const activeTimer = get(activeTimers).find(timer => timer.id === id)
+            const activeTimer = get(activeTimers).find((timer) => timer.id === id)
             let status = "Stopped"
             if (activeTimer) {
                 status = activeTimer.paused ? "Paused" : "Playing"
@@ -232,7 +232,7 @@ export const mainResponses: MainResponses = {
 
         // timer status
         const anyActiveTimers = !!get(activeTimers).length
-        const anyPlaying = get(activeTimers).find(a => !a.paused)
+        const anyPlaying = get(activeTimers).find((a) => !a.paused)
         variableData.timer_status = anyPlaying ? "Playing" : anyActiveTimers ? "Paused" : "Stopped"
 
         return variableData
@@ -240,17 +240,17 @@ export const mainResponses: MainResponses = {
 
     // CONNECTION
     // UNIFIED PROVIDER CALLBACKS
-    [ToMain.PROVIDER_CONNECT]: data => {
+    [ToMain.PROVIDER_CONNECT]: (data) => {
         if (!data.success) return
 
-        providerConnections.update(c => {
+        providerConnections.update((c) => {
             c[data.providerId] = true
             return c
         })
 
         if (data.isFirstConnection) newToast("main.finished")
     },
-    [ToMain.PROVIDER_PROJECTS]: async data => {
+    [ToMain.PROVIDER_PROJECTS]: async (data) => {
         if (!data.projects) return
 
         // CREATE CATEGORY
@@ -284,7 +284,7 @@ export const mainResponses: MainResponses = {
                         replaceIds[id] = existingShow.id
 
                         await loadShows([existingShow.id])
-                        showsCache.update(a => {
+                        showsCache.update((a) => {
                             if (!a[existingShow.id].quickAccess) a[existingShow.id].quickAccess = {}
                             if (linkKey) a[existingShow.id].quickAccess[linkKey] = id
                             return a
@@ -318,7 +318,7 @@ export const mainResponses: MainResponses = {
         }
         setTempShows(tempShows)
 
-        data.projects.forEach(currentProject => {
+        data.projects.forEach((currentProject) => {
             // CREATE PROJECT FOLDER
             const folderId = currentProject.folderId
             if (folderId && (!get(folders)[folderId] || get(folders)[folderId].deleted)) {
@@ -335,7 +335,7 @@ export const mainResponses: MainResponses = {
             }
 
             // REPLACE IDS
-            project.shows = project.shows.map(a => ({ ...a, id: replaceIds[a.id] || a.id }))
+            project.shows = project.shows.map((a) => ({ ...a, id: replaceIds[a.id] || a.id }))
 
             const projectId = currentProject.id
             history({ id: "UPDATE", newData: { data: project }, oldData: { id: projectId }, location: { page: "show", id: "project" } })
@@ -345,7 +345,7 @@ export const mainResponses: MainResponses = {
         activeProject.set(data.projects.sort((a, b) => a.scheduledTo - b.scheduledTo)[0]?.id)
         projectView.set(false)
     },
-    [ToMain.OPEN_FOLDER2]: a => {
+    [ToMain.OPEN_FOLDER2]: (a) => {
         const receiveFOLDER = {
             MEDIA: () => addDrawerFolder(a, "media"), // menuClick
             AUDIO: () => addDrawerFolder(a, "audio") // menuClick
@@ -354,7 +354,7 @@ export const mainResponses: MainResponses = {
         if (!receiveFOLDER[a.channel]) return
         receiveFOLDER[a.channel]()
     },
-    [ToMain.IMPORT2]: a => {
+    [ToMain.IMPORT2]: (a) => {
         const mainData = a.data
 
         const receiveFilePathIMPORT = {
@@ -362,7 +362,7 @@ export const mainResponses: MainResponses = {
             pdf: () => addToProject("pdf", mainData as string[]),
             powerkey: () => addToProject("ppt", mainData as string[])
         }
-        if (mainData.find(dataValue => typeof dataValue === "string")) {
+        if (mainData.find((dataValue) => typeof dataValue === "string")) {
             if (!receiveFilePathIMPORT[a.channel]) return
             receiveFilePathIMPORT[a.channel]()
             return

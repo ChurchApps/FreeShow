@@ -14,12 +14,12 @@
     $: activeSubTab = $drawerTabsData.overlays?.activeSubTab || ""
 
     $: categoriesList = keysToID($overlayCategories)
-    $: unarchivedCategoriesList = categoriesList.filter(a => !a.isArchive && profile[a.id] !== "none")
-    $: archivedCategoriesList = categoriesList.filter(a => a.isArchive)
+    $: unarchivedCategoriesList = categoriesList.filter((a) => !a.isArchive && profile[a.id] !== "none")
+    $: archivedCategoriesList = categoriesList.filter((a) => a.isArchive)
 
-    $: allVisibleOverlays = Object.values($overlays).filter(a => a && profile[a.category || ""] !== "none")
-    $: unarchivedOverlays = allVisibleOverlays.filter(a => a.category === null || !$overlayCategories[a.category]?.isArchive)
-    $: uncategorizedOverlaysLength = unarchivedOverlays.filter(a => a.category === null || !$overlayCategories[a.category]).length
+    $: allVisibleOverlays = Object.values($overlays).filter((a) => a && profile[a.category || ""] !== "none")
+    $: unarchivedOverlays = allVisibleOverlays.filter((a) => a.category === null || !$overlayCategories[a.category]?.isArchive)
+    $: uncategorizedOverlaysLength = unarchivedOverlays.filter((a) => a.category === null || !$overlayCategories[a.category]).length
 
     $: effectsLength = Object.keys($effects).length
 
@@ -47,7 +47,7 @@
 
     function updateName(e: any) {
         const { id, value } = e.detail
-        overlayCategories.update(a => {
+        overlayCategories.update((a) => {
             if (a[id].default) delete a[id].default
             a[id].name = value
             return a

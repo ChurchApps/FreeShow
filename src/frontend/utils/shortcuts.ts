@@ -418,9 +418,9 @@ export function togglePlayingMedia(e: Event | null = null, back = false, api = f
             // play / pause video
             // WIP duplicate of MediaControls.svelte
             const dataValues: any = {}
-            const activeOutputIds = getAllNormalOutputs().map(a => a.id)
+            const activeOutputIds = getAllNormalOutputs().map((a) => a.id)
             const videoData = get(videosData)[currentOutput?.id || ""] || {}
-            activeOutputIds.forEach(id => {
+            activeOutputIds.forEach((id) => {
                 dataValues[id] = { ...videoData, muted: id !== currentOutput?.id ? true : videoData.muted, paused: !videoData.paused }
             })
 
@@ -453,13 +453,13 @@ export async function playFolder(path: string, back = false) {
 
     const mediaExtensions = [...videoExtensions, ...imageExtensions, ...audioExtensions]
     const files = await requestMain(Main.READ_FOLDER, { path })
-    const folderFiles = sortByName(files.files.filter(a => mediaExtensions.includes(a.extension)).map(a => ({ path: a.path, name: a.name, type: getMediaType(a.extension), thumbnail: a.thumbnailPath })))
+    const folderFiles = sortByName(files.files.filter((a) => mediaExtensions.includes(a.extension)).map((a) => ({ path: a.path, name: a.name, type: getMediaType(a.extension), thumbnail: a.thumbnailPath })))
     if (!folderFiles.length) return
 
-    const mediaFiles = folderFiles.filter(a => a.type !== "audio")
-    const playingIndex = mediaFiles.findIndex(a => a.path === currentlyPlaying)
+    const mediaFiles = folderFiles.filter((a) => a.type !== "audio")
+    const playingIndex = mediaFiles.findIndex((a) => a.path === currentlyPlaying)
     const newMedia = back ? (mediaFiles[playingIndex - 1] ?? mediaFiles[mediaFiles.length - 1]) : (mediaFiles[playingIndex + 1] ?? mediaFiles[0])
-    const allFilesIndex = folderFiles.findIndex(a => a.path === newMedia.path)
+    const allFilesIndex = folderFiles.findIndex((a) => a.path === newMedia.path)
 
     // skip and play audio file
     if (!back && folderFiles[allFilesIndex - 1]?.type === "audio") {

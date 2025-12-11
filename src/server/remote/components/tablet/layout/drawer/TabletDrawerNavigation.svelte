@@ -29,11 +29,11 @@
 
     function buildCategoryData(items: any[], categoriesObj: Record<string, any>): CategoryData {
         const categoriesList = keysToID(categoriesObj)
-        const unarchivedCategories = categoriesList.filter(a => !a.isArchive)
-        const archivedCategories = categoriesList.filter(a => a.isArchive)
-        const allItems = items.filter(a => a && !a.private)
-        const unarchivedItems = allItems.filter(a => a.category === null || !categoriesObj[a.category]?.isArchive)
-        const uncategorizedCount = unarchivedItems.filter(a => a.category === null || !categoriesObj[a.category]).length
+        const unarchivedCategories = categoriesList.filter((a) => !a.isArchive)
+        const archivedCategories = categoriesList.filter((a) => a.isArchive)
+        const allItems = items.filter((a) => a && !a.private)
+        const unarchivedItems = allItems.filter((a) => a.category === null || !categoriesObj[a.category]?.isArchive)
+        const uncategorizedCount = unarchivedItems.filter((a) => a.category === null || !categoriesObj[a.category]).length
         return { categoriesList, unarchivedCategories, archivedCategories, allItems, unarchivedItems, uncategorizedCount }
     }
 
@@ -63,29 +63,29 @@
     $: favoritesList =
         id === "scripture"
             ? sortByName(
-                  scriptureEntries.filter(a => a.favorite),
+                  scriptureEntries.filter((a) => a.favorite),
                   "name"
               )
             : []
-    $: favoriteIds = new Set(favoritesList.map(a => a.id))
+    $: favoriteIds = new Set(favoritesList.map((a) => a.id))
     $: collectionList =
         id === "scripture"
             ? sortByName(
-                  scriptureEntries.filter(a => a.collection && !favoriteIds.has(a.id)),
+                  scriptureEntries.filter((a) => a.collection && !favoriteIds.has(a.id)),
                   "name"
               )
             : []
     $: localBibles =
         id === "scripture"
             ? sortByName(
-                  scriptureEntries.filter(a => !a.collection && !a.api && !favoriteIds.has(a.id)),
+                  scriptureEntries.filter((a) => !a.collection && !a.api && !favoriteIds.has(a.id)),
                   "name"
               )
             : []
     $: apiBibles =
         id === "scripture"
             ? sortByName(
-                  scriptureEntries.filter(a => !a.collection && a.api && !favoriteIds.has(a.id)),
+                  scriptureEntries.filter((a) => !a.collection && a.api && !favoriteIds.has(a.id)),
                   "name"
               )
             : []
@@ -96,7 +96,7 @@
                   { id: "favorites", label: "category.favourites", items: favoritesList },
                   { id: "collections", label: "scripture.collections", items: collectionList },
                   { id: "local", label: "scripture.bibles_section", items: [...localBibles, ...apiBibles] }
-              ].filter(s => s.items.length > 0)
+              ].filter((s) => s.items.length > 0)
             : []
 
     function setCategory(catId: string) {
@@ -104,8 +104,8 @@
     }
 
     // Functions tab logic - only computed when functions tab is active
-    $: actionsTagsOnly = id === "functions" ? Object.values($actions).map(a => a.tags || []) : []
-    $: variablesTagsOnly = id === "functions" ? Object.values($variables).map(a => a.tags || []) : []
+    $: actionsTagsOnly = id === "functions" ? Object.values($actions).map((a) => a.tags || []) : []
+    $: variablesTagsOnly = id === "functions" ? Object.values($variables).map((a) => a.tags || []) : []
     $: timersCount = id === "functions" ? Object.keys($timers).length : 0
     $: triggersCount = id === "functions" ? Object.keys($triggers).length : 0
 
@@ -113,11 +113,11 @@
         id === "functions"
             ? sortByName(keysToID($actionTags), "name")
                   .sort((a, b) => String(a.color || "").localeCompare(String(b.color || "")))
-                  .map(a => ({
+                  .map((a) => ({
                       ...a,
                       label: a.name,
                       icon: "tag",
-                      count: actionsTagsOnly.filter(b => b.includes(a.id)).length
+                      count: actionsTagsOnly.filter((b) => b.includes(a.id)).length
                   }))
             : []
 
@@ -125,11 +125,11 @@
         id === "functions"
             ? sortByName(keysToID($variableTags), "name")
                   .sort((a, b) => String(a.color || "").localeCompare(String(b.color || "")))
-                  .map(a => ({
+                  .map((a) => ({
                       ...a,
                       label: a.name,
                       icon: "tag",
-                      count: variablesTagsOnly.filter(b => b.includes(a.id)).length
+                      count: variablesTagsOnly.filter((b) => b.includes(a.id)).length
                   }))
             : []
 
@@ -170,7 +170,7 @@
                 <div class="section">
                     <div class="title">{translate("guide_title.categories", $dictionary)}</div>
                     {#each sortByName(showsData.unarchivedCategories, "name") as cat}
-                        {@const count = showsData.allItems.filter(s => s.category === cat.id).length}
+                        {@const count = showsData.allItems.filter((s) => s.category === cat.id).length}
                         <MaterialButton class="tab {active === cat.id ? 'active' : ''}" on:click={() => setCategory(cat.id)} style="width: 100%; font-weight: normal; padding: 0.2em 0.8em;" isActive={active === cat.id} tab>
                             <div style="max-width: 85%;" data-title={translate(cat.name, $dictionary) || cat.name}>
                                 <Icon id={cat.icon || "folder"} size={1} white={active === cat.id} />
@@ -190,7 +190,7 @@
                         <hr />
                     </div>
                     {#each sortByName(showsData.archivedCategories, "name") as cat}
-                        {@const count = showsData.allItems.filter(s => s.category === cat.id).length}
+                        {@const count = showsData.allItems.filter((s) => s.category === cat.id).length}
                         <MaterialButton class="tab {active === cat.id ? 'active' : ''}" on:click={() => setCategory(cat.id)} style="width: 100%; font-weight: normal; padding: 0.2em 0.8em;" isActive={active === cat.id} tab>
                             <div style="max-width: 85%;" data-title={translate(cat.name, $dictionary) || cat.name}>
                                 <Icon id={cat.icon || "folder"} size={1} white={active === cat.id} />
@@ -336,7 +336,7 @@
                 <div class="section">
                     <div class="title">{translate("guide_title.categories", $dictionary)}</div>
                     {#each sortByName(overlaysData.unarchivedCategories, "name") as cat}
-                        {@const count = overlaysData.allItems.filter(s => s.category === cat.id).length}
+                        {@const count = overlaysData.allItems.filter((s) => s.category === cat.id).length}
                         <MaterialButton class="tab {activeOverlay === cat.id ? 'active' : ''}" on:click={() => setOverlayCategory(cat.id)} style="width: 100%; font-weight: normal; padding: 0.2em 0.8em;" isActive={activeOverlay === cat.id} tab>
                             <div style="max-width: 85%;" data-title={translate(cat.name, $dictionary) || cat.name}>
                                 <Icon id={cat.icon || "folder"} size={1} white={activeOverlay === cat.id} />
@@ -356,7 +356,7 @@
                         <hr />
                     </div>
                     {#each sortByName(overlaysData.archivedCategories, "name") as cat}
-                        {@const count = overlaysData.allItems.filter(s => s.category === cat.id).length}
+                        {@const count = overlaysData.allItems.filter((s) => s.category === cat.id).length}
                         <MaterialButton class="tab {activeOverlay === cat.id ? 'active' : ''}" on:click={() => setOverlayCategory(cat.id)} style="width: 100%; font-weight: normal; padding: 0.2em 0.8em;" isActive={activeOverlay === cat.id} tab>
                             <div style="max-width: 85%;" data-title={translate(cat.name, $dictionary) || cat.name}>
                                 <Icon id={cat.icon || "folder"} size={1} white={activeOverlay === cat.id} />
@@ -396,7 +396,7 @@
                 <div class="section">
                     <div class="title">{translate("guide_title.categories", $dictionary)}</div>
                     {#each sortByName(templatesData.unarchivedCategories, "name") as cat}
-                        {@const count = templatesData.allItems.filter(s => s.category === cat.id).length}
+                        {@const count = templatesData.allItems.filter((s) => s.category === cat.id).length}
                         <MaterialButton class="tab {activeTemplate === cat.id ? 'active' : ''}" on:click={() => setTemplateCategory(cat.id)} style="width: 100%; font-weight: normal; padding: 0.2em 0.8em;" isActive={activeTemplate === cat.id} tab>
                             <div style="max-width: 85%;" data-title={translate(cat.name, $dictionary) || cat.name}>
                                 <Icon id={cat.icon || "folder"} size={1} white={activeTemplate === cat.id} />
@@ -416,7 +416,7 @@
                         <hr />
                     </div>
                     {#each sortByName(templatesData.archivedCategories, "name") as cat}
-                        {@const count = templatesData.allItems.filter(s => s.category === cat.id).length}
+                        {@const count = templatesData.allItems.filter((s) => s.category === cat.id).length}
                         <MaterialButton class="tab {activeTemplate === cat.id ? 'active' : ''}" on:click={() => setTemplateCategory(cat.id)} style="width: 100%; font-weight: normal; padding: 0.2em 0.8em;" isActive={activeTemplate === cat.id} tab>
                             <div style="max-width: 85%;" data-title={translate(cat.name, $dictionary) || cat.name}>
                                 <Icon id={cat.icon || "folder"} size={1} white={activeTemplate === cat.id} />

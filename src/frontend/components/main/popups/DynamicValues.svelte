@@ -33,19 +33,19 @@
     let values = getValues()
 
     function getValues() {
-        let list = getDynamicIds(false, mode, showAll).map(id => ({ id }))
+        let list = getDynamicIds(false, mode, showAll).map((id) => ({ id }))
 
         const isStage = $activePage === "stage"
         const stageHidden = ["slide_text_previous", "slide_text_next"]
-        if (isStage) list = list.filter(a => !stageHidden.includes(a.id))
+        if (isStage) list = list.filter((a) => !stageHidden.includes(a.id))
 
         let separatorId = ""
         // the ones that can have a custom name should be first (to prevent it from overwriting a category)
         const separators = ["$", "timer_", "meta_", "rss_", "project_", "time_", "show_", "slide_text_", "video_", "audio_", "scripture_"]
 
         let newList: { [key: string]: typeof list } = {}
-        list.forEach(value => {
-            const separator = separators.find(a => value.id.includes(a)) || ""
+        list.forEach((value) => {
+            const separator = separators.find((a) => value.id.includes(a)) || ""
             if (separator && separatorId !== separator && separatorId !== "$" && !newList[separator]?.length) {
                 separatorId = separator
                 newList[separatorId] = []
@@ -96,7 +96,7 @@
         searchedValues = {
             search: Object.values(currentValuesList)
                 .flat()
-                .filter(a => formatSearch(a.id).includes(searchValue))
+                .filter((a) => formatSearch(a.id).includes(searchValue))
         }
 
         // previousSearchValue = searchValue
@@ -128,7 +128,7 @@
             let activeItemId = $activeStage?.items[0]
             if (!$stageShows[$activeStage.id!] || !activeItemId) return
 
-            stageShows.update(a => {
+            stageShows.update((a) => {
                 a[$activeStage.id!].items[activeItemId] = updateItemText(a[$activeStage.id!]?.items[activeItemId])
                 return a
             })
@@ -140,12 +140,12 @@
 
         if (edit.id) {
             if (edit.type === "overlay") {
-                overlays.update(a => {
+                overlays.update((a) => {
                     a[edit.id!].items = updateItemText(a[edit.id!].items)
                     return a
                 })
             } else if (edit.type === "template") {
-                templates.update(a => {
+                templates.update((a) => {
                     a[edit.id!].items = updateItemText(a[edit.id!].items)
                     console.log(a[edit.id!].items)
                     return a
@@ -161,7 +161,7 @@
         let ref = getLayoutRef(showId)
         let slideId = ref[edit.slide || 0]?.id || ""
 
-        showsCache.update(a => {
+        showsCache.update((a) => {
             if (!a[showId]?.slides?.[slideId]) return a
 
             a[showId].slides[slideId].items = updateItemText(a[showId].slides[slideId].items)
@@ -177,7 +177,7 @@
             let lines = items[edit.items?.[0]]?.lines || []
             if (isStage) lines = items?.lines || []
 
-            lines[caret.line]?.text?.forEach(text => {
+            lines[caret.line]?.text?.forEach((text) => {
                 if (replaced) return
 
                 let value = text.value
@@ -228,7 +228,7 @@
 <MaterialButton class="popup-options {showAll ? 'active' : ''}" icon={showAll ? "eye" : "hide"} iconSize={1.3} title={showAll ? "actions.close" : "create_show.more_options"} on:click={toggleShowAll} white />
 
 {#key resetInput}
-    <MaterialTextInput label="main.search" value="" on:input={e => search(e.detail)} autofocus />
+    <MaterialTextInput label="main.search" value="" on:input={(e) => search(e.detail)} autofocus />
 {/key}
 
 <div style="position: relative;height: 100%;width: calc(100vw - (var(--navigation-width) + 20px) * 2);overflow-y: auto;">
@@ -242,7 +242,7 @@
                 <div class="grid">
                     {#each values as value, i}
                         {@const preview = replaceDynamicValues(`{${value.id}}`, ref, updateDynamic)}
-                        <div class="value" class:active={searchValue.length > 1 && i === 0 ? "border: 2px solid var(--secondary-opacity);" : ""} role="button" tabindex="0" on:click={e => applyValue(e, value.id)} on:keydown={triggerClickOnEnterSpace}>
+                        <div class="value" class:active={searchValue.length > 1 && i === 0 ? "border: 2px solid var(--secondary-opacity);" : ""} role="button" tabindex="0" on:click={(e) => applyValue(e, value.id)} on:keydown={triggerClickOnEnterSpace}>
                             <p class="preview">
                                 {#if preview}{@html preview}{:else}—{/if}
                             </p>

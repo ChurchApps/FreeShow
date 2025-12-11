@@ -64,13 +64,13 @@ export const receiveCONTROLLER = {
 function clearPainting() {
     paintCache.set([])
 
-    drawSettings.update(a => {
+    drawSettings.update((a) => {
         if (!a.paint) a.paint = { color: "#ffffff", size: 10, threed: false, dots: false, hold: true }
         a.paint.clear = true
         return a
     })
     setTimeout(() => {
-        drawSettings.update(a => {
+        drawSettings.update((a) => {
             delete a.paint.clear
             return a
         })

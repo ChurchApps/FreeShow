@@ -48,7 +48,7 @@ function renderWaveform(container: HTMLElement, rawData: Float32Array) {
     }
 
     requestAnimationFrame(() => {
-        bars.forEach(bar => (bar.style.height = "5px"))
+        bars.forEach((bar) => (bar.style.height = "5px"))
 
         // set correct height (after previous render)
         requestAnimationFrame(() => {

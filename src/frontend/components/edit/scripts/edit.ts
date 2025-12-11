@@ -8,7 +8,7 @@ import { hexToRgb } from "../../helpers/color"
 
 // Add opacity to each color stop in the gradient (hex, rgb, and rgba)
 export function addOpacityToGradient(gradientValue: string, alpha: number) {
-    return gradientValue.replace(/(#[0-9a-fA-F]{3,8}|rgba?\(\s*\d+\s*,\s*\d+\s*,\s*\d+(?:\s*,\s*\d*\.?\d+)?\s*\))/g, color => {
+    return gradientValue.replace(/(#[0-9a-fA-F]{3,8}|rgba?\(\s*\d+\s*,\s*\d+\s*,\s*\d+(?:\s*,\s*\d*\.?\d+)?\s*\))/g, (color) => {
         if (color.startsWith("#")) {
             const rgb = hexToRgb(color)
             if (rgb) {
@@ -97,7 +97,7 @@ export function openDrawer(id: string, openPopup = false) {
     else if (id === drawerPageId) id = "all"
 
     if (id) {
-        drawerTabsData.update(a => {
+        drawerTabsData.update((a) => {
             if (!a[drawerPageId]) a[drawerPageId] = { enabled: true, activeSubTab: null }
             a[drawerPageId].activeSubTab = id
 

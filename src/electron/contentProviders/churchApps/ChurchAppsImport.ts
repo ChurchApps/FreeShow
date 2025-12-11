@@ -117,7 +117,7 @@ export class ChurchAppsImport {
 
         const sections: any[] = []
         const lines = lyrics.split("\n")
-        lines.forEach(line => {
+        lines.forEach((line) => {
             if (line.startsWith("[") && line.endsWith("]")) {
                 const label = line.slice(1, -1)
                 sections.push({ label, lyrics: "" })
@@ -134,7 +134,7 @@ export class ChurchAppsImport {
         const slides: { [key: string]: Slide } = {}
         const layoutSlides: SlideData[] = []
 
-        SECTIONS.forEach(section => {
+        SECTIONS.forEach((section) => {
             const linesPerPage = 2
             const pages: { lines: string[] }[] = []
             let allLines = section.lyrics.split("\n")

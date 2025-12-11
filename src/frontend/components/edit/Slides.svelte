@@ -133,7 +133,7 @@
                                 noQuickEdit
                                 {altKeyPressed}
                                 columns={$editColumns}
-                                on:click={e => {
+                                on:click={(e) => {
                                     if (!e.ctrlKey && !e.metaKey && !e.shiftKey) {
                                         activeEdit.set({ slide: i, items: [], showId })
                                         skipScrolling = true

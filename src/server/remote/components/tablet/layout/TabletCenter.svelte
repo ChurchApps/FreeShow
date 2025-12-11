@@ -75,7 +75,7 @@
         if ($outShow && showId === $outShow.id && layoutId === $outShow.settings.activeLayout && index === outNumber) {
             // reveal lines if it exists
             const ref = GetLayout($activeShow, $activeShow?.settings?.activeLayout)
-            const revealExists = $activeShow.slides[ref[index]?.id]?.items?.find(item => item.lineReveal || item.clickReveal)
+            const revealExists = $activeShow.slides[ref[index]?.id]?.items?.find((item) => item.lineReveal || item.clickReveal)
             if (revealExists) {
                 send("API:next_slide")
             }
@@ -168,7 +168,7 @@
                         {#if slideView === "lyrics"}
                             {#each layoutSlides as layoutSlide, i (layoutSlide.id)}
                                 {#if !layoutSlide.disabled}
-                                    <span style="padding: 5px;{$outShow?.id === $activeShow.id && outNumber === i ? 'background-color: rgba(0 0 0 / 0.6);' : ''}" role="button" tabindex="0" on:click={() => playSlide(i)} on:keydown={e => (e.key === "Enter" ? playSlide(i) : null)}>
+                                    <span style="padding: 5px;{$outShow?.id === $activeShow.id && outNumber === i ? 'background-color: rgba(0 0 0 / 0.6);' : ''}" role="button" tabindex="0" on:click={() => playSlide(i)} on:keydown={(e) => (e.key === "Enter" ? playSlide(i) : null)}>
                                         <span class="group" style="opacity: 0.6;font-size: 0.8em;display: flex;justify-content: center;position: relative;">
                                             <span style="left: 0;position: absolute;">{i + 1}</span>
                                             <span>{$activeShow.slides[layoutSlide.id].group === null ? "" : getName($activeShow.slides[layoutSlide.id].group || "", layoutSlide.id, i)}</span>
@@ -192,7 +192,7 @@
                                 {/if}
                             {/each}
                         {:else}
-                            <Slides {dictionary} {scrollElem} on:click={e => playSlide(e.detail)} outSlide={outNumber} columns={3} />
+                            <Slides {dictionary} {scrollElem} on:click={(e) => playSlide(e.detail)} outSlide={outNumber} columns={3} />
                         {/if}
                     </div>
                 {/if}

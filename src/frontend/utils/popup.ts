@@ -156,13 +156,13 @@ export function waitForPopupData(popupId: Popups): Promise<any> {
     popupData.set({ ...get(popupData), id: "", value: "" })
     activePopup.set(popupId)
 
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
         // check that popup is still active
         const interval = setInterval(() => {
             if (get(activePopup) !== popupId) finish(undefined)
         }, 1000)
 
-        const unsubscribe = popupData.subscribe(a => {
+        const unsubscribe = popupData.subscribe((a) => {
             if (a.id !== popupId) return
             activePopup.set(null)
             finish(a.value)

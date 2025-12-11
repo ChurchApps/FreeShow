@@ -55,13 +55,13 @@
         // reset
         if (active === "filters") deleteKeys = ["filter"]
         else if (active !== "media") return
-        deleteKeys.forEach(key => removeStore("media", { keys: [mediaId, key] }))
+        deleteKeys.forEach((key) => removeStore("media", { keys: [mediaId, key] }))
 
         // update output
         let currentOutput: any = getFirstActiveOutput()
         let bg = currentOutput?.out?.background
         if (!bg) return
-        deleteKeys.forEach(key => delete bg[key])
+        deleteKeys.forEach((key) => delete bg[key])
         setOutput("background", bg)
 
         mediaSections = clone(mediaBoxes[mediaType]?.sections || {})

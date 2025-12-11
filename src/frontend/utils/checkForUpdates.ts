@@ -6,8 +6,8 @@ export function checkForUpdates(currentVersion: string) {
     const includeBeta = currentVersion.includes("beta") || get(special).betaVersionAlert
 
     fetch("https://api.github.com/repos/ChurchApps/freeshow/releases")
-        .then(response => response.json())
-        .then(data => {
+        .then((response) => response.json())
+        .then((data) => {
             if (get(activePopup) !== null) return
 
             const latestAll = data.filter((a: any) => a.draft === false)[0]
@@ -21,7 +21,7 @@ export function checkForUpdates(currentVersion: string) {
             alertMessage.set(`<h2>${get(dictionary).about?.new_update || "New update available"}: v${latestVersion}</h2>${get(dictionary).about?.download || "Go to freeshow.app to download"}!<br><br><h3>${get(dictionary).about?.changes || "What's new"}</h3>${latestRelease.body.replaceAll("\r\n", "<br>")}`)
             activePopup.set("alert")
         })
-        .catch(error => {
+        .catch((error) => {
             console.warn(error)
         })
 }

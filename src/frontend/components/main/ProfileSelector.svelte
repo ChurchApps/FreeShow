@@ -9,7 +9,7 @@
     import T from "../helpers/T.svelte"
     import Button from "../inputs/Button.svelte"
 
-    const profilesList = [{ id: "", color: "", name: translateText("profile.admin") }, ...sortByName(keysToID($profiles).filter(a => a.id !== "admin"))]
+    const profilesList = [{ id: "", color: "", name: translateText("profile.admin") }, ...sortByName(keysToID($profiles).filter((a) => a.id !== "admin"))]
 
     async function selectProfile(id: string) {
         if (id === "") {

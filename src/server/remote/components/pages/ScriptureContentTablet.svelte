@@ -35,7 +35,7 @@
     function loadCollectionScripture(scrId: string, bookIndex: number, chapterIndex?: number) {
         if (scrId === id || !isCollection || scriptures.length <= 1) return
 
-        const scr = scriptures.find(s => s.id === scrId)
+        const scr = scriptures.find((s) => s.id === scrId)
         if (!scr) return
 
         const scrBooks = scr.data?.books || []
@@ -64,7 +64,7 @@
         }
         // Load book data for all collection scriptures
         if (isCollection) {
-            scriptures.forEach(scr => loadCollectionScripture(scr.id, activeBook))
+            scriptures.forEach((scr) => loadCollectionScripture(scr.id, activeBook))
         }
     }
 
@@ -77,7 +77,7 @@
         }
         // Load chapter data for all collection scriptures
         if (isCollection) {
-            scriptures.forEach(scr => loadCollectionScripture(scr.id, activeBook, activeChapter))
+            scriptures.forEach((scr) => loadCollectionScripture(scr.id, activeBook, activeChapter))
         }
     }
 
@@ -86,7 +86,7 @@
     $: currentVerse = activeVerse > 0 ? String(activeVerse) : ""
 
     // Update displayed indices from main app state (what's currently on output)
-    const unsubscribeScripture = currentScriptureState.subscribe(state => {
+    const unsubscribeScripture = currentScriptureState.subscribe((state) => {
         if (!state) return
         if (state.scriptureId && state.scriptureId !== id) return
 
@@ -147,7 +147,7 @@
     const colors = ["", "#f17d46", "#ffd17c", "#8cdfff", "#8888ff", "#ff97f2", "#ffdce7", "#88ffa9", "#ffd3b6"]
 
     export function getColorCode(books: any[], bookId: number | string) {
-        let bookIndex = typeof bookId === "number" ? bookId : books.findIndex(a => a.id === bookId)
+        let bookIndex = typeof bookId === "number" ? bookId : books.findIndex((a) => a.id === bookId)
         if (books.length === colorCodesFull.length) return colors[colorCodesFull[bookIndex]]
         else if (books.length === colorCodesNT.length) return colors[colorCodesNT[bookIndex]]
         return ""
@@ -279,7 +279,7 @@
         const verseNumber = parseInt(verseStr, 10)
         const normalizedBookName = bookName.toLowerCase().trim()
 
-        const bookIndex = books.findIndex(book => {
+        const bookIndex = books.findIndex((book) => {
             const normalizedName = book.name.toLowerCase()
             return normalizedName === normalizedBookName || normalizedName.includes(normalizedBookName) || normalizedBookName.includes(normalizedName)
         })
