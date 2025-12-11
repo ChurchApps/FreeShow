@@ -1,5 +1,5 @@
 <script lang="ts">
-    import Button from "../../../common/components/Button.svelte"
+    import { onDestroy, onMount } from "svelte"
     import Icon from "../../../common/components/Icon.svelte"
     import { translate } from "../../util/helpers"
     import { send } from "../../util/socket"
@@ -30,6 +30,20 @@
     let shouldLoop = false
     let shouldMute = false
 
+    // Playback polling (keep remote UI responsive)
+    const POLL_PLAYING = 500
+    const POLL_PAUSED = 2000
+    let pollInterval: ReturnType<typeof setInterval> | null = null
+    let pollRate = POLL_PAUSED
+    let mounted = false
+
+    onMount(() => {
+        mounted = true
+        if (isVideo && isPlayingInOutput) startPolling()
+    })
+
+    onDestroy(() => stopPolling())
+
     function playInOutput() {
         send("API:play_media", { path, data: { type: mediaType, loop: shouldLoop, muted: shouldMute } })
         send("API:get_cleared")
@@ -37,11 +51,13 @@
 
     function togglePlayPause() {
         send("API:toggle_playing_media")
+        scheduleRefresh()
     }
 
     function toggleLoop() {
         if (isPlayingInOutput) {
             send("API:toggle_media_loop")
+            scheduleRefresh()
         } else {
             shouldLoop = !shouldLoop
         }
@@ -50,6 +66,7 @@
     function toggleMute() {
         if (isPlayingInOutput) {
             send("API:toggle_media_mute")
+            scheduleRefresh()
         } else {
             shouldMute = !shouldMute
         }
@@ -62,6 +79,50 @@
 
     function seekTo(value: number) {
         send("API:video_seekto", { seconds: value })
+        scheduleRefresh()
+    }
+
+    function fetchVideoState() {
+        if (!isVideo || !isPlayingInOutput) return
+        send("API:get_playing_video_state")
+    }
+
+    function startPolling() {
+        if (pollInterval || !isVideo || !isPlayingInOutput) return
+        fetchVideoState()
+        pollInterval = setInterval(fetchVideoState, pollRate)
+    }
+
+    function stopPolling() {
+        if (pollInterval) {
+            clearInterval(pollInterval)
+            pollInterval = null
+        }
+    }
+
+    function restartPolling() {
+        stopPolling()
+        startPolling()
+    }
+
+    function scheduleRefresh() {
+        if (!isVideo || !isPlayingInOutput) return
+        setTimeout(fetchVideoState, 75)
+        setTimeout(fetchVideoState, 300)
+    }
+
+    $: if (mounted) {
+        if (isVideo && isPlayingInOutput) {
+            const nextRate = isPaused ? POLL_PAUSED : POLL_PLAYING
+            if (pollRate !== nextRate) {
+                pollRate = nextRate
+                restartPolling()
+            } else if (!pollInterval) {
+                startPolling()
+            }
+        } else {
+            stopPolling()
+        }
     }
 
     $: displayTime = isPlayingInOutput ? videoTime : 0
@@ -70,17 +131,17 @@
 
 <div class="media">
     {#if path}
-        {#if hasThumbnail}
-            <img src={thumbnailPath} alt="Preview" draggable="false" />
-        {:else}
-            <div class="placeholder">
-                <Icon id={mediaType === "player" ? "player" : "video"} size={2.5} />
-                <p>{translate("remote.no_preview", $dictionary) || "No preview available"}</p>
-                <small style="opacity: 0.6; word-break: break-all;">{path}</small>
-            </div>
-        {/if}
-
         {#if isPlayingInOutput}
+            {#if hasThumbnail}
+                <img src={thumbnailPath} alt="Preview" draggable="false" />
+            {:else}
+                <div class="placeholder">
+                    <Icon id={mediaType === "player" ? "player" : "video"} size={2.5} />
+                    <p>{translate("remote.no_preview", $dictionary) || "No preview available"}</p>
+                    <small style="opacity: 0.6; word-break: break-all;">{path}</small>
+                </div>
+            {/if}
+
             <!-- Full playback controls when playing in output -->
             <div class="floating-controls center">
                 <div class="floating-bar">
@@ -98,11 +159,11 @@
 
                     <div class="divider"></div>
 
-                    <button class="float-btn" on:click={() => seekRelative(-10)} title={translate("media.back10", $dictionary) || "Back 10s"}>
+                    <button class="float-btn back-btn" on:click={() => seekRelative(-10)} title={translate("media.back10", $dictionary) || "Back 10s"}>
                         <Icon id="back_10" size={1.3} white />
                     </button>
 
-                    <button class="float-btn" on:click={() => seekRelative(10)} title={translate("media.forward10", $dictionary) || "Forward 10s"}>
+                    <button class="float-btn forward-btn" on:click={() => seekRelative(10)} title={translate("media.forward10", $dictionary) || "Forward 10s"}>
                         <Icon id="forward_10" size={1.3} white />
                     </button>
 
@@ -118,12 +179,21 @@
                 </div>
             </div>
         {:else}
-            <!-- Play button to send to output -->
-            <div class="play">
-                <Button on:click={playInOutput} center>
+            <!-- Entire preview becomes the play button when not playing -->
+            <button class="media-click" on:click={playInOutput}>
+                {#if hasThumbnail}
+                    <img src={thumbnailPath} alt="Preview" draggable="false" />
+                {:else}
+                    <div class="placeholder">
+                        <Icon id={mediaType === "player" ? "player" : "video"} size={2.5} />
+                        <p>{translate("remote.no_preview", $dictionary) || "No preview available"}</p>
+                        <small style="opacity: 0.6; word-break: break-all;">{path}</small>
+                    </div>
+                {/if}
+                <div class="play-icon">
                     <Icon id="play" style="opacity: 0.8;" size={8} white />
-                </Button>
-            </div>
+                </div>
+            </button>
 
             <!-- Loop and mute options on the left (when not playing) -->
             {#if isVideo}
@@ -151,6 +221,7 @@
         flex-direction: column;
         height: 100%;
         width: 100%;
+        overflow: hidden;
     }
 
     img {
@@ -175,23 +246,32 @@
         opacity: 0.8;
     }
 
-    .play {
-        position: absolute;
-        top: 0;
-        left: 0;
+    .media-click {
+        position: relative;
+        border: none;
+        padding: 0;
+        margin: 0;
+        background: none;
         width: 100%;
         height: 100%;
+        display: flex;
+        cursor: pointer;
+    }
+
+    .media-click:focus-visible {
+        outline: 2px solid var(--secondary);
+        outline-offset: -2px;
+    }
+
+    .play-icon {
+        position: absolute;
+        inset: 0;
         display: flex;
         align-items: center;
         justify-content: center;
         pointer-events: none;
-    }
-
-    .play :global(button) {
-        pointer-events: auto;
-        width: auto;
-        height: auto;
-        padding: 30px;
+        z-index: 5;
+        color: white;
     }
 
     /* Floating controls - similar to main app */
@@ -238,6 +318,11 @@
         padding: 0 14px;
         height: 100%;
         transition: background-color 0.15s;
+    }
+
+    /* Default all control icons to white */
+    .float-btn :global(svg) {
+        fill: white;
     }
 
     .float-btn:hover {
@@ -297,5 +382,91 @@
     /* Mute button: white when muted, secondary color when unmuted (has sound) */
     .float-btn.mute-btn.muted :global(svg) {
         fill: var(--secondary);
+    }
+
+    @media (max-width: 768px) {
+        .floating-controls {
+            position: static;
+            width: 100%;
+            left: auto;
+            transform: none;
+            bottom: auto;
+            align-items: stretch;
+            padding: 0;
+            margin-top: auto;
+            box-sizing: border-box;
+        }
+
+        .floating-controls.center {
+            width: 100%;
+            max-width: none;
+            left: auto;
+            transform: none;
+        }
+
+        .floating-bar {
+            width: 100%;
+            box-shadow: none;
+            border-radius: 12px 12px 0 0;
+            border-left: none;
+            border-right: none;
+        }
+    }
+
+    /* Mobile: two-row layout, time/seek on top, controls below */
+    @media (max-width: 768px) {
+        .floating-bar {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(44px, 1fr));
+            grid-template-areas:
+                "time time time time time"
+                "play back forward loop mute";
+            row-gap: 8px;
+            column-gap: 8px;
+            height: auto;
+            padding: 10px 12px;
+        }
+
+        .divider {
+            display: none;
+        }
+
+        .time-section {
+            grid-area: time;
+            width: 100%;
+            padding: 0 4px;
+            gap: 12px;
+        }
+
+        .float-btn {
+            height: 36px;
+            padding: 6px 10px;
+            justify-self: center;
+        }
+
+        .float-btn.play-pause {
+            grid-area: play;
+            padding: 6px 12px;
+        }
+
+        .float-btn.back-btn {
+            grid-area: back;
+        }
+
+        .float-btn.forward-btn {
+            grid-area: forward;
+        }
+
+        .float-btn.loop-btn {
+            grid-area: loop;
+        }
+
+        .float-btn.mute-btn {
+            grid-area: mute;
+        }
+
+        .slider {
+            min-width: 0;
+        }
     }
 </style>

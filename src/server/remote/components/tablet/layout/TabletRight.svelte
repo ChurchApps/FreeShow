@@ -106,7 +106,6 @@
             {#key outNumber}
                 <Clear outSlide={outNumber} tablet />
             {/key}
-            <MediaPlaybackControls />
         </div>
 
         {#if $outShow && layout}
@@ -130,6 +129,12 @@
                         <span class="label-text">{outShowName}</span>
                     </div>
                 {/if}
+            </div>
+        {/if}
+
+        {#if hasBackground}
+            <div class="media-wrapper">
+                <MediaPlaybackControls />
             </div>
         {/if}
     </div>
@@ -188,6 +193,12 @@
         position: relative;
         overflow: hidden;
         border-radius: 4px;
+    }
+
+    /* Ensure slide content paints above the background media preview */
+    .preview-container :global(.main) {
+        position: relative;
+        z-index: 2;
     }
 
     .black-background {
@@ -291,6 +302,10 @@
         flex-direction: column;
         gap: 8px;
         padding: 0 8px;
+    }
+
+    .media-wrapper {
+        padding: 8px;
     }
 
     .current-show-label .label-text {

@@ -2,7 +2,8 @@
     import { onMount, tick } from "svelte"
 
     // props
-    export let items
+    // Default to an empty list so consumers don't have to guard against undefined
+    export let items = []
     export let height = "100%"
     export let itemHeight = undefined
     /** @type number | null */
