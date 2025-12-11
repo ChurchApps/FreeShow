@@ -86,8 +86,8 @@ export class AmazingLifeContentLibrary {
 
                 console.log("APlay API response:", JSON.stringify(data, null, 2))
                 try {
-                    const modules = data.data || []
-                    console.log(`Found ${modules.length} modules`)
+                    const allModules = data.data || []
+                    const modules = allModules.filter((module: any) => !module.isLocked)
 
                     const modulePromises = modules.map(async (module: any) => {
                         const moduleCategory: ContentLibraryCategory = {
