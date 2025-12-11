@@ -120,6 +120,8 @@
     .icon {
         position: absolute;
         left: 14px;
+        top: 50%;
+        transform: translateY(-40%);
         color: color-mix(in oklab, var(--text) 65%, transparent);
         pointer-events: none;
         z-index: 1;
