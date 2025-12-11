@@ -22,7 +22,6 @@ const defaultPath = "./lang/en.json"
 
 let loadingLocale = ""
 function setLanguage(locale = "", init = false) {
-    console.log(locale)
     if (!locale) {
         // locale = getLocaleFromHostname(/^(.*?)\./) || getLocaleFromPathname(/^\/(.*?)\//) || getLocaleFromNavigator() || getLocaleFromHash('lang') || 'en';
         // locale = window.navigator.userLanguage || window.navigator.language || 'en';
