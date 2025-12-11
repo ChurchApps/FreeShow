@@ -21,7 +21,7 @@ const preBuild = spawn("node", ["scripts/preBuild.js"], {
     env: process.env
 })
 
-preBuild.on("close", code => {
+preBuild.on("close", (code) => {
     if (code !== 0) {
         console.error("Pre-build script failed")
         process.exit(code)
@@ -36,7 +36,7 @@ preBuild.on("close", code => {
         env: { ...process.env, NODE_ENV: "development" }
     })
 
-    buildServers.on("close", serverCode => {
+    buildServers.on("close", (serverCode) => {
         if (serverCode !== 0) {
             console.error("Server build failed")
             process.exit(serverCode)
@@ -67,16 +67,16 @@ preBuild.on("close", code => {
                 env: process.env
             })
 
-            electron.on("error", err => {
+            electron.on("error", (err) => {
                 console.error("Failed to start Electron:", err)
             })
         }, 5000) // Give Vite more time to start
 
-        vite.on("error", err => {
+        vite.on("error", (err) => {
             console.error("Failed to start Vite:", err)
         })
 
-        serverWatch.on("error", err => {
+        serverWatch.on("error", (err) => {
             console.error("Failed to start server watch:", err)
         })
 

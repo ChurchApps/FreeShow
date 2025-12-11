@@ -43,7 +43,7 @@
 
     $: lines = createVirtualBreaks(clone(item?.lines || []), outputStyle?.skipVirtualBreaks)
     $: if (linesStart !== null && linesEnd !== null && lines.length) {
-        lines = lines.filter(a => a.text.filter(a => a.value !== undefined)?.length)
+        lines = lines.filter((a) => a.text.filter((a) => a.value !== undefined)?.length)
 
         // show last possible lines if no text at current line
         if (!lines[linesStart]) {
@@ -157,12 +157,12 @@
 
             let html = ""
             let index = 0
-            line.text.forEach(text => {
+            line.text.forEach((text) => {
                 let value = text.value.trim().replaceAll("\n", "") || ""
 
                 let letters = value.split("")
-                letters.forEach(letter => {
-                    let chordIndex = chords.findIndex(a => a.pos === index)
+                letters.forEach((letter) => {
+                    let chordIndex = chords.findIndex((a) => a.pos === index)
                     if (chordIndex >= 0) {
                         html += `<span class="chord">${chords[chordIndex].key}</span>`
                         chords.splice(chordIndex, 1)

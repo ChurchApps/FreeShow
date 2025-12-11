@@ -65,7 +65,7 @@
         })
         fetch(pingbackUrl, { method: "GET", mode: "no-cors" })
             .then(() => console.log(`[APlay] Pingback sent successfully to: ${pingbackUrl}`))
-            .catch(error => {
+            .catch((error) => {
                 console.error(`[APlay] Pingback failed:`, error)
             })
     }

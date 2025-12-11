@@ -126,8 +126,8 @@
             if ($selected.id !== "slide") return
 
             let ref = getLayoutRef()
-            const getCurrentSlide = index => ref.find(a => a.layoutIndex === index)
-            let parentSlide = $selected.data.find(a => a.index && getCurrentSlide(a.index)?.type === "parent")
+            const getCurrentSlide = (index) => ref.find((a) => a.layoutIndex === index)
+            let parentSlide = $selected.data.find((a) => a.index && getCurrentSlide(a.index)?.type === "parent")
 
             if (parentSlide) return
 
@@ -192,7 +192,7 @@
             // WIP don't show this if not an effect
             let isEnabled = false
             let path = $selected.data[0]?.path || $selected.data[0]?.id
-            let existing = $effectsLibrary.find(a => a.path === path)
+            let existing = $effectsLibrary.find((a) => a.path === path)
             if (path && existing) isEnabled = true
 
             enabled = isEnabled
@@ -223,7 +223,7 @@
             disabled = !!$outputs[outputId]?.invisible
         },
         move_to_front: () => {
-            let previewOutputs = keysToID($outputs).filter(a => a.enabled) //  && !a.invisible
+            let previewOutputs = keysToID($outputs).filter((a) => a.enabled) //  && !a.invisible
             // WIP check currently selected against the other outputs...
             if (previewOutputs.length !== 2) {
                 disabled = false
@@ -236,7 +236,7 @@
                 return
             }
 
-            const alwaysOnTopState = [...new Set(previewOutputs.map(out => out?.alwaysOnTop ?? true))]
+            const alwaysOnTopState = [...new Set(previewOutputs.map((out) => out?.alwaysOnTop ?? true))]
 
             // disable if all outputs have different states!
             disabled = alwaysOnTopState.length === previewOutputs.length

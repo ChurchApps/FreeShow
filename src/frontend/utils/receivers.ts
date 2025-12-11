@@ -99,7 +99,7 @@ const receiveOUTPUTasMAIN: any = {
         const timeSinceSent = Date.now() - time
         if (timeSinceSent > 100) return // skip frames if overloaded
 
-        previewBuffers.update(a => {
+        previewBuffers.update((a) => {
             a[id] = { buffer, size }
             return a
         })
@@ -108,17 +108,17 @@ const receiveOUTPUTasMAIN: any = {
     RESTART: ({ id }) => restartOutputs(id),
     // DISPLAY: (a: any) => outputDisplay.set(a.enabled),
     OUTPUT_STATE: (newStates: { id: string; active: boolean | "invisible" }[]) => {
-        outputState.update(a => {
-            newStates.forEach(newState => {
-                const stateIndex = a.findIndex(state => state.id === newState.id)
+        outputState.update((a) => {
+            newStates.forEach((newState) => {
+                const stateIndex = a.findIndex((state) => state.id === newState.id)
                 if (stateIndex < 0) a.push(newState)
                 else a[stateIndex] = newState
             })
 
             // only enabled ones & not invisible
-            a = a.filter(state => get(outputs)[state.id]?.enabled && !get(outputs)[state.id]?.invisible)
+            a = a.filter((state) => get(outputs)[state.id]?.enabled && !get(outputs)[state.id]?.invisible)
 
-            const getVisibleState = [...new Set(a.filter(state => typeof state.active === "boolean").map(state => state.active) as boolean[])]
+            const getVisibleState = [...new Set(a.filter((state) => typeof state.active === "boolean").map((state) => state.active) as boolean[])]
             if (getVisibleState.length === 1) outputDisplay.set(getVisibleState[0])
 
             return a
@@ -130,8 +130,8 @@ const receiveOUTPUTasMAIN: any = {
 
         if (data.channels) AudioAnalyserMerger.addChannels(data.id, data.channels)
 
-        playingVideos.update(playingVideo => {
-            const existing = playingVideo.findIndex(a => a.id === data.id)
+        playingVideos.update((playingVideo) => {
+            const existing = playingVideo.findIndex((a) => a.id === data.id)
 
             if (data.stop) {
                 if (existing > -1) playingVideo.splice(existing, 1)
@@ -151,8 +151,8 @@ const receiveOUTPUTasMAIN: any = {
             AudioAnalyserMerger.stop()
         }
     },
-    MOVE: data => {
-        outputs.update(a => {
+    MOVE: (data) => {
+        outputs.update((a) => {
             if (!a[data.id] || a[data.id].boundsLocked) return a
 
             a[data.id].bounds = data.bounds
@@ -160,9 +160,9 @@ const receiveOUTPUTasMAIN: any = {
         })
     },
     UPDATE_OUTPUTS_DATA: ({ key, value, id, autoSave }) => {
-        outputs.update(a => {
+        outputs.update((a) => {
             const ids = id ? [id] : Object.keys(get(outputs))
-            ids.forEach(outputId => {
+            ids.forEach((outputId) => {
                 if (a[outputId]) a[outputId][key] = value
             })
             return a
@@ -171,9 +171,9 @@ const receiveOUTPUTasMAIN: any = {
     },
     REQUEST_DATA_MAIN: () => sendInitialOutputData(),
     MAIN_LOG: (msg: any) => console.info(msg),
-    MAIN_DATA: (msg: any) => videosData.update(a => ({ ...a, ...msg })),
-    MAIN_TIME: (msg: any) => videosTime.update(a => ({ ...a, ...msg })),
-    MAIN_VIDEO_ENDED: msg => {
+    MAIN_DATA: (msg: any) => videosData.update((a) => ({ ...a, ...msg })),
+    MAIN_TIME: (msg: any) => videosTime.update((a) => ({ ...a, ...msg })),
+    MAIN_VIDEO_ENDED: (msg) => {
         if (!msg || clearing.includes(msg.id)) return
         clearing.push(msg.id)
         setTimeout(() => clearing.splice(clearing.indexOf(msg.id), 1), msg.duration || 1000)
@@ -219,7 +219,7 @@ const receiveOUTPUTasMAIN: any = {
     },
     MAIN_SHOWS_DATA: () => send(OUTPUT, ["SHOWS_DATA"], get(shows)),
     MAIN_SLIDE_VIDEO: (data: { id: string; path: string; data: any }) => {
-        slideVideoData.update(a => {
+        slideVideoData.update((a) => {
             if (!a[data.id]) a = { [data.id]: {} }
             a[data.id][data.path] = data.data
             return a
@@ -261,7 +261,7 @@ export const receiveOUTPUTasOUTPUT: any = {
         // let outputId = Object.keys(get(outputs))[0]
         // if (id !== outputId) return
 
-        previewBuffers.update(a => {
+        previewBuffers.update((a) => {
             a[id] = { buffer, size }
             return a
         })
@@ -307,7 +307,7 @@ export const receiveOUTPUTasOUTPUT: any = {
     SHOWS_DATA: (a: any) => shows.set(a),
 
     // stage & dynamic value (video)
-    VIDEO_DATA: data => {
+    VIDEO_DATA: (data) => {
         videosData.set(data.data)
         videosTime.set(data.time)
     },
@@ -337,10 +337,10 @@ export const receiveOUTPUTasOUTPUT: any = {
 // NDI
 
 const receiveNDI: any = {
-    SEND_DATA: msg => {
+    SEND_DATA: (msg) => {
         if (!msg?.id) return
 
-        ndiData.update(a => {
+        ndiData.update((a) => {
             a[msg.id] = msg
 
             return a
@@ -361,7 +361,7 @@ const receiveCLOUD = {
         // WIP set connected status, and see in settings
 
         if (get(driveData)?.mainFolderId) {
-            driveData.update(a => {
+            driveData.update((a) => {
                 a.initializeMethod = "done"
                 return a
             })
@@ -379,7 +379,7 @@ const receiveCLOUD = {
         }
         if (!id) return
 
-        driveData.update(a => {
+        driveData.update((a) => {
             a.mainFolderId = id
             return a
         })
@@ -393,7 +393,7 @@ const receiveCLOUD = {
                 return
             }
 
-            driveData.update(a => {
+            driveData.update((a) => {
                 a.initializeMethod = existingData ? "done" : "upload"
                 return a
             })
@@ -416,7 +416,7 @@ const receiveCLOUD = {
             return
         }
 
-        driveData.update(a => {
+        driveData.update((a) => {
             a.initializeMethod = "done"
             return a
         })

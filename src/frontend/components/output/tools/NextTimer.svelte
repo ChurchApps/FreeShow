@@ -21,7 +21,7 @@
         step = true
 
         let outputIds = getAllActiveOutputs().map(({ id }) => id)
-        outputIds.forEach(id => {
+        outputIds.forEach((id) => {
             let timer = $slideTimers[id]
             if (timer) updateTime(e.target.value, timer)
         })
@@ -39,7 +39,7 @@
 
         if (autoPause) {
             let outputIds = getAllActiveOutputs().map(({ id }) => id)
-            outputIds.forEach(id => {
+            outputIds.forEach((id) => {
                 let timer = $slideTimers[id]
                 if (timer) timer.timer.resume()
             })
@@ -50,7 +50,7 @@
 
     function playPause(isPaused: boolean) {
         let outputIds = getAllActiveOutputs().map(({ id }) => id)
-        outputIds.forEach(id => {
+        outputIds.forEach((id) => {
             let timer = $slideTimers[id]
             if (timer) {
                 if (isPaused) timer.timer.resume()

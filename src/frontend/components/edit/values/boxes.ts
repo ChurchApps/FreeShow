@@ -37,7 +37,7 @@ export function setBoxInputValue(box: BoxContent2 | { [key: string]: EditBoxSect
     if (!newBox?.[sectionId]) return
 
     const inputs = newBox[sectionId].inputs.flat()
-    const keyIndex = inputs.findIndex(a => a.key === inputId || a.id === inputId)
+    const keyIndex = inputs.findIndex((a) => a.key === inputId || a.id === inputId)
     if (keyIndex < 0) return
 
     if (key === "values") {
@@ -344,7 +344,7 @@ const mediaSections: { [key: string]: EditBoxSection } = {
 ///
 
 export function splitIntoRows(inputs: EditInput2[]) {
-    return inputs.map(a => [a])
+    return inputs.map((a) => [a])
 }
 
 function eventText(defaultSection: any) {
@@ -515,7 +515,7 @@ export const itemBoxes: Box2 = {
             default: {
                 inputs: splitIntoRows([
                     { id: "device", type: "popup", value: "", values: { label: "popup.choose_camera", icon: "camera", popupId: "choose_camera" } },
-                    { id: "fit", type: "dropdown", value: "contain", values: { label: "media.fit", options: mediaFitOptions.filter(a => a.value !== "blur") } },
+                    { id: "fit", type: "dropdown", value: "contain", values: { label: "media.fit", options: mediaFitOptions.filter((a) => a.value !== "blur") } },
                     { id: "flipped", type: "checkbox", value: false, values: { label: "media.flip_horizontally" } },
                     { id: "flippedY", type: "checkbox", value: false, values: { label: "media.flip_vertically" } }
                 ])
@@ -612,7 +612,7 @@ export const itemBoxes: Box2 = {
         sections: {
             default: {
                 inputs: splitIntoRows([
-                    { id: "captions.language", type: "dropdown", value: "en-US", values: { label: "captions.language", options: captionLanguages.map(a => ({ value: a.id, label: a.name })) } },
+                    { id: "captions.language", type: "dropdown", value: "en-US", values: { label: "captions.language", options: captionLanguages.map((a) => ({ value: a.id, label: a.name })) } },
                     // this is very limited
                     // { id: "captions.translate", type: "dropdown", value: "en-US", values: { label: "captions.translate", options: captionTranslateLanguages } },
                     { id: "captions.showtime", type: "number", value: 5, values: { label: "captions.showtime", min: 1, max: 60 } },

@@ -86,7 +86,7 @@ function createSlides(song: Song) {
     if (!lyrics) return { slides, layout }
 
     const slideLines = lyrics.split("\n\n")
-    slideLines.forEach(slideLine => {
+    slideLines.forEach((slideLine) => {
         const lines = slideLine.split("\n")
         const groupName = lines.shift() || ""
 

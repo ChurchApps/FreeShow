@@ -47,7 +47,7 @@
     const text = "Lorem ipsum dolor sit amet,\nconsectetur adipiscing elit.\nDonec eget condimentum diam,\na sollicitudin lorem."
     function getOverride(style: Styles) {
         let override = clone(outOverride)
-        const lines = text.split("\n").map(a => ({ align: "", text: [{ value: a, style: "" }] }))
+        const lines = text.split("\n").map((a) => ({ align: "", text: [{ value: a, style: "" }] }))
         override.slide!.tempItems![0].lines = lines.slice(0, style.lines || 10)
         return override
     }

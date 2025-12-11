@@ -29,7 +29,7 @@ function startWebSocket(PORT: number) {
         console.info(`WebSocket: Starting server at port ${PORT.toString()}`)
     })
 
-    server.once("error", err => {
+    server.once("error", (err) => {
         if ((err as any).code === "EADDRINUSE") server.close()
     })
 

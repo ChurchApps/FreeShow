@@ -28,7 +28,7 @@
     }))
 
     // Filter overlays by category
-    $: categoryFilteredOverlays = overlaysList.filter(overlay => {
+    $: categoryFilteredOverlays = overlaysList.filter((overlay) => {
         if (activeCategory === "all") {
             // Exclude archived categories in "all" view
             return !$overlayCategories[overlay.category || ""]?.isArchive
@@ -40,7 +40,7 @@
     })
 
     // Filter overlays by search
-    $: filteredOverlays = categoryFilteredOverlays.filter(overlay => {
+    $: filteredOverlays = categoryFilteredOverlays.filter((overlay) => {
         if (!searchValue) return true
         return (overlay.name || "").toLowerCase().includes(searchValue.toLowerCase())
     })

@@ -29,7 +29,7 @@
             return ""
         })
         // extract and remove raw links from plain text
-        const finalText = textWithoutATags.replace(/https?:\/\/[^\s<>"']+/gi, url => {
+        const finalText = textWithoutATags.replace(/https?:\/\/[^\s<>"']+/gi, (url) => {
             links.push(url)
             return ""
         })
@@ -70,7 +70,7 @@
         <MaterialButton
             icon="add"
             title="tooltip.show"
-            on:click={e => {
+            on:click={(e) => {
                 if (e.detail.ctrl) {
                     history({ id: "UPDATE", newData: { remember: { project: $activeProject } }, location: { page: "show", id: "show" } })
                 } else activePopup.set("show")

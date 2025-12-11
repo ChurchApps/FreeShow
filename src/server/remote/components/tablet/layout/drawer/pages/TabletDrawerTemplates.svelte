@@ -25,7 +25,7 @@
     }))
 
     // Filter templates by category
-    $: categoryFilteredTemplates = templatesList.filter(template => {
+    $: categoryFilteredTemplates = templatesList.filter((template) => {
         if (activeCategory === "all") {
             // Exclude archived categories in "all" view
             return !$templateCategories[template.category || ""]?.isArchive
@@ -37,7 +37,7 @@
     })
 
     // Filter templates by search
-    $: filteredTemplates = categoryFilteredTemplates.filter(template => {
+    $: filteredTemplates = categoryFilteredTemplates.filter((template) => {
         if (!searchValue) return true
         return (template.name || "").toLowerCase().includes(searchValue.toLowerCase())
     })

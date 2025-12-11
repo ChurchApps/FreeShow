@@ -28,13 +28,13 @@
         style="width: 100%;"
         title={path}
         bold={false}
-        on:click={e => {
+        on:click={(e) => {
             if ($outLocked || e.ctrlKey || e.metaKey || e.shiftKey) return
 
             if (playlist) AudioPlaylist.start(active || "", path, index, { pauseIfPlaying: true })
             else AudioPlayer.start(path, { name }, { playMultiple: e.altKey })
         }}
-        on:dblclick={e => {
+        on:dblclick={(e) => {
             if (e.ctrlKey || e.metaKey || e.shiftKey) return
             addProjectItem({ id: path, name, type: "audio" })
         }}

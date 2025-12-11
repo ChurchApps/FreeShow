@@ -20,7 +20,7 @@
     // WIP use savedScreen = $projects[$activeProject || ""].shows.find((a) => a.id === path)?.data?.screenName to determine if it is active or not
 
     onMount(() => {
-        requestMain(Main.SLIDESHOW_GET_APPS, undefined, a => presentationApps.set(a))
+        requestMain(Main.SLIDESHOW_GET_APPS, undefined, (a) => presentationApps.set(a))
     })
 
     let opening = false
@@ -117,10 +117,10 @@
 {:else}
     <div style="display: flex;flex-direction: column;height: 100%;">
         <Dropdown
-            options={$presentationApps.map(id => ({ name: id }))}
+            options={$presentationApps.map((id) => ({ name: id }))}
             value={$special.presentationApp || "PowerPoint"}
-            on:click={e => {
-                special.update(a => {
+            on:click={(e) => {
+                special.update((a) => {
                     a.presentationApp = e.detail?.name
                     return a
                 })

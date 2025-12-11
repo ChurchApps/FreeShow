@@ -13,7 +13,7 @@ export function openProfileByName(profileName: string) {
     }
 
     // find profile by name (case-insensitive)
-    const profileId = Object.keys(get(profiles)).find(id => (get(profiles)[id].name || "").toLowerCase() === profileName.toLowerCase())
+    const profileId = Object.keys(get(profiles)).find((id) => (get(profiles)[id].name || "").toLowerCase() === profileName.toLowerCase())
 
     if (!profileId) return
     activeProfile.set(profileId)
@@ -28,4 +28,4 @@ export function checkPassword(password: string, encoded: string) {
     return encoded === encrypt(password)
 }
 const k = "bw46feskw4"
-const encrypt = text => Array.from(text, (char: string, i) => ("0" + (char.charCodeAt(0) ^ k.charCodeAt(i % k.length)).toString(16)).slice(-2)).join("")
+const encrypt = (text) => Array.from(text, (char: string, i) => ("0" + (char.charCodeAt(0) ^ k.charCodeAt(i % k.length)).toString(16)).slice(-2)).join("")

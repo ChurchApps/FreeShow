@@ -4,7 +4,7 @@ export const getStyles = (str: string | null | undefined, removeTxt = false) => 
     let styles: StringObject = {}
     if (!str?.length) return styles
 
-    str.split(";").forEach(s => {
+    str.split(";").forEach((s) => {
         if (!s.length) return
 
         const key: string = s.slice(0, s.indexOf(":")).trim()
@@ -29,7 +29,7 @@ export function getFilters(filter: string | undefined) {
     if (typeof filter !== "string") return {}
 
     const styles: StringObject = {}
-    filter.split(" ").forEach(s => {
+    filter.split(" ").forEach((s) => {
         if (s.length) {
             const key: string = s.slice(0, s.indexOf("(")).trim()
             let style: string = s.slice(s.indexOf("(") + 1, s.indexOf(")")).trim()

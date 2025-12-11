@@ -41,11 +41,11 @@ export function createData(paths: MainFilePaths) {
 
     setExampleOverlays()
 
-    folders.update(a => {
+    folders.update((a) => {
         a.default = { name: translateText("example.meetings"), parent: "/" }
         return a
     })
-    projects.update(a => {
+    projects.update((a) => {
         a.default = {
             name: translateText("example.example"),
             created: new Date("2022-01-01").getTime(),
@@ -56,12 +56,12 @@ export function createData(paths: MainFilePaths) {
     })
 
     setExampleTemplates()
-    mediaFolders.update(a => {
+    mediaFolders.update((a) => {
         if (paths.pictures) a.pictures = { name: "category.pictures", icon: "folder", path: paths.pictures, default: true }
         if (paths.videos) a.videos = { name: "category.videos", icon: "folder", path: paths.videos, default: true }
         return a
     })
-    audioFolders.update(a => {
+    audioFolders.update((a) => {
         if (paths.music) a.music = { name: "category.music", icon: "folder", path: paths.music, default: true }
         return a
     })
@@ -70,13 +70,13 @@ export function createData(paths: MainFilePaths) {
 
     // translate names set in defaults.ts
     if (get(outputs).default?.name === "Primary") {
-        outputs.update(a => {
+        outputs.update((a) => {
             a.default.name = translateText("theme.primary")
             return a
         })
     }
     if (get(variables).default?.name === "Counter") {
-        variables.update(a => {
+        variables.update((a) => {
             a.default.name = translateText("variables.number")
             return a
         })
@@ -90,7 +90,7 @@ const randomNumber = (from: number, to: number): number => Math.floor(Math.rando
 // OVERLAYS
 
 export function setExampleEffects() {
-    special.update(a => {
+    special.update((a) => {
         delete a.deletedEffects
         return a
     })
@@ -102,8 +102,8 @@ function createDefaultEffects() {
     const deletedIds = get(special).deletedEffects || []
     const defaultEffects = getDefaultEffects()
 
-    effects.update(a => {
-        Object.keys(defaultEffects).forEach(id => {
+    effects.update((a) => {
+        Object.keys(defaultEffects).forEach((id) => {
             // if deleted or exists, skip
             if (deletedIds.includes(id) || a[id]) return
             a[id] = defaultEffects[id]
@@ -169,7 +169,7 @@ function getDefaultEffects() {
 }
 
 export function setExampleOverlays() {
-    special.update(a => {
+    special.update((a) => {
         delete a.deletedOverlays
         return a
     })
@@ -181,8 +181,8 @@ function createDefaultOverlays() {
     const deletedIds = get(special).deletedOverlays || []
     const defaultOverlays = getDefaultOverlays()
 
-    overlays.update(a => {
-        Object.keys(defaultOverlays).forEach(id => {
+    overlays.update((a) => {
+        Object.keys(defaultOverlays).forEach((id) => {
             // if deleted or exists, skip
             if (deletedIds.includes(id) || a[id]) return
             a[id] = defaultOverlays[id]
@@ -300,12 +300,12 @@ function getDefaultOverlays() {
 // TEMPLATES
 
 export function setExampleTemplates() {
-    special.update(a => {
+    special.update((a) => {
         delete a.deletedTemplates
         return a
     })
 
-    templateCategories.update(a => {
+    templateCategories.update((a) => {
         a.scripture = { default: true, name: "category.scripture", icon: "scripture" }
         return a
     })
@@ -317,12 +317,12 @@ export function setExampleTemplates() {
 export function setDefaultScriptureTemplates() {
     const templatesList = getDefaultScriptureTemplates()
 
-    special.update(a => {
-        a.deletedTemplates = (get(special).deletedTemplates || []).filter(id => !Object.keys(templatesList).includes(id))
+    special.update((a) => {
+        a.deletedTemplates = (get(special).deletedTemplates || []).filter((id) => !Object.keys(templatesList).includes(id))
         return a
     })
 
-    templateCategories.update(a => {
+    templateCategories.update((a) => {
         a.scripture = { default: true, name: "category.scripture", icon: "scripture" }
         return a
     })
@@ -334,8 +334,8 @@ function createDefaultTemplates() {
     const deletedIds = get(special).deletedTemplates || []
     const defaultTemplates = getDefaultTemplates()
 
-    templates.update(a => {
-        Object.keys(defaultTemplates).forEach(id => {
+    templates.update((a) => {
+        Object.keys(defaultTemplates).forEach((id) => {
             // if deleted or exists, skip
             if (deletedIds.includes(id) || a[id]) return
             a[id] = defaultTemplates[id]
@@ -1155,7 +1155,7 @@ export function createDefaultShow() {
 }
 
 export function createDoubleTemplate() {
-    templates.update(a => {
+    templates.update((a) => {
         a.double = {
             isDefault: true,
             name: "Double",
@@ -1200,8 +1200,8 @@ const templateIds = ["metadata", "message", "header", "text", "big", "default", 
 function getDeletedTemplates() {
     if (get(special).deletedTemplates) return
 
-    const deletedIds = templateIds.filter(id => !get(templates)[id])
-    special.update(a => {
+    const deletedIds = templateIds.filter((id) => !get(templates)[id])
+    special.update((a) => {
         a.deletedTemplates = deletedIds
         return a
     })
@@ -1211,8 +1211,8 @@ const overlayIds = ["watermark", "visual", "clock", "clock_analog", "name", "rou
 function getDeletedOverlays() {
     if (get(special).deletedOverlays) return
 
-    const deletedIds = overlayIds.filter(id => !get(overlays)[id])
-    special.update(a => {
+    const deletedIds = overlayIds.filter((id) => !get(overlays)[id])
+    special.update((a) => {
         a.deletedOverlays = deletedIds
         return a
     })
@@ -1222,8 +1222,8 @@ const effectIds = ["ocean", "spotlights", "rain", "fireworks"]
 function getDeletedEffects() {
     if (get(special).deletedEffects) return
 
-    const deletedIds = effectIds.filter(id => !get(effects)[id])
-    special.update(a => {
+    const deletedIds = effectIds.filter((id) => !get(effects)[id])
+    special.update((a) => {
         a.deletedEffects = deletedIds
         return a
     })

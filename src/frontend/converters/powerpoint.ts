@@ -29,7 +29,7 @@ export function convertPowerpoint(files: any[]) {
 
             const presentationData = content["ppt/presentation.xml"]?.["p:presentation"] || {}
             const relations = content["ppt/_rels/presentation.xml.rels"]?.Relationships?.Relationship || []
-            const slideOrder = (presentationData["p:sldIdLst"]?.[0]["p:sldId"] || []).map(a => relations.find(r => r.$.Id === a.$?.["r:id"])?.$?.Target)
+            const slideOrder = (presentationData["p:sldIdLst"]?.[0]["p:sldId"] || []).map((a) => relations.find((r) => r.$.Id === a.$?.["r:id"])?.$?.Target)
 
             // sort by number in name to ensure correct slide order (ppt/slides/slide1.xml)
             // const slideKeys = sortByNameNumber(Object.keys(content).filter((a) => a.includes("ppt/slides/slide")))
@@ -42,7 +42,7 @@ export function convertPowerpoint(files: any[]) {
             // loadAllFonts(contentPaths)
             const fonts = getAllFontNames(contentPaths)
 
-            const slides = slideOrder.map(key => convertSlide("ppt/" + key, content))
+            const slides = slideOrder.map((key) => convertSlide("ppt/" + key, content))
             if (!slides.length) {
                 alertMessage.set('This format is unsupported, try using an online "PPT to TXT converter".')
                 return
@@ -81,7 +81,7 @@ export function convertPowerpoint(files: any[]) {
 
 function getAllFontNames(contentPaths: Record<string, string>) {
     const fontNames: { name: string; path: string }[] = []
-    Object.keys(contentPaths).forEach(key => {
+    Object.keys(contentPaths).forEach((key) => {
         if (key.startsWith("ppt/fonts/") && key.endsWith(".fntdata")) {
             const fileName = key.slice(key.lastIndexOf("/") + 1)
             const match = fileName.match(/^(.+?)-?(regular|bold|italic|boldItalic)?\.fntdata$/i)
@@ -141,7 +141,7 @@ function convertSlide(key: string, content: any) {
     let bgColorValue = ""
 
     // slide layout
-    const slideLayouts = slideRelations.filter(a => a.$.Target.includes("slideLayout")).map(a => a.$.Target)
+    const slideLayouts = slideRelations.filter((a) => a.$.Target.includes("slideLayout")).map((a) => a.$.Target)
     for (const layoutId of slideLayouts) {
         const layout = content[layoutId.replace("..", "ppt")]?.["p:sldLayout"] || {}
 
@@ -149,7 +149,7 @@ function convertSlide(key: string, content: any) {
         const layoutRelations = getRelations(content, `ppt/slideLayouts/_rels/${layoutNumber}.rels`)
 
         // master
-        const slideMasterId = layoutRelations.filter(a => a.$.Target.includes("slideMaster")).map(a => a.$.Target)[0] || ""
+        const slideMasterId = layoutRelations.filter((a) => a.$.Target.includes("slideMaster")).map((a) => a.$.Target)[0] || ""
         const master = content[slideMasterId.replace("..", "ppt")]?.["p:sldMaster"] || {}
 
         const masterNumber = slideMasterId.slice(slideMasterId.lastIndexOf("slideMaster"))
@@ -157,7 +157,7 @@ function convertSlide(key: string, content: any) {
 
         // ---- theme bg ----
         const masterBgScheme = master["p:cSld"]?.[0]?.["p:bg"]?.[0]?.["p:bgPr"]?.[0]?.["a:solidFill"]?.[0]
-        const themeTarget = masterRelations.find(r => r.$.Target.includes("/theme/"))?.$.Target
+        const themeTarget = masterRelations.find((r) => r.$.Target.includes("/theme/"))?.$.Target
         if (themeTarget) {
             const theme = content[themeTarget.replace("..", "ppt")]?.["a:theme"]?.["a:themeElements"]?.[0] || {}
             clrSchemes = theme["a:clrScheme"]?.[0]
@@ -186,22 +186,22 @@ function getRelations(content: any, path: string) {
 }
 
 function getNotes(relations: any, content: any): string {
-    const slideNotesRelationId = relations.find(a => a.$.Target.includes("notesSlide"))?.$.Target || ""
+    const slideNotesRelationId = relations.find((a) => a.$.Target.includes("notesSlide"))?.$.Target || ""
     const slideNotesRelation = content[slideNotesRelationId.replace("..", "ppt")]
     return (
         slideNotesRelation?.["p:notes"]?.["p:cSld"]?.[0]["p:spTree"]?.[0]["p:sp"]
-            ?.map(sp => {
+            ?.map((sp) => {
                 const body = sp["p:txBody"]?.[0]
                 if (!body) return null
                 return (
                     body["a:p"]
-                        ?.map(p => {
-                            return (p["a:r"] || []).map(r => r["a:t"]?.[0] || "").join("")
+                        ?.map((p) => {
+                            return (p["a:r"] || []).map((r) => r["a:t"]?.[0] || "").join("")
                         })
                         .join("\n") || ""
                 )
             })
-            .filter(a => a !== null)
+            .filter((a) => a !== null)
             .join("\n") || ""
     )
 }
@@ -210,7 +210,7 @@ function mergeItems(slideItems: PlaceholderItem[], layoutItems: PlaceholderItem[
     const items: Item[] = []
 
     // decorative shapes
-    const decorativeCandidates = [...layoutItems, ...masterItems].filter(i => !i.placeholder)
+    const decorativeCandidates = [...layoutItems, ...masterItems].filter((i) => !i.placeholder)
     items.push(...decorativeCandidates)
 
     // slide items
@@ -297,7 +297,7 @@ function extractItemsFromTree(slideTree, relations, content, clrSchemes, layoutI
                 // split each text[] into line[] if there are line breaks
                 const lineBreaks = paragraph["a:br"] || []
                 if (lineBreaks.length) {
-                    line.text?.forEach(a => {
+                    line.text?.forEach((a) => {
                         lines.push({ ...line, text: [a] })
                     })
                 }
@@ -305,7 +305,7 @@ function extractItemsFromTree(slideTree, relations, content, clrSchemes, layoutI
                 lines.push(line)
             }
 
-            if (!lines.filter(line => line.text?.filter(a => a.value.length).length).length) {
+            if (!lines.filter((line) => line.text?.filter((a) => a.value.length).length).length) {
                 const svg = pptShapeToNormalizedSvg(textItem, clrSchemes)
 
                 if (svg) {
@@ -343,7 +343,7 @@ function extractItemsFromTree(slideTree, relations, content, clrSchemes, layoutI
     // ---------- IMAGES ----------
     for (const imageItem of imageItems) {
         const relationId: string = imageItem["p:blipFill"]?.[0]["a:blip"]?.[0].$?.["r:embed"] || ""
-        let imageId = relations.find(a => a.$.Id === relationId)?.$?.Target || ""
+        let imageId = relations.find((a) => a.$.Id === relationId)?.$?.Target || ""
         if (!imageId && relationId) imageId = findRelationTargetById(content, relationId) || ""
         const filePath = contentPaths[imageId.replace("..", "ppt")] || ""
 
@@ -358,7 +358,7 @@ function extractItemsFromTree(slideTree, relations, content, clrSchemes, layoutI
 
         // video/audio
         const videoLinkId = imageItem["p:nvPicPr"]?.[0]["p:cNvPr"]?.[0]?.["a:hlinkClick"]?.[0]?.$?.["r:id"]
-        const videoUrl = relations.find(a => a.$.Id === videoLinkId)?.$?.Target
+        const videoUrl = relations.find((a) => a.$.Id === videoLinkId)?.$?.Target
         if (videoUrl) convertedItems.push({ placeholder, style: getItemStyle(imageItem, clrSchemes), type: "web", web: { src: videoUrl, noNavigation: true }, clickReveal: true })
     }
 
@@ -374,7 +374,7 @@ function extractItemsFromTree(slideTree, relations, content, clrSchemes, layoutI
 
     for (const node of embeddedNodes) {
         const relationId: string = node.embedId || ""
-        let mediaTarget = relations.find(a => a.$.Id === relationId)?.$?.Target || ""
+        let mediaTarget = relations.find((a) => a.$.Id === relationId)?.$?.Target || ""
         if (!mediaTarget && relationId) mediaTarget = findRelationTargetById(content, relationId) || ""
         const filePath = contentPaths[mediaTarget.replace("..", "ppt")] || ""
         if (!filePath) continue

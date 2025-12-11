@@ -28,13 +28,13 @@ function checkLesson(lesson: LessonsData) {
     makeDir(lessonFolder)
 
     return lesson.files
-        .map(file => {
+        .map((file) => {
             const filePath = getFilePath(file)
             if (!filePath) return
 
             return downloadFile(filePath, file, lesson.showId)
         })
-        .filter(a => a)
+        .filter((a) => a)
 
     function getFilePath(file: LessonFile) {
         if (type === "planningcenter") return path.join(lessonFolder, file.name)
@@ -76,7 +76,7 @@ function downloadFile(filePath: string, file: LessonFile, showId: string) {
 type DownloadFile = { path: string; file: LessonFile; showId: string }
 const downloadQueue: DownloadFile[] = []
 function addToDownloadQueue(file: DownloadFile) {
-    const alreadyInQueue = downloadQueue.find(a => a.path === file.path)
+    const alreadyInQueue = downloadQueue.find((a) => a.path === file.path)
     if (alreadyInQueue) {
         downloadCount++
         return
@@ -142,10 +142,10 @@ function startDownload(data: DownloadFile) {
     console.info(`Downloading lessons media: ${file.name}`)
     console.info(url)
     https
-        .get(url, res => {
+        .get(url, (res) => {
             if (res.statusCode !== 200) {
                 fileStream.close()
-                fs.unlink(data.path, err => console.error(err))
+                fs.unlink(data.path, (err) => console.error(err))
 
                 console.error(`Failed to download file, status code: ${String(res.statusCode)}`)
                 failedDownloads++
@@ -157,15 +157,15 @@ function startDownload(data: DownloadFile) {
 
             res.pipe(fileStream)
 
-            res.on("error", err => {
+            res.on("error", (err) => {
                 fileStream.close()
                 console.error(`Response error: ${err.message}`)
 
                 retry()
             })
 
-            fileStream.on("error", err1 => {
-                fs.unlink(data.path, err2 => console.error(err2))
+            fileStream.on("error", (err1) => {
+                fs.unlink(data.path, (err2) => console.error(err2))
                 console.error(`File error: ${err1.message}`)
 
                 retry()
@@ -180,7 +180,7 @@ function startDownload(data: DownloadFile) {
                 next()
             })
         })
-        .on("error", err => {
+        .on("error", (err) => {
             fileStream.close()
             console.error(`Request error: ${err.message}`)
 
@@ -246,10 +246,10 @@ export function downloadMedia({ url, contentFile }: { url: string; contentFile?:
 
     const fileStream = fs.createWriteStream(outputPath)
     https
-        .get(url, res => {
+        .get(url, (res) => {
             if (res.statusCode !== 200) {
                 fileStream.close()
-                fs.unlink(outputPath, err => err && console.error(err))
+                fs.unlink(outputPath, (err) => err && console.error(err))
 
                 console.error(`Failed to download file, status code: ${String(res.statusCode)}`)
                 return
@@ -257,15 +257,15 @@ export function downloadMedia({ url, contentFile }: { url: string; contentFile?:
 
             res.pipe(fileStream)
 
-            res.on("error", err => {
+            res.on("error", (err) => {
                 fileStream.close()
                 console.error(`Response error: ${err.message}`)
 
                 retry()
             })
 
-            fileStream.on("error", err1 => {
-                fs.unlink(outputPath, err2 => err2 && console.error(err2))
+            fileStream.on("error", (err1) => {
+                fs.unlink(outputPath, (err2) => err2 && console.error(err2))
                 console.error(`File error: ${err1.message}`)
 
                 retry()
@@ -277,7 +277,7 @@ export function downloadMedia({ url, contentFile }: { url: string; contentFile?:
                 console.info(`Finished downloading file: ${url}`)
             })
         })
-        .on("error", err => {
+        .on("error", (err) => {
             fileStream.close()
             console.error(`Request error: ${err.message}`)
 

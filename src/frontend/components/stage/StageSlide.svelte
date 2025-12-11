@@ -31,7 +31,7 @@
         if (readOnly) return
 
         let name = e.detail.value
-        stageShows.update(a => {
+        stageShows.update((a) => {
             a[id].name = name
             return a
         })
@@ -43,7 +43,7 @@
     // { $activeTimers, $variables, $playingAudio, $playingAudioPaths, videoTime }
     let updater = 0
     const updaterInterval = setInterval(() => {
-        if (stageItems.some(a => a.conditions)) updater++
+        if (stageItems.some((a) => a.conditions)) updater++
     }, 1000)
     onDestroy(() => clearInterval(updaterInterval))
 </script>

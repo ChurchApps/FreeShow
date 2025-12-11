@@ -35,7 +35,7 @@ export class AmazingLifeContentLibrary {
      * Fetches libraries for a specific product
      */
     private static fetchProductLibraries(productId: string, productTitle: string, productImage: string, headers: any): Promise<ContentLibraryCategory | null> {
-        return new Promise(resolve => {
+        return new Promise((resolve) => {
             httpsRequest(AMAZING_LIFE_API_BASE, `/prod/curriculum/modules/products/${productId}/libraries`, "GET", headers, {}, (err, data) => {
                 if (err) {
                     console.error(`Failed to fetch libraries for product ${productId}:`, err)
@@ -132,7 +132,7 @@ export class AmazingLifeContentLibrary {
             return null
         }
 
-        return new Promise(resolve => {
+        return new Promise((resolve) => {
             const headers = this.createAuthHeaders(accessToken)
             const payload = { mediaIds: [mediaId] }
 

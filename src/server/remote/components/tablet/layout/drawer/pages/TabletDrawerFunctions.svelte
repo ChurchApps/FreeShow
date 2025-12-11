@@ -9,7 +9,7 @@
 
     // Actions
     $: sortedActions = sortByName(keysToID($actions), "name", true)
-    $: filteredActionsTags = sortedActions.filter(a => !$activeActionTagFilter.length || (a.tags?.length && !$activeActionTagFilter.find(tagId => !a.tags?.includes(tagId))))
+    $: filteredActionsTags = sortedActions.filter((a) => !$activeActionTagFilter.length || (a.tags?.length && !$activeActionTagFilter.find((tagId) => !a.tags?.includes(tagId))))
 
     function runAction(action: any) {
         send("API:run_action", { id: action.id })
@@ -31,7 +31,7 @@
     })
 
     function getCurrentTimerValue(timer: any, _tick: number) {
-        const activeTimer = $activeTimers.find(a => a.id === timer.id)
+        const activeTimer = $activeTimers.find((a) => a.id === timer.id)
         if (activeTimer?.currentTime !== undefined) return activeTimer.currentTime
         return timer.start || 0
     }
@@ -42,7 +42,7 @@
     }
 
     function playPauseTimer(timerId: string) {
-        const activeTimer = $activeTimers.find(a => a.id === timerId)
+        const activeTimer = $activeTimers.find((a) => a.id === timerId)
         if (activeTimer && !activeTimer.paused) {
             send("API:id_pause_timer", { id: timerId })
         } else {
@@ -59,10 +59,10 @@
         const varTypeOrder: { [key: string]: number } = { number: 1, text: 2 }
         return (varTypeOrder[a.type] || 3) - (varTypeOrder[b.type] || 3)
     })
-    $: filteredVariablesTags = sortedVariables.filter(a => !$activeVariableTagFilter.length || (a.tags?.length && !$activeVariableTagFilter.find(tagId => !a.tags?.includes(tagId))))
+    $: filteredVariablesTags = sortedVariables.filter((a) => !$activeVariableTagFilter.length || (a.tags?.length && !$activeVariableTagFilter.find((tagId) => !a.tags?.includes(tagId))))
 
-    $: numberVariables = filteredVariablesTags.filter(a => a.type === "number")
-    $: otherVariables = filteredVariablesTags.filter(a => a.type !== "number" && a.type !== "random_number" && a.type !== "text_set")
+    $: numberVariables = filteredVariablesTags.filter((a) => a.type === "number")
+    $: otherVariables = filteredVariablesTags.filter((a) => a.type !== "number" && a.type !== "random_number" && a.type !== "text_set")
 
     function updateVariable(id: string, key: string, value: any) {
         send("API:change_variable", { id, key, value })
@@ -157,7 +157,7 @@
         {#if sortedTimers.length}
             <div class="timers">
                 {#each sortedTimers as timer}
-                    {@const isPlaying = timer.type !== "counter" || $activeTimers.find(a => a.id === timer.id && a.paused !== true)}
+                    {@const isPlaying = timer.type !== "counter" || $activeTimers.find((a) => a.id === timer.id && a.paused !== true)}
                     {@const currentValue = getCurrentTimerValue(timer, tick)}
                     {@const timeRemaining = getTimeRemaining(timer, currentValue)}
                     {@const isCountingDown = (timer.start || 0) > (timer.end || 0)}
@@ -165,7 +165,7 @@
                     {@const maxValue = Math.max(timer.start || 0, timer.end || 0)}
                     {@const totalDuration = isCountingDown ? timer.start || 0 : timer.end || 0}
 
-                    <div class="timer" class:outline={$activeTimers.find(a => a.id === timer.id)}>
+                    <div class="timer" class:outline={$activeTimers.find((a) => a.id === timer.id)}>
                         <div class="timer-left">
                             <Button disabled={timer.type !== "counter"} on:click={() => playPauseTimer(timer.id)} style="padding: 8px;">
                                 <Icon id={isPlaying ? "pause" : "play"} white={!isPlaying} />
@@ -186,7 +186,7 @@
                                 </span>
                             {/if}
                             {#if timer.type === "counter"}
-                                <Button on:click={() => resetTimer(timer.id)} disabled={!$activeTimers.find(a => a.id === timer.id)} style="padding: 8px;">
+                                <Button on:click={() => resetTimer(timer.id)} disabled={!$activeTimers.find((a) => a.id === timer.id)} style="padding: 8px;">
                                     <Icon id="stop" white={!isPlaying} />
                                 </Button>
                             {/if}

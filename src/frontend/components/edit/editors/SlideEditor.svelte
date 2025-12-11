@@ -115,14 +115,14 @@
 
         let items = currentShow?.slides[ref[$activeEdit.slide || 0]?.id].items
         let values: string[] = []
-        active.forEach(id => {
+        active.forEach((id) => {
             let item = items[id]
             if (item) {
                 let styles = getStyles(item.style)
                 let textStyles = ""
 
                 Object.entries(newStyles).forEach(([key, value]) => (styles[key] = value.toString()))
-                Object.entries(styles).forEach(obj => (textStyles += obj[0] + ":" + obj[1] + ";"))
+                Object.entries(styles).forEach((obj) => (textStyles += obj[0] + ":" + obj[1] + ";"))
 
                 values.push(textStyles)
             }
@@ -150,7 +150,7 @@
         updateTimeout = setTimeout(resetAutoSize, 3000)
 
         function resetAutoSize() {
-            showsCache.update(a => {
+            showsCache.update((a) => {
                 if (!a[currentShowId]?.slides?.[slideId]?.items?.[activeItems[0] || 0]?.autoFontSize) return a
 
                 delete a[currentShowId].slides[slideId].items[activeItems[0] || 0].autoFontSize
@@ -260,7 +260,7 @@
         setTimeout(() => {
             // set focus to textbox if only one
             if (Slide?.items.length === 1 && !$activeEdit.items.length && $activeTriggerFunction !== "slide_notes") {
-                activeEdit.update(a => ({ ...(a || {}), items: [0] }))
+                activeEdit.update((a) => ({ ...(a || {}), items: [0] }))
                 const elem = document.querySelector(".editItem")?.querySelector(".edit")
                 if (elem) {
                     elem.addEventListener("focus", () => setCaretAtEnd(elem))

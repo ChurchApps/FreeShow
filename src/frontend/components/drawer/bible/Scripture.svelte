@@ -43,7 +43,7 @@
 
     // Load all scriptures in collection for multi-version display
     $: if (isCollection) {
-        activeScriptures.forEach(id => {
+        activeScriptures.forEach((id) => {
             if (id && !data[id]) {
                 loadScriptureForCollection(id)
             }
@@ -108,7 +108,7 @@
         const chars = Number($scriptureSettings.longVersesChars || 100)
 
         return activeScriptures
-            .map(scriptureId => {
+            .map((scriptureId) => {
                 const scriptureData = data[scriptureId]
                 const scriptureMeta = $scriptures[scriptureId]
                 const name = scriptureMeta?.customName || scriptureMeta?.name || scriptureId
@@ -133,7 +133,7 @@
                     return { id: scriptureId, name, text: "", isSplit: false }
                 }
             })
-            .filter(v => v.text)
+            .filter((v) => v.text)
     }
 
     $: isActiveInOutput = outputIsScripture($outputs)
@@ -168,7 +168,7 @@
     $: books = currentBible?.books || null
     $: chapters = currentBibleData?.bookData?.data?.chapters || null
     // $: verses = currentBibleData?.chapterData?.data?.verses || null
-    $: verses = currentBibleData?.chapterData?.data?.verses?.map(a => ({ ...a, text: currentBibleData?.chapterData?.getVerse(a.number).getHTML() || "" })) || null
+    $: verses = currentBibleData?.chapterData?.data?.verses?.map((a) => ({ ...a, text: currentBibleData?.chapterData?.getVerse(a.number).getHTML() || "" })) || null
 
     // category color / abbreviation data
     $: booksData = currentBibleData?.bibleData?.getBooksData() || []
@@ -180,11 +180,11 @@
         const chars = Number($scriptureSettings.longVersesChars || 100)
         const splitCounts: { [verseNumber: number]: number } = {}
 
-        activeScriptures.forEach(scriptureId => {
+        activeScriptures.forEach((scriptureId) => {
             const chapterData = data[scriptureId]?.chapterData
             if (!chapterData) return
 
-            verses.forEach(verse => {
+            verses.forEach((verse) => {
                 try {
                     const verseObj = chapterData.getVerse(verse.number)
                     const fullText = verseObj.getHTML() || verseObj?.data?.text || ""
@@ -234,11 +234,11 @@
     // WIP similar to getSplittedVerses in scripture.ts
     function updateSplitted(verses: Verse[] | null, _updater: any, collectionSplitCounts: { [verseNumber: number]: number } = {}) {
         if (!verses) return []
-        if (!$scriptureSettings.splitLongVerses) return verses.map(verse => ({ ...verse, id: (verse.number || "").toString() + (verse.endNumber ? "-" + verse.endNumber : "") }))
+        if (!$scriptureSettings.splitLongVerses) return verses.map((verse) => ({ ...verse, id: (verse.number || "").toString() + (verse.endNumber ? "-" + verse.endNumber : "") }))
 
         const chars = Number($scriptureSettings.longVersesChars || 100)
         const newVerses: (Verse & { id: string })[] = []
-        verses.forEach(verse => {
+        verses.forEach((verse) => {
             const sanitizedVerse = sanitizeVerseText(verse.text)
             const newVerseStrings = splitText(sanitizedVerse, chars)
             const end = verse.endNumber ? `-${verse.endNumber}` : ""
@@ -266,9 +266,9 @@
 
     function toggleChapter(e: any, id: string) {
         if (e.ctrlKey || e.metaKey) {
-            if (activeReference.chapters.find(cid => cid?.toString() === id)) {
+            if (activeReference.chapters.find((cid) => cid?.toString() === id)) {
                 // remove chapter
-                const newChapters = activeReference.chapters.filter(cid => cid.toString() !== id)
+                const newChapters = activeReference.chapters.filter((cid) => cid.toString() !== id)
                 const newVerses = activeReference.verses.filter((_, i) => i < newChapters.length)
                 openChapter(newChapters, newVerses)
             } else {
@@ -380,7 +380,7 @@
     /// HISTORY ///
 
     let historyOpened = false
-    $: currentHistory = clone($scriptureHistory.filter(a => a.id === previewBibleId)).reverse()
+    $: currentHistory = clone($scriptureHistory.filter((a) => a.id === previewBibleId)).reverse()
 
     /// AUTOSCROLL ///
 
@@ -412,7 +412,7 @@
         const selectedVerses = clone(activeReference.verses)
 
         if (isClick) {
-            if (previousSelection.find(a => a.toString() === verseNumber)) {
+            if (previousSelection.find((a) => a.toString() === verseNumber)) {
                 return [[verseNumber]]
             }
             return selectedVerses
@@ -424,7 +424,7 @@
         setTimeout(() => (isSelected = false), 100)
 
         const keys = e.ctrlKey || e.metaKey || e.shiftKey
-        if (keys || !selectedVerses[selectedVerses.length - 1]?.find(a => a && (a.toString() === verseNumber || a === getVerseId(verseNumber)))) {
+        if (keys || !selectedVerses[selectedVerses.length - 1]?.find((a) => a && (a.toString() === verseNumber || a === getVerseId(verseNumber)))) {
             selectedVerses[selectedVerses.length - 1] = scriptureRangeSelect(e, selectedVerses[selectedVerses.length - 1], verseNumber, splittedVerses)
         }
 
@@ -443,7 +443,7 @@
     function selectAllVerses() {
         if (!splittedVerses) return
 
-        openVerse([splittedVerses.map(a => a.id)])
+        openVerse([splittedVerses.map((a) => a.id)])
 
         // update
         setTimeout(() => (activeReference = activeReference))
@@ -516,7 +516,7 @@
 
         const rawSegments = sanitizedValue
             .split(";")
-            .map(segment => segment.trim())
+            .map((segment) => segment.trim())
             .filter(Boolean)
         const segmentsToProcess = rawSegments.length ? rawSegments : [sanitizedValue]
 
@@ -529,7 +529,7 @@
         if (!baseResult?.book) return null
 
         const bookNumber = Number(baseResult.book)
-        const canonicalBookName = books?.find(book => Number(book.number) === bookNumber)?.name || firstSegment
+        const canonicalBookName = books?.find((book) => Number(book.number) === bookNumber)?.name || firstSegment
 
         const resolvedSegments: string[] = []
         for (let i = 0; i < segmentsToProcess.length; i++) {
@@ -612,7 +612,7 @@
     async function getEntireChapterVerses(bookNumber: number, chapterNumber: number, bibleData: any) {
         const bookData = await bibleData.getBook(bookNumber)
         const chapterData = await bookData.getChapter(chapterNumber)
-        return (chapterData?.data?.verses || []).map(verse => Number(verse.number)).filter(Boolean)
+        return (chapterData?.data?.verses || []).map((verse) => Number(verse.number)).filter(Boolean)
     }
 
     // Format the combined reference so the UI shows "Book 1:1-12 ; 2:1-10".
@@ -621,8 +621,8 @@
         const bookRegex = new RegExp(`^${escapedBook}\\s*`, "i")
         const [firstSegment, ...rest] = segments
         const firstLabel = firstSegment.replace(bookRegex, "").trim() || firstSegment
-        const restLabels = rest.map(segment => segment.replace(bookRegex, "").trim())
-        const suffix = restLabels.length ? restLabels.map(label => ` ; ${label}`).join("") : ""
+        const restLabels = rest.map((segment) => segment.replace(bookRegex, "").trim())
+        const suffix = restLabels.length ? restLabels.map((label) => ` ; ${label}`).join("") : ""
         return `${bookName} ${firstLabel}${suffix}`.trim()
     }
 
@@ -753,7 +753,7 @@
         const currentVerseId = currentVerses[0]?.toString()
         const selectionCount = currentVerses.length
         if (currentVerseId && splittedVerses.length) {
-            const currentIndex = splittedVerses.findIndex(v => v.id === currentVerseId || getVerseIdParts(v.id).id === Number(currentVerseId))
+            const currentIndex = splittedVerses.findIndex((v) => v.id === currentVerseId || getVerseIdParts(v.id).id === Number(currentVerseId))
             if (currentIndex !== -1) {
                 // Navigate within split verses, maintaining selection count
                 const newIndex = moveLeft ? currentIndex - selectionCount : currentIndex + selectionCount
@@ -777,12 +777,12 @@
         let versesCount = verses?.length || 0 // splittedVerses.length
 
         // get length from previous chapter when moving left from verse 1
-        const normalizedVerses = (verses || []).map(v => getVerseIdParts(v.number).id)
+        const normalizedVerses = (verses || []).map((v) => getVerseIdParts(v.number).id)
         const firstVerse = normalizedVerses[0]
         if (moveLeft && firstVerse === 1) {
             // get verses count from previous chapter
             const chapterNumber = activeReference.chapters[0]
-            const prevChapterIndex = (chapters || []).findIndex(c => c.number?.toString() === chapterNumber?.toString()) - 1
+            const prevChapterIndex = (chapters || []).findIndex((c) => c.number?.toString() === chapterNumber?.toString()) - 1
             const prevChapter = chapters?.[prevChapterIndex]
             versesCount = prevChapter ? prevChapter.verses.length || chapterLengths[Number(chapterNumber) - 1] : 0
         }
@@ -897,12 +897,12 @@
                         {#if chapters?.length}
                             {#each chapters as chapter}
                                 {@const id = chapter.number.toString()}
-                                {@const isActive = activeReference.chapters.find(cid => cid.toString() === id)}
+                                {@const isActive = activeReference.chapters.find((cid) => cid.toString() === id)}
 
                                 <span
                                     {id}
                                     class:isActive
-                                    on:click={e => toggleChapter(e, id)}
+                                    on:click={(e) => toggleChapter(e, id)}
                                     on:contextmenu={() => {
                                         openChapter([id])
                                         setTimeout(selectAllVerses)
@@ -923,7 +923,7 @@
                                 {@const showSplitSuffix = $scriptureSettings.splitLongVersesSuffix}
                                 {@const showSuffixInPicker = $scriptureMode === "grid" || (isCollection && $scriptureSettings.showAllVersions) ? true : showSplitSuffix}
                                 {@const verseLabel = buildVerseLabel(id, subverse, endNumber, showSuffixInPicker)}
-                                {@const isActive = activeReference.verses[activeReference.verses.length - 1]?.find(vid => vid.toString() === content.id || vid.toString() === id.toString())}
+                                {@const isActive = activeReference.verses[activeReference.verses.length - 1]?.find((vid) => vid.toString() === content.id || vid.toString() === id.toString())}
                                 {@const text = formatBibleText(content.text, true) || (isCollection ? '<span style="opacity: 0.6; font-size: 0.85em; margin: 0; padding: 0;">~</span>' : "")}
                                 {@const collectionVerses = $scriptureSettings.showAllVersions && isCollection && $scriptureMode !== "grid" ? getCollectionVerses(content.id) : []}
 
@@ -936,10 +936,10 @@
                                     class:collection-verse={isCollection && $scriptureMode !== "grid"}
                                     data-title="{text}<br><br>{translateText('tooltip.scripture')}"
                                     draggable="true"
-                                    on:mousedown={e => openVerse(updateVersesSelection(e, content.id))}
-                                    on:click={e => openVerse(updateVersesSelection(e, content.id, true))}
-                                    on:click={e => (isActiveInOutput && !e.ctrlKey && !e.metaKey ? playScripture() : false)}
-                                    on:dblclick={e => (isActiveInOutput && !e.ctrlKey && !e.metaKey ? false : playScripture())}
+                                    on:mousedown={(e) => openVerse(updateVersesSelection(e, content.id))}
+                                    on:click={(e) => openVerse(updateVersesSelection(e, content.id, true))}
+                                    on:click={(e) => (isActiveInOutput && !e.ctrlKey && !e.metaKey ? playScripture() : false)}
+                                    on:dblclick={(e) => (isActiveInOutput && !e.ctrlKey && !e.metaKey ? false : playScripture())}
                                     role="none"
                                 >
                                     <span class="v" style={endNumber && subverse && showSuffixInPicker ? "width: 60px;" : ""}
@@ -1008,8 +1008,8 @@
                         <MaterialCheckbox
                             label="scripture.show_all"
                             checked={$scriptureSettings.showAllVersions}
-                            on:change={e => {
-                                scriptureSettings.update(s => ({ ...s, showAllVersions: e.detail }))
+                            on:change={(e) => {
+                                scriptureSettings.update((s) => ({ ...s, showAllVersions: e.detail }))
                             }}
                             small
                         />
@@ -1033,7 +1033,7 @@
 {:else if $scriptureMode !== "grid" || $resized.rightPanelDrawer > 5}
     <FloatingInputs arrow let:open>
         {#if open || isActiveInOutput}
-            <MaterialButton disabled={activeReference.book?.toString() === "1" && !!activeReference.chapters.find(a => a.toString() === "1") && !!activeReference.verses[0]?.find(a => a.toString() === "1")} title="{translateText('preview._previous_slide')} [Ctrl+Arrow Left]" on:click={() => _moveSelection(true)}>
+            <MaterialButton disabled={activeReference.book?.toString() === "1" && !!activeReference.chapters.find((a) => a.toString() === "1") && !!activeReference.verses[0]?.find((a) => a.toString() === "1")} title="{translateText('preview._previous_slide')} [Ctrl+Arrow Left]" on:click={() => _moveSelection(true)}>
                 <Icon size={1.3} id="previous" white={!isActiveInOutput} />
             </MaterialButton>
             <MaterialButton disabled={activeReference.book?.toString() === books?.length.toString() && activeReference.chapters.includes(chapters ? chapters.length : 1) && activeReference.verses[0]?.includes(verses ? verses.length : 1)} title="{translateText('preview._next_slide')} [Ctrl+Arrow Right]" on:click={() => _moveSelection(false)}>

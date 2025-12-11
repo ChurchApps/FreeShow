@@ -12,7 +12,7 @@
     export let value
 
     function convertToOptions(a) {
-        let options = Object.keys(a).map(id => ({ value: id, label: a[id].name, data: translateText(`variables.${a[id].type}`) }))
+        let options = Object.keys(a).map((id) => ({ value: id, label: a[id].name, data: translateText(`variables.${a[id].type}`) }))
         return sortByName(options, "label")
     }
 
@@ -76,11 +76,11 @@
     $: currentType = variable?.type
 </script>
 
-<MaterialDropdown label="items.variable" options={variableOptions} value={value?.id} on:change={e => updateValue("id", e.detail)} />
+<MaterialDropdown label="items.variable" options={variableOptions} value={value?.id} on:change={(e) => updateValue("id", e.detail)} />
 
 {#if value?.id}
     <InputRow>
-        <MaterialDropdown label="actions.mode" options={variableModes[currentType] || []} value={value?.key || defaultMode[currentType] || ""} on:change={e => updateValue("key", e.detail)} />
+        <MaterialDropdown label="actions.mode" options={variableModes[currentType] || []} value={value?.key || defaultMode[currentType] || ""} on:change={(e) => updateValue("key", e.detail)} />
 
         <!-- {#if variable?.type === "text_set"}
         <CombinedInput>
@@ -90,9 +90,9 @@
 
         {#if value?.key === "value" || variable?.type === "number"}
             {#if (variable?.type === "number" && value?.key !== "expression") || variable?.type === "text_set"}
-                <MaterialNumberInput label="variables.value" value={!isNaN(value?.value) ? value?.value || "1" : "1"} step={1} on:change={e => updateValue("value", e)} />
+                <MaterialNumberInput label="variables.value" value={!isNaN(value?.value) ? value?.value || "1" : "1"} step={1} on:change={(e) => updateValue("value", e)} />
             {:else}
-                <MaterialTextInput label="variables.value" value={isNaN(value?.value) ? value?.value || "" : ""} placeholder={value?.key === "expression" ? "Use math & dynamic variable values" : ""} on:change={e => updateValue("value", e)} />
+                <MaterialTextInput label="variables.value" value={isNaN(value?.value) ? value?.value || "" : ""} placeholder={value?.key === "expression" ? "Use math & dynamic variable values" : ""} on:change={(e) => updateValue("value", e)} />
             {/if}
         {:else if variable?.type === "text"}
             <MaterialDropdown label="variables.value" options={stateOptions} value={typeof value?.value === "boolean" ? (value.value ? "on" : "off") : ""} on:change={textStateChange} />

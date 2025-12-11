@@ -24,7 +24,7 @@
             isScrolling = null
             projectUpdating = null
             // scrollToActive()
-            if ($activeFocus.id) activeFocus.set({ ...active, index: project.shows.findIndex(a => a.id === active.id) })
+            if ($activeFocus.id) activeFocus.set({ ...active, index: project.shows.findIndex((a) => a.id === active.id) })
         }, 100)
     }
 
@@ -44,7 +44,7 @@
         if (!listElem || isScrolling || projectUpdating) return
 
         let index = active.index
-        if (index === undefined) index = project.shows.findIndex(a => a.id === (outputShowId ?? active.id))
+        if (index === undefined) index = project.shows.findIndex((a) => a.id === (outputShowId ?? active.id))
 
         let id = "id_" + getId(outputShowId ?? active.id) + "_" + index
         let elem = listElem.querySelector("#" + id) as HTMLElement
@@ -76,7 +76,7 @@
         if (!listElem?.closest(".center")) return
 
         fromTop = (listElem.children[0] as HTMLElement)?.offsetTop || 0
-        if (listElem.closest(".center")) (listElem.closest(".center") as HTMLElement).onscroll = e => scrolling(e)
+        if (listElem.closest(".center")) (listElem.closest(".center") as HTMLElement).onscroll = (e) => scrolling(e)
     }
 
     $: sidebarClosed = $resized.leftPanel < 5
@@ -96,7 +96,7 @@
 
         let focusedId = ""
         let names = listElem.querySelectorAll(".name")
-        ;[...names].forEach(a => {
+        ;[...names].forEach((a) => {
             let top = (a as HTMLElement).offsetTop - fromTop
             if (top <= scrollTop) focusedId = a.id
         })

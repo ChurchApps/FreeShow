@@ -119,7 +119,7 @@
     // preload data (to check if some of the buttons can be hidden)
     $: if (activeMenu) loadData()
     function loadData() {
-        activeMenu.forEach(id => {
+        activeMenu.forEach((id) => {
             let items = contextMenuItems[id]?.items || []
             if (!items[0]?.includes("LOAD")) return
 

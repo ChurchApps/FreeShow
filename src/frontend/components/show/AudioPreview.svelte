@@ -223,7 +223,7 @@
                 title="media._loop"
                 on:click={() => {
                     let loop = !$media[path]?.loop
-                    media.update(a => {
+                    media.update((a) => {
                         if (!a[path]) a[path] = {}
                         a[path].loop = loop
 

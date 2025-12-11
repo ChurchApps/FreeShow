@@ -31,12 +31,12 @@
                         <circle cx="12" cy="14.75" r="1.25" fill="currentColor" />
                     </svg>
                 </span>
-                <input id="password-input" class="input" type="password" name="password" autocomplete="current-password" placeholder={translate("remote.password", $dictionary)} on:input={e => _update("password", "stored", getValue(e))} on:change={e => _update("password", "stored", getValue(e))} value={$password.stored} />
+                <input id="password-input" class="input" type="password" name="password" autocomplete="current-password" placeholder={translate("remote.password", $dictionary)} on:input={(e) => _update("password", "stored", getValue(e))} on:change={(e) => _update("password", "stored", getValue(e))} value={$password.stored} />
             </div>
 
             <div class="actions">
                 <label class="remember-row">
-                    <input class="remember-checkbox" type="checkbox" checked={$password.remember} on:change={e => _update("password", "remember", isChecked(e))} />
+                    <input class="remember-checkbox" type="checkbox" checked={$password.remember} on:change={(e) => _update("password", "remember", isChecked(e))} />
                     <span class="remember-label">{translate("remote.remember", $dictionary)}</span>
                 </label>
 

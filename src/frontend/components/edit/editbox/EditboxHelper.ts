@@ -13,11 +13,11 @@ export class EditboxHelper {
         const oldTexts: string[] = []
         const newTexts: string[] = []
 
-        oldLines?.forEach(line => {
+        oldLines?.forEach((line) => {
             if (line.text?.[0]?.value) oldTexts.push(line.text[0].value)
         })
 
-        newLines.forEach(line => {
+        newLines.forEach((line) => {
             if (line.text?.[0]?.value) newTexts.push(line.text[0].value)
         })
 
@@ -34,7 +34,7 @@ export class EditboxHelper {
 
     static splitAllCrlf(lines: Line[]) {
         const result: Line[] = []
-        lines.forEach(line => {
+        lines.forEach((line) => {
             const splitLines = this.splitCrlf(line)
             result.push(...splitLines)
         })
@@ -48,7 +48,7 @@ export class EditboxHelper {
         let newLine = clone(line)
         newLine.text = []
 
-        line.text?.forEach(text => {
+        line.text?.forEach((text) => {
             const value = text.value
             const parts = value.replace("\r", "").split("\n")
             newLine.text.push({ style: text.style, value: parts[0] })
@@ -75,7 +75,7 @@ export class EditboxHelper {
             else firstLines.push({ align: line.align, text: [] })
 
             textPos = 0
-            line.text?.forEach(text => {
+            line.text?.forEach((text) => {
                 currentIndex += text.value.length
                 if (sel[i]?.start !== undefined) start = sel[i].start
 
@@ -116,8 +116,8 @@ export class EditboxHelper {
         if (!secondLines.length) secondLines = defaultLine
 
         // add chords (currently only adding full line chords, so splitting in the middle of a line might shift chords)
-        const chordLines = clone(lines.map(a => a.chords || []))
-        ;[...firstLines, ...secondLines].forEach(line => {
+        const chordLines = clone(lines.map((a) => a.chords || []))
+        ;[...firstLines, ...secondLines].forEach((line) => {
             const oldLineChords = chordLines.shift()
             if (oldLineChords?.length) line.chords = oldLineChords
         })
@@ -154,7 +154,7 @@ export class EditboxHelper {
 
                 // SAVE CHORDS (WIP does not work well with more "text" per line)
                 const textEnd = textIndex + a.value.length
-                const textChords = currentChords.filter(chord => chord.pos >= textIndex && (chord.pos <= textEnd || line.text.length - 1 >= tIndex))
+                const textChords = currentChords.filter((chord) => chord.pos >= textIndex && (chord.pos <= textEnd || line.text.length - 1 >= tIndex))
                 textIndex = textEnd
 
                 const textStyle = a.style || listStyle ? 'style="' + this.getCustomTextStyle(a.style) + listStyle + '"' : ""

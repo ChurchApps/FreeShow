@@ -89,11 +89,11 @@
     let currentPath = ""
 
     const workerErrors = ["RenderingCancelledException", "Transport destroyed", "Worker was destroyed", "Worker was terminated", "sendWithPromise"]
-    const isWorkerError = (error: any) => error?.name === "RenderingCancelledException" || workerErrors.some(msg => error?.message?.includes(msg))
+    const isWorkerError = (error: any) => error?.name === "RenderingCancelledException" || workerErrors.some((msg) => error?.message?.includes(msg))
 
     onMount(loadPages)
     onDestroy(() => {
-        renderTasks.forEach(task => task?.cancel())
+        renderTasks.forEach((task) => task?.cancel())
         try {
             loadingTask?.destroy()
         } catch {}
@@ -101,7 +101,7 @@
 
     async function loadPages() {
         loading = true
-        renderTasks.forEach(task => task?.cancel())
+        renderTasks.forEach((task) => task?.cancel())
         renderTasks = []
 
         if (loadingTask) {
@@ -192,7 +192,7 @@
                 {/if}
             </div>
 
-            <div class="slide" style={transparentOutput ? "" : `background-color: ${currentStyle.background};`} tabindex={0} role="button" on:click={e => outputPdf(e, i)} on:keydown={triggerClickOnEnterSpace}>
+            <div class="slide" style={transparentOutput ? "" : `background-color: ${currentStyle.background};`} tabindex={0} role="button" on:click={(e) => outputPdf(e, i)} on:keydown={triggerClickOnEnterSpace}>
                 <canvas bind:this={canvases[i]} />
             </div>
         </div>
@@ -231,7 +231,7 @@
 
         <div class="divider"></div>
 
-        <MaterialZoom columns={$slidesOptions.columns} on:change={e => slidesOptions.set({ ...$slidesOptions, columns: e.detail })} />
+        <MaterialZoom columns={$slidesOptions.columns} on:change={(e) => slidesOptions.set({ ...$slidesOptions, columns: e.detail })} />
     </FloatingInputs>
 {/if}
 

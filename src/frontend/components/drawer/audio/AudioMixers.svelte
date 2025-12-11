@@ -5,13 +5,13 @@
     import AudioChannelMixer from "./AudioChannelMixer.svelte"
     import AudioMixersGroup from "./AudioMixersGroup.svelte"
 
-    const outputIds = getAllNormalOutputs().map(a => a.id)
+    const outputIds = getAllNormalOutputs().map((a) => a.id)
 
     const mixerGroups = [
         {
             icon: "display_settings",
             label: "settings.display_settings",
-            channels: outputIds.map(id => ({ id, label: $outputs[id]?.name || id }))
+            channels: outputIds.map((id) => ({ id, label: $outputs[id]?.name || id }))
         }
     ]
 </script>

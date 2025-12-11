@@ -39,19 +39,19 @@
     }
 
     function updateOverride(id: string, key: keyof TemplateStyleOverride, value: string | boolean) {
-        const next = overrides.map(override => (override.id === id ? { ...override, [key]: value } : override))
+        const next = overrides.map((override) => (override.id === id ? { ...override, [key]: value } : override))
         commit(next)
     }
 
     function removeOverride(id: string) {
-        const next = overrides.filter(override => override.id !== id)
+        const next = overrides.filter((override) => override.id !== id)
         commit(next)
     }
 
     $: templatesList = sortByName(
         keysToID($templates)
-            .filter(a => a.settings?.mode === "text")
-            .map(a => ({ value: a.id, label: a.name, style: new TemplateHelper(a.id).getTextStyle() + ";font-size: unset;" })),
+            .filter((a) => a.settings?.mode === "text")
+            .map((a) => ({ value: a.id, label: a.name, style: new TemplateHelper(a.id).getTextStyle() + ";font-size: unset;" })),
         "value"
     )
 
@@ -68,7 +68,7 @@
         } as Template
 
         // history({ id: "UPDATE", newData: defaultTemplate, oldData: {id: templateId}, location: { page: "drawer", id: "template" } })
-        templates.update(a => {
+        templates.update((a) => {
             a[templateId] = newTemplate
             return a
         })
@@ -93,9 +93,9 @@
     {#if overrides.length}
         {#each overrides as override (override.id)}
             <InputRow>
-                <MaterialTextInput label="edit.style_override_pattern" style="flex: 4;" value={override.pattern} on:change={e => updateOverride(override.id, "pattern", e.detail)} autofocus={!override.pattern} />
+                <MaterialTextInput label="edit.style_override_pattern" style="flex: 4;" value={override.pattern} on:change={(e) => updateOverride(override.id, "pattern", e.detail)} autofocus={!override.pattern} />
 
-                <MaterialDropdown label="formats.template" style="flex: 2;border-left: 3px solid var(--primary-lighter) !important;" options={templatesList} value={override.templateId || ""} on:change={e => updateOverride(override.id, "templateId", e.detail)} on:new={e => updateOverride(override.id, "templateId", createTemplate(e))} addNew="new.template" on:delete={e => deleteTemplate(e.detail)} allowDeleting />
+                <MaterialDropdown label="formats.template" style="flex: 2;border-left: 3px solid var(--primary-lighter) !important;" options={templatesList} value={override.templateId || ""} on:change={(e) => updateOverride(override.id, "templateId", e.detail)} on:new={(e) => updateOverride(override.id, "templateId", createTemplate(e))} addNew="new.template" on:delete={(e) => deleteTemplate(e.detail)} allowDeleting />
                 {#if override.templateId && $templates[override.templateId]}
                     <MaterialButton title="titlebar.edit" icon="edit" on:click={() => editTemplate(override.templateId)} white />
                 {/if}

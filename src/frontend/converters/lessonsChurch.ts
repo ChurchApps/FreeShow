@@ -77,12 +77,12 @@ export async function convertLessonsPresentation(data: any) {
     sendMain(Main.DOWNLOAD_LESSONS_MEDIA, [{ name: lesson.lessonName, files: mediaToDownload, showId: lessonShow.id }])
 
     const replace = await receiveMessage()
-    replace.forEach(r => {
+    replace.forEach((r) => {
         replacer[r.from] = r.to
     })
 
     // change from remote urls to local paths
-    Object.keys(lessonShow.show.media).forEach(id => {
+    Object.keys(lessonShow.show.media).forEach((id) => {
         lessonShow.show.media[id].path = replacer[lessonShow.show.media[id].path]
     })
 
@@ -117,7 +117,7 @@ function convertOpenLessonPlaylist(lesson: OlpLesson) {
 
     // fix file names (might have spaces or :)
     slideGroups.forEach((group, i) => {
-        slideGroups[i].files = group.files?.map(file => {
+        slideGroups[i].files = group.files?.map((file) => {
             file.name = formatToFileName(file.name)
             return file
         })
@@ -126,7 +126,7 @@ function convertOpenLessonPlaylist(lesson: OlpLesson) {
     const { slides, layout, media }: any = convertToSlides(slideGroups)
     const lessonShow = createShow()
 
-    const mediaToDownload: any[] = slideGroups.map(a => a.files).flat()
+    const mediaToDownload: any[] = slideGroups.map((a) => a.files).flat()
 
     return { mediaToDownload, lessonShow }
 
@@ -171,8 +171,8 @@ function convertOlfLessonToOlpType(lesson: OlfLesson) {
     function getMessages(sections: any[]) {
         const messages: any[] = []
 
-        sections.forEach(section => {
-            let actions = section.actions?.filter(a => a.actionType === "play")
+        sections.forEach((section) => {
+            let actions = section.actions?.filter((a) => a.actionType === "play")
             actions = actions.map(({ files, content }) => ({ files, name: content }))
             messages.push(...actions)
         })
@@ -182,7 +182,7 @@ function convertOlfLessonToOlpType(lesson: OlfLesson) {
 }
 
 async function receiveMessage(): Promise<any[]> {
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
         // 5 seconds
         setTimeout(() => {
             removeListener()
@@ -190,7 +190,7 @@ async function receiveMessage(): Promise<any[]> {
             resolve([])
         }, 5000)
 
-        const listenerId = receiveToMain(ToMain.REPLACE_MEDIA_PATHS, data => {
+        const listenerId = receiveToMain(ToMain.REPLACE_MEDIA_PATHS, (data) => {
             removeListener()
             resolve(data)
         })
@@ -219,7 +219,7 @@ function convertToSlides(groups) {
             const loop = !!(file.loopVideo || file.loop || file.name.includes("Title"))
             let mediaId = uid()
             // find existing
-            const existingId = Object.keys(media).find(id => media[id].path === file.url)
+            const existingId = Object.keys(media).find((id) => media[id].path === file.url)
             if (existingId) mediaId = existingId
             else media[mediaId] = { name: file.name, path: file.url, muted: false, loop }
 

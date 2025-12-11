@@ -25,7 +25,7 @@
     let styleId = $popupData.styleId || ""
     let style = $styles[styleId]
     function updateStyle(key: string, value: any) {
-        styles.update(a => {
+        styles.update((a) => {
             a[styleId][key] = value
             return a
         })
@@ -58,10 +58,10 @@
 </div>
 
 {#if showMore}
-    <MaterialNumberInput style="margin-top: 20px;" label="actions.custom_key" value={active} min={0} max={99} on:change={e => setValue(e.detail)} />
+    <MaterialNumberInput style="margin-top: 20px;" label="actions.custom_key" value={active} min={0} max={99} on:change={(e) => setValue(e.detail)} />
 
     {#if styleId}
-        <MaterialToggleSwitch label="edit.skip_virtual_breaks" checked={!!style?.skipVirtualBreaks} defaultValue={false} on:change={e => updateStyle("skipVirtualBreaks", e.detail)} />
+        <MaterialToggleSwitch label="edit.skip_virtual_breaks" checked={!!style?.skipVirtualBreaks} defaultValue={false} on:change={(e) => updateStyle("skipVirtualBreaks", e.detail)} />
     {/if}
 {/if}
 

@@ -92,7 +92,7 @@ export class ChurchAppsProvider extends ContentProvider<ChurchAppsScopes, Church
                 }
 
                 const convertToCategories = (programs: any[]): ContentLibraryCategory[] => {
-                    return programs.map(program => ({
+                    return programs.map((program) => ({
                         name: program.name,
                         thumbnail: program.image,
                         children: program.studies?.map((study: any) => ({

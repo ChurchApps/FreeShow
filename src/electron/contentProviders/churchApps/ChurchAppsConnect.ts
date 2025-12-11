@@ -77,7 +77,7 @@ export class ChurchAppsConnect {
             }
         }
 
-        return new Promise(resolve => {
+        return new Promise((resolve) => {
             const apiUrl = CHURCHAPPS_API_URL
             const pathPrefix = data.api === "doing" ? "/doing" : "/content"
             const fullEndpoint = `${pathPrefix}${data.endpoint}`
@@ -106,7 +106,7 @@ export class ChurchAppsConnect {
 
         this.app.use(express.json())
 
-        return new Promise(resolve => {
+        return new Promise((resolve) => {
             this.app.get(path, (req, res) => {
                 const code = req.query.code?.toString() || ""
                 if (!code) return resolve(null)
@@ -155,7 +155,7 @@ export class ChurchAppsConnect {
     }
 
     private static refreshToken(access: ChurchAppsAuthData): Promise<ChurchAppsAuthData> {
-        return new Promise(resolve => {
+        return new Promise((resolve) => {
             if (!access?.refresh_token) return resolve(null)
             console.info("Refreshing ChurchApps OAuth token")
 

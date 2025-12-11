@@ -74,8 +74,8 @@ async function getNextBackground(currentOutputSlide: OutSlide | null, returnPath
 export const receiveSTAGE = {
     LAYOUTS: () => {
         return keysToID(get(stageShows))
-            .filter(a => !a.disabled)
-            .map(a => ({ id: a.id, name: a.name, password: !!a.password }))
+            .filter((a) => !a.disabled)
+            .map((a) => ({ id: a.id, name: a.name, password: !!a.password }))
     },
     LAYOUT: (data: { id: string }, connectionId: string) => {
         let layout = get(stageShows)[data.id]
@@ -86,7 +86,7 @@ export const receiveSTAGE = {
         layout = arrayToObject(filterObjectArray(get(stageShows), ["disabled", "name", "settings", "items"]))[data.id]
 
         // add labels
-        Object.keys(layout.items).map(itemId => {
+        Object.keys(layout.items).map((itemId) => {
             const item = layout.items[itemId]
             item.label = getCustomStageLabel(item.type || itemId, item)
         })
@@ -150,7 +150,7 @@ export const receiveSTAGE = {
         const slidesLength = currentLayoutRef.length || 0
 
         // get custom group names
-        const layoutGroups = currentLayoutRef.map(a => {
+        const layoutGroups = currentLayoutRef.map((a) => {
             const ref = a.parent || a
             const slide = currentShowSlides[ref.id]
             if (!slide) return { name: "—" }
@@ -165,7 +165,7 @@ export const receiveSTAGE = {
             if (typeof group !== "string") group = ""
             const name = getGroupName({ show: _show(currentShowId).get(), showId: currentShowId }, ref.id, group, ref.layoutIndex)?.replace(/ *\([^)]*\) */g, "")
             const oneLetterName = getGroupName({ show: _show(currentShowId).get(), showId: currentShowId }, ref.id, group[0].toUpperCase(), ref.layoutIndex)?.replace(/ *\([^)]*\) */g, "")
-            return { name: name || "—", oneLetterName: (oneLetterName || "—").replace(" ", ""), index: ref.layoutIndex, child: a.type === "child" ? (currentLayoutRef[ref.layoutIndex]?.children || []).findIndex(id => id === a.id) + 1 : 0 }
+            return { name: name || "—", oneLetterName: (oneLetterName || "—").replace(" ", ""), index: ref.layoutIndex, child: a.type === "child" ? (currentLayoutRef[ref.layoutIndex]?.children || []).findIndex((id) => id === a.id) + 1 : 0 }
         })
 
         data.progress = { currentShowSlide, slidesLength, layoutGroups }

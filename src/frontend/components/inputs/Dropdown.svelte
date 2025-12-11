@@ -30,7 +30,7 @@
         if (disabled || arrow || nextScrollTimeout || !ctrl) return
         e.preventDefault()
 
-        let index = options.findIndex(a => (activeId ? a.id === activeId : a.name === value))
+        let index = options.findIndex((a) => (activeId ? a.id === activeId : a.name === value))
         if (e.deltaY > 0) index = Math.min(options.length - 1, index + 1)
         else index = Math.max(0, index - 1)
         dispatch("click", options[index])

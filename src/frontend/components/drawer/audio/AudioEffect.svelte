@@ -50,7 +50,7 @@
         style="width: 100%;height: 100px;border: 2px solid var(--primary-lighter);"
         title={getFileName(path)}
         bold={false}
-        on:click={e => {
+        on:click={(e) => {
             if ($outLocked || e.ctrlKey || e.metaKey) return
 
             AudioPlayer.start(path, { name }, { playMultiple: true, stopIfPlaying: true, clearTime: 0.3 })

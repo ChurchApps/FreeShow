@@ -49,10 +49,10 @@
 
         let disableMedia = true
 
-        if (refs.some(ref => ref.some(slide => slide.data.background))) disableMedia = false
-        else if (refs.some(ref => ref.some(slide => slide.data.audio))) disableMedia = false
-        else if (refs.some(ref => ref.some(slide => slide.data.mics))) disableMedia = false
-        else if (refs.some(ref => ref.some(slide => slide.data.actions?.slideActions?.length))) disableMedia = false
+        if (refs.some((ref) => ref.some((slide) => slide.data.background))) disableMedia = false
+        else if (refs.some((ref) => ref.some((slide) => slide.data.audio))) disableMedia = false
+        else if (refs.some((ref) => ref.some((slide) => slide.data.mics))) disableMedia = false
+        else if (refs.some((ref) => ref.some((slide) => slide.data.actions?.slideActions?.length))) disableMedia = false
         // else if (Object.keys(show?.midi || {}).length) disableMedia = false
         // else if (Object.values($actions).find((value: any) => value.shows?.find((a) => a.id === $activeShow?.id))) disableMedia = false
 

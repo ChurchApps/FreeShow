@@ -46,7 +46,7 @@
     on:mousemove={mousemoveOutput}
     bind:offsetWidth={width}
     bind:offsetHeight={height}
-    on:dblclick={e => {
+    on:dblclick={(e) => {
         if (e.target?.closest(".website") || e.target?.closest(".clickable")) return
         hideDisplay()
     }}

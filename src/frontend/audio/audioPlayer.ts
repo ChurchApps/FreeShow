@@ -80,7 +80,7 @@ export class AudioPlayer {
         options.startAt = AudioPlayer.getStartTime(path, options.startAt)
         if (options.startAt > 0) audio.currentTime = options.startAt
 
-        playingAudio.update(a => {
+        playingAudio.update((a) => {
             a[path] = {
                 name: removeExtension(metadata.name || getFileName(path)),
                 paused: false,
@@ -112,7 +112,7 @@ export class AudioPlayer {
         const audio = await this.createAudioFromStream(id, stream)
         if (!audio) return
 
-        playingAudio.update(a => {
+        playingAudio.update((a) => {
             a[id] = {
                 name: metadata.name,
                 paused: false,
@@ -138,7 +138,7 @@ export class AudioPlayer {
     }
 
     private static waitForAudio(pathOrId: string, audio: HTMLAudioElement): Promise<HTMLAudioElement | null> {
-        return new Promise(resolve => {
+        return new Promise((resolve) => {
             audio.addEventListener("canplay", loaded, { once: true })
             audio.addEventListener("error", error, { once: true })
 
@@ -200,7 +200,7 @@ export class AudioPlayer {
         if (!this.audioExists(id)) return
 
         this.pause(id)
-        playingAudio.update(a => {
+        playingAudio.update((a) => {
             // reset
             a[id].audio.src = ""
             this.stopStream(a[id].stream)
@@ -215,7 +215,7 @@ export class AudioPlayer {
 
     private static stopStream(stream: MediaStream | undefined) {
         if (!stream) return
-        stream.getAudioTracks().forEach(track => track.stop())
+        stream.getAudioTracks().forEach((track) => track.stop())
     }
 
     private static togglePausedState(id: string) {
@@ -226,7 +226,7 @@ export class AudioPlayer {
 
     static updateVolume(specificAudioPath: string | null = null) {
         const ids = specificAudioPath ? [specificAudioPath] : Object.keys(get(playingAudio))
-        ids.forEach(id => {
+        ids.forEach((id) => {
             let newVolume = this.getVolume(id)
 
             // check playlist volume
@@ -298,7 +298,7 @@ export class AudioPlayer {
     static getAllPlaying(removePaused = true) {
         return get(playingAudioPaths).length
             ? get(playingAudioPaths)
-            : Object.keys(get(playingAudio)).filter(id => {
+            : Object.keys(get(playingAudio)).filter((id) => {
                   const audioData = get(playingAudio)[id]
                   return audioData.audio && (!removePaused || !audioData.paused)
               })
@@ -359,16 +359,16 @@ export class AudioPlayer {
     }
 
     static getOutputs(): Promise<{ value: string; label: string }[]> {
-        return new Promise(resolve => {
+        return new Promise((resolve) => {
             navigator.mediaDevices
                 .enumerateDevices()
-                .then(devices => {
+                .then((devices) => {
                     // only get audio outputs & not "default" becuase that does not work
-                    const outputDevices = devices.filter(device => device.kind === "audiooutput" && device.deviceId !== "default")
-                    const audioOutputs = outputDevices.map(a => ({ value: a.deviceId, label: a.label }))
+                    const outputDevices = devices.filter((device) => device.kind === "audiooutput" && device.deviceId !== "default")
+                    const audioOutputs = outputDevices.map((a) => ({ value: a.deviceId, label: a.label }))
                     resolve(audioOutputs)
                 })
-                .catch(err => {
+                .catch((err) => {
                     console.log(`${err.name}: ${err.message}`)
                     resolve([])
                 })
@@ -387,7 +387,7 @@ export class AudioPlayer {
 }
 
 function updatePlayingStore(id: string, key: string, value: any) {
-    playingAudio.update(a => {
+    playingAudio.update((a) => {
         if (!a[id]) return a
         a[id][key] = value
         return a
@@ -395,7 +395,7 @@ function updatePlayingStore(id: string, key: string, value: any) {
 }
 
 function updateAudioStore(id: string, key: string, value: any) {
-    playingAudio.update(a => {
+    playingAudio.update((a) => {
         if (!a[id]?.audio) return a
         a[id].audio[key] = value
         return a
@@ -403,7 +403,7 @@ function updateAudioStore(id: string, key: string, value: any) {
 }
 
 export async function loadAudioFile(path: string): Promise<HTMLAudioElement | null> {
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
         const audio = new Audio(encodeFilePath(path))
 
         audio.addEventListener("canplaythrough", loaded, { once: true })

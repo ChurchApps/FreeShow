@@ -109,7 +109,7 @@ export function generateLightRandomColor() {
     const b = Math.floor(Math.random() * (256 - minBrightness)) + minBrightness
 
     // RGB to hex
-    const toHex = c => {
+    const toHex = (c) => {
         const hex = c.toString(16)
         return hex.length === 1 ? "0" + hex : hex
     }
@@ -179,7 +179,7 @@ export function splitGradientValue(gradientStr: string) {
     const normalizeColor = (str: string) => {
         const rgbMatch = str.match(/^rgb\(([^)]+)\)$/i)
         if (!rgbMatch) return str.trim()
-        const vals = rgbMatch[1].split(/[\s,]+/).map(s => s.trim())
+        const vals = rgbMatch[1].split(/[\s,]+/).map((s) => s.trim())
         return vals.length === 3 ? `rgba(${vals.join(",")}, 1)` : `rgba(${vals.join(",")})`
     }
 
@@ -195,7 +195,7 @@ export function splitGradientValue(gradientStr: string) {
 
     // Auto-assign positions if missing
     const total = result.colors.length
-    const hasAllPositions = result.colors.every(c => c.pos !== null)
+    const hasAllPositions = result.colors.every((c) => c.pos !== null)
     if (!hasAllPositions) {
         for (let i = 0; i < total; i++) {
             if (result.colors[i].pos === null) {

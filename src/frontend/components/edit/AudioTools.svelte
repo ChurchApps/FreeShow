@@ -34,7 +34,7 @@
         if (currentMedia.volume) setTimeout(() => AudioPlayer.updateVolume(audioId))
 
         // reset
-        deleteKeys.forEach(key => removeStore("media", { keys: [audioId, key] }))
+        deleteKeys.forEach((key) => removeStore("media", { keys: [audioId, key] }))
 
         currentAudioSections = clone(audioSections)
         getAudioDuration()

@@ -76,7 +76,7 @@ export class AudioMultichannel {
      * Uses an AnalyserNode to detect actual audio content
      */
     static detectActiveChannelCount(audioContext: AudioContext, source: AudioNode, sourceId: string, maxChannels: number): Promise<number> {
-        return new Promise(resolve => {
+        return new Promise((resolve) => {
             if (!source) {
                 resolve(this.DEFAULT_CHANNELS)
                 return
@@ -132,7 +132,7 @@ export class AudioMultichannel {
                     try {
                         source.disconnect(tempSplitter)
                         tempSplitter.disconnect()
-                        tempAnalysers.forEach(a => a.disconnect())
+                        tempAnalysers.forEach((a) => a.disconnect())
                     } catch (err) {
                         // Ignore cleanup errors
                     }
@@ -313,11 +313,11 @@ export class AudioMultichannel {
             merger.connect(audioContext.destination)
 
             // Start and stop quickly to test
-            oscillators.forEach(osc => osc.start())
+            oscillators.forEach((osc) => osc.start())
 
-            await new Promise(resolve => setTimeout(resolve, 100))
+            await new Promise((resolve) => setTimeout(resolve, 100))
 
-            oscillators.forEach(osc => osc.stop())
+            oscillators.forEach((osc) => osc.stop())
             merger.disconnect()
 
             console.log(`✅ ${channelCount}-channel test successful`)

@@ -16,7 +16,7 @@
 
     // && !$editHistory.length
     $: editDisabled = $activeEdit.id && ($activeEdit.type || "show") !== "show" ? false : $activeShow && ($activeShow?.type || "show") === "show" ? isLocked : $activeShow?.type === "pdf" || !$activeShow?.id
-    $: physicalOutputWindows = Object.values($outputs).filter(a => a.enabled && !a.invisible)
+    $: physicalOutputWindows = Object.values($outputs).filter((a) => a.enabled && !a.invisible)
 
     let confirm = false
     let disableClick = false
