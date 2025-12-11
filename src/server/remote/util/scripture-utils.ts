@@ -2,38 +2,103 @@ import { sanitizeVerseText } from "../../../common/scripture/sanitizeVerseText"
 
 // Book abbreviation mappings
 export const BOOK_ABBREVIATIONS: Record<string, string> = {
-    jh: "john", jn: "john", jo: "john",
-    gen: "genesis", ex: "exodus", exo: "exodus",
-    lev: "leviticus", num: "numbers",
-    deut: "deuteronomy", dt: "deuteronomy",
-    josh: "joshua", judg: "judges", ru: "ruth",
-    sam: "samuel", "1sam": "1samuel", "2sam": "2samuel",
-    kg: "kings", kgs: "kings", "1kg": "1kings", "1kgs": "1kings", "2kg": "2kings", "2kgs": "2kings",
-    chr: "chronicles", "1chr": "1chronicles", "2chr": "2chronicles",
-    ezr: "ezra", neh: "nehemiah", est: "esther",
-    ps: "psalms", psa: "psalms", prov: "proverbs", pr: "proverbs",
-    ecc: "ecclesiastes", eccl: "ecclesiastes",
-    song: "songofsongs", ss: "songofsongs",
-    isa: "isaiah", is: "isaiah", jer: "jeremiah", lam: "lamentations",
-    ezek: "ezekiel", ez: "ezekiel", dan: "daniel",
-    hos: "hosea", joe: "joel", am: "amos", ob: "obadiah",
-    jon: "jonah", mic: "micah", nah: "nahum", hab: "habakkuk",
-    zeph: "zephaniah", zep: "zephaniah", hag: "haggai",
-    zech: "zechariah", zec: "zechariah", mal: "malachi",
-    mt: "matthew", matt: "matthew", mk: "mark", lk: "luke", luk: "luke",
-    joh: "john", act: "acts", rom: "romans",
-    cor: "corinthians", "1cor": "1corinthians", "2cor": "2corinthians",
-    gal: "galatians", eph: "ephesians",
-    phil: "philippians", php: "philippians", col: "colossians",
-    thess: "thessalonians", thes: "thessalonians",
-    "1thess": "1thessalonians", "1thes": "1thessalonians",
-    "2thess": "2thessalonians", "2thes": "2thessalonians",
-    tim: "timothy", "1tim": "1timothy", "2tim": "2timothy",
-    tit: "titus", philem: "philemon", phlm: "philemon",
-    heb: "hebrews", jas: "james", jam: "james",
-    pet: "peter", pt: "peter", "1pet": "1peter", "1pt": "1peter",
-    "2pet": "2peter", "2pt": "2peter", jude: "jude",
-    rev: "revelation", rv: "revelation"
+    jh: "john",
+    jn: "john",
+    jo: "john",
+    gen: "genesis",
+    ex: "exodus",
+    exo: "exodus",
+    lev: "leviticus",
+    num: "numbers",
+    deut: "deuteronomy",
+    dt: "deuteronomy",
+    josh: "joshua",
+    judg: "judges",
+    ru: "ruth",
+    sam: "samuel",
+    "1sam": "1samuel",
+    "2sam": "2samuel",
+    kg: "kings",
+    kgs: "kings",
+    "1kg": "1kings",
+    "1kgs": "1kings",
+    "2kg": "2kings",
+    "2kgs": "2kings",
+    chr: "chronicles",
+    "1chr": "1chronicles",
+    "2chr": "2chronicles",
+    ezr: "ezra",
+    neh: "nehemiah",
+    est: "esther",
+    ps: "psalms",
+    psa: "psalms",
+    prov: "proverbs",
+    pr: "proverbs",
+    ecc: "ecclesiastes",
+    eccl: "ecclesiastes",
+    song: "songofsongs",
+    ss: "songofsongs",
+    isa: "isaiah",
+    is: "isaiah",
+    jer: "jeremiah",
+    lam: "lamentations",
+    ezek: "ezekiel",
+    ez: "ezekiel",
+    dan: "daniel",
+    hos: "hosea",
+    joe: "joel",
+    am: "amos",
+    ob: "obadiah",
+    jon: "jonah",
+    mic: "micah",
+    nah: "nahum",
+    hab: "habakkuk",
+    zeph: "zephaniah",
+    zep: "zephaniah",
+    hag: "haggai",
+    zech: "zechariah",
+    zec: "zechariah",
+    mal: "malachi",
+    mt: "matthew",
+    matt: "matthew",
+    mk: "mark",
+    lk: "luke",
+    luk: "luke",
+    joh: "john",
+    act: "acts",
+    rom: "romans",
+    cor: "corinthians",
+    "1cor": "1corinthians",
+    "2cor": "2corinthians",
+    gal: "galatians",
+    eph: "ephesians",
+    phil: "philippians",
+    php: "philippians",
+    col: "colossians",
+    thess: "thessalonians",
+    thes: "thessalonians",
+    "1thess": "1thessalonians",
+    "1thes": "1thessalonians",
+    "2thess": "2thessalonians",
+    "2thes": "2thessalonians",
+    tim: "timothy",
+    "1tim": "1timothy",
+    "2tim": "2timothy",
+    tit: "titus",
+    philem: "philemon",
+    phlm: "philemon",
+    heb: "hebrews",
+    jas: "james",
+    jam: "james",
+    pet: "peter",
+    pt: "peter",
+    "1pet": "1peter",
+    "1pt": "1peter",
+    "2pet": "2peter",
+    "2pt": "2peter",
+    jude: "jude",
+    rev: "revelation",
+    rv: "revelation"
 }
 
 // Normalize book name for searching
@@ -53,14 +118,14 @@ export function formatBookSearch(search: string): string {
 // Find a book by name or abbreviation
 export function findBook(books: any[], value: string): any {
     const search = formatBookSearch(value)
-    const exactMatch = books.find(book => {
+    const exactMatch = books.find((book) => {
         const bookName = formatBookSearch(book.name)
         if (bookName === search) return true
         const expandedName = BOOK_ABBREVIATIONS[search]
         if (expandedName && bookName.includes(expandedName)) return true
         return false
     })
-    return exactMatch || books.find(book => formatBookSearch(book.name).startsWith(search))
+    return exactMatch || books.find((book) => formatBookSearch(book.name).startsWith(search))
 }
 
 // Find a chapter by number (1-indexed)
@@ -95,7 +160,10 @@ export function parseCombinedQuery(query: string, books: any[]): { textTerm: str
             const bookName = words.slice(i, i + len).join(" ")
             const book = findBook(books, bookName)
             if (book) {
-                const textTerm = words.filter((_, idx) => idx < i || idx >= i + len).join(" ").trim()
+                const textTerm = words
+                    .filter((_, idx) => idx < i || idx >= i + len)
+                    .join(" ")
+                    .trim()
                 if (textTerm.length >= 2) return { textTerm, book }
             }
         }
@@ -115,7 +183,9 @@ export function searchInBible(books: any[], searchTerm: string, filterBook: any 
                 const verseContent = sanitizeVerseText(verse.text || "")
                 if (verseContent.toLowerCase().includes(searchLower)) {
                     results.push({
-                        book, chapter, verse,
+                        book,
+                        chapter,
+                        verse,
                         reference: `${book.number}.${chapter.number}.${verse.number}`,
                         referenceFull: `${book.name} ${chapter.number}:${verse.number}`,
                         verseText: verseContent

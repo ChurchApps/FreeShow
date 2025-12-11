@@ -50,17 +50,10 @@
 </script>
 
 <div class="mixer-container">
-    <AudioChannel
-        label={translate("audio.main", $dictionary)}
-        volume={getVolume("main", mainData.volume)}
-        isMuted={mainData.isMuted ?? false}
-        on:input={(e) => handleInput("main", e.detail)}
-        on:change={(e) => handleChange("main", e.detail)}
-        on:mute={() => toggleMute("main")}
-    />
+    <AudioChannel label={translate("audio.main", $dictionary)} volume={getVolume("main", mainData.volume)} isMuted={mainData.isMuted ?? false} on:input={(e) => handleInput("main", e.detail)} on:change={(e) => handleChange("main", e.detail)} on:mute={() => toggleMute("main")} />
 
     {#if Object.keys(outputs).length > 0}
-        <button class="outputs-header" type="button" on:click={() => outputsExpanded = !outputsExpanded}>
+        <button class="outputs-header" type="button" on:click={() => (outputsExpanded = !outputsExpanded)}>
             <div class="outputs-title">
                 <Icon id="display_settings" size={1} />
                 <span>{translate("settings.display_settings", $dictionary)}</span>
@@ -70,14 +63,7 @@
 
         {#if outputsExpanded}
             {#each Object.entries(outputs) as [id, output]}
-                <AudioChannel
-                    label={output.name || id}
-                    volume={getVolume(id, output.volume)}
-                    isMuted={output.isMuted ?? false}
-                    on:input={(e) => handleInput(id, e.detail)}
-                    on:change={(e) => handleChange(id, e.detail)}
-                    on:mute={() => toggleMute(id)}
-                />
+                <AudioChannel label={output.name || id} volume={getVolume(id, output.volume)} isMuted={output.isMuted ?? false} on:input={(e) => handleInput(id, e.detail)} on:change={(e) => handleChange(id, e.detail)} on:mute={() => toggleMute(id)} />
             {/each}
         {/if}
     {/if}

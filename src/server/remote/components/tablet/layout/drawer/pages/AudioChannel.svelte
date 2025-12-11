@@ -8,7 +8,7 @@
     export let volume: number = 1
     export let isMuted: boolean = false
     export let disabled: boolean = false
-    
+
     const dispatch = createEventDispatcher()
 
     function onVolumeInput(e: any) {
@@ -34,40 +34,15 @@
         <div class="label">
             <p>{label}</p>
 
-            <input
-                type="range"
-                class="volume-slider"
-                min="0"
-                max="1"
-                step="0.01"
-                value={volume}
-                disabled={disabled || isMuted}
-                on:input={onVolumeInput}
-                on:change={onVolumeChange}
-            />
+            <input type="range" class="volume-slider" min="0" max="1" step="0.01" value={volume} disabled={disabled || isMuted} on:input={onVolumeInput} on:change={onVolumeChange} />
         </div>
 
         <div class="input">
-            <input
-                type="number"
-                min="0"
-                max="100"
-                step="1"
-                value={Math.round(volume * 100)}
-                disabled={disabled || isMuted}
-                on:change={onNumberChange}
-            />
+            <input type="number" min="0" max="100" step="1" value={Math.round(volume * 100)} disabled={disabled || isMuted} on:change={onNumberChange} />
             <span class="unit">%</span>
         </div>
 
-        <MaterialButton
-            variant="outlined"
-            style="padding: 8px; height: 36px; width: 36px;"
-            icon={isMuted ? "muted" : "volume"}
-            title={translate(`actions.${isMuted ? "unmute" : "mute"}`, $dictionary)}
-            red={isMuted}
-            on:click={toggleMute}
-        />
+        <MaterialButton variant="outlined" style="padding: 8px; height: 36px; width: 36px;" icon={isMuted ? "muted" : "volume"} title={translate(`actions.${isMuted ? "unmute" : "mute"}`, $dictionary)} red={isMuted} on:click={toggleMute} />
     </div>
 </div>
 
@@ -122,7 +97,10 @@
         cursor: pointer;
         border-radius: 50%;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-        transition: width 0.15s ease, height 0.15s ease, box-shadow 0.15s ease;
+        transition:
+            width 0.15s ease,
+            height 0.15s ease,
+            box-shadow 0.15s ease;
     }
 
     .volume-slider::-webkit-slider-thumb:active {
@@ -139,7 +117,10 @@
         border-radius: 50%;
         border: none;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-        transition: width 0.15s ease, height 0.15s ease, box-shadow 0.15s ease;
+        transition:
+            width 0.15s ease,
+            height 0.15s ease,
+            box-shadow 0.15s ease;
     }
 
     .volume-slider::-moz-range-thumb:active {

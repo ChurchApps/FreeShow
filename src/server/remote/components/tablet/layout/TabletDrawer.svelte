@@ -226,7 +226,7 @@
         cursor: ns-resize;
         padding: 0;
         padding-right: 10px;
-        padding-top: 4px; 
+        padding-top: 4px;
         touch-action: none;
         -webkit-tap-highlight-color: transparent;
         box-sizing: border-box;

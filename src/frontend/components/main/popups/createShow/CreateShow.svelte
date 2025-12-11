@@ -53,8 +53,7 @@
     // get the selected category
     if ($drawerTabsData.shows?.activeSubTab && $categories[$drawerTabsData.shows.activeSubTab]) selectedCategory = cats.find((a) => a.id === $drawerTabsData.shows.activeSubTab)
     // get the category from the active show
-    else if ($shows[$activeShow?.id || ""]?.category && $categories[$shows[$activeShow!.id].category!])
-        selectedCategory = cats.find((a) => a.id === $shows[$activeShow?.id || ""]?.category)
+    else if ($shows[$activeShow?.id || ""]?.category && $categories[$shows[$activeShow!.id].category!]) selectedCategory = cats.find((a) => a.id === $shows[$activeShow?.id || ""]?.category)
     // set to "Songs" if it exists & nothing else if selected
     else if ($categories.song) selectedCategory = cats.find((a) => a.id === "song")
     // otherwise set to first category

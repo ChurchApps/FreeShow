@@ -22,24 +22,14 @@
             <div class="field-group">
                 <label class="field-label" for="password-input">{translate("remote.password", $dictionary)}</label>
                 <div class="field">
-                <span class="icon" aria-hidden="true">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M7 10V8a5 5 0 0 1 10 0v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-                        <rect x="4.75" y="10" width="14.5" height="9.5" rx="2.5" stroke="currentColor" stroke-width="1.5" />
-                        <circle cx="12" cy="14.75" r="1.25" fill="currentColor" />
-                    </svg>
-                </span>
-                <input
-                    id="password-input"
-                    class="input"
-                    type="password"
-                    name="password"
-                    autocomplete="current-password"
-                    placeholder={translate("remote.password", $dictionary)}
-                    on:input={(e) => _update("password", "stored", getValue(e))}
-                    on:change={(e) => _update("password", "stored", getValue(e))}
-                    value={$password.stored}
-                />
+                    <span class="icon" aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M7 10V8a5 5 0 0 1 10 0v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                            <rect x="4.75" y="10" width="14.5" height="9.5" rx="2.5" stroke="currentColor" stroke-width="1.5" />
+                            <circle cx="12" cy="14.75" r="1.25" fill="currentColor" />
+                        </svg>
+                    </span>
+                    <input id="password-input" class="input" type="password" name="password" autocomplete="current-password" placeholder={translate("remote.password", $dictionary)} on:input={(e) => _update("password", "stored", getValue(e))} on:change={(e) => _update("password", "stored", getValue(e))} value={$password.stored} />
                 </div>
             </div>
 

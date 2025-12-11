@@ -463,12 +463,7 @@
     {:else if id === "audio"}
         <div class="tabSection">
             <div class="section">
-                <MaterialButton
-                    class="tab active"
-                    style="width: 100%; font-weight: normal; padding: 0.2em 0.8em;"
-                    isActive={true}
-                    tab
-                >
+                <MaterialButton class="tab active" style="width: 100%; font-weight: normal; padding: 0.2em 0.8em;" isActive={true} tab>
                     <div style="max-width: 85%;">
                         <Icon id="volume" size={1} white={true} />
                         <p style="margin: 5px;">{translate("audio.mixer", $dictionary)}</p>

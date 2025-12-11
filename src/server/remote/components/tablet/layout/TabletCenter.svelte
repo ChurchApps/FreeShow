@@ -369,7 +369,9 @@
         border: none;
         padding: 6px 12px;
         border-radius: 10px;
-        transition: background-color 120ms ease, transform 120ms ease;
+        transition:
+            background-color 120ms ease,
+            transform 120ms ease;
         align-self: center;
     }
     .hero-row :global(svg) {
