@@ -13,7 +13,7 @@ import { updateOut } from "../components/helpers/showActions"
 import { _show } from "../components/helpers/shows"
 import { clearAll } from "../components/output/clear"
 import { REMOTE } from "./../../types/Channels"
-import { actions, actionTags, activePage, activeProject, activeShow, activeTimers, audioChannelsData, categories, connections, dictionary, driveData, folders, language, openedFolders, outLocked, outputs, overlayCategories, overlays, projects, remotePassword, runningActions, scriptures, shows, showsCache, styles, templateCategories, templates, timers, triggers, variableTags, variables, volume } from "./../stores"
+import { actions, actionTags, activePage, activeProject, activeShow, activeTimers, audioChannelsData, categories, connections, dictionary, driveData, folders, language, openedFolders, outLocked, outputs, overlayCategories, overlays, playerVideos, projects, remotePassword, runningActions, scriptures, shows, showsCache, styles, templateCategories, templates, timers, triggers, variableTags, variables, volume } from "./../stores"
 import { lastClickTime } from "./common"
 import { translateText } from "./language"
 import { send } from "./request"
@@ -180,7 +180,14 @@ export const receiveREMOTE: any = {
   },
   OUT_DATA: (msg: any) => {
     const currentOutput = getFirstActiveOutput()
-    const out = currentOutput?.out || {}
+    const out = clone(currentOutput?.out || {})
+
+    // Include player video name for online media (YouTube, Vimeo, etc.)
+    if (out.background?.type === "player" && out.background?.id) {
+      const playerName = get(playerVideos)[out.background.id]?.name
+      if (playerName) out.background.name = playerName
+    }
+
     msg.data = out
 
     return msg

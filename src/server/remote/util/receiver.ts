@@ -315,17 +315,13 @@ export const receiver = {
         }
 
         const audioFiles: any = {}
-        
+
         // Handle if data is an object of media items
         if (typeof data === "object" && !Array.isArray(data)) {
-            Object.keys(data).forEach(id => {
+            Object.keys(data).forEach((id) => {
                 const item = data[id]
                 // Check various ways audio might be identified
-                if (item && (
-                    item.type === "audio" || 
-                    item.audioPath || 
-                    item.path?.match(/\.(mp3|wav|ogg|m4a|flac|aac|wma)$/i)
-                )) {
+                if (item && (item.type === "audio" || item.audioPath || item.path?.match(/\.(mp3|wav|ogg|m4a|flac|aac|wma)$/i))) {
                     audioFiles[id] = {
                         id,
                         name: item.name || item.path?.split(/[\/\\]/).pop() || id,
@@ -335,7 +331,7 @@ export const receiver = {
                 }
             })
         }
-        
+
         _set("audio", audioFiles)
     },
     VOLUME: (data: any) => {
@@ -354,10 +350,10 @@ export const receiver = {
         mixer.update((prev: any) => {
             const current = prev || {}
             const currentOutputs = current.outputs || {}
-            
+
             // Merge new data with existing outputs to preserve volume/mute state if not present in update
             const newOutputs = { ...currentOutputs }
-            Object.keys(data).forEach(id => {
+            Object.keys(data).forEach((id) => {
                 newOutputs[id] = { ...(newOutputs[id] || {}), ...data[id] }
             })
 
@@ -373,7 +369,7 @@ export const receiver = {
             const { main, ...outs } = data
 
             const outputs = { ...current.outputs }
-            Object.keys(outs).forEach(id => {
+            Object.keys(outs).forEach((id) => {
                 if (outputs[id]) outputs[id] = { ...outputs[id], ...outs[id] }
             })
 
@@ -407,6 +403,29 @@ export const receiver = {
     },
     "API:get_playing_audio_time": (data: any) => {
         _set("playingAudioTime", data)
+    },
+    "API:get_playing_video_time": (data: any) => {
+        _set("playingVideoTime", data || 0)
+    },
+    "API:get_playing_video_duration": (data: any) => {
+        _set("playingVideoDuration", data || 0)
+    },
+    "API:get_playing_video_state": (data: any) => {
+        if (!data) return
+        if (data.duration !== undefined) _set("playingVideoDuration", data.duration || 0)
+        if (data.time !== undefined) _set("playingVideoTime", data.time || 0)
+        if (data.paused !== undefined) _set("playingVideoPaused", !!data.paused)
+        if (data.loop !== undefined) _set("playingVideoLoop", !!data.loop)
+        if (data.muted !== undefined) _set("playingVideoMuted", data.muted !== false)
+    },
+
+    "API:get_media_loop_state": (data: any) => {
+        _set("playingVideoLoop", data !== false)
+    },
+
+    "API:toggle_media_loop": () => {
+        // Refresh state after toggle
+        send("API:get_playing_video_state")
     },
 
     "API:get_pdf_thumbnails": (data: { path: string; pages: string[] }) => {
