@@ -12,7 +12,7 @@ import type { ValidChannels } from "../types/Channels"
 // wait to log messages until after intial load is done
 let appLoaded = false
 const LOG_MESSAGES: boolean = process.env.NODE_ENV !== "production"
-const filteredChannelsData: string[] = ["AUDIO_MAIN", "VISUALIZER_DATA", "STREAM", "BUFFER", "REQUEST_STREAM", "MAIN_TIME", "MAIN_SLIDE_VIDEO", "GET_THUMBNAIL", "ACTIVE_TIMERS", "RECEIVE_STREAM"]
+const filteredChannelsData: string[] = ["AUDIO_MAIN", "VISUALIZER_DATA", "STREAM", "BUFFER", "REQUEST_STREAM", "MAIN_TIME", "MAIN_SLIDE_VIDEO", "GET_THUMBNAIL", "ACTIVE_TIMERS", "RECEIVE_STREAM", "CHECK_RAM_USAGE"]
 const filteredChannels: ValidChannels[] = ["AUDIO"]
 
 const storedReceivers: { [key: string]: (e: IpcRendererEvent, args: any) => void } = {}
@@ -29,7 +29,7 @@ contextBridge.exposeInMainWorld("api", {
     },
     receive: (channel: ValidChannels, func: any, id?: string) => {
         const receiver = (_e: IpcRendererEvent, args: any, listenedId?: string) => {
-            if (!appLoaded && channel === "MAIN" && args?.channel === "SHOWS") setTimeout(() => (appLoaded = true), 3000)
+            if (!appLoaded && channel === "MAIN" && args?.channel === "SHOWS") setTimeout(() => (appLoaded = true), 5000)
             if (LOG_MESSAGES && appLoaded && !filteredChannels.includes(channel) && !filteredChannelsData.includes(args?.channel)) console.info("TO CLIENT [" + channel + "]: ", args)
 
             func(args, listenedId)
