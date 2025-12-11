@@ -1,9 +1,9 @@
 <script lang="ts">
-    import { active, activeShow, dictionary, outShow, outSlide, textCache } from "../../../util/stores"
+    import { _set, active, activeProject, activeShow, createShow, dictionary, outShow, outSlide, project, projectsOpened, textCache } from "../../../util/stores"
+    import { uid } from "uid"
     import { translate } from "../../../util/helpers"
     import { GetLayout } from "../../../util/output"
     import { send } from "../../../util/socket"
-    import { _set } from "../../../util/stores"
 
     import Slides from "../../show/Slides.svelte"
     import ShowContent from "../../pages/ShowContent.svelte"
@@ -96,6 +96,24 @@
     let scrollTimeout: number | null = null
     let lastSlideNumber = -1
     let lastAutoScrollTime = 0
+
+    function newShowCTA() {
+        _set("activeTab", "shows")
+        createShow.set(true)
+    }
+
+    function newProjectCTA() {
+        _set("activeTab", "project")
+
+        const name = prompt(translate("new.project", $dictionary) || "New project")
+        if (!name) return
+
+        const projectId = uid()
+        send("API:create_project", { name, id: projectId })
+        projectsOpened.set(false)
+        project.set(projectId)
+        activeProject.set({ id: projectId, name, parent: "/", shows: [] } as any)
+    }
 
     // Detect manual scrolling - disable auto-scroll temporarily
     function handleScroll() {
@@ -250,8 +268,18 @@
                 </div>
             </div>
         {:else}
-            <div style="flex: 1; display: flex; justify-content: center; align-items: center; opacity: 0.5;">
-                {translate("empty.show", $dictionary)}
+            <div class="empty-hero">
+                <h1 class="hero-title">RemoteShow</h1>
+                <div class="hero-actions">
+                    <button class="hero-row" type="button" on:click={newProjectCTA}>
+                        <Icon id="project" size={1.6} />
+                        <span>{translate("new.project", $dictionary)}</span>
+                    </button>
+                    <button class="hero-row" type="button" on:click={newShowCTA}>
+                        <Icon id="add" size={1.6} />
+                        <span>{translate("new.show", $dictionary)}</span>
+                    </button>
+                </div>
             </div>
         {/if}
     {:else}
@@ -302,5 +330,56 @@
         border-radius: 8px;
         padding: 0.6em 1em !important;
         min-height: auto !important;
+    }
+
+    .empty-hero {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 18px;
+        color: var(--text);
+        opacity: 0.95;
+        text-align: center;
+        padding: 24px;
+    }
+    .hero-title {
+        font-size: clamp(2.2rem, 4vw, 3.4rem);
+        margin: 0;
+        color: var(--secondary);
+        letter-spacing: 0.4px;
+        font-weight: 700;
+    }
+    .hero-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        margin-top: 8px;
+    }
+    .hero-row {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        color: var(--text);
+        font-weight: 600;
+        font-size: 1.05rem;
+        cursor: pointer;
+        background: transparent;
+        border: none;
+        padding: 6px 12px;
+        border-radius: 10px;
+        transition: background-color 120ms ease, transform 120ms ease;
+        align-self: center;
+    }
+    .hero-row :global(svg) {
+        fill: var(--secondary);
+    }
+    .hero-row:hover {
+        background: rgb(255 255 255 / 0.06);
+        transform: translateY(-1px);
+    }
+    .hero-row:active {
+        transform: translateY(0);
     }
 </style>

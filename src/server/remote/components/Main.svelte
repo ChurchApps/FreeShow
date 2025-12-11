@@ -29,11 +29,12 @@
 
     let tabs: TabsObj = {}
     $: tabs = {
-        shows: { name: translate("remote.shows", $dictionary), icon: "search" },
+        shows: { name: translate("remote.shows", $dictionary), icon: "search" }, // shows
         scripture: { name: translate("tabs.scripture", $dictionary), icon: "scripture" },
         project: { name: translate("remote.project", $dictionary), icon: "project" },
         show: { name: translate("remote.show", $dictionary), icon: "show" },
-        slide: { name: translate("remote.slide", $dictionary), icon: "display_settings" }
+        slide: { name: translate("remote.slide", $dictionary), icon: "display_settings" } // slide
+        // lyrics: { name: translate("remote.lyrics", $dictionary), icon: "lyrics" },
     }
     $: tabsDisabled = {
         shows: $shows.length,
@@ -44,14 +45,19 @@
         lyrics: $outShow
     }
 
+    // keyboard shortcuts
     function keydown(e: KeyboardEvent) {
         if ((e.target as HTMLElement)?.closest("textarea") || (e.target as HTMLElement)?.closest("input")) return
+
         if ([" ", "Arrow", "Page"].includes(e.key)) e.preventDefault()
+
+        // WIP keyboard shortcuts same as main app
         if ([" ", "ArrowRight", "PageDown"].includes(e.key)) send("API:next_slide")
         else if (["ArrowLeft", "PageUp"].includes(e.key)) send("API:previous_slide")
         else if (e.key === "Escape") send("API:clear_all")
     }
 
+    // click when focused
     function double(e: any) {
         let id = e.detail
         if (id === "shows") {
@@ -68,6 +74,7 @@
     let newShowText = ""
     let previousCreateShow = false
     $: {
+        // Set initial name when dialog opens with a string value
         if ($createShow && typeof $createShow === "string" && !previousCreateShow) {
             newShowName = $createShow
         }
@@ -78,7 +85,9 @@
             newShowFinish()
             return
         }
+
         send("API:create_show", { text: newShowText, name: newShowName })
+        // WIP open show
         newShowFinish()
     }
     const updateName = (e: any) => (newShowName = e.target?.value)
