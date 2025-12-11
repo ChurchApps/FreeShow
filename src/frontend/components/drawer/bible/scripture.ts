@@ -418,7 +418,7 @@ export function joinRange(array: (number | string)[]) {
     })
 
     const chapters = new Map<string | null, string[]>()
-    segments.forEach(seg => {
+    segments.forEach((seg) => {
         const key = seg.chapter
         const value = seg.start === seg.end ? `${seg.start}` : `${seg.start}-${seg.end}`
         if (!chapters.has(key)) chapters.set(key, [])
@@ -478,7 +478,7 @@ function splitContent(content: BibleContent[], perSlide: number): BibleContent[]
             })
 
             // Build activeVerses array structure matching the chapter structure
-            const filteredActiveVerses = bible.chapters.map((_, chapterIndex) => slideVerses.filter(verseId => String(verseId) in bible.verses[chapterIndex]))
+            const filteredActiveVerses = bible.chapters.map((_, chapterIndex) => slideVerses.filter((verseId) => String(verseId) in bible.verses[chapterIndex]))
 
             return {
                 ...bible,
@@ -528,7 +528,6 @@ export function getScriptureSlidesNew(data: any, onlyOne = false, disableReferen
                 line.text = line.text.filter((a) => a.value?.trim())
                 return line
             })
-
             if (index === slides.length - 1) return item
 
             // remove entire line with last
@@ -615,7 +614,7 @@ export function getScriptureSlidesNew(data: any, onlyOne = false, disableReferen
                 const versesText = bible.verses[chapterIndex] || {}
                 const chapterVerses = bible.activeVerses[chapterIndex] || []
 
-                chapterVerses.forEach(v => {
+                chapterVerses.forEach((v) => {
                     let text = versesText[v] || ""
                     let number = ""
                     // Include chapter number in verseId when multiple chapters are selected
@@ -1384,7 +1383,7 @@ export function getScriptureShow(biblesContent: BibleContent[] | null) {
 
     // create first slide reference
     // const itemIndex = get(scriptureSettings)?.invertItems ? 1 : 0
-    const textboxes = slides[0].filter(a => (a.type || "text") === "text" && a.lines?.length)
+    const textboxes = slides[0].filter((a) => (a.type || "text") === "text" && a.lines?.length)
     if (useOldSystem && get(scriptureSettings).firstSlideReference && textboxes[0]?.lines?.[0]?.text?.[0]) {
         const textboxesClone = clone(textboxes)
 
