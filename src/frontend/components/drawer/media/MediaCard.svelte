@@ -192,7 +192,7 @@
     }
 </script>
 
-<SelectElem id="media" class="context #media_card" data={{ name, path, type }} {shiftRange} draggable fill>
+<SelectElem id="media" class="context #media_card" data={{ name, path, type, contentProvider }} {shiftRange} draggable fill>
     <Card
         resolution={{ width: 16, height: 9 }}
         {loaded}

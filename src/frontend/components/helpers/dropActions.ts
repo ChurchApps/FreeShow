@@ -508,8 +508,10 @@ const slideDrop = {
 
             let backgroundData = backgroundTypeData
             const mediaStyle = getMediaStyle(get(media)[path], undefined)
-            if (mediaStyle.videoType === "background") backgroundData = { muted: true, loop: true }
-            else if (mediaStyle.videoType === "foreground") backgroundData = { muted: false, loop: false }
+            let type = mediaStyle.videoType || "background"
+            if (a.contentProvider) type = "foreground"
+            if (type === "background") backgroundData = { muted: true, loop: true }
+            else if (type === "foreground") backgroundData = { muted: false, loop: false }
 
             return { ...a, path, ...(a.type === "video" ? backgroundData : {}) }
         })
@@ -523,6 +525,7 @@ const slideDrop = {
             const newData = data[0]
             delete newData.index
             delete newData.id
+            delete newData.contentProvider
             history.newData = newData
 
             return history
