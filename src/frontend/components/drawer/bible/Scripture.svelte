@@ -921,7 +921,7 @@
                             <Loader />
                         {/if}
                     </div>
-                    <div class="verses context #scripture_verse" bind:this={versesScrollElem} class:center={!splittedVerses.length}>
+                    <div class="verses context #scripture_verse" class:showFloatingButtons={$resized.rightPanelDrawer > 5 && splittedVerses.length > 10} bind:this={versesScrollElem} class:center={!splittedVerses.length}>
                         {#if splittedVerses.length}
                             {#each splittedVerses as content}
                                 {@const { id, subverse, endNumber } = getVerseIdParts(content.id)}
@@ -1103,6 +1103,14 @@
     .main .verses {
         flex: 1;
         flex-flow: wrap;
+    }
+
+    .main .grid .verses.showFloatingButtons::after {
+        content: "";
+        display: block;
+        width: 250px;
+        height: 50px;
+        flex-shrink: 0;
     }
 
     .main div.center {

@@ -138,7 +138,7 @@ export class EditboxHelper {
             currentStyle += align + lineStyleBg + lineStyleRadius // + line.chords?.map((a) => a.key)
             const style = align || lineStyleBg || lineStyleRadius || listStyle ? 'style="' + align + lineStyleBg + lineStyleRadius + listStyle + '"' : ""
 
-            const normalWrap = align.includes("justify") || JSON.stringify(line).includes("nowrap")
+            const normalWrap = align.includes("justify") || align.includes("left") || JSON.stringify(line).includes("nowrap")
 
             html += `<div class="break ${normalWrap ? "normalWrap" : ""}" ${plain ? "" : style}>`
 
