@@ -355,6 +355,7 @@
     "inputs": {
         "name": "Név",
         "url": "URL",
+        "group": "Csoport",
         "method": "Módszer",
         "contentType": "Tartalomtípus",
         "payload": "Hasznos teher",
@@ -399,7 +400,8 @@
         "offers": "Adakozás",
         "notice": "Figyelem",
         "visuals": "Látványok",
-        "action_tip": "Egy művelet, mely kiváltódik minden olyan esetben, amikor ilyen kategóriájú bemutató vetítésre kerül."
+        "action_tip": "Egy művelet, mely kiváltódik minden olyan esetben, amikor ilyen kategóriájú bemutató vetítésre kerül.",
+        "create_nonexistent": "Nem létező kategóriák létrehozása"
     },
     "groups": {
         "current": "Jelenlegi",
@@ -412,7 +414,7 @@
         "pre_chorus": "Elő-refrén",
         "chorus": "Refrén",
         "break": "Szünet",
-        "tag": "Címke",
+        "tag": "Toldalék",
         "bridge": "Híd",
         "outro": "Utójáték"
     },
@@ -433,6 +435,7 @@
         "variable": "Változó",
         "trigger": "Kiváltó",
         "audio_stream": "Hangfolyam",
+        "now_playing": "Most lejátszott fájl",
         "aspect_ratio": "Oldalarány módosítása",
         "max_lines": "Maximum sor beállítása",
         "transition": "Átmenet",
@@ -446,6 +449,7 @@
         "choose_output": "Kimeneti típus kiválasztása",
         "choose_style": "Stílus előbeállítás kijelölése",
         "change_output_values": "Kimeneti értékek módosítása",
+        "output_selector": "Kimenetválasztó",
         "choose_chord": "Akkord kiválasztása",
         "set_time": "Idő beállítása",
         "assign_shortcut": "Gyorsbillentyű hozzárendelése",
@@ -484,6 +488,7 @@
         "manage_colors": "Színek kezelése",
         "manage_metadata": "Metaadatok kezelése",
         "manage_dynamic_values": "Dinamikus értékek kezelése",
+        "template_style_overrides": "Stílus felülírása",
         "choose_camera": "Kamera kiválasztása",
         "manage_tags": "Címkék kezelése",
         "sync_categories": "Kategóriák szinkronizálása",
@@ -492,6 +497,7 @@
         "unsaved": "Biztosan ki szeretne léptni?",
         "cancel": "Mégsem",
         "continue": "Folytatás",
+        "restore": "Biztonsági másolat visszaállítása",
         "reset_all": "Minden visszaállítása",
         "reset_all_confirm": "Biztosan mindent visszaállít?",
         "reset_all_action": "Ez visszaállítja az egész programot, de nem törli a .show fájlokat a „Shows” mappában.",
@@ -764,6 +770,7 @@
         "start_playlist": "Lejátszási lista indítása",
         "playlist_next": "Következő szám a lejátszási listában",
         "start_metronome": "Metronóm indítása",
+        "start_audio_effect": "Hangeffektus indítása",
         "id_start_timer": "Időzítő indítása",
         "start_slide_timers": "Időzítők indítása az aktív dián",
         "id_select_output_style": "Kimeneti stílus kiválasztása",
@@ -950,6 +957,8 @@
         "max_lines_per_slide": "Sorok maximális száma diánként",
         "break_long_lines": "Hosszú sorok megtörése",
         "break_long_lines_tip": "Sor megtörése, ha hosszabb, mint a beállított szavak",
+        "style_overrides_tip": "Az egyező szavak automatikus átformázása.",
+        "style_override_pattern": "Szó vagy /reguláris kifejezés/",
         "skip_virtual_breaks": "Virtuális törések kihagyása",
         "media_fit": "Média méretezése",
         "cropping": "Vágás",
@@ -990,8 +999,8 @@
         "_title_top": "Felülre igazítás",
         "_title_bottom": "Alulra igazítás",
         "align_center": "Középre igazított",
-        "align_start": "Kezdés",
-        "align_end": "Vége",
+        "align_start": "Fenn",
+        "align_end": "Lenn",
         "outline": "Körvonal",
         "shadow": "Árnyék",
         "shadow_inset": "Zsugorított árnyék",
@@ -1209,7 +1218,8 @@
         "source_output": "Forráskimenet",
         "auto_stretch": "Tartalom automatikus nyújtása",
         "labels": "Címkék megjelenítése",
-        "label_color": "Színek címkézése"
+        "label_color": "Színek címkézése",
+        "create_stage_output": "Színpadi kimenet létrehozása"
     },
     "settings": {
         "general": "Általános",
@@ -1265,6 +1275,7 @@
         "disable_labels": "Címkék letiltása",
         "group_numbers": "Csoportszámok",
         "auto_group_numbers": "Csoportszámok automatikus hozzárendelése",
+        "shortcuts_on_slides": "Gyorsbillentyűk megjelenítése a diákon",
         "transparent_slides": "Átlátszó dia előnézete",
         "full_colors": "Nagy kontrasztú csoportszínek",
         "next_item_on_last_slide": "A jobbra, ill. balra nyíl az utolsó/első dián lévő projektelemet módosítja.",
@@ -1297,15 +1308,11 @@
         "add": "Hozzáadás",
         "remove": "Eltávolítás",
         "change_name": "Név módosítása",
-        "show_location": "Bemutatók helye",
         "data_location": "Adatok helye",
-        "user_data_location": "Felhasználói beállítások mentése az „Adatok helyére\"",
-        "user_data_location_confirm": "Csak akkor folytassa, ha tudja, mit csinál. Valóban megváltoztatja a felhasználói adatok helyét?",
-        "user_data_exists": "Meglévő adatok találhatóak ezen az egyedi helyen, szeretné felülírni azokat?",
-        "user_data_yes": "Igen, jelenlegi adatok megőrzése",
-        "user_data_no": "Nem, meglévő adatok importálása",
         "auto_locate_missing_media_files": "Hiányzó médiafájlok automatikus keresése",
         "popup_before_close": "Bezárást megerősítő felugró ablak engedélyezése",
+        "log_song_usage": "Dalok használatának naplózása fájlba",
+        "auto_error_reporting": "Automatikus hibajelentés",
         "disable_hardware_acceleration": "Hardveres gyorsítás letiltása",
         "restart_for_change": "Újra kell indítani a programot a módosítás érvénybe lépéséhez!",
         "font": "Betűkészlet",
@@ -1353,7 +1360,8 @@
     },
     "output": {
         "state_inactive": "Inaktív",
-        "state_locked": "Zárolt"
+        "state_locked": "Zárolt",
+        "disabled_layers": "Letiltott rétegek"
     },
     "profile": {
         "profiles_hint": "Profil/szerepkör létrehozása, hogy bizonyos felhasználók hozzáférését a program kiválasztott részeinek vezérléséhez/szerkesztéséhez korlátozza.",
@@ -1415,6 +1423,7 @@
         "verse_numbers": "Versszámok",
         "verses_on_individual_lines": "Versszakok az egyes sorokban",
         "divide_long_verses": "Hosszú versszakok szétválasztása",
+        "split_long_verses_suffix": "Betű utótag megjelenítése",
         "version": "Verzió megjelenítése",
         "reference": "Hivatkozás megjelenítése",
         "split_reference": "Hivatkozás szétválasztása",
@@ -1422,6 +1431,7 @@
         "first_slide_reference": "Hivatkozás az első dián",
         "reference_at_bottom": "Mozgatás alulra",
         "red_jesus": "Jézus szavai pirossal",
+        "show_all": "Összes megjelenítése",
         "search": "Keresés a Bibliában"
     },
     "filter": {

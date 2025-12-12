@@ -77,11 +77,11 @@ checkered={template.items?.length > 0 && transparentOutput} -->
     <!-- slide content -->
     {#if edit && mode !== "text"}
         <Snaplines bind:lines bind:newStyles bind:mouse {ratio} {active} />
-        {#each template.items as item, index}
+        {#each template.items || [] as item, index}
             <Editbox ref={{ type: "template", id: templateId }} {item} {index} {ratio} bind:mouse />
         {/each}
     {:else}
-        {#each template.items as item}
+        {#each template.items || [] as item}
             <Textbox backdropFilter={template["backdrop-filter"] || ""} {item} ref={{ type: "template", id: templateId }} dynamicValues={false} isTemplatePreview />
         {/each}
     {/if}

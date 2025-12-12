@@ -569,6 +569,8 @@
         display: flex;
         align-items: center;
         gap: 5px;
+
+        /* line-height: 1.5em; */
     }
     .dropdown li:hover,
     .dropdown li.highlighted {
