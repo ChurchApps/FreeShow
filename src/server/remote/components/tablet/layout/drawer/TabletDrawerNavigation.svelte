@@ -1,22 +1,36 @@
 <script lang="ts">
-    import { categories, shows, activeCategory, dictionary, scriptures, openedScripture, collectionId, actions, actionTags, variables, variableTags, activeActionTagFilter, activeVariableTagFilter, functionsSubTab, timers, triggers, overlays, overlayCategories, activeOverlayCategory, templates, templateCategories, activeTemplateCategory } from "../../../../util/stores"
-    import { translate, keysToID, sortByName } from "../../../../util/helpers"
+    import {
+        categories,
+        shows,
+        activeCategory,
+        dictionary,
+        scriptures,
+        openedScripture,
+        collectionId,
+        actions,
+        actionTags,
+        variables,
+        variableTags,
+        activeActionTagFilter,
+        activeVariableTagFilter,
+        functionsSubTab,
+        timers,
+        triggers,
+        overlays,
+        overlayCategories,
+        activeOverlayCategory,
+        templates,
+        templateCategories,
+        activeTemplateCategory
+    } from "../../../../util/stores"
+    import { translate, keysToID, sortByName, buildCategoryData, type CategoryData } from "../../../../util/helpers"
     import { _set } from "../../../../util/stores"
     import Button from "../../../../../common/components/Button.svelte"
     import Icon from "../../../../../common/components/Icon.svelte"
     import MaterialButton from "../../../MaterialButton.svelte"
+    import CategoryListRenderer from "./CategoryListRenderer.svelte"
 
     export let id: string
-
-    // Generic category list builder - reduces duplication between shows/overlays
-    type CategoryData = {
-        categoriesList: any[]
-        unarchivedCategories: any[]
-        archivedCategories: any[]
-        allItems: any[]
-        unarchivedItems: any[]
-        uncategorizedCount: number
-    }
 
     const EMPTY_CATEGORY_DATA: CategoryData = {
         categoriesList: [],
@@ -25,16 +39,6 @@
         allItems: [],
         unarchivedItems: [],
         uncategorizedCount: 0
-    }
-
-    function buildCategoryData(items: any[], categoriesObj: Record<string, any>): CategoryData {
-        const categoriesList = keysToID(categoriesObj)
-        const unarchivedCategories = categoriesList.filter((a) => !a.isArchive)
-        const archivedCategories = categoriesList.filter((a) => a.isArchive)
-        const allItems = items.filter((a) => a && !a.private)
-        const unarchivedItems = allItems.filter((a) => a.category === null || !categoriesObj[a.category]?.isArchive)
-        const uncategorizedCount = unarchivedItems.filter((a) => a.category === null || !categoriesObj[a.category]).length
-        return { categoriesList, unarchivedCategories, archivedCategories, allItems, unarchivedItems, uncategorizedCount }
     }
 
     // LAZY COMPUTATION - Only compute data for active tab to prevent freeze on tab switch
@@ -143,65 +147,7 @@
 
 <div class="main">
     {#if id === "shows"}
-        <div class="tabSection">
-            <!-- All & Unlabeled Section -->
-            <div class="section">
-                <MaterialButton class="tab {active === 'all' ? 'active' : ''}" on:click={() => setCategory("all")} style="width: 100%; font-weight: normal; padding: 0.2em 0.8em;" isActive={active === "all"} tab>
-                    <div style="max-width: 85%;" data-title={translate("category.all", $dictionary)}>
-                        <Icon id="all" size={1} white={active === "all"} />
-                        <p style="margin: 5px;">{translate("category.all", $dictionary)}</p>
-                    </div>
-                    <span class="count">{showsData.unarchivedItems.length}</span>
-                </MaterialButton>
-
-                {#if showsData.uncategorizedCount}
-                    <MaterialButton class="tab {active === 'unlabeled' ? 'active' : ''}" on:click={() => setCategory("unlabeled")} style="width: 100%; font-weight: normal; padding: 0.2em 0.8em;" isActive={active === "unlabeled"} tab>
-                        <div style="max-width: 85%;" data-title={translate("category.unlabeled", $dictionary)}>
-                            <Icon id="noIcon" size={1} white={active === "unlabeled"} />
-                            <p style="margin: 5px;">{translate("category.unlabeled", $dictionary)}</p>
-                        </div>
-                        <span class="count">{showsData.uncategorizedCount}</span>
-                    </MaterialButton>
-                {/if}
-            </div>
-
-            <!-- Categories Section -->
-            {#if showsData.unarchivedCategories.length}
-                <div class="section">
-                    <div class="title">{translate("guide_title.categories", $dictionary)}</div>
-                    {#each sortByName(showsData.unarchivedCategories, "name") as cat}
-                        {@const count = showsData.allItems.filter((s) => s.category === cat.id).length}
-                        <MaterialButton class="tab {active === cat.id ? 'active' : ''}" on:click={() => setCategory(cat.id)} style="width: 100%; font-weight: normal; padding: 0.2em 0.8em;" isActive={active === cat.id} tab>
-                            <div style="max-width: 85%;" data-title={translate(cat.name, $dictionary) || cat.name}>
-                                <Icon id={cat.icon || "folder"} size={1} white={active === cat.id} />
-                                <p style="margin: 5px;">{translate(cat.name, $dictionary) || cat.name}</p>
-                            </div>
-                            <span class="count">{count}</span>
-                        </MaterialButton>
-                    {/each}
-                </div>
-            {/if}
-
-            <!-- Archived Categories Section -->
-            {#if showsData.archivedCategories.length}
-                <div class="section">
-                    <div class="separator">
-                        <div class="sepLabel">{translate("actions.archive_title", $dictionary)}</div>
-                        <hr />
-                    </div>
-                    {#each sortByName(showsData.archivedCategories, "name") as cat}
-                        {@const count = showsData.allItems.filter((s) => s.category === cat.id).length}
-                        <MaterialButton class="tab {active === cat.id ? 'active' : ''}" on:click={() => setCategory(cat.id)} style="width: 100%; font-weight: normal; padding: 0.2em 0.8em;" isActive={active === cat.id} tab>
-                            <div style="max-width: 85%;" data-title={translate(cat.name, $dictionary) || cat.name}>
-                                <Icon id={cat.icon || "folder"} size={1} white={active === cat.id} />
-                                <p style="margin: 5px;">{translate(cat.name, $dictionary) || cat.name}</p>
-                            </div>
-                            <span class="count">{count}</span>
-                        </MaterialButton>
-                    {/each}
-                </div>
-            {/if}
-        </div>
+        <CategoryListRenderer categoryData={showsData} activeItem={active} onSelect={setCategory} />
     {:else if id === "functions"}
         <div class="tabSection">
             <!-- Actions Section -->
@@ -309,125 +255,9 @@
             </div>
         </div>
     {:else if id === "overlays"}
-        <div class="tabSection">
-            <!-- All & Unlabeled Section -->
-            <div class="section">
-                <MaterialButton class="tab {activeOverlay === 'all' ? 'active' : ''}" on:click={() => setOverlayCategory("all")} style="width: 100%; font-weight: normal; padding: 0.2em 0.8em;" isActive={activeOverlay === "all"} tab>
-                    <div style="max-width: 85%;" data-title={translate("category.all", $dictionary)}>
-                        <Icon id="all" size={1} white={activeOverlay === "all"} />
-                        <p style="margin: 5px;">{translate("category.all", $dictionary)}</p>
-                    </div>
-                    <span class="count">{overlaysData.unarchivedItems.length}</span>
-                </MaterialButton>
-
-                {#if overlaysData.uncategorizedCount}
-                    <MaterialButton class="tab {activeOverlay === 'unlabeled' ? 'active' : ''}" on:click={() => setOverlayCategory("unlabeled")} style="width: 100%; font-weight: normal; padding: 0.2em 0.8em;" isActive={activeOverlay === "unlabeled"} tab>
-                        <div style="max-width: 85%;" data-title={translate("category.unlabeled", $dictionary)}>
-                            <Icon id="noIcon" size={1} white={activeOverlay === "unlabeled"} />
-                            <p style="margin: 5px;">{translate("category.unlabeled", $dictionary)}</p>
-                        </div>
-                        <span class="count">{overlaysData.uncategorizedCount}</span>
-                    </MaterialButton>
-                {/if}
-            </div>
-
-            <!-- Categories Section -->
-            {#if overlaysData.unarchivedCategories.length}
-                <div class="section">
-                    <div class="title">{translate("guide_title.categories", $dictionary)}</div>
-                    {#each sortByName(overlaysData.unarchivedCategories, "name") as cat}
-                        {@const count = overlaysData.allItems.filter((s) => s.category === cat.id).length}
-                        <MaterialButton class="tab {activeOverlay === cat.id ? 'active' : ''}" on:click={() => setOverlayCategory(cat.id)} style="width: 100%; font-weight: normal; padding: 0.2em 0.8em;" isActive={activeOverlay === cat.id} tab>
-                            <div style="max-width: 85%;" data-title={translate(cat.name, $dictionary) || cat.name}>
-                                <Icon id={cat.icon || "folder"} size={1} white={activeOverlay === cat.id} />
-                                <p style="margin: 5px;">{translate(cat.name, $dictionary) || cat.name}</p>
-                            </div>
-                            <span class="count">{count}</span>
-                        </MaterialButton>
-                    {/each}
-                </div>
-            {/if}
-
-            <!-- Archived Categories Section -->
-            {#if overlaysData.archivedCategories.length}
-                <div class="section">
-                    <div class="separator">
-                        <div class="sepLabel">{translate("actions.archive_title", $dictionary)}</div>
-                        <hr />
-                    </div>
-                    {#each sortByName(overlaysData.archivedCategories, "name") as cat}
-                        {@const count = overlaysData.allItems.filter((s) => s.category === cat.id).length}
-                        <MaterialButton class="tab {activeOverlay === cat.id ? 'active' : ''}" on:click={() => setOverlayCategory(cat.id)} style="width: 100%; font-weight: normal; padding: 0.2em 0.8em;" isActive={activeOverlay === cat.id} tab>
-                            <div style="max-width: 85%;" data-title={translate(cat.name, $dictionary) || cat.name}>
-                                <Icon id={cat.icon || "folder"} size={1} white={activeOverlay === cat.id} />
-                                <p style="margin: 5px;">{translate(cat.name, $dictionary) || cat.name}</p>
-                            </div>
-                            <span class="count">{count}</span>
-                        </MaterialButton>
-                    {/each}
-                </div>
-            {/if}
-        </div>
+        <CategoryListRenderer categoryData={overlaysData} activeItem={activeOverlay} onSelect={setOverlayCategory} />
     {:else if id === "templates"}
-        <div class="tabSection">
-            <!-- All & Unlabeled Section -->
-            <div class="section">
-                <MaterialButton class="tab {activeTemplate === 'all' ? 'active' : ''}" on:click={() => setTemplateCategory("all")} style="width: 100%; font-weight: normal; padding: 0.2em 0.8em;" isActive={activeTemplate === "all"} tab>
-                    <div style="max-width: 85%;" data-title={translate("category.all", $dictionary)}>
-                        <Icon id="all" size={1} white={activeTemplate === "all"} />
-                        <p style="margin: 5px;">{translate("category.all", $dictionary)}</p>
-                    </div>
-                    <span class="count">{templatesData.unarchivedItems.length}</span>
-                </MaterialButton>
-
-                {#if templatesData.uncategorizedCount}
-                    <MaterialButton class="tab {activeTemplate === 'unlabeled' ? 'active' : ''}" on:click={() => setTemplateCategory("unlabeled")} style="width: 100%; font-weight: normal; padding: 0.2em 0.8em;" isActive={activeTemplate === "unlabeled"} tab>
-                        <div style="max-width: 85%;" data-title={translate("category.unlabeled", $dictionary)}>
-                            <Icon id="noIcon" size={1} white={activeTemplate === "unlabeled"} />
-                            <p style="margin: 5px;">{translate("category.unlabeled", $dictionary)}</p>
-                        </div>
-                        <span class="count">{templatesData.uncategorizedCount}</span>
-                    </MaterialButton>
-                {/if}
-            </div>
-
-            <!-- Categories Section -->
-            {#if templatesData.unarchivedCategories.length}
-                <div class="section">
-                    <div class="title">{translate("guide_title.categories", $dictionary)}</div>
-                    {#each sortByName(templatesData.unarchivedCategories, "name") as cat}
-                        {@const count = templatesData.allItems.filter((s) => s.category === cat.id).length}
-                        <MaterialButton class="tab {activeTemplate === cat.id ? 'active' : ''}" on:click={() => setTemplateCategory(cat.id)} style="width: 100%; font-weight: normal; padding: 0.2em 0.8em;" isActive={activeTemplate === cat.id} tab>
-                            <div style="max-width: 85%;" data-title={translate(cat.name, $dictionary) || cat.name}>
-                                <Icon id={cat.icon || "folder"} size={1} white={activeTemplate === cat.id} />
-                                <p style="margin: 5px;">{translate(cat.name, $dictionary) || cat.name}</p>
-                            </div>
-                            <span class="count">{count}</span>
-                        </MaterialButton>
-                    {/each}
-                </div>
-            {/if}
-
-            <!-- Archived Categories Section -->
-            {#if templatesData.archivedCategories.length}
-                <div class="section">
-                    <div class="separator">
-                        <div class="sepLabel">{translate("actions.archive_title", $dictionary)}</div>
-                        <hr />
-                    </div>
-                    {#each sortByName(templatesData.archivedCategories, "name") as cat}
-                        {@const count = templatesData.allItems.filter((s) => s.category === cat.id).length}
-                        <MaterialButton class="tab {activeTemplate === cat.id ? 'active' : ''}" on:click={() => setTemplateCategory(cat.id)} style="width: 100%; font-weight: normal; padding: 0.2em 0.8em;" isActive={activeTemplate === cat.id} tab>
-                            <div style="max-width: 85%;" data-title={translate(cat.name, $dictionary) || cat.name}>
-                                <Icon id={cat.icon || "folder"} size={1} white={activeTemplate === cat.id} />
-                                <p style="margin: 5px;">{translate(cat.name, $dictionary) || cat.name}</p>
-                            </div>
-                            <span class="count">{count}</span>
-                        </MaterialButton>
-                    {/each}
-                </div>
-            {/if}
-        </div>
+        <CategoryListRenderer categoryData={templatesData} activeItem={activeTemplate} onSelect={setTemplateCategory} />
     {:else if id === "scripture"}
         <div class="tabSection">
             {#each scriptureSections as section}
@@ -523,27 +353,6 @@
         opacity: 0.8;
         background: var(--primary-darkest);
         border-bottom: 1px solid var(--primary-lighter);
-    }
-
-    .separator {
-        display: flex;
-        align-items: center;
-    }
-
-    .sepLabel {
-        font-size: 0.6rem;
-        color: var(--text);
-        opacity: 0.5;
-        padding: 6px 14px;
-        line-height: 1;
-    }
-
-    hr {
-        height: 1px;
-        border: none;
-        background-color: var(--primary-lighter);
-        flex: 1;
-        opacity: 0.8;
     }
 
     .section :global(.tab) {

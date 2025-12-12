@@ -106,3 +106,57 @@ export function formatTime(seconds: number): string {
     if (h > 0) return `${h}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`
     return `${m}:${s.toString().padStart(2, "0")}`
 }
+
+// Performance utilities for mobile/tablet optimization
+
+/** Debounce function - delays execution until after a pause in calls */
+export function debounce<T extends (...args: any[]) => any>(fn: T, delay: number): (...args: Parameters<T>) => void {
+    let timeoutId: number | null = null
+    return (...args: Parameters<T>) => {
+        if (timeoutId !== null) clearTimeout(timeoutId)
+        timeoutId = setTimeout(() => fn(...args), delay) as unknown as number
+    }
+}
+
+/** Throttle function - limits execution rate (useful for scroll handlers) */
+export function throttle<T extends (...args: any[]) => any>(fn: T, limit: number): (...args: Parameters<T>) => void {
+    let waiting = false
+    return (...args: Parameters<T>) => {
+        if (!waiting) {
+            fn(...args)
+            waiting = true
+            setTimeout(() => (waiting = false), limit)
+        }
+    }
+}
+
+// Category data structure utilities
+
+export type CategoryData = {
+    categoriesList: any[]
+    unarchivedCategories: any[]
+    archivedCategories: any[]
+    allItems: any[]
+    unarchivedItems: any[]
+    uncategorizedCount: number
+}
+
+/** Build category data structure */
+export function buildCategoryData(items: any[], categoriesObj: Record<string, any>): CategoryData {
+    const categoriesList = keysToID(categoriesObj)
+    const unarchivedCategories = categoriesList.filter((a) => !a.isArchive)
+    const archivedCategories = categoriesList.filter((a) => a.isArchive)
+    const allItems = items.filter((a) => a && !a.private)
+    const unarchivedItems = allItems.filter((a) => a.category === null || !categoriesObj[a.category]?.isArchive)
+    const uncategorizedCount = unarchivedItems.filter((a) => a.category === null || !categoriesObj[a.category]).length
+
+    return {
+        categoriesList,
+        unarchivedCategories,
+        archivedCategories,
+        allItems,
+        unarchivedItems,
+        uncategorizedCount
+    }
+}
+

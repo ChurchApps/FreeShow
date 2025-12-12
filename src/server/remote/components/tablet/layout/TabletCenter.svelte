@@ -1,7 +1,7 @@
 <script lang="ts">
     import { _set, active, activeProject, activeShow, createShow, dictionary, outShow, outSlide, project, projectsOpened, textCache } from "../../../util/stores"
     import { uid } from "uid"
-    import { translate } from "../../../util/helpers"
+    import { translate, throttle } from "../../../util/helpers"
     import { GetLayout } from "../../../util/output"
     import { send } from "../../../util/socket"
 
@@ -131,6 +131,9 @@
         }
     }
 
+    // Throttled version for better mobile performance (max once per 100ms)
+    const handleScrollThrottled = throttle(handleScroll, 100)
+
     // Auto-scroll to current slide
     $: {
         if (scrollElem && outNumber !== null && slideView === "lyrics" && scrollRaf === null && outNumber !== lastSlideNumber) {
@@ -182,7 +185,7 @@
                         <TextEdit bind:value={textValue} />
                     {/if}
                 {:else}
-                    <div bind:this={scrollElem} on:scroll={handleScroll} class="scroll" style="flex: 1;min-height: 0;overflow-y: auto;background-color: var(--primary-darkest);scroll-behavior: smooth;display: flex;flex-direction: column;">
+                    <div bind:this={scrollElem} on:scroll={handleScrollThrottled} class="scroll" style="flex: 1;min-height: 0;overflow-y: auto;background-color: var(--primary-darkest);scroll-behavior: smooth;display: flex;flex-direction: column;">
                         {#if slideView === "lyrics"}
                             {#each layoutSlides as layoutSlide, i (layoutSlide.id)}
                                 {#if !layoutSlide.disabled}
