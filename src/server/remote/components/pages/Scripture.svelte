@@ -299,135 +299,30 @@
         searchInput.select()
     }
 
-    function formatBookSearch(search: string): string {
-        return search
-            .toLowerCase()
-            .replace(/\s/g, "")
-            .replace(/\./g, "")
-            .normalize("NFD")
-            .replace(/\p{Diacritic}/gu, "")
-    }
-
-    // Common biblical book abbreviations
-    const BOOK_ABBREVIATIONS: Record<string, string> = {
-        jh: "john",
-        jn: "john",
-        jo: "john",
-        gen: "genesis",
-        ex: "exodus",
-        exo: "exodus",
-        lev: "leviticus",
-        num: "numbers",
-        deut: "deuteronomy",
-        dt: "deuteronomy",
-        josh: "joshua",
-        judg: "judges",
-        ru: "ruth",
-        sam: "samuel",
-        "1sam": "1samuel",
-        "2sam": "2samuel",
-        kg: "kings",
-        kgs: "kings",
-        "1kg": "1kings",
-        "1kgs": "1kings",
-        "2kg": "2kings",
-        "2kgs": "2kings",
-        chr: "chronicles",
-        "1chr": "1chronicles",
-        "2chr": "2chronicles",
-        ezr: "ezra",
-        neh: "nehemiah",
-        est: "esther",
-        ps: "psalms",
-        psa: "psalms",
-        prov: "proverbs",
-        pr: "proverbs",
-        ecc: "ecclesiastes",
-        eccl: "ecclesiastes",
-        song: "songofsongs",
-        ss: "songofsongs",
-        isa: "isaiah",
-        is: "isaiah",
-        jer: "jeremiah",
-        lam: "lamentations",
-        ezek: "ezekiel",
-        ez: "ezekiel",
-        dan: "daniel",
-        hos: "hosea",
-        joe: "joel",
-        am: "amos",
-        ob: "obadiah",
-        jon: "jonah",
-        mic: "micah",
-        nah: "nahum",
-        hab: "habakkuk",
-        zeph: "zephaniah",
-        zep: "zephaniah",
-        hag: "haggai",
-        zech: "zechariah",
-        zec: "zechariah",
-        mal: "malachi",
-        mt: "matthew",
-        matt: "matthew",
-        mk: "mark",
-        lk: "luke",
-        luk: "luke",
-        joh: "john",
-        act: "acts",
-        rom: "romans",
-        cor: "corinthians",
-        "1cor": "1corinthians",
-        "2cor": "2corinthians",
-        gal: "galatians",
-        eph: "ephesians",
-        phil: "philippians",
-        php: "philippians",
-        col: "colossians",
-        thess: "thessalonians",
-        thes: "thessalonians",
-        "1thess": "1thessalonians",
-        "1thes": "1thessalonians",
-        "2thess": "2thessalonians",
-        "2thes": "2thessalonians",
-        tim: "timothy",
-        "1tim": "1timothy",
-        "2tim": "2timothy",
-        tit: "titus",
-        philem: "philemon",
-        phlm: "philemon",
-        heb: "hebrews",
-        jas: "james",
-        jam: "james",
-        pet: "peter",
-        pt: "peter",
-        "1pet": "1peter",
-        "1pt": "1peter",
-        "2pet": "2peter",
-        "2pt": "2peter",
-        jude: "jude",
-        rev: "revelation",
-        rv: "revelation"
-    }
-
-    function findBook(books: any[], value: string): any {
-        const search = formatBookSearch(value)
-
-        // First try exact matches and common abbreviations
-        const exactMatch = books.find((book) => {
-            const bookName = formatBookSearch(book.name)
-            if (bookName === search) return true
-
-            // Handle common abbreviations
-            const expandedName = BOOK_ABBREVIATIONS[search]
-            if (expandedName && bookName.includes(expandedName)) return true
-
-            return false
+    // Find a book in the books array using normalized search with Unicode normalization
+    // Uses .normalize("NFD").replace(/\p{Diacritic}/gu, "") to handle accented characters universally
+    function findBookInArray(books: any[], value: string): any {
+        const normalized = value.toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "").replace(/\s/g, "").replace(/\./g, "")
+        
+        // First try exact match
+        const exactMatch = books.find((book: any) => {
+            const bookName = (book.name || "").toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "").replace(/\s/g, "").replace(/\./g, "")
+            return bookName === normalized
         })
-
         if (exactMatch) return exactMatch
-
-        // Then try partial matches (book name starts with search)
-        return books.find((book) => formatBookSearch(book.name).startsWith(search))
+        
+        // Then try starts with
+        const startsWithMatch = books.find((book: any) => {
+            const bookName = (book.name || "").toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "").replace(/\s/g, "").replace(/\./g, "")
+            return bookName.startsWith(normalized)
+        })
+        if (startsWithMatch) return startsWithMatch
+        
+        // Finally try contains
+        return books.find((book: any) => {
+            const bookName = (book.name || "").toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "").replace(/\s/g, "").replace(/\./g, "")
+            return bookName.includes(normalized)
+        })
     }
 
     function findChapter(book: any, value: string): any {
@@ -458,7 +353,7 @@
         for (let i = 0; i < words.length; i++) {
             // Single word
             const singleWord = words[i]
-            const book = findBook(books, singleWord)
+            const book = findBookInArray(books, singleWord)
             if (book) {
                 const textTerm = words
                     .filter((_, idx) => idx !== i)
@@ -472,7 +367,7 @@
             // Two words
             if (i < words.length - 1) {
                 const twoWords = `${words[i]} ${words[i + 1]}`
-                const book2 = findBook(books, twoWords)
+                const book2 = findBookInArray(books, twoWords)
                 if (book2) {
                     const textTerm = words
                         .filter((_, idx) => idx !== i && idx !== i + 1)
@@ -487,7 +382,7 @@
             // Three words
             if (i < words.length - 2) {
                 const threeWords = `${words[i]} ${words[i + 1]} ${words[i + 2]}`
-                const book3 = findBook(books, threeWords)
+                const book3 = findBookInArray(books, threeWords)
                 if (book3) {
                     const textTerm = words
                         .filter((_, idx) => idx !== i && idx !== i + 1 && idx !== i + 2)
@@ -565,7 +460,7 @@
                 const [, bookPart, chapterPart, versePart1, versePart2] = referenceMatch
                 const versePart = versePart1 || versePart2
 
-                const book = findBook(books, bookPart)
+                const book = findBookInArray(books, bookPart)
                 if (book) {
                     const chapterNumber = parseInt(chapterPart, 10)
                     const verseNumber = versePart ? parseInt(versePart, 10) : null
@@ -686,7 +581,7 @@
             const [, bookPart, chapterPart, versePart1, versePart2] = referenceMatch
             const versePart = versePart1 || versePart2 // Handle both patterns
 
-            const book = findBook(books, bookPart)
+            const book = findBookInArray(books, bookPart)
             if (book) {
                 const chapter = findChapter(book, chapterPart)
                 if (chapter) {
