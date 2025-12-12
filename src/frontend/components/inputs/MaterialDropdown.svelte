@@ -9,6 +9,7 @@
     import { newDropdown } from "../edit/scripts/edit"
     import Icon from "../helpers/Icon.svelte"
     import InputRow from "../input/InputRow.svelte"
+    import VirtualList from "../drawer/VirtualList.svelte"
     import MaterialButton from "./MaterialButton.svelte"
     import MaterialTextInput from "./MaterialTextInput.svelte"
 
@@ -185,7 +186,7 @@
     // scroll
 
     let scrollElem: HTMLUListElement | null = null
-    $: if (open) setTimeout(scrollToHighlighted)
+    $: if (open && !useVirtualList) setTimeout(scrollToHighlighted)
     function scrollToHighlighted() {
         if (highlightedIndex < 0 && allowEmpty) return scrollElem?.scrollTo(0, 0)
 
@@ -236,13 +237,7 @@
     }
 
     $: selected = options.find((o) => o.value === value)
-
-    // let renderedOptions: typeof options = []
-    // $: if (open) {
-    //     // only show the first few immediately (for large lists) - can't scroll to highlighted
-    //     renderedOptions = options.slice(0, 20)
-    //     setTimeout(() => (renderedOptions = options), 82)
-    // }
+    $: useVirtualList = options.length > 100
 
     // RESET
 
@@ -343,44 +338,81 @@
     {/if}
 
     {#if open}
-        <ul style="max-height: {maxHeight}px" class="dropdown" role="listbox" tabindex="-1" bind:this={scrollElem} transition:flyFade>
-            {#if allowEmpty}
-                <li style="opacity: 0.5;font-style: italic;" role="option" aria-selected={!value} class:selected={!value} class:highlighted={highlightedIndex < 0} on:click={() => selectOption(null, "")}>
-                    {translateText("main.none")}
-                </li>
-            {/if}
+        {#if useVirtualList}
+            <div class="dropdown virtual" style="max-height: {maxHeight}px" transition:flyFade>
+                <VirtualList items={options} height="{maxHeight}px" activeIndex={highlightedIndex} let:item={option}>
+                    <li style="{option.data ? 'justify-content: space-between;' : ''}{option.style || ''}" role="option" aria-selected={option.value === value} class:selected={option.value === value} class:highlighted={options.indexOf(option) === highlightedIndex} on:click={(e) => selectOption(e, option.value)}>
+                        {#if option.prefix}<span class="prefix">{option.prefix}</span>{/if}
+                        {option.label || "—"}
 
-            {#each options as option, i}
-                <li style="{option.data ? 'justify-content: space-between;' : ''}{option.style || ''}" role="option" aria-selected={option.value === value} class:selected={option.value === value} class:highlighted={i === highlightedIndex} on:click={(e) => selectOption(e, option.value)}>
-                    {#if option.prefix}<span class="prefix">{option.prefix}</span>{/if}
-                    {option.label || "—"}
+                        {#if option.data}
+                            <div class="data" data-title={option.data}>{option.data}</div>
+                        {/if}
 
-                    {#if option.data}
-                        <div class="data" data-title={option.data}>{option.data}</div>
-                    {/if}
+                        {#if allowDeleting && option.value !== value}
+                            <MaterialButton
+                                label="actions.delete"
+                                class="delete-button"
+                                style="position: absolute;right: 2px;width: 40px;"
+                                icon="delete"
+                                on:click={() => {
+                                    dispatch("delete", option.value)
+                                }}
+                                red
+                            />
+                        {/if}
+                    </li>
+                </VirtualList>
 
-                    {#if allowDeleting && option.value !== value}
-                        <MaterialButton
-                            label="actions.delete"
-                            class="delete-button"
-                            style="position: absolute;right: 2px;width: 40px;"
-                            icon="delete"
-                            on:click={() => {
-                                dispatch("delete", option.value)
-                            }}
-                            red
-                        />
-                    {/if}
-                </li>
-            {/each}
+                {#if addNew}
+                    <div class="add-new-button">
+                        <li style="font-style: italic;opacity: 0.9;" role="option" on:click={createNew}>
+                            <Icon id="add" />
+                            {translateText(addNew)}
+                        </li>
+                    </div>
+                {/if}
+            </div>
+        {:else}
+            <ul style="max-height: {maxHeight}px" class="dropdown" role="listbox" tabindex="-1" bind:this={scrollElem} transition:flyFade>
+                {#if allowEmpty}
+                    <li style="opacity: 0.5;font-style: italic;" role="option" aria-selected={!value} class:selected={!value} class:highlighted={highlightedIndex < 0} on:click={() => selectOption(null, "")}>
+                        {translateText("main.none")}
+                    </li>
+                {/if}
 
-            {#if addNew}
-                <li style="font-style: italic;opacity: 0.9;" on:click={createNew}>
-                    <Icon id="add" />
-                    {translateText(addNew)}
-                </li>
-            {/if}
-        </ul>
+                {#each options as option, i}
+                    <li style="{option.data ? 'justify-content: space-between;' : ''}{option.style || ''}" role="option" aria-selected={option.value === value} class:selected={option.value === value} class:highlighted={i === highlightedIndex} on:click={(e) => selectOption(e, option.value)}>
+                        {#if option.prefix}<span class="prefix">{option.prefix}</span>{/if}
+                        {option.label || "—"}
+
+                        {#if option.data}
+                            <div class="data" data-title={option.data}>{option.data}</div>
+                        {/if}
+
+                        {#if allowDeleting && option.value !== value}
+                            <MaterialButton
+                                label="actions.delete"
+                                class="delete-button"
+                                style="position: absolute;right: 2px;width: 40px;"
+                                icon="delete"
+                                on:click={() => {
+                                    dispatch("delete", option.value)
+                                }}
+                                red
+                            />
+                        {/if}
+                    </li>
+                {/each}
+
+                {#if addNew}
+                    <li style="font-style: italic;opacity: 0.9;" role="option" on:click={createNew}>
+                        <Icon id="add" />
+                        {translateText(addNew)}
+                    </li>
+                {/if}
+            </ul>
+        {/if}
 
         {#if searchValue}
             <div class="search">{searchValue}</div>
@@ -552,6 +584,19 @@
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25);
 
         border-bottom: 1px solid var(--primary-lighter);
+    }
+
+    /* virtual */
+    .dropdown.virtual {
+        overflow-y: hidden;
+        padding: 0;
+    }
+    .dropdown :global(svelte-virtual-list-viewport) {
+        background-color: var(--primary-darkest);
+    }
+    .add-new-button {
+        border-top: 1px solid var(--primary-lighter);
+        padding-top: 0.25rem;
     }
 
     .onlyArrow .dropdown {
