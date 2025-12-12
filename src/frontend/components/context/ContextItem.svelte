@@ -334,7 +334,7 @@
     $: customStyle = id === "uppercase" ? "text-transform: uppercase;" : id === "lowercase" ? "text-transform: lowercase;" : ""
 </script>
 
-<div on:click={contextItemClick} class:enabled class:disabled class:hide class:highlighted style="color: {menu?.color || 'unset'};font-weight: {menu?.color ? '500' : 'normal'};{menu?.style || ''}" tabindex={0} on:keydown={keydown} role="menuitem">
+<div on:click={contextItemClick} class:enabled class:disabled class:hide class:highlighted data-title={translateText(menu?.tooltip || "")} style="color: {menu?.color || 'unset'};font-weight: {menu?.color ? '500' : 'normal'};{menu?.style || ''}" tabindex={0} on:keydown={keydown} role="menuitem">
     <span style="display: flex;align-items: center;gap: 15px;">
         <!-- white={menu.icon !== "edit"} -->
         {#if menu?.icon}<Icon style="opacity: 0.7;color: {(topBar ? '' : menu.iconColor) || 'var(--text)'};" id={menu.icon} white />{/if}

@@ -75,7 +75,11 @@
         "slide": "Edit current slide.",
         "filters": "Change the look of the selected element.",
         "options": "More options.",
-        "scripture": "Hold Ctrl/Cmd or Shift to select multiple verses."
+        "scripture": "Hold Ctrl/Cmd or Shift to select multiple verses.",
+        "context_cut_in_half": "Split the first textbox into two slides.",
+        "context_merge": "Merge selected slides into one.",
+        "context_capitalize": "Make first letter of each line uppercase.",
+        "context_trim": "Trim whitespace and punctuation from start/end of each line, and remove double spaces."
     },
     "tips": {
         "trigger": "Triggers are commonly used to send a HTTP request to change the preset of cameras.",

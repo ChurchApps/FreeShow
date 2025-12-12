@@ -2025,7 +2025,7 @@ const formatting = {
     trim: (t: string) =>
         t
             .trim()
-            .trim()
+            .replace(/\s+/g, " ")
             .replace(/[.,!]*$/g, "")
             .trim()
 }
