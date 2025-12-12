@@ -16,8 +16,9 @@
         items: any[]
     }
 
-    const MEDIA_TYPES = new Set(["image", "video", "overlay", "audio", "pdf"])
-    const THUMBNAIL_TYPES = new Set(["image", "video"])
+    // Player = online media (e.g. YouTube/Vimeo/etc). Treat like other media entries.
+    const MEDIA_TYPES = new Set(["image", "video", "overlay", "audio", "pdf", "player"])
+    const THUMBNAIL_TYPES = new Set(["image", "video", "player"])
 
     let editProject = false
     let showLookup: Record<string, ShowList> = {}
@@ -150,7 +151,7 @@
                                     </div>
                                 {/if}
                                 <div class="section-items">
-                                    {#each section.items as show (getShowId(show) || show)}
+                                    {#each section.items as show, idx (`${section.id}-${idx}`)}
                                         {@const showId = getShowId(show)}
                                         {@const showType = getShowType(show)}
                                         {@const showData = showId ? (showLookup[showId] ?? null) : null}

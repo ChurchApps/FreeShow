@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { dictionary, isCleared, outLayout, outShow, outSlide, outData, overlays } from "../../../util/stores"
+    import { dictionary, isCleared, outLayout, outShow, outSlide, outData, overlays, mediaCache } from "../../../util/stores"
     import { translate } from "../../../util/helpers"
     import { GetLayout, getNextSlide, nextSlide } from "../../../util/output"
     import { send } from "../../../util/socket"
@@ -7,6 +7,7 @@
 
     import Slide from "../../show/Slide.svelte"
     import Clear from "../../show/Clear.svelte"
+    import MediaPlaybackControls from "../../show/MediaPlaybackControls.svelte"
     import Button from "../../../../common/components/Button.svelte"
     import Icon from "../../../../common/components/Icon.svelte"
     import Textbox from "../../show/Textbox.svelte"
@@ -26,6 +27,19 @@
     $: activeOverlayIds = $outData?.overlays || []
     // Get the actual overlay objects for active overlays
     $: activeOverlayItems = activeOverlayIds.map((id) => ({ id, overlay: $overlays[id] })).filter(({ overlay }) => overlay)
+
+    // Background media
+    $: background = $outData?.background
+    $: backgroundPath = background?.path || background?.id || ""
+    $: backgroundThumbnail = backgroundPath ? $mediaCache[backgroundPath] : null
+    $: hasBackground = !!backgroundPath && !$isCleared.background
+
+    // Request thumbnail for background if not cached (only when path changes)
+    let lastRequestedPath = ""
+    $: if (backgroundPath && backgroundPath !== lastRequestedPath && !$mediaCache[backgroundPath]) {
+        lastRequestedPath = backgroundPath
+        send("API:get_thumbnail", { path: backgroundPath })
+    }
 
     function openOutShow() {
         const showId = $outShow?.id
@@ -53,10 +67,21 @@
                     <div class="empty-preview"></div>
                 {:else}
                     <div class="preview-container">
+                        <!-- Background layer (video/image thumbnail) -->
+                        {#if hasBackground && backgroundThumbnail}
+                            <div class="background-layer">
+                                <img src={backgroundThumbnail} alt="Background" draggable="false" />
+                            </div>
+                        {:else if hasBackground}
+                            <div class="background-layer background-playing">
+                                <Icon id="video" size={2} />
+                            </div>
+                        {/if}
+
                         <!-- Base slide -->
                         {#if !$isCleared.slide && $outShow && layout}
                             <Slide outSlide={outNumber} {transition} preview />
-                        {:else}
+                        {:else if !hasBackground}
                             <div class="black-background"></div>
                         {/if}
 
@@ -104,6 +129,12 @@
                         <span class="label-text">{outShowName}</span>
                     </div>
                 {/if}
+            </div>
+        {/if}
+
+        {#if hasBackground}
+            <div class="media-wrapper">
+                <MediaPlaybackControls />
             </div>
         {/if}
     </div>
@@ -164,6 +195,12 @@
         border-radius: 4px;
     }
 
+    /* Ensure slide content paints above the background media preview */
+    .preview-container :global(.main) {
+        position: relative;
+        z-index: 2;
+    }
+
     .black-background {
         position: absolute;
         top: 0;
@@ -171,6 +208,31 @@
         width: 100%;
         height: 100%;
         background-color: black;
+    }
+
+    .background-layer {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1;
+    }
+
+    .background-layer img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        background-color: black;
+    }
+
+    .background-layer.background-playing {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: black;
+        color: var(--text);
+        opacity: 0.5;
     }
 
     .overlays-layer {
@@ -233,6 +295,17 @@
     .current-show-label:disabled {
         opacity: 0.6;
         cursor: default;
+    }
+
+    .buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding: 0 8px;
+    }
+
+    .media-wrapper {
+        padding: 8px;
     }
 
     .current-show-label .label-text {

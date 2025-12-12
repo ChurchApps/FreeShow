@@ -79,7 +79,8 @@ export const DEFAULT_DICTIONARY = {
         edit: "Edit"
     },
     settings: {
-        add: "Add"
+        add: "Add",
+        display_settings: "Outputs"
     },
     actions: {
         rename: "Rename",
@@ -116,5 +117,9 @@ export const DEFAULT_DICTIONARY = {
     },
     context: {
         addToProject: "Add to project"
+    },
+    audio: {
+        main: "Main",
+        mixer: "Mixer"
     }
 }

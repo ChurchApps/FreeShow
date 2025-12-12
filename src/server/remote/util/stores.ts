@@ -98,9 +98,17 @@ export let scriptureCache: Writable<{ [key: string]: Bible }> = writable({})
 
 export let playingAudioData: Writable<any> = writable({})
 export let playingAudioTime: Writable<number> = writable(0)
+export let playingVideoTime: Writable<number> = writable(0)
+export let playingVideoDuration: Writable<number> = writable(0)
+export let playingVideoPaused: Writable<boolean> = writable(false)
+export let playingVideoLoop: Writable<boolean> = writable(true)
+export let playingVideoMuted: Writable<boolean> = writable(true)
 
 export let pdfPages: Writable<{ [key: string]: string[] }> = writable({})
 export let scriptureSearchResults: Writable<any> = writable(null)
+
+export let audio: Writable<{ [key: string]: any }> = writable({})
+export let mixer: Writable<any> = writable(null)
 
 /////
 
@@ -149,8 +157,15 @@ export const _ = {
     scriptureCache,
     playingAudioData,
     playingAudioTime,
+    playingVideoTime,
+    playingVideoDuration,
+    playingVideoPaused,
+    playingVideoLoop,
+    playingVideoMuted,
     pdfPages,
     scriptureSearchResults,
+    audio,
+    mixer,
     actions,
     actionTags,
     variables,
