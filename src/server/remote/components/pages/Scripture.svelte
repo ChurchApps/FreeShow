@@ -304,12 +304,8 @@
             .toLowerCase()
             .replace(/\s/g, "")
             .replace(/\./g, "")
-            .replace(/[áàâã]/g, "a")
-            .replace(/[éèê]/g, "e")
-            .replace(/[íìî]/g, "i")
-            .replace(/[óòôõ]/g, "o")
-            .replace(/[úùû]/g, "u")
-            .replace(/ç/g, "c")
+            .normalize("NFD")
+            .replace(/\p{Diacritic}/gu, "")
     }
 
     // Common biblical book abbreviations
