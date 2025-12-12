@@ -170,7 +170,7 @@
         usageLogExported = false
     }
 
-    $: isBeta = $version.includes("beta")
+    $: isBeta = $version.includes("-beta")
 </script>
 
 <MaterialToggleSwitch label="settings.auto_updates" checked={$special.autoUpdates} on:change={(e) => updateSpecial(e.detail, "autoUpdates")} />
