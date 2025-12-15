@@ -63,22 +63,41 @@
         }
     }
 
-    async function loadCollectionBookChapter() {
-        if (!isCollection || !activeReference.book || !activeReference.chapters.length) return
+    // Track what book/chapter each scripture's data is loaded for
+    let collectionLoadedFor: { [scriptureId: string]: { book: number | string | null, chapter: number | string | null } } = {}
+
+    // Reset tracking when the active scripture/collection changes
+    $: if (activeScriptureId) collectionLoadedFor = {}
+
+    // Load book/chapter data for all collection scriptures when navigating
+    async function loadCollectionBookChapter(targetBook: number | string, targetChapter: number | string) {
+        if (!isCollection) return
 
         for (const scriptureId of activeScriptures) {
             if (scriptureId === previewBibleId) continue
             const scriptureData = data[scriptureId]
             if (!scriptureData?.bibleData) continue
 
+            const currentLoaded = collectionLoadedFor[scriptureId]
+            const bookNeedsReload = !scriptureData.bookData || currentLoaded?.book !== targetBook
+            const chapterNeedsReload = !scriptureData.chapterData || currentLoaded?.chapter !== targetChapter || bookNeedsReload
+
             try {
-                if (!scriptureData.bookData) {
-                    scriptureData.bookData = await scriptureData.bibleData.getBook(activeReference.book)
+                // Load book if needed (book changed or not loaded)
+                if (bookNeedsReload) {
+                    scriptureData.bookData = await scriptureData.bibleData.getBook(targetBook)
+                    // Clear chapter data when book changes since it's for the old book
+                    delete scriptureData.chapterData
                 }
-                if (!scriptureData.chapterData && scriptureData.bookData) {
-                    scriptureData.chapterData = await scriptureData.bookData.getChapter(Number(activeReference.chapters[0]))
+                // Load chapter if needed (chapter changed or not loaded)
+                if (chapterNeedsReload && scriptureData.bookData) {
+                    scriptureData.chapterData = await scriptureData.bookData.getChapter(Number(targetChapter))
                 }
-                data = data
+                
+                // Update tracking for this scripture
+                collectionLoadedFor[scriptureId] = { book: targetBook, chapter: targetChapter }
+                
+                data = data // trigger reactivity
             } catch (err) {
                 console.error("Error loading collection book/chapter:", scriptureId, err)
             }
@@ -86,7 +105,9 @@
     }
 
     // Trigger loading book/chapter for all collection scriptures when reference changes
-    $: if (isCollection && activeReference.book && activeReference.chapters.length) loadCollectionBookChapter()
+    $: if (isCollection && activeReference.book && activeReference.chapters.length) {
+        loadCollectionBookChapter(activeReference.book, activeReference.chapters[0])
+    }
 
     const GOLDEN_ANGLE = 137.508
     const BASE_HUE = 330
