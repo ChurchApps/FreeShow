@@ -30,6 +30,7 @@ import CreateShow from "../components/main/popups/createShow/CreateShow.svelte"
 import CustomAction from "../components/main/popups/CustomAction.svelte"
 import CustomText from "../components/main/popups/CustomText.svelte"
 import DeleteDuplicatedShows from "../components/main/popups/DeleteDuplicatedShows.svelte"
+import DeleteFolder from "../components/main/popups/DeleteFolder.svelte"
 import DeleteShow from "../components/main/popups/DeleteShow.svelte"
 import DisplayDuration from "../components/main/popups/DisplayDuration.svelte"
 import DynamicValues from "../components/main/popups/DynamicValues.svelte"
@@ -77,113 +78,114 @@ import NowPlaying from "../components/main/popups/NowPlaying.svelte"
 import Restore from "../components/main/popups/Restore.svelte"
 
 export const popups: { [key in Popups]: ComponentType } = {
-    initialize: Initialize,
-    confirm: Confirm,
-    custom_text: CustomText,
-    import: Import,
-    songbeamer_import: SongbeamerImport,
-    export: Export,
-    show: CreateShow,
-    delete_show: DeleteShow,
-    select_show: SelectShow,
-    select_template: SelectTemplate,
-    select_style: SelectStyle,
-    select_stage_layout: SelectStageLayout,
-    delete_duplicated_shows: DeleteDuplicatedShows,
-    icon: ChangeIcon,
-    manage_groups: ManageGroups,
-    manage_icons: ManageIcons,
-    manage_colors: ManageColors,
-    manage_metadata: ManageMetadata,
-    manage_dynamic_values: ManageDynamicValues,
-    template_style_overrides: TemplateStyleOverrides,
-    choose_chord: ChooseChord,
-    choose_camera: ChooseCamera,
-    player: CreatePlayer,
-    rename: Rename,
-    color: Color,
-    color_gradient: ColorGradient,
-    find_replace: FindReplace,
-    timer: Timer,
-    variable: Variable,
-    trigger: Trigger,
-    audio_stream: AudioStream,
-    now_playing: NowPlaying,
-    aspect_ratio: AspectRatio,
-    max_lines: MaxLines,
-    transition: Transition,
-    media_fit: MediaFit,
-    metadata_display: MetadataDisplay,
-    import_scripture: ImportScripture,
-    create_collection: CreateCollection,
-    scripture_show: ScriptureShow,
-    edit_event: EditEvent,
-    choose_screen: ChooseScreen,
-    choose_output: ChooseOutput,
-    choose_style: ChooseStyle,
-    change_output_values: ChangeOutputValues,
-    output_selector: OutputSelector,
-    set_time: SetTime,
-    assign_shortcut: SlideShortcut,
-    dynamic_values: DynamicValues,
-    conditions: Conditions,
-    animate: Animate,
-    translate: Translate,
-    next_timer: NextTimer,
-    display_duration: DisplayDuration,
-    manage_tags: ManageTags,
-    about: About,
-    shortcuts: Shortcuts,
-    unsaved: Unsaved,
-    restore: Restore,
-    reset_all: ResetAll,
-    alert: Alert,
-    history: History,
-    action_history: ActionHistory,
-    manage_emitters: Emitters,
-    action: Action,
-    category_action: CategoryAction,
-    custom_action: CustomAction,
-    slide_midi: SlideMidi,
-    connect: Connect,
-    cloud_update: CloudUpdate,
-    cloud_method: CloudMethod,
-    sync_categories: ChurchAppsSyncCategories,
-    effect_items: EffectItems
+  initialize: Initialize,
+  confirm: Confirm,
+  custom_text: CustomText,
+  import: Import,
+  songbeamer_import: SongbeamerImport,
+  export: Export,
+  show: CreateShow,
+  delete_show: DeleteShow,
+  delete_folder: DeleteFolder,
+  select_show: SelectShow,
+  select_template: SelectTemplate,
+  select_style: SelectStyle,
+  select_stage_layout: SelectStageLayout,
+  delete_duplicated_shows: DeleteDuplicatedShows,
+  icon: ChangeIcon,
+  manage_groups: ManageGroups,
+  manage_icons: ManageIcons,
+  manage_colors: ManageColors,
+  manage_metadata: ManageMetadata,
+  manage_dynamic_values: ManageDynamicValues,
+  template_style_overrides: TemplateStyleOverrides,
+  choose_chord: ChooseChord,
+  choose_camera: ChooseCamera,
+  player: CreatePlayer,
+  rename: Rename,
+  color: Color,
+  color_gradient: ColorGradient,
+  find_replace: FindReplace,
+  timer: Timer,
+  variable: Variable,
+  trigger: Trigger,
+  audio_stream: AudioStream,
+  now_playing: NowPlaying,
+  aspect_ratio: AspectRatio,
+  max_lines: MaxLines,
+  transition: Transition,
+  media_fit: MediaFit,
+  metadata_display: MetadataDisplay,
+  import_scripture: ImportScripture,
+  create_collection: CreateCollection,
+  scripture_show: ScriptureShow,
+  edit_event: EditEvent,
+  choose_screen: ChooseScreen,
+  choose_output: ChooseOutput,
+  choose_style: ChooseStyle,
+  change_output_values: ChangeOutputValues,
+  output_selector: OutputSelector,
+  set_time: SetTime,
+  assign_shortcut: SlideShortcut,
+  dynamic_values: DynamicValues,
+  conditions: Conditions,
+  animate: Animate,
+  translate: Translate,
+  next_timer: NextTimer,
+  display_duration: DisplayDuration,
+  manage_tags: ManageTags,
+  about: About,
+  shortcuts: Shortcuts,
+  unsaved: Unsaved,
+  restore: Restore,
+  reset_all: ResetAll,
+  alert: Alert,
+  history: History,
+  action_history: ActionHistory,
+  manage_emitters: Emitters,
+  action: Action,
+  category_action: CategoryAction,
+  custom_action: CustomAction,
+  slide_midi: SlideMidi,
+  connect: Connect,
+  cloud_update: CloudUpdate,
+  cloud_method: CloudMethod,
+  sync_categories: ChurchAppsSyncCategories,
+  effect_items: EffectItems
 }
 
 export function waitForPopupData(popupId: Popups): Promise<any> {
-    popupData.set({ ...get(popupData), id: "", value: "" })
-    activePopup.set(popupId)
+  popupData.set({ ...get(popupData), id: "", value: "" })
+  activePopup.set(popupId)
 
-    return new Promise((resolve) => {
-        // check that popup is still active
-        const interval = setInterval(() => {
-            if (get(activePopup) !== popupId) finish(undefined)
-        }, 1000)
+  return new Promise((resolve) => {
+    // check that popup is still active
+    const interval = setInterval(() => {
+      if (get(activePopup) !== popupId) finish(undefined)
+    }, 1000)
 
-        const unsubscribe = popupData.subscribe((a) => {
-            if (a.id !== popupId) return
-            activePopup.set(null)
-            finish(a.value)
-        })
-
-        function finish(value) {
-            unsubscribe()
-            clearInterval(interval)
-            resolve(value)
-        }
+    const unsubscribe = popupData.subscribe((a) => {
+      if (a.id !== popupId) return
+      activePopup.set(null)
+      finish(a.value)
     })
+
+    function finish(value) {
+      unsubscribe()
+      clearInterval(interval)
+      resolve(value)
+    }
+  })
 }
 
 export async function confirmCustom(prompt: string) {
-    popupData.set({ prompt })
-    const data = await waitForPopupData("confirm")
-    return !!data
+  popupData.set({ prompt })
+  const data = await waitForPopupData("confirm")
+  return !!data
 }
 
 export async function promptCustom(prompt: string) {
-    popupData.set({ prompt, textInput: true })
-    const data = (await waitForPopupData("confirm")) || ""
-    return data as string
+  popupData.set({ prompt, textInput: true })
+  const data = (await waitForPopupData("confirm")) || ""
+  return data as string
 }
