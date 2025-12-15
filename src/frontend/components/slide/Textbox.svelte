@@ -35,6 +35,7 @@
     export let dynamicValues = true
     export let isStage = false
     export let originalStyle = false
+    export let useOriginalTextColor = false
     export let customFontSize: number | null = null
     export let outputStyle: Styles | null = null
     export let ref: {
@@ -586,7 +587,7 @@
     on:mouseup={release}
 >
     {#if lines}
-        <TextboxLines {item} {slideIndex} {isMirrorItem} {key} {smallFontSize} {animationStyle} {dynamicValues} {isStage} {customFontSize} {outputStyle} {ref} {style} {customStyle} {stageItem} {chords} {linesStart} {linesEnd} fontSize={smallFontSize ? 20 : fontSize} {customTypeRatio} {maxLines} {maxLinesInvert} {centerPreview} {revealed} styleOverrides={templateStyleOverrides} on:updateAutoSize={calculateAutosize} />
+        <TextboxLines {item} {slideIndex} {isMirrorItem} {key} {smallFontSize} {animationStyle} {dynamicValues} {isStage} {customFontSize} {outputStyle} {ref} {style} {customStyle} {stageItem} {chords} {linesStart} {linesEnd} fontSize={smallFontSize ? 20 : fontSize} {customTypeRatio} {maxLines} {maxLinesInvert} {centerPreview} {revealed} styleOverrides={templateStyleOverrides} {useOriginalTextColor} on:updateAutoSize={calculateAutosize} />
     {:else}
         <SlideItems {item} {slideIndex} {preview} {isTemplatePreview} {mirror} {isMirrorItem} {ratio} {disableListTransition} {smallFontSize} {ref} {fontSize} {outputId} />
     {/if}

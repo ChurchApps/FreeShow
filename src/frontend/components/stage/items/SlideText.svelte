@@ -106,6 +106,8 @@
     $: clickRevealed = slideOffset === 0 && !!currentSlide?.itemClickReveal
     $: revealed = slideOffset === 0 ? (currentSlide?.revealCount || 0) - 1 : -1
     // WIP stage items merged (so this only works properly for the first item with linesReveal enabled (use "Item number" option))
+
+    $: useOriginalTextColor = stageItem.style?.includes("color:;")
 </script>
 
 {#if style}
@@ -134,12 +136,12 @@
 {:else}
     <div class:loading={items1 && !firstActive}>
         {#each items1 as item}
-            <Textbox {item} style={false} customStyle={textStyle} {stageItem} {chords} {ref} maxLines={Number(slideOffset !== 0 && stageItem.lineCount)} maxLinesInvert={slideOffset < 0} stageAutoSize={autoSize} {fontSize} {clickRevealed} {revealed} isStage />
+            <Textbox {item} style={false} customStyle={textStyle} {stageItem} {chords} {ref} maxLines={Number(slideOffset !== 0 && stageItem.lineCount)} maxLinesInvert={slideOffset < 0} stageAutoSize={autoSize} {fontSize} {clickRevealed} {revealed} isStage {useOriginalTextColor} />
         {/each}
     </div>
     <div class:loading={items2 && firstActive}>
         {#each items2 as item}
-            <Textbox {item} style={false} customStyle={textStyle} {stageItem} {chords} {ref} maxLines={Number(slideOffset !== 0 && stageItem.lineCount)} maxLinesInvert={slideOffset < 0} stageAutoSize={autoSize} {fontSize} {clickRevealed} {revealed} isStage />
+            <Textbox {item} style={false} customStyle={textStyle} {stageItem} {chords} {ref} maxLines={Number(slideOffset !== 0 && stageItem.lineCount)} maxLinesInvert={slideOffset < 0} stageAutoSize={autoSize} {fontSize} {clickRevealed} {revealed} isStage {useOriginalTextColor} />
         {/each}
     </div>
 {/if}

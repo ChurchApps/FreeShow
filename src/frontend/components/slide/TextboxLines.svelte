@@ -30,6 +30,7 @@
     export let style = true
     export let customStyle = ""
     export let stageItem: any = {}
+    export let useOriginalTextColor = false
     export let chords = false
     export let linesStart: null | number = null
     export let linesEnd: null | number = null
@@ -92,6 +93,13 @@
         alphaStyles += "color: rgb(255 255 255 / " + textAlpha + ");"
 
         return style + alphaStyles
+    }
+
+    function getColor(style: string | undefined) {
+        if (!isStage || !useOriginalTextColor || !style) return ""
+
+        const lineStyle = getStyles(style)
+        return lineStyle.color ? `color: ${lineStyle.color};` : ""
     }
 
     function getAlphaValues(colorValue: string) {
@@ -246,7 +254,7 @@
                     {:else}
                         {#each line.text || [] as text, ti}
                             {@const value = text.value?.replaceAll("\n", "<br>") || "<br>"}
-                            <span class="textContainer" style="{style ? getCustomStyle(text.style) : ''}{customStyle}{text.customType?.includes('disableTemplate') ? text.style : ''}{fontSize ? `;font-size: ${fontSize * (text.customType?.includes('disableTemplate') && !text.customType?.includes('jw') ? customTypeRatio : 1)}px;` : style ? getCustomFontSize(text.style, outputStyle) : ''}">
+                            <span class="textContainer" style="{style ? getCustomStyle(text.style) : ''}{getColor(text.style)}{customStyle}{text.customType?.includes('disableTemplate') ? text.style : ''}{fontSize ? `;font-size: ${fontSize * (text.customType?.includes('disableTemplate') && !text.customType?.includes('jw') ? customTypeRatio : 1)}px;` : style ? getCustomFontSize(text.style, outputStyle) : ''}">
                                 {@html getTextValue(value, i, ti, updateDynamic)}
                             </span>
                         {/each}
