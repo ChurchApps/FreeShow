@@ -1141,7 +1141,7 @@ const customTriggers = {
 
 // DYNAMIC VALUES
 
-const commonOnly = ["slide_text_", "time_str", "project_section_time"]
+const commonOnly = ["slide_text_", "time_str", "project_section_time", "show_name_next", "layout_notes", "slide_group_upcoming", "slide_notes_next", "audio_subtitle", "audio_genre", "audio_year", "audio_volume"]
 export const dynamicValueText = (id: string) => `{${id}}`
 export function getDynamicIds(noVariables = false, mode: null | "scripture" = null, showAll: boolean = true): string[] {
     const mainValues = Object.keys(dynamicValues).filter((id) => (showAll ? true : !commonOnly.find((cId) => id.startsWith(cId))))
@@ -1444,7 +1444,7 @@ const dynamicValues = {
         const group = show.slides?.[ref[parentIndex]?.id]?.group || ""
         return getGroupName({ show, showId: outSlide?.id }, ref[parentIndex]?.id, group, parentIndex, false, false)
     },
-    slide_group_upcomming: ({ show, ref, slideIndex, outSlide }) => {
+    slide_group_upcoming: ({ show, ref, slideIndex, outSlide }) => {
         if (slideIndex < 0) return ""
         let nextParentIndex = slideIndex + 1
         while (ref[nextParentIndex]?.type !== "parent" && nextParentIndex < ref.length) nextParentIndex++

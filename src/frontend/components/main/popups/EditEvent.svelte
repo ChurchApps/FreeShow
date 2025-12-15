@@ -106,7 +106,6 @@
     const getISO = (date: Date) => {
         date = new Date(date.getFullYear(), date.getMonth(), date.getDate(), date.getHours(), date.getMinutes())
         date.setMinutes(date.getMinutes() - date.getTimezoneOffset())
-        console.log(date)
         return date.toISOString().substring(0, 10)
     }
 
