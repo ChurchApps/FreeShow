@@ -702,6 +702,8 @@ export function enableStageOutput(options: any = {}) {
 }
 
 export function changeStageOutputLayout(data: API_stage_output_layout) {
+    if (!data.stageLayoutId) return
+
     const outputIds = data.outputId ? [data.outputId] : Object.keys(get(outputs))
 
     outputs.update((a) => {
