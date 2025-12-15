@@ -4,6 +4,7 @@ import { Main } from "../../../types/IPC/Main"
 import type { Clipboard } from "../../../types/Main"
 import type { Folder, Project } from "../../../types/Projects"
 import type { Item } from "../../../types/Show"
+import { getProjectsInFolder } from "../../converters/project"
 import { sendMain } from "../../IPC/main"
 import {
     actions,
@@ -55,6 +56,7 @@ import {
 } from "../../stores"
 import { newToast, triggerFunction } from "../../utils/common"
 import { translateText } from "../../utils/language"
+import { confirmCustom } from "../../utils/popup"
 import { removeSlide } from "../context/menuClick"
 import { deleteTimer } from "../drawer/timers/timers"
 import { updateSortedStageItems } from "../edit/scripts/itemHelpers"
@@ -68,7 +70,6 @@ import { select } from "./select"
 import { loadShows } from "./setShow"
 import { checkName, getLayoutRef } from "./show"
 import { _show } from "./shows"
-import { confirmCustom } from "../../utils/popup"
 
 export function copy(clip: Clipboard | null = null, getData = true, shouldDuplicate = false) {
     let copyData: Clipboard | null = clip
@@ -825,7 +826,31 @@ const deleteActions = {
             return a
         })
     },
-    folder: (data: any) => historyDelete("UPDATE", data, { updater: "project_folder" }),
+    folder: async (data: any) => {
+        let projectIds: string[] = []
+        let folderIds: string[] = []
+
+        data.map((a) => {
+            const { projectIds: pIds, folderIds: fIds } = getProjectsInFolder(a.id)
+            projectIds = projectIds.concat(pIds)
+            folderIds = folderIds.concat(fIds)
+        })
+
+        // remove duplicates
+        const folderIdsData = [...new Set([...folderIds, ...data.map((a) => a.id)])].map((id) => ({ id }))
+
+        if (!projectIds.length) {
+            historyDelete("UPDATE", folderIdsData, { updater: "project_folder" })
+            return
+        }
+
+        if (!(await confirmCustom(translateText("Deleting this folder will also delete all projects and folders within it.<br>popup.delete_show_confirmation?")))) return
+
+        const projectIdsData = [...new Set(projectIds)].map((id) => ({ id }))
+
+        historyDelete("UPDATE", projectIdsData, { updater: "project" })
+        historyDelete("UPDATE", folderIdsData, { updater: "project_folder" })
+    },
     project: (data: any) => historyDelete("UPDATE", data, { updater: "project" }),
     project_template: (data: any) => historyDelete("UPDATE", data, { updater: "project_template" }),
     stage: (data: any) => historyDelete("UPDATE", data, { updater: "stage" }),

@@ -1,6 +1,7 @@
 import { get } from "svelte/store"
 import type { ProjectShowRef } from "../../types/Projects"
 import type { Show, ShowType } from "../../types/Show"
+import { keysToID } from "../components/helpers/array"
 import { history } from "../components/helpers/history"
 import { getExtension, getFileName, getMediaType, removeExtension } from "../components/helpers/media"
 import { checkName } from "../components/helpers/show"
@@ -121,4 +122,32 @@ export function addSection() {
     const index: number = activeShowIndex ?? get(projects)[get(activeProject) || ""]?.shows?.length ?? 0
 
     history({ id: "UPDATE", newData: { key: "shows", index }, oldData: { id: get(activeProject) }, location: { page: "show", id: "section" } })
+}
+
+export function getProjectsInFolder(id: string) {
+    let projectIds: string[] = []
+    let folderIds: string[] = []
+
+    const projectsList = keysToID(get(projects))
+    const foldersList = keysToID(get(folders))
+
+    const foldersToCheck = [id]
+    while (foldersToCheck.length > 0) {
+        const folderId = foldersToCheck.pop()
+        if (!folderId) continue
+
+        projectsList.forEach((a) => {
+            if (a.parent === folderId) projectIds.push(a.id)
+        })
+
+        // add subfolders
+        foldersList.forEach((a) => {
+            if (a.parent === folderId) {
+                folderIds.push(a.id)
+                foldersToCheck.push(a.id)
+            }
+        })
+    }
+
+    return { projectIds, folderIds }
 }
