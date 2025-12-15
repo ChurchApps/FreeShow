@@ -64,7 +64,7 @@
     }
 
     // Track what book/chapter each scripture's data is loaded for
-    let collectionLoadedFor: { [scriptureId: string]: { book: number | string | null, chapter: number | string | null } } = {}
+    let collectionLoadedFor: { [scriptureId: string]: { book: number | string | null; chapter: number | string | null } } = {}
 
     // Reset tracking when the active scripture/collection changes
     $: if (activeScriptureId) collectionLoadedFor = {}
@@ -93,10 +93,10 @@
                 if (chapterNeedsReload && scriptureData.bookData) {
                     scriptureData.chapterData = await scriptureData.bookData.getChapter(Number(targetChapter))
                 }
-                
+
                 // Update tracking for this scripture
                 collectionLoadedFor[scriptureId] = { book: targetBook, chapter: targetChapter }
-                
+
                 data = data // trigger reactivity
             } catch (err) {
                 console.error("Error loading collection book/chapter:", scriptureId, err)
@@ -709,6 +709,7 @@
             // Enter in search to play
             if (e.target?.closest(".search")) {
                 playScripture()
+                ;(document.activeElement as any)?.blur()
                 return
             }
 

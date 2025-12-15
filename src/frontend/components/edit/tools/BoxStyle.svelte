@@ -268,7 +268,7 @@
 
         // does not work for partial text when auto size is enabled
         // WIP doesn't need to show if disabled works correctly
-        if (id === "text" && input.key === "font-size" && selection?.length && item?.textFit !== "none") {
+        if (id === "text" && input.key === "font-size" && selection?.length && (item?.textFit || "none") !== "none") {
             newToast("edit.auto_size settings.enabled!")
         }
 

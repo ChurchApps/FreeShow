@@ -853,14 +853,14 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
             )
         ] as string[]
 
+        const hasDynamicValue = templateItem?.lines?.some((line) => line?.text?.some((text) => text.value?.includes("{")))
+
         item.lines?.forEach((line, j) => {
             let templateLine = templateItem?.lines?.[j] || templateItem?.lines?.[0]
             if (!templateLine) return
 
             // remove empty text parts (if not completely empty)
             if (templateLine.text.some((a) => a?.value?.trim().length)) templateLine.text = templateLine.text.filter((a) => a?.value?.trim().length)
-
-            const hasDynamicValue = templateLine?.text?.some((text) => text.value?.includes("{"))
 
             line.align = templateLine?.align || ""
             line.text?.forEach((text, k) => {
@@ -1026,9 +1026,10 @@ function getSlideItemsFromTemplate(templateSettings: TemplateSettings) {
 function removeTextValue(items: Item[]) {
     items.forEach((item) => {
         if (!item.lines) return
-        item.lines = item.lines.map((line) => {
-            const hasDynamicValue = line.text?.some((text) => text.value?.includes("{"))
 
+        const hasDynamicValue = item.lines.some((line) => line.text?.some((text) => text.value?.includes("{")))
+
+        item.lines = item.lines.map((line) => {
             if (hasDynamicValue) return { align: line.align, text: line.text }
             return { align: line.align, text: [{ style: line.text?.[0]?.style, value: "" }] }
         })
