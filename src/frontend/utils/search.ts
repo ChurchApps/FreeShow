@@ -69,6 +69,9 @@ export function showSearchFilter(searchValue: string, show: ShowList) {
     // Priority 1: Title Exact Match
     if (formattedSearchValue === showName || formattedSearchValue === showNameWithNumber) return 100
 
+    // Priority 1.25: Song Number Starts With Match
+    // if (songNumber && formattedSongNumber.startsWith(formattedSearchValue)) return 100
+
     // Priority 1.5: Title Word Start Match
     if (showName.startsWith(formattedSearchValue)) return 100
 

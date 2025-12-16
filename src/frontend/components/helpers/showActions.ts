@@ -1141,7 +1141,7 @@ const customTriggers = {
 
 // DYNAMIC VALUES
 
-const commonOnly = ["slide_text_", "time_str", "project_section_time", "show_name_next", "layout_notes", "slide_group_upcoming", "slide_notes_next", "audio_subtitle", "audio_genre", "audio_year", "audio_volume"]
+const commonOnly = ["time_str", "project_section_time", "show_name_next", "show_text_full", "slide_text_", "layout_notes", "slide_group_upcoming", "slide_notes_next", "audio_subtitle", "audio_genre", "audio_year", "audio_volume"]
 export const dynamicValueText = (id: string) => `{${id}}`
 export function getDynamicIds(noVariables = false, mode: null | "scripture" = null, showAll: boolean = true): string[] {
     const mainValues = Object.keys(dynamicValues).filter((id) => (showAll ? true : !commonOnly.find((cId) => id.startsWith(cId))))
@@ -1457,6 +1457,7 @@ const dynamicValues = {
     // text
     slide_text_previous: ({ show, ref, slideIndex, outSlide }) => getTextLines(outSlide?.id === "temp" ? { items: outSlide?.previousSlides } : show.slides?.[ref[slideIndex - 1]?.id]).join("<br>"),
     slide_text_next: ({ show, ref, slideIndex, outSlide }) => getTextLines(outSlide?.id === "temp" ? { items: outSlide?.nextSlides } : show.slides?.[ref[slideIndex + 1]?.id]).join("<br>"),
+    show_text_full: ({ show, ref }) => ref.map((a) => getTextLines(show.slides?.[a.id]).join("<br>")).join("<br><br>"),
 
     // video
     video_time: ({ videoTime }) => joinTime(secondsToTime(videoTime)),

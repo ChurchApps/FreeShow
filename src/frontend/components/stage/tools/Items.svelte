@@ -121,7 +121,7 @@
     $: allItems = getSortedStageItems(stageId, $stageShows)
     $: invertedItemList = Array.isArray(allItems) ? clone(allItems).reverse() : []
 
-    const excludeValues = ["project_", "time_", "audio_", "meta_", "slide_text_previous", "slide_text_next"]
+    const excludeValues = ["project_", "time_", "audio_", "meta_", "slide_text_", "show_text_full"]
     const ref = { type: "stage" }
     const dynamicValues = getDynamicIds()
         .filter((id) => !excludeValues.find((v) => id.includes(v))) // || id.startsWith("project_")
