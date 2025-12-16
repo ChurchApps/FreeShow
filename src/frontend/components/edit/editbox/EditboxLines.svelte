@@ -152,7 +152,7 @@
                 return
             }
 
-            cutInTwo({ e, sel, lines, currentIndex, textPos, start })
+            cutInTwo({ e, sel, lines: clone(lines), currentIndex, textPos, start })
         }
 
         storeCurrentCaretPos()
