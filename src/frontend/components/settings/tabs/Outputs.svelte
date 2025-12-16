@@ -63,6 +63,8 @@
                     updateOutput("transparent", true)
                     updateOutput("invisible", true)
                 }
+
+                ndiMenuOpened = true
             }
         } else if (key === "blackmagic") {
             if (value === true) {
@@ -269,6 +271,8 @@
     receive(BLACKMAGIC, receiveBMD, listenerId)
 
     $: outputLabel = `${currentOutput?.bounds?.width || 1920}x${currentOutput?.bounds?.height || 1080}`
+
+    let ndiMenuOpened = false
 </script>
 
 {#if outputsList.filter((a) => !a.stageOutput).length > 1 || !currentOutput?.enabled || currentOutput?.stageOutput}
@@ -310,17 +314,21 @@
 <!-- NDI -->
 <Title label="NDI®" icon="companion" />
 
-<MaterialToggleSwitch label="actions.enable NDI®" checked={currentOutput?.ndi} defaultValue={false} data={$ndiData[currentOutput?.id || ""]?.connections || null} on:change={(e) => updateOutput("ndi", e.detail)} />
+<InputRow arrow={currentOutput?.ndi} bind:open={ndiMenuOpened}>
+    <MaterialToggleSwitch label="actions.enable NDI®" style="width: 100%;" checked={currentOutput?.ndi} defaultValue={false} data={$ndiData[currentOutput?.id || ""]?.connections || null} on:change={(e) => updateOutput("ndi", e.detail)} />
 
-{#if currentOutput?.ndi}
-    <MaterialToggleSwitch label="preview.audio" checked={currentOutput.ndiData?.audio} defaultValue={false} on:change={(e) => updateNdiData(e.detail, "audio")} />
-    <MaterialDropdown label="settings.frame_rate" value={currentOutput.ndiData?.framerate || "30"} defaultValue="30" options={framerates} on:change={(e) => updateNdiData(e.detail, "framerate")} />
+    <svelte:fragment slot="menu">
+        {#if currentOutput}
+            <MaterialToggleSwitch label="preview.audio" checked={currentOutput.ndiData?.audio} defaultValue={false} on:change={(e) => updateNdiData(e.detail, "audio")} />
+            <MaterialDropdown label="settings.frame_rate" value={currentOutput.ndiData?.framerate || "30"} defaultValue="30" options={framerates} on:change={(e) => updateNdiData(e.detail, "framerate")} />
 
-    <InputRow>
-        <MaterialTextInput label="inputs.name" value={currentOutput.ndiData?.name || `FreeShow NDI${currentOutput.name ? ` - ${currentOutput.name}` : ""}`} defaultValue={`FreeShow NDI${currentOutput.name ? ` - ${currentOutput.name}` : ""}`} on:change={(e) => updateNdiData(e.detail, "name")} />
-        <MaterialTextInput label="inputs.group" title="settings.comma_seperated" value={currentOutput.ndiData?.groups || ""} defaultValue="" placeholder="public" on:change={(e) => updateNdiData(e.detail, "groups")} />
-    </InputRow>
-{/if}
+            <InputRow>
+                <MaterialTextInput label="inputs.name" value={currentOutput.ndiData?.name || `FreeShow NDI${currentOutput.name ? ` - ${currentOutput.name}` : ""}`} defaultValue={`FreeShow NDI${currentOutput.name ? ` - ${currentOutput.name}` : ""}`} on:change={(e) => updateNdiData(e.detail, "name")} />
+                <MaterialTextInput label="inputs.group" title="settings.comma_seperated" value={currentOutput.ndiData?.groups || ""} defaultValue="" placeholder="public" on:change={(e) => updateNdiData(e.detail, "groups")} />
+            </InputRow>
+        {/if}
+    </svelte:fragment>
+</InputRow>
 
 <!-- Blackmagic -->
 <!-- BLACKMAGIC CURRENTLY NOT WORKING -->

@@ -179,7 +179,7 @@
             <Icon id={"stop"} white={paused} size={1.2} />
         </MaterialButton>
 
-        <div style="display: flex;align-items: center;gap: 10px;flex: 1;margin: 0 10px;">
+        <div style="display: flex;align-items: center;gap: 10px;flex: 1;margin: 0 10px;font-size: 1.1em;">
             {#if sliderValue !== null}
                 <span>
                     {joinTime(secondsToTime(sliderValue))}
