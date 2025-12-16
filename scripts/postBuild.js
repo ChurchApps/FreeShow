@@ -35,20 +35,22 @@ function deleteFolderRecursive(folderPath) {
     rmdirSync(folderPath)
 }
 
-function copyPublicFolderAndMinify(folderPath, destinationPath) {
+async function copyPublicFolderAndMinify(folderPath, destinationPath) {
     if (existsSync(destinationPath)) deleteFolderRecursive(destinationPath)
 
     mkdirSync(destinationPath)
 
-    readdirSync(folderPath).forEach(processFile)
-    function processFile(file) {
+    const files = readdirSync(folderPath)
+    await Promise.all(files.map(processFile))
+
+    async function processFile(file) {
         const curPath = join(folderPath, file)
         const newPath = join(destinationPath, file)
         const isFolder = lstatSync(curPath).isDirectory()
 
-        if (isFolder) return copyPublicFolderAndMinify(curPath, newPath)
+        if (isFolder) return await copyPublicFolderAndMinify(curPath, newPath)
 
-        if (/\.js$/.exec(curPath)) return minifyJS(curPath, newPath)
+        if (/\.js$/.exec(curPath)) return await minifyJS(curPath, newPath)
         // if (/\.html$/.exec(curPath)) return minifyHTML(curPath, newPath)
         // if (/\.css$/.exec(curPath)) return minifyCSS(curPath, newPath)
 
@@ -86,21 +88,21 @@ const minifyJSOptions = {
     }
 }
 
-function minifyJSFiles(filePaths) {
-    filePaths.forEach((filePath) => minifyJS(filePath))
+async function minifyJSFiles(filePaths) {
+    await Promise.all(filePaths.map((filePath) => minifyJS(filePath)))
 }
 
-function minifyJS(filePath, newPath = "") {
+async function minifyJS(filePath, newPath = "") {
     const unminified = readFileSync(filePath, "utf8")
 
-    Terser.minify(unminified, minifyJSOptions)
-        .then((minified) => {
-            writeFileSync(newPath || filePath, minified.code)
-        })
-        .catch((err) => {
-            process.emitWarning(err)
-            process.abort()
-        })
+    try {
+        const minified = await Terser.minify(unminified, minifyJSOptions)
+        if (!minified?.code) return
+        writeFileSync(newPath || filePath, minified.code)
+    } catch (err) {
+        process.emitWarning(err)
+        process.abort()
+    }
 }
 
 // const minifyHTMLOptions = {
@@ -175,11 +177,13 @@ function setProductionHTML() {
 
 // EXECUTE
 
-const bundledElectronPath = join(__dirname, "..", "build")
-minifyJSFiles(getAllJSFiles(bundledElectronPath))
-copyPublicFolderAndMinify(join(__dirname, "..", "public"), join(bundledElectronPath, "public"))
-setProductionHTML()
-removeTsConfigs()
+;(async () => {
+    const bundledElectronPath = join(__dirname, "..", "build")
+    await minifyJSFiles(getAllJSFiles(bundledElectronPath))
+    await copyPublicFolderAndMinify(join(__dirname, "..", "public"), join(bundledElectronPath, "public"))
+    setProductionHTML()
+    removeTsConfigs()
 
-// fix for OPUS electron vs node env
-renameOpusBuild()
+    // fix for OPUS electron vs node env
+    renameOpusBuild()
+})()
