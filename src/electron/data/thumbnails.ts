@@ -209,7 +209,7 @@ export async function pdfToImage({ filePath }: { filePath: string }) {
     const pdfImportPath = getDataFolderPath("imports", "PDF")
     const pathName = createFolder(path.join(pdfImportPath, pdfName))
 
-    const { pages: pdfImages }: { pages: string[] } = await requestToMain(ToMain.API, { action: "get_pdf_thumbnails", data: { path: filePath } })
+    const { pages: pdfImages }: { pages: string[] } = (await requestToMain(ToMain.API, { action: "get_pdf_thumbnails", data: { path: filePath } })) || { pages: [] }
     if (!Array.isArray(pdfImages)) return
 
     const images: string[] = []

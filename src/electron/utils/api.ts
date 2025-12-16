@@ -54,7 +54,7 @@ function connected(socket: Socket) {
 
         let returnData
         if (parsedData.isVariable) {
-            returnData = { isVariable: true, values: await requestToMain(ToMain.GET_DYNAMIC_VALUES, parsedData.keys || []) }
+            returnData = { isVariable: true, values: (await requestToMain(ToMain.GET_DYNAMIC_VALUES, parsedData.keys || [])) || {} }
         } else {
             returnData = await receivedData(parsedData, log)
         }

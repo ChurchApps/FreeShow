@@ -83,7 +83,10 @@ function pcoAuthenticate(scope: PCOScopes): Promise<PCOAuthData> {
         app.get(path, (req, res) => {
             const code = req.query.code?.toString() || ""
             console.info(`OAuth code received: ${code}`)
-            if (!code) return resolve(null)
+            if (!code) {
+                server.close()
+                return resolve(null)
+            }
 
             const params = {
                 grant_type: "authorization_code",
@@ -99,6 +102,7 @@ function pcoAuthenticate(scope: PCOScopes): Promise<PCOAuthData> {
                     const errorPage = HTML_error.replace("{error_msg}", err.message)
                     res.send(errorPage)
 
+                    server.close()
                     sendToMain(ToMain.ALERT, "Could not authorize! " + err.message)
                     return resolve(null)
                 }
