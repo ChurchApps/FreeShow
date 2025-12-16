@@ -223,10 +223,10 @@
                             {/if}
 
                             {#if shown && isEmpty && !isReadOnly}
-                                <!-- padding: 5px 0; -->
-                                <div class:indented={project.parent !== "/"} style="margin-inline-start: {8 * ((project.index || 0) + 1)}px;display: flex;align-items: center;flex-direction: column;">
-                                    <p style="opacity: 0.5;padding-bottom: 5px;"><T id="empty.general" /></p>
-                                    <MaterialButton icon="add" style="width: 100%;padding: 0.12rem 0.65rem;background-color: var(--primary-darkest);" on:click={() => history({ id: "UPDATE", newData: { replace: { parent: project.id } }, location: { page: "show", id: "project" } })} title="new.project">
+                                <div class:indented={project.parent !== "/"} style="margin-inline-start: {8 * ((project.index || 0) + 1)}px;display: flex;align-items: center;flex-direction: column;padding: 12px;">
+                                    <p style="opacity: 0.5;padding-bottom: 8px;"><T id="empty.general" /></p>
+
+                                    <MaterialButton variant="outlined" icon="add" title="new.project" style="justify-content: start;padding: 6px 14px;" on:click={() => history({ id: "UPDATE", newData: { replace: { parent: project.id } }, location: { page: "show", id: "project" } })}>
                                         {#if !$labelsDisabled}<p><T id="new.project" /></p>{/if}
                                     </MaterialButton>
                                 </div>

@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { DrawerTabIds } from "../../../types/Tabs"
-    import { activeDrawerTab, activeEdit, activePage, activePopup, activeProject, activeShow, drawer, drawerOpenedInEdit, drawerTabsData, focusMode, labelsDisabled, os, previousShow, projects, quickTextCache, selected } from "../../stores"
+    import { activeDrawerTab, activeEdit, activePage, activePopup, activeProject, activeShow, activeTriggerFunction, drawer, drawerOpenedInEdit, drawerTabsData, focusMode, labelsDisabled, os, previousShow, projects, quickTextCache, selected } from "../../stores"
     import { DEFAULT_DRAWER_HEIGHT, DEFAULT_WIDTH, MENU_BAR_HEIGHT } from "../../utils/common"
     import { translateText } from "../../utils/language"
     import { getAccess } from "../../utils/profile"
@@ -135,8 +135,7 @@
     function keydown(e: KeyboardEvent) {
         if ((e.ctrlKey || e.metaKey) && e.key === "f") {
             if ($activePopup === "show" || shouldOpenReplace()) return
-            searchActive = false
-            searchActive = true
+            focusSearch()
 
             // change to "Show" and "All" when searching when drawer is closed
             // (not needed now as there is Quick search)
@@ -178,6 +177,11 @@
         setTimeout(() => {
             searchElem?.focus()
         }, 10)
+    }
+    $: if ($activeTriggerFunction === "drawer_search") focusSearch()
+    function focusSearch() {
+        searchActive = false
+        setTimeout(() => (searchActive = true))
     }
 
     const hiddenInFocusMode = ["templates", "calendar"]

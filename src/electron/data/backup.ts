@@ -1,10 +1,10 @@
 import path from "path"
-import type { Main } from "../../types/IPC/Main"
+import { Main } from "../../types/IPC/Main"
 import { ToMain } from "../../types/IPC/ToMain"
 import type { SaveActions } from "../../types/Save"
 import type { Show, Shows, TrimmedShow } from "../../types/Show"
 import { sendMain, sendToMain } from "../IPC/main"
-import { deleteFolder, doesPathExist, getDataFolderPath, getFileStats, getTimePointString, makeDir, openInSystem, readFile, readFileAsync, readFolder, selectFilesDialog, writeFile, writeFileAsync } from "../utils/files"
+import { deleteFolder, doesPathExist, getDataFolderPath, getFileStats, getTimePointString, loadShows, makeDir, openInSystem, readFile, readFileAsync, readFolder, selectFilesDialog, writeFile, writeFileAsync } from "../utils/files"
 import { wait } from "../utils/helpers"
 import { _store, getStore, storeFilesData } from "./store"
 
@@ -181,6 +181,8 @@ export function restoreFiles(data?: { folder: string }) {
             const showPath: string = path.resolve(showsPath, (value.name || id) + ".show")
             writeFile(showPath, JSON.stringify([id, value]), id)
         }
+
+        sendMain(Main.SHOWS, loadShows())
     }
 }
 
