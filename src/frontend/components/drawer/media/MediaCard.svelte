@@ -203,7 +203,7 @@
         outlineColor={findMatchingOut(path, $outputs)}
         active={findMatchingOut(path, $outputs) !== null}
         label={displayName}
-        title={path}
+        title={contentProvider ? "" : path}
         icon={thumbnail ? icon : null}
         white={type === "image"}
         showPlayOnHover

@@ -20,7 +20,7 @@ import { getCurrentTimerValue, getTimeUntilClock, playPauseGlobal } from "../dra
 import { getDynamicValue } from "../edit/scripts/itemHelpers"
 import { getTextLines } from "../edit/scripts/textStyle"
 import { clearBackground, clearOverlays, clearTimers } from "../output/clear"
-import { actions, activeEdit, activeFocus, activePage, activeProject, activeShow, allOutputs, audioData, customMetadata, dictionary, driveData, dynamicValueData, focusMode, media, outLocked, outputs, outputSlideCache, overlays, playingAudio, playingMetronome, projects, shows, showsCache, slideTimers, special, stageShows, styles, templates, timers, triggers, variables, videosData, videosTime } from "./../../stores"
+import { actions, activeEdit, activeFocus, activePage, activeProject, activeShow, allOutputs, audioData, customMetadata, dictionary, driveData, dynamicValueData, focusMode, media, outLocked, outputDisplay, outputs, outputSlideCache, overlays, playingAudio, playingMetronome, projects, shows, showsCache, slideTimers, special, stageShows, styles, templates, timers, triggers, variables, videosData, videosTime } from "./../../stores"
 import { clone, keysToID, sortByName } from "./array"
 import { getExtension, getFileName, getMediaStyle, getMediaType, removeExtension } from "./media"
 import { defaultLayers, getActiveOutputs, getAllNormalOutputs, getFirstActiveOutput, getFirstOutput, getWindowOutputId, isOutCleared, refreshOut, setOutput } from "./output"
@@ -1239,7 +1239,7 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
     const currentShow = _show(showId).get()
     if (type === "show" && !currentShow) return ""
 
-    const customIds = ["slide_text_current", "active_layers", "active_styles", "log_song_usage"]
+    const customIds = ["slide_text_current", "active_layers", "active_styles", "output_windows_active", "log_song_usage"]
     ;[...getDynamicIds(false, mode), ...customIds].forEach((dynamicId) => {
         let textHasValue = text.includes(dynamicValueText(dynamicId))
         if (dynamicId.startsWith("$") && text.includes(dynamicValueText(dynamicId.replace("$", "variable_")))) textHasValue = true
@@ -1371,6 +1371,8 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
             const outputStyleIds = activeOutputIds.map((oId) => get(outputs)[oId].style || "").filter(Boolean)
             const outputStyleNames = outputStyleIds.map((styleId) => get(styles)[styleId]?.name).filter(Boolean)
             return outputStyleNames.sort((a, b) => a.localeCompare(b)).join(", ")
+        } else if (dynamicId === "output_windows_active") {
+            return get(outputDisplay) ? "true" : "false"
         } else if (dynamicId === "log_song_usage") {
             return get(special).logSongUsage ? "true" : "false"
         }

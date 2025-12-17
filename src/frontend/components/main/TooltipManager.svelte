@@ -13,7 +13,7 @@
     let autoHideTimeout: ReturnType<typeof setTimeout> | null = null
 
     const tooltipDelay = 700
-    const autoHideDelay = 5000
+    const autoHideDelay = 8000
 
     function extractShortcuts(input: string) {
         if (typeof input !== "string") return []

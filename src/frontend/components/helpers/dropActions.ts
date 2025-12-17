@@ -494,10 +494,8 @@ const slideDrop = {
         let center = drop.center
         if (drag.id === "files" && drop.index !== undefined) center = true
 
-        // get background type
-        let backgroundTypeData: any = {}
         // videos are probably not meant to be background if they are added in bulk
-        if (data.length > 1 && !center) backgroundTypeData = { muted: false, loop: false }
+        const shouldBeForeground = data.length > 1 && !center
 
         data = data.map((a) => {
             const path = a.path || a.id
@@ -506,12 +504,12 @@ const slideDrop = {
             a.path = path
             delete a.id
 
-            let backgroundData = backgroundTypeData
+            // "background" by default
+            let backgroundData = { muted: true, loop: true }
             const mediaStyle = getMediaStyle(get(media)[path], undefined)
-            let type = mediaStyle.videoType || "background"
+            let type = mediaStyle.videoType || (shouldBeForeground ? "foreground" : "background")
             if (a.contentProvider) type = "foreground"
-            if (type === "background") backgroundData = { muted: true, loop: true }
-            else if (type === "foreground") backgroundData = { muted: false, loop: false }
+            if (type === "foreground") backgroundData = { muted: false, loop: false }
 
             return { ...a, path, ...(a.type === "video" ? backgroundData : {}) }
         })

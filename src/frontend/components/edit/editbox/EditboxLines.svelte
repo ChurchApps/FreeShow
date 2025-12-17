@@ -368,14 +368,20 @@
 
             newLines.push(newLine)
 
-            // WIP backspace a line into a line with different styling will merge both and apply the first style to both (HTML issue)
-
             new Array(...line.childNodes).forEach((child: any, j) => {
                 if (child.nodeName === "#text") {
                     // add "floating" text to previous node (e.g. pressing backspace at the start of a line)
+                    // preserve style when merging lines with different styling (macOS issue)
                     let lastNode = newLines[pos].text.length - 1
-                    if (lastNode < 0 || !newLines[pos].text[lastNode]) return
-                    newLines[pos].text[lastNode].value += child.textContent
+                    let originalLineStyle = item.lines?.[i]?.text?.[0]?.style || ""
+                    let lastNodeStyle = lastNode >= 0 ? newLines[pos].text[lastNode]?.style || "" : ""
+
+                    // Create new segment if no previous node or styles differ
+                    if (lastNode < 0 || !newLines[pos].text[lastNode] || (originalLineStyle && originalLineStyle !== lastNodeStyle)) {
+                        newLines[pos].text.push({ style: originalLineStyle, value: child.textContent })
+                    } else {
+                        newLines[pos].text[lastNode].value += child.textContent
+                    }
 
                     updateHTML = true
                     return

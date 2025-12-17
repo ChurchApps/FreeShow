@@ -217,15 +217,21 @@
                     <span style="opacity: 0.5;"><T id="empty.general" /></span>
 
                     <span style="padding-top: 20px" class="buttons">
+                        <MaterialButton variant="outlined" icon="add" title="tooltip.show [Ctrl+N]" on:click={createShow}>
+                            <T id="new.show" />
+                        </MaterialButton>
+
+                        <!-- <MaterialButton variant="outlined" title="actions.import [Ctrl+I]" on:click={() => activePopup.set("import")}>
+                            <Icon id="import" white />
+                            <T id="actions.import" />
+                        </MaterialButton> -->
+
                         {#if Object.keys($shows).length > 10}
                             <MaterialButton variant="outlined" title="tabs.search_tip [Ctrl+F]" on:click={openSearch}>
                                 <Icon id="search" white />
                                 <T id="main.search" />
                             </MaterialButton>
                         {/if}
-                        <MaterialButton variant="outlined" icon="add" title="tooltip.show [Ctrl+N]" on:click={createShow}>
-                            <T id="new.show" />
-                        </MaterialButton>
                     </span>
                 </Center>
             {/if}
