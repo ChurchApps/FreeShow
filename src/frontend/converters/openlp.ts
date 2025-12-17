@@ -246,7 +246,7 @@ function XMLtoObject(xml: string) {
         if (!Array.isArray(currentSongAuthors)) currentSongAuthors = [currentSongAuthors]
 
         let authors: any[] = []
-        authors = currentSongAuthors.map((author) => ({ name: author["#text"] || "", type: author["@type"] || "words" }))
+        authors = currentSongAuthors.filter(Boolean).map((author) => ({ name: author["#text"] || "", type: author["@type"] || "words" }))
 
         return authors
     }
