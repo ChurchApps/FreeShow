@@ -2,7 +2,7 @@ import type { Item, Show } from "../../../types/Show"
 import { sanitizeVerseText } from "../../../common/scripture/sanitizeVerseText"
 import { setError, translate } from "./helpers"
 import { send } from "./socket"
-import { _, _get, _set, _update, currentScriptureState, overlays, scriptures, scriptureCache, timers, triggers, activeTimers, runningActions } from "./stores"
+import { _, _get, _set, _update, currentScriptureState, overlays, scriptures, scriptureCache, timers, triggers, activeTimers, runningActions, mixer } from "./stores"
 
 function sanitizeBiblePayload(bible: any) {
     if (!bible || !Array.isArray(bible.books)) return bible
@@ -302,6 +302,84 @@ export const receiver = {
         activeTimers.set(data.activeTimers)
         runningActions.set(data.runningActions)
     },
+    GET_AUDIO: (data: any) => {
+        _set("audio", data)
+    },
+    GET_MIXER: (data: any) => {
+        _set("mixer", data)
+    },
+    MEDIA: (data: any) => {
+        if (!data) {
+            _set("audio", {})
+            return
+        }
+
+        const audioFiles: any = {}
+
+        // Handle if data is an object of media items
+        if (typeof data === "object" && !Array.isArray(data)) {
+            Object.keys(data).forEach((id) => {
+                const item = data[id]
+                // Check various ways audio might be identified
+                if (item && (item.type === "audio" || item.audioPath || item.path?.match(/\.(mp3|wav|ogg|m4a|flac|aac|wma)$/i))) {
+                    audioFiles[id] = {
+                        id,
+                        name: item.name || item.path?.split(/[\/\\]/).pop() || id,
+                        path: item.path || item.audioPath || id,
+                        ...item
+                    }
+                }
+            })
+        }
+
+        _set("audio", audioFiles)
+    },
+    VOLUME: (data: any) => {
+        mixer.update((prev: any) => {
+            const current = prev || {}
+            return {
+                ...current,
+                main: {
+                    ...current.main,
+                    volume: data
+                }
+            }
+        })
+    },
+    OUTPUTS: (data: any) => {
+        mixer.update((prev: any) => {
+            const current = prev || {}
+            const currentOutputs = current.outputs || {}
+
+            // Merge new data with existing outputs to preserve volume/mute state if not present in update
+            const newOutputs = { ...currentOutputs }
+            Object.keys(data).forEach((id) => {
+                newOutputs[id] = { ...(newOutputs[id] || {}), ...data[id] }
+            })
+
+            return {
+                ...current,
+                outputs: newOutputs
+            }
+        })
+    },
+    AUDIO_CHANNELS_DATA: (data: any) => {
+        mixer.update((prev: any) => {
+            const current = prev || { main: {}, outputs: {} }
+            const { main, ...outs } = data
+
+            const outputs = { ...current.outputs }
+            Object.keys(outs).forEach((id) => {
+                if (outputs[id]) outputs[id] = { ...outputs[id], ...outs[id] }
+            })
+
+            return {
+                ...current,
+                main: { ...current.main, ...main },
+                outputs
+            }
+        })
+    },
 
     /////
 
@@ -325,6 +403,29 @@ export const receiver = {
     },
     "API:get_playing_audio_time": (data: any) => {
         _set("playingAudioTime", data)
+    },
+    "API:get_playing_video_time": (data: any) => {
+        _set("playingVideoTime", data || 0)
+    },
+    "API:get_playing_video_duration": (data: any) => {
+        _set("playingVideoDuration", data || 0)
+    },
+    "API:get_playing_video_state": (data: any) => {
+        if (!data) return
+        if (data.duration !== undefined) _set("playingVideoDuration", data.duration || 0)
+        if (data.time !== undefined) _set("playingVideoTime", data.time || 0)
+        if (data.paused !== undefined) _set("playingVideoPaused", !!data.paused)
+        if (data.loop !== undefined) _set("playingVideoLoop", !!data.loop)
+        if (data.muted !== undefined) _set("playingVideoMuted", data.muted !== false)
+    },
+
+    "API:get_media_loop_state": (data: any) => {
+        _set("playingVideoLoop", data !== false)
+    },
+
+    "API:toggle_media_loop": () => {
+        // Refresh state after toggle
+        send("API:get_playing_video_state")
     },
 
     "API:get_pdf_thumbnails": (data: { path: string; pages: string[] }) => {

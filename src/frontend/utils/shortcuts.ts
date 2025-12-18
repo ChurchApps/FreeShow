@@ -418,13 +418,15 @@ export function togglePlayingMedia(e: Event | null = null, back = false, api = f
     let item = get(focusMode) ? get(activeFocus) : get(activeShow)
 
     const currentOutput = getFirstActiveOutput()
-    const currentlyPlaying = currentOutput?.out?.background?.path
+    const background = currentOutput?.out?.background
+    const currentlyPlaying = background?.path || background?.id
+    const backgroundType = background?.type
 
     if (api) {
         // get playing audio
         let audioId = AudioPlayer.getAllPlaying(false)[0]
         if (audioId) item = { id: audioId, type: "audio" }
-        else if (currentlyPlaying) item = { id: currentlyPlaying, type: "video" }
+        else if (currentlyPlaying) item = { id: currentlyPlaying, type: backgroundType === "player" ? "player" : "video" }
     }
 
     const type: ShowType | undefined = item?.type

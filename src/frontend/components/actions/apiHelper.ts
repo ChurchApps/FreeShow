@@ -494,6 +494,7 @@ export function startScripture(data: API_scripture) {
 export function playMedia(data: API_media) {
     if (get(outLocked)) return
 
+    const mediaType = data.data?.type
     const extension = getMediaType(getExtension(data.path))
 
     if (extension === "pdf") {
@@ -508,7 +509,17 @@ export function playMedia(data: API_media) {
 
     const mediaStyle = getMediaStyle(get(media)[data.path], currentStyle)
 
-    setOutput("background", { path: data.path, ...mediaStyle })
+    // Get loop and muted settings from data, default to true
+    const loop = data.data?.loop !== undefined ? data.data.loop : true
+    const muted = data.data?.muted !== undefined ? data.data.muted : true
+
+    // Handle player (online media like YouTube/Vimeo)
+    if (mediaType === "player") {
+        setOutput("background", { type: "player", id: data.path, loop, muted, ...mediaStyle })
+    } else {
+        const type = mediaType || extension || "video"
+        setOutput("background", { type, path: data.path, loop, muted, ...mediaStyle })
+    }
 }
 
 export function videoSeekTo(data: API_seek) {
@@ -521,6 +532,40 @@ export function videoSeekTo(data: API_seek) {
     })
 
     send(OUTPUT, ["TIME"], timeValues)
+}
+
+export function toggleMediaLoop() {
+    if (get(outLocked)) return
+
+    const activeOutput = getFirstActiveOutput()
+    if (!activeOutput) return
+
+    const currentBg = get(outputs)[activeOutput.id]?.out?.background
+    if (!currentBg) return
+
+    const isLooping = currentBg.loop !== false
+    setOutput("background", { ...currentBg, loop: !isLooping })
+}
+
+export function getMediaLoopState(): boolean {
+    const activeOutput = getFirstActiveOutput()
+    if (!activeOutput) return true
+
+    const currentBg = get(outputs)[activeOutput.id]?.out?.background
+    return currentBg?.loop !== false
+}
+
+export function toggleMediaMute() {
+    if (get(outLocked)) return
+
+    const activeOutput = getFirstActiveOutput()
+    if (!activeOutput) return
+
+    const currentBg = get(outputs)[activeOutput.id]?.out?.background
+    if (!currentBg) return
+
+    const isMuted = currentBg.muted !== false
+    setOutput("background", { ...currentBg, muted: !isMuted })
 }
 
 // AUDIO
