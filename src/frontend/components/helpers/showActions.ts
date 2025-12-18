@@ -1242,18 +1242,25 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
 
     const customIds = ["slide_text_current", "active_layers", "active_styles", "output_windows_active", "log_song_usage"]
     ;[...getDynamicIds(false, mode), ...customIds].forEach((dynamicId) => {
-        let textHasValue = text.includes(dynamicValueText(dynamicId))
-        if (dynamicId.startsWith("$") && text.includes(dynamicValueText(dynamicId.replace("$", "variable_")))) textHasValue = true
-        if (!textHasValue) return
+        const hasValue = (id: string) => text.includes(`{${id}}`) || text.includes(`{${id}|`)
+        if (!hasValue(dynamicId) && !(dynamicId.startsWith("$") && hasValue(dynamicId.replace("$", "variable_")))) return
 
         const newValue = getDynamicValueText(dynamicId, currentShow)
-        text = text.replaceAll(dynamicValueText(dynamicId), newValue)
+        text = replaceDynamicValueWithFallback(text, dynamicId, newValue)
 
         // $ = variable_
-        if (dynamicId.startsWith("$")) text = text.replaceAll(dynamicValueText(dynamicId.replace("$", "variable_")), newValue)
+        if (dynamicId.startsWith("$")) text = replaceDynamicValueWithFallback(text, dynamicId.replace("$", "variable_"), newValue)
     })
 
     return text
+
+    // append {variable|no value} to add fallback
+    function replaceDynamicValueWithFallback(text: string, dynamicId: string, newValue: string): string {
+        const escapedId = dynamicId.replace(/\$/g, "\\$")
+        text = text.replace(new RegExp(`\\{${escapedId}\\|([^}]*)\\}`, "g"), (_match, fallback) => newValue || fallback)
+        text = text.replaceAll(`{${dynamicId}}`, newValue)
+        return text
+    }
 
     function getDynamicValueText(dynamicId: string, show: Show | object): string {
         // VARIABLE
