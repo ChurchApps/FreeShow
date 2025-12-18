@@ -1068,7 +1068,7 @@ export function checkNextAfterMedia(endedId: string, type: "media" | "audio" | "
 
     // WIP PAUSE PLAYING VIDEO WHEN ENDED, so it does not loop to start
     const loop = layoutSlide?.data?.end
-    nextSlide(null, false, false, loop, true, outputId, !loop)
+    nextSlide(null, false, false, loop, true, outputId, !loop, true)
 
     return true
 }
