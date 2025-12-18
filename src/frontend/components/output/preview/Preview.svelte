@@ -9,7 +9,7 @@
     import T from "../../helpers/T.svelte"
     import { getActiveOutputs, isOutCleared, outputSlideHasContent, setOutput } from "../../helpers/output"
     import { getLayoutRef } from "../../helpers/show"
-    import { getFewestOutputLines, getItemWithMostLines, playNextGroup, updateOut } from "../../helpers/showActions"
+    import { getFewestOutputLines, getItemWithMostLines, playNextGroup, playPreviousGroup, updateOut } from "../../helpers/showActions"
     import { _show } from "../../helpers/shows"
     import { newSlideTimer } from "../../helpers/tick"
     import { getFirstOutputIdWithAudableBackground } from "../../helpers/video"
@@ -156,6 +156,7 @@
             })
         })
 
+        if (e.shiftKey) return playPreviousGroup(globalGroupIds, { showRef, outSlide, currentShowId }, !e.altKey)
         return playNextGroup(globalGroupIds, { showRef, outSlide, currentShowId }, !e.altKey)
     }
 

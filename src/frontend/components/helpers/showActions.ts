@@ -987,24 +987,31 @@ export function changeOutputStyle(data: API_output_style) {
     refreshOut()
 }
 
-export function playNextGroup(globalGroupIds: string[], { showRef, outSlide, currentShowId }, extra = true) {
+function playGroup(globalGroupIds: string[], { showRef, outSlide, currentShowId }, extra = true, direction: "next" | "previous" = "next") {
     if (!globalGroupIds.length || get(outLocked)) return
 
-    // play first matching group
-    let nextAfterOutput
-    let index
+    let targetIndex
+    let fallbackIndex
+    let firstMatchingGroup
+
     showRef.forEach((ref) => {
-        // if (ref.id !== slideId) return
         if (!globalGroupIds.includes(ref.id) || ref.data?.disabled) return
 
-        // get next slide if global group is outputted
-        if (index === undefined) index = ref.layoutIndex
-        if (outSlide?.index === undefined || nextAfterOutput || ref.layoutIndex <= outSlide.index) return
+        if (firstMatchingGroup === undefined) firstMatchingGroup = ref.layoutIndex
 
-        nextAfterOutput = ref.layoutIndex
+        if (direction === "next") {
+            // play first matching group after current
+            if (outSlide?.index === undefined || targetIndex !== undefined || ref.layoutIndex <= outSlide.index) return
+            targetIndex = ref.layoutIndex
+        } else {
+            // play last matching group before current
+            fallbackIndex = ref.layoutIndex // track last for looping
+            if (outSlide?.index === undefined || ref.layoutIndex >= outSlide.index) return
+            targetIndex = ref.layoutIndex
+        }
     })
 
-    if (nextAfterOutput) index = nextAfterOutput
+    const index = targetIndex ?? fallbackIndex ?? firstMatchingGroup
     if (index === undefined) return
 
     // WIP duplicate of "slideClick" in Slides.svelte
@@ -1022,6 +1029,14 @@ export function playNextGroup(globalGroupIds: string[], { showRef, outSlide, cur
     }, 10)
 
     return true
+}
+
+export function playNextGroup(globalGroupIds: string[], { showRef, outSlide, currentShowId }, extra = true) {
+    return playGroup(globalGroupIds, { showRef, outSlide, currentShowId }, extra, "next")
+}
+
+export function playPreviousGroup(globalGroupIds: string[], { showRef, outSlide, currentShowId }, extra = true) {
+    return playGroup(globalGroupIds, { showRef, outSlide, currentShowId }, extra, "previous")
 }
 
 // go to next slide if current output slide has nextAfterMedia action
