@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { Item } from "../../../../types/Show"
-    import { activeEdit, activeShow, openToolsTab, os, outputs, showsCache, special, variables } from "../../../stores"
+    import { activeEdit, activeShow, openToolsTab, os, outputs, showsCache, special, templates, variables } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { getAccess } from "../../../utils/profile"
     import { deleteAction } from "../../helpers/clipboard"
@@ -172,6 +172,8 @@
 
     // fixed letter width
     $: fixedWidth = item?.type === "timer" || item?.type === "clock" ? "font-feature-settings: 'tnum' 1;" : ""
+
+    $: noTextMode = ref?.type === "template" && $templates[ref?.id]?.settings?.mode === "item"
 </script>
 
 <!-- on:mouseup={() => chordUp({ showRef: ref, itemIndex: index, item })} -->
@@ -196,7 +198,7 @@ bind:offsetWidth={width} -->
     {#if !plain}
         <EditboxPlain {item} {index} {ratio} />
     {/if}
-    {#if item?.lines}
+    {#if item?.lines && !noTextMode}
         <EditboxLines {item} {ref} {index} {editIndex} {plain} {chordsMode} {chordsAction} {isLocked} />
     {:else if item}
         <SlideItems {item} {ratio} {ref} {itemElem} slideIndex={$activeEdit.slide || 0} edit />

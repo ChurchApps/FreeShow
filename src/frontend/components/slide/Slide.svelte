@@ -17,7 +17,7 @@
     import { getContrast, hexToRgb, splitRgb } from "../helpers/color"
     import Icon from "../helpers/Icon.svelte"
     import { doesMediaExist, downloadOnlineMedia, getFileName, getMediaStyle, getThumbnailPath, loadThumbnail, mediaSize, splitPath } from "../helpers/media"
-    import { getActiveOutputs, getFirstActiveOutput, getResolution, getSlideFilter } from "../helpers/output"
+    import { getActiveOutputs, getFirstActiveOutput, getResolution, getSlideFilter, setTemplateStyle } from "../helpers/output"
     import { getGroupName } from "../helpers/show"
     import Effect from "../output/effects/Effect.svelte"
     import SelectElem from "../system/SelectElem.svelte"
@@ -268,6 +268,13 @@
 
     // correct view order based on arranged order in Items.svelte (?.reverse())
     $: itemsList = clone(slide.items) || []
+
+    // style template preview
+    $: if ($special.styleTemplatePreview !== false) updateItemsList(slide)
+    else itemsList = clone(slide.items) || []
+    function updateItemsList(_updater: any = null) {
+        itemsList = setTemplateStyle(null, currentStyle, itemsList, outputId)
+    }
 
     // $: styleTemplate = getStyleTemplate(null, currentStyle)
     // || styleTemplate.settings?.backgroundColor

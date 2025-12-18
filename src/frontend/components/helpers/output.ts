@@ -785,7 +785,7 @@ export function getCurrentMediaTransition() {
 
 // TEMPLATE
 
-export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], addOverflowTemplateItems = false, resetAutoSize = true, templateClicked = false) {
+export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], addOverflowTemplateItems = false, resetAutoSize = true, templateClicked = false, mode: string = "") {
     // if (!slideItems?.length && !addOverflowTemplateItems) return []
     slideItems = clone(slideItems || []).filter((a) => a && (!templateClicked || !a.fromTemplate))
 
@@ -826,6 +826,9 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
 
         item.style = templateItem.style || ""
         item.align = templateItem.align || ""
+
+        // don't alter text if item mode
+        if (mode === "item") return finish()
 
         if (resetAutoSize) delete item.autoFontSize
         item.auto = templateItem.auto || false
@@ -1123,7 +1126,7 @@ export function getOutputTransitions(slideData: SlideData | null, styleTransitio
     return clone(transitions)
 }
 
-export function getStyleTemplate(outSlide: OutSlide, currentStyle: Styles | undefined) {
+export function getStyleTemplate(outSlide: OutSlide | null, currentStyle: Styles | undefined) {
     if (!currentStyle) return {} as Template
 
     // scripture
@@ -1143,13 +1146,14 @@ export function slideHasAutoSizeItem(slide: Slide | Template) {
     return slide?.items?.find((a) => a.auto)
 }
 
-export function setTemplateStyle(outSlide: OutSlide, currentStyle: Styles, items: Item[] | undefined, outputId: string) {
+export function setTemplateStyle(outSlide: OutSlide | null, currentStyle: Styles, items: Item[] | undefined, outputId: string) {
     const isDrawerScripture = outSlide?.id === "temp"
     const slideItems = isDrawerScripture ? outSlide.tempItems : items?.filter(checkSpecificOutput)
 
     const template = getStyleTemplate(outSlide, currentStyle)
     const templateItems = template.items || []
-    const newItems = mergeWithTemplate(slideItems || [], templateItems, true) || []
+    const mode = template?.settings?.mode
+    const newItems = mergeWithTemplate(slideItems || [], templateItems, true, true, false, mode) || []
     newItems.push(...getSlideItemsFromTemplate(template.settings || {}))
 
     return newItems

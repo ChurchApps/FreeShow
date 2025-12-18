@@ -579,6 +579,8 @@
             hidden = true
         }, displayDuration * 1000)
     }
+
+    $: noTextMode = ref?.type === "template" && $templates[ref?.id]?.settings?.mode === "item"
 </script>
 
 <!-- lyrics view must have "width: 100%;height: 100%;" set -->
@@ -599,7 +601,7 @@
     on:mousedown={press}
     on:mouseup={release}
 >
-    {#if lines}
+    {#if lines && !noTextMode}
         <TextboxLines {item} {slideIndex} {isMirrorItem} {key} {smallFontSize} {animationStyle} {dynamicValues} {isStage} {customFontSize} {outputStyle} {ref} {style} {customStyle} {stageItem} {chords} {linesStart} {linesEnd} fontSize={smallFontSize ? 20 : fontSize} {customTypeRatio} {maxLines} {maxLinesInvert} {centerPreview} {revealed} styleOverrides={templateStyleOverrides} {useOriginalTextColor} on:updateAutoSize={calculateAutosize} />
     {:else}
         <SlideItems {item} {slideIndex} {preview} {isTemplatePreview} {mirror} {isMirrorItem} {ratio} {disableListTransition} {smallFontSize} {ref} {fontSize} {outputId} />

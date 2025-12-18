@@ -94,12 +94,13 @@
     // $: metadataDisplay = (metadata.display ? metadata.display : outputShowSettings.displayMetadata) || "never"
 
     function editMetadataStyle() {
-        activePage.set("settings")
+        // activeStyle.set(styleId)
         settingsTab.set("styles")
+        activePage.set("settings")
         // scroll to bottom
         setTimeout(() => {
             document.querySelector(".row")?.querySelector(".center")?.querySelector(".scroll")?.scrollTo(0, 1000)
-        }, 50)
+        }, 80)
     }
 </script>
 
