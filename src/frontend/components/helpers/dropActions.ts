@@ -17,7 +17,7 @@ import { addItem, DEFAULT_ITEM_STYLE } from "../edit/scripts/itemHelpers"
 import { clone, removeDuplicates } from "./array"
 import { projectDropFolders } from "./drop"
 import { history, historyAwait } from "./history"
-import { getExtension, getFileName, getMediaStyle, getMediaType, removeExtension } from "./media"
+import { downloadOnlineMedia, getExtension, getFileName, getMediaStyle, getMediaType, removeExtension } from "./media"
 import { addToPos, getIndexes, mover } from "./mover"
 import { getLayoutRef } from "./show"
 import { getVariableNameId } from "./showActions"
@@ -144,6 +144,11 @@ export const dropActions = {
                     if (drag.id === "files" && !files[drop.id].includes(extension)) {
                         extraFiles.push(path)
                         return null
+                    }
+
+                    // pre-download online media
+                    if (typeof path === "string" && path.includes("http")) {
+                        downloadOnlineMedia(path)
                     }
 
                     const type: string = getMediaType(extension)
