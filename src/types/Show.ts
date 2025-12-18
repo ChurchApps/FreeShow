@@ -36,7 +36,6 @@ export interface Show {
         template?: string
     }
     metadata?: {
-        autoMedia?: boolean
         override: boolean
         display: string
         template: string
@@ -478,7 +477,7 @@ export interface TemplateStyleOverride {
     templateId?: string
 }
 export interface TemplateSettings {
-    mode?: "default" | "scripture" | "text"
+    mode?: "default" | "scripture" | "item" | "text"
     resolution?: Resolution
     backgroundColor?: string
     backgroundPath?: string

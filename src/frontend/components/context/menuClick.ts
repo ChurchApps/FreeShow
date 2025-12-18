@@ -1161,12 +1161,14 @@ const clickActions = {
         activePopup.set("transition")
     },
     item_actions: (obj: ObjData) => {
-        const action = obj.menu.id || ""
+        let action = obj.menu.id || ""
+
+        if (action === "display_duration") action = "displayDuration"
 
         // if (action === "transition") {
         //     popupData.set({ action })
         //     activePopup.set("transition")
-        if (action.includes("Timer")) {
+        if (action.includes("Timer") || action === "displayDuration") {
             popupData.set({ action })
             activePopup.set("set_time")
         } else {
@@ -2025,7 +2027,7 @@ const formatting = {
     trim: (t: string) =>
         t
             .trim()
-            .trim()
+            .replace(/\s+/g, " ")
             .replace(/[.,!]*$/g, "")
             .trim()
 }

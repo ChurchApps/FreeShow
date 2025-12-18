@@ -55,6 +55,13 @@
         tabs.items.remove = false
         // tabs.slide.remove = false
     }
+    $: templateItemMode = $activeEdit.type === "template" && $templates[activeId]?.settings?.mode === "item"
+    $: if (templateItemMode) {
+        if (active === "text") active = item ? "item" : "items"
+        tabs.text.remove = true
+    } else {
+        tabs.text.remove = false
+    }
 
     $: showIsActive = $activeShow && ($activeShow.type === undefined || $activeShow.type === "show")
     $: editSlideSelected = $activeEdit.slide !== null && $activeEdit.slide !== undefined

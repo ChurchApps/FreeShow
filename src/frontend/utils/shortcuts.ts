@@ -143,9 +143,10 @@ export function keydown(e: KeyboardEvent) {
             return
         }
 
-        let key = e.key === "Z" ? e.key : e.key.toLowerCase()
-        // include other special letter symbols (í=i)
-        if (e.keyCode === 73) key = "i"
+        // Use normalized key for shortcuts with Ctrl/Cmd to support all keyboard layouts
+        let key = getNormalizedKey(e)
+        // Handle shift+Z for redo
+        if (key === "z" && e.shiftKey) key = "Z"
 
         // use default input shortcuts on supported devices
         const exeption = ["e", "i", "n", "o", "s", "a", "z", "Z", "y"]
@@ -197,6 +198,25 @@ export function keydown(e: KeyboardEvent) {
         e.preventDefault()
         keys[e.key](e)
     }
+}
+
+/**
+ * Normalize keyboard event to return the expected key character based on physical key position
+ * This fixes issues with non-Latin keyboard layouts (Cyrillic, etc.) where e.key returns
+ * different characters but we want shortcuts to work based on physical key position
+ *
+ * For example, on a Russian keyboard layout:
+ * - Physical Z key produces 'Я' character (e.key = 'Я')
+ * - But for Ctrl+Z shortcut, we want to detect the physical Z position (e.code = 'KeyZ')
+ * - This function maps 'KeyZ' -> 'z' regardless of keyboard layout
+ *
+ * This ensures shortcuts like Ctrl+Z, Ctrl+C, Ctrl+V work consistently across all keyboard layouts
+ */
+const keyCodeMap: { [code: string]: string } = { KeyA: "a", KeyB: "b", KeyC: "c", KeyD: "d", KeyE: "e", KeyF: "f", KeyG: "g", KeyH: "h", KeyI: "i", KeyJ: "j", KeyK: "k", KeyL: "l", KeyM: "m", KeyN: "n", KeyO: "o", KeyP: "p", KeyQ: "q", KeyR: "r", KeyS: "s", KeyT: "t", KeyU: "u", KeyV: "v", KeyW: "w", KeyX: "x", KeyY: "y", KeyZ: "z" }
+export function getNormalizedKey(e: KeyboardEvent): string {
+    if (!keyCodeMap[e.code]) return e.key
+    if (e.shiftKey) return keyCodeMap[e.code].toUpperCase()
+    return keyCodeMap[e.code]
 }
 
 /// // PREVIEW /////
@@ -398,13 +418,15 @@ export function togglePlayingMedia(e: Event | null = null, back = false, api = f
     let item = get(focusMode) ? get(activeFocus) : get(activeShow)
 
     const currentOutput = getFirstActiveOutput()
-    const currentlyPlaying = currentOutput?.out?.background?.path
+    const background = currentOutput?.out?.background
+    const currentlyPlaying = background?.path || background?.id
+    const backgroundType = background?.type
 
     if (api) {
         // get playing audio
         let audioId = AudioPlayer.getAllPlaying(false)[0]
         if (audioId) item = { id: audioId, type: "audio" }
-        else if (currentlyPlaying) item = { id: currentlyPlaying, type: "video" }
+        else if (currentlyPlaying) item = { id: currentlyPlaying, type: backgroundType === "player" ? "player" : "video" }
     }
 
     const type: ShowType | undefined = item?.type

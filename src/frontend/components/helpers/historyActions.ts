@@ -881,7 +881,8 @@ export const historyActions = ({ obj, undo = null }: any) => {
                     // && slidesWithTextboxes < 5
                     const changeOverflowItems = !!(slide.settings?.template || createItems)
 
-                    let newItems = mergeWithTemplate(slide.items, slideTemplate.items, changeOverflowItems, obj.save !== false, createItems)
+                    const mode = slideTemplate?.settings?.mode
+                    let newItems = mergeWithTemplate(slide.items, slideTemplate.items, changeOverflowItems, obj.save !== false, createItems, mode)
 
                     // remove items if not in template (and textbox is empty)
                     if (changeOverflowItems) {

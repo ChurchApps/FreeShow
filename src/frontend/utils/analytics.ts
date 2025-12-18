@@ -1,24 +1,44 @@
 import { os, version, deviceId, isDev, activePage, activeDrawerTab } from "../stores"
 import { get } from "svelte/store"
 
+declare global {
+    interface Window {
+        dataLayer: any[]
+        gtag: (...args: any[]) => void
+    }
+}
+
+const MEASUREMENT_ID = "G-CEE6P1QXG6"
+let gtagInitialized = false
+
+function initGtag() {
+    if (gtagInitialized || get(isDev)) return
+
+    // Initialize dataLayer
+    window.dataLayer = window.dataLayer || []
+    window.gtag = function gtag() {
+        window.dataLayer.push(arguments)
+    }
+    window.gtag("js", new Date())
+    window.gtag("config", MEASUREMENT_ID, {
+        client_id: get(deviceId),
+        send_page_view: false
+    })
+
+    // Load gtag.js script
+    const script = document.createElement("script")
+    script.async = true
+    script.src = `https://www.googletagmanager.com/gtag/js?id=${MEASUREMENT_ID}`
+    document.head.appendChild(script)
+
+    gtagInitialized = true
+}
+
 export function trackEvent(eventName: string, params?: any) {
     if (get(isDev)) return
 
-    const sec = atob("YlVwZE42bXpRVjYyWDc2d0Z3OGMwZw==")
-    const measurementId = "G-CEE6P1QXG6"
-    const url = `https://www.google-analytics.com/mp/collect?api_secret=${sec}&measurement_id=${measurementId}`
-    const clientId = get(deviceId)
-
-    const payload = {
-        client_id: clientId,
-        events: [{ name: eventName, params: params || {} }]
-    }
-
-    fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-    })
+    initGtag()
+    window.gtag("event", eventName, params || {})
 }
 
 export function startTracking() {

@@ -58,15 +58,11 @@
         const pingbackUrl = $media[path]?.pingbackUrl
         if (!pingbackUrl) return
 
-        console.log(`[APlay] Sending pingback after 30s playback:`, {
-            url: pingbackUrl,
-            method: "GET",
-            path: path
-        })
+        console.log(`[Provider] Sending pingback after 30s playback:`, { url: pingbackUrl, method: "GET", path: path })
         fetch(pingbackUrl, { method: "GET", mode: "no-cors" })
-            .then(() => console.log(`[APlay] Pingback sent successfully to: ${pingbackUrl}`))
+            .then(() => console.log(`[Provider] Pingback sent successfully to: ${pingbackUrl}`))
             .catch((error) => {
-                console.error(`[APlay] Pingback failed:`, error)
+                console.error(`[Provider] Pingback failed:`, error)
             })
     }
 

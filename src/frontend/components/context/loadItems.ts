@@ -186,11 +186,14 @@ const loadActions = {
         if (get(activeEdit).type !== "overlay") {
             itemActions.push({ id: "clickReveal", label: "actions.click_reveal", icon: "click_action", iconColor: "#d4a3f6", enabled: !!currentItem?.clickReveal })
             if (currentItem?.type === "text" || currentItem?.lines) itemActions.push({ id: "lineReveal", label: "actions.line_reveal", icon: "line_reveal", iconColor: "#d4a3f6", enabled: !!currentItem?.lineReveal })
+            itemActions.push("SEPARATOR")
         }
 
         itemActions.push(
             ...[
                 // { id: "transition", label: "popup.transition", icon: "transition", enabled: !!currentItemActions.transition },
+                { id: "display_duration", label: "popup.display_duration", icon: "clock", iconColor: "#d497ff", enabled: Number(currentItemActions.displayDuration || 0) || false },
+                "SEPARATOR",
                 { id: "showTimer", label: "actions.show_timer", icon: "time_in", iconColor: "#cd86ff", enabled: Number(currentItemActions.showTimer || 0) || false },
                 { id: "hideTimer", label: "actions.hide_timer", icon: "time_out", iconColor: "#cd86ff", enabled: Number(currentItemActions.hideTimer || 0) || false }
             ]

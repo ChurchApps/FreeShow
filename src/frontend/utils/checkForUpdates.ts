@@ -3,7 +3,7 @@ import { alertMessage, activePopup, dictionary, isDev, alertUpdates, special } f
 
 export function checkForUpdates(currentVersion: string) {
     if (get(isDev) || get(alertUpdates) === false) return
-    const includeBeta = currentVersion.includes("beta") || get(special).betaVersionAlert
+    const includeBeta = currentVersion.includes("-beta") || get(special).betaVersionAlert
 
     fetch("https://api.github.com/repos/ChurchApps/freeshow/releases")
         .then((response) => response.json())

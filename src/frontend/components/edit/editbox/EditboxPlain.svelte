@@ -23,8 +23,12 @@
 
     const actions = [
         { id: "transition", label: "popup.transition", icon: "transition" },
+
         { id: "clickReveal", label: "actions.click_reveal", icon: "click_action", direct: true },
         { id: "lineReveal", label: "actions.line_reveal", icon: "line_reveal", direct: true },
+
+        { id: "displayDuration", label: "popup.display_duration", icon: "clock" },
+
         { id: "showTimer", label: "actions.show_timer", icon: "time_in" },
         { id: "hideTimer", label: "actions.hide_timer", icon: "time_out" }
     ]

@@ -59,6 +59,8 @@ let resetActionTrigger = false
 export function setOutput(type: string, data: any, toggle = false, outputId = "", add = false) {
     const ref = data?.layout ? _show(data.id).layouts([data.layout]).ref()[0] || [] : []
 
+    customActionActivation("output_changed")
+
     // track usage (& set attributionString)
     if (type === "slide" && data?.id) {
         const showReference = _show(data.id).get("reference")
@@ -702,6 +704,8 @@ export function enableStageOutput(options: any = {}) {
 }
 
 export function changeStageOutputLayout(data: API_stage_output_layout) {
+    if (!data.stageLayoutId) return
+
     const outputIds = data.outputId ? [data.outputId] : Object.keys(get(outputs))
 
     outputs.update((a) => {
@@ -781,7 +785,7 @@ export function getCurrentMediaTransition() {
 
 // TEMPLATE
 
-export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], addOverflowTemplateItems = false, resetAutoSize = true, templateClicked = false) {
+export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], addOverflowTemplateItems = false, resetAutoSize = true, templateClicked = false, mode: string = "") {
     // if (!slideItems?.length && !addOverflowTemplateItems) return []
     slideItems = clone(slideItems || []).filter((a) => a && (!templateClicked || !a.fromTemplate))
 
@@ -823,6 +827,9 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
         item.style = templateItem.style || ""
         item.align = templateItem.align || ""
 
+        // don't alter text if item mode
+        if (mode === "item") return finish()
+
         if (resetAutoSize) delete item.autoFontSize
         item.auto = templateItem.auto || false
         if (templateItem.textFit) item.textFit = templateItem.textFit
@@ -853,14 +860,14 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
             )
         ] as string[]
 
+        const hasDynamicValue = templateItem?.lines?.some((line) => line?.text?.some((text) => text.value?.includes("{")))
+
         item.lines?.forEach((line, j) => {
             let templateLine = templateItem?.lines?.[j] || templateItem?.lines?.[0]
             if (!templateLine) return
 
             // remove empty text parts (if not completely empty)
             if (templateLine.text.some((a) => a?.value?.trim().length)) templateLine.text = templateLine.text.filter((a) => a?.value?.trim().length)
-
-            const hasDynamicValue = templateLine?.text?.some((text) => text.value?.includes("{"))
 
             line.align = templateLine?.align || ""
             line.text?.forEach((text, k) => {
@@ -1026,9 +1033,10 @@ function getSlideItemsFromTemplate(templateSettings: TemplateSettings) {
 function removeTextValue(items: Item[]) {
     items.forEach((item) => {
         if (!item.lines) return
-        item.lines = item.lines.map((line) => {
-            const hasDynamicValue = line.text?.some((text) => text.value?.includes("{"))
 
+        const hasDynamicValue = item.lines.some((line) => line.text?.some((text) => text.value?.includes("{")))
+
+        item.lines = item.lines.map((line) => {
             if (hasDynamicValue) return { align: line.align, text: line.text }
             return { align: line.align, text: [{ style: line.text?.[0]?.style, value: "" }] }
         })
@@ -1118,7 +1126,7 @@ export function getOutputTransitions(slideData: SlideData | null, styleTransitio
     return clone(transitions)
 }
 
-export function getStyleTemplate(outSlide: OutSlide, currentStyle: Styles | undefined) {
+export function getStyleTemplate(outSlide: OutSlide | null, currentStyle: Styles | undefined) {
     if (!currentStyle) return {} as Template
 
     // scripture
@@ -1138,13 +1146,14 @@ export function slideHasAutoSizeItem(slide: Slide | Template) {
     return slide?.items?.find((a) => a.auto)
 }
 
-export function setTemplateStyle(outSlide: OutSlide, currentStyle: Styles, items: Item[] | undefined, outputId: string) {
+export function setTemplateStyle(outSlide: OutSlide | null, currentStyle: Styles, items: Item[] | undefined, outputId: string) {
     const isDrawerScripture = outSlide?.id === "temp"
     const slideItems = isDrawerScripture ? outSlide.tempItems : items?.filter(checkSpecificOutput)
 
     const template = getStyleTemplate(outSlide, currentStyle)
     const templateItems = template.items || []
-    const newItems = mergeWithTemplate(slideItems || [], templateItems, true) || []
+    const mode = template?.settings?.mode
+    const newItems = mergeWithTemplate(slideItems || [], templateItems, true, true, false, mode) || []
     newItems.push(...getSlideItemsFromTemplate(template.settings || {}))
 
     return newItems
@@ -1254,7 +1263,6 @@ export function getMetadata(oldMetadata: any, show: Show | undefined, currentSty
     const overrideOutput = settings.override
     const templateId: string = overrideOutput ? settings.template : currentStyle.metadataTemplate || "metadata"
 
-    metadata.media = settings.autoMedia
     metadata.message = metadata.media ? {} : show.meta
     metadata.display = overrideOutput ? settings.display : currentStyle.displayMetadata
     metadata.style = getTemplateStyle(templateId, templatesUpdater) || defaultMetadataStyle
@@ -1317,38 +1325,6 @@ function getTemplateAlignment(templateId: string, templatesUpdater: Templates) {
     const lineAlign = template.items?.[0]?.lines?.[0]?.align || ""
 
     return itemAlign + lineAlign.replace("text-align", "justify-content")
-}
-
-export function decodeExif(data: any) {
-    const message: any = {}
-
-    const exif = data.exif
-    if (!exif) return message
-
-    if (exif.exif.DateTimeOriginal) message.taken = "Date: " + exif.exif.DateTimeOriginal
-    if (exif.exif.ApertureValue) message.aperture = "Aperture: " + exif.exif.ApertureValue
-    if (exif.exif.BrightnessValue) message.brightness = "Brightness: " + exif.exif.BrightnessValue
-    if (exif.exif.ExposureTime) message.exposure_time = "Exposure Time: " + exif.exif.ExposureTime.toFixed(4)
-    if (exif.exif.FNumber) message.fnumber = "F Number: " + exif.exif.FNumber
-    if (exif.exif.Flash) message.flash = "Flash: " + exif.exif.Flash
-    if (exif.exif.FocalLength) message.focallength = "Focal Length: " + exif.exif.FocalLength
-    if (exif.exif.ISO) message.iso = "ISO: " + exif.exif.ISO
-    if (exif.exif.InteropOffset) message.interopoffset = "Interop Offset: " + exif.exif.InteropOffset
-    if (exif.exif.LightSource) message.lightsource = "Light Source: " + exif.exif.LightSource
-    if (exif.exif.ShutterSpeedValue) message.shutterspeed = "Shutter Speed: " + exif.exif.ShutterSpeedValue
-
-    if (exif.exif.LensMake) message.lens = "Lens: " + exif.exif.LensMake
-    if (exif.exif.LensModel) message.lensmodel = "Lens Model: " + exif.exif.LensModel
-
-    if (exif.gps.GPSLatitude) message.gps = "Position: " + exif.gps.GPSLatitudeRef + exif.gps.GPSLatitude[0]
-    if (exif.gps.GPSLongitude) message.gps += " " + exif.gps.GPSLongitudeRef + exif.gps.GPSLongitude[0]
-    if (exif.gps.GPSAltitude) message.gps += " " + exif.gps.GPSAltitude
-
-    if (exif.image.Make) message.device = "Device: " + exif.image.Make
-    if (exif.image.Model) message.device += " " + exif.image.Model
-    if (exif.image.Software) message.software = "Software: " + exif.image.Software
-
-    return message
 }
 
 export function getSlideFilter(slideData: SlideData | null) {

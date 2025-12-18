@@ -22,7 +22,7 @@ import { clearAll, clearBackground, clearDrawing, clearOverlay, clearOverlays, c
 import { formatText } from "../show/formatTextEditor"
 import { getPlainEditorText } from "../show/getTextEditor"
 import { runActionByName, runActionId, toggleAction } from "./actions"
-import { getOutput, getOutputGroupName, getOutputSlideText, getPlayingAudioData, getPlayingAudioDuration, getPlayingAudioTime, getPlayingPlaylist, getPlayingVideoDuration, getPlayingVideoTime, getPlaylists, getProject, getProjects, getShow, getShowLayout, getShows, getSlide, getVariable, getVariables } from "./apiGet"
+import { getOutput, getOutputGroupName, getOutputSlideText, getPlayingAudioData, getPlayingAudioDuration, getPlayingAudioTime, getPlayingPlaylist, getPlayingVideoDuration, getPlayingVideoState, getPlayingVideoTime, getPlaylists, getProject, getProjects, getShow, getShowLayout, getShows, getSlide, getVariable, getVariables } from "./apiGet"
 import {
     addGroup,
     addToProject,
@@ -68,6 +68,9 @@ import {
     timerSeekTo,
     toggleLock,
     toggleLogSongUsage,
+    toggleMediaLoop,
+    toggleMediaMute,
+    getMediaLoopState,
     updateVolumeValues,
     videoSeekTo
 } from "./apiHelper"
@@ -228,6 +231,9 @@ export const API_ACTIONS = {
     start_screen: (data: API_screen) => startScreen(data),
     play_media: (data: API_media) => playMedia(data),
     toggle_playing_media: () => togglePlayingMedia(null, false, true),
+    toggle_media_loop: () => toggleMediaLoop(),
+    toggle_media_mute: () => toggleMediaMute(),
+    get_media_loop_state: () => getMediaLoopState(),
     video_seekto: (data: API_seek) => videoSeekTo(data), // BC
     // play / pause playing
 
@@ -334,6 +340,7 @@ export const API_ACTIONS = {
     get_dynamic_value: (data: API_dynamic_value) => replaceDynamicValues(data.value, data.ref || {}),
 
     get_playing_video_duration: () => getPlayingVideoDuration(),
+    get_playing_video_state: () => getPlayingVideoState(),
     get_playing_video_time: () => getPlayingVideoTime(),
     get_playing_video_time_left: () => getPlayingVideoDuration() - getPlayingVideoTime(),
     get_playing_audio_duration: () => getPlayingAudioDuration(),

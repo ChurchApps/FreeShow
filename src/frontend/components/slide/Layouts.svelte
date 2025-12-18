@@ -2,7 +2,7 @@
     import { uid } from "uid"
     import type { ClickEvent } from "../../../types/Main"
     import { changeSlidesView } from "../../show/slides"
-    import { actions, activeEdit, activePage, activePopup, activeProject, activeShow, alertMessage, labelsDisabled, openToolsTab, projects, showsCache, slidesOptions, templates } from "../../stores"
+    import { actions, activeEdit, activePage, activePopup, activeProject, activeShow, activeStyle, alertMessage, labelsDisabled, openToolsTab, outputs, projects, settingsTab, showsCache, slidesOptions, special, styles, templates } from "../../stores"
     import { triggerClickOnEnterSpace } from "../../utils/clickable"
     import { translateText } from "../../utils/language"
     import { getAccess } from "../../utils/profile"
@@ -12,6 +12,7 @@
     import { keysToID, sortByName } from "../helpers/array"
     import { duplicate } from "../helpers/clipboard"
     import { history } from "../helpers/history"
+    import { getFirstActiveOutput } from "../helpers/output"
     import { removeTemplatesFromShow } from "../helpers/show"
     import { _show } from "../helpers/shows"
     import { joinTime, secondsToTime } from "../helpers/time"
@@ -142,7 +143,7 @@
 
         const metadataValues = Object.values(currentShow.meta || {})
         const metadataText = metadataValues.reduce((v, a) => (v += a), "")
-        if (!currentShow.metadata?.autoMedia && metadataText.length) {
+        if (metadataText.length) {
             const divider = "; " // currentStyle.metadataDivider
             const text = metadataValues
                 .filter((a) => a?.length)
@@ -155,6 +156,19 @@
 
     $: referenceType = currentShow?.reference?.type
     $: notesVisible = $slidesOptions.mode !== "simple" && $slidesOptions.mode !== "groups" && notes && referenceType !== "lessons" // $slidesOptions.mode === "grid" &&
+
+    // style template
+    $: outputStyleId = getFirstActiveOutput($outputs)?.style || ""
+    $: outputStyleTemplate = $styles[outputStyleId]?.[referenceType === "scripture" ? "templateScripture" : "template"] || ""
+    function editStyleTemplate() {
+        activeStyle.set(outputStyleId)
+        settingsTab.set("styles")
+        activePage.set("settings")
+        // scroll to bottom
+        setTimeout(() => {
+            document.querySelector(".row")?.querySelector(".center")?.querySelector(".scroll")?.scrollTo(0, 1000)
+        }, 80)
+    }
 </script>
 
 {#if notesVisible && notes}
@@ -233,6 +247,17 @@
                         <Icon size={1.1} id="remove_circle" />
                     </MaterialButton>
                 {/if}
+            {/if}
+
+            <!-- output style template -->
+            {#if outputStyleTemplate && $special.styleTemplatePreview !== false && $templates[outputStyleTemplate]}
+                {#if open}
+                    <div class="divider"></div>
+                {/if}
+
+                <MaterialButton title="formats.template: {$templates[outputStyleTemplate].name || ''}" on:click={editStyleTemplate}>
+                    <Icon size={1.1} id="styles" />
+                </MaterialButton>
             {/if}
         {/if}
 

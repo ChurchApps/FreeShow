@@ -19,7 +19,6 @@ export class ShowObj implements Show {
         template?: string
     }
     metadata?: {
-        autoMedia?: boolean
         override: boolean
         display: string
         template: string

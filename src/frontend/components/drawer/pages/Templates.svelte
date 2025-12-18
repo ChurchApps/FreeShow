@@ -1,11 +1,11 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import type { Template } from "../../../../types/Show"
-    import { activeEdit, activePage, activePopup, activeShow, alertMessage, labelsDisabled, mediaOptions, outputs, selected, showsCache, styles, templateCategories, templates } from "../../../stores"
+    import { activeEdit, activePage, activePopup, activeShow, alertMessage, labelsDisabled, mediaOptions, outputs, selected, showsCache, special, styles, templateCategories, templates } from "../../../stores"
     import { getAccess } from "../../../utils/profile"
     import { clone, keysToID, sortByName } from "../../helpers/array"
     import { history } from "../../helpers/history"
-    import { getResolution } from "../../helpers/output"
+    import { getFirstActiveOutput, getResolution } from "../../helpers/output"
     import { deselect } from "../../helpers/select"
     import { getLayoutRef } from "../../helpers/show"
     import { _show } from "../../helpers/shows"
@@ -148,6 +148,15 @@
                                 }
 
                                 history({ id: "TEMPLATE", newData: { id: template.id, data: { createItems: true, shiftItems: e.shiftKey } }, location: { page: "none", override: "show#" + $activeShow.id } })
+
+                                if ($special.styleTemplatePreview !== false) {
+                                    const outputStyleId = getFirstActiveOutput()?.style || ""
+                                    const styleTemplate = $styles[outputStyleId]?.template || ""
+                                    if (styleTemplate) {
+                                        alertMessage.set("tips.style_template_active")
+                                        activePopup.set("alert")
+                                    }
+                                }
                             }}
                         >
                             <!-- icons -->

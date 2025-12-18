@@ -96,10 +96,11 @@ function mergeOverrideStyles(baseStyle: string, override: TemplateStyleOverride)
 
 function getRelativeFontSize(baseStyle: string, templateStyle: string) {
     let templateFontSize = templateStyle.match(/font-size:\s*(\d+)px/)
-    let baseFontSize = baseStyle.match(/font-size:\s*(\d+)px/)
-    if (!templateFontSize && !baseFontSize) return 100
-    if (!templateFontSize) return Number(baseFontSize![1])
+    let baseFontSize = baseStyle?.match(/font-size:\s*(\d+)px/)
+    if (!templateFontSize && !baseFontSize) return null
+    if (!baseFontSize) return Number(templateFontSize![1])
+    if (!templateFontSize) return Number(baseFontSize[1])
 
-    let percentageDiff = Number(templateFontSize[1]) / Number(baseFontSize![1])
-    return Number(baseFontSize![1]) * percentageDiff
+    let percentageDiff = Number(templateFontSize[1]) / Number(baseFontSize[1])
+    return Number(baseFontSize[1]) * percentageDiff
 }

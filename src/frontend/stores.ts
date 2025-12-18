@@ -143,6 +143,7 @@ export const audioData: Writable<{ [key: string]: { metadata: ICommonTagsResult 
 export const customScriptureBooks: Writable<{ [key: string]: string[] }> = writable({})
 export const scriptureHistoryUsed: Writable<boolean> = writable(false)
 export const actionRevealUsed: Writable<boolean> = writable(false)
+export const dynamicValuesRevealUsed: Writable<boolean> = writable(false)
 export const groupsMoreOptionsEnabled: Writable<boolean> = writable(false)
 
 // EDIT
@@ -162,6 +163,7 @@ export const notFound: Writable<{ show: string[]; bible: string[] }> = writable(
 export const toastMessages: Writable<string[]> = writable([])
 export const alertMessage: Writable<string> = writable("")
 export const popupData: Writable<any> = writable({})
+export const shownTips: Writable<string[]> = writable([])
 export const previousShow: Writable<any> = writable(null)
 export const projectToolSize: Writable<number> = writable(150)
 export const forceClock: Writable<boolean> = writable(false)

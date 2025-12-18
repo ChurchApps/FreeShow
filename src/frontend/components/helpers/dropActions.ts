@@ -17,7 +17,7 @@ import { addItem, DEFAULT_ITEM_STYLE } from "../edit/scripts/itemHelpers"
 import { clone, removeDuplicates } from "./array"
 import { projectDropFolders } from "./drop"
 import { history, historyAwait } from "./history"
-import { getExtension, getFileName, getMediaStyle, getMediaType, removeExtension } from "./media"
+import { downloadOnlineMedia, getExtension, getFileName, getMediaStyle, getMediaType, removeExtension } from "./media"
 import { addToPos, getIndexes, mover } from "./mover"
 import { getLayoutRef } from "./show"
 import { getVariableNameId } from "./showActions"
@@ -144,6 +144,11 @@ export const dropActions = {
                     if (drag.id === "files" && !files[drop.id].includes(extension)) {
                         extraFiles.push(path)
                         return null
+                    }
+
+                    // pre-download online media
+                    if (typeof path === "string" && path.includes("http")) {
+                        downloadOnlineMedia(path)
                     }
 
                     const type: string = getMediaType(extension)
@@ -494,10 +499,8 @@ const slideDrop = {
         let center = drop.center
         if (drag.id === "files" && drop.index !== undefined) center = true
 
-        // get background type
-        let backgroundTypeData: any = {}
         // videos are probably not meant to be background if they are added in bulk
-        if (data.length > 1 && !center) backgroundTypeData = { muted: false, loop: false }
+        const shouldBeForeground = data.length > 1 && !center
 
         data = data.map((a) => {
             const path = a.path || a.id
@@ -506,12 +509,12 @@ const slideDrop = {
             a.path = path
             delete a.id
 
-            let backgroundData = backgroundTypeData
+            // "background" by default
+            let backgroundData = { muted: true, loop: true }
             const mediaStyle = getMediaStyle(get(media)[path], undefined)
-            let type = mediaStyle.videoType || "background"
+            let type = mediaStyle.videoType || (shouldBeForeground ? "foreground" : "background")
             if (a.contentProvider) type = "foreground"
-            if (type === "background") backgroundData = { muted: true, loop: true }
-            else if (type === "foreground") backgroundData = { muted: false, loop: false }
+            if (type === "foreground") backgroundData = { muted: false, loop: false }
 
             return { ...a, path, ...(a.type === "video" ? backgroundData : {}) }
         })

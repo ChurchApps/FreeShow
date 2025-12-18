@@ -2,15 +2,17 @@
     import { onDestroy, onMount } from "svelte"
     import type { ProjectShowRef, Tree } from "../../../types/Projects"
     import { ShowType } from "../../../types/Show"
-    import { actions, activeFocus, activeProject, activeShow, drawer, focusMode, fullColors, labelsDisabled, projects, projectView, shows, special } from "../../stores"
+    import { actions, activeFocus, activePopup, activeProject, activeShow, drawer, focusMode, fullColors, labelsDisabled, projects, projectView, shows, special } from "../../stores"
     import { getAccess } from "../../utils/profile"
     import { getActionIcon } from "../actions/actions"
     import { getTimeUntilClock } from "../drawer/timers/timers"
+    import { openDrawer } from "../edit/scripts/edit"
     import { getContrast } from "../helpers/color"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
     import { getFileName, removeExtension } from "../helpers/media"
     import T from "../helpers/T.svelte"
+    import { joinTimeBig } from "../helpers/time"
     import FloatingInputs from "../input/FloatingInputs.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
     import ShowButton from "../inputs/ShowButton.svelte"
@@ -18,7 +20,7 @@
     import Center from "../system/Center.svelte"
     import DropArea from "../system/DropArea.svelte"
     import SelectElem from "../system/SelectElem.svelte"
-    import { joinTimeBig } from "../helpers/time"
+    import { triggerFunction } from "../../utils/common"
 
     export let tree: Tree[]
     export let recentlyUsedList: any[] = []
@@ -79,7 +81,7 @@
 
     $: projectItemsList = $projects[$activeProject || ""]?.shows || []
 
-    $: lessVisibleSection = projectItemsList.length > 10 || projectItemsList.some((a) => a.type === "section")
+    $: lessVisibleSection = projectItemsList.length > 10 || projectItemsList.length < 1 || projectItemsList.some((a) => a.type === "section")
 
     let splittedProjectsList: { color: string; items: ProjectShowRef[] }[] = []
     $: if (projectItemsList) splitProjectItemsToSections()
@@ -96,6 +98,15 @@
             a.index = index
             splittedProjectsList.at(-1)!.items.push(a)
         })
+    }
+
+    function createShow() {
+        activePopup.set("show")
+        openDrawer("shows")
+    }
+    function openSearch() {
+        openDrawer("shows")
+        triggerFunction("drawer_search")
     }
 
     onMount(() => {
@@ -202,8 +213,26 @@
                     </div>
                 {/each}
             {:else}
-                <Center faded>
-                    <T id="empty.general" />
+                <Center absolute>
+                    <span style="opacity: 0.5;"><T id="empty.general" /></span>
+
+                    <span style="padding-top: 20px" class="buttons">
+                        <MaterialButton variant="outlined" icon="add" title="tooltip.show [Ctrl+N]" on:click={createShow}>
+                            <T id="new.show" />
+                        </MaterialButton>
+
+                        <!-- <MaterialButton variant="outlined" title="actions.import [Ctrl+I]" on:click={() => activePopup.set("import")}>
+                            <Icon id="import" white />
+                            <T id="actions.import" />
+                        </MaterialButton> -->
+
+                        {#if Object.keys($shows).length > 10}
+                            <MaterialButton variant="outlined" title="tabs.search_tip [Ctrl+F]" on:click={openSearch}>
+                                <Icon id="search" white />
+                                <T id="main.search" />
+                            </MaterialButton>
+                        {/if}
+                    </span>
                 </Center>
             {/if}
         </DropArea>
@@ -272,4 +301,15 @@
         border-bottom: 2px solid var(--border-color);
         outline-color: var(--border-color);
     } */
+
+    .buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+    }
+    .buttons :global(button) {
+        justify-content: start;
+        padding: 8px 14px;
+        background-color: var(--primary-darker) !important;
+    }
 </style>

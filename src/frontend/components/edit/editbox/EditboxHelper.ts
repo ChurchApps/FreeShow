@@ -70,37 +70,64 @@ export class EditboxHelper {
         let firstLines: Line[] = []
         let secondLines: Line[] = []
 
-        lines.forEach((line: Line, i: number) => {
+        // remove empty lines and trim text (that messes up the selection)
+        // lines = lines
+        //     .map((line) => {
+        //         line.text = (line.text || []).map((text) => ({ ...text, value: (text.value || "").trim() })).filter((a) => a.value.length)
+        //         return line
+        //     }).filter((a) => a.text?.[0]?.value?.length)
+
+        // split lines in two
+        lines.forEach((line, i) => {
+            // Update start position if this line has a selection start
+            if (sel[i]?.start !== undefined) start = currentIndex + sel[i].start!
+
             if (start > -1 && currentIndex >= start) secondLines.push({ align: line.align, text: [] })
             else firstLines.push({ align: line.align, text: [] })
 
             textPos = 0
-            line.text?.forEach((text) => {
-                currentIndex += text.value.length
-                if (sel[i]?.start !== undefined) start = sel[i].start
-
-                if (start > -1 && currentIndex >= start) {
-                    if (!secondLines.length) secondLines.push({ align: line.align, text: [] })
-                    const pos = start - textPos
-                    if (pos > 0)
-                        firstLines[firstLines.length - 1].text.push({
-                            style: text.style,
-                            value: text.value.slice(0, pos)
-                        })
-                    secondLines[secondLines.length - 1].text.push({
-                        style: text.style,
-                        value: text.value.slice(pos > 0 ? pos : 0, text.value.length)
-                    })
-                } else {
-                    firstLines[firstLines.length - 1].text.push({
-                        style: text.style,
-                        value: text.value
-                    })
-                }
-                textPos += text.value.length
-            })
+            line.text?.forEach(splitLines)
 
             if (!firstLines.at(-1)?.text.length) firstLines.pop()
+            if (!secondLines.at(0)?.text.length) secondLines.shift()
+
+            function splitLines(text) {
+                const segmentStart = currentIndex
+                const segmentEnd = currentIndex + text.value.length
+                currentIndex = segmentEnd
+
+                // Entire segment is before split point
+                if (start < 0 || segmentEnd <= start) {
+                    firstLines[firstLines.length - 1].text.push(text)
+                    textPos += text.value.length
+                    return
+                }
+
+                // Entire segment is after split point
+                if (segmentStart >= start) {
+                    if (!secondLines.length) secondLines.push({ align: line.align, text: [] })
+                    secondLines[secondLines.length - 1].text.push(text)
+                    textPos += text.value.length
+                    return
+                }
+
+                // Split point is within this segment
+                if (!secondLines.length) secondLines.push({ align: line.align, text: [] })
+                const pos = start - segmentStart
+
+                if (pos > 0) {
+                    firstLines[firstLines.length - 1].text.push({
+                        style: text.style,
+                        value: text.value.slice(0, pos)
+                    })
+                }
+                secondLines[secondLines.length - 1].text.push({
+                    style: text.style,
+                    value: text.value.slice(pos)
+                })
+
+                textPos += text.value.length
+            }
         })
 
         // remove first line if empty
@@ -138,7 +165,7 @@ export class EditboxHelper {
             currentStyle += align + lineStyleBg + lineStyleRadius // + line.chords?.map((a) => a.key)
             const style = align || lineStyleBg || lineStyleRadius || listStyle ? 'style="' + align + lineStyleBg + lineStyleRadius + listStyle + '"' : ""
 
-            const normalWrap = align.includes("justify") || JSON.stringify(line).includes("nowrap")
+            const normalWrap = align.includes("justify") || align.includes("left") || JSON.stringify(line).includes("nowrap")
 
             html += `<div class="break ${normalWrap ? "normalWrap" : ""}" ${plain ? "" : style}>`
 

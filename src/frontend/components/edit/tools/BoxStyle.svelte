@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
     import type { Item, ItemType, Slide } from "../../../../types/Show"
-    import { activeEdit, activeShow, overlays, selected, showsCache, templates, theme, themes, timers } from "../../../stores"
+    import { activeEdit, activePopup, activeShow, alertMessage, overlays, selected, shownTips, showsCache, templates, theme, themes, timers } from "../../../stores"
     import { newToast } from "../../../utils/common"
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
@@ -13,6 +13,7 @@
     import { addFilterString, addStyle, addStyleString, getItemStyleAtPos, getItemText, getLastLineAlign, getLineText, getSelectionRange, setCaret } from "../scripts/textStyle"
     import { itemBoxes, setBoxInputValue } from "../values/boxes"
     import EditValues from "./EditValues.svelte"
+    import { openDrawer } from "../scripts/edit"
 
     export let id: ItemType
     export let allSlideItems: Item[] = []
@@ -268,7 +269,7 @@
 
         // does not work for partial text when auto size is enabled
         // WIP doesn't need to show if disabled works correctly
-        if (id === "text" && input.key === "font-size" && selection?.length && item?.textFit !== "none") {
+        if (id === "text" && input.key === "font-size" && selection?.length && (item?.textFit || "none") !== "none") {
             newToast("edit.auto_size settings.enabled!")
         }
 
@@ -478,6 +479,14 @@
             input.value = input.value.replace("rgb(0 0 0 / 0)", "rgb(0 0 0 / 0.4)")
         }
 
+        // store changes for detection
+        if (!$activeEdit.id) {
+            const id = `${input.id}${input.key || ""}`
+            if (!changes[$activeEdit.slide || 0]) changes[$activeEdit.slide || 0] = {}
+            changes[$activeEdit.slide || 0][id] = JSON.stringify(input)
+            changes = changes
+        }
+
         updateValue({ detail: input })
     }
 
@@ -486,6 +495,29 @@
     onMount(() => {
         loaded = true
     })
+
+    // check if the same changes are made to multiple slides, and notify the user to consider using templates
+    let changes: { [key: string]: { [key: string]: string } } = {}
+    $: if (changes) checkChanges()
+    function checkChanges() {
+        if ($shownTips.includes("consider_templates")) return
+
+        const SLIDES = 3
+        const allValues: string[] = Object.values(changes).flatMap((slide) => Object.values(slide))
+        const valueCounts = new Map<string, number>()
+
+        allValues.forEach((value) => {
+            valueCounts.set(value, (valueCounts.get(value) || 0) + 1)
+        })
+
+        const duplicates = Array.from(valueCounts.entries()).filter(([_value, count]) => count > SLIDES)
+        if (duplicates.length > 0) {
+            openDrawer("templates")
+            alertMessage.set("tips.consider_templates")
+            activePopup.set("alert")
+            shownTips.set([...$shownTips, "consider_templates"])
+        }
+    }
 </script>
 
 <svelte:window on:keyup={keyup} on:keydown={keydown} on:mouseup={getTextSelection} on:mousedown={mousedown} />

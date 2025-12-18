@@ -475,7 +475,7 @@
                         <Center absolute>
                             <span style="opacity: 0.5;font-size: 2em;margin-bottom: 10px;"><T id="empty.slides" /></span>
 
-                            <MaterialButton disabled={isLocked} icon="add" title="tooltip.project" style="justify-content: start;padding: 8px 12px;" on:click={createSlide}>
+                            <MaterialButton variant="outlined" disabled={isLocked} icon="add" title="tooltip.project" style="justify-content: start;padding: 8px 14px;" on:click={createSlide}>
                                 <T id="new.slide" />
                             </MaterialButton>
                         </Center>

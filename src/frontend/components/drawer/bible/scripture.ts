@@ -454,43 +454,59 @@ export function buildFullReferenceRange(chapters: (number | string)[], versesPer
 
 // return array with length of slidesCount containing the content with splitted verses
 function splitContent(content: BibleContent[], perSlide: number): BibleContent[][] {
-    const allVerses = content[0]?.activeVerses.flat() || []
+    // Create a flat list of all verse references, preserving chapter order.
+    // This uses the first translation as the authority for verse structure.
+    const allVersesInOrder: { chapter: number | string; verse: number | string }[] = []
+    if (content.length > 0) {
+        content[0].chapters.forEach((chapterNum, chapterIndex) => {
+            const chapterVerses = content[0].activeVerses[chapterIndex] || []
+            chapterVerses.forEach((verseNum) => {
+                allVersesInOrder.push({ chapter: chapterNum, verse: verseNum })
+            })
+        })
+    }
 
-    const totalVerses = allVerses.length
+    const totalVerses = allVersesInOrder.length
+    if (totalVerses === 0) {
+        return []
+    }
+
     const slidesCount = Math.ceil(totalVerses / perSlide)
-    const splitContent: BibleContent[][] = []
+    const slidesContent: BibleContent[][] = []
 
     for (let i = 0; i < slidesCount; i++) {
-        const slideVerses = allVerses.slice(i * perSlide, (i + 1) * perSlide)
+        const slideVerseContexts = allVersesInOrder.slice(i * perSlide, (i + 1) * perSlide)
 
-        // Create a new BibleContent array for each slide with only the verses for that slide
-        const slideContent: BibleContent[] = content.map((bible) => {
-            // Filter each chapter's verses object to only include the current slide's verses
-            const filteredVerses = bible.verses.map((chapterVerses) => {
-                const filtered: { [key: string]: string } = {}
-                slideVerses.forEach((verseId) => {
-                    const key = String(verseId)
-                    if (key in chapterVerses) {
-                        filtered[key] = chapterVerses[key]
+        const slideContentForTranslations: BibleContent[] = content.map((bible) => {
+            // For the current slide, we need to build the `activeVerses` and `verses` properties
+            // that match the expected structure (an array per chapter).
+            const slideActiveVerses: (number | string)[][] = bible.chapters.map(() => [])
+            const slideVersesText: { [key: string]: string }[] = bible.chapters.map(() => ({}))
+
+            slideVerseContexts.forEach((verseContext) => {
+                const chapterIndex = bible.chapters.findIndex((c) => c == verseContext.chapter)
+                if (chapterIndex !== -1) {
+                    slideActiveVerses[chapterIndex].push(verseContext.verse)
+
+                    // Copy the verse text for the active verse
+                    const verseKey = String(verseContext.verse)
+                    if (bible.verses[chapterIndex] && verseKey in bible.verses[chapterIndex]) {
+                        slideVersesText[chapterIndex][verseKey] = bible.verses[chapterIndex][verseKey]
                     }
-                })
-                return filtered
+                }
             })
-
-            // Build activeVerses array structure matching the chapter structure
-            const filteredActiveVerses = bible.chapters.map((_, chapterIndex) => slideVerses.filter((verseId) => String(verseId) in bible.verses[chapterIndex]))
 
             return {
                 ...bible,
-                verses: filteredVerses,
-                activeVerses: filteredActiveVerses
+                verses: slideVersesText,
+                activeVerses: slideActiveVerses
             }
         })
 
-        splitContent.push(slideContent)
+        slidesContent.push(slideContentForTranslations)
     }
 
-    return splitContent
+    return slidesContent
 }
 
 // use old formatting if old scripture template type
@@ -847,7 +863,7 @@ export function getScriptureSlides({ biblesContent, selectedChapters, selectedVe
             }
 
             // verse number
-            if (get(scriptureSettings).verseNumbers) {
+            if (get(scriptureSettings).verseNumbers && allVerses.length > 1) {
                 let size = get(scriptureSettings).numberSize || 50
                 if (rangeIndex === 0) size *= 1.2
                 const verseNumberStyle = `${textStyle};font-size: ${size}px;color: ${get(scriptureSettings).numberColor || "#919191"};text-shadow: none;`

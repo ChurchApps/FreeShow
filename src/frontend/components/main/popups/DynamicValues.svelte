@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
-    import { activeEdit, activePage, activePopup, activeShow, activeStage, overlays, popupData, refreshEditSlide, showsCache, special, stageShows, templates } from "../../../stores"
+    import { activeEdit, activePage, activePopup, activeShow, activeStage, dynamicValuesRevealUsed, overlays, popupData, refreshEditSlide, showsCache, special, stageShows, templates } from "../../../stores"
     import { triggerClickOnEnterSpace } from "../../../utils/clickable"
     import { formatSearch } from "../../../utils/search"
     import { clone } from "../../helpers/array"
@@ -21,11 +21,12 @@
     let mode: null | "scripture" = null
     if ($activePage === "edit" && $activeEdit.type === "template" && ($templates[$activeEdit.id || ""]?.settings?.mode === "scripture" || $templates[$activeEdit.id || ""]?.category === "scripture")) mode = "scripture"
 
-    let showAll: boolean = false
+    let showAll = $dynamicValuesRevealUsed
     function toggleShowAll() {
         showAll = !showAll
         values = getValues()
         defaultValues = clone(values)
+        dynamicValuesRevealUsed.set(showAll)
     }
 
     const hidden: string[] = $special.disabledDynamicValues || []
@@ -36,12 +37,14 @@
         let list = getDynamicIds(false, mode, showAll).map((id) => ({ id }))
 
         const isStage = $activePage === "stage"
+        const nonStageHidden = ["show_text_full"]
         const stageHidden = ["slide_text_previous", "slide_text_next"]
         if (isStage) list = list.filter((a) => !stageHidden.includes(a.id))
+        else list = list.filter((a) => !nonStageHidden.includes(a.id))
 
         let separatorId = ""
         // the ones that can have a custom name should be first (to prevent it from overwriting a category)
-        const separators = ["$", "timer_", "meta_", "rss_", "project_", "time_", "show_", "slide_text_", "video_", "audio_", "scripture_"]
+        const separators = ["$", "timer_", "meta_", "rss_", "project_", "time_", "show_", "slide_text_", "exif_", "video_", "audio_", "scripture_"]
 
         let newList: { [key: string]: typeof list } = {}
         list.forEach((value) => {
@@ -65,6 +68,7 @@
         if (id === "project_") return "guide_title.project"
         if (id === "show_") return "guide_title.show"
         if (id === "slide_text_") return "edit.text"
+        if (id === "exif_") return "items.image (EXIF)"
         if (id === "video_") return "edit.video"
         if (id === "audio_") return "tools.audio"
         if (id === "meta_") return "tools.metadata"

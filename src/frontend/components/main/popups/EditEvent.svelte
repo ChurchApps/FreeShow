@@ -106,7 +106,6 @@
     const getISO = (date: Date) => {
         date = new Date(date.getFullYear(), date.getMonth(), date.getDate(), date.getHours(), date.getMinutes())
         date.setMinutes(date.getMinutes() - date.getTimezoneOffset())
-        console.log(date)
         return date.toISOString().substring(0, 10)
     }
 
@@ -310,8 +309,8 @@
 {#if !actionSelector}
     <!-- TODO: update totime if fromtime is newer -->
     <InputRow style="margin-top: {showMore ? 0 : 10}px;">
-        <MaterialDatePicker label="calendar.from_date" style="flex: 1;" value={editEvent.isoFrom || ""} on:change={(e) => (editEvent.isoFrom = e.detail)} />
-        <MaterialTimePicker label="calendar.from_time" style="width: 200px;" disabled={!editEvent.time} value={editEvent.fromTime || ""} on:input={(e) => (editEvent.fromTime = e.detail)} on:change={() => updateTime("from")} />
+        <MaterialDatePicker label={selectedType === "event" ? "calendar.from_date" : "sort.date"} style="flex: 1;" value={editEvent.isoFrom || ""} on:change={(e) => (editEvent.isoFrom = e.detail)} />
+        <MaterialTimePicker label={selectedType === "event" ? "calendar.from_time" : "calendar.time"} style="width: 200px;" disabled={!editEvent.time} value={editEvent.fromTime || ""} on:input={(e) => (editEvent.fromTime = e.detail)} on:change={() => updateTime("from")} />
     </InputRow>
     {#if selectedType === "event"}
         <InputRow>

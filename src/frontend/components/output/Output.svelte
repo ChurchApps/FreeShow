@@ -3,17 +3,15 @@
 <script lang="ts">
     import { onDestroy } from "svelte"
     import { uid } from "uid"
-    import { Main } from "../../../types/IPC/Main"
     import { OutData } from "../../../types/Output"
     import type { Styles } from "../../../types/Settings"
     import type { AnimationData, LayoutRef, OutBackground, OutSlide, Slide, SlideData, Template, Overlays as TOverlays } from "../../../types/Show"
-    import { requestMain } from "../../IPC/main"
     import { allOutputs, colorbars, currentWindow, customMessageCredits, drawSettings, drawTool, effects, media, outputs, overlays, showsCache, styles, templates, transitionData } from "../../stores"
     import { wait } from "../../utils/common"
     import { custom } from "../../utils/transitions"
     import Draw from "../draw/Draw.svelte"
     import { clone } from "../helpers/array"
-    import { decodeExif, defaultLayers, getCurrentStyle, getMetadata, getOutputLines, getOutputTransitions, getResolution, getSlideFilter, getStyleTemplate, joinMetadata, OutputMetadata, setTemplateStyle } from "../helpers/output"
+    import { defaultLayers, getCurrentStyle, getMetadata, getOutputLines, getOutputTransitions, getResolution, getSlideFilter, getStyleTemplate, OutputMetadata, setTemplateStyle } from "../helpers/output"
     import { replaceDynamicValues } from "../helpers/showActions"
     import { _show } from "../helpers/shows"
     import Image from "../media/Image.svelte"
@@ -180,19 +178,6 @@
     // metadata
     let metadata: OutputMetadata = {}
     $: metadata = getMetadata(metadata, $showsCache[slide?.id || ""], currentStyle, $templates, slide)
-
-    // media exif metadata
-    $: getExifData = metadata.media
-    $: if (getExifData && background?.path) getExif()
-    async function getExif() {
-        metadata.value = ""
-
-        const data = await requestMain(Main.READ_EXIF, { id: background?.path || "" })
-        if (!metadata.media || data.id !== background?.path) return
-
-        let message = decodeExif(data)
-        metadata.value = joinMetadata(message, currentStyle.metadataDivider)
-    }
 
     // ANIMATE
     let animationData: AnimationData = {}

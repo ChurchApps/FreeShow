@@ -75,11 +75,17 @@
         "slide": "Edit current slide.",
         "filters": "Change the look of the selected element.",
         "options": "More options.",
-        "scripture": "Hold Ctrl/Cmd or Shift to select multiple verses."
+        "scripture": "Hold Ctrl/Cmd or Shift to select multiple verses.",
+        "context_cut_in_half": "Split the first textbox into two slides.",
+        "context_merge": "Merge selected slides into one.",
+        "context_capitalize": "Make first letter of each line uppercase.",
+        "context_trim": "Trim whitespace and punctuation from start/end of each line, and remove double spaces."
     },
     "tips": {
         "trigger": "Triggers are commonly used to send a HTTP request to change the preset of cameras.",
-        "global_options": "These options are applied globally."
+        "global_options": "These options are applied globally.",
+        "consider_templates": "You made the same changes to multiple slides. Consider using a template.",
+        "style_template_active": "A style in the output is set to override the show template."
     },
     "setup": {
         "good_luck": "We hope you find this software useful. Good luck with the presentation! :)",
@@ -317,7 +323,6 @@
         "autofill": "Autofill",
         "message": "Message",
         "message_tip": "Display something on all slides",
-        "auto_media": "Get meta from media content",
         "override_output": "Override output style",
         "display_metadata": "Display metadata",
         "meta_template": "Metadata template",
@@ -791,6 +796,7 @@
         "override_category_action": "Override category action",
         "activate_on_startup": "Activate on startup",
         "activate_save": "Activate on save",
+        "activate_output_changed": "Activate when output changes",
         "activate_slide_clicked": "Activate on slide click",
         "activate_group_start": "Activate when group is started",
         "activate_video_starting": "Activate when video is starting",
@@ -1278,6 +1284,7 @@
         "auto_group_numbers": "Auto assign group numbers",
         "shortcuts_on_slides": "Display shortcuts on slides",
         "transparent_slides": "Transparent slide preview",
+        "style_template_preview": "Use style template as slide preview",
         "full_colors": "High contrast group colors",
         "next_item_on_last_slide": "Arrow left/right changes project item on first/last slide",
         "slide_number_keys": "Play slides with number keys",

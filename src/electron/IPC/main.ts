@@ -39,7 +39,7 @@ export async function receiveMain(e: Electron.IpcMainEvent, msg: MainReceiveValu
 
 const currentlyAwaiting: string[] = []
 // @ts-ignore
-export async function requestToMain<ID extends ToMain, R = Awaited<ToMainReturnPayloads[ID]>>(id: ID, value: ToMainSendValue<ID>, callback?: (data: R) => void) {
+export async function requestToMain<ID extends ToMain, R = Awaited<ToMainReturnPayloads[ID]>>(id: ID, value: ToMainSendValue<ID>, callback?: (data: R | null) => void) {
     const listenerId = id + uid(5)
     currentlyAwaiting.push(listenerId)
 
@@ -48,9 +48,11 @@ export async function requestToMain<ID extends ToMain, R = Awaited<ToMainReturnP
     // LISTENER
     const waitingTimeout = 15000
     let timeout: NodeJS.Timeout | null = null
-    const returnData: R = await new Promise((resolve) => {
+    const returnData: R | null = await new Promise((resolve) => {
         timeout = setTimeout(() => {
             if (!isProd) console.error(`IPC Message Timed Out: ${id}`)
+            ipcMain.removeListener(MAIN, receive)
+            resolve(null)
         }, waitingTimeout)
 
         ipcMain.on(MAIN, receive)

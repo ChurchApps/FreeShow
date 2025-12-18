@@ -2,14 +2,14 @@
     import { actions, activePage, activePopup, activeShow, activeTimers, contextActive, groups, guideActive, outLocked, outputs, overlayTimers, playingAudio, playingMetronome, resized, slideTimers, special } from "../../../stores"
     import { DEFAULT_WIDTH, isDarkTheme } from "../../../utils/common"
     import { formatSearch } from "../../../utils/search"
-    import { previewCtrlShortcuts, previewShortcuts } from "../../../utils/shortcuts"
+    import { getNormalizedKey, previewCtrlShortcuts, previewShortcuts } from "../../../utils/shortcuts"
     import { runAction } from "../../actions/actions"
     import { getSlideText } from "../../edit/scripts/textStyle"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { getActiveOutputs, isOutCleared, outputSlideHasContent, setOutput } from "../../helpers/output"
     import { getLayoutRef } from "../../helpers/show"
-    import { getFewestOutputLines, getItemWithMostLines, playNextGroup, updateOut } from "../../helpers/showActions"
+    import { getFewestOutputLines, getItemWithMostLines, playNextGroup, playPreviousGroup, updateOut } from "../../helpers/showActions"
     import { _show } from "../../helpers/shows"
     import { newSlideTimer } from "../../helpers/tick"
     import { getFirstOutputIdWithAudableBackground } from "../../helpers/video"
@@ -139,15 +139,24 @@
         let showGroups = groupIds.length ? _show(currentShowId).slides(groupIds).get() : []
         if (!showGroups.length) return
 
+        // Get both the actual key and normalized key to support all keyboard layouts
+        const actualKey = e.key
+        const normalizedKey = getNormalizedKey(e)
+
         let globalGroupIds: string[] = []
         Object.entries($groups).forEach(([groupId, group]) => {
-            if (typeof group.shortcut !== "string" || group.shortcut.toLowerCase() !== e.key.toLowerCase()) return
+            if (typeof group.shortcut !== "string") return
+
+            // Check both actual key (for native shortcuts) and normalized key (for Latin shortcuts on non-Latin keyboards)
+            const shortcutLower = group.shortcut.toLowerCase()
+            if (shortcutLower !== actualKey.toLowerCase() && shortcutLower !== normalizedKey.toLowerCase()) return
 
             showGroups.forEach((slide) => {
                 if (slide.globalGroup === groupId) globalGroupIds.push(slide.id)
             })
         })
 
+        if (e.shiftKey) return playPreviousGroup(globalGroupIds, { showRef, outSlide, currentShowId }, !e.altKey)
         return playNextGroup(globalGroupIds, { showRef, outSlide, currentShowId }, !e.altKey)
     }
 

@@ -48,7 +48,8 @@
 
     const modes = [
         { value: "default", label: translateText("example.default") },
-        { value: "scripture", label: translateText("tabs.scripture") }
+        { value: "scripture", label: translateText("tabs.scripture") },
+        { value: "item", label: translateText("tools.item") }
         // { value: "text", label: translateText("edit.text") } // hidden
     ]
     $: mode = template.settings?.mode || "default"

@@ -355,6 +355,7 @@
     "inputs": {
         "name": "Název",
         "url": "URL",
+        "group": "Skupina",
         "method": "Metoda",
         "contentType": "Typ obsahu",
         "payload": "Zatížení",
@@ -399,7 +400,8 @@
         "offers": "Nabídky",
         "notice": "Poznámka",
         "visuals": "Visuály",
-        "action_tip": "Akce, která se spustí pokaždé, když je prezentace této kategorie uvedena."
+        "action_tip": "Akce, která se spustí pokaždé, když je prezentace této kategorie uvedena.",
+        "create_nonexistent": "Vytvořit neexistující kategorie"
     },
     "groups": {
         "current": "Aktuální",
@@ -433,6 +435,7 @@
         "variable": "Proměnné",
         "trigger": "Spouštěč",
         "audio_stream": "Přenos audia",
+        "now_playing": "Soubor se nyní přehrává",
         "aspect_ratio": "Změnit poměr aspektu",
         "max_lines": "Nastavit maximum řádků",
         "transition": "Přechod",
@@ -446,6 +449,7 @@
         "choose_output": "Vybrat typ výstupu",
         "choose_style": "Zvolit přednastavení stylu",
         "change_output_values": "Změnit hodnoty výstupu",
+        "output_selector": "Výběr výstupu",
         "choose_chord": "Vybrat akord",
         "set_time": "Nastavit čas",
         "assign_shortcut": "Přiřadit zkratku",
@@ -484,6 +488,7 @@
         "manage_colors": "Spravovat barvy",
         "manage_metadata": "Spravovat metadata",
         "manage_dynamic_values": "Spravovat dynamické hodnoty",
+        "template_style_overrides": "Přepsání stylu",
         "choose_camera": "Vybrat kameru",
         "manage_tags": "Spravovat štítky",
         "sync_categories": "Synchronizovat kategorie",
@@ -492,6 +497,7 @@
         "unsaved": "Opustit FreeShow?",
         "cancel": "Storno",
         "continue": "Pokračovat",
+        "restore": "Obnovit zálohu",
         "reset_all": "Resetovat vše",
         "reset_all_confirm": "Přejete si vše resetovat?",
         "reset_all_action": "Toto zresetuje celý program, ale nevymaže soubory .show ve složce \"Shows\"-folder.",
@@ -764,6 +770,7 @@
         "start_playlist": "Spustit playlist",
         "playlist_next": "Další nahrávka v playlistu",
         "start_metronome": "Spustit metronom",
+        "start_audio_effect": "Spustit audio efekt",
         "id_start_timer": "Spustit odpočet",
         "start_slide_timers": "Spustit časovače po aktivaci snímku",
         "id_select_output_style": "Zvolit výstupní styl",
@@ -950,6 +957,8 @@
         "max_lines_per_slide": "Max řádků za snímek",
         "break_long_lines": "Přerušit dlouhé řádky",
         "break_long_lines_tip": "Přerušit řádek pokud delší než určený počet slov",
+        "style_overrides_tip": "Automaticky přestylovat shodující slova.",
+        "style_override_pattern": "Slovo nebo /regex/",
         "skip_virtual_breaks": "Přeskočit virtuální pauzy",
         "media_fit": "Vmístit média",
         "cropping": "Oříznutí",
@@ -990,8 +999,8 @@
         "_title_top": "Zarovnat nahoru",
         "_title_bottom": "Zarovnat dolů",
         "align_center": "Vycentrované",
-        "align_start": "Start",
-        "align_end": "Konec",
+        "align_start": "Nahoře",
+        "align_end": "Dole",
         "outline": "Obrys",
         "shadow": "Stín",
         "shadow_inset": "Vnitřní stín",
@@ -1209,7 +1218,8 @@
         "source_output": "Výstup zdroje",
         "auto_stretch": "Automaticky roztáhnout obsah",
         "labels": "Zobrazit názvy",
-        "label_color": "Barva štítku"
+        "label_color": "Barva štítku",
+        "create_stage_output": "Vytvořit výstup pódia"
     },
     "settings": {
         "general": "Obecné",
@@ -1265,6 +1275,7 @@
         "disable_labels": "Vypnout štítky",
         "group_numbers": "Skupinová čísla",
         "auto_group_numbers": "Automaticky přiřadit skupinám číslo",
+        "shortcuts_on_slides": "Zobrazovat zkratky na snímcích",
         "transparent_slides": "Průhledný náhled snímku",
         "full_colors": "Vysoký kontrast skupinových barev",
         "next_item_on_last_slide": "Šipky vlevo/vpravo upravují předmět na prvním/posledním snímku.",
@@ -1297,15 +1308,11 @@
         "add": "Přidat",
         "remove": "Odstranit",
         "change_name": "Změnit název",
-        "show_location": "Zobrazit lokaci",
         "data_location": "Lokace dat",
-        "user_data_location": "Uložit nastavení uživatele do 'Lokace dat'",
-        "user_data_location_confirm": "Pokračujte pouze, pokud víte, co děláte. Změnit umístění uživatelských dat?",
-        "user_data_exists": "Nalezeny existující data ve vlastní lokaci, přejete si přepsat?",
-        "user_data_yes": "Ano, zachovat aktuální data",
-        "user_data_no": "Ne, importovat aktuální data",
         "auto_locate_missing_media_files": "Automaticky najít chybějící soubory médií",
         "popup_before_close": "Deaktivovat vyskakovací okna pro potvrzení",
+        "log_song_usage": "Zaznamenat užívání písně do souboru",
+        "auto_error_reporting": "Automatické hlášení chyb",
         "disable_hardware_acceleration": "Vypnout hardwarovou akceleraci",
         "restart_for_change": "Restartujte program, aby se změna projevila!",
         "font": "Font",
@@ -1353,7 +1360,8 @@
     },
     "output": {
         "state_inactive": "Neaktivní",
-        "state_locked": "Uzamčeno"
+        "state_locked": "Uzamčeno",
+        "disabled_layers": "Deaktivované vrstvy"
     },
     "profile": {
         "profiles_hint": "Vytvořit více profilů k omezení přístupu uživatelům při ovládání či upravování vybraných částí programu.",
@@ -1415,6 +1423,7 @@
         "verse_numbers": "Čísla veršů",
         "verses_on_individual_lines": "Verše na jednotlivých řádcích",
         "divide_long_verses": "Rozdělit dlouhé verše",
+        "split_long_verses_suffix": "Zobrazit příponu písmenka",
         "version": "Zobrazit verzi",
         "reference": "Zobrazit reference",
         "split_reference": "Rozdělit reference",
@@ -1422,6 +1431,7 @@
         "first_slide_reference": "Odkaz na prvním snímku",
         "reference_at_bottom": "Posunout dolů",
         "red_jesus": "Ježíšova slova červenou barvou",
+        "show_all": "Zobrazit vše",
         "search": "Vyhledat v Bibli"
     },
     "filter": {

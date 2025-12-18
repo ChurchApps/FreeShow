@@ -6,12 +6,12 @@
     import { getActiveOutputs } from "../../helpers/output"
     import { getCustomMetadata, initializeMetadata, metadataDisplayValues } from "../../helpers/show"
     import HRule from "../../input/HRule.svelte"
+    import InputRow from "../../input/InputRow.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialPopupButton from "../../inputs/MaterialPopupButton.svelte"
     import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
     import MaterialTextarea from "../../inputs/MaterialTextarea.svelte"
     import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
-    import InputRow from "../../input/InputRow.svelte"
-    import MaterialButton from "../../inputs/MaterialButton.svelte"
 
     $: currentShow = $showsCache[$activeShow!.id]
     $: meta = currentShow.meta
@@ -90,43 +90,32 @@
         title: () => currentShow.name.replace(/[0-9\-.,!:;]/g, "").trim()
     }
 
-    $: slideBackgrounds = Object.values(currentShow?.layouts)
-        .map((a) => a.slides.map((a) => a.background).filter(Boolean))
-        .flat()
-
     $: metadataDisplay = metadata.display || "never"
     // $: metadataDisplay = (metadata.display ? metadata.display : outputShowSettings.displayMetadata) || "never"
 
     function editMetadataStyle() {
-        activePage.set("settings")
+        // activeStyle.set(styleId)
         settingsTab.set("styles")
+        activePage.set("settings")
         // scroll to bottom
         setTimeout(() => {
             document.querySelector(".row")?.querySelector(".center")?.querySelector(".scroll")?.scrollTo(0, 1000)
-        }, 50)
+        }, 80)
     }
 </script>
 
 <section>
-    {#if metadata.autoMedia !== true}
-        <div class="context #metadata_tools" style="padding: 10px;">
-            {#each Object.entries(values) as [key, value]}
-                {@const isDefault = !!$dictionary.meta?.[key]}
-                {@const label = isDefault ? translateText(`meta.${key}`) : `<span style="text-transform: capitalize;">${key}</span>`}
-                {@const shouldAutofill = (!value || (key === "number" && !currentShow?.quickAccess?.number)) && (autofillValues[key]?.() || (key === "number" && value))}
-                {@const autofillValue = shouldAutofill ? autofillValues[key]?.() || "" : ""}
-                {@const numberStored = key === "number" && currentShow?.quickAccess?.number}
+    <div class="context #metadata_tools" style="padding: 10px;">
+        {#each Object.entries(values) as [key, value]}
+            {@const isDefault = !!$dictionary.meta?.[key]}
+            {@const label = isDefault ? translateText(`meta.${key}`) : `<span style="text-transform: capitalize;">${key}</span>`}
+            {@const shouldAutofill = (!value || (key === "number" && !currentShow?.quickAccess?.number)) && (autofillValues[key]?.() || (key === "number" && value))}
+            {@const autofillValue = shouldAutofill ? autofillValues[key]?.() || "" : ""}
+            {@const numberStored = key === "number" && currentShow?.quickAccess?.number}
 
-                <MaterialTextInput {label} style={numberStored ? "border-bottom: 1px solid var(--secondary);" : ""} {value} autofill={autofillValue} on:change={(e) => changeValue(e.detail, key)} />
-            {/each}
-        </div>
-    {/if}
-
-    {#if slideBackgrounds.length}
-        <div style="padding: 10px;">
-            <MaterialToggleSwitch label="meta.auto_media" data="EXIF from .JPEG" checked={metadata.autoMedia || false} defaultValue={false} on:change={(e) => updateMetadata(e, "autoMedia")} />
-        </div>
-    {/if}
+            <MaterialTextInput {label} style={numberStored ? "border-bottom: 1px solid var(--secondary);" : ""} {value} autofill={autofillValue} on:change={(e) => changeValue(e.detail, key)} />
+        {/each}
+    </div>
 
     <!-- message -->
     <HRule title="meta.message" />

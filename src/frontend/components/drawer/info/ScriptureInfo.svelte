@@ -51,6 +51,7 @@
     $: templateBackground = template.settings?.backgroundPath
 
     // auto change template based on number of bibles (if default)
+    // if collection, but only one of the Bibles load, biblesContent will be length 1 & not change the template, which is fine, but maybe confusing
     $: if (activeScriptureId || templateId || biblesContent.length) setTimeout(checkTemplate, 100)
     $: isDefault = typeof templateId === "string" ? templateId.includes("scripture") && !templateId.includes("LT") : false
     function checkTemplate() {

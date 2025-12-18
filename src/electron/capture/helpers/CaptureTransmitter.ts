@@ -68,7 +68,7 @@ export class CaptureTransmitter {
 
     static stopChannel(captureId: string, key: string) {
         const combinedKey = `${captureId}-${key}`
-        if (!this.channels[combinedKey].timer) return
+        if (!this.channels[combinedKey]?.timer) return
 
         // console.log("STOP CHANNEL:", key)
         clearInterval(this.channels[combinedKey].timer)

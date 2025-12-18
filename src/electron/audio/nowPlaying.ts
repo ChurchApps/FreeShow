@@ -2,7 +2,7 @@ import { type ICommonTagsResult, parseFile } from "music-metadata"
 import { join } from "path"
 import { ToMain } from "../../types/IPC/ToMain"
 import { sendToMain } from "../IPC/main"
-import { deleteFile, doesPathExist, getDataFolderPath, openInSystem, readFile, writeFile } from "../utils/files"
+import { deleteFile, doesPathExist, getDataFolderPath, openInSystem, writeFile } from "../utils/files"
 
 const fileNameText = "NowPlaying.txt"
 const fileNameImage = "NowPlayingCover.png"
@@ -25,9 +25,21 @@ export async function setPlayingState(data: NowPlayingData) {
     // const title = metadata?.title || data.name || data.unknownLang[1] || "Unknown Title"
     // const album = metadata?.album || data.unknownLang[2] || "Unknown Album"
 
+    // create album art cover BEFORE converting dynamic values
+    const filePathCover = join(audioFolder, fileNameImage)
+    const cover = metadata?.picture?.[0]
+    const buffer = cover?.data
+    if (!buffer) {
+        if (doesPathExist(filePathCover)) {
+            deleteFile(filePathCover)
+        }
+    } else {
+        writeFile(filePathCover, buffer)
+    }
+
     // format: Artist - Title - Album
     // const content = `${artist} - ${title} - ${album}`
-    const content = await convertDynamicValues(data)
+    const content = await convertDynamicValues(data, metadata, buffer)
     // currentContent = content
 
     // create playing data text file
@@ -37,27 +49,12 @@ export async function setPlayingState(data: NowPlayingData) {
     // (no point in this at the moment)
     // serve "text file" on local server
     // startServer()
-
-    // create album art cover
-    const filePathCover = join(audioFolder, fileNameImage)
-    const cover = metadata?.picture?.[0]
-    const buffer = cover?.data
-    if (!buffer) {
-        if (doesPathExist(filePathCover)) {
-            deleteFile(filePathCover)
-        }
-        return
-    }
-
-    writeFile(filePathCover, buffer)
 }
 
 // , "{time}", "{time_s}"
 const dynamicValues = ["{artist}", "{title}", "{album}", "{year}", "{artwork_path}", "{artwork_base64}", "{duration}", "{duration_s}"]
-async function convertDynamicValues(data: NowPlayingData) {
+async function convertDynamicValues(data: NowPlayingData, metadata: ICommonTagsResult | null, coverBuffer: Buffer | undefined) {
     if (!data.format) data.format = `{artist} - {title} - {album}`
-
-    const metadata = await getAudioMetadata(data.filePath)
 
     dynamicValues.forEach((value) => {
         data.format = data.format.replaceAll(value, replaceValue(value))
@@ -81,10 +78,9 @@ async function convertDynamicValues(data: NowPlayingData) {
                 const coverFilePath = join(audioFolder, fileNameImage)
                 if (value === "{artwork_path}") return coverFilePath
 
-                if (!doesPathExist(coverFilePath)) return ""
-                const pngBuffer = readFile(coverFilePath)
-                const base64String = Buffer.from(pngBuffer).toString("base64")
-                return pngBuffer ? `data:image/png;base64,${base64String}` : ""
+                if (!coverBuffer) return ""
+                const base64String = coverBuffer.toString("base64")
+                return `data:image/png;base64,${base64String}`
             case "{duration}":
             case "{duration_s}":
                 if (value === "{duration_s}") return data.duration.toString()
@@ -161,6 +157,7 @@ async function getAudioMetadata(filePath: string): Promise<ICommonTagsResult | n
             resolve(metadata)
         } catch (err: any) {
             console.error("Error parsing metadata:", err.message)
+            resolve(null)
         }
     })
 }

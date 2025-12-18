@@ -167,6 +167,13 @@
     function loadBackgrounds() {
         bgs.forEach(async (background) => {
             let path = background.path || ""
+
+            const mediaData = $media[path]
+            if (mediaData?.contentFile?.thumbnail) {
+                newPaths[path] = mediaData.contentFile.thumbnail
+                return
+            }
+
             let newBgPath = await loadThumbnail(path, mediaSize.small)
 
             if (newBgPath) newPaths[path] = newBgPath

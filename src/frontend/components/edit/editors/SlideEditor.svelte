@@ -85,7 +85,11 @@
         if (newPath) thumbnailPath = newPath
     }
     async function download() {
-        thumbnailPath = await downloadOnlineMedia(bgPath)
+        const localPath = await downloadOnlineMedia(bgPath)
+
+        const mediaData = $media[bgPath]
+        if (mediaData?.contentFile?.thumbnail) thumbnailPath = mediaData.contentFile.thumbnail
+        else if (localPath) thumbnailPath = localPath
     }
 
     $: currentOutput = getFirstActiveOutput($outputs)

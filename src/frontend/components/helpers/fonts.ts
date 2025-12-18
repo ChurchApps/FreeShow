@@ -105,9 +105,9 @@ function fontDataToCssString(fontData: FontData) {
 const defaultFonts = ["CMGSans", "Arial", "Verdana", "Tahoma", "Trebuchet MS", "Times New Roman", "Georgia", "Garamond", "Courier New", "Brush Script MT", "Helvetica", "Fantasy", "monospace"]
 // does not work with ''
 const noQuotes = ["Fantasy", "monospace"]
-function getFontName(value: string) {
+export function getFontName(value: string) {
     if (!value) return ""
-    if (noQuotes.includes(value)) return value
+    if (noQuotes.includes(value) || value.startsWith("'")) return value
     return `'${value}'`
 }
 
@@ -121,7 +121,7 @@ export async function getSystemFontsList() {
     const loadedFonts = await getFontsList()
     if (!loadedFonts.length) return []
 
-    return addFonts(fonts, loadedFonts).map((a) => ({ label: a.family, value: a.family, style: a.fonts[a.default]?.css || (a.family ? `font-family: ${a.family};` : "") }))
+    return addFonts(fonts, loadedFonts).map((a) => ({ label: a.family, value: getFontName(a.family), style: a.fonts[a.default]?.css || (a.family ? `font-family: ${getFontName(a.family)};` : "") }))
 }
 export function getFontStyleList(font: string) {
     if (!cachedFonts.length) return { fontStyles: [], defaultValue: "" }

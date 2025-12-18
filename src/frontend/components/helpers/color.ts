@@ -63,8 +63,12 @@ export function hexToRgb(hex: string) {
 }
 
 export function splitRgb(rgb: string) {
-    const numbers = rgb.replace(/[^\d. ]+/g, "").replaceAll("  ", " ")
-    const splitted = numbers.split(" ")
+    // Handle both modern space-separated and legacy comma-separated syntax
+    // rgb(r g b / a) or rgb(r, g, b, a) or rgba(r, g, b, a)
+    const numbers = rgb.replace(/rgba?\(|\)/gi, "").trim()
+
+    // Split by comma or space, then filter out empty strings and slashes
+    const splitted = numbers.split(/[\s,/]+/).filter((s) => s && s !== "/")
 
     return {
         r: Number(splitted[0] ?? 0),
@@ -179,7 +183,22 @@ export function splitGradientValue(gradientStr: string) {
     const normalizeColor = (str: string) => {
         const rgbMatch = str.match(/^rgb\(([^)]+)\)$/i)
         if (!rgbMatch) return str.trim()
-        const vals = rgbMatch[1].split(/[\s,]+/).map((s) => s.trim())
+
+        const content = rgbMatch[1]
+
+        // Handle modern syntax: rgb(r g b / alpha) or rgb(r g b)
+        if (content.includes("/")) {
+            const parts = content.split("/")
+            const rgbVals = parts[0]
+                .trim()
+                .split(/[\s,]+/)
+                .map((s) => s.trim())
+            const alpha = parts[1].trim()
+            return `rgba(${rgbVals.join(",")}, ${alpha})`
+        }
+
+        // Handle legacy syntax: rgb(r, g, b) or rgba(r, g, b, a)
+        const vals = content.split(/[\s,]+/).map((s) => s.trim())
         return vals.length === 3 ? `rgba(${vals.join(",")}, 1)` : `rgba(${vals.join(",")})`
     }
 

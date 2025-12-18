@@ -40,6 +40,9 @@
         if (stageSections.text) stageSections.text = { inputs: [...stageSections.text.inputs, [{ id: "style", key: "line-height", type: "number", value: 1.1, multiplier: 10, extension: "em", values: { label: "edit.line_height", max: 50 } }]] }
 
         // setBoxInputValue(stageSections, "font", "font-weight", "default", "bold")
+
+        // allow no color (inherit from slide)
+        if (stageSections.font) stageSections.font.inputs[0][1].values.allowEmpty = true
     }
 
     $: if (stageSections?.CSS) {
