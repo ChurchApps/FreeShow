@@ -142,7 +142,7 @@
 
         const metadataValues = Object.values(currentShow.meta || {})
         const metadataText = metadataValues.reduce((v, a) => (v += a), "")
-        if (!currentShow.metadata?.autoMedia && metadataText.length) {
+        if (metadataText.length) {
             const divider = "; " // currentStyle.metadataDivider
             const text = metadataValues
                 .filter((a) => a?.length)

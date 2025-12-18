@@ -1,3 +1,4 @@
+import type { ExifData } from "exif"
 import type { ICommonTagsResult } from "music-metadata/lib/type"
 import { getDocument, GlobalWorkerOptions } from "pdfjs-dist"
 import { get } from "svelte/store"
@@ -9,7 +10,7 @@ import type { Item, LayoutRef, OutSlide, Show, Slide, SlideAction, SlideData } f
 import { clearAudio } from "../../audio/audioFading"
 import { AudioMicrophone } from "../../audio/audioMicrophone"
 import { AudioPlayer } from "../../audio/audioPlayer"
-import { sendMain } from "../../IPC/main"
+import { requestMain, sendMain } from "../../IPC/main"
 import { isMainWindow, isOutputWindow } from "../../utils/common"
 import { send } from "../../utils/request"
 import { convertRSSToString, getRSS } from "../../utils/rss"
@@ -1141,7 +1142,7 @@ const customTriggers = {
 
 // DYNAMIC VALUES
 
-const commonOnly = ["time_str", "project_section_time", "show_name_next", "show_text_full", "slide_text_", "layout_notes", "slide_group_upcoming", "slide_notes_next", "audio_subtitle", "audio_genre", "audio_year", "audio_volume"]
+const commonOnly = ["time_str", "project_section_time", "show_name_next", "show_text_full", "slide_text_", "layout_notes", "slide_group_upcoming", "slide_notes_next", "exif_", "audio_subtitle", "audio_genre", "audio_year", "audio_volume"]
 export const dynamicValueText = (id: string) => `{${id}}`
 export function getDynamicIds(noVariables = false, mode: null | "scripture" = null, showAll: boolean = true): string[] {
     const mainValues = Object.keys(dynamicValues).filter((id) => (showAll ? true : !commonOnly.find((cId) => id.startsWith(cId))))
@@ -1315,11 +1316,13 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
             send(OUTPUT, ["MAIN_REQUEST_VIDEO_DATA"], { id: outputId })
         }
 
+        const output = get(outputs)[outputId]
+
         // set to normal output, if stage output, for video time
-        const stageLayout = get(outputs)[outputId]?.stageOutput
+        const stageLayout = output?.stageOutput
         if (stageLayout) outputId = get(stageShows)[stageLayout]?.settings?.output || getActiveOutputs(get(allOutputs), false, true, true)[0]
 
-        const outSlide: OutSlide | null = get(outputs)[outputId]?.out?.slide || null
+        const outSlide: OutSlide | null = output?.out?.slide || null
 
         if (!showId) {
             showId = outSlide?.id
@@ -1341,6 +1344,9 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
         const activeLayout = layoutId ? [layoutId] : "active"
         const ref = _show(showId).layouts(activeLayout).ref()[0] || []
         const layout = _show(showId).layouts(activeLayout).get()[0] || {}
+
+        const outBackground = output?.out?.background || null
+        const bgPath = outBackground?.path || ""
 
         const videoTime: number = get(videosTime)[outputId] || 0
         const videoDuration: number = get(videosData)[outputId]?.duration || 0
@@ -1383,7 +1389,7 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
 
         if (!dynamicValues[dynamicId]) return ""
 
-        const value = (dynamicValues[dynamicId]({ show, ref, slideIndex, layout, projectRef, outSlide, videoTime, videoDuration, audioTime, audioDuration, audioPath }) ?? "").toString()
+        const value = (dynamicValues[dynamicId]({ show, ref, slideIndex, layout, projectRef, outSlide, bgPath, videoTime, videoDuration, audioTime, audioDuration, audioPath }) ?? "").toString()
 
         if (dynamicId === "show_name_next" && !value && isOutputWin) {
             send(OUTPUT, ["MAIN_SHOWS_DATA"])
@@ -1460,6 +1466,24 @@ const dynamicValues = {
     slide_text_previous: ({ show, ref, slideIndex, outSlide }) => getTextLines(outSlide?.id === "temp" ? { items: outSlide?.previousSlides } : show.slides?.[ref[slideIndex - 1]?.id]).join("<br>"),
     slide_text_next: ({ show, ref, slideIndex, outSlide }) => getTextLines(outSlide?.id === "temp" ? { items: outSlide?.nextSlides } : show.slides?.[ref[slideIndex + 1]?.id]).join("<br>"),
     show_text_full: ({ show, ref }) => ref.map((a) => getTextLines(show.slides?.[a.id]).join("<br>")).join("<br><br>"),
+
+    // image (exif)
+    exif_datetime: ({ bgPath }) => getExifData(bgPath, "DateTimeOriginal"),
+    exif_aperture: ({ bgPath }) => getExifData(bgPath, "ApertureValue"),
+    exif_brightness: ({ bgPath }) => getExifData(bgPath, "BrightnessValue"),
+    exif_exposure: ({ bgPath }) => getExifData(bgPath, "ExposureTime"),
+    exif_fnumber: ({ bgPath }) => getExifData(bgPath, "FNumber"),
+    exif_flash: ({ bgPath }) => getExifData(bgPath, "Flash"),
+    exif_focallength: ({ bgPath }) => getExifData(bgPath, "FocalLength"),
+    exif_iso: ({ bgPath }) => getExifData(bgPath, "ISO"),
+    exif_interopoffset: ({ bgPath }) => getExifData(bgPath, "InteropOffset"),
+    exif_lightsource: ({ bgPath }) => getExifData(bgPath, "LightSource"),
+    exif_shutterspeed: ({ bgPath }) => getExifData(bgPath, "ShutterSpeedValue"),
+    exif_lens: ({ bgPath }) => getExifData(bgPath, "LensMake"),
+    exif_lensmodel: ({ bgPath }) => getExifData(bgPath, "LensModel"),
+    exif_gps: ({ bgPath }) => `${getExifData(bgPath, "GPSLatitudeRef", "gps")}${getExifData(bgPath, "GPSLatitude", "gps")?.split(",")[0]} ${getExifData(bgPath, "GPSLongitudeRef", "gps")}${getExifData(bgPath, "GPSLongitude", "gps")?.split(",")[0]} ${getExifData(bgPath, "GPSAltitude", "gps")}`.trim(),
+    exif_device: ({ bgPath }) => `${getExifData(bgPath, "Make", "image")} ${getExifData(bgPath, "Model", "image")}`.trim(),
+    exif_software: ({ bgPath }) => getExifData(bgPath, "Software", "image"),
 
     // video
     video_time: ({ videoTime }) => joinTime(secondsToTime(videoTime)),
@@ -1554,6 +1578,35 @@ function getClosestProjectSectionByTime() {
     })
 
     return { closestPassedId, closestUpcommingId }
+}
+
+// EXIF
+
+function getExifData(backgroundPath: string, key: string, parent: string = "exif"): string {
+    if (!backgroundPath.endsWith(".jpg") && !backgroundPath.endsWith(".jpeg") && !backgroundPath.endsWith(".tiff") && !backgroundPath.endsWith(".cr2") && !backgroundPath.endsWith(".nef")) return ""
+
+    const exif = getExif(backgroundPath)
+    if (!exif) return ""
+
+    const value = exif[parent]?.[key]
+    if (!value) return ""
+
+    if (typeof value === "number") return value.toFixed(2).replace(".00", "")
+    return value.toString()
+}
+
+const exifCache: Map<string, ExifData> = new Map()
+function getExif(path: string) {
+    if (exifCache.has(path)) return exifCache.get(path)!
+
+    requestMain(Main.READ_EXIF, { id: path }, (data) => {
+        const exif = data.exif
+        if (!exif) return
+
+        exifCache.set(path, exif)
+    })
+
+    return null
 }
 
 // AUDIO METADATA

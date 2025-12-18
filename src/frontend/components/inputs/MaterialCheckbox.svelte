@@ -186,6 +186,10 @@
     .data {
         font-size: 0.7em;
         opacity: 0.5;
+
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 
     .changed {

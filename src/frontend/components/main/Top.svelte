@@ -1,11 +1,11 @@
 <script type="ts">
     import { slide } from "svelte/transition"
-    import { activeEdit, activeProfile, activeShow, dictionary, drawSettings, drawTool, os, outputDisplay, outputs, paintCache, profiles, saved, shows } from "../../stores"
+    import { activeEdit, activePage, activeProfile, activeShow, dictionary, drawSettings, drawTool, os, outputDisplay, outputs, paintCache, profiles, saved, settingsTab, shows } from "../../stores"
     import Icon from "../helpers/Icon.svelte"
     import { toggleOutputs } from "../helpers/output"
     import T from "../helpers/T.svelte"
-    import Button from "../inputs/Button.svelte"
     import TopButton from "../inputs/TopButton.svelte"
+    import Button from "../inputs/Button.svelte"
     import { translateText } from "../../utils/language"
 
     export let isWindows = false
@@ -46,11 +46,18 @@
         }, 1800)
     }
 
+    function openOutputSettings() {
+        settingsTab.set("display_settings")
+        activePage.set("settings")
+    }
+
     // disabled tabs
 
     let settingsDisabled = false
     $: profile = $profiles[$activeProfile || ""]
     $: settingsDisabled = Object.keys(profile?.access.settings || {}).length > 7
+
+    $: noPhysicalOutputWindows = (!$outputDisplay && !physicalOutputWindows.length) || disableClick
 </script>
 
 <div class="top" class:drag={!isWindows}>
@@ -79,7 +86,24 @@
             <TopButton id="settings" hideLabel />
         {/if}
 
-        <Button id="output_window_button" title={translateText(`menu.${$outputDisplay ? (confirm ? "again_confirm" : "_title_display_stop") : "_title_display"} [Ctrl+O]`, $dictionary)} style={$outputDisplay || disableClick ? "" : "border-bottom: 2px solid var(--secondary);"} on:click={toggleOutput} class="context #output display {$outputDisplay ? 'on' : 'off'}" red={$outputDisplay} disabled={(!$outputDisplay && !physicalOutputWindows.length) || disableClick}>
+        <!-- <MaterialButton id="output_window_button" class="context #output display {$outputDisplay ? 'on' : 'off'}" title="menu.{$outputDisplay ? (confirm ? 'again_confirm' : '_title_display_stop') : '_title_display'} [Ctrl+O]" style={$outputDisplay || disableClick ? "" : "border-bottom: 2px solid var(--secondary);"} on:click={toggleOutput} disabled={(!$outputDisplay && !physicalOutputWindows.length) || disableClick} red={$outputDisplay}>
+            {#if $outputDisplay}
+                {#if confirm}
+                    <Icon id="close" size={1.6} white />
+                {:else}
+                    <Icon id="cancelDisplay" size={1.6} white />
+                {/if}
+            {:else}
+                <Icon id="outputs" size={1.6} white />
+            {/if}
+
+            {#if $outputDisplay && confirm}
+                <div class="click_again" transition:slide>
+                    <T id="menu.again_confirm" />
+                </div>
+            {/if}
+        </MaterialButton> -->
+        <Button id="output_window_button" title={translateText(`menu.${$outputDisplay ? (confirm ? "again_confirm" : "_title_display_stop") : "_title_display"} [Ctrl+O]`, $dictionary)} style={$outputDisplay || disableClick ? "" : "border-bottom: 2px solid var(--secondary);"} on:click={toggleOutput} class="context #output display {$outputDisplay ? 'on' : 'off'}" red={$outputDisplay} disabled={noPhysicalOutputWindows}>
             {#if $outputDisplay}
                 {#if confirm}
                     <Icon id="close" size={1.6} white />
@@ -96,6 +120,9 @@
                 </div>
             {/if}
         </Button>
+        {#if !$outputDisplay && !physicalOutputWindows.length}
+            <div data-title={translateText("No physical outputs!<br>'settings.invisible_window' is turned on in the outputs settings.")} style="position: absolute;top: 0;inset-inline-end: 0;height: 100%;width: 60px;" role="none" on:click={openOutputSettings} />
+        {/if}
     </span>
 </div>
 
@@ -173,6 +200,7 @@
 
         font-size: 1.1em;
         padding: 4px 10px;
+        font-weight: normal;
         background-color: var(--primary-darker);
         color: var(--text);
 

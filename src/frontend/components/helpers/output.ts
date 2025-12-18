@@ -1257,7 +1257,6 @@ export function getMetadata(oldMetadata: any, show: Show | undefined, currentSty
     const overrideOutput = settings.override
     const templateId: string = overrideOutput ? settings.template : currentStyle.metadataTemplate || "metadata"
 
-    metadata.media = settings.autoMedia
     metadata.message = metadata.media ? {} : show.meta
     metadata.display = overrideOutput ? settings.display : currentStyle.displayMetadata
     metadata.style = getTemplateStyle(templateId, templatesUpdater) || defaultMetadataStyle
@@ -1320,38 +1319,6 @@ function getTemplateAlignment(templateId: string, templatesUpdater: Templates) {
     const lineAlign = template.items?.[0]?.lines?.[0]?.align || ""
 
     return itemAlign + lineAlign.replace("text-align", "justify-content")
-}
-
-export function decodeExif(data: any) {
-    const message: any = {}
-
-    const exif = data.exif
-    if (!exif) return message
-
-    if (exif.exif.DateTimeOriginal) message.taken = "Date: " + exif.exif.DateTimeOriginal
-    if (exif.exif.ApertureValue) message.aperture = "Aperture: " + exif.exif.ApertureValue
-    if (exif.exif.BrightnessValue) message.brightness = "Brightness: " + exif.exif.BrightnessValue
-    if (exif.exif.ExposureTime) message.exposure_time = "Exposure Time: " + exif.exif.ExposureTime.toFixed(4)
-    if (exif.exif.FNumber) message.fnumber = "F Number: " + exif.exif.FNumber
-    if (exif.exif.Flash) message.flash = "Flash: " + exif.exif.Flash
-    if (exif.exif.FocalLength) message.focallength = "Focal Length: " + exif.exif.FocalLength
-    if (exif.exif.ISO) message.iso = "ISO: " + exif.exif.ISO
-    if (exif.exif.InteropOffset) message.interopoffset = "Interop Offset: " + exif.exif.InteropOffset
-    if (exif.exif.LightSource) message.lightsource = "Light Source: " + exif.exif.LightSource
-    if (exif.exif.ShutterSpeedValue) message.shutterspeed = "Shutter Speed: " + exif.exif.ShutterSpeedValue
-
-    if (exif.exif.LensMake) message.lens = "Lens: " + exif.exif.LensMake
-    if (exif.exif.LensModel) message.lensmodel = "Lens Model: " + exif.exif.LensModel
-
-    if (exif.gps.GPSLatitude) message.gps = "Position: " + exif.gps.GPSLatitudeRef + exif.gps.GPSLatitude[0]
-    if (exif.gps.GPSLongitude) message.gps += " " + exif.gps.GPSLongitudeRef + exif.gps.GPSLongitude[0]
-    if (exif.gps.GPSAltitude) message.gps += " " + exif.gps.GPSAltitude
-
-    if (exif.image.Make) message.device = "Device: " + exif.image.Make
-    if (exif.image.Model) message.device += " " + exif.image.Model
-    if (exif.image.Software) message.software = "Software: " + exif.image.Software
-
-    return message
 }
 
 export function getSlideFilter(slideData: SlideData | null) {

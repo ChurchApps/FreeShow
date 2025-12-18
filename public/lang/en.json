@@ -321,7 +321,6 @@
         "autofill": "Autofill",
         "message": "Message",
         "message_tip": "Display something on all slides",
-        "auto_media": "Get meta from media content",
         "override_output": "Override output style",
         "display_metadata": "Display metadata",
         "meta_template": "Metadata template",

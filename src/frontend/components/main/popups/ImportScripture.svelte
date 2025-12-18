@@ -3,15 +3,15 @@
     import { uid } from "uid"
     import { Main } from "../../../../types/IPC/Main"
     import { sendMain } from "../../../IPC/main"
-    import { labelsDisabled, language, scriptures } from "../../../stores"
+    import { language, scriptures } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { replace } from "../../../utils/languageData"
     import { customBibleData, getApiBiblesList } from "../../drawer/bible/scripture"
     import { sortByName } from "../../helpers/array"
-    import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import Link from "../../inputs/Link.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
+    import MaterialCheckbox from "../../inputs/MaterialCheckbox.svelte"
     import MaterialMultiChoice from "../../inputs/MaterialMultiChoice.svelte"
     import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
     import Center from "../../system/Center.svelte"
@@ -27,7 +27,7 @@
             let bibleList = await getApiBiblesList()
             bibleList = bibleList.map((a) => {
                 const bible = customBibleData(a)
-                if (bible.description && (bible.description.toLowerCase() === "common" || bible.name.includes(bible.description))) bible.description = ""
+                if (bible.description && (bible.description.toLowerCase() === "common" || bible.description === "Holy Bible" || bible.name.includes(bible.description))) bible.description = ""
                 return bible
             })
 
@@ -88,59 +88,31 @@
         searchedRecommendedBibles = recommended.filter((a) => value.split(" ").find((value) => a.name.toLowerCase().includes(value)))
     }
 
-    let searchActive = false
-    $: if (importType === "" && searchActive) searchActive = false
-
     let importType = ""
     const importTypes = [
         { id: "api", name: "API", icon: "web" }, // translate | scripture_alt
         { id: "local", name: translateText("cloud.local"), icon: "scripture" }
     ]
-
-    function goBack() {
-        if (importType === "api" && searchActive && (document.getElementById("scriptureApiSearchInput") as any)?.value) {
-            searchActive = false
-            searchedBibles = bibles
-            searchedRecommendedBibles = recommended
-            return
-        }
-
-        importType = ""
-    }
 </script>
 
 {#if importType}
-    <MaterialButton class="popup-back" icon="back" iconSize={1.3} title="actions.back" on:click={goBack} />
+    <MaterialButton class="popup-back" icon="back" iconSize={1.3} title="actions.back" on:click={() => (importType = "")} />
 {/if}
 
 {#if importType === "api"}
     {#if error}
         <T id="error.bible_api" />
     {:else}
-        <div style="display: flex;align-items: center;justify-content: space-between;">
-            <h2>
-                <T id="scripture.bibles" />
-            </h2>
-
-            {#if searchActive}
-                <MaterialTextInput label="main.search" id="scriptureApiSearchInput" style="width: 50%;" value="" on:input={search} autofocus />
-            {:else}
-                <MaterialButton class="search" style="border-bottom: 2px solid var(--secondary);font-weight: normal;padding: 11px 15px;" on:click={() => (searchActive = true)}>
-                    <Icon id="search" size={1.4} white />
-                    {#if !$labelsDisabled}<p style="opacity: 0.8;font-size: 1.1em;"><T id="main.search" /></p>{/if}
-                </MaterialButton>
-            {/if}
+        <div class="info">
+            <T id="scripture.bibles" />
         </div>
+
+        <MaterialTextInput label="main.search" id="scriptureApiSearchInput" value="" on:input={search} autofocus />
 
         <div class="list">
             {#if searchedRecommendedBibles.length}
                 {#each searchedRecommendedBibles as bible}
-                    <MaterialButton icon="scripture_alt" on:click={() => toggleScripture(bible)} isActive={!!Object.values($scriptures).find((a) => a.id === bible.sourceKey)}>
-                        {bible.name}
-                        {#if bible.description}
-                            <span class="description" data-title={bible.description}>{bible.description}</span>
-                        {/if}
-                    </MaterialButton>
+                    <MaterialCheckbox label={bible.name} data={bible.description} checked={!!Object.values($scriptures).find((a) => a.id === bible.sourceKey)} on:change={() => toggleScripture(bible)} />
                 {/each}
                 <hr />
             {/if}
@@ -148,12 +120,7 @@
             {#if bibles.length}
                 {#if searchedBibles.length}
                     {#each searchedBibles as bible}
-                        <MaterialButton icon="scripture_alt" on:click={() => toggleScripture(bible)} isActive={!!Object.values($scriptures).find((a) => a.id === bible.sourceKey)}>
-                            {bible.name}
-                            {#if bible.description}
-                                <span class="description" data-title={bible.description}>{bible.description}</span>
-                            {/if}
-                        </MaterialButton>
+                        <MaterialCheckbox label={bible.name} data={bible.description} checked={!!Object.values($scriptures).find((a) => a.id === bible.sourceKey)} on:change={() => toggleScripture(bible)} />
                     {/each}
                 {:else}
                     <Center faded>
@@ -194,7 +161,7 @@
         display: flex;
         flex-direction: column;
         max-height: 55vh;
-        margin: 15px 0;
+        margin-top: 10px;
         overflow: auto;
 
         background-color: var(--primary-darker);
@@ -221,18 +188,12 @@
         margin: 20px 0;
     }
 
-    h2 {
-        color: var(--text);
-        font-size: 1.1em;
-    }
-
-    .description {
-        opacity: 0.5;
-        font-style: italic;
-        margin-inline-start: 10px;
-
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
+    .info {
+        position: absolute;
+        right: 40px;
+        top: 8px;
+        padding: 10px 20px;
+        font-size: 0.7em;
+        opacity: 0.3;
     }
 </style>

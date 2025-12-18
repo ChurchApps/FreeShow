@@ -58,7 +58,8 @@
             if (value) {
                 newToast("toast.output_capture_enabled")
 
-                const enabledOutputs = Object.values($outputs).filter((a) => a.enabled && !a.stageOutput)
+                // auto enable transparent & invisible if more than 1 non invisible output enabled
+                const enabledOutputs = Object.values($outputs).filter((a) => a.enabled && !a.stageOutput && !a.invisible)
                 if (enabledOutputs.length > 1) {
                     updateOutput("transparent", true)
                     updateOutput("invisible", true)
@@ -319,13 +320,13 @@
 
     <svelte:fragment slot="menu">
         {#if currentOutput}
-            <MaterialToggleSwitch label="preview.audio" checked={currentOutput.ndiData?.audio} defaultValue={false} on:change={(e) => updateNdiData(e.detail, "audio")} />
-            <MaterialDropdown label="settings.frame_rate" value={currentOutput.ndiData?.framerate || "30"} defaultValue="30" options={framerates} on:change={(e) => updateNdiData(e.detail, "framerate")} />
-
             <InputRow>
                 <MaterialTextInput label="inputs.name" value={currentOutput.ndiData?.name || `FreeShow NDI${currentOutput.name ? ` - ${currentOutput.name}` : ""}`} defaultValue={`FreeShow NDI${currentOutput.name ? ` - ${currentOutput.name}` : ""}`} on:change={(e) => updateNdiData(e.detail, "name")} />
                 <MaterialTextInput label="inputs.group" title="settings.comma_seperated" value={currentOutput.ndiData?.groups || ""} defaultValue="" placeholder="public" on:change={(e) => updateNdiData(e.detail, "groups")} />
             </InputRow>
+
+            <MaterialToggleSwitch label="preview.audio" checked={currentOutput.ndiData?.audio} defaultValue={false} on:change={(e) => updateNdiData(e.detail, "audio")} />
+            <MaterialDropdown label="settings.frame_rate" value={currentOutput.ndiData?.framerate || "30"} defaultValue="30" options={framerates} on:change={(e) => updateNdiData(e.detail, "framerate")} />
         {/if}
     </svelte:fragment>
 </InputRow>
