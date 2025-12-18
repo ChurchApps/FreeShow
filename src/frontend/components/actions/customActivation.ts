@@ -10,6 +10,8 @@ export const customActionActivations = [
     { id: "startup", name: "actions.activate_on_startup", icon: "startup" },
     { id: "save", name: "actions.activate_save", icon: "save" },
 
+    { id: "output_changed", common: true, name: "actions.activate_output_changed", icon: "display_settings" },
+
     { id: "show_created", name: "actions.activate_show_created", icon: "slide" },
     { id: "show_opened", name: "actions.activate_show_opened", icon: "slide" },
     { id: "slide_click", name: "actions.activate_slide_clicked", icon: "slide" },

@@ -794,6 +794,7 @@
         "override_category_action": "Override category action",
         "activate_on_startup": "Activate on startup",
         "activate_save": "Activate on save",
+        "activate_output_changed": "Activate when output changes",
         "activate_slide_clicked": "Activate on slide click",
         "activate_group_start": "Activate when group is started",
         "activate_video_starting": "Activate when video is starting",

@@ -59,6 +59,8 @@ let resetActionTrigger = false
 export function setOutput(type: string, data: any, toggle = false, outputId = "", add = false) {
     const ref = data?.layout ? _show(data.id).layouts([data.layout]).ref()[0] || [] : []
 
+    customActionActivation("output_changed")
+
     // track usage (& set attributionString)
     if (type === "slide" && data?.id) {
         const showReference = _show(data.id).get("reference")

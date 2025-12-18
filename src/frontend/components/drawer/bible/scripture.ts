@@ -863,7 +863,7 @@ export function getScriptureSlides({ biblesContent, selectedChapters, selectedVe
             }
 
             // verse number
-            if (get(scriptureSettings).verseNumbers) {
+            if (get(scriptureSettings).verseNumbers && allVerses.length > 1) {
                 let size = get(scriptureSettings).numberSize || 50
                 if (rangeIndex === 0) size *= 1.2
                 const verseNumberStyle = `${textStyle};font-size: ${size}px;color: ${get(scriptureSettings).numberColor || "#919191"};text-shadow: none;`

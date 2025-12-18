@@ -566,6 +566,19 @@
 
     // fixed letter width
     $: fixedWidth = item?.type === "timer" || item?.type === "clock" ? "font-feature-settings: 'tnum' 1;" : ""
+
+    // display duration
+    // WIP not using transitions at the moment
+    let hidden = false
+    let hideTimeout: NodeJS.Timeout | null = null
+    $: displayDuration = item?.actions?.displayDuration || 0
+    $: if (displayDuration && clickRevealed) {
+        hidden = false
+        if (hideTimeout) clearTimeout(hideTimeout)
+        hideTimeout = setTimeout(() => {
+            hidden = true
+        }, displayDuration * 1000)
+    }
 </script>
 
 <!-- lyrics view must have "width: 100%;height: 100%;" set -->
@@ -581,7 +594,7 @@
     class:chords={chordLines.length}
     class:clickable={$currentWindow === "output" && (item.button?.press || item.button?.release)}
     class:reveal={(centerPreview || isStage) && item.clickReveal && !clickRevealed}
-    class:autoSizingHidden={hideUntilAutosized}
+    class:hidden={hideUntilAutosized || hidden}
     bind:this={itemElem}
     on:mousedown={press}
     on:mouseup={release}
@@ -630,7 +643,7 @@
         filter: brightness(0.8);
     }
 
-    .item.autoSizingHidden {
+    .item.hidden {
         visibility: hidden;
         opacity: 0;
     }
