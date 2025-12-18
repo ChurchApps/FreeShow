@@ -83,7 +83,8 @@
     },
     "tips": {
         "trigger": "Triggers are commonly used to send a HTTP request to change the preset of cameras.",
-        "global_options": "These options are applied globally."
+        "global_options": "These options are applied globally.",
+        "consider_templates": "You made the same changes to multiple slides. Consider using a template."
     },
     "setup": {
         "good_luck": "We hope you find this software useful. Good luck with the presentation! :)",
