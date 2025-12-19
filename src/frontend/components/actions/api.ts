@@ -222,7 +222,7 @@ export const API_ACTIONS = {
     clear_slide: () => clearSlide(), // BC
     clear_overlays: () => clearOverlays(), // BC
     clear_overlay: (data: API_id) => clearOverlay(data.id),
-    clear_audio: () => clearAudio(), // BC
+    clear_audio: () => clearAudio("", { clearPlaylist: true, commonClear: true }), // BC
     clear_next_timer: () => clearTimers(), // BC
     clear_drawing: () => clearDrawing(),
 
