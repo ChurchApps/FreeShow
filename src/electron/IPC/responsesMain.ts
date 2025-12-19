@@ -29,6 +29,7 @@ import { deleteShows, deleteShowsNotIndexed, getAllShows, getEmptyShows, refresh
 import { correctSpelling } from "../utils/spellcheck"
 import checkForUpdates from "../utils/updater"
 import { getLocalIPs } from "../data/bonjour"
+import { canSync, getSyncTeams, syncData } from "../cloud/syncManager"
 
 export const mainResponses: MainResponses = {
     // DEV
@@ -155,6 +156,10 @@ export const mainResponses: MainResponses = {
     [Main.READ_FILE]: (data) => ({ content: readFile(data.path) }),
     [Main.OPEN_FOLDER]: (data) => selectFolder(data),
     [Main.OPEN_FILE]: (data) => selectFiles(data),
+    // SYNC
+    [Main.CAN_SYNC]: (data) => canSync(data),
+    [Main.GET_TEAMS]: (data) => getSyncTeams(data),
+    [Main.CLOUD_SYNC]: (data) => syncData(data),
     // Provider-based routing
     [Main.PROVIDER_LOAD_SERVICES]: async (data) => {
         await ContentProviderRegistry.loadServices(data.providerId)

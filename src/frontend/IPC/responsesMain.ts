@@ -86,6 +86,7 @@ import { initializeClosing, saveComplete } from "../utils/save"
 import { updateSettings, updateSyncedSettings, updateThemeValues } from "../utils/updateSettings"
 import type { MainReturnPayloads } from "./../../types/IPC/Main"
 import { Main } from "./../../types/IPC/Main"
+import { setupCloudSync } from "../utils/cloudSync"
 
 type MainHandler<ID extends Main | ToMain> = (data: ID extends keyof ToMainSendPayloads ? ToMainSendPayloads[ID] : ID extends keyof MainReturnPayloads ? Awaited<MainReturnPayloads[ID]> : undefined) => void
 export type MainResponses = {
@@ -304,6 +305,8 @@ export const mainResponses: MainResponses = {
             c[data.providerId] = true
             return c
         })
+
+        setupCloudSync()
 
         if (data.isFirstConnection) newToast("main.finished")
     },

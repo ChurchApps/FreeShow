@@ -47,6 +47,8 @@ export abstract class ContentProvider<TScope extends string = string, TAuthData 
         this.setupAuthRoutes()
     }
 
+    abstract isConnected(scope: TScope): boolean
+
     /**
      * Establishes connection to the content provider
      */

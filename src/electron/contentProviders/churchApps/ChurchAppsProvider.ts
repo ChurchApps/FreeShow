@@ -7,7 +7,7 @@ import { httpsRequest } from "../../utils/requests"
 import type { ContentLibraryCategory, ContentFile } from "../base/types"
 
 // Import and re-export types
-import type { ChurchAppsScopes } from "./types"
+import type { ChurchAppsRequestData, ChurchAppsScopes } from "./types"
 export type { ChurchAppsScopes } from "./types"
 
 // Fix ChurchAppsAuthData to not include null in the export
@@ -41,6 +41,10 @@ export class ChurchAppsProvider extends ContentProvider<ChurchAppsScopes, Church
         })
     }
 
+    isConnected(scope: ChurchAppsScopes): boolean {
+        return this.access !== null && this.access.scope === scope
+    }
+
     async connect(scope: ChurchAppsScopes): Promise<ChurchAppsAuthData | null> {
         const result = await ChurchAppsConnect.connect(scope)
         this.access = result
@@ -52,7 +56,7 @@ export class ChurchAppsProvider extends ContentProvider<ChurchAppsScopes, Church
         this.access = null
     }
 
-    async apiRequest(data: any): Promise<any> {
+    async apiRequest(data: ChurchAppsRequestData): Promise<any> {
         return ChurchAppsConnect.apiRequest(data)
     }
 
@@ -61,6 +65,7 @@ export class ChurchAppsProvider extends ContentProvider<ChurchAppsScopes, Church
     }
 
     async startupLoad(scope: ChurchAppsScopes, data?: any): Promise<void> {
+        ChurchAppsConnect.initialize()
         const connected = await this.connect(scope)
         if (!connected) return
 

@@ -35,6 +35,10 @@ export class AmazingLifeProvider extends ContentProvider<AmazingLifeScopes, Amaz
         })
     }
 
+    isConnected(scope: AmazingLifeScopes): boolean {
+        return this.access !== null && this.access.scope === scope
+    }
+
     async connect(scope: AmazingLifeScopes): Promise<AmazingLifeAuthData | null> {
         const result = await AmazingLifeConnect.connect(scope)
         this.access = result
@@ -61,6 +65,7 @@ export class AmazingLifeProvider extends ContentProvider<AmazingLifeScopes, Amaz
     }
 
     async startupLoad(scope: AmazingLifeScopes): Promise<void> {
+        AmazingLifeConnect.initialize()
         const connected = await this.connect(scope)
         if (!connected) return
 

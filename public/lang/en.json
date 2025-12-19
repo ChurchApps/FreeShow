@@ -485,6 +485,7 @@
         "slide_midi": "Slide MIDI input",
         "user_data_overwrite": "Found existing data",
         "connect": "Connect",
+        "cloud_sync": "Cloud sync",
         "cloud_update": "Syncing with cloud",
         "cloud_method": "Data location",
         "shortcuts": "Shortcuts",

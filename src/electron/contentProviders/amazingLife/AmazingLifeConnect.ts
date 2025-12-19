@@ -47,35 +47,21 @@ export class AmazingLifeConnect {
         }
     }
 
+    public static initialize() {
+        this.AMAZING_LIFE_ACCESS = null
+    }
+
     public static async connect(scope: AmazingLifeScopes): Promise<AmazingLifeAuthData | null> {
-        const storedAccess = getContentProviderAccess("amazinglife", scope) as AmazingLifeAuthData | null
+        let accessData = this.AMAZING_LIFE_ACCESS || (getContentProviderAccess("amazinglife", scope) as AmazingLifeAuthData | null)
 
-        if (storedAccess) {
-            this.AMAZING_LIFE_ACCESS = storedAccess
+        if (this.isTokenExpired(accessData)) accessData = await this.refreshToken(scope)
+        if (!accessData) accessData = await this.authenticate(scope)
+        if (!accessData) return null
 
-            if (this.isTokenExpired(storedAccess)) {
-                console.info("APlay: Token expired, refreshing...")
-                const refreshed = await this.refreshToken(scope)
-                if (refreshed) {
-                    this.AMAZING_LIFE_ACCESS = refreshed
-                    sendToMain(ToMain.PROVIDER_CONNECT, { providerId: "amazinglife", success: true })
-                    return refreshed
-                }
-            } else {
-                console.info("APlay: Using valid stored credentials")
-                sendToMain(ToMain.PROVIDER_CONNECT, { providerId: "amazinglife", success: true })
-                return storedAccess
-            }
-        }
+        if (!this.AMAZING_LIFE_ACCESS) connectionInitialized()
+        this.AMAZING_LIFE_ACCESS = accessData
 
-        console.info("APlay: Starting OAuth flow...")
-        const authData = await this.authenticate(scope)
-        sendToMain(ToMain.PROVIDER_CONNECT, {
-            providerId: "amazinglife",
-            success: !!authData,
-            isFirstConnection: !!authData
-        })
-        return authData
+        return accessData
     }
 
     public static disconnect(scope: AmazingLifeScopes = "openid profile email"): void {
@@ -88,7 +74,8 @@ export class AmazingLifeConnect {
         return this.AMAZING_LIFE_ACCESS?.access_token || null
     }
 
-    private static isTokenExpired(access: AmazingLifeAuthData): boolean {
+    private static isTokenExpired(access: AmazingLifeAuthData | null): boolean {
+        if (!access?.created_at || !access?.expires_in) return true
         return (access.created_at + access.expires_in) * 1000 < Date.now()
     }
 
@@ -125,10 +112,11 @@ export class AmazingLifeConnect {
 
         try {
             const authData = await this.oauthHelper.authorize(scope)
-            if (authData) {
-                this.AMAZING_LIFE_ACCESS = authData
-                setContentProviderAccess("amazinglife", scope, authData)
-            }
+            if (!authData) return null
+
+            setContentProviderAccess("amazinglife", scope, authData)
+            this.AMAZING_LIFE_ACCESS = authData
+            connectionInitialized(true)
             return authData
         } catch (error) {
             console.error("APlay authentication failed:", error)
@@ -142,4 +130,8 @@ export class AmazingLifeConnect {
         this.initializeOAuthHelper()
         this.oauthHelper.handleCallback(req, res)
     }
+}
+
+function connectionInitialized(isFirstConnection: boolean = false): void {
+    sendToMain(ToMain.PROVIDER_CONNECT, { providerId: "amazinglife", success: true, isFirstConnection })
 }
