@@ -160,6 +160,11 @@ export function restoreFiles(data?: { folder: string }) {
 
         const data = JSON.parse(file)
 
+        if (storeId === "SETTINGS") {
+            delete data.dataPath
+            delete data.showsPath
+        }
+
         _store[storeId]?.clear()
         _store[storeId]?.set(data)
 
