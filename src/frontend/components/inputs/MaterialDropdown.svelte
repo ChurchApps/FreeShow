@@ -76,11 +76,9 @@
     // SELECT
 
     function selectOption(e: any, optionValue: string) {
-        console.log("select")
         if (e?.target?.closest(".delete-button")) return
 
         value = optionValue
-        console.log(value)
         open = false
         dispatch("change", value)
     }
