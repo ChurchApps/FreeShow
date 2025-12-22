@@ -85,7 +85,8 @@
         "trigger": "Triggers are commonly used to send a HTTP request to change the preset of cameras.",
         "global_options": "These options are applied globally.",
         "consider_templates": "You made the same changes to multiple slides. Consider using a template.",
-        "style_template_active": "A style in the output is set to override the show template."
+        "style_template_active": "A style in the output is set to override the show template.",
+        "group_numbers": "Numbers are auto assigned, so you don't need to add numbers to group names."
     },
     "setup": {
         "good_luck": "We hope you find this software useful. Good luck with the presentation! :)",
