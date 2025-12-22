@@ -107,24 +107,10 @@ export async function getActiveScripturesContent() {
 
     const active = get(activeScripture).reference
 
-    // Sort verses by numeric verse id and subverse (e.g. "2_0", "2_1") so mixed
-    // values like ["2_1","2_0", 1] end up ordered by base id then subverse.
     const selectedVerses =
         active?.verses.map((v) => {
             if (!Array.isArray(v)) return []
-
-            return v.sort((a, b) => {
-                // strip optional chapter prefix (e.g. "2:1") before parsing
-                const sa = String(a).replace(/^\d+:/, "")
-                const sb = String(b).replace(/^\d+:/, "")
-
-                const pa = getVerseIdParts(sa)
-                const pb = getVerseIdParts(sb)
-
-                if (pa.id !== pb.id) return pa.id - pb.id
-                if (pa.subverse !== pb.subverse) return pa.subverse - pb.subverse
-                return 0
-            })
+            return sortScriptureSelection(v)
         }) || []
 
     if (!selectedVerses[0]?.length) return null
@@ -199,6 +185,23 @@ export async function getActiveScripturesContent() {
             })
             .filter(Boolean)
     )) as BibleContent[]
+}
+
+// Sort verses by numeric verse id and subverse (e.g. "2_0", "2_1") so mixed
+// values like ["2_1","2_0", 1] end up ordered by base id then subverse.
+export function sortScriptureSelection(selection: (string | number)[]) {
+    return selection.sort((a, b) => {
+        // strip optional chapter prefix (e.g. "2:1") before parsing
+        const sa = String(a).replace(/^\d+:/, "")
+        const sb = String(b).replace(/^\d+:/, "")
+
+        const pa = getVerseIdParts(sa)
+        const pb = getVerseIdParts(sb)
+
+        if (pa.id !== pb.id) return pa.id - pb.id
+        if (pa.subverse !== pb.subverse) return pa.subverse - pb.subverse
+        return 0
+    })
 }
 
 // OUTPUT
@@ -459,7 +462,7 @@ function splitContent(content: BibleContent[], perSlide: number): BibleContent[]
     const allVersesInOrder: { chapter: number | string; verse: number | string }[] = []
     if (content.length > 0) {
         content[0].chapters.forEach((chapterNum, chapterIndex) => {
-            const chapterVerses = content[0].activeVerses[chapterIndex] || []
+            const chapterVerses = sortScriptureSelection(content[0].activeVerses[chapterIndex] || [])
             chapterVerses.forEach((verseNum) => {
                 allVersesInOrder.push({ chapter: chapterNum, verse: verseNum })
             })
@@ -629,7 +632,7 @@ export function getScriptureSlidesNew(data: any, onlyOne = false, disableReferen
             // Process verses from all chapters
             bible.chapters.forEach((chapterNumber, chapterIndex) => {
                 const versesText = bible.verses[chapterIndex] || {}
-                const chapterVerses = bible.activeVerses[chapterIndex] || []
+                const chapterVerses = sortScriptureSelection(bible.activeVerses[chapterIndex] || [])
 
                 chapterVerses.forEach((v) => {
                     let text = versesText[v] || ""

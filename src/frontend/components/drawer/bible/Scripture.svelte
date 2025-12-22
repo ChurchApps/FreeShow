@@ -17,7 +17,7 @@
     import TextInput from "../../inputs/TextInput.svelte"
     import Loader from "../../main/Loader.svelte"
     import Center from "../../system/Center.svelte"
-    import { formatBibleText, getVerseIdParts, getVersePartLetter, joinRange, loadJsonBible, moveSelection, outputIsScripture, playScripture, scriptureRangeSelect, splitText, swapPreviewBible } from "./scripture"
+    import { formatBibleText, getVerseIdParts, getVersePartLetter, joinRange, loadJsonBible, moveSelection, outputIsScripture, playScripture, scriptureRangeSelect, sortScriptureSelection, splitText, swapPreviewBible } from "./scripture"
 
     export let active: string | null
     export let searchValue: string
@@ -776,7 +776,7 @@
         if (!activeReference.book) return
 
         // Check if we're dealing with split verses
-        const currentVerses = activeReference.verses[0] || []
+        const currentVerses = sortScriptureSelection(activeReference.verses[0] || [])
         const currentVerseId = currentVerses[0]?.toString()
         const selectionCount = currentVerses.length
         if (currentVerseId && splittedVerses.length) {
@@ -823,7 +823,7 @@
         const selection = {
             book: Number(activeReference.book),
             chapters: [Number(activeReference.chapters[0])],
-            verses: activeReference.verses[0] || []
+            verses: sortScriptureSelection(activeReference.verses[0] || [])
         }
 
         // store
@@ -840,7 +840,7 @@
     function getReference(_updater: any) {
         const book = data[previewBibleId]?.bookData?.name || ""
         const referenceDivider = $scriptureSettings.referenceDivider || ":"
-        const range = joinRange(activeReference.verses[0] || [])
+        const range = joinRange(sortScriptureSelection(activeReference.verses[0] || []))
         const reference = `${book} ${activeReference.chapters}${referenceDivider}${range}`
         return reference
     }
