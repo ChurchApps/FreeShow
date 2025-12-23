@@ -2,7 +2,7 @@ import path from "path"
 import { ToMain } from "../../types/IPC/ToMain"
 import type { Show, Shows, TrimmedShow, TrimmedShows } from "../../types/Show"
 import { sendToMain } from "../IPC/main"
-import { deleteFile, getDataFolderPath, parseShow, readFile, readFileAsync, readFolder, readFolderAsync, renameFile } from "./files"
+import { deleteFile, getDataFolderPath, parseShow, readFile, readFileAsync, readFolder, readFolderAsync, renameFileAsync } from "./files"
 
 export function getAllShows() {
     const showsPath = getDataFolderPath("shows")
@@ -10,13 +10,13 @@ export function getAllShows() {
     return filesInFolder
 }
 
-export function renameShows(shows: { id: string; name: string; oldName: string }[], filePath: string) {
-    for (const show of shows) checkFile(show)
-    function checkFile(show: { id: string; name: string; oldName: string }) {
+export async function renameShows(shows: { id: string; name: string; oldName: string }[], filePath: string) {
+    await Promise.all(shows.map((show) => checkFile(show)))
+    async function checkFile(show: { id: string; name: string; oldName: string }) {
         const oldName = show.oldName + ".show"
         const newName = (show.name || show.id) + ".show"
 
-        renameFile(filePath, oldName, newName)
+        await renameFileAsync(filePath, oldName, newName)
     }
 }
 

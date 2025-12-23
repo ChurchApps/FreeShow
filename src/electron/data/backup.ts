@@ -4,36 +4,41 @@ import { ToMain } from "../../types/IPC/ToMain"
 import type { SaveActions } from "../../types/Save"
 import type { Show, Shows, TrimmedShow } from "../../types/Show"
 import { sendMain, sendToMain } from "../IPC/main"
-import { deleteFolder, doesPathExist, getDataFolderPath, getFileStats, getTimePointString, loadShows, makeDir, openInSystem, readFile, readFileAsync, readFolder, selectFilesDialog, writeFile, writeFileAsync } from "../utils/files"
+import { copyFileAsync, deleteFolder, doesPathExist, getDataFolderPath, getFileStats, getTimePointString, loadShows, makeDir, openInSystem, readFile, readFileAsync, readFolder, selectFilesDialog, writeFile, writeFileAsync } from "../utils/files"
 import { wait } from "../utils/helpers"
-import { _store, getStore, storeFilesData } from "./store"
+import { _store, getStore, setStore, storeFilesData } from "./store"
 
-export async function startBackup({ customTriggers }: { customTriggers: SaveActions }) {
+export async function startBackup({ customTriggers, customOutputLocation }: { customTriggers?: SaveActions; customOutputLocation?: string } = {}): Promise<void> {
     let shows = getStore("SHOWS")
-    // let bibles = null
+
+    const isCloudSync = !!customOutputLocation
 
     // no need to backup shows on auto backup (as that just takes a lot of space)
     const isAutoBackup = !!customTriggers?.isAutoBackup
 
     const folderName = getTimePointString() + (isAutoBackup ? "_auto" : "")
-    const backupFolder = getDataFolderPath("backups", folderName)
+    const backupFolder = customOutputLocation ?? getDataFolderPath("backups", folderName)
 
     // CONFIGS
     await Promise.all(
-        Object.entries(storeFilesData).map(([id, data]) => {
+        Object.entries(storeFilesData).map(async ([id, data]) => {
             if (!data.portable) return
-            syncStores(id as keyof typeof _store)
+            await syncStores(id as keyof typeof _store)
         })
     )
-    // "SYNCED_SETTINGS" and "STAGE" has to be before "SETTINGS" and "SHOWS" (can't remember why)
-    syncStores("SETTINGS")
 
-    // SCRIPTURE
     // bibles are not backed up because they are located in the Bibles folder
-    // if (bibles) await syncBibles()
+    if (isCloudSync) {
+        await syncBibles()
+    } else {
+        // "SYNCED_SETTINGS" and "STAGE" has to be before "SETTINGS" and "SHOWS" (can't remember why)
+        await syncStores("SETTINGS")
+    }
 
     // SHOWS
     if (!isAutoBackup || customTriggers?.backupShows) await syncAllShows()
+
+    if (isCloudSync) return
 
     sendToMain(ToMain.BACKUP, { finished: true, path: backupFolder })
 
@@ -50,6 +55,19 @@ export async function startBackup({ customTriggers }: { customTriggers: SaveActi
         const content: string = JSON.stringify(store.store)
         const filePath: string = path.resolve(backupFolder, name)
         await writeFileAsync(filePath, content)
+    }
+
+    async function syncBibles() {
+        const biblesPath = getDataFolderPath("scriptures")
+        const bibleFiles = readFolder(biblesPath)
+
+        await Promise.all(
+            bibleFiles.map(async (fileName) => {
+                const sourcePath = path.join(biblesPath, fileName)
+                const destPath = path.join(backupFolder, `BIBLE_${fileName}`)
+                await copyFileAsync(sourcePath, destPath)
+            })
+        )
     }
 
     async function syncAllShows() {
@@ -160,8 +178,7 @@ export function restoreFiles(data?: { folder: string }) {
 
         const data = JSON.parse(file)
 
-        _store[storeId]?.clear()
-        _store[storeId]?.set(data)
+        setStore(_store[storeId], data)
 
         sendMain(storeId as Main, data)
     }
@@ -186,7 +203,7 @@ export function restoreFiles(data?: { folder: string }) {
     }
 }
 
-function isValidJSON(file: string) {
+export function isValidJSON(file: string) {
     try {
         JSON.parse(file)
         return true
