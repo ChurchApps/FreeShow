@@ -776,7 +776,7 @@
         if (!activeReference.book) return
 
         // Check if we're dealing with split verses
-        const currentVerses = activeReference.verses[0] || []
+        const currentVerses = [...(activeReference.verses[0] || [])].sort()
         const currentVerseId = currentVerses[0]?.toString()
         const selectionCount = currentVerses.length
         if (currentVerseId && splittedVerses.length) {
