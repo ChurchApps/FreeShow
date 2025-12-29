@@ -10,7 +10,7 @@ export type ChurchAppsAuthData = {
 } | null
 
 export type ChurchAppsRequestData = {
-    api: "doing" | "content"
+    api: "doing" | "content" | "lessons"
     scope: ChurchAppsScopes
     endpoint: string
     authenticated: boolean
@@ -22,6 +22,7 @@ export type ChurchAppsRequestData = {
 // Prod URLs
 export const CHURCHAPPS_API_URL = "https://api.churchapps.org"
 export const CHURCHAPPS_APP_URL = "https://admin.b1.church"
+export const LESSONS_API_URL = "https://api.lessons.church"
 
 // export const DEFAULT_CHURCHAPPS_DATA: ChurchAppsAuthData = {
 //     access_token: "",
@@ -39,3 +40,10 @@ export interface ChurchAppsSongData {
     lyrics: string
     ccliNumber: string
 }
+
+// Venue feed types
+export interface FeedFile { name?: string; url?: string; streamUrl?: string; seconds?: number; fileType?: string; loopVideo?: boolean }
+export interface FeedAction { id?: string; actionType?: string; content?: string; files?: FeedFile[] }
+export interface FeedSection { id?: string; name?: string; actions?: FeedAction[] }
+export interface FeedAddOn { id?: string; name?: string; files?: FeedFile[] }
+export interface VenueFeed { sections?: FeedSection[]; files?: FeedAddOn[] }
