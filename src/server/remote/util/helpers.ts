@@ -130,6 +130,80 @@ export function throttle<T extends (...args: any[]) => any>(fn: T, limit: number
     }
 }
 
+export type LongPressPointerType = "mouse" | "touch" | "pen"
+
+export type LongPressOptions<T> = {
+    onLongPress: (context: T) => void
+    isEnabled?: () => boolean
+    delayMs?: number
+    moveThresholdPx?: number
+    suppressClickMs?: number
+    allowedPointerTypes?: LongPressPointerType[]
+}
+
+export type LongPressHandlers<T> = {
+    onPointerDown: (context: T, event: PointerEvent) => void
+    onPointerMove: (event: PointerEvent) => void
+    onPointerUp: () => void
+    onPointerCancel: () => void
+    shouldSuppressClick: () => boolean
+}
+
+export function createLongPress<T>(options: LongPressOptions<T>): LongPressHandlers<T> {
+    const delayMs = options.delayMs ?? 450
+    const moveThresholdPx = options.moveThresholdPx ?? 10
+    const suppressClickMs = options.suppressClickMs ?? 700
+
+    let timer: ReturnType<typeof setTimeout> | null = null
+    let startX = 0
+    let startY = 0
+    let lastLongPressAt = 0
+
+    function clear() {
+        if (timer) {
+            clearTimeout(timer)
+            timer = null
+        }
+    }
+
+    function isAllowedPointerType(pointerType: string): boolean {
+        if (!options.allowedPointerTypes?.length) return true
+        return options.allowedPointerTypes.includes(pointerType as LongPressPointerType)
+    }
+
+    return {
+        onPointerDown: (context: T, event: PointerEvent) => {
+            if (options.isEnabled && !options.isEnabled()) return
+            if (!isAllowedPointerType(event.pointerType)) return
+
+            // Only primary button for mouse; touch/pen are always primary.
+            if (event.pointerType === "mouse" && event.button !== 0) return
+
+            startX = event.clientX
+            startY = event.clientY
+            clear()
+
+            timer = setTimeout(() => {
+                lastLongPressAt = Date.now()
+                options.onLongPress(context)
+            }, delayMs)
+        },
+        onPointerMove: (event: PointerEvent) => {
+            if (!timer) return
+            const dx = Math.abs(event.clientX - startX)
+            const dy = Math.abs(event.clientY - startY)
+            if (dx > moveThresholdPx || dy > moveThresholdPx) clear()
+        },
+        onPointerUp: () => {
+            clear()
+        },
+        onPointerCancel: () => {
+            clear()
+        },
+        shouldSuppressClick: () => Date.now() - lastLongPressAt < suppressClickMs
+    }
+}
+
 // Category data structure utilities
 
 export type CategoryData = {

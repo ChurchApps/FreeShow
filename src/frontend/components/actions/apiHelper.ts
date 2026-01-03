@@ -480,7 +480,18 @@ export function getClearedState() {
 // "1.1.1" = "Gen 1:1"
 export function startScripture(data: API_scripture) {
     const split = data.reference.split(".")
-    const ref = { book: Number(split[0]), chapter: Number(split[1]), verses: [[split[2]]] }
+
+    const book = Number(split[0])
+    const chapter = Number(split[1])
+    const rawVerses = String(split[2] ?? "").trim()
+
+    // Support multiple verses encoded as comma-separated values, e.g. "43.3.16,17,18".
+    const verseItems = rawVerses
+        .split(",")
+        .map((v) => v.trim())
+        .filter(Boolean)
+
+    const ref = { book, chapter, verses: [verseItems.length ? verseItems : [rawVerses]] }
 
     if (get(activePage) !== "edit") activePage.set("show")
     if (data.id) setDrawerTabData("scripture", data.id) // use active if no ID
