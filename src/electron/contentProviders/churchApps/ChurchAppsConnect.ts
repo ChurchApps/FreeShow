@@ -93,6 +93,11 @@ export class ChurchAppsConnect {
         })
     }
 
+    public static async getToken(scope: ChurchAppsScopes): Promise<string | null> {
+        const access = await this.connect(scope)
+        return access ? access.access_token : null
+    }
+
     private static async authenticate(scope: ChurchAppsScopes): Promise<ChurchAppsAuthData> {
         const path = "/auth/complete"
         const redirect_uri = `http://localhost:${this.CHURCHAPPS_PORT}${path}`

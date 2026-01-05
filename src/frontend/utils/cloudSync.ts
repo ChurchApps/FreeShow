@@ -3,9 +3,13 @@ import { Main } from "../../types/IPC/Main"
 import { requestMain } from "../IPC/main"
 import { activePopup, alertMessage, cloudSyncData, popupData } from "../stores"
 import { confirmCustom } from "./popup"
+import { save } from "./save"
 
-export async function setupCloudSync() {
-    if (get(cloudSyncData).id) return
+export async function setupCloudSync(auto: boolean = false) {
+    if (auto && get(cloudSyncData).id) {
+        syncWithCloud()
+        return
+    }
     if (!(await requestMain(Main.CAN_SYNC))) return
 
     const teams = await requestMain(Main.GET_TEAMS)
@@ -15,7 +19,7 @@ export async function setupCloudSync() {
         return
     }
 
-    if (!(await confirmCustom("You can sync your data with FreeShow Cloud! Do you want to enable cloud sync now?"))) return
+    if (auto && !(await confirmCustom("You can sync your data with FreeShow Cloud! Do you want to enable cloud sync now?"))) return
 
     if (teams.length === 1) {
         chooseTeam({ id: teams[0].id, churchId: teams[0].churchId, name: teams[0].name })
@@ -27,23 +31,45 @@ export async function setupCloudSync() {
     activePopup.set("cloud_sync")
 }
 
-export function chooseTeam(team: { id: string; churchId: string; name: string }) {
+export async function chooseTeam(team: { id: string; churchId: string; name: string }) {
+    const id = "churchApps"
+
     cloudSyncData.update((a) => {
-        a = { ...a, id: "churchApps", enabled: true, team }
+        a = { ...a, id, enabled: true, team }
         return a
     })
 
-    // WIP take backup
+    const existingData = await requestMain(Main.CLOUD_DATA, { id, churchId: team.churchId, teamId: team.id })
+    console.log("Existing data:", existingData)
 
-    syncWithCloud()
+    if (!existingData) {
+        syncWithCloud(true)
+        return
+    }
+
+    activePopup.set("cloud_method")
 }
 
-export async function syncWithCloud() {
+let isSyncing = false
+export async function syncWithCloud(initialize: boolean = false) {
+    if (isSyncing) return false
+
     const data = get(cloudSyncData)
-    if (!data.enabled || !data.id || !data.team) return
+    if (!data.enabled || !data.id || !data.team) return false
 
-    // save ??
+    const method = data.cloudMethod || "merge"
 
-    const status = await requestMain(Main.CLOUD_SYNC, { id: data.id as any, churchId: data.team.churchId, teamId: data.team.id })
+    if (initialize) {
+        // save & backup
+        save(false, { autosave: true, backup: true, isAutoBackup: true, backupShows: true })
+        return false
+    }
+
+    isSyncing = true
+    const status = await requestMain(Main.CLOUD_SYNC, { id: data.id as any, churchId: data.team.churchId, teamId: data.team.id, method })
+    isSyncing = false
+
     console.log(status)
+
+    return true
 }

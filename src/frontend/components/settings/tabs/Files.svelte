@@ -1,8 +1,10 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
+    import type { ContentProviderId } from "../../../../electron/contentProviders/base/types"
     import { Main } from "../../../../types/IPC/Main"
     import { requestMain, sendMain } from "../../../IPC/main"
-    import { activePopup, autosave, dataPath, driveData, driveKeys, saved, special } from "../../../stores"
+    import { activePopup, autosave, cloudSyncData, dataPath, driveData, driveKeys, providerConnections, saved, special } from "../../../stores"
+    import { setupCloudSync } from "../../../utils/cloudSync"
     import { previousAutosave, startAutosave, wait } from "../../../utils/common"
     import { syncDrive, validateKeys } from "../../../utils/drive"
     import { translateText } from "../../../utils/language"
@@ -10,6 +12,7 @@
     import { convertAutosave } from "../../../values/autosave"
     import T from "../../helpers/T.svelte"
     import { getTimeFromInterval, joinTimeBig } from "../../helpers/time"
+    import InputRow from "../../input/InputRow.svelte"
     import Title from "../../input/Title.svelte"
     import Link from "../../inputs/Link.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
@@ -160,6 +163,40 @@
 
         sendMain(Main.REFRESH_SHOWS)
     }
+
+    // CLOUD
+
+    function updateCloudData(key: string, value: any) {
+        cloudSyncData.update((a) => {
+            a[key] = value
+            return a
+        })
+    }
+
+    function contentProviderConnect(providerId: ContentProviderId) {
+        if (!$providerConnections[providerId]) {
+            sendMain(Main.PROVIDER_LOAD_SERVICES, { providerId })
+        } else {
+            requestMain(Main.PROVIDER_DISCONNECT, { providerId }, (a) => {
+                if (!a.success) return
+                providerConnections.update((c) => {
+                    c[providerId] = false
+                    return c
+                })
+            })
+        }
+    }
+
+    let resetValue = 0
+    $: if ($activePopup) resetValue++
+    function toggleSync(e) {
+        const enabled = e.detail
+        if (enabled) {
+            setupCloudSync()
+        } else {
+            updateCloudData("enabled", false)
+        }
+    }
 </script>
 
 <MaterialDropdown label="settings.autosave{autosaveInfo}" value={$autosave} defaultValue="15min" options={autosaveList} on:change={updateAutosave} />
@@ -179,17 +216,50 @@
 <!-- cloud -->
 <Title label="settings.cloud" icon="cloud" title="cloud.info" />
 
-<MaterialMediaPicker label="cloud.google_drive_api" title="cloud.select_key" value={validKeys ? translateText("cloud.update_key") : ""} filter={{ name: "Key file", extensions: ["json"] }} icon="key" on:change={receiveKeysFile} allowEmpty />
-<!-- better name: "Read only" -->
-<MaterialToggleSwitch label="cloud.disable_upload" checked={$driveData.disableUpload} defaultValue={false} on:change={(e) => toggleData(e.detail, "disableUpload")} />
+{#if !$providerConnections.churchApps}
+    <InputRow>
+        <MaterialButton on:click={() => contentProviderConnect("churchApps")} style="flex: 1;" icon="login">
+            <T id="settings.connect_to" replace={["ChurchApps"]} />
+        </MaterialButton>
+    </InputRow>
+{:else}
+    <InputRow>
+        <MaterialButton on:click={() => contentProviderConnect("churchApps")} style="flex: 1;border-bottom: 2px solid var(--connected) !important;" icon="logout">
+            <T id="settings.disconnect_from" replace={["ChurchApps"]} />
+        </MaterialButton>
+        {#if $cloudSyncData.enabled}
+            <MaterialButton icon="cloud_sync" on:click={() => save(false, { autosave: true })}>
+                <T id="cloud.sync" />
+            </MaterialButton>
+        {/if}
+    </InputRow>
+
+    <InputRow arrow={$cloudSyncData.enabled}>
+        {#key resetValue}
+            <MaterialToggleSwitch label="Enable sync" checked={$cloudSyncData.enabled} style="flex: 1;" on:change={toggleSync} />
+        {/key}
+
+        <svelte:fragment slot="menu">
+            <!-- changing team directly without toggling "Enable sync" off/on -->
+            <MaterialToggleSwitch label="cloud.read_only" checked={$cloudSyncData.cloudMethod === "read_only"} defaultValue={false} on:change={(e) => updateCloudData("cloudMethod", e.detail ? "read_only" : "merge")} />
+        </svelte:fragment>
+    </InputRow>
+{/if}
+
+<!-- TODO: media folder -->
+
+<!-- DEPRECATED: -->
 
 {#if validKeys}
-    <MaterialToggleSwitch label="cloud.enable" checked={!$driveData.disabled} defaultValue={true} on:change={(e) => toggleData(e.detail, "disabled", true)} />
-    <!-- <MaterialTextInput label="cloud.media_id" value={$driveData?.mediaId || "default"} defaultValue="default" on:change={(e) => updateValue(e.detail, "mediaId")} /> -->
-    <MaterialTextInput label="cloud.main_folder{$driveData?.mainFolderId ? `<span style="margin-left: 10px;font-size: 0.7em;opacity: 0.5;color: var(--text);">drive.google.com/drive/folders/</span>` : ''}" value={$driveData?.mainFolderId || ""} on:change={(e) => updateValue(e.detail, "mainFolderId")} />
+    <MaterialMediaPicker label="cloud.google_drive_api" title="cloud.select_key" value={validKeys ? translateText("cloud.update_key") : ""} filter={{ name: "Key file", extensions: ["json"] }} icon="key" on:change={receiveKeysFile} allowEmpty />
+    <MaterialToggleSwitch label="cloud.disable_upload" checked={$driveData.disableUpload} defaultValue={false} on:change={(e) => toggleData(e.detail, "disableUpload")} />
 
-    <!-- TODO: media folder -->
-    <!-- <div>
+    {#if validKeys}
+        <MaterialToggleSwitch label="cloud.enable" checked={!$driveData.disabled} defaultValue={true} on:change={(e) => toggleData(e.detail, "disabled", true)} />
+        <!-- <MaterialTextInput label="cloud.media_id" value={$driveData?.mediaId || "default"} defaultValue="default" on:change={(e) => updateValue(e.detail, "mediaId")} /> -->
+        <MaterialTextInput label="cloud.main_folder{$driveData?.mainFolderId ? `<span style="margin-left: 10px;font-size: 0.7em;opacity: 0.5;color: var(--text);">drive.google.com/drive/folders/</span>` : ''}" value={$driveData?.mainFolderId || ""} on:change={(e) => updateValue(e.detail, "mainFolderId")} />
+
+        <!-- <div>
         <p><T id="cloud.media_folder" /></p>
         <span style="display: flex;align-items: center;overflow: auto;">
             <p style="font-size: 0.9em;opacity: 0.7;">drive.google.com/drive/folders/</p>
@@ -197,31 +267,24 @@
         </span>
     </div> -->
 
-    <MaterialButton
-        style="width: 100%;"
-        icon="cloud_sync"
-        title="Note: Shows and projects should sync both ways. Other elements like settings will be uploaded when using this. Enable auto sync for better syncing."
-        on:click={() => {
-            save()
-            setTimeout(() => syncDrive(true), 2000)
-        }}
-    >
-        <T id="cloud.sync" />
-    </MaterialButton>
-
-    <!-- Probably never used: -->
-    <!-- <CombinedInput>
-        <Button on:click={() => driveConnect($driveKeys)} disabled={!validKeys} style="width: 100%;" center>
-            <Icon id="refresh" right />
-            <T id="cloud.reconnect" />
-        </Button>
-    </CombinedInput> -->
-{:else}
-    <span class="guide" style="display: block;margin-top: 8px;">
-        <!-- Keep in mind you have a 750 GB limit per day, and 20,000 queries per second which should be plenty. -->
-        <p><T id="cloud.tip_api" /></p>
-        <p><T id="cloud.tip_how" />&nbsp;<Link url={"https://freeshow.app/docs/drive"}><T id="cloud.tip_guide" /></Link></p>
-    </span>
+        <MaterialButton
+            style="width: 100%;"
+            icon="cloud_sync"
+            title="Note: Shows and projects should sync both ways. Other elements like settings will be uploaded when using this. Enable auto sync for better syncing."
+            on:click={() => {
+                save()
+                setTimeout(() => syncDrive(true), 2000)
+            }}
+        >
+            <T id="cloud.sync" />
+        </MaterialButton>
+    {:else}
+        <span class="guide" style="display: block;margin-top: 8px;">
+            <!-- Keep in mind you have a 750 GB limit per day, and 20,000 queries per second which should be plenty. -->
+            <p><T id="cloud.tip_api" /></p>
+            <p><T id="cloud.tip_how" />&nbsp;<Link url={"https://freeshow.app/docs/drive"}><T id="cloud.tip_guide" /></Link></p>
+        </span>
+    {/if}
 {/if}
 
 <style>

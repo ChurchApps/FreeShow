@@ -64,6 +64,8 @@ export abstract class ContentProvider<TScope extends string = string, TAuthData 
      */
     abstract apiRequest(data: BaseRequestData & { scope: TScope }): Promise<any>
 
+    getToken?(scope: TScope): Promise<string | null>
+
     /**
      * Loads services/plans from the content provider
      */

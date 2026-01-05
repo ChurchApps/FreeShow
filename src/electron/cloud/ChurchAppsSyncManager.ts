@@ -1,6 +1,6 @@
 import axios from "axios"
 import { join } from "path"
-import { type ChurchAppsProvider, ContentProviderRegistry } from "../contentProviders"
+import { ChurchAppsProvider, ContentProviderRegistry } from "../contentProviders"
 import { httpsRequest } from "../utils/requests"
 
 const HOSTNAME = "https://content.churchapps.org"
@@ -14,7 +14,8 @@ class ChurchAppsSyncManager {
         this.provider = provider
     }
 
-    hasValidConnection() {
+    async hasValidConnection() {
+        await this.provider.connect(SCOPE)
         return this.provider.isConnected(SCOPE)
     }
 
@@ -23,17 +24,59 @@ class ChurchAppsSyncManager {
         return response || []
     }
 
+    async existingData(churchId: string, teamId: string) {
+        const headers = await this.getHeaders(churchId, teamId)
+        this.isCloudNewer(headers) // update changedAt
+        return !!headers
+    }
+
+    async hasChanged(churchId: string, teamId: string) {
+        const headers = await this.getHeaders(churchId, teamId)
+        return this.isCloudNewer(headers)
+    }
+
+    private changedAt = 0
+    private isCloudNewer(headers: any): boolean {
+        if (!headers) return false
+
+        const remoteLastModified = new Date(headers["last-modified"]).getTime()
+        const localLastModified = this.changedAt
+
+        this.changedAt = remoteLastModified
+        return remoteLastModified > localLastModified
+    }
+
+    private async getHeaders(churchId: string, teamId: string, fileName: string = "current.zip"): Promise<any> {
+        const path = `/${churchId}/files/group/${teamId}/${fileName}`
+        console.log("Headers", path)
+
+        return new Promise((resolve) => {
+            httpsRequest(HOSTNAME, path, "HEAD", {}, {}, (err: Error | null, data?: any) => {
+                if (err) {
+                    console.error("Failed to get headers:", err)
+                    return resolve(null)
+                }
+                console.log("Headers data:", data)
+                return resolve(data)
+            })
+        })
+    }
+
     async getData(churchId: string, teamId: string, outputFolderPath: string, fileName: string = "current.zip"): Promise<string | null> {
         const randomNumber = Math.floor(Math.random() * 1000000)
         const path = `/${churchId}/files/group/${teamId}/${fileName}?cacheBuster=${randomNumber}`
-        console.log(path)
+        console.log("Data", path)
+
+        // auth token if needed
+        // const token = await this.provider.getToken(SCOPE)
+        // const headers = token ? { Authorization: `Bearer ${token}` } : {}
 
         return new Promise((resolve) => {
             httpsRequest(HOSTNAME, path, "GET", {}, {}, response, join(outputFolderPath, fileName))
 
             function response(err: Error | null, filePath?: string) {
                 if (err) {
-                    console.error("Failed to fetch ChurchApps content library:", err)
+                    console.error("Failed to fetch content:", err)
                     return resolve(null)
                 }
 
@@ -45,11 +88,11 @@ class ChurchAppsSyncManager {
 
     async getWriteToken(teamId: string, fileName: string): Promise<any> {
         const path = `/files/postUrl`
-        const params = { fileName, contentType: "group", contentId: teamId }
-        // return await ApiHelper.post(path, params, "ContentApi");
+        let params: { [key: string]: string } = { fileName, contentType: "group", contentId: teamId }
+        console.log("Write", params)
 
         return new Promise((resolve) => {
-            httpsRequest(HOSTNAME, path, "POST", params, {}, (err, data: Buffer) => {
+            httpsRequest(HOSTNAME, path, "POST", {}, {}, (err, data: Buffer) => {
                 if (err) {
                     console.error("Failed to get ChurchApps token:", err)
                     return resolve(null)
@@ -62,7 +105,7 @@ class ChurchAppsSyncManager {
     }
 
     async uploadData(teamId: string, filePath: string, fileName: string = "current.zip"): Promise<boolean> {
-        const presigned = await this.getWriteToken(fileName, teamId)
+        const presigned = await this.getWriteToken(teamId, fileName)
         if (!presigned?.url) return false
 
         const formData = new FormData()

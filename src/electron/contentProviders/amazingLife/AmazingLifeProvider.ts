@@ -1,15 +1,15 @@
 import type express from "express"
+import { getKey } from "../../utils/keys"
 import { ContentProvider } from "../base/ContentProvider"
+import type { ContentFile, ContentLibraryCategory } from "../base/types"
 import { AmazingLifeConnect } from "./AmazingLifeConnect"
 import { AmazingLifeContentLibrary } from "./AmazingLifeContentLibrary"
-import type { ContentFile, ContentLibraryCategory } from "../base/types"
 import { AMAZING_LIFE_API_URL } from "./types"
-import { getKey } from "../../utils/keys"
-import { getMachineId } from "../../IPC/responsesMain"
 
 // Import and re-export types
-import type { AmazingLifeScopes, AmazingLifeAuthData } from "./types"
-export type { AmazingLifeScopes, AmazingLifeAuthData } from "./types"
+import type { AmazingLifeAuthData, AmazingLifeScopes } from "./types"
+import { getMachineId } from "../../utils/helpers"
+export type { AmazingLifeAuthData, AmazingLifeScopes } from "./types"
 
 /**
  * AmazingLife (APlay) provider that acts as the sole interface to AmazingLife functionality.

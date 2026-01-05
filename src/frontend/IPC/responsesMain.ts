@@ -306,9 +306,11 @@ export const mainResponses: MainResponses = {
             return c
         })
 
-        setupCloudSync()
-
         if (data.isFirstConnection) newToast("main.finished")
+
+        setTimeout(() => {
+            setupCloudSync(!data.isFirstConnection)
+        }, 1000)
     },
     [ToMain.PROVIDER_PROJECTS]: async (data) => {
         if (!data.projects) return

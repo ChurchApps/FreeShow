@@ -1,7 +1,6 @@
 import * as Sentry from "@sentry/electron/main"
 import type { BrowserWindow, DesktopCapturerSource } from "electron"
 import { app, desktopCapturer, screen, shell, systemPreferences } from "electron"
-import { machineIdSync } from "node-machine-id"
 import os from "os"
 import path from "path"
 import { getMainWindow, isProd, mainWindow, maximizeMain, setGlobalMenu } from ".."
@@ -9,8 +8,10 @@ import type { MainResponses } from "../../types/IPC/Main"
 import { Main } from "../../types/IPC/Main"
 import type { ErrorLog, LyricSearchResult, OS } from "../../types/Main"
 import { openNowPlaying, setPlayingState, unsetPlayingAudio } from "../audio/nowPlaying"
+import { canSync, getSyncTeams, hasDataChanged, hasTeamData, syncData } from "../cloud/syncManager"
 import { ContentProviderRegistry } from "../contentProviders"
 import { deleteBackup, getBackups, restoreFiles } from "../data/backup"
+import { getLocalIPs } from "../data/bonjour"
 import { checkIfMediaDownloaded, downloadLessonsMedia, downloadMedia } from "../data/downloadMedia"
 import { importShow } from "../data/import"
 import { save } from "../data/save"
@@ -23,13 +24,12 @@ import { closeServers, startServers, updateServerData } from "../servers"
 import { apiReturnData, emitOSC, startWebSocketAndRest, stopApiListener } from "../utils/api"
 import { closeMain } from "../utils/close"
 import { bundleMediaFiles, getDataFolderPath, getDataFolderRoot, getFileInfo, getFolderContent, getFoldersContent, getMediaCodec, getMediaTracks, getPaths, getSimularPaths, loadFile, loadShows, locateMediaFile, openInSystem, readExifData, readFile, selectFiles, selectFilesDialog, selectFolder, writeFile } from "../utils/files"
+import { getMachineId } from "../utils/helpers"
 import { LyricSearch } from "../utils/LyricSearch"
 import { closeMidiInPorts, getMidiInputs, getMidiOutputs, receiveMidi, sendMidi } from "../utils/midi"
 import { deleteShows, deleteShowsNotIndexed, getAllShows, getEmptyShows, refreshAllShows } from "../utils/shows"
 import { correctSpelling } from "../utils/spellcheck"
 import checkForUpdates from "../utils/updater"
-import { getLocalIPs } from "../data/bonjour"
-import { canSync, getSyncTeams, syncData } from "../cloud/syncManager"
 
 export const mainResponses: MainResponses = {
     // DEV
@@ -159,6 +159,8 @@ export const mainResponses: MainResponses = {
     // SYNC
     [Main.CAN_SYNC]: (data) => canSync(data),
     [Main.GET_TEAMS]: (data) => getSyncTeams(data),
+    [Main.CLOUD_DATA]: (data) => hasTeamData(data),
+    [Main.CLOUD_CHANGED]: (data) => hasDataChanged(data),
     [Main.CLOUD_SYNC]: (data) => syncData(data),
     // Provider-based routing
     [Main.PROVIDER_LOAD_SERVICES]: async (data) => {
@@ -256,19 +258,6 @@ export function loadShow(msg: { id: string; name: string }) {
     const show = loadFile(filePath, msg.id)
 
     return show
-}
-
-export function getMachineId(): string {
-    try {
-        return machineIdSync()
-    } catch (err) {
-        console.warn("Could not get machine ID:", err)
-
-        // fallback to a hash of hostname + username + platform
-        const crypto = require("crypto")
-        const fallbackId = `${os.hostname()}-${os.userInfo().username}-${os.platform()}`
-        return crypto.createHash("sha256").update(fallbackId).digest("hex")
-    }
 }
 
 function getVersion() {

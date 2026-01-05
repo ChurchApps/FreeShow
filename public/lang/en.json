@@ -856,6 +856,7 @@
         "tip_guide": "Click here for a guide.",
         "enable": "Automatic sync on startup and close",
         "disable_upload": "Disable uploading data",
+        "read_only": "Read-only",
         "media_id": "Media path ID",
         "google_drive_api": "Google API service account key",
         "select_key": "Import keys file",

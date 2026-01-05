@@ -60,6 +60,10 @@ export class ChurchAppsProvider extends ContentProvider<ChurchAppsScopes, Church
         return ChurchAppsConnect.apiRequest(data)
     }
 
+    async getToken(scope: ChurchAppsScopes) {
+        return ChurchAppsConnect.getToken(scope)
+    }
+
     async loadServices(): Promise<void> {
         return ChurchAppsImport.loadServices()
     }

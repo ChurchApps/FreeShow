@@ -101,6 +101,7 @@ import type { SaveActions, SaveData, SaveList, SaveListSettings, SaveListSyncedS
 import { audioStreams, companion } from "./../stores"
 import { newToast } from "./common"
 import { syncDrive } from "./drive"
+import { syncWithCloud } from "./cloudSync"
 
 export function save(closeWhenFinished = false, customTriggers: SaveActions = {}) {
     console.info("SAVING...")
@@ -229,7 +230,7 @@ export function save(closeWhenFinished = false, customTriggers: SaveActions = {}
     setTimeout(() => sendMain(Main.SAVE, saveData))
 }
 
-export function saveComplete({ closeWhenFinished, customTriggers }: { closeWhenFinished: boolean; customTriggers?: SaveActions }) {
+export async function saveComplete({ closeWhenFinished, customTriggers }: { closeWhenFinished: boolean; customTriggers?: SaveActions }) {
     if (!closeWhenFinished) {
         if ((!customTriggers?.autosave || !get(saved)) && !customTriggers?.backup) newToast("toast.saved")
 
@@ -237,8 +238,17 @@ export function saveComplete({ closeWhenFinished, customTriggers }: { closeWhenF
         console.info("SAVED!")
     }
 
+    // cloud sync
+    if (customTriggers?.autosave || closeWhenFinished) {
+        // only sync when autosaving or closing
+        await syncWithCloud()
+        if (closeWhenFinished) closeApp()
+        return
+    }
+
     if (customTriggers?.backup || customTriggers?.reset) return
 
+    // DEPRECATED drive sync
     const mainFolderId = get(driveData)?.mainFolderId
     if (!mainFolderId || get(driveData)?.disabled === true || !Object.keys(get(driveKeys)).length) {
         if (closeWhenFinished) closeApp()

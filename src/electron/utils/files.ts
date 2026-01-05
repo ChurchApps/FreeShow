@@ -57,6 +57,7 @@ export function readFolder(filePath: string): string[] {
 }
 
 export function deleteFolder(filePath: string) {
+    if (!filePath) return
     try {
         fs.rmSync(filePath, { recursive: true })
     } catch (err) {

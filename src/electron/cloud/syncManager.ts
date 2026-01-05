@@ -7,9 +7,8 @@ import { isValidJSON, startBackup } from "../data/backup"
 import { _store, setStore } from "../data/store"
 import { compressToZip, decompressZipStream } from "../data/zip"
 import { sendMain } from "../IPC/main"
-import { getMachineId } from "../IPC/responsesMain"
-import { createFolder, deleteFile, doesPathExistAsync, getDataFolderPath, getFileStatsAsync, getTimePointString, moveFileAsync, readFileAsync, readFolderAsync, writeFileAsync } from "../utils/files"
-import { clone } from "../utils/helpers"
+import { createFolder, deleteFile, deleteFolder, doesPathExistAsync, getDataFolderPath, getFileStatsAsync, getTimePointString, moveFileAsync, readFileAsync, readFolderAsync, writeFileAsync } from "../utils/files"
+import { clone, getMachineId } from "../utils/helpers"
 import { getChurchAppsSyncManager } from "./ChurchAppsSyncManager"
 
 export type SyncProviderId = "churchApps"
@@ -17,11 +16,11 @@ const getManager = {
     churchApps: getChurchAppsSyncManager
 }
 
-export function canSync({ id }: { id: SyncProviderId } = { id: "churchApps" }): boolean {
+export async function canSync({ id }: { id: SyncProviderId } = { id: "churchApps" }): Promise<boolean> {
     const provider = getManager[id]()
     if (!provider) return false
 
-    return provider.hasValidConnection()
+    return await provider.hasValidConnection()
 }
 
 export async function getSyncTeams({ id }: { id: SyncProviderId } = { id: "churchApps" }): Promise<{ id: string; churchId: string; name: string }[]> {
@@ -31,24 +30,33 @@ export async function getSyncTeams({ id }: { id: SyncProviderId } = { id: "churc
     return provider.getTeams()
 }
 
+export async function hasTeamData({ id, churchId, teamId }: { id: SyncProviderId; churchId: string; teamId: string }) {
+    const provider = getManager[id]()
+    if (!provider) return false
+
+    return await provider.existingData(churchId, teamId)
+}
+
+export async function hasDataChanged({ id, churchId, teamId }: { id: SyncProviderId; churchId: string; teamId: string }) {
+    const provider = getManager[id]()
+    if (!provider) return false
+
+    return await provider.hasChanged(churchId, teamId)
+}
+
 const EXTRACT_LOCATION = path.join(app.getPath("temp"), "freeshow-cloud")
 const MERGE_INDIVIDUAL = ["OVERLAYS", "PROJECTS", "STAGE", "TEMPLATES"] // "EVENTS", "THEMES"
 
-export async function syncData(data: { id: SyncProviderId; churchId: string; teamId: string }) {
-    const readOnly = false // never write to cloud
-    const changedFiles: string[] = [] // WIP write to this
+export async function syncData(data: { id: SyncProviderId; churchId: string; teamId: string; method: "merge" | "read_only" }) {
+    const readOnly = data.method === "read_only" // never write to cloud
+    const changedFiles: string[] = [] // WIP write changes
 
     const provider = getManager[data.id]()
     if (!provider) return { changedFiles }
 
-    console.log(data)
+    console.log("SYNC", data)
 
-    // DEBUG
-    const backupPath = getDataFolderPath("cloud")
-    const files = await readFolderAsync(backupPath)
-    const firstBackupPath = files.length ? path.join(backupPath, files[0]) : null
-    const cloudDataPath = firstBackupPath
-    // const cloudDataPath = await provider.getData(data.churchId, data.teamId, EXTRACT_LOCATION)
+    const cloudDataPath = await provider.getData(data.churchId, data.teamId, EXTRACT_LOCATION)
     console.log("Downloaded data to path:", cloudDataPath)
     if (!cloudDataPath) {
         await uploadLocalData()
@@ -269,17 +277,15 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
         markAsCreated("BIBLES", fileName)
     })
 
-    await uploadLocalData()
+    if (readOnly) return finish()
 
+    await uploadLocalData()
     await uploadBackupData()
 
     return finish()
 
     async function uploadLocalData() {
-        if (readOnly) return
-
         const zipPath = await compressUserData()
-        return // DEBUG
         const uploadSuccess = await provider!.uploadData(data.teamId, zipPath)
         console.log("Uploaded merged data to cloud:", uploadSuccess)
     }
@@ -310,7 +316,7 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
     }
 
     function finish() {
-        // deleteFolder(EXTRACT_LOCATION) // DEBUG
+        deleteFolder(EXTRACT_LOCATION)
         return { changedFiles }
     }
 }

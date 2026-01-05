@@ -133,6 +133,8 @@ export enum Main {
     // SYNC
     CAN_SYNC = "CAN_SYNC",
     GET_TEAMS = "GET_TEAMS",
+    CLOUD_DATA = "CLOUD_DATA",
+    CLOUD_CHANGED = "CLOUD_CHANGED",
     CLOUD_SYNC = "CLOUD_SYNC",
     // Provider-based routing
     PROVIDER_LOAD_SERVICES = "PROVIDER_LOAD_SERVICES",
@@ -210,7 +212,9 @@ export interface MainSendPayloads {
     // SYNC
     [Main.CAN_SYNC]?: { id: SyncProviderId }
     [Main.GET_TEAMS]?: { id: SyncProviderId }
-    [Main.CLOUD_SYNC]: { id: SyncProviderId; churchId: string; teamId: string }
+    [Main.CLOUD_DATA]: { id: SyncProviderId; churchId: string; teamId: string }
+    [Main.CLOUD_CHANGED]: { id: SyncProviderId; churchId: string; teamId: string }
+    [Main.CLOUD_SYNC]: { id: SyncProviderId; churchId: string; teamId: string; method: "merge" | "read_only" }
     // Provider-based routing
     [Main.PROVIDER_LOAD_SERVICES]: { providerId: ContentProviderId }
     [Main.PROVIDER_DISCONNECT]: { providerId: ContentProviderId; scope?: string }
@@ -286,8 +290,10 @@ export interface MainReturnPayloads {
     [Main.READ_FOLDERS]: Promise<{ [key: string]: FileData[] }>
     [Main.READ_FILE]: { content: string }
     // SYNC
-    [Main.CAN_SYNC]: boolean
+    [Main.CAN_SYNC]: Promise<boolean>
     [Main.GET_TEAMS]: Promise<{ id: string; churchId: string; name: string }[]>
+    [Main.CLOUD_DATA]: Promise<boolean>
+    [Main.CLOUD_CHANGED]: Promise<boolean>
     [Main.CLOUD_SYNC]: Promise<{ success?: boolean; error?: string; changedFiles: any[] }>
     // Provider-based routing
     [Main.PROVIDER_DISCONNECT]: { success: boolean }
