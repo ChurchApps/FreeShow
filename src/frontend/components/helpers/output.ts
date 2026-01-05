@@ -824,6 +824,9 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
         item.style = templateItem.style || ""
         item.align = templateItem.align || ""
 
+        // use template image unless it's empty
+        if (type === "media" && templateItem.src) item.src = templateItem.src
+
         // don't alter text if item mode
         if (mode === "item") return finish()
 
