@@ -866,6 +866,8 @@ export const historyActions = ({ obj, undo = null }: any) => {
                     if (!slideTemplate?.items?.length) return
 
                     // roll items around
+                    // WIP this is not changing anything at the moment
+                    // WIP apparently when template is not clicked directly the text content is re-ordered based on the item order, but the item order itself is unchanged, but it should be
                     const newTemplate = data.previousData.template !== data.id
                     if (shiftItems && !slide.settings?.template && !newTemplate) slide.items = [...slide.items.slice(1), slide.items[0]].filter((a) => a)
 

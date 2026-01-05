@@ -256,7 +256,7 @@ export function formatText(text: string, showId = "") {
             // let textboxItemIndex = getFirstNormalTextboxIndex(oldItems)
             const textboxItemIndexes = getTextboxesIndexes(oldItems)
             if (!textboxItemIndexes.length) {
-                items = [...removeEmptyTextboxes(oldItems), ...newItems]
+                items = [...removeEmptyTextboxes(oldItems).filter((a) => (a.type || "text") === "text"), ...newItems]
             } else {
                 textboxItemIndexes
                     .sort((a, b) => b - a)

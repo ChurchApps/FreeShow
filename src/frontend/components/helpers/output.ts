@@ -187,15 +187,12 @@ export function startFolderTimer(folderPath: string, file: { type: string; path:
 
 let justLogged = ""
 function appendShowUsage(showId: string) {
-    console.log(get(special).logSongUsage)
     if (!get(special).logSongUsage) return
 
-    console.log(get(showsCache), showId)
     const show = get(showsCache)[showId]
     if (!show) return
 
     // only log once in a row
-    console.log(justLogged)
     if (show.name === justLogged) return
     justLogged = show.name || ""
 
@@ -915,7 +912,6 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
     if (addOverflowTemplateItems) {
         const remainingTextTemplateItems = sorted.text?.slice(slideTextboxes) || []
         sortedTemplateItems.text = removeTextValue(remainingTextTemplateItems)
-        console.log(slideTextboxes, remainingTextTemplateItems, sortedTemplateItems.text)
     } else {
         delete sortedTemplateItems.text
 
