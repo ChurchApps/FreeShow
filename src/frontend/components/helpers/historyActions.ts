@@ -1105,6 +1105,7 @@ function filterIndexes(data: any, subkey = "", { indexes, keys }) {
     return filteredData
 }
 
+// move text value to any template textbox with matching text content
 function rearrangeContent(content: Item[], prevState: Item[], newState: Item[]) {
     const indexMap: { [key: string]: number } = {}
 
@@ -1127,11 +1128,13 @@ function rearrangeContent(content: Item[], prevState: Item[], newState: Item[]) 
     newState.forEach((item, newIndex) => {
         const value = getItemText(item)
         if (indexMap[value] === undefined) return
+        // must be of text type
+        if (!content[newIndex]?.lines) return
 
         let count = 0
         while (usedIndices.has(indexMap[getValue(value, count)])) count++
         const contentIndex = indexMap[getValue(value, count)]
-        if (contentIndex < content.length && !usedIndices.has(contentIndex)) {
+        if (contentIndex < content.length && !usedIndices.has(contentIndex) && content[contentIndex]?.lines) {
             if (content[contentIndex]) {
                 tempContent[newIndex] = clone({ ...content[newIndex], lines: clone(content[contentIndex].lines) })
             }

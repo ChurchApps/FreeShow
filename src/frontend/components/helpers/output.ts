@@ -860,6 +860,7 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
             )
         ] as string[]
 
+        // && !text.value?.includes("{scripture")
         const hasDynamicValue = templateItem?.lines?.some((line) => line?.text?.some((text) => text.value?.includes("{")))
 
         item.lines?.forEach((line, j) => {
@@ -914,6 +915,7 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
     if (addOverflowTemplateItems) {
         const remainingTextTemplateItems = sorted.text?.slice(slideTextboxes) || []
         sortedTemplateItems.text = removeTextValue(remainingTextTemplateItems)
+        console.log(slideTextboxes, remainingTextTemplateItems, sortedTemplateItems.text)
     } else {
         delete sortedTemplateItems.text
 
@@ -1034,6 +1036,7 @@ function removeTextValue(items: Item[]) {
     items.forEach((item) => {
         if (!item.lines) return
 
+        // && !text.value?.includes("{scripture")
         const hasDynamicValue = item.lines.some((line) => line.text?.some((text) => text.value?.includes("{")))
 
         item.lines = item.lines.map((line) => {
