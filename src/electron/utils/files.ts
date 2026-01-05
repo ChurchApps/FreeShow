@@ -317,7 +317,19 @@ export function getFolderContent(data: { path: string; disableThumbnails?: boole
     for (const name of fileList) {
         const filePath = path.join(folderPath, name)
         const stats = getFileStats(filePath)
-        if (stats) files.push({ ...stats, name, thumbnailPath: !data.disableThumbnails && isMedia() ? createThumbnail(filePath) : "" })
+        if (stats) {
+            let thumbnailPath = ""
+            if (!data.disableThumbnails && isMedia()) {
+                try {
+                    thumbnailPath = createThumbnail(filePath)
+                } catch (err) {
+                    console.error("Thumbnail creation failed:", err)
+                    thumbnailPath = ""
+                }
+            }
+
+            files.push({ ...stats, name, thumbnailPath })
+        }
 
         function isMedia() {
             if (stats!.folder) return false
