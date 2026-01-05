@@ -7,7 +7,7 @@
 </script>
 
 {#if item.customSvg}
-    <div class="customIcon" class:customColor={item?.style.includes("color:") && !item?.style.includes("color:#FFFFFF;")}>
+    <div class="customIcon" class:customColor={item?.style.includes("color:") && !item?.style.includes("color:;")}>
         {@html item.customSvg}
     </div>
 {:else}
