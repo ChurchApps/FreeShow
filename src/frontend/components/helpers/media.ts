@@ -3,7 +3,7 @@
 
 import { get } from "svelte/store"
 import { Main } from "../../../types/IPC/Main"
-import type { MediaStyle, Subtitle } from "../../../types/Main"
+import type { FileFolder, MediaStyle, Subtitle } from "../../../types/Main"
 import type { Cropping, Styles } from "../../../types/Settings"
 import type { ShowType } from "../../../types/Show"
 import { requestMain, sendMain } from "../../IPC/main"
@@ -670,4 +670,23 @@ function compressImage(dataUrl: string, maxWidth = 1920, maxHeight = 1080, quali
 
         img.src = dataUrl
     })
+}
+
+export function countFolderMediaItems(folderPath: string, folderContents: FileFolder[], includeFolders = true, audio = false) {
+    const folderFiles = (folderContents.find((a) => a.path === folderPath) as any)?.files || []
+    let count = 0
+
+    folderFiles.forEach((filePath: string) => {
+        if (filePath === folderPath) return
+
+        const file = folderContents.find((a) => a.path === filePath)
+        if (file?.isFolder) {
+            if (includeFolders && file.files?.length) count++
+            return
+        }
+
+        if (audio ? audioExtensions.includes(getExtension(filePath)) : isMediaExtension(getExtension(filePath))) count++
+    })
+
+    return count
 }

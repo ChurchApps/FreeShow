@@ -1,35 +1,13 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte"
-    import { Main } from "../../../../types/IPC/Main"
-    import type { FileData } from "../../../../types/Main"
-    import { requestMain } from "../../../IPC/main"
-    import { special } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
-    import { getThumbnailPath, isMediaExtension, mediaSize } from "../../helpers/media"
     import Card from "../Card.svelte"
 
     export let name: string
     export let path: string
     export let mode: "grid" | "list"
-    export let folderPreview = false
-
-    let files: FileData[] = []
-    let fileCount = 0
-
-    // WIP this creates one listener per individual folder...
-    $: if (folderPreview && mode === "grid" && path && !$special.optimizedMode) {
-        requestMain(Main.READ_FOLDER, { path, disableThumbnails: true }, (data) => {
-            if (data.path !== path) return
-
-            fileCount = 0
-            let filtered = data.files.filter((file) => isMediaExtension(file.extension))
-            fileCount = filtered.length
-            files = filtered.slice(0, 4).map((a) => {
-                a.path = getThumbnailPath(a.path, mediaSize.drawerSize)
-                return a
-            })
-        })
-    }
+    export let previewPaths: string[] = []
+    export let folderFilesCount: number = 0
 
     const dispatch = createEventDispatcher()
     function openFolder() {
@@ -39,14 +17,14 @@
     const removeBrokenImg = (e: any) => (e.target.style.display = "none")
 </script>
 
-<Card resolution={{ width: 16, height: 9 }} on:click={openFolder} width={100} title={name} label={name} count={fileCount} icon={mode === "grid" ? "folder" : null} color={mode === "grid" ? "var(--secondary);" : ""} {mode}>
+<Card resolution={{ width: 16, height: 9 }} on:click={openFolder} width={100} title={name} label={name} count={folderFilesCount} icon={mode === "grid" ? "folder" : null} color={mode === "grid" ? "var(--secondary);" : ""} {mode}>
     <div class="flex" style="width: 100%;height: 100%;">
         <div class="grid">
             {#key path}
-                {#if folderPreview && mode === "grid" && fileCount}
+                {#if mode === "grid" && previewPaths.length}
                     <div class="images">
-                        {#each files as file}
-                            <img loading="lazy" src={file.path} alt={file.name} on:error={removeBrokenImg} />
+                        {#each previewPaths.slice(0, 4) as path}
+                            <img loading="lazy" src={path} on:error={removeBrokenImg} />
                         {/each}
                     </div>
                 {/if}

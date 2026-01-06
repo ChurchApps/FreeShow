@@ -7,10 +7,10 @@ import { clearAudio } from "../audio/audioFading"
 import { AudioPlayer } from "../audio/audioPlayer"
 import { menuClick } from "../components/context/menuClick"
 import { addItem } from "../components/edit/scripts/itemHelpers"
-import { sortByName } from "../components/helpers/array"
+import { keysToID, sortByName } from "../components/helpers/array"
 import { copy, cut, deleteAction, duplicate, paste, selectAll } from "../components/helpers/clipboard"
 import { history, redo, undo } from "../components/helpers/history"
-import { getMediaStyle, getMediaType } from "../components/helpers/media"
+import { getExtension, getMediaStyle, getMediaType } from "../components/helpers/media"
 import { getAllNormalOutputs, getFirstActiveOutput, refreshOut, setOutput, startFolderTimer, toggleOutputs } from "../components/helpers/output"
 import { nextSlideIndividual, previousSlideIndividual } from "../components/helpers/showActions"
 import { stopSlideRecording, updateSlideRecording } from "../components/helpers/slideRecording"
@@ -469,13 +469,14 @@ export function togglePlayingMedia(e: Event | null = null, back = false, api = f
     }
 }
 
+// FolderShow.svelte shortcuts
 export async function playFolder(path: string, back = false) {
     const currentOutput = getFirstActiveOutput()
     const currentlyPlaying = currentOutput?.out?.background?.path
 
     const mediaExtensions = [...videoExtensions, ...imageExtensions, ...audioExtensions]
-    const files = await requestMain(Main.READ_FOLDER, { path })
-    const folderFiles = sortByName(files.files.filter((a) => mediaExtensions.includes(a.extension)).map((a) => ({ path: a.path, name: a.name, type: getMediaType(a.extension), thumbnail: a.thumbnailPath })))
+    const files = keysToID(await requestMain(Main.READ_FOLDER, { path, generateThumbnails: true }))
+    const folderFiles = sortByName(files.filter((a) => mediaExtensions.includes(getExtension(a.name))).map((a) => ({ path: a.path, name: a.name, type: getMediaType(getExtension(a.name)), thumbnail: (a as any).thumbnailPath })))
     if (!folderFiles.length) return
 
     const mediaFiles = folderFiles.filter((a) => a.type !== "audio")

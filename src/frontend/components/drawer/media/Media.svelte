@@ -1,15 +1,14 @@
 <script lang="ts">
-    import { onDestroy } from "svelte"
     import type { ContentProviderId } from "../../../../electron/contentProviders/base/types"
     import { Main } from "../../../../types/IPC/Main"
-    import type { ClickEvent } from "../../../../types/Main"
-    import { destroyMain, receiveMain, requestMain, sendMain } from "../../../IPC/main"
-    import { activeEdit, activeFocus, activeMediaTagFilter, activePopup, activeShow, drawerTabsData, focusMode, labelsDisabled, media, mediaFolders, mediaOptions, outLocked, outputs, popupData, providerConnections, selectAllMedia, selected, sorted } from "../../../stores"
+    import type { ClickEvent, FileFolder } from "../../../../types/Main"
+    import { requestMain } from "../../../IPC/main"
+    import { activeEdit, activeFocus, activeMediaTagFilter, activePopup, activeShow, drawerTabsData, focusMode, labelsDisabled, media, mediaFolders, mediaOptions, outLocked, outputs, popupData, providerConnections, selectAllMedia, selected, sorted, special } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
-    import { clone, sortByName, sortFilenames } from "../../helpers/array"
+    import { clone, keysToID, sortFilenames } from "../../helpers/array"
     import { splitPath } from "../../helpers/get"
-    import { getExtension, getFileName, getMediaType, isMediaExtension, removeExtension } from "../../helpers/media"
+    import { countFolderMediaItems, getExtension, getFileName, getMediaType, isMediaExtension, removeExtension } from "../../helpers/media"
     import { getFirstActiveOutput, setOutput } from "../../helpers/output"
     import FloatingInputs from "../../input/FloatingInputs.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
@@ -34,8 +33,8 @@
     export let searchValue = ""
     export let streams: MediaStream[] = []
 
-    type File = { path: string; favourite: boolean; name: string; extension: string; audio: boolean; folder?: boolean; stat?: any }
-    let files: File[] = []
+    // type File = { path: string; favourite: boolean; name: string; extension: string; audio: boolean; folder?: boolean; stat?: any }
+    // let files: File[] = []
 
     let specialTabs = ["online", "screens", "cameras"]
     $: isProviderSection = contentProviders.some((p) => p.providerId === active)
@@ -46,15 +45,20 @@
     $: folderName = active === "all" ? "category.all" : active === "favourites" ? "category.favourites" : rootPath === path ? (active !== null ? $mediaFolders[active]?.name || "" : "") : splitPath(path).name
 
     async function loadFilesAsync() {
-        fullFilteredFiles = []
         if ((onlineTab !== "pixabay" && onlineTab !== "unsplash") || activeView === "folder") return
 
+        let onlineFiles: any[] = []
         if (onlineTab === "pixabay") {
-            fullFilteredFiles = await loadFromPixabay(searchValue || "landscape", activeView === "video")
+            onlineFiles = await loadFromPixabay(searchValue || "landscape", activeView === "video")
         } else if (onlineTab === "unsplash") {
-            fullFilteredFiles = await loadFromUnsplash(searchValue || "landscape")
+            onlineFiles = await loadFromUnsplash(searchValue || "landscape")
         }
-        loadAllFiles(fullFilteredFiles)
+
+        hightlightActive()
+
+        filteredFiles = clone(onlineFiles)
+        if (searchValue.length < 2) searchedFiles = clone(filteredFiles)
+        else filterSearch()
     }
 
     function setSubSubTab(id: string) {
@@ -91,10 +95,10 @@
     $: if (active === "online" && onlineTab === "pixabay" && (searchValue !== null || activeView)) loadFilesAsync()
     $: if (active === "online" && onlineTab === "unsplash" && (searchValue !== null || activeView)) loadFilesAsync()
 
-    // get list of files & folders
     let prevActive: null | string = null
     let prevTab = ""
-    $: {
+    $: if (active || path) updateContent()
+    async function updateContent() {
         if (prevActive === "online" && active !== "online") activeView = "all"
         if (active !== "online") prevTab = ""
 
@@ -105,69 +109,102 @@
             prevActive = active
         } else if (active === "favourites") {
             prevActive = active
-            files = sortByName(
-                Object.entries($media)
-                    .map(([path, a]) => {
-                        let p = splitPath(path)
-                        let name = p.name
-                        return { path, favourite: a.favourite === true, name, extension: p.extension, audio: a.audio === true }
-                    })
-                    .filter((a) => a.favourite === true && a.audio !== true)
-            )
 
-            filterFiles()
+            allRelevantFiles = keysToID($media)
+                .filter((a) => a.favourite === true && a.audio !== true)
+                .map((a) => {
+                    return { isFolder: false, path: a.id, name: getFileName(a.id), stats: {} as any }
+                })
+
+            openFolder("favourites")
         } else if (active === "all") {
-            if (active !== prevActive) {
-                prevActive = active
-                files = []
-                fullFilteredFiles = []
+            if (active === prevActive) return
+            prevActive = active
 
-                for (const data of Object.values($mediaFolders)) {
-                    sendMain(Main.READ_FOLDER, { path: data.path!, disableThumbnails: $mediaOptions.mode === "list" })
-                }
-            }
+            requestFiles(Object.values($mediaFolders).map((a) => a.path!))
         } else if (path?.length) {
-            if (path !== prevActive) {
-                prevActive = path
-                files = []
-                fullFilteredFiles = []
-                sendMain(Main.READ_FOLDER, { path, listFilesInFolders: true, disableThumbnails: $mediaOptions.mode === "list" })
-            }
+            if (path === prevActive) return
+            prevActive = path
+
+            requestFiles(path, 0, true)
         } else {
             // screens && cameras
             prevActive = active
         }
     }
 
-    let filesInFolders: File[] = []
-    let folderFiles: { [key: string]: string[] } = {}
+    let foldersList: FileFolder[] = []
+    let filesList: FileFolder[] = []
+    let allRelevantFiles: FileFolder[] = []
 
-    let listenerId = receiveMain(Main.READ_FOLDER, (data) => {
-        filesInFolders = sortFilenames(data.filesInFolders || [])
+    let requesting = 0
+    let currentDepth = 0
+    async function requestFiles(path: string | string[], depth: number = 0, captureFolderContent: boolean = false) {
+        if (!path) return
 
-        if (active !== "all" && data.path !== path) return
+        currentDepth = depth
 
-        files.push(...(data.files.filter((file) => file.folder || isMediaExtension(file.extension)) as any))
-        files = sortFilenames(files).sort((a, b) => (a.folder === b.folder ? 0 : a.folder ? -1 : 1))
+        if ($special.optimizedMode || $mediaOptions.mode !== "grid") {
+            // depth = 0
+            captureFolderContent = false
+        }
 
-        files = files.map((a) => ({ ...a, path: a.folder ? a.path : a.path }))
+        // WIP generateThumbnails - might be better to generate dynamically, instead of full folder at once
+        // WIP only list folders with any recursive media content?
 
-        // set valid files in folder
-        folderFiles = {}
-        Object.keys(data.folderFiles).forEach((path) => {
-            folderFiles[path] = data.folderFiles[path].filter((file) => file.folder || isMediaExtension(file.extension))
+        requesting++
+        let currentRequest = requesting
+        const data = await requestMain(Main.READ_FOLDER, { path, depth, generateThumbnails: $mediaOptions.mode === "grid", captureFolderContent })
+        if (requesting !== currentRequest) return
+
+        // WIP check if there's any audio files that the user might want to find
+
+        allRelevantFiles = Object.values(data).filter((a) => {
+            // remove folders with no content
+            if (a.isFolder) return a.files.length > 0
+            // only image/video files
+            return isMediaExtension(getExtension(a.name))
         })
 
+        openFolder(active === "all" ? "all" : (path as string))
+    }
+
+    function openFolder(path: string) {
+        if (path === "all" || path === "favourites") {
+            foldersList = []
+            filesList = allRelevantFiles.filter((a) => !a.isFolder)
+
+            filterFiles()
+            return
+        }
+
+        if (searchValue.length > 1) {
+            foldersList = allRelevantFiles.filter((a) => a.isFolder)
+            filesList = allRelevantFiles.filter((a) => !a.isFolder)
+
+            filterFiles()
+            return
+        }
+
+        const folder = allRelevantFiles.find((a) => a.isFolder && a.path === path)
+        if (!folder) return
+
+        foldersList = allRelevantFiles.filter((a) => a.isFolder && (folder as any).files.includes(a.path))
+        filesList = allRelevantFiles.filter((a) => !a.isFolder && (folder as any).files.includes(a.path))
+
         filterFiles()
-    })
-    onDestroy(() => destroyMain(listenerId))
+    }
 
     let scrollElem: HTMLElement | undefined
 
     // arrow selector
     let activeFile: null | number = null
-    let allFiles: string[] = []
-    let content = allFiles.length
+    $: mediaFilesOnly = searchedFiles.filter((a) => !a.isFolder)
+    function hightlightActive() {
+        const activeShowPath = $activeShow?.type === "image" || $activeShow?.type === "video" ? $activeShow?.id : ""
+        const index = mediaFilesOnly.findIndex((a) => a.path === activeShowPath)
+        activeFile = index < 0 ? null : index
+    }
 
     $: showUpdate($activeShow)
     function showUpdate(a) {
@@ -176,75 +213,87 @@
 
     // filter files
     let activeView = "all" // keyof typeof nextActiveView
-    let filteredFiles: File[] = []
-    $: if (activeView || $activeMediaTagFilter) filterFiles()
+    $: if (activeView || $activeMediaTagFilter || $sorted) filterFiles()
     $: if (searchValue !== undefined) filterSearch()
 
+    let filteredFiles: FileFolder[] = []
     function filterFiles() {
         if (active === "online" || active === "screens" || active === "cameras" || isProviderSection) return
 
-        // filter files
-        if (activeView === "all") filteredFiles = files.filter((a) => active !== "all" || !a.folder)
-        else filteredFiles = files.filter((a) => (activeView === "folder" && active !== "all" && a.folder) || (!a.folder && activeView === getMediaType(a.extension)))
+        let localFilteredFiles: FileFolder[] = []
 
         // filter by tag
         if ($activeMediaTagFilter.length) {
-            filteredFiles = filteredFiles.filter((a) => !a.folder && $media[a.path]?.tags?.length && !$activeMediaTagFilter.find((tagId) => !$media[a.path].tags!.includes(tagId)))
+            localFilteredFiles = clone(filesList).filter((a) => $media[a.path]?.tags?.length && !$activeMediaTagFilter.find((tagId) => !$media[a.path].tags!.includes(tagId)))
         }
-
-        // remove folders with no content
-        filteredFiles = filteredFiles.filter((a) => !a.folder || !folderFiles[a.path] || folderFiles[a.path].length > 0)
+        // filter by type
+        else if (activeView === "all") localFilteredFiles = clone(filesList)
+        else if (activeView === "folder") localFilteredFiles = clone(foldersList)
+        else localFilteredFiles = clone(filesList).filter((a) => activeView === getMediaType(getExtension(a.name)))
 
         // reset arrow selector
-        loadAllFiles(filteredFiles)
+        hightlightActive()
 
-        filterSearch()
+        // sort
+        let sortType = $sorted.media?.type || "name"
+        if (sortType === "name") localFilteredFiles = sortFilenames(localFilteredFiles)
+        else if (sortType === "name_des") localFilteredFiles = localFilteredFiles.reverse()
+        else if (sortType === "created") localFilteredFiles = localFilteredFiles.sort((a, b) => (a.isFolder || b.isFolder ? 1 : b.stats.birthtimeMs - a.stats.birthtimeMs))
+        else if (sortType === "modified") localFilteredFiles = localFilteredFiles.sort((a, b) => (a.isFolder || b.isFolder ? 1 : b.stats.mtimeMs - a.stats.mtimeMs))
+
+        // append folders
+        if (activeView === "all") {
+            localFilteredFiles = [...sortFilenames(foldersList), ...localFilteredFiles]
+        }
+
+        filteredFiles = clone(localFilteredFiles)
+        if (searchValue.length < 2) searchedFiles = clone(filteredFiles)
+        else filterSearch()
 
         // scroll to top
         scrollElem?.scrollTo(0, 0)
     }
 
-    function loadAllFiles(f: File[]) {
-        allFiles = [...f.filter((a) => !a.folder).map((a) => a.path)]
-        if ($activeShow !== null && allFiles.includes($activeShow.id)) activeFile = allFiles.findIndex((a) => a === $activeShow!.id)
-        else activeFile = null
-        content = allFiles.length
-    }
-
     // search
     const filter = (s: string) => s.toLowerCase().replace(/[.,\/#!?$%\^&\*;:{}=\-_`~() ]/g, "")
-    let fullFilteredFiles: File[] = []
-    function filterSearch() {
-        fullFilteredFiles = clone(filteredFiles)
-        if (searchValue.length > 1) fullFilteredFiles = [...fullFilteredFiles, ...filesInFolders].filter((a) => filter(a.name).includes(filter(searchValue)))
+    let searchFilterActive = false
+    let searchedFiles: FileFolder[] = []
+    async function filterSearch() {
+        if (searchFilterActive) return
+        searchFilterActive = true
+
+        if (searchValue.length === 1) {
+            searchFilterActive = false
+            return
+        }
+        if (searchValue.length < 2) {
+            if (active !== "all" && active !== "favourites") requestFiles(path, 0, true)
+            else searchedFiles = clone(filteredFiles)
+            searchFilterActive = false
+            return
+        }
+
+        if (active !== "all" && active !== "favourites" && currentDepth < 5) {
+            await requestFiles(path, 5)
+        }
+
+        searchedFiles = clone(filteredFiles).filter((a) => filter(a.name).includes(filter(searchValue)))
 
         // scroll to top
         document.querySelector("svelte-virtual-list-viewport")?.scrollTo(0, 0)
+
+        searchFilterActive = false
     }
 
-    let sortedFiles: File[] = []
-    $: if (fullFilteredFiles && $sorted) sortFiles()
-    function sortFiles() {
-        let type = $sorted.media?.type || "name"
-
-        let files = clone(fullFilteredFiles)
-
-        if (searchValue.length > 1 || type === "name") files = files
-        else if (type === "name_des") files = files.reverse()
-        else if (type === "created") files = files.sort((a, b) => b.stat?.birthtimeMs - a.stat?.birthtimeMs)
-        else if (type === "modified") files = files.sort((a, b) => b.stat?.mtimeMs - a.stat?.mtimeMs)
-
-        sortedFiles = files.sort((a, b) => (a.folder === b.folder ? 0 : a.folder ? -1 : 1))
-    }
-
+    $: fileCount = mediaFilesOnly.length
     const shortcuts = {
         ArrowRight: () => {
             if ($activeEdit.items.length) return
-            if (activeFile === null || activeFile < content - 1) activeFile = activeFile === null ? 0 : activeFile + 1
+            if (activeFile === null || activeFile < fileCount - 1) activeFile = activeFile === null ? 0 : activeFile + 1
         },
         ArrowLeft: () => {
             if ($activeEdit.items.length) return
-            if (activeFile === null || activeFile > 0) activeFile = activeFile === null ? content - 1 : activeFile - 1
+            if (activeFile === null || activeFile > 0) activeFile = activeFile === null ? fileCount - 1 : activeFile - 1
         },
         Backspace: () => {
             if (rootPath === path) return
@@ -256,7 +305,7 @@
     function selectMedia() {
         if (activeFile === null) return
 
-        let path = allFiles[activeFile] || ""
+        let path = mediaFilesOnly[activeFile]?.path || ""
         if (!path) return
 
         activeEdit.set({ id: path, type: "media", items: [] })
@@ -269,18 +318,18 @@
 
     function keydown(e: KeyboardEvent) {
         if (e.key === "Enter" && searchValue.length > 1 && e.target?.closest(".search")) {
-            if (fullFilteredFiles.length) {
-                let file = fullFilteredFiles[0]
+            if (fileCount) {
+                let file = mediaFilesOnly[0]
 
-                if ($focusMode) activeFocus.set({ id: file.path, type: getMediaType(file.extension) })
-                else activeShow.set({ id: file.path, name: file.name, type: getMediaType(file.extension) })
+                if ($focusMode) activeFocus.set({ id: file.path, type: getMediaType(getExtension(file.name)) })
+                else activeShow.set({ id: file.path, name: file.name, type: getMediaType(getExtension(file.name)) })
 
-                activeFile = filteredFiles.findIndex((a) => a.path === file.path)
+                activeFile = searchedFiles.findIndex((a) => a.path === file.path)
                 if (activeFile < 0) activeFile = null
             }
         }
 
-        if (e.target?.closest("input") || e.target?.closest(".edit") || !allFiles.length) return
+        if (e.target?.closest("input") || e.target?.closest(".edit") || !fileCount) return
 
         if ((e.ctrlKey || e.metaKey) && shortcuts[e.key]) {
             // e.preventDefault()
@@ -325,10 +374,10 @@
     // select all
     $: if ($selectAllMedia) selectAll()
     function selectAll() {
-        let data = sortedFiles
-            .filter((a) => a.extension)
+        let data = searchedFiles
+            .filter((a) => !a.isFolder)
             .map((file) => {
-                let type = getMediaType(file.extension)
+                let type = getMediaType(getExtension(file.name))
                 return { name: file.name, path: file.path, type }
             })
 
@@ -423,23 +472,33 @@
                     }}
                 />
             </div>
-        {:else if sortedFiles.length}
+        {:else if searchedFiles.length}
             <div class="context #media" style="display: contents;">
-                {#key sortedFiles}
+                {#key searchedFiles}
                     {#if $mediaOptions.mode === "grid"}
-                        <MediaGrid items={sortedFiles} columns={$mediaOptions.columns} let:item>
-                            {#if item.folder}
-                                <Folder name={item.name} path={item.path} mode={$mediaOptions.mode} folderPreview={sortedFiles.length < 20} on:open={(e) => (path = e.detail)} />
+                        <MediaGrid items={searchedFiles} columns={$mediaOptions.columns} let:item>
+                            {#if item.isFolder}
+                                <Folder
+                                    name={item.name}
+                                    path={item.path}
+                                    mode={$mediaOptions.mode}
+                                    previewPaths={item.files
+                                        .map((path) => allRelevantFiles.find((a) => a.path === path)?.thumbnailPath)
+                                        .filter(Boolean)
+                                        .slice(0, 4)}
+                                    folderFilesCount={countFolderMediaItems(item.path, allRelevantFiles)}
+                                    on:open={(e) => (path = e.detail)}
+                                />
                             {:else}
-                                <Media credits={item.credits || {}} name={item.name || ""} path={item.path} thumbnailPath={item.previewUrl || ($mediaOptions.columns < 3 ? "" : item.thumbnailPath)} type={getMediaType(item.extension)} shiftRange={sortedFiles.map((a) => ({ ...a, type: getMediaType(a.extension), name: removeExtension(a.name) }))} {active} />
+                                <Media credits={item.credits || {}} name={item.name || ""} path={item.path} thumbnailPath={item.previewUrl || ($mediaOptions.columns < 3 ? "" : item.thumbnailPath)} type={getMediaType(item.extension || getExtension(item.name))} shiftRange={mediaFilesOnly.map((a) => ({ ...a, type: getMediaType(getExtension(a.name)), name: removeExtension(a.name) }))} {active} />
                             {/if}
                         </MediaGrid>
                     {:else}
-                        <VirtualList items={sortedFiles} let:item={file}>
-                            {#if file.folder}
+                        <VirtualList items={searchedFiles} let:item={file}>
+                            {#if file.isFolder}
                                 <Folder name={file.name} path={file.path} mode={$mediaOptions.mode} on:open={(e) => (path = e.detail)} />
                             {:else}
-                                <Media credits={file.credits || {}} thumbnail={$mediaOptions.mode !== "list"} name={file.name || ""} path={file.path} type={getMediaType(file.extension)} shiftRange={sortedFiles.map((a) => ({ ...a, type: getMediaType(a.extension), name: removeExtension(a.name) }))} {active} />
+                                <Media credits={file.credits || {}} thumbnail={$mediaOptions.mode !== "list"} name={file.name || ""} path={file.path} type={getMediaType(file.extension || getExtension(file.name))} shiftRange={mediaFilesOnly.map((a) => ({ ...a, type: getMediaType(getExtension(a.name)), name: removeExtension(a.name) }))} {active} />
                             {/if}
                         </VirtualList>
                     {/if}
@@ -519,8 +578,8 @@
                 <span style="opacity: 0.3;font-size: 0.9em;max-width: 500px;overflow: hidden;direction: rtl;">{pathString ? "/" : ""}{pathString}</span>
                 {folderName}
 
-                {#if content && rootPath !== path}
-                    <span style="opacity: 0.5;font-size: 0.9em;margin-inline-start: 10px;">{content}</span>
+                {#if fileCount && rootPath !== path}
+                    <span style="opacity: 0.5;font-size: 0.9em;margin-inline-start: 10px;">{fileCount}</span>
                 {/if}
             </p>
         </FloatingInputs>
