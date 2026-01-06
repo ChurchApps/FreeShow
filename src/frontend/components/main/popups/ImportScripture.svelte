@@ -104,7 +104,7 @@
         <T id="error.bible_api" />
     {:else}
         <div class="info">
-            <T id="scripture.bibles" />
+            <T id="scripture.bibles" /> & YouVersion
         </div>
 
         <MaterialTextInput label="main.search" id="scriptureApiSearchInput" value="" on:input={search} autofocus />
