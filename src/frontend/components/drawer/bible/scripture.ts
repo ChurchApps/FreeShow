@@ -147,7 +147,7 @@ export async function getActiveScripturesContent() {
                 // add the three prior and next verse numbers to selected for the stage display next slide
                 const selected = clone(selectedVerses)
                 const includeCount = 3
-                selected[0].unshift(...Array.from({ length: includeCount }, (_, i) => getVerseId(selected[0][0]) - (i + 1)).reverse())
+                selected[0].unshift(...Array.from({ length: includeCount }, (_, i) => Math.max(1, getVerseId(selected[0][0]) - (i + 1))).reverse())
                 selected[0].push(...Array.from({ length: includeCount }, (_, i) => getVerseId(selected[0][selected[0].length - 1]) + (i + 1)))
                 // remove selected not in range of min to max verse number
                 const minVerseNumber = 1
@@ -312,7 +312,7 @@ export function getMergedAttribution(biblesContent: BibleContent[], customAttrib
 }
 
 function getVerseId(verseRef: number | string) {
-    if (!verseRef) return 1
+    if (verseRef === null || verseRef === undefined || verseRef === "") return 1
     return Number(verseRef.toString().split("_")[0])
 }
 
