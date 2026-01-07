@@ -19,7 +19,7 @@ import { importFromClipboard } from "../converters/importHelpers"
 import { addSection } from "../converters/project"
 import { requestMain, sendMain } from "../IPC/main"
 import { changeSlidesView } from "../show/slides"
-import { activeDrawerTab, activeEdit, activeFocus, activePage, activePopup, activeSlideRecording, activeStage, contextActive, drawer, focusedArea, focusMode, guideActive, media, os, outLocked, outputs, outputSlideCache, quickSearchActive, refreshEditSlide, selected, showsCache, special, spellcheck, styles, topContextActive, videosData, volume } from "../stores"
+import { activeDrawerTab, activeEdit, activeFocus, activePage, activePopup, activeSlideRecording, activeStage, contextActive, drawer, focusedArea, focusMode, guideActive, media, os, outLocked, outputs, outputSlideCache, quickSearchActive, refreshEditSlide, selected, showsCache, special, spellcheck, styles, textEditActive, topContextActive, videosData, volume } from "../stores"
 import { audioExtensions, imageExtensions, videoExtensions } from "../values/extensions"
 import { drawerTabs } from "../values/tabs"
 import { activeShow } from "./../stores"
@@ -55,6 +55,18 @@ const ctrlKeys = {
 const shiftCtrlKeys = {
     d: () => (get(activePage) === "show" && get(activeShow) && (get(activeShow)?.type || "show") === "show" ? activePopup.set("next_timer") : ""),
     // t: () => activePopup.set("translate"),
+    t: () => {
+        // toggle text edit
+        if (get(activeShow)?.type !== "show") return
+        if (get(activePage) === "edit" && get(textEditActive)) {
+            activePage.set("show")
+            textEditActive.set(false)
+            return
+        }
+        if (!get(activeEdit)?.showId) activeEdit.set({ slide: 0, items: [], showId: get(activeShow)?.id })
+        textEditActive.set(true)
+        activePage.set("edit")
+    },
     f: () => menuClick("focus_mode"),
     n: () => activePopup.set("show"),
     v: () => changeSlidesView()
@@ -155,9 +167,9 @@ export function keydown(e: KeyboardEvent) {
             return
         }
 
-        if (e.shiftKey && shiftCtrlKeys[key]) {
+        if (e.shiftKey && shiftCtrlKeys[key.toLowerCase()]) {
             e.preventDefault()
-            shiftCtrlKeys[key](e)
+            shiftCtrlKeys[key.toLowerCase()](e)
             return
         }
 
