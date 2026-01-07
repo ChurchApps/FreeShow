@@ -77,13 +77,20 @@ export async function startBackup({ customTriggers, customOutputLocation }: { cu
         const allShows: Shows = {}
         const showsPath = getDataFolderPath("shows")
 
-        await Promise.all(Object.entries(shows).map(checkShow))
-        async function checkShow([id, show]: [string, TrimmedShow]) {
-            const fileName = (show.name || id) + ".show"
-            const localShowPath = path.join(showsPath, fileName)
+        // avoid opening too many files at once (EMFILE error)
+        const entries = Object.entries(shows)
+        const BATCH_SIZE = 20
+        for (let i = 0; i < entries.length; i += BATCH_SIZE) {
+            const batch = entries.slice(i, i + BATCH_SIZE)
+            await Promise.all(
+                batch.map(async ([id, show]: [string, TrimmedShow]) => {
+                    const fileName = (show.name || id) + ".show"
+                    const localShowPath = path.join(showsPath, fileName)
 
-            const localContent = await readFileAsync(localShowPath)
-            if (localContent && isValidJSON(localContent)) allShows[id] = JSON.parse(localContent)[1]
+                    const localContent = await readFileAsync(localShowPath)
+                    if (localContent && isValidJSON(localContent)) allShows[id] = JSON.parse(localContent)[1]
+                })
+            )
         }
 
         // ensure all shows are added correctly

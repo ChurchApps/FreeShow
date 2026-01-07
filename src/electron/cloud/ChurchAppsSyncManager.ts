@@ -1,9 +1,11 @@
 import axios from "axios"
 import { join } from "path"
+import { ToMain } from "../../types/IPC/ToMain"
 import { ChurchAppsProvider, ContentProviderRegistry } from "../contentProviders"
+import { sendToMain } from "../IPC/main"
 import { httpsRequest } from "../utils/requests"
 
-const HOSTNAME = "https://content.churchapps.org"
+const HOSTNAME = "https://api.churchapps.org"
 const SCOPE = "plans"
 const ZIP_TYPE = "application/zip"
 
@@ -47,12 +49,18 @@ class ChurchAppsSyncManager {
     }
 
     private async getHeaders(churchId: string, teamId: string, fileName: string = "current.zip"): Promise<any> {
-        const path = `/${churchId}/files/group/${teamId}/${fileName}`
+        const path = `/content/${churchId}/files/group/${teamId}/${fileName}`
         console.log("Headers", path)
 
+        const token = await this.provider.getToken(SCOPE)
+        const headers = token ? { Authorization: `Bearer ${token}` } : {}
+
         return new Promise((resolve) => {
-            httpsRequest(HOSTNAME, path, "HEAD", {}, {}, (err: Error | null, data?: any) => {
+            httpsRequest(HOSTNAME, path, "HEAD", headers, {}, (err: any, data?: any) => {
                 if (err) {
+                    // not existing
+                    if (err.statusCode === 404) return resolve(null)
+
                     console.error("Failed to get headers:", err)
                     return resolve(null)
                 }
@@ -64,19 +72,22 @@ class ChurchAppsSyncManager {
 
     async getData(churchId: string, teamId: string, outputFolderPath: string, fileName: string = "current.zip"): Promise<string | null> {
         const randomNumber = Math.floor(Math.random() * 1000000)
-        const path = `/${churchId}/files/group/${teamId}/${fileName}?cacheBuster=${randomNumber}`
+        const path = `/content/${churchId}/files/group/${teamId}/${fileName}?cacheBuster=${randomNumber}`
         console.log("Data", path)
 
-        // auth token if needed
-        // const token = await this.provider.getToken(SCOPE)
-        // const headers = token ? { Authorization: `Bearer ${token}` } : {}
+        const token = await this.provider.getToken(SCOPE)
+        const headers = token ? { Authorization: `Bearer ${token}` } : {}
 
         return new Promise((resolve) => {
-            httpsRequest(HOSTNAME, path, "GET", {}, {}, response, join(outputFolderPath, fileName))
+            httpsRequest(HOSTNAME, path, "GET", headers, {}, response, join(outputFolderPath, fileName))
 
-            function response(err: Error | null, filePath?: string) {
+            function response(err: any, filePath?: string) {
                 if (err) {
+                    // not existing
+                    if (err.statusCode === 404) return resolve(null)
+
                     console.error("Failed to fetch content:", err)
+                    sendToMain(ToMain.ALERT, "Failed to get data: " + err.message)
                     return resolve(null)
                 }
 
@@ -87,14 +98,19 @@ class ChurchAppsSyncManager {
     }
 
     async getWriteToken(teamId: string, fileName: string): Promise<any> {
-        const path = `/files/postUrl`
+        const path = `/content/files/postUrl`
         let params: { [key: string]: string } = { fileName, contentType: "group", contentId: teamId }
         console.log("Write", params)
 
+        const token = await this.provider.getToken(SCOPE)
+        const headers = token ? { Authorization: `Bearer ${token}` } : {}
+        console.log("Headers:", headers)
+
         return new Promise((resolve) => {
-            httpsRequest(HOSTNAME, path, "POST", {}, {}, (err, data: Buffer) => {
+            httpsRequest(HOSTNAME, path, "POST", headers, params, (err, data: Buffer) => {
                 if (err) {
-                    console.error("Failed to get ChurchApps token:", err)
+                    console.error("Failed to get token:", err)
+                    sendToMain(ToMain.ALERT, "Failed to upload data: " + err.message)
                     return resolve(null)
                 }
 

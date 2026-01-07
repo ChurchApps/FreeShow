@@ -4,6 +4,7 @@ import { requestMain } from "../IPC/main"
 import { activePopup, alertMessage, cloudSyncData, popupData } from "../stores"
 import { confirmCustom } from "./popup"
 import { save } from "./save"
+import { newToast } from "./common"
 
 export async function setupCloudSync(auto: boolean = false) {
     if (auto && get(cloudSyncData).id) {
@@ -65,11 +66,16 @@ export async function syncWithCloud(initialize: boolean = false) {
         return false
     }
 
+    newToast("cloud.syncing")
+
     isSyncing = true
     const status = await requestMain(Main.CLOUD_SYNC, { id: data.id as any, churchId: data.team.churchId, teamId: data.team.id, method })
     isSyncing = false
 
-    console.log(status)
+    if (status.success) newToast("cloud.sync_complete")
+    else newToast("Error: " + (status.error || "Sync failed"))
+
+    // console.log(status.changedFiles)
 
     return true
 }
