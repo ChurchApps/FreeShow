@@ -50,6 +50,7 @@ export enum Main {
     FULLSCREEN = "FULLSCREEN",
     /////
     IMPORT = "IMPORT",
+    IMPORT_FILES = "IMPORT_FILES",
     BIBLE = "BIBLE",
     SHOW = "SHOW",
     SAVE = "SAVE",
@@ -144,6 +145,7 @@ export interface MainSendPayloads {
     [Main.LOG]: any
     /////
     [Main.IMPORT]: { channel: string; format: { name: string; extensions: string[] }; settings?: any }
+    [Main.IMPORT_FILES]: string[]
     [Main.BIBLE]: { id: string; name: string }
     [Main.SHOW]: { id: string; name: string }
     [Main.SAVE]: SaveData

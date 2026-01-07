@@ -67,6 +67,7 @@ export const mainResponses: MainResponses = {
     [Main.BACKUPS]: () => getBackups(),
     [Main.DELETE_BACKUP]: (data) => deleteBackup(data),
     [Main.IMPORT]: (data) => startImport(data),
+    [Main.IMPORT_FILES]: (data) => importFiles(data),
     [Main.BIBLE]: (data) => loadScripture(data),
     [Main.SHOW]: (data) => loadShow(data),
     // MAIN
@@ -213,6 +214,10 @@ export function startImport(data: { channel: string; format: { name: string; ext
     if (needsFileAndNoFileSelected) return
 
     importShow(data.channel, files || null, data.settings || {})
+}
+
+function importFiles(paths: string[]) {
+    importShow("IMPORT", paths, {})
 }
 
 // BIBLE

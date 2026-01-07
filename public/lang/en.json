@@ -651,6 +651,7 @@
         "reset": "Reset",
         "create_template": "Create template",
         "project_template_tip": "Create a new project from this template",
+        "import_project_file": "Found a new project file. Would you like to import it?",
         "pdf_single_page": "Render as one document",
         "convert_to_images": "Convert to images",
         "converting": "Converting...",

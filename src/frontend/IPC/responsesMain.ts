@@ -31,7 +31,7 @@ import { convertMediaShout } from "../converters/mediashout"
 import { convertOpenLP } from "../converters/openlp"
 import { convertOpenSong } from "../converters/opensong"
 import { convertPowerpoint } from "../converters/powerpoint"
-import { addToProject, importProject } from "../converters/project"
+import { addToProject, importProject, updateRecentlyAddedFiles } from "../converters/project"
 import { convertProPresenter } from "../converters/propresenter"
 import { convertQuelea } from "../converters/quelea"
 import { convertSoftProjector } from "../converters/softprojector"
@@ -204,6 +204,7 @@ export const mainResponses: MainResponses = {
 
         newToast("settings.restore_finished")
     },
+    [ToMain.RECENTLY_ADDED_FILES]: (data) => updateRecentlyAddedFiles(data.paths),
     [Main.LOCATE_MEDIA_FILE]: (data) => {
         if (!data) return
         let prevPath = ""

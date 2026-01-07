@@ -691,6 +691,80 @@ async function checkIsFolder(filePath: string): Promise<boolean> {
     )
 }
 
+/////
+
+// detect new files in downloads folder for easy importing
+// - auto import .project files
+// - suggest importing videos/images/pdfs
+// - WIP extract & import zip files with media content
+export async function detectNewFiles() {
+    const downloadsFolder = app.getPath("downloads")
+    const ONE_DAY = 24 * 60 * 60 * 1000
+    const ONE_MINUTE = 60 * 1000
+    const WRITE_WAIT_MS = 2000
+    const temporaryExtensions = [".crdownload", ".part", ".download", ".tmp"]
+
+    // read folder once and build known set
+    const dirListing = await readFolderAsync(downloadsFolder)
+    const knownFiles = new Set(dirListing)
+
+    // initial recent files
+    const cutoff = Date.now() - ONE_DAY
+    const allRecentFiles: string[] = []
+    for (const fileName of dirListing) {
+        if (!fileName) continue
+        const ext = path.extname(fileName).toLowerCase()
+        if (temporaryExtensions.includes(ext)) continue
+
+        const filePath = path.join(downloadsFolder, fileName)
+        const stats = await getFileStatsAsync(filePath)
+        if (!stats) continue
+
+        if (stats.birthtimeMs < cutoff) continue
+
+        allRecentFiles.push(filePath)
+    }
+
+    sendToMain(ToMain.RECENTLY_ADDED_FILES, { paths: allRecentFiles })
+
+    // watch for file changes
+    fs.watch(downloadsFolder, { persistent: false }, async (eventType, filename) => {
+        if (eventType !== "rename" || !filename) return
+
+        const ext = path.extname(filename).toLowerCase()
+        if (temporaryExtensions.includes(ext)) return
+
+        const filePath = path.join(downloadsFolder, filename)
+
+        const exists = await doesPathExistAsync(filePath)
+        if (!exists) {
+            const isKnown = knownFiles.delete(filename)
+            if (!isKnown) return
+
+            const idx = allRecentFiles.indexOf(filePath)
+            if (idx === -1) return
+
+            allRecentFiles.splice(idx, 1)
+            sendToMain(ToMain.RECENTLY_ADDED_FILES, { paths: allRecentFiles })
+            return
+        }
+
+        if (knownFiles.has(filename)) return
+
+        // treat as potential new download after a short write-wait
+        setTimeout(async () => {
+            const stats = await getFileStatsAsync(filePath)
+            if (!stats) return
+
+            knownFiles.add(filename)
+            if (stats.birthtimeMs < Date.now() - ONE_MINUTE) return
+
+            if (!allRecentFiles.includes(filePath)) allRecentFiles.push(filePath)
+            sendToMain(ToMain.RECENTLY_ADDED_FILES, { paths: allRecentFiles })
+        }, WRITE_WAIT_MS)
+    })
+}
+
 /// ///
 
 // BUNDLE MEDIA FILES FROM ALL SHOWS (IMAGE/VIDEO/AUDIO)
