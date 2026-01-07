@@ -352,9 +352,9 @@
 
     {#if actualSlide?.attributionString && layers.includes("slide")}
         {#if mirror}
-            <p class="attributionString">{actualSlide.attributionString}</p>
+            <p class="attributionString">{actualSlide.attributionString.slice(0, 135)}</p>
         {:else}
-            <p class="attributionString" transition:custom={transitions.text}>{actualSlide.attributionString}</p>
+            <p class="attributionString" transition:custom={transitions.text}>{actualSlide.attributionString.slice(0, 135)}</p>
         {/if}
     {/if}
 

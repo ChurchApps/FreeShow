@@ -22,8 +22,7 @@
             prevVal = value
             setTimeout(() => inputElem?.focus(), 10)
         } else if (e.target !== inputElem) {
-            edit = false
-            activeRename.set(null)
+            cancelEdit()
         }
     }
 
@@ -45,10 +44,9 @@
             return
         }
 
-        if (e.target.closest("input") || e.target.closest(".edit")) return
+        if (e.target.closest("input") || e.target.closest(".edit") || e.target.closest(".contextMenu")) return
 
-        edit = false
-        activeRename.set(null)
+        cancelEdit()
     }
 
     function stopTimeout() {
@@ -61,26 +59,9 @@
                 setTimeout(() => projectView.set(false), 20)
             }
 
-            edit = false
-            activeRename.set(null)
-
+            cancelEdit()
             return
         }
-
-        if (edit !== id) return
-
-        // disable space clicking on button
-        if (e.key !== " " || !e.target?.classList.contains("_rename")) return
-        e.preventDefault()
-
-        let pos = e.target.selectionStart
-        if (pos + 1 < value.length) value = value.trim()
-        value = value.slice(0, pos) + " " + value.slice(pos)
-        setTimeout(() => {
-            console.log(pos)
-            e.target.selectionStart = pos + 1
-            e.target.selectionEnd = pos + 1
-        })
     }
 
     let initiallyEmpty = false
@@ -91,7 +72,7 @@
 
     const dispatch = createEventDispatcher()
     function change(e: any) {
-        let value = e.target.value
+        let value = (e.target?.value || "").trim()
         if (allowEmpty || value.length) dispatch("edit", { value, id })
 
         if (!initiallyEmpty || id.includes("category")) return
@@ -105,7 +86,15 @@
         }
     }
 
-    $: if (edit === id && allowEdit) setTimeout(selectText, 10)
+    $: editingActive = edit === id && allowEdit
+    function cancelEdit() {
+        if (!editingActive) return
+
+        edit = false
+        activeRename.set(null)
+    }
+
+    $: if (editingActive) setTimeout(selectText, 10)
     function selectText() {
         inputElem?.select()
     }
@@ -114,8 +103,8 @@
 <svelte:window on:mousedown={mousedown} on:mouseup={stopTimeout} on:dragstart={stopTimeout} on:keydown={keydown} />
 <!-- on:contextmenu={click} -->
 
-{#if edit === id && allowEdit}
-    <input bind:this={inputElem} on:change={change} class="edit nocontext _rename name" bind:value />
+{#if editingActive}
+    <input bind:this={inputElem} {value} on:change={change} class="edit nocontext _rename name" />
 {:else}
     <p {id} {style} bind:this={nameElem} class="_rename">
         {#if value.length}

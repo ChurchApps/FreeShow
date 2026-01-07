@@ -349,7 +349,7 @@
         </MaterialButton>
     </FloatingInputs>
 {:else if playlist}
-    <FloatingInputs side="left" on:mousedown={storeSelected}>
+    <FloatingInputs side="left">
         <MaterialButton
             disabled={$outLocked}
             title={$activePlaylist?.id === active ? "media.stop" : "media.play"}
@@ -430,7 +430,7 @@
 
     <!-- only show if audio content -->
     {#if filteredFiles.filter((a) => !a.isFolder)?.length}
-        <FloatingInputs onlyOne>
+        <FloatingInputs onlyOne on:mousedown={storeSelected}>
             <MaterialButton title="new.playlist" on:click={createPlaylist}>
                 <Icon size={1.2} id="playlist_create" />
                 {#if !$labelsDisabled}<p><T id="new.playlist" /></p>{/if}

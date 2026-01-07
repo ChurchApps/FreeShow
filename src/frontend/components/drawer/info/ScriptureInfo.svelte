@@ -206,7 +206,7 @@
             {/key}
 
             {#if attributionString}
-                <p class="attributionString">{attributionString}</p>
+                <p class="attributionString">{attributionString.slice(0, 135)}</p>
             {/if}
         {/if}
     </Zoomed>

@@ -151,6 +151,9 @@
 
         height: 100%;
         align-content: start;
+
+        overflow-y: auto;
+        padding-bottom: 60px;
     }
 
     /* icons */
