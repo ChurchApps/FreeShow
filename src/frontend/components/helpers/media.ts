@@ -672,20 +672,22 @@ function compressImage(dataUrl: string, maxWidth = 1920, maxHeight = 1080, quali
     })
 }
 
-export function countFolderMediaItems(folderPath: string, folderContents: FileFolder[], includeFolders = true, audio = false) {
+export function countFolderMediaItems(folderPath: string, folderContents: FileFolder[]) {
     const folderFiles = (folderContents.find((a) => a.path === folderPath) as any)?.files || []
-    let count = 0
+    let count = { folder: 0, audio: 0, video: 0, image: 0 }
 
     folderFiles.forEach((filePath: string) => {
         if (filePath === folderPath) return
 
         const file = folderContents.find((a) => a.path === filePath)
         if (file?.isFolder) {
-            if (includeFolders && file.files?.length) count++
+            if (file.files?.length) count.folder++
             return
         }
 
-        if (audio ? audioExtensions.includes(getExtension(filePath)) : isMediaExtension(getExtension(filePath))) count++
+        if (videoExtensions.includes(getExtension(filePath))) count.video++
+        else if (imageExtensions.includes(getExtension(filePath))) count.image++
+        else if (audioExtensions.includes(getExtension(filePath))) count.audio++
     })
 
     return count

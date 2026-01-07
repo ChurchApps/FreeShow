@@ -7,7 +7,7 @@
     export let path: string
     export let mode: "grid" | "list"
     export let previewPaths: string[] = []
-    export let folderFilesCount: number = 0
+    export let folderFilesCount: { folder: number; audio: number; video: number; image: number } = { folder: 0, audio: 0, video: 0, image: 0 }
 
     const dispatch = createEventDispatcher()
     function openFolder() {
@@ -17,7 +17,7 @@
     const removeBrokenImg = (e: any) => (e.target.style.display = "none")
 </script>
 
-<Card resolution={{ width: 16, height: 9 }} on:click={openFolder} width={100} title={name} label={name} count={folderFilesCount} icon={mode === "grid" ? "folder" : null} color={mode === "grid" ? "var(--secondary);" : ""} {mode}>
+<Card resolution={{ width: 16, height: 9 }} on:click={openFolder} width={100} title={name} label={name} count={folderFilesCount.folder + folderFilesCount.video + folderFilesCount.image} icon={mode === "grid" ? "folder" : null} color={mode === "grid" ? "var(--secondary);" : ""} {mode}>
     <div class="flex" style="width: 100%;height: 100%;">
         <div class="grid">
             {#key path}

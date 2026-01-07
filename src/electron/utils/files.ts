@@ -323,7 +323,13 @@ export async function readFolderContent(data: { path: string | string[]; depth?:
     async function getFolderContentRecursive(folderPath: string, currentDepth: number = 0) {
         let exceededDepth = currentDepth > data.depth!
         if ((data.captureFolderContent && currentDepth < 2 ? false : exceededDepth) || folderContent.has(folderPath)) {
-            folderContent.set(folderPath, { isFolder: true, path: folderPath, name: path.basename(folderPath), files: [] })
+            let filePaths: string[] = []
+            if (currentDepth === 1) {
+                const fileList = await readFolderAsync(folderPath)
+                filePaths = fileList.map((name) => path.join(folderPath, name))
+            }
+
+            folderContent.set(folderPath, { isFolder: true, path: folderPath, name: path.basename(folderPath), files: filePaths })
             return
         }
 

@@ -221,6 +221,8 @@
         "settings": "Audio settings",
         "playlists": "Playlists",
         "playlist_settings": "Playlist settings",
+        "open_audio_folder": "Open related audio folder",
+        "create_audio_folder": "Create audio folder",
         "custom_output": "Custom audio output",
         "mute_when_video_plays": "Mute when video plays",
         "allow_gaining": "Allow gaining",

@@ -59,8 +59,8 @@
         } else if (active === "effects_library") {
             prevActive = active
 
-            allRelevantFiles = keysToID($effectsLibrary).map((a) => {
-                return { isFolder: false, path: a.id, name: getFileName(a.id), stats: {} as any }
+            allRelevantFiles = $effectsLibrary.map((a) => {
+                return { isFolder: false, path: a.path, name: a.name, stats: {} as any }
             })
 
             openFolder("effects_library")
@@ -73,7 +73,7 @@
             if (path === prevActive) return
             prevActive = path
 
-            requestFiles(path, 1)
+            requestFiles(path)
         } else {
             // microphones & audio_streams & metronome
             prevActive = active
@@ -177,7 +177,7 @@
             return
         }
         if (searchValue.length < 2) {
-            if (active !== "all" && active !== "favourites") requestFiles(path, 1)
+            if (active !== "all" && active !== "favourites") requestFiles(path)
             else searchedFiles = clone(filteredFiles)
             searchFilterActive = false
             return
@@ -316,24 +316,26 @@
                     </Center>
                 {/if}
             </DropArea>
-        {:else if active === "effects_library"}
-            <div class="effects">
-                {#each searchedFiles as file}
-                    <AudioEffect path={file.path} name={file.name} />
-                {/each}
-            </div>
         {:else if searchedFiles.length}
-            {#key rootPath}
-                {#key path}
+            {#if active === "effects_library"}
+                <div class="effects">
                     {#each searchedFiles as file}
-                        {#if file.isFolder}
-                            <Folder name={file.name} path={file.path} mode="list" on:open={(e) => (path = e.detail)} />
-                        {:else}
-                            <AudioFile path={file.path} name={file.name} {active} />
-                        {/if}
+                        <AudioEffect path={file.path} name={file.name} />
                     {/each}
+                </div>
+            {:else}
+                {#key rootPath}
+                    {#key path}
+                        {#each searchedFiles as file}
+                            {#if file.isFolder}
+                                <Folder name={file.name} path={file.path} mode="list" on:open={(e) => (path = e.detail)} />
+                            {:else}
+                                <AudioFile path={file.path} name={file.name} {active} />
+                            {/if}
+                        {/each}
+                    {/key}
                 {/key}
-            {/key}
+            {/if}
         {:else}
             <Center style="opacity: 0.2;">
                 <Icon id="noAudio" size={5} white />

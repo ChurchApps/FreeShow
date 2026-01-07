@@ -28,19 +28,17 @@
     $: if (foldersList.length) getCounts()
     async function getCounts() {
         const folderPaths = foldersList.map((a) => a.path || "")
-        const data = keysToID(await requestMain(Main.READ_FOLDER, { path: folderPaths, depth: 1 }))
+        const data = keysToID(await requestMain(Main.READ_FOLDER, { path: folderPaths }))
         const newFolderLengths: { [key: string]: number } = {}
+        allCount = 0
 
         folderPaths.forEach((folderPath) => {
-            newFolderLengths[folderPath] = countFolderMediaItems(folderPath, data)
+            const count = countFolderMediaItems(folderPath, data)
+            newFolderLengths[folderPath] = count.folder + count.video + count.image
+            allCount += count.video + count.image
         })
 
         folderLengths = newFolderLengths
-        // WIP allCount
-        // allCount = data.reduce((acc) => {
-        //     acc += isRootFolderItem isMediaExtension(getExtension(filePath)) ? 1 : 0
-        //     return acc
-        // }, 0)
     }
 
     // Content providers with libraries, and are currently connected
@@ -72,7 +70,7 @@
 
     function convertToButton(categories: any[], lengths: { [key: string]: number }) {
         return sortObject(categories, "name").map((a) => {
-            return { id: a.id, label: a.name, icon: a.icon, count: lengths[a.path] }
+            return { id: a.id, label: a.name, icon: a.icon || "folder", count: lengths[a.path] }
         })
     }
 

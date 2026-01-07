@@ -1,9 +1,10 @@
 <script lang="ts">
+    import { uid } from "uid"
     import type { ContentProviderId } from "../../../../electron/contentProviders/base/types"
     import { Main } from "../../../../types/IPC/Main"
     import type { ClickEvent, FileFolder } from "../../../../types/Main"
     import { requestMain } from "../../../IPC/main"
-    import { activeEdit, activeFocus, activeMediaTagFilter, activePopup, activeShow, drawerTabsData, focusMode, labelsDisabled, media, mediaFolders, mediaOptions, outLocked, outputs, popupData, providerConnections, selectAllMedia, selected, sorted, special } from "../../../stores"
+    import { activeDrawerTab, activeEdit, activeFocus, activeMediaTagFilter, activePopup, activeShow, audioFolders, drawerTabsData, focusMode, labelsDisabled, media, mediaFolders, mediaOptions, outLocked, outputs, popupData, providerConnections, selectAllMedia, selected, sorted, special } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { clone, keysToID, sortFilenames } from "../../helpers/array"
@@ -133,6 +134,27 @@
         }
     }
 
+    let hasAudio = { count: 0, exists: false }
+    function openAudioFolder() {
+        const tabId = keysToID($audioFolders).find((a) => a.path === path)?.id
+        if (!tabId) return
+
+        drawerTabsData.update((a) => {
+            if (!a.audio) a.audio = { enabled: true, activeSubTab: tabId }
+            else a.audio.activeSubTab = tabId
+            return a
+        })
+        activeDrawerTab.set("audio")
+    }
+    function createAudioFolder() {
+        audioFolders.update((a) => {
+            a[uid()] = { name: getFileName(path), icon: "folder", path }
+            return a
+        })
+
+        openAudioFolder()
+    }
+
     let foldersList: FileFolder[] = []
     let filesList: FileFolder[] = []
     let allRelevantFiles: FileFolder[] = []
@@ -157,7 +179,17 @@
         const data = await requestMain(Main.READ_FOLDER, { path, depth, generateThumbnails: $mediaOptions.mode === "grid", captureFolderContent })
         if (requesting !== currentRequest) return
 
-        // WIP check if there's any audio files that the user might want to find
+        // check if there's any audio files that the user might want to find
+        if (!Array.isArray(path)) {
+            const count = countFolderMediaItems(path, Object.values(data))
+            const audioFolderExists = !!Object.values($audioFolders).find((a) => a.path === path)
+            // only show if existing or more than half are audio files
+            if (count.audio && (audioFolderExists || count.audio * 2 > count.video + count.image)) {
+                hasAudio = { count: count.audio, exists: audioFolderExists }
+            } else {
+                hasAudio = { count: 0, exists: false }
+            }
+        }
 
         allRelevantFiles = Object.values(data).filter((a) => {
             // remove folders with no content
@@ -566,23 +598,34 @@
 
     <MaterialZoom hidden columns={$mediaOptions.columns} defaultValue={5} on:change={(e) => mediaOptions.set({ ...$mediaOptions, columns: e.detail })} />
 {:else}
-    {#if active !== "all" && active !== "favourites" && rootPath !== path}
-        <FloatingInputs side="left">
-            <MaterialButton disabled={rootPath === path} title="actions.back" on:click={goBack}>
-                <Icon id="back" white />
-            </MaterialButton>
+    {#if active !== "all" && active !== "favourites"}
+        {#if rootPath !== path}
+            <FloatingInputs side="left">
+                <MaterialButton disabled={rootPath === path} title="actions.back" on:click={goBack}>
+                    <Icon id="back" white />
+                </MaterialButton>
 
-            <div class="divider"></div>
+                <div class="divider"></div>
 
-            <p style="opacity: 0.8;display: flex;align-items: center;padding: 0 15px;">
-                <span style="opacity: 0.3;font-size: 0.9em;max-width: 500px;overflow: hidden;direction: rtl;">{pathString ? "/" : ""}{pathString}</span>
-                {folderName}
+                <p style="opacity: 0.8;display: flex;align-items: center;padding: 0 15px;">
+                    <span style="opacity: 0.3;font-size: 0.9em;max-width: 500px;overflow: hidden;direction: rtl;">{pathString ? "/" : ""}{pathString}</span>
+                    {folderName}
 
-                {#if fileCount && rootPath !== path}
-                    <span style="opacity: 0.5;font-size: 0.9em;margin-inline-start: 10px;">{fileCount}</span>
-                {/if}
-            </p>
-        </FloatingInputs>
+                    {#if fileCount && rootPath !== path}
+                        <span style="opacity: 0.5;font-size: 0.9em;margin-inline-start: 10px;">{fileCount}</span>
+                    {/if}
+                </p>
+            </FloatingInputs>
+        {:else if hasAudio.count}
+            <FloatingInputs side="left" onlyOne>
+                <MaterialButton icon="autofill" on:click={hasAudio.exists ? openAudioFolder : createAudioFolder}>
+                    <p>
+                        <T id="audio.{hasAudio.exists ? 'open_audio_folder' : 'create_audio_folder'}" />
+                        <span style="opacity: 0.5;font-size: 0.8em;margin-left: 5px;">{hasAudio.count}</span>
+                    </p>
+                </MaterialButton>
+            </FloatingInputs>
+        {/if}
     {/if}
 
     <FloatingInputs arrow let:open>
