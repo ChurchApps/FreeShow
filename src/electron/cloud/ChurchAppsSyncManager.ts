@@ -1,10 +1,12 @@
 import axios from "axios"
+import fs from "fs"
 import { join } from "path"
 import { ToMain } from "../../types/IPC/ToMain"
 import { ChurchAppsProvider, ContentProviderRegistry } from "../contentProviders"
 import { sendToMain } from "../IPC/main"
 import { httpsRequest } from "../utils/requests"
 
+const CONTENT_HOSTNAME = "https://content.churchapps.org"
 const HOSTNAME = "https://api.churchapps.org"
 const SCOPE = "plans"
 const ZIP_TYPE = "application/zip"
@@ -48,15 +50,12 @@ class ChurchAppsSyncManager {
         return remoteLastModified > localLastModified
     }
 
+    // Simple HTTP GET to content S3 web server.  No auth needed.
     private async getHeaders(churchId: string, teamId: string, fileName: string = "current.zip"): Promise<any> {
-        const path = `/content/${churchId}/files/group/${teamId}/${fileName}`
-        console.log("Headers", path)
-
-        const token = await this.provider.getToken(SCOPE)
-        const headers = token ? { Authorization: `Bearer ${token}` } : {}
+        const path = `/${churchId}/files/group/${teamId}/${fileName}`
 
         return new Promise((resolve) => {
-            httpsRequest(HOSTNAME, path, "HEAD", headers, {}, (err: any, data?: any) => {
+            httpsRequest(CONTENT_HOSTNAME, path, "HEAD", {}, {}, (err: any, data?: any) => {
                 if (err) {
                     // not existing
                     if (err.statusCode === 404) return resolve(null)
@@ -70,16 +69,14 @@ class ChurchAppsSyncManager {
         })
     }
 
+    // Fetch from S3 content server. No auth needed.
     async getData(churchId: string, teamId: string, outputFolderPath: string, fileName: string = "current.zip"): Promise<string | null> {
         const randomNumber = Math.floor(Math.random() * 1000000)
-        const path = `/content/${churchId}/files/group/${teamId}/${fileName}?cacheBuster=${randomNumber}`
+        const path = `/${churchId}/files/group/${teamId}/${fileName}?cacheBuster=${randomNumber}`
         console.log("Data", path)
 
-        const token = await this.provider.getToken(SCOPE)
-        const headers = token ? { Authorization: `Bearer ${token}` } : {}
-
         return new Promise((resolve) => {
-            httpsRequest(HOSTNAME, path, "GET", headers, {}, response, join(outputFolderPath, fileName))
+            httpsRequest(CONTENT_HOSTNAME, path, "GET", {}, {}, response, join(outputFolderPath, fileName))
 
             function response(err: any, filePath?: string) {
                 if (err) {
@@ -124,6 +121,9 @@ class ChurchAppsSyncManager {
         const presigned = await this.getWriteToken(teamId, fileName)
         if (!presigned?.url) return false
 
+        const fileBuffer = fs.readFileSync(filePath)
+        const blob = new Blob([fileBuffer], { type: ZIP_TYPE })
+
         const formData = new FormData()
         formData.append("acl", "public-read")
         formData.append("Content-Type", ZIP_TYPE)
@@ -131,7 +131,7 @@ class ChurchAppsSyncManager {
         // Loop through all the presigned parameters returned and append them to this request
         for (const property in presigned.fields) formData.append(property, presigned.fields[property])
 
-        formData.append("file", { uri: filePath, type: ZIP_TYPE, name: fileName } as any)
+        formData.append("file", blob, fileName)
         await axios.post(presigned.url, formData, { headers: { "Content-Type": "multipart/form-data" } })
 
         return true
