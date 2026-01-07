@@ -96,7 +96,6 @@
         const data = await requestMain(Main.READ_FOLDER, { path, depth })
         if (requesting !== currentRequest) return
 
-        console.log(data)
         allRelevantFiles = Object.values(data).filter((a) => {
             // remove folders with no content
             if (a.isFolder) return a.files.length > 0
@@ -127,8 +126,6 @@
         const folder = allRelevantFiles.find((a) => a.isFolder && a.path === path)
         if (!folder) return
 
-        console.log(allRelevantFiles)
-
         foldersList = allRelevantFiles.filter((a) => a.isFolder && (folder as any).files.includes(a.path))
         filesList = allRelevantFiles.filter((a) => !a.isFolder && (folder as any).files.includes(a.path))
 
@@ -152,7 +149,6 @@
         // else if (sortType === "modified") localFilteredFiles = localFilteredFiles.sort((a, b) => (a.isFolder || b.isFolder ? 1 : b.stats.mtimeMs - a.stats.mtimeMs))
 
         // append folders
-        console.log(foldersList, localFilteredFiles)
         localFilteredFiles = [...sortFilenames(foldersList), ...localFilteredFiles]
 
         filteredFiles = clone(localFilteredFiles)
