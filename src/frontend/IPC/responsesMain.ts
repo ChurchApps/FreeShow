@@ -2,20 +2,19 @@ import { get } from "svelte/store"
 import type { ToMainSendPayloads } from "../../types/IPC/ToMain"
 import { ToMain } from "../../types/IPC/ToMain"
 import type { Project } from "../../types/Projects"
-import type { Show } from "../../types/Show"
+import type { Show, Slide } from "../../types/Show"
 import { API_ACTIONS, triggerAction } from "../components/actions/api"
 import { receivedMidi } from "../components/actions/midi"
 import { menuClick } from "../components/context/menuClick"
 import { getCurrentTimerValue } from "../components/drawer/timers/timers"
 import { _getVariableValue, getDynamicValue } from "../components/edit/scripts/itemHelpers"
-import { getSlidesText } from "../components/edit/scripts/textStyle"
 import { clone, keysToID } from "../components/helpers/array"
 import { addDrawerFolder } from "../components/helpers/dropActions"
 import { history } from "../components/helpers/history"
 import { captureCanvas, setMediaTracks } from "../components/helpers/media"
 import { getActiveOutputs } from "../components/helpers/output"
 import { loadShows, saveTextCache } from "../components/helpers/setShow"
-import { checkName, getLabelId } from "../components/helpers/show"
+import { checkName, getGlobalGroup, getLabelId } from "../components/helpers/show"
 import { joinTimeBig } from "../components/helpers/time"
 import { defaultThemes } from "../components/settings/tabs/defaultThemes"
 import { importBibles } from "../converters/bible"
@@ -332,43 +331,36 @@ export const mainResponses: MainResponses = {
                 continue
             }
 
-            // find existing show with same name and ask to replace.
-            if (data.providerId === "planningcenter") {
-                const existingShow = allShows.find(({ name }) => name.toLowerCase() === show.name.toLowerCase())
-                // const existingShowHasContent = existingShow && (await loadShows([existingShow.id])) && getSlidesText(get(showsCache)[existingShow.id].slides)
-                if (existingShow) {
-                    const useLocal = get(contentProviderData).planningcenter?.localAlways ?? (await confirmCustom(`There is an existing show with the same name: ${existingShow.name}.<br><br>Would you like to use the local version instead of the one from Planning Center?`))
-                    if (useLocal) {
-                        replaceIds[id] = existingShow.id
+            // find existing show with same name and ask to replace
+            const providerName = data.providerId === "planningcenter" ? "Planning Center" : data.providerId === "churchApps" ? "ChurchApps" : "the cloud"
+            const existingShow = allShows.find(({ name }) => name.toLowerCase() === show.name.toLowerCase())
+            // const existingShowHasContent = existingShow && (await loadShows([existingShow.id])) && getSlidesText(get(showsCache)[existingShow.id].slides)
+            if (existingShow) {
+                const useLocal = get(contentProviderData)[data.providerId]?.localAlways ?? (await confirmCustom(`There is an existing show with the same name: ${existingShow.name}.<br><br>Would you like to use the local version instead of the one from ${providerName}?`))
+                if (useLocal) {
+                    replaceIds[id] = existingShow.id
 
-                        await loadShows([existingShow.id])
-                        showsCache.update((a) => {
-                            if (!a[existingShow.id].quickAccess) a[existingShow.id].quickAccess = {}
-                            if (linkKey) a[existingShow.id].quickAccess[linkKey] = id
-                            return a
-                        })
+                    await loadShows([existingShow.id])
+                    showsCache.update((a) => {
+                        if (!a[existingShow.id].quickAccess) a[existingShow.id].quickAccess = {}
+                        if (linkKey) a[existingShow.id].quickAccess[linkKey] = id
+                        return a
+                    })
 
-                        continue
-                    }
+                    continue
                 }
-            } else {
-                // ChurchApps: replace with existing ChurchApps show, that has the same name (but different ID), if it's without content
-                for (const [showId, currentShow] of Object.entries(get(shows))) {
-                    if (currentShow.name !== show.name || currentShow.origin !== "churchApps") continue
-                    await loadShows([showId])
-
-                    const loadedShow = get(showsCache)[showId]
-                    if (!getSlidesText(loadedShow.slides)) {
-                        replaceIds[show.id] = showId
-                        break
-                    }
-                }
-
-                if (replaceIds[show.id]) continue
             }
 
             // don't add/update if already existing (to not mess up any set styles)
             if (get(shows)[id]) continue
+
+            // replace group names with existing global groups
+            Object.values<Slide>(show.slides).forEach((slide) => {
+                if (slide.globalGroup || !slide.group) return
+
+                const globalGroup = getGlobalGroup(slide.group)
+                if (globalGroup) slide.globalGroup = globalGroup
+            })
 
             delete show.id
             const origin = data.providerId === "planningcenter" ? "pco" : data.providerId
