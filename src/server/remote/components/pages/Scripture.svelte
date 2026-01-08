@@ -994,11 +994,6 @@
                             <Icon id={$scriptureMultiSelect ? "close" : "check"} white />
                         </Button>
                     {/if}
-                    {#if depth === 2 && $scriptureViewList && $scriptureMultiSelect && $selectedVerses.length > 0}
-                        <Button style="flex: 0;" on:click={() => scriptureContentRef?.playSelectedVerses?.()} center dark title="Show Selected ({$selectedVerses.length})">
-                            <Icon id="play" white />
-                        </Button>
-                    {/if}
                     <Button style="flex: 1;" on:click={previous} center dark>
                         <Icon size={1.2} id="previous" />
                     </Button>
@@ -1006,9 +1001,15 @@
                         <Icon size={1.2} id="next" />
                     </Button>
                     {#if depth === 2}
-                        <Button style="flex: 0;" on:click={() => scriptureViewList.set(!$scriptureViewList)} center dark>
-                            <Icon id={$scriptureViewList ? "grid" : "list"} white />
-                        </Button>
+                        {#if $scriptureViewList && $scriptureMultiSelect && $selectedVerses.length > 0}
+                            <Button style="flex: 0;" on:click={() => scriptureContentRef?.playSelectedVerses?.()} center dark title="Show Selected ({$selectedVerses.length})">
+                                <Icon id="play" white />
+                            </Button>
+                        {:else}
+                            <Button style="flex: 0;" on:click={() => scriptureViewList.set(!$scriptureViewList)} center dark>
+                                <Icon id={$scriptureViewList ? "grid" : "list"} white />
+                            </Button>
+                        {/if}
                     {/if}
                 </div>
             {:else if depth === 2}
@@ -1026,15 +1027,16 @@
                         >
                             <Icon id={$scriptureMultiSelect ? "close" : "check"} white />
                         </Button>
-                        {#if $scriptureMultiSelect && $selectedVerses.length > 0}
-                            <Button style="flex: 0;" on:click={() => scriptureContentRef?.playSelectedVerses?.()} center dark title="Show Selected ({$selectedVerses.length})">
-                                <Icon id="play" white />
-                            </Button>
-                        {/if}
                     {/if}
-                    <Button on:click={() => scriptureViewList.set(!$scriptureViewList)} center dark>
-                        <Icon id={$scriptureViewList ? "grid" : "list"} white />
-                    </Button>
+                    {#if $scriptureViewList && $scriptureMultiSelect && $selectedVerses.length > 0}
+                        <Button on:click={() => scriptureContentRef?.playSelectedVerses?.()} center dark title="Show Selected ({$selectedVerses.length})">
+                            <Icon id="play" white />
+                        </Button>
+                    {:else}
+                        <Button on:click={() => scriptureViewList.set(!$scriptureViewList)} center dark>
+                            <Icon id={$scriptureViewList ? "grid" : "list"} white />
+                        </Button>
+                    {/if}
                 </div>
             {/if}
             {#if !$isCleared.all && !tablet}
