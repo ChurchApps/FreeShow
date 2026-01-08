@@ -361,7 +361,7 @@ async function compressUserData(): Promise<string> {
         return ""
     }
 
-    await deleteUnusedZips(outputFolderPath)
+    await deleteUnusedZips(outputFolderPath, zipPath)
 
     return zipPath
 }
@@ -384,8 +384,8 @@ async function getFilesSortedByDate(folderPath: string) {
 // delete any existing zips that are less than an hour old
 // or any more than two weeks old, but keep the two newest zips
 const ONE_HOUR = 1000 * 60 * 60
-async function deleteUnusedZips(folderPath: string) {
-    const zipFiles = await getFilesSortedByDate(folderPath) // .filter((file) => file.path.endsWith(".zip"))
+async function deleteUnusedZips(folderPath: string, excludeZip: string) {
+    const zipFiles = (await getFilesSortedByDate(folderPath)).filter((a) => a.path !== excludeZip) // .filter((file) => file.path.endsWith(".zip"))
 
     const now = Date.now()
     for (let i = 0; i < zipFiles.length; i++) {
