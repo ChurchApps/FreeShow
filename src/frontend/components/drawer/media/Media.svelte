@@ -320,17 +320,19 @@
     $: fileCount = mediaFilesOnly.length
     const shortcuts = {
         ArrowRight: () => {
-            if ($activeEdit.items.length) return
             if (activeFile === null || activeFile < fileCount - 1) activeFile = activeFile === null ? 0 : activeFile + 1
         },
         ArrowLeft: () => {
-            if ($activeEdit.items.length) return
             if (activeFile === null || activeFile > 0) activeFile = activeFile === null ? fileCount - 1 : activeFile - 1
         },
         Backspace: () => {
             if (rootPath === path) return
             goBack()
-        }
+        },
+        // macOS workaround as it mostly ignores the M4/M5 mouse buttons
+        // special programs can be used to map these buttons to the following keyboard keys
+        "[": () => goBack(),
+        "]": () => goForward()
     }
 
     $: if (activeFile !== null) selectMedia()
@@ -361,7 +363,7 @@
             }
         }
 
-        if (e.target?.closest("input") || e.target?.closest(".edit") || !fileCount) return
+        if (e.target?.closest("input") || e.target?.closest(".edit") || $activeEdit.items.length || !fileCount) return
 
         if ((e.ctrlKey || e.metaKey) && shortcuts[e.key]) {
             // e.preventDefault()
