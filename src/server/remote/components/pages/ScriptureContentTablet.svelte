@@ -3,7 +3,8 @@
     import Loading from "../../../common/components/Loading.svelte"
     import { onDestroy } from "svelte"
     import { send } from "../../util/socket"
-    import { currentScriptureState, scriptureViewList, scriptureWrapText, outShow, outSlide } from "../../util/stores"
+    import { currentScriptureState, scriptureViewList, scriptureWrapText, scriptureMultiSelect, selectedVerses, outShow, outSlide } from "../../util/stores"
+    import { createLongPress } from "../../util/helpers"
 
     export let id: string
     export let scripture: Bible
@@ -31,7 +32,7 @@
     $: books = scripture?.books || []
     $: chapters = books[activeBook]?.chapters || []
 
-    // Helper: Load collection scripture data if needed
+    // Load collection Scripture data
     function loadCollectionScripture(scrId: string, bookIndex: number, chapterIndex?: number) {
         if (scrId === id || !isCollection || scriptures.length <= 1) return
 
@@ -43,14 +44,12 @@
         if (!scrBook?.keyName) return
 
         if (chapterIndex !== undefined) {
-            // Load chapter data
             const scrChapters = scrBook?.chapters || []
             const scrChapter = scrChapters[chapterIndex]
             if (scrChapter?.keyName && !(scrChapter?.verses?.length > 0)) {
                 send("GET_SCRIPTURE", { id: scrId, bookKey: scrBook.keyName, chapterKey: scrChapter.keyName, bookIndex, chapterIndex })
             }
         } else {
-            // Load book data
             if (!(scrBook?.chapters?.length > 0)) {
                 send("GET_SCRIPTURE", { id: scrId, bookKey: scrBook.keyName, bookIndex })
             }
@@ -85,7 +84,7 @@
     $: currentChapter = chapters[activeChapter]?.number != null ? String(chapters[activeChapter].number) : ""
     $: currentVerse = activeVerse > 0 ? String(activeVerse) : ""
 
-    // Update displayed indices from main app state (what's currently on output)
+    // Update displayed indices from output state
     const unsubscribeScripture = currentScriptureState.subscribe((state) => {
         if (!state) return
         if (state.scriptureId && state.scriptureId !== id) return
@@ -103,7 +102,7 @@
         unsubscribeScripture()
     })
 
-    // Auto-navigate to Genesis 1:1 when scripture loads
+    // Auto-navigate to first book/chapter
     let hasAutoNavigated = false
     $: if (books.length > 0 && !hasAutoNavigated && activeBook === -1) {
         hasAutoNavigated = true
@@ -141,7 +140,7 @@
         scrollElem.scrollTo(0, Math.max(0, selectedElemTop - 70))
     }
 
-    // COLORS - matching frontend implementation
+    // Color codes
     const colorCodesFull = [1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 6, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 8]
     const colorCodesNT = [5, 5, 5, 5, 6, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 8]
     const colors = ["", "#f17d46", "#ffd17c", "#8cdfff", "#8888ff", "#ff97f2", "#ffdce7", "#88ffa9", "#ffd3b6"]
@@ -204,17 +203,105 @@
         send("API:start_scripture", { id, reference: `${bookNumber}.${chapterNumber}.${vNum}` })
     }
 
-    // Click handler for verse
-    function handleVerseClick(verseNumber: number) {
-        activeVerse = verseNumber
-        playScripture(verseNumber)
+    function makeVerseRef(bookIndex: number, chapterIndex: number, verseNumber: number): string {
+        return `${bookIndex}.${chapterIndex}.${verseNumber}`
     }
 
-    // NAVIGATION (for parent component compatibility)
+    function onVerseRowClick(verseNumber: number, event: MouseEvent) {
+        // In multi-select mode we want the entire row to toggle selection.
+        // But avoid double toggles when clicking the checkbox itself.
+        if (verseLongPress.shouldSuppressClick()) return
+        if ($scriptureMultiSelect && event.target instanceof HTMLInputElement) return
+        handleVerseClick(verseNumber)
+    }
+
+    function onVerseRowDblClick(verseNumber: number) {
+        // On touch devices, a fast double tap can fire dblclick.
+        // In multi-select mode that can lead to a double-toggle (net no change),
+        // so we ignore dblclick there.
+        if ($scriptureMultiSelect) return
+        handleVerseClick(verseNumber)
+    }
+
+    const verseLongPress = createLongPress<number>({
+        allowedPointerTypes: ["mouse", "touch", "pen"],
+        isEnabled: () => !$scriptureMultiSelect,
+        onLongPress: (verseNumber) => {
+            scriptureMultiSelect.set(true)
+            handleVerseClick(verseNumber)
+        }
+    })
+
+    // Click handler for verse
+    function handleVerseClick(verseNumber: number) {
+        if ($scriptureMultiSelect) {
+            // Multi-select mode: toggle verse selection
+            if (activeBook < 0 || activeChapter < 0) return
+
+            const verseRef = makeVerseRef(activeBook, activeChapter, verseNumber)
+            const prefix = `${activeBook}.${activeChapter}.`
+
+            // In tablet mode, keep selection scoped to the current chapter.
+            selectedVerses.update((verses) => {
+                const chapterScoped = verses.filter((v) => v.startsWith(prefix))
+                if (chapterScoped.includes(verseRef)) {
+                    return chapterScoped.filter((v) => v !== verseRef)
+                }
+                return [...chapterScoped, verseRef]
+            })
+        } else {
+            // Normal mode: play verse immediately
+            activeVerse = verseNumber
+            playScripture(verseNumber)
+        }
+    }
+
+    // Play selected verses
+    export function playSelectedVerses() {
+        if ($selectedVerses.length === 0) return
+
+        // Verse refs are stored as "bookIndex.chapterIndex.verseNumber"; selection is chapter-scoped.
+        const parsed = $selectedVerses
+            .map((ref) => {
+                const [book, chapter, verse] = ref.split(".")
+                return {
+                    bookIndex: parseInt(book, 10),
+                    chapterIndex: parseInt(chapter, 10),
+                    verseNumber: parseInt(verse, 10)
+                }
+            })
+            .filter((r) => Number.isFinite(r.bookIndex) && Number.isFinite(r.chapterIndex) && Number.isFinite(r.verseNumber))
+
+        if (!parsed.length) return
+
+        const { bookIndex, chapterIndex } = parsed[0]
+        const selectedBook: any = books[bookIndex]
+        const selectedChapter: any = selectedBook?.chapters?.[chapterIndex]
+        if (!selectedBook || !selectedChapter) return
+
+        const bookNumber = selectedBook.number ?? bookIndex + 1
+        const chapterNumber = selectedChapter.number ?? chapterIndex + 1
+
+        const verseNumbers = Array.from(new Set(parsed.map((r) => r.verseNumber))).sort((a, b) => a - b)
+        const versesPart = verseNumbers.join(",")
+
+        // Encode multiple verses as "book.chapter.1,2,3"
+        send("API:start_scripture", {
+            id,
+            reference: `${bookNumber}.${chapterNumber}.${versesPart}`
+        })
+    }
+
+    // Clear selection when multi-select is disabled
+    $: if (!$scriptureMultiSelect) {
+        selectedVerses.set([])
+    }
+
+    // Navigation (tablet)
     export const depth = 2 // Always show all columns in tablet mode
 
     export function goBack() {
-        // In tablet mode, we don't navigate by depth
+        // tablet mode doesn't navigate by depth
     }
 
     function getBookNumber(book: any): number {
@@ -479,37 +566,62 @@
                         {@const verseNumber = Number(verse.number) || i + 1}
                         {@const isActive = activeVerse === verseNumber}
                         {@const isDisplayed = activeBook === displayedBookIndex && activeChapter === displayedChapterIndex && verseNumber === displayedVerseNumber}
+                        {@const verseRef = makeVerseRef(activeBook, activeChapter, verseNumber)}
+                        {@const isSelected = $selectedVerses.includes(verseRef)}
                         {@const text = formatBibleText(verse.text || verse.value, true)}
+                        {@const checkMode = $scriptureMultiSelect && $scriptureViewList}
 
-                        <span id={String(verseNumber)} class="verse" class:isActive class:isDisplayed class:wrapText={$scriptureWrapText} class:collection-verse={isCollection && $scriptureViewList && selectedTranslationIndex === null} on:click={() => handleVerseClick(verseNumber)} on:dblclick={() => handleVerseClick(verseNumber)} role="none">
+                        <span
+                            id={String(verseNumber)}
+                            class="verse"
+                            class:checkMode={checkMode}
+                            class:isActive
+                            class:isDisplayed
+                            class:isSelected={$scriptureMultiSelect && isSelected}
+                            class:wrapText={$scriptureWrapText}
+                            class:collection-verse={isCollection && $scriptureViewList && selectedTranslationIndex === null}
+                            on:pointerdown={(event) => verseLongPress.onPointerDown(verseNumber, event)}
+                            on:pointermove={verseLongPress.onPointerMove}
+                            on:pointerup={verseLongPress.onPointerUp}
+                            on:pointercancel={verseLongPress.onPointerCancel}
+                            on:click|capture={(event) => onVerseRowClick(verseNumber, event)}
+                            on:dblclick={() => onVerseRowDblClick(verseNumber)}
+                            role="none"
+                        >
+                            {#if checkMode}
+                                <input type="checkbox" class="verse-checkbox" checked={isSelected} on:click|stopPropagation={() => handleVerseClick(verseNumber)} />
+                            {/if}
                             <span class="v">{verseNumber}</span>
                             {#if $scriptureViewList}
-                                {#if isCollection}
-                                    {#if selectedTranslationIndex === null}
-                                        <!-- Show all translations with colors -->
-                                        <div class="collection-versions">
-                                            {#each scriptures as scr, scrIndex}
-                                                {@const scrVerse = scr.data?.books?.[activeBook]?.chapters?.[activeChapter]?.verses?.[i]}
-                                                {@const verseText = scrVerse?.text || scrVerse?.value}
-                                                <div class="version-item" style="--version-color: {getVersionColor(scrIndex)}; --version-bg: {getVersionBgColor(scrIndex)}">
-                                                    {#if verseText}
-                                                        <span class="version-text">{@html formatBibleText(verseText, true)}</span>
-                                                    {:else}
-                                                        <span class="version-text">...</span>
-                                                    {/if}
-                                                </div>
-                                            {/each}
-                                        </div>
-                                    {:else}
-                                        <!-- Show single translation as normal (no colors) -->
-                                        {@const selectedScr = scriptures[selectedTranslationIndex]}
-                                        {@const selectedVerse = selectedScr?.data?.books?.[activeBook]?.chapters?.[activeChapter]?.verses?.[i]}
-                                        {@const selectedText = selectedVerse?.text || selectedVerse?.value || ""}
-                                        {@html formatBibleText(selectedText, true) || "..."}
+                                <span class="verse-content">
+                                    {#if !checkMode}
+                                        <span class="v-inline">{verseNumber}</span>
                                     {/if}
-                                {:else}
-                                    {@html text}
-                                {/if}
+                                    {#if isCollection}
+                                        {#if selectedTranslationIndex === null}
+                                            <span class="collection-versions">
+                                                {#each scriptures as scr, scrIndex}
+                                                    {@const scrVerse = scr.data?.books?.[activeBook]?.chapters?.[activeChapter]?.verses?.[i]}
+                                                    {@const verseText = scrVerse?.text || scrVerse?.value}
+                                                    <span class="version-item" style="--version-color: {getVersionColor(scrIndex)}; --version-bg: {getVersionBgColor(scrIndex)}">
+                                                        {#if verseText}
+                                                            <span class="version-text">{@html formatBibleText(verseText, true)}</span>
+                                                        {:else}
+                                                            <span class="version-text">...</span>
+                                                        {/if}
+                                                    </span>
+                                                {/each}
+                                            </span>
+                                        {:else}
+                                            {@const selectedScr = scriptures[selectedTranslationIndex]}
+                                            {@const selectedVerse = selectedScr?.data?.books?.[activeBook]?.chapters?.[activeChapter]?.verses?.[i]}
+                                            {@const selectedText = selectedVerse?.text || selectedVerse?.value || ""}
+                                            {@html formatBibleText(selectedText, true) || "..."}
+                                        {/if}
+                                    {:else}
+                                        {@html text}
+                                    {/if}
+                                </span>
                             {/if}
                         </span>
                     {/each}
@@ -566,11 +678,16 @@
         background-color: var(--focus);
         box-shadow: inset 0 0 0 2px var(--secondary);
     }
-    .main span:hover:not(.isActive):not(.v) {
+    .main span.isSelected {
+        background-color: rgba(255, 105, 180, 0.3);
+        box-shadow: inset 0 0 0 2px rgba(255, 105, 180, 0.6);
+    }
+    /* Only highlight the clickable row items (not nested spans inside a verse row) */
+    .main div > span:hover:not(.isActive) {
         background-color: var(--hover);
     }
-    .main span:focus,
-    .main span:active:not(.isActive):not(.v) {
+    .main div > span:focus,
+    .main div > span:active:not(.isActive) {
         background-color: var(--focus);
     }
 
@@ -582,27 +699,79 @@
         white-space: nowrap;
         text-overflow: ellipsis;
     }
-    /* Wrap text mode - allows verses to have different heights */
-    .main span.verse.wrapText {
-        white-space: normal;
-        text-overflow: initial;
-        overflow: visible;
-        line-height: 1.5;
-        display: flex;
-        align-items: flex-start;
+
+    /* List-mode layout */
+    .main .list span.verse {
+        padding: 6px 10px;
     }
-    .main span.verse.wrapText .v {
-        flex-shrink: 0;
+    .main .list span.verse .v {
+        color: var(--secondary);
+        font-weight: bold;
+        display: inline-block;
+        margin: 0;
+        width: 45px;
+        text-align: center;
+        white-space: nowrap;
     }
-    .main .list .v {
+    .main .list span.verse:not(.checkMode) .v {
+        display: none;
+    }
+    .main .list span.verse.checkMode {
+        display: grid;
+        grid-template-columns: 24px 45px 1fr;
+        column-gap: 10px;
+        align-items: center;
+    }
+    .main .list span.verse.checkMode .verse-checkbox {
+        grid-column: 1;
+        justify-self: center;
+    }
+    .main .list span.verse.checkMode .v {
+        grid-column: 2;
+    }
+    .main .list span.verse.checkMode .verse-content {
+        grid-column: 3;
+        min-width: 0;
+    }
+    .main .list span.verse .verse-content {
+        display: inline;
+    }
+    .main .list span.verse .v-inline {
         color: var(--secondary);
         font-weight: bold;
         display: inline-block;
         width: 45px;
         margin-inline-end: 10px;
         text-align: center;
-        white-space: nowrap;
     }
+
+    /* Override global span padding inside verse rows to keep rows compact */
+    .main .list span.verse .v,
+    .main .list span.verse .verse-content,
+    .main .list span.verse .verse-content :global(span) {
+        padding: 0;
+    }
+    
+    /* Checkbox styling */
+    .verse-checkbox {
+        width: 20px;
+        height: 20px;
+        flex-shrink: 0;
+        cursor: pointer;
+        accent-color: var(--secondary);
+    }
+    
+    /* Wrap text mode - allows verses to have different heights */
+    .main span.verse.wrapText {
+        white-space: normal;
+        text-overflow: initial;
+        overflow: visible;
+        line-height: 1.5;
+    }
+    .main span.verse.wrapText .v {
+        flex-shrink: 0;
+    }
+
 
     /* Red letter text */
     .main :global(.wj) {
@@ -685,11 +854,9 @@
 
     /* Collection multi-version display */
     .verse.collection-verse {
-        display: block !important;
-        flex: none !important;
         height: auto !important;
         min-height: 0 !important;
-        padding: 2px 10px 2px 0 !important;
+        padding: 4px 10px !important;
         margin: 0 !important;
         white-space: normal !important;
         overflow: visible !important;
