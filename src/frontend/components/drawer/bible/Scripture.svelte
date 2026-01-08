@@ -18,6 +18,7 @@
     import Loader from "../../main/Loader.svelte"
     import Center from "../../system/Center.svelte"
     import { formatBibleText, getVerseIdParts, getVersePartLetter, joinRange, loadJsonBible, moveSelection, outputIsScripture, playScripture, scriptureRangeSelect, sortScriptureSelection, splitText, swapPreviewBible } from "./scripture"
+    import { wait } from "../../../utils/common"
 
     export let active: string | null
     export let searchValue: string
@@ -772,8 +773,11 @@
     let chapterLengths: { [key: number]: number } = {}
     $: if ($activeTriggerFunction === "scripture_next") _moveSelection(false)
     $: if ($activeTriggerFunction === "scripture_previous") _moveSelection(true)
-    function _moveSelection(moveLeft: boolean) {
+    async function _moveSelection(moveLeft: boolean) {
         if (!activeReference.book) return
+
+        // WIP this seems like duplicated code
+        // most of the time the code underneath is never run I think, but it's the main code
 
         // Check if we're dealing with split verses
         const currentVerses = sortScriptureSelection(activeReference.verses[0] || [])
@@ -791,6 +795,8 @@
                     for (let i = 0; i < selectionCount; i++) {
                         newSelection.push(splittedVerses[newIndex + i].id)
                     }
+
+                    await wait(1) // this fixes API next not changing selection
                     openVerse([newSelection])
                     if (isActiveInOutput) setTimeout(playScripture)
                     return

@@ -257,7 +257,7 @@
         {#if expanded}
             <!-- Verse numbers -->
             <InputRow arrow={useOldSystem && $scriptureSettings.verseNumbers} bind:open={verseMenuOpened}>
-                <MaterialToggleSwitch label="scripture.verse_numbers" style="width: 100%;" checked={$scriptureSettings.verseNumbers} defaultValue={false} on:change={(e) => update("verseNumbers", e.detail)} />
+                <MaterialToggleSwitch label="scripture.verse_numbers" style="width: 100%;" checked={$scriptureSettings.verseNumbers} on:change={(e) => update("verseNumbers", e.detail)} />
 
                 <svelte:fragment slot="menu">
                     {#if $scriptureSettings.verseNumbers}

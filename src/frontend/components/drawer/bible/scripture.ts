@@ -783,9 +783,9 @@ export function getScriptureSlidesNew(data: any, onlyOne = false, disableReferen
 
                             // Separator between verses (don't break verses in multiple parts)
                             if (i < bibleVerses.length - 1) {
-                                const currentVerseId = getVerseIdParts(verse.verseId).id
+                                const { id: currentVerseId, endNumber } = getVerseIdParts(verse.verseId)
                                 const nextVerseId = getVerseIdParts(bibleVerses[i + 1].verseId).id
-                                const isConsecutive = nextVerseId === currentVerseId + 1
+                                const isConsecutive = nextVerseId === currentVerseId + 1 || nextVerseId === endNumber + 1
                                 const isSameVersePart = currentVerseId === nextVerseId
 
                                 // Same verse parts get a space, non-consecutive verses get newline, consecutive verses follow settings

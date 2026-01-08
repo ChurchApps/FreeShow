@@ -269,7 +269,7 @@ export const scripturesCache: Writable<{ [key: string]: Bible }> = writable({}) 
 export const scriptureSettings: Writable<any> = writable({
     template: "scripture",
     versesPerSlide: 3,
-    verseNumbers: false,
+    verseNumbers: true,
     showVersion: false,
     showVerse: true,
     referenceDivider: ":",
