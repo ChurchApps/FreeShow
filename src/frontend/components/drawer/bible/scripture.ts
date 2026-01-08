@@ -1401,18 +1401,14 @@ export function getScriptureShow(biblesContent: BibleContent[] | null) {
     const fullReferenceRange = buildFullReferenceRange(selectedChapters, selectedVerses)
     // use the combined range so slide names show multi-chapter selections
 
+    // DEPRECATED
     // create first slide reference
-    // const itemIndex = get(scriptureSettings)?.invertItems ? 1 : 0
     const textboxes = slides[0].filter((a) => (a.type || "text") === "text" && a.lines?.length)
     if (useOldSystem && get(scriptureSettings).firstSlideReference && textboxes[0]?.lines?.[0]?.text?.[0]) {
         const textboxesClone = clone(textboxes)
-
-        // remove reference item
-        // slides.forEach((a) => a.splice(a.length - 1, 1))
         // get verse text for correct styling
         let metaStyle = get(scriptureSettings)?.invertItems ? textboxesClone.at(-1) : textboxesClone.at(-2)
         if (!metaStyle) metaStyle = clone(textboxesClone[0])
-
         if (metaStyle) slides = [[metaStyle], ...slides]
         // only keep one line/text item (not verse number)
         slides[0][0].lines = [slides[0][0].lines![0]]
@@ -1440,7 +1436,7 @@ export function getScriptureShow(biblesContent: BibleContent[] | null) {
         let settings: any = {}
         if (backgroundColor) settings.color = backgroundColor
 
-        slides2[id] = { group: groupNames[i] || referenceText, color: null, settings, notes: "", items }
+        slides2[id] = { group: groupNames[i] || referenceText, color: null, settings, notes: "", items: fixHTMLTags(items) }
         const l: any = { id }
 
         if (backgroundId && i === 0) l.background = backgroundId
@@ -1509,6 +1505,24 @@ export function getScriptureShow(biblesContent: BibleContent[] | null) {
     // WIP add template background?
 
     return show
+}
+
+// replace HTML tags when converting to show as it breaks some selection features
+// we can keep it when presenting directly to keep the original style
+function fixHTMLTags(items: Item[]) {
+    items.forEach((item) => {
+        item.lines?.forEach((line) => {
+            line.text?.forEach((text) => {
+                if (typeof text.value !== "string") return
+                // replace <q> with actual quotes
+                text.value = text.value.replace(/<q>(.*?)<\/q>/g, "“$1”")
+                // remove HTML tags
+                // text.value = text.value.replace(/<[^>]+>/g, "")
+            })
+        })
+    })
+
+    return items
 }
 
 function getScriptureTemplateId() {
