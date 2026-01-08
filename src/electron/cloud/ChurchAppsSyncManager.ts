@@ -83,8 +83,9 @@ class ChurchAppsSyncManager {
                     // not existing
                     if (err.statusCode === 404) return resolve(null)
 
-                    console.error("Failed to fetch content:", err)
-                    sendToMain(ToMain.ALERT, "Failed to get data: " + err.message)
+                    //Quietly fail.  The file may not exist yet.
+                    //console.error("Failed to fetch content:", err)
+                    //sendToMain(ToMain.ALERT, "Failed to get data: " + err.message)
                     return resolve(null)
                 }
 
