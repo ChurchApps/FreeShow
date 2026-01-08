@@ -133,7 +133,7 @@
             </div>
         {/if}
 
-        {#if backgroundData.videoType !== "foreground"}
+        {#if backgroundData.videoType !== "foreground" || !slideCleared}
             <div class="combinedButton">
                 <MaterialButton style="padding: 0.3em 0.6em;" disabled={$outLocked || slideCleared} title="clear.slide  [F2]" on:click={() => clear("slide")} red>
                     <!-- PDFs are visually the background layer as it is toggled by the style "Background" layer, but it behaves as a slide in the code -->

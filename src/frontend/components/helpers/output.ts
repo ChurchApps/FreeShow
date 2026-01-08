@@ -411,6 +411,16 @@ export function findMatchingOut(id: string, updater: Outputs = get(outputs)): st
     return match
 }
 
+// used for checking if style template should be used as slide preview - only if all outputs have it
+export function allOutputsHasStyleTemplate(isScripture: boolean = false) {
+    const outputs = getAllNormalOutputs()
+    return outputs.every((output) => {
+        const style = output.style ? get(styles)[output.style] || null : null
+        const template = style?.[isScripture ? "templateScripture" : "template"]
+        return !!template
+    })
+}
+
 export function refreshOut(refresh = true) {
     outputs.update((a) => {
         getAllActiveOutputs().forEach(({ id }) => {

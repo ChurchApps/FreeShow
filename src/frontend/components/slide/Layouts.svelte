@@ -12,7 +12,7 @@
     import { keysToID, sortByName } from "../helpers/array"
     import { duplicate } from "../helpers/clipboard"
     import { history } from "../helpers/history"
-    import { getFirstActiveOutput } from "../helpers/output"
+    import { allOutputsHasStyleTemplate, getFirstActiveOutput } from "../helpers/output"
     import { removeTemplatesFromShow } from "../helpers/show"
     import { _show } from "../helpers/shows"
     import { joinTime, secondsToTime } from "../helpers/time"
@@ -159,7 +159,7 @@
 
     // style template
     $: outputStyleId = getFirstActiveOutput($outputs)?.style || ""
-    $: outputStyleTemplate = $styles[outputStyleId]?.[referenceType === "scripture" ? "templateScripture" : "template"] || ""
+    $: outputStyleTemplate = allOutputsHasStyleTemplate(referenceType === "scripture") ? $styles[outputStyleId]?.[referenceType === "scripture" ? "templateScripture" : "template"] || "" : ""
     function editStyleTemplate() {
         activeStyle.set(outputStyleId)
         settingsTab.set("styles")

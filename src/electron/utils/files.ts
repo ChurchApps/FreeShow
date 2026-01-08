@@ -177,7 +177,7 @@ export function getValidFileName(filePath: string) {
 
 export function selectFilesDialog(title = "", filters: Electron.FileFilter, multiple = true, initialPath: string = ""): string[] {
     // crashes if empty in electron v37
-    if (!filters.extensions.length) filters.extensions = ["*"]
+    if (!filters.extensions?.length) filters.extensions = ["*"]
 
     const options: Electron.OpenDialogSyncOptions = { properties: ["openFile"], filters: [{ name: filters.name, extensions: filters.extensions }] }
     if (title) options.title = title
