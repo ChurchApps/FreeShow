@@ -93,6 +93,9 @@ export class ChurchAppsConnect {
             httpsRequest(apiUrl, fullEndpoint, data.method || "GET", headers, data.data || {}, (err, result) => {
                 if (err) {
                     console.error("Could not get data", apiUrl, fullEndpoint)
+                    // ignore if checking for missing songs
+                    if (fullEndpoint.includes("/missing")) return resolve(null)
+
                     sendToMain(ToMain.ALERT, "Could not get data! " + err.message + "\n" + apiUrl + fullEndpoint)
                     return resolve(null)
                 } else resolve(result)
