@@ -113,7 +113,7 @@ function createProject() {
 }
 
 function convertOpenLessonPlaylist(lesson: OlpLesson) {
-    const slideGroups = [{ files: [{ name: "Lesson Image", url: lesson.lessonImage }], name: "Lesson Image" }, ...lesson.messages]
+    const slideGroups = [{ files: [{ name: "Lesson Image", url: lesson.lessonImage }], name: "Lesson Image" }, ...(lesson.messages || [])]
 
     // fix file names (might have spaces or :)
     slideGroups.forEach((group, i) => {
