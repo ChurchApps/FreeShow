@@ -641,7 +641,7 @@ export const itemBoxes: Box2 = {
     icon: {
         icon: "star",
         sections: {
-            default: { inputs: [[{ id: "style", key: "color", type: "color", value: "#FFFFFF", values: { label: "edit.color", allowOpacity: true } }]] }
+            default: { inputs: [[{ id: "style", key: "color", type: "color", value: "", values: { label: "edit.color", allowOpacity: true, allowEmpty: true } }]] }
         }
     }
 }

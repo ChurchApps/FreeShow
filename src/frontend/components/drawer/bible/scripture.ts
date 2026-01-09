@@ -107,24 +107,10 @@ export async function getActiveScripturesContent() {
 
     const active = get(activeScripture).reference
 
-    // Sort verses by numeric verse id and subverse (e.g. "2_0", "2_1") so mixed
-    // values like ["2_1","2_0", 1] end up ordered by base id then subverse.
     const selectedVerses =
         active?.verses.map((v) => {
             if (!Array.isArray(v)) return []
-
-            return v.sort((a, b) => {
-                // strip optional chapter prefix (e.g. "2:1") before parsing
-                const sa = String(a).replace(/^\d+:/, "")
-                const sb = String(b).replace(/^\d+:/, "")
-
-                const pa = getVerseIdParts(sa)
-                const pb = getVerseIdParts(sb)
-
-                if (pa.id !== pb.id) return pa.id - pb.id
-                if (pa.subverse !== pb.subverse) return pa.subverse - pb.subverse
-                return 0
-            })
+            return sortScriptureSelection(v)
         }) || []
 
     if (!selectedVerses[0]?.length) return null
@@ -161,7 +147,7 @@ export async function getActiveScripturesContent() {
                 // add the three prior and next verse numbers to selected for the stage display next slide
                 const selected = clone(selectedVerses)
                 const includeCount = 3
-                selected[0].unshift(...Array.from({ length: includeCount }, (_, i) => getVerseId(selected[0][0]) - (i + 1)).reverse())
+                selected[0].unshift(...Array.from({ length: includeCount }, (_, i) => Math.max(1, getVerseId(selected[0][0]) - (i + 1))).reverse())
                 selected[0].push(...Array.from({ length: includeCount }, (_, i) => getVerseId(selected[0][selected[0].length - 1]) + (i + 1)))
                 // remove selected not in range of min to max verse number
                 const minVerseNumber = 1
@@ -199,6 +185,23 @@ export async function getActiveScripturesContent() {
             })
             .filter(Boolean)
     )) as BibleContent[]
+}
+
+// Sort verses by numeric verse id and subverse (e.g. "2_0", "2_1") so mixed
+// values like ["2_1","2_0", 1] end up ordered by base id then subverse.
+export function sortScriptureSelection(selection: (string | number)[]) {
+    return selection.sort((a, b) => {
+        // strip optional chapter prefix (e.g. "2:1") before parsing
+        const sa = String(a).replace(/^\d+:/, "")
+        const sb = String(b).replace(/^\d+:/, "")
+
+        const pa = getVerseIdParts(sa)
+        const pb = getVerseIdParts(sb)
+
+        if (pa.id !== pb.id) return pa.id - pb.id
+        if (pa.subverse !== pb.subverse) return pa.subverse - pb.subverse
+        return 0
+    })
 }
 
 // OUTPUT
@@ -309,7 +312,7 @@ export function getMergedAttribution(biblesContent: BibleContent[], customAttrib
 }
 
 function getVerseId(verseRef: number | string) {
-    if (!verseRef) return 1
+    if (verseRef === null || verseRef === undefined || verseRef === "") return 1
     return Number(verseRef.toString().split("_")[0])
 }
 
@@ -459,7 +462,7 @@ function splitContent(content: BibleContent[], perSlide: number): BibleContent[]
     const allVersesInOrder: { chapter: number | string; verse: number | string }[] = []
     if (content.length > 0) {
         content[0].chapters.forEach((chapterNum, chapterIndex) => {
-            const chapterVerses = content[0].activeVerses[chapterIndex] || []
+            const chapterVerses = sortScriptureSelection(content[0].activeVerses[chapterIndex] || [])
             chapterVerses.forEach((verseNum) => {
                 allVersesInOrder.push({ chapter: chapterNum, verse: verseNum })
             })
@@ -629,7 +632,7 @@ export function getScriptureSlidesNew(data: any, onlyOne = false, disableReferen
             // Process verses from all chapters
             bible.chapters.forEach((chapterNumber, chapterIndex) => {
                 const versesText = bible.verses[chapterIndex] || {}
-                const chapterVerses = bible.activeVerses[chapterIndex] || []
+                const chapterVerses = sortScriptureSelection(bible.activeVerses[chapterIndex] || [])
 
                 chapterVerses.forEach((v) => {
                     let text = versesText[v] || ""
@@ -780,9 +783,9 @@ export function getScriptureSlidesNew(data: any, onlyOne = false, disableReferen
 
                             // Separator between verses (don't break verses in multiple parts)
                             if (i < bibleVerses.length - 1) {
-                                const currentVerseId = getVerseIdParts(verse.verseId).id
+                                const { id: currentVerseId, endNumber } = getVerseIdParts(verse.verseId)
                                 const nextVerseId = getVerseIdParts(bibleVerses[i + 1].verseId).id
-                                const isConsecutive = nextVerseId === currentVerseId + 1
+                                const isConsecutive = nextVerseId === currentVerseId + 1 || nextVerseId === endNumber + 1
                                 const isSameVersePart = currentVerseId === nextVerseId
 
                                 // Same verse parts get a space, non-consecutive verses get newline, consecutive verses follow settings
@@ -1398,18 +1401,14 @@ export function getScriptureShow(biblesContent: BibleContent[] | null) {
     const fullReferenceRange = buildFullReferenceRange(selectedChapters, selectedVerses)
     // use the combined range so slide names show multi-chapter selections
 
+    // DEPRECATED
     // create first slide reference
-    // const itemIndex = get(scriptureSettings)?.invertItems ? 1 : 0
     const textboxes = slides[0].filter((a) => (a.type || "text") === "text" && a.lines?.length)
     if (useOldSystem && get(scriptureSettings).firstSlideReference && textboxes[0]?.lines?.[0]?.text?.[0]) {
         const textboxesClone = clone(textboxes)
-
-        // remove reference item
-        // slides.forEach((a) => a.splice(a.length - 1, 1))
         // get verse text for correct styling
         let metaStyle = get(scriptureSettings)?.invertItems ? textboxesClone.at(-1) : textboxesClone.at(-2)
         if (!metaStyle) metaStyle = clone(textboxesClone[0])
-
         if (metaStyle) slides = [[metaStyle], ...slides]
         // only keep one line/text item (not verse number)
         slides[0][0].lines = [slides[0][0].lines![0]]
@@ -1437,7 +1436,7 @@ export function getScriptureShow(biblesContent: BibleContent[] | null) {
         let settings: any = {}
         if (backgroundColor) settings.color = backgroundColor
 
-        slides2[id] = { group: groupNames[i] || referenceText, color: null, settings, notes: "", items }
+        slides2[id] = { group: groupNames[i] || referenceText, color: null, settings, notes: "", items: fixHTMLTags(items) }
         const l: any = { id }
 
         if (backgroundId && i === 0) l.background = backgroundId
@@ -1506,6 +1505,24 @@ export function getScriptureShow(biblesContent: BibleContent[] | null) {
     // WIP add template background?
 
     return show
+}
+
+// replace HTML tags when converting to show as it breaks some selection features
+// we can keep it when presenting directly to keep the original style
+function fixHTMLTags(items: Item[]) {
+    items.forEach((item) => {
+        item.lines?.forEach((line) => {
+            line.text?.forEach((text) => {
+                if (typeof text.value !== "string") return
+                // replace <q> with actual quotes
+                text.value = text.value.replace(/<q>(.*?)<\/q>/g, "“$1”")
+                // remove HTML tags
+                // text.value = text.value.replace(/<[^>]+>/g, "")
+            })
+        })
+    })
+
+    return items
 }
 
 function getScriptureTemplateId() {

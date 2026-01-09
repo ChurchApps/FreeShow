@@ -50,10 +50,7 @@ export async function save(data: SaveData) {
     // rename shows
     if (data.renamedShows) {
         const renamedShows = data.renamedShows.filter(({ id }: { id: string }) => !data.deletedShows?.find((a) => a.id === id))
-        renameShows(renamedShows, showsPath)
-        // rename should be sync, but sometimes it might not be finished right away
-        // so add some extra wait time just in case
-        await wait(200)
+        await renameShows(renamedShows, showsPath)
     }
 
     // shows

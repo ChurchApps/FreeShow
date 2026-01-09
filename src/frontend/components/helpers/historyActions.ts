@@ -866,6 +866,8 @@ export const historyActions = ({ obj, undo = null }: any) => {
                     if (!slideTemplate?.items?.length) return
 
                     // roll items around
+                    // WIP this is not changing anything at the moment
+                    // WIP apparently when template is not clicked directly the text content is re-ordered based on the item order, but the item order itself is unchanged, but it should be
                     const newTemplate = data.previousData.template !== data.id
                     if (shiftItems && !slide.settings?.template && !newTemplate) slide.items = [...slide.items.slice(1), slide.items[0]].filter((a) => a)
 
@@ -1105,6 +1107,7 @@ function filterIndexes(data: any, subkey = "", { indexes, keys }) {
     return filteredData
 }
 
+// move text value to any template textbox with matching text content
 function rearrangeContent(content: Item[], prevState: Item[], newState: Item[]) {
     const indexMap: { [key: string]: number } = {}
 
@@ -1127,11 +1130,13 @@ function rearrangeContent(content: Item[], prevState: Item[], newState: Item[]) 
     newState.forEach((item, newIndex) => {
         const value = getItemText(item)
         if (indexMap[value] === undefined) return
+        // must be of text type
+        if (!content[newIndex]?.lines) return
 
         let count = 0
         while (usedIndices.has(indexMap[getValue(value, count)])) count++
         const contentIndex = indexMap[getValue(value, count)]
-        if (contentIndex < content.length && !usedIndices.has(contentIndex)) {
+        if (contentIndex < content.length && !usedIndices.has(contentIndex) && content[contentIndex]?.lines) {
             if (content[contentIndex]) {
                 tempContent[newIndex] = clone({ ...content[newIndex], lines: clone(content[contentIndex].lines) })
             }

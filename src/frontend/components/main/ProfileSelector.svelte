@@ -1,6 +1,6 @@
 <script lang="ts">
     import { activeProfile, profiles } from "../../stores"
-    import { newToast } from "../../utils/common"
+    import { newToast, wait } from "../../utils/common"
     import { translateText } from "../../utils/language"
     import { confirmCustom, promptCustom } from "../../utils/popup"
     import { checkPassword } from "../../utils/profile"
@@ -23,6 +23,9 @@
                 }
             } else if (!(await confirmCustom(translateText("profile.choose_admin")))) return
         }
+
+        // wait to avoid popup Svelte transition causing the page to not clear properly
+        await wait(50)
 
         activeProfile.set(id)
     }

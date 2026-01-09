@@ -1,15 +1,15 @@
 import type express from "express"
+import { getKey } from "../../utils/keys"
 import { ContentProvider } from "../base/ContentProvider"
+import type { ContentFile, ContentLibraryCategory } from "../base/types"
 import { AmazingLifeConnect } from "./AmazingLifeConnect"
 import { AmazingLifeContentLibrary } from "./AmazingLifeContentLibrary"
-import type { ContentFile, ContentLibraryCategory } from "../base/types"
 import { AMAZING_LIFE_API_URL } from "./types"
-import { getKey } from "../../utils/keys"
-import { getMachineId } from "../../IPC/responsesMain"
 
 // Import and re-export types
-import type { AmazingLifeScopes, AmazingLifeAuthData } from "./types"
-export type { AmazingLifeScopes, AmazingLifeAuthData } from "./types"
+import type { AmazingLifeAuthData, AmazingLifeScopes } from "./types"
+import { getMachineId } from "../../utils/helpers"
+export type { AmazingLifeAuthData, AmazingLifeScopes } from "./types"
 
 /**
  * AmazingLife (APlay) provider that acts as the sole interface to AmazingLife functionality.
@@ -33,6 +33,10 @@ export class AmazingLifeProvider extends ContentProvider<AmazingLifeScopes, Amaz
             apiUrl: AMAZING_LIFE_API_URL,
             scopes: ["openid profile email"] as const
         })
+    }
+
+    isConnected(scope: AmazingLifeScopes): boolean {
+        return this.access !== null && this.access.scope === scope
     }
 
     async connect(scope: AmazingLifeScopes): Promise<AmazingLifeAuthData | null> {
@@ -61,6 +65,7 @@ export class AmazingLifeProvider extends ContentProvider<AmazingLifeScopes, Amaz
     }
 
     async startupLoad(scope: AmazingLifeScopes): Promise<void> {
+        AmazingLifeConnect.initialize()
         const connected = await this.connect(scope)
         if (!connected) return
 
@@ -71,7 +76,11 @@ export class AmazingLifeProvider extends ContentProvider<AmazingLifeScopes, Amaz
      * Retrieves the content library hierarchy: Modules -> Products -> Libraries
      */
     async getContentLibrary(): Promise<ContentLibraryCategory[]> {
-        return AmazingLifeContentLibrary.getContentLibrary()
+        try {
+            return AmazingLifeContentLibrary.getContentLibrary()
+        } catch (err) {
+            return []
+        }
     }
 
     /**

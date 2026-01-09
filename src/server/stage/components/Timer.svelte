@@ -27,25 +27,21 @@
     $: percentage = Math.max(0, Math.min(100, ((currentTime - min) / (max - min)) * 100))
     $: itemColor = getStyles(item?.style)?.color || "#ffffff"
 
-    $: overflow = getTimerOverflow(currentTime)
-    $: negative = timer?.start! > timer?.end! || currentTime < 0
-    function getTimerOverflow(time: number) {
-        if (!timer.overflow) return false
+    $: overflow = !!timer.overflow && getTimerOverflow(currentTime)
+    $: negative = (timer?.start || 0) > (timer?.end || 0) || currentTime < 0
 
+    function getTimerOverflow(time: number, offset = 0) {
         if (currentTime < 0) return true
         if (timer.type !== "counter") return false
 
-        let start: number = timer.start!
-        let end: number = timer.end!
+        let start = timer.start || 0
+        let end = timer.end || 0
 
-        if (start < end) {
-            if (time > end) return true
-            return false
-        }
-
-        if (time < end) return true
-        return false
+        if (start < end) return time + offset > end
+        return time - offset < end
     }
+
+    $: shouldWarn = !!timer.warn && getTimerOverflow(currentTime, (timer.warnOffset || 30) + 1)
 </script>
 
 {#if item?.timer?.viewType === "line"}
@@ -54,7 +50,7 @@
     <div class="circle" class:mask={item?.timer?.circleMask} style="--percentage: {percentage};--color: {itemColor};" />
 {:else}
     <div class="align autoFontSize" style="{style}{(item?.align || '').replaceAll('text-align', 'justify-content')}">
-        <div style="display: flex;white-space: nowrap;{overflow ? 'color: ' + (timer.overflowColor || 'red') + ';' : ''}">
+        <div style="display: flex;white-space: nowrap;{overflow ? 'color: ' + (timer.overflowColor || '#FF4136') + ';' : shouldWarn ? 'color: ' + (timer.warnColor || '#FF8000') + ';' : ''}">
             {#if overflow && negative}
                 <span>-</span>
             {/if}

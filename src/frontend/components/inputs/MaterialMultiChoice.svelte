@@ -4,7 +4,7 @@
     import MaterialButton from "./MaterialButton.svelte"
 
     export let options: { id: string; name: string; title?: string; icon: string; disabled?: boolean; colored?: boolean }[] = []
-    export let hightlightFirst = true
+    export let highlightFirst = true
 
     let dispatch = createEventDispatcher()
     function click(id: string) {
@@ -12,7 +12,7 @@
     }
 </script>
 
-<div class="choice" class:hightlightFirst>
+<div class="choice" class:highlightFirst>
     {#each options as option, i}
         <MaterialButton title={option.title || option.name} disabled={option.disabled} class={i === 0 ? "first" : i === options.length - 1 ? "last" : ""} variant="outlined" on:click={() => click(option.id)} white>
             <div class="list">
@@ -50,7 +50,7 @@
         /* border-radius: 0; */
     }
 
-    .choice.hightlightFirst :global(button.first) {
+    .choice.highlightFirst :global(button.first) {
         border-color: rgb(255 255 255 / 0.25) !important;
     }
 

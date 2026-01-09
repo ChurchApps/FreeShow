@@ -7,10 +7,10 @@ import { clearAudio } from "../audio/audioFading"
 import { AudioPlayer } from "../audio/audioPlayer"
 import { menuClick } from "../components/context/menuClick"
 import { addItem } from "../components/edit/scripts/itemHelpers"
-import { sortByName } from "../components/helpers/array"
+import { keysToID, sortByName } from "../components/helpers/array"
 import { copy, cut, deleteAction, duplicate, paste, selectAll } from "../components/helpers/clipboard"
 import { history, redo, undo } from "../components/helpers/history"
-import { getMediaStyle, getMediaType } from "../components/helpers/media"
+import { getExtension, getMediaStyle, getMediaType } from "../components/helpers/media"
 import { getAllNormalOutputs, getFirstActiveOutput, refreshOut, setOutput, startFolderTimer, toggleOutputs } from "../components/helpers/output"
 import { nextSlideIndividual, previousSlideIndividual } from "../components/helpers/showActions"
 import { stopSlideRecording, updateSlideRecording } from "../components/helpers/slideRecording"
@@ -19,7 +19,7 @@ import { importFromClipboard } from "../converters/importHelpers"
 import { addSection } from "../converters/project"
 import { requestMain, sendMain } from "../IPC/main"
 import { changeSlidesView } from "../show/slides"
-import { activeDrawerTab, activeEdit, activeFocus, activePage, activePopup, activeSlideRecording, activeStage, contextActive, drawer, focusedArea, focusMode, guideActive, media, os, outLocked, outputs, outputSlideCache, quickSearchActive, refreshEditSlide, selected, showsCache, special, spellcheck, styles, topContextActive, videosData, volume } from "../stores"
+import { activeDrawerTab, activeEdit, activeFocus, activePage, activePopup, activeSlideRecording, activeStage, contextActive, drawer, focusedArea, focusMode, guideActive, media, os, outLocked, outputs, outputSlideCache, quickSearchActive, refreshEditSlide, selected, showsCache, special, spellcheck, styles, textEditActive, topContextActive, videosData, volume } from "../stores"
 import { audioExtensions, imageExtensions, videoExtensions } from "../values/extensions"
 import { drawerTabs } from "../values/tabs"
 import { activeShow } from "./../stores"
@@ -55,6 +55,18 @@ const ctrlKeys = {
 const shiftCtrlKeys = {
     d: () => (get(activePage) === "show" && get(activeShow) && (get(activeShow)?.type || "show") === "show" ? activePopup.set("next_timer") : ""),
     // t: () => activePopup.set("translate"),
+    t: () => {
+        // toggle text edit
+        if (get(activeShow)?.type !== "show") return
+        if (get(activePage) === "edit" && get(textEditActive)) {
+            activePage.set("show")
+            textEditActive.set(false)
+            return
+        }
+        if (!get(activeEdit)?.showId) activeEdit.set({ slide: 0, items: [], showId: get(activeShow)?.id })
+        textEditActive.set(true)
+        activePage.set("edit")
+    },
     f: () => menuClick("focus_mode"),
     n: () => activePopup.set("show"),
     v: () => changeSlidesView()
@@ -155,9 +167,9 @@ export function keydown(e: KeyboardEvent) {
             return
         }
 
-        if (e.shiftKey && shiftCtrlKeys[key]) {
+        if (e.shiftKey && shiftCtrlKeys[key.toLowerCase()]) {
             e.preventDefault()
-            shiftCtrlKeys[key](e)
+            shiftCtrlKeys[key.toLowerCase()](e)
             return
         }
 
@@ -469,13 +481,14 @@ export function togglePlayingMedia(e: Event | null = null, back = false, api = f
     }
 }
 
+// FolderShow.svelte shortcuts
 export async function playFolder(path: string, back = false) {
     const currentOutput = getFirstActiveOutput()
     const currentlyPlaying = currentOutput?.out?.background?.path
 
     const mediaExtensions = [...videoExtensions, ...imageExtensions, ...audioExtensions]
-    const files = await requestMain(Main.READ_FOLDER, { path })
-    const folderFiles = sortByName(files.files.filter((a) => mediaExtensions.includes(a.extension)).map((a) => ({ path: a.path, name: a.name, type: getMediaType(a.extension), thumbnail: a.thumbnailPath })))
+    const files = keysToID(await requestMain(Main.READ_FOLDER, { path, generateThumbnails: true }))
+    const folderFiles = sortByName(files.filter((a) => mediaExtensions.includes(getExtension(a.name))).map((a) => ({ path: a.path, name: a.name, type: getMediaType(getExtension(a.name)), thumbnail: (a as any).thumbnailPath })))
     if (!folderFiles.length) return
 
     const mediaFiles = folderFiles.filter((a) => a.type !== "audio")

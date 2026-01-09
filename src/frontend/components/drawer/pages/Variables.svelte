@@ -232,7 +232,7 @@
                         <span style="gap: 5px;width: 70%;">
                             <p style="display: flex;flex: 1;">
                                 <span style="color: var(--secondary);">#</span>
-                                <NumberInput title={translateText("variables.set_number")} style="width: 40px;" value={activeSet + 1} min={1} max={variable.textSets?.length ?? 1} on:change={(e) => updateVariable(e.detail - 1, variable.id, "activeTextSet")} buttons={false} />
+                                <NumberInput title={translateText("variables.number")} style="width: 40px;" value={activeSet + 1} min={1} max={variable.textSets?.length ?? 1} on:change={(e) => updateVariable(e.detail - 1, variable.id, "activeTextSet")} buttons={false} />
                                 <span style="font-size: 0.8em;opacity: 0.5;">/{variable.textSets?.length || 1}</span>
                             </p>
 

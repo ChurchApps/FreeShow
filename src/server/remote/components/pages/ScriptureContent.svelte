@@ -3,7 +3,8 @@
     import Loading from "../../../common/components/Loading.svelte"
     import { onDestroy } from "svelte"
     import { send } from "../../util/socket"
-    import { currentScriptureState, scriptureViewList, outShow, outSlide } from "../../util/stores"
+    import { currentScriptureState, scriptureViewList, scriptureMultiSelect, selectedVerses, outShow, outSlide } from "../../util/stores"
+    import { createLongPress } from "../../util/helpers"
 
     export let id: string
     export let scripture: Bible
@@ -35,11 +36,11 @@
     let activeChapter = -1
     let activeVerse = 0
 
-    // Track what is displayed on output (separate from user's navigation position)
+    // Displayed output indices
     let displayedBookIndex = -1
     let displayedChapterIndex = -1
     let displayedVerseNumber = 0
-    let pendingVerseDepth = false // Used when navigating from search to wait for data load
+    let pendingVerseDepth = false // used when waiting for data load
 
     // Reference to verses container for scrolling
     let versesContainer: HTMLElement | null = null
@@ -85,7 +86,7 @@
             })
         }
     }
-    // Auto-advance to verse depth once data loads (for search navigation)
+    // Auto-advance depth after data loads
     $: if (pendingVerseDepth && depth === 1 && activeBook >= 0 && activeChapter >= 0) {
         const chapterObj: any = chapters[activeChapter]
         if (chapters.length > 0 && chapterObj) {
@@ -167,6 +168,87 @@
         const bookNumber = book.number ?? activeBook + 1
         const chapterNumber = chapter.number ?? activeChapter + 1
         send("API:start_scripture", { id, reference: `${bookNumber}.${chapterNumber}.${verseNumber}` })
+    }
+
+    function makeVerseRef(bookIndex: number, chapterIndex: number, verseNumber: number): string {
+        return `${bookIndex}.${chapterIndex}.${verseNumber}`
+    }
+
+    export function playSelectedVerses() {
+        if ($selectedVerses.length === 0) return
+
+        const parsed = $selectedVerses
+            .map((ref) => {
+                const [book, chapter, verse] = ref.split(".")
+                return {
+                    bookIndex: parseInt(book, 10),
+                    chapterIndex: parseInt(chapter, 10),
+                    verseNumber: parseInt(verse, 10)
+                }
+            })
+            .filter((r) => Number.isFinite(r.bookIndex) && Number.isFinite(r.chapterIndex) && Number.isFinite(r.verseNumber))
+
+        if (!parsed.length) return
+
+        const { bookIndex, chapterIndex } = parsed[0]
+        const selectedBook: any = books[bookIndex]
+        const selectedChapter: any = selectedBook?.chapters?.[chapterIndex]
+        if (!selectedBook || !selectedChapter) return
+
+        const bookNumber = selectedBook.number ?? bookIndex + 1
+        const chapterNumber = selectedChapter.number ?? chapterIndex + 1
+
+        const verseNumbers = Array.from(new Set(parsed.map((r) => r.verseNumber))).sort((a, b) => a - b)
+        const versesPart = verseNumbers.join(",")
+
+        // Multiple verses are encoded as "book.chapter.1,2,3" and parsed in startScripture().
+        send("API:start_scripture", {
+            id,
+            reference: `${bookNumber}.${chapterNumber}.${versesPart}`
+        })
+    }
+
+    function handleVerseClick(verseNumber: number) {
+        // Multi-select is list-only
+        if ($scriptureMultiSelect && $scriptureViewList) {
+            if (activeBook < 0 || activeChapter < 0) return
+
+            const verseRef = makeVerseRef(activeBook, activeChapter, verseNumber)
+            const prefix = `${activeBook}.${activeChapter}.`
+
+            // Keep selection scoped to the current chapter.
+            selectedVerses.update((verses) => {
+                const chapterScoped = verses.filter((v) => v.startsWith(prefix))
+                if (chapterScoped.includes(verseRef)) {
+                    return chapterScoped.filter((v) => v !== verseRef)
+                }
+                return [...chapterScoped, verseRef]
+            })
+            return
+        }
+
+        activeVerse = verseNumber
+        playScripture(verseNumber)
+    }
+
+    function onVerseClick(verseNumber: number) {
+        // Many mobile browsers fire a click after a long-press.
+        if (verseLongPress.shouldSuppressClick()) return
+        handleVerseClick(verseNumber)
+    }
+
+    const verseLongPress = createLongPress<number>({
+        allowedPointerTypes: ["touch", "pen"],
+        isEnabled: () => $scriptureViewList && !$scriptureMultiSelect,
+        onLongPress: (verseNumber) => {
+            scriptureMultiSelect.set(true)
+            handleVerseClick(verseNumber)
+        }
+    })
+
+    // Clear selection when multi-select is disabled
+    $: if (!$scriptureMultiSelect) {
+        selectedVerses.set([])
     }
 
     // NAVIGATION
@@ -563,29 +645,50 @@
                     {@const verseNumber = Number(verse.number) || i + 1}
                     {@const isDisplayed = activeBook === displayedBookIndex && activeChapter === displayedChapterIndex && verseNumber === displayedVerseNumber}
                     {@const isActive = activeVerse === verseNumber}
+                    {@const verseRef = makeVerseRef(activeBook, activeChapter, verseNumber)}
+                    {@const isSelected = $selectedVerses.includes(verseRef)}
                     {#if tablet && i === Math.max(0, verses.length - 6)}
                         <div style="float: right; width: 220px; height: 80px;"></div>
                     {/if}
 
-                    <button type="button" class="verse-button" class:collection-verse={isCollection && $scriptureViewList} on:click={() => playScripture(verseNumber)} on:keydown={(e) => e.key === "Enter" && playScripture(verseNumber)} class:active={isActive} class:displayed={isDisplayed}>
-                        <span class="verse-num" style="color: var(--secondary);font-weight: bold;">
-                            {verseNumber}
+                    <button
+                        type="button"
+                        class="verse-button"
+                        class:collection-verse={isCollection && $scriptureViewList}
+                        class:selected={$scriptureMultiSelect && $scriptureViewList && isSelected}
+                        on:pointerdown={(event) => verseLongPress.onPointerDown(verseNumber, event)}
+                        on:pointermove={verseLongPress.onPointerMove}
+                        on:pointerup={verseLongPress.onPointerUp}
+                        on:pointercancel={verseLongPress.onPointerCancel}
+                        on:click={() => onVerseClick(verseNumber)}
+                        on:keydown={(e) => e.key === "Enter" && onVerseClick(verseNumber)}
+                        class:active={isActive}
+                        class:displayed={isDisplayed}
+                    >
+                        <span class="verse-left">
+                            <span class="verse-num" style="color: var(--secondary);font-weight: bold;">
+                                {verseNumber}
+                            </span>
+                            {#if $scriptureMultiSelect && $scriptureViewList}
+                                <input type="checkbox" class="verse-checkbox" checked={isSelected} on:click|stopPropagation={() => onVerseClick(verseNumber)} />
+                            {/if}
                         </span>
                         {#if $scriptureViewList}
-                            {#if isCollection}
-                                <!-- Show all scriptures, even if only one has loaded -->
-                                <div class="collection-versions">
-                                    {#each scriptures as scr, scrIndex}
-                                        {@const scrVerse = scr.data?.books?.[activeBook]?.chapters?.[activeChapter]?.verses?.[i]}
-                                        {@const verseText = scrVerse?.text || scrVerse?.value || ""}
-                                        <div class="version-item" style="--version-color: {getVersionColor(scrIndex)}; --version-bg: {getVersionBgColor(scrIndex)}">
-                                            <span class="version-text">{verseText ? formatBibleText(verseText) : "..."}</span>
-                                        </div>
-                                    {/each}
-                                </div>
-                            {:else}
-                                {formatBibleText(verse.text || verse.value)}
-                            {/if}
+                            <span class="verse-content">
+                                {#if isCollection}
+                                    <div class="collection-versions">
+                                        {#each scriptures as scr, scrIndex}
+                                            {@const scrVerse = scr.data?.books?.[activeBook]?.chapters?.[activeChapter]?.verses?.[i]}
+                                            {@const verseText = scrVerse?.text || scrVerse?.value || ""}
+                                            <div class="version-item" style="--version-color: {getVersionColor(scrIndex)}; --version-bg: {getVersionBgColor(scrIndex)}">
+                                                <span class="version-text">{verseText ? formatBibleText(verseText) : "..."}</span>
+                                            </div>
+                                        {/each}
+                                    </div>
+                                {:else}
+                                    {formatBibleText(verse.text || verse.value)}
+                                {/if}
+                            </span>
                         {/if}
                     </button>
                 {/each}
@@ -647,22 +750,78 @@
         align-items: center;
         font-size: 1.3em;
         font-weight: 600;
-        /* min-width: 40px; */
         min-width: 50px;
         flex: 1;
         padding: 0;
         margin: 0;
     }
     .grid .verses.list .verse-button {
-        align-items: unset;
-        justify-content: unset;
+        display: grid;
+        grid-template-columns: 55px 1fr;
+        column-gap: 12px;
+        align-items: start;
         padding: 10px 0;
-        gap: 12px;
+        width: 100%;
+        min-width: 0;
+        position: relative;
+    }
+    .grid .verses.list .verse-button .verse-left {
+        grid-column: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+    }
+    .verse-checkbox {
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+        accent-color: var(--secondary);
     }
 
-    .grid .verses.list .verse-button span {
+    .grid .verses.list .verse-button .verse-num {
+        text-align: center;
+        margin: 0;
+        width: 55px;
+    }
+
+    .grid .verses.list .verse-button .verse-content {
+        min-width: 0;
+        max-width: none;
+        width: 100%;
+    }
+
+    /* Mobile-only: make list verses smaller */
+    @media (max-width: 600px) {
+        .grid .verses.list .verse-button {
+            font-size: 1.05em;
+        }
+        .grid .verses.list .verse-button .verse-content {
+            font-weight: normal;
+            color: var(--text);
+        }
+    }
+
+    .grid .verses.list .verse-button.selected {
+        background-color: transparent;
+        box-shadow: none;
+    }
+
+    .grid .verses.list .verse-button.selected::after {
+        content: "";
+        position: absolute;
+        left: -4px;
+        right: -4px;
+        top: 0;
+        bottom: 0;
+        background-color: rgba(255, 105, 180, 0.3);
+        box-shadow: inset 0 0 0 2px rgba(255, 105, 180, 0.6);
+        border-radius: 6px;
+        z-index: -1;
+    }
+
+    .grid .verses.list .verse-button .verse-num {
         flex-shrink: 0;
-        min-width: 40px;
     }
     .verse-button {
         display: flex;
@@ -676,8 +835,9 @@
         text-align: left;
         cursor: pointer;
     }
-    .grid .verses.list span {
-        max-width: 50px;
+    .grid .verses.list .verse-button .verse-content,
+    .grid .verses.list .verse-button .verse-content span {
+        max-width: none;
     }
 
     .grid .books span {

@@ -186,10 +186,16 @@ export interface Timer {
     end?: number
     event?: string
     time?: string
+
+    warn?: boolean
+    warnOffset?: number
+    warnColor?: string
+    warnFlash?: boolean
+
     overflow?: boolean
     overflowColor?: string
-    overflowBlink?: boolean
-    overflowBlinkOffset?: number // start blinking before the time
+    overflowFlash?: boolean
+
     // format?: string
     // paused?: boolean
 }

@@ -1,14 +1,12 @@
-import Bonjour, { type Bonjour as BonjourInstance } from "bonjour-service"
+import Bonjour from "bonjour-service"
 import crypto from "crypto"
 import os from "os"
 
-let bonjour: BonjourInstance | null = null
-try {
-    bonjour = new Bonjour()
-} catch (err) {
-    // likely no permission on macOS (System Settings > Privacy & Security > Network Access)
-    console.warn("Bonjour: Failed to initialize:", err.message)
-}
+const bonjour = new Bonjour({}, (err: any) => {
+    // might not have permission on macOS (System Settings > Privacy & Security > Network Access)
+    // catch "send EHOSTUNREACH 224.0.0.251:5353" on macOS
+    console.warn("Bonjour: An error occurred:", err.message)
+})
 
 const ips = getLocalIPs()
 

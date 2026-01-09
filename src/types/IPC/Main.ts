@@ -4,7 +4,7 @@ import type { Stats } from "fs"
 import type { Bible } from "json-bible/lib/Bible"
 import type { ContentFile, ContentLibraryCategory, ContentProviderId } from "../../electron/contentProviders/base/types"
 import type { _store } from "../../electron/data/store"
-import type { ErrorLog, FileData, LessonsData, LyricSearchResult, MainFilePaths, Media, OS, Subtitle } from "../Main"
+import type { ErrorLog, FileFolder, LessonsData, LyricSearchResult, MainFilePaths, Media, OS, Subtitle } from "../Main"
 import type { Output } from "../Output"
 import type { Folders, Projects } from "../Projects"
 import type { Dictionary, Resolution, Themes } from "../Settings"
@@ -14,6 +14,7 @@ import type { StageLayouts } from "../Stage"
 import type { Event } from "./../Calendar"
 import type { History } from "./../History"
 import type { SaveData, SaveListSyncedSettings } from "./../Save"
+import { SyncProviderId } from "../../electron/cloud/syncManager"
 
 export const MAIN = "MAIN"
 
@@ -50,6 +51,7 @@ export enum Main {
     FULLSCREEN = "FULLSCREEN",
     /////
     IMPORT = "IMPORT",
+    IMPORT_FILES = "IMPORT_FILES",
     BIBLE = "BIBLE",
     SHOW = "SHOW",
     SAVE = "SAVE",
@@ -125,10 +127,15 @@ export enum Main {
     BUNDLE_MEDIA_FILES = "BUNDLE_MEDIA_FILES",
     FILE_INFO = "FILE_INFO",
     READ_FOLDER = "READ_FOLDER",
-    READ_FOLDERS = "READ_FOLDERS",
     READ_FILE = "READ_FILE",
     OPEN_FOLDER = "OPEN_FOLDER",
     OPEN_FILE = "OPEN_FILE",
+    // SYNC
+    CAN_SYNC = "CAN_SYNC",
+    GET_TEAMS = "GET_TEAMS",
+    CLOUD_DATA = "CLOUD_DATA",
+    CLOUD_CHANGED = "CLOUD_CHANGED",
+    CLOUD_SYNC = "CLOUD_SYNC",
     // Provider-based routing
     PROVIDER_LOAD_SERVICES = "PROVIDER_LOAD_SERVICES",
     PROVIDER_DISCONNECT = "PROVIDER_DISCONNECT",
@@ -145,6 +152,7 @@ export interface MainSendPayloads {
     [Main.LOG]: any
     /////
     [Main.IMPORT]: { channel: string; format: { name: string; extensions: string[] }; settings?: any }
+    [Main.IMPORT_FILES]: string[]
     [Main.BIBLE]: { id: string; name: string }
     [Main.SHOW]: { id: string; name: string }
     [Main.SAVE]: SaveData
@@ -197,15 +205,20 @@ export interface MainSendPayloads {
     [Main.LOCATE_MEDIA_FILE]: { fileName: string; splittedPath: string[]; folders: string[]; ref: { showId: string; mediaId: string; cloudId: string } }
     [Main.GET_SIMILAR]: { paths: string[] }
     [Main.FILE_INFO]: string
-    [Main.READ_FOLDER]: { path: string; disableThumbnails?: boolean; listFilesInFolders?: boolean }
-    [Main.READ_FOLDERS]: { path: string }[]
+    [Main.READ_FOLDER]: { path: string | string[]; depth?: number; generateThumbnails?: boolean; captureFolderContent?: boolean }
     [Main.READ_FILE]: { path: string }
     [Main.OPEN_FOLDER]: { channel: string; title?: string; path?: string }
     [Main.OPEN_FILE]: { id: string; channel: string; title?: string; filter: any; multiple: boolean; read?: boolean }
+    // SYNC
+    [Main.CAN_SYNC]?: { id: SyncProviderId }
+    [Main.GET_TEAMS]?: { id: SyncProviderId }
+    [Main.CLOUD_DATA]: { id: SyncProviderId; churchId: string; teamId: string }
+    [Main.CLOUD_CHANGED]: { id: SyncProviderId; churchId: string; teamId: string }
+    [Main.CLOUD_SYNC]: { id: SyncProviderId; churchId: string; teamId: string; method: "merge" | "read_only" }
     // Provider-based routing
-    [Main.PROVIDER_LOAD_SERVICES]: { providerId: ContentProviderId }
+    [Main.PROVIDER_LOAD_SERVICES]: { providerId: ContentProviderId; cloudOnly?: boolean }
     [Main.PROVIDER_DISCONNECT]: { providerId: ContentProviderId; scope?: string }
-    [Main.PROVIDER_STARTUP_LOAD]: { providerId: ContentProviderId; scope?: string; data?: any }
+    [Main.PROVIDER_STARTUP_LOAD]: { providerId: ContentProviderId; scope?: string; data?: any; cloudOnly?: boolean }
     // Content Library
     [Main.GET_CONTENT_LIBRARY]: { providerId: ContentProviderId }
     [Main.GET_PROVIDER_CONTENT]: { providerId: ContentProviderId; key: string }
@@ -273,9 +286,14 @@ export interface MainReturnPayloads {
     [Main.GET_SIMILAR]: { path: string; name: string }[]
     [Main.LOCATE_MEDIA_FILE]: Promise<{ path: string; ref: { showId: string; mediaId: string; cloudId: string } } | undefined>
     [Main.FILE_INFO]: { path: string; stat: Stats; extension: string; folder: boolean } | null
-    [Main.READ_FOLDER]: { path: string; files: FileData[]; filesInFolders: any[]; folderFiles: { [key: string]: any[] } }
-    [Main.READ_FOLDERS]: Promise<{ [key: string]: FileData[] }>
+    [Main.READ_FOLDER]: Promise<{ [key: string]: FileFolder }>
     [Main.READ_FILE]: { content: string }
+    // SYNC
+    [Main.CAN_SYNC]: Promise<boolean>
+    [Main.GET_TEAMS]: Promise<{ id: string; churchId: string; name: string }[]>
+    [Main.CLOUD_DATA]: Promise<boolean>
+    [Main.CLOUD_CHANGED]: Promise<boolean>
+    [Main.CLOUD_SYNC]: Promise<{ success?: boolean; error?: string; changedFiles: any[] }>
     // Provider-based routing
     [Main.PROVIDER_DISCONNECT]: { success: boolean }
     // Content Library

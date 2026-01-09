@@ -2,7 +2,7 @@ import { app, screen, type BrowserWindow } from "electron"
 import path from "path"
 import { isProd, isWindows, setAutoProfile } from ".."
 import { catchErrors } from "../IPC/responsesMain"
-import { doesPathExist } from "./files"
+import { detectNewFiles, doesPathExist } from "./files"
 
 export function parseCommandLineArgs() {
     const result: { profile?: string } = {}
@@ -30,6 +30,8 @@ export function mainWindowInitialize() {
 
     // set app title to app name
     if (isWindows) app.setAppUserModelId(app.name)
+
+    detectNewFiles()
 
     if (!isProd) return
 

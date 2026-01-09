@@ -206,7 +206,7 @@
             {/key}
 
             {#if attributionString}
-                <p class="attributionString">{attributionString}</p>
+                <p class="attributionString">{attributionString.slice(0, 135)}</p>
             {/if}
         {/if}
     </Zoomed>
@@ -215,7 +215,7 @@
     <div class="settings border">
         <!-- Template -->
         <InputRow style={templateBackground ? "" : "margin-bottom: 10px;"}>
-            <MaterialPopupButton label="info.template" disabled={!!styleScriptureTemplate} value={templateId} name={template?.name} popupId="select_template" icon="templates" on:change={(e) => update("template", e.detail)} allowEmpty={!isDefault} />
+            <MaterialPopupButton id="scripture_drawer" label="info.template" disabled={!!styleScriptureTemplate} value={templateId} name={template?.name} popupId="select_template" icon="templates" on:change={(e) => update("template", e.detail)} allowEmpty={!isDefault} />
             {#if (templateId && template) || styleScriptureTemplate}
                 <MaterialButton title="titlebar.edit" icon="edit" on:click={editTemplate} />
             {/if}
@@ -257,7 +257,7 @@
         {#if expanded}
             <!-- Verse numbers -->
             <InputRow arrow={useOldSystem && $scriptureSettings.verseNumbers} bind:open={verseMenuOpened}>
-                <MaterialToggleSwitch label="scripture.verse_numbers" style="width: 100%;" checked={$scriptureSettings.verseNumbers} defaultValue={false} on:change={(e) => update("verseNumbers", e.detail)} />
+                <MaterialToggleSwitch label="scripture.verse_numbers" style="width: 100%;" checked={$scriptureSettings.verseNumbers} on:change={(e) => update("verseNumbers", e.detail)} />
 
                 <svelte:fragment slot="menu">
                     {#if $scriptureSettings.verseNumbers}

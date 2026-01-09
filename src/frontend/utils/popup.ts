@@ -75,6 +75,7 @@ import Variable from "../components/main/popups/Variable.svelte"
 import { activePopup, popupData } from "../stores"
 import NowPlaying from "../components/main/popups/NowPlaying.svelte"
 import Restore from "../components/main/popups/Restore.svelte"
+import CloudSync from "../components/main/popups/CloudSync.svelte"
 
 export const popups: { [key in Popups]: ComponentType } = {
     initialize: Initialize,
@@ -146,6 +147,7 @@ export const popups: { [key in Popups]: ComponentType } = {
     custom_action: CustomAction,
     slide_midi: SlideMidi,
     connect: Connect,
+    cloud_sync: CloudSync,
     cloud_update: CloudUpdate,
     cloud_method: CloudMethod,
     sync_categories: ChurchAppsSyncCategories,

@@ -531,6 +531,21 @@ const slideDrop = {
             delete newData.contentProvider
             history.newData = newData
 
+            // change slide group name if same name as previous media
+            const showId = get(activeShow)?.id || ""
+            const layoutRef = getLayoutRef()
+            const slideId = layoutRef[drop.index!]?.id
+            const slide = _show(showId).slides([slideId]).get()?.[0] || {}
+            const currentBgId = layoutRef[drop.index!]?.data.background || ""
+            const mediaName = removeExtension(_show(showId).media([currentBgId]).get()?.[0]?.name || "")
+            if (newData.name && slide.group === mediaName) {
+                showsCache.update((shows) => {
+                    if (!shows[showId]) return shows
+                    shows[showId].slides[slideId].group = removeExtension(newData.name)
+                    return shows
+                })
+            }
+
             return history
         }
 

@@ -1,4 +1,5 @@
 import type fs from "fs"
+import type { Stats } from "fs"
 import type { dataFolderNames } from "../electron/utils/files"
 import type { Cropping } from "./Settings"
 
@@ -150,6 +151,8 @@ export interface ActiveEdit {
     showId?: string // only used to reset to slide 0 if changed ($activeShow.id is actually used)
     data?: any // camera data
 }
+
+export type FileFolder = { isFolder: false; path: string; name: string; thumbnailPath?: string; stats: Stats } | { isFolder: true; path: string; name: string; files: string[] }
 
 export type MediaFit = "contain" | "cover" | "fill" | "blur"
 export interface Media {
@@ -370,6 +373,7 @@ export type Popups =
     | "custom_action"
     | "slide_midi"
     | "connect"
+    | "cloud_sync"
     | "cloud_update"
     | "cloud_method"
     | "sync_categories"

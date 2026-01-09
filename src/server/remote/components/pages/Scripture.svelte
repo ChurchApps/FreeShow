@@ -7,7 +7,7 @@
     import { keysToID } from "../../../common/util/helpers"
     import { translate } from "../../util/helpers"
     import { send } from "../../util/socket"
-    import { dictionary, isCleared, scriptureCache, scriptures, scriptureSearchResults, scriptureViewList, outSlide, outShow, openedScripture, collectionId, selectedTranslationIndex } from "../../util/stores"
+    import { dictionary, isCleared, scriptureCache, scriptures, scriptureSearchResults, scriptureViewList, scriptureMultiSelect, selectedVerses, outSlide, outShow, openedScripture, collectionId, selectedTranslationIndex } from "../../util/stores"
     import Clear from "../show/Clear.svelte"
     import ScriptureContent from "./ScriptureContent.svelte"
     import { sanitizeVerseText } from "../../../../common/scripture/sanitizeVerseText"
@@ -17,6 +17,12 @@
 
     // Set default to list mode in tablet
     $: if (tablet) scriptureViewList.set(true)
+
+    // Multi-select is list-only. If the user switches to grid mode, exit multi-select.
+    $: if (!$scriptureViewList && $scriptureMultiSelect) {
+        scriptureMultiSelect.set(false)
+        selectedVerses.set([])
+    }
     export let searchValueFromDrawer: string = ""
 
     const dispatch = createEventDispatcher<{ "search-clear": void }>()
@@ -941,6 +947,28 @@
                     <Button on:click={() => scriptureViewList.set(!$scriptureViewList)} center dark class="floating-control-button" title={$scriptureViewList ? "Grid View" : "List View"}>
                         <Icon id={$scriptureViewList ? "list" : "grid"} white size={1.2} />
                     </Button>
+                    <Button 
+                        on:click={() => {
+                            scriptureMultiSelect.set(!$scriptureMultiSelect)
+                            if (!$scriptureMultiSelect) selectedVerses.set([])
+                        }} 
+                        center 
+                        dark 
+                        class="floating-control-button {$scriptureMultiSelect ? 'active' : ''}"
+                        title={$scriptureMultiSelect ? "Exit Multi-Select" : "Multi-Select Verses"}>
+                        <Icon id={$scriptureMultiSelect ? "close" : "check"} white size={1.2} />
+                    </Button>
+                    {#if $scriptureMultiSelect && $selectedVerses.length > 0}
+                        <Button 
+                            on:click={() => scriptureContentRef?.playSelectedVerses?.()} 
+                            center 
+                            dark 
+                            class="floating-control-button show-selected-button" 
+                            title="Show Selected ({$selectedVerses.length})">
+                            <Icon id="play" white size={1.2} />
+                            <span class="verse-count">{$selectedVerses.length}</span>
+                        </Button>
+                    {/if}
                 </div>
             {/if}
         {:else if checkScriptureExists($openedScripture, $collectionId)}
@@ -952,6 +980,20 @@
         <div class="controls-section">
             {#if showPrevNext}
                 <div class="navigation-buttons">
+                    {#if depth === 2 && $scriptureViewList}
+                        <Button
+                            style="flex: 0;"
+                            on:click={() => {
+                                scriptureMultiSelect.set(!$scriptureMultiSelect)
+                                if (!$scriptureMultiSelect) selectedVerses.set([])
+                            }}
+                            center
+                            dark
+                            title={$scriptureMultiSelect ? "Exit Multi-Select" : "Multi-Select Verses"}
+                        >
+                            <Icon id={$scriptureMultiSelect ? "close" : "check"} white />
+                        </Button>
+                    {/if}
                     <Button style="flex: 1;" on:click={previous} center dark>
                         <Icon size={1.2} id="previous" />
                     </Button>
@@ -959,16 +1001,42 @@
                         <Icon size={1.2} id="next" />
                     </Button>
                     {#if depth === 2}
-                        <Button style="flex: 0;" on:click={() => scriptureViewList.set(!$scriptureViewList)} center dark>
-                            <Icon id={$scriptureViewList ? "grid" : "list"} white />
-                        </Button>
+                        {#if $scriptureViewList && $scriptureMultiSelect && $selectedVerses.length > 0}
+                            <Button style="flex: 0;" on:click={() => scriptureContentRef?.playSelectedVerses?.()} center dark title="Show Selected ({$selectedVerses.length})">
+                                <Icon id="play" white />
+                            </Button>
+                        {:else}
+                            <Button style="flex: 0;" on:click={() => scriptureViewList.set(!$scriptureViewList)} center dark>
+                                <Icon id={$scriptureViewList ? "grid" : "list"} white />
+                            </Button>
+                        {/if}
                     {/if}
                 </div>
             {:else if depth === 2}
                 <div class="navigation-buttons center-toggle">
-                    <Button on:click={() => scriptureViewList.set(!$scriptureViewList)} center dark>
-                        <Icon id={$scriptureViewList ? "grid" : "list"} white />
-                    </Button>
+                    {#if $scriptureViewList}
+                        <Button
+                            style="flex: 0;"
+                            on:click={() => {
+                                scriptureMultiSelect.set(!$scriptureMultiSelect)
+                                if (!$scriptureMultiSelect) selectedVerses.set([])
+                            }}
+                            center
+                            dark
+                            title={$scriptureMultiSelect ? "Exit Multi-Select" : "Multi-Select Verses"}
+                        >
+                            <Icon id={$scriptureMultiSelect ? "close" : "check"} white />
+                        </Button>
+                    {/if}
+                    {#if $scriptureViewList && $scriptureMultiSelect && $selectedVerses.length > 0}
+                        <Button on:click={() => scriptureContentRef?.playSelectedVerses?.()} center dark title="Show Selected ({$selectedVerses.length})">
+                            <Icon id="play" white />
+                        </Button>
+                    {:else}
+                        <Button on:click={() => scriptureViewList.set(!$scriptureViewList)} center dark>
+                            <Icon id={$scriptureViewList ? "grid" : "list"} white />
+                        </Button>
+                    {/if}
                 </div>
             {/if}
             {#if !$isCleared.all && !tablet}
@@ -1501,14 +1569,45 @@
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
+        position: relative !important;
+    }
+
+    :global(.floating-control-button.active) {
+        background: rgba(255, 105, 180, 0.25) !important;
     }
 
     :global(.floating-control-button:hover) {
         background: rgb(255 255 255 / 0.1) !important;
     }
 
+    :global(.floating-control-button.active:hover) {
+        background: rgba(255, 105, 180, 0.35) !important;
+    }
+
     :global(.floating-control-button:active) {
         background: rgb(255 255 255 / 0.15) !important;
+    }
+
+    :global(.floating-control-button.show-selected-button) {
+        gap: 6px !important;
+    }
+
+    :global(.floating-control-button .verse-count) {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75em;
+        line-height: 18px;
+        font-weight: 600;
+        background: var(--secondary);
+        color: var(--primary-darkest);
+        height: 18px;
+        padding: 0 6px;
+        border-radius: 999px;
+        min-width: 18px;
+        text-align: center;
+        position: relative;
+        top: -1px;
     }
 
     /* Tablet Search Results */

@@ -1,3 +1,6 @@
+import { machineIdSync } from "node-machine-id"
+import os from "os"
+
 // clone objects
 export function clone<T>(object: T): T {
     if (typeof object !== "object") return object
@@ -37,4 +40,17 @@ export function waitUntilValueIsDefined(value: () => any, intervalTime = 50, tim
             clearInterval(interval)
         }
     })
+}
+
+export function getMachineId(): string {
+    try {
+        return machineIdSync()
+    } catch (err) {
+        console.warn("Could not get machine ID:", err)
+
+        // fallback to a hash of hostname + username + platform
+        const crypto = require("crypto")
+        const fallbackId = `${os.hostname()}-${os.userInfo().username}-${os.platform()}`
+        return crypto.createHash("sha256").update(fallbackId).digest("hex")
+    }
 }

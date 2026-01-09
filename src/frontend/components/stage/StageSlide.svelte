@@ -43,7 +43,7 @@
     // { $activeTimers, $variables, $playingAudio, $playingAudioPaths, videoTime }
     let updater = 0
     const updaterInterval = setInterval(() => {
-        if (stageItems.some((a) => a.conditions)) updater++
+        if (stageItems.some((a) => a?.conditions)) updater++
     }, 1000)
     onDestroy(() => clearInterval(updaterInterval))
 </script>

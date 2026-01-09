@@ -142,6 +142,7 @@ function streamToDisk(readStream: NodeJS.ReadableStream, outputPath: string, nam
     })
 }
 
+const STRING_CONVERT_LIMIT = 50 * 1024 * 1024 // 50 MB
 function bufferInMemory(readStream: NodeJS.ReadableStream, name: string, extension: string, asBuffer: boolean, data: { content: Buffer | string; name: string; extension: string }[], zipfile: yauzl.ZipFile) {
     const chunks: Buffer[] = []
 
@@ -151,7 +152,13 @@ function bufferInMemory(readStream: NodeJS.ReadableStream, name: string, extensi
         let content: Buffer | string = Buffer.concat(chunks)
 
         // import as string unless asBuffer is true, or it's a .pro file
-        if (extension !== "pro" && (!asBuffer || extension === "json")) {
+        const stringType = extension !== "pro" && (!asBuffer || extension === "json")
+        if (stringType) {
+            if (content.length > STRING_CONVERT_LIMIT) {
+                console.warn(`Skipped converting large file to string: ${name} (${content.length} bytes)`)
+                return
+            }
+
             content = content.toString("utf8")
         }
 

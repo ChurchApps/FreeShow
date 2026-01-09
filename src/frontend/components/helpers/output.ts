@@ -4,7 +4,7 @@ import { OUTPUT } from "../../../types/Channels"
 import { Main } from "../../../types/IPC/Main"
 import type { Output, Outputs } from "../../../types/Output"
 import type { Resolution, Styles } from "../../../types/Settings"
-import type { Item, Layout, LayoutRef, Media, OutSlide, Show, Slide, SlideData, Template, Templates, TemplateSettings, Transition } from "../../../types/Show"
+import type { Item, Layout, LayoutRef, Line, Media, OutSlide, Show, Slide, SlideData, Template, Templates, TemplateSettings, Transition } from "../../../types/Show"
 import { AudioAnalyser } from "../../audio/audioAnalyser"
 import { fadeinAllPlayingAudio, fadeoutAllPlayingAudio } from "../../audio/audioFading"
 import { sendMain } from "../../IPC/main"
@@ -187,15 +187,12 @@ export function startFolderTimer(folderPath: string, file: { type: string; path:
 
 let justLogged = ""
 function appendShowUsage(showId: string) {
-    console.log(get(special).logSongUsage)
     if (!get(special).logSongUsage) return
 
-    console.log(get(showsCache), showId)
     const show = get(showsCache)[showId]
     if (!show) return
 
     // only log once in a row
-    console.log(justLogged)
     if (show.name === justLogged) return
     justLogged = show.name || ""
 
@@ -412,6 +409,16 @@ export function findMatchingOut(id: string, updater: Outputs = get(outputs)): st
     // }
 
     return match
+}
+
+// used for checking if style template should be used as slide preview - only if all outputs have it
+export function allOutputsHasStyleTemplate(isScripture: boolean = false) {
+    const outputs = getAllNormalOutputs()
+    return outputs.every((output) => {
+        const style = output.style ? get(styles)[output.style] || null : null
+        const template = style?.[isScripture ? "templateScripture" : "template"]
+        return !!template
+    })
 }
 
 export function refreshOut(refresh = true) {
@@ -827,6 +834,9 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
         item.style = templateItem.style || ""
         item.align = templateItem.align || ""
 
+        // use template image unless it's empty
+        if (type === "media" && templateItem.src) item.src = templateItem.src
+
         // don't alter text if item mode
         if (mode === "item") return finish()
 
@@ -860,6 +870,7 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
             )
         ] as string[]
 
+        // && !text.value?.includes("{scripture")
         const hasDynamicValue = templateItem?.lines?.some((line) => line?.text?.some((text) => text.value?.includes("{")))
 
         item.lines?.forEach((line, j) => {
@@ -871,7 +882,22 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
 
             line.align = templateLine?.align || ""
             line.text?.forEach((text, k) => {
-                const templateText = templateLine?.text?.[k] || templateLine?.text?.[0]
+                // For scripture slides: match by placeholder type, not just index
+                let templateText: Line["text"][number] | undefined = templateLine?.text?.[k]
+                if (!templateText && templateLine?.text?.some((t) => t?.value?.includes("{scripture_"))) {
+                    // If no exact index match and this is a scripture template, find the right placeholder
+                    // Verse numbers have customType "disableTemplate", verse text doesn't
+                    if (text.customType?.includes("disableTemplate")) {
+                        // This is a verse number, find {scripture_number} template
+                        templateText = templateLine.text.find((t) => t?.value?.includes("{scripture_number}"))
+                    } else {
+                        // This is verse text, find {scripture_text} template
+                        templateText = templateLine.text.find((t) => t?.value?.includes("{scripture_text}"))
+                    }
+                }
+                // Final fallback to first template text
+                if (!templateText) templateText = templateLine?.text?.[0]
+
                 if (!text.customType?.includes("disableTemplate") && !templateText?.value?.includes("{scripture_number}")) {
                     let style = templateText?.style || ""
 
@@ -1034,6 +1060,7 @@ function removeTextValue(items: Item[]) {
     items.forEach((item) => {
         if (!item.lines) return
 
+        // && !text.value?.includes("{scripture")
         const hasDynamicValue = item.lines.some((line) => line.text?.some((text) => text.value?.includes("{")))
 
         item.lines = item.lines.map((line) => {
@@ -1147,6 +1174,8 @@ export function slideHasAutoSizeItem(slide: Slide | Template) {
 }
 
 export function setTemplateStyle(outSlide: OutSlide | null, currentStyle: Styles, items: Item[] | undefined, outputId: string) {
+    if (!Array.isArray(items)) return []
+
     const isDrawerScripture = outSlide?.id === "temp"
     const slideItems = isDrawerScripture ? outSlide.tempItems : items?.filter(checkSpecificOutput)
 

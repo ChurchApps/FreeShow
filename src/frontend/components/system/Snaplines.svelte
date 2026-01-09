@@ -27,7 +27,8 @@
         let moveCondition: boolean = mouse.e.target.closest(".line") || ((!mouse.e.target.closest(".edit") || notTextBox || mouse.e.altKey) && !mouse.e.target.closest(".square")) || (control && !mouse.e.target.closest(".square")) || mouse.e.buttons === 4
 
         let keepAspectRatio = e.shiftKey
-        const square = mouse.item.type === "icon"
+        // WIP square option currently not working well (also custom SVG icons can be any ratio)
+        const square = false // mouse.item.type === "icon"
 
         if (mouse.e.target.closest(".rotate")) {
             let rotation = rotateBox(e, mouse, ratio)

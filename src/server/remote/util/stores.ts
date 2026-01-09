@@ -53,6 +53,8 @@ export let categories: Writable<{ [key: string]: any }> = writable({})
 export let resized: Writable<{ [key: string]: number }> = writable({})
 export let scriptureViewList = writable(false)
 export let scriptureWrapText = writable(false)
+export let scriptureMultiSelect = writable(false)
+export let selectedVerses = writable<string[]>([])
 export let openedScripture = writable(localStorage.getItem("scripture") || "")
 export let collectionId = writable(localStorage.getItem("collectionId") || "")
 

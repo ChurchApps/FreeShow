@@ -17,7 +17,8 @@
     import TextInput from "../../inputs/TextInput.svelte"
     import Loader from "../../main/Loader.svelte"
     import Center from "../../system/Center.svelte"
-    import { formatBibleText, getVerseIdParts, getVersePartLetter, joinRange, loadJsonBible, moveSelection, outputIsScripture, playScripture, scriptureRangeSelect, splitText, swapPreviewBible } from "./scripture"
+    import { formatBibleText, getVerseIdParts, getVersePartLetter, joinRange, loadJsonBible, moveSelection, outputIsScripture, playScripture, scriptureRangeSelect, sortScriptureSelection, splitText, swapPreviewBible } from "./scripture"
+    import { wait } from "../../../utils/common"
 
     export let active: string | null
     export let searchValue: string
@@ -772,11 +773,14 @@
     let chapterLengths: { [key: number]: number } = {}
     $: if ($activeTriggerFunction === "scripture_next") _moveSelection(false)
     $: if ($activeTriggerFunction === "scripture_previous") _moveSelection(true)
-    function _moveSelection(moveLeft: boolean) {
+    async function _moveSelection(moveLeft: boolean) {
         if (!activeReference.book) return
 
+        // WIP this seems like duplicated code
+        // most of the time the code underneath is never run I think, but it's the main code
+
         // Check if we're dealing with split verses
-        const currentVerses = activeReference.verses[0] || []
+        const currentVerses = sortScriptureSelection(activeReference.verses[0] || [])
         const currentVerseId = currentVerses[0]?.toString()
         const selectionCount = currentVerses.length
         if (currentVerseId && splittedVerses.length) {
@@ -791,6 +795,8 @@
                     for (let i = 0; i < selectionCount; i++) {
                         newSelection.push(splittedVerses[newIndex + i].id)
                     }
+
+                    await wait(1) // this fixes API next not changing selection
                     openVerse([newSelection])
                     if (isActiveInOutput) setTimeout(playScripture)
                     return
@@ -823,7 +829,7 @@
         const selection = {
             book: Number(activeReference.book),
             chapters: [Number(activeReference.chapters[0])],
-            verses: activeReference.verses[0] || []
+            verses: sortScriptureSelection(activeReference.verses[0] || [])
         }
 
         // store
@@ -840,7 +846,7 @@
     function getReference(_updater: any) {
         const book = data[previewBibleId]?.bookData?.name || ""
         const referenceDivider = $scriptureSettings.referenceDivider || ":"
-        const range = joinRange(activeReference.verses[0] || [])
+        const range = joinRange(sortScriptureSelection(activeReference.verses[0] || []))
         const reference = `${book} ${activeReference.chapters}${referenceDivider}${range}`
         return reference
     }

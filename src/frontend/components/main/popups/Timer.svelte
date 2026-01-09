@@ -153,11 +153,16 @@
             newTimer.end = timer.end === undefined ? 0 : Number(timer.end)
         }
 
+        if (timer.warn) {
+            newTimer.warn = true
+            newTimer.warnOffset = timer.warnOffset || 30
+            newTimer.warnColor = timer.warnColor || "#FF8000"
+            newTimer.warnFlash = !!timer.warnFlash
+        }
         if (timer.overflow) {
-            newTimer.overflow = timer.overflow
-            newTimer.overflowColor = timer.overflowColor
-            newTimer.overflowBlink = timer.overflowBlink
-            newTimer.overflowBlinkOffset = timer.overflowBlinkOffset
+            newTimer.overflow = true
+            newTimer.overflowColor = timer.overflowColor || "#FF4136"
+            // newTimer.overflowFlash = timer.overflowFlash
         }
 
         return newTimer
@@ -171,6 +176,16 @@
     }
 
     const MAX_MINUTES = 60 * 24 * 30 // 365
+
+    $: warningMenuOpened = false
+    $: overflowMenuOpened = false
+
+    function updateTimerValue(key: string, value: any) {
+        timer[key] = value
+
+        if (key === "warn") warningMenuOpened = !!value
+        else if (key === "overflow") overflowMenuOpened = !!value
+    }
 </script>
 
 {#if (!currentTimer?.id || created) && !chosenType}
@@ -262,17 +277,22 @@
         </div>
     {/if}
 
-    <InputRow arrow>
-        <MaterialToggleSwitch label="timer.overflow" style="width: 100%;" checked={timer.overflow} defaultValue={false} on:change={(e) => (timer.overflow = e.detail)} />
+    <InputRow arrow={timer.warn} bind:open={warningMenuOpened}>
+        <MaterialToggleSwitch label="timer.warn_early" style="width: 100%;" checked={timer.warn} defaultValue={false} on:change={(e) => updateTimerValue("warn", e.detail)} />
 
         <div slot="menu">
-            <MaterialColorInput label="timer.overflow_color" disabled={!timer.overflow} value={timer.overflowColor || "#FF4136"} defaultValue="#FF4136" on:input={(e) => (timer.overflowColor = e.detail)} />
+            <MaterialNumberInput label="timer.warn_offset" value={timer.warnOffset || 30} min={1} defaultValue={30} max={Math.abs((timer.start ?? 300) - (timer.end || 0))} on:change={(e) => updateTimerValue("warnOffset", e.detail)} />
+            <MaterialColorInput label="edit.color" value={timer.warnColor || "#FF8000"} defaultValue="#FF8000" on:input={(e) => updateTimerValue("warnColor", e.detail)} />
+            <MaterialToggleSwitch label="timer.flash" checked={timer.warnFlash} defaultValue={false} on:change={(e) => updateTimerValue("warnFlash", e.detail)} />
+        </div>
+    </InputRow>
 
-            <MaterialToggleSwitch label="timer.overflow_blink" disabled={!timer.overflow} checked={timer.overflowBlink} defaultValue={false} on:change={(e) => (timer.overflowBlink = e.detail)} />
-            {#if timer.overflowBlink}
-                <!-- conditions.seconds -->
-                <MaterialNumberInput label="timer.overflow_blink_offset" disabled={!timer.overflow} value={timer.overflowBlinkOffset || 0} defaultValue={0} max={Math.abs((timer.start ?? 300) - (timer.end || 0))} on:change={(e) => (timer.overflowBlinkOffset = e.detail)} />
-            {/if}
+    <InputRow arrow={timer.overflow} bind:open={overflowMenuOpened}>
+        <MaterialToggleSwitch label="timer.overflow" style="width: 100%;" checked={timer.overflow} defaultValue={false} on:change={(e) => updateTimerValue("overflow", e.detail)} />
+
+        <div slot="menu">
+            <MaterialColorInput label="edit.color" value={timer.overflowColor || "#FF4136"} defaultValue="#FF4136" on:input={(e) => updateTimerValue("overflowColor", e.detail)} />
+            <!-- <MaterialToggleSwitch label="timer.flash" checked={timer.overflowFlash} defaultValue={false} on:change={(e) => updateTimerValue("overflowFlash", e.detail)} /> -->
         </div>
     </InputRow>
 {/if}

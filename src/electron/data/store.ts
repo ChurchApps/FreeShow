@@ -227,6 +227,15 @@ export function setStoreValue(data: { file: "config" | keyof typeof _store; key:
     store?.set(data.key, data.value)
 }
 
+export function setStore(store: Store<any> | undefined, newData: any) {
+    try {
+        store?.clear()
+        store?.set(newData)
+    } catch (err) {
+        console.warn("Failed to write store:", err)
+    }
+}
+
 /// MIGRATE
 
 function moveStore(key: keyof typeof storeFilesData, previousLocation: string, setup: boolean = false) {
