@@ -42,8 +42,6 @@ export async function chooseTeam(team: { id: string; churchId: string; name: str
     })
 
     const existingData = await requestMain(Main.CLOUD_DATA, { id, churchId: team.churchId, teamId: team.id })
-    console.log("Existing data:", existingData)
-
     if (!existingData) {
         syncWithCloud(true)
         return
@@ -58,7 +56,6 @@ export async function syncWithCloud(initialize: boolean = false) {
     if (isSyncing) return false
     // skip if synced less than half a minute ago
     if (Date.now() - lastSync < 30000) return false
-    lastSync = Date.now()
 
     const data = get(cloudSyncData)
     if (!data.enabled || !data.id || !data.team) return false
@@ -78,10 +75,15 @@ export async function syncWithCloud(initialize: boolean = false) {
     const status = await requestMain(Main.CLOUD_SYNC, { id: data.id as any, churchId: data.team.churchId, teamId: data.team.id, method }, () => {}, timeout)
     isSyncing = false
 
-    if (status.success) newToast("cloud.sync_complete")
-    else newToast("Error: " + (status.error || "Sync failed"))
+    if (!status.success) {
+        newToast("Error: " + (status.error || "Sync failed"))
+        return false
+    }
+
+    newToast("cloud.sync_complete")
 
     // console.log(status.changedFiles)
 
+    lastSync = Date.now()
     return true
 }
