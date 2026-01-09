@@ -15,7 +15,8 @@ export async function setupCloudSync(auto: boolean = false) {
 
     const teams = await requestMain(Main.GET_TEAMS)
     if (!teams.length) {
-        alertMessage.set("You can setup cloud sync with ChurchApps, but no teams were found in your account. Add in Serving>Plans>Ministries>Teams!")
+        const addTeam = "Get added to a team, or create one in B1.church>Serving>Plans>Ministy>Teams!"
+        alertMessage.set(auto ? "You can setup cloud sync with ChurchApps, but no teams were found in your account. " + addTeam : "No teams were found in your account. " + addTeam)
         activePopup.set("alert")
         return
     }

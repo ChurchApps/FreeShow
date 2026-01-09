@@ -58,7 +58,7 @@ class ChurchAppsSyncManager {
             httpsRequest(CONTENT_HOSTNAME, path, "HEAD", {}, {}, (err: any, data?: any) => {
                 if (err) {
                     // not existing
-                    if (err.statusCode === 404) return resolve(null)
+                    if (err.statusCode === 404 || err.statusCode === 403) return resolve(null)
 
                     console.error("Failed to get headers:", err)
                     return resolve(null)
@@ -80,12 +80,11 @@ class ChurchAppsSyncManager {
 
             function response(err: any, filePath?: string) {
                 if (err) {
-                    // not existing
-                    if (err.statusCode === 404) return resolve(null)
+                    // likely not existing yet
+                    if (err.statusCode === 404 || err.statusCode === 403) return resolve(null)
 
-                    //Quietly fail.  The file may not exist yet.
-                    //console.error("Failed to fetch content:", err)
-                    //sendToMain(ToMain.ALERT, "Failed to get data: " + err.message)
+                    console.error("Failed to fetch content:", err)
+                    sendToMain(ToMain.ALERT, "Failed to get data: " + err.message)
                     return resolve(null)
                 }
 
@@ -108,7 +107,8 @@ class ChurchAppsSyncManager {
             httpsRequest(HOSTNAME, path, "POST", headers, params, (err, data: Buffer) => {
                 if (err) {
                     console.error("Failed to get token:", err)
-                    sendToMain(ToMain.ALERT, "Failed to upload data: " + err.message)
+                    if (err.statusCode === 401) sendToMain(ToMain.ALERT, "Could not upload data. Make sure you are member of a team.")
+                    else sendToMain(ToMain.ALERT, "Failed to upload data: " + err.message)
                     return resolve(null)
                 }
 

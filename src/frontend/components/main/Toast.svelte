@@ -12,6 +12,8 @@
     const clearEarly = [
         { if: "toast.saving", when: "toast.saved" },
         { if: "cloud.syncing", when: "cloud.sync_complete" },
+        { if: "settings.backup_started", when: "settings.backup_finished" },
+        { if: "settings.restore_started", when: "settings.restore_finished" },
         { if: "toast.recording_started", when: "toast.recording_stopped" }
     ]
 

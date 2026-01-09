@@ -123,7 +123,7 @@ export function contentProviderSync() {
     setTimeout(() => {
         const hasDriveSync = typeof get(driveKeys) === "object" && Object.keys(get(driveKeys)).length
         if (!Object.keys(get(providerConnections)).length && !get(activePopup) && Math.random() < (hasDriveSync ? 0.5 : 0.2)) {
-            alertMessage.set("You can now set up free cloud sync with ChurchApps! Go to Settings>Connection to log in." + (hasDriveSync ? "<br>It's recommended to switch over from your current Google Sync!" : ""))
+            alertMessage.set("You can now set up free cloud sync with ChurchApps! Go to Settings>Files to log in." + (hasDriveSync ? "<br>It's recommended to switch over from your current Google Sync!" : ""))
             activePopup.set("alert")
         }
     }, 2000)

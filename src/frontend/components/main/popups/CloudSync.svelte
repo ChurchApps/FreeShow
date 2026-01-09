@@ -16,8 +16,8 @@
 </script>
 
 {#if type === "choose_team"}
-    <p class="tip">Select a team associated with this computer</p>
-    <MaterialMultiChoice options={$popupData.teams} on:click={teamChosen} />
+    <p class="tip">Select a team where you want to sync the data.</p>
+    <MaterialMultiChoice options={$popupData.teams} on:click={teamChosen} highlightFirst={false} />
 
     <!-- <CombinedInput style="margin-top: 10px;width: initial;">
         <MaterialButton style="width: 100%;" icon="arrow_forward" on:click={() => activePopup.set(null)}>
