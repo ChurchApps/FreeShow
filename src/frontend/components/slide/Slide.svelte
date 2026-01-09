@@ -300,7 +300,7 @@
     let updater = 0
     onMount(() => {
         const interval = setInterval(() => {
-            if (itemsList.find((a) => a.conditions)) updater++
+            if (itemsList.find((a) => a?.conditions)) updater++
         }, 3000)
 
         return () => {

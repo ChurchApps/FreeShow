@@ -1174,6 +1174,8 @@ export function slideHasAutoSizeItem(slide: Slide | Template) {
 }
 
 export function setTemplateStyle(outSlide: OutSlide | null, currentStyle: Styles, items: Item[] | undefined, outputId: string) {
+    if (!Array.isArray(items)) return []
+
     const isDrawerScripture = outSlide?.id === "temp"
     const slideItems = isDrawerScripture ? outSlide.tempItems : items?.filter(checkSpecificOutput)
 
