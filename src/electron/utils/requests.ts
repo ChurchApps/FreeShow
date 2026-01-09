@@ -5,7 +5,7 @@ import type { ErrorLog } from "../../types/Main"
 import { createLog, logError } from "../IPC/responsesMain"
 import { createFolder } from "./files"
 
-export function httpsRequest(hostname: string, path: string, method: "POST" | "GET" | "HEAD", headers: object = {}, content: object = {}, cb: (err: (Error & { statusCode?: number; headers?: any }) | null, result?: any) => void, outputFilePath?: string) {
+export function httpsRequest(hostname: string, path: string, method: "POST" | "GET" | "HEAD", headers: object = {}, content: object = {}, cb: (err: (Error & { statusCode?: number; headers?: any }) | null, result?: any) => void, outputFilePath?: string, onlyHeaders: boolean = false) {
     const headersObj = headers as Record<string, string>
     const isFormEncoded = headersObj["Content-Type"] === "application/x-www-form-urlencoded"
     let dataString = ""
@@ -41,6 +41,10 @@ export function httpsRequest(hostname: string, path: string, method: "POST" | "G
                 err.headers = response.headers
                 return cb(err, null)
             }
+            if (onlyHeaders) {
+                cb(null, response.headers)
+                return
+            }
 
             // Stream to file if outputFilePath is provided
             if (outputFilePath) {
@@ -67,6 +71,7 @@ export function httpsRequest(hostname: string, path: string, method: "POST" | "G
 
                 response.on("end", () => {
                     try {
+                        if (!data) throw new Error("Empty response")
                         const parsedData = JSON.parse(data)
                         cb(null, parsedData)
                     } catch (err) {

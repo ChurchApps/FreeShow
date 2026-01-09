@@ -53,19 +53,21 @@ class ChurchAppsSyncManager {
     // Simple HTTP GET to content S3 web server.  No auth needed.
     private async getHeaders(churchId: string, teamId: string, fileName: string = "current.zip"): Promise<any> {
         const path = `/${churchId}/files/group/${teamId}/${fileName}`
+        console.log("Checking data...")
 
         return new Promise((resolve) => {
-            httpsRequest(CONTENT_HOSTNAME, path, "HEAD", {}, {}, (err: any, data?: any) => {
+            httpsRequest(CONTENT_HOSTNAME, path, "GET", {}, {}, response, "", true)
+
+            function response(err: any, data?: any) {
                 if (err) {
                     // not existing
                     if (err.statusCode === 404 || err.statusCode === 403) return resolve(null)
-
                     console.error("Failed to get headers:", err)
                     return resolve(null)
                 }
-                console.log("Headers data:", data)
+
                 return resolve(data)
-            })
+            }
         })
     }
 
@@ -73,7 +75,7 @@ class ChurchAppsSyncManager {
     async getData(churchId: string, teamId: string, outputFolderPath: string, fileName: string = "current.zip"): Promise<string | null> {
         const randomNumber = Math.floor(Math.random() * 1000000)
         const path = `/${churchId}/files/group/${teamId}/${fileName}?cacheBuster=${randomNumber}`
-        console.log("Data", path)
+        console.log("Downloading data...")
 
         return new Promise((resolve) => {
             httpsRequest(CONTENT_HOSTNAME, path, "GET", {}, {}, response, join(outputFolderPath, fileName))
@@ -84,11 +86,12 @@ class ChurchAppsSyncManager {
                     if (err.statusCode === 404 || err.statusCode === 403) return resolve(null)
 
                     console.error("Failed to fetch content:", err)
+                    if (fileName !== "current.zip") return resolve(null)
+
                     sendToMain(ToMain.ALERT, "Failed to get data: " + err.message)
                     return resolve(null)
                 }
 
-                console.log("Downloaded data to:", filePath)
                 return resolve(filePath || null)
             }
         })
@@ -97,22 +100,22 @@ class ChurchAppsSyncManager {
     async getWriteToken(teamId: string, fileName: string): Promise<any> {
         const path = `/content/files/postUrl`
         let params: { [key: string]: string } = { fileName, contentType: "group", contentId: teamId }
-        console.log("Write", params)
 
         const token = await this.provider.getToken(SCOPE)
         const headers = token ? { Authorization: `Bearer ${token}` } : {}
-        console.log("Headers:", headers)
 
         return new Promise((resolve) => {
             httpsRequest(HOSTNAME, path, "POST", headers, params, (err, data: Buffer) => {
                 if (err) {
                     console.error("Failed to get token:", err)
-                    if (err.statusCode === 401) sendToMain(ToMain.ALERT, "Could not upload data. Make sure you are member of a team.")
+                    if (fileName !== "current.zip") return resolve(null)
+
+                    if (err.statusCode === 401) sendToMain(ToMain.ALERT, "Could not upload data. Make sure you are member of a team, then log out and back in.")
                     else sendToMain(ToMain.ALERT, "Failed to upload data: " + err.message)
+
                     return resolve(null)
                 }
 
-                console.log("Token data:", data)
                 return resolve(data)
             })
         })
@@ -132,6 +135,7 @@ class ChurchAppsSyncManager {
         // Loop through all the presigned parameters returned and append them to this request
         for (const property in presigned.fields) formData.append(property, presigned.fields[property])
 
+        console.log("Uploading data...")
         formData.append("file", blob, fileName)
         await axios.post(presigned.url, formData, { headers: { "Content-Type": "multipart/form-data" } })
 

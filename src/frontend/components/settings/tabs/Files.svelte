@@ -14,7 +14,6 @@
     import { getTimeFromInterval, joinTimeBig } from "../../helpers/time"
     import InputRow from "../../input/InputRow.svelte"
     import Title from "../../input/Title.svelte"
-    import Link from "../../inputs/Link.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialDropdown from "../../inputs/MaterialDropdown.svelte"
     import MaterialMediaPicker from "../../inputs/MaterialFilePicker.svelte"
@@ -241,7 +240,7 @@
 
         <svelte:fragment slot="menu">
             <!-- changing team directly without toggling "Enable sync" off/on -->
-            <MaterialToggleSwitch label="cloud.read_only" checked={$cloudSyncData.cloudMethod === "read_only"} defaultValue={false} on:change={(e) => updateCloudData("cloudMethod", e.detail ? "read_only" : "merge")} />
+            <MaterialToggleSwitch label="cloud.read_only" title="cloud.readonly_tip" checked={$cloudSyncData.cloudMethod === "read_only"} defaultValue={false} on:change={(e) => updateCloudData("cloudMethod", e.detail ? "read_only" : "merge")} />
         </svelte:fragment>
     </InputRow>
 {/if}
@@ -251,13 +250,13 @@
 <!-- DEPRECATED: -->
 
 {#if validKeys}
-    <MaterialMediaPicker label="cloud.google_drive_api" title="cloud.select_key" value={validKeys ? translateText("cloud.update_key") : ""} filter={{ name: "Key file", extensions: ["json"] }} icon="key" on:change={receiveKeysFile} allowEmpty />
-    <MaterialToggleSwitch label="cloud.disable_upload" checked={$driveData.disableUpload} defaultValue={false} on:change={(e) => toggleData(e.detail, "disableUpload")} />
+    <MaterialMediaPicker label="Google API service account key" title="Import keys file" value="Update keys file" filter={{ name: "Key file", extensions: ["json"] }} icon="key" on:change={receiveKeysFile} allowEmpty />
+    <MaterialToggleSwitch label="Disable uploading data" checked={$driveData.disableUpload} defaultValue={false} on:change={(e) => toggleData(e.detail, "disableUpload")} />
 
     {#if validKeys}
         <MaterialToggleSwitch label="cloud.enable" checked={!$driveData.disabled} defaultValue={true} on:change={(e) => toggleData(e.detail, "disabled", true)} />
-        <!-- <MaterialTextInput label="cloud.media_id" value={$driveData?.mediaId || "default"} defaultValue="default" on:change={(e) => updateValue(e.detail, "mediaId")} /> -->
-        <MaterialTextInput label="cloud.main_folder{$driveData?.mainFolderId ? `<span style="margin-left: 10px;font-size: 0.7em;opacity: 0.5;color: var(--text);">drive.google.com/drive/folders/</span>` : ''}" value={$driveData?.mainFolderId || ""} on:change={(e) => updateValue(e.detail, "mainFolderId")} />
+        <!-- <MaterialTextInput label="Media path ID" value={$driveData?.mediaId || "default"} defaultValue="default" on:change={(e) => updateValue(e.detail, "mediaId")} /> -->
+        <MaterialTextInput label="Set main folder manually{$driveData?.mainFolderId ? `<span style="margin-left: 10px;font-size: 0.7em;opacity: 0.5;color: var(--text);">drive.google.com/drive/folders/</span>` : ''}" value={$driveData?.mainFolderId || ""} on:change={(e) => updateValue(e.detail, "mainFolderId")} />
 
         <!-- <div>
         <p><T id="cloud.media_folder" /></p>
@@ -278,21 +277,5 @@
         >
             <T id="cloud.sync" />
         </MaterialButton>
-    {:else}
-        <span class="guide" style="display: block;margin-top: 8px;">
-            <!-- Keep in mind you have a 750 GB limit per day, and 20,000 queries per second which should be plenty. -->
-            <p><T id="cloud.tip_api" /></p>
-            <p><T id="cloud.tip_how" />&nbsp;<Link url={"https://freeshow.app/docs/drive"}><T id="cloud.tip_guide" /></Link></p>
-        </span>
     {/if}
 {/if}
-
-<style>
-    /* cloud */
-    .guide p {
-        white-space: normal;
-        /* font-style: italic; */
-        opacity: 0.6;
-        font-size: 0.7em;
-    }
-</style>

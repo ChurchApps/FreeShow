@@ -16,14 +16,13 @@ export function requestMainMultiple<T extends Main>(object: { [K in T]: (data: M
 
 const currentlyAwaiting: string[] = []
 // @ts-ignore
-export async function requestMain<ID extends Main, R = Awaited<MainReturnPayloads[ID]>>(id: ID, value?: MainSendValue<ID>, callback?: (data: R) => void) {
+export async function requestMain<ID extends Main, R = Awaited<MainReturnPayloads[ID]>>(id: ID, value?: MainSendValue<ID>, callback?: (data: R) => void, waitingTimeout: number = 15000) {
     const listenerId = id + uid(5)
     currentlyAwaiting.push(listenerId)
 
     sendMain(id, value, listenerId)
 
     // LISTENER
-    const waitingTimeout = 15000
     let timeout: NodeJS.Timeout | null = null
     const returnData: R = await new Promise((resolve) => {
         timeout = setTimeout(() => {

@@ -53,8 +53,12 @@ export async function chooseTeam(team: { id: string; churchId: string; name: str
 }
 
 let isSyncing = false
+let lastSync = 0
 export async function syncWithCloud(initialize: boolean = false) {
     if (isSyncing) return false
+    // skip if synced less than half a minute ago
+    if (Date.now() - lastSync < 30000) return false
+    lastSync = Date.now()
 
     const data = get(cloudSyncData)
     if (!data.enabled || !data.id || !data.team) return false
@@ -70,7 +74,8 @@ export async function syncWithCloud(initialize: boolean = false) {
     newToast("cloud.syncing")
 
     isSyncing = true
-    const status = await requestMain(Main.CLOUD_SYNC, { id: data.id as any, churchId: data.team.churchId, teamId: data.team.id, method })
+    const timeout = 5 * 60 * 1000 // 5 minutes
+    const status = await requestMain(Main.CLOUD_SYNC, { id: data.id as any, churchId: data.team.churchId, teamId: data.team.id, method }, () => {}, timeout)
     isSyncing = false
 
     if (status.success) newToast("cloud.sync_complete")
