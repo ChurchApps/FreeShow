@@ -24,7 +24,7 @@ class ChurchAppsSyncManager {
     }
 
     async getTeams(): Promise<{ id: string; churchId: string; name: string }[]> {
-        const response = await this.provider.apiRequest({ api: "membership", authenticated: true, scope: SCOPE, endpoint: "/groups/tag/team" })
+        const response = await this.provider.apiRequest({ api: "membership", authenticated: true, scope: SCOPE, endpoint: "/groups/my/team" })
         return response || []
     }
 
