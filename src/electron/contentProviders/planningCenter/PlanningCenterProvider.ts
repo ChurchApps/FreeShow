@@ -1,6 +1,6 @@
 import { ContentProvider } from "../base/ContentProvider"
 import { getKey } from "../../utils/keys"
-import { pcoConnect, pcoDisconnect, pcoStartupLoad, type PCOScopes } from "./connect"
+import { pcoConnect, pcoDisconnect, pcoInitialize, pcoStartupLoad, type PCOScopes } from "./connect"
 import { pcoRequest, pcoLoadServices } from "./request"
 
 // Re-export types from connect file
@@ -35,6 +35,10 @@ export class PlanningCenterProvider extends ContentProvider<PCOScopes, PCOAuthDa
         })
     }
 
+    isConnected(scope: PCOScopes): boolean {
+        return this.access !== null && this.access.scope === scope
+    }
+
     async connect(scope: PCOScopes): Promise<PCOAuthData | null> {
         const result = await pcoConnect(scope)
         this.access = result
@@ -55,6 +59,7 @@ export class PlanningCenterProvider extends ContentProvider<PCOScopes, PCOAuthDa
     }
 
     async startupLoad(scope: PCOScopes): Promise<void> {
+        pcoInitialize()
         return pcoStartupLoad(scope)
     }
 

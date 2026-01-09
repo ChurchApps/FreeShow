@@ -48,6 +48,7 @@ export type SaveListSettings =
     | "volume"
     | "gain"
     | "audioChannelsData"
+    | "cloudSyncData"
     | "driveData"
     | "calendarAddShow"
     | "metronome"

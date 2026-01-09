@@ -14,6 +14,7 @@ import type { StageLayouts } from "../Stage"
 import type { Event } from "./../Calendar"
 import type { History } from "./../History"
 import type { SaveData, SaveListSyncedSettings } from "./../Save"
+import { SyncProviderId } from "../../electron/cloud/syncManager"
 
 export const MAIN = "MAIN"
 
@@ -129,6 +130,12 @@ export enum Main {
     READ_FILE = "READ_FILE",
     OPEN_FOLDER = "OPEN_FOLDER",
     OPEN_FILE = "OPEN_FILE",
+    // SYNC
+    CAN_SYNC = "CAN_SYNC",
+    GET_TEAMS = "GET_TEAMS",
+    CLOUD_DATA = "CLOUD_DATA",
+    CLOUD_CHANGED = "CLOUD_CHANGED",
+    CLOUD_SYNC = "CLOUD_SYNC",
     // Provider-based routing
     PROVIDER_LOAD_SERVICES = "PROVIDER_LOAD_SERVICES",
     PROVIDER_DISCONNECT = "PROVIDER_DISCONNECT",
@@ -202,6 +209,12 @@ export interface MainSendPayloads {
     [Main.READ_FILE]: { path: string }
     [Main.OPEN_FOLDER]: { channel: string; title?: string; path?: string }
     [Main.OPEN_FILE]: { id: string; channel: string; title?: string; filter: any; multiple: boolean; read?: boolean }
+    // SYNC
+    [Main.CAN_SYNC]?: { id: SyncProviderId }
+    [Main.GET_TEAMS]?: { id: SyncProviderId }
+    [Main.CLOUD_DATA]: { id: SyncProviderId; churchId: string; teamId: string }
+    [Main.CLOUD_CHANGED]: { id: SyncProviderId; churchId: string; teamId: string }
+    [Main.CLOUD_SYNC]: { id: SyncProviderId; churchId: string; teamId: string; method: "merge" | "read_only" }
     // Provider-based routing
     [Main.PROVIDER_LOAD_SERVICES]: { providerId: ContentProviderId }
     [Main.PROVIDER_DISCONNECT]: { providerId: ContentProviderId; scope?: string }
@@ -275,6 +288,12 @@ export interface MainReturnPayloads {
     [Main.FILE_INFO]: { path: string; stat: Stats; extension: string; folder: boolean } | null
     [Main.READ_FOLDER]: Promise<{ [key: string]: FileFolder }>
     [Main.READ_FILE]: { content: string }
+    // SYNC
+    [Main.CAN_SYNC]: Promise<boolean>
+    [Main.GET_TEAMS]: Promise<{ id: string; churchId: string; name: string }[]>
+    [Main.CLOUD_DATA]: Promise<boolean>
+    [Main.CLOUD_CHANGED]: Promise<boolean>
+    [Main.CLOUD_SYNC]: Promise<{ success?: boolean; error?: string; changedFiles: any[] }>
     // Provider-based routing
     [Main.PROVIDER_DISCONNECT]: { success: boolean }
     // Content Library

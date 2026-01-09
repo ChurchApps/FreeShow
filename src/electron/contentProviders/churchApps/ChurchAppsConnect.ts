@@ -43,22 +43,22 @@ export class ChurchAppsConnect {
     </body>
   `
 
+    // reset if frontend reloads (dev)
+    public static initialize() {
+        this.CHURCHAPPS_ACCESS = null
+    }
+
     public static async connect(scope: ChurchAppsScopes): Promise<ChurchAppsAuthData> {
-        const storedAccess: any = this.CHURCHAPPS_ACCESS || getContentProviderAccess("churchApps", scope)
+        let accessData = this.CHURCHAPPS_ACCESS || (getContentProviderAccess("churchApps", scope) as ChurchAppsAuthData)
 
-        if (storedAccess?.created_at) {
-            if (this.hasExpired(storedAccess)) {
-                this.CHURCHAPPS_ACCESS = await this.refreshToken(storedAccess)
-                return this.CHURCHAPPS_ACCESS
-            }
+        if (this.hasExpired(accessData)) accessData = await this.refreshToken(accessData)
+        if (!accessData) accessData = await this.authenticate(scope)
+        if (!accessData) return null
 
-            sendToMain(ToMain.PROVIDER_CONNECT, { providerId: "churchApps", success: true })
-            if (!this.CHURCHAPPS_ACCESS) this.CHURCHAPPS_ACCESS = storedAccess
-            return storedAccess
-        }
+        if (!this.CHURCHAPPS_ACCESS) connectionInitialized()
+        this.CHURCHAPPS_ACCESS = accessData
 
-        this.CHURCHAPPS_ACCESS = await this.authenticate(scope)
-        return this.CHURCHAPPS_ACCESS
+        return accessData
     }
 
     public static disconnect(scope: ChurchAppsScopes = "plans"): { success: boolean } {
@@ -68,13 +68,14 @@ export class ChurchAppsConnect {
     }
 
     public static async apiRequest(data: ChurchAppsRequestData): Promise<any> {
-        let CHURCHAPPS_ACCESS: any = {}
+        let token = ""
         if (data.authenticated) {
-            CHURCHAPPS_ACCESS = await this.connect(data.scope)
-            if (!CHURCHAPPS_ACCESS) {
+            const ACCESS = await this.connect(data.scope)
+            if (!ACCESS) {
                 sendToMain(ToMain.ALERT, "Not authorized at ChurchApps (try logging out and in again)!")
                 return null
             }
+            token = ACCESS.access_token
         }
 
         return new Promise((resolve) => {
@@ -85,11 +86,11 @@ export class ChurchAppsConnect {
                 apiUrl = LESSONS_API_URL
                 fullEndpoint = data.endpoint
             } else {
-                const pathPrefix = data.api === "doing" ? "/doing" : "/content"
+                const pathPrefix = data.api === "doing" ? "/doing" : data.api === "membership" ? "/membership" : "/content"
                 fullEndpoint = `${pathPrefix}${data.endpoint}`
             }
 
-            const headers = data.authenticated ? { Authorization: `Bearer ${CHURCHAPPS_ACCESS.access_token}` } : {}
+            const headers = token ? { Authorization: `Bearer ${token}` } : {}
             httpsRequest(apiUrl, fullEndpoint, data.method || "GET", headers, data.data || {}, (err, result) => {
                 if (err) {
                     console.error("Could not get data", apiUrl, fullEndpoint)
@@ -101,6 +102,11 @@ export class ChurchAppsConnect {
                 } else resolve(result)
             })
         })
+    }
+
+    public static async getToken(scope: ChurchAppsScopes): Promise<string | null> {
+        const access = await this.connect(scope)
+        return access ? access.access_token : null
     }
 
     private static async authenticate(scope: ChurchAppsScopes): Promise<ChurchAppsAuthData> {
@@ -150,7 +156,8 @@ export class ChurchAppsConnect {
                     server.close()
 
                     setContentProviderAccess("churchApps", scope, data)
-                    sendToMain(ToMain.PROVIDER_CONNECT, { providerId: "churchApps", success: true, isFirstConnection: true })
+                    this.CHURCHAPPS_ACCESS = data
+                    connectionInitialized(true)
                     resolve(data)
                 })
             })
@@ -161,7 +168,7 @@ export class ChurchAppsConnect {
     }
 
     private static hasExpired(access: ChurchAppsAuthData): boolean {
-        if (access === null) return true
+        if (!access?.created_at || !access?.expires_in) return true
         return (access.created_at + access.expires_in) * 1000 < Date.now()
     }
 
@@ -185,11 +192,13 @@ export class ChurchAppsConnect {
                     return
                 }
 
-                this.CHURCHAPPS_ACCESS = data
                 setContentProviderAccess("churchApps", data.scope, data)
-                sendToMain(ToMain.PROVIDER_CONNECT, { providerId: "churchApps", success: true })
                 resolve(data)
             })
         })
     }
+}
+
+function connectionInitialized(isFirstConnection: boolean = false) {
+    sendToMain(ToMain.PROVIDER_CONNECT, { providerId: "churchApps", success: true, isFirstConnection })
 }

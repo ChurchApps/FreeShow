@@ -213,6 +213,9 @@
         <MaterialButton icon="cloud_sync" on:click={syncContentProvider}>
             <T id="cloud.sync" />
         </MaterialButton>
+        <MaterialButton on:click={() => sendMain(Main.URL, "https://planningcenter.com")} title="Planning Center" white>
+            <Icon id="launch" white />
+        </MaterialButton>
     </InputRow>
     <MaterialToggleSwitch label="Always use local instance of songs" checked={$contentProviderData.planningcenter?.localAlways} defaultValue={false} on:change={(e) => updateProvider("planningcenter", "localAlways", e.detail)} />
 {:else if $providerConnections.churchApps}
@@ -228,6 +231,9 @@
         </MaterialButton>
         <MaterialButton title="settings.sync_categories_tip" icon="options" on:click={() => activePopup.set("sync_categories")}>
             <T id="popup.sync_categories" />
+        </MaterialButton>
+        <MaterialButton on:click={() => sendMain(Main.URL, "https://b1.church")} title="B1.Church" white>
+            <Icon id="launch" white />
         </MaterialButton>
     </InputRow>
 {:else if $providerConnections.amazinglife}

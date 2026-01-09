@@ -13,7 +13,7 @@ import { ToMain } from "../../types/IPC/ToMain"
 import type { FileFolder, MainFilePaths, Subtitle } from "../../types/Main"
 import type { Show, TrimmedShows } from "../../types/Show"
 import { imageExtensions, mimeTypes, videoExtensions } from "../data/media"
-import { _store, appDataPath, config, getStore } from "../data/store"
+import { _store, appDataPath, config, getStore, setStore } from "../data/store"
 import { createThumbnail } from "../data/thumbnails"
 import { sendMain, sendToMain } from "../IPC/main"
 import { OutputHelper } from "../output/OutputHelper"
@@ -57,6 +57,7 @@ export function readFolder(filePath: string): string[] {
 }
 
 export function deleteFolder(filePath: string) {
+    if (!filePath) return
     try {
         fs.rmSync(filePath, { recursive: true })
     } catch (err) {
@@ -128,14 +129,41 @@ export function writeFile(filePath: string, content: string | NodeJS.ArrayBuffer
 }
 
 export function deleteFile(filePath: string) {
-    fs.unlink(filePath, (err) => actionComplete(err, "Could not delete file"))
+    fs.unlinkSync(filePath)
 }
 
-export function renameFile(filePath: string, oldName: string, newName: string) {
+// export function deleteFileAsync(filePath: string) {
+//     return new Promise<boolean>((resolve) => {
+//         fs.unlink(filePath, (err) => {
+//             actionComplete(err, "Could not delete file")
+//             resolve(!err)
+//         })
+//     })
+// }
+
+export function copyFileAsync(sourcePath: string, destPath: string) {
+    return new Promise<boolean>((resolve) => {
+        fs.copyFile(sourcePath, destPath, (err) => {
+            actionComplete(err, "Could not copy file")
+            resolve(!err)
+        })
+    })
+}
+
+export function moveFileAsync(oldPath: string, newPath: string) {
+    return new Promise<boolean>((resolve) => {
+        fs.rename(oldPath, newPath, (err) => {
+            actionComplete(err, "Could not rename file")
+            resolve(!err)
+        })
+    })
+}
+
+export async function renameFileAsync(filePath: string, oldName: string, newName: string) {
     const oldPath = path.join(filePath, oldName)
     const newPath = path.join(filePath, newName)
 
-    fs.rename(oldPath, newPath, (err) => actionComplete(err, "Could not rename file"))
+    return await moveFileAsync(oldPath, newPath)
 }
 
 export function getFileStats(filePath: string, disableLog = false) {
@@ -218,7 +246,8 @@ export const dataFolderNames = {
     planningcenter: "Planning Center",
     recordings: "Recordings",
     audio: "Audio",
-    userData: "Config"
+    userData: "Config",
+    cloud: "Cloud"
 }
 
 // Documents/FreeShow
@@ -888,12 +917,7 @@ export function loadShows(returnShows = false) {
     if (returnShows) return newCachedShows
 
     // save this (for cloud sync)
-    try {
-        _store.SHOWS?.clear()
-        _store.SHOWS?.set(newCachedShows)
-    } catch (err) {
-        console.warn("Failed to save shows cache:", err)
-    }
+    setStore(_store.SHOWS, newCachedShows)
 
     return newCachedShows
 }

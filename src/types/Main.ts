@@ -373,6 +373,7 @@ export type Popups =
     | "custom_action"
     | "slide_midi"
     | "connect"
+    | "cloud_sync"
     | "cloud_update"
     | "cloud_method"
     | "sync_categories"

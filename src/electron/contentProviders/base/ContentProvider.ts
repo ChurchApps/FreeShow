@@ -47,6 +47,8 @@ export abstract class ContentProvider<TScope extends string = string, TAuthData 
         this.setupAuthRoutes()
     }
 
+    abstract isConnected(scope: TScope): boolean
+
     /**
      * Establishes connection to the content provider
      */
@@ -61,6 +63,8 @@ export abstract class ContentProvider<TScope extends string = string, TAuthData 
      * Makes an authenticated API request
      */
     abstract apiRequest(data: BaseRequestData & { scope: TScope }): Promise<any>
+
+    getToken?(scope: TScope): Promise<string | null>
 
     /**
      * Loads services/plans from the content provider
