@@ -4,7 +4,7 @@ import { OUTPUT } from "../../../types/Channels"
 import { Main } from "../../../types/IPC/Main"
 import type { Output, Outputs } from "../../../types/Output"
 import type { Resolution, Styles } from "../../../types/Settings"
-import type { Item, Layout, LayoutRef, Media, OutSlide, Show, Slide, SlideData, Template, Templates, TemplateSettings, Transition } from "../../../types/Show"
+import type { Item, Layout, LayoutRef, Line, Media, OutSlide, Show, Slide, SlideData, Template, Templates, TemplateSettings, Transition } from "../../../types/Show"
 import { AudioAnalyser } from "../../audio/audioAnalyser"
 import { fadeinAllPlayingAudio, fadeoutAllPlayingAudio } from "../../audio/audioFading"
 import { sendMain } from "../../IPC/main"
@@ -882,7 +882,22 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
 
             line.align = templateLine?.align || ""
             line.text?.forEach((text, k) => {
-                const templateText = templateLine?.text?.[k] || templateLine?.text?.[0]
+                // For scripture slides: match by placeholder type, not just index
+                let templateText: Line["text"][number] | undefined = templateLine?.text?.[k]
+                if (!templateText && templateLine?.text?.some((t) => t?.value?.includes("{scripture_"))) {
+                    // If no exact index match and this is a scripture template, find the right placeholder
+                    // Verse numbers have customType "disableTemplate", verse text doesn't
+                    if (text.customType?.includes("disableTemplate")) {
+                        // This is a verse number, find {scripture_number} template
+                        templateText = templateLine.text.find((t) => t?.value?.includes("{scripture_number}"))
+                    } else {
+                        // This is verse text, find {scripture_text} template
+                        templateText = templateLine.text.find((t) => t?.value?.includes("{scripture_text}"))
+                    }
+                }
+                // Final fallback to first template text
+                if (!templateText) templateText = templateLine?.text?.[0]
+
                 if (!text.customType?.includes("disableTemplate") && !templateText?.value?.includes("{scripture_number}")) {
                     let style = templateText?.style || ""
 
