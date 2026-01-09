@@ -75,7 +75,8 @@ export class AmazingLifeConnect {
     }
 
     private static isTokenExpired(access: AmazingLifeAuthData | null): boolean {
-        if (!access?.created_at || !access?.expires_in) return true
+        // || !access?.expires_in // missing
+        if (!access?.created_at) return true
         return (access.created_at + access.expires_in) * 1000 < Date.now()
     }
 

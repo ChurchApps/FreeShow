@@ -356,7 +356,7 @@ async function compressUserData(): Promise<string> {
     const files: { name: string; content?: Buffer | string; filePath?: string }[] = filesNames.map((fileName) => ({ name: fileName, filePath: path.join(backupPath, fileName) }))
 
     // changes.json
-    files.push({ name: changes_name, content: JSON.stringify(CHANGES) })
+    files.push({ name: changes_name, content: JSON.stringify(getLatestChanges()) })
 
     const outputFolderPath = getDataFolderPath("cloud")
     const zipName = `${getTimePointString()}.zip`
@@ -425,12 +425,19 @@ async function deleteUnusedZips(folderPath: string, excludeZip: string) {
 // if found locally and in cloud: use newest version
 
 const changes_name = "changes.json"
-let CHANGES: { devices: string[]; deleted: { [key: string]: string[] }; created: { [key: string]: string[] } } = { devices: [], deleted: {}, created: {} }
+let CHANGES: { devices: string[]; modified: { [key: string]: number }; deleted: { [key: string]: string[] }; created: { [key: string]: string[] } } = { devices: [], modified: {}, deleted: {}, created: {} }
+
+// keep track of last changed time so we can know which devices to ignore eventually
+function getLatestChanges() {
+    if (!CHANGES.modified) CHANGES.modified = {}
+    CHANGES.modified[deviceId] = Date.now()
+    return CHANGES
+}
 
 type ChangeId = keyof typeof _store | "SHOWS_CONTENT" | "BIBLES"
 function markAsDeleted(storeId: ChangeId, key: string) {
     const instanceId = `${storeId}_${key}`
-    if (CHANGES.created[instanceId]) delete CHANGES.created[instanceId]
+    if (CHANGES.created?.[instanceId]) delete CHANGES.created[instanceId]
     markAs("deleted", instanceId)
 }
 
@@ -445,6 +452,7 @@ function markAs(type: "deleted" | "created", instanceId: string) {
     if (!CHANGES.devices.includes(deviceId)) CHANGES.devices.push(deviceId)
     if (CHANGES.devices.length < 2) return
 
+    if (!CHANGES[type]) CHANGES[type] = {}
     if (!CHANGES[type][instanceId]) CHANGES[type][instanceId] = []
     CHANGES[type][instanceId].push(deviceId)
 

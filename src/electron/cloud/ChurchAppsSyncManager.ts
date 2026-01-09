@@ -5,6 +5,7 @@ import { ToMain } from "../../types/IPC/ToMain"
 import { ChurchAppsProvider, ContentProviderRegistry } from "../contentProviders"
 import { sendToMain } from "../IPC/main"
 import { httpsRequest } from "../utils/requests"
+import { getContentProviderAccess } from "../data/contentProviders"
 
 const CONTENT_HOSTNAME = "https://content.churchapps.org"
 const HOSTNAME = "https://api.churchapps.org"
@@ -19,6 +20,7 @@ class ChurchAppsSyncManager {
     }
 
     async hasValidConnection() {
+        if (!getContentProviderAccess("churchApps", SCOPE)) return false
         await this.provider.connect(SCOPE)
         return this.provider.isConnected(SCOPE)
     }

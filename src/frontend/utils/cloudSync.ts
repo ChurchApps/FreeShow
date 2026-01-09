@@ -1,7 +1,7 @@
 import { get } from "svelte/store"
 import { Main } from "../../types/IPC/Main"
 import { requestMain } from "../IPC/main"
-import { activePopup, alertMessage, cloudSyncData, popupData } from "../stores"
+import { activePopup, alertMessage, cloudSyncData, popupData, providerConnections } from "../stores"
 import { confirmCustom } from "./popup"
 import { save } from "./save"
 import { newToast } from "./common"
@@ -53,9 +53,11 @@ export async function chooseTeam(team: { id: string; churchId: string; name: str
 let isSyncing = false
 let lastSync = 0
 export async function syncWithCloud(initialize: boolean = false) {
+    if (!get(providerConnections).churchApps) return false
+
     if (isSyncing) return false
     // skip if synced less than half a minute ago
-    if (Date.now() - lastSync < 30000) return false
+    if (!initialize && Date.now() - lastSync < 30000) return false
 
     const data = get(cloudSyncData)
     if (!data.enabled || !data.id || !data.team) return false

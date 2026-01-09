@@ -10,8 +10,8 @@
         const teams = $popupData.teams
         const team = teams.find((a) => a.id === selectedId)
 
-        chooseTeam(team)
         activePopup.set(null)
+        chooseTeam(team)
     }
 </script>
 
