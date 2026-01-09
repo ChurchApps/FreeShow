@@ -296,18 +296,26 @@
     let customTypeRatio = 1
     function deriveCustomTypeRatio() {
         if (isStage) {
-            let text = stageItem?.lines?.[0]?.text || []
-            if (!Array.isArray(text) || !text.length) return 1
-            const verseItemText = text.filter((a) => a.customType?.includes("disableTemplate")) || []
+            // Search all lines to find disableTemplate items (verse numbers may not be in first line)
+            let allText: any[] = []
+            stageItem?.lines?.forEach((line) => {
+                if (line?.text) allText.push(...line.text)
+            })
+            if (!allText.length) return 1
+            const verseItemText = allText.filter((a) => a.customType?.includes("disableTemplate")) || []
             if (!verseItemText.length) return 1
             const verseItemSize = Number(getStyles(verseItemText[0]?.style, true)?.["font-size"] || "") || 0
             const stageFontSize = Number(getStyles(stageItem?.style, true)?.["font-size"] || "") || 100
             return stageFontSize ? verseItemSize / stageFontSize || 1 : 1
         }
 
-        let text = item?.lines?.[0]?.text || []
-        if (!Array.isArray(text) || !text.length) return 1
-        const verseItemText = text.filter((a) => a.customType?.includes("disableTemplate")) || []
+        // Search all lines to find disableTemplate items (verse numbers may not be in first line)
+        let allText: any[] = []
+        item?.lines?.forEach((line) => {
+            if (line?.text) allText.push(...line.text)
+        })
+        if (!allText.length) return 1
+        const verseItemText = allText.filter((a) => a.customType?.includes("disableTemplate")) || []
         if (!verseItemText.length) return 1
         const verseItemSize = Number(getStyles(verseItemText[0]?.style, true)?.["font-size"] || "") || 0
         return verseItemSize ? verseItemSize / 100 || 1 : 1
@@ -357,14 +365,17 @@
                 return
             }
 
-            let text = item?.lines?.[0]?.text || []
-            if (!Array.isArray(text)) text = []
-            const itemText = text.filter((a) => !a.customType?.includes("disableTemplate")) || []
-            let itemFontSize = Number(getStyles(itemText[0]?.style, true)?.["font-size"] || "") || 100
+            // Search all lines to find disableTemplate items and regular text (verse numbers may not be in first line)
+            let allText: any[] = []
+            item?.lines?.forEach((line) => {
+                if (line?.text && Array.isArray(line.text)) allText.push(...line.text)
+            })
+            const itemText = allText.filter((a) => !a.customType?.includes("disableTemplate")) || []
+            let itemFontSize = Number(getStyles(itemText[0]?.style, true)?.[" font-size"] || "") || 100
 
             // get scripture verse ratio
-            const verseItemText = text.filter((a) => a.customType?.includes("disableTemplate")) || []
-            const verseItemSize = Number(getStyles(verseItemText[0]?.style, true)?.["font-size"] || "") || 0
+            const verseItemText = allText.filter((a) => a.customType?.includes("disableTemplate")) || []
+            const verseItemSize = Number(getStyles(verseItemText[0]?.style, true)?.[" font-size"] || "") || 0
             customTypeRatio = verseItemSize / 100 || 1
 
             defaultFontSize = itemFontSize
