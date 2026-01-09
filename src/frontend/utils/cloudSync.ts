@@ -42,12 +42,13 @@ export async function chooseTeam(team: { id: string; churchId: string; name: str
     })
 
     const existingData = await requestMain(Main.CLOUD_DATA, { id, churchId: team.churchId, teamId: team.id })
-    if (!existingData) {
-        syncWithCloud(true)
+    if (existingData) {
+        // ensure previous popup is closed first
+        setTimeout(() => activePopup.set("cloud_method"), 20)
         return
     }
 
-    activePopup.set("cloud_method")
+    syncWithCloud(true)
 }
 
 let isSyncing = false

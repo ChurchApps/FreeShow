@@ -117,7 +117,8 @@ export function contentProviderSync() {
     ]
 
     providers.forEach(({ providerId, scope, data }) => {
-        sendMain(Main.PROVIDER_STARTUP_LOAD, { providerId, scope, data })
+        const cloudOnly = providerId === "churchApps" && get(special).churchAppsCloudOnly
+        sendMain(Main.PROVIDER_STARTUP_LOAD, { providerId, scope, data, cloudOnly })
     })
 
     setTimeout(() => {

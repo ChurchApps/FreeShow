@@ -174,7 +174,12 @@
 
     function contentProviderConnect(providerId: ContentProviderId) {
         if (!$providerConnections[providerId]) {
-            sendMain(Main.PROVIDER_LOAD_SERVICES, { providerId })
+            special.update((a) => {
+                a.churchAppsCloudOnly = true
+                return a
+            })
+
+            sendMain(Main.PROVIDER_LOAD_SERVICES, { providerId, cloudOnly: true })
         } else {
             requestMain(Main.PROVIDER_DISCONNECT, { providerId }, (a) => {
                 if (!a.success) return

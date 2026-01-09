@@ -56,6 +56,9 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
 
     console.log("Syncing to cloud")
 
+    // clear any uncleared previous data
+    deleteFolder(EXTRACT_LOCATION)
+
     const cloudDataPath = await provider.getData(data.churchId, data.teamId, EXTRACT_LOCATION)
     if (!cloudDataPath) {
         await uploadLocalData()
@@ -63,7 +66,7 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
     }
 
     // extract cloud data
-    createFolder(EXTRACT_LOCATION)
+    createFolder(EXTRACT_LOCATION) // should already be created
     const extractedFiles = await decompressZipStream(cloudDataPath, true, {
         getOutputPath: (fileName: string) => path.join(EXTRACT_LOCATION, fileName)
     })
