@@ -92,6 +92,7 @@
         history({ id: "UPDATE", newData: { key: "name", data: value }, oldData: { id }, location: { page: "show", id: "project_key" } })
     }
     function renameFolder(id: string, value: string) {
+        console.log(id, value)
         // if (editActive) return
 
         history({ id: "UPDATE", newData: { key: "name", data: value }, oldData: { id }, location: { page: "show", id: "project_folder_key" } })

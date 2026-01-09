@@ -17,7 +17,7 @@
     import { getContrast, hexToRgb, splitRgb } from "../helpers/color"
     import Icon from "../helpers/Icon.svelte"
     import { doesMediaExist, downloadOnlineMedia, getFileName, getMediaStyle, getThumbnailPath, loadThumbnail, mediaSize, splitPath } from "../helpers/media"
-    import { getActiveOutputs, getFirstActiveOutput, getResolution, getSlideFilter, setTemplateStyle } from "../helpers/output"
+    import { allOutputsHasStyleTemplate, getActiveOutputs, getFirstActiveOutput, getResolution, getSlideFilter, setTemplateStyle } from "../helpers/output"
     import { getGroupName } from "../helpers/show"
     import Effect from "../output/effects/Effect.svelte"
     import SelectElem from "../system/SelectElem.svelte"
@@ -273,6 +273,7 @@
     $: if ($special.styleTemplatePreview !== false) updateItemsList(slide)
     else itemsList = clone(slide.items) || []
     function updateItemsList(_updater: any = null) {
+        if (!allOutputsHasStyleTemplate(show?.reference?.type === "scripture")) return
         itemsList = setTemplateStyle(null, currentStyle, itemsList, outputId)
     }
 
@@ -299,7 +300,7 @@
     let updater = 0
     onMount(() => {
         const interval = setInterval(() => {
-            if (itemsList.find((a) => a.conditions)) updater++
+            if (itemsList.find((a) => a?.conditions)) updater++
         }, 3000)
 
         return () => {

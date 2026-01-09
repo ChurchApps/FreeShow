@@ -184,6 +184,7 @@ export const disableDragging: Writable<boolean> = writable(false)
 export const activeDropId: Writable<string> = writable("")
 export const randomNumberVariable: Writable<{ [key: string]: boolean }> = writable({})
 export const dynamicValueData: Writable<{ [key: string]: any }> = writable({})
+export const recentFiles: Writable<{ all: string[]; cleared: string[]; projectMedia: string[] }> = writable({ all: [], cleared: [], projectMedia: [] })
 
 // ----- SAVED VARIABLES -----
 
@@ -268,7 +269,7 @@ export const scripturesCache: Writable<{ [key: string]: Bible }> = writable({}) 
 export const scriptureSettings: Writable<any> = writable({
     template: "scripture",
     versesPerSlide: 3,
-    verseNumbers: false,
+    verseNumbers: true,
     showVersion: false,
     showVerse: true,
     referenceDivider: ":",

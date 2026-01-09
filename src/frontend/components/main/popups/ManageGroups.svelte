@@ -1,5 +1,6 @@
 <script lang="ts">
     import { activePopup, groupNumbers, groups, groupsMoreOptionsEnabled, special, templates } from "../../../stores"
+    import { newToast } from "../../../utils/common"
     import { translateText } from "../../../utils/language"
     import T from "../../helpers/T.svelte"
     import { clone, sortByName } from "../../helpers/array"
@@ -29,6 +30,11 @@
         // if (value === "—") value = ""
 
         history({ id: "UPDATE", newData: { key, data: value }, oldData: { id: id }, location: { page: "none", id: "global_group", override: "group_" + key } })
+
+        // if name ends with space and a single digit, alert that numbers are auto assigned
+        if (key === "name" && $groupNumbers && /\s\d$/.test(value)) {
+            newToast("tips.group_numbers")
+        }
     }
 
     const defaultGroups = {

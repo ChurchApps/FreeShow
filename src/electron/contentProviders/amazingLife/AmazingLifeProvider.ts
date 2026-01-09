@@ -76,7 +76,11 @@ export class AmazingLifeProvider extends ContentProvider<AmazingLifeScopes, Amaz
      * Retrieves the content library hierarchy: Modules -> Products -> Libraries
      */
     async getContentLibrary(): Promise<ContentLibraryCategory[]> {
-        return AmazingLifeContentLibrary.getContentLibrary()
+        try {
+            return AmazingLifeContentLibrary.getContentLibrary()
+        } catch (err) {
+            return []
+        }
     }
 
     /**

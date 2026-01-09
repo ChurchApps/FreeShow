@@ -5,7 +5,12 @@ import { keysToID } from "../components/helpers/array"
 import { history } from "../components/helpers/history"
 import { getExtension, getFileName, getMediaType, removeExtension } from "../components/helpers/media"
 import { checkName } from "../components/helpers/show"
-import { actions as actionsStores, activePage, activePopup, activeProject, activeShow, alertMessage, effects as effectsStores, focusMode, folders, media as mediaStores, overlays as overlayStores, projects } from "../stores"
+import { actions as actionsStores, activePage, activePopup, activeProject, activeShow, alertMessage, effects as effectsStores, focusMode, folders, media as mediaStores, overlays as overlayStores, projects, recentFiles } from "../stores"
+import { audioExtensions, mediaExtensions } from "../values/extensions"
+import { confirmCustom } from "../utils/popup"
+import { sendMain } from "../IPC/main"
+import { Main } from "../../types/IPC/Main"
+import { translateText } from "../utils/language"
 
 export function importProject(files: { content: string; name?: string; extension?: string }[]) {
     files.forEach(({ content }) => {
@@ -77,7 +82,7 @@ export function importProject(files: { content: string; name?: string; extension
     activePopup.set("alert")
 }
 
-export function addToProject(type: ShowType, filePaths: string[]) {
+export function addToProject(type: ShowType | null, filePaths: string[]) {
     const currentProject = get(activeProject)
     if (!currentProject) {
         // ALERT please open a project
@@ -150,4 +155,43 @@ export function getProjectsInFolder(id: string) {
     }
 
     return { projectIds, folderIds }
+}
+
+// recently added files
+const projectMediaExtensions = ["pdf", ...mediaExtensions, ...audioExtensions]
+export async function updateRecentlyAddedFiles(paths: string[] | null = null) {
+    if (paths === null) paths = get(recentFiles).all || []
+    const cleared = get(recentFiles).cleared || []
+    const filteredPaths = paths.filter((a) => !cleared.includes(a))
+
+    let projectFiles: { path: string; name: string }[] = []
+    let projectMedia: string[] = []
+
+    filteredPaths.forEach((a) => {
+        const ext = getExtension(a)
+
+        if (ext === "project") {
+            // check if project with same name already exists
+            const name = removeExtension(getFileName(a))
+            const existingProject = Object.values(get(projects)).find((b) => b.name === name)
+            // WIP check actual content name/id?
+            if (existingProject) return
+
+            projectFiles.push({ path: a, name })
+        } else if (projectMediaExtensions.includes(ext)) {
+            projectMedia.push(a)
+        }
+    })
+
+    recentFiles.set({ all: filteredPaths, cleared, projectMedia })
+
+    // auto import recent project file
+    const projectFile = projectFiles[0]
+    if (!projectFile) return
+
+    const importProject = await confirmCustom(`${translateText("actions.import_project_file")}<br><b>${projectFile.name}</b>`)
+    recentFiles.update((a) => ({ ...a, cleared: [...a.cleared, ...projectFiles.map((p) => p.path)] }))
+    if (!importProject) return
+
+    sendMain(Main.IMPORT_FILES, [projectFile.path])
 }

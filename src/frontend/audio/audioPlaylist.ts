@@ -132,10 +132,11 @@ export class AudioPlaylist {
         // prevent playing the same song twice (while it's fading) to stop duplicate audio
         if (Object.keys(playingAudio).includes(nextSong)) return
 
-        let nextIndex = startIndex > -1 ? startIndex : (get(activePlaylist).index ?? -1) + 1
+        let nextIndex = startIndex > -1 ? startIndex : (get(activePlaylist)?.index ?? -1) + 1
         if (playlist.songs[nextIndex] !== nextSong) nextIndex = songs.findIndex((a) => a === nextSong)
 
         activePlaylist.update((a) => {
+            if (!a) a = {}
             a.active = nextSong
             a.index = nextIndex
             return a
@@ -155,6 +156,7 @@ export class AudioPlaylist {
             if (mode === "shuffle") songsList = shuffleArray(songsList)
 
             activePlaylist.update((a) => {
+                if (!a) a = {}
                 a.songs = songsList
                 return a
             })

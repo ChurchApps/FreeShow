@@ -438,7 +438,7 @@
                 {/if}
             {/if}
 
-            <MaterialButton title="show.text" on:click={() => textEditActive.set(true)}>
+            <MaterialButton title="show.text [Ctrl+Shift+T]" on:click={() => textEditActive.set(true)}>
                 <Icon id="text_edit" white />
                 <!-- {#if open && !$labelsDisabled}<p><T id="show.text" /></p>{/if} -->
             </MaterialButton>

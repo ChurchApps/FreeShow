@@ -26,7 +26,7 @@
     $: active = $popupData.active || ""
 
     // multiple types (scripture)
-    const id = $popupData.id
+    const id = $popupData.id || ""
     let types: { value: string; label: string }[] = []
     let values: { value: string; label: string }[] = []
     if (id === "scripture") {
@@ -105,6 +105,10 @@
     // open drawer tab instantly before content has loaded
     let preloader = true
     onMount(() => setTimeout(() => (preloader = false), 20))
+
+    $: normalTemplates = searchedTemplates.filter((a) => a.category !== "scripture")
+    $: scriptureTemplates = searchedTemplates.filter((a) => a.category === "scripture")
+    $: templatesList = id.includes("scripture") ? [...scriptureTemplates, ...normalTemplates] : [...normalTemplates, ...scriptureTemplates]
 </script>
 
 <svelte:window on:keydown={chooseTemplate} />
@@ -124,7 +128,7 @@
         <Center style="height: 100px;padding-top: 20px;">
             <Loader />
         </Center>
-    {:else if searchedTemplates.length}
+    {:else if templatesList.length}
         <div class="grid">
             {#if allowEmpty || (customTypes && selectedType !== types[0]?.value)}
                 <Card active={!value} label={translateText(allowEmpty ? "main.none" : "example.default")} icon="templates" {resolution} on:click={() => selectTemplate("")}>
@@ -132,7 +136,7 @@
                 </Card>
             {/if}
 
-            {#each searchedTemplates as template, i}
+            {#each templatesList as template, i}
                 <Card preview={!!(searchValue.length && i === 0)} active={value === template.id} label={template.name} color={template.color} {resolution} on:click={() => selectTemplate(template)}>
                     <TemplateSlide templateId={template.id} {template} preview />
                 </Card>

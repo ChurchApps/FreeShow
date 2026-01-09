@@ -10,7 +10,7 @@ import { uid } from "uid"
 import { OUTPUT } from "../../types/Channels"
 import { Main } from "../../types/IPC/Main"
 import { ToMain } from "../../types/IPC/ToMain"
-import type { FileData, MainFilePaths, Subtitle } from "../../types/Main"
+import type { FileFolder, MainFilePaths, Subtitle } from "../../types/Main"
 import type { Show, TrimmedShows } from "../../types/Show"
 import { imageExtensions, mimeTypes, videoExtensions } from "../data/media"
 import { _store, appDataPath, config, getStore, setStore } from "../data/store"
@@ -205,7 +205,7 @@ export function getValidFileName(filePath: string) {
 
 export function selectFilesDialog(title = "", filters: Electron.FileFilter, multiple = true, initialPath: string = ""): string[] {
     // crashes if empty in electron v37
-    if (!filters.extensions.length) filters.extensions = ["*"]
+    if (!filters.extensions?.length) filters.extensions = ["*"]
 
     const options: Electron.OpenDialogSyncOptions = { properties: ["openFile"], filters: [{ name: filters.name, extensions: filters.extensions }] }
     if (title) options.title = title
@@ -334,76 +334,74 @@ function getMediaFolderPath(name: Parameters<typeof app.getPath>[0]): string {
 }
 
 // READ_FOLDER
-export function getFolderContent(data: { path: string; disableThumbnails?: boolean; listFilesInFolders?: boolean }) {
-    const folderPath: string = data.path
-    const fileList: string[] = readFolder(folderPath)
+export async function readFolderContent(data: { path: string | string[]; depth?: number; generateThumbnails?: boolean; captureFolderContent?: boolean }) {
+    let folderContent = new Map<string, FileFolder>()
 
-    if (!fileList.length) {
-        return { path: folderPath, files: [], filesInFolders: [], folderFiles: {} }
-    }
+    if (!Array.isArray(data.path)) data.path = [data.path]
+    if (data.depth === undefined) data.depth = 0
 
-    const files: FileData[] = []
-    for (const name of fileList) {
-        const filePath = path.join(folderPath, name)
-        const stats = getFileStats(filePath)
-        if (stats) files.push({ ...stats, name, thumbnailPath: !data.disableThumbnails && isMedia() ? createThumbnail(filePath) : "" })
+    await Promise.all(
+        data.path.map(async (folderPath) => {
+            const stats = await getFileStatsAsync(folderPath)
+            if (!stats?.isDirectory()) return
 
-        function isMedia() {
-            if (stats!.folder) return false
-            return [...imageExtensions, ...videoExtensions].includes(stats!.extension.toLowerCase())
+            await getFolderContentRecursive(folderPath)
+        })
+    )
+
+    async function getFolderContentRecursive(folderPath: string, currentDepth: number = 0) {
+        let exceededDepth = currentDepth > data.depth!
+        if ((data.captureFolderContent && currentDepth < 2 ? false : exceededDepth) || folderContent.has(folderPath)) {
+            let filePaths: string[] = []
+            if (currentDepth === 1) {
+                const fileList = await readFolderAsync(folderPath)
+                filePaths = fileList.map((name) => path.join(folderPath, name))
+            }
+
+            folderContent.set(folderPath, { isFolder: true, path: folderPath, name: path.basename(folderPath), files: filePaths })
+            return
         }
+
+        const fileList = await readFolderAsync(folderPath)
+        const filePaths: string[] = fileList.map((name) => path.join(folderPath, name))
+
+        let captureThumbnailPaths = data.captureFolderContent && currentDepth === 1 ? getFirstMediaFiles(filePaths, 4) : []
+        let currentPaths = data.captureFolderContent && exceededDepth ? captureThumbnailPaths : filePaths
+
+        await Promise.all(
+            currentPaths.map(async (filePath) => {
+                const stats = await getFileStatsAsync(filePath)
+                if (!stats) return
+
+                if (stats.isDirectory()) {
+                    await getFolderContentRecursive(filePath, currentDepth + 1)
+                } else {
+                    let thumbnailPath = ""
+                    if (captureThumbnailPaths.includes(filePath) || (data.generateThumbnails && currentDepth === 0 && isMedia(path.extname(filePath).substring(1)))) {
+                        try {
+                            thumbnailPath = createThumbnail(filePath)
+                        } catch (err) {
+                            console.error("Thumbnail creation failed:", err)
+                        }
+                    }
+
+                    folderContent.set(filePath, { isFolder: false, path: filePath, name: path.basename(filePath), thumbnailPath, stats })
+                }
+            })
+        )
+
+        folderContent.set(folderPath, { isFolder: true, path: folderPath, name: path.basename(folderPath), files: filePaths })
     }
 
-    if (!files.length) {
-        return { path: folderPath, files: [], filesInFolders: [], folderFiles: {} }
-    }
-
-    // get first "layer" of files inside folder for searching
-    const filesInFolders: FileData[] = []
-    const folderFiles: { [key: string]: FileData[] } = {}
-    if (data.listFilesInFolders) {
-        const folders: FileData[] = files.filter((a) => a.folder)
-        if (folders.length < 15) folders.forEach(getFilesInFolder)
-    }
-
-    function getFilesInFolder(folder: FileData) {
-        const folderFileList: string[] = readFolder(folder.path)
-        folderFiles[folder.path] = []
-        if (!folderFileList.length) return
-
-        for (const name of folderFileList) {
-            const filePath = path.join(folder.path, name)
-            const stats = getFileStats(filePath)
-            if (!stats) return
-
-            if (!stats.folder) filesInFolders.push({ ...stats, name })
-            folderFiles[folder.path].push({ ...stats, name })
-        }
-    }
-
-    return { path: folderPath, files, filesInFolders, folderFiles }
+    return Object.fromEntries(folderContent)
 }
 
-// READ_FOLDERS
-export async function getFoldersContent(paths: { path: string }[]) {
-    const list: { [key: string]: FileData[] } = {}
+function isMedia(extension: string) {
+    return [...imageExtensions, ...videoExtensions].includes(extension.toLowerCase())
+}
 
-    for (const folderData of paths) {
-        const folderPath = folderData.path
-        const fileList = await readFolderAsync(folderPath)
-
-        const files: FileData[] = []
-        for (const name of fileList) {
-            const filePath = path.join(folderPath, name)
-            const stats = getFileStats(filePath)
-            const hasContent = !stats?.folder || !!(await readFolderAsync(filePath)).length
-            if (hasContent && stats) files.push({ ...stats, name })
-        }
-
-        list[folderPath] = files
-    }
-
-    return list
+function getFirstMediaFiles(paths: string[], count: number) {
+    return paths.filter((filePath: string) => isMedia(path.extname(filePath).substring(1))).slice(0, count)
 }
 
 export function getSimularPaths(data: { paths: string[] }) {
@@ -720,6 +718,80 @@ async function checkIsFolder(filePath: string): Promise<boolean> {
             resolve(err ? false : stats.isDirectory())
         })
     )
+}
+
+/////
+
+// detect new files in downloads folder for easy importing
+// - auto import .project files
+// - suggest importing videos/images/pdfs
+// - WIP extract & import zip files with media content
+export async function detectNewFiles() {
+    const downloadsFolder = app.getPath("downloads")
+    const ONE_DAY = 24 * 60 * 60 * 1000
+    const ONE_MINUTE = 60 * 1000
+    const WRITE_WAIT_MS = 2000
+    const temporaryExtensions = [".crdownload", ".part", ".download", ".tmp"]
+
+    // read folder once and build known set
+    const dirListing = await readFolderAsync(downloadsFolder)
+    const knownFiles = new Set(dirListing)
+
+    // initial recent files
+    const cutoff = Date.now() - ONE_DAY
+    const allRecentFiles: string[] = []
+    for (const fileName of dirListing) {
+        if (!fileName) continue
+        const ext = path.extname(fileName).toLowerCase()
+        if (temporaryExtensions.includes(ext)) continue
+
+        const filePath = path.join(downloadsFolder, fileName)
+        const stats = await getFileStatsAsync(filePath)
+        if (!stats) continue
+
+        if (stats.birthtimeMs < cutoff) continue
+
+        allRecentFiles.push(filePath)
+    }
+
+    sendToMain(ToMain.RECENTLY_ADDED_FILES, { paths: allRecentFiles })
+
+    // watch for file changes
+    fs.watch(downloadsFolder, { persistent: false }, async (eventType, filename) => {
+        if (eventType !== "rename" || !filename) return
+
+        const ext = path.extname(filename).toLowerCase()
+        if (temporaryExtensions.includes(ext)) return
+
+        const filePath = path.join(downloadsFolder, filename)
+
+        const exists = await doesPathExistAsync(filePath)
+        if (!exists) {
+            const isKnown = knownFiles.delete(filename)
+            if (!isKnown) return
+
+            const idx = allRecentFiles.indexOf(filePath)
+            if (idx === -1) return
+
+            allRecentFiles.splice(idx, 1)
+            sendToMain(ToMain.RECENTLY_ADDED_FILES, { paths: allRecentFiles })
+            return
+        }
+
+        if (knownFiles.has(filename)) return
+
+        // treat as potential new download after a short write-wait
+        setTimeout(async () => {
+            const stats = await getFileStatsAsync(filePath)
+            if (!stats) return
+
+            knownFiles.add(filename)
+            if (stats.birthtimeMs < Date.now() - ONE_MINUTE) return
+
+            if (!allRecentFiles.includes(filePath)) allRecentFiles.push(filePath)
+            sendToMain(ToMain.RECENTLY_ADDED_FILES, { paths: allRecentFiles })
+        }, WRITE_WAIT_MS)
+    })
 }
 
 /// ///

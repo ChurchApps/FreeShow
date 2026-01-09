@@ -216,7 +216,6 @@
         flex-wrap: wrap;
         flex: 1;
         place-content: flex-start;
-        padding: 5px;
         overflow-y: auto;
     }
 

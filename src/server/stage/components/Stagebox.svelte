@@ -236,4 +236,17 @@
     .align :global(.item .align .lines) {
         text-align: var(--text-align);
     }
+
+    /* phone view */
+    @media (max-width: 1000px) {
+        .label {
+            font-size: 24px;
+        }
+    }
+
+    @media (max-width: 500px) {
+        .label {
+            font-size: 18px;
+        }
+    }
 </style>

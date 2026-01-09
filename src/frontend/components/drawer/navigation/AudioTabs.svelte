@@ -3,18 +3,17 @@
     import { uid } from "uid"
     import { Main } from "../../../../types/IPC/Main"
     import { ToMain } from "../../../../types/IPC/ToMain"
-    import type { FileData } from "../../../../types/Main"
+    import { AudioPlaylist } from "../../../audio/audioPlaylist"
     import { destroyMain, receiveToMain, requestMain, sendMain } from "../../../IPC/main"
-    import { drawerTabsData, labelsDisabled, audioFolders, media, audioPlaylists, effectsLibrary, audioStreams, activeRename } from "../../../stores"
+    import { activeRename, audioFolders, audioPlaylists, audioStreams, drawerTabsData, effectsLibrary, labelsDisabled, media } from "../../../stores"
     import { getAccess } from "../../../utils/profile"
     import { keysToID, sortObject } from "../../helpers/array"
     import { addDrawerFolder } from "../../helpers/dropActions"
+    import Icon from "../../helpers/Icon.svelte"
+    import { countFolderMediaItems } from "../../helpers/media"
     import T from "../../helpers/T.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import NavigationSections from "./NavigationSections.svelte"
-    import { audioExtensions } from "../../../values/extensions"
-    import Icon from "../../helpers/Icon.svelte"
-    import { AudioPlaylist } from "../../../audio/audioPlaylist"
 
     const profile = getAccess("audio")
     $: readOnly = profile.global === "read"
@@ -28,32 +27,20 @@
 
     let allCount = 0
     let folderLengths: { [key: string]: number } = {}
-    $: if (foldersList.length) {
-        requestMain(
-            Main.READ_FOLDERS,
-            foldersList?.map((a) => ({ path: a.path || "" })),
-            (data) => {
-                console.log(data)
+    $: if (foldersList.length) getCounts()
+    async function getCounts() {
+        const folderPaths = foldersList.map((a) => a.path || "")
+        const data = keysToID(await requestMain(Main.READ_FOLDER, { path: folderPaths }))
+        const newFolderLengths: { [key: string]: number } = {}
+        allCount = 0
 
-                const newFolderLengths: { [key: string]: number } = {}
-                allCount = 0
-                Object.entries(data).forEach(([path, files]) => {
-                    newFolderLengths[path] = countFiles(files)
-                })
-                folderLengths = newFolderLengths
-            }
-        )
-    }
-    function countFiles(files: FileData[]) {
-        let count = 0
-        files.forEach((file) => {
-            if (file.folder) count++
-            else if (audioExtensions.includes(file.extension)) {
-                allCount++
-                count++
-            }
+        folderPaths.forEach((folderPath) => {
+            const count = countFolderMediaItems(folderPath, data)
+            newFolderLengths[folderPath] = count.folder + count.audio
+            allCount += count.audio
         })
-        return count
+
+        folderLengths = newFolderLengths
     }
 
     $: playlists = !!Object.keys($audioPlaylists).length
@@ -86,7 +73,7 @@
 
     function convertToButton(categories: any[], lengths: { [key: string]: number }) {
         return sortObject(categories, "name").map((a) => {
-            return { id: a.id, label: a.name, icon: a.icon, count: lengths[a.path] }
+            return { id: a.id, label: a.name, icon: a.icon || "folder", count: lengths[a.path] }
         })
     }
 

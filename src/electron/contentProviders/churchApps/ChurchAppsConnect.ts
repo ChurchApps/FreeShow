@@ -6,7 +6,7 @@ import { openURL } from "../../IPC/responsesMain"
 import { getKey } from "../../utils/keys"
 import { httpsRequest } from "../../utils/requests"
 import type { ChurchAppsAuthData, ChurchAppsRequestData, ChurchAppsScopes } from "./types"
-import { CHURCHAPPS_API_URL, CHURCHAPPS_APP_URL } from "./types"
+import { CHURCHAPPS_API_URL, CHURCHAPPS_APP_URL, LESSONS_API_URL } from "./types"
 
 /**
  * Handles authentication and API communication with the ChurchApps service.
@@ -79,13 +79,24 @@ export class ChurchAppsConnect {
         }
 
         return new Promise((resolve) => {
-            const apiUrl = CHURCHAPPS_API_URL
-            const pathPrefix = data.api === "doing" ? "/doing" : data.api === "membership" ? "/membership" : "/content"
-            const fullEndpoint = `${pathPrefix}${data.endpoint}`
+            let apiUrl = CHURCHAPPS_API_URL
+            let fullEndpoint = ""
+
+            if (data.api === "lessons") {
+                apiUrl = LESSONS_API_URL
+                fullEndpoint = data.endpoint
+            } else {
+                const pathPrefix = data.api === "doing" ? "/doing" : data.api === "membership" ? "/membership" : "/content"
+                fullEndpoint = `${pathPrefix}${data.endpoint}`
+            }
+
             const headers = token ? { Authorization: `Bearer ${token}` } : {}
             httpsRequest(apiUrl, fullEndpoint, data.method || "GET", headers, data.data || {}, (err, result) => {
                 if (err) {
                     console.error("Could not get data", apiUrl, fullEndpoint)
+                    // ignore if checking for missing songs
+                    if (fullEndpoint.includes("/missing")) return resolve(null)
+
                     sendToMain(ToMain.ALERT, "Could not get data! " + err.message + "\n" + apiUrl + fullEndpoint)
                     return resolve(null)
                 } else resolve(result)

@@ -185,6 +185,11 @@ export function restoreFiles(data?: { folder: string }) {
 
         const data = JSON.parse(file)
 
+        if (storeId === "SETTINGS") {
+            delete data.dataPath
+            delete data.showsPath
+        }
+
         setStore(_store[storeId], data)
 
         sendMain(storeId as Main, data)

@@ -25,6 +25,7 @@ import { apiReturnData, emitOSC, startWebSocketAndRest, stopApiListener } from "
 import { closeMain } from "../utils/close"
 import { bundleMediaFiles, getDataFolderPath, getDataFolderRoot, getFileInfo, getFolderContent, getFoldersContent, getMediaCodec, getMediaTracks, getPaths, getSimularPaths, loadFile, loadShows, locateMediaFile, openInSystem, readExifData, readFile, selectFiles, selectFilesDialog, selectFolder, writeFile } from "../utils/files"
 import { getMachineId } from "../utils/helpers"
+import { bundleMediaFiles, getDataFolderPath, getDataFolderRoot, getFileInfo, getMediaCodec, getMediaTracks, getPaths, getSimularPaths, loadFile, loadShows, locateMediaFile, openInSystem, readExifData, readFile, readFolderContent, selectFiles, selectFilesDialog, selectFolder, writeFile } from "../utils/files"
 import { LyricSearch } from "../utils/LyricSearch"
 import { closeMidiInPorts, getMidiInputs, getMidiOutputs, receiveMidi, sendMidi } from "../utils/midi"
 import { deleteShows, deleteShowsNotIndexed, getAllShows, getEmptyShows, refreshAllShows } from "../utils/shows"
@@ -68,6 +69,7 @@ export const mainResponses: MainResponses = {
     [Main.BACKUPS]: () => getBackups(),
     [Main.DELETE_BACKUP]: (data) => deleteBackup(data),
     [Main.IMPORT]: (data) => startImport(data),
+    [Main.IMPORT_FILES]: (data) => importFiles(data),
     [Main.BIBLE]: (data) => loadScripture(data),
     [Main.SHOW]: (data) => loadShow(data),
     // MAIN
@@ -151,8 +153,7 @@ export const mainResponses: MainResponses = {
     [Main.GET_SIMILAR]: (data) => getSimularPaths(data),
     [Main.BUNDLE_MEDIA_FILES]: () => bundleMediaFiles(),
     [Main.FILE_INFO]: (data) => getFileInfo(data),
-    [Main.READ_FOLDER]: (data) => getFolderContent(data),
-    [Main.READ_FOLDERS]: (data) => getFoldersContent(data),
+    [Main.READ_FOLDER]: (data) => readFolderContent(data),
     [Main.READ_FILE]: (data) => ({ content: readFile(data.path) }),
     [Main.OPEN_FOLDER]: (data) => selectFolder(data),
     [Main.OPEN_FILE]: (data) => selectFiles(data),
@@ -221,6 +222,10 @@ export function startImport(data: { channel: string; format: { name: string; ext
     if (needsFileAndNoFileSelected) return
 
     importShow(data.channel, files || null, data.settings || {})
+}
+
+function importFiles(paths: string[]) {
+    importShow("IMPORT", paths, {})
 }
 
 // BIBLE

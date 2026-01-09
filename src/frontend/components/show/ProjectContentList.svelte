@@ -2,7 +2,9 @@
     import { onDestroy, onMount } from "svelte"
     import type { ProjectShowRef, Tree } from "../../../types/Projects"
     import { ShowType } from "../../../types/Show"
-    import { actions, activeFocus, activePopup, activeProject, activeShow, drawer, focusMode, fullColors, labelsDisabled, projects, projectView, shows, special } from "../../stores"
+    import { addToProject, updateRecentlyAddedFiles } from "../../converters/project"
+    import { actions, activeFocus, activePopup, activeProject, activeShow, drawer, focusMode, fullColors, labelsDisabled, projects, projectView, recentFiles, shows, special } from "../../stores"
+    import { triggerFunction } from "../../utils/common"
     import { getAccess } from "../../utils/profile"
     import { getActionIcon } from "../actions/actions"
     import { getTimeUntilClock } from "../drawer/timers/timers"
@@ -20,7 +22,6 @@
     import Center from "../system/Center.svelte"
     import DropArea from "../system/DropArea.svelte"
     import SelectElem from "../system/SelectElem.svelte"
-    import { triggerFunction } from "../../utils/common"
 
     export let tree: Tree[]
     export let recentlyUsedList: any[] = []
@@ -147,6 +148,12 @@
             if (timeLeft > 0 && (!closestTime || timeLeft < closestTime)) closestTime = timeLeft
         })
     }
+
+    // remove files already in project - max 5
+    $: recommended = $recentFiles.projectMedia
+        .filter((a) => !projectItemsList.find((b) => b.id === a))
+        .sort((a, b) => a.localeCompare(b))
+        .slice(0, 5)
 </script>
 
 <div id="projectArea" class="list {projectReadOnly ? '' : 'context #project'}">
@@ -212,6 +219,43 @@
                         {/each}
                     </div>
                 {/each}
+
+                <!-- suggestions -->
+                {#if recommended.length}
+                    <div class="section" style="margin-top: 50px;border-top: 1px solid var(--primary-lighter);background-color: var(--primary-darkest);padding: 2px 18px;display: flex;justify-content: space-between;align-items: center;">
+                        <T id="media.recommended" />
+
+                        <MaterialButton
+                            class="show"
+                            style="padding: 0.2em;border-radius: 2px;border-left: none;min-height: unset;"
+                            on:click={() => {
+                                recentFiles.update((a) => {
+                                    a.cleared = [...a.cleared, ...recommended]
+                                    return a
+                                })
+                                updateRecentlyAddedFiles()
+                            }}
+                            title="clear.general"
+                            tab
+                        >
+                            <Icon id="clear" size={0.9} white />
+                        </MaterialButton>
+                    </div>
+
+                    <div class="listSection">
+                        {#each recommended as path, i}
+                            {@const name = getFileName(path)}
+                            {@const isFirst = i === 0}
+                            {@const isLast = i === recommended.length - 1}
+                            {@const borderRadiusStyle = `${isFirst ? "border-top-right-radius: 10px;" : ""}${isLast ? "border-bottom-right-radius: 10px;" : ""}`}
+
+                            <MaterialButton class="show context #recent_file__project" style="justify-content: left;padding: 0.35em 0.8em;font-weight: normal;{borderRadiusStyle}" on:click={() => addToProject(null, [path])} title="context.addToProject: <b>{name}</b>" tab>
+                                <Icon id="add" size={0.9} white right />
+                                <p style="min-height: 10px;">{removeExtension(name)}</p>
+                            </MaterialButton>
+                        {/each}
+                    </div>
+                {/if}
             {:else}
                 <Center absolute>
                     <span style="opacity: 0.5;"><T id="empty.general" /></span>

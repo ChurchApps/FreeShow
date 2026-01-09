@@ -4,14 +4,13 @@
     import type { ContentProviderId } from "../../../../electron/contentProviders/base/types"
     import { Main } from "../../../../types/IPC/Main"
     import { ToMain } from "../../../../types/IPC/ToMain"
-    import type { FileData } from "../../../../types/Main"
     import { destroyMain, receiveToMain, requestMain, sendMain } from "../../../IPC/main"
     import { drawerTabsData, labelsDisabled, media, mediaFolders, providerConnections } from "../../../stores"
     import { getAccess } from "../../../utils/profile"
-    import { mediaExtensions } from "../../../values/extensions"
     import { keysToID, sortObject } from "../../helpers/array"
     import { addDrawerFolder } from "../../helpers/dropActions"
     import Icon from "../../helpers/Icon.svelte"
+    import { countFolderMediaItems } from "../../helpers/media"
     import T from "../../helpers/T.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import NavigationSections from "./NavigationSections.svelte"
@@ -26,30 +25,20 @@
 
     let allCount = 0
     let folderLengths: { [key: string]: number } = {}
-    $: if (foldersList.length) {
-        requestMain(
-            Main.READ_FOLDERS,
-            foldersList?.map((a) => ({ path: a.path || "" })),
-            (data) => {
-                const newFolderLengths: { [key: string]: number } = {}
-                allCount = 0
-                Object.entries(data).forEach(([path, files]) => {
-                    newFolderLengths[path] = countFiles(files)
-                })
-                folderLengths = newFolderLengths
-            }
-        )
-    }
-    function countFiles(files: FileData[]) {
-        let count = 0
-        files.forEach((file) => {
-            if (file.folder) count++
-            else if (mediaExtensions.includes(file.extension)) {
-                allCount++
-                count++
-            }
+    $: if (foldersList.length) getCounts()
+    async function getCounts() {
+        const folderPaths = foldersList.map((a) => a.path || "")
+        const data = keysToID(await requestMain(Main.READ_FOLDER, { path: folderPaths }))
+        const newFolderLengths: { [key: string]: number } = {}
+        allCount = 0
+
+        folderPaths.forEach((folderPath) => {
+            const count = countFolderMediaItems(folderPath, data)
+            newFolderLengths[folderPath] = count.folder + count.video + count.image
+            allCount += count.video + count.image
         })
-        return count
+
+        folderLengths = newFolderLengths
     }
 
     // Content providers with libraries, and are currently connected
@@ -81,7 +70,7 @@
 
     function convertToButton(categories: any[], lengths: { [key: string]: number }) {
         return sortObject(categories, "name").map((a) => {
-            return { id: a.id, label: a.name, icon: a.icon, count: lengths[a.path] }
+            return { id: a.id, label: a.name, icon: a.icon || "folder", count: lengths[a.path] }
         })
     }
 

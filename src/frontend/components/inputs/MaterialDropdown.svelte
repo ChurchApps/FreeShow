@@ -6,10 +6,10 @@
     import { dictionary } from "../../stores"
     import { translateText } from "../../utils/language"
     import { formatSearch } from "../../utils/search"
+    import VirtualList from "../drawer/VirtualList.svelte"
     import { newDropdown } from "../edit/scripts/edit"
     import Icon from "../helpers/Icon.svelte"
     import InputRow from "../input/InputRow.svelte"
-    import VirtualList from "../drawer/VirtualList.svelte"
     import MaterialButton from "./MaterialButton.svelte"
     import MaterialTextInput from "./MaterialTextInput.svelte"
 
@@ -201,20 +201,21 @@
 
     // blur focus
 
-    function handleFocusOut(event: FocusEvent) {
-        if (!dropdownEl.contains(event.relatedTarget as Node)) {
-            open = false
-            addNewTextbox = false
-        }
-    }
+    // relatedTarget is null, even in dropdown
+    // function handleFocusOut(event: FocusEvent) {
+    //     if (!dropdownEl.contains(event.relatedTarget as Node)) {
+    //         open = false
+    //         addNewTextbox = false
+    //     }
+    // }
 
     onMount(() => {
         document.addEventListener("click", handleClickOutside)
-        document.addEventListener("focusout", handleFocusOut, true)
+        // document.addEventListener("focusout", handleFocusOut, true)
 
         return () => {
             document.removeEventListener("click", handleClickOutside)
-            document.removeEventListener("focusout", handleFocusOut, true)
+            // document.removeEventListener("focusout", handleFocusOut, true)
         }
     })
 

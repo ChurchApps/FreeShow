@@ -9,6 +9,7 @@ export enum ToMain {
     API = "API",
     SPELL_CHECK = "SPELL_CHECK",
     BACKUP = "BACKUP",
+    RECENTLY_ADDED_FILES = "RECENTLY_ADDED_FILES",
     PRESENTATION_STATE = "PRESENTATION_STATE",
     CAPTURE_CANVAS = "CAPTURE_CANVAS",
     REPLACE_MEDIA_PATHS = "REPLACE_MEDIA_PATHS",
@@ -39,6 +40,7 @@ export interface ToMainSendPayloads {
     [ToMain.API]: { action: string; data?: any }
     [ToMain.SPELL_CHECK]: { misspelled: string; suggestions: string[] }
     [ToMain.BACKUP]: { finished: boolean; path: string }
+    [ToMain.RECENTLY_ADDED_FILES]: { paths: string[] }
     [ToMain.PRESENTATION_STATE]: { id: string; stat: any; info: any }
     [ToMain.CAPTURE_CANVAS]: { input: string; output: string; size: any; extension: string; config: any }
     [ToMain.REPLACE_MEDIA_PATHS]: any[]
