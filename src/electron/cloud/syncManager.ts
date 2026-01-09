@@ -119,6 +119,8 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
         if (!isValidJSON(cloudFile)) return
         const cloudFileData = JSON.parse(cloudFile)
 
+        const id = path.basename(file.name, path.extname(file.name)) as keyof typeof _store
+
         // download new/modified shows
         if (file.name === "SHOWS_CONTENT.json") {
             let cloudShowNames: string[] = []
@@ -170,7 +172,6 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
             return
         }
 
-        const id = path.basename(file.name, path.extname(file.name)) as keyof typeof _store
         if (id === "ACCESS" || id === "ERROR_LOG") return // type safety
 
         const localStore = _store[id]
