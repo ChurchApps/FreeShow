@@ -110,8 +110,8 @@ export function save(closeWhenFinished = false, customTriggers: SaveActions = {}
       sendMain(Main.AUTO_BUNDLE_MEDIA_FILES)
     }
   })
-  console.info("SAVING...")
 
+  console.info("SAVING...")
   if ((!customTriggers.autosave || !get(saved)) && !customTriggers.backup) {
     newToast("toast.saving")
     customActionActivation("save")

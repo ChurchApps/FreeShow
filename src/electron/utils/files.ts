@@ -797,8 +797,12 @@ export async function detectNewFiles() {
 
 /// ///
 
-// BUNDLE MEDIA FILES FROM ALL SHOWS AND PROJECTS (IMAGE/VIDEO/AUDIO)
+// region: BUNDLE MEDIA FILES FROM ALL SHOWS AND PROJECTS (IMAGE/VIDEO/AUDIO)
 let currentlyBundling = false
+/**
+ * Bundles media files from all shows and projects
+ * @param openFolderWhenDone [default=false] Whether to open the output folder when done
+ */
 export function bundleMediaFiles(openFolderWhenDone: boolean = false) {
   if (currentlyBundling) return
   currentlyBundling = true
