@@ -215,7 +215,7 @@
         "downloading": "Downloading",
         "recommended": "Recommended",
         "bundle_media_files": "Bundle all media files",
-        "bundle_media_files_tip": "Copy the media files from all shows into one folder",
+        "bundle_media_files_tip": "Copy the media files from all shows and projects into one folder",
         "auto_bundle_media_files": "Automatically bundle media files on save"
     },
     "audio": {
