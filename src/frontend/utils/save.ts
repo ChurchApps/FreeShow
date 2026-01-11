@@ -107,8 +107,7 @@ export function save(closeWhenFinished = false, customTriggers: SaveActions = {}
   requestMain(Main.GET_STORE_VALUE, { file: "config", key: "autoBundleMediaFiles" }, (value) => {
     let autoBundleMediaFiles = value !== false
     if (autoBundleMediaFiles) {
-      console.info("Auto bundling media files...")
-      sendMain(Main.BUNDLE_MEDIA_FILES)
+      sendMain(Main.AUTO_BUNDLE_MEDIA_FILES)
     }
   })
   console.info("SAVING...")

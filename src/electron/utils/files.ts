@@ -799,7 +799,7 @@ export async function detectNewFiles() {
 
 // BUNDLE MEDIA FILES FROM ALL SHOWS AND PROJECTS (IMAGE/VIDEO/AUDIO)
 let currentlyBundling = false
-export function bundleMediaFiles() {
+export function bundleMediaFiles(openFolderWhenDone: boolean = false) {
   if (currentlyBundling) return
   currentlyBundling = true
 
@@ -866,7 +866,9 @@ export function bundleMediaFiles() {
   })
 
   // open folder
-  openInSystem(outputPath, true)
+  if (openFolderWhenDone) {
+    openInSystem(outputPath, true)
+  }
   currentlyBundling = false
 }
 
