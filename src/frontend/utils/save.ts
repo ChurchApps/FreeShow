@@ -4,7 +4,7 @@ import type { Projects } from "../../types/Projects"
 import type { Shows } from "../../types/Show"
 import { customActionActivation } from "../components/actions/actions"
 import { clone, keysToID, removeDeleted } from "../components/helpers/array"
-import { sendMain } from "../IPC/main"
+import { requestMain, sendMain } from "../IPC/main"
 import {
   actionTags,
   actions,
@@ -102,16 +102,17 @@ import { audioStreams, companion } from "./../stores"
 import { newToast } from "./common"
 import { syncDrive } from "./drive"
 import { syncWithCloud } from "./cloudSync"
-import { bundleMediaFiles } from "../../electron/utils/files"
-import { config } from "../../electron/data/store"
 
 export function save(closeWhenFinished = false, customTriggers: SaveActions = {}) {
+  requestMain(Main.GET_STORE_VALUE, { file: "config", key: "autoBundleMediaFiles" }, (value) => {
+    let autoBundleMediaFiles = value !== false
+    if (autoBundleMediaFiles) {
+      console.info("Auto bundling media files...")
+      sendMain(Main.BUNDLE_MEDIA_FILES)
+    }
+  })
   console.info("SAVING...")
-  console.log("Auto Bundle: ", config.get("autoBundleMediaFiles"))
-  if (config.get("autoBundleMediaFiles") === true) {
-    console.log("bundling")
-    bundleMediaFiles()
-  }
+
   if ((!customTriggers.autosave || !get(saved)) && !customTriggers.backup) {
     newToast("toast.saving")
     customActionActivation("save")
