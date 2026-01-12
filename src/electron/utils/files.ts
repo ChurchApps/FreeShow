@@ -19,6 +19,7 @@ import { sendMain, sendToMain } from "../IPC/main"
 import { OutputHelper } from "../output/OutputHelper"
 import { mainWindow, setAutoProfile, toApp } from "./../index"
 import { getAllShows, trimShow } from "./shows"
+import { Project } from "../../types/Projects"
 
 function actionComplete(err: Error | null, actionFailedMessage: string) {
     if (err) console.error(actionFailedMessage + ":", err)
@@ -796,22 +797,25 @@ export async function detectNewFiles() {
 
 /// ///
 
-// BUNDLE MEDIA FILES FROM ALL SHOWS (IMAGE/VIDEO/AUDIO)
+// region: BUNDLE MEDIA FILES FROM ALL SHOWS AND PROJECTS (IMAGE/VIDEO/AUDIO)
 let currentlyBundling = false
-export function bundleMediaFiles() {
+/**
+ * Bundles media files from all shows and projects
+ * @param openFolderWhenDone [default=false] Whether to open the output folder when done
+ */
+export function bundleMediaFiles(openFolderWhenDone: boolean = false) {
     if (currentlyBundling) return
     currentlyBundling = true
 
-    const showsPath = getDataFolderPath("shows")
+    let allMediaFiles: string[] = []
 
+    // shows
+    const showsPath = getDataFolderPath("shows")
     let showsList = readFolder(showsPath)
     showsList = showsList
         .filter((name) => name.toLowerCase().endsWith(".show")) // only .show files
         .filter((trimmedName) => trimmedName) // remove files with no name
 
-    let allMediaFiles: string[] = []
-
-    for (const name of showsList) readShow(name)
     function readShow(fileName: string) {
         const showPath: string = path.join(showsPath, fileName)
         const jsonData = readFile(showPath) || "{}"
@@ -825,8 +829,22 @@ export function bundleMediaFiles() {
             if (mediaPath) allMediaFiles.push(mediaPath)
         })
 
-        // WIP also copy media item paths? (only when it's supported by the auto find feature)
+        // TODO: WIP also copy media item paths? (only when it's supported by the auto find feature)
     }
+    for (const name of showsList) readShow(name)
+
+    // projects
+    function readProject(project: Project) {
+        project?.shows?.forEach((show) => {
+            if (show.type && ["image", "video", "audio", "pdf", "ppt"].includes(show.type)) {
+                allMediaFiles.push(show.id)
+            } else if (show.type && show.type === "folder") {
+                console.info("unhandled folder during bundling: ", show)
+                // TODO: WIP handle folders
+            }
+        })
+    }
+    for (const proj of Object.values(getStore("PROJECTS").projects)) readProject(proj as Project)
 
     // remove duplicates
     allMediaFiles = [...new Set(allMediaFiles)]
@@ -852,7 +870,9 @@ export function bundleMediaFiles() {
     })
 
     // open folder
-    openInSystem(outputPath, true)
+    if (openFolderWhenDone) {
+        openInSystem(outputPath, true)
+    }
     currentlyBundling = false
 }
 

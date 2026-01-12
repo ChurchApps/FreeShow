@@ -4,7 +4,7 @@ import type { Projects } from "../../types/Projects"
 import type { Shows } from "../../types/Show"
 import { customActionActivation } from "../components/actions/actions"
 import { clone, keysToID, removeDeleted } from "../components/helpers/array"
-import { sendMain } from "../IPC/main"
+import { requestMain, sendMain } from "../IPC/main"
 import {
     actionTags,
     actions,
@@ -104,6 +104,13 @@ import { syncDrive } from "./drive"
 import { syncWithCloud } from "./cloudSync"
 
 export function save(closeWhenFinished = false, customTriggers: SaveActions = {}) {
+    requestMain(Main.GET_STORE_VALUE, { file: "config", key: "autoBundleMediaFiles" }, (value) => {
+        let autoBundleMediaFiles = value !== false
+        if (autoBundleMediaFiles) {
+            sendMain(Main.AUTO_BUNDLE_MEDIA_FILES)
+        }
+    })
+
     console.info("SAVING...")
     if ((!customTriggers.autosave || !get(saved)) && !customTriggers.backup) {
         newToast("toast.saving")

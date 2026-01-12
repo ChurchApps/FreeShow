@@ -9,6 +9,7 @@
     "prettier.printWidth": 500,
     "prettier.singleQuote": false,
     "prettier.semi": false,
+    "prettier.tabWidth": 4,
     "typescript.preferences.quoteStyle": "double",
     "typescript.preferences.importModuleSpecifier": "non-relative"
 }
