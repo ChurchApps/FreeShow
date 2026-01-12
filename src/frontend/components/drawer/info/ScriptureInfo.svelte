@@ -162,6 +162,8 @@
     $: onlyOneNormalOutput = getAllNormalOutputs().length === 1
     $: styleScriptureTemplate = onlyOneNormalOutput ? $styles[styleId]?.templateScripture : ""
 
+    // auto convert
+    $: if (useOldSystem && usingDefault && (!styleScriptureTemplate || styleScriptureTemplate.includes("scripture"))) convertToNew()
     $: useOldSystem = useOldScriptureSystem(templateId, $templates) && !styleScriptureTemplate
     $: usingDefault = templateId.includes("scripture")
     async function convertToNew() {
@@ -171,6 +173,7 @@
 
         setDefaultScriptureTemplates()
         update("template", "scripture")
+        useOldSystem = false
     }
 
     let expanded = false
