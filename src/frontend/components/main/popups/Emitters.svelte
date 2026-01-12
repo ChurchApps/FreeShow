@@ -51,7 +51,7 @@
     }
 
     function createEmitter() {
-        let id = createId ?? uid()
+        let id = createId || uid()
         emitters.update((a) => {
             a[id] = clone(DEFAULT_EMITTER)
             return a
