@@ -43,8 +43,8 @@ export async function chooseTeam(team: { id: string; churchId: string; name: str
 
     const existingData = await requestMain(Main.CLOUD_DATA, { id, churchId: team.churchId, teamId: team.id })
     if (existingData) {
-        // ensure previous popup is closed first
-        setTimeout(() => activePopup.set("cloud_method"), 20)
+        // ensure previous popup is closed first to prevent Svelte bug "locking" popup
+        setTimeout(() => activePopup.set("cloud_method"), 250)
         return
     }
 

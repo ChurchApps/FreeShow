@@ -6,6 +6,11 @@
     import T from "../../helpers/T.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
 
+    const options = [
+        { name: "actions.merge", description: "cloud.merge_tip", icon: "merge", click: () => setMethod("merge") },
+        { name: "cloud.read_only", description: "cloud.readonly_tip", icon: "import", click: () => setMethod("read_only") }
+    ]
+
     function updateData(key: string, value: any) {
         cloudSyncData.update((a) => {
             a[key] = value
@@ -19,11 +24,6 @@
         activePopup.set(null)
     }
 
-    const powerpoint_options = [
-        { name: "actions.merge", description: "cloud.merge_tip", icon: "merge", click: () => setMethod("merge") },
-        { name: "cloud.read_only", description: "cloud.readonly_tip", icon: "import", click: () => setMethod("read_only") }
-    ]
-
     function cancel() {
         cloudSyncData.set({})
         activePopup.set(null)
@@ -33,8 +33,8 @@
 <p class="tip"><T id="cloud.choose_method_tip" /></p>
 
 <div style="display: flex;flex-direction: column;gap: 5px;">
-    {#each powerpoint_options as option, i}
-        <MaterialButton variant="outlined" style="justify-content: start;flex: 1;min-height: 50px;font-weight: normal;" on:click={() => option.click()}>
+    {#each options as option, i}
+        <MaterialButton variant="outlined" style="justify-content: start;flex: 1;min-height: 50px;font-weight: normal;" on:click={option.click}>
             <Icon id={option.icon} size={2.5} white={i > 0} />
 
             <div style="display: flex;flex-direction: column;align-items: start;gap: 5px;">
