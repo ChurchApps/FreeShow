@@ -11,6 +11,7 @@ import { OUTPUT } from "../../types/Channels"
 import { Main } from "../../types/IPC/Main"
 import { ToMain } from "../../types/IPC/ToMain"
 import type { FileFolder, MainFilePaths, Subtitle } from "../../types/Main"
+import type { Project } from "../../types/Projects"
 import type { Show, TrimmedShows } from "../../types/Show"
 import { imageExtensions, mimeTypes, videoExtensions } from "../data/media"
 import { _store, appDataPath, config, getStore, setStore } from "../data/store"
@@ -19,7 +20,6 @@ import { sendMain, sendToMain } from "../IPC/main"
 import { OutputHelper } from "../output/OutputHelper"
 import { mainWindow, setAutoProfile, toApp } from "./../index"
 import { getAllShows, trimShow } from "./shows"
-import { Project } from "../../types/Projects"
 
 function actionComplete(err: Error | null, actionFailedMessage: string) {
     if (err) console.error(actionFailedMessage + ":", err)
@@ -803,7 +803,7 @@ let currentlyBundling = false
  * Bundles media files from all shows and projects
  * @param openFolderWhenDone [default=false] Whether to open the output folder when done
  */
-export function bundleMediaFiles(openFolderWhenDone: boolean = false) {
+export function bundleMediaFiles({ openFolder = false }: { openFolder?: boolean } = {}) {
     if (currentlyBundling) return
     currentlyBundling = true
 
@@ -869,10 +869,7 @@ export function bundleMediaFiles(openFolderWhenDone: boolean = false) {
         })
     })
 
-    // open folder
-    if (openFolderWhenDone) {
-        openInSystem(outputPath, true)
-    }
+    if (openFolder) openInSystem(outputPath, true)
     currentlyBundling = false
 }
 

@@ -125,7 +125,6 @@ export enum Main {
     LOCATE_MEDIA_FILE = "LOCATE_MEDIA_FILE",
     GET_SIMILAR = "GET_SIMILAR",
     BUNDLE_MEDIA_FILES = "BUNDLE_MEDIA_FILES",
-    AUTO_BUNDLE_MEDIA_FILES = "AUTO_BUNDLE_MEDIA_FILES",
     FILE_INFO = "FILE_INFO",
     READ_FOLDER = "READ_FOLDER",
     READ_FILE = "READ_FILE",
@@ -205,6 +204,7 @@ export interface MainSendPayloads {
 
     [Main.LOCATE_MEDIA_FILE]: { fileName: string; splittedPath: string[]; folders: string[]; ref: { showId: string; mediaId: string; cloudId: string } }
     [Main.GET_SIMILAR]: { paths: string[] }
+    [Main.BUNDLE_MEDIA_FILES]: { openFolder?: boolean }
     [Main.FILE_INFO]: string
     [Main.READ_FOLDER]: { path: string | string[]; depth?: number; generateThumbnails?: boolean; captureFolderContent?: boolean }
     [Main.READ_FILE]: { path: string }

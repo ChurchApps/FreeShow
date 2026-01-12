@@ -10,7 +10,6 @@ export interface Config {
     dataPath: string | null
     disableHardwareAcceleration: boolean | null
     autoErrorReporting?: boolean
-    autoBundleMediaFiles?: boolean
 }
 
 export interface OS {

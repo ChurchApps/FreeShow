@@ -20,9 +20,6 @@
         requestMain(Main.GET_STORE_VALUE, { file: "config", key: "disableHardwareAcceleration" }, (value) => {
             disableHardwareAcceleration = !!value
         })
-        requestMain(Main.GET_STORE_VALUE, { file: "config", key: "autoBundleMediaFiles" }, (value) => {
-            autoBundleMediaFiles = value !== false
-        })
         requestMain(Main.GET_EMPTY_SHOWS, { cached: $showsCache }, (a) => {
             if (a) emptyShows = a
         })
@@ -153,21 +150,7 @@
 
     // bundle media files
     function bundleMediaFiles() {
-        sendMain(Main.BUNDLE_MEDIA_FILES)
-    }
-
-    // toggle automatic media file bundling
-    let autoBundleMediaFiles = false
-    /**
-     * toggle automatic media file bundling
-     * @param e
-     */
-    function toggleAutoBundleMediaFiles(e: any) {
-        autoBundleMediaFiles = e.detail
-        sendMain(Main.SET_STORE_VALUE, { file: "config", key: "autoBundleMediaFiles", value: autoBundleMediaFiles })
-
-        alertMessage.set("settings.restart_for_change")
-        activePopup.set("alert")
+        sendMain(Main.BUNDLE_MEDIA_FILES, { openFolder: true })
     }
 
     // usage log
@@ -288,7 +271,7 @@
         <T id="media.bundle_media_files" />
     </MaterialButton>
 </InputRow>
-<MaterialToggleSwitch label="media.auto_bundle_media_files" checked={autoBundleMediaFiles} defaultValue={false} on:change={toggleAutoBundleMediaFiles} />
+<MaterialToggleSwitch label="media.auto_bundle_media_files" checked={$special.autoBundleMediaFiles} defaultValue={false} on:change={(e) => updateSpecial(e.detail, "autoBundleMediaFiles")} />
 
 {#if $special.logSongUsage && $usageLog.all?.length}
     <InputRow>
