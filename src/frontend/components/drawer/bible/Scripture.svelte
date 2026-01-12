@@ -449,6 +449,17 @@
         if (keys || !selectedVerses[selectedVerses.length - 1]?.find((a) => a && (a.toString() === verseNumber || a === getVerseId(verseNumber)))) {
             selectedVerses[selectedVerses.length - 1] = scriptureRangeSelect(e, selectedVerses[selectedVerses.length - 1], verseNumber, splittedVerses)
 
+            // Remove plain verse IDs if split versions exist (e.g., remove "1" if "1_1", "1_2" are present)
+            const currentSelection = selectedVerses[selectedVerses.length - 1]
+            const splitVerseIds = currentSelection.filter(id => id.toString().includes("_"))
+            if (splitVerseIds.length > 0) {
+                const baseIdsToRemove = new Set(splitVerseIds.map(id => id.toString().split("_")[0]))
+                selectedVerses[selectedVerses.length - 1] = currentSelection.filter(id => {
+                    const idStr = id.toString()
+                    return idStr.includes("_") || !baseIdsToRemove.has(idStr)
+                })
+            }
+
             // deselecting a verse
             if (!selectedVerses[selectedVerses.length - 1]?.find((id) => id.toString() === verseNumber)) {
                 previousSelection = clone(selectedVerses[selectedVerses.length - 1])
