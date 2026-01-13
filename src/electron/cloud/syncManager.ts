@@ -140,21 +140,29 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
                         if (isDeleted("SHOWS_CONTENT", fileName)) return
 
                         const localShowPath = path.join(showsFolder, fileName)
-                        const localStats = await getFileStatsAsync(localShowPath)
+                        const localFile = await readFileAsync(localShowPath)
 
                         const cloudModTime = show.timestamps?.modified || show.timestamps?.created
                         if (!cloudModTime) return
 
                         // exists only in cloud
-                        const existsLocally = !!localStats
+                        const existsLocally = !!localFile
                         if (!existsLocally) {
                             if (isCreated("SHOWS_CONTENT", fileName)) await download()
                             else markAsDeleted("SHOWS_CONTENT", fileName)
                             return
                         }
 
+                        if (!isValidJSON(localFile)) {
+                            await download()
+                            return
+                        }
+
+                        const localShow: Show = JSON.parse(localFile)[1]
+                        const localModTime = localShow.timestamps?.modified || localShow.timestamps?.created
+
                         // exists both locally and in cloud
-                        const cloudIsNewer = !localStats || cloudModTime > localStats.mtime.getTime()
+                        const cloudIsNewer = cloudModTime > localModTime
                         if (cloudIsNewer) {
                             replacedShows.push(show.name)
                             await download()
