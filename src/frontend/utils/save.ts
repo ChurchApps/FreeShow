@@ -104,8 +104,6 @@ import { newToast } from "./common"
 import { syncDrive } from "./drive"
 
 export function save(closeWhenFinished = false, customTriggers: SaveActions = {}) {
-    if (get(special).autoBundleMediaFiles) sendMain(Main.BUNDLE_MEDIA_FILES)
-
     console.info("SAVING...")
     if ((!customTriggers.autosave || !get(saved)) && !customTriggers.backup) {
         newToast("toast.saving")

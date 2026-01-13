@@ -271,7 +271,6 @@
         <T id="media.bundle_media_files" />
     </MaterialButton>
 </InputRow>
-<MaterialToggleSwitch label="media.auto_bundle_media_files" checked={$special.autoBundleMediaFiles} defaultValue={false} on:change={(e) => updateSpecial(e.detail, "autoBundleMediaFiles")} />
 
 {#if $special.logSongUsage && $usageLog.all?.length}
     <InputRow>

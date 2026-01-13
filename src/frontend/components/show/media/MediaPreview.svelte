@@ -1,6 +1,7 @@
 <script lang="ts">
     import type { MediaStyle } from "../../../../types/Main"
     import { activeShow, media, outLocked, outputs, styles } from "../../../stores"
+    import { addToMediaFolder } from "../../../utils/cloudSync"
     import Image from "../../drawer/media/Image.svelte"
     import { downloadOnlineMedia, getMediaStyle } from "../../helpers/media"
     import { getActiveOutputs, getCurrentStyle, setOutput } from "../../helpers/output"
@@ -12,6 +13,7 @@
 
     $: path = show?.id || ""
     $: if (path.includes("http")) download()
+    else addToMediaFolder(path)
     async function download() {
         path = await downloadOnlineMedia(path)
     }

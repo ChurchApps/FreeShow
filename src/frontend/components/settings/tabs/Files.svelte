@@ -3,7 +3,7 @@
     import type { ContentProviderId } from "../../../../electron/contentProviders/base/types"
     import { Main } from "../../../../types/IPC/Main"
     import { requestMain, sendMain } from "../../../IPC/main"
-    import { activePopup, autosave, cloudSyncData, dataPath, driveData, driveKeys, providerConnections, saved, special } from "../../../stores"
+    import { activePopup, alertMessage, autosave, cloudSyncData, dataPath, driveData, driveKeys, providerConnections, saved, special } from "../../../stores"
     import { setupCloudSync } from "../../../utils/cloudSync"
     import { previousAutosave, startAutosave, wait } from "../../../utils/common"
     import { syncDrive, validateKeys } from "../../../utils/drive"
@@ -201,6 +201,17 @@
             updateCloudData("enabled", false)
         }
     }
+
+    function toggleMediaFolder(e: any) {
+        updateSpecial(e.detail, "cloudSyncMediaFolder")
+
+        if (e.detail) {
+            alertMessage.set("media.media_sync_folder_tip")
+            activePopup.set("alert")
+
+            sendMain(Main.BUNDLE_MEDIA_FILES, { openFolder: true })
+        }
+    }
 </script>
 
 <MaterialDropdown label="settings.autosave{autosaveInfo}" value={$autosave} defaultValue="15min" options={autosaveList} on:change={updateAutosave} />
@@ -216,6 +227,9 @@
 <!-- {#key refreshInput}
     <MaterialToggleSwitch label="settings.user_data_location" disabled={!$dataPath} checked={$special.customUserDataLocation || false} defaultValue={false} on:change={(e) => toggle(e.detail, "customUserDataLocation")} />
 {/key} -->
+
+<!-- Enable without cloud sync? (People with existing custom media management/drives should know to not enable this) -->
+<!-- <MaterialToggleSwitch label="media.media_sync_folder" title="media.media_sync_folder_tip" style="width: 100%;" checked={$special.cloudSyncMediaFolder} on:change={mediaFolder} /> -->
 
 <!-- cloud -->
 <Title label="settings.cloud" icon="cloud" title="cloud.info" />
@@ -246,11 +260,15 @@
         <svelte:fragment slot="menu">
             <!-- changing team directly without toggling "Enable sync" off/on -->
             <MaterialToggleSwitch label="cloud.read_only" title="cloud.readonly_tip" checked={$cloudSyncData.cloudMethod === "read_only"} defaultValue={false} on:change={(e) => updateCloudData("cloudMethod", e.detail ? "read_only" : "merge")} />
+
+            <!-- Documents/FreeShow/Media -->
+            <!-- This should only be needed if no custom media management is already existing -->
+            <!-- Custom drives should work without as long as the path location is the same -->
+            <!-- Files in this folder will automatically be checked to find missing files -->
+            <MaterialToggleSwitch label="media.media_sync_folder" title="media.media_sync_folder_tip" style="width: 100%;" checked={$special.cloudSyncMediaFolder} defaultValue={false} on:change={toggleMediaFolder} />
         </svelte:fragment>
     </InputRow>
 {/if}
-
-<!-- TODO: media folder -->
 
 <!-- DEPRECATED: -->
 

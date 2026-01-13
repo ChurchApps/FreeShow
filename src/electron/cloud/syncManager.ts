@@ -201,13 +201,14 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
             // replace full files (settings)
             if (!MERGE_INDIVIDUAL.includes(id)) {
                 const localPath = localStore.path
-                if (await cloudIsNewer(localPath, modifiedDates[file.name])) {
+                // replace local file if cloud is newer or new device
+                if (isNewDevice || (await cloudIsNewer(localPath, modifiedDates[file.name]))) {
                     await moveFileAsync(cloudPath, localPath)
-                }
 
-                // send to frontend
-                const localData = localStore.store
-                sendMain(Main[id], localData)
+                    // send to frontend
+                    const localData = localStore.store
+                    sendMain(Main[id], localData)
+                }
                 return
             }
 
@@ -251,7 +252,6 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
                 })
             } else {
                 Object.entries<{ [key: string]: any; modified?: number }>(cloudFileData).forEach(([key, value]) => {
-                    if (!value.modified) value.modified = Date.now()
                     const newLocalValue = checkCloudEntry(localData[key], key, value)
                     if (newLocalValue) localData[key] = newLocalValue
                 })
@@ -300,9 +300,11 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
                     return localValue
                 }
 
+                if (!localValue.modified) localValue.modified = Date.now()
+
                 // exists both locally and in cloud
-                const localModTime = localValue?.modified
-                const cloudIsNewer = !localModTime || cloudModTime > localModTime
+                const localModTime = localValue.modified
+                const cloudIsNewer = cloudModTime > localModTime
                 if (cloudIsNewer) localValue = value
 
                 return localValue

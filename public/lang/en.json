@@ -214,9 +214,10 @@
         "online": "Online",
         "downloading": "Downloading",
         "recommended": "Recommended",
+        "media_sync_folder": "Media sync folder",
+        "media_sync_folder_tip": "Copy all used media files continuously into one shared folder. Any custom sync provider can be pointed to that folder.",
         "bundle_media_files": "Bundle all media files",
-        "bundle_media_files_tip": "Copy the media files from all shows and projects into one folder",
-        "auto_bundle_media_files": "Automatically bundle media files on save"
+        "bundle_media_files_tip": "Copy the media files from all shows and projects into one folder"
     },
     "audio": {
         "settings": "Audio settings",

@@ -124,7 +124,7 @@
             if ($special.autoLocateMedia === false) return
 
             let fileName = getFileName(path)
-            sendMain(Main.LOCATE_MEDIA_FILE, { fileName, splittedPath: splitPath(path), folders, ref: { showId, mediaId: fileId, cloudId: checkCloud ? cloudId : "" } })
+            sendMain(Main.LOCATE_MEDIA_FILE, { filePath: path, fileName, splittedPath: splitPath(path), folders, ref: { showId, mediaId: fileId, cloudId: checkCloud ? cloudId : "" } })
             return
         }
 

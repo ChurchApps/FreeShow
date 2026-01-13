@@ -125,6 +125,7 @@ export enum Main {
     LOCATE_MEDIA_FILE = "LOCATE_MEDIA_FILE",
     GET_SIMILAR = "GET_SIMILAR",
     BUNDLE_MEDIA_FILES = "BUNDLE_MEDIA_FILES",
+    MEDIA_FOLDER_COPY = "MEDIA_FOLDER_COPY",
     FILE_INFO = "FILE_INFO",
     READ_FOLDER = "READ_FOLDER",
     READ_FILE = "READ_FILE",
@@ -202,9 +203,10 @@ export interface MainSendPayloads {
     [Main.RECORDER]: { blob: ArrayBuffer; name: string }
     [Main.SYSTEM_OPEN]: string
 
-    [Main.LOCATE_MEDIA_FILE]: { fileName: string; splittedPath: string[]; folders: string[]; ref: { showId: string; mediaId: string; cloudId: string } }
+    [Main.LOCATE_MEDIA_FILE]: { filePath: string; fileName: string; splittedPath: string[]; folders: string[]; ref: { showId: string; mediaId: string; cloudId: string } }
     [Main.GET_SIMILAR]: { paths: string[] }
     [Main.BUNDLE_MEDIA_FILES]: { openFolder?: boolean }
+    [Main.MEDIA_FOLDER_COPY]: { paths: string[] }
     [Main.FILE_INFO]: string
     [Main.READ_FOLDER]: { path: string | string[]; depth?: number; generateThumbnails?: boolean; captureFolderContent?: boolean }
     [Main.READ_FILE]: { path: string }
@@ -285,6 +287,7 @@ export interface MainReturnPayloads {
     [Main.GET_LYRICS]: Promise<{ lyrics: string; source: string; title: string; artist: string }>
     [Main.SEARCH_LYRICS]: Promise<LyricSearchResult[]>
     [Main.GET_SIMILAR]: { path: string; name: string }[]
+    [Main.MEDIA_FOLDER_COPY]: Promise<boolean>
     [Main.LOCATE_MEDIA_FILE]: Promise<{ path: string; ref: { showId: string; mediaId: string; cloudId: string } } | undefined>
     [Main.FILE_INFO]: { path: string; stat: Stats; extension: string; folder: boolean } | null
     [Main.READ_FOLDER]: Promise<{ [key: string]: FileFolder }>

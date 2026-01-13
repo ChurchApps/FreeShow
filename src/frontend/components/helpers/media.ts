@@ -13,6 +13,7 @@ import { audioExtensions, imageExtensions, mediaExtensions, presentationExtensio
 import type { API_media, API_slide_thumbnail } from "../actions/api"
 import { clone } from "./array"
 import { getFirstActiveOutput, getOutputResolution } from "./output"
+import { addToMediaFolder } from "../../utils/cloudSync"
 
 export function getExtension(path: string): string {
     if (typeof path !== "string") return ""
@@ -62,7 +63,7 @@ export function joinPath(path: string[]): string {
     return path.join(pathJoiner)
 }
 
-function isLocalFile(path: string): boolean {
+export function isLocalFile(path: string): boolean {
     if (typeof path !== "string") return false
     if (path.startsWith("http://") || path.startsWith("https://") || path.startsWith("data:") || path.startsWith("blob:") || path.startsWith("freeshow-protected://")) return false
     return true
@@ -329,6 +330,8 @@ export async function loadThumbnail(input: string, size: number) {
 
     // already encoded (this could cause an infinite loop)
     if (input.includes("freeshow-cache") || input.includes("media-cache")) return input
+
+    addToMediaFolder(input)
 
     const loadedPath = get(loadedMediaThumbnails)[getThumbnailId({ input, size })]
     if (loadedPath) return loadedPath
