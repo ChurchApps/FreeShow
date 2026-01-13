@@ -141,7 +141,7 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
                         const localShowPath = path.join(showsFolder, fileName)
                         const localStats = await getFileStatsAsync(localShowPath)
 
-                        const cloudModTime = show.timestamps?.modified
+                        const cloudModTime = show.timestamps?.modified || show.timestamps?.created
                         if (!cloudModTime) return
 
                         // exists only in cloud
@@ -171,6 +171,9 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
                         await createOrDeleteLocalFile(id, fileName, localShowPath)
                     })
                 )
+
+                // send to frontend
+                if (_store.SHOWS) sendMain(Main.SHOWS, _store.SHOWS.store)
                 return
             }
 
@@ -477,7 +480,7 @@ async function createOrDeleteLocalFile(id: ChangeId, fileName: string, localPath
 
 type Changes = { version: string; devices: string[]; modified: { [key: string]: number }; deleted: { [key: string]: string[] }; created: { [key: string]: string[] } }
 const changes_name = "changes.json"
-const version = "0.0.2"
+const version = "0.1.0"
 const DEFAULT_CHANGES: Changes = { version, devices: [], modified: {}, deleted: {}, created: {} }
 let CHANGES: Changes = clone(DEFAULT_CHANGES)
 let cloudChanges: Changes | null = null

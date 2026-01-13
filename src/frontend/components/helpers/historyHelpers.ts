@@ -420,6 +420,8 @@ export const _updaters = {
             // update remote project shows data, so the new show is properly added
             setTimeout(() => window.api.send(REMOTE, { channel: "SHOWS", data: get(shows) }))
 
+            if (!data.timestamps) data.timestamps = {}
+            data.timestamps.modified = Date.now()
             return replaceEmptyValues(data, replacer)
         },
         select: (id: string, data: any) => {
@@ -498,6 +500,11 @@ export const _updaters = {
     show_layout: {
         store: showsCache,
         empty: EMPTY_LAYOUT,
+        initialize: (data) => {
+            if (!data.timestamps) data.timestamps = {}
+            data.timestamps.modified = Date.now()
+            return data
+        },
         select: (id: string, { subkey }: any, initializing: boolean) => {
             _show(id).set({ key: "settings.activeLayout", value: subkey })
 
@@ -521,7 +528,14 @@ export const _updaters = {
         }
     },
 
-    show_key: { store: showsCache },
+    show_key: {
+        store: showsCache,
+        initialize: (data) => {
+            if (!data.timestamps) data.timestamps = {}
+            data.timestamps.modified = Date.now()
+            return data
+        }
+    },
 
     global_group: { store: groups },
 

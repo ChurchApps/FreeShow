@@ -125,6 +125,7 @@
             showsCache.update((a) => {
                 if (!a[showId]?.slides?.[slideId]?.items?.[itemIndex]) return a
                 a[showId].slides[slideId].items[itemIndex].conditions = conditions
+                a[showId].timestamps.modified = Date.now()
                 return a
             })
         }
