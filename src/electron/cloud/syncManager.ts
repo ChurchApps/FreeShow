@@ -7,7 +7,7 @@ import { isValidJSON, startBackup } from "../data/backup"
 import { _store, setStore } from "../data/store"
 import { compressToZip, decompressZipStream, getZipModifiedDates } from "../data/zip"
 import { sendMain } from "../IPC/main"
-import { createFolder, deleteFile, deleteFolder, doesPathExistAsync, getDataFolderPath, getFileStatsAsync, getTimePointString, moveFileAsync, readFileAsync, readFolderAsync, writeFileAsync } from "../utils/files"
+import { createFolder, deleteFile, deleteFolder, doesPathExistAsync, getDataFolderPath, getFileStatsAsync, getTimePointString, loadShows, moveFileAsync, readFileAsync, readFolderAsync, writeFileAsync } from "../utils/files"
 import { clone, getMachineId } from "../utils/helpers"
 import { getChurchAppsSyncManager } from "./ChurchAppsSyncManager"
 
@@ -130,6 +130,7 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
             // download new/modified shows
             if (file.name === "SHOWS_CONTENT.json") {
                 let cloudShowNames: string[] = []
+                let replacedShows: string[] = []
 
                 await Promise.all(
                     Object.entries<Show>(cloudFileData).map(async ([id, show]) => {
@@ -154,7 +155,10 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
 
                         // exists both locally and in cloud
                         const cloudIsNewer = !localStats || cloudModTime > localStats.mtime.getTime()
-                        if (cloudIsNewer) await download()
+                        if (cloudIsNewer) {
+                            replacedShows.push(show.name)
+                            await download()
+                        }
 
                         async function download() {
                             await writeFileAsync(localShowPath, JSON.stringify([id, show]))
@@ -173,6 +177,7 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
                 )
 
                 // send to frontend
+                loadShows(false, replacedShows)
                 if (_store.SHOWS) sendMain(Main.SHOWS, _store.SHOWS.store)
                 return
             }

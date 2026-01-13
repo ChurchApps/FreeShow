@@ -875,7 +875,7 @@ export function bundleMediaFiles({ openFolder = false }: { openFolder?: boolean 
 
 // LOAD SHOWS
 
-export function loadShows(returnShows = false) {
+export function loadShows(returnShows = false, newShows: string[] = []) {
     const showsPath = getDataFolderPath("shows")
 
     specialCaseFixer()
@@ -890,7 +890,7 @@ export function loadShows(returnShows = false) {
     // create a map for quick lookup of cached shows by name
     const cachedShowNames = new Map<string, string>()
     for (const [id, show] of Object.entries(cachedShows)) {
-        if (show?.name) cachedShowNames.set(show.name, id)
+        if (show?.name && !newShows.includes(show.name)) cachedShowNames.set(show.name, id)
     }
 
     filesInFolder = filesInFolder
