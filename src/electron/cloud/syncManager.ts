@@ -188,6 +188,10 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
                 if (await cloudIsNewer(localPath, modifiedDates[file.name])) {
                     await moveFileAsync(cloudPath, localPath)
                 }
+
+                // send to frontend
+                const localData = localStore.store
+                sendMain(Main[id], localData)
                 return
             }
 
