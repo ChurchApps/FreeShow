@@ -64,7 +64,6 @@ export const _updaters = {
     project: {
         store: projects,
         empty: EMPTY_PROJECT,
-        cloudCombine: true,
         initialize: (data) => {
             return replaceEmptyValues(data, { name: getProjectName(), created: Date.now(), modified: Date.now(), used: Date.now() })
         },
@@ -105,7 +104,6 @@ export const _updaters = {
     project_folder: {
         store: folders,
         empty: EMPTY_PROJECT_FOLDER,
-        cloudCombine: true,
         initialize: (data) => {
             return replaceEmptyValues(data, { created: Date.now(), modified: Date.now() })
         },
@@ -135,6 +133,7 @@ export const _updaters = {
             function addBackParents(items: any, type: "project" | "folder") {
                 changed[type]?.forEach((a: any) => {
                     items[a.id].parent = a.parent
+                    items[a.id].modified = Date.now()
                 })
                 return items
             }
@@ -165,6 +164,7 @@ export const _updaters = {
                         const key = Object.keys(items)[found]
                         parents[type].push({ id: key, parent: items[key].parent })
                         items[key].parent = parentId
+                        items[key].modified = Date.now()
                     }
                     found = Object.values(items).findIndex((a: any) => a.parent === id)
                 } while (found > -1)
@@ -175,21 +175,43 @@ export const _updaters = {
     },
     project_template: {
         store: projectTemplates,
-        cloudCombine: true,
+        initialize: (data) => {
+            data.modified = Date.now()
+            return data
+        },
         empty: EMPTY_PROJECT
     },
 
     project_key: {
         store: projects,
+        initialize: (data) => {
+            data.modified = Date.now()
+            return data
+        },
         timestamp: true
     },
-    project_folder_key: { store: folders, timestamp: true },
+    project_folder_key: {
+        store: folders,
+        initialize: (data) => {
+            data.modified = Date.now()
+            return data
+        },
+        timestamp: true
+    },
 
-    project_ref: { store: projects, timestamp: true },
+    project_ref: {
+        store: projects,
+        initialize: (data) => {
+            data.modified = Date.now()
+            return data
+        },
+        timestamp: true
+    },
     section: {
         store: projects,
         empty: EMPTY_SECTION,
         initialize: (data) => {
+            data.modified = Date.now()
             return replaceEmptyValues(data, { id: uid(5) })
         },
         select: (_id: string, data: any) => {

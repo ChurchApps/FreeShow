@@ -528,6 +528,7 @@ const clickActions = {
             if (!a[get(activeProject)!]?.shows) return a
 
             a[get(activeProject)!].shows.push(...obj.sel!.data)
+            a[get(activeProject)!].modified = Date.now()
             return a
         })
     },

@@ -93,6 +93,7 @@
                 if (!a[$activeProject || ""]?.shows) return a
 
                 a[$activeProject || ""].shows[selection.data[0].index].color = value
+                a[$activeProject || ""].modified = Date.now()
                 return a
             })
         }

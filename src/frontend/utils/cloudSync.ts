@@ -1,10 +1,11 @@
 import { get } from "svelte/store"
 import { Main } from "../../types/IPC/Main"
 import { requestMain } from "../IPC/main"
-import { activePopup, alertMessage, cloudSyncData, popupData, providerConnections } from "../stores"
+import { activePopup, activeShow, alertMessage, cloudSyncData, popupData, providerConnections, shows, showsCache } from "../stores"
 import { confirmCustom } from "./popup"
 import { save } from "./save"
 import { newToast } from "./common"
+import { loadShows } from "../components/helpers/setShow"
 
 export async function setupCloudSync(auto: boolean = false) {
     if (auto && get(cloudSyncData).id) {
@@ -84,6 +85,13 @@ export async function syncWithCloud(initialize: boolean = false) {
     }
 
     newToast("cloud.sync_complete")
+
+    // reset cached shows as they might have changed
+    showsCache.set({})
+
+    // reload current show
+    const currentlyActive = get(activeShow)?.id || ""
+    if (get(shows)[currentlyActive]) loadShows([currentlyActive])
 
     // console.log(status.changedFiles)
 

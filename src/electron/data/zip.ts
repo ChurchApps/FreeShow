@@ -180,7 +180,6 @@ export function getZipModifiedDates(filePath: string): Promise<{ [key: string]: 
             const modified: { [key: string]: Date } = {}
 
             zipfile.on("entry", (entry: yauzl.Entry) => {
-                console.log(entry.fileName)
                 modified[entry.fileName] = entry.getLastModDate()
                 zipfile.readEntry()
             })
