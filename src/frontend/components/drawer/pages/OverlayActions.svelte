@@ -15,6 +15,7 @@
             // WIP history
             overlays.update((a) => {
                 delete a[overlayId][actionId]
+                a[overlayId].modified = Date.now()
                 return a
             })
         })

@@ -266,14 +266,43 @@ export const _updaters = {
 
             activeRename.set("overlay_" + id)
 
+            data.modified = Date.now()
             return data
         },
         deselect: (id: string) => clearOverlayOutput(id)
     },
-    overlay_items: { store: overlays, empty: [] },
-    overlay_name: { store: overlays, empty: "" },
-    overlay_color: { store: overlays, empty: null },
-    overlay_category: { store: overlays, empty: null },
+    overlay_items: {
+        store: overlays,
+        initialize: (data) => {
+            data.modified = Date.now()
+            return data
+        },
+        empty: []
+    },
+    overlay_name: {
+        store: overlays,
+        initialize: (data) => {
+            data.modified = Date.now()
+            return data
+        },
+        empty: ""
+    },
+    overlay_color: {
+        store: overlays,
+        initialize: (data) => {
+            data.modified = Date.now()
+            return data
+        },
+        empty: null
+    },
+    overlay_category: {
+        store: overlays,
+        initialize: (data) => {
+            data.modified = Date.now()
+            return data
+        },
+        empty: null
+    },
 
     template: {
         store: templates,
@@ -286,14 +315,50 @@ export const _updaters = {
 
             activeRename.set("template_" + id)
 
+            data.modified = Date.now()
             return data
         }
     },
-    template_items: { store: templates, empty: [] },
-    template_name: { store: templates, empty: "" },
-    template_color: { store: templates, empty: null },
-    template_category: { store: templates, empty: null },
-    template_settings: { store: templates, empty: {} },
+    template_items: {
+        store: templates,
+        initialize: (data) => {
+            data.modified = Date.now()
+            return data
+        },
+        empty: []
+    },
+    template_name: {
+        store: templates,
+        initialize: (data) => {
+            data.modified = Date.now()
+            return data
+        },
+        empty: ""
+    },
+    template_color: {
+        store: templates,
+        initialize: (data) => {
+            data.modified = Date.now()
+            return data
+        },
+        empty: null
+    },
+    template_category: {
+        store: templates,
+        initialize: (data) => {
+            data.modified = Date.now()
+            return data
+        },
+        empty: null
+    },
+    template_settings: {
+        store: templates,
+        initialize: (data) => {
+            data.modified = Date.now()
+            return data
+        },
+        empty: {}
+    },
 
     player_video: { store: playerVideos, empty: EMPTY_PLAYER_VIDEO },
 
@@ -309,9 +374,30 @@ export const _updaters = {
         }
     },
 
-    stage_item_style: { store: stageShows, empty: "" },
-    stage_item_position: { store: stageShows, empty: "" },
-    stage_item_content: { store: stageShows, empty: "" },
+    stage_item_style: {
+        store: stageShows,
+        initialize: (data) => {
+            data.modified = Date.now()
+            return data
+        },
+        empty: ""
+    },
+    stage_item_position: {
+        store: stageShows,
+        initialize: (data) => {
+            data.modified = Date.now()
+            return data
+        },
+        empty: ""
+    },
+    stage_item_content: {
+        store: stageShows,
+        initialize: (data) => {
+            data.modified = Date.now()
+            return data
+        },
+        empty: ""
+    },
 
     show: {
         store: showsCache,

@@ -79,6 +79,7 @@
             }
 
             a[stageId].items[itemId] = item
+            a[stageId].modified = Date.now()
             return a
         })
 

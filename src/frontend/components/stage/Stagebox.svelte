@@ -82,6 +82,7 @@
             // TODO: history??
             stageShows.update((a) => {
                 delete a[$activeStage.id!].items[id]
+                a[$activeStage.id!].modified = Date.now()
                 return a
             })
             activeStage.set({ ...$activeStage, items: [] })
@@ -212,6 +213,7 @@
         stageShows.update((a) => {
             if (!a[$activeStage.id!]?.items?.[id]?.conditions) return a
             delete a[$activeStage.id!].items[id].conditions
+            a[$activeStage.id!].modified = Date.now()
             return a
         })
     }

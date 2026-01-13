@@ -203,6 +203,12 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
                     if (!localData[type]) localData[type] = {}
 
                     Object.entries(object).forEach(([key, value]) => {
+                        if (value.deleted) {
+                            // from old cloud sync
+                            delete localData[type][key]
+                            return
+                        }
+
                         const newLocalValue = checkCloudEntry(localData[type][key], key, value)
                         if (newLocalValue) localData[type][key] = newLocalValue
                     })
@@ -211,6 +217,14 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
                     const localKeys = getLocalOnlyKeys(object, localData[type])
                     localKeys.forEach((key) => {
                         if (isDeleted(id, key)) {
+                            if (isDeletedLocally(id, key)) {
+                                if (!localData[type][key]) return
+
+                                unmarkAsDeleted(id, key)
+                                markAsCreated(id, key)
+                                return
+                            }
+
                             delete localData[type][key]
                             return
                         }
@@ -221,6 +235,7 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
                 })
             } else {
                 Object.entries<{ [key: string]: any; modified?: number }>(cloudFileData).forEach(([key, value]) => {
+                    if (!value.modified) value.modified = Date.now()
                     const newLocalValue = checkCloudEntry(localData[key], key, value)
                     if (newLocalValue) localData[key] = newLocalValue
                 })
@@ -229,6 +244,15 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
                 const localKeys = getLocalOnlyKeys(cloudFileData, localData)
                 localKeys.forEach((key) => {
                     if (isDeleted(id, key)) {
+                        // restore if previously deleted in cloud but restored locally
+                        if (isDeletedLocally(id, key)) {
+                            if (!localData[key]) return
+
+                            unmarkAsDeleted(id, key)
+                            markAsCreated(id, key)
+                            return
+                        }
+
                         delete localData[key]
                         return
                     }
@@ -453,7 +477,7 @@ async function createOrDeleteLocalFile(id: ChangeId, fileName: string, localPath
 
 type Changes = { version: string; devices: string[]; modified: { [key: string]: number }; deleted: { [key: string]: string[] }; created: { [key: string]: string[] } }
 const changes_name = "changes.json"
-const version = "0.0.1"
+const version = "0.0.2"
 const DEFAULT_CHANGES: Changes = { version, devices: [], modified: {}, deleted: {}, created: {} }
 let CHANGES: Changes = clone(DEFAULT_CHANGES)
 let cloudChanges: Changes | null = null
@@ -469,12 +493,13 @@ function getLatestChanges() {
 type ChangeId = keyof typeof _store | "SHOWS_CONTENT" | "BIBLES"
 function markAsDeleted(storeId: ChangeId, key: string) {
     const instanceId = `${storeId}_${key}`
-    if (CHANGES.created?.[instanceId]) delete CHANGES.created[instanceId]
+    unmarkAsCreated(storeId, key)
     markAs("deleted", instanceId)
 }
 
 function markAsCreated(storeId: ChangeId, key: string) {
     const instanceId = `${storeId}_${key}`
+    unmarkAsDeleted(storeId, key)
     markAs("created", instanceId)
 }
 
@@ -499,6 +524,13 @@ function unmarkAsDeleted(storeId: ChangeId, key: string) {
 
     const instanceId = `${storeId}_${key}`
     delete CHANGES.deleted[instanceId]
+}
+
+function unmarkAsCreated(storeId: ChangeId, key: string) {
+    if (!CHANGES.created) return
+
+    const instanceId = `${storeId}_${key}`
+    delete CHANGES.created[instanceId]
 }
 
 function isDeleted(storeId: ChangeId, key: string): boolean {

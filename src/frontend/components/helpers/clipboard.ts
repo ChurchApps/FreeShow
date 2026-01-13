@@ -1076,6 +1076,7 @@ const deleteActions = {
             activeItems.forEach((itemId) => {
                 delete a[data.id].items[itemId]
             })
+            a[data.id].modified = Date.now()
             return a
         })
         activeStage.set({ ...get(activeStage), items: [] })

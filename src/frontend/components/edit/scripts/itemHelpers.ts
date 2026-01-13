@@ -210,6 +210,7 @@ export function rearrangeStageItems(type: string, itemId: string = get(activeSta
 
     stageShows.update((a) => {
         a[get(activeStage).id!].itemOrder = items.map((item) => item.id)
+        a[get(activeStage).id!].modified = Date.now()
         return a
     })
 
@@ -231,6 +232,7 @@ export function getSortedStageItems(stageId = get(activeStage).id, _updater: any
     if (!stageShow.itemOrder) {
         stageShows.update((a) => {
             a[stageId].itemOrder = itemOrder
+            a[stageId].modified = Date.now()
             return a
         })
     }
@@ -260,6 +262,7 @@ export function updateSortedStageItems() {
         const newItems = currentItemIds.filter((id) => !itemOrder.includes(id))
 
         a[stageId].itemOrder = [...itemOrder, ...newItems]
+        a[stageId].modified = Date.now()
         return a
     })
 }

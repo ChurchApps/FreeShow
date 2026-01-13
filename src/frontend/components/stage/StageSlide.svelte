@@ -33,6 +33,7 @@
         let name = e.detail.value
         stageShows.update((a) => {
             a[id].name = name
+            a[id].modified = Date.now()
             return a
         })
     }

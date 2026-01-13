@@ -978,6 +978,7 @@ const clickActions = {
                 const value = !a[obj.sel!.data[0]?.id].disabled
                 obj.sel!.data.forEach((b) => {
                     a[b.id].disabled = value
+                    a[b.id].modified = Date.now()
                 })
                 return a
             })
@@ -1454,6 +1455,7 @@ const clickActions = {
         overlays.update((a) => {
             obj.sel!.data.forEach((id: string) => {
                 a[id].locked = setLocked
+                a[id].modified = Date.now()
             })
             return a
         })
@@ -1476,6 +1478,7 @@ const clickActions = {
         overlays.update((a) => {
             obj.sel!.data.forEach((id: string) => {
                 a[id].placeUnderSlide = setUnder
+                a[id].modified = Date.now()
             })
             return a
         })
