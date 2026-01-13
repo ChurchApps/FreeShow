@@ -2,7 +2,7 @@
     import type { Template } from "../../../../types/Show"
     import { activeEdit, outputs, overlays, styles } from "../../../stores"
     import Editbox from "../../edit/editbox/Editbox.svelte"
-    import { loadThumbnail, mediaSize } from "../../helpers/media"
+    import { loadThumbnail, locateMediaFile, mediaSize } from "../../helpers/media"
     import { getResolution } from "../../helpers/output"
     import Textbox from "../../slide/Textbox.svelte"
     import Zoomed from "../../slide/Zoomed.svelte"
@@ -34,8 +34,17 @@
     $: resolution = getResolution(null, { $outputs, $styles })
 
     // LOAD BACKGROUND
+    let mediaPath = ""
     $: bgPath = template?.settings?.backgroundPath || ""
-    $: loadBackground(bgPath)
+    $: if (bgPath) locateMedia()
+    async function locateMedia() {
+        mediaPath = bgPath
+        const status = await locateMediaFile(bgPath)
+        if (!status) return
+
+        if (status.hasChanged) mediaPath = status.path
+        loadBackground(mediaPath)
+    }
     let thumbnailPath = ""
     async function loadBackground(path: string) {
         if (!path) {
@@ -43,7 +52,7 @@
             return
         }
 
-        let newPath = await loadThumbnail(bgPath, mediaSize.slideSize)
+        let newPath = await loadThumbnail(path, mediaSize.slideSize)
         if (newPath) thumbnailPath = newPath
     }
 
@@ -70,7 +79,7 @@ checkered={template.items?.length > 0 && transparentOutput} -->
     <!-- WIP !altKeyPressed &&  -->
     {#if thumbnailPath}
         <div class="background" style="zoom: {1 / ratio};opacity: 0.5;height: 100%;width: 100%;">
-            <MediaLoader path={bgPath} {thumbnailPath} />
+            <MediaLoader path={mediaPath} {thumbnailPath} />
         </div>
     {/if}
 

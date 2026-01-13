@@ -645,20 +645,24 @@ function formatTimestamp(timestamp: number) {
 
 // SEARCH FOR MEDIA FILE (in drawer media folders & their following folders)
 const NESTED_SEARCH = 8 // folder levels deep
-export async function locateMediaFile({ filePath, fileName, splittedPath, folders, ref }: { filePath: string; fileName: string; splittedPath: string[]; folders: string[]; ref: { showId: string; mediaId: string; cloudId: string } }) {
+export async function locateMediaFile({ filePath, folders }: { filePath: string; folders: string[] }) {
+    if (await doesPathExistAsync(filePath)) return { path: filePath, hasChanged: false }
+
     const matches: string[] = []
 
     // Media Sync Folder
     const mediaFolder = getDataFolderPath("media")
     const folderId = getFileParentFolderId(filePath)
     const mediaFilePath = path.join(mediaFolder, folderId, upath.basename(filePath))
-    if (await doesPathExistAsync(mediaFilePath)) return { path: mediaFilePath, ref }
+    if (await doesPathExistAsync(mediaFilePath)) return { path: mediaFilePath, hasChanged: true }
     folders.unshift(mediaFolder)
 
-    await findMatches()
-    if (!matches.length) return
+    const fileName = upath.basename(filePath)
 
-    return { path: matches[0], ref }
+    await findMatches()
+    if (!matches.length) return null
+
+    return { path: matches[0], hasChanged: true }
 
     async function findMatches() {
         for (const folderPath of folders) {
@@ -701,23 +705,13 @@ export async function locateMediaFile({ filePath, fileName, splittedPath, folder
     }
 
     function checkFileForMatch(currentFileName: string, folderPath: string) {
-        // include original parent folder name in search first (to limit it a bit if two files with same name are in two different folders!)
-        if (splittedPath?.length > 1) {
-            const currentParentFolder = path.basename(folderPath)
-            const pathName = path.join(currentParentFolder, currentFileName)
-            const searchName = path.join(splittedPath[splittedPath.length - 2], fileName)
-            if (pathName === searchName) {
-                const filePath: string = path.join(folderPath, currentFileName)
-                matches.push(filePath)
-            }
-        }
+        // WIP check any path with same parent folder for matches first to limit search a bit
 
         if (matches.length) return
 
-        // check for file name exact match
+        // simple search: match by file name only
         if (currentFileName === fileName) {
-            const filePath: string = path.join(folderPath, currentFileName)
-            matches.push(filePath)
+            matches.push(path.join(folderPath, currentFileName))
         }
     }
 }
@@ -896,6 +890,9 @@ export async function addToMediaFolder(mediaPaths: string[]) {
         mediaPaths.map(async (mediaPath) => {
             // if media path is already in media folder, skip
             if (mediaPath.startsWith(mediaFolderPath)) return
+
+            // make sure original media exists
+            if (!(await doesPathExistAsync(mediaPath))) return
 
             // ensure folder name is matching path in case files with the same name has the same parent folder name
             const folderId = getFileParentFolderId(mediaPath)

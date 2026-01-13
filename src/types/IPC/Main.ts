@@ -203,7 +203,7 @@ export interface MainSendPayloads {
     [Main.RECORDER]: { blob: ArrayBuffer; name: string }
     [Main.SYSTEM_OPEN]: string
 
-    [Main.LOCATE_MEDIA_FILE]: { filePath: string; fileName: string; splittedPath: string[]; folders: string[]; ref: { showId: string; mediaId: string; cloudId: string } }
+    [Main.LOCATE_MEDIA_FILE]: { filePath: string; folders: string[] }
     [Main.GET_SIMILAR]: { paths: string[] }
     [Main.BUNDLE_MEDIA_FILES]: { openFolder?: boolean }
     [Main.MEDIA_FOLDER_COPY]: { paths: string[] }
@@ -288,7 +288,7 @@ export interface MainReturnPayloads {
     [Main.SEARCH_LYRICS]: Promise<LyricSearchResult[]>
     [Main.GET_SIMILAR]: { path: string; name: string }[]
     [Main.MEDIA_FOLDER_COPY]: Promise<boolean>
-    [Main.LOCATE_MEDIA_FILE]: Promise<{ path: string; ref: { showId: string; mediaId: string; cloudId: string } } | undefined>
+    [Main.LOCATE_MEDIA_FILE]: Promise<{ path: string; hasChanged: boolean } | null>
     [Main.FILE_INFO]: { path: string; stat: Stats; extension: string; folder: boolean } | null
     [Main.READ_FOLDER]: Promise<{ [key: string]: FileFolder }>
     [Main.READ_FILE]: { content: string }

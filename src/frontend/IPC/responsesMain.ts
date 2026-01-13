@@ -205,27 +205,6 @@ export const mainResponses: MainResponses = {
         newToast("settings.restore_finished")
     },
     [ToMain.RECENTLY_ADDED_FILES]: (data) => updateRecentlyAddedFiles(data.paths),
-    [Main.LOCATE_MEDIA_FILE]: (data) => {
-        if (!data) return
-        let prevPath = ""
-
-        showsCache.update((a) => {
-            const mediaData = a[data.ref.showId].media[data.ref.mediaId]
-            if (data.ref.cloudId) {
-                if (!mediaData.cloud) a[data.ref.showId].media[data.ref.mediaId].cloud = {}
-                prevPath = a[data.ref.showId].media[data.ref.mediaId].cloud![data.ref.cloudId]
-                a[data.ref.showId].media[data.ref.mediaId].cloud![data.ref.cloudId] = data.path
-            } else {
-                prevPath = a[data.ref.showId].media[data.ref.mediaId].path || ""
-                a[data.ref.showId].media[data.ref.mediaId].path = data.path
-            }
-
-            return a
-        })
-
-        // sometimes when lagging the image will be "replaced" even when it exists
-        if (prevPath !== data.path) newToast("toast.media_replaced")
-    },
     [Main.MEDIA_TRACKS]: (data) => setMediaTracks(data),
     [ToMain.API_TRIGGER2]: (data) => triggerAction(data),
     [ToMain.PRESENTATION_STATE]: (data) => presentationData.set(data),

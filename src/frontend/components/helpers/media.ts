@@ -7,7 +7,7 @@ import type { FileFolder, MediaStyle, Subtitle } from "../../../types/Main"
 import type { Cropping, Styles } from "../../../types/Settings"
 import type { ShowType } from "../../../types/Show"
 import { requestMain, sendMain } from "../../IPC/main"
-import { cachePath, loadedMediaThumbnails, media } from "../../stores"
+import { audioFolders, cachePath, loadedMediaThumbnails, media, mediaFolders, special } from "../../stores"
 import { newToast, wait, waitUntilValueIsDefined } from "../../utils/common"
 import { audioExtensions, imageExtensions, mediaExtensions, presentationExtensions, videoExtensions } from "../../values/extensions"
 import type { API_media, API_slide_thumbnail } from "../actions/api"
@@ -154,6 +154,25 @@ async function toDataURL(url: string): Promise<string> {
         xhr.responseType = "blob"
         xhr.send()
     })
+}
+
+// let locating: string[] = []
+export async function locateMediaFile(path: string) {
+    // if (locating.includes(path)) return // path
+    // locating.push(path)
+
+    let folders: string[] = []
+    if (get(special).autoLocateMedia !== false) {
+        const mediaType = getMediaType(getExtension(path))
+        if (mediaType === "audio") folders = Object.values(get(audioFolders)).map((a) => a.path!)
+        else folders = Object.values(get(mediaFolders)).map((a) => a.path!)
+    }
+
+    const result = await requestMain(Main.LOCATE_MEDIA_FILE, { filePath: path, folders })
+
+    // if (!result) newToast("error.media")
+    if (result?.hasChanged) newToast("toast.media_replaced")
+    return result
 }
 
 // DEPRECATED

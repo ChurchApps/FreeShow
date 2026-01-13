@@ -3,7 +3,7 @@
     import { activeShow, media, outLocked, outputs, styles } from "../../../stores"
     import { addToMediaFolder } from "../../../utils/cloudSync"
     import Image from "../../drawer/media/Image.svelte"
-    import { downloadOnlineMedia, getMediaStyle } from "../../helpers/media"
+    import { downloadOnlineMedia, getMediaStyle, locateMediaFile } from "../../helpers/media"
     import { getActiveOutputs, getCurrentStyle, setOutput } from "../../helpers/output"
     import HoverButton from "../../inputs/HoverButton.svelte"
     import { clearSlide } from "../../output/clear"
@@ -13,9 +13,16 @@
 
     $: path = show?.id || ""
     $: if (path.includes("http")) download()
-    else addToMediaFolder(path)
+    else locateLocal()
     async function download() {
         path = await downloadOnlineMedia(path)
+    }
+    async function locateLocal() {
+        const status = await locateMediaFile(path)
+        if (!status) return
+
+        if (status.hasChanged) path = status.path
+        else addToMediaFolder(path)
     }
 
     $: outputId = getActiveOutputs($outputs)[0]

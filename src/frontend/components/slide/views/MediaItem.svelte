@@ -7,7 +7,7 @@
     import { currentWindow, outputs, slideVideoData, styles, volume } from "../../../stores"
     import { destroy, receive, send } from "../../../utils/request"
     import Image from "../../drawer/media/Image.svelte"
-    import { encodeFilePath, getExtension, getMediaType, loadThumbnail, mediaSize } from "../../helpers/media"
+    import { encodeFilePath, getExtension, getMediaType, loadThumbnail, locateMediaFile, mediaSize } from "../../helpers/media"
     import { defaultLayers } from "../../helpers/output"
     import { _show } from "../../helpers/shows"
 
@@ -58,19 +58,26 @@
         mediaItemPath = ""
         if (typeof item.src !== "string") return getCustomPath()
 
+        let mediaPath = item.src
+
+        const status = await locateMediaFile(mediaPath)
+        if (!status) return
+
+        if (status.hasChanged) mediaPath = status.path
+
         if (shouldAutoUpdate) {
-            mediaItemPath = item.src
+            mediaItemPath = mediaPath
             return
         }
 
         // only load thumbnails in main
         if ($currentWindow || preview) {
-            mediaItemPath = item.src
+            mediaItemPath = mediaPath
             return
         }
 
-        // if (edit) mediaItemPath = getThumbnailPath(item.src, mediaSize.slideSize)
-        mediaItemPath = await loadThumbnail(item.src, mediaSize.slideSize)
+        // if (edit) mediaItemPath = getThumbnailPath(mediaPath, mediaSize.slideSize)
+        mediaItemPath = await loadThumbnail(mediaPath, mediaSize.slideSize)
     }
 
     $: mediaStyleString = `filter: ${item?.filter};object-fit: ${item?.fit === "blur" ? "contain" : item?.fit || "contain"};`

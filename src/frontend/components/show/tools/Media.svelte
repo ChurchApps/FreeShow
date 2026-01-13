@@ -15,7 +15,7 @@
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { clone, sortByName } from "../../helpers/array"
-    import { getExtension, getMediaStyle, getMediaType, isMediaExtension, loadThumbnail, mediaSize } from "../../helpers/media"
+    import { getExtension, getMediaStyle, getMediaType, isMediaExtension, loadThumbnail, locateMediaFile, mediaSize } from "../../helpers/media"
     import { findMatchingOut, getActiveOutputs, getCurrentStyle, setOutput } from "../../helpers/output"
     import { _show } from "../../helpers/shows"
     import Button from "../../inputs/Button.svelte"
@@ -167,6 +167,11 @@
     function loadBackgrounds() {
         bgs.forEach(async (background) => {
             let path = background.path || ""
+
+            const status = await locateMediaFile(path)
+            if (!status) return
+
+            if (status.hasChanged) path = status.path
 
             const mediaData = $media[path]
             if (mediaData?.contentFile?.thumbnail) {

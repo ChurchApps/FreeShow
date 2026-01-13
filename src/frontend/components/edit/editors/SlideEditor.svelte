@@ -12,7 +12,7 @@
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { history } from "../../helpers/history"
-    import { downloadOnlineMedia, getMediaFileFromClipboard, getMediaStyle, loadThumbnail, mediaSize } from "../../helpers/media"
+    import { downloadOnlineMedia, getMediaFileFromClipboard, getMediaStyle, loadThumbnail, locateMediaFile, mediaSize } from "../../helpers/media"
     import { getFirstActiveOutput, getResolution, getSlideFilter } from "../../helpers/output"
     import { getLayoutRef } from "../../helpers/show"
     import { _show } from "../../helpers/shows"
@@ -75,19 +75,26 @@
     // $: slideOverlays = layoutSlide.overlays || []
 
     // LOAD BACKGROUND
+    let mediaPath = ""
     $: bgPath = backgroundPath || background?.id || ""
     $: if (bgPath) loadBackground()
     let thumbnailPath = ""
     async function loadBackground() {
-        if (bgPath.includes("http")) return download()
+        mediaPath = bgPath
+        if (mediaPath.includes("http")) return download()
 
-        let newPath = await loadThumbnail(bgPath, mediaSize.big)
+        const status = await locateMediaFile(mediaPath)
+        if (!status) return
+
+        if (status.hasChanged) mediaPath = status.path
+
+        let newPath = await loadThumbnail(mediaPath, mediaSize.big)
         if (newPath) thumbnailPath = newPath
     }
     async function download() {
-        const localPath = await downloadOnlineMedia(bgPath)
+        const localPath = await downloadOnlineMedia(mediaPath)
 
-        const mediaData = $media[bgPath]
+        const mediaData = $media[mediaPath]
         if (mediaData?.contentFile?.thumbnail) thumbnailPath = mediaData.contentFile.thumbnail
         else if (localPath) thumbnailPath = localPath
     }
@@ -97,7 +104,7 @@
     $: currentStyle = $styles[currentOutput?.style || ""] || {}
 
     let mediaStyle: MediaStyle = {}
-    $: if (bgPath) mediaStyle = getMediaStyle($media[bgPath], currentStyle)
+    $: if (mediaPath) mediaStyle = getMediaStyle($media[mediaPath], currentStyle)
 
     $: {
         if (active.length) setTimeout(updateStyles)
@@ -346,7 +353,7 @@
                     <!-- background -->
                     {#if !altKeyPressed && background}
                         <div class="background" style="zoom: {1 / ratio};opacity: 0.5;{slideFilter};height: 100%;width: 100%;">
-                            <MediaLoader path={bgPath} {thumbnailPath} {loadFullImage} type={background.type !== "player" ? background.type : null} {mediaStyle} />
+                            <MediaLoader path={mediaPath} {thumbnailPath} {loadFullImage} type={background.type !== "player" ? background.type : null} {mediaStyle} />
                         </div>
                     {/if}
 
