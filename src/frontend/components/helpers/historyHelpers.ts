@@ -173,45 +173,16 @@ export const _updaters = {
             }
         }
     },
-    project_template: {
-        store: projectTemplates,
-        initialize: (data) => {
-            data.modified = Date.now()
-            return data
-        },
-        empty: EMPTY_PROJECT
-    },
+    project_template: { store: projectTemplates, empty: EMPTY_PROJECT, timestamp: true },
 
-    project_key: {
-        store: projects,
-        initialize: (data) => {
-            data.modified = Date.now()
-            return data
-        },
-        timestamp: true
-    },
-    project_folder_key: {
-        store: folders,
-        initialize: (data) => {
-            data.modified = Date.now()
-            return data
-        },
-        timestamp: true
-    },
+    project_key: { store: projects, timestamp: true },
+    project_folder_key: { store: folders, timestamp: true },
 
-    project_ref: {
-        store: projects,
-        initialize: (data) => {
-            data.modified = Date.now()
-            return data
-        },
-        timestamp: true
-    },
+    project_ref: { store: projects, timestamp: true },
     section: {
         store: projects,
         empty: EMPTY_SECTION,
         initialize: (data) => {
-            data.modified = Date.now()
             return replaceEmptyValues(data, { id: uid(5) })
         },
         select: (_id: string, data: any) => {
@@ -229,7 +200,8 @@ export const _updaters = {
             setTimeout(() => {
                 document.getElementById("sectionTitle")?.querySelector("input")?.focus()
             }, 10)
-        }
+        },
+        timestamp: true
     },
 
     category_shows: {
@@ -288,43 +260,15 @@ export const _updaters = {
 
             activeRename.set("overlay_" + id)
 
-            data.modified = Date.now()
             return data
         },
-        deselect: (id: string) => clearOverlayOutput(id)
+        deselect: (id: string) => clearOverlayOutput(id),
+        timestamp: true
     },
-    overlay_items: {
-        store: overlays,
-        initialize: (data) => {
-            data.modified = Date.now()
-            return data
-        },
-        empty: []
-    },
-    overlay_name: {
-        store: overlays,
-        initialize: (data) => {
-            data.modified = Date.now()
-            return data
-        },
-        empty: ""
-    },
-    overlay_color: {
-        store: overlays,
-        initialize: (data) => {
-            data.modified = Date.now()
-            return data
-        },
-        empty: null
-    },
-    overlay_category: {
-        store: overlays,
-        initialize: (data) => {
-            data.modified = Date.now()
-            return data
-        },
-        empty: null
-    },
+    overlay_items: { store: overlays, empty: [], timestamp: true },
+    overlay_name: { store: overlays, empty: "", timestamp: true },
+    overlay_color: { store: overlays, empty: null, timestamp: true },
+    overlay_category: { store: overlays, empty: null, timestamp: true },
 
     template: {
         store: templates,
@@ -337,50 +281,15 @@ export const _updaters = {
 
             activeRename.set("template_" + id)
 
-            data.modified = Date.now()
-            return data
-        }
-    },
-    template_items: {
-        store: templates,
-        initialize: (data) => {
-            data.modified = Date.now()
             return data
         },
-        empty: []
+        timestamp: true
     },
-    template_name: {
-        store: templates,
-        initialize: (data) => {
-            data.modified = Date.now()
-            return data
-        },
-        empty: ""
-    },
-    template_color: {
-        store: templates,
-        initialize: (data) => {
-            data.modified = Date.now()
-            return data
-        },
-        empty: null
-    },
-    template_category: {
-        store: templates,
-        initialize: (data) => {
-            data.modified = Date.now()
-            return data
-        },
-        empty: null
-    },
-    template_settings: {
-        store: templates,
-        initialize: (data) => {
-            data.modified = Date.now()
-            return data
-        },
-        empty: {}
-    },
+    template_items: { store: templates, empty: [], timestamp: true },
+    template_name: { store: templates, empty: "", timestamp: true },
+    template_color: { store: templates, empty: null, timestamp: true },
+    template_category: { store: templates, empty: null, timestamp: true },
+    template_settings: { store: templates, empty: {}, timestamp: true },
 
     player_video: { store: playerVideos, empty: EMPTY_PLAYER_VIDEO },
 
@@ -396,30 +305,9 @@ export const _updaters = {
         }
     },
 
-    stage_item_style: {
-        store: stageShows,
-        initialize: (data) => {
-            data.modified = Date.now()
-            return data
-        },
-        empty: ""
-    },
-    stage_item_position: {
-        store: stageShows,
-        initialize: (data) => {
-            data.modified = Date.now()
-            return data
-        },
-        empty: ""
-    },
-    stage_item_content: {
-        store: stageShows,
-        initialize: (data) => {
-            data.modified = Date.now()
-            return data
-        },
-        empty: ""
-    },
+    stage_item_style: { store: stageShows, empty: "", timestamp: true },
+    stage_item_position: { store: stageShows, empty: "", timestamp: true },
+    stage_item_content: { store: stageShows, empty: "", timestamp: true },
 
     show: {
         store: showsCache,

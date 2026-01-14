@@ -1,5 +1,6 @@
 <script lang="ts">
     import type { MediaStyle } from "../../../../types/Main"
+    import { ProjectShowRef } from "../../../../types/Projects"
     import { activeShow, media, outLocked, outputs, styles } from "../../../stores"
     import Image from "../../drawer/media/Image.svelte"
     import { getMedia, getMediaStyle } from "../../helpers/media"
@@ -8,7 +9,8 @@
     import { clearSlide } from "../../output/clear"
     import VideoShow from "../VideoShow.svelte"
 
-    $: show = $activeShow
+    export let projectShow: ProjectShowRef | null = null
+    $: show = projectShow || $activeShow
 
     // LOAD MEDIA
 
@@ -41,7 +43,7 @@
     <!-- WIP indicate that this does not loop when played! -->
     <div style="display: flex;flex-direction: column;height: 100%;">
         {#if show.type === "video" || show.type === "player"}
-            <VideoShow {show} {mediaStyle} />
+            <VideoShow {mediaPath} {show} {mediaStyle} />
         {:else}
             <div id={mediaPath} class="media context #media_preview" style="flex: 1;overflow: hidden;">
                 <HoverButton
