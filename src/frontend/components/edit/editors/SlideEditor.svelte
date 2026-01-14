@@ -12,7 +12,7 @@
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { history } from "../../helpers/history"
-    import { downloadOnlineMedia, getMediaFileFromClipboard, getMediaStyle, loadThumbnail, locateMediaFile, mediaSize } from "../../helpers/media"
+    import { getMedia, getMediaFileFromClipboard, getMediaStyle, getThumbnailPath, mediaSize } from "../../helpers/media"
     import { getFirstActiveOutput, getResolution, getSlideFilter } from "../../helpers/output"
     import { getLayoutRef } from "../../helpers/show"
     import { _show } from "../../helpers/shows"
@@ -75,28 +75,21 @@
     // $: slideOverlays = layoutSlide.overlays || []
 
     // LOAD BACKGROUND
+
     let mediaPath = ""
+    let thumbnailPath = ""
+
     $: bgPath = backgroundPath || background?.id || ""
     $: if (bgPath) loadBackground()
-    let thumbnailPath = ""
     async function loadBackground() {
         mediaPath = bgPath
-        if (mediaPath.includes("http")) return download()
+        thumbnailPath = getThumbnailPath(mediaPath, mediaSize.slideSize)
 
-        const status = await locateMediaFile(mediaPath)
-        if (!status) return
+        const media = await getMedia(bgPath)
+        if (!media) return
 
-        if (status.hasChanged) mediaPath = status.path
-
-        let newPath = await loadThumbnail(mediaPath, mediaSize.big)
-        if (newPath) thumbnailPath = newPath
-    }
-    async function download() {
-        const localPath = await downloadOnlineMedia(mediaPath)
-
-        const mediaData = $media[mediaPath]
-        if (mediaData?.contentFile?.thumbnail) thumbnailPath = mediaData.contentFile.thumbnail
-        else if (localPath) thumbnailPath = localPath
+        mediaPath = media.path
+        thumbnailPath = media.thumbnail
     }
 
     $: currentOutput = getFirstActiveOutput($outputs)

@@ -2,7 +2,7 @@
     import type { Template } from "../../../../types/Show"
     import { activeEdit, outputs, overlays, styles } from "../../../stores"
     import Editbox from "../../edit/editbox/Editbox.svelte"
-    import { loadThumbnail, locateMediaFile, mediaSize } from "../../helpers/media"
+    import { getMedia, getThumbnailPath, mediaSize } from "../../helpers/media"
     import { getResolution } from "../../helpers/output"
     import Textbox from "../../slide/Textbox.svelte"
     import Zoomed from "../../slide/Zoomed.svelte"
@@ -34,26 +34,21 @@
     $: resolution = getResolution(null, { $outputs, $styles })
 
     // LOAD BACKGROUND
+
     let mediaPath = ""
-    $: bgPath = template?.settings?.backgroundPath || ""
-    $: if (bgPath) locateMedia()
-    async function locateMedia() {
-        mediaPath = bgPath
-        const status = await locateMediaFile(bgPath)
-        if (!status) return
-
-        if (status.hasChanged) mediaPath = status.path
-        loadBackground(mediaPath)
-    }
     let thumbnailPath = ""
-    async function loadBackground(path: string) {
-        if (!path) {
-            thumbnailPath = ""
-            return
-        }
 
-        let newPath = await loadThumbnail(path, mediaSize.slideSize)
-        if (newPath) thumbnailPath = newPath
+    $: bgPath = template?.settings?.backgroundPath || ""
+    $: if (bgPath) loadBackground()
+    async function loadBackground() {
+        mediaPath = bgPath
+        thumbnailPath = getThumbnailPath(mediaPath, mediaSize.slideSize)
+
+        const media = await getMedia(bgPath)
+        if (!media) return
+
+        mediaPath = media.path
+        thumbnailPath = media.thumbnail
     }
 
     // OVERLAY

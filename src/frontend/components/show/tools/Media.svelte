@@ -15,7 +15,7 @@
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { clone, sortByName } from "../../helpers/array"
-    import { getExtension, getMediaStyle, getMediaType, isMediaExtension, loadThumbnail, locateMediaFile, mediaSize } from "../../helpers/media"
+    import { getExtension, getMedia, getMediaStyle, getMediaType, isMediaExtension } from "../../helpers/media"
     import { findMatchingOut, getActiveOutputs, getCurrentStyle, setOutput } from "../../helpers/output"
     import { _show } from "../../helpers/shows"
     import Button from "../../inputs/Button.svelte"
@@ -165,24 +165,13 @@
     let newPaths: { [key: string]: string } = {}
     $: if (bgs) loadBackgrounds()
     function loadBackgrounds() {
-        bgs.forEach(async (background) => {
-            let path = background.path || ""
+        bgs.forEach(async (bgMedia) => {
+            let bgPath = bgMedia.path || ""
 
-            const status = await locateMediaFile(path)
-            if (!status) return
+            const media = await getMedia(bgPath)
+            if (!media) return
 
-            if (status.hasChanged) path = status.path
-
-            const mediaData = $media[path]
-            if (mediaData?.contentFile?.thumbnail) {
-                newPaths[path] = mediaData.contentFile.thumbnail
-                return
-            }
-
-            let newBgPath = await loadThumbnail(path, mediaSize.small)
-
-            if (newBgPath) newPaths[path] = newBgPath
-            else newPaths[path] = path
+            newPaths[bgPath] = media.thumbnail
         })
     }
 </script>

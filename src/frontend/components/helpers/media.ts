@@ -8,12 +8,12 @@ import type { Cropping, Styles } from "../../../types/Settings"
 import type { ShowType } from "../../../types/Show"
 import { requestMain, sendMain } from "../../IPC/main"
 import { audioFolders, cachePath, loadedMediaThumbnails, media, mediaFolders, special } from "../../stores"
-import { newToast, wait, waitUntilValueIsDefined } from "../../utils/common"
+import { addToMediaFolder } from "../../utils/cloudSync"
+import { isMainWindow, newToast, wait, waitUntilValueIsDefined } from "../../utils/common"
 import { audioExtensions, imageExtensions, mediaExtensions, presentationExtensions, videoExtensions } from "../../values/extensions"
 import type { API_media, API_slide_thumbnail } from "../actions/api"
 import { clone } from "./array"
 import { getFirstActiveOutput, getOutputResolution } from "./output"
-import { addToMediaFolder } from "../../utils/cloudSync"
 
 export function getExtension(path: string): string {
     if (typeof path !== "string") return ""
@@ -156,11 +156,46 @@ async function toDataURL(url: string): Promise<string> {
     })
 }
 
-// let locating: string[] = []
-export async function locateMediaFile(path: string) {
-    // if (locating.includes(path)) return // path
-    // locating.push(path)
+// download any online media
+// get located media path & generated thumbnail
+export async function getMedia(path: string, size: number = mediaSize.drawerSize) {
+    if (typeof path !== "string") return null
 
+    const mediaData = clone(get(media)[path])
+
+    if (path.includes("http")) {
+        const localPath = (await downloadOnlineMedia(path)) || path
+        const thumbnail = mediaData?.contentFile?.thumbnail || localPath
+        return { path: localPath, altPath: path, thumbnail, data: mediaData }
+    }
+
+    if (!isLocalFile(path) || path.includes("freeshow-cache") || path.includes("media-cache")) {
+        return { path, thumbnail: path, data: mediaData }
+    }
+
+    // lessons
+    // let thumbnailPath = getThumbnailPath(path, data.size)
+    // // cache after it's downloaded
+    // setTimeout(() => loadThumbnail(path, data.size), 1000)
+
+    const located = await locateMediaFile(path)
+    if (!located) return null
+
+    if (located.hasChanged) path = located.path
+    else addToMediaFolder(path)
+
+    if (!isMainWindow()) {
+        const thumbnail = getThumbnailPath(path, size)
+        return { path, thumbnail, data: mediaData }
+    }
+
+    // generate thumbnails only in main window
+    const thumbnail = (await loadThumbnail(path, size)) || path
+
+    return { path, thumbnail, data: mediaData }
+}
+
+async function locateMediaFile(path: string) {
     let folders: string[] = []
     if (get(special).autoLocateMedia !== false) {
         const mediaType = getMediaType(getExtension(path))
@@ -171,43 +206,10 @@ export async function locateMediaFile(path: string) {
     const result = await requestMain(Main.LOCATE_MEDIA_FILE, { filePath: path, folders })
 
     // if (!result) newToast("error.media")
-    if (result?.hasChanged) newToast("toast.media_replaced")
+    // else if (result.hasChanged) newToast("toast.media_replaced")
+
     return result
 }
-
-// DEPRECATED
-// check if media file exists in plain js
-// function checkMedia(src: string): Promise<boolean> {
-//     const extension = getExtension(src)
-//     const isVideo = videoExtensions.includes(extension)
-//     const isAudio = !isVideo && audioExtensions.includes(extension)
-
-//     return new Promise((resolve) => {
-//         let elem
-//         if (isVideo) {
-//             elem = document.createElement("video")
-//             elem.onloadeddata = () => finish()
-//         } else if (isAudio) {
-//             elem = document.createElement("audio")
-//             elem.onloadeddata = () => finish()
-//         } else {
-//             elem = new Image()
-//             elem.onload = () => finish()
-//         }
-
-//         elem.onerror = () => finish(false)
-//         elem.src = encodeFilePath(src)
-
-//         const timedout = setTimeout(() => {
-//             finish(false)
-//         }, 3000)
-
-//         function finish(response = true) {
-//             clearTimeout(timedout)
-//             resolve(response)
-//         }
-//     })
-// }
 
 const existingMedia: string[] = []
 export async function doesMediaExist(path: string, noCache = false) {
@@ -343,14 +345,12 @@ export const mediaSize = {
     small: 100 // show tools
 }
 
-export async function loadThumbnail(input: string, size: number) {
+async function loadThumbnail(input: string, size: number) {
     if (typeof input !== "string") return ""
     if (!isLocalFile(input)) return input
 
     // already encoded (this could cause an infinite loop)
     if (input.includes("freeshow-cache") || input.includes("media-cache")) return input
-
-    addToMediaFolder(input)
 
     const loadedPath = get(loadedMediaThumbnails)[getThumbnailId({ input, size })]
     if (loadedPath) return loadedPath

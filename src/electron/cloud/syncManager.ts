@@ -190,7 +190,7 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
                 return
             }
 
-            if (id === "ACCESS" || id === "ERROR_LOG") return // type safety
+            if (id === "ACCESS" || id === "ERROR_LOG" || id === "CACHE_SYNC") return // type safety
 
             const localStore = _store[id]
             if (!localStore) {

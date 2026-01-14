@@ -3,7 +3,7 @@
     import type { ContentProviderId } from "../../../../electron/contentProviders/base/types"
     import { Main } from "../../../../types/IPC/Main"
     import { requestMain, sendMain } from "../../../IPC/main"
-    import { activePopup, alertMessage, autosave, cloudSyncData, dataPath, driveData, driveKeys, providerConnections, saved, special } from "../../../stores"
+    import { activePopup, autosave, cloudSyncData, dataPath, driveData, driveKeys, providerConnections, saved, special } from "../../../stores"
     import { setupCloudSync } from "../../../utils/cloudSync"
     import { previousAutosave, startAutosave, wait } from "../../../utils/common"
     import { syncDrive, validateKeys } from "../../../utils/drive"
@@ -65,14 +65,25 @@
     //     })
     // }
 
+    let mediaFolderPath = ""
+    async function updateMediaFolderPath(e: any) {
+        mediaFolderPath = e.detail || ""
+        sendMain(Main.SET_MEDIA_FOLDER_PATH, mediaFolderPath)
+
+        // get default path again if reset
+        if (!mediaFolderPath) mediaFolderPath = await requestMain(Main.GET_MEDIA_FOLDER_PATH)
+    }
+
     // get times
     let nextAutosave = 0
     let nextAutobackup = 0
 
     let updater: NodeJS.Timeout | null = null
-    onMount(() => {
+    onMount(async () => {
         checkTimes()
         updater = setInterval(checkTimes, 1000)
+
+        if ($special.cloudSyncMediaFolder) mediaFolderPath = await requestMain(Main.GET_MEDIA_FOLDER_PATH)
     })
     onDestroy(() => {
         if (updater) clearInterval(updater)
@@ -202,14 +213,24 @@
         }
     }
 
-    function toggleMediaFolder(e: any) {
+    function syncNow() {
+        saved.set(false)
+        save(false, { autosave: true })
+    }
+
+    let bundled = false
+    async function toggleMediaFolder(e: any) {
         updateSpecial(e.detail, "cloudSyncMediaFolder")
 
         if (e.detail) {
-            alertMessage.set("media.media_sync_folder_tip")
-            activePopup.set("alert")
+            if (bundled) return
+            bundled = true
+
+            // alertMessage.set("media.media_sync_folder_tip")
+            // activePopup.set("alert")
 
             sendMain(Main.BUNDLE_MEDIA_FILES, { openFolder: true })
+            mediaFolderPath = await requestMain(Main.GET_MEDIA_FOLDER_PATH)
         }
     }
 </script>
@@ -246,7 +267,7 @@
             <T id="settings.disconnect_from" replace={["ChurchApps"]} />
         </MaterialButton>
         {#if $cloudSyncData.enabled}
-            <MaterialButton icon="cloud_sync" on:click={() => save(false, { autosave: true })}>
+            <MaterialButton icon="cloud_sync" on:click={syncNow}>
                 <T id="cloud.sync" />
             </MaterialButton>
         {/if}
@@ -266,6 +287,10 @@
             <!-- Custom drives should work without as long as the path location is the same -->
             <!-- Files in this folder will automatically be checked to find missing files -->
             <MaterialToggleSwitch label="media.media_sync_folder" title="media.media_sync_folder_tip" style="width: 100%;" checked={$special.cloudSyncMediaFolder} defaultValue={false} on:change={toggleMediaFolder} />
+
+            {#if $special.cloudSyncMediaFolder}
+                <MaterialFolderPicker label="media.media_sync_folder" value={mediaFolderPath} on:change={updateMediaFolderPath} allowEmpty={!mediaFolderPath.endsWith("Documents\\FreeShow\\Media") && !mediaFolderPath.endsWith("Documents/FreeShow/Media")} />
+            {/if}
         </svelte:fragment>
     </InputRow>
 {/if}

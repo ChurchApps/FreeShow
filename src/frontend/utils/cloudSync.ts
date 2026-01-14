@@ -1,12 +1,12 @@
 import { get } from "svelte/store"
 import { Main } from "../../types/IPC/Main"
+import { isLocalFile } from "../components/helpers/media"
+import { loadShows } from "../components/helpers/setShow"
 import { requestMain, sendMain } from "../IPC/main"
 import { activePopup, activeShow, alertMessage, cloudSyncData, popupData, providerConnections, shows, showsCache, special } from "../stores"
+import { isMainWindow, newToast } from "./common"
 import { confirmCustom } from "./popup"
 import { save } from "./save"
-import { newToast } from "./common"
-import { loadShows } from "../components/helpers/setShow"
-import { isLocalFile } from "../components/helpers/media"
 
 export async function setupCloudSync(auto: boolean = false) {
     if (auto && get(cloudSyncData).id) {
@@ -105,6 +105,7 @@ export function addToMediaFolder(filePath: string) {
     // ensure it's a valid local file path
     if (!isLocalFile(filePath)) return
     if (filePath.includes("freeshow-cache") || filePath.includes("media-cache")) return
+    if (!isMainWindow()) return
 
     if (!get(special).cloudSyncMediaFolder) return
     sendMain(Main.MEDIA_FOLDER_COPY, { paths: [filePath] })

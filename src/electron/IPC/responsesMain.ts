@@ -23,7 +23,7 @@ import { getPresentationApplications, presentationControl, startSlideshow } from
 import { closeServers, startServers, updateServerData } from "../servers"
 import { apiReturnData, emitOSC, startWebSocketAndRest, stopApiListener } from "../utils/api"
 import { closeMain } from "../utils/close"
-import { addToMediaFolder, bundleMediaFiles, getDataFolderPath, getDataFolderRoot, getFileInfo, getMediaCodec, getMediaTracks, getPaths, getSimularPaths, loadFile, loadShows, locateMediaFile, openInSystem, readExifData, readFile, readFolderContent, selectFiles, selectFilesDialog, selectFolder, writeFile } from "../utils/files"
+import { addToMediaFolder, bundleMediaFiles, getDataFolderPath, getDataFolderRoot, getFileInfo, getMediaCodec, getMediaSyncFolderPath, getMediaTracks, getPaths, getSimularPaths, loadFile, loadShows, locateMediaFile, openInSystem, readExifData, readFile, readFolderContent, selectFiles, selectFilesDialog, selectFolder, setMediaSyncFolderPath, writeFile } from "../utils/files"
 import { getMachineId } from "../utils/helpers"
 import { LyricSearch } from "../utils/LyricSearch"
 import { closeMidiInPorts, getMidiInputs, getMidiOutputs, receiveMidi, sendMidi } from "../utils/midi"
@@ -149,6 +149,8 @@ export const mainResponses: MainResponses = {
     [Main.RECORDER]: (data) => saveRecording(data),
     [Main.SYSTEM_OPEN]: (data) => openInSystem(data),
     [Main.LOCATE_MEDIA_FILE]: (data) => locateMediaFile(data),
+    [Main.GET_MEDIA_FOLDER_PATH]: () => getMediaSyncFolderPath(),
+    [Main.SET_MEDIA_FOLDER_PATH]: (data) => setMediaSyncFolderPath(data),
     [Main.GET_SIMILAR]: (data) => getSimularPaths(data),
     [Main.BUNDLE_MEDIA_FILES]: (data) => bundleMediaFiles(data),
     [Main.MEDIA_FOLDER_COPY]: (data) => addToMediaFolder(data.paths),

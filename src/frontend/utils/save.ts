@@ -231,8 +231,9 @@ export function save(closeWhenFinished = false, customTriggers: SaveActions = {}
 }
 
 export async function saveComplete({ closeWhenFinished, customTriggers }: { closeWhenFinished: boolean; customTriggers?: SaveActions }) {
+    const alreadySaved = get(saved)
     if (!closeWhenFinished) {
-        if ((!customTriggers?.autosave || !get(saved)) && !customTriggers?.backup) newToast("toast.saved")
+        if ((!customTriggers?.autosave || !alreadySaved) && !customTriggers?.backup) newToast("toast.saved")
 
         saved.set(true)
         console.info("SAVED!")
@@ -241,7 +242,7 @@ export async function saveComplete({ closeWhenFinished, customTriggers }: { clos
     // cloud sync
     if (customTriggers?.autosave || closeWhenFinished) {
         // only sync when autosaving or closing
-        await syncWithCloud()
+        if (!customTriggers?.autosave || !alreadySaved) await syncWithCloud()
         if (closeWhenFinished) closeApp()
         return
     }

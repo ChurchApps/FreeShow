@@ -41,6 +41,7 @@ export const storeFilesData = {
     MEDIA: { fileName: "media", portable: false, defaults: {} as Media, minify: true },
 
     CACHE: { fileName: "cache", portable: false, defaults: {} as any, minify: true },
+    CACHE_SYNC: { fileName: "cache_sync", portable: false, defaults: {} as any, minify: true },
     USAGE: { fileName: "usage", portable: false, defaults: {} as { all: any[] }, minify: true },
     ERROR_LOG: { fileName: "error_log", portable: false, defaults: {} as { renderer?: ErrorLog[]; main?: ErrorLog[]; request?: ErrorLog[] } },
 

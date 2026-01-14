@@ -123,6 +123,8 @@ export enum Main {
     RESTORE = "RESTORE",
     SYSTEM_OPEN = "SYSTEM_OPEN",
     LOCATE_MEDIA_FILE = "LOCATE_MEDIA_FILE",
+    GET_MEDIA_FOLDER_PATH = "GET_MEDIA_FOLDER_PATH",
+    SET_MEDIA_FOLDER_PATH = "SET_MEDIA_FOLDER_PATH",
     GET_SIMILAR = "GET_SIMILAR",
     BUNDLE_MEDIA_FILES = "BUNDLE_MEDIA_FILES",
     MEDIA_FOLDER_COPY = "MEDIA_FOLDER_COPY",
@@ -204,6 +206,7 @@ export interface MainSendPayloads {
     [Main.SYSTEM_OPEN]: string
 
     [Main.LOCATE_MEDIA_FILE]: { filePath: string; folders: string[] }
+    [Main.SET_MEDIA_FOLDER_PATH]: string
     [Main.GET_SIMILAR]: { paths: string[] }
     [Main.BUNDLE_MEDIA_FILES]: { openFolder?: boolean }
     [Main.MEDIA_FOLDER_COPY]: { paths: string[] }
@@ -289,6 +292,7 @@ export interface MainReturnPayloads {
     [Main.GET_SIMILAR]: { path: string; name: string }[]
     [Main.MEDIA_FOLDER_COPY]: Promise<boolean>
     [Main.LOCATE_MEDIA_FILE]: Promise<{ path: string; hasChanged: boolean } | null>
+    [Main.GET_MEDIA_FOLDER_PATH]: string
     [Main.FILE_INFO]: { path: string; stat: Stats; extension: string; folder: boolean } | null
     [Main.READ_FOLDER]: Promise<{ [key: string]: FileFolder }>
     [Main.READ_FILE]: { content: string }

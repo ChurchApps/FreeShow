@@ -10,6 +10,7 @@ export interface Config {
     dataPath: string | null
     disableHardwareAcceleration: boolean | null
     autoErrorReporting?: boolean
+    mediaFolderPath?: string
 }
 
 export interface OS {
