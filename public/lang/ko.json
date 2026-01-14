@@ -137,7 +137,6 @@
         "_hide_preview": "미리보기 숨기기",
         "show_preview": "미리보기 표시",
         "restore_output": "출력 복원",
-        "enable_controls": "미디어 미리보기 조작부 표시",
         "background": "배경",
         "foreground": "전경",
         "slide": "슬라이드",
@@ -147,7 +146,8 @@
         "nextTimer": "다음 슬라이드 전환 타이머",
         "lock": "잠금",
         "unlock": "잠금 해제",
-        "test_pattern": "테스트 패턴"
+        "test_pattern": "테스트 패턴",
+        "live_prepare": "출력 내용 숨기기 (검정으로 덮음)"
     },
     "clear": {
         "general": "지우기",
@@ -217,8 +217,10 @@
         "mute_when_video_plays": "비디오 작동시 소리 안나옴",
         "allow_gaining": "증폭 허용",
         "allow_gaining_tip": "100%보다 큰 볼륨 허용(소리가 왜곡될 수 있음)",
-        "pre_fader_volume_meter": "페이더 앞 볼륨 미터",
         "mixer": "믹서",
+        "equalizer": "이퀄라이저",
+        "preset": "사전설정",
+        "main": "메인",
         "metronome": "메트로놈",
         "toggle_metronome": "메트로놈 토글",
         "use_metadata_bpm": "메타데이터에서 BPM 사용",
@@ -353,6 +355,7 @@
     "inputs": {
         "name": "이름",
         "url": "URL",
+        "group": "그룹",
         "method": "방식",
         "contentType": "내용 유형",
         "payload": "Payload",
@@ -397,7 +400,8 @@
         "offers": "예배",
         "notice": "공지",
         "visuals": "시각적인",
-        "action_tip": "이 분류의 쇼가 나올 때마다 실행할 동작입니다."
+        "action_tip": "이 분류의 쇼가 나올 때마다 실행할 동작입니다.",
+        "create_nonexistent": "존재하지 않는 분류 생성"
     },
     "groups": {
         "current": "현재",
@@ -431,6 +435,7 @@
         "variable": "변수",
         "trigger": "트리거",
         "audio_stream": "오디오 스트림",
+        "now_playing": "현재 재생중인 파일",
         "aspect_ratio": "비율 변경",
         "max_lines": "최대 줄 수 설정",
         "transition": "전환 효과",
@@ -444,6 +449,7 @@
         "choose_output": "출력 유형 선택",
         "choose_style": "스타일 사전 설정 선택",
         "change_output_values": "출력 값 변경",
+        "output_selector": "출력 선택기",
         "choose_chord": "화음 선택",
         "set_time": "시간 설정",
         "assign_shortcut": "단축키 할당",
@@ -482,14 +488,16 @@
         "manage_colors": "색상 관리",
         "manage_metadata": "메타데이터 관리",
         "manage_dynamic_values": "동적 값 관리",
+        "template_style_overrides": "스타일 덮어씌우기",
         "choose_camera": "카메라 선택",
         "manage_tags": "꼬리표 관리",
-        "sync_categories": "동기화 할 분류 선택",
+        "sync_categories": "분류 동기화",
         "effect_items": "효과 항목",
         "initialize": "FreeShow에 오신 것을 환영합니다",
         "unsaved": "정말 종료하시겠습니까?",
         "cancel": "취소",
         "continue": "계속",
+        "restore": "백업 복원",
         "reset_all": "모든 것을 재설정",
         "reset_all_confirm": "정말 모든 것을 재설정하시겠습니까?",
         "reset_all_action": "전체 프로그램을 재설정하지만 \"Shows\" 폴더의 .show 파일은 삭제하지 않습니다.",
@@ -762,6 +770,7 @@
         "start_playlist": "재생목록 시작",
         "playlist_next": "재생목록에서 다음 트랙",
         "start_metronome": "메트로놈 시작",
+        "start_audio_effect": "오디오 효과 시작",
         "id_start_timer": "타이머 시작",
         "start_slide_timers": "활성 슬라이드에서 타이머 시작",
         "id_select_output_style": "출력 스타일 선택",
@@ -794,7 +803,9 @@
         "activate_background_cleared": "배경을 지울 때 활성화",
         "activate_show_created": "쇼를 생성했을 때 활성화",
         "activate_show_opened": "쇼를 열었을 때 활성화",
-        "activate_audio_playlist_ended": "오디오 재생목록이 끝났을 때 활성화"
+        "activate_audio_playlist_ended": "오디오 재생목록이 끝났을 때 활성화",
+        "mark_played": "재생한 것으로 표시",
+        "mark_not_played": "재생하지 않은 것으로 표시"
     },
     "conditions": {
         "show_item": "항목 표시 조건",
@@ -946,6 +957,8 @@
         "max_lines_per_slide": "슬라이드 당 최대 줄 수",
         "break_long_lines": "긴 줄을 나눔",
         "break_long_lines_tip": "설정한 단어보다 긴 경우 줄 나눔",
+        "style_overrides_tip": "일치하는 단어의 스타일을 자동으로 바꿉니다.",
+        "style_override_pattern": "단어 또는 /regex/",
         "skip_virtual_breaks": "가상 중단 무시",
         "media_fit": "미디어 맞춤",
         "cropping": "잘라내기",
@@ -986,8 +999,8 @@
         "_title_top": "위로 정렬",
         "_title_bottom": "아래로 정렬",
         "align_center": "중앙",
-        "align_start": "시작",
-        "align_end": "끝",
+        "align_start": "위",
+        "align_end": "아래",
         "outline": "윤곽선",
         "shadow": "그림자",
         "shadow_inset": "내부 그림자",
@@ -1046,7 +1059,9 @@
         "longitude": "경도",
         "altitude": "고도",
         "fahrenheit": "화씨",
-        "longRange": "장기간"
+        "longRange": "장기간",
+        "media_item_tip": "해당 매체를 배경으로 사용하시겠습니까?",
+        "convert_to_background": "배경으로 변환"
     },
     "items": {
         "text": "글상자",
@@ -1065,13 +1080,14 @@
         "variable": "변수",
         "web": "웹사이트",
         "slide_tracker": "진행률",
-        "visualizer": "비주얼라이저",
+        "visualizer": "시각화",
         "captions": "자막",
+        "metronome": "메트로놈",
         "icon": "아이콘",
         "effect": "효과",
         "slide_text": "슬라이드 본문",
         "slide_notes": "슬라이드 메모",
-        "current_output": "현재 출력"
+        "current_output": "출력 창"
     },
     "borders": {
         "solid": "실선",
@@ -1202,7 +1218,8 @@
         "source_output": "원본 출력",
         "auto_stretch": "내용을 자동으로 늘려서 채움",
         "labels": "이름표 보기",
-        "label_color": "이름표 색상"
+        "label_color": "이름표 색상",
+        "create_stage_output": "무대 출력 생성"
     },
     "settings": {
         "general": "일반",
@@ -1253,12 +1270,15 @@
         "window": "창",
         "active_style": "스타일 사용",
         "alert_updates": "새 업데이트가 있을 때 알림",
+        "alert_updates_beta": "새로운 베타 버전이 나오면 알림",
         "auto_updates": "자동 업데이트",
         "disable_labels": "이름표 비활성화",
         "group_numbers": "그룹 번호",
         "auto_group_numbers": "그룹 번호 자동 할당",
+        "shortcuts_on_slides": "슬라이드에 단축키 표시",
         "transparent_slides": "투명 슬라이드 미리보기",
         "full_colors": "그룹 색상 고대비",
+        "next_item_on_last_slide": "처음/마지막 슬라이드에서 왼쪽/오른쪽 화살표로 프로젝트 아이템 변경",
         "slide_number_keys": "숫자 키로 슬라이드 재생",
         "auto_shortcut_first_letter": "본문의 첫 글자를 단축키로 자동 지정",
         "startup_projects_list": "시작할 때 프로젝트 목록을 보여줌",
@@ -1288,14 +1308,11 @@
         "add": "추가",
         "remove": "제거",
         "change_name": "이름 변경",
-        "show_location": "위치 표시",
         "data_location": "데이터 위치",
-        "user_data_location": "'데이터 위치'에 사용자 설정 저장",
-        "user_data_exists": "사용자 정의 위치에 데이터가 있습니다. 덮어씌우시겠습니까?",
-        "user_data_yes": "예, 현재 데이터를 유지합니다.",
-        "user_data_no": "아니오, 기존 데이터를 가져옵니다.",
         "auto_locate_missing_media_files": "잃어버린 미디어 파일을 자동으로 연결",
         "popup_before_close": "확인 팝업 닫기 활성화",
+        "log_song_usage": "곡 사용 내역을 파일로 기록",
+        "auto_error_reporting": "자동으로 오류 보고",
         "disable_hardware_acceleration": "하드웨어 가속 비활성화",
         "restart_for_change": "변경사항을 적용하려면 프로그램을 다시 시작해야 합니다!",
         "font": "글자",
@@ -1319,6 +1336,7 @@
         "restart": "서버 재시작",
         "connect_to": "$1(으)로 연결",
         "disconnect_from": "$1에서 연결 끊음",
+        "sync_categories_tip": "곡으로 업로드할 분류 선택",
         "reset_all": "모든 것을 재설정",
         "reset_theme": "테마 재설정",
         "reset_themes": "테마 재설정",
@@ -1342,7 +1360,8 @@
     },
     "output": {
         "state_inactive": "비활성화",
-        "state_locked": "잠김"
+        "state_locked": "잠김",
+        "disabled_layers": "비활성 레이어"
     },
     "profile": {
         "profiles_hint": "사용자가 프로그램의 특정 부분만 제어하거나 편집할 수 있도록 접근을 제한하는 여러 개의 프로필/역할을 만듭니다.",
@@ -1404,6 +1423,7 @@
         "verse_numbers": "구절 번호",
         "verses_on_individual_lines": "각 구절 줄 나눔",
         "divide_long_verses": "긴 구절은 나눔",
+        "split_long_verses_suffix": "분절 접미사 보기",
         "version": "판본 표시",
         "reference": "참조 표시",
         "split_reference": "참조 분리",
@@ -1411,6 +1431,7 @@
         "first_slide_reference": "첫 번째 슬라이드에 참조 표시",
         "reference_at_bottom": "하단으로 이동",
         "red_jesus": "예수님의 말씀을 빨간색으로",
+        "show_all": "모두 보기",
         "search": "성경에서 검색"
     },
     "filter": {
