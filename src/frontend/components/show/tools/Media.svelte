@@ -180,7 +180,7 @@
         {#if bgs.length}
             <!-- <h5><T id="tools.media" /></h5> -->
             {#each bgs as background}
-                {@const media = newMedia[background.path || ""]}
+                {@const media = newMedia[background.path || ""] || {}}
 
                 <!-- TODO: cameras -->
                 {@const mediaStyle = getMediaStyle(media.data, outputStyle)}

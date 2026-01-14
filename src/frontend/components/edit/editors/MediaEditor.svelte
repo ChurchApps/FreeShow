@@ -2,7 +2,7 @@
     import type { MediaStyle } from "../../../../types/Main"
     import { activeEdit, activeShow, media, outputs, styles } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
-    import { getExtension, getMediaStyle, getMediaType } from "../../helpers/media"
+    import { getExtension, getMedia, getMediaStyle, getMediaType } from "../../helpers/media"
     import { getCurrentStyle, getFirstActiveOutput } from "../../helpers/output"
     import FloatingInputs from "../../input/FloatingInputs.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
@@ -11,7 +11,21 @@
 
     $: path = $activeEdit.id || $activeShow!.id
 
-    $: extension = getExtension(path)
+    let mediaPath = ""
+
+    // LOAD MEDIA
+
+    $: if (path) loadMedia()
+    async function loadMedia() {
+        mediaPath = path
+
+        const media = await getMedia(path)
+        if (!media) return
+
+        mediaPath = media.path
+    }
+
+    $: extension = getExtension(mediaPath)
     $: type = getMediaType(extension)
 
     let videoTime = 0
@@ -27,7 +41,7 @@
 
 <div class="parent" style="display: flex;flex-direction: column;height: 100%;">
     <div class="media" style="flex: 1;overflow: hidden;position: relative;">
-        <Media {path} {mediaStyle} bind:videoData bind:videoTime mirror />
+        <Media path={mediaPath} {mediaStyle} bind:videoData bind:videoTime mirror />
 
         {#if type === "video"}
             <FloatingInputs side="center" style="width: 60%;">
