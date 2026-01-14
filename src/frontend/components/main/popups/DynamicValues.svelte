@@ -134,6 +134,7 @@
 
             stageShows.update((a) => {
                 a[$activeStage.id!].items[activeItemId] = updateItemText(a[$activeStage.id!]?.items[activeItemId])
+                a[$activeStage.id!].modified = Date.now()
                 return a
             })
 
@@ -146,12 +147,13 @@
             if (edit.type === "overlay") {
                 overlays.update((a) => {
                     a[edit.id!].items = updateItemText(a[edit.id!].items)
+                    a[edit.id!].modified = Date.now()
                     return a
                 })
             } else if (edit.type === "template") {
                 templates.update((a) => {
                     a[edit.id!].items = updateItemText(a[edit.id!].items)
-                    console.log(a[edit.id!].items)
+                    a[edit.id!].modified = Date.now()
                     return a
                 })
             }

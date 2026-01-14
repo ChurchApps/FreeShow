@@ -150,7 +150,7 @@
 
     // bundle media files
     function bundleMediaFiles() {
-        sendMain(Main.BUNDLE_MEDIA_FILES)
+        sendMain(Main.BUNDLE_MEDIA_FILES, { openFolder: true })
     }
 
     // usage log
@@ -265,11 +265,14 @@
     </Button>
 </CombinedInput> -->
 
-<InputRow>
-    <MaterialButton title="media.bundle_media_files_tip" style="width: 100%;justify-content: left;" icon="image" on:click={bundleMediaFiles}>
-        <T id="media.bundle_media_files" />
-    </MaterialButton>
-</InputRow>
+<!-- BUNDLE MEDIA FILES MANUALLY OR AUTOMATICALLY -->
+{#if !$special.cloudSyncMediaFolder}
+    <InputRow>
+        <MaterialButton title="media.bundle_media_files_tip" style="width: 100%;justify-content: left;" icon="image" on:click={bundleMediaFiles}>
+            <T id="media.bundle_media_files" />
+        </MaterialButton>
+    </InputRow>
+{/if}
 
 {#if $special.logSongUsage && $usageLog.all?.length}
     <InputRow>

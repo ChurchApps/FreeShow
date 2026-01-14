@@ -525,7 +525,7 @@ export function getScriptureSlidesNew(data: any, onlyOne = false, disableReferen
 
     const _template = new TemplateHelper(templateId)
 
-    const biblesContent = data.biblesContent as BibleContent[]
+    const biblesContent = (data.biblesContent || []).filter(Boolean) as BibleContent[]
     const selectedChapters = data.selectedChapters as number[]
     const selectedVerses = data.selectedVerses as (number | string)[][]
 
@@ -625,6 +625,7 @@ export function getScriptureSlidesNew(data: any, onlyOne = false, disableReferen
             if (!scriptureVerseContent[i][j]) scriptureVerseContent[i][j] = []
 
             const bible = currentSlideContent[j]
+            if (!bible) continue
 
             scriptureVerseContent[i] = scriptureVerseContent[i] || []
             scriptureVerseContent[i][j] = []

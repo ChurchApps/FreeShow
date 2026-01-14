@@ -2,7 +2,9 @@
     import { Main } from "../../../types/IPC/Main"
     import type { Popups } from "../../../types/Main"
     import { sendMain } from "../../IPC/main"
-    import { activePopup, dataPath, outputs, settingsTab } from "../../stores"
+    import { activePopup, dataPath, outputs, settingsTab, syncStatus } from "../../stores"
+    import { translateText } from "../../utils/language"
+    import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
 
@@ -54,6 +56,16 @@
             </MaterialButton>
         {/if}
     </div>
+{:else if openedTab === "files"}
+    <div class="status" data-title={translateText($syncStatus === "completed" ? "cloud.sync_complete" : $syncStatus === "syncing" ? "cloud.syncing" : "")}>
+        {#if $syncStatus === "syncing"}
+            <div class="spinning">
+                <Icon id="loop" size={1.5} style="opacity: 0.8;" white />
+            </div>
+        {:else if $syncStatus === "completed"}
+            <Icon id="cloud_done" size={1.5} white />
+        {/if}
+    </div>
 {:else if openedTab === "other"}
     <div class="bottom">
         <MaterialButton variant="outlined" icon="document" on:click={openLog} small>
@@ -87,5 +99,28 @@
         justify-content: left;
         /* border-width: 0; */
         box-shadow: none;
+    }
+
+    /* Sync status */
+
+    .status {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        height: 100px;
+    }
+
+    .spinning {
+        animation: spin 2s linear infinite;
+        display: flex;
+    }
+    @keyframes spin {
+        from {
+            transform: rotate(360deg);
+        }
+        to {
+            transform: rotate(0deg);
+        }
     }
 </style>

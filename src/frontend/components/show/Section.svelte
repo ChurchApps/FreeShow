@@ -29,6 +29,7 @@
             if (!a[$activeProject!]?.shows) return a
             let index = a[$activeProject!].shows.findIndex((a) => a.id === section.id)
             if (index >= 0) a[$activeProject!].shows[index].notes = e.detail
+            a[$activeProject!].modified = Date.now()
             return a
         })
     }
@@ -44,6 +45,7 @@
             if (!a[$activeProject!]?.shows) return a
             let index = a[$activeProject!].shows.findIndex((a) => a.id === section.id)
             if (index >= 0) a[$activeProject!].shows[index][key] = value
+            a[$activeProject!].modified = Date.now()
             return a
         })
     }
@@ -72,6 +74,7 @@
             if (!a[$activeProject!]?.shows?.[section.index]) return a
             const currentData = a[$activeProject!].shows[section.index].data || {}
             a[$activeProject!].shows[section.index].data = { ...currentData, [key]: value }
+            a[$activeProject!].modified = Date.now()
             return a
         })
     }

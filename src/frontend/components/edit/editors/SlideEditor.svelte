@@ -12,7 +12,7 @@
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { history } from "../../helpers/history"
-    import { downloadOnlineMedia, getMediaFileFromClipboard, getMediaStyle, loadThumbnail, mediaSize } from "../../helpers/media"
+    import { getMedia, getMediaFileFromClipboard, getMediaStyle, getThumbnailPath, mediaSize } from "../../helpers/media"
     import { getFirstActiveOutput, getResolution, getSlideFilter } from "../../helpers/output"
     import { getLayoutRef } from "../../helpers/show"
     import { _show } from "../../helpers/shows"
@@ -75,21 +75,21 @@
     // $: slideOverlays = layoutSlide.overlays || []
 
     // LOAD BACKGROUND
+
+    let mediaPath = ""
+    let thumbnailPath = ""
+
     $: bgPath = backgroundPath || background?.id || ""
     $: if (bgPath) loadBackground()
-    let thumbnailPath = ""
     async function loadBackground() {
-        if (bgPath.includes("http")) return download()
+        mediaPath = bgPath
+        thumbnailPath = getThumbnailPath(mediaPath, mediaSize.slideSize)
 
-        let newPath = await loadThumbnail(bgPath, mediaSize.big)
-        if (newPath) thumbnailPath = newPath
-    }
-    async function download() {
-        const localPath = await downloadOnlineMedia(bgPath)
+        const media = await getMedia(bgPath)
+        if (!media) return
 
-        const mediaData = $media[bgPath]
-        if (mediaData?.contentFile?.thumbnail) thumbnailPath = mediaData.contentFile.thumbnail
-        else if (localPath) thumbnailPath = localPath
+        mediaPath = media.path
+        thumbnailPath = media.thumbnail
     }
 
     $: currentOutput = getFirstActiveOutput($outputs)
@@ -97,7 +97,7 @@
     $: currentStyle = $styles[currentOutput?.style || ""] || {}
 
     let mediaStyle: MediaStyle = {}
-    $: if (bgPath) mediaStyle = getMediaStyle($media[bgPath], currentStyle)
+    $: if (mediaPath) mediaStyle = getMediaStyle($media[bgPath], currentStyle)
 
     $: {
         if (active.length) setTimeout(updateStyles)
@@ -346,7 +346,7 @@
                     <!-- background -->
                     {#if !altKeyPressed && background}
                         <div class="background" style="zoom: {1 / ratio};opacity: 0.5;{slideFilter};height: 100%;width: 100%;">
-                            <MediaLoader path={bgPath} {thumbnailPath} {loadFullImage} type={background.type !== "player" ? background.type : null} {mediaStyle} />
+                            <MediaLoader path={mediaPath} {thumbnailPath} {loadFullImage} type={background.type !== "player" ? background.type : null} {mediaStyle} />
                         </div>
                     {/if}
 

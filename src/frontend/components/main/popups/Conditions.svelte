@@ -98,6 +98,7 @@
             stageShows.update((a) => {
                 if (!a[stageId]?.items[itemIndex]) return a
                 a[stageId].items[itemIndex].conditions = conditions
+                a[stageId].modified = Date.now()
                 return a
             })
             return
@@ -110,18 +111,21 @@
             overlays.update((a) => {
                 if (!a[edit.id!]?.items?.[itemIndex]) return a
                 a[edit.id!].items[itemIndex].conditions = conditions
+                a[edit.id!].modified = Date.now()
                 return a
             })
         } else if (isTemplate) {
             templates.update((a) => {
                 if (!a[edit.id!]?.items?.[itemIndex]) return a
                 a[edit.id!].items[itemIndex].conditions = conditions
+                a[edit.id!].modified = Date.now()
                 return a
             })
         } else {
             showsCache.update((a) => {
                 if (!a[showId]?.slides?.[slideId]?.items?.[itemIndex]) return a
                 a[showId].slides[slideId].items[itemIndex].conditions = conditions
+                a[showId].timestamps.modified = Date.now()
                 return a
             })
         }

@@ -1,19 +1,30 @@
 <script lang="ts">
     import type { MediaStyle } from "../../../../types/Main"
+    import { ProjectShowRef } from "../../../../types/Projects"
     import { activeShow, media, outLocked, outputs, styles } from "../../../stores"
     import Image from "../../drawer/media/Image.svelte"
-    import { downloadOnlineMedia, getMediaStyle } from "../../helpers/media"
+    import { getMedia, getMediaStyle } from "../../helpers/media"
     import { getActiveOutputs, getCurrentStyle, setOutput } from "../../helpers/output"
     import HoverButton from "../../inputs/HoverButton.svelte"
     import { clearSlide } from "../../output/clear"
     import VideoShow from "../VideoShow.svelte"
 
-    $: show = $activeShow
+    export let projectShow: ProjectShowRef | null = null
+    $: show = projectShow || $activeShow
+
+    // LOAD MEDIA
+
+    let mediaPath = ""
 
     $: path = show?.id || ""
-    $: if (path.includes("http")) download()
-    async function download() {
-        path = await downloadOnlineMedia(path)
+    $: if (path) loadMedia()
+    async function loadMedia() {
+        mediaPath = path
+
+        const media = await getMedia(path)
+        if (!media) return
+
+        mediaPath = media.path
     }
 
     $: outputId = getActiveOutputs($outputs)[0]
@@ -32,9 +43,9 @@
     <!-- WIP indicate that this does not loop when played! -->
     <div style="display: flex;flex-direction: column;height: 100%;">
         {#if show.type === "video" || show.type === "player"}
-            <VideoShow {show} {mediaStyle} />
+            <VideoShow {mediaPath} {show} {mediaStyle} />
         {:else}
-            <div id={path} class="media context #media_preview" style="flex: 1;overflow: hidden;">
+            <div id={mediaPath} class="media context #media_preview" style="flex: 1;overflow: hidden;">
                 <HoverButton
                     icon="play"
                     size={10}
@@ -44,13 +55,13 @@
                         const type = mediaData.videoType
                         if (type === "foreground" || type !== "background") clearSlide()
 
-                        setOutput("background", { path, ...mediaStyle })
+                        setOutput("background", { path: mediaPath, ...mediaStyle })
                     }}
                 >
                     {#if mediaStyle.fit === "blur"}
-                        <Image style={mediaStyleBlurString} src={path} alt="" />
+                        <Image style={mediaStyleBlurString} src={mediaPath} alt="" />
                     {/if}
-                    <Image style={mediaStyleString} src={path} alt={show.name || ""} />
+                    <Image style={mediaStyleString} src={mediaPath} alt={show.name || ""} />
                 </HoverButton>
             </div>
         {/if}

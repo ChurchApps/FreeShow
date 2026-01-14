@@ -7,14 +7,16 @@ import { ExifImage } from "exif"
 import fs, { type Stats } from "fs"
 import path, { join, parse } from "path"
 import { uid } from "uid"
+import upath from "upath"
 import { OUTPUT } from "../../types/Channels"
 import { Main } from "../../types/IPC/Main"
 import { ToMain } from "../../types/IPC/ToMain"
 import type { FileFolder, MainFilePaths, Subtitle } from "../../types/Main"
-import type { Show, TrimmedShows } from "../../types/Show"
+import type { Project } from "../../types/Projects"
+import type { Item, Show, TrimmedShows } from "../../types/Show"
 import { imageExtensions, mimeTypes, videoExtensions } from "../data/media"
-import { _store, appDataPath, config, getStore, setStore } from "../data/store"
-import { createThumbnail } from "../data/thumbnails"
+import { _store, appDataPath, config, getStore, setStore, setStoreValue } from "../data/store"
+import { createThumbnail, filePathHashCode } from "../data/thumbnails"
 import { sendMain, sendToMain } from "../IPC/main"
 import { OutputHelper } from "../output/OutputHelper"
 import { mainWindow, setAutoProfile, toApp } from "./../index"
@@ -239,7 +241,7 @@ export const dataFolderNames = {
     backups: "Backups",
     scriptures: "Bibles",
     onlineMedia: "Online",
-    mediaBundle: "Media",
+    media: "Media",
     exports: "Exports",
     imports: "Imports",
     lessons: "Lessons",
@@ -641,15 +643,46 @@ function formatTimestamp(timestamp: number) {
 
 /// ///
 
+export function getMediaSyncFolderPath() {
+    return getStore("config").mediaFolderPath || getDataFolderPath("media")
+}
+export function setMediaSyncFolderPath(folderPath: string) {
+    setStoreValue({ file: "config", key: "mediaFolderPath", value: folderPath })
+}
+
 // SEARCH FOR MEDIA FILE (in drawer media folders & their following folders)
 const NESTED_SEARCH = 8 // folder levels deep
-export async function locateMediaFile({ fileName, splittedPath, folders, ref }: { fileName: string; splittedPath: string[]; folders: string[]; ref: { showId: string; mediaId: string; cloudId: string } }) {
+export async function locateMediaFile({ filePath, folders }: { filePath: string; folders: string[] }) {
+    if (await doesPathExistAsync(filePath)) return { path: filePath, hasChanged: false }
+
     const matches: string[] = []
 
-    await findMatches()
-    if (!matches.length) return
+    // Media Sync Folder
+    const mediaFolder = getMediaSyncFolderPath()
+    const folderId = getFileParentFolderId(filePath)
+    const mediaFilePath = path.join(mediaFolder, folderId, upath.basename(filePath))
+    if (await doesPathExistAsync(mediaFilePath)) return { path: mediaFilePath, hasChanged: true }
+    folders.unshift(mediaFolder)
 
-    return { path: matches[0], ref }
+    // lookup already replaced paths from cache
+    const syncCache = getStore("CACHE_SYNC")
+    if (!syncCache.replacedPaths) syncCache.replacedPaths = {}
+    const cachedPath = syncCache.replacedPaths[folderId]
+    if (cachedPath && (await doesPathExistAsync(cachedPath))) {
+        return { path: cachedPath, hasChanged: false }
+    }
+
+    const fileName = upath.basename(filePath)
+
+    await findMatches()
+    const newPath = matches?.[0]
+    if (!newPath) return null
+
+    // store replaced path in cache
+    syncCache.replacedPaths[folderId] = newPath
+    setStore(_store.CACHE_SYNC, syncCache)
+
+    return { path: newPath, hasChanged: true }
 
     async function findMatches() {
         for (const folderPath of folders) {
@@ -661,6 +694,7 @@ export async function locateMediaFile({ fileName, splittedPath, folders, ref }: 
 
     async function searchInFolder(folderPath: string, level = 1) {
         if (level > NESTED_SEARCH || matches.length) return
+        if (!(await doesPathExistAsync(folderPath))) return
 
         const currentFolderFolders: string[] = []
         const files = await readFolderAsync(folderPath)
@@ -691,23 +725,14 @@ export async function locateMediaFile({ fileName, splittedPath, folders, ref }: 
     }
 
     function checkFileForMatch(currentFileName: string, folderPath: string) {
-        // include original parent folder name in search first (to limit it a bit if two files with same name are in two different folders!)
-        if (splittedPath?.length > 1) {
-            const currentParentFolder = path.basename(folderPath)
-            const pathName = path.join(currentParentFolder, currentFileName)
-            const searchName = path.join(splittedPath[splittedPath.length - 2], fileName)
-            if (pathName === searchName) {
-                const filePath: string = path.join(folderPath, currentFileName)
-                matches.push(filePath)
-            }
-        }
+        // WIP check any path with same parent folder for matches first to limit search a bit
+        // this would also help with files with same name
 
         if (matches.length) return
 
-        // check for file name exact match
+        // simple search: match by file name only
         if (currentFileName === fileName) {
-            const filePath: string = path.join(folderPath, currentFileName)
-            matches.push(filePath)
+            matches.push(path.join(folderPath, currentFileName))
         }
     }
 }
@@ -796,22 +821,28 @@ export async function detectNewFiles() {
 
 /// ///
 
-// BUNDLE MEDIA FILES FROM ALL SHOWS (IMAGE/VIDEO/AUDIO)
+// region: BUNDLE MEDIA FILES FROM ALL SHOWS AND PROJECTS (IMAGE/VIDEO/AUDIO)
 let currentlyBundling = false
-export function bundleMediaFiles() {
+/**
+ * Bundles media files from all shows and projects
+ * @param openFolderWhenDone [default=false] Whether to open the output folder when done
+ */
+export function bundleMediaFiles({ openFolder = false }: { openFolder?: boolean } = {}) {
     if (currentlyBundling) return
     currentlyBundling = true
 
-    const showsPath = getDataFolderPath("shows")
+    let allMediaFiles: string[] = []
+    function addFile(filePath: string | undefined) {
+        if (filePath) allMediaFiles.push(filePath)
+    }
 
+    // shows
+    const showsPath = getDataFolderPath("shows")
     let showsList = readFolder(showsPath)
     showsList = showsList
         .filter((name) => name.toLowerCase().endsWith(".show")) // only .show files
         .filter((trimmedName) => trimmedName) // remove files with no name
 
-    let allMediaFiles: string[] = []
-
-    for (const name of showsList) readShow(name)
     function readShow(fileName: string) {
         const showPath: string = path.join(showsPath, fileName)
         const jsonData = readFile(showPath) || "{}"
@@ -822,10 +853,40 @@ export function bundleMediaFiles() {
         // media backgrounds & audio
         Object.values(show.media || {}).forEach((media) => {
             const mediaPath = media.path || media.id
-            if (mediaPath) allMediaFiles.push(mediaPath)
+            if (mediaPath) addFile(mediaPath)
         })
 
-        // WIP also copy media item paths? (only when it's supported by the auto find feature)
+        // slide media items
+        Object.values(show.slides || {}).forEach((a) => getItemsMedia(a.items || []))
+    }
+    for (const name of showsList) readShow(name)
+
+    // projects
+    function readProject(project: Project) {
+        project?.shows?.forEach((show) => {
+            const type = show.type || "show"
+            if (["image", "video", "audio", "pdf", "ppt"].includes(type)) {
+                addFile(show.id)
+            } else if (type === "folder") {
+                // WIP handle project media folders?
+            }
+        })
+    }
+    const projects = getStore("PROJECTS").projects as Project
+    Object.values(projects).forEach(readProject)
+
+    // get overlays media
+    const overlays = getStore("OVERLAYS")
+    Object.values(overlays).forEach((a) => getItemsMedia(a.items || []))
+
+    // get templates media
+    const templates = getStore("TEMPLATES")
+    Object.values(templates).forEach((a) => getItemsMedia(a.items || []))
+
+    function getItemsMedia(items: Item[]) {
+        items.forEach((item) => {
+            if (item.type === "media") addFile(item.src)
+        })
     }
 
     // remove duplicates
@@ -835,30 +896,64 @@ export function bundleMediaFiles() {
         return
     }
 
-    // get/create new folder
-    const outputPath = getDataFolderPath("mediaBundle")
+    // bundle should use default Media folder, and not any custom sync folders
+    const outputFolder = getDataFolderPath("media")
 
     // copy media files
-    allMediaFiles.forEach((mediaPath) => {
-        const fileName = path.basename(mediaPath)
-        const newPath = path.join(outputPath, fileName)
+    addToMediaFolder(allMediaFiles, outputFolder) // skip awaiting
 
-        // don't copy if it's already copied
-        if (doesPathExist(newPath)) return
-
-        fs.copyFile(mediaPath, newPath, (err) => {
-            if (err) console.error("Could not copy: " + mediaPath + "! File might not exist.")
-        })
-    })
-
-    // open folder
-    openInSystem(outputPath, true)
+    if (openFolder) openInSystem(outputFolder, true)
     currentlyBundling = false
+}
+
+export async function addToMediaFolder(mediaPaths: string[], outputFolder?: string) {
+    const mediaFolderPath = outputFolder || getMediaSyncFolderPath()
+    let changed = false
+
+    await Promise.all(
+        mediaPaths.map(async (mediaPath) => {
+            // if media path is already in media folder, skip
+            if (mediaPath.startsWith(mediaFolderPath)) return
+
+            // make sure original media exists
+            if (!(await doesPathExistAsync(mediaPath))) return
+
+            // ensure folder name is matching path in case files with the same name has the same parent folder name
+            const folderId = getFileParentFolderId(mediaPath)
+
+            const newFolderPath = path.join(mediaFolderPath, folderId)
+            createFolder(newFolderPath)
+
+            const fileName = path.basename(mediaPath)
+            const newMediaPath = path.join(newFolderPath, fileName)
+
+            const alreadyExists = await doesPathExistAsync(newMediaPath)
+            if (alreadyExists) {
+                // no need when we have the folder name path id
+                // double check that it's actually different
+                // const matches = await fileContentMatchesAsync(await readFileAsync(mediaPath), newMediaPath)
+                // if (matches) return
+                return
+            }
+
+            changed = true
+            await copyFileAsync(mediaPath, newMediaPath)
+        })
+    )
+
+    return changed
+}
+
+function getFileParentFolderId(filePath: string) {
+    const fileFolderPath = upath.dirname(filePath)
+    const parentFolderName = upath.basename(fileFolderPath)
+    const uniqueName = parentFolderName + "_" + filePathHashCode(fileFolderPath)
+    return uniqueName
 }
 
 // LOAD SHOWS
 
-export function loadShows(returnShows = false) {
+export function loadShows(returnShows = false, newShows: string[] = []) {
     const showsPath = getDataFolderPath("shows")
 
     specialCaseFixer()
@@ -873,7 +968,7 @@ export function loadShows(returnShows = false) {
     // create a map for quick lookup of cached shows by name
     const cachedShowNames = new Map<string, string>()
     for (const [id, show] of Object.entries(cachedShows)) {
-        if (show?.name) cachedShowNames.set(show.name, id)
+        if (show?.name && !newShows.includes(show.name)) cachedShowNames.set(show.name, id)
     }
 
     filesInFolder = filesInFolder

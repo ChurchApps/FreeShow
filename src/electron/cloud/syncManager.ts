@@ -5,9 +5,9 @@ import type { Folders, Projects } from "../../types/Projects"
 import type { Show } from "../../types/Show"
 import { isValidJSON, startBackup } from "../data/backup"
 import { _store, setStore } from "../data/store"
-import { compressToZip, decompressZipStream } from "../data/zip"
+import { compressToZip, decompressZipStream, getZipModifiedDates } from "../data/zip"
 import { sendMain } from "../IPC/main"
-import { createFolder, deleteFile, deleteFolder, doesPathExistAsync, getDataFolderPath, getFileStatsAsync, getTimePointString, moveFileAsync, readFileAsync, readFolderAsync, writeFileAsync } from "../utils/files"
+import { createFolder, deleteFile, deleteFolder, doesPathExistAsync, getDataFolderPath, getFileStatsAsync, getTimePointString, loadShows, moveFileAsync, readFileAsync, readFolderAsync, writeFileAsync } from "../utils/files"
 import { clone, getMachineId } from "../utils/helpers"
 import { getChurchAppsSyncManager } from "./ChurchAppsSyncManager"
 
@@ -44,20 +44,40 @@ export async function hasDataChanged({ id, churchId, teamId }: { id: SyncProvide
     return await provider.hasChanged(churchId, teamId)
 }
 
+function deleteLocalFiles() {
+    // reset syncable (portable) Config files
+    // no need, these will get auto replaced by the downloaded files
+    // Object.entries(storeFilesData).forEach(([id, data]) => {
+    //     if (!data.portable && id !== "MEDIA") return
+    //     // reset
+    // })
+
+    // delete all show files
+    const showsPath = getDataFolderPath("shows")
+    deleteFolder(showsPath)
+}
+
 const EXTRACT_LOCATION = path.join(app.getPath("temp"), "freeshow-cloud")
 const MERGE_INDIVIDUAL = ["OVERLAYS", "PROJECTS", "STAGE", "TEMPLATES"] // "EVENTS", "THEMES"
 
-export async function syncData(data: { id: SyncProviderId; churchId: string; teamId: string; method: "merge" | "read_only" }) {
-    const readOnly = data.method === "read_only" // never write to cloud
+export async function syncData(data: { id: SyncProviderId; churchId: string; teamId: string; method: "merge" | "read_only" | "upload" | "replace" }) {
+    const readOnly = data.method === "read_only" || data.method === "replace" // never write to cloud
     const changedFiles: string[] = [] // WIP write changes
 
     const provider = getManager[data.id]()
     if (!provider) return { changedFiles }
 
+    if (data.method === "replace") deleteLocalFiles()
+
     console.log("Syncing to cloud")
 
+    if (data.method === "upload") {
+        await uploadLocalData()
+        return finish()
+    }
+
     // clear any uncleared previous data
-    deleteFolder(EXTRACT_LOCATION)
+    if (await doesPathExistAsync(EXTRACT_LOCATION)) deleteFolder(EXTRACT_LOCATION)
 
     const cloudDataPath = await provider.getData(data.churchId, data.teamId, EXTRACT_LOCATION)
     if (!cloudDataPath) {
@@ -70,6 +90,7 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
     const extractedFiles = await decompressZipStream(cloudDataPath, true, {
         getOutputPath: (fileName: string) => path.join(EXTRACT_LOCATION, fileName)
     })
+    const modifiedDates = await getZipModifiedDates(cloudDataPath)
     console.log("Files:", extractedFiles.length)
 
     const showsFolder = getDataFolderPath("shows")
@@ -79,6 +100,9 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
     if (typeof changesFile?.content === "string") {
         const changesContent = await readFileAsync(changesFile.content)
         if (isValidJSON(changesContent)) CHANGES = JSON.parse(changesContent)
+        if (CHANGES.version !== version) CHANGES = clone(DEFAULT_CHANGES)
+        cloudChanges = clone(CHANGES)
+        isNewDevice = !CHANGES.devices.find((id) => id === deviceId)
     }
     // console.log("Devices:", CHANGES.devices)
 
@@ -108,7 +132,7 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
                 }
 
                 // exists both locally and in cloud
-                if (await cloudIsNewer(cloudPath, bibleDestPath)) await download()
+                if (await cloudIsNewer(bibleDestPath, modifiedDates[file.name])) await download()
 
                 async function download() {
                     await moveFileAsync(cloudPath, bibleDestPath)
@@ -126,6 +150,7 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
             // download new/modified shows
             if (file.name === "SHOWS_CONTENT.json") {
                 let cloudShowNames: string[] = []
+                let replacedShows: string[] = []
 
                 await Promise.all(
                     Object.entries<Show>(cloudFileData).map(async ([id, show]) => {
@@ -135,22 +160,33 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
                         if (isDeleted("SHOWS_CONTENT", fileName)) return
 
                         const localShowPath = path.join(showsFolder, fileName)
-                        const localStats = await getFileStatsAsync(localShowPath)
+                        const localFile = await readFileAsync(localShowPath)
 
-                        const cloudModTime = show.timestamps?.modified
+                        const cloudModTime = show.timestamps?.modified || show.timestamps?.created
                         if (!cloudModTime) return
 
                         // exists only in cloud
-                        const existsLocally = !!localStats
+                        const existsLocally = !!localFile
                         if (!existsLocally) {
                             if (isCreated("SHOWS_CONTENT", fileName)) await download()
                             else markAsDeleted("SHOWS_CONTENT", fileName)
                             return
                         }
 
+                        if (!isValidJSON(localFile)) {
+                            await download()
+                            return
+                        }
+
+                        const localShow: Show = JSON.parse(localFile)[1]
+                        const localModTime = localShow.timestamps?.modified || localShow.timestamps?.created
+
                         // exists both locally and in cloud
-                        const cloudIsNewer = !localStats || cloudModTime > localStats.mtime.getTime()
-                        if (cloudIsNewer) await download()
+                        const cloudIsNewer = cloudModTime > localModTime
+                        if (cloudIsNewer) {
+                            replacedShows.push(show.name)
+                            await download()
+                        }
 
                         async function download() {
                             await writeFileAsync(localShowPath, JSON.stringify([id, show]))
@@ -161,20 +197,20 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
                 // check any local instance not in cloud (exists only locally)
                 const showNames = await readFolderAsync(showsFolder)
                 const localShows = showNames.filter((key) => !cloudShowNames.includes(key))
-                localShows.forEach((fileName) => {
-                    if (isDeleted(id, fileName)) {
+                await Promise.all(
+                    localShows.map(async (fileName) => {
                         const localShowPath = path.join(showsFolder, fileName)
-                        deleteFile(localShowPath)
-                        return
-                    }
+                        await createOrDeleteLocalFile(id, fileName, localShowPath)
+                    })
+                )
 
-                    // new file
-                    markAsCreated(id, fileName)
-                })
+                // send to frontend
+                loadShows(false, replacedShows)
+                if (_store.SHOWS) sendMain(Main.SHOWS, _store.SHOWS.store)
                 return
             }
 
-            if (id === "ACCESS" || id === "ERROR_LOG") return // type safety
+            if (id === "ACCESS" || id === "ERROR_LOG" || id === "CACHE_SYNC") return // type safety
 
             const localStore = _store[id]
             if (!localStore) {
@@ -182,11 +218,16 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
                 return
             }
 
-            // replace full files (settings)
-            if (!MERGE_INDIVIDUAL.includes(id)) {
+            // replace full files
+            if (data.method === "replace" || !MERGE_INDIVIDUAL.includes(id)) {
                 const localPath = localStore.path
-                if (await cloudIsNewer(cloudPath, localPath)) {
+                // replace local file if cloud is newer or new device
+                if (data.method === "replace" || isNewDevice || (await cloudIsNewer(localPath, modifiedDates[file.name]))) {
                     await moveFileAsync(cloudPath, localPath)
+
+                    // send to frontend
+                    const localData = localStore.store
+                    sendMain(Main[id], localData)
                 }
                 return
             }
@@ -199,6 +240,12 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
                     if (!localData[type]) localData[type] = {}
 
                     Object.entries(object).forEach(([key, value]) => {
+                        if (value.deleted) {
+                            // from old cloud sync
+                            delete localData[type][key]
+                            return
+                        }
+
                         const newLocalValue = checkCloudEntry(localData[type][key], key, value)
                         if (newLocalValue) localData[type][key] = newLocalValue
                     })
@@ -207,6 +254,14 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
                     const localKeys = getLocalOnlyKeys(object, localData[type])
                     localKeys.forEach((key) => {
                         if (isDeleted(id, key)) {
+                            if (isDeletedLocally(id, key)) {
+                                if (!localData[type][key]) return
+
+                                unmarkAsDeleted(id, key)
+                                markAsCreated(id, key)
+                                return
+                            }
+
                             delete localData[type][key]
                             return
                         }
@@ -225,6 +280,15 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
                 const localKeys = getLocalOnlyKeys(cloudFileData, localData)
                 localKeys.forEach((key) => {
                     if (isDeleted(id, key)) {
+                        // restore if previously deleted in cloud but restored locally
+                        if (isDeletedLocally(id, key)) {
+                            if (!localData[key]) return
+
+                            unmarkAsDeleted(id, key)
+                            markAsCreated(id, key)
+                            return
+                        }
+
                         delete localData[key]
                         return
                     }
@@ -256,9 +320,11 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
                     return localValue
                 }
 
+                if (!localValue.modified) localValue.modified = Date.now()
+
                 // exists both locally and in cloud
-                const localModTime = localValue?.modified
-                const cloudIsNewer = !localModTime || cloudModTime > localModTime
+                const localModTime = localValue.modified
+                const cloudIsNewer = cloudModTime > localModTime
                 if (cloudIsNewer) localValue = value
 
                 return localValue
@@ -269,16 +335,12 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
     // check any local instance not in cloud (exists only locally)
     const bibleNames = await readFolderAsync(biblesFolder)
     const localBibles = bibleNames.filter((key) => !cloudBibleNames.includes(key))
-    localBibles.forEach((fileName) => {
-        if (isDeleted("BIBLES", fileName)) {
+    await Promise.all(
+        localBibles.map(async (fileName) => {
             const localBiblePath = path.join(biblesFolder, fileName)
-            deleteFile(localBiblePath)
-            return
-        }
-
-        // new file
-        markAsCreated("BIBLES", fileName)
-    })
+            await createOrDeleteLocalFile("BIBLES", fileName, localBiblePath)
+        })
+    )
 
     if (readOnly) return finish()
 
@@ -328,17 +390,17 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
     function finish(success: boolean = true) {
         deleteFolder(EXTRACT_LOCATION)
         console.log("Sync completed!")
+        isNewDevice = false
         return { success, changedFiles }
     }
 }
 
-async function cloudIsNewer(cloudFilePath: any, localFilePath: any): Promise<boolean> {
-    const cloudStats = await getFileStatsAsync(cloudFilePath)
+async function cloudIsNewer(localFilePath: any, cloudDate: Date): Promise<boolean> {
     const localStats = await getFileStatsAsync(localFilePath)
-    if (!cloudStats) return false
+    if (!cloudDate) return false
     if (!localStats) return true
 
-    return cloudStats.mtime > localStats.mtime
+    return cloudDate.getTime() > localStats.mtime.getTime()
 }
 
 function getLocalOnlyKeys(cloudKeys: any, localKeys: any): string[] {
@@ -419,6 +481,29 @@ async function deleteUnusedZips(folderPath: string, excludeZip: string) {
     }
 }
 
+async function createOrDeleteLocalFile(id: ChangeId, fileName: string, localPath: string) {
+    // marked as deleted in general
+    if (isDeleted(id, fileName)) {
+        // marked as already deleted for this device
+        if (isDeletedLocally(id, fileName)) {
+            // already deleted locally
+            if (!(await doesPathExistAsync(localPath))) return
+
+            // revert if not deleted anymore
+            unmarkAsDeleted(id, fileName)
+            markAsCreated(id, fileName)
+            return
+        }
+
+        // delete local file
+        deleteFile(localPath)
+        return
+    }
+
+    // new file
+    markAsCreated(id, fileName)
+}
+
 // SYNC LOGIC
 // if not found locally, and marked as "deleted" in cloud: skip
 // if not found locally, and marked as "created" in cloud: download
@@ -426,9 +511,15 @@ async function deleteUnusedZips(folderPath: string, excludeZip: string) {
 // if found locally only, and not marked in cloud: mark as "created"
 // if found locally, but marked as "deleted" in cloud: delete locally
 // if found locally and in cloud: use newest version
+// if marked as deleted locally in cloud, but exists locally: unmark as deleted and mark as created
 
+type Changes = { version: string; devices: string[]; modified: { [key: string]: number }; deleted: { [key: string]: string[] }; created: { [key: string]: string[] } }
 const changes_name = "changes.json"
-let CHANGES: { devices: string[]; modified: { [key: string]: number }; deleted: { [key: string]: string[] }; created: { [key: string]: string[] } } = { devices: [], modified: {}, deleted: {}, created: {} }
+const version = "0.1.0"
+const DEFAULT_CHANGES: Changes = { version, devices: [], modified: {}, deleted: {}, created: {} }
+let CHANGES: Changes = clone(DEFAULT_CHANGES)
+let cloudChanges: Changes | null = null
+let isNewDevice = false
 
 // keep track of last changed time so we can know which devices to ignore eventually
 function getLatestChanges() {
@@ -440,12 +531,13 @@ function getLatestChanges() {
 type ChangeId = keyof typeof _store | "SHOWS_CONTENT" | "BIBLES"
 function markAsDeleted(storeId: ChangeId, key: string) {
     const instanceId = `${storeId}_${key}`
-    if (CHANGES.created?.[instanceId]) delete CHANGES.created[instanceId]
+    unmarkAsCreated(storeId, key)
     markAs("deleted", instanceId)
 }
 
 function markAsCreated(storeId: ChangeId, key: string) {
     const instanceId = `${storeId}_${key}`
+    unmarkAsDeleted(storeId, key)
     markAs("created", instanceId)
 }
 
@@ -465,12 +557,32 @@ function markAs(type: "deleted" | "created", instanceId: string) {
     }
 }
 
+function unmarkAsDeleted(storeId: ChangeId, key: string) {
+    if (!CHANGES.deleted) return
+
+    const instanceId = `${storeId}_${key}`
+    delete CHANGES.deleted[instanceId]
+}
+
+function unmarkAsCreated(storeId: ChangeId, key: string) {
+    if (!CHANGES.created) return
+
+    const instanceId = `${storeId}_${key}`
+    delete CHANGES.created[instanceId]
+}
+
 function isDeleted(storeId: ChangeId, key: string): boolean {
     const instanceId = `${storeId}_${key}`
     return !!CHANGES.deleted?.[instanceId]
 }
 
 function isCreated(storeId: ChangeId, key: string): boolean {
+    if (isNewDevice) return true
     const instanceId = `${storeId}_${key}`
     return !!CHANGES.created?.[instanceId]
+}
+
+function isDeletedLocally(storeId: ChangeId, key: string): boolean {
+    const instanceId = `${storeId}_${key}`
+    return !!cloudChanges?.deleted?.[instanceId]?.includes(deviceId)
 }

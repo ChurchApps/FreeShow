@@ -460,6 +460,7 @@ export interface Overlay {
     name: string
     color: null | string
     category: null | string
+    modified?: number // cloud sync
     items: Item[]
     locked?: boolean
     placeUnderSlide?: boolean
@@ -474,6 +475,7 @@ export interface Template {
     name: string
     color: null | string
     category: null | string
+    modified?: number // cloud sync
     settings?: TemplateSettings
     items: Item[]
 }

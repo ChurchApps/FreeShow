@@ -193,5 +193,5 @@ export async function updateRecentlyAddedFiles(paths: string[] | null = null) {
     recentFiles.update((a) => ({ ...a, cleared: [...a.cleared, ...projectFiles.map((p) => p.path)] }))
     if (!importProject) return
 
-    sendMain(Main.IMPORT_FILES, [projectFile.path])
+    sendMain(Main.IMPORT_FILES, { id: "freeshow_project", paths: [projectFile.path] })
 }

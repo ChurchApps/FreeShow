@@ -49,6 +49,23 @@
             }
         }
 
+        // remove all lines that are too close to each other (with same orientation)
+        const MAX_DISTANCE = 12 / ratio
+        lines = lines.filter((line, index, arr) => {
+            for (let i = 0; i < arr.length; i++) {
+                if (i === index) continue
+                if (line[0][0] !== arr[i][0][0] && line[0] !== arr[i][0]) continue
+                if (Math.abs(line[1] - arr[i][1]) <= MAX_DISTANCE) return false
+            }
+            return true
+        })
+
+        // show max 3 lines of each orientation at once
+        const MAX_LINES = 3
+        let xLines = lines.filter((line) => line[0] === "x" || line[0] === "xc").slice(0, MAX_LINES)
+        let yLines = lines.filter((line) => line[0] === "y" || line[0] === "yc").slice(0, MAX_LINES)
+        lines = [...xLines, ...yLines]
+
         // percentage scale
         let outputId = isStage ? "" : getActiveOutputs($outputs, true, true, true)[0]
         let outputResolution = isStage ? getStageResolution() : getOutputResolution(outputId, $outputs, true)

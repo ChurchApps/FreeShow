@@ -56,6 +56,14 @@ export const historyActions = ({ obj, undo = null }: any) => {
                 if (initializing && obj.location.id === "show") customActionActivation("show_created")
                 if (initializing && empty && updater.initialize) data.data = updater.initialize(data.data, id)
 
+                // cloud sync update
+                if (initializing && obj.location.id === "project_ref") {
+                    projects.update((a) => {
+                        a[id].modified = Date.now()
+                        return a
+                    })
+                }
+
                 if (data.replace) {
                     data.data = { ...data.data, ...data.replace }
                     delete data.replace
@@ -134,10 +142,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                 data = { ...data, data: clone(a[id]) }
 
                 if (previousData) a[id] = previousData
-                else {
-                    if (updater.cloudCombine) a[id] = { id, deleted: true, modified: Date.now() }
-                    else delete a[id]
-                }
+                else delete a[id]
 
                 return a
             }
@@ -162,7 +167,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
                 if (subkey && index !== undefined && index > -1 && !Array.isArray(a[id][key][subkey])) delete data.previousData
 
-                if (initializing && updater.timestamp && a[id]) a[id].modified = Date.now()
+                if (updater.timestamp && a[id]) a[id].modified = Date.now() // cloud sync
                 if (data.previousData === data.data) console.warn(obj.id, "HISTORY:", "Previous data is the same as current data. Try using clone()!")
                 return a
             }

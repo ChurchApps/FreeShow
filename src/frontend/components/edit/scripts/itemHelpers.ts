@@ -12,7 +12,8 @@ import { dynamicValueText, getVariableValue, replaceDynamicValues } from "../../
 import { _show } from "../../helpers/shows"
 import { getStyles, removeText } from "../../helpers/style"
 import { itemBoxes } from "../values/boxes"
-import { getItemText } from "./textStyle"
+import { getLikelyPosition } from "./autoPosition"
+import { getItemText, setCaret } from "./textStyle"
 
 export const DEFAULT_ITEM_STYLE = "top:120px;left:50px;height:840px;width:1820px;"
 
@@ -45,8 +46,12 @@ export function addItem(type: ItemType, id: string | null = null, options: any =
     }
     if (id) newData.id = id
 
-    // selected item is always on top, deselect to make new item on top
-    activeEdit.set({ ...get(activeEdit), items: [] })
+    const currentItems = getEditItems()
+    const itemsCount = currentItems.length
+    if (itemsCount && itemsCount >= (template?.length || 0)) newData.style = getLikelyPosition(currentItems, newData.style)
+
+    // deselect previous selection & select new item
+    activeEdit.set({ ...get(activeEdit), items: [itemsCount] })
 
     if (type === "text") newData.lines = [{ align: template?.[0]?.lines?.[0]?.align || "", text: [{ value: textValue, style: template?.[0]?.lines?.[0]?.text?.[0]?.style || "" }] }]
     if (type === "list") newData.list = { items: [] }
@@ -109,6 +114,19 @@ export function addItem(type: ItemType, id: string | null = null, options: any =
     } else {
         // overlay, template
         history({ id: "UPDATE", newData: { data: newData, key: "items", index: -1 }, oldData: { id: get(activeEdit).id }, location: { page: "edit", id: get(activeEdit).type } })
+    }
+
+    // set caret ready for typing
+    if (type === "text" && textValue === "") {
+        // wait for elem to be created
+        setTimeout(() => {
+            // get last item elem
+            const elem = Array.from(document.querySelectorAll(".editItem") || [])
+                .at(-1)
+                ?.querySelector(".edit")
+            if (elem) (elem as HTMLElement).focus()
+            setCaret(elem, { line: 0, pos: 0 })
+        })
     }
 }
 
@@ -192,6 +210,7 @@ export function rearrangeStageItems(type: string, itemId: string = get(activeSta
 
     stageShows.update((a) => {
         a[get(activeStage).id!].itemOrder = items.map((item) => item.id)
+        a[get(activeStage).id!].modified = Date.now()
         return a
     })
 
@@ -213,6 +232,7 @@ export function getSortedStageItems(stageId = get(activeStage).id, _updater: any
     if (!stageShow.itemOrder) {
         stageShows.update((a) => {
             a[stageId].itemOrder = itemOrder
+            a[stageId].modified = Date.now()
             return a
         })
     }
@@ -242,6 +262,7 @@ export function updateSortedStageItems() {
         const newItems = currentItemIds.filter((id) => !itemOrder.includes(id))
 
         a[stageId].itemOrder = [...itemOrder, ...newItems]
+        a[stageId].modified = Date.now()
         return a
     })
 }

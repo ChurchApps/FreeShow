@@ -22,18 +22,22 @@
     import Player from "../system/Player.svelte"
     import { formatVTT, SRTtoVTT } from "./media/subtitles"
 
+    export let mediaPath: string
     export let show
 
     $: showId = show?.id
     $: type = show?.type
 
+    // NOTE: subtitles uses local mediaPath - time markers uses synced showId path
+
     // show updates when videoTime updates for some reason?
     // $: console.trace(show)
     // $: console.trace(videoTime)
 
-    $: tracks = $media[showId]?.tracks || []
-    $: subtitle = $media[showId]?.subtitle || ""
-    $: if (type !== "player" && showId && $media[showId]?.tracks === undefined) sendMain(Main.MEDIA_TRACKS, { path: showId })
+    $: subtitleData = $media[mediaPath] || {}
+    $: tracks = subtitleData.tracks || []
+    $: subtitle = subtitleData.subtitle || ""
+    $: if (type !== "player" && mediaPath && subtitleData.tracks === undefined) sendMain(Main.MEDIA_TRACKS, { path: mediaPath })
 
     export let mediaStyle: MediaStyle = {}
 
@@ -58,12 +62,12 @@
     }
 
     let prevId: string | undefined = undefined
-    $: if (showId !== prevId) {
+    $: if (mediaPath !== prevId) {
         videoTime = 0
         autoPause = true
-        prevId = showId
+        prevId = mediaPath
 
-        timeMarkersEnabled = !!$videoMarkers[showId]?.length || false
+        timeMarkersEnabled = !!$videoMarkers[mediaPath]?.length || false
         if (timeMarkersEnabled && manageSubtitles) manageSubtitles = false
     }
 
@@ -77,12 +81,12 @@
 
     // outBackground.subscribe(backgroundChanged)
     $: background = currentOutput?.out?.background || {}
-    $: if (background || showId) backgroundChanged()
+    $: if (background || mediaPath) backgroundChanged()
     let playingInOutput = false
     function backgroundChanged() {
         // background = currentOutput?.out?.background || {}
         // || videoData.paused
-        if (background === null || (background.path || background.id) !== showId) {
+        if (background === null || (background.path || background.id) !== mediaPath) {
             playingInOutput = false
             return
         }
@@ -104,7 +108,7 @@
     // WIP toggle between output/preview video...
     // WIP player video output time
 
-    // $: if (background.path === showId && autoPause) videoData.paused = true
+    // $: if (background.path === mediaPath && autoPause) videoData.paused = true
 
     let autoPause = true
     let hasLoaded = false
@@ -154,7 +158,7 @@
             // if (!analyser) return
 
             playingVideos.update((a) => {
-                a.push({ id: showId, location: "preview" })
+                a.push({ id: mediaPath, location: "preview" })
                 return a
             })
 
@@ -164,7 +168,7 @@
     }
     // $: if (videoData) {
     //     playingVideos.update((a) => {
-    //         let existing = a.findIndex((a) => a.id === showId && a.location === "preview")
+    //         let existing = a.findIndex((a) => a.id === mediaPath && a.location === "preview")
     //         if (existing > -1) {
     //             a[existing].paused = videoData.muted ? true : videoData.paused
     //             if (!a[existing].paused) analyseAudio()
@@ -176,7 +180,7 @@
     let shouldLoop = false
     let shouldBeMuted = false
     $: videoType = mediaStyle.videoType || ""
-    $: if (showId) {
+    $: if (mediaPath) {
         shouldLoop = videoType === "background" ? true : false
         shouldBeMuted = videoType === "background" ? true : false
     }
@@ -188,9 +192,9 @@
         if (videoType === "foreground" || (videoType !== "background" && !shouldLoop)) clearSlide()
         let bg: any = { type, startAt, muted, loop, ...mediaStyle, ignoreLayer: videoType === "foreground" }
 
-        if (type === "player") bg.id = showId
+        if (type === "player") bg.id = mediaPath
         else {
-            bg.path = showId
+            bg.path = mediaPath
             // if (filter) data.filter = filter
         }
 
@@ -214,9 +218,9 @@
         if (subtitleIndex === undefined || !value) return
 
         media.update((a) => {
-            if (!a[showId]?.tracks?.[subtitleIndex]) return a
-            a[showId].tracks[subtitleIndex].name = value
-            if (a[showId].tracks[subtitleIndex].lang.length !== 2) a[showId].tracks[subtitleIndex].lang = value.replaceAll(" ", "_").toLowerCase()
+            if (!a[mediaPath]?.tracks?.[subtitleIndex]) return a
+            a[mediaPath].tracks![subtitleIndex].name = value
+            if (a[mediaPath].tracks![subtitleIndex].lang.length !== 2) a[mediaPath].tracks![subtitleIndex].lang = value.replaceAll(" ", "_").toLowerCase()
 
             return a
         })
@@ -235,14 +239,14 @@
         content = formatVTT(content)
 
         media.update((a) => {
-            if (!a[showId]) a[showId] = {}
-            if (!a[showId].tracks) a[showId].tracks = []
+            if (!a[mediaPath]) a[mediaPath] = {}
+            if (!a[mediaPath].tracks) a[mediaPath].tracks = []
 
             let name = removeExtension(getFileName(path)).replaceAll(" ", "_")
             let id = name || uid(5)
-            a[showId].tracks.push({ lang: id, name, vtt: content })
+            a[mediaPath].tracks!.push({ lang: id, name, vtt: content })
 
-            activeRename.set("subtitle_" + (a[showId].tracks.length - 1))
+            activeRename.set("subtitle_" + (a[mediaPath].tracks!.length - 1))
 
             return a
         })
@@ -252,11 +256,11 @@
         if (e.target?.closest(".edit")) return
 
         media.update((a) => {
-            if (!a[showId]) a[showId] = {}
-            if (a[showId].subtitle === lang) {
-                a[showId].subtitle = ""
+            if (!a[mediaPath]) a[mediaPath] = {}
+            if (a[mediaPath].subtitle === lang) {
+                a[mediaPath].subtitle = ""
                 lang = ""
-            } else a[showId].subtitle = lang
+            } else a[mediaPath].subtitle = lang
 
             return a
         })
@@ -320,18 +324,18 @@
     // WIP if paused on mount, blur video does not get paused
 </script>
 
-{#key showId}
-    <div id={showId} class="media context #media_preview" style="flex: 1;overflow: hidden;">
+{#key mediaPath || showId}
+    <div id={mediaPath || showId} class="media context #media_preview" style="flex: 1;overflow: hidden;">
         <!-- TODO: info about: CTRL click to play at current pos -->
         <HoverButton icon="play" size={10} on:click={(e) => playVideo(e.ctrlKey || e.metaKey ? videoTime : 0)}>
             {#if type === "player"}
                 <Player id={showId} bind:videoData bind:videoTime preview />
-            {:else}
+            {:else if mediaPath}
                 <!-- TODO: on:error={videoError} - ERR_FILE_NOT_FOUND -->
                 {#if mediaStyle.fit === "blur"}
-                    <video style={mediaStyleBlurString} src={encodeFilePath(showId)} bind:this={blurVideo} bind:paused={blurPausedState} loop={videoData.loop} muted />
+                    <video style={mediaStyleBlurString} src={encodeFilePath(mediaPath)} bind:this={blurVideo} bind:paused={blurPausedState} loop={videoData.loop} muted />
                 {/if}
-                <video style={mediaStyleString} src={encodeFilePath(showId)} on:loadedmetadata={onLoad} on:playing={onPlay} bind:this={video} bind:currentTime={videoTime} bind:paused={videoData.paused} bind:duration={videoData.duration} bind:muted={videoData.muted} bind:volume={$volume} loop={videoData.loop}>
+                <video style={mediaStyleString} src={encodeFilePath(mediaPath)} on:loadedmetadata={onLoad} on:playing={onPlay} bind:this={video} bind:currentTime={videoTime} bind:paused={videoData.paused} bind:duration={videoData.duration} bind:muted={videoData.muted} bind:volume={$volume} loop={videoData.loop}>
                     <track kind="captions" src="" label="No captions available" />
                     {#each tracks as track}
                         <track label={track.name} srclang={track.lang} kind="subtitles" src="data:text/vtt;charset=utf-8,{encodeURI(track.vtt)}" />

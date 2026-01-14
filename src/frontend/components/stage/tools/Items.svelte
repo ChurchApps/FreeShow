@@ -16,6 +16,7 @@
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialDropdown from "../../inputs/MaterialDropdown.svelte"
     import { getCustomStageLabel, updateStageShow } from "../stage"
+    import { getLikelyPosition } from "../../edit/scripts/autoPosition"
 
     type ItemRef = { id: string; icon?: string; name?: string; maxAmount?: number }
     const dynamicItems: ItemRef[] = [
@@ -65,6 +66,10 @@
                 style = `width: ${width}px;height: ${height}px;left: ${left}px;top: ${top}px;`
             }
 
+            if (Object.keys(a[stageId]?.items).length > 0) {
+                style = getLikelyPosition(Object.values(a[stageId].items), style)
+            }
+
             let item: StageItem = { type: itemType, style, align: "" }
 
             if (itemType === "text") item.lines = [{ align: "", text: [{ style: "", value: textValue || "" }] }]
@@ -74,6 +79,7 @@
             }
 
             a[stageId].items[itemId] = item
+            a[stageId].modified = Date.now()
             return a
         })
 

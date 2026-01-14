@@ -21,10 +21,11 @@
     function updatePopup() {
         if (popupTimeout) return
 
+        popupId = $activePopup
         popupTimeout = setTimeout(() => {
-            popupId = $activePopup
             popupTimeout = null
-        }, 100)
+            if (popupId !== $activePopup) updatePopup()
+        }, 250)
     }
 
     $: isWindows = $os.platform === "win32"

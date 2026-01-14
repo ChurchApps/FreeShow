@@ -172,6 +172,26 @@ function bufferInMemory(readStream: NodeJS.ReadableStream, name: string, extensi
     })
 }
 
+export function getZipModifiedDates(filePath: string): Promise<{ [key: string]: Date }> {
+    return new Promise((resolve) => {
+        yauzl.open(filePath, { lazyEntries: true }, (err, zipfile) => {
+            if (err || !zipfile) return resolve({})
+
+            const modified: { [key: string]: Date } = {}
+
+            zipfile.on("entry", (entry: yauzl.Entry) => {
+                modified[entry.fileName] = entry.getLastModDate()
+                zipfile.readEntry()
+            })
+
+            zipfile.on("close", () => resolve(modified))
+            zipfile.on("error", () => resolve({}))
+
+            zipfile.readEntry()
+        })
+    })
+}
+
 export function isZip(path: string): Promise<boolean> {
     const initialBuffer = Buffer.alloc(4)
 

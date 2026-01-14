@@ -675,6 +675,7 @@ const pasteActions = {
         projects.update((a) => {
             if (!a[get(activeProject) || ""]?.shows) return a
             a[get(activeProject) || ""].shows.push(...data)
+            a[get(activeProject) || ""].modified = Date.now()
             return a
         })
     },
@@ -1076,6 +1077,7 @@ const deleteActions = {
             activeItems.forEach((itemId) => {
                 delete a[data.id].items[itemId]
             })
+            a[data.id].modified = Date.now()
             return a
         })
         activeStage.set({ ...get(activeStage), items: [] })
@@ -1109,6 +1111,7 @@ const duplicateActions = {
         projects.update((a) => {
             if (!a[get(activeProject)!]?.shows) return a
             a[get(activeProject)!].shows.push(...data)
+            a[get(activeProject)!].modified = Date.now()
             return a
         })
     },

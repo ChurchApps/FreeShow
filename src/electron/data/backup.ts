@@ -29,6 +29,7 @@ export async function startBackup({ customTriggers, customOutputLocation }: { cu
 
     // bibles are not backed up because they are located in the Bibles folder
     if (isCloudSync) {
+        await syncStores("MEDIA") // sync media data
         await syncBibles()
     } else {
         // "SYNCED_SETTINGS" and "STAGE" has to be before "SETTINGS" and "SHOWS" (can't remember why)

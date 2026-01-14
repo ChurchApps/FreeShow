@@ -229,6 +229,7 @@
             stageShows.update((a) => {
                 if (!a[$activeStage.id!]?.items?.[ref.id]) return a
                 a[$activeStage.id!].items[ref.id].lines = newLines
+                a[$activeStage.id!].modified = Date.now()
                 return a
             })
         } else if (ref.id) {
@@ -274,9 +275,11 @@
         }
 
         function setNewLines(a: any) {
-            if (!a[$activeEdit.id!].items[index]) return a
+            if (!a[$activeEdit.id!]?.items?.[index]) return a
 
             a[$activeEdit.id!].items[index].lines = newLines
+
+            a[$activeEdit.id!].modified = Date.now()
             return a
         }
     }

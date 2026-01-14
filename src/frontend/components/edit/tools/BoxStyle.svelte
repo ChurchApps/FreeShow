@@ -246,6 +246,8 @@
         return
 
         function updateItemValues(a: any) {
+            if (!a[$activeEdit.id!]?.items) return a
+
             allItems.forEach((i: number) => {
                 if (!a[$activeEdit.id!].items[i]) return
 
@@ -259,6 +261,7 @@
                 a[$activeEdit.id!].items[i][splitted[0]][splitted[1]] = value
             })
 
+            a[$activeEdit.id!].modified = Date.now()
             return a
         }
     }

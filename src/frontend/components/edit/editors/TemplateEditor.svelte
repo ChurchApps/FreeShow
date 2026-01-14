@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onDestroy } from "svelte"
     import type { ItemType } from "../../../../types/Show"
-    import { activeEdit, outputs, styles, templates } from "../../../stores"
+    import { activeEdit, activePopup, outputs, popupData, styles, templates } from "../../../stores"
     import TemplateSlide from "../../drawer/pages/TemplateSlide.svelte"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -89,6 +89,8 @@
     $: widthOrHeight = getStyleResolution(resolution, width, height, "fit", { zoom })
 
     $: mode = Slide?.settings?.mode || "default"
+
+    $: styleOverrides = (Slide?.settings?.styleOverrides || []).filter((a) => a.pattern && a.templateId).length
 </script>
 
 {#if Slide?.isDefault}
@@ -122,6 +124,21 @@
     {/if}
 
     <FloatingInputs>
+        {#if styleOverrides > 0}
+            <MaterialButton
+                icon="text"
+                on:click={() => {
+                    popupData.set({ templateId: currentId })
+                    activePopup.set("template_style_overrides")
+                }}
+            >
+                {translateText("popup.template_style_overrides")}
+                <span style="font-size: 0.8em;opacity: 0.5;">{styleOverrides}</span>
+            </MaterialButton>
+
+            <div class="divider"></div>
+        {/if}
+
         <MaterialZoom columns={zoom} min={0.2} max={4} defaultValue={1} addValue={0.1} on:change={updateZoom} />
     </FloatingInputs>
 </div>

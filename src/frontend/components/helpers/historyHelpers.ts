@@ -64,7 +64,6 @@ export const _updaters = {
     project: {
         store: projects,
         empty: EMPTY_PROJECT,
-        cloudCombine: true,
         initialize: (data) => {
             return replaceEmptyValues(data, { name: getProjectName(), created: Date.now(), modified: Date.now(), used: Date.now() })
         },
@@ -105,7 +104,6 @@ export const _updaters = {
     project_folder: {
         store: folders,
         empty: EMPTY_PROJECT_FOLDER,
-        cloudCombine: true,
         initialize: (data) => {
             return replaceEmptyValues(data, { created: Date.now(), modified: Date.now() })
         },
@@ -135,6 +133,7 @@ export const _updaters = {
             function addBackParents(items: any, type: "project" | "folder") {
                 changed[type]?.forEach((a: any) => {
                     items[a.id].parent = a.parent
+                    items[a.id].modified = Date.now()
                 })
                 return items
             }
@@ -165,6 +164,7 @@ export const _updaters = {
                         const key = Object.keys(items)[found]
                         parents[type].push({ id: key, parent: items[key].parent })
                         items[key].parent = parentId
+                        items[key].modified = Date.now()
                     }
                     found = Object.values(items).findIndex((a: any) => a.parent === id)
                 } while (found > -1)
@@ -173,16 +173,9 @@ export const _updaters = {
             }
         }
     },
-    project_template: {
-        store: projectTemplates,
-        cloudCombine: true,
-        empty: EMPTY_PROJECT
-    },
+    project_template: { store: projectTemplates, empty: EMPTY_PROJECT, timestamp: true },
 
-    project_key: {
-        store: projects,
-        timestamp: true
-    },
+    project_key: { store: projects, timestamp: true },
     project_folder_key: { store: folders, timestamp: true },
 
     project_ref: { store: projects, timestamp: true },
@@ -207,7 +200,8 @@ export const _updaters = {
             setTimeout(() => {
                 document.getElementById("sectionTitle")?.querySelector("input")?.focus()
             }, 10)
-        }
+        },
+        timestamp: true
     },
 
     category_shows: {
@@ -268,12 +262,13 @@ export const _updaters = {
 
             return data
         },
-        deselect: (id: string) => clearOverlayOutput(id)
+        deselect: (id: string) => clearOverlayOutput(id),
+        timestamp: true
     },
-    overlay_items: { store: overlays, empty: [] },
-    overlay_name: { store: overlays, empty: "" },
-    overlay_color: { store: overlays, empty: null },
-    overlay_category: { store: overlays, empty: null },
+    overlay_items: { store: overlays, empty: [], timestamp: true },
+    overlay_name: { store: overlays, empty: "", timestamp: true },
+    overlay_color: { store: overlays, empty: null, timestamp: true },
+    overlay_category: { store: overlays, empty: null, timestamp: true },
 
     template: {
         store: templates,
@@ -287,13 +282,14 @@ export const _updaters = {
             activeRename.set("template_" + id)
 
             return data
-        }
+        },
+        timestamp: true
     },
-    template_items: { store: templates, empty: [] },
-    template_name: { store: templates, empty: "" },
-    template_color: { store: templates, empty: null },
-    template_category: { store: templates, empty: null },
-    template_settings: { store: templates, empty: {} },
+    template_items: { store: templates, empty: [], timestamp: true },
+    template_name: { store: templates, empty: "", timestamp: true },
+    template_color: { store: templates, empty: null, timestamp: true },
+    template_category: { store: templates, empty: null, timestamp: true },
+    template_settings: { store: templates, empty: {}, timestamp: true },
 
     player_video: { store: playerVideos, empty: EMPTY_PLAYER_VIDEO },
 
@@ -309,9 +305,9 @@ export const _updaters = {
         }
     },
 
-    stage_item_style: { store: stageShows, empty: "" },
-    stage_item_position: { store: stageShows, empty: "" },
-    stage_item_content: { store: stageShows, empty: "" },
+    stage_item_style: { store: stageShows, empty: "", timestamp: true },
+    stage_item_position: { store: stageShows, empty: "", timestamp: true },
+    stage_item_content: { store: stageShows, empty: "", timestamp: true },
 
     show: {
         store: showsCache,
@@ -334,6 +330,8 @@ export const _updaters = {
             // update remote project shows data, so the new show is properly added
             setTimeout(() => window.api.send(REMOTE, { channel: "SHOWS", data: get(shows) }))
 
+            if (!data.timestamps) data.timestamps = {}
+            data.timestamps.modified = Date.now()
             return replaceEmptyValues(data, replacer)
         },
         select: (id: string, data: any) => {
@@ -412,6 +410,11 @@ export const _updaters = {
     show_layout: {
         store: showsCache,
         empty: EMPTY_LAYOUT,
+        initialize: (data) => {
+            if (!data.timestamps) data.timestamps = {}
+            data.timestamps.modified = Date.now()
+            return data
+        },
         select: (id: string, { subkey }: any, initializing: boolean) => {
             _show(id).set({ key: "settings.activeLayout", value: subkey })
 
@@ -435,7 +438,14 @@ export const _updaters = {
         }
     },
 
-    show_key: { store: showsCache },
+    show_key: {
+        store: showsCache,
+        initialize: (data) => {
+            if (!data.timestamps) data.timestamps = {}
+            data.timestamps.modified = Date.now()
+            return data
+        }
+    },
 
     global_group: { store: groups },
 

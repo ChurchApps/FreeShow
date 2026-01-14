@@ -215,8 +215,10 @@
             else if ($activeEdit.type === "template") templates.update(updateItemValues)
 
             function updateItemValues(a: any) {
+                if (!a[$activeEdit.id!]?.items) return
+
                 $activeEdit.items.forEach((i: number) => {
-                    if (!a[$activeEdit.id!]?.items[i]?.lines) return
+                    if (!a[$activeEdit.id!].items[i]?.lines) return
 
                     a[$activeEdit.id!].items[i].lines.forEach((line: Line) => {
                         line.text?.forEach((text) => {
@@ -225,6 +227,7 @@
                     })
                 })
 
+                a[$activeEdit.id!].modified = Date.now()
                 return a
             }
 

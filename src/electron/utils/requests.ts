@@ -104,5 +104,6 @@ export function httpsRequest(hostname: string, path: string, method: "POST" | "G
 
         logError(error, "request")
         console.error("HTTP Request Error:", err)
+        cb(err, null)
     }
 }

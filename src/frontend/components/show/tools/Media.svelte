@@ -1,6 +1,7 @@
 <script lang="ts">
     import { OUTPUT } from "../../../../types/Channels"
     import { Main } from "../../../../types/IPC/Main"
+    import type { MediaStyle } from "../../../../types/Main"
     import type { Media, MediaType, SlideAction } from "../../../../types/Show"
     import { requestMain } from "../../../IPC/main"
     import { AudioMicrophone } from "../../../audio/audioMicrophone"
@@ -15,7 +16,7 @@
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { clone, sortByName } from "../../helpers/array"
-    import { getExtension, getMediaStyle, getMediaType, isMediaExtension, loadThumbnail, mediaSize } from "../../helpers/media"
+    import { getExtension, getMedia, getMediaStyle, getMediaType, isMediaExtension } from "../../helpers/media"
     import { findMatchingOut, getActiveOutputs, getCurrentStyle, setOutput } from "../../helpers/output"
     import { _show } from "../../helpers/shows"
     import Button from "../../inputs/Button.svelte"
@@ -162,22 +163,14 @@
         })
     }
 
-    let newPaths: { [key: string]: string } = {}
+    let newMedia: { [key: string]: { path: string; thumbnail: string; data: MediaStyle } } = {}
     $: if (bgs) loadBackgrounds()
     function loadBackgrounds() {
-        bgs.forEach(async (background) => {
-            let path = background.path || ""
+        bgs.forEach(async (bgMedia) => {
+            let bgPath = bgMedia.path || ""
 
-            const mediaData = $media[path]
-            if (mediaData?.contentFile?.thumbnail) {
-                newPaths[path] = mediaData.contentFile.thumbnail
-                return
-            }
-
-            let newBgPath = await loadThumbnail(path, mediaSize.small)
-
-            if (newBgPath) newPaths[path] = newBgPath
-            else newPaths[path] = path
+            const media = await getMedia(bgPath)
+            if (media) newMedia[bgPath] = media
         })
     }
 </script>
@@ -187,12 +180,13 @@
         {#if bgs.length}
             <!-- <h5><T id="tools.media" /></h5> -->
             {#each bgs as background}
+                {@const media = newMedia[background.path || ""] || {}}
+
                 <!-- TODO: cameras -->
-                {@const mediaStyle = getMediaStyle($media[background.path || ""], outputStyle)}
-                {@const bgPath = newPaths[background.path || ""] || ""}
+                {@const mediaStyle = getMediaStyle(media.data, outputStyle)}
 
                 <SelectElem id="media" data={{ ...background }} draggable>
-                    <div class="media_item item context #show_media" class:active={findMatchingOut(background.path || "", $outputs)}>
+                    <div class="media_item item context #show_media" class:active={findMatchingOut(media.path || "", $outputs)}>
                         <HoverButton
                             style="flex: 2;height: 50px;max-width: 100px;"
                             icon="play"
@@ -200,18 +194,18 @@
                             on:click={() => {
                                 if (!$outLocked) {
                                     let style = clone(mediaStyle)
-                                    style.fit = $media[background.path || ""]?.fit || ""
+                                    style.fit = media.data?.fit || ""
                                     delete style.fitOptions
 
-                                    setOutput("background", { path: background.path, type: background.type, loop: background.loop !== false, muted: background.muted !== false, ...style })
+                                    setOutput("background", { path: media.path, type: background.type, loop: background.loop !== false, muted: background.muted !== false, ...style })
                                     if (background.type === "video") send(OUTPUT, ["DATA"], { [outputId]: { duration: 0, paused: false, muted: background.muted !== false, loop: background.loop !== false } })
                                 }
                             }}
                         >
-                            <MediaLoader name={background.name} path={background.path || ""} thumbnailPath={bgPath} type={background.type} {mediaStyle} />
+                            <MediaLoader name={background.name} path={media.path} thumbnailPath={media.thumbnail} type={background.type} {mediaStyle} />
                         </HoverButton>
 
-                        <p data-title={background.path}>{background.name}</p>
+                        <p data-title={media.path}>{background.name}</p>
 
                         {#if background.count > 1}
                             <span style="color: var(--secondary);font-weight: bold;">{background.count}</span>
