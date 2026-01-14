@@ -2,7 +2,7 @@
     import type { CustomBibleListContent } from "json-bible/lib/api/ApiBible"
     import { uid } from "uid"
     import { Main } from "../../../../types/IPC/Main"
-    import { sendMain } from "../../../IPC/main"
+    import { requestMain, sendMain } from "../../../IPC/main"
     import { language, scriptures } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { replace } from "../../../utils/languageData"
@@ -16,6 +16,7 @@
     import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
     import Center from "../../system/Center.svelte"
     import Loader from "../Loader.svelte"
+    import HRule from "../../input/HRule.svelte"
 
     let bibles: CustomBibleListContent[] = []
     let recommended: CustomBibleListContent[] = []
@@ -93,6 +94,19 @@
         { id: "api", name: "API", icon: "web" }, // translate | scripture_alt
         { id: "local", name: translateText("cloud.local"), icon: "scripture" }
     ]
+
+    let localBibles: { path: string; name: string }[] = []
+    $: if (importType === "local") getLocalBibles()
+    async function getLocalBibles() {
+        localBibles = await requestMain(Main.READ_BIBLES_FOLDER)
+        const existingBibles = Object.values($scriptures).map((a) => a.name.replace(/\.fsb$/i, ""))
+        console.log(localBibles, existingBibles, $scriptures)
+        // remove already existing
+        localBibles = localBibles.filter((a) => !existingBibles.includes(a.name))
+    }
+    function importBible(path: string) {
+        sendMain(Main.IMPORT_FILES, { id: "BIBLE", paths: [path] })
+    }
 </script>
 
 {#if importType}
@@ -135,6 +149,18 @@
         </div>
     {/if}
 {:else if importType === "local"}
+    {#if localBibles.length}
+        <div class="existingBiblesList">
+            {#each localBibles as localBible}
+                <MaterialButton variant="outlined" icon="import" style="justify-content: left;" on:click={() => importBible(localBible.path)} white>
+                    {localBible.name}
+                </MaterialButton>
+            {/each}
+        </div>
+
+        <HRule />
+    {/if}
+
     <p style="font-size: 1.1em;"><T id="scripture.supported_formats" /></p>
     <ul style="list-style: inside;">
         <li>
@@ -195,5 +221,11 @@
         padding: 10px 20px;
         font-size: 0.7em;
         opacity: 0.3;
+    }
+
+    .existingBiblesList {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
     }
 </style>

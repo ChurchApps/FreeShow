@@ -23,7 +23,7 @@ import { getPresentationApplications, presentationControl, startSlideshow } from
 import { closeServers, startServers, updateServerData } from "../servers"
 import { apiReturnData, emitOSC, startWebSocketAndRest, stopApiListener } from "../utils/api"
 import { closeMain } from "../utils/close"
-import { addToMediaFolder, bundleMediaFiles, getDataFolderPath, getDataFolderRoot, getFileInfo, getMediaCodec, getMediaSyncFolderPath, getMediaTracks, getPaths, getSimularPaths, loadFile, loadShows, locateMediaFile, openInSystem, readExifData, readFile, readFolderContent, selectFiles, selectFilesDialog, selectFolder, setMediaSyncFolderPath, writeFile } from "../utils/files"
+import { addToMediaFolder, bundleMediaFiles, getDataFolderPath, getDataFolderRoot, getFileInfo, getMediaCodec, getMediaSyncFolderPath, getMediaTracks, getPaths, getSimularPaths, loadFile, loadShows, locateMediaFile, openInSystem, readExifData, readFile, readFolder, readFolderContent, selectFiles, selectFilesDialog, selectFolder, setMediaSyncFolderPath, writeFile } from "../utils/files"
 import { getMachineId } from "../utils/helpers"
 import { LyricSearch } from "../utils/LyricSearch"
 import { closeMidiInPorts, getMidiInputs, getMidiOutputs, receiveMidi, sendMidi } from "../utils/midi"
@@ -154,6 +154,7 @@ export const mainResponses: MainResponses = {
     [Main.GET_SIMILAR]: (data) => getSimularPaths(data),
     [Main.BUNDLE_MEDIA_FILES]: (data) => bundleMediaFiles(data),
     [Main.MEDIA_FOLDER_COPY]: (data) => addToMediaFolder(data.paths),
+    [Main.READ_BIBLES_FOLDER]: () => readBiblesFolder(),
     [Main.FILE_INFO]: (data) => getFileInfo(data),
     [Main.READ_FOLDER]: (data) => readFolderContent(data),
     [Main.READ_FILE]: (data) => ({ content: readFile(data.path) }),
@@ -226,8 +227,8 @@ export function startImport(data: { channel: string; format: { name: string; ext
     importShow(data.channel, files || null, data.settings || {})
 }
 
-function importFiles(paths: string[]) {
-    importShow("IMPORT", paths, {})
+function importFiles(data: { id: string; paths: string[] }) {
+    importShow(data.id, data.paths, {})
 }
 
 // BIBLE
@@ -256,6 +257,15 @@ export function loadScripture(msg: { id: string; name: string }) {
     }
 
     return bible
+}
+
+function readBiblesFolder() {
+    const bibleFolder: string = getDataFolderPath("scriptures")
+    const names = readFolder(bibleFolder)
+    return names.map((name) => {
+        const filePath = path.join(bibleFolder, name)
+        return { path: filePath, name: name.replace(/\.fsb$/i, "") }
+    })
 }
 
 // SHOW

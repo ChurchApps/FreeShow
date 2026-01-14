@@ -198,6 +198,17 @@
             return isMediaExtension(getExtension(a.name))
         })
 
+        if ($special.cloudSyncMediaFolder) {
+            const mediaFolderPath = await requestMain(Main.GET_MEDIA_FOLDER_PATH)
+            if (path === mediaFolderPath) {
+                allRelevantFiles.map((a) => {
+                    // remove folderId suffix
+                    if (a.name.includes("_")) a.name = a.name.slice(0, a.name.lastIndexOf("_"))
+                    return a
+                })
+            }
+        }
+
         openFolder(active === "all" ? "all" : (path as string))
     }
 

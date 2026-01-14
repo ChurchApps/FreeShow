@@ -97,7 +97,7 @@
     $: currentStyle = $styles[currentOutput?.style || ""] || {}
 
     let mediaStyle: MediaStyle = {}
-    $: if (mediaPath) mediaStyle = getMediaStyle($media[mediaPath], currentStyle)
+    $: if (mediaPath) mediaStyle = getMediaStyle($media[bgPath], currentStyle)
 
     $: {
         if (active.length) setTimeout(updateStyles)
