@@ -23,7 +23,7 @@ import { getTextLines } from "../edit/scripts/textStyle"
 import { clearBackground, clearOverlays, clearTimers } from "../output/clear"
 import { actions, activeEdit, activeFocus, activePage, activeProject, activeShow, allOutputs, audioData, customMetadata, dictionary, driveData, dynamicValueData, focusMode, media, outLocked, outputDisplay, outputs, outputSlideCache, overlays, playingAudio, playingMetronome, projects, shows, showsCache, slideTimers, special, stageShows, styles, templates, timers, triggers, variables, videosData, videosTime } from "./../../stores"
 import { clone, keysToID, sortByName } from "./array"
-import { getExtension, getFileName, getMediaStyle, getMediaType, removeExtension } from "./media"
+import { getExtension, getFileName, getMedia, getMediaStyle, getMediaType, removeExtension } from "./media"
 import { defaultLayers, getActiveOutputs, getAllNormalOutputs, getFirstActiveOutput, getFirstOutput, getWindowOutputId, isOutCleared, refreshOut, setOutput } from "./output"
 import { getSetChars } from "./randomValue"
 import { loadShows } from "./setShow"
@@ -740,7 +740,7 @@ export function updateOut(showId: string, index: number, layout: LayoutRef[], ex
 
     outputIds.map(activateActions)
 
-    function activateActions(outputId: string) {
+    async function activateActions(outputId: string) {
         let background = data.background || null
 
         // get ghost background
@@ -760,21 +760,17 @@ export function updateOut(showId: string, index: number, layout: LayoutRef[], ex
         if (background && _show(showId).get("media")?.[background]) {
             const bg = _show(showId).get("media")[background]
             const outputBg = get(outputs)[outputId]?.out?.background
-            const cloudId = get(driveData).mediaId
-            const bgPath = cloudId && cloudId !== "default" ? bg.cloud?.[cloudId] || bg.path || bg.id : bg.path || bg.id
-            const name = bg.name || removeExtension(getFileName(bgPath))
-            const extension = getExtension(bgPath)
-            const type = bg.type || getMediaType(extension)
+            const bgPath = bg?.path || bg?.id
+            const media = await getMedia(bgPath)
 
-            // get stored media files
-            // if (get(special).storeShowMedia && bg.base64) {
-            //     bgPath = `data:${type}/${extension};base64,${bg.base64}`
-            // }
+            if (bg && media && media.path !== outputBg?.path) {
+                const name = bg.name || removeExtension(getFileName(media.path))
+                const extension = getExtension(media.path)
+                const type = bg.type || getMediaType(extension)
 
-            if (bg && bgPath !== outputBg?.path) {
                 const outputStyle = get(styles)[get(outputs)[outputId]?.style || ""]
-                const mediaStyle = getMediaStyle(get(media)[bgPath], outputStyle)
-                mediaStyle.fit = get(media)[bgPath]?.fit || ""
+                const mediaStyle = getMediaStyle(media.data, outputStyle)
+                mediaStyle.fit = media.data.fit || ""
                 delete mediaStyle.fitOptions
 
                 const loop = bg.loop !== false
@@ -783,9 +779,9 @@ export function updateOut(showId: string, index: number, layout: LayoutRef[], ex
                 const bgData = {
                     name,
                     type,
-                    path: bgPath,
+                    path: media.path,
                     cameraGroup: bg.cameraGroup || "",
-                    id: bg.id || bgPath, // path = cameras
+                    id: bg.id || media.path, // path = cameras
                     loop,
                     muted,
                     ...mediaStyle,

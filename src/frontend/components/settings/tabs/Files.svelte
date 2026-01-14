@@ -3,8 +3,8 @@
     import type { ContentProviderId } from "../../../../electron/contentProviders/base/types"
     import { Main } from "../../../../types/IPC/Main"
     import { requestMain, sendMain } from "../../../IPC/main"
-    import { activePopup, autosave, cloudSyncData, dataPath, driveData, driveKeys, providerConnections, saved, special } from "../../../stores"
-    import { setupCloudSync } from "../../../utils/cloudSync"
+    import { activePopup, autosave, cloudSyncData, dataPath, driveData, driveKeys, providerConnections, saved, special, syncStatus } from "../../../stores"
+    import { changeTeam, setupCloudSync } from "../../../utils/cloudSync"
     import { previousAutosave, startAutosave, wait } from "../../../utils/common"
     import { syncDrive, validateKeys } from "../../../utils/drive"
     import { translateText } from "../../../utils/language"
@@ -218,6 +218,10 @@
         save(false, { autosave: true })
     }
 
+    // function deleteCloudData() {
+    //     console.log(1)
+    // }
+
     let bundled = false
     async function toggleMediaFolder(e: any) {
         updateSpecial(e.detail, "cloudSyncMediaFolder")
@@ -267,16 +271,22 @@
             <T id="settings.disconnect_from" replace={["ChurchApps"]} />
         </MaterialButton>
         {#if $cloudSyncData.enabled}
-            <MaterialButton icon="cloud_sync" on:click={syncNow}>
+            <MaterialButton icon="cloud_sync" disabled={!!$syncStatus} on:click={syncNow}>
                 <T id="cloud.sync" />
             </MaterialButton>
         {/if}
     </InputRow>
 
     <InputRow arrow={$cloudSyncData.enabled}>
-        {#key resetValue}
-            <MaterialToggleSwitch label="Enable sync" checked={$cloudSyncData.enabled} style="flex: 1;" on:change={toggleSync} />
-        {/key}
+        <InputRow style="flex: 1;">
+            {#key resetValue}
+                <MaterialToggleSwitch label="Enable sync" data={$cloudSyncData?.team?.name} checked={$cloudSyncData.enabled} style="flex: 1;" on:change={toggleSync} />
+            {/key}
+
+            {#if $cloudSyncData.enabled && ($cloudSyncData.team?.count || 0) > 1}
+                <MaterialButton variant="outlined" icon="people" on:click={changeTeam}><T id="cloud.change_team" /></MaterialButton>
+            {/if}
+        </InputRow>
 
         <svelte:fragment slot="menu">
             <!-- changing team directly without toggling "Enable sync" off/on -->
@@ -291,6 +301,8 @@
             {#if $special.cloudSyncMediaFolder}
                 <MaterialFolderPicker label="media.media_sync_folder" value={mediaFolderPath} on:change={updateMediaFolderPath} allowEmpty={!mediaFolderPath.endsWith("Documents\\FreeShow\\Media") && !mediaFolderPath.endsWith("Documents/FreeShow/Media")} />
             {/if}
+
+            <!-- <MaterialButton variant="outlined" icon="delete" on:click={deleteCloudData} red white>Delete cloud data</MaterialButton> -->
         </svelte:fragment>
     </InputRow>
 {/if}

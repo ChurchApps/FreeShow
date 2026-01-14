@@ -185,6 +185,7 @@ export const activeDropId: Writable<string> = writable("")
 export const randomNumberVariable: Writable<{ [key: string]: boolean }> = writable({})
 export const dynamicValueData: Writable<{ [key: string]: any }> = writable({})
 export const recentFiles: Writable<{ all: string[]; cleared: string[]; projectMedia: string[] }> = writable({ all: [], cleared: [], projectMedia: [] })
+export const syncStatus: Writable<string> = writable("")
 
 // ----- SAVED VARIABLES -----
 
@@ -337,7 +338,7 @@ export const companion: Writable<any> = writable({ enabled: false }) // {}
 export const contentProviderData: Writable<{ [key in ContentProviderId]?: any }> = writable({}) // {}
 
 // CLOUD
-export const cloudSyncData: Writable<{ enabled?: boolean; id?: string; team?: { id: string; churchId: string; name: string }; cloudMethod?: "merge" | "read_only" }> = writable({}) // {}
+export const cloudSyncData: Writable<{ enabled?: boolean; id?: string; team?: { id: string; churchId: string; name: string; count?: number }; cloudMethod?: "merge" | "read_only" | "upload" | "replace" }> = writable({}) // {}
 export const driveKeys: Writable<any> = writable({})
 export const driveData: Writable<any> = writable({ mainFolderId: null, disabled: false, initializeMethod: null, disableUpload: false })
 

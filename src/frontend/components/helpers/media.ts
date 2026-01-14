@@ -158,14 +158,18 @@ async function toDataURL(url: string): Promise<string> {
 
 // download any online media
 // get located media path & generated thumbnail
+const replacedPaths = new Map<string, { path: string; altPath?: string; thumbnail: string }>()
 export async function getMedia(path: string, size: number = mediaSize.drawerSize) {
     if (typeof path !== "string") return null
 
     const mediaData = clone(get(media)[path])
+    if (replacedPaths.has(path)) return { ...replacedPaths.get(path)!, data: mediaData }
 
     if (path.includes("http")) {
         const localPath = (await downloadOnlineMedia(path)) || path
         const thumbnail = mediaData?.contentFile?.thumbnail || localPath
+
+        replacedPaths.set(path, { path: localPath, altPath: path, thumbnail })
         return { path: localPath, altPath: path, thumbnail, data: mediaData }
     }
 
@@ -181,18 +185,28 @@ export async function getMedia(path: string, size: number = mediaSize.drawerSize
     const located = await locateMediaFile(path)
     if (!located) return null
 
-    if (located.hasChanged) path = located.path
-    else addToMediaFolder(path)
+    const newPath = located.path
+    if (!located.hasChanged) addToMediaFolder(path)
 
     if (!isMainWindow()) {
-        const thumbnail = getThumbnailPath(path, size)
-        return { path, thumbnail, data: mediaData }
+        const thumbnail = getThumbnailPath(newPath, size)
+
+        replacedPaths.set(path, { path: newPath, thumbnail })
+        return { path: newPath, thumbnail, data: mediaData }
     }
 
     // generate thumbnails only in main window
-    const thumbnail = (await loadThumbnail(path, size)) || path
+    const thumbnail = (await loadThumbnail(newPath, size)) || newPath
 
-    return { path, thumbnail, data: mediaData }
+    replacedPaths.set(path, { path: newPath, thumbnail })
+    return { path: newPath, thumbnail, data: mediaData }
+}
+
+export function getMediaCached(path: string) {
+    if (!replacedPaths.has(path)) return null
+
+    const mediaData = clone(get(media)[path])
+    return { ...replacedPaths.get(path)!, data: mediaData }
 }
 
 async function locateMediaFile(path: string) {

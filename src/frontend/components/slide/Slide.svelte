@@ -14,7 +14,7 @@
     import { clone } from "../helpers/array"
     import { getContrast, hexToRgb, splitRgb } from "../helpers/color"
     import Icon from "../helpers/Icon.svelte"
-    import { getMedia, getMediaStyle, getThumbnailPath, mediaSize } from "../helpers/media"
+    import { getMedia, getMediaCached, getMediaStyle, getThumbnailPath, mediaSize } from "../helpers/media"
     import { allOutputsHasStyleTemplate, getActiveOutputs, getFirstActiveOutput, getResolution, getSlideFilter, setTemplateStyle } from "../helpers/output"
     import { getGroupName } from "../helpers/show"
     import Effect from "../output/effects/Effect.svelte"
@@ -97,8 +97,12 @@
         if (ghostBackground && !isFirstGhost) {
             // wait for first ghost to create image - this also reduces loading lag a bit
             await wait(200)
+
             // load ghost thumbnails
-            thumbnailPath = getThumbnailPath(mediaPath, mediaSize.drawerSize)
+            const media = getMediaCached(bgPath)
+            if (!media) return
+
+            thumbnailPath = media.thumbnail
             return
         }
 

@@ -57,8 +57,8 @@
     let mediaPath = ""
 
     $: bgPath = item?.src
-    $: if (bgPath) getMediaItemPath()
-    async function getMediaItemPath() {
+    $: if (bgPath) loadMedia()
+    async function loadMedia() {
         if (item.type !== "media") return
 
         if (typeof bgPath !== "string") return getCustomPath()

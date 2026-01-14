@@ -220,7 +220,7 @@ export interface MainSendPayloads {
     [Main.GET_TEAMS]?: { id: SyncProviderId }
     [Main.CLOUD_DATA]: { id: SyncProviderId; churchId: string; teamId: string }
     [Main.CLOUD_CHANGED]: { id: SyncProviderId; churchId: string; teamId: string }
-    [Main.CLOUD_SYNC]: { id: SyncProviderId; churchId: string; teamId: string; method: "merge" | "read_only" }
+    [Main.CLOUD_SYNC]: { id: SyncProviderId; churchId: string; teamId: string; method: "merge" | "read_only" | "upload" | "replace" }
     // Provider-based routing
     [Main.PROVIDER_LOAD_SERVICES]: { providerId: ContentProviderId; cloudOnly?: boolean }
     [Main.PROVIDER_DISCONNECT]: { providerId: ContentProviderId; scope?: string }

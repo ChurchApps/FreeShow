@@ -44,17 +44,37 @@ export async function hasDataChanged({ id, churchId, teamId }: { id: SyncProvide
     return await provider.hasChanged(churchId, teamId)
 }
 
+function deleteLocalFiles() {
+    // reset syncable (portable) Config files
+    // no need, these will get auto replaced by the downloaded files
+    // Object.entries(storeFilesData).forEach(([id, data]) => {
+    //     if (!data.portable && id !== "MEDIA") return
+    //     // reset
+    // })
+
+    // delete all show files
+    const showsPath = getDataFolderPath("shows")
+    deleteFolder(showsPath)
+}
+
 const EXTRACT_LOCATION = path.join(app.getPath("temp"), "freeshow-cloud")
 const MERGE_INDIVIDUAL = ["OVERLAYS", "PROJECTS", "STAGE", "TEMPLATES"] // "EVENTS", "THEMES"
 
-export async function syncData(data: { id: SyncProviderId; churchId: string; teamId: string; method: "merge" | "read_only" }) {
-    const readOnly = data.method === "read_only" // never write to cloud
+export async function syncData(data: { id: SyncProviderId; churchId: string; teamId: string; method: "merge" | "read_only" | "upload" | "replace" }) {
+    const readOnly = data.method === "read_only" || data.method === "replace" // never write to cloud
     const changedFiles: string[] = [] // WIP write changes
 
     const provider = getManager[data.id]()
     if (!provider) return { changedFiles }
 
+    if (data.method === "replace") deleteLocalFiles()
+
     console.log("Syncing to cloud")
+
+    if (data.method === "upload") {
+        await uploadLocalData()
+        return finish()
+    }
 
     // clear any uncleared previous data
     if (await doesPathExistAsync(EXTRACT_LOCATION)) deleteFolder(EXTRACT_LOCATION)
@@ -198,11 +218,11 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
                 return
             }
 
-            // replace full files (settings)
-            if (!MERGE_INDIVIDUAL.includes(id)) {
+            // replace full files
+            if (data.method === "replace" || !MERGE_INDIVIDUAL.includes(id)) {
                 const localPath = localStore.path
                 // replace local file if cloud is newer or new device
-                if (isNewDevice || (await cloudIsNewer(localPath, modifiedDates[file.name]))) {
+                if (data.method === "replace" || isNewDevice || (await cloudIsNewer(localPath, modifiedDates[file.name]))) {
                     await moveFileAsync(cloudPath, localPath)
 
                     // send to frontend

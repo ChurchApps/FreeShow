@@ -4,20 +4,22 @@
     import MaterialMultiChoice from "../../inputs/MaterialMultiChoice.svelte"
 
     const type = $popupData.type
+    const teams = $popupData.teams || []
 
     function teamChosen(e: any) {
+        if (!Array.isArray(teams)) return
+
         const selectedId = e.detail
-        const teams = $popupData.teams
         const team = teams.find((a) => a.id === selectedId)
 
         activePopup.set(null)
-        chooseTeam(team)
+        chooseTeam({ ...team, count: teams.length })
     }
 </script>
 
 {#if type === "choose_team"}
     <p class="tip">Select a team where you want to sync the data.</p>
-    <MaterialMultiChoice options={$popupData.teams} on:click={teamChosen} highlightFirst={false} />
+    <MaterialMultiChoice options={teams} on:click={teamChosen} highlightFirst={false} />
 
     <!-- <CombinedInput style="margin-top: 10px;width: initial;">
         <MaterialButton style="width: 100%;" icon="arrow_forward" on:click={() => activePopup.set(null)}>
