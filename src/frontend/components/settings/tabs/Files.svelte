@@ -3,7 +3,7 @@
     import type { ContentProviderId } from "../../../../electron/contentProviders/base/types"
     import { Main } from "../../../../types/IPC/Main"
     import { requestMain, sendMain } from "../../../IPC/main"
-    import { activePopup, autosave, cloudSyncData, dataPath, driveData, driveKeys, providerConnections, saved, special, syncStatus } from "../../../stores"
+    import { activePopup, autosave, cloudSyncData, dataPath, driveData, driveKeys, providerConnections, saved, special, statusIndicator } from "../../../stores"
     import { changeTeam, setupCloudSync } from "../../../utils/cloudSync"
     import { previousAutosave, startAutosave, wait } from "../../../utils/common"
     import { syncDrive, validateKeys } from "../../../utils/drive"
@@ -271,7 +271,7 @@
             <T id="settings.disconnect_from" replace={["ChurchApps"]} />
         </MaterialButton>
         {#if $cloudSyncData.enabled}
-            <MaterialButton icon="cloud_sync" disabled={!!$syncStatus} on:click={syncNow}>
+            <MaterialButton icon="cloud_sync" disabled={$statusIndicator === "syncing"} on:click={syncNow}>
                 <T id="cloud.sync" />
             </MaterialButton>
         {/if}

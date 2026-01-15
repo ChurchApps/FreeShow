@@ -185,7 +185,7 @@ export const activeDropId: Writable<string> = writable("")
 export const randomNumberVariable: Writable<{ [key: string]: boolean }> = writable({})
 export const dynamicValueData: Writable<{ [key: string]: any }> = writable({})
 export const recentFiles: Writable<{ all: string[]; cleared: string[]; projectMedia: string[] }> = writable({ all: [], cleared: [], projectMedia: [] })
-export const syncStatus: Writable<string> = writable("")
+export const statusIndicator: Writable<string> = writable("")
 
 // ----- SAVED VARIABLES -----
 

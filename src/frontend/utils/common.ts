@@ -6,7 +6,7 @@ import { removeDuplicates } from "../components/helpers/array"
 import { getContrast } from "../components/helpers/color"
 import { getActiveOutputs, toggleOutputs } from "../components/helpers/output"
 import { sendMain } from "../IPC/main"
-import { activeTriggerFunction, autosave, currentWindow, disabledServers, drawer, errorHasOccurred, focusedArea, os, outputs, quickSearchActive, resized, serverData, theme, themes, toastMessages, version } from "../stores"
+import { activeTriggerFunction, autosave, currentWindow, disabledServers, drawer, errorHasOccurred, focusedArea, os, outputs, quickSearchActive, resized, serverData, statusIndicator, theme, themes, toastMessages, version } from "../stores"
 import { convertAutosave } from "../values/autosave"
 import { send } from "./request"
 import { save } from "./save"
@@ -26,6 +26,20 @@ export function isOutputWindow() {
 export function newToast(msg: string) {
     if (!msg) return
     toastMessages.set(removeDuplicates([...get(toastMessages), msg]))
+}
+
+// set status indicator, set timeout in seconds
+let statusTimeout: NodeJS.Timeout | null = null
+export function setStatus(id: string, timeout: number | null = null) {
+    statusIndicator.set(id)
+
+    if (statusTimeout) clearTimeout(statusTimeout)
+    if (!timeout) return
+
+    statusTimeout = setTimeout(() => {
+        statusIndicator.set("")
+        statusTimeout = null
+    }, timeout * 1000)
 }
 
 // async wait (instead of timeouts)

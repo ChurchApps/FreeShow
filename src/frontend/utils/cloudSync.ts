@@ -3,8 +3,8 @@ import { Main } from "../../types/IPC/Main"
 import { isLocalFile } from "../components/helpers/media"
 import { loadShows } from "../components/helpers/setShow"
 import { requestMain, sendMain } from "../IPC/main"
-import { activeEdit, activePage, activePopup, activeShow, alertMessage, cloudSyncData, deletedShows, popupData, providerConnections, renamedShows, scripturesCache, settingsTab, shows, showsCache, special, syncStatus } from "../stores"
-import { isMainWindow, newToast } from "./common"
+import { activeEdit, activePopup, activeShow, alertMessage, cloudSyncData, deletedShows, popupData, providerConnections, renamedShows, saved, scripturesCache, shows, showsCache, special } from "../stores"
+import { isMainWindow, newToast, setStatus } from "./common"
 import { confirmCustom } from "./popup"
 import { save } from "./save"
 
@@ -92,19 +92,13 @@ export async function syncWithCloud(initialize: boolean = false) {
         activeEdit.set({ items: [] })
     }
 
-    if (get(activePage) !== "settings" || get(settingsTab) !== "files") newToast("cloud.syncing")
-
     isSyncing = true
-    syncStatus.set("syncing")
+    setStatus("syncing")
 
     const timeout = 5 * 60 * 1000 // 5 minutes
     const status = await requestMain(Main.CLOUD_SYNC, { id: data.id as any, churchId: data.team.churchId, teamId: data.team.id, method }, () => {}, timeout)
 
-    syncStatus.set("completed")
-    setTimeout(() => {
-        syncStatus.set("")
-        isSyncing = false
-    }, 5000)
+    isSyncing = false
 
     // set back to merge
     if (method === "replace" || method === "upload") {
@@ -116,10 +110,11 @@ export async function syncWithCloud(initialize: boolean = false) {
 
     if (!status.success) {
         newToast("Error: " + (status.error || "Sync failed"))
+        setStatus("error", 1)
         return false
     }
 
-    if (get(activePage) !== "settings" || get(settingsTab) !== "files") newToast("cloud.sync_complete")
+    setStatus("synced", 3)
 
     // reset cached shows as they might have changed
     showsCache.set({})
@@ -127,6 +122,9 @@ export async function syncWithCloud(initialize: boolean = false) {
     // reload current show
     const currentlyActive = get(activeShow)?.id || ""
     if (get(shows)[currentlyActive]) loadShows([currentlyActive])
+
+    // set status back to saved
+    setTimeout(() => saved.set(true), 100)
 
     // console.log(status.changedFiles)
 
