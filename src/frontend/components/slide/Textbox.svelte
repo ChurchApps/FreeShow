@@ -89,6 +89,20 @@
     let autoSizeReady = false
     // hold onto whether the visible output should stay hidden until autosize finishes
     let hideUntilAutosized = false
+    let hideSafetyTimeout: NodeJS.Timeout | null = null
+    $: if (hideUntilAutosized) {
+        if (hideSafetyTimeout) clearTimeout(hideSafetyTimeout)
+        hideSafetyTimeout = setTimeout(() => {
+            if (hideUntilAutosized) {
+                hideUntilAutosized = false
+                // markAutoSizeReady() // Ensure state is consistent
+            }
+        }, 600)
+    } else {
+        if (hideSafetyTimeout) clearTimeout(hideSafetyTimeout)
+        hideSafetyTimeout = null
+    }
+
     // remember which item signature we already reset local font size for
     let lastRenderedSignature = ""
     onMount(() => {
@@ -281,12 +295,13 @@
     // Combine content and template to detect all layout-affecting changes
     $: stateSignature = newItem + "|" + resolvedTemplateId
     
-    $: if (stateSignature !== lastRenderedSignature) autoSizeReady = false
-    
-    $: if (stateSignature !== lastRenderedSignature && (item?.auto || (item?.textFit || "none") !== "none")) {
-        fontSize = item?.autoFontSize || 0
-        lastRenderedSignature = stateSignature
-        hideUntilAutosized = shouldHideUntilAutoSizeCompletes()
+    $: if (stateSignature !== lastRenderedSignature) {
+        autoSizeReady = false
+        if (item?.auto || (item?.textFit || "none") !== "none") {
+            fontSize = item?.autoFontSize || 0
+            lastRenderedSignature = stateSignature
+            hideUntilAutosized = shouldHideUntilAutoSizeCompletes()
+        }
     }
     // Trigger calculation if Content OR Template changes (resolvedTemplateId added to dependency list)
     $: if (itemElem && loaded && (stageAutoSize || newItem !== previousItem || resolvedTemplateId || chordLines || stageItem)) calculateAutosize()
@@ -429,12 +444,16 @@
         //     textQuery = ".align .item .align " + textQuery
         // }
 
-        fontSize = autosize(elem, {
-            type: textFit,
-            textQuery,
-            defaultFontSize,
-            maxFontSize
-        })
+        try {
+            fontSize = autosize(elem, {
+                type: textFit,
+                textQuery,
+                defaultFontSize,
+                maxFontSize
+            })
+        } catch (e) {
+            console.warn("[Autosize] failed:", e)
+        }
 
 
 
