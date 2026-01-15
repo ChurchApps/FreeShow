@@ -6,6 +6,7 @@ import type { DrawerTabIds, TopViews } from "../../types/Tabs"
 import { clearAudio } from "../audio/audioFading"
 import { AudioPlayer } from "../audio/audioPlayer"
 import { menuClick } from "../components/context/menuClick"
+import { createScriptureShow } from "../components/drawer/bible/scripture"
 import { addItem } from "../components/edit/scripts/itemHelpers"
 import { keysToID, sortByName } from "../components/helpers/array"
 import { copy, cut, deleteAction, duplicate, paste, selectAll } from "../components/helpers/clipboard"
@@ -15,18 +16,18 @@ import { getAllNormalOutputs, getFirstActiveOutput, refreshOut, setOutput, start
 import { nextSlideIndividual, previousSlideIndividual } from "../components/helpers/showActions"
 import { stopSlideRecording, updateSlideRecording } from "../components/helpers/slideRecording"
 import { clearAll, clearBackground, clearSlide } from "../components/output/clear"
+import { getRecentlyUsedProjects, openProject } from "../components/show/project"
 import { importFromClipboard } from "../converters/importHelpers"
 import { addSection } from "../converters/project"
 import { requestMain, sendMain } from "../IPC/main"
 import { changeSlidesView } from "../show/slides"
-import { activeDrawerTab, activeEdit, activeFocus, activePage, activePopup, activeSlideRecording, activeStage, alertMessage, contextActive, drawer, focusedArea, focusMode, guideActive, media, os, outLocked, outputs, outputSlideCache, quickSearchActive, refreshEditSlide, selected, showsCache, special, spellcheck, styles, textEditActive, topContextActive, videosData, volume } from "../stores"
+import { activeDrawerTab, activeEdit, activeFocus, activePage, activePopup, activeSlideRecording, activeStage, alertMessage, contextActive, drawer, focusedArea, focusMode, guideActive, media, os, outLocked, outputs, outputSlideCache, quickSearchActive, refreshEditSlide, selected, showRecentlyUsedProjects, showsCache, special, spellcheck, styles, textEditActive, topContextActive, videosData, volume } from "../stores"
 import { audioExtensions, imageExtensions, videoExtensions } from "../values/extensions"
 import { drawerTabs } from "../values/tabs"
 import { activeShow } from "./../stores"
 import { hideDisplay, isOutputWindow, togglePanels } from "./common"
 import { send } from "./request"
 import { save } from "./save"
-import { createScriptureShow } from "../components/drawer/bible/scripture"
 
 const menus: TopViews[] = ["show", "edit", "stage", "draw", "settings"]
 
@@ -113,6 +114,13 @@ const keys = {
             if (popupId) activePopup.set(null)
             else if (get(selected).id) selected.set({ id: null, data: [] })
         }, 20)
+    },
+    Enter: () => {
+        // open last used project if Enter pressed "first" on startup
+        if (get(showRecentlyUsedProjects) && !get(activeShow) && get(activePage) === "show") {
+            const lastUsedProject = getRecentlyUsedProjects()[0]
+            if (lastUsedProject) openProject(lastUsedProject.id)
+        }
     },
     Delete: () => (get(contextActive) ? null : deleteAction(get(selected), "remove")),
     Backspace: () => keys.Delete(),
