@@ -6,6 +6,7 @@
     import Icon from "../../helpers/Icon.svelte"
     import Link from "../../inputs/Link.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
+    import Loader from "../Loader.svelte"
 
     let msg = ""
     $: msg = $alertMessage.toString()
@@ -37,26 +38,33 @@
 
 <svelte:window on:keydown={keydown} />
 
-<p on:click={click}>
-    {#key msg}
-        {#if msg.includes("captions#")}
-            {translateText("captions.info")}
-            <br />
-            <br />
-            <Link url={msg.slice(msg.indexOf("#") + 1)}>{msg.slice(msg.indexOf("#") + 1)}</Link>
-        {:else if !msg.includes("<") && msg?.length - msg?.replaceAll(".", "").length === 1}
-            {translateText(msg)}
-        {:else}
-            {@html msg}
-        {/if}
-    {/key}
-</p>
+{#if msg === "actions.closing"}
+    <div class="centered">
+        {translateText(msg)}
+        <Loader />
+    </div>
+{:else}
+    <p on:click={click}>
+        {#key msg}
+            {#if msg.includes("captions#")}
+                {translateText("captions.info")}
+                <br />
+                <br />
+                <Link url={msg.slice(msg.indexOf("#") + 1)}>{msg.slice(msg.indexOf("#") + 1)}</Link>
+            {:else if !msg.includes("<") && msg?.length - msg?.replaceAll(".", "").length === 1}
+                {translateText(msg)}
+            {:else}
+                {@html msg}
+            {/if}
+        {/key}
+    </p>
 
-<br />
+    <br />
 
-<MaterialButton variant="outlined" on:click={close}>
-    <Icon id="check" size={1.2} white />
-</MaterialButton>
+    <MaterialButton variant="outlined" on:click={close}>
+        <Icon id="check" size={1.2} white />
+    </MaterialButton>
+{/if}
 
 <style>
     p {
@@ -81,5 +89,12 @@
     }
     p :global(a):active {
         opacity: 0.9;
+    }
+
+    .centered {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 25px;
     }
 </style>
