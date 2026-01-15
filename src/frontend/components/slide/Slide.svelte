@@ -326,6 +326,7 @@
                                     smallFontSize={viewMode === "lyrics" && !noQuickEdit}
                                     clickRevealed={!!output?.clickRevealed}
                                     {centerPreview}
+                                    preview={true}
                                     chords={item.chords?.enabled}
                                 />
                             {/if}
