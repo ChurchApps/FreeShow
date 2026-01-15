@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { createEventDispatcher, onDestroy, onMount } from "svelte"
+    import { createEventDispatcher, onDestroy, onMount, tick } from "svelte"
     import { OUTPUT } from "../../../types/Channels"
     import type { Styles } from "../../../types/Settings"
     import type { Item, Slide, TemplateStyleOverride, Transition } from "../../../types/Show"
@@ -339,6 +339,9 @@
         }, 200)
         previousItem = newItem
 
+        // Wait for DOM to update with new template styles before measuring
+        await tick()
+        
         // TEMP FIX for auto size sometimes not sized properly in show slides
         if (!preview && !isStage) await wait(70)
 
@@ -403,6 +406,7 @@
         let textQuery = ""
         if (isTextItem) {
             elem = elem.querySelector(".align") as HTMLElement
+            if (!elem) return
             textQuery = ".lines .break span"
         } else {
             textFit = "growToFit"
@@ -444,9 +448,20 @@
 
     // capture the bits of state that influence autosize outcomes for cache invalidation
     function buildAutoSizeSignature() {
+        // Extract key dimensional properties from style to ensure cache invalidation
+        const styles = item?.style ? getStyles(item.style) : {}
+        const boxDimensions = {
+            width: styles.width,
+            height: styles.height,
+            left: styles.left,
+            top: styles.top,
+            fontSize: styles['font-size']
+        }
+        
         return JSON.stringify({
             lines: item?.lines,
             style: item?.style,
+            boxDimensions, // Add explicit dimensions for better cache invalidation
             textFit: item?.textFit,
             list: item?.list,
             chords,
@@ -461,7 +476,9 @@
             smallFontSize,
             maxLines,
             maxLinesInvert,
-            centerPreview
+            centerPreview,
+            // Include resolved template to invalidate cache when template changes
+            resolvedTemplateId
         })
     }
 

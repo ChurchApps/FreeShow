@@ -841,7 +841,21 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
         if (mode === "item") return finish()
 
         if (resetAutoSize) delete item.autoFontSize
-        item.auto = templateItem.auto || false
+
+        // Handle auto and textFit properties
+        if (templateItem.auto !== undefined) {
+            // Template explicitly defines auto
+            item.auto = templateItem.auto
+        } else if (templateItem.textFit) {
+            // Template has textFit but not auto - enable auto (textFit implies auto-sizing)
+            if (templateItem.textFit !== "none") item.auto = true
+        } else if (templateItem.auto === undefined && templateItem.textFit === undefined) {
+            // Template defines neither - disable auto-sizing (simple static template)
+            item.auto = false
+            delete item.textFit
+        }
+
+        // Apply textFit if template defines it
         if (templateItem.textFit) item.textFit = templateItem.textFit
         if (templateItem.list) item.list = templateItem.list
 
@@ -853,7 +867,8 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
 
         // remove exiting styling & add new if set in template
         // WIP some keys are probably missing here...
-        const extraStyles = ["chords", "textFit", "actions", "specialStyle", "scrolling", "bindings", "conditions", "clickReveal", "lineReveal", "fit", "filter", "flipped", "flippedY"]
+        // NOTE: textFit is already handled above in the auto/textFit logic block
+        const extraStyles = ["chords", "actions", "specialStyle", "scrolling", "bindings", "conditions", "clickReveal", "lineReveal", "fit", "filter", "flipped", "flippedY"]
         extraStyles.forEach((key) => {
             delete item[key]
             if (templateItem[key]) item[key] = templateItem[key]
@@ -1182,8 +1197,25 @@ export function setTemplateStyle(outSlide: OutSlide | null, currentStyle: Styles
     const template = getStyleTemplate(outSlide, currentStyle)
     const templateItems = template.items || []
     const mode = template?.settings?.mode
+
+    console.log("[DEBUG - setTemplateStyle]", {
+        outSlideId: outSlide?.id,
+        currentStyleId: currentStyle?.id,
+        templateId: currentStyle?.template,
+        templateMode: mode,
+        templateItemsCount: templateItems.length,
+        slideItemsCount: slideItems?.length,
+        templateAuto: templateItems?.find((i) => i.auto),
+        outputId
+    })
+
     const newItems = mergeWithTemplate(slideItems || [], templateItems, true, true, false, mode) || []
     newItems.push(...getSlideItemsFromTemplate(template.settings || {}))
+
+    console.log("[DEBUG - setTemplateStyle] After merge", {
+        newItemsCount: newItems.length,
+        newItemsAuto: newItems?.find((i) => i.auto)
+    })
 
     return newItems
 
