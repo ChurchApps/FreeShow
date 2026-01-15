@@ -773,7 +773,7 @@ export function updateOut(showId: string, index: number, layout: LayoutRef[], ex
 
                 const outputStyle = get(styles)[get(outputs)[outputId]?.style || ""]
                 const mediaStyle = getMediaStyle(media.data, outputStyle)
-                mediaStyle.fit = media.data.fit || ""
+                mediaStyle.fit = media.data?.fit || ""
                 delete mediaStyle.fitOptions
 
                 // WIP getMediaLayerType - use what is set in show only
