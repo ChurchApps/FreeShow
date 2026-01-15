@@ -11,7 +11,7 @@ import { addItem } from "../components/edit/scripts/itemHelpers"
 import { keysToID, sortByName } from "../components/helpers/array"
 import { copy, cut, deleteAction, duplicate, paste, selectAll } from "../components/helpers/clipboard"
 import { history, redo, undo } from "../components/helpers/history"
-import { getExtension, getMediaStyle, getMediaType } from "../components/helpers/media"
+import { getExtension, getMediaLayerType, getMediaStyle, getMediaType } from "../components/helpers/media"
 import { getAllNormalOutputs, getFirstActiveOutput, refreshOut, setOutput, startFolderTimer, toggleOutputs } from "../components/helpers/output"
 import { nextSlideIndividual, previousSlideIndividual } from "../components/helpers/showActions"
 import { stopSlideRecording, updateSlideRecording } from "../components/helpers/slideRecording"
@@ -475,7 +475,7 @@ export function togglePlayingMedia(e: Event | null = null, back = false, api = f
         const mediaData = get(media)[item.id] || {}
         const mediaStyle = getMediaStyle(mediaData, outputStyle)
 
-        const videoType = mediaData.videoType
+        const videoType = getMediaLayerType(item.id, mediaStyle)
         const shouldLoop = videoType === "background" ? true : false
         const shouldBeMuted = videoType === "background" ? true : false
 

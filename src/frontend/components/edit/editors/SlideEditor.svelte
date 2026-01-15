@@ -12,7 +12,7 @@
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { history } from "../../helpers/history"
-    import { getMedia, getMediaFileFromClipboard, getMediaStyle, getThumbnailPath, mediaSize } from "../../helpers/media"
+    import { getMedia, getMediaFileFromClipboard, getMediaLayerType, getMediaStyle, getThumbnailPath, mediaSize } from "../../helpers/media"
     import { getFirstActiveOutput, getResolution, getSlideFilter } from "../../helpers/output"
     import { getLayoutRef } from "../../helpers/show"
     import { _show } from "../../helpers/shows"
@@ -63,8 +63,9 @@
                 if (slideHasAction(a.data?.actions, "clear_background")) bgId = null
                 else if (a.data.background) bgId = a.data.background
 
-                const mediaData = a.data.background && currentShow?.media[a.data.background]
-                if (mediaData && (mediaData?.loop === false || $media[mediaData?.path || ""]?.videoType === "foreground")) bgId = null
+                const mediaData = a.data.background ? currentShow?.media[a.data.background] : null
+                const mediaType = mediaData ? getMediaLayerType(mediaData.path || "", $media[mediaData.path || ""]) : ""
+                if (mediaData && (mediaData?.loop === false || mediaType === "foreground")) bgId = null
             }
         })
     }

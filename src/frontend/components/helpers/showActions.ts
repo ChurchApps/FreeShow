@@ -750,8 +750,11 @@ export function updateOut(showId: string, index: number, layout: LayoutRef[], ex
                     if (slideHasAction(a.data?.actions, "clear_background")) background = null
                     else if (a.data.background) background = a.data.background
 
-                    const mediaData = _show(showId).get("media")?.[a.data.background || ""]
-                    if (mediaData && (mediaData?.loop === false || get(media)[mediaData?.path || ""]?.videoType === "foreground")) background = null
+                    const showMedia = _show(showId).get("media")?.[a.data.background || ""]
+                    const mediaData = get(media)[showMedia?.path || ""] || {}
+                    // WIP getMediaLayerType - use what is set in show only
+                    // const mediaType = getMediaLayerType(a.data.background || "", mediaData)
+                    if (showMedia && (showMedia?.loop === false || mediaData.videoType === "foreground")) background = null
                 }
             })
         }
@@ -773,6 +776,8 @@ export function updateOut(showId: string, index: number, layout: LayoutRef[], ex
                 mediaStyle.fit = media.data.fit || ""
                 delete mediaStyle.fitOptions
 
+                // WIP getMediaLayerType - use what is set in show only
+                // const mediaType = getMediaLayerType(media.path, mediaStyle)
                 const loop = bg.loop !== false
                 const muted = bg.muted !== false
 

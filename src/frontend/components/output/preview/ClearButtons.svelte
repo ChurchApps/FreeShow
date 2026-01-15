@@ -4,6 +4,7 @@
     import { activeSlideRecording, activeTimers, isFadingOut, labelsDisabled, media, outLocked, outputCache, outputs, overlayTimers, playingAudio, playingMetronome, styles } from "../../../stores"
     import { presentationControllersKeysDisabled } from "../../../utils/shortcuts"
     import Icon from "../../helpers/Icon.svelte"
+    import { getMediaLayerType } from "../../helpers/media"
     import { getActiveOutputs, getOutputContent, isOutCleared } from "../../helpers/output"
     import T from "../../helpers/T.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
@@ -121,7 +122,7 @@
         {#if outputContent?.type !== "pdf" && outputContent?.type !== "ppt"}
             <div class="combinedButton">
                 <MaterialButton style="padding: 0.3em 0.6em;{styleBackground ? 'opacity: 0.5;cursor: default;' : ''}" disabled={($outLocked || backgroundCleared) && !styleBackground} title={$outLocked || backgroundCleared ? "" : "clear.background [F1]"} on:click={() => clear("background")} red>
-                    <Icon id="background" size={1.2} white />
+                    <Icon id="image" size={1.2} white />
                 </MaterialButton>
                 {#if !allCleared}
                     <MaterialButton style="padding: {activeClear === 'background' ? 0 : 2}px !important;min-height: 15px;" isActive={activeClear === "background"} disabled={backgroundCleared} on:click={() => openPreview("background")} title="preview.background">
@@ -133,7 +134,7 @@
             </div>
         {/if}
 
-        {#if backgroundData.videoType !== "foreground" || !slideCleared}
+        {#if getMediaLayerType(outBackground.path || "", backgroundData) !== "foreground" || !slideCleared}
             <div class="combinedButton">
                 <MaterialButton style="padding: 0.3em 0.6em;" disabled={$outLocked || slideCleared} title="clear.slide  [F2]" on:click={() => clear("slide")} red>
                     <!-- PDFs are visually the background layer as it is toggled by the style "Background" layer, but it behaves as a slide in the code -->

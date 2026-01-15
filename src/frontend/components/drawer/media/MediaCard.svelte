@@ -8,7 +8,7 @@
     import { translateText } from "../../../utils/language"
     import { getKey } from "../../../values/keys"
     import Icon from "../../helpers/Icon.svelte"
-    import { getMediaStyle, getMediaType } from "../../helpers/media"
+    import { getMediaLayerType, getMediaStyle, getMediaType } from "../../helpers/media"
     import { findMatchingOut, getAllActiveOutputs, getFirstActiveOutput, setOutput } from "../../helpers/output"
     import Button from "../../inputs/Button.svelte"
     import { clearBackground, clearSlide } from "../../output/clear"
@@ -113,7 +113,7 @@
             return
         }
 
-        let videoType = mediaStyle.videoType || ""
+        let videoType = getMediaLayerType(path, mediaStyle)
         let loop = contentProvider || videoType === "foreground" ? false : true
         let muted = videoType === "background" ? true : false
         if (videoType === "foreground") clearSlide()
@@ -230,7 +230,7 @@
                 <div style="max-width: 100%;">
                     <div class="button">
                         <Button style="padding: 3px;" redHover title={translateText("actions.remove")} on:click={() => removeStyle("videoType")}>
-                            <Icon id={mediaStyle.videoType === "background" ? "muted" : mediaStyle.videoType === "foreground" ? "volume" : ""} size={0.9} white />
+                            <Icon id={`type_${mediaStyle.videoType}`} size={0.9} white />
                         </Button>
                     </div>
                 </div>

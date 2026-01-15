@@ -109,7 +109,8 @@
     $: aspectRatioLabel = aspectRatio.outputResolutionAsRatio ? "settings.output_resolution_ratio" : `${aspectRatio.width}:${aspectRatio.height}`
 
     const layerOptions = [
-        { label: "preview.background", icon: "background", value: "background" },
+        { label: "preview.background", icon: "image", value: "background" },
+        // { label: "preview.foreground", icon: "image", value: "foreground" }, ?
         { label: "preview.slide", icon: "slide", value: "slide" },
         { label: "preview.overlays", icon: "overlays", value: "overlays" }
     ]

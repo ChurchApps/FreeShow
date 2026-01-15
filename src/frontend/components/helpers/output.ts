@@ -21,7 +21,7 @@ import { getItemText, getItemTextArray, getSlideText } from "../edit/scripts/tex
 import type { EditInput } from "../edit/values/boxes"
 import { clearBackground, clearSlide } from "../output/clear"
 import { areObjectsEqual, clone, keysToID, removeDuplicates, sortByName, sortObject } from "./array"
-import { getExtension, getFileName, removeExtension } from "./media"
+import { getExtension, getFileName, getMediaLayerType, removeExtension } from "./media"
 import { getLayoutRef } from "./show"
 import { getFewestOutputLines, getItemWithMostLines, replaceDynamicValues } from "./showActions"
 import { _show } from "./shows"
@@ -117,7 +117,8 @@ export function setOutput(type: string, data: any, toggle = false, outputId = ""
             // if current playing background is "foreground", clear it
             const currentBackground = get(outputs)[outs?.[0]]?.out?.background || {}
             const mediaData = get(media)[currentBackground.path || ""] || {}
-            if (mediaData.videoType === "foreground") clearBackground()
+            const mediaType = getMediaLayerType(currentBackground.path || "", mediaData)
+            if (mediaType === "foreground") clearBackground()
         }
 
         let toggleState = false
@@ -1198,24 +1199,23 @@ export function setTemplateStyle(outSlide: OutSlide | null, currentStyle: Styles
     const templateItems = template.items || []
     const mode = template?.settings?.mode
 
-    console.log("[DEBUG - setTemplateStyle]", {
-        outSlideId: outSlide?.id,
-        currentStyleId: currentStyle?.id,
-        templateId: currentStyle?.template,
-        templateMode: mode,
-        templateItemsCount: templateItems.length,
-        slideItemsCount: slideItems?.length,
-        templateAuto: templateItems?.find((i) => i.auto),
-        outputId
-    })
+    // console.log("[DEBUG - setTemplateStyle]", {
+    //     outSlideId: outSlide?.id,
+    //     templateId: currentStyle?.template,
+    //     templateMode: mode,
+    //     templateItemsCount: templateItems.length,
+    //     slideItemsCount: slideItems?.length,
+    //     templateAuto: templateItems?.find((i) => i.auto),
+    //     outputId
+    // })
 
     const newItems = mergeWithTemplate(slideItems || [], templateItems, true, true, false, mode) || []
     newItems.push(...getSlideItemsFromTemplate(template.settings || {}))
 
-    console.log("[DEBUG - setTemplateStyle] After merge", {
-        newItemsCount: newItems.length,
-        newItemsAuto: newItems?.find((i) => i.auto)
-    })
+    // console.log("[DEBUG - setTemplateStyle] After merge", {
+    //     newItemsCount: newItems.length,
+    //     newItemsAuto: newItems?.find((i) => i.auto)
+    // })
 
     return newItems
 

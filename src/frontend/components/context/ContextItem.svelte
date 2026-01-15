@@ -1,6 +1,6 @@
 <script lang="ts">
     import { cameraManager } from "../../media/cameraManager"
-    import { actions, activeEdit, activeProject, activeRecording, activeShow, categories, colorbars, dictionary, disabledServers, drawerTabsData, effects, effectsLibrary, events, forceClock, livePrepare, media, os, outputs, overlayCategories, overlays, projects, redoHistory, scriptures, selected, shows, showsCache, slidesOptions, stageShows, styles, templateCategories, timers, topContextActive, undoHistory } from "../../stores"
+    import { actions, activeEdit, activeProject, activeRecording, activeShow, categories, colorbars, dictionary, disabledServers, drawerTabsData, effects, effectsLibrary, events, forceClock, livePrepare, media, mediaFolders, os, outputs, overlayCategories, overlays, projects, redoHistory, scriptures, selected, shows, showsCache, slidesOptions, stageShows, styles, templateCategories, timers, topContextActive, undoHistory } from "../../stores"
     import { translateText } from "../../utils/language"
     import { closeContextMenu } from "../../utils/shortcuts"
     import { keysToID } from "../helpers/array"
@@ -286,10 +286,30 @@
             menu.icon = isPlayed ? "remove" : "check"
             menu.iconColor = isPlayed ? "var(--secondary)" : "var(--text)"
             enabled = isPlayed
-        }
+        },
         // bind_item: () => {
         //     if (item is bound) enabled = true
         // }
+
+        // Media type
+        type_default: () => {
+            const folderId = $selected.data[0]
+            if (!folderId) return
+            const folder = $mediaFolders[folderId]
+            enabled = !folder?.mediaType
+        },
+        type_background: () => {
+            const folderId = $selected.data[0]
+            if (!folderId) return
+            const folder = $mediaFolders[folderId]
+            enabled = folder?.mediaType === "background"
+        },
+        type_foreground: () => {
+            const folderId = $selected.data[0]
+            if (!folderId) return
+            const folder = $mediaFolders[folderId]
+            enabled = folder?.mediaType === "foreground"
+        }
     }
 
     if (conditions[id]) conditions[id]()
