@@ -6,7 +6,7 @@
     import { activePopup, autosave, cloudSyncData, dataPath, driveData, driveKeys, providerConnections, saved, special, statusIndicator } from "../../../stores"
     import { changeTeam, setupCloudSync } from "../../../utils/cloudSync"
     import { previousAutosave, startAutosave, wait } from "../../../utils/common"
-    import { syncDrive, validateKeys } from "../../../utils/drive"
+    import { validateKeys } from "../../../utils/drive"
     import { translateText } from "../../../utils/language"
     import { save } from "../../../utils/save"
     import { convertAutosave } from "../../../values/autosave"
@@ -313,29 +313,6 @@
     <MaterialMediaPicker label="Google API service account key" title="Import keys file" value="Update keys file" filter={{ name: "Key file", extensions: ["json"] }} icon="key" on:change={receiveKeysFile} allowEmpty />
     <MaterialToggleSwitch label="Disable uploading data" checked={$driveData.disableUpload} defaultValue={false} on:change={(e) => toggleData(e.detail, "disableUpload")} />
 
-    {#if validKeys}
-        <MaterialToggleSwitch label="cloud.enable" checked={!$driveData.disabled} defaultValue={true} on:change={(e) => toggleData(e.detail, "disabled", true)} />
-        <!-- <MaterialTextInput label="Media path ID" value={$driveData?.mediaId || "default"} defaultValue="default" on:change={(e) => updateValue(e.detail, "mediaId")} /> -->
-        <MaterialTextInput label="Set main folder manually{$driveData?.mainFolderId ? `<span style="margin-left: 10px;font-size: 0.7em;opacity: 0.5;color: var(--text);">drive.google.com/drive/folders/</span>` : ''}" value={$driveData?.mainFolderId || ""} on:change={(e) => updateValue(e.detail, "mainFolderId")} />
-
-        <!-- <div>
-        <p><T id="cloud.media_folder" /></p>
-        <span style="display: flex;align-items: center;overflow: auto;">
-            <p style="font-size: 0.9em;opacity: 0.7;">drive.google.com/drive/folders/</p>
-            <TextInput style="width: 300px;padding: 3px;border-bottom: 2px solid var(--secondary);background-color: var(--primary-darkest);" value={$driveData?.mediaFolderId || ""} on:change={updateMediaFolder} />
-        </span>
-    </div> -->
-
-        <MaterialButton
-            style="width: 100%;"
-            icon="cloud_sync"
-            title="Note: Shows and projects should sync both ways. Other elements like settings will be uploaded when using this. Enable auto sync for better syncing."
-            on:click={() => {
-                save()
-                setTimeout(() => syncDrive(true), 2000)
-            }}
-        >
-            <T id="cloud.sync" />
-        </MaterialButton>
-    {/if}
+    <MaterialToggleSwitch label="cloud.enable" checked={!$driveData.disabled} defaultValue={true} on:change={(e) => toggleData(e.detail, "disabled", true)} />
+    <MaterialTextInput label="Set main folder manually{$driveData?.mainFolderId ? `<span style="margin-left: 10px;font-size: 0.7em;opacity: 0.5;color: var(--text);">drive.google.com/drive/folders/</span>` : ''}" value={$driveData?.mainFolderId || ""} on:change={(e) => updateValue(e.detail, "mainFolderId")} />
 {/if}

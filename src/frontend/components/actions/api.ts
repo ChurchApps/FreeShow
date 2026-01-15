@@ -7,7 +7,6 @@ import { convertText } from "../../converters/txt"
 import { sendMain } from "../../IPC/main"
 import { transposeText } from "../../utils/chordTranspose"
 import { triggerFunction } from "../../utils/common"
-import { syncDrive } from "../../utils/drive"
 import { togglePlayingMedia } from "../../utils/shortcuts"
 import { contentProviderSync } from "../../utils/startup"
 import { updateTransition } from "../../utils/transitions"
@@ -34,6 +33,7 @@ import {
     deleteProject,
     editTimer,
     getClearedState,
+    getMediaLoopState,
     getPDFThumbnails,
     getPlainText,
     getShowGroups,
@@ -70,7 +70,6 @@ import {
     toggleLogSongUsage,
     toggleMediaLoop,
     toggleMediaMute,
-    getMediaLoopState,
     updateVolumeValues,
     videoSeekTo
 } from "./apiHelper"
@@ -295,8 +294,8 @@ export const API_ACTIONS = {
     change_draw_zoom: (data: API_draw_zoom) => changeDrawZoom(data),
 
     // CONNECTION
-    sync_drive: () => syncDrive(true),
     sync_content_provider: () => contentProviderSync(),
+    // sync_cloud_now
 
     // EMIT
     send_midi: (data: API_midi) => sendMidi(data), // DEPRECATED, use emit_action instead

@@ -859,7 +859,6 @@
         "info": "Sync files to the cloud for backups or to access between multiple computers.",
         "enable": "Automatic sync on startup and close",
         "read_only": "Read-only",
-        "media_folder": "Cloud media folder",
         "reconnect": "Reconnect",
         "sync": "Sync now",
         "change_team": "Change team",
