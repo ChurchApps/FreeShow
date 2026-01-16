@@ -29,7 +29,7 @@
     $: shouldShow = shouldItemBeShown(tempItem, [tempItem], showItemRef, updater)
 </script>
 
-{#if shouldShow}
+{#if shouldShow && !isClearing}
     {#if noTransition}
         <div class="meta" {style}>
             {@html value}

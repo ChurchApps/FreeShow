@@ -225,11 +225,21 @@
 
 {#if (currentStyle.displayMetadata || "never") !== "never"}
     <MaterialTextInput label="meta.text_divider" disabled={!activeLayers.includes("overlays")} value={metadataDividerValue} defaultValue={defaultDivider} on:change={(e) => updateStyle(e.detail, "metadataDivider")}></MaterialTextInput>
-    <MaterialPopupButton label="meta.meta_template" disabled={!activeLayers.includes("overlays")} value={metadataTemplate} defaultValue="metadata" name={$templates[metadataTemplate]?.name} popupId="select_template" icon="templates" on:change={(e) => updateStyle(e.detail, "metadataTemplate")} />
+    <InputRow>
+        <MaterialPopupButton label="meta.meta_template" disabled={!activeLayers.includes("overlays")} value={metadataTemplate} defaultValue="metadata" name={$templates[metadataTemplate]?.name} popupId="select_template" icon="templates" on:change={(e) => updateStyle(e.detail, "metadataTemplate")} />
+        {#if metadataTemplate && $templates[metadataTemplate]}
+            <MaterialButton title="titlebar.edit" icon="edit" on:click={() => editTemplate(metadataTemplate)} />
+        {/if}
+    </InputRow>
     <!-- <CombinedInput>
         <p><T id="meta.metadata_layout" /></p>
         <TextInput value={currentStyle.metadataLayout || DEFAULT_META_LAYOUT} on:change={(e) => updateStyle(e, "metadataLayout")} on:keydown={keydown} />
     </CombinedInput> -->
 {/if}
 
-<MaterialPopupButton label="meta.message_template" disabled={!activeLayers.includes("overlays")} value={messageTemplate} defaultValue="message" name={$templates[messageTemplate]?.name} popupId="select_template" icon="templates" on:change={(e) => updateStyle(e.detail, "messageTemplate")} />
+<InputRow>
+    <MaterialPopupButton label="meta.message_template" disabled={!activeLayers.includes("overlays")} value={messageTemplate} defaultValue="message" name={$templates[messageTemplate]?.name} popupId="select_template" icon="templates" on:change={(e) => updateStyle(e.detail, "messageTemplate")} />
+    {#if messageTemplate && $templates[messageTemplate]}
+        <MaterialButton title="titlebar.edit" icon="edit" on:click={() => editTemplate(messageTemplate)} />
+    {/if}
+</InputRow>

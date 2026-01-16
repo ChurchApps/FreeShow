@@ -356,9 +356,9 @@ function getDefaultTemplates() {
         category: "song", // "metadata"
         items: [
             {
-                style: "top: 910px;left: 30px;width: 1860px;height: 150px;opacity: 0.8;",
+                style: "top: 910px;left: 30px;width: 1860px;height: 150px;",
                 align: "",
-                lines: [{ align: "", text: [{ value: translateText("tools.metadata"), style: "font-size: 30px;text-shadow: 2px 2px 4px rgb(0 0 0 / 80%);" }] }]
+                lines: [{ align: "", text: [{ value: translateText("tools.metadata"), style: "font-size: 30px;color: rgb(255 255 255 / 0.8);text-shadow: 2px 2px 4px rgb(0 0 0 / 80%);" }] }]
             }
         ]
     }
@@ -370,9 +370,9 @@ function getDefaultTemplates() {
         category: "song", // "metadata"
         items: [
             {
-                style: "top: 50px;left: 30px;width: 1860px;height: 150px;opacity: 0.8;",
+                style: "top: 50px;left: 30px;width: 1860px;height: 150px;",
                 align: "",
-                lines: [{ align: "", text: [{ value: translateText("meta.message"), style: "font-size: 50px;text-shadow: 2px 2px 4px rgb(0 0 0 / 80%);" }] }]
+                lines: [{ align: "", text: [{ value: translateText("meta.message"), style: "font-size: 50px;color: rgb(255 255 255 / 0.8);text-shadow: 2px 2px 4px rgb(0 0 0 / 80%);" }] }]
             }
         ]
     }
@@ -845,11 +845,11 @@ function getDefaultScriptureTemplates() {
                 ]
             },
             {
-                style: "top: 900px;left: 30px;width: 1860px;height: 150px;opacity: 0.8;",
+                style: "top: 900px;left: 30px;width: 1860px;height: 150px;",
                 align: "",
                 lines: [
-                    { align: "", text: [{ value: "{scripture_reference}", style: "font-size: 55px;" }] },
-                    { align: "", text: [{ value: "{scripture_name}", style: "font-size: 40px;" }] }
+                    { align: "", text: [{ value: "{scripture_reference}", style: "font-size: 55px;color: rgb(255 255 255 / 0.8);" }] },
+                    { align: "", text: [{ value: "{scripture_name}", style: "font-size: 40px;color: rgb(255 255 255 / 0.7);" }] }
                 ]
             }
         ]
@@ -890,11 +890,11 @@ function getDefaultScriptureTemplates() {
                 ]
             },
             {
-                style: "top: 900px;left: 30px;width: 1860px;height: 150px;opacity: 0.8;",
+                style: "top: 900px;left: 30px;width: 1860px;height: 150px;",
                 align: "",
                 lines: [
-                    { align: "", text: [{ value: "{scripture_reference}", style: "font-size: 55px;" }] },
-                    { align: "", text: [{ value: "{scripture_name}", style: "font-size: 40px;" }] }
+                    { align: "", text: [{ value: "{scripture_reference}", style: "font-size: 55px;color: rgb(255 255 255 / 0.8);" }] },
+                    { align: "", text: [{ value: "{scripture_name}", style: "font-size: 40px;color: rgb(255 255 255 / 0.7);" }] }
                 ]
             }
         ]
@@ -949,11 +949,11 @@ function getDefaultScriptureTemplates() {
                 ]
             },
             {
-                style: "top: 900px;left: 30px;width: 1860px;height: 150px;opacity: 0.8;",
+                style: "top: 900px;left: 30px;width: 1860px;height: 150px;",
                 align: "",
                 lines: [
-                    { align: "", text: [{ value: "{scripture_reference}", style: "font-size: 55px;" }] },
-                    { align: "", text: [{ value: "{scripture_name}", style: "font-size: 40px;" }] }
+                    { align: "", text: [{ value: "{scripture_reference}", style: "font-size: 55px;color: rgb(255 255 255 / 0.8);" }] },
+                    { align: "", text: [{ value: "{scripture_name}", style: "font-size: 40px;color: rgb(255 255 255 / 0.7);" }] }
                 ]
             }
         ]
@@ -1022,11 +1022,11 @@ function getDefaultScriptureTemplates() {
                 ]
             },
             {
-                style: "top: 900px;left: 30px;width: 1860px;height: 150px;opacity: 0.8;",
+                style: "top: 900px;left: 30px;width: 1860px;height: 150px;",
                 align: "",
                 lines: [
-                    { align: "", text: [{ value: "{scripture_reference}", style: "font-size: 55px;" }] },
-                    { align: "", text: [{ value: "{scripture_name}", style: "font-size: 40px;" }] }
+                    { align: "", text: [{ value: "{scripture_reference}", style: "font-size: 55px;color: rgb(255 255 255 / 0.8);" }] },
+                    { align: "", text: [{ value: "{scripture_name}", style: "font-size: 40px;color: rgb(255 255 255 / 0.7);" }] }
                 ]
             }
         ]

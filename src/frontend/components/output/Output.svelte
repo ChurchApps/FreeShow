@@ -276,6 +276,51 @@
         })
     }
 
+    let isMessageClearing = false
+    let messageVisible = false
+    let messageTransition: NodeJS.Timeout | null = null
+    $: if (messageText !== undefined) updateMessage()
+    function updateMessage() {
+        if (messageTransition) clearTimeout(messageTransition)
+        if (messageText) {
+            isMessageClearing = false
+            messageVisible = true
+        } else {
+            isMessageClearing = true
+            // wait for transition to finish
+            messageTransition = setTimeout(
+                () => {
+                    messageVisible = false
+                    isMessageClearing = false
+                },
+                (metadata.messageTransition || transitions.overlay)?.duration || 500
+            )
+        }
+    }
+
+    let isMetadataClearing = false
+    let metadataVisible = false
+    let metadataTransition: NodeJS.Timeout | null = null
+    $: showMetadata = displayMetadata || ((layers.includes("background") || backgroundData?.ignoreLayer) && $customMessageCredits)
+    $: if (showMetadata !== undefined) updateMetadata()
+    function updateMetadata() {
+        if (metadataTransition) clearTimeout(metadataTransition)
+        if (displayMetadata) {
+            isMetadataClearing = false
+            metadataVisible = true
+        } else {
+            isMetadataClearing = true
+            // wait for transition to finish
+            metadataTransition = setTimeout(
+                () => {
+                    metadataVisible = false
+                    isMetadataClearing = false
+                },
+                (metadata.transition || transitions.overlay)?.duration || 500
+            )
+        }
+    }
+
     // UPDATE DYNAMIC VALUES e.g. {time_} EVERY SECOND
     let updateDynamic = 0
     const dynamicInterval = setInterval(() => {
@@ -328,14 +373,14 @@
 
     {#if layers.includes("overlays")}
         <!-- message -->
-        {#if messageText}
-            <Metadata value={messageText.includes("{") ? replaceDynamicValues(messageText, { showId: actualSlide?.id, layoutId: actualSlide?.layout, slideIndex: actualSlide?.index }, updateDynamic) : messageText} style={metadata.messageStyle || ""} transition={metadata.messageTransition || transitions.overlay} />
+        {#if messageVisible}
+            <Metadata isClearing={isMessageClearing} value={messageText.includes("{") ? replaceDynamicValues(messageText, { showId: actualSlide?.id, layoutId: actualSlide?.layout, slideIndex: actualSlide?.index }, updateDynamic) : messageText} style={metadata.messageStyle || ""} transition={metadata.messageTransition || transitions.overlay} />
         {/if}
 
         <!-- metadata -->
-        {#if displayMetadata || ((layers.includes("background") || backgroundData?.ignoreLayer) && $customMessageCredits)}
+        {#if metadataVisible}
             <!-- value={metadata.value ? (metadata.value.includes("{") ? createMetadataLayout(metadata.value, { showId: actualSlide?.id, layoutId: actualSlide?.layout, slideIndex: actualSlide?.index }, updateDynamic) : metadata.value) : $customMessageCredits || ""} -->
-            <Metadata value={metadata.value || $customMessageCredits || ""} style={metadata.style || ""} conditions={metadata.condition} isClearing={isSlideClearing} {outputId} transition={metadata.transition || transitions.overlay} />
+            <Metadata isClearing={isMetadataClearing} value={metadata.value || $customMessageCredits || ""} style={metadata.style || ""} conditions={metadata.condition} {outputId} transition={metadata.transition || transitions.overlay} />
         {/if}
 
         <!-- effects -->
