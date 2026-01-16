@@ -41,6 +41,7 @@
     export let centerPreview = false
     export let revealed = -1
     export let styleOverrides: TemplateStyleOverride[] = []
+    export let hideContent = false
 
     $: lines = createVirtualBreaks(clone(item?.lines || []), outputStyle?.skipVirtualBreaks)
     $: if (linesStart !== null && linesEnd !== null && lines.length) {
@@ -231,7 +232,7 @@
     // $: isScripture = ref?.id === "scripture" || ref?.showId === "temp" || $showsCache[ref.showId || ""]?.reference?.type === "scripture"
 </script>
 
-<div class="align" class:isStage class:scrolling={!isStage && item?.scrolling?.type} class:topBottomScrolling={!isStage && item?.scrolling?.type === "top_bottom"} class:bottomTopScrolling={!isStage && item?.scrolling?.type === "bottom_top"} class:leftRightScrolling={!isStage && item?.scrolling?.type === "left_right"} class:rightLeftScrolling={!isStage && item?.scrolling?.type === "right_left"} style="--scrollSpeed: {item?.scrolling?.speed ?? 30}s;{style ? item?.align : null}">
+<div class="align" class:hidden={hideContent} class:isStage class:scrolling={!isStage && item?.scrolling?.type} class:topBottomScrolling={!isStage && item?.scrolling?.type === "top_bottom"} class:bottomTopScrolling={!isStage && item?.scrolling?.type === "bottom_top"} class:leftRightScrolling={!isStage && item?.scrolling?.type === "left_right"} class:rightLeftScrolling={!isStage && item?.scrolling?.type === "right_left"} style="--scrollSpeed: {item?.scrolling?.speed ?? 30}s;{style ? item?.align : null}">
     <div class="lines" style="{style ? lineStyleBox : ''}{smallFontSize || customFontSize !== null ? '--font-size: ' + (smallFontSize ? (-1.1 * $slidesOptions.columns + 10) * 5 : customFontSize) + 'px;' : ''}{textAnimation}{chordsStyle}">
         {#each renderedLines as line, i}
             {#if (linesStart === null || linesEnd === null || (i >= linesStart && i < linesEnd)) && (!maxLines || (maxLinesInvert ? i > lines.length - maxLines - 1 : i < maxLines))}
@@ -275,6 +276,11 @@
         display: flex;
         text-align: center;
         align-items: center;
+    }
+
+    .align.hidden {
+        visibility: hidden !important;
+        opacity: 0 !important;
     }
 
     /* should match .edit in Editbox.svelte */
