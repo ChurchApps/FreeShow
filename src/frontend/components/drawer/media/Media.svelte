@@ -423,7 +423,7 @@
             .filter((a) => !a.isFolder)
             .map((file) => {
                 let type = getMediaType(getExtension(file.name))
-                return { name: file.name, path: file.path, type }
+                return { name: file.name, path: file.path, type, contentProvider: false }
             })
 
         selected.set({ id: "media", data })
