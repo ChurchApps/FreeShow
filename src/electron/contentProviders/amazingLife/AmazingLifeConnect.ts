@@ -74,10 +74,31 @@ export class AmazingLifeConnect {
         return this.AMAZING_LIFE_ACCESS?.access_token || null
     }
 
+    public static async ensureValidToken(scope: AmazingLifeScopes = "openid profile email"): Promise<string | null> {
+        let accessData = this.AMAZING_LIFE_ACCESS || (getContentProviderAccess("amazinglife", scope) as AmazingLifeAuthData | null)
+
+        if (!accessData) {
+            console.warn("No active session. Please connect first.")
+            return null
+        }
+
+        if (this.isTokenExpired(accessData)) {
+            accessData = await this.refreshToken(scope)
+            if (!accessData) {
+                console.error("Failed to refresh token")
+                return null
+            }
+            this.AMAZING_LIFE_ACCESS = accessData
+        }
+
+        return accessData.access_token
+    }
+
     private static isTokenExpired(access: AmazingLifeAuthData | null): boolean {
-        // || !access?.expires_in // missing
         if (!access?.created_at) return true
-        return (access.created_at + access.expires_in) * 1000 < Date.now()
+        // Check if token is expired or about to expire (within 5 minutes)
+        const bufferTime = 5 * 60 * 1000 // 5 minutes in milliseconds
+        return (access.created_at + access.expires_in) * 1000 < Date.now() + bufferTime
     }
 
     private static async refreshToken(scope: AmazingLifeScopes): Promise<AmazingLifeAuthData | null> {
