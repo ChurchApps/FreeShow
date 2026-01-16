@@ -505,6 +505,7 @@ const faq = [
     { id: "https://freeshow.app/docs/overlays", name: "About Overlays", icon: "help" },
     { id: "https://freeshow.app/docs/templates", name: "About Templates", icon: "help" },
     { id: "https://freeshow.app/docs/outputs", name: "Multiple Outputs", icon: "help", aliases: ["-Livestream", "-OBS"] },
+    { id: "https://freeshow.app/docs/cloud", name: "Cloud Sync", icon: "help" },
     // Docs Help
     { id: "https://freeshow.app/docs/scripture#create-a-collection", name: "Multiple Scripture Versions", icon: "help", aliases: ["-Multilingual", "-Multiple translations", "-Multiple Bibles", "-Multiple languages"] },
     { id: "https://freeshow.app/docs/faq#multilingual-songs", name: "Multilingual Song Lyrics", icon: "help", aliases: ["-Multilingual", "-translations", "-lyrics", "-languages", "-translated"] },

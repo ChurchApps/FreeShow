@@ -753,7 +753,7 @@ async function checkIsFolder(filePath: string): Promise<boolean> {
 // - WIP extract & import zip files with media content
 export async function detectNewFiles() {
     const downloadsFolder = app.getPath("downloads")
-    const ONE_DAY = 24 * 60 * 60 * 1000
+    const MAX_TIME = 16 * 60 * 60 * 1000 // 16 hours
     const ONE_MINUTE = 60 * 1000
     const WRITE_WAIT_MS = 2000
     const temporaryExtensions = [".crdownload", ".part", ".download", ".tmp"]
@@ -763,7 +763,7 @@ export async function detectNewFiles() {
     const knownFiles = new Set(dirListing)
 
     // initial recent files
-    const cutoff = Date.now() - ONE_DAY
+    const cutoff = Date.now() - MAX_TIME
     const allRecentFiles: string[] = []
     for (const fileName of dirListing) {
         if (!fileName) continue

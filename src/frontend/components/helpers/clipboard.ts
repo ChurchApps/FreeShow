@@ -97,7 +97,10 @@ export function copy(clip: Clipboard | null = null, getData = true, shouldDuplic
         return { id: null, data: copyData, index: copyObj.data?.[0]?.index }
     }
 
-    if (copyData.data) clipboard.set(copyData)
+    if (copyData.data) {
+        clipboard.set(copyData)
+        newToast("actions.copied")
+    }
 
     console.info("COPIED:", copyObj)
     console.info("CLIPBOARD:", get(clipboard))
@@ -127,6 +130,7 @@ export function paste(clip: Clipboard | null = null, extraData: any = {}, custom
     // custom media paste: only paste on selected ones
     if (clip.id === "media") {
         mediaPaste(clip.data[0])
+        newToast("actions.pasted")
         return
     }
 
@@ -135,6 +139,7 @@ export function paste(clip: Clipboard | null = null, extraData: any = {}, custom
         return
     }
     pasteActions[clip.id](clip.data, extraData)
+    newToast("actions.pasted")
 
     console.info("PASTED:", clip)
 }

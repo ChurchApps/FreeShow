@@ -12,7 +12,7 @@
     import { getContrast } from "../helpers/color"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
-    import { getFileName, removeExtension } from "../helpers/media"
+    import { getExtension, getFileName, getMediaType, removeExtension } from "../helpers/media"
     import T from "../helpers/T.svelte"
     import { joinTimeBig } from "../helpers/time"
     import FloatingInputs from "../input/FloatingInputs.svelte"
@@ -245,13 +245,18 @@
                     <div class="listSection">
                         {#each recommended as path, i}
                             {@const name = getFileName(path)}
+                            {@const type = getMediaType(getExtension(name))}
                             {@const isFirst = i === 0}
                             {@const isLast = i === recommended.length - 1}
                             {@const borderRadiusStyle = `${isFirst ? "border-top-right-radius: 10px;" : ""}${isLast ? "border-bottom-right-radius: 10px;" : ""}`}
+                            {@const icon = type === "audio" ? "music" : type}
 
-                            <MaterialButton class="show context #recent_file__project" style="justify-content: left;padding: 0.35em 0.8em;font-weight: normal;{borderRadiusStyle}" on:click={() => addToProject(null, [path])} title="context.addToProject: <b>{name}</b>" tab>
+                            <MaterialButton class="show context #recent_file__project" style="justify-content: space-between;padding: 0.35em 0.8em;font-weight: normal;{borderRadiusStyle}" on:click={() => addToProject(null, [path])} title="context.addToProject: <b>{name}</b>" tab>
+                                <span style="display: flex;align-items: center;gap: 8px;">
+                                    <Icon id={icon} size={0.9} white right />
+                                    <p style="min-height: 10px;">{removeExtension(name)}</p>
+                                </span>
                                 <Icon id="add" size={0.9} white right />
-                                <p style="min-height: 10px;">{removeExtension(name)}</p>
                             </MaterialButton>
                         {/each}
                     </div>
