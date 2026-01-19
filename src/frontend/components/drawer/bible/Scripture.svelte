@@ -430,6 +430,7 @@
 
     let previousSelection: (number | string)[] = []
     let isSelected = false
+    let selectedTimeout: NodeJS.Timeout | null = null
     function updateVersesSelection(e: any, verseNumber: string, isClick: boolean = false) {
         const selectedVerses = clone(activeReference.verses)
 
@@ -443,7 +444,8 @@
         previousSelection = clone(selectedVerses[selectedVerses.length - 1])
 
         isSelected = true
-        setTimeout(() => (isSelected = false), 100)
+        if (selectedTimeout) clearTimeout(selectedTimeout)
+        selectedTimeout = setTimeout(() => (isSelected = false), 100)
 
         const keys = e.ctrlKey || e.metaKey || e.shiftKey
         if (keys || !selectedVerses[selectedVerses.length - 1]?.find((a) => a && (a.toString() === verseNumber || a === getVerseId(verseNumber)))) {
@@ -451,10 +453,10 @@
 
             // Remove plain verse IDs if split versions exist (e.g., remove "1" if "1_1", "1_2" are present)
             const currentSelection = selectedVerses[selectedVerses.length - 1]
-            const splitVerseIds = currentSelection.filter(id => id.toString().includes("_"))
+            const splitVerseIds = currentSelection.filter((id) => id.toString().includes("_"))
             if (splitVerseIds.length > 0) {
-                const baseIdsToRemove = new Set(splitVerseIds.map(id => id.toString().split("_")[0]))
-                selectedVerses[selectedVerses.length - 1] = currentSelection.filter(id => {
+                const baseIdsToRemove = new Set(splitVerseIds.map((id) => id.toString().split("_")[0]))
+                selectedVerses[selectedVerses.length - 1] = currentSelection.filter((id) => {
                     const idStr = id.toString()
                     return idStr.includes("_") || !baseIdsToRemove.has(idStr)
                 })
@@ -491,9 +493,12 @@
 
     $: if (searchValue.length) referenceSearch()
 
+    let selectAllTimeout: NodeJS.Timeout | null = null
     let freezeTimeout: NodeJS.Timeout | null = null
     let freezeInput: string | null = null
     async function referenceSearch() {
+        if (selectAllTimeout) clearTimeout(selectAllTimeout)
+
         // if search value ends with any number, unfreeze
         if (/\d$/.test(searchValue) || searchValue.length < (freezeInput?.length || 0)) {
             if (freezeTimeout) clearTimeout(freezeTimeout)
@@ -533,7 +538,7 @@
 
             // VERSES
             if (result.verses.length) openVerse([result.verses])
-            else setTimeout(selectAllVerses)
+            else selectAllTimeout = setTimeout(selectAllVerses)
         }
     }
 
