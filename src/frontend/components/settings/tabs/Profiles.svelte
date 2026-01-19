@@ -1,9 +1,11 @@
 <script lang="ts">
     import type { AccessType, Profile } from "../../../../types/Main"
     import { SettingsTabs } from "../../../../types/Tabs"
-    import { activeProfile, categories, folders, overlayCategories, profiles, selectedProfile, stageShows, templateCategories } from "../../../stores"
+    import { activeProfile, categories, folders, overlayCategories, profiles, selectedProfile, special, stageShows, templateCategories } from "../../../stores"
+    import { newToast } from "../../../utils/common"
     import { translateText } from "../../../utils/language"
-    import { encodePassword } from "../../../utils/profile"
+    import { promptCustom } from "../../../utils/popup"
+    import { checkPassword, encodePassword } from "../../../utils/profile"
     import { clone, keysToID, sortByName } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import Icon from "../../helpers/Icon.svelte"
@@ -142,10 +144,30 @@
     }
 
     $: profilesList = Object.keys($profiles).filter((a) => a !== "admin")
+
+    async function setCurrentAsActive() {
+        // require password if setting admin profile (and password exists)
+        if (profileId === "" && hasAdminPass) {
+            const pwd = await promptCustom(translateText("remote.password"))
+            const adminPassword = $profiles.admin?.password || ""
+            if (!checkPassword(pwd, adminPassword)) {
+                newToast("remote.wrong_password")
+                return
+            }
+        }
+
+        activeProfile.set(profileId)
+
+        // store last used profile
+        special.update((a) => {
+            a.lastUsedProfile = profileId
+            return a
+        })
+    }
 </script>
 
 {#if $activeProfile !== profileId && profilesList.length}
-    <MaterialButton variant="outlined" style="width: 100%;margin-bottom: 10px;" icon="check" on:click={() => activeProfile.set(profileId)}>
+    <MaterialButton variant="outlined" style="width: 100%;margin-bottom: 10px;" icon="check" on:click={setCurrentAsActive}>
         <T id="profile.set_active" />
     </MaterialButton>
 {/if}
