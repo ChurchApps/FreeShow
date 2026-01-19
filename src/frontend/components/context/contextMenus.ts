@@ -356,6 +356,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     theme: ["rename", "duplicate", "delete", "SEPARATOR", "export", "SEPARATOR", "reset_theme"],
     style: ["rename", "duplicate", "delete", "SEPARATOR", "reset"],
     profile_tab: ["rename", "recolor", "duplicate", "delete", "SEPARATOR", "reset"],
+    profile_tab_admin: [],
     output_screen: ["rename", "recolor", "duplicate", "delete"], // , "SEPARATOR", "reset"
     output_screen_stage: ["rename", "recolor", "duplicate", "delete"] // , "SEPARATOR", "reset"
 }

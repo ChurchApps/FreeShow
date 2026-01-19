@@ -1228,6 +1228,8 @@ const duplicateActions = {
     },
     profile: (data: any) => {
         data.forEach(({ id }) => {
+            if (!id) return
+
             const profile = clone(get(profiles)[id])
             id = uid()
             history({ id: "UPDATE", newData: { data: profile, replace: { name: profile.name + " 2" } }, oldData: { id }, location: { page: "settings", id: "settings_profile" } })

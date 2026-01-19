@@ -1385,8 +1385,10 @@
         "write": "Write",
         "set_active": "Set as active",
         "choose_profile": "Choose a profile",
+        "change_profile": "Change profile",
         "choose_admin": "Only continue if you know what you are doing. Choose admin profile?",
-        "locked": "Your selected profile has restricted access to this!"
+        "locked": "Your selected profile has restricted access to this!",
+        "auto_open_last_used": "Auto open last used profile on startup"
     },
     "sort": {
         "sort_by": "Sort by",

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activeProfile, profiles } from "../../stores"
+    import { activeProfile, profiles, special } from "../../stores"
     import { newToast, wait } from "../../utils/common"
     import { translateText } from "../../utils/language"
     import { confirmCustom, promptCustom } from "../../utils/popup"
@@ -28,6 +28,12 @@
         await wait(50)
 
         activeProfile.set(id)
+
+        // store last used profile
+        special.update((a) => {
+            a.lastUsedProfile = id
+            return a
+        })
     }
 </script>
 
@@ -39,7 +45,7 @@
         {#each profilesList as profile}
             <Button title="{translateText('profile.set_active')}: {profile.name}" style="padding: 1.8em;" on:click={() => selectProfile(profile.id)}>
                 <div class="profile">
-                    <Icon id={profile.id ? "profiles" : "admin"} size={8} style="fill: {profile.color || 'white'};" />
+                    <Icon id={profile.id ? "profiles" : "admin"} size={8} style="fill: {profile.color || 'white'};" white />
                     <p>{profile.name}</p>
                 </div>
             </Button>

@@ -12,7 +12,7 @@ import { wait, waitUntilValueIsDefined } from "./common"
 import { getDefaultElements } from "./createData"
 import { setLanguage } from "./language"
 import { storeSubscriber } from "./listeners"
-import { openProfileByName } from "./profile"
+import { autoOpenLastUsedProfile, openProfileByName } from "./profile"
 import { receiveOUTPUTasOUTPUT, remoteListen, setupMainReceivers } from "./receivers"
 import { destroy, receive, send } from "./request"
 import { save, unsavedUpdater } from "./save"
@@ -58,6 +58,7 @@ async function startupMain() {
     await waitUntilValueIsDefined(() => get(loaded), 100, 8000)
 
     if (startupProfile) openProfileByName(startupProfile)
+    else autoOpenLastUsedProfile()
 
     storeSubscriber()
     remoteListen()

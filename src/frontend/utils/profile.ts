@@ -1,5 +1,5 @@
 import { get } from "svelte/store"
-import { activeProfile, profiles } from "../stores"
+import { activeProfile, profiles, showChangeProfileMenu, special } from "../stores"
 
 export function getAccess(id: string) {
     return get(activeProfile) ? get(profiles)[get(activeProfile)!]?.access[id] || {} : {}
@@ -17,6 +17,18 @@ export function openProfileByName(profileName: string) {
 
     if (!profileId) return
     activeProfile.set(profileId)
+}
+
+export function autoOpenLastUsedProfile() {
+    if (!get(profiles).admin?.autoOpenLastUsed) return
+
+    const lastUsedId = get(special).lastUsedProfile
+    if (lastUsedId !== "" && (!lastUsedId || !get(profiles)[lastUsedId])) return
+
+    activeProfile.set(lastUsedId)
+
+    showChangeProfileMenu.set(true)
+    setTimeout(() => showChangeProfileMenu.set(false), 5000)
 }
 
 // doesn't need to be secure
