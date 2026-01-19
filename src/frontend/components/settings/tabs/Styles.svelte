@@ -194,7 +194,7 @@
 <!-- WIP toggle meta -->
 
 <!-- Background -->
-<Title label="preview.background" icon="background" />
+<Title label="preview.background" icon="image" />
 
 <MaterialNumberInput label="media.volume (%)" disabled={!activeLayers.includes("background")} value={currentStyle.volume ?? 100} defaultValue={100} max={100} on:change={(e) => updateStyle(e.detail, "volume")} />
 

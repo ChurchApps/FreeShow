@@ -3,7 +3,7 @@
     import type { ContentProviderId } from "../../../../electron/contentProviders/base/types"
     import { Main } from "../../../../types/IPC/Main"
     import { requestMain, sendMain } from "../../../IPC/main"
-    import { activePage, activePopup, activeShow, activeTriggerFunction, companion, connections, contentProviderData, disabledServers, maxConnections, outputs, popupData, ports, providerConnections, serverData, special } from "../../../stores"
+    import { activePage, activePopup, activeShow, activeTriggerFunction, cloudSyncData, companion, connections, contentProviderData, disabledServers, maxConnections, outputs, popupData, ports, providerConnections, serverData, special } from "../../../stores"
     import { contentProviderSync } from "../../../utils/startup"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -98,13 +98,24 @@
     $: cloudOnly = { churchApps: !!$special.churchAppsCloudOnly }
     function contentProviderConnect(providerId: ContentProviderId) {
         if (!$providerConnections[providerId] || cloudOnly[providerId]) {
-            special.update((a) => {
-                delete a.churchAppsCloudOnly
-                return a
-            })
+            if (providerId === "churchApps") {
+                special.update((a) => {
+                    delete a.churchAppsCloudOnly
+                    return a
+                })
+            }
 
             sendMain(Main.PROVIDER_LOAD_SERVICES, { providerId, cloudOnly: cloudOnly[providerId] || false })
         } else {
+            if ($cloudSyncData.enabled && providerId === $cloudSyncData.id) {
+                // should remain connected to cloud
+                special.update((a) => {
+                    a.churchAppsCloudOnly = true
+                    return a
+                })
+                return
+            }
+
             requestMain(Main.PROVIDER_DISCONNECT, { providerId }, (a) => {
                 if (!a.success) return
                 providerConnections.update((c) => {

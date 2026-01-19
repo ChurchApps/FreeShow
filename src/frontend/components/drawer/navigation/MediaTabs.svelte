@@ -5,7 +5,7 @@
     import { Main } from "../../../../types/IPC/Main"
     import { ToMain } from "../../../../types/IPC/ToMain"
     import { destroyMain, receiveToMain, requestMain, sendMain } from "../../../IPC/main"
-    import { drawerTabsData, labelsDisabled, media, mediaFolders, providerConnections } from "../../../stores"
+    import { drawerTabsData, labelsDisabled, media, mediaFolders, providerConnections, special } from "../../../stores"
     import { getAccess } from "../../../utils/profile"
     import { keysToID, sortObject } from "../../helpers/array"
     import { addDrawerFolder } from "../../helpers/dropActions"
@@ -56,14 +56,15 @@
         })
     }
 
+    $: curriculumProviders = contentProviders.filter((a) => a.providerId !== "churchApps" || $special.churchAppsCloudOnly !== true)
+
     let sections: any[] = []
     $: sections = [
         [
             { id: "all", label: "category.all", icon: "all", count: allCount },
             { id: "favourites", label: "category.favourites", icon: "star", count: favoritesListLength, hidden: !favoritesListLength && activeSubTab !== "favourites" }
         ],
-        // WIP Providers
-        ...(contentProviders.length ? [[{ id: "TITLE", label: "Curriculum" }, ...contentProviders.map((p) => ({ id: p.providerId, label: p.displayName, icon: "web" }))]] : []),
+        ...(curriculumProviders.length ? [[{ id: "TITLE", label: "Curriculum" }, ...curriculumProviders.map((a) => ({ id: a.providerId, label: a.displayName, icon: "web" }))]] : []),
         [{ id: "online", label: "media.online", icon: "web" }, "SEPARATOR", { id: "screens", label: "live.screens", icon: "screen" }, { id: "cameras", label: "live.cameras", icon: "camera" }].filter(Boolean),
         [{ id: "TITLE", label: "media.folders" }, ...convertToButton(foldersList, folderLengths)]
     ]

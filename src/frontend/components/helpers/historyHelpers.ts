@@ -311,7 +311,7 @@ export const _updaters = {
 
     show: {
         store: showsCache,
-        empty: new ShowObj(),
+        empty: new ShowObj(), // this should not be used (it's not updated)
         initialize: (data: any) => {
             const replacer: any = {}
 
