@@ -153,6 +153,7 @@
         font-size: 100px;
         line-height: 1.1;
         -webkit-text-stroke-color: #000000;
+        paint-order: stroke fill;
 
         border-style: solid;
         border-width: 0px;

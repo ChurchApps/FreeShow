@@ -1,10 +1,9 @@
+import { app as electronApp } from "electron"
 import type { Request, Response } from "express"
 import path from "path"
-import { app as electronApp } from "electron"
 import { stores } from "../../../electron/data/store"
 import { readFile } from "../../../electron/utils/files"
-import type { TrimmedShow, Show, Slide, SlideData } from "../../../types/Show"
-import type { Media as ItemMedia } from "../../../types/Show"
+import type { Media as ItemMedia, Show, Slide, SlideData, TrimmedShow } from "../../../types/Show"
 import { getMediaUrl } from "./MediaHelper"
 
 // Desktop app constants
@@ -254,7 +253,7 @@ export function generateSlideHtmlResponse(showData: Show, slideData: Slide, show
                     // Process each text segment in the line
                     for (const textSegment of line.text) {
                         // Start with default text styling using viewport-based sizing
-                        let spanStyle = `font-size: min(${(DEFAULT_FONT_SIZE / 1920) * 100}vw, ${(DEFAULT_FONT_SIZE / 1080) * 100}vh); min-height: min(${(50 / 1920) * 100}vw, ${(50 / 1080) * 100}vh); color: white; font-family: 'CMGSans', sans-serif; line-height: 1.1; text-shadow: 2px 2px 10px #000000; -webkit-text-stroke-color: #000000; font-weight: bold;`
+                        let spanStyle = `font-size: min(${(DEFAULT_FONT_SIZE / 1920) * 100}vw, ${(DEFAULT_FONT_SIZE / 1080) * 100}vh); min-height: min(${(50 / 1920) * 100}vw, ${(50 / 1080) * 100}vh); color: white; font-family: 'CMGSans', sans-serif; line-height: 1.1; text-shadow: 2px 2px 10px #000000; -webkit-text-stroke-color: #000000; paint-order: stroke fill; font-weight: bold;`
 
                         // Apply individual text segment styles - this is where custom styling happens
                         if (textSegment.style) {

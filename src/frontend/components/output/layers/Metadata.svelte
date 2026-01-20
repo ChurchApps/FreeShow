@@ -54,6 +54,7 @@
         font-family: unset;
         line-height: 1.1;
         -webkit-text-stroke-color: #000000;
+        paint-order: stroke fill;
         text-shadow: 2px 2px 10px #000000;
 
         border-style: solid;
