@@ -117,7 +117,15 @@ export async function syncWithCloud(initialize: boolean = false) {
     setStatus("synced", 3)
 
     // reset cached shows as they might have changed
-    showsCache.set({})
+    const allShowIds = Object.keys(get(shows))
+    const syncedShowIds = Object.keys(get(showsCache)).filter((id) => allShowIds.includes(id))
+    showsCache.update((a) => {
+        // only delete shows that were synced, so any shows created while syncing don't get deleted
+        syncedShowIds.forEach((id) => {
+            delete a[id]
+        })
+        return a
+    })
 
     // reload current show
     const currentlyActive = get(activeShow)?.id || ""

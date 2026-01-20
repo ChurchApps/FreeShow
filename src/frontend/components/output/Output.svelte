@@ -336,7 +336,7 @@
     {/if}
 
     <!-- background -->
-    {#if (layers.includes("background") || backgroundData?.ignoreLayer) && backgroundData}
+    {#if (backgroundData?.ignoreLayer ? layers.includes("slide") : layers.includes("background")) && backgroundData}
         <Background data={backgroundData} {outputId} transition={transitions.media} {currentStyle} {slideFilter} {ratio} animationStyle={animationData.style?.background || ""} {mirror} />
     {/if}
 

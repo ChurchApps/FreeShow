@@ -195,10 +195,14 @@
     }
 
     function next() {
-        scriptureContentRef?.forward?.()
+        // scriptureContentRef?.forward?.()
+        send("API:scripture_next")
+        // if (typeof currentVerse === "number") currentVerse++
     }
     function previous() {
-        scriptureContentRef?.backward?.()
+        // scriptureContentRef?.backward?.()
+        send("API:scripture_previous")
+        // if (typeof currentVerse === "number") currentVerse--
     }
 
     // UI control visibility
@@ -933,10 +937,10 @@
 
             {#if tablet}
                 <div class="floating-controls-container">
-                    <Button on:click={() => scriptureContentRef?.backward()} center dark class="floating-control-button" title="Previous">
+                    <Button on:click={previous} center dark class="floating-control-button" title="Previous">
                         <Icon id="previous" white size={1.2} />
                     </Button>
-                    <Button on:click={() => scriptureContentRef?.forward()} center dark class="floating-control-button" title="Next">
+                    <Button on:click={next} center dark class="floating-control-button" title="Next">
                         <Icon id="next" white size={1.2} />
                     </Button>
                     {#if isCollection && collectionScripturesData.length > 1}
