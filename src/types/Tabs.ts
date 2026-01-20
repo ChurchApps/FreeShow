@@ -6,7 +6,8 @@ export interface Category {
     icon?: null | string
     path?: string
     id?: string
-    type?: "youtube" | "vimeo"
+    type?: "youtube" | "vimeo" // DEPRECATED
+    mediaType?: "background" | "foreground"
     url?: string
     default?: boolean
     description?: string

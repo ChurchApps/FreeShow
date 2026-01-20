@@ -13,6 +13,7 @@
     import Popup from "./components/main/Popup.svelte"
     import ProfileSelector from "./components/main/ProfileSelector.svelte"
     import Recorder from "./components/main/Recorder.svelte"
+    import StatusIndicator from "./components/main/StatusIndicator.svelte"
     import Toast from "./components/main/Toast.svelte"
     import TooltipManager from "./components/main/TooltipManager.svelte"
     import QuickSearch from "./components/quicksearch/QuickSearch.svelte"
@@ -78,6 +79,7 @@
             <Popup />
             <QuickSearch />
             <Toast />
+            <StatusIndicator />
             <Recorder />
             <Guide />
             <MediaDownloadProgress />

@@ -75,9 +75,9 @@ export function addStyleString(oldStyle: string, style: any[]): string {
     let array: string[] = oldStyle.split(";")
     // remove last if empty
     if (!array[array.length - 1].length) array.pop()
-    // remove old styles
-    array.forEach((s, i) => {
-        if (s.split(":")[0].trim() === style[0] || !s.length) array.splice(i, 1)
+    // remove old styles using filter to avoid index issues
+    array = array.filter((s) => {
+        return s.split(":")[0].trim() !== style[0] && s.length > 0
     })
 
     // remove font if changing family

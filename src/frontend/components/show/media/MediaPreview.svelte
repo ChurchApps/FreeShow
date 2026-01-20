@@ -3,7 +3,7 @@
     import { ProjectShowRef } from "../../../../types/Projects"
     import { activeShow, media, outLocked, outputs, styles } from "../../../stores"
     import Image from "../../drawer/media/Image.svelte"
-    import { getMedia, getMediaStyle } from "../../helpers/media"
+    import { getMedia, getMediaLayerType, getMediaStyle } from "../../helpers/media"
     import { getActiveOutputs, getCurrentStyle, setOutput } from "../../helpers/output"
     import HoverButton from "../../inputs/HoverButton.svelte"
     import { clearSlide } from "../../output/clear"
@@ -52,7 +52,7 @@
                     on:click={() => {
                         if ($outLocked) return
 
-                        const type = mediaData.videoType
+                        const type = getMediaLayerType(mediaPath, mediaStyle)
                         if (type === "foreground" || type !== "background") clearSlide()
 
                         setOutput("background", { path: mediaPath, ...mediaStyle })

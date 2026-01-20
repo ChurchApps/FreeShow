@@ -12,7 +12,7 @@
     import MediaLoader from "../../drawer/media/MediaLoader.svelte"
     import { keysToID, sortByName } from "../../helpers/array"
     import Icon from "../../helpers/Icon.svelte"
-    import { getExtension, getMediaStyle, getMediaType, getVideoDuration } from "../../helpers/media"
+    import { getExtension, getMediaLayerType, getMediaStyle, getMediaType, getVideoDuration } from "../../helpers/media"
     import { findMatchingOut, getFirstActiveOutput, setOutput, startFolderTimer } from "../../helpers/output"
     import T from "../../helpers/T.svelte"
     import { joinTime, secondsToTime } from "../../helpers/time"
@@ -64,7 +64,7 @@
 
         const mediaStyle = getMediaStyle($media[file.path], currentStyle)
 
-        let videoType = mediaStyle.videoType || ""
+        let videoType = getMediaLayerType(file.path, mediaStyle)
         let loop = videoType === "foreground" ? false : true
         let muted = videoType === "background" ? true : false
         if (videoType === "foreground") clearSlide()

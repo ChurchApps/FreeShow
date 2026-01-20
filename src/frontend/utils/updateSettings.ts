@@ -185,7 +185,7 @@ export function restartOutputs(specificId = "") {
 }
 
 export function updateThemeValues(themeValues: Themes) {
-    if (!themeValues) return
+    if (!themeValues?.colors) return
 
     Object.entries(themeValues.colors || {}).forEach(([key, value]) => document.documentElement.style.setProperty("--" + key, value))
     Object.entries(themeValues.font || {}).forEach(([key, value]) => {

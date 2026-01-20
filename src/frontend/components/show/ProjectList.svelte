@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import type { Tree } from "../../../types/Projects"
-    import { activeEdit, activeProject, activeShow, folders, labelsDisabled, openedFolders, projects, projectView, saved, showRecentlyUsedProjects } from "../../stores"
+    import { activeProject, folders, labelsDisabled, openedFolders, projects } from "../../stores"
     import { translateText } from "../../utils/language"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
@@ -12,6 +12,7 @@
     import Loader from "../main/Loader.svelte"
     import Center from "../system/Center.svelte"
     import SelectElem from "../system/SelectElem.svelte"
+    import { openProject } from "./project"
 
     export let tree: Tree[]
     export let readOnly = false
@@ -104,35 +105,7 @@
         if (e.detail.target.closest(".edit") || e.detail.target.querySelector(".edit") || editActive) return
         if (e.detail.ctrl) return
 
-        // set back to saved if opening, as project used time is changed
-        if ($saved) setTimeout(() => saved.set(true), 10)
-
-        // set last used
-        showRecentlyUsedProjects.set(false)
-        projects.update((a) => {
-            if (a[id]) a[id].used = Date.now()
-            return a
-        })
-
-        projectView.set(false)
-
-        let alreadyActive = $activeProject === id
-        if (alreadyActive) return
-
-        activeProject.set(id)
-
-        // select first if ALT key is NOT held down
-        if (e.detail.alt || !$projects[id]?.shows?.length) return
-
-        let showRef = $projects[id].shows[0]
-        if (!showRef) return
-
-        activeShow.set({ ...showRef, index: 0 })
-
-        let type = showRef.type
-        // same as ShowButton
-        if (type === "image" || type === "video") activeEdit.set({ id: showRef.id, type: "media", items: [] })
-        else if ($activeEdit.id) activeEdit.set({ type: "show", slide: 0, items: [], showId: showRef.id })
+        openProject(id, !e.detail.alt)
     }
 
     function toggleFolder(e: any, project: any, opened: boolean) {

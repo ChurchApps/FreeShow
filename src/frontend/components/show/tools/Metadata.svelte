@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import { activePage, activeShow, customMetadata, dictionary, outputs, settingsTab, shows, showsCache, styles, templates } from "../../../stores"
+    import { activeDrawerTab, activeEdit, activePage, activeShow, customMetadata, dictionary, outputs, settingsTab, shows, showsCache, styles, templates } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { history } from "../../helpers/history"
     import { getActiveOutputs } from "../../helpers/output"
@@ -102,6 +102,15 @@
             document.querySelector(".row")?.querySelector(".center")?.querySelector(".scroll")?.scrollTo(0, 1000)
         }, 80)
     }
+
+    $: metadataTemplate = (metadata.template ? metadata.template : outputShowSettings.metadataTemplate) || "metadata"
+    $: messageTemplate = (message.template ? message.template : outputShowSettings.messageTemplate) || "message"
+
+    function editTemplate(id: string) {
+        activeDrawerTab.set("templates")
+        activeEdit.set({ type: "template", id, items: [] })
+        activePage.set("edit")
+    }
 </script>
 
 <section>
@@ -137,10 +146,20 @@
             <MaterialPopupButton label="meta.display_metadata" value={metadataDisplay} defaultValue="never" name={metadataDisplayValues.find((a) => a.id === metadataDisplay)?.name || ""} popupId="metadata_display" icon="info" on:change={(e) => updateMetadata(e, "display")} />
 
             {#if metadataDisplay !== "never"}
-                <MaterialPopupButton label="meta.meta_template" value={(metadata.template ? metadata.template : outputShowSettings.metadataTemplate) || "metadata"} defaultValue="metadata" name={$templates[(metadata.template ? metadata.template : outputShowSettings.metadataTemplate) || "metadata"]?.name} popupId="select_template" icon="templates" on:change={(e) => updateMetadata(e, "template")} />
+                <InputRow>
+                    <MaterialPopupButton label="meta.meta_template" value={metadataTemplate} defaultValue="metadata" name={$templates[(metadata.template ? metadata.template : outputShowSettings.metadataTemplate) || "metadata"]?.name} popupId="select_template" icon="templates" on:change={(e) => updateMetadata(e, "template")} />
+                    {#if metadataTemplate && $templates[metadataTemplate]}
+                        <MaterialButton title="titlebar.edit" icon="edit" on:click={() => editTemplate(metadataTemplate)} />
+                    {/if}
+                </InputRow>
             {/if}
 
-            <MaterialPopupButton label="meta.message_template" value={(message.template ? message.template : outputShowSettings.messageTemplate) || "message"} defaultValue="message" name={$templates[(message.template ? message.template : outputShowSettings.messageTemplate) || "message"]?.name} popupId="select_template" icon="templates" on:change={updateMessageTemplate} />
+            <InputRow>
+                <MaterialPopupButton label="meta.message_template" value={messageTemplate} defaultValue="message" name={$templates[(message.template ? message.template : outputShowSettings.messageTemplate) || "message"]?.name} popupId="select_template" icon="templates" on:change={updateMessageTemplate} />
+                {#if messageTemplate && $templates[messageTemplate]}
+                    <MaterialButton title="titlebar.edit" icon="edit" on:click={() => editTemplate(messageTemplate)} />
+                {/if}
+            </InputRow>
         {/if}
     </div>
 

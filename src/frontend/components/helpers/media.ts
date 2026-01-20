@@ -352,6 +352,30 @@ export function getMediaStyle(mediaObj: MediaStyle | undefined, currentStyle: St
     return mediaStyle
 }
 
+export function getMediaLayerType(path: string, style: MediaStyle | null): "" | "background" | "foreground" {
+    if (style?.videoType) return style.videoType as "background" | "foreground"
+
+    // get multiple matching folder paths if children are added
+    let allMatchingFolderPaths: string[] = []
+    const mediaFolderPaths = Object.values(get(mediaFolders)).map((a) => a.path || "")
+    mediaFolderPaths.forEach((folderPath) => {
+        if (path.startsWith(folderPath)) allMatchingFolderPaths.push(folderPath)
+    })
+    if (!allMatchingFolderPaths.length) return ""
+
+    // get longest matching folder path (the closest to the actual file)
+    let matchedFolderPath = ""
+    allMatchingFolderPaths.forEach((folderPath) => {
+        if (folderPath.length > matchedFolderPath.length) matchedFolderPath = folderPath
+    })
+    if (!matchedFolderPath) return ""
+
+    const folderData = Object.values(get(mediaFolders)).find((a) => a.path === matchedFolderPath)
+    if (!folderData) return ""
+
+    return folderData.mediaType || ""
+}
+
 export const mediaSize = {
     big: 900, // stage & editor
     slideSize: 500, // slide + remote

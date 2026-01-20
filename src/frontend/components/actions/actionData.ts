@@ -25,7 +25,7 @@ export const actionData = {
     // CLEAR
     restore_output: { SECTION: "clear.general", name: "preview.restore_output", icon: "reset", incompatible: ["clear_all", "clear_background", "clear_slide", "clear_overlays", "clear_audio", "clear_next_timer"] },
     clear_all: { name: "clear.all", icon: "clear", incompatible: ["restore_output", "clear_background", "clear_slide", "clear_overlays", "clear_audio", "clear_next_timer"] },
-    clear_background: { slideId: "clearBackground", common: true, name: "clear.background", icon: "background", red: true, incompatible: ["restore_output", "clear_all"] },
+    clear_background: { slideId: "clearBackground", common: true, name: "clear.background", icon: "image", red: true, incompatible: ["restore_output", "clear_all"] },
     clear_slide: { common: true, name: "clear.slide", icon: "slide", red: true, incompatible: ["restore_output", "clear_all"] },
     clear_overlays: { slideId: "clearOverlays", common: true, name: "clear.overlays", icon: "overlays", red: true, incompatible: ["restore_output", "clear_all", "clear_overlay"] },
     clear_overlay: { name: "clear.overlay", icon: "overlays", input: "id", red: true, incompatible: ["restore_output", "clear_all", "clear_overlays"] }, // common: true,

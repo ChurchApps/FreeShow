@@ -7,7 +7,7 @@
     import { translateText } from "../../utils/language"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
-    import { enableSubtitle, encodeFilePath, getExtension, getFileName, removeExtension } from "../helpers/media"
+    import { enableSubtitle, encodeFilePath, getExtension, getFileName, getMediaLayerType, removeExtension } from "../helpers/media"
     import { getActiveOutputs, setOutput } from "../helpers/output"
     import { joinTime, secondsToTime } from "../helpers/time"
     import { getFirstOutputIdWithAudableBackground } from "../helpers/video"
@@ -179,7 +179,7 @@
 
     let shouldLoop = false
     let shouldBeMuted = false
-    $: videoType = mediaStyle.videoType || ""
+    $: videoType = getMediaLayerType(mediaPath, mediaStyle)
     $: if (mediaPath) {
         shouldLoop = videoType === "background" ? true : false
         shouldBeMuted = videoType === "background" ? true : false

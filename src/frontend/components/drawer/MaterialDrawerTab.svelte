@@ -16,6 +16,7 @@
     $: id = category.id
     $: label = category.label
     $: icon = category.icon
+    $: option = category.option
     $: action = category.action || ""
     $: template = category.template || ""
     $: count = category.count || 0
@@ -109,6 +110,11 @@
             {/if}
         </div>
 
+        {#if option}
+            <span style="padding: 0 5px;{option.style}" data-title={translateText(option.title)}>
+                <Icon id={option.icon} size={0.8} white />
+            </span>
+        {/if}
         {#if template && $templates[template]}
             <span style="padding: 0 5px;" data-title={translateText(`info.template: <b>${$templates[template].name}</b>`)}>
                 <Icon id="templates" size={0.8} white />

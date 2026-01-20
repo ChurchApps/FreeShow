@@ -287,7 +287,8 @@ export interface Profiles {
 export interface Profile {
     name: string
     color: string
-    password?: string
+    password?: string // currently admin only
+    autoOpenLastUsed?: boolean // admin only
     image: string
     access: { [key: string]: { [key: string]: AccessType } }
 }

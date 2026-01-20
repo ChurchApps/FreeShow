@@ -1,9 +1,11 @@
 <script lang="ts">
     import type { AccessType, Profile } from "../../../../types/Main"
     import { SettingsTabs } from "../../../../types/Tabs"
-    import { activeProfile, categories, folders, overlayCategories, profiles, selectedProfile, stageShows, templateCategories } from "../../../stores"
+    import { activeProfile, categories, folders, overlayCategories, profiles, selectedProfile, special, stageShows, templateCategories } from "../../../stores"
+    import { newToast } from "../../../utils/common"
     import { translateText } from "../../../utils/language"
-    import { encodePassword } from "../../../utils/profile"
+    import { promptCustom } from "../../../utils/popup"
+    import { checkPassword, encodePassword } from "../../../utils/profile"
     import { clone, keysToID, sortByName } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import Icon from "../../helpers/Icon.svelte"
@@ -12,6 +14,7 @@
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialMultiButtons from "../../inputs/MaterialMultiButtons.svelte"
     import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
+    import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
     import Center from "../../system/Center.svelte"
 
     // set id after deletion
@@ -129,25 +132,52 @@
     $: hasAdminPass = !!$profiles.admin?.password
     function setAdminPassword(e: any) {
         const password = e.detail
+        updateAdmin("password", password ? encodePassword(password) : "")
+    }
 
+    function updateAdmin(key: string, value: any) {
         profiles.update((a) => {
-            a.admin = { name: "", color: "", image: "", password: password ? encodePassword(password) : "", access: {} }
+            if (!a.admin) a.admin = { name: "", color: "", image: "", access: {} }
+            ;(a.admin as any)[key] = value
             return a
         })
     }
 
     $: profilesList = Object.keys($profiles).filter((a) => a !== "admin")
+
+    async function setCurrentAsActive() {
+        // require password if setting admin profile (and password exists)
+        if (profileId === "" && hasAdminPass) {
+            const pwd = await promptCustom(translateText("remote.password"))
+            const adminPassword = $profiles.admin?.password || ""
+            if (!checkPassword(pwd, adminPassword)) {
+                newToast("remote.wrong_password")
+                return
+            }
+        }
+
+        activeProfile.set(profileId)
+
+        // store last used profile
+        special.update((a) => {
+            a.lastUsedProfile = profileId
+            return a
+        })
+    }
 </script>
 
 {#if $activeProfile !== profileId && profilesList.length}
-    <MaterialButton variant="outlined" style="width: 100%;margin-bottom: 10px;" icon="check" on:click={() => activeProfile.set(profileId)}>
+    <MaterialButton variant="outlined" style="width: 100%;margin-bottom: 10px;" icon="check" on:click={setCurrentAsActive}>
         <T id="profile.set_active" />
     </MaterialButton>
 {/if}
 
 {#if !profileId || !profilesList.length}
     {#if profilesList.length && !$activeProfile}
-        <MaterialTextInput label="remote.password" disabled={hasAdminPass} value={hasAdminPass ? "****" : ""} defaultValue="" on:change={setAdminPassword} />
+        <!-- Admin settings -->
+        <MaterialTextInput label="remote.password" disabled={hasAdminPass} value={hasAdminPass ? "*****" : ""} defaultValue="" on:change={setAdminPassword} />
+
+        <MaterialToggleSwitch label="profile.auto_open_last_used" checked={currentProfile.autoOpenLastUsed || false} defaultValue={false} on:change={(e) => updateAdmin("autoOpenLastUsed", e.detail)} />
     {/if}
 
     <Center style="height: 82%;opacity: 0.1;">

@@ -20,6 +20,7 @@
     import Center from "../../system/Center.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
     import VirtualList from "../VirtualList.svelte"
+    import { ShowObj } from "../../../classes/Show"
 
     export let active: string | null
     export let searchValue: string
@@ -209,8 +210,9 @@
 
         const { ctrl } = e.detail
         if (ctrl) {
+            let show = new ShowObj()
             const selectedIndex = $activeShow?.index === undefined ? undefined : $activeShow.index + 1
-            history({ id: "UPDATE", newData: { remember: { project: $activeProject, index: selectedIndex } }, location: { page: "show", id: "show" } })
+            history({ id: "UPDATE", newData: { data: show, remember: { project: $activeProject, index: selectedIndex } }, location: { page: "show", id: "show" } })
         } else {
             activePopup.set("show")
         }

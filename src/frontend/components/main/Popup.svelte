@@ -1,7 +1,7 @@
 <script lang="ts">
     import { fade, scale } from "svelte/transition"
     import type { Popups } from "../../../types/Main"
-    import { activePopup, os, special } from "../../stores"
+    import { activePopup, alertMessage, os, special } from "../../stores"
     import { MENU_BAR_HEIGHT } from "../../utils/common"
     import { popups } from "../../utils/popup"
     import { disablePopupClose } from "../../utils/shortcuts"
@@ -9,7 +9,9 @@
     import MaterialButton from "../inputs/MaterialButton.svelte"
 
     function mousedown(e: any) {
+        // same logic for Escape in shortcuts.ts
         if (popupId && disablePopupClose.includes(popupId)) return
+        if (popupId === "alert" && $alertMessage === "actions.closing") return
 
         if (e.target.classList.contains("popup")) activePopup.set(null)
     }

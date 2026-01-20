@@ -21,7 +21,7 @@ import { getItemText, getItemTextArray, getSlideText } from "../edit/scripts/tex
 import type { EditInput } from "../edit/values/boxes"
 import { clearBackground, clearSlide } from "../output/clear"
 import { areObjectsEqual, clone, keysToID, removeDuplicates, sortByName, sortObject } from "./array"
-import { getExtension, getFileName, removeExtension } from "./media"
+import { getExtension, getFileName, getMediaLayerType, removeExtension } from "./media"
 import { getLayoutRef } from "./show"
 import { getFewestOutputLines, getItemWithMostLines, replaceDynamicValues } from "./showActions"
 import { _show } from "./shows"
@@ -117,7 +117,8 @@ export function setOutput(type: string, data: any, toggle = false, outputId = ""
             // if current playing background is "foreground", clear it
             const currentBackground = get(outputs)[outs?.[0]]?.out?.background || {}
             const mediaData = get(media)[currentBackground.path || ""] || {}
-            if (mediaData.videoType === "foreground") clearBackground()
+            const mediaType = getMediaLayerType(currentBackground.path || "", mediaData)
+            if (mediaType === "foreground") clearBackground()
         }
 
         let toggleState = false
@@ -841,7 +842,21 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
         if (mode === "item") return finish()
 
         if (resetAutoSize) delete item.autoFontSize
-        item.auto = templateItem.auto || false
+
+        // Handle auto and textFit properties
+        if (templateItem.auto !== undefined) {
+            // Template explicitly defines auto
+            item.auto = templateItem.auto
+        } else if (templateItem.textFit) {
+            // Template has textFit but not auto - enable auto (textFit implies auto-sizing)
+            if (templateItem.textFit !== "none") item.auto = true
+        } else if (templateItem.auto === undefined && templateItem.textFit === undefined) {
+            // Template defines neither - disable auto-sizing (simple static template)
+            item.auto = false
+            delete item.textFit
+        }
+
+        // Apply textFit if template defines it
         if (templateItem.textFit) item.textFit = templateItem.textFit
         if (templateItem.list) item.list = templateItem.list
 
@@ -853,7 +868,8 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
 
         // remove exiting styling & add new if set in template
         // WIP some keys are probably missing here...
-        const extraStyles = ["chords", "textFit", "actions", "specialStyle", "scrolling", "bindings", "conditions", "clickReveal", "lineReveal", "fit", "filter", "flipped", "flippedY"]
+        // NOTE: textFit is already handled above in the auto/textFit logic block
+        const extraStyles = ["chords", "actions", "specialStyle", "scrolling", "bindings", "conditions", "clickReveal", "lineReveal", "fit", "filter", "flipped", "flippedY"]
         extraStyles.forEach((key) => {
             delete item[key]
             if (templateItem[key]) item[key] = templateItem[key]
@@ -1182,8 +1198,24 @@ export function setTemplateStyle(outSlide: OutSlide | null, currentStyle: Styles
     const template = getStyleTemplate(outSlide, currentStyle)
     const templateItems = template.items || []
     const mode = template?.settings?.mode
+
+    // console.log("[DEBUG - setTemplateStyle]", {
+    //     outSlideId: outSlide?.id,
+    //     templateId: currentStyle?.template,
+    //     templateMode: mode,
+    //     templateItemsCount: templateItems.length,
+    //     slideItemsCount: slideItems?.length,
+    //     templateAuto: templateItems?.find((i) => i.auto),
+    //     outputId
+    // })
+
     const newItems = mergeWithTemplate(slideItems || [], templateItems, true, true, false, mode) || []
     newItems.push(...getSlideItemsFromTemplate(template.settings || {}))
+
+    // console.log("[DEBUG - setTemplateStyle] After merge", {
+    //     newItemsCount: newItems.length,
+    //     newItemsAuto: newItems?.find((i) => i.auto)
+    // })
 
     return newItems
 

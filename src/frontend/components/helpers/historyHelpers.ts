@@ -311,7 +311,7 @@ export const _updaters = {
 
     show: {
         store: showsCache,
-        empty: new ShowObj(),
+        empty: new ShowObj(), // this should not be used (it's not updated)
         initialize: (data: any) => {
             const replacer: any = {}
 
@@ -440,7 +440,7 @@ export const _updaters = {
 
     show_key: {
         store: showsCache,
-        initialize: (data) => {
+        initialize: (data = {}) => {
             if (!data.timestamps) data.timestamps = {}
             data.timestamps.modified = Date.now()
             return data

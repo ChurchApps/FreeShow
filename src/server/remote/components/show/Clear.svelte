@@ -44,7 +44,7 @@
                     center
                     compact
                 >
-                    <Icon id="background" size={1.2} />
+                    <Icon id="image" size={1.2} />
                 </Button>
             {/if}
 

@@ -6,7 +6,7 @@
     import { getAccess } from "../../utils/profile"
     import { historyAwait } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
-    import { getFileName, getMediaStyle, removeExtension } from "../helpers/media"
+    import { getFileName, getMediaLayerType, getMediaStyle, removeExtension } from "../helpers/media"
     import { findMatchingOut, getActiveOutputs, setOutput } from "../helpers/output"
     import { loadShows } from "../helpers/setShow"
     import { checkName, getLayoutRef } from "../helpers/show"
@@ -137,7 +137,7 @@
             const mediaData = $media[id] || {}
             let mediaStyle: MediaStyle = getMediaStyle(mediaData, outputStyle)
 
-            const videoType = mediaData.videoType
+            const videoType = getMediaLayerType(id, mediaStyle)
             const shouldLoop = videoType === "background" ? show.loop || true : false
             const shouldBeMuted = videoType === "background" ? show.muted || true : false
 

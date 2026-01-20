@@ -10,6 +10,7 @@ import {
     actions,
     activePopup,
     activeProject,
+    alertMessage,
     alertUpdates,
     audioChannelsData,
     audioFolders,
@@ -80,6 +81,7 @@ import {
     special,
     splitLines,
     stageShows,
+    statusIndicator,
     styles,
     templateCategories,
     templates,
@@ -100,14 +102,22 @@ import {
 import type { SaveActions, SaveData, SaveList, SaveListSettings, SaveListSyncedSettings } from "./../../types/Save"
 import { audioStreams, companion } from "./../stores"
 import { syncWithCloud } from "./cloudSync"
-import { newToast } from "./common"
+import { newToast, setStatus } from "./common"
 import { syncDrive } from "./drive"
 
 export function save(closeWhenFinished = false, customTriggers: SaveActions = {}) {
+    // don't save again while saving
+    if (get(statusIndicator) === "saving") return
+
     console.info("SAVING...")
     if ((!customTriggers.autosave || !get(saved)) && !customTriggers.backup) {
-        newToast("toast.saving")
+        setStatus("saving")
         customActionActivation("save")
+    }
+
+    if (closeWhenFinished) {
+        alertMessage.set("actions.closing")
+        activePopup.set("alert")
     }
 
     const settings: { [key in SaveListSettings]: any } = {
@@ -233,7 +243,7 @@ export function save(closeWhenFinished = false, customTriggers: SaveActions = {}
 export async function saveComplete({ closeWhenFinished, customTriggers }: { closeWhenFinished: boolean; customTriggers?: SaveActions }) {
     const alreadySaved = get(saved)
     if (!closeWhenFinished) {
-        if ((!customTriggers?.autosave || !alreadySaved) && !customTriggers?.backup) newToast("toast.saved")
+        if ((!customTriggers?.autosave || !alreadySaved) && !customTriggers?.backup) setStatus("saved", 1)
 
         saved.set(true)
         console.info("SAVED!")

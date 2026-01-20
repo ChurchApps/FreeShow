@@ -17,7 +17,7 @@ import { addItem, DEFAULT_ITEM_STYLE } from "../edit/scripts/itemHelpers"
 import { clone, removeDuplicates } from "./array"
 import { projectDropFolders } from "./drop"
 import { history, historyAwait } from "./history"
-import { downloadOnlineMedia, getExtension, getFileName, getMediaStyle, getMediaType, removeExtension } from "./media"
+import { downloadOnlineMedia, getExtension, getFileName, getMediaLayerType, getMediaStyle, getMediaType, removeExtension } from "./media"
 import { addToPos, getIndexes, mover } from "./mover"
 import { getLayoutRef } from "./show"
 import { getVariableNameId } from "./showActions"
@@ -512,7 +512,7 @@ const slideDrop = {
             // "background" by default
             let backgroundData = { muted: true, loop: true }
             const mediaStyle = getMediaStyle(get(media)[path], undefined)
-            let type = mediaStyle.videoType || (shouldBeForeground ? "foreground" : "background")
+            let type = getMediaLayerType(path, mediaStyle) || (shouldBeForeground ? "foreground" : "background")
             if (a.contentProvider) type = "foreground"
             if (type === "foreground") backgroundData = { muted: false, loop: false }
 

@@ -1,10 +1,10 @@
 <script lang="ts">
     import { uid } from "uid"
     import type { Tree } from "../../../types/Projects"
-    import { activeEdit, activeProject, activeRename, activeShow, drawer, focusMode, folders, labelsDisabled, openedFolders, projects, projectTemplates, projectView, saved, showRecentlyUsedProjects, sorted } from "../../stores"
+    import { activeProject, activeRename, drawer, focusMode, folders, labelsDisabled, openedFolders, projects, projectTemplates, projectView, showRecentlyUsedProjects, sorted } from "../../stores"
     import { translateText } from "../../utils/language"
     import { getAccess } from "../../utils/profile"
-    import { clone, keysToID, removeDuplicateValues, sortByName, sortByTimeNew } from "../helpers/array"
+    import { clone, keysToID, removeDuplicateValues, sortByName } from "../helpers/array"
     import { history } from "../helpers/history"
     import { getProjectName } from "../helpers/historyHelpers"
     import Icon from "../helpers/Icon.svelte"
@@ -15,6 +15,7 @@
     import MaterialButton from "../inputs/MaterialButton.svelte"
     import Autoscroll from "../system/Autoscroll.svelte"
     import DropArea from "../system/DropArea.svelte"
+    import { getRecentlyUsedProjects, openProject } from "./project"
     import ProjectContentList from "./ProjectContentList.svelte"
     import ProjectList from "./ProjectList.svelte"
 
@@ -116,16 +117,8 @@
     else recentlyUsedList = []
 
     function lastUsed() {
-        const FIVE_DAYS = 432000000
-        // get all projects used within the last five days
-        recentlyUsedList = keysToID($projects).filter((a) => !a.archived && a.used && Date.now() - a.used < FIVE_DAYS)
-        // last used first
-        recentlyUsedList = sortByTimeNew(recentlyUsedList, "used").reverse()
-
-        if (recentlyUsedList.length < 2) {
-            recentlyUsedList = []
-            showRecentlyUsedProjects.set(false)
-        }
+        recentlyUsedList = getRecentlyUsedProjects()
+        if (!recentlyUsedList.length) showRecentlyUsedProjects.set(false)
     }
 
     // most recently interacted with folder (to put new project inside)
@@ -177,30 +170,7 @@
     function openRecentlyUsed(e: any, id: string) {
         if (e.detail.target.closest(".edit") || e.detail.target.querySelector(".edit")) return
 
-        // set back to saved if opening, as project used time is changed
-        if ($saved) setTimeout(() => saved.set(true), 10)
-
-        // set last used
-        showRecentlyUsedProjects.set(false)
-        projects.update((a) => {
-            if (a[id]) a[id].used = Date.now()
-            return a
-        })
-
-        projectView.set(false)
-        activeProject.set(id)
-
-        // select first
-        if (!$projects[id]?.shows?.length) return
-        let showRef = $projects[id].shows[0]
-        if (!showRef) return
-
-        activeShow.set({ ...showRef, index: 0 })
-
-        let type = showRef.type
-        // same as ShowButton
-        if (type === "image" || type === "video") activeEdit.set({ id: showRef.id, type: "media", items: [] })
-        else if ($activeEdit.id) activeEdit.set({ type: "show", slide: 0, items: [], showId: showRef.id })
+        openProject(id, !e.detail.alt)
     }
 </script>
 

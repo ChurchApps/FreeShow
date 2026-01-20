@@ -61,6 +61,12 @@ export async function decompressZip(files: string[], asBuffer = false, options?:
             const fileData = await decompressZipStream(file, asBuffer, options)
             data.push(...fileData)
         } catch (err) {
+            const errorMsg = (err as Error).message.toLowerCase()
+            if (errorMsg.includes("encrypted")) {
+                sendToMain(ToMain.ALERT, "Can't decompress, this file is password protected!")
+            } else {
+                sendToMain(ToMain.ALERT, `Failed to open zip file: ${file}`)
+            }
             console.error("Could not decompress zip file:", file, err)
         }
     }
@@ -74,12 +80,6 @@ export async function decompressZipStream(file: string, asBuffer = false, option
 
         yauzl.open(file, { lazyEntries: true }, (err, zipfile) => {
             if (err) {
-                const errorMsg = (err as Error).message
-                if (errorMsg.includes("Incompatible password parameter") || errorMsg.includes("encrypted")) {
-                    sendToMain(ToMain.ALERT, "Can't decompress, this file is password protected!")
-                } else {
-                    sendToMain(ToMain.ALERT, `Failed to open zip file: ${file}`)
-                }
                 reject(err)
                 return
             }
@@ -114,7 +114,14 @@ function processEntry(entry: yauzl.Entry, zipfile: yauzl.ZipFile, data: { conten
 
     zipfile.openReadStream(entry, (err, readStream) => {
         if (err || !readStream) {
-            if (err) console.error(err)
+            if (err) {
+                const errorMsg = (err as Error).message.toLowerCase()
+                if (errorMsg.includes("encrypted")) {
+                    sendToMain(ToMain.ALERT, "Can't decompress, this file is password protected!")
+                }
+                console.error(err)
+            }
+
             zipfile.readEntry()
             return
         }
@@ -156,6 +163,7 @@ function bufferInMemory(readStream: NodeJS.ReadableStream, name: string, extensi
         if (stringType) {
             if (content.length > STRING_CONVERT_LIMIT) {
                 console.warn(`Skipped converting large file to string: ${name} (${content.length} bytes)`)
+                zipfile.readEntry()
                 return
             }
 

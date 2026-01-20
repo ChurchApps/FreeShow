@@ -43,10 +43,8 @@
     $: url = `http://${useHostname ? hostname : ip}:${port}`
     $: if (url) generateQR(url)
 
-    function mousedown(e: any) {
-        if (e.target.closest("a")) {
-            activePopup.set(null)
-        }
+    function mouseup(e: any) {
+        if (e.target.closest("a")) activePopup.set(null)
     }
 
     let qrImg = ""
@@ -134,7 +132,7 @@
         <MaterialToggleSwitch label="settings.use_hostname" checked={$special.connectionHostname} defaultValue={false} on:change={(e) => updateSpecial("connectionHostname", e.detail)} />
     {/if}
 {:else}
-    <div on:mousedown={mousedown}>
+    <div on:mouseup={mouseup}>
         {#if id === "companion"}
             <Link url="https://freeshow.app/api">
                 API Docs

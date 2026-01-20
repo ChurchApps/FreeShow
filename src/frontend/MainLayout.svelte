@@ -11,9 +11,10 @@
     import ShowTools from "./components/show/ShowTools.svelte"
     import StageLayouts from "./components/stage/StageLayouts.svelte"
     import Resizeable from "./components/system/Resizeable.svelte"
-    import { activeEdit, activePage, activeShow, activeStage, currentWindow, focusMode, loaded, os, showsCache, textEditActive } from "./stores"
+    import { activeEdit, activePage, activeProfile, activeShow, activeStage, currentWindow, focusMode, loaded, os, showChangeProfileMenu, showsCache, textEditActive } from "./stores"
     import { DEFAULT_WIDTH } from "./utils/common"
     import Tipbar from "./components/main/Tipbar.svelte"
+    import ProfileChangerMenu from "./components/main/ProfileChangerMenu.svelte"
 
     $: page = $activePage
     $: isWindows = !$currentWindow && $os.platform === "win32"
@@ -102,6 +103,10 @@
 
     {#if $loaded && (page === "show" || page === "edit")}
         <LazyLoad component={() => import("./components/drawer/Drawer.svelte")} show={$loaded && (page === "show" || page === "edit")} />
+    {/if}
+
+    {#if $showChangeProfileMenu && $activeProfile !== null}
+        <ProfileChangerMenu />
     {/if}
 
     <Tipbar />

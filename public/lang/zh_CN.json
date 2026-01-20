@@ -355,6 +355,7 @@
     "inputs": {
         "name": "名称",
         "url": "地址",
+        "group": "分组",
         "method": "方法",
         "contentType": "内容类型",
         "payload": "数据",
@@ -399,7 +400,8 @@
         "offers": "报价",
         "notice": "通知",
         "visuals": "视觉",
-        "action_tip": "每次演示该类别的节目时触发的操作。"
+        "action_tip": "每次演示该类别的节目时触发的操作。",
+        "create_nonexistent": "创建不存在的分类"
     },
     "groups": {
         "current": "当前",
@@ -433,6 +435,7 @@
         "variable": "变量",
         "trigger": "触发器",
         "audio_stream": "音频流",
+        "now_playing": "正在播放的文件",
         "aspect_ratio": "修改宽高比",
         "max_lines": "设置最大行数",
         "transition": "转场动画",
@@ -446,6 +449,7 @@
         "choose_output": "选择输出类型",
         "choose_style": "选择样式预设",
         "change_output_values": "修改输出值",
+        "output_selector": "输出选择器",
         "choose_chord": "选择和弦",
         "set_time": "设置时间",
         "assign_shortcut": "分配快捷键",
@@ -484,6 +488,7 @@
         "manage_colors": "管理颜色",
         "manage_metadata": "管理元数据",
         "manage_dynamic_values": "管理动态值",
+        "template_style_overrides": "样式覆盖",
         "choose_camera": "选择相机",
         "manage_tags": "管理标签",
         "sync_categories": "同步分类",
@@ -492,6 +497,7 @@
         "unsaved": "您确定要退出吗？",
         "cancel": "取消",
         "continue": "继续",
+        "restore": "还原备份",
         "reset_all": "全部重置",
         "reset_all_confirm": "您确定要全部重置吗？",
         "reset_all_action": "这将重置整个程序，但不会删除您“节目”文件夹中的 .show 文件。",
@@ -764,6 +770,7 @@
         "start_playlist": "启动播放列表",
         "playlist_next": "播放列表中下一个音轨",
         "start_metronome": "启动节拍器",
+        "start_audio_effect": "启动音效特效",
         "id_start_timer": "启动计时器",
         "start_slide_timers": "在当前幻灯片上启动计时器",
         "id_select_output_style": "选择输出样式",
@@ -950,6 +957,8 @@
         "max_lines_per_slide": "单幻灯片最大行数",
         "break_long_lines": "长句换行",
         "break_long_lines_tip": "超过设定字数时换行",
+        "style_overrides_tip": "自动重设匹配单字的样式。",
+        "style_override_pattern": "单字或正则运算",
         "skip_virtual_breaks": "忽略虚拟换行符",
         "media_fit": "媒体适应",
         "cropping": "裁剪",
@@ -990,8 +999,8 @@
         "_title_top": "上对齐",
         "_title_bottom": "下对齐",
         "align_center": "居中",
-        "align_start": "开始",
-        "align_end": "结束",
+        "align_start": "上",
+        "align_end": "下",
         "outline": "描边",
         "shadow": "阴影",
         "shadow_inset": "内阴影",
@@ -1209,7 +1218,8 @@
         "source_output": "源输出",
         "auto_stretch": "自动撑开内容",
         "labels": "显示标签",
-        "label_color": "标签颜色"
+        "label_color": "标签颜色",
+        "create_stage_output": "创建舞台输出"
     },
     "settings": {
         "general": "通用",
@@ -1265,6 +1275,7 @@
         "disable_labels": "禁用标签",
         "group_numbers": "分组编号",
         "auto_group_numbers": "自动分配分组编号",
+        "shortcuts_on_slides": "在幻灯片上显示快捷键",
         "transparent_slides": "透明幻灯片预览",
         "full_colors": "高对比度分组颜色",
         "next_item_on_last_slide": "左/右箭头可在首张/末张幻灯片上切换项目项",
@@ -1297,15 +1308,11 @@
         "add": "添加",
         "remove": "移除",
         "change_name": "修改名称",
-        "show_location": "节目位置",
         "data_location": "数据位置",
-        "user_data_location": "将个人设置存储在“数据位置”",
-        "user_data_location_confirm": "只有在你清楚自己在做什么的情况下才继续。是否更改用户数据位置？",
-        "user_data_exists": "在自定义位置发现已有数据，是否要覆盖它？",
-        "user_data_yes": "是，保留当前数据",
-        "user_data_no": "否，导入已有数据",
         "auto_locate_missing_media_files": "自动定位丢失的媒体文件",
         "popup_before_close": "关闭时显示确认弹窗",
+        "log_song_usage": "将歌曲使用情况记录到文件中",
+        "auto_error_reporting": "自动错误报告",
         "disable_hardware_acceleration": "禁用硬件加速",
         "restart_for_change": "您必须重启程序才能使修改生效！",
         "font": "字体",
@@ -1353,7 +1360,8 @@
     },
     "output": {
         "state_inactive": "不活跃",
-        "state_locked": "已锁定"
+        "state_locked": "已锁定",
+        "disabled_layers": "已禁用的图层"
     },
     "profile": {
         "profiles_hint": "创建多角色配置以限制特定用户对程序选定部分的控制/编辑权限",
@@ -1415,6 +1423,7 @@
         "verse_numbers": "经文章节",
         "verses_on_individual_lines": "每行一句经文",
         "divide_long_verses": "分割长经文",
+        "split_long_verses_suffix": "显示字母后缀",
         "version": "节目版本",
         "reference": "节目偏好设置",
         "split_reference": "拆分偏好设置",
@@ -1422,6 +1431,7 @@
         "first_slide_reference": "在第一页幻灯片上引用",
         "reference_at_bottom": "移到底部",
         "red_jesus": "耶稣的话用红色显示",
+        "show_all": "显示全部",
         "search": "在圣经中搜索"
     },
     "filter": {
