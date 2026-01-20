@@ -97,6 +97,7 @@ function createSlides({ lyrics, presentation, backgrounds }: Song) {
             .split("\n")
             .splice(0, 1)[0]
             ?.replace(/[\[\]]/g, "")
+            .trim()
         if (group.startsWith(".")) group = "V"
         if (!groupText) return
 
