@@ -116,28 +116,31 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
 
             // download new/modified Bibles
             if (file.name.startsWith("BIBLE_")) {
-                const bibleName = file.name.replace("BIBLE_", "")
-                cloudBibleNames.push(bibleName)
+                try {
+                    const bibleName = file.name.replace("BIBLE_", "")
+                    cloudBibleNames.push(bibleName)
 
-                if (isDeleted("BIBLES", bibleName)) return
+                    if (isDeleted("BIBLES", bibleName)) return
 
-                const bibleDestPath = path.join(biblesFolder, bibleName)
+                    const bibleDestPath = path.join(biblesFolder, bibleName)
 
-                // exists only in cloud
-                const existsLocally = await doesPathExistAsync(bibleDestPath)
-                if (!existsLocally) {
-                    if (isCreated("BIBLES", bibleName)) await download()
-                    else markAsDeleted("BIBLES", bibleName)
-                    return
+                    // exists only in cloud
+                    const existsLocally = await doesPathExistAsync(bibleDestPath)
+                    if (!existsLocally) {
+                        if (isCreated("BIBLES", bibleName)) await download()
+                        else markAsDeleted("BIBLES", bibleName)
+                        return
+                    }
+
+                    // exists both locally and in cloud
+                    if (await cloudIsNewer(bibleDestPath, modifiedDates[file.name])) await download()
+
+                    async function download() {
+                        await moveFileAsync(cloudPath, bibleDestPath)
+                    }
+                } catch (err) {
+                    console.error("Failed to write bible:", file.name, err)
                 }
-
-                // exists both locally and in cloud
-                if (await cloudIsNewer(bibleDestPath, modifiedDates[file.name])) await download()
-
-                async function download() {
-                    await moveFileAsync(cloudPath, bibleDestPath)
-                }
-
                 return
             }
 
@@ -154,42 +157,46 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
 
                 await Promise.all(
                     Object.entries<Show>(cloudFileData).map(async ([id, show]) => {
-                        const fileName = (show.name || id) + ".show"
-                        cloudShowNames.push(fileName)
+                        try {
+                            const fileName = (show.name || id) + ".show"
+                            cloudShowNames.push(fileName)
 
-                        if (isDeleted("SHOWS_CONTENT", fileName)) return
+                            if (isDeleted("SHOWS_CONTENT", fileName)) return
 
-                        const localShowPath = path.join(showsFolder, fileName)
-                        const localFile = await readFileAsync(localShowPath)
+                            const localShowPath = path.join(showsFolder, fileName)
+                            const localFile = await readFileAsync(localShowPath)
 
-                        const cloudModTime = show.timestamps?.modified || show.timestamps?.created
-                        if (!cloudModTime) return
+                            const cloudModTime = show.timestamps?.modified || show.timestamps?.created
+                            if (!cloudModTime) return
 
-                        // exists only in cloud
-                        const existsLocally = !!localFile
-                        if (!existsLocally) {
-                            if (isCreated("SHOWS_CONTENT", fileName)) await download()
-                            else markAsDeleted("SHOWS_CONTENT", fileName)
-                            return
-                        }
+                            // exists only in cloud
+                            const existsLocally = !!localFile
+                            if (!existsLocally) {
+                                if (isCreated("SHOWS_CONTENT", fileName)) await download()
+                                else markAsDeleted("SHOWS_CONTENT", fileName)
+                                return
+                            }
 
-                        if (!isValidJSON(localFile)) {
-                            await download()
-                            return
-                        }
+                            if (!isValidJSON(localFile)) {
+                                await download()
+                                return
+                            }
 
-                        const localShow: Show = JSON.parse(localFile)[1]
-                        const localModTime = localShow.timestamps?.modified || localShow.timestamps?.created
+                            const localShow: Show = JSON.parse(localFile)[1]
+                            const localModTime = localShow.timestamps?.modified || localShow.timestamps?.created
 
-                        // exists both locally and in cloud
-                        const cloudIsNewer = cloudModTime > localModTime
-                        if (cloudIsNewer) {
-                            replacedShows.push(show.name)
-                            await download()
-                        }
+                            // exists both locally and in cloud
+                            const cloudIsNewer = cloudModTime > localModTime
+                            if (cloudIsNewer) {
+                                replacedShows.push(show.name)
+                                await download()
+                            }
 
-                        async function download() {
-                            await writeFileAsync(localShowPath, JSON.stringify([id, show]))
+                            async function download() {
+                                await writeFileAsync(localShowPath, JSON.stringify([id, show]))
+                            }
+                        } catch (err) {
+                            console.error("Failed to write show:", show.name, err)
                         }
                     })
                 )

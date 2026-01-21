@@ -28,7 +28,7 @@ export function checkName(name = "", showId = "") {
 export function formatToFileName(name = "") {
     name = name.replaceAll(":", ",")
     // remove illegal file name characters
-    name = name.trim().replace(/[/\\?%*:|"<>╠]/g, "")
+    name = name.trim().replace(/[/\\?%*:|│"<>╠┤╡╝╖┐¬]/g, "")
     // max 255 length
     if (name.length > 255) name = name.slice(0, 255)
 
