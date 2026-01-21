@@ -89,6 +89,7 @@
     let autoSizeReady = false
     // hold onto whether the visible output should stay hidden until autosize finishes
     let hideUntilAutosized = false
+
     let hideSafetyTimeout: NodeJS.Timeout | null = null
     $: if (hideUntilAutosized) {
         if (hideSafetyTimeout) clearTimeout(hideSafetyTimeout)
@@ -106,6 +107,7 @@
     // remember which item signature we already reset local font size for
     let lastRenderedSignature = ""
     onMount(() => {
+        
         if (preview) {
              // Defer slightly to ensure DOM layout is ready for measurement, preventing 0-width errors
              setTimeout(() => (loaded = true), 20)
@@ -297,8 +299,14 @@
     
     $: if (stateSignature !== lastRenderedSignature) {
         autoSizeReady = false
-        if (item?.auto || (item?.textFit || "none") !== "none") {
-            fontSize = item?.autoFontSize || 0
+        // Check if autosize is active - for STAGE, use stageAutoSize since slide items don't have auto/textFit set
+        const hasAutoSize = stageAutoSize || item?.auto || (item?.textFit || "none") !== "none"
+        if (hasAutoSize) {
+            // CRITICAL: For STAGE, don't use item?.autoFontSize because:
+            // 1. item.autoFontSize is computed for OUTPUT dimensions, not STAGE dimensions
+            // 2. Using OUTPUT's value causes giant text flash before STAGE autosize runs
+            // 3. STAGE must always compute its own autoFontSize independently
+            fontSize = isStage ? 0 : (item?.autoFontSize || 0)
             lastRenderedSignature = stateSignature
             hideUntilAutosized = shouldHideUntilAutoSizeCompletes()
         }
@@ -349,8 +357,12 @@
     let loopStop: NodeJS.Timeout | null = null
     let newCall = false
     async function calculateAutosize() {
+        const debugContext = isStage ? "STAGE" : (preview ? "PREVIEW" : "OUTPUT")
+
         if (item.type === "media" || item.type === "camera" || item.type === "icon") return
-        if (isStage && !stageAutoSize) return
+        if (isStage && !stageAutoSize) {
+            return
+        }
 
         if (loopStop) {
             newCall = true
@@ -386,6 +398,7 @@
 
             defaultFontSize = itemFontSize
             if (textFit === "growToFit" && itemFontSize !== 100) maxFontSize = itemFontSize
+
         } else {
             if (isTextItem && textFit === "none") {
                 fontSize = 0
@@ -407,17 +420,18 @@
 
             defaultFontSize = itemFontSize
             if (textFit === "growToFit" && isTextItem && itemFontSize > 100) maxFontSize = itemFontSize
+
         }
 
         let elem = itemElem
         if (!elem) return
 
-
-
         // short-circuit expensive DOM work when we already measured identical content
         const cacheKey = buildAutoSizeCacheKey()
         const cacheSignature = buildAutoSizeSignature(elem.clientWidth, elem.clientHeight)
         const cachedResult = cacheKey ? readAutoSizeCache(cacheKey) : undefined
+
+
         if (!isDynamic && cachedResult && cachedResult.signature === cacheSignature) {
             fontSize = cachedResult.fontSize
             if (item.type === "slide_tracker") {
@@ -444,6 +458,7 @@
         //     textQuery = ".align .item .align " + textQuery
         // }
 
+
         try {
             fontSize = autosize(elem, {
                 type: textFit,
@@ -454,7 +469,6 @@
         } catch (e) {
             console.warn("[Autosize] failed:", e)
         }
-
 
 
         // smaller in general if bullet list, because they are not accounted for
@@ -530,16 +544,21 @@
 
     // determine whether we should keep the visible textbox hidden while autosize runs
     function shouldHideUntilAutoSizeCompletes() {
-        if (isStage || preview) return false
+        // NOTE: Stage uses its own loading mechanism in SlideText.svelte (.loading class)
+        // but for the first render, that mechanism shows nothing while the new content loads
+        // We need to hide content until autosize is ready for stage too
+        if (preview) return false
         const type = item?.type || "text"
         if (type !== "text") return false
         
         // Use detailed validation to ensure we catch all autosize candidates
+        // For STAGE: stageAutoSize controls autosize, slide items don't have auto/textFit set
         const isExplicitNone = item?.textFit === "none"
         const isExplicitActive = item?.textFit && item?.textFit !== "none"
         const isImpliedActive = !item?.textFit && item?.auto
+        const isStageAutoSizeActive = stageAutoSize
 
-        if (isExplicitNone || (!isExplicitActive && !isImpliedActive)) {
+        if (!isStageAutoSizeActive && (isExplicitNone || (!isExplicitActive && !isImpliedActive))) {
              return false
         }
         
@@ -548,7 +567,11 @@
         const cacheSignature = buildAutoSizeSignature()
         const cachedResult = cacheKey ? readAutoSizeCache(cacheKey) : undefined
 
-        if (cachedResult && cachedResult.signature === cacheSignature) {
+        const hasValidCache = cachedResult && cachedResult.signature === cacheSignature
+        const shouldHide = !hasValidCache
+        
+
+        if (hasValidCache) {
             return false
         }
         
