@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activeProfile, profiles, special } from "../../stores"
+    import { activeProfile, dictionary, profiles, special } from "../../stores"
     import { newToast, wait } from "../../utils/common"
     import { translateText } from "../../utils/language"
     import { confirmCustom, promptCustom } from "../../utils/popup"
@@ -9,7 +9,7 @@
     import T from "../helpers/T.svelte"
     import Button from "../inputs/Button.svelte"
 
-    const profilesList = [{ id: "", color: "", name: translateText("profile.admin") }, ...sortByName(keysToID($profiles).filter((a) => a.id !== "admin"))]
+    $: profilesList = [{ id: "", color: "", name: translateText("profile.admin", $dictionary) }, ...sortByName(keysToID($profiles).filter((a) => a.id !== "admin"))]
 
     async function selectProfile(id: string) {
         if (id === "") {

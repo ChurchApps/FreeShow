@@ -170,7 +170,7 @@ export const dropActions = {
             data = data.map((a) => ({ id: a.id, name: a.name, type: "camera", data: { groupId: a.cameraGroup } }))
         } else if (drag.id === "scripture") {
             const biblesContent = await getActiveScripturesContent()
-            const show = getScriptureShow(biblesContent)
+            const show = await getScriptureShow(biblesContent)
             if (!show) return
 
             let index = drop.index
@@ -756,7 +756,7 @@ const slideDrop = {
         const selectedChapters = biblesContent[0].chapters
         const selectedVerses = biblesContent[0].activeVerses
 
-        const { slides: scriptureSlides, groupNames } = getScriptureSlidesNew({ biblesContent, selectedChapters, selectedVerses })
+        const { slides: scriptureSlides, groupNames } = await getScriptureSlidesNew({ biblesContent, selectedChapters, selectedVerses })
         const slideTemplate: string = get(scriptureSettings).verseNumbers ? "" : get(scriptureSettings).template || ""
         let newSlides = scriptureSlides.map((items, i) => {
             const referenceText = getReferenceText(biblesContent)

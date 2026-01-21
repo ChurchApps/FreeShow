@@ -65,9 +65,11 @@
     }
 
     $: {
-        // if (selectedVerses.length || $scriptureSettings) slides = getScriptureSlides({ biblesContent, selectedChapters, selectedVerses }, true)
-        if (selectedVerses.length || $scriptureSettings) slides = getScriptureSlidesNew({ biblesContent, selectedChapters, selectedVerses }, true).slides
+        if (selectedVerses.length || $scriptureSettings) getSlides({ biblesContent, selectedChapters, selectedVerses })
         else slides = [[]]
+    }
+    async function getSlides(data: any) {
+        slides = (await getScriptureSlidesNew(data, true)).slides
     }
 
     $: showVersion = biblesContent.find((a) => a?.attributionRequired) || $scriptureSettings.showVersion
