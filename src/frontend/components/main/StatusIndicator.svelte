@@ -31,16 +31,28 @@
 
     // don't show a new indicator while the current one is clearing
     let indicatorId: string = ""
+    let maxTimeout: NodeJS.Timeout | null = null
     let indicatorTimeout: NodeJS.Timeout | null = null
     $: if ($statusIndicator !== undefined) updateIndicator()
     function updateIndicator() {
-        if (indicatorTimeout) return
+        if (indicatorTimeout) {
+            if ($statusIndicator && indicatorId) indicatorId = $statusIndicator
+            return
+        }
 
         indicatorId = $statusIndicator || ""
         indicatorTimeout = setTimeout(() => {
             indicatorTimeout = null
             if ($statusIndicator !== indicatorId) updateIndicator()
+            else if (maxTimeout) clearTimeout(maxTimeout)
         }, 301)
+
+        if (maxTimeout) clearTimeout(maxTimeout)
+        maxTimeout = setTimeout(() => {
+            if (indicatorTimeout) clearTimeout(indicatorTimeout)
+            indicatorTimeout = null
+            indicatorId = ""
+        }, 10000)
     }
 </script>
 
