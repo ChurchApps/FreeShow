@@ -160,7 +160,7 @@
     let referenceMenuOpened = false
 
     $: onlyOneNormalOutput = getAllNormalOutputs().length === 1
-    $: styleScriptureTemplate = onlyOneNormalOutput ? $styles[styleId]?.templateScripture : ""
+    $: styleScriptureTemplate = onlyOneNormalOutput ? $styles[styleId]?.templateScripture || "" : ""
 
     // auto convert
     $: if (useOldSystem && usingDefault && (!styleScriptureTemplate || styleScriptureTemplate.includes("scripture"))) convertToNew()
