@@ -111,7 +111,6 @@
 
     $: fontSize = Number(getStyles(item?.style, true)?.["font-size"] || 0) || 100 // item.autoFontSize ||
 
-    // DEBUG: Stagebox fontSize computed logging commented out
 
     // Exclude slide_text from Stagebox autosize - it uses Textbox's own autosize instead
     // Stagebox autosize is for SlideNotes, SlideProgress, VideoTime, etc.
@@ -140,7 +139,6 @@
             // If height is 0, the content hasn't rendered yet - retry with longer delay
             if (!alignElem || alignElem.clientHeight === 0) {
                 autoSizeRetryCount++
-                // DEBUG: console.debug(`[DEBUG] Stagebox.updateAutoSize - zero height, retry ${autoSizeRetryCount}/${MAX_AUTOSIZE_RETRIES}`)
                 
                 if (autoSizeRetryCount < MAX_AUTOSIZE_RETRIES) {
                     // Retry with progressively longer delays
@@ -148,7 +146,6 @@
                     return
                 }
                 // Give up after max retries - don't apply bad values
-                // DEBUG: console.debug(`[DEBUG] Stagebox.updateAutoSize - max retries reached, skipping`)
                 currentAutoSizeTimeout = null
                 return
             }
@@ -165,11 +162,9 @@
             const isTextItem = item?.type === "slide_text" || (item?.type || "text") === "text"
             if (!isTextItem) maxFontSize = 0
 
-            // DEBUG: Stagebox.updateAutoSize logging commented out
 
             size = autosize(alignElem, { type, textQuery: ".autoFontSize", defaultFontSize, maxFontSize })
             
-            // DEBUG: Stagebox.updateAutoSize RESULT logging commented out
 
             currentAutoSizeTimeout = null
         }, 20)
