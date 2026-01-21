@@ -1,5 +1,6 @@
 import { app } from "electron"
 import path from "path"
+import { isProd } from ".."
 import { Main } from "../../types/IPC/Main"
 import type { Folders, Projects } from "../../types/Projects"
 import type { Show } from "../../types/Show"
@@ -57,6 +58,8 @@ function deleteLocalFiles() {
     deleteFolder(showsPath)
 }
 
+const DEBUG_MODE = false && !isProd
+
 const EXTRACT_LOCATION = path.join(app.getPath("temp"), "freeshow-cloud")
 const MERGE_INDIVIDUAL = ["OVERLAYS", "PROJECTS", "STAGE", "TEMPLATES"] // "EVENTS", "THEMES"
 
@@ -77,7 +80,7 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
     }
 
     // clear any uncleared previous data
-    if (await doesPathExistAsync(EXTRACT_LOCATION)) deleteFolder(EXTRACT_LOCATION)
+    if (!DEBUG_MODE && (await doesPathExistAsync(EXTRACT_LOCATION))) deleteFolder(EXTRACT_LOCATION)
 
     const cloudDataPath = await provider.getData(data.churchId, data.teamId, EXTRACT_LOCATION)
     if (!cloudDataPath) {
@@ -355,6 +358,7 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
 
     // silently backup in the background, this is skipped when the program is being closed
     setTimeout(async () => {
+        if (DEBUG_MODE) return
         await uploadBackupData()
         deleteFolder(EXTRACT_LOCATION)
         console.log("Backup sync completed!")
@@ -395,7 +399,7 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
     }
 
     function finish(success: boolean = true) {
-        deleteFolder(EXTRACT_LOCATION)
+        if (!DEBUG_MODE) deleteFolder(EXTRACT_LOCATION)
         console.log("Sync completed!")
         isNewDevice = false
         return { success, changedFiles }

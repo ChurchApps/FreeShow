@@ -1,12 +1,10 @@
-<script>
+<script lang="ts">
     import { slide } from "svelte/transition"
     import { activePage, os, settingsTab, statusIndicator } from "../../stores"
     import { translateText } from "../../utils/language"
     import Icon from "../helpers/Icon.svelte"
 
     $: isWindows = $os.platform === "win32"
-
-    $: indicatorId = $statusIndicator
 
     const titles = {
         saving: "toast.saving",
@@ -30,10 +28,24 @@
 
     // WIP more indicators:
     // Backup / restore
+
+    // don't show a new indicator while the current one is clearing
+    let indicatorId: string = ""
+    let indicatorTimeout: NodeJS.Timeout | null = null
+    $: if ($statusIndicator !== undefined) updateIndicator()
+    function updateIndicator() {
+        if (indicatorTimeout) return
+
+        indicatorId = $statusIndicator || ""
+        indicatorTimeout = setTimeout(() => {
+            indicatorTimeout = null
+            if ($statusIndicator !== indicatorId) updateIndicator()
+        }, 301)
+    }
 </script>
 
 {#if indicatorId}
-    <div class="status" style={isWindows ? "transform: translateY(25px);" : ""} role="none" data-title={translateText(titles[indicatorId] || "")} on:click={onClick} transition:slide={{ axis: "x" }}>
+    <div class="status" style={isWindows ? "transform: translateY(25px);" : ""} role="none" data-title={translateText(titles[indicatorId] || "")} on:click={onClick} transition:slide={{ axis: "x", duration: 300 }}>
         <div class={indicatorId}>
             {#if indicatorId === "saving"}
                 <Icon id="save" white />
