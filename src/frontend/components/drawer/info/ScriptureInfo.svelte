@@ -165,7 +165,7 @@
     // auto convert
     $: if (useOldSystem && usingDefault && (!styleScriptureTemplate || styleScriptureTemplate.includes("scripture"))) convertToNew()
     $: useOldSystem = useOldScriptureSystem(templateId, $templates) && !styleScriptureTemplate
-    $: usingDefault = templateId.includes("scripture")
+    $: usingDefault = typeof templateId === "string" ? templateId.includes("scripture") : false
     async function convertToNew() {
         if (!usingDefault) {
             if (!(await confirmCustom("This will apply the default template, and convert that to the new format. Your current template will not change.<br>You can use it as an example to adapt your existing templates. Continue?"))) return
