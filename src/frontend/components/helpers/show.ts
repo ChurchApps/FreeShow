@@ -1,10 +1,12 @@
 import { get } from "svelte/store"
 import type { Item, Show, ShowList, Shows, Slide, TrimmedShow, TrimmedShows } from "../../../types/Show"
-import { cachedShowsData, customMetadata, dictionary, groupNumbers, groups, shows, showsCache, sorted, sortedShowsList } from "../../stores"
+import { activeEdit, activeFocus, activePage, activeProject, activeShow, cachedShowsData, customMetadata, dictionary, focusMode, groupNumbers, groups, projects, refreshEditSlide, shows, showsCache, sorted, sortedShowsList } from "../../stores"
 import { translateText } from "../../utils/language"
 import { clone, keysToID, removeValues, sortByName, sortByNameAndNumber } from "./array"
 import { GetLayout } from "./get"
 import { history } from "./history"
+import { loadShows } from "./setShow"
+import { swichProjectItem } from "./showActions"
 import { _show } from "./shows"
 
 // check if name exists and add number
@@ -52,6 +54,45 @@ export function getLabelId(label: string, replaceNumbers = true) {
 
     return label
     // .replace(/[0-9-]/g, "")
+}
+
+export function openShow(showId: string) {
+    if (!showId || !get(shows)[showId]) return
+
+    // set active show in project
+    let pos: number | null = null
+    if (get(activeProject) !== null) {
+        let i = get(projects)[get(activeProject) || ""]?.shows?.findIndex((p) => p.id === showId) ?? -1
+        if (i > -1) pos = i
+    }
+
+    let newShow: any = { id: showId, type: "show" }
+
+    if (get(focusMode)) {
+        let inProject = get(projects)[get(activeProject) || ""]?.shows?.find((p) => p.id === showId)
+        if (inProject) {
+            activeFocus.set({ id: showId, index: pos ?? undefined })
+            return
+        } else {
+            focusMode.set(false)
+        }
+    }
+
+    if (pos !== null) {
+        newShow.index = pos
+
+        // async waiting for show to load
+        setTimeout(async () => {
+            // preload show (so the layout can be changed)
+            await loadShows([showId])
+            if (get(showsCache)[showId]) swichProjectItem(pos, showId)
+        })
+    }
+
+    activeShow.set(newShow)
+
+    if (get(activeEdit).id) activeEdit.set({ type: "show", slide: 0, items: [], showId })
+    if (get(activePage) === "edit") refreshEditSlide.set(true)
 }
 
 // check if label exists as a global label

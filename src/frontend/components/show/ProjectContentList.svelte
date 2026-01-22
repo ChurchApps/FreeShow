@@ -1,14 +1,16 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
+    import { fade } from "svelte/transition"
     import type { ProjectShowRef, Tree } from "../../../types/Projects"
     import { ShowType } from "../../../types/Show"
-    import { addToProject, updateRecentlyAddedFiles } from "../../converters/project"
-    import { actions, activeFocus, activePopup, activeProject, activeShow, drawer, focusMode, fullColors, labelsDisabled, projects, projectView, recentFiles, shows, special } from "../../stores"
+    import { addProjectItem, addToProject, updateRecentlyAddedFiles } from "../../converters/project"
+    import { actions, activeFocus, activePopup, activeProject, activeShow, contextActive, drawer, focusMode, fullColors, labelsDisabled, projects, projectView, recentFiles, selected, shows, special } from "../../stores"
     import { triggerFunction } from "../../utils/common"
     import { getAccess } from "../../utils/profile"
     import { getActionIcon } from "../actions/actions"
     import { getTimeUntilClock } from "../drawer/timers/timers"
     import { openDrawer } from "../edit/scripts/edit"
+    import { clone } from "../helpers/array"
     import { getContrast } from "../helpers/color"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
@@ -154,6 +156,41 @@
         .filter((a) => !projectItemsList.find((b) => b.id === a))
         .sort((a, b) => a.localeCompare(b))
         .slice(0, 5)
+
+    // "Add to project" button
+
+    let canAddToProject = false
+    $: if ($contextActive && $selected) checkCanAddToProject()
+    else canAddToProject = false
+    const validIds = ["show_drawer", "player", "media", "audio", "overlay"]
+
+    function checkCanAddToProject() {
+        canAddToProject = false
+        if (readOnly || !$activeProject || !validIds.includes($selected?.id || "")) return
+        canAddToProject = true
+    }
+
+    function addSelectedToProject() {
+        if (readOnly || !$activeProject || !validIds.includes($selected.id || "")) return
+
+        let data = clone($selected.data)
+        if (!data?.length) return
+
+        if ($selected.id === "overlay") data = data.map((id: string) => ({ id, type: "overlay" }))
+        else if ($selected.id === "player") data = data.map((id: string) => ({ id, type: "player" }))
+        else if ($selected.id === "audio") data = data.filter((a) => a.path).map(({ path, name }) => ({ id: path, name, type: "audio" }))
+        else if ($selected.id === "media")
+            data = data
+                .filter((a) => a.path)
+                .map(({ path, name }) => ({
+                    id: path,
+                    name,
+                    type: getMediaType(path.slice(path.lastIndexOf(".") + 1, path.length))
+                }))
+
+        data.forEach(addProjectItem)
+        contextActive.set(false)
+    }
 </script>
 
 <div id="projectArea" class="list {projectReadOnly ? '' : 'context #project'}">
@@ -286,6 +323,13 @@
             {/if}
         </DropArea>
     </Autoscroll>
+
+    {#if canAddToProject}
+        <div class="addToProject" role="none" on:mousedown={addSelectedToProject} transition:fade={{ duration: 50 }}>
+            <Icon id="add" size={2} white />
+            <T id="context.addToProject" />
+        </div>
+    {/if}
 </div>
 
 {#if $activeProject && !$projectView && !$focusMode && !recentlyUsedList.length && !projectReadOnly}
@@ -360,5 +404,23 @@
         justify-content: start;
         padding: 8px 14px;
         background-color: var(--primary-darker) !important;
+    }
+
+    .addToProject {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+
+        background-color: rgba(0, 0, 0, 0.3);
+        cursor: pointer;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+
+        z-index: 200;
     }
 </style>

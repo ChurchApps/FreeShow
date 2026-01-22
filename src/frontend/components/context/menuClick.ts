@@ -95,7 +95,7 @@ import { history, redo, undo } from "../helpers/history"
 import { getExtension, getFileName, getMediaLayerType, getMediaStyle, getMediaType, removeExtension, splitPath } from "../helpers/media"
 import { defaultOutput, getCurrentStyle, getFirstActiveOutput, setOutput, toggleOutput, toggleOutputs } from "../helpers/output"
 import { select } from "../helpers/select"
-import { checkName, formatToFileName, getLayoutRef, removeTemplatesFromShow, updateShowsList } from "../helpers/show"
+import { checkName, formatToFileName, getLayoutRef, openShow, removeTemplatesFromShow, updateShowsList } from "../helpers/show"
 import { sendMidi } from "../helpers/showActions"
 import { _show } from "../helpers/shows"
 import { clearSlide } from "../output/clear"
@@ -509,29 +509,6 @@ const clickActions = {
         activePopup.set("action_history")
     },
 
-    addToProject: (obj: ObjData) => {
-        if (!obj.sel) return
-        if ((obj.sel.id !== "show" && obj.sel.id !== "show_drawer" && obj.sel.id !== "player" && obj.sel.id !== "media" && obj.sel.id !== "audio") || !get(activeProject)) return
-
-        if (obj.sel.id === "player") obj.sel.data = obj.sel.data.map((id: string) => ({ id, type: "player" }))
-        else if (obj.sel.id === "audio") obj.sel.data = obj.sel.data.filter((a) => a.path).map(({ path, name }) => ({ id: path, name, type: "audio" }))
-        else if (obj.sel.id === "media")
-            obj.sel.data = obj.sel.data
-                .filter((a) => a.path)
-                .map(({ path, name }) => ({
-                    id: path,
-                    name,
-                    type: getMediaType(path.slice(path.lastIndexOf(".") + 1, path.length))
-                }))
-
-        projects.update((a) => {
-            if (!a[get(activeProject)!]?.shows) return a
-
-            a[get(activeProject)!].shows.push(...obj.sel!.data)
-            a[get(activeProject)!].modified = Date.now()
-            return a
-        })
-    },
     addToShow: (obj: ObjData) => {
         // WIP replaced by convertToShow
         let data = obj.sel?.data || []
@@ -1277,9 +1254,16 @@ const clickActions = {
         if (newData) history({ id: "SHOW_LAYOUT", newData })
     },
 
-    // media
+    // media / overlay / show
     preview: (obj: ObjData) => {
         if (!obj.sel) return
+
+        if (obj.sel.id === "show_drawer") {
+            activePage.set("show")
+            const showId = obj.sel.data[0]?.id
+            openShow(showId)
+            return
+        }
 
         const path: string = obj.sel.data[0]?.path || obj.sel.data[0]?.id || obj.sel.data[0]
         if (!path) return
