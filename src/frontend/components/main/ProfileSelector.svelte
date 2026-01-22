@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activeProfile, dictionary, profiles, special } from "../../stores"
+    import { activeProfile, os, profiles, special } from "../../stores"
     import { newToast, wait } from "../../utils/common"
     import { translateText } from "../../utils/language"
     import { confirmCustom, promptCustom } from "../../utils/popup"
@@ -7,9 +7,11 @@
     import { keysToID, sortByName } from "../helpers/array"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
-    import Button from "../inputs/Button.svelte"
+    import MaterialButton from "../inputs/MaterialButton.svelte"
 
-    $: profilesList = [{ id: "", color: "", name: translateText("profile.admin", $dictionary) }, ...sortByName(keysToID($profiles).filter((a) => a.id !== "admin"))]
+    $: isWindows = $os.platform === "win32"
+
+    $: profilesList = sortByName(keysToID($profiles).filter((a) => a.id !== "admin"))
 
     async function selectProfile(id: string) {
         if (id === "") {
@@ -37,20 +39,25 @@
     }
 </script>
 
-<div class="profiles">
+<div class="profiles" style="top: {isWindows ? '25px' : '0'};height: {isWindows ? 'calc(100% - 25px)' : '100%'};">
     <h1>FreeShow</h1>
-    <p><T id="profile.choose_profile" /></p>
+    <p style="opacity: 0.8;margin-bottom: 20px;"><T id="profile.choose_profile" /></p>
 
     <div class="flex">
         {#each profilesList as profile}
-            <Button title="{translateText('profile.set_active')}: {profile.name}" style="padding: 1.8em;" on:click={() => selectProfile(profile.id)}>
+            <MaterialButton title="profile.set_active: <b>{profile.name}</b>" style="padding: 1.8em;border: 1px solid rgb(255 255 255 / 0.1);" on:click={() => selectProfile(profile.id)}>
                 <div class="profile">
-                    <Icon id={profile.id ? "profiles" : "admin"} size={8} style="fill: {profile.color || 'white'};" white />
+                    <Icon id="profiles" size={8} style="fill: {profile.color || 'white'};" white />
                     <p>{profile.name}</p>
                 </div>
-            </Button>
+            </MaterialButton>
         {/each}
     </div>
+
+    <MaterialButton variant="outlined" title="profile.set_active: <b>profile.admin</b>" style="margin-top: 20px;" on:click={() => selectProfile("")}>
+        <Icon id="admin" size={2} white />
+        <p><T id="profile.admin" /></p>
+    </MaterialButton>
 </div>
 
 <style>
@@ -60,18 +67,25 @@
     }
 
     p {
-        font-size: 1.3em;
+        font-size: 1.2em;
         overflow: initial;
     }
 
     .profiles {
+        position: absolute;
+        top: 0;
+        left: 0;
         width: 100%;
         height: 100%;
+
+        background-color: var(--primary);
 
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
+
+        z-index: 99;
     }
 
     .flex {
