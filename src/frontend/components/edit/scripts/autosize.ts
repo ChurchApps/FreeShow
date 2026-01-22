@@ -16,10 +16,14 @@ type Options = {
 }
 
 export default function autosize(elem: HTMLElement, { type, textQuery, defaultFontSize, maxFontSize, minFontSize }: Options = {}) {
+    // DEBUG: console.debug(`[DEBUG] autosize() ENTRY`, JSON.stringify({ type, textQuery, inputDefaultFontSize: defaultFontSize, inputMaxFontSize: maxFontSize, inputMinFontSize: minFontSize, DEF_FONT_SIZE, MAX_FONT_SIZE, MIN_FONT_SIZE }, null, 2))
+
     // set default values
     if (!minFontSize) minFontSize = MIN_FONT_SIZE
     if (!maxFontSize) maxFontSize = MAX_FONT_SIZE
     if (!defaultFontSize) defaultFontSize = Math.max(minFontSize, Math.min(maxFontSize, DEF_FONT_SIZE))
+
+    // DEBUG: console.debug(`[DEBUG] autosize() after defaults`, JSON.stringify({ type, minFontSize, maxFontSize, defaultFontSize }, null, 2))
 
     if (!elem) return defaultFontSize
 
@@ -38,6 +42,8 @@ export default function autosize(elem: HTMLElement, { type, textQuery, defaultFo
     const boxWidth = boxElem.clientWidth
     const boxHeight = boxElem.clientHeight
 
+    // DEBUG: console.debug(`[DEBUG] autosize() box dimensions`, JSON.stringify({ boxWidth, boxHeight }, null, 2))
+
     let textChildren: HTMLElement[] | HTMLCollection = []
     if (textQuery) textChildren = boxElem.querySelectorAll(textQuery) as any
     if (!textChildren.length) textChildren = boxElem.children.length ? boxElem.children : [boxElem]
@@ -49,6 +55,7 @@ export default function autosize(elem: HTMLElement, { type, textQuery, defaultFo
     if (type === "shrinkToFit") {
         if (!textIsBiggerThanBox()) {
             // don't change the font size
+            // DEBUG: console.debug(`[DEBUG] autosize() shrinkToFit - text fits`, JSON.stringify({ defaultFontSize }, null, 2))
             return finish(defaultFontSize)
         }
         // shrinkToFit is same as growToFit if text is larger
@@ -58,10 +65,15 @@ export default function autosize(elem: HTMLElement, { type, textQuery, defaultFo
     let highestValue = maxFontSize
     let previousSize = 0
 
+    // DEBUG: console.debug(`[DEBUG] autosize() starting binary search`, JSON.stringify({ type, lowestValue, highestValue, minFontSize, maxFontSize }, null, 2))
+
     size()
 
+    const finalResult = Math.min(maxFontSize, lowestValue)
+    // DEBUG: console.debug(`[DEBUG] autosize() FINAL RESULT`, JSON.stringify({ type, lowestValue, maxFontSize, finalResult }, null, 2))
+
     // prefer lowest value (due to margin)
-    return finish(Math.min(maxFontSize, lowestValue))
+    return finish(finalResult)
 
     function finish(value: number) {
         boxElem!.remove()
