@@ -40,6 +40,7 @@ export const mainResponses: MainResponses = {
     [Main.VERSION]: () => getVersion(),
     [Main.GET_OS]: () => getOS(),
     [Main.DEVICE_ID]: () => getMachineId(),
+    [Main.GET_DEVICE_NAME]: () => getDeviceName(),
     [Main.IP]: () => getLocalIPs(),
     [Main.CHECK_RAM_USAGE]: () => checkRamUsage(),
     // STORES
@@ -288,6 +289,10 @@ function getVersion() {
 
 function getOS() {
     return { platform: os.platform(), name: os.hostname(), arch: os.arch() } as OS
+}
+
+function getDeviceName() {
+    return os.hostname()
 }
 
 function checkRamUsage() {

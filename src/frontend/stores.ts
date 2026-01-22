@@ -78,6 +78,7 @@ export const providerConnections: Writable<{ [key in ContentProviderId]?: boolea
 export const metronomeTimer: Writable<{ beat: number; timeToNext: number }> = writable({ beat: 0, timeToNext: 0 })
 export const mediaDownloads: Writable<Map<string, { progress: number; total: number; status: string }>> = writable(new Map())
 export const showChangeProfileMenu: Writable<boolean> = writable(false)
+export const cloudUsers: Writable<{ socketId: string; displayName: string; activePage?: string; activeShow?: string }[]> = writable([])
 
 // TAGS
 export const activeTagFilter: Writable<string[]> = writable([])
@@ -339,7 +340,7 @@ export const companion: Writable<any> = writable({ enabled: false }) // {}
 export const contentProviderData: Writable<{ [key in ContentProviderId]?: any }> = writable({}) // {}
 
 // CLOUD
-export const cloudSyncData: Writable<{ enabled?: boolean; id?: string; team?: { id: string; churchId: string; name: string; count?: number }; cloudMethod?: "merge" | "read_only" | "upload" | "replace" }> = writable({}) // {}
+export const cloudSyncData: Writable<{ enabled?: boolean; id?: string; deviceName?: string; team?: { id: string; churchId: string; name: string; count?: number }; cloudMethod?: "merge" | "read_only" | "upload" | "replace" }> = writable({}) // {}
 export const driveKeys: Writable<any> = writable({})
 export const driveData: Writable<any> = writable({ mainFolderId: null, disabled: false, initializeMethod: null, disableUpload: false })
 

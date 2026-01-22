@@ -27,6 +27,7 @@ export enum Main {
     VERSION = "VERSION",
     GET_OS = "GET_OS",
     DEVICE_ID = "DEVICE_ID",
+    GET_DEVICE_NAME = "GET_DEVICE_NAME",
     IP = "IP",
     CHECK_RAM_USAGE = "CHECK_RAM_USAGE",
     // STORES
@@ -240,6 +241,7 @@ export interface MainReturnPayloads {
     [Main.VERSION]: string
     [Main.GET_OS]: OS
     [Main.DEVICE_ID]: string
+    [Main.GET_DEVICE_NAME]: string
     [Main.IP]: string[]
     [Main.CHECK_RAM_USAGE]: { total: number; free: number; performanceMode: boolean }
     ///

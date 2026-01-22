@@ -3,10 +3,11 @@ import { Main } from "../../types/IPC/Main"
 import { isLocalFile } from "../components/helpers/media"
 import { loadShows } from "../components/helpers/setShow"
 import { requestMain, sendMain } from "../IPC/main"
-import { activeEdit, activePopup, activeShow, alertMessage, cloudSyncData, deletedShows, popupData, providerConnections, renamedShows, saved, scripturesCache, shows, showsCache, special } from "../stores"
+import { activeEdit, activePage, activePopup, activeShow, alertMessage, cloudSyncData, cloudUsers, deletedShows, popupData, providerConnections, renamedShows, saved, scripturesCache, shows, showsCache, special } from "../stores"
 import { isMainWindow, newToast, setStatus } from "./common"
 import { confirmCustom } from "./popup"
 import { save } from "./save"
+import { SocketHelper } from "./SocketHelper"
 
 export async function setupCloudSync(auto: boolean = false) {
     if (auto && get(cloudSyncData).id) {
@@ -46,9 +47,12 @@ export async function changeTeam() {
 
 export async function chooseTeam(team: { id: string; churchId: string; name: string; count?: number }) {
     const id = "churchApps"
+    const deviceName = get(cloudSyncData).deviceName || (await requestMain(Main.GET_DEVICE_NAME))
+
+    socketDisconnect()
 
     cloudSyncData.update((a) => {
-        a = { ...a, id, enabled: true, team }
+        a = { ...a, id, enabled: true, deviceName, team }
         return a
     })
 
@@ -91,6 +95,8 @@ export async function syncWithCloud(initialize: boolean = false) {
         activeShow.set(null)
         activeEdit.set({ items: [] })
     }
+
+    socketConnect()
 
     isSyncing = true
     setStatus("syncing")
@@ -149,4 +155,113 @@ export function addToMediaFolder(filePath: string) {
 
     if (!get(special).cloudSyncMediaFolder) return
     sendMain(Main.MEDIA_FOLDER_COPY, { paths: [filePath] })
+}
+
+// SOCKET
+
+let cloudSocketHelper: SocketHelper | null = null
+function getCloudSocket() {
+    if (cloudSocketHelper) return cloudSocketHelper
+
+    const team = get(cloudSyncData).team
+    if (!team) return null
+
+    const name = get(cloudSyncData).deviceName || ""
+
+    try {
+        cloudSocketHelper = new SocketHelper({ churchId: team.churchId, teamId: team.id, displayName: name })
+        return cloudSocketHelper
+    } catch (err) {
+        console.error("Failed to create cloud socket:", err)
+        return null
+    }
+}
+
+function socketDisconnect() {
+    if (!cloudSocketHelper) return
+    const socket = cloudSocketHelper
+
+    clearStoreListeners()
+
+    cloudSyncMessage("presence", { action: "bye" })
+
+    // clear local reference immediately so new connections create a new socket
+    cloudSocketHelper = null
+    cloudUsers.set([])
+
+    // disconnect the actual socket instance after a delay
+    setTimeout(() => {
+        socket.disconnect()
+    }, 1000)
+}
+
+function socketConnect() {
+    const socket = getCloudSocket()
+    if (!socket) return
+
+    // initialize receivers
+    socket.addHandler("presence", CLOUD_RECEIVERS.presence)
+
+    // announce self and get responses from all users
+    broadcastPresence("iamnew")
+
+    // setup listeners
+    setupStoreListeners()
+}
+
+let presenceUnsubscribers: (() => void)[] = []
+function setupStoreListeners() {
+    clearStoreListeners()
+    presenceUnsubscribers.push(activePage.subscribe(() => broadcastPresence()))
+    presenceUnsubscribers.push(activeShow.subscribe(() => broadcastPresence()))
+}
+
+function clearStoreListeners() {
+    presenceUnsubscribers.forEach((u) => u())
+    presenceUnsubscribers = []
+}
+
+function broadcastPresence(action: string = "update") {
+    const page = get(activePage)
+    const show = get(activeShow)
+
+    cloudSyncMessage("presence", { action, activePage: page, activeShow: show })
+}
+
+export async function cloudSyncMessage(id: string = "", data: { [key: string]: any } = {}) {
+    const socket = getCloudSocket()
+    if (!socket) return
+
+    if (!(await socket.waitUntilConnected())) return
+
+    socket.sendMessage(id, data)
+}
+
+// RECEIVERS
+
+const CLOUD_RECEIVERS = {
+    presence: (data) => {
+        if (!data.socketId || !data.displayName) return
+
+        const isBye = data.action === "bye"
+        const isNewUser = data.action === "iamnew"
+
+        cloudUsers.update((users) => {
+            const existingIndex = users.findIndex((u) => u.socketId === data.socketId)
+
+            // remove user
+            if (isBye) {
+                if (existingIndex < 0) return users
+                users.splice(existingIndex, 1)
+                return users
+            }
+
+            // add/update user
+            if (existingIndex < 0) return [...users, data]
+            users[existingIndex] = data
+            return users
+        })
+
+        if (isNewUser) broadcastPresence("iamhere")
+    }
 }
