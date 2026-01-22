@@ -146,7 +146,7 @@ export class SocketHelper {
 
             if (!response.ok) {
                 const json = await response.json()
-                console.error(response.status.toString(), response.url, json.errors[0])
+                console.error(response.status.toString(), response.url, json.errors?.[0])
                 return
             }
 
