@@ -307,14 +307,17 @@
             // CRITICAL: Start with fontSize=0 when hiding to prevent giant text flash:
             // - STAGE: Always starts at 0 (computes for STAGE dimensions, not OUTPUT)
             // - OUTPUT: Starts at 0 if cache is invalid (willHide=true), otherwise uses cache
-            // - PREVIEW: Always uses cached OUTPUT value (never recalculates)
+            // - PREVIEW: Uses own previewAutoFontSize cache, or OUTPUT cache as fallback, or 100px default
             if (isStage) {
                 fontSize = 0
             } else if (willHide) {
                 // Cache is invalid - start at 0 to avoid displaying wrong fontSize while recalculating
                 fontSize = 0
+            } else if (preview) {
+                // Preview uses its own cache, fallback to OUTPUT cache, then default
+                fontSize = item?.previewAutoFontSize || item?.autoFontSize || 100
             } else {
-                // Cache is valid - use it
+                // OUTPUT uses its cache
                 fontSize = item?.autoFontSize || 0
             }
             
@@ -323,9 +326,9 @@
         }
     }
     // Trigger calculation if Content OR Template changes (resolvedTemplateId added to dependency list)
-    // IMPORTANT: Preview thumbnails should NOT recalculate - they use cached OUTPUT fontSize only
-    $: if (itemElem && loaded && !preview && (stageAutoSize || newItem !== previousItem || resolvedTemplateId || chordLines || stageItem)) calculateAutosize()
-    $: if (!preview && $variables) setTimeout(calculateAutosize)
+    // All contexts (OUTPUT, STAGE, PREVIEW) calculate and cache their own autosize independently
+    $: if (itemElem && loaded && (stageAutoSize || newItem !== previousItem || resolvedTemplateId || chordLines || stageItem)) calculateAutosize()
+    $: if ($variables) setTimeout(calculateAutosize)
 
     // recalculate auto size if output template is different than show template
     $: currentShowTemplateId = $showsCache[ref.showId || ""]?.settings?.template || ""
@@ -489,7 +492,12 @@
             markAutoSizeReady()
             return
         }
-        if (fontSize !== item.autoFontSize) setItemAutoFontSize(fontSize)
+        // Store in separate field for previews vs OUTPUT
+        if (preview) {
+            if (fontSize !== item.previewAutoFontSize) setItemPreviewAutoFontSize(fontSize)
+        } else {
+            if (fontSize !== item.autoFontSize) setItemAutoFontSize(fontSize)
+        }
         if (!isDynamic && cacheKey) writeAutoSizeCache(cacheKey, { signature: cacheSignature, fontSize })
         markAutoSizeReady()
     }
@@ -599,7 +607,7 @@
     }
 
     function setItemAutoFontSize(fontSize) {
-        if (isStage || itemIndex < 0 || $currentWindow || ref.id === "scripture") return
+        if (isStage || itemIndex < 0 || $currentWindow || ref.showId === "temp") return
 
         if (ref.type === "overlay") {
             overlays.update((a) => {
@@ -618,6 +626,30 @@
                 if (!a[ref.showId!]?.slides?.[ref.id]?.items?.[itemIndex]) return a
 
                 a[ref.showId!].slides[ref.id].items[itemIndex].autoFontSize = fontSize
+                return a
+            })        }
+    }
+
+    function setItemPreviewAutoFontSize(fontSize) {
+        if (isStage || itemIndex < 0 || $currentWindow || ref.showId === "temp") return
+
+        if (ref.type === "overlay") {
+            overlays.update((a) => {
+                if (!a[ref.id]?.items?.[itemIndex]) return a
+                a[ref.id].items[itemIndex].previewAutoFontSize = fontSize
+                return a
+            })
+        } else if (ref.type === "template") {
+            templates.update((a) => {
+                if (!a[ref.id]?.items?.[itemIndex]) return a
+                a[ref.id].items[itemIndex].previewAutoFontSize = fontSize
+                return a
+            })
+        } else if (ref.showId) {
+            showsCache.update((a) => {
+                if (!a[ref.showId!]?.slides?.[ref.id]?.items?.[itemIndex]) return a
+
+                a[ref.showId!].slides[ref.id].items[itemIndex].previewAutoFontSize = fontSize
                 return a
             })
         }
