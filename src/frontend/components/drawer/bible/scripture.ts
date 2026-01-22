@@ -1385,7 +1385,7 @@ export async function createScriptureShow() {
     // if (!verseRange) return
     if (!selectedVerses[0]?.length) return
 
-    const show = getScriptureShow(biblesContent)
+    const show = await getScriptureShow(biblesContent)
     if (!show) return
 
     history({ id: "UPDATE", newData: { data: show, remember: { project: get(activeProject) } }, location: { page: "show", id: "show" } })
