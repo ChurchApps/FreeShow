@@ -28,9 +28,9 @@ export function newToast(msg: string) {
     toastMessages.set(removeDuplicates([...get(toastMessages), msg]))
 }
 
-// set status indicator, set timeout in seconds
+// set status indicator, set timeout in seconds (max 60 seconds)
 let statusTimeout: NodeJS.Timeout | null = null
-export function setStatus(id: string, timeout: number | null = null) {
+export function setStatus(id: string, timeout: number = 60) {
     statusIndicator.set(id)
 
     if (statusTimeout) clearTimeout(statusTimeout)

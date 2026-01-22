@@ -625,6 +625,7 @@
         "import_calendar": "Import calendar",
         "imported": "Imported!",
         "duplicate": "Duplicate",
+        "duplicated": "Duplicated",
         "delete": "Delete",
         "delete_slide": "Delete slide from show",
         "delete_group": "Delete group",

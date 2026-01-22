@@ -11,6 +11,9 @@
         saved: "toast.saved",
         syncing: "cloud.syncing",
         synced: "cloud.sync_complete",
+        copied: "actions.copied",
+        pasted: "actions.pasted",
+        duplicated: "actions.duplicated",
         error: "Error"
     }
 
@@ -70,6 +73,12 @@
                 <Icon id="loop" white />
             {:else if indicatorId === "synced"}
                 <Icon id="cloud_done" white />
+            {:else if indicatorId === "copied"}
+                <Icon id="copy" white />
+            {:else if indicatorId === "pasted"}
+                <Icon id="paste" white />
+            {:else if indicatorId === "duplicated"}
+                <Icon id="duplicate" white />
             {:else if indicatorId === "error"}
                 <Icon id="close" white />
             {/if}
