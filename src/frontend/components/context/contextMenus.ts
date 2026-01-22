@@ -190,9 +190,9 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
 
 export const contextMenuGroups = {
     open: ["edit", "preview"],
-    editonly: ["edit"],
-    edit: ["rename", "duplicate", "delete"],
-    edit_color: ["rename", "recolor", "duplicate", "delete"]
+    edit: ["edit"],
+    rename: ["rename", "duplicate", "delete"],
+    rename_color: ["rename", "recolor", "duplicate", "delete"]
     // delete: ["duplicate", "delete"]
 }
 
@@ -215,7 +215,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
 
     // OUTPUTS
     output_preview: ["edit", "edit_style", "SEPARATOR", "live_prepare", "SEPARATOR", "test_pattern"],
-    output_active_button: ["GROUP_editonly", "toggle_output", "move_to_front", "SEPARATOR", "hide_from_preview"],
+    output_active_button: ["GROUP_edit", "toggle_output", "move_to_front", "SEPARATOR", "hide_from_preview"],
 
     // DRAWER
     drawer_top: ["enabledTabs"],
@@ -240,7 +240,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     // , "changeCategory" ? edit with rename & categories...
     // , "convertToOverlay"
     // , "SEPARATOR", "export"
-    drawer_show_button: ["GROUP_open", "lock_show", "tag_set", "tag_filter", "GROUP_edit"],
+    drawer_show_button: ["GROUP_open", "lock_show", "tag_set", "tag_filter", "GROUP_rename"],
     drawer_show_button_readonly: ["tag_filter"],
     drawer_new_show: ["newShow"],
     // media / audio
@@ -257,23 +257,23 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     media_card: ["GROUP_open", "createSlideshow", "play_no_audio", "play_no_filters", "SEPARATOR", "favourite", "SEPARATOR", "media_tag_set", "media_tag_filter", "sort_media_by", "SEPARATOR", "system_open"],
     // "addToFirstSlide",
     drawer_overlays: ["reset_defaults"],
-    overlay_card: ["GROUP_open", "display_duration", "SEPARATOR", "lock_to_output", "place_under_slide", "GROUP_edit_color"],
+    overlay_card: ["GROUP_open", "display_duration", "SEPARATOR", "lock_to_output", "place_under_slide", "GROUP_rename_color"],
     overlay_card_default: ["GROUP_open", "duplicate", "delete"],
     overlay_card_readonly: ["preview"],
     // "addToShow",
     drawer_templates: ["reset_defaults"],
-    template_card: ["GROUP_editonly", "template_actions", "GROUP_edit_color", "export"],
-    template_card_default: ["GROUP_editonly", "duplicate", "delete"],
+    template_card: ["GROUP_edit", "template_actions", "GROUP_rename_color", "export"],
+    template_card_default: ["GROUP_edit", "duplicate", "delete"],
     template_card_readonly: [],
-    effect_card: ["GROUP_editonly", "display_duration", "SEPARATOR", "place_under_slide", "GROUP_edit_color"],
-    effect_card_default: ["GROUP_editonly", "duplicate", "delete"],
+    effect_card: ["GROUP_edit", "display_duration", "SEPARATOR", "place_under_slide", "GROUP_rename_color"],
+    effect_card_default: ["GROUP_edit", "duplicate", "delete"],
     player_button: ["GROUP_open", "rename", "delete"],
     audio_button: ["GROUP_open", "effects_library_add", "favourite", "SEPARATOR", "system_open"],
     audio_effect_button: ["rename", "remove", "SEPARATOR", "system_open"],
     audio_button_playlist: ["GROUP_open", "remove"],
     // "addToFirstSlide"
     screen_card: ["recording"],
-    camera_card: ["GROUP_editonly", "startup_activate", "SEPARATOR", "recording"],
+    camera_card: ["GROUP_edit", "startup_activate", "SEPARATOR", "recording"],
     // actions
     actions: ["manage_action_tags", "action_tag_filter", "SEPARATOR", "action_history"],
     actions_readonly: ["action_tag_filter"],
@@ -308,23 +308,23 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     project_folder: ["remove"], // "rename",
     shows: ["newSlide", "selectAll"],
     // TIMER
-    // timer: ["GROUP_editonly", "play"], // , "reset"
-    global_timer: ["GROUP_editonly", "play", "GROUP_delete"], // , "reset"
+    // timer: ["GROUP_edit", "play"], // , "reset"
+    global_timer: ["GROUP_edit", "play", "SEPARATOR", "duplicate", "delete"], // , "reset"
     global_timer_readonly: ["play"], // , "reset"
     // VARIABLE
     variables: ["manage_variable_tags", "variable_tag_filter"],
     variables_readonly: ["variable_tag_filter"],
-    variable: ["GROUP_editonly", "duplicate", "delete", "SEPARATOR", "variable_tag_set", "variable_tag_filter"],
+    variable: ["GROUP_edit", "duplicate", "delete", "SEPARATOR", "variable_tag_set", "variable_tag_filter"],
     variable_readonly: ["variable_tag_filter"],
     // TRIGGER
-    trigger: ["GROUP_editonly", "delete"],
+    trigger: ["GROUP_edit", "delete"],
     // AUDIO STREAM
-    audio_stream: ["GROUP_editonly", "delete"],
+    audio_stream: ["GROUP_edit", "delete"],
 
     // SHOWS
     // , "copy", "paste"
-    slide: ["GROUP_editonly", "slideGroups", "actions", "bind_to", "format", "remove_layers", "slide_transition", "disable", "SEPARATOR", "duplicate", "delete_slide", "remove_slide"],
-    slideChild: ["GROUP_editonly", "slideGroups", "actions", "bind_to", "format", "remove_layers", "slide_transition", "disable", "SEPARATOR", "duplicate", "delete_slide", "remove_slide"],
+    slide: ["GROUP_edit", "slideGroups", "actions", "bind_to", "format", "remove_layers", "slide_transition", "disable", "SEPARATOR", "duplicate", "delete_slide", "remove_slide"],
+    slideChild: ["GROUP_edit", "slideGroups", "actions", "bind_to", "format", "remove_layers", "slide_transition", "disable", "SEPARATOR", "duplicate", "delete_slide", "remove_slide"],
     slideFocus: ["editSlideText"],
     group: ["rename", "recolor", "SEPARATOR", "selectAll", "SEPARATOR", "duplicate", "delete_group"],
     global_group: ["manage_groups"],
@@ -346,15 +346,15 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     bible_book_local: ["rename"],
 
     // STAGE
-    stage_slide: ["move_connections", "rename", "disable", "GROUP_delete"],
+    stage_slide: ["move_connections", "rename", "disable", "SEPARATOR", "duplicate", "delete"],
     stage_slide_readonly: ["move_connections"],
-    stage_item: ["conditions", "SEPARATOR", "rearrange_stage", "GROUP_delete"],
+    stage_item: ["conditions", "SEPARATOR", "rearrange_stage", "SEPARATOR", "duplicate", "delete"],
     stage_item_output: ["rearrange_stage", "SEPARATOR", "delete"],
-    stage_text_item: ["dynamic_values", "conditions", "SEPARATOR", "rearrange_stage", "GROUP_delete"],
+    stage_text_item: ["dynamic_values", "conditions", "SEPARATOR", "rearrange_stage", "SEPARATOR", "duplicate", "delete"],
     items_list_item_stage: ["to_front_stage", "forward_stage", "backward_stage", "to_back_stage"],
 
     // EDIT
-    edit_box: ["dynamic_values", "conditions", "item_actions", "item_bind_to", "format", "rearrange", "transition", "GROUP_delete"], // "copy", "paste" (shortcut or top menubar)
+    edit_box: ["dynamic_values", "conditions", "item_actions", "item_bind_to", "format", "rearrange", "transition", "SEPARATOR", "duplicate", "delete"], // "copy", "paste" (shortcut or top menubar)
     items_list_item: ["to_front", "forward", "backward", "to_back"],
 
     // CALENDAR
@@ -363,8 +363,8 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     // SETTINGS
     theme: ["rename", "duplicate", "delete", "SEPARATOR", "export", "SEPARATOR", "reset_theme"],
     style: ["rename", "duplicate", "delete", "SEPARATOR", "reset"],
-    profile_tab: ["GROUP_edit_color", "reset"],
+    profile_tab: ["GROUP_rename_color", "reset"],
     profile_tab_admin: [],
-    output_screen: ["GROUP_edit_color"], // , "SEPARATOR", "reset"
-    output_screen_stage: ["GROUP_edit_color"] // , "SEPARATOR", "reset"
+    output_screen: ["GROUP_rename_color"], // , "SEPARATOR", "reset"
+    output_screen_stage: ["GROUP_rename_color"] // , "SEPARATOR", "reset"
 }
