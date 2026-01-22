@@ -509,29 +509,6 @@ const clickActions = {
         activePopup.set("action_history")
     },
 
-    addToProject: (obj: ObjData) => {
-        if (!obj.sel) return
-        if ((obj.sel.id !== "show" && obj.sel.id !== "show_drawer" && obj.sel.id !== "player" && obj.sel.id !== "media" && obj.sel.id !== "audio") || !get(activeProject)) return
-
-        if (obj.sel.id === "player") obj.sel.data = obj.sel.data.map((id: string) => ({ id, type: "player" }))
-        else if (obj.sel.id === "audio") obj.sel.data = obj.sel.data.filter((a) => a.path).map(({ path, name }) => ({ id: path, name, type: "audio" }))
-        else if (obj.sel.id === "media")
-            obj.sel.data = obj.sel.data
-                .filter((a) => a.path)
-                .map(({ path, name }) => ({
-                    id: path,
-                    name,
-                    type: getMediaType(path.slice(path.lastIndexOf(".") + 1, path.length))
-                }))
-
-        projects.update((a) => {
-            if (!a[get(activeProject)!]?.shows) return a
-
-            a[get(activeProject)!].shows.push(...obj.sel!.data)
-            a[get(activeProject)!].modified = Date.now()
-            return a
-        })
-    },
     addToShow: (obj: ObjData) => {
         // WIP replaced by convertToShow
         let data = obj.sel?.data || []

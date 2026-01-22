@@ -100,7 +100,6 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     sort_projects_by: { label: "sort.sort_by", icon: "sort", iconColor: "#979aff", items: ["LOAD_sort_projects"] },
     sort_media_by: { label: "sort.sort_by", icon: "sort", iconColor: "#979aff", items: ["LOAD_sort_media"] },
     // SHOWS
-    addToProject: { label: "context.addToProject", icon: "project" },
     lock_show: { label: "context.lockForChanges", icon: "lock", iconColor: "#ff5454" },
     remove: { label: "actions.remove", icon: "remove", iconColor: "#ff5454" },
     remove_group: { label: "actions.remove", icon: "remove", iconColor: "#ff5454" },
@@ -167,6 +166,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     play_no_filters: { label: "media.play_no_filters", icon: "play", iconColor: "#7d81ff" },
     favourite: { label: "media.favourite", icon: "star", iconColor: "#fff1ad" },
     effects_library_add: { label: "media.effects_library_add", icon: "effect", iconColor: "#fff1ad" },
+    createSlideshow: { label: "context.create_slideshow", icon: "slide" },
     system_open: { label: "main.system_open", icon: "launch" },
     media_type: { label: "clock.type", icon: "media", items: ["type_default", "type_background", "type_foreground"] },
     type_default: { label: "example.default", icon: "autofill" },
@@ -236,12 +236,12 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     category_scripture_button: ["rename", "delete", "SEPARATOR", "favourite"],
     playlist: ["rename", "delete"],
     // CONTENT
-    drawer_show: ["newShowPopup", "SEPARATOR", "manage_show_tags", "tag_filter", "sort_shows_by"],
+    drawer_show: ["newShowPopup", "SEPARATOR", "manage_show_tags", "tag_filter", "sort_shows_by", "SEPARATOR", "selectAll"],
     // , "changeCategory" ? edit with rename & categories...
     // , "convertToOverlay"
     // , "SEPARATOR", "export"
-    drawer_show_button: ["GROUP_open", "addToProject", "SEPARATOR", "lock_show", "tag_set", "tag_filter", "SEPARATOR", "selectAll", "GROUP_edit"],
-    drawer_show_button_readonly: ["tag_filter"], // "addToProject", "SEPARATOR",
+    drawer_show_button: ["GROUP_open", "lock_show", "tag_set", "tag_filter", "GROUP_edit"],
+    drawer_show_button_readonly: ["tag_filter"],
     drawer_new_show: ["newShow"],
     // media / audio
     // "play", "play_no_audio", "play_no_filters", "SEPARATOR", "edit",
@@ -254,7 +254,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     // , "addToShow"
     // show_in_explorer!!
     media: ["manage_media_tags", "media_tag_filter", "sort_media_by"],
-    media_card: ["GROUP_open", "addToProject", "SEPARATOR", "play_no_audio", "play_no_filters", "SEPARATOR", "favourite", "SEPARATOR", "media_tag_set", "media_tag_filter", "sort_media_by", "SEPARATOR", "system_open"],
+    media_card: ["GROUP_open", "createSlideshow", "play_no_audio", "play_no_filters", "SEPARATOR", "favourite", "SEPARATOR", "media_tag_set", "media_tag_filter", "sort_media_by", "SEPARATOR", "system_open"],
     // "addToFirstSlide",
     drawer_overlays: ["reset_defaults"],
     overlay_card: ["GROUP_open", "display_duration", "SEPARATOR", "lock_to_output", "place_under_slide", "GROUP_edit_color"],
@@ -267,8 +267,8 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     template_card_readonly: [],
     effect_card: ["GROUP_editonly", "display_duration", "SEPARATOR", "place_under_slide", "GROUP_edit_color"],
     effect_card_default: ["GROUP_editonly", "duplicate", "delete"],
-    player_button: ["GROUP_open", "addToProject", "SEPARATOR", "rename", "delete"],
-    audio_button: ["GROUP_open", "addToProject", "SEPARATOR", "effects_library_add", "favourite", "SEPARATOR", "system_open"],
+    player_button: ["GROUP_open", "rename", "delete"],
+    audio_button: ["GROUP_open", "effects_library_add", "favourite", "SEPARATOR", "system_open"],
     audio_effect_button: ["rename", "remove", "SEPARATOR", "system_open"],
     audio_button_playlist: ["GROUP_open", "remove"],
     // "addToFirstSlide"

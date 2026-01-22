@@ -145,17 +145,8 @@
         redo: () => {
             if (!$redoHistory.length) disabled = true
         },
-        addToProject: () => {
-            // hide button if $selected.id === "media" && one item selected ? as it's now done with double click
-            if ($selected.id === "media" && $selected.data.length > 1) {
-                id = "createSlideshow"
-                menu = { label: "context.create_slideshow", icon: "slide" }
-                // id = "addToShow"
-                // menu = { label: "context.add_to_show", icon: "slide" }
-                // if (!$activeShow || ($activeShow.type || "show") !== "show") disabled = true
-            } else {
-                if (!$activeProject) disabled = true
-            }
+        createSlideshow: () => {
+            hide = $selected.id !== "media" || $selected.data.length < 2
         },
         play: () => {
             if ($selected.id === "global_timer") {
