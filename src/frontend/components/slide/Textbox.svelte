@@ -107,7 +107,6 @@
     // remember which item signature we already reset local font size for
     let lastRenderedSignature = ""
     onMount(() => {
-        
         if (preview) {
              // Defer slightly to ensure DOM layout is ready for measurement, preventing 0-width errors
              setTimeout(() => (loaded = true), 20)
@@ -302,18 +301,31 @@
         // Check if autosize is active - for STAGE, use stageAutoSize since slide items don't have auto/textFit set
         const hasAutoSize = stageAutoSize || item?.auto || (item?.textFit || "none") !== "none"
         if (hasAutoSize) {
-            // CRITICAL: For STAGE, don't use item?.autoFontSize because:
-            // 1. item.autoFontSize is computed for OUTPUT dimensions, not STAGE dimensions
-            // 2. Using OUTPUT's value causes giant text flash before STAGE autosize runs
-            // 3. STAGE must always compute its own autoFontSize independently
-            fontSize = isStage ? 0 : (item?.autoFontSize || 0)
+            // Determine if we'll hide during autosize calculation
+            const willHide = shouldHideUntilAutoSizeCompletes()
+            
+            // CRITICAL: Start with fontSize=0 when hiding to prevent giant text flash:
+            // - STAGE: Always starts at 0 (computes for STAGE dimensions, not OUTPUT)
+            // - OUTPUT: Starts at 0 if cache is invalid (willHide=true), otherwise uses cache
+            // - PREVIEW: Always uses cached OUTPUT value (never recalculates)
+            if (isStage) {
+                fontSize = 0
+            } else if (willHide) {
+                // Cache is invalid - start at 0 to avoid displaying wrong fontSize while recalculating
+                fontSize = 0
+            } else {
+                // Cache is valid - use it
+                fontSize = item?.autoFontSize || 0
+            }
+            
             lastRenderedSignature = stateSignature
-            hideUntilAutosized = shouldHideUntilAutoSizeCompletes()
+            hideUntilAutosized = willHide
         }
     }
     // Trigger calculation if Content OR Template changes (resolvedTemplateId added to dependency list)
-    $: if (itemElem && loaded && (stageAutoSize || newItem !== previousItem || resolvedTemplateId || chordLines || stageItem)) calculateAutosize()
-    $: if ($variables) setTimeout(calculateAutosize)
+    // IMPORTANT: Preview thumbnails should NOT recalculate - they use cached OUTPUT fontSize only
+    $: if (itemElem && loaded && !preview && (stageAutoSize || newItem !== previousItem || resolvedTemplateId || chordLines || stageItem)) calculateAutosize()
+    $: if (!preview && $variables) setTimeout(calculateAutosize)
 
     // recalculate auto size if output template is different than show template
     $: currentShowTemplateId = $showsCache[ref.showId || ""]?.settings?.template || ""
@@ -357,8 +369,6 @@
     let loopStop: NodeJS.Timeout | null = null
     let newCall = false
     async function calculateAutosize() {
-        const debugContext = isStage ? "STAGE" : (preview ? "PREVIEW" : "OUTPUT")
-
         if (item.type === "media" || item.type === "camera" || item.type === "icon") return
         if (isStage && !stageAutoSize) {
             return
@@ -508,6 +518,16 @@
         if (preview) {
             boxDimensions.measuredWidth = measuredWidth
             boxDimensions.measuredHeight = measuredHeight
+        }
+        
+        // Fix for OUTPUT getting stuck with wrong cache when output window dimensions change
+        // Include container dimensions to invalidate cache when OUTPUT resolution/size changes
+        if (!preview && !isStage && itemElem) {
+            const container = itemElem.parentElement
+            if (container) {
+                boxDimensions.containerWidth = container.clientWidth
+                boxDimensions.containerHeight = container.clientHeight
+            }
         }
 
         return JSON.stringify({
