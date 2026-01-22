@@ -72,6 +72,7 @@
     $: selectedItem = $focusMode ? $activeFocus : $activeShow
     $: isActive = index !== null ? selectedItem?.index === index : selectedItem?.id === id
 
+    // WIP partly duplicate of openShow() in show.ts
     let editActive = false
     function click(e: ClickEvent) {
         const { ctrl, shift, target } = e.detail
