@@ -13,17 +13,14 @@ type Options = {
     defaultFontSize?: number // 50
     maxFontSize?: number // 800
     minFontSize?: number // 10
+    isList?: boolean // whether this is a list item (affects measurement)
 }
 
-export default function autosize(elem: HTMLElement, { type, textQuery, defaultFontSize, maxFontSize, minFontSize }: Options = {}) {
-    // DEBUG: console.debug(`[DEBUG] autosize() ENTRY`, JSON.stringify({ type, textQuery, inputDefaultFontSize: defaultFontSize, inputMaxFontSize: maxFontSize, inputMinFontSize: minFontSize, DEF_FONT_SIZE, MAX_FONT_SIZE, MIN_FONT_SIZE }, null, 2))
-
+export default function autosize(elem: HTMLElement, { type, textQuery, defaultFontSize, maxFontSize, minFontSize, isList }: Options = {}) {
     // set default values
     if (!minFontSize) minFontSize = MIN_FONT_SIZE
     if (!maxFontSize) maxFontSize = MAX_FONT_SIZE
     if (!defaultFontSize) defaultFontSize = Math.max(minFontSize, Math.min(maxFontSize, DEF_FONT_SIZE))
-
-    // DEBUG: console.debug(`[DEBUG] autosize() after defaults`, JSON.stringify({ type, minFontSize, maxFontSize, defaultFontSize }, null, 2))
 
     if (!elem) return defaultFontSize
 
@@ -42,8 +39,6 @@ export default function autosize(elem: HTMLElement, { type, textQuery, defaultFo
     const boxWidth = boxElem.clientWidth
     const boxHeight = boxElem.clientHeight
 
-    // DEBUG: console.debug(`[DEBUG] autosize() box dimensions`, JSON.stringify({ boxWidth, boxHeight }, null, 2))
-
     let textChildren: HTMLElement[] | HTMLCollection = []
     if (textQuery) textChildren = boxElem.querySelectorAll(textQuery) as any
     if (!textChildren.length) textChildren = boxElem.children.length ? boxElem.children : [boxElem]
@@ -55,7 +50,6 @@ export default function autosize(elem: HTMLElement, { type, textQuery, defaultFo
     if (type === "shrinkToFit") {
         if (!textIsBiggerThanBox()) {
             // don't change the font size
-            // DEBUG: console.debug(`[DEBUG] autosize() shrinkToFit - text fits`, JSON.stringify({ defaultFontSize }, null, 2))
             return finish(defaultFontSize)
         }
         // shrinkToFit is same as growToFit if text is larger
@@ -65,12 +59,9 @@ export default function autosize(elem: HTMLElement, { type, textQuery, defaultFo
     let highestValue = maxFontSize
     let previousSize = 0
 
-    // DEBUG: console.debug(`[DEBUG] autosize() starting binary search`, JSON.stringify({ type, lowestValue, highestValue, minFontSize, maxFontSize }, null, 2))
-
     size()
 
     const finalResult = Math.min(maxFontSize, lowestValue)
-    // DEBUG: console.debug(`[DEBUG] autosize() FINAL RESULT`, JSON.stringify({ type, lowestValue, maxFontSize, finalResult }, null, 2))
 
     // prefer lowest value (due to margin)
     return finish(finalResult)
@@ -134,6 +125,20 @@ export default function autosize(elem: HTMLElement, { type, textQuery, defaultFo
 
         for (const elemHide of Array.from(cloned.querySelectorAll(".hideFromAutosize"))) {
             ;(elemHide as HTMLElement).style.display = "none"
+        }
+
+        // CRITICAL FIX FOR LIST ITEMS:
+        // List items have font-size on both the parent .break div AND the inner span elements
+        // This causes double font-size application during measurement
+        // We need to remove font-size from .break divs so only the spans (selected by textQuery) control sizing
+        if (isList) {
+            const breakElements = cloned.querySelectorAll('.break')
+            for (const breakElem of Array.from(breakElements)) {
+                const htmlBreak = breakElem as HTMLElement
+                const currentStyle = htmlBreak.getAttribute('style') || ''
+                const newStyle = currentStyle.replace(/font-size:\s*[^;]+;?/gi, '')
+                htmlBreak.setAttribute('style', newStyle)
+            }
         }
 
         elem.after(cloned)
