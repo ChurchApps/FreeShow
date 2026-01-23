@@ -2,7 +2,7 @@
     import { onMount } from "svelte"
     import type { MediaStyle } from "../../../../types/Main"
     import type { ItemType } from "../../../../types/Show"
-    import { activeEdit, activePage, activePopup, activeShow, activeTriggerFunction, alertMessage, driveData, focusMode, labelsDisabled, media, outputs, overlays, refreshEditSlide, showsCache, special, styles, templates, textEditActive } from "../../../stores"
+    import { activeEdit, activePage, activePopup, activeShow, activeTriggerFunction, alertMessage, driveData, focusMode, groups, labelsDisabled, media, outputs, overlays, refreshEditSlide, showsCache, special, styles, templates, textEditActive } from "../../../stores"
     import { transposeText } from "../../../utils/chordTranspose"
     import { triggerFunction } from "../../../utils/common"
     import { translateText } from "../../../utils/language"
@@ -314,13 +314,15 @@
 
     $: hasTextContent = getSlideText(Slide)?.length
 
-    $: template = Slide?.settings?.template || currentShow?.settings?.template || ""
+    $: parentId = $activeEdit.slide !== null && ref?.[$activeEdit.slide!] ? ref[$activeEdit.slide!]?.parent?.id || ref[$activeEdit.slide!]?.id : ""
+    $: slideGroup = _show(currentShowId).slides([parentId]).get()?.[0]?.globalGroup || ""
+    $: template = Slide?.settings?.template || $groups[slideGroup]?.template || currentShow?.settings?.template || ""
 </script>
 
 <svelte:window on:keydown={keydown} on:keyup={keyup} on:blur={blurred} on:paste={paste} />
 
 {#if template && !chordsMode && !widthOrHeight.includes("height") && !$focusMode && !isLocked}
-    <div class="default" data-title={translateText(`info.template: ${$templates[template]?.name || "—"}`)}>
+    <div class="default" data-title={translateText(`info.template: <b>${$templates[template]?.name || "—"}</b>`)}>
         <MaterialButton
             style="border-radius: 50%;"
             on:click={() => {
