@@ -260,7 +260,7 @@
 
                 <MaterialButton
                     class="context #show_template"
-                    title="menu.edit: {$templates[currentShow.settings.template].name || 'info.template'}"
+                    title="menu.edit: <b>{$templates[currentShow.settings.template].name || 'info.template'}</b>"
                     on:click={() => {
                         activeEdit.set({ type: "template", id: currentShow.settings.template || "", items: [] })
                         activePage.set("edit")

@@ -1,6 +1,6 @@
 <script lang="ts">
     import { uid } from "uid"
-    import { activePopup, activeShow, alertMessage, cachedShowsData, fullColors, globalGroupViewEnabled, groups, selected, showsCache } from "../../../stores"
+    import { activePopup, activeShow, alertMessage, cachedShowsData, fullColors, globalGroupViewEnabled, groups, selected, showsCache, templates } from "../../../stores"
     import { createKeydownHandler } from "../../../utils/clickable"
     import { translateText } from "../../../utils/language"
     import { getAccess } from "../../../utils/profile"
@@ -90,8 +90,15 @@
                             })}
                         >
                             <p data-title={slide.group}>
+                                {#if $groups[slide.globalGroup]?.template}
+                                    <span class="info template" data-title="{translateText('groups.group_template')}: <b>{$templates[$groups[slide.globalGroup].template || '']?.name || ''}</b>"><Icon id="templates" size={0.7} white /></span>
+                                {:else if displayGlobalGroups && $groups[slide.globalGroup]}
+                                    <span class="info template" data-title={translateText("groups.global")}><Icon id="autofill" size={0.6} white /></span>
+                                {/if}
+
                                 {slide.group === "." ? "" : slide.group || "—"}
-                                {#if groupCount > 1}<span class="shortcut" style="opacity: 0.5;font-style: initial;">{groupCount}</span>{/if}
+
+                                {#if groupCount > 1}<span class="info shortcut" style="opacity: 0.5;font-style: initial;">{groupCount}</span>{/if}
                             </p>
                         </div>
                     </SelectElem>
@@ -143,8 +150,11 @@
                                 })}
                             >
                                 <p data-title={slide.group}>
+                                    {#if $groups[slide.id]?.template}<span class="info template" data-title="{translateText('groups.group_template')}: <b>{$templates[$groups[slide.id].template || '']?.name || ''}</b>"><Icon id="templates" size={0.7} white /></span>{/if}
+
                                     {slide.group === "." ? "" : slide.group || "—"}
-                                    {#if $groups[slide.id]?.shortcut}<span class="shortcut">{$groups[slide.id].shortcut}</span>{/if}
+
+                                    {#if $groups[slide.id]?.shortcut}<span class="info shortcut">{$groups[slide.id].shortcut}</span>{/if}
                                 </p>
                             </div>
                         </SelectElem>
@@ -226,15 +236,23 @@
         display: flex;
         align-items: center;
     }
-    .shortcut {
+
+    .info {
         position: absolute;
-        inset-inline-end: 5px;
         background-color: var(--primary-darker);
 
         color: rgb(255 255 255 / 0.5);
         opacity: 0.8;
         font-style: italic;
         font-size: 0.8em;
+    }
+    .info.template {
+        inset-inline-start: 5px;
+        padding-inline-end: 5px;
+        opacity: 0.5;
+    }
+    .info.shortcut {
+        inset-inline-end: 5px;
         padding-inline-start: 5px;
     }
 
@@ -242,6 +260,10 @@
         overflow: visible;
         text-align: center;
         color: var(--text);
+
+        font-size: 0.8em;
+        opacity: 0.7;
+        margin-bottom: 5px;
     }
 
     .separator {

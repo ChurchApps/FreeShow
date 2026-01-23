@@ -32,7 +32,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     quick_start_guide: { label: "guide.start", icon: "guide" },
     focus_mode: { label: "actions.focus_mode", icon: "focus_mode", shortcuts: ["Ctrl+Shift+F"] },
     fullscreen: { label: "actions.fullscreen", icon: "fullscreen", shortcuts: ["F11"] },
-    resetZoom: { label: "actions.resetZoom", icon: "reset", iconColor: "#ff9b54" },
+    resetZoom: { label: "actions.resetZoom", icon: "reset", iconColor: "#ff6b54" },
     zoomIn: { label: "actions.zoomIn", icon: "zoomIn" },
     zoomOut: { label: "actions.zoomOut", icon: "zoomOut" },
     // MAIN
@@ -42,7 +42,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     shortcuts: { label: "popup.shortcuts", icon: "shortcut", shortcuts: ["Ctrl+?"] },
     rename: { label: "actions.rename", icon: "rename", iconColor: "#6effbe", shortcuts: ["F2"] },
     delete: { label: "actions.delete", icon: "delete", iconColor: "#ff5454", shortcuts: ["Del"] },
-    delete_remove: { label: "actions.remove", icon: "delete", iconColor: "#ff9b54", shortcuts: ["Del"] },
+    delete_remove: { label: "actions.remove", icon: "delete", iconColor: "#ff6b54", shortcuts: ["Del"] },
     delete_all: { label: "actions.delete_all", icon: "delete", iconColor: "#ff5454" },
     import: { label: "actions.import", icon: "import" },
     export: { label: "actions.export", icon: "export" },
@@ -61,7 +61,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     manage_variable_tags: { label: "popup.manage_tags", icon: "edit", iconColor: "#97c7ff" },
     variable_tag_set: { label: "context.setTag", icon: "tag", iconColor: "#979aff", items: ["LOAD_variable_tag_set"] },
     variable_tag_filter: { label: "context.filterByTags", icon: "tag", iconColor: "#979aff", items: ["LOAD_variable_tag_filter"] },
-    reset_defaults: { label: "actions.reset_defaults", icon: "reset", iconColor: "#ff9b54" },
+    reset_defaults: { label: "actions.reset_defaults", icon: "reset", iconColor: "#ff6b54" },
     action_history: { label: "popup.action_history", icon: "history", iconColor: "var(--secondary)" },
     newCategory: { label: "context.newCategory", icon: "add", iconColor: "var(--secondary)" },
     newScripture: { label: "new.scripture", icon: "add", iconColor: "var(--secondary)" },
@@ -101,7 +101,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     sort_media_by: { label: "sort.sort_by", icon: "sort", iconColor: "#979aff", items: ["LOAD_sort_media"] },
     // SHOWS
     lock_show: { label: "context.lockForChanges", icon: "lock", iconColor: "#ff5454" },
-    remove: { label: "actions.remove", icon: "delete", iconColor: "#ff9b54" },
+    remove: { label: "actions.remove", icon: "delete", iconColor: "#ff6b54" },
     remove_group: { label: "actions.remove_group_short", tooltip: "actions.remove_group", icon: "delete", iconColor: "#ff9b54", shortcuts: ["Del"] },
     delete_slide: { label: "actions.delete_slide_short", tooltip: "actions.delete_slide", icon: "delete", iconColor: "#ff5454" },
     delete_group: { label: "actions.delete_group", icon: "delete", iconColor: "#ff5454", shortcuts: ["Del"] },
@@ -112,7 +112,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     selectAll: { label: "context.selectAll", icon: "select", shortcuts: ["Ctrl+A"] },
     newSlide: { label: "new.slide", icon: "add", iconColor: "var(--secondary)" },
     // newGroup: { label: "context.createNew", icon: "add", iconColor: "var(--secondary)" },
-    remove_template: { label: "actions.remove_template_from_show", icon: "remove_circle", iconColor: "#ff9b54" },
+    remove_template: { label: "actions.remove_template_from_show", icon: "remove_circle", iconColor: "#ff6b54" },
     // SLIDE VIEWS
     view_grid: { label: "show.grid", icon: "grid" },
     view_simple: { label: "show.simple", icon: "simple" },
@@ -184,8 +184,8 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     // STAGE
     move_connections: { label: "context.move_connections", icon: "up" },
     // SETTINGS
-    reset_theme: { label: "settings.reset_theme", icon: "reset", iconColor: "#ff9b54" },
-    reset: { label: "actions.reset", icon: "reset", iconColor: "#ff9b54" }
+    reset_theme: { label: "settings.reset_theme", icon: "reset", iconColor: "#ff6b54" },
+    reset: { label: "actions.reset", icon: "reset", iconColor: "#ff6b54" }
 }
 
 export const contextMenuGroups = {
