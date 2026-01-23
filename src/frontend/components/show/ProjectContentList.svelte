@@ -212,7 +212,7 @@
                                 {#if show.type === "section"}
                                     <MaterialButton
                                         isActive={$focusMode ? $activeFocus.id === show.id : $activeShow?.id === show.id}
-                                        class="section {projectReadOnly ? '' : `context #project_section__project ${show.color ? 'color-border' : ''}`}"
+                                        class="section {projectReadOnly ? '' : `context #project_section ${show.color ? 'color-border' : ''}`}"
                                         style="{borderRadiusStyle}justify-content: left;background-color: var(--primary-darkest);border-top: 1px solid var(--primary-lighter);padding: 0.1em 1em;{$fullColors ? `background-color: ${show.color || 'var(--primary-darker)'} !important;color: ${getContrast(show.color || '')};` : `border-bottom: 1px solid ${show.color || 'transparent'} !important;`}"
                                         on:click={(e) => {
                                             if (e.detail.ctrl) return
@@ -250,7 +250,7 @@
                                         {/if}
                                     </MaterialButton>
                                 {:else}
-                                    <ShowButton id={show.id} {show} {index} class={projectReadOnly ? "" : `context #${pcoLink ? "pco_item__" : ""}project_${getContextMenuId(show.type)}__project`} style={borderRadiusStyle} icon />
+                                    <ShowButton id={show.id} {show} {index} class={projectReadOnly ? "" : `context #${pcoLink ? "pco_item__" : ""}project_${getContextMenuId(show.type)}`} style={borderRadiusStyle} icon />
                                 {/if}
                             </SelectElem>
                         {/each}

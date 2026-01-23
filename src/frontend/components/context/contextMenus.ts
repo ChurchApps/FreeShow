@@ -192,11 +192,14 @@ export const contextMenuGroups = {
     open: ["edit", "preview"],
     edit: ["edit"],
     rename: ["rename", "duplicate", "delete"],
+    duplicate_delete: ["duplicate", "delete"],
     rename_color: ["rename", "recolor", "duplicate", "delete"],
     rename_icon: ["rename", "changeIcon"],
     rename_only: ["rename"],
     recolor: ["recolor"],
-    slide_remove: ["remove_group", "delete_slide"]
+    slide_remove: ["remove_group", "delete_slide"],
+    dynamic: ["dynamic_values", "conditions"],
+    conditions: ["conditions"]
 }
 
 export const contextMenuLayouts: { [key: string]: string[] } = {
@@ -280,7 +283,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     // actions
     actions: ["manage_action_tags", "action_tag_filter", "SEPARATOR", "action_history"],
     actions_readonly: ["action_tag_filter"],
-    action: ["edit", "disable", "SEPARATOR", "duplicate", "delete", "SEPARATOR", "action_tag_set", "action_tag_filter"],
+    action: ["edit", "disable", "SEPARATOR", "action_tag_set", "action_tag_filter", "GROUP_duplicate_delete"],
     action_readonly: ["action_tag_filter"],
     scripture_verse: ["create_show", "SEPARATOR", "selectAll"],
     scripture_chapter: ["create_show"],
@@ -312,12 +315,12 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     shows: ["newSlide", "selectAll"],
     // TIMER
     // timer: ["GROUP_edit", "play"], // , "reset"
-    global_timer: ["GROUP_edit", "play", "SEPARATOR", "duplicate", "delete"], // , "reset"
+    global_timer: ["GROUP_edit", "play", "GROUP_duplicate_delete"], // , "reset"
     global_timer_readonly: ["play"], // , "reset"
     // VARIABLE
     variables: ["manage_variable_tags", "variable_tag_filter"],
     variables_readonly: ["variable_tag_filter"],
-    variable: ["GROUP_edit", "duplicate", "delete", "SEPARATOR", "variable_tag_set", "variable_tag_filter"],
+    variable: ["GROUP_edit", "variable_tag_set", "variable_tag_filter", "GROUP_duplicate_delete"],
     variable_readonly: ["variable_tag_filter"],
     // TRIGGER
     trigger: ["GROUP_edit", "delete"],
@@ -350,15 +353,15 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     bible_book_local: ["rename"],
 
     // STAGE
-    stage_slide: ["move_connections", "rename", "disable", "SEPARATOR", "duplicate", "delete"],
+    stage_slide: ["move_connections", "rename", "disable", "GROUP_duplicate_delete"],
     stage_slide_readonly: ["move_connections"],
-    stage_item: ["conditions", "SEPARATOR", "rearrange_stage", "SEPARATOR", "duplicate", "delete"],
+    stage_item: ["GROUP_conditions", "rearrange_stage", "GROUP_duplicate_delete"],
     stage_item_output: ["rearrange_stage", "SEPARATOR", "delete"],
-    stage_text_item: ["dynamic_values", "conditions", "SEPARATOR", "rearrange_stage", "SEPARATOR", "duplicate", "delete"],
+    stage_text_item: ["GROUP_dynamic", "rearrange_stage", "GROUP_duplicate_delete"],
     items_list_item_stage: ["to_front_stage", "forward_stage", "backward_stage", "to_back_stage"],
 
     // EDIT
-    edit_box: ["dynamic_values", "conditions", "item_actions", "item_bind_to", "format", "rearrange", "transition", "SEPARATOR", "duplicate", "delete"], // "copy", "paste" (shortcut or top menubar)
+    edit_box: ["GROUP_dynamic", "item_actions", "item_bind_to", "format", "rearrange", "transition", "GROUP_duplicate_delete"], // "copy", "paste" (shortcut or top menubar)
     items_list_item: ["to_front", "forward", "backward", "to_back"],
 
     // CALENDAR

@@ -16,7 +16,7 @@
     export let index = -1
     export let fileOver = false
 
-    $: outline = !!$playingAudio[path] && $activePlaylist?.index === index
+    $: outline = !!$playingAudio[path] && (!$activePlaylist || $activePlaylist?.index === index)
 </script>
 
 <SelectElem id="audio" data={{ path, name, index }} {fileOver} borders={playlist ? "edges" : "all"} trigger={playlist ? "column" : null} draggable>
