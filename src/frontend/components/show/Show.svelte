@@ -8,6 +8,8 @@
     import Splash from "../main/Splash.svelte"
     import Camera from "../output/Camera.svelte"
     import Layouts from "../slide/Layouts.svelte"
+    import Resizeable from "../system/Resizeable.svelte"
+    import Timeline from "../timeline/Timeline.svelte"
     import AudioPreview from "./AudioPreview.svelte"
     import FolderShow from "./folder/FolderShow.svelte"
     import MediaPreview from "./media/MediaPreview.svelte"
@@ -25,77 +27,97 @@
     $: position = $projects[$activeProject || ""]?.shows?.findIndex((a) => a.id === show?.id)
 </script>
 
-<div id="showArea" class="main">
-    {#if show}
-        {#if show.type === "video" || show.type === "image" || show.type === "player"}
-            <MediaPreview />
-        {:else if show.type === "audio"}
-            <AudioPreview active={$activeShow} />
-        {:else if show.type === "section"}
-            {#key position !== undefined}
-                <!-- update content when moving position in project -->
-                <Section section={show} />
-            {/key}
-        {:else if show.type === "overlay"}
-            <OverlayPreview {show} />
-        {:else if show.type === "pdf"}
-            {#key show}
-                <PdfPreview {show} index={show.index || 0} />
-            {/key}
-        {:else if show.type === "ppt"}
-            <!-- DEPRECATED -->
-            <PowerPointPreview {show} />
-        {:else if show.type === "camera"}
-            <HoverButton
-                icon="play"
-                size={10}
-                on:click={() => {
-                    if (!$outLocked) setOutput("background", { id: show.id, type: show.type })
-                }}
-            >
-                <Camera id={show.id} groupId={show.data?.groupId} class="media" />
-            </HoverButton>
-        {:else if show.type === "screen"}
-            <HoverButton
-                icon="play"
-                size={10}
-                on:click={() => {
-                    if (!$outLocked) setOutput("background", { id: show.id, type: show.type })
-                }}
-            >
-                <Capture screen={{ id: show.id, name: show.name || "" }} streams={[]} background />
-            </HoverButton>
-        {:else if show.type === "ndi"}
-            <HoverButton
-                icon="play"
-                size={10}
-                on:click={() => {
-                    if (!$outLocked) setOutput("background", { id: show.id, type: show.type })
-                }}
-            >
-                <NdiStream screen={{ id: show.id, name: show.name || "" }} background />
-            </HoverButton>
-        {:else if show.type === "folder"}
-            {#key show.id}
-                <FolderShow path={show.id} index={show.index || 0} />
-            {/key}
-        {:else if (show.type || "show") === "show"}
-            <Slides showId={$activeShow?.id || ""} />
-            <Layouts />
+<div class="double">
+    <div id="showArea" class="main">
+        {#if show}
+            {#if show.type === "video" || show.type === "image" || show.type === "player"}
+                <MediaPreview />
+            {:else if show.type === "audio"}
+                <AudioPreview active={$activeShow} />
+            {:else if show.type === "section"}
+                {#key position !== undefined}
+                    <!-- update content when moving position in project -->
+                    <Section section={show} />
+                {/key}
+            {:else if show.type === "overlay"}
+                <OverlayPreview {show} />
+            {:else if show.type === "pdf"}
+                {#key show}
+                    <PdfPreview {show} index={show.index || 0} />
+                {/key}
+            {:else if show.type === "ppt"}
+                <!-- DEPRECATED -->
+                <PowerPointPreview {show} />
+            {:else if show.type === "camera"}
+                <HoverButton
+                    icon="play"
+                    size={10}
+                    on:click={() => {
+                        if (!$outLocked) setOutput("background", { id: show.id, type: show.type })
+                    }}
+                >
+                    <Camera id={show.id} groupId={show.data?.groupId} class="media" />
+                </HoverButton>
+            {:else if show.type === "screen"}
+                <HoverButton
+                    icon="play"
+                    size={10}
+                    on:click={() => {
+                        if (!$outLocked) setOutput("background", { id: show.id, type: show.type })
+                    }}
+                >
+                    <Capture screen={{ id: show.id, name: show.name || "" }} streams={[]} background />
+                </HoverButton>
+            {:else if show.type === "ndi"}
+                <HoverButton
+                    icon="play"
+                    size={10}
+                    on:click={() => {
+                        if (!$outLocked) setOutput("background", { id: show.id, type: show.type })
+                    }}
+                >
+                    <NdiStream screen={{ id: show.id, name: show.name || "" }} background />
+                </HoverButton>
+            {:else if show.type === "folder"}
+                {#key show.id}
+                    <FolderShow path={show.id} index={show.index || 0} />
+                {/key}
+            {:else if (show.type || "show") === "show"}
+                <Slides showId={$activeShow?.id || ""} />
+                <Layouts />
+            {:else}
+                <p style="text-align: center;text-transform: capitalize;opacity: 0.8;">{show.type}</p>
+            {/if}
         {:else}
-            <p style="text-align: center;text-transform: capitalize;opacity: 0.8;">{show.type}</p>
+            <Splash />
         {/if}
-    {:else}
-        <Splash />
+    </div>
+
+    {#if show && (show.type || "show") === "show"}
+        <Resizeable id="timeline" side="bottom">
+            <!-- TODO: toggle on/off -->
+            <Timeline />
+        </Resizeable>
     {/if}
 </div>
 
 <style>
+    .double {
+        height: 100%;
+
+        display: flex;
+        flex-direction: column;
+
+        /* overflow: hidden; */
+    }
+
     .main {
         height: 100%;
         position: relative;
         display: flex;
         flex-direction: column;
         justify-content: center;
+
+        overflow: auto;
     }
 </style>
