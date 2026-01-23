@@ -102,7 +102,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     // SHOWS
     lock_show: { label: "context.lockForChanges", icon: "lock", iconColor: "#ff5454" },
     remove: { label: "actions.remove", icon: "delete", iconColor: "#ff9b54" },
-    remove_slide: { label: "actions.remove_group_short", tooltip: "actions.remove_group", icon: "delete", iconColor: "#ff9b54", shortcuts: ["Del"] },
+    remove_group: { label: "actions.remove_group_short", tooltip: "actions.remove_group", icon: "delete", iconColor: "#ff9b54", shortcuts: ["Del"] },
     delete_slide: { label: "actions.delete_slide_short", tooltip: "actions.delete_slide", icon: "delete", iconColor: "#ff5454" },
     delete_group: { label: "actions.delete_group", icon: "delete", iconColor: "#ff5454", shortcuts: ["Del"] },
     manage_groups: { label: "popup.manage_groups", icon: "edit", iconColor: "#97c7ff" },
@@ -112,6 +112,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     selectAll: { label: "context.selectAll", icon: "select", shortcuts: ["Ctrl+A"] },
     newSlide: { label: "new.slide", icon: "add", iconColor: "var(--secondary)" },
     // newGroup: { label: "context.createNew", icon: "add", iconColor: "var(--secondary)" },
+    remove_template: { label: "actions.remove_template_from_show", icon: "remove_circle", iconColor: "#ff9b54" },
     // SLIDE VIEWS
     view_grid: { label: "show.grid", icon: "grid" },
     view_simple: { label: "show.simple", icon: "simple" },
@@ -195,7 +196,7 @@ export const contextMenuGroups = {
     rename_icon: ["rename", "changeIcon"],
     rename_only: ["rename"],
     recolor: ["recolor"],
-    slide_remove: ["remove_slide", "delete_slide"]
+    slide_remove: ["remove_group", "delete_slide"]
 }
 
 export const contextMenuLayouts: { [key: string]: string[] } = {
@@ -334,6 +335,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     // global_group: ["rename"],
     layout: ["rename", "duplicate", "remove"],
     slideViews: ["view_grid", "view_list", "view_lyrics", "SEPARATOR", "view_simple", "view_groups"],
+    show_template: ["remove_template"],
     tag: ["rename", "recolor", "SEPARATOR", "delete"],
     chord: ["set_key", "chord_list", "custom_key", "SEPARATOR", "delete"],
     meta_message: ["dynamic_values"],

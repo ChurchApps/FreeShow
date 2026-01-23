@@ -4,7 +4,7 @@ import { EXPORT, OUTPUT } from "../../../types/Channels"
 import type { HistoryPages } from "../../../types/History"
 import { Main } from "../../../types/IPC/Main"
 import type { MediaStyle, Selected, SelectIds } from "../../../types/Main"
-import type { Item, LayoutRef, Slide, SlideData } from "../../../types/Show"
+import type { Item, LayoutRef, SlideData } from "../../../types/Show"
 import { ShowObj } from "../../classes/Show"
 import { sendMain } from "../../IPC/main"
 import { cameraManager } from "../../media/cameraManager"
@@ -232,9 +232,7 @@ const clickActions = {
         // "slide" || "group" || "overlay" || "template" || "output" || "effect"
         activePopup.set("color")
     },
-    // not currently in use:
-    remove_group: (obj: ObjData) => removeGroup(obj.sel?.data || []),
-    remove_slide: (obj: ObjData) => {
+    remove_group: (obj: ObjData) => {
         removeSlide(obj.sel?.data || [], "remove")
         if (get(activePage) === "edit") refreshEditSlide.set(true)
     },
@@ -906,6 +904,9 @@ const clickActions = {
         else activeRename.set("project_" + id)
 
         history({ id: "UPDATE", newData: { data: project }, oldData: { id }, location: { page: "show", id: "project_template" } })
+    },
+    remove_template: () => {
+        removeTemplatesFromShow(get(activeShow)?.id || "", true)
     },
 
     // slide views
@@ -1835,72 +1836,6 @@ function changeSlideAction(obj: ObjData, id: string) {
     })
 
     history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: actionsList, indexes } })
-}
-
-export function removeGroup(data: any[]) {
-    const ref = getLayoutRef()
-    const firstSlideId = ref[0]?.id
-
-    let removeSlideIds: string[] = []
-    data.forEach((slideRef) => {
-        if (!slideRef.index) return
-        const refSlide = ref.find((a) => a.layoutIndex === slideRef.index)
-        if (!refSlide || refSlide?.type === "child" || refSlide?.id === firstSlideId) return
-
-        removeSlideIds.push(refSlide.id)
-    })
-    removeSlideIds = removeDuplicates(removeSlideIds)
-    if (!removeSlideIds.length) return
-
-    const newParentIds: { [key: string]: string } = {}
-
-    // remove from layout
-    const activeLayout = _show().get("settings.activeLayout")
-    const layout: SlideData[] = clone(_show().layouts([activeLayout]).get("slides")[0])
-    const newLayoutSlides: any[] = []
-    layout.forEach((layoutRef, i: number) => {
-        if (!removeSlideIds.includes(layoutRef.id)) {
-            newLayoutSlides.push(layoutRef)
-            return
-        }
-
-        const currentIndex = newLayoutSlides.length - 1
-        const layoutIndex = ref.find((a) => a.id === layoutRef.id && a.index === i)?.layoutIndex
-        const isSelected = data.find((a) => a.index === layoutIndex)
-        if (isSelected) newParentIds[layoutRef.id] = newLayoutSlides[currentIndex].id
-
-        if (!Object.keys(layoutRef).length) return
-
-        if (!newLayoutSlides[currentIndex].children) newLayoutSlides[currentIndex].children = {}
-        const id = layoutRef.id
-
-        const childData: any = layoutRef
-        delete childData.id
-        newLayoutSlides[currentIndex].children[id] = childData
-    })
-
-    const slides = clone(_show().get("slides"))
-    Object.keys(slides).forEach((slideId) => {
-        const slide: Slide = slides[slideId]
-        const willChange = removeSlideIds.includes(slideId)
-        if (!willChange) return
-
-        const newParent: string = newParentIds[slideId]
-        if (!newParent) return
-
-        const children = slide.children || []
-        if (!slides[newParent].children) slides[newParent].children = []
-
-        slides[newParent].children = [...slides[newParent].children, slideId, ...children]
-        delete slides[slideId].children
-
-        delete slides[slideId].globalGroup
-        slides[slideId].group = null
-        slides[slideId].color = null
-    })
-
-    const newData = { slides, layout: newLayoutSlides }
-    history({ id: "slide", newData, location: { layout: activeLayout, page: "show", show: get(activeShow)! } })
 }
 
 export async function removeSlide(data: any[], type: "delete" | "remove" = "delete") {

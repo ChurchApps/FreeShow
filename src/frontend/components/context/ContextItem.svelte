@@ -124,16 +124,29 @@
             }
         },
         remove_group: () => {
-            if ($selected.id !== "slide") return
+            if ($selected.id !== "slide" || $selected.data?.length > 1) return
 
-            let ref = getLayoutRef()
-            const getCurrentSlide = (index) => ref.find((a) => a.layoutIndex === index)
-            let parentSlide = $selected.data.find((a) => a.index && getCurrentSlide(a.index)?.type === "parent")
+            const ref = getLayoutRef()
+            const slideIndex = $selected.data[0]?.index
+            const currentSlideId = ref[slideIndex]?.parent?.id || ref[slideIndex]?.id
+            if (!currentSlideId) return
 
-            if (parentSlide) return
+            const show = $showsCache[$activeShow?.id || ""]
 
-            // disable when no parents are selected or just first slide
-            disabled = true
+            // if parent slide and has children, don't hide
+            const isParent = ref[slideIndex]?.type === "parent"
+            if (isParent && (show.slides[currentSlideId]?.children || []).length) {
+                hide = false
+                return
+            }
+
+            const currentSlideInstances = Object.values(show.layouts)
+                .map((a) => a.slides)
+                .flat()
+                .filter((b) => b.id === currentSlideId)
+
+            // hide if there is just one instance of the slide group across all layouts
+            hide = currentSlideInstances.length < 2
         },
         remove: () => {
             if ($selected.id !== "show" || _show($selected.data[0]?.id).get("private") !== true) return
