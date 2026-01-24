@@ -162,7 +162,7 @@ export class ChurchAppsConnect {
                 })
             })
 
-            const URL = `${CHURCHAPPS_APP_URL}/login?returnUrl=` + encodeURIComponent(`/oauth?client_id=${this.clientId}&redirect_uri=${encodeURIComponent(redirect_uri)}&response_type=code&scope=${scope}`)
+            const URL = `${CHURCHAPPS_APP_URL}/login?returnUrl=` + encodeURIComponent(`/oauth?client_id=${this.clientId}&redirect_uri=${encodeURIComponent(redirect_uri)}&response_type=code&scope=${scope}` + "&forceLogin=1")
             openURL(URL)
         })
     }
