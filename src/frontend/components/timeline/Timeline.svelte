@@ -37,6 +37,7 @@
     let isScrubbing = false
     let draggingActionId: string | null = null
     let dragTimeOffset = 0
+    let dragInitialTimes = new Map<string, number>()
     let wasPlaying = false
     let lastMouseX = 0
     let trackWrapper: HTMLElement
@@ -56,10 +57,10 @@
     let useFixedDuration = false
     let fixedDurationSeconds = 300
 
-    let usedHeaderWidth = 100
+    let usedHeaderWidth = 120
     // Computed
     $: timeString = formatTime(currentTime)
-    $: lastActionTime = actions.length > 0 ? Math.max(...actions.map((a) => a.time)) : 0
+    $: lastActionTime = actions.length > 0 ? Math.max(...actions.map((a) => a.time + (a.duration || 0) * 1000)) : 0
     $: duration = useFixedDuration ? fixedDurationSeconds * 1000 : Math.max(minDuration, lastActionTime + 60 * 1000) // 60s buffer
     $: tickInterval = getTickInterval(zoomLevel)
     $: totalTickCount = Math.ceil(duration / 1000 / tickInterval)
@@ -497,13 +498,7 @@
             } else if (draggingActionId) {
                 const newTime = seekTime - dragTimeOffset
                 const snappedTime = Math.round(newTime / 10) * 10
-                const clampedTime = Math.max(0, Math.min(snappedTime, duration))
-
-                const index = actions.findIndex((a) => a.id === draggingActionId)
-                if (index !== -1) {
-                    actions[index].time = clampedTime
-                    actions = actions
-                }
+                moveSelectedActions(snappedTime)
             }
         }
 
@@ -523,7 +518,21 @@
     function startActionDrag(e: MouseEvent, id: string) {
         if (e.button !== 0) return
 
+        if (!selectedActionIds.includes(id)) {
+            if (e.ctrlKey || e.shiftKey) {
+                selectedActionIds = [...selectedActionIds, id]
+            } else {
+                selectedActionIds = [id]
+            }
+        }
+
         draggingActionId = id
+
+        dragInitialTimes.clear()
+        selectedActionIds.forEach((selectedId) => {
+            const act = actions.find((a) => a.id === selectedId)
+            if (act) dragInitialTimes.set(selectedId, act.time)
+        })
 
         const action = actions.find((a) => a.id === id)
         if (action && trackWrapper) {
@@ -542,6 +551,30 @@
         window.addEventListener("mouseup", endActionDrag)
     }
 
+    function moveSelectedActions(targetAnchorTime: number) {
+        if (!draggingActionId) return
+
+        const initialAnchorTime = dragInitialTimes.get(draggingActionId)
+        if (initialAnchorTime === undefined) return
+
+        let delta = targetAnchorTime - initialAnchorTime
+
+        let minInitial = Infinity
+        for (const t of dragInitialTimes.values()) {
+            if (t < minInitial) minInitial = t
+        }
+        if (minInitial + delta < 0) {
+            delta = -minInitial
+        }
+
+        actions = actions.map((a) => {
+            if (dragInitialTimes.has(a.id)) {
+                return { ...a, time: dragInitialTimes.get(a.id)! + delta }
+            }
+            return a
+        })
+    }
+
     function updateActionDrag(e: MouseEvent) {
         if (!draggingActionId || !trackWrapper) return
         lastMouseX = e.clientX
@@ -552,13 +585,8 @@
 
         const newTime = mouseTime - dragTimeOffset
         const snappedTime = Math.round(newTime / 10) * 10
-        const clampedTime = Math.max(0, Math.min(snappedTime, duration))
 
-        const index = actions.findIndex((a) => a.id === draggingActionId)
-        if (index !== -1) {
-            actions[index].time = clampedTime
-            actions = actions
-        }
+        moveSelectedActions(snappedTime)
     }
 
     function endActionDrag() {
@@ -796,7 +824,9 @@
 
     <div class="timeline-grid">
         <!-- Top Left Corner -->
-        <div class="corner" style="width: {usedHeaderWidth}px; border-bottom: 1px solid #444; border-right: 1px solid rgba(255,255,255,0.1); background-color: var(--primary-darker); box-sizing: border-box;"></div>
+        <div class="corner" style="width: {usedHeaderWidth}px; border-bottom: 1px solid rgba(255,255,255,0.1); border-right: 1px solid rgba(255,255,255,0.1);">
+            <input class="time-display" value={timeString} on:change={handleTimeChange} on:keydown={handleTimeKeydown} />
+        </div>
 
         <!-- Ruler (Sticky Top) -->
         <div class="ruler-container" bind:this={rulerContainer} on:mousedown={startRulerScrub}>
@@ -883,7 +913,7 @@
         </div>
     </div>
 
-    <FloatingInputs side="left" style="margin-bottom: 8px;">
+    <FloatingInputs side="left" style="margin-bottom: 8px;margin-left: 120px;">
         <MaterialButton title={isPlaying ? "media.pause" : "media.play"} on:click={() => (isPlaying ? pause() : play())}>
             <Icon size={1.3} id={isPlaying ? "pause" : "play"} white={!isPlaying} />
         </MaterialButton>
@@ -895,12 +925,6 @@
         <MaterialButton title="actions.{isRecording ? 'stop_recording' : 'start_recording'}" on:click={toggle} red={isRecording}>
             <Icon size={1.3} id="record" white />
         </MaterialButton>
-
-        <div class="divider" />
-
-        <p class="time">
-            <input class="time-display" value={timeString} on:change={handleTimeChange} on:keydown={handleTimeKeydown} />
-        </p>
     </FloatingInputs>
 
     <FloatingInputs style="margin-bottom: 8px;">
@@ -934,17 +958,18 @@
     }
 
     .time-display {
+        width: 100%;
+        min-width: 120px;
+        padding: 5px 8px;
+
+        border: none;
+        outline: none;
+        background: inherit;
+
         font-family: monospace;
         font-size: 1.25em;
-        background: #111;
-        padding: 5px 10px;
-        border-radius: 4px;
-        min-width: 100px;
+        color: var(--text);
         text-align: center;
-        margin: 0 10px;
-        border: 1px solid #444;
-        color: #eee;
-        outline: none;
     }
     .time-display:focus {
         border-color: var(--focus);
@@ -952,7 +977,7 @@
 
     .timeline-grid {
         display: grid;
-        grid-template-columns: var(--header-width, 100px) 1fr;
+        grid-template-columns: var(--header-width, 120px) 1fr;
         grid-template-rows: 30px 1fr;
         height: 100%;
         overflow: hidden;
@@ -1041,7 +1066,7 @@
         color: var(--text);
         opacity: 0.5;
         position: absolute;
-        top: 8px;
+        top: 10px;
     }
 
     .track-headers {
@@ -1056,7 +1081,7 @@
     .track-header {
         position: absolute;
         left: 0;
-        /* width: 100px; */
+        /* width: 120px; */
         height: 60px;
         display: flex;
         align-items: center;
@@ -1175,8 +1200,8 @@
 
     .selection-box {
         position: absolute;
-        background-color: rgba(255, 255, 255, 0.2);
-        border: 1px solid rgba(255, 255, 255, 0.5);
+        background-color: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.4);
         pointer-events: none;
         z-index: 100;
     }
@@ -1192,8 +1217,8 @@
 
     .selection-box {
         position: absolute;
-        background-color: rgba(255, 255, 255, 0.2);
-        border: 1px solid rgba(255, 255, 255, 0.5);
+        background-color: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.4);
         pointer-events: none;
         z-index: 100;
     }
@@ -1237,16 +1262,5 @@
         gap: 5px;
         margin-left: 10px;
         font-size: 0.8em;
-    }
-
-    /* bottom */
-
-    .time {
-        display: flex;
-        align-items: center;
-
-        font-size: 0.9em;
-        padding: 0 10px;
-        opacity: 0.8;
     }
 </style>
