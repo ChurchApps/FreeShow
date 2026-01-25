@@ -1,12 +1,14 @@
+import { Main } from "../../types/IPC/Main"
+import { requestMain } from "../IPC/main"
 import { wait } from "./common"
 
-const MESSAGING_API = "https://api.churchapps.org/messaging" // "https://messaging.churchapps.org"
 const SOCKET_URL = "wss://socket.churchapps.org"
 
 interface Connection {
     churchId: string
     teamId: string
     displayName: string
+    conversationId?: string
 }
 
 // https://github.com/ChurchApps/Helpers/blob/main/src/interfaces/Messaging.ts
@@ -41,6 +43,7 @@ export class SocketHelper {
             this.socket = new WebSocket(SOCKET_URL)
 
             this.socket.onmessage = (e) => {
+                console.log("[Socket] Message received:", e.data)
                 if (!isValidJSON(e.data)) return
 
                 const payload: SocketPayloadInterface = JSON.parse(e.data)
@@ -54,13 +57,14 @@ export class SocketHelper {
             }
 
             this.socket.onopen = async () => {
+                console.log("[Socket] Connected to server")
                 this.socket!.send("getId")
             }
 
-            // this.socket.onclose = async () => {}
-            this.socket.onerror = (err) => console.error("Socket error:", err)
+            this.socket.onclose = async () => {}
+            this.socket.onerror = (err) => console.error("[Socket] Socket error:", err)
         } catch (err) {
-            console.error("Socket connection error:", err)
+            console.error("[Socket] Socket connection error:", err)
         }
     }
 
@@ -70,18 +74,18 @@ export class SocketHelper {
 
     private connect() {
         console.info("Connected to socket as", this.connection.displayName)
+        const conversationId = this.connection.conversationId
 
         const connection = {
             socketId: this.socketId,
             churchId: this.connection.churchId,
             teamId: this.connection.teamId,
-            conversationId: "alerts",
+            conversationId,
             displayName: this.connection.displayName
         }
 
-        this.postAnonymous("/connections", [connection])
-
-        // this.sendMessage("alerts", { action: "connect" });
+        console.log("[Socket] Joining room:", conversationId)
+        this.postConnectionsAnonymous([connection])
     }
 
     disconnect = () => {
@@ -112,48 +116,48 @@ export class SocketHelper {
         return false
     }
 
-    // MESSAGING
-
-    sendMessage(conversationId: string, data: { [key: string]: any } = {}) {
-        if (!this.isConnected()) return
-
-        const message = {
-            socketId: this.socketId,
-            churchId: this.connection.churchId,
-            teamId: this.connection.teamId,
-            conversationId,
-            displayName: this.connection.displayName,
-            ...data
-        }
-
-        console.log(`Sending message to ${conversationId}:`, data)
-        this.postAnonymous("/messages", message)
+    getSocketId = () => {
+        return this.socketId
     }
 
-    private async postAnonymous(path: string, data: any[] | {}) {
+    // MESSAGING
+
+    sendMessage(topic: string, data: { [key: string]: any } = {}) {
+        if (!this.isConnected()) return
+
+        const body = { topic, ...data, teamId: this.connection.teamId }
+        const messageData = {
+            churchId: this.connection.churchId,
+            teamId: this.connection.teamId,
+            content: JSON.stringify(body),
+            displayName: this.connection.displayName
+        }
+
+        console.log("[Socket] Sending message:", topic)
+        requestMain(Main.SEND_SOCKET_MESSAGE, messageData).catch((err) => {
+            console.error("[Socket] Error sending message:", err)
+        })
+    }
+
+    private async postConnectionsAnonymous(data: any[]) {
+        const MESSAGING_API = "https://api.churchapps.org/messaging"
         const requestOptions = {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(data)
         }
 
-        return await this.fetchWithErrorHandling(MESSAGING_API + path, requestOptions)
-    }
-
-    private async fetchWithErrorHandling(url: string, requestOptions: any) {
         try {
-            const response = await fetch(url, requestOptions)
-
+            const response = await fetch(MESSAGING_API + "/connections", requestOptions)
             if (!response.ok) {
                 const json = await response.json()
-                console.error(response.status.toString(), response.url, json.errors?.[0])
+                console.error("[Socket] Connection error:", response.status, json.errors?.[0])
                 return
             }
-
             if (response.status === 204) return
-            return response.json()
+            return await response.json()
         } catch (err) {
-            console.error("Fetch error:", err)
+            console.error("[Socket] Fetch error:", err)
         }
     }
 
@@ -175,18 +179,33 @@ export class SocketHelper {
     }
 
     private handleMessage(payload: SocketPayloadInterface) {
-        const matchingHandler = this.actionHandlers.find((handler) => handler.id === payload.action)
-        if (!matchingHandler) {
-            console.error("Received message with no matching handler:", payload)
-            return
+        if (payload.action === "message" && payload.data?.content) {
+            try {
+                const content = JSON.parse(payload.data.content)
+                const topic = content.topic
+                if (topic) {
+                    const topicHandler = this.actionHandlers.find((handler) => handler.id === topic)
+                    console.log("[Socket] Handling topic message:", topic, topicHandler ? "found handler" : "no handler")
+                    if (topicHandler) {
+                        const handlerData = { ...content, socketId: payload.data.socketId, displayName: payload.data.displayName }
+                        topicHandler.handleMessage(handlerData)
+                        return
+                    }
+                }
+            } catch (err) {
+                console.error("[Socket] Failed to parse message content:", err)
+            }
         }
+/*
+        const matchingHandler = this.actionHandlers.find((handler) => handler.id === payload.action)
+        if (!matchingHandler) return
 
         try {
-            console.info("Received message:", payload)
             matchingHandler.handleMessage(payload.data)
         } catch (err) {
-            console.error(`Error in handler ${matchingHandler.id}:`, err)
+            console.error(`[Socket] Error in handler ${matchingHandler.id}:`, err)
         }
+            */
     }
 }
 

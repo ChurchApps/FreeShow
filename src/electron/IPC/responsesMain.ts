@@ -9,6 +9,7 @@ import { Main } from "../../types/IPC/Main"
 import type { ErrorLog, LyricSearchResult, OS } from "../../types/Main"
 import { openNowPlaying, setPlayingState, unsetPlayingAudio } from "../audio/nowPlaying"
 import { canSync, getSyncTeams, hasDataChanged, hasTeamData, syncData } from "../cloud/syncManager"
+import { ChurchAppsChat } from "../contentProviders/churchApps/ChurchAppsChat"
 import { ContentProviderRegistry } from "../contentProviders"
 import { deleteBackup, getBackups, restoreFiles } from "../data/backup"
 import { getLocalIPs } from "../data/bonjour"
@@ -167,6 +168,8 @@ export const mainResponses: MainResponses = {
     [Main.CLOUD_DATA]: (data) => hasTeamData(data),
     [Main.CLOUD_CHANGED]: (data) => hasDataChanged(data),
     [Main.CLOUD_SYNC]: (data) => syncData(data),
+    [Main.GET_CONVERSATION_ID]: (data) => getConversationId(data.teamId),
+    [Main.SEND_SOCKET_MESSAGE]: (data) => sendSocketMessage(data),
     // Provider-based routing
     [Main.PROVIDER_LOAD_SERVICES]: async (data) => {
         await ContentProviderRegistry.loadServices(data.providerId, data.cloudOnly || false)
@@ -285,6 +288,16 @@ function getVersion() {
         console.error("Could not get version:", err)
         return "0.0.0"
     }
+}
+
+async function getConversationId(teamId: string): Promise<string | null> {
+    return ChurchAppsChat.getOrCreateConversation(teamId)
+}
+
+async function sendSocketMessage(data: { churchId: string; teamId: string; displayName: string; content: string }): Promise<boolean> {
+    const conversationId = await ChurchAppsChat.getOrCreateConversation(data.teamId)
+    if (!conversationId) return false
+    return ChurchAppsChat.sendMessage({ churchId: data.churchId, conversationId, displayName: data.displayName, content: data.content })
 }
 
 function getOS() {

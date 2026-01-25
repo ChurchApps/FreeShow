@@ -10,7 +10,7 @@ export type ChurchAppsAuthData = {
 } | null
 
 export type ChurchAppsRequestData = {
-    api: "doing" | "content" | "membership" | "lessons"
+    api: "doing" | "content" | "membership" | "lessons" | "messaging"
     scope: ChurchAppsScopes
     endpoint: string
     authenticated: boolean

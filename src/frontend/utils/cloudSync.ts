@@ -160,16 +160,21 @@ export function addToMediaFolder(filePath: string) {
 // SOCKET
 
 let cloudSocketHelper: SocketHelper | null = null
-function getCloudSocket() {
+let cachedConversationId: string | null = null
+
+function getCloudSocket() { return cloudSocketHelper}
+
+async function createCloudSocket(): Promise<SocketHelper | null> {
     if (cloudSocketHelper) return cloudSocketHelper
 
     const team = get(cloudSyncData).team
     if (!team) return null
 
     const name = get(cloudSyncData).deviceName || ""
+    if (!cachedConversationId) cachedConversationId = await requestMain(Main.GET_CONVERSATION_ID, { teamId: team.id })
 
     try {
-        cloudSocketHelper = new SocketHelper({ churchId: team.churchId, teamId: team.id, displayName: name })
+        cloudSocketHelper = new SocketHelper({ churchId: team.churchId, teamId: team.id, displayName: name, conversationId: cachedConversationId || undefined })
         return cloudSocketHelper
     } catch (err) {
         console.error("Failed to create cloud socket:", err)
@@ -187,6 +192,7 @@ function socketDisconnect() {
 
     // clear local reference immediately so new connections create a new socket
     cloudSocketHelper = null
+    cachedConversationId = null
     cloudUsers.set([])
 
     // disconnect the actual socket instance after a delay
@@ -195,8 +201,8 @@ function socketDisconnect() {
     }, 1000)
 }
 
-function socketConnect() {
-    const socket = getCloudSocket()
+async function socketConnect() {
+    const socket = await createCloudSocket()
     if (!socket) return
 
     // initialize receivers
@@ -229,7 +235,7 @@ function broadcastPresence(action: string = "update") {
 }
 
 export async function cloudSyncMessage(id: string = "", data: { [key: string]: any } = {}) {
-    const socket = getCloudSocket()
+    const socket = getCloudSocket() || (await createCloudSocket())
     if (!socket) return
 
     if (!(await socket.waitUntilConnected())) return
@@ -240,11 +246,12 @@ export async function cloudSyncMessage(id: string = "", data: { [key: string]: a
 // RECEIVERS
 
 const CLOUD_RECEIVERS = {
-    presence: (data) => {
+    presence: (data: { socketId?: string; displayName?: string; action?: string; activePage?: string; activeShow?: string }) => {
         if (!data.socketId || !data.displayName) return
 
         const isBye = data.action === "bye"
         const isNewUser = data.action === "iamnew"
+        const userData = { socketId: data.socketId, displayName: data.displayName, activePage: data.activePage, activeShow: data.activeShow }
 
         cloudUsers.update((users) => {
             const existingIndex = users.findIndex((u) => u.socketId === data.socketId)
@@ -257,8 +264,8 @@ const CLOUD_RECEIVERS = {
             }
 
             // add/update user
-            if (existingIndex < 0) return [...users, data]
-            users[existingIndex] = data
+            if (existingIndex < 0) return [...users, userData]
+            users[existingIndex] = userData
             return users
         })
 
