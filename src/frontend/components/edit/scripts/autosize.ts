@@ -132,12 +132,12 @@ export default function autosize(elem: HTMLElement, { type, textQuery, defaultFo
         // This causes double font-size application during measurement
         // We need to remove font-size from .break divs so only the spans (selected by textQuery) control sizing
         if (isList) {
-            const breakElements = cloned.querySelectorAll('.break')
+            const breakElements = cloned.querySelectorAll(".break")
             for (const breakElem of Array.from(breakElements)) {
                 const htmlBreak = breakElem as HTMLElement
-                const currentStyle = htmlBreak.getAttribute('style') || ''
-                const newStyle = currentStyle.replace(/font-size:\s*[^;]+;?/gi, '')
-                htmlBreak.setAttribute('style', newStyle)
+                const currentStyle = htmlBreak.getAttribute("style") || ""
+                const newStyle = currentStyle.replace(/font-size:\s*[^;]+;?/gi, "")
+                htmlBreak.setAttribute("style", newStyle)
             }
         }
 
