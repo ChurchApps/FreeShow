@@ -528,6 +528,22 @@
             console.error(e)
         }
 
+        // smaller in general if bullet list, because they are not accounted for
+        if (item?.list?.enabled) fontSize *= 0.9
+
+        if (item.type === "slide_tracker") {
+            if (cacheKey) writeAutoSizeCache(cacheKey, { signature: cacheSignature, fontSize })
+            markAutoSizeReady()
+            return
+        }
+        // Store in separate field for previews vs OUTPUT
+        if (preview) {
+            if (fontSize !== item.previewAutoFontSize) setItemPreviewAutoFontSize(fontSize)
+        } else {
+            if (fontSize !== item.autoFontSize) setItemAutoFontSize(fontSize)
+        }
+        if (!isDynamic && cacheKey) writeAutoSizeCache(cacheKey, { signature: cacheSignature, fontSize })
+
         markAutoSizeReady()
     }
 
