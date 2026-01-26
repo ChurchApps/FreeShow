@@ -83,8 +83,6 @@
 
     const shortcutItems: { id: ItemType; icon?: string }[] = [{ id: "text" }, { id: "media", icon: "image" }, { id: "timer" }]
 
-    // const ignoreDefault = ["metadata", "message", "double"]
-
     $: resolution = getResolution(null, { $outputs, $styles })
     $: widthOrHeight = getStyleResolution(resolution, width, height, "fit", { zoom })
 
@@ -101,7 +99,7 @@
 
 <div class="editArea">
     <div class="parent" class:noOverflow={zoom >= 1} bind:this={scrollElem} bind:offsetWidth={width} bind:offsetHeight={height}>
-        <!--  && (!Slide.isDefault || ignoreDefault.includes(currentId)) -->
+        <!--  && (!Slide.isDefault) -->
         {#if Slide}
             <DropArea id="edit" file>
                 <TemplateSlide bind:newStyles templateId={currentId} template={Slide} edit {width} {height} {zoom} bind:ratio />

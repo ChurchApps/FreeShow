@@ -268,7 +268,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     overlay_card_readonly: ["preview"],
     // "addToShow",
     drawer_templates: ["reset_defaults"],
-    template_card: ["GROUP_edit", "template_actions", "GROUP_rename_color", "export"],
+    template_card: ["GROUP_edit", "template_actions", "export", "GROUP_rename_color"],
     template_card_default: ["GROUP_edit", "duplicate", "delete"],
     template_card_readonly: [],
     effect_card: ["GROUP_edit", "display_duration", "SEPARATOR", "place_under_slide", "GROUP_rename_color"],
