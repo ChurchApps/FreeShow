@@ -1,12 +1,14 @@
 import { get, type Unsubscriber } from "svelte/store"
 import type { LayoutRef, TimelineAction } from "../../../types/Show"
-import { activeShow, outputs, showsCache } from "../../stores"
+import { activeShow, outputs, showsCache, timelineRecordingAction } from "../../stores"
+import { actionData } from "../actions/actionData"
+import { runAction } from "../actions/actions"
 import { getFirstActiveOutput, setOutput } from "../helpers/output"
 import { getLayoutRef } from "../helpers/show"
 import { updateOut } from "../helpers/showActions"
 import { _show } from "../helpers/shows"
 
-type TimelineActionPass = { type: string; name: string; data: { id: string; index?: number; path?: string } }
+type TimelineActionPass = { type: string; name: string; data: any }
 
 export class ShowTimeline {
     private static recordingActive: boolean = false
@@ -62,6 +64,7 @@ export class ShowTimeline {
     // INPUT
 
     private static outputListenerUnsubscribe: Unsubscriber | null = null
+    private static actionUnsubscribe: Unsubscriber | null = null
     private static outputListener(callback?: (s: TimelineActionPass) => void) {
         let firstOutputId = getFirstActiveOutput()?.id || ""
         if (!firstOutputId) return
@@ -95,41 +98,58 @@ export class ShowTimeline {
 
             // WIP add clearing as actions...
         })
+
+        timelineRecordingAction.set({ id: "" })
+        ShowTimeline.actionUnsubscribe = timelineRecordingAction.subscribe(({ id, data }) => {
+            if (!id) return
+
+            // triggering clear_all/clear_audio does not work well with the synced audio
+
+            const action: any = { triggers: [id] }
+            if (data) action.actionValues = { [id]: data }
+
+            if (callback) callback({ type: "action", name: actionData[id]?.name || "", data: action })
+
+            timelineRecordingAction.set({ id: "" })
+        })
     }
 
     private static clearOutputListener() {
-        if (!ShowTimeline.outputListenerUnsubscribe) return
-        ShowTimeline.outputListenerUnsubscribe()
-        ShowTimeline.outputListenerUnsubscribe = null
+        if (ShowTimeline.outputListenerUnsubscribe) {
+            ShowTimeline.outputListenerUnsubscribe()
+            ShowTimeline.outputListenerUnsubscribe = null
+        }
+        if (ShowTimeline.actionUnsubscribe) {
+            ShowTimeline.actionUnsubscribe()
+            ShowTimeline.actionUnsubscribe = null
+        }
     }
 
     static playAction(action: TimelineAction) {
-        console.log("Action:", action)
-
         if (action.type === "slide") {
             const ref = action.data
             const layoutRef = getLayoutRef()
-            const slideIndex = ref.index
-            if (typeof slideIndex !== "number") return
 
             // check that slide exists
-            let slide: LayoutRef | undefined = layoutRef[slideIndex]
-            if (!slide) slide = layoutRef.find((a) => a.id === ref.id)
+            let slide: LayoutRef | undefined = layoutRef[ref.index || 0]
+            if (!slide?.id || slide.id !== ref.id) slide = layoutRef.find((a) => a.id === ref.id)
             if (!slide) return
+
+            const index = slide.layoutIndex
 
             // WIP improve this
             const showId = get(activeShow)?.id || "" // WIP should be playable independent of svelte component and the active ref
             const layoutId = _show().get("settings.activeLayout")
             const outSlide = getFirstActiveOutput()?.out?.slide
-            if (outSlide?.id !== showId || outSlide?.layout !== layoutId || outSlide?.index !== slideIndex) {
-                updateOut("active", slideIndex, layoutRef)
+            if (outSlide?.id !== showId || outSlide?.layout !== layoutId || outSlide?.index !== index) {
+                updateOut("active", index, layoutRef)
                 // WIP check that slide is the correct ID ??
-                setOutput("slide", { id: showId, layout: layoutId, index: slideIndex, line: 0 })
+                setOutput("slide", { id: showId, layout: layoutId, index, line: 0 })
             }
+        } else if (action.type === "action") {
+            runAction({ id: action.id, ...action.data })
+        } else {
+            console.log("Action:", action)
         }
-
-        // if (action.type === "audio") {
-        //     AudioPlayer.start(action.data.path, { name: action.data.name }, { pauseIfPlaying: false, playMultiple: true })
-        // }
     }
 }

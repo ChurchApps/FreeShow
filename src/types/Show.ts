@@ -303,6 +303,8 @@ export interface TimelineAction {
         id?: string // slide/action
         path?: string // audio
         index?: number // slide
+        triggers?: string[] // action
+        actionValues?: any // action
     }
 }
 

@@ -2,7 +2,7 @@
     import { onMount } from "svelte"
     import type { Overlay } from "../../../../types/Show"
     import { addProjectItem } from "../../../converters/project"
-    import { activeEdit, activePage, activeShow, labelsDisabled, mediaOptions, outLocked, outputs, overlayCategories, overlays, styles } from "../../../stores"
+    import { activeEdit, activePage, activeShow, labelsDisabled, mediaOptions, outLocked, outputs, overlayCategories, overlays, styles, timelineRecordingAction } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { getAccess } from "../../../utils/profile"
     import { clone, keysToID, sortByName } from "../../helpers/array"
@@ -103,6 +103,7 @@
                                     if ($outLocked || e.ctrlKey || e.metaKey) return
                                     if (e.target?.closest(".edit") || e.target?.closest(".icons")) return
 
+                                    timelineRecordingAction.set({ id: "id_select_overlay", data: { id: overlay.id } })
                                     setOutput("overlays", overlay.id, true)
                                 }}
                                 on:dblclick={(e) => {

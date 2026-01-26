@@ -2,7 +2,7 @@ import { get } from "svelte/store"
 import type { OutSlide } from "../../../types/Show"
 import { clearAudio } from "../../audio/audioFading"
 import { AudioPlayer } from "../../audio/audioPlayer"
-import { activeEdit, activePage, activePopup, activeStage, contextActive, customMessageCredits, drawSettings, focusMode, lockedOverlays, outLocked, outputCache, outputs, outputSlideCache, overlays, overlayTimers, playingAudio, playingMetronome, selected, slideTimers, topContextActive, videosData, videosTime } from "../../stores"
+import { activeEdit, activePage, activePopup, activeStage, contextActive, customMessageCredits, drawSettings, focusMode, lockedOverlays, outLocked, outputCache, outputs, outputSlideCache, overlays, overlayTimers, playingAudio, playingMetronome, selected, slideTimers, timelineRecordingAction, topContextActive, videosData, videosTime } from "../../stores"
 import { customActionActivation } from "../actions/actions"
 import { startMetronome } from "../drawer/audio/metronome"
 import { clone } from "../helpers/array"
@@ -10,6 +10,7 @@ import { clearOverlayTimer, clearPlayingVideo, getAllActiveOutputs, isOutCleared
 import { _show } from "../helpers/shows"
 import { stopSlideRecording } from "../helpers/slideRecording"
 
+let isClearingAll = false
 export function clearAll(button = false) {
     if (get(outLocked)) return
     if (!button && (get(activePopup) || (get(selected).id && get(selected).id !== "scripture") || (get(activePage) === "edit" && get(activeEdit).items.length) || get(activeStage).items.length || get(contextActive) || get(topContextActive))) return
@@ -22,6 +23,9 @@ export function clearAll(button = false) {
     if (allCleared) return
 
     storeCache()
+
+    isClearingAll = true
+    setTimeout(() => (isClearingAll = false))
 
     const keepLastSlide = get(focusMode)
     clearBackground()
@@ -102,6 +106,7 @@ export function clearBackground(specificOutputId = "") {
 
     customMessageCredits.set("") // unsplash
     customActionActivation("background_cleared")
+    if (!isClearingAll) timelineRecordingAction.set({ id: "clear_background" })
 }
 
 // shouldClearAll = don't keep cached previous slide
@@ -131,6 +136,7 @@ export function clearSlide(shouldClearAll = false) {
     setOutput("slide", null)
     stopSlideRecording()
     customActionActivation("slide_cleared")
+    if (!isClearingAll) timelineRecordingAction.set({ id: "clear_slide" })
 }
 
 export function clearOverlay(overlayId: string) {
@@ -163,6 +169,8 @@ export function clearOverlays(specificOutputId = "") {
         // let outEffects: string[] = get(outputs)[outputId]?.out?.effects || []
         setOutput("effects", [], false, outputId)
     })
+
+    if (!isClearingAll) timelineRecordingAction.set({ id: "clear_overlays" })
 }
 
 export function clearTimers(specificOutputId = "", clearOverlayTimers = true) {
@@ -187,6 +195,8 @@ export function clearTimers(specificOutputId = "", clearOverlayTimers = true) {
             }
         })
     })
+
+    if (!isClearingAll) timelineRecordingAction.set({ id: "clear_timers" })
 }
 
 export function clearDrawing() {

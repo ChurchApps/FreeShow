@@ -79,6 +79,7 @@ export const metronomeTimer: Writable<{ beat: number; timeToNext: number }> = wr
 export const mediaDownloads: Writable<Map<string, { progress: number; total: number; status: string }>> = writable(new Map())
 export const showChangeProfileMenu: Writable<boolean> = writable(false)
 export const localTimelineActive: Writable<boolean> = writable(false)
+export const timelineRecordingAction: Writable<{ id: string; data?: any }> = writable({ id: "" })
 
 // TAGS
 export const activeTagFilter: Writable<string[]> = writable([])

@@ -6,10 +6,10 @@
     import { AudioPlayer } from "../../audio/audioPlayer"
     import { activeShow, activeTriggerFunction, localTimelineActive, playingAudio, selected, showsCache } from "../../stores"
     import { translateText } from "../../utils/language"
+    import { actionData } from "../actions/actionData"
     import Icon from "../helpers/Icon.svelte"
     import { getExtension, getMediaType } from "../helpers/media"
     import { _show } from "../helpers/shows"
-    import T from "../helpers/T.svelte"
     import FloatingInputs from "../input/FloatingInputs.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
     import MaterialCheckbox from "../inputs/MaterialCheckbox.svelte"
@@ -244,17 +244,6 @@
         animationFrameId = requestAnimationFrame(loop)
     }
 
-    function addAction() {
-        const newAction: TimelineAction = {
-            id: crypto.randomUUID(),
-            time: currentTime,
-            type: "action",
-            data: { id: "" },
-            name: `Action ${actions.length + 1}`
-        }
-        actions = [...actions, newAction]
-    }
-
     async function resetView() {
         zoomLevel = 50
         await tick()
@@ -313,11 +302,11 @@
     $: hasActionActions = actions.some((a) => a.type === "action") ? 1 : 0
     $: hasAudioActions = actions.some((a) => a.type === "audio") ? 1 : 0
 
-    function getTrackName(index: number, _updater: any) {
-        if (hasAudioActions && index === hasActionActions + hasSlideActions) return translateText("tabs.audio")
-        if (hasActionActions && index === hasSlideActions) return translateText("tabs.actions")
-        if (hasSlideActions && index === 0) return translateText("tools.slide")
-        return "Unknown"
+    function getTrackData(index: number, _updater: any) {
+        if (hasAudioActions && index === hasActionActions + hasSlideActions) return { name: "tabs.audio", icon: "audio" }
+        if (hasActionActions && index === hasSlideActions) return { name: "tabs.actions", icon: "actions" }
+        if (hasSlideActions && index === 0) return { name: "tools.slide", icon: "slide" }
+        return { name: "Unknown", icon: "unknown" }
     }
 
     function getActionTrack(action: TimelineAction): number {
@@ -693,6 +682,14 @@
                         data: { path: item.path },
                         name: item.name
                     }
+                } else if ($selected.id === "action") {
+                    newAction = {
+                        id: uid(6),
+                        time: resultTime,
+                        type: "action",
+                        data: { triggers: item.triggers || [], actionValues: item.actionValues || {} },
+                        name: item.name || "Action"
+                    }
                 }
 
                 if (newAction) {
@@ -832,7 +829,8 @@
         isRecording = ShowTimeline.toggleRecording((sequence) => {
             const time = Number(currentTime.toFixed(2))
             // skip if already exists at this time (within 100ms)
-            if (actions.find((a) => a.type === sequence.type && Math.abs(time - a.time) < 100 && a.data.id === sequence.data.id && a.data.index === sequence.data.index)) return
+            if (actions.find((a) => a.type === sequence.type && Math.abs(time - a.time) < 100 && JSON.stringify(a.data) === JSON.stringify(sequence.data))) return
+            // WIP skip if previous action is the same as current (only "slide")
 
             actions.push({
                 id: uid(6),
@@ -896,8 +894,10 @@
         <div class="headers-container" bind:this={headersContainer} style="width: {usedHeaderWidth}px; min-width: {usedHeaderWidth}px;">
             <div class="track-headers" style="height: {totalTrackHeight}px;">
                 {#each Array(maxTrackIndex) as _, i}
+                    {@const track = getTrackData(i, actions)}
                     <div class="track-header" style="top: {35 + i * 70}px; width: 100%;">
-                        <span class="track-name">{getTrackName(i, actions)}</span>
+                        <Icon id={track.icon} white />
+                        <span class="track-name">{translateText(track.name)}</span>
                     </div>
                 {/each}
             </div>
@@ -934,9 +934,13 @@
                     {:else}
                         <div class="action-marker {action.type} context #timeline_node" class:selected={selectedActionIds.includes(action.id)} style="left: {(action.time / 1000) * zoomLevel}px; top: {baseY + 5}px;" data-title="{formatTime(action.time)}: {action.name}" on:mousedown|stopPropagation={(e) => startActionDrag(e, action.id)}>
                             <div class="action-head">
-                                {#if typeof action.data?.index === "number"}{action.data.index + 1}{/if}
+                                {#if action.type === "action"}
+                                    <Icon id={action.data.triggers?.length === 1 ? actionData[action.data.triggers[0]]?.icon : "actions"} size={0.9} white />
+                                {:else if typeof action.data?.index === "number"}
+                                    {action.data.index + 1}
+                                {/if}
                             </div>
-                            <div class="action-label">{action.name}</div>
+                            <div class="action-label">{translateText(action.name)}</div>
                         </div>
                     {/if}
                 {/each}
@@ -966,21 +970,15 @@
         <MaterialButton disabled={isPlaying && !isRecording} title="actions.{isRecording ? 'stop_recording' : 'start_recording'}" on:click={toggle} red={isRecording}>
             <Icon size={1.3} id="record" white />
         </MaterialButton>
+
+        <div class="divider" />
+
+        <MaterialButton icon="focus" title="actions.resetZoom" on:click={resetView} />
     </FloatingInputs>
 
     <FloatingInputs style="margin-bottom: 8px;">
         <MaterialButton title="edit.options" on:click={() => (optionsVisible = !optionsVisible)}>
             <Icon id="options" white={!optionsVisible} />
-        </MaterialButton>
-
-        <div class="divider" />
-
-        <MaterialButton icon="focus" title="Reset View" on:click={resetView} />
-
-        <div class="divider" />
-
-        <MaterialButton icon="add" title="new.action" on:click={addAction}>
-            <T id="new.action" />
         </MaterialButton>
     </FloatingInputs>
 </div>
@@ -1135,6 +1133,10 @@
         /* background: rgba(0, 0, 0, 0.6); */
         border-bottom: 1px solid rgba(255, 255, 255, 0.05); /* Separators */
         pointer-events: auto; /* Allow interaction if needed */
+
+        display: flex;
+        align-items: center;
+        gap: 6px;
     }
 
     .playhead {
@@ -1184,8 +1186,8 @@
     }
 
     .action-head {
-        width: 14px;
-        height: 14px;
+        width: 16px;
+        height: 16px;
         background-color: var(--secondary);
         border-radius: 50%;
         border: 2px solid var(--secondary);
