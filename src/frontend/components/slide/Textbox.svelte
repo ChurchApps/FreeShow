@@ -391,8 +391,52 @@
         // Wait for DOM to update with new template styles before measuring
         await tick()
         
-        // TEMP FIX for auto size sometimes not sized properly in show slides
-        if (!preview && !isStage) await wait(70)
+        // Wait for web fonts to load before measuring (prevents wrong dimensions from fallback fonts)
+        try {
+            await document.fonts.ready
+        } catch (e) {
+            // Font loading check failed, continue anyway
+        }
+        
+        // Wait for CSS styles to fully cascade and layout to stabilize before measuring
+        // This ONLY adds delay when element dimensions are still changing (unstable layout)
+        // Once dimensions stabilize, no additional waiting occurs
+        if (itemElem) {
+            let prevWidth = itemElem.clientWidth
+            let prevHeight = itemElem.clientHeight
+            let attempts = 0
+            const maxAttempts = 20
+            let totalWait = 0
+            const maxWait = 500 // Maximum 500ms - reasonable buffer for slow computers without painful delays
+            
+            // Output window needs longer initial wait for CSS cascade in separate Electron window
+            const isOutputContext = ratio < 0.5 && !preview && !isStage
+            
+            while (attempts < maxAttempts && totalWait < maxWait) {
+                const waitTime = attempts === 0 ? (isOutputContext ? 150 : 100) : (attempts === 1 ? 50 : 20)
+                await wait(waitTime)
+                totalWait += waitTime
+                
+                // Check if element still exists after waiting
+                if (!itemElem) {
+                    return // Element destroyed, abort calculation
+                }
+                
+                const newWidth = itemElem.clientWidth
+                const newHeight = itemElem.clientHeight
+                
+                if (newWidth === prevWidth && newHeight === prevHeight) {
+                    // Dimensions stable - stop waiting
+                    break
+                }
+                
+                prevWidth = newWidth
+                prevHeight = newHeight
+                attempts++
+            }
+        }
+
+
 
         let defaultFontSize
         let maxFontSize
@@ -424,7 +468,7 @@
                 if (line?.text && Array.isArray(line.text)) allText.push(...line.text)
             })
             const itemText = allText.filter((a) => !a.customType?.includes("disableTemplate")) || []
-            let itemFontSize = Number(getStyles(itemText[0]?.style, true)?.[" font-size"] || "") || 100
+            let itemFontSize = Number(getStyles(itemText[0]?.style, true)?.["font-size"] || "") || 100
 
             // get scripture verse ratio
             const verseItemText = allText.filter((a) => a.customType?.includes("disableTemplate")) || []
@@ -443,6 +487,7 @@
         const cacheKey = buildAutoSizeCacheKey()
         const cacheSignature = buildAutoSizeSignature(elem.clientWidth, elem.clientHeight)
         const cachedResult = cacheKey ? readAutoSizeCache(cacheKey) : undefined
+
 
 
         if (!isDynamic && cachedResult && cachedResult.signature === cacheSignature) {
@@ -471,18 +516,17 @@
         //     textQuery = ".align .item .align " + textQuery
         // }
 
-
         try {
             fontSize = autosize(elem, {
                 type: textFit,
                 textQuery,
                 defaultFontSize,
-                maxFontSize
+                maxFontSize,
+                isList: item?.list?.enabled || false
             })
         } catch (e) {
-            console.warn("[Autosize] failed:", e)
+            console.error(e)
         }
-
 
         // smaller in general if bullet list, because they are not accounted for
         if (item?.list?.enabled) fontSize *= 0.9
@@ -499,6 +543,7 @@
             if (fontSize !== item.autoFontSize) setItemAutoFontSize(fontSize)
         }
         if (!isDynamic && cacheKey) writeAutoSizeCache(cacheKey, { signature: cacheSignature, fontSize })
+
         markAutoSizeReady()
     }
 
@@ -596,8 +641,6 @@
         const cachedResult = cacheKey ? readAutoSizeCache(cacheKey) : undefined
 
         const hasValidCache = cachedResult && cachedResult.signature === cacheSignature
-        const shouldHide = !hasValidCache
-        
 
         if (hasValidCache) {
             return false
