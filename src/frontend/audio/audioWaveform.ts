@@ -1,11 +1,16 @@
 import { encodeFilePath } from "../components/helpers/media"
 
+type WaveformSettings = {
+    height?: number // 1 = 100%
+    samples?: number
+}
+
 const cachedWaveformData: Map<string, Float32Array> = new Map()
-export async function createWaveform(container: HTMLElement, path: string) {
+export async function createWaveform(container: HTMLElement, path: string, settings: WaveformSettings = {}) {
     const audioCtx = new AudioContext()
 
     if (cachedWaveformData.has(path)) {
-        renderWaveform(container, cachedWaveformData.get(path)!)
+        renderWaveform(container, cachedWaveformData.get(path)!, settings)
         return
     }
 
@@ -16,12 +21,12 @@ export async function createWaveform(container: HTMLElement, path: string) {
     const rawData = audioBuffer.getChannelData(0)
     cachedWaveformData.set(path, rawData)
 
-    renderWaveform(container, rawData)
+    renderWaveform(container, rawData, settings)
 }
 
 export const WAVEFORM_SAMPLES = 150
-function renderWaveform(container: HTMLElement, rawData: Float32Array) {
-    const samples = WAVEFORM_SAMPLES
+function renderWaveform(container: HTMLElement, rawData: Float32Array, settings: WaveformSettings = {}) {
+    const samples = settings.samples || WAVEFORM_SAMPLES
     const blockSize = Math.floor(rawData.length / samples)
     const waveform = new Float32Array(samples)
 
@@ -53,7 +58,7 @@ function renderWaveform(container: HTMLElement, rawData: Float32Array) {
         // set correct height (after previous render)
         requestAnimationFrame(() => {
             bars.forEach((bar, i) => {
-                bar.style.height = `${waveform[i] * 100}%`
+                bar.style.height = `${waveform[i] * 100 * (settings.height || 1)}%`
             })
         })
     })

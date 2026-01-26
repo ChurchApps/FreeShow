@@ -4,6 +4,7 @@
     import { uid } from "uid"
     import type { TimelineAction } from "../../../types/Show"
     import { AudioPlayer } from "../../audio/audioPlayer"
+    import { createWaveform } from "../../audio/audioWaveform"
     import { activeShow, activeTriggerFunction, localTimelineActive, playingAudio, selected, showsCache } from "../../stores"
     import { translateText } from "../../utils/language"
     import { actionData } from "../actions/actionData"
@@ -845,6 +846,21 @@
             if (!isPlaying) play()
         })
     }
+
+    // Waveform
+    function useWaveform(node: HTMLElement, path: string) {
+        const settings = { height: 2.2, samples: 512 }
+        if (path) createWaveform(node, path, settings)
+
+        return {
+            update(newPath: string) {
+                if (newPath !== path) {
+                    path = newPath
+                    if (path) createWaveform(node, path, settings)
+                }
+            }
+        }
+    }
 </script>
 
 <svelte:window on:keydown={keydown} />
@@ -928,6 +944,9 @@
                     {#if action.duration}
                         <div class="action-clip context #timeline_node" class:selected={selectedActionIds.includes(action.id)} style="left: {(action.time / 1000) * zoomLevel}px; width: {action.duration * zoomLevel}px; top: {baseY}px;" data-title="{formatTime(action.time)}-{formatTime(action.duration * 1000)}: {action.name}" on:mousedown|stopPropagation={(e) => startActionDrag(e, action.id)}>
                             <div class="action-clip-content">
+                                {#if action.type === "audio"}
+                                    <div class="waveform-container" use:useWaveform={action.data.path || ""}></div>
+                                {/if}
                                 <div class="clip-label">{action.name}</div>
                             </div>
                         </div>
@@ -1186,9 +1205,9 @@
     }
 
     .action-head {
-        width: 16px;
-        height: 16px;
-        background-color: var(--secondary);
+        width: 18px;
+        height: 18px;
+        background-color: var(--secondary-opacity);
         border-radius: 50%;
         border: 2px solid var(--secondary);
         box-shadow: 0 0 4px rgb(0 0 0 / 0.6);
@@ -1202,15 +1221,13 @@
     }
     .action-marker.slide .action-head {
         border-radius: 4px;
-        width: 18px;
-        height: 18px;
     }
 
     .action-clip {
         position: absolute;
         top: 35px;
         height: 60px;
-        background-color: var(--secondary);
+        background-color: var(--secondary-opacity);
         color: var(--secondary-text);
         border: 2px solid var(--secondary);
         border-radius: 4px;
@@ -1224,7 +1241,7 @@
 
     .action-clip-content {
         display: flex;
-        align-items: center;
+        align-items: flex-start;
         width: 100%;
         height: 100%;
         padding: 0 5px;
@@ -1238,7 +1255,26 @@
         overflow: hidden;
         text-overflow: ellipsis;
         flex: 1;
-        padding: 0 10px;
+        padding: 4px 6px;
+        z-index: 1;
+        position: relative;
+        font-size: 0.8em;
+    }
+
+    .waveform-container {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        /* align-items: center; */
+        align-items: flex-end; /* at bottom */
+        opacity: 0.3;
+        pointer-events: none;
+    }
+    .waveform-container :global(.wave-bar) {
+        background-color: var(--secondary-text);
     }
 
     .clip-delete {
