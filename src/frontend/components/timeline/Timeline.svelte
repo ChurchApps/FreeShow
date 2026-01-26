@@ -1,10 +1,14 @@
 <script lang="ts">
     import { onDestroy, tick } from "svelte"
+    import { fade } from "svelte/transition"
     import { uid } from "uid"
+    import type { TimelineAction } from "../../../types/Show"
     import { AudioPlayer } from "../../audio/audioPlayer"
-    import { activeShow, localTimelineActive, playingAudio, selected } from "../../stores"
+    import { activeShow, activeTriggerFunction, localTimelineActive, playingAudio, selected, showsCache } from "../../stores"
+    import { translateText } from "../../utils/language"
     import Icon from "../helpers/Icon.svelte"
     import { getExtension, getMediaType } from "../helpers/media"
+    import { _show } from "../helpers/shows"
     import T from "../helpers/T.svelte"
     import FloatingInputs from "../input/FloatingInputs.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
@@ -12,19 +16,29 @@
     import MaterialNumberInput from "../inputs/MaterialNumberInput.svelte"
     import { ShowTimeline } from "./ShowTimeline"
 
-    // Data types
-    interface TimelineAction {
-        id: string
-        time: number // in milliseconds
-        type: string
-        data: any
-        name: string
-        description?: string
-        duration?: number
+    let actions: TimelineAction[] = []
+
+    let useFixedDuration = false
+    let fixedDurationSeconds = 300
+
+    $: showId = $activeShow?.id || ""
+    $: exists = $showsCache[showId] !== undefined
+    $: if (exists && showId) getShowActions()
+    function getShowActions() {
+        const timeline = _show().layouts("active").get()[0]?.timeline
+        if (!timeline) {
+            actions = []
+            return
+        }
+
+        actions = timeline.actions || []
+        if (timeline.maxTime) {
+            useFixedDuration = true
+            fixedDurationSeconds = timeline.maxTime
+        }
     }
 
     // State
-    let actions: TimelineAction[] = []
     let currentTime = 0
     let minDuration = 60000 * 5 // 5 minutes default
     let isPlaying = false
@@ -54,35 +68,17 @@
     let selectionRect: { x: number; y: number; w: number; h: number } | null = null
     let selectionStart = { x: 0, y: 0 }
 
-    let useFixedDuration = false
-    let fixedDurationSeconds = 300
-
     let usedHeaderWidth = 120
     // Computed
     $: timeString = formatTime(currentTime)
     $: lastActionTime = actions.length > 0 ? Math.max(...actions.map((a) => a.time + (a.duration || 0) * 1000)) : 0
     $: duration = useFixedDuration ? fixedDurationSeconds * 1000 : Math.max(minDuration, lastActionTime + 60 * 1000) // 60s buffer
     $: tickInterval = getTickInterval(zoomLevel)
+    $: snapInterval = (tickInterval * 1000) / 10
     $: totalTickCount = Math.ceil(duration / 1000 / tickInterval)
     $: visibleTicksStartIndex = Math.min(totalTickCount, Math.max(0, Math.floor(scrollLeft / (tickInterval * zoomLevel))))
     $: visibleTicksEndIndex = Math.min(totalTickCount, Math.ceil((scrollLeft + containerWidth) / (tickInterval * zoomLevel)))
     $: visibleTickCount = Math.max(0, visibleTicksEndIndex - visibleTicksStartIndex + 1)
-
-    $: maxTrackIndex = actions.reduce((max, action) => Math.max(max, getActionTrack(action)), 2)
-    $: totalTrackHeight = 35 + (maxTrackIndex + 1) * 70 + 50
-
-    function getTrackName(index: number) {
-        switch (index) {
-            case 0:
-                return "Slide"
-            case 1:
-                return "Action"
-            case 2:
-                return "Audio"
-            default:
-                return `Track ${index + 1}`
-        }
-    }
 
     function getTickInterval(zoom: number) {
         const minSpacing = 80 // minimum pixels between ticks
@@ -123,6 +119,7 @@
 
     function pause() {
         isPlaying = false
+
         if (animationFrameId) {
             cancelAnimationFrame(animationFrameId)
             animationFrameId = 0
@@ -142,6 +139,12 @@
     function stop() {
         pause()
         currentTime = 0
+
+        if (animationFrameId) {
+            cancelAnimationFrame(animationFrameId)
+            animationFrameId = 0
+        }
+
         if (isRecording) toggle()
 
         // check if any audio is playing and stop it
@@ -178,16 +181,18 @@
         }
 
         // Check if there's an audio file that's supposed to be playing at this time
+        let hasPlayed: string[] = [] // don't allow the same file to be started multiple times in one loop (WIP allow multiple if not at same time...)
         for (const action of actions) {
             if (action.type === "audio") {
                 const a = action.data
-                if (a && a.path) {
+                if (a && a.path && !hasPlayed.includes(a.path)) {
+                    hasPlayed.push(a.path)
                     const audioStart = action.time
                     const audioEnd = action.time + (action.duration || 0) * 1000
                     if (currentTime >= audioStart && currentTime < audioEnd) {
                         // Should be playing
                         if (!$playingAudio[a.path]) {
-                            AudioPlayer.start(a.path, { name: a.name }, { pauseIfPlaying: false, playMultiple: true })
+                            AudioPlayer.start(a.path, { name: "" }, { pauseIfPlaying: false, playMultiple: true })
                         } else if ($playingAudio[a.path].paused) {
                             AudioPlayer.play(a.path)
                         }
@@ -244,15 +249,12 @@
             id: crypto.randomUUID(),
             time: currentTime,
             type: "action",
-            data: "",
+            data: { id: "" },
             name: `Action ${actions.length + 1}`
         }
         actions = [...actions, newAction]
     }
 
-    function removeAction(id: string) {
-        actions = actions.filter((a) => a.id !== id)
-    }
     async function resetView() {
         zoomLevel = 50
         await tick()
@@ -267,16 +269,17 @@
             trackWrapper.scrollLeft = Math.max(0, playheadPixelPos - containerWidth / 2)
         }
     }
-    const MIN_ZOOM = 5
+    const MIN_ZOOM = 6
     const MAX_ZOOM = 1000
-    async function handleWheel(e: WheelEvent) {
+    async function handleWheel(e: WheelEvent, zoom: boolean = false) {
+        const shouldZoom = zoom || e.ctrlKey || e.metaKey
         // If not zooming (just regular scrolling) Disable auto-follow
-        if (!e.ctrlKey && e.deltaY !== 0) {
+        if (!shouldZoom && e.deltaY !== 0) {
             autoFollow = false
         }
-        if (e.ctrlKey) {
+        if (shouldZoom) {
             e.preventDefault()
-            const ZOOM_SPEED = 0.1
+            const ZOOM_SPEED = e.altKey ? 0.4 : 0.1
             // Store mouse position relative to track start in time
             const rect = trackWrapper.getBoundingClientRect()
             const mouseX = e.clientX - rect.left
@@ -297,46 +300,34 @@
             trackWrapper.scrollLeft = newPixelPos - mouseX
         } else if (e.shiftKey && e.deltaY !== 0) {
             // Horizontal scroll with Shift+Wheel
+            const speed = e.deltaY * (e.altKey ? 4 : 1)
             e.preventDefault()
-            trackWrapper.scrollLeft += e.deltaY
+            trackWrapper.scrollLeft += speed
         }
     }
 
-    async function handleZoomSlider(e: Event) {
-        const input = e.target as HTMLInputElement
-        const newZoom = parseInt(input.value)
+    $: maxTrackIndex = hasSlideActions + hasActionActions + hasAudioActions // actions.reduce((max, action) => Math.max(max, getActionTrack(action)), 2)
+    $: totalTrackHeight = 35 + (maxTrackIndex + 1) * 70 + 50
 
-        // Calculate playhead position relative to view
-        const playheadPixelPos = (currentTime / 1000) * zoomLevel
-        const scrollLeft = trackWrapper.scrollLeft
+    $: hasSlideActions = actions.some((a) => a.type === "slide") ? 1 : 0
+    $: hasActionActions = actions.some((a) => a.type === "action") ? 1 : 0
+    $: hasAudioActions = actions.some((a) => a.type === "audio") ? 1 : 0
 
-        // Distance of playhead from left edge of view (screen offset)
-        // If playhead is off screen, this might be negative or > width.
-        // We probably still want to keep it at that relative position?
-        // OR better: ensure playhead stays centered if it was centered?
-        // Let's stick to: maintain screen offset of playhead.
-        const screenOffset = playheadPixelPos - scrollLeft
-
-        zoomLevel = newZoom
-
-        await tick()
-
-        // New pixel position of playhead
-        const newPlayheadPixelPos = (currentTime / 1000) * zoomLevel
-
-        // Restore screen offset
-        isProgrammaticScroll = true
-        trackWrapper.scrollLeft = newPlayheadPixelPos - screenOffset
+    function getTrackName(index: number, _updater: any) {
+        if (hasAudioActions && index === hasActionActions + hasSlideActions) return translateText("tabs.audio")
+        if (hasActionActions && index === hasSlideActions) return translateText("tabs.actions")
+        if (hasSlideActions && index === 0) return translateText("tools.slide")
+        return "Unknown"
     }
 
     function getActionTrack(action: TimelineAction): number {
         switch (action.type) {
             case "slide":
-                return 0
+                return hasSlideActions - 1
             case "action":
-                return 1
+                return hasSlideActions + hasActionActions - 1
             case "audio":
-                return 2
+                return hasSlideActions + hasActionActions + hasAudioActions - 1
             default:
                 return 3
         }
@@ -383,6 +374,38 @@
         window.addEventListener("mouseup", endSelection)
     }
 
+    function getActionAtPosition(e: MouseEvent): TimelineAction | null {
+        if (!trackWrapper) return null
+
+        const rect = trackWrapper.getBoundingClientRect()
+        const offsetX = e.clientX - rect.left + trackWrapper.scrollLeft
+        const offsetY = e.clientY - rect.top + trackWrapper.scrollTop
+
+        for (const action of actions) {
+            let ax = (action.time / 1000) * zoomLevel
+            let baseY = getActionBaseY(action)
+            let ay = baseY
+            let aw = 0
+            let ah = 60 // default clip H
+
+            if (action.duration) {
+                aw = action.duration * zoomLevel
+            } else {
+                ay = baseY + 5
+                ax -= 7 // centered
+                aw = 14
+                ah = 14
+            }
+
+            // Check if point is inside action rect
+            if (offsetX >= ax && offsetX <= ax + aw && offsetY >= ay && offsetY <= ay + ah) {
+                return action
+            }
+        }
+
+        return null
+    }
+
     function updateSelection(e: MouseEvent) {
         if (!isSelecting || !trackWrapper) return
 
@@ -407,6 +430,7 @@
 
         const newSelectedIds: string[] = []
 
+        // WIP duplicate of getActionAtPosition
         actions.forEach((action) => {
             let ax = (action.time / 1000) * zoomLevel
             let baseY = getActionBaseY(action)
@@ -458,8 +482,8 @@
         const rect = trackWrapper.getBoundingClientRect()
         const offsetX = e.clientX - rect.left + trackWrapper.scrollLeft
         const seekTime = (offsetX / zoomLevel) * 1000
-        // Snap to nearest 10ms (1/100th second)
-        const snappedTime = Math.round(seekTime / 10) * 10
+
+        const snappedTime = Math.round(seekTime / snapInterval) * snapInterval
         currentTime = Math.max(0, Math.min(snappedTime, duration))
     }
 
@@ -494,10 +518,11 @@
 
             if (isScrubbing) {
                 const snappedTime = Math.round(seekTime / 10) * 10
+                // const snappedTime = Math.round(seekTime / snapInterval) * snapInterval // not smooth
                 currentTime = Math.max(0, Math.min(snappedTime, duration))
             } else if (draggingActionId) {
                 const newTime = seekTime - dragTimeOffset
-                const snappedTime = Math.round(newTime / 10) * 10
+                const snappedTime = Math.round(newTime / snapInterval) * snapInterval
                 moveSelectedActions(snappedTime)
             }
         }
@@ -516,6 +541,19 @@
     }
 
     function startActionDrag(e: MouseEvent, id: string) {
+        // select on right-click
+        if (e.button === 2) {
+            const clickedAction = getActionAtPosition(e)
+            if (clickedAction) {
+                if (!selectedActionIds.includes(clickedAction.id)) {
+                    selectedActionIds = [clickedAction.id]
+                }
+            } else {
+                selectedActionIds = []
+            }
+            return
+        }
+
         if (e.button !== 0) return
 
         if (!selectedActionIds.includes(id)) {
@@ -584,7 +622,7 @@
         const mouseTime = (offsetX / zoomLevel) * 1000
 
         const newTime = mouseTime - dragTimeOffset
-        const snappedTime = Math.round(newTime / 10) * 10
+        const snappedTime = Math.round(newTime / snapInterval) * snapInterval
 
         moveSelectedActions(snappedTime)
     }
@@ -609,6 +647,8 @@
         const dropTime = (offsetX / zoomLevel) * 1000
         const resultTime = Math.max(0, Math.min(Math.round(dropTime / 10) * 10, duration))
 
+        const existingAudioActions = actions.some((a) => a.type === "audio")
+
         const files = e.dataTransfer?.files
         if (files && files.length > 0) {
             // Handle external files (Audio)
@@ -619,9 +659,9 @@
                 if (file.type.startsWith("audio/") || type === "audio") {
                     actions.push({
                         id: uid(6),
-                        time: resultTime,
+                        time: existingAudioActions ? resultTime : 0,
                         type: "audio",
-                        data: { path: (file as any).path, name: file.name },
+                        data: { path: (file as any).path },
                         duration: AudioPlayer.getDurationSync((file as any).path),
                         name: file.name
                     })
@@ -639,7 +679,7 @@
                 if ($selected.id === "audio") {
                     newAction = {
                         id: uid(6),
-                        time: resultTime,
+                        time: existingAudioActions ? resultTime : 0,
                         type: "audio",
                         data: item,
                         name: item.name || "Audio",
@@ -650,7 +690,7 @@
                         id: uid(6),
                         time: resultTime,
                         type: "audio",
-                        data: { path: item.path, name: item.name },
+                        data: { path: item.path },
                         name: item.name
                     }
                 }
@@ -765,10 +805,7 @@
 
         if (e.key === "Delete" || e.key === "Backspace") {
             e.preventDefault()
-            if (selectedActionIds.length > 0) {
-                actions = actions.filter((a) => !selectedActionIds.includes(a.id))
-                selectedActionIds = []
-            }
+            deleteSelectedNodes()
             return
         }
 
@@ -779,17 +816,30 @@
         else play()
     }
 
+    $: if ($activeTriggerFunction === "delete_selected_nodes") deleteSelectedNodes()
+    function deleteSelectedNodes() {
+        if (!selectedActionIds.length) return
+
+        actions = actions.filter((a) => !selectedActionIds.includes(a.id))
+        selectedActionIds = []
+        setTimeout(() => (actions = actions)) // update properly when deleting from context menu
+    }
+
     // Show timeline
     let isRecording = false
     $: if ($activeShow) isRecording = ShowTimeline.isRecordingActive()
     function toggle() {
         isRecording = ShowTimeline.toggleRecording((sequence) => {
+            const time = Number(currentTime.toFixed(2))
+            // skip if already exists at this time (within 100ms)
+            if (actions.find((a) => a.type === sequence.type && Math.abs(time - a.time) < 100 && a.data.id === sequence.data.id && a.data.index === sequence.data.index)) return
+
             actions.push({
                 id: uid(6),
-                time: currentTime,
-                type: "slide",
-                data: sequence,
-                name: `Slide ${sequence.slideRef.index + 1}`
+                time,
+                type: sequence.type,
+                data: sequence.data,
+                name: sequence.name
             })
             actions = actions
 
@@ -810,15 +860,6 @@
                     <MaterialNumberInput label="Duration (s)" min={1} value={fixedDurationSeconds} on:change={(e) => (fixedDurationSeconds = e.detail)} />
                 {/if}
             </div>
-
-            <div style="flex:1"></div>
-
-            <MaterialButton icon="focus" title="Reset View" on:click={resetView} />
-
-            <div class="zoom-controls">
-                <span style="font-size: 0.8em; opacity: 0.7;">Zoom:</span>
-                <input type="range" min={MIN_ZOOM} max={MAX_ZOOM} value={zoomLevel} on:input={handleZoomSlider} />
-            </div>
         </div>
     {/if}
 
@@ -829,7 +870,7 @@
         </div>
 
         <!-- Ruler (Sticky Top) -->
-        <div class="ruler-container" bind:this={rulerContainer} on:mousedown={startRulerScrub}>
+        <div class="ruler-container" bind:this={rulerContainer} on:mousedown={startRulerScrub} on:wheel={(e) => handleWheel(e, true)}>
             <div class="ruler" style="width: {(duration / 1000) * zoomLevel}px">
                 {#each Array(visibleTickCount) as _, i}
                     {@const tickIndex = i + visibleTicksStartIndex}
@@ -854,9 +895,9 @@
         <!-- Track Headers (Sticky Left) -->
         <div class="headers-container" bind:this={headersContainer} style="width: {usedHeaderWidth}px; min-width: {usedHeaderWidth}px;">
             <div class="track-headers" style="height: {totalTrackHeight}px;">
-                {#each Array(maxTrackIndex + 1) as _, i}
+                {#each Array(maxTrackIndex) as _, i}
                     <div class="track-header" style="top: {35 + i * 70}px; width: 100%;">
-                        <span class="track-name">{getTrackName(i)}</span>
+                        <span class="track-name">{getTrackName(i, actions)}</span>
                     </div>
                 {/each}
             </div>
@@ -885,24 +926,24 @@
                 {#each actions as action (action.id)}
                     {@const baseY = getActionBaseY(action)}
                     {#if action.duration}
-                        <div class="action-clip" class:selected={selectedActionIds.includes(action.id)} style="left: {(action.time / 1000) * zoomLevel}px; width: {action.duration * zoomLevel}px; top: {baseY}px;" title="{action.name} ({formatTime(action.duration * 1000)}) at {formatTime(action.time)}" on:mousedown|stopPropagation={(e) => startActionDrag(e, action.id)}>
+                        <div class="action-clip context #timeline_node" class:selected={selectedActionIds.includes(action.id)} style="left: {(action.time / 1000) * zoomLevel}px; width: {action.duration * zoomLevel}px; top: {baseY}px;" data-title="{formatTime(action.time)}-{formatTime(action.duration * 1000)}: {action.name}" on:mousedown|stopPropagation={(e) => startActionDrag(e, action.id)}>
                             <div class="action-clip-content">
-                                <div class="action-label clip-label">{action.name}</div>
-                                <button class="delete-btn clip-delete" on:mousedown|stopPropagation on:click|stopPropagation={() => removeAction(action.id)}>×</button>
+                                <div class="clip-label">{action.name}</div>
                             </div>
                         </div>
                     {:else}
-                        <div class="action-marker" class:selected={selectedActionIds.includes(action.id)} style="left: {(action.time / 1000) * zoomLevel}px; top: {baseY + 5}px;" title="{action.name} at {formatTime(action.time)}" on:mousedown|stopPropagation={(e) => startActionDrag(e, action.id)}>
-                            <div class="action-head"></div>
+                        <div class="action-marker {action.type} context #timeline_node" class:selected={selectedActionIds.includes(action.id)} style="left: {(action.time / 1000) * zoomLevel}px; top: {baseY + 5}px;" data-title="{formatTime(action.time)}: {action.name}" on:mousedown|stopPropagation={(e) => startActionDrag(e, action.id)}>
+                            <div class="action-head">
+                                {#if typeof action.data?.index === "number"}{action.data.index + 1}{/if}
+                            </div>
                             <div class="action-label">{action.name}</div>
-                            <button class="delete-btn" on:mousedown|stopPropagation on:click|stopPropagation={() => removeAction(action.id)}>×</button>
                         </div>
                     {/if}
                 {/each}
 
                 <!-- Selection Box -->
                 {#if selectionRect}
-                    <div class="selection-box" style="left: {selectionRect.x}px; top: {selectionRect.y}px; width: {selectionRect.w}px; height: {selectionRect.h}px;"></div>
+                    <div class="selection-box" style="left: {selectionRect.x}px; top: {selectionRect.y}px; width: {selectionRect.w}px; height: {selectionRect.h}px;" out:fade={{ duration: 80 }}></div>
                 {/if}
 
                 <!-- Playhead (Line Only) -->
@@ -922,7 +963,7 @@
             <Icon size={1.3} id="stop" white={!isPlaying} />
         </MaterialButton>
 
-        <MaterialButton title="actions.{isRecording ? 'stop_recording' : 'start_recording'}" on:click={toggle} red={isRecording}>
+        <MaterialButton disabled={isPlaying && !isRecording} title="actions.{isRecording ? 'stop_recording' : 'start_recording'}" on:click={toggle} red={isRecording}>
             <Icon size={1.3} id="record" white />
         </MaterialButton>
     </FloatingInputs>
@@ -931,6 +972,10 @@
         <MaterialButton title="edit.options" on:click={() => (optionsVisible = !optionsVisible)}>
             <Icon id="options" white={!optionsVisible} />
         </MaterialButton>
+
+        <div class="divider" />
+
+        <MaterialButton icon="focus" title="Reset View" on:click={resetView} />
 
         <div class="divider" />
 
@@ -968,6 +1013,7 @@
 
         font-family: monospace;
         font-size: 1.25em;
+        font-weight: bold;
         color: var(--text);
         text-align: center;
     }
@@ -1103,6 +1149,7 @@
         position: absolute;
         width: 2px;
         background-color: var(--secondary);
+        box-shadow: 0 0 2px rgb(0 0 0 / 0.6);
         top: 0;
         bottom: 0;
         left: -1px;
@@ -1141,16 +1188,32 @@
         height: 14px;
         background-color: var(--secondary);
         border-radius: 50%;
-        border: 2px solid var(--text);
+        border: 2px solid var(--secondary);
+        box-shadow: 0 0 4px rgb(0 0 0 / 0.6);
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        font-size: 0.7em;
+        font-weight: bold;
+    }
+    .action-marker.slide .action-head {
+        border-radius: 4px;
+        width: 18px;
+        height: 18px;
     }
 
     .action-clip {
         position: absolute;
         top: 35px;
         height: 60px;
-        background-color: var(--primary-light);
-        border: 1px solid rgba(255, 255, 255, 0.2);
+        background-color: var(--secondary);
+        color: var(--secondary-text);
+        border: 2px solid var(--secondary);
         border-radius: 4px;
+        box-shadow: 0 0 4px rgb(0 0 0 / 0.4);
+
         z-index: 4;
         cursor: move;
         overflow: hidden;
@@ -1173,7 +1236,7 @@
         overflow: hidden;
         text-overflow: ellipsis;
         flex: 1;
-        padding: 0;
+        padding: 0 10px;
     }
 
     .clip-delete {
@@ -1183,19 +1246,12 @@
         padding: 0 5px;
     }
 
-    .action-clip:hover .clip-delete {
-        opacity: 1;
-    }
-
     .action-clip.selected {
-        border-color: var(--secondary);
-        box-shadow: 0 0 0 1px var(--secondary);
+        border: 2px solid var(--text);
     }
 
     .action-marker.selected .action-head {
-        background-color: #fff;
-        border-color: var(--secondary);
-        transform: scale(1.2);
+        border-color: var(--text);
     }
 
     .selection-box {
@@ -1213,29 +1269,6 @@
         padding: 2px 4px;
         border-radius: 3px;
         white-space: nowrap;
-    }
-
-    .selection-box {
-        position: absolute;
-        background-color: rgba(255, 255, 255, 0.1);
-        border: 1px solid rgba(255, 255, 255, 0.4);
-        pointer-events: none;
-        z-index: 100;
-    }
-
-    .action-clip:hover .clip-delete {
-        opacity: 1;
-    }
-
-    .action-clip.selected {
-        border-color: var(--secondary);
-        box-shadow: 0 0 0 1px var(--secondary);
-    }
-
-    .action-marker.selected .action-head {
-        background-color: #fff;
-        border-color: var(--secondary);
-        transform: scale(1.2);
     }
 
     .delete-btn {

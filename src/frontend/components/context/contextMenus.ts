@@ -364,6 +364,9 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     edit_box: ["GROUP_dynamic", "item_actions", "item_bind_to", "format", "rearrange", "transition", "GROUP_duplicate_delete"], // "copy", "paste" (shortcut or top menubar)
     items_list_item: ["to_front", "forward", "backward", "to_back"],
 
+    // TIMELINE
+    timeline_node: ["delete"],
+
     // CALENDAR
     event: ["edit", "duplicate", "delete", "delete_all"],
 

@@ -251,6 +251,11 @@ const clickActions = {
 
         if (obj.sel && deleteAction(obj.sel)) return
 
+        if (obj.contextElem?.classList.value.includes("#timeline_node")) {
+            triggerFunction("delete_selected_nodes")
+            return
+        }
+
         if (obj.contextElem?.classList.value.includes("#project_template")) {
             deleteAction({ id: "project_template", data: [{ id: obj.contextElem.id }] })
             return

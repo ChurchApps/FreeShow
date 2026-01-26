@@ -1,18 +1,18 @@
 import { get, type Unsubscriber } from "svelte/store"
-import type { LayoutRef } from "../../../types/Show"
-import { activeShow, outputs } from "../../stores"
+import type { LayoutRef, TimelineAction } from "../../../types/Show"
+import { activeShow, outputs, showsCache } from "../../stores"
 import { getFirstActiveOutput, setOutput } from "../helpers/output"
 import { getLayoutRef } from "../helpers/show"
 import { updateOut } from "../helpers/showActions"
 import { _show } from "../helpers/shows"
 
-type Sequence = { type: string; slideRef: { id: string; index: number } }
+type TimelineActionPass = { type: string; name: string; data: { id: string; index?: number; path?: string } }
 
 export class ShowTimeline {
-    static recordingActive: boolean = false
-    static showRef: { id: string; layoutId: string } | null = null
+    private static recordingActive: boolean = false
+    private static showRef: { id: string; layoutId: string } | null = null
 
-    static toggleRecording(callback?: (s: Sequence) => void) {
+    static toggleRecording(callback?: (s: TimelineActionPass) => void) {
         const currentShow = get(activeShow)
         if (!currentShow) {
             ShowTimeline.stopRecording()
@@ -31,7 +31,7 @@ export class ShowTimeline {
         }
     }
 
-    static startRecording(callback?: (s: Sequence) => void) {
+    static startRecording(callback?: (s: TimelineActionPass) => void) {
         const currentShow = get(activeShow)
         if (!currentShow) return
 
@@ -55,16 +55,14 @@ export class ShowTimeline {
         const currentShow = get(activeShow)
         if (!currentShow) return false
 
-        console.log(ShowTimeline.recordingActive, ShowTimeline.showRef, currentShow)
-
         const activeLayout = _show(currentShow.id).get("settings.activeLayout")
         return ShowTimeline.recordingActive && ShowTimeline.showRef?.id === currentShow.id && ShowTimeline.showRef?.layoutId === activeLayout
     }
 
     // INPUT
 
-    static outputListenerUnsubscribe: Unsubscriber | null = null
-    static outputListener(callback?: (s: Sequence) => void) {
+    private static outputListenerUnsubscribe: Unsubscriber | null = null
+    private static outputListener(callback?: (s: TimelineActionPass) => void) {
         let firstOutputId = getFirstActiveOutput()?.id || ""
         if (!firstOutputId) return
 
@@ -87,27 +85,32 @@ export class ShowTimeline {
             if (previousRef === newRef) return
             previousRef = newRef
 
-            if (callback) callback({ type: "slide", slideRef })
+            const groupSlideId = layoutRef[outSlide.index]?.parent?.id || layoutSlide?.id
+            const slideGroup = get(showsCache)[ShowTimeline.showRef?.id || ""]?.slides?.[groupSlideId]?.group || ""
+            if (callback) callback({ type: "slide", name: slideGroup, data: slideRef })
 
             // let sequence = { time: Date.now(), slideRef }
             // ShowTimeline.currentSequence.push(sequence)
             // if (callback) callback(ShowTimeline.currentSequence)
+
+            // WIP add clearing as actions...
         })
     }
 
-    static clearOutputListener() {
+    private static clearOutputListener() {
         if (!ShowTimeline.outputListenerUnsubscribe) return
         ShowTimeline.outputListenerUnsubscribe()
         ShowTimeline.outputListenerUnsubscribe = null
     }
 
-    static playAction(action: any) {
+    static playAction(action: TimelineAction) {
         console.log("Action:", action)
 
         if (action.type === "slide") {
-            const ref = action.data.slideRef
+            const ref = action.data
             const layoutRef = getLayoutRef()
             const slideIndex = ref.index
+            if (typeof slideIndex !== "number") return
 
             // check that slide exists
             let slide: LayoutRef | undefined = layoutRef[slideIndex]

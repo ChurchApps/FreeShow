@@ -281,8 +281,29 @@ export interface Layout {
     id?: string
     name: string
     notes: string
+    timeline?: Timeline
     recording?: Recording[]
     slides: SlideData[]
+}
+
+export interface Timeline {
+    // id: string
+    // name: string
+    actions: TimelineAction[]
+    maxTime?: number // s
+}
+
+export interface TimelineAction {
+    id: string
+    time: number // ms
+    duration?: number // ms (media)
+    name: string
+    type: string // "slide" | "action" | "audio"
+    data: {
+        id?: string // slide/action
+        path?: string // audio
+        index?: number // slide
+    }
 }
 
 export interface Recording {
