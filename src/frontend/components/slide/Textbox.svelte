@@ -468,7 +468,7 @@
                 if (line?.text && Array.isArray(line.text)) allText.push(...line.text)
             })
             const itemText = allText.filter((a) => !a.customType?.includes("disableTemplate")) || []
-            let itemFontSize = Number(getStyles(itemText[0]?.style, true)?.[" font-size"] || "") || 100
+            let itemFontSize = Number(getStyles(itemText[0]?.style, true)?.["font-size"] || "") || 100
 
             // get scripture verse ratio
             const verseItemText = allText.filter((a) => a.customType?.includes("disableTemplate")) || []
@@ -516,34 +516,18 @@
         //     textQuery = ".align .item .align " + textQuery
         // }
 
-
         try {
             fontSize = autosize(elem, {
                 type: textFit,
                 textQuery,
                 defaultFontSize,
-                maxFontSize
+                maxFontSize,
+                isList: item?.list?.enabled || false
             })
         } catch (e) {
-            console.warn("[Autosize] failed:", e)
+            console.error(e)
         }
 
-
-        // smaller in general if bullet list, because they are not accounted for
-        if (item?.list?.enabled) fontSize *= 0.9
-
-        if (item.type === "slide_tracker") {
-            if (cacheKey) writeAutoSizeCache(cacheKey, { signature: cacheSignature, fontSize })
-            markAutoSizeReady()
-            return
-        }
-        // Store in separate field for previews vs OUTPUT
-        if (preview) {
-            if (fontSize !== item.previewAutoFontSize) setItemPreviewAutoFontSize(fontSize)
-        } else {
-            if (fontSize !== item.autoFontSize) setItemAutoFontSize(fontSize)
-        }
-        if (!isDynamic && cacheKey) writeAutoSizeCache(cacheKey, { signature: cacheSignature, fontSize })
         markAutoSizeReady()
     }
 
