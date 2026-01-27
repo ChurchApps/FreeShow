@@ -86,13 +86,14 @@
                 <div class="grid" style="--width: {100 / $mediaOptions.columns}%;">
                     {#each fullFilteredOverlays as overlay}
                         {@const isReadOnly = readOnly || profile[overlay.category || ""] === "read"}
+                        {@const isActive = findMatchingOut(overlay.id, $outputs) !== null}
 
                         <SelectElem id="overlay" data={overlay.id} class="context #overlay_card{overlay.isDefault && !isReadOnly ? '_default' : ''}{isReadOnly ? '_readonly' : ''}" draggable fill>
                             <Card
                                 width={100}
                                 preview={$activePage === "edit" ? $activeEdit.type === "overlay" && $activeEdit.id === overlay.id : $activeShow?.type === "overlay" && $activeShow?.id === overlay.id}
                                 outlineColor={findMatchingOut(overlay.id, $outputs)}
-                                active={findMatchingOut(overlay.id, $outputs) !== null}
+                                active={isActive}
                                 label={overlay.name}
                                 renameId="overlay_{overlay.id}"
                                 icon={overlay.isDefault ? "protected" : null}
@@ -103,8 +104,10 @@
                                     if ($outLocked || e.ctrlKey || e.metaKey) return
                                     if (e.target?.closest(".edit") || e.target?.closest(".icons")) return
 
-                                    timelineRecordingAction.set({ id: "id_select_overlay", data: { id: overlay.id } })
                                     setOutput("overlays", overlay.id, true)
+
+                                    if (isActive) timelineRecordingAction.set({ id: "clear_overlay", data: { id: overlay.id } })
+                                    else timelineRecordingAction.set({ id: "id_select_overlay", data: { id: overlay.id } })
                                 }}
                                 on:dblclick={(e) => {
                                     if (e.ctrlKey || e.metaKey) return

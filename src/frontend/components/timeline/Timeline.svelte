@@ -1,152 +1,70 @@
 <script lang="ts">
     import { onDestroy, tick } from "svelte"
-    import { get } from "svelte/store"
     import { fade } from "svelte/transition"
     import { uid } from "uid"
     import type { TimelineAction } from "../../../types/Show"
     import { AudioPlayer } from "../../audio/audioPlayer"
     import { createWaveform } from "../../audio/audioWaveform"
-    import { activeShow, activeTriggerFunction, localTimelineActive, playingAudio, selected, showsCache } from "../../stores"
+    import { activeShow, activeTriggerFunction, playingAudio, resized } from "../../stores"
+    import { DEFAULT_WIDTH } from "../../utils/common"
     import { translateText } from "../../utils/language"
     import { actionData } from "../actions/actionData"
     import { clone } from "../helpers/array"
     import Icon from "../helpers/Icon.svelte"
-    import { getExtension, getMediaType } from "../helpers/media"
-    import { getLayoutRef } from "../helpers/show"
-    import { _show } from "../helpers/shows"
     import FloatingInputs from "../input/FloatingInputs.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
     import { ShowTimeline } from "./ShowTimeline"
+    import { formatTime, getActionsAtPosition, getTickInterval, getTimelineSections, parseTime, showTimelineSections, TIMELINE_SECTION_GAP, TIMELINE_SECTION_HEIGHT, TIMELINE_SECTION_TOP, timelineZoom } from "./timeline"
+    import { TimelineActions, type TimelineType } from "./TimelineActions"
+    import { TimelinePlayback } from "./TimelinePlayback"
+
+    export let type: TimelineType
+    export let isClosed: boolean = false
+
+    // SECTIONS
+
+    const sections = clone(showTimelineSections)
+    let tabIds = Object.keys(sections)
+
+    const maxTrackIndex = tabIds.length
+    $: totalTrackHeight = TIMELINE_SECTION_TOP + maxTrackIndex * (TIMELINE_SECTION_HEIGHT + TIMELINE_SECTION_GAP) - TIMELINE_SECTION_GAP + TIMELINE_SECTION_TOP
+
+    function getTrackData(index: number, _updater: any) {
+        return sections[tabIds[index]] || { name: "Unknown", icon: "unknown" }
+    }
+    function getActionTrack(action: TimelineAction): number {
+        return tabIds.indexOf(action.type)
+    }
+    function getActionBaseY(action: TimelineAction): number {
+        return TIMELINE_SECTION_TOP + getActionTrack(action) * (TIMELINE_SECTION_HEIGHT + TIMELINE_SECTION_GAP)
+    }
+
+    // TIMELINE
 
     let actions: TimelineAction[] = []
 
-    $: showId = $activeShow?.id || ""
-    $: layoutId = $showsCache[showId]?.settings?.activeLayout || ""
-    $: exists = $showsCache[showId] !== undefined
-    $: if (exists && showId) updateActions()
-    function updateActions() {
-        saveCurrentState()
+    const player = new TimelinePlayback()
 
-        selectedActionIds = []
+    const timeline = new TimelineActions(type, (a) => {
+        actions = a
+        player.setActions(a)
+        tabIds = getTimelineSections(sections, a)
+    })
+    onDestroy(() => {
+        player.stop()
+        timeline.close()
+    })
 
-        const timeline = _show().layouts("active").get()[0]?.timeline
-        if (!timeline) {
-            actions = []
-            return
-        }
-
-        actions = timeline.actions || []
-        previousShowId = showId
-        previousLayoutId = layoutId
-        // if (timeline.maxTime) fixedDurationSeconds = timeline.maxTime
-    }
-
-    onDestroy(saveCurrentState)
-
-    let actionsChanged = false
-    let previousShowId = ""
-    let previousLayoutId = ""
-    function saveCurrentState() {
-        if (!actionsChanged) return
-        actionsChanged = false
-
-        // save current state
-        showsCache.update((a) => {
-            if (!a[previousShowId]?.layouts?.[previousLayoutId]) return a
-
-            if (!a[previousShowId].layouts[previousLayoutId].timeline) a[previousShowId].layouts[previousLayoutId].timeline = { actions: [] }
-            a[previousShowId].layouts[previousLayoutId].timeline!.actions = clone(actions)
-
-            return a
-        })
-    }
-
-    // State
-    let currentTime = 0
-    let minDuration = 60000 * 5 // 5 minutes default
     let isPlaying = false
-    let zoomLevel = 50 // pixels per second
-
-    let animationFrameId: number
-    let autoScrollFrameId: number
-    let autoScrollTimeout: any
-    let lastTime: number
-    let isScrubbing = false
-    let draggingActionId: string | null = null
-    let dragTimeOffset = 0
-    let dragInitialTimes = new Map<string, number>()
-    let wasPlaying = false
-    let lastMouseX = 0
-    let trackWrapper: HTMLElement
-    let rulerContainer: HTMLElement
-    let headersContainer: HTMLElement
-    let scrollLeft = 0
-    let containerWidth = 0
-    let autoFollow = true
-    let isProgrammaticScroll = false
-
-    let selectedActionIds: string[] = []
-    let selectionStartIds: string[] = []
-    let isSelecting = false
-    let selectionRect: { x: number; y: number; w: number; h: number } | null = null
-    let selectionStart = { x: 0, y: 0 }
-
-    let usedHeaderWidth = 120
-    // Computed
-    $: timeString = formatTime(currentTime)
-    $: lastActionTime = actions.length > 0 ? Math.max(...actions.map((a) => a.time + (a.duration || 0) * 1000)) : 0
-    $: duration = Math.max(minDuration, lastActionTime + 60 * 1000) // 60s buffer
-    $: tickInterval = getTickInterval(zoomLevel)
-    $: snapInterval = (tickInterval * 1000) / 10
-    $: totalTickCount = Math.ceil(duration / 1000 / tickInterval)
-    $: visibleTicksStartIndex = Math.min(totalTickCount, Math.max(0, Math.floor(scrollLeft / (tickInterval * zoomLevel))))
-    $: visibleTicksEndIndex = Math.min(totalTickCount, Math.ceil((scrollLeft + containerWidth) / (tickInterval * zoomLevel)))
-    $: visibleTickCount = Math.max(0, visibleTicksEndIndex - visibleTicksStartIndex + 1)
-
-    function getTickInterval(zoom: number) {
-        const minSpacing = 80 // minimum pixels between ticks
-        const target = minSpacing / zoom
-        const steps = [0.1, 0.2, 0.5, 1, 2, 5, 10, 15, 30, 60]
-        return steps.find((s) => s >= target) || 60
-    }
-
-    function formatTime(ms: number): string {
-        const offsetMs = ms // + 3600000 // Start at 01:00:00;00
-        const totalSeconds = Math.floor(offsetMs / 1000)
-        const hours = Math.floor(totalSeconds / 3600)
-        const minutes = Math.floor((totalSeconds % 3600) / 60)
-        const seconds = totalSeconds % 60
-        // Use centiseconds (0-99) to look like frames/decimal
-        const centiseconds = Math.floor((offsetMs % 1000) / 10)
-
-        const h = hours.toString().padStart(2, "0")
-        const m = minutes.toString().padStart(2, "0")
-        const s = seconds.toString().padStart(2, "0")
-        const cs = centiseconds.toString().padStart(2, "0")
-
-        return `${h}:${m}:${s};${cs}`
-    }
-
-    function play() {
-        if (isPlaying) return
+    player.onPlay(() => {
         isPlaying = true
         autoFollow = true
-        lastTime = performance.now()
-
-        if (animationFrameId) cancelAnimationFrame(animationFrameId)
-        animationFrameId = requestAnimationFrame(loop)
 
         // start recording if at beginning and no actions
-        if (currentTime === 0 && !actions.length && !isRecording) toggle()
-    }
-
-    function pause() {
+        if (currentTime === 0 && !actions.length && !isRecording) toggleRecording()
+    })
+    player.onPause(() => {
         isPlaying = false
-
-        if (animationFrameId) {
-            cancelAnimationFrame(animationFrameId)
-            animationFrameId = 0
-        }
 
         // check if any audio is playing and pause it
         for (const action of actions) {
@@ -157,18 +75,11 @@
                 }
             }
         }
-    }
+    })
+    player.onStop(() => {
+        isPlaying = false
 
-    function stop() {
-        pause()
-        currentTime = 0
-
-        if (animationFrameId) {
-            cancelAnimationFrame(animationFrameId)
-            animationFrameId = 0
-        }
-
-        if (isRecording) toggle()
+        if (isRecording) toggleRecording()
 
         // check if any audio is playing and stop it
         for (const action of actions) {
@@ -179,96 +90,61 @@
                 }
             }
         }
-    }
+    })
 
-    function loop() {
-        if (!isPlaying) return
-        const now = performance.now()
-        const delta = now - lastTime
-        lastTime = now
+    let duration = 60000 * 5
+    player.onDuration((time) => (duration = time))
 
-        const previousTime = currentTime
-        currentTime += delta
+    let currentTime = 0
+    let updateTimer = 0
+    player.onTime((time) => {
+        currentTime = time
 
-        // Check for triggers
-        for (const action of actions) {
-            if (action.time >= previousTime && action.time < currentTime) {
-                ShowTimeline.playAction(action)
-            }
+        updateTimer++
+        if (updateTimer > 10) {
+            // only update part of the time
+            checkAutoScroll()
+            updateTimer = 0
         }
+    })
 
-        // Check for end
-        if (currentTime >= duration) {
-            currentTime = duration
-            pause()
-        }
+    // State
+    let trackWrapper: HTMLElement
+    let rulerContainer: HTMLElement
+    let headersContainer: HTMLElement
+    let scrollLeft = 0
+    let containerWidth = 0
+    let autoFollow = true
+    let isProgrammaticScroll = false
 
-        // Check if there's an audio file that's supposed to be playing at this time
-        let hasPlayed: string[] = [] // don't allow the same file to be started multiple times in one loop (WIP allow multiple if not at same time...)
-        for (const action of actions) {
-            if (action.type === "audio") {
-                const a = action.data
-                if (a && a.path && !hasPlayed.includes(a.path)) {
-                    hasPlayed.push(a.path)
-                    const audioStart = action.time
-                    const audioEnd = action.time + (action.duration || 0) * 1000
-                    if (currentTime >= audioStart && currentTime < audioEnd) {
-                        // Should be playing
-                        if (!$playingAudio[a.path]) {
-                            AudioPlayer.start(a.path, { name: "" }, { pauseIfPlaying: false, playMultiple: true })
-                        } else if ($playingAudio[a.path].paused) {
-                            AudioPlayer.play(a.path)
-                        }
+    let autoScrollFrameId: number
+    let autoScrollTimeout: any
+    let lastMouseX = 0
+    let wasPlaying = false
+    let isScrubbing = false
+    let draggingActionId: string | null = null
+    let dragTimeOffset = 0
+    let dragInitialTimes = new Map<string, number>()
 
-                        // Seek to correct position (with tolerance)
-                        const tolerance = 20 // ms
-                        if ($playingAudio[a.path]) {
-                            const seekPos = (currentTime - audioStart) / 1000
-                            const currentAudioTime = $playingAudio[a.path].audio?.currentTime || 0
-                            const diff = Math.abs(currentAudioTime - seekPos) * 1000
-                            if (diff > tolerance) {
-                                AudioPlayer.setTime(a.path, seekPos)
-                            }
-                        }
-                    } else {
-                        // Should be stopped
-                        if ($playingAudio[a.path]) {
-                            AudioPlayer.stop(a.path)
-                        }
-                    }
-                }
-            }
-        }
+    let isSelecting = false
+    let selectedActionIds: string[] = []
+    let selectionStartIds: string[] = []
+    let selectionRect: { x: number; y: number; w: number; h: number } | null = null
+    let selectionStart = { x: 0, y: 0 }
 
-        // Auto-scroll to keep playhead in view
-        if (trackWrapper && autoFollow) {
-            const playheadPixelPos = (currentTime / 1000) * zoomLevel
-            const containerWidth = trackWrapper.clientWidth
-            const scrollLeft = trackWrapper.scrollLeft
-            let newScrollLeft = -1
+    let usedHeaderWidth = 120
 
-            // If playhead moves past the right edge of the visible area
-            if (playheadPixelPos > scrollLeft + containerWidth) {
-                // Scroll to bring playhead to the beginning (with some padding)
-                newScrollLeft = playheadPixelPos - containerWidth * 0.1
-            }
-            // Optional: If playhead is behind scroll (shouldn't happen in normal forward play but possible if seeked/looped)
-            else if (playheadPixelPos < scrollLeft) {
-                newScrollLeft = playheadPixelPos - containerWidth * 0.1
-            }
+    $: timeString = formatTime(currentTime)
+    $: tickInterval = getTickInterval(zoomLevel)
+    $: snapInterval = (tickInterval * 1000) / 10
 
-            if (newScrollLeft !== -1) {
-                isProgrammaticScroll = true
-                trackWrapper.scrollLeft = newScrollLeft
-                if (rulerContainer) rulerContainer.scrollLeft = newScrollLeft
-            }
-        }
-
-        animationFrameId = requestAnimationFrame(loop)
-    }
+    $: totalTickCount = Math.ceil(duration / 1000 / tickInterval)
+    $: visibleTicksStartIndex = Math.min(totalTickCount, Math.max(0, Math.floor(scrollLeft / (tickInterval * zoomLevel))))
+    $: visibleTicksEndIndex = Math.min(totalTickCount, Math.ceil((scrollLeft + containerWidth) / (tickInterval * zoomLevel)))
+    $: visibleTickCount = Math.max(0, visibleTicksEndIndex - visibleTicksStartIndex + 1)
 
     async function resetView() {
-        zoomLevel = 50
+        zoomLevel = 10
         autoFollow = true
         await tick()
         centerPlayhead()
@@ -282,36 +158,32 @@
             trackWrapper.scrollLeft = Math.max(0, playheadPixelPos - containerWidth / 2)
         }
     }
-    const MIN_ZOOM = 6
-    const MAX_ZOOM = 1000
+
+    let zoomLevel = 10 // pixels per second
     async function handleWheel(e: WheelEvent, zoom: boolean = false) {
         const shouldZoom = zoom || e.ctrlKey || e.metaKey
-        // If not zooming (just regular scrolling) Disable auto-follow
-        if (!shouldZoom && e.deltaY !== 0) {
-            autoFollow = false
-        }
         if (shouldZoom) {
-            e.preventDefault()
-            const ZOOM_SPEED = e.altKey ? 0.4 : 0.1
+            const currentZoom = zoomLevel
+
+            zoomLevel = await timelineZoom(e, zoomLevel)
+
             // Store mouse position relative to track start in time
             const rect = trackWrapper.getBoundingClientRect()
             const mouseX = e.clientX - rect.left
-            const scrollLeft = trackWrapper.scrollLeft
-
-            // Time at mouse position
-            const mouseTime = ((mouseX + scrollLeft) / zoomLevel) * 1000
-
-            // Apply zoom
-            const newZoom = zoomLevel - Math.sign(e.deltaY) * zoomLevel * ZOOM_SPEED
-            zoomLevel = Math.max(MIN_ZOOM, Math.min(newZoom, MAX_ZOOM))
+            const timeAtMouse = ((mouseX + trackWrapper.scrollLeft) / currentZoom) * 1000
 
             await tick()
 
             // Adjust scroll to keep time at mouse position
-            const newPixelPos = (mouseTime / 1000) * zoomLevel
+            const newPixelPos = (timeAtMouse / 1000) * zoomLevel
             isProgrammaticScroll = true
             trackWrapper.scrollLeft = newPixelPos - mouseX
-        } else if (e.shiftKey && e.deltaY !== 0) {
+            return
+        }
+
+        // if scrolling, disable auto-follow
+        if (e.deltaY !== 0) autoFollow = false
+        if (e.shiftKey && e.deltaY !== 0) {
             // Horizontal scroll with Shift+Wheel
             const speed = e.deltaY * (e.altKey ? 4 : 1)
             e.preventDefault()
@@ -319,49 +191,13 @@
         }
     }
 
-    const tabs = {
-        action: { name: "tabs.actions", icon: "actions", hasData: false },
-        slide: { name: "tools.slide", icon: "slide", hasData: false },
-        audio: { name: "tabs.audio", icon: "audio", hasData: false }
-    }
-    let tabIds = Object.keys(tabs)
-
-    const BAR_TOP = 25
-    const BAR_HEIGHT = 55
-    const BAR_GAP = 12
-    const maxTrackIndex = tabIds.length
-    $: totalTrackHeight = BAR_TOP + maxTrackIndex * (BAR_HEIGHT + BAR_GAP) - BAR_GAP + BAR_TOP
-
-    $: sortTracks(actions)
-    function sortTracks(_updater: any) {
-        tabIds = Object.keys(tabs)
-        tabIds.forEach((tabId) => {
-            tabs[tabId].hasData = actions.some((a) => a.type === tabId)
-        })
-
-        tabIds = tabIds.sort((a, b) => {
-            const hasActionsA = tabs[a].hasData ? 1 : 0
-            const hasActionsB = tabs[b].hasData ? 1 : 0
-            if (hasActionsA === hasActionsB) return 0
-            return hasActionsA > hasActionsB ? -1 : 1
-        })
-    }
-
-    function getTrackData(index: number, _updater: any) {
-        return tabs[tabIds[index]] || { name: "Unknown", icon: "unknown" }
-    }
-    function getActionTrack(action: TimelineAction): number {
-        return tabIds.indexOf(action.type)
-    }
-    function getActionBaseY(action: TimelineAction): number {
-        return BAR_TOP + getActionTrack(action) * (BAR_HEIGHT + BAR_GAP)
-    }
+    // RULER
 
     function startRulerScrub(e: MouseEvent) {
         if (e.button !== 0) return
         isScrubbing = true
         wasPlaying = isPlaying
-        pause()
+        player.pause()
 
         lastMouseX = e.clientX
         updateScrub(e)
@@ -373,17 +209,17 @@
     function startContentInteraction(e: MouseEvent) {
         if (e.button !== 0) return
 
-        const rect = trackWrapper.getBoundingClientRect()
-        // Start Selection
-        isSelecting = true
         // Store origin in content space (relative to track)
+        const rect = trackWrapper.getBoundingClientRect()
         const offsetX = e.clientX - rect.left + trackWrapper.scrollLeft
         const offsetY = e.clientY - rect.top + trackWrapper.scrollTop
+
+        isSelecting = true
         selectionStart = { x: offsetX, y: offsetY }
         selectionRect = { x: offsetX, y: offsetY, w: 0, h: 0 }
 
-        // Clear selection if not holding Shift/Ctrl
-        if (!e.shiftKey && !e.ctrlKey) {
+        // clear selection if not holding Ctrl/Shift
+        if (!e.ctrlKey && !e.metaKey && !e.shiftKey) {
             selectedActionIds = []
             selectionStartIds = []
         } else {
@@ -392,38 +228,6 @@
 
         window.addEventListener("mousemove", updateSelection)
         window.addEventListener("mouseup", endSelection)
-    }
-
-    function getActionAtPosition(e: MouseEvent): TimelineAction | null {
-        if (!trackWrapper) return null
-
-        const rect = trackWrapper.getBoundingClientRect()
-        const offsetX = e.clientX - rect.left + trackWrapper.scrollLeft
-        const offsetY = e.clientY - rect.top + trackWrapper.scrollTop
-
-        for (const action of actions) {
-            let ax = (action.time / 1000) * zoomLevel
-            let baseY = getActionBaseY(action)
-            let ay = baseY
-            let aw = 0
-            let ah = 60 // default clip H
-
-            if (action.duration) {
-                aw = action.duration * zoomLevel
-            } else {
-                ay = baseY + 5
-                ax -= 7 // centered
-                aw = 14
-                ah = 14
-            }
-
-            // Check if point is inside action rect
-            if (offsetX >= ax && offsetX <= ax + aw && offsetY >= ay && offsetY <= ay + ah) {
-                return action
-            }
-        }
-
-        return null
     }
 
     function updateSelection(e: MouseEvent) {
@@ -448,36 +252,7 @@
 
         selectionRect = { x: visualX, y: visualY, w: visualW, h: visualH }
 
-        const newSelectedIds: string[] = []
-
-        // WIP duplicate of getActionAtPosition
-        actions.forEach((action) => {
-            let ax = (action.time / 1000) * zoomLevel
-            let baseY = getActionBaseY(action)
-            let ay = baseY
-            let aw = 0
-            let ah = 60 // default clip H
-
-            if (action.duration) {
-                aw = action.duration * zoomLevel
-            } else {
-                ay = baseY + 5
-                ax -= 7 // centered
-                aw = 14
-                ah = 14
-            }
-
-            // Intersection check:
-            // Two rectangles R1 and R2 intersect if:
-            // R1.x < R2.x + R2.w &&
-            // R1.x + R1.w > R2.x &&
-            // R1.y < R2.y + R2.h &&
-            // R1.y + R1.h > R2.y
-
-            if (visualX < ax + aw && visualX + visualW > ax && visualY < ay + ah && visualY + visualH > ay) {
-                newSelectedIds.push(action.id)
-            }
-        })
+        const newSelectedIds = getActionsAtPosition(e, trackWrapper, actions, tabIds, zoomLevel, selectionRect)
 
         if (selectionStartIds.length > 0) {
             const combined = new Set([...selectionStartIds, ...newSelectedIds])
@@ -503,8 +278,35 @@
         const offsetX = e.clientX - rect.left + trackWrapper.scrollLeft
         const seekTime = (offsetX / zoomLevel) * 1000
 
-        const snappedTime = Math.round(seekTime / snapInterval) * snapInterval
-        currentTime = Math.max(0, Math.min(snappedTime, duration))
+        const snappedTime = isClosed ? Math.round(seekTime / 10) * 10 : Math.round(seekTime / snapInterval) * snapInterval
+        const time = Math.max(0, Math.min(snappedTime, duration))
+        player.setTime(time)
+    }
+
+    function checkAutoScroll() {
+        // Auto-scroll to keep playhead in view
+        if (!trackWrapper || !isPlaying || !autoFollow) return
+
+        const playheadPixelPos = (currentTime / 1000) * zoomLevel
+        const containerWidth = trackWrapper.clientWidth
+        const scrollLeft = trackWrapper.scrollLeft
+        let newScrollLeft = -1
+
+        // If playhead moves past the right edge of the visible area
+        if (playheadPixelPos > scrollLeft + containerWidth) {
+            // Scroll to bring playhead to the beginning (with some padding)
+            newScrollLeft = playheadPixelPos - containerWidth * 0.1
+        }
+        // Optional: If playhead is behind scroll (shouldn't happen in normal forward play but possible if seeked/looped)
+        else if (playheadPixelPos < scrollLeft) {
+            newScrollLeft = playheadPixelPos - containerWidth * 0.1
+        }
+
+        if (newScrollLeft !== -1) {
+            isProgrammaticScroll = true
+            trackWrapper.scrollLeft = newScrollLeft
+            if (rulerContainer) rulerContainer.scrollLeft = newScrollLeft
+        }
     }
 
     function autoScrollLoop() {
@@ -520,10 +322,10 @@
         let scrollAmount = 0
 
         if (distLeft < EDGE_THRESHOLD) {
-            const intensity = 1 - Math.max(0, distLeft) / EDGE_THRESHOLD
+            const intensity = 1 - distLeft / EDGE_THRESHOLD
             scrollAmount = -MAX_SCROLL_SPEED * intensity
         } else if (distRight < EDGE_THRESHOLD) {
-            const intensity = 1 - Math.max(0, distRight) / EDGE_THRESHOLD
+            const intensity = 1 - distRight / EDGE_THRESHOLD
             scrollAmount = MAX_SCROLL_SPEED * intensity
         }
 
@@ -539,7 +341,8 @@
             if (isScrubbing) {
                 const snappedTime = Math.round(seekTime / 10) * 10
                 // const snappedTime = Math.round(seekTime / snapInterval) * snapInterval // not smooth
-                currentTime = Math.max(0, Math.min(snappedTime, duration))
+                const time = Math.max(0, Math.min(snappedTime, duration))
+                player.setTime(time)
             } else if (draggingActionId) {
                 const newTime = seekTime - dragTimeOffset
                 const snappedTime = Math.round(newTime / snapInterval) * snapInterval
@@ -557,59 +360,32 @@
         window.removeEventListener("mousemove", updateScrub)
         window.removeEventListener("mouseup", endScrub)
 
-        if (wasPlaying) play()
+        if (wasPlaying) player.play()
     }
 
     function startActionDrag(e: MouseEvent, id: string) {
         // select on right-click
         if (e.button === 2) {
-            const clickedAction = getActionAtPosition(e)
-            if (clickedAction) {
-                if (!selectedActionIds.includes(clickedAction.id)) {
-                    selectedActionIds = [clickedAction.id]
-                }
-            } else {
-                selectedActionIds = []
-            }
+            const clickedActions = getActionsAtPosition(e, trackWrapper, actions, tabIds, zoomLevel)
+            // skip if selection includes any clicked action
+            if (clickedActions.some((a) => selectedActionIds.includes(a))) return
+            // select all right clicked actions
+            selectedActionIds = clickedActions
             return
         }
 
         if (e.button !== 0) return
 
         if (!selectedActionIds.includes(id)) {
-            if (e.ctrlKey || e.shiftKey) {
-                selectedActionIds = [...selectedActionIds, id]
-            } else {
-                selectedActionIds = [id]
-            }
+            if (e.ctrlKey || e.shiftKey) selectedActionIds = [...selectedActionIds, id]
+            else selectedActionIds = [id]
         }
 
         // DUPLICATE
         if (e.altKey) {
-            const newSelectedIds: string[] = []
-            let newDraggingId: string | null = null
-
-            const newActions = selectedActionIds
-                .map((sid) => {
-                    const original = actions.find((a) => a.id === sid)
-                    if (!original) return null
-
-                    const newId = uid(6)
-                    if (sid === id) newDraggingId = newId
-                    newSelectedIds.push(newId)
-
-                    return {
-                        ...original,
-                        id: newId,
-                        data: JSON.parse(JSON.stringify(original.data))
-                    }
-                })
-                .filter((a) => a !== null) as TimelineAction[]
-
-            actions = [...actions, ...newActions]
-            actionsChanged = true
-            selectedActionIds = newSelectedIds
-            if (newDraggingId) id = newDraggingId
+            const selectedIdIndex = selectedActionIds.indexOf(id)
+            selectedActionIds = timeline.duplicateActions(selectedActionIds)
+            id = selectedActionIds[selectedIdIndex]
         }
 
         draggingActionId = id
@@ -649,17 +425,9 @@
         for (const t of dragInitialTimes.values()) {
             if (t < minInitial) minInitial = t
         }
-        if (minInitial + delta < 0) {
-            delta = -minInitial
-        }
+        if (minInitial + delta < 0) delta = -minInitial
 
-        actions = actions.map((a) => {
-            if (dragInitialTimes.has(a.id)) {
-                return { ...a, time: dragInitialTimes.get(a.id)! + delta }
-            }
-            return a
-        })
-        actionsChanged = true
+        timeline.updateTimes(dragInitialTimes, delta)
     }
 
     function updateActionDrag(e: MouseEvent) {
@@ -696,76 +464,10 @@
         const dropTime = (offsetX / zoomLevel) * 1000
         const resultTime = Math.max(0, Math.min(Math.round(dropTime / 10) * 10, duration))
 
-        const existingAudioActions = actions.some((a) => a.type === "audio")
-
-        let selection = $selected
-
-        // external files
-        const files = e.dataTransfer?.files
-        if (files && files.length > 0) {
-            for (let i = 0; i < files.length; i++) {
-                const file = files[i]
-
-                let audioFiles: { path: string; name: string }[] = []
-                if (file.type.startsWith("audio/") || getMediaType(getExtension(file.name)) === "audio") {
-                    const path = window.api.showFilePath(file)
-                    audioFiles.push({ path, name: file.name })
-                }
-
-                selection = { id: "audio", data: audioFiles }
-            }
-        }
-
-        const id = selection.id
-        if (!id || !selection.data?.length) return
-
-        const layoutRef = getLayoutRef()
-
-        await Promise.all(
-            selection.data.map(async (item) => {
-                if (!tabIds.includes(id)) return
-
-                const time = id === "audio" && !existingAudioActions ? 0 : resultTime
-                const type = id
-                const data = getData()
-                const name = getName() || id
-
-                const newAction: TimelineAction = {
-                    id: uid(6),
-                    time,
-                    type,
-                    data,
-                    name
-                }
-                if (id === "audio") newAction.duration = await AudioPlayer.getDuration(item.path)
-
-                actions.push(newAction)
-
-                function getData() {
-                    if (id === "action") return { triggers: item.triggers || [], actionValues: item.actionValues || {} }
-                    if (id === "slide") return { id: layoutRef[item.index]?.id, index: item.index }
-
-                    return item
-                }
-
-                function getName() {
-                    if (id === "slide") {
-                        const slideId = layoutRef[item.index]?.id
-                        const groupSlideId = layoutRef[item.index]?.parent?.id || slideId
-                        const slideGroup = get(showsCache)[item?.showId]?.slides?.[groupSlideId]?.group
-                        return slideGroup || ""
-                    }
-
-                    return item.name || ""
-                }
-            })
-        )
-        actions = actions
-        actionsChanged = true
+        timeline.handleDrop(e, resultTime)
     }
 
     onDestroy(() => {
-        if (animationFrameId) cancelAnimationFrame(animationFrameId)
         if (autoScrollFrameId) cancelAnimationFrame(autoScrollFrameId)
         // Cleanup global listeners if component is destroyed while dragging
         if (typeof window !== "undefined") {
@@ -776,18 +478,22 @@
         }
     })
 
-    // Type time in input to go to specific time
+    // TIME INPUT
 
     function handleTimeChange(e: Event) {
         const input = (e.target as HTMLInputElement).value
         const ms = parseTime(input)
+        let time = currentTime
+
         if (!isNaN(ms)) {
-            currentTime = Math.max(0, Math.min(ms, duration))
+            time = Math.max(0, Math.min(ms, duration))
+            player.setTime(time)
             centerPlayhead()
         }
+
         // Force update input value in case it was invalid or clamped
         const target = e.target as HTMLInputElement
-        target.value = formatTime(currentTime)
+        target.value = formatTime(time)
         target.blur()
     }
 
@@ -798,40 +504,7 @@
         }
     }
 
-    function parseTime(str: string): number {
-        // Split Centiseconds
-        let cs = 0
-        let main = str
-        if (str.includes(";")) {
-            const parts = str.split(";")
-            main = parts[0]
-            cs = parseInt(parts[1]) || 0
-        } else if (str.includes(".")) {
-            const parts = str.split(".")
-            main = parts[0]
-            cs = parseInt(parts[1]) || 0
-        }
-
-        const parts = main
-            .split(":")
-            .reverse()
-            .map((p) => parseInt(p) || 0)
-        let s = parts[0] || 0
-        let m = parts[1] || 0
-        let h = parts[2] || 0
-
-        // Calculate total ms
-        let ms = (h * 3600 + m * 60 + s) * 1000 + cs * 10
-
-        // Offset logic
-        // If >= 1 hour (start offset), assume absolute. Subtract offset.
-        // If < 1 hour, assume relative (offset from start of show).
-        const offset = 3600000
-        if (ms >= offset) {
-            return ms - offset
-        }
-        return ms
-    }
+    // SCROLL
 
     function handleScroll() {
         if (rulerContainer) rulerContainer.scrollLeft = trackWrapper.scrollLeft
@@ -842,18 +515,13 @@
             scrollLeft = trackWrapper.scrollLeft
             return
         }
-        // User scrolled
-        if (isPlaying) {
-            autoFollow = false
-        }
+
+        // user scrolled
+        if (isPlaying) autoFollow = false
         scrollLeft = trackWrapper.scrollLeft
     }
 
-    let offsetHeight = 0
-    $: localTimelineActive.set(offsetHeight > 0)
     function keydown(e) {
-        if (!$localTimelineActive) return
-
         const target = e.target as HTMLElement
         if (["INPUT", "TEXTAREA"].includes(target.tagName) || target.isContentEditable) return
 
@@ -871,42 +539,38 @@
         if (e.key !== " " || e.repeat) return
 
         e.preventDefault()
-        if (isPlaying) pause()
-        else play()
+        if (isPlaying) player.pause()
+        else player.play()
     }
 
     $: if ($activeTriggerFunction === "delete_selected_nodes") deleteSelectedNodes()
     function deleteSelectedNodes() {
-        if (!selectedActionIds.length) return
+        if (isClosed || !selectedActionIds.length) return
 
-        actions = actions.filter((a) => !selectedActionIds.includes(a.id))
-        actionsChanged = true
+        timeline.deleteActions(selectedActionIds)
         selectedActionIds = []
-        setTimeout(() => (actions = actions)) // update properly when deleting from context menu
     }
 
-    // Show timeline
+    // show timeline recording
     let isRecording = false
     $: if ($activeShow) isRecording = ShowTimeline.isRecordingActive()
-    function toggle() {
+    function toggleRecording() {
         isRecording = ShowTimeline.toggleRecording((sequence) => {
             const time = Number(currentTime.toFixed(2))
             // skip if already exists at this time (within 100ms)
             if (actions.find((a) => a.type === sequence.type && Math.abs(time - a.time) < 100 && JSON.stringify(a.data) === JSON.stringify(sequence.data))) return
             // WIP skip if previous action is the same as current (only "slide")
 
-            actions.push({
+            timeline.addAction({
                 id: uid(6),
                 time,
                 type: sequence.type,
                 data: sequence.data,
                 name: sequence.name
             })
-            actionsChanged = true
-            actions = actions
 
             // start if changed when paused
-            if (!isPlaying) play()
+            if (!isPlaying) player.play()
         })
     }
 
@@ -924,134 +588,185 @@
             }
         }
     }
+
+    $: if (isClosed !== undefined) resetView()
 </script>
 
 <svelte:window on:keydown={keydown} />
 
-<div class="timeline" bind:offsetHeight>
-    <div class="timeline-grid">
-        <!-- Top Left Corner -->
-        <div class="corner" style="width: {usedHeaderWidth}px; border-bottom: 1px solid rgba(255,255,255,0.1); border-right: 1px solid rgba(255,255,255,0.1);">
-            <input class="time-display" value={timeString} on:change={handleTimeChange} on:keydown={handleTimeKeydown} />
-        </div>
+<div class="timeline">
+    {#if isClosed}
+        <div class="closed">
+            <MaterialButton style="min-width: 40px;padding: 10px;" title={isPlaying ? "media.pause" : "media.play"} on:click={() => (isPlaying ? player.pause() : player.play())}>
+                <Icon id={isPlaying ? "pause" : "play"} white={!isPlaying} />
+            </MaterialButton>
 
-        <!-- Ruler (Sticky Top) -->
-        <div class="ruler-container" bind:this={rulerContainer} on:mousedown={startRulerScrub} on:wheel={(e) => handleWheel(e, true)}>
-            <div class="ruler" style="width: {(duration / 1000) * zoomLevel}px">
-                {#each Array(visibleTickCount) as _, i}
-                    {@const tickIndex = i + visibleTicksStartIndex}
-                    {@const pos = tickIndex * tickInterval * zoomLevel}
-                    <div class="tick" style="left: {pos}px">
-                        <span class="tick-label">{formatTime(tickIndex * tickInterval * 1000)}</span>
+            <MaterialButton style="min-width: 40px;padding: 10px;" disabled={currentTime === 0} title="media.stop" on:click={() => player.stop()}>
+                <Icon id="stop" white={!isPlaying} />
+            </MaterialButton>
+
+            <div class="time-display" style="display: flex;align-items: center;width: auto;">{timeString}</div>
+
+            <div class="timeline-track-wrapper" bind:this={trackWrapper} on:mousedown={startRulerScrub} bind:clientWidth={containerWidth} on:scroll={handleScroll} on:wheel={handleWheel}>
+                <!-- svelte-ignore a11y-click-events-have-key-events -->
+                <div class="timeline-track" style="width: {(duration / 1000) * zoomLevel}px;">
+                    <!-- Actions -->
+                    {#each actions as action (action.id)}
+                        {#if action.duration}
+                            <div class="action-clip context #timeline_node" class:selected={selectedActionIds.includes(action.id)} style="left: {(action.time / 1000) * zoomLevel}px; width: {action.duration * zoomLevel}px; top: 50%;transform: translateY(-50%);height: 100%;opacity: 0.3;" data-title={action.name}>
+                                <div class="action-clip-content">
+                                    <div class="clip-label">{action.name}</div>
+                                </div>
+                            </div>
+                        {:else}
+                            <div class="action-marker {action.type} context #timeline_node" class:selected={selectedActionIds.includes(action.id)} style="left: {(action.time / 1000) * zoomLevel}px; top: 50%;transform: translate(-50%, -50%);" data-title={translateText(action.name)}>
+                                <div class="action-head">
+                                    {#if action.type === "action"}
+                                        <Icon id={action.data.triggers?.length === 1 ? actionData[action.data.triggers[0]]?.icon : "actions"} size={0.9} white />
+                                    {:else if typeof action.data?.index === "number"}
+                                        {action.data.index + 1}
+                                    {/if}
+                                </div>
+                            </div>
+                        {/if}
+                    {/each}
+
+                    <!-- Playhead (Line Only) -->
+                    <div class="playhead" style="left: {(currentTime / 1000) * zoomLevel}px;">
+                        <div class="playhead-line"></div>
                     </div>
-
-                    <!-- Subticks -->
-                    {#if tickIndex < totalTickCount}
-                        {#each Array(10) as _, j}
-                            <div class="tick minor" style="left: {pos + j * (tickInterval / 10) * zoomLevel}px;height: {j === 0 ? '20px' : j === 5 ? '10px' : '8px'}"></div>
-                        {/each}
-                    {/if}
-                {/each}
-
-                <!-- Playhead Knob -->
-                <div class="playhead-knob" style="left: {(currentTime / 1000) * zoomLevel}px;"></div>
+                </div>
             </div>
-        </div>
 
-        <!-- Track Headers (Sticky Left) -->
-        <div class="headers-container" bind:this={headersContainer} style="width: {usedHeaderWidth}px; min-width: {usedHeaderWidth}px;">
-            <div class="track-headers" style="height: {totalTrackHeight}px;">
-                {#each Array(maxTrackIndex) as _, i}
-                    {@const track = getTrackData(i, actions)}
-                    <div class="track-header" style="top: {BAR_TOP + i * (BAR_HEIGHT + BAR_GAP)}px;width: 100%;{track.hasData ? '' : 'opacity: 0.3;'}">
-                        <Icon id={track.icon} white />
-                        <span class="track-name">{translateText(track.name)}</span>
-                    </div>
-                {/each}
+            <MaterialButton style="min-width: 40px;padding: 10px;" title="main.open" on:click={() => resized.update((a) => ({ ...a, timeline: DEFAULT_WIDTH }))}>
+                <Icon id="up" white />
+            </MaterialButton>
+        </div>
+    {:else}
+        <div class="timeline-grid">
+            <!-- Top Left Corner -->
+            <div class="corner" style="width: {usedHeaderWidth}px; border-bottom: 1px solid rgba(255,255,255,0.1); border-right: 1px solid rgba(255,255,255,0.1);">
+                <input class="time-display" value={timeString} on:change={handleTimeChange} on:keydown={handleTimeKeydown} />
             </div>
-        </div>
 
-        <!-- Main Content (Scroll Master) -->
-        <div class="timeline-track-wrapper" bind:this={trackWrapper} bind:clientWidth={containerWidth} on:scroll={handleScroll} on:wheel={handleWheel} on:dragover={handleDragOver} on:drop={handleDrop}>
-            <!-- svelte-ignore a11y-click-events-have-key-events -->
-            <div class="timeline-track" style="width: {(duration / 1000) * zoomLevel}px; height: {totalTrackHeight}px;" on:mousedown={startContentInteraction}>
-                <!-- Grid Lines -->
-                <div class="grid">
+            <!-- Ruler (Sticky Top) -->
+            <div class="ruler-container" bind:this={rulerContainer} on:mousedown={startRulerScrub} on:wheel={(e) => handleWheel(e, true)}>
+                <div class="ruler" style="width: {(duration / 1000) * zoomLevel}px">
                     {#each Array(visibleTickCount) as _, i}
                         {@const tickIndex = i + visibleTicksStartIndex}
                         {@const pos = tickIndex * tickInterval * zoomLevel}
-                        <div class="grid-line" style="left: {pos}px"></div>
+                        <div class="tick" style="left: {pos}px">
+                            <span class="tick-label">{formatTime(tickIndex * tickInterval * 1000)}</span>
+                        </div>
+
                         <!-- Subticks -->
                         {#if tickIndex < totalTickCount}
                             {#each Array(10) as _, j}
-                                <div class="grid-line minor" style="left: {pos + j * (tickInterval / 10) * zoomLevel}px;"></div>
+                                <div class="tick minor" style="left: {pos + j * (tickInterval / 10) * zoomLevel}px;height: {j === 0 ? '20px' : j === 5 ? '10px' : '8px'}"></div>
                             {/each}
                         {/if}
                     {/each}
+
+                    <!-- Playhead Knob -->
+                    <div class="playhead-knob" style="left: {(currentTime / 1000) * zoomLevel}px;"></div>
                 </div>
+            </div>
 
-                <!-- Actions -->
-                {#each actions as action (action.id)}
-                    {@const baseY = getActionBaseY(action)}
-                    {#if action.duration}
-                        <div class="action-clip context #timeline_node" class:selected={selectedActionIds.includes(action.id)} style="left: {(action.time / 1000) * zoomLevel}px; width: {action.duration * zoomLevel}px; top: {baseY}px;height: {BAR_HEIGHT + 4}px;" data-title="{formatTime(action.time)}-{formatTime(action.duration * 1000)}: {action.name}" on:mousedown|stopPropagation={(e) => startActionDrag(e, action.id)}>
-                            <div class="action-clip-content">
-                                {#if action.type === "audio"}
-                                    <div class="waveform-container" use:useWaveform={action.data.path || ""}></div>
-                                {/if}
-                                <div class="clip-label">{action.name}</div>
-                            </div>
+            <!-- Track Headers (Sticky Left) -->
+            <div class="headers-container" bind:this={headersContainer} style="width: {usedHeaderWidth}px; min-width: {usedHeaderWidth}px;">
+                <div class="track-headers" style="height: {totalTrackHeight}px;">
+                    {#each Array(maxTrackIndex) as _, i}
+                        {@const track = getTrackData(i, actions)}
+                        <div class="track-header" style="top: {TIMELINE_SECTION_TOP + i * (TIMELINE_SECTION_HEIGHT + TIMELINE_SECTION_GAP)}px;width: 100%;{track.hasData ? '' : 'opacity: 0.3;'}">
+                            <Icon id={track.icon} white />
+                            <span class="track-name">{translateText(track.name)}</span>
                         </div>
-                    {:else}
-                        <div class="action-marker {action.type} context #timeline_node" class:selected={selectedActionIds.includes(action.id)} style="left: {(action.time / 1000) * zoomLevel}px; top: {baseY + 10}px;" data-title="{formatTime(action.time)}: {action.name}" on:mousedown|stopPropagation={(e) => startActionDrag(e, action.id)}>
-                            <div class="action-head">
-                                {#if action.type === "action"}
-                                    <Icon id={action.data.triggers?.length === 1 ? actionData[action.data.triggers[0]]?.icon : "actions"} size={0.9} white />
-                                {:else if typeof action.data?.index === "number"}
-                                    {action.data.index + 1}
-                                {/if}
+                    {/each}
+                </div>
+            </div>
+
+            <!-- Main Content (Scroll Master) -->
+            <div class="timeline-track-wrapper" bind:this={trackWrapper} bind:clientWidth={containerWidth} on:scroll={handleScroll} on:wheel={handleWheel} on:dragover={handleDragOver} on:drop={handleDrop}>
+                <!-- svelte-ignore a11y-click-events-have-key-events -->
+                <div class="timeline-track" style="width: {(duration / 1000) * zoomLevel}px; height: {totalTrackHeight}px;" on:mousedown={startContentInteraction}>
+                    <!-- Grid Lines -->
+                    <div class="grid">
+                        {#each Array(visibleTickCount) as _, i}
+                            {@const tickIndex = i + visibleTicksStartIndex}
+                            {@const pos = tickIndex * tickInterval * zoomLevel}
+                            <div class="grid-line" style="left: {pos}px"></div>
+                            <!-- Subticks -->
+                            {#if tickIndex < totalTickCount}
+                                {#each Array(10) as _, j}
+                                    <div class="grid-line minor" style="left: {pos + j * (tickInterval / 10) * zoomLevel}px;"></div>
+                                {/each}
+                            {/if}
+                        {/each}
+                    </div>
+
+                    <!-- Actions -->
+                    {#each actions as action (action.id)}
+                        {@const baseY = getActionBaseY(action)}
+                        {#if action.duration}
+                            <div class="action-clip context #timeline_node" class:selected={selectedActionIds.includes(action.id)} style="left: {(action.time / 1000) * zoomLevel}px; width: {action.duration * zoomLevel}px; top: {baseY}px;height: {TIMELINE_SECTION_HEIGHT + 4}px;" data-title="{formatTime(action.time)}-{formatTime(action.duration * 1000)}: {action.name}" on:mousedown|stopPropagation={(e) => startActionDrag(e, action.id)}>
+                                <div class="action-clip-content">
+                                    {#if action.type === "audio"}
+                                        <div class="waveform-container" use:useWaveform={action.data.path || ""}></div>
+                                    {/if}
+                                    <div class="clip-label">{action.name}</div>
+                                </div>
                             </div>
-                            <div class="action-label">{translateText(action.name)}</div>
-                        </div>
+                        {:else}
+                            <div class="action-marker {action.type} context #timeline_node" class:selected={selectedActionIds.includes(action.id)} style="left: {(action.time / 1000) * zoomLevel}px; top: {baseY + 10}px;" data-title="{formatTime(action.time)}: {action.name}" on:mousedown|stopPropagation={(e) => startActionDrag(e, action.id)}>
+                                <div class="action-head">
+                                    {#if action.type === "action"}
+                                        <Icon id={action.data.triggers?.length === 1 ? actionData[action.data.triggers[0]]?.icon : "actions"} size={0.9} white />
+                                    {:else if typeof action.data?.index === "number"}
+                                        {action.data.index + 1}
+                                    {/if}
+                                </div>
+                                <div class="action-label">{translateText(action.name)}</div>
+                            </div>
+                        {/if}
+                    {/each}
+
+                    <!-- Selection Box -->
+                    {#if selectionRect}
+                        <div class="selection-box" style="left: {selectionRect.x}px; top: {selectionRect.y}px; width: {selectionRect.w}px; height: {selectionRect.h}px;" out:fade={{ duration: 80 }}></div>
                     {/if}
-                {/each}
 
-                <!-- Selection Box -->
-                {#if selectionRect}
-                    <div class="selection-box" style="left: {selectionRect.x}px; top: {selectionRect.y}px; width: {selectionRect.w}px; height: {selectionRect.h}px;" out:fade={{ duration: 80 }}></div>
-                {/if}
-
-                <!-- Playhead (Line Only) -->
-                <div class="playhead" style="left: {(currentTime / 1000) * zoomLevel}px;">
-                    <div class="playhead-line"></div>
+                    <!-- Playhead (Line Only) -->
+                    <div class="playhead" style="left: {(currentTime / 1000) * zoomLevel}px;">
+                        <div class="playhead-line"></div>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <FloatingInputs side="left" style="margin-bottom: 8px;margin-left: 120px;">
-        <MaterialButton title={isPlaying ? "media.pause" : "media.play"} on:click={() => (isPlaying ? pause() : play())}>
-            <Icon size={1.3} id={isPlaying ? "pause" : "play"} white={!isPlaying} />
-        </MaterialButton>
+        <FloatingInputs side="left" style="margin-bottom: 8px;margin-left: 120px;">
+            <MaterialButton title={isPlaying ? "media.pause" : "media.play"} on:click={() => (isPlaying ? player.pause() : player.play())}>
+                <Icon size={1.3} id={isPlaying ? "pause" : "play"} white={!isPlaying} />
+            </MaterialButton>
 
-        <MaterialButton disabled={currentTime === 0} title="media.stop" on:click={stop}>
-            <Icon size={1.3} id="stop" white={!isPlaying} />
-        </MaterialButton>
+            <MaterialButton disabled={currentTime === 0} title="media.stop" on:click={() => player.stop()}>
+                <Icon size={1.3} id="stop" white={!isPlaying} />
+            </MaterialButton>
 
-        <MaterialButton disabled={isPlaying && !isRecording} title="actions.{isRecording ? 'stop_recording' : 'start_recording'}" on:click={toggle} red={isRecording}>
-            <Icon size={1.3} id="record" white />
-        </MaterialButton>
+            <MaterialButton disabled={isPlaying && !isRecording} title="actions.{isRecording ? 'stop_recording' : 'start_recording'}" on:click={toggleRecording} red={isRecording}>
+                <Icon size={1.3} id="record" white />
+            </MaterialButton>
 
-        <div class="divider" />
+            <div class="divider" />
 
-        <MaterialButton icon="focus" title="actions.resetZoom" on:click={resetView} />
-    </FloatingInputs>
+            <MaterialButton icon="focus" title="actions.resetZoom" on:click={resetView} />
+        </FloatingInputs>
 
-    <!-- <FloatingInputs style="margin-bottom: 8px;">
+        <!-- <FloatingInputs style="margin-bottom: 8px;">
         <MaterialButton title="edit.options" on:click={() => (optionsVisible = !optionsVisible)}>
             <Icon id="options" white={!optionsVisible} />
         </MaterialButton>
     </FloatingInputs> -->
+    {/if}
 </div>
 
 <style>
@@ -1144,14 +859,10 @@
     }
 
     .ruler {
-        position: absolute; /* Changed from sticky */
+        position: absolute;
         top: 0;
         height: 30px;
-        /* pointer-events: none; */ /* Now interactive */
-        /* z-index: 100; */
     }
-
-    /* .ruler::after { ... } */ /* Removed shadow or keep if desired */
 
     .tick {
         position: absolute;
@@ -1260,6 +971,7 @@
         align-items: center;
         justify-content: center;
 
+        /* cursor: e-resize; */
         font-size: 0.7em;
         font-weight: bold;
     }
@@ -1278,7 +990,8 @@
         box-shadow: 0 0 4px rgb(0 0 0 / 0.4);
 
         z-index: 4;
-        cursor: move;
+        /* cursor: move; */
+        /* cursor: e-resize; */
         overflow: hidden;
         box-sizing: border-box;
     }
@@ -1322,13 +1035,6 @@
         background-color: var(--secondary-text);
     }
 
-    .clip-delete {
-        opacity: 0;
-        transition: opacity 0.2s;
-        margin: 0;
-        padding: 0 5px;
-    }
-
     .action-clip.selected {
         border: 2px solid var(--text);
     }
@@ -1354,29 +1060,25 @@
         white-space: nowrap;
     }
 
-    .delete-btn {
-        margin-top: 2px;
-        background: none;
-        border: none;
-        color: #ff5555;
-        font-weight: bold;
-        cursor: pointer;
-        font-size: 1.2em;
-        line-height: 1;
+    /* CLOSED */
+
+    .closed {
+        display: flex;
     }
 
-    .zoom-controls {
-        display: flex;
-        align-items: center;
-        gap: 5px;
-        margin-left: auto;
+    .closed .timeline-track-wrapper {
+        overflow: hidden;
+        background-color: var(--primary-darkest);
+    }
+    .closed .timeline-track {
+        min-height: 0;
+        height: 100%;
     }
 
-    .duration-controls {
-        display: flex;
+    .closed .action-clip {
+        cursor: default;
+    }
+    .closed .action-clip-content {
         align-items: center;
-        gap: 5px;
-        margin-left: 10px;
-        font-size: 0.8em;
     }
 </style>

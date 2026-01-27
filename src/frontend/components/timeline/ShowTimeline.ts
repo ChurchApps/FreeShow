@@ -1,8 +1,7 @@
 import { get, type Unsubscriber } from "svelte/store"
-import type { LayoutRef, TimelineAction } from "../../../types/Show"
+import type { LayoutRef } from "../../../types/Show"
 import { activeShow, outputs, showsCache, timelineRecordingAction } from "../../stores"
 import { actionData } from "../actions/actionData"
-import { runAction } from "../actions/actions"
 import { getFirstActiveOutput, setOutput } from "../helpers/output"
 import { getLayoutRef } from "../helpers/show"
 import { updateOut } from "../helpers/showActions"
@@ -125,31 +124,24 @@ export class ShowTimeline {
         }
     }
 
-    static playAction(action: TimelineAction) {
-        if (action.type === "slide") {
-            const ref = action.data
-            const layoutRef = getLayoutRef()
+    static playSlide(ref: { id?: string; index?: number }) {
+        const layoutRef = getLayoutRef()
 
-            // check that slide exists
-            let slide: LayoutRef | undefined = layoutRef[ref.index || 0]
-            if (!slide?.id || slide.id !== ref.id) slide = layoutRef.find((a) => a.id === ref.id)
-            if (!slide) return
+        // check that slide exists
+        let slide: LayoutRef | undefined = layoutRef[ref.index || 0]
+        if (!slide?.id || slide.id !== ref.id) slide = layoutRef.find((a) => a.id === ref.id)
+        if (!slide) return
 
-            const index = slide.layoutIndex
+        const index = slide.layoutIndex
 
-            // WIP improve this
-            const showId = get(activeShow)?.id || "" // WIP should be playable independent of svelte component and the active ref
-            const layoutId = _show().get("settings.activeLayout")
-            const outSlide = getFirstActiveOutput()?.out?.slide
-            if (outSlide?.id !== showId || outSlide?.layout !== layoutId || outSlide?.index !== index) {
-                updateOut("active", index, layoutRef)
-                // WIP check that slide is the correct ID ??
-                setOutput("slide", { id: showId, layout: layoutId, index, line: 0 })
-            }
-        } else if (action.type === "action") {
-            runAction({ id: action.id, ...action.data })
-        } else {
-            console.log("Action:", action)
+        // WIP improve this
+        const showId = get(activeShow)?.id || "" // WIP should be playable independent of svelte component and the active ref
+        const layoutId = _show().get("settings.activeLayout")
+        const outSlide = getFirstActiveOutput()?.out?.slide
+        if (outSlide?.id !== showId || outSlide?.layout !== layoutId || outSlide?.index !== index) {
+            updateOut("active", index, layoutRef)
+            // WIP check that slide is the correct ID ??
+            setOutput("slide", { id: showId, layout: layoutId, index, line: 0 })
         }
     }
 }
