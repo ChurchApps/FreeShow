@@ -32,6 +32,10 @@ export class ShowTimeline {
         }
     }
 
+    static isRecording() {
+        return ShowTimeline.recordingActive
+    }
+
     static startRecording(callback?: (s: TimelineActionPass) => void) {
         const currentShow = get(activeShow)
         if (!currentShow) return
@@ -70,7 +74,6 @@ export class ShowTimeline {
 
         ShowTimeline.clearOutputListener()
 
-        const layoutRef = getLayoutRef()
         let previousRef = ""
         ShowTimeline.outputListenerUnsubscribe = outputs.subscribe((a) => {
             let outSlide = a[firstOutputId]?.out?.slide
@@ -78,6 +81,7 @@ export class ShowTimeline {
 
             // if (!currentSequence.length) newToast("toast.recording_started")
 
+            const layoutRef = _show(outSlide.id).layouts([outSlide.layout]).ref()[0] || []
             let layoutSlide = layoutRef[outSlide.index]
             if (!layoutSlide) return
 

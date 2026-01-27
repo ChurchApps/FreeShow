@@ -842,16 +842,6 @@
     "timeline": {
         "toggle_timeline": "Toggle timeline"
     },
-    "recording": {
-        "remove": "Remove recording",
-        "tip": "Record and replay the timings of slides. Sync with an audio track on the first slide.",
-        "layout_changed": "Layout has changed since last recording!",
-        "audio_synced": "Synced with audio!",
-        "start": "Start slide recording",
-        "action_play": "Play slide recording",
-        "use_duration": "Use duration time",
-        "use_duration_tip": "Use duration time instead of timestamp time"
-    },
     "animate": {
         "change": "Change",
         "set": "Set",

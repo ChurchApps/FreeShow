@@ -43,12 +43,16 @@
 
     let actions: TimelineAction[] = []
 
-    const player = new TimelinePlayback()
+    const player = new TimelinePlayback(type)
 
     const timeline = new TimelineActions(type, (a) => {
         actions = a
         player.setActions(a)
         tabIds = getTimelineSections(sections, a)
+    })
+    timeline.onUpdate(() => {
+        currentTime = 0
+        resetView()
     })
     onDestroy(() => {
         player.stop()
@@ -604,6 +608,12 @@
             <MaterialButton style="min-width: 40px;padding: 10px;" disabled={currentTime === 0} title="media.stop" on:click={() => player.stop()}>
                 <Icon id="stop" white={!isPlaying} />
             </MaterialButton>
+
+            {#if !actions.length || isRecording}
+                <MaterialButton style="min-width: 40px;padding: 10px;" title="actions.{isRecording ? 'stop_recording' : 'start_recording'}" on:click={toggleRecording} red={isRecording}>
+                    <Icon id="record" white />
+                </MaterialButton>
+            {/if}
 
             <div class="time-display" style="display: flex;align-items: center;width: auto;">{timeString}</div>
 

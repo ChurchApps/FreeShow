@@ -1,20 +1,17 @@
 <script lang="ts">
     import type { TabsObj } from "../../../types/Tabs"
     import { activeShow, labelsDisabled, showsCache } from "../../stores"
-    import { translateText } from "../../utils/language"
     import { _show } from "../helpers/shows"
     import Tabs from "../main/Tabs.svelte"
     import Media from "./tools/Media.svelte"
     import Metadata from "./tools/Metadata.svelte"
     import Notes from "./tools/Notes.svelte"
-    import Recording from "./tools/Recording.svelte"
     import SlideGroups from "./tools/SlideGroups.svelte"
 
     const tabs: TabsObj = {
         groups: { name: "tools.groups", icon: "groups" },
         media: { name: "tools.media", icon: "media", remove: true },
         metadata: { name: "tools.metadata", icon: "info", overflow: true },
-        recording: { name: "example.recording", icon: "record", overflow: true, tooltip: translateText("recording.tip") },
         notes: { name: "tools.notes", icon: "notes", overflow: true }
     }
     let active: string = Object.keys(tabs)[0]
@@ -94,10 +91,6 @@
                 <div class="content">
                     <Metadata />
                 </div>
-            {:else if active === "recording"}
-                {#key showId}
-                    <Recording showId={showId || ""} />
-                {/key}
             {:else if active === "notes"}
                 <div class="content" style="background-color: var(--primary-darker);">
                     <Notes on:edit={edit} value={note} />

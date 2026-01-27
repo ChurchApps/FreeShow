@@ -53,6 +53,12 @@ export class TimelineActions {
         }
 
         this.loadActions()
+        this.onUpdateCallbacks.forEach((cb) => cb())
+    }
+
+    onUpdateCallbacks: (() => void)[] = []
+    onUpdate(callback: () => void) {
+        this.onUpdateCallbacks.push(callback)
     }
 
     close() {

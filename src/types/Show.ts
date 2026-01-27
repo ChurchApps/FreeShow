@@ -282,7 +282,7 @@ export interface Layout {
     name: string
     notes: string
     timeline?: Timeline
-    recording?: Recording[]
+    recording?: Recording[] // deprecated
     slides: SlideData[]
 }
 
@@ -307,10 +307,9 @@ export interface TimelineAction {
     }
 }
 
+// deprecated
 export interface Recording {
     id: string
-    // name: string
-    // useDurationTime?: boolean // moved to global settings
     layoutAtRecording: string // store layout ids to detect changes
     sequence: {
         time: number
