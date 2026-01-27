@@ -44,9 +44,8 @@
     let current: any = {}
     let show = false
 
-    // Track items that are unchanged between slides and have no transition (to avoid redraw flicker)
-    let persistentItems: Item[] = []
-    let persistentItemIndexes: number[] = []
+    // Track which items should skip transition (unchanged content, no real transition)
+    let itemsShouldSkipTransition: boolean[] = []
 
     // Check if a transition is "meaningful" (not none and duration > 0)
     function hasRealTransition(itemTransition: Transition | undefined, globalTrans: Transition | undefined): boolean {
@@ -156,9 +155,7 @@
         if (!currentSlideItems?.length) {
             scheduleAutoSizePrecompute([])
             currentItems = []
-            // Clear persistent items when no slide content
-            persistentItems = []
-            persistentItemIndexes = []
+            itemsShouldSkipTransition = []
             current = {
                 outSlide: clone(outSlide),
                 slideData: clone(slideData),
@@ -188,49 +185,30 @@
         let currentTransitionDuration = transitionEnabled ? (itemTransitionDuration ?? currentTransition?.duration ?? 0) : 0
         let waitToShow = currentTransitionDuration * 0.5
 
-        // Identify items that are unchanged and have no real transition (to skip redraw)
-        const newPersistentIndexes: number[] = []
-        const newPersistentItems: Item[] = []
-        const transitioningItems: Item[] = []
-        const transitioningIndexes: number[] = []
-
         // First, check if ANY item on the slide has a real transition
-        // If so, all items should animate together (no persistent items)
+        // If so, all items should animate together
         const slideHasAnyTransition = currentSlide.items.some((item: Item) => {
             const itemTrans = item.actions?.transition
             return hasRealTransition(itemTrans, currentTransition)
         })
 
-        currentSlide.items.forEach((newItem: Item, newIndex: number) => {
-            // Find matching old item by index (position-based matching for slides)
+        // Determine which items can skip transition (unchanged content, no transition, and no other items transitioning)
+        const newItemsShouldSkipTransition: boolean[] = currentSlide.items.map((newItem: Item, newIndex: number) => {
             const oldItem = currentItems[newIndex]
-
-            // Item is persistent only if:
+            // Item can skip transition only if:
             // 1. Content is unchanged AND
             // 2. No real transition on this item AND
             // 3. No other item on the slide has a transition (so whole slide animates together)
-            if (itemsAreEqual(oldItem, newItem) && !slideHasAnyTransition) {
-                newPersistentIndexes.push(newIndex)
-                newPersistentItems.push(clone(newItem))
-            } else {
-                // Item needs to be re-rendered (changed, has transition, or another item has transition)
-                transitioningIndexes.push(newIndex)
-                transitioningItems.push(clone(newItem))
-            }
+            return itemsAreEqual(oldItem, newItem) && !slideHasAnyTransition
         })
-
-        // Update persistent items (these won't flash)
-        persistentItemIndexes = newPersistentIndexes
-        persistentItems = newPersistentItems
 
         // between
         if (currentItems.length && currentSlide.items.length) transitioningBetween = true
 
         if (timeout) clearTimeout(timeout)
 
-        // If all items are persistent (unchanged), skip the show/hide cycle entirely
-        if (transitioningItems.length === 0 && persistentItems.length > 0) {
-            // Just update the context without triggering transitions
+        // If all items can skip transition (unchanged), just update context without triggering show/hide cycle
+        if (newItemsShouldSkipTransition.every(skip => skip)) {
             current = {
                 outSlide: clone(outSlide),
                 slideData: clone(slideData),
@@ -238,8 +216,8 @@
                 lines: clone(lines),
                 currentStyle: clone(currentStyle)
             }
-            // Keep currentItems in sync but don't toggle show
             currentItems = clone(currentSlide.items || [])
+            itemsShouldSkipTransition = newItemsShouldSkipTransition
             transitioningBetween = false
             return
         }
@@ -250,9 +228,8 @@
 
             // wait for previous items to start fading out (svelte will keep them until the transition is done!)
             timeout = setTimeout(() => {
-                // Only include items that need transitioning in currentItems
-                // Persistent items are rendered separately
                 currentItems = clone(currentSlide.items || [])
+                itemsShouldSkipTransition = newItemsShouldSkipTransition
                 current = {
                     outSlide: clone(outSlide),
                     slideData: clone(slideData),
@@ -275,64 +252,69 @@
     }
 </script>
 
-<!-- Persistent items: unchanged content with no transition, rendered outside {#key} to avoid flicker -->
-{#each persistentItems as item, idx}
-    {@const index = persistentItemIndexes[idx]}
-    {#if shouldItemBeShown(item, currentItems, showItemRef, updater) && (!item.clickReveal || current.outSlide?.itemClickReveal)}
-        <Textbox
-            backdropFilter={current.slideData?.["backdrop-filter"] || ""}
-            disableListTransition={mirror}
-            chords={item.chords?.enabled}
-            animationStyle={animationData.style || {}}
-            {item}
-            transition={null}
-            {ratio}
-            {outputId}
-            ref={{ showId: current.outSlide?.id, slideId: current.currentSlide?.id, id: current.currentSlide?.id || "", layoutId: current.outSlide?.layout }}
-            linesStart={current.lines?.[currentLineId || ""]?.[item.lineReveal ? "linesStart" : "start"]}
-            linesEnd={current.lines?.[currentLineId || ""]?.[item.lineReveal ? "linesEnd" : "end"]}
-            clickRevealed={!!current.lines?.[currentLineId || ""]?.clickRevealed}
-            outputStyle={current.currentStyle}
-            {mirror}
-            {preview}
-            slideIndex={current.outSlide?.index}
-            {styleIdOverride}
-            autoSizeKey={createAutoSizeKey(item, index)}
-        />
+
+<!-- Render all items maintaining their original z-order -->
+<!-- Items that don't need transitions are rendered outside {#key} to avoid flicker, but with explicit z-index to maintain layering -->
+{#each currentItems as item, index}
+    {#if itemsShouldSkipTransition[index] && shouldItemBeShown(item, currentItems, showItemRef, updater) && (!item.clickReveal || current.outSlide?.itemClickReveal)}
+        <!-- Item unchanged: render directly without {#key} to avoid flicker, with z-index to preserve order -->
+        <div style="position: relative; z-index: {index};">
+            <Textbox
+                backdropFilter={current.slideData?.["backdrop-filter"] || ""}
+                disableListTransition={mirror}
+                chords={item.chords?.enabled}
+                animationStyle={animationData.style || {}}
+                {item}
+                transition={null}
+                {ratio}
+                {outputId}
+                ref={{ showId: current.outSlide?.id, slideId: current.currentSlide?.id, id: current.currentSlide?.id || "", layoutId: current.outSlide?.layout }}
+                linesStart={current.lines?.[currentLineId || ""]?.[item.lineReveal ? "linesStart" : "start"]}
+                linesEnd={current.lines?.[currentLineId || ""]?.[item.lineReveal ? "linesEnd" : "end"]}
+                clickRevealed={!!current.lines?.[currentLineId || ""]?.clickRevealed}
+                outputStyle={current.currentStyle}
+                {mirror}
+                {preview}
+                slideIndex={current.outSlide?.index}
+                {styleIdOverride}
+                autoSizeKey={createAutoSizeKey(item, index)}
+            />
+        </div>
     {/if}
 {/each}
 
-<!-- Transitioning items: changed content or items with transitions, rendered inside {#key} for proper animation -->
+<!-- Transitioning items: rendered inside {#key} for proper animation, with z-index to preserve order -->
 {#key show}
     {#each currentItems as item, index}
-        {#if show && !persistentItemIndexes.includes(index) && shouldItemBeShown(item, currentItems, showItemRef, updater) && (!item.clickReveal || current.outSlide?.itemClickReveal)}
-            <SlideItemTransition {preview} {transitionEnabled} {transitioningBetween} globalTransition={transition} currentSlide={current.currentSlide} {item} outSlide={current.outSlide} lines={current.lines} currentStyle={current.currentStyle} let:customSlide let:customItem let:customLines let:customOut let:transition>
-                <!-- filter={current.slideData?.filterEnabled?.includes("foreground") ? current.slideData?.filter : ""} -->
-                <!-- backdropFilter={current.slideData?.filterEnabled?.includes("foreground") ? current.slideData?.["backdrop-filter"] : ""} -->
-                <Textbox
-                    backdropFilter={current.slideData?.["backdrop-filter"] || ""}
-                    disableListTransition={mirror}
-                    chords={customItem.chords?.enabled}
-                    animationStyle={animationData.style || {}}
-                    item={customItem}
-                    {transition}
-                    {ratio}
-                    {outputId}
-                    ref={{ showId: customOut?.id, slideId: customSlide?.id, id: customSlide?.id || "", layoutId: customOut?.layout }}
-                    linesStart={customLines?.[currentLineId || ""]?.[item.lineReveal ? "linesStart" : "start"]}
-                    linesEnd={customLines?.[currentLineId || ""]?.[item.lineReveal ? "linesEnd" : "end"]}
-                    clickRevealed={!!customLines?.[currentLineId || ""]?.clickRevealed}
-                    outputStyle={current.currentStyle}
-                    {mirror}
-                    {preview}
-                    slideIndex={customOut?.index}
-                    {styleIdOverride}
-                    autoSizeKey={createAutoSizeKey(item, index)}
-                />
-            </SlideItemTransition>
+        {#if show && !itemsShouldSkipTransition[index] && shouldItemBeShown(item, currentItems, showItemRef, updater) && (!item.clickReveal || current.outSlide?.itemClickReveal)}
+            <div style="position: relative; z-index: {index};">
+                <SlideItemTransition {preview} {transitionEnabled} {transitioningBetween} globalTransition={transition} currentSlide={current.currentSlide} {item} outSlide={current.outSlide} lines={current.lines} currentStyle={current.currentStyle} let:customSlide let:customItem let:customLines let:customOut let:transition>
+                    <Textbox
+                        backdropFilter={current.slideData?.["backdrop-filter"] || ""}
+                        disableListTransition={mirror}
+                        chords={customItem.chords?.enabled}
+                        animationStyle={animationData.style || {}}
+                        item={customItem}
+                        {transition}
+                        {ratio}
+                        {outputId}
+                        ref={{ showId: customOut?.id, slideId: customSlide?.id, id: customSlide?.id || "", layoutId: customOut?.layout }}
+                        linesStart={customLines?.[currentLineId || ""]?.[item.lineReveal ? "linesStart" : "start"]}
+                        linesEnd={customLines?.[currentLineId || ""]?.[item.lineReveal ? "linesEnd" : "end"]}
+                        clickRevealed={!!customLines?.[currentLineId || ""]?.clickRevealed}
+                        outputStyle={current.currentStyle}
+                        {mirror}
+                        {preview}
+                        slideIndex={customOut?.index}
+                        {styleIdOverride}
+                        autoSizeKey={createAutoSizeKey(item, index)}
+                    />
+                </SlideItemTransition>
+            </div>
         {/if}
     {/each}
 {/key}
+
 
 {#if precomputeTargets.length}
     <div class="autosize-precompute" aria-hidden="true">
