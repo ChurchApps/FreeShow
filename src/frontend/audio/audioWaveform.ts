@@ -3,6 +3,12 @@ import { encodeFilePath } from "../components/helpers/media"
 type WaveformSettings = {
     height?: number // 1 = 100%
     samples?: number
+    type?: "bars" | "line"
+
+    // line
+    strokeWidth?: number
+    fill?: boolean
+    fillOpacity?: number
 }
 
 const cachedWaveformData: Map<string, Float32Array> = new Map()
@@ -41,6 +47,40 @@ function renderWaveform(container: HTMLElement, rawData: Float32Array, settings:
 
     container.innerHTML = ""
 
+    // LINE
+    if (settings.type === "line") {
+        const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg")
+        svg.setAttribute("viewBox", `0 0 ${samples} 100`)
+        svg.setAttribute("preserveAspectRatio", "none")
+        svg.style.cssText = "width: 100%; height: 100%; overflow: visible; display: block;"
+
+        const hScale = 100 * (settings.height || 1)
+        const points = Array.from(waveform).map((v, i) => `${i} ${100 - v * hScale}`)
+        const lineD = `M ${points.join(" L ")}`
+
+        if (settings.fill) {
+            const fill = document.createElementNS("http://www.w3.org/2000/svg", "path")
+            fill.setAttribute("d", `${lineD} L ${samples - 1} 100 L 0 100 Z`)
+            fill.setAttribute("fill", "currentColor")
+            if (settings.fillOpacity) fill.setAttribute("fill-opacity", String(settings.fillOpacity))
+            fill.style.stroke = "none"
+            svg.appendChild(fill)
+        }
+
+        const line = document.createElementNS("http://www.w3.org/2000/svg", "path")
+        line.classList.add("wave-line")
+        line.setAttribute("d", lineD)
+        line.setAttribute("stroke", "currentColor")
+        line.setAttribute("stroke-width", String(settings.strokeWidth || 2))
+        line.setAttribute("vector-effect", "non-scaling-stroke")
+        line.setAttribute("fill", "none")
+        svg.appendChild(line)
+
+        container.appendChild(svg)
+        return
+    }
+
+    // BARS
     // create bars with a small initial height (for animation)
     const bars: HTMLDivElement[] = []
     for (let i = 0; i < samples; i++) {

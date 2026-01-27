@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activeProject, activeShow, outLocked, projects } from "../../stores"
+    import { activeProject, activeShow, localTimelineActive, outLocked, projects, special } from "../../stores"
     import Capture from "../drawer/live/Capture.svelte"
     import NdiStream from "../drawer/live/NDIStream.svelte"
     import { createGlobalTimerFromLocalTimer } from "../drawer/timers/timers"
@@ -10,6 +10,7 @@
     import Layouts from "../slide/Layouts.svelte"
     import Resizeable from "../system/Resizeable.svelte"
     import Timeline from "../timeline/Timeline.svelte"
+    import TimelineMinified from "../timeline/TimelineMinified.svelte"
     import AudioPreview from "./AudioPreview.svelte"
     import FolderShow from "./folder/FolderShow.svelte"
     import MediaPreview from "./media/MediaPreview.svelte"
@@ -93,11 +94,13 @@
         {/if}
     </div>
 
-    {#if show && (show.type || "show") === "show"}
-        <Resizeable id="timeline" side="bottom">
-            <!-- TODO: toggle on/off -->
+    {#if $special.timelineActive && show && (show.type || "show") === "show"}
+        <Resizeable id="timeline" side="bottom" maxWidth={2000}>
             <Timeline />
         </Resizeable>
+        {#if !$localTimelineActive}
+            <TimelineMinified />
+        {/if}
     {/if}
 </div>
 

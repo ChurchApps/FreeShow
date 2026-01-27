@@ -293,6 +293,12 @@
 
         <MaterialZoom hidden={!open} columns={$slidesOptions.columns} on:change={(e) => slidesOptions.set({ ...$slidesOptions, columns: e.detail })} />
 
+        {#if open || $special.timelineActive}
+            <MaterialButton title="timeline.toggle_timeline" on:click={() => special.update((a) => ({ ...a, timelineActive: !a.timelineActive }))}>
+                <Icon size={1.3} id="timeline" white={!$special.timelineActive} />
+            </MaterialButton>
+        {/if}
+
         <MaterialButton class="context #slideViews" title="show.change_view: show.{$slidesOptions.mode} [Ctrl+Shift+V]" on:click={changeSlidesView}>
             <Icon size={1.3} id={$slidesOptions.mode} white={$slidesOptions.mode === "grid"} />
         </MaterialButton>

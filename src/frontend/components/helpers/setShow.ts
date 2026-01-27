@@ -99,7 +99,7 @@ async function convertOldShowValues(show: Show): Promise<Show> {
             if (!rec || layout.timeline) return
 
             let actions: TimelineAction[] = []
-            let maxTime: number = 0
+            // let maxTime: number = 0
 
             // get any audio on first slide
             const audioIds = layout.slides[0]?.audio || []
@@ -107,7 +107,7 @@ async function convertOldShowValues(show: Show): Promise<Show> {
             await Promise.all(
                 audioPaths.map(async (path) => {
                     const duration = await AudioPlayer.getDuration(path)
-                    if (duration > maxTime) maxTime = duration
+                    // if (duration > maxTime) maxTime = duration
 
                     actions.push({
                         id: uid(6),
@@ -145,7 +145,7 @@ async function convertOldShowValues(show: Show): Promise<Show> {
             )
 
             layout.timeline = { actions }
-            if (maxTime) layout.timeline.maxTime = maxTime
+            // if (maxTime) layout.timeline.maxTime = maxTime
 
             // remove start recording action
             const startRecordingAction = (layout.slides[0]?.actions?.slideActions || []).findIndex((a) => a.triggers?.includes("start_slide_recording"))

@@ -290,7 +290,6 @@ export interface Timeline {
     // id: string
     // name: string
     actions: TimelineAction[]
-    maxTime?: number // s
 }
 
 export interface TimelineAction {

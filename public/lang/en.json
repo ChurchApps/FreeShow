@@ -839,6 +839,9 @@
         "seconds": "seconds",
         "empty": "empty"
     },
+    "timeline": {
+        "toggle_timeline": "Toggle timeline"
+    },
     "recording": {
         "remove": "Remove recording",
         "tip": "Record and replay the timings of slides. Sync with an audio track on the first slide.",

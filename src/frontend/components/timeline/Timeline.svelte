@@ -1,5 +1,6 @@
 <script lang="ts">
     import { onDestroy, tick } from "svelte"
+    import { get } from "svelte/store"
     import { fade } from "svelte/transition"
     import { uid } from "uid"
     import type { TimelineAction } from "../../../types/Show"
@@ -8,24 +9,26 @@
     import { activeShow, activeTriggerFunction, localTimelineActive, playingAudio, selected, showsCache } from "../../stores"
     import { translateText } from "../../utils/language"
     import { actionData } from "../actions/actionData"
+    import { clone } from "../helpers/array"
     import Icon from "../helpers/Icon.svelte"
     import { getExtension, getMediaType } from "../helpers/media"
+    import { getLayoutRef } from "../helpers/show"
     import { _show } from "../helpers/shows"
     import FloatingInputs from "../input/FloatingInputs.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
-    import MaterialCheckbox from "../inputs/MaterialCheckbox.svelte"
-    import MaterialNumberInput from "../inputs/MaterialNumberInput.svelte"
     import { ShowTimeline } from "./ShowTimeline"
 
     let actions: TimelineAction[] = []
 
-    let useFixedDuration = false
-    let fixedDurationSeconds = 300
-
     $: showId = $activeShow?.id || ""
+    $: layoutId = $showsCache[showId]?.settings?.activeLayout || ""
     $: exists = $showsCache[showId] !== undefined
-    $: if (exists && showId) getShowActions()
-    function getShowActions() {
+    $: if (exists && showId) updateActions()
+    function updateActions() {
+        saveCurrentState()
+
+        selectedActionIds = []
+
         const timeline = _show().layouts("active").get()[0]?.timeline
         if (!timeline) {
             actions = []
@@ -33,10 +36,29 @@
         }
 
         actions = timeline.actions || []
-        if (timeline.maxTime) {
-            useFixedDuration = true
-            fixedDurationSeconds = timeline.maxTime
-        }
+        previousShowId = showId
+        previousLayoutId = layoutId
+        // if (timeline.maxTime) fixedDurationSeconds = timeline.maxTime
+    }
+
+    onDestroy(saveCurrentState)
+
+    let actionsChanged = false
+    let previousShowId = ""
+    let previousLayoutId = ""
+    function saveCurrentState() {
+        if (!actionsChanged) return
+        actionsChanged = false
+
+        // save current state
+        showsCache.update((a) => {
+            if (!a[previousShowId]?.layouts?.[previousLayoutId]) return a
+
+            if (!a[previousShowId].layouts[previousLayoutId].timeline) a[previousShowId].layouts[previousLayoutId].timeline = { actions: [] }
+            a[previousShowId].layouts[previousLayoutId].timeline!.actions = clone(actions)
+
+            return a
+        })
     }
 
     // State
@@ -73,7 +95,7 @@
     // Computed
     $: timeString = formatTime(currentTime)
     $: lastActionTime = actions.length > 0 ? Math.max(...actions.map((a) => a.time + (a.duration || 0) * 1000)) : 0
-    $: duration = useFixedDuration ? fixedDurationSeconds * 1000 : Math.max(minDuration, lastActionTime + 60 * 1000) // 60s buffer
+    $: duration = Math.max(minDuration, lastActionTime + 60 * 1000) // 60s buffer
     $: tickInterval = getTickInterval(zoomLevel)
     $: snapInterval = (tickInterval * 1000) / 10
     $: totalTickCount = Math.ceil(duration / 1000 / tickInterval)
@@ -247,6 +269,7 @@
 
     async function resetView() {
         zoomLevel = 50
+        autoFollow = true
         await tick()
         centerPlayhead()
     }
@@ -296,35 +319,42 @@
         }
     }
 
-    $: maxTrackIndex = hasSlideActions + hasActionActions + hasAudioActions // actions.reduce((max, action) => Math.max(max, getActionTrack(action)), 2)
-    $: totalTrackHeight = 35 + (maxTrackIndex + 1) * 70 + 50
+    const tabs = {
+        action: { name: "tabs.actions", icon: "actions", hasData: false },
+        slide: { name: "tools.slide", icon: "slide", hasData: false },
+        audio: { name: "tabs.audio", icon: "audio", hasData: false }
+    }
+    let tabIds = Object.keys(tabs)
 
-    $: hasSlideActions = actions.some((a) => a.type === "slide") ? 1 : 0
-    $: hasActionActions = actions.some((a) => a.type === "action") ? 1 : 0
-    $: hasAudioActions = actions.some((a) => a.type === "audio") ? 1 : 0
+    const BAR_TOP = 25
+    const BAR_HEIGHT = 55
+    const BAR_GAP = 12
+    const maxTrackIndex = tabIds.length
+    $: totalTrackHeight = BAR_TOP + maxTrackIndex * (BAR_HEIGHT + BAR_GAP) - BAR_GAP + BAR_TOP
+
+    $: sortTracks(actions)
+    function sortTracks(_updater: any) {
+        tabIds = Object.keys(tabs)
+        tabIds.forEach((tabId) => {
+            tabs[tabId].hasData = actions.some((a) => a.type === tabId)
+        })
+
+        tabIds = tabIds.sort((a, b) => {
+            const hasActionsA = tabs[a].hasData ? 1 : 0
+            const hasActionsB = tabs[b].hasData ? 1 : 0
+            if (hasActionsA === hasActionsB) return 0
+            return hasActionsA > hasActionsB ? -1 : 1
+        })
+    }
 
     function getTrackData(index: number, _updater: any) {
-        if (hasAudioActions && index === hasActionActions + hasSlideActions) return { name: "tabs.audio", icon: "audio" }
-        if (hasActionActions && index === hasSlideActions) return { name: "tabs.actions", icon: "actions" }
-        if (hasSlideActions && index === 0) return { name: "tools.slide", icon: "slide" }
-        return { name: "Unknown", icon: "unknown" }
+        return tabs[tabIds[index]] || { name: "Unknown", icon: "unknown" }
     }
-
     function getActionTrack(action: TimelineAction): number {
-        switch (action.type) {
-            case "slide":
-                return hasSlideActions - 1
-            case "action":
-                return hasSlideActions + hasActionActions - 1
-            case "audio":
-                return hasSlideActions + hasActionActions + hasAudioActions - 1
-            default:
-                return 3
-        }
+        return tabIds.indexOf(action.type)
     }
-
     function getActionBaseY(action: TimelineAction): number {
-        return 35 + getActionTrack(action) * 70
+        return BAR_TOP + getActionTrack(action) * (BAR_HEIGHT + BAR_GAP)
     }
 
     function startRulerScrub(e: MouseEvent) {
@@ -554,6 +584,34 @@
             }
         }
 
+        // DUPLICATE
+        if (e.altKey) {
+            const newSelectedIds: string[] = []
+            let newDraggingId: string | null = null
+
+            const newActions = selectedActionIds
+                .map((sid) => {
+                    const original = actions.find((a) => a.id === sid)
+                    if (!original) return null
+
+                    const newId = uid(6)
+                    if (sid === id) newDraggingId = newId
+                    newSelectedIds.push(newId)
+
+                    return {
+                        ...original,
+                        id: newId,
+                        data: JSON.parse(JSON.stringify(original.data))
+                    }
+                })
+                .filter((a) => a !== null) as TimelineAction[]
+
+            actions = [...actions, ...newActions]
+            actionsChanged = true
+            selectedActionIds = newSelectedIds
+            if (newDraggingId) id = newDraggingId
+        }
+
         draggingActionId = id
 
         dragInitialTimes.clear()
@@ -601,6 +659,7 @@
             }
             return a
         })
+        actionsChanged = true
     }
 
     function updateActionDrag(e: MouseEvent) {
@@ -629,7 +688,7 @@
         e.preventDefault()
     }
 
-    function handleDrop(e: DragEvent) {
+    async function handleDrop(e: DragEvent) {
         e.preventDefault()
 
         const rect = trackWrapper.getBoundingClientRect()
@@ -639,66 +698,70 @@
 
         const existingAudioActions = actions.some((a) => a.type === "audio")
 
+        let selection = $selected
+
+        // external files
         const files = e.dataTransfer?.files
         if (files && files.length > 0) {
-            // Handle external files (Audio)
             for (let i = 0; i < files.length; i++) {
                 const file = files[i]
-                const type = getMediaType(getExtension(file.name))
-                // Check if audio
-                if (file.type.startsWith("audio/") || type === "audio") {
-                    actions.push({
-                        id: uid(6),
-                        time: existingAudioActions ? resultTime : 0,
-                        type: "audio",
-                        data: { path: (file as any).path },
-                        duration: AudioPlayer.getDurationSync((file as any).path),
-                        name: file.name
-                    })
+
+                let audioFiles: { path: string; name: string }[] = []
+                if (file.type.startsWith("audio/") || getMediaType(getExtension(file.name)) === "audio") {
+                    const path = window.api.showFilePath(file)
+                    audioFiles.push({ path, name: file.name })
                 }
+
+                selection = { id: "audio", data: audioFiles }
             }
-            actions = actions
-            return
         }
 
-        // Handle internal selection
-        if ($selected.id && $selected.data && $selected.data.length > 0) {
-            const items = $selected.data
-            items.forEach((item) => {
-                let newAction: TimelineAction | null = null
-                if ($selected.id === "audio") {
-                    newAction = {
-                        id: uid(6),
-                        time: existingAudioActions ? resultTime : 0,
-                        type: "audio",
-                        data: item,
-                        name: item.name || "Audio",
-                        duration: AudioPlayer.getDurationSync(item.path)
-                    }
-                } else if ($selected.id === "media" && item.type === "audio") {
-                    newAction = {
-                        id: uid(6),
-                        time: resultTime,
-                        type: "audio",
-                        data: { path: item.path },
-                        name: item.name
-                    }
-                } else if ($selected.id === "action") {
-                    newAction = {
-                        id: uid(6),
-                        time: resultTime,
-                        type: "action",
-                        data: { triggers: item.triggers || [], actionValues: item.actionValues || {} },
-                        name: item.name || "Action"
-                    }
+        const id = selection.id
+        if (!id || !selection.data?.length) return
+
+        const layoutRef = getLayoutRef()
+
+        await Promise.all(
+            selection.data.map(async (item) => {
+                if (!tabIds.includes(id)) return
+
+                const time = id === "audio" && !existingAudioActions ? 0 : resultTime
+                const type = id
+                const data = getData()
+                const name = getName() || id
+
+                const newAction: TimelineAction = {
+                    id: uid(6),
+                    time,
+                    type,
+                    data,
+                    name
+                }
+                if (id === "audio") newAction.duration = await AudioPlayer.getDuration(item.path)
+
+                actions.push(newAction)
+
+                function getData() {
+                    if (id === "action") return { triggers: item.triggers || [], actionValues: item.actionValues || {} }
+                    if (id === "slide") return { id: layoutRef[item.index]?.id, index: item.index }
+
+                    return item
                 }
 
-                if (newAction) {
-                    actions.push(newAction)
+                function getName() {
+                    if (id === "slide") {
+                        const slideId = layoutRef[item.index]?.id
+                        const groupSlideId = layoutRef[item.index]?.parent?.id || slideId
+                        const slideGroup = get(showsCache)[item?.showId]?.slides?.[groupSlideId]?.group
+                        return slideGroup || ""
+                    }
+
+                    return item.name || ""
                 }
             })
-            if (items.length > 0) actions = actions
-        }
+        )
+        actions = actions
+        actionsChanged = true
     }
 
     onDestroy(() => {
@@ -786,8 +849,6 @@
         scrollLeft = trackWrapper.scrollLeft
     }
 
-    let optionsVisible = false
-
     let offsetHeight = 0
     $: localTimelineActive.set(offsetHeight > 0)
     function keydown(e) {
@@ -819,6 +880,7 @@
         if (!selectedActionIds.length) return
 
         actions = actions.filter((a) => !selectedActionIds.includes(a.id))
+        actionsChanged = true
         selectedActionIds = []
         setTimeout(() => (actions = actions)) // update properly when deleting from context menu
     }
@@ -840,6 +902,7 @@
                 data: sequence.data,
                 name: sequence.name
             })
+            actionsChanged = true
             actions = actions
 
             // start if changed when paused
@@ -849,7 +912,7 @@
 
     // Waveform
     function useWaveform(node: HTMLElement, path: string) {
-        const settings = { height: 2.2, samples: 512 }
+        const settings = { height: 2.2, samples: 256, type: "line" as const, fill: true, fillOpacity: 0.3 }
         if (path) createWaveform(node, path, settings)
 
         return {
@@ -866,17 +929,6 @@
 <svelte:window on:keydown={keydown} />
 
 <div class="timeline" bind:offsetHeight>
-    {#if optionsVisible}
-        <div class="toolbar">
-            <div class="duration-controls">
-                <MaterialCheckbox label="Set max length" checked={useFixedDuration} on:change={(e) => (useFixedDuration = e.detail)} />
-                {#if useFixedDuration}
-                    <MaterialNumberInput label="Duration (s)" min={1} value={fixedDurationSeconds} on:change={(e) => (fixedDurationSeconds = e.detail)} />
-                {/if}
-            </div>
-        </div>
-    {/if}
-
     <div class="timeline-grid">
         <!-- Top Left Corner -->
         <div class="corner" style="width: {usedHeaderWidth}px; border-bottom: 1px solid rgba(255,255,255,0.1); border-right: 1px solid rgba(255,255,255,0.1);">
@@ -911,7 +963,7 @@
             <div class="track-headers" style="height: {totalTrackHeight}px;">
                 {#each Array(maxTrackIndex) as _, i}
                     {@const track = getTrackData(i, actions)}
-                    <div class="track-header" style="top: {35 + i * 70}px; width: 100%;">
+                    <div class="track-header" style="top: {BAR_TOP + i * (BAR_HEIGHT + BAR_GAP)}px;width: 100%;{track.hasData ? '' : 'opacity: 0.3;'}">
                         <Icon id={track.icon} white />
                         <span class="track-name">{translateText(track.name)}</span>
                     </div>
@@ -942,7 +994,7 @@
                 {#each actions as action (action.id)}
                     {@const baseY = getActionBaseY(action)}
                     {#if action.duration}
-                        <div class="action-clip context #timeline_node" class:selected={selectedActionIds.includes(action.id)} style="left: {(action.time / 1000) * zoomLevel}px; width: {action.duration * zoomLevel}px; top: {baseY}px;" data-title="{formatTime(action.time)}-{formatTime(action.duration * 1000)}: {action.name}" on:mousedown|stopPropagation={(e) => startActionDrag(e, action.id)}>
+                        <div class="action-clip context #timeline_node" class:selected={selectedActionIds.includes(action.id)} style="left: {(action.time / 1000) * zoomLevel}px; width: {action.duration * zoomLevel}px; top: {baseY}px;height: {BAR_HEIGHT + 4}px;" data-title="{formatTime(action.time)}-{formatTime(action.duration * 1000)}: {action.name}" on:mousedown|stopPropagation={(e) => startActionDrag(e, action.id)}>
                             <div class="action-clip-content">
                                 {#if action.type === "audio"}
                                     <div class="waveform-container" use:useWaveform={action.data.path || ""}></div>
@@ -951,7 +1003,7 @@
                             </div>
                         </div>
                     {:else}
-                        <div class="action-marker {action.type} context #timeline_node" class:selected={selectedActionIds.includes(action.id)} style="left: {(action.time / 1000) * zoomLevel}px; top: {baseY + 5}px;" data-title="{formatTime(action.time)}: {action.name}" on:mousedown|stopPropagation={(e) => startActionDrag(e, action.id)}>
+                        <div class="action-marker {action.type} context #timeline_node" class:selected={selectedActionIds.includes(action.id)} style="left: {(action.time / 1000) * zoomLevel}px; top: {baseY + 10}px;" data-title="{formatTime(action.time)}: {action.name}" on:mousedown|stopPropagation={(e) => startActionDrag(e, action.id)}>
                             <div class="action-head">
                                 {#if action.type === "action"}
                                     <Icon id={action.data.triggers?.length === 1 ? actionData[action.data.triggers[0]]?.icon : "actions"} size={0.9} white />
@@ -995,11 +1047,11 @@
         <MaterialButton icon="focus" title="actions.resetZoom" on:click={resetView} />
     </FloatingInputs>
 
-    <FloatingInputs style="margin-bottom: 8px;">
+    <!-- <FloatingInputs style="margin-bottom: 8px;">
         <MaterialButton title="edit.options" on:click={() => (optionsVisible = !optionsVisible)}>
             <Icon id="options" white={!optionsVisible} />
         </MaterialButton>
-    </FloatingInputs>
+    </FloatingInputs> -->
 </div>
 
 <style>
@@ -1008,15 +1060,6 @@
         flex-direction: column;
         height: 100%;
         overflow: hidden;
-    }
-
-    .toolbar {
-        display: flex;
-        align-items: center;
-        padding: 10px;
-        background-color: var(--primary-darkest);
-        gap: 10px;
-        border-bottom: 1px solid #444;
     }
 
     .time-display {
@@ -1150,7 +1193,8 @@
         align-items: center;
         padding-left: 10px;
         /* background: rgba(0, 0, 0, 0.6); */
-        border-bottom: 1px solid rgba(255, 255, 255, 0.05); /* Separators */
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
         pointer-events: auto; /* Allow interaction if needed */
 
         display: flex;
@@ -1272,6 +1316,7 @@
         align-items: flex-end; /* at bottom */
         opacity: 0.3;
         pointer-events: none;
+        color: var(--secondary-text);
     }
     .waveform-container :global(.wave-bar) {
         background-color: var(--secondary-text);
