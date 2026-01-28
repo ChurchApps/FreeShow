@@ -1,7 +1,7 @@
 import { get, Unsubscriber } from "svelte/store"
 import type { TimelineAction } from "../../../types/Show"
 import { AudioPlayer } from "../../audio/audioPlayer"
-import { activeShow, isTimelinePlaying, outputs, playingAudio, showsCache } from "../../stores"
+import { activeShow, isTimelinePlaying, outputs, playingAudio, showsCache, timecode } from "../../stores"
 import { runAction } from "../actions/actions"
 import { clone } from "../helpers/array"
 import { getFirstActiveOutput } from "../helpers/output"
@@ -10,6 +10,9 @@ import { _show } from "../helpers/shows"
 import { ShowTimeline } from "./ShowTimeline"
 import { TimelineType } from "./TimelineActions"
 import { getProjectShowDurations } from "./timeline"
+import { sendMain } from "../../IPC/main"
+import { Main } from "../../../types/IPC/Main"
+import { startListeningLTC, stopListeningLTC } from "./timecode"
 
 let activePlayback: TimelinePlayback | null = null
 export function getActiveTimelinePlayback() {
@@ -47,6 +50,7 @@ export class TimelinePlayback {
     play() {
         this.setAsPlayer()
         isTimelinePlaying.set(true)
+        this.initTimecode()
 
         this.isPlaying = true
         this.startLoop()
@@ -57,7 +61,13 @@ export class TimelinePlayback {
 
     pause() {
         if (!this.isPlaying) return
-        isTimelinePlaying.set(false)
+        if (activePlayback === this) {
+            isTimelinePlaying.set(false)
+            if (this.type === "project") {
+                sendMain(Main.TIMECODE_STOP)
+                stopListeningLTC()
+            }
+        }
 
         this.isPlaying = false
         this.stopLoop()
@@ -72,6 +82,10 @@ export class TimelinePlayback {
         if (activePlayback === this) {
             activePlayback = null
             isTimelinePlaying.set(false)
+            if (this.type === "project") {
+                sendMain(Main.TIMECODE_STOP)
+                stopListeningLTC()
+            }
         }
 
         this.isPlaying = false
@@ -161,11 +175,15 @@ export class TimelinePlayback {
         this.animationFrameId = null
     }
 
+    private receiveTime: boolean = false
     private loop() {
         if (!this.isPlaying) {
             this.stopLoop()
             return
         }
+
+        if (this.type === "project") this.offset = get(timecode).offset || 0
+        this.receiveTime = this.type === "project" && get(timecode)?.type === "receive"
 
         this.tick()
         this.next()
@@ -173,13 +191,20 @@ export class TimelinePlayback {
 
     // TICK
 
-    private tick() {
-        const now = performance.now()
-        const delta = now - this.lastTime
-        this.lastTime = now
+    private offset: number = 0
+    private getTimeWithOffset(time: number) {
+        return time + this.offset
+    }
 
+    private tick() {
         const previousTime = this.currentTime
-        this.currentTime += delta
+        if (!this.receiveTime) {
+            const now = performance.now()
+            const delta = now - this.lastTime
+            this.lastTime = now
+
+            this.currentTime += delta
+        }
 
         this.hasPlayed = []
 
@@ -195,7 +220,7 @@ export class TimelinePlayback {
                 continue
             }
 
-            const shouldPlay = action.time >= previousTime && action.time < this.currentTime
+            const shouldPlay = action.time >= this.getTimeWithOffset(previousTime) && action.time < this.getTimeWithOffset(this.currentTime)
             if (shouldPlay) {
                 this.playAction(action, this.ref)
             }
@@ -207,6 +232,7 @@ export class TimelinePlayback {
             this.pause()
         }
 
+        this.sendTimecode()
         if (this.onTimeCallback) this.onTimeCallback(this.currentTime)
     }
 
@@ -230,7 +256,7 @@ export class TimelinePlayback {
 
         const audioStart = action.time
         const audioEnd = action.time + (action.duration || 0) * 1000
-        const shouldPlay = this.currentTime >= audioStart && this.currentTime < audioEnd
+        const shouldPlay = this.getTimeWithOffset(this.currentTime) >= audioStart && this.getTimeWithOffset(this.currentTime) < audioEnd
         let playing = get(playingAudio)[path]
 
         if (!shouldPlay) {
@@ -249,7 +275,7 @@ export class TimelinePlayback {
 
         // seek to correct position (with tolerance)
         const tolerance = 20 // ms
-        const seekPos = (this.currentTime - audioStart) / 1000
+        const seekPos = (this.getTimeWithOffset(this.currentTime) - audioStart) / 1000
         const currentAudioTime = playing.audio.currentTime || 0
         const diff = Math.abs(currentAudioTime - seekPos) * 1000
         if (diff > tolerance) AudioPlayer.setTime(path, seekPos)
@@ -320,7 +346,7 @@ export class TimelinePlayback {
 
         // if show does not have any timeline actions, just start the first slide instead
         if (!timeline?.actions?.length) {
-            const shouldPlay = action.time >= previousTime && action.time < this.currentTime
+            const shouldPlay = action.time >= this.getTimeWithOffset(previousTime) && action.time < this.getTimeWithOffset(this.currentTime)
             if (!shouldPlay) return
 
             // start first slide
@@ -332,10 +358,6 @@ export class TimelinePlayback {
         }
 
         const showStart = action.time
-        // const duration = this.showDurations[showId] || 0
-        // const showEnd = action.time + duration * 1000
-        // const shouldPlay = this.currentTime >= showStart && this.currentTime < showEnd
-        // if (!shouldPlay) return
 
         // update times to match new timeline position
         const showTimelineActions = timeline.actions.map((a) => ({ ...a, time: a.time + showStart }))
@@ -346,11 +368,51 @@ export class TimelinePlayback {
                 continue
             }
 
-            const shouldPlay = action.time >= previousTime && action.time < this.currentTime
+            const shouldPlay = action.time >= this.getTimeWithOffset(previousTime) && action.time < this.getTimeWithOffset(this.currentTime)
             if (shouldPlay) {
                 this.playAction(action, data.ref)
             }
         }
+    }
+
+    // TIMECODE
+
+    private initTimecode() {
+        if (this.type !== "project") return
+
+        const type = get(timecode).type || "send"
+        const mode = get(timecode).mode || "LTC"
+        let shouldSend = true
+        if (type === "send" && mode === "LTC" && !get(timecode).audioOutput) shouldSend = false
+        if (type === "receive" && mode === "LTC" && !get(timecode).audioInput) shouldSend = false
+
+        const framerate = get(timecode).framerate || 25
+        const data = { audioInput: get(timecode).audioInput || "" }
+        if (shouldSend) sendMain(Main.TIMECODE_START, { type, mode, framerate, data })
+
+        if (type === "receive" && mode === "LTC") {
+            this.setTime(0)
+            startListeningLTC()
+        }
+    }
+
+    private lastSentFrame: number = -1
+    private sendTimecode() {
+        if (this.type !== "project") return
+
+        const type = get(timecode).type || "send"
+        const mode = get(timecode).mode || "LTC"
+        if (type === "send" && mode === "LTC" && !get(timecode).audioOutput) return
+
+        // limit to framerate
+        const framerate = get(timecode).framerate || 25
+        const frameDuration = 1000 / framerate
+        const currentFrame = Math.floor(this.currentTime / frameDuration)
+
+        if (currentFrame <= this.lastSentFrame) return
+        this.lastSentFrame = currentFrame
+
+        sendMain(Main.TIMECODE_VALUE, this.currentTime)
     }
 
     // LISTEN

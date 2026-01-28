@@ -2,8 +2,10 @@ import type { Display } from "electron"
 import type { ExifData } from "exif"
 import type { Stats } from "fs"
 import type { Bible } from "json-bible/lib/Bible"
+import type { SyncProviderId } from "../../electron/cloud/syncManager"
 import type { ContentFile, ContentLibraryCategory, ContentProviderId } from "../../electron/contentProviders/base/types"
 import type { _store } from "../../electron/data/store"
+import type { TimecodeMode } from "../../electron/timecode/timecode"
 import type { ErrorLog, FileFolder, LessonsData, LyricSearchResult, MainFilePaths, Media, OS, Subtitle } from "../Main"
 import type { Output } from "../Output"
 import type { Folders, Projects } from "../Projects"
@@ -14,7 +16,6 @@ import type { StageLayouts } from "../Stage"
 import type { Event } from "./../Calendar"
 import type { History } from "./../History"
 import type { SaveData, SaveListSyncedSettings } from "./../Save"
-import { SyncProviderId } from "../../electron/cloud/syncManager"
 
 export const MAIN = "MAIN"
 
@@ -148,7 +149,12 @@ export enum Main {
     GET_CONTENT_PROVIDERS = "GET_CONTENT_PROVIDERS",
     GET_CONTENT_LIBRARY = "GET_CONTENT_LIBRARY",
     GET_PROVIDER_CONTENT = "GET_PROVIDER_CONTENT",
-    CHECK_MEDIA_LICENSE = "CHECK_MEDIA_LICENSE"
+    CHECK_MEDIA_LICENSE = "CHECK_MEDIA_LICENSE",
+    // Timecode
+    TIMECODE_START = "TIMECODE_START",
+    TIMECODE_STOP = "TIMECODE_STOP",
+    TIMECODE_VALUE = "TIMECODE_VALUE",
+    TIMECODE_AUDIO_DATA = "TIMECODE_AUDIO_DATA"
 }
 
 export interface MainSendPayloads {
@@ -230,6 +236,10 @@ export interface MainSendPayloads {
     [Main.GET_CONTENT_LIBRARY]: { providerId: ContentProviderId }
     [Main.GET_PROVIDER_CONTENT]: { providerId: ContentProviderId; key: string }
     [Main.CHECK_MEDIA_LICENSE]: { providerId: ContentProviderId; mediaId: string }
+    // Timecode
+    [Main.TIMECODE_START]: { type: "send" | "receive"; mode: TimecodeMode; framerate?: number; data?: any }
+    [Main.TIMECODE_VALUE]: number
+    [Main.TIMECODE_AUDIO_DATA]: { mode: TimecodeMode; buffer: Uint8Array }
 }
 
 export interface MainReturnPayloads {
@@ -311,6 +321,9 @@ export interface MainReturnPayloads {
     [Main.GET_CONTENT_LIBRARY]: Promise<ContentLibraryCategory[]>
     [Main.GET_PROVIDER_CONTENT]: Promise<ContentFile[]>
     [Main.CHECK_MEDIA_LICENSE]: Promise<string | null>
+    // Timecode
+    [Main.TIMECODE_VALUE]: number | void
+    [Main.TIMECODE_AUDIO_DATA]: Buffer | void
 }
 
 ///////////

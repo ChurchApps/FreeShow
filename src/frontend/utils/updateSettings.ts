@@ -73,6 +73,7 @@ import {
     theme,
     themes,
     timeFormat,
+    timecode,
     timers,
     triggers,
     variableTags,
@@ -341,6 +342,7 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
 
         special.set(v)
     },
+    timecode: (v: any) => timecode.set(v),
     // @ts-ignore - DEPERACTED (migrate)
     chumsSyncCategories: (v: any) => {
         if (v?.length > 1) contentProviderData.set({ ...get(contentProviderData), churchApps: { syncCategories: v } })

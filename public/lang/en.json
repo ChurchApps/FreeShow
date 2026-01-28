@@ -505,6 +505,7 @@
         "manage_tags": "Manage tags",
         "sync_categories": "Sync categories",
         "effect_items": "Effect items",
+        "timecode": "Timecode",
         "initialize": "Welcome to FreeShow",
         "unsaved": "Are you sure you want to quit?",
         "cancel": "Cancel",

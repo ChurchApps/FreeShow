@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { AudioMicrophone } from "../../../audio/audioMicrophone"
     import T from "../../helpers/T.svelte"
     import Center from "../../system/Center.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
@@ -11,12 +12,8 @@
     }
 
     let mics: Mics = {}
-    navigator.mediaDevices?.enumerateDevices()?.then(function (devices) {
-        if (!devices) return
-
-        devices.forEach((d) => {
-            if (d.kind !== "audioinput") return
-
+    AudioMicrophone.getList()?.then((devices) => {
+        devices?.forEach((d) => {
             if (!mics[d.groupId]) mics[d.groupId] = {}
             mics[d.groupId][d.deviceId] = d.label
         })

@@ -76,6 +76,7 @@ import { activePopup, popupData } from "../stores"
 import NowPlaying from "../components/main/popups/NowPlaying.svelte"
 import Restore from "../components/main/popups/Restore.svelte"
 import CloudSync from "../components/main/popups/CloudSync.svelte"
+import Timecode from "../components/main/popups/Timecode.svelte"
 
 export const popups: { [key in Popups]: ComponentType } = {
     initialize: Initialize,
@@ -151,7 +152,8 @@ export const popups: { [key in Popups]: ComponentType } = {
     cloud_update: CloudUpdate,
     cloud_method: CloudMethod,
     sync_categories: ChurchAppsSyncCategories,
-    effect_items: EffectItems
+    effect_items: EffectItems,
+    timecode: Timecode
 }
 
 export function waitForPopupData(popupId: Popups): Promise<any> {

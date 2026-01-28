@@ -4,7 +4,7 @@
     import { uid } from "uid"
     import type { TimelineAction } from "../../../types/Show"
     import { createWaveform } from "../../audio/audioWaveform"
-    import { activeShow, activeTriggerFunction, resized, showsCache, special } from "../../stores"
+    import { activePopup, activeShow, activeTriggerFunction, resized, showsCache, special, timecode } from "../../stores"
     import { DEFAULT_WIDTH } from "../../utils/common"
     import { translateText } from "../../utils/language"
     import { actionData } from "../actions/actionData"
@@ -184,6 +184,7 @@
     // RULER
 
     function startRulerScrub(e: MouseEvent) {
+        if (disablePlayback) return
         if (e.button !== 0) return
         isScrubbing = true
         wasPlaying = isPlaying
@@ -611,6 +612,8 @@
     $: if (isClosed !== undefined) resetView()
 
     $: projectShowDurations = type === "project" ? getProjectShowDurations(actions, $showsCache) : {}
+
+    $: disablePlayback = type === "project" && $timecode.type === "receive"
 </script>
 
 <svelte:window on:keydown={keydown} />
@@ -618,13 +621,19 @@
 <div class="timeline">
     {#if isClosed}
         <div class="closed">
-            <MaterialButton style="min-width: 40px;padding: 10px;" title={isPlaying ? "media.pause" : "media.play"} on:click={() => (isPlaying ? player.pause() : player.play())}>
-                <Icon id={isPlaying ? "pause" : "play"} white={!isPlaying} />
-            </MaterialButton>
+            {#if disablePlayback}
+                <MaterialButton style="min-width: 40px;padding: 10px;" title={isPlaying ? "media.stop" : "media.play"} on:click={() => (isPlaying ? player.pause() : player.play())}>
+                    <Icon id={isPlaying ? "stop" : "microphone"} white={!isPlaying} />
+                </MaterialButton>
+            {:else}
+                <MaterialButton style="min-width: 40px;padding: 10px;" title={isPlaying ? "media.pause" : "media.play"} on:click={() => (isPlaying ? player.pause() : player.play())}>
+                    <Icon id={isPlaying ? "pause" : "play"} white={!isPlaying} />
+                </MaterialButton>
 
-            <MaterialButton style="min-width: 40px;padding: 10px;" disabled={currentTime === 0} title="media.stop" on:click={() => player.stop()}>
-                <Icon id="stop" white={!isPlaying} />
-            </MaterialButton>
+                <MaterialButton style="min-width: 40px;padding: 10px;" disabled={currentTime === 0} title="media.stop" on:click={() => player.stop()}>
+                    <Icon id="stop" white={!isPlaying} />
+                </MaterialButton>
+            {/if}
 
             {#if (type === "show" && !actions.length) || isRecording}
                 <MaterialButton style="min-width: 40px;padding: 10px;" title="actions.{isRecording ? 'stop_recording' : 'start_recording'}" on:click={toggleRecording} red={isRecording}>
@@ -783,13 +792,19 @@
         </div>
 
         <FloatingInputs side="left" style="margin-bottom: 8px;margin-left: 120px;">
-            <MaterialButton title={isPlaying ? "media.pause" : "media.play"} on:click={() => (isPlaying ? player.pause() : player.play())}>
-                <Icon size={1.3} id={isPlaying ? "pause" : "play"} white={!isPlaying} />
-            </MaterialButton>
+            {#if disablePlayback}
+                <MaterialButton style="min-width: 40px;padding: 10px;" title={isPlaying ? "media.stop" : "media.play"} on:click={() => (isPlaying ? player.pause() : player.play())}>
+                    <Icon id={isPlaying ? "stop" : "microphone"} white={!isPlaying} />
+                </MaterialButton>
+            {:else}
+                <MaterialButton title={isPlaying ? "media.pause" : "media.play"} on:click={() => (isPlaying ? player.pause() : player.play())}>
+                    <Icon size={1.3} id={isPlaying ? "pause" : "play"} white={!isPlaying} />
+                </MaterialButton>
 
-            <MaterialButton disabled={currentTime === 0} title="media.stop" on:click={() => player.stop()}>
-                <Icon size={1.3} id="stop" white={!isPlaying} />
-            </MaterialButton>
+                <MaterialButton disabled={currentTime === 0} title="media.stop" on:click={() => player.stop()}>
+                    <Icon size={1.3} id="stop" white={!isPlaying} />
+                </MaterialButton>
+            {/if}
 
             {#if type === "show"}
                 <MaterialButton disabled={isPlaying && !isRecording} title="actions.{isRecording ? 'stop_recording' : 'start_recording'}" on:click={toggleRecording} red={isRecording}>
@@ -802,11 +817,13 @@
             <MaterialButton icon="focus" title="actions.resetZoom" on:click={resetView} />
         </FloatingInputs>
 
-        <!-- <FloatingInputs style="margin-bottom: 8px;">
-        <MaterialButton title="edit.options" on:click={() => (optionsVisible = !optionsVisible)}>
-            <Icon id="options" white={!optionsVisible} />
-        </MaterialButton>
-    </FloatingInputs> -->
+        {#if type === "project"}
+            <FloatingInputs style="margin-bottom: 8px;">
+                <MaterialButton title="popup.timecode" on:click={() => activePopup.set("timecode")}>
+                    <Icon id="options" white />
+                </MaterialButton>
+            </FloatingInputs>
+        {/if}
     {/if}
 </div>
 

@@ -13,7 +13,7 @@ export interface Project {
     used?: number // used to create startup "last used" list
     parent: string
     shows: ProjectShowRef[]
-    timeline: Timeline
+    timeline?: Timeline
     archived?: boolean
 }
 

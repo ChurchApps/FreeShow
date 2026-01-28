@@ -77,6 +77,7 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
     eqPresets: {},
     effectsLibrary: [],
     special: {},
+    timecode: {},
     contentProviderData: {
         planningcenter: {
             localAlways: false
