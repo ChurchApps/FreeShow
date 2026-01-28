@@ -387,7 +387,8 @@ const selectActions = {
         selected.set({ id: "template", data: newSelection })
     },
     media: () => selectAllMedia.set(true),
-    audio: () => selectAllAudio.set(true)
+    audio: () => selectAllAudio.set(true),
+    timeline: () => triggerFunction("timeline_selectAll")
 }
 
 const copyActions = {

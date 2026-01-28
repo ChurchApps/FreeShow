@@ -293,7 +293,7 @@
 
         <MaterialZoom hidden={!open} columns={$slidesOptions.columns} on:change={(e) => slidesOptions.set({ ...$slidesOptions, columns: e.detail })} />
 
-        {#if open || $special.timelineActive || layouts[activeLayout]?.timeline}
+        {#if open || $special.timelineActive || layouts[activeLayout]?.timeline?.actions?.length}
             <MaterialButton title="timeline.toggle_timeline" on:click={() => special.update((a) => ({ ...a, timelineActive: !a.timelineActive }))}>
                 <Icon size={1.3} id="timeline" white={!$special.timelineActive} />
             </MaterialButton>

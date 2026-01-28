@@ -1,5 +1,6 @@
 <script lang="ts">
     import { activeProject, activeShow, outLocked, projects, resized, special } from "../../stores"
+    import { DEFAULT_WIDTH } from "../../utils/common"
     import Capture from "../drawer/live/Capture.svelte"
     import NdiStream from "../drawer/live/NDIStream.svelte"
     import { createGlobalTimerFromLocalTimer } from "../drawer/timers/timers"
@@ -93,9 +94,13 @@
         {/if}
     </div>
 
-    {#if $special.timelineActive && show && (show.type || "show") === "show"}
-        <Resizeable id="timeline" side="bottom" maxWidth={2000} minWidth={40}>
-            <Timeline type="show" isClosed={$resized.timeline <= 40} />
+    <!-- || $showsCache[show.id || ""]?.layouts[$showsCache[show.id || ""]?.settings?.activeLayout || ""]?.timeline?.actions?.length -->
+    {#if show && (show.type || "show") === "show" && $special.timelineActive}
+        <Resizeable id="timeline" side="bottom" maxWidth={DEFAULT_WIDTH} minWidth={40}>
+            {#key $activeShow}
+                <!-- || !$special.timelineActive -->
+                <Timeline type="show" isClosed={$resized.timeline <= 40} />
+            {/key}
         </Resizeable>
     {/if}
 </div>

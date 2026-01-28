@@ -840,6 +840,7 @@
         "empty": "empty"
     },
     "timeline": {
+        "timeline": "Timeline",
         "toggle_timeline": "Toggle timeline"
     },
     "animate": {

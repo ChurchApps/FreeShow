@@ -42,10 +42,15 @@
     // TIMELINE
 
     let actions: TimelineAction[] = []
+    let isDestroyed = false
 
     const player = new TimelinePlayback(type)
 
-    const timeline = new TimelineActions(type, (a) => {
+    const timeline = new TimelineActions(type, async (a) => {
+        await tick()
+
+        if (isDestroyed) return
+
         actions = a
         player.setActions(a)
         tabIds = getTimelineSections(sections, a)
@@ -55,11 +60,12 @@
         resetView()
     })
     onDestroy(() => {
-        player.stop()
+        isDestroyed = true
+        player.close()
         timeline.close()
     })
 
-    let isPlaying = false
+    let isPlaying = player.isPlaying
     player.onPlay(() => {
         isPlaying = true
         autoFollow = true
@@ -125,6 +131,7 @@
     let autoScrollTimeout: any
     let lastMouseX = 0
     let wasPlaying = false
+    let lastMouseEvent: MouseEvent | null = null
     let isScrubbing = false
     let draggingActionId: string | null = null
     let dragTimeOffset = 0
@@ -230,12 +237,25 @@
             selectionStartIds = [...selectedActionIds]
         }
 
+        lastMouseEvent = e
+        lastMouseX = e.clientX
+        autoScrollTimeout = setTimeout(autoScrollLoop, 300)
+
         window.addEventListener("mousemove", updateSelection)
         window.addEventListener("mouseup", endSelection)
     }
 
+    $: if ($activeTriggerFunction === "timeline_selectAll") selectAll()
+    function selectAll() {
+        const allActionIds = actions.map((a) => a.id)
+        selectedActionIds = allActionIds
+    }
+
     function updateSelection(e: MouseEvent) {
         if (!isSelecting || !trackWrapper) return
+
+        lastMouseX = e.clientX
+        lastMouseEvent = e
 
         const rect = trackWrapper.getBoundingClientRect()
         // Current mouse position in content space
@@ -269,6 +289,11 @@
     function endSelection() {
         isSelecting = false
         selectionRect = null
+        lastMouseEvent = null
+
+        if (autoScrollTimeout) clearTimeout(autoScrollTimeout)
+        if (autoScrollFrameId) cancelAnimationFrame(autoScrollFrameId)
+
         window.removeEventListener("mousemove", updateSelection)
         window.removeEventListener("mouseup", endSelection)
     }
@@ -309,16 +334,16 @@
         if (newScrollLeft !== -1) {
             isProgrammaticScroll = true
             trackWrapper.scrollLeft = newScrollLeft
-            if (rulerContainer) rulerContainer.scrollLeft = newScrollLeft
+            if (rulerContainer && !isSelecting) rulerContainer.scrollLeft = newScrollLeft
         }
     }
 
     function autoScrollLoop() {
-        if ((!isScrubbing && !draggingActionId) || !trackWrapper) return
+        if ((!isScrubbing && !draggingActionId && !isSelecting) || !trackWrapper) return
 
         const rect = trackWrapper.getBoundingClientRect()
         const EDGE_THRESHOLD = 100
-        const MAX_SCROLL_SPEED = 18
+        const MAX_SCROLL_SPEED = 14
 
         const distLeft = lastMouseX - rect.left
         const distRight = rect.right - lastMouseX
@@ -351,6 +376,8 @@
                 const newTime = seekTime - dragTimeOffset
                 const snappedTime = Math.round(newTime / snapInterval) * snapInterval
                 moveSelectedActions(snappedTime)
+            } else if (isSelecting && lastMouseEvent) {
+                updateSelection(lastMouseEvent)
             }
         }
 
@@ -380,9 +407,13 @@
 
         if (e.button !== 0) return
 
-        if (!selectedActionIds.includes(id)) {
-            if (e.ctrlKey || e.shiftKey) selectedActionIds = [...selectedActionIds, id]
-            else selectedActionIds = [id]
+        if (e.ctrlKey || e.metaKey || e.shiftKey) {
+            const index = selectedActionIds.indexOf(id)
+            if (index === -1) selectedActionIds = [...selectedActionIds, id]
+            else selectedActionIds.splice(index, 1) // deselect if selected
+            selectedActionIds = selectedActionIds
+        } else if (!selectedActionIds.includes(id)) {
+            selectedActionIds = [id]
         }
 
         // DUPLICATE
@@ -951,7 +982,7 @@
         border-right: 7px solid transparent;
         border-top: 10px solid var(--secondary);
         z-index: 111;
-        cursor: ew-resize; /* Indicate grab */
+        /* cursor: ew-resize; */
     }
 
     .action-marker {
@@ -981,7 +1012,7 @@
         align-items: center;
         justify-content: center;
 
-        /* cursor: e-resize; */
+        /* cursor: ew-resize; */
         font-size: 0.7em;
         font-weight: bold;
     }
@@ -1001,7 +1032,7 @@
 
         z-index: 4;
         /* cursor: move; */
-        /* cursor: e-resize; */
+        /* cursor: ew-resize; */
         overflow: hidden;
         box-sizing: border-box;
     }

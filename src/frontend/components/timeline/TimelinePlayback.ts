@@ -1,7 +1,7 @@
 import { get, Unsubscriber } from "svelte/store"
 import type { TimelineAction } from "../../../types/Show"
 import { AudioPlayer } from "../../audio/audioPlayer"
-import { activeShow, outputs, playingAudio } from "../../stores"
+import { activeShow, isTimelinePlaying, outputs, playingAudio } from "../../stores"
 import { runAction } from "../actions/actions"
 import { getFirstActiveOutput } from "../helpers/output"
 import { _show } from "../helpers/shows"
@@ -9,24 +9,39 @@ import { ShowTimeline } from "./ShowTimeline"
 import { TimelineType } from "./TimelineActions"
 
 let activePlayback: TimelinePlayback | null = null
+export function stopActiveTimelinePlayback() {
+    activePlayback?.stop()
+}
 
 const ONE_MINUTE = 60000
 const MIN_DURATION = ONE_MINUTE * 5
 
 export class TimelinePlayback {
     currentTime: number = 0 // ms
+    isPlaying: boolean = false
     private type: TimelineType
-    private isPlaying: boolean = false
     private ref: { id: string; layoutId?: string }
+
+    getId() {
+        return JSON.stringify(this.ref)
+    }
 
     constructor(type: TimelineType) {
         this.type = type
 
-        if (type === "show") this.ref = { id: get(activeShow)?.id || "", layoutId: _show().get("settings.activeLayout") }
+        if (type === "show") {
+            this.ref = { id: get(activeShow)?.id || "", layoutId: _show().get("settings.activeLayout") }
+        }
+
+        // restore playing
+        if (activePlayback && activePlayback.getId() === JSON.stringify(this.ref)) {
+            return activePlayback
+        }
     }
 
     play() {
         this.setAsPlayer()
+        isTimelinePlaying.set(true)
 
         this.isPlaying = true
         this.startLoop()
@@ -37,6 +52,7 @@ export class TimelinePlayback {
 
     pause() {
         if (!this.isPlaying) return
+        isTimelinePlaying.set(false)
 
         this.isPlaying = false
         this.stopLoop()
@@ -46,18 +62,33 @@ export class TimelinePlayback {
     }
 
     stop() {
+        if (activePlayback === this) {
+            activePlayback = null
+            isTimelinePlaying.set(false)
+        }
+
         this.isPlaying = false
         this.setTime(0)
         this.stopLoop()
-        activePlayback = null
         this.stopListeners()
 
         this.runCallbacks(this.onStopCallbacks)
     }
 
+    close() {
+        if (this.isPlaying) return
+        this.stop()
+    }
+
     setTime(time: number) {
         this.currentTime = time
         if (this.onTimeCallback) this.onTimeCallback(this.currentTime)
+    }
+
+    reset() {
+        this.updateDuration()
+        this.setTime(0)
+        this.stop()
     }
 
     // ACTIONS
@@ -81,9 +112,9 @@ export class TimelinePlayback {
     }
 
     private setAsPlayer() {
-        if (!activePlayback || activePlayback === this) return
+        if (activePlayback && activePlayback === this) return
 
-        activePlayback.stop()
+        activePlayback?.stop()
         activePlayback = this
     }
 
@@ -155,9 +186,7 @@ export class TimelinePlayback {
             runAction({ id: action.id, ...action.data })
         } else if (action.type === "slide") {
             this.previousSlide = action.data
-            ShowTimeline.playSlide(action.data)
-            // } else if (this.onActionCallback) {
-            //     this.onActionCallback(action)
+            ShowTimeline.playSlide(action.data, this.ref)
         } else {
             console.log("Unknown Timeline Action:", action)
         }
@@ -198,14 +227,14 @@ export class TimelinePlayback {
 
     // LISTEN
 
-    private unsubscriber: Unsubscriber | null = null
+    private outputsUnsubscriber: Unsubscriber | null = null
     private startListeners() {
         if (this.type === "show") {
             let firstOutputId = getFirstActiveOutput()?.id || ""
             if (!firstOutputId) return
 
             let skippedFirst = false
-            this.unsubscriber = outputs.subscribe((a) => {
+            this.outputsUnsubscriber = outputs.subscribe((a) => {
                 if (!skippedFirst) {
                     skippedFirst = true
                     return
@@ -246,9 +275,9 @@ export class TimelinePlayback {
         }
     }
     private stopListeners() {
-        if (this.unsubscriber) {
-            this.unsubscriber()
-            this.unsubscriber = null
+        if (this.outputsUnsubscriber) {
+            this.outputsUnsubscriber()
+            this.outputsUnsubscriber = null
         }
     }
 
@@ -283,10 +312,4 @@ export class TimelinePlayback {
         if (this.onTimeCallback) console.error("Only one time callback allowed!")
         this.onTimeCallback = callback
     }
-
-    // private onActionCallback: ((action: TimelineAction) => void) | null = null
-    // onAction(callback: (action: TimelineAction) => void) {
-    //     if (this.onActionCallback) console.error("Only one action callback allowed!")
-    //     this.onActionCallback = callback
-    // }
 }

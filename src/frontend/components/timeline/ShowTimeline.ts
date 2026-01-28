@@ -1,11 +1,11 @@
 import { get, type Unsubscriber } from "svelte/store"
 import type { LayoutRef } from "../../../types/Show"
-import { activeShow, outputs, showsCache, timelineRecordingAction } from "../../stores"
+import { actions, activeShow, outputs, showsCache, timelineRecordingAction } from "../../stores"
 import { actionData } from "../actions/actionData"
 import { getFirstActiveOutput, setOutput } from "../helpers/output"
-import { getLayoutRef } from "../helpers/show"
 import { updateOut } from "../helpers/showActions"
 import { _show } from "../helpers/shows"
+import { clone } from "../helpers/array"
 
 type TimelineActionPass = { type: string; name: string; data: any }
 
@@ -54,6 +54,8 @@ export class ShowTimeline {
         ShowTimeline.recordingActive = false
 
         console.log("Stopped recording timeline actions")
+
+        ShowTimeline.clearOutputListener()
     }
 
     static isRecordingActive() {
@@ -76,6 +78,8 @@ export class ShowTimeline {
 
         let previousRef = ""
         ShowTimeline.outputListenerUnsubscribe = outputs.subscribe((a) => {
+            if (!ShowTimeline.recordingActive) return
+
             let outSlide = a[firstOutputId]?.out?.slide
             if (!outSlide || outSlide.id !== ShowTimeline.showRef?.id || outSlide.layout !== ShowTimeline.showRef?.layoutId || outSlide.index === undefined) return
 
@@ -94,24 +98,21 @@ export class ShowTimeline {
             const groupSlideId = layoutRef[outSlide.index]?.parent?.id || layoutSlide?.id
             const slideGroup = get(showsCache)[ShowTimeline.showRef?.id || ""]?.slides?.[groupSlideId]?.group || ""
             if (callback) callback({ type: "slide", name: slideGroup, data: slideRef })
-
-            // let sequence = { time: Date.now(), slideRef }
-            // ShowTimeline.currentSequence.push(sequence)
-            // if (callback) callback(ShowTimeline.currentSequence)
-
-            // WIP add clearing as actions...
         })
 
         timelineRecordingAction.set({ id: "" })
         ShowTimeline.actionUnsubscribe = timelineRecordingAction.subscribe(({ id, data }) => {
             if (!id) return
 
-            // triggering clear_all/clear_audio does not work well with the synced audio
+            if (id === "run_action") {
+                const action = clone(get(actions)[data.id])
+                if (action && callback) callback({ type: "action", name: action.name, data: { triggers: action.triggers || [], actionValues: action.actionValues || {} } })
+            } else {
+                const action: any = { triggers: [id] }
+                if (data) action.actionValues = { [id]: data }
 
-            const action: any = { triggers: [id] }
-            if (data) action.actionValues = { [id]: data }
-
-            if (callback) callback({ type: "action", name: actionData[id]?.name || "", data: action })
+                if (callback) callback({ type: "action", name: actionData[id]?.name || "", data: action })
+            }
 
             timelineRecordingAction.set({ id: "" })
         })
@@ -128,8 +129,8 @@ export class ShowTimeline {
         }
     }
 
-    static playSlide(ref: { id?: string; index?: number }) {
-        const layoutRef = getLayoutRef()
+    static playSlide(ref: { id?: string; index?: number }, showRef: { id: string; layoutId?: string }) {
+        const layoutRef = _show(showRef.id).layouts([showRef.layoutId]).ref()[0] || []
 
         // check that slide exists
         let slide: LayoutRef | undefined = layoutRef[ref.index || 0]
@@ -137,15 +138,10 @@ export class ShowTimeline {
         if (!slide) return
 
         const index = slide.layoutIndex
-
-        // WIP improve this
-        const showId = get(activeShow)?.id || "" // WIP should be playable independent of svelte component and the active ref
-        const layoutId = _show().get("settings.activeLayout")
         const outSlide = getFirstActiveOutput()?.out?.slide
-        if (outSlide?.id !== showId || outSlide?.layout !== layoutId || outSlide?.index !== index) {
+        if (outSlide?.id !== showRef.id || outSlide?.layout !== showRef.layoutId || outSlide?.index !== index) {
             updateOut("active", index, layoutRef)
-            // WIP check that slide is the correct ID ??
-            setOutput("slide", { id: showId, layout: layoutId, index, line: 0 })
+            setOutput("slide", { id: showRef.id, layout: showRef.layoutId, index, line: 0 })
         }
     }
 }

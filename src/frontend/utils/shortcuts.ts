@@ -20,7 +20,7 @@ import { importFromClipboard } from "../converters/importHelpers"
 import { addSection } from "../converters/project"
 import { requestMain, sendMain } from "../IPC/main"
 import { changeSlidesView } from "../show/slides"
-import { activeDrawerTab, activeEdit, activeFocus, activePage, activePopup, activeStage, alertMessage, contextActive, drawer, focusedArea, focusMode, guideActive, media, os, outLocked, outputs, outputSlideCache, quickSearchActive, refreshEditSlide, selected, showRecentlyUsedProjects, showsCache, special, spellcheck, styles, textEditActive, topContextActive, videosData, volume } from "../stores"
+import { activeDrawerTab, activeEdit, activeFocus, activePage, activePopup, activeStage, alertMessage, contextActive, drawer, focusedArea, focusMode, guideActive, media, os, outLocked, outputs, outputSlideCache, quickSearchActive, refreshEditSlide, selected, showRecentlyUsedProjects, showsCache, special, spellcheck, styles, textEditActive, timelineRecordingAction, topContextActive, videosData, volume } from "../stores"
 import { audioExtensions, imageExtensions, videoExtensions } from "../values/extensions"
 import { drawerTabs } from "../values/tabs"
 import { activeShow } from "./../stores"
@@ -259,7 +259,9 @@ export const previewShortcuts = {
         if (!presentationControllersKeysDisabled()) clearAll()
     },
     F1: () => {
-        if (!get(outLocked)) clearBackground()
+        if (get(outLocked)) return
+        clearBackground()
+        timelineRecordingAction.set({ id: "clear_background" })
     },
     F2: () => {
         // return if "rename" is selected
@@ -267,15 +269,19 @@ export const previewShortcuts = {
         if (presentationControllersKeysDisabled()) return false
 
         clearSlide()
+        timelineRecordingAction.set({ id: "clear_slide" })
         return true
     },
     F3: () => {
         if (get(outLocked)) return
         setOutput("overlays", [])
         setOutput("effects", [])
+        timelineRecordingAction.set({ id: "clear_overlays" })
     },
     F4: () => {
-        if (!get(outLocked)) clearAudio("", { clearPlaylist: true, commonClear: true })
+        if (get(outLocked)) return
+        clearAudio("", { clearPlaylist: true, commonClear: true })
+        timelineRecordingAction.set({ id: "clear_audio" })
     },
     F5: () => {
         if (!presentationControllersKeysDisabled()) nextSlideIndividual(null)
