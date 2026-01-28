@@ -297,11 +297,12 @@ export interface TimelineAction {
     time: number // ms
     duration?: number // ms (media)
     name: string
-    type: string // "slide" | "action" | "audio"
+    type: string // "action" | "slide" | "show" | "audio"
     data: {
-        id?: string // slide/action
+        id?: string // slide/action/show
         path?: string // audio
         index?: number // slide
+        layoutId?: string // show
         triggers?: string[] // action
         actionValues?: any // action
     }

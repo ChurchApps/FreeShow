@@ -368,7 +368,7 @@ export const previewShortcuts = {
         }
 
         // space bar should toggle timeline for show when active
-        if (get(special).timelineActive) return
+        if (get(special).timelineActive || get(special).projectTimelineActive) return
 
         const outputId = getFirstActiveOutput()?.id || ""
         const currentOutput = outputId ? get(outputs)[outputId] || null : null

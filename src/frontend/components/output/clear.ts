@@ -8,7 +8,7 @@ import { startMetronome } from "../drawer/audio/metronome"
 import { clone } from "../helpers/array"
 import { clearOverlayTimer, clearPlayingVideo, getAllActiveOutputs, isOutCleared, setOutput } from "../helpers/output"
 import { _show } from "../helpers/shows"
-import { stopActiveTimelinePlayback } from "../timeline/TimelinePlayback"
+import { getActiveTimelinePlayback } from "../timeline/TimelinePlayback"
 
 export function clearAll(button = false) {
     if (get(outLocked)) return
@@ -23,7 +23,7 @@ export function clearAll(button = false) {
 
     storeCache()
 
-    stopActiveTimelinePlayback()
+    getActiveTimelinePlayback()?.stop()
 
     const keepLastSlide = get(focusMode)
     clearBackground()

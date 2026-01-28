@@ -1,16 +1,19 @@
 import { get, Unsubscriber } from "svelte/store"
 import type { TimelineAction } from "../../../types/Show"
 import { AudioPlayer } from "../../audio/audioPlayer"
-import { activeShow, isTimelinePlaying, outputs, playingAudio } from "../../stores"
+import { activeShow, isTimelinePlaying, outputs, playingAudio, showsCache } from "../../stores"
 import { runAction } from "../actions/actions"
+import { clone } from "../helpers/array"
 import { getFirstActiveOutput } from "../helpers/output"
+import { loadShows } from "../helpers/setShow"
 import { _show } from "../helpers/shows"
 import { ShowTimeline } from "./ShowTimeline"
 import { TimelineType } from "./TimelineActions"
+import { getProjectShowDurations } from "./timeline"
 
 let activePlayback: TimelinePlayback | null = null
-export function stopActiveTimelinePlayback() {
-    activePlayback?.stop()
+export function getActiveTimelinePlayback() {
+    return activePlayback
 }
 
 const ONE_MINUTE = 60000
@@ -31,6 +34,8 @@ export class TimelinePlayback {
 
         if (type === "show") {
             this.ref = { id: get(activeShow)?.id || "", layoutId: _show().get("settings.activeLayout") }
+        } else if (type === "project") {
+            this.ref = { id: get(activeShow)?.id || "" }
         }
 
         // restore playing
@@ -99,13 +104,28 @@ export class TimelinePlayback {
         this.updateDuration()
     }
 
+    private showDurations: Record<string, number> = {}
     private duration: number = MIN_DURATION // s
     updateDuration() {
         // at least 5 minutes or 1 minute after last action
         const lastActionTime = this.actions.length > 0 ? Math.max(...this.actions.map((a) => a.time + (a.duration || 0) * 1000)) : 0
-        const duration = Math.max(MIN_DURATION, lastActionTime + ONE_MINUTE)
+        let duration = Math.max(MIN_DURATION, lastActionTime + ONE_MINUTE)
 
         // WIP set max duration to audio length if any (and no futher actions)
+
+        // get show durations
+        if (this.type === "project") {
+            this.showDurations = getProjectShowDurations(this.actions)
+            Object.entries(this.showDurations).some(([showId, d]) => {
+                const actionTime = this.actions.find((a) => a.type === "show" && a.data?.id === showId)?.time || 0
+                const dMs = actionTime + d * 1000 + ONE_MINUTE
+                if (dMs > duration) {
+                    duration = Math.max(MIN_DURATION, dMs)
+                    return true
+                }
+                return false
+            })
+        }
 
         this.duration = duration
         for (const callback of this.onDurationCallbacks) callback(this.duration)
@@ -160,16 +180,7 @@ export class TimelinePlayback {
         this.hasPlayed = []
 
         // run actions
-        for (const action of this.actions) {
-            if (action.type === "audio") {
-                this.checkAudio(action)
-                continue
-            }
-
-            if (action.time >= previousTime && action.time < this.currentTime) {
-                this.playAction(action)
-            }
-        }
+        this.checkActions(this.actions, previousTime, this.ref)
 
         // check end
         if (this.currentTime >= this.duration) {
@@ -180,13 +191,31 @@ export class TimelinePlayback {
         if (this.onTimeCallback) this.onTimeCallback(this.currentTime)
     }
 
+    private checkActions(actions: TimelineAction[], previousTime: number, ref: typeof this.ref) {
+        for (const action of actions) {
+            if (action.type === "audio") {
+                this.checkAudio(action)
+                continue
+            }
+
+            if (action.type === "show") {
+                this.checkShow(action, previousTime)
+                continue
+            }
+
+            if (action.time >= previousTime && action.time < this.currentTime) {
+                this.playAction(action, ref)
+            }
+        }
+    }
+
     private previousSlide: { id?: string; index?: number } = {}
-    private playAction(action: TimelineAction) {
+    private playAction(action: TimelineAction, ref: typeof this.ref) {
         if (action.type === "action") {
             runAction({ id: action.id, ...action.data })
         } else if (action.type === "slide") {
             this.previousSlide = action.data
-            ShowTimeline.playSlide(action.data, this.ref)
+            ShowTimeline.playSlide(action.data, ref)
         } else {
             console.log("Unknown Timeline Action:", action)
         }
@@ -223,6 +252,53 @@ export class TimelinePlayback {
         const currentAudioTime = playing.audio.currentTime || 0
         const diff = Math.abs(currentAudioTime - seekPos) * 1000
         if (diff > tolerance) AudioPlayer.setTime(path, seekPos)
+    }
+
+    private isLoaded: string[] = []
+    private checkShow(action: TimelineAction, previousTime: number) {
+        const showId = action.data?.id
+        if (!showId) return
+        const show = get(showsCache)[showId]
+        if (!show) {
+            if (this.isLoaded.includes(showId)) return
+            this.isLoaded.push(showId)
+            loadShows([showId])
+            return
+        }
+
+        const layoutId = action.data?.layoutId || show.settings?.activeLayout || ""
+        const layout = show.layouts?.[layoutId]
+        if (!layout) return
+
+        const timeline = layout.timeline
+
+        // if show does not have any timeline actions, just start the first slide instead
+        if (!timeline?.actions?.length) {
+            const shouldPlay = action.time >= previousTime && action.time < this.currentTime
+            if (!shouldPlay) return
+
+            // start first slide
+            const firstSlideId = layout.slides?.[0]?.id
+            if (!firstSlideId) return
+
+            ShowTimeline.playSlide({ id: firstSlideId, index: 0 }, { id: showId, layoutId })
+            return
+        }
+
+        const showStart = action.time
+        const duration = this.showDurations[showId] || 0
+        const showEnd = action.time + duration * 1000
+        const shouldPlay = this.currentTime >= showStart && this.currentTime < showEnd
+
+        if (!shouldPlay) return
+
+        let showTimelineActions = clone(timeline.actions)
+
+        // update times to match new timeline position
+        showTimelineActions = showTimelineActions.map((a) => ({ ...a, time: a.time + showStart }))
+
+        const ref = { id: showId, layoutId }
+        this.checkActions(showTimelineActions, previousTime, ref)
     }
 
     // LISTEN

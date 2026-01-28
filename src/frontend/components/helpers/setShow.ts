@@ -179,39 +179,39 @@ export async function loadShows(s: string[], deleting = false) {
 
     await Promise.all(
         notLoaded.map(async (showId) => {
-            await requestMain(Main.SHOW, { name: get(shows)[showId].name, id: showId }, (data) => {
-                if (data.error || !data.content) {
-                    notFound.update((a) => {
-                        a.show.push(data.id)
-                        return a
-                    })
+            const data = await requestMain(Main.SHOW, { name: get(shows)[showId].name, id: showId })
+
+            if (data.error || !data.content) {
+                notFound.update((a) => {
+                    a.show.push(data.id)
+                    return a
+                })
+                return
+            }
+
+            // has been loaded in the meantime
+            if (get(showsCache)[data.id]) return
+
+            // remove from not found
+            if (get(notFound).show.includes(data.id)) {
+                notFound.update((a) => {
+                    a.show.splice(a.show.indexOf(data.id), 1)
+                    return a
+                })
+            }
+
+            // might have been saved wrongly
+            if (typeof data.content[1] === "string") {
+                try {
+                    data.content[1] = JSON.parse(data.content[1])
+                    if (data.content[1]?.[1]?.name) data.content[1] = data.content[1][1]
+                } catch (err) {
                     return
                 }
+            }
 
-                // has been loaded in the meantime
-                if (get(showsCache)[data.id]) return
-
-                // remove from not found
-                if (get(notFound).show.includes(data.id)) {
-                    notFound.update((a) => {
-                        a.show.splice(a.show.indexOf(data.id), 1)
-                        return a
-                    })
-                }
-
-                // might have been saved wrongly
-                if (typeof data.content[1] === "string") {
-                    try {
-                        data.content[1] = JSON.parse(data.content[1])
-                        if (data.content[1]?.[1]?.name) data.content[1] = data.content[1][1]
-                    } catch (err) {
-                        return
-                    }
-                }
-
-                const show = fixShowIssues(data.content[1])
-                setShow(data.id || data.content[0], show)
-            })
+            const show = fixShowIssues(data.content[1])
+            await setShow(data.id || data.content[0], show)
         })
     )
 

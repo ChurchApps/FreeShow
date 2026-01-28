@@ -1,13 +1,15 @@
 import { get, Unsubscriber } from "svelte/store"
 import { uid } from "uid"
 import type { TimelineAction } from "../../../types/Show"
-import { activeShow, selected, showsCache } from "../../stores"
+import { activeProject, activeShow, projects, selected, shows, showsCache } from "../../stores"
 import { waitUntilValueIsDefined } from "../../utils/common"
 import { clone } from "../helpers/array"
 import { _show } from "../helpers/shows"
 import { getExtension, getMediaType } from "../helpers/media"
 import { getLayoutRef } from "../helpers/show"
 import { AudioPlayer } from "../../audio/audioPlayer"
+import { timelineSections } from "./timeline"
+import { loadShows } from "../helpers/setShow"
 
 export type TimelineType = "slide" | "show" | "project"
 export class TimelineActions {
@@ -31,6 +33,12 @@ export class TimelineActions {
 
                 this.updateRef()
             })
+        } else if (type === "project") {
+            this.unsubscriber = activeProject.subscribe((id) => {
+                if (!id) return
+
+                this.updateRef()
+            })
         } else {
             this.updateRef()
         }
@@ -50,6 +58,9 @@ export class TimelineActions {
             }
 
             this.ref = { id: showId, layoutId: currentShow.settings?.activeLayout || "" }
+        } else if (this.type === "project") {
+            const projectId = get(activeProject) || ""
+            this.ref = { id: projectId }
         }
 
         this.loadActions()
@@ -89,6 +100,17 @@ export class TimelineActions {
 
                 return a
             })
+        } else if (this.type === "project") {
+            const projectId = this.ref.id
+
+            projects.update((a) => {
+                if (!a[projectId]) return a
+
+                if (!a[projectId].timeline) a[projectId].timeline = { actions: [] }
+                a[projectId].timeline.actions = clone(this.actions)
+
+                return a
+            })
         }
     }
 
@@ -99,6 +121,8 @@ export class TimelineActions {
 
         if (this.type === "show") {
             this.actions = clone(_show(this.ref.id).layouts([this.ref.layoutId]).get()[0]?.timeline?.actions || [])
+        } else if (this.type === "project") {
+            this.actions = clone(get(projects)[this.ref.id]?.timeline?.actions || [])
         }
 
         this.callback(this.actions)
@@ -162,7 +186,6 @@ export class TimelineActions {
 
     // DROP
 
-    private supportedTypes = ["action", "slide", "audio"]
     handleDrop(e: DragEvent, dropTime: number) {
         const existingAudioActions = this.actions.some((a) => a.type === "audio")
 
@@ -184,25 +207,40 @@ export class TimelineActions {
             }
         }
 
-        const id = selection.id
-        if (!id || !selection.data?.length || !this.supportedTypes.includes(id)) return
+        let id = selection.id
+        if (id === "show_drawer") id = "show"
+
+        const supportedTypes = Object.keys(timelineSections[this.type] || {})
+        if (!id || !selection.data?.length || !supportedTypes.includes(id)) return
 
         const layoutRef = getLayoutRef()
 
         selection.data.forEach(async (item) => {
             const time = id === "audio" && !existingAudioActions ? 0 : dropTime
             const type = id
-            const data = getData()
+            const data = await getData()
             const name = getName() || id
+
+            if (data === null) return
 
             const action: TimelineAction = { id: uid(6), time, type, data, name }
             if (id === "audio") action.duration = await AudioPlayer.getDuration(item.path)
 
             this.addAction(action)
 
-            function getData() {
+            async function getData() {
                 if (id === "action") return { triggers: item.triggers || [], actionValues: item.actionValues || {} }
                 if (id === "slide") return { id: layoutRef[item.index]?.id, index: item.index }
+                if (id === "show") {
+                    let show = get(showsCache)[item.id]
+                    if (!show) {
+                        await loadShows([item.id])
+                        show = get(showsCache)[item.id]
+                    }
+                    if (!show) return null
+
+                    return { id: item.id, layoutId: show.settings?.activeLayout || "" }
+                }
 
                 return item
             }
@@ -213,6 +251,10 @@ export class TimelineActions {
                     const groupSlideId = layoutRef[item.index]?.parent?.id || slideId
                     const slideGroup = get(showsCache)[item?.showId]?.slides?.[groupSlideId]?.group
                     return slideGroup || ""
+                }
+
+                if (id === "show") {
+                    return get(shows)[item.id]?.name || ""
                 }
 
                 return item.name || ""

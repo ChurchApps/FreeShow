@@ -1,12 +1,22 @@
-import type { TimelineAction } from "../../../types/Show"
+import { get } from "svelte/store"
+import type { Timeline, TimelineAction } from "../../../types/Show"
+import { showsCache } from "../../stores"
+import { loadShows } from "../helpers/setShow"
 
 // SECTIONS
 
 type TimelineSection = { name: string; icon: string; hasData: boolean }
-export const showTimelineSections = {
-    action: { name: "tabs.actions", icon: "actions", hasData: false },
-    slide: { name: "tools.slide", icon: "slide", hasData: false },
-    audio: { name: "tabs.audio", icon: "audio", hasData: false }
+export const timelineSections = {
+    show: {
+        action: { name: "tabs.actions", icon: "actions", hasData: false },
+        slide: { name: "tools.slide", icon: "slide", hasData: false },
+        audio: { name: "tabs.audio", icon: "audio", hasData: false }
+    },
+    project: {
+        action: { name: "tabs.actions", icon: "actions", hasData: false },
+        show: { name: "formats.show", icon: "slide", hasData: false },
+        audio: { name: "tabs.audio", icon: "audio", hasData: false }
+    }
 }
 
 export const TIMELINE_SECTION_TOP = 25
@@ -89,7 +99,7 @@ export function parseTime(str: string): number {
 
 // ACTIONS
 
-export function getActionsAtPosition(e: MouseEvent, trackWrapper: HTMLElement, actions: TimelineAction[], actionOrder: string[], zoomLevel: number, box: { x: number; y: number; w: number; h: number } | null = null): string[] {
+export function getActionsAtPosition(e: MouseEvent, trackWrapper: HTMLElement, actions: TimelineAction[], actionOrder: string[], zoomLevel: number, box: { x: number; y: number; w: number; h: number } | null = null, projectShowDurations: Record<string, number> = {}): string[] {
     if (!trackWrapper) return []
 
     const rect = trackWrapper.getBoundingClientRect()
@@ -104,8 +114,9 @@ export function getActionsAtPosition(e: MouseEvent, trackWrapper: HTMLElement, a
         let aw = 0
         let ah = 60 // default clip H
 
-        if (action.duration) {
-            aw = action.duration * zoomLevel
+        const duration = action.duration || projectShowDurations[action.data?.id || ""] || 0
+        if (duration) {
+            aw = duration * zoomLevel
         } else {
             ay = baseY + 5
             ax -= 7 // centered
@@ -131,6 +142,41 @@ export function getActionsAtPosition(e: MouseEvent, trackWrapper: HTMLElement, a
     function getActionBaseY(action: TimelineAction): number {
         return TIMELINE_SECTION_TOP + actionOrder.indexOf(action.type) * (TIMELINE_SECTION_HEIGHT + TIMELINE_SECTION_GAP)
     }
+}
+
+// PROJECT TIMELINE
+
+export function getProjectShowDurations(actions: TimelineAction[], _updater: any = null) {
+    const durations: Record<string, number> = {}
+    const showActions = actions.filter((a) => a.type === "show") || []
+
+    let shouldLoad: string[] = []
+    for (const item of showActions) {
+        const showId = item.data?.id
+        if (!showId) continue
+
+        const show = get(showsCache)[showId]
+        if (!show) {
+            // load if not already
+            shouldLoad.push(showId)
+            continue
+        }
+
+        const layoutId = item.data.layoutId || ""
+        const showTimeline = show.layouts?.[layoutId]?.timeline
+        if (!showTimeline?.actions?.length) continue
+
+        durations[showId] = getTimelineDuration(showTimeline)
+    }
+
+    if (shouldLoad.length) loadShows(shouldLoad)
+
+    return durations
+}
+
+function getTimelineDuration(timeline: Timeline) {
+    const lastActionTime = timeline.actions.length > 0 ? Math.max(...timeline.actions.map((a) => a.time + (a.duration || 0) * 1000)) : 0
+    return lastActionTime / 1000
 }
 
 // INPUTS

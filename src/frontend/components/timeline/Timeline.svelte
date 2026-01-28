@@ -5,7 +5,7 @@
     import type { TimelineAction } from "../../../types/Show"
     import { AudioPlayer } from "../../audio/audioPlayer"
     import { createWaveform } from "../../audio/audioWaveform"
-    import { activeShow, activeTriggerFunction, playingAudio, resized } from "../../stores"
+    import { activeShow, activeTriggerFunction, playingAudio, resized, showsCache, special } from "../../stores"
     import { DEFAULT_WIDTH } from "../../utils/common"
     import { translateText } from "../../utils/language"
     import { actionData } from "../actions/actionData"
@@ -14,16 +14,16 @@
     import FloatingInputs from "../input/FloatingInputs.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
     import { ShowTimeline } from "./ShowTimeline"
-    import { formatTime, getActionsAtPosition, getTickInterval, getTimelineSections, parseTime, showTimelineSections, TIMELINE_SECTION_GAP, TIMELINE_SECTION_HEIGHT, TIMELINE_SECTION_TOP, timelineZoom } from "./timeline"
+    import { formatTime, getActionsAtPosition, getProjectShowDurations, getTickInterval, getTimelineSections, parseTime, TIMELINE_SECTION_GAP, TIMELINE_SECTION_HEIGHT, TIMELINE_SECTION_TOP, timelineSections, timelineZoom } from "./timeline"
     import { TimelineActions, type TimelineType } from "./TimelineActions"
-    import { TimelinePlayback } from "./TimelinePlayback"
+    import { getActiveTimelinePlayback, TimelinePlayback } from "./TimelinePlayback"
 
     export let type: TimelineType
     export let isClosed: boolean = false
 
     // SECTIONS
 
-    const sections = clone(showTimelineSections)
+    const sections = clone(timelineSections[type] || {})
     let tabIds = Object.keys(sections)
 
     const maxTrackIndex = tabIds.length
@@ -102,8 +102,8 @@
         }
     })
 
-    let duration = 60000 * 5
-    player.onDuration((time) => (duration = time))
+    let timelineDuration = 60000 * 5
+    player.onDuration((time) => (timelineDuration = time))
 
     let currentTime = 0
     let updateTimer = 0
@@ -149,7 +149,7 @@
     $: tickInterval = getTickInterval(zoomLevel)
     $: snapInterval = (tickInterval * 1000) / 10
 
-    $: totalTickCount = Math.ceil(duration / 1000 / tickInterval)
+    $: totalTickCount = Math.ceil(timelineDuration / 1000 / tickInterval)
     $: visibleTicksStartIndex = Math.min(totalTickCount, Math.max(0, Math.floor(scrollLeft / (tickInterval * zoomLevel))))
     $: visibleTicksEndIndex = Math.min(totalTickCount, Math.ceil((scrollLeft + containerWidth) / (tickInterval * zoomLevel)))
     $: visibleTickCount = Math.max(0, visibleTicksEndIndex - visibleTicksStartIndex + 1)
@@ -276,7 +276,7 @@
 
         selectionRect = { x: visualX, y: visualY, w: visualW, h: visualH }
 
-        const newSelectedIds = getActionsAtPosition(e, trackWrapper, actions, tabIds, zoomLevel, selectionRect)
+        const newSelectedIds = getActionsAtPosition(e, trackWrapper, actions, tabIds, zoomLevel, selectionRect, projectShowDurations)
 
         if (selectionStartIds.length > 0) {
             const combined = new Set([...selectionStartIds, ...newSelectedIds])
@@ -308,7 +308,7 @@
         const seekTime = (offsetX / zoomLevel) * 1000
 
         const snappedTime = isClosed ? Math.round(seekTime / 10) * 10 : Math.round(seekTime / snapInterval) * snapInterval
-        const time = Math.max(0, Math.min(snappedTime, duration))
+        const time = Math.max(0, Math.min(snappedTime, timelineDuration))
         player.setTime(time)
     }
 
@@ -370,7 +370,7 @@
             if (isScrubbing) {
                 const snappedTime = Math.round(seekTime / 10) * 10
                 // const snappedTime = Math.round(seekTime / snapInterval) * snapInterval // not smooth
-                const time = Math.max(0, Math.min(snappedTime, duration))
+                const time = Math.max(0, Math.min(snappedTime, timelineDuration))
                 player.setTime(time)
             } else if (draggingActionId) {
                 const newTime = seekTime - dragTimeOffset
@@ -397,7 +397,7 @@
     function startActionDrag(e: MouseEvent, id: string) {
         // select on right-click
         if (e.button === 2) {
-            const clickedActions = getActionsAtPosition(e, trackWrapper, actions, tabIds, zoomLevel)
+            const clickedActions = getActionsAtPosition(e, trackWrapper, actions, tabIds, zoomLevel, null, projectShowDurations)
             // skip if selection includes any clicked action
             if (clickedActions.some((a) => selectedActionIds.includes(a))) return
             // select all right clicked actions
@@ -497,7 +497,7 @@
         const rect = trackWrapper.getBoundingClientRect()
         const offsetX = e.clientX - rect.left + trackWrapper.scrollLeft
         const dropTime = (offsetX / zoomLevel) * 1000
-        const resultTime = Math.max(0, Math.min(Math.round(dropTime / 10) * 10, duration))
+        const resultTime = Math.max(0, Math.min(Math.round(dropTime / 10) * 10, timelineDuration))
 
         timeline.handleDrop(e, resultTime)
     }
@@ -521,7 +521,7 @@
         let time = currentTime
 
         if (!isNaN(ms)) {
-            time = Math.max(0, Math.min(ms, duration))
+            time = Math.max(0, Math.min(ms, timelineDuration))
             player.setTime(time)
             centerPlayhead()
         }
@@ -573,6 +573,9 @@
 
         if (e.key !== " " || e.repeat) return
 
+        const active = getActiveTimelinePlayback()
+        if (active ? active !== player : type === "show" && $special.projectTimelineActive) return
+
         e.preventDefault()
         if (isPlaying) player.pause()
         else player.play()
@@ -588,8 +591,10 @@
 
     // show timeline recording
     let isRecording = false
-    $: if ($activeShow) isRecording = ShowTimeline.isRecordingActive()
+    $: if (type === "show" && $activeShow) isRecording = ShowTimeline.isRecordingActive()
     function toggleRecording() {
+        if (type !== "show") return
+
         isRecording = ShowTimeline.toggleRecording((sequence) => {
             const time = Number(currentTime.toFixed(2))
             // skip if already exists at this time (within 100ms)
@@ -625,6 +630,8 @@
     }
 
     $: if (isClosed !== undefined) resetView()
+
+    $: projectShowDurations = type === "project" ? getProjectShowDurations(actions, $showsCache) : {}
 </script>
 
 <svelte:window on:keydown={keydown} />
@@ -640,7 +647,7 @@
                 <Icon id="stop" white={!isPlaying} />
             </MaterialButton>
 
-            {#if !actions.length || isRecording}
+            {#if (type === "show" && !actions.length) || isRecording}
                 <MaterialButton style="min-width: 40px;padding: 10px;" title="actions.{isRecording ? 'stop_recording' : 'start_recording'}" on:click={toggleRecording} red={isRecording}>
                     <Icon id="record" white />
                 </MaterialButton>
@@ -650,11 +657,13 @@
 
             <div class="timeline-track-wrapper" bind:this={trackWrapper} on:mousedown={startRulerScrub} bind:clientWidth={containerWidth} on:scroll={handleScroll} on:wheel={handleWheel}>
                 <!-- svelte-ignore a11y-click-events-have-key-events -->
-                <div class="timeline-track" style="width: {(duration / 1000) * zoomLevel}px;">
+                <div class="timeline-track" style="width: {(timelineDuration / 1000) * zoomLevel}px;">
                     <!-- Actions -->
                     {#each actions as action (action.id)}
-                        {#if action.duration}
-                            <div class="action-clip context #timeline_node" class:selected={selectedActionIds.includes(action.id)} style="left: {(action.time / 1000) * zoomLevel}px; width: {action.duration * zoomLevel}px; top: 50%;transform: translateY(-50%);height: 100%;opacity: 0.3;" data-title={action.name}>
+                        {@const duration = action.duration || (type === "project" && action.type === "show" ? projectShowDurations[action.data.id || ""] : 0) || 0}
+
+                        {#if duration}
+                            <div class="action-clip context #timeline_node" class:selected={selectedActionIds.includes(action.id)} style="left: {(action.time / 1000) * zoomLevel}px; width: {duration * zoomLevel}px; top: 50%;transform: translateY(-50%);height: 100%;opacity: 0.3;" data-title={action.name}>
                                 <div class="action-clip-content">
                                     <div class="clip-label">{action.name}</div>
                                 </div>
@@ -679,11 +688,19 @@
                 </div>
             </div>
 
-            <MaterialButton style="min-width: 40px;padding: 10px;" title="main.open" on:click={() => resized.update((a) => ({ ...a, timeline: DEFAULT_WIDTH }))}>
+            <MaterialButton style="min-width: 40px;padding: 10px;" title="main.open" on:click={() => resized.update((a) => ({ ...a, [(type === "project" ? "project_" : "") + "timeline"]: DEFAULT_WIDTH }))}>
                 <Icon id="up" white />
             </MaterialButton>
         </div>
     {:else}
+        <!-- {#if type === "project" && projectShowTimelines.length}
+            <div class="header">
+                {#each projectShowTimelines as showTimeline}
+                    <div class="tag">{showTimeline.name}</div>
+                {/each}
+            </div>
+        {/if} -->
+
         <div class="timeline-grid">
             <!-- Top Left Corner -->
             <div class="corner" style="width: {usedHeaderWidth}px; border-bottom: 1px solid rgba(255,255,255,0.1); border-right: 1px solid rgba(255,255,255,0.1);">
@@ -692,7 +709,7 @@
 
             <!-- Ruler (Sticky Top) -->
             <div class="ruler-container" bind:this={rulerContainer} on:mousedown={startRulerScrub} on:wheel={(e) => handleWheel(e, true)}>
-                <div class="ruler" style="width: {(duration / 1000) * zoomLevel}px">
+                <div class="ruler" style="width: {(timelineDuration / 1000) * zoomLevel}px">
                     {#each Array(visibleTickCount) as _, i}
                         {@const tickIndex = i + visibleTicksStartIndex}
                         {@const pos = tickIndex * tickInterval * zoomLevel}
@@ -729,7 +746,7 @@
             <!-- Main Content (Scroll Master) -->
             <div class="timeline-track-wrapper" bind:this={trackWrapper} bind:clientWidth={containerWidth} on:scroll={handleScroll} on:wheel={handleWheel} on:dragover={handleDragOver} on:drop={handleDrop}>
                 <!-- svelte-ignore a11y-click-events-have-key-events -->
-                <div class="timeline-track" style="width: {(duration / 1000) * zoomLevel}px; height: {totalTrackHeight}px;" on:mousedown={startContentInteraction}>
+                <div class="timeline-track" style="width: {(timelineDuration / 1000) * zoomLevel}px; height: {totalTrackHeight}px;" on:mousedown={startContentInteraction}>
                     <!-- Grid Lines -->
                     <div class="grid">
                         {#each Array(visibleTickCount) as _, i}
@@ -747,9 +764,11 @@
 
                     <!-- Actions -->
                     {#each actions as action (action.id)}
+                        {@const duration = action.duration || (type === "project" && action.type === "show" ? projectShowDurations[action.data.id || ""] : 0) || 0}
                         {@const baseY = getActionBaseY(action)}
-                        {#if action.duration}
-                            <div class="action-clip context #timeline_node" class:selected={selectedActionIds.includes(action.id)} style="left: {(action.time / 1000) * zoomLevel}px; width: {action.duration * zoomLevel}px; top: {baseY}px;height: {TIMELINE_SECTION_HEIGHT + 4}px;" data-title="{formatTime(action.time)}-{formatTime(action.duration * 1000)}: {action.name}" on:mousedown|stopPropagation={(e) => startActionDrag(e, action.id)}>
+
+                        {#if duration}
+                            <div class="action-clip context #timeline_node" class:selected={selectedActionIds.includes(action.id)} style="left: {(action.time / 1000) * zoomLevel}px; width: {duration * zoomLevel}px; top: {baseY}px;height: {TIMELINE_SECTION_HEIGHT + 4}px;" data-title="{formatTime(action.time)}-{formatTime(duration * 1000)}: {action.name}" on:mousedown|stopPropagation={(e) => startActionDrag(e, action.id)}>
                                 <div class="action-clip-content">
                                     {#if action.type === "audio"}
                                         <div class="waveform-container" use:useWaveform={action.data.path || ""}></div>
@@ -793,9 +812,11 @@
                 <Icon size={1.3} id="stop" white={!isPlaying} />
             </MaterialButton>
 
-            <MaterialButton disabled={isPlaying && !isRecording} title="actions.{isRecording ? 'stop_recording' : 'start_recording'}" on:click={toggleRecording} red={isRecording}>
-                <Icon size={1.3} id="record" white />
-            </MaterialButton>
+            {#if type === "show"}
+                <MaterialButton disabled={isPlaying && !isRecording} title="actions.{isRecording ? 'stop_recording' : 'start_recording'}" on:click={toggleRecording} red={isRecording}>
+                    <Icon size={1.3} id="record" white />
+                </MaterialButton>
+            {/if}
 
             <div class="divider" />
 
@@ -1122,4 +1143,24 @@
     .closed .action-clip-content {
         align-items: center;
     }
+
+    /* header */
+
+    .header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px;
+        background-color: var(--primary-darker);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    /* .header .tag {
+        background-color: var(--secondary-opacity);
+        color: var(--secondary-text);
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 0.9em;
+        white-space: nowrap;
+    } */
 </style>
