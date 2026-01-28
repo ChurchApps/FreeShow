@@ -140,7 +140,7 @@ export class ShowTimeline {
         const index = slide.layoutIndex
         const outSlide = getFirstActiveOutput()?.out?.slide
         if (outSlide?.id !== showRef.id || outSlide?.layout !== showRef.layoutId || outSlide?.index !== index) {
-            updateOut("active", index, layoutRef)
+            updateOut(showRef.id, index, layoutRef)
             setOutput("slide", { id: showRef.id, layout: showRef.layoutId, index, line: 0 })
         }
     }

@@ -3,9 +3,8 @@
     import { fade } from "svelte/transition"
     import { uid } from "uid"
     import type { TimelineAction } from "../../../types/Show"
-    import { AudioPlayer } from "../../audio/audioPlayer"
     import { createWaveform } from "../../audio/audioWaveform"
-    import { activeShow, activeTriggerFunction, playingAudio, resized, showsCache, special } from "../../stores"
+    import { activeShow, activeTriggerFunction, resized, showsCache, special } from "../../stores"
     import { DEFAULT_WIDTH } from "../../utils/common"
     import { translateText } from "../../utils/language"
     import { actionData } from "../actions/actionData"
@@ -75,31 +74,11 @@
     })
     player.onPause(() => {
         isPlaying = false
-
-        // check if any audio is playing and pause it
-        for (const action of actions) {
-            if (action.type === "audio") {
-                const a = action.data
-                if (a && a.path && $playingAudio[a.path] && !$playingAudio[a.path].paused) {
-                    AudioPlayer.pause(a.path)
-                }
-            }
-        }
     })
     player.onStop(() => {
         isPlaying = false
 
         if (isRecording) toggleRecording()
-
-        // check if any audio is playing and stop it
-        for (const action of actions) {
-            if (action.type === "audio") {
-                const a = action.data
-                if (a && a.path && $playingAudio[a.path]) {
-                    AudioPlayer.stop(a.path)
-                }
-            }
-        }
     })
 
     let timelineDuration = 60000 * 5

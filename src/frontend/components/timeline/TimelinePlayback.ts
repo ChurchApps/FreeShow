@@ -63,6 +63,8 @@ export class TimelinePlayback {
         this.stopLoop()
         this.stopListeners()
 
+        this.checkAudioPause(this.actions)
+
         this.runCallbacks(this.onPauseCallbacks)
     }
 
@@ -76,6 +78,8 @@ export class TimelinePlayback {
         this.setTime(0)
         this.stopLoop()
         this.stopListeners()
+
+        this.checkAudioStop(this.actions)
 
         this.runCallbacks(this.onStopCallbacks)
     }
@@ -180,19 +184,7 @@ export class TimelinePlayback {
         this.hasPlayed = []
 
         // run actions
-        this.checkActions(this.actions, previousTime, this.ref)
-
-        // check end
-        if (this.currentTime >= this.duration) {
-            this.currentTime = this.duration
-            this.pause()
-        }
-
-        if (this.onTimeCallback) this.onTimeCallback(this.currentTime)
-    }
-
-    private checkActions(actions: TimelineAction[], previousTime: number, ref: typeof this.ref) {
-        for (const action of actions) {
+        for (const action of this.actions) {
             if (action.type === "audio") {
                 this.checkAudio(action)
                 continue
@@ -203,10 +195,19 @@ export class TimelinePlayback {
                 continue
             }
 
-            if (action.time >= previousTime && action.time < this.currentTime) {
-                this.playAction(action, ref)
+            const shouldPlay = action.time >= previousTime && action.time < this.currentTime
+            if (shouldPlay) {
+                this.playAction(action, this.ref)
             }
         }
+
+        // check end
+        if (this.currentTime >= this.duration) {
+            this.currentTime = this.duration
+            this.pause()
+        }
+
+        if (this.onTimeCallback) this.onTimeCallback(this.currentTime)
     }
 
     private previousSlide: { id?: string; index?: number } = {}
@@ -254,23 +255,68 @@ export class TimelinePlayback {
         if (diff > tolerance) AudioPlayer.setTime(path, seekPos)
     }
 
+    // check if any audio is playing and pause it
+    private checkAudioPause(actions: TimelineAction[]) {
+        for (const action of actions) {
+            if (action.type === "audio") {
+                const a = action.data
+                if (a && a.path && get(playingAudio)[a.path] && !get(playingAudio)[a.path].paused) {
+                    AudioPlayer.pause(a.path)
+                }
+            }
+
+            if (action.type === "show") {
+                const data = this.getShowLayoutFromRef(action.data)
+                const showTimelineActions = data?.layout?.timeline?.actions || []
+                if (showTimelineActions.length) this.checkAudioPause(showTimelineActions)
+            }
+        }
+    }
+
+    // check if any audio is playing and stop it
+    private checkAudioStop(actions: TimelineAction[]) {
+        for (const action of actions) {
+            if (action.type === "audio") {
+                const a = action.data
+                if (a && a.path && get(playingAudio)[a.path]) {
+                    AudioPlayer.stop(a.path)
+                }
+            }
+
+            if (action.type === "show") {
+                const data = this.getShowLayoutFromRef(action.data)
+                const showTimelineActions = data?.layout?.timeline?.actions || []
+                if (showTimelineActions.length) this.checkAudioStop(showTimelineActions)
+            }
+        }
+    }
+
     private isLoaded: string[] = []
-    private checkShow(action: TimelineAction, previousTime: number) {
-        const showId = action.data?.id
-        if (!showId) return
+    private getShowLayoutFromRef(ref: { id?: string; layoutId?: string }) {
+        const showId = ref.id
+        if (!showId) return null
+
         const show = get(showsCache)[showId]
         if (!show) {
-            if (this.isLoaded.includes(showId)) return
+            if (this.isLoaded.includes(showId)) return null
+
             this.isLoaded.push(showId)
             loadShows([showId])
-            return
+            return null
         }
 
-        const layoutId = action.data?.layoutId || show.settings?.activeLayout || ""
+        const layoutId = ref.layoutId || show.settings?.activeLayout || ""
         const layout = show.layouts?.[layoutId]
-        if (!layout) return
+        if (!layout) return null
 
-        const timeline = layout.timeline
+        return { layout: clone(layout), ref: { id: showId, layoutId } }
+    }
+
+    private checkShow(action: TimelineAction, previousTime: number) {
+        const data = this.getShowLayoutFromRef(action.data)
+        if (!data?.layout) return
+
+        const timeline = data.layout.timeline
 
         // if show does not have any timeline actions, just start the first slide instead
         if (!timeline?.actions?.length) {
@@ -278,27 +324,33 @@ export class TimelinePlayback {
             if (!shouldPlay) return
 
             // start first slide
-            const firstSlideId = layout.slides?.[0]?.id
+            const firstSlideId = data.layout.slides?.[0]?.id
             if (!firstSlideId) return
 
-            ShowTimeline.playSlide({ id: firstSlideId, index: 0 }, { id: showId, layoutId })
+            ShowTimeline.playSlide({ id: firstSlideId, index: 0 }, data.ref)
             return
         }
 
         const showStart = action.time
-        const duration = this.showDurations[showId] || 0
-        const showEnd = action.time + duration * 1000
-        const shouldPlay = this.currentTime >= showStart && this.currentTime < showEnd
-
-        if (!shouldPlay) return
-
-        let showTimelineActions = clone(timeline.actions)
+        // const duration = this.showDurations[showId] || 0
+        // const showEnd = action.time + duration * 1000
+        // const shouldPlay = this.currentTime >= showStart && this.currentTime < showEnd
+        // if (!shouldPlay) return
 
         // update times to match new timeline position
-        showTimelineActions = showTimelineActions.map((a) => ({ ...a, time: a.time + showStart }))
+        const showTimelineActions = timeline.actions.map((a) => ({ ...a, time: a.time + showStart }))
 
-        const ref = { id: showId, layoutId }
-        this.checkActions(showTimelineActions, previousTime, ref)
+        for (const action of showTimelineActions) {
+            if (action.type === "audio") {
+                this.checkAudio(action)
+                continue
+            }
+
+            const shouldPlay = action.time >= previousTime && action.time < this.currentTime
+            if (shouldPlay) {
+                this.playAction(action, data.ref)
+            }
+        }
     }
 
     // LISTEN
