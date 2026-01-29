@@ -105,8 +105,8 @@ export function focusArea(e: any) {
 
     // custom area without select elems
     if (!id) {
-        const scriptureArea = e.target.closest(".scripture")
-        if (scriptureArea) focusedArea.set("scripture")
+        if (e.target.closest(".scripture")) focusedArea.set("scripture")
+        else if (e.target.closest(".timeline")) focusedArea.set("timeline")
     }
 }
 

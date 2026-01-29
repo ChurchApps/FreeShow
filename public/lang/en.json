@@ -505,6 +505,8 @@
         "manage_tags": "Manage tags",
         "sync_categories": "Sync categories",
         "effect_items": "Effect items",
+        "timeline": "Timeline",
+        "timecode": "Timecode",
         "initialize": "Welcome to FreeShow",
         "unsaved": "Are you sure you want to quit?",
         "cancel": "Cancel",
@@ -839,15 +841,9 @@
         "seconds": "seconds",
         "empty": "empty"
     },
-    "recording": {
-        "remove": "Remove recording",
-        "tip": "Record and replay the timings of slides. Sync with an audio track on the first slide.",
-        "layout_changed": "Layout has changed since last recording!",
-        "audio_synced": "Synced with audio!",
-        "start": "Start slide recording",
-        "action_play": "Play slide recording",
-        "use_duration": "Use duration time",
-        "use_duration_tip": "Use duration time instead of timestamp time"
+    "timeline": {
+        "toggle_timeline": "Toggle timeline",
+        "start_time": "Start time"
     },
     "animate": {
         "change": "Change",

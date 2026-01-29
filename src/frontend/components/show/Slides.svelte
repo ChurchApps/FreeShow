@@ -12,7 +12,6 @@
     import { getCachedShow } from "../helpers/show"
     import { checkActionTrigger, getFewestOutputLines, getFewestOutputLinesReveal, getItemWithMostLines, updateOut } from "../helpers/showActions"
     import { _show } from "../helpers/shows"
-    import { getClosestRecordingSlide } from "../helpers/slideRecording"
     import T from "../helpers/T.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
     import Loader from "../main/Loader.svelte"
@@ -122,8 +121,6 @@
 
             setOutput("slide", { id: showId, layout: activeLayout, index, line, revealCount, itemClickReveal })
             updateOut(showId, index, slideRef, !e.altKey)
-
-            getClosestRecordingSlide({ showId, layoutId: activeLayout }, index)
 
             // force update output if index is the same as previous
             if (activeSlides[index]) refreshOut()

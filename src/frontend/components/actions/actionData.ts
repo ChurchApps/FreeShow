@@ -20,7 +20,6 @@ export const actionData = {
     index_select_slide: { name: "actions.index_select_slide", icon: "slide", input: "index", incompatible: ["next_slide", "previous_slide", "random_slide", "name_select_slide", "id_select_group"] },
     name_select_slide: { name: "actions.name_select_slide", icon: "groups", input: "strval", incompatible: ["next_slide", "previous_slide", "random_slide", "index_select_slide", "id_select_group"] },
     id_select_group: { name: "actions.id_select_group", icon: "groups", input: "id", incompatible: ["next_slide", "previous_slide", "random_slide", "index_select_slide", "name_select_slide"] },
-    start_slide_recording: { name: "recording.action_play", icon: "record" },
 
     // CLEAR
     restore_output: { SECTION: "clear.general", name: "preview.restore_output", icon: "reset", incompatible: ["clear_all", "clear_background", "clear_slide", "clear_overlays", "clear_audio", "clear_next_timer"] },

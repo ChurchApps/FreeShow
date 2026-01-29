@@ -56,6 +56,8 @@ export type SaveListSettings =
     | "eqPresets"
     | "effectsLibrary"
     | "special"
+    | "timeline"
+    | "timecode"
     | "contentProviderData"
 
 export interface SaveData {

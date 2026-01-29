@@ -21,6 +21,7 @@ import { OutputHelper } from "../output/OutputHelper"
 import { libreConvert } from "../output/ppt/libreConverter"
 import { getPresentationApplications, presentationControl, startSlideshow } from "../output/ppt/presentation"
 import { closeServers, startServers, updateServerData } from "../servers"
+import { processAudioData, timecodeStart, timecodeStop, updateTimecodeValue } from "../timecode/timecode"
 import { apiReturnData, emitOSC, startWebSocketAndRest, stopApiListener } from "../utils/api"
 import { closeMain } from "../utils/close"
 import { addToMediaFolder, bundleMediaFiles, getDataFolderPath, getDataFolderRoot, getFileInfo, getMediaCodec, getMediaSyncFolderPath, getMediaTracks, getPaths, getSimularPaths, loadFile, loadShows, locateMediaFile, openInSystem, readExifData, readFile, readFolder, readFolderContent, selectFiles, selectFilesDialog, selectFolder, setMediaSyncFolderPath, writeFile } from "../utils/files"
@@ -212,7 +213,13 @@ export const mainResponses: MainResponses = {
             return null
         }
         return await provider.checkMediaLicense(data.mediaId)
-    }
+    },
+    // Timecode
+    [Main.TIMECODE_START]: (data) => timecodeStart(data),
+    [Main.TIMECODE_STOP]: () => timecodeStop(),
+    [Main.TIMECODE_VALUE]: (data) => updateTimecodeValue(data),
+    [Main.TIMECODE_STATUS]: (data) => console.log(data),
+    [Main.TIMECODE_AUDIO_DATA]: (data) => processAudioData(data)
 }
 
 /// ///////

@@ -17,6 +17,7 @@ import { loadShows, saveTextCache } from "../components/helpers/setShow"
 import { checkName, getGlobalGroup, getLabelId } from "../components/helpers/show"
 import { joinTimeBig } from "../components/helpers/time"
 import { defaultThemes } from "../components/settings/tabs/defaultThemes"
+import { processTimecodeFrame, updateTimelineStatus, updateTimelineTime } from "../components/timeline/timecode"
 import { importBibles } from "../converters/bible"
 import { convertCalendar } from "../converters/calendar"
 import { convertChordPro } from "../converters/chordpro"
@@ -79,13 +80,13 @@ import {
     variables,
     windowState
 } from "../stores"
+import { setupCloudSync } from "../utils/cloudSync"
 import { newToast } from "../utils/common"
 import { confirmCustom } from "../utils/popup"
 import { initializeClosing, saveComplete } from "../utils/save"
 import { updateSettings, updateSyncedSettings, updateThemeValues } from "../utils/updateSettings"
 import type { MainReturnPayloads } from "./../../types/IPC/Main"
 import { Main } from "./../../types/IPC/Main"
-import { setupCloudSync } from "../utils/cloudSync"
 
 type MainHandler<ID extends Main | ToMain> = (data: ID extends keyof ToMainSendPayloads ? ToMainSendPayloads[ID] : ID extends keyof MainReturnPayloads ? Awaited<MainReturnPayloads[ID]> : undefined) => void
 export type MainResponses = {
@@ -438,5 +439,9 @@ export const mainResponses: MainResponses = {
 
         if (!receiveIMPORT[a.channel]) return
         receiveIMPORT[a.channel]()
-    }
+    },
+    // Timecode
+    [Main.TIMECODE_VALUE]: (data) => updateTimelineTime(data!),
+    [Main.TIMECODE_STATUS]: (data) => updateTimelineStatus(data!),
+    [Main.TIMECODE_AUDIO_DATA]: (data) => processTimecodeFrame(data!)
 }

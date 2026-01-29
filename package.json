@@ -125,6 +125,7 @@
         "grandiose": "github:ChurchApps/grandiose#b1649cd",
         "json-bible": "^1.1.3",
         "jzz": "^1.9.5",
+        "libltc-wrapper": "github:bitfocus/libltc-wrapper#9637e39",
         "libreoffice-convert": "^1.6.1",
         "mdb-reader": "^1.2.1",
         "mp4box": "^0.6.5",
