@@ -6,7 +6,7 @@ import { removeDuplicates } from "../components/helpers/array"
 import { getContrast } from "../components/helpers/color"
 import { getActiveOutputs, toggleOutputs } from "../components/helpers/output"
 import { sendMain } from "../IPC/main"
-import { activeTriggerFunction, autosave, currentWindow, disabledServers, drawer, errorHasOccurred, focusedArea, os, outputs, quickSearchActive, resized, serverData, statusIndicator, theme, themes, toastMessages, version } from "../stores"
+import { activePopup, activeTriggerFunction, autosave, currentWindow, disabledServers, drawer, errorHasOccurred, focusedArea, os, outputs, quickSearchActive, resized, serverData, statusIndicator, theme, themes, toastMessages, version } from "../stores"
 import { convertAutosave } from "../values/autosave"
 import { send } from "./request"
 import { save } from "./save"
@@ -126,7 +126,8 @@ export function startAutosave() {
 
     previousAutosave = Date.now()
     autosaveTimeout = setTimeout(() => {
-        save(false, { autosave: true })
+        const skip = get(activePopup) === "initialize" || get(activePopup) === "cloud_method"
+        if (!skip) save(false, { autosave: true })
         startAutosave()
     }, saveInterval)
 }

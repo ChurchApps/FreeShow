@@ -611,7 +611,16 @@
 
     $: if (isClosed !== undefined) resetView()
 
-    $: projectShowDurations = type === "project" ? getProjectShowDurations(actions, $showsCache) : {}
+    let projectShowDurations: Record<string, number> = {}
+    $: if (actions || $showsCache) updateProjectShowDurations()
+    function updateProjectShowDurations() {
+        if (type !== "project") return
+
+        // load after startup
+        setTimeout(() => {
+            projectShowDurations = getProjectShowDurations(actions, $showsCache)
+        }, 50)
+    }
 
     $: disablePlayback = type === "project" && $timecode.type === "receive"
 </script>
