@@ -161,7 +161,7 @@ function createSlides({ lyrics, presentation, backgrounds }: Song) {
                 group: i === 0 ? "" : null,
                 color: null,
                 settings: {},
-                notes: "",
+                notes: commentData && commentData.length ? commentData.join("\n") : "",
                 items
             }
 
