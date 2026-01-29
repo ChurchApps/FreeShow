@@ -107,8 +107,14 @@ function createSlides({ lyrics, presentation, backgrounds }: Song) {
         groupText.split("__CHILD_SLIDE__").forEach((slideText, i) => {
             const lines = slideText.trim().split("\n")
             if (i === 0 && lines[0].includes("[")) lines.shift()
-            const chordData = lines.filter((_v: string) => _v.startsWith(".")).join("")
-            const text = lines.filter((_v: string) => !_v.startsWith("."))
+            // extract chord data (lines starting with '.')
+            const chordData = lines.filter((_v: string) => _v.trim().startsWith(".")).join("")
+            // extract comment lines (starting with ';') for later processing
+            const commentData = lines
+                .filter((l: string) => l.trim().startsWith(";"))
+                .map((l: string) => l.trim().slice(1).trim())
+            // text lines: exclude chord lines and comment lines
+            const text = lines.filter((_v: string) => !_v.trim().startsWith(".") && !_v.trim().startsWith(";"))
 
             const id: string = i === 0 ? parentId : uid()
             if (i === 0) slideRef[group] = id
