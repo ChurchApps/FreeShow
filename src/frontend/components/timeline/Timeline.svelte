@@ -4,7 +4,7 @@
     import { uid } from "uid"
     import type { TimelineAction } from "../../../types/Show"
     import { createWaveform } from "../../audio/audioWaveform"
-    import { activePopup, activeShow, activeTriggerFunction, resized, showsCache, special, timecode } from "../../stores"
+    import { activePopup, activeShow, activeTriggerFunction, resized, showsCache, special, timecode, timeline as timelineStore } from "../../stores"
     import { DEFAULT_WIDTH } from "../../utils/common"
     import { translateText } from "../../utils/language"
     import { actionData } from "../actions/actionData"
@@ -124,7 +124,7 @@
 
     let usedHeaderWidth = 120
 
-    $: timeString = formatTime(currentTime)
+    $: timeString = formatTime(currentTime, type, $timelineStore)
     $: tickInterval = getTickInterval(zoomLevel)
     $: snapInterval = (tickInterval * 1000) / 10
 
@@ -508,7 +508,7 @@
 
         // Force update input value in case it was invalid or clamped
         const target = e.target as HTMLInputElement
-        target.value = formatTime(time)
+        target.value = formatTime(time, type)
         target.blur()
     }
 
@@ -702,7 +702,7 @@
                         {@const tickIndex = i + visibleTicksStartIndex}
                         {@const pos = tickIndex * tickInterval * zoomLevel}
                         <div class="tick" style="left: {pos}px">
-                            <span class="tick-label">{formatTime(tickIndex * tickInterval * 1000)}</span>
+                            <span class="tick-label">{formatTime(tickIndex * tickInterval * 1000, type, $timelineStore)}</span>
                         </div>
 
                         <!-- Subticks -->
@@ -756,7 +756,7 @@
                         {@const baseY = getActionBaseY(action)}
 
                         {#if duration}
-                            <div class="action-clip context #timeline_node" class:selected={selectedActionIds.includes(action.id)} style="left: {(action.time / 1000) * zoomLevel}px; width: {duration * zoomLevel}px; top: {baseY}px;height: {TIMELINE_SECTION_HEIGHT + 4}px;" data-title="{formatTime(action.time)}-{formatTime(duration * 1000)}: {action.name}" on:mousedown|stopPropagation={(e) => startActionDrag(e, action.id)}>
+                            <div class="action-clip context #timeline_node" class:selected={selectedActionIds.includes(action.id)} style="left: {(action.time / 1000) * zoomLevel}px; width: {duration * zoomLevel}px; top: {baseY}px;height: {TIMELINE_SECTION_HEIGHT + 4}px;" data-title="{formatTime(action.time, type, $timelineStore)}-{formatTime(duration * 1000, type, $timelineStore)}: {action.name}" on:mousedown|stopPropagation={(e) => startActionDrag(e, action.id)}>
                                 <div class="action-clip-content">
                                     {#if action.type === "audio"}
                                         <div class="waveform-container" use:useWaveform={action.data.path || ""}></div>
@@ -765,7 +765,7 @@
                                 </div>
                             </div>
                         {:else}
-                            <div class="action-marker {action.type} context #timeline_node" class:selected={selectedActionIds.includes(action.id)} style="left: {(action.time / 1000) * zoomLevel}px; top: {baseY + 10}px;" data-title="{formatTime(action.time)}: {action.name}" on:mousedown|stopPropagation={(e) => startActionDrag(e, action.id)}>
+                            <div class="action-marker {action.type} context #timeline_node" class:selected={selectedActionIds.includes(action.id)} style="left: {(action.time / 1000) * zoomLevel}px; top: {baseY + 10}px;" data-title="{formatTime(action.time, type, $timelineStore)}: {action.name}" on:mousedown|stopPropagation={(e) => startActionDrag(e, action.id)}>
                                 <div class="action-head">
                                     {#if action.type === "action"}
                                         <Icon id={action.data.triggers?.length === 1 ? actionData[action.data.triggers[0]]?.icon : "actions"} size={0.9} white />
@@ -820,6 +820,12 @@
         {#if type === "project"}
             <FloatingInputs style="margin-bottom: 8px;">
                 <MaterialButton title="popup.timecode" on:click={() => activePopup.set("timecode")}>
+                    <Icon id="clock" white />
+                </MaterialButton>
+
+                <div class="divider"></div>
+
+                <MaterialButton title="popup.timeline" on:click={() => activePopup.set("timeline")}>
                     <Icon id="options" white />
                 </MaterialButton>
             </FloatingInputs>

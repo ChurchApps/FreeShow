@@ -90,6 +90,7 @@ import {
     themes,
     timeFormat,
     timecode,
+    timeline,
     timers,
     transitionData,
     triggers,
@@ -169,6 +170,7 @@ export function save(closeWhenFinished = false, customTriggers: SaveActions = {}
         eqPresets: get(eqPresets),
         effectsLibrary: get(effectsLibrary),
         special: get(special),
+        timeline: get(timeline),
         timecode: get(timecode),
         contentProviderData: get(contentProviderData)
     }
@@ -420,6 +422,7 @@ const saveList: { [key in SaveList]: any } = {
     eqPresets: null,
     effectsLibrary: null,
     special,
+    timeline: null,
     timecode: null,
     companion: null,
     globalTags,

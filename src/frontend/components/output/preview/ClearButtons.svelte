@@ -116,7 +116,7 @@
             </MaterialButton>
         {:else}
             <MaterialButton style="padding: 0.42em 0.8em;" class="clearAll" disabled={$outLocked || allCleared} title="clear.all [esc]" on:click={() => clearAll(true)} red>
-                {#if $isTimelinePlaying}<span class="faded" data-title={translateText("timeline.timeline")}><Icon id="timeline" white /></span>{/if}
+                {#if $isTimelinePlaying}<span class="faded" data-title={translateText("popup.timeline")}><Icon id="timeline" white /></span>{/if}
                 <Icon id="clear" size={1.2} white />
                 {#if !$labelsDisabled}<T id="clear.all" />{/if}
             </MaterialButton>

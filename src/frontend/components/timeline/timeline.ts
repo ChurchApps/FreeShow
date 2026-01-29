@@ -1,6 +1,7 @@
 import { get } from "svelte/store"
 import type { Timeline, TimelineAction } from "../../../types/Show"
-import { showsCache } from "../../stores"
+import { showsCache, timeline } from "../../stores"
+import type { TimelineType } from "./TimelineActions"
 import { loadShows } from "../helpers/setShow"
 
 // SECTIONS
@@ -46,8 +47,10 @@ export function getTickInterval(zoom: number) {
     return steps.find((s) => s >= target) || 60
 }
 
-export function formatTime(ms: number): string {
-    const offsetMs = ms // + 3600000 // Start at 01:00:00;00
+export function formatTime(ms: number, type: TimelineType | null, _updater: any = null): string {
+    // + 3600000 = 01:00:00;00
+    const offsetMs = ms + (type === "project" ? get(timeline).startTime || 0 : 0)
+
     const totalSeconds = Math.floor(offsetMs / 1000)
     const hours = Math.floor(totalSeconds / 3600)
     const minutes = Math.floor((totalSeconds % 3600) / 60)

@@ -6,12 +6,19 @@ import ltcProcessorUrl from "./ltcProcessor.ts?worker&url"
 import { getActiveTimelinePlayback } from "./TimelinePlayback"
 
 export function updateTimelineTime(timeMs: number) {
-    console.log("TIME", timeMs)
-
     const active = getActiveTimelinePlayback()
     if (!active) return
 
     active.setTime(timeMs)
+}
+
+export function updateTimelineStatus(status: "play" | "pause" | "stop") {
+    const active = getActiveTimelinePlayback()
+    if (!active) return
+
+    if (status === "play") active.play(true)
+    else if (status === "pause") active.pause(true)
+    else if (status === "stop") active.pause(true)
 }
 
 let ltcContext: AudioContext | null = null

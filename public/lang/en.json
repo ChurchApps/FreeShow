@@ -505,6 +505,7 @@
         "manage_tags": "Manage tags",
         "sync_categories": "Sync categories",
         "effect_items": "Effect items",
+        "timeline": "Timeline",
         "timecode": "Timecode",
         "initialize": "Welcome to FreeShow",
         "unsaved": "Are you sure you want to quit?",
@@ -841,8 +842,8 @@
         "empty": "empty"
     },
     "timeline": {
-        "timeline": "Timeline",
-        "toggle_timeline": "Toggle timeline"
+        "toggle_timeline": "Toggle timeline",
+        "start_time": "Start time"
     },
     "animate": {
         "change": "Change",

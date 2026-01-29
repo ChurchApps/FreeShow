@@ -47,7 +47,11 @@ export class TimelinePlayback {
         }
     }
 
-    play() {
+    private listenerPaused: boolean = false
+    play(isListener: boolean = false) {
+        this.listenerPaused = false
+        if (isListener) return
+
         this.setAsPlayer()
         isTimelinePlaying.set(true)
         this.initTimecode()
@@ -59,8 +63,14 @@ export class TimelinePlayback {
         this.runCallbacks(this.onPlayCallbacks)
     }
 
-    pause() {
+    pause(isListener: boolean = false) {
+        if (isListener) {
+            this.listenerPaused = true
+            this.checkAudioPause(this.actions)
+            return
+        }
         if (!this.isPlaying) return
+
         if (activePlayback === this) {
             isTimelinePlaying.set(false)
             if (this.type === "project") {
@@ -160,8 +170,10 @@ export class TimelinePlayback {
 
     private animationFrameId: number | null = null
     private lastTime: number = 0
+    private previousTickTime: number = 0
     private startLoop() {
         this.lastTime = performance.now()
+        this.previousTickTime = this.currentTime
         this.stopLoop()
         this.next()
     }
@@ -197,7 +209,8 @@ export class TimelinePlayback {
     }
 
     private tick() {
-        const previousTime = this.currentTime
+        if (this.listenerPaused) return
+
         if (!this.receiveTime) {
             const now = performance.now()
             const delta = now - this.lastTime
@@ -205,6 +218,9 @@ export class TimelinePlayback {
 
             this.currentTime += delta
         }
+
+        const previousTime = this.previousTickTime
+        this.previousTickTime = this.currentTime
 
         this.hasPlayed = []
 
@@ -274,7 +290,7 @@ export class TimelinePlayback {
         if (!playing?.audio) return
 
         // seek to correct position (with tolerance)
-        const tolerance = 20 // ms
+        const tolerance = 50 // ms // 20 is too low
         const seekPos = (this.getTimeWithOffset(this.currentTime) - audioStart) / 1000
         const currentAudioTime = playing.audio.currentTime || 0
         const diff = Math.abs(currentAudioTime - seekPos) * 1000
@@ -384,10 +400,12 @@ export class TimelinePlayback {
         const mode = get(timecode).mode || "LTC"
         let shouldSend = true
         if (type === "send" && mode === "LTC" && !get(timecode).audioOutput) shouldSend = false
-        if (type === "receive" && mode === "LTC" && !get(timecode).audioInput) shouldSend = false
+        else if (type === "receive" && mode === "LTC" && !get(timecode).audioInput) shouldSend = false
+        else if (type === "send" && mode === "MTC" && !get(timecode).midiOutput) shouldSend = false
+        else if (type === "receive" && mode === "MTC" && !get(timecode).midiInput) shouldSend = false
 
         const framerate = get(timecode).framerate || 25
-        const data = { audioInput: get(timecode).audioInput || "" }
+        const data = { midiInput: get(timecode).midiInput || "", midiOutput: get(timecode).midiOutput || "" }
         if (shouldSend) sendMain(Main.TIMECODE_START, { type, mode, framerate, data })
 
         if (type === "receive" && mode === "LTC") {
@@ -403,6 +421,7 @@ export class TimelinePlayback {
         const type = get(timecode).type || "send"
         const mode = get(timecode).mode || "LTC"
         if (type === "send" && mode === "LTC" && !get(timecode).audioOutput) return
+        if (type === "send" && mode === "MTC" && !get(timecode).midiOutput) return
 
         // limit to framerate
         const framerate = get(timecode).framerate || 25

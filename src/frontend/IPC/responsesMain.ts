@@ -17,7 +17,7 @@ import { loadShows, saveTextCache } from "../components/helpers/setShow"
 import { checkName, getGlobalGroup, getLabelId } from "../components/helpers/show"
 import { joinTimeBig } from "../components/helpers/time"
 import { defaultThemes } from "../components/settings/tabs/defaultThemes"
-import { processTimecodeFrame, updateTimelineTime } from "../components/timeline/timecode"
+import { processTimecodeFrame, updateTimelineStatus, updateTimelineTime } from "../components/timeline/timecode"
 import { importBibles } from "../converters/bible"
 import { convertCalendar } from "../converters/calendar"
 import { convertChordPro } from "../converters/chordpro"
@@ -442,5 +442,6 @@ export const mainResponses: MainResponses = {
     },
     // Timecode
     [Main.TIMECODE_VALUE]: (data) => updateTimelineTime(data!),
+    [Main.TIMECODE_STATUS]: (data) => updateTimelineStatus(data!),
     [Main.TIMECODE_AUDIO_DATA]: (data) => processTimecodeFrame(data!)
 }

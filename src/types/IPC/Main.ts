@@ -154,7 +154,8 @@ export enum Main {
     TIMECODE_START = "TIMECODE_START",
     TIMECODE_STOP = "TIMECODE_STOP",
     TIMECODE_VALUE = "TIMECODE_VALUE",
-    TIMECODE_AUDIO_DATA = "TIMECODE_AUDIO_DATA"
+    TIMECODE_AUDIO_DATA = "TIMECODE_AUDIO_DATA",
+    TIMECODE_STATUS = "TIMECODE_STATUS"
 }
 
 export interface MainSendPayloads {
@@ -239,6 +240,7 @@ export interface MainSendPayloads {
     // Timecode
     [Main.TIMECODE_START]: { type: "send" | "receive"; mode: TimecodeMode; framerate?: number; data?: any }
     [Main.TIMECODE_VALUE]: number
+    [Main.TIMECODE_STATUS]: "play" | "pause" | "stop"
     [Main.TIMECODE_AUDIO_DATA]: { mode: TimecodeMode; buffer: Uint8Array }
 }
 
@@ -324,6 +326,7 @@ export interface MainReturnPayloads {
     // Timecode
     [Main.TIMECODE_VALUE]: number | void
     [Main.TIMECODE_AUDIO_DATA]: Buffer | void
+    [Main.TIMECODE_STATUS]: "play" | "pause" | "stop" | void
 }
 
 ///////////

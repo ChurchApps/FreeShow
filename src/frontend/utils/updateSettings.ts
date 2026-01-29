@@ -74,6 +74,7 @@ import {
     themes,
     timeFormat,
     timecode,
+    timeline,
     timers,
     triggers,
     variableTags,
@@ -342,6 +343,7 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
 
         special.set(v)
     },
+    timeline: (v: any) => timeline.set(v),
     timecode: (v: any) => timecode.set(v),
     // @ts-ignore - DEPERACTED (migrate)
     chumsSyncCategories: (v: any) => {

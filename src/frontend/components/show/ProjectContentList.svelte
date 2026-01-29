@@ -333,12 +333,14 @@
 </div>
 
 {#if $activeProject && !$projectView && !$focusMode && !recentlyUsedList.length && !projectReadOnly}
-    <FloatingInputs>
-        <MaterialButton title="timeline.toggle_timeline" on:click={() => special.update((a) => ({ ...a, projectTimelineActive: !a.projectTimelineActive }))}>
-            <Icon size={1.3} id="timeline" white={!$special.projectTimelineActive} />
-        </MaterialButton>
+    <FloatingInputs arrow let:open>
+        {#if open || $special.projectTimelineActive || $projects[$activeProject]?.timeline?.actions?.length}
+            <MaterialButton title="timeline.toggle_timeline" on:click={() => special.update((a) => ({ ...a, projectTimelineActive: !a.projectTimelineActive }))}>
+                <Icon size={1.3} id="timeline" white={!$special.projectTimelineActive} />
+            </MaterialButton>
 
-        <div class="divider"></div>
+            <div class="divider"></div>
+        {/if}
 
         <MaterialButton icon="section" title="new.section" on:click={addSection} white={lessVisibleSection}>
             {#if !lessVisibleSection && !$labelsDisabled}<T id="new.section" />{/if}
