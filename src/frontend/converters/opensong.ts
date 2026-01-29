@@ -127,7 +127,7 @@ function createSlides({ lyrics, presentation, backgrounds }: Song) {
             if (i === 0 && lines[0].includes("[")) lines.shift()
             // extract chord data (lines starting with '.')
             const chordData = lines.filter((_v: string) => _v.startsWith(".")).join("")
-            // extract comment lines (starting with ';') for later processing
+            // extract comment lines (starting with ';'), to add as slide notes
             const commentData = lines
                 .filter((l: string) => l.trim().startsWith(";"))
                 .map((l: string) => l.trim().slice(1).trim())
