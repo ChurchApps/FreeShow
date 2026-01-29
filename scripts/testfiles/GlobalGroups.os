@@ -28,11 +28,18 @@
 [I]
  Globalgroup must be: Intro
 
+[Tag]
+ Custom groupname, No Globalgroup
+
+[Verse 3]
+ Custom groupname, No Globalgroup
+
+
 </lyrics>
   <author></author>
   <copyright></copyright>
   <hymn_number></hymn_number>
-  <presentation>V1 V2 C B P T O I</presentation>
+  <presentation>V1 V2 C B P T O I Tag</presentation>
   <ccli></ccli>
   <capo print="false" sharp="true"></capo>
   <key></key>

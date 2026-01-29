@@ -199,7 +199,7 @@ function createSlides({ lyrics, presentation, backgrounds }) {
             };
             if (i > 0)
                 return;
-            const globalGroup = OSgroups[group.replace(/[0-9]/g, "").trim()];
+            const globalGroup = OSgroups[group.replace(/[0-9]/g, "").trim().toUpperCase()];
             if (get(groups)[globalGroup])
                 slides[id].globalGroup = globalGroup;
             else
@@ -215,7 +215,13 @@ function createSlides({ lyrics, presentation, backgrounds }) {
     if (slideOrder.length) {
         layout = [];
         slideOrder.forEach((group) => {
-            const id = slideRef[group];
+            // case-insensitive lookup in slideRef
+            let id = slideRef[group];
+            if (!id) {
+                const key = Object.keys(slideRef).find((k) => k.toLowerCase() === group.toLowerCase());
+                if (key)
+                    id = slideRef[key];
+            }
             if (id)
                 layout.push({ id });
         });
