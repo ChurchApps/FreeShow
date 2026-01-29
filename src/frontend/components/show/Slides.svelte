@@ -12,7 +12,6 @@
     import { getCachedShow } from "../helpers/show"
     import { checkActionTrigger, getFewestOutputLines, getFewestOutputLinesReveal, getItemWithMostLines, updateOut } from "../helpers/showActions"
     import { _show } from "../helpers/shows"
-    import { getClosestRecordingSlide } from "../helpers/slideRecording"
     import T from "../helpers/T.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
     import Loader from "../main/Loader.svelte"
@@ -123,8 +122,6 @@
             setOutput("slide", { id: showId, layout: activeLayout, index, line, revealCount, itemClickReveal })
             updateOut(showId, index, slideRef, !e.altKey)
 
-            getClosestRecordingSlide({ showId, layoutId: activeLayout }, index)
-
             // force update output if index is the same as previous
             if (activeSlides[index]) refreshOut()
         })
@@ -155,17 +152,20 @@
         } else endIndex = null
     }
 
-    // update show by its template
     $: gridMode = mode === "grid" || mode === "simple" || mode === "groups"
-    $: if (showId && gridMode && !isLessons && loaded) setTimeout(updateTemplate, 100)
+
+    // update show by its template
+    $: if (showId && loaded) setTimeout(updateTemplate, 100)
     function updateTemplate() {
         if (!loaded) return
 
-        let showTemplate = currentShow?.settings?.template || ""
-        // get category template if no show template
-        if (!showTemplate || showTemplate === "default" || !$templates[showTemplate]) showTemplate = $categories[currentShow?.category || ""]?.template || ""
+        let currentTemplate = currentShow?.settings?.template || ""
 
-        history({ id: "TEMPLATE", save: false, newData: { id: showTemplate }, location: { page: "show" } })
+        // override with category template if any
+        const categoryTemplate = $categories[currentShow?.category || ""]?.template || ""
+        if (categoryTemplate && $templates[categoryTemplate]) currentTemplate = categoryTemplate
+
+        history({ id: "TEMPLATE", save: false, newData: { id: currentTemplate }, location: { page: "show" } })
     }
 
     $: if (showId && $special.capitalize_words) capitalizeWords()

@@ -52,7 +52,6 @@
         "start_metronome",
         "start_slide_timers",
         "stop_timers",
-        "start_slide_recording",
         "change_output_style",
         "change_stage_output_layout",
         "start_trigger",

@@ -89,6 +89,7 @@
     let autoSizeReady = false
     // hold onto whether the visible output should stay hidden until autosize finishes
     let hideUntilAutosized = false
+
     let hideSafetyTimeout: NodeJS.Timeout | null = null
     $: if (hideUntilAutosized) {
         if (hideSafetyTimeout) clearTimeout(hideSafetyTimeout)
@@ -297,13 +298,35 @@
     
     $: if (stateSignature !== lastRenderedSignature) {
         autoSizeReady = false
-        if (item?.auto || (item?.textFit || "none") !== "none") {
-            fontSize = item?.autoFontSize || 0
+        // Check if autosize is active - for STAGE, use stageAutoSize since slide items don't have auto/textFit set
+        const hasAutoSize = stageAutoSize || item?.auto || (item?.textFit || "none") !== "none"
+        if (hasAutoSize) {
+            // Determine if we'll hide during autosize calculation
+            const willHide = shouldHideUntilAutoSizeCompletes()
+            
+            // CRITICAL: Start with fontSize=0 when hiding to prevent giant text flash:
+            // - STAGE: Always starts at 0 (computes for STAGE dimensions, not OUTPUT)
+            // - OUTPUT: Starts at 0 if cache is invalid (willHide=true), otherwise uses cache
+            // - PREVIEW: Uses own previewAutoFontSize cache, or OUTPUT cache as fallback, or 100px default
+            if (isStage) {
+                fontSize = 0
+            } else if (willHide) {
+                // Cache is invalid - start at 0 to avoid displaying wrong fontSize while recalculating
+                fontSize = 0
+            } else if (preview) {
+                // Preview uses its own cache, fallback to OUTPUT cache, then default
+                fontSize = item?.previewAutoFontSize || item?.autoFontSize || 100
+            } else {
+                // OUTPUT uses its cache
+                fontSize = item?.autoFontSize || 0
+            }
+            
             lastRenderedSignature = stateSignature
-            hideUntilAutosized = shouldHideUntilAutoSizeCompletes()
+            hideUntilAutosized = willHide
         }
     }
     // Trigger calculation if Content OR Template changes (resolvedTemplateId added to dependency list)
+    // All contexts (OUTPUT, STAGE, PREVIEW) calculate and cache their own autosize independently
     $: if (itemElem && loaded && (stageAutoSize || newItem !== previousItem || resolvedTemplateId || chordLines || stageItem)) calculateAutosize()
     $: if ($variables) setTimeout(calculateAutosize)
 
@@ -350,7 +373,9 @@
     let newCall = false
     async function calculateAutosize() {
         if (item.type === "media" || item.type === "camera" || item.type === "icon") return
-        if (isStage && !stageAutoSize) return
+        if (isStage && !stageAutoSize) {
+            return
+        }
 
         if (loopStop) {
             newCall = true
@@ -366,8 +391,52 @@
         // Wait for DOM to update with new template styles before measuring
         await tick()
         
-        // TEMP FIX for auto size sometimes not sized properly in show slides
-        if (!preview && !isStage) await wait(70)
+        // Wait for web fonts to load before measuring (prevents wrong dimensions from fallback fonts)
+        try {
+            await document.fonts.ready
+        } catch (e) {
+            // Font loading check failed, continue anyway
+        }
+        
+        // Wait for CSS styles to fully cascade and layout to stabilize before measuring
+        // This ONLY adds delay when element dimensions are still changing (unstable layout)
+        // Once dimensions stabilize, no additional waiting occurs
+        if (itemElem) {
+            let prevWidth = itemElem.clientWidth
+            let prevHeight = itemElem.clientHeight
+            let attempts = 0
+            const maxAttempts = 20
+            let totalWait = 0
+            const maxWait = 500 // Maximum 500ms - reasonable buffer for slow computers without painful delays
+            
+            // Output window needs longer initial wait for CSS cascade in separate Electron window
+            const isOutputContext = ratio < 0.5 && !preview && !isStage
+            
+            while (attempts < maxAttempts && totalWait < maxWait) {
+                const waitTime = attempts === 0 ? (isOutputContext ? 150 : 100) : (attempts === 1 ? 50 : 20)
+                await wait(waitTime)
+                totalWait += waitTime
+                
+                // Check if element still exists after waiting
+                if (!itemElem) {
+                    return // Element destroyed, abort calculation
+                }
+                
+                const newWidth = itemElem.clientWidth
+                const newHeight = itemElem.clientHeight
+                
+                if (newWidth === prevWidth && newHeight === prevHeight) {
+                    // Dimensions stable - stop waiting
+                    break
+                }
+                
+                prevWidth = newWidth
+                prevHeight = newHeight
+                attempts++
+            }
+        }
+
+
 
         let defaultFontSize
         let maxFontSize
@@ -386,6 +455,7 @@
 
             defaultFontSize = itemFontSize
             if (textFit === "growToFit" && itemFontSize !== 100) maxFontSize = itemFontSize
+
         } else {
             if (isTextItem && textFit === "none") {
                 fontSize = 0
@@ -398,7 +468,7 @@
                 if (line?.text && Array.isArray(line.text)) allText.push(...line.text)
             })
             const itemText = allText.filter((a) => !a.customType?.includes("disableTemplate")) || []
-            let itemFontSize = Number(getStyles(itemText[0]?.style, true)?.[" font-size"] || "") || 100
+            let itemFontSize = Number(getStyles(itemText[0]?.style, true)?.["font-size"] || "") || 100
 
             // get scripture verse ratio
             const verseItemText = allText.filter((a) => a.customType?.includes("disableTemplate")) || []
@@ -406,18 +476,20 @@
             customTypeRatio = verseItemSize / 100 || 1
 
             defaultFontSize = itemFontSize
-            if (textFit === "growToFit" && isTextItem) maxFontSize = itemFontSize
+            if (textFit === "growToFit" && isTextItem && itemFontSize > 100) maxFontSize = itemFontSize
+
         }
 
         let elem = itemElem
         if (!elem) return
 
-
-
         // short-circuit expensive DOM work when we already measured identical content
         const cacheKey = buildAutoSizeCacheKey()
         const cacheSignature = buildAutoSizeSignature(elem.clientWidth, elem.clientHeight)
         const cachedResult = cacheKey ? readAutoSizeCache(cacheKey) : undefined
+
+
+
         if (!isDynamic && cachedResult && cachedResult.signature === cacheSignature) {
             fontSize = cachedResult.fontSize
             if (item.type === "slide_tracker") {
@@ -449,13 +521,12 @@
                 type: textFit,
                 textQuery,
                 defaultFontSize,
-                maxFontSize
+                maxFontSize,
+                isList: item?.list?.enabled || false
             })
         } catch (e) {
-            console.warn("[Autosize] failed:", e)
+            console.error(e)
         }
-
-
 
         // smaller in general if bullet list, because they are not accounted for
         if (item?.list?.enabled) fontSize *= 0.9
@@ -465,8 +536,14 @@
             markAutoSizeReady()
             return
         }
-        if (fontSize !== item.autoFontSize) setItemAutoFontSize(fontSize)
+        // Store in separate field for previews vs OUTPUT
+        if (preview) {
+            if (fontSize !== item.previewAutoFontSize) setItemPreviewAutoFontSize(fontSize)
+        } else {
+            if (fontSize !== item.autoFontSize) setItemAutoFontSize(fontSize)
+        }
         if (!isDynamic && cacheKey) writeAutoSizeCache(cacheKey, { signature: cacheSignature, fontSize })
+
         markAutoSizeReady()
     }
 
@@ -494,6 +571,16 @@
         if (preview) {
             boxDimensions.measuredWidth = measuredWidth
             boxDimensions.measuredHeight = measuredHeight
+        }
+        
+        // Fix for OUTPUT getting stuck with wrong cache when output window dimensions change
+        // Include container dimensions to invalidate cache when OUTPUT resolution/size changes
+        if (!preview && !isStage && itemElem) {
+            const container = itemElem.parentElement
+            if (container) {
+                boxDimensions.containerWidth = container.clientWidth
+                boxDimensions.containerHeight = container.clientHeight
+            }
         }
 
         return JSON.stringify({
@@ -530,16 +617,21 @@
 
     // determine whether we should keep the visible textbox hidden while autosize runs
     function shouldHideUntilAutoSizeCompletes() {
-        if (isStage || preview) return false
+        // NOTE: Stage uses its own loading mechanism in SlideText.svelte (.loading class)
+        // but for the first render, that mechanism shows nothing while the new content loads
+        // We need to hide content until autosize is ready for stage too
+        if (preview) return false
         const type = item?.type || "text"
         if (type !== "text") return false
         
         // Use detailed validation to ensure we catch all autosize candidates
+        // For STAGE: stageAutoSize controls autosize, slide items don't have auto/textFit set
         const isExplicitNone = item?.textFit === "none"
         const isExplicitActive = item?.textFit && item?.textFit !== "none"
         const isImpliedActive = !item?.textFit && item?.auto
+        const isStageAutoSizeActive = stageAutoSize
 
-        if (isExplicitNone || (!isExplicitActive && !isImpliedActive)) {
+        if (!isStageAutoSizeActive && (isExplicitNone || (!isExplicitActive && !isImpliedActive))) {
              return false
         }
         
@@ -548,7 +640,9 @@
         const cacheSignature = buildAutoSizeSignature()
         const cachedResult = cacheKey ? readAutoSizeCache(cacheKey) : undefined
 
-        if (cachedResult && cachedResult.signature === cacheSignature) {
+        const hasValidCache = cachedResult && cachedResult.signature === cacheSignature
+
+        if (hasValidCache) {
             return false
         }
         
@@ -556,7 +650,7 @@
     }
 
     function setItemAutoFontSize(fontSize) {
-        if (isStage || itemIndex < 0 || $currentWindow || ref.id === "scripture") return
+        if (isStage || itemIndex < 0 || $currentWindow || ref.showId === "temp") return
 
         if (ref.type === "overlay") {
             overlays.update((a) => {
@@ -575,6 +669,30 @@
                 if (!a[ref.showId!]?.slides?.[ref.id]?.items?.[itemIndex]) return a
 
                 a[ref.showId!].slides[ref.id].items[itemIndex].autoFontSize = fontSize
+                return a
+            })        }
+    }
+
+    function setItemPreviewAutoFontSize(fontSize) {
+        if (isStage || itemIndex < 0 || $currentWindow || ref.showId === "temp") return
+
+        if (ref.type === "overlay") {
+            overlays.update((a) => {
+                if (!a[ref.id]?.items?.[itemIndex]) return a
+                a[ref.id].items[itemIndex].previewAutoFontSize = fontSize
+                return a
+            })
+        } else if (ref.type === "template") {
+            templates.update((a) => {
+                if (!a[ref.id]?.items?.[itemIndex]) return a
+                a[ref.id].items[itemIndex].previewAutoFontSize = fontSize
+                return a
+            })
+        } else if (ref.showId) {
+            showsCache.update((a) => {
+                if (!a[ref.showId!]?.slides?.[ref.id]?.items?.[itemIndex]) return a
+
+                a[ref.showId!].slides[ref.id].items[itemIndex].previewAutoFontSize = fontSize
                 return a
             })
         }

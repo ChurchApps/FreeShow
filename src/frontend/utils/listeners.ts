@@ -337,7 +337,9 @@ export function storeSubscriber() {
         sendRemoteMixer()
     })
 
-    equalizerConfig.subscribe((data) => {
+    equalizerConfig.subscribe(async (data) => {
+        if (await hasNewerUpdate("EQUALIZER_CONFIG_CACHE", 50)) return
+
         send(OUTPUT, ["EQUALIZER_CONFIG"], data)
     })
 

@@ -54,7 +54,7 @@ import {
     variables,
     videoMarkers
 } from "../../stores"
-import { newToast, triggerFunction } from "../../utils/common"
+import { newToast, setStatus, triggerFunction } from "../../utils/common"
 import { translateText } from "../../utils/language"
 import { confirmCustom } from "../../utils/popup"
 import { removeSlide } from "../context/menuClick"
@@ -99,7 +99,7 @@ export function copy(clip: Clipboard | null = null, getData = true, shouldDuplic
 
     if (copyData.data) {
         clipboard.set(copyData)
-        newToast("actions.copied")
+        setStatus("copied", 5)
     }
 
     console.info("COPIED:", copyObj)
@@ -109,7 +109,7 @@ export function copy(clip: Clipboard | null = null, getData = true, shouldDuplic
 }
 
 // pasting text in editbox is it's own function
-export function paste(clip: Clipboard | null = null, extraData: any = {}, customElem: HTMLElement | null = null) {
+export function paste(clip: Clipboard | null = null, extraData: any = {}, customElem: HTMLElement | null = null, isDuplicating = false) {
     if (!clip) clip = get(clipboard)
     let activeElem = document.activeElement
 
@@ -130,7 +130,7 @@ export function paste(clip: Clipboard | null = null, extraData: any = {}, custom
     // custom media paste: only paste on selected ones
     if (clip.id === "media") {
         mediaPaste(clip.data[0])
-        newToast("actions.pasted")
+        setStatus("pasted", 2)
         return
     }
 
@@ -138,8 +138,11 @@ export function paste(clip: Clipboard | null = null, extraData: any = {}, custom
         if (clip.id) console.info("No paste action:", clip.id)
         return
     }
+
     pasteActions[clip.id](clip.data, extraData)
-    newToast("actions.pasted")
+
+    if (isDuplicating) setStatus("duplicated", 2)
+    else setStatus("pasted", 2)
 
     console.info("PASTED:", clip)
 }
@@ -188,7 +191,7 @@ export function duplicate(clip: Clipboard | null = null) {
 
     const copyData = copy(clip, true, true)
     if (!copyData?.data) return false
-    paste(copyData.data, { index: (copyData as any).index })
+    paste(copyData.data, { index: (copyData as any).index }, null, true)
 
     console.info("DUPLICATED:", copyData)
     return true
@@ -384,7 +387,8 @@ const selectActions = {
         selected.set({ id: "template", data: newSelection })
     },
     media: () => selectAllMedia.set(true),
-    audio: () => selectAllAudio.set(true)
+    audio: () => selectAllAudio.set(true),
+    timeline: () => triggerFunction("timeline_selectAll")
 }
 
 const copyActions = {

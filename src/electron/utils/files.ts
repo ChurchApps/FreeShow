@@ -696,6 +696,15 @@ export async function locateMediaFile({ filePath, folders }: { filePath: string;
         if (level > NESTED_SEARCH || matches.length) return
         if (!(await doesPathExistAsync(folderPath))) return
 
+        // check any path with same parent folder for matches first to limit search a bit
+        // this should also help if multiple files has the same name, but originates from different folders
+        const parentFolderName = upath.basename(upath.dirname(filePath))
+        const potentialPath = path.join(folderPath, parentFolderName, fileName)
+        if (await doesPathExistAsync(potentialPath)) {
+            matches.push(potentialPath)
+            return
+        }
+
         const currentFolderFolders: string[] = []
         const files = await readFolderAsync(folderPath)
 
@@ -725,9 +734,6 @@ export async function locateMediaFile({ filePath, folders }: { filePath: string;
     }
 
     function checkFileForMatch(currentFileName: string, folderPath: string) {
-        // WIP check any path with same parent folder for matches first to limit search a bit
-        // this would also help with files with same name
-
         if (matches.length) return
 
         // simple search: match by file name only

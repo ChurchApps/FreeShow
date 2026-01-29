@@ -209,7 +209,7 @@ export function getMediaCached(path: string) {
     return { ...replacedPaths.get(path)!, data: mediaData }
 }
 
-async function locateMediaFile(path: string) {
+export async function locateMediaFile(path: string) {
     let folders: string[] = []
     if (get(special).autoLocateMedia !== false) {
         const mediaType = getMediaType(getExtension(path))

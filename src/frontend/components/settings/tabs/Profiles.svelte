@@ -177,7 +177,7 @@
         <!-- Admin settings -->
         <MaterialTextInput label="remote.password" disabled={hasAdminPass} value={hasAdminPass ? "*****" : ""} defaultValue="" on:change={setAdminPassword} />
 
-        <MaterialToggleSwitch label="profile.auto_open_last_used" checked={currentProfile.autoOpenLastUsed || false} defaultValue={false} on:change={(e) => updateAdmin("autoOpenLastUsed", e.detail)} />
+        <MaterialToggleSwitch label="profile.auto_open_last_used" checked={$profiles.admin?.autoOpenLastUsed || false} defaultValue={false} on:change={(e) => updateAdmin("autoOpenLastUsed", e.detail)} />
     {/if}
 
     <Center style="height: 82%;opacity: 0.1;">

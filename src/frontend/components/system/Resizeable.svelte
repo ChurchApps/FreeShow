@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import { editColumns, localeDirection, resized } from "../../stores"
+    import { drawer, editColumns, localeDirection, os, resized } from "../../stores"
     import { DEFAULT_WIDTH } from "../../utils/common"
     import Icon from "../helpers/Icon.svelte"
 
@@ -68,6 +68,10 @@
         if (width < DEFAULT_WIDTH * MIN_WIDTH) return DEFAULT_WIDTH * MIN_WIDTH
         if (width > DEFAULT_WIDTH - 20 && width < DEFAULT_WIDTH + 20) return DEFAULT_WIDTH
         if (width > maxWidth) return maxWidth
+        if (side === "bottom") {
+            const availableHeight = window.innerHeight - ($os.platform === "win32" ? 25 : 0) - $drawer.height - 40
+            if (width > availableHeight) return availableHeight
+        }
         move = true
         return width
     }
@@ -138,7 +142,7 @@ role="button"
 tabindex="0"
 aria-label="Resize panel {id}"
 aria-expanded={width > minWidth} -->
-<div {id} style="{side === 'left' || side === 'right' ? 'width' : 'height'}: {width}px; --handle-width: {handleWidth}px" class="panel bar_{side}" class:zero={width <= handleWidth} on:mousedown={mousedown} on:click={click}>
+<div {id} style="{side === 'left' || side === 'right' ? 'width' : 'height'}: {width}px;{side === 'left' || side === 'right' ? '' : `min-height: ${width}px;`} --handle-width: {handleWidth}px" class="panel bar_{side}" class:zero={width <= handleWidth} on:mousedown={mousedown} on:click={click}>
     {#if width <= handleWidth}
         <Icon id="arrow_right" size={1.3} white />
     {/if}
@@ -208,6 +212,12 @@ aria-expanded={width > minWidth} -->
         /* right: unset;
         left: 0;
         transform: translate(-62%, -50%) rotate(180deg); */
+    }
+    .bar_bottom.zero :global(svg) {
+        transform: translate(-50%, -50%) rotate(-90deg);
+    }
+    .bar_top.zero :global(svg) {
+        transform: translate(-50%, -50%) rotate(90deg);
     }
 
     div:global(.bar_left)::after {

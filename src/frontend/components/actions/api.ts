@@ -15,7 +15,6 @@ import { pauseAllTimers } from "../drawer/timers/timers"
 import { getSlideThumbnail, getThumbnail } from "../helpers/media"
 import { changeStageOutputLayout, startCamera, startScreen, toggleOutput, toggleOutputs } from "../helpers/output"
 import { activateTriggerSync, changeOutputStyle, nextSlideIndividual, playSlideTimers, previousSlideIndividual, randomSlide, replaceDynamicValues, selectProjectShow, sendMidi, startShowSync } from "../helpers/showActions"
-import { playSlideRecording } from "../helpers/slideRecording"
 import { startTimerById, startTimerByName, stopTimers } from "../helpers/timerTick"
 import { clearAll, clearBackground, clearDrawing, clearOverlay, clearOverlays, clearSlide, clearTimers, restoreOutput } from "../output/clear"
 import { formatText } from "../show/formatTextEditor"
@@ -212,7 +211,6 @@ export const API_ACTIONS = {
     index_select_slide: (data: API_slide_index) => selectSlideByIndex(data), // BC
     name_select_slide: (data: API_strval) => selectSlideByName(data.value), // BC
     id_select_group: (data: API_id) => gotoGroup(data.id), // BC
-    start_slide_recording: () => playSlideRecording(),
 
     // CLEAR
     restore_output: () => restoreOutput(), // BC

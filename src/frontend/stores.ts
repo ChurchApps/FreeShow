@@ -5,6 +5,7 @@ import type { Bible } from "json-bible/lib/Bible"
 import type { ICommonTagsResult } from "music-metadata"
 import { type Writable, writable } from "svelte/store"
 import type { ContentProviderId } from "../electron/contentProviders/base/types"
+import type { TimecodeMode } from "../electron/timecode/timecode"
 import type { Event } from "../types/Calendar"
 import type { Draw, DrawLine, DrawSettings, DrawTools } from "../types/Draw"
 import type { Effects } from "../types/Effects"
@@ -19,7 +20,7 @@ import type { BibleCategories, Categories, DrawerTabs, SettingsTabs, TopViews } 
 import type { AudioChannel, AudioChannelData, AudioStream, Playlist } from "./../types/Audio"
 import type { Outputs } from "./../types/Output"
 import type { DrawerTabIds } from "./../types/Tabs"
-import { type EQBand, type EqualizerConfig } from "./audio/audioEqualizer"
+import type { EQBand, EqualizerConfig } from "./audio/audioEqualizer"
 import type { AudioData } from "./audio/audioPlayer"
 import type { API_metronome } from "./components/actions/api"
 
@@ -72,12 +73,13 @@ export const activeScripture: Writable<{ id?: string; reference?: { book: number
 export const activeTriggerFunction: Writable<string> = writable("")
 export const guideActive: Writable<boolean> = writable(false)
 export const runningActions: Writable<string[]> = writable([])
-export const activeSlideRecording: Writable<any> = writable(null)
 export const scriptureMode: Writable<"grid" | "list"> = writable("list")
 export const providerConnections: Writable<{ [key in ContentProviderId]?: boolean }> = writable({})
 export const metronomeTimer: Writable<{ beat: number; timeToNext: number }> = writable({ beat: 0, timeToNext: 0 })
 export const mediaDownloads: Writable<Map<string, { progress: number; total: number; status: string }>> = writable(new Map())
 export const showChangeProfileMenu: Writable<boolean> = writable(false)
+export const isTimelinePlaying: Writable<boolean> = writable(false)
+export const timelineRecordingAction: Writable<{ id: string; data?: any }> = writable({ id: "" })
 
 // TAGS
 export const activeTagFilter: Writable<string[]> = writable([])
@@ -328,6 +330,10 @@ export const profiles: Writable<Profiles> = writable({}) // {}
 // MIDI
 export const actions: Writable<{ [key: string]: Action }> = writable({}) // {}
 export const emitters: Writable<{ [key: string]: Emitter }> = writable({}) // {}
+
+// TIMECODE
+export const timeline: Writable<{ startTime?: number }> = writable({}) // {}
+export const timecode: Writable<{ type?: "send" | "receive"; mode?: TimecodeMode; framerate?: number; offset?: number; audioOutput?: string; audioInput?: string; midiOutput?: string; midiInput?: string }> = writable({}) // {}
 
 // CONNECTIONS
 export const ports: Writable<{ [key: string]: number }> = writable({ remote: 5510, stage: 5511, controller: 5512, output_stream: 5513 }) // {default}

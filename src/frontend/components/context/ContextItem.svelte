@@ -18,6 +18,7 @@
     export let menu: ContextMenuItem = contextMenuItems[id]
     export let disabled = false
     export let highlighted = false
+    export let group = false
 
     let hide = false
     let enabled: boolean = menu?.enabled ? true : false
@@ -123,16 +124,29 @@
             }
         },
         remove_group: () => {
-            if ($selected.id !== "slide") return
+            if ($selected.id !== "slide" || $selected.data?.length > 1) return
 
-            let ref = getLayoutRef()
-            const getCurrentSlide = (index) => ref.find((a) => a.layoutIndex === index)
-            let parentSlide = $selected.data.find((a) => a.index && getCurrentSlide(a.index)?.type === "parent")
+            const ref = getLayoutRef()
+            const slideIndex = $selected.data[0]?.index
+            const currentSlideId = ref[slideIndex]?.parent?.id || ref[slideIndex]?.id
+            if (!currentSlideId) return
 
-            if (parentSlide) return
+            const show = $showsCache[$activeShow?.id || ""]
 
-            // disable when no parents are selected or just first slide
-            disabled = true
+            // if parent slide and has children, don't hide
+            const isParent = ref[slideIndex]?.type === "parent"
+            if (isParent && (show.slides[currentSlideId]?.children || []).length) {
+                hide = false
+                return
+            }
+
+            const currentSlideInstances = Object.values(show.layouts)
+                .map((a) => a.slides)
+                .flat()
+                .filter((b) => b.id === currentSlideId)
+
+            // hide if there is just one instance of the slide group across all layouts
+            hide = currentSlideInstances.length < 2
         },
         remove: () => {
             if ($selected.id !== "show" || _show($selected.data[0]?.id).get("private") !== true) return
@@ -144,17 +158,8 @@
         redo: () => {
             if (!$redoHistory.length) disabled = true
         },
-        addToProject: () => {
-            // hide button if $selected.id === "media" && one item selected ? as it's now done with double click
-            if ($selected.id === "media" && $selected.data.length > 1) {
-                id = "createSlideshow"
-                menu = { label: "context.create_slideshow", icon: "slide" }
-                // id = "addToShow"
-                // menu = { label: "context.add_to_show", icon: "slide" }
-                // if (!$activeShow || ($activeShow.type || "show") !== "show") disabled = true
-            } else {
-                if (!$activeProject) disabled = true
-            }
+        createSlideshow: () => {
+            hide = $selected.id !== "media" || $selected.data.length < 2
         },
         play: () => {
             if ($selected.id === "global_timer") {
@@ -354,10 +359,10 @@
     $: customStyle = id === "uppercase" ? "text-transform: uppercase;" : id === "lowercase" ? "text-transform: lowercase;" : ""
 </script>
 
-<div on:click={contextItemClick} class:enabled class:disabled class:hide class:highlighted data-title={translateText(menu?.tooltip || "")} style="color: {menu?.color || 'unset'};font-weight: {menu?.color ? '500' : 'normal'};{menu?.style || ''}" tabindex={0} on:keydown={keydown} role="menuitem">
-    <span style="display: flex;align-items: center;gap: 15px;">
+<div on:click={contextItemClick} class:enabled class:disabled class:hide class:highlighted class:group data-title={translateText(menu?.tooltip || "")} style="color: {menu?.color || 'unset'};font-weight: {menu?.color ? '500' : 'normal'};{menu?.style || ''}" tabindex={0} on:keydown={keydown} role="menuitem">
+    <span class="item" data-title={group && !menu?.tooltip ? `${shortcut}` : ""}>
         <!-- white={menu.icon !== "edit"} -->
-        {#if menu?.icon}<Icon style="opacity: 0.7;color: {(topBar ? '' : menu.iconColor) || 'var(--text)'};" id={menu.icon} white />{/if}
+        {#if menu?.icon}<Icon style="opacity: 0.7;color: {(topBar ? '' : menu.iconColor) || 'var(--text)'};" id={menu.icon} size={group ? 1.4 : 1} white />{/if}
         {#if enabled === true}<Icon id="check" style="fill: var(--text);" size={0.7} white />{/if}
         <p style="display: flex;align-items: center;gap: 5px;{customStyle}">
             {#if menu?.translate === false}
@@ -378,7 +383,7 @@
         </p>
     </span>
 
-    {#if shortcut}
+    {#if shortcut && !group}
         <span style="opacity: 0.4;font-size: 0.8em;/*text-transform: uppercase;*/">{shortcut}</span>
     {/if}
 </div>
@@ -401,6 +406,12 @@
         cursor: default;
     }
 
+    div span.item {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
     p {
         max-width: 300px;
     }
@@ -418,5 +429,32 @@
         background-color: rgb(0 0 0 / 0.2);
         outline: 2px solid var(--secondary);
         outline-offset: -2px;
+    }
+
+    /* Group */
+
+    div.group {
+        flex: 1;
+        font-size: 0.88em;
+        padding: 0;
+        gap: 0;
+
+        min-width: 90px;
+    }
+
+    div.group span.item {
+        flex-direction: column;
+        padding: 6px;
+        flex: 1;
+        gap: 4px;
+    }
+
+    div.group:hover:not(.disabled) {
+        background-color: initial;
+        cursor: initial;
+    }
+    div.group:not(.disabled) span.item:hover {
+        background-color: rgb(0 0 0 / 0.2);
+        cursor: pointer;
     }
 </style>

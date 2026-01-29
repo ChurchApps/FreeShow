@@ -281,14 +281,36 @@ export interface Layout {
     id?: string
     name: string
     notes: string
-    recording?: Recording[]
+    timeline?: Timeline
+    recording?: Recording[] // deprecated
     slides: SlideData[]
 }
 
+export interface Timeline {
+    // id: string
+    // name: string
+    actions: TimelineAction[]
+}
+
+export interface TimelineAction {
+    id: string
+    time: number // ms
+    duration?: number // ms (media)
+    name: string
+    type: string // "action" | "slide" | "show" | "audio"
+    data: {
+        id?: string // slide/action/show
+        path?: string // audio
+        index?: number // slide
+        layoutId?: string // show
+        triggers?: string[] // action
+        actionValues?: any // action
+    }
+}
+
+// deprecated
 export interface Recording {
     id: string
-    // name: string
-    // useDurationTime?: boolean // moved to global settings
     layoutAtRecording: string // store layout ids to detect changes
     sequence: {
         time: number

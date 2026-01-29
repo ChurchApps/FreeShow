@@ -33,6 +33,10 @@
         const alt = e.altKey
         const doubleClick = e.detail === 2
         const target = e.target
+
+        // defocus button to avoid accidental space/enter presses
+        ;(document.activeElement as HTMLElement)?.blur()
+
         dispatch(double ? "dblclick" : "click", { ctrl, shift, alt, doubleClick, target })
     }
 

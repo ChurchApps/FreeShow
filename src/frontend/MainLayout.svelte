@@ -2,19 +2,20 @@
     import { customActionActivation } from "./components/actions/actions"
     import DrawTabs from "./components/draw/DrawTabs.svelte"
     import Navigation from "./components/edit/Navigation.svelte"
+    import LazyLoad from "./components/helpers/LazyLoad.svelte"
+    import ProfileChangerMenu from "./components/main/ProfileChangerMenu.svelte"
+    import Tipbar from "./components/main/Tipbar.svelte"
     import Top from "./components/main/Top.svelte"
     import Preview from "./components/output/preview/Preview.svelte"
-    import LazyLoad from "./components/helpers/LazyLoad.svelte"
     import SettingsTabs from "./components/settings/SettingsTabs.svelte"
     import Projects from "./components/show/Projects.svelte"
     import Show from "./components/show/Show.svelte"
     import ShowTools from "./components/show/ShowTools.svelte"
     import StageLayouts from "./components/stage/StageLayouts.svelte"
     import Resizeable from "./components/system/Resizeable.svelte"
-    import { activeEdit, activePage, activeProfile, activeShow, activeStage, currentWindow, focusMode, loaded, os, showChangeProfileMenu, showsCache, textEditActive } from "./stores"
+    import Timeline from "./components/timeline/Timeline.svelte"
+    import { activeEdit, activePage, activeProfile, activeProject, activeShow, activeStage, currentWindow, focusMode, loaded, os, resized, showChangeProfileMenu, showsCache, special, textEditActive } from "./stores"
     import { DEFAULT_WIDTH } from "./utils/common"
-    import Tipbar from "./components/main/Tipbar.svelte"
-    import ProfileChangerMenu from "./components/main/ProfileChangerMenu.svelte"
 
     $: page = $activePage
     $: isWindows = !$currentWindow && $os.platform === "win32"
@@ -100,6 +101,14 @@
             </div>
         </Resizeable>
     </div>
+
+    {#if page === "show" && $special.projectTimelineActive && $activeProject}
+        <Resizeable id="project_timeline" side="bottom" maxWidth={DEFAULT_WIDTH} minWidth={40}>
+            {#key $activeProject}
+                <Timeline type="project" isClosed={$resized.project_timeline <= 40} />
+            {/key}
+        </Resizeable>
+    {/if}
 
     {#if $loaded && (page === "show" || page === "edit")}
         <LazyLoad component={() => import("./components/drawer/Drawer.svelte")} show={$loaded && (page === "show" || page === "edit")} />

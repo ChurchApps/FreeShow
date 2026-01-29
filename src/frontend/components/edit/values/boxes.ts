@@ -249,7 +249,7 @@ export const textSections: { [key: string]: EditBoxSection } = {
     },
     outline: {
         expandAutoValue: {
-            "-webkit-text-stroke-width": 2
+            "-webkit-text-stroke-width": 10
         },
         inputs: [
             [

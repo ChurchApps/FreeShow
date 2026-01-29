@@ -12,7 +12,7 @@ import type { ValidChannels } from "../types/Channels"
 // wait to log messages until after intial load is done
 let appLoaded = false
 const LOG_MESSAGES: boolean = process.env.NODE_ENV !== "production"
-const filteredChannelsData: string[] = ["AUDIO_MAIN", "VISUALIZER_DATA", "STREAM", "BUFFER", "REQUEST_STREAM", "MAIN_TIME", "MAIN_SLIDE_VIDEO", "GET_THUMBNAIL", "ACTIVE_TIMERS", "RECEIVE_STREAM", "CHECK_RAM_USAGE"]
+const filteredChannelsData: string[] = ["AUDIO_MAIN", "VISUALIZER_DATA", "STREAM", "BUFFER", "REQUEST_STREAM", "MAIN_TIME", "MAIN_SLIDE_VIDEO", "GET_THUMBNAIL", "ACTIVE_TIMERS", "RECEIVE_STREAM", "CHECK_RAM_USAGE", "TIMECODE_VALUE", "TIMECODE_AUDIO_DATA"]
 const filteredChannels: ValidChannels[] = ["AUDIO"]
 
 const storedReceivers: { [key: string]: (e: IpcRendererEvent, args: any) => void } = {}

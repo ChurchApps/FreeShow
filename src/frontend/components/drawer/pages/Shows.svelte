@@ -3,7 +3,7 @@
     // import VirtualList from "@sveltejs/svelte-virtual-list"
     // import VirtualList from "./VirtualList2.svelte"
     import type { ShowList } from "../../../../types/Show"
-    import { activeEdit, activeFocus, activePopup, activeProject, activeShow, activeTagFilter, categories, drawer, focusMode, labelsDisabled, shows, sorted, sortedShowsList } from "../../../stores"
+    import { activeEdit, activeFocus, activePopup, activeProject, activeShow, activeTagFilter, categories, drawer, focusedArea, focusMode, labelsDisabled, shows, sorted, sortedShowsList } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { getAccess } from "../../../utils/profile"
     import { formatSearch, isRefinement, showSearch, tokenize } from "../../../utils/search"
@@ -250,7 +250,7 @@
 
 <Autoscroll style="overflow-y: auto;flex: 1;">
     <!-- bind:this={listElem} -->
-    <div class="column {readOnly ? '' : 'context #drawer_show'}">
+    <div class="column {readOnly ? '' : 'context #drawer_show'}" on:mouseup={() => focusedArea.set("show_drawer")}>
         {#if filteredShows.length}
             {#if createFromSearch && searchValue.length && typeof searchValue === "string" && activeIsSearch}
                 <div class="warning">

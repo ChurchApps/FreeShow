@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
     import { slide } from "svelte/transition"
     import { activePage, os, settingsTab, statusIndicator } from "../../stores"
     import { translateText } from "../../utils/language"
@@ -6,13 +6,14 @@
 
     $: isWindows = $os.platform === "win32"
 
-    $: indicatorId = $statusIndicator
-
     const titles = {
         saving: "toast.saving",
         saved: "toast.saved",
         syncing: "cloud.syncing",
         synced: "cloud.sync_complete",
+        copied: "actions.copied",
+        pasted: "actions.pasted",
+        duplicated: "actions.duplicated",
         error: "Error"
     }
 
@@ -30,10 +31,36 @@
 
     // WIP more indicators:
     // Backup / restore
+
+    // don't show a new indicator while the current one is clearing
+    let indicatorId: string = ""
+    let maxTimeout: NodeJS.Timeout | null = null
+    let indicatorTimeout: NodeJS.Timeout | null = null
+    $: if ($statusIndicator !== undefined) updateIndicator()
+    function updateIndicator() {
+        if (indicatorTimeout) {
+            if ($statusIndicator && indicatorId) indicatorId = $statusIndicator
+            return
+        }
+
+        indicatorId = $statusIndicator || ""
+        indicatorTimeout = setTimeout(() => {
+            indicatorTimeout = null
+            if ($statusIndicator !== indicatorId) updateIndicator()
+            else if (maxTimeout) clearTimeout(maxTimeout)
+        }, 301)
+
+        if (maxTimeout) clearTimeout(maxTimeout)
+        maxTimeout = setTimeout(() => {
+            if (indicatorTimeout) clearTimeout(indicatorTimeout)
+            indicatorTimeout = null
+            indicatorId = ""
+        }, 10000)
+    }
 </script>
 
 {#if indicatorId}
-    <div class="status" style={isWindows ? "transform: translateY(25px);" : ""} role="none" data-title={translateText(titles[indicatorId] || "")} on:click={onClick} transition:slide={{ axis: "x" }}>
+    <div class="status" style={isWindows ? "transform: translateY(25px);" : ""} role="none" data-title={translateText(titles[indicatorId] || "")} on:click={onClick} transition:slide={{ axis: "x", duration: 300 }}>
         <div class={indicatorId}>
             {#if indicatorId === "saving"}
                 <Icon id="save" white />
@@ -46,6 +73,12 @@
                 <Icon id="loop" white />
             {:else if indicatorId === "synced"}
                 <Icon id="cloud_done" white />
+            {:else if indicatorId === "copied"}
+                <Icon id="copy" white />
+            {:else if indicatorId === "pasted"}
+                <Icon id="paste" white />
+            {:else if indicatorId === "duplicated"}
+                <Icon id="duplicate" white />
             {:else if indicatorId === "error"}
                 <Icon id="close" white />
             {/if}
