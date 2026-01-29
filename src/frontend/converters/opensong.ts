@@ -76,7 +76,7 @@ export function convertOpenSong(data: any) {
     }, 10)
 }
 
-const OSgroups: any = { V: "verse", C: "chorus", B: "bridge", T: "tag", O: "outro" }
+const OSgroups: any = { V: "verse", C: "chorus", B: "bridge", T: "tag", O: "outro", P: "pre_chorus" }
 function createSlides({ lyrics, presentation, backgrounds }: Song) {
     const slides: any = {}
     const media: any = {}

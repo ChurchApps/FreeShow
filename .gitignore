@@ -22,3 +22,4 @@ test-results/
 *.ipr
 *.iws
 .serena
+.python-version
