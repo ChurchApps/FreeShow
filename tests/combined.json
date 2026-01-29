@@ -1,0 +1,1319 @@
+[
+  {
+    "file": "/home/mtulen/v1.5.5/FreeShow/scripts/testfiles/CheckNumbering.os",
+    "shows": [
+      {
+        "id": "1cc198c70c6",
+        "show": {
+          "name": "Test2",
+          "private": false,
+          "category": "category_test_OpenSong",
+          "settings": {
+            "activeLayout": "5ae2e1cc198"
+          },
+          "timestamps": {
+            "created": 1769671274362,
+            "modified": null,
+            "used": null
+          },
+          "quickAccess": {
+            "number": ""
+          },
+          "meta": {
+            "number": "",
+            "title": "Test2",
+            "author": "",
+            "copyright": "",
+            "key": "",
+            "CCLI": ""
+          },
+          "slides": {
+            "ae2e1cc198c": {
+              "group": "",
+              "color": null,
+              "settings": {},
+              "notes": "",
+              "items": [
+                {
+                  "style": {
+                    "fontSize": "40"
+                  },
+                  "lines": [
+                    {
+                      "align": "",
+                      "text": [
+                        {
+                          "style": "",
+                          "value": "First verse, used"
+                        }
+                      ],
+                      "chords": []
+                    }
+                  ]
+                }
+              ],
+              "globalGroup": "verse"
+            },
+            "e2e1cc198c7": {
+              "group": "",
+              "color": null,
+              "settings": {},
+              "notes": "",
+              "items": [
+                {
+                  "style": {
+                    "fontSize": "40"
+                  },
+                  "lines": [
+                    {
+                      "align": "",
+                      "text": [
+                        {
+                          "style": "",
+                          "value": "Second verse, not used"
+                        }
+                      ],
+                      "chords": []
+                    }
+                  ]
+                }
+              ],
+              "globalGroup": "verse"
+            },
+            "2e1cc198c70": {
+              "group": "",
+              "color": null,
+              "settings": {},
+              "notes": "",
+              "items": [
+                {
+                  "style": {
+                    "fontSize": "40"
+                  },
+                  "lines": [
+                    {
+                      "align": "",
+                      "text": [
+                        {
+                          "style": "",
+                          "value": "Third verse, not used"
+                        }
+                      ],
+                      "chords": []
+                    }
+                  ]
+                }
+              ],
+              "globalGroup": "verse"
+            },
+            "e1cc198c70c": {
+              "group": "",
+              "color": null,
+              "settings": {},
+              "notes": "",
+              "items": [
+                {
+                  "style": {
+                    "fontSize": "40"
+                  },
+                  "lines": [
+                    {
+                      "align": "",
+                      "text": [
+                        {
+                          "style": "",
+                          "value": "Fourth verse, used"
+                        }
+                      ],
+                      "chords": []
+                    }
+                  ]
+                }
+              ],
+              "globalGroup": "verse"
+            }
+          },
+          "layouts": {
+            "5ae2e1cc198": {
+              "name": "example.default",
+              "notes": "",
+              "slides": [
+                {
+                  "id": "ae2e1cc198c"
+                },
+                {
+                  "id": "e1cc198c70c"
+                }
+              ]
+            }
+          },
+          "media": {},
+          "origin": "opensong"
+        }
+      }
+    ]
+  },
+  {
+    "file": "/home/mtulen/v1.5.5/FreeShow/scripts/testfiles/Test1.os",
+    "shows": [
+      {
+        "id": "6758f97b609",
+        "show": {
+          "name": "Test1",
+          "private": false,
+          "category": "category_test_OpenSong",
+          "settings": {
+            "activeLayout": "cc198c70c66"
+          },
+          "timestamps": {
+            "created": 1769671274655,
+            "modified": null,
+            "used": null
+          },
+          "quickAccess": {
+            "number": ""
+          },
+          "meta": {
+            "number": "",
+            "title": "Test1",
+            "author": "",
+            "copyright": "",
+            "key": "",
+            "CCLI": ""
+          },
+          "slides": {
+            "c198c70c667": {
+              "group": "",
+              "color": null,
+              "settings": {},
+              "notes": "",
+              "items": [
+                {
+                  "style": {
+                    "fontSize": "40"
+                  },
+                  "lines": [
+                    {
+                      "align": "",
+                      "text": [
+                        {
+                          "style": "",
+                          "value": "\"First occurence of V1\", should be included"
+                        }
+                      ],
+                      "chords": []
+                    }
+                  ]
+                }
+              ],
+              "globalGroup": "verse"
+            },
+            "198c70c6675": {
+              "group": "",
+              "color": null,
+              "settings": {},
+              "notes": "",
+              "items": [
+                {
+                  "style": {
+                    "fontSize": "40"
+                  },
+                  "lines": [
+                    {
+                      "align": "",
+                      "text": [
+                        {
+                          "style": "",
+                          "value": "Second occurence of V1, should be included on same slide as \"First occurence of V1\""
+                        }
+                      ],
+                      "chords": []
+                    }
+                  ]
+                }
+              ],
+              "globalGroup": "verse"
+            },
+            "98c70c66758": {
+              "group": "",
+              "color": null,
+              "settings": {},
+              "notes": "",
+              "items": [
+                {
+                  "style": {
+                    "fontSize": "40"
+                  },
+                  "lines": [
+                    {
+                      "align": "",
+                      "text": [
+                        {
+                          "style": "",
+                          "value": "Globalgroup must be: Verse"
+                        }
+                      ],
+                      "chords": []
+                    }
+                  ]
+                }
+              ],
+              "globalGroup": "verse"
+            },
+            "8c70c66758f": {
+              "group": "",
+              "color": null,
+              "settings": {},
+              "notes": "",
+              "items": [
+                {
+                  "style": {
+                    "fontSize": "40"
+                  },
+                  "lines": [
+                    {
+                      "align": "",
+                      "text": [
+                        {
+                          "style": "",
+                          "value": "Globalgroup must be: Chorus"
+                        }
+                      ],
+                      "chords": []
+                    }
+                  ]
+                }
+              ],
+              "globalGroup": "chorus"
+            },
+            "c70c66758f9": {
+              "group": "",
+              "color": null,
+              "settings": {},
+              "notes": "",
+              "items": [
+                {
+                  "style": {
+                    "fontSize": "40"
+                  },
+                  "lines": [
+                    {
+                      "align": "",
+                      "text": [
+                        {
+                          "style": "",
+                          "value": "Globalgroup must be: Bridge"
+                        }
+                      ],
+                      "chords": []
+                    }
+                  ]
+                }
+              ],
+              "globalGroup": "bridge"
+            },
+            "70c66758f97": {
+              "group": "",
+              "color": null,
+              "settings": {},
+              "notes": "",
+              "items": [
+                {
+                  "style": {
+                    "fontSize": "40"
+                  },
+                  "lines": [
+                    {
+                      "align": "",
+                      "text": [
+                        {
+                          "style": "",
+                          "value": "Globalgroup must be: Pre-chorus"
+                        }
+                      ],
+                      "chords": []
+                    }
+                  ]
+                }
+              ],
+              "globalGroup": "pre_chorus"
+            },
+            "0c66758f97b": {
+              "group": "",
+              "color": null,
+              "settings": {},
+              "notes": "",
+              "items": [
+                {
+                  "style": {
+                    "fontSize": "40"
+                  },
+                  "lines": [
+                    {
+                      "align": "",
+                      "text": [
+                        {
+                          "style": "",
+                          "value": "Globalgroup must be: Tag"
+                        }
+                      ],
+                      "chords": []
+                    }
+                  ]
+                }
+              ],
+              "globalGroup": "tag"
+            },
+            "c66758f97b6": {
+              "group": "O",
+              "color": null,
+              "settings": {},
+              "notes": "",
+              "items": [
+                {
+                  "style": {
+                    "fontSize": "40"
+                  },
+                  "lines": [
+                    {
+                      "align": "",
+                      "text": [
+                        {
+                          "style": "",
+                          "value": "Globalgroup must be: Outro"
+                        }
+                      ],
+                      "chords": []
+                    }
+                  ]
+                }
+              ]
+            },
+            "66758f97b60": {
+              "group": "I",
+              "color": null,
+              "settings": {},
+              "notes": "",
+              "items": [
+                {
+                  "style": {
+                    "fontSize": "40"
+                  },
+                  "lines": [
+                    {
+                      "align": "",
+                      "text": [
+                        {
+                          "style": "",
+                          "value": "Globalgroup must be: Intro"
+                        }
+                      ],
+                      "chords": []
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          "layouts": {
+            "cc198c70c66": {
+              "name": "example.default",
+              "notes": "",
+              "slides": [
+                {
+                  "id": "198c70c6675"
+                },
+                {
+                  "id": "98c70c66758"
+                },
+                {
+                  "id": "8c70c66758f"
+                },
+                {
+                  "id": "c70c66758f9"
+                },
+                {
+                  "id": "70c66758f97"
+                },
+                {
+                  "id": "0c66758f97b"
+                },
+                {
+                  "id": "c66758f97b6"
+                },
+                {
+                  "id": "66758f97b60"
+                }
+              ]
+            }
+          },
+          "media": {},
+          "origin": "opensong"
+        }
+      }
+    ]
+  },
+  {
+    "file": "/home/mtulen/v1.5.5/FreeShow/scripts/testfiles/Test2.os",
+    "shows": [
+      {
+        "id": "097e0451b74",
+        "show": {
+          "name": "Test2",
+          "private": false,
+          "category": "category_test_OpenSong",
+          "settings": {
+            "activeLayout": "758f97b6097"
+          },
+          "timestamps": {
+            "created": 1769671274956,
+            "modified": null,
+            "used": null
+          },
+          "quickAccess": {
+            "number": ""
+          },
+          "meta": {
+            "number": "",
+            "title": "Test2",
+            "author": "",
+            "copyright": "",
+            "key": "",
+            "CCLI": ""
+          },
+          "slides": {
+            "58f97b6097e": {
+              "group": "",
+              "color": null,
+              "settings": {},
+              "notes": "",
+              "items": [
+                {
+                  "style": {
+                    "fontSize": "40"
+                  },
+                  "lines": [
+                    {
+                      "align": "",
+                      "text": [
+                        {
+                          "style": "",
+                          "value": "1.1 Without empty line1"
+                        }
+                      ],
+                      "chords": []
+                    },
+                    {
+                      "align": "",
+                      "text": [
+                        {
+                          "style": "",
+                          "value": "2.2 Without empty line2"
+                        }
+                      ],
+                      "chords": []
+                    }
+                  ]
+                }
+              ],
+              "globalGroup": "verse"
+            },
+            "8f97b6097e0": {
+              "group": "",
+              "color": null,
+              "settings": {},
+              "notes": "",
+              "items": [
+                {
+                  "style": {
+                    "fontSize": "40"
+                  },
+                  "lines": [
+                    {
+                      "align": "",
+                      "text": [
+                        {
+                          "style": "",
+                          "value": "2.1 Before empty line (next presented line should be 2.2)"
+                        }
+                      ],
+                      "chords": []
+                    },
+                    {
+                      "align": "",
+                      "text": [
+                        {
+                          "style": "",
+                          "value": "2.2 After empty line"
+                        }
+                      ],
+                      "chords": []
+                    }
+                  ]
+                }
+              ],
+              "globalGroup": "verse"
+            },
+            "f97b6097e04": {
+              "group": "",
+              "color": null,
+              "settings": {},
+              "notes": "",
+              "items": [
+                {
+                  "style": {
+                    "fontSize": "40"
+                  },
+                  "lines": [
+                    {
+                      "align": "",
+                      "text": [
+                        {
+                          "style": "",
+                          "value": "3.1 After empty line1, before empty line2 (next presented line should be 3.2)"
+                        }
+                      ],
+                      "chords": []
+                    },
+                    {
+                      "align": "",
+                      "text": [
+                        {
+                          "style": "",
+                          "value": "3.2 After empty line2"
+                        }
+                      ],
+                      "chords": []
+                    }
+                  ]
+                }
+              ],
+              "globalGroup": "verse"
+            },
+            "97b6097e045": {
+              "group": "",
+              "color": null,
+              "settings": {},
+              "notes": "",
+              "items": [
+                {
+                  "style": {
+                    "fontSize": "40"
+                  },
+                  "lines": [
+                    {
+                      "align": "",
+                      "text": [
+                        {
+                          "style": "",
+                          "value": "4.1 Before new line (next presented line should be 4.2, after an empty line)"
+                        }
+                      ],
+                      "chords": []
+                    },
+                    {
+                      "align": "",
+                      "text": [
+                        {
+                          "style": "",
+                          "value": ""
+                        }
+                      ],
+                      "chords": []
+                    },
+                    {
+                      "align": "",
+                      "text": [
+                        {
+                          "style": "",
+                          "value": "4.2 Before new line (next presented line should be 4.3, after an empty line)"
+                        }
+                      ],
+                      "chords": []
+                    },
+                    {
+                      "align": "",
+                      "text": [
+                        {
+                          "style": "",
+                          "value": ""
+                        }
+                      ],
+                      "chords": []
+                    },
+                    {
+                      "align": "",
+                      "text": [
+                        {
+                          "style": "",
+                          "value": ""
+                        }
+                      ],
+                      "chords": []
+                    },
+                    {
+                      "align": "",
+                      "text": [
+                        {
+                          "style": "",
+                          "value": "4.3 Before new line fill fill fill"
+                        }
+                      ],
+                      "chords": []
+                    },
+                    {
+                      "align": "",
+                      "text": [
+                        {
+                          "style": "",
+                          "value": "After new line 2"
+                        }
+                      ],
+                      "chords": []
+                    }
+                  ]
+                }
+              ],
+              "globalGroup": "verse"
+            },
+            "7b6097e0451": {
+              "group": "",
+              "color": null,
+              "settings": {},
+              "notes": "",
+              "items": [
+                {
+                  "style": {
+                    "fontSize": "40"
+                  },
+                  "lines": [
+                    {
+                      "align": "",
+                      "text": [
+                        {
+                          "style": "",
+                          "value": "5.1 Before new slide (next presented line should be 5.2, on a NEW SLIDE, in SAME VERSE)"
+                        }
+                      ],
+                      "chords": []
+                    }
+                  ]
+                }
+              ],
+              "globalGroup": "verse",
+              "children": [
+                "b6097e0451b"
+              ]
+            },
+            "b6097e0451b": {
+              "group": null,
+              "color": null,
+              "settings": {},
+              "notes": "",
+              "items": [
+                {
+                  "style": {
+                    "fontSize": "40"
+                  },
+                  "lines": [
+                    {
+                      "align": "",
+                      "text": [
+                        {
+                          "style": "",
+                          "value": "5.2 After new slide"
+                        }
+                      ],
+                      "chords": []
+                    }
+                  ]
+                }
+              ]
+            },
+            "6097e0451b7": {
+              "group": "",
+              "color": null,
+              "settings": {},
+              "notes": "",
+              "items": [
+                {
+                  "style": {
+                    "fontSize": "40"
+                  },
+                  "lines": [
+                    {
+                      "align": "",
+                      "text": [
+                        {
+                          "style": "",
+                          "value": "Line2"
+                        }
+                      ],
+                      "chords": []
+                    }
+                  ]
+                }
+              ],
+              "globalGroup": "verse"
+            }
+          },
+          "layouts": {
+            "758f97b6097": {
+              "name": "example.default",
+              "notes": "",
+              "slides": [
+                {
+                  "id": "58f97b6097e"
+                },
+                {
+                  "id": "8f97b6097e0"
+                },
+                {
+                  "id": "f97b6097e04"
+                },
+                {
+                  "id": "97b6097e045"
+                },
+                {
+                  "id": "7b6097e0451"
+                }
+              ]
+            }
+          },
+          "media": {},
+          "origin": "opensong"
+        }
+      }
+    ]
+  },
+  {
+    "file": "/home/mtulen/v1.5.5/FreeShow/scripts/testfiles/Test3.os",
+    "shows": [
+      {
+        "id": "5a1c040aa63",
+        "show": {
+          "name": "Test3",
+          "private": false,
+          "category": "category_test_OpenSong",
+          "settings": {
+            "activeLayout": "97e0451b74a"
+          },
+          "timestamps": {
+            "created": 1769671275257,
+            "modified": null,
+            "used": null
+          },
+          "quickAccess": {
+            "number": ""
+          },
+          "meta": {
+            "number": "",
+            "title": "Test3",
+            "author": "",
+            "copyright": "",
+            "key": "",
+            "CCLI": ""
+          },
+          "slides": {
+            "7e0451b74a6": {
+              "group": ";Comment line outside tag, should be excluded",
+              "color": null,
+              "settings": {},
+              "notes": "Comment line outside tag, should be excluded",
+              "items": [
+                {
+                  "style": {
+                    "fontSize": "40"
+                  },
+                  "lines": []
+                }
+              ]
+            },
+            "e0451b74a64": {
+              "group": "",
+              "color": null,
+              "settings": {},
+              "notes": "Comment line in verse1, should be excluded",
+              "items": [
+                {
+                  "style": {
+                    "fontSize": "40"
+                  },
+                  "lines": [
+                    {
+                      "align": "",
+                      "text": [
+                        {
+                          "style": "",
+                          "value": "After comment, without empty line"
+                        }
+                      ],
+                      "chords": []
+                    }
+                  ]
+                }
+              ],
+              "globalGroup": "verse"
+            },
+            "0451b74a64a": {
+              "group": "",
+              "color": null,
+              "settings": {},
+              "notes": "Comment line in verse2, should be excluded",
+              "items": [
+                {
+                  "style": {
+                    "fontSize": "40"
+                  },
+                  "lines": [
+                    {
+                      "align": "",
+                      "text": [
+                        {
+                          "style": "",
+                          "value": "After comment, with empty line"
+                        }
+                      ],
+                      "chords": []
+                    }
+                  ]
+                }
+              ],
+              "globalGroup": "verse"
+            },
+            "451b74a64ae": {
+              "group": "",
+              "color": null,
+              "settings": {},
+              "notes": "",
+              "items": [
+                {
+                  "style": {
+                    "fontSize": "40"
+                  },
+                  "lines": [
+                    {
+                      "align": "",
+                      "text": [
+                        {
+                          "style": "",
+                          "value": "Should contain lines 3.1-3.3"
+                        }
+                      ],
+                      "chords": [
+                        {
+                          "id": "51b74",
+                          "pos": 0,
+                          "key": "C"
+                        },
+                        {
+                          "id": "1b74a",
+                          "pos": 6,
+                          "key": "D"
+                        },
+                        {
+                          "id": "b74a6",
+                          "pos": 11,
+                          "key": "A"
+                        },
+                        {
+                          "id": "74a64",
+                          "pos": 15,
+                          "key": "B.C"
+                        },
+                        {
+                          "id": "4a64a",
+                          "pos": 21,
+                          "key": "D"
+                        },
+                        {
+                          "id": "a64ae",
+                          "pos": 26,
+                          "key": "A"
+                        },
+                        {
+                          "id": "64ae5",
+                          "pos": 30,
+                          "key": "B.C"
+                        },
+                        {
+                          "id": "4ae5a",
+                          "pos": 36,
+                          "key": "D"
+                        },
+                        {
+                          "id": "ae5a1",
+                          "pos": 41,
+                          "key": "A"
+                        },
+                        {
+                          "id": "e5a1c",
+                          "pos": 45,
+                          "key": "B"
+                        }
+                      ]
+                    },
+                    {
+                      "align": "",
+                      "text": [
+                        {
+                          "style": "",
+                          "value": "3.1 text below chord line1"
+                        }
+                      ],
+                      "chords": [
+                        {
+                          "id": "51b74",
+                          "pos": 0,
+                          "key": "C"
+                        },
+                        {
+                          "id": "1b74a",
+                          "pos": 6,
+                          "key": "D"
+                        },
+                        {
+                          "id": "b74a6",
+                          "pos": 11,
+                          "key": "A"
+                        },
+                        {
+                          "id": "74a64",
+                          "pos": 15,
+                          "key": "B.C"
+                        },
+                        {
+                          "id": "4a64a",
+                          "pos": 21,
+                          "key": "D"
+                        },
+                        {
+                          "id": "a64ae",
+                          "pos": 26,
+                          "key": "A"
+                        },
+                        {
+                          "id": "64ae5",
+                          "pos": 30,
+                          "key": "B.C"
+                        },
+                        {
+                          "id": "4ae5a",
+                          "pos": 36,
+                          "key": "D"
+                        },
+                        {
+                          "id": "ae5a1",
+                          "pos": 41,
+                          "key": "A"
+                        },
+                        {
+                          "id": "e5a1c",
+                          "pos": 45,
+                          "key": "B"
+                        }
+                      ]
+                    },
+                    {
+                      "align": "",
+                      "text": [
+                        {
+                          "style": "",
+                          "value": "3.2 text below chord line2"
+                        }
+                      ],
+                      "chords": [
+                        {
+                          "id": "51b74",
+                          "pos": 0,
+                          "key": "C"
+                        },
+                        {
+                          "id": "1b74a",
+                          "pos": 6,
+                          "key": "D"
+                        },
+                        {
+                          "id": "b74a6",
+                          "pos": 11,
+                          "key": "A"
+                        },
+                        {
+                          "id": "74a64",
+                          "pos": 15,
+                          "key": "B.C"
+                        },
+                        {
+                          "id": "4a64a",
+                          "pos": 21,
+                          "key": "D"
+                        },
+                        {
+                          "id": "a64ae",
+                          "pos": 26,
+                          "key": "A"
+                        },
+                        {
+                          "id": "64ae5",
+                          "pos": 30,
+                          "key": "B.C"
+                        },
+                        {
+                          "id": "4ae5a",
+                          "pos": 36,
+                          "key": "D"
+                        },
+                        {
+                          "id": "ae5a1",
+                          "pos": 41,
+                          "key": "A"
+                        },
+                        {
+                          "id": "e5a1c",
+                          "pos": 45,
+                          "key": "B"
+                        }
+                      ]
+                    },
+                    {
+                      "align": "",
+                      "text": [
+                        {
+                          "style": "",
+                          "value": "3.3 text below chord line3, with empty line"
+                        }
+                      ],
+                      "chords": [
+                        {
+                          "id": "51b74",
+                          "pos": 0,
+                          "key": "C"
+                        },
+                        {
+                          "id": "1b74a",
+                          "pos": 6,
+                          "key": "D"
+                        },
+                        {
+                          "id": "b74a6",
+                          "pos": 11,
+                          "key": "A"
+                        },
+                        {
+                          "id": "74a64",
+                          "pos": 15,
+                          "key": "B.C"
+                        },
+                        {
+                          "id": "4a64a",
+                          "pos": 21,
+                          "key": "D"
+                        },
+                        {
+                          "id": "a64ae",
+                          "pos": 26,
+                          "key": "A"
+                        },
+                        {
+                          "id": "64ae5",
+                          "pos": 30,
+                          "key": "B.C"
+                        },
+                        {
+                          "id": "4ae5a",
+                          "pos": 36,
+                          "key": "D"
+                        },
+                        {
+                          "id": "ae5a1",
+                          "pos": 41,
+                          "key": "A"
+                        },
+                        {
+                          "id": "e5a1c",
+                          "pos": 45,
+                          "key": "B"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "globalGroup": "verse"
+            }
+          },
+          "layouts": {
+            "97e0451b74a": {
+              "name": "example.default",
+              "notes": "",
+              "slides": [
+                {
+                  "id": "e0451b74a64"
+                },
+                {
+                  "id": "0451b74a64a"
+                },
+                {
+                  "id": "451b74a64ae"
+                }
+              ]
+            }
+          },
+          "media": {},
+          "origin": "opensong"
+        }
+      }
+    ]
+  },
+  {
+    "file": "/home/mtulen/v1.5.5/FreeShow/scripts/testfiles/opensong_sample.os",
+    "shows": [
+      {
+        "id": "40aa63b67cf",
+        "show": {
+          "name": "Test Song",
+          "private": false,
+          "category": "category_test_OpenSong",
+          "settings": {
+            "activeLayout": "a1c040aa63b"
+          },
+          "timestamps": {
+            "created": 1769671275558,
+            "modified": null,
+            "used": null
+          },
+          "quickAccess": {
+            "number": ""
+          },
+          "meta": {
+            "number": "",
+            "title": "Test Song",
+            "author": "Example Author",
+            "copyright": "",
+            "key": "",
+            "CCLI": "12345"
+          },
+          "slides": {
+            "1c040aa63b6": {
+              "group": "",
+              "color": null,
+              "settings": {},
+              "notes": "",
+              "items": [
+                {
+                  "style": {
+                    "fontSize": "40"
+                  },
+                  "lines": [
+                    {
+                      "align": "",
+                      "text": [
+                        {
+                          "style": "",
+                          "value": "Verse line 1"
+                        }
+                      ],
+                      "chords": []
+                    },
+                    {
+                      "align": "",
+                      "text": [
+                        {
+                          "style": "",
+                          "value": "Verse line 2"
+                        }
+                      ],
+                      "chords": []
+                    }
+                  ]
+                }
+              ],
+              "globalGroup": "verse"
+            },
+            "c040aa63b67": {
+              "group": "",
+              "color": null,
+              "settings": {},
+              "notes": "",
+              "items": [
+                {
+                  "style": {
+                    "fontSize": "40"
+                  },
+                  "lines": [
+                    {
+                      "align": "",
+                      "text": [
+                        {
+                          "style": "",
+                          "value": "Chorus line 1"
+                        }
+                      ],
+                      "chords": []
+                    },
+                    {
+                      "align": "",
+                      "text": [
+                        {
+                          "style": "",
+                          "value": "Chorus line 2"
+                        }
+                      ],
+                      "chords": []
+                    }
+                  ]
+                }
+              ],
+              "globalGroup": "chorus"
+            },
+            "040aa63b67c": {
+              "group": "",
+              "color": null,
+              "settings": {},
+              "notes": "",
+              "items": [
+                {
+                  "style": {
+                    "fontSize": "40"
+                  },
+                  "lines": [
+                    {
+                      "align": "",
+                      "text": [
+                        {
+                          "style": "",
+                          "value": "Bridge line"
+                        }
+                      ],
+                      "chords": []
+                    }
+                  ]
+                }
+              ],
+              "globalGroup": "bridge"
+            }
+          },
+          "layouts": {
+            "a1c040aa63b": {
+              "name": "example.default",
+              "notes": "",
+              "slides": [
+                {
+                  "id": "1c040aa63b6"
+                },
+                {
+                  "id": "040aa63b67c"
+                },
+                {
+                  "id": "c040aa63b67"
+                }
+              ]
+            }
+          },
+          "media": {},
+          "origin": "opensong"
+        }
+      }
+    ]
+  }
+]

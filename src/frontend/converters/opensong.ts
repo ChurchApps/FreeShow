@@ -93,7 +93,42 @@ function createSlides({ lyrics, presentation, backgrounds }: Song) {
     let slideOrder: string[] = []
 
     // split into groups: if square-bracket group markers exist, split at each '[' (keep '[' with group)
-    const splittedgroups = lyrics.includes("[") ? lyrics.split(/(?=\[)/) : [lyrics]
+    let splittedgroups = lyrics.includes("[") ? lyrics.split(/(?=\[)/) : [lyrics]
+
+    // Mimic Opensong handling of duplicate [] tags. 
+    // Combine groups with identical [] tags into the first occurrence (remove extra [] markers and later groups)
+    if (splittedgroups.length > 1) {
+        const seen: Record<string, number> = {}
+        for (let i = 0; i < splittedgroups.length; i++) {
+            const grp = splittedgroups[i]
+            if (!grp) continue
+            const firstLine = grp.split("\n")[0] || ""
+            let tag = ""
+            const openIdx = firstLine.indexOf("[")
+            if (openIdx !== -1) {
+                const closeIdx = firstLine.indexOf("]", openIdx + 1)
+                tag = closeIdx !== -1 ? firstLine.slice(openIdx + 1, closeIdx) : firstLine.slice(openIdx + 1)
+            } else {
+                tag = ""
+            }
+            tag = (tag || "").trim()
+            if (!tag) continue
+            if (!(tag in seen)) {
+                seen[tag] = i
+                continue
+            }
+
+            const firstIdx = seen[tag]
+            // remove the leading [tag] from this duplicate group
+            const escapedTag = tag.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&")
+            const newContent = grp.replace(new RegExp("^\\[" + escapedTag + "\\]"), "").trim()
+            // append to first occurrence with spacing
+            splittedgroups[firstIdx] = (splittedgroups[firstIdx].trim() + "\n\n" + newContent).trim()
+            // mark duplicate for removal
+            splittedgroups[i] = ""
+        }
+        splittedgroups = splittedgroups.filter((g) => g && g.length)
+    }
 
     splittedgroups.forEach((slide) => {
         // Trim each line and remove empty lines (keep significant content only)
@@ -112,8 +147,7 @@ function createSlides({ lyrics, presentation, backgrounds }: Song) {
             const closeIdx = firstLine.indexOf("]", openIdx + 1)
             group = closeIdx !== -1 ? firstLine.slice(openIdx + 1, closeIdx) : firstLine.slice(openIdx + 1)
         } else {
-            // fallback: use the full first line trimmed
-            group = firstLine.trim()
+            group = "V" // default to Verse if no group found
         }
         group = (group || "").trim()
         if (group.startsWith(".")) group = "V"
