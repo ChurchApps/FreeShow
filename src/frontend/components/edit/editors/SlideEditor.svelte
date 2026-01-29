@@ -317,6 +317,21 @@
     $: parentId = $activeEdit.slide !== null && ref?.[$activeEdit.slide!] ? ref[$activeEdit.slide!]?.parent?.id || ref[$activeEdit.slide!]?.id : ""
     $: slideGroup = _show(currentShowId).slides([parentId]).get()?.[0]?.globalGroup || ""
     $: template = Slide?.settings?.template || $groups[slideGroup]?.template || currentShow?.settings?.template || ""
+
+    // BACKGROUND
+
+    $: currentBackgroundPath = currentShow?.media?.[ref[$activeEdit.slide || 0]?.data.background || ""]?.path || ""
+    $: hasBackground = !!currentBackgroundPath
+    function convertBackgroundToMedia() {
+        // WIP add to back
+        addItem("media", null, { src: currentBackgroundPath }, "", { left: "0px", top: "0px", width: "1920px", height: "1080px" })
+
+        showsCache.update((a) => {
+            if (!a[currentShowId]?.layouts?.[currentShow?.settings?.activeLayout || ""]?.slides?.[$activeEdit.slide || 0]?.background) return a
+            delete a[currentShowId].layouts[currentShow?.settings?.activeLayout || ""].slides[$activeEdit.slide || 0].background
+            return a
+        })
+    }
 </script>
 
 <svelte:window on:keydown={keydown} on:keyup={keyup} on:blur={blurred} on:paste={paste} />
@@ -471,6 +486,12 @@
                         {chord}
                     </MaterialButton>
                 {/each}
+            </FloatingInputs>
+        {:else if hasBackground}
+            <FloatingInputs side="left" bottom={notesVisible ? bottomHeight : 10} onlyOne>
+                <MaterialButton icon="autofill" on:click={convertBackgroundToMedia}>
+                    <T id="edit.convert_to_media_item" />
+                </MaterialButton>
             </FloatingInputs>
         {/if}
     {/if}

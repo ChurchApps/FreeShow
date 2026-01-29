@@ -261,5 +261,8 @@ bind:offsetWidth={width} -->
         font-family: Arial, Helvetica, sans-serif;
         font-size: 0.32em;
         text-shadow: none;
+
+        /* if parent is flipped, this will apply the same flip, so it's flipped back */
+        transform: inherit;
     }
 </style>

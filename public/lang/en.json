@@ -1073,7 +1073,8 @@
         "fahrenheit": "Fahrenheit",
         "longRange": "Long range",
         "media_item_tip": "Are you trying to use the media as a background?",
-        "convert_to_background": "Convert to background"
+        "convert_to_background": "Convert to background",
+        "convert_to_media_item": "Convert background to media item"
     },
     "items": {
         "text": "Textbox",
