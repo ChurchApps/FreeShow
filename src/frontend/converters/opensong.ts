@@ -77,7 +77,7 @@ export function convertOpenSong(data: any) {
 }
 
 // Added Pre-chorus as a common global group
-const OSgroups: any = { V: "verse", C: "chorus", B: "bridge", T: "tag", O: "outro", P: "pre_chorus" }
+const OSgroups: any = { V: "verse", C: "chorus", B: "bridge", T: "tag", O: "outro", I: "intro", P: "pre_chorus" }
 function createSlides({ lyrics, presentation, backgrounds }: Song) {
     const slides: any = {}
     const media: any = {}

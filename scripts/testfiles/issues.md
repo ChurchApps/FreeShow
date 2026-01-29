@@ -9,13 +9,13 @@ ORIGINAL: Handle comments (lines starting with ";"). Opensong ignore these lines
 
 DONE: (Already fixed in issue 2696: Handle Opensong blocks with whitespace after a [] tag.)
 
-============
-Handle Opensong [] tags in lowercase. Opensong handles [V1] and [v1] tags case-insensitive. Freeshow-import uses the globalgroup "Verse 1" tag for [V1]. For [v1] it creates a non-globalgroup "v1" tag.
+DONE: Handle Opensong [] tags in lowercase. Opensong handles [V1] and [v1] tags case-insensitive. Freeshow-import uses the globalgroup "Verse 1" tag for [V1]. For [v1] it creates a non-globalgroup "v1" tag.
 
-Handle Opensong `<presentation>` tags in lowercase. Opensong handles v1 V2 case-insensitive. Freeshow-import doesn't add the verse to the standard layout if case is unmatched. (Note: This only happens when editing the Opensong file manually, Opensong application normally changes the presentation field to uppercase on edit.)
+DONE: Handle Opensong `<presentation>` tags in lowercase. Opensong handles v1 V2 case-insensitive. Freeshow-import doesn't add the verse to the standard layout if case is unmatched. (Note: This only happens when editing the Opensong file manually, Opensong application normally changes the presentation field to uppercase on edit.)
 ORIGINAL: Handle Opensong tags in lowercase. Opensong handles v1 V2 case-insensitive. Freeshow-import doesn't add the verse to the standard layout if case is unmatched. (Note: This only happens when editing the Opensong file manually, Opensong application normally changes the presentation field to uppercase on edit.)
 
-Better handle "|" newline character. Opensong adds an empty line in place of the "|" character while presenting the lyrics. Freeshow-import replaces the newline by a non-breaking-space. which is different result and also gives confusing behavior since it is not a regular space). It would be better to add an empty line.
+============
+DONE: Better handle "|" newline character. Opensong adds an empty line in place of the "|" character while presenting the lyrics. Freeshow-import replaces the newline by a non-breaking-space. which is different result and also gives confusing behavior since it is not a regular space). It would be better to add an empty line.
 
 ==================
 New

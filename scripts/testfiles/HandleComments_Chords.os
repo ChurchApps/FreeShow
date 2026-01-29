@@ -17,10 +17,10 @@
  Should contain lines 3.1-3.3
 .C     D    A   B
  3.1 text below chord line1
-.C     D    A   B
+.C     G    F   D
  3.2 text below chord line2
 
-.C     D    A   B
+.E     F    G   A
  3.3 text below chord line3, with empty line</lyrics>
   <author></author>
   <copyright></copyright>

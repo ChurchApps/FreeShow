@@ -1,43 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <song>
-  <title>GlobalGroups</title>
-  <lyrics>
-[V1]
- Globalgroup must be: Verse
+  <title>HandleNewlineNewslide</title>
+  <lyrics>[V1]
+ 4.1 Next presented line should be 4.2, after an empty line|
+ 4.2 next presented line should be 4.3, after 2 empty lines
+|
+ 4.3 This is first part of line 4.3 splitted|This is second part of line 4.3 splitted
 
 [V2]
- Globalgroup must be: Verse
-
-[C]
- Globalgroup must be: Chorus
-
-[B]
- Globalgroup must be: Bridge
-
-[P]
- Globalgroup must be: Pre-chorus
-
-[T]
- Globalgroup must be: Tag
-
-[O]
- Globalgroup must be: Outro
-
-[I]
- Globalgroup must be: Intro
-
-[Tag]
- Custom groupname, No Globalgroup
-
-[Verse 3]
- Custom groupname, No Globalgroup
-
-
+ 5.1 Before new slide (next presented line should be 5.2, on a NEW SLIDE, in SAME VERSE)||
+ 5.2 After new slide
 </lyrics>
   <author></author>
   <copyright></copyright>
   <hymn_number></hymn_number>
-  <presentation>V1 V2 C B P T O I Tag</presentation>
+  <presentation>V1 V2</presentation>
   <ccli></ccli>
   <capo print="false" sharp="true"></capo>
   <key></key>
