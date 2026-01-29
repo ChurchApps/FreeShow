@@ -102,6 +102,7 @@ function createSlides({ lyrics, presentation, backgrounds }: Song) {
             .map((l) => l.trim())
             .filter((l) => l.length)
             .join('\n')
+            .replaceAll("|", "\n")
 
         // Determine group from first line: take text between '[' and ']', or from '[' to end-of-line if no closing ']'.
         const firstLine = groupText.split("\n")[0] || ""
@@ -152,7 +153,7 @@ function createSlides({ lyrics, presentation, backgrounds }: Song) {
             const items = [
                 {
                     style: DEFAULT_ITEM_STYLE,
-                    lines: text.map((a: any) => ({ align: "", text: [{ style: "", value: a.replace("|", "&nbsp;").replaceAll("_", "").trim() }], chords }))
+                    lines: text.map((a: any) => ({ align: "", text: [{ style: "", value: a.replaceAll("_", "").trim() }], chords }))
                 }
             ]
 
