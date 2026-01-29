@@ -159,35 +159,48 @@ function createSlides({ lyrics, presentation, backgrounds }: Song) {
         groupText.split("__CHILD_SLIDE__").forEach((slideText, i) => {
             const lines = slideText.trim().split("\n")
             if (i === 0 && lines[0].includes("[")) lines.shift()
-            // extract chord data (lines starting with '.')
-            const chordData = lines.filter((_v: string) => _v.startsWith(".")).join("")
+
             // extract comment lines (starting with ';'), to add as slide notes
             const commentData = lines
                 .filter((l: string) => l.trim().startsWith(";"))
                 .map((l: string) => l.trim().slice(1).trim())
-            // text lines: exclude chord lines and comment lines
-            const text = lines.filter((_v: string) => !_v.trim().startsWith(".") && !_v.trim().startsWith(";"))
+
+            const contentLines = lines.filter((l) => !l.trim().startsWith(";"))
+
+            const newLines: any[] = []
+            let pendingChords: Chords[] | null = null
+
+            for (const line of contentLines) {
+                if (line.startsWith(".")) {
+                    const chords: Chords[] = []
+                    let pos = -1
+                    line.slice(1)
+                        .split(" ")
+                        .forEach((letter) => {
+                            pos++
+                            if (letter === "") return
+                            chords.push({ id: uid(5), pos, key: letter })
+                            pos++ // add extra " " removed by split
+                        })
+                    pendingChords = chords
+                } else if (line.trim() !== "") {
+                    newLines.push({
+                        align: "",
+                        text: [{ style: "", value: line.replaceAll("_", "").trim() }],
+                        chords: pendingChords || []
+                    })
+                    pendingChords = null // Reset for next line
+                }
+            }
 
             const id: string = i === 0 ? parentId : uid()
             if (i === 0) slideRef[group] = id
             else children.push(id)
 
-            const chords: Chords[] = []
-            let pos = -1
-            chordData
-                .slice(1)
-                .split(" ")
-                .forEach((letter) => {
-                    pos++
-                    if (letter === "") return
-                    chords.push({ id: uid(5), pos, key: letter })
-                    pos++ // add extra " " removed by split
-                })
-
             const items = [
                 {
                     style: DEFAULT_ITEM_STYLE,
-                    lines: text.map((a: any) => ({ align: "", text: [{ style: "", value: a.replaceAll("_", "").trim() }], chords }))
+                    lines: newLines
                 }
             ]
 
