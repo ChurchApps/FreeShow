@@ -3,7 +3,7 @@
 import { get } from "svelte/store"
 import { Main } from "../../types/IPC/Main"
 import { customActionActivation } from "../components/actions/actions"
-import { encodeFilePath, getFileName, removeExtension } from "../components/helpers/media"
+import { encodeFilePath, getFileName, locateMediaFile, removeExtension } from "../components/helpers/media"
 import { checkNextAfterMedia } from "../components/helpers/showActions"
 import { sendMain } from "../IPC/main"
 import { audioChannelsData, dictionary, media, outLocked, playingAudio, playingAudioPaths, special, volume } from "../stores"
@@ -12,6 +12,7 @@ import { AudioAnalyserMerger } from "./audioAnalyserMerger"
 import { clearAudio, clearing, fadeInAudio, fadeOutAudio } from "./audioFading"
 import { AudioMultichannel } from "./audioMultichannel"
 import { AudioPlaylist } from "./audioPlaylist"
+import { addToMediaFolder } from "../utils/cloudSync"
 
 type AudioMetadata = {
     name: string
@@ -60,6 +61,15 @@ export class AudioPlayer {
     static async start(path: string, metadata: AudioMetadata, options: AudioOptions = {}) {
         if (get(outLocked) || clearing.includes(path) || this.isLoading(path)) return
         this.setLoading(path)
+
+        const located = await locateMediaFile(path)
+        if (!located) {
+            this.clearLoading(path)
+            return
+        }
+
+        path = located.path
+        if (!located.hasChanged) addToMediaFolder(path)
 
         // get type
         const duration = await this.getDuration(path)
