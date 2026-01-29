@@ -76,6 +76,7 @@ export function convertOpenSong(data: any) {
     }, 10)
 }
 
+// Added Pre-chorus as a common global group
 const OSgroups: any = { V: "verse", C: "chorus", B: "bridge", T: "tag", O: "outro", P: "pre_chorus" }
 function createSlides({ lyrics, presentation, backgrounds }: Song) {
     const slides: any = {}
@@ -84,20 +85,36 @@ function createSlides({ lyrics, presentation, backgrounds }: Song) {
     if (!lyrics) return { slides, layout }
 
     // fix incorrect formatting
-    lyrics = lyrics.replaceAll("\n \n", "\n\n").replaceAll("[", "\n\n[").trim()
+    lyrics = lyrics.replaceAll("\n \n", "\n\n").trim()
     lyrics = lyrics.replaceAll("\n\n\n\n", "\n\n")
     lyrics = lyrics.replaceAll("||", "__CHILD_SLIDE__")
 
     const slideRef: any = {}
     let slideOrder: string[] = []
 
-    lyrics.split("\n\n").forEach((slide) => {
-        const groupText = slide.trim()
-        let group = groupText
-            .split("\n")
-            .splice(0, 1)[0]
-            ?.replace(/[\[\]]/g, "")
-            .trim()
+    // split into groups: if square-bracket group markers exist, split at each '[' (keep '[' with group)
+    const splittedgroups = lyrics.includes("[") ? lyrics.split(/(?=\[)/) : [lyrics]
+
+    splittedgroups.forEach((slide) => {
+        // Trim each line and remove empty lines (keep significant content only)
+        const groupText = slide
+            .split('\n')
+            .map((l) => l.trim())
+            .filter((l) => l.length)
+            .join('\n')
+
+        // Determine group from first line: take text between '[' and ']', or from '[' to end-of-line if no closing ']'.
+        const firstLine = groupText.split("\n")[0] || ""
+        let group = ""
+        const openIdx = firstLine.indexOf("[")
+        if (openIdx !== -1) {
+            const closeIdx = firstLine.indexOf("]", openIdx + 1)
+            group = closeIdx !== -1 ? firstLine.slice(openIdx + 1, closeIdx) : firstLine.slice(openIdx + 1)
+        } else {
+            // fallback: use the full first line trimmed
+            group = firstLine.trim()
+        }
+        group = (group || "").trim()
         if (group.startsWith(".")) group = "V"
         if (!groupText) return
 
