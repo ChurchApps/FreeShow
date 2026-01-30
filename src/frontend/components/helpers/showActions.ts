@@ -764,16 +764,16 @@ export function updateOut(showId: string, index: number, layout: LayoutRef[], ex
             const bg = _show(showId).get("media")[background]
             const outputBg = get(outputs)[outputId]?.out?.background
             const bgPath = bg?.path || bg?.id
-            const media = await getMedia(bgPath)
+            const m = bg.type === "video" || bg.type === "image" || bg.type === "media" ? await getMedia(bgPath) : { path: bgPath, data: clone(get(media)[bgPath]) }
 
-            if (bg && media && media.path !== outputBg?.path) {
-                const name = bg.name || removeExtension(getFileName(media.path))
-                const extension = getExtension(media.path)
+            if (bg && m && m.path !== outputBg?.path) {
+                const name = bg.name || removeExtension(getFileName(m.path))
+                const extension = getExtension(m.path)
                 const type = bg.type || getMediaType(extension)
 
                 const outputStyle = get(styles)[get(outputs)[outputId]?.style || ""]
-                const mediaStyle = getMediaStyle(media.data, outputStyle)
-                mediaStyle.fit = media.data?.fit || ""
+                const mediaStyle = getMediaStyle(m.data, outputStyle)
+                mediaStyle.fit = m.data?.fit || ""
                 delete mediaStyle.fitOptions
 
                 // WIP getMediaLayerType - use what is set in show only
@@ -784,9 +784,9 @@ export function updateOut(showId: string, index: number, layout: LayoutRef[], ex
                 const bgData = {
                     name,
                     type,
-                    path: media.path,
+                    path: m.path,
                     cameraGroup: bg.cameraGroup || "",
-                    id: bg.id || media.path, // path = cameras
+                    id: bg.id || m.path, // path = cameras
                     loop,
                     muted,
                     ...mediaStyle,
