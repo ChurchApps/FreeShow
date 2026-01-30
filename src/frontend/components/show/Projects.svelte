@@ -182,7 +182,7 @@
             {#if !$focusMode}
                 <MaterialButton style="flex: 1;padding: 0.3em 0.5em;" icon="back" title="remote.projects" on:click={back} />
                 <!-- {recentlyUsedList.length ? '' : 'border-bottom: 1px solid var(--secondary);'} -->
-                <div style="flex: 7;max-width: calc(100% - 43px);" class="header context #projectTab _close" title={translateText("remote.project: ") + ($projects[$activeProject || ""]?.name || "")}>
+                <div style="flex: 7;max-width: calc(100% - 43px);" class="header context #projectTab _close" data-title={translateText("remote.project: ") + `<b>${$projects[$activeProject || ""]?.name || ""}</b>`}>
                     <!-- <Icon id="project" white right /> -->
                     {#if recentlyUsedList.length}
                         <p style="font-style: italic;opacity: 0.7;"><T id="info.recently_used" /></p>
@@ -192,7 +192,7 @@
                 </div>
             {/if}
         {:else}
-            <div class="header context #projectsTab">
+            <div class="header context #projectsTab" data-title={translateText("<b>remote.projects</b><br>guide_description.project_manage<br>guide_description.project_create")}>
                 <!-- <Icon id="folder" white right /> -->
                 <p><T id="remote.projects" /></p>
             </div>
@@ -202,7 +202,7 @@
     {#if recentlyUsedList.length}
         <div id="projectsArea" class="list projects" style="overflow: auto;">
             {#each recentlyUsedList as project}
-                <MaterialButton style="width: 100%;padding: 0.08rem 0.65rem;font-weight: normal;" on:click={(e) => openRecentlyUsed(e, project.id)} isActive={$activeProject === project.id} tab>
+                <MaterialButton style="width: 100%;padding: 0.08rem 0.65rem;font-weight: normal;" title="actions.id_select_project: <b>{project.name}</b>" on:click={(e) => openRecentlyUsed(e, project.id)} isActive={$activeProject === project.id} tab>
                     <Icon id="project" />
                     <HiddenInput value={project.name} id={"project_" + project.id} allowEdit={false} />
                 </MaterialButton>
@@ -219,7 +219,7 @@
             <FloatingInputs>
                 <MaterialButton icon="folder" title="new.folder" on:click={() => createProject(true)} white />
                 <div class="divider"></div>
-                <MaterialButton icon="add" title="new.project" on:click={() => createProject()}>
+                <MaterialButton icon="add" title="<b>new.project</b><br>tooltip.project" on:click={() => createProject()}>
                     {#if !$labelsDisabled}<T id="new.project" />{/if}
                 </MaterialButton>
             </FloatingInputs>

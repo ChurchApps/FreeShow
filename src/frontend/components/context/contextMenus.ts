@@ -293,10 +293,10 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     projectsTab: ["import"],
     projectTab: ["export", "SEPARATOR", "close"],
     project: ["newShowPopup", "section"], // "newShow"(empty) , "newPrivateShow"
-    project_button: ["GROUP_rename", "export", "copy_to_template", "archive", "SEPARATOR", "sort_projects_by"], // "open",
-    project_button_readonly: ["export", "SEPARATOR", "sort_projects_by"],
+    project_button: ["GROUP_rename", "export", "copy_to_template", "archive"], // "open",
+    project_button_readonly: ["export"],
     project_template: ["GROUP_rename_only", "delete"],
-    folder: ["GROUP_rename_only", "delete"],
+    folder: ["GROUP_rename_only", "delete", "SEPARATOR", "newProject", "newFolder"],
     folder_readonly: ["sort_projects_by"],
     project_media: ["play", "play_no_audio", "play_no_filters", "SEPARATOR", "remove", "SEPARATOR", "mark_played"],
     project_audio: ["remove", "SEPARATOR", "mark_played"],

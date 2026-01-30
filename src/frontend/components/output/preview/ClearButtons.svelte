@@ -107,10 +107,10 @@
     }
 </script>
 
-<div class="clear">
+<div class="clear" data-title={translateText("guide_description.output_clear")}>
     <span>
         {#if allCleared && $outputCache && $outputCache?.slide?.type !== "ppt"}
-            <MaterialButton style="padding: 0.42em 0.8em;" class="clearAll" disabled={$outLocked || !enableRestore} on:click={restoreOutput}>
+            <MaterialButton style="padding: 0.42em 0.8em;" class="clearAll" disabled={$outLocked || !enableRestore} title="preview.restore_output" on:click={restoreOutput}>
                 <Icon id="reset" size={1.2} white />
                 {#if !$labelsDisabled}<T id="preview.restore_output" />{/if}
             </MaterialButton>

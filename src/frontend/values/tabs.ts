@@ -1,14 +1,14 @@
 export const drawerTabs = {
-    shows: { name: "tabs.shows", icon: "shows" },
-    media: { name: "tabs.media", icon: "media" },
-    audio: { name: "tabs.audio", icon: "audio" },
-    overlays: { name: "tabs.overlays", icon: "overlays" },
-    templates: { name: "tabs.templates", icon: "templates" },
+    shows: { name: "tabs.shows", icon: "shows", title: "tabs.shows_info" },
+    media: { name: "tabs.media", icon: "media", title: "" },
+    audio: { name: "tabs.audio", icon: "audio", title: "" },
+    overlays: { name: "tabs.overlays", icon: "overlays", title: "" },
+    templates: { name: "tabs.templates", icon: "templates", title: "" },
 
-    scripture: { name: "tabs.scripture", icon: "scripture" },
-    calendar: { name: "tabs.calendar", icon: "calendar" },
+    scripture: { name: "tabs.scripture", icon: "scripture", title: "" },
+    calendar: { name: "tabs.calendar", icon: "calendar", title: "" },
 
-    functions: { name: "tabs.functions", icon: "functions" }
+    functions: { name: "tabs.functions", icon: "functions", title: "" }
 }
 
 // export const drawerTabs = {

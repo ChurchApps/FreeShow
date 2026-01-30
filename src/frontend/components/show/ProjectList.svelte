@@ -163,7 +163,7 @@
                                 <!-- , path: project.path -->
                                 <SelectElem id={project.type || "project"} data={{ type: project.type || "project", id: project.id }} draggable trigger="column" borders="center">
                                     {#if project.type === "folder" && (project.parent === "/" || shown)}
-                                        <MaterialButton style="width: 100%;padding: 0.22rem 0.65rem;" on:click={(e) => toggleFolder(e, project, opened)} class="folder {readOnly ? 'context #folder_readonly' : 'context #folder__projects'}" isActive={pathToActive.includes(project.id)} tab>
+                                        <MaterialButton style="width: 100%;padding: 0.22rem 0.65rem;" title="{opened ? 'actions.close' : 'main.open'}: <b>{project.name}</b>" on:click={(e) => toggleFolder(e, project, opened)} class="folder context #folder{readOnly ? '_readonly' : ''}" isActive={pathToActive.includes(project.id)} tab>
                                             <Icon id={opened ? "folderOpen" : "folder"} white />
                                             <HiddenInput value={project.name} id={"folder_" + project.id} on:edit={(e) => renameFolder(project.id, e.detail.value)} bind:edit={editActive} allowEdit={!isReadOnly} />
 
@@ -172,7 +172,7 @@
                                             {/if}
                                         </MaterialButton>
                                     {:else if project.id && shown && isArchivedShown}
-                                        <MaterialButton style="width: 100%;padding: 0.08rem 0.65rem;font-weight: normal;" on:click={(e) => open(e, project.id)} class="context #project_button{readOnly ? '_readonly' : ''}" isActive={$activeProject === project.id} tab>
+                                        <MaterialButton style="width: 100%;padding: 0.08rem 0.65rem;font-weight: normal;" title="actions.id_select_project: <b>{project.name}</b>" on:click={(e) => open(e, project.id)} class="context #project_button{readOnly ? '_readonly' : ''}" isActive={$activeProject === project.id} tab>
                                             <Icon id={$projects[project.id]?.archived ? "archive" : "project"} white={$projects[project.id]?.archived} />
                                             <HiddenInput value={project.name} id={"project_" + project.id} on:edit={(e) => rename(project.id, e.detail.value)} bind:edit={editActive} allowEdit={!isReadOnly} />
                                         </MaterialButton>

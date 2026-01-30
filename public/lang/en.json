@@ -378,6 +378,7 @@
     },
     "tabs": {
         "shows": "Shows",
+        "shows_info": "A show is made up of slides; it can be a song, presentation, media, scripture, and more.",
         "media": "Media",
         "overlays": "Overlays",
         "audio": "Audio",
