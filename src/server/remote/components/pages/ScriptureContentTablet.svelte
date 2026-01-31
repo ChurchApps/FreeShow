@@ -1,13 +1,15 @@
 <script lang="ts">
     import type { Bible } from "../../../../types/Bible"
     import Loading from "../../../common/components/Loading.svelte"
-    import { onDestroy } from "svelte"
+    import { onDestroy, tick } from "svelte"
+    import { get } from "svelte/store"
     import { send } from "../../util/socket"
     import { currentScriptureState, scriptureViewList, scriptureWrapText, scriptureMultiSelect, selectedVerses, outShow, outSlide } from "../../util/stores"
     import { createLongPress } from "../../util/helpers"
 
     export let id: string
     export let scripture: Bible
+    export let openedScriptureId: string = ""
     export let scriptures: { id: string; data: any; name: string }[] = []
     export let isCollection: boolean = false
     export let selectedTranslationIndex: number | null = null // null = all, number = specific translation index
@@ -23,11 +25,20 @@
     let displayedBookIndex = -1
     let displayedChapterIndex = -1
     let displayedVerseNumber = 0
+    let lastOpenedScriptureId = ""
+    let pendingSyncToDisplayed = false
+    let syncScheduled = false
+    let lastBooksCount = 0
+    let lastChaptersCount = 0
+    let lastVersesCount = 0
 
     // Reference to scroll containers
     let booksScrollElem: HTMLElement | null = null
     let chaptersScrollElem: HTMLElement | null = null
     let versesScrollElem: HTMLElement | null = null
+    let books: any[] = []
+    let chapters: any[] = []
+    let verses: any[] = []
 
     $: books = scripture?.books || []
     $: chapters = books[activeBook]?.chapters || []
@@ -84,51 +95,155 @@
     $: currentChapter = chapters[activeChapter]?.number != null ? String(chapters[activeChapter].number) : ""
     $: currentVerse = activeVerse > 0 ? String(activeVerse) : ""
 
+    async function maybeSyncToDisplayed(source: string) {
+        if (!pendingSyncToDisplayed || syncScheduled) return
+        if (!books.length || displayedBookIndex < 0 || displayedChapterIndex < 0) return
+
+        syncScheduled = true
+        await tick()
+        syncScheduled = false
+
+        if (!books.length || displayedBookIndex < 0 || displayedChapterIndex < 0) return
+
+        const targetBookIndex = Math.min(Math.max(displayedBookIndex, 0), books.length - 1)
+        const targetBook = books[targetBookIndex]
+        const targetChapters = targetBook?.chapters || []
+        if (!targetChapters.length) {
+            if (targetBook?.keyName) {
+                send("GET_SCRIPTURE", { id, bookKey: targetBook.keyName, bookIndex: targetBookIndex })
+            }
+            return
+        }
+
+        const targetChapterIndex = Math.min(Math.max(displayedChapterIndex, 0), targetChapters.length - 1)
+        const targetChapter = targetChapters[targetChapterIndex]
+
+        activeBook = targetBookIndex
+        activeChapter = targetChapterIndex
+        if (displayedVerseNumber > 0) {
+            activeVerse = displayedVerseNumber
+        }
+
+        // Scroll all three columns to the active reference.
+        scrollToActive(booksScrollElem)
+        scrollToActive(chaptersScrollElem)
+        if (displayedVerseNumber > 0) {
+            if (!verses.length) {
+                if (targetBook?.keyName && targetChapter?.keyName) {
+                    send("GET_SCRIPTURE", {
+                        id,
+                        bookKey: targetBook.keyName,
+                        chapterKey: targetChapter.keyName,
+                        bookIndex: targetBookIndex,
+                        chapterIndex: targetChapterIndex
+                    })
+                }
+                return
+            }
+            scrollToVerse(displayedVerseNumber)
+        }
+
+        pendingSyncToDisplayed = false
+    }
+
+    // Auto-navigate to Genesis 1:1 if there's no scripture output
+    function autoNavigateToGenesis() {
+        if (books.length === 0) return
+        
+        // Check if there's truly no scripture output (no valid book/chapter/verse)
+        const hasNoOutput = displayedBookIndex < 0 || displayedChapterIndex < 0 || displayedVerseNumber <= 0
+        
+        if (hasNoOutput && activeBook < 0 && activeChapter < 0) {
+            // Navigate to Genesis (book 1, chapter 1)
+            activeBook = 0
+            activeChapter = 0
+            activeVerse = 1
+        }
+    }
+
     // Update displayed indices from output state
     const unsubscribeScripture = currentScriptureState.subscribe((state) => {
-        if (!state) return
-        if (state.scriptureId && state.scriptureId !== id) return
-
+        if (!state) {
+            // No scripture state - auto-navigate to Genesis 1:1
+            displayedBookIndex = -1
+            displayedChapterIndex = -1
+            displayedVerseNumber = 0
+            autoNavigateToGenesis()
+            return
+        }
+        
         const bookIndex = state.bookId
         const chapterIndex = state.chapterId
         const verseList = state.activeVerses
         const latestVerse = Array.isArray(verseList) && verseList.length > 0 ? parseInt(String(verseList[verseList.length - 1]), 10) : 0
 
-        if (Number.isInteger(bookIndex) && bookIndex >= 0) displayedBookIndex = bookIndex
-        if (Number.isInteger(chapterIndex) && chapterIndex >= 0) displayedChapterIndex = chapterIndex
-        if (Number.isFinite(latestVerse) && latestVerse > 0) displayedVerseNumber = latestVerse
+        // Check if we have valid scripture output
+        const hasValidOutput = Number.isInteger(bookIndex) && bookIndex >= 0 && 
+                               Number.isInteger(chapterIndex) && chapterIndex >= 0 && 
+                               Number.isFinite(latestVerse) && latestVerse > 0
+
+        if (hasValidOutput) {
+            if (Number.isInteger(bookIndex) && bookIndex >= 0) displayedBookIndex = bookIndex
+            if (Number.isInteger(chapterIndex) && chapterIndex >= 0) displayedChapterIndex = chapterIndex
+            if (Number.isFinite(latestVerse) && latestVerse > 0) displayedVerseNumber = latestVerse
+            void maybeSyncToDisplayed("activeScripture")
+        } else {
+            // Invalid or incomplete state - auto-navigate to Genesis 1:1
+            displayedBookIndex = -1
+            displayedChapterIndex = -1
+            displayedVerseNumber = 0
+            autoNavigateToGenesis()
+        }
     })
     onDestroy(() => {
         unsubscribeScripture()
     })
 
-    // Auto-navigate to first book/chapter
-    let hasAutoNavigated = false
-    $: if (books.length > 0 && !hasAutoNavigated && activeBook === -1) {
-        hasAutoNavigated = true
-        activeBook = 0
-        activeChapter = 0
-
-        const bookObj: any = books[0]
-        if (bookObj?.keyName && !(bookObj?.chapters?.length > 0)) {
-            send("GET_SCRIPTURE", { id, bookKey: bookObj.keyName, bookIndex: 0 })
-        }
-
-        const bookChapters = bookObj?.chapters || []
-        if (bookChapters.length > 0) {
-            const chapterObj: any = bookChapters[0]
-            if (bookObj?.keyName && chapterObj?.keyName && !(chapterObj?.verses?.length > 0)) {
-                send("GET_SCRIPTURE", { id, bookKey: bookObj.keyName, chapterKey: chapterObj.keyName, bookIndex: 0, chapterIndex: 0 })
-            }
+    $: if (openedScriptureId && openedScriptureId !== lastOpenedScriptureId) {
+        lastOpenedScriptureId = openedScriptureId
+        pendingSyncToDisplayed = true
+        
+        // Check current scripture state to see if there's valid output
+        const currentState = get(currentScriptureState)
+        const hasValidOutput = currentState && 
+                               Number.isInteger(currentState.bookId) && currentState.bookId >= 0 && 
+                               Number.isInteger(currentState.chapterId) && currentState.chapterId >= 0 && 
+                               Array.isArray(currentState.activeVerses) && currentState.activeVerses.length > 0
+        
+        if (hasValidOutput) {
+            // Sync to displayed output
+            void maybeSyncToDisplayed("openedScripture")
+        } else {
+            // No valid output - reset displayed indices and auto-navigate to Genesis 1:1
+            displayedBookIndex = -1
+            displayedChapterIndex = -1
+            displayedVerseNumber = 0
+            // Wait for books to load, then auto-navigate
+            setTimeout(() => autoNavigateToGenesis(), 100)
         }
     }
 
-    // Autoscroll to active items
-    $: if (activeBook >= 0) setTimeout(() => scrollToActive(booksScrollElem))
-    $: if (activeChapter >= 0) setTimeout(() => scrollToActive(chaptersScrollElem))
-    $: if (activeVerse > 0) setTimeout(() => scrollToActive(versesScrollElem, activeVerse))
+    $: if (books.length && books.length !== lastBooksCount) {
+        lastBooksCount = books.length
+        // If no scripture output and no active navigation, auto-navigate to Genesis 1:1
+        if (displayedBookIndex < 0 && activeBook < 0) {
+            autoNavigateToGenesis()
+        } else {
+            void maybeSyncToDisplayed("books")
+        }
+    }
 
-    function scrollToActive(scrollElem: HTMLElement | null, _verseNum?: number) {
+    $: if (pendingSyncToDisplayed && chapters.length !== lastChaptersCount) {
+        lastChaptersCount = chapters.length
+        void maybeSyncToDisplayed("chapters")
+    }
+
+    $: if (pendingSyncToDisplayed && verses.length !== lastVersesCount) {
+        lastVersesCount = verses.length
+        void maybeSyncToDisplayed("verses")
+    }
+
+    function scrollToActive(scrollElem: HTMLElement | null) {
         if (!scrollElem) return
         const activeEl = scrollElem.querySelector(".isActive") as HTMLElement
         if (!activeEl) return
@@ -154,26 +269,20 @@
 
     // Generate dynamic colors for Bible versions that match FreeShow's theme
     // Uses HSL to create evenly distributed, vibrant colors on dark background
+    const GOLDEN_ANGLE = 137.508
+    const BASE_HUE = 330 // FreeShow's pink
+    
+    function getVersionHue(index: number): number {
+        return (BASE_HUE + index * GOLDEN_ANGLE) % 360
+    }
+    
     function getVersionColor(index: number): string {
-        // Start with FreeShow's secondary pink (330°), then distribute other hues evenly
-        // Offset each subsequent color by golden angle (~137.5°) for good visual separation
-        const goldenAngle = 137.508
-        const baseHue = 330 // FreeShow's pink
-        const hue = (baseHue + index * goldenAngle) % 360
-
-        // High saturation (70-85%) and medium-high lightness (60-70%) for vibrant colors on dark bg
-        const saturation = 75
-        const lightness = 65
-
-        return `hsl(${hue}, ${saturation}%, ${lightness}%)`
+        return `hsl(${getVersionHue(index)}, 75%, 65%)`
     }
 
     // Generate a subtle background color (same hue but very transparent)
     function getVersionBgColor(index: number): string {
-        const goldenAngle = 137.508
-        const baseHue = 330
-        const hue = (baseHue + index * goldenAngle) % 360
-        return `hsla(${hue}, 70%, 50%, 0.12)`
+        return `hsla(${getVersionHue(index)}, 70%, 50%, 0.12)`
     }
 
     // NAMES - matching ScriptureContent.svelte
@@ -347,10 +456,13 @@
         activeBook = -1
         activeChapter = -1
         activeVerse = 0
-        displayedBookIndex = -1
-        displayedChapterIndex = -1
-        displayedVerseNumber = 0
+    } else if (books.length > 0 && activeBook < 0 && displayedBookIndex < 0) {
+        // Scripture loaded but no navigation yet and no output - auto-navigate to Genesis 1:1
+        autoNavigateToGenesis()
     }
+
+    // Normalize book name for search (simpler version than Scripture.svelte)
+    const normalizeBookName = (name: string) => name.toLowerCase().replace(/\s+/g, "").replace(/\./g, "")
 
     function parseScriptureReference(reference: string): { bookIndex: number; chapterIndex: number; verseNumber: number } | null {
         if (!reference || !books?.length) return null
@@ -364,15 +476,27 @@
 
         const chapterNumber = parseInt(chapterStr, 10)
         const verseNumber = parseInt(verseStr, 10)
-        const normalizedBookName = bookName.toLowerCase().trim()
+        const normalizedBookName = normalizeBookName(bookName)
+        const numericPrefix = normalizedBookName.match(/^\d+/)?.[0] || ""
 
-        const bookIndex = books.findIndex((book) => {
-            const normalizedName = book.name.toLowerCase()
-            return normalizedName === normalizedBookName || normalizedName.includes(normalizedBookName) || normalizedBookName.includes(normalizedName)
-        })
+        const matches = books
+            .map((book, index) => ({ index, name: normalizeBookName(book.name || "") }))
+            .filter((item) => {
+                if (!item.name) return false
+                if (numericPrefix) return item.name.startsWith(numericPrefix)
+                return !/^\d+/.test(item.name)
+            })
 
-        if (bookIndex === -1) return null
-        return { bookIndex, chapterIndex: chapterNumber - 1, verseNumber }
+        const exactMatch = matches.find((item) => item.name === normalizedBookName)
+        const broadMatch =
+            exactMatch ||
+            matches.find((item) => item.name.startsWith(normalizedBookName)) ||
+            matches.find((item) => normalizedBookName.startsWith(item.name)) ||
+            matches.find((item) => item.name.includes(normalizedBookName)) ||
+            matches.find((item) => normalizedBookName.includes(item.name))
+
+        const bookIndex = broadMatch ? broadMatch.index : -1
+        return bookIndex === -1 ? null : { bookIndex, chapterIndex: chapterNumber - 1, verseNumber }
     }
 
     function extractScriptureFromSlide(): { bookIndex: number; chapterIndex: number; verseNumber: number } | null {
@@ -406,74 +530,73 @@
             displayedBookIndex = slideScripture.bookIndex
             displayedChapterIndex = slideScripture.chapterIndex
             displayedVerseNumber = slideScripture.verseNumber
+
+            void maybeSyncToDisplayed("slide")
         }
     }
 
-    $: if (displayedVerseNumber > 0 && displayedBookIndex >= 0 && displayedChapterIndex >= 0) {
-        if (activeBook === displayedBookIndex && activeChapter === displayedChapterIndex) {
-            if (activeVerse !== displayedVerseNumber) {
-                activeVerse = displayedVerseNumber
-            }
+    // No auto-navigation except when switching bible to sync to current output reference.
+
+    // Helper to get verse numbers array from verses
+    function getVerseNumbers(): number[] {
+        return verses.map((v: any, i: number) => {
+            const num = v?.number ?? i + 1
+            return typeof num === "string" ? parseInt(num, 10) : num
+        })
+    }
+
+    // Helper to get book/chapter numbers from displayed indices
+    function getDisplayedReference(): { bookNumber: number; chapterNumber: number } | null {
+        if (displayedBookIndex < 0 || displayedChapterIndex < 0) return null
+        
+        const displayedBook = books[displayedBookIndex]
+        if (!displayedBook) return null
+
+        const displayedChapters = displayedBook.chapters || []
+        const displayedChapter = displayedChapters[displayedChapterIndex]
+        if (!displayedChapter) return null
+
+        return {
+            bookNumber: displayedBook.number ?? displayedBookIndex + 1,
+            chapterNumber: displayedChapter.number ?? displayedChapterIndex + 1
         }
     }
 
     export function forward() {
-        if (displayedBookIndex >= 0 && displayedChapterIndex >= 0 && displayedVerseNumber > 0) {
-            const displayedBook = books[displayedBookIndex]
-            if (!displayedBook) return
+        if (displayedVerseNumber <= 0) return
+        const ref = getDisplayedReference()
+        if (!ref) return
 
-            const bookNumber = displayedBook.number ?? displayedBookIndex + 1
-            const displayedChapters = displayedBook.chapters || []
-            const displayedChapter = displayedChapters[displayedChapterIndex]
-            if (!displayedChapter) return
+        const { bookNumber, chapterNumber } = ref
+        const isCurrentChapter = activeBook === displayedBookIndex && activeChapter === displayedChapterIndex && verses.length > 0
 
-            const chapterNumber = displayedChapter.number ?? displayedChapterIndex + 1
-
-            if (activeBook === displayedBookIndex && activeChapter === displayedChapterIndex && verses.length > 0) {
-                const verseNumbers: number[] = verses.map((v: any, i: number) => {
-                    const num = v?.number ?? i + 1
-                    return typeof num === "string" ? parseInt(num, 10) : num
-                })
-                const currentIndex = verseNumbers.indexOf(displayedVerseNumber)
-                if (currentIndex >= 0 && currentIndex < verseNumbers.length - 1) {
-                    const nextVerse = verseNumbers[currentIndex + 1]
-                    send("API:start_scripture", { id, reference: `${bookNumber}.${chapterNumber}.${nextVerse}` })
-                }
-            } else {
-                const nextVerse = displayedVerseNumber + 1
-                send("API:start_scripture", { id, reference: `${bookNumber}.${chapterNumber}.${nextVerse}` })
+        if (isCurrentChapter) {
+            const verseNumbers = getVerseNumbers()
+            const currentIndex = verseNumbers.indexOf(displayedVerseNumber)
+            if (currentIndex >= 0 && currentIndex < verseNumbers.length - 1) {
+                send("API:start_scripture", { id, reference: `${bookNumber}.${chapterNumber}.${verseNumbers[currentIndex + 1]}` })
             }
+        } else {
+            send("API:start_scripture", { id, reference: `${bookNumber}.${chapterNumber}.${displayedVerseNumber + 1}` })
         }
     }
 
     export function backward() {
-        if (displayedBookIndex >= 0 && displayedChapterIndex >= 0 && displayedVerseNumber > 0) {
-            const displayedBook = books[displayedBookIndex]
-            if (!displayedBook) return
+        if (displayedVerseNumber <= 0) return
+        const ref = getDisplayedReference()
+        if (!ref) return
 
-            const bookNumber = displayedBook.number ?? displayedBookIndex + 1
-            const displayedChapters = displayedBook.chapters || []
-            const displayedChapter = displayedChapters[displayedChapterIndex]
-            if (!displayedChapter) return
+        const { bookNumber, chapterNumber } = ref
+        const isCurrentChapter = activeBook === displayedBookIndex && activeChapter === displayedChapterIndex && verses.length > 0
 
-            const chapterNumber = displayedChapter.number ?? displayedChapterIndex + 1
-
-            if (activeBook === displayedBookIndex && activeChapter === displayedChapterIndex && verses.length > 0) {
-                const verseNumbers: number[] = verses.map((v: any, i: number) => {
-                    const num = v?.number ?? i + 1
-                    return typeof num === "string" ? parseInt(num, 10) : num
-                })
-                const currentIndex = verseNumbers.indexOf(displayedVerseNumber)
-                if (currentIndex > 0) {
-                    const prevVerse = verseNumbers[currentIndex - 1]
-                    send("API:start_scripture", { id, reference: `${bookNumber}.${chapterNumber}.${prevVerse}` })
-                }
-            } else {
-                if (displayedVerseNumber > 1) {
-                    const prevVerse = displayedVerseNumber - 1
-                    send("API:start_scripture", { id, reference: `${bookNumber}.${chapterNumber}.${prevVerse}` })
-                }
+        if (isCurrentChapter) {
+            const verseNumbers = getVerseNumbers()
+            const currentIndex = verseNumbers.indexOf(displayedVerseNumber)
+            if (currentIndex > 0) {
+                send("API:start_scripture", { id, reference: `${bookNumber}.${chapterNumber}.${verseNumbers[currentIndex - 1]}` })
             }
+        } else if (displayedVerseNumber > 1) {
+            send("API:start_scripture", { id, reference: `${bookNumber}.${chapterNumber}.${displayedVerseNumber - 1}` })
         }
     }
 
