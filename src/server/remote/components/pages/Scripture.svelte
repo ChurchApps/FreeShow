@@ -702,9 +702,22 @@
         // Close search first so ScriptureContent component is rendered
         openScriptureSearch = false
         searchValue = ""
+        debouncedSearchValue = ""
+        
+        // Clear search results
+        searchResults = []
+        searchResult = { reference: "", referenceFull: "", verseText: "" }
+        scriptureSearchResults.set(null)
+        
+        // In tablet mode, also clear external search if active
+        if (tablet && usingExternalSearch) {
+            usingExternalSearch = false
+            awaitingExternalClear = true
+            dispatch("search-clear")
+        }
 
         // Send the scripture reference to display
-        send("API:start_scripture", { id: collectionId || openedScripture, reference: ref })
+        send("API:start_scripture", { id: $collectionId || $openedScripture, reference: ref })
 
         // Wait for next tick to ensure component is rendered, then navigate
         setTimeout(() => {
