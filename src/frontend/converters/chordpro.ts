@@ -164,8 +164,9 @@ export function convertChordPro(data: any) {
                 let isChord = false
                 let letterIndex = 0
                 line = line.replaceAll("[/]", " ").replaceAll("[|]", "")
+                const isDirectiveLine = line.trim().startsWith("{") && line.includes(":")
                 line.split("").forEach((char) => {
-                    if ((char === "[" || char === "]") && !line.slice(0, -2).includes(":")) {
+                    if ((char === "[" || char === "]") && !isDirectiveLine) {
                         isChord = char === "["
                         if (isChord) chords.push({ id: uid(5), pos: letterIndex, key: "" })
                         return
