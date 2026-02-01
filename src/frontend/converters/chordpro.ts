@@ -93,17 +93,27 @@ export function convertChordPro(data: any) {
                 // {title: Amazing Grace}
                 // Title: 10,000 Reasons (Bless the Lord)
                 if (line.includes(":")) {
-                    let metaKey = line.startsWith("{d_") ? "d_" : metaKeys.find((a) => line.toLowerCase().includes(a + ":"))
-                    if (metaKey) {
+                    const trimmed = line.trim()
+                    const directiveMatch = trimmed.match(/^\{([a-z_]+)\s*:\s*(.*)\}$/i)
+                    const looseMatch = trimmed.match(/^([a-z_]+)\s*:\s*(.*)$/i)
+                    let metaKey = ""
+                    let metaValue = ""
+                    if (directiveMatch) {
+                        metaKey = directiveMatch[1].toLowerCase()
+                        metaValue = directiveMatch[2]
+                    } else if (looseMatch) {
+                        metaKey = looseMatch[1].toLowerCase()
+                        metaValue = looseMatch[2]
+                    }
+                    if (metaKey && metaKeys.includes(metaKey)) {
                         if (metaKey === "t") metaKey = "title"
                         if (metaKey === "lyricist") metaKey = "author"
                         if (metaKey === "su") metaKey = "publisher"
                         if (metaKey === "ccli" || metaKey === "d_ccli") metaKey = "CCLI"
                         if (metaKey === "f") metaKey = "copyright"
                         if (metaKey === "k") metaKey = "key"
-                        if (metaKey === "d_") metaKey = line.slice(3, line.indexOf(":"))
-                        metadata[metaKey] = line.slice(line.indexOf(":") + 1).trim()
-                        metadata[metaKey] = metadata[metaKey].replaceAll("}", "")
+                        if (metaKey === "d_") metaKey = metaValue.slice(0, metaValue.indexOf(":")).trim()
+                        metadata[metaKey] = metaValue.trim()
 
                         if (metaKey === "notes") {
                             notes = metadata[metaKey]
