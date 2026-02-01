@@ -12,7 +12,7 @@ import { activePopup, alertMessage, dictionary, drawerTabsData, groups } from ".
 import { setTempShows } from "./importHelpers"
 import { DEFAULT_ITEM_STYLE } from "../components/edit/scripts/itemHelpers"
 
-const metaKeys = ["number", "title", "artist", "composer", "lyricist", "copyright", "year", "notes", "ccli", "t", "su", "k", "f"]
+const metaKeys = ["number", "title", "artist", "composer", "lyricist", "copyright", "year", "notes", "ccli", "t", "su", "k", "key", "f"]
 const chorus = ["start_of_chorus", "soc"]
 // const verse = ["start_of_verse", "sov"]
 // const end = ["end_of_chorus", "eoc", "end_of_verse", "eov"]
