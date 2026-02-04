@@ -1090,10 +1090,11 @@ export function getSplittedVerses(verses: { [key: string]: string }) {
     if (!get(scriptureSettings).splitLongVerses) return verses || {}
 
     const chars = Number(get(scriptureSettings).longVersesChars || 100)
+    const tolerance = Number(get(scriptureSettings).longVersesTolerance || 0)
     const newVerses: { [key: string | number]: string } = {}
     Object.keys(verses || {}).forEach((verseKey) => {
         const verse = sanitizeVerseText(verses[verseKey] || "")
-        const newVerseStrings = splitText(verse, chars)
+        const newVerseStrings = splitText(verse, chars, tolerance)
 
         for (let i = 0; i < newVerseStrings.length; i++) {
             const key = newVerseStrings.length === 1 ? "" : `_${i + 1}`
@@ -1104,10 +1105,10 @@ export function getSplittedVerses(verses: { [key: string]: string }) {
     return newVerses
 }
 
-export function splitText(value: string, maxLength: number) {
+export function splitText(value: string, maxLength: number, tolerance: number = 0) {
     if (!value) return []
-    if (/<[^>]+>/.test(value)) return splitHtmlText(value, maxLength)
-    return splitPlainText(value, maxLength)
+    if (/<[^>]+>/.test(value)) return splitHtmlText(value, maxLength, tolerance)
+    return splitPlainText(value, maxLength, tolerance)
 }
 
 const BRACKET_WORD_LIMIT = 4
@@ -1155,7 +1156,7 @@ function moveDanglingBracketToNext(first: string, second: string) {
     return { first: kept, second: combinedSecond }
 }
 
-function splitPlainText(value: string, maxLength: number) {
+function splitPlainText(value: string, maxLength: number, tolerance: number = 0) {
     const queue: string[] = [value.trim()]
     const segments: string[] = []
     const proportion = Math.floor(maxLength * 0.3)
@@ -1173,7 +1174,7 @@ function splitPlainText(value: string, maxLength: number) {
             continue
         }
 
-        const halves = getSplitHalves(current, maxLength)
+        const halves = getSplitHalves(current, maxLength, tolerance)
         if (!halves) {
             segments.push(current)
             continue
@@ -1183,9 +1184,12 @@ function splitPlainText(value: string, maxLength: number) {
 
         ;({ first, second } = moveDanglingBracketToNext(first, second))
 
-        const rebalanced = rebalanceHalves(first, second, maxLength, minSegmentLength)
-        first = rebalanced.first
-        second = rebalanced.second
+        // Only rebalance when tolerance is 0 (to preserve punctuation-based splits)
+        if (tolerance === 0) {
+            const rebalanced = rebalanceHalves(first, second, maxLength, minSegmentLength)
+            first = rebalanced.first
+            second = rebalanced.second
+        }
 
         if (second.length < 1) {
             segments.push(first)
@@ -1203,7 +1207,7 @@ function splitPlainText(value: string, maxLength: number) {
     return segments
 }
 
-function splitHtmlText(value: string, maxLength: number) {
+function splitHtmlText(value: string, maxLength: number, tolerance: number = 0) {
     const tokens = tokenizeHtml(value)
     if (!tokens.length) return [value]
 
@@ -1318,19 +1322,44 @@ function findHtmlSplitIndex(text: string, capacity: number) {
     return Math.max(0, breakPos)
 }
 
-function getSplitHalves(text: string, maxLength: number): [string, string] | null {
-    const halves = splitTextContentInHalf(text)
-    if (halves.length >= 2) {
-        const first = halves[0].trim()
-        const second = halves[1].trim()
-        if (first.length && second.length) return [first, second]
+function getSplitHalves(text: string, maxLength: number, tolerance: number = 0): [string, string] | null {
+    // Only use splitTextContentInHalf when tolerance is 0 (original behavior)
+    if (tolerance === 0) {
+        const halves = splitTextContentInHalf(text)
+        if (halves.length >= 2) {
+            const first = halves[0].trim()
+            const second = halves[1].trim()
+            if (first.length && second.length) {
+                return [first, second]
+            }
+        }
     }
 
     if (text.length <= maxLength) return null
 
-    let pivot = text.lastIndexOf(" ", maxLength)
-    if (pivot <= 0) pivot = text.indexOf(" ", maxLength)
-    if (pivot <= 0) pivot = maxLength
+    let pivot = -1
+    
+    // Only use smart punctuation splitting if tolerance > 0
+    if (tolerance > 0) {
+        const windowMin = maxLength - tolerance
+        const windowMax = Math.min(text.length - 1, maxLength + tolerance)
+        
+        // Search for punctuation ONLY within [windowMin, windowMax]
+        for (let i = windowMin; i <= windowMax; i++) {
+            const ch = text.charAt(i)
+            if (/[.,;:!?]/.test(ch)) {
+                pivot = i + 1
+                break
+            }
+        }
+    }
+    
+    // Original behavior: find space (used when tolerance=0 or no punctuation found)
+    if (pivot === -1) {
+        pivot = text.lastIndexOf(" ", maxLength)
+        if (pivot <= 0) pivot = text.indexOf(" ", maxLength)
+        if (pivot <= 0) pivot = maxLength
+    }
 
     const first = text.slice(0, pivot).trim()
     const second = text.slice(pivot).trim()
@@ -1675,7 +1704,16 @@ export function swapPreviewBible(collectionId: string) {
 // WIP similar to array.ts rangeSelect
 // Custom range selection for scripture verses that handles split verses (e.g., "1_1", "5_2")
 export function scriptureRangeSelect(e: any, currentlySelected: (number | string)[], newSelection: number | string, availableVerses: { id: string }[]): (number | string)[] {
-    if (!e.ctrlKey && !e.metaKey && !e.shiftKey) return [newSelection]
+    if (!e.ctrlKey && !e.metaKey && !e.shiftKey) {
+        // When clicking a verse without modifier keys, select all parts of that verse
+        const baseVerseNumber = newSelection.toString().split('_')[0]
+        const allParts = availableVerses
+            .filter(v => v.id.split('_')[0] === baseVerseNumber)
+            .map(v => v.id)
+        
+        // If this verse has multiple parts, return all of them; otherwise just the clicked verse
+        return allParts.length > 1 ? allParts : [newSelection]
+    }
 
     currentlySelected = currentlySelected.map((id) => id.toString())
     newSelection = newSelection.toString()

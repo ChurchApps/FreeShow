@@ -1441,6 +1441,7 @@
         "verses_on_individual_lines": "Verses on individual lines",
         "divide_long_verses": "Split long verses",
         "split_long_verses_suffix": "Show letter suffix",
+        "tolerance": "Tolerance",
         "version": "Show version",
         "reference": "Show reference",
         "split_reference": "Split reference",
