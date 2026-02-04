@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onDestroy, onMount } from "svelte"
+    import { onDestroy } from "svelte"
     import type { Item, OutSlide, SlideData, Transition } from "../../../../types/Show"
     import { showsCache } from "../../../stores"
     import { shouldItemBeShown } from "../../edit/scripts/itemHelpers"
@@ -27,11 +27,14 @@
     export let transitionEnabled = false
     export let styleIdOverride = ""
 
-    onMount(() => {
+    let origin = ""
+    $: if (outSlide.id) updateShow()
+    function updateShow() {
         // custom fonts
         const currentShow = $showsCache[outSlide.id]
         if (currentShow?.settings?.customFonts) loadCustomFonts(currentShow.settings.customFonts)
-    })
+        origin = currentShow?.origin || ""
+    }
 
     // TEST:
     // conditions
@@ -314,7 +317,7 @@
                             {transition}
                             {ratio}
                             {outputId}
-                            ref={{ showId: customOut?.id, slideId: customSlide?.id, id: customSlide?.id || "", layoutId: customOut?.layout }}
+                            ref={{ showId: customOut?.id, slideId: customSlide?.id, id: customSlide?.id || "", layoutId: customOut?.layout, origin }}
                             linesStart={customLines?.[currentLineId || ""]?.[item.lineReveal ? "linesStart" : "start"]}
                             linesEnd={customLines?.[currentLineId || ""]?.[item.lineReveal ? "linesEnd" : "end"]}
                             clickRevealed={!!customLines?.[currentLineId || ""]?.clickRevealed}

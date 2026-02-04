@@ -605,7 +605,7 @@ function getNewSize(contentSize: { width: number; height: number }, newSize: { w
 
 // CROP
 
-export function cropImageToBase64(imagePath: string, crop: Partial<Cropping> | undefined): Promise<string> {
+export function cropImageToBase64(imagePath: string, crop: Partial<Cropping> | undefined, percentageScaling: boolean = false): Promise<string> {
     return new Promise((resolve) => {
         if (!crop) return resolve("")
         if (!crop.bottom && !crop.left && !crop.right && !crop.top) return resolve("")
@@ -618,17 +618,46 @@ export function cropImageToBase64(imagePath: string, crop: Partial<Cropping> | u
         // needed if loading from local path
         img.src = encodeFilePath(imagePath)
         img.onload = () => {
-            const cropWidth = img.width - (crop.left || 0) - (crop.right || 0)
-            const cropHeight = img.height - (crop.top || 0) - (crop.bottom || 0)
+            const iw = img.naturalWidth
+            const ih = img.naturalHeight
 
-            if (cropWidth <= 0 || cropHeight <= 0) return resolve("")
+            const left = (crop.left || 0) * (percentageScaling ? iw * 0.01 : 1)
+            const right = (crop.right || 0) * (percentageScaling ? iw * 0.01 : 1)
+            const top = (crop.top || 0) * (percentageScaling ? ih * 0.01 : 1)
+            const bottom = (crop.bottom || 0) * (percentageScaling ? ih * 0.01 : 1)
+
+            const sx = left
+            const sy = top
+            const sWidth = iw - left - right
+            const sHeight = ih - top - bottom
+
+            if (sWidth <= 0 || sHeight <= 0) return resolve("")
 
             const canvas = document.createElement("canvas")
-            canvas.width = cropWidth
-            canvas.height = cropHeight
-
             const ctx = canvas.getContext("2d")!
-            ctx.drawImage(img, crop.left || 0, crop.top || 0, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight)
+
+            if (percentageScaling) {
+                canvas.width = iw
+                canvas.height = ih
+
+                const scaleX = canvas.width / sWidth
+                const scaleY = canvas.height / sHeight
+
+                ctx.save()
+
+                // Office transform
+                ctx.scale(scaleX, scaleY)
+                ctx.translate(-left, -top)
+
+                ctx.drawImage(img, 0, 0)
+
+                ctx.restore()
+            } else {
+                canvas.width = sWidth
+                canvas.height = sHeight
+
+                ctx.drawImage(img, sx, sy, sWidth, sHeight, 0, 0, canvas.width, canvas.height)
+            }
 
             const base64 = canvas.toDataURL("image/png")
             resolve(base64)

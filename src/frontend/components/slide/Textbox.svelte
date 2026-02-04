@@ -43,6 +43,7 @@
         showId?: string
         slideId?: string
         layoutId?: string
+        origin?: string
         id: string
     }
     export let style = true
@@ -108,10 +109,9 @@
     let lastRenderedSignature = ""
     onMount(() => {
         if (preview) {
-             // Defer slightly to ensure DOM layout is ready for measurement, preventing 0-width errors
-             setTimeout(() => (loaded = true), 20)
-        }
-        else setTimeout(() => (loaded = true), 100)
+            // Defer slightly to ensure DOM layout is ready for measurement, preventing 0-width errors
+            setTimeout(() => (loaded = true), 20)
+        } else setTimeout(() => (loaded = true), 100)
     })
     onDestroy(() => {
         if (dateInterval) clearInterval(dateInterval)
@@ -295,7 +295,7 @@
     $: newItem = JSON.stringify(item)
     // Combine content and template to detect all layout-affecting changes
     $: stateSignature = newItem + "|" + resolvedTemplateId
-    
+
     $: if (stateSignature !== lastRenderedSignature) {
         autoSizeReady = false
         // Check if autosize is active - for STAGE, use stageAutoSize since slide items don't have auto/textFit set
@@ -303,7 +303,7 @@
         if (hasAutoSize) {
             // Determine if we'll hide during autosize calculation
             const willHide = shouldHideUntilAutoSizeCompletes()
-            
+
             // CRITICAL: Start with fontSize=0 when hiding to prevent giant text flash:
             // - STAGE: Always starts at 0 (computes for STAGE dimensions, not OUTPUT)
             // - OUTPUT: Starts at 0 if cache is invalid (willHide=true), otherwise uses cache
@@ -320,7 +320,7 @@
                 // OUTPUT uses its cache
                 fontSize = item?.autoFontSize || 0
             }
-            
+
             lastRenderedSignature = stateSignature
             hideUntilAutosized = willHide
         }
@@ -390,14 +390,14 @@
 
         // Wait for DOM to update with new template styles before measuring
         await tick()
-        
+
         // Wait for web fonts to load before measuring (prevents wrong dimensions from fallback fonts)
         try {
             await document.fonts.ready
         } catch (e) {
             // Font loading check failed, continue anyway
         }
-        
+
         // Wait for CSS styles to fully cascade and layout to stabilize before measuring
         // This ONLY adds delay when element dimensions are still changing (unstable layout)
         // Once dimensions stabilize, no additional waiting occurs
@@ -408,35 +408,33 @@
             const maxAttempts = 20
             let totalWait = 0
             const maxWait = 500 // Maximum 500ms - reasonable buffer for slow computers without painful delays
-            
+
             // Output window needs longer initial wait for CSS cascade in separate Electron window
             const isOutputContext = ratio < 0.5 && !preview && !isStage
-            
+
             while (attempts < maxAttempts && totalWait < maxWait) {
-                const waitTime = attempts === 0 ? (isOutputContext ? 150 : 100) : (attempts === 1 ? 50 : 20)
+                const waitTime = attempts === 0 ? (isOutputContext ? 150 : 100) : attempts === 1 ? 50 : 20
                 await wait(waitTime)
                 totalWait += waitTime
-                
+
                 // Check if element still exists after waiting
                 if (!itemElem) {
                     return // Element destroyed, abort calculation
                 }
-                
+
                 const newWidth = itemElem.clientWidth
                 const newHeight = itemElem.clientHeight
-                
+
                 if (newWidth === prevWidth && newHeight === prevHeight) {
                     // Dimensions stable - stop waiting
                     break
                 }
-                
+
                 prevWidth = newWidth
                 prevHeight = newHeight
                 attempts++
             }
         }
-
-
 
         let defaultFontSize
         let maxFontSize
@@ -455,7 +453,6 @@
 
             defaultFontSize = itemFontSize
             if (textFit === "growToFit" && itemFontSize !== 100) maxFontSize = itemFontSize
-
         } else {
             if (isTextItem && textFit === "none") {
                 fontSize = 0
@@ -477,7 +474,6 @@
 
             defaultFontSize = itemFontSize
             if (textFit === "growToFit" && isTextItem && itemFontSize > 100) maxFontSize = itemFontSize
-
         }
 
         let elem = itemElem
@@ -487,8 +483,6 @@
         const cacheKey = buildAutoSizeCacheKey()
         const cacheSignature = buildAutoSizeSignature(elem.clientWidth, elem.clientHeight)
         const cachedResult = cacheKey ? readAutoSizeCache(cacheKey) : undefined
-
-
 
         if (!isDynamic && cachedResult && cachedResult.signature === cacheSignature) {
             fontSize = cachedResult.fontSize
@@ -564,15 +558,15 @@
             height: styles.height,
             left: styles.left,
             top: styles.top,
-            fontSize: styles['font-size']
+            fontSize: styles["font-size"]
         }
-        
+
         // Fix for thumbnails getting stuck with wrong cache when dimensions change via CSS classes
         if (preview) {
             boxDimensions.measuredWidth = measuredWidth
             boxDimensions.measuredHeight = measuredHeight
         }
-        
+
         // Fix for OUTPUT getting stuck with wrong cache when output window dimensions change
         // Include container dimensions to invalidate cache when OUTPUT resolution/size changes
         if (!preview && !isStage && itemElem) {
@@ -623,7 +617,7 @@
         if (preview) return false
         const type = item?.type || "text"
         if (type !== "text") return false
-        
+
         // Use detailed validation to ensure we catch all autosize candidates
         // For STAGE: stageAutoSize controls autosize, slide items don't have auto/textFit set
         const isExplicitNone = item?.textFit === "none"
@@ -632,9 +626,9 @@
         const isStageAutoSizeActive = stageAutoSize
 
         if (!isStageAutoSizeActive && (isExplicitNone || (!isExplicitActive && !isImpliedActive))) {
-             return false
+            return false
         }
-        
+
         // CHECK CACHE
         const cacheKey = buildAutoSizeCacheKey()
         const cacheSignature = buildAutoSizeSignature()
@@ -645,7 +639,7 @@
         if (hasValidCache) {
             return false
         }
-        
+
         return true
     }
 
@@ -670,7 +664,8 @@
 
                 a[ref.showId!].slides[ref.id].items[itemIndex].autoFontSize = fontSize
                 return a
-            })        }
+            })
+        }
     }
 
     function setItemPreviewAutoFontSize(fontSize) {
@@ -781,6 +776,8 @@
     }
 
     $: noTextMode = ref?.type === "template" && $templates[ref?.id]?.settings?.mode === "item"
+
+    $: normalWrap = ref?.origin === "powerpoint"
 </script>
 
 <!-- lyrics view must have "width: 100%;height: 100%;" set -->
@@ -796,13 +793,13 @@
     class:chords={chordLines.length}
     class:clickable={$currentWindow === "output" && (item.button?.press || item.button?.release)}
     class:reveal={(centerPreview || isStage) && item.clickReveal && !clickRevealed}
-    class:hidden={hidden}
+    class:hidden
     bind:this={itemElem}
     on:mousedown={press}
     on:mouseup={release}
 >
     {#if lines && !noTextMode}
-        <TextboxLines {item} {slideIndex} {isMirrorItem} {key} {smallFontSize} {animationStyle} {dynamicValues} {isStage} {customFontSize} {outputStyle} {ref} {style} {customStyle} {stageItem} {chords} {linesStart} {linesEnd} fontSize={smallFontSize ? 20 : fontSize} {customTypeRatio} {maxLines} {maxLinesInvert} {centerPreview} {revealed} styleOverrides={templateStyleOverrides} {useOriginalTextColor} hideContent={hideUntilAutosized} on:updateAutoSize={calculateAutosize} />
+        <TextboxLines {item} {slideIndex} {isMirrorItem} {key} {smallFontSize} {animationStyle} {dynamicValues} {isStage} {customFontSize} {outputStyle} {ref} {style} {customStyle} {stageItem} {chords} {linesStart} {linesEnd} fontSize={smallFontSize ? 20 : fontSize} {customTypeRatio} {maxLines} {maxLinesInvert} {centerPreview} {revealed} styleOverrides={templateStyleOverrides} {useOriginalTextColor} hideContent={hideUntilAutosized} {normalWrap} on:updateAutoSize={calculateAutosize} />
     {:else}
         <SlideItems {item} {slideIndex} {preview} {isTemplatePreview} {mirror} {isMirrorItem} {ratio} {disableListTransition} {smallFontSize} {ref} {fontSize} {outputId} />
     {/if}

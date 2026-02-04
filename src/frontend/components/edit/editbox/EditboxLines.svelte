@@ -20,6 +20,7 @@
     export let ref: {
         type?: "show" | "overlay" | "template" | "stage"
         showId?: string
+        origin?: string
         id: string
     }
     export let index: number
@@ -91,7 +92,7 @@
 
     function getStyle() {
         if (!plain && $activeEdit.slide === null) return
-        let result = EditboxHelper.getStyleHtml(item, plain, currentStyle)
+        let result = EditboxHelper.getStyleHtml(item, plain, currentStyle, ref.origin === "powerpoint")
         html = result.html
         currentStyle = result.currentStyle
         previousHTML = html
