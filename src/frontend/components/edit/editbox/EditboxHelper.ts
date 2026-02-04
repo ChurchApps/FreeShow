@@ -152,7 +152,7 @@ export class EditboxHelper {
         return { firstLines, secondLines }
     }
 
-    static getStyleHtml(item: Item, plain: boolean, currentStyle: string) {
+    static getStyleHtml(item: Item, plain: boolean, currentStyle: string, useNormalWrap: boolean = false) {
         currentStyle = ""
         let html = ""
         let firstTextStyleArchive = ""
@@ -165,7 +165,7 @@ export class EditboxHelper {
             currentStyle += align + lineStyleBg + lineStyleRadius // + line.chords?.map((a) => a.key)
             const style = align || lineStyleBg || lineStyleRadius || listStyle ? 'style="' + align + lineStyleBg + lineStyleRadius + listStyle + '"' : ""
 
-            const normalWrap = align.includes("justify") || align.includes("left") || JSON.stringify(line).includes("nowrap")
+            const normalWrap = useNormalWrap || align.includes("justify") || align.includes("left") || JSON.stringify(line).includes("nowrap")
 
             html += `<div class="break ${normalWrap ? "normalWrap" : ""}" ${plain ? "" : style}>`
 

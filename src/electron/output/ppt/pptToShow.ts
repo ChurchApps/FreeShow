@@ -1,16 +1,15 @@
+import { XMLParser } from "fast-xml-parser"
 import path from "path"
-import { parseStringPromise } from "xml2js"
 import { toApp } from "../.."
 import { MAIN } from "../../../types/Channels"
 import { decompressZipStream } from "../../data/zip"
 import { createFolder, getDataFolderPath } from "../../utils/files"
 
-// Extract .pptx contents (zip) and convert XML files to JSON using xml2js.
+// Extract .pptx contents (zip) and convert XML files to JSON
 // Media and fonts are streamed directly to disk to avoid OOM with large embedded videos.
 export async function pptToShow(filePath: string) {
     try {
-        console.info("Starting PPT importing (zip -> xml2js) ...")
-
+        console.info("Starting PPT importing...")
         const fileName = path.basename(filePath, path.extname(filePath))
         const importsFolder = getDataFolderPath("imports", "PowerPoint")
         const contentFolder = createFolder(path.join(importsFolder, fileName))
@@ -45,8 +44,18 @@ export async function pptToShow(filePath: string) {
             if (entryName.endsWith(".xml") || entryName.endsWith(".rels")) {
                 const xmlText = typeof entry.content === "string" ? entry.content : (entry.content as Buffer).toString("utf8")
                 try {
-                    const parsed: any = await parseStringPromise(xmlText, { trim: true })
-                    json[entryName] = parsed
+                    const options = {
+                        ignoreAttributes: false,
+                        attributeNamePrefix: "",
+                        preserveOrder: true,
+                        allowBooleanAttributes: true,
+                        ignoreDeclaration: true,
+                        trimValues: false
+                    }
+                    const parser = new XMLParser(options)
+                    const output = parser.parse(xmlText)
+
+                    json[entryName] = output
                 } catch (err: any) {
                     console.error("Failed to parse XML for", entryName, err)
                     // fallback to raw xml text so caller still has the data

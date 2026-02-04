@@ -19,6 +19,7 @@
     export let ref: {
         type?: "show" | "overlay" | "template"
         showId?: string
+        origin?: string
         id: string
     }
     export let index: number

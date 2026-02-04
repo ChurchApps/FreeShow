@@ -1,11 +1,13 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import { encodeFilePath } from "../../helpers/media"
+    import type { Cropping } from "../../../../types/Settings"
+    import { cropImageToBase64, encodeFilePath } from "../../helpers/media"
 
     export let src: string
     export let updater = 0
     export let alt: string
     export let transition = true
+    export let cropping: Cropping | null = null
 
     let loaded = false
     let image: HTMLImageElement | null = null
@@ -37,10 +39,17 @@
         e.target.style.display = null
         loaded = true
     }
+
+    let croppedImage = ""
+    $: croppingActive = cropping?.bottom || cropping?.left || cropping?.top || cropping?.right
+    $: if (croppingActive) cropImage()
+    async function cropImage() {
+        croppedImage = await cropImageToBase64(src, cropping!, true)
+    }
 </script>
 
 {#key retryCount}
-    <img style={$$props.style} src="{encodeFilePath(src)}{updater ? '?' + updater : ''}" {alt} draggable="false" class:loaded class:transition bind:this={image} on:load={hasLoaded} on:error={reload} />
+    <img style={$$props.style} src="{croppingActive ? croppedImage : encodeFilePath(src)}{updater ? '?' + updater : ''}" {alt} draggable="false" class:loaded class:transition bind:this={image} on:load={hasLoaded} on:error={reload} />
 {/key}
 
 <style>

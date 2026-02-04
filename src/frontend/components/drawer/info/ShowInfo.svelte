@@ -41,7 +41,7 @@
         words = 0
         allLines.forEach((lines) => {
             lines.forEach((line) => {
-                line?.text?.forEach((text) => (words += text.value.split(" ").length))
+                line?.text?.forEach((text) => (words += text.value?.split(" ").length))
             })
         })
     }

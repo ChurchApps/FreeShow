@@ -1,7 +1,7 @@
 import type { AutosizeTypes } from "../frontend/components/edit/scripts/autosize"
 import type { Input } from "./Input"
 import type { Animation } from "./Output"
-import type { Resolution } from "./Settings"
+import type { Cropping, Resolution } from "./Settings"
 
 export interface Shows {
     [key: string]: Show
@@ -110,6 +110,7 @@ export interface Item {
     align?: string
     specialStyle?: any // line gap && line background
     media?: any
+    cropping?: Cropping // in percentage based on original image size
     // timer?: Timer // pre 0.8.3 // also local backup?
     timer?: { id: string; [key: string]: any }
     timerId?: string // pre 1.5.0
