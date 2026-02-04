@@ -175,6 +175,11 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
                             // exists only in cloud
                             const existsLocally = !!localFile
                             if (!existsLocally) {
+                                const lastSeen = CHANGES.modified?.[deviceId] || 0
+                                if (cloudModTime && lastSeen >= cloudModTime) {
+                                    markAsDeleted("SHOWS_CONTENT", fileName)
+                                    return
+                                }
                                 if (isCreated("SHOWS_CONTENT", fileName)) await download()
                                 else markAsDeleted("SHOWS_CONTENT", fileName)
                                 return
