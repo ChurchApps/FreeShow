@@ -380,6 +380,8 @@ export type Popups =
     | "cloud_method"
     | "sync_categories"
     | "effect_items"
+    | "timeline"
+    | "timecode"
 
 export type DefaultProjectNames = "date" | "today" | "sunday" | "week" | "custom" | "blank"
 

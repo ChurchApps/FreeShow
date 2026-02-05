@@ -50,8 +50,6 @@
         send("API:set_template", { id: templateId })
     }
 
-    const ignoreDefault = ["metadata", "message", "double"]
-
     let isLoading = true
     onMount(() => {
         send("GET_TEMPLATES")
@@ -82,7 +80,7 @@
                                 </div>
 
                                 <div class="label">
-                                    {#if template.isDefault && !ignoreDefault.includes(template.id)}
+                                    {#if template.isDefault}
                                         <Icon id="protected" style="opacity: 0.6; margin-inline-start: 3px; position: absolute; left: 0;" size={0.6} white />
                                     {/if}
                                     <span class="name">{template.name || translate("main.unnamed", $dictionary)}</span>

@@ -320,7 +320,8 @@
                                     ref={{
                                         showId,
                                         slideId: layoutSlide.id,
-                                        id: layoutSlide.id
+                                        id: layoutSlide.id,
+                                        origin: show.origin
                                     }}
                                     style={viewMode !== "lyrics" || noQuickEdit}
                                     smallFontSize={viewMode === "lyrics" && !noQuickEdit}
@@ -601,6 +602,9 @@
     }
     .notes:hover {
         background-color: rgb(255 255 255 / 0.2);
+    }
+    .notes span {
+        text-align: left;
     }
 
     .label .text {

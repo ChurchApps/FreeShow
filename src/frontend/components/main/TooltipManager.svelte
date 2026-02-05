@@ -17,7 +17,7 @@
 
     function extractShortcuts(input: string) {
         if (typeof input !== "string") return []
-        const match = input.match(/^(.+?)\s*(?:\[(.*?)\])?$/)
+        const match = input.match(/^(.+?)\s*(?:\[(.*?)\])?$/s)
         if (!match) return [{ text: input, isShortcut: false }]
 
         const result = [{ text: match[1], isShortcut: false }]

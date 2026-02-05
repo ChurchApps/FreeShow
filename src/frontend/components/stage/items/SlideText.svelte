@@ -108,6 +108,8 @@
     // WIP stage items merged (so this only works properly for the first item with linesReveal enabled (use "Item number" option))
 
     $: useOriginalTextColor = stageItem.style?.includes("color:;")
+
+    // DEBUG: SlideText rendering and fontSize prop logging commented out
 </script>
 
 {#if style}

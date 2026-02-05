@@ -14,14 +14,13 @@ import { history, redo, undo } from "../components/helpers/history"
 import { getExtension, getMediaLayerType, getMediaStyle, getMediaType } from "../components/helpers/media"
 import { getAllNormalOutputs, getFirstActiveOutput, refreshOut, setOutput, startFolderTimer, toggleOutputs } from "../components/helpers/output"
 import { nextSlideIndividual, previousSlideIndividual } from "../components/helpers/showActions"
-import { stopSlideRecording, updateSlideRecording } from "../components/helpers/slideRecording"
 import { clearAll, clearBackground, clearSlide } from "../components/output/clear"
 import { getRecentlyUsedProjects, openProject } from "../components/show/project"
 import { importFromClipboard } from "../converters/importHelpers"
 import { addSection } from "../converters/project"
 import { requestMain, sendMain } from "../IPC/main"
 import { changeSlidesView } from "../show/slides"
-import { activeDrawerTab, activeEdit, activeFocus, activePage, activePopup, activeSlideRecording, activeStage, alertMessage, contextActive, drawer, focusedArea, focusMode, guideActive, media, os, outLocked, outputs, outputSlideCache, quickSearchActive, refreshEditSlide, selected, showRecentlyUsedProjects, showsCache, special, spellcheck, styles, textEditActive, topContextActive, videosData, volume } from "../stores"
+import { activeDrawerTab, activeEdit, activeFocus, activePage, activePopup, activeStage, alertMessage, contextActive, drawer, focusedArea, focusMode, guideActive, media, os, outLocked, outputs, outputSlideCache, quickSearchActive, refreshEditSlide, selected, showRecentlyUsedProjects, showsCache, special, spellcheck, styles, textEditActive, timelineRecordingAction, topContextActive, videosData, volume } from "../stores"
 import { audioExtensions, imageExtensions, videoExtensions } from "../values/extensions"
 import { drawerTabs } from "../values/tabs"
 import { activeShow } from "./../stores"
@@ -260,7 +259,9 @@ export const previewShortcuts = {
         if (!presentationControllersKeysDisabled()) clearAll()
     },
     F1: () => {
-        if (!get(outLocked)) clearBackground()
+        if (get(outLocked)) return
+        clearBackground()
+        timelineRecordingAction.set({ id: "clear_background" })
     },
     F2: () => {
         // return if "rename" is selected
@@ -268,15 +269,19 @@ export const previewShortcuts = {
         if (presentationControllersKeysDisabled()) return false
 
         clearSlide()
+        timelineRecordingAction.set({ id: "clear_slide" })
         return true
     },
     F3: () => {
         if (get(outLocked)) return
         setOutput("overlays", [])
         setOutput("effects", [])
+        timelineRecordingAction.set({ id: "clear_overlays" })
     },
     F4: () => {
-        if (!get(outLocked)) clearAudio("", { clearPlaylist: true, commonClear: true })
+        if (get(outLocked)) return
+        clearAudio("", { clearPlaylist: true, commonClear: true })
+        timelineRecordingAction.set({ id: "clear_audio" })
     },
     F5: () => {
         if (!presentationControllersKeysDisabled()) nextSlideIndividual(null)
@@ -309,7 +314,6 @@ export const previewShortcuts = {
         // if (get(activeShow)?.type !== "show" && get(activeShow)?.type !== undefined) return
         if (get(outLocked) || e.ctrlKey || e.metaKey) return
         if (!e.preview && (get(activeEdit).items.length || get(activeStage).items.length)) return
-        if (get(activeSlideRecording)) return updateSlideRecording("next")
 
         const currentShow = get(focusMode) ? get(activeFocus) : get(activeShow)
         if (!get(showsCache)[currentShow?.id || ""]) {
@@ -333,7 +337,6 @@ export const previewShortcuts = {
         // if (get(activeShow)?.type !== "show" && get(activeShow)?.type !== undefined) return
         if (get(outLocked) || e.ctrlKey || e.metaKey) return
         if (!e.preview && (get(activeEdit).items.length || get(activeStage).items.length)) return
-        if (get(activeSlideRecording)) return updateSlideRecording("previous")
 
         // const currentShow = get(focusMode) ? get(activeFocus) : get(activeShow)
         // if (!get(showsCache)[currentShow?.id || ""]) {
@@ -364,16 +367,17 @@ export const previewShortcuts = {
             return togglePlayingMedia(e)
         }
 
+        // space bar should toggle timeline for show when active
+        if (get(special).timelineActive || get(special).projectTimelineActive) return
+
         const outputId = getFirstActiveOutput()?.id || ""
         const currentOutput = outputId ? get(outputs)[outputId] || null : null
         const outSlide = currentOutput?.out?.slide || get(outputSlideCache)[outputId] || {}
 
         e.preventDefault()
         if (outSlide.id !== currentShow?.id || (currentShow && outSlide.layout !== get(showsCache)[currentShow.id || ""]?.settings.activeLayout)) {
-            if (get(activeSlideRecording)) stopSlideRecording()
             nextSlideIndividual(e, true)
         } else {
-            if (get(activeSlideRecording)) return updateSlideRecording("next")
             if (e.shiftKey) previousSlideIndividual(e)
             else nextSlideIndividual(e)
         }

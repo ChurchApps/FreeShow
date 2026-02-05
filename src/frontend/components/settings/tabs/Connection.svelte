@@ -194,7 +194,7 @@
     </InputRow>
 {/each}
 
-{#if !$providerConnections.planningcenter && (!$providerConnections.churchApps || cloudOnly.churchApps) && !$providerConnections.amazinglife}
+{#if $providerConnections.churchApps ? cloudOnly.churchApps : !$providerConnections.planningcenter && !$providerConnections.churchApps && !$providerConnections.amazinglife}
     <!-- No provider connected - show connection options -->
     <div class="tapping" on:click={tap}>
         <Title label="Content Provider" icon="list" />

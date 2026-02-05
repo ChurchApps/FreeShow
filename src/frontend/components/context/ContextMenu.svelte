@@ -7,8 +7,8 @@
     import { hexToRgb } from "../helpers/color"
     import ContextChild from "./ContextChild.svelte"
     import ContextItem from "./ContextItem.svelte"
-    import { contextMenuItems, contextMenuLayouts } from "./contextMenus"
-    import { flattenMenuItems, searchMenuItems, handleKeydown as handleSearchKeydown, type FlatMenuItem } from "./contextMenuSearch"
+    import { contextMenuGroups, contextMenuItems, contextMenuLayouts } from "./contextMenus"
+    import { flattenMenuItems, handleKeydown as handleSearchKeydown, searchMenuItems, type FlatMenuItem } from "./contextMenuSearch"
     import { quickLoadItems } from "./loadItems"
     import SpellCheckMenu from "./SpellCheckMenu.svelte"
 
@@ -178,6 +178,13 @@
         const result = searchMenuItems(searchQuery, flatMenuItems, translateText, $dictionary)
         highlighted = { id: result.id, path: result.path }
     }
+
+    function getGroupItems(id: string) {
+        const groupList: string[] | undefined = contextMenuGroups[id.slice(6)]
+        if (!groupList) return []
+
+        return groupList
+    }
 </script>
 
 <svelte:window on:contextmenu={onContextMenu} on:click={click} on:keydown={handleKeydown} />
@@ -187,9 +194,15 @@
         {#key activeMenu}
             <SpellCheckMenu />
 
-            {#each activeMenu as id}
+            {#each activeMenu as id, i}
                 {#if id === "SEPARATOR"}
                     <hr />
+                {:else if id.startsWith("GROUP_")}
+                    <div class="group" class:isFirst={i === 0} class:isLast={i === activeMenu.length - 1}>
+                        {#each getGroupItems(id) as itemId}
+                            <ContextItem id={itemId} {contextElem} highlighted={highlighted.id === itemId} group />
+                        {/each}
+                    </div>
                 {:else if contextMenuItems[id]?.items}
                     {#if shouldShowMenuWithItems(id)}
                         <ContextChild {id} {contextElem} {side} translate={y > window.innerHeight - 50 ? translate : 0} highlightedPath={highlighted.path} />
@@ -233,6 +246,33 @@
         height: 1px;
         border: none;
         background-color: var(--primary-lighter);
+    }
+
+    .group {
+        display: flex;
+        justify-content: space-between;
+
+        /* margin: 10px 8px;
+        border: 1px solid rgb(255 255 255 / 0.07);
+        border-radius: 4px; */
+
+        padding: 8px 0;
+        margin: 8px 0;
+        border-top: 1px solid rgb(255 255 255 / 0.07);
+        border-bottom: 1px solid rgb(255 255 255 / 0.07);
+    }
+    .group.isFirst {
+        margin-top: 0;
+        padding-top: 0;
+        border-top: none;
+    }
+    .group.isLast {
+        margin-bottom: 0;
+        padding-bottom: 0;
+        border-bottom: none;
+    }
+    .group :global(div:not(:last-child)) {
+        border-right: 1px solid rgb(255 255 255 / 0.08);
     }
 
     .search {

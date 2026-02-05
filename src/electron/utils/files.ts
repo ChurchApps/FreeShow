@@ -696,6 +696,15 @@ export async function locateMediaFile({ filePath, folders }: { filePath: string;
         if (level > NESTED_SEARCH || matches.length) return
         if (!(await doesPathExistAsync(folderPath))) return
 
+        // check any path with same parent folder for matches first to limit search a bit
+        // this should also help if multiple files has the same name, but originates from different folders
+        const parentFolderName = upath.basename(upath.dirname(filePath))
+        const potentialPath = path.join(folderPath, parentFolderName, fileName)
+        if (await doesPathExistAsync(potentialPath)) {
+            matches.push(potentialPath)
+            return
+        }
+
         const currentFolderFolders: string[] = []
         const files = await readFolderAsync(folderPath)
 
@@ -725,9 +734,6 @@ export async function locateMediaFile({ filePath, folders }: { filePath: string;
     }
 
     function checkFileForMatch(currentFileName: string, folderPath: string) {
-        // WIP check any path with same parent folder for matches first to limit search a bit
-        // this would also help with files with same name
-
         if (matches.length) return
 
         // simple search: match by file name only
@@ -953,7 +959,7 @@ function getFileParentFolderId(filePath: string) {
 
 // LOAD SHOWS
 
-export function loadShows(returnShows = false, newShows: string[] = []) {
+export function loadShows(returnShows = false, reCacheNames: string[] = []) {
     const showsPath = getDataFolderPath("shows")
 
     specialCaseFixer()
@@ -968,7 +974,7 @@ export function loadShows(returnShows = false, newShows: string[] = []) {
     // create a map for quick lookup of cached shows by name
     const cachedShowNames = new Map<string, string>()
     for (const [id, show] of Object.entries(cachedShows)) {
-        if (show?.name && !newShows.includes(show.name)) cachedShowNames.set(show.name, id)
+        if (show?.name && !reCacheNames.includes(show.name)) cachedShowNames.set(show.name, id)
     }
 
     filesInFolder = filesInFolder

@@ -1,7 +1,7 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
 import type { Item, Slide, SlideData, Template } from "../../../types/Show"
-import { breakLongLines, removeItemValues, splitItemInTwo } from "../../show/slides"
+import { breakLongLines, removeItemValues } from "../../show/slides"
 import { activeEdit, activePage, activePopup, activeProject, activeShow, alertMessage, cachedShowsData, deletedShows, driveData, groups, notFound, projects, refreshEditSlide, renamedShows, shows, showsCache, templates } from "../../stores"
 import { save } from "../../utils/save"
 import { EMPTY_SHOW_SLIDE } from "../../values/empty"
@@ -14,6 +14,7 @@ import { addToPos } from "./mover"
 import { getItemsCountByType, isEmptyOrSpecial, mergeWithTemplate, updateLayoutsFromTemplate, updateSlideFromTemplate } from "./output"
 import { loadShows, saveTextCache } from "./setShow"
 import { getShowCacheId } from "./show"
+import { getItemWithMostLines } from "./showActions"
 import { _show } from "./shows"
 
 // TODO: move history switch to actions
@@ -766,7 +767,10 @@ export const historyActions = ({ obj, undo = null }: any) => {
                 if (templateId && !slideId && previousTemplateId !== templateId) _show(data.remember.showId).set({ key: "settings.template", value: slideId ? null : templateId })
 
                 const template = clone(get(templates)[templateId])
-                if (template?.settings?.maxLinesPerSlide) splitToMaxLines(template.settings.maxLinesPerSlide)
+                if (template?.settings?.maxLinesPerSlide) {
+                    slides = splitToMaxLines(template.settings.maxLinesPerSlide)
+                    show.slides = slides
+                }
                 if (template?.settings?.breakLongLines) {
                     slides = breakLongLines(data.remember.showId, template.settings.breakLongLines)
                     show.slides = slides
@@ -789,30 +793,45 @@ export const historyActions = ({ obj, undo = null }: any) => {
             else obj.newData = clone(data)
 
             function splitToMaxLines(maxLines: number) {
-                let itemIndex = -1
-                // find match
-                let slideMatch = ref.find((slideRef) => {
-                    itemIndex = slides[slideRef.id]?.items?.findIndex((a) => (a.lines?.length || 0) > maxLines) ?? -1
-                    return itemIndex > -1
+                const currentSlides = clone(show.slides) || {}
+                const newSlides: { [key: string]: Slide } = {}
+
+                Object.entries(currentSlides).forEach(([id, slide]) => {
+                    let childrenIds: string[] = []
+
+                    const totalLines = getItemWithMostLines(slide)
+                    for (let i = 0; i < totalLines; i += maxLines) {
+                        const newItems: Item[] = []
+                        slide.items.forEach((item) => {
+                            if (!item.lines) {
+                                newItems.push(item)
+                                return
+                            }
+
+                            const lines = clone(item.lines).slice(i, i + maxLines)
+                            newItems.push({ ...item, lines })
+                        })
+
+                        const newSlide = {
+                            ...clone(slide),
+                            group: i === 0 ? slide.group : null,
+                            color: i === 0 ? slide.color : null,
+                            items: newItems
+                        }
+                        if (i > 0) {
+                            delete newSlide.globalGroup
+                            delete newSlide.children
+                        }
+
+                        const currentId = i === 0 ? id : uid()
+                        newSlides[currentId] = newSlide
+                        if (i > 0) childrenIds.push(currentId)
+                    }
+
+                    if (childrenIds.length) newSlides[id].children = childrenIds
                 })
 
-                let breaker = 0
-                while (slideMatch && breaker < 250) {
-                    breaker++
-                    splitItemInTwo(slideMatch, itemIndex, [], maxLines)
-
-                    // update
-                    ref = _show(data.remember.showId).layouts([data.remember.layout]).ref()[0] || []
-                    slides = get(showsCache)[data.remember.showId]?.slides || {}
-                    // find match
-                    slideMatch = ref.find((slideRef) => {
-                        itemIndex = slides[slideRef.id]?.items?.findIndex((a) => (a.lines?.length || 0) > maxLines) ?? -1
-                        return itemIndex > -1
-                    })
-                }
-
-                // update
-                show = get(showsCache)[data.remember.showId]
+                return newSlides
             }
 
             function updateSlidesWithTemplate(template: Template) {
@@ -895,16 +914,19 @@ export const historyActions = ({ obj, undo = null }: any) => {
                     if (changeOverflowItems) {
                         const templateItemCount = getItemsCountByType(slideTemplate.items)
                         const slideItemCount = getItemsCountByType(newItems)
-                        newItems = newItems.filter((a) => {
-                            const type = a.type || "text"
-                            if (templateItemCount[type] - slideItemCount[type] >= 0) return true
-                            if (type === "text" && !isEmptyOrSpecial(a)) return true
-                            if (type === "media" && a.src) return true
+                        newItems = newItems
+                            .reverse()
+                            .filter((a) => {
+                                const type = a.type || "text"
+                                if (templateItemCount[type] - slideItemCount[type] >= 0) return true
+                                if (type === "text" && !isEmptyOrSpecial(a)) return true
+                                if (type === "media" && a.src) return true
 
-                            // remove item
-                            slideItemCount[type]--
-                            return false
-                        })
+                                // remove item
+                                slideItemCount[type]--
+                                return false
+                            })
+                            .reverse()
                     }
 
                     show.slides[id].items = clone(newItems)

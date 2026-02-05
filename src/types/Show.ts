@@ -1,7 +1,7 @@
 import type { AutosizeTypes } from "../frontend/components/edit/scripts/autosize"
 import type { Input } from "./Input"
 import type { Animation } from "./Output"
-import type { Resolution } from "./Settings"
+import type { Cropping, Resolution } from "./Settings"
 
 export interface Shows {
     [key: string]: Show
@@ -105,10 +105,12 @@ export interface Item {
     auto?: boolean // DEPRECATED - use textFit
     textFit?: AutosizeTypes // auto size text fix option (default: shrinkToFit)
     autoFontSize?: number // only used to store the calculated auto size text size
+    previewAutoFontSize?: number // only used to store the calculated auto size text size for the preview
     style: string
     align?: string
     specialStyle?: any // line gap && line background
     media?: any
+    cropping?: Cropping // in percentage based on original image size
     // timer?: Timer // pre 0.8.3 // also local backup?
     timer?: { id: string; [key: string]: any }
     timerId?: string // pre 1.5.0
@@ -281,14 +283,36 @@ export interface Layout {
     id?: string
     name: string
     notes: string
-    recording?: Recording[]
+    timeline?: Timeline
+    recording?: Recording[] // deprecated
     slides: SlideData[]
 }
 
+export interface Timeline {
+    // id: string
+    // name: string
+    actions: TimelineAction[]
+}
+
+export interface TimelineAction {
+    id: string
+    time: number // ms
+    duration?: number // ms (media)
+    name: string
+    type: string // "action" | "slide" | "show" | "audio"
+    data: {
+        id?: string // slide/action/show
+        path?: string // audio
+        index?: number // slide
+        layoutId?: string // show
+        triggers?: string[] // action
+        actionValues?: any // action
+    }
+}
+
+// deprecated
 export interface Recording {
     id: string
-    // name: string
-    // useDurationTime?: boolean // moved to global settings
     layoutAtRecording: string // store layout ids to detect changes
     sequence: {
         time: number

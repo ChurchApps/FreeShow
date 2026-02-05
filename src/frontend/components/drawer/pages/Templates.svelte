@@ -67,8 +67,6 @@
     let preloader = true
     onMount(() => setTimeout(() => (preloader = false), 20))
 
-    const ignoreDefault = ["metadata", "message", "double"]
-
     $: templateWithNonExistentCategory = active === "unlabeled" && filteredTemplates.some((s) => s.category)
     function createNonExistentCategories() {
         const nonexistentCategories = [...new Set(filteredTemplates.map((s) => s.category))].filter((c) => c && !$templateCategories[c]) as string[]
@@ -94,7 +92,7 @@
                 {#each fullFilteredTemplates as template}
                     {@const isReadOnly = readOnly || profile[template.category || ""] === "read"}
 
-                    <SelectElem id="template" data={template.id} class="context #template_card{template.isDefault && !ignoreDefault.includes(template.id) && !isReadOnly ? '_default' : ''}{isReadOnly ? '_readonly' : ''}" draggable fill>
+                    <SelectElem id="template" data={template.id} class="context #template_card{template.isDefault && !isReadOnly ? '_default' : ''}{isReadOnly ? '_readonly' : ''}" draggable fill>
                         <Card
                             width={100}
                             preview={$activePage === "edit" && $activeEdit.type === "template" && $activeEdit.id === template.id}

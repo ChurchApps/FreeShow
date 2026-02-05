@@ -100,18 +100,20 @@ async function getLocalBible(id: string) {
 
 // GET CONTENT
 
-export async function getActiveScripturesContent() {
+export async function getActiveScripturesContent(selectedVerses: (number | string)[][] | null = null) {
     const tabId = get(drawerTabsData).scripture?.activeSubTab || ""
     const selectedScriptureData = get(scriptures)[tabId]
     if (!selectedScriptureData) return null
 
     const active = get(activeScripture).reference
 
-    const selectedVerses =
-        active?.verses.map((v) => {
-            if (!Array.isArray(v)) return []
-            return sortScriptureSelection(v)
-        }) || []
+    if (!selectedVerses) {
+        selectedVerses =
+            active?.verses.map((v) => {
+                if (!Array.isArray(v)) return []
+                return sortScriptureSelection(v)
+            }) || []
+    }
 
     if (!selectedVerses[0]?.length) return null
 
@@ -214,7 +216,7 @@ export async function playScripture() {
     const selectedChapters = biblesContent[0]?.chapters || []
     const selectedVerses = biblesContent[0]?.activeVerses || []
 
-    const { slides, attributions } = getScriptureSlidesNew({ biblesContent, selectedChapters, selectedVerses }, true)
+    const { slides, attributions } = await getScriptureSlidesNew({ biblesContent, selectedChapters, selectedVerses }, true)
 
     const fullReferenceRange = buildFullReferenceRange(selectedChapters, selectedVerses)
     // include every selected chapter/verse in the displayed reference label
@@ -241,20 +243,25 @@ export async function playScripture() {
         return a
     })
 
+    const templateId = getScriptureTemplateId()
+    const _template = new TemplateHelper(templateId)
+
     const outputIsScripture = getFirstActiveOutput()?.out?.slide?.id === "temp"
-    if (!outputIsScripture) customActionActivation("scripture_start")
+    if (!outputIsScripture) {
+        // trigger action activation
+        customActionActivation("scripture_start")
+        // trigger template action(s)
+        _template.runActions()
+    }
 
     const attributionString = getMergedAttribution(biblesContent, attributions)
     const includeCount = 3
-
-    const templateId = getScriptureTemplateId()
-    const _template = new TemplateHelper(templateId)
 
     const settings = { backgroundColor: _template.getSetting("backgroundColor") }
 
     const tempItems: Item[] = slides[0] || []
     const categoryId = get(drawerTabsData).scripture?.activeSubTab || ""
-    setOutput("slide", { id: "temp", categoryId, tempItems, previousSlides: getPreviousSlides(), nextSlides: getNextSlides(), attributionString, translations: biblesContent.length, settings })
+    setOutput("slide", { id: "temp", categoryId, tempItems, previousSlides: await getPreviousSlides(), nextSlides: await getNextSlides(), attributionString, translations: biblesContent.length, settings })
 
     // track
     const reference = `${biblesContent[0].book} ${fullReferenceRange || biblesContent[0].chapters[0]}`.trim()
@@ -278,24 +285,24 @@ export async function playScripture() {
 
     ///
 
-    function getPreviousSlides() {
+    async function getPreviousSlides() {
         const lowestIndex = getVerseId(selectedVerses[0].sort((a, b) => getVerseId(a) - getVerseId(b))[0])
 
         const slides: any[] = []
         for (let i = 1; i <= includeCount; i++) {
             const verseIndex = lowestIndex - i
-            slides.push(getScriptureSlidesNew({ biblesContent: biblesContent!, selectedChapters, selectedVerses: [[verseIndex]] }, true, true).slides[0])
+            slides.push((await getScriptureSlidesNew({ biblesContent: biblesContent!, selectedChapters, selectedVerses: [[verseIndex]] }, true, true)).slides[0])
         }
 
         return slides
     }
-    function getNextSlides() {
+    async function getNextSlides() {
         const highestIndex = getVerseId(selectedVerses[0].sort((a, b) => getVerseId(b) - getVerseId(a))[0])
 
         const slides: any[] = []
         for (let i = 1; i <= includeCount; i++) {
             const verseIndex = highestIndex + i
-            slides.push(getScriptureSlidesNew({ biblesContent: biblesContent!, selectedChapters, selectedVerses: [[verseIndex]] }, true, true).slides[0])
+            slides.push((await getScriptureSlidesNew({ biblesContent: biblesContent!, selectedChapters, selectedVerses: [[verseIndex]] }, true, true)).slides[0])
         }
 
         return slides
@@ -519,15 +526,16 @@ export function useOldScriptureSystem(templateId: string, _updater: any = null) 
     return !_template.getPlainText().includes("{scripture_")
 }
 
-export function getScriptureSlidesNew(data: any, onlyOne = false, disableReference = false) {
+export async function getScriptureSlidesNew(data: any, onlyOne = false, disableReference = false) {
     const templateId = getScriptureTemplateId()
     if (useOldScriptureSystem(templateId)) return getScriptureSlides(data, onlyOne, disableReference)
 
     const _template = new TemplateHelper(templateId)
 
-    const biblesContent = (data.biblesContent || []).filter(Boolean) as BibleContent[]
     const selectedChapters = data.selectedChapters as number[]
     const selectedVerses = data.selectedVerses as (number | string)[][]
+    // const biblesContent = (data.biblesContent || []).filter(Boolean) as BibleContent[]
+    const biblesContent = (await getActiveScripturesContent(selectedVerses)) || []
 
     let perSlide = get(scriptureSettings).versesPerSlide || 3
     // Count total verses across all chapters
@@ -672,14 +680,14 @@ export function getScriptureSlidesNew(data: any, onlyOne = false, disableReferen
                 const mergedBooks = removeDuplicates(biblesContent.map((a) => a.book)).join(" / ")
                 const mergedReference = `${mergedBooks} ${verses}`.trim()
 
-                slidesString = slidesString.replace(`{scripture_reference}`, mergedReference)
+                slidesString = slidesString.replace(`{scripture_reference}`, format(mergedReference))
                 slidesString = slidesString.replace("{scripture_text}", `{key_${i}_${j}}`)
-                slidesString = slidesString.replace("{scripture_verses}", justVerses)
+                slidesString = slidesString.replace("{scripture_verses}", format(justVerses))
             }
             const reference = `${bible.book} ${verses}`.trim()
-            slidesString = slidesString.replace(`{scripture${j + 1}_reference}`, reference)
+            slidesString = slidesString.replace(`{scripture${j + 1}_reference}`, format(reference))
             slidesString = slidesString.replace(`{scripture${j + 1}_text}`, `{key_${i}_${j}}`)
-            slidesString = slidesString.replace(`{scripture${j + 1}_verses}`, justVerses)
+            slidesString = slidesString.replace(`{scripture${j + 1}_verses}`, format(justVerses))
 
             groupNames.push(reference)
         }
@@ -705,19 +713,24 @@ export function getScriptureSlidesNew(data: any, onlyOne = false, disableReferen
             attributions.push(bibleVersions[i - 1] || "")
         }
 
-        slidesString = slidesString.replaceAll(`{scripture${i}_name}`, bibleVersions[i - 1] || "")
-        slidesString = slidesString.replaceAll(`{scripture${i}_book}`, biblesContent[i - 1]?.book || "")
-        slidesString = slidesString.replaceAll(`{scripture${i}_book_abbr}`, biblesContent[i - 1]?.bookAbbr || "")
-        slidesString = slidesString.replaceAll(`{scripture${i}_chapter}`, selectedChapters[i - 1]?.toString() || "")
+        slidesString = slidesString.replaceAll(`{scripture${i}_name}`, format(bibleVersions[i - 1] || ""))
+        slidesString = slidesString.replaceAll(`{scripture${i}_book}`, format(biblesContent[i - 1]?.book || ""))
+        slidesString = slidesString.replaceAll(`{scripture${i}_book_abbr}`, format(biblesContent[i - 1]?.bookAbbr || ""))
+        slidesString = slidesString.replaceAll(`{scripture${i}_chapter}`, format(selectedChapters[i - 1]?.toString() || ""))
     }
 
-    slidesString = slidesString.replaceAll("{scripture_name}", mergedNames)
-    slidesString = slidesString.replaceAll("{scripture_book}", mergedBooks)
-    slidesString = slidesString.replaceAll("{scripture_book_abbr}", mergedBooksAbbr)
-    slidesString = slidesString.replaceAll("{scripture_chapter}", selectedChapters[0]?.toString() || "")
+    slidesString = slidesString.replaceAll("{scripture_name}", format(mergedNames))
+    slidesString = slidesString.replaceAll("{scripture_book}", format(mergedBooks))
+    slidesString = slidesString.replaceAll("{scripture_book_abbr}", format(mergedBooksAbbr))
+    slidesString = slidesString.replaceAll("{scripture_chapter}", format(selectedChapters[0]?.toString() || ""))
 
-    slidesString = slidesString.replaceAll("{scripture_reference_full}", fullReference)
-    slidesString = slidesString.replaceAll("{scripture_reference_last}", fullReference)
+    slidesString = slidesString.replaceAll("{scripture_reference_full}", format(fullReference))
+    slidesString = slidesString.replaceAll("{scripture_reference_last}", format(fullReference))
+
+    function format(text: string) {
+        if (disableReference) return ""
+        return text
+    }
 
     // metadata, uses the default "meta_" values
     for (const [key, value] of Object.entries(biblesContent[0]?.metadata || {})) {
@@ -1082,10 +1095,11 @@ export function getSplittedVerses(verses: { [key: string]: string }) {
     if (!get(scriptureSettings).splitLongVerses) return verses || {}
 
     const chars = Number(get(scriptureSettings).longVersesChars || 100)
+    const tolerance = Number(get(scriptureSettings).longVersesTolerance || 0)
     const newVerses: { [key: string | number]: string } = {}
     Object.keys(verses || {}).forEach((verseKey) => {
         const verse = sanitizeVerseText(verses[verseKey] || "")
-        const newVerseStrings = splitText(verse, chars)
+        const newVerseStrings = splitText(verse, chars, tolerance)
 
         for (let i = 0; i < newVerseStrings.length; i++) {
             const key = newVerseStrings.length === 1 ? "" : `_${i + 1}`
@@ -1096,10 +1110,10 @@ export function getSplittedVerses(verses: { [key: string]: string }) {
     return newVerses
 }
 
-export function splitText(value: string, maxLength: number) {
+export function splitText(value: string, maxLength: number, tolerance: number = 0) {
     if (!value) return []
     if (/<[^>]+>/.test(value)) return splitHtmlText(value, maxLength)
-    return splitPlainText(value, maxLength)
+    return splitPlainText(value, maxLength, tolerance)
 }
 
 const BRACKET_WORD_LIMIT = 4
@@ -1147,7 +1161,7 @@ function moveDanglingBracketToNext(first: string, second: string) {
     return { first: kept, second: combinedSecond }
 }
 
-function splitPlainText(value: string, maxLength: number) {
+function splitPlainText(value: string, maxLength: number, tolerance: number = 0) {
     const queue: string[] = [value.trim()]
     const segments: string[] = []
     const proportion = Math.floor(maxLength * 0.3)
@@ -1165,7 +1179,7 @@ function splitPlainText(value: string, maxLength: number) {
             continue
         }
 
-        const halves = getSplitHalves(current, maxLength)
+        const halves = getSplitHalves(current, maxLength, tolerance)
         if (!halves) {
             segments.push(current)
             continue
@@ -1175,9 +1189,12 @@ function splitPlainText(value: string, maxLength: number) {
 
         ;({ first, second } = moveDanglingBracketToNext(first, second))
 
-        const rebalanced = rebalanceHalves(first, second, maxLength, minSegmentLength)
-        first = rebalanced.first
-        second = rebalanced.second
+        // Only rebalance when tolerance is 0 (to preserve punctuation-based splits)
+        if (tolerance === 0) {
+            const rebalanced = rebalanceHalves(first, second, maxLength, minSegmentLength)
+            first = rebalanced.first
+            second = rebalanced.second
+        }
 
         if (second.length < 1) {
             segments.push(first)
@@ -1310,19 +1327,44 @@ function findHtmlSplitIndex(text: string, capacity: number) {
     return Math.max(0, breakPos)
 }
 
-function getSplitHalves(text: string, maxLength: number): [string, string] | null {
-    const halves = splitTextContentInHalf(text)
-    if (halves.length >= 2) {
-        const first = halves[0].trim()
-        const second = halves[1].trim()
-        if (first.length && second.length) return [first, second]
+function getSplitHalves(text: string, maxLength: number, tolerance: number = 0): [string, string] | null {
+    // Only use splitTextContentInHalf when tolerance is 0 (original behavior)
+    if (tolerance === 0) {
+        const halves = splitTextContentInHalf(text)
+        if (halves.length >= 2) {
+            const first = halves[0].trim()
+            const second = halves[1].trim()
+            if (first.length && second.length) {
+                return [first, second]
+            }
+        }
     }
 
     if (text.length <= maxLength) return null
 
-    let pivot = text.lastIndexOf(" ", maxLength)
-    if (pivot <= 0) pivot = text.indexOf(" ", maxLength)
-    if (pivot <= 0) pivot = maxLength
+    let pivot = -1
+
+    // Only use smart punctuation splitting if tolerance > 0
+    if (tolerance > 0) {
+        const windowMin = maxLength - tolerance
+        const windowMax = Math.min(text.length - 1, maxLength + tolerance)
+
+        // Search for punctuation ONLY within [windowMin, windowMax]
+        for (let i = windowMin; i <= windowMax; i++) {
+            const ch = text.charAt(i)
+            if (/[.,;:!?]/.test(ch)) {
+                pivot = i + 1
+                break
+            }
+        }
+    }
+
+    // Original behavior: find space (used when tolerance=0 or no punctuation found)
+    if (pivot === -1) {
+        pivot = text.lastIndexOf(" ", maxLength)
+        if (pivot <= 0) pivot = text.indexOf(" ", maxLength)
+        if (pivot <= 0) pivot = maxLength
+    }
 
     const first = text.slice(0, pivot).trim()
     const second = text.slice(pivot).trim()
@@ -1377,13 +1419,13 @@ export async function createScriptureShow() {
     // if (!verseRange) return
     if (!selectedVerses[0]?.length) return
 
-    const show = getScriptureShow(biblesContent)
+    const show = await getScriptureShow(biblesContent)
     if (!show) return
 
     history({ id: "UPDATE", newData: { data: show, remember: { project: get(activeProject) } }, location: { page: "show", id: "show" } })
 }
 
-export function getScriptureShow(biblesContent: BibleContent[] | null) {
+export async function getScriptureShow(biblesContent: BibleContent[] | null) {
     if (!biblesContent?.length) return null
 
     const templateId = getScriptureTemplateId()
@@ -1395,7 +1437,7 @@ export function getScriptureShow(biblesContent: BibleContent[] | null) {
     let slides: Item[][] = [[]]
     let groupNames: string[] = []
     if (selectedVerses.length) {
-        const data = getScriptureSlidesNew({ biblesContent, selectedChapters, selectedVerses })
+        const data = await getScriptureSlidesNew({ biblesContent, selectedChapters, selectedVerses })
         slides = data.slides
         groupNames = data.groupNames
     }
@@ -1667,7 +1709,14 @@ export function swapPreviewBible(collectionId: string) {
 // WIP similar to array.ts rangeSelect
 // Custom range selection for scripture verses that handles split verses (e.g., "1_1", "5_2")
 export function scriptureRangeSelect(e: any, currentlySelected: (number | string)[], newSelection: number | string, availableVerses: { id: string }[]): (number | string)[] {
-    if (!e.ctrlKey && !e.metaKey && !e.shiftKey) return [newSelection]
+    if (!e.ctrlKey && !e.metaKey && !e.shiftKey) {
+        // When clicking a verse without modifier keys, select all parts of that verse
+        const baseVerseNumber = newSelection.toString().split("_")[0]
+        const allParts = availableVerses.filter((v) => v.id.split("_")[0] === baseVerseNumber).map((v) => v.id)
+
+        // If this verse has multiple parts, return all of them; otherwise just the clicked verse
+        return allParts.length > 1 ? allParts : [newSelection]
+    }
 
     currentlySelected = currentlySelected.map((id) => id.toString())
     newSelection = newSelection.toString()

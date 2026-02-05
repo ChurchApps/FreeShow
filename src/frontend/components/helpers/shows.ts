@@ -83,7 +83,7 @@ export function _show(id = "active") {
                 if (!shows[id]) return []
                 if (!slideIds.length && shows[id].slides) slideIds = Object.keys(shows[id].slides)
                 slideIds.forEach((slideId) => {
-                    const slide = clone(shows[id].slides[slideId])
+                    const slide = clone(shows[id]?.slides?.[slideId])
                     if (!slide) return
 
                     if (key) a.push(slide[key])

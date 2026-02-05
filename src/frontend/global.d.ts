@@ -36,3 +36,8 @@ interface EventTarget {
     classList?: any
     closest?: any
 }
+
+declare module "*?worker&url" {
+    const url: string
+    export default url
+}

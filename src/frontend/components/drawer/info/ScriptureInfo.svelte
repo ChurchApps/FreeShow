@@ -65,9 +65,11 @@
     }
 
     $: {
-        // if (selectedVerses.length || $scriptureSettings) slides = getScriptureSlides({ biblesContent, selectedChapters, selectedVerses }, true)
-        if (selectedVerses.length || $scriptureSettings) slides = getScriptureSlidesNew({ biblesContent, selectedChapters, selectedVerses }, true).slides
+        if (selectedVerses.length || $scriptureSettings) getSlides({ biblesContent, selectedChapters, selectedVerses })
         else slides = [[]]
+    }
+    async function getSlides(data: any) {
+        slides = (await getScriptureSlidesNew(data, true)).slides
     }
 
     $: showVersion = biblesContent.find((a) => a?.attributionRequired) || $scriptureSettings.showVersion
@@ -160,12 +162,12 @@
     let referenceMenuOpened = false
 
     $: onlyOneNormalOutput = getAllNormalOutputs().length === 1
-    $: styleScriptureTemplate = onlyOneNormalOutput ? $styles[styleId]?.templateScripture : ""
+    $: styleScriptureTemplate = onlyOneNormalOutput ? $styles[styleId]?.templateScripture || "" : ""
 
     // auto convert
     $: if (useOldSystem && usingDefault && (!styleScriptureTemplate || styleScriptureTemplate.includes("scripture"))) convertToNew()
     $: useOldSystem = useOldScriptureSystem(templateId, $templates) && !styleScriptureTemplate
-    $: usingDefault = templateId.includes("scripture")
+    $: usingDefault = typeof templateId === "string" ? templateId.includes("scripture") : false
     async function convertToNew() {
         if (!usingDefault) {
             if (!(await confirmCustom("This will apply the default template, and convert that to the new format. Your current template will not change.<br>You can use it as an example to adapt your existing templates. Continue?"))) return
@@ -282,6 +284,7 @@
                     {#if $scriptureSettings.splitLongVerses}
                         <MaterialToggleSwitch label="scripture.split_long_verses_suffix" checked={$scriptureSettings.splitLongVersesSuffix} defaultValue={false} on:change={(e) => update("splitLongVersesSuffix", e.detail)} />
                         <MaterialNumberInput label="edit.size" value={$scriptureSettings.longVersesChars || 100} defaultValue={100} min={50} on:change={(e) => update("longVersesChars", e.detail)} />
+                        <MaterialNumberInput label="scripture.tolerance" value={$scriptureSettings.longVersesTolerance || 0} defaultValue={0} min={0} max={100} on:change={(e) => update("longVersesTolerance", e.detail)} />
                     {/if}
                 </svelte:fragment>
             </InputRow>

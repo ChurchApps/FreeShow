@@ -3,7 +3,7 @@
 import { get } from "svelte/store"
 import { Main } from "../../types/IPC/Main"
 import { customActionActivation } from "../components/actions/actions"
-import { encodeFilePath, getFileName, removeExtension } from "../components/helpers/media"
+import { encodeFilePath, getFileName, locateMediaFile, removeExtension } from "../components/helpers/media"
 import { checkNextAfterMedia } from "../components/helpers/showActions"
 import { sendMain } from "../IPC/main"
 import { audioChannelsData, dictionary, media, outLocked, playingAudio, playingAudioPaths, special, volume } from "../stores"
@@ -12,6 +12,7 @@ import { AudioAnalyserMerger } from "./audioAnalyserMerger"
 import { clearAudio, clearing, fadeInAudio, fadeOutAudio } from "./audioFading"
 import { AudioMultichannel } from "./audioMultichannel"
 import { AudioPlaylist } from "./audioPlaylist"
+import { addToMediaFolder } from "../utils/cloudSync"
 
 type AudioMetadata = {
     name: string
@@ -41,10 +42,34 @@ export class AudioPlayer {
 
     // static playing: { [key: string]: AudioData } = {}
 
+    // LOADING
+
+    private static currentlyLoading: string[] = []
+    private static isLoading(path: string) {
+        return this.currentlyLoading.includes(path)
+    }
+    private static setLoading(path: string) {
+        if (!this.isLoading(path)) this.currentlyLoading.push(path)
+    }
+    private static clearLoading(path: string) {
+        const index = AudioPlayer.currentlyLoading.indexOf(path)
+        if (index !== -1) AudioPlayer.currentlyLoading.splice(index, 1)
+    }
+
     // INIT
 
     static async start(path: string, metadata: AudioMetadata, options: AudioOptions = {}) {
-        if (get(outLocked) || clearing.includes(path)) return
+        if (get(outLocked) || clearing.includes(path) || this.isLoading(path)) return
+        this.setLoading(path)
+
+        const located = await locateMediaFile(path)
+        if (!located) {
+            this.clearLoading(path)
+            return
+        }
+
+        path = located.path
+        if (!located.hasChanged) addToMediaFolder(path)
 
         // get type
         const duration = await this.getDuration(path)
@@ -54,15 +79,18 @@ export class AudioPlayer {
         if (this.audioExists(path)) {
             if (options.pauseIfPlaying === false) {
                 updateAudioStore(path, "currentTime", 0)
+                this.clearLoading(path)
                 return
             }
             if (options.stopIfPlaying) {
                 if (options.clearTime) clearAudio(path, { clearTime: options.clearTime })
                 else AudioPlayer.stop(path)
+                this.clearLoading(path)
                 return
             }
 
             this.togglePausedState(path)
+            this.clearLoading(path)
             return
         }
 
@@ -72,7 +100,10 @@ export class AudioPlayer {
 
         const audio = await this.createAudio(path)
         // another audio might have been started while awaiting (if played rapidly)
-        if (!audio || this.audioExists(path)) return
+        if (!audio || this.audioExists(path)) {
+            this.clearLoading(path)
+            return
+        }
 
         const newVolume = AudioPlayer.getVolume() * (options.volume || 1)
         audio.volume = newVolume
@@ -101,6 +132,7 @@ export class AudioPlayer {
 
         const name = removeExtension(metadata.name || getFileName(path))
         this.nowPlaying(path, name)
+        this.clearLoading(path)
     }
 
     static async playStream(id: string, stream: MediaStream, metadata: AudioMetadata) {

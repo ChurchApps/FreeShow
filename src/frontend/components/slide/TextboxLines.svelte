@@ -42,6 +42,7 @@
     export let revealed = -1
     export let styleOverrides: TemplateStyleOverride[] = []
     export let hideContent = false
+    export let normalWrap = false
 
     $: lines = createVirtualBreaks(clone(item?.lines || []), outputStyle?.skipVirtualBreaks)
     $: if (linesStart !== null && linesEnd !== null && lines.length) {
@@ -232,7 +233,17 @@
     // $: isScripture = ref?.id === "scripture" || ref?.showId === "temp" || $showsCache[ref.showId || ""]?.reference?.type === "scripture"
 </script>
 
-<div class="align" class:hidden={hideContent} class:isStage class:scrolling={!isStage && item?.scrolling?.type} class:topBottomScrolling={!isStage && item?.scrolling?.type === "top_bottom"} class:bottomTopScrolling={!isStage && item?.scrolling?.type === "bottom_top"} class:leftRightScrolling={!isStage && item?.scrolling?.type === "left_right"} class:rightLeftScrolling={!isStage && item?.scrolling?.type === "right_left"} style="--scrollSpeed: {item?.scrolling?.speed ?? 30}s;{style ? item?.align : null}">
+<div
+    class="align"
+    class:hidden={hideContent}
+    class:isStage
+    class:scrolling={!isStage && item?.scrolling?.type}
+    class:topBottomScrolling={!isStage && item?.scrolling?.type === "top_bottom"}
+    class:bottomTopScrolling={!isStage && item?.scrolling?.type === "bottom_top"}
+    class:leftRightScrolling={!isStage && item?.scrolling?.type === "left_right"}
+    class:rightLeftScrolling={!isStage && item?.scrolling?.type === "right_left"}
+    style="--scrollSpeed: {item?.scrolling?.speed ?? 30}s;{style ? item?.align : null}"
+>
     <div class="lines" style="{style ? lineStyleBox : ''}{smallFontSize || customFontSize !== null ? '--font-size: ' + (smallFontSize ? (-1.1 * $slidesOptions.columns + 10) * 5 : customFontSize) + 'px;' : ''}{textAnimation}{chordsStyle}">
         {#each renderedLines as line, i}
             {#if (linesStart === null || linesEnd === null || (i >= linesStart && i < linesEnd)) && (!maxLines || (maxLinesInvert ? i > lines.length - maxLines - 1 : i < maxLines))}
@@ -245,7 +256,7 @@
                 <!-- class:height={!line.text[0]?.value.length} -->
                 <div
                     class="break"
-                    class:normalWrap={isStage ? stageItem.style.includes("justify") || stageItem.style.includes("nowrap") : line.align?.includes("justify") || line.align?.includes("left") || JSON.stringify(line).includes("nowrap")}
+                    class:normalWrap={normalWrap || (isStage ? stageItem.style.includes("justify") || stageItem.style.includes("nowrap") : line.align?.includes("justify") || line.align?.includes("left") || JSON.stringify(line).includes("nowrap"))}
                     class:reveal={(centerPreview || isStage) && item?.lineReveal && revealed < i}
                     class:smallFontSize={smallFontSize || customFontSize || textAnimation.includes("font-size")}
                     style="{style ? lineStyle : ''}{style ? line.align : ''}{item?.list?.enabled && line.text?.reduce((value, t) => (value += t.value || ''), '')?.length ? listStyle : ''}{item?.list?.enabled ? `color: ${getStyles(line.text[0]?.style).color || ''};` : ''}"
@@ -255,9 +266,7 @@
                     {:else}
                         {#each line.text || [] as text, ti}
                             {@const value = text.value?.replaceAll("\n", "<br>") || "<br>"}
-                            <span class="textContainer" style="{style ? getCustomStyle(text.style) : ''}{getColor(text.style)}{customStyle}{text.customType?.includes('disableTemplate') ? text.style : ''}{fontSize ? `;font-size: ${fontSize * (text.customType?.includes('disableTemplate') && !text.customType?.includes('jw') ? customTypeRatio : 1)}px;` : style ? getCustomFontSize(text.style, outputStyle) : ''}">
-                                {@html getTextValue(value, i, ti, updateDynamic)}
-                            </span>
+                            <span class="textContainer" style="{style ? getCustomStyle(text.style) : ''}{getColor(text.style)}{customStyle}{text.customType?.includes('disableTemplate') ? text.style : ''}{fontSize ? `;font-size: ${fontSize * (text.customType?.includes('disableTemplate') && !text.customType?.includes('jw') ? customTypeRatio : 1)}px;` : style ? getCustomFontSize(text.style, outputStyle) : ''}">{@html getTextValue(value, i, ti, updateDynamic)}</span>
                         {/each}
                     {/if}
                 </div>

@@ -71,10 +71,6 @@
 
         {#if $currentWindow === "output"}
             <MainOutput />
-        {:else if $loaded && Object.keys($profiles).filter((a) => a !== "admin").length && $activeProfile === null}
-            <Popup />
-            <Toast />
-            <ProfileSelector />
         {:else if $loaded}
             <Popup />
             <QuickSearch />
@@ -85,6 +81,10 @@
             <MediaDownloadProgress />
 
             <MainLayout />
+
+            {#if Object.keys($profiles).filter((a) => a !== "admin").length && $activeProfile === null}
+                <ProfileSelector />
+            {/if}
         {:else}
             <Center>
                 <Loader size={2} />

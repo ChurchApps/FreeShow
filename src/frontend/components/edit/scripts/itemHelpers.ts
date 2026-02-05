@@ -36,7 +36,7 @@ function getDefaultStyles(type: ItemType, templateItems: Item[] | null = null) {
     return styleString
 }
 
-export function addItem(type: ItemType, id: string | null = null, options: any = {}, textValue = "") {
+export function addItem(type: ItemType, id: string | null = null, options: any = {}, textValue = "", customStyles: { [key: string]: string } | null = null) {
     const activeTemplate: string | null = get(activeShow)?.id ? get(showsCache)[get(activeShow)!.id]?.settings?.template : null
     const template = activeTemplate ? get(templates)[activeTemplate]?.items : null
 
@@ -49,6 +49,16 @@ export function addItem(type: ItemType, id: string | null = null, options: any =
     const currentItems = getEditItems()
     const itemsCount = currentItems.length
     if (itemsCount && itemsCount >= (template?.length || 0)) newData.style = getLikelyPosition(currentItems, newData.style)
+
+    // set custom style values (like position)
+    if (customStyles) {
+        const styles = getStyles(newData.style)
+        Object.entries(customStyles).forEach(([key, value]) => {
+            styles[key] = value
+        })
+        newData.style = ""
+        Object.entries(styles).forEach((obj) => (newData.style += obj[0] + ":" + obj[1] + ";"))
+    }
 
     // deselect previous selection & select new item
     activeEdit.set({ ...get(activeEdit), items: [itemsCount] })

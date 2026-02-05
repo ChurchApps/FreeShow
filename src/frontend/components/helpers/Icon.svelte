@@ -5,7 +5,6 @@
     import { triggerClickOnEnterSpace } from "../../utils/clickable"
     import { customIcons } from "../../values/customIcons"
     import icons from "../../values/icons"
-    import { clone } from "./array"
     import { hexToHSL, hslToHex } from "./color"
 
     export let id: string
@@ -29,7 +28,7 @@
     }
 
     // smaller change
-    $: hsl = clone(hexToHSL(baseColor))
+    $: hsl = hexToHSL(baseColor)
     $: colorStart = gradient ? hslToHex(340, hsl.s, Math.min(hsl.l + 15, 100)) : hslToHex(hsl.h, hsl.s, Math.min(hsl.l + 6, 100)) // lighter
     $: colorMid = baseColor
     $: colorEnd = gradient ? hslToHex(270, hsl.s, Math.max(hsl.l - 30, 0)) : hslToHex(hsl.h, hsl.s, Math.max(hsl.l - 6, 0)) // darker

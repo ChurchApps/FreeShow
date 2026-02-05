@@ -46,7 +46,7 @@
 
     let nextScrollTimeout: NodeJS.Timeout | null = null
     function wheel(e: any) {
-        if (e.target?.closest(".textfield")) return
+        if (e.target?.closest(".textfield") || e.target?.closest(".timeline")) return
         if (
             !e.target?.querySelector("#" + currentId) &&
             !e.target?.closest(".center")?.querySelector("#" + currentId) &&

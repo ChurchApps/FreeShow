@@ -122,6 +122,11 @@ export function storeSubscriber() {
         if (Object.keys(data).length < 100) updateCachedShows(data)
     })
 
+    groups.subscribe(async (data) => {
+        if (await hasNewerUpdate("LISTENER_GROUPS", 50)) return
+
+        send(OUTPUT, ["GROUPS"], data)
+    })
     templates.subscribe(async (data) => {
         if (await hasNewerUpdate("LISTENER_TEMPLATES", 50)) return
 
@@ -337,7 +342,9 @@ export function storeSubscriber() {
         sendRemoteMixer()
     })
 
-    equalizerConfig.subscribe((data) => {
+    equalizerConfig.subscribe(async (data) => {
+        if (await hasNewerUpdate("EQUALIZER_CONFIG_CACHE", 50)) return
+
         send(OUTPUT, ["EQUALIZER_CONFIG"], data)
     })
 
@@ -448,6 +455,7 @@ const initalOutputData = {
     TEMPLATES: "templates",
     OVERLAYS: "overlays",
     EVENTS: "events",
+    GROUPS: "groups",
 
     DRAW: { data: "draw" },
     DRAW_TOOL: { data: "drawTool" },

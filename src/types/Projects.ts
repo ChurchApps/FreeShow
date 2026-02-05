@@ -1,4 +1,4 @@
-import type { ShowType } from "./Show"
+import type { ShowType, Timeline } from "./Show"
 
 export interface Projects {
     [key: string]: Project
@@ -13,6 +13,7 @@ export interface Project {
     used?: number // used to create startup "last used" list
     parent: string
     shows: ProjectShowRef[]
+    timeline?: Timeline
     archived?: boolean
 }
 

@@ -159,8 +159,8 @@
                             {#if getIdentifier[type]}<p style="margin-inline-start: 10px;max-width: 120px;opacity: 0.5;font-size: 0.8em;max-width: 40%;">{getIdentifier[type](currentItem)}</p>{/if}
                         </span>
                         <span>
-                            <MaterialButton disabled={i === allSlideItems.length - 1} icon="down" style="padding: 8px;" on:click={() => rearrangeItems("backward", index)} />
-                            <MaterialButton disabled={i === 0} icon="up" style="padding: 8px;" on:click={() => rearrangeItems("forward", index)} />
+                            <MaterialButton disabled={i === allSlideItems.length - 1} icon="down" title="actions.backward" style="padding: 8px;" on:click={() => rearrangeItems("backward", index)} />
+                            <MaterialButton disabled={i === 0} icon="up" title="actions.forward" style="padding: 8px;" on:click={() => rearrangeItems("forward", index)} />
                         </span>
                     </MaterialButton>
                 {/each}
