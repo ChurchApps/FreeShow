@@ -794,12 +794,12 @@ export function getCurrentMediaTransition() {
 // TEMPLATE
 
 export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], addOverflowTemplateItems = false, resetAutoSize = true, templateClicked = false, mode: string = "") {
-    // if (!slideItems?.length && !addOverflowTemplateItems) return []
-    // only get items that are not from a template
-    // slideItems = clone(slideItems || []).filter((a) => a && (!templateClicked || !a.fromTemplate))
-    slideItems = clone(slideItems || []).filter((a) => a && !a.fromTemplate)
-
+    slideItems = clone(slideItems || []).filter(Boolean)
     if (!templateItems.length) return slideItems
+
+    // only get items that are not from a template
+    slideItems = slideItems.filter((a) => a && !a.fromTemplate)
+
     // it's the wrong way around when a template is converted to a slide/output, but it breaks more than it fixes at this time.
     // should be reversed, but people have to invert the order of their template items order.
     templateItems = clone(templateItems) // .reverse()
