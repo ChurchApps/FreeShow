@@ -78,7 +78,7 @@ export const providerConnections: Writable<{ [key in ContentProviderId]?: boolea
 export const metronomeTimer: Writable<{ beat: number; timeToNext: number }> = writable({ beat: 0, timeToNext: 0 })
 export const mediaDownloads: Writable<Map<string, { progress: number; total: number; status: string }>> = writable(new Map())
 export const showChangeProfileMenu: Writable<boolean> = writable(false)
-export const cloudUsers: Writable<{ socketId: string; displayName: string; activePage?: string; activeShow?: string }[]> = writable([])
+export const cloudUsers: Writable<{ displayName: string; color: string; activePage?: string; activeShow?: ShowRef }[]> = writable([])
 
 // TAGS
 export const activeTagFilter: Writable<string[]> = writable([])

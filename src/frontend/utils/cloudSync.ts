@@ -8,6 +8,7 @@ import { isMainWindow, newToast, setStatus } from "./common"
 import { confirmCustom } from "./popup"
 import { save } from "./save"
 import { SocketHelper } from "./SocketHelper"
+import { generateLightRandomColor } from "../components/helpers/color"
 
 export async function setupCloudSync(auto: boolean = false) {
     if (auto && get(cloudSyncData).id) {
@@ -162,7 +163,9 @@ export function addToMediaFolder(filePath: string) {
 let cloudSocketHelper: SocketHelper | null = null
 let cachedConversationId: string | null = null
 
-function getCloudSocket() { return cloudSocketHelper}
+function getCloudSocket() {
+    return cloudSocketHelper
+}
 
 async function createCloudSocket(): Promise<SocketHelper | null> {
     if (cloudSocketHelper) return cloudSocketHelper
@@ -231,7 +234,21 @@ function broadcastPresence(action: string = "update") {
     const page = get(activePage)
     const show = get(activeShow)
 
+    // don't send if in use by another user
+    if (isActiveShowInUseByCloudUser()) return
+
     cloudSyncMessage("presence", { action, activePage: page, activeShow: show })
+}
+
+export function getCloudUsers(updater = get(cloudUsers)) {
+    const name = get(cloudSyncData).deviceName || ""
+    return updater.filter((a) => a.displayName !== name)
+}
+
+export function isActiveShowInUseByCloudUser(_updater: any = null) {
+    const users = getCloudUsers()
+    const activeShowId = get(activeShow)?.id
+    return users.some((user) => user.activeShow?.id === activeShowId)
 }
 
 export async function cloudSyncMessage(id: string = "", data: { [key: string]: any } = {}) {
@@ -246,15 +263,16 @@ export async function cloudSyncMessage(id: string = "", data: { [key: string]: a
 // RECEIVERS
 
 const CLOUD_RECEIVERS = {
-    presence: (data: { socketId?: string; displayName?: string; action?: string; activePage?: string; activeShow?: string }) => {
-        if (!data.socketId || !data.displayName) return
+    presence: (data: { displayName?: string; action?: string; activePage?: string; activeShow?: any }) => {
+        const name = get(cloudSyncData).deviceName || ""
+        if (!data.displayName || data.displayName === name) return
 
         const isBye = data.action === "bye"
         const isNewUser = data.action === "iamnew"
-        const userData = { socketId: data.socketId, displayName: data.displayName, activePage: data.activePage, activeShow: data.activeShow }
+        const userData = { displayName: data.displayName, activePage: data.activePage, activeShow: data.activeShow }
 
         cloudUsers.update((users) => {
-            const existingIndex = users.findIndex((u) => u.socketId === data.socketId)
+            const existingIndex = users.findIndex((u) => u.displayName === data.displayName)
 
             // remove user
             if (isBye) {
@@ -263,9 +281,11 @@ const CLOUD_RECEIVERS = {
                 return users
             }
 
-            // add/update user
-            if (existingIndex < 0) return [...users, userData]
-            users[existingIndex] = userData
+            // add user
+            if (existingIndex < 0) return [...users, { ...userData, color: generateLightRandomColor() }]
+
+            // update user
+            users[existingIndex] = { ...users[existingIndex], ...userData }
             return users
         })
 

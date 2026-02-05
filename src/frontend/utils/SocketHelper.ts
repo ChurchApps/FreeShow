@@ -12,7 +12,7 @@ interface Connection {
 }
 
 // https://github.com/ChurchApps/Helpers/blob/main/src/interfaces/Messaging.ts
-type SocketPayloadAction = "message" | "deleteMessage" | "callout" | "socketId"
+type SocketPayloadAction = "message" | "deleteMessage" | "callout" | "socketId" | "attendance"
 interface SocketPayloadInterface {
     action: SocketPayloadAction
     data: any
@@ -179,6 +179,8 @@ export class SocketHelper {
     }
 
     private handleMessage(payload: SocketPayloadInterface) {
+        if (payload.action === "attendance") return
+
         if (payload.action === "message" && payload.data?.content) {
             try {
                 const content = JSON.parse(payload.data.content)
@@ -187,7 +189,7 @@ export class SocketHelper {
                     const topicHandler = this.actionHandlers.find((handler) => handler.id === topic)
                     console.log("[Socket] Handling topic message:", topic, topicHandler ? "found handler" : "no handler")
                     if (topicHandler) {
-                        const handlerData = { ...content, socketId: payload.data.socketId, displayName: payload.data.displayName }
+                        const handlerData = { ...content, displayName: payload.data.displayName }
                         topicHandler.handleMessage(handlerData)
                         return
                     }
@@ -196,7 +198,7 @@ export class SocketHelper {
                 console.error("[Socket] Failed to parse message content:", err)
             }
         }
-/*
+        /*
         const matchingHandler = this.actionHandlers.find((handler) => handler.id === payload.action)
         if (!matchingHandler) return
 
