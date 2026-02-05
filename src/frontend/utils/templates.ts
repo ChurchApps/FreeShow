@@ -4,6 +4,7 @@ import { getItemText } from "../components/edit/scripts/textStyle"
 import { clone } from "../components/helpers/array"
 import { mergeWithTemplate } from "../components/helpers/output"
 import { overlays, templates } from "../stores"
+import { runAction } from "../components/actions/actions"
 
 const DEFAULT_TEMPLATE: Template = { name: "", color: null, category: null, items: [] }
 
@@ -47,6 +48,11 @@ export class TemplateHelper {
 
     getSetting<K extends keyof NonNullable<Template["settings"]>>(key: K): NonNullable<Template["settings"]>[K] | undefined {
         return this.template.settings?.[key]
+    }
+
+    runActions() {
+        const actions = this.template.settings?.actions || []
+        actions.forEach((a) => runAction(a))
     }
 
     // used for scripture slides

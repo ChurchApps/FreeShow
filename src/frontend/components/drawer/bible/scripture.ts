@@ -243,14 +243,19 @@ export async function playScripture() {
         return a
     })
 
+    const templateId = getScriptureTemplateId()
+    const _template = new TemplateHelper(templateId)
+
     const outputIsScripture = getFirstActiveOutput()?.out?.slide?.id === "temp"
-    if (!outputIsScripture) customActionActivation("scripture_start")
+    if (!outputIsScripture) {
+        // trigger action activation
+        customActionActivation("scripture_start")
+        // trigger template action(s)
+        _template.runActions()
+    }
 
     const attributionString = getMergedAttribution(biblesContent, attributions)
     const includeCount = 3
-
-    const templateId = getScriptureTemplateId()
-    const _template = new TemplateHelper(templateId)
 
     const settings = { backgroundColor: _template.getSetting("backgroundColor") }
 
@@ -1338,12 +1343,12 @@ function getSplitHalves(text: string, maxLength: number, tolerance: number = 0):
     if (text.length <= maxLength) return null
 
     let pivot = -1
-    
+
     // Only use smart punctuation splitting if tolerance > 0
     if (tolerance > 0) {
         const windowMin = maxLength - tolerance
         const windowMax = Math.min(text.length - 1, maxLength + tolerance)
-        
+
         // Search for punctuation ONLY within [windowMin, windowMax]
         for (let i = windowMin; i <= windowMax; i++) {
             const ch = text.charAt(i)
@@ -1353,7 +1358,7 @@ function getSplitHalves(text: string, maxLength: number, tolerance: number = 0):
             }
         }
     }
-    
+
     // Original behavior: find space (used when tolerance=0 or no punctuation found)
     if (pivot === -1) {
         pivot = text.lastIndexOf(" ", maxLength)
@@ -1706,11 +1711,9 @@ export function swapPreviewBible(collectionId: string) {
 export function scriptureRangeSelect(e: any, currentlySelected: (number | string)[], newSelection: number | string, availableVerses: { id: string }[]): (number | string)[] {
     if (!e.ctrlKey && !e.metaKey && !e.shiftKey) {
         // When clicking a verse without modifier keys, select all parts of that verse
-        const baseVerseNumber = newSelection.toString().split('_')[0]
-        const allParts = availableVerses
-            .filter(v => v.id.split('_')[0] === baseVerseNumber)
-            .map(v => v.id)
-        
+        const baseVerseNumber = newSelection.toString().split("_")[0]
+        const allParts = availableVerses.filter((v) => v.id.split("_")[0] === baseVerseNumber).map((v) => v.id)
+
         // If this verse has multiple parts, return all of them; otherwise just the clicked verse
         return allParts.length > 1 ? allParts : [newSelection]
     }
