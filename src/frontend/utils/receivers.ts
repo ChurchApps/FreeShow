@@ -31,6 +31,7 @@ import {
     equalizerConfig,
     events,
     gain,
+    groups,
     livePrepare,
     media,
     metronome,
@@ -282,6 +283,7 @@ export const receiveOUTPUTasOUTPUT: any = {
     TEMPLATES: (a: any) => templates.set(a),
     OVERLAYS: (a: any) => clone(overlays.set(a)),
     EVENTS: (a: any) => events.set(a),
+    GROUPS: (a: any) => groups.set(a),
 
     DRAW: (a: any) => draw.set(a.data),
     DRAW_TOOL: (a: any) => drawTool.set(a.data),

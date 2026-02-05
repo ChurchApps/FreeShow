@@ -196,6 +196,7 @@
         if (!slideData) return ""
         const groupId = slideData.globalGroup && slideData.globalGroup !== "none" ? slideData.globalGroup : slideData.group
         if (!groupId) return ""
+        
         // pick up template supplied by group overrides (if present)
         return $groups[groupId]?.template || ""
     })()
@@ -245,18 +246,19 @@
         if (ref?.type === "overlay") return ""
         if (slideData?.settings?.template) return slideData.settings.template
 
-        const groupResolved = resolveTemplate(groupTemplateId)
-        if (groupResolved) return groupResolved
-
-        const showResolved = resolveTemplate(currentShowTemplateId)
-        if (showResolved) return showResolved
-
-        // favor output-driven scripture layouts first so overrides don't bleed between outputs
+        // favor output-driven templates/scripture layouts first so overrides don't bleed between outputs
         const styleScriptureResolved = resolveTemplate(styleScriptureTemplateId)
         if (styleScriptureResolved) return styleScriptureResolved
 
         const styleResolved = resolveTemplate(outputStyle?.template || "")
         if (styleResolved) return styleResolved
+
+        // group templates provide per-group defaults
+        const groupResolved = resolveTemplate(groupTemplateId)
+        if (groupResolved) return groupResolved
+
+        const showResolved = resolveTemplate(currentShowTemplateId)
+        if (showResolved) return showResolved
 
         // finally fall back to the template captured when the scripture show was generated
         const scriptureResolved = resolveTemplate(scriptureSettingsTemplateId)
@@ -268,6 +270,7 @@
     $: templateStyleOverrides = (() => {
         // ensure overrides follow whichever template actually drives this slide
         if (!resolvedTemplateId) return []
+        
         return clone($templates[resolvedTemplateId]?.settings?.styleOverrides || [])
     })()
 
