@@ -1112,7 +1112,7 @@ export function getSplittedVerses(verses: { [key: string]: string }) {
 
 export function splitText(value: string, maxLength: number, tolerance: number = 0) {
     if (!value) return []
-    if (/<[^>]+>/.test(value)) return splitHtmlText(value, maxLength, tolerance)
+    if (/<[^>]+>/.test(value)) return splitHtmlText(value, maxLength)
     return splitPlainText(value, maxLength, tolerance)
 }
 
@@ -1212,7 +1212,7 @@ function splitPlainText(value: string, maxLength: number, tolerance: number = 0)
     return segments
 }
 
-function splitHtmlText(value: string, maxLength: number, tolerance: number = 0) {
+function splitHtmlText(value: string, maxLength: number) {
     const tokens = tokenizeHtml(value)
     if (!tokens.length) return [value]
 

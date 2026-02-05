@@ -14,7 +14,7 @@
     import StageLayouts from "./components/stage/StageLayouts.svelte"
     import Resizeable from "./components/system/Resizeable.svelte"
     import Timeline from "./components/timeline/Timeline.svelte"
-    import { activeEdit, activePage, activeProfile, activeProject, activeShow, activeStage, currentWindow, focusMode, loaded, os, resized, showChangeProfileMenu, showsCache, special, textEditActive } from "./stores"
+    import { activeEdit, activePage, activeProfile, activeProject, activeShow, activeStage, currentWindow, focusMode, loaded, os, projectView, resized, showChangeProfileMenu, showsCache, special, textEditActive } from "./stores"
     import { DEFAULT_WIDTH } from "./utils/common"
 
     $: page = $activePage
@@ -102,7 +102,7 @@
         </Resizeable>
     </div>
 
-    {#if page === "show" && $special.projectTimelineActive && $activeProject}
+    {#if page === "show" && $special.projectTimelineActive && $activeProject && !$projectView}
         <Resizeable id="project_timeline" side="bottom" maxWidth={DEFAULT_WIDTH} minWidth={40}>
             {#key $activeProject}
                 <Timeline type="project" isClosed={$resized.project_timeline <= 40} />
