@@ -104,7 +104,16 @@
 <!-- on:contextmenu={click} -->
 
 {#if editingActive}
-    <input bind:this={inputElem} {value} on:change={change} class="edit nocontext _rename name" />
+    <input
+        bind:this={inputElem}
+        {value}
+        on:change={change}
+        on:keydown={(e) => {
+            // stop space from triggering other keydown events
+            if (e.key === " ") e.stopPropagation()
+        }}
+        class="edit nocontext _rename name"
+    />
 {:else}
     <p {id} {style} bind:this={nameElem} class="_rename">
         {#if value.length}
