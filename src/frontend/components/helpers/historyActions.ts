@@ -895,16 +895,19 @@ export const historyActions = ({ obj, undo = null }: any) => {
                     if (changeOverflowItems) {
                         const templateItemCount = getItemsCountByType(slideTemplate.items)
                         const slideItemCount = getItemsCountByType(newItems)
-                        newItems = newItems.filter((a) => {
-                            const type = a.type || "text"
-                            if (templateItemCount[type] - slideItemCount[type] >= 0) return true
-                            if (type === "text" && !isEmptyOrSpecial(a)) return true
-                            if (type === "media" && a.src) return true
+                        newItems = newItems
+                            .reverse()
+                            .filter((a) => {
+                                const type = a.type || "text"
+                                if (templateItemCount[type] - slideItemCount[type] >= 0) return true
+                                if (type === "text" && !isEmptyOrSpecial(a)) return true
+                                if (type === "media" && a.src) return true
 
-                            // remove item
-                            slideItemCount[type]--
-                            return false
-                        })
+                                // remove item
+                                slideItemCount[type]--
+                                return false
+                            })
+                            .reverse()
                     }
 
                     show.slides[id].items = clone(newItems)
