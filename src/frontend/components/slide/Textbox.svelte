@@ -3,7 +3,7 @@
     import { OUTPUT } from "../../../types/Channels"
     import type { Styles } from "../../../types/Settings"
     import type { Item, Slide, TemplateStyleOverride, Transition } from "../../../types/Show"
-    import { categories, currentWindow, groups, outputs, overlays, scriptureSettings, showsCache, styles, templates, variables } from "../../stores"
+    import { currentWindow, groups, outputs, overlays, scriptureSettings, showsCache, styles, templates, variables } from "../../stores"
     import { wait } from "../../utils/common"
     import { send } from "../../utils/request"
     import autosize from "../edit/scripts/autosize"
@@ -259,12 +259,6 @@
 
         const showResolved = resolveTemplate(currentShowTemplateId)
         if (showResolved) return showResolved
-
-        // category templates provide category-wide defaults
-        const categoryId = ref?.showId ? $showsCache[ref.showId]?.category : null
-        const categoryTemplateId = categoryId ? $categories[categoryId]?.template : null
-        const categoryResolved = resolveTemplate(categoryTemplateId || "")
-        if (categoryResolved) return categoryResolved
 
         // finally fall back to the template captured when the scripture show was generated
         const scriptureResolved = resolveTemplate(scriptureSettingsTemplateId)
