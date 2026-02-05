@@ -1,15 +1,16 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import { activeEdit, activeShow, drawer, drawerOpenedInEdit, focusMode, refreshEditSlide, showsCache, textEditActive } from "../../stores"
+    import { activeEdit, activeShow, cloudUsers, drawer, drawerOpenedInEdit, focusMode, refreshEditSlide, showsCache, textEditActive } from "../../stores"
+    import { isActiveShowInUseByCloudUser } from "../../utils/cloudSync"
     import Splash from "../main/Splash.svelte"
+    import TextEditor from "../show/TextEditor.svelte"
+    import AudioEditor from "./editors/AudioEditor.svelte"
+    import CameraEditor from "./editors/CameraEditor.svelte"
     import EffectEditor from "./editors/EffectEditor.svelte"
     import MediaEditor from "./editors/MediaEditor.svelte"
     import OverlayEditor from "./editors/OverlayEditor.svelte"
     import SlideEditor from "./editors/SlideEditor.svelte"
     import TemplateEditor from "./editors/TemplateEditor.svelte"
-    import TextEditor from "../show/TextEditor.svelte"
-    import AudioEditor from "./editors/AudioEditor.svelte"
-    import CameraEditor from "./editors/CameraEditor.svelte"
 
     $: if ($refreshEditSlide) {
         setTimeout(() => {
@@ -47,6 +48,12 @@
     {:else if $activeEdit.type === "audio"}
         <AudioEditor />
     {:else if $activeEdit.slide !== undefined && $activeEdit.slide !== null}
+        {#if isActiveShowInUseByCloudUser({ $activeShow, $cloudUsers })}
+            <div class="darken">
+                <p style="text-align: center;font-size: 1.5em;display: block;background-color: black;padding: 10px;border-radius: 4px;">Currently in use by another cloud user!</p>
+            </div>
+        {/if}
+
         {#if $textEditActive && !$focusMode}
             <TextEditor currentShow={$showsCache[$activeShow?.id || ""]} />
         {:else}
@@ -56,3 +63,21 @@
         <Splash />
     {/if}
 {/key}
+
+<style>
+    .darken {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+
+        background-color: rgba(0, 0, 0, 0.5);
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        z-index: 200;
+    }
+</style>

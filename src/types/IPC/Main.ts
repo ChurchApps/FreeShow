@@ -28,6 +28,7 @@ export enum Main {
     VERSION = "VERSION",
     GET_OS = "GET_OS",
     DEVICE_ID = "DEVICE_ID",
+    GET_DEVICE_NAME = "GET_DEVICE_NAME",
     IP = "IP",
     CHECK_RAM_USAGE = "CHECK_RAM_USAGE",
     // STORES
@@ -141,6 +142,8 @@ export enum Main {
     CLOUD_DATA = "CLOUD_DATA",
     CLOUD_CHANGED = "CLOUD_CHANGED",
     CLOUD_SYNC = "CLOUD_SYNC",
+    GET_CONVERSATION_ID = "GET_CONVERSATION_ID",
+    SEND_SOCKET_MESSAGE = "SEND_SOCKET_MESSAGE",
     // Provider-based routing
     PROVIDER_LOAD_SERVICES = "PROVIDER_LOAD_SERVICES",
     PROVIDER_DISCONNECT = "PROVIDER_DISCONNECT",
@@ -229,6 +232,8 @@ export interface MainSendPayloads {
     [Main.CLOUD_DATA]: { id: SyncProviderId; churchId: string; teamId: string }
     [Main.CLOUD_CHANGED]: { id: SyncProviderId; churchId: string; teamId: string }
     [Main.CLOUD_SYNC]: { id: SyncProviderId; churchId: string; teamId: string; method: "merge" | "read_only" | "upload" | "replace" }
+    [Main.GET_CONVERSATION_ID]: { teamId: string }
+    [Main.SEND_SOCKET_MESSAGE]: { churchId: string; teamId: string; displayName: string; content: string }
     // Provider-based routing
     [Main.PROVIDER_LOAD_SERVICES]: { providerId: ContentProviderId; cloudOnly?: boolean }
     [Main.PROVIDER_DISCONNECT]: { providerId: ContentProviderId; scope?: string }
@@ -252,6 +257,7 @@ export interface MainReturnPayloads {
     [Main.VERSION]: string
     [Main.GET_OS]: OS
     [Main.DEVICE_ID]: string
+    [Main.GET_DEVICE_NAME]: string
     [Main.IP]: string[]
     [Main.CHECK_RAM_USAGE]: { total: number; free: number; performanceMode: boolean }
     ///
@@ -316,6 +322,8 @@ export interface MainReturnPayloads {
     [Main.CLOUD_DATA]: Promise<boolean>
     [Main.CLOUD_CHANGED]: Promise<boolean>
     [Main.CLOUD_SYNC]: Promise<{ success?: boolean; error?: string; changedFiles: any[] }>
+    [Main.GET_CONVERSATION_ID]: Promise<string | null>
+    [Main.SEND_SOCKET_MESSAGE]: Promise<boolean>
     // Provider-based routing
     [Main.PROVIDER_DISCONNECT]: { success: boolean }
     // Content Library

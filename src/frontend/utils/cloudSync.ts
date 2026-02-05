@@ -3,10 +3,13 @@ import { Main } from "../../types/IPC/Main"
 import { isLocalFile } from "../components/helpers/media"
 import { loadShows } from "../components/helpers/setShow"
 import { requestMain, sendMain } from "../IPC/main"
-import { activeEdit, activePopup, activeShow, alertMessage, cloudSyncData, deletedShows, popupData, providerConnections, renamedShows, saved, scripturesCache, shows, showsCache, special } from "../stores"
+import { activeEdit, activePage, activePopup, activeProject, activeShow, alertMessage, cloudSyncData, cloudUsers, deletedShows, popupData, providerConnections, renamedShows, saved, scripturesCache, shows, showsCache, special } from "../stores"
 import { isMainWindow, newToast, setStatus } from "./common"
 import { confirmCustom } from "./popup"
 import { save } from "./save"
+import { SocketHelper } from "./SocketHelper"
+import { generateLightRandomColor } from "../components/helpers/color"
+import { clone } from "../components/helpers/array"
 
 export async function setupCloudSync(auto: boolean = false) {
     if (auto && get(cloudSyncData).id) {
@@ -46,9 +49,12 @@ export async function changeTeam() {
 
 export async function chooseTeam(team: { id: string; churchId: string; name: string; count?: number }) {
     const id = "churchApps"
+    const deviceName = get(cloudSyncData).deviceName || (await requestMain(Main.GET_DEVICE_NAME))
+
+    socketDisconnect()
 
     cloudSyncData.update((a) => {
-        a = { ...a, id, enabled: true, team }
+        a = { ...a, id, enabled: true, deviceName, team }
         return a
     })
 
@@ -91,6 +97,8 @@ export async function syncWithCloud(initialize: boolean = false) {
         activeShow.set(null)
         activeEdit.set({ items: [] })
     }
+
+    socketConnect()
 
     isSyncing = true
     setStatus("syncing")
@@ -149,4 +157,141 @@ export function addToMediaFolder(filePath: string) {
 
     if (!get(special).cloudSyncMediaFolder) return
     sendMain(Main.MEDIA_FOLDER_COPY, { paths: [filePath] })
+}
+
+// SOCKET
+
+let cloudSocketHelper: SocketHelper | null = null
+let cachedConversationId: string | null = null
+
+function getCloudSocket() {
+    return cloudSocketHelper
+}
+
+async function createCloudSocket(): Promise<SocketHelper | null> {
+    if (cloudSocketHelper) return cloudSocketHelper
+
+    const team = get(cloudSyncData).team
+    if (!team) return null
+
+    const name = get(cloudSyncData).deviceName || ""
+    if (!cachedConversationId) cachedConversationId = await requestMain(Main.GET_CONVERSATION_ID, { teamId: team.id })
+
+    try {
+        cloudSocketHelper = new SocketHelper({ churchId: team.churchId, teamId: team.id, displayName: name, conversationId: cachedConversationId || undefined })
+        return cloudSocketHelper
+    } catch (err) {
+        console.error("Failed to create cloud socket:", err)
+        return null
+    }
+}
+
+function socketDisconnect() {
+    if (!cloudSocketHelper) return
+    const socket = cloudSocketHelper
+
+    clearStoreListeners()
+
+    cloudSyncMessage("presence", { action: "bye" })
+
+    // clear local reference immediately so new connections create a new socket
+    cloudSocketHelper = null
+    cachedConversationId = null
+    cloudUsers.set([])
+
+    // disconnect the actual socket instance after a delay
+    setTimeout(() => {
+        socket.disconnect()
+    }, 1000)
+}
+
+async function socketConnect() {
+    const socket = await createCloudSocket()
+    if (!socket) return
+
+    // initialize receivers
+    socket.addHandler("presence", CLOUD_RECEIVERS.presence)
+
+    // announce self and get responses from all users
+    broadcastPresence("iamnew")
+
+    // setup listeners
+    setupStoreListeners()
+}
+
+let presenceUnsubscribers: (() => void)[] = []
+function setupStoreListeners() {
+    clearStoreListeners()
+    presenceUnsubscribers.push(activePage.subscribe(() => broadcastPresence()))
+    presenceUnsubscribers.push(activeShow.subscribe(() => broadcastPresence()))
+    presenceUnsubscribers.push(activeProject.subscribe(() => broadcastPresence()))
+}
+
+function clearStoreListeners() {
+    presenceUnsubscribers.forEach((u) => u())
+    presenceUnsubscribers = []
+}
+
+function broadcastPresence(action: string = "update") {
+    // don't send if in use by another user
+    if (isActiveShowInUseByCloudUser()) return
+
+    const page = get(activePage)
+    const show = clone(get(activeShow))
+    delete show?.index
+
+    cloudSyncMessage("presence", { action, activePage: page, activeShow: show, activeProject: get(activeProject) })
+}
+
+export function getCloudUsers(updater = get(cloudUsers)) {
+    const name = get(cloudSyncData).deviceName || ""
+    return updater.filter((a) => a.displayName !== name)
+}
+
+export function isActiveShowInUseByCloudUser(_updater: any = null) {
+    const users = getCloudUsers()
+    const activeShowId = get(activeShow)?.id
+    return users.some((user) => user.activeShow?.id === activeShowId)
+}
+
+export async function cloudSyncMessage(id: string = "", data: { [key: string]: any } = {}) {
+    const socket = getCloudSocket() || (await createCloudSocket())
+    if (!socket) return
+
+    if (!(await socket.waitUntilConnected())) return
+
+    socket.sendMessage(id, data)
+}
+
+// RECEIVERS
+
+const CLOUD_RECEIVERS = {
+    presence: (data: { displayName?: string; action?: string; activePage?: string; activeShow?: any; activeProject?: any }) => {
+        const name = get(cloudSyncData).deviceName || ""
+        if (!data.displayName || data.displayName === name) return
+
+        const isBye = data.action === "bye"
+        const isNewUser = data.action === "iamnew"
+        const userData = { displayName: data.displayName, activePage: data.activePage, activeShow: data.activeShow, activeProject: data.activeProject }
+
+        cloudUsers.update((users) => {
+            const existingIndex = users.findIndex((u) => u.displayName === data.displayName)
+
+            // remove user
+            if (isBye) {
+                if (existingIndex < 0) return users
+                users.splice(existingIndex, 1)
+                return users
+            }
+
+            // add user
+            if (existingIndex < 0) return [...users, { ...userData, color: generateLightRandomColor() }]
+
+            // update user
+            users[existingIndex] = { ...users[existingIndex], ...userData }
+            return users
+        })
+
+        if (isNewUser) broadcastPresence("iamhere")
+    }
 }

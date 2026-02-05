@@ -1,12 +1,13 @@
 <script type="ts">
     import { slide } from "svelte/transition"
-    import { activeEdit, activePage, activeProfile, activeShow, dictionary, drawSettings, drawTool, os, outputDisplay, outputs, paintCache, profiles, saved, settingsTab, shows } from "../../stores"
+    import { activeEdit, activePage, activeProfile, activeProject, activeShow, cloudUsers, dictionary, drawSettings, drawTool, os, outputDisplay, outputs, paintCache, profiles, saved, settingsTab, shows } from "../../stores"
+    import { getCloudUsers } from "../../utils/cloudSync"
+    import { translateText } from "../../utils/language"
     import Icon from "../helpers/Icon.svelte"
     import { toggleOutputs } from "../helpers/output"
     import T from "../helpers/T.svelte"
-    import TopButton from "../inputs/TopButton.svelte"
     import Button from "../inputs/Button.svelte"
-    import { translateText } from "../../utils/language"
+    import TopButton from "../inputs/TopButton.svelte"
 
     export let isWindows = false
 
@@ -58,7 +59,26 @@
     $: settingsDisabled = Object.keys(profile?.access.settings || {}).length > 7
 
     $: noPhysicalOutputWindows = (!$outputDisplay && !physicalOutputWindows.length) || disableClick
+
+    $: users = getCloudUsers($cloudUsers)
+    function goToUser(user: { [key: string]: any }) {
+        if (user.activePage) activePage.set(user.activePage as any)
+        if (user.activeShow) activeShow.set(user.activeShow)
+        if (user.activeProject) activeProject.set(user.activeProject)
+    }
 </script>
+
+{#if users.length}
+    <div class="users" style="{isWindows ? 'top: 25px;' : ''}width: calc(17px + ((22px - 5px) * {users.length}));" data-title={translateText("settings.connections")}>
+        {#each users as user, i}
+            {@const isSameArea = $activeShow && user.activeShow?.id === $activeShow?.id}
+
+            <div class="user" class:isSameArea data-title={user.displayName} style="background-color: {user.color};transform: translateX(-{5 * i}px);" role="none" on:click={() => goToUser(user)}>
+                {user.displayName?.[0] || "?"}
+            </div>
+        {/each}
+    </div>
+{/if}
 
 <div class="top" class:drag={!isWindows}>
     <!-- {#if !isWindows}
@@ -207,5 +227,52 @@
         border: 2px solid var(--secondary);
         border-top: none;
         border-inline-end: none;
+    }
+
+    /* USERS */
+
+    .users {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: calc(40px - 4px);
+
+        display: flex;
+        align-items: center;
+        /* gap: 2px; */
+        margin: 2px 0;
+        padding: 0 5px;
+
+        background-color: var(--primary-darker);
+        border: 1px solid var(--primary-lighter);
+        border-left: none;
+        border-top-right-radius: 5px;
+        border-bottom-right-radius: 5px;
+
+        z-index: 31;
+    }
+
+    .user {
+        width: 22px;
+        min-width: 22px;
+        height: 22px;
+
+        background-color: var(--secondary);
+        color: var(--textInvert);
+        border: 1px solid var(--primary-lighter);
+        border-radius: 50%;
+
+        font-size: 0.8em;
+        font-weight: bold;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .user:hover {
+        filter: brightness(0.9);
+    }
+    .user.isSameArea {
+        box-shadow: 0 0 0 2px var(--secondary);
     }
 </style>
