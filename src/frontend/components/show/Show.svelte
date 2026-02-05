@@ -1,6 +1,5 @@
 <script lang="ts">
-    import { activeProject, activeShow, cloudUsers, outLocked, projects } from "../../stores"
-    import { isActiveShowInUseByCloudUser } from "../../utils/cloudSync"
+    import { activeProject, activeShow, outLocked, projects } from "../../stores"
     import Capture from "../drawer/live/Capture.svelte"
     import NdiStream from "../drawer/live/NDIStream.svelte"
     import { createGlobalTimerFromLocalTimer } from "../drawer/timers/timers"
@@ -81,12 +80,6 @@
                 <FolderShow path={show.id} index={show.index || 0} />
             {/key}
         {:else if (show.type || "show") === "show"}
-            {#if isActiveShowInUseByCloudUser({ $activeShow, $cloudUsers })}
-                <div class="darken">
-                    <p style="text-align: center;font-size: 1.5em;display: block;background-color: black;padding: 10px;border-radius: 4px;">Currently in use by another cloud user!</p>
-                </div>
-            {/if}
-
             <Slides showId={$activeShow?.id || ""} />
             <Layouts />
         {:else}
@@ -104,21 +97,5 @@
         display: flex;
         flex-direction: column;
         justify-content: center;
-    }
-
-    .darken {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-
-        background-color: rgba(0, 0, 0, 0.5);
-
-        display: flex;
-        align-items: center;
-        justify-content: center;
-
-        z-index: 200;
     }
 </style>

@@ -3,12 +3,13 @@ import { Main } from "../../types/IPC/Main"
 import { isLocalFile } from "../components/helpers/media"
 import { loadShows } from "../components/helpers/setShow"
 import { requestMain, sendMain } from "../IPC/main"
-import { activeEdit, activePage, activePopup, activeShow, alertMessage, cloudSyncData, cloudUsers, deletedShows, popupData, providerConnections, renamedShows, saved, scripturesCache, shows, showsCache, special } from "../stores"
+import { activeEdit, activePage, activePopup, activeProject, activeShow, alertMessage, cloudSyncData, cloudUsers, deletedShows, popupData, providerConnections, renamedShows, saved, scripturesCache, shows, showsCache, special } from "../stores"
 import { isMainWindow, newToast, setStatus } from "./common"
 import { confirmCustom } from "./popup"
 import { save } from "./save"
 import { SocketHelper } from "./SocketHelper"
 import { generateLightRandomColor } from "../components/helpers/color"
+import { clone } from "../components/helpers/array"
 
 export async function setupCloudSync(auto: boolean = false) {
     if (auto && get(cloudSyncData).id) {
@@ -223,6 +224,7 @@ function setupStoreListeners() {
     clearStoreListeners()
     presenceUnsubscribers.push(activePage.subscribe(() => broadcastPresence()))
     presenceUnsubscribers.push(activeShow.subscribe(() => broadcastPresence()))
+    presenceUnsubscribers.push(activeProject.subscribe(() => broadcastPresence()))
 }
 
 function clearStoreListeners() {
@@ -231,13 +233,14 @@ function clearStoreListeners() {
 }
 
 function broadcastPresence(action: string = "update") {
-    const page = get(activePage)
-    const show = get(activeShow)
-
     // don't send if in use by another user
     if (isActiveShowInUseByCloudUser()) return
 
-    cloudSyncMessage("presence", { action, activePage: page, activeShow: show })
+    const page = get(activePage)
+    const show = clone(get(activeShow))
+    delete show?.index
+
+    cloudSyncMessage("presence", { action, activePage: page, activeShow: show, activeProject: get(activeProject) })
 }
 
 export function getCloudUsers(updater = get(cloudUsers)) {
@@ -263,13 +266,13 @@ export async function cloudSyncMessage(id: string = "", data: { [key: string]: a
 // RECEIVERS
 
 const CLOUD_RECEIVERS = {
-    presence: (data: { displayName?: string; action?: string; activePage?: string; activeShow?: any }) => {
+    presence: (data: { displayName?: string; action?: string; activePage?: string; activeShow?: any; activeProject?: any }) => {
         const name = get(cloudSyncData).deviceName || ""
         if (!data.displayName || data.displayName === name) return
 
         const isBye = data.action === "bye"
         const isNewUser = data.action === "iamnew"
-        const userData = { displayName: data.displayName, activePage: data.activePage, activeShow: data.activeShow }
+        const userData = { displayName: data.displayName, activePage: data.activePage, activeShow: data.activeShow, activeProject: data.activeProject }
 
         cloudUsers.update((users) => {
             const existingIndex = users.findIndex((u) => u.displayName === data.displayName)

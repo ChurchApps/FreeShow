@@ -1,6 +1,6 @@
 <script type="ts">
     import { slide } from "svelte/transition"
-    import { activeEdit, activePage, activeProfile, activeShow, cloudUsers, dictionary, drawSettings, drawTool, os, outputDisplay, outputs, paintCache, profiles, saved, settingsTab, shows } from "../../stores"
+    import { activeEdit, activePage, activeProfile, activeProject, activeShow, cloudUsers, dictionary, drawSettings, drawTool, os, outputDisplay, outputs, paintCache, profiles, saved, settingsTab, shows } from "../../stores"
     import { getCloudUsers } from "../../utils/cloudSync"
     import { translateText } from "../../utils/language"
     import Icon from "../helpers/Icon.svelte"
@@ -61,18 +61,19 @@
     $: noPhysicalOutputWindows = (!$outputDisplay && !physicalOutputWindows.length) || disableClick
 
     $: users = getCloudUsers($cloudUsers)
-    function seeUser(user: { [key: string]: any }) {
+    function goToUser(user: { [key: string]: any }) {
         if (user.activePage) activePage.set(user.activePage as any)
         if (user.activeShow) activeShow.set(user.activeShow)
+        if (user.activeProject) activeProject.set(user.activeProject)
     }
 </script>
 
 {#if users.length}
     <div class="users" style="{isWindows ? 'top: 25px;' : ''}width: calc(17px + ((22px - 5px) * {users.length}));" data-title={translateText("settings.connections")}>
         {#each users as user, i}
-            {@const isSameArea = user.activePage === $activePage && JSON.stringify(user.activeShow) === JSON.stringify($activeShow)}
+            {@const isSameArea = $activeShow && user.activeShow?.id === $activeShow?.id}
 
-            <div class="user" class:isSameArea data-title={user.displayName} style="background-color: {user.color};transform: translateX(-{5 * i}px);" role="none" on:click={() => seeUser(user)}>
+            <div class="user" class:isSameArea data-title={user.displayName} style="background-color: {user.color};transform: translateX(-{5 * i}px);" role="none" on:click={() => goToUser(user)}>
                 {user.displayName?.[0] || "?"}
             </div>
         {/each}
