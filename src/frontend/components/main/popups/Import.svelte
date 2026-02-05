@@ -176,7 +176,7 @@
                         on:click={() => {
                             openedPage = "powerpoint"
                         }}
-                        title="actions.options"
+                        title="create_show.more_options"
                     >
                         <Icon id="next" style="opacity: 0.6;" size={1.8} white />
                     </MaterialButton>
