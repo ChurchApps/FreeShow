@@ -122,17 +122,16 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
             if (file.name.startsWith("BIBLE_")) {
                 try {
                     const bibleName = file.name.replace("BIBLE_", "")
+                    const localBiblePath = path.join(biblesFolder, bibleName)
                     cloudBibleNames.push(bibleName)
 
-                    const bibleDestPath = path.join(biblesFolder, bibleName)
-
-                    const getLocalData = async () => await doesPathExistAsync(bibleDestPath)
-                    const isCloudNewer = async () => await isCloudNewerThanFile(bibleDestPath, modifiedDates[file.name])
+                    const getLocalData = async () => await doesPathExistAsync(localBiblePath)
+                    const isCloudNewer = async () => await isCloudNewerThanFile(localBiblePath, modifiedDates[file.name])
 
                     const result = await checkCloudEntry("BIBLES", bibleName, null, getLocalData, isCloudNewer)
 
-                    if (result.action === "delete") deleteFile(bibleDestPath)
-                    else if (result.action === "create" || result.action === "download") await moveFileAsync(cloudPath, bibleDestPath)
+                    if (result.action === "delete") deleteFile(localBiblePath)
+                    else if (result.action === "create" || result.action === "download") await moveFileAsync(cloudPath, localBiblePath)
                 } catch (err) {
                     console.error("Failed to write bible:", file.name, err)
                 }
@@ -154,9 +153,8 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
                     Object.entries<Show>(cloudFileData).map(async ([id, show]) => {
                         try {
                             const fileName = (show.name || id) + ".show"
-                            cloudShowNames.push(fileName)
-
                             const localShowPath = path.join(showsFolder, fileName)
+                            cloudShowNames.push(fileName)
 
                             const getLocalData = async () => {
                                 const localFile = await readFileAsync(localShowPath)
@@ -281,7 +279,7 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
 
             // changedFiles.push(id)
             setStore(localStore, localData)
-            sendMain(Main[id], localData) // update frontend data
+            sendMain(Main[id], localData) // send to frontend
         })
     )
 
@@ -436,20 +434,21 @@ async function deleteUnusedZips(folderPath: string, excludeZip: string) {
 }
 
 async function checkCloudEntry(id: ChangeId, key: string, cloudData: any, getLocalData: () => Promise<any>, isCloudNewer?: () => Promise<boolean>) {
-    if (isDeleted(id, key)) return { action: "delete" }
-
     const cloudModTime = getModifiedDate(cloudData)
-    if (cloudData !== null && !cloudModTime) return { action: "delete" } // invalid: no modified time
+    if (cloudData !== null && !cloudModTime) return { action: "skip" } // invalid: no modified time
 
     const localValue = await getLocalData()
 
     // exists only in cloud
     if (!localValue) {
+        if (isDeleted(id, key)) return { action: "skip" }
         if (isCreated(id, key)) return { action: "create" }
 
         markAsDeleted(id, key)
-        return { action: "delete" }
+        return { action: "skip" }
     }
+
+    if (isDeleted(id, key)) return { action: "delete" }
 
     let localModTime = getModifiedDate(localValue)
     if (cloudData !== null && !localModTime) localModTime = setModifiedDate()
