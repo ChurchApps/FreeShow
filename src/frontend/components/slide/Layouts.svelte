@@ -22,8 +22,6 @@
     import MaterialZoom from "../inputs/MaterialZoom.svelte"
     import SelectElem from "../system/SelectElem.svelte"
     import Reference from "./Reference.svelte"
-    import { sendMain } from "../../IPC/main"
-    import { Main } from "../../../types/IPC/Main"
 
     $: showId = $activeShow?.id || ""
     $: currentShow = $showsCache[showId] || {}
@@ -103,16 +101,7 @@
     $: reference = currentShow.reference
     $: multipleLayouts = sortedLayouts.length > 1
 
-    const openTab = (e: Event, id: string) => {
-        if (e.target?.closest("a")) {
-            e.preventDefault()
-            const url = (e.target as HTMLElement).closest("a")?.getAttribute("href") || ""
-            sendMain(Main.URL, url)
-            return
-        }
-
-        openToolsTab.set(id)
-    }
+    const openTab = (id: string) => openToolsTab.set(id)
 
     $: customActionId = currentShow?.settings?.customAction
     $: customAction = customActionId && $actions[customActionId] ? customActionId : ""
@@ -141,14 +130,14 @@
         const layoutNotes = layouts?.[activeLayout]?.notes
         if (layoutNotes) {
             if (typeof layoutNotes !== "string") return
-            notes = { text: layoutNotes, id: "notes", title: "tools.notes", icon: "notes", tab: "notes" }
+            notes = { text: layoutNotes.replaceAll("\n", "&nbsp;"), id: "notes", title: "tools.notes", icon: "notes", tab: "notes" }
             if (layoutNotes.includes("<br>")) bottomHeight = 40 + 18 * (layoutNotes.split("<br>").length - 1)
             return
         }
 
         const messageText = currentShow.message?.text
         if (messageText?.length) {
-            notes = { text: messageText, id: "message", title: "meta.message", icon: "message", tab: "metadata" }
+            notes = { text: messageText.replaceAll("\n", "&nbsp;"), id: "message", title: "meta.message", icon: "message", tab: "metadata" }
             return
         }
 
@@ -180,26 +169,12 @@
             document.querySelector(".row")?.querySelector(".center")?.querySelector(".scroll")?.scrollTo(0, 1000)
         }, 80)
     }
-
-    // make links clickable
-    function formatLinks(text: string) {
-        return text
-            .replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)|(https?:\/\/[^\s]+)/g, (_match, label, link, rawUrl) => {
-                const url = link || rawUrl
-                let preview = label || rawUrl
-                preview = preview.replace(/^https?:\/\//, "")
-                if (preview.length > 35) preview = preview.slice(0, 35) + "..."
-
-                return `<a href="${url}" data-title="${url}" target="_blank" rel="noopener noreferrer">${preview}</a>`
-            })
-            .replaceAll("\n", "&nbsp;")
-    }
 </script>
 
 {#if notesVisible && notes}
-    <div class="notes" role="button" tabindex="0" data-title={translateText(notes.title)} on:click={(e) => openTab(e, notes?.tab || "")} on:keydown={triggerClickOnEnterSpace}>
+    <div class="notes" role="button" tabindex="0" data-title={translateText(notes.title)} on:click={() => openTab(notes?.tab || "")} on:keydown={triggerClickOnEnterSpace}>
         <Icon id={notes.icon} right white />
-        <p>{@html formatLinks(notes.text)}</p>
+        <p>{@html notes.text}</p>
     </div>
 {/if}
 
@@ -352,23 +327,6 @@
 
     .notes p :global(*) {
         display: inline;
-    }
-
-    .notes :global(a) {
-        color: var(--text);
-        opacity: 0.7;
-
-        display: inline-flex;
-        gap: 5px;
-        align-items: flex-end;
-
-        -webkit-user-drag: none;
-    }
-    .notes :global(a:hover) {
-        opacity: 0.75;
-    }
-    .notes :global(a:active) {
-        opacity: 0.9;
     }
 
     div {
