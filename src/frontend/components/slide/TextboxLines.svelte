@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { createEventDispatcher, onDestroy } from "svelte"
+    import { createEventDispatcher, onDestroy, onMount } from "svelte"
     import type { Styles } from "../../../types/Settings"
     import type { Item, TemplateStyleOverride } from "../../../types/Show"
     import { createVirtualBreaks } from "../../show/slides"
@@ -224,8 +224,14 @@
     $: if ($outputs) setTimeout(update, isStage ? 250 : 0) // time with auto size
     const dynamicInterval = setInterval(update, 1000)
     function update() {
+        if (!hasMounted) return
         updateDynamic++
     }
+
+    let hasMounted = false
+    onMount(() => {
+        hasMounted = true
+    })
 
     $: chordFontSize = chordLines.length ? stageItem?.chords?.size || stageItem?.chordsData?.size || item?.chords?.size || 50 : 0
     $: chordsStyle = `--chord-size: ${chordLines.length ? (fontSize || cssFontSize) * (chordFontSize / 100) : "undefined"}px;--chord-color: ${stageItem?.chords?.color || stageItem?.chordsData?.color || item?.chords?.color || "#FF851B"};`
