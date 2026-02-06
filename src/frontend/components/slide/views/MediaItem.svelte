@@ -89,7 +89,9 @@
 
     $: if (!$currentWindow && $slideVideoData) updateVideo()
     function updateVideo() {
-        const videoData = $slideVideoData[id]?.[mediaPath]
+        if (!bgPath) return
+
+        const videoData = $slideVideoData[id]?.[bgPath]
         if (!videoElem || !videoData) return
 
         if (videoData.isPaused && !videoElem.paused) {
@@ -109,12 +111,12 @@
 
             const videoData = { currentTime: videoElem.currentTime, duration: videoElem.duration, isPaused: videoElem.paused, loop: videoElem.loop }
             // send(Main.MAIN_SLIDE_VIDEO, videoData)
-            send(OUTPUT, ["MAIN_SLIDE_VIDEO"], { id, path: mediaPath, data: videoData })
+            send(OUTPUT, ["MAIN_SLIDE_VIDEO"], { id, path: bgPath, data: videoData })
         }, 200)
 
         const videoReceiver = {
             SLIDE_VIDEO_STATE: (data: any) => {
-                if (data.slideId !== id || data.path !== mediaPath) return
+                if (data.slideId !== id || data.path !== bgPath) return
                 if (!videoElem) return
 
                 if (data.action === "play") {

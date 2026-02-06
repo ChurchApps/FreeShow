@@ -97,7 +97,7 @@ export class ChurchAppsConnect {
                     // ignore if checking for missing songs
                     if (fullEndpoint.includes("/missing")) return resolve(null)
 
-                    sendToMain(ToMain.ALERT, "Could not get data! " + err.message + "\n" + apiUrl + fullEndpoint)
+                    // sendToMain(ToMain.ALERT, "Could not get data! " + err.message + "\n" + apiUrl + fullEndpoint)
                     return resolve(null)
                 } else resolve(result)
             })

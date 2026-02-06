@@ -213,6 +213,17 @@
         })
     }
 
+    function resetTextSetValues() {
+        if (!currentVariable.textSets) return
+
+        currentVariable.textSets = currentVariable.textSets.map(() => ({}))
+
+        variables.update((a) => {
+            a[variableId] = currentVariable
+            return a
+        })
+    }
+
     let showMoreRN = false
 </script>
 
@@ -292,6 +303,8 @@
             </div>
         {/if}
     {:else if currentVariable.type === "text_set"}
+        <MaterialButton class="popup-options" icon="reset" iconSize={1.1} title="actions.reset" on:click={resetTextSetValues} white />
+
         {#each currentVariable.textSets?.length ? currentVariable.textSets : [{}] as textSet, i}
             <div class="text_set" style={i === 0 ? "" : "margin-top: 10px;"} class:active={(currentVariable.textSets?.length ?? 1) > 1 && (currentVariable.activeTextSet ?? 0) === i}>
                 <p style="border-bottom: 1px solid var(--primary-lighter);" class="part"><span style="color: var(--secondary);">#</span>{i + 1}</p>

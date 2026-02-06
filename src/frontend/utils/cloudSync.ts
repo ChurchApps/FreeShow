@@ -267,15 +267,26 @@ export async function cloudSyncMessage(id: string = "", data: { [key: string]: a
 
 const CLOUD_RECEIVERS = {
     presence: (data: { displayName?: string; action?: string; activePage?: string; activeShow?: any; activeProject?: any }) => {
-        const name = get(cloudSyncData).deviceName || ""
-        if (!data.displayName || data.displayName === name) return
+        const currentName = get(cloudSyncData).deviceName || ""
+        const name = data.displayName
+        if (!name || name === currentName) return
 
         const isBye = data.action === "bye"
         const isNewUser = data.action === "iamnew"
-        const userData = { displayName: data.displayName, activePage: data.activePage, activeShow: data.activeShow, activeProject: data.activeProject }
+        const userData = { displayName: name, activePage: data.activePage, activeShow: data.activeShow, activeProject: data.activeProject }
+
+        // store a persistent color
+        let color = get(special).cloudUserColors?.[name]
+        if (!color) {
+            color = generateLightRandomColor()
+            special.update((s) => {
+                s.cloudUserColors = { ...s.cloudUserColors, [name!]: color }
+                return s
+            })
+        }
 
         cloudUsers.update((users) => {
-            const existingIndex = users.findIndex((u) => u.displayName === data.displayName)
+            const existingIndex = users.findIndex((u) => u.displayName === name)
 
             // remove user
             if (isBye) {
@@ -285,7 +296,7 @@ const CLOUD_RECEIVERS = {
             }
 
             // add user
-            if (existingIndex < 0) return [...users, { ...userData, color: generateLightRandomColor() }]
+            if (existingIndex < 0) return [...users, { ...userData, color }]
 
             // update user
             users[existingIndex] = { ...users[existingIndex], ...userData }
