@@ -357,8 +357,11 @@ export function checkConditionValue(cVal: ConditionValue, itemsText: string, typ
     let value = ""
     if (element === "text") value = itemsText
     else if (element === "timer") value = getTimerValue(elementId)
-    else if (element === "variable") value = _getVariableValue(elementId)
-    else if (element === "dynamicValue") value = getDynamicValue(elementId, type)
+    else if (element === "variable") {
+        const val = _getVariableValue(elementId)
+        if (Array.isArray(val)) value = val[Number(cVal.index ?? 0)]
+        else value = val
+    } else if (element === "dynamicValue") value = getDynamicValue(elementId, type)
 
     if (operator === "is") {
         return value === dataValue

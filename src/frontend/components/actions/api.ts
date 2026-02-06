@@ -139,6 +139,9 @@ export type API_variable = {
     key?: "text" | "number" | "random_number" | "text_set" | "value" | "enabled" | "step" | "name" | "type" | "increment" | "decrement" | "expression" | "randomize" | "reset" | "next" | "previous" // default: "enabled"
     value?: string | number | boolean
     variableAction?: "increment" | "decrement"
+
+    text_set?: string
+    text_set_number?: number
 }
 
 export interface API_midi extends MidiValues {

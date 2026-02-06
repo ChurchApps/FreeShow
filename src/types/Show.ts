@@ -186,6 +186,8 @@ export interface Timer {
     showHours?: boolean // use just minutes or minutes and hours
     start?: number
     end?: number
+    startDynamic?: string
+    endDynamic?: string
     event?: string
     time?: string
 

@@ -88,6 +88,11 @@
 
             {#if conditionId === "element" && elementOptions[value.value]}
                 <MaterialDropdown label="tools.item" options={elementOptions[value.value]} value={input.elementId} on:change={(e) => setValue("elementId", e)} />
+
+                {#if input.element === "variable" && input.elementId?.includes("__")}
+                    <!-- 0 = active -->
+                    <MaterialNumberInput label="variables.number" value={Number(input.index ?? 0)} on:change={(e) => setValue("index", e)} />
+                {/if}
             {/if}
 
             {#if conditionId === "data"}

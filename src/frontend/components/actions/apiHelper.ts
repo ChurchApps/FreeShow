@@ -296,9 +296,24 @@ export function changeVariable(data: API_variable) {
         else if (!data.variableAction) value = Number(data.value || variable.default || 0)
         key = "number"
     } else if (variable.type === "text_set") {
-        // if (key === "value") {
-        key = "activeTextSet" as any
-        value = Number(data.value ?? 1)
+        if (key === "text_set") {
+            let index = (data.text_set_number ?? 1) - 1
+            if (index === -1) index = variable.activeTextSet || 0
+            const setId = data.text_set
+            if (!setId) return
+
+            const allSets = variable.textSets || []
+            const currentSet = allSets[index] || {}
+            const newValue = (data.value || "") as string
+            allSets[index] = { ...currentSet, [setId]: newValue }
+
+            key = "textSets" as any
+            value = allSets
+        } else {
+            // key = "value"
+            key = "activeTextSet" as any
+            value = Number(data.value ?? 1) - 1
+        }
     } else if (data.value !== undefined) {
         value = data.value
         if (key === "value" && typeof value !== "boolean") key = variable.type

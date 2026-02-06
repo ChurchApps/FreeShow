@@ -36,7 +36,8 @@
         text_set: [
             { value: "next", label: translateText("media.next") },
             { value: "previous", label: translateText("media.previous") },
-            { value: "value", label: translateText("variables.value") }
+            { value: "value", label: translateText("variables.number") }, // specific index
+            { value: "text_set", label: translateText("variables.value") }
         ]
     }
     const defaultMode = {
@@ -96,6 +97,10 @@
             {/if}
         {:else if variable?.type === "text"}
             <MaterialDropdown label="variables.value" options={stateOptions} value={typeof value?.value === "boolean" ? (value.value ? "on" : "off") : ""} on:change={textStateChange} />
+        {:else if variable?.type === "text_set" && value?.key === "text_set"}
+            <MaterialDropdown label="variables.text_set" options={variable.textSetKeys?.map((name) => ({ value: name, label: name })) || []} value={variable.textSetKeys?.find((name) => name === value?.text_set) || ""} on:change={(e) => updateValue("text_set", e.detail)} />
+            <MaterialNumberInput label="variables.number" value={value?.text_set_number ?? 1} on:change={(e) => updateValue("text_set_number", e)} />
+            <MaterialTextInput label="variables.value" value={(value?.value || "").toString()} on:change={(e) => updateValue("value", e)} />
         {/if}
     </InputRow>
 {/if}

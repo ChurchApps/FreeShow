@@ -249,7 +249,9 @@ export const mainResponses: MainResponses = {
         // get "actual" variables
         Object.entries(get(variables)).forEach(([id, a]) => {
             if (!a.name) return
-            variableData[`variable_${getLabelId(a.name, false)}`] = _getVariableValue(id)
+            let val = _getVariableValue(id)
+            if (Array.isArray(val)) val = val[0]
+            variableData[`variable_${getLabelId(a.name, false)}`] = val
         })
 
         // get timers

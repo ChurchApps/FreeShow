@@ -1182,11 +1182,11 @@ export function getDynamicIds(noVariables = false, mode: null | "scripture" = nu
 
     if (timersList.length) mergedValues.push(...timersList)
     if (rssValues.length) mergedValues.push(...rssValues)
-    mergedValues.push(...getVariablesIds())
+    mergedValues.push(...getVariablesIds(showAll))
     return mergedValues
 }
 
-export function getVariablesIds() {
+export function getVariablesIds(showAll: boolean = false) {
     // WIP sort by type?
     const variablesList = sortByName(Object.values<Variable>(get(variables)).filter((a) => a?.name))
     const variableValues = variablesList.filter((a) => a.type !== "text_set").map(({ name }) => `$${getVariableNameId(name)}`)
@@ -1197,6 +1197,7 @@ export function getVariablesIds() {
         .filter((a) => a.type === "text_set")
         .forEach((set) => {
             const name = `$` + getVariableNameId(set.name)
+            if (showAll) variableTextSets.push(name) // list all sets at once
             set.textSetKeys?.filter(Boolean).forEach((key) => {
                 variableTextSets.push(`${name}__${getVariableNameId(key)}`)
             })
@@ -1205,7 +1206,7 @@ export function getVariablesIds() {
     return [...variableValues, ...variableSetNameValues, ...variableTextSets]
 }
 
-export function getVariableValue(dynamicId: string, ref: any = null) {
+export function getVariableValue(dynamicId: string, ref: any = null): string | string[] {
     if (dynamicId.includes("variable_set_")) {
         const nameId = dynamicId.slice(13)
         const variable = Object.values(get(variables)).find((a) => getVariableNameId(a.name) === nameId)
@@ -1219,7 +1220,7 @@ export function getVariableValue(dynamicId: string, ref: any = null) {
         let variable = Object.values(get(variables)).find((a) => getVariableNameId(a.name) === nameId)
 
         if (!variable && nameId.includes("__")) {
-            const textSetId = nameId.slice(0, nameId.indexOf("__"))
+            const textSetId = nameId.slice(0, nameId.indexOf("__")).replace(/#\d+/, "")
             variable = Object.values(get(variables)).find((a) => getVariableNameId(a.name) === textSetId)
         }
         if (!variable) return ""
@@ -1227,10 +1228,19 @@ export function getVariableValue(dynamicId: string, ref: any = null) {
         if (variable.type === "number") return Number(variable.number || 0).toString()
         if (variable.type === "random_number") return (variable.number || 0).toString().padStart(getSetChars(variable.sets), "0")
         if (variable.type === "text_set") {
-            const currentSet = variable.textSets?.[variable.activeTextSet ?? 0] || {}
+            // list all entires
+            if (!nameId.includes("__")) {
+                return (variable.textSets || [])
+                    .map((set) => {
+                        return Object.values(set).join(", ")
+                    })
+                    .join("<br>")
+            }
+
+            const setIndex = variable.activeTextSet ?? 0
             const setId = nameId.slice(nameId.indexOf("__") + 2)
             const setName = variable.textSetKeys?.find((name) => getVariableNameId(name) === setId) || ""
-            return currentSet[setName] || ""
+            return [variable.textSets?.[setIndex]?.[setName] || "", ...(variable.textSets?.map((set) => set[setName] || "") || [])]
         }
 
         if (variable.enabled === false) return ""
@@ -1239,6 +1249,42 @@ export function getVariableValue(dynamicId: string, ref: any = null) {
     }
 
     return ""
+}
+
+// Helper to escape characters like $, *, +, etc.
+const escapeRegExp = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+
+// This pattern breaks down as:
+// \{           -> Opening brace
+// ${id}        -> Your variable
+// (?:#(\d+))?  -> Optional group 1: the number after #
+// (?:\|(.*?))? -> Optional group 2: the fallback after |
+// \}           -> Closing brace
+const createRegex = (id: string) => {
+    // Escape the ID so the '$' isn't treated as "End of Line"
+    const safeId = escapeRegExp(id)
+    return new RegExp(`\\{${safeId}(?:#(\\d+))?(?:\\|([^}]*))?\\}`, "g")
+}
+
+/** Check if the pattern exists **/
+const exists = (str: string, id: string) => createRegex(id).test(str)
+
+/** Get all numbers (e.g., [null, 2, 100, 5, null]) **/
+// const getNumbers = (str: string, id: string) => [...str.matchAll(createRegex(id))].map(m => m[1] ?? null)
+
+/** Replace with input value or fallback **/
+const replaceTokens = (str: string, id: string, inputs: string[] = []) => {
+    return str.replace(createRegex(id), (match: string, num: string | undefined, fallback: string | undefined) => {
+        // 1. Determine index: Use the #num if it exists, otherwise default to 0
+        const index = num !== undefined ? parseInt(num, 10) : 0
+
+        // 2. Get value from array
+        const value = inputs[index]
+
+        // 3. Return priority: Input Value -> Fallback -> Original Match
+        if (value !== undefined) return value
+        return fallback ?? match
+    })
 }
 
 export function replaceDynamicValues(text: string, { showId, layoutId, slideIndex, type, id, mode }: any, _updater = 0) {
@@ -1258,8 +1304,7 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
 
     const customIds = ["slide_text_current", "active_layers", "active_styles", "output_windows_active", "log_song_usage"]
     ;[...getDynamicIds(false, mode), ...customIds].forEach((dynamicId) => {
-        const hasValue = (id: string) => text.includes(`{${id}}`) || text.includes(`{${id}|`)
-        if (!hasValue(dynamicId) && !(dynamicId.startsWith("$") && hasValue(dynamicId.replace("$", "variable_")))) return
+        if (!exists(text, dynamicId) && !(dynamicId.startsWith("$") && exists(text, dynamicId.replace("$", "variable_")))) return
 
         const newValue = getDynamicValueText(dynamicId, currentShow)
         text = replaceDynamicValueWithFallback(text, dynamicId, newValue)
@@ -1271,14 +1316,12 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
     return text
 
     // append {variable|no value} to add fallback
-    function replaceDynamicValueWithFallback(text: string, dynamicId: string, newValue: string): string {
-        const escapedId = dynamicId.replace(/\$/g, "\\$")
-        text = text.replace(new RegExp(`\\{${escapedId}\\|([^}]*)\\}`, "g"), (_match, fallback) => newValue || fallback)
-        text = text.replaceAll(`{${dynamicId}}`, newValue)
-        return text
+    function replaceDynamicValueWithFallback(text: string, dynamicId: string, newValue: string | string[]): string {
+        if (!Array.isArray(newValue)) newValue = [newValue]
+        return replaceTokens(text, dynamicId, newValue)
     }
 
-    function getDynamicValueText(dynamicId: string, show: Show | object): string {
+    function getDynamicValueText(dynamicId: string, show: Show | object): string | string[] {
         // VARIABLE
         if (dynamicId.startsWith("variable_set_") || dynamicId.startsWith("$") || dynamicId.startsWith("variable_")) {
             return getVariableValue(dynamicId, { showId, layoutId, slideIndex, type, id: dynamicId })

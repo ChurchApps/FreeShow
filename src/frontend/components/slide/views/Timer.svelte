@@ -57,8 +57,10 @@
     //     if (msInterval) clearInterval(msInterval)
     // })
 
-    $: if (timer?.type) currentTime = getCurrentTimerValue(timer, ref, today, $activeTimers)
+    $: if (timer?.type) currentTime = getCurrentTimerValue(timer, ref, today, $activeTimers, updateDynamic)
     else currentTime = 0
+
+    $: console.log(currentTime)
 
     $: min = Math.min(timer.start || 0, timer.end || 0)
     $: max = Math.max(timer.start || 0, timer.end || 0)
@@ -118,6 +120,12 @@
 
     $: playingTimer = $activeTimers.filter((a) => a.id === ref.id)[0]
     $: isPaused = playingTimer?.paused
+
+    let updateDynamic = 0
+    const dynamicInterval = setInterval(() => {
+        updateDynamic++
+    }, 5000)
+    onDestroy(() => clearInterval(dynamicInterval))
 </script>
 
 {#if item?.timer?.viewType === "line"}

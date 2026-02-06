@@ -14,7 +14,7 @@
     import Timer from "../../slide/views/Timer.svelte"
     import Center from "../../system/Center.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
-    import { getCurrentTimerValue, playPauseGlobal, resetTimer } from "./timers"
+    import { getCurrentTimerValue, getTimerDynamicValue, playPauseGlobal, resetTimer } from "./timers"
 
     export let searchValue
     export let onlyPlaying: boolean = false
@@ -76,6 +76,8 @@
         {#each filteredTimers as timer, i}
             {@const title = timer.type === filteredTimers[i - 1]?.type ? "" : timer.type}
             {@const isPlaying = timer.type !== "counter" || $activeTimers.find((a) => a.id === timer.id && a.paused !== true)}
+            {@const startTime = timer.startDynamic !== undefined ? (getTimerDynamicValue(timer.startDynamic) ?? 0) : timer.start || 0}
+            {@const endTime = timer.endDynamic !== undefined ? (getTimerDynamicValue(timer.endDynamic) ?? 0) : timer.end || 0}
 
             {#if i === 0 && list.length}
                 <h5><T id="remote.project" /></h5>
@@ -104,7 +106,7 @@
                     </div>
 
                     {#if timer.type === "counter"}
-                        <Slider style="background: var(--primary);align-self: center;margin: 0 10px;" on:input={(e) => updateActiveTimer(e, { id: timer.id }, timer)} on:mousedown={() => disableDragging.set(true)} value={getCurrentValue(timer, { id: timer.id }, $activeTimers)} min={Math.min(timer.start || 0, timer.end || 0)} max={Math.max(timer.start || 0, timer.end || 0)} invert={(timer.end || 0) < (timer.start || 0)} />
+                        <Slider style="background: var(--primary);align-self: center;margin: 0 10px;" on:input={(e) => updateActiveTimer(e, { id: timer.id }, timer)} on:mousedown={() => disableDragging.set(true)} value={getCurrentValue(timer, { id: timer.id }, $activeTimers)} min={Math.min(startTime, endTime)} max={Math.max(startTime, endTime)} invert={endTime < startTime} />
                     {/if}
 
                     <div style="display: flex;justify-content: end;{onlyPlaying ? '' : 'min-width: 125px;'}">
@@ -112,9 +114,9 @@
                             <Timer id={timer.id} {today} />
                             <!-- {getTimes(list[active].timer.start, list[active].timer.format)} -->
 
-                            {#if timer.type === "counter" && timer.end && timer.end !== 0}
+                            {#if timer.type === "counter" && endTime && endTime !== 0}
                                 <span class="end" style="opacity: 0.6;font-size: 0.8em;align-self: center;margin-left: 5px;">
-                                    {joinTime(secondsToTime(timer.end || 0))}
+                                    {joinTime(secondsToTime(endTime))}
                                 </span>
                             {/if}
                         </span>

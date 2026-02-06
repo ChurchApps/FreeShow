@@ -8,7 +8,7 @@ import { send } from "../../utils/request"
 import { actionData } from "../actions/actionData"
 import { customActionActivation, runAction } from "../actions/actions"
 import { sortByClosestMatch } from "../actions/apiHelper"
-import { getCurrentTimerValue, playPauseGlobal } from "../drawer/timers/timers"
+import { getCurrentTimerValue, getTimerDynamicValue, playPauseGlobal } from "../drawer/timers/timers"
 import { getDynamicValue } from "../edit/scripts/itemHelpers"
 import { clone, keysToID, sortByTime } from "./array"
 import { loadShows } from "./setShow"
@@ -74,7 +74,10 @@ function increment(timer: { id: string; start: number; end: number; [key: string
         return timer
     }
 
-    if (timer.start < timer.end ? timer.currentTime >= timer.end && timer.currentTime < timer.end + 1 : timer.currentTime <= timer.end && timer.currentTime > timer.end - 1) {
+    const startTime = timer.startDynamic !== undefined ? getTimerDynamicValue(timer.startDynamic) ?? 0 : timer.start || 0
+    const endTime = timer.endDynamic !== undefined ? getTimerDynamicValue(timer.endDynamic) ?? 0 : timer.end || 0
+
+    if (startTime < endTime ? timer.currentTime >= endTime && timer.currentTime < endTime + 1 : timer.currentTime <= endTime && timer.currentTime > endTime - 1) {
         if (!timer.overflow) timer.paused = true
 
         // ended
@@ -82,14 +85,14 @@ function increment(timer: { id: string; start: number; end: number; [key: string
         customActionActivation("timer_end", timer.id)
     }
 
-    if (timer.currentTime === timer.end && !timer.overflow) return timer
+    if (timer.currentTime === endTime && !timer.overflow) return timer
 
     const currentTime = Date.now()
     // store timer start time (for accuracy)
     if (!timer.startTime) {
-        const timerIs = timer.currentTime - timer.start
+        const timerIs = timer.currentTime - startTime
         const timerStartShouldBe = timerIs * 1000 // - 1
-        if (timer.start < timer.end) timer.startTime = currentTime - timerStartShouldBe
+        if (startTime < endTime) timer.startTime = currentTime - timerStartShouldBe
         else timer.startTime = currentTime + timerStartShouldBe
     }
 
@@ -103,8 +106,8 @@ function increment(timer: { id: string; start: number; end: number; [key: string
         customInterval = Math.max(500, INTERVAL - differenceMs)
     }
 
-    if (timer.start < timer.end) timer.currentTime = timer.start + timerShouldBe
-    else timer.currentTime = timer.start - timerShouldBe
+    if (startTime < endTime) timer.currentTime = startTime + timerShouldBe
+    else timer.currentTime = startTime - timerShouldBe
 
     return timer
 }
