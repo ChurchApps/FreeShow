@@ -24,6 +24,7 @@ import {
     customMetadata,
     customizedIcons,
     dataPath,
+    deletedDefaults,
     deletedShows,
     disabledServers,
     drawSettings,
@@ -103,7 +104,7 @@ import {
 } from "../stores"
 import type { SaveActions, SaveData, SaveList, SaveListSettings, SaveListSyncedSettings } from "./../../types/Save"
 import { audioStreams, companion } from "./../stores"
-import { syncWithCloud } from "./cloudSync"
+import { socketDisconnect, syncWithCloud } from "./cloudSync"
 import { newToast, setStatus } from "./common"
 import { syncDrive } from "./drive"
 
@@ -202,7 +203,8 @@ export function save(closeWhenFinished = false, customTriggers: SaveActions = {}
         companion: get(companion),
         globalTags: get(globalTags),
         customMetadata: get(customMetadata),
-        effects: get(effects)
+        effects: get(effects),
+        deletedDefaults: get(deletedDefaults)
     }
 
     const allSavedData: SaveData = {
@@ -257,7 +259,10 @@ export async function saveComplete({ closeWhenFinished, customTriggers }: { clos
     if (customTriggers?.autosave || closeWhenFinished) {
         // only sync when autosaving or closing
         if (!customTriggers?.autosave || !alreadySaved) await syncWithCloud()
-        if (closeWhenFinished) closeApp()
+        if (closeWhenFinished) {
+            socketDisconnect()
+            closeApp()
+        }
         return
     }
 
@@ -428,5 +433,6 @@ const saveList: { [key in SaveList]: any } = {
     globalTags,
     customMetadata: null,
     contentProviderData,
-    effects
+    effects,
+    deletedDefaults: null
 }

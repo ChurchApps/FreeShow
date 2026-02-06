@@ -186,7 +186,7 @@ async function createCloudSocket(): Promise<SocketHelper | null> {
     }
 }
 
-function socketDisconnect() {
+export function socketDisconnect() {
     if (!cloudSocketHelper) return
     const socket = cloudSocketHelper
 

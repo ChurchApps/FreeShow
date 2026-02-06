@@ -442,7 +442,9 @@ async function checkCloudEntry(id: ChangeId, key: string, cloudData: any, getLoc
     // exists only in cloud
     if (!localValue) {
         if (isDeleted(id, key)) return { action: "skip" }
-        if (isCreated(id, key)) return { action: "create" }
+
+        // if marked as created and not yet created locally
+        if (isCreated(id, key) && !isCreatedLocally(id, key)) return { action: "create" }
 
         markAsDeleted(id, key)
         return { action: "skip" }
@@ -589,4 +591,9 @@ function isDeletedLocally(storeId: ChangeId, key: string): boolean {
     const instanceId = getInstanceId(storeId, key)
     if (deletedNow.includes(instanceId)) return false
     return !!cloudChanges?.deleted?.[instanceId]?.includes(deviceId)
+}
+
+function isCreatedLocally(storeId: ChangeId, key: string): boolean {
+    const instanceId = getInstanceId(storeId, key)
+    return !!cloudChanges?.created?.[instanceId]?.includes(deviceId)
 }

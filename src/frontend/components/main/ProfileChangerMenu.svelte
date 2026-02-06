@@ -1,21 +1,28 @@
 <script lang="ts">
     import { slide } from "svelte/transition"
     import { activeProfile, profiles } from "../../stores"
-    import { translateText } from "../../utils/language"
     import Icon from "../helpers/Icon.svelte"
+    import T from "../helpers/T.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
 
-    const currentProfile = $activeProfile ? $profiles[$activeProfile]?.name || "" : translateText("profile.admin")
+    const isAdmin = !$activeProfile
+    const currentProfile = isAdmin ? "" : $profiles[$activeProfile]?.name || ""
 </script>
 
 <div class="profile-changer-menu" transition:slide>
     <p style="display: flex;align-items: center;gap: 0.5em;">
         <Icon id="profiles" white />
-        <span>{currentProfile}</span>
+        <span>
+            {#if isAdmin}
+                <T id="profile.admin" />
+            {:else}
+                {currentProfile}
+            {/if}
+        </span>
     </p>
 
     <MaterialButton variant="outlined" on:click={() => activeProfile.set(null)}>
-        {translateText("profile.change_profile")}
+        <T id="profile.change_profile" />
     </MaterialButton>
 </div>
 

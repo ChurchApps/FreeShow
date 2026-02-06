@@ -63,8 +63,13 @@
     $: users = getCloudUsers($cloudUsers)
     function goToUser(user: { [key: string]: any }) {
         if (user.activePage) activePage.set(user.activePage as any)
-        if (user.activeShow) activeShow.set(user.activeShow)
         if (user.activeProject) activeProject.set(user.activeProject)
+        if (user.activeShow) {
+            activeShow.set(user.activeShow)
+
+            if (user.activeShow.type === "image" || user.activeShow.type === "video") activeEdit.set({ id: user.activeShow.id, type: "media", items: [] })
+            else activeEdit.set({ type: "show", slide: 0, items: [], showId: user.activeShow.id })
+        }
     }
 </script>
 

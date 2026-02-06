@@ -22,6 +22,7 @@ import {
     categories,
     clipboard,
     currentOutputSettings,
+    deletedDefaults,
     drawerTabsData,
     effects,
     events,
@@ -43,7 +44,6 @@ import {
     selected,
     shows,
     showsCache,
-    special,
     stageShows,
     styles,
     templateCategories,
@@ -1337,10 +1337,10 @@ function historyDelete(id, data, { updater } = { updater: "" }) {
 
     // set as deleted (for defaults)
     if (["template", "overlay", "effect"].includes(updater)) {
-        special.update((a) => {
-            if (updater === "template") a.deletedTemplates = getDeletedArray("deletedTemplates")
-            if (updater === "overlay") a.deletedOverlays = getDeletedArray("deletedOverlays")
-            if (updater === "effect") a.deletedEffects = getDeletedArray("deletedEffects")
+        deletedDefaults.update((a) => {
+            if (updater === "template") a.templates = getDeletedArray("templates")
+            if (updater === "overlay") a.overlays = getDeletedArray("overlays")
+            if (updater === "effect") a.effects = getDeletedArray("effects")
             return a
 
             function getDeletedArray(key: string) {

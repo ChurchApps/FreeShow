@@ -160,5 +160,6 @@ export const defaultSyncedSettings: { [key in SaveListSyncedSettings]: any } = {
     companion: {},
     globalTags: {},
     customMetadata: { disabled: [], custom: [] },
-    effects: {}
+    effects: {},
+    deletedDefaults: {}
 }

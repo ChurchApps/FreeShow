@@ -238,6 +238,8 @@ export const effects: Writable<Effects> = writable({}) // {default}
 export const overlayCategories: Writable<Categories> = writable({}) // {default}
 export const overlays: Writable<Overlays> = writable({}) // {default}
 
+export const deletedDefaults: Writable<{ [key: string]: string[] }> = writable({}) // {}
+
 // AUDIO
 export const audioFolders: Writable<Categories> = writable({}) // {default}
 export const audioStreams: Writable<{ [key: string]: AudioStream }> = writable({}) // {}

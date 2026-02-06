@@ -26,6 +26,7 @@ import {
     customMetadata,
     customizedIcons,
     dataPath,
+    deletedDefaults,
     disabledServers,
     drawSettings,
     drawer,
@@ -341,6 +342,22 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
         // DEPRECATED (migrate)
         v.customUserDataLocation = true
 
+        // DEPRECATED (migrate)
+        let deletedDefaultsValue = get(deletedDefaults)
+        if (v.deletedTemplates) {
+            deletedDefaultsValue.templates = v.deletedTemplates
+            delete v.deletedTemplates
+        }
+        if (v.deletedOverlays) {
+            deletedDefaultsValue.overlays = v.deletedOverlays
+            delete v.deletedOverlays
+        }
+        if (v.deletedEffects) {
+            deletedDefaultsValue.effects = v.deletedEffects
+            delete v.deletedEffects
+        }
+        if (Object.keys(deletedDefaultsValue).length) deletedDefaults.set(deletedDefaultsValue)
+
         special.set(v)
     },
     timeline: (v: any) => timeline.set(v),
@@ -350,5 +367,6 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
         if (v?.length > 1) contentProviderData.set({ ...get(contentProviderData), churchApps: { syncCategories: v } })
     },
     contentProviderData: (v: any) => contentProviderData.set(v),
-    effects: (a: any) => effects.set(a)
+    effects: (a: any) => effects.set(a),
+    deletedDefaults: (a: any) => deletedDefaults.set({ ...get(deletedDefaults), ...a })
 }

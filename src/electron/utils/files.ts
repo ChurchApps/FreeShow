@@ -717,20 +717,18 @@ export async function locateMediaFile({ filePath, folders }: { filePath: string;
         let found: string | null = null
 
         // search all files in current folder before searching in any nested folders
-        await asyncPool(16, entries, async (entry) => {
-            if (found) return
-
+        for (const entry of entries) {
             const currentPath = path.join(folderPath, entry.name)
 
             if (entry.isDirectory()) {
                 subFolders.push(currentPath)
-                return
+                continue
             }
 
             if (entry.name === fileName) {
-                found = currentPath
+                return currentPath
             }
-        })
+        }
 
         if (found) return found
 
