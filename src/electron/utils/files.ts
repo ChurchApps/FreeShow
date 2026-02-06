@@ -103,6 +103,15 @@ export function readFolderAsync(filePath: string): Promise<string[]> {
     )
 }
 
+async function readFolderWithTypesAsync(folderPath: string): Promise<fs.Dirent[]> {
+    return new Promise((resolve, reject) => {
+        fs.readdir(folderPath, { withFileTypes: true }, (err, entries) => {
+            if (err) reject(err)
+            else resolve(entries)
+        })
+    })
+}
+
 export async function writeFileAsync(filePath: string, content: string | NodeJS.ArrayBufferView, id = ""): Promise<boolean> {
     // don't know if it's necessary to check the file
     if (await fileContentMatchesAsync(content, filePath)) return false
@@ -655,14 +664,12 @@ const NESTED_SEARCH = 8 // folder levels deep
 export async function locateMediaFile({ filePath, folders }: { filePath: string; folders: string[] }) {
     if (await doesPathExistAsync(filePath)) return { path: filePath, hasChanged: false }
 
-    const matches: string[] = []
-
     // Media Sync Folder
     const mediaFolder = getMediaSyncFolderPath()
     const folderId = getFileParentFolderId(filePath)
     const mediaFilePath = path.join(mediaFolder, folderId, upath.basename(filePath))
     if (await doesPathExistAsync(mediaFilePath)) return { path: mediaFilePath, hasChanged: true }
-    folders.unshift(mediaFolder)
+    const searchFolders = [mediaFolder, ...folders]
 
     // lookup already replaced paths from cache
     const syncCache = getStore("CACHE_SYNC")
@@ -673,9 +680,9 @@ export async function locateMediaFile({ filePath, folders }: { filePath: string;
     }
 
     const fileName = upath.basename(filePath)
+    const parentFolderName = upath.basename(upath.dirname(filePath))
 
-    await findMatches()
-    const newPath = matches?.[0]
+    const newPath = await findMatches()
     if (!newPath) return null
 
     // store replaced path in cache
@@ -685,70 +692,85 @@ export async function locateMediaFile({ filePath, folders }: { filePath: string;
     return { path: newPath, hasChanged: true }
 
     async function findMatches() {
-        for (const folderPath of folders) {
-            // if (matches.length > 1) return // this might be used if we want the user to choose if more than one match is found
-            if (matches.length) return
-            await searchInFolder(folderPath)
+        for (const folderPath of searchFolders) {
+            const newPath = await searchInFolder(folderPath)
+            if (newPath) return newPath
         }
+        return null
     }
 
-    async function searchInFolder(folderPath: string, level = 1) {
-        if (level > NESTED_SEARCH || matches.length) return
-        if (!(await doesPathExistAsync(folderPath))) return
+    async function searchInFolder(folderPath: string, level = 1): Promise<string | null> {
+        if (level > NESTED_SEARCH) return null
+        if (!(await doesPathExistAsync(folderPath))) return null
 
         // check any path with same parent folder for matches first to limit search a bit
         // this should also help if multiple files has the same name, but originates from different folders
-        const parentFolderName = upath.basename(upath.dirname(filePath))
         const potentialPath = path.join(folderPath, parentFolderName, fileName)
         if (await doesPathExistAsync(potentialPath)) {
-            matches.push(potentialPath)
-            return
+            return potentialPath
         }
 
-        const currentFolderFolders: string[] = []
-        const files = await readFolderAsync(folderPath)
+        const entries = await readFolderWithTypesAsync(folderPath)
+        const subFolders: string[] = []
 
-        await Promise.all(
-            files.map(async (name) => {
-                const currentFilePath: string = path.join(folderPath, name)
-                const isFolder = await checkIsFolder(currentFilePath)
+        // ---- Scan files & collect subfolders
+        let found: string | null = null
 
-                if (isFolder) {
-                    // search all files in current folder before searching in any nested folders
-                    currentFolderFolders.push(currentFilePath)
-                } else {
-                    checkFileForMatch(name, folderPath)
-                    if (matches.length) return
-                }
-            })
-        )
+        // search all files in current folder before searching in any nested folders
+        await asyncPool(16, entries, async (entry) => {
+            if (found) return
 
-        if (matches.length) return
+            const currentPath = path.join(folderPath, entry.name)
 
-        await Promise.all(
-            currentFolderFolders.map(async (folderName) => {
-                await searchInFolder(folderName, level + 1)
-                if (matches.length) return
-            })
-        )
-    }
+            if (entry.isDirectory()) {
+                subFolders.push(currentPath)
+                return
+            }
 
-    function checkFileForMatch(currentFileName: string, folderPath: string) {
-        if (matches.length) return
+            if (entry.name === fileName) {
+                found = currentPath
+            }
+        })
 
-        // simple search: match by file name only
-        if (currentFileName === fileName) {
-            matches.push(path.join(folderPath, currentFileName))
-        }
+        if (found) return found
+
+        // ---- Scan files in subfolders
+        await asyncPool(8, subFolders, async (sub) => {
+            if (found) return
+
+            const result = await searchInFolder(sub, level + 1)
+            if (result) {
+                found = result
+            }
+        })
+
+        return found
     }
 }
 
-async function checkIsFolder(filePath: string): Promise<boolean> {
-    return new Promise((resolve) =>
-        fs.stat(filePath, (err, stats) => {
-            resolve(err ? false : stats.isDirectory())
-        })
-    )
+// poolLimit = number of concurrent promises
+async function asyncPool<T>(poolLimit: number, array: T[], iteratorFn: (item: T) => Promise<void>) {
+    const ret: Promise<void>[] = []
+    const executing: Promise<void>[] = []
+
+    for (const item of array) {
+        if ((iteratorFn as any).shouldStop?.()) break
+        const p = Promise.resolve().then(() => iteratorFn(item))
+        ret.push(p)
+
+        if (poolLimit <= array.length) {
+            const e: Promise<void> = p.then(() => {
+                executing.splice(executing.indexOf(e), 1)
+            })
+            executing.push(e)
+
+            if (executing.length >= poolLimit) {
+                await Promise.race(executing)
+            }
+        }
+    }
+
+    await Promise.all(ret)
 }
 
 /////
