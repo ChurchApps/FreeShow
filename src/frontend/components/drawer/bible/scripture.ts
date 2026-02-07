@@ -161,9 +161,11 @@ export async function getActiveScripturesContent(selectedVerses: (number | strin
                 })
 
                 const splitLongVerses = get(scriptureSettings).splitLongVerses
+                const expandedSelectedVerses: (number | string)[][] = selectedVerses!.map((chapterVs) => [...chapterVs])
                 const allVersesText: { [key: string]: string }[] = []
                 selected.forEach((verses, i) => {
                     const versesText: { [key: string]: string } = {}
+                    const expansions: Map<string, string[]> = new Map()
 
                     // WIP if 1_1, 1_2, 1_3 all add up to over the splitted verse length combined, then merge into "1"
 
@@ -174,16 +176,40 @@ export async function getActiveScripturesContent(selectedVerses: (number | strin
                         const splittedVerses = getSplittedVerses({ [id]: text })
 
                         const newVerseId = id + (subverse ? `_${subverse}` : "")
-                        if (splitLongVerses && splittedVerses[newVerseId]) versesText[v] = splittedVerses[newVerseId]
-                        else versesText[v] = text
+                        if (splitLongVerses && splittedVerses[newVerseId]) {
+                            versesText[v] = splittedVerses[newVerseId]
+                        } else if (splitLongVerses && !subverse && Object.keys(splittedVerses).length > 1) {
+                            // Verse was split into sub-parts (e.g. "1_1", "1_2") but lookup by base ID failed
+                            const splitKeys = Object.keys(splittedVerses)
+                            splitKeys.forEach((key) => {
+                                versesText[key] = splittedVerses[key]
+                            })
+                            expansions.set(String(v), splitKeys)
+                        } else {
+                            versesText[v] = text
+                        }
                     })
+
+                    // Expand selectedVerses to include split sub-verse IDs
+                    if (splitLongVerses && expansions.size > 0 && expandedSelectedVerses[i]) {
+                        const newList: (number | string)[] = []
+                        expandedSelectedVerses[i].forEach((v) => {
+                            const vStr = String(v)
+                            if (expansions.has(vStr)) {
+                                newList.push(...expansions.get(vStr)!)
+                            } else {
+                                newList.push(v)
+                            }
+                        })
+                        expandedSelectedVerses[i] = newList
+                    }
 
                     allVersesText.push(versesText)
                 })
 
                 // const reference = Chapter.getVerse(selectedVerses[0]).getReference()
 
-                return { id, isApi: scriptureData.api, version, metadata, book: bookName, bookAbbr, bookId: active?.book || "", chapters: selectedChapters, verses: allVersesText, activeVerses: selectedVerses, attributionString, attributionRequired } as BibleContent
+                return { id, isApi: scriptureData.api, version, metadata, book: bookName, bookAbbr, bookId: active?.book || "", chapters: selectedChapters, verses: allVersesText, activeVerses: expandedSelectedVerses, attributionString, attributionRequired } as BibleContent
             })
             .filter(Boolean)
     )) as BibleContent[]
@@ -1112,7 +1138,7 @@ export function getSplittedVerses(verses: { [key: string]: string }) {
 
 export function splitText(value: string, maxLength: number, tolerance: number = 0) {
     if (!value) return []
-    if (/<[^>]+>/.test(value)) return splitHtmlText(value, maxLength)
+    if (/<[^>]+>/.test(value)) return splitHtmlText(value, maxLength, tolerance)
     return splitPlainText(value, maxLength, tolerance)
 }
 
@@ -1166,6 +1192,8 @@ function splitPlainText(value: string, maxLength: number, tolerance: number = 0)
     const segments: string[] = []
     const proportion = Math.floor(maxLength * 0.3)
     const upperBound = Math.max(maxLength - 1, 0)
+    // When tolerance > 0, segments up to maxLength+tolerance are acceptable
+    const acceptLength = tolerance > 0 ? maxLength + tolerance : maxLength
     let minSegmentLength = Math.max(10, proportion)
     if (upperBound > 0) minSegmentLength = Math.min(minSegmentLength, upperBound)
     if (minSegmentLength < 1) minSegmentLength = 1
@@ -1174,7 +1202,7 @@ function splitPlainText(value: string, maxLength: number, tolerance: number = 0)
         const current = queue.shift()?.trim()
         if (!current) continue
 
-        if (current.length <= maxLength) {
+        if (current.length <= acceptLength) {
             segments.push(current)
             continue
         }
@@ -1206,13 +1234,19 @@ function splitPlainText(value: string, maxLength: number, tolerance: number = 0)
     }
 
     if (segments.length > 1 && segments[segments.length - 1].length < minSegmentLength) {
-        segments[segments.length - 2] = `${segments[segments.length - 2]} ${segments.pop()}`.trim()
+        const last = segments[segments.length - 1]
+        const combined = `${segments[segments.length - 2]} ${last}`.trim()
+        // Don't merge back if it would exceed the acceptable length (defeats the split)
+        if (tolerance === 0 || combined.length <= acceptLength) {
+            segments[segments.length - 2] = combined
+            segments.pop()
+        }
     }
 
     return segments
 }
 
-function splitHtmlText(value: string, maxLength: number) {
+function splitHtmlText(value: string, maxLength: number, tolerance: number = 0) {
     const tokens = tokenizeHtml(value)
     if (!tokens.length) return [value]
 
@@ -1251,7 +1285,7 @@ function splitHtmlText(value: string, maxLength: number) {
                 continue
             }
 
-            const splitIndex = findHtmlSplitIndex(remaining, capacity)
+            const splitIndex = findHtmlSplitIndex(remaining, capacity, tolerance)
             const chunk = remaining.slice(0, splitIndex)
             current += chunk
             currentLength += chunk.length
@@ -1306,8 +1340,22 @@ function getTagName(tag: string) {
     return match ? match[1] : ""
 }
 
-function findHtmlSplitIndex(text: string, capacity: number) {
+function findHtmlSplitIndex(text: string, capacity: number, tolerance: number = 0) {
     if (text.length <= capacity) return text.length
+
+    // Tolerance-aware punctuation split
+    if (tolerance > 0) {
+        const windowMin = Math.max(0, capacity - tolerance)
+        const windowMax = Math.min(text.length - 1, capacity + tolerance)
+        for (let i = windowMin; i <= windowMax; i++) {
+            if (/[.,;:!?]/.test(text.charAt(i))) {
+                let breakPos = i + 1
+                breakPos = adjustSplitIndexForBracket(text, breakPos)
+                return Math.max(0, breakPos)
+            }
+        }
+    }
+
     const slice = text.slice(0, capacity)
     const breakChars = [" ", "\n", "\t", "-", ","]
     let splitIndex = -1
@@ -1344,22 +1392,51 @@ function getSplitHalves(text: string, maxLength: number, tolerance: number = 0):
 
     let pivot = -1
 
-    // Only use smart punctuation splitting if tolerance > 0
+    // When tolerance > 0, search for punctuation near the CENTER for balanced splits
     if (tolerance > 0) {
-        const windowMin = maxLength - tolerance
-        const windowMax = Math.min(text.length - 1, maxLength + tolerance)
+        const center = Math.floor(text.length / 2)
+        const windowMin = Math.max(0, center - tolerance)
+        const windowMax = Math.min(text.length - 1, center + tolerance)
 
-        // Search for punctuation ONLY within [windowMin, windowMax]
+        // Find punctuation closest to center (best balance)
+        let bestPivot = -1
+        let bestDistance = Infinity
         for (let i = windowMin; i <= windowMax; i++) {
             const ch = text.charAt(i)
             if (/[.,;:!?]/.test(ch)) {
-                pivot = i + 1
-                break
+                const distance = Math.abs(i - center)
+                if (distance < bestDistance) {
+                    bestDistance = distance
+                    bestPivot = i + 1
+                }
+            }
+        }
+
+        if (bestPivot !== -1) {
+            pivot = bestPivot
+        }
+
+        // No punctuation near center — try nearest space to center
+        if (pivot === -1) {
+            let leftSpace = -1
+            let rightSpace = -1
+            for (let i = center; i >= windowMin; i--) {
+                if (text[i] === " ") { leftSpace = i; break }
+            }
+            for (let i = center; i <= windowMax; i++) {
+                if (text[i] === " ") { rightSpace = i; break }
+            }
+            if (leftSpace !== -1 && rightSpace !== -1) {
+                pivot = (center - leftSpace <= rightSpace - center) ? leftSpace : rightSpace
+            } else if (leftSpace !== -1) {
+                pivot = leftSpace
+            } else if (rightSpace !== -1) {
+                pivot = rightSpace
             }
         }
     }
 
-    // Original behavior: find space (used when tolerance=0 or no punctuation found)
+    // Original behavior: find space near maxLength (used when tolerance=0 or no split found)
     if (pivot === -1) {
         pivot = text.lastIndexOf(" ", maxLength)
         if (pivot <= 0) pivot = text.indexOf(" ", maxLength)
