@@ -810,7 +810,7 @@ export function updateOut(showId: string, index: number, layout: LayoutRef[], ex
             // let clear action trigger first
             setTimeout(() => {
                 data.audio?.forEach((audio: string) => {
-                    const a = clone(_show(showId).get("media")[audio])
+                    const a = clone(_show(showId).get("media")?.[audio] || {})
                     const cloudId = get(driveData).mediaId
                     if (cloudId && cloudId !== "default") a.path = a.cloud?.[cloudId] || a.path
 
@@ -1593,6 +1593,7 @@ const scriptureDynamicValues = {
 }
 
 export function getVariableNameId(name: string) {
+    if (typeof name !== "string") return ""
     return name.toLowerCase().trim().replaceAll(" ", "_")
 }
 

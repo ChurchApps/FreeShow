@@ -49,7 +49,7 @@ export class EditboxHelper {
         newLine.text = []
 
         line.text?.forEach((text) => {
-            const value = text.value
+            const value = text.value || ""
             const parts = value.replace("\r", "").split("\n")
             newLine.text.push({ style: text.style, value: parts[0] })
             if (parts.length > 1) {
@@ -92,14 +92,17 @@ export class EditboxHelper {
             if (!secondLines.at(0)?.text.length) secondLines.shift()
 
             function splitLines(text) {
+                const value = text.value || ""
+
                 const segmentStart = currentIndex
-                const segmentEnd = currentIndex + text.value.length
+                const segmentEnd = currentIndex + value.length
                 currentIndex = segmentEnd
 
                 // Entire segment is before split point
                 if (start < 0 || segmentEnd <= start) {
+                    if (!firstLines.length) firstLines.push({ align: line.align, text: [] })
                     firstLines[firstLines.length - 1].text.push(text)
-                    textPos += text.value.length
+                    textPos += value.length
                     return
                 }
 
@@ -107,7 +110,7 @@ export class EditboxHelper {
                 if (segmentStart >= start) {
                     if (!secondLines.length) secondLines.push({ align: line.align, text: [] })
                     secondLines[secondLines.length - 1].text.push(text)
-                    textPos += text.value.length
+                    textPos += value.length
                     return
                 }
 
@@ -116,17 +119,18 @@ export class EditboxHelper {
                 const pos = start - segmentStart
 
                 if (pos > 0) {
+                    if (!firstLines.length) firstLines.push({ align: line.align, text: [] })
                     firstLines[firstLines.length - 1].text.push({
                         style: text.style,
-                        value: text.value.slice(0, pos)
+                        value: value.slice(0, pos)
                     })
                 }
                 secondLines[secondLines.length - 1].text.push({
                     style: text.style,
-                    value: text.value.slice(pos)
+                    value: value.slice(pos)
                 })
 
-                textPos += text.value.length
+                textPos += value.length
             }
         })
 

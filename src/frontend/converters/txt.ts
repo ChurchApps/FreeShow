@@ -304,6 +304,7 @@ function createSlides(labeled: { type: string; text: string }[], noFormatting) {
 
     // add children
     Object.entries(addedChildren).forEach(([parentId, children]) => {
+        if (!slides[parentId]) return
         slides[parentId].children = [...(slides[parentId].children || []), ...(children || [])]
     })
 

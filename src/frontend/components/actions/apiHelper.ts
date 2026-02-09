@@ -815,6 +815,7 @@ export async function getPDFThumbnails({ path }: API_media) {
 export function changeDrawZoom(data: API_draw_zoom) {
     const size = data.size || 100
     drawSettings.update((a) => {
+        if (!a.zoom) a.zoom = {}
         a.zoom.size = size
         return a
     })

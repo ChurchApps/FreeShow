@@ -570,12 +570,15 @@ export function splitItemInTwo(slideRef: LayoutRef, itemIndex: number, sel: { st
         if (!firstLines.at(-1)?.text.length) firstLines.pop()
 
         function splitLines(text) {
-            currentIndex += text.value.length
+            const value = text.value || ""
+
+            currentIndex += value.length
             if (sel[i]?.start !== undefined) start = sel[i].start!
 
             if (start < 0 || currentIndex < start) {
+                if (!firstLines.length) firstLines.push({ align: line.align, text: [] })
                 firstLines[firstLines.length - 1].text.push(text)
-                textPos += text.value.length
+                textPos += value.length
                 return
             }
 
@@ -583,17 +586,18 @@ export function splitItemInTwo(slideRef: LayoutRef, itemIndex: number, sel: { st
             const pos = (sel[i]?.start || 0) - textPos
 
             if (pos > 0) {
+                if (!firstLines.length) firstLines.push({ align: line.align, text: [] })
                 firstLines[firstLines.length - 1].text.push({
                     style: text.style,
-                    value: text.value.slice(0, pos)
+                    value: value.slice(0, pos)
                 })
             }
             secondLines[secondLines.length - 1].text.push({
                 style: text.style,
-                value: text.value.slice(0, text.value.length)
+                value: value.slice(0, value.length)
             })
 
-            textPos += text.value.length
+            textPos += value.length
         }
     })
 
@@ -897,6 +901,7 @@ export function createVirtualBreaks(lines: Line[], skip = false) {
         if (!Array.isArray(line?.text)) return
 
         line.text.forEach((text) => {
+            if (!text.value) text.value = ""
             text.value = replaceVirtualBreaks(text.value, replaceWith)
         })
     })

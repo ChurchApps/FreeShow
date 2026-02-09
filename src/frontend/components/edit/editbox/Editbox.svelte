@@ -142,7 +142,7 @@
     let mediaShouldBeBackground = false
     function checkMedia() {
         // WIP return if background exists
-        if (!item?.src || (ref?.type || "show") !== "show" || !item.style.includes("width:1920") || !item.style.includes("height:1080")) {
+        if (!item?.src || (ref?.type || "show") !== "show" || !item.style?.includes("width:1920") || !item.style?.includes("height:1080")) {
             mediaShouldBeBackground = false
             return
         }

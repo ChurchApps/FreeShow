@@ -939,11 +939,14 @@ const clickActions = {
     },
     disable: (obj: ObjData) => {
         if (obj.sel?.id === "slide") {
+            const showId = get(activeShow)?.id
+            if (!showId) return
+
             showsCache.update((a) => {
                 obj.sel!.data.forEach((b) => {
                     if (!b) return
                     const ref = getLayoutRef()?.[b.index] || {}
-                    const slides = a[get(activeShow)!.id].layouts?.[a[get(activeShow)!.id]?.settings?.activeLayout]?.slides
+                    const slides = a[showId].layouts?.[a[showId]?.settings?.activeLayout]?.slides
                     if (!slides) return
 
                     if (ref.type === "child") {
@@ -1927,7 +1930,7 @@ export async function format(id: string, obj: ObjData, data: any = null) {
             .map((a) => a.id)
     } else if (obj.sel?.id?.includes("slide")) {
         if (!Array.isArray(obj.sel.data)) return
-        slideIds = obj.sel.data.map((a) => ref[a.index].id)
+        slideIds = obj.sel.data.map((a) => ref[a.index]?.id).filter(Boolean)
     } else {
         slideIds = [
             _show()

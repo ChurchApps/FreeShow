@@ -30,7 +30,7 @@
     const isOverlay = edit.type === "overlay"
     const isTemplate = edit.type === "template"
 
-    let itemIndex = (isStage ? $activeStage : edit).items[0]
+    let itemIndex = Number((isStage ? $activeStage : edit).items[0] || 0)
     let slide = isStage ? $stageShows[$activeStage.id || ""] : isOverlay ? $overlays[edit.id!] : isTemplate ? $templates[edit.id!] : $showsCache[showId]?.slides?.[slideId]
     let item = slide?.items[itemIndex]
     let itemText = getItemText(item)

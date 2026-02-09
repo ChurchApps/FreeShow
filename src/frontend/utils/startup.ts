@@ -20,7 +20,15 @@ import { save, unsavedUpdater } from "./save"
 let initialized = false
 let startupProfile = ""
 
-export function startup() {
+export async function startup() {
+    // wait for window.api to be available (preload script might not be ready yet) - not likely
+    await waitUntilValueIsDefined(() => window.api, 20, 5000)
+
+    if (!window.api) {
+        console.error("window.api is not available after waiting")
+        return
+    }
+
     window.api.receive(
         STARTUP,
         (msg) => {

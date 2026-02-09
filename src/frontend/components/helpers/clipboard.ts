@@ -1144,10 +1144,13 @@ const duplicateActions = {
         updateSortedStageItems()
     },
     layout: (data: any) => {
-        const layoutId = data?.[0] || get(showsCache)[get(activeShow)!.id]?.settings?.activeLayout
+        const showId = get(activeShow)?.id
+        if (!showId) return
+
+        const layoutId = data?.[0] || get(showsCache)[showId]?.settings?.activeLayout
         if (!layoutId) return
 
-        const newLayout = clone(get(showsCache)[get(activeShow)!.id].layouts[layoutId])
+        const newLayout = clone(get(showsCache)[showId].layouts[layoutId])
         if (!newLayout) return
 
         newLayout.name += " 2"

@@ -43,6 +43,9 @@
 
     const renameAction = {
         slide: () => {
+            const showId = $activeShow?.id
+            if (!showId) return
+
             const ref = getLayoutRef()
 
             // get selected ids
@@ -77,9 +80,9 @@
                 const slideId = ref.id
 
                 // remove global group if active
-                if ($activeShow && $showsCache[$activeShow.id].slides[slideId].globalGroup) history({ id: "UPDATE", newData: { data: null, key: "slides", keys: [slideId], subkey: "globalGroup" }, oldData: { id: $activeShow?.id }, location: { page: "show", id: "show_key" } })
+                if ($activeShow && $showsCache[showId].slides[slideId].globalGroup) history({ id: "UPDATE", newData: { data: null, key: "slides", keys: [slideId], subkey: "globalGroup" }, oldData: { id: showId }, location: { page: "show", id: "show_key" } })
 
-                history({ id: "UPDATE", newData: { data: groupName, key: "slides", keys: [slideId], subkey: "group" }, oldData: { id: $activeShow?.id }, location: { page: "show", id: "show_key" } })
+                history({ id: "UPDATE", newData: { data: groupName, key: "slides", keys: [slideId], subkey: "group" }, oldData: { id: showId }, location: { page: "show", id: "show_key" } })
 
                 if (!ref?.parent) return
                 // make child a parent
@@ -91,12 +94,12 @@
                 history({
                     id: "UPDATE",
                     newData: { data: children.filter((a: string) => a !== ref.id), key: "slides", keys: [ref.parent.id], subkey: "children" },
-                    oldData: { id: $activeShow?.id },
+                    oldData: { id: showId },
                     location: { page: "show", id: "show_key" }
                 })
 
                 let currentLayouts: SlideData[][] = _show().layouts().get("slides")
-                let layoutIds: string[] = Object.keys($showsCache[$activeShow!.id].layouts)
+                let layoutIds: string[] = Object.keys($showsCache[showId].layouts)
                 let newLayouts: { [key: string]: SlideData[] } = {}
 
                 currentLayouts.forEach((layout, i: number) => {
@@ -116,7 +119,7 @@
                 })
 
                 // set updated layout slides
-                history({ id: "UPDATE", newData: { key: "layouts", keys: layoutIds, subkey: "slides", data: newLayouts }, oldData: { id: $activeShow?.id }, location: { page: "show", id: "show_key" } })
+                history({ id: "UPDATE", newData: { key: "layouts", keys: layoutIds, subkey: "slides", data: newLayouts }, oldData: { id: showId }, location: { page: "show", id: "show_key" } })
             })
         },
         group: () => {

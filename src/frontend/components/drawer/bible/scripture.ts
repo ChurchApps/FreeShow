@@ -209,7 +209,7 @@ export async function getActiveScripturesContent(selectedVerses: (number | strin
 
                 // const reference = Chapter.getVerse(selectedVerses[0]).getReference()
 
-                return { id, isApi: scriptureData.api, version, metadata, book: bookName, bookAbbr, bookId: active?.book || "", chapters: selectedChapters, verses: allVersesText, activeVerses: expandedSelectedVerses, attributionString, attributionRequired } as BibleContent
+                return { id, isApi: !!scriptureData?.api, version, metadata, book: bookName, bookAbbr, bookId: active?.book || "", chapters: selectedChapters, verses: allVersesText, activeVerses: expandedSelectedVerses, attributionString, attributionRequired } as BibleContent
             })
             .filter(Boolean)
     )) as BibleContent[]
@@ -238,9 +238,10 @@ export async function playScripture() {
     if (get(outLocked)) return
 
     const biblesContent = await getActiveScripturesContent()
-    if (!biblesContent?.length) return
-    const selectedChapters = biblesContent[0]?.chapters || []
-    const selectedVerses = biblesContent[0]?.activeVerses || []
+    if (!biblesContent?.length || !biblesContent[0]) return
+
+    const selectedChapters = biblesContent[0].chapters || []
+    const selectedVerses = biblesContent[0].activeVerses || []
 
     const { slides, attributions } = await getScriptureSlidesNew({ biblesContent, selectedChapters, selectedVerses }, true)
 
@@ -292,6 +293,7 @@ export async function playScripture() {
     // track
     const reference = `${biblesContent[0].book} ${fullReferenceRange || biblesContent[0].chapters[0]}`.trim()
     biblesContent.forEach((translation) => {
+        if (!translation) return
         const name = translation.version || ""
         const apiId = translation.isApi ? get(scriptures)[translation.id]?.id || translation.id || "" : null
         if (name || apiId) trackScriptureUsage(name, apiId, reference)
@@ -526,7 +528,7 @@ function splitContent(content: BibleContent[], perSlide: number): BibleContent[]
 
                     // Copy the verse text for the active verse
                     const verseKey = String(verseContext.verse)
-                    if (bible.verses[chapterIndex] && verseKey in bible.verses[chapterIndex]) {
+                    if (bible?.verses[chapterIndex] && verseKey in bible.verses[chapterIndex]) {
                         slideVersesText[chapterIndex][verseKey] = bible.verses[chapterIndex][verseKey]
                     }
                 }
@@ -562,6 +564,7 @@ export async function getScriptureSlidesNew(data: any, onlyOne = false, disableR
     const selectedVerses = data.selectedVerses as (number | string)[][]
     // const biblesContent = (data.biblesContent || []).filter(Boolean) as BibleContent[]
     const biblesContent = (await getActiveScripturesContent(selectedVerses)) || []
+    if (!biblesContent?.length || !biblesContent[0]) return { slides: [], groupNames: [], attributions: [] }
 
     let perSlide = get(scriptureSettings).versesPerSlide || 3
     // Count total verses across all chapters
@@ -868,6 +871,8 @@ export function getScriptureSlides({ biblesContent, selectedChapters, selectedVe
     const combineWithText = templateTextItems.length <= 1 || get(scriptureSettings).combineWithText
 
     biblesContent.forEach((bible, bibleIndex) => {
+        if (!bible) return
+
         const allVerses: { text: string; chapterNumber: number; verseId: string }[] = []
         selectedChapters.forEach((chapterNumber, chapterIndex) => {
             const chapterVerses = selectedVerses[chapterIndex] || []
@@ -1421,13 +1426,19 @@ function getSplitHalves(text: string, maxLength: number, tolerance: number = 0):
             let leftSpace = -1
             let rightSpace = -1
             for (let i = center; i >= windowMin; i--) {
-                if (text[i] === " ") { leftSpace = i; break }
+                if (text[i] === " ") {
+                    leftSpace = i
+                    break
+                }
             }
             for (let i = center; i <= windowMax; i++) {
-                if (text[i] === " ") { rightSpace = i; break }
+                if (text[i] === " ") {
+                    rightSpace = i
+                    break
+                }
             }
             if (leftSpace !== -1 && rightSpace !== -1) {
-                pivot = (center - leftSpace <= rightSpace - center) ? leftSpace : rightSpace
+                pivot = center - leftSpace <= rightSpace - center ? leftSpace : rightSpace
             } else if (leftSpace !== -1) {
                 pivot = leftSpace
             } else if (rightSpace !== -1) {
@@ -1494,7 +1505,8 @@ export async function createScriptureShow() {
     const selectedVerses = biblesContent?.[0]?.activeVerses || []
     // const verseRange = joinRange(selectedVerses)
     // if (!verseRange) return
-    if (!selectedVerses[0]?.length) return
+    if (!selectedVerses[0]?.length) return // unfocus (search input) so slide can be started
+    ;(document.activeElement as any)?.blur()
 
     const show = await getScriptureShow(biblesContent)
     if (!show) return
@@ -1503,13 +1515,13 @@ export async function createScriptureShow() {
 }
 
 export async function getScriptureShow(biblesContent: BibleContent[] | null) {
-    if (!biblesContent?.length) return null
+    if (!biblesContent?.length || !biblesContent[0]) return null
 
     const templateId = getScriptureTemplateId()
     const useOldSystem = useOldScriptureSystem(templateId)
 
-    const selectedChapters = biblesContent[0]?.chapters || []
-    const selectedVerses = biblesContent?.[0]?.activeVerses || []
+    const selectedChapters = biblesContent[0].chapters || []
+    const selectedVerses = biblesContent[0].activeVerses || []
 
     let slides: Item[][] = [[]]
     let groupNames: string[] = []

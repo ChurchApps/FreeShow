@@ -244,6 +244,7 @@
     let activeFile: null | number = null
     $: mediaFilesOnly = searchedFiles.filter((a) => !a.isFolder)
     function hightlightActive() {
+        if (!Array.isArray(mediaFilesOnly)) return
         const activeShowPath = $activeShow?.type === "image" || $activeShow?.type === "video" ? $activeShow?.id : ""
         const index = mediaFilesOnly.findIndex((a) => a.path === activeShowPath)
         activeFile = index < 0 ? null : index

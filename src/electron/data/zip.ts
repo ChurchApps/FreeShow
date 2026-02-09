@@ -208,14 +208,17 @@ export function isZip(path: string): Promise<boolean> {
             if (openError) {
                 console.error(openError)
                 resolve(false)
+                return
             }
 
             fs.read(fd, initialBuffer, 0, 4, 0, (readError, _bytesRead, buffer) => {
+                fs.close(fd, (closeError) => {
+                    if (closeError) console.error(closeError)
+                })
+
                 if (readError) {
-                    fs.close(fd, (closeError) => {
-                        console.error(closeError || readError)
-                        resolve(false)
-                    })
+                    console.error(readError)
+                    resolve(false)
                     return
                 }
 

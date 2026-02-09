@@ -140,7 +140,13 @@ export function writeFile(filePath: string, content: string | NodeJS.ArrayBuffer
 }
 
 export function deleteFile(filePath: string) {
-    fs.unlinkSync(filePath)
+    try {
+        fs.unlinkSync(filePath)
+        return true
+    } catch (err) {
+        actionComplete(err, "Could not delete file")
+        return false
+    }
 }
 
 export function deleteFileAsync(filePath: string) {
@@ -550,8 +556,14 @@ async function extractCodecInfo(data: { path: string }): Promise<{ path: string;
             const mp4boxfile = MP4Box.createFile()
             mp4boxfile.onError = (err: Error) => console.error("MP4Box error:", err)
             mp4boxfile.onReady = (info: { tracks: { codec: string }[]; [key: string]: any }) => {
-                const codecs = info.tracks.map((track: { codec: string }) => track.codec)
                 const mimeType = getMimeType(data.path)
+
+                if (!Array.isArray(info?.tracks)) {
+                    resolve({ ...data, codecs: [], mimeType, mimeCodec: "" })
+                    return
+                }
+
+                const codecs = info.tracks.map((track: { codec: string }) => track.codec)
                 const mimeCodec = `${mimeType}; codecs="${codecs.join(", ")}"`
                 resolve({ ...data, codecs, mimeType, mimeCodec })
             }
@@ -599,6 +611,11 @@ async function extractSubtitles(data: { path: string }): Promise<{ path: string;
         const mp4boxfile = MP4Box.createFile()
         mp4boxfile.onError = (e: Error) => console.error("MP4Box error:", e)
         mp4boxfile.onReady = (info: any) => {
+            if (!Array.isArray(info?.tracks)) {
+                resolve({ ...data, tracks: [] })
+                return
+            }
+
             const tracks: Subtitle[] = []
             let trackCount = 0
             let completed = 0

@@ -1232,6 +1232,7 @@ export function setTemplateStyle(outSlide: OutSlide | null, currentStyle: Styles
     return newItems
 
     function checkSpecificOutput(item: Item) {
+        if (!item) return false
         return !item.bindings?.length || item.bindings.includes(outputId)
     }
 }

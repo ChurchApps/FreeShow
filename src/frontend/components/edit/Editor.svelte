@@ -50,7 +50,7 @@
     {:else if $activeEdit.slide !== undefined && $activeEdit.slide !== null}
         {#if isActiveShowInUseByCloudUser({ $activeShow, $cloudUsers })}
             <div class="darken">
-                <p style="text-align: center;font-size: 1.5em;display: block;background-color: black;padding: 10px;border-radius: 4px;">Currently in use by another cloud user!</p>
+                <p style="text-align: center;font-size: 1.5em;display: block;background-color: black;padding: 10px;border-radius: 4px;">Currently in use on another computer!</p>
             </div>
         {/if}
 

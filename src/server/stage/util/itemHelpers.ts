@@ -197,6 +197,7 @@ export function getDynamicValue(id: string) {
 /////
 
 function getVariableNameId(name: string) {
+    if (typeof name !== "string") return ""
     return name.toLowerCase().trim().replaceAll(" ", "_")
 }
 

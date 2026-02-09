@@ -63,6 +63,8 @@
                 let noName = !$playerVideos[playerId]?.name || $playerVideos[playerId].name.includes($playerVideos[playerId].id)
                 if (title && noName) {
                     playerVideos.update((a) => {
+                        if (!a[playerId]) return a
+
                         a[playerId].name = title
                         return a
                     })

@@ -440,7 +440,9 @@ export const _updaters = {
 
     show_key: {
         store: showsCache,
-        initialize: (data = {}) => {
+        initialize: (data) => {
+            if (typeof data !== "object") return data
+
             if (!data.timestamps) data.timestamps = {}
             data.timestamps.modified = Date.now()
             return data

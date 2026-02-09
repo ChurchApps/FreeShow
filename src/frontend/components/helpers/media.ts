@@ -353,6 +353,7 @@ export function getMediaStyle(mediaObj: MediaStyle | undefined, currentStyle: St
 }
 
 export function getMediaLayerType(path: string, style: MediaStyle | null): "" | "background" | "foreground" {
+    if (!path) return ""
     if (style?.videoType) return style.videoType as "background" | "foreground"
 
     // get multiple matching folder paths if children are added
