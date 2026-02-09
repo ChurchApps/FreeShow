@@ -108,6 +108,13 @@
 </script>
 
 <div class="icons" style="zoom: {zoom};{style}">
+    {#if slide.locked}
+        <div>
+            <div class="button">
+                <Icon id="lock" size={0.9} white />
+            </div>
+        </div>
+    {/if}
     {#if layoutSlide.disabled}
         <div>
             <div class="button">

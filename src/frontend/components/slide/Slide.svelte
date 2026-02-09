@@ -193,7 +193,7 @@
     }
 
     let profile = getAccess("shows")
-    $: isLocked = show?.locked || profile.global === "read" || profile[show?.category || ""] === "read"
+    $: isLocked = show?.locked || slide?.locked || profile.global === "read" || profile[show?.category || ""] === "read"
 
     // correct view order based on arranged order in Items.svelte (?.reverse())
     $: itemsList = clone(slide.items) || []

@@ -614,6 +614,25 @@ const slideDrop = {
         history.id = "slide"
         let ref = getLayoutRef(showId)
 
+        // Check if any selected slides are locked
+        if (drag.id === "slide") {
+            const currentShow = get(showsCache)[showId]
+            const lockedSlides: string[] = []
+            drag.data.forEach(({ index }: any) => {
+                if (!ref[index]) return
+                const slideId = ref[index].type === "parent" ? ref[index].id : ref[index].parent?.id
+                if (slideId && currentShow?.slides?.[slideId]?.locked) {
+                    lockedSlides.push(slideId)
+                }
+            })
+
+            if (lockedSlides.length > 0) {
+                alertMessage.set("error.slides_locked")
+                activePopup.set("alert")
+                return history
+            }
+        }
+
         const slides: { [key: string]: Slide } = _show(showId).get().slides
         const oldLayout = _show(showId).layouts("active").get()[0]?.slides || []
         history.oldData = clone({ layout: oldLayout, slides })

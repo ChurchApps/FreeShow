@@ -84,6 +84,19 @@
             if (!$shows[$selected.data[0]?.id]?.locked) return
             enabled = !!$shows[$selected.data[0].id].locked
         },
+        lock_slide: () => {
+            if (!$selected.data?.[0] || $selected.id !== "slide") return
+            
+            const ref = getLayoutRef()
+            const slideIndex = $selected.data[0]?.index
+            const slideId = ref[slideIndex]?.type === "parent" ? ref[slideIndex]?.id : ref[slideIndex]?.parent?.id
+            
+            if (!slideId) return
+            
+            const show = $showsCache[$activeShow?.id || ""]
+            const isLocked = show?.slides?.[slideId]?.locked || false
+            enabled = isLocked
+        },
         disable: () => {
             let isEnabled = false
             if ($selected.id === "slide" && $activeShow) {

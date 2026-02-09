@@ -589,6 +589,35 @@ const clickActions = {
             return a
         })
     },
+    lock_slide: (obj: ObjData) => {
+        if (!obj.sel?.data) return
+
+        const ref = getLayoutRef()
+        const slideIndexes = obj.sel.data.map((a) => a.index)
+        const slideIds = slideIndexes.map((index) => ref[index]?.id).filter(Boolean)
+        
+        if (!slideIds.length) return
+
+        // Check if first slide is locked to determine toggle state
+        const firstSlideId = slideIds[0]
+        const currentShow = get(showsCache)[get(activeShow)?.id || ""]
+        const shouldBeLocked = !currentShow?.slides?.[firstSlideId]?.locked
+
+        showsCache.update((a) => {
+            const showId = get(activeShow)?.id
+            if (!showId || !a[showId]) return a
+
+            slideIds.forEach((slideId) => {
+                if (!a[showId].slides[slideId]) return
+                if (shouldBeLocked) {
+                    a[showId].slides[slideId].locked = true
+                } else {
+                    delete a[showId].slides[slideId].locked
+                }
+            })
+            return a
+        })
+    },
     category_action: (obj: ObjData) => {
         const id = obj.sel?.data[0]
         if (!id) return
@@ -1847,6 +1876,23 @@ export async function removeSlide(data: any[], type: "delete" | "remove" = "dele
     const ref = getLayoutRef()
     const parents: any[] = []
     const childs: any[] = []
+
+    // Check if any selected slides are locked
+    const currentShow = get(showsCache)[get(activeShow)?.id || ""]
+    const lockedSlides: string[] = []
+    data.forEach(({ index }: any) => {
+        if (!ref[index]) return
+        const slideId = ref[index].type === "parent" ? ref[index].id : ref[index].parent?.id
+        if (slideId && currentShow?.slides?.[slideId]?.locked) {
+            lockedSlides.push(slideId)
+        }
+    })
+
+    if (lockedSlides.length > 0) {
+        const prompt = translateText("error.slides_locked")
+        await confirmCustom(prompt)
+        return
+    }
 
     if (type === "delete") {
         const selectedInDifferentLayout = checkIfAddedToDifferentLayout(ref, data)
