@@ -10,6 +10,7 @@
     import { translateText } from "../../../utils/language"
     import { save } from "../../../utils/save"
     import { convertAutosave } from "../../../values/autosave"
+    import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { getTimeFromInterval, joinTimeBig } from "../../helpers/time"
     import InputRow from "../../input/InputRow.svelte"
@@ -263,6 +264,9 @@
     <InputRow>
         <MaterialButton on:click={() => contentProviderConnect("churchApps")} style="flex: 1;" icon="login">
             <T id="settings.connect_to" replace={["ChurchApps"]} />
+        </MaterialButton>
+        <MaterialButton on:click={() => sendMain(Main.URL, "https://freeshow.app/docs/cloud")} title="ChurchApps Documentation" white>
+            <Icon id="help" white />
         </MaterialButton>
     </InputRow>
 {:else}
