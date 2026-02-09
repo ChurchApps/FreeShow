@@ -553,8 +553,15 @@
             openChapter([result.chapter])
 
             // VERSES
-            if (result.verses.length) openVerse([result.verses])
-            else selectAllTimeout = setTimeout(selectAllVerses)
+            if (result.verses.length) {
+                if (splittedVerses) {
+                    openVerse([splittedVerses.filter((a) => result.verses.includes(a.number)).map((a) => a.id)])
+                } else {
+                    openVerse([result.verses])
+                }
+            } else {
+                selectAllTimeout = setTimeout(selectAllVerses)
+            }
         }
     }
 
