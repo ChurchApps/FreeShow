@@ -414,7 +414,8 @@ export function closeContextMenu() {
 function createNew() {
     const selectId = get(selected)?.id || get(focusedArea)
 
-    if (selectId === "slide")
+    if (get(activePage) === "show" && get(activeDrawerTab) === "scripture") createScriptureShow()
+    else if (selectId === "slide")
         history({ id: "SLIDES" }) // show
     else if (selectId === "show")
         addSection() // project
@@ -429,7 +430,6 @@ function createNew() {
     else if (["action", "variable", "trigger"].includes(selectId)) activePopup.set(selectId as any)
     else if (get(activePage) === "edit") addItem("text")
     else if (get(activePage) === "stage") history({ id: "UPDATE", location: { page: "stage", id: "stage" } })
-    else if (get(activePage) === "show" && get(activeDrawerTab) === "scripture") createScriptureShow()
     else {
         console.info("CREATE NEW:", selectId)
         activePopup.set("show")
