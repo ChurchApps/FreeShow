@@ -143,14 +143,14 @@ export function deleteFile(filePath: string) {
     fs.unlinkSync(filePath)
 }
 
-// export function deleteFileAsync(filePath: string) {
-//     return new Promise<boolean>((resolve) => {
-//         fs.unlink(filePath, (err) => {
-//             actionComplete(err, "Could not delete file")
-//             resolve(!err)
-//         })
-//     })
-// }
+export function deleteFileAsync(filePath: string) {
+    return new Promise<boolean>((resolve) => {
+        fs.unlink(filePath, (err) => {
+            actionComplete(err, "Could not delete file")
+            resolve(!err)
+        })
+    })
+}
 
 export function copyFileAsync(sourcePath: string, destPath: string) {
     return new Promise<boolean>((resolve) => {
@@ -163,9 +163,21 @@ export function copyFileAsync(sourcePath: string, destPath: string) {
 
 export function moveFileAsync(oldPath: string, newPath: string) {
     return new Promise<boolean>((resolve) => {
-        fs.rename(oldPath, newPath, (err) => {
-            actionComplete(err, "Could not rename file")
-            resolve(!err)
+        fs.rename(oldPath, newPath, async (err) => {
+            if (err && err.code === "EXDEV") {
+                // cross-device link not permitted, fallback to copy + delete
+                try {
+                    await copyFileAsync(oldPath, newPath)
+                    await deleteFileAsync(oldPath)
+                    resolve(true)
+                } catch (copyErr) {
+                    actionComplete(copyErr as Error, "Could not copy file for cross-device move")
+                    resolve(false)
+                }
+            } else {
+                actionComplete(err, "Could not rename file")
+                resolve(!err)
+            }
         })
     })
 }
@@ -778,6 +790,8 @@ async function asyncPool<T>(poolLimit: number, array: T[], iteratorFn: (item: T)
 // - suggest importing videos/images/pdfs
 // - WIP extract & import zip files with media content
 export async function detectNewFiles() {
+    if (!getStore("SETTINGS").initialized) return
+
     const downloadsFolder = app.getPath("downloads")
     const MAX_TIME = 16 * 60 * 60 * 1000 // 16 hours
     const ONE_MINUTE = 60 * 1000
@@ -808,41 +822,45 @@ export async function detectNewFiles() {
     sendToMain(ToMain.RECENTLY_ADDED_FILES, { paths: allRecentFiles })
 
     // watch for file changes
-    fs.watch(downloadsFolder, { persistent: false }, async (eventType, filename) => {
-        if (eventType !== "rename" || !filename) return
+    try {
+        fs.watch(downloadsFolder, { persistent: false }, async (eventType, filename) => {
+            if (eventType !== "rename" || !filename) return
 
-        const ext = path.extname(filename).toLowerCase()
-        if (temporaryExtensions.includes(ext)) return
+            const ext = path.extname(filename).toLowerCase()
+            if (temporaryExtensions.includes(ext)) return
 
-        const filePath = path.join(downloadsFolder, filename)
+            const filePath = path.join(downloadsFolder, filename)
 
-        const exists = await doesPathExistAsync(filePath)
-        if (!exists) {
-            const isKnown = knownFiles.delete(filename)
-            if (!isKnown) return
+            const exists = await doesPathExistAsync(filePath)
+            if (!exists) {
+                const isKnown = knownFiles.delete(filename)
+                if (!isKnown) return
 
-            const idx = allRecentFiles.indexOf(filePath)
-            if (idx === -1) return
+                const idx = allRecentFiles.indexOf(filePath)
+                if (idx === -1) return
 
-            allRecentFiles.splice(idx, 1)
-            sendToMain(ToMain.RECENTLY_ADDED_FILES, { paths: allRecentFiles })
-            return
-        }
+                allRecentFiles.splice(idx, 1)
+                sendToMain(ToMain.RECENTLY_ADDED_FILES, { paths: allRecentFiles })
+                return
+            }
 
-        if (knownFiles.has(filename)) return
+            if (knownFiles.has(filename)) return
 
-        // treat as potential new download after a short write-wait
-        setTimeout(async () => {
-            const stats = await getFileStatsAsync(filePath)
-            if (!stats) return
+            // treat as potential new download after a short write-wait
+            setTimeout(async () => {
+                const stats = await getFileStatsAsync(filePath)
+                if (!stats) return
 
-            knownFiles.add(filename)
-            if (stats.birthtimeMs < Date.now() - ONE_MINUTE) return
+                knownFiles.add(filename)
+                if (stats.birthtimeMs < Date.now() - ONE_MINUTE) return
 
-            if (!allRecentFiles.includes(filePath)) allRecentFiles.push(filePath)
-            sendToMain(ToMain.RECENTLY_ADDED_FILES, { paths: allRecentFiles })
-        }, WRITE_WAIT_MS)
-    })
+                if (!allRecentFiles.includes(filePath)) allRecentFiles.push(filePath)
+                sendToMain(ToMain.RECENTLY_ADDED_FILES, { paths: allRecentFiles })
+            }, WRITE_WAIT_MS)
+        })
+    } catch (err) {
+        console.warn("No permission to watch folder:", err)
+    }
 }
 
 /// ///
