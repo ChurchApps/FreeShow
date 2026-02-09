@@ -1,16 +1,17 @@
 import { get } from "svelte/store"
+import { uid } from "uid"
+import { Main } from "../../types/IPC/Main"
 import type { ProjectShowRef } from "../../types/Projects"
 import type { Show, ShowType } from "../../types/Show"
 import { keysToID } from "../components/helpers/array"
 import { history } from "../components/helpers/history"
 import { getExtension, getFileName, getMediaType, removeExtension } from "../components/helpers/media"
 import { checkName } from "../components/helpers/show"
-import { actions as actionsStores, activePage, activePopup, activeProject, activeShow, alertMessage, effects as effectsStores, focusMode, folders, media as mediaStores, overlays as overlayStores, projects, recentFiles } from "../stores"
-import { audioExtensions, mediaExtensions } from "../values/extensions"
-import { confirmCustom } from "../utils/popup"
 import { sendMain } from "../IPC/main"
-import { Main } from "../../types/IPC/Main"
+import { actions as actionsStores, activePage, activePopup, activeProject, activeShow, alertMessage, effects as effectsStores, focusMode, folders, media as mediaStores, overlays as overlayStores, projects, projectView, recentFiles } from "../stores"
 import { translateText } from "../utils/language"
+import { confirmCustom } from "../utils/popup"
+import { audioExtensions, mediaExtensions } from "../values/extensions"
 
 export function importProject(files: { content: string; name?: string; extension?: string }[]) {
     files.forEach(({ content }) => {
@@ -83,10 +84,26 @@ export function importProject(files: { content: string; name?: string; extension
 }
 
 export function addToProject(type: ShowType | null, filePaths: string[]) {
-    const currentProject = get(activeProject)
+    let currentProject = get(activeProject)
     if (!currentProject) {
-        // ALERT please open a project
-        return
+        // get the latest empty project
+        currentProject =
+            Object.entries(get(projects))
+                .sort((a, b) => {
+                    const aDate = new Date(a[1].created || 0).getTime()
+                    const bDate = new Date(b[1].created || 0).getTime()
+                    return bDate - aDate
+                })
+                .find(([_id, project]) => project.shows && !project.shows.length)?.[0] || null
+    }
+    if (!currentProject) {
+        // auto-create a new project
+        currentProject = uid()
+        history({ id: "UPDATE", oldData: { id: currentProject }, location: { page: "show", id: "project" } })
+    }
+    if (!get(activeProject)) {
+        activeProject.set(currentProject)
+        projectView.set(false)
     }
 
     const projectShows = get(projects)[currentProject]?.shows || []
