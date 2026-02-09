@@ -276,6 +276,9 @@ export async function setItemStyle(styles: StyleClipboard[], slides: any) {
 
 export async function setSlideStyle(style: StyleClipboard, slides: any) {
     for (const slide of slides) {
+        // Skip locked slides
+        if (slide.locked) continue
+        
         updateSlideStyle(slide)
 
         // prevent lag when updating many slides

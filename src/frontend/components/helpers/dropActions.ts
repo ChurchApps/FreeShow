@@ -223,6 +223,15 @@ export const dropActions = {
 
                 const ref = getLayoutRef()
                 const slideId = ref[drop.index!].id
+                
+                // Skip locked slides
+                const slide = _show().slides([slideId]).get()[0]
+                if (slide?.locked) {
+                    alertMessage.set("error.slides_locked")
+                    activePopup.set("alert")
+                    return
+                }
+                
                 const slideSettings = _show().slides([slideId]).get("settings")
                 const oldData = { style: clone(slideSettings) }
                 const newData = { style: { ...clone(slideSettings), template: templateId } }

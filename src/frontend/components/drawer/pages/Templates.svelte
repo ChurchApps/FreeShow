@@ -125,6 +125,11 @@
                                 if ($selected.id === "slide" && $selected.data.length < ref.length) {
                                     $selected.data.forEach(({ index, showId }) => {
                                         let slideId = ref[index]?.id
+                                        
+                                        // Skip locked slides
+                                        let slide = _show(showId || "active").slides([slideId]).get()[0]
+                                        if (slide?.locked) return
+                                        
                                         let slideSettings = _show(showId || "active")
                                             .slides([slideId])
                                             .get("settings")

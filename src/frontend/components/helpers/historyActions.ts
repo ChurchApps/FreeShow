@@ -843,7 +843,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                 const previousFirstSlideTemplateId = get(templates)[data.previousData?.template || ""]?.settings?.firstSlideTemplate || ""
 
                 Object.entries(slides).forEach(([id, slide]) => {
-                    if ((slideId && slideId !== id) || !slide) return
+                    if ((slideId && slideId !== id) || !slide || slide.locked) return
 
                     // show template
                     let slideTemplate = template
