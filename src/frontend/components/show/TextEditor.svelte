@@ -15,6 +15,10 @@
 
     let text = ""
     $: if (currentShow) text = getPlainEditorText()
+    
+    // Check if any slide is locked
+    $: hasLockedSlide = currentShow ? Object.values(currentShow.slides || {}).some(slide => slide.locked) : false
+    $: isDisabled = currentShow?.locked || hasLockedSlide
 
     // Ctrl+F in shortcuts.ts does not get triggered when a text input is active, so we trigger from here as well
     function keydown(e: any) {
@@ -33,7 +37,7 @@
     $: showHasChords = Object.values(currentShow?.slides || {}).find((a) => a.items?.find((a) => a.lines?.find((a) => a.chords)))
 </script>
 
-<Notes disabled={currentShow?.locked} style="padding: 30px;font-size: {$textEditZoom / 8}em;" placeholder={getQuickExample()} value={text} on:change={(e) => formatText(e.detail)} on:keydown={keydown} />
+<Notes disabled={isDisabled} style="padding: 30px;font-size: {$textEditZoom / 8}em;" placeholder={getQuickExample()} value={text} on:change={(e) => formatText(e.detail)} on:keydown={keydown} />
 
 <FloatingInputs arrow let:open>
     <MaterialZoom hidden={!open} columns={$textEditZoom / 10} min={0.5} max={2} defaultValue={1} addValue={-0.1} on:change={(e) => textEditZoom.set(e.detail * 10)} />

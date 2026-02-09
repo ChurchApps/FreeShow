@@ -777,9 +777,16 @@ const deleteActions = {
             return finish()
         }
 
+        // Check if slide is locked before deleting items
         const layout = data.layout || _show().get("settings.activeLayout")
         const slide = data.slideId || getLayoutRef()[data.slide]?.id
         if (!slide) return
+
+        const currentShow = get(showsCache)[get(activeShow)?.id || ""]
+        if (currentShow?.slides?.[slide]?.locked) {
+            newToast("error.slides_locked")
+            return
+        }
 
         history({
             id: "deleteItem",
