@@ -85,9 +85,9 @@ export function importProject(files: { content: string; name?: string; extension
 export function addToProject(type: ShowType | null, filePaths: string[]) {
     const currentProject = get(activeProject)
     if (!currentProject) {
-        // ALERT please open a project
         const fileNames = filePaths.map(fp => getFileName(fp)).join(", ")
-        alertMessage.set(`Cannot import ${fileNames}.<br><br>Please open or create a project first to import ${type === "pdf" ? "PDF" : type === "ppt" ? "PowerPoint" : "media"} files.`)
+        const fileType = type === "pdf" ? "PDF" : type === "ppt" ? "PowerPoint" : "media"
+        alertMessage.set(`${translateText("actions.no_project_open")} ${fileNames}.<br><br>${translateText("actions.no_project_open_message")} ${fileType} files.`)
         activePopup.set("alert")
         return
     }

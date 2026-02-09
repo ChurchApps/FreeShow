@@ -628,6 +628,8 @@
         "export": "Export",
         "import_calendar": "Import calendar",
         "imported": "Imported!",
+        "no_project_open": "Cannot import",
+        "no_project_open_message": "Please open or create a project first to import",
         "duplicate": "Duplicate",
         "duplicated": "Duplicated",
         "delete": "Delete",

@@ -624,6 +624,8 @@
         "export": "Exportar",
         "import_calendar": "Importar calendario",
         "imported": "¡Importado!",
+        "no_project_open": "No se puede importar",
+        "no_project_open_message": "Por favor, abra o cree un proyecto primero para importar",
         "duplicate": "Duplicar",
         "delete": "Eliminar",
         "delete_slide": "Eliminar diapositiva de la presentación",
