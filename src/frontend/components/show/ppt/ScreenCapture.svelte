@@ -4,7 +4,7 @@
     import { activeProject, outLocked, outputs, presentationData, projects, special } from "../../../stores"
     import { triggerClickOnEnterSpace } from "../../../utils/clickable"
     import { getFileName, removeExtension } from "../../helpers/media"
-    import { getAllActiveOutputs } from "../../helpers/output"
+    import { getAllActiveOutputIds } from "../../helpers/output"
     import T from "../../helpers/T.svelte"
     import Window from "../../output/Window.svelte"
     import Center from "../../system/Center.svelte"
@@ -82,7 +82,7 @@
         // update output with screen
         if ($outLocked) return
 
-        let outputIds = getAllActiveOutputs().map(({ id }) => id)
+        const outputIds = getAllActiveOutputIds()
         outputs.update((a) => {
             outputIds.forEach((id) => {
                 if (a[id].out?.slide?.type !== "ppt") return

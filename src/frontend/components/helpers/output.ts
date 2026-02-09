@@ -324,12 +324,16 @@ export function clearOverlayTimer(outputId: string, overlayId: string) {
 ///
 
 export function getAllOutputs() {
+    if (!Object.keys(get(outputs)).length) return [{ ...clone(defaultOutput), id: "default" }]
     // sort by normal first A-Z, then stage A-Z
     return sortObject(sortByName(keysToID(get(outputs))), "stageOutput")
     // return sortByName(keysToID(get(outputs)))
 }
 export function getAllEnabledOutputs() {
-    return getAllOutputs().filter((a) => a.enabled)
+    const outputs = getAllOutputs()
+    const enabled = outputs.filter((a) => a.enabled)
+    if (!enabled.length) return [outputs[0]]
+    return enabled
 }
 
 export function getAllNormalOutputs() {
@@ -351,7 +355,13 @@ export function getWindowOutputId() {
 }
 
 export function getAllActiveOutputs() {
-    return getAllEnabledOutputs().filter((a) => !a.stageOutput && a.active)
+    const outputs = getAllNormalOutputs()
+    const active = outputs.filter((a) => a.active)
+    if (!active.length) return [outputs[0]]
+    return active
+}
+export function getAllActiveOutputIds() {
+    return getAllActiveOutputs().map(({ id }) => id)
 }
 export function getFirstActiveOutput(_updater: any = null) {
     const firstActive = getAllActiveOutputs()[0]
