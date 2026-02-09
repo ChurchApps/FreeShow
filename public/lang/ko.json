@@ -378,6 +378,7 @@
     },
     "tabs": {
         "shows": "쇼",
+        "shows_info": "쇼는 슬라이드로 구성됩니다. 노래, 프레젠테이션, 매체, 성경 구절 등 다양한 요소가 포함될 수 있습니다.",
         "media": "미디어",
         "overlays": "오버레이",
         "audio": "오디오",
@@ -505,6 +506,8 @@
         "manage_tags": "꼬리표 관리",
         "sync_categories": "분류 동기화",
         "effect_items": "효과 항목",
+        "timeline": "시간선",
+        "timecode": "타임코드",
         "initialize": "FreeShow에 오신 것을 환영합니다",
         "unsaved": "정말 종료하시겠습니까?",
         "cancel": "취소",
@@ -612,6 +615,7 @@
         "recolor": "색상 변경",
         "remove": "제거",
         "remove_group": "레이아웃에서 그룹 제거",
+        "remove_group_short": "그룹 제거",
         "choose_group": "그룹 선택",
         "goto_group": "그룹으로 이동",
         "active_outputs": "활성 출력",
@@ -625,7 +629,9 @@
         "import_calendar": "달력 가져오기",
         "imported": "가져왔습니다!",
         "duplicate": "복제",
+        "duplicated": "복제함",
         "delete": "삭제",
+        "delete_slide_short": "슬라이드 삭제",
         "delete_slide": "쇼에서 슬라이드 삭제",
         "delete_group": "그룹 삭제",
         "delete_all": "모두 삭제",
@@ -638,7 +644,9 @@
         "redo": "다시 실행",
         "cut": "잘라내기",
         "copy": "복사",
+        "copied": "복사함",
         "paste": "붙여넣기",
+        "pasted": "붙여넣기 함",
         "pasteAndMatchStyle": "스타일 붙여넣기 및 일치",
         "selectAll": "모두 선택",
         "remove_selection": "선택 항목 제거",
@@ -834,15 +842,9 @@
         "seconds": "초",
         "empty": "비어 있음"
     },
-    "recording": {
-        "remove": "녹화 제거",
-        "tip": "슬라이드의 타이밍을 녹화하고 재생합니다. 첫 번째 슬라이드의 오디오 트랙과 동기화합니다.",
-        "layout_changed": "마지막 녹화 이후 레이아웃이 변경되었습니다!",
-        "audio_synced": "오디오와 동기화되었습니다!",
-        "start": "슬라이드 녹화 시작",
-        "action_play": "슬라이드 녹화 재생",
-        "use_duration": "지속 시간 사용",
-        "use_duration_tip": "기록된 시간 대신 지속 시간을 사용합니다."
+    "timeline": {
+        "toggle_timeline": "시간선 토글",
+        "start_time": "시작 시각"
     },
     "animate": {
         "change": "변경",
@@ -859,7 +861,6 @@
         "info": "백업 또는 여러 컴퓨터에서의 접근을 위해 파일을 클라우드에 동기화합니다.",
         "enable": "시작 및 종료 시 자동 동기화",
         "read_only": "읽기전용",
-        "media_folder": "클라우드 미디어 폴더",
         "reconnect": "다시 연결",
         "sync": "지금 동기화",
         "change_team": "팀 변경",
@@ -1072,8 +1073,9 @@
         "altitude": "고도",
         "fahrenheit": "화씨",
         "longRange": "장기간",
-        "media_item_tip": "해당 매체를 배경으로 사용하시겠습니까?",
-        "convert_to_background": "배경으로 변환"
+        "media_item_tip": "해당 미디어를 배경으로 사용하시겠습니까?",
+        "convert_to_background": "배경으로 변환",
+        "convert_to_media_item": "배경을 미디어 항목으로 변환"
     },
     "items": {
         "text": "글상자",
@@ -1384,8 +1386,10 @@
         "write": "쓰기",
         "set_active": "활성화",
         "choose_profile": "프로필 선택",
+        "change_profile": "프로필 변경",
         "choose_admin": "확실한 경우에만 계속하십시오. 관리자 프로필을 선택하시겠습니까?",
-        "locked": "선택한 프로필은 이 동작이 제한되어 있습니다!"
+        "locked": "선택한 프로필은 이 동작이 제한되어 있습니다!",
+        "auto_open_last_used": "시작시 마지막으로 사용한 프로필 열기"
     },
     "sort": {
         "sort_by": "정렬 기준",
@@ -1437,6 +1441,7 @@
         "verses_on_individual_lines": "각 구절 줄 나눔",
         "divide_long_verses": "긴 구절은 나눔",
         "split_long_verses_suffix": "분절 접미사 보기",
+        "tolerance": "허용",
         "version": "판본 표시",
         "reference": "참조 표시",
         "split_reference": "참조 분리",

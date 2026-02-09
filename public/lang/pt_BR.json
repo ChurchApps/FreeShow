@@ -378,6 +378,7 @@
     },
     "tabs": {
         "shows": "Shows",
+        "shows_info": "Um Show é feito de slides; pode ser uma música, uma apresentação, mídia, versículos e mais.",
         "media": "Mídia",
         "overlays": "Sobreposições",
         "audio": "Áudio",
@@ -505,6 +506,8 @@
         "manage_tags": "Gerenciar tags",
         "sync_categories": "Sincronizar categorias",
         "effect_items": "Efeitos",
+        "timeline": "Linha do tempo",
+        "timecode": "Timecode",
         "initialize": "Seja bem-vindo ao FreeShow",
         "unsaved": "Tem certeza que deseja sair?",
         "cancel": "Cancelar",
@@ -612,6 +615,7 @@
         "recolor": "Alterar cor",
         "remove": "Remover",
         "remove_group": "Remover grupo do layout",
+        "remove_group_short": "Remover grupo",
         "choose_group": "Escolher grupo",
         "goto_group": "Ir até grupo",
         "active_outputs": "Saídas ativas",
@@ -625,7 +629,9 @@
         "import_calendar": "Importar calendário",
         "imported": "Importado!",
         "duplicate": "Duplicar",
+        "duplicated": "Duplicado",
         "delete": "Excluir",
+        "delete_slide_short": "Deletar slide",
         "delete_slide": "Deletar slide do Show",
         "delete_group": "Excluir grupo",
         "delete_all": "Excluir tudo",
@@ -638,7 +644,9 @@
         "redo": "Refazer",
         "cut": "Cortar",
         "copy": "Copiar",
+        "copied": "Copiado",
         "paste": "Colar",
+        "pasted": "Colado",
         "pasteAndMatchStyle": "Colar e combinar estilo",
         "selectAll": "Selecionar tudo",
         "remove_selection": "Remover seleção",
@@ -834,15 +842,9 @@
         "seconds": "segundos",
         "empty": "vazio"
     },
-    "recording": {
-        "remove": "Remover gravação",
-        "tip": "Grave e reproduza os tempos de cada slide. Sincronize com uma faixa de áudio no primeiro slide.",
-        "layout_changed": "O layout mudou desde a última gravação!",
-        "audio_synced": "Sincronizado com áudio!",
-        "start": "Iniciar gravação de slide",
-        "action_play": "Reproduzir gravação de slide",
-        "use_duration": "Usar tempo de duração",
-        "use_duration_tip": "Usar tempo de duração ao invés de tempo marcado"
+    "timeline": {
+        "toggle_timeline": "Editar linha do tempo",
+        "start_time": "Tempo de início"
     },
     "animate": {
         "change": "Mudar",
@@ -859,7 +861,6 @@
         "info": "Sincroniza arquivos com a nuvem para backups ou para acesso entre vários computadores.",
         "enable": "Sincronização automática ao salvar e iniciar",
         "read_only": "Somente leitura",
-        "media_folder": "Pasta de mídia da nuvem",
         "reconnect": "Reconectar",
         "sync": "Sincronizar agora",
         "change_team": "Mudar time",
@@ -1073,7 +1074,8 @@
         "fahrenheit": "Fahrenheit",
         "longRange": "Longo alcance",
         "media_item_tip": "Você está tentando usar a mídia como plano de fundo?",
-        "convert_to_background": "Converter para plano de fundo"
+        "convert_to_background": "Converter para plano de fundo",
+        "convert_to_media_item": "Converter fundo para item de mídia"
     },
     "items": {
         "text": "Caixa de texto",
@@ -1384,8 +1386,10 @@
         "write": "Escrita",
         "set_active": "Definir como ativo",
         "choose_profile": "Escolher um perfil",
+        "change_profile": "Mudar perfil",
         "choose_admin": "Continue apenas se souber o que está fazendo. Escolher perfil de administrador?",
-        "locked": "Seu perfil tem acesso restrito a isso!"
+        "locked": "Seu perfil tem acesso restrito a isso!",
+        "auto_open_last_used": "Abrir o último perfil usado ao iniciar"
     },
     "sort": {
         "sort_by": "Ordenar por",
@@ -1437,6 +1441,7 @@
         "verses_on_individual_lines": "Versículos em linhas individuais",
         "divide_long_verses": "Dividir versículos longos",
         "split_long_verses_suffix": "Mostrar letra de subdivisão",
+        "tolerance": "Tolerância",
         "version": "Mostrar versão",
         "reference": "Mostrar referência",
         "split_reference": "Referência dividida",

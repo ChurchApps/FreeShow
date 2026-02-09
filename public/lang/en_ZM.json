@@ -378,6 +378,7 @@
     },
     "tabs": {
         "shows": "Shows",
+        "shows_info": "A show is made up of slides; it can be a song, presentation, media, scripture, and more.",
         "media": "Media",
         "overlays": "Overlays",
         "audio": "Audio",
@@ -505,6 +506,8 @@
         "manage_tags": "Manage tags",
         "sync_categories": "Sync categories",
         "effect_items": "Effect items",
+        "timeline": "Timeline",
+        "timecode": "Timecode",
         "initialize": "Welcome to FreeShow",
         "unsaved": "Are you sure you want to quit?",
         "cancel": "Cancel",
@@ -612,6 +615,7 @@
         "recolor": "Change colour",
         "remove": "Remove",
         "remove_group": "Remove group from layout",
+        "remove_group_short": "Remove group",
         "choose_group": "Choose group",
         "goto_group": "Go to group",
         "active_outputs": "Active outputs",
@@ -625,7 +629,9 @@
         "import_calendar": "Import calendar",
         "imported": "Imported!",
         "duplicate": "Duplicate",
+        "duplicated": "Duplicated",
         "delete": "Delete",
+        "delete_slide_short": "Delete slide",
         "delete_slide": "Delete slide from show",
         "delete_group": "Delete group",
         "delete_all": "Delete all",
@@ -638,7 +644,9 @@
         "redo": "Redo",
         "cut": "Cut",
         "copy": "Copy",
+        "copied": "Copied",
         "paste": "Paste",
+        "pasted": "Pasted",
         "pasteAndMatchStyle": "Paste And Match Style",
         "selectAll": "Select All",
         "remove_selection": "Remove selection",
@@ -834,15 +842,9 @@
         "seconds": "seconds",
         "empty": "empty"
     },
-    "recording": {
-        "remove": "Remove recording",
-        "tip": "Record and replay the timings of slides. Sync with an audio track on the first slide.",
-        "layout_changed": "Layout has changed since last recording!",
-        "audio_synced": "Synced with audio!",
-        "start": "Start slide recording",
-        "action_play": "Play slide recording",
-        "use_duration": "Use duration time",
-        "use_duration_tip": "Use duration time instead of timestamp time"
+    "timeline": {
+        "toggle_timeline": "Toggle timeline",
+        "start_time": "Start time"
     },
     "animate": {
         "change": "Change",
@@ -859,7 +861,6 @@
         "info": "Sync files to the cloud for backups or to access between multiple computers.",
         "enable": "Automatic sync on startup and close",
         "read_only": "Read-only",
-        "media_folder": "Cloud media folder",
         "reconnect": "Reconnect",
         "sync": "Sync now",
         "change_team": "Change team",
@@ -1073,7 +1074,8 @@
         "fahrenheit": "Fahrenheit",
         "longRange": "Long range",
         "media_item_tip": "Are you trying to use the media as a background?",
-        "convert_to_background": "Convert to background"
+        "convert_to_background": "Convert to background",
+        "convert_to_media_item": "Convert background to media item"
     },
     "items": {
         "text": "Textbox",
@@ -1384,8 +1386,10 @@
         "write": "Write",
         "set_active": "Set as active",
         "choose_profile": "Choose a profile",
+        "change_profile": "Change profile",
         "choose_admin": "Only continue if you know what you are doing. Choose admin profile?",
-        "locked": "Your selected profile has restricted access to this!"
+        "locked": "Your selected profile has restricted access to this!",
+        "auto_open_last_used": "Auto open last used profile on startup"
     },
     "sort": {
         "sort_by": "Sort by",
@@ -1437,6 +1441,7 @@
         "verses_on_individual_lines": "Verses on individual lines",
         "divide_long_verses": "Split long verses",
         "split_long_verses_suffix": "Show letter suffix",
+        "tolerance": "Tolerance",
         "version": "Show version",
         "reference": "Show reference",
         "split_reference": "Split reference",

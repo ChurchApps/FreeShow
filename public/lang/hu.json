@@ -378,6 +378,7 @@
     },
     "tabs": {
         "shows": "Bemutatók",
+        "shows_info": "A bemutató diákból áll; lehet dal, prezentáció, média, szentírás és még sok más.",
         "media": "Média",
         "overlays": "Átfedések",
         "audio": "Hang",
@@ -505,6 +506,8 @@
         "manage_tags": "Címkék kezelése",
         "sync_categories": "Kategóriák szinkronizálása",
         "effect_items": "Effektus elemek",
+        "timeline": "Idővonal",
+        "timecode": "Időjel",
         "initialize": "Üdvözöljük a FreeShow-ban",
         "unsaved": "Biztosan ki szeretne léptni?",
         "cancel": "Mégsem",
@@ -612,6 +615,7 @@
         "recolor": "Szín módosítása",
         "remove": "Eltávolítás",
         "remove_group": "Csoport eltávolítása az elrendezésből",
+        "remove_group_short": "Csoport eltávolítása",
         "choose_group": "Csoport kiválasztása",
         "goto_group": "Ugrás a csoporthoz",
         "active_outputs": "Aktív kimenetek",
@@ -625,7 +629,9 @@
         "import_calendar": "Naptár importálása",
         "imported": "Importálva!",
         "duplicate": "Duplikálás",
+        "duplicated": "Duplikált",
         "delete": "Törlés",
+        "delete_slide_short": "Dia törlése",
         "delete_slide": "Dia törlése a bemutatóból",
         "delete_group": "Csoport törlése",
         "delete_all": "Összes törlése",
@@ -638,7 +644,9 @@
         "redo": "Ismét",
         "cut": "Kivágás",
         "copy": "Másolás",
+        "copied": "Másolt",
         "paste": "Beillesztés",
+        "pasted": "Beillesztett",
         "pasteAndMatchStyle": "Beillesztés és stílus egyeztetése",
         "selectAll": "Összes kijelölése",
         "remove_selection": "Kijelölés törlése",
@@ -834,15 +842,9 @@
         "seconds": "másodperc",
         "empty": "üres"
     },
-    "recording": {
-        "remove": "Felvétel eltávolítása",
-        "tip": "Diák időzítésének rögzítése és lejátszása . Szinkronizálás az első dia hangsávjával.",
-        "layout_changed": "Az elrendezés módosult az utolsó rögzítés óta!",
-        "audio_synced": "Hanggal szinkronizálva!",
-        "start": "Diarögzítés indítása",
-        "action_play": "Diarögzítés lejátszása",
-        "use_duration": "Időtartam alkalmazása",
-        "use_duration_tip": "Időtartam alkalmazása az időbélyeg helyett"
+    "timeline": {
+        "toggle_timeline": "Idővonal átváltása",
+        "start_time": "Idő indítása"
     },
     "animate": {
         "change": "Módosítás",
@@ -859,7 +861,6 @@
         "info": "Fájlok szinkronizálása a felhőbe biztonsági mentésként vagy több számítógép közötti hozzáférés érdekében.",
         "enable": "Automatikus szinkronizálás indításkor és bezáráskor",
         "read_only": "Csak olvasható",
-        "media_folder": "Felhő médiamappa",
         "reconnect": "Újracsatlakozás",
         "sync": "Szinkronizálás most",
         "change_team": "Csapatváltás",
@@ -1073,7 +1074,8 @@
         "fahrenheit": "Fahrenheit",
         "longRange": "Hosszú távú",
         "media_item_tip": "A médiát háttérként próbálja használni?",
-        "convert_to_background": "Konvertálás háttérnek"
+        "convert_to_background": "Konvertálás háttérnek",
+        "convert_to_media_item": "Háttér átalakítása médiaelemmé"
     },
     "items": {
         "text": "Szövegdoboz",
@@ -1384,8 +1386,10 @@
         "write": "Írás",
         "set_active": "Beállítás aktívnak",
         "choose_profile": "Profil kijelölése",
+        "change_profile": "Profil módosítása",
         "choose_admin": "Csak akkor folytassa, ha tudja, mit csinál. Valóban az adminisztrátori profilt választja?",
-        "locked": "A kiválasztott profil korlátozott hozzáféréssel rendelkezik ehhez!"
+        "locked": "A kiválasztott profil korlátozott hozzáféréssel rendelkezik ehhez!",
+        "auto_open_last_used": "Utolsó használt profil automatikus megnyitása indításkor"
     },
     "sort": {
         "sort_by": "Sorba rendezés",
@@ -1437,6 +1441,7 @@
         "verses_on_individual_lines": "Versszakok az egyes sorokban",
         "divide_long_verses": "Hosszú versszakok szétválasztása",
         "split_long_verses_suffix": "Betű utótag megjelenítése",
+        "tolerance": "Tolerancia",
         "version": "Verzió megjelenítése",
         "reference": "Hivatkozás megjelenítése",
         "split_reference": "Hivatkozás szétválasztása",

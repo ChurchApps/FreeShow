@@ -378,6 +378,7 @@
     },
     "tabs": {
         "shows": "Show",
+        "shows_info": "Et show består av lysbilder; det kan være en sang, presentasjon, medier, bibeltekst, og mer.",
         "media": "Medier",
         "overlays": "Overlegg",
         "audio": "Lyd",
@@ -505,6 +506,8 @@
         "manage_tags": "Behandle etiketter",
         "sync_categories": "Synkroniser kategorier",
         "effect_items": "Effekt elementer",
+        "timeline": "Tidslinje",
+        "timecode": "Tidskode",
         "initialize": "Velkommen til FreeShow",
         "unsaved": "Er du sikkert på at du vil avslutte?",
         "cancel": "Avbryt",
@@ -612,6 +615,7 @@
         "recolor": "Endre farge",
         "remove": "Fjern",
         "remove_group": "Fjern gruppe fra oppsett",
+        "remove_group_short": "Fjern gruppe",
         "choose_group": "Velg gruppe",
         "goto_group": "Gå til gruppe",
         "active_outputs": "Aktive utgangsskjermer",
@@ -625,7 +629,9 @@
         "import_calendar": "Importer kalender",
         "imported": "Importert!",
         "duplicate": "Dupliser",
+        "duplicated": "Duplisert",
         "delete": "Slett",
+        "delete_slide_short": "Slett lysbilde",
         "delete_slide": "Slett lysbilde fra show",
         "delete_group": "Slett gruppe",
         "delete_all": "Slett alle",
@@ -638,7 +644,9 @@
         "redo": "Gjør om",
         "cut": "Klipp ut",
         "copy": "Kopiér",
+        "copied": "Kopiert",
         "paste": "Lim inn",
+        "pasted": "Limt inn",
         "pasteAndMatchStyle": "Lim inn uten formatering",
         "selectAll": "Merk alt",
         "remove_selection": "Fjern markering",
@@ -834,15 +842,9 @@
         "seconds": "sekunder",
         "empty": "ingenting"
     },
-    "recording": {
-        "remove": "Fjern opptak",
-        "tip": "Ta opp og spill av en fast rekkefølge for lysbildene. Synkroniser med en lydfil på første lysbilde.",
-        "layout_changed": "Oppsett har blitt endret siden sist opptak",
-        "audio_synced": "Synkronisert med lyd!",
-        "start": "Start lysbildeopptak",
-        "action_play": "Spill av lysbildeopptak",
-        "use_duration": "Bruk varighet for tid",
-        "use_duration_tip": "Bruk varighet for tid i stedet for tidsstempel"
+    "timeline": {
+        "toggle_timeline": "Veksle tidslinje",
+        "start_time": "Start tid"
     },
     "animate": {
         "change": "Endre",
@@ -859,7 +861,6 @@
         "info": "Synkroniser filer til skyen for sikkerhetskopiering eller tilgang mellom flere datamaskiner.",
         "enable": "Synkroniser automatisk ved oppstart og lukking",
         "read_only": "Skrivebeskyttet",
-        "media_folder": "Mediemappe i skyen",
         "reconnect": "Koble til på nytt",
         "sync": "Synkroniser nå",
         "change_team": "Endre team",
@@ -1073,7 +1074,8 @@
         "fahrenheit": "Fahrenheit",
         "longRange": "Lang rekkevidde",
         "media_item_tip": "Prøver du å bruke media som bakgrunn?",
-        "convert_to_background": "Konverter til bakgrunn"
+        "convert_to_background": "Konverter til bakgrunn",
+        "convert_to_media_item": "Konvertér"
     },
     "items": {
         "text": "Tekstboks",
@@ -1384,8 +1386,10 @@
         "write": "Skrive",
         "set_active": "Sett til aktiv",
         "choose_profile": "Velg en profil",
+        "change_profile": "Endre profil",
         "choose_admin": "Bare fortsett om du vet hva du gjør. Velg administrator?",
-        "locked": "Din valgte profil har redusert tilgang til dette!"
+        "locked": "Din valgte profil har redusert tilgang til dette!",
+        "auto_open_last_used": "Åpne siste brukte profil automatisk ved oppstart"
     },
     "sort": {
         "sort_by": "Sorter etter",
@@ -1437,6 +1441,7 @@
         "verses_on_individual_lines": "Vers på enkeltlinjer",
         "divide_long_verses": "Del opp lange vers",
         "split_long_verses_suffix": "Vis bokstavsuffiks",
+        "tolerance": "Toleranse",
         "version": "Vis versjon",
         "reference": "Vis referanse",
         "split_reference": "Del opp referanse",
