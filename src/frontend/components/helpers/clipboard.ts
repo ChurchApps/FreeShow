@@ -79,6 +79,17 @@ export function copy(clip: Clipboard | null = null, getData = true, shouldDuplic
         return
     }
 
+    // Check if trying to copy from a locked slide
+    if (get(activePage) === "edit" && get(activeEdit).slide !== null && get(activeEdit).slide !== undefined) {
+        const ref = getLayoutRef()
+        const slideId = ref[get(activeEdit).slide]?.id
+        const currentShow = get(showsCache)[get(activeShow)?.id || ""]
+        if (slideId && currentShow?.slides?.[slideId]?.locked) {
+            newToast("error.slides_locked")
+            return
+        }
+    }
+
     if (get(selected).id) copyData = get(selected)
     else if (get(activeEdit).items.length) copyData = { id: "item", data: get(activeEdit) }
     else if (get(activePage) === "stage" && get(activeStage).items?.length) {
@@ -110,6 +121,17 @@ export function copy(clip: Clipboard | null = null, getData = true, shouldDuplic
 
 // pasting text in editbox is it's own function
 export function paste(clip: Clipboard | null = null, extraData: any = {}, customElem: HTMLElement | null = null, isDuplicating = false) {
+    // Check if trying to paste to a locked slide
+    if (get(activePage) === "edit" && get(activeEdit).slide !== null && get(activeEdit).slide !== undefined) {
+        const ref = getLayoutRef()
+        const slideId = ref[get(activeEdit).slide]?.id
+        const currentShow = get(showsCache)[get(activeShow)?.id || ""]
+        if (slideId && currentShow?.slides?.[slideId]?.locked) {
+            newToast("error.slides_locked")
+            return
+        }
+    }
+    
     if (!clip) clip = get(clipboard)
     let activeElem = document.activeElement
 
@@ -156,6 +178,18 @@ export function cut(clip: Clipboard | null = null) {
         console.info("CUTTED TEXT", selection.toString())
         return
     }
+    
+    // Check if trying to cut from a locked slide
+    if (get(activePage) === "edit" && get(activeEdit).slide !== null && get(activeEdit).slide !== undefined) {
+        const ref = getLayoutRef()
+        const slideId = ref[get(activeEdit).slide]?.id
+        const currentShow = get(showsCache)[get(activeShow)?.id || ""]
+        if (slideId && currentShow?.slides?.[slideId]?.locked) {
+            newToast("error.slides_locked")
+            return
+        }
+    }
+    
     // Handle other types
     const copyData = copy(clip)
     if (!copyData) return

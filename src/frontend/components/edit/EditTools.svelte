@@ -362,7 +362,18 @@
 
     $: slideActive = !!((slides?.length && showIsActive && activeSlide !== null) || activeId)
     let profile = getAccess("shows")
-    $: isLocked = activeId ? false : $showsCache[$activeShow?.id || ""]?.locked || profile.global === "read" || profile[$showsCache[$activeShow?.id || ""]?.category || ""] === "read"
+    
+    // Check if current slide is locked
+    $: isSlideLockedFn = () => {
+        if (activeId || !$activeShow?.id || activeSlide === null) return false
+        const currentShow = $showsCache[$activeShow.id]
+        if (!currentShow) return false
+        const slideId = ref[activeSlide]?.id
+        return slideId ? currentShow.slides?.[slideId]?.locked || false : false
+    }
+    $: isSlideLocked = isSlideLockedFn()
+    
+    $: isLocked = activeId ? false : $showsCache[$activeShow?.id || ""]?.locked || isSlideLocked || profile.global === "read" || profile[$showsCache[$activeShow?.id || ""]?.category || ""] === "read"
     // $: isDefault = $activeEdit.type === "overlay" ? $overlays[activeId || ""]?.isDefault : $activeEdit.type === "template" ? $templates[activeId || ""]?.isDefault : false
     $: overflowHidden = !!(isShow || $activeEdit.type === "template")
 
@@ -494,7 +505,18 @@
                 </Button>
             {/if}
         </span> -->
-    {:else if !isLocked}
+    {:else if isLocked}
+        <Center faded>
+            {#if isSlideLocked}
+                <div style="display: flex;flex-direction: column;align-items: center;gap: 10px;">
+                    <Icon id="lock" size={2} />
+                    <p style="text-align: center;"><T id="error.slides_locked" /></p>
+                </div>
+            {:else}
+                <T id="profile.locked" />
+            {/if}
+        </Center>
+    {:else}
         <Center faded>
             <T id="empty.slides" />
         </Center>
