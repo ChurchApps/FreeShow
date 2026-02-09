@@ -281,6 +281,7 @@ export const scriptureSettings: Writable<any> = writable({
     referenceDivider: ":",
     splitLongVerses: false,
     longVersesChars: 100,
+    longVersesTolerance: 0,
     splitLongVersesSuffix: false
 }) // {default}
 
