@@ -299,6 +299,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     project_template: ["GROUP_rename_only", "delete"],
     folder: ["GROUP_rename_only", "delete", "SEPARATOR", "newProject", "newFolder"],
     folder_readonly: ["sort_projects_by"],
+    folder_noediting: ["newProject", "newFolder"],
     project_media: ["play", "play_no_audio", "play_no_filters", "SEPARATOR", "remove", "SEPARATOR", "mark_played"],
     project_audio: ["remove", "SEPARATOR", "mark_played"],
     project_player: ["remove"],

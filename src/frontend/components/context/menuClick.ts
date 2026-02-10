@@ -697,7 +697,7 @@ const clickActions = {
         history({ id: "UPDATE", newData: { replace: { parent } }, location: { page: "show", id: "project" } })
     },
     newFolder: (obj: ObjData) => {
-        if (obj.contextElem?.classList.contains("#folder__projects") || obj.contextElem?.classList.contains("#projects")) {
+        if (obj.contextElem?.closest(".projectItem")) {
             let parent = obj.sel?.data[0]?.id || obj.contextElem.id || "/"
             if (parent === "projectsArea") parent = "/"
             history({ id: "UPDATE", newData: { replace: { parent } }, location: { page: "show", id: "project_folder" } })
