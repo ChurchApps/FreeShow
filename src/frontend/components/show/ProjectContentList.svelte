@@ -95,11 +95,18 @@
             // Cannot create property 'index' on string 'uid'
             if (typeof a !== "object") return
 
-            if (a.type === "section" && (a.color || projectItemsList[index - 1]?.type === "section")) splittedProjectsList.push({ color: a.color || "", items: [] })
-            if (!splittedProjectsList.at(-1)) splittedProjectsList.push({ color: "", items: [] })
+            const previousItem = projectItemsList[index - 1]
+
+            if (!splittedProjectsList.at(-1)) newSection()
+            else if (a.type === "section" && (a.color || previousItem?.type === "section")) newSection()
+            else if (previousItem?.type !== "section" && a.type !== "section" && a.type !== previousItem?.type) newSection()
 
             a.index = index
             splittedProjectsList.at(-1)!.items.push(a)
+
+            function newSection() {
+                splittedProjectsList.push({ color: a.color || "", items: [] })
+            }
         })
     }
 

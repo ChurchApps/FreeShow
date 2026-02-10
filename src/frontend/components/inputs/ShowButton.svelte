@@ -6,7 +6,7 @@
     import { getAccess } from "../../utils/profile"
     import { historyAwait } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
-    import { getFileName, getMediaLayerType, getMediaStyle, removeExtension } from "../helpers/media"
+    import { getFileName, getMediaLayerType, getMediaStyle, loadThumbnail, mediaSize, removeExtension } from "../helpers/media"
     import { findMatchingOut, getActiveOutputs, setOutput } from "../helpers/output"
     import { loadShows } from "../helpers/setShow"
     import { checkName, getLayoutRef } from "../helpers/show"
@@ -185,15 +185,30 @@
     }
 
     $: outline = activeOutput !== null || !!$playingAudio[id]
+
+    let thumbnailPath: string | null = null
+    $: isMedia = type === "image" || type === "video"
+    $: mediaStyle = isMedia ? getMediaStyle($media[id], undefined) : {} // , $styles[getFirstActiveOutput($outputs)?.style || ""]
+    $: mediaStyleString = `pointer-events: none;filter: ${mediaStyle.filter || ""};transform: scale(${mediaStyle.flipped ? "-1" : "1"}, ${mediaStyle.flippedY ? "-1" : "1"});`
+    $: if (id && isMedia) getThumbnail()
+    else thumbnailPath = ""
+    async function getThumbnail() {
+        thumbnailPath = ""
+        thumbnailPath = await loadThumbnail(id, mediaSize.small)
+    }
 </script>
 
 <div id="show_{id}" class="main" class:played={show.played}>
     <MaterialButton on:click={click} on:dblclick={doubleClick} {isActive} showOutline={outline} class="context {$$props.class}{readOnly ? '_readonly' : ''}" style="font-weight: normal;--outline-color: {activeOutput || 'var(--secondary)'};{$notFound.show?.includes(id) ? 'background-color: rgb(255 0 0 / 0.2);' : ''}{style}{$$props.style || ''}" tab>
         <div class="row">
             <span class="cell" style="max-width: calc(100% {showNumber ? '- var(--number-width)' : ''} - var(--modified-width, 0px));">
-                {#if icon || show.locked}
-                    <Icon id={show.played ? "check" : iconID ? iconID : show.locked ? "locked" : "noIcon"} custom={!show.played && custom} box={iconID === "ppt" ? 50 : 24} white={show.played} right />
-                {/if}
+                <div class="icon" class:isMedia>
+                    {#if thumbnailPath}
+                        <img class="thumbnail" src={thumbnailPath} alt="thumbnail" style={mediaStyleString} />
+                    {:else if icon || show.locked}
+                        <Icon id={show.played ? "check" : iconID ? iconID : show.locked ? "locked" : "noIcon"} custom={!show.played && custom} box={iconID === "ppt" ? 50 : 24} white={show.played} right={!isMedia} />
+                    {/if}
+                </div>
 
                 <HiddenInput value={newName} id={index !== null ? "show_" + id + "#" + index : "show_drawer_" + id} on:edit={rename} bind:edit={editActive} allowEmpty={false} allowEdit={(!show.type || show.type === "show") && !readOnly} />
 
@@ -224,6 +239,8 @@
 <style>
     .main {
         width: 100%;
+
+        display: flex;
     }
 
     .main :global(button) {
@@ -282,5 +299,25 @@
         padding-inline-start: 5px;
         white-space: nowrap;
         max-width: 45%;
+    }
+
+    .icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .icon.isMedia {
+        min-width: 35px;
+        min-height: 35px;
+        width: 35px;
+        height: 35px;
+        margin-right: 10px;
+    }
+
+    .thumbnail {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 4px;
     }
 </style>
