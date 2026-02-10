@@ -795,7 +795,7 @@ const clickActions = {
             if (obj.sel?.id !== "project" && !get(activeProject)) return
             const projectId: string = obj.sel?.data[0]?.id || get(activeProject)
             exportProject(get(projects)[projectId], projectId)
-
+            // WIP set sourcePath to export path
             return
         }
     },
@@ -804,6 +804,14 @@ const clickActions = {
             const extensions = ["project", "shows", "json", "zip"]
             const name = translateText("formats.project")
             sendMain(Main.IMPORT, { channel: "freeshow_project", format: { extensions, name } })
+            return
+        }
+    },
+    save_to_file: (obj: ObjData) => {
+        if (obj.contextElem?.classList.value.includes("project")) {
+            if (obj.sel?.id !== "project" && !get(activeProject)) return
+            const projectId: string = obj.sel?.data[0]?.id || get(activeProject)
+            exportProject(get(projects)[projectId], projectId, get(projects)[projectId]?.sourcePath)
             return
         }
     },

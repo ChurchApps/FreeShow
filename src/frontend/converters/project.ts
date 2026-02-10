@@ -13,8 +13,8 @@ import { translateText } from "../utils/language"
 import { confirmCustom } from "../utils/popup"
 import { audioExtensions, mediaExtensions } from "../values/extensions"
 
-export function importProject(files: { content: string; name?: string; extension?: string }[]) {
-    files.forEach(({ content }) => {
+export function importProject(files: { content: string; path?: string; name?: string; extension?: string }[]) {
+    files.forEach(({ content, path }) => {
         const { project, parentFolder, shows, overlays, effects, actions, media } = JSON.parse(content)
         if (!project) return
 
@@ -22,6 +22,7 @@ export function importProject(files: { content: string; name?: string; extension
         if (parentFolder) project.parent = Object.entries(get(folders)).find(([_id, folder]) => folder.name === parentFolder)?.[0] || "/"
         const projectId = project.id || ""
         delete project.id
+        if (path) project.sourcePath = path
 
         // add overlays
         if (overlays) {

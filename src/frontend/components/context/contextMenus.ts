@@ -46,6 +46,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     delete_all: { label: "actions.delete_all", icon: "delete", iconColor: "#ff5454" },
     import: { label: "actions.import", icon: "import" },
     export: { label: "actions.export", icon: "export" },
+    save_to_file: { label: "actions.save_to_file", icon: "save" },
     custom_text: { label: "popup.custom_text", icon: "rename", iconColor: "#6effbe" },
     // DRAWER
     enabledTabs: { label: "context.enabledTabs", items: ["LOAD_enabled_drawer_tabs"] },
@@ -291,7 +292,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     // PROJECT
     projects: ["newProject", "newFolder", "SEPARATOR", "sort_projects_by"],
     projectsTab: ["import"],
-    projectTab: ["export", "SEPARATOR", "close"],
+    projectTab: ["save_to_file", "export", "SEPARATOR", "close"],
     project: ["newShowPopup", "section"], // "newShow"(empty) , "newPrivateShow"
     project_button: ["GROUP_rename", "export", "copy_to_template", "archive"], // "open",
     project_button_readonly: ["export"],

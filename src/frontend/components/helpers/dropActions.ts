@@ -140,11 +140,18 @@ export const dropActions = {
         if (drag.id === "media" || drag.id === "files") {
             const extraFiles: string[] = []
             const pptFiles: string[] = []
+            const projectFiles: string[] = []
 
             data = data
                 .map((a) => {
                     const path = a.path || window.api.showFilePath(a)
                     const extension: string = getExtension(path || a.name)
+
+                    if (extension === "project") {
+                        projectFiles.push(path)
+                        return
+                    }
+
                     if (drag.id === "files" && !files[drop.id].includes(extension)) {
                         extraFiles.push(path)
                         return null
@@ -171,6 +178,8 @@ export const dropActions = {
             if (extraFiles.length) projectDropFolders(extraFiles, drop.index)
             // auto convert PPT to slides
             if (pptFiles.length) sendMain(Main.IMPORT_FILES, { id: "powerpoint", paths: pptFiles })
+            // iport projects
+            if (projectFiles.length) sendMain(Main.IMPORT_FILES, { id: "freeshow_project", paths: projectFiles })
         } else if (drag.id === "audio" || drag.id === "audio_effect") {
             data = data.map((a) => ({ id: a.path, name: removeExtension(a.name), type: "audio" }))
         } else if (drag.id === "overlay") {

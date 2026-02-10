@@ -312,7 +312,7 @@ function getOS() {
 }
 
 function getDeviceName() {
-    return os.hostname()
+    return (os.hostname() || "").replace(".local", "")
 }
 
 function checkRamUsage() {
