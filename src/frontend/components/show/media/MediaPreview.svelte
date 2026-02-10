@@ -26,6 +26,8 @@
         failed = false
         mediaPath = path
 
+        if (show?.type === "player") return
+
         const media = await getMedia(path)
         if (!media) {
             failed = true
