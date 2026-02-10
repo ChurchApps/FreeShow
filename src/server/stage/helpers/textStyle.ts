@@ -203,15 +203,14 @@ export function getLastLineAlign(item: Item, selection: any): string {
 
 // get text of item.text...
 export function getItemText(item: Item): string {
-    if (!item) return ""
+    let text = ""
 
-    let text: string = ""
-    if (item.lines)
-        item.lines.forEach((line: any) => {
-            line.text?.forEach((content: any) => {
-                text += content.value
-            })
-        })
+    for (const line of item?.lines ?? []) {
+        for (const t of line.text ?? []) {
+            if (t.value) text += t.value
+        }
+    }
+
     return text
 }
 

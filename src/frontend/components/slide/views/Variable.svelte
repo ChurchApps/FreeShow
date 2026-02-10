@@ -25,11 +25,28 @@
     }
 
     // UPDATE DYNAMIC VALUES e.g. {time_} EVERY SECOND
+    $: hasDynamicValues = variable.text?.includes("{")
+
+    // only update if text contains dynamic values
+    $: if (hasDynamicValues) startInterval()
+    else stopInterval()
+    let dynamicInterval: NodeJS.Timeout | null = null
+    function startInterval() {
+        stopInterval()
+        dynamicInterval = setInterval(update, 1000)
+    }
+    function stopInterval() {
+        if (dynamicInterval) clearInterval(dynamicInterval)
+        dynamicInterval = null
+    }
+
     let updateDynamic = 0
-    const dynamicInterval = setInterval(() => {
+    function update() {
+        if (!hasDynamicValues) return
         updateDynamic++
-    }, 1000)
-    onDestroy(() => clearInterval(dynamicInterval))
+    }
+
+    onDestroy(() => stopInterval())
 </script>
 
 <div class="align autoFontSize" style="{style}{item?.align || ''}" class:hidden={variable.enabled === false} on:dblclick={openInDrawer}>

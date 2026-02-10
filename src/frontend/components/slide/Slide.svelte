@@ -226,10 +226,10 @@
     //     sendMain(Main.URL, url)
     // }
 
-    let updater = 0
+    let conditionsUpdater = 0
     onMount(() => {
         const interval = setInterval(() => {
-            if (itemsList.find((a) => a?.conditions)) updater++
+            if (itemsList.find((a) => a?.conditions)) conditionsUpdater++
         }, 3000)
 
         return () => {
@@ -305,7 +305,7 @@
                     <!-- text content -->
                     {#if slide.items}
                         {#each itemsList as item, i}
-                            {#if item && shouldItemBeShown(item, itemsList, { outputId, id: showId, slideIndex: index }, updater, true) && (viewMode !== "lyrics" || item.type === undefined || ["text", "events", "list"].includes(item.type))}
+                            {#if item && shouldItemBeShown(item, itemsList, { outputId, id: showId, slideIndex: index }, conditionsUpdater, true) && (viewMode !== "lyrics" || item.type === undefined || ["text", "events", "list"].includes(item.type))}
                                 <!-- && (!item.clickReveal || output?.clickRevealed) -->
                                 <!-- filter={layoutSlide.filterEnabled?.includes("foreground") ? layoutSlide.filter : ""} -->
                                 <!-- backdropFilter={layoutSlide.filterEnabled?.includes("foreground") ? layoutSlide["backdrop-filter"] : ""} -->

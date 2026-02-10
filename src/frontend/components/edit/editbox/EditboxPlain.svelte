@@ -114,11 +114,11 @@
     $: styles = getStyles(item?.lines?.[0]?.text?.[0]?.style)
     $: textTransform = !!(styles["text-transform"] && styles["text-transform"] !== "none")
 
-    let updater = 0
-    const updaterInterval = setInterval(() => updater++, 3000)
+    let conditionsUpdater = 0
+    const updaterInterval = setInterval(() => conditionsUpdater++, 3000)
     onDestroy(() => clearInterval(updaterInterval))
 
-    $: showItemState = isConditionMet(item?.conditions?.showItem, getItemText(item), "default", updater)
+    $: showItemState = isConditionMet(item?.conditions?.showItem, getItemText(item), "default", conditionsUpdater)
 </script>
 
 <!-- all icons are square, so only corner resizers need to be active -->

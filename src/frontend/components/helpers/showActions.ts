@@ -1287,7 +1287,6 @@ const replaceTokens = (str: string, id: string, inputs: string[] = []) => {
     })
 }
 
-let count = 0
 export function replaceDynamicValues(text: string, { showId, layoutId, slideIndex, type, id, mode }: any, _updater = 0) {
     const isOutputWin = isOutputWindow()
 
@@ -1302,11 +1301,6 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
 
     const currentShow = _show(showId).get()
     if (type === "show" && !currentShow) return ""
-
-    // too much??
-    if (count > 20) return ""
-    console.trace(count)
-    count++
 
     const customIds = ["slide_text_current", "active_layers", "active_styles", "output_windows_active", "log_song_usage"]
     ;[...getDynamicIds(false, mode), ...customIds].forEach((dynamicId) => {

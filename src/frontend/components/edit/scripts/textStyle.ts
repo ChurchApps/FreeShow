@@ -267,16 +267,12 @@ export function getSlideText(slide: Slide) {
 // get text of item.text...
 export function getItemText(item: Item | null): string {
     let text = ""
-    if (!item?.lines) return ""
 
-    item.lines.forEach((line) => {
-        console.assert(Array.isArray(line?.text), "Text is not an array!")
-        if (!Array.isArray(line?.text)) return
-
-        line.text.forEach((content) => {
-            text += content.value
-        })
-    })
+    for (const line of item?.lines ?? []) {
+        for (const t of line.text ?? []) {
+            if (t.value) text += t.value
+        }
+    }
 
     return text
 }

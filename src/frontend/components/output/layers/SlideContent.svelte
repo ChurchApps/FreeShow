@@ -75,10 +75,10 @@
     const showItemRef = { outputId, slideIndex: outSlide?.index }
     // $: videoTime = $videosTime[outputId] || 0 // WIP only update if the items text has a video dynamic value
     // $: if ($activeTimers || $variables || $playingAudio || $playingAudioPaths || videoTime) updateValues()
-    let updater = 0
+    let conditionsUpdater = 0
     const updaterInterval = setInterval(() => {
         if (isClearing) return
-        if (currentItems.find((a) => a?.conditions)) updater++
+        if (currentItems.find((a) => a?.conditions)) conditionsUpdater++
     }, 300)
     onDestroy(() => clearInterval(updaterInterval))
 
@@ -280,7 +280,7 @@
 
 <!-- Render all items in original order to maintain z-index layering -->
 {#each currentItems as item, index}
-    {#if shouldItemBeShown(item, currentItems, showItemRef, updater) && (!item.clickReveal || current.outSlide?.itemClickReveal)}
+    {#if shouldItemBeShown(item, currentItems, showItemRef, conditionsUpdater) && (!item.clickReveal || current.outSlide?.itemClickReveal)}
         {#if persistentItemIndexes.includes(index)}
             <!-- Persistent item: unchanged content, render outside transition to avoid flicker -->
             <Textbox

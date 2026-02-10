@@ -184,8 +184,8 @@
     // $: addMoreOuter = showItemValues?.length > 1 || showItemValues?.[0]?.length > 1 || (showItemValues?.[0]?.[0]?.[0]?.[0] && (showItemValues?.[0]?.[0]?.[0]?.[1] || showItemValues?.[0]?.[0]?.[1]?.[0]))
     $: addMoreOuter = showItemValues?.[0]?.length > 1 || showItemValues?.length > 1
 
-    let updater = 0
-    const updaterInterval = setInterval(() => updater++, 2000)
+    let conditionsUpdater = 0
+    const updaterInterval = setInterval(() => conditionsUpdater++, 2000)
     onDestroy(() => clearInterval(updaterInterval))
 
     $: currentItemText =
@@ -194,7 +194,7 @@
                   .map(getItemText)
                   .join("")
             : itemText
-    $: showItemState = isConditionMet(OUTER_OR, currentItemText, isStage ? "stage" : "default", updater)
+    $: showItemState = isConditionMet(OUTER_OR, currentItemText, isStage ? "stage" : "default", conditionsUpdater)
 
     let zoom = 1
 </script>
@@ -239,7 +239,7 @@
                                 {#each INNER_AND as content, d}
                                     {@const CONTENT = content || {}}
 
-                                    <div class="node and" class:trail={d > 0} class:isActive={checkConditionValue(content, currentItemText, isStage ? "stage" : "default", updater)}>
+                                    <div class="node and" class:trail={d > 0} class:isActive={checkConditionValue(content, currentItemText, isStage ? "stage" : "default", conditionsUpdater)}>
                                         {#if innerAnd?.length || a !== 0 || b !== 0 || c !== 0 || d !== 0}
                                             <div class="delete">
                                                 <MaterialButton variant="outlined" icon="delete" title="actions.delete" style="padding: 8px;border-radius: 50%;" on:click={() => deleteContent(a, b, c, d)} />
