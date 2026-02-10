@@ -171,12 +171,12 @@
             captureFolderContent = false
         }
 
-        // WIP generateThumbnails - might be better to generate dynamically, instead of full folder at once
         // WIP only list folders with any recursive media content?
 
         requesting++
         let currentRequest = requesting
-        const data = await requestMain(Main.READ_FOLDER, { path, depth, generateThumbnails: $mediaOptions.mode === "grid", captureFolderContent })
+        // , generateThumbnails: $mediaOptions.mode === "grid" // WIP not in use anymore
+        const data = await requestMain(Main.READ_FOLDER, { path, depth, captureFolderContent })
         if (requesting !== currentRequest) return
 
         // check if there's any audio files that the user might want to find

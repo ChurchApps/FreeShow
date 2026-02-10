@@ -50,7 +50,8 @@ export async function getThumbnail(data: { input: string; size: number }) {
     const mediaId = `${data.input}-${data.size}`
     if (currentlyGenerating.includes(mediaId)) {
         await waitUntilValueIsDefined(() => !currentlyGenerating.includes(mediaId), 50, 10000)
-        return { ...data, output: getThumbnailPath(data.input, data.size) }
+
+        return finish(getThumbnailPath(data.input, data.size))
     }
     currentlyGenerating.push(mediaId)
 
@@ -58,7 +59,16 @@ export async function getThumbnail(data: { input: string; size: number }) {
 
     await waitUntilValueIsDefined(() => !currentlyGenerating.includes(mediaId), 50, 10000)
 
-    return { ...data, output }
+    return finish(output)
+
+    function finish(output: string) {
+        if (failedPaths.includes(mediaId)) {
+            failedPaths.splice(failedPaths.indexOf(mediaId), 1) // allow retrying
+            return { ...data, output: "" }
+        }
+
+        return { ...data, output }
+    }
 }
 
 export function createThumbnail(filePath: string, size = 250) {
@@ -78,20 +88,17 @@ function addToGenerateQueue(data: Thumbnail) {
     nextInQueue()
 }
 
-let working = false
+// let working = false
 function nextInQueue() {
-    if (working) return
-    if (!thumbnailQueue[0]) {
-        currentlyGenerating = []
-        return // removeCaptureWindow()
-    }
+    // if (working) return
+    if (!thumbnailQueue[0]) return
 
-    working = true
+    // working = true
     generateThumbnail(thumbnailQueue.shift()!)
 }
 
 function generationFinished(mediaId: string) {
-    working = false
+    // working = false
     nextInQueue()
 
     if (currentlyGenerating.includes(mediaId)) currentlyGenerating.splice(currentlyGenerating.indexOf(mediaId), 1)
@@ -109,7 +116,7 @@ async function generateThumbnail(data: Thumbnail) {
     }
 
     try {
-        await generate(data.input, data.output, String(data.size) + "x?", { seek: 0.5 })
+        await generate(data.input, data.output, String(data.size) + "x?", { seek: 0.5 }, mediaId)
     } catch (err) {
         console.error(err)
         generationFinished(mediaId)
@@ -161,8 +168,7 @@ interface Config {
     // quality?: number // 0-100
 }
 // const customImageCapture = ["gif", "webp"]
-async function generate(input: string, output: string, size: string, config: Config = {}) {
-    const mediaId = `${input}-${size}`
+async function generate(input: string, output: string, size: string, config: Config = {}, mediaId: string) {
     if (!input || !output) {
         generationFinished(mediaId)
         return
@@ -201,6 +207,7 @@ async function captureWithCanvas(data: { input: string; output: string; size: Re
     // generationFinished(mediaId)
 }
 
+let failedPaths: string[] = []
 export function saveImage(data: { id?: string; path?: string; base64?: string; filePath?: string[]; format?: "png" | "jpg" }) {
     const dataURL = data.base64
     let savePath = data.path || ""
@@ -213,9 +220,16 @@ export function saveImage(data: { id?: string; path?: string; base64?: string; f
         savePath = path.join(folderPath, fileName)
     } else {
         mediaBeingCaptured = Math.max(0, mediaBeingCaptured - 1)
+        if (mediaBeingCaptured === 0) currentlyGenerating = []
     }
 
-    if (!dataURL || !savePath) return
+    if (!dataURL || !savePath) {
+        if (!data.id) return
+        failedPaths.push(data.id)
+        setTimeout(() => generationFinished(data.id!))
+        return
+    }
+    if (data.id && failedPaths.includes(data.id)) failedPaths.splice(failedPaths.indexOf(data.id), 1)
 
     const image = nativeImage.createFromDataURL(dataURL)
     saveToDisk(savePath, image, data.format || "png", data.id)

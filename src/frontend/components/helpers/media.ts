@@ -413,7 +413,7 @@ export const mediaSize = {
     small: 100 // show tools
 }
 
-async function loadThumbnail(input: string, size: number) {
+export async function loadThumbnail(input: string, size: number = mediaSize.drawerSize) {
     if (typeof input !== "string") return ""
     if (!isLocalFile(input)) return input
 
@@ -421,7 +421,7 @@ async function loadThumbnail(input: string, size: number) {
     if (input.includes("freeshow-cache") || input.includes("media-cache")) return input
 
     const loadedPath = get(loadedMediaThumbnails)[getThumbnailId({ input, size })]
-    if (loadedPath) return loadedPath
+    if (loadedPath !== undefined) return loadedPath
 
     const data = await requestMain(Main.GET_THUMBNAIL, { input, size })
     if (!data) return ""
@@ -438,7 +438,7 @@ export function getThumbnailPath(input: string, size: number) {
     if (input.includes("freeshow-cache") || input.includes("media-cache")) return input
 
     const loadedPath = get(loadedMediaThumbnails)[getThumbnailId({ input, size })]
-    if (loadedPath) return loadedPath
+    if (loadedPath !== undefined) return loadedPath
 
     const encodedPath: string = joinPath([get(cachePath), getThumbnailFileName(hashCode(input))])
     return encodedPath
@@ -615,7 +615,8 @@ export function captureCanvas(data: { input: string; output: string; size: any; 
         if (completed) return
 
         completed = true
-        sendMain(Main.SAVE_IMAGE, { id: data.id, path: data.output })
+        sendMain(Main.SAVE_IMAGE, { id: data.id })
+        capturing.splice(capturing.indexOf(data.input), 1)
     }
 }
 
