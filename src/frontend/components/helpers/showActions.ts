@@ -764,12 +764,12 @@ export function updateOut(showId: string, index: number, layout: LayoutRef[], ex
             const bg = _show(showId).get("media")[background]
             const outputBg = get(outputs)[outputId]?.out?.background
             const bgPath = bg?.path || bg?.id
-            const m = bg.type === "video" || bg.type === "image" || bg.type === "media" ? await getMedia(bgPath) : { path: bgPath, data: clone(get(media)[bgPath]) }
+            const extension = getExtension(bgPath)
+            const type = bg.type || getMediaType(extension)
+            const m = type === "video" || type === "image" || type === "media" ? await getMedia(bgPath) : { path: bgPath, data: clone(get(media)[bgPath]) }
 
             if (bg && m && m.path !== outputBg?.path) {
                 const name = bg.name || removeExtension(getFileName(m.path))
-                const extension = getExtension(m.path)
-                const type = bg.type || getMediaType(extension)
 
                 const outputStyle = get(styles)[get(outputs)[outputId]?.style || ""]
                 const mediaStyle = getMediaStyle(m.data, outputStyle)
@@ -1287,6 +1287,7 @@ const replaceTokens = (str: string, id: string, inputs: string[] = []) => {
     })
 }
 
+let count = 0
 export function replaceDynamicValues(text: string, { showId, layoutId, slideIndex, type, id, mode }: any, _updater = 0) {
     const isOutputWin = isOutputWindow()
 
@@ -1301,6 +1302,11 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
 
     const currentShow = _show(showId).get()
     if (type === "show" && !currentShow) return ""
+
+    // too much??
+    if (count > 20) return ""
+    console.trace(count)
+    count++
 
     const customIds = ["slide_text_current", "active_layers", "active_styles", "output_windows_active", "log_song_usage"]
     ;[...getDynamicIds(false, mode), ...customIds].forEach((dynamicId) => {
