@@ -136,6 +136,12 @@
             // if parent slide and has children, don't hide
             const isParent = ref[slideIndex]?.type === "parent"
             if (isParent && (show.slides[currentSlideId]?.children || []).length) {
+                // hide if group is set to "None"
+                if (show.slides[currentSlideId].group === ".") {
+                    hide = true
+                    return
+                }
+
                 hide = false
                 return
             }

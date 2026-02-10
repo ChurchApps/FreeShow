@@ -89,19 +89,15 @@ export function addToProject(type: ShowType | null, filePaths: string[]) {
         // get the latest empty project
         currentProject =
             Object.entries(get(projects))
-                .sort((a, b) => {
-                    const aDate = new Date(a[1].created || 0).getTime()
-                    const bDate = new Date(b[1].created || 0).getTime()
-                    return bDate - aDate
-                })
+                .sort((a, b) => a[1].created - b[1].created)
                 .find(([_id, project]) => project.shows && !project.shows.length)?.[0] || null
-    }
-    if (!currentProject) {
-        // auto-create a new project
-        currentProject = uid()
-        history({ id: "UPDATE", oldData: { id: currentProject }, location: { page: "show", id: "project" } })
-    }
-    if (!get(activeProject)) {
+
+        if (!currentProject) {
+            // auto-create a new project
+            currentProject = uid()
+            history({ id: "UPDATE", oldData: { id: currentProject }, location: { page: "show", id: "project" } })
+        }
+
         activeProject.set(currentProject)
         projectView.set(false)
     }

@@ -1,7 +1,7 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte"
     import { clearAudio } from "../../../audio/audioFading"
-    import { activeTimers, isFadingOut, isTimelinePlaying, labelsDisabled, media, outLocked, outputCache, outputs, overlayTimers, playingAudio, playingMetronome, styles, timelineRecordingAction } from "../../../stores"
+    import { activeTimers, dictionary, isFadingOut, isTimelinePlaying, labelsDisabled, media, outLocked, outputCache, outputs, overlayTimers, playingAudio, playingMetronome, styles, timelineRecordingAction } from "../../../stores"
     import { presentationControllersKeysDisabled } from "../../../utils/shortcuts"
     import Icon from "../../helpers/Icon.svelte"
     import { getMediaLayerType } from "../../helpers/media"
@@ -107,7 +107,7 @@
     }
 </script>
 
-<div class="clear" data-title={translateText("guide_description.output_clear")}>
+<div class="clear" data-title={translateText("guide_description.output_clear", $dictionary)}>
     <span>
         {#if allCleared && $outputCache && $outputCache?.slide?.type !== "ppt"}
             <MaterialButton style="padding: 0.42em 0.8em;" class="clearAll" disabled={$outLocked || !enableRestore} title="preview.restore_output" on:click={restoreOutput}>
