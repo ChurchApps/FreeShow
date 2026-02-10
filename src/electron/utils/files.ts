@@ -696,26 +696,27 @@ export async function locateMediaFile({ filePath, folders }: { filePath: string;
     // Media Sync Folder
     const mediaFolder = getMediaSyncFolderPath()
     const folderId = getFileParentFolderId(filePath)
-    const mediaFilePath = path.join(mediaFolder, folderId, upath.basename(filePath))
+    const fileName = upath.basename(filePath)
+    const mediaFilePath = path.join(mediaFolder, folderId, fileName)
     if (await doesPathExistAsync(mediaFilePath)) return { path: mediaFilePath, hasChanged: true }
     const searchFolders = [mediaFolder, ...folders]
 
     // lookup already replaced paths from cache
     const syncCache = getStore("CACHE_SYNC")
     if (!syncCache.replacedPaths) syncCache.replacedPaths = {}
-    const cachedPath = syncCache.replacedPaths[folderId]
+    const cacheId = `${folderId}_${fileName}`
+    const cachedPath = syncCache.replacedPaths[cacheId]
     if (cachedPath && (await doesPathExistAsync(cachedPath))) {
         return { path: cachedPath, hasChanged: false }
     }
 
-    const fileName = upath.basename(filePath)
     const parentFolderName = upath.basename(upath.dirname(filePath))
 
     const newPath = await findMatches()
     if (!newPath) return null
 
     // store replaced path in cache
-    syncCache.replacedPaths[folderId] = newPath
+    syncCache.replacedPaths[cacheId] = newPath
     setStore(_store.CACHE_SYNC, syncCache)
 
     return { path: newPath, hasChanged: true }
