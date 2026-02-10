@@ -57,7 +57,8 @@
 
         activeMenu = getContextMenu(id) || contextMenuLayouts.default
 
-        let contextHeight = Object.keys(activeMenu).length * 30 + 10
+        console.log(activeMenu)
+        let contextHeight = activeMenu.reduce((acc, id) => acc + (id.includes("GROUP") ? 2 : 1), 0) * 32 + 10
         if (x + 250 > window.innerWidth) x -= 250
         if (y + contextHeight > window.innerHeight) translate = 100
         if (x + (250 + 150) > window.innerWidth) side = "left"
