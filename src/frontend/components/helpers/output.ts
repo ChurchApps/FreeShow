@@ -330,9 +330,15 @@ export function getAllOutputs() {
     // return sortByName(keysToID(get(outputs)))
 }
 export function getAllEnabledOutputs() {
-    const outputs = getAllOutputs()
-    const enabled = outputs.filter((a) => a.enabled)
-    if (!enabled.length) return [outputs[0]]
+    const outputsList = getAllOutputs()
+    const enabled = outputsList.filter((a) => a.enabled)
+    if (!enabled.length) {
+        outputs.update((a) => {
+            a[Object.keys(a)[0]].enabled = true
+            return a
+        })
+        return [outputsList[0]]
+    }
     return enabled
 }
 
@@ -355,9 +361,15 @@ export function getWindowOutputId() {
 }
 
 export function getAllActiveOutputs() {
-    const outputs = getAllNormalOutputs()
-    const active = outputs.filter((a) => a.active)
-    if (!active.length) return [outputs[0]]
+    const outputsList = getAllNormalOutputs()
+    const active = outputsList.filter((a) => a.active)
+    if (!active.length) {
+        outputs.update((a) => {
+            a[Object.keys(a)[0]].active = true
+            return a
+        })
+        return [outputsList[0]]
+    }
     return active
 }
 export function getAllActiveOutputIds() {

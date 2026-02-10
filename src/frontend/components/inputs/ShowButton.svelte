@@ -6,7 +6,7 @@
     import { getAccess } from "../../utils/profile"
     import { historyAwait } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
-    import { getFileName, getMediaLayerType, getMediaStyle, loadThumbnail, mediaSize, removeExtension } from "../helpers/media"
+    import { getFileName, getMedia, getMediaLayerType, getMediaStyle, mediaSize, removeExtension } from "../helpers/media"
     import { findMatchingOut, getActiveOutputs, setOutput } from "../helpers/output"
     import { loadShows } from "../helpers/setShow"
     import { checkName, getLayoutRef } from "../helpers/show"
@@ -21,6 +21,7 @@
     export let data: null | string = null
     export let index: null | number = null
     export let isFirst: boolean = false
+    export let isProject: boolean = false
     $: type = show.type || "show"
     $: name = type === "show" ? $shows[show.id]?.name : type === "overlay" ? $overlays[show.id]?.name : type === "player" ? ($playerVideos[id] ? $playerVideos[id].name : setNotFound(id)) : show.name
     // export let page: "side" | "drawer" = "drawer"
@@ -194,14 +195,15 @@
     else thumbnailPath = ""
     async function getThumbnail() {
         thumbnailPath = ""
-        thumbnailPath = await loadThumbnail(id, mediaSize.small)
+        const media = await getMedia(id, mediaSize.small)
+        if (media?.thumbnail) thumbnailPath = media.thumbnail
     }
 </script>
 
 <div id="show_{id}" class="main" class:played={show.played}>
     <MaterialButton on:click={click} on:dblclick={doubleClick} {isActive} showOutline={outline} class="context {$$props.class}{readOnly ? '_readonly' : ''}" style="font-weight: normal;--outline-color: {activeOutput || 'var(--secondary)'};{$notFound.show?.includes(id) ? 'background-color: rgb(255 0 0 / 0.2);' : ''}{style}{$$props.style || ''}" tab>
         <div class="row">
-            <span class="cell" style="max-width: calc(100% {showNumber ? '- var(--number-width)' : ''} - var(--modified-width, 0px));">
+            <span class="cell" style={isProject ? `width: 100%;max-width: ${show.layoutInfo?.name || show.scheduleLength ? 92 : 100}%;` : `max-width: calc(100% ${showNumber ? "- var(--number-width)" : ""} - var(--modified-width, 0px));`}>
                 <div class="icon" class:isMedia>
                     {#if thumbnailPath}
                         <img class="thumbnail" src={thumbnailPath} alt="thumbnail" style={mediaStyleString} />
@@ -212,7 +214,7 @@
 
                 <HiddenInput value={newName} id={index !== null ? "show_" + id + "#" + index : "show_drawer_" + id} on:edit={rename} bind:edit={editActive} allowEmpty={false} allowEdit={(!show.type || show.type === "show") && !readOnly} />
 
-                {#if match !== null && ($activeShow?.data?.searchInput ? $activeShow?.id === id : isFirst)}
+                {#if !isProject && match !== null && ($activeShow?.data?.searchInput ? $activeShow?.id === id : isFirst)}
                     <span style="opacity: 0.4;font-size: 0.9em;padding: 0 10px;">Press enter to add to project</span>
                 {/if}
 
@@ -225,13 +227,21 @@
                 {/if}
             </span>
 
-            <span class="cell">
-                {#if showNumber}
-                    <span class="number">{showNumber}</span>
+            {#if isProject}
+                {#if isActive}
+                    <span class="arrow">
+                        <Icon id="next" white />
+                    </span>
                 {/if}
+            {:else}
+                <span class="cell">
+                    {#if showNumber}
+                        <span class="number">{showNumber}</span>
+                    {/if}
 
-                <span class="date">{data || ""}</span>
-            </span>
+                    <span class="date">{data || ""}</span>
+                </span>
+            {/if}
         </div>
     </MaterialButton>
 </div>
@@ -259,6 +269,7 @@
     .cell {
         display: flex;
         align-items: center;
+        justify-content: space-between;
 
         max-width: 75%;
     }
@@ -319,5 +330,22 @@
         height: 100%;
         object-fit: cover;
         border-radius: 4px;
+
+        /* hide alt text */
+        text-indent: 100%;
+        white-space: nowrap;
+        overflow: hidden;
+    }
+
+    .arrow {
+        position: absolute;
+        right: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+
+        opacity: 0.4;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 </style>
