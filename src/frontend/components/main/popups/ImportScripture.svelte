@@ -3,12 +3,13 @@
     import { uid } from "uid"
     import { Main } from "../../../../types/IPC/Main"
     import { requestMain, sendMain } from "../../../IPC/main"
-    import { language, scriptures } from "../../../stores"
+    import { scriptures } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { replace } from "../../../utils/languageData"
     import { customBibleData, getApiBiblesList } from "../../drawer/bible/scripture"
-    import { sortByName } from "../../helpers/array"
+    import { clone, sortByName } from "../../helpers/array"
     import T from "../../helpers/T.svelte"
+    import HRule from "../../input/HRule.svelte"
     import Link from "../../inputs/Link.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialCheckbox from "../../inputs/MaterialCheckbox.svelte"
@@ -16,7 +17,6 @@
     import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
     import Center from "../../system/Center.svelte"
     import Loader from "../Loader.svelte"
-    import HRule from "../../input/HRule.svelte"
 
     let bibles: CustomBibleListContent[] = []
     let recommended: CustomBibleListContent[] = []
@@ -38,17 +38,20 @@
             bibleList = sortByName(bibleList).sort((a, b) => ((b.attributionRequired || b.attributionString) as any) - ((a.attributionRequired || a.attributionString) as any))
             let newSorted: any[] = []
             bibleList.forEach((bible) => {
+                let lang = bible.language
+                if (lang === "nob" || lang === "nor" || lang === "nno") lang = "no"
+
                 newSorted.push(bible)
-                let found = false
-                if (bible.countryList?.includes(langCode)) found = true
+                let match = false
+                // eng <> en
+                if (lang.includes(langCode)) match = true
+                else {
+                    langCode = replace[langCode] ? langCode : Object.entries(replace).find(([_id, r]) => r.includes(langCode))?.[0] || ""
+                    if (lang.includes(langCode)) match = true
+                }
 
-                replace[$language].forEach((r: any) => {
-                    r = r.slice(-2)
-                    if (bible.countryList?.includes(r.toLowerCase())) found = true
-                })
-
-                if (found) {
-                    recommended.push(bible)
+                if (match) {
+                    recommended.push({ ...bible, name: bible.nameLocal || bible.name, description: bible.nameLocal ? bible.name : bible.description })
                     newSorted.pop()
                 }
             })
@@ -62,7 +65,7 @@
     let searchedBibles: CustomBibleListContent[] = []
     let searchedRecommendedBibles: CustomBibleListContent[] = []
     $: searchedBibles = bibles
-    $: searchedRecommendedBibles = recommended.map((a) => ({ ...a, name: a.nameLocal || a.name }))
+    $: searchedRecommendedBibles = clone(recommended)
 
     function toggleScripture(bible: CustomBibleListContent) {
         scriptures.update((a) => {
@@ -81,12 +84,12 @@
 
         if (value.length < 2) {
             searchedBibles = bibles
-            searchedRecommendedBibles = recommended
+            searchedRecommendedBibles = clone(recommended)
             return
         }
 
         searchedBibles = bibles.filter((a) => value.split(" ").find((value) => a.name.toLowerCase().includes(value)))
-        searchedRecommendedBibles = recommended.filter((a) => value.split(" ").find((value) => a.name.toLowerCase().includes(value)))
+        searchedRecommendedBibles = clone(recommended).filter((a) => value.split(" ").find((value) => a.name.toLowerCase().includes(value)))
     }
 
     let importType = ""
@@ -128,7 +131,10 @@
                 {#each searchedRecommendedBibles as bible}
                     <MaterialCheckbox label={bible.name} data={bible.description} checked={!!Object.values($scriptures).find((a) => a.id === bible.sourceKey)} on:change={() => toggleScripture(bible)} />
                 {/each}
-                <hr />
+
+                {#if searchedBibles.length}
+                    <hr />
+                {/if}
             {/if}
 
             {#if bibles.length}
@@ -136,7 +142,7 @@
                     {#each searchedBibles as bible}
                         <MaterialCheckbox label={bible.name} data={bible.description} checked={!!Object.values($scriptures).find((a) => a.id === bible.sourceKey)} on:change={() => toggleScripture(bible)} />
                     {/each}
-                {:else}
+                {:else if !searchedRecommendedBibles.length}
                     <Center faded>
                         <T id="empty.search" />
                     </Center>

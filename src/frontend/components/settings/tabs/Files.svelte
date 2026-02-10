@@ -311,7 +311,7 @@
 
 <!-- DEPRECATED: -->
 
-{#if validKeys}
+{#if !$providerConnections.churchApps && validKeys}
     <MaterialMediaPicker label="Google API service account key" title="Import keys file" value="Update keys file" filter={{ name: "Key file", extensions: ["json"] }} icon="key" on:change={receiveKeysFile} allowEmpty />
     <MaterialToggleSwitch label="Disable uploading data" checked={$driveData.disableUpload} defaultValue={false} on:change={(e) => toggleData(e.detail, "disableUpload")} />
 

@@ -1775,6 +1775,9 @@ export function getShortBibleName(name: string) {
 const bibleData = {
     "eea18ccd2ca05dde-01": {
         nameLocal: "Bibel 2011 Bokmål" // med gammeltestamentlige apokryfer
+    },
+    "7bcaa2f2e77739d5-01": {
+        nameLocal: "Bibel 2011 Nynorsk"
     }
 }
 export function customBibleData(data: CustomBibleListContent) {
