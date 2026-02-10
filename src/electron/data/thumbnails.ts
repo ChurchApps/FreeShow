@@ -45,8 +45,18 @@ function deleteThumbnails(filePath: string) {
     })
 }
 
-export function getThumbnail(data: { input: string; size: number }) {
+let currentlyGenerating: string[] = []
+export async function getThumbnail(data: { input: string; size: number }) {
+    const mediaId = `${data.input}-${data.size}`
+    if (currentlyGenerating.includes(mediaId)) {
+        await waitUntilValueIsDefined(() => !currentlyGenerating.includes(mediaId), 50, 10000)
+        return { ...data, output: getThumbnailPath(data.input, data.size) }
+    }
+    currentlyGenerating.push(mediaId)
+
     const output = createThumbnail(data.input, data.size || 500)
+
+    await waitUntilValueIsDefined(() => !currentlyGenerating.includes(mediaId), 50, 10000)
 
     return { ...data, output }
 }
@@ -70,25 +80,31 @@ function addToGenerateQueue(data: Thumbnail) {
 
 let working = false
 function nextInQueue() {
-    if (working || !thumbnailQueue[0]) return
-    // if (!thumbnailQueue[0]) return removeCaptureWindow()
+    if (working) return
+    if (!thumbnailQueue[0]) {
+        currentlyGenerating = []
+        return // removeCaptureWindow()
+    }
 
     working = true
     generateThumbnail(thumbnailQueue.shift()!)
 }
 
-function generationFinished() {
+function generationFinished(mediaId: string) {
     working = false
     nextInQueue()
+
+    if (currentlyGenerating.includes(mediaId)) currentlyGenerating.splice(currentlyGenerating.indexOf(mediaId), 1)
 }
 
 const exists: string[] = []
 async function generateThumbnail(data: Thumbnail) {
-    if (![...imageExtensions, ...videoExtensions].includes(getExtension(data.input))) return generationFinished()
-    if (isProd && exists.includes(data.output)) return generationFinished()
+    const mediaId = `${data.input}-${data.size}`
+    if (![...imageExtensions, ...videoExtensions].includes(getExtension(data.input))) return generationFinished(mediaId)
+    if (isProd && exists.includes(data.output)) return generationFinished(mediaId)
     if (await doesPathExistAsync(data.output)) {
         exists.push(data.output)
-        generationFinished()
+        generationFinished(mediaId)
         return
     }
 
@@ -96,7 +112,7 @@ async function generateThumbnail(data: Thumbnail) {
         await generate(data.input, data.output, String(data.size) + "x?", { seek: 0.5 })
     } catch (err) {
         console.error(err)
-        generationFinished()
+        generationFinished(mediaId)
     }
 }
 let thumbnailFolderPath = ""
@@ -146,8 +162,9 @@ interface Config {
 }
 // const customImageCapture = ["gif", "webp"]
 async function generate(input: string, output: string, size: string, config: Config = {}) {
+    const mediaId = `${input}-${size}`
     if (!input || !output) {
-        generationFinished()
+        generationFinished(mediaId)
         return
     }
 
@@ -159,15 +176,15 @@ async function generate(input: string, output: string, size: string, config: Con
     // if (!customImageCapture.includes(extension) && defaultSettings.imageExtensions.includes(extension)) return captureImage(input, output, parsedSize)
 
     // capture other media with canvas in main window
-    await captureWithCanvas({ input, output, size: parsedSize, extension: getExtension(input), config })
+    await captureWithCanvas({ input, output, size: parsedSize, extension: getExtension(input), config, id: mediaId })
 }
 
 let mediaBeingCaptured = 0
 const maxAmount = 20
 const refillMargin = maxAmount * 0.6
-async function captureWithCanvas(data: { input: string; output: string; size: ResizeOptions; extension: string; config: Config }) {
+async function captureWithCanvas(data: { input: string; output: string; size: ResizeOptions; extension: string; config: Config; id: string }) {
     if (!(await doesPathExistAsync(data.input))) {
-        generationFinished()
+        generationFinished(data.id)
         return
     }
 
@@ -181,10 +198,10 @@ async function captureWithCanvas(data: { input: string; output: string; size: Re
     if (mediaBeingCaptured > maxAmount) await waitUntilValueIsDefined(() => mediaBeingCaptured < refillMargin)
 
     // console.timeEnd("CAPTURING: " + captureIndex + " - " + data.input)
-    generationFinished()
+    // generationFinished(mediaId)
 }
 
-export function saveImage(data: { path?: string; base64?: string; filePath?: string[]; format?: "png" | "jpg" }) {
+export function saveImage(data: { id?: string; path?: string; base64?: string; filePath?: string[]; format?: "png" | "jpg" }) {
     const dataURL = data.base64
     let savePath = data.path || ""
 
@@ -201,7 +218,7 @@ export function saveImage(data: { path?: string; base64?: string; filePath?: str
     if (!dataURL || !savePath) return
 
     const image = nativeImage.createFromDataURL(dataURL)
-    saveToDisk(savePath, image, false, data.format || "png")
+    saveToDisk(savePath, image, data.format || "png", data.id)
 }
 
 export async function pdfToImage({ filePath }: { filePath: string }) {
@@ -218,7 +235,7 @@ export async function pdfToImage({ filePath }: { filePath: string }) {
         const image = nativeImage.createFromDataURL(base64)
         const imagePath = path.join(pathName, `${i + 1}.jpg`)
 
-        saveToDisk(imagePath, image, false, "jpg")
+        saveToDisk(imagePath, image, "jpg")
         images.push(imagePath)
     }
 
@@ -283,14 +300,14 @@ function parseSize(sizeStr: string): ResizeOptions {
 /// // SAVE /////
 
 const jpegQuality = 90 // 0-100
-function saveToDisk(savePath: string, image: NativeImage, nextOnFinished = true, format: "png" | "jpg") {
+function saveToDisk(savePath: string, image: NativeImage, format: "png" | "jpg", id?: string) {
     let img
     if (format === "jpg") img = image.toJPEG(jpegQuality)
     else img = image.toPNG() // higher file size, but supports transparent images
 
     fs.writeFile(savePath, img, (err) => {
         if (!err) exists.push(savePath)
-        if (nextOnFinished) generationFinished()
+        if (id) generationFinished(id)
     })
 }
 

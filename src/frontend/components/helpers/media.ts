@@ -159,22 +159,32 @@ async function toDataURL(url: string): Promise<string> {
 // download any online media
 // get located media path & generated thumbnail
 const replacedPaths = new Map<string, { path: string; altPath?: string; thumbnail: string }>()
+let currentlyGetting: string[] = []
 export async function getMedia(path: string, size: number = mediaSize.drawerSize) {
     if (typeof path !== "string") return null
 
+    const mediaId = `${path}-${size}`
+
     const mediaData = clone(get(media)[path])
-    if (replacedPaths.has(path)) return { ...replacedPaths.get(path)!, data: mediaData }
+    if (replacedPaths.has(mediaId)) return { ...replacedPaths.get(mediaId)!, data: mediaData }
+
+    if (currentlyGetting.includes(mediaId)) {
+        await waitUntilValueIsDefined(() => replacedPaths.has(mediaId), 50, 10000)
+        if (replacedPaths.has(mediaId)) return { ...replacedPaths.get(mediaId)!, data: mediaData }
+        return null
+    }
+    currentlyGetting.push(mediaId)
 
     if (path.includes("http")) {
         const localPath = (await downloadOnlineMedia(path)) || path
         const thumbnail = mediaData?.contentFile?.thumbnail || localPath
 
-        replacedPaths.set(path, { path: localPath, altPath: path, thumbnail })
-        return { path: localPath, altPath: path, thumbnail, data: mediaData }
+        replacedPaths.set(mediaId, { path: localPath, altPath: path, thumbnail })
+        return finish(localPath, thumbnail, path)
     }
 
     if (!isLocalFile(path) || path.includes("freeshow-cache") || path.includes("media-cache")) {
-        return { path, thumbnail: path, data: mediaData }
+        return finish(path, path)
     }
 
     // lessons
@@ -183,7 +193,7 @@ export async function getMedia(path: string, size: number = mediaSize.drawerSize
     // setTimeout(() => loadThumbnail(path, data.size), 1000)
 
     const located = await locateMediaFile(path)
-    if (!located) return null
+    if (!located) return finish()
 
     const newPath = located.path
     if (!located.hasChanged) addToMediaFolder(path)
@@ -191,22 +201,41 @@ export async function getMedia(path: string, size: number = mediaSize.drawerSize
     if (!isMainWindow()) {
         const thumbnail = getThumbnailPath(newPath, size)
 
-        replacedPaths.set(path, { path: newPath, thumbnail })
-        return { path: newPath, thumbnail, data: mediaData }
+        replacedPaths.set(mediaId, { path: newPath, thumbnail })
+        return finish(newPath, thumbnail)
     }
 
     // generate thumbnails only in main window
     const thumbnail = (await loadThumbnail(newPath, size)) || newPath
 
-    replacedPaths.set(path, { path: newPath, thumbnail })
-    return { path: newPath, thumbnail, data: mediaData }
+    replacedPaths.set(mediaId, { path: newPath, thumbnail })
+    return finish(newPath, thumbnail)
+
+    function finish(path?: string, thumbnail?: string, altPath?: string) {
+        currentlyGetting.splice(currentlyGetting.indexOf(mediaId), 1)
+        if (!path || !thumbnail) return null
+        if (altPath) return { path, altPath, thumbnail, data: mediaData }
+        return { path, thumbnail, data: mediaData }
+    }
 }
 
-export function getMediaCached(path: string) {
-    if (!replacedPaths.has(path)) return null
+// export function isMediaCached(path: string, size: number = mediaSize.drawerSize) {
+//     const mediaId = `${path}-${size}`
+//     return replacedPaths.has(mediaId)
+// }
 
+export async function getMediaCached(path: string, size: number = mediaSize.drawerSize) {
     const mediaData = clone(get(media)[path])
-    return { ...replacedPaths.get(path)!, data: mediaData }
+
+    const mediaId = `${path}-${size}`
+    if (replacedPaths.has(mediaId)) return { ...replacedPaths.get(mediaId)!, data: mediaData }
+
+    if (currentlyGetting.includes(mediaId)) {
+        await waitUntilValueIsDefined(() => replacedPaths.has(mediaId), 50, 10000)
+        if (replacedPaths.has(mediaId)) return { ...replacedPaths.get(mediaId)!, data: mediaData }
+    }
+
+    return null
 }
 
 export async function locateMediaFile(path: string) {
@@ -513,7 +542,7 @@ export function getVideoDuration(path: string): Promise<number> {
 // const jpegQuality = 90 // 0-100
 const capturing: string[] = []
 const retries: { [key: string]: number } = {}
-export function captureCanvas(data: { input: string; output: string; size: any; extension: string; config: any; seek?: number }) {
+export function captureCanvas(data: { input: string; output: string; size: any; extension: string; config: any; id: string; seek?: number }) {
     let completed = false
     if (capturing.includes(data.output)) return exit()
     capturing.push(data.output)
@@ -574,7 +603,7 @@ export function captureCanvas(data: { input: string; output: string; size: any; 
         await wait(200)
         const dataURL = canvas.toDataURL("image/png") // , jpegQuality
 
-        sendMain(Main.SAVE_IMAGE, { path: data.output, base64: dataURL })
+        sendMain(Main.SAVE_IMAGE, { id: data.id, path: data.output, base64: dataURL })
         completed = true
 
         // unload
@@ -586,7 +615,7 @@ export function captureCanvas(data: { input: string; output: string; size: any; 
         if (completed) return
 
         completed = true
-        sendMain(Main.SAVE_IMAGE, { path: data.output })
+        sendMain(Main.SAVE_IMAGE, { id: data.id, path: data.output })
     }
 }
 

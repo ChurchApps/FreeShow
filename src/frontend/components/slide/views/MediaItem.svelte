@@ -66,7 +66,7 @@
         mediaPath = bgPath
         let thumbnailPath = getThumbnailPath(mediaPath, mediaSize.slideSize)
 
-        const media = await getMedia(bgPath)
+        const media = await getMedia(bgPath, mediaSize.slideSize)
         if (!media) return
 
         mediaPath = media.path

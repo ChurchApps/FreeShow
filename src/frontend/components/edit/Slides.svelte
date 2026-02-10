@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { onMount } from "svelte"
     import { activeEdit, activeShow, cachedShowsData, editColumns, showsCache } from "../../stores"
     import T from "../helpers/T.svelte"
     import { findMatchingOut } from "../helpers/output"
@@ -7,10 +8,17 @@
     import Autoscroll from "../system/Autoscroll.svelte"
     import Center from "../system/Center.svelte"
     import DropArea from "../system/DropArea.svelte"
+    import SkeletonSlide from "../slide/SkeletonSlide.svelte"
 
     $: showId = $activeShow?.id || $activeEdit.showId || ""
     $: currentShow = $showsCache[showId]
     $: layoutSlides = $cachedShowsData[getShowCacheId(showId, currentShow)]?.layout || []
+
+    let hasMounted = false
+    onMount(() => {
+        // don't double render all slides on first load because of cachedShowsData update
+        setTimeout(() => (hasMounted = true), 80)
+    })
 
     function keydown(e: KeyboardEvent) {
         if (e.altKey) {
@@ -47,7 +55,7 @@
     let skipScrolling = false
     let scrollElem: HTMLElement | undefined
     let offset = -1
-    $: if (loaded && $activeEdit.slide !== null && $activeEdit.slide !== undefined) updateScroll()
+    $: if ($activeEdit.slide !== null && $activeEdit.slide !== undefined) updateScroll()
     function updateScroll() {
         if (skipScrolling) return
 
@@ -77,6 +85,14 @@
     let altKeyPressed = false
     function keyup() {
         altKeyPressed = false
+    }
+
+    function slideClick(e: any, index: number) {
+        if (!e.ctrlKey && !e.metaKey && !e.shiftKey) {
+            activeEdit.set({ slide: index, items: [], showId })
+            skipScrolling = true
+            setTimeout(() => (skipScrolling = false), 10)
+        }
     }
 
     // lazy loader
@@ -119,28 +135,13 @@
             {#if layoutSlides.length}
                 <div class="grid" on:wheel={wheel}>
                     {#each layoutSlides as slide, i}
-                        {#if (loaded || i < lazyLoader) && currentShow?.slides?.[slide.id]}
-                            <Slide
-                                {showId}
-                                slide={currentShow.slides[slide.id]}
-                                show={currentShow}
-                                layoutSlide={slide}
-                                {layoutSlides}
-                                index={i}
-                                color={slide.color}
-                                active={findMatchingOut(slide.id) !== null}
-                                focused={$activeEdit.slide === i}
-                                noQuickEdit
-                                {altKeyPressed}
-                                columns={$editColumns}
-                                on:click={(e) => {
-                                    if (!e.ctrlKey && !e.metaKey && !e.shiftKey) {
-                                        activeEdit.set({ slide: i, items: [], showId })
-                                        skipScrolling = true
-                                        setTimeout(() => (skipScrolling = false), 10)
-                                    }
-                                }}
-                            />
+                        {@const currentSlide = currentShow?.slides?.[slide.id]}
+                        {#if hasMounted && (loaded || i < lazyLoader)}
+                            {#if currentSlide}
+                                <Slide {showId} slide={currentSlide} show={currentShow} layoutSlide={slide} {layoutSlides} index={i} color={slide.color} active={findMatchingOut(slide.id) !== null} focused={$activeEdit.slide === i} noQuickEdit {altKeyPressed} columns={$editColumns} on:click={(e) => slideClick(e, i)} />
+                            {/if}
+                        {:else}
+                            <SkeletonSlide slide={currentSlide} index={i} color={slide.color} columns={$editColumns} active={$activeEdit.slide === i} on:click={(e) => slideClick(e, i)} />
                         {/if}
                     {/each}
 

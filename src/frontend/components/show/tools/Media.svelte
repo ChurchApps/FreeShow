@@ -16,7 +16,7 @@
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { clone, sortByName } from "../../helpers/array"
-    import { getExtension, getMedia, getMediaStyle, getMediaType, isMediaExtension } from "../../helpers/media"
+    import { getExtension, getMedia, getMediaStyle, getMediaType, isMediaExtension, mediaSize } from "../../helpers/media"
     import { findMatchingOut, getActiveOutputs, getCurrentStyle, setOutput } from "../../helpers/output"
     import { _show } from "../../helpers/shows"
     import Button from "../../inputs/Button.svelte"
@@ -169,7 +169,7 @@
         bgs.forEach(async (bgMedia) => {
             let bgPath = bgMedia.path || ""
 
-            const media = await getMedia(bgPath)
+            const media = await getMedia(bgPath, mediaSize.small)
             if (media) newMedia[bgPath] = media
         })
     }

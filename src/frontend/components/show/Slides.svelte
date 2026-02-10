@@ -62,9 +62,9 @@
 
     let scrollElem: HTMLElement | undefined
     let offset = -1
-    $: updateOffset({ $outputs })
+    $: setTimeout(() => updateOffset({ $outputs }))
     async function updateOffset(_updater: any) {
-        if (!loaded || !scrollElem) return
+        if (!scrollElem) return
         if (await hasNewerUpdate("SHOWS_SCROLL_OFFSET", 50)) return
 
         let output = $outputs[activeOutputs[0]] || {}
@@ -472,13 +472,13 @@
                 <div class="grid" style={$focusMode ? "" : "padding-bottom: 60px;"}>
                     {#if layoutSlides.length}
                         {#each layoutSlides as slide, i}
-                            {@const currentSlide = currentShow.slides[slide.id]}
+                            {@const currentSlide = currentShow?.slides?.[slide.id]}
                             {#if hasMounted && (loaded || i < lazyLoader)}
-                                {#if currentShow?.slides?.[slide.id] && (mode === "grid" || mode === "groups" || !slide.disabled) && (mode !== "groups" || currentShow.slides[slide.id].group !== null || activeSlides[i] !== undefined)}
+                                {#if currentSlide && (mode === "grid" || mode === "groups" || !slide.disabled) && (mode !== "groups" || currentSlide.group !== null || activeSlides[i] !== undefined)}
                                     <Slide {showId} slide={currentSlide} show={currentShow} {layoutSlides} layoutSlide={slide} index={i} color={slide.color} output={activeSlides[i]} active={activeSlides[i] !== undefined} {endIndex} list={!gridMode} columns={$slidesOptions.columns} icons {altKeyPressed} disableThumbnails={isLessons && !loaded} centerPreview on:click={(e) => slideClick(e, i)} />
                                 {/if}
                             {:else}
-                                <SkeletonSlide slide={currentSlide} index={i} color={slide.color} columns={$slidesOptions.columns} on:click={(e) => slideClick(e, i)} />
+                                <SkeletonSlide slide={currentSlide} index={i} color={slide.color} columns={$slidesOptions.columns} active={activeSlides[i] !== undefined} on:click={(e) => slideClick(e, i)} />
                             {/if}
                         {/each}
                     {:else}

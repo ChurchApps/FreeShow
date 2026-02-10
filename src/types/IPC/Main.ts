@@ -186,7 +186,7 @@ export interface MainSendPayloads {
     [Main.OUTPUT]: "true" | "false"
     [Main.DOES_MEDIA_EXIST]: { path: string; creationTime?: number; noCache?: boolean }
     [Main.GET_THUMBNAIL]: { input: string; size: number }
-    [Main.SAVE_IMAGE]: { path?: string; base64?: string; filePath?: string[]; format?: "png" | "jpg" }
+    [Main.SAVE_IMAGE]: { id?: string; path?: string; base64?: string; filePath?: string[]; format?: "png" | "jpg" }
     [Main.PDF_TO_IMAGE]: { filePath: string }
     [Main.READ_EXIF]: { id: string }
     [Main.MEDIA_CODEC]: { path: string }
@@ -295,7 +295,7 @@ export interface MainReturnPayloads {
     [Main.GET_SCREENS]: Promise<{ name: string; id: string }[]>
     [Main.GET_WINDOWS]: Promise<{ name: string; id: string }[]>
     [Main.DOES_MEDIA_EXIST]: Promise<{ path: string; exists: boolean; creationTime?: number }>
-    [Main.GET_THUMBNAIL]: { output: string; input: string; size: number }
+    [Main.GET_THUMBNAIL]: Promise<{ output: string; input: string; size: number }>
     // [Main.PDF_TO_IMAGE]: Promise<string[]>
     [Main.READ_EXIF]: Promise<{ id: string; exif: ExifData }>
     [Main.MEDIA_CODEC]: Promise<{ path: string; codecs: string[]; mimeType: string; mimeCodec: string }>
