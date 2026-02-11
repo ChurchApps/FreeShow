@@ -16,7 +16,7 @@ import { autoErrorReport } from "./IPC/responsesMain"
 import { receiveNDI } from "./ndi/talk"
 import { OutputHelper } from "./output/OutputHelper"
 import { callClose, exitApp, saveAndClose } from "./utils/close"
-import { isWithinDisplayBounds, mainWindowInitialize, openDevTools, parseCommandLineArgs, waitForBundle } from "./utils/init"
+import { isWithinDisplayBounds, mainWindowInitialize, openDevTools, parseCommandLineArgs, waitForBundle, isDraggableAreaVisible } from "./utils/init"
 import { template } from "./utils/menuTemplate"
 import { spellcheck } from "./utils/spellcheck"
 import { loadingOptions, mainOptions } from "./utils/windowOptions"
@@ -167,8 +167,8 @@ function createMain() {
     if (bounds.x) options.x = bounds.x
     if (bounds.y) options.y = bounds.y
 
-    // check if window position is within a visible area
-    if (bounds.x && bounds.y && !isWithinDisplayBounds({ x: bounds.x, y: bounds.y })) {
+    // check if window position is within a visible area and draggable top area is accessible
+    if (bounds.x && bounds.y && (!isWithinDisplayBounds({ x: bounds.x, y: bounds.y }) || !isDraggableAreaVisible(bounds, options.width!))) {
         options.x = (screenBounds.width - options.width!) / 2
         options.y = (screenBounds.height - options.height!) / 2
     }

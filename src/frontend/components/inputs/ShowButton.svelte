@@ -188,13 +188,27 @@
     $: outline = activeOutput !== null || !!$playingAudio[id]
 
     let thumbnailPath: string | null = null
-    $: isMedia = type === "image" || type === "video"
+    $: isMedia = type === "image" || type === "video" || type === "player"
     $: mediaStyle = isMedia ? getMediaStyle($media[id], undefined) : {} // , $styles[getFirstActiveOutput($outputs)?.style || ""]
     $: mediaStyleString = `pointer-events: none;filter: ${mediaStyle.filter || ""};transform: scale(${mediaStyle.flipped ? "-1" : "1"}, ${mediaStyle.flippedY ? "-1" : "1"});`
     $: if (id && isMedia) getThumbnail()
     else thumbnailPath = ""
     async function getThumbnail() {
         thumbnailPath = ""
+
+        if (type === "player") {
+            const player = $playerVideos[id]
+            if (player?.type === "youtube") {
+                thumbnailPath = `https://i.ytimg.com/vi/${player.id}/sddefault.jpg`
+                return
+            }
+            if (player?.type === "vimeo") {
+                thumbnailPath = `https://vumbnail.com/${player.id}_medium.jpg`
+                return
+            }
+            return
+        }
+
         const media = await getMedia(id, mediaSize.small)
         if (media?.thumbnail) thumbnailPath = media.thumbnail
     }

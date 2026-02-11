@@ -60,12 +60,18 @@
         })
     }
 
+    let shouldSkipSmooth = 0
+    $: if (showId) {
+        offset = 0
+        shouldSkipSmooth++
+    }
+
     let scrollElem: HTMLElement | undefined
     let offset = -1
-    $: setTimeout(() => updateOffset({ $outputs }))
+    $: setTimeout(() => updateOffset({ $outputs, showId }))
     async function updateOffset(_updater: any) {
         if (!scrollElem) return
-        if (await hasNewerUpdate("SHOWS_SCROLL_OFFSET", 50)) return
+        if (await hasNewerUpdate("SHOWS_SCROLL_OFFSET", 10)) return
 
         let output = $outputs[activeOutputs[0]] || {}
         if (showId === output.out?.slide?.id && activeLayout === output.out?.slide?.layout) {
@@ -457,7 +463,7 @@
 
 <svelte:window on:keydown={keydown} on:keyup={keyup} on:mousedown={keyup} on:blur={blurred} />
 
-<Autoscroll class={$focusMode || isLocked ? "" : "context #shows__close"} {offset} disabled={disableAutoScroll} bind:scrollElem style="display: flex;">
+<Autoscroll class={$focusMode || isLocked ? "" : "context #shows__close"} {offset} disabled={disableAutoScroll} {shouldSkipSmooth} bind:scrollElem style="display: flex;">
     <DropArea id="all_slides" selectChildren>
         <DropArea id="slides" hoverTimeout={0} selectChildren>
             {#if $showsCache[showId] === undefined}

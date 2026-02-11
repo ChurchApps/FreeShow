@@ -220,7 +220,7 @@ export function getStore<T extends keyof typeof storeFilesData | "config">(id: T
 // GET STORE VALUE (used in special cases - currently only some "config" keys)
 export function getStoreValue(data: { file: "config" | keyof typeof _store; key: string }) {
     const store = data.file === "config" ? config : _store[data.file]
-    return (store as any).get(data.key)
+    return (store as any).get(data.key) ?? null
 }
 // SET STORE VALUE (used in special cases - currently only some "config" keys)
 export function setStoreValue(data: { file: "config" | keyof typeof _store; key: string; value: any }) {

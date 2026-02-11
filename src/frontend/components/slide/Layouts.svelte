@@ -12,7 +12,7 @@
     import { keysToID, sortByName } from "../helpers/array"
     import { duplicate } from "../helpers/clipboard"
     import { history } from "../helpers/history"
-    import { allOutputsHasStyleTemplate, getFirstActiveOutput } from "../helpers/output"
+    import { allOutputsHasStyleTemplate, getAllEnabledOutputs, getFirstActiveOutput } from "../helpers/output"
     import { removeTemplatesFromShow } from "../helpers/show"
     import { _show } from "../helpers/shows"
     import { joinTime, secondsToTime } from "../helpers/time"
@@ -194,6 +194,11 @@
             })
             .replaceAll("\n", "&nbsp;")
     }
+
+    const outputsCount = getAllEnabledOutputs().length
+    $: enableStylePreview = !!(outputStyleTemplate && $special.styleTemplatePreview !== false && $templates[outputStyleTemplate])
+    $: showTemplateId = currentShow?.settings?.template || ""
+    $: showTemplateIcon = !!(showTemplateId && $templates[showTemplateId])
 </script>
 
 {#if notesVisible && notes}
@@ -253,16 +258,16 @@
                 </MaterialButton>
             {/if}
 
-            {#if (!referenceType || referenceType === "scripture" || open) && currentShow?.settings?.template && $templates[currentShow.settings.template]}
+            {#if enableStylePreview && outputsCount === 1 ? false : showTemplateIcon && (!referenceType || referenceType === "scripture" || open)}
                 {#if open}
                     <div class="divider"></div>
                 {/if}
 
                 <MaterialButton
                     class="context #show_template"
-                    title="menu.edit: <b>{$templates[currentShow.settings.template].name || 'info.template'}</b>"
+                    title="menu.edit: <b>{$templates[showTemplateId].name || 'info.template'}</b>"
                     on:click={() => {
-                        activeEdit.set({ type: "template", id: currentShow.settings.template || "", items: [] })
+                        activeEdit.set({ type: "template", id: showTemplateId, items: [] })
                         activePage.set("edit")
                     }}
                 >
@@ -276,7 +281,7 @@
             {/if}
 
             <!-- output style template -->
-            {#if outputStyleTemplate && $special.styleTemplatePreview !== false && $templates[outputStyleTemplate]}
+            {#if enableStylePreview}
                 {#if open}
                     <div class="divider"></div>
                 {/if}
