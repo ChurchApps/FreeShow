@@ -264,7 +264,7 @@ export async function saveComplete({ closeWhenFinished, customTriggers }: { clos
         }
 
         // only sync when autosaving or closing
-        if (!customTriggers?.autosave || !alreadySaved) await syncWithCloud()
+        if (!customTriggers?.autosave || !alreadySaved) await syncWithCloud(false, closeWhenFinished)
         if (closeWhenFinished) {
             await socketDisconnect()
             closeApp()

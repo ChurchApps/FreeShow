@@ -70,7 +70,7 @@ export async function chooseTeam(team: { id: string; churchId: string; name: str
 
 let isSyncing = false
 // let lastSync = 0
-export async function syncWithCloud(initialize: boolean = false) {
+export async function syncWithCloud(initialize: boolean = false, isClosing: boolean = false) {
     if (!get(providerConnections).churchApps) return false
 
     if (isSyncing) return false
@@ -98,7 +98,7 @@ export async function syncWithCloud(initialize: boolean = false) {
         activeEdit.set({ items: [] })
     }
 
-    socketConnect()
+    if (!isClosing) socketConnect()
 
     isSyncing = true
     setStatus("syncing")
@@ -123,6 +123,8 @@ export async function syncWithCloud(initialize: boolean = false) {
     }
 
     setStatus("synced", 3)
+
+    if (isClosing) return true
 
     // reset cached shows as they might have changed
     const allShowIds = Object.keys(get(shows))
