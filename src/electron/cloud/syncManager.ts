@@ -125,6 +125,11 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
                     const localBiblePath = path.join(biblesFolder, bibleName)
                     cloudBibleNames.push(bibleName)
 
+                    if (data.method === "replace") {
+                        await moveFileAsync(cloudPath, localBiblePath)
+                        return
+                    }
+
                     const getLocalData = async () => await doesPathExistAsync(localBiblePath)
                     const isCloudNewer = async () => await isCloudNewerThanFile(localBiblePath, modifiedDates[file.name])
 
@@ -155,6 +160,11 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
                             const fileName = (show.name || id) + ".show"
                             const localShowPath = path.join(showsFolder, fileName)
                             cloudShowNames.push(fileName)
+
+                            if (data.method === "replace") {
+                                await download(true)
+                                return
+                            }
 
                             const getLocalData = async () => {
                                 const localFile = await readFileAsync(localShowPath)

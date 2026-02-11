@@ -65,6 +65,7 @@ import {
     profiles,
     projectTemplates,
     projects,
+    providerConnections,
     redoHistory,
     remotePassword,
     renamedShows,
@@ -256,7 +257,7 @@ export async function saveComplete({ closeWhenFinished, customTriggers }: { clos
     }
 
     // cloud sync
-    if (customTriggers?.autosave || closeWhenFinished) {
+    if ((customTriggers?.autosave || closeWhenFinished) && (get(providerConnections).churchApps || !get(driveData)?.mainFolderId)) {
         if (closeWhenFinished) {
             alertMessage.set("actions.closing")
             activePopup.set("alert")
@@ -265,7 +266,7 @@ export async function saveComplete({ closeWhenFinished, customTriggers }: { clos
         // only sync when autosaving or closing
         if (!customTriggers?.autosave || !alreadySaved) await syncWithCloud()
         if (closeWhenFinished) {
-            socketDisconnect()
+            await socketDisconnect()
             closeApp()
         }
         return

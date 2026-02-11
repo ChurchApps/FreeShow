@@ -4,7 +4,7 @@ import { isLocalFile } from "../components/helpers/media"
 import { loadShows } from "../components/helpers/setShow"
 import { requestMain, sendMain } from "../IPC/main"
 import { activeEdit, activePage, activePopup, activeProject, activeShow, alertMessage, cloudSyncData, cloudUsers, deletedShows, popupData, providerConnections, renamedShows, saved, scripturesCache, shows, showsCache, special } from "../stores"
-import { isMainWindow, newToast, setStatus } from "./common"
+import { isMainWindow, newToast, setStatus, wait } from "./common"
 import { confirmCustom } from "./popup"
 import { save } from "./save"
 import { SocketHelper } from "./SocketHelper"
@@ -186,23 +186,20 @@ async function createCloudSocket(): Promise<SocketHelper | null> {
     }
 }
 
-export function socketDisconnect() {
+export async function socketDisconnect() {
     if (!cloudSocketHelper) return
     const socket = cloudSocketHelper
 
     clearStoreListeners()
 
-    cloudSyncMessage("presence", { action: "bye" })
+    await cloudSyncMessage("presence", { action: "bye" })
+    await wait(100) // ensure message is sent before disconnecting
+    socket.disconnect()
 
     // clear local reference immediately so new connections create a new socket
     cloudSocketHelper = null
     cachedConversationId = null
     cloudUsers.set([])
-
-    // disconnect the actual socket instance after a delay
-    setTimeout(() => {
-        socket.disconnect()
-    }, 1000)
 }
 
 async function socketConnect() {
