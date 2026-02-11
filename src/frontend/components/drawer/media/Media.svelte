@@ -175,7 +175,6 @@
 
         requesting++
         let currentRequest = requesting
-        // , generateThumbnails: $mediaOptions.mode === "grid" // WIP not in use anymore
         const data = await requestMain(Main.READ_FOLDER, { path, depth, captureFolderContent })
         if (requesting !== currentRequest) return
 

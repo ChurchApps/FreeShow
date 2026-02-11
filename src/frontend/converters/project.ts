@@ -12,6 +12,7 @@ import { actions as actionsStores, activePage, activePopup, activeProject, activ
 import { translateText } from "../utils/language"
 import { confirmCustom } from "../utils/popup"
 import { audioExtensions, mediaExtensions } from "../values/extensions"
+import { newToast } from "../utils/common"
 
 export function importProject(files: { content: string; path?: string; name?: string; extension?: string }[]) {
     files.forEach(({ content, path }) => {
@@ -80,8 +81,12 @@ export function importProject(files: { content: string; path?: string; name?: st
         history({ id: "UPDATE", newData: { data: project }, oldData: { id: projectId }, location: { page: "show", id: "project" } })
     })
 
-    alertMessage.set("actions.imported")
-    activePopup.set("alert")
+    if (get(activePopup)) {
+        alertMessage.set("actions.imported")
+        activePopup.set("alert")
+    } else {
+        newToast("actions.imported")
+    }
 }
 
 export function addToProject(type: ShowType | null, filePaths: string[]) {
