@@ -579,7 +579,7 @@ export function captureCanvas(data: { input: string; output: string; size: any; 
     mediaElem.addEventListener("error", (err) => {
         if (!mediaElem.src || completed) return
 
-        console.error("Could not load media:", err)
+        console.error("Could not load media:", data.input, err)
         if (!retries[data.input]) retries[data.input] = 0
         retries[data.input]++
 
