@@ -378,6 +378,7 @@ export interface Transition {
     type: TransitionType
     duration: number
     easing: string
+    fadeInOffset?: number // when to start fading in (default = 50%)
     delay?: number // item in/out wait
     custom?: any // e.g. transition direction
 

@@ -34,7 +34,7 @@
 
     // UPDATE
 
-    function changeTransition(id: TransitionTypes, key: "type" | "duration" | "easing" | "custom", value: any, reset = false) {
+    function changeTransition(id: TransitionTypes, key: "type" | "duration" | "easing" | "fadeInOffset" | "custom", value: any, reset = false) {
         if (key === "duration") value = Number(value)
 
         if ($popupData.trigger) {
@@ -111,7 +111,7 @@
 
     // let updated: string[] = []
     // let updatedTimeout: NodeJS.Timeout | null = null
-    function updateSpecific(data: Transition, key: "type" | "duration" | "easing" | "custom", value: any, reset = false) {
+    function updateSpecific(data: Transition, key: "type" | "duration" | "easing" | "fadeInOffset" | "custom", value: any, reset = false) {
         if (!enableSpecific) {
             return { ...data, [key]: value }
         }
@@ -314,6 +314,10 @@
     <!-- defaultValue="sine" -->
     <MaterialDropdown label="transition.easing" disabled={isDisabled} options={easings.map((a) => ({ ...a, label: translateText(a.label) }))} value={easingValue} on:change={(e) => changeTransition(selectedType, "easing", e.detail)} />
 </InputRow>
+
+{#if showMore && selectedType === "text"}
+    <MaterialNumberInput label="transition.fade_in_offset (%)" disabled={isDisabled} value={currentTransition?.fadeInOffset ?? 50} defaultValue={50} max={100} step={10} on:change={(e) => changeTransition(selectedType, "fadeInOffset", e.detail)} />
+{/if}
 
 <style>
     .types {

@@ -1500,7 +1500,8 @@
         "blur": "Blur",
         "scale": "Scale",
         "spin": "Spin",
-        "slide": "Slide"
+        "slide": "Slide",
+        "fade_in_offset": "Fade in offset"
     },
     "easings": {
         "linear": "Linear",
