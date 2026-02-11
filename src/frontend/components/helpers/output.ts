@@ -332,7 +332,7 @@ export function getAllOutputs() {
 export function getAllEnabledOutputs() {
     const outputsList = getAllOutputs()
     const enabled = outputsList.filter((a) => a.enabled)
-    if (!enabled.length) {
+    if (!enabled.length && isMainWindow()) {
         outputs.update((a) => {
             a[Object.keys(a)[0]].enabled = true
             return a
@@ -363,7 +363,7 @@ export function getWindowOutputId() {
 export function getAllActiveOutputs() {
     const outputsList = getAllNormalOutputs()
     const active = outputsList.filter((a) => a.active)
-    if (!active.length) {
+    if (!active.length && isMainWindow()) {
         outputs.update((a) => {
             a[Object.keys(a)[0]].active = true
             return a
