@@ -79,10 +79,73 @@
             return a
         })
     }
+
+    function templateClick(e: MouseEvent, templateId: string) {
+        if (e.target?.closest(".edit") || e.target?.closest(".icons")) return
+        if (!$activeShow || ($activeShow?.type || "show") !== "show" || e.ctrlKey || e.metaKey) return
+
+        if ($showsCache[$activeShow.id]?.locked) {
+            alertMessage.set("show.locked_info")
+            activePopup.set("alert")
+            return
+        }
+
+        const profile = getAccess("shows")
+        const readOnly = profile.global === "read" || profile[$showsCache[$activeShow.id]?.category || ""] === "read"
+        if (readOnly) {
+            alertMessage.set("profile.locked")
+            activePopup.set("alert")
+            return
+        }
+
+        // one selected slides
+        let ref = getLayoutRef()
+        if ($selected.id === "slide" && $selected.data.length < ref.length) {
+            $selected.data.forEach(({ index, showId }) => {
+                let slideId = ref[index]?.id
+
+                // check if locked
+                let groupSlide = _show(showId || "active")
+                    .slides([ref[index]?.parent?.id || ref[index]?.id])
+                    .get()[0]
+                if (groupSlide?.locked) return
+
+                let slideSettings = _show(showId || "active")
+                    .slides([slideId])
+                    .get("settings")
+                let oldData = { style: clone(slideSettings) }
+                let newData = { style: { ...clone(slideSettings), template: templateId } }
+
+                // WIP apply to all slides at once...
+                history({
+                    id: "slideStyle",
+                    oldData,
+                    newData,
+                    location: { page: "edit", show: $activeShow, slide: slideId }
+                })
+            })
+
+            deselect()
+            // WIP refresh slides (apply template)
+            return
+        }
+
+        history({ id: "TEMPLATE", newData: { id: templateId, data: { createItems: true, shiftItems: e.shiftKey } }, location: { page: "none", override: "show#" + $activeShow.id } })
+
+        if ($special.styleTemplatePreview !== false) {
+            const outputStyleId = getFirstActiveOutput()?.style || ""
+            const styleTemplate = $styles[outputStyleId]?.template || ""
+            if (styleTemplate) {
+                alertMessage.set("tips.style_template_active")
+                activePopup.set("alert")
+            }
+        }
+    }
 </script>
 
 <div style="position: relative;height: 100%;overflow-y: auto;" class="context #drawer_templates" on:wheel={wheel}>
     <DropArea id="templates">
+        <!-- WIP lazy loading with skeleton instead -->
         {#if preloader && fullFilteredTemplates.length > 10}
             <Center>
                 <Loader />
@@ -93,77 +156,7 @@
                     {@const isReadOnly = readOnly || profile[template.category || ""] === "read"}
 
                     <SelectElem id="template" data={template.id} class="context #template_card{template.isDefault && !isReadOnly ? '_default' : ''}{isReadOnly ? '_readonly' : ''}" draggable fill>
-                        <Card
-                            width={100}
-                            preview={$activePage === "edit" && $activeEdit.type === "template" && $activeEdit.id === template.id}
-                            active={template.id === activeTemplate}
-                            label={template.name}
-                            renameId="template_{template.id}"
-                            icon={template.isDefault ? "protected" : null}
-                            color={template.color}
-                            {resolution}
-                            on:click={(e) => {
-                                if (e.target?.closest(".edit") || e.target?.closest(".icons")) return
-                                if (!$activeShow || ($activeShow?.type || "show") !== "show" || e.ctrlKey || e.metaKey) return
-
-                                if ($showsCache[$activeShow.id]?.locked) {
-                                    alertMessage.set("show.locked_info")
-                                    activePopup.set("alert")
-                                    return
-                                }
-
-                                const profile = getAccess("shows")
-                                const readOnly = profile.global === "read" || profile[$showsCache[$activeShow.id]?.category || ""] === "read"
-                                if (readOnly) {
-                                    alertMessage.set("profile.locked")
-                                    activePopup.set("alert")
-                                    return
-                                }
-
-                                // one selected slides
-                                let ref = getLayoutRef()
-                                if ($selected.id === "slide" && $selected.data.length < ref.length) {
-                                    $selected.data.forEach(({ index, showId }) => {
-                                        let slideId = ref[index]?.id
-
-                                        // Skip locked slides
-                                        let groupSlide = _show(showId || "active")
-                                            .slides([ref[index]?.parent?.id || ref[index]?.id])
-                                            .get()[0]
-                                        if (groupSlide?.locked) return
-
-                                        let slideSettings = _show(showId || "active")
-                                            .slides([slideId])
-                                            .get("settings")
-                                        let oldData = { style: clone(slideSettings) }
-                                        let newData = { style: { ...clone(slideSettings), template: template.id } }
-
-                                        // WIP apply to all slides at once...
-                                        history({
-                                            id: "slideStyle",
-                                            oldData,
-                                            newData,
-                                            location: { page: "edit", show: $activeShow, slide: slideId }
-                                        })
-                                    })
-
-                                    deselect()
-                                    // WIP refresh slides (apply template)
-                                    return
-                                }
-
-                                history({ id: "TEMPLATE", newData: { id: template.id, data: { createItems: true, shiftItems: e.shiftKey } }, location: { page: "none", override: "show#" + $activeShow.id } })
-
-                                if ($special.styleTemplatePreview !== false) {
-                                    const outputStyleId = getFirstActiveOutput()?.style || ""
-                                    const styleTemplate = $styles[outputStyleId]?.template || ""
-                                    if (styleTemplate) {
-                                        alertMessage.set("tips.style_template_active")
-                                        activePopup.set("alert")
-                                    }
-                                }
-                            }}
-                        >
+                        <Card width={100} preview={$activePage === "edit" && $activeEdit.type === "template" && $activeEdit.id === template.id} active={template.id === activeTemplate} label={template.name} renameId="template_{template.id}" icon={template.isDefault ? "protected" : null} color={template.color} {resolution} on:click={(e) => templateClick(e, template.id)}>
                             <!-- icons -->
                             {#if template.settings?.actions?.length}
                                 <Actions columns={$mediaOptions.columns} templateId={template.id} actions={{ slideActions: template.settings?.actions }} />
