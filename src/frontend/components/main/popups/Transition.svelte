@@ -16,6 +16,7 @@
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialDropdown from "../../inputs/MaterialDropdown.svelte"
     import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
+    import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
     import Tabs from "../Tabs.svelte"
 
     let currentValue = $popupData.active || ""
@@ -34,7 +35,7 @@
 
     // UPDATE
 
-    function changeTransition(id: TransitionTypes, key: "type" | "duration" | "easing" | "custom", value: any, reset = false) {
+    function changeTransition(id: TransitionTypes, key: "type" | "duration" | "easing" | "fadeThrough" | "custom", value: any, reset = false) {
         if (key === "duration") value = Number(value)
 
         if ($popupData.trigger) {
@@ -111,7 +112,7 @@
 
     // let updated: string[] = []
     // let updatedTimeout: NodeJS.Timeout | null = null
-    function updateSpecific(data: Transition, key: "type" | "duration" | "easing" | "custom", value: any, reset = false) {
+    function updateSpecific(data: Transition, key: "type" | "duration" | "easing" | "fadeThrough" | "custom", value: any, reset = false) {
         if (!enableSpecific) {
             return { ...data, [key]: value }
         }
@@ -244,7 +245,7 @@
     // RESET
 
     const DEFAULT_TRANSITIONS = {
-        text: { type: "fade", duration: 500, easing: "sine", custom: {} },
+        text: { type: "fade", fadeThrough: false, duration: 500, easing: "sine", custom: {} },
         media: { type: "fade", duration: 800, easing: "sine", custom: {} }
     }
     function reset() {
@@ -313,6 +314,11 @@
     <MaterialNumberInput label="transition.duration" disabled={isDisabled} value={durationValue / 1000} max={20} step={0.1} on:change={(e) => changeTransition(selectedType, "duration", e.detail * 1000)} />
     <!-- defaultValue="sine" -->
     <MaterialDropdown label="transition.easing" disabled={isDisabled} options={easings.map((a) => ({ ...a, label: translateText(a.label) }))} value={easingValue} on:change={(e) => changeTransition(selectedType, "easing", e.detail)} />
+    <!-- defaultValue={false} -->
+    <!-- fade through only for text, since it is on by default for media -->
+    {#if selectedType === "text"}
+        <MaterialToggleSwitch label="transition.fade_through" disabled={isDisabled} checked={currentTransition?.fadeThrough || false} on:change={(e) => changeTransition(selectedType, "fadeThrough", e.detail)} />
+    {/if}
 </InputRow>
 
 <style>

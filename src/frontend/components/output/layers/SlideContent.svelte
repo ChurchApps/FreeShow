@@ -189,7 +189,7 @@
         if (currentTransition?.type === "none") currentTransition.duration = 0
 
         let currentTransitionDuration = transitionEnabled ? (itemTransitionDuration ?? currentTransition?.duration ?? 0) : 0
-        let waitToShow = currentTransitionDuration * 0.5
+        let waitToShow = currentTransition?.fadeThrough ? 0 : (currentTransitionDuration * 0.5);
 
         // Identify items that are unchanged and have no real transition (to skip redraw)
         const newPersistentIndexes: number[] = []
