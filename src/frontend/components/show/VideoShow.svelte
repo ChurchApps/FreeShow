@@ -351,7 +351,7 @@
     {#if !playingInOutput && !manageSubtitles && !timeMarkersEnabled}
         <FloatingInputs side="left">
             <MaterialButton
-                title="media._loop"
+                title={"media._loop" + (shouldLoop ? ": settings.enabled" : "")}
                 on:click={() => {
                     // WIP save in project item if any
                     shouldLoop = !shouldLoop
