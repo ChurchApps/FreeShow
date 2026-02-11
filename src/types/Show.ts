@@ -375,15 +375,9 @@ export interface SlideAction {
 
 export interface Transition {
     type: TransitionType
-    /**
-     * Fade through transition, where the old slide fades out at the same time
-     * as the new slide fades in.
-     *
-     * This creates e.g. a crossfade effect for the fade transition.
-     */
-    fadeThrough?: boolean
     duration: number
     easing: string
+    fadeInOffset?: number // when to start fading in (default = 50%)
     delay?: number // item in/out wait
     custom?: any // e.g. transition direction
 
@@ -394,13 +388,6 @@ export interface Transition {
 
 export interface TransitionData {
     type: TransitionType
-    /**
-     * Fade through transition, where the old slide fades out at the same time
-     * as the new slide fades in.
-     *
-     * This creates e.g. a crossfade effect for the fade transition.
-     */
-    fadeThrough?: boolean
     duration: number
     easing: string
     delay?: number // item in/out wait

@@ -1501,8 +1501,7 @@
         "scale": "Scale",
         "spin": "Spin",
         "slide": "Slide",
-        "fade_through": "Fade through",
-        "fade_through_explanation": "Transitions without a brief dip. With the \"fade\" transition, this creates a crossfade."
+        "fade_in_offset": "Fade in offset"
     },
     "easings": {
         "linear": "Linear",

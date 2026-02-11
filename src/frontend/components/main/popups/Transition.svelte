@@ -16,7 +16,6 @@
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialDropdown from "../../inputs/MaterialDropdown.svelte"
     import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
-    import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
     import Tabs from "../Tabs.svelte"
 
     let currentValue = $popupData.active || ""
@@ -35,7 +34,7 @@
 
     // UPDATE
 
-    function changeTransition(id: TransitionTypes, key: "type" | "duration" | "easing" | "fadeThrough" | "custom", value: any, reset = false) {
+    function changeTransition(id: TransitionTypes, key: "type" | "duration" | "easing" | "fadeInOffset" | "custom", value: any, reset = false) {
         if (key === "duration") value = Number(value)
 
         if ($popupData.trigger) {
@@ -112,7 +111,7 @@
 
     // let updated: string[] = []
     // let updatedTimeout: NodeJS.Timeout | null = null
-    function updateSpecific(data: Transition, key: "type" | "duration" | "easing" | "fadeThrough" | "custom", value: any, reset = false) {
+    function updateSpecific(data: Transition, key: "type" | "duration" | "easing" | "fadeInOffset" | "custom", value: any, reset = false) {
         if (!enableSpecific) {
             return { ...data, [key]: value }
         }
@@ -316,10 +315,11 @@
     <MaterialDropdown label="transition.easing" disabled={isDisabled} options={easings.map((a) => ({ ...a, label: translateText(a.label) }))} value={easingValue} on:change={(e) => changeTransition(selectedType, "easing", e.detail)} />
     <!-- defaultValue={false} -->
     <!-- fade through only for text, since it is on by default for media -->
-    {#if selectedType === "text"}
-        <MaterialToggleSwitch label="transition.fade_through" disabled={isDisabled} checked={currentTransition?.fadeThrough || false} on:change={(e) => changeTransition(selectedType, "fadeThrough", e.detail)} title={"transition.fade_through_explanation"} />
-    {/if}
 </InputRow>
+
+{#if showMore && selectedType === "text"}
+    <MaterialNumberInput label="transition.fade_in_offset (%)" disabled={isDisabled} value={currentTransition?.fadeInOffset ?? 50} defaultValue={50} max={100} step={10} on:change={(e) => changeTransition(selectedType, "fadeInOffset", e.detail)} />
+{/if}
 
 <style>
     .types {
