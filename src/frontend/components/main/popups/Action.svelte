@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
     import { uid } from "uid"
-    import { actions, activePopup, activeShow, drawerTabsData, groups, popupData, showsCache, templates, timers } from "../../../stores"
+    import { actions, activePopup, activeShow, drawerTabsData, groups, overlays, popupData, showsCache, templates, timers } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import CreateAction from "../../actions/CreateAction.svelte"
     import MidiValues from "../../actions/MidiValues.svelte"
@@ -34,6 +34,9 @@
         if (!id) {
             id = uid()
             popupData.set({ ...$popupData, id })
+        } else if (mode === "overlay") {
+            if (id) action = $overlays[$popupData.overlayId]?.actions?.find((a) => a.id === id) || action
+            else id = uid()
         } else if (mode === "template") {
             if (id) action = $templates[$popupData.templateId]?.settings?.actions?.find((a) => a.id === id) || action
             else id = uid()
@@ -223,11 +226,24 @@
     }
     function saveAction() {
         if (!loaded || stopUpdate) return
-        if (mode !== "slide" && mode !== "template" && !action.name) return
+        if (mode !== "slide" && mode !== "overlay" && mode !== "template" && !action.name) return
 
         if (action.midiEnabled && !action.midi) action.midi = actionMidi
 
-        if (mode === "template") {
+        if (mode === "overlay") {
+            let overlayId = $popupData.overlayId
+            let overlay = $overlays[overlayId]
+            if (!overlay) return activePopup.set(null)
+            if (!action.triggers?.length) return
+
+            let overlayActions = overlay?.actions || []
+            let existingIndex = overlayActions.findIndex((a) => a.id === id || a.triggers?.[0] === action.triggers?.[0])
+            if (existingIndex > -1) overlayActions[existingIndex] = action
+            else overlayActions.push(action)
+
+            let newData = { key: "actions", data: overlayActions }
+            history({ id: "UPDATE", newData, oldData: { id: overlayId }, location: { page: "drawer", id: "overlay_key", override: `actions_${overlayId}` } })
+        } else if (mode === "template") {
             let templateId = $popupData.templateId
             let template = $templates[templateId]
             if (!template) return activePopup.set(null)

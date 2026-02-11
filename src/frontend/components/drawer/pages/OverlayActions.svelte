@@ -1,6 +1,10 @@
 <script lang="ts">
     import { overlays } from "../../../stores"
     import { translateText } from "../../../utils/language"
+    import { actionData } from "../../actions/actionData"
+    import { getActionName, getActionTriggerId } from "../../actions/actions"
+    import { clone } from "../../helpers/array"
+    import { history } from "../../helpers/history"
     import Icon from "../../helpers/Icon.svelte"
     import Button from "../../inputs/Button.svelte"
 
@@ -28,9 +32,39 @@
     ]
 
     $: zoom = 5 / columns
+
+    function removeAction(e: any, id: string) {
+        e.preventDefault()
+
+        let actions = clone(overlay.actions || [])
+        let actionIndex = actions.findIndex((a) => a.id === id || getActionTriggerId(a.triggers?.[0]) === id)
+        if (actionIndex < 0) return
+        actions.splice(actionIndex, 1)
+
+        let newData = { key: "actions", data: actions }
+        history({ id: "UPDATE", newData, oldData: { id: overlayId }, location: { page: "drawer", id: "overlay_key", override: `actions_${overlayId}` } })
+    }
 </script>
 
 <div class="icons" style="zoom: {zoom};">
+    <!-- actions -->
+    {#if overlay?.actions?.length}
+        {#each overlay.actions as action}
+            <!-- should be always just one trigger on each action when on a slide -->
+            {@const actionId = getActionTriggerId(action.triggers?.[0])}
+            {@const customData = actionData[actionId] || {}}
+            {@const actionValue = action?.actionValues?.[actionId] || action?.actionValues?.[action.triggers?.[0]] || {}}
+            {@const customName = getActionName(actionId, actionValue) || (action.name !== translateText(customData.name) ? action.name : "")}
+
+            <div class="button {customData.red ? '' : 'white'}">
+                <Button style="padding: 3px;" redHover title="{translateText('actions.remove')}: <b>{translateText(customData.name)}</b>{action.name && action.name !== translateText(customData.name) ? `\n${action.name}` : ''}" {zoom} on:click={(e) => setTimeout(() => removeAction(e, action.id || actionId))}>
+                    {#if customName}<p>{customName}</p>{/if}
+                    <Icon id={customData.icon || "actions"} size={0.9} white />
+                </Button>
+            </div>
+        {/each}
+    {/if}
+
     {#each actionsList as action}
         {#if overlay[action.id]}
             <div>

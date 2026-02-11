@@ -489,6 +489,7 @@ export interface Overlay {
     modified?: number // cloud sync
     items: Item[]
     locked?: boolean
+    actions?: any[]
     placeUnderSlide?: boolean
     displayDuration?: number
 }

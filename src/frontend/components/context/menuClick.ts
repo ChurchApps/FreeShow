@@ -1196,6 +1196,16 @@ const clickActions = {
             })
         }
     },
+    overlay_actions: (obj: ObjData) => {
+        const overlayId = obj.sel?.data[0]
+        const overlay = get(overlays)[overlayId]
+        if (!overlay) return
+
+        const existingActions = overlay.actions || []
+
+        popupData.set({ mode: "overlay", overlayId, existing: existingActions.map((a) => a.triggers?.[0]) })
+        activePopup.set("action")
+    },
     template_actions: (obj: ObjData) => {
         const templateId = obj.sel?.data[0]
         const template = get(templates)[templateId]

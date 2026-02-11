@@ -269,6 +269,7 @@ export const _updaters = {
     overlay_name: { store: overlays, empty: "", timestamp: true },
     overlay_color: { store: overlays, empty: null, timestamp: true },
     overlay_category: { store: overlays, empty: null, timestamp: true },
+    overlay_key: { store: overlays, empty: {}, timestamp: true },
 
     template: {
         store: templates,
