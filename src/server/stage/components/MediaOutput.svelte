@@ -10,12 +10,14 @@
 
     // path starting at "/" auto completes to app root, but should be file://
     $: if (typeof path === "string" && path[0] === "/") path = `file://${path}`
+
+    $: mediaStyleString = `object-fit: ${mediaStyle.fit || "contain"};filter: ${mediaStyle.filter || ""};transform: scale(${mediaStyle.flipped ? "-1" : "1"}, ${mediaStyle.flippedY ? "-1" : "1"});`
 </script>
 
 {#key path}
-    <div style="height: 100%;object-fit: {mediaStyle.fit || 'contain'};filter: {mediaStyle.filter || ''};transform: scale({mediaStyle.flipped ? '-1' : '1'}, {mediaStyle.flippedY ? '-1' : '1'});">
+    <div style="height: 100%;">
         {#if !errorLoading}
-            <img src={path} on:error={error} />
+            <img src={path} on:error={error} style={mediaStyleString} />
         {/if}
     </div>
 {/key}
