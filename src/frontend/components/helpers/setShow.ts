@@ -9,6 +9,7 @@ import { cachedShowsData, categories, notFound, saved, shows, showsCache, textCa
 import { Main } from "./../../../types/IPC/Main"
 import { getFileName } from "./media"
 import { getShowCacheId, updateCachedShow } from "./show"
+import { invalidateSearchIndex } from "../../utils/searchFast"
 
 export async function setShow(id: string, value: "delete" | Show): Promise<Show> {
     let previousValue: Show
@@ -234,6 +235,7 @@ export function saveTextCache(id: string, show: Show) {
     updateTimeout = setTimeout(() => {
         textCache.set({ ...get(textCache), ...tempCache })
         tempCache = {}
+        invalidateSearchIndex()
     }, 1000)
 }
 function getTextCacheString(show: Show) {

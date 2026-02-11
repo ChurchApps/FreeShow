@@ -138,7 +138,7 @@
 
     let showLoading = false
     function keydown(e: KeyboardEvent) {
-        if (e.target?.closest(".search")) {
+        if (e.target?.closest(".drawer_search")) {
             // get preview of shows
             if (e.key === "ArrowDown" || e.key === "ArrowUp") {
                 e.preventDefault()
