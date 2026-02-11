@@ -13,7 +13,7 @@ import { loadShows } from "../helpers/setShow"
 import { formatToFileName } from "../helpers/show"
 import { _show } from "../helpers/shows"
 
-export async function exportProject(project: Project, projectId: string) {
+export async function exportProject(project: Project, projectId: string, savePath?: string) {
     if (!project) return
 
     const shows: Shows = {}
@@ -27,6 +27,7 @@ export async function exportProject(project: Project, projectId: string) {
     const parentFolder = get(folders)[project.parent]?.name || ""
     if (projectId) project.id = projectId
     project.parent = "/" // place on root
+    delete project.sourcePath
 
     // project items
     const getProjectItems = {
@@ -57,7 +58,7 @@ export async function exportProject(project: Project, projectId: string) {
             })
 
             // get media file paths
-            const mediaData = _show(showRef.id).get("media")
+            const mediaData = _show(showRef.id).get("media") || {}
             mediaIds.forEach((id) => {
                 const path = mediaData[id]?.path || mediaData[id]?.id
                 if (!path || path.includes("http")) return
@@ -126,7 +127,7 @@ export async function exportProject(project: Project, projectId: string) {
     }
 
     // export to file
-    send(EXPORT, ["GENERATE"], { type: "project", name: formatToFileName(project.name), file: projectData })
+    send(EXPORT, ["GENERATE"], { type: "project", name: formatToFileName(project.name), file: projectData, path: savePath })
 
     function getItem(showRef: ProjectShowRef) {
         const type = showRef.type || "show"

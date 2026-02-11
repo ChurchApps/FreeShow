@@ -95,11 +95,18 @@
             // Cannot create property 'index' on string 'uid'
             if (typeof a !== "object") return
 
-            if (a.type === "section" && (a.color || projectItemsList[index - 1]?.type === "section")) splittedProjectsList.push({ color: a.color || "", items: [] })
-            if (!splittedProjectsList.at(-1)) splittedProjectsList.push({ color: "", items: [] })
+            const previousItem = projectItemsList[index - 1]
+
+            if (!splittedProjectsList.at(-1)) newSection()
+            else if (a.type === "section" && (a.color || previousItem?.type === "section")) newSection()
+            else if (previousItem?.type !== "section" && a.type !== "section" && a.type !== previousItem?.type) newSection()
 
             a.index = index
             splittedProjectsList.at(-1)!.items.push(a)
+
+            function newSection() {
+                splittedProjectsList.push({ color: a.color || "", items: [] })
+            }
         })
     }
 
@@ -207,11 +214,12 @@
                             {@const isLast = i === splittedItemsList.items.length - 1}
                             {@const borderRadiusStyle = `${isFirst ? "border-top-right-radius: 10px;" : ""}${isLast ? "border-bottom-right-radius: 10px;" : ""}`}
                             {@const sectionTime = show.data?.time ? getTimeUntilClock(show.data.time, today) : 0}
+                            {@const isActive = show.type === "section" ? ($focusMode ? $activeFocus.id === show.id : $activeShow?.id === show.id) : false}
 
                             <SelectElem id="show" dropAbove={isFirst} triggerOnHover data={{ ...show, name: show.name || removeExtension(getFileName(show.id)), index }} {fileOver} borders="edges" trigger="column" draggable>
                                 {#if show.type === "section"}
                                     <MaterialButton
-                                        isActive={$focusMode ? $activeFocus.id === show.id : $activeShow?.id === show.id}
+                                        {isActive}
                                         class="section {projectReadOnly ? '' : `context #project_section ${show.color ? 'color-border' : ''}`}"
                                         style="{borderRadiusStyle}justify-content: left;background-color: var(--primary-darkest);border-top: 1px solid var(--primary-lighter);padding: 0.1em 1em;{$fullColors ? `background-color: ${show.color || 'var(--primary-darker)'} !important;color: ${getContrast(show.color || '')};` : `border-bottom: 1px solid ${show.color || 'transparent'} !important;`}"
                                         on:click={(e) => {
@@ -231,7 +239,7 @@
                                             </span>
                                         {/if}
 
-                                        <p style="min-height: 10px;">
+                                        <p style="min-height: 10px;max-width: 97%;">
                                             {#if show.name?.length}
                                                 {show.name}
                                             {:else}
@@ -244,13 +252,19 @@
                                         {/if}
 
                                         {#if triggerAction && $actions[triggerAction]}
-                                            <span style="display: flex;position: absolute;inset-inline-end: 5px;" data-title={$actions[triggerAction].name}>
+                                            <span style="display: flex;position: absolute;inset-inline-end: 7px;" data-title={$actions[triggerAction].name}>
                                                 <Icon id={getActionIcon(triggerAction)} size={0.8} white />
+                                            </span>
+                                        {/if}
+
+                                        {#if isActive}
+                                            <span class="arrow">
+                                                <Icon id="next" white />
                                             </span>
                                         {/if}
                                     </MaterialButton>
                                 {:else}
-                                    <ShowButton id={show.id} {show} {index} class={projectReadOnly ? "" : `context #${pcoLink ? "pco_item__" : ""}project_${getContextMenuId(show.type)}`} style={borderRadiusStyle} icon />
+                                    <ShowButton id={show.id} {show} {index} class={projectReadOnly ? "" : `context #${pcoLink ? "pco_item__" : ""}project_${getContextMenuId(show.type)}`} style={borderRadiusStyle} icon isProject />
                                 {/if}
                             </SelectElem>
                         {/each}
@@ -430,5 +444,17 @@
         gap: 10px;
 
         z-index: 200;
+    }
+
+    .arrow {
+        position: absolute;
+        right: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+
+        opacity: 0.4;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 </style>

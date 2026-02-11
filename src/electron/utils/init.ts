@@ -89,3 +89,26 @@ export function isWithinDisplayBounds(pos: { x: number; y: number }) {
         return result || (pos.x >= area.x && pos.y >= area.y && pos.x < area.x + area.width && pos.y < area.y + area.height)
     }, false)
 }
+
+// check if draggable top area of the window is visible and accessible on any display (to prevent windows from being inaccessible and unmovable)
+export function isDraggableAreaVisible(bounds: { x: number; y: number }, width: number) {
+    const displays = screen.getAllDisplays()
+    const TITLE_BAR_HEIGHT = 35 // approximated
+
+    return displays.some((display) => {
+        const area = display.workArea
+
+        // Check if title bar rectangle intersects with display work area
+        const windowLeft = bounds.x
+        const windowRight = bounds.x + width
+        const windowTop = bounds.y
+        const windowTitleBottom = bounds.y + TITLE_BAR_HEIGHT
+
+        const displayLeft = area.x
+        const displayRight = area.x + area.width
+        const displayTop = area.y
+        const displayBottom = area.y + area.height
+
+        return windowLeft < displayRight && windowRight > displayLeft && windowTop < displayBottom && windowTitleBottom > displayTop
+    })
+}

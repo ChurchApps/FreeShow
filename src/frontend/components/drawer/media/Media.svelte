@@ -171,12 +171,11 @@
             captureFolderContent = false
         }
 
-        // WIP generateThumbnails - might be better to generate dynamically, instead of full folder at once
         // WIP only list folders with any recursive media content?
 
         requesting++
         let currentRequest = requesting
-        const data = await requestMain(Main.READ_FOLDER, { path, depth, generateThumbnails: $mediaOptions.mode === "grid", captureFolderContent })
+        const data = await requestMain(Main.READ_FOLDER, { path, depth, captureFolderContent })
         if (requesting !== currentRequest) return
 
         // check if there's any audio files that the user might want to find
@@ -244,6 +243,7 @@
     let activeFile: null | number = null
     $: mediaFilesOnly = searchedFiles.filter((a) => !a.isFolder)
     function hightlightActive() {
+        if (!Array.isArray(mediaFilesOnly)) return
         const activeShowPath = $activeShow?.type === "image" || $activeShow?.type === "video" ? $activeShow?.id : ""
         const index = mediaFilesOnly.findIndex((a) => a.path === activeShowPath)
         activeFile = index < 0 ? null : index

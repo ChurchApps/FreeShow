@@ -19,7 +19,7 @@
     let open = false
     let elem: HTMLDivElement
     let timeout: NodeJS.Timeout | null = null
-    let duration = 200
+    let duration = 180
 
     $: highlighted = highlightedPath.length > 0 && highlightedPath[0] === id
 
@@ -49,7 +49,7 @@
             timeout = setTimeout(() => {
                 open = false
                 timeout = null
-            }, duration / 2)
+            }, duration * 1.1)
 
             return
         }

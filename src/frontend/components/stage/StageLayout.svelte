@@ -122,9 +122,9 @@
 
     // $: videoTime = $videosTime[outputId] || 0
     // { $activeTimers, $variables, $playingAudio, $playingAudioPaths, videoTime }
-    let updater = 0
+    let conditionsUpdater = 0
     const updaterInterval = setInterval(() => {
-        if (stageItems.some((a) => a?.conditions)) updater++
+        if (stageItems.some((a) => a?.conditions)) conditionsUpdater++
     }, 500)
     onDestroy(() => clearInterval(updaterInterval))
 
@@ -160,7 +160,7 @@
                 {/if}
                 {#key stageLayoutId}
                     {#each stageItems as item, index}
-                        {#if (item.type || item.enabled !== false) && (edit || checkVisibility(index, updater))}
+                        {#if (item.type || item.enabled !== false) && (edit || checkVisibility(index, conditionsUpdater))}
                             <Stagebox edit={edit && !readOnly} stageLayout={edit ? null : layout} id={item.id} item={clone(item)} {ratio} {preview} bind:mouse />
                         {/if}
                     {/each}

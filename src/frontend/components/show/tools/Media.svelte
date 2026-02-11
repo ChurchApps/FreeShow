@@ -16,7 +16,7 @@
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { clone, sortByName } from "../../helpers/array"
-    import { getExtension, getMedia, getMediaStyle, getMediaType, isMediaExtension } from "../../helpers/media"
+    import { getExtension, getMedia, getMediaStyle, getMediaType, isMediaExtension, mediaSize } from "../../helpers/media"
     import { findMatchingOut, getActiveOutputs, getCurrentStyle, setOutput } from "../../helpers/output"
     import { _show } from "../../helpers/shows"
     import Button from "../../inputs/Button.svelte"
@@ -169,7 +169,7 @@
         bgs.forEach(async (bgMedia) => {
             let bgPath = bgMedia.path || ""
 
-            const media = await getMedia(bgPath)
+            const media = await getMedia(bgPath, mediaSize.small)
             if (media) newMedia[bgPath] = media
         })
     }
@@ -205,7 +205,7 @@
                             <MediaLoader name={background.name} path={media.path} thumbnailPath={media.thumbnail} type={background.type} {mediaStyle} />
                         </HoverButton>
 
-                        <p data-title={media.path}>{background.name}</p>
+                        <p data-title={decodeURIComponent(media.path || background.path || "")}>{background.name}</p>
 
                         {#if background.count > 1}
                             <span style="color: var(--secondary);font-weight: bold;">{background.count}</span>
@@ -215,7 +215,7 @@
                             <Button style="flex: 0;padding: 14px 5px;" center title={translateText(background.muted !== false ? "actions.unmute" : "actions.mute")} on:click={() => setBG(background.id || "", "muted", background.muted === false)} dark>
                                 <Icon id={background.muted !== false ? "muted" : "volume"} white={background.muted !== false} size={1.2} />
                             </Button>
-                            <Button style="flex: 0;padding: 14px 5px;" center title={translateText("media._loop")} on:click={() => setBG(background.id || "", "loop", background.loop === false)} dark>
+                            <Button style="flex: 0;padding: 14px 5px;" center title={translateText("media._loop" + (background.loop !== false ? ": settings.enabled" : ""))} on:click={() => setBG(background.id || "", "loop", background.loop === false)} dark>
                                 <Icon id="loop" white={background.loop === false} size={1.2} />
                             </Button>
                         {/if}

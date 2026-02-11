@@ -764,12 +764,12 @@ export function updateOut(showId: string, index: number, layout: LayoutRef[], ex
             const bg = _show(showId).get("media")[background]
             const outputBg = get(outputs)[outputId]?.out?.background
             const bgPath = bg?.path || bg?.id
-            const m = bg.type === "video" || bg.type === "image" || bg.type === "media" ? await getMedia(bgPath) : { path: bgPath, data: clone(get(media)[bgPath]) }
+            const extension = getExtension(bgPath)
+            const type = bg.type || getMediaType(extension)
+            const m = type === "video" || type === "image" || type === "media" ? await getMedia(bgPath) : { path: bgPath, data: clone(get(media)[bgPath]) }
 
             if (bg && m && m.path !== outputBg?.path) {
                 const name = bg.name || removeExtension(getFileName(m.path))
-                const extension = getExtension(m.path)
-                const type = bg.type || getMediaType(extension)
 
                 const outputStyle = get(styles)[get(outputs)[outputId]?.style || ""]
                 const mediaStyle = getMediaStyle(m.data, outputStyle)
@@ -810,7 +810,7 @@ export function updateOut(showId: string, index: number, layout: LayoutRef[], ex
             // let clear action trigger first
             setTimeout(() => {
                 data.audio?.forEach((audio: string) => {
-                    const a = clone(_show(showId).get("media")[audio])
+                    const a = clone(_show(showId).get("media")?.[audio] || {})
                     const cloudId = get(driveData).mediaId
                     if (cloudId && cloudId !== "default") a.path = a.cloud?.[cloudId] || a.path
 
@@ -1191,6 +1191,7 @@ export function getVariablesIds(showAll: boolean = false) {
     const variablesList = sortByName(Object.values<Variable>(get(variables)).filter((a) => a?.name))
     const variableValues = variablesList.filter((a) => a.type !== "text_set").map(({ name }) => `$${getVariableNameId(name)}`)
     const variableSetNameValues = variablesList.filter((a) => a.type === "random_number" && (a.sets?.length || 0) > 1).map(({ name }) => `variable_set_${getVariableNameId(name)}`)
+    const randomNumberVariableHistory = showAll ? variablesList.filter((a) => a.type === "random_number").map(({ name }) => `$${getVariableNameId(name)}_history`) : []
 
     const variableTextSets: string[] = []
     variablesList
@@ -1203,7 +1204,7 @@ export function getVariablesIds(showAll: boolean = false) {
             })
         })
 
-    return [...variableValues, ...variableSetNameValues, ...variableTextSets]
+    return [...variableValues, ...variableSetNameValues, ...randomNumberVariableHistory, ...variableTextSets]
 }
 
 export function getVariableValue(dynamicId: string, ref: any = null): string | string[] {
@@ -1219,6 +1220,14 @@ export function getVariableValue(dynamicId: string, ref: any = null): string | s
         const nameId = dynamicId.includes("$") ? dynamicId.slice(1) : dynamicId.slice(9)
         let variable = Object.values(get(variables)).find((a) => getVariableNameId(a.name) === nameId)
 
+        if (!variable && nameId.endsWith("_history")) {
+            const baseNameId = nameId.slice(0, -8)
+            variable = Object.values(get(variables)).find((a) => getVariableNameId(a.name) === baseNameId)
+            if (variable && variable.type === "random_number") {
+                const multipleSets = (variable.sets?.length || 0) > 1
+                return variable.setLog?.map(({ name, number }) => `${multipleSets ? `${name}: ` : ""}${number}`).join("<br>") || ""
+            }
+        }
         if (!variable && nameId.includes("__")) {
             const textSetId = nameId.slice(0, nameId.indexOf("__")).replace(/#\d+/, "")
             variable = Object.values(get(variables)).find((a) => getVariableNameId(a.name) === textSetId)
@@ -1593,6 +1602,7 @@ const scriptureDynamicValues = {
 }
 
 export function getVariableNameId(name: string) {
+    if (typeof name !== "string") return ""
     return name.toLowerCase().trim().replaceAll(" ", "_")
 }
 

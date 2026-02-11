@@ -70,10 +70,11 @@ export function convertVerseVIEW(data: any) {
             }
 
             const root = xml2json(content)
-
             if (!root) return
 
             const { songDB } = root
+            if (!songDB?.song) return
+
             const songs = Array.isArray(songDB.song) ? songDB.song : [songDB.song]
 
             for (const song of songs) {

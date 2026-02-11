@@ -20,13 +20,14 @@ import { importFromClipboard } from "../converters/importHelpers"
 import { addSection } from "../converters/project"
 import { requestMain, sendMain } from "../IPC/main"
 import { changeSlidesView } from "../show/slides"
-import { activeDrawerTab, activeEdit, activeFocus, activePage, activePopup, activeStage, alertMessage, contextActive, drawer, focusedArea, focusMode, guideActive, media, os, outLocked, outputs, outputSlideCache, quickSearchActive, refreshEditSlide, selected, showRecentlyUsedProjects, showsCache, special, spellcheck, styles, textEditActive, timelineRecordingAction, topContextActive, videosData, volume } from "../stores"
+import { activeDrawerTab, activeEdit, activeFocus, activePage, activePopup, activeProject, activeStage, alertMessage, contextActive, drawer, focusedArea, focusMode, guideActive, media, os, outLocked, outputs, outputSlideCache, projects, quickSearchActive, refreshEditSlide, selected, showRecentlyUsedProjects, showsCache, special, spellcheck, styles, textEditActive, timelineRecordingAction, topContextActive, videosData, volume } from "../stores"
 import { audioExtensions, imageExtensions, videoExtensions } from "../values/extensions"
 import { drawerTabs } from "../values/tabs"
 import { activeShow } from "./../stores"
 import { hideDisplay, isOutputWindow, togglePanels } from "./common"
 import { send } from "./request"
 import { save } from "./save"
+import { runActionId } from "../components/actions/actions"
 
 const menus: TopViews[] = ["show", "edit", "stage", "draw", "settings"]
 
@@ -363,6 +364,12 @@ export const previewShortcuts = {
             if (currentShow?.type === "overlay") {
                 e.preventDefault()
                 return setOutput("overlays", currentShow.id, false, "", true)
+            } else if (currentShow?.type === "section") {
+                // play section action if any
+                const itemSettings = get(projects)[get(activeProject) || ""]?.shows?.find((s) => s.id === currentShow.id)?.data?.settings
+                const actionId = itemSettings?.triggerAction || get(special).sectionTriggerAction
+                if (actionId) runActionId(actionId)
+                return
             }
             return togglePlayingMedia(e)
         }
@@ -500,8 +507,8 @@ export async function playFolder(path: string, back = false) {
     const currentlyPlaying = currentOutput?.out?.background?.path
 
     const mediaExtensions = [...videoExtensions, ...imageExtensions, ...audioExtensions]
-    const files = keysToID(await requestMain(Main.READ_FOLDER, { path, generateThumbnails: true }))
-    const folderFiles = sortByName(files.filter((a) => mediaExtensions.includes(getExtension(a.name))).map((a) => ({ path: a.path, name: a.name, type: getMediaType(getExtension(a.name)), thumbnail: (a as any).thumbnailPath })))
+    const files = keysToID(await requestMain(Main.READ_FOLDER, { path }))
+    const folderFiles = sortByName(files.filter((a) => mediaExtensions.includes(getExtension(a.name))).map((a) => ({ path: a.path, name: a.name, type: getMediaType(getExtension(a.name)) })))
     if (!folderFiles.length) return
 
     const mediaFiles = folderFiles.filter((a) => a.type !== "audio")

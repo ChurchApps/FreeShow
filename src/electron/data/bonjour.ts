@@ -11,7 +11,6 @@ const bonjour = new Bonjour({}, (err: any) => {
 const ips = getLocalIPs()
 
 const instanceID = crypto.randomBytes(3).toString("hex")
-const hostname = os.hostname()
 
 // broadcast port over LAN
 export function publishPort(name: string, port: number) {
@@ -21,8 +20,8 @@ export function publishPort(name: string, port: number) {
         return
     }
 
-    // Format: computer-REMOTE-a4f2d9
-    const uniqueName = `${hostname}-${name}-${instanceID}`
+    // Format: freeshow-REMOTE-a4f2d9
+    const uniqueName = `freeshow-${name}-${instanceID}`
     const customData = { ip: ips[0], ips }
 
     try {

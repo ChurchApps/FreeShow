@@ -8,21 +8,23 @@ export function addStyle(selection: { start: number; end: number }[], item: Item
         let pos = 0
         if (selection[i]?.start !== undefined) {
             line.text?.forEach((text) => {
-                const length: number = text.value.length
+                const value = text.value || ""
+                const length = value.length
+
                 let from = 0
                 let to = length
                 if (pos < selection[i].start && pos + length > selection[i].start) from = selection[i].start - pos
                 if (pos < selection[i].end && pos + length > selection[i].end) to = selection[i].end - pos
 
                 if ((pos < selection[i].start && pos + length > selection[i].start) || (pos < selection[i].end && pos + length > selection[i].end) || (pos >= selection[i].start && pos + length <= selection[i].end)) {
-                    if (from > 0) newText.push({ value: text.value.slice(0, from), style: text.style })
+                    if (from > 0) newText.push({ value: value.slice(0, from), style: text.style })
                     if (to - from > 0 && to - from <= length) {
                         let newStyle = ""
                         if (Array.isArray(style)) newStyle = addStyleString(text.style, style)
                         else newStyle = style
-                        newText.push({ value: text.value.slice(from, to), style: newStyle })
+                        newText.push({ value: value.slice(from, to), style: newStyle })
                     }
-                    if (to < length) newText.push({ value: text.value.slice(to, length), style: text.style })
+                    if (to < length) newText.push({ value: value.slice(to, length), style: text.style })
                 } else newText.push(text)
 
                 // empty line
@@ -191,13 +193,15 @@ export function getItemStyleAtPos(lines: Line[], pos: null | { start: number; en
     ;(pos || lines).forEach((_a: any, i: number) => {
         let currentPos = 0
         lines[i]?.text?.some((text) => {
-            // if (pos) console.log(currentPos, pos[i].end, currentPos <= pos[i].end, currentPos + text.value.length >= pos[i].end)
-            if (pos?.[i] && currentPos <= pos[i].end && currentPos + text.value.length >= pos[i].end) {
+            const value = text.value || ""
+
+            // if (pos) console.log(currentPos, pos[i].end, currentPos <= pos[i].end, currentPos + value.length >= pos[i].end)
+            if (pos?.[i] && currentPos <= pos[i].end && currentPos + value.length >= pos[i].end) {
                 style = text.style || ""
                 return true
             }
 
-            currentPos += text.value.length
+            currentPos += value.length
             return false
         })
     })
@@ -263,16 +267,12 @@ export function getSlideText(slide: Slide) {
 // get text of item.text...
 export function getItemText(item: Item | null): string {
     let text = ""
-    if (!item?.lines) return ""
 
-    item.lines.forEach((line) => {
-        console.assert(Array.isArray(line?.text), "Text is not an array!")
-        if (!Array.isArray(line?.text)) return
-
-        line.text.forEach((content) => {
-            text += content.value
-        })
-    })
+    for (const line of item?.lines ?? []) {
+        for (const t of line.text ?? []) {
+            if (t.value) text += t.value
+        }
+    }
 
     return text
 }

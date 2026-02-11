@@ -322,11 +322,28 @@
     }
 
     // UPDATE DYNAMIC VALUES e.g. {time_} EVERY SECOND
+    $: hasDynamicValues = messageVisible && messageText.includes("{")
+
+    // only update if text contains dynamic values
+    $: if (hasDynamicValues) startInterval()
+    else stopInterval()
+    let dynamicInterval: NodeJS.Timeout | null = null
+    function startInterval() {
+        stopInterval()
+        dynamicInterval = setInterval(update, 1000)
+    }
+    function stopInterval() {
+        if (dynamicInterval) clearInterval(dynamicInterval)
+        dynamicInterval = null
+    }
+
     let updateDynamic = 0
-    const dynamicInterval = setInterval(() => {
+    function update() {
+        if (!hasDynamicValues) return
         updateDynamic++
-    }, 1000)
-    onDestroy(() => clearInterval(dynamicInterval))
+    }
+
+    onDestroy(() => stopInterval())
 </script>
 
 <Zoomed id={outputId} background={backgroundColor} checkered={(preview || mirror) && backgroundColor === "transparent"} backgroundDuration={transitions.media?.type === "none" ? 0 : (transitions.media?.duration ?? 800)} align={alignPosition} center {style} {resolution} {mirror} {drawZoom} {cropping} bind:ratio>
@@ -379,7 +396,6 @@
 
         <!-- metadata -->
         {#if metadataVisible}
-            <!-- value={metadata.value ? (metadata.value.includes("{") ? createMetadataLayout(metadata.value, { showId: actualSlide?.id, layoutId: actualSlide?.layout, slideIndex: actualSlide?.index }, updateDynamic) : metadata.value) : $customMessageCredits || ""} -->
             <Metadata isClearing={isMetadataClearing} value={metadata.value || $customMessageCredits || ""} style={metadata.style || ""} conditions={metadata.condition} {outputId} transition={metadata.transition || transitions.overlay} />
         {/if}
 

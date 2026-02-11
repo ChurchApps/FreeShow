@@ -269,6 +269,7 @@ export const _updaters = {
     overlay_name: { store: overlays, empty: "", timestamp: true },
     overlay_color: { store: overlays, empty: null, timestamp: true },
     overlay_category: { store: overlays, empty: null, timestamp: true },
+    overlay_key: { store: overlays, empty: {}, timestamp: true },
 
     template: {
         store: templates,
@@ -440,7 +441,9 @@ export const _updaters = {
 
     show_key: {
         store: showsCache,
-        initialize: (data = {}) => {
+        initialize: (data) => {
+            if (typeof data !== "object") return data
+
             if (!data.timestamps) data.timestamps = {}
             data.timestamps.modified = Date.now()
             return data
@@ -596,6 +599,15 @@ function replaceEmptyValues(object: any, replacer: any) {
     return object
 }
 
+function getNextWeekdayDate(currentDate: Date, targetWeekday: number): Date {
+    let daysToAdd = targetWeekday - currentDate.getDay()
+    if (daysToAdd <= 0) daysToAdd += 7
+
+    const result = new Date(currentDate)
+    result.setDate(result.getDate() + daysToAdd)
+    return result
+}
+
 export const projectReplacers = [
     { id: "DD", title: translateText("calendar.day"), value: (date) => addZero(date.getDate()) },
     { id: "MM", title: translateText("calendar.month"), value: (date) => addZero(date.getMonth() + 1) },
@@ -605,7 +617,16 @@ export const projectReplacers = [
     { id: "mm", title: "Minutes", value: (date) => date.getMinutes() },
     { id: "weeknum", title: "Week number", value: (date) => getWeekNumber(date) },
     { id: "weekday", title: "Weekday", value: (date) => getWeekday(date.getDay(), get(dictionary), true) },
-    { id: "monthname", title: "Name of month", value: (date) => getMonthName(date.getMonth(), get(dictionary), true) }
+    { id: "monthname", title: "Name of month", value: (date) => getMonthName(date.getMonth(), get(dictionary), true) },
+
+    { id: "D0", title: "Next Sunday", value: (date) => addZero(getNextWeekdayDate(date, 0).getDate()) },
+    { id: "D1", title: "Next Monday", value: (date) => addZero(getNextWeekdayDate(date, 1).getDate()) },
+    { id: "D2", title: "Next Tuesday", value: (date) => addZero(getNextWeekdayDate(date, 2).getDate()) },
+    { id: "D3", title: "Next Wednesday", value: (date) => addZero(getNextWeekdayDate(date, 3).getDate()) },
+    { id: "D4", title: "Next Thursday", value: (date) => addZero(getNextWeekdayDate(date, 4).getDate()) },
+    { id: "D5", title: "Next Friday", value: (date) => addZero(getNextWeekdayDate(date, 5).getDate()) },
+    { id: "D6", title: "Next Saturday", value: (date) => addZero(getNextWeekdayDate(date, 6).getDate()) },
+    { id: "D7", title: "Next Sunday", value: (date) => addZero(getNextWeekdayDate(date, 0).getDate()) }
 ]
 const DEFAULT_PROJECT_NAME = "{DD}.{MM}.{YY}"
 export function getDefaultProjectName() {

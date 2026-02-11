@@ -167,7 +167,7 @@
     }
 </script>
 
-{#if normalOutputs.length === 1 && normalOutputs[0].style !== styleId}
+{#if styleId && normalOutputs.length === 1 && normalOutputs[0].style !== styleId}
     <MaterialButton variant="outlined" style="width: 100%;margin-bottom: 10px;" icon="check" on:click={useStyle}>
         <T id="settings.active_style" />
     </MaterialButton>

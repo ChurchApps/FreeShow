@@ -1,11 +1,51 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
 import { sendMain } from "../../IPC/main"
-import { actions, activeEdit, activePage, activePopup, activeProject, activeShow, activeStage, activeStyle, alertMessage, categories, companion, currentOutputSettings, disabledServers, focusMode, folders, groups, openToolsTab, outputs, overlays, profiles, projects, projectView, quickSearchActive, refreshEditSlide, selectedProfile, settingsTab, showRecentlyUsedProjects, showsCache, slidesOptions, sortedShowsList, stageShows, styles, textEditActive } from "../../stores"
+import {
+    actions,
+    activeEdit,
+    activePage,
+    activePopup,
+    activeProject,
+    activeShow,
+    activeStage,
+    activeStyle,
+    alertMessage,
+    audioFolders,
+    audioPlaylists,
+    categories,
+    companion,
+    currentOutputSettings,
+    disabledServers,
+    drawerTabsData,
+    focusMode,
+    folders,
+    groups,
+    mediaFolders,
+    openScripture,
+    openToolsTab,
+    outputs,
+    overlays,
+    profiles,
+    projects,
+    projectView,
+    quickSearchActive,
+    refreshEditSlide,
+    selectedProfile,
+    settingsTab,
+    showRecentlyUsedProjects,
+    showsCache,
+    slidesOptions,
+    sortedShowsList,
+    stageShows,
+    styles,
+    textEditActive
+} from "../../stores"
 import { triggerFunction } from "../../utils/common"
 import { translateText } from "../../utils/language"
 import { getAccess } from "../../utils/profile"
-import { showSearch } from "../../utils/search"
+import { formatSearch } from "../../utils/search"
+import { fastSearch } from "../../utils/searchFast"
 import { runAction } from "../actions/actions"
 import { sortByClosestMatch } from "../actions/apiHelper"
 import { menuClick } from "../context/menuClick"
@@ -14,6 +54,7 @@ import { keysToID } from "../helpers/array"
 import { duplicate } from "../helpers/clipboard"
 import { history } from "../helpers/history"
 import { Main } from "./../../../types/IPC/Main"
+import { getBibleResults, getMediaResults, showResult } from "./quicksearchData"
 
 interface QuickSearchValue {
     type: keyof typeof triggerActions
@@ -24,92 +65,161 @@ interface QuickSearchValue {
     aliasMatch: string | null
     description?: string
     data?: any
+    category: string
 }
 
-const MAX_RESULTS = 10
-export function quicksearch(searchValue: string) {
+const MAX_RESULTS_NORMAL = 5
+const MAX_RESULTS_LARGE = 10
+
+export type SearchCategory = "show" | "settings" | "stage" | "overlays" | "projects" | "actions" | "navigation" | "faq" | "shows" | "media" | "audio" | "bible"
+const categoryNames: Record<SearchCategory, string> = {
+    show: "formats.show",
+    settings: "menu.settings",
+    stage: "menu.stage",
+    overlays: "tabs.overlays",
+    projects: "guide.projects",
+    actions: "tabs.actions",
+    navigation: "settings.general",
+    faq: "FAQ",
+    shows: "tabs.shows",
+    media: "tabs.media",
+    audio: "tabs.audio",
+    bible: "tabs.scripture"
+}
+
+export async function quicksearch(searchValue: string, categoryFilter: null | SearchCategory = null) {
+    const rawSearchValue = searchValue
+    searchValue = formatSearch(searchValue)
     const values: QuickSearchValue[] = []
-    const shouldReturn = () => values.length >= MAX_RESULTS
-    const trimValues = () => values.slice(0, MAX_RESULTS)
+    const trimValues = (array: any[], max: number = MAX_RESULTS_NORMAL) => array.slice(0, max)
     const sort = (array: any[]) => sortByClosestMatch(array, searchValue)
 
-    if (get(activePage) === "show" && get(activeShow)?.type === "show") {
-        addValues(sort(getShowActions()).slice(0, 5), "custom_actions")
-        if (shouldReturn()) return trimValues()
+    let currentCategory: SearchCategory = "show"
+    const isVisible = (cat: SearchCategory) => {
+        currentCategory = cat
+        return categoryFilter ? categoryFilter === cat : true
     }
 
-    if (get(activePage) === "edit" && !get(activeEdit)?.id && get(activeShow)?.type === "show") {
-        addValues(sort(getEditActions()).slice(0, 5), "custom_actions")
-        if (shouldReturn()) return trimValues()
+    // --- ACTIVE SHOW ---
+    if (isVisible("show")) {
+        if (get(activePage) === "show" && get(activeShow)?.type === "show") {
+            addValues(trimValues(sort(getShowActions())), "custom_actions")
+        }
+
+        if (get(activePage) === "edit" && !get(activeEdit)?.id && get(activeShow)?.type === "show") {
+            addValues(trimValues(sort(getEditActions())), "custom_actions")
+        }
     }
 
-    // outputs
-    addValues(sort(keysToID(get(outputs))).slice(0, 5), "settings_output", "display_settings")
-    if (shouldReturn()) return trimValues()
+    // --- SETTINGS ---
+    if (isVisible("settings")) {
+        // outputs
+        addValues(trimValues(sort(keysToID(get(outputs)))), "settings_output", "display_settings")
 
-    // styles
-    addValues(sort(keysToID(get(styles))).slice(0, 5), "settings_styles", "styles")
-    if (shouldReturn()) return trimValues()
+        // styles
+        addValues(trimValues(sort(keysToID(get(styles)))), "settings_styles", "styles")
 
-    // profiles
-    addValues(sort(keysToID(get(profiles))).slice(0, 5), "settings_profiles", "profiles")
-    if (shouldReturn()) return trimValues()
+        // profiles
+        addValues(trimValues(sort(keysToID(get(profiles)))), "settings_profiles", "profiles")
+    }
 
-    // stage layouts
-    addValues(sort(keysToID(get(stageShows))).slice(0, 5), "stage_layout", "stage")
-    if (shouldReturn()) return trimValues()
+    // --- STAGE LAYOUTS ---
+    if (isVisible("stage")) {
+        const stageLayouts = trimValues(sort(keysToID(get(stageShows))))
+        addValues(stageLayouts, "stage_layout", "stage")
+    }
 
-    // overlays
-    addValues(sort(keysToID(get(overlays))).slice(0, 5), "overlay", "overlays")
-    if (shouldReturn()) return trimValues()
+    // --- OVERLAYS ---
+    if (isVisible("overlays")) {
+        const overlaysList = trimValues(sort(keysToID(get(overlays))))
+        addValues(overlaysList, "overlay", "overlays")
+    }
 
-    // projects
-    addValues(sort(keysToID(get(projects))).slice(0, 5), "project", "project")
-    if (shouldReturn()) return trimValues()
+    // --- PROJECTS ---
+    if (isVisible("projects")) {
+        const projectsList = trimValues(sort(keysToID(get(projects))), MAX_RESULTS_LARGE)
+        addValues(projectsList, "project", "project")
+    }
 
-    // actions
-    addValues(sort(keysToID(get(actions))).slice(0, 2), "action", "actions")
-    if (shouldReturn()) return trimValues()
+    // --- ACTIONS ---
+    if (isVisible("actions")) {
+        const actionsList = trimValues(sort(keysToID(get(actions))), 2)
+        addValues(actionsList, "action", "actions")
+    }
 
-    // main pages
-    addValues(sort(getMainPages()).slice(0, 2), "main_page")
-    if (shouldReturn()) return trimValues()
+    // --- NAVIGATION ---
+    if (isVisible("navigation")) {
+        // main pages
+        addValues(trimValues(sort(getMainPages()), 2), "main_page")
 
-    // drawer submenus
-    addValues(sort(getDrawerSubmenus()).slice(0, 3), "drawer_submenu")
-    if (shouldReturn()) return trimValues()
+        // drawer submenus
+        addValues(trimValues(sort(getDrawerSubmenus()), 3), "drawer_submenu")
 
-    // menu bar
-    addValues(sort(getMenubarItems()).slice(0, 3), "context_menu")
-    if (shouldReturn()) return trimValues()
+        // menu bar
+        addValues(trimValues(sort(getMenubarItems()), 3), "context_menu")
 
-    // popups
-    addValues(sort(getPopups()).slice(0, 3), "popups")
-    if (shouldReturn()) return trimValues()
+        // popups
+        addValues(trimValues(sort(getPopups()), 3), "popups")
 
-    // settings
-    addValues(sort(getSettings()).slice(0, 3), "settings")
-    if (shouldReturn()) return trimValues()
+        // settings
+        addValues(trimValues(sort(getSettings()), 3), "settings")
 
-    // connections
-    addValues(sort(connectionsList), "settings_connection", "connection")
-    if (shouldReturn()) return trimValues()
+        // connections
+        addValues(sort(connectionsList), "settings_connection", "connection")
+    }
 
-    // faq
-    addValues(sort(getFaq()).slice(0, 3), "faq")
-    if (shouldReturn()) return trimValues()
+    // --- FAQ ---
+    if (isVisible("faq")) {
+        addValues(trimValues(sort(getFaq()), 3), "faq")
+    }
 
-    // shows
-    const shows = showSearch(
-        searchValue,
-        get(sortedShowsList).filter((a) => !get(categories)[a.category || ""]?.isArchive)
-    )
-    addValues(shows, "show", "slide")
+    // --- SHOWS ---
+    if (isVisible("shows")) {
+        const allShows = get(sortedShowsList).filter((a) => !get(categories)[a.category || ""]?.isArchive)
+        const shows = fastSearch(searchValue, allShows)
+        const showsWithPreview = trimValues(shows, MAX_RESULTS_LARGE).map((show) => showResult(show, rawSearchValue))
+        addValues(showsWithPreview, "show", "slide")
+    }
 
-    return trimValues()
+    // --- MEDIA ---
+    if (isVisible("media")) {
+        const folderPaths = Object.values(get(mediaFolders)).map((a) => a.path!)
+        const mediaResults = trimValues(await getMediaResults(searchValue, folderPaths), MAX_RESULTS_LARGE)
+        addValues(mediaResults, "media")
+    }
 
-    function addValues(items: any[], type: keyof typeof triggerActions, icon = "") {
-        const newValues: QuickSearchValue[] = items.map((a) => ({ type, icon: a.icon || icon, id: a.id, name: a.name, color: a.color, data: a.data || null, aliasMatch: a.aliasMatch || null }))
+    // --- AUDIO ---
+    if (isVisible("audio")) {
+        // playlists
+        const playlists = trimValues(sort(keysToID(get(audioPlaylists))))
+        addValues(playlists, "audio_playlist", "playlist")
+
+        // audio files
+        const folderPaths = Object.values(get(audioFolders)).map((a) => a.path!)
+        const audioMedia = trimValues(await getMediaResults(searchValue, folderPaths), MAX_RESULTS_LARGE)
+        addValues(audioMedia, "media")
+    }
+
+    // --- BIBLE ---
+    if (isVisible("bible")) {
+        const bibleResults = trimValues(await getBibleResults(searchValue), MAX_RESULTS_LARGE)
+        addValues(bibleResults, "bible", "bible")
+    }
+
+    return values
+
+    function addValues(items: any[], type: keyof typeof triggerActions, icon: string = "") {
+        const newValues: QuickSearchValue[] = items.map((a) => ({
+            type,
+            icon: a.icon || icon,
+            id: a.id,
+            name: a.name,
+            color: a.color,
+            data: a.data || null,
+            aliasMatch: a.aliasMatch || null,
+            description: a.description || null,
+            category: translateText(categoryNames[currentCategory])
+        }))
         values.push(...newValues)
     }
 }
@@ -317,6 +427,32 @@ const triggerActions = {
                 activeShow.set({ ...newShow, index: newIndex })
             }
         }
+    },
+    bible: (_id: string, data: any) => {
+        openDrawer("scripture")
+
+        if (data?.reference) openScripture.set({ ...data.reference, play: data.play })
+    },
+    audio_playlist: (id: string) => {
+        openDrawer("audio")
+
+        drawerTabsData.update((a) => {
+            if (a.audio) a.audio.activeSubTab = id
+            return a
+        })
+    },
+    media: (id: string, data: any) => {
+        const path = id
+        const type = data?.type
+
+        if (type === "media" || type === "audio") activeEdit.set({ id: path, type: type === "audio" ? "audio" : "media", items: [] })
+
+        const showRef: any = { id: path, type }
+        showRef.name = data?.name || ""
+        activeShow.set(showRef)
+
+        activePage.set("show")
+        if (get(focusMode)) focusMode.set(false)
     }
 }
 

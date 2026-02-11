@@ -42,7 +42,7 @@ export interface ToMainSendPayloads {
     [ToMain.BACKUP]: { finished: boolean; path: string }
     [ToMain.RECENTLY_ADDED_FILES]: { paths: string[] }
     [ToMain.PRESENTATION_STATE]: { id: string; stat: any; info: any }
-    [ToMain.CAPTURE_CANVAS]: { input: string; output: string; size: any; extension: string; config: any }
+    [ToMain.CAPTURE_CANVAS]: { input: string; output: string; size: any; extension: string; config: any; id: string }
     [ToMain.REPLACE_MEDIA_PATHS]: any[]
     [ToMain.LESSONS_DONE]: { showId: string; status: { finished: number; failed: number } }
     [ToMain.IMAGES_TO_SHOW]: { images: string[]; name: string }

@@ -4,7 +4,7 @@ import type { Condition, ConditionValue, Item, LayoutRef } from "../../../types/
 import { StageItem, StageLayout } from "../../../types/Stage"
 import { keysToID, sortByName } from "../../common/util/helpers"
 import { getCurrentTimerValue } from "../../common/util/time"
-import { getLayoutRef } from "../helpers/show"
+import { getDynamicValue, getLayoutRef, replaceDynamicValues } from "../helpers/show"
 import { getItemText } from "../helpers/textStyle"
 import { activeTimers, output, outputSlideCache, showsCache, timers, variables } from "./stores"
 
@@ -128,7 +128,7 @@ function checkConditionValue(cVal: ConditionValue, itemsText: string) {
     if (element === "text") value = itemsText
     else if (element === "timer") value = getTimerValue(elementId)
     else if (element === "variable") value = _getVariableValue(elementId)
-    else if (element === "dynamicValue") value = getDynamicValue(elementId)
+    else if (element === "dynamicValue") value = _getDynamicValue(elementId)
 
     if (operator === "is") {
         return value === dataValue
@@ -188,15 +188,17 @@ export function _getVariableValue(dynamicId: string) {
     }
 }
 
-export function getDynamicValue(id: string) {
-    // WIP get dynamic value
-    console.log(id)
-    return ""
+export const dynamicValueText = (id: string) => `{${id}}`
+export function _getDynamicValue(id: string) {
+    id = id.includes("{") ? id : dynamicValueText(id)
+    replaceDynamicValues(id) // request
+    return getDynamicValue(id)
 }
 
 /////
 
 function getVariableNameId(name: string) {
+    if (typeof name !== "string") return ""
     return name.toLowerCase().trim().replaceAll(" ", "_")
 }
 

@@ -109,8 +109,12 @@ export function importTemplate(files: { content: string; name?: string; extensio
         history({ id: "UPDATE", newData: { data: template }, oldData: { id: templateId }, location: { page: "drawer", id: "template" } })
     })
 
-    alertMessage.set("actions.imported")
-    activePopup.set("alert")
+    if (get(activePopup)) {
+        alertMessage.set("actions.imported")
+        activePopup.set("alert")
+    } else {
+        newToast("actions.imported")
+    }
 }
 
 /// //

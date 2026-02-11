@@ -119,11 +119,29 @@
     $: playingTimer = $activeTimers.filter((a) => a.id === ref.id)[0]
     $: isPaused = playingTimer?.paused
 
+    // DYNAMIC VALUES
+    $: hasDynamicValues = timer.startDynamic !== undefined || timer.endDynamic !== undefined
+
+    // only update if text contains dynamic values
+    $: if (hasDynamicValues) startInterval()
+    else stopInterval()
+    let dynamicInterval: NodeJS.Timeout | null = null
+    function startInterval() {
+        stopInterval()
+        dynamicInterval = setInterval(update, 5000)
+    }
+    function stopInterval() {
+        if (dynamicInterval) clearInterval(dynamicInterval)
+        dynamicInterval = null
+    }
+
     let updateDynamic = 0
-    const dynamicInterval = setInterval(() => {
+    function update() {
+        if (!hasDynamicValues) return
         updateDynamic++
-    }, 5000)
-    onDestroy(() => clearInterval(dynamicInterval))
+    }
+
+    onDestroy(() => stopInterval())
 </script>
 
 {#if item?.timer?.viewType === "line"}

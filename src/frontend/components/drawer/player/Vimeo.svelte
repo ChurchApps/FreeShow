@@ -115,7 +115,7 @@
 <div class="main" class:hide={!id}>
     {#if id}
         <!-- TODO: looping vimeo video will reload the video -->
-        <iframe bind:this={iframe} on:load={iframeLoaded} data-vimeo-title="0" data-vimeo-autopause="0" data-vimeo-dnt="0" allow="autopause;" {id} title="video" src="https://player.vimeo.com/video/{id}?autopause=0&controls=0&loop={videoData.loop}" width="640" height="360" frameborder="0" />
+        <iframe bind:this={iframe} on:load={iframeLoaded} data-vimeo-title="0" data-vimeo-autopause="0" data-vimeo-dnt="0" allow="autoplay;" {id} title="video" src="https://player.vimeo.com/video/{id}?autopause=0&controls=0&loop={videoData.loop}" width="640" height="360" />
     {/if}
 </div>
 
@@ -129,6 +129,7 @@
     .main :global(iframe) {
         height: 100%;
         width: 100%;
+        border: none;
     }
 
     .hide :global(.yt) {

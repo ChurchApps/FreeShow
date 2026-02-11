@@ -15,6 +15,7 @@ export interface Project {
     shows: ProjectShowRef[]
     timeline?: Timeline
     archived?: boolean
+    sourcePath?: string // used to save directly to file import location
 }
 
 export interface ProjectShowRef extends ShowRef {

@@ -1,19 +1,21 @@
 import { get } from "svelte/store"
+import { uid } from "uid"
+import { Main } from "../../types/IPC/Main"
 import type { ProjectShowRef } from "../../types/Projects"
 import type { Show, ShowType } from "../../types/Show"
 import { keysToID } from "../components/helpers/array"
 import { history } from "../components/helpers/history"
 import { getExtension, getFileName, getMediaType, removeExtension } from "../components/helpers/media"
 import { checkName } from "../components/helpers/show"
-import { actions as actionsStores, activePage, activePopup, activeProject, activeShow, alertMessage, effects as effectsStores, focusMode, folders, media as mediaStores, overlays as overlayStores, projects, recentFiles } from "../stores"
-import { audioExtensions, mediaExtensions } from "../values/extensions"
-import { confirmCustom } from "../utils/popup"
 import { sendMain } from "../IPC/main"
-import { Main } from "../../types/IPC/Main"
+import { actions as actionsStores, activePage, activePopup, activeProject, activeShow, alertMessage, effects as effectsStores, focusMode, folders, media as mediaStores, overlays as overlayStores, projects, projectView, recentFiles } from "../stores"
 import { translateText } from "../utils/language"
+import { confirmCustom } from "../utils/popup"
+import { audioExtensions, mediaExtensions } from "../values/extensions"
+import { newToast } from "../utils/common"
 
-export function importProject(files: { content: string; name?: string; extension?: string }[]) {
-    files.forEach(({ content }) => {
+export function importProject(files: { content: string; path?: string; name?: string; extension?: string }[]) {
+    files.forEach(({ content, path }) => {
         const { project, parentFolder, shows, overlays, effects, actions, media } = JSON.parse(content)
         if (!project) return
 
@@ -21,6 +23,7 @@ export function importProject(files: { content: string; name?: string; extension
         if (parentFolder) project.parent = Object.entries(get(folders)).find(([_id, folder]) => folder.name === parentFolder)?.[0] || "/"
         const projectId = project.id || ""
         delete project.id
+        if (path) project.sourcePath = path
 
         // add overlays
         if (overlays) {
@@ -78,15 +81,31 @@ export function importProject(files: { content: string; name?: string; extension
         history({ id: "UPDATE", newData: { data: project }, oldData: { id: projectId }, location: { page: "show", id: "project" } })
     })
 
-    alertMessage.set("actions.imported")
-    activePopup.set("alert")
+    if (get(activePopup)) {
+        alertMessage.set("actions.imported")
+        activePopup.set("alert")
+    } else {
+        newToast("actions.imported")
+    }
 }
 
 export function addToProject(type: ShowType | null, filePaths: string[]) {
-    const currentProject = get(activeProject)
+    let currentProject = get(activeProject)
     if (!currentProject) {
-        // ALERT please open a project
-        return
+        // get the latest empty project
+        currentProject =
+            Object.entries(get(projects))
+                .sort((a, b) => a[1].created - b[1].created)
+                .find(([_id, project]) => project.shows && !project.shows.length)?.[0] || null
+
+        if (!currentProject) {
+            // auto-create a new project
+            currentProject = uid()
+            history({ id: "UPDATE", oldData: { id: currentProject }, location: { page: "show", id: "project" } })
+        }
+
+        activeProject.set(currentProject)
+        projectView.set(false)
     }
 
     const projectShows = get(projects)[currentProject]?.shows || []
@@ -194,4 +213,30 @@ export async function updateRecentlyAddedFiles(paths: string[] | null = null) {
     if (!importProject) return
 
     sendMain(Main.IMPORT_FILES, { id: "freeshow_project", paths: [projectFile.path] })
+}
+
+export function markItemsAsPlayed(indexes: number[] | "active", customNewState?: boolean | undefined) {
+    const projectId = get(activeProject)
+    if (!projectId) return
+
+    if (indexes === "active") {
+        const activeShowIndex = get(activeShow)?.index
+        if (activeShowIndex === undefined) return
+        indexes = [activeShowIndex]
+    }
+
+    projects.update((a) => {
+        if (!a[projectId]?.shows) return a
+
+        const newState = customNewState === undefined ? !a[projectId].shows[indexes[0]]?.played : customNewState
+
+        indexes.forEach((index) => {
+            if (!a[projectId].shows[index]) return
+            if (typeof a[projectId].shows[index] !== "object") return
+
+            a[projectId].shows[index].played = newState
+        })
+
+        return a
+    })
 }

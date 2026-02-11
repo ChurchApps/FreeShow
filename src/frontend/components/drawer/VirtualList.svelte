@@ -153,7 +153,7 @@
             }
 
             const d = actual_height - expected_height
-            viewport.scrollTo(0, scrollTop + d)
+            if (viewport) viewport.scrollTo(0, scrollTop + d)
         }
 
         // TODO if we overestimated the space these

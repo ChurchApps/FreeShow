@@ -18,15 +18,15 @@
     $: showItemRef = { outputId, slideIndex: -1 }
     // $: videoTime = $videosTime[outputId] || 0 // WIP only update if the items text has a video dynamic value
     // $: if ($activeTimers || $variables || $playingAudio || $playingAudioPaths || videoTime) updateValues()
-    let updater = 0
+    let conditionsUpdater = 0
     const updaterInterval = setInterval(() => {
         if (isClearing) return
-        if (conditions) updater++
+        if (conditions) conditionsUpdater++
     }, 500)
     onDestroy(() => clearInterval(updaterInterval))
 
     $: tempItem = { style: "", lines: [{ align: "", text: [{ value, style }] }], conditions } as Item
-    $: shouldShow = shouldItemBeShown(tempItem, [tempItem], showItemRef, updater)
+    $: shouldShow = shouldItemBeShown(tempItem, [tempItem], showItemRef, conditionsUpdater)
 </script>
 
 {#if shouldShow && !isClearing}

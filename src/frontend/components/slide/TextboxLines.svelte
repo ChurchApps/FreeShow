@@ -4,6 +4,7 @@
     import type { Item, TemplateStyleOverride } from "../../../types/Show"
     import { createVirtualBreaks } from "../../show/slides"
     import { outputs, slidesOptions, styles, variables } from "../../stores"
+    import { getItemText } from "../edit/scripts/textStyle"
     import { clone } from "../helpers/array"
     import { getFirstActiveOutput, getOutputResolution, percentageStylePos } from "../helpers/output"
     import { replaceDynamicValues } from "../helpers/showActions"
@@ -60,10 +61,6 @@
 
     let renderedLines: any[] = []
     $: renderedLines = styleOverrides?.length ? applyStyleOverrides(lines, styleOverrides) : lines
-
-    onDestroy(() => {
-        clearInterval(dynamicInterval)
-    })
 
     function getCustomStyle(style: string, outputId = "", _updater: any = null) {
         if (!style) return ""
@@ -219,18 +216,36 @@
 
     // UPDATE DYNAMIC VALUES e.g. {time_} EVERY SECOND
     // & update instantly when variables or item change
+    $: slideText = getItemText(item)
+    $: hasDynamicValues = slideText.includes("{")
+
+    // only update if text contains dynamic values
+    $: if (hasDynamicValues) startInterval()
+    else stopInterval()
+    let dynamicInterval: NodeJS.Timeout | null = null
+    function startInterval() {
+        stopInterval()
+        dynamicInterval = setInterval(update, 1000)
+    }
+    function stopInterval() {
+        if (dynamicInterval) clearInterval(dynamicInterval)
+        dynamicInterval = null
+    }
+
     let updateDynamic = 0
     $: if ($variables) setTimeout(update)
     $: if ($outputs) setTimeout(update, isStage ? 250 : 0) // time with auto size
-    const dynamicInterval = setInterval(update, 1000)
     function update() {
-        if (!hasMounted) return
+        if (!hasDynamicValues || !hasMounted) return
         updateDynamic++
     }
 
     let hasMounted = false
     onMount(() => {
-        hasMounted = true
+        setTimeout(() => (hasMounted = true))
+    })
+    onDestroy(() => {
+        stopInterval()
     })
 
     $: chordFontSize = chordLines.length ? stageItem?.chords?.size || stageItem?.chordsData?.size || item?.chords?.size || 50 : 0

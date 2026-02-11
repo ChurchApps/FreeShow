@@ -22,6 +22,7 @@
 
     let hide = false
     let enabled: boolean = menu?.enabled ? true : false
+    let customTitle: string = ""
 
     const conditions = {
         // slide views
@@ -35,6 +36,11 @@
         },
         delete: () => {
             hide = !!$shows[$selected.data[0]?.id]?.locked
+        },
+        save_to_file: () => {
+            const project = $projects[$activeProject || ""]
+            hide = !project?.sourcePath
+            customTitle = project?.sourcePath || ""
         },
         private: () => {
             let show = $shows[$selected.data[0]?.id]
@@ -144,6 +150,12 @@
             // if parent slide and has children, don't hide
             const isParent = ref[slideIndex]?.type === "parent"
             if (isParent && (show.slides[currentSlideId]?.children || []).length) {
+                // hide if group is set to "None"
+                if (show.slides[currentSlideId].group === ".") {
+                    hide = true
+                    return
+                }
+
                 hide = false
                 return
             }
@@ -368,7 +380,7 @@
 </script>
 
 <div on:click={contextItemClick} class:enabled class:disabled class:hide class:highlighted class:group data-title={translateText(menu?.tooltip || "")} style="color: {menu?.color || 'unset'};font-weight: {menu?.color ? '500' : 'normal'};{menu?.style || ''}" tabindex={0} on:keydown={keydown} role="menuitem">
-    <span class="item" data-title={group && !menu?.tooltip ? `${shortcut}` : ""}>
+    <span class="item" data-title={group && !menu?.tooltip ? `${shortcut}` : customTitle || ""}>
         <!-- white={menu.icon !== "edit"} -->
         {#if menu?.icon}<Icon style="opacity: 0.7;color: {(topBar ? '' : menu.iconColor) || 'var(--text)'};" id={menu.icon} size={group ? 1.4 : 1} white />{/if}
         {#if enabled === true}<Icon id="check" style="fill: var(--text);" size={0.7} white />{/if}

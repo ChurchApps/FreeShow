@@ -13,6 +13,7 @@ import { activeStage, allOutputs, connections, outputs, outputSlideCache, showsC
 export function updateStageShow() {
     Object.entries(get(connections).STAGE || {}).forEach(([id, stage]) => {
         const show = arrayToObject(filterObjectArray([get(stageShows)[stage.active || ""]], ["disabled", "name", "settings", "items"]))[0]
+        if (!show) return
         if (!show.disabled) window.api.send(STAGE, { channel: "LAYOUT", id, data: show })
     })
 }

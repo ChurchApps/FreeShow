@@ -2,6 +2,7 @@
     import { createEventDispatcher } from "svelte"
     import Icon from "../../helpers/Icon.svelte"
     import Card from "../Card.svelte"
+    import { encodeFilePath } from "../../helpers/media"
 
     export let name: string
     export let path: string
@@ -24,7 +25,7 @@
                 {#if mode === "grid" && previewPaths.length}
                     <div class="images">
                         {#each previewPaths.slice(0, 4) as path}
-                            <img loading="lazy" src={path} on:error={removeBrokenImg} />
+                            <img loading="lazy" src={encodeFilePath(path)} on:error={removeBrokenImg} />
                         {/each}
                     </div>
                 {/if}

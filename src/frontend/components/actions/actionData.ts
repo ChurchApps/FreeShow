@@ -5,6 +5,7 @@ export const actionData = {
     next_project_item: { name: "actions.next_project_item", icon: "project", incompatible: ["previous_project_item", "index_select_project_item"] },
     previous_project_item: { name: "actions.previous_project_item", icon: "project", incompatible: ["next_project_item", "index_select_project_item"] },
     index_select_project_item: { name: "actions.index_select_project_item", icon: "project", input: "index", incompatible: ["next_project_item", "previous_project_item"] },
+    mark_active_as_played: { name: "actions.mark_played", icon: "check", input: "toggle" },
 
     // SHOWS
     name_select_show: { SECTION: "guide_title.show", name: "actions.name_select_show", icon: "showIcon", input: "strval" },

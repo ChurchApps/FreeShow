@@ -8,7 +8,7 @@
     import { translateText } from "../../../utils/language"
     import { getKey } from "../../../values/keys"
     import Icon from "../../helpers/Icon.svelte"
-    import { getMediaLayerType, getMediaStyle, getMediaType } from "../../helpers/media"
+    import { getMediaLayerType, getMediaStyle, getMediaType, loadThumbnail } from "../../helpers/media"
     import { findMatchingOut, getAllActiveOutputs, getFirstActiveOutput, setOutput } from "../../helpers/output"
     import Button from "../../inputs/Button.svelte"
     import { clearBackground, clearSlide } from "../../output/clear"
@@ -26,6 +26,14 @@
     export let thumbnail = true
     export let contentProvider: ContentProviderId | false = false
     export let contentFileData: ContentFile | null = null
+
+    let failed = false
+    if (thumbnail && !thumbnailPath) getThumbnail()
+    async function getThumbnail() {
+        failed = false
+        thumbnailPath = await loadThumbnail(path)
+        if (!thumbnailPath) failed = true
+    }
 
     // Store ContentFile object and display name for later use (license check, convert to show, etc.)
     $: if (contentFileData && contentProvider && path) {
@@ -195,7 +203,7 @@
 <SelectElem id="media" class="context #media_card" data={{ name, path, type, contentProvider }} {shiftRange} draggable fill>
     <Card
         resolution={{ width: 16, height: 9 }}
-        {loaded}
+        loaded={(loaded && thumbnailPath !== "") || failed}
         style={thumbnail ? `width: ${$mediaOptions.mode === "grid" ? 100 : 100 / $mediaOptions.columns}%;` : ""}
         mode={$mediaOptions.mode}
         width={100}
@@ -207,7 +215,7 @@
         icon={thumbnail ? icon : null}
         white={type === "image"}
         showPlayOnHover
-        checkered={mediaStyle.fit !== "blur"}
+        checkered={mediaStyle.fit !== "blur" && !failed}
         on:mousedown={mousedown}
         on:click={click}
         on:dblclick={dblclick}
@@ -258,9 +266,14 @@
             {/if}
         </div>
 
-        <!-- && !$special.optimizedMode -->
-        {#if thumbnail}
-            <MediaLoader bind:loaded bind:hover bind:duration bind:videoElem {resolution} {type} {path} {thumbnailPath} {name} {mediaStyle} />
+        {#if failed}
+            <div class="icon">
+                <Icon size={2.5} id="close" style="color: var(--disconnected);" white />
+            </div>
+        {:else if thumbnail}
+            {#if thumbnailPath}
+                <MediaLoader bind:loaded bind:hover bind:duration bind:videoElem {resolution} {type} {path} {thumbnailPath} {name} {mediaStyle} />
+            {/if}
         {:else}
             <div class="icon">
                 <Icon size={2.5} id={icon} white={type === "image"} />

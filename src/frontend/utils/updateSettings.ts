@@ -120,10 +120,11 @@ export function updateSettings(data: any) {
         setTimeout(
             () => {
                 restartOutputs()
-                if (get(autoOutput)) setTimeout(() => toggleOutputs(null, { autoStartup: true }), get(os).platform === "darwin" ? 1500 : 500)
-                setTimeout(() => checkWindowCapture(true), get(os).platform === "darwin" ? 2000 : 1000)
+                const delay = 1200
+                if (get(autoOutput)) setTimeout(() => toggleOutputs(null, { autoStartup: true }), get(os).platform === "darwin" ? delay + 300 : delay)
+                setTimeout(() => checkWindowCapture(true), get(os).platform === "darwin" ? delay + 300 + 500 : delay + 500)
             },
-            get(os).platform === "darwin" ? 2500 : 1500
+            get(os).platform === "darwin" ? 3500 : 2500
         )
     }
 

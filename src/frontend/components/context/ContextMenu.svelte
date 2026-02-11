@@ -57,7 +57,8 @@
 
         activeMenu = getContextMenu(id) || contextMenuLayouts.default
 
-        let contextHeight = Object.keys(activeMenu).length * 30 + 10
+        let contextHeight = activeMenu.reduce((acc, id) => acc + (id.includes("GROUP") ? 73.6 : id === "SEPARATOR" ? 17 : 33.6), 0) + 16
+        // if ($spellcheck?.suggestions?.length) contextHeight += $spellcheck.suggestions.length * 33.6 + 33.6
         if (x + 250 > window.innerWidth) x -= 250
         if (y + contextHeight > window.innerHeight) translate = 100
         if (x + (250 + 150) > window.innerWidth) side = "left"
@@ -189,7 +190,7 @@
 
 <svelte:window on:contextmenu={onContextMenu} on:click={click} on:keydown={handleKeydown} />
 
-{#if $contextActive}
+{#if $contextActive && activeMenu.length}
     <div class="contextMenu" style="left: {x}px; top: {y}px;transform: translateY(-{translate}%);--background: rgb({rgb.r} {rgb.g} {rgb.b} / 0.97);" class:top class:isOptimized transition:fade={{ duration: 60 }}>
         {#key activeMenu}
             <SpellCheckMenu />

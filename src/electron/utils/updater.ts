@@ -7,7 +7,12 @@ import { isProd } from ".."
 export default async function checkForUpdates() {
     if (!isProd) return
 
-    await autoUpdater.checkForUpdatesAndNotify()
+    try {
+        await autoUpdater.checkForUpdatesAndNotify()
+    } catch (err) {
+        console.error("Auto-update error:", err)
+    }
+
     // {
     //   title: app.getName(),
     //   body: "Downloading new update...",

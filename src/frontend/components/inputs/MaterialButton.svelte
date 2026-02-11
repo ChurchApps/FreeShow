@@ -2,6 +2,7 @@
     import { createEventDispatcher } from "svelte"
     import { translateText } from "../../utils/language"
     import Icon from "../helpers/Icon.svelte"
+    import { dictionary } from "../../stores"
 
     export let variant: "contained" | "outlined" | "text" = "text"
     export let title = ""
@@ -87,7 +88,7 @@
     class="{variant} {$$props.class || ''}"
     tabindex={disabled ? -1 : 0}
     aria-disabled={disabled}
-    data-title={translateText(title)}
+    data-title={translateText(title, $dictionary)}
     class:isActive
     class:showOutline
     class:white

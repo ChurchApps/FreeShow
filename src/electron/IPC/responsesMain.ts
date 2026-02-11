@@ -106,7 +106,7 @@ export const mainResponses: MainResponses = {
     [Main.OUTPUT]: (_, e) => (e.sender.id === getMainWindow()?.webContents.id ? "false" : "true"),
     // MEDIA
     [Main.DOES_MEDIA_EXIST]: (data) => doesMediaExist(data),
-    [Main.GET_THUMBNAIL]: (data) => getThumbnail(data),
+    [Main.GET_THUMBNAIL]: async (data) => await getThumbnail(data),
     [Main.SAVE_IMAGE]: (data) => saveImage(data),
     [Main.PDF_TO_IMAGE]: (data) => pdfToImage(data),
     [Main.READ_EXIF]: (data) => readExifData(data),
@@ -312,7 +312,7 @@ function getOS() {
 }
 
 function getDeviceName() {
-    return os.hostname()
+    return (os.hostname() || "").replace(".local", "")
 }
 
 function checkRamUsage() {

@@ -374,7 +374,7 @@
             <Icon size={1.1} id="shuffle_play" white={$audioPlaylists[active || ""]?.mode !== "shuffle"} />
         </MaterialButton>
         <MaterialButton
-            title="media._loop"
+            title={`media._loop${$audioPlaylists[active || ""]?.loop !== false ? ": settings.enabled" : ""}`}
             on:click={() => {
                 if (!active) return
                 AudioPlaylist.update(active, "loop", $audioPlaylists[active]?.loop === undefined ? false : !$audioPlaylists[active]?.loop)

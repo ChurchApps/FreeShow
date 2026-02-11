@@ -330,9 +330,15 @@ export function getAllOutputs() {
     // return sortByName(keysToID(get(outputs)))
 }
 export function getAllEnabledOutputs() {
-    const outputs = getAllOutputs()
-    const enabled = outputs.filter((a) => a.enabled)
-    if (!enabled.length) return [outputs[0]]
+    const outputsList = getAllOutputs()
+    const enabled = outputsList.filter((a) => a.enabled)
+    if (!enabled.length && isMainWindow()) {
+        outputs.update((a) => {
+            a[Object.keys(a)[0]].enabled = true
+            return a
+        })
+        return [outputsList[0]]
+    }
     return enabled
 }
 
@@ -355,9 +361,15 @@ export function getWindowOutputId() {
 }
 
 export function getAllActiveOutputs() {
-    const outputs = getAllNormalOutputs()
-    const active = outputs.filter((a) => a.active)
-    if (!active.length) return [outputs[0]]
+    const outputsList = getAllNormalOutputs()
+    const active = outputsList.filter((a) => a.active)
+    if (!active.length && isMainWindow()) {
+        outputs.update((a) => {
+            a[Object.keys(a)[0]].active = true
+            return a
+        })
+        return [outputsList[0]]
+    }
     return active
 }
 export function getAllActiveOutputIds() {
@@ -1205,7 +1217,7 @@ export function setTemplateStyle(outSlide: OutSlide | null, currentStyle: Styles
     if (!Array.isArray(items)) return []
 
     const isDrawerScripture = outSlide?.id === "temp"
-    const slideItems = isDrawerScripture ? outSlide.tempItems : items?.filter(checkSpecificOutput)
+    const slideItems = isDrawerScripture ? outSlide.tempItems : items
 
     const template = getStyleTemplate(outSlide, currentStyle)
     const templateItems = template.items || []
@@ -1229,9 +1241,11 @@ export function setTemplateStyle(outSlide: OutSlide | null, currentStyle: Styles
     //     newItemsAuto: newItems?.find((i) => i.auto)
     // })
 
-    return newItems
+    return newItems.filter(checkSpecificOutput)
 
     function checkSpecificOutput(item: Item) {
+        if (!item) return false
+        if (outSlide === null) return true // always show in slides preview
         return !item.bindings?.length || item.bindings.includes(outputId)
     }
 }

@@ -254,7 +254,7 @@ export interface Variable {
     eachNumberOnce?: boolean
     sets?: { name: string; minValue?: number; maxValue?: number }[]
     setName?: string // chosen random set
-    setLog?: { name: string; number: number }[]
+    setLog?: { name: string; number: string }[]
 
     // text
     text?: string

@@ -20,6 +20,7 @@
     import Card from "../Card.svelte"
     import Effects from "../effects/Effects.svelte"
     import OverlayActions from "./OverlayActions.svelte"
+    import { runAction } from "../../actions/actions"
 
     export let active: string | null
     export let searchValue = ""
@@ -71,6 +72,23 @@
             return a
         })
     }
+
+    function overlayClick(e: any, id: string) {
+        if ($outLocked || e.ctrlKey || e.metaKey) return
+        if (e.target?.closest(".edit") || e.target?.closest(".icons")) return
+
+        const isActive = findMatchingOut(id, $outputs) !== null
+
+        if (!isActive) {
+            // run actions - before starting overlay
+            $overlays[id]?.actions?.forEach((a) => runAction(a))
+        }
+
+        setOutput("overlays", id, true)
+
+        if (isActive) timelineRecordingAction.set({ id: "clear_overlay", data: { id } })
+        else timelineRecordingAction.set({ id: "id_select_overlay", data: { id } })
+    }
 </script>
 
 <div style="position: relative;height: 100%;overflow-y: auto;" class="context #drawer_overlays" on:wheel={wheel}>
@@ -100,15 +118,7 @@
                                 color={overlay.color}
                                 {resolution}
                                 showPlayOnHover
-                                on:click={(e) => {
-                                    if ($outLocked || e.ctrlKey || e.metaKey) return
-                                    if (e.target?.closest(".edit") || e.target?.closest(".icons")) return
-
-                                    setOutput("overlays", overlay.id, true)
-
-                                    if (isActive) timelineRecordingAction.set({ id: "clear_overlay", data: { id: overlay.id } })
-                                    else timelineRecordingAction.set({ id: "id_select_overlay", data: { id: overlay.id } })
-                                }}
+                                on:click={(e) => overlayClick(e, overlay.id)}
                                 on:dblclick={(e) => {
                                     if (e.ctrlKey || e.metaKey) return
                                     if (e.target?.closest(".edit") || e.target?.closest(".icons")) return

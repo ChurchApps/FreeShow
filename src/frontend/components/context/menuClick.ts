@@ -6,6 +6,7 @@ import { Main } from "../../../types/IPC/Main"
 import type { MediaStyle, Selected, SelectIds } from "../../../types/Main"
 import type { Item, LayoutRef, SlideData } from "../../../types/Show"
 import { ShowObj } from "../../classes/Show"
+import { markItemsAsPlayed } from "../../converters/project"
 import { sendMain } from "../../IPC/main"
 import { cameraManager } from "../../media/cameraManager"
 import { changeSlideGroups, mergeSlides, mergeTextboxes, splitItemInTwo } from "../../show/slides"
@@ -720,7 +721,7 @@ const clickActions = {
         history({ id: "UPDATE", newData: { replace: { parent } }, location: { page: "show", id: "project" } })
     },
     newFolder: (obj: ObjData) => {
-        if (obj.contextElem?.classList.contains("#folder__projects") || obj.contextElem?.classList.contains("#projects")) {
+        if (obj.contextElem?.closest(".projectItem")) {
             let parent = obj.sel?.data[0]?.id || obj.contextElem.id || "/"
             if (parent === "projectsArea") parent = "/"
             history({ id: "UPDATE", newData: { replace: { parent } }, location: { page: "show", id: "project_folder" } })
@@ -818,7 +819,7 @@ const clickActions = {
             if (obj.sel?.id !== "project" && !get(activeProject)) return
             const projectId: string = obj.sel?.data[0]?.id || get(activeProject)
             exportProject(get(projects)[projectId], projectId)
-
+            // WIP set sourcePath to export path
             return
         }
     },
@@ -827,6 +828,14 @@ const clickActions = {
             const extensions = ["project", "shows", "json", "zip"]
             const name = translateText("formats.project")
             sendMain(Main.IMPORT, { channel: "freeshow_project", format: { extensions, name } })
+            return
+        }
+    },
+    save_to_file: (obj: ObjData) => {
+        if (obj.contextElem?.classList.value.includes("project")) {
+            if (obj.sel?.id !== "project" && !get(activeProject)) return
+            const projectId: string = obj.sel?.data[0]?.id || get(activeProject)
+            exportProject(get(projects)[projectId], projectId, get(projects)[projectId]?.sourcePath)
             return
         }
     },
@@ -899,24 +908,8 @@ const clickActions = {
         history({ id: "UPDATE", newData: { key: "shows", index }, oldData: { id: get(activeProject) }, location: { page: "show", id: "section" } })
     },
     mark_played: (obj: ObjData) => {
-        const projectId = get(activeProject)
         const indexes = (obj.sel?.data || []).map((item) => Number(item.index))
-        if (!projectId || !indexes.length) return
-
-        projects.update((a) => {
-            if (!a[projectId]?.shows) return a
-
-            const newState = !a[projectId].shows[indexes[0]]?.played
-
-            indexes.forEach((index) => {
-                if (!a[projectId].shows[index]) return
-                if (typeof a[projectId].shows[index] !== "object") return
-
-                a[projectId].shows[index].played = newState
-            })
-
-            return a
-        })
+        markItemsAsPlayed(indexes)
     },
     copy_to_template: (obj: ObjData) => {
         let project = clone(get(projects)[obj.sel?.data[0]?.id])
@@ -962,11 +955,14 @@ const clickActions = {
     },
     disable: (obj: ObjData) => {
         if (obj.sel?.id === "slide") {
+            const showId = get(activeShow)?.id
+            if (!showId) return
+
             showsCache.update((a) => {
                 obj.sel!.data.forEach((b) => {
                     if (!b) return
                     const ref = getLayoutRef()?.[b.index] || {}
-                    const slides = a[get(activeShow)!.id].layouts?.[a[get(activeShow)!.id]?.settings?.activeLayout]?.slides
+                    const slides = a[showId].layouts?.[a[showId]?.settings?.activeLayout]?.slides
                     if (!slides) return
 
                     if (ref.type === "child") {
@@ -1222,6 +1218,16 @@ const clickActions = {
                 return a
             })
         }
+    },
+    overlay_actions: (obj: ObjData) => {
+        const overlayId = obj.sel?.data[0]
+        const overlay = get(overlays)[overlayId]
+        if (!overlay) return
+
+        const existingActions = overlay.actions || []
+
+        popupData.set({ mode: "overlay", overlayId, existing: existingActions.map((a) => a.triggers?.[0]) })
+        activePopup.set("action")
     },
     template_actions: (obj: ObjData) => {
         const templateId = obj.sel?.data[0]
@@ -1959,7 +1965,7 @@ export async function format(id: string, obj: ObjData, data: any = null) {
             .map((a) => a.id)
     } else if (obj.sel?.id?.includes("slide")) {
         if (!Array.isArray(obj.sel.data)) return
-        slideIds = obj.sel.data.map((a) => ref[a.index].id)
+        slideIds = obj.sel.data.map((a) => ref[a.index]?.id).filter(Boolean)
     } else {
         slideIds = [
             _show()

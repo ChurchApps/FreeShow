@@ -20,7 +20,13 @@ import { save, unsavedUpdater } from "./save"
 let initialized = false
 let startupProfile = ""
 
-export function startup() {
+export async function startup() {
+    if (!window.api) {
+        // wait for window.api to be available (preload script might not be ready yet) - not likely
+        await waitUntilValueIsDefined(() => window.api, 20, 5000)
+        if (!window.api) return console.error("window.api is not available after waiting")
+    }
+
     window.api.receive(
         STARTUP,
         (msg) => {
@@ -124,7 +130,7 @@ export function contentProviderSync() {
 
     setTimeout(() => {
         const hasDriveSync = typeof get(driveKeys) === "object" && Object.keys(get(driveKeys)).length
-        if (!Object.keys(get(providerConnections)).length && !get(activePopup) && Math.random() < (hasDriveSync ? 0.5 : 0.2)) {
+        if (!Object.keys(get(providerConnections)).length && !get(activePopup) && Math.random() < (hasDriveSync ? 0.5 : 0.1)) {
             alertMessage.set("You can now set up free cloud sync with ChurchApps! Go to Settings>Files to log in." + (hasDriveSync ? "<br>It's recommended to switch over from your current Google Sync!" : ""))
             activePopup.set("alert")
         }

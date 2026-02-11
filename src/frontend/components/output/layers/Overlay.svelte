@@ -38,17 +38,17 @@
     const showItemRef = { outputId, type: "default" }
     // $: videoTime = $videosTime[outputId] || 0
     // $: if ($activeTimers || $variables || $playingAudio || $playingAudioPaths || videoTime) updateValues()
-    let updater = 0
+    let conditionsUpdater = 0
     const updaterInterval = setInterval(() => {
         if (isClearing) return
-        if (currentItems.find((a) => a?.conditions)) updater++
+        if (currentItems.find((a) => a?.conditions)) conditionsUpdater++
     }, 300)
     onDestroy(() => clearInterval(updaterInterval))
 </script>
 
 {#key show}
     {#each currentItems as item}
-        {#if show && shouldItemBeShown(item, currentItems, showItemRef, updater)}
+        {#if show && shouldItemBeShown(item, currentItems, showItemRef, conditionsUpdater)}
             <SlideItemTransition {transitionEnabled} globalTransition={transition} {item} let:customItem>
                 <Textbox item={customItem} ref={{ type: "overlay", id }} {mirror} {preview} {outputId} />
             </SlideItemTransition>

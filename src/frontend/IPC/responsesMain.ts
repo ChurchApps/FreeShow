@@ -87,6 +87,7 @@ import { initializeClosing, saveComplete } from "../utils/save"
 import { updateSettings, updateSyncedSettings, updateThemeValues } from "../utils/updateSettings"
 import type { MainReturnPayloads } from "./../../types/IPC/Main"
 import { Main } from "./../../types/IPC/Main"
+import { invalidateSearchIndex } from "../utils/searchFast"
 
 type MainHandler<ID extends Main | ToMain> = (data: ID extends keyof ToMainSendPayloads ? ToMainSendPayloads[ID] : ID extends keyof MainReturnPayloads ? Awaited<MainReturnPayloads[ID]> : undefined) => void
 export type MainResponses = {
@@ -141,6 +142,7 @@ export const mainResponses: MainResponses = {
     },
     [Main.CACHE]: (a) => {
         textCache.set(a.text || {})
+        invalidateSearchIndex()
     },
     [Main.USAGE]: (a) => usageLog.set(a),
 

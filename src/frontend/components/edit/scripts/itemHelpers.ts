@@ -15,7 +15,7 @@ import { itemBoxes } from "../values/boxes"
 import { getLikelyPosition } from "./autoPosition"
 import { getItemText, setCaret } from "./textStyle"
 
-export const DEFAULT_ITEM_STYLE = "top:120px;left:50px;height:840px;width:1820px;"
+export const DEFAULT_ITEM_STYLE = "top:88px;left:50px;height:904px;width:1820px;"
 
 function getDefaultStyles(type: ItemType, templateItems: Item[] | null = null) {
     // Get position styles from template or use default from boxes.ts

@@ -164,7 +164,7 @@
             </Button>
 
             {#if isVideo}
-                <Button class="icon-btn loop-btn {isLooping ? 'loop-on' : ''}" on:click={toggleLoop} title={translate("media._loop", $dictionary) || "Loop"} compact>
+                <Button class="icon-btn loop-btn {isLooping ? 'loop-on' : ''}" on:click={toggleLoop} title={translate("media._loop" + (isLooping ? ": settings.enabled" : ""), $dictionary) || "Loop"} compact>
                     <Icon id="loop" size={1.1} white={!isLooping} />
                 </Button>
             {/if}

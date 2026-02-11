@@ -42,9 +42,9 @@
 
     // $: videoTime = $videosTime[stageOutputId] || 0
     // { $activeTimers, $variables, $playingAudio, $playingAudioPaths, videoTime }
-    let updater = 0
+    let conditionsUpdater = 0
     const updaterInterval = setInterval(() => {
-        if (stageItems.some((a) => a?.conditions)) updater++
+        if (stageItems.some((a) => a?.conditions)) conditionsUpdater++
     }, 1000)
     onDestroy(() => clearInterval(updaterInterval))
 </script>
@@ -56,7 +56,7 @@
             <SelectElem id="stage" data={{ id }} {selectable}>
                 <Zoomed background={layout.items.length ? "black" : "transparent"} style="width: 100%;" {resolution} id={stageOutputId} isStage disableStyle center bind:ratio>
                     {#each stageItems as item}
-                        {#if (item.type || item.enabled !== false) && shouldItemBeShown(stageItemToItem(item), item.type === "slide_text" ? getSlideTextItems(layout, item, $outputs || $allOutputs) : [], { type: "stage" }, updater)}
+                        {#if (item.type || item.enabled !== false) && shouldItemBeShown(stageItemToItem(item), item.type === "slide_text" ? getSlideTextItems(layout, item, $outputs || $allOutputs) : [], { type: "stage" }, conditionsUpdater)}
                             <Stagebox id={item.id} item={clone(item)} {ratio} stageLayout={layout} />
                         {/if}
                     {/each}

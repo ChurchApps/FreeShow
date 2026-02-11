@@ -105,7 +105,7 @@
 
                     <!-- WIP change loop/mute state -->
                     <!-- NOTE: mute state can be changed in the media item edit currently -->
-                    <Button center title={translateText("media._loop")} on:click={() => toggleLoop(path, !!data.loop)}>
+                    <Button center title={translateText("media._loop" + (data.loop ? ": settings.enabled" : ""))} on:click={() => toggleLoop(path, !!data.loop)}>
                         <Icon id="loop" white={!data.loop} />
                     </Button>
                     <!-- <Button

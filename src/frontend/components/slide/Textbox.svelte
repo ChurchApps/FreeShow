@@ -196,7 +196,7 @@
         if (!slideData) return ""
         const groupId = slideData.globalGroup && slideData.globalGroup !== "none" ? slideData.globalGroup : slideData.group
         if (!groupId) return ""
-        
+
         // pick up template supplied by group overrides (if present)
         return $groups[groupId]?.template || ""
     })()
@@ -270,7 +270,7 @@
     $: templateStyleOverrides = (() => {
         // ensure overrides follow whichever template actually drives this slide
         if (!resolvedTemplateId) return []
-        
+
         return clone($templates[resolvedTemplateId]?.settings?.styleOverrides || [])
     })()
 

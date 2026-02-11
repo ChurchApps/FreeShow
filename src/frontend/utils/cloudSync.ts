@@ -4,7 +4,7 @@ import { isLocalFile } from "../components/helpers/media"
 import { loadShows } from "../components/helpers/setShow"
 import { requestMain, sendMain } from "../IPC/main"
 import { activeEdit, activePage, activePopup, activeProject, activeShow, alertMessage, cloudSyncData, cloudUsers, deletedShows, popupData, providerConnections, renamedShows, saved, scripturesCache, shows, showsCache, special } from "../stores"
-import { isMainWindow, newToast, setStatus } from "./common"
+import { isMainWindow, newToast, setStatus, wait } from "./common"
 import { confirmCustom } from "./popup"
 import { save } from "./save"
 import { SocketHelper } from "./SocketHelper"
@@ -21,7 +21,8 @@ export async function setupCloudSync(auto: boolean = false) {
     const teams = await requestMain(Main.GET_TEAMS)
     if (!teams.length) {
         const addTeam = "Get added to a team, or create one in B1.church>Serving>Plans>Ministry>Teams!"
-        alertMessage.set(auto ? "You can setup cloud sync with ChurchApps, but no teams were found in your account. " + addTeam : "No teams were found in your account. " + addTeam)
+        const msg = auto ? "You can setup cloud sync with ChurchApps, but no teams were found in your account. " + addTeam : "No teams were found in your account. " + addTeam
+        alertMessage.set(msg + "<br><br>If you already did, try disconnecting and connecting again!")
         activePopup.set("alert")
         return
     }
@@ -70,7 +71,7 @@ export async function chooseTeam(team: { id: string; churchId: string; name: str
 
 let isSyncing = false
 // let lastSync = 0
-export async function syncWithCloud(initialize: boolean = false) {
+export async function syncWithCloud(initialize: boolean = false, isClosing: boolean = false) {
     if (!get(providerConnections).churchApps) return false
 
     if (isSyncing) return false
@@ -98,7 +99,7 @@ export async function syncWithCloud(initialize: boolean = false) {
         activeEdit.set({ items: [] })
     }
 
-    socketConnect()
+    if (!isClosing) socketConnect()
 
     isSyncing = true
     setStatus("syncing")
@@ -123,6 +124,8 @@ export async function syncWithCloud(initialize: boolean = false) {
     }
 
     setStatus("synced", 3)
+
+    if (isClosing) return true
 
     // reset cached shows as they might have changed
     const allShowIds = Object.keys(get(shows))
@@ -186,23 +189,20 @@ async function createCloudSocket(): Promise<SocketHelper | null> {
     }
 }
 
-export function socketDisconnect() {
+export async function socketDisconnect() {
     if (!cloudSocketHelper) return
     const socket = cloudSocketHelper
 
     clearStoreListeners()
 
-    cloudSyncMessage("presence", { action: "bye" })
+    await cloudSyncMessage("presence", { action: "bye" })
+    await wait(100) // ensure message is sent before disconnecting
+    socket.disconnect()
 
     // clear local reference immediately so new connections create a new socket
     cloudSocketHelper = null
     cachedConversationId = null
     cloudUsers.set([])
-
-    // disconnect the actual socket instance after a delay
-    setTimeout(() => {
-        socket.disconnect()
-    }, 1000)
 }
 
 async function socketConnect() {

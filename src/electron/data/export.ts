@@ -4,7 +4,7 @@
 
 import { BrowserWindow, ipcMain } from "electron"
 import fs, { type WriteFileOptions } from "fs"
-import { basename, extname, join } from "path"
+import { basename, dirname, extname, join } from "path"
 import { EXPORT, STARTUP } from "../../types/Channels"
 import { ToMain } from "../../types/IPC/ToMain"
 import type { Show, Slide, Template } from "../../types/Show"
@@ -253,19 +253,22 @@ function exportAllShows(data: { type: string }) {
 
 // ----- PROJECT -----
 
-export function exportProject(data: { type: "project"; name: string; file: any }) {
+export function exportProject(data: { type: "project"; name: string; file: any; path?: string }) {
     sendToMain(ToMain.ALERT, "export.exporting")
     const exportFolder = getDataFolderPath("exports")
 
     const files: string[] = data.file.files || []
     if (!files.length) {
+        let exportPath = data.path ? data.path.replace(".project", "") : join(exportFolder, data.name)
         // export as plain JSON
-        writeFile(join(exportFolder, data.name), ".project", JSON.stringify(data.file), "utf-8", (err) => doneWritingFile(err, exportFolder))
+        writeFile(exportPath, ".project", JSON.stringify(data.file), "utf-8", (err) => doneWritingFile(err, data.path ? "" : exportFolder))
         return
     }
 
     // create archive with hashed filenames
-    compressWithMedia(files, data.file, data.name, ".project", exportFolder, (path, extension) => {
+    const folderPath = data.path ? dirname(data.path) : exportFolder
+    const name = data.path ? basename(data.path).replace(".project", "") : data.name
+    compressWithMedia(files, data.file, name, ".project", folderPath, (path, extension) => {
         return `${basename(path, extension)}__${filePathHashCode(path)}${extension}`
     })
 }

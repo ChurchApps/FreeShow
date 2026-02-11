@@ -3,7 +3,7 @@
 // https://www.npmjs.com/package/electron-store
 
 import Store from "electron-store"
-import { mkdirSync, renameSync, statSync } from "fs"
+import { mkdirSync, statSync } from "fs"
 import path from "path"
 import type { Event } from "../../types/Calendar"
 import type { History } from "../../types/History"
@@ -15,7 +15,7 @@ import type { Overlays, Templates, TrimmedShows } from "../../types/Show"
 import type { StageLayouts } from "../../types/Stage"
 import type { ContentProviderId } from "../contentProviders/base/types"
 import { sendMain, sendToMain } from "../IPC/main"
-import { dataFolderNames, deleteFile, doesPathExist, getDataFolderPath, getDataFolderRoot, getDefaultDataFolderRoot, readFile, readFolder } from "../utils/files"
+import { dataFolderNames, deleteFile, doesPathExist, getDataFolderPath, getDataFolderRoot, getDefaultDataFolderRoot, moveFileAsync, readFile, readFolder } from "../utils/files"
 import { clone, wait } from "../utils/helpers"
 import "./contentProviders"
 import { defaultConfig, defaultSettings, defaultSyncedSettings } from "./defaults"
@@ -220,7 +220,7 @@ export function getStore<T extends keyof typeof storeFilesData | "config">(id: T
 // GET STORE VALUE (used in special cases - currently only some "config" keys)
 export function getStoreValue(data: { file: "config" | keyof typeof _store; key: string }) {
     const store = data.file === "config" ? config : _store[data.file]
-    return (store as any).get(data.key)
+    return (store as any).get(data.key) ?? null
 }
 // SET STORE VALUE (used in special cases - currently only some "config" keys)
 export function setStoreValue(data: { file: "config" | keyof typeof _store; key: string; value: any }) {
@@ -314,7 +314,7 @@ function moveShowsToDataFolder(oldShowsPath: string) {
         const newPath = path.join(showsFolderPath, file)
 
         try {
-            renameSync(oldPath, newPath)
+            moveFileAsync(oldPath, newPath)
         } catch (err) {
             console.error("Could not move show file to new data folder:", err)
         }

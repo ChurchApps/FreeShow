@@ -3,8 +3,10 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
 import type { History } from "../../../types/History"
+import { Main } from "../../../types/IPC/Main"
 import type { DropData, Selected } from "../../../types/Main"
 import type { Item, Slide, SlideAction } from "../../../types/Show"
+import { sendMain } from "../../IPC/main"
 import { changeLayout, changeSlideGroups } from "../../show/slides"
 import { activeDrawerTab, activePage, activePopup, activeProject, activeShow, alertMessage, audioFolders, audioPlaylists, audioStreams, drawerTabsData, media, mediaFolders, overlays, projects, scriptureSettings, shows, showsCache, templates, timers } from "../../stores"
 import { newToast } from "../../utils/common"
@@ -137,10 +139,19 @@ export const dropActions = {
         let data = drag.data
         if (drag.id === "media" || drag.id === "files") {
             const extraFiles: string[] = []
+            const pptFiles: string[] = []
+            const projectFiles: string[] = []
+
             data = data
                 .map((a) => {
                     const path = a.path || window.api.showFilePath(a)
                     const extension: string = getExtension(path || a.name)
+
+                    if (extension === "project") {
+                        projectFiles.push(path)
+                        return
+                    }
+
                     if (drag.id === "files" && !files[drop.id].includes(extension)) {
                         extraFiles.push(path)
                         return null
@@ -153,13 +164,22 @@ export const dropActions = {
 
                     const type: string = getMediaType(extension)
 
+                    if (type === "ppt") {
+                        pptFiles.push(path)
+                        return null
+                    }
+
                     const name: string = a.name || getFileName(path)
                     return { name: removeExtension(name), id: path, type }
                 })
-                .filter((a) => a)
+                .filter(Boolean)
 
             // add folders
             if (extraFiles.length) projectDropFolders(extraFiles, drop.index)
+            // auto convert PPT to slides
+            if (pptFiles.length) sendMain(Main.IMPORT_FILES, { id: "powerpoint", paths: pptFiles })
+            // iport projects
+            if (projectFiles.length) sendMain(Main.IMPORT_FILES, { id: "freeshow_project", paths: projectFiles })
         } else if (drag.id === "audio" || drag.id === "audio_effect") {
             data = data.map((a) => ({ id: a.path, name: removeExtension(a.name), type: "audio" }))
         } else if (drag.id === "overlay") {
@@ -484,7 +504,9 @@ const files = {
 
 const slideDrop = {
     media: ({ drag, drop }: Data, history: History) => {
-        let data = drag.data
+        let data = clone(drag.data)
+        if (!data.length) return
+
         // TODO: move multiple add to possible slides
 
         // check files
@@ -709,6 +731,8 @@ const slideDrop = {
         const layoutId: string = _show().get("settings.activeLayout")
 
         const slides: { [key: string]: Slide } = clone(get(showsCache)[get(activeShow)?.id || ""]?.slides)
+        if (!slides || !Object.keys(slides).length) return
+
         const mediaData: any = clone(get(showsCache)[get(activeShow)?.id || ""]?.media || {})
         let layout: any[] = _show().layouts([layoutId]).slides().get()[0]
 
@@ -791,9 +815,11 @@ const slideDrop = {
         const layoutId: string = _show().get("settings.activeLayout")
 
         const slides: { [key: string]: Slide } = clone(get(showsCache)[get(activeShow)?.id || ""]?.slides)
+        if (!slides || !Object.keys(slides).length) return
+
         let layout: any[] = _show().layouts([layoutId]).slides().get()[0] || []
 
-        if (drop.index === undefined) drop.index = layout.length
+        if (drop.index === undefined) drop.index = ref.length
         let newIndex: number = drop.index
         if (drop.trigger?.includes("end")) newIndex++
 

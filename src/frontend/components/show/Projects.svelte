@@ -182,7 +182,7 @@
             {#if !$focusMode}
                 <MaterialButton style="flex: 1;padding: 0.3em 0.5em;" icon="back" title="remote.projects" on:click={back} />
                 <!-- {recentlyUsedList.length ? '' : 'border-bottom: 1px solid var(--secondary);'} -->
-                <div style="flex: 7;max-width: calc(100% - 43px);" class="header context #projectTab _close" data-title={translateText("remote.project: ") + `<b>${$projects[$activeProject || ""]?.name || ""}</b>`}>
+                <div style="flex: 7;max-width: calc(100% - 43px);" class="header {recentlyUsedList.length ? '' : 'context #projectTab'}" data-title={translateText("remote.project: ") + `<b>${$projects[$activeProject || ""]?.name || ""}</b>`}>
                     <!-- <Icon id="project" white right /> -->
                     {#if recentlyUsedList.length}
                         <p style="font-style: italic;opacity: 0.7;"><T id="info.recently_used" /></p>

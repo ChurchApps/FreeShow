@@ -3,6 +3,7 @@ import type { MidiValues, TransitionType } from "../../../types/Show"
 import { clearAudio } from "../../audio/audioFading"
 import { AudioPlayer } from "../../audio/audioPlayer"
 import { AudioPlaylist } from "../../audio/audioPlaylist"
+import { markItemsAsPlayed } from "../../converters/project"
 import { convertText } from "../../converters/txt"
 import { sendMain } from "../../IPC/main"
 import { transposeText } from "../../utils/chordTranspose"
@@ -194,6 +195,7 @@ export const API_ACTIONS = {
     next_project_item: () => selectProjectShow("next"), // BC
     previous_project_item: () => selectProjectShow("previous"), // BC
     index_select_project_item: (data: API_index) => selectProjectShow(data.index), // BC
+    mark_active_as_played: (data: API_toggle_specific) => markItemsAsPlayed("active", data.value),
 
     // SHOWS
     name_select_show: (data: API_strval) => selectShowByName(data.value), // BC

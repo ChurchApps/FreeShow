@@ -86,7 +86,7 @@
         updateSortedStageItems()
 
         // select item
-        if (Object.keys($stageShows[stageId]?.items).length > 1) {
+        if (Object.keys($stageShows[stageId]?.items || {}).length > 1) {
             activeStage.update((a) => {
                 a.items = [itemId]
                 return a

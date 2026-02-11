@@ -956,7 +956,7 @@
                         {#if chapters?.length}
                             {#each chapters as chapter}
                                 {@const id = chapter.number.toString()}
-                                {@const isActive = activeReference.chapters.find((cid) => cid.toString() === id)}
+                                {@const isActive = activeReference.chapters.find((cid) => cid?.toString() === id)}
 
                                 <span
                                     {id}

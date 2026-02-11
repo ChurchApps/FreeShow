@@ -111,7 +111,6 @@
 
     $: fontSize = Number(getStyles(item?.style, true)?.["font-size"] || 0) || 100 // item.autoFontSize ||
 
-
     // Exclude slide_text from Stagebox autosize - it uses Textbox's own autosize instead
     // Stagebox autosize is for SlideNotes, SlideProgress, VideoTime, etc.
     $: autoSizeEnabled = item?.type === "current_output" || item?.type === "slide_text" ? false : item?.type?.includes("text") ? item?.auto || (item?.textFit && item?.textFit !== "none") : item?.auto !== false || item?.textFit !== "none"
@@ -139,7 +138,7 @@
             // If height is 0, the content hasn't rendered yet - retry with longer delay
             if (!alignElem || alignElem.clientHeight === 0) {
                 autoSizeRetryCount++
-                
+
                 if (autoSizeRetryCount < MAX_AUTOSIZE_RETRIES) {
                     // Retry with progressively longer delays
                     currentAutoSizeTimeout = setTimeout(() => updateAutoSize(), 50 * autoSizeRetryCount)
@@ -149,10 +148,10 @@
                 currentAutoSizeTimeout = null
                 return
             }
-            
+
             // Reset retry count on successful measurement
             autoSizeRetryCount = 0
-            
+
             let itemFontSize = Number(getStyles(item?.style, true)?.["font-size"] || "") || 100
 
             const type = item?.textFit || "growToFit"
@@ -162,9 +161,7 @@
             const isTextItem = item?.type === "slide_text" || (item?.type || "text") === "text"
             if (!isTextItem) maxFontSize = 0
 
-
             size = autosize(alignElem, { type, textQuery: ".autoFontSize", defaultFontSize, maxFontSize })
-            
 
             currentAutoSizeTimeout = null
         }, 20)
@@ -222,8 +219,7 @@
             else if (key === "font-size" && isSlideTextWithAutosize) {
                 // Skip font-size for autosize items - let Textbox's autosize compute it
                 // Otherwise 800px gets inherited and causes giant text flash
-            }
-            else itemStyle += `${key}: ${value};`
+            } else itemStyle += `${key}: ${value};`
         })
     }
 
@@ -262,12 +258,12 @@
 
     $: contextId = item?.type === "text" ? "stage_text_item" : item?.type === "current_output" ? "stage_item_output" : "stage_item"
 
-    let updater = 0
-    const updaterInterval = setInterval(() => updater++, 3000)
+    let conditionsUpdater = 0
+    const updaterInterval = setInterval(() => conditionsUpdater++, 3000)
     onDestroy(() => clearInterval(updaterInterval))
 
     $: currentItemText = item ? (item.type === "slide_text" ? getSlideTextItems(stageLayout!, item).map(getItemText).join("") : getItemText(stageItemToItem(item))) : ""
-    $: showItemState = edit ? isConditionMet(item?.conditions?.showItem, currentItemText, "stage", updater) : false
+    $: showItemState = edit ? isConditionMet(item?.conditions?.showItem, currentItemText, "stage", conditionsUpdater) : false
 
     // fixed letter width
     $: fixedWidth = item?.type === "timer" || item?.type === "clock" ? "font-feature-settings: 'tnum' 1;" : ""

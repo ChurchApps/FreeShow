@@ -19,6 +19,7 @@
     import Autoscroll from "../system/Autoscroll.svelte"
     import Center from "../system/Center.svelte"
     import DropArea from "../system/DropArea.svelte"
+    import SkeletonSlide from "../slide/SkeletonSlide.svelte"
 
     export let showId: string
     export let layout = ""
@@ -28,7 +29,11 @@
     $: activeLayout = layout || $showsCache[showId]?.settings?.activeLayout
     $: layoutSlides = currentShow ? getCachedShow(showId, activeLayout, $cachedShowsData)?.layout || [] : []
 
+    let hasMounted = false
     onMount(() => {
+        // don't double render all slides on first load because of cachedShowsData update
+        setTimeout(() => (hasMounted = true), 80)
+
         // custom fonts
         if (currentShow?.settings?.customFonts) loadCustomFonts(currentShow.settings.customFonts)
     })
@@ -55,12 +60,18 @@
         })
     }
 
+    let shouldSkipSmooth = 0
+    $: if (showId) {
+        offset = 0
+        shouldSkipSmooth++
+    }
+
     let scrollElem: HTMLElement | undefined
     let offset = -1
-    $: updateOffset({ $outputs })
+    $: setTimeout(() => updateOffset({ $outputs, showId }))
     async function updateOffset(_updater: any) {
-        if (!loaded || !scrollElem) return
-        if (await hasNewerUpdate("SHOWS_SCROLL_OFFSET", 50)) return
+        if (!scrollElem) return
+        if (await hasNewerUpdate("SHOWS_SCROLL_OFFSET", 10)) return
 
         let output = $outputs[activeOutputs[0]] || {}
         if (showId === output.out?.slide?.id && activeLayout === output.out?.slide?.layout) {
@@ -452,7 +463,7 @@
 
 <svelte:window on:keydown={keydown} on:keyup={keyup} on:mousedown={keyup} on:blur={blurred} />
 
-<Autoscroll class={$focusMode || isLocked ? "" : "context #shows__close"} {offset} disabled={disableAutoScroll} bind:scrollElem style="display: flex;">
+<Autoscroll class={$focusMode || isLocked ? "" : "context #shows__close"} {offset} disabled={disableAutoScroll} {shouldSkipSmooth} bind:scrollElem style="display: flex;">
     <DropArea id="all_slides" selectChildren>
         <DropArea id="slides" hoverTimeout={0} selectChildren>
             {#if $showsCache[showId] === undefined}
@@ -467,8 +478,13 @@
                 <div class="grid" style={$focusMode ? "" : "padding-bottom: 60px;"}>
                     {#if layoutSlides.length}
                         {#each layoutSlides as slide, i}
-                            {#if (loaded || i < lazyLoader) && currentShow?.slides?.[slide.id] && (mode === "grid" || mode === "groups" || !slide.disabled) && (mode !== "groups" || currentShow.slides[slide.id].group !== null || activeSlides[i] !== undefined)}
-                                <Slide {showId} slide={currentShow.slides[slide.id]} show={currentShow} {layoutSlides} layoutSlide={slide} index={i} color={slide.color} output={activeSlides[i]} active={activeSlides[i] !== undefined} {endIndex} list={!gridMode} columns={$slidesOptions.columns} icons {altKeyPressed} disableThumbnails={isLessons && !loaded} centerPreview on:click={(e) => slideClick(e, i)} />
+                            {@const currentSlide = currentShow?.slides?.[slide.id]}
+                            {#if hasMounted && (loaded || i < lazyLoader)}
+                                {#if currentSlide && (mode === "grid" || mode === "groups" || !slide.disabled) && (mode !== "groups" || currentSlide.group !== null || activeSlides[i] !== undefined)}
+                                    <Slide {showId} slide={currentSlide} show={currentShow} {layoutSlides} layoutSlide={slide} index={i} color={slide.color} output={activeSlides[i]} active={activeSlides[i] !== undefined} {endIndex} list={!gridMode} columns={$slidesOptions.columns} icons {altKeyPressed} disableThumbnails={isLessons && !loaded} centerPreview on:click={(e) => slideClick(e, i)} />
+                                {/if}
+                            {:else}
+                                <SkeletonSlide slide={currentSlide} index={i} color={slide.color} columns={$slidesOptions.columns} active={activeSlides[i] !== undefined} on:click={(e) => slideClick(e, i)} />
                             {/if}
                         {/each}
                     {:else}

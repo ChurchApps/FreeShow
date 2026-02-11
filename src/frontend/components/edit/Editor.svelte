@@ -11,6 +11,7 @@
     import OverlayEditor from "./editors/OverlayEditor.svelte"
     import SlideEditor from "./editors/SlideEditor.svelte"
     import TemplateEditor from "./editors/TemplateEditor.svelte"
+    import MaterialButton from "../inputs/MaterialButton.svelte"
 
     $: if ($refreshEditSlide) {
         setTimeout(() => {
@@ -30,6 +31,8 @@
             activeEdit.set({ id: $activeShow.id, type: $activeShow.type, items: [] } as any)
         }
     })
+
+    let hideCloudConflict = false
 </script>
 
 {#key $refreshEditSlide}
@@ -48,9 +51,13 @@
     {:else if $activeEdit.type === "audio"}
         <AudioEditor />
     {:else if $activeEdit.slide !== undefined && $activeEdit.slide !== null}
-        {#if isActiveShowInUseByCloudUser({ $activeShow, $cloudUsers })}
+        {#if !hideCloudConflict && isActiveShowInUseByCloudUser({ $activeShow, $cloudUsers })}
             <div class="darken">
-                <p style="text-align: center;font-size: 1.5em;display: block;background-color: black;padding: 10px;border-radius: 4px;">Currently in use by another cloud user!</p>
+                <p style="text-align: center;font-size: 1.5em;display: block;background-color: black;padding: 10px;border-radius: 4px;">
+                    Currently in use on another computer!
+                    <br />
+                    <MaterialButton variant="outlined" icon="check" on:click={() => (hideCloudConflict = true)} />
+                </p>
             </div>
         {/if}
 

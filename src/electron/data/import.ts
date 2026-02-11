@@ -14,7 +14,7 @@ import { detectFileType } from "./bibleDetecter"
 import { filePathHashCode } from "./thumbnails"
 import { decompressZip, decompressZipStream, isZip } from "./zip"
 
-type FileData = { content: Buffer | string | object; name?: string; extension?: string }
+type FileData = { content: Buffer | string | object; path?: string; name?: string; extension?: string }
 
 const specialImports = {
     powerpoint: async (files: string[]) => {
@@ -176,7 +176,7 @@ async function readFile(filePath: string, encoding: BufferEncoding = "utf8") {
         console.error("Error reading file:", (err as Error).stack)
     }
 
-    return { content, name, extension }
+    return { content, path: filePath, name, extension }
 }
 
 const getFileName = (filePath: string) => path.basename(filePath).slice(0, path.basename(filePath).lastIndexOf("."))

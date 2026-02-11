@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onMount, onDestroy } from "svelte"
+    import { onDestroy, onMount } from "svelte"
     import type { Cropping, Resolution } from "../../../types/Settings"
     import { draw, outputs, styles } from "../../stores"
     import { DEFAULT_BOUNDS, getActiveOutputs, getOutputResolution, getResolution } from "../helpers/output"
@@ -108,10 +108,12 @@
     // $: heightRatio = isTaller ? currentAspectRatio / originalAspectRatio : 1 // ?
     // $: drawX = $draw ? (($draw.x / 1920 - 0.5) * (drawZoom - 1) * -1 * 100) * widthRatio : 0
     // $: drawY = $draw ? (($draw.y / 1080 - 0.5) * (drawZoom - 1) * -1 * 100) * heightRatio : 0
+
+    $: canOverflow = false // $special.textCanOverflow !== false
 </script>
 
 <div id={outputId} class:center class:disabled class="zoomed" style="width: 100%;height: 100%;{outline ? `border: 2px solid ${outline};` : ''}{alignStyle}" bind:offsetWidth={elemWidth} bind:offsetHeight={elemHeight}>
-    <div bind:this={slideElem} class="slide" class:landscape={resolution.width / resolution.height > elemWidth / elemHeight} class:hideOverflow class:disableStyle class:showMirror class:relative class:checkered class:border style="{$$props.style || ''}background-color: {background};transition: {backgroundDuration}ms background-color;{aspectRatio ? `aspect-ratio: ${resolution.width}/${resolution.height};${croppedStyle}` : ''};">
+    <div bind:this={slideElem} class="slide" class:landscape={resolution.width / resolution.height > elemWidth / elemHeight} class:hideOverflow class:canOverflow class:disableStyle class:showMirror class:relative class:checkered class:border style="{$$props.style || ''}background-color: {background};transition: {backgroundDuration}ms background-color;{aspectRatio ? `aspect-ratio: ${resolution.width}/${resolution.height};${croppedStyle}` : ''};">
         {#if zoom}
             <span class="zoom" style="zoom: {ratio};{drawZoom === 1 ? '' : `transform: scale(${drawZoom});position: absolute;width: 100%;height: 100%;` + ($draw ? `inset-inline-start: ${drawX}%;top: ${drawY}%;` : '')}">
                 <slot {ratio} />
@@ -142,6 +144,11 @@
     }
     .slide:not(.relative) :global(.item .align) {
         overflow: hidden;
+    }
+
+    .slide.canOverflow :global(.item),
+    .slide.canOverflow :global(.item .align) {
+        overflow: visible;
     }
 
     .slide:not(.disableStyle) :global(.item) {

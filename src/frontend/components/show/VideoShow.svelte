@@ -48,6 +48,7 @@
         duration: 0,
         loop: false
     }
+    $: if (showId) videoData.paused = false
     $: if (!videoData) videoData = { paused: false, muted: true, duration: 0, loop: false }
     $: if (playingInOutput && $videosData[outputId]) setVideoData()
     $: if (playingInOutput && $videosData[outputId]?.paused && !videoData.paused) setPaused()
@@ -350,8 +351,9 @@
     {#if !playingInOutput && !manageSubtitles && !timeMarkersEnabled}
         <FloatingInputs side="left">
             <MaterialButton
-                title="media._loop"
+                title={"media._loop" + (shouldLoop ? ": settings.enabled" : "")}
                 on:click={() => {
+                    // WIP save in project item if any
                     shouldLoop = !shouldLoop
                 }}
             >
