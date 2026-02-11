@@ -317,7 +317,7 @@
     <!-- defaultValue={false} -->
     <!-- fade through only for text, since it is on by default for media -->
     {#if selectedType === "text"}
-        <MaterialToggleSwitch label="transition.fade_through" disabled={isDisabled} checked={currentTransition?.fadeThrough || false} on:change={(e) => changeTransition(selectedType, "fadeThrough", e.detail)} />
+        <MaterialToggleSwitch label="transition.fade_through" disabled={isDisabled} checked={currentTransition?.fadeThrough || false} on:change={(e) => changeTransition(selectedType, "fadeThrough", e.detail)} title={"transition.fade_through_explanation"} />
     {/if}
 </InputRow>
 
