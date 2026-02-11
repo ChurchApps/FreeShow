@@ -1,12 +1,12 @@
 <script lang="ts">
-    import Zoomed from "./Zoomed.svelte"
-    import Stagebox from "./Stagebox.svelte"
     import { getStyleResolution } from "../../common/util/getStyleResolution"
     import { clone } from "../../common/util/helpers"
-    import { activeTimers, output, stageLayout, variables } from "../util/stores"
     import { getSlideTextItems, shouldItemBeShown } from "../util/itemHelpers"
+    import { output, stageLayout } from "../util/stores"
+    import Stagebox from "./Stagebox.svelte"
+    import Zoomed from "./Zoomed.svelte"
 
-    import { onDestroy } from "svelte"
+    import { onDestroy, onMount } from "svelte"
 
     let width: number = 0
     let height: number = 0
@@ -27,7 +27,16 @@
         if (resizeTimeout) clearTimeout(resizeTimeout)
     }
 
-    // $: console.log(show.settings.resolution ? "contain" : "fill")
+    let conditionsUpdater = 0
+    onMount(() => {
+        const interval = setInterval(() => {
+            if (Object.values($stageLayout?.items || {}).find((a) => a?.conditions)) conditionsUpdater++
+        }, 3000)
+
+        return () => {
+            clearInterval(interval)
+        }
+    })
 </script>
 
 <div class="main" bind:offsetWidth={width} bind:offsetHeight={height}>
@@ -38,7 +47,7 @@
             {#key resizeKey}
                 <Zoomed show={$stageLayout} style={getStyleResolution(resolution, width, height) + ";" + `background-color: ${$stageLayout.settings.color || "#000000"};`} dynamicResolution disableStyle>
                     {#each Object.entries($stageLayout.items) as [id, item]}
-                        {#if (item.type || item.enabled !== false) && shouldItemBeShown(item, item.type === "slide_text" ? getSlideTextItems($stageLayout, item, $output) : [], { type: "stage" }, { $activeTimers, $variables })}
+                        {#if (item.type || item.enabled !== false) && shouldItemBeShown(item, item.type === "slide_text" ? getSlideTextItems($stageLayout, item, $output) : [], { type: "stage" }, conditionsUpdater)}
                             {#key $stageLayout}
                                 <Stagebox stageLayout={$stageLayout} {id} item={clone(item)} />
                             {/key}
