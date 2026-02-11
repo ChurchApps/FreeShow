@@ -1217,7 +1217,7 @@ export function setTemplateStyle(outSlide: OutSlide | null, currentStyle: Styles
     if (!Array.isArray(items)) return []
 
     const isDrawerScripture = outSlide?.id === "temp"
-    const slideItems = isDrawerScripture ? outSlide.tempItems : items?.filter(checkSpecificOutput)
+    const slideItems = isDrawerScripture ? outSlide.tempItems : items
 
     const template = getStyleTemplate(outSlide, currentStyle)
     const templateItems = template.items || []
@@ -1241,10 +1241,11 @@ export function setTemplateStyle(outSlide: OutSlide | null, currentStyle: Styles
     //     newItemsAuto: newItems?.find((i) => i.auto)
     // })
 
-    return newItems
+    return newItems.filter(checkSpecificOutput)
 
     function checkSpecificOutput(item: Item) {
         if (!item) return false
+        if (outSlide === null) return true // always show in slides preview
         return !item.bindings?.length || item.bindings.includes(outputId)
     }
 }
