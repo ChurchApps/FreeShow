@@ -193,7 +193,8 @@
     }
 
     let profile = getAccess("shows")
-    $: isLocked = show?.locked || slide?.locked || profile.global === "read" || profile[show?.category || ""] === "read"
+    $: isGroupLocked = !!slide?.locked // WIP get group slide
+    $: isLocked = show?.locked || isGroupLocked || profile.global === "read" || profile[show?.category || ""] === "read"
 
     // correct view order based on arranged order in Items.svelte (?.reverse())
     $: itemsList = clone(slide.items) || []
@@ -245,7 +246,7 @@
     {/if}
     <!-- icons -->
     {#if icons && !altKeyPressed && viewMode !== "simple" && !$focusMode}
-        <Icons {slide} {timer} {layoutSlide} {background} {backgroundCount} {duration} {columns} {index} {showId} slideId={layoutSlide.id} style={viewMode === "lyrics" ? "padding-top: 23px;" : ""} />
+        <Icons {slide} {timer} {layoutSlide} {background} {backgroundCount} {duration} {columns} {index} style={viewMode === "lyrics" ? "padding-top: 23px;" : ""} />
         <Actions {columns} {index} actions={layoutSlide.actions || {}} />
     {/if}
     <!-- content -->

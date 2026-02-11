@@ -223,15 +223,15 @@ export const dropActions = {
 
                 const ref = getLayoutRef()
                 const slideId = ref[drop.index!].id
-                
-                // Skip locked slides
-                const slide = _show().slides([slideId]).get()[0]
+
+                const slide = _show()
+                    .slides([ref[drop.index!]?.parent?.id || ref[drop.index!]?.id])
+                    .get()[0]
                 if (slide?.locked) {
-                    alertMessage.set("error.slides_locked")
-                    activePopup.set("alert")
+                    newToast("output.state_locked")
                     return
                 }
-                
+
                 const slideSettings = _show().slides([slideId]).get("settings")
                 const oldData = { style: clone(slideSettings) }
                 const newData = { style: { ...clone(slideSettings), template: templateId } }
@@ -622,27 +622,16 @@ const slideDrop = {
         const showId = drag.showId || drag.data[0]?.showId || get(activeShow)?.id || ""
         history.id = "slide"
         let ref = getLayoutRef(showId)
-
-        // Check if any selected slides are locked
-        if (drag.id === "slide") {
-            const currentShow = get(showsCache)[showId]
-            const lockedSlides: string[] = []
-            drag.data.forEach(({ index }: any) => {
-                if (!ref[index]) return
-                const slideId = ref[index].type === "parent" ? ref[index].id : ref[index].parent?.id
-                if (slideId && currentShow?.slides?.[slideId]?.locked) {
-                    lockedSlides.push(slideId)
-                }
-            })
-
-            if (lockedSlides.length > 0) {
-                alertMessage.set("error.slides_locked")
-                activePopup.set("alert")
-                return history
-            }
-        }
-
         const slides: { [key: string]: Slide } = _show(showId).get().slides
+
+        // remove locked slide groups
+        let data: any[] = []
+        drag.data.forEach((a: any) => {
+            const slideId = ref[a.index]?.parent?.id ?? ref[a.index]?.id
+            if (!slides?.[slideId]?.locked) data.push(a)
+        })
+        if (data.length < drag.data.length) newToast("output.state_locked")
+
         const oldLayout = _show(showId).layouts("active").get()[0]?.slides || []
         history.oldData = clone({ layout: oldLayout, slides })
 
@@ -654,7 +643,7 @@ const slideDrop = {
         let sortedLayout: any[] = []
 
         if (drag.id === "slide") {
-            let selected: number[] = getIndexes(drag.data)
+            let selected: number[] = getIndexes(data)
 
             // move all children when parent is moved
             selected.forEach(selectChildren)
@@ -689,7 +678,7 @@ const slideDrop = {
                 // WIP adding to children will not remove old children
             }
 
-            moved = drag.data.map(({ index, id }) => ref[index] || { type: "parent", id })
+            moved = data.map(({ index, id }) => ref[index] || { type: "parent", id })
             sortedLayout = addToPos(ref, moved, newIndex)
         }
 

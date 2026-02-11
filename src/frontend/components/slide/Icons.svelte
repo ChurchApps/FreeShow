@@ -22,8 +22,6 @@
     export let columns: number
     export let index: number
     export let style: string
-    export let showId: string
-    export let slideId: string
 
     $: videoDuration = duration ? joinTime(secondsToTime(duration)) : null
     $: isVideo = background?.path ? videoExtensions.includes(getExtension(background.path)) : false
@@ -85,21 +83,6 @@
         // send(OUTPUT, ["ACTIVE_TIMERS"], $activeTimers)
     }
 
-    function toggleLock() {
-        if (!hasAccess()) return
-
-        const isLocked = slide?.locked || false
-        
-        history({
-            id: "slides",
-            oldData: { key: "locked", data: [{ index, value: isLocked }] },
-            newData: { key: "locked", data: [{ index, value: !isLocked }] },
-            location: { page: "show", show: { id: showId } }
-        })
-
-        _show(showId).slides([slideId]).set({ key: "locked", value: !isLocked ? true : undefined })
-    }
-
     function removeSlideSetting(key: string) {
         if (!slide || currentShow.locked) return
 
@@ -125,15 +108,6 @@
 </script>
 
 <div class="icons" style="zoom: {zoom};{style}">
-    {#if slide.locked}
-        <div>
-            <div class="button">
-                <Button style="padding: 3px;" redHover title={translateText("actions.unlock")} {zoom} on:click={toggleLock}>
-                    <Icon id="lock" size={0.9} white />
-                </Button>
-            </div>
-        </div>
-    {/if}
     {#if layoutSlide.disabled}
         <div>
             <div class="button">

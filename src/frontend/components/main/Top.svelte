@@ -14,18 +14,9 @@
     $: show = $shows[$activeShow?.id || ""]
     $: showProfile = profile?.access.shows || {}
     $: isLocked = show?.locked || showProfile.global === "read" || showProfile[show?.category || ""] === "read"
-    
-    // Check if current slide is locked
-    $: isSlideLockedFn = () => {
-        if (!$activeShow?.id || !show || $activeEdit.slide === null || $activeEdit.slide === undefined) return false
-        const layoutSlides = show.layouts?.[show.settings?.activeLayout]?.slides || []
-        const slideId = layoutSlides[$activeEdit.slide]?.id
-        return slideId ? show.slides?.[slideId]?.locked || false : false
-    }
-    $: isSlideLocked = isSlideLockedFn()
 
     // && !$editHistory.length
-    $: editDisabled = $activeEdit.id && ($activeEdit.type || "show") !== "show" ? false : $activeShow && ($activeShow?.type || "show") === "show" ? (isLocked || isSlideLocked) : $activeShow?.type === "pdf" || !$activeShow?.id
+    $: editDisabled = $activeEdit.id && ($activeEdit.type || "show") !== "show" ? false : $activeShow && ($activeShow?.type || "show") === "show" ? isLocked : $activeShow?.type === "pdf" || !$activeShow?.id
     $: physicalOutputWindows = Object.values($outputs).filter((a) => a.enabled && !a.invisible)
 
     let confirm = false

@@ -15,6 +15,7 @@
     import Center from "../../system/Center.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
     import { getSlideGroups } from "./groups"
+    import { newToast } from "../../../utils/common"
 
     $: showId = $activeShow?.id || ""
     $: allShowGroups = getSlideGroups(showId, $showsCache, $cachedShowsData)
@@ -55,7 +56,7 @@
             {#if showGroups.length}
                 {#each showGroups as slide}
                     {@const groupCount = countGroupsInLayout(slide.id)}
-                    <SelectElem id="group" data={{ id: slide.id }} draggable>
+                    <SelectElem id="group" data={{ id: slide.id }} draggable={!isLocked && !slide.locked}>
                         <!-- style="{$fullColors ? 'background-' : ''}color: {slide.color};{$fullColors && slide.color ? `color: ${getContrast(slide.color)};` : ''}" -->
                         <div
                             class="slide {isLocked ? '' : 'context #group'}"
@@ -66,6 +67,10 @@
                                 if (isLocked) {
                                     alertMessage.set(currentShow?.locked ? "show.locked_info" : "profile.locked")
                                     activePopup.set("alert")
+                                    return
+                                }
+                                if (slide.locked) {
+                                    newToast("output.state_locked")
                                     return
                                 }
 
@@ -81,6 +86,10 @@
                                     activePopup.set("alert")
                                     return
                                 }
+                                if (slide.locked) {
+                                    newToast("output.state_locked")
+                                    return
+                                }
 
                                 if (!e.ctrlKey && !e.metaKey) {
                                     selected.set({ id: "group", data: [{ id: slide.id }] })
@@ -90,7 +99,9 @@
                             })}
                         >
                             <p data-title={slide.group}>
-                                {#if $groups[slide.globalGroup]?.template}
+                                {#if slide.locked}
+                                    <span class="info template" data-title={translateText("output.state_locked")}><Icon id="lock" size={0.7} white /></span>
+                                {:else if $groups[slide.globalGroup]?.template}
                                     <span class="info template" data-title="{translateText('groups.group_template')}: <b>{$templates[$groups[slide.globalGroup].template || '']?.name || ''}</b>"><Icon id="templates" size={0.7} white /></span>
                                 {:else if displayGlobalGroups && $groups[slide.globalGroup]}
                                     <span class="info template" data-title={translateText("groups.global")}><Icon id="autofill" size={0.6} white /></span>

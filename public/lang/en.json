@@ -312,8 +312,7 @@
         "video_unavailable": "Getting video unavailable? The creator has disabled embeds on the video.",
         "folder_exists": "This folder does already exist",
         "uri": "Could not parse the audio name, please rename the file",
-        "ip": "Could not get the IP-address of your device, go to the computer Wi-Fi settings to find your local IPv4 address.",
-        "slides_locked": "One or more selected slides are locked and cannot be deleted or removed."
+        "ip": "Could not get the IP-address of your device, go to the computer Wi-Fi settings to find your local IPv4 address."
     },
     "meta": {
         "number": "Number",
@@ -913,7 +912,6 @@
         "addToProject": "Add to project",
         "add_to_show": "Add to show",
         "lockForChanges": "Lock for editing",
-        "lockSlide": "Lock slide",
         "use_as_archive": "Mark as archive",
         "newCategory": "New category",
         "changeIcon": "Change icon",

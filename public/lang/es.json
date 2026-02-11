@@ -312,8 +312,7 @@
         "video_unavailable": "¿El video no está disponible? El creador ha deshabilitado las incrustaciones en el video.",
         "folder_exists": "Esta carpeta ya existe",
         "uri": "No se pudo analizar el nombre del audio. Por favor, cambiar el nombre del archivo",
-        "ip": "No se pudo obtener la dirección IP del dispositivo. Ir a la configuración Wi-Fi de la computadora para encontrar la dirección IPv4 local.",
-        "slides_locked": "Una o más diapositivas seleccionadas están bloqueadas y no pueden ser eliminadas o movidas."
+        "ip": "No se pudo obtener la dirección IP del dispositivo. Ir a la configuración Wi-Fi de la computadora para encontrar la dirección IPv4 local."
     },
     "meta": {
         "number": "Número",
@@ -912,7 +911,6 @@
         "addToProject": "Agregar al proyecto",
         "add_to_show": "Agregar a la presentación",
         "lockForChanges": "Bloquear para edición",
-        "lockSlide": "Bloquear diapositiva",
         "use_as_archive": "Marcar como archivo",
         "newCategory": "Nueva categoría",
         "changeIcon": "Cambiar ícono",

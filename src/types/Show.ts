@@ -87,7 +87,7 @@ export interface Slide {
     group: null | string
     color: null | string
     globalGroup?: string
-    locked?: boolean // lock slide to prevent edits, deletion, and movement
+    locked?: boolean // lock slide group to prevent changes
     settings: {
         template?: string
         background?: boolean
