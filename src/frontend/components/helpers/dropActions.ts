@@ -802,7 +802,7 @@ const slideDrop = {
 
         let layout: any[] = _show().layouts([layoutId]).slides().get()[0] || []
 
-        if (drop.index === undefined) drop.index = layout.length
+        if (drop.index === undefined) drop.index = ref.length
         let newIndex: number = drop.index
         if (drop.trigger?.includes("end")) newIndex++
 
