@@ -1500,7 +1500,9 @@
         "blur": "Blur",
         "scale": "Scale",
         "spin": "Spin",
-        "slide": "Slide"
+        "slide": "Slide",
+        "fade_through": "Fade through",
+        "fade_through_explanation": "Transitions without a brief dip. With the \"fade\" transition, this creates a crossfade."
     },
     "easings": {
         "linear": "Linear",
