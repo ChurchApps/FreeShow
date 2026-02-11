@@ -244,7 +244,7 @@
     // RESET
 
     const DEFAULT_TRANSITIONS = {
-        text: { type: "fade", fadeThrough: false, duration: 500, easing: "sine", custom: {} },
+        text: { type: "fade", duration: 500, easing: "sine", custom: {} },
         media: { type: "fade", duration: 800, easing: "sine", custom: {} }
     }
     function reset() {
@@ -313,8 +313,6 @@
     <MaterialNumberInput label="transition.duration" disabled={isDisabled} value={durationValue / 1000} max={20} step={0.1} on:change={(e) => changeTransition(selectedType, "duration", e.detail * 1000)} />
     <!-- defaultValue="sine" -->
     <MaterialDropdown label="transition.easing" disabled={isDisabled} options={easings.map((a) => ({ ...a, label: translateText(a.label) }))} value={easingValue} on:change={(e) => changeTransition(selectedType, "easing", e.detail)} />
-    <!-- defaultValue={false} -->
-    <!-- fade through only for text, since it is on by default for media -->
 </InputRow>
 
 {#if showMore && selectedType === "text"}
