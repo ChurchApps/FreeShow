@@ -164,7 +164,8 @@
     $: isDisabledVariable = item?.type === "variable" && $variables[item.variable?.id]?.enabled === false
     // SHOW IS LOCKED FOR EDITING
     let profile = getAccess("shows")
-    $: isLocked = (ref.type || "show") !== "show" ? false : $showsCache[active || ""]?.locked || profile.global === "read" || profile[$showsCache[active || ""]?.category || ""] === "read"
+    $: currentSlide = (ref.type || "show") === "show" ? $showsCache[active || ""]?.slides?.[ref.id] : null // WIP get group slide
+    $: isLocked = (ref.type || "show") !== "show" ? false : $showsCache[active || ""]?.locked || currentSlide?.locked || profile.global === "read" || profile[$showsCache[active || ""]?.category || ""] === "read"
 
     // give CSS access to number variable values
     $: cssVariables = getNumberVariables($variables)

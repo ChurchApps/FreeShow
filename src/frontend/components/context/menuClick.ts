@@ -590,6 +590,29 @@ const clickActions = {
             return a
         })
     },
+    lock_group: (obj: ObjData) => {
+        if (obj.sel?.id !== "group") return
+
+        // parent group slides
+        const slideIds = (obj.sel?.data || []).map((a) => a.id)
+        if (!slideIds.length) return
+
+        const showId = get(activeShow)?.id || ""
+        const currentShow = get(showsCache)[showId]
+        const shouldBeLocked = !currentShow?.slides?.[slideIds[0]]?.locked
+
+        showsCache.update((a) => {
+            if (!a[showId]) return a
+
+            slideIds.forEach((slideId) => {
+                if (!a[showId].slides?.[slideId]) return
+                if (shouldBeLocked) a[showId].slides[slideId].locked = true
+                else delete a[showId].slides[slideId].locked
+            })
+
+            return a
+        })
+    },
     category_action: (obj: ObjData) => {
         const id = obj.sel?.data[0]
         if (!id) return
@@ -1849,10 +1872,19 @@ function changeSlideAction(obj: ObjData, id: string) {
     history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: actionsList, indexes } })
 }
 
-export async function removeSlide(data: any[], type: "delete" | "remove" = "delete") {
+export async function removeSlide(initialData: any[], type: "delete" | "remove" = "delete") {
     const ref = getLayoutRef()
     const parents: any[] = []
     const childs: any[] = []
+
+    // remove locked slide groups
+    const showSlides = get(showsCache)[get(activeShow)?.id || ""]?.slides || {}
+    let data: any[] = []
+    initialData.forEach((a: any) => {
+        const slideId = ref[a.index]?.parent?.id ?? ref[a.index]?.id
+        if (!showSlides[slideId]?.locked) data.push(a)
+    })
+    if (data.length < initialData.length) newToast("output.state_locked")
 
     if (type === "delete") {
         const selectedInDifferentLayout = checkIfAddedToDifferentLayout(ref, data)

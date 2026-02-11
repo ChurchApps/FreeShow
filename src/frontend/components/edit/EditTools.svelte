@@ -362,7 +362,13 @@
 
     $: slideActive = !!((slides?.length && showIsActive && activeSlide !== null) || activeId)
     let profile = getAccess("shows")
-    $: isLocked = activeId ? false : $showsCache[$activeShow?.id || ""]?.locked || profile.global === "read" || profile[$showsCache[$activeShow?.id || ""]?.category || ""] === "read"
+
+    $: currentShow = $showsCache[$activeShow?.id || ""]
+    $: isSlideLockedFn = () => {
+        const slideId = ref[activeSlide]?.parent?.id || ref[activeSlide]?.id
+        return !!currentShow.slides?.[slideId]?.locked
+    }
+    $: isLocked = activeId ? false : currentShow?.locked || isSlideLockedFn() || profile.global === "read" || profile[currentShow?.category || ""] === "read"
     // $: isDefault = $activeEdit.type === "overlay" ? $overlays[activeId || ""]?.isDefault : $activeEdit.type === "template" ? $templates[activeId || ""]?.isDefault : false
     $: overflowHidden = !!(isShow || $activeEdit.type === "template")
 
@@ -494,7 +500,12 @@
                 </Button>
             {/if}
         </span> -->
-    {:else if !isLocked}
+    {:else if isLocked}
+        <Center faded>
+            <Icon id="lock" size={2} white />
+            <p style="margin-top: 8px;"><T id="output.state_locked" /></p>
+        </Center>
+    {:else}
         <Center faded>
             <T id="empty.slides" />
         </Center>

@@ -90,6 +90,14 @@
             if (!$shows[$selected.data[0]?.id]?.locked) return
             enabled = !!$shows[$selected.data[0].id].locked
         },
+        lock_group: () => {
+            if ($selected.id !== "group") return
+
+            const slideId = $selected.data?.[0]?.id
+            const show = $showsCache[$activeShow?.id || ""]
+            const isLocked = show?.slides?.[slideId]?.locked || false
+            enabled = isLocked
+        },
         disable: () => {
             let isEnabled = false
             if ($selected.id === "slide" && $activeShow) {

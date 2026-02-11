@@ -156,6 +156,7 @@ export function cut(clip: Clipboard | null = null) {
         console.info("CUTTED TEXT", selection.toString())
         return
     }
+
     // Handle other types
     const copyData = copy(clip)
     if (!copyData) return
@@ -744,8 +745,17 @@ const deleteActions = {
         }
 
         const layout = data.layout || _show().get("settings.activeLayout")
-        const slide = data.slideId || getLayoutRef()[data.slide]?.id
-        if (!slide) return
+        const ref = getLayoutRef()
+        const slideId = data.slideId || ref[data.slide]?.id
+        if (!slideId) return
+
+        const slideRef = ref.find((a) => a.id === slideId)
+        const groupId = slideRef?.parent?.id || slideRef?.id
+        const currentShow = get(showsCache)[get(activeShow)?.id || ""]
+        if (currentShow.locked || currentShow?.slides?.[groupId || ""]?.locked) {
+            newToast("output.state_locked")
+            return
+        }
 
         history({
             id: "deleteItem",
@@ -754,7 +764,7 @@ const deleteActions = {
                 show: get(activeShow)!,
                 items: get(activeEdit).items,
                 layout,
-                slide
+                slide: slideId
             }
         })
 

@@ -103,6 +103,13 @@
         if ($selected.id === "slide" && $selected.data.length < ref.length) {
             $selected.data.forEach(({ index, showId }) => {
                 let slideId = ref[index]?.id
+
+                // check if locked
+                let groupSlide = _show(showId || "active")
+                    .slides([ref[index]?.parent?.id || ref[index]?.id])
+                    .get()[0]
+                if (groupSlide?.locked) return
+
                 let slideSettings = _show(showId || "active")
                     .slides([slideId])
                     .get("settings")

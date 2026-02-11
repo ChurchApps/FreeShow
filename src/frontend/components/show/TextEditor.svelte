@@ -3,6 +3,7 @@
     import { getQuickExample } from "../../converters/txt"
     import { activePopup, textEditActive, textEditZoom } from "../../stores"
     import { transposeText } from "../../utils/chordTranspose"
+    import { newToast } from "../../utils/common"
     import Icon from "../helpers/Icon.svelte"
     import FloatingInputs from "../input/FloatingInputs.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
@@ -15,6 +16,10 @@
 
     let text = ""
     $: if (currentShow) text = getPlainEditorText()
+
+    $: hasLockedSlide = Object.values(currentShow?.slides || {}).some((a) => a.locked)
+    $: isLocked = currentShow?.locked || hasLockedSlide
+    $: if (isLocked) newToast("output.state_locked")
 
     // Ctrl+F in shortcuts.ts does not get triggered when a text input is active, so we trigger from here as well
     function keydown(e: any) {
@@ -33,7 +38,7 @@
     $: showHasChords = Object.values(currentShow?.slides || {}).find((a) => a.items?.find((a) => a.lines?.find((a) => a.chords)))
 </script>
 
-<Notes disabled={currentShow?.locked} style="padding: 30px;font-size: {$textEditZoom / 8}em;" placeholder={getQuickExample()} value={text} on:change={(e) => formatText(e.detail)} on:keydown={keydown} />
+<Notes disabled={isLocked} style="padding: 30px;font-size: {$textEditZoom / 8}em;" placeholder={getQuickExample()} value={text} on:change={(e) => formatText(e.detail)} on:keydown={keydown} />
 
 <FloatingInputs arrow let:open>
     <MaterialZoom hidden={!open} columns={$textEditZoom / 10} min={0.5} max={2} defaultValue={1} addValue={-0.1} on:change={(e) => textEditZoom.set(e.detail * 10)} />
