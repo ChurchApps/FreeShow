@@ -24,10 +24,11 @@
     function getReplacerTitle() {
         let titles: string[] = []
         projectReplacers.forEach((a) => {
-            titles.push(`${a.title}: {${a.id}}`)
+            if (a.id === "D0") titles.push("")
+            else titles.push(`• <b>${a.title}:</b> {${a.id}}`)
         })
 
-        return titles.join(", ")
+        return titles.join("<br>")
     }
 
     // WIP set calendar starting day
