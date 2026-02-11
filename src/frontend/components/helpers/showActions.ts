@@ -1191,6 +1191,7 @@ export function getVariablesIds(showAll: boolean = false) {
     const variablesList = sortByName(Object.values<Variable>(get(variables)).filter((a) => a?.name))
     const variableValues = variablesList.filter((a) => a.type !== "text_set").map(({ name }) => `$${getVariableNameId(name)}`)
     const variableSetNameValues = variablesList.filter((a) => a.type === "random_number" && (a.sets?.length || 0) > 1).map(({ name }) => `variable_set_${getVariableNameId(name)}`)
+    const randomNumberVariableHistory = showAll ? variablesList.filter((a) => a.type === "random_number").map(({ name }) => `$${getVariableNameId(name)}_history`) : []
 
     const variableTextSets: string[] = []
     variablesList
@@ -1203,7 +1204,7 @@ export function getVariablesIds(showAll: boolean = false) {
             })
         })
 
-    return [...variableValues, ...variableSetNameValues, ...variableTextSets]
+    return [...variableValues, ...variableSetNameValues, ...randomNumberVariableHistory, ...variableTextSets]
 }
 
 export function getVariableValue(dynamicId: string, ref: any = null): string | string[] {
@@ -1219,6 +1220,14 @@ export function getVariableValue(dynamicId: string, ref: any = null): string | s
         const nameId = dynamicId.includes("$") ? dynamicId.slice(1) : dynamicId.slice(9)
         let variable = Object.values(get(variables)).find((a) => getVariableNameId(a.name) === nameId)
 
+        if (!variable && nameId.endsWith("_history")) {
+            const baseNameId = nameId.slice(0, -8)
+            variable = Object.values(get(variables)).find((a) => getVariableNameId(a.name) === baseNameId)
+            if (variable && variable.type === "random_number") {
+                const multipleSets = (variable.sets?.length || 0) > 1
+                return variable.setLog?.map(({ name, number }) => `${multipleSets ? `${name}: ` : ""}${number}`).join("<br>") || ""
+            }
+        }
         if (!variable && nameId.includes("__")) {
             const textSetId = nameId.slice(0, nameId.indexOf("__")).replace(/#\d+/, "")
             variable = Object.values(get(variables)).find((a) => getVariableNameId(a.name) === textSetId)

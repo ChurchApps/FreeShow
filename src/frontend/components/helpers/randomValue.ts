@@ -52,7 +52,7 @@ export function setRandomValue(id: string) {
             }
             randomIndex -= range.count
         }
-    } while (variable.eachNumberOnce && randomValue && variable.setLog?.find((a) => a.name === randomValue!.name && a.number === randomValue!.number) && loopStop < 50000)
+    } while (variable.eachNumberOnce && randomValue && variable.setLog?.find((a) => a.name === randomValue!.name && Number(a.number) === randomValue!.number) && loopStop < 50000)
 
     if (!randomValue) return
 
@@ -114,7 +114,7 @@ function setRandom(id: string, finalValue: { name: string; number: number }) {
         // numbers log
         const MAX_LOG_SIZE = 100
         const setLog = (a[id].setLog || []).slice(0, MAX_LOG_SIZE)
-        setLog.unshift(finalValue)
+        setLog.unshift({ name: finalValue.name, number: finalValue.number.toString().padStart(getSetChars(a[id].sets), "0") })
         a[id].setLog = setLog
 
         return a
