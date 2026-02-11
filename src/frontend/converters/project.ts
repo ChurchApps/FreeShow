@@ -214,3 +214,29 @@ export async function updateRecentlyAddedFiles(paths: string[] | null = null) {
 
     sendMain(Main.IMPORT_FILES, { id: "freeshow_project", paths: [projectFile.path] })
 }
+
+export function markItemsAsPlayed(indexes: number[] | "active", customNewState?: boolean | undefined) {
+    const projectId = get(activeProject)
+    if (!projectId) return
+
+    if (indexes === "active") {
+        const activeShowIndex = get(activeShow)?.index
+        if (activeShowIndex === undefined) return
+        indexes = [activeShowIndex]
+    }
+
+    projects.update((a) => {
+        if (!a[projectId]?.shows) return a
+
+        const newState = customNewState === undefined ? !a[projectId].shows[indexes[0]]?.played : customNewState
+
+        indexes.forEach((index) => {
+            if (!a[projectId].shows[index]) return
+            if (typeof a[projectId].shows[index] !== "object") return
+
+            a[projectId].shows[index].played = newState
+        })
+
+        return a
+    })
+}

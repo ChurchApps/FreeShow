@@ -6,6 +6,7 @@ import { Main } from "../../../types/IPC/Main"
 import type { MediaStyle, Selected, SelectIds } from "../../../types/Main"
 import type { Item, LayoutRef, SlideData } from "../../../types/Show"
 import { ShowObj } from "../../classes/Show"
+import { markItemsAsPlayed } from "../../converters/project"
 import { sendMain } from "../../IPC/main"
 import { cameraManager } from "../../media/cameraManager"
 import { changeSlideGroups, mergeSlides, mergeTextboxes, splitItemInTwo } from "../../show/slides"
@@ -884,24 +885,8 @@ const clickActions = {
         history({ id: "UPDATE", newData: { key: "shows", index }, oldData: { id: get(activeProject) }, location: { page: "show", id: "section" } })
     },
     mark_played: (obj: ObjData) => {
-        const projectId = get(activeProject)
         const indexes = (obj.sel?.data || []).map((item) => Number(item.index))
-        if (!projectId || !indexes.length) return
-
-        projects.update((a) => {
-            if (!a[projectId]?.shows) return a
-
-            const newState = !a[projectId].shows[indexes[0]]?.played
-
-            indexes.forEach((index) => {
-                if (!a[projectId].shows[index]) return
-                if (typeof a[projectId].shows[index] !== "object") return
-
-                a[projectId].shows[index].played = newState
-            })
-
-            return a
-        })
+        markItemsAsPlayed(indexes)
     },
     copy_to_template: (obj: ObjData) => {
         let project = clone(get(projects)[obj.sel?.data[0]?.id])
