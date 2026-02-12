@@ -186,13 +186,29 @@
 
         return groupList
     }
+
+    $: if (activeMenu) requestUpdate()
+    let update = 0
+    let isRequesting = false
+    let requestTimeout: NodeJS.Timeout | null = null
+    function requestUpdate() {
+        if (!isRequesting) update++
+        isRequesting = true
+
+        if (requestTimeout) return
+
+        requestTimeout = setTimeout(() => {
+            isRequesting = false
+            if (isRequesting) update++
+        }, 61)
+    }
 </script>
 
 <svelte:window on:contextmenu={onContextMenu} on:click={click} on:keydown={handleKeydown} />
 
 {#if $contextActive && activeMenu.length}
     <div class="contextMenu" style="left: {x}px; top: {y}px;transform: translateY(-{translate}%);--background: rgb({rgb.r} {rgb.g} {rgb.b} / 0.97);" class:top class:isOptimized transition:fade={{ duration: 60 }}>
-        {#key activeMenu}
+        {#key update}
             <SpellCheckMenu />
 
             {#each activeMenu as id, i}
