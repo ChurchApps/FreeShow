@@ -48,7 +48,7 @@ jobs:
         run:
           |
           sudo apt-get update
-          sudo apt-get install -y libfontconfig1-dev uuid-dev --fix-missing
+          sudo apt-get install -y libfontconfig1-dev uuid-dev libltc-dev --fix-missing
 
       - name: Install dependencies
         run: npm install
@@ -77,7 +77,7 @@ jobs:
         run:
           |
           sudo apt-get update
-          sudo apt-get install -y libfontconfig1-dev uuid-dev --fix-missing
+          sudo apt-get install -y libfontconfig1-dev uuid-dev libltc-dev --fix-missing
 
       # WIDEVINE
       # - name: Use stock Electron on ARM64

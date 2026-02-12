@@ -34,7 +34,12 @@ win:
 
 linux:
     asarUnpack:
-        - node_modules/grandiose/**
+        - "**/node_modules/grandiose/**"
+        - "**/node_modules/libltc-wrapper/**/*"
+    depends:
+        - libfontconfig1
+        - uuid-runtime
+        - libltc11
     category: AudioVideo
     target:
         - AppImage
