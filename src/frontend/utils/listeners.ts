@@ -16,6 +16,7 @@ import {
     audioChannelsData,
     audioData,
     cachedShowsData,
+    categories,
     colorbars,
     customMessageCredits,
     customMetadata,
@@ -120,6 +121,13 @@ export function storeSubscriber() {
 
         // cache shows data for faster show loading (if it's less than 100)
         if (Object.keys(data).length < 100) updateCachedShows(data)
+    })
+
+    // show category metadata display
+    categories.subscribe(async (data) => {
+        if (await hasNewerUpdate("LISTENER_CATEGORIES", 50)) return
+
+        send(OUTPUT, ["CATEGORIES"], data)
     })
 
     groups.subscribe(async (data) => {
@@ -448,6 +456,7 @@ const initalOutputData = {
     STYLES: "styles",
     TRANSITION: "transitionData",
     SHOWS: "showsCache",
+    CATEGORIES: "categories",
 
     TEMPLATES: "templates",
     OVERLAYS: "overlays",

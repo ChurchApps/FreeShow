@@ -16,6 +16,7 @@ export interface Styles {
     background?: string
     backgroundImage?: string
     clearStyleBackgroundOnText?: boolean
+    transition?: { [key: string]: Transition }
     fit?: MediaFit | null
     blurAmount?: number
     blurOpacity?: number
@@ -30,12 +31,17 @@ export interface Styles {
     templateScripture_2?: string
     templateScripture_3?: string
     templateScripture_4?: string
-    metadataDivider?: string
-    metadataLayout?: string // not in use yet 1.2.8
+    metadata?: Metadata
+    // DEPRECATED:
     displayMetadata?: string
     metadataTemplate?: string
     messageTemplate?: string
-    transition?: { [key: string]: Transition }
+}
+
+export interface Metadata {
+    display?: string
+    template?: string
+    templateSecondary?: string
 }
 
 export interface Resolution {

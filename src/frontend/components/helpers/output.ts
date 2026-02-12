@@ -1344,14 +1344,17 @@ const defaultMetadataStyle = "top: 910px;left: 50px;width: 1820px;height: 150px;
 const defaultMessageStyle = "top: 50px;left: 50px;width: 1820px;height: 150px;opacity: 0.8;font-size: 50px;text-shadow: 2px 2px 4px rgb(0 0 0 / 80%);"
 export function getMetadata(oldMetadata: any, show: Show | undefined, currentStyle: Styles, templatesUpdater = get(templates), outSlide: OutSlide | null) {
     const metadata: OutputMetadata = { style: getTemplateStyle("metadata", templatesUpdater) || defaultMetadataStyle }
-
     if (!show) return metadata
-    const settings: any = show.metadata || {}
-    const overrideOutput = settings.override
-    const templateId: string = overrideOutput ? settings.template : currentStyle.metadataTemplate || "metadata"
+
+    const showCategory = get(categories)[show.category || ""] || {}
+    const metadataValues = currentStyle.metadata || showCategory.metadata || {}
 
     metadata.message = metadata.media ? {} : show.meta
-    metadata.display = overrideOutput ? settings.display : currentStyle.displayMetadata
+    metadata.display = metadataValues.display
+
+    // template
+    let templateId: string = metadataValues.template || "metadata"
+    if (outSlide?.index === 0 && metadataValues.display === "first_last") templateId = metadataValues.templateSecondary || templateId
     metadata.style = getTemplateStyle(templateId, templatesUpdater) || defaultMetadataStyle
     metadata.style += getTemplateAlignment(templateId, templatesUpdater)
     metadata.transition = templatesUpdater[templateId]?.items?.[0]?.actions?.transition || null
@@ -1376,10 +1379,10 @@ export function getMetadata(oldMetadata: any, show: Show | undefined, currentSty
         if (!metadata.message) return
 
         // metadata.value = currentStyle.metadataLayout || DEFAULT_META_LAYOUT
-        metadata.value = joinMetadata(metadata.message, currentStyle.metadataDivider)
+        metadata.value = joinMetadata(metadata.message, "; ")
     }
 
-    const messageTemplate = overrideOutput ? show.message?.template || "" : currentStyle.messageTemplate || "message"
+    const messageTemplate = currentStyle.messageTemplate || "message"
     metadata.messageStyle = getTemplateStyle(messageTemplate, templatesUpdater) || defaultMessageStyle
     metadata.messageStyle += getTemplateAlignment(messageTemplate, templatesUpdater)
     metadata.messageTransition = templatesUpdater[messageTemplate]?.items?.[0]?.actions?.transition || null

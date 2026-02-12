@@ -636,6 +636,13 @@ const clickActions = {
             })
         }
     },
+    metadata_display: (obj: ObjData) => {
+        if (obj.sel?.id === "category_shows") {
+            const ids = obj.sel.data || []
+            popupData.set({ type: "show_category", ids })
+            activePopup.set("metadata_display")
+        }
+    },
     use_as_archive: (obj: ObjData) => {
         const categoryStores = {
             category_shows: () => categories.update(toggleArchive),

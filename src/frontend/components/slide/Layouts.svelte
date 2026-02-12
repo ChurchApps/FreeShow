@@ -155,7 +155,7 @@
         const metadataValues = Object.values(currentShow.meta || {})
         const metadataText = metadataValues.reduce((v, a) => (v += a), "")
         if (metadataText.length) {
-            const divider = "; " // currentStyle.metadataDivider
+            const divider = "; "
             const text = metadataValues
                 .filter((a) => a?.length)
                 .join(divider)

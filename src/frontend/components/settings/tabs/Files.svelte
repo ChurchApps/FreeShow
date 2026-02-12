@@ -4,7 +4,7 @@
     import { Main } from "../../../../types/IPC/Main"
     import { requestMain, sendMain } from "../../../IPC/main"
     import { activePopup, autosave, cloudSyncData, dataPath, driveData, driveKeys, providerConnections, saved, special, statusIndicator } from "../../../stores"
-    import { changeTeam, setupCloudSync } from "../../../utils/cloudSync"
+    import { changeTeam, setupCloudSync, socketDisconnect } from "../../../utils/cloudSync"
     import { previousAutosave, startAutosave, wait } from "../../../utils/common"
     import { validateKeys } from "../../../utils/drive"
     import { translateText } from "../../../utils/language"
@@ -183,7 +183,8 @@
         })
     }
 
-    function contentProviderConnect(providerId: ContentProviderId) {
+    let disconnecting = false
+    async function contentProviderConnect(providerId: ContentProviderId) {
         if (!$providerConnections[providerId]) {
             special.update((a) => {
                 a.churchAppsCloudOnly = true
@@ -192,7 +193,10 @@
 
             sendMain(Main.PROVIDER_LOAD_SERVICES, { providerId, cloudOnly: true })
         } else {
+            disconnecting = true
+            await socketDisconnect()
             requestMain(Main.PROVIDER_DISCONNECT, { providerId }, (a) => {
+                disconnecting = false
                 if (!a.success) return
                 providerConnections.update((c) => {
                     c[providerId] = false
@@ -267,7 +271,7 @@
     </InputRow>
 {:else}
     <InputRow>
-        <MaterialButton on:click={() => contentProviderConnect("churchApps")} style="flex: 1;border-bottom: 2px solid var(--connected) !important;" icon="logout">
+        <MaterialButton disabled={disconnecting} on:click={() => contentProviderConnect("churchApps")} style="flex: 1;border-bottom: 2px solid var(--connected) !important;" icon="logout">
             <T id="settings.disconnect_from" replace={["ChurchApps"]} />
         </MaterialButton>
         {#if $cloudSyncData.enabled}

@@ -10,6 +10,7 @@
     import { history } from "../../helpers/history"
     import { defaultLayers } from "../../helpers/output"
     import { metadataDisplayValues } from "../../helpers/show"
+    import T from "../../helpers/T.svelte"
     import InputRow from "../../input/InputRow.svelte"
     import Title from "../../input/Title.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
@@ -17,10 +18,8 @@
     import MaterialFilePicker from "../../inputs/MaterialFilePicker.svelte"
     import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
     import MaterialPopupButton from "../../inputs/MaterialPopupButton.svelte"
-    import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
     import MaterialToggleButtons from "../../inputs/MaterialToggleButtons.svelte"
     import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
-    import T from "../../helpers/T.svelte"
 
     function updateStyle(e: any, key: string, currentId = "") {
         let value = e?.detail ?? e?.target?.value ?? e
@@ -29,7 +28,8 @@
 
         // create a style if nothing exists
         styles.update((a) => {
-            if (!a[currentId]) a[currentId] = clone(currentStyle)
+            if (key === "metadata" && value?.display === "default") value = undefined
+            else if (!a[currentId]) a[currentId] = clone(currentStyle)
 
             return a
         })
@@ -95,7 +95,8 @@
     $: defaultAspectRatio = getAspectRatio(currentStyle.resolution)
     $: aspectRatio = currentStyle.aspectRatio || defaultAspectRatio
     $: maxLines = Number(currentStyle.lines || 0)
-    $: metadataDisplay = currentStyle.displayMetadata || "never"
+    $: metadata = currentStyle.metadata || {}
+    $: metadataDisplay = currentStyle.metadata?.display || "default"
     $: textTransitionData = transitionTypes.find((a) => a.id === currentStyle.transition?.text?.type)
 
     $: bgImage = currentStyle.backgroundImage
@@ -143,10 +144,7 @@
 
     // METADATA
 
-    $: metadataDisplayLabel = metadataDisplayValues.find((a) => a.id === metadataDisplay)?.name || ""
-    const defaultDivider = "; "
-    $: metadataDividerValue = currentStyle.metadataDivider === undefined ? defaultDivider : currentStyle.metadataDivider
-    $: metadataTemplate = currentStyle.metadataTemplate || "metadata"
+    $: metadataDisplayLabel = metadataDisplay === "default" ? "example.default" : metadataDisplayValues.find((a) => a.id === metadataDisplay)?.name || ""
     $: messageTemplate = currentStyle.messageTemplate || "message"
 
     function updateCustom(e: any) {
@@ -221,22 +219,9 @@
 <!-- Overlays -->
 <Title label="preview.overlays (tools.metadata)" icon="overlays" />
 
-<MaterialPopupButton label="meta.display_metadata" disabled={!activeLayers.includes("overlays")} value={metadataDisplay} defaultValue="never" name={metadataDisplayLabel} popupId="metadata_display" icon="info" on:change={(e) => updateStyle(e.detail, "displayMetadata")} />
+<MaterialPopupButton id={styleId} label="meta.display_metadata" disabled={!activeLayers.includes("overlays")} value={metadataDisplay} defaultValue="default" name={metadataDisplayLabel} popupId="metadata_display" icon="info" data={{ type: "style" }} on:change={(e) => updateStyle({ ...metadata, display: e.detail }, "metadata")} />
 
-{#if (currentStyle.displayMetadata || "never") !== "never"}
-    <MaterialTextInput label="meta.text_divider" disabled={!activeLayers.includes("overlays")} value={metadataDividerValue} defaultValue={defaultDivider} on:change={(e) => updateStyle(e.detail, "metadataDivider")}></MaterialTextInput>
-    <InputRow>
-        <MaterialPopupButton label="meta.meta_template" disabled={!activeLayers.includes("overlays")} value={metadataTemplate} defaultValue="metadata" name={$templates[metadataTemplate]?.name} popupId="select_template" icon="templates" on:change={(e) => updateStyle(e.detail, "metadataTemplate")} />
-        {#if metadataTemplate && $templates[metadataTemplate]}
-            <MaterialButton title="titlebar.edit" icon="edit" on:click={() => editTemplate(metadataTemplate)} />
-        {/if}
-    </InputRow>
-    <!-- <CombinedInput>
-        <p><T id="meta.metadata_layout" /></p>
-        <TextInput value={currentStyle.metadataLayout || DEFAULT_META_LAYOUT} on:change={(e) => updateStyle(e, "metadataLayout")} on:keydown={keydown} />
-    </CombinedInput> -->
-{/if}
-
+<!-- WIP remove?: -->
 <InputRow>
     <MaterialPopupButton label="meta.message_template" disabled={!activeLayers.includes("overlays")} value={messageTemplate} defaultValue="message" name={$templates[messageTemplate]?.name} popupId="select_template" icon="templates" on:change={(e) => updateStyle(e.detail, "messageTemplate")} />
     {#if messageTemplate && $templates[messageTemplate]}

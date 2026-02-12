@@ -1,7 +1,7 @@
 import { get } from "svelte/store"
 import { Main } from "../../types/IPC/Main"
 import type { Output } from "../../types/Output"
-import type { Themes } from "../../types/Settings"
+import type { Metadata, Themes } from "../../types/Settings"
 import { clone, keysToID } from "../components/helpers/array"
 import { checkWindowCapture, setOutput, toggleOutputs } from "../components/helpers/output"
 import { defaultThemes } from "../components/settings/tabs/defaultThemes"
@@ -262,7 +262,19 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
         outputs.set(v)
     },
     sorted: (v: any) => sorted.set(v),
-    styles: (v: any) => styles.set(v),
+    styles: (v: any) => {
+        // convert settings (<= v1.5.7)
+        Object.values(v).forEach((style: any) => {
+            const metadata: Metadata = {}
+            if (style.displayMetadata) metadata.display = style.displayMetadata
+            if (style.metadataTemplate) metadata.template = style.metadataTemplate
+            if (Object.keys(metadata).length) style.metadata = metadata
+            delete style.displayMetadata
+            delete style.metadataTemplate
+        })
+
+        styles.set(v)
+    },
     profiles: (v: any) => profiles.set(v),
     remotePassword: (v: any) => remotePassword.set(v),
     audioFolders: (v: any) => audioFolders.set(v),

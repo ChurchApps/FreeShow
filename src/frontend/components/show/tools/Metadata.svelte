@@ -1,24 +1,17 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import { activeDrawerTab, activeEdit, activePage, activeShow, customMetadata, dictionary, outputs, settingsTab, shows, showsCache, styles, templates } from "../../../stores"
+    import { activeShow, customMetadata, dictionary, shows, showsCache } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { history } from "../../helpers/history"
-    import { getActiveOutputs } from "../../helpers/output"
-    import { getCustomMetadata, initializeMetadata, metadataDisplayValues } from "../../helpers/show"
+    import { getCustomMetadata, initializeMetadata } from "../../helpers/show"
     import HRule from "../../input/HRule.svelte"
-    import InputRow from "../../input/InputRow.svelte"
-    import MaterialButton from "../../inputs/MaterialButton.svelte"
-    import MaterialPopupButton from "../../inputs/MaterialPopupButton.svelte"
     import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
     import MaterialTextarea from "../../inputs/MaterialTextarea.svelte"
-    import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
 
     $: currentShow = $showsCache[$activeShow!.id]
     $: meta = currentShow.meta
     let values: { [key: string]: string } = {}
     let message: any = {}
-    let metadata: any = {}
-    let outputShowSettings: any = {}
 
     onMount(getValues)
     $: messageUpdate = $showsCache[$activeShow?.id || ""]?.message
@@ -33,11 +26,7 @@
             values[key] = value
         })
 
-        metadata = currentShow.metadata || {}
         message = currentShow.message || {}
-
-        let outputId = getActiveOutputs($outputs)[0]
-        outputShowSettings = $styles[$outputs[outputId]?.style || ""] || {}
     }
 
     const changeValue = (value: string, key: string) => {
@@ -65,17 +54,6 @@
         }
     }
 
-    function updateMetadata(e: any, key: string) {
-        metadata[key] = e.detail
-        updateData(metadata, "metadata")
-    }
-
-    function updateMessageTemplate(e: any) {
-        if (currentShow.message) message = currentShow.message
-        message.template = e.detail
-        updateData(message, "message")
-    }
-
     function updateData(data, key) {
         let override = "show#" + ($activeShow?.id || "") + "_" + key
         history({ id: "UPDATE", newData: { data, key }, oldData: { id: $activeShow?.id || "" }, location: { page: "show", id: "show_key", override } })
@@ -88,28 +66,6 @@
         number: () => values.number || currentShow.name.match(/^\d+/)?.[0] || currentShow.name.match(/\d+$/)?.[0],
         // remove numbers
         title: () => currentShow.name.replace(/[0-9\-.,!:;]/g, "").trim()
-    }
-
-    $: metadataDisplay = metadata.display || "never"
-    // $: metadataDisplay = (metadata.display ? metadata.display : outputShowSettings.displayMetadata) || "never"
-
-    function editMetadataStyle() {
-        // activeStyle.set(styleId)
-        settingsTab.set("styles")
-        activePage.set("settings")
-        // scroll to bottom
-        setTimeout(() => {
-            document.querySelector(".row")?.querySelector(".center")?.querySelector(".scroll")?.scrollTo(0, 1000)
-        }, 80)
-    }
-
-    $: metadataTemplate = (metadata.template ? metadata.template : outputShowSettings.metadataTemplate) || "metadata"
-    $: messageTemplate = (message.template ? message.template : outputShowSettings.messageTemplate) || "message"
-
-    function editTemplate(id: string) {
-        activeDrawerTab.set("templates")
-        activeEdit.set({ type: "template", id, items: [] })
-        activePage.set("edit")
     }
 </script>
 
@@ -132,36 +88,7 @@
         <MaterialTextarea label="meta.message_tip" class="context #meta_message" value={message.text || ""} rows={2} on:change={(e) => updateData({ ...message, text: e.detail }, "message")} />
     </div>
 
-    <!-- styling -->
-    <HRule title="edit.style" />
-    <div style="padding: 10px;">
-        <InputRow>
-            <MaterialToggleSwitch label="meta.override_output" checked={metadata.override || false} defaultValue={false} style="width: 100%;" on:change={(e) => updateMetadata(e, "override")} />
-            {#if !metadata.override}
-                <MaterialButton icon="edit" title="menu.edit" on:click={editMetadataStyle} />
-            {/if}
-        </InputRow>
-
-        {#if metadata.override}
-            <MaterialPopupButton label="meta.display_metadata" value={metadataDisplay} defaultValue="never" name={metadataDisplayValues.find((a) => a.id === metadataDisplay)?.name || ""} popupId="metadata_display" icon="info" on:change={(e) => updateMetadata(e, "display")} />
-
-            {#if metadataDisplay !== "never"}
-                <InputRow>
-                    <MaterialPopupButton label="meta.meta_template" value={metadataTemplate} defaultValue="metadata" name={$templates[(metadata.template ? metadata.template : outputShowSettings.metadataTemplate) || "metadata"]?.name} popupId="select_template" icon="templates" on:change={(e) => updateMetadata(e, "template")} />
-                    {#if metadataTemplate && $templates[metadataTemplate]}
-                        <MaterialButton title="titlebar.edit" icon="edit" on:click={() => editTemplate(metadataTemplate)} />
-                    {/if}
-                </InputRow>
-            {/if}
-
-            <InputRow>
-                <MaterialPopupButton label="meta.message_template" value={messageTemplate} defaultValue="message" name={$templates[(message.template ? message.template : outputShowSettings.messageTemplate) || "message"]?.name} popupId="select_template" icon="templates" on:change={updateMessageTemplate} />
-                {#if messageTemplate && $templates[messageTemplate]}
-                    <MaterialButton title="titlebar.edit" icon="edit" on:click={() => editTemplate(messageTemplate)} />
-                {/if}
-            </InputRow>
-        {/if}
-    </div>
+    <!-- WIP how to enable tip -->
 
     <!-- <h5><T id="meta.tags" /></h5>
     <div class="tags" style="display: flex;flex-direction: column;">

@@ -24,7 +24,12 @@ const sampleRate = 48000
 export function setupLTCListener(f: number = 25) {
     framerate = f
 
-    decoder = new LTCDecoder(sampleRate, framerate, "u8") // 48khz, 25 fps, unsigned 8 bit
+    try {
+        decoder = new LTCDecoder(sampleRate, framerate, "u8") // 48khz, 25 fps, unsigned 8 bit
+    } catch (error) {
+        console.error("Failed to create LTCDecoder:", error)
+        return null
+    }
 
     return {
         stop: () => {
@@ -44,7 +49,13 @@ let lastTimeMs = -1
 export function sendLTC(timeMs: number, framerate: number) {
     // using default LTC_USE_DATE encoding
     if (!encoder || currentFramerate !== framerate || timeMs < lastTimeMs) {
-        encoder = new LTCEncoder(sampleRate, framerate)
+        try {
+            encoder = new LTCEncoder(sampleRate, framerate)
+        } catch (error) {
+            console.error("Failed to create LTCEncoder:", error)
+            return
+        }
+
         currentFramerate = framerate
     }
     lastTimeMs = timeMs

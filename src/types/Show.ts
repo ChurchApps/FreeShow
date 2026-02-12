@@ -36,9 +36,9 @@ export interface Show {
         template?: string
     }
     metadata?: {
-        override: boolean
-        display: string
-        template: string
+        // override: boolean
+        // display: string
+        // template: string
         tags?: string[]
     }
     meta: {

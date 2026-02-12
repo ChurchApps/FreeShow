@@ -84,6 +84,7 @@
     "tips": {
         "trigger": "Triggers are commonly used to send a HTTP request to change the preset of cameras.",
         "global_options": "These options are applied globally.",
+        "category_template": "The category of this show has a template set, which will overwrite any edits.",
         "consider_templates": "You made the same changes to multiple slides. Consider using a template.",
         "style_template_active": "A style in the output is set to override the show template.",
         "group_numbers": "Numbers are auto assigned, so you don't need to add numbers to group names."
@@ -328,7 +329,6 @@
         "autofill": "Autofill",
         "message": "Message",
         "message_tip": "Display something on all slides",
-        "override_output": "Override output style",
         "display_metadata": "Display metadata",
         "meta_template": "Metadata template",
         "text_divider": "Text separator",

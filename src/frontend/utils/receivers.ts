@@ -18,6 +18,7 @@ import {
     allOutputs,
     audioChannelsData,
     audioData,
+    categories,
     closeAd,
     colorbars,
     customMessageCredits,
@@ -279,6 +280,7 @@ export const receiveOUTPUTasOUTPUT: any = {
     // COLOR: (a: any) => backgroundColor.set(a),
     // SCREEN: (a: any) => screen.set(a),
     SHOWS: (a: any) => showsCache.set(a),
+    CATEGORIES: (a: any) => categories.set(a),
 
     TEMPLATES: (a: any) => templates.set(a),
     OVERLAYS: (a: any) => clone(overlays.set(a)),
