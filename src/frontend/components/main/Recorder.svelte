@@ -11,7 +11,7 @@
     let currentStream
     function toggleRecording() {
         if (!$activeRecording) {
-            currentStream?.getTracks().forEach(track => {
+            currentStream?.getTracks().forEach((track) => {
                 track.stop()
             })
 
@@ -33,7 +33,7 @@
 
         navigator.mediaDevices
             .getUserMedia(options)
-            .then(stream => {
+            .then((stream) => {
                 if (!stream) return console.error("Error getting media stream!")
                 if (!videoElem) return
 

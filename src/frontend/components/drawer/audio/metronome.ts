@@ -49,7 +49,7 @@ export function startMetronome(values: API_metronome = {}) {
 
 export function getShowBPM() {
     const showMetadata = _show().get("meta")
-    const customKey = get(customMetadata).custom.find(a => a.toLowerCase().includes("bpm")) || "BPM"
+    const customKey = get(customMetadata).custom.find((a) => a.toLowerCase().includes("bpm")) || "BPM"
     return Math.floor(parseFloat(showMetadata[customKey] || 0)) || 120
 }
 
@@ -81,13 +81,13 @@ async function setAudioBuffers() {
     if (audioBuffers.hi) return
 
     await Promise.all(
-        audioFiles.map(async fileName => {
+        audioFiles.map(async (fileName) => {
             const path = `./assets/${fileName}.mp3`
             const id = fileName.slice(fileName.indexOf("-") + 1)
 
             const audioBuffer = await fetch(path)
-                .then(res => res.arrayBuffer())
-                .then(ArrayBuffer => audioContext.decodeAudioData(ArrayBuffer))
+                .then((res) => res.arrayBuffer())
+                .then((ArrayBuffer) => audioContext.decodeAudioData(ArrayBuffer))
 
             audioBuffers[id] = audioBuffer
         })

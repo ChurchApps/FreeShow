@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { Item } from "../../../../types/Show"
-    import { activeEdit, activeShow, openToolsTab, os, outputs, showsCache, special, variables } from "../../../stores"
+    import { activeEdit, activeShow, openToolsTab, os, outputs, showsCache, special, templates, variables } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { getAccess } from "../../../utils/profile"
     import { deleteAction } from "../../helpers/clipboard"
@@ -19,6 +19,7 @@
     export let ref: {
         type?: "show" | "overlay" | "template"
         showId?: string
+        origin?: string
         id: string
     }
     export let index: number
@@ -37,7 +38,7 @@
 
         const rightClick: boolean = e.button === 2 || e.buttons === 2 || ($os.platform === "darwin" && e.ctrlKey)
 
-        activeEdit.update(ae => {
+        activeEdit.update((ae) => {
             if (rightClick) {
                 if (ae.items.includes(index)) return ae
                 ae.items = [index]
@@ -93,7 +94,7 @@
             if ($activeEdit.items.length) {
                 // give time so output don't clear
                 setTimeout(() => {
-                    activeEdit.update(a => {
+                    activeEdit.update((a) => {
                         a.items = []
                         return a
                     })
@@ -118,7 +119,7 @@
 
         // timeout to allow CSS to update selected items first if any
         setTimeout(() => {
-            activeEdit.update(ae => {
+            activeEdit.update((ae) => {
                 ae.items = []
                 return ae
             })
@@ -141,7 +142,7 @@
     let mediaShouldBeBackground = false
     function checkMedia() {
         // WIP return if background exists
-        if (!item?.src || (ref?.type || "show") !== "show" || !item.style.includes("width:1920") || !item.style.includes("height:1080")) {
+        if (!item?.src || (ref?.type || "show") !== "show" || !item.style?.includes("width:1920") || !item.style?.includes("height:1080")) {
             mediaShouldBeBackground = false
             return
         }
@@ -163,7 +164,8 @@
     $: isDisabledVariable = item?.type === "variable" && $variables[item.variable?.id]?.enabled === false
     // SHOW IS LOCKED FOR EDITING
     let profile = getAccess("shows")
-    $: isLocked = (ref.type || "show") !== "show" ? false : $showsCache[active || ""]?.locked || profile.global === "read" || profile[$showsCache[active || ""]?.category || ""] === "read"
+    $: currentSlide = (ref.type || "show") === "show" ? $showsCache[active || ""]?.slides?.[ref.id] : null // WIP get group slide
+    $: isLocked = (ref.type || "show") !== "show" ? false : $showsCache[active || ""]?.locked || currentSlide?.locked || profile.global === "read" || profile[$showsCache[active || ""]?.category || ""] === "read"
 
     // give CSS access to number variable values
     $: cssVariables = getNumberVariables($variables)
@@ -172,6 +174,8 @@
 
     // fixed letter width
     $: fixedWidth = item?.type === "timer" || item?.type === "clock" ? "font-feature-settings: 'tnum' 1;" : ""
+
+    $: noTextMode = ref?.type === "template" && $templates[ref?.id]?.settings?.mode === "item"
 </script>
 
 <!-- on:mouseup={() => chordUp({ showRef: ref, itemIndex: index, item })} -->
@@ -196,7 +200,7 @@ bind:offsetWidth={width} -->
     {#if !plain}
         <EditboxPlain {item} {index} {ratio} />
     {/if}
-    {#if item?.lines}
+    {#if item?.lines && !noTextMode}
         <EditboxLines {item} {ref} {index} {editIndex} {plain} {chordsMode} {chordsAction} {isLocked} />
     {:else if item}
         <SlideItems {item} {ratio} {ref} {itemElem} slideIndex={$activeEdit.slide || 0} edit />
@@ -259,5 +263,8 @@ bind:offsetWidth={width} -->
         font-family: Arial, Helvetica, sans-serif;
         font-size: 0.32em;
         text-shadow: none;
+
+        /* if parent is flipped, this will apply the same flip, so it's flipped back */
+        transform: inherit;
     }
 </style>

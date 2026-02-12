@@ -7,10 +7,8 @@
     import { DEFAULT_ITEM_STYLE } from "../../edit/scripts/itemHelpers"
     import { clone, keysToID, sortByName } from "../../helpers/array"
     import { history } from "../../helpers/history"
-    import Icon from "../../helpers/Icon.svelte"
     import { getResolution } from "../../helpers/output"
     import T from "../../helpers/T.svelte"
-    import Button from "../../inputs/Button.svelte"
     import CombinedInput from "../../inputs/CombinedInput.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import Output from "../../output/Output.svelte"
@@ -47,7 +45,7 @@
     const text = "Lorem ipsum dolor sit amet,\nconsectetur adipiscing elit.\nDonec eget condimentum diam,\na sollicitudin lorem."
     function getOverride(style: Styles) {
         let override = clone(outOverride)
-        const lines = text.split("\n").map(a => ({ align: "", text: [{ value: a, style: "" }] }))
+        const lines = text.split("\n").map((a) => ({ align: "", text: [{ value: a, style: "" }] }))
         override.slide!.tempItems![0].lines = lines.slice(0, style.lines || 10)
         return override
     }
@@ -87,10 +85,9 @@
 
 {#if skip}
     <CombinedInput style="margin: 6px;margin-top: 10px;width: initial;">
-        <Button style="width: 100%;" on:click={() => activePopup.set(null)} center dark>
-            <Icon id="arrow_forward" right />
+        <MaterialButton style="width: 100%;" icon="arrow_forward" on:click={() => activePopup.set(null)}>
             <T id="guide.skip" />
-        </Button>
+        </MaterialButton>
     </CombinedInput>
 {/if}
 

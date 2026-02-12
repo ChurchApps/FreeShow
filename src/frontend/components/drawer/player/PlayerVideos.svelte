@@ -15,7 +15,7 @@
     $: videos = sortByName(
         Object.entries($playerVideos)
             .map(([id, video]) => ({ rid: id, ...video }))
-            .filter(a => a.type === active)
+            .filter((a) => a.type === active)
     )
 
     // search
@@ -24,7 +24,7 @@
     let fullFilteredVideos: (Category & { rid: string })[] = []
     function filterSearch() {
         fullFilteredVideos = clone(videos)
-        if (searchValue.length > 1) fullFilteredVideos = fullFilteredVideos.filter(a => filter(a.name).includes(searchValue))
+        if (searchValue.length > 1) fullFilteredVideos = fullFilteredVideos.filter((a) => filter(a.name).includes(searchValue))
     }
 
     let loaded: { [key: string]: boolean } = {}
@@ -58,7 +58,7 @@
             renameId="player_{video.rid}"
             title={video.id || ""}
             showPlayOnHover
-            on:click={e => {
+            on:click={(e) => {
                 if ($outLocked || e.ctrlKey || e.metaKey) return
                 if (e.target?.closest(".edit")) return
 

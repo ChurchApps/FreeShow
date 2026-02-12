@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onDestroy } from "svelte"
     import type { ItemType } from "../../../../types/Show"
-    import { activeEdit, outputs, styles, templates } from "../../../stores"
+    import { activeEdit, activePopup, outputs, popupData, styles, templates } from "../../../stores"
     import TemplateSlide from "../../drawer/pages/TemplateSlide.svelte"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -22,7 +22,7 @@
     $: currentId = $activeEdit.id!
     $: if (currentId) update()
     let Slide = clone($templates[currentId])
-    const unsubscribe = templates.subscribe(a => clone((Slide = a[currentId])))
+    const unsubscribe = templates.subscribe((a) => clone((Slide = a[currentId])))
     onDestroy(unsubscribe)
 
     let newStyles: { [key: string]: string | number } = {}
@@ -40,13 +40,13 @@
 
         let items = Slide.items
         let values: string[] = []
-        active.forEach(id => {
+        active.forEach((id) => {
             let item = items[id]
             let styles = getStyles(item.style)
             let textStyles = ""
 
             Object.entries(newStyles).forEach(([key, value]) => (styles[key] = value.toString()))
-            Object.entries(styles).forEach(obj => (textStyles += obj[0] + ":" + obj[1] + ";"))
+            Object.entries(styles).forEach((obj) => (textStyles += obj[0] + ":" + obj[1] + ";"))
 
             // TODO: move multiple!
             values.push(textStyles)
@@ -83,10 +83,12 @@
 
     const shortcutItems: { id: ItemType; icon?: string }[] = [{ id: "text" }, { id: "media", icon: "image" }, { id: "timer" }]
 
-    // const ignoreDefault = ["metadata", "message", "double"]
-
     $: resolution = getResolution(null, { $outputs, $styles })
     $: widthOrHeight = getStyleResolution(resolution, width, height, "fit", { zoom })
+
+    $: mode = Slide?.settings?.mode || "default"
+
+    $: styleOverrides = (Slide?.settings?.styleOverrides || []).filter((a) => a.pattern && a.templateId).length
 </script>
 
 {#if Slide?.isDefault}
@@ -97,7 +99,7 @@
 
 <div class="editArea">
     <div class="parent" class:noOverflow={zoom >= 1} bind:this={scrollElem} bind:offsetWidth={width} bind:offsetHeight={height}>
-        <!--  && (!Slide.isDefault || ignoreDefault.includes(currentId)) -->
+        <!--  && (!Slide.isDefault) -->
         {#if Slide}
             <DropArea id="edit" file>
                 <TemplateSlide bind:newStyles templateId={currentId} template={Slide} edit {width} {height} {zoom} bind:ratio />
@@ -109,7 +111,7 @@
         {/if}
     </div>
 
-    {#if !widthOrHeight.includes("height")}
+    {#if !widthOrHeight.includes("height") && mode !== "text"}
         <FloatingInputs side="center">
             {#each shortcutItems as item}
                 <MaterialButton title="settings.add: items.{item.id}" on:click={() => addItem(item.id, null, {}, translateText("example.text"))}>
@@ -120,6 +122,21 @@
     {/if}
 
     <FloatingInputs>
+        {#if styleOverrides > 0}
+            <MaterialButton
+                icon="text"
+                on:click={() => {
+                    popupData.set({ templateId: currentId })
+                    activePopup.set("template_style_overrides")
+                }}
+            >
+                {translateText("popup.template_style_overrides")}
+                <span style="font-size: 0.8em;opacity: 0.5;">{styleOverrides}</span>
+            </MaterialButton>
+
+            <div class="divider"></div>
+        {/if}
+
         <MaterialZoom columns={zoom} min={0.2} max={4} defaultValue={1} addValue={0.1} on:change={updateZoom} />
     </FloatingInputs>
 </div>

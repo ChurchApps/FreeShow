@@ -30,7 +30,7 @@
     }
 
     const dispatch = createEventDispatcher()
-    let listenerId = receiveToMain(ToMain.OPEN_FOLDER2, data => {
+    let listenerId = receiveToMain(ToMain.OPEN_FOLDER2, (data) => {
         if (data.channel !== PICK_ID || !data.path) return
         dispatch("change", data.path)
     })
@@ -56,7 +56,7 @@
         class="input edit button-trigger"
         role="button"
         tabindex={disabled ? undefined : 0}
-        on:click={e => {
+        on:click={(e) => {
             if (e.target?.closest(".button")) return
             pickFolder()
         }}

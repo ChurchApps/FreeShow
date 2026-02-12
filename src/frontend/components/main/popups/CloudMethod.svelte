@@ -1,81 +1,74 @@
 <script lang="ts">
-    import { driveData } from "../../../stores"
-    import { syncDrive } from "../../../utils/drive"
+    import { activePopup, cloudSyncData } from "../../../stores"
+    import { syncWithCloud } from "../../../utils/cloudSync"
+    import { translateText } from "../../../utils/language"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
-    import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
-    import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
 
-    function setMethod(method: "download" | "upload") {
-        driveData.update(a => {
-            a.initializeMethod = method
-            return a
-        })
+    let showMore = false
+    $: multipleTeams = ($cloudSyncData.team?.count || 0) > 1
+    $: options = [
+        { name: "actions.merge", description: "cloud.merge_tip", icon: "merge", click: () => setMethod("merge") },
+        { name: "cloud.read_only", description: "cloud.readonly_tip", icon: "cloud_download", click: () => setMethod("read_only") },
+        ...(showMore || multipleTeams
+            ? [
+                  { name: "cloud.upload", description: "cloud.upload_tip", icon: "export", click: () => setMethod("upload") },
+                  { name: "cloud.replace", description: "cloud.replace_tip", icon: "import", click: () => setMethod("replace") }
+              ]
+            : [])
+    ]
 
-        syncDrive(true)
-    }
-
-    function updateValue(value: string, key: string) {
-        if (value === undefined) return
-
-        driveData.update(a => {
+    function updateData(key: string, value: any) {
+        cloudSyncData.update((a) => {
             a[key] = value
             return a
         })
     }
 
-    let customFolderEnabled = false
+    function setMethod(method: "merge" | "read_only" | "upload" | "replace") {
+        updateData("cloudMethod", method)
+        syncWithCloud(true)
+        activePopup.set(null)
+    }
+
+    function cancel() {
+        cloudSyncData.set({})
+        activePopup.set(null)
+    }
 </script>
 
-<p style="max-width: 600px;white-space: normal;margin-bottom: 10px;opacity: 0.9;"><T id="cloud.choose_method_tip" /></p>
+<p class="tip"><T id="cloud.choose_method_tip" /></p>
 
-<div class="choice" style="margin: 10px 0;">
-    <MaterialButton variant="outlined" on:click={() => setMethod("upload")}>
-        <Icon id="export" size={6} />
-        <p><Icon id="screen" size={1.2} white /><T id="cloud.local" /></p>
-    </MaterialButton>
-    <MaterialButton variant="outlined" on:click={() => setMethod("download")}>
-        <Icon id="import" size={6} />
-        <p><Icon id="cloud" size={1.2} white /><T id="settings.cloud" /></p>
-    </MaterialButton>
-</div>
-
-<MaterialToggleSwitch label="cloud.enable_custom_folder_id" checked={customFolderEnabled} defaultValue={false} on:change={e => (customFolderEnabled = e.detail)} />
-
-{#if customFolderEnabled}
-    <MaterialTextInput label="cloud.main_folder{$driveData?.mainFolderId ? `<span style="margin-left: 10px;font-size: 0.7em;opacity: 0.5;color: var(--text);">drive.google.com/drive/folders/</span>` : ''}" value={$driveData?.mainFolderId || ""} defaultValue="" on:change={e => updateValue(e.detail, "mainFolderId")} />
+{#if !multipleTeams}
+    <MaterialButton class="popup-options {showMore ? 'active' : ''}" style="inset-inline-end: 0;" icon="options" iconSize={1.3} title={showMore ? "actions.close" : "create_show.more_options"} on:click={() => (showMore = !showMore)} white />
 {/if}
 
+<div style="display: flex;flex-direction: column;gap: 5px;">
+    {#each options as option, i}
+        <MaterialButton variant="outlined" style="{i === 2 ? 'margin-top: 5px;' : ''}justify-content: start;flex: 1;min-height: 50px;font-weight: normal;" on:click={option.click}>
+            <Icon id={option.icon} size={2.4} white={i > 0} />
+
+            <div style="display: flex;flex-direction: column;align-items: start;gap: 5px;margin-left: 10px;">
+                <p style="font-size: 1.1em;">{translateText(option.name)}</p>
+                <span style="opacity: 0.5;">{translateText(option.description)}</span>
+            </div>
+        </MaterialButton>
+    {/each}
+</div>
+
+<MaterialButton variant="outlined" style="margin-top: 20px;" icon="close" on:click={cancel}>
+    <T id="popup.cancel" />
+</MaterialButton>
+
 <style>
-    .choice {
-        display: flex;
-        justify-content: center; /* space-evenly; */
-        flex-wrap: wrap;
-        width: 100%;
+    .tip {
+        margin-bottom: 10px;
 
-        gap: 9px;
+        opacity: 0.7;
+        font-size: 0.8em;
 
-        border-radius: 8px;
-        background-color: var(--primary-darker);
-        padding: 10px;
-    }
-
-    .choice :global(button) {
-        flex: 1;
-        aspect-ratio: 1;
-        min-width: 160px;
-        max-width: 280px;
-
-        /* border-radius: 0; */
-
-        gap: 12px;
-        flex-direction: column;
-    }
-
-    .choice p {
-        display: flex;
-        align-items: center;
-        gap: 10px;
+        max-width: 700px;
+        white-space: normal;
     }
 </style>

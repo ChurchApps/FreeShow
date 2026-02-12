@@ -1,7 +1,6 @@
 import * as Sentry from "@sentry/electron/main"
 import type { BrowserWindow, DesktopCapturerSource } from "electron"
 import { app, desktopCapturer, screen, shell, systemPreferences } from "electron"
-import { machineIdSync } from "node-machine-id"
 import os from "os"
 import path from "path"
 import { getMainWindow, isProd, mainWindow, maximizeMain, setGlobalMenu } from ".."
@@ -9,8 +8,11 @@ import type { MainResponses } from "../../types/IPC/Main"
 import { Main } from "../../types/IPC/Main"
 import type { ErrorLog, LyricSearchResult, OS } from "../../types/Main"
 import { openNowPlaying, setPlayingState, unsetPlayingAudio } from "../audio/nowPlaying"
+import { canSync, getSyncTeams, hasDataChanged, hasTeamData, syncData } from "../cloud/syncManager"
+import { ChurchAppsChat } from "../contentProviders/churchApps/ChurchAppsChat"
 import { ContentProviderRegistry } from "../contentProviders"
 import { deleteBackup, getBackups, restoreFiles } from "../data/backup"
+import { getLocalIPs } from "../data/bonjour"
 import { checkIfMediaDownloaded, downloadLessonsMedia, downloadMedia } from "../data/downloadMedia"
 import { importShow } from "../data/import"
 import { save } from "../data/save"
@@ -20,9 +22,11 @@ import { OutputHelper } from "../output/OutputHelper"
 import { libreConvert } from "../output/ppt/libreConverter"
 import { getPresentationApplications, presentationControl, startSlideshow } from "../output/ppt/presentation"
 import { closeServers, startServers, updateServerData } from "../servers"
+import { processAudioData, timecodeStart, timecodeStop, updateTimecodeValue } from "../timecode/timecode"
 import { apiReturnData, emitOSC, startWebSocketAndRest, stopApiListener } from "../utils/api"
 import { closeMain } from "../utils/close"
-import { bundleMediaFiles, getDataFolderPath, getDataFolderRoot, getFileInfo, getFolderContent, getFoldersContent, getMediaCodec, getMediaTracks, getPaths, getSimularPaths, getTempPaths, loadFile, loadShows, locateMediaFile, openInSystem, readExifData, readFile, selectFiles, selectFilesDialog, selectFolder, writeFile } from "../utils/files"
+import { addToMediaFolder, bundleMediaFiles, getDataFolderPath, getDataFolderRoot, getFileInfo, getMediaCodec, getMediaSyncFolderPath, getMediaTracks, getPaths, getSimularPaths, loadFile, loadShows, locateMediaFile, openInSystem, readExifData, readFile, readFolder, readFolderContent, selectFiles, selectFilesDialog, selectFolder, setMediaSyncFolderPath, writeFile } from "../utils/files"
+import { getMachineId } from "../utils/helpers"
 import { LyricSearch } from "../utils/LyricSearch"
 import { closeMidiInPorts, getMidiInputs, getMidiOutputs, receiveMidi, sendMidi } from "../utils/midi"
 import { deleteShows, deleteShowsNotIndexed, getAllShows, getEmptyShows, refreshAllShows } from "../utils/shows"
@@ -31,14 +35,15 @@ import checkForUpdates from "../utils/updater"
 
 export const mainResponses: MainResponses = {
     // DEV
-    [Main.LOG]: data => console.info(data),
+    [Main.LOG]: (data) => console.info(data),
     [Main.IS_DEV]: () => !isProd,
-    [Main.GET_TEMP_PATHS]: () => getTempPaths(),
+    [Main.GET_CACHE_PATH]: () => getThumbnailFolderPath(),
     // APP
     [Main.VERSION]: () => getVersion(),
     [Main.GET_OS]: () => getOS(),
     [Main.DEVICE_ID]: () => getMachineId(),
-    [Main.IP]: () => os.networkInterfaces(),
+    [Main.GET_DEVICE_NAME]: () => getDeviceName(),
+    [Main.IP]: () => getLocalIPs(),
     [Main.CHECK_RAM_USAGE]: () => checkRamUsage(),
     // STORES
     [Main.SETTINGS]: () => getStore("SETTINGS"),
@@ -60,38 +65,39 @@ export const mainResponses: MainResponses = {
     [Main.MAXIMIZED]: () => !!getMainWindow()?.isMaximized(),
     [Main.MINIMIZE]: () => getMainWindow()?.minimize(),
     [Main.FULLSCREEN]: () => getMainWindow()?.setFullScreen(!getMainWindow()?.isFullScreen()),
-    [Main.SPELLCHECK]: a => correctSpelling(a),
+    [Main.SPELLCHECK]: (a) => correctSpelling(a),
     /// //////////////////////
-    [Main.SAVE]: a => save(a),
+    [Main.SAVE]: (a) => save(a),
     [Main.BACKUPS]: () => getBackups(),
-    [Main.DELETE_BACKUP]: data => deleteBackup(data),
-    [Main.IMPORT]: data => startImport(data),
-    [Main.BIBLE]: data => loadScripture(data),
-    [Main.SHOW]: data => loadShow(data),
+    [Main.DELETE_BACKUP]: (data) => deleteBackup(data),
+    [Main.IMPORT]: (data) => startImport(data),
+    [Main.IMPORT_FILES]: (data) => importFiles(data),
+    [Main.BIBLE]: (data) => loadScripture(data),
+    [Main.SHOW]: (data) => loadShow(data),
     // MAIN
     [Main.SHOWS]: () => loadShows(),
     [Main.AUTO_UPDATE]: () => checkForUpdates(),
-    [Main.URL]: data => openURL(data),
-    [Main.LANGUAGE]: data => setGlobalMenu(data.strings),
+    [Main.URL]: (data) => openURL(data),
+    [Main.LANGUAGE]: (data) => setGlobalMenu(data.strings),
     [Main.GET_PATHS]: () => getPaths(),
     [Main.DATA_PATH]: () => getDataFolderRoot(),
-    [Main.UPDATE_DATA_PATH]: data => {
+    [Main.UPDATE_DATA_PATH]: (data) => {
         config.set("dataPath", data.newPath)
         createStores(data.oldPath)
     },
-    [Main.LOG_ERROR]: data => logError(data),
+    [Main.LOG_ERROR]: (data) => logError(data),
     [Main.OPEN_LOG]: () => openInSystem(_store.ERROR_LOG?.path || ""),
     [Main.OPEN_CACHE]: () => openInSystem(getThumbnailFolderPath(), true),
     [Main.OPEN_APPDATA]: () => openInSystem(appDataPath, true),
-    [Main.OPEN_FOLDER_PATH]: folderPath => openInSystem(folderPath, true),
+    [Main.OPEN_FOLDER_PATH]: (folderPath) => openInSystem(folderPath, true),
     [Main.OPEN_NOW_PLAYING]: () => openNowPlaying(),
-    [Main.GET_STORE_VALUE]: data => getStoreValue(data),
-    [Main.SET_STORE_VALUE]: data => setStoreValue(data),
+    [Main.GET_STORE_VALUE]: (data) => getStoreValue(data),
+    [Main.SET_STORE_VALUE]: (data) => setStoreValue(data),
     // SHOWS
-    [Main.DELETE_SHOWS]: data => deleteShows(data),
-    [Main.DELETE_SHOWS_NI]: data => deleteShowsNotIndexed(data),
+    [Main.DELETE_SHOWS]: (data) => deleteShows(data),
+    [Main.DELETE_SHOWS_NI]: (data) => deleteShowsNotIndexed(data),
     [Main.REFRESH_SHOWS]: () => refreshAllShows(),
-    [Main.GET_EMPTY_SHOWS]: data => getEmptyShows(data),
+    [Main.GET_EMPTY_SHOWS]: (data) => getEmptyShows(data),
     [Main.FULL_SHOWS_LIST]: () => getAllShows(),
     // OUTPUT
     [Main.GET_SCREENS]: () => getScreens(),
@@ -99,76 +105,87 @@ export const mainResponses: MainResponses = {
     [Main.GET_DISPLAYS]: () => screen.getAllDisplays(),
     [Main.OUTPUT]: (_, e) => (e.sender.id === getMainWindow()?.webContents.id ? "false" : "true"),
     // MEDIA
-    [Main.DOES_MEDIA_EXIST]: data => doesMediaExist(data),
-    [Main.GET_THUMBNAIL]: data => getThumbnail(data),
-    [Main.SAVE_IMAGE]: data => saveImage(data),
-    [Main.PDF_TO_IMAGE]: data => pdfToImage(data),
-    [Main.READ_EXIF]: data => readExifData(data),
-    [Main.MEDIA_CODEC]: data => getMediaCodec(data),
-    [Main.MEDIA_TRACKS]: data => getMediaTracks(data),
-    [Main.DOWNLOAD_LESSONS_MEDIA]: data => downloadLessonsMedia(data),
-    [Main.MEDIA_DOWNLOAD]: data => downloadMedia(data),
-    [Main.MEDIA_IS_DOWNLOADED]: async data => await checkIfMediaDownloaded(data),
-    [Main.NOW_PLAYING]: data => setPlayingState(data),
+    [Main.DOES_MEDIA_EXIST]: (data) => doesMediaExist(data),
+    [Main.GET_THUMBNAIL]: async (data) => await getThumbnail(data),
+    [Main.SAVE_IMAGE]: (data) => saveImage(data),
+    [Main.PDF_TO_IMAGE]: (data) => pdfToImage(data),
+    [Main.READ_EXIF]: (data) => readExifData(data),
+    [Main.MEDIA_CODEC]: (data) => getMediaCodec(data),
+    [Main.MEDIA_TRACKS]: (data) => getMediaTracks(data),
+    [Main.DOWNLOAD_LESSONS_MEDIA]: (data) => downloadLessonsMedia(data),
+    [Main.MEDIA_DOWNLOAD]: (data) => downloadMedia(data),
+    [Main.MEDIA_IS_DOWNLOADED]: async (data) => await checkIfMediaDownloaded(data),
+    [Main.NOW_PLAYING]: (data) => setPlayingState(data),
     [Main.NOW_PLAYING_UNSET]: () => unsetPlayingAudio(),
     // [Main.MEDIA_BASE64]: (data) => storeMedia(data),
-    [Main.CAPTURE_SLIDE]: data => captureSlide(data),
+    [Main.CAPTURE_SLIDE]: (data) => captureSlide(data),
     [Main.ACCESS_CAMERA_PERMISSION]: () => getPermission("camera"),
     [Main.ACCESS_MICROPHONE_PERMISSION]: () => getPermission("microphone"),
     [Main.ACCESS_SCREEN_PERMISSION]: () => getPermission("screen"),
     // PPT
-    [Main.LIBREOFFICE_CONVERT]: data => libreConvert(data),
+    [Main.LIBREOFFICE_CONVERT]: (data) => libreConvert(data),
     [Main.SLIDESHOW_GET_APPS]: () => getPresentationApplications(),
-    [Main.START_SLIDESHOW]: data => startSlideshow(data),
-    [Main.PRESENTATION_CONTROL]: data => presentationControl(data),
+    [Main.START_SLIDESHOW]: (data) => startSlideshow(data),
+    [Main.PRESENTATION_CONTROL]: (data) => presentationControl(data),
     // SERVERS
-    [Main.START]: data => startServers(data),
+    [Main.START]: (data) => startServers(data),
     [Main.STOP]: () => closeServers(),
-    [Main.SERVER_DATA]: data => updateServerData(data),
+    [Main.SERVER_DATA]: (data) => updateServerData(data),
     // WebSocket / REST / OSC
-    [Main.WEBSOCKET_START]: port => startWebSocketAndRest(port),
+    [Main.WEBSOCKET_START]: (port) => startWebSocketAndRest(port),
     [Main.WEBSOCKET_STOP]: () => stopApiListener(),
-    [Main.API_TRIGGER]: data => apiReturnData(data),
-    [Main.EMIT_OSC]: data => emitOSC(data),
+    [Main.API_TRIGGER]: (data) => apiReturnData(data),
+    [Main.EMIT_OSC]: (data) => emitOSC(data),
     // MIDI
     [Main.GET_MIDI_OUTPUTS]: () => getMidiOutputs(),
     [Main.GET_MIDI_INPUTS]: () => getMidiInputs(),
-    [Main.SEND_MIDI]: data => {
+    [Main.SEND_MIDI]: (data) => {
         sendMidi(data)
     },
-    [Main.RECEIVE_MIDI]: data => receiveMidi(data),
-    [Main.CLOSE_MIDI]: data => closeMidiInPorts(data.id),
+    [Main.RECEIVE_MIDI]: (data) => receiveMidi(data),
+    [Main.CLOSE_MIDI]: (data) => closeMidiInPorts(data.id),
     // LYRICS
-    [Main.GET_LYRICS]: data => getLyrics(data),
-    [Main.SEARCH_LYRICS]: data => searchLyrics(data),
+    [Main.GET_LYRICS]: (data) => getLyrics(data),
+    [Main.SEARCH_LYRICS]: (data) => searchLyrics(data),
     // FILES
-    [Main.RESTORE]: data => restoreFiles(data),
-    [Main.RECORDER]: data => saveRecording(data),
-    [Main.SYSTEM_OPEN]: data => openInSystem(data),
-    [Main.LOCATE_MEDIA_FILE]: data => locateMediaFile(data),
-    [Main.GET_SIMILAR]: data => getSimularPaths(data),
-    [Main.BUNDLE_MEDIA_FILES]: () => bundleMediaFiles(),
-    [Main.FILE_INFO]: data => getFileInfo(data),
-    [Main.READ_FOLDER]: data => getFolderContent(data),
-    [Main.READ_FOLDERS]: data => getFoldersContent(data),
-    [Main.READ_FILE]: data => ({ content: readFile(data.path) }),
-    [Main.OPEN_FOLDER]: data => selectFolder(data),
-    [Main.OPEN_FILE]: data => selectFiles(data),
+    [Main.RESTORE]: (data) => restoreFiles(data),
+    [Main.RECORDER]: (data) => saveRecording(data),
+    [Main.SYSTEM_OPEN]: (data) => openInSystem(data),
+    [Main.LOCATE_MEDIA_FILE]: (data) => locateMediaFile(data),
+    [Main.GET_MEDIA_FOLDER_PATH]: () => getMediaSyncFolderPath(),
+    [Main.SET_MEDIA_FOLDER_PATH]: (data) => setMediaSyncFolderPath(data),
+    [Main.GET_SIMILAR]: (data) => getSimularPaths(data),
+    [Main.BUNDLE_MEDIA_FILES]: (data) => bundleMediaFiles(data),
+    [Main.MEDIA_FOLDER_COPY]: (data) => addToMediaFolder(data.paths),
+    [Main.READ_BIBLES_FOLDER]: () => readBiblesFolder(),
+    [Main.FILE_INFO]: (data) => getFileInfo(data),
+    [Main.READ_FOLDER]: (data) => readFolderContent(data),
+    [Main.READ_FILE]: (data) => ({ content: readFile(data.path) }),
+    [Main.OPEN_FOLDER]: (data) => selectFolder(data),
+    [Main.OPEN_FILE]: (data) => selectFiles(data),
+    // SYNC
+    [Main.CAN_SYNC]: (data) => canSync(data),
+    [Main.GET_TEAMS]: (data) => getSyncTeams(data),
+    [Main.CLOUD_DATA]: (data) => hasTeamData(data),
+    [Main.CLOUD_CHANGED]: (data) => hasDataChanged(data),
+    [Main.CLOUD_SYNC]: (data) => syncData(data),
+    [Main.GET_CONVERSATION_ID]: (data) => getConversationId(data.teamId),
+    [Main.SEND_SOCKET_MESSAGE]: (data) => sendSocketMessage(data),
     // Provider-based routing
-    [Main.PROVIDER_LOAD_SERVICES]: async data => {
-        await ContentProviderRegistry.loadServices(data.providerId)
+    [Main.PROVIDER_LOAD_SERVICES]: async (data) => {
+        await ContentProviderRegistry.loadServices(data.providerId, data.cloudOnly || false)
     },
-    [Main.PROVIDER_DISCONNECT]: data => {
+    [Main.PROVIDER_DISCONNECT]: (data) => {
         ContentProviderRegistry.disconnect(data.providerId, data.scope)
         return { success: true }
     },
-    [Main.PROVIDER_STARTUP_LOAD]: async data => {
-        await ContentProviderRegistry.startupLoad(data.providerId, data.scope || "", data.data)
+    [Main.PROVIDER_STARTUP_LOAD]: async (data) => {
+        await ContentProviderRegistry.startupLoad(data.providerId, data.scope || "", data.data, data.cloudOnly)
     },
     // Content Library
     [Main.GET_CONTENT_PROVIDERS]: () => {
         const providers = ContentProviderRegistry.getAvailableProviders()
-        return providers.map(providerId => {
+        return providers.map((providerId) => {
             const provider = ContentProviderRegistry.getProvider(providerId)
             return {
                 providerId,
@@ -177,7 +194,7 @@ export const mainResponses: MainResponses = {
             }
         })
     },
-    [Main.GET_CONTENT_LIBRARY]: async data => {
+    [Main.GET_CONTENT_LIBRARY]: async (data) => {
         const provider = ContentProviderRegistry.getProvider(data.providerId)
         if (!provider?.getContentLibrary) {
             console.error(`Provider ${data.providerId} does not support content library`)
@@ -185,7 +202,7 @@ export const mainResponses: MainResponses = {
         }
         return await provider.getContentLibrary()
     },
-    [Main.GET_PROVIDER_CONTENT]: async data => {
+    [Main.GET_PROVIDER_CONTENT]: async (data) => {
         const provider = ContentProviderRegistry.getProvider(data.providerId)
         if (!provider?.getContent) {
             console.error(`Provider ${data.providerId} does not support getContent`)
@@ -193,14 +210,20 @@ export const mainResponses: MainResponses = {
         }
         return await provider.getContent(data.key)
     },
-    [Main.CHECK_MEDIA_LICENSE]: async data => {
+    [Main.CHECK_MEDIA_LICENSE]: async (data) => {
         const provider = ContentProviderRegistry.getProvider(data.providerId)
         if (!provider?.checkMediaLicense) {
             console.error(`Provider ${data.providerId} does not support checkMediaLicense`)
             return null
         }
         return await provider.checkMediaLicense(data.mediaId)
-    }
+    },
+    // Timecode
+    [Main.TIMECODE_START]: (data) => timecodeStart(data),
+    [Main.TIMECODE_STOP]: () => timecodeStop(),
+    [Main.TIMECODE_VALUE]: (data) => updateTimecodeValue(data),
+    [Main.TIMECODE_STATUS]: (data) => console.log(data),
+    [Main.TIMECODE_AUDIO_DATA]: (data) => processAudioData(data)
 }
 
 /// ///////
@@ -213,6 +236,10 @@ export function startImport(data: { channel: string; format: { name: string; ext
     if (needsFileAndNoFileSelected) return
 
     importShow(data.channel, files || null, data.settings || {})
+}
+
+function importFiles(data: { id: string; paths: string[] }) {
+    importShow(data.id, data.paths, {})
 }
 
 // BIBLE
@@ -243,6 +270,15 @@ export function loadScripture(msg: { id: string; name: string }) {
     return bible
 }
 
+function readBiblesFolder() {
+    const bibleFolder: string = getDataFolderPath("scriptures")
+    const names = readFolder(bibleFolder)
+    return names.map((name) => {
+        const filePath = path.join(bibleFolder, name)
+        return { path: filePath, name: name.replace(/\.fsb$/i, "") }
+    })
+}
+
 // SHOW
 export function loadShow(msg: { id: string; name: string }) {
     const showsFolder = getDataFolderPath("shows")
@@ -250,19 +286,6 @@ export function loadShow(msg: { id: string; name: string }) {
     const show = loadFile(filePath, msg.id)
 
     return show
-}
-
-export function getMachineId(): string {
-    try {
-        return machineIdSync()
-    } catch (err) {
-        console.warn("Could not get machine ID:", err)
-
-        // fallback to a hash of hostname + username + platform
-        const crypto = require("crypto")
-        const fallbackId = `${os.hostname()}-${os.userInfo().username}-${os.platform()}`
-        return crypto.createHash("sha256").update(fallbackId).digest("hex")
-    }
 }
 
 function getVersion() {
@@ -274,8 +297,22 @@ function getVersion() {
     }
 }
 
+async function getConversationId(teamId: string): Promise<string | null> {
+    return ChurchAppsChat.getOrCreateConversation(teamId)
+}
+
+async function sendSocketMessage(data: { churchId: string; teamId: string; displayName: string; content: string }): Promise<boolean> {
+    const conversationId = await ChurchAppsChat.getOrCreateConversation(data.teamId)
+    if (!conversationId) return false
+    return ChurchAppsChat.sendMessage({ churchId: data.churchId, conversationId, displayName: data.displayName, content: data.content })
+}
+
 function getOS() {
     return { platform: os.platform(), name: os.hostname(), arch: os.arch() } as OS
+}
+
+function getDeviceName() {
+    return (os.hostname() || "").replace(".local", "")
 }
 
 function checkRamUsage() {
@@ -320,17 +357,17 @@ function getPermission(id: "camera" | "microphone" | "screen") {
 }
 
 function getScreens(type: "window" | "screen" = "screen"): Promise<{ name: string; id: string }[]> {
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
         desktopCapturer
             .getSources({ types: [type] })
-            .then(sources => {
+            .then((sources) => {
                 let screens: { name: string; id: string }[] = []
-                sources.map(source => screens.push({ name: source.name, id: source.id }))
+                sources.map((source) => screens.push({ name: source.name, id: source.id }))
                 if (type === "window") screens = addFreeShowWindows(screens, sources)
 
                 resolve(screens)
             })
-            .catch(err => {
+            .catch((err) => {
                 console.error("Could not get screens:", err)
                 resolve([])
             })
@@ -338,12 +375,12 @@ function getScreens(type: "window" | "screen" = "screen"): Promise<{ name: strin
 
     function addFreeShowWindows(screens: { name: string; id: string }[], sources: DesktopCapturerSource[]) {
         const windows: BrowserWindow[] = []
-        OutputHelper.getAllOutputs().forEach(output => {
+        OutputHelper.getAllOutputs().forEach((output) => {
             if (output.window) windows.push(output.window)
         })
-        ;[mainWindow!, ...windows].forEach(window => {
+        ;[mainWindow!, ...windows].forEach((window) => {
             const mediaId = window?.getMediaSourceId()
-            const windowsAlreadyExists = sources.find(a => a.id === mediaId)
+            const windowsAlreadyExists = sources.find((a) => a.id === mediaId)
             if (windowsAlreadyExists) return
 
             screens.push({ name: window?.getTitle(), id: mediaId })
@@ -394,8 +431,8 @@ const ERROR_FILTER = [
     "First argument to DataView constructor must be an ArrayBuffer" // mp4box issue
 ]
 export function catchErrors() {
-    process.on("uncaughtException", err => {
-        if (ERROR_FILTER.find(a => err.message.includes(a))) return
+    process.on("uncaughtException", (err) => {
+        if (ERROR_FILTER.find((a) => err.message.includes(a))) return
         logError(createLog(err), "main")
     })
 }
@@ -421,7 +458,7 @@ export function autoErrorReport() {
         beforeSend(event) {
             // filter out known non-critical errors
             const errorMessage = event.exception?.values?.[0]?.value || ""
-            const shouldFilter = ERROR_FILTER.some(filter => errorMessage.includes(filter))
+            const shouldFilter = ERROR_FILTER.some((filter) => errorMessage.includes(filter))
             return shouldFilter ? null : event
         }
     })

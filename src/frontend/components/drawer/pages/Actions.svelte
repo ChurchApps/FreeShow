@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { actions, actionTags, activeActionTagFilter, activePopup, labelsDisabled, popupData, runningActions } from "../../../stores"
+    import { actions, actionTags, activeActionTagFilter, activePopup, labelsDisabled, popupData, runningActions, timelineRecordingAction } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { getAccess } from "../../../utils/profile"
     import { getActionIcon, runAction } from "../../actions/actions"
@@ -25,8 +25,8 @@
     }
 
     $: sortedActions = sortByName(keysToID($actions), "name", true).map(convertOldMidiToNewAction)
-    $: filteredActionsTags = sortedActions.filter(a => !$activeActionTagFilter.length || (a.tags?.length && !$activeActionTagFilter.find(tagId => !a.tags?.includes(tagId))))
-    $: filteredActionsSearch = searchValue.length > 1 ? filteredActionsTags.filter(a => a.name.toLowerCase().includes(searchValue.toLowerCase())) : filteredActionsTags
+    $: filteredActionsTags = sortedActions.filter((a) => !$activeActionTagFilter.length || (a.tags?.length && !$activeActionTagFilter.find((tagId) => !a.tags?.includes(tagId))))
+    $: filteredActionsSearch = searchValue.length > 1 ? filteredActionsTags.filter((a) => a.name.toLowerCase().includes(searchValue.toLowerCase())) : filteredActionsTags
 </script>
 
 <div class="context #actions{readOnly ? '_readonly' : ''}" style="position: relative;height: 100%;overflow-y: auto;">
@@ -38,9 +38,15 @@
                         <!-- WIP MIDI if slide action.action ... -->
                         <Button
                             title={translateText("media.play")}
-                            on:click={e => {
+                            on:click={(e) => {
                                 if (e.ctrlKey || e.metaKey) return
-                                action.shows?.length ? receivedMidi({ id: action.id, bypass: true }) : runAction(action)
+                                if (action.shows?.length) {
+                                    receivedMidi({ id: action.id, bypass: true })
+                                    return
+                                }
+
+                                runAction(action)
+                                timelineRecordingAction.set({ id: "run_action", data: { id: action.id } })
                             }}
                             outline={$runningActions.includes(action.id)}
                             bold={false}
@@ -73,7 +79,7 @@
                                     {#if action.customActivation || action.startupEnabled}
                                         <span>
                                             {#key action.customActivation}
-                                                <T id={customActionActivations.find(a => a.id === action.customActivation)?.name || "actions.custom_activation"} />
+                                                <T id={customActionActivations.find((a) => a.id === action.customActivation)?.name || "actions.custom_activation"} />
                                             {/key}
                                         </span>
                                     {/if}

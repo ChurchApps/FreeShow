@@ -5,7 +5,7 @@
     import { Option } from "../../../../types/Main"
     import type { Output } from "../../../../types/Output"
     import { AudioAnalyser } from "../../../audio/audioAnalyser"
-    import { activePage, activePopup, activeStage, activeStyle, alertMessage, currentOutputSettings, ndiData, os, outputDisplay, outputs, settingsTab, stageShows, styles, toggleOutputEnabled } from "../../../stores"
+    import { activePage, activePopup, activeStage, activeStyle, alertMessage, currentOutputSettings, ndiData, os, outputDisplay, outputs, saved, settingsTab, stageShows, styles, toggleOutputEnabled } from "../../../stores"
     import { newToast } from "../../../utils/common"
     import { translateText } from "../../../utils/language"
     import { destroy, receive, send } from "../../../utils/request"
@@ -58,11 +58,14 @@
             if (value) {
                 newToast("toast.output_capture_enabled")
 
-                const enabledOutputs = Object.values($outputs).filter(a => a.enabled && !a.stageOutput)
+                // auto enable transparent & invisible if more than 1 non invisible output enabled
+                const enabledOutputs = Object.values($outputs).filter((a) => a.enabled && !a.stageOutput && !a.invisible)
                 if (enabledOutputs.length > 1) {
                     updateOutput("transparent", true)
                     updateOutput("invisible", true)
                 }
+
+                ndiMenuOpened = true
             }
         } else if (key === "blackmagic") {
             if (value === true) {
@@ -86,7 +89,7 @@
 
             if (key === "ndi") {
                 if (!value) {
-                    ndiData.update(a => {
+                    ndiData.update((a) => {
                         delete a[outputId]
                         return a
                     })
@@ -183,6 +186,7 @@
         if (key === "name" || key === "groups") {
             alertMessage.set("settings.restart_for_change")
             activePopup.set("alert")
+            saved.set(false)
         }
     }
 
@@ -214,25 +218,25 @@
         // wait for current value to update
         setTimeout(() => {
             if (key === "deviceId") {
-                let device = blackmagicDevices.find(a => a.id === value)
+                let device = blackmagicDevices.find((a) => a.id === value)
                 if (!device) return
 
                 let displayModes = device.data?.displayModes || []
                 updateBlackmagicData(displayModes, "displayModes")
                 if (displayModes.length) {
                     // try setting to "preferred" modes, or set to first available
-                    updateBlackmagicData(displayModes.find(a => a.name === "1080i59.94" || a.name === "1080p29.97")?.name || displayModes[0]?.name, "displayMode")
+                    updateBlackmagicData(displayModes.find((a) => a.name === "1080i59.94" || a.name === "1080p29.97")?.name || displayModes[0]?.name, "displayMode")
                 }
             } else if (key === "displayMode") {
-                let device = blackmagicDevices.find(a => a.id === currentOutput?.blackmagicData?.deviceId)
+                let device = blackmagicDevices.find((a) => a.id === currentOutput?.blackmagicData?.deviceId)
                 if (!device) return
 
                 let displayModes = device.data?.displayModes || []
-                let modeData = displayModes.find(a => a.name === value) || {}
+                let modeData = displayModes.find((a) => a.name === value) || {}
                 if (!modeData.width) return
 
                 // pixel format
-                let pixelFormats = (modeData.videoModes || []).map(format => ({ name: format }))
+                let pixelFormats = (modeData.videoModes || []).map((format) => ({ name: format }))
                 updateBlackmagicData(pixelFormats, "pixelFormats")
                 updateBlackmagicData(pixelFormats[0]?.name, "pixelFormat")
 
@@ -253,37 +257,39 @@
         })
     }
 
-    $: activeOutputs = Object.values($outputs).filter(a => !a.stageOutput && a.enabled && a.active === true)
+    $: activeOutputs = Object.values($outputs).filter((a) => !a.stageOutput && a.enabled && a.active === true)
 
     // RECEIVE BLACKMAGIC DEVICES
 
     let listenerId = uid()
     onDestroy(() => destroy(BLACKMAGIC, listenerId))
     const receiveBMD = {
-        GET_DEVICES: data => {
-            blackmagicDevices = JSON.parse(data).map(a => ({ id: a.deviceHandle, name: a.displayName || a.modelName, data: { displayModes: a.inputDisplayModes } }))
+        GET_DEVICES: (data) => {
+            blackmagicDevices = JSON.parse(data).map((a) => ({ id: a.deviceHandle, name: a.displayName || a.modelName, data: { displayModes: a.inputDisplayModes } }))
             if (blackmagicDevices.length && !currentOutput?.blackmagicData?.deviceId) updateBlackmagicData(blackmagicDevices[0].id, "deviceId")
         }
     }
     receive(BLACKMAGIC, receiveBMD, listenerId)
 
     $: outputLabel = `${currentOutput?.bounds?.width || 1920}x${currentOutput?.bounds?.height || 1080}`
+
+    let ndiMenuOpened = false
 </script>
 
-{#if outputsList.filter(a => !a.stageOutput).length > 1 || !currentOutput?.enabled || currentOutput?.stageOutput}
-    <MaterialToggleSwitch label="settings.enabled" checked={currentOutput?.enabled} defaultValue={true} disabled={!currentOutput?.stageOutput && currentOutput?.enabled && activeOutputs.length < 2} on:change={e => _toggleOutput(e.detail)} />
+{#if outputsList.filter((a) => !a.stageOutput).length > 1 || !currentOutput?.enabled || currentOutput?.stageOutput}
+    <MaterialToggleSwitch label="settings.enabled" checked={currentOutput?.enabled} defaultValue={true} disabled={!currentOutput?.stageOutput && currentOutput?.enabled && activeOutputs.length < 2} on:change={(e) => _toggleOutput(e.detail)} />
 {/if}
 
 {#if stageId}
     <InputRow>
-        <MaterialPopupButton label="stage.stage_layout" value={stageId} name={$stageShows[stageId]?.name} icon="stage" popupId="select_stage_layout" on:change={e => updateOutput("stageOutput", e.detail)} />
+        <MaterialPopupButton label="stage.stage_layout" value={stageId} name={$stageShows[stageId]?.name} icon="stage" popupId="select_stage_layout" on:change={(e) => updateOutput("stageOutput", e.detail)} />
         {#if $stageShows[stageId]}
             <MaterialButton title="titlebar.edit" icon="edit" on:click={editStage} />
         {/if}
     </InputRow>
 {:else}
     <InputRow>
-        <MaterialPopupButton label="settings.active_style" value={styleId} name={$styles[styleId]?.name} icon="styles" popupId="select_style" on:change={e => updateOutput("style", e.detail)} allowEmpty />
+        <MaterialPopupButton label="settings.active_style" value={styleId} name={$styles[styleId]?.name} icon="styles" popupId="select_style" on:change={(e) => updateOutput("style", e.detail)} allowEmpty />
         {#if $styles[styleId]}
             <MaterialButton title="titlebar.edit" icon="edit" on:click={editStyle} />
         {/if}
@@ -297,29 +303,33 @@
 <Title label="settings.window" icon="window" />
 
 <MaterialPopupButton label="settings.output_screen" value={outputLabel} name={outputLabel} icon={currentOutput?.invisible ? "stage" : currentOutput?.boundsLocked ? "locked" : "screen"} popupId={currentOutput?.invisible ? "change_output_values" : "choose_screen"} />
-<MaterialToggleSwitch label="settings.always_on_top" checked={currentOutput?.alwaysOnTop !== false} defaultValue={true} disabled={currentOutput?.invisible} on:change={e => updateOutput("alwaysOnTop", e.detail)} />
+<MaterialToggleSwitch label="settings.always_on_top" checked={currentOutput?.alwaysOnTop !== false} defaultValue={true} disabled={currentOutput?.invisible} on:change={(e) => updateOutput("alwaysOnTop", e.detail)} />
 
 <!-- this will make the whole application "locked" so no other apps can be accessed, might increase performance, but generally not recommend -->
 <!-- disable on windows -->
 <!-- only <= 1.4.5 -->
 {#if $os.platform !== "win32" && currentOutput?.kioskMode === true}
-    <MaterialToggleSwitch label="settings.kiosk_mode" checked={currentOutput?.kioskMode === true} defaultValue={false} on:change={e => updateOutput("kioskMode", e.detail)} />
+    <MaterialToggleSwitch label="settings.kiosk_mode" checked={currentOutput?.kioskMode === true} defaultValue={false} on:change={(e) => updateOutput("kioskMode", e.detail)} />
 {/if}
 
 <!-- NDI -->
 <Title label="NDI®" icon="companion" />
 
-<MaterialToggleSwitch label="actions.enable NDI®" checked={currentOutput?.ndi} defaultValue={false} data={$ndiData[currentOutput?.id || ""]?.connections || null} on:change={e => updateOutput("ndi", e.detail)} />
+<InputRow arrow={currentOutput?.ndi} bind:open={ndiMenuOpened}>
+    <MaterialToggleSwitch label="actions.enable NDI®" style="width: 100%;" checked={currentOutput?.ndi} defaultValue={false} data={$ndiData[currentOutput?.id || ""]?.connections || null} on:change={(e) => updateOutput("ndi", e.detail)} />
 
-{#if currentOutput?.ndi}
-    <MaterialToggleSwitch label="preview.audio" checked={currentOutput.ndiData?.audio} defaultValue={false} on:change={e => updateNdiData(e.detail, "audio")} />
-    <MaterialDropdown label="settings.frame_rate" value={currentOutput.ndiData?.framerate || "30"} defaultValue="30" options={framerates} on:change={e => updateNdiData(e.detail, "framerate")} />
+    <svelte:fragment slot="menu">
+        {#if currentOutput}
+            <InputRow>
+                <MaterialTextInput label="inputs.name" value={currentOutput.ndiData?.name || `FreeShow NDI${currentOutput.name ? ` - ${currentOutput.name}` : ""}`} defaultValue={`FreeShow NDI${currentOutput.name ? ` - ${currentOutput.name}` : ""}`} on:change={(e) => updateNdiData(e.detail, "name")} />
+                <MaterialTextInput label="inputs.group" title="settings.comma_seperated" value={currentOutput.ndiData?.groups || ""} defaultValue="" placeholder="public" on:change={(e) => updateNdiData(e.detail, "groups")} />
+            </InputRow>
 
-    <InputRow>
-        <MaterialTextInput label="inputs.name" value={currentOutput.ndiData?.name || `FreeShow NDI${currentOutput.name ? ` - ${currentOutput.name}` : ""}`} defaultValue={`FreeShow NDI${currentOutput.name ? ` - ${currentOutput.name}` : ""}`} on:change={e => updateNdiData(e.detail, "name")} />
-        <MaterialTextInput label="inputs.group" title="settings.comma_seperated" value={currentOutput.ndiData?.groups || ""} placeholder="public" on:change={e => updateNdiData(e.detail, "groups")} />
-    </InputRow>
-{/if}
+            <MaterialToggleSwitch label="preview.audio" checked={currentOutput.ndiData?.audio} defaultValue={false} on:change={(e) => updateNdiData(e.detail, "audio")} />
+            <MaterialDropdown label="settings.frame_rate" value={currentOutput.ndiData?.framerate || "30"} defaultValue="30" options={framerates} on:change={(e) => updateNdiData(e.detail, "framerate")} />
+        {/if}
+    </svelte:fragment>
+</InputRow>
 
 <!-- Blackmagic -->
 <!-- BLACKMAGIC CURRENTLY NOT WORKING -->
@@ -335,27 +345,27 @@
 {#if currentOutput?.blackmagic}
     <CombinedInput>
         <p><T id="settings.device" /></p>
-        <Dropdown value={blackmagicDevices.find(a => a.id === currentOutput?.blackmagicData?.deviceId)?.name || "—"} options={blackmagicDevices} on:click={e => updateBlackmagicData(e, "deviceId")} />
+        <Dropdown value={blackmagicDevices.find((a) => a.id === currentOutput?.blackmagicData?.deviceId)?.name || "—"} options={blackmagicDevices} on:click={(e) => updateBlackmagicData(e, "deviceId")} />
     </CombinedInput>
 
     {#if currentOutput.blackmagicData?.deviceId}
         <CombinedInput>
             <p><T id="settings.display_mode" /></p>
-            <Dropdown value={currentOutput.blackmagicData?.displayModes?.find(a => a.name === currentOutput?.blackmagicData?.displayMode)?.name || "—"} options={currentOutput.blackmagicData?.displayModes || []} on:click={e => updateBlackmagicData(e, "displayMode")} />
+            <Dropdown value={currentOutput.blackmagicData?.displayModes?.find((a) => a.name === currentOutput?.blackmagicData?.displayMode)?.name || "—"} options={currentOutput.blackmagicData?.displayModes || []} on:click={(e) => updateBlackmagicData(e, "displayMode")} />
         </CombinedInput>
 
         <CombinedInput>
             <p><T id="settings.pixel_format" /></p>
-            <Dropdown value={currentOutput.blackmagicData?.pixelFormats?.find(a => a.name === currentOutput?.blackmagicData?.pixelFormat)?.name || "—"} options={currentOutput.blackmagicData?.pixelFormats || []} on:click={e => updateBlackmagicData(e, "pixelFormat")} />
+            <Dropdown value={currentOutput.blackmagicData?.pixelFormats?.find((a) => a.name === currentOutput?.blackmagicData?.pixelFormat)?.name || "—"} options={currentOutput.blackmagicData?.pixelFormats || []} on:click={(e) => updateBlackmagicData(e, "pixelFormat")} />
         </CombinedInput>
 
-        <MaterialToggleSwitch label="settings.alpha_key" checked={currentOutput.blackmagicData?.alphaKey} on:change={e => updateBlackmagicData(e.detail, "alphaKey")} />
+        <MaterialToggleSwitch label="settings.alpha_key" checked={currentOutput.blackmagicData?.alphaKey} on:change={(e) => updateBlackmagicData(e.detail, "alphaKey")} />
     {/if}
 {/if}
 
 {#if currentOutput?.ndi || currentOutput?.blackmagic}
     <br />
 
-    <MaterialToggleSwitch label="settings.transparent" checked={currentOutput.transparent} defaultValue={true} on:change={e => updateOutput("transparent", e.detail)} />
-    <MaterialToggleSwitch label="settings.invisible_window" checked={currentOutput.invisible} defaultValue={true} on:change={e => updateOutput("invisible", e.detail)} />
+    <MaterialToggleSwitch label="settings.transparent" checked={currentOutput.transparent} defaultValue={true} on:change={(e) => updateOutput("transparent", e.detail)} />
+    <MaterialToggleSwitch label="settings.invisible_window" checked={currentOutput.invisible} defaultValue={true} on:change={(e) => updateOutput("invisible", e.detail)} />
 {/if}

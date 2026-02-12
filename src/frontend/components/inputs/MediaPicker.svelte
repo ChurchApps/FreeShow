@@ -24,7 +24,7 @@
     }
 
     let dispatch = createEventDispatcher()
-    let listenerId = receiveToMain(ToMain.OPEN_FILE2, data => {
+    let listenerId = receiveToMain(ToMain.OPEN_FILE2, (data) => {
         if (data.id !== id || data.channel !== "MEDIA" || !data.files?.length) return
 
         dispatch("picked", multiple ? data.files : data.files[0])

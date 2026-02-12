@@ -32,10 +32,10 @@
 <MaterialButton class="popup-options {showMore ? 'active' : ''}" icon="options" iconSize={1.3} title={showMore ? "actions.close" : "create_show.more_options"} on:click={() => (showMore = !showMore)} white />
 
 {#if showMore}
-    <MaterialToggleSwitch label="actions.case_sensitive" checked={caseSentitive} defaultValue={true} on:change={e => (caseSentitive = e.detail)} />
+    <MaterialToggleSwitch label="actions.case_sensitive" checked={caseSentitive} defaultValue={true} on:change={(e) => (caseSentitive = e.detail)} />
 {/if}
-<MaterialTextInput label="actions.find" value={findValue} on:change={e => (findValue = e.detail)} autofocus />
-<MaterialTextInput label="actions.replace" value={replaceValue} on:change={e => (replaceValue = e.detail)} />
+<MaterialTextInput label="actions.find" value={findValue} on:change={(e) => (findValue = e.detail)} autofocus />
+<MaterialTextInput label="actions.replace" value={replaceValue} on:change={(e) => (replaceValue = e.detail)} />
 
 <MaterialButton style="margin-top: 20px;" variant="contained" on:click={replace}>
     <Icon id="find_replace" size={1.2} white />

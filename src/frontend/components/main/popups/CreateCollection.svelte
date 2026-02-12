@@ -8,9 +8,9 @@
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialCheckbox from "../../inputs/MaterialCheckbox.svelte"
 
-    $: scripturesList = keysToID($scriptures).filter(a => !a.collection)
-    $: localScripturesList = sortByName(scripturesList.filter(a => !a.api))
-    $: apiScripturesList = sortByName(scripturesList.filter(a => a.api))
+    $: scripturesList = keysToID($scriptures).filter((a) => !a.collection)
+    $: localScripturesList = sortByName(scripturesList.filter((a) => !a.api))
+    $: apiScripturesList = sortByName(scripturesList.filter((a) => a.api))
 
     let selectedScriptures: string[] = []
 
@@ -30,8 +30,8 @@
         let versions: string[] = selectedScriptures
 
         // remove collections and non-string items
-        versions = versions.filter(id => typeof id === "string") // sometimes the bibles object is added
-        versions = versions.filter(id => !Object.entries($scriptures).find(([tabId, a]) => (tabId === id || a.id === id) && a.collection !== undefined))
+        versions = versions.filter((id) => typeof id === "string") // sometimes the bibles object is added
+        versions = versions.filter((id) => !Object.entries($scriptures).find(([tabId, a]) => (tabId === id || a.id === id) && a.collection !== undefined))
         if (versions.length < 2) return
 
         let name = ""
@@ -40,12 +40,12 @@
             if (id.length < 5) {
                 name += id.toUpperCase()
             } else {
-                const bibleName: string = ($scriptures[id] || Object.values($scriptures).find(a => a.id === id))?.name || ""
+                const bibleName: string = ($scriptures[id] || Object.values($scriptures).find((a) => a.id === id))?.name || ""
                 name += getShortBibleName(bibleName)
             }
         })
 
-        scriptures.update(a => {
+        scriptures.update((a) => {
             a[uid()] = { name, collection: { versions } }
             return a
         })
@@ -57,7 +57,7 @@
 <div class="list">
     {#each localScripturesList as scripture}
         <div class="item">
-            <MaterialCheckbox style="width: 100%;" label={scripture.customName || scripture.name} on:change={e => toggle(e.detail, scripture.id)} />
+            <MaterialCheckbox style="width: 100%;" label={scripture.customName || scripture.name} on:change={(e) => toggle(e.detail, scripture.id)} />
         </div>
     {/each}
 
@@ -67,7 +67,7 @@
 
     {#each apiScripturesList as scripture}
         <div class="item">
-            <MaterialCheckbox style="width: 100%;" label={scripture.customName || scripture.name} on:change={e => toggle(e.detail, scripture.id)} />
+            <MaterialCheckbox style="width: 100%;" label={scripture.customName || scripture.name} on:change={(e) => toggle(e.detail, scripture.id)} />
         </div>
     {/each}
 </div>

@@ -21,7 +21,7 @@ type MidiValues = { name: string }[]
 // https://jazz-soft.net/doc/JZZ/jzz.html#info
 // https://jazz-soft.net/doc/JZZ/midiin.html#info
 export function getMidiOutputs(): { name: string }[] {
-    return (JZZ().info().outputs as MidiValues).map(a => ({ name: a.name }))
+    return (JZZ().info().outputs as MidiValues).map((a) => ({ name: a.name }))
 }
 
 export function getMidiInputs(): { name: string }[] {

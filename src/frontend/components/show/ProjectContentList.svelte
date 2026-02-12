@@ -1,16 +1,22 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
+    import { fade } from "svelte/transition"
     import type { ProjectShowRef, Tree } from "../../../types/Projects"
     import { ShowType } from "../../../types/Show"
-    import { actions, activeFocus, activeProject, activeShow, drawer, focusMode, fullColors, labelsDisabled, projects, projectView, shows, special } from "../../stores"
+    import { addProjectItem, addToProject, updateRecentlyAddedFiles } from "../../converters/project"
+    import { actions, activeFocus, activePopup, activeProject, activeShow, contextActive, drawer, focusMode, fullColors, labelsDisabled, projects, projectView, recentFiles, selected, shows, special } from "../../stores"
+    import { triggerFunction } from "../../utils/common"
     import { getAccess } from "../../utils/profile"
     import { getActionIcon } from "../actions/actions"
     import { getTimeUntilClock } from "../drawer/timers/timers"
+    import { openDrawer } from "../edit/scripts/edit"
+    import { clone } from "../helpers/array"
     import { getContrast } from "../helpers/color"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
-    import { getFileName, removeExtension } from "../helpers/media"
+    import { getExtension, getFileName, getMediaType, removeExtension } from "../helpers/media"
     import T from "../helpers/T.svelte"
+    import { joinTimeBig } from "../helpers/time"
     import FloatingInputs from "../input/FloatingInputs.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
     import ShowButton from "../inputs/ShowButton.svelte"
@@ -18,7 +24,6 @@
     import Center from "../system/Center.svelte"
     import DropArea from "../system/DropArea.svelte"
     import SelectElem from "../system/SelectElem.svelte"
-    import { joinTimeBig } from "../helpers/time"
 
     export let tree: Tree[]
     export let recentlyUsedList: any[] = []
@@ -33,9 +38,9 @@
         let time = tree.length * 0.5 + 20
         setTimeout(() => {
             if (!scrollElem) return
-            const projectElements = [...(scrollElem.querySelectorAll(".listSection") || [])].map(a => a?.querySelectorAll("button") || [])
-            const flattened = projectElements.flatMap(item => Array.from(item))
-            const activeProjectItem = flattened.findLast(a => a?.classList.contains("isActive"))
+            const projectElements = [...(scrollElem.querySelectorAll(".listSection") || [])].map((a) => a?.querySelectorAll("button") || [])
+            const flattened = projectElements.flatMap((item) => Array.from(item))
+            const activeProjectItem = flattened.findLast((a) => a?.classList.contains("isActive"))
             if (!activeProjectItem) return
 
             offset = Math.max(0, ((activeProjectItem.closest("#show") as HTMLElement)?.offsetTop || 0) + scrollElem.offsetTop - ($drawer.height < 400 ? 120 : 20))
@@ -50,13 +55,13 @@
     function findShowInProject() {
         if (!$projects[$activeProject!]?.shows) return
 
-        let i = $projects[$activeProject!].shows.findIndex(p => p.id === $activeShow?.id)
+        let i = $projects[$activeProject!].shows.findIndex((p) => p.id === $activeShow?.id)
         let pos: number = i > -1 ? i : ($activeShow?.index ?? -1)
 
         // ($activeShow?.type !== "video" && $activeShow?.type !== "image")
         if (pos < 0 || $activeShow?.index === pos) return
 
-        activeShow.update(a => {
+        activeShow.update((a) => {
             a!.index = pos
             return a
         })
@@ -75,11 +80,11 @@
     }
 
     $: activeProjectParent = $activeProject ? $projects[$activeProject]?.parent : ""
-    $: projectReadOnly = readOnly || profile[activeProjectParent] === "read" || tree.find(a => a.id === activeProjectParent)?.readOnly
+    $: projectReadOnly = readOnly || profile[activeProjectParent] === "read" || tree.find((a) => a.id === activeProjectParent)?.readOnly
 
     $: projectItemsList = $projects[$activeProject || ""]?.shows || []
 
-    $: lessVisibleSection = projectItemsList.length > 10 || projectItemsList.some(a => a.type === "section")
+    $: lessVisibleSection = projectItemsList.length > 10 || projectItemsList.length < 1 || projectItemsList.some((a) => a.type === "section")
 
     let splittedProjectsList: { color: string; items: ProjectShowRef[] }[] = []
     $: if (projectItemsList) splitProjectItemsToSections()
@@ -90,20 +95,36 @@
             // Cannot create property 'index' on string 'uid'
             if (typeof a !== "object") return
 
-            if (a.type === "section" && (a.color || projectItemsList[index - 1]?.type === "section")) splittedProjectsList.push({ color: a.color || "", items: [] })
-            if (!splittedProjectsList.at(-1)) splittedProjectsList.push({ color: "", items: [] })
+            const previousItem = projectItemsList[index - 1]
+
+            if (!splittedProjectsList.at(-1)) newSection()
+            else if (a.type === "section" && (a.color || previousItem?.type === "section")) newSection()
+            else if (previousItem?.type !== "section" && a.type !== "section" && a.type !== previousItem?.type) newSection()
 
             a.index = index
             splittedProjectsList.at(-1)!.items.push(a)
+
+            function newSection() {
+                splittedProjectsList.push({ color: a.color || "", items: [] })
+            }
         })
+    }
+
+    function createShow() {
+        activePopup.set("show")
+        openDrawer("shows")
+    }
+    function openSearch() {
+        openDrawer("shows")
+        triggerFunction("drawer_search")
     }
 
     onMount(() => {
         // convert section times in title to actual times
-        projects.update(a => {
+        projects.update((a) => {
             if (!a[$activeProject || ""]?.shows) return a
 
-            a[$activeProject!].shows = a[$activeProject!].shows.map(item => {
+            a[$activeProject!].shows = a[$activeProject!].shows.map((item) => {
                 if (item.type !== "section") return item
 
                 // prefixed clock time, like "12:00 Title"
@@ -131,10 +152,51 @@
     let closestTime = 0
     $: {
         closestTime = 0
-        projectItemsList?.find(a => {
+        projectItemsList?.find((a) => {
             const timeLeft = getTimeUntilClock(a.data?.time, today)
             if (timeLeft > 0 && (!closestTime || timeLeft < closestTime)) closestTime = timeLeft
         })
+    }
+
+    // remove files already in project - max 5
+    $: recommended = $recentFiles.projectMedia
+        .filter((a) => !projectItemsList.find((b) => b.id === a))
+        .sort((a, b) => a.localeCompare(b))
+        .slice(0, 5)
+
+    // "Add to project" button
+
+    let canAddToProject = false
+    $: if ($contextActive && $selected) checkCanAddToProject()
+    else canAddToProject = false
+    const validIds = ["show_drawer", "player", "media", "audio", "overlay"]
+
+    function checkCanAddToProject() {
+        canAddToProject = false
+        if (readOnly || !$activeProject || !validIds.includes($selected?.id || "")) return
+        canAddToProject = true
+    }
+
+    function addSelectedToProject() {
+        if (readOnly || !$activeProject || !validIds.includes($selected.id || "")) return
+
+        let data = clone($selected.data)
+        if (!data?.length) return
+
+        if ($selected.id === "overlay") data = data.map((id: string) => ({ id, type: "overlay" }))
+        else if ($selected.id === "player") data = data.map((id: string) => ({ id, type: "player" }))
+        else if ($selected.id === "audio") data = data.filter((a) => a.path).map(({ path, name }) => ({ id: path, name, type: "audio" }))
+        else if ($selected.id === "media")
+            data = data
+                .filter((a) => a.path)
+                .map(({ path, name }) => ({
+                    id: path,
+                    name,
+                    type: getMediaType(path.slice(path.lastIndexOf(".") + 1, path.length))
+                }))
+
+        data.forEach(addProjectItem)
+        contextActive.set(false)
     }
 </script>
 
@@ -152,14 +214,15 @@
                             {@const isLast = i === splittedItemsList.items.length - 1}
                             {@const borderRadiusStyle = `${isFirst ? "border-top-right-radius: 10px;" : ""}${isLast ? "border-bottom-right-radius: 10px;" : ""}`}
                             {@const sectionTime = show.data?.time ? getTimeUntilClock(show.data.time, today) : 0}
+                            {@const isActive = show.type === "section" ? ($focusMode ? $activeFocus.id === show.id : $activeShow?.id === show.id) : false}
 
                             <SelectElem id="show" dropAbove={isFirst} triggerOnHover data={{ ...show, name: show.name || removeExtension(getFileName(show.id)), index }} {fileOver} borders="edges" trigger="column" draggable>
                                 {#if show.type === "section"}
                                     <MaterialButton
-                                        isActive={$focusMode ? $activeFocus.id === show.id : $activeShow?.id === show.id}
-                                        class="section {projectReadOnly ? '' : `context #project_section__project ${show.color ? 'color-border' : ''}`}"
+                                        {isActive}
+                                        class="section {projectReadOnly ? '' : `context #project_section ${show.color ? 'color-border' : ''}`}"
                                         style="{borderRadiusStyle}justify-content: left;background-color: var(--primary-darkest);border-top: 1px solid var(--primary-lighter);padding: 0.1em 1em;{$fullColors ? `background-color: ${show.color || 'var(--primary-darker)'} !important;color: ${getContrast(show.color || '')};` : `border-bottom: 1px solid ${show.color || 'transparent'} !important;`}"
-                                        on:click={e => {
+                                        on:click={(e) => {
                                             if (e.detail.ctrl) return
                                             if ($focusMode) activeFocus.set({ id: show.id, index, type: show.type })
                                             else activeShow.set({ ...show, index })
@@ -176,7 +239,7 @@
                                             </span>
                                         {/if}
 
-                                        <p style="min-height: 10px;">
+                                        <p style="min-height: 10px;max-width: 97%;">
                                             {#if show.name?.length}
                                                 {show.name}
                                             {:else}
@@ -189,29 +252,110 @@
                                         {/if}
 
                                         {#if triggerAction && $actions[triggerAction]}
-                                            <span style="display: flex;position: absolute;inset-inline-end: 5px;" data-title={$actions[triggerAction].name}>
+                                            <span style="display: flex;position: absolute;inset-inline-end: 7px;" data-title={$actions[triggerAction].name}>
                                                 <Icon id={getActionIcon(triggerAction)} size={0.8} white />
+                                            </span>
+                                        {/if}
+
+                                        {#if isActive}
+                                            <span class="arrow">
+                                                <Icon id="next" white />
                                             </span>
                                         {/if}
                                     </MaterialButton>
                                 {:else}
-                                    <ShowButton id={show.id} {show} {index} class={projectReadOnly ? "" : `context #${pcoLink ? "pco_item__" : ""}project_${getContextMenuId(show.type)}__project`} style={borderRadiusStyle} icon />
+                                    <ShowButton id={show.id} {show} {index} class={projectReadOnly ? "" : `context #${pcoLink ? "pco_item__" : ""}project_${getContextMenuId(show.type)}`} style={borderRadiusStyle} icon isProject />
                                 {/if}
                             </SelectElem>
                         {/each}
                     </div>
                 {/each}
+
+                <!-- suggestions -->
+                {#if recommended.length}
+                    <div class="section" style="margin-top: 50px;border-top: 1px solid var(--primary-lighter);background-color: var(--primary-darkest);padding: 2px 18px;display: flex;justify-content: space-between;align-items: center;">
+                        <T id="media.recommended" />
+
+                        <MaterialButton
+                            class="show"
+                            style="padding: 0.2em;border-radius: 2px;border-left: none;min-height: unset;"
+                            on:click={() => {
+                                recentFiles.update((a) => {
+                                    a.cleared = [...a.cleared, ...recommended]
+                                    return a
+                                })
+                                updateRecentlyAddedFiles()
+                            }}
+                            title="clear.general"
+                            tab
+                        >
+                            <Icon id="clear" size={0.9} white />
+                        </MaterialButton>
+                    </div>
+
+                    <div class="listSection">
+                        {#each recommended as path, i}
+                            {@const name = getFileName(path)}
+                            {@const type = getMediaType(getExtension(name))}
+                            {@const isFirst = i === 0}
+                            {@const isLast = i === recommended.length - 1}
+                            {@const borderRadiusStyle = `${isFirst ? "border-top-right-radius: 10px;" : ""}${isLast ? "border-bottom-right-radius: 10px;" : ""}`}
+                            {@const icon = type === "audio" ? "music" : type}
+
+                            <MaterialButton class="show context #recent_file__project" style="justify-content: space-between;padding: 0.35em 0.8em;font-weight: normal;{borderRadiusStyle}" on:click={() => addToProject(null, [path])} title="context.addToProject: <b>{name}</b>" tab>
+                                <span style="display: flex;align-items: center;gap: 8px;">
+                                    <Icon id={icon} size={0.9} white right />
+                                    <p style="min-height: 10px;">{removeExtension(name)}</p>
+                                </span>
+                                <Icon id="add" size={0.9} white right />
+                            </MaterialButton>
+                        {/each}
+                    </div>
+                {/if}
             {:else}
-                <Center faded>
-                    <T id="empty.general" />
+                <Center absolute>
+                    <span style="opacity: 0.5;"><T id="empty.general" /></span>
+
+                    <span style="padding-top: 20px" class="buttons">
+                        <MaterialButton variant="outlined" icon="add" title="tooltip.show [Ctrl+N]" on:click={createShow}>
+                            <T id="new.show" />
+                        </MaterialButton>
+
+                        <!-- <MaterialButton variant="outlined" title="actions.import [Ctrl+I]" on:click={() => activePopup.set("import")}>
+                            <Icon id="import" white />
+                            <T id="actions.import" />
+                        </MaterialButton> -->
+
+                        {#if Object.keys($shows).length > 10}
+                            <MaterialButton variant="outlined" title="tabs.search_tip [Ctrl+F]" on:click={openSearch}>
+                                <Icon id="search" white />
+                                <T id="main.search" />
+                            </MaterialButton>
+                        {/if}
+                    </span>
                 </Center>
             {/if}
         </DropArea>
     </Autoscroll>
+
+    {#if canAddToProject}
+        <div class="addToProject" role="none" on:mousedown={addSelectedToProject} transition:fade={{ duration: 50 }}>
+            <Icon id="add" size={2} white />
+            <T id="context.addToProject" />
+        </div>
+    {/if}
 </div>
 
 {#if $activeProject && !$projectView && !$focusMode && !recentlyUsedList.length && !projectReadOnly}
-    <FloatingInputs onlyOne round={lessVisibleSection}>
+    <FloatingInputs arrow let:open>
+        {#if open || $special.projectTimelineActive || $projects[$activeProject]?.timeline?.actions?.length}
+            <MaterialButton title="timeline.toggle_timeline" on:click={() => special.update((a) => ({ ...a, projectTimelineActive: !a.projectTimelineActive }))}>
+                <Icon size={1.3} id="timeline" white={!$special.projectTimelineActive} />
+            </MaterialButton>
+
+            <div class="divider"></div>
+        {/if}
+
         <MaterialButton icon="section" title="new.section" on:click={addSection} white={lessVisibleSection}>
             {#if !lessVisibleSection && !$labelsDisabled}<T id="new.section" />{/if}
         </MaterialButton>
@@ -272,4 +416,45 @@
         border-bottom: 2px solid var(--border-color);
         outline-color: var(--border-color);
     } */
+
+    .buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+    }
+    .buttons :global(button) {
+        justify-content: start;
+        padding: 8px 14px;
+        background-color: var(--primary-darker) !important;
+    }
+
+    .addToProject {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+
+        background-color: rgba(0, 0, 0, 0.3);
+        cursor: pointer;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+
+        z-index: 200;
+    }
+
+    .arrow {
+        position: absolute;
+        right: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+
+        opacity: 0.4;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
 </style>

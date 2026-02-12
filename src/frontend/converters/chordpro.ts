@@ -12,7 +12,7 @@ import { activePopup, alertMessage, dictionary, drawerTabsData, groups } from ".
 import { setTempShows } from "./importHelpers"
 import { DEFAULT_ITEM_STYLE } from "../components/edit/scripts/itemHelpers"
 
-const metaKeys = ["number", "title", "artist", "composer", "lyricist", "copyright", "year", "notes", "ccli", "t", "su", "k", "f"]
+const metaKeys = ["number", "title", "artist", "composer", "lyricist", "copyright", "year", "notes", "ccli", "t", "su", "k", "key", "f"]
 const chorus = ["start_of_chorus", "soc"]
 // const verse = ["start_of_verse", "sov"]
 // const end = ["end_of_chorus", "eoc", "end_of_verse", "eov"]
@@ -26,7 +26,7 @@ export function convertChordPro(data: any) {
     const tempShows: any[] = []
 
     setTimeout(() => {
-        data.forEach(file => {
+        data.forEach((file) => {
             let name: string = file.name
             const content = file.content
 
@@ -93,17 +93,27 @@ export function convertChordPro(data: any) {
                 // {title: Amazing Grace}
                 // Title: 10,000 Reasons (Bless the Lord)
                 if (line.includes(":")) {
-                    let metaKey = line.startsWith("{d_") ? "d_" : metaKeys.find(a => line.toLowerCase().includes(a + ":"))
-                    if (metaKey) {
+                    const trimmed = line.trim()
+                    const directiveMatch = trimmed.match(/^\{([a-z_]+)\s*:\s*(.*)\}$/i)
+                    const looseMatch = trimmed.match(/^([a-z_]+)\s*:\s*(.*)$/i)
+                    let metaKey = ""
+                    let metaValue = ""
+                    if (directiveMatch) {
+                        metaKey = directiveMatch[1].toLowerCase()
+                        metaValue = directiveMatch[2]
+                    } else if (looseMatch) {
+                        metaKey = looseMatch[1].toLowerCase()
+                        metaValue = looseMatch[2]
+                    }
+                    if (metaKey && metaKeys.includes(metaKey)) {
                         if (metaKey === "t") metaKey = "title"
                         if (metaKey === "lyricist") metaKey = "author"
                         if (metaKey === "su") metaKey = "publisher"
                         if (metaKey === "ccli" || metaKey === "d_ccli") metaKey = "CCLI"
                         if (metaKey === "f") metaKey = "copyright"
                         if (metaKey === "k") metaKey = "key"
-                        if (metaKey === "d_") metaKey = line.slice(3, line.indexOf(":"))
-                        metadata[metaKey] = line.slice(line.indexOf(":") + 1).trim()
-                        metadata[metaKey] = metadata[metaKey].replaceAll("}", "")
+                        if (metaKey === "d_") metaKey = metaValue.slice(0, metaValue.indexOf(":")).trim()
+                        metadata[metaKey] = metaValue.trim()
 
                         if (metaKey === "notes") {
                             notes = metadata[metaKey]
@@ -123,11 +133,11 @@ export function convertChordPro(data: any) {
 
                     // Environment
                     let group = ""
-                    const isChorus = chorus.find(a => line.includes(a))
+                    const isChorus = chorus.find((a) => line.includes(a))
                     if (isChorus) group = "chorus"
                     // else slides[slides.length - 1].globalGroup = "verse"
 
-                    const groupId = group || Object.keys(get(dictionary).groups || {}).find(a => line.toLowerCase().includes(a.replaceAll("_", "-")))
+                    const groupId = group || Object.keys(get(dictionary).groups || {}).find((a) => line.toLowerCase().includes(a.replaceAll("_", "-")))
 
                     if (groupId) {
                         slides[slides.length - 1].globalGroup = groupId
@@ -154,8 +164,9 @@ export function convertChordPro(data: any) {
                 let isChord = false
                 let letterIndex = 0
                 line = line.replaceAll("[/]", " ").replaceAll("[|]", "")
-                line.split("").forEach(char => {
-                    if ((char === "[" || char === "]") && !line.slice(0, -2).includes(":")) {
+                const isDirectiveLine = line.trim().startsWith("{") && line.includes(":")
+                line.split("").forEach((char) => {
+                    if ((char === "[" || char === "]") && !isDirectiveLine) {
                         isChord = char === "["
                         if (isChord) chords.push({ id: uid(5), pos: letterIndex, key: "" })
                         return
@@ -184,14 +195,14 @@ export function convertChordPro(data: any) {
 
             // repeat repeated slides
             const newSlides: Slide[] = []
-            slides.forEach(slide => {
+            slides.forEach((slide) => {
                 const repeat: number = (slide as any).repeat ?? 1
                 delete (slide as any).repeat
                 slide.id = uid()
 
                 // replace with matching
                 if (!slide.items.length) {
-                    const matching = slides.find(a => a.group === slide.group && a.items)
+                    const matching = slides.find((a) => a.group === slide.group && a.items)
                     slide.items = matching?.items || []
                     if (matching?.id) slide.id = matching.id
                 }
@@ -216,7 +227,7 @@ function createShow({ slides, metadata, name, notes }) {
     let show = new ShowObj(false, category, layoutID)
 
     // remove empty slides
-    slides = slides.filter(a => a.items.length)
+    slides = slides.filter((a) => a.items.length)
 
     const layouts = getLayout(slides)
     const newSlides: any = {}
@@ -238,6 +249,6 @@ function createShow({ slides, metadata, name, notes }) {
 }
 
 function getLayout(slides: Slide[]) {
-    const layout: any[] = slides.map(a => ({ id: a.id || uid() }))
+    const layout: any[] = slides.map((a) => ({ id: a.id || uid() }))
     return layout
 }

@@ -9,7 +9,7 @@
     export let label: string
     export let channels: { id: string; label: string }[]
 
-    const channelIds = channels.map(a => a.id)
+    const channelIds = channels.map((a) => a.id)
 
     $: hasChanged = Object.entries($audioChannelsData).some(([id, a]) => channelIds.includes(id) && (a.isMuted || (a.volume ?? 1) < 1))
     $: if (hasChanged) expanded = true
@@ -20,7 +20,7 @@
     }
 
     function resetSection() {
-        audioChannelsData.update(a => {
+        audioChannelsData.update((a) => {
             for (const channelId of channelIds) {
                 delete a[channelId]
             }

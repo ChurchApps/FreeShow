@@ -23,7 +23,7 @@ export function initSocket() {
         send("PASSWORD")
     })
 
-    socket.on("REMOTE", msg => {
+    socket.on("REMOTE", (msg) => {
         let key = msg.channel as ReceiverKey
         if (!receiver[key]) {
             if (msg.data !== null) console.log("Unhandled message:", msg)

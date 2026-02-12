@@ -13,7 +13,7 @@ import { loadShows } from "../helpers/setShow"
 import { formatToFileName } from "../helpers/show"
 import { _show } from "../helpers/shows"
 
-export async function exportProject(project: Project, projectId: string) {
+export async function exportProject(project: Project, projectId: string, savePath?: string) {
     if (!project) return
 
     const shows: Shows = {}
@@ -27,6 +27,7 @@ export async function exportProject(project: Project, projectId: string) {
     const parentFolder = get(folders)[project.parent]?.name || ""
     if (projectId) project.id = projectId
     project.parent = "/" // place on root
+    delete project.sourcePath
 
     // project items
     const getProjectItems = {
@@ -36,7 +37,7 @@ export async function exportProject(project: Project, projectId: string) {
             const refs = _show(showRef.id).layouts().ref()
             const mediaIds: string[] = []
 
-            refs.forEach(ref => {
+            refs.forEach((ref) => {
                 ref.forEach(({ data }: { data: SlideData }) => {
                     // background
                     const background = data.background
@@ -52,13 +53,13 @@ export async function exportProject(project: Project, projectId: string) {
 
                     // actions
                     const actionIds = data.actions?.slideActions || []
-                    actionIds.forEach(a => getAction(a.id))
+                    actionIds.forEach((a) => getAction(a.id))
                 })
             })
 
             // get media file paths
-            const mediaData = _show(showRef.id).get("media")
-            mediaIds.forEach(id => {
+            const mediaData = _show(showRef.id).get("media") || {}
+            mediaIds.forEach((id) => {
                 const path = mediaData[id]?.path || mediaData[id]?.id
                 if (!path || path.includes("http")) return
                 getFile(path)
@@ -67,7 +68,7 @@ export async function exportProject(project: Project, projectId: string) {
             // get media from "Media" items
             const slides = shows[showRef.id]?.slides || {}
             Object.values(slides).forEach(({ items }) => {
-                items.forEach(item => {
+                items.forEach((item) => {
                     if (item.type === "media") {
                         getFile(item.src)
                     }
@@ -94,7 +95,7 @@ export async function exportProject(project: Project, projectId: string) {
     const projectItems = project.shows
 
     // load shows
-    const showIds = projectItems.filter(a => (a.type || "show") === "show").map(a => a.id)
+    const showIds = projectItems.filter((a) => (a.type || "show") === "show").map((a) => a.id)
     await loadShows(showIds)
 
     projectItems.map(getItem)
@@ -112,7 +113,7 @@ export async function exportProject(project: Project, projectId: string) {
         projectData.files = files
 
         const mediaData: any = {}
-        files.forEach(path => {
+        files.forEach((path) => {
             if (!get(media)[path]) return
 
             const data = clone(get(media)[path])
@@ -126,7 +127,7 @@ export async function exportProject(project: Project, projectId: string) {
     }
 
     // export to file
-    send(EXPORT, ["GENERATE"], { type: "project", name: formatToFileName(project.name), file: projectData })
+    send(EXPORT, ["GENERATE"], { type: "project", name: formatToFileName(project.name), file: projectData, path: savePath })
 
     function getItem(showRef: ProjectShowRef) {
         const type = showRef.type || "show"
@@ -150,7 +151,7 @@ export async function exportProject(project: Project, projectId: string) {
         overlays[id] = clone(get(overlayStores)[id])
 
         // get media data from overlay "Media" items
-        get(overlayStores)[id].items.forEach(item => {
+        get(overlayStores)[id].items.forEach((item) => {
             if (item.type === "media" && item.src) {
                 getFile(item.src)
             }

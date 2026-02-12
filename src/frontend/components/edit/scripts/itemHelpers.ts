@@ -12,20 +12,21 @@ import { dynamicValueText, getVariableValue, replaceDynamicValues } from "../../
 import { _show } from "../../helpers/shows"
 import { getStyles, removeText } from "../../helpers/style"
 import { itemBoxes } from "../values/boxes"
-import { getItemText } from "./textStyle"
+import { getLikelyPosition } from "./autoPosition"
+import { getItemText, setCaret } from "./textStyle"
 
-export const DEFAULT_ITEM_STYLE = "top:120px;left:50px;height:840px;width:1820px;"
+export const DEFAULT_ITEM_STYLE = "top:88px;left:50px;height:904px;width:1820px;"
 
 function getDefaultStyles(type: ItemType, templateItems: Item[] | null = null) {
     // Get position styles from template or use default from boxes.ts
-    const positionStyle = templateItems?.find(a => (a.type || "text") === type)?.style || DEFAULT_ITEM_STYLE
+    const positionStyle = templateItems?.find((a) => (a.type || "text") === type)?.style || DEFAULT_ITEM_STYLE
 
     // Get default styles from boxes configuration
     const boxDefaults = itemBoxes[type]?.sections?.font?.inputs?.flat() || []
     let styleString = positionStyle
 
     // Add default font styles if they exist
-    boxDefaults.forEach(def => {
+    boxDefaults.forEach((def) => {
         if (def.type === "toggle" || def.type === "radio") return
         if (def.key && def.value) {
             styleString += `${def.key}:${def.value};`
@@ -35,7 +36,7 @@ function getDefaultStyles(type: ItemType, templateItems: Item[] | null = null) {
     return styleString
 }
 
-export function addItem(type: ItemType, id: string | null = null, options: any = {}, textValue = "") {
+export function addItem(type: ItemType, id: string | null = null, options: any = {}, textValue = "", customStyles: { [key: string]: string } | null = null) {
     const activeTemplate: string | null = get(activeShow)?.id ? get(showsCache)[get(activeShow)!.id]?.settings?.template : null
     const template = activeTemplate ? get(templates)[activeTemplate]?.items : null
 
@@ -45,8 +46,22 @@ export function addItem(type: ItemType, id: string | null = null, options: any =
     }
     if (id) newData.id = id
 
-    // selected item is always on top, deselect to make new item on top
-    activeEdit.set({ ...get(activeEdit), items: [] })
+    const currentItems = getEditItems()
+    const itemsCount = currentItems.length
+    if (itemsCount && itemsCount >= (template?.length || 0)) newData.style = getLikelyPosition(currentItems, newData.style)
+
+    // set custom style values (like position)
+    if (customStyles) {
+        const styles = getStyles(newData.style)
+        Object.entries(customStyles).forEach(([key, value]) => {
+            styles[key] = value
+        })
+        newData.style = ""
+        Object.entries(styles).forEach((obj) => (newData.style += obj[0] + ":" + obj[1] + ";"))
+    }
+
+    // deselect previous selection & select new item
+    activeEdit.set({ ...get(activeEdit), items: [itemsCount] })
 
     if (type === "text") newData.lines = [{ align: template?.[0]?.lines?.[0]?.align || "", text: [{ value: textValue, style: template?.[0]?.lines?.[0]?.text?.[0]?.style || "" }] }]
     if (type === "list") newData.list = { items: [] }
@@ -110,6 +125,19 @@ export function addItem(type: ItemType, id: string | null = null, options: any =
         // overlay, template
         history({ id: "UPDATE", newData: { data: newData, key: "items", index: -1 }, oldData: { id: get(activeEdit).id }, location: { page: "edit", id: get(activeEdit).type } })
     }
+
+    // set caret ready for typing
+    if (type === "text" && textValue === "") {
+        // wait for elem to be created
+        setTimeout(() => {
+            // get last item elem
+            const elem = Array.from(document.querySelectorAll(".editItem") || [])
+                .at(-1)
+                ?.querySelector(".edit")
+            if (elem) (elem as HTMLElement).focus()
+            setCaret(elem, { line: 0, pos: 0 })
+        })
+    }
 }
 
 export function getEditSlide() {
@@ -163,7 +191,7 @@ export function rearrangeItems(type: string, startIndex: number = get(activeEdit
         history({ id: "UPDATE", newData: { data: items, key: "items" }, oldData: { id: get(activeEdit).id }, location: { page: "edit", id: get(activeEdit).type, override: "rearrange_items" } })
     }
 
-    activeEdit.update(a => {
+    activeEdit.update((a) => {
         // update selected edit item, because it has changed!
         // could set to selected: startIndex, but that's confusing because selected is always in front!
         a.items = []
@@ -177,7 +205,7 @@ export function rearrangeStageItems(type: string, itemId: string = get(activeSta
     let items = getSortedStageItems()
     if (!items?.length || !itemId) return
 
-    let startIndex = items.findIndex(a => a.id === itemId)
+    let startIndex = items.findIndex((a) => a.id === itemId)
     if (startIndex < 0) return
 
     const currentItem = items.splice(startIndex, 1)[0]
@@ -190,12 +218,13 @@ export function rearrangeStageItems(type: string, itemId: string = get(activeSta
     items = [...items.slice(0, startIndex), currentItem, ...items.slice(startIndex)]
     if (!items?.length || items.length < 2) return
 
-    stageShows.update(a => {
-        a[get(activeStage).id!].itemOrder = items.map(item => item.id)
+    stageShows.update((a) => {
+        a[get(activeStage).id!].itemOrder = items.map((item) => item.id)
+        a[get(activeStage).id!].modified = Date.now()
         return a
     })
 
-    activeStage.update(a => {
+    activeStage.update((a) => {
         a.items = []
         return a
     })
@@ -211,14 +240,15 @@ export function getSortedStageItems(stageId = get(activeStage).id, _updater: any
     const itemOrder = stageShow.itemOrder || Object.keys(stageShow.items)
     // if ((stageShow.itemOrder || [])?.length !== Object.keys(stageShow.items).length) {
     if (!stageShow.itemOrder) {
-        stageShows.update(a => {
+        stageShows.update((a) => {
             a[stageId].itemOrder = itemOrder
+            a[stageId].modified = Date.now()
             return a
         })
     }
 
     const sortedItems: (StageItem & { id: string })[] = []
-    itemOrder.forEach(itemId => {
+    itemOrder.forEach((itemId) => {
         const item = stageShow.items[itemId]
         if (!item) return
         sortedItems.push({ ...item, id: itemId })
@@ -229,7 +259,7 @@ export function getSortedStageItems(stageId = get(activeStage).id, _updater: any
 
 export function updateSortedStageItems() {
     const stageId = get(activeStage).id || ""
-    stageShows.update(a => {
+    stageShows.update((a) => {
         const stageLayout = a[stageId]
         if (!stageLayout) return a
 
@@ -237,11 +267,12 @@ export function updateSortedStageItems() {
         let itemOrder = stageLayout.itemOrder || currentItemIds
 
         // remove items not existing anymore
-        itemOrder = itemOrder.filter(id => currentItemIds.includes(id))
+        itemOrder = itemOrder.filter((id) => currentItemIds.includes(id))
         // add any new items
-        const newItems = currentItemIds.filter(id => !itemOrder.includes(id))
+        const newItems = currentItemIds.filter((id) => !itemOrder.includes(id))
 
         a[stageId].itemOrder = [...itemOrder, ...newItems]
+        a[stageId].modified = Date.now()
         return a
     })
 }
@@ -253,7 +284,7 @@ export function shouldItemBeShown(item: Item, allItems: Item[] = [], { outputId,
     if (type === "stage") allItems = getTempItems(item, allItems)
 
     if (!allItems.length) allItems = [item]
-    const slideItems = allItems.filter(a => !a?.bindings?.length || a.bindings.includes(outputId))
+    const slideItems = allItems.filter((a) => !a?.bindings?.length || a.bindings.includes(outputId))
     const itemsText = slideItems.reduce((value, currentItem) => (value += getItemText(currentItem)), "")
     // set dynamic values
     // const ref = { showId: get(activeShow)?.id, layoutId: _show().get("settings.activeLayout"), slideIndex: get(activeEdit).slide, type: get(activePage) === "stage" ? "stage" : get(activeEdit).type || "show", id: get(activeEdit).id }
@@ -296,10 +327,10 @@ export function isConditionMet(condition: Condition | undefined, itemsText: stri
     }
 
     // outerOr
-    const conditionMet = !!condition.find(outerAnd => {
-        return outerAnd.every(innerOr => {
-            return !!innerOr.find(innerAnd => {
-                return innerAnd.every(content => {
+    const conditionMet = !!condition.find((outerAnd) => {
+        return outerAnd.every((innerOr) => {
+            return !!innerOr.find((innerAnd) => {
+                return innerAnd.every((content) => {
                     return checkConditionValue(content, itemsText, type)
                 })
             })
@@ -326,8 +357,11 @@ export function checkConditionValue(cVal: ConditionValue, itemsText: string, typ
     let value = ""
     if (element === "text") value = itemsText
     else if (element === "timer") value = getTimerValue(elementId)
-    else if (element === "variable") value = _getVariableValue(elementId)
-    else if (element === "dynamicValue") value = getDynamicValue(elementId, type)
+    else if (element === "variable") {
+        const val = _getVariableValue(elementId)
+        if (Array.isArray(val)) value = val[Number(cVal.index ?? 0)]
+        else value = val
+    } else if (element === "dynamicValue") value = getDynamicValue(elementId, type)
 
     if (operator === "is") {
         return value === dataValue
@@ -350,7 +384,7 @@ export function checkConditionValue(cVal: ConditionValue, itemsText: string, typ
 
 export function getFirstActiveTimer() {
     let firstTimerId = get(activeTimers)[0]?.id
-    if (!firstTimerId) firstTimerId = sortByName(keysToID(get(timers))).find(timer => timer.type !== "counter")?.id || ""
+    if (!firstTimerId) firstTimerId = sortByName(keysToID(get(timers))).find((timer) => timer.type !== "counter")?.id || ""
 
     return firstTimerId
 }
@@ -370,7 +404,7 @@ function isTimerRunning(timerId: string) {
         return value > 0
     }
 
-    return !!get(activeTimers).find(a => a.id === timerId)
+    return !!get(activeTimers).find((a) => a.id === timerId)
 }
 
 export function _getVariableValue(dynamicId: string) {

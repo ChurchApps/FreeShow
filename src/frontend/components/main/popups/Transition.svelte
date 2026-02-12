@@ -34,7 +34,7 @@
 
     // UPDATE
 
-    function changeTransition(id: TransitionTypes, key: "type" | "duration" | "easing" | "custom", value: any, reset = false) {
+    function changeTransition(id: TransitionTypes, key: "type" | "duration" | "easing" | "fadeInOffset" | "custom", value: any, reset = false) {
         if (key === "duration") value = Number(value)
 
         if ($popupData.trigger) {
@@ -58,7 +58,7 @@
                 slideItems[i].actions.transition = value
             })
 
-            let actions = indexes.map(i => slideItems[i].actions)
+            let actions = indexes.map((i) => slideItems[i].actions)
 
             if ($activeEdit.type === "overlay" || $activeEdit.type === "template") {
                 history({
@@ -85,10 +85,10 @@
             else slideMediaTransition = value
 
             let globalValues = $transitionData[id]
-            if (value.type === globalValues.type && value.duration === globalValues.duration && value.easing === globalValues.easing && !specificScenatios.find(a => value[a])) value = null
+            if (value.type === globalValues.type && value.duration === globalValues.duration && value.easing === globalValues.easing && !specificScenatios.find((a) => value[a])) value = null
 
             let type = id === "text" ? "transition" : "mediaTransition"
-            let indexes = $selected.data.map(a => a.index)
+            let indexes = $selected.data.map((a) => a.index)
             let override = "show#" + $activeShow?.id + "layout#" + _show().get("settings.activeLayout") + "indexes#" + indexes.join(",") + type
             history({ id: "SHOW_LAYOUT", newData: { key: type, data: value, indexes }, location: { page: "show", override } })
 
@@ -111,7 +111,7 @@
 
     // let updated: string[] = []
     // let updatedTimeout: NodeJS.Timeout | null = null
-    function updateSpecific(data: Transition, key: "type" | "duration" | "easing" | "custom", value: any, reset = false) {
+    function updateSpecific(data: Transition, key: "type" | "duration" | "easing" | "fadeInOffset" | "custom", value: any, reset = false) {
         if (!enableSpecific) {
             return { ...data, [key]: value }
         }
@@ -120,14 +120,14 @@
         let changeSpecific = [selectedSpecific]
         if (selectedSpecific === "in") {
             specificScenatios
-                .filter(a => a !== selectedSpecific)
-                .forEach(sKey => {
+                .filter((a) => a !== selectedSpecific)
+                .forEach((sKey) => {
                     if (!data[sKey] || JSON.stringify(data[sKey]) === JSON.stringify(data[selectedSpecific])) changeSpecific.push(sKey)
                 })
         }
 
         // set data
-        changeSpecific.forEach(sKey => {
+        changeSpecific.forEach((sKey) => {
             if (reset) {
                 delete data[sKey]
             } else {
@@ -234,7 +234,7 @@
 
     let enableSpecific = false
     let selectedSpecific: string = specificScenatios[0]
-    $: if (specificScenatios.find(a => currentTransitionFull?.[a]) || showMore) {
+    $: if (specificScenatios.find((a) => currentTransitionFull?.[a]) || showMore) {
         enableSpecific = true
     } else {
         selectedSpecific = specificScenatios[0]
@@ -250,7 +250,7 @@
     function reset() {
         const defaults = DEFAULT_TRANSITIONS[selectedType]
 
-        Object.keys(defaults).forEach(key => {
+        Object.keys(defaults).forEach((key) => {
             let defaultValue = defaults[key]
             // @ts-ignore
             changeTransition(selectedType, key, isSlide || isItem ? $transitionData[selectedType][key] || defaultValue : defaultValue, true)
@@ -305,15 +305,19 @@
 </div>
 
 {#if currentTransition.type === "slide"}
-    <MaterialDropdown label="transition.direction" style="margin-bottom: 10px;" options={slideTypes} value={currentTransition.custom?.direction || slideTypes[0].value} on:change={e => changeTransition(selectedType, "custom", { ...(currentTransition.custom || {}), direction: e.detail })} />
+    <MaterialDropdown label="transition.direction" style="margin-bottom: 10px;" options={slideTypes} value={currentTransition.custom?.direction || slideTypes[0].value} on:change={(e) => changeTransition(selectedType, "custom", { ...(currentTransition.custom || {}), direction: e.detail })} />
 {/if}
 
 <InputRow>
     <!-- defaultValue={selectedType === "media" ? 0.8 : 0.5} -->
-    <MaterialNumberInput label="transition.duration" disabled={isDisabled} value={durationValue / 1000} max={20} step={0.1} on:change={e => changeTransition(selectedType, "duration", e.detail * 1000)} />
+    <MaterialNumberInput label="transition.duration" disabled={isDisabled} value={durationValue / 1000} max={20} step={0.1} on:change={(e) => changeTransition(selectedType, "duration", e.detail * 1000)} />
     <!-- defaultValue="sine" -->
-    <MaterialDropdown label="transition.easing" disabled={isDisabled} options={easings.map(a => ({ ...a, label: translateText(a.label) }))} value={easingValue} on:change={e => changeTransition(selectedType, "easing", e.detail)} />
+    <MaterialDropdown label="transition.easing" disabled={isDisabled} options={easings.map((a) => ({ ...a, label: translateText(a.label) }))} value={easingValue} on:change={(e) => changeTransition(selectedType, "easing", e.detail)} />
 </InputRow>
+
+{#if showMore && selectedType === "text"}
+    <MaterialNumberInput label="transition.fade_in_offset (%)" disabled={isDisabled} value={currentTransition?.fadeInOffset ?? 50} defaultValue={50} max={100} step={10} on:change={(e) => changeTransition(selectedType, "fadeInOffset", e.detail)} />
+{/if}
 
 <style>
     .types {

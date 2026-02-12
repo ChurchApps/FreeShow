@@ -8,10 +8,12 @@
     import { getBlending } from "./components/helpers/output"
     import { checkTimers, startEventTimer, startTimer } from "./components/helpers/timerTick"
     import Loader from "./components/main/Loader.svelte"
+    import MediaDownloadProgress from "./components/main/MediaDownloadProgress.svelte"
     import MenuBar from "./components/main/MenuBar.svelte"
     import Popup from "./components/main/Popup.svelte"
     import ProfileSelector from "./components/main/ProfileSelector.svelte"
     import Recorder from "./components/main/Recorder.svelte"
+    import StatusIndicator from "./components/main/StatusIndicator.svelte"
     import Toast from "./components/main/Toast.svelte"
     import TooltipManager from "./components/main/TooltipManager.svelte"
     import QuickSearch from "./components/quicksearch/QuickSearch.svelte"
@@ -69,18 +71,20 @@
 
         {#if $currentWindow === "output"}
             <MainOutput />
-        {:else if $loaded && Object.keys($profiles).filter(a => a !== "admin").length && $activeProfile === null}
-            <Popup />
-            <Toast />
-            <ProfileSelector />
         {:else if $loaded}
             <Popup />
             <QuickSearch />
             <Toast />
+            <StatusIndicator />
             <Recorder />
             <Guide />
+            <MediaDownloadProgress />
 
             <MainLayout />
+
+            {#if Object.keys($profiles).filter((a) => a !== "admin").length && $activeProfile === null}
+                <ProfileSelector />
+            {/if}
         {:else}
             <Center>
                 <Loader size={2} />

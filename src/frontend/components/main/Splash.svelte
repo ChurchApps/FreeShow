@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { onMount } from "svelte"
     import { activePopup, activeProject, projects, projectView, showRecentlyUsedProjects, shows, special, version } from "../../stores"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
@@ -6,6 +7,7 @@
     import Link from "../inputs/Link.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
     import Center from "../system/Center.svelte"
+    import { getVOTD } from "./votd"
 
     function createProject() {
         // if opened project is empty go to project list (to reduce confusion)
@@ -29,13 +31,19 @@
             return ""
         })
         // extract and remove raw links from plain text
-        const finalText = textWithoutATags.replace(/https?:\/\/[^\s<>"']+/gi, url => {
+        const finalText = textWithoutATags.replace(/https?:\/\/[^\s<>"']+/gi, (url) => {
             links.push(url)
             return ""
         })
 
         return finalText.replaceAll("\n", "<br>").replace(/\s+/g, " ").trim()
     }
+
+    let votd: string = ""
+    onMount(async () => {
+        if ($special.splashText) return
+        votd = await getVOTD()
+    })
 </script>
 
 <Center class="context #splash">
@@ -61,6 +69,12 @@
                 <Icon id="launch" white />
             </Link>
         </p>
+    {:else if votd}
+        <p class="votd" style="padding-top: 30px" data-title="Verse of the Day [votd.org]">
+            <Link url="https://votd.org/">
+                {votd}
+            </Link>
+        </p>
     {/if}
 
     <span style="padding-top: 30px" class="buttons">
@@ -70,7 +84,7 @@
         <MaterialButton
             icon="add"
             title="tooltip.show"
-            on:click={e => {
+            on:click={(e) => {
                 if (e.detail.ctrl) {
                     history({ id: "UPDATE", newData: { remember: { project: $activeProject } }, location: { page: "show", id: "show" } })
                 } else activePopup.set("show")
@@ -100,6 +114,18 @@
     .buttons :global(button) {
         justify-content: start;
         padding: 8px 12px;
+    }
+
+    .votd {
+        padding: 0 10px;
+        max-width: 580px;
+        white-space: normal;
+        text-align: left;
+        font-style: italic;
+        font-size: 0.9em;
+    }
+    .votd :global(a) {
+        text-decoration: none;
     }
 
     @media screen and (max-height: 500px) {

@@ -1,17 +1,19 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
+    import type { ContentProviderId } from "../../../../electron/contentProviders/base/types"
     import { Main } from "../../../../types/IPC/Main"
     import { requestMain, sendMain } from "../../../IPC/main"
-    import { activePopup, autosave, dataPath, driveData, driveKeys, saved, special } from "../../../stores"
+    import { activePopup, autosave, cloudSyncData, dataPath, driveData, driveKeys, providerConnections, saved, special, statusIndicator } from "../../../stores"
+    import { changeTeam, setupCloudSync, socketDisconnect } from "../../../utils/cloudSync"
     import { previousAutosave, startAutosave, wait } from "../../../utils/common"
-    import { syncDrive, validateKeys } from "../../../utils/drive"
+    import { validateKeys } from "../../../utils/drive"
     import { translateText } from "../../../utils/language"
     import { save } from "../../../utils/save"
     import { convertAutosave } from "../../../values/autosave"
     import T from "../../helpers/T.svelte"
     import { getTimeFromInterval, joinTimeBig } from "../../helpers/time"
+    import InputRow from "../../input/InputRow.svelte"
     import Title from "../../input/Title.svelte"
-    import Link from "../../inputs/Link.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialDropdown from "../../inputs/MaterialDropdown.svelte"
     import MaterialMediaPicker from "../../inputs/MaterialFilePicker.svelte"
@@ -20,7 +22,7 @@
     import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
 
     function updateSpecial(value, key) {
-        special.update(a => {
+        special.update((a) => {
             if (!value) delete a[key]
             else a[key] = value
 
@@ -63,14 +65,25 @@
     //     })
     // }
 
+    let mediaFolderPath = ""
+    async function updateMediaFolderPath(e: any) {
+        mediaFolderPath = e.detail || ""
+        sendMain(Main.SET_MEDIA_FOLDER_PATH, mediaFolderPath)
+
+        // get default path again if reset
+        if (!mediaFolderPath) mediaFolderPath = await requestMain(Main.GET_MEDIA_FOLDER_PATH)
+    }
+
     // get times
     let nextAutosave = 0
     let nextAutobackup = 0
 
     let updater: NodeJS.Timeout | null = null
-    onMount(() => {
+    onMount(async () => {
         checkTimes()
         updater = setInterval(checkTimes, 1000)
+
+        if ($special.cloudSyncMediaFolder) mediaFolderPath = await requestMain(Main.GET_MEDIA_FOLDER_PATH)
     })
     onDestroy(() => {
         if (updater) clearInterval(updater)
@@ -122,14 +135,14 @@
         if (!value) return
 
         // mainFolderId: It seems the character length is 33 for drive folders and 44 for files.
-        driveData.update(a => {
+        driveData.update((a) => {
             a[key] = value
             return a
         })
     }
 
     function toggleData(checked: boolean, key, invert = false) {
-        driveData.update(a => {
+        driveData.update((a) => {
             a[key] = invert ? !checked : checked
             return a
         })
@@ -160,10 +173,78 @@
 
         sendMain(Main.REFRESH_SHOWS)
     }
+
+    // CLOUD
+
+    function updateCloudData(key: string, value: any) {
+        cloudSyncData.update((a) => {
+            a[key] = value
+            return a
+        })
+    }
+
+    let disconnecting = false
+    async function contentProviderConnect(providerId: ContentProviderId) {
+        if (!$providerConnections[providerId]) {
+            special.update((a) => {
+                a.churchAppsCloudOnly = true
+                return a
+            })
+
+            sendMain(Main.PROVIDER_LOAD_SERVICES, { providerId, cloudOnly: true })
+        } else {
+            disconnecting = true
+            await socketDisconnect()
+            requestMain(Main.PROVIDER_DISCONNECT, { providerId }, (a) => {
+                disconnecting = false
+                if (!a.success) return
+                providerConnections.update((c) => {
+                    c[providerId] = false
+                    return c
+                })
+            })
+        }
+    }
+
+    let resetValue = 0
+    $: if ($activePopup) resetValue++
+    function toggleSync(e) {
+        const enabled = e.detail
+        if (enabled) {
+            setupCloudSync()
+        } else {
+            updateCloudData("enabled", false)
+        }
+    }
+
+    function syncNow() {
+        saved.set(false)
+        save(false, { autosave: true })
+    }
+
+    // function deleteCloudData() {
+    //     console.log(1)
+    // }
+
+    let bundled = false
+    async function toggleMediaFolder(e: any) {
+        updateSpecial(e.detail, "cloudSyncMediaFolder")
+
+        if (e.detail) {
+            if (bundled) return
+            bundled = true
+
+            // alertMessage.set("media.media_sync_folder_tip")
+            // activePopup.set("alert")
+
+            sendMain(Main.BUNDLE_MEDIA_FILES, { openFolder: true })
+            mediaFolderPath = await requestMain(Main.GET_MEDIA_FOLDER_PATH)
+        }
+    }
 </script>
 
 <MaterialDropdown label="settings.autosave{autosaveInfo}" value={$autosave} defaultValue="15min" options={autosaveList} on:change={updateAutosave} />
-<MaterialDropdown label="settings.auto_backup{autoBackupInfo}" value={autoBackup} defaultValue="weekly" options={autobackupList} on:change={e => updateSpecial(e.detail, "autoBackup")} />
+<MaterialDropdown label="settings.auto_backup{autoBackupInfo}" value={autoBackup} defaultValue="weekly" options={autobackupList} on:change={(e) => updateSpecial(e.detail, "autoBackup")} />
 
 <MaterialFolderPicker label="settings.data_location" value={$dataPath} on:change={updateDataPath} />
 
@@ -176,60 +257,68 @@
     <MaterialToggleSwitch label="settings.user_data_location" disabled={!$dataPath} checked={$special.customUserDataLocation || false} defaultValue={false} on:change={(e) => toggle(e.detail, "customUserDataLocation")} />
 {/key} -->
 
+<!-- Enable without cloud sync? (People with existing custom media management/drives should know to not enable this) -->
+<!-- <MaterialToggleSwitch label="media.media_sync_folder" title="media.media_sync_folder_tip" style="width: 100%;" checked={$special.cloudSyncMediaFolder} on:change={mediaFolder} /> -->
+
 <!-- cloud -->
 <Title label="settings.cloud" icon="cloud" title="cloud.info" />
 
-<MaterialMediaPicker label="cloud.google_drive_api" title="cloud.select_key" value={validKeys ? translateText("cloud.update_key") : ""} filter={{ name: "Key file", extensions: ["json"] }} icon="key" on:change={receiveKeysFile} allowEmpty />
-<!-- better name: "Read only" -->
-<MaterialToggleSwitch label="cloud.disable_upload" checked={$driveData.disableUpload} defaultValue={false} on:change={e => toggleData(e.detail, "disableUpload")} />
-
-{#if validKeys}
-    <MaterialToggleSwitch label="cloud.enable" checked={!$driveData.disabled} defaultValue={true} on:change={e => toggleData(e.detail, "disabled", true)} />
-    <!-- <MaterialTextInput label="cloud.media_id" value={$driveData?.mediaId || "default"} defaultValue="default" on:change={(e) => updateValue(e.detail, "mediaId")} /> -->
-    <MaterialTextInput label="cloud.main_folder{$driveData?.mainFolderId ? `<span style="margin-left: 10px;font-size: 0.7em;opacity: 0.5;color: var(--text);">drive.google.com/drive/folders/</span>` : ''}" value={$driveData?.mainFolderId || ""} on:change={e => updateValue(e.detail, "mainFolderId")} />
-
-    <!-- TODO: media folder -->
-    <!-- <div>
-        <p><T id="cloud.media_folder" /></p>
-        <span style="display: flex;align-items: center;overflow: auto;">
-            <p style="font-size: 0.9em;opacity: 0.7;">drive.google.com/drive/folders/</p>
-            <TextInput style="width: 300px;padding: 3px;border-bottom: 2px solid var(--secondary);background-color: var(--primary-darkest);" value={$driveData?.mediaFolderId || ""} on:change={updateMediaFolder} />
-        </span>
-    </div> -->
-
-    <MaterialButton
-        style="width: 100%;"
-        icon="cloud_sync"
-        title="Note: Shows and projects should sync both ways. Other elements like settings will be uploaded when using this. Enable auto sync for better syncing."
-        on:click={() => {
-            save()
-            setTimeout(() => syncDrive(true), 2000)
-        }}
-    >
-        <T id="cloud.sync" />
-    </MaterialButton>
-
-    <!-- Probably never used: -->
-    <!-- <CombinedInput>
-        <Button on:click={() => driveConnect($driveKeys)} disabled={!validKeys} style="width: 100%;" center>
-            <Icon id="refresh" right />
-            <T id="cloud.reconnect" />
-        </Button>
-    </CombinedInput> -->
+{#if !$providerConnections.churchApps}
+    <InputRow>
+        <MaterialButton on:click={() => contentProviderConnect("churchApps")} style="flex: 1;" icon="login">
+            <T id="settings.connect_to" replace={["ChurchApps"]} />
+        </MaterialButton>
+    </InputRow>
 {:else}
-    <span class="guide" style="display: block;margin-top: 8px;">
-        <!-- Keep in mind you have a 750 GB limit per day, and 20,000 queries per second which should be plenty. -->
-        <p><T id="cloud.tip_api" /></p>
-        <p><T id="cloud.tip_how" />&nbsp;<Link url={"https://freeshow.app/docs/drive"}><T id="cloud.tip_guide" /></Link></p>
-    </span>
+    <InputRow>
+        <MaterialButton disabled={disconnecting} on:click={() => contentProviderConnect("churchApps")} style="flex: 1;border-bottom: 2px solid var(--connected) !important;" icon="logout">
+            <T id="settings.disconnect_from" replace={["ChurchApps"]} />
+        </MaterialButton>
+        {#if $cloudSyncData.enabled}
+            <MaterialButton icon="cloud_sync" disabled={$statusIndicator === "syncing"} on:click={syncNow}>
+                <T id="cloud.sync" />
+            </MaterialButton>
+        {/if}
+    </InputRow>
+
+    <InputRow arrow={$cloudSyncData.enabled}>
+        <InputRow style="flex: 1;">
+            {#key resetValue}
+                <MaterialToggleSwitch label="Enable sync" data={$cloudSyncData?.team?.name} checked={$cloudSyncData.enabled} style="flex: 1;" on:change={toggleSync} />
+            {/key}
+
+            {#if $cloudSyncData.enabled && ($cloudSyncData.team?.count || 0) > 1}
+                <MaterialButton variant="outlined" icon="people" on:click={changeTeam}><T id="cloud.change_team" /></MaterialButton>
+            {/if}
+        </InputRow>
+
+        <svelte:fragment slot="menu">
+            <MaterialTextInput label="inputs.name" value={$cloudSyncData.deviceName || ""} on:change={(e) => updateCloudData("deviceName", e.detail)} />
+
+            <!-- changing team directly without toggling "Enable sync" off/on -->
+            <MaterialToggleSwitch label="cloud.read_only" title="cloud.readonly_tip" checked={$cloudSyncData.cloudMethod === "read_only"} defaultValue={false} on:change={(e) => updateCloudData("cloudMethod", e.detail ? "read_only" : "merge")} />
+
+            <!-- Documents/FreeShow/Media -->
+            <!-- This should only be needed if no custom media management is already existing -->
+            <!-- Custom drives should work without as long as the path location is the same -->
+            <!-- Files in this folder will automatically be checked to find missing files -->
+            <MaterialToggleSwitch label="media.media_sync_folder" title="media.media_sync_folder_tip" style="width: 100%;" checked={$special.cloudSyncMediaFolder} defaultValue={false} on:change={toggleMediaFolder} />
+
+            {#if $special.cloudSyncMediaFolder}
+                <MaterialFolderPicker label="media.media_sync_folder" value={mediaFolderPath} on:change={updateMediaFolderPath} allowEmpty={!mediaFolderPath.endsWith("Documents\\FreeShow\\Media") && !mediaFolderPath.endsWith("Documents/FreeShow/Media")} />
+            {/if}
+
+            <!-- <MaterialButton variant="outlined" icon="delete" on:click={deleteCloudData} red white>Delete cloud data</MaterialButton> -->
+        </svelte:fragment>
+    </InputRow>
 {/if}
 
-<style>
-    /* cloud */
-    .guide p {
-        white-space: normal;
-        /* font-style: italic; */
-        opacity: 0.6;
-        font-size: 0.7em;
-    }
-</style>
+<!-- DEPRECATED: -->
+
+{#if !$providerConnections.churchApps && validKeys}
+    <MaterialMediaPicker label="Google API service account key" title="Import keys file" value="Update keys file" filter={{ name: "Key file", extensions: ["json"] }} icon="key" on:change={receiveKeysFile} allowEmpty />
+    <MaterialToggleSwitch label="Disable uploading data" checked={$driveData.disableUpload} defaultValue={false} on:change={(e) => toggleData(e.detail, "disableUpload")} />
+
+    <MaterialToggleSwitch label="cloud.enable" checked={!$driveData.disabled} defaultValue={true} on:change={(e) => toggleData(e.detail, "disabled", true)} />
+    <MaterialTextInput label="Set main folder manually{$driveData?.mainFolderId ? `<span style="margin-left: 10px;font-size: 0.7em;opacity: 0.5;color: var(--text);">drive.google.com/drive/folders/</span>` : ''}" value={$driveData?.mainFolderId || ""} on:change={(e) => updateValue(e.detail, "mainFolderId")} />
+{/if}

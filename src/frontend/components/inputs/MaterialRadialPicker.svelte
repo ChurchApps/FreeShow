@@ -82,7 +82,7 @@
         angle = Math.round(angle < 0 ? angle + 360 : angle)
 
         // snapping
-        const shouldSnap = SNAP_POINTS.find(a => Math.abs(angle - a) < 5)
+        const shouldSnap = SNAP_POINTS.find((a) => Math.abs(angle - a) < 5)
         if (shouldSnap !== undefined) return shouldSnap
 
         return angle
@@ -164,12 +164,12 @@
         </svg>
 
         <div class="buttons">
-            <button type="button" class="inc" on:click={e => increment(e.shiftKey ? step * 10 : step)} tabindex="-1" {disabled}>
+            <button type="button" class="inc" on:click={(e) => increment(e.shiftKey ? step * 10 : step)} tabindex="-1" {disabled}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M7 14l5-5 5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                 </svg>
             </button>
-            <button type="button" class="dec" on:click={e => decrement(e.shiftKey ? step * 10 : step)} tabindex="-1" {disabled}>
+            <button type="button" class="dec" on:click={(e) => decrement(e.shiftKey ? step * 10 : step)} tabindex="-1" {disabled}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M7 10l5 5 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                 </svg>

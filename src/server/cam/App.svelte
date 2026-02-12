@@ -110,7 +110,7 @@
         video.srcObject = stream
 
         // Handle the video stream once it loads.
-        return new Promise(resolve => {
+        return new Promise((resolve) => {
             video.onloadedmetadata = () => {
                 resolve(video)
             }

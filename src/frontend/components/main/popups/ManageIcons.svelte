@@ -12,7 +12,7 @@
     function click(icon: string) {
         let isDefault = customIcons[icon]
 
-        customizedIcons.update(a => {
+        customizedIcons.update((a) => {
             if (isDefault) {
                 let disabledIcons = a.disabled
                 let iconIndex = disabledIcons.indexOf(icon)
@@ -29,15 +29,15 @@
         const text = await navigator.clipboard.readText()
         if (!text || !text.includes("<svg")) return
 
-        customizedIcons.update(a => {
+        customizedIcons.update((a) => {
             a.svg.push({ id: uid(), path: text })
             return a
         })
     }
 
     function deleteCustom(iconId: string) {
-        customizedIcons.update(a => {
-            let iconIndex = a.svg.findIndex(a => a.id === iconId)
+        customizedIcons.update((a) => {
+            let iconIndex = a.svg.findIndex((a) => a.id === iconId)
             if (iconIndex >= 0) a.svg.splice(iconIndex, 1)
 
             return a

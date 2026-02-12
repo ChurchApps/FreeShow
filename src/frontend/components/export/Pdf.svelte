@@ -51,7 +51,7 @@
 
             // Create a display string for metadata while preserving the original object
             const metaDisplay = Object.values((show.meta || {}) as { [key: string]: string })
-                .filter(a => a.length)
+                .filter((a) => a.length)
                 .join("; ")
 
             // Preserve original meta object and add display string
@@ -117,10 +117,10 @@
     function getShowChords(show: Show): string[] {
         const chords = new Set<string>()
 
-        Object.values(show.slides || {}).forEach(slide => {
-            slide.items?.forEach(item => {
-                item.lines?.forEach(line => {
-                    line.chords?.forEach(chord => {
+        Object.values(show.slides || {}).forEach((slide) => {
+            slide.items?.forEach((item) => {
+                item.lines?.forEach((line) => {
+                    line.chords?.forEach((chord) => {
                         chords.add(chord.key)
                     })
                 })
@@ -142,10 +142,10 @@
             // Find the most common chord (assuming it's likely the key)
             const chordCounts: { [key: string]: number } = {}
 
-            Object.values(show.slides || {}).forEach(slide => {
-                slide.items?.forEach(item => {
-                    item.lines?.forEach(line => {
-                        line.chords?.forEach(chord => {
+            Object.values(show.slides || {}).forEach((slide) => {
+                slide.items?.forEach((item) => {
+                    item.lines?.forEach((line) => {
+                        line.chords?.forEach((chord) => {
                             const key = chord.key || chord.chord || ""
                             if (key) {
                                 chordCounts[key] = (chordCounts[key] || 0) + 1
@@ -196,7 +196,7 @@
         // Sort chords by position to handle overlaps properly
         const sortedChords = [...chords].sort((a, b) => (a.pos || 0) - (b.pos || 0))
 
-        sortedChords.forEach(chord => {
+        sortedChords.forEach((chord) => {
             const pos = Math.max(0, Math.min(chord.pos || 0, chordArray.length - (chord.chord || chord.key || "").length))
             const chordStr = chord.chord || chord.key || ""
 
@@ -215,7 +215,7 @@
         // Create a map to track slide numbers for each group
         const groupCounts: { [key: string]: number } = {}
 
-        slides.forEach(slide => {
+        slides.forEach((slide) => {
             const groupName = slide.group || "Verse"
 
             // Increment the count for this group

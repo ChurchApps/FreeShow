@@ -31,7 +31,7 @@ export function getRSS(url: string, updateTime: number | string | undefined): RS
     }
 
     fetch(url)
-        .then(response => {
+        .then((response) => {
             if (!response.ok) {
                 console.error(`HTTP error: ${response.status}`)
                 return
@@ -39,7 +39,7 @@ export function getRSS(url: string, updateTime: number | string | undefined): RS
 
             return response.text()
         })
-        .then(xmlText => {
+        .then((xmlText) => {
             if (!xmlText) return
 
             // some feeds have all the text content in <![CDATA[ Text ]]> blocks!
@@ -50,7 +50,7 @@ export function getRSS(url: string, updateTime: number | string | undefined): RS
 
             cachedData[queryKey] = { time: Date.now(), data }
         })
-        .catch(error => {
+        .catch((error) => {
             console.error("Fetch error:", error)
         })
 
@@ -63,6 +63,6 @@ export function convertRSSToString(data: RSSjson | null, divider?: string, count
 
     divider = divider || " | "
 
-    const stringItems = items.slice(0, count).map(a => `${a.title}: ${a.description}`)
+    const stringItems = items.slice(0, count).map((a) => `${a.title}: ${a.description}`)
     return stringItems.join(divider)
 }

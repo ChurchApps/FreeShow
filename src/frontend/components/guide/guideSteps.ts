@@ -52,7 +52,7 @@ export const guideSteps = [
             if (!get(projects)[projectId] || get(projects)[projectId]?.deleted) {
                 if (removeDeleted(keysToID(get(projects))).length) projectId = Object.keys(get(projects))[0]
                 else {
-                    projects.update(a => {
+                    projects.update((a) => {
                         a.default = {
                             name: translateText("example.example") || "Example",
                             created: Date.now(),

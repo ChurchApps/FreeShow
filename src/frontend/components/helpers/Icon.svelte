@@ -24,7 +24,7 @@
     $: if ($themes[$theme]) updateBaseColor()
     function updateBaseColor() {
         if (gradientColor || gradient) return
-        baseColor = $themes[$theme]?.colors.secondary || "#f0008c"
+        baseColor = $themes[$theme]?.colors?.secondary || "#f0008c"
     }
 
     // smaller change

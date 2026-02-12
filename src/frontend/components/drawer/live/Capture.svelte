@@ -48,7 +48,7 @@
     function capture() {
         navigator.mediaDevices
             .getUserMedia(constraints)
-            .then(stream => {
+            .then((stream) => {
                 if (!videoElem) return
 
                 streams.push(stream)

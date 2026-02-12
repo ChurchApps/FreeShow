@@ -62,21 +62,21 @@
         let colorKeys = Object.keys($outputs)
         if (colorKeys.length !== 1) return
 
-        outputs.update(a => {
+        outputs.update((a) => {
             a[colorKeys[0]].color = value
             return a
         })
     }
 </script>
 
-<MaterialFontDropdown label="settings.font_family" value={$theme === "default" ? "" : $themes[$theme]?.font?.family || ""} on:change={e => updateTheme(e.detail || "", "family", "font")} allowEmpty />
-<MaterialNumberInput label="settings.font_size" value={Number($themes[$theme]?.font?.size.replace("em", "") ?? 1) * 10} min={5} max={20} on:change={e => updateTheme(e.detail / 10 + "em", "size", "font")} />
+<MaterialFontDropdown label="settings.font_family" value={$theme === "default" ? "" : $themes[$theme]?.font?.family || ""} on:change={(e) => updateTheme(e.detail || "", "family", "font")} allowEmpty />
+<MaterialNumberInput label="settings.font_size" value={Number($themes[$theme]?.font?.size.replace("em", "") ?? 1) * 10} min={5} max={20} on:change={(e) => updateTheme(e.detail / 10 + "em", "size", "font")} />
 
 <Title label="settings.colors" icon="color" />
 
 <div class="colors">
     {#each colors as color}
-        <MaterialColorInput label={"theme." + color} value={$themes[$theme]?.colors?.[color] || ""} on:change={e => updateTheme(e.detail, color)} />
+        <MaterialColorInput label={"theme." + color} value={$themes[$theme]?.colors?.[color] || ""} on:change={(e) => updateTheme(e.detail, color)} />
     {/each}
 </div>
 

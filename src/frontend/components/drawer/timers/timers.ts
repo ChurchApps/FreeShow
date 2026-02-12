@@ -7,6 +7,7 @@ import { _show } from "../../helpers/shows"
 import { showsCache } from "./../../../stores"
 import { customActionActivation } from "../../actions/actions"
 import { joinTimeBig } from "../../helpers/time"
+import { getDynamicValue } from "../../edit/scripts/itemHelpers"
 
 const typeOrder = { counter: 1, clock: 2, event: 3 }
 export function getSortedTimers(updater = get(timers), options: { showHours?: boolean; firstActive?: boolean }) {
@@ -14,7 +15,7 @@ export function getSortedTimers(updater = get(timers), options: { showHours?: bo
 
     let timersList = sortByName(keysToID(updater), "name", true)
         .sort((a, b) => typeOrder[a.type] - typeOrder[b.type])
-        .map(a => {
+        .map((a) => {
             const currentTime = getCurrentTimerValue(a, { id: a.id }, today)
             const timeValue = joinTimeBig(typeof currentTime === "number" ? currentTime : 0, options.showHours)
             return { id: a.id, name: a.name, extraInfo: timeValue }
@@ -35,7 +36,7 @@ export function getTimer(ref: any) {
                 .items()
                 .get()
                 .flat()
-                .find(a => a.timer?.id === ref.id)?.timer || {}
+                .find((a) => a.timer?.id === ref.id)?.timer || {}
         // && a.type === "timer"
 
         // older versions (pre 0.5.3)
@@ -62,13 +63,13 @@ export function createGlobalTimerFromLocalTimer(showId: string | undefined) {
 
         // TODO: "backup" global timer to show item.timer
 
-        let timerIndex = items.findIndex(a => !a?.timerId && a?.timer)
+        let timerIndex = items.findIndex((a) => !a?.timerId && a?.timer)
         while (timerIndex >= 0) {
             timerCreated = true
             const globalTimerId = uid()
             currentShow.slides[slideId].items[timerIndex].timerId = globalTimerId
 
-            timers.update(t => {
+            timers.update((t) => {
                 const globalTimer = clone(currentShow.slides[slideId].items[timerIndex].timer)
                 globalTimer.name = currentShow.name
                 delete globalTimer.id
@@ -80,26 +81,28 @@ export function createGlobalTimerFromLocalTimer(showId: string | undefined) {
                 return t
             })
 
-            timerIndex = items.findIndex(a => !a.timerId && a.timer)
+            timerIndex = items.findIndex((a) => !a.timerId && a.timer)
         }
     }
 
     if (!timerCreated) return
 
-    showsCache.update(a => {
+    showsCache.update((a) => {
         a[showId] = currentShow
         return a
     })
 }
 
 const ONE_HOUR = 3600000 // 60 * 60 * 1000
-export function getCurrentTimerValue(timer: Timer, ref: any, today: Date, updater = get(activeTimers)) {
+export function getCurrentTimerValue(timer: Timer, ref: any, today: Date, updater = get(activeTimers), _updater: any = null) {
     let currentTime = 0
     if (!timer) return currentTime
 
     if (timer.type === "counter") {
-        currentTime = updater.filter(a => a.id === ref.id)[0]?.currentTime
-        if (typeof currentTime !== "number") currentTime = timer.start!
+        currentTime = updater.filter((a) => a.id === ref.id)[0]?.currentTime
+        if (typeof currentTime !== "number") {
+            currentTime = timer.startDynamic !== undefined ? (getTimerDynamicValue(timer.startDynamic) ?? 0) : timer.start || 0
+        }
     } else if (timer.type === "clock") {
         currentTime = getTimeUntilClock(timer.time!, today)
     } else if (timer.type === "event") {
@@ -119,15 +122,31 @@ export function getCurrentTimerValue(timer: Timer, ref: any, today: Date, update
     return currentTime
 }
 
+export function getTimerDynamicValue(val: string | undefined, _updater: any = null) {
+    if (val === undefined || val === "") return null
+
+    if (val.startsWith("{")) val = getDynamicValue(val)
+    if (val.startsWith("{")) return 0
+
+    try {
+        val = new Function(`return ${val}`)()
+    } catch {
+        // invalid expression
+        return isNaN(Number(val)) ? 0 : Number(val)
+    }
+
+    return isNaN(Number(val)) ? 0 : Number(val)
+}
+
 function getClosestUpcommingEvent(eventGroup: string) {
-    const eventsList = keysToID(get(events)).filter(a => a.group === eventGroup)
+    const eventsList = keysToID(get(events)).filter((a) => a.group === eventGroup)
     if (!eventsList.length) return null
 
     const today = Date.now()
 
     let closestTime = 0
     let closestId = ""
-    eventsList.forEach(a => {
+    eventsList.forEach((a) => {
         const currentTime = new Date(a?.from)?.getTime() || 0
         if (currentTime > today && (!closestTime || currentTime < closestTime)) {
             closestTime = currentTime
@@ -146,18 +165,21 @@ export function getTimeUntilClock(time: string, today: Date = new Date(), _updat
 // ACTIONS
 
 export function pauseAllTimers() {
-    activeTimers.update(active => {
-        active.forEach(a => (a.paused = true))
+    activeTimers.update((active) => {
+        active.forEach((a) => (a.paused = true))
         return active
     })
 }
 
 export function playPauseGlobal(id: any, timer: any, forcePlay = false, pausedState: boolean | null = null) {
     if (get(timers)[id]?.type !== "counter") return
-    const index = get(activeTimers).findIndex(a => a.id === id)
+    const index = get(activeTimers).findIndex((a) => a.id === id)
 
-    activeTimers.update(a => {
-        if (index < 0) a.push({ ...timer, id, currentTime: timer?.start || 0, paused: pausedState === null ? false : pausedState })
+    activeTimers.update((a) => {
+        let startTime = timer?.start || 0
+        if (timer.startDynamic !== undefined) startTime = getTimerDynamicValue(timer.startDynamic) ?? 0
+
+        if (index < 0) a.push({ ...timer, id, currentTime: startTime, paused: pausedState === null ? false : pausedState })
         else {
             if (pausedState === null) a[index].paused = forcePlay ? false : !a[index].paused
             else a[index].paused = pausedState
@@ -175,7 +197,7 @@ export function playPauseGlobal(id: any, timer: any, forcePlay = false, pausedSt
 export function createNewTimer(name = "") {
     const timerId = uid()
 
-    timers.update(a => {
+    timers.update((a) => {
         a[timerId] = { name, type: "counter" }
         return a
     })
@@ -189,15 +211,15 @@ export function resetTimer(id: string) {
 }
 
 export function deleteTimer(id: string) {
-    const active = get(activeTimers).findIndex(a => a.id === id)
+    const active = get(activeTimers).findIndex((a) => a.id === id)
     if (active > -1) {
-        activeTimers.update(a => {
+        activeTimers.update((a) => {
             a.splice(active, 1)
             return a
         })
     }
 
-    timers.update(a => {
+    timers.update((a) => {
         delete a[id]
         return a
     })

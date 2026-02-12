@@ -60,7 +60,11 @@ export function convertSoftProjector(data: any) {
 
         show.meta = {
             number: song.number || "",
-            title: song.title || ""
+            title: song.title || "",
+            author: song.words || "",
+            composer: song.music || "",
+            note: song.notes || "",
+            key: song.tune || ""
         }
         if (show.meta.number !== undefined) show.quickAccess = { number: show.meta.number }
 
@@ -82,7 +86,7 @@ function createSlides(song: Song) {
     if (!lyrics) return { slides, layout }
 
     const slideLines = lyrics.split("\n\n")
-    slideLines.forEach(slideLine => {
+    slideLines.forEach((slideLine) => {
         const lines = slideLine.split("\n")
         const groupName = lines.shift() || ""
 

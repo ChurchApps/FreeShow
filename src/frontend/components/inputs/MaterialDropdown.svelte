@@ -6,11 +6,12 @@
     import { dictionary } from "../../stores"
     import { translateText } from "../../utils/language"
     import { formatSearch } from "../../utils/search"
+    import VirtualList from "../drawer/VirtualList.svelte"
+    import { newDropdown } from "../edit/scripts/edit"
     import Icon from "../helpers/Icon.svelte"
     import InputRow from "../input/InputRow.svelte"
     import MaterialButton from "./MaterialButton.svelte"
     import MaterialTextInput from "./MaterialTextInput.svelte"
-    import { newDropdown } from "../edit/scripts/edit"
 
     export let label: string
     export let value: string
@@ -24,6 +25,7 @@
     export let onlyArrow = false
 
     export let addNew: string | null = null
+    export let allowDeleting = false
 
     const dispatch = createEventDispatcher()
     export let open = false
@@ -38,7 +40,7 @@
         open = typeof force === "boolean" && value ? force : !open
         if (open) setTimeout(calculateMaxHeight)
 
-        if (open && value) highlightedIndex = options.findIndex(o => o.value === value)
+        if (open && value) highlightedIndex = options.findIndex((o) => o.value === value)
         else highlightedIndex = -1
     }
 
@@ -73,7 +75,9 @@
 
     // SELECT
 
-    function selectOption(optionValue: string) {
+    function selectOption(e: any, optionValue: string) {
+        if (e?.target?.closest(".delete-button")) return
+
         value = optionValue
         open = false
         dispatch("change", value)
@@ -96,7 +100,7 @@
             if (searchValue && event.key === " ") return
 
             if (open && highlightedIndex >= 0) {
-                selectOption(options[highlightedIndex].value)
+                selectOption(null, options[highlightedIndex].value)
             } else {
                 toggleDropdown(true)
             }
@@ -129,13 +133,13 @@
         event.preventDefault()
         if (event.key === "Backspace") {
             searchValue = ""
-            highlightedIndex = options.findIndex(o => o.value === value)
+            highlightedIndex = options.findIndex((o) => o.value === value)
             scrollToHighlighted()
         } else if (event.key.length === 1) {
             searchValue = formatSearch(searchValue + event.key, true)
 
-            let activeIndex = options.findIndex(a => formatSearch(a.label, true).startsWith(searchValue))
-            if (activeIndex < 0) activeIndex = options.findIndex(a => formatSearch(a.label, true).includes(searchValue))
+            let activeIndex = options.findIndex((a) => formatSearch(a.label, true).startsWith(searchValue))
+            if (activeIndex < 0) activeIndex = options.findIndex((a) => formatSearch(a.label, true).includes(searchValue))
             if (activeIndex < 0) return
 
             // enter to select
@@ -151,7 +155,7 @@
         if (disabled || nextScrollTimeout || !ctrl) return
         e.preventDefault()
 
-        let index = options.findIndex(a => a.value === value)
+        let index = options.findIndex((a) => a.value === value)
         if (e.deltaY > 0) {
             // scroll down
             index = Math.min(options.length - 1, index + 1)
@@ -182,7 +186,7 @@
     // scroll
 
     let scrollElem: HTMLUListElement | null = null
-    $: if (open) setTimeout(scrollToHighlighted)
+    $: if (open && !useVirtualList) setTimeout(scrollToHighlighted)
     function scrollToHighlighted() {
         if (highlightedIndex < 0 && allowEmpty) return scrollElem?.scrollTo(0, 0)
 
@@ -197,20 +201,21 @@
 
     // blur focus
 
-    function handleFocusOut(event: FocusEvent) {
-        if (!dropdownEl.contains(event.relatedTarget as Node)) {
-            open = false
-            addNewTextbox = false
-        }
-    }
+    // relatedTarget is null, even in dropdown
+    // function handleFocusOut(event: FocusEvent) {
+    //     if (!dropdownEl.contains(event.relatedTarget as Node)) {
+    //         open = false
+    //         addNewTextbox = false
+    //     }
+    // }
 
     onMount(() => {
         document.addEventListener("click", handleClickOutside)
-        document.addEventListener("focusout", handleFocusOut, true)
+        // document.addEventListener("focusout", handleFocusOut, true)
 
         return () => {
             document.removeEventListener("click", handleClickOutside)
-            document.removeEventListener("focusout", handleFocusOut, true)
+            // document.removeEventListener("focusout", handleFocusOut, true)
         }
     })
 
@@ -232,14 +237,8 @@
         }
     }
 
-    $: selected = options.find(o => o.value === value)
-
-    // let renderedOptions: typeof options = []
-    // $: if (open) {
-    //     // only show the first few immediately (for large lists) - can't scroll to highlighted
-    //     renderedOptions = options.slice(0, 20)
-    //     setTimeout(() => (renderedOptions = options), 82)
-    // }
+    $: selected = options.find((o) => o.value === value)
+    $: useVirtualList = options.length > 100
 
     // RESET
 
@@ -292,7 +291,7 @@
         data-title="{translateText(label)}{selected ? `: <b>${selected.label || '—'}</b>` : ''}"
         role="button"
         tabindex={disabled ? undefined : 0}
-        on:click={e => {
+        on:click={(e) => {
             if (e.target?.closest(".remove")) return
             toggleDropdown()
         }}
@@ -320,7 +319,7 @@
 
     {#if allowEmpty && hasValue}
         <div class="remove">
-            <MaterialButton on:click={() => selectOption("")} title="clear.general" white>
+            <MaterialButton on:click={() => selectOption(null, "")} title="clear.general" white>
                 <Icon id="close" white />
             </MaterialButton>
         </div>
@@ -340,31 +339,81 @@
     {/if}
 
     {#if open}
-        <ul style="max-height: {maxHeight}px" class="dropdown" role="listbox" tabindex="-1" bind:this={scrollElem} transition:flyFade>
-            {#if allowEmpty}
-                <li style="opacity: 0.5;font-style: italic;" role="option" aria-selected={!value} class:selected={!value} class:highlighted={highlightedIndex < 0} on:click={() => selectOption("")}>
-                    {translateText("main.none")}
-                </li>
-            {/if}
+        {#if useVirtualList}
+            <div class="dropdown virtual" style="max-height: {maxHeight}px" transition:flyFade>
+                <VirtualList items={options} height="{maxHeight}px" activeIndex={highlightedIndex} let:item={option}>
+                    <li style="{option.data ? 'justify-content: space-between;' : ''}{option.style || ''}" role="option" aria-selected={option.value === value} class:selected={option.value === value} class:highlighted={options.indexOf(option) === highlightedIndex} on:click={(e) => selectOption(e, option.value)}>
+                        {#if option.prefix}<span class="prefix">{option.prefix}</span>{/if}
+                        {option.label || "—"}
 
-            {#each options as option, i}
-                <li style="{option.data ? 'justify-content: space-between;' : ''}{option.style || ''}" role="option" aria-selected={option.value === value} class:selected={option.value === value} class:highlighted={i === highlightedIndex} on:click={() => selectOption(option.value)}>
-                    {#if option.prefix}<span class="prefix">{option.prefix}</span>{/if}
-                    {option.label || "—"}
+                        {#if option.data}
+                            <div class="data" data-title={option.data}>{option.data}</div>
+                        {/if}
 
-                    {#if option.data}
-                        <div class="data" data-title={option.data}>{option.data}</div>
-                    {/if}
-                </li>
-            {/each}
+                        {#if allowDeleting && option.value !== value}
+                            <MaterialButton
+                                label="actions.delete"
+                                class="delete-button"
+                                style="position: absolute;right: 2px;width: 40px;"
+                                icon="delete"
+                                on:click={() => {
+                                    dispatch("delete", option.value)
+                                }}
+                                red
+                            />
+                        {/if}
+                    </li>
+                </VirtualList>
 
-            {#if addNew}
-                <li style="font-style: italic;opacity: 0.9;" on:click={createNew}>
-                    <Icon id="add" />
-                    {translateText(addNew)}
-                </li>
-            {/if}
-        </ul>
+                {#if addNew}
+                    <div class="add-new-button">
+                        <li style="font-style: italic;opacity: 0.9;" role="option" on:click={createNew}>
+                            <Icon id="add" />
+                            {translateText(addNew)}
+                        </li>
+                    </div>
+                {/if}
+            </div>
+        {:else}
+            <ul style="max-height: {maxHeight}px" class="dropdown" role="listbox" tabindex="-1" bind:this={scrollElem} transition:flyFade>
+                {#if allowEmpty}
+                    <li style="opacity: 0.5;font-style: italic;" role="option" aria-selected={!value} class:selected={!value} class:highlighted={highlightedIndex < 0} on:click={() => selectOption(null, "")}>
+                        {translateText("main.none")}
+                    </li>
+                {/if}
+
+                {#each options as option, i}
+                    <li style="{option.data ? 'justify-content: space-between;' : ''}{option.style || ''}" role="option" aria-selected={option.value === value} class:selected={option.value === value} class:highlighted={i === highlightedIndex} on:click={(e) => selectOption(e, option.value)}>
+                        {#if option.prefix}<span class="prefix">{option.prefix}</span>{/if}
+                        {option.label || "—"}
+
+                        {#if option.data}
+                            <div class="data" data-title={option.data}>{option.data}</div>
+                        {/if}
+
+                        {#if allowDeleting && option.value !== value}
+                            <MaterialButton
+                                label="actions.delete"
+                                class="delete-button"
+                                style="position: absolute;right: 2px;width: 40px;"
+                                icon="delete"
+                                on:click={() => {
+                                    dispatch("delete", option.value)
+                                }}
+                                red
+                            />
+                        {/if}
+                    </li>
+                {/each}
+
+                {#if addNew}
+                    <li style="font-style: italic;opacity: 0.9;" role="option" on:click={createNew}>
+                        <Icon id="add" />
+                        {translateText(addNew)}
+                    </li>
+                {/if}
+            </ul>
+        {/if}
 
         {#if searchValue}
             <div class="search">{searchValue}</div>
@@ -374,7 +423,7 @@
     {#if addNew && addNewTextbox}
         <div class="dropdown">
             <InputRow>
-                <MaterialTextInput label="inputs.name" value={newValue} autofocus on:input={e => (newValue = e.detail)} on:keydown={keydown} />
+                <MaterialTextInput label="inputs.name" value={newValue} autofocus on:input={(e) => (newValue = e.detail)} on:keydown={keydown} />
                 <MaterialButton disabled={!newValue.length} title={addNew} on:click={createNewEvent}>
                     <Icon id="check" size={1.2} white />
                 </MaterialButton>
@@ -538,6 +587,19 @@
         border-bottom: 1px solid var(--primary-lighter);
     }
 
+    /* virtual */
+    .dropdown.virtual {
+        overflow-y: hidden;
+        padding: 0;
+    }
+    .dropdown :global(svelte-virtual-list-viewport) {
+        background-color: var(--primary-darkest);
+    }
+    .add-new-button {
+        border-top: 1px solid var(--primary-lighter);
+        padding-top: 0.25rem;
+    }
+
     .onlyArrow .dropdown {
         --left: 160px;
         left: calc(0 - var(--left));
@@ -553,6 +615,8 @@
         display: flex;
         align-items: center;
         gap: 5px;
+
+        /* line-height: 1.5em; */
     }
     .dropdown li:hover,
     .dropdown li.highlighted {

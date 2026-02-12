@@ -9,11 +9,13 @@ export enum ToMain {
     API = "API",
     SPELL_CHECK = "SPELL_CHECK",
     BACKUP = "BACKUP",
+    RECENTLY_ADDED_FILES = "RECENTLY_ADDED_FILES",
     PRESENTATION_STATE = "PRESENTATION_STATE",
     CAPTURE_CANVAS = "CAPTURE_CANVAS",
     REPLACE_MEDIA_PATHS = "REPLACE_MEDIA_PATHS",
     LESSONS_DONE = "LESSONS_DONE",
     IMAGES_TO_SHOW = "IMAGES_TO_SHOW",
+    MEDIA_DOWNLOAD_PROGRESS = "MEDIA_DOWNLOAD_PROGRESS",
     // Unified provider callbacks
     PROVIDER_CONNECT = "PROVIDER_CONNECT",
     PROVIDER_PROJECTS = "PROVIDER_PROJECTS",
@@ -38,11 +40,13 @@ export interface ToMainSendPayloads {
     [ToMain.API]: { action: string; data?: any }
     [ToMain.SPELL_CHECK]: { misspelled: string; suggestions: string[] }
     [ToMain.BACKUP]: { finished: boolean; path: string }
+    [ToMain.RECENTLY_ADDED_FILES]: { paths: string[] }
     [ToMain.PRESENTATION_STATE]: { id: string; stat: any; info: any }
-    [ToMain.CAPTURE_CANVAS]: { input: string; output: string; size: any; extension: string; config: any }
+    [ToMain.CAPTURE_CANVAS]: { input: string; output: string; size: any; extension: string; config: any; id: string }
     [ToMain.REPLACE_MEDIA_PATHS]: any[]
     [ToMain.LESSONS_DONE]: { showId: string; status: { finished: number; failed: number } }
     [ToMain.IMAGES_TO_SHOW]: { images: string[]; name: string }
+    [ToMain.MEDIA_DOWNLOAD_PROGRESS]: { url: string; progress: number; total: number; status: "downloading" | "complete" | "error" }
     // Unified provider callbacks
     [ToMain.PROVIDER_CONNECT]: { providerId: ContentProviderId; success: boolean; isFirstConnection?: boolean }
     [ToMain.PROVIDER_PROJECTS]: { providerId: ContentProviderId; categoryName: string; shows: any; projects: any }

@@ -10,7 +10,7 @@
     import Center from "../../system/Center.svelte"
 
     $: sortedShows = $sortedShowsList
-    $: privateShows = sortByName(keysToID($shows).filter(a => a.private === true))
+    $: privateShows = sortByName(keysToID($shows).filter((a) => a.private === true))
 
     $: defaultShows = clone([...(showPrivate ? privateShows : []), ...sortedShows])
     $: if (defaultShows) search()
@@ -63,7 +63,7 @@
     let showPrivate = false
 </script>
 
-<MaterialTextInput label="main.search" value="" on:input={e => search(e.detail)} autofocus />
+<MaterialTextInput label="main.search" value="" on:input={(e) => search(e.detail)} autofocus />
 
 <!-- probably not needed as private shows rarely need to be auto played (one could unprivate, add it, then make it private again) -->
 <!-- <CombinedInput>

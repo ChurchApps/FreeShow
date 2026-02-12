@@ -6,7 +6,7 @@ import { getExtension } from "../../helpers/media"
 const cache: any = {}
 
 export async function loadFromPixabay(query = "", video = false): Promise<any[]> {
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
         if (cache[query + video]) return resolve(cache[query + video])
 
         let url: string = "https://pixabay.com/api/" + (video ? "videos/" : "") + "?key=" + getKey("pixabay") + "&safesearch=true&per_page=80&q="
@@ -14,10 +14,10 @@ export async function loadFromPixabay(query = "", video = false): Promise<any[]>
 
         let hits: any = []
         fetch(url)
-            .then(response => response.json())
-            .then(data => {
+            .then((response) => response.json())
+            .then((data) => {
                 // https://pixabay.com/api/?key={API_KEY}&q=yellow+flowers&image_type=photo&pretty=true
-                hits = data.hits.map(media => {
+                hits = data.hits.map((media) => {
                     let path = media.largeImageURL
                     if (video) path = media.videos.medium.url
                     return { path, previewUrl: video ? media.videos.small.thumbnail : media.previewURL, name: media.tags, extension: getExtension(path), credits: getPixabayCredits(media) }
@@ -28,7 +28,7 @@ export async function loadFromPixabay(query = "", video = false): Promise<any[]>
                 // let img = { path, favourite: a.favourite === true, name, extension: p.extension, audio: a.audio === true }
                 return resolve(hits)
             })
-            .catch(error => {
+            .catch((error) => {
                 console.error(error)
                 return resolve([])
             })

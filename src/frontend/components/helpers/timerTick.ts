@@ -8,7 +8,7 @@ import { send } from "../../utils/request"
 import { actionData } from "../actions/actionData"
 import { customActionActivation, runAction } from "../actions/actions"
 import { sortByClosestMatch } from "../actions/apiHelper"
-import { getCurrentTimerValue, playPauseGlobal } from "../drawer/timers/timers"
+import { getCurrentTimerValue, getTimerDynamicValue, playPauseGlobal } from "../drawer/timers/timers"
 import { getDynamicValue } from "../edit/scripts/itemHelpers"
 import { clone, keysToID, sortByTime } from "./array"
 import { loadShows } from "./setShow"
@@ -22,7 +22,8 @@ let timeout: NodeJS.Timeout | null = null
 let customInterval = INTERVAL
 export function startTimer() {
     if (!isMainWindow()) return
-    if (!get(activeTimers).filter(a => a.paused !== true).length || timeout) return
+    // if (!get(activeTimers).length || timeout) return
+    if (!get(activeTimers).filter((a) => a.paused !== true).length || timeout) return
 
     if (timeout) clearTimeout(timeout)
     timeout = setTimeout(() => {
@@ -63,7 +64,20 @@ export function stopTimers() {
 }
 
 function increment(timer: { id: string; start: number; end: number; [key: string]: any }, i: number) {
-    if (!timer.paused && (timer.start < timer.end ? timer.currentTime >= timer.end && timer.currentTime < timer.end + 1 : timer.currentTime <= timer.end && timer.currentTime > timer.end - 1)) {
+    if (timer.paused) {
+        // has ended
+        // if (timer.currentTime === timer.end && !timer.overflow) {
+        //     // stop timers that have ended and is not outputted
+        //     if (!isTimerOutputted(timer.id)) stopTimerById(timer.id)
+        // }
+
+        return timer
+    }
+
+    const startTime = timer.startDynamic !== undefined ? getTimerDynamicValue(timer.startDynamic) ?? 0 : timer.start || 0
+    const endTime = timer.endDynamic !== undefined ? getTimerDynamicValue(timer.endDynamic) ?? 0 : timer.end || 0
+
+    if (startTime < endTime ? timer.currentTime >= endTime && timer.currentTime < endTime + 1 : timer.currentTime <= endTime && timer.currentTime > endTime - 1) {
         if (!timer.overflow) timer.paused = true
 
         // ended
@@ -71,14 +85,14 @@ function increment(timer: { id: string; start: number; end: number; [key: string
         customActionActivation("timer_end", timer.id)
     }
 
-    if ((timer.currentTime === timer.end && !timer.overflow) || timer.paused) return timer
+    if (timer.currentTime === endTime && !timer.overflow) return timer
 
     const currentTime = Date.now()
     // store timer start time (for accuracy)
     if (!timer.startTime) {
-        const timerIs = timer.currentTime - timer.start
+        const timerIs = timer.currentTime - startTime
         const timerStartShouldBe = timerIs * 1000 // - 1
-        if (timer.start < timer.end) timer.startTime = currentTime - timerStartShouldBe
+        if (startTime < endTime) timer.startTime = currentTime - timerStartShouldBe
         else timer.startTime = currentTime + timerStartShouldBe
     }
 
@@ -92,11 +106,36 @@ function increment(timer: { id: string; start: number; end: number; [key: string
         customInterval = Math.max(500, INTERVAL - differenceMs)
     }
 
-    if (timer.start < timer.end) timer.currentTime = timer.start + timerShouldBe
-    else timer.currentTime = timer.start - timerShouldBe
+    if (startTime < endTime) timer.currentTime = startTime + timerShouldBe
+    else timer.currentTime = startTime - timerShouldBe
 
     return timer
 }
+
+// auto stop any timer that is no longer in use
+// function isTimerOutputted(timerId: string) {
+//     const outputs = getAllActiveOutputs()
+//     const outputSlideHasTimer =
+//         outputs.some((output) => {
+//             const outSlide = output.out?.slide
+//             const outShow = get(showsCache)[outSlide?.id || ""]
+//             if (!outShow) return false
+
+//             const ref = getLayoutRef(outSlide?.id)
+//             const slide = outShow.slides[ref[outSlide?.index ?? -1]?.id]
+//             if (!slide) return false
+
+//             const hasTimer = slide.items.some((item) => item.type === "timer" && item.timerId === timerId)
+//             return hasTimer
+//         })
+//     if (outputSlideHasTimer) return true
+
+//     // check stage
+
+//     // might be in use by a dynamic value?
+
+//     return false
+// }
 
 // convert "show" to "action" <= 1.1.7
 let initialized = false
@@ -106,7 +145,7 @@ function convertShowToAction() {
 
     let updated = false
     const allEvents = get(events)
-    Object.keys(allEvents).forEach(eventId => {
+    Object.keys(allEvents).forEach((eventId) => {
         const newEvent = allEvents[eventId]
         if (newEvent.type !== "show") return
 
@@ -127,7 +166,7 @@ export function startEventTimer() {
     convertShowToAction()
 
     const currentTime: Date = new Date()
-    let actionEvents: Event[] = Object.values(get(events)).filter(a => {
+    let actionEvents: Event[] = Object.values(get(events)).filter((a) => {
         const eventTime: Date = new Date(a.from)
         return a.type === "action" && currentTime.getTime() - INTERVAL < eventTime.getTime()
     })

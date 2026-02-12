@@ -14,10 +14,10 @@
 
     $: scripturesList = keysToID($scriptures)
 
-    $: collections = scripturesList.filter(a => a.collection)
-    $: apiBibles = scripturesList.filter(a => a.api)
-    $: localBibles = scripturesList.filter(a => !a.collection && !a.api)
-    $: favoritesList = scripturesList.filter(a => a.favorite)
+    $: collections = scripturesList.filter((a) => a.collection)
+    $: apiBibles = scripturesList.filter((a) => a.api)
+    $: localBibles = scripturesList.filter((a) => !a.collection && !a.api)
+    $: favoritesList = scripturesList.filter((a) => a.favorite)
 
     let sections: any[] = []
     $: sections = [...(favoritesList.length ? [[{ id: "TITLE", label: "category.favourites" }, ...convertToButton(favoritesList)]] : []), [{ id: "TITLE", label: "scripture.collections" }, ...convertToButton(collections)], [{ id: "TITLE", label: "scripture.bibles_section" }, ...convertToButton(localBibles), ...(localBibles.length && apiBibles.length ? [{ id: "SEPARATOR", label: "API" }] : []), ...convertToButton(apiBibles)]]
@@ -47,7 +47,7 @@
 
     function updateName(e: any) {
         const { id, value } = e.detail
-        scriptures.update(a => {
+        scriptures.update((a) => {
             a[id].customName = value
             return a
         })

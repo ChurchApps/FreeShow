@@ -38,7 +38,7 @@
     }
 </script>
 
-<MaterialDropdown label="songbeamer_import.encoding" options={encodingOptions} value={selectedEncoding} on:change={e => (selectedEncoding = e.detail)} />
+<MaterialDropdown label="songbeamer_import.encoding" options={encodingOptions} value={selectedEncoding} on:change={(e) => (selectedEncoding = e.detail)} />
 
 <HRule title="songbeamer_import.translations" />
 

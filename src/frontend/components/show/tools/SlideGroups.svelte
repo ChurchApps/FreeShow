@@ -1,6 +1,6 @@
 <script lang="ts">
     import { uid } from "uid"
-    import { activePopup, activeShow, alertMessage, cachedShowsData, fullColors, globalGroupViewEnabled, groups, selected, showsCache } from "../../../stores"
+    import { activePopup, activeShow, alertMessage, cachedShowsData, fullColors, globalGroupViewEnabled, groups, selected, showsCache, templates } from "../../../stores"
     import { createKeydownHandler } from "../../../utils/clickable"
     import { translateText } from "../../../utils/language"
     import { getAccess } from "../../../utils/profile"
@@ -15,10 +15,11 @@
     import Center from "../../system/Center.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
     import { getSlideGroups } from "./groups"
+    import { newToast } from "../../../utils/common"
 
     $: showId = $activeShow?.id || ""
     $: allShowGroups = getSlideGroups(showId, $showsCache, $cachedShowsData)
-    $: showGroups = allShowGroups.filter(a => a.group !== ".")
+    $: showGroups = allShowGroups.filter((a) => a.group !== ".")
 
     $: currentShow = $showsCache[showId]
 
@@ -55,17 +56,21 @@
             {#if showGroups.length}
                 {#each showGroups as slide}
                     {@const groupCount = countGroupsInLayout(slide.id)}
-                    <SelectElem id="group" data={{ id: slide.id }} draggable>
+                    <SelectElem id="group" data={{ id: slide.id }} draggable={!isLocked && !slide.locked}>
                         <!-- style="{$fullColors ? 'background-' : ''}color: {slide.color};{$fullColors && slide.color ? `color: ${getContrast(slide.color)};` : ''}" -->
                         <div
                             class="slide {isLocked ? '' : 'context #group'}"
                             role="button"
                             tabindex="0"
                             style="border-bottom: 2px solid {slide.color};{$fullColors ? '' : `color: ${slide.color};`}"
-                            on:click={e => {
+                            on:click={(e) => {
                                 if (isLocked) {
                                     alertMessage.set(currentShow?.locked ? "show.locked_info" : "profile.locked")
                                     activePopup.set("alert")
+                                    return
+                                }
+                                if (slide.locked) {
+                                    newToast("output.state_locked")
                                     return
                                 }
 
@@ -75,10 +80,14 @@
                                     selected.set({ id: null, data: [] })
                                 }
                             }}
-                            on:keydown={createKeydownHandler(e => {
+                            on:keydown={createKeydownHandler((e) => {
                                 if (isLocked) {
                                     alertMessage.set(currentShow?.locked ? "show.locked_info" : "profile.locked")
                                     activePopup.set("alert")
+                                    return
+                                }
+                                if (slide.locked) {
+                                    newToast("output.state_locked")
                                     return
                                 }
 
@@ -90,8 +99,17 @@
                             })}
                         >
                             <p data-title={slide.group}>
+                                {#if slide.locked}
+                                    <span class="info template" data-title={translateText("output.state_locked")}><Icon id="lock" size={0.7} white /></span>
+                                {:else if $groups[slide.globalGroup]?.template}
+                                    <span class="info template" data-title="{translateText('groups.group_template')}: <b>{$templates[$groups[slide.globalGroup].template || '']?.name || ''}</b>"><Icon id="templates" size={0.7} white /></span>
+                                {:else if displayGlobalGroups && $groups[slide.globalGroup]}
+                                    <span class="info template" data-title={translateText("groups.global")}><Icon id="autofill" size={0.6} white /></span>
+                                {/if}
+
                                 {slide.group === "." ? "" : slide.group || "—"}
-                                {#if groupCount > 1}<span class="shortcut" style="opacity: 0.5;font-style: initial;">{groupCount}</span>{/if}
+
+                                {#if groupCount > 1}<span class="info shortcut" style="opacity: 0.5;font-style: initial;">{groupCount}</span>{/if}
                             </p>
                         </div>
                     </SelectElem>
@@ -117,7 +135,7 @@
                                 role="button"
                                 tabindex="0"
                                 style="border-bottom: 2px solid {slide.color};{$fullColors ? '' : `color: ${slide.color};`}"
-                                on:click={e => {
+                                on:click={(e) => {
                                     if (isLocked) {
                                         alertMessage.set(currentShow?.locked ? "show.locked_info" : "profile.locked")
                                         activePopup.set("alert")
@@ -129,7 +147,7 @@
                                         history({ id: "SLIDES", newData: { data: [{ ...slide, id: uid() }] } })
                                     }
                                 }}
-                                on:keydown={createKeydownHandler(e => {
+                                on:keydown={createKeydownHandler((e) => {
                                     if (isLocked) {
                                         alertMessage.set(currentShow?.locked ? "show.locked_info" : "profile.locked")
                                         activePopup.set("alert")
@@ -143,8 +161,11 @@
                                 })}
                             >
                                 <p data-title={slide.group}>
+                                    {#if $groups[slide.id]?.template}<span class="info template" data-title="{translateText('groups.group_template')}: <b>{$templates[$groups[slide.id].template || '']?.name || ''}</b>"><Icon id="templates" size={0.7} white /></span>{/if}
+
                                     {slide.group === "." ? "" : slide.group || "—"}
-                                    {#if $groups[slide.id]?.shortcut}<span class="shortcut">{$groups[slide.id].shortcut}</span>{/if}
+
+                                    {#if $groups[slide.id]?.shortcut}<span class="info shortcut">{$groups[slide.id].shortcut}</span>{/if}
                                 </p>
                             </div>
                         </SelectElem>
@@ -226,15 +247,23 @@
         display: flex;
         align-items: center;
     }
-    .shortcut {
+
+    .info {
         position: absolute;
-        inset-inline-end: 5px;
         background-color: var(--primary-darker);
 
         color: rgb(255 255 255 / 0.5);
         opacity: 0.8;
         font-style: italic;
         font-size: 0.8em;
+    }
+    .info.template {
+        inset-inline-start: 5px;
+        padding-inline-end: 5px;
+        opacity: 0.5;
+    }
+    .info.shortcut {
+        inset-inline-end: 5px;
         padding-inline-start: 5px;
     }
 
@@ -242,6 +271,10 @@
         overflow: visible;
         text-align: center;
         color: var(--text);
+
+        font-size: 0.8em;
+        opacity: 0.7;
+        margin-bottom: 5px;
     }
 
     .separator {

@@ -18,6 +18,9 @@
     <OverlayPreview show={activeShow} />
 {:else if activeShow.type === "pdf"}
     <PdfPreview active={activeShow} {tablet} />
+{:else if activeShow.type === "player"}
+    <!-- Online media / player content -->
+    <Media />
 {:else}
     <p style="text-transform: capitalize;">{activeShow.type}</p>
 {/if}

@@ -9,7 +9,7 @@ import type { StageLayouts } from "./Stage"
 
 export type SaveList = SaveListSettings | SaveListSyncedSettings | "themes" | "events" | "templates" | "overlays" | "driveKeys"
 
-export type SaveListSyncedSettings = "categories" | "drawSettings" | "overlayCategories" | "templateCategories" | "styles" | "profiles" | "timers" | "variables" | "triggers" | "audioStreams" | "audioPlaylists" | "scriptures" | "scriptureSettings" | "groups" | "midiIn" | "emitters" | "playerVideos" | "videoMarkers" | "mediaTags" | "actionTags" | "variableTags" | "customizedIcons" | "companion" | "globalTags" | "customMetadata" | "effects"
+export type SaveListSyncedSettings = "categories" | "drawSettings" | "overlayCategories" | "templateCategories" | "styles" | "profiles" | "timers" | "variables" | "triggers" | "audioStreams" | "audioPlaylists" | "scriptures" | "scriptureSettings" | "groups" | "midiIn" | "emitters" | "playerVideos" | "videoMarkers" | "mediaTags" | "actionTags" | "variableTags" | "customizedIcons" | "companion" | "globalTags" | "customMetadata" | "effects" | "deletedDefaults"
 
 export type SaveListSettings =
     | "initialized"
@@ -48,6 +48,7 @@ export type SaveListSettings =
     | "volume"
     | "gain"
     | "audioChannelsData"
+    | "cloudSyncData"
     | "driveData"
     | "calendarAddShow"
     | "metronome"
@@ -55,6 +56,8 @@ export type SaveListSettings =
     | "eqPresets"
     | "effectsLibrary"
     | "special"
+    | "timeline"
+    | "timecode"
     | "contentProviderData"
 
 export interface SaveData {

@@ -11,7 +11,8 @@ const oscActions = {
     // },
     slide: {
         next: () => ({ action: "next_slide" }),
-        previous: () => ({ action: "previous_slide" })
+        previous: () => ({ action: "previous_slide" }),
+        _index: (index: number) => ({ action: "index_select_slide", index })
     },
     show: {
         _id: (id: string) => ({
@@ -71,6 +72,8 @@ function parsePath(path) {
             currentPath = currentPath[part]
         } else if (currentPath._id) {
             currentPath = currentPath._id(part)
+        } else if (currentPath._index) {
+            currentPath = currentPath._index(Number(part))
         } else {
             throw new Error(`Invalid OSC API path: ${path}`)
         }

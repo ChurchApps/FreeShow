@@ -1,8 +1,9 @@
 <script lang="ts">
+    import { onMount } from "svelte"
     // import VirtualList from "@sveltejs/svelte-virtual-list"
     // import VirtualList from "./VirtualList2.svelte"
     import type { ShowList } from "../../../../types/Show"
-    import { activeEdit, activeFocus, activePopup, activeProject, activeShow, activeTagFilter, categories, drawer, focusMode, labelsDisabled, shows, sorted, sortedShowsList } from "../../../stores"
+    import { activeEdit, activeFocus, activePopup, activeProfile, activeProject, activeShow, activeTagFilter, categories, drawer, focusedArea, focusMode, labelsDisabled, shows, sorted, sortedShowsList } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { getAccess } from "../../../utils/profile"
     import { formatSearch, isRefinement, showSearch, tokenize } from "../../../utils/search"
@@ -19,6 +20,7 @@
     import Center from "../../system/Center.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
     import VirtualList from "../VirtualList.svelte"
+    import { ShowObj } from "../../../classes/Show"
 
     export let active: string | null
     export let searchValue: string
@@ -33,18 +35,18 @@
     //     if (JSON.stringify(updateSorted) !== JSON.stringify(updatedSorted)) updatedSorted = clone(showsSorted)
     // }
 
-    const profile = getAccess("shows")
-    const readOnly = profile.global === "read"
+    $: profile = $activeProfile ? getAccess("shows") : {}
+    $: readOnly = profile.global === "read"
 
     let filteredShows: ShowList[] = []
     let filteredStored: ShowList[] = []
     $: filteredStored = filteredShows =
         active === "all"
-            ? showsSorted.filter(a => !$categories[a?.category || ""]?.isArchive && profile[a?.category || ""] !== "none")
+            ? showsSorted.filter((a) => !$categories[a?.category || ""]?.isArchive && profile[a?.category || ""] !== "none")
             : // : active === "number" ? sortByNameAndNumber(showsSorted.filter((a) => a.quickAccess?.number), "asc")
               active === "locked"
-              ? showsSorted.filter(a => a.locked)
-              : showsSorted.filter(s => profile[s?.category || ""] !== "none" && (active === s.category || (active === "unlabeled" && (s.category === null || !$categories[s.category]))))
+              ? showsSorted.filter((a) => a.locked)
+              : showsSorted.filter((s) => profile[s?.category || ""] !== "none" && (active === s.category || (active === "unlabeled" && (s.category === null || !$categories[s.category]))))
 
     export let firstMatch: null | any = null
     let previousSearchTokens: string[] = []
@@ -118,7 +120,7 @@
             previousFilteredShows = clone(filteredStored)
             createFromSearch = false
             if ($activeShow?.data?.searchInput) {
-                activeShow.update(a => {
+                activeShow.update((a) => {
                     delete a!.data
                     return a
                 })
@@ -129,19 +131,19 @@
     function filterByTags(shows, tags: string[]) {
         if (!tags.length) return shows
 
-        return shows.filter(a => {
-            return !tags.find(tagId => !a.quickAccess?.tags?.includes(tagId))
+        return shows.filter((a) => {
+            return !tags.find((tagId) => !a.quickAccess?.tags?.includes(tagId))
         })
     }
 
     let showLoading = false
     function keydown(e: KeyboardEvent) {
-        if (e.target?.closest(".search")) {
+        if (e.target?.closest(".drawer_search")) {
             // get preview of shows
             if (e.key === "ArrowDown" || e.key === "ArrowUp") {
                 e.preventDefault()
                 createFromSearch = false
-                let currentIndex = filteredShows.findIndex(a => a.id === $activeShow?.id)
+                let currentIndex = filteredShows.findIndex((a) => a.id === $activeShow?.id)
                 let newIndex = 0
                 if (currentIndex < 0) newIndex = e.key === "ArrowDown" ? 0 : filteredShows.length - 1
                 else newIndex = e.key === "ArrowDown" ? currentIndex + 1 : currentIndex - 1
@@ -162,13 +164,13 @@
         if (e.key === "ArrowRight") {
             if (!$activeShow || ($activeShow.type !== undefined && $activeShow.type !== "show")) id = filteredShows[0].id
             else {
-                let currentIndex: number = filteredShows.findIndex(a => a.id === $activeShow!.id)
+                let currentIndex: number = filteredShows.findIndex((a) => a.id === $activeShow!.id)
                 if (currentIndex < filteredShows.length - 1) id = filteredShows[currentIndex + 1].id
             }
         } else if (e.key === "ArrowLeft") {
             if (!$activeShow || ($activeShow.type !== undefined && $activeShow.type !== "show")) id = filteredShows[filteredShows.length - 1].id
             else {
-                let currentIndex: number = filteredShows.findIndex(a => a.id === $activeShow!.id)
+                let currentIndex: number = filteredShows.findIndex((a) => a.id === $activeShow!.id)
                 if (currentIndex > 0) id = filteredShows[currentIndex - 1].id
             }
         }
@@ -179,14 +181,14 @@
         }
     }
 
-    $: showWithNumber = filteredShows.some(a => a.quickAccess?.number)
+    $: showWithNumber = filteredShows.some((a) => a.quickAccess?.number)
     $: sortType = $sorted.shows?.type || "name"
     $: modifiedType = ["modified", "created", "used"].includes(sortType.replace("_old", "")) ? sortType.replace("_old", "") : "modified"
     // All sortable columns share the same metadata so the UI + store stay in sync
     $: sortHeaders = [{ id: "name", style: "flex: 1;", label: translateText("show.name"), asc: "name", desc: "name_des", default: "asc" }, ...(showWithNumber ? [{ id: "number", style: "min-width: var(--number-width);", label: translateText("meta.number"), asc: "number", desc: "number_des", default: "asc" }] : []), { id: "modified", style: "min-width: var(--modified-width);", label: translateText(`info.${modifiedType}`), asc: `${modifiedType}_old`, desc: modifiedType, default: "desc" }]
 
     function toggleSort(columnId: string) {
-        const definition = sortHeaders.find(header => header.id === columnId)
+        const definition = sortHeaders.find((header) => header.id === columnId)
         if (!definition) return
 
         const currentType = $sorted.shows?.type || "name"
@@ -194,7 +196,7 @@
         if (currentType === definition.asc) nextType = definition.desc
         else if (currentType === definition.desc) nextType = definition.asc
 
-        sorted.update(state => {
+        sorted.update((state) => {
             if (!state.shows) state.shows = {}
             state.shows.type = nextType
             return state
@@ -208,8 +210,9 @@
 
         const { ctrl } = e.detail
         if (ctrl) {
+            let show = new ShowObj()
             const selectedIndex = $activeShow?.index === undefined ? undefined : $activeShow.index + 1
-            history({ id: "UPDATE", newData: { remember: { project: $activeProject, index: selectedIndex } }, location: { page: "show", id: "show" } })
+            history({ id: "UPDATE", newData: { data: show, remember: { project: $activeProject, index: selectedIndex } }, location: { page: "show", id: "show" } })
         } else {
             activePopup.set("show")
         }
@@ -222,12 +225,12 @@
     //     scrollElem = listElem?.querySelector("svelte-virtual-list-viewport") || null
     // }
 
-    $: showWithNonExistentCategory = active === "unlabeled" && filteredStored.some(s => s.category)
+    $: showWithNonExistentCategory = active === "unlabeled" && filteredStored.some((s) => s.category)
     function createNonExistentCategories() {
-        const nonexistentCategories = [...new Set(filteredStored.map(s => s.category))] as string[]
+        const nonexistentCategories = [...new Set(filteredStored.map((s) => s.category))] as string[]
 
-        categories.update(a => {
-            nonexistentCategories.forEach(id => {
+        categories.update((a) => {
+            nonexistentCategories.forEach((id) => {
                 if (a[id]) return
                 a[id] = { name: translateText("main.unnamed") }
             })
@@ -236,17 +239,18 @@
     }
 
     let activeIsSearch = true
-    $: if (searchValue.length < 2) activeIsSearch = true
-    function mouseup() {
-        activeIsSearch = document.activeElement?.classList.contains("search") || false
-    }
+    onMount(() => {
+        const searchInput = document.querySelector(".drawer")?.querySelector(".search")
+        searchInput?.addEventListener("focus", () => (activeIsSearch = true))
+        searchInput?.addEventListener("blur", () => (activeIsSearch = false))
+    })
 </script>
 
-<svelte:window on:keydown={keydown} on:mouseup={mouseup} />
+<svelte:window on:keydown={keydown} />
 
 <Autoscroll style="overflow-y: auto;flex: 1;">
     <!-- bind:this={listElem} -->
-    <div class="column {readOnly ? '' : 'context #drawer_show'}">
+    <div class="column {readOnly ? '' : 'context #drawer_show'}" on:mouseup={() => focusedArea.set("show_drawer")}>
         {#if filteredShows.length}
             {#if createFromSearch && searchValue.length && typeof searchValue === "string" && activeIsSearch}
                 <div class="warning">
@@ -273,7 +277,7 @@
 
             <!-- reload list when changing category -->
             {#key active}
-                <VirtualList items={filteredShows} let:item={show} activeIndex={searchValue.length ? -1 : filteredShows.findIndex(a => a.id === $activeShow?.id)}>
+                <VirtualList items={filteredShows} let:item={show} activeIndex={searchValue.length ? -1 : filteredShows.findIndex((a) => a.id === $activeShow?.id)}>
                     <SelectElem id="show_drawer" data={{ id: show.id }} shiftRange={filteredShows} draggable>
                         {#if searchValue.length <= 1 || show.match}
                             <ShowButton id={show.id} {show} data={dateToString(show.timestamps?.[sortType.replace("_old", "")] || show.timestamps?.modified || show.timestamps?.created || "", true)} class="#drawer_show_button" match={show.match || null} isFirst={firstMatch?.id === show.id && activeIsSearch} />
@@ -300,7 +304,7 @@
 {/if}
 
 <FloatingInputs onlyOne gradient>
-    <div role="none" class="overflow-interact" on:click={e => createShow(e, true)}>
+    <div role="none" class="overflow-interact" on:click={(e) => createShow(e, true)}>
         <MaterialButton icon="add" class="context #drawer_new_show" title="tooltip.show [Ctrl+N]" disabled={readOnly} on:click={createShow}>
             {#if !$labelsDisabled}<T id="new.show" />{/if}
         </MaterialButton>

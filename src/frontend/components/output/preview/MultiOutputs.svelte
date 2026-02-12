@@ -11,9 +11,9 @@
     export let disableTransitions = false
 
     // export let resolution: Resolution
-    $: outs = sortObject(sortByName(keysToID($outputs).filter(a => a.enabled)), "stageOutput")
+    $: outs = sortObject(sortByName(keysToID($outputs).filter((a) => a.enabled)), "stageOutput")
     // hide from preview if omre than one output is "enabled", and no non hidden output is "active"
-    $: if (outs.length > 1 && !keysToID($outputs).filter(a => outs.find(({ id }) => a.id === id) && !a.active && !a.hideFromPreview).length) outs = outs.filter(a => !a.hideFromPreview)
+    $: if (outs.length > 1 && !keysToID($outputs).filter((a) => outs.find(({ id }) => a.id === id) && !a.active && !a.hideFromPreview).length) outs = outs.filter((a) => !a.hideFromPreview)
 
     let fullscreen = false
     let fullscreenId = ""
@@ -116,20 +116,20 @@ aria-label={fullscreen ? "Exit fullscreen preview" : "Toggle fullscreen preview"
             <PreviewOutput outputId={output.id} {disableTransitions} disabled={outs.length > 1 && !fullscreen && !output?.active} {fullscreen} />
 
             <!-- icons -->
-            {#if !fullscreen}
+            {#if !fullscreen && layers.length < 3}
                 <div class="icons">
                     {#if !layers.includes("background")}
-                        <div class="icon" data-title={translateText("<b>actions.remove_layers:</b> preview.background")}>
+                        <div class="icon" data-title={translateText("<b>output.disabled_layers:</b> preview.background")}>
                             <Icon id="media_off" size={0.8} white />
                         </div>
                     {/if}
                     {#if !layers.includes("slide")}
-                        <div class="icon" data-title={translateText("<b>actions.remove_layers:</b> preview.slide")}>
+                        <div class="icon" data-title={translateText("<b>output.disabled_layers:</b> preview.slide")}>
                             <Icon id="shows_off" size={0.8} white />
                         </div>
                     {/if}
                     {#if !layers.includes("overlays")}
-                        <div class="icon" data-title={translateText("<b>actions.remove_layers:</b> preview.overlays")}>
+                        <div class="icon" data-title={translateText("<b>output.disabled_layers:</b> preview.overlays")}>
                             <Icon id="overlays_off" size={0.8} white />
                         </div>
                     {/if}

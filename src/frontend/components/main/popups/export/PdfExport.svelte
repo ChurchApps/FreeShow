@@ -48,7 +48,7 @@
     function showHasChords(show: Show | null): boolean {
         if (!show) return false
 
-        return Object.values(show.slides || {}).some(slide => slide.items?.some(item => item.lines?.some(line => line.chords && line.chords.length > 0)))
+        return Object.values(show.slides || {}).some((slide) => slide.items?.some((item) => item.lines?.some((line) => line.chords && line.chords.length > 0)))
     }
 
     function updatePdfOptions(e: any, key: string) {
@@ -59,34 +59,34 @@
 <!-- min-width: 42vw; -->
 <div style="display: flex;gap: 15px;">
     <div class="options" style="flex: 0 0 300px;">
-        <MaterialDropdown label="clock.type" style="margin-bottom: 10px;" options={pdfTypeOptions} value={pdfOptions.type || "default"} on:change={e => (pdfOptions.type = e.detail)} />
+        <MaterialDropdown label="clock.type" style="margin-bottom: 10px;" options={pdfTypeOptions} value={pdfOptions.type || "default"} on:change={(e) => (pdfOptions.type = e.detail)} />
 
         <!-- <MaterialCheckbox label="export.title" checked={pdfOptions.title} on:change={(e) => updatePdfOptions(e, "title")} /> -->
 
         {#if pdfOptions.type !== "chordSheet"}
-            <MaterialCheckbox label="export.metadata" checked={pdfOptions.metadata} on:change={e => updatePdfOptions(e, "metadata")} />
-            <MaterialCheckbox label="export.page_numbers" checked={pdfOptions.pageNumbers} on:change={e => updatePdfOptions(e, "pageNumbers")} />
-            <MaterialCheckbox label="export.groups" checked={pdfOptions.groups} on:change={e => updatePdfOptions(e, "groups")} />
-            <MaterialCheckbox label="export.numbers" checked={pdfOptions.numbers} on:change={e => updatePdfOptions(e, "numbers")} />
-            <MaterialCheckbox label="export.invert" disabled={pdfOptions.type === "text"} checked={pdfOptions.invert} on:change={e => updatePdfOptions(e, "invert")} />
+            <MaterialCheckbox label="export.metadata" checked={pdfOptions.metadata} on:change={(e) => updatePdfOptions(e, "metadata")} />
+            <MaterialCheckbox label="export.page_numbers" checked={pdfOptions.pageNumbers} on:change={(e) => updatePdfOptions(e, "pageNumbers")} />
+            <MaterialCheckbox label="export.groups" checked={pdfOptions.groups} on:change={(e) => updatePdfOptions(e, "groups")} />
+            <MaterialCheckbox label="export.numbers" checked={pdfOptions.numbers} on:change={(e) => updatePdfOptions(e, "numbers")} />
+            <MaterialCheckbox label="export.invert" disabled={pdfOptions.type === "text"} checked={pdfOptions.invert} on:change={(e) => updatePdfOptions(e, "invert")} />
 
-            <MaterialCheckbox label="export.original_text_size" style="margin-top: 10px;" disabled={pdfOptions.type === "slides"} checked={pdfOptions.originalTextSize !== false} on:change={e => updatePdfOptions(e, "originalTextSize")} />
-            <MaterialNumberInput label="settings.font_size" disabled={pdfOptions.type === "slides" || pdfOptions.originalTextSize !== false} value={pdfOptions.textSize} on:change={e => (pdfOptions.textSize = e.detail)} />
+            <MaterialCheckbox label="export.original_text_size" style="margin-top: 10px;" disabled={pdfOptions.type === "slides"} checked={pdfOptions.originalTextSize !== false} on:change={(e) => updatePdfOptions(e, "originalTextSize")} />
+            <MaterialNumberInput label="settings.font_size" disabled={pdfOptions.type === "slides" || pdfOptions.originalTextSize !== false} value={pdfOptions.textSize} on:change={(e) => (pdfOptions.textSize = e.detail)} />
 
             {#if pdfOptions.type !== "text"}
-                <MaterialNumberInput label="export.rows" style="margin-top: 10px;" value={pdfOptions.grid[1]} min={1} max={7} on:change={e => (pdfOptions.grid[1] = e.detail)} />
-                <MaterialNumberInput label="export.columns" disabled={pdfOptions.type !== "slides"} value={pdfOptions.grid[0]} min={1} max={6} on:change={e => (pdfOptions.grid[0] = e.detail)} />
+                <MaterialNumberInput label="export.rows" style="margin-top: 10px;" value={pdfOptions.grid[1]} min={1} max={7} on:change={(e) => (pdfOptions.grid[1] = e.detail)} />
+                <MaterialNumberInput label="export.columns" disabled={pdfOptions.type !== "slides"} value={pdfOptions.grid[0]} min={1} max={6} on:change={(e) => (pdfOptions.grid[0] = e.detail)} />
             {/if}
         {:else}
-            <MaterialNumberInput label="settings.font_size" value={pdfOptions.fontSize} min={8} max={24} on:change={e => (pdfOptions.fontSize = e.detail)} />
-            <MaterialNumberInput label="export.margin (mm)" value={pdfOptions.margin} min={5} max={50} on:change={e => (pdfOptions.margin = e.detail)} />
-            <MaterialNumberInput label="edit.line_spacing" value={pdfOptions.spacing * 10} min={1} max={30} on:change={e => (pdfOptions.spacing = e.detail / 10)} />
+            <MaterialNumberInput label="settings.font_size" value={pdfOptions.fontSize} min={8} max={24} on:change={(e) => (pdfOptions.fontSize = e.detail)} />
+            <MaterialNumberInput label="export.margin (mm)" value={pdfOptions.margin} min={5} max={50} on:change={(e) => (pdfOptions.margin = e.detail)} />
+            <MaterialNumberInput label="edit.line_spacing" value={pdfOptions.spacing * 10} min={1} max={30} on:change={(e) => (pdfOptions.spacing = e.detail / 10)} />
 
-            <MaterialNumberInput label="export.columns" style="margin-top: 10px;" value={pdfOptions.columnsPerPage} min={1} max={3} on:change={e => (pdfOptions.columnsPerPage = e.detail)} />
+            <MaterialNumberInput label="export.columns" style="margin-top: 10px;" value={pdfOptions.columnsPerPage} min={1} max={3} on:change={(e) => (pdfOptions.columnsPerPage = e.detail)} />
 
             <h5 style="margin: 10px 0;text-align: center;color: var(--text);"><T id="edit.chords" /></h5>
 
-            <MaterialNumberInput label="edit.font_size" value={pdfOptions.chordFontSize} min={6} max={20} on:change={e => (pdfOptions.chordFontSize = e.detail)} />
+            <MaterialNumberInput label="edit.font_size" value={pdfOptions.chordFontSize} min={6} max={20} on:change={(e) => (pdfOptions.chordFontSize = e.detail)} />
         {/if}
     </div>
 

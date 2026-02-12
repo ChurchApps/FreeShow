@@ -33,7 +33,7 @@
     export let actionNameIndex = 0
     export let choosePopup = false
 
-    $: existingActionsFiltered = choosePopup ? existingActions : existingActions.filter(a => a !== actionId)
+    $: existingActionsFiltered = choosePopup ? existingActions : existingActions.filter((a) => a !== actionId)
 
     let dispatch = createEventDispatcher()
     function changeAction(data: any) {
@@ -52,7 +52,6 @@
         "start_metronome",
         "start_slide_timers",
         "stop_timers",
-        "start_slide_recording",
         "change_output_style",
         "change_stage_output_layout",
         "start_trigger",
@@ -74,7 +73,7 @@
     let previousSection = ""
     $: ACTIONS = [
         ...Object.keys(API_ACTIONS)
-            .map(id => {
+            .map((id) => {
                 let data = actionData[id] || {}
                 let name = translateText(data.name || "") || id
                 let icon = data.icon || "actions"
@@ -91,7 +90,7 @@
                 // show if it is the currently selected
                 if (id === actionId) return true
                 // don't show action if incompatible with any existing action (and no wait action is added)
-                if (!existingActionsFiltered.find(a => a.includes("wait")) && actionData[id].incompatible?.find(id => existingActionsFiltered.includes(id))) return false
+                if (!existingActionsFiltered.find((a) => a.includes("wait")) && actionData[id].incompatible?.find((id) => existingActionsFiltered.includes(id))) return false
                 // don't display GET actions
                 if (id.includes("get_")) return false
 
@@ -136,12 +135,12 @@
 
     function findName(actionId: string): string {
         actionId = getActionTriggerId(actionId)
-        return ACTIONS.find(a => a.id === actionId)?.name || actionId || ""
+        return ACTIONS.find((a) => a.id === actionId)?.name || actionId || ""
     }
 
     function findIcon(actionId: string): string {
         actionId = getActionTriggerId(actionId)
-        return ACTIONS.find(a => a.id === actionId)?.icon || "actions"
+        return ACTIONS.find((a) => a.id === actionId)?.icon || "actions"
     }
 
     $: dataInputs = !!(input && actionId && !pickAction && !full)
@@ -170,7 +169,7 @@
         // reset if search value changed
         // if (!searchValue.includes(previousSearchValue)) currentActionsList = list
 
-        searchedActions = currentActionsList.filter(a => formatSearch(a.name || "").includes(searchValue))
+        searchedActions = currentActionsList.filter((a) => formatSearch(a.name || "").includes(searchValue))
 
         // previousSearchValue = searchValue
     }
@@ -180,7 +179,7 @@
         changeAction({ ...searchedActions[0], index: full ? undefined : 0 })
     }
 
-    const getName = object => object[actionValue.id]?.name || ""
+    const getName = (object) => object[actionValue.id]?.name || ""
     function getActionInfo(actionId: string): string {
         const id = actionId.split(":")[0]
         // console.log(id, actionValue)
@@ -226,7 +225,7 @@
             </Button>
         </CombinedInput>
     {:else}
-        <MaterialTextInput label="main.search" value="" on:input={e => search(e.detail)} autofocus />
+        <MaterialTextInput label="main.search" value="" on:input={(e) => search(e.detail)} autofocus />
 
         {#if mode !== "slide"}
             <MaterialButton
@@ -290,7 +289,7 @@
 
         <InputRow style="background-color: var(--primary-darker);" arrow={dataInputs && !dataOpened} bind:open={dataMenuOpened}>
             {#if !choosePopup}
-                <Dropdown activeId={actionId} value={findName(actionId) || "—"} options={[...(actionNameIndex ? [{ id: "remove", name: "—" }] : []), ...ACTIONS]} on:click={e => changeAction(e.detail)} />
+                <Dropdown activeId={actionId} value={findName(actionId) || "—"} options={[...(actionNameIndex ? [{ id: "remove", name: "—" }] : []), ...ACTIONS]} on:click={(e) => changeAction(e.detail)} />
                 <!-- <MaterialDropdown value={actionId} options={[...(actionNameIndex ? [{ value: "remove", label: "—" }] : []), ...ACTIONS]} on:change={(e) => changeAction(e.detail)} /> -->
             {:else}
                 <MaterialButton style="flex: 1;justify-content: start;{actionId ? 'font-weight: normal;' : ''}" title="actions.choose_action" on:click={() => dispatch("choose")}>
@@ -316,12 +315,12 @@
 
 {#if dataInputs && (dataOpened || dataMenuOpened)}
     <div class="menu-indent">
-        <CustomInput {mainId} inputId={input} actionIndex={actionNameIndex} value={actionValue} actionId={getActionTriggerId(actionId)} on:change={e => changeAction({ id: actionId, actionValue: e.detail })} list />
+        <CustomInput {mainId} inputId={input} actionIndex={actionNameIndex} value={actionValue} actionId={getActionTriggerId(actionId)} on:change={(e) => changeAction({ id: actionId, actionValue: e.detail })} list />
     </div>
 {/if}
 
 {#if mode === "slide" && getActionTriggerId(actionId) === "run_action" && $categories[_show().get().category]?.action}
-    <MaterialToggleSwitch label="actions.override_category_action" checked={customData.overrideCategoryAction} defaultValue={false} on:change={e => changeAction({ id: actionId, customDataKey: "overrideCategoryAction", customDataValue: e.detail })} />
+    <MaterialToggleSwitch label="actions.override_category_action" checked={customData.overrideCategoryAction} defaultValue={false} on:change={(e) => changeAction({ id: actionId, customDataKey: "overrideCategoryAction", customDataValue: e.detail })} />
 {/if}
 
 <style>

@@ -113,11 +113,11 @@
 
     function getOption(id: string | undefined, options: any[]) {
         if (!id) return {}
-        return options.find(a => a.id === id) || {}
+        return options.find((a) => a.id === id) || {}
     }
     function getOptionName(id: string | undefined, options: any[]) {
         if (!id) return ""
-        return options.find(a => a.id === id)?.name || ""
+        return options.find((a) => a.id === id)?.name || ""
     }
 
     // function updateValue(e: any, i: number) {
@@ -138,11 +138,11 @@
 <div class="list">
     {#each animation.actions as animate, i}
         <CombinedInput style={currentActive && $activeAnimate.index === i ? "outline: 2px solid var(--secondary);outline-offset: 0;z-index: 1;" : ""}>
-            <Dropdown options={types} value={getOptionName(animate.type, types) || "—"} on:click={e => (animation.actions[i].type = e.detail.id)} />
+            <Dropdown options={types} value={getOptionName(animate.type, types) || "—"} on:click={(e) => (animation.actions[i].type = e.detail.id)} />
 
             {#if animate.type === "wait"}
                 <span><T id="animate.for" /></span>
-                <NumberInput style="max-width: 80px;" value={animate.duration || 3} on:change={e => (animation.actions[i].duration = e.detail)} fixed={Number(animate.duration).toString().includes(".") ? 1 : 0} decimals={1} buttons={false} />
+                <NumberInput style="max-width: 80px;" value={animate.duration || 3} on:change={(e) => (animation.actions[i].duration = e.detail)} fixed={Number(animate.duration).toString().includes(".") ? 1 : 0} decimals={1} buttons={false} />
                 <span style="flex: 20;"><T id="animate.seconds" /></span>
                 <!-- {:else if animate.type === "set"}
                 <Dropdown options={setIds} value={getOptionName(animate.id, setIds) || setIds[0].name} on:click={(e) => (animation.actions[i].id = e.detail.id)} />
@@ -159,7 +159,7 @@
                 <Dropdown
                     options={ids}
                     value={getOptionName(animate.id, ids) || ids[0].name}
-                    on:click={e => {
+                    on:click={(e) => {
                         animation.actions[i].id = e.detail.id
 
                         let key = e.detail.id
@@ -173,7 +173,7 @@
                     <Dropdown
                         options={textKeys}
                         value={getOptionName(animate.key, textKeys) || textKeys[0].name}
-                        on:click={e => {
+                        on:click={(e) => {
                             animation.actions[i].key = e.detail.id
                             animation.actions[i].extension = e.detail.data?.extension || ""
                         }}
@@ -182,30 +182,30 @@
                     <Dropdown
                         options={itemKeys}
                         value={getOptionName(animate.key, itemKeys) || itemKeys[0].name}
-                        on:click={e => {
+                        on:click={(e) => {
                             animation.actions[i].key = e.detail.id
                             animation.actions[i].extension = e.detail.data?.extension || ""
                         }}
                     />
                 {:else if animate.id === "background"}
-                    <Dropdown options={backgroundKeys} value={getOptionName(animate.key, backgroundKeys) || backgroundKeys[0].name} on:click={e => (animation.actions[i].key = e.detail.id)} />
+                    <Dropdown options={backgroundKeys} value={getOptionName(animate.key, backgroundKeys) || backgroundKeys[0].name} on:click={(e) => (animation.actions[i].key = e.detail.id)} />
                 {/if}
 
                 {#if !animate.id || animate.id === "text"}
                     <span><T id="animate.to" /></span>
                     <!-- <TextInput value={animate.value || "0"} on:change={(e) => updateValue(e, i)} /> -->
                     {#key animate.key}
-                        <NumberInput style="max-width: 80px;" value={animate.value || 0} {...getOption(animate.key, textKeys).values || {}} on:change={e => (animation.actions[i].value = e.detail || 0)} buttons={false} />
+                        <NumberInput style="max-width: 80px;" value={animate.value || 0} {...getOption(animate.key, textKeys).values || {}} on:change={(e) => (animation.actions[i].value = e.detail || 0)} buttons={false} />
                     {/key}
                 {:else if animate.id === "item"}
                     <span><T id="animate.to" /></span>
                     {#key animate.key}
-                        <NumberInput style="max-width: 80px;" value={animate.value || 0} {...getOption(animate.key, itemKeys).values || {}} on:change={e => (animation.actions[i].value = e.detail || 0)} buttons={false} />
+                        <NumberInput style="max-width: 80px;" value={animate.value || 0} {...getOption(animate.key, itemKeys).values || {}} on:change={(e) => (animation.actions[i].value = e.detail || 0)} buttons={false} />
                     {/key}
                 {/if}
 
                 <span><T id="animate.for" /></span>
-                <NumberInput style="max-width: 80px;" value={animate.duration || 3} on:change={e => (animation.actions[i].duration = e.detail)} fixed={Number(animate.duration).toString().includes(".") ? 1 : 0} decimals={1} buttons={false} />
+                <NumberInput style="max-width: 80px;" value={animate.duration || 3} on:change={(e) => (animation.actions[i].duration = e.detail)} fixed={Number(animate.duration).toString().includes(".") ? 1 : 0} decimals={1} buttons={false} />
                 <span style="flex: 20;"><T id="animate.seconds" /></span>
             {/if}
 
@@ -236,8 +236,8 @@
 
 <br />
 
-<MaterialToggleSwitch label="calendar.repeat" checked={animation.repeat} disabled={!animation.actions.find(a => a.type === "wait")} on:change={e => (animation.repeat = e.detail)} />
-<MaterialDropdown label="transition.easing" options={easings} value={animation.easing || "ease"} on:change={e => (animation.easing = e.detail)} />
+<MaterialToggleSwitch label="calendar.repeat" checked={animation.repeat} disabled={!animation.actions.find((a) => a.type === "wait")} on:change={(e) => (animation.repeat = e.detail)} />
+<MaterialDropdown label="transition.easing" options={easings} value={animation.easing || "ease"} on:change={(e) => (animation.easing = e.detail)} />
 
 <!-- <br />
 

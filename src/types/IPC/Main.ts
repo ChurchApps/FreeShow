@@ -2,10 +2,11 @@ import type { Display } from "electron"
 import type { ExifData } from "exif"
 import type { Stats } from "fs"
 import type { Bible } from "json-bible/lib/Bible"
-import type os from "os"
+import type { SyncProviderId } from "../../electron/cloud/syncManager"
 import type { ContentFile, ContentLibraryCategory, ContentProviderId } from "../../electron/contentProviders/base/types"
 import type { _store } from "../../electron/data/store"
-import type { ErrorLog, FileData, LessonsData, LyricSearchResult, MainFilePaths, Media, OS, Subtitle } from "../Main"
+import type { TimecodeMode } from "../../electron/timecode/timecode"
+import type { ErrorLog, FileFolder, LessonsData, LyricSearchResult, MainFilePaths, Media, OS, Subtitle } from "../Main"
 import type { Output } from "../Output"
 import type { Folders, Projects } from "../Projects"
 import type { Dictionary, Resolution, Themes } from "../Settings"
@@ -22,11 +23,12 @@ export enum Main {
     // DEV
     LOG = "LOG",
     IS_DEV = "IS_DEV",
-    GET_TEMP_PATHS = "GET_TEMP_PATHS",
+    GET_CACHE_PATH = "GET_CACHE_PATH",
     // APP
     VERSION = "VERSION",
     GET_OS = "GET_OS",
     DEVICE_ID = "DEVICE_ID",
+    GET_DEVICE_NAME = "GET_DEVICE_NAME",
     IP = "IP",
     CHECK_RAM_USAGE = "CHECK_RAM_USAGE",
     // STORES
@@ -51,6 +53,7 @@ export enum Main {
     FULLSCREEN = "FULLSCREEN",
     /////
     IMPORT = "IMPORT",
+    IMPORT_FILES = "IMPORT_FILES",
     BIBLE = "BIBLE",
     SHOW = "SHOW",
     SAVE = "SAVE",
@@ -122,14 +125,25 @@ export enum Main {
     RESTORE = "RESTORE",
     SYSTEM_OPEN = "SYSTEM_OPEN",
     LOCATE_MEDIA_FILE = "LOCATE_MEDIA_FILE",
+    GET_MEDIA_FOLDER_PATH = "GET_MEDIA_FOLDER_PATH",
+    SET_MEDIA_FOLDER_PATH = "SET_MEDIA_FOLDER_PATH",
     GET_SIMILAR = "GET_SIMILAR",
     BUNDLE_MEDIA_FILES = "BUNDLE_MEDIA_FILES",
+    MEDIA_FOLDER_COPY = "MEDIA_FOLDER_COPY",
+    READ_BIBLES_FOLDER = "READ_BIBLES_FOLDER",
     FILE_INFO = "FILE_INFO",
     READ_FOLDER = "READ_FOLDER",
-    READ_FOLDERS = "READ_FOLDERS",
     READ_FILE = "READ_FILE",
     OPEN_FOLDER = "OPEN_FOLDER",
     OPEN_FILE = "OPEN_FILE",
+    // SYNC
+    CAN_SYNC = "CAN_SYNC",
+    GET_TEAMS = "GET_TEAMS",
+    CLOUD_DATA = "CLOUD_DATA",
+    CLOUD_CHANGED = "CLOUD_CHANGED",
+    CLOUD_SYNC = "CLOUD_SYNC",
+    GET_CONVERSATION_ID = "GET_CONVERSATION_ID",
+    SEND_SOCKET_MESSAGE = "SEND_SOCKET_MESSAGE",
     // Provider-based routing
     PROVIDER_LOAD_SERVICES = "PROVIDER_LOAD_SERVICES",
     PROVIDER_DISCONNECT = "PROVIDER_DISCONNECT",
@@ -138,7 +152,13 @@ export enum Main {
     GET_CONTENT_PROVIDERS = "GET_CONTENT_PROVIDERS",
     GET_CONTENT_LIBRARY = "GET_CONTENT_LIBRARY",
     GET_PROVIDER_CONTENT = "GET_PROVIDER_CONTENT",
-    CHECK_MEDIA_LICENSE = "CHECK_MEDIA_LICENSE"
+    CHECK_MEDIA_LICENSE = "CHECK_MEDIA_LICENSE",
+    // Timecode
+    TIMECODE_START = "TIMECODE_START",
+    TIMECODE_STOP = "TIMECODE_STOP",
+    TIMECODE_VALUE = "TIMECODE_VALUE",
+    TIMECODE_AUDIO_DATA = "TIMECODE_AUDIO_DATA",
+    TIMECODE_STATUS = "TIMECODE_STATUS"
 }
 
 export interface MainSendPayloads {
@@ -146,6 +166,7 @@ export interface MainSendPayloads {
     [Main.LOG]: any
     /////
     [Main.IMPORT]: { channel: string; format: { name: string; extensions: string[] }; settings?: any }
+    [Main.IMPORT_FILES]: { id: string; paths: string[] }
     [Main.BIBLE]: { id: string; name: string }
     [Main.SHOW]: { id: string; name: string }
     [Main.SAVE]: SaveData
@@ -165,7 +186,7 @@ export interface MainSendPayloads {
     [Main.OUTPUT]: "true" | "false"
     [Main.DOES_MEDIA_EXIST]: { path: string; creationTime?: number; noCache?: boolean }
     [Main.GET_THUMBNAIL]: { input: string; size: number }
-    [Main.SAVE_IMAGE]: { path?: string; base64?: string; filePath?: string[]; format?: "png" | "jpg" }
+    [Main.SAVE_IMAGE]: { id?: string; path?: string; base64?: string; filePath?: string[]; format?: "png" | "jpg" }
     [Main.PDF_TO_IMAGE]: { filePath: string }
     [Main.READ_EXIF]: { id: string }
     [Main.MEDIA_CODEC]: { path: string }
@@ -195,33 +216,49 @@ export interface MainSendPayloads {
     [Main.RECORDER]: { blob: ArrayBuffer; name: string }
     [Main.SYSTEM_OPEN]: string
 
-    [Main.LOCATE_MEDIA_FILE]: { fileName: string; splittedPath: string[]; folders: string[]; ref: { showId: string; mediaId: string; cloudId: string } }
+    [Main.LOCATE_MEDIA_FILE]: { filePath: string; folders: string[] }
+    [Main.SET_MEDIA_FOLDER_PATH]: string
     [Main.GET_SIMILAR]: { paths: string[] }
+    [Main.BUNDLE_MEDIA_FILES]: { openFolder?: boolean }
+    [Main.MEDIA_FOLDER_COPY]: { paths: string[] }
     [Main.FILE_INFO]: string
-    [Main.READ_FOLDER]: { path: string; disableThumbnails?: boolean; listFilesInFolders?: boolean }
-    [Main.READ_FOLDERS]: { path: string }[]
+    [Main.READ_FOLDER]: { path: string | string[]; depth?: number; generateThumbnails?: boolean; captureFolderContent?: boolean }
     [Main.READ_FILE]: { path: string }
     [Main.OPEN_FOLDER]: { channel: string; title?: string; path?: string }
     [Main.OPEN_FILE]: { id: string; channel: string; title?: string; filter: any; multiple: boolean; read?: boolean }
+    // SYNC
+    [Main.CAN_SYNC]?: { id: SyncProviderId }
+    [Main.GET_TEAMS]?: { id: SyncProviderId }
+    [Main.CLOUD_DATA]: { id: SyncProviderId; churchId: string; teamId: string }
+    [Main.CLOUD_CHANGED]: { id: SyncProviderId; churchId: string; teamId: string }
+    [Main.CLOUD_SYNC]: { id: SyncProviderId; churchId: string; teamId: string; method: "merge" | "read_only" | "upload" | "replace" }
+    [Main.GET_CONVERSATION_ID]: { teamId: string }
+    [Main.SEND_SOCKET_MESSAGE]: { churchId: string; teamId: string; displayName: string; content: string }
     // Provider-based routing
-    [Main.PROVIDER_LOAD_SERVICES]: { providerId: ContentProviderId }
+    [Main.PROVIDER_LOAD_SERVICES]: { providerId: ContentProviderId; cloudOnly?: boolean }
     [Main.PROVIDER_DISCONNECT]: { providerId: ContentProviderId; scope?: string }
-    [Main.PROVIDER_STARTUP_LOAD]: { providerId: ContentProviderId; scope?: string; data?: any }
+    [Main.PROVIDER_STARTUP_LOAD]: { providerId: ContentProviderId; scope?: string; data?: any; cloudOnly?: boolean }
     // Content Library
     [Main.GET_CONTENT_LIBRARY]: { providerId: ContentProviderId }
     [Main.GET_PROVIDER_CONTENT]: { providerId: ContentProviderId; key: string }
     [Main.CHECK_MEDIA_LICENSE]: { providerId: ContentProviderId; mediaId: string }
+    // Timecode
+    [Main.TIMECODE_START]: { type: "send" | "receive"; mode: TimecodeMode; framerate?: number; data?: any }
+    [Main.TIMECODE_VALUE]: number
+    [Main.TIMECODE_STATUS]: "play" | "pause" | "stop"
+    [Main.TIMECODE_AUDIO_DATA]: { mode: TimecodeMode; buffer: Uint8Array }
 }
 
 export interface MainReturnPayloads {
     // DEV
     [Main.IS_DEV]: boolean
-    [Main.GET_TEMP_PATHS]: { [key: string]: string }
+    [Main.GET_CACHE_PATH]: string
     // APP
     [Main.VERSION]: string
     [Main.GET_OS]: OS
     [Main.DEVICE_ID]: string
-    [Main.IP]: NodeJS.Dict<os.NetworkInterfaceInfo[]>
+    [Main.GET_DEVICE_NAME]: string
+    [Main.IP]: string[]
     [Main.CHECK_RAM_USAGE]: { total: number; free: number; performanceMode: boolean }
     ///
     // [Main.SAVE]: { closeWhenFinished: boolean; customTriggers: any } | Promise<void>
@@ -258,25 +295,35 @@ export interface MainReturnPayloads {
     [Main.GET_SCREENS]: Promise<{ name: string; id: string }[]>
     [Main.GET_WINDOWS]: Promise<{ name: string; id: string }[]>
     [Main.DOES_MEDIA_EXIST]: Promise<{ path: string; exists: boolean; creationTime?: number }>
-    [Main.GET_THUMBNAIL]: { output: string; input: string; size: number }
+    [Main.GET_THUMBNAIL]: Promise<{ output: string; input: string; size: number }>
     // [Main.PDF_TO_IMAGE]: Promise<string[]>
     [Main.READ_EXIF]: Promise<{ id: string; exif: ExifData }>
     [Main.MEDIA_CODEC]: Promise<{ path: string; codecs: string[]; mimeType: string; mimeCodec: string }>
     [Main.MEDIA_TRACKS]: Promise<{ path: string; tracks: Subtitle[] }>
-    [Main.MEDIA_IS_DOWNLOADED]: Promise<{ path: string; buffer: Buffer | null; protectedUrl?: string | null } | null>
+    [Main.MEDIA_IS_DOWNLOADED]: Promise<{ path: string; buffer: Buffer | null; protectedUrl?: string | null; isDownloading?: boolean } | null>
     // [Main.MEDIA_BASE64]: { id: string; content: string }[]
-    [Main.CAPTURE_SLIDE]: Promise<{ base64: string } | undefined>
+    [Main.CAPTURE_SLIDE]: Promise<{ base64: string } | null>
     [Main.SLIDESHOW_GET_APPS]: string[]
     [Main.GET_MIDI_OUTPUTS]: { name: string }[]
     [Main.GET_MIDI_INPUTS]: { name: string }[]
     [Main.GET_LYRICS]: Promise<{ lyrics: string; source: string; title: string; artist: string }>
     [Main.SEARCH_LYRICS]: Promise<LyricSearchResult[]>
     [Main.GET_SIMILAR]: { path: string; name: string }[]
-    [Main.LOCATE_MEDIA_FILE]: Promise<{ path: string; ref: { showId: string; mediaId: string; cloudId: string } } | undefined>
+    [Main.MEDIA_FOLDER_COPY]: Promise<boolean>
+    [Main.LOCATE_MEDIA_FILE]: Promise<{ path: string; hasChanged: boolean } | null>
+    [Main.GET_MEDIA_FOLDER_PATH]: string
+    [Main.READ_BIBLES_FOLDER]: { path: string; name: string }[]
     [Main.FILE_INFO]: { path: string; stat: Stats; extension: string; folder: boolean } | null
-    [Main.READ_FOLDER]: { path: string; files: FileData[]; filesInFolders: any[]; folderFiles: { [key: string]: any[] } }
-    [Main.READ_FOLDERS]: Promise<{ [key: string]: FileData[] }>
+    [Main.READ_FOLDER]: Promise<{ [key: string]: FileFolder }>
     [Main.READ_FILE]: { content: string }
+    // SYNC
+    [Main.CAN_SYNC]: Promise<boolean>
+    [Main.GET_TEAMS]: Promise<{ id: string; churchId: string; name: string }[]>
+    [Main.CLOUD_DATA]: Promise<boolean>
+    [Main.CLOUD_CHANGED]: Promise<boolean>
+    [Main.CLOUD_SYNC]: Promise<{ success?: boolean; error?: string; changedFiles: any[] }>
+    [Main.GET_CONVERSATION_ID]: Promise<string | null>
+    [Main.SEND_SOCKET_MESSAGE]: Promise<boolean>
     // Provider-based routing
     [Main.PROVIDER_DISCONNECT]: { success: boolean }
     // Content Library
@@ -284,6 +331,10 @@ export interface MainReturnPayloads {
     [Main.GET_CONTENT_LIBRARY]: Promise<ContentLibraryCategory[]>
     [Main.GET_PROVIDER_CONTENT]: Promise<ContentFile[]>
     [Main.CHECK_MEDIA_LICENSE]: Promise<string | null>
+    // Timecode
+    [Main.TIMECODE_VALUE]: number | void
+    [Main.TIMECODE_AUDIO_DATA]: Buffer | void
+    [Main.TIMECODE_STATUS]: "play" | "pause" | "stop" | void
 }
 
 ///////////

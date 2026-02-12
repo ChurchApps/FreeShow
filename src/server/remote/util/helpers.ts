@@ -26,7 +26,7 @@ export function setError(err: string) {
 
 /** Convert object with IDs as keys to array with id property */
 export function keysToID<T>(obj: Record<string, T>): (T & { id: string })[] {
-    return Object.keys(obj || {}).map(key => ({ id: key, ...obj[key] }))
+    return Object.keys(obj || {}).map((key) => ({ id: key, ...obj[key] }))
 }
 
 /** Sort array by a string property (case-insensitive) */
@@ -106,3 +106,131 @@ export function formatTime(seconds: number): string {
     if (h > 0) return `${h}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`
     return `${m}:${s.toString().padStart(2, "0")}`
 }
+
+// Performance utilities for mobile/tablet optimization
+
+/** Debounce function - delays execution until after a pause in calls */
+export function debounce<T extends (...args: any[]) => any>(fn: T, delay: number): (...args: Parameters<T>) => void {
+    let timeoutId: number | null = null
+    return (...args: Parameters<T>) => {
+        if (timeoutId !== null) clearTimeout(timeoutId)
+        timeoutId = setTimeout(() => fn(...args), delay) as unknown as number
+    }
+}
+
+/** Throttle function - limits execution rate (useful for scroll handlers) */
+export function throttle<T extends (...args: any[]) => any>(fn: T, limit: number): (...args: Parameters<T>) => void {
+    let waiting = false
+    return (...args: Parameters<T>) => {
+        if (!waiting) {
+            fn(...args)
+            waiting = true
+            setTimeout(() => (waiting = false), limit)
+        }
+    }
+}
+
+export type LongPressPointerType = "mouse" | "touch" | "pen"
+
+export type LongPressOptions<T> = {
+    onLongPress: (context: T) => void
+    isEnabled?: () => boolean
+    delayMs?: number
+    moveThresholdPx?: number
+    suppressClickMs?: number
+    allowedPointerTypes?: LongPressPointerType[]
+}
+
+export type LongPressHandlers<T> = {
+    onPointerDown: (context: T, event: PointerEvent) => void
+    onPointerMove: (event: PointerEvent) => void
+    onPointerUp: () => void
+    onPointerCancel: () => void
+    shouldSuppressClick: () => boolean
+}
+
+export function createLongPress<T>(options: LongPressOptions<T>): LongPressHandlers<T> {
+    const delayMs = options.delayMs ?? 450
+    const moveThresholdPx = options.moveThresholdPx ?? 10
+    const suppressClickMs = options.suppressClickMs ?? 700
+
+    let timer: ReturnType<typeof setTimeout> | null = null
+    let startX = 0
+    let startY = 0
+    let lastLongPressAt = 0
+
+    function clear() {
+        if (timer) {
+            clearTimeout(timer)
+            timer = null
+        }
+    }
+
+    function isAllowedPointerType(pointerType: string): boolean {
+        if (!options.allowedPointerTypes?.length) return true
+        return options.allowedPointerTypes.includes(pointerType as LongPressPointerType)
+    }
+
+    return {
+        onPointerDown: (context: T, event: PointerEvent) => {
+            if (options.isEnabled && !options.isEnabled()) return
+            if (!isAllowedPointerType(event.pointerType)) return
+
+            // Only primary button for mouse; touch/pen are always primary.
+            if (event.pointerType === "mouse" && event.button !== 0) return
+
+            startX = event.clientX
+            startY = event.clientY
+            clear()
+
+            timer = setTimeout(() => {
+                lastLongPressAt = Date.now()
+                options.onLongPress(context)
+            }, delayMs)
+        },
+        onPointerMove: (event: PointerEvent) => {
+            if (!timer) return
+            const dx = Math.abs(event.clientX - startX)
+            const dy = Math.abs(event.clientY - startY)
+            if (dx > moveThresholdPx || dy > moveThresholdPx) clear()
+        },
+        onPointerUp: () => {
+            clear()
+        },
+        onPointerCancel: () => {
+            clear()
+        },
+        shouldSuppressClick: () => Date.now() - lastLongPressAt < suppressClickMs
+    }
+}
+
+// Category data structure utilities
+
+export type CategoryData = {
+    categoriesList: any[]
+    unarchivedCategories: any[]
+    archivedCategories: any[]
+    allItems: any[]
+    unarchivedItems: any[]
+    uncategorizedCount: number
+}
+
+/** Build category data structure */
+export function buildCategoryData(items: any[], categoriesObj: Record<string, any>): CategoryData {
+    const categoriesList = keysToID(categoriesObj)
+    const unarchivedCategories = categoriesList.filter((a) => !a.isArchive)
+    const archivedCategories = categoriesList.filter((a) => a.isArchive)
+    const allItems = items.filter((a) => a && !a.private)
+    const unarchivedItems = allItems.filter((a) => a.category === null || !categoriesObj[a.category]?.isArchive)
+    const uncategorizedCount = unarchivedItems.filter((a) => a.category === null || !categoriesObj[a.category]).length
+
+    return {
+        categoriesList,
+        unarchivedCategories,
+        archivedCategories,
+        allItems,
+        unarchivedItems,
+        uncategorizedCount
+    }
+}
+

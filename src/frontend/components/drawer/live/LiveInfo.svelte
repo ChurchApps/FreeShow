@@ -18,7 +18,7 @@
     $: paused ? videoElem?.pause() : videoElem?.play()
 
     function updateSpecial(key: string, value: any) {
-        special.update(a => {
+        special.update((a) => {
             if (!value) delete a[key]
             else a[key] = value
             return a
@@ -59,7 +59,7 @@
     </div>
 {:else if active === "ndi"}
     <div class="scroll" style="padding: 10px;">
-        <MaterialTextInput label="inputs.group" title="settings.comma_seperated" value={$special?.ndiInputGroups || ""} placeholder="public" on:change={e => updateSpecial("ndiInputGroups", e.detail)} />
+        <MaterialTextInput label="inputs.group" title="settings.comma_seperated" value={$special?.ndiInputGroups || ""} placeholder="public" on:change={(e) => updateSpecial("ndiInputGroups", e.detail)} />
     </div>
 {/if}
 

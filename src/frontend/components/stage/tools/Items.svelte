@@ -16,6 +16,7 @@
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialDropdown from "../../inputs/MaterialDropdown.svelte"
     import { getCustomStageLabel, updateStageShow } from "../stage"
+    import { getLikelyPosition } from "../../edit/scripts/autoPosition"
 
     type ItemRef = { id: string; icon?: string; name?: string; maxAmount?: number }
     const dynamicItems: ItemRef[] = [
@@ -40,7 +41,7 @@
     $: sortedItems = sortItemsByType(Object.values(stageShow.items || {}) as any)
 
     // check slide text state
-    $: slideTextItems = Object.values(stageShow.items || {}).filter(a => a.type === "slide_text")
+    $: slideTextItems = Object.values(stageShow.items || {}).filter((a) => a.type === "slide_text")
 
     const resolution = { width: 1920, height: 1080 }
     const halfWidth = resolution.width * 0.5
@@ -53,7 +54,7 @@
         if (!stageId) return
 
         let itemId = uid(5)
-        stageShows.update(a => {
+        stageShows.update((a) => {
             if (!a[stageId]?.items) return a
 
             let style = DEFAULT_STYLE
@@ -65,6 +66,10 @@
                 style = `width: ${width}px;height: ${height}px;left: ${left}px;top: ${top}px;`
             }
 
+            if (Object.keys(a[stageId]?.items).length > 0) {
+                style = getLikelyPosition(Object.values(a[stageId].items), style)
+            }
+
             let item: StageItem = { type: itemType, style, align: "" }
 
             if (itemType === "text") item.lines = [{ align: "", text: [{ style: "", value: textValue || "" }] }]
@@ -74,14 +79,15 @@
             }
 
             a[stageId].items[itemId] = item
+            a[stageId].modified = Date.now()
             return a
         })
 
         updateSortedStageItems()
 
         // select item
-        if (Object.keys($stageShows[stageId]?.items).length > 1) {
-            activeStage.update(a => {
+        if (Object.keys($stageShows[stageId]?.items || {}).length > 1) {
+            activeStage.update((a) => {
                 a.items = [itemId]
                 return a
             })
@@ -121,11 +127,11 @@
     $: allItems = getSortedStageItems(stageId, $stageShows)
     $: invertedItemList = Array.isArray(allItems) ? clone(allItems).reverse() : []
 
-    const excludeValues = ["project_", "time_", "audio_", "meta_", "slide_text_previous", "slide_text_next"]
+    const excludeValues = ["project_", "time_", "exif_", "audio_", "meta_", "slide_text_", "show_text_full"]
     const ref = { type: "stage" }
     const dynamicValues = getDynamicIds()
-        .filter(id => !excludeValues.find(v => id.includes(v))) // || id.startsWith("project_")
-        .map(id => ({ value: `{${id}}`, label: `{${id}}`, data: replaceDynamicValues(`{${id}}`, ref).slice(0, 20) }))
+        .filter((id) => !excludeValues.find((v) => id.includes(v))) // || id.startsWith("project_")
+        .map((id) => ({ value: `{${id}}`, label: `{${id}}`, data: replaceDynamicValues(`{${id}}`, ref).slice(0, 20) }))
 </script>
 
 <div class="tools">
@@ -152,7 +158,7 @@
                 {#if !$labelsDisabled}{translateText("items.text")}{/if}
             </MaterialButton>
 
-            <MaterialDropdown label="actions.dynamic_values" options={dynamicValues} value="" style="border: 1px solid var(--primary-lighter);" on:change={e => addItem("text", e.detail)} onlyArrow />
+            <MaterialDropdown label="actions.dynamic_values" options={dynamicValues} value="" style="border: 1px solid var(--primary-lighter);" on:change={(e) => addItem("text", e.detail)} onlyArrow />
         </InputRow>
     </div>
 
@@ -177,7 +183,7 @@
             <div
                 class="items {invertedItemList.length > 1 ? 'context #items_list_item_stage' : ''}"
                 style="display: flex;flex-direction: column;"
-                on:mousedown={e => {
+                on:mousedown={(e) => {
                     if (e.button !== 2) return
                     // select on right click for context menu
                     const itemId = (e.target?.closest(".item_button")?.id || "").slice(1)
@@ -195,9 +201,9 @@
                         style="width: 100%;justify-content: space-between;padding: 2px 8px;"
                         isActive={$activeStage.items.includes(id)}
                         tab
-                        on:click={e => {
+                        on:click={(e) => {
                             selected.set({ id: null, data: [] })
-                            activeStage.update(ae => {
+                            activeStage.update((ae) => {
                                 if (e.detail.ctrl) {
                                     if (ae.items.includes(id)) ae.items.splice(ae.items.indexOf(id), 1)
                                     else ae.items.push(id)
@@ -214,8 +220,8 @@
                             {#if getIdentifier[type]}<p style="margin-inline-start: 10px;max-width: 120px;opacity: 0.5;font-size: 0.8em;max-width: 40%;">{getIdentifier[type](currentItem)}</p>{/if}
                         </span>
                         <span>
-                            <MaterialButton disabled={i === allItems.length - 1} icon="down" style="padding: 8px;" on:click={() => rearrangeStageItems("backward", id)} />
-                            <MaterialButton disabled={i === 0} icon="up" style="padding: 8px;" on:click={() => rearrangeStageItems("forward", id)} />
+                            <MaterialButton disabled={i === allItems.length - 1} icon="down" title="actions.backward" style="padding: 8px;" on:click={() => rearrangeStageItems("backward", id)} />
+                            <MaterialButton disabled={i === 0} icon="up" title="actions.forward" style="padding: 8px;" on:click={() => rearrangeStageItems("forward", id)} />
                         </span>
                     </MaterialButton>
                 {/each}

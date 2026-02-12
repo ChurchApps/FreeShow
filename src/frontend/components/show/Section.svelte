@@ -25,10 +25,11 @@
     function edit(e: any) {
         if (section.notes === e.detail || !$activeProject) return
 
-        projects.update(a => {
+        projects.update((a) => {
             if (!a[$activeProject!]?.shows) return a
-            let index = a[$activeProject!].shows.findIndex(a => a.id === section.id)
+            let index = a[$activeProject!].shows.findIndex((a) => a.id === section.id)
             if (index >= 0) a[$activeProject!].shows[index].notes = e.detail
+            a[$activeProject!].modified = Date.now()
             return a
         })
     }
@@ -40,10 +41,11 @@
     function updateSection(key: string, value: any) {
         if (!$activeProject) return
 
-        projects.update(a => {
+        projects.update((a) => {
             if (!a[$activeProject!]?.shows) return a
-            let index = a[$activeProject!].shows.findIndex(a => a.id === section.id)
+            let index = a[$activeProject!].shows.findIndex((a) => a.id === section.id)
             if (index >= 0) a[$activeProject!].shows[index][key] = value
+            a[$activeProject!].modified = Date.now()
             return a
         })
     }
@@ -53,10 +55,10 @@
         ;(document.activeElement as any)?.blur()
     }
 
-    $: actionOptions = sortByName(keysToID($actions)).map(a => ({ value: a.id, label: a.name }))
+    $: actionOptions = sortByName(keysToID($actions)).map((a) => ({ value: a.id, label: a.name }))
 
     function updateTrigger(e: any) {
-        special.update(a => {
+        special.update((a) => {
             a.sectionTriggerAction = e.detail
             return a
         })
@@ -68,10 +70,11 @@
     }
 
     function updateSectionData(key: string, value: any) {
-        projects.update(a => {
+        projects.update((a) => {
             if (!a[$activeProject!]?.shows?.[section.index]) return a
             const currentData = a[$activeProject!].shows[section.index].data || {}
             a[$activeProject!].shows[section.index].data = { ...currentData, [key]: value }
+            a[$activeProject!].modified = Date.now()
             return a
         })
     }
@@ -103,7 +106,7 @@
             </h4>
             <!-- WIP suggest titles based on previous titles? (maybe not needed as we have project templates) -->
 
-            <MaterialTimePicker label="calendar.time" value={section?.data?.time} style="flex: 1;" on:change={e => updateSectionData("time", e.detail)} />
+            <MaterialTimePicker label="calendar.time" value={section?.data?.time} style="flex: 1;" on:change={(e) => updateSectionData("time", e.detail)} />
         </InputRow>
 
         <Notes value={note} on:edit={edit} />

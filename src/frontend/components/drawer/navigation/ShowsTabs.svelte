@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { TrimmedShow } from "../../../../types/Show"
-    import { categories, drawerTabsData, labelsDisabled, shows } from "../../../stores"
+    import { activeProfile, categories, drawerTabsData, labelsDisabled, shows } from "../../../stores"
     import { hasNewerUpdate } from "../../../utils/common"
     import { getAccess } from "../../../utils/profile"
     import { keysToID, sortObject } from "../../helpers/array"
@@ -10,14 +10,14 @@
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import NavigationSections from "./NavigationSections.svelte"
 
-    const profile = getAccess("shows")
+    $: profile = $activeProfile ? getAccess("shows") : {}
     $: readOnly = profile.global === "read"
 
     $: activeSubTab = $drawerTabsData.shows?.activeSubTab || ""
 
     $: categoriesList = keysToID($categories)
-    $: unarchivedCategoriesList = categoriesList.filter(a => !a.isArchive && profile[a.id] !== "none")
-    $: archivedCategoriesList = categoriesList.filter(a => a.isArchive)
+    $: unarchivedCategoriesList = categoriesList.filter((a) => !a.isArchive && profile[a.id] !== "none")
+    $: archivedCategoriesList = categoriesList.filter((a) => a.isArchive)
 
     let currentShows: TrimmedShow[] = []
     $: if ($shows) updateShows()
@@ -26,10 +26,10 @@
         currentShows = Object.values($shows)
     }
 
-    $: allVisibleShows = currentShows.filter(a => a && !a.private && profile[a.category || ""] !== "none")
-    $: unarchivedShows = allVisibleShows.filter(a => a.category === null || !$categories[a.category]?.isArchive)
+    $: allVisibleShows = currentShows.filter((a) => a && !a.private && profile[a.category || ""] !== "none")
+    $: unarchivedShows = allVisibleShows.filter((a) => a.category === null || !$categories[a.category]?.isArchive)
     // $: archivedShows = currentShows.filter((a) => a.category !== null && $categories[a.category]?.isArchive)
-    $: uncategorizedShowsLength = unarchivedShows.filter(a => a.category === null || !$categories[a.category]).length
+    $: uncategorizedShowsLength = unarchivedShows.filter((a) => a.category === null || !$categories[a.category]).length
     // $: lockedShowsLength = allVisibleShows.filter((a) => a.locked).length
     // $: songNumberShowsLength = allVisibleShows.filter((a) => a.quickAccess?.number).length
 
@@ -48,9 +48,10 @@
         return sortObject(categories, "name").map((a: any) => {
             const action = a.action
             const template = a.template
+            const metadata = a.metadata?.display
             const count = allVisibleShows.reduce((count, show) => count + (show.category === a.id ? 1 : 0), 0)
             const readOnly = profile.global === "read" || profile[a.id] === "read"
-            return { id: a.id, label: a.name, icon: a.icon, action, template, count, readOnly }
+            return { id: a.id, label: a.name, icon: a.icon, action, template, metadata, count, readOnly }
         })
     }
 
@@ -60,7 +61,7 @@
 
     function updateName(e: any) {
         const { id, value } = e.detail
-        categories.update(a => {
+        categories.update((a) => {
             if (a[id].default) delete a[id].default
             a[id].name = value
             return a

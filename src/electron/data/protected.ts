@@ -4,8 +4,10 @@ import fs from "fs"
 import http from "http"
 import https from "https"
 import path from "path"
+import { ToMain } from "../../types/IPC/ToMain"
 import { ContentProviderFactory } from "../contentProviders/base/ContentProvider"
 import type { ContentProviderId } from "../contentProviders/base/types"
+import { sendToMain } from "../IPC/main"
 import { createFolder, getMimeType } from "../utils/files"
 import { getKey } from "../utils/keys"
 import { filePathHashCode } from "./thumbnails"
@@ -43,10 +45,19 @@ export async function encryptFile(inputFile: string, outputFile: string, key: st
     const readStream = await getReadStream(inputFile)
     const cipher = crypto.createCipheriv(alg, k, iv)
 
+    // track download progress
+    const totalSize = parseInt((readStream as any).headers?.["content-length"] || "0", 10)
+    let downloadedSize = 0
+    readStream.on("data", (chunk: Buffer) => {
+        downloadedSize += chunk.length
+        if (totalSize > 0) sendToMain(ToMain.MEDIA_DOWNLOAD_PROGRESS, { url: inputFile, progress: downloadedSize, total: totalSize, status: "downloading" })
+    })
+
     return new Promise<void>((resolve, reject) => {
         const handleError = (err: Error) => {
             writeStream.destroy()
             removeIfExists(outputFile)
+            sendToMain(ToMain.MEDIA_DOWNLOAD_PROGRESS, { url: inputFile, progress: 0, total: 0, status: "error" })
             reject(err)
         }
 
@@ -54,6 +65,7 @@ export async function encryptFile(inputFile: string, outputFile: string, key: st
         writeStream.on("error", handleError)
         writeStream.on("finish", () => {
             console.info("File encrypted successfully!")
+            sendToMain(ToMain.MEDIA_DOWNLOAD_PROGRESS, { url: inputFile, progress: totalSize || downloadedSize, total: totalSize || downloadedSize, status: "complete" })
             resolve()
         })
 
@@ -84,7 +96,7 @@ async function getReadStream(input: string, maxRedirects = 5): Promise<NodeJS.Re
 
     return new Promise((resolve, reject) => {
         const client = input.startsWith("https://") ? https : http
-        const req = client.get(input, res => {
+        const req = client.get(input, (res) => {
             // handle redirects (basic)
             if (res.statusCode && res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
                 if (maxRedirects <= 0) {
@@ -135,7 +147,7 @@ const CACHE_TTL = 1000 * 60 * 5 // 5 minutes
 const PROTOCOL_SCHEME = "freeshow-protected"
 
 export function registerProtectedProtocol() {
-    protocol.handle(PROTOCOL_SCHEME, async request => {
+    protocol.handle(PROTOCOL_SCHEME, async (request) => {
         try {
             const parsed = new URL(request.url)
             const entryId = parsed.hostname || parsed.pathname.replace(/^\//, "")

@@ -25,7 +25,7 @@
     }))
 
     // Filter templates by category
-    $: categoryFilteredTemplates = templatesList.filter(template => {
+    $: categoryFilteredTemplates = templatesList.filter((template) => {
         if (activeCategory === "all") {
             // Exclude archived categories in "all" view
             return !$templateCategories[template.category || ""]?.isArchive
@@ -37,7 +37,7 @@
     })
 
     // Filter templates by search
-    $: filteredTemplates = categoryFilteredTemplates.filter(template => {
+    $: filteredTemplates = categoryFilteredTemplates.filter((template) => {
         if (!searchValue) return true
         return (template.name || "").toLowerCase().includes(searchValue.toLowerCase())
     })
@@ -49,8 +49,6 @@
     function clickTemplate(templateId: string) {
         send("API:set_template", { id: templateId })
     }
-
-    const ignoreDefault = ["metadata", "message", "double"]
 
     let isLoading = true
     onMount(() => {
@@ -82,7 +80,7 @@
                                 </div>
 
                                 <div class="label">
-                                    {#if template.isDefault && !ignoreDefault.includes(template.id)}
+                                    {#if template.isDefault}
                                         <Icon id="protected" style="opacity: 0.6; margin-inline-start: 3px; position: absolute; left: 0;" size={0.6} white />
                                     {/if}
                                     <span class="name">{template.name || translate("main.unnamed", $dictionary)}</span>

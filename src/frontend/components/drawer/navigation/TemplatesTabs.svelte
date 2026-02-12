@@ -14,25 +14,25 @@
     $: activeSubTab = $drawerTabsData.templates?.activeSubTab || ""
 
     $: categoriesList = keysToID($templateCategories)
-    $: unarchivedCategoriesList = categoriesList.filter(a => !a.isArchive && profile[a.id] !== "none")
-    $: archivedCategoriesList = categoriesList.filter(a => a.isArchive)
+    $: unarchivedCategoriesList = categoriesList.filter((a) => !a.isArchive && profile[a.id] !== "none")
+    $: archivedCategoriesList = categoriesList.filter((a) => a.isArchive)
 
-    $: allVisibleOverlays = Object.values($templates).filter(a => a && profile[a.category || ""] !== "none")
-    $: unarchivedOverlays = allVisibleOverlays.filter(a => a.category === null || !$templateCategories[a.category]?.isArchive)
-    $: uncategorizedOverlaysLength = unarchivedOverlays.filter(a => a.category === null || !$templateCategories[a.category]).length
+    $: allVisibleTemplates = Object.values($templates).filter((a) => a && profile[a.category || ""] !== "none" && a?.settings?.mode !== "text")
+    $: unarchivedTemplates = allVisibleTemplates.filter((a) => a.category === null || !$templateCategories[a.category]?.isArchive)
+    $: uncategorizedTemplatesLength = unarchivedTemplates.filter((a) => a.category === null || !$templateCategories[a.category]).length
 
     let sections: any[] = []
     $: sections = [
         [
-            { id: "all", label: "category.all", icon: "all", count: unarchivedOverlays.length },
-            { id: "unlabeled", label: "category.unlabeled", icon: "noIcon", count: uncategorizedOverlaysLength, hidden: !uncategorizedOverlaysLength && activeSubTab !== "unlabeled" }
+            { id: "all", label: "category.all", icon: "all", count: unarchivedTemplates.length },
+            { id: "unlabeled", label: "category.unlabeled", icon: "noIcon", count: uncategorizedTemplatesLength, hidden: !uncategorizedTemplatesLength && activeSubTab !== "unlabeled" }
         ],
         [{ id: "TITLE", label: "guide_title.categories" }, ...convertToButton(unarchivedCategoriesList), ...(archivedCategoriesList.length ? [{ id: "SEPARATOR", label: "actions.archive_title" }, ...convertToButton(archivedCategoriesList)] : [])]
     ]
 
     function convertToButton(categories: any[]) {
         return sortObject(categories, "name").map((a: any) => {
-            const count = allVisibleOverlays.reduce((count, template) => count + (template.category === a.id ? 1 : 0), 0)
+            const count = allVisibleTemplates.reduce((count, template) => count + (template.category === a.id ? 1 : 0), 0)
             const readOnly = profile.global === "read" || profile[a.id] === "read"
             return { id: a.id, label: a.name, icon: a.icon, count, readOnly }
         })
@@ -44,7 +44,7 @@
 
     function updateName(e: any) {
         const { id, value } = e.detail
-        templateCategories.update(a => {
+        templateCategories.update((a) => {
             if (a[id].default) delete a[id].default
             a[id].name = value
             return a

@@ -13,9 +13,10 @@ type Options = {
     defaultFontSize?: number // 50
     maxFontSize?: number // 800
     minFontSize?: number // 10
+    isList?: boolean // whether this is a list item (affects measurement)
 }
 
-export default function autosize(elem: HTMLElement, { type, textQuery, defaultFontSize, maxFontSize, minFontSize }: Options = {}) {
+export default function autosize(elem: HTMLElement, { type, textQuery, defaultFontSize, maxFontSize, minFontSize, isList }: Options = {}) {
     // set default values
     if (!minFontSize) minFontSize = MIN_FONT_SIZE
     if (!maxFontSize) maxFontSize = MAX_FONT_SIZE
@@ -60,8 +61,10 @@ export default function autosize(elem: HTMLElement, { type, textQuery, defaultFo
 
     size()
 
+    const finalResult = Math.min(maxFontSize, lowestValue)
+
     // prefer lowest value (due to margin)
-    return finish(Math.min(maxFontSize, lowestValue))
+    return finish(finalResult)
 
     function finish(value: number) {
         boxElem!.remove()
@@ -122,6 +125,20 @@ export default function autosize(elem: HTMLElement, { type, textQuery, defaultFo
 
         for (const elemHide of Array.from(cloned.querySelectorAll(".hideFromAutosize"))) {
             ;(elemHide as HTMLElement).style.display = "none"
+        }
+
+        // CRITICAL FIX FOR LIST ITEMS:
+        // List items have font-size on both the parent .break div AND the inner span elements
+        // This causes double font-size application during measurement
+        // We need to remove font-size from .break divs so only the spans (selected by textQuery) control sizing
+        if (isList) {
+            const breakElements = cloned.querySelectorAll(".break")
+            for (const breakElem of Array.from(breakElements)) {
+                const htmlBreak = breakElem as HTMLElement
+                const currentStyle = htmlBreak.getAttribute("style") || ""
+                const newStyle = currentStyle.replace(/font-size:\s*[^;]+;?/gi, "")
+                htmlBreak.setAttribute("style", newStyle)
+            }
         }
 
         elem.after(cloned)

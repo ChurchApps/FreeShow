@@ -7,17 +7,17 @@
     import MaterialButton from "../../inputs/MaterialButton.svelte"
 
     const names = {
-        category_shows: (icon: string) => categories.update(a => changeIcon(a, icon)),
-        category_media: (icon: string) => mediaFolders.update(a => changeIcon(a, icon)),
-        category_overlays: (icon: string) => overlayCategories.update(a => changeIcon(a, icon)),
-        category_templates: (icon: string) => templateCategories.update(a => changeIcon(a, icon)),
+        category_shows: (icon: string) => categories.update((a) => changeIcon(a, icon)),
+        category_media: (icon: string) => mediaFolders.update((a) => changeIcon(a, icon)),
+        category_overlays: (icon: string) => overlayCategories.update((a) => changeIcon(a, icon)),
+        category_templates: (icon: string) => templateCategories.update((a) => changeIcon(a, icon)),
         slide_icon: (icon: string, path: string) => addItem("icon", icon, path ? { path } : { color: customIconsColors[icon] })
     }
 
     $: colors = $selected.id === "slide_icon"
 
     const changeIcon = (a: any, icon: string) => {
-        $selected.data.forEach(b => {
+        $selected.data.forEach((b) => {
             if (b !== "all" && b !== "unlabeled") a[b].icon = icon
         })
         return a
@@ -30,7 +30,7 @@
         activePopup.set(null)
     }
 
-    $: filteredIcons = Object.keys(customIcons).filter(a => !$customizedIcons.disabled.includes(a))
+    $: filteredIcons = Object.keys(customIcons).filter((a) => !$customizedIcons.disabled.includes(a))
 
     function manageIcons() {
         popupData.set({ back: "icon" })

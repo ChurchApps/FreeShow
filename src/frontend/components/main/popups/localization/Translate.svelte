@@ -14,7 +14,7 @@
 
     function updateLanguage(e: any) {
         let value = e.detail
-        special.update(a => {
+        special.update((a) => {
             a.translationLanguage = value
             return a
         })
@@ -48,12 +48,12 @@
         let activeLayout = currentShow.settings?.activeLayout
         let layoutSlides = currentShow.layouts?.[activeLayout]?.slides
 
-        layoutSlides.forEach(a => {
+        layoutSlides.forEach((a) => {
             _show()
                 .slides([a.id])
                 .get("items")
                 .flat()
-                .forEach(a => {
+                .forEach((a) => {
                     if (a.language) translatedLangs.push(a.language)
                 })
         })
@@ -84,7 +84,7 @@
         <div class="list">
             {#each translatedLangs as lang}
                 <InputRow>
-                    <p style="flex: 1;">{isoLanguages.find(a => a.code === lang)?.name || lang}</p>
+                    <p style="flex: 1;">{isoLanguages.find((a) => a.code === lang)?.name || lang}</p>
                     <MaterialButton title="settings.remove" on:click={() => remove(lang)}>
                         <Icon id="close" size={1.3} white />
                     </MaterialButton>

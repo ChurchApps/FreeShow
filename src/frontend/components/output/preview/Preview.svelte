@@ -2,14 +2,14 @@
     import { actions, activePage, activePopup, activeShow, activeTimers, contextActive, groups, guideActive, outLocked, outputs, overlayTimers, playingAudio, playingMetronome, resized, slideTimers, special } from "../../../stores"
     import { DEFAULT_WIDTH, isDarkTheme } from "../../../utils/common"
     import { formatSearch } from "../../../utils/search"
-    import { previewCtrlShortcuts, previewShortcuts } from "../../../utils/shortcuts"
+    import { getNormalizedKey, previewCtrlShortcuts, previewShortcuts } from "../../../utils/shortcuts"
     import { runAction } from "../../actions/actions"
     import { getSlideText } from "../../edit/scripts/textStyle"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { getActiveOutputs, isOutCleared, outputSlideHasContent, setOutput } from "../../helpers/output"
     import { getLayoutRef } from "../../helpers/show"
-    import { getFewestOutputLines, getItemWithMostLines, playNextGroup, updateOut } from "../../helpers/showActions"
+    import { getFewestOutputLines, getItemWithMostLines, playNextGroup, playPreviousGroup, updateOut } from "../../helpers/showActions"
     import { _show } from "../../helpers/shows"
     import { newSlideTimer } from "../../helpers/tick"
     import { getFirstOutputIdWithAudableBackground } from "../../helpers/video"
@@ -32,7 +32,7 @@
     let currentOutput: any = {}
     $: currentOutput = outputId ? $outputs[outputId] || {} : {}
 
-    $: allOutputsWithBackground = allActiveOutputs.filter(id => $outputs[id]?.out?.background)
+    $: allOutputsWithBackground = allActiveOutputs.filter((id) => $outputs[id]?.out?.background)
     $: backgroundOutputId = getFirstOutputIdWithAudableBackground(allOutputsWithBackground) || allOutputsWithBackground[0] || outputId
     $: currentBgOutput = backgroundOutputId ? $outputs[backgroundOutputId] || null : null
 
@@ -60,7 +60,7 @@
         if ((outSlide?.id || $activeShow) && !e.ctrlKey && !e.metaKey && !$outLocked) {
             // play slide with custom shortcut key
             let layoutRef = getLayoutRef(outSlide?.id || "active")
-            let slideShortcutMatch = layoutRef.findIndex(ref => ref.data?.actions?.slide_shortcut?.key === e.key)
+            let slideShortcutMatch = layoutRef.findIndex((ref) => ref.data?.actions?.slide_shortcut?.key === e.key)
             if (slideShortcutMatch > -1 && !e.altKey && !e.shiftKey) {
                 playSlideAtIndex(slideShortcutMatch)
                 e.preventDefault()
@@ -94,7 +94,7 @@
             if ($special.autoLetterShortcut) {
                 const isSpecial = [".", ",", "-", "+", "/", "*", "<", ">", "|", "\\", "¨", "'"].includes(e.key)
                 if (e.key.trim().length === 1 && isNaN(e.key as any) && !isSpecial) {
-                    const firstLetterMatch = layoutRef.findIndex(ref => {
+                    const firstLetterMatch = layoutRef.findIndex((ref) => {
                         const slide = _show().get("slides")?.[ref.id]
                         const slideText = formatSearch(getSlideText(slide)).replace(/\d+/g, "").trim()
                         return slideText[0]?.toLowerCase() === e.key.toLowerCase()
@@ -118,7 +118,7 @@
     function actionKeyActivate(key: string) {
         let actionTriggered = false
 
-        Object.values($actions).forEach(action => {
+        Object.values($actions).forEach((action) => {
             // can become [object Object] in some rare cases
             if (typeof action.keypressActivate !== "string") return
             if (action.keypressActivate.toUpperCase() === key) {
@@ -135,19 +135,28 @@
         if (!currentShowId) return
 
         let showRef = getLayoutRef(currentShowId)
-        let groupIds = showRef.map(a => a.id)
+        let groupIds = showRef.map((a) => a.id)
         let showGroups = groupIds.length ? _show(currentShowId).slides(groupIds).get() : []
         if (!showGroups.length) return
 
+        // Get both the actual key and normalized key to support all keyboard layouts
+        const actualKey = e.key
+        const normalizedKey = getNormalizedKey(e)
+
         let globalGroupIds: string[] = []
         Object.entries($groups).forEach(([groupId, group]) => {
-            if (typeof group.shortcut !== "string" || group.shortcut.toLowerCase() !== e.key.toLowerCase()) return
+            if (typeof group.shortcut !== "string") return
 
-            showGroups.forEach(slide => {
+            // Check both actual key (for native shortcuts) and normalized key (for Latin shortcuts on non-Latin keyboards)
+            const shortcutLower = group.shortcut.toLowerCase()
+            if (shortcutLower !== actualKey.toLowerCase() && shortcutLower !== normalizedKey.toLowerCase()) return
+
+            showGroups.forEach((slide) => {
                 if (slide.globalGroup === groupId) globalGroupIds.push(slide.id)
             })
         })
 
+        if (e.shiftKey) return playPreviousGroup(globalGroupIds, { showRef, outSlide, currentShowId }, !e.altKey)
         return playNextGroup(globalGroupIds, { showRef, outSlide, currentShowId }, !e.altKey)
     }
 
@@ -265,7 +274,7 @@
 
     {#if $activePage === "show"}
         <div class="section" style="margin-top: 2px;">
-            <ClearButtons bind:autoChange activeClear={updatedActiveClear} on:update={e => (activeClear = e.detail)} />
+            <ClearButtons bind:autoChange activeClear={updatedActiveClear} on:update={(e) => (activeClear = e.detail)} />
 
             {#if updatedActiveClear === "background"}
                 <MediaControls currentOutput={currentBgOutput} outputId={backgroundOutputId} />

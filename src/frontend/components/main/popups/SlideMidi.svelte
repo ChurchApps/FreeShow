@@ -38,10 +38,10 @@
     function saveAction() {
         if (!loaded) return
 
-        actions.update(a => {
+        actions.update((a) => {
             let shows = a[id]?.shows || []
             let showId = $popupData.index === undefined && !$popupData.indexes?.length ? "" : $activeShow?.id || ""
-            if (showId && !shows.find(a => a.id === showId)) shows.push({ id: showId })
+            if (showId && !shows.find((a) => a.id === showId)) shows.push({ id: showId })
             action.shows = shows
 
             if (action.midi?.defaultValues) delete action.midi.defaultValues
@@ -57,4 +57,4 @@
 
 <p style="opacity: 0.8;font-size: 0.8em;text-align: center;margin-bottom: 20px;"><T id="actions.play_on_midi_tip" /></p>
 
-<MidiValues value={clone(action.midi || actionMidi)} firstActionId={action.triggers?.[0]} on:change={e => updateValue("midi", e)} playSlide />
+<MidiValues value={clone(action.midi || actionMidi)} firstActionId={action.triggers?.[0]} on:change={(e) => updateValue("midi", e)} playSlide />

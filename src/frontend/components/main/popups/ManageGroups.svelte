@@ -1,5 +1,6 @@
 <script lang="ts">
     import { activePopup, groupNumbers, groups, groupsMoreOptionsEnabled, special, templates } from "../../../stores"
+    import { newToast } from "../../../utils/common"
     import { translateText } from "../../../utils/language"
     import T from "../../helpers/T.svelte"
     import { clone, sortByName } from "../../helpers/array"
@@ -17,7 +18,7 @@
         // remove default tag if name is changed (used for translation)
         // WIP undo won't work here...
         if (key === "name" && $groups[id].default) {
-            groups.update(a => {
+            groups.update((a) => {
                 delete a[id].default
 
                 return a
@@ -29,6 +30,11 @@
         // if (value === "—") value = ""
 
         history({ id: "UPDATE", newData: { key, data: value }, oldData: { id: id }, location: { page: "none", id: "global_group", override: "group_" + key } })
+
+        // if name ends with space and a single digit, alert that numbers are auto assigned
+        if (key === "name" && $groupNumbers && /\s\d$/.test(value)) {
+            newToast("tips.group_numbers")
+        }
     }
 
     const defaultGroups = {
@@ -54,7 +60,7 @@
     }
 
     function updateSpecial(key: string, value: any) {
-        special.update(a => {
+        special.update((a) => {
             a[key] = value
             return a
         })
@@ -76,15 +82,15 @@
 
 <div style="min-width: calc(100vw - var(--navigation-width) * 2 - 51px);">
     {#if showMore}
-        <MaterialToggleSwitch label="settings.auto_group_numbers" checked={$groupNumbers} defaultValue={true} on:change={e => groupNumbers.set(e.detail)} />
-        <MaterialToggleSwitch style="margin-bottom: 10px;" label="settings.shortcuts_on_slides" checked={$special.groupShortcutPreview} defaultValue={false} on:change={e => updateSpecial("groupShortcutPreview", e.detail)} />
+        <MaterialToggleSwitch label="settings.auto_group_numbers" checked={$groupNumbers} defaultValue={true} on:change={(e) => groupNumbers.set(e.detail)} />
+        <MaterialToggleSwitch style="margin-bottom: 10px;" label="settings.shortcuts_on_slides" checked={$special.groupShortcutPreview} defaultValue={false} on:change={(e) => updateSpecial("groupShortcutPreview", e.detail)} />
     {/if}
 
     {#if g.length}
         {#each g as group}
             <InputRow>
-                <MaterialTextInput label="inputs.name" style="flex: 1;" value={group.name} on:change={e => changeGroup(e.detail, group.id)} />
-                <MaterialColorInput label="edit.color" noLabel style="flex: 0;min-width: 200px;" value={group.color} on:input={e => changeGroup(e.detail, group.id, "color")} />
+                <MaterialTextInput label="inputs.name" style="flex: 1;" value={group.name} on:change={(e) => changeGroup(e.detail, group.id)} />
+                <MaterialColorInput label="edit.color" noLabel style="flex: 0;min-width: 200px;" value={group.color} on:input={(e) => changeGroup(e.detail, group.id, "color")} />
                 <MaterialPopupButton
                     label="groups.group_shortcut"
                     style="width: 28%;"
@@ -95,10 +101,10 @@
                     popupId="assign_shortcut"
                     data={{
                         revert: $activePopup,
-                        existingShortcuts: g.filter(a => a.id !== group.id && a.shortcut).map(a => a.shortcut),
+                        existingShortcuts: g.filter((a) => a.id !== group.id && a.shortcut).map((a) => a.shortcut),
                         mode: "global_group"
                     }}
-                    on:change={e => changeGroup(e.detail, group.id, "shortcut")}
+                    on:change={(e) => changeGroup(e.detail, group.id, "shortcut")}
                     allowEmpty
                 />
                 <!-- template -->
@@ -114,7 +120,7 @@
                             action: "select_template",
                             revert: $activePopup
                         }}
-                        on:change={e => changeGroup(e.detail, group.id, "template")}
+                        on:change={(e) => changeGroup(e.detail, group.id, "template")}
                         allowEmpty
                     />
                 {/if}

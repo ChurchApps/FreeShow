@@ -17,8 +17,8 @@ export async function translate(text: string, language: string, source = "auto")
 
     return new Promise((resolve, reject) => {
         fetch(query)
-            .then(a => a.json())
-            .then(json => {
+            .then((a) => a.json())
+            .then((json) => {
                 const txt: string = json?.[0]?.[0]?.[0] || ""
                 return resolve(txt)
             })
@@ -27,7 +27,7 @@ export async function translate(text: string, language: string, source = "auto")
 }
 
 export function getIsoLanguages() {
-    return sortByName(isoLanguages).map(a => ({ value: a.code, label: `${a.name}${a.nativeName !== a.name ? " - " + a.nativeName : ""}`, prefix: a.flag }))
+    return sortByName(isoLanguages).map((a) => ({ value: a.code, label: `${a.name}${a.nativeName !== a.name ? " - " + a.nativeName : ""}`, prefix: a.flag }))
 }
 
 export async function translateShow(showId: string, languageCode: string) {
@@ -37,9 +37,9 @@ export async function translateShow(showId: string, languageCode: string) {
     let onlyOneTextbox = true
 
     await Promise.all(
-        Object.keys(slides).map(async slideId => {
+        Object.keys(slides).map(async (slideId) => {
             const items = slides[slideId].items
-            const untranslatedItems = items.filter(a => !a.language)
+            const untranslatedItems = items.filter((a) => !a.language)
             if (onlyOneTextbox && (untranslatedItems.length > 1 || (untranslatedItems[0]?.type || "text") !== "text")) onlyOneTextbox = false
 
             const toRemove = new Set<number>()
@@ -70,7 +70,7 @@ export async function translateShow(showId: string, languageCode: string) {
                     const textStyle = item.lines?.[0]?.text?.[0]?.style || ""
 
                     const newLines: Line[] = []
-                    translatedLines.forEach(lineText => {
+                    translatedLines.forEach((lineText) => {
                         newLines.push({ align: alignStyle, text: [{ style: textStyle, value: lineText.trim() }] })
                     })
 
@@ -80,7 +80,7 @@ export async function translateShow(showId: string, languageCode: string) {
             )
 
             // place translated items at correct index
-            if (translations.some(t => t !== null) || toRemove.size) {
+            if (translations.some((t) => t !== null) || toRemove.size) {
                 const rebuilt: Item[] = []
                 for (let i = 0; i < items.length; i++) {
                     const t = translations[i]
@@ -109,9 +109,9 @@ export function removeTranslationFromShow(showId: string, langId = "") {
     const slides = clone(show.slides)
     let changed = false
 
-    Object.keys(slides).forEach(slideId => {
+    Object.keys(slides).forEach((slideId) => {
         const previousSize = slides[slideId].items.length
-        slides[slideId].items = slides[slideId].items.filter(item => !item.language || (langId ? item.language !== langId : false))
+        slides[slideId].items = slides[slideId].items.filter((item) => !item.language || (langId ? item.language !== langId : false))
         if (slides[slideId].items.length < previousSize) changed = true
     })
 

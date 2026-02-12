@@ -16,16 +16,17 @@
         items: any[]
     }
 
-    const MEDIA_TYPES = new Set(["image", "video", "overlay", "audio", "pdf"])
-    const THUMBNAIL_TYPES = new Set(["image", "video"])
+    // Player = online media (e.g. YouTube/Vimeo/etc). Treat like other media entries.
+    const MEDIA_TYPES = new Set(["image", "video", "overlay", "audio", "pdf", "player"])
+    const THUMBNAIL_TYPES = new Set(["image", "video", "player"])
 
     let editProject = false
     let showLookup: Record<string, ShowList> = {}
 
-    $: showLookup = Array.isArray($shows) ? Object.fromEntries(($shows as unknown as ShowList[]).map(show => [show.id, show])) : {}
+    $: showLookup = Array.isArray($shows) ? Object.fromEntries(($shows as unknown as ShowList[]).map((show) => [show.id, show])) : {}
 
     $: projectSections = buildProjectSections($activeProject?.shows || [])
-    $: canAddActiveShow = ($active.type || "show") === "show" && $activeShow && !!$activeProject?.shows && !$activeProject.shows.some(show => getShowId(show) === $activeShow?.id)
+    $: canAddActiveShow = ($active.type || "show") === "show" && $activeShow && !!$activeProject?.shows && !$activeProject.shows.some((show) => getShowId(show) === $activeShow?.id)
 
     function getShowId(show: any): string | undefined {
         return show?.id
@@ -66,7 +67,7 @@
             current?.items.push(show)
         })
 
-        return sections.filter(section => section.items.length)
+        return sections.filter((section) => section.items.length)
     }
 
     function renameProject() {
@@ -74,7 +75,7 @@
         if (!name) return
 
         send("API:rename_project", { id: $activeProject?.id, name })
-        activeProject.update(current => (current ? { ...current, name } : current))
+        activeProject.update((current) => (current ? { ...current, name } : current))
         editProject = false
     }
 
@@ -150,7 +151,7 @@
                                     </div>
                                 {/if}
                                 <div class="section-items">
-                                    {#each section.items as show (getShowId(show) || show)}
+                                    {#each section.items as show, idx (`${section.id}-${idx}`)}
                                         {@const showId = getShowId(show)}
                                         {@const showType = getShowType(show)}
                                         {@const showData = showId ? (showLookup[showId] ?? null) : null}
@@ -181,7 +182,7 @@
                                             <div class="show-button-wrapper" class:active={($active.type || "show") === "show" && $activeShow?.id === showData.id}>
                                                 <ShowButton
                                                     class="project-show-button"
-                                                    on:click={e => {
+                                                    on:click={(e) => {
                                                         _set("active", show)
                                                         _set("activeTab", "show")
                                                         send("SHOW", e.detail)

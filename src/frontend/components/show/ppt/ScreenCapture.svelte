@@ -4,7 +4,7 @@
     import { activeProject, outLocked, outputs, presentationData, projects, special } from "../../../stores"
     import { triggerClickOnEnterSpace } from "../../../utils/clickable"
     import { getFileName, removeExtension } from "../../helpers/media"
-    import { getAllActiveOutputs } from "../../helpers/output"
+    import { getAllActiveOutputIds } from "../../helpers/output"
     import T from "../../helpers/T.svelte"
     import Window from "../../output/Window.svelte"
     import Center from "../../system/Center.svelte"
@@ -31,9 +31,9 @@
     function receiveWindows(a: any) {
         chosenWindow = null
 
-        let savedScreen = $projects[$activeProject || ""]?.shows?.find(a => a.id === path)?.data?.screenName
+        let savedScreen = $projects[$activeProject || ""]?.shows?.find((a) => a.id === path)?.data?.screenName
         if (savedScreen) {
-            let window = a.find(a => a.name === savedScreen)
+            let window = a.find((a) => a.name === savedScreen)
             if (window) {
                 selectWindow(window)
                 return
@@ -43,9 +43,9 @@
         let fileName = getFileName(path)
         let appName = ($special.presentationApp || "PowerPoint").split(" ")[0]
 
-        let windows = a.filter(a => a.name.includes(appName) && a.name.includes(fileName) && !a.name.includes(fileName + " - " + appName))
-        if (!windows.length) windows = a.filter(a => a.name.includes(removeExtension(fileName)) && a.name.includes(appName))
-        if (!windows.length) windows = a.filter(a => a.name.toLowerCase().includes(appName.toLowerCase()) || a.name.toLowerCase().includes(removeExtension(fileName).toLowerCase()))
+        let windows = a.filter((a) => a.name.includes(appName) && a.name.includes(fileName) && !a.name.includes(fileName + " - " + appName))
+        if (!windows.length) windows = a.filter((a) => a.name.includes(removeExtension(fileName)) && a.name.includes(appName))
+        if (!windows.length) windows = a.filter((a) => a.name.toLowerCase().includes(appName.toLowerCase()) || a.name.toLowerCase().includes(removeExtension(fileName).toLowerCase()))
 
         if (windows.length === 1) {
             selectWindow(windows[0])
@@ -70,8 +70,8 @@
 
         // save chosen screen in project item
         if (save) {
-            projects.update(a => {
-                let projectIndex = a[$activeProject || ""]?.shows?.findIndex(a => a.id === path) ?? -1
+            projects.update((a) => {
+                let projectIndex = a[$activeProject || ""]?.shows?.findIndex((a) => a.id === path) ?? -1
                 if (projectIndex < 0) return a
 
                 a[$activeProject!].shows[projectIndex].data = { screenName: chosenWindow.name }
@@ -82,9 +82,9 @@
         // update output with screen
         if ($outLocked) return
 
-        let outputIds = getAllActiveOutputs().map(({ id }) => id)
-        outputs.update(a => {
-            outputIds.forEach(id => {
+        const outputIds = getAllActiveOutputIds()
+        outputs.update((a) => {
+            outputIds.forEach((id) => {
                 if (a[id].out?.slide?.type !== "ppt") return
                 a[id].out.slide.screen = chosenWindow
             })

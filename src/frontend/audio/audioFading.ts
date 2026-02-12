@@ -127,7 +127,7 @@ async function fadeAudio(id: string, audio: HTMLAudioElement, duration = 1, incr
         isFadingOut.set(true)
     }
 
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
         currentlyFading[fadeId] = setInterval(() => {
             if (forceClear || (increment && currentlyCrossfadingOut.includes(id))) return finished()
 
@@ -152,7 +152,7 @@ async function fadeAudio(id: string, audio: HTMLAudioElement, duration = 1, incr
             clearTimeout(timedout)
             setTimeout(() => resolve(true), 50)
 
-            if (!increment && !Object.keys(currentlyFading).filter(a => a.includes("out")).length) {
+            if (!increment && !Object.keys(currentlyFading).filter((a) => a.includes("out")).length) {
                 isFadingOut.set(false)
             }
         }
@@ -206,7 +206,7 @@ export function fadeinAllPlayingAudio() {
 }
 
 function stopFading() {
-    Object.keys(currentlyFading).forEach(id => {
+    Object.keys(currentlyFading).forEach((id) => {
         clearInterval(currentlyFading[id])
         delete currentlyFading[id]
     })

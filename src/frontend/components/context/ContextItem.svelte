@@ -1,6 +1,6 @@
 <script lang="ts">
     import { cameraManager } from "../../media/cameraManager"
-    import { actions, activeEdit, activeProject, activeRecording, activeShow, categories, colorbars, dictionary, disabledServers, drawerTabsData, effects, effectsLibrary, events, forceClock, livePrepare, media, os, outputs, overlayCategories, overlays, projects, redoHistory, scriptures, selected, shows, showsCache, slidesOptions, stageShows, styles, templateCategories, timers, topContextActive, undoHistory } from "../../stores"
+    import { actions, activeEdit, activeProject, activeRecording, activeShow, categories, colorbars, dictionary, disabledServers, drawerTabsData, effects, effectsLibrary, events, forceClock, livePrepare, media, mediaFolders, os, outputs, overlayCategories, overlays, projects, redoHistory, scriptures, selected, shows, showsCache, slidesOptions, stageShows, styles, templateCategories, timers, topContextActive, undoHistory } from "../../stores"
     import { translateText } from "../../utils/language"
     import { closeContextMenu } from "../../utils/shortcuts"
     import { keysToID } from "../helpers/array"
@@ -18,9 +18,11 @@
     export let menu: ContextMenuItem = contextMenuItems[id]
     export let disabled = false
     export let highlighted = false
+    export let group = false
 
     let hide = false
     let enabled: boolean = menu?.enabled ? true : false
+    let customTitle: string = ""
 
     const conditions = {
         // slide views
@@ -34,6 +36,11 @@
         },
         delete: () => {
             hide = !!$shows[$selected.data[0]?.id]?.locked
+        },
+        save_to_file: () => {
+            const project = $projects[$activeProject || ""]
+            hide = !project?.sourcePath
+            customTitle = project?.sourcePath || ""
         },
         private: () => {
             let show = $shows[$selected.data[0]?.id]
@@ -83,6 +90,14 @@
             if (!$shows[$selected.data[0]?.id]?.locked) return
             enabled = !!$shows[$selected.data[0].id].locked
         },
+        lock_group: () => {
+            if ($selected.id !== "group") return
+
+            const slideId = $selected.data?.[0]?.id
+            const show = $showsCache[$activeShow?.id || ""]
+            const isLocked = show?.slides?.[slideId]?.locked || false
+            enabled = isLocked
+        },
         disable: () => {
             let isEnabled = false
             if ($selected.id === "slide" && $activeShow) {
@@ -123,16 +138,35 @@
             }
         },
         remove_group: () => {
-            if ($selected.id !== "slide") return
+            if ($selected.id !== "slide" || $selected.data?.length > 1) return
 
-            let ref = getLayoutRef()
-            const getCurrentSlide = index => ref.find(a => a.layoutIndex === index)
-            let parentSlide = $selected.data.find(a => a.index && getCurrentSlide(a.index)?.type === "parent")
+            const ref = getLayoutRef()
+            const slideIndex = $selected.data[0]?.index
+            const currentSlideId = ref[slideIndex]?.parent?.id || ref[slideIndex]?.id
+            if (!currentSlideId) return
 
-            if (parentSlide) return
+            const show = $showsCache[$activeShow?.id || ""]
 
-            // disable when no parents are selected or just first slide
-            disabled = true
+            // if parent slide and has children, don't hide
+            const isParent = ref[slideIndex]?.type === "parent"
+            if (isParent && (show.slides[currentSlideId]?.children || []).length) {
+                // hide if group is set to "None"
+                if (show.slides[currentSlideId].group === ".") {
+                    hide = true
+                    return
+                }
+
+                hide = false
+                return
+            }
+
+            const currentSlideInstances = Object.values(show.layouts)
+                .map((a) => a.slides)
+                .flat()
+                .filter((b) => b.id === currentSlideId)
+
+            // hide if there is just one instance of the slide group across all layouts
+            hide = currentSlideInstances.length < 2
         },
         remove: () => {
             if ($selected.id !== "show" || _show($selected.data[0]?.id).get("private") !== true) return
@@ -144,17 +178,8 @@
         redo: () => {
             if (!$redoHistory.length) disabled = true
         },
-        addToProject: () => {
-            // hide button if $selected.id === "media" && one item selected ? as it's now done with double click
-            if ($selected.id === "media" && $selected.data.length > 1) {
-                id = "createSlideshow"
-                menu = { label: "context.create_slideshow", icon: "slide" }
-                // id = "addToShow"
-                // menu = { label: "context.add_to_show", icon: "slide" }
-                // if (!$activeShow || ($activeShow.type || "show") !== "show") disabled = true
-            } else {
-                if (!$activeProject) disabled = true
-            }
+        createSlideshow: () => {
+            hide = $selected.id !== "media" || $selected.data.length < 2
         },
         play: () => {
             if ($selected.id === "global_timer") {
@@ -192,7 +217,7 @@
             // WIP don't show this if not an effect
             let isEnabled = false
             let path = $selected.data[0]?.path || $selected.data[0]?.id
-            let existing = $effectsLibrary.find(a => a.path === path)
+            let existing = $effectsLibrary.find((a) => a.path === path)
             if (path && existing) isEnabled = true
 
             enabled = isEnabled
@@ -223,7 +248,7 @@
             disabled = !!$outputs[outputId]?.invisible
         },
         move_to_front: () => {
-            let previewOutputs = keysToID($outputs).filter(a => a.enabled) //  && !a.invisible
+            let previewOutputs = keysToID($outputs).filter((a) => a.enabled) //  && !a.invisible
             // WIP check currently selected against the other outputs...
             if (previewOutputs.length !== 2) {
                 disabled = false
@@ -236,7 +261,7 @@
                 return
             }
 
-            const alwaysOnTopState = [...new Set(previewOutputs.map(out => out?.alwaysOnTop ?? true))]
+            const alwaysOnTopState = [...new Set(previewOutputs.map((out) => out?.alwaysOnTop ?? true))]
 
             // disable if all outputs have different states!
             disabled = alwaysOnTopState.length === previewOutputs.length
@@ -286,10 +311,30 @@
             menu.icon = isPlayed ? "remove" : "check"
             menu.iconColor = isPlayed ? "var(--secondary)" : "var(--text)"
             enabled = isPlayed
-        }
+        },
         // bind_item: () => {
         //     if (item is bound) enabled = true
         // }
+
+        // Media type
+        type_default: () => {
+            const folderId = $selected.data[0]
+            if (!folderId) return
+            const folder = $mediaFolders[folderId]
+            enabled = !folder?.mediaType
+        },
+        type_background: () => {
+            const folderId = $selected.data[0]
+            if (!folderId) return
+            const folder = $mediaFolders[folderId]
+            enabled = folder?.mediaType === "background"
+        },
+        type_foreground: () => {
+            const folderId = $selected.data[0]
+            if (!folderId) return
+            const folder = $mediaFolders[folderId]
+            enabled = folder?.mediaType === "foreground"
+        }
     }
 
     if (conditions[id]) conditions[id]()
@@ -334,10 +379,10 @@
     $: customStyle = id === "uppercase" ? "text-transform: uppercase;" : id === "lowercase" ? "text-transform: lowercase;" : ""
 </script>
 
-<div on:click={contextItemClick} class:enabled class:disabled class:hide class:highlighted style="color: {menu?.color || 'unset'};font-weight: {menu?.color ? '500' : 'normal'};{menu?.style || ''}" tabindex={0} on:keydown={keydown} role="menuitem">
-    <span style="display: flex;align-items: center;gap: 15px;">
+<div on:click={contextItemClick} class:enabled class:disabled class:hide class:highlighted class:group data-title={translateText(menu?.tooltip || "")} style="color: {menu?.color || 'unset'};font-weight: {menu?.color ? '500' : 'normal'};{menu?.style || ''}" tabindex={0} on:keydown={keydown} role="menuitem">
+    <span class="item" data-title={group && !menu?.tooltip ? `${shortcut}` : customTitle || ""}>
         <!-- white={menu.icon !== "edit"} -->
-        {#if menu?.icon}<Icon style="opacity: 0.7;color: {(topBar ? '' : menu.iconColor) || 'var(--text)'};" id={menu.icon} white />{/if}
+        {#if menu?.icon}<Icon style="opacity: 0.7;color: {(topBar ? '' : menu.iconColor) || 'var(--text)'};" id={menu.icon} size={group ? 1.4 : 1} white />{/if}
         {#if enabled === true}<Icon id="check" style="fill: var(--text);" size={0.7} white />{/if}
         <p style="display: flex;align-items: center;gap: 5px;{customStyle}">
             {#if menu?.translate === false}
@@ -358,7 +403,7 @@
         </p>
     </span>
 
-    {#if shortcut}
+    {#if shortcut && !group}
         <span style="opacity: 0.4;font-size: 0.8em;/*text-transform: uppercase;*/">{shortcut}</span>
     {/if}
 </div>
@@ -381,6 +426,12 @@
         cursor: default;
     }
 
+    div span.item {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
     p {
         max-width: 300px;
     }
@@ -398,5 +449,32 @@
         background-color: rgb(0 0 0 / 0.2);
         outline: 2px solid var(--secondary);
         outline-offset: -2px;
+    }
+
+    /* Group */
+
+    div.group {
+        flex: 1;
+        font-size: 0.88em;
+        padding: 0;
+        gap: 0;
+
+        min-width: 90px;
+    }
+
+    div.group span.item {
+        flex-direction: column;
+        padding: 6px;
+        flex: 1;
+        gap: 4px;
+    }
+
+    div.group:hover:not(.disabled) {
+        background-color: initial;
+        cursor: initial;
+    }
+    div.group:not(.disabled) span.item:hover {
+        background-color: rgb(0 0 0 / 0.2);
+        cursor: pointer;
     }
 </style>

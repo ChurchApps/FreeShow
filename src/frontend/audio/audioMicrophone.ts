@@ -22,10 +22,10 @@ export class AudioMicrophone {
 
         navigator.mediaDevices
             .getUserMedia({ audio: { deviceId: { exact: id }, echoCancellation: false } })
-            .then(stream => {
+            .then((stream) => {
                 AudioPlayer.playStream(id, stream, metadata)
             })
-            .catch(err => {
+            .catch((err) => {
                 console.error(err)
                 if (err.name === "NotReadableError") {
                     sendMain(Main.ACCESS_MICROPHONE_PERMISSION)
@@ -35,5 +35,11 @@ export class AudioMicrophone {
 
     static stop(id: string) {
         AudioPlayer.stop(id)
+    }
+
+    static async getList() {
+        return navigator.mediaDevices.enumerateDevices().then((devices) => {
+            return devices?.filter((device) => device.kind === "audioinput")
+        })
     }
 }

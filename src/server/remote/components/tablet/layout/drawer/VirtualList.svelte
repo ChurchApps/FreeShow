@@ -1,19 +1,24 @@
-<!-- Source: https://npmjs.com/package/@sveltejs/svelte-virtual-list -->
-<!-- fixed infinite loop with content_height of 0 while refreshing -->
-<!-- added auto scrolling to selected index -->
-
 <script>
     import { onMount, tick } from "svelte"
 
     // props
-    export let items
+    // Default to an empty list so consumers don't have to guard against undefined
+    export let items = []
     export let height = "100%"
     export let itemHeight = undefined
     /** @type number | null */
     export let activeIndex = null
 
+    // Export scrollToTop for external use
+    export function scrollToTop() {
+        if (!viewport) return
+        viewport.scrollTo({ top: 0, behavior: "instant" })
+        start = 0
+        top = 0
+    }
+
     // custom scroll to index
-    $: if (mounted && activeIndex !== null) setTimeout(() => scrollToIndex(activeIndex))
+    $: if (mounted && activeIndex !== null && activeIndex >= 0) setTimeout(() => scrollToIndex(activeIndex))
     function scrollToIndex(index) {
         if (!viewport || !items || index < 0 || index >= items.length) return
 

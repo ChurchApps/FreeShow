@@ -41,7 +41,7 @@ class CameraManager {
 
     // set startup cameras for faster activation
     setStartupCameras(cameraIds: string[]) {
-        special.update(a => {
+        special.update((a) => {
             a.startupCameras = cameraIds
             return a
         })
@@ -55,7 +55,7 @@ class CameraManager {
 
     private async getCameraFromId(cameraId: string) {
         const allCameras = await this.getCamerasList()
-        return allCameras.find(a => a.id === cameraId)
+        return allCameras.find((a) => a.id === cameraId)
     }
 
     async initializeCameraWarming() {
@@ -69,7 +69,7 @@ class CameraManager {
 
         if (!selectedCameraIds.length) return
 
-        const camerasToWarm = allCameras.filter(camera => selectedCameraIds.includes(camera.id))
+        const camerasToWarm = allCameras.filter((camera) => selectedCameraIds.includes(camera.id))
         for (const camera of camerasToWarm) {
             await this.warmUpCamera(camera)
         }
@@ -91,8 +91,8 @@ class CameraManager {
         try {
             const devices = await navigator.mediaDevices.enumerateDevices()
             const cameraList = devices
-                .filter(device => device.kind === "videoinput")
-                .map(device => ({
+                .filter((device) => device.kind === "videoinput")
+                .map((device) => ({
                     name: device.label || `Camera ${device.deviceId.slice(0, 8)}`,
                     id: device.deviceId,
                     group: device.groupId
@@ -153,7 +153,7 @@ class CameraManager {
             console.info(`Camera ${camera.name} started`)
 
             // Listen for stream end to retry
-            stream.getTracks().forEach(track => {
+            stream.getTracks().forEach((track) => {
                 track.addEventListener("ended", () => {
                     console.warn(`Camera ${camera.name} stream ended, will retry...`)
                     this.retryCameraWarming(camera)
@@ -261,7 +261,7 @@ class CameraManager {
     }
 
     stopTracks(cameraStream: MediaStream | null | undefined) {
-        cameraStream?.getTracks()?.forEach(track => track.stop())
+        cameraStream?.getTracks()?.forEach((track) => track.stop())
     }
 
     // Keep camera streams alive by periodically checking and restarting them
@@ -275,7 +275,7 @@ class CameraManager {
         for (const camera of this.activeCameras.values()) {
             if (this.failed.includes(camera.id)) return
 
-            if (!camera.stream || !camera.stream.active || camera.stream.getTracks().some(track => track.readyState === "ended")) {
+            if (!camera.stream || !camera.stream.active || camera.stream.getTracks().some((track) => track.readyState === "ended")) {
                 console.warn(`Camera ${camera.name} stream is not active, restarting...`)
                 await this.retryCameraWarming({ id: camera.id, name: camera.name, group: camera.groupId })
             }

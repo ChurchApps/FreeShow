@@ -3,7 +3,7 @@
     import type { ContentProviderId } from "../../../../electron/contentProviders/base/types"
     import { Main } from "../../../../types/IPC/Main"
     import { requestMain, sendMain } from "../../../IPC/main"
-    import { activePage, activePopup, activeShow, activeTriggerFunction, companion, connections, contentProviderData, disabledServers, maxConnections, outputs, popupData, ports, providerConnections, serverData } from "../../../stores"
+    import { activePage, activePopup, activeShow, activeTriggerFunction, cloudSyncData, companion, connections, contentProviderData, disabledServers, maxConnections, outputs, popupData, ports, providerConnections, serverData, special } from "../../../stores"
     import { contentProviderSync } from "../../../utils/startup"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -16,25 +16,8 @@
     let ip = "localhost"
 
     onMount(async () => {
-        getIP(await requestMain(Main.IP))
+        ip = (await requestMain(Main.IP))[0]
     })
-
-    function getIP(nets: any) {
-        let results: any = {}
-        for (const name of Object.keys(nets)) {
-            for (const net of nets[name]) {
-                // Skip over non-IPv4 and internal (i.e. 127.0.0.1) addresses
-                // 'IPv4' is in Node <= 17, from 18 it's a number 4 or 6
-                const familyV4Value = typeof net.family === "string" ? "IPv4" : 4
-                if (net.family === familyV4Value && !net.internal) {
-                    if (!results[name]) results[name] = []
-                    results[name].push(net.address)
-                }
-            }
-        }
-
-        ip = results["en0"]?.[0] || results["eth0"]?.[0] || results["Wi-Fi"]?.[0] || Object.values(results)[0]?.[0] || "localhost"
-    }
 
     // WIP reset in popups
     // function reset() {
@@ -49,7 +32,7 @@
     function toggleServer(e: any, id: string) {
         let value = e.detail
 
-        disabledServers.update(a => {
+        disabledServers.update((a) => {
             a[id] = !value
             return a
         })
@@ -61,7 +44,7 @@
 
         if (id === "output_stream") {
             if ($serverData?.output_stream?.outputId && !$outputs[$serverData.output_stream.outputId]) {
-                serverData.update(a => {
+                serverData.update((a) => {
                     delete a.output_stream.outputId
                     return a
                 })
@@ -74,7 +57,7 @@
     function toggleCompanion(e: any) {
         let value = e.detail
 
-        companion.update(a => {
+        companion.update((a) => {
             a.enabled = value
             return a
         })
@@ -103,8 +86,8 @@
         { id: "remote", name: "RemoteShow", icon: "connection", enabledByDefault: true },
         { id: "stage", name: "StageShow", icon: "stage", enabledByDefault: true },
         { id: "controller", name: "ControlShow", icon: "connection", enabledByDefault: false },
-        // $special.optimizedMode &&
-        ...($disabledServers.output_stream !== false ? [] : [{ id: "output_stream", name: "OutputShow", icon: "stage", enabledByDefault: false }]),
+        // ...(($special.optimizedMode && $disabledServers.output_stream !== false) ? [] : [{ id: "output_stream", name: "OutputShow", icon: "stage", enabledByDefault: false }]),
+        { id: "output_stream", name: "OutputShow", icon: "stage", enabledByDefault: false },
         // Bitfocus Companion (WebSocket/REST)
         { id: "companion", name: "API", icon: "companion", enabledByDefault: false, url: "https://freeshow.app/docs/companion" }
         // { id: "rest", name: "REST Listener", icon: "companion", enabledByDefault: false, url: "https://freeshow.app/docs/api" },
@@ -112,13 +95,30 @@
     // Camera
     // Answer / Guess / Poll
 
+    $: cloudOnly = { churchApps: !!$special.churchAppsCloudOnly }
     function contentProviderConnect(providerId: ContentProviderId) {
-        if (!$providerConnections[providerId]) {
-            sendMain(Main.PROVIDER_LOAD_SERVICES, { providerId })
+        if (!$providerConnections[providerId] || cloudOnly[providerId]) {
+            if (providerId === "churchApps") {
+                special.update((a) => {
+                    delete a.churchAppsCloudOnly
+                    return a
+                })
+            }
+
+            sendMain(Main.PROVIDER_LOAD_SERVICES, { providerId, cloudOnly: cloudOnly[providerId] || false })
         } else {
-            requestMain(Main.PROVIDER_DISCONNECT, { providerId }, a => {
+            if ($cloudSyncData.enabled && providerId === $cloudSyncData.id) {
+                // should remain connected to cloud
+                special.update((a) => {
+                    a.churchAppsCloudOnly = true
+                    return a
+                })
+                return
+            }
+
+            requestMain(Main.PROVIDER_DISCONNECT, { providerId }, (a) => {
                 if (!a.success) return
-                providerConnections.update(c => {
+                providerConnections.update((c) => {
                     c[providerId] = false
                     return c
                 })
@@ -133,7 +133,7 @@
     }
 
     function updateProvider(id: ContentProviderId, key: string, value: any) {
-        contentProviderData.update(a => {
+        contentProviderData.update((a) => {
             if (!a[id]) a[id] = {}
             a[id][key] = value
             return a
@@ -189,12 +189,12 @@
         {#if server.id === "companion"}
             <MaterialToggleSwitch label="" checked={$companion?.enabled === true} on:change={toggleCompanion} />
         {:else}
-            <MaterialToggleSwitch label="" checked={server.enabledByDefault ? $disabledServers[server.id] !== true : $disabledServers[server.id] === false} on:change={e => toggleServer(e, server.id)} />
+            <MaterialToggleSwitch label="" checked={server.enabledByDefault ? $disabledServers[server.id] !== true : $disabledServers[server.id] === false} on:change={(e) => toggleServer(e, server.id)} />
         {/if}
     </InputRow>
 {/each}
 
-{#if !$providerConnections.planningcenter && !$providerConnections.churchApps && !$providerConnections.amazinglife}
+{#if $providerConnections.churchApps ? cloudOnly.churchApps : !$providerConnections.planningcenter && !$providerConnections.churchApps && !$providerConnections.amazinglife}
     <!-- No provider connected - show connection options -->
     <div class="tapping" on:click={tap}>
         <Title label="Content Provider" icon="list" />
@@ -230,8 +230,11 @@
         <MaterialButton icon="cloud_sync" on:click={syncContentProvider}>
             <T id="cloud.sync" />
         </MaterialButton>
+        <MaterialButton on:click={() => sendMain(Main.URL, "https://planningcenter.com")} title="Planning Center" white>
+            <Icon id="launch" white />
+        </MaterialButton>
     </InputRow>
-    <MaterialToggleSwitch label="Always use local instance of songs" checked={$contentProviderData.planningcenter?.localAlways} defaultValue={false} on:change={e => updateProvider("planningcenter", "localAlways", e.detail)} />
+    <MaterialToggleSwitch label="Always use local instance of songs" checked={$contentProviderData.planningcenter?.localAlways} defaultValue={false} on:change={(e) => updateProvider("planningcenter", "localAlways", e.detail)} />
 {:else if $providerConnections.churchApps}
     <!-- ChurchApps connected -->
     <Title label="Content Provider: ChurchApps" icon="list" />
@@ -246,6 +249,9 @@
         <MaterialButton title="settings.sync_categories_tip" icon="options" on:click={() => activePopup.set("sync_categories")}>
             <T id="popup.sync_categories" />
         </MaterialButton>
+        <MaterialButton on:click={() => sendMain(Main.URL, "https://b1.church")} title="B1.Church" white>
+            <Icon id="launch" white />
+        </MaterialButton>
     </InputRow>
 {:else if $providerConnections.amazinglife}
     <!-- APlay connected -->
@@ -255,9 +261,10 @@
         <MaterialButton on:click={() => contentProviderConnect("amazinglife")} style="flex: 1;border-bottom: 2px solid var(--connected) !important;" icon="logout">
             <T id="settings.disconnect_from" replace={["APlay"]} />
         </MaterialButton>
-        <MaterialButton icon="cloud_sync" on:click={syncContentProvider}>
+        <!-- Nothing to sync yet -->
+        <!-- <MaterialButton icon="cloud_sync" on:click={syncContentProvider}>
             <T id="cloud.sync" />
-        </MaterialButton>
+        </MaterialButton> -->
     </InputRow>
 {/if}
 

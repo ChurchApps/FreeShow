@@ -42,8 +42,26 @@
     // is not template or overlay
     $: isShow = !activeId
     $: tabs.filters.remove = !isShow // TODO: set filters in template / overlay ? ( && $activeEdit.type !== "template")
-    $: tabs.slide.remove = !isShow && $activeEdit.type !== "template"
+    $: tabs.slide.remove = (!isShow && $activeEdit.type !== "template") || templateTextMode
     $: if ((tabs.slide.remove && active === "slide") || (tabs.filters.remove && active === "filters")) active = item ? "text" : "items"
+
+    $: templateTextMode = $activeEdit.type === "template" && $templates[activeId]?.settings?.mode === "text"
+    $: if (templateTextMode) {
+        tabs.item.remove = true
+        tabs.items.remove = true
+        // tabs.slide.remove = true
+    } else {
+        tabs.item.remove = false
+        tabs.items.remove = false
+        // tabs.slide.remove = false
+    }
+    $: templateItemMode = $activeEdit.type === "template" && $templates[activeId]?.settings?.mode === "item"
+    $: if (templateItemMode) {
+        if (active === "text") active = item ? "item" : "items"
+        tabs.text.remove = true
+    } else {
+        tabs.text.remove = false
+    }
 
     $: showIsActive = $activeShow && ($activeShow.type === undefined || $activeShow.type === "show")
     $: editSlideSelected = $activeEdit.slide !== null && $activeEdit.slide !== undefined
@@ -87,7 +105,7 @@
         else if ($activeEdit.type === "template") allSlideItems = clone($templates[activeId]?.items || [])
         else allSlideItems = editSlideSelected && activeIsShow && ref.length > activeSlide ? clone(_show().slides([ref[activeSlide]?.id]).get("items")[0] || []) : []
     }
-    const getItemsByIndex = (array: number[]): Item[] => array.map(i => allSlideItems[i])
+    const getItemsByIndex = (array: number[]): Item[] => array.map((i) => allSlideItems[i])
 
     // select active items or all items
     $: items = $activeEdit.items.length ? getItemsByIndex($activeEdit.items.sort((a, b) => a - b)) : allSlideItems
@@ -101,7 +119,7 @@
     function copyStyle() {
         const styles = getItemsStyle()
 
-        copyPasteEdit.update(a => {
+        copyPasteEdit.update((a) => {
             a[type] = styles
             return a
         })
@@ -110,7 +128,7 @@
     }
 
     function clearClipboard() {
-        copyPasteEdit.update(a => {
+        copyPasteEdit.update((a) => {
             delete a[type]
             return a
         })
@@ -118,7 +136,7 @@
 
     function getItemsStyle(_updater: any = null) {
         if (!items?.length) return [getCurrentStyle()]
-        return items.map(item => getCurrentStyle(item))
+        return items.map((item) => getCurrentStyle(item))
     }
 
     function getCurrentStyle(item: Item | null = null) {
@@ -160,7 +178,7 @@
             if (active === "slide") return setSlideStyle(styles[0], slides)
             if (active === "filters") {
                 let indexes: number[] = []
-                if (applyToFollowing) indexes = ref.map((_, i) => i).filter(a => a >= activeSlide)
+                if (applyToFollowing) indexes = ref.map((_, i) => i).filter((a) => a >= activeSlide)
                 else if (applyToAll) indexes = ref.map((_, i) => i)
                 else indexes = [activeSlide]
 
@@ -197,16 +215,19 @@
             else if ($activeEdit.type === "template") templates.update(updateItemValues)
 
             function updateItemValues(a: any) {
+                if (!a[$activeEdit.id!]?.items) return
+
                 $activeEdit.items.forEach((i: number) => {
-                    if (!a[$activeEdit.id!]?.items[i]?.lines) return
+                    if (!a[$activeEdit.id!].items[i]?.lines) return
 
                     a[$activeEdit.id!].items[i].lines.forEach((line: Line) => {
-                        line.text?.forEach(text => {
+                        line.text?.forEach((text) => {
                             text.style = ""
                         })
                     })
                 })
 
+                a[$activeEdit.id!].modified = Date.now()
                 return a
             }
 
@@ -214,8 +235,8 @@
         }
 
         let ref = getLayoutRef()
-        let slide = ref[activeSlide].id
-        if (!slide) return
+        let slideId = ref[activeSlide]?.id
+        if (!slideId) return
 
         storedEditMenuState.set({})
 
@@ -223,7 +244,7 @@
             history({
                 id: "setStyle",
                 newData: { style: { key: "style", values: [DEFAULT_ITEM_STYLE] } },
-                location: { page: "edit", show: $activeShow!, slide, items: $activeEdit.items }
+                location: { page: "edit", show: $activeShow!, slide: slideId, items: $activeEdit.items }
             })
             return
         }
@@ -241,9 +262,9 @@
         if (active === "slide") {
             history({
                 id: "slideStyle",
-                oldData: { style: _show().slides([slide]).get("settings")[0] },
+                oldData: { style: _show().slides([slideId]).get("settings")[0] },
                 newData: { style: {} },
-                location: { page: "edit", show: $activeShow!, slide }
+                location: { page: "edit", show: $activeShow!, slide: slideId }
             })
             return
         }
@@ -251,10 +272,10 @@
         if (active !== "text") return
 
         let values: any = []
-        items.forEach(item => {
+        items.forEach((item) => {
             if (item.lines) {
-                let text = item.lines.map(a => {
-                    return a.text.map(a => {
+                let text = item.lines.map((a) => {
+                    return a.text.map((a) => {
                         a.style = ""
                         return a
                     })
@@ -271,7 +292,7 @@
                 location: {
                     page: "edit",
                     show: $activeShow!,
-                    slide,
+                    slide: slideId,
                     items: $activeEdit.items
                 }
             })
@@ -281,11 +302,11 @@
         // reset timer/icon/media/mirror etc. style
         if (item && item[item.type || ""]) deleteKeys = [item.type!]
 
-        deleteKeys.forEach(key => {
+        deleteKeys.forEach((key) => {
             history({
                 id: "setItems",
                 newData: { style: { key, values: [undefined] } },
-                location: { page: "edit", show: $activeShow!, slide, items: $activeEdit.items, id: key }
+                location: { page: "edit", show: $activeShow!, slide: slideId, items: $activeEdit.items, id: key }
             })
         })
 
@@ -308,7 +329,7 @@
 
             let values: string[] = []
 
-            selectedItems.forEach(index => {
+            selectedItems.forEach((index) => {
                 let item = allSlideItems[index]
                 if (!item) return
 
@@ -339,12 +360,16 @@
         }
     }
 
-    // const ignoreDefault = ["metadata", "message", "double"]
-
     $: slideActive = !!((slides?.length && showIsActive && activeSlide !== null) || activeId)
     let profile = getAccess("shows")
-    $: isLocked = activeId ? false : $showsCache[$activeShow?.id || ""]?.locked || profile.global === "read" || profile[$showsCache[$activeShow?.id || ""]?.category || ""] === "read"
-    // $: isDefault = $activeEdit.type === "overlay" ? $overlays[activeId || ""]?.isDefault : $activeEdit.type === "template" ? $templates[activeId || ""]?.isDefault && !ignoreDefault.includes(activeId || "") : false
+
+    $: currentShow = $showsCache[$activeShow?.id || ""]
+    $: isSlideLockedFn = () => {
+        const slideId = ref[activeSlide]?.parent?.id || ref[activeSlide]?.id
+        return !!currentShow.slides?.[slideId]?.locked
+    }
+    $: isLocked = activeId ? false : currentShow?.locked || isSlideLockedFn() || profile.global === "read" || profile[currentShow?.category || ""] === "read"
+    // $: isDefault = $activeEdit.type === "overlay" ? $overlays[activeId || ""]?.isDefault : $activeEdit.type === "template" ? $templates[activeId || ""]?.isDefault : false
     $: overflowHidden = !!(isShow || $activeEdit.type === "template")
 
     $: currentCopied = $copyPasteEdit[type]
@@ -475,7 +500,12 @@
                 </Button>
             {/if}
         </span> -->
-    {:else if !isLocked}
+    {:else if isLocked}
+        <Center faded>
+            <Icon id="lock" size={2} white />
+            <p style="margin-top: 8px;"><T id="output.state_locked" /></p>
+        </Center>
+    {:else}
         <Center faded>
             <T id="empty.slides" />
         </Center>

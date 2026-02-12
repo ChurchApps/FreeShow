@@ -35,7 +35,7 @@ export class AmazingLifeContentLibrary {
      * Fetches libraries for a specific product
      */
     private static fetchProductLibraries(productId: string, productTitle: string, productImage: string, headers: any): Promise<ContentLibraryCategory | null> {
-        return new Promise(resolve => {
+        return new Promise((resolve) => {
             httpsRequest(AMAZING_LIFE_API_BASE, `/prod/curriculum/modules/products/${productId}/libraries`, "GET", headers, {}, (err, data) => {
                 if (err) {
                     console.error(`Failed to fetch libraries for product ${productId}:`, err)
@@ -86,8 +86,8 @@ export class AmazingLifeContentLibrary {
 
                 console.log("APlay API response:", JSON.stringify(data, null, 2))
                 try {
-                    const modules = data.data || []
-                    console.log(`Found ${modules.length} modules`)
+                    const allModules = data.data || []
+                    const modules = allModules.filter((module: any) => !module.isLocked)
 
                     const modulePromises = modules.map(async (module: any) => {
                         const moduleCategory: ContentLibraryCategory = {
@@ -98,7 +98,8 @@ export class AmazingLifeContentLibrary {
 
                         // Fetch libraries for each product in the module
                         if (module.products && Array.isArray(module.products)) {
-                            const productPromises = module.products.map((product: any) => this.fetchProductLibraries(product.productId, product.title, product.image, headers))
+                            const visibleProducts = module.products.filter((product: any) => !product.isHidden)
+                            const productPromises = visibleProducts.map((product: any) => this.fetchProductLibraries(product.productId, product.title, product.image, headers))
 
                             const productResults = await Promise.all(productPromises)
                             moduleCategory.children = productResults.filter((p): p is ContentLibraryCategory => p !== null)
@@ -132,7 +133,7 @@ export class AmazingLifeContentLibrary {
             return null
         }
 
-        return new Promise(resolve => {
+        return new Promise((resolve) => {
             const headers = this.createAuthHeaders(accessToken)
             const payload = { mediaIds: [mediaId] }
 

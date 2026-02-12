@@ -10,14 +10,17 @@
     import HiddenInput from "../inputs/HiddenInput.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
     import SelectElem from "../system/SelectElem.svelte"
+    import { metadataDisplayValues } from "../helpers/show"
 
     export let category: any
 
     $: id = category.id
     $: label = category.label
     $: icon = category.icon
+    $: option = category.option
     $: action = category.action || ""
     $: template = category.template || ""
+    $: metadata = category.metadata || ""
     $: count = category.count || 0
     $: readOnly = category.readOnly || false
 
@@ -44,7 +47,7 @@
         if (category.openTrigger) category.openTrigger(id, shift)
         if (shift) return
 
-        drawerTabsData.update(a => {
+        drawerTabsData.update((a) => {
             a[drawerId].activeSubTab = parentId || id
             if (isSubmenu) a[drawerId].activeSubmenu = id
             return a
@@ -74,11 +77,11 @@
     $: submenuOpened = openedSubmenus.includes(id)
 
     function openSubMenu() {
-        drawerTabsData.update(a => {
+        drawerTabsData.update((a) => {
             if (!a[drawerId]) return a
             let opened = clone(openedSubmenus)
 
-            let existingIndex = opened.findIndex(menuId => menuId === id) ?? -1
+            let existingIndex = opened.findIndex((menuId) => menuId === id) ?? -1
             if (existingIndex < 0) opened.push(id)
             else {
                 opened.splice(existingIndex, 1)
@@ -109,20 +112,32 @@
             {/if}
         </div>
 
-        {#if template && $templates[template]}
-            <span style="padding: 0 5px;" data-title={translateText(`info.template: <b>${$templates[template].name}</b>`)}>
-                <Icon id="templates" size={0.8} white />
-            </span>
-        {/if}
-        {#if action && $actions[action]}
-            <span style="padding: 0 5px;" data-title={translateText(`popup.action: <b>${$actions[action].name}</b>`)}>
-                <Icon id={getActionIcon(action)} size={0.8} white />
-            </span>
-        {/if}
+        <div class="icons">
+            {#if option}
+                <span style="padding: 0 2px;{option.style}" data-title={translateText(option.title)}>
+                    <Icon id={option.icon} size={0.8} white />
+                </span>
+            {/if}
+            {#if metadata}
+                <span style="padding: 0 2px;" data-title={translateText(`tools.metadata: <b>${metadataDisplayValues.find((a) => a.id === metadata)?.name}</b>`)}>
+                    <Icon id="info" size={0.8} white />
+                </span>
+            {/if}
+            {#if template && $templates[template]}
+                <span style="padding: 0 2px;" data-title={translateText(`info.template: <b>${$templates[template].name}</b>`)}>
+                    <Icon id="templates" size={0.8} white />
+                </span>
+            {/if}
+            {#if action && $actions[action]}
+                <span style="padding: 0 2px;" data-title={translateText(`popup.action: <b>${$actions[action].name}</b>`)}>
+                    <Icon id={getActionIcon(action)} size={0.8} white />
+                </span>
+            {/if}
 
-        {#if count}
-            <span class="count">{count}</span>
-        {/if}
+            {#if count}
+                <span class="count">{count}</span>
+            {/if}
+        </div>
 
         <!-- SUB MENU -->
         {#if !isSubmenu && submenu?.options?.length}
@@ -161,8 +176,17 @@
     .count {
         opacity: 0.5;
         font-size: 0.8em;
-        min-width: 28px;
+        min-width: 10px;
         text-align: end;
+    }
+
+    .icons {
+        display: flex;
+        align-items: center;
+        gap: 0;
+        width: auto;
+
+        opacity: 0.8;
     }
 
     .submenus {

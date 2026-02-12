@@ -18,7 +18,7 @@
 
     $: emittersList = clone(
         sortByName(
-            keysToID($emitters).map(a => ({ value: a.id, label: a.name })),
+            keysToID($emitters).map((a) => ({ value: a.id, label: a.name })),
             "label"
         )
     )
@@ -76,12 +76,12 @@
         { value: "custom", label: translateText("actions.custom_key") },
         ...clone(
             sortByName(
-                keysToID(emitter?.templates || {}).map(a => ({ value: a.id, label: a.name })),
+                keysToID(emitter?.templates || {}).map((a) => ({ value: a.id, label: a.name })),
                 "label"
             )
         )
     ]
-    $: templateInputs = (emitter?.templates?.[activeTemplate]?.inputs || []).filter(a => emitter?.type === "midi" || a.name)
+    $: templateInputs = (emitter?.templates?.[activeTemplate]?.inputs || []).filter((a) => emitter?.type === "midi" || a.name)
 
     $: customTemplateInputs = (value.templateValues || []).map((a, i) => ({ ...a, id: i.toString() }))
 
@@ -101,15 +101,15 @@
         label="emitters.emitter {emitter?.type ? `<span style='color: var(--text);opacity: 0.5;font-weight: normal;font-size: 0.8em;margin-left: 10px;'>${emitter.type.toUpperCase()}</span>` : ''}"
         options={emittersList}
         value={value.emitter}
-        on:new={e => {
+        on:new={(e) => {
             const id = uid()
             const name = e.detail
             const actionId = $popupData?.id
             if (!actionId) return
 
-            actions.update(a => {
+            actions.update((a) => {
                 a[actionId].name += `: ${name}`
-                const triggerId = a[actionId].triggers?.find(a => a.includes("emit_action"))
+                const triggerId = a[actionId].triggers?.find((a) => a.includes("emit_action"))
                 if (!triggerId) return a
 
                 if (!a[actionId].actionValues) a[actionId].actionValues = {}
@@ -121,7 +121,7 @@
             popupData.set({ name, id, actionData: $popupData })
             activePopup.set("manage_emitters")
         }}
-        on:change={e => updateValue("emitter", e.detail)}
+        on:change={(e) => updateValue("emitter", e.detail)}
         addNew="timer.create"
     />
     {#if value.emitter}
@@ -137,7 +137,7 @@
         </InputRow>
     {/if}
 
-    <MaterialDropdown label="emitters.message_template" options={templatesList} value={activeTemplate || "custom"} on:change={e => updateValue("template", e.detail)} />
+    <MaterialDropdown label="emitters.message_template" options={templatesList} value={activeTemplate || "custom"} on:change={(e) => updateValue("template", e.detail)} />
 
     {#if templateInputs.length}
         {#if emitter?.templates?.[activeTemplate]?.description}
@@ -151,23 +151,23 @@
             {#each templateInputs as input, i}
                 {@const stringValue = typeof (value.templateValues?.[i] || input).value === "string" ? (value.templateValues?.[i] || input).value : ""}
 
-                <MaterialTextInput label={input.name} disabled={!!input.value} placeholder={translateText("variables.value")} value={stringValue} on:change={e => setTemplateValue(i, e)} />
+                <MaterialTextInput label={input.name} disabled={!!input.value} placeholder={translateText("variables.value")} value={stringValue} on:change={(e) => setTemplateValue(i, e)} />
             {/each}
         {/if}
     {:else if emitter?.type === "midi"}
-        <MidiValues value={{ ...emitter.signal, values: typeof customTemplateInputs[0]?.value === "object" ? customTemplateInputs[0].value : {} }} on:change={e => setMidiTemplateValue(e)} type="emitter" />
+        <MidiValues value={{ ...emitter.signal, values: typeof customTemplateInputs[0]?.value === "object" ? customTemplateInputs[0].value : {} }} on:change={(e) => setMidiTemplateValue(e)} type="emitter" />
     {:else}
-        <DynamicList addDisabled={!!customTemplateInputs?.find(a => !a.name && !a.value)} items={customTemplateInputs} let:item={input} on:add={createTemplateValue} on:delete={e => removeTemplateValue(e.detail)} allowOpen={false} nothingText={false}>
+        <DynamicList addDisabled={!!customTemplateInputs?.find((a) => !a.name && !a.value)} items={customTemplateInputs} let:item={input} on:add={createTemplateValue} on:delete={(e) => removeTemplateValue(e.detail)} allowOpen={false} nothingText={false}>
             <div style="display: flex;width: 100%;">
-                <MaterialTextInput label="inputs.name" value={input.name} on:change={e => setTemplateValue(input.id, e, "name")} style="width: 50%;" />
-                <MaterialTextInput label="variables.value" value={input.value} on:change={e => setTemplateValue(input.id, e, "value")} style="width: 50%;" />
+                <MaterialTextInput label="inputs.name" value={input.name} on:change={(e) => setTemplateValue(input.id, e, "name")} style="width: 50%;" />
+                <MaterialTextInput label="variables.value" value={input.value} on:change={(e) => setTemplateValue(input.id, e, "value")} style="width: 50%;" />
             </div>
         </DynamicList>
     {/if}
 
     <!-- extra DATA -->
     {#if emitter?.type === "osc"}
-        <MaterialTextInput label="emitters.data" value={value.data || ""} on:change={e => updateValue("data", e)} />
+        <MaterialTextInput label="emitters.data" value={value.data || ""} on:change={(e) => updateValue("data", e)} />
     {/if}
 
     <InputRow style="background-color: var(--primary-darker);display: flex;align-items: center;justify-content: space-between;padding: 10px;">

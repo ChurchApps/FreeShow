@@ -1,17 +1,18 @@
 import type { TemplateStyleOverride } from "../../../types/Show"
+import { TemplateHelper } from "../../utils/templates"
 
 // split the rendered text so template rules can restyle matching chunks
 export function applyStyleOverrides(baseLines: any[], overrides: TemplateStyleOverride[]) {
-    return baseLines.map(line => {
+    return baseLines.map((line) => {
         if (!Array.isArray(line?.text)) return line
 
-        let segments = line.text.map(segment => ({ ...segment }))
-        overrides.forEach(override => {
+        let segments = line.text.map((segment) => ({ ...segment }))
+        overrides.forEach((override) => {
             const regex = buildOverrideRegex(override)
             if (!regex) return
 
             const nextSegments: any[] = []
-            segments.forEach(segment => {
+            segments.forEach((segment) => {
                 nextSegments.push(...splitSegment(segment, regex, override))
             })
             segments = nextSegments
@@ -81,11 +82,55 @@ function splitSegment(segment: any, regex: RegExp, override: TemplateStyleOverri
 }
 
 function mergeOverrideStyles(baseStyle: string, override: TemplateStyleOverride) {
-    let style = baseStyle || ""
-    if (override.color) style += `color: ${override.color};`
-    if (override.bold) style += "font-weight: 700;"
-    if (override.italic) style += "font-style: italic;"
-    if (override.underline) style += "text-decoration: underline;"
-    if (override.uppercase) style += "text-transform: uppercase;"
-    return style
+    if (!override.templateId) return baseStyle || ""
+
+    const _template = new TemplateHelper(override.templateId)
+    const templateStyle = _template.getTextStyle()
+
+    if (!templateStyle) return baseStyle || ""
+
+    // Parse both styles into objects
+    const baseProps = parseStyleString(baseStyle || "")
+    const templateProps = parseStyleString(templateStyle)
+
+    // Merge: base properties + template override properties
+    // Template properties (color, font-weight, font-style, etc.) override base
+    const merged = { ...baseProps, ...templateProps }
+
+    // IMPORTANT: Remove font-size from merged result since it will be set separately by fontSizePart
+    // This prevents duplicate font-size declarations in the final style string
+    delete merged["font-size"]
+
+    // Convert back to CSS string with !important for color and font-style to ensure they override
+    const result = Object.entries(merged)
+        .map(([key, value]) => {
+            // Add !important to style overrides that might be getting overridden
+            if (key === "color" || key === "font-style" || key === "font-weight") {
+                return `${key}:${value} !important`
+            }
+            return `${key}:${value}`
+        })
+        .join(";") + (Object.keys(merged).length ? ";" : "")
+
+    return result
+}
+
+function parseStyleString(styleString: string): Record<string, string> {
+    const result: Record<string, string> = {}
+    if (!styleString) return result
+
+    // Split by semicolon and parse each property
+    styleString.split(";").forEach((declaration) => {
+        const colonIndex = declaration.indexOf(":")
+        if (colonIndex === -1) return
+
+        const property = declaration.slice(0, colonIndex).trim()
+        const value = declaration.slice(colonIndex + 1).trim()
+
+        if (property && value) {
+            result[property] = value
+        }
+    })
+
+    return result
 }

@@ -5,7 +5,7 @@
     let loadedComponent: any = null
 
     $: if (show && !loadedComponent) {
-        component().then(module => {
+        component().then((module) => {
             loadedComponent = module.default
         })
     }

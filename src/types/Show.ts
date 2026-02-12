@@ -1,7 +1,7 @@
 import type { AutosizeTypes } from "../frontend/components/edit/scripts/autosize"
 import type { Input } from "./Input"
 import type { Animation } from "./Output"
-import type { Resolution } from "./Settings"
+import type { Cropping, Resolution } from "./Settings"
 
 export interface Shows {
     [key: string]: Show
@@ -36,10 +36,9 @@ export interface Show {
         template?: string
     }
     metadata?: {
-        autoMedia?: boolean
-        override: boolean
-        display: string
-        template: string
+        // override: boolean
+        // display: string
+        // template: string
         tags?: string[]
     }
     meta: {
@@ -88,6 +87,7 @@ export interface Slide {
     group: null | string
     color: null | string
     globalGroup?: string
+    locked?: boolean // lock slide group to prevent changes
     settings: {
         template?: string
         background?: boolean
@@ -103,15 +103,17 @@ export interface Item {
     id?: string
     lines?: Line[]
     list?: List
-    auto?: boolean
+    auto?: boolean // DEPRECATED - use textFit
     textFit?: AutosizeTypes // auto size text fix option (default: shrinkToFit)
     autoFontSize?: number // only used to store the calculated auto size text size
+    previewAutoFontSize?: number // only used to store the calculated auto size text size for the preview
     style: string
     align?: string
     specialStyle?: any // line gap && line background
     media?: any
+    cropping?: Cropping // in percentage based on original image size
     // timer?: Timer // pre 0.8.3 // also local backup?
-    timer?: { id: string }
+    timer?: { id: string; [key: string]: any }
     timerId?: string // pre 1.5.0
     clock?: Clock
     events?: DynamicEvent
@@ -185,12 +187,20 @@ export interface Timer {
     showHours?: boolean // use just minutes or minutes and hours
     start?: number
     end?: number
+    startDynamic?: string
+    endDynamic?: string
     event?: string
     time?: string
+
+    warn?: boolean
+    warnOffset?: number
+    warnColor?: string
+    warnFlash?: boolean
+
     overflow?: boolean
     overflowColor?: string
-    overflowBlink?: boolean
-    overflowBlinkOffset?: number // start blinking before the time
+    overflowFlash?: boolean
+
     // format?: string
     // paused?: boolean
 }
@@ -276,14 +286,36 @@ export interface Layout {
     id?: string
     name: string
     notes: string
-    recording?: Recording[]
+    timeline?: Timeline
+    recording?: Recording[] // deprecated
     slides: SlideData[]
 }
 
+export interface Timeline {
+    // id: string
+    // name: string
+    actions: TimelineAction[]
+}
+
+export interface TimelineAction {
+    id: string
+    time: number // ms
+    duration?: number // ms (media)
+    name: string
+    type: string // "action" | "slide" | "show" | "audio"
+    data: {
+        id?: string // slide/action/show
+        path?: string // audio
+        index?: number // slide
+        layoutId?: string // show
+        triggers?: string[] // action
+        actionValues?: any // action
+    }
+}
+
+// deprecated
 export interface Recording {
     id: string
-    // name: string
-    // useDurationTime?: boolean // moved to global settings
     layoutAtRecording: string // store layout ids to detect changes
     sequence: {
         time: number
@@ -346,6 +378,7 @@ export interface Transition {
     type: TransitionType
     duration: number
     easing: string
+    fadeInOffset?: number // when to start fading in (default = 50%)
     delay?: number // item in/out wait
     custom?: any // e.g. transition direction
 
@@ -455,8 +488,10 @@ export interface Overlay {
     name: string
     color: null | string
     category: null | string
+    modified?: number // cloud sync
     items: Item[]
     locked?: boolean
+    actions?: any[]
     placeUnderSlide?: boolean
     displayDuration?: number
 }
@@ -469,20 +504,17 @@ export interface Template {
     name: string
     color: null | string
     category: null | string
+    modified?: number // cloud sync
     settings?: TemplateSettings
     items: Item[]
 }
 export interface TemplateStyleOverride {
     id: string
     pattern: string
-    color?: string
-    bold?: boolean
-    italic?: boolean
-    underline?: boolean
-    uppercase?: boolean
+    templateId?: string
 }
 export interface TemplateSettings {
-    mode?: "default" | "scripture"
+    mode?: "default" | "scripture" | "item" | "text"
     resolution?: Resolution
     backgroundColor?: string
     backgroundPath?: string

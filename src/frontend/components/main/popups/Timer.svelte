@@ -5,7 +5,7 @@
     import { events, timers } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { getDateString } from "../../drawer/calendar/calendar"
-    import { getTimer } from "../../drawer/timers/timers"
+    import { getTimer, getTimerDynamicValue } from "../../drawer/timers/timers"
     import T from "../../helpers/T.svelte"
     import { deselect, getSelected } from "../../helpers/select"
     import { secondsToTime } from "../../helpers/time"
@@ -94,7 +94,7 @@
         event: translateText("timer.event")
     }
     $: if (timer.event && eventList.length) updateEventName()
-    const updateEventName = () => (timerNames.event = eventList.find(a => a.id === timer.event)?.name)
+    const updateEventName = () => (timerNames.event = eventList.find((a) => a.id === timer.event)?.name)
 
     function changeName(e: any) {
         let newName = e.detail
@@ -106,7 +106,7 @@
 
         // set unique timer name
         let count = 1
-        while (Object.values($timers).find(a => a.name === newName + (count > 1 ? ` ${count}` : ""))) {
+        while (Object.values($timers).find((a) => a.name === newName + (count > 1 ? ` ${count}` : ""))) {
             count++
         }
         newName = newName + (count > 1 ? ` ${count}` : "")
@@ -130,7 +130,7 @@
             created = true
         }
 
-        timers.update(a => {
+        timers.update((a) => {
             a[id] = getNewTimer()
             return a
         })
@@ -151,13 +151,21 @@
         else {
             newTimer.start = timer.start === undefined ? 300 : Number(timer.start)
             newTimer.end = timer.end === undefined ? 0 : Number(timer.end)
+
+            if (timer.startDynamic) newTimer.startDynamic = timer.startDynamic
+            if (timer.endDynamic) newTimer.endDynamic = timer.endDynamic
         }
 
+        if (timer.warn) {
+            newTimer.warn = true
+            newTimer.warnOffset = timer.warnOffset || 30
+            newTimer.warnColor = timer.warnColor || "#FF8000"
+            newTimer.warnFlash = !!timer.warnFlash
+        }
         if (timer.overflow) {
-            newTimer.overflow = timer.overflow
-            newTimer.overflowColor = timer.overflowColor
-            newTimer.overflowBlink = timer.overflowBlink
-            newTimer.overflowBlinkOffset = timer.overflowBlinkOffset
+            newTimer.overflow = true
+            newTimer.overflowColor = timer.overflowColor || "#FF4136"
+            // newTimer.overflowFlash = timer.overflowFlash
         }
 
         return newTimer
@@ -171,10 +179,25 @@
     }
 
     const MAX_MINUTES = 60 * 24 * 30 // 365
+
+    $: warningMenuOpened = false
+    $: overflowMenuOpened = false
+
+    function updateTimerValue(key: string, value: any) {
+        timer[key] = value
+
+        if (key === "warn") warningMenuOpened = !!value
+        else if (key === "overflow") overflowMenuOpened = !!value
+    }
+
+    let showMore = false
+
+    $: dynamicStart = getTimerDynamicValue(timer.startDynamic)
+    $: dynamicEnd = getTimerDynamicValue(timer.endDynamic)
 </script>
 
 {#if (!currentTimer?.id || created) && !chosenType}
-    <MaterialMultiChoice options={timerTypes} on:click={e => (chosenType = timer.type = e.detail)} />
+    <MaterialMultiChoice options={timerTypes} on:click={(e) => (chosenType = timer.type = e.detail)} />
 {:else}
     {#if created}
         <MaterialButton class="popup-back" icon="back" iconSize={1.3} title="actions.back" on:click={() => (chosenType = "")} />
@@ -183,6 +206,8 @@
     <MaterialTextInput label="inputs.name" value={timer.name} on:change={changeName} autoselect={created} />
 
     {#if timer.type === "counter"}
+        <MaterialButton class="popup-options {showMore ? 'active' : ''}" icon="options" iconSize={1.3} title={showMore ? "actions.close" : "create_show.more_options"} on:click={() => (showMore = !showMore)} white />
+
         <div style="display: flex;gap: 5px;margin: 20px 0;">
             <div class="timerbox">
                 <p class="part">
@@ -197,10 +222,20 @@
                 </p>
 
                 <div>
-                    <MaterialNumberInput label="timer.minutes" value={timer.start === undefined ? 5 : getMinutes(timer.start)} padLength={2} max={MAX_MINUTES} on:change={e => (timer.start = getSeconds(timer.start || 0) + Number(e.detail) * 60)} />
-                    <span style="padding: 0 10px;font-size: 3em;font-weight: bold;line-height: 1.7;">:</span>
-                    <MaterialNumberInput label="timer.seconds" value={timer.start === undefined ? 0 : getSeconds(timer.start)} padLength={2} max={59} on:change={e => (timer.start = getMinutes(timer.start ?? 300) * 60 + Number(e.detail))} />
+                    {#if dynamicStart !== null}
+                        <p style="font-size: 2.8em;font-weight: bold;">{dynamicStart}</p>
+                    {:else}
+                        <MaterialNumberInput label="timer.minutes" value={timer.start === undefined ? 5 : getMinutes(timer.start)} padLength={2} max={MAX_MINUTES} on:change={(e) => (timer.start = getSeconds(timer.start || 0) + Number(e.detail) * 60)} />
+                        <span style="padding: 0 10px;font-size: 3em;font-weight: bold;line-height: 1.7;">:</span>
+                        <MaterialNumberInput label="timer.seconds" value={timer.start === undefined ? 0 : getSeconds(timer.start)} padLength={2} max={59} on:change={(e) => (timer.start = getMinutes(timer.start ?? 300) * 60 + Number(e.detail))} />
+                    {/if}
                 </div>
+
+                {#if showMore}
+                    <div style="padding-top: 0;">
+                        <MaterialTextInput label="actions.dynamic_value (s)" value={timer.startDynamic || ""} placeholder={`{$min} * 60`} defaultValue="" style="flex: 1;" on:change={(e) => (timer.startDynamic = e.detail)} />
+                    </div>
+                {/if}
             </div>
             <div class="timerbox">
                 <p class="part">
@@ -215,10 +250,20 @@
                 </p>
 
                 <div>
-                    <MaterialNumberInput label="timer.minutes" value={timer.end === undefined ? 5 : getMinutes(timer.end)} padLength={2} max={MAX_MINUTES} on:change={e => (timer.end = getSeconds(timer.end || 0) + Number(e.detail) * 60)} />
-                    <span style="padding: 0 10px;font-size: 3em;font-weight: bold;line-height: 1.7;">:</span>
-                    <MaterialNumberInput label="timer.seconds" value={timer.end === undefined ? 0 : getSeconds(timer.end)} padLength={2} max={59} on:change={e => (timer.end = getMinutes(timer.end ?? 300) * 60 + Number(e.detail))} />
+                    {#if dynamicEnd !== null}
+                        <p style="font-size: 2.8em;font-weight: bold;">{dynamicEnd}</p>
+                    {:else}
+                        <MaterialNumberInput label="timer.minutes" value={timer.end === undefined ? 5 : getMinutes(timer.end)} padLength={2} max={MAX_MINUTES} on:change={(e) => (timer.end = getSeconds(timer.end || 0) + Number(e.detail) * 60)} />
+                        <span style="padding: 0 10px;font-size: 3em;font-weight: bold;line-height: 1.7;">:</span>
+                        <MaterialNumberInput label="timer.seconds" value={timer.end === undefined ? 0 : getSeconds(timer.end)} padLength={2} max={59} on:change={(e) => (timer.end = getMinutes(timer.end ?? 300) * 60 + Number(e.detail))} />
+                    {/if}
                 </div>
+
+                {#if showMore}
+                    <div style="padding-top: 0;">
+                        <MaterialTextInput label="actions.dynamic_value (s)" value={timer.endDynamic || ""} defaultValue="" style="flex: 1;" on:change={(e) => (timer.endDynamic = e.detail)} />
+                    </div>
+                {/if}
             </div>
         </div>
     {:else if timer.type === "clock"}
@@ -262,17 +307,22 @@
         </div>
     {/if}
 
-    <InputRow arrow>
-        <MaterialToggleSwitch label="timer.overflow" style="width: 100%;" checked={timer.overflow} defaultValue={false} on:change={e => (timer.overflow = e.detail)} />
+    <InputRow arrow={timer.warn} bind:open={warningMenuOpened}>
+        <MaterialToggleSwitch label="timer.warn_early" style="width: 100%;" checked={timer.warn} defaultValue={false} on:change={(e) => updateTimerValue("warn", e.detail)} />
 
         <div slot="menu">
-            <MaterialColorInput label="timer.overflow_color" disabled={!timer.overflow} value={timer.overflowColor || "#FF4136"} defaultValue="#FF4136" on:input={e => (timer.overflowColor = e.detail)} />
+            <MaterialNumberInput label="timer.warn_offset" value={timer.warnOffset || 30} min={1} defaultValue={30} max={Math.abs((timer.start ?? 300) - (timer.end || 0))} on:change={(e) => updateTimerValue("warnOffset", e.detail)} />
+            <MaterialColorInput label="edit.color" value={timer.warnColor || "#FF8000"} defaultValue="#FF8000" on:input={(e) => updateTimerValue("warnColor", e.detail)} />
+            <MaterialToggleSwitch label="timer.flash" checked={timer.warnFlash} defaultValue={false} on:change={(e) => updateTimerValue("warnFlash", e.detail)} />
+        </div>
+    </InputRow>
 
-            <MaterialToggleSwitch label="timer.overflow_blink" disabled={!timer.overflow} checked={timer.overflowBlink} defaultValue={false} on:change={e => (timer.overflowBlink = e.detail)} />
-            {#if timer.overflowBlink}
-                <!-- conditions.seconds -->
-                <MaterialNumberInput label="timer.overflow_blink_offset" disabled={!timer.overflow} value={timer.overflowBlinkOffset || 0} defaultValue={0} max={Math.abs((timer.start ?? 300) - (timer.end || 0))} on:change={e => (timer.overflowBlinkOffset = e.detail)} />
-            {/if}
+    <InputRow arrow={timer.overflow} bind:open={overflowMenuOpened}>
+        <MaterialToggleSwitch label="timer.overflow" style="width: 100%;" checked={timer.overflow} defaultValue={false} on:change={(e) => updateTimerValue("overflow", e.detail)} />
+
+        <div slot="menu">
+            <MaterialColorInput label="edit.color" value={timer.overflowColor || "#FF4136"} defaultValue="#FF4136" on:input={(e) => updateTimerValue("overflowColor", e.detail)} />
+            <!-- <MaterialToggleSwitch label="timer.flash" checked={timer.overflowFlash} defaultValue={false} on:change={(e) => updateTimerValue("overflowFlash", e.detail)} /> -->
         </div>
     </InputRow>
 {/if}
@@ -295,11 +345,11 @@
         padding: 15px;
     }
 
-    .timerbox :global(.textfield:not(:has(.dropdown-trigger))) {
+    .timerbox :global(.textfield.numberfield) {
         width: 140px;
         height: 100px;
     }
-    .timerbox :global(input) {
+    .timerbox :global(.numberfield input) {
         width: 140px;
         height: 100px;
 

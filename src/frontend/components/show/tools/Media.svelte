@@ -1,6 +1,7 @@
 <script lang="ts">
     import { OUTPUT } from "../../../../types/Channels"
     import { Main } from "../../../../types/IPC/Main"
+    import type { MediaStyle } from "../../../../types/Main"
     import type { Media, MediaType, SlideAction } from "../../../../types/Show"
     import { requestMain } from "../../../IPC/main"
     import { AudioMicrophone } from "../../../audio/audioMicrophone"
@@ -15,7 +16,7 @@
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { clone, sortByName } from "../../helpers/array"
-    import { getExtension, getMediaStyle, getMediaType, isMediaExtension, loadThumbnail, mediaSize } from "../../helpers/media"
+    import { getExtension, getMedia, getMediaStyle, getMediaType, isMediaExtension, mediaSize } from "../../helpers/media"
     import { findMatchingOut, getActiveOutputs, getCurrentStyle, setOutput } from "../../helpers/output"
     import { _show } from "../../helpers/shows"
     import Button from "../../inputs/Button.svelte"
@@ -41,24 +42,24 @@
 
         if (show) {
             let refs = _show().layouts().ref()
-            refs.forEach(slides => {
-                layoutBackgrounds.push(...slides.map(a => a.data.background).filter(a => a !== undefined))
+            refs.forEach((slides) => {
+                layoutBackgrounds.push(...slides.map((a) => a.data.background).filter((a) => a !== undefined))
                 layoutAudio.push(
                     ...slides
-                        .map(a => a.data.audio)
-                        .filter(a => a !== undefined)
+                        .map((a) => a.data.audio)
+                        .filter((a) => a !== undefined)
                         .flat()
                 )
                 layoutMics.push(
                     ...slides
-                        .map(a => a.data.mics)
-                        .filter(a => a !== undefined)
+                        .map((a) => a.data.mics)
+                        .filter((a) => a !== undefined)
                         .flat()
                 )
                 layoutActions.push(
                     ...slides
-                        .map(a => a.data.actions?.slideActions)
-                        .filter(a => a !== undefined)
+                        .map((a) => a.data.actions?.slideActions)
+                        .filter((a) => a !== undefined)
                         .flat()
                 )
             })
@@ -68,7 +69,7 @@
     let bgs: (Media & { count: number })[] = []
     $: if (layoutBackgrounds.length) {
         let tempBackgrounds: { [key: string]: Media & { count: number } } = {}
-        layoutBackgrounds.forEach(a => {
+        layoutBackgrounds.forEach((a) => {
             if (!show.media?.[a]) return
 
             let path: string = show.media[a].path || show.media[a].id || ""
@@ -87,7 +88,7 @@
     let audio: (Media & { count: number })[] = []
     $: if (layoutAudio.length) {
         let tempAudio: { [key: string]: Media & { count: number } } = {}
-        layoutAudio.forEach(a => {
+        layoutAudio.forEach((a) => {
             if (!show.media?.[a]) return
 
             let path = show.media[a].path!
@@ -107,7 +108,7 @@
     let mics: { id: string; name: string; count: number }[] = []
     $: if (layoutMics.length) {
         let tempMics: { [key: string]: { id: string; name: string; count: number } } = {}
-        layoutMics.forEach(a => {
+        layoutMics.forEach((a) => {
             let id = a.id
 
             if (tempMics[id]) tempMics[id].count++
@@ -132,7 +133,7 @@
             return
         }
 
-        showsCache.update(a => {
+        showsCache.update((a) => {
             let bgs = a[$activeShow!.id].media
             if (!bgs[id]) return a // old media
             if (value) delete bgs[id][key]
@@ -144,9 +145,9 @@
     let actions: SlideAction[] = []
     $: if (layoutActions.length) {
         actions = []
-        layoutActions.forEach(action => {
+        layoutActions.forEach((action) => {
             // check if another exact exists
-            if (actions.find(a => JSON.stringify(a) === JSON.stringify(action))) return
+            if (actions.find((a) => JSON.stringify(a) === JSON.stringify(action))) return
 
             actions.push(action)
         })
@@ -155,22 +156,21 @@
     let similarBgs: { path: string; name: string }[] = []
     $: if (bgs.length) getSimularPaths()
     function getSimularPaths() {
-        if (!bgs.filter(a => !a.path?.includes("http") && !a.path?.includes("data:")).length) return
+        if (!bgs.filter((a) => !a.path?.includes("http") && !a.path?.includes("data:")).length) return
 
-        requestMain(Main.GET_SIMILAR, { paths: bgs.map(a => a.path || "") }, data => {
-            similarBgs = data.filter(a => isMediaExtension(getExtension(a.path))).slice(0, 3)
+        requestMain(Main.GET_SIMILAR, { paths: bgs.map((a) => a.path || "") }, (data) => {
+            similarBgs = data.filter((a) => isMediaExtension(getExtension(a.path))).slice(0, 3)
         })
     }
 
-    let newPaths: { [key: string]: string } = {}
+    let newMedia: { [key: string]: { path: string; thumbnail: string; data: MediaStyle } } = {}
     $: if (bgs) loadBackgrounds()
     function loadBackgrounds() {
-        bgs.forEach(async background => {
-            let path = background.path || ""
-            let newBgPath = await loadThumbnail(path, mediaSize.small)
+        bgs.forEach(async (bgMedia) => {
+            let bgPath = bgMedia.path || ""
 
-            if (newBgPath) newPaths[path] = newBgPath
-            else newPaths[path] = path
+            const media = await getMedia(bgPath, mediaSize.small)
+            if (media) newMedia[bgPath] = media
         })
     }
 </script>
@@ -180,12 +180,13 @@
         {#if bgs.length}
             <!-- <h5><T id="tools.media" /></h5> -->
             {#each bgs as background}
+                {@const media = newMedia[background.path || ""] || {}}
+
                 <!-- TODO: cameras -->
-                {@const mediaStyle = getMediaStyle($media[background.path || ""], outputStyle)}
-                {@const bgPath = newPaths[background.path || ""] || ""}
+                {@const mediaStyle = getMediaStyle(media.data, outputStyle)}
 
                 <SelectElem id="media" data={{ ...background }} draggable>
-                    <div class="media_item item context #show_media" class:active={findMatchingOut(background.path || "", $outputs)}>
+                    <div class="media_item item context #show_media" class:active={findMatchingOut(media.path || "", $outputs)}>
                         <HoverButton
                             style="flex: 2;height: 50px;max-width: 100px;"
                             icon="play"
@@ -193,18 +194,18 @@
                             on:click={() => {
                                 if (!$outLocked) {
                                     let style = clone(mediaStyle)
-                                    style.fit = $media[background.path || ""]?.fit || ""
+                                    style.fit = media.data?.fit || ""
                                     delete style.fitOptions
 
-                                    setOutput("background", { path: background.path, type: background.type, loop: background.loop !== false, muted: background.muted !== false, ...style })
+                                    setOutput("background", { path: media.path, type: background.type, loop: background.loop !== false, muted: background.muted !== false, ...style })
                                     if (background.type === "video") send(OUTPUT, ["DATA"], { [outputId]: { duration: 0, paused: false, muted: background.muted !== false, loop: background.loop !== false } })
                                 }
                             }}
                         >
-                            <MediaLoader name={background.name} path={background.path || ""} thumbnailPath={bgPath} type={background.type} {mediaStyle} />
+                            <MediaLoader name={background.name} path={media.path} thumbnailPath={media.thumbnail} type={background.type} {mediaStyle} />
                         </HoverButton>
 
-                        <p data-title={background.path}>{background.name}</p>
+                        <p data-title={decodeURIComponent(media.path || background.path || "")}>{background.name}</p>
 
                         {#if background.count > 1}
                             <span style="color: var(--secondary);font-weight: bold;">{background.count}</span>
@@ -214,7 +215,7 @@
                             <Button style="flex: 0;padding: 14px 5px;" center title={translateText(background.muted !== false ? "actions.unmute" : "actions.mute")} on:click={() => setBG(background.id || "", "muted", background.muted === false)} dark>
                                 <Icon id={background.muted !== false ? "muted" : "volume"} white={background.muted !== false} size={1.2} />
                             </Button>
-                            <Button style="flex: 0;padding: 14px 5px;" center title={translateText("media._loop")} on:click={() => setBG(background.id || "", "loop", background.loop === false)} dark>
+                            <Button style="flex: 0;padding: 14px 5px;" center title={translateText("media._loop" + (background.loop !== false ? ": settings.enabled" : ""))} on:click={() => setBG(background.id || "", "loop", background.loop === false)} dark>
                                 <Icon id="loop" white={background.loop === false} size={1.2} />
                             </Button>
                         {/if}

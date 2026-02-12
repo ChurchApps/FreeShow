@@ -8,21 +8,21 @@
 
     $: activeSubTab = $drawerTabsData.functions?.activeSubTab || ""
 
-    $: actionsTagsOnly = Object.values($actions).map(a => a.tags || [])
-    $: variablesTagsOnly = Object.values($variables).map(a => a.tags || [])
-    $: sortedActions = sortObject(sortByName(keysToID($actionTags)), "color").map(a => ({
+    $: actionsTagsOnly = Object.values($actions).map((a) => a.tags || [])
+    $: variablesTagsOnly = Object.values($variables).map((a) => a.tags || [])
+    $: sortedActions = sortObject(sortByName(keysToID($actionTags)), "color").map((a) => ({
         ...a,
         label: a.name,
         icon: "tag",
         openTrigger: (id, add) => activeActionTagFilter.set([...(add ? $activeActionTagFilter : []), id]),
-        count: actionsTagsOnly.filter(b => b.includes(a.id)).length
+        count: actionsTagsOnly.filter((b) => b.includes(a.id)).length
     }))
-    $: sortedVariables = sortObject(sortByName(keysToID($variableTags)), "color").map(a => ({
+    $: sortedVariables = sortObject(sortByName(keysToID($variableTags)), "color").map((a) => ({
         ...a,
         label: a.name,
         icon: "tag",
         openTrigger: (id, add) => activeVariableTagFilter.set([...(add ? $activeVariableTagFilter : []), id]),
-        count: variablesTagsOnly.filter(b => b.includes(a.id)).length
+        count: variablesTagsOnly.filter((b) => b.includes(a.id)).length
     }))
 
     let sections: any[] = []

@@ -27,7 +27,7 @@ export const commonInputs = {
 export function getValues(inputs: Input[], data: object) {
     if (!Array.isArray(inputs)) return []
 
-    inputs = inputs.map(input => {
+    inputs = inputs.map((input) => {
         if (!input.id) return { ...input, value: data || input.value }
 
         const keys = input.id.includes(".") ? input.id.split(".") : [input.id]

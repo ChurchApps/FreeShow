@@ -111,6 +111,8 @@ export function changeTime(date: string | Date, time: string | Date) {
 
 export function combineDateAndTime(date: string | Date, time: string) {
     date = new Date(date)
+    if (typeof time !== "string") return date
+
     const splittedDate = splitDate(date)
     const splittedTime = { hours: Number(time.slice(0, 2)), minutes: Number(time.slice(3, 5)) }
 
@@ -129,7 +131,7 @@ const intervals = [
 export function timeAgo(time: number) {
     if (!time) return ""
     const seconds = Math.floor((Date.now() - time) / 1000)
-    const interval: any = intervals.find(i => i.seconds < seconds)
+    const interval: any = intervals.find((i) => i.seconds < seconds)
     if (!interval) return "just now"
     const count = Math.floor(seconds / interval.seconds)
     return `${count} ${interval.label}${count !== 1 ? "s" : ""} ago`

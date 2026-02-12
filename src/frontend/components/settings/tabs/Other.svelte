@@ -3,7 +3,7 @@
     import { EXPORT } from "../../../../types/Channels"
     import { Main } from "../../../../types/IPC/Main"
     import { destroyMain, receiveMain, requestMain, sendMain } from "../../../IPC/main"
-    import { activePage, activePopup, alertMessage, alertUpdates, deletedShows, os, popupData, shows, showsCache, special, usageLog, version } from "../../../stores"
+    import { activePage, activePopup, alertMessage, alertUpdates, deletedShows, popupData, shows, showsCache, special, usageLog, version } from "../../../stores"
     import { send } from "../../../utils/request"
     import T from "../../helpers/T.svelte"
     import InputRow from "../../input/InputRow.svelte"
@@ -14,13 +14,13 @@
         // getCacheSize()
         // getAudioOutputs()
         sendMain(Main.FULL_SHOWS_LIST)
-        requestMain(Main.GET_STORE_VALUE, { file: "config", key: "autoErrorReporting" }, value => {
+        requestMain(Main.GET_STORE_VALUE, { file: "config", key: "autoErrorReporting" }, (value) => {
             autoErrorReporting = value !== false
         })
-        requestMain(Main.GET_STORE_VALUE, { file: "config", key: "disableHardwareAcceleration" }, value => {
+        requestMain(Main.GET_STORE_VALUE, { file: "config", key: "disableHardwareAcceleration" }, (value) => {
             disableHardwareAcceleration = !!value
         })
-        requestMain(Main.GET_EMPTY_SHOWS, { cached: $showsCache }, a => {
+        requestMain(Main.GET_EMPTY_SHOWS, { cached: $showsCache }, (a) => {
             if (a) emptyShows = a
         })
         getDuplicatedShows()
@@ -34,7 +34,7 @@
     // ]
 
     function updateSpecial(value, key) {
-        special.update(a => {
+        special.update((a) => {
             if (!value) delete a[key]
             else a[key] = value
 
@@ -55,7 +55,7 @@
     }
 
     // hardware acceleration
-    let disableHardwareAcceleration = $os.platform === "darwin"
+    let disableHardwareAcceleration = false
     function toggleHardwareAcceleration(e: any) {
         disableHardwareAcceleration = e.detail
         sendMain(Main.SET_STORE_VALUE, { file: "config", key: "disableHardwareAcceleration", value: disableHardwareAcceleration })
@@ -96,10 +96,10 @@
         }, 800)
     }
 
-    let listenerId = receiveMain(Main.FULL_SHOWS_LIST, data => {
+    let listenerId = receiveMain(Main.FULL_SHOWS_LIST, (data) => {
         hiddenShows = data || []
-        let deletedShowNames = $deletedShows.map(a => a.name + ".show")
-        hiddenShows = hiddenShows.filter(name => !deletedShowNames.includes(name))
+        let deletedShowNames = $deletedShows.map((a) => a.name + ".show")
+        hiddenShows = hiddenShows.filter((name) => !deletedShowNames.includes(name))
     })
     onDestroy(() => destroyMain(listenerId))
 
@@ -127,8 +127,8 @@
         })
 
         duplicatedShows = Object.values(names)
-            .filter(a => a.length > 1)
-            .map(ids => ({ ids }))
+            .filter((a) => a.length > 1)
+            .map((ids) => ({ ids }))
     }
     function deleteDuplicatedShows() {
         popupData.set({ id: "delete_duplicated_shows", data: duplicatedShows })
@@ -150,7 +150,7 @@
 
     // bundle media files
     function bundleMediaFiles() {
-        sendMain(Main.BUNDLE_MEDIA_FILES)
+        sendMain(Main.BUNDLE_MEDIA_FILES, { openFolder: true })
     }
 
     // usage log
@@ -170,23 +170,23 @@
         usageLogExported = false
     }
 
-    $: isBeta = $version.includes("beta")
+    $: isBeta = $version.includes("-beta")
 </script>
 
-<MaterialToggleSwitch label="settings.auto_updates" checked={$special.autoUpdates} on:change={e => updateSpecial(e.detail, "autoUpdates")} />
+<MaterialToggleSwitch label="settings.auto_updates" checked={$special.autoUpdates} on:change={(e) => updateSpecial(e.detail, "autoUpdates")} />
 
 <!-- <InputRow arrow={$alertUpdates}> -->
-<MaterialToggleSwitch style="flex: 1;" label="settings.alert_updates" checked={$alertUpdates} defaultValue={true} on:change={e => alertUpdates.set(e.detail)} />
+<MaterialToggleSwitch style="flex: 1;" label="settings.alert_updates" checked={$alertUpdates} defaultValue={true} on:change={(e) => alertUpdates.set(e.detail)} />
 <!-- <div slot="menu"> -->
 {#if $alertUpdates}
-    <MaterialToggleSwitch label="settings.alert_updates_beta" disabled={isBeta} checked={isBeta ? $alertUpdates : $special.betaVersionAlert} defaultValue={false} on:change={e => updateSpecial(e.detail, "betaVersionAlert")} />
+    <MaterialToggleSwitch label="settings.alert_updates_beta" disabled={isBeta} checked={isBeta ? $alertUpdates : $special.betaVersionAlert} defaultValue={false} on:change={(e) => updateSpecial(e.detail, "betaVersionAlert")} />
 {/if}
 <!-- </div> -->
 <!-- </InputRow> -->
 
-<MaterialToggleSwitch label="settings.popup_before_close" checked={$special.showClosePopup || false} defaultValue={false} on:change={e => updateSpecial(e.detail, "showClosePopup")} />
+<MaterialToggleSwitch label="settings.popup_before_close" checked={$special.showClosePopup || false} defaultValue={false} on:change={(e) => updateSpecial(e.detail, "showClosePopup")} />
 
-<MaterialToggleSwitch label="settings.log_song_usage" checked={$special.logSongUsage || false} defaultValue={false} on:change={e => updateSpecial(e.detail, "logSongUsage")} />
+<MaterialToggleSwitch label="settings.log_song_usage" checked={$special.logSongUsage || false} defaultValue={false} on:change={(e) => updateSpecial(e.detail, "logSongUsage")} />
 
 <MaterialToggleSwitch label="settings.auto_error_reporting" checked={autoErrorReporting} defaultValue={true} on:change={toggleAutoErrorReporting} />
 
@@ -265,11 +265,14 @@
     </Button>
 </CombinedInput> -->
 
-<InputRow>
-    <MaterialButton title="media.bundle_media_files_tip" style="width: 100%;justify-content: left;" icon="image" on:click={bundleMediaFiles}>
-        <T id="media.bundle_media_files" />
-    </MaterialButton>
-</InputRow>
+<!-- BUNDLE MEDIA FILES MANUALLY OR AUTOMATICALLY -->
+{#if !$special.cloudSyncMediaFolder}
+    <InputRow>
+        <MaterialButton title="media.bundle_media_files_tip" style="width: 100%;justify-content: left;" icon="image" on:click={bundleMediaFiles}>
+            <T id="media.bundle_media_files" />
+        </MaterialButton>
+    </InputRow>
+{/if}
 
 {#if $special.logSongUsage && $usageLog.all?.length}
     <InputRow>

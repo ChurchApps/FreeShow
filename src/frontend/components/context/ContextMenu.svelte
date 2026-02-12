@@ -7,8 +7,8 @@
     import { hexToRgb } from "../helpers/color"
     import ContextChild from "./ContextChild.svelte"
     import ContextItem from "./ContextItem.svelte"
-    import { contextMenuItems, contextMenuLayouts } from "./contextMenus"
-    import { flattenMenuItems, searchMenuItems, handleKeydown as handleSearchKeydown, type FlatMenuItem } from "./contextMenuSearch"
+    import { contextMenuGroups, contextMenuItems, contextMenuLayouts } from "./contextMenus"
+    import { flattenMenuItems, handleKeydown as handleSearchKeydown, searchMenuItems, type FlatMenuItem } from "./contextMenuSearch"
     import { quickLoadItems } from "./loadItems"
     import SpellCheckMenu from "./SpellCheckMenu.svelte"
 
@@ -57,7 +57,8 @@
 
         activeMenu = getContextMenu(id) || contextMenuLayouts.default
 
-        let contextHeight = Object.keys(activeMenu).length * 30 + 10
+        let contextHeight = activeMenu.reduce((acc, id) => acc + (id.includes("GROUP") ? 73.6 : id === "SEPARATOR" ? 17 : 33.6), 0) + 16
+        // if ($spellcheck?.suggestions?.length) contextHeight += $spellcheck.suggestions.length * 33.6 + 33.6
         if (x + 250 > window.innerWidth) x -= 250
         if (y + contextHeight > window.innerHeight) translate = 100
         if (x + (250 + 150) > window.innerWidth) side = "left"
@@ -108,6 +109,7 @@
     let closingMenuTimeout: NodeJS.Timeout | null = null
     $: if ($contextActive === false) startCloseTimer()
     function startCloseTimer() {
+        if (!highlighted.id) return
         if (contextElem) {
             lastTriggeredTime = Date.now()
             lastTriggeredElem = contextElem
@@ -118,7 +120,7 @@
     // preload data (to check if some of the buttons can be hidden)
     $: if (activeMenu) loadData()
     function loadData() {
-        activeMenu.forEach(id => {
+        activeMenu.forEach((id) => {
             let items = contextMenuItems[id]?.items || []
             if (!items[0]?.includes("LOAD")) return
 
@@ -177,18 +179,47 @@
         const result = searchMenuItems(searchQuery, flatMenuItems, translateText, $dictionary)
         highlighted = { id: result.id, path: result.path }
     }
+
+    function getGroupItems(id: string) {
+        const groupList: string[] | undefined = contextMenuGroups[id.slice(6)]
+        if (!groupList) return []
+
+        return groupList
+    }
+
+    $: if (activeMenu) requestUpdate()
+    let update = 0
+    let isRequesting = false
+    let requestTimeout: NodeJS.Timeout | null = null
+    function requestUpdate() {
+        if (!isRequesting) update++
+        isRequesting = true
+
+        if (requestTimeout) return
+
+        requestTimeout = setTimeout(() => {
+            isRequesting = false
+            if (isRequesting) update++
+        }, 61)
+    }
 </script>
 
 <svelte:window on:contextmenu={onContextMenu} on:click={click} on:keydown={handleKeydown} />
 
-{#if $contextActive}
+{#if $contextActive && activeMenu.length}
     <div class="contextMenu" style="left: {x}px; top: {y}px;transform: translateY(-{translate}%);--background: rgb({rgb.r} {rgb.g} {rgb.b} / 0.97);" class:top class:isOptimized transition:fade={{ duration: 60 }}>
-        {#key activeMenu}
+        {#key update}
             <SpellCheckMenu />
 
-            {#each activeMenu as id}
+            {#each activeMenu as id, i}
                 {#if id === "SEPARATOR"}
                     <hr />
+                {:else if id.startsWith("GROUP_")}
+                    <div class="group" class:isFirst={i === 0} class:isLast={i === activeMenu.length - 1}>
+                        {#each getGroupItems(id) as itemId}
+                            <ContextItem id={itemId} {contextElem} highlighted={highlighted.id === itemId} group />
+                        {/each}
+                    </div>
                 {:else if contextMenuItems[id]?.items}
                     {#if shouldShowMenuWithItems(id)}
                         <ContextChild {id} {contextElem} {side} translate={y > window.innerHeight - 50 ? translate : 0} highlightedPath={highlighted.path} />
@@ -232,6 +263,33 @@
         height: 1px;
         border: none;
         background-color: var(--primary-lighter);
+    }
+
+    .group {
+        display: flex;
+        justify-content: space-between;
+
+        /* margin: 10px 8px;
+        border: 1px solid rgb(255 255 255 / 0.07);
+        border-radius: 4px; */
+
+        padding: 8px 0;
+        margin: 8px 0;
+        border-top: 1px solid rgb(255 255 255 / 0.07);
+        border-bottom: 1px solid rgb(255 255 255 / 0.07);
+    }
+    .group.isFirst {
+        margin-top: 0;
+        padding-top: 0;
+        border-top: none;
+    }
+    .group.isLast {
+        margin-bottom: 0;
+        padding-bottom: 0;
+        border-bottom: none;
+    }
+    .group :global(div:not(:last-child)) {
+        border-right: 1px solid rgb(255 255 255 / 0.08);
     }
 
     .search {

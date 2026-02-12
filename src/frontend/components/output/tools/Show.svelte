@@ -27,7 +27,7 @@
         if (!slide || slide.id === "temp") return
 
         if (slide?.layout && $showsCache[slide.id]) {
-            showsCache.update(a => {
+            showsCache.update((a) => {
                 if (!a[slide.id].settings) a[slide.id].settings = { activeLayout: "", template: null }
                 a[slide.id].settings.activeLayout = slide.layout!
                 return a
@@ -42,7 +42,7 @@
     $: totalLength = slide?.type === "ppt" ? $presentationData.stat?.slides : slide?.pages || length
 
     // {ref.showId}_{ref.slideId}
-    $: videoId = `${slide?.id}_${ref?.[slide?.index || ""]?.id}`
+    $: videoId = `${slide?.id}_${ref?.[slide?.index || 0]?.id}`
 
     function playPause(path: string, play: boolean) {
         send(OUTPUT, ["SLIDE_VIDEO_STATE"], { slideId: videoId, path, action: play ? "play" : "pause" })
@@ -105,7 +105,7 @@
 
                     <!-- WIP change loop/mute state -->
                     <!-- NOTE: mute state can be changed in the media item edit currently -->
-                    <Button center title={translateText("media._loop")} on:click={() => toggleLoop(path, !!data.loop)}>
+                    <Button center title={translateText("media._loop" + (data.loop ? ": settings.enabled" : ""))} on:click={() => toggleLoop(path, !!data.loop)}>
                         <Icon id="loop" white={!data.loop} />
                     </Button>
                     <!-- <Button

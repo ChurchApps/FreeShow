@@ -26,7 +26,7 @@ export const GetLayout = (show: Show | null, layout: string | null): SlideData[]
 
             layoutSlides.push({ ...ls, color: slide.color })
             if (slide.children) {
-                slide.children.forEach(id => {
+                slide.children.forEach((id) => {
                     if (ls.children?.[id]) {
                         let slideData: any = ls.children[id]
                         if (slideData) layoutSlides.push({ id, ...slideData, color: slide.color, parent: ls.id })

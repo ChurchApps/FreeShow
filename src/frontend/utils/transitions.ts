@@ -72,13 +72,13 @@ export const easings: any[] = [
 
 // : Transition
 export function custom(node: any, { type = "fade", duration = 500, easing = "sine", delay = 0, custom: customData = {} }: any) {
-    const customTransition = { ...transitions[type as TransitionType](node, customData), duration: type === "none" ? 0 : duration, easing: easings.find(a => a.value === easing)?.function || linear, delay }
+    const customTransition = { ...transitions[type as TransitionType](node, customData), duration: type === "none" ? 0 : duration, easing: easings.find((a) => a.value === easing)?.function || linear, delay }
     // if (type === "crossfade") customTransition.key = "a"
     return customTransition
 }
 
 export function updateTransition(data: API_transition) {
-    transitionData.update(a => {
+    transitionData.update((a) => {
         a[data.id || "text"] = {
             type: data.type || "fade",
             duration: data.duration ?? 500,

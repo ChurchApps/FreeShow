@@ -12,4 +12,4 @@
     export let autofocus = false
 </script>
 
-<MaterialTimePicker {label} {value} {defaultValue} {id} {title} {disabled} {autofocus} style={$$props.style} isDate />
+<MaterialTimePicker {label} {value} {defaultValue} {id} {title} {disabled} {autofocus} style={$$props.style} on:input on:change isDate />

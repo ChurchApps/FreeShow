@@ -38,6 +38,9 @@
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 
         max-width: 380px;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        white-space: normal;
     }
 
     .shortcut {

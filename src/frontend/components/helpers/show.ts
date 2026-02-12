@@ -1,10 +1,12 @@
 import { get } from "svelte/store"
 import type { Item, Show, ShowList, Shows, Slide, TrimmedShow, TrimmedShows } from "../../../types/Show"
-import { cachedShowsData, customMetadata, dictionary, groupNumbers, groups, shows, showsCache, sorted, sortedShowsList } from "../../stores"
+import { activeEdit, activeFocus, activePage, activeProject, activeShow, cachedShowsData, customMetadata, dictionary, focusMode, groupNumbers, groups, projects, refreshEditSlide, shows, showsCache, sorted, sortedShowsList } from "../../stores"
 import { translateText } from "../../utils/language"
 import { clone, keysToID, removeValues, sortByName, sortByNameAndNumber } from "./array"
 import { GetLayout } from "./get"
 import { history } from "./history"
+import { loadShows } from "./setShow"
+import { swichProjectItem } from "./showActions"
 import { _show } from "./shows"
 
 // check if name exists and add number
@@ -19,7 +21,7 @@ export function checkName(name = "", showId = "") {
     }
 
     let number = 1
-    while (Object.values(get(shows)).find(a => a.name?.toLowerCase() === (number > 1 ? name.toLowerCase() + " " + number : name.toLowerCase()))) number++
+    while (Object.values(get(shows)).find((a) => a.name?.toLowerCase() === (number > 1 ? name.toLowerCase() + " " + number : name.toLowerCase()))) number++
 
     // add number if existing name, and trim away spaces from the start/end
     return (number > 1 ? name + " " + number : name).trim()
@@ -28,7 +30,7 @@ export function checkName(name = "", showId = "") {
 export function formatToFileName(name = "") {
     name = name.replaceAll(":", ",")
     // remove illegal file name characters
-    name = name.trim().replace(/[/\\?%*:|"<>╠]/g, "")
+    name = name.trim().replace(/[/\\?%*:|│"<>╠┤╡╝╖┐¬]/g, "")
     // max 255 length
     if (name.length > 255) name = name.slice(0, 255)
 
@@ -54,13 +56,52 @@ export function getLabelId(label: string, replaceNumbers = true) {
     // .replace(/[0-9-]/g, "")
 }
 
+export function openShow(showId: string) {
+    if (!showId || !get(shows)[showId]) return
+
+    // set active show in project
+    let pos: number | null = null
+    if (get(activeProject) !== null) {
+        let i = get(projects)[get(activeProject) || ""]?.shows?.findIndex((p) => p.id === showId) ?? -1
+        if (i > -1) pos = i
+    }
+
+    let newShow: any = { id: showId, type: "show" }
+
+    if (get(focusMode)) {
+        let inProject = get(projects)[get(activeProject) || ""]?.shows?.find((p) => p.id === showId)
+        if (inProject) {
+            activeFocus.set({ id: showId, index: pos ?? undefined })
+            return
+        } else {
+            focusMode.set(false)
+        }
+    }
+
+    if (pos !== null) {
+        newShow.index = pos
+
+        // async waiting for show to load
+        setTimeout(async () => {
+            // preload show (so the layout can be changed)
+            await loadShows([showId])
+            if (get(showsCache)[showId]) swichProjectItem(pos, showId)
+        })
+    }
+
+    activeShow.set(newShow)
+
+    if (get(activeEdit).id) activeEdit.set({ type: "show", slide: 0, items: [], showId })
+    if (get(activePage) === "edit") refreshEditSlide.set(true)
+}
+
 // check if label exists as a global label
 export function getGlobalGroup(group: string, returnInputIfNull = false): string {
     const groupId = getLabelId(group)
 
     if (get(groups)[groupId]) return groupId
 
-    const matchingName = Object.keys(get(groups)).find(id => {
+    const matchingName = Object.keys(get(groups)).find((id) => {
         return get(groups)[id].name === group
     })
     if (matchingName) return matchingName
@@ -86,21 +127,24 @@ export function getGroupName({ show, showId }: { show: Show; showId: string }, s
     // sort by order when just one layout
     let slides = keysToID(clone(show.slides || {}))
     if (Object.keys(show.layouts || {}).length < 2) {
-        const layoutSlides = Object.values(show.layouts || {})[0]?.slides?.map(({ id }) => id) || []
+        const layoutSlides =
+            Object.values(show.layouts || {})[0]
+                ?.slides?.filter(Boolean)
+                ?.map(({ id }) => id) || []
         slides = slides.sort((a, b) => layoutSlides.indexOf(a.id) - layoutSlides.indexOf(b.id))
     }
 
     // different slides with same name
     const currentSlide = show.slides?.[slideID] || {}
-    const allSlidesWithSameGroup = slides.filter(a => a.group === currentSlide.group)
-    const currentIndex = allSlidesWithSameGroup.findIndex(a => a.id === slideID)
+    const allSlidesWithSameGroup = slides.filter((a) => a.group === currentSlide.group)
+    const currentIndex = allSlidesWithSameGroup.findIndex((a) => a.id === slideID)
     const currentGroupNumber = allSlidesWithSameGroup.length > 1 ? " " + (currentIndex + 1) : ""
     name += currentGroupNumber
 
     // same group - count
     const layoutRef = getLayoutRef(showId)
-    const allGroupLayoutSlides = layoutRef.filter(a => a.id === slideID)
-    const currentGroupLayoutIndex = allGroupLayoutSlides.findIndex(a => a.layoutIndex === layoutIndex)
+    const allGroupLayoutSlides = layoutRef.filter((a) => a.id === slideID)
+    const currentGroupLayoutIndex = allGroupLayoutSlides.findIndex((a) => a.layoutIndex === layoutIndex)
     const currentLayoutNumberHTML = allGroupLayoutSlides.length > 1 ? '<span class="group_count">' + (currentGroupLayoutIndex + 1) + "</span>" : ""
     const currentLayoutNumber = allGroupLayoutSlides.length > 1 ? " (" + (currentGroupLayoutIndex + 1) + ")" : ""
     if (layoutNumber) name += addHTML ? currentLayoutNumberHTML : currentLayoutNumber
@@ -118,11 +162,11 @@ export function getCustomMetadata() {
     const customKeys = get(customMetadata).custom?.filter(Boolean) || []
     const values: { [key: string]: string } = {}
 
-    defaultKeys.forEach(key => {
+    defaultKeys.forEach((key) => {
         if (get(customMetadata).disabled?.includes(key)) return
         values[key] = ""
     })
-    customKeys.forEach(key => {
+    customKeys.forEach((key) => {
         values[key] = ""
     })
 
@@ -209,7 +253,7 @@ export function getCachedShow(id: string, layout = "", updater = get(cachedShows
     if (cachedShow || !layout) return cachedShow
 
     cachedShow = updateCachedShow(id, show, layout)
-    cachedShowsData.update(a => {
+    cachedShowsData.update((a) => {
         a[customId] = cachedShow
         return a
     })
@@ -229,7 +273,7 @@ export function updateCachedShow(showId: string, show: Show, layoutId = "") {
 
     let endIndex = -1
     if (layout.length) {
-        const lastEnabledSlide: number = layout.findIndex(a => a.end === true && a.disabled !== true)
+        const lastEnabledSlide: number = layout.findIndex((a) => a.end === true && a.disabled !== true)
         if (lastEnabledSlide >= 0) endIndex = lastEnabledSlide
     }
 
@@ -242,7 +286,10 @@ export function updateCachedShow(showId: string, show: Show, layoutId = "") {
     // sort by order when just one layout
     let showSlides = keysToID(clone(show.slides || {}))
     if (Object.keys(show.layouts || {}).length < 2) {
-        const layoutSlides = Object.values(show.layouts || {})[0]?.slides?.map(({ id }) => id) || []
+        const layoutSlides =
+            Object.values(show.layouts || {})[0]
+                ?.slides?.filter(Boolean)
+                ?.map(({ id }) => id) || []
         showSlides = showSlides.sort((a, b) => layoutSlides.indexOf(a.id) - layoutSlides.indexOf(b.id))
     }
 
@@ -261,7 +308,7 @@ export function updateCachedShow(showId: string, show: Show, layoutId = "") {
 
             // update local group
             if (JSON.stringify(oldGroup) !== JSON.stringify({ group: slide.group, color: slide.color })) {
-                showsCache.update(a => {
+                showsCache.update((a) => {
                     a[showId].slides[slide.id].group = slide.group
                     a[showId].slides[slide.id].color = slide.color
                     return a
@@ -280,7 +327,7 @@ export function updateCachedShow(showId: string, show: Show, layoutId = "") {
             addedGroups[slide.group] = 1
 
             // find all groups with same name
-            const allSameGroups = showSlides.filter(a => a.group !== null && (a.group || "—") === slide.group)
+            const allSameGroups = showSlides.filter((a) => a.group !== null && (a.group || "—") === slide.group)
             if (allSameGroups.length > 1) slide.group += " 1"
         }
 
@@ -288,7 +335,7 @@ export function updateCachedShow(showId: string, show: Show, layoutId = "") {
     }
     // sort groups by name
     const sortedGroups = sortByName(
-        showGroups.filter(a => a.group !== null && a.group !== undefined),
+        showGroups.filter((a) => a.group !== null && a.group !== undefined),
         "group"
     )
 
@@ -307,9 +354,9 @@ export function removeTemplatesFromShow(showId: string, enableHistory = false) {
     }
 
     // remove any slide templates
-    showsCache.update(a => {
+    showsCache.update((a) => {
         const show = a[showId]
-        Object.values(show.slides || {}).forEach(slide => {
+        Object.values(show.slides || {}).forEach((slide) => {
             if (slide.settings?.template) delete slide.settings.template
         })
         return a

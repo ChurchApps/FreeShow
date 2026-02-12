@@ -26,7 +26,7 @@ export async function startSlideshow(data: { path: string; program: string }) {
     await initPresentation(data.path, data.program.toLowerCase().replaceAll(" ", ""))
 
     if (alwaysOnTopDisabled.length) return
-    OutputHelper.getAllOutputs().forEach(output => {
+    OutputHelper.getAllOutputs().forEach((output) => {
         if (output.window.isAlwaysOnTop()) {
             OutputValues.updateValue({ id: output.id, key: "alwaysOnTop", value: false })
             alwaysOnTopDisabled.push(output.id)
@@ -46,7 +46,7 @@ function stopSlideshow() {
         // .then(() => currentSlideshow!.close())
         // .then(() => currentSlideshow!.quit())
         .then(end)
-        .catch(err => {
+        .catch((err) => {
             if (err !== "still no running slideshow" && err !== "still no active presentation") {
                 console.error("Error when closing:", err)
             }
@@ -66,7 +66,7 @@ function stopSlideshow() {
         openedPresentation = ""
 
         setTimeout(() => {
-            alwaysOnTopDisabled.forEach(id => {
+            alwaysOnTopDisabled.forEach((id) => {
                 OutputValues.updateValue({ id, key: "alwaysOnTop", value: true })
             })
             alwaysOnTopDisabled = []

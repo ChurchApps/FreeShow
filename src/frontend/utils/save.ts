@@ -10,6 +10,7 @@ import {
     actions,
     activePopup,
     activeProject,
+    alertMessage,
     alertUpdates,
     audioChannelsData,
     audioFolders,
@@ -18,10 +19,12 @@ import {
     autosave,
     calendarAddShow,
     categories,
+    cloudSyncData,
     contentProviderData,
     customMetadata,
     customizedIcons,
     dataPath,
+    deletedDefaults,
     deletedShows,
     disabledServers,
     drawSettings,
@@ -62,6 +65,7 @@ import {
     profiles,
     projectTemplates,
     projects,
+    providerConnections,
     redoHistory,
     remotePassword,
     renamedShows,
@@ -79,6 +83,7 @@ import {
     special,
     splitLines,
     stageShows,
+    statusIndicator,
     styles,
     templateCategories,
     templates,
@@ -86,6 +91,8 @@ import {
     theme,
     themes,
     timeFormat,
+    timecode,
+    timeline,
     timers,
     transitionData,
     triggers,
@@ -98,14 +105,23 @@ import {
 } from "../stores"
 import type { SaveActions, SaveData, SaveList, SaveListSettings, SaveListSyncedSettings } from "./../../types/Save"
 import { audioStreams, companion } from "./../stores"
-import { newToast } from "./common"
+import { socketDisconnect, syncWithCloud } from "./cloudSync"
+import { newToast, setStatus } from "./common"
 import { syncDrive } from "./drive"
 
 export function save(closeWhenFinished = false, customTriggers: SaveActions = {}) {
+    // don't save again while saving
+    if (get(statusIndicator) === "saving") return
+
     console.info("SAVING...")
     if ((!customTriggers.autosave || !get(saved)) && !customTriggers.backup) {
-        newToast("toast.saving")
+        setStatus("saving")
         customActionActivation("save")
+    }
+
+    if (closeWhenFinished) {
+        alertMessage.set("actions.closing")
+        activePopup.set("alert")
     }
 
     const settings: { [key in SaveListSettings]: any } = {
@@ -148,6 +164,7 @@ export function save(closeWhenFinished = false, customTriggers: SaveActions = {}
         volume: get(volume),
         gain: get(gain),
         audioChannelsData: get(audioChannelsData),
+        cloudSyncData: get(cloudSyncData),
         driveData: get(driveData),
         calendarAddShow: get(calendarAddShow),
         metronome: get(metronome),
@@ -155,6 +172,8 @@ export function save(closeWhenFinished = false, customTriggers: SaveActions = {}
         eqPresets: get(eqPresets),
         effectsLibrary: get(effectsLibrary),
         special: get(special),
+        timeline: get(timeline),
+        timecode: get(timecode),
         contentProviderData: get(contentProviderData)
     }
 
@@ -185,7 +204,8 @@ export function save(closeWhenFinished = false, customTriggers: SaveActions = {}
         companion: get(companion),
         globalTags: get(globalTags),
         customMetadata: get(customMetadata),
-        effects: get(effects)
+        effects: get(effects),
+        deletedDefaults: get(deletedDefaults)
     }
 
     const allSavedData: SaveData = {
@@ -227,16 +247,34 @@ export function save(closeWhenFinished = false, customTriggers: SaveActions = {}
     setTimeout(() => sendMain(Main.SAVE, saveData))
 }
 
-export function saveComplete({ closeWhenFinished, customTriggers }: { closeWhenFinished: boolean; customTriggers?: SaveActions }) {
+export async function saveComplete({ closeWhenFinished, customTriggers }: { closeWhenFinished: boolean; customTriggers?: SaveActions }) {
+    const alreadySaved = get(saved)
     if (!closeWhenFinished) {
-        if ((!customTriggers?.autosave || !get(saved)) && !customTriggers?.backup) newToast("toast.saved")
+        if ((!customTriggers?.autosave || !alreadySaved) && !customTriggers?.backup) setStatus("saved", 1)
 
         saved.set(true)
         console.info("SAVED!")
     }
 
+    // cloud sync
+    if ((customTriggers?.autosave || closeWhenFinished) && (get(providerConnections).churchApps || !get(driveData)?.mainFolderId)) {
+        if (closeWhenFinished) {
+            alertMessage.set("actions.closing")
+            activePopup.set("alert")
+        }
+
+        // only sync when autosaving or closing
+        if (!customTriggers?.autosave || !alreadySaved) await syncWithCloud(false, closeWhenFinished)
+        if (closeWhenFinished) {
+            await socketDisconnect()
+            closeApp()
+        }
+        return
+    }
+
     if (customTriggers?.backup || customTriggers?.reset) return
 
+    // DEPRECATED drive sync
     const mainFolderId = get(driveData)?.mainFolderId
     if (!mainFolderId || get(driveData)?.disabled === true || !Object.keys(get(driveKeys)).length) {
         if (closeWhenFinished) closeApp()
@@ -266,7 +304,7 @@ export function unsavedUpdater() {
     const s = { ...saveList, folders, projects, showsCache, stageShows, deletedShows, renamedShows }
 
     let initialized = false
-    Object.keys(s).forEach(id => {
+    Object.keys(s).forEach((id) => {
         if (!s[id]) return
 
         s[id].subscribe((a: any) => {
@@ -299,13 +337,13 @@ export function unsavedUpdater() {
 
 const customSavedListener = {
     showsCache: (data: Shows) => {
-        Object.keys(data).forEach(id => {
+        Object.keys(data).forEach((id) => {
             if (!data[id]?.slides) return
 
             delete (data[id] as any).timestamps
             delete (data[id] as any).settings
 
-            Object.values(data[id].slides).forEach(slide => {
+            Object.values(data[id].slides).forEach((slide) => {
                 delete slide.id
             })
         })
@@ -313,8 +351,8 @@ const customSavedListener = {
         return data
     },
     projects: (data: Projects) => {
-        removeDeleted(keysToID(data)).forEach(a => {
-            data[a.id].shows?.map(show => {
+        removeDeleted(keysToID(data)).forEach((a) => {
+            data[a.id].shows?.map((show) => {
                 delete show.layout
             })
         })
@@ -387,6 +425,7 @@ const saveList: { [key in SaveList]: any } = {
     variableTags,
     customizedIcons,
     driveKeys,
+    cloudSyncData,
     driveData,
     calendarAddShow: null,
     metronome: null,
@@ -394,9 +433,12 @@ const saveList: { [key in SaveList]: any } = {
     eqPresets: null,
     effectsLibrary: null,
     special,
+    timeline: null,
+    timecode: null,
     companion: null,
     globalTags,
     customMetadata: null,
     contentProviderData,
-    effects
+    effects,
+    deletedDefaults: null
 }

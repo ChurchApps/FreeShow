@@ -24,7 +24,7 @@
     function updateDrawing() {
         if (!mounted) return
 
-        paintCacheSlide.update(a => {
+        paintCacheSlide.update((a) => {
             a[previousOutSlideId] = clone(lines)
             return a
         })
@@ -78,7 +78,7 @@
         paintCache.set([])
 
         setTimeout(() => {
-            drawSettings.update(a => {
+            drawSettings.update((a) => {
                 if (a.paint?.clear) delete a.paint.clear
                 return a
             })

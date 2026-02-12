@@ -22,7 +22,7 @@
 </script>
 
 {#if input.type === "dropdown"}
-    <MaterialDropdown {label} {...input} options={input.options?.map(a => ({ ...a, label: translateText(a.label) }))} on:change={changed} />
+    <MaterialDropdown {label} {...input} options={input.options?.map((a) => ({ ...a, label: translateText(a.label) }))} on:change={changed} />
 
     <!-- custom edit -->
     {#if input.label === "items.timer" && input.value}

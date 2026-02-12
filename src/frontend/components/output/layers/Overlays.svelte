@@ -22,7 +22,7 @@
     $: if (activeOverlays !== undefined) updateOverlays()
     let clearingTimeout: NodeJS.Timeout | null = null
     function updateOverlays() {
-        ;[...activeOverlays, ...outputtedOverlays].forEach(id => {
+        ;[...activeOverlays, ...outputtedOverlays].forEach((id) => {
             if (clearingOverlays.includes(id)) return
 
             if (!activeOverlays.includes(id) && outputtedOverlays.includes(id)) {
@@ -42,7 +42,7 @@
     }
 
     function clearingFinished() {
-        clearingOverlays.forEach(id => {
+        clearingOverlays.forEach((id) => {
             if (activeOverlays.includes(id) && !outputtedOverlays.includes(id)) outputtedOverlays.push(id)
             outputtedOverlays = outputtedOverlays
         })
@@ -55,7 +55,7 @@
     $: if (outputtedOverlays !== undefined) updateClearingOverlays()
     function updateClearingOverlays() {
         // update clearing variable before setting slide value
-        isClearing = actualOutputtedOverlays.filter(id => !outputtedOverlays.includes(id))
+        isClearing = actualOutputtedOverlays.filter((id) => !outputtedOverlays.includes(id))
         setTimeout(() => {
             actualOutputtedOverlays = clone(outputtedOverlays)
         })

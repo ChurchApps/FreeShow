@@ -68,7 +68,7 @@ export class ChurchAppsExport {
     private static getAllFreeShowSongIds(data: ChurchAppsStartupLoadData): string[] {
         const shows = data.shows
         const selectedCategories = data.categories || ["song"]
-        return Object.keys(shows).filter(key => selectedCategories.includes(shows[key].category || ""))
+        return Object.keys(shows).filter((key) => selectedCategories.includes(shows[key].category || ""))
     }
 
     private static getChurchAppsSongData(freeShowIds: string[], data: ChurchAppsStartupLoadData): ChurchAppsSongData[] {
@@ -78,7 +78,7 @@ export class ChurchAppsExport {
         freeShowIds.forEach((key: string) => {
             const show = shows[key]
             const showData = this.loadShowData(show.name)
-            if (!showData) return
+            if (!showData?.[1]?.slides) return
 
             const songData: ChurchAppsSongData = {
                 freeShowId: key,
@@ -91,14 +91,14 @@ export class ChurchAppsExport {
             // Add lyrics with group names
             let currentGroup = ""
             Object.keys(showData[1].slides).forEach((slideKey: string) => {
-                const slide = showData[1].slides?.[slideKey]
+                const slide = showData[1].slides[slideKey]
                 // Add group name if it's different from the current group
                 if (slide.group && slide.group !== currentGroup) {
                     songData.lyrics += `[${slide.group}]\n`
                     currentGroup = slide.group
                 }
-                slide.items.forEach(item => {
-                    item.lines?.forEach(line => {
+                slide.items.forEach((item) => {
+                    item.lines?.forEach((line) => {
                         songData.lyrics += line.text?.[0]?.value + "\n" || ""
                     })
                 })

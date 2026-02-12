@@ -8,16 +8,20 @@ import { getExtension } from "../utils/files"
 // https://www.npmjs.com/package/yazl (compression)
 // https://www.npmjs.com/package/yauzl (decompression)
 
-export function compressToZip(entries: { name: string; content: Buffer | string }[], outputPath: string): Promise<void> {
+export function compressToZip(entries: { name: string; content?: Buffer | string; filePath?: string }[], outputPath: string): Promise<void> {
     return new Promise((resolve, reject) => {
         const zipfile = new yazl.ZipFile()
 
-        entries.forEach(entry => {
+        entries.forEach((entry) => {
             try {
-                const buffer = typeof entry.content === "string" ? Buffer.from(entry.content, "utf-8") : entry.content
-                zipfile.addBuffer(buffer, entry.name)
+                if (entry.filePath) {
+                    zipfile.addFile(entry.filePath, entry.name)
+                } else if (entry.content) {
+                    const buffer = typeof entry.content === "string" ? Buffer.from(entry.content, "utf-8") : entry.content
+                    zipfile.addBuffer(buffer, entry.name)
+                }
             } catch (err) {
-                console.error(`Error adding buffer to zip: ${entry.name}`, err)
+                console.error(`Error adding to zip: ${entry.name}`, err)
             }
         })
 
@@ -31,13 +35,13 @@ export function compressToZip(entries: { name: string; content: Buffer | string 
             resolve()
         })
 
-        writeStream.on("error", err => {
+        writeStream.on("error", (err) => {
             console.error(err)
             sendToMain(ToMain.ALERT, `Failed to create zip file: ${outputPath}`)
             reject(err)
         })
 
-        zipfile.outputStream.on("error", err => {
+        zipfile.outputStream.on("error", (err) => {
             console.error(err)
             reject(err)
         })
@@ -57,6 +61,12 @@ export async function decompressZip(files: string[], asBuffer = false, options?:
             const fileData = await decompressZipStream(file, asBuffer, options)
             data.push(...fileData)
         } catch (err) {
+            const errorMsg = (err as Error).message.toLowerCase()
+            if (errorMsg.includes("encrypted")) {
+                sendToMain(ToMain.ALERT, "Can't decompress, this file is password protected!")
+            } else {
+                sendToMain(ToMain.ALERT, `Failed to open zip file: ${file}`)
+            }
             console.error("Could not decompress zip file:", file, err)
         }
     }
@@ -70,12 +80,6 @@ export async function decompressZipStream(file: string, asBuffer = false, option
 
         yauzl.open(file, { lazyEntries: true }, (err, zipfile) => {
             if (err) {
-                const errorMsg = (err as Error).message
-                if (errorMsg.includes("Incompatible password parameter") || errorMsg.includes("encrypted")) {
-                    sendToMain(ToMain.ALERT, "Can't decompress, this file is password protected!")
-                } else {
-                    sendToMain(ToMain.ALERT, `Failed to open zip file: ${file}`)
-                }
                 reject(err)
                 return
             }
@@ -110,7 +114,14 @@ function processEntry(entry: yauzl.Entry, zipfile: yauzl.ZipFile, data: { conten
 
     zipfile.openReadStream(entry, (err, readStream) => {
         if (err || !readStream) {
-            if (err) console.error(err)
+            if (err) {
+                const errorMsg = (err as Error).message.toLowerCase()
+                if (errorMsg.includes("encrypted")) {
+                    sendToMain(ToMain.ALERT, "Can't decompress, this file is password protected!")
+                }
+                console.error(err)
+            }
+
             zipfile.readEntry()
             return
         }
@@ -132,12 +143,13 @@ function streamToDisk(readStream: NodeJS.ReadableStream, outputPath: string, nam
         zipfile.readEntry()
     })
 
-    writeStream.on("error", err => {
+    writeStream.on("error", (err) => {
         console.error("Failed to write file to disk:", outputPath, err)
         zipfile.readEntry()
     })
 }
 
+const STRING_CONVERT_LIMIT = 50 * 1024 * 1024 // 50 MB
 function bufferInMemory(readStream: NodeJS.ReadableStream, name: string, extension: string, asBuffer: boolean, data: { content: Buffer | string; name: string; extension: string }[], zipfile: yauzl.ZipFile) {
     const chunks: Buffer[] = []
 
@@ -147,7 +159,14 @@ function bufferInMemory(readStream: NodeJS.ReadableStream, name: string, extensi
         let content: Buffer | string = Buffer.concat(chunks)
 
         // import as string unless asBuffer is true, or it's a .pro file
-        if (extension !== "pro" && (!asBuffer || extension === "json")) {
+        const stringType = extension !== "pro" && (!asBuffer || extension === "json")
+        if (stringType) {
+            if (content.length > STRING_CONVERT_LIMIT) {
+                console.warn(`Skipped converting large file to string: ${name} (${content.length} bytes)`)
+                zipfile.readEntry()
+                return
+            }
+
             content = content.toString("utf8")
         }
 
@@ -155,28 +174,51 @@ function bufferInMemory(readStream: NodeJS.ReadableStream, name: string, extensi
         zipfile.readEntry()
     })
 
-    readStream.on("error", err => {
+    readStream.on("error", (err) => {
         console.error(err)
         zipfile.readEntry()
+    })
+}
+
+export function getZipModifiedDates(filePath: string): Promise<{ [key: string]: Date }> {
+    return new Promise((resolve) => {
+        yauzl.open(filePath, { lazyEntries: true }, (err, zipfile) => {
+            if (err || !zipfile) return resolve({})
+
+            const modified: { [key: string]: Date } = {}
+
+            zipfile.on("entry", (entry: yauzl.Entry) => {
+                modified[entry.fileName] = entry.getLastModDate()
+                zipfile.readEntry()
+            })
+
+            zipfile.on("close", () => resolve(modified))
+            zipfile.on("error", () => resolve({}))
+
+            zipfile.readEntry()
+        })
     })
 }
 
 export function isZip(path: string): Promise<boolean> {
     const initialBuffer = Buffer.alloc(4)
 
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
         fs.open(path, "r", (openError, fd) => {
             if (openError) {
                 console.error(openError)
                 resolve(false)
+                return
             }
 
             fs.read(fd, initialBuffer, 0, 4, 0, (readError, _bytesRead, buffer) => {
+                fs.close(fd, (closeError) => {
+                    if (closeError) console.error(closeError)
+                })
+
                 if (readError) {
-                    fs.close(fd, closeError => {
-                        console.error(closeError || readError)
-                        resolve(false)
-                    })
+                    console.error(readError)
+                    resolve(false)
                     return
                 }
 

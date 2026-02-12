@@ -91,7 +91,7 @@
                 <div style="opacity: 0.8;position: absolute;width: {currentScreen.bounds?.width}px;height: {currentScreen.bounds?.height}px;inset-inline-start: {currentScreen.bounds?.x - (minPosX ? minPosX : 0)}px;top: {currentScreen.bounds?.y - (minPosY ? minPosY : 0)}px;">
                     <span style="z-index: 2;position: absolute;top: 50%;left: 50%;transform: translate(-50%, -50%);font-size: 0.5em;pointer-events: none;">{currentScreen.name}</span>
                     <!-- Current screen position -->
-                    <div data-title={translateText(`main.open: <b>${currentScreen.name}</b>`)} class="screen" style="width: 100%;height: 100%;{currentScreen.screen && screens.find(a => a.id.toString() === currentScreen.screen) ? 'opacity: 1;' : ''}" on:click={() => openOutput(currentScreen.id)} role="button" tabindex="0" on:keydown={triggerClickOnEnterSpace}></div>
+                    <div data-title={translateText(`main.open: <b>${currentScreen.name}</b>`)} class="screen" style="width: 100%;height: 100%;{currentScreen.screen && screens.find((a) => a.id.toString() === currentScreen.screen) ? 'opacity: 1;' : ''}" on:click={() => openOutput(currentScreen.id)} role="button" tabindex="0" on:keydown={triggerClickOnEnterSpace}></div>
                 </div>
             {/each}
         </div>

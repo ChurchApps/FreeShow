@@ -64,7 +64,7 @@
     function setTime(e: any, id: string) {
         sliderValue = null
 
-        playingAudio.update(a => {
+        playingAudio.update((a) => {
             if (a[id]?.audio?.currentTime === undefined) return a
             a[id].audio.currentTime = e.target.value || 0
             // something (in audio.ts I guess) plays the audio when updating the time, so this will pause it again
@@ -126,7 +126,7 @@
                 </span>
             {/if}
 
-            <Slider value={currentTime} max={duration} on:input={setSliderValue} on:change={e => setTime(e, path)} />
+            <Slider value={currentTime} max={duration} on:input={setSliderValue} on:change={(e) => setTime(e, path)} />
 
             <span style={fullLength ? "" : "color: var(--secondary)"} role="button" tabindex="0" on:click={() => (fullLength = !fullLength)} on:keydown={triggerClickOnEnterSpace}>
                 {#if fullLength}

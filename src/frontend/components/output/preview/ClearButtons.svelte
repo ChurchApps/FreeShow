@@ -1,13 +1,15 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte"
     import { clearAudio } from "../../../audio/audioFading"
-    import { activeSlideRecording, activeTimers, isFadingOut, labelsDisabled, media, outLocked, outputCache, outputs, overlayTimers, playingAudio, playingMetronome, styles } from "../../../stores"
+    import { activeTimers, dictionary, isFadingOut, isTimelinePlaying, labelsDisabled, media, outLocked, outputCache, outputs, overlayTimers, playingAudio, playingMetronome, styles, timelineRecordingAction } from "../../../stores"
     import { presentationControllersKeysDisabled } from "../../../utils/shortcuts"
     import Icon from "../../helpers/Icon.svelte"
+    import { getMediaLayerType } from "../../helpers/media"
     import { getActiveOutputs, getOutputContent, isOutCleared } from "../../helpers/output"
     import T from "../../helpers/T.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import { clearAll, clearBackground, clearOverlays, clearSlide, clearTimers, restoreOutput } from "../clear"
+    import { translateText } from "../../../utils/language"
 
     export let autoChange: any
     export let activeClear: any
@@ -43,6 +45,9 @@
         autoChange = true
 
         clearActions[key]()
+
+        if (key === "nextTimer") key = "next_timer"
+        timelineRecordingAction.set({ id: "clear_" + key })
     }
 
     let dispatch = createEventDispatcher()
@@ -69,7 +74,7 @@
 
     $: isScripture = outputContent?.id === "temp"
     $: isMetronome = $playingMetronome && !Object.keys($playingAudio).length
-    $: isTimer = !output.out?.transition && !Object.values($overlayTimers).find(a => a.outputId === outputId) && Object.keys($activeTimers).length
+    $: isTimer = !output.out?.transition && !Object.values($overlayTimers).find((a) => a.outputId === outputId) && Object.keys($activeTimers).length
 
     $: slideCleared = isOutCleared("slide", $outputs)
 
@@ -102,15 +107,16 @@
     }
 </script>
 
-<div class="clear">
+<div class="clear" data-title={translateText("guide_description.output_clear", $dictionary)}>
     <span>
         {#if allCleared && $outputCache && $outputCache?.slide?.type !== "ppt"}
-            <MaterialButton style="padding: 0.42em 0.8em;" class="clearAll" disabled={$outLocked || !enableRestore} on:click={restoreOutput}>
+            <MaterialButton style="padding: 0.42em 0.8em;" class="clearAll" disabled={$outLocked || !enableRestore} title="preview.restore_output" on:click={restoreOutput}>
                 <Icon id="reset" size={1.2} white />
                 {#if !$labelsDisabled}<T id="preview.restore_output" />{/if}
             </MaterialButton>
         {:else}
             <MaterialButton style="padding: 0.42em 0.8em;" class="clearAll" disabled={$outLocked || allCleared} title="clear.all [esc]" on:click={() => clearAll(true)} red>
+                {#if $isTimelinePlaying}<span class="faded" data-title={translateText("popup.timeline")}><Icon id="timeline" white /></span>{/if}
                 <Icon id="clear" size={1.2} white />
                 {#if !$labelsDisabled}<T id="clear.all" />{/if}
             </MaterialButton>
@@ -121,7 +127,7 @@
         {#if outputContent?.type !== "pdf" && outputContent?.type !== "ppt"}
             <div class="combinedButton">
                 <MaterialButton style="padding: 0.3em 0.6em;{styleBackground ? 'opacity: 0.5;cursor: default;' : ''}" disabled={($outLocked || backgroundCleared) && !styleBackground} title={$outLocked || backgroundCleared ? "" : "clear.background [F1]"} on:click={() => clear("background")} red>
-                    <Icon id="background" size={1.2} white />
+                    <Icon id="image" size={1.2} white />
                 </MaterialButton>
                 {#if !allCleared}
                     <MaterialButton style="padding: {activeClear === 'background' ? 0 : 2}px !important;min-height: 15px;" isActive={activeClear === "background"} disabled={backgroundCleared} on:click={() => openPreview("background")} title="preview.background">
@@ -133,12 +139,12 @@
             </div>
         {/if}
 
-        {#if backgroundData.videoType !== "foreground"}
+        {#if getMediaLayerType(outBackground.path || "", backgroundData) !== "foreground" || !slideCleared}
             <div class="combinedButton">
                 <MaterialButton style="padding: 0.3em 0.6em;" disabled={$outLocked || slideCleared} title="clear.slide  [F2]" on:click={() => clear("slide")} red>
                     <!-- PDFs are visually the background layer as it is toggled by the style "Background" layer, but it behaves as a slide in the code -->
                     <!-- display recording icon here if a slide recoring is playing -->
-                    <Icon id={isScripture ? "scripture" : outputContent?.type === "pdf" ? "background" : $activeSlideRecording ? "record" : "slide"} size={1.2} white />
+                    <Icon id={isScripture ? "scripture" : outputContent?.type === "pdf" ? "background" : "slide"} size={1.2} white />
                 </MaterialButton>
                 {#if !allCleared}
                     <MaterialButton style="padding: {activeClear === 'slide' ? 0 : 2}px !important;min-height: 15px;" isActive={activeClear === "slide"} disabled={slideCleared} on:click={() => openPreview("slide")} title="preview.slide">
@@ -201,6 +207,14 @@
 
     :global(.clearAll) {
         width: 100%;
+    }
+
+    .faded {
+        position: absolute;
+        left: 10px;
+        opacity: 0.4;
+        display: flex;
+        align-items: center;
     }
 
     .group {

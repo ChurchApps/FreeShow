@@ -79,11 +79,14 @@ function pcoAuthenticate(scope: PCOScopes): Promise<PCOAuthData> {
 
     app.use(express.json())
 
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
         app.get(path, (req, res) => {
             const code = req.query.code?.toString() || ""
             console.info(`OAuth code received: ${code}`)
-            if (!code) return resolve(null)
+            if (!code) {
+                server.close()
+                return resolve(null)
+            }
 
             const params = {
                 grant_type: "authorization_code",
@@ -99,6 +102,7 @@ function pcoAuthenticate(scope: PCOScopes): Promise<PCOAuthData> {
                     const errorPage = HTML_error.replace("{error_msg}", err.message)
                     res.send(errorPage)
 
+                    server.close()
                     sendToMain(ToMain.ALERT, "Could not authorize! " + err.message)
                     return resolve(null)
                 }
@@ -113,7 +117,8 @@ function pcoAuthenticate(scope: PCOScopes): Promise<PCOAuthData> {
                 server.close()
 
                 setContentProviderAccess("planningcenter", scope, data)
-                sendToMain(ToMain.PROVIDER_CONNECT, { providerId: "planningcenter", success: true, isFirstConnection: true })
+                PCO_ACCESS = data
+                connectionInitialized(true)
                 resolve(data)
             })
         })
@@ -125,7 +130,7 @@ function pcoAuthenticate(scope: PCOScopes): Promise<PCOAuthData> {
 }
 
 function hasExpired(access: PCOAuthData): boolean {
-    if (access === null) return true
+    if (!access?.created_at || !access?.expires_in) return true
 
     const expirationTime = (access.created_at + access.expires_in) * 1000
     const currentTime = Date.now()
@@ -137,7 +142,7 @@ function hasExpired(access: PCOAuthData): boolean {
 }
 
 function refreshToken(access: PCOAuthData): Promise<PCOAuthData> {
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
         if (!access?.refresh_token) {
             console.warn("No refresh token available, cannot refresh PCO OAuth token")
             return resolve(null)
@@ -154,7 +159,6 @@ function refreshToken(access: PCOAuthData): Promise<PCOAuthData> {
             }
 
             setContentProviderAccess("planningcenter", data.scope, data)
-            sendToMain(ToMain.PROVIDER_CONNECT, { providerId: "planningcenter", success: true })
 
             return resolve(data)
         })
@@ -182,23 +186,21 @@ function generateCodeChallenge(verifier: string) {
     return Buffer.from(hash).toString("base64url")
 }
 
+export function pcoInitialize() {
+    PCO_ACCESS = null
+}
+
 export async function pcoConnect(scope: PCOScopes): Promise<PCOAuthData> {
-    const storedAccess = PCO_ACCESS || getContentProviderAccess("planningcenter", scope)
+    let accessData = PCO_ACCESS || getContentProviderAccess("planningcenter", scope)
 
-    if (storedAccess?.created_at) {
-        if (hasExpired(storedAccess)) {
-            PCO_ACCESS = await refreshToken(storedAccess)
-            return PCO_ACCESS
-        }
+    if (hasExpired(accessData)) accessData = await refreshToken(accessData)
+    if (!accessData) accessData = await pcoAuthenticate(scope)
+    if (!accessData) return null
 
-        sendToMain(ToMain.PROVIDER_CONNECT, { providerId: "planningcenter", success: true })
-        if (!PCO_ACCESS) PCO_ACCESS = storedAccess
-        return storedAccess
-    }
+    if (!PCO_ACCESS) connectionInitialized()
+    PCO_ACCESS = accessData
 
-    PCO_ACCESS = await pcoAuthenticate(scope)
-
-    return PCO_ACCESS
+    return accessData
 }
 
 export function pcoDisconnect(scope: PCOScopes = "services") {
@@ -210,4 +212,8 @@ export function pcoDisconnect(scope: PCOScopes = "services") {
 export async function pcoStartupLoad(scope: PCOScopes = "services") {
     if (!getContentProviderAccess("planningcenter", scope)) return
     await pcoLoadServices()
+}
+
+function connectionInitialized(isFirstConnection: boolean = false): void {
+    sendToMain(ToMain.PROVIDER_CONNECT, { providerId: "planningcenter", success: true, isFirstConnection })
 }

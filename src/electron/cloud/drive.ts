@@ -170,7 +170,7 @@ export async function downloadFile(fileId: string): Promise<any> {
 
     // https://developers.google.com/drive/api/guides/manage-downloads#node.js
 
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
         driveClient!.files.get({ fileId, alt: "media", supportsAllDrives: true }, (err, res) => {
             if (err) {
                 console.error("The API returned an error:", err)
@@ -232,10 +232,10 @@ export async function syncDataDrive(data: DriveData) {
         const storeData: any = store.store
         const name = id + ".json"
 
-        let driveFileId = files.find(a => a.name === name)?.id || ""
+        let driveFileId = files.find((a) => a.name === name)?.id || ""
 
         // pre 1.5.3
-        if (!driveFileId && id === "STAGE") driveFileId = files.find(a => a.name === "STAGE_SHOWS.json")?.id || ""
+        if (!driveFileId && id === "STAGE") driveFileId = files.find((a) => a.name === "STAGE_SHOWS.json")?.id || ""
 
         const driveFile = await getFile(driveFileId)
 
@@ -309,12 +309,12 @@ export async function syncDataDrive(data: DriveData) {
 
     async function syncBibles() {
         const localBibles: string[] = Object.values(bibles!)
-            .filter(a => !a.api && !a.collection)
-            .map(a => a.name + ".fsb")
+            .filter((a) => !a.api && !a.collection)
+            .map((a) => a.name + ".fsb")
 
         if (!localBibles.length) return
 
-        let driveBiblesFolderId = files.find(a => a.name === "Bibles")?.id
+        let driveBiblesFolderId = files.find((a) => a.name === "Bibles")?.id
 
         // create bible folder
         if (!driveBiblesFolderId) {
@@ -332,7 +332,7 @@ export async function syncDataDrive(data: DriveData) {
         await Promise.all(localBibles.map(syncBible))
 
         async function syncBible(name: string) {
-            const driveFileId = driveBibles?.find(a => a.name === name)?.id || ""
+            const driveFileId = driveBibles?.find((a) => a.name === name)?.id || ""
 
             const driveFile = await getFile(driveFileId)
 
@@ -383,7 +383,7 @@ export async function syncDataDrive(data: DriveData) {
         if (DEBUG) console.info("Method:", data.method)
 
         const name = SHOWS_CONTENT + ".json"
-        const driveFileId = files.find(a => a.name === name)?.id || ""
+        const driveFileId = files.find((a) => a.name === name)?.id || ""
 
         const driveFile = await getFile(driveFileId)
         // download shows
@@ -551,7 +551,7 @@ function combineFiles(cloudContent: any, localContent: any, newest: string) {
     const content = (newest === "cloud" ? cloudContent : localContent) || {}
     const olderContent = (newest === "cloud" ? localContent : cloudContent) || {}
 
-    Object.keys(olderContent).forEach(id => {
+    Object.keys(olderContent).forEach((id) => {
         const olderIsNewer = (content[id]?.modified || 0) < (olderContent[id]?.modified || 0)
         if (!content[id] || olderIsNewer) content[id] = olderContent[id]
     })

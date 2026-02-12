@@ -37,9 +37,12 @@
         stageSections = clone(item?.keepStyle ? { default: slideTextSections.default, chords: slideTextSections.chords, special: slideTextSections.special } : slideTextSections)
 
         // line height
-        stageSections.text = { inputs: [...stageSections.text.inputs, [{ id: "style", key: "line-height", type: "number", value: 1.1, multiplier: 10, extension: "em", values: { label: "edit.line_height", max: 50 } }]] }
+        if (stageSections.text) stageSections.text = { inputs: [...stageSections.text.inputs, [{ id: "style", key: "line-height", type: "number", value: 1.1, multiplier: 10, extension: "em", values: { label: "edit.line_height", max: 50 } }]] }
 
         // setBoxInputValue(stageSections, "font", "font-weight", "default", "bold")
+
+        // allow no color (inherit from slide)
+        if (stageSections.font) stageSections.font.inputs[0][1].values.allowEmpty = true
     }
 
     $: if (stageSections?.CSS) {
@@ -168,7 +171,7 @@
 
         // only update changed value
         let styles: { [key: string]: string } = {}
-        activeItemIds.forEach(itemId => {
+        activeItemIds.forEach((itemId) => {
             let item = stageItems[itemId]
             if (!item || (!$activeStage.items?.length && item.type !== updateType)) return
 

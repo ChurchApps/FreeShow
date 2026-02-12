@@ -3,17 +3,15 @@
 <script lang="ts">
     import { onDestroy } from "svelte"
     import { uid } from "uid"
-    import { Main } from "../../../types/IPC/Main"
     import { OutData } from "../../../types/Output"
     import type { Styles } from "../../../types/Settings"
     import type { AnimationData, LayoutRef, OutBackground, OutSlide, Slide, SlideData, Template, Overlays as TOverlays } from "../../../types/Show"
-    import { requestMain } from "../../IPC/main"
     import { allOutputs, colorbars, currentWindow, customMessageCredits, drawSettings, drawTool, effects, media, outputs, overlays, showsCache, styles, templates, transitionData } from "../../stores"
     import { wait } from "../../utils/common"
     import { custom } from "../../utils/transitions"
     import Draw from "../draw/Draw.svelte"
     import { clone } from "../helpers/array"
-    import { decodeExif, defaultLayers, getCurrentStyle, getMetadata, getOutputLines, getOutputTransitions, getResolution, getSlideFilter, getStyleTemplate, joinMetadata, OutputMetadata, setTemplateStyle } from "../helpers/output"
+    import { defaultLayers, getCurrentStyle, getMetadata, getOutputLines, getOutputTransitions, getResolution, getSlideFilter, getStyleTemplate, OutputMetadata, setTemplateStyle } from "../helpers/output"
     import { replaceDynamicValues } from "../helpers/showActions"
     import { _show } from "../helpers/shows"
     import Image from "../media/Image.svelte"
@@ -54,8 +52,8 @@
 
     $: effectsIds = clone(out.effects || [])
     $: allEffects = $effects
-    $: effectsUnderSlide = effectsIds.filter(id => allEffects[id]?.placeUnderSlide === true)
-    $: effectsOverSlide = effectsIds.filter(id => !allEffects[id]?.placeUnderSlide)
+    $: effectsUnderSlide = effectsIds.filter((id) => allEffects[id]?.placeUnderSlide === true)
+    $: effectsOverSlide = effectsIds.filter((id) => !allEffects[id]?.placeUnderSlide)
 
     // don't update when layer content changes, only when refreshing or adding/removing layer
     // currentOutput is set to refresh state when changed in preview
@@ -105,8 +103,8 @@
     let storedOverlayIds = ""
     let storedOverlays = ""
     $: if (JSON.stringify(overlayIds) !== storedOverlayIds) updateOutData("overlays")
-    $: outOverlays = out.overlays?.filter(id => !clonedOverlays?.[id]?.placeUnderSlide) || []
-    $: outUnderlays = out.overlays?.filter(id => clonedOverlays?.[id]?.placeUnderSlide) || []
+    $: outOverlays = out.overlays?.filter((id) => !clonedOverlays?.[id]?.placeUnderSlide) || []
+    $: outUnderlays = out.overlays?.filter((id) => clonedOverlays?.[id]?.placeUnderSlide) || []
 
     // layout & slide data
     let currentLayout: LayoutRef[] = []
@@ -181,19 +179,6 @@
     let metadata: OutputMetadata = {}
     $: metadata = getMetadata(metadata, $showsCache[slide?.id || ""], currentStyle, $templates, slide)
 
-    // media exif metadata
-    $: getExifData = metadata.media
-    $: if (getExifData && background?.path) getExif()
-    async function getExif() {
-        metadata.value = ""
-
-        const data = await requestMain(Main.READ_EXIF, { id: background?.path || "" })
-        if (!metadata.media || data.id !== background?.path) return
-
-        let message = decodeExif(data)
-        metadata.value = joinMetadata(message, currentStyle.metadataDivider)
-    }
-
     // ANIMATE
     let animationData: AnimationData = {}
     let currentAnimationId = ""
@@ -256,8 +241,8 @@
     $: backgroundColor = currentOutput.transparent ? "transparent" : styleTemplate?.settings?.backgroundColor || currentSlide?.settings?.color || currentStyle.background || slide?.settings?.backgroundColor || "black"
     $: messageText = $showsCache[slide?.id || ""]?.message?.text?.replaceAll("\n", "<br>") || ""
     // metadata display
-    $: firstActiveSlideIndex = currentLayout.findIndex(a => !a.data.disabled)
-    $: lastActiveSlideIndex = currentLayout.length - 1 - [...currentLayout].reverse().findIndex(a => !a.data.disabled)
+    $: firstActiveSlideIndex = currentLayout.findIndex((a) => !a.data.disabled)
+    $: lastActiveSlideIndex = currentLayout.length - 1 - [...currentLayout].reverse().findIndex((a) => !a.data.disabled)
     $: displayMetadata = metadata.value?.length && (metadata.display === "always" || (metadata.display?.includes("first") && (slide?.index === firstActiveSlideIndex || slide?.index === 0)) || (metadata.display?.includes("last") && (slide?.index === lastActiveSlideIndex || slide?.index === currentLayout.length - 1)))
     // background image
     $: styleBackground = currentStyle?.clearStyleBackgroundOnText && (slide || background) ? "" : currentStyle?.backgroundImage || ""
@@ -291,12 +276,74 @@
         })
     }
 
+    let isMessageClearing = false
+    let messageVisible = false
+    let messageTransition: NodeJS.Timeout | null = null
+    $: if (messageText !== undefined) updateMessage()
+    function updateMessage() {
+        if (messageTransition) clearTimeout(messageTransition)
+        if (messageText) {
+            isMessageClearing = false
+            messageVisible = true
+        } else {
+            isMessageClearing = true
+            // wait for transition to finish
+            messageTransition = setTimeout(
+                () => {
+                    messageVisible = false
+                    isMessageClearing = false
+                },
+                (metadata.messageTransition || transitions.overlay)?.duration || 500
+            )
+        }
+    }
+
+    let isMetadataClearing = false
+    let metadataVisible = false
+    let metadataTransition: NodeJS.Timeout | null = null
+    $: showMetadata = displayMetadata || ((layers.includes("background") || backgroundData?.ignoreLayer) && $customMessageCredits)
+    $: if (showMetadata !== undefined) updateMetadata()
+    function updateMetadata() {
+        if (metadataTransition) clearTimeout(metadataTransition)
+        if (displayMetadata) {
+            isMetadataClearing = false
+            metadataVisible = true
+        } else {
+            isMetadataClearing = true
+            // wait for transition to finish
+            metadataTransition = setTimeout(
+                () => {
+                    metadataVisible = false
+                    isMetadataClearing = false
+                },
+                (metadata.transition || transitions.overlay)?.duration || 500
+            )
+        }
+    }
+
     // UPDATE DYNAMIC VALUES e.g. {time_} EVERY SECOND
+    $: hasDynamicValues = messageVisible && messageText.includes("{")
+
+    // only update if text contains dynamic values
+    $: if (hasDynamicValues) startInterval()
+    else stopInterval()
+    let dynamicInterval: NodeJS.Timeout | null = null
+    function startInterval() {
+        stopInterval()
+        dynamicInterval = setInterval(update, 1000)
+    }
+    function stopInterval() {
+        if (dynamicInterval) clearInterval(dynamicInterval)
+        dynamicInterval = null
+    }
+
     let updateDynamic = 0
-    const dynamicInterval = setInterval(() => {
+    function update() {
+        if (!hasDynamicValues) return
         updateDynamic++
-    }, 1000)
-    onDestroy(() => clearInterval(dynamicInterval))
+    }
+
+    onDestroy(() => stopInterval())
 </script>
 
 <Zoomed id={outputId} background={backgroundColor} checkered={(preview || mirror) && backgroundColor === "transparent"} backgroundDuration={transitions.media?.type === "none" ? 0 : (transitions.media?.duration ?? 800)} align={alignPosition} center {style} {resolution} {mirror} {drawZoom} {cropping} bind:ratio>
@@ -306,7 +353,7 @@
     {/if}
 
     <!-- background -->
-    {#if (layers.includes("background") || backgroundData?.ignoreLayer) && backgroundData}
+    {#if (backgroundData?.ignoreLayer ? layers.includes("slide") : layers.includes("background")) && backgroundData}
         <Background data={backgroundData} {outputId} transition={transitions.media} {currentStyle} {slideFilter} {ratio} animationStyle={animationData.style?.background || ""} {mirror} />
     {/if}
 
@@ -343,14 +390,13 @@
 
     {#if layers.includes("overlays")}
         <!-- message -->
-        {#if messageText}
-            <Metadata value={messageText.includes("{") ? replaceDynamicValues(messageText, { showId: actualSlide?.id, layoutId: actualSlide?.layout, slideIndex: actualSlide?.index }, updateDynamic) : messageText} style={metadata.messageStyle || ""} transition={metadata.messageTransition || transitions.overlay} />
+        {#if messageVisible}
+            <Metadata isClearing={isMessageClearing} value={messageText.includes("{") ? replaceDynamicValues(messageText, { showId: actualSlide?.id, layoutId: actualSlide?.layout, slideIndex: actualSlide?.index }, updateDynamic) : messageText} style={metadata.messageStyle || ""} transition={metadata.messageTransition || transitions.overlay} />
         {/if}
 
         <!-- metadata -->
-        {#if displayMetadata || ((layers.includes("background") || backgroundData?.ignoreLayer) && $customMessageCredits)}
-            <!-- value={metadata.value ? (metadata.value.includes("{") ? createMetadataLayout(metadata.value, { showId: actualSlide?.id, layoutId: actualSlide?.layout, slideIndex: actualSlide?.index }, updateDynamic) : metadata.value) : $customMessageCredits || ""} -->
-            <Metadata value={metadata.value || $customMessageCredits || ""} style={metadata.style || ""} conditions={metadata.condition} isClearing={isSlideClearing} {outputId} transition={metadata.transition || transitions.overlay} />
+        {#if metadataVisible}
+            <Metadata isClearing={isMetadataClearing} value={metadata.value || $customMessageCredits || ""} style={metadata.style || ""} conditions={metadata.condition} {outputId} transition={metadata.transition || transitions.overlay} />
         {/if}
 
         <!-- effects -->
@@ -367,9 +413,9 @@
 
     {#if actualSlide?.attributionString && layers.includes("slide")}
         {#if mirror}
-            <p class="attributionString">{actualSlide.attributionString}</p>
+            <p class="attributionString">{actualSlide.attributionString.slice(0, 135)}</p>
         {:else}
-            <p class="attributionString" transition:custom={transitions.text}>{actualSlide.attributionString}</p>
+            <p class="attributionString" transition:custom={transitions.text}>{actualSlide.attributionString.slice(0, 135)}</p>
         {/if}
     {/if}
 

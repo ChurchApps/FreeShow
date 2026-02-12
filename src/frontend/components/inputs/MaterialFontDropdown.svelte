@@ -1,7 +1,7 @@
 <script lang="ts">
     import { createEventDispatcher, onMount } from "svelte"
     import type { DropdownOptions } from "../../../types/Input"
-    import { getFontStyleList, getSystemFontsList } from "../helpers/fonts"
+    import { getFontName, getFontStyleList, getSystemFontsList } from "../helpers/fonts"
     import MaterialDropdown from "./MaterialDropdown.svelte"
     import InputRow from "../input/InputRow.svelte"
 
@@ -38,10 +38,12 @@
     }
 
     $: fontStylesVisible = enableFontStyles && value !== "CMGSans"
+
+    $: quotedValue = getFontName(value)
 </script>
 
 <InputRow style={$$props.style || ""}>
-    <MaterialDropdown {label} options={systemFontsList} {value} style={fontStylesVisible ? "max-width: 85%;" : ""} on:change={change} {allowEmpty} />
+    <MaterialDropdown {label} options={systemFontsList} value={quotedValue} style={fontStylesVisible ? "max-width: 85%;" : ""} on:change={change} {allowEmpty} />
     {#if fontStylesVisible}
         <MaterialDropdown label="settings.font_style" disabled={fontsStylesList.length < 2} options={fontsStylesList} value={fontStyleValue || defaultFontStyleValue} on:change={styleChange} onlyArrow />
     {/if}

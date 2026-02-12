@@ -79,7 +79,7 @@
         const sections: TreeItem[][] = [[]]
         let rootProjects: TreeItem[] = []
 
-        tree.forEach(a => {
+        tree.forEach((a) => {
             if (a.parent === "/" && a.type !== "folder") {
                 rootProjects.push(a)
                 return
@@ -94,20 +94,20 @@
             sections.push([{ id: "ROOT", name: "", type: "project", parent: "/", index: 0, path: "" } as TreeItem, ...rootProjects])
         }
 
-        return sections.filter(a => a.length)
+        return sections.filter((a) => a.length)
     })()
 
     function checkIfShown(item: TreeItem): boolean {
         if (item.parent === "/") return true
         const pathParts = item.path.split("/").filter(Boolean)
-        return pathParts.every(id => $openedFolders.includes(id))
+        return pathParts.every((id) => $openedFolders.includes(id))
     }
 
     function toggleFolder(folderId: string) {
         if ($openedFolders.includes(folderId)) {
             _set(
                 "openedFolders",
-                $openedFolders.filter(id => id !== folderId)
+                $openedFolders.filter((id) => id !== folderId)
             )
         } else {
             _set("openedFolders", [...$openedFolders, folderId])

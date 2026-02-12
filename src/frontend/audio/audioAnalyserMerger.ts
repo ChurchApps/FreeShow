@@ -85,7 +85,7 @@ export class AudioAnalyserMerger {
         AudioPlaylist.checkCrossfade()
 
         const playing = AudioPlayer.getAllPlaying()
-        playing.forEach(id => {
+        playing.forEach((id) => {
             AudioPlayer.checkIfEnding(id)
         })
     }
@@ -96,7 +96,7 @@ export class AudioAnalyserMerger {
         const allChannels = this.channels
         allChannels.main = AudioAnalyser.getChannelsVolume()
 
-        Object.values(allChannels).forEach(channels => {
+        Object.values(allChannels).forEach((channels) => {
             channels.forEach((channel, channelIndex) => {
                 if (!merged[channelIndex]) merged[channelIndex] = []
 

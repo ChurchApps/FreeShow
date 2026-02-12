@@ -193,8 +193,8 @@
         AudioAnalyser.detach(previousPath)
 
         // playingVideos.set([])
-        playingVideos.update(a => {
-            let videoIndex = a.findIndex(a => a.id === previousPath)
+        playingVideos.update((a) => {
+            let videoIndex = a.findIndex((a) => a.id === previousPath)
             if (videoIndex > -1) a.splice(videoIndex, 1)
             return a
         })

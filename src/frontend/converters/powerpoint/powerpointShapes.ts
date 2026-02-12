@@ -2,11 +2,11 @@
 export function getPresetShapePath(prstGeom, x1, y1, width, height, adj = 0) {
     let path = ""
 
-    const normalizeX = x => (x - x1) / width
-    const normalizeY = y => (y - y1) / height
+    const normalizeX = (x) => (x - x1) / width
+    const normalizeY = (y) => (y - y1) / height
 
     // Helper for simple polygons
-    const pointsToPath = points => points.map((p, i) => `${i === 0 ? "M" : "L"} ${normalizeX(p.x)} ${normalizeY(p.y)}`).join(" ") + " Z"
+    const pointsToPath = (points) => points.map((p, i) => `${i === 0 ? "M" : "L"} ${normalizeX(p.x)} ${normalizeY(p.y)}`).join(" ") + " Z"
 
     // const pointsToCubicPath = (pts) => {
     //     // pts: array of {x, y, cx1, cy1, cx2, cy2} for each cubic segment
@@ -580,7 +580,7 @@ export function getCustomShapePath(path: any): { pathData: string; vbWidth: numb
             }
         }
     }
-    ;["a:moveTo", "a:lnTo", "a:arcTo", "a:quadBezTo", "a:cubicBezTo"].forEach(type => {
+    ;["a:moveTo", "a:lnTo", "a:arcTo", "a:quadBezTo", "a:cubicBezTo"].forEach((type) => {
         if (path[type]) {
             for (const cmd of path[type]) {
                 collectPoints(cmd)
@@ -591,7 +591,7 @@ export function getCustomShapePath(path: any): { pathData: string; vbWidth: numb
     let minY = Infinity
     let maxX = -Infinity
     let maxY = -Infinity
-    points.forEach(pt => {
+    points.forEach((pt) => {
         if (pt.x < minX) minX = pt.x
         if (pt.y < minY) minY = pt.y
         if (pt.x > maxX) maxX = pt.x

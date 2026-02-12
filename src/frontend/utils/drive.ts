@@ -23,7 +23,7 @@ export function validateKeys(file: string) {
     }
 
     // set media id
-    driveData.update(a => {
+    driveData.update((a) => {
         if (!a.mediaId || a.mediaId === "default") a.mediaId = uid(8)
         return a
     })

@@ -4,7 +4,7 @@
 
 import { BrowserWindow, ipcMain } from "electron"
 import fs, { type WriteFileOptions } from "fs"
-import { basename, extname, join } from "path"
+import { basename, dirname, extname, join } from "path"
 import { EXPORT, STARTUP } from "../../types/Channels"
 import { ToMain } from "../../types/IPC/ToMain"
 import type { Show, Slide, Template } from "../../types/Show"
@@ -61,7 +61,7 @@ export function startExport(_e: Electron.IpcMainEvent, msg: Message) {
 
     const exportFolder = getDataFolderPath("exports")
     const showNames: string[] = msg.data.showNames || []
-    const shows = getShowContent(showNames.map(name => name + ".show"))
+    const shows = getShowContent(showNames.map((name) => name + ".show"))
 
     if (msg.data.type === "show") exportShow({ shows, path: exportFolder })
     else if (msg.data.type === "txt") exportTXT({ shows, path: exportFolder })
@@ -143,11 +143,11 @@ ipcMain.on(EXPORT, (_e, msg: any) => {
 // ----- JSON -----
 
 export function exportJSON(content: any, extension: string, path: string, name = "") {
-    writeFile(join(path, name || content.name || "Unnamed"), extension, JSON.stringify(content, null, 4), "utf-8", err => doneWritingFile(err, path))
+    writeFile(join(path, name || content.name || "Unnamed"), extension, JSON.stringify(content, null, 4), "utf-8", (err) => doneWritingFile(err, path))
 }
 
 export function exportJSONFile(content: any, path: string, name: string) {
-    writeFile(join(path, name), ".json", JSON.stringify(content, null, 4), "utf-8", err => doneWritingFile(err, path))
+    writeFile(join(path, name), ".json", JSON.stringify(content, null, 4), "utf-8", (err) => doneWritingFile(err, path))
 }
 
 // ----- SHOW -----
@@ -158,7 +158,7 @@ export function exportShow(data: { path: string; shows: Show[] }) {
         const id = show.id
         delete show.id
 
-        writeFile(join(data.path, show.name || id!), ".show", JSON.stringify([id, show]), "utf-8", err => doneWritingFile(err, data.path, i >= data.shows.length - 1))
+        writeFile(join(data.path, show.name || id!), ".show", JSON.stringify([id, show]), "utf-8", (err) => doneWritingFile(err, data.path, i >= data.shows.length - 1))
     })
 }
 
@@ -166,7 +166,7 @@ export function exportShow(data: { path: string; shows: Show[] }) {
 
 export function exportTXT(data: { path: string; shows: Show[] }) {
     data.shows.forEach((show, i) => {
-        writeFile(join(data.path, show.name || show.id!), ".txt", getSlidesText(show), "utf-8", err => doneWritingFile(err, data.path, i >= data.shows.length - 1))
+        writeFile(join(data.path, show.name || show.id!), ".txt", getSlidesText(show), "utf-8", (err) => doneWritingFile(err, data.path, i >= data.shows.length - 1))
     })
 }
 
@@ -175,7 +175,7 @@ function getSlidesText(show: Show) {
     let text = ""
 
     const slides: Slide[] = []
-    show.layouts?.[show.settings?.activeLayout].slides.forEach(layoutSlide => {
+    show.layouts?.[show.settings?.activeLayout].slides.forEach((layoutSlide) => {
         const slide = show.slides[layoutSlide.id]
         if (!slide) return
 
@@ -188,16 +188,16 @@ function getSlidesText(show: Show) {
         })
     })
 
-    slides.forEach(slide => {
+    slides.forEach((slide) => {
         if (slide.group) text += "[" + slide.group + "]\n"
 
-        slide.items.forEach(item => {
+        slide.items.forEach((item) => {
             if (!item.lines) return
 
-            item.lines.forEach(line => {
+            item.lines.forEach((line) => {
                 if (!Array.isArray(line?.text)) return
 
-                line.text.forEach(txt => {
+                line.text.forEach((txt) => {
                     text += txt.value
                 })
                 text += "\n"
@@ -253,19 +253,22 @@ function exportAllShows(data: { type: string }) {
 
 // ----- PROJECT -----
 
-export function exportProject(data: { type: "project"; name: string; file: any }) {
+export function exportProject(data: { type: "project"; name: string; file: any; path?: string }) {
     sendToMain(ToMain.ALERT, "export.exporting")
     const exportFolder = getDataFolderPath("exports")
 
     const files: string[] = data.file.files || []
     if (!files.length) {
+        let exportPath = data.path ? data.path.replace(".project", "") : join(exportFolder, data.name)
         // export as plain JSON
-        writeFile(join(exportFolder, data.name), ".project", JSON.stringify(data.file), "utf-8", err => doneWritingFile(err, exportFolder))
+        writeFile(exportPath, ".project", JSON.stringify(data.file), "utf-8", (err) => doneWritingFile(err, data.path ? "" : exportFolder))
         return
     }
 
     // create archive with hashed filenames
-    compressWithMedia(files, data.file, data.name, ".project", exportFolder, (path, extension) => {
+    const folderPath = data.path ? dirname(data.path) : exportFolder
+    const name = data.path ? basename(data.path).replace(".project", "") : data.name
+    compressWithMedia(files, data.file, name, ".project", folderPath, (path, extension) => {
         return `${basename(path, extension)}__${filePathHashCode(path)}${extension}`
     })
 }
@@ -285,15 +288,15 @@ export function exportTemplate(data: { file: { template: Template; files?: strin
     }
 
     // create archive with original filenames
-    compressWithMedia(files, data.file, data.name, customJSONExtensions.TEMPLATE, exportFolder, path => basename(path))
+    compressWithMedia(files, data.file, data.name, customJSONExtensions.TEMPLATE, exportFolder, (path) => basename(path))
 }
 
 function compressWithMedia(files: string[], fileData: any, name: string, extension: string, exportFolder: string, getFileName: (path: string, ext: string) => string) {
-    const entries = files
-        .filter(path => fs.existsSync(path))
-        .map(path => ({
-            name: getFileName(path, extname(path)),
-            content: fs.readFileSync(path)
+    const entries: { name: string; content?: Buffer | string; filePath?: string }[] = files
+        .filter((filePath) => fs.existsSync(filePath))
+        .map((filePath) => ({
+            name: getFileName(filePath, extname(filePath)),
+            filePath
         }))
 
     entries.push({ name: "data.json", content: Buffer.from(JSON.stringify(fileData)) })
@@ -302,7 +305,7 @@ function compressWithMedia(files: string[], fileData: any, name: string, extensi
 
     compressToZip(entries, filePath)
         .then(() => doneWritingFile(null, exportFolder))
-        .catch(err => doneWritingFile(err, exportFolder))
+        .catch((err) => doneWritingFile(err, exportFolder))
 }
 
 // ----- HELPERS -----

@@ -6,9 +6,13 @@
     import Tabs from "../../common/components/Tabs.svelte"
     import Textarea from "../../common/components/Textarea.svelte"
     import TextInput from "../../common/components/TextInput.svelte"
+    import Center from "../../common/components/Center.svelte"
+    import Loading from "../../common/components/Loading.svelte"
     import { translate } from "../util/helpers"
     import { send } from "../util/socket"
     import { _set, active, activeProject, activeShow, activeTab, createShow, dictionary, isCleared, outShow, projects, projectsOpened, scriptures, shows } from "../util/stores"
+
+    // Phone mode components (always loaded - small footprint)
     import Lyrics from "./pages/Lyrics.svelte"
     import Project from "./pages/Project.svelte"
     import Scripture from "./pages/Scripture.svelte"
@@ -16,7 +20,9 @@
     import ShowContent from "./pages/ShowContent.svelte"
     import Shows from "./pages/Shows.svelte"
     import Slide from "./pages/Slide.svelte"
-    import TabletMode from "./tablet/TabletMode.svelte"
+
+    // Tablet mode component (lazy-loaded for performance)
+    let TabletMode: any = null
 
     $: tab = $activeTab
     $: if (tab) _set("activeTab", tab)
@@ -93,20 +99,41 @@
     }
 
     let isTablet = false
+    let tabletLoading = false
+
     onMount(() => {
         const media = window.matchMedia("(min-width: 1000px)")
         isTablet = media.matches
-        const listener = (e: MediaQueryListEvent) => (isTablet = e.matches)
+        const listener = (e: MediaQueryListEvent) => {
+            isTablet = e.matches
+            if (e.matches && !TabletMode) loadTabletMode()
+        }
         media.addEventListener("change", listener)
+
+        // Load tablet components if needed
+        if (isTablet) loadTabletMode()
+
         return () => media.removeEventListener("change", listener)
     })
+
+    async function loadTabletMode() {
+        if (TabletMode || tabletLoading) return
+        tabletLoading = true
+        const module = await import("./tablet/TabletMode.svelte")
+        TabletMode = module.default
+        tabletLoading = false
+    }
 </script>
 
 <svelte:window on:keydown={keydown} />
 
 {#if isTablet}
     <section class="tabletMode">
-        <TabletMode />
+        {#if TabletMode}
+            <svelte:component this={TabletMode} />
+        {:else}
+            <Center><Loading /></Center>
+        {/if}
     </section>
 {:else}
     <section class="phoneMode justify">

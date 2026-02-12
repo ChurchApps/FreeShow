@@ -20,22 +20,24 @@
     const nameCategories = {
         overlay: (c: { name: string; id: string }) => {
             if (getAccess("overlays").global === "read" || getAccess("overlays")[c.id] === "read") return
-            overlays.update(a => setName(a, c))
+            overlays.update((a) => setName(a, c, true))
         },
         template: (c: { name: string; id: string }) => {
             if (getAccess("templates").global === "read" || getAccess("templates")[c.id] === "read") return
-            templates.update(a => setName(a, c))
+            templates.update((a) => setName(a, c, true))
         },
         effect: (c: { name: string; id: string }) => {
             if (getAccess("overlays").global === "read" || getAccess("overlays")[c.id] === "read") return
-            effects.update(a => setName(a, c))
+            effects.update((a) => setName(a, c))
         },
-        player: (c: { name: string; id: string }) => playerVideos.update(a => setName(a, c))
+        player: (c: { name: string; id: string }) => playerVideos.update((a) => setName(a, c))
     }
-    const setName = (a: any, { name, id }: any, nameKey = "name") => {
+    const setName = (a: any, { name, id }: any, modify: boolean = false) => {
         if (!a[id]) return a
 
-        a[id][nameKey] = name
+        a[id].name = name
+
+        if (modify) a[id].modified = Date.now()
         return a
     }
 
@@ -57,7 +59,7 @@
     {/if}
 
     {#if renameId}
-        <HiddenInput value={label} id={renameId} on:edit={e => changeName(e, renameId)} bind:edit={editActive} />
+        <HiddenInput value={label} id={renameId} on:edit={(e) => changeName(e, renameId)} bind:edit={editActive} />
     {:else}
         <span class="title" style={count ? "margin-inline-end: 14px;" : ""}>
             {#if label}

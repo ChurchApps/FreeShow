@@ -75,11 +75,19 @@
         "slide": "Edit current slide.",
         "filters": "Change the look of the selected element.",
         "options": "More options.",
-        "scripture": "Hold Ctrl/Cmd or Shift to select multiple verses."
+        "scripture": "Hold Ctrl/Cmd or Shift to select multiple verses.",
+        "context_cut_in_half": "Split the first textbox into two slides.",
+        "context_merge": "Merge selected slides into one.",
+        "context_capitalize": "Make first letter of each line uppercase.",
+        "context_trim": "Trim whitespace and punctuation from start/end of each line, and remove double spaces."
     },
     "tips": {
         "trigger": "Triggers are commonly used to send a HTTP request to change the preset of cameras.",
-        "global_options": "These options are applied globally."
+        "global_options": "These options are applied globally.",
+        "category_template": "The category of this show has a template set, which will overwrite any edits.",
+        "consider_templates": "You made the same changes to multiple slides. Consider using a template.",
+        "style_template_active": "A style in the output is set to override the show template.",
+        "group_numbers": "Numbers are auto assigned, so you don't need to add numbers to group names."
     },
     "setup": {
         "good_luck": "We hope you find this software useful. Good luck with the presentation! :)",
@@ -205,14 +213,19 @@
         "blur_fill": "Blur fill",
         "cover": "Cover",
         "online": "Online",
+        "downloading": "Downloading",
         "recommended": "Recommended",
+        "media_sync_folder": "Media sync folder",
+        "media_sync_folder_tip": "Copy all used media files continuously into one shared folder. Any custom sync provider can be pointed to that folder.",
         "bundle_media_files": "Bundle all media files",
-        "bundle_media_files_tip": "Copy the media files from all shows into one folder"
+        "bundle_media_files_tip": "Copy the media files from all shows and projects into one folder"
     },
     "audio": {
         "settings": "Audio settings",
         "playlists": "Playlists",
         "playlist_settings": "Playlist settings",
+        "open_audio_folder": "Open related audio folder",
+        "create_audio_folder": "Create audio folder",
         "custom_output": "Custom audio output",
         "mute_when_video_plays": "Mute when video plays",
         "allow_gaining": "Allow gaining",
@@ -316,8 +329,6 @@
         "autofill": "Autofill",
         "message": "Message",
         "message_tip": "Display something on all slides",
-        "auto_media": "Get meta from media content",
-        "override_output": "Override output style",
         "display_metadata": "Display metadata",
         "meta_template": "Metadata template",
         "text_divider": "Text separator",
@@ -367,6 +378,7 @@
     },
     "tabs": {
         "shows": "Shows",
+        "shows_info": "A show is made up of slides; it can be a song, presentation, media, scripture, and more.",
         "media": "Media",
         "overlays": "Overlays",
         "audio": "Audio",
@@ -479,6 +491,7 @@
         "slide_midi": "Slide MIDI input",
         "user_data_overwrite": "Found existing data",
         "connect": "Connect",
+        "cloud_sync": "Cloud sync",
         "cloud_update": "Syncing with cloud",
         "cloud_method": "Data location",
         "shortcuts": "Shortcuts",
@@ -493,6 +506,8 @@
         "manage_tags": "Manage tags",
         "sync_categories": "Sync categories",
         "effect_items": "Effect items",
+        "timeline": "Timeline",
+        "timecode": "Timecode",
         "initialize": "Welcome to FreeShow",
         "unsaved": "Are you sure you want to quit?",
         "cancel": "Cancel",
@@ -600,6 +615,7 @@
         "recolor": "Change color",
         "remove": "Remove",
         "remove_group": "Remove group from layout",
+        "remove_group_short": "Remove group",
         "choose_group": "Choose group",
         "goto_group": "Go to group",
         "active_outputs": "Active outputs",
@@ -610,10 +626,13 @@
         "unlink_pco": "Unlink from Planning Center",
         "import": "Import",
         "export": "Export",
+        "save_to_file": "Save to file",
         "import_calendar": "Import calendar",
         "imported": "Imported!",
         "duplicate": "Duplicate",
+        "duplicated": "Duplicated",
         "delete": "Delete",
+        "delete_slide_short": "Delete slide",
         "delete_slide": "Delete slide from show",
         "delete_group": "Delete group",
         "delete_all": "Delete all",
@@ -626,7 +645,9 @@
         "redo": "Redo",
         "cut": "Cut",
         "copy": "Copy",
+        "copied": "Copied",
         "paste": "Paste",
+        "pasted": "Pasted",
         "pasteAndMatchStyle": "Paste And Match Style",
         "selectAll": "Select All",
         "remove_selection": "Remove selection",
@@ -642,6 +663,7 @@
         "reset": "Reset",
         "create_template": "Create template",
         "project_template_tip": "Create a new project from this template",
+        "import_project_file": "Found a new project file. Would you like to import it?",
         "pdf_single_page": "Render as one document",
         "convert_to_images": "Convert to images",
         "converting": "Converting...",
@@ -770,6 +792,7 @@
         "start_playlist": "Start playlist",
         "playlist_next": "Next track in playlist",
         "start_metronome": "Start metronome",
+        "start_audio_effect": "Start audio effect",
         "id_start_timer": "Start timer",
         "start_slide_timers": "Start timers on active slide",
         "id_select_output_style": "Select output style",
@@ -789,6 +812,7 @@
         "override_category_action": "Override category action",
         "activate_on_startup": "Activate on startup",
         "activate_save": "Activate on save",
+        "activate_output_changed": "Activate when output changes",
         "activate_slide_clicked": "Activate on slide click",
         "activate_group_start": "Activate when group is started",
         "activate_video_starting": "Activate when video is starting",
@@ -819,15 +843,9 @@
         "seconds": "seconds",
         "empty": "empty"
     },
-    "recording": {
-        "remove": "Remove recording",
-        "tip": "Record and replay the timings of slides. Sync with an audio track on the first slide.",
-        "layout_changed": "Layout has changed since last recording!",
-        "audio_synced": "Synced with audio!",
-        "start": "Start slide recording",
-        "action_play": "Play slide recording",
-        "use_duration": "Use duration time",
-        "use_duration_tip": "Use duration time instead of timestamp time"
+    "timeline": {
+        "toggle_timeline": "Toggle timeline",
+        "start_time": "Start time"
     },
     "animate": {
         "change": "Change",
@@ -841,22 +859,19 @@
         "seconds": "seconds"
     },
     "cloud": {
-        "info": "Sync files with Google Drive for backups, or if you work on multiple computers.",
-        "tip_api": "You have to provide your own free Google API key so the program can automatically upload files to your Google Drive.",
-        "tip_how": "Don't know how to get one?",
-        "tip_guide": "Click here for a guide.",
+        "info": "Sync files to the cloud for backups or to access between multiple computers.",
         "enable": "Automatic sync on startup and close",
-        "disable_upload": "Disable uploading data",
-        "media_id": "Media path ID",
-        "google_drive_api": "Google API service account key",
-        "select_key": "Import keys file",
-        "update_key": "Update keys file",
-        "enable_custom_folder_id": "Use custom folder ID",
-        "main_folder": "Set main folder manually",
-        "media_folder": "Cloud media folder",
+        "read_only": "Read-only",
         "reconnect": "Reconnect",
         "sync": "Sync now",
-        "choose_method_tip": "There is existing data in the cloud. Please choose to either upload from local or download from cloud. The other location will be overwritten.",
+        "change_team": "Change team",
+        "choose_method_tip": "There is existing data in the cloud. What would you like to do?",
+        "merge_tip": "Keep the latest changes from both local and cloud data.",
+        "readonly_tip": "Merge cloud data with local data, but never upload local changes.",
+        "upload": "Upload",
+        "upload_tip": "Replace cloud data with local data initially, merge normally afterwards.",
+        "replace": "Download",
+        "replace_tip": "Replace local data with cloud data initially, merge normally afterwards.",
         "local": "Local",
         "syncing": "Syncing to cloud",
         "sync_complete": "Sync completed"
@@ -1060,7 +1075,8 @@
         "fahrenheit": "Fahrenheit",
         "longRange": "Long range",
         "media_item_tip": "Are you trying to use the media as a background?",
-        "convert_to_background": "Convert to background"
+        "convert_to_background": "Convert to background",
+        "convert_to_media_item": "Convert background to media item"
     },
     "items": {
         "text": "Textbox",
@@ -1123,10 +1139,10 @@
         "seconds": "Seconds",
         "from": "From",
         "to": "To",
+        "warn_early": "Early warning",
+        "warn_offset": "Seconds before end",
         "overflow": "Overflow when reached end",
-        "overflow_color": "Overflow color",
-        "overflow_blink": "Blink when overflowing",
-        "overflow_blink_offset": "Start blinking early",
+        "flash": "Flash",
         "preview": "Preview",
         "clock": "Clock",
         "event": "Event",
@@ -1276,6 +1292,7 @@
         "auto_group_numbers": "Auto assign group numbers",
         "shortcuts_on_slides": "Display shortcuts on slides",
         "transparent_slides": "Transparent slide preview",
+        "style_template_preview": "Use style template as slide preview",
         "full_colors": "High contrast group colors",
         "next_item_on_last_slide": "Arrow left/right changes project item on first/last slide",
         "slide_number_keys": "Play slides with number keys",
@@ -1359,7 +1376,8 @@
     },
     "output": {
         "state_inactive": "Inactive",
-        "state_locked": "Locked"
+        "state_locked": "Locked",
+        "disabled_layers": "Disabled layers"
     },
     "profile": {
         "profiles_hint": "Create multiple profiles/roles to limit certain users access to control/edit chosen parts of the program.",
@@ -1369,8 +1387,10 @@
         "write": "Write",
         "set_active": "Set as active",
         "choose_profile": "Choose a profile",
+        "change_profile": "Change profile",
         "choose_admin": "Only continue if you know what you are doing. Choose admin profile?",
-        "locked": "Your selected profile has restricted access to this!"
+        "locked": "Your selected profile has restricted access to this!",
+        "auto_open_last_used": "Auto open last used profile on startup"
     },
     "sort": {
         "sort_by": "Sort by",
@@ -1422,6 +1442,7 @@
         "verses_on_individual_lines": "Verses on individual lines",
         "divide_long_verses": "Split long verses",
         "split_long_verses_suffix": "Show letter suffix",
+        "tolerance": "Tolerance",
         "version": "Show version",
         "reference": "Show reference",
         "split_reference": "Split reference",
@@ -1429,6 +1450,7 @@
         "first_slide_reference": "Reference on first slide",
         "reference_at_bottom": "Move to bottom",
         "red_jesus": "Jesus words in red",
+        "show_all": "Show all",
         "search": "Search in the Bible"
     },
     "filter": {
@@ -1478,7 +1500,8 @@
         "blur": "Blur",
         "scale": "Scale",
         "spin": "Spin",
-        "slide": "Slide"
+        "slide": "Slide",
+        "fade_in_offset": "Fade in offset"
     },
     "easings": {
         "linear": "Linear",

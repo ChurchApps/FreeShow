@@ -1,6 +1,6 @@
 export function getIndexes<T>(array: T): number[] {
     if (!Array.isArray(array)) return []
-    return array.map(a => a.index).sort((a, b) => b - a)
+    return array.map((a) => a.index).sort((a, b) => b - a)
 }
 
 export function mover<T>(array: T, selected: number[], pos: number) {

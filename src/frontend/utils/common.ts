@@ -6,7 +6,7 @@ import { removeDuplicates } from "../components/helpers/array"
 import { getContrast } from "../components/helpers/color"
 import { getActiveOutputs, toggleOutputs } from "../components/helpers/output"
 import { sendMain } from "../IPC/main"
-import { activeTriggerFunction, autosave, currentWindow, disabledServers, drawer, errorHasOccurred, focusedArea, os, outputs, quickSearchActive, resized, serverData, theme, themes, toastMessages, version } from "../stores"
+import { activePopup, activeTriggerFunction, autosave, currentWindow, disabledServers, drawer, errorHasOccurred, focusedArea, os, outputs, quickSearchActive, resized, serverData, statusIndicator, theme, themes, toastMessages, version } from "../stores"
 import { convertAutosave } from "../values/autosave"
 import { send } from "./request"
 import { save } from "./save"
@@ -28,9 +28,23 @@ export function newToast(msg: string) {
     toastMessages.set(removeDuplicates([...get(toastMessages), msg]))
 }
 
+// set status indicator, set timeout in seconds (max 60 seconds)
+let statusTimeout: NodeJS.Timeout | null = null
+export function setStatus(id: string, timeout: number = 60) {
+    statusIndicator.set(id)
+
+    if (statusTimeout) clearTimeout(statusTimeout)
+    if (!timeout) return
+
+    statusTimeout = setTimeout(() => {
+        statusIndicator.set("")
+        statusTimeout = null
+    }, timeout * 1000)
+}
+
 // async wait (instead of timeouts)
 export function wait(ms: number) {
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
         setTimeout(() => {
             resolve("ended")
         }, Number(ms))
@@ -39,7 +53,7 @@ export function wait(ms: number) {
 
 // wait until input value is true
 export async function waitUntilValueIsDefined(value: () => any, intervalTime = 50, timeoutValue = 5000) {
-    return new Promise(async resolve => {
+    return new Promise(async (resolve) => {
         let currentValue = await value()
         if (currentValue) resolve(currentValue)
 
@@ -91,8 +105,8 @@ export function focusArea(e: any) {
 
     // custom area without select elems
     if (!id) {
-        const scriptureArea = e.target.closest(".scripture")
-        if (scriptureArea) focusedArea.set("scripture")
+        if (e.target.closest(".scripture")) focusedArea.set("scripture")
+        else if (e.target.closest(".timeline")) focusedArea.set("timeline")
     }
 }
 
@@ -112,7 +126,8 @@ export function startAutosave() {
 
     previousAutosave = Date.now()
     autosaveTimeout = setTimeout(() => {
-        save(false, { autosave: true })
+        const skip = get(activePopup) === "initialize" || get(activePopup) === "cloud_method"
+        if (!skip) save(false, { autosave: true })
         startAutosave()
     }, saveInterval)
 }
@@ -131,7 +146,7 @@ export const ERROR_FILTER = [
 ]
 export function logerror(err) {
     const msg = err.type === "unhandledrejection" ? err.reason?.message : err.message
-    if (!msg || ERROR_FILTER.find(a => msg.includes(a))) return
+    if (!msg || ERROR_FILTER.find((a) => msg.includes(a))) return
 
     const log: ErrorLog = {
         time: new Date(),
@@ -238,7 +253,7 @@ export function hasNewerUpdate(id: string, maxUpdatesMs = 0): Promise<boolean> {
         limited[id].pending(true)
     }
 
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
         limited[id] = {
             timeout: setTimeout(() => {
                 delete limited[id]

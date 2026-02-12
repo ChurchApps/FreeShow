@@ -79,7 +79,7 @@
     let firstTimerId: string = ""
     $: if (item.type === "timer" || id.includes("first_active_timer")) {
         firstTimerId = $activeTimers[0]?.id
-        if (!firstTimerId) firstTimerId = sortByName(keysToID($timers)).find(timer => timer.type !== "counter")?.id || ""
+        if (!firstTimerId) firstTimerId = sortByName(keysToID($timers)).find((timer) => timer.type !== "counter")?.id || ""
     }
 
     let itemStyle: string = ""
@@ -88,12 +88,18 @@
     function updateStyles() {
         const styles = getStyles(style)
         const textStyleKeys = ["line-height", "text-decoration"]
+        // For slide_text items with autosize, exclude font-size from container style
+        // to prevent CSS inheritance of 800px (MAX_FONT_SIZE) before autosize computes correct value
+        const isSlideTextWithAutosize = item?.type === "slide_text" && (item?.auto !== false || (item?.textFit && item?.textFit !== "none"))
 
         itemStyle = ""
         textStyle = ""
 
         Object.entries(styles).forEach(([key, value]) => {
             if (textStyleKeys.includes(key)) textStyle += `${key}: ${value};`
+            else if (key === "font-size" && isSlideTextWithAutosize) {
+                // Skip font-size for autosize items - let Textbox's autosize compute it
+            }
             else itemStyle += `${key}: ${value};`
         })
     }
@@ -235,5 +241,18 @@
     }
     .align :global(.item .align .lines) {
         text-align: var(--text-align);
+    }
+
+    /* phone view */
+    @media (max-width: 1000px) {
+        .label {
+            font-size: 24px;
+        }
+    }
+
+    @media (max-width: 500px) {
+        .label {
+            font-size: 18px;
+        }
     }
 </style>

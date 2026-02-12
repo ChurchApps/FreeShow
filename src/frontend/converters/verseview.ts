@@ -21,16 +21,16 @@ function createSlides({ slide, slide2 }: any) {
     const slides: any = {}
     const layout: any[] = []
 
-    ;[cdataString(slide), cdataString(slide2)].forEach(s =>
+    ;[cdataString(slide), cdataString(slide2)].forEach((s) =>
         s
             .split("<slide>")
-            .filter(a => Boolean(a.trim()))
-            .map(lines =>
+            .filter((a) => Boolean(a.trim()))
+            .map((lines) =>
                 lines
                     .replace(/<BR>/gi, "<br>")
                     .split("<br>")
-                    .map(line => line.trim())
-                    .filter(a => Boolean(a.trim()))
+                    .map((line) => line.trim())
+                    .filter((a) => Boolean(a.trim()))
             )
             .forEach((lines: string[]) => {
                 const id: string = uid()
@@ -70,10 +70,11 @@ export function convertVerseVIEW(data: any) {
             }
 
             const root = xml2json(content)
-
             if (!root) return
 
             const { songDB } = root
+            if (!songDB?.song) return
+
             const songs = Array.isArray(songDB.song) ? songDB.song : [songDB.song]
 
             for (const song of songs) {

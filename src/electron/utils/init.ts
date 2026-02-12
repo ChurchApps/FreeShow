@@ -2,7 +2,7 @@ import { app, screen, type BrowserWindow } from "electron"
 import path from "path"
 import { isProd, isWindows, setAutoProfile } from ".."
 import { catchErrors } from "../IPC/responsesMain"
-import { doesPathExist } from "./files"
+import { detectNewFiles, doesPathExist } from "./files"
 
 export function parseCommandLineArgs() {
     const result: { profile?: string } = {}
@@ -31,6 +31,8 @@ export function mainWindowInitialize() {
     // set app title to app name
     if (isWindows) app.setAppUserModelId(app.name)
 
+    detectNewFiles()
+
     if (!isProd) return
 
     catchErrors()
@@ -49,7 +51,7 @@ export function waitForBundle() {
     const CHECK_INTERVAL = 2 // every 2 seconds
     let tries = 0
 
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
         const interval = setInterval(() => {
             // Check if bundle file exists - old Rollup code, only production build for Vite
             if (doesPathExist(BUNDLE_PATH)) {
@@ -86,4 +88,27 @@ export function isWithinDisplayBounds(pos: { x: number; y: number }) {
         const area = display.workArea
         return result || (pos.x >= area.x && pos.y >= area.y && pos.x < area.x + area.width && pos.y < area.y + area.height)
     }, false)
+}
+
+// check if draggable top area of the window is visible and accessible on any display (to prevent windows from being inaccessible and unmovable)
+export function isDraggableAreaVisible(bounds: { x: number; y: number }, width: number) {
+    const displays = screen.getAllDisplays()
+    const TITLE_BAR_HEIGHT = 35 // approximated
+
+    return displays.some((display) => {
+        const area = display.workArea
+
+        // Check if title bar rectangle intersects with display work area
+        const windowLeft = bounds.x
+        const windowRight = bounds.x + width
+        const windowTop = bounds.y
+        const windowTitleBottom = bounds.y + TITLE_BAR_HEIGHT
+
+        const displayLeft = area.x
+        const displayRight = area.x + area.width
+        const displayTop = area.y
+        const displayBottom = area.y + area.height
+
+        return windowLeft < displayRight && windowRight > displayLeft && windowTop < displayBottom && windowTitleBottom > displayTop
+    })
 }

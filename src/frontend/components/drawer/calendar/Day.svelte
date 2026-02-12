@@ -26,7 +26,7 @@
         })
 
         // sort
-        tempEvents = tempEvents.filter(a => a.type === type)
+        tempEvents = tempEvents.filter((a) => a.type === type)
         currentEvents = tempEvents.sort(sortByTime)
     }
 

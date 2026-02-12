@@ -1,10 +1,10 @@
 <script lang="ts">
     import { uid } from "uid"
     import type { Tree } from "../../../types/Projects"
-    import { activeEdit, activeProject, activeRename, activeShow, drawer, focusMode, folders, labelsDisabled, openedFolders, projects, projectTemplates, projectView, saved, showRecentlyUsedProjects, sorted } from "../../stores"
+    import { activeProject, activeRename, drawer, focusMode, folders, labelsDisabled, openedFolders, projects, projectTemplates, projectView, showRecentlyUsedProjects, sorted } from "../../stores"
     import { translateText } from "../../utils/language"
     import { getAccess } from "../../utils/profile"
-    import { clone, keysToID, removeDuplicateValues, sortByName, sortByTimeNew } from "../helpers/array"
+    import { clone, keysToID, removeDuplicateValues, sortByName } from "../helpers/array"
     import { history } from "../helpers/history"
     import { getProjectName } from "../helpers/historyHelpers"
     import Icon from "../helpers/Icon.svelte"
@@ -15,6 +15,7 @@
     import MaterialButton from "../inputs/MaterialButton.svelte"
     import Autoscroll from "../system/Autoscroll.svelte"
     import DropArea from "../system/DropArea.svelte"
+    import { getRecentlyUsedProjects, openProject } from "./project"
     import ProjectContentList from "./ProjectContentList.svelte"
     import ProjectList from "./ProjectList.svelte"
 
@@ -34,7 +35,7 @@
     $: p = Object.entries($projects)
         .filter(([_, a]) => !a.deleted)
         .map(([id, project]) => ({ ...project, parent: $folders[project.parent] ? project.parent : "/", id, shows: [] as any }))
-    $: templates = sortByName(keysToID($projectTemplates)).filter(a => !a.deleted)
+    $: templates = sortByName(keysToID($projectTemplates)).filter((a) => !a.deleted)
 
     $: {
         let sortType = $sorted.projects?.type || "name"
@@ -57,7 +58,7 @@
         tree = [...(sortedFolders as any), ...sortedProjects]
 
         // update parents (if folders are missing)
-        tree = tree.map(a => ({ ...a, parent: !$folders[a.parent] || $folders[a.parent].deleted ? "/" : a.parent }))
+        tree = tree.map((a) => ({ ...a, parent: !$folders[a.parent] || $folders[a.parent].deleted ? "/" : a.parent }))
 
         folderSorted = []
         sortFolders()
@@ -66,8 +67,8 @@
 
     let folderSorted: Tree[] = []
     function sortFolders(parent = "/", index = 0, path = "") {
-        let filtered = tree.filter(a => a.parent === parent).map(a => ({ ...a, index, path }))
-        filtered.forEach(folder => {
+        let filtered = tree.filter((a) => a.parent === parent).map((a) => ({ ...a, index, path }))
+        filtered.forEach((folder) => {
             const rootParentId = path.split("/")[0] || folder.id
             if (profile[rootParentId] === "none") return
 
@@ -85,7 +86,7 @@
 
     function createProject(folder = false) {
         let parent = interactedFolder || ($folders[$projects[$activeProject || ""]?.parent] ? $projects[$activeProject || ""]?.parent || "/" : "/")
-        if (profile[parent] === "none" || tree.find(a => a.id === parent)?.readOnly) parent = "/"
+        if (profile[parent] === "none" || tree.find((a) => a.id === parent)?.readOnly) parent = "/"
         history({ id: "UPDATE", newData: { replace: { parent } }, location: { page: "show", id: `project${folder ? "_folder" : ""}` } })
     }
 
@@ -97,7 +98,7 @@
         setTimeout(() => {
             if (!listScrollElem) return
             const projectElements = [...(listScrollElem.querySelector(".fullTree")?.querySelectorAll("button") || [])]
-            const activeProject = projectElements.findLast(a => a?.classList.contains("isActive"))
+            const activeProject = projectElements.findLast((a) => a?.classList.contains("isActive"))
             if (!activeProject) return
 
             listOffset = Math.max(0, ((activeProject.closest(".projectItem") as HTMLElement)?.offsetTop || 0) + listScrollElem.offsetTop - ($drawer.height < 400 ? 120 : 20))
@@ -116,16 +117,8 @@
     else recentlyUsedList = []
 
     function lastUsed() {
-        const FIVE_DAYS = 432000000
-        // get all projects used within the last five days
-        recentlyUsedList = keysToID($projects).filter(a => !a.archived && a.used && Date.now() - a.used < FIVE_DAYS)
-        // last used first
-        recentlyUsedList = sortByTimeNew(recentlyUsedList, "used").reverse()
-
-        if (recentlyUsedList.length < 2) {
-            recentlyUsedList = []
-            showRecentlyUsedProjects.set(false)
-        }
+        recentlyUsedList = getRecentlyUsedProjects()
+        if (!recentlyUsedList.length) showRecentlyUsedProjects.set(false)
     }
 
     // most recently interacted with folder (to put new project inside)
@@ -135,7 +128,7 @@
     $: if ($openedFolders) checkInteraction()
     function checkInteraction() {
         if ($openedFolders.length > previouslyOpened.length) {
-            $openedFolders.forEach(folderId => {
+            $openedFolders.forEach((folderId) => {
                 if (!previouslyOpened.includes(folderId)) interactedFolder = folderId
             })
         }
@@ -167,7 +160,7 @@
 
     let editActive = false
     function rename(value: string, id: string) {
-        if (editActive) return
+        // if (editActive) return
 
         history({ id: "UPDATE", newData: { key: "name", data: value }, oldData: { id }, location: { page: "show", id: "project_template" } })
     }
@@ -177,30 +170,7 @@
     function openRecentlyUsed(e: any, id: string) {
         if (e.detail.target.closest(".edit") || e.detail.target.querySelector(".edit")) return
 
-        // set back to saved if opening, as project used time is changed
-        if ($saved) setTimeout(() => saved.set(true), 10)
-
-        // set last used
-        showRecentlyUsedProjects.set(false)
-        projects.update(a => {
-            if (a[id]) a[id].used = Date.now()
-            return a
-        })
-
-        projectView.set(false)
-        activeProject.set(id)
-
-        // select first
-        if (!$projects[id]?.shows?.length) return
-        let showRef = $projects[id].shows[0]
-        if (!showRef) return
-
-        activeShow.set({ ...showRef, index: 0 })
-
-        let type = showRef.type
-        // same as ShowButton
-        if (type === "image" || type === "video") activeEdit.set({ id: showRef.id, type: "media", items: [] })
-        else if ($activeEdit.id) activeEdit.set({ type: "show", slide: 0, items: [], showId: showRef.id })
+        openProject(id, !e.detail.alt)
     }
 </script>
 
@@ -212,7 +182,7 @@
             {#if !$focusMode}
                 <MaterialButton style="flex: 1;padding: 0.3em 0.5em;" icon="back" title="remote.projects" on:click={back} />
                 <!-- {recentlyUsedList.length ? '' : 'border-bottom: 1px solid var(--secondary);'} -->
-                <div style="flex: 7;max-width: calc(100% - 43px);" class="header context #projectTab _close" title={translateText("remote.project: ") + ($projects[$activeProject || ""]?.name || "")}>
+                <div style="flex: 7;max-width: calc(100% - 43px);" class="header {recentlyUsedList.length ? '' : 'context #projectTab'}" data-title={translateText("remote.project: ") + `<b>${$projects[$activeProject || ""]?.name || ""}</b>`}>
                     <!-- <Icon id="project" white right /> -->
                     {#if recentlyUsedList.length}
                         <p style="font-style: italic;opacity: 0.7;"><T id="info.recently_used" /></p>
@@ -222,7 +192,7 @@
                 </div>
             {/if}
         {:else}
-            <div class="header context #projectsTab">
+            <div class="header context #projectsTab" data-title={translateText("<b>remote.projects</b><br>guide_description.project_manage<br>guide_description.project_create")}>
                 <!-- <Icon id="folder" white right /> -->
                 <p><T id="remote.projects" /></p>
             </div>
@@ -232,7 +202,7 @@
     {#if recentlyUsedList.length}
         <div id="projectsArea" class="list projects" style="overflow: auto;">
             {#each recentlyUsedList as project}
-                <MaterialButton style="width: 100%;padding: 0.08rem 0.65rem;font-weight: normal;" on:click={e => openRecentlyUsed(e, project.id)} isActive={$activeProject === project.id} tab>
+                <MaterialButton style="width: 100%;padding: 0.08rem 0.65rem;font-weight: normal;" title="actions.id_select_project: <b>{project.name}</b>" on:click={(e) => openRecentlyUsed(e, project.id)} isActive={$activeProject === project.id} tab>
                     <Icon id="project" />
                     <HiddenInput value={project.name} id={"project_" + project.id} allowEdit={false} />
                 </MaterialButton>
@@ -249,7 +219,7 @@
             <FloatingInputs>
                 <MaterialButton icon="folder" title="new.folder" on:click={() => createProject(true)} white />
                 <div class="divider"></div>
-                <MaterialButton icon="add" title="new.project" on:click={() => createProject()}>
+                <MaterialButton icon="add" title="<b>new.project</b><br>tooltip.project" on:click={() => createProject()}>
                     {#if !$labelsDisabled}<T id="new.project" />{/if}
                 </MaterialButton>
             </FloatingInputs>
@@ -260,9 +230,9 @@
                 <div class="title">{translateText("tabs.templates")}</div>
                 <div class="scroll">
                     {#each templates as project}
-                        <MaterialButton id={project.id} style="width: 100%;padding: 0.1rem 0.65rem;font-weight: normal;" on:click={e => createFromTemplate(e, project.id)} class="context #project_template{readOnly ? '_readonly' : ''}" isActive={$activeProject === project.id} tab>
+                        <MaterialButton id={project.id} style="width: 100%;padding: 0.1rem 0.65rem;font-weight: normal;" on:click={(e) => createFromTemplate(e, project.id)} class="context #project_template{readOnly ? '_readonly' : ''}" isActive={$activeProject === project.id} tab>
                             <Icon id="templates" white={$projects[project.id]?.archived} />
-                            <HiddenInput value={project.name} id={"project_" + project.id} on:edit={e => rename(e.detail.value, project.id)} bind:edit={editActive} />
+                            <HiddenInput value={project.name} id={"project_" + project.id} on:edit={(e) => rename(e.detail.value, project.id)} bind:edit={editActive} />
                         </MaterialButton>
                     {/each}
                 </div>

@@ -30,7 +30,7 @@
 
         currentStream[key] = value
 
-        audioStreams.update(a => {
+        audioStreams.update((a) => {
             a[streamId] = currentStream
             return a
         })
@@ -52,13 +52,13 @@
 
 {#if dropdown}
     {#if sortedStreams.length}
-        <Dropdown options={sortedStreams} value={sortedStreams.find(a => a.id === streamId)?.name || "—"} on:click={changeStream} />
+        <Dropdown options={sortedStreams} value={sortedStreams.find((a) => a.id === streamId)?.name || "—"} on:click={changeStream} />
     {:else}
         <Center faded>
             <T id="empty.general" />
         </Center>
     {/if}
 {:else}
-    <MaterialTextInput label="inputs.name" value={currentStream.name} on:change={e => updateValue(e.detail, "name")} autofocus={!currentStream.name} />
-    <MaterialTextInput label="variables.value" value={currentStream.value} placeholder="http://stream-url" on:change={e => updateValue(e.detail, "value")} />
+    <MaterialTextInput label="inputs.name" value={currentStream.name} on:change={(e) => updateValue(e.detail, "name")} autofocus={!currentStream.name} />
+    <MaterialTextInput label="variables.value" value={currentStream.value} placeholder="http://stream-url" on:change={(e) => updateValue(e.detail, "value")} />
 {/if}

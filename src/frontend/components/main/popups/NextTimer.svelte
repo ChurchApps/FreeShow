@@ -14,7 +14,7 @@
 
     let value = $popupData.value || 0
     let layoutRef = getLayoutRef()
-    let allActiveSlides = layoutRef.filter(a => !a.data.disabled)
+    let allActiveSlides = layoutRef.filter((a) => !a.data.disabled)
     let indexes = $popupData.indexes || layoutRef.map((_, i) => i)
     let allSlides = !$popupData.indexes?.length
 
@@ -34,7 +34,7 @@
         if (value) value = value
 
         if (isProjectItem) {
-            projects.update(a => {
+            projects.update((a) => {
                 const index = $activeShow?.index ?? -1
                 const projectId = $activeProject
                 if (!projectId || !a[projectId]?.shows?.[index] || index < 0) return a
@@ -57,7 +57,7 @@
             if (goToStartRefs.length === 1) {
                 let showId = $activeShow?.id || ""
                 let layoutId = _show().get("settings.activeLayout")
-                showsCache.update(a => {
+                showsCache.update((a) => {
                     let ref = goToStartRefs[0]
                     if (!ref) return a
 
@@ -78,7 +78,7 @@
     function getTotalTime() {
         totalTime = allActiveSlides.reduce((value, ref) => (value += Number(ref.data.nextTimer || 0)), 0)
 
-        let allValues = allActiveSlides.map(ref => Number(ref.data.nextTimer || 0))
+        let allValues = allActiveSlides.map((ref) => Number(ref.data.nextTimer || 0))
         appliedToSlides = [...new Set(allValues)].length === 1 && allValues[0] === allTime ? allTime : 0
     }
 
@@ -90,7 +90,7 @@
 </script>
 
 {#if allSlides}
-    <MaterialNumberInput style="margin-bottom: 10px;" label="timer.seconds" value={allTime} max={3600} on:change={e => (allTime = e.detail)} />
+    <MaterialNumberInput style="margin-bottom: 10px;" label="timer.seconds" value={allTime} max={3600} on:change={(e) => (allTime = e.detail)} />
 
     <!-- reset if next timer applied, but not same on all slides ?? (set input to 0) -->
     {#if isProjectItem ? !allTime || allTime === value : totalTime && (appliedToSlides === allTime || allTime === 0)}

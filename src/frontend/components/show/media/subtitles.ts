@@ -6,7 +6,7 @@ export function SRTtoVTT(srt: string) {
     let vtt = "WEBVTT\n\n"
     const srtBlocks = srt.split("\n\n")
 
-    srtBlocks.forEach(block => {
+    srtBlocks.forEach((block) => {
         const lines = block.split("\n")
         if (lines.length < 2) return
 

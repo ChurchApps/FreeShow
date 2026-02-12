@@ -7,7 +7,7 @@
     import { keysToID } from "../../../common/util/helpers"
     import { translate } from "../../util/helpers"
     import { send } from "../../util/socket"
-    import { dictionary, isCleared, scriptureCache, scriptures, scriptureSearchResults, scriptureViewList, outSlide, outShow, openedScripture, collectionId, selectedTranslationIndex } from "../../util/stores"
+    import { dictionary, isCleared, scriptureCache, scriptures, scriptureSearchResults, scriptureViewList, scriptureMultiSelect, selectedVerses, outSlide, outShow, openedScripture, collectionId, selectedTranslationIndex } from "../../util/stores"
     import Clear from "../show/Clear.svelte"
     import ScriptureContent from "./ScriptureContent.svelte"
     import { sanitizeVerseText } from "../../../../common/scripture/sanitizeVerseText"
@@ -17,6 +17,12 @@
 
     // Set default to list mode in tablet
     $: if (tablet) scriptureViewList.set(true)
+
+    // Multi-select is list-only. If the user switches to grid mode, exit multi-select.
+    $: if (!$scriptureViewList && $scriptureMultiSelect) {
+        scriptureMultiSelect.set(false)
+        selectedVerses.set([])
+    }
     export let searchValueFromDrawer: string = ""
 
     const dispatch = createEventDispatcher<{ "search-clear": void }>()
@@ -42,19 +48,19 @@
     $: scripturesLoaded = Object.keys($scriptures).length > 0
 
     $: allScripturesData = Object.keys($scriptures)
-        .map(sid => ({
+        .map((sid) => ({
             id: sid,
             data: $scriptureCache[sid],
             name: ($scriptures[sid]?.customName || $scriptures[sid]?.name || sid) as string
         }))
-        .filter(s => s.data)
+        .filter((s) => s.data)
 
     $: isCollection = !!($collectionId && $scriptures[$collectionId]?.collection)
 
     // Filter to only collection versions when viewing a collection
     function getScriptureData(versionId: string) {
         return (
-            allScripturesData.find(s => s.id === versionId) || {
+            allScripturesData.find((s) => s.id === versionId) || {
                 id: versionId,
                 data: $scriptureCache[versionId],
                 name: ($scriptures[versionId]?.customName || $scriptures[versionId]?.name || versionId) as string
@@ -62,7 +68,7 @@
         )
     }
 
-    $: collectionScripturesData = isCollection && $collectionId ? ($scriptures[$collectionId]?.collection?.versions || []).map(getScriptureData).filter(s => s.id) : allScripturesData
+    $: collectionScripturesData = isCollection && $collectionId ? ($scriptures[$collectionId]?.collection?.versions || []).map(getScriptureData).filter((s) => s.id) : allScripturesData
 
     // Toggle through translations in collection: 0 -> 1 -> ... -> null (all) -> 0
     function toggleTranslation() {
@@ -160,11 +166,11 @@
     // This prevents expensive filtering/sorting when user is already browsing a bible
     $: showScripturePicker = !tablet && !$openedScripture && scripturesLoaded
     $: scriptureEntries = showScripturePicker || (tablet && !$openedScripture) ? keysToID($scriptures).map((a: any) => ({ ...a, icon: iconForScripture(a) })) : []
-    $: favoritesList = scriptureEntries.length ? sortByName(scriptureEntries.filter(a => a.favorite)) : []
-    $: favoriteIds = new Set(favoritesList.map(a => a.id))
-    $: collectionList = scriptureEntries.length ? sortByName(scriptureEntries.filter(a => a.collection && !favoriteIds.has(a.id))) : []
-    $: localBibles = scriptureEntries.length ? sortByName(scriptureEntries.filter(a => !a.collection && !a.api && !favoriteIds.has(a.id))) : []
-    $: apiBibles = scriptureEntries.length ? sortByName(scriptureEntries.filter(a => !a.collection && a.api && !favoriteIds.has(a.id))) : []
+    $: favoritesList = scriptureEntries.length ? sortByName(scriptureEntries.filter((a) => a.favorite)) : []
+    $: favoriteIds = new Set(favoritesList.map((a) => a.id))
+    $: collectionList = scriptureEntries.length ? sortByName(scriptureEntries.filter((a) => a.collection && !favoriteIds.has(a.id))) : []
+    $: localBibles = scriptureEntries.length ? sortByName(scriptureEntries.filter((a) => !a.collection && !a.api && !favoriteIds.has(a.id))) : []
+    $: apiBibles = scriptureEntries.length ? sortByName(scriptureEntries.filter((a) => !a.collection && a.api && !favoriteIds.has(a.id))) : []
 
     type ScriptureSection = {
         id: string
@@ -189,10 +195,10 @@
     }
 
     function next() {
-        scriptureContentRef?.forward?.()
+        send("API:scripture_next")
     }
     function previous() {
-        scriptureContentRef?.backward?.()
+        send("API:scripture_previous")
     }
 
     // UI control visibility
@@ -239,7 +245,6 @@
     type SearchItem = { reference: string; referenceFull: string; verseText: string }
     let searchResults: SearchItem[] = []
     let searchResult: SearchItem = { reference: "", referenceFull: "", verseText: "" }
-    let isApiBible = false
     let usingExternalSearch = false
     let awaitingExternalClear = false
 
@@ -258,9 +263,8 @@
         debouncedSearchValue = searchValue
     })
 
-    $: isApiBible = !!($openedScripture && $scriptures[$openedScripture]?.api === true)
     // Use debounced value for actual search - prevents blocking UI on every keystroke
-    $: updateSearch(debouncedSearchValue, $scriptureCache, $openedScripture, isApiBible)
+    $: updateSearch(debouncedSearchValue, $scriptureCache, $openedScripture, !!($openedScripture && $scriptures[$openedScripture]?.api === true))
     $: handleApiSearchResults($scriptureSearchResults, debouncedSearchValue, $openedScripture)
     $: updateSearchResultsWithLoadedVerses($scriptureCache, searchResults, $openedScripture)
 
@@ -299,139 +303,26 @@
         searchInput.select()
     }
 
-    function formatBookSearch(search: string): string {
-        return search
-            .toLowerCase()
-            .replace(/\s/g, "")
-            .replace(/\./g, "")
-            .replace(/[áàâã]/g, "a")
-            .replace(/[éèê]/g, "e")
-            .replace(/[íìî]/g, "i")
-            .replace(/[óòôõ]/g, "o")
-            .replace(/[úùû]/g, "u")
-            .replace(/ç/g, "c")
-    }
+    // Normalize book name for search (handles accented characters, spaces, dots)
+    const normalizeBookName = (name: string) => (name || "").toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "").replace(/\s/g, "").replace(/\./g, "")
 
-    // Common biblical book abbreviations
-    const BOOK_ABBREVIATIONS: Record<string, string> = {
-        jh: "john",
-        jn: "john",
-        jo: "john",
-        gen: "genesis",
-        ex: "exodus",
-        exo: "exodus",
-        lev: "leviticus",
-        num: "numbers",
-        deut: "deuteronomy",
-        dt: "deuteronomy",
-        josh: "joshua",
-        judg: "judges",
-        ru: "ruth",
-        sam: "samuel",
-        "1sam": "1samuel",
-        "2sam": "2samuel",
-        kg: "kings",
-        kgs: "kings",
-        "1kg": "1kings",
-        "1kgs": "1kings",
-        "2kg": "2kings",
-        "2kgs": "2kings",
-        chr: "chronicles",
-        "1chr": "1chronicles",
-        "2chr": "2chronicles",
-        ezr: "ezra",
-        neh: "nehemiah",
-        est: "esther",
-        ps: "psalms",
-        psa: "psalms",
-        prov: "proverbs",
-        pr: "proverbs",
-        ecc: "ecclesiastes",
-        eccl: "ecclesiastes",
-        song: "songofsongs",
-        ss: "songofsongs",
-        isa: "isaiah",
-        is: "isaiah",
-        jer: "jeremiah",
-        lam: "lamentations",
-        ezek: "ezekiel",
-        ez: "ezekiel",
-        dan: "daniel",
-        hos: "hosea",
-        joe: "joel",
-        am: "amos",
-        ob: "obadiah",
-        jon: "jonah",
-        mic: "micah",
-        nah: "nahum",
-        hab: "habakkuk",
-        zeph: "zephaniah",
-        zep: "zephaniah",
-        hag: "haggai",
-        zech: "zechariah",
-        zec: "zechariah",
-        mal: "malachi",
-        mt: "matthew",
-        matt: "matthew",
-        mk: "mark",
-        lk: "luke",
-        luk: "luke",
-        joh: "john",
-        act: "acts",
-        rom: "romans",
-        cor: "corinthians",
-        "1cor": "1corinthians",
-        "2cor": "2corinthians",
-        gal: "galatians",
-        eph: "ephesians",
-        phil: "philippians",
-        php: "philippians",
-        col: "colossians",
-        thess: "thessalonians",
-        thes: "thessalonians",
-        "1thess": "1thessalonians",
-        "1thes": "1thessalonians",
-        "2thess": "2thessalonians",
-        "2thes": "2thessalonians",
-        tim: "timothy",
-        "1tim": "1timothy",
-        "2tim": "2timothy",
-        tit: "titus",
-        philem: "philemon",
-        phlm: "philemon",
-        heb: "hebrews",
-        jas: "james",
-        jam: "james",
-        pet: "peter",
-        pt: "peter",
-        "1pet": "1peter",
-        "1pt": "1peter",
-        "2pet": "2peter",
-        "2pt": "2peter",
-        jude: "jude",
-        rev: "revelation",
-        rv: "revelation"
-    }
+    // Regex for matching scripture references: "Book 3:16", "Book 3 16", "Book 3.16", "Book 3,16", "Book 1:1-3"
+    const REFERENCE_REGEX = /^(.+?)\s+(\d+)(?:[:.,]\s*(\d+)|\s+(\d+))?(?:-(\d+))?/
 
-    function findBook(books: any[], value: string): any {
-        const search = formatBookSearch(value)
-
-        // First try exact matches and common abbreviations
-        const exactMatch = books.find(book => {
-            const bookName = formatBookSearch(book.name)
-            if (bookName === search) return true
-
-            // Handle common abbreviations
-            const expandedName = BOOK_ABBREVIATIONS[search]
-            if (expandedName && bookName.includes(expandedName)) return true
-
-            return false
-        })
-
+    // Find a book in the books array using normalized search with Unicode normalization
+    function findBookInArray(books: any[], value: string): any {
+        const normalized = normalizeBookName(value)
+        
+        // First try exact match
+        const exactMatch = books.find((book: any) => normalizeBookName(book.name) === normalized)
         if (exactMatch) return exactMatch
-
-        // Then try partial matches (book name starts with search)
-        return books.find(book => formatBookSearch(book.name).startsWith(search))
+        
+        // Then try starts with
+        const startsWithMatch = books.find((book: any) => normalizeBookName(book.name).startsWith(normalized))
+        if (startsWithMatch) return startsWithMatch
+        
+        // Finally try contains
+        return books.find((book: any) => normalizeBookName(book.name).includes(normalized))
     }
 
     function findChapter(book: any, value: string): any {
@@ -462,7 +353,7 @@
         for (let i = 0; i < words.length; i++) {
             // Single word
             const singleWord = words[i]
-            const book = findBook(books, singleWord)
+            const book = findBookInArray(books, singleWord)
             if (book) {
                 const textTerm = words
                     .filter((_, idx) => idx !== i)
@@ -476,7 +367,7 @@
             // Two words
             if (i < words.length - 1) {
                 const twoWords = `${words[i]} ${words[i + 1]}`
-                const book2 = findBook(books, twoWords)
+                const book2 = findBookInArray(books, twoWords)
                 if (book2) {
                     const textTerm = words
                         .filter((_, idx) => idx !== i && idx !== i + 1)
@@ -491,7 +382,7 @@
             // Three words
             if (i < words.length - 2) {
                 const threeWords = `${words[i]} ${words[i + 1]} ${words[i + 2]}`
-                const book3 = findBook(books, threeWords)
+                const book3 = findBookInArray(books, threeWords)
                 if (book3) {
                     const textTerm = words
                         .filter((_, idx) => idx !== i && idx !== i + 1 && idx !== i + 2)
@@ -517,7 +408,7 @@
         const searchLower = searchTerm.toLowerCase()
         const booksToSearch = filterBook ? [filterBook] : books
 
-        booksToSearch.forEach(book => {
+        booksToSearch.forEach((book) => {
             book.chapters?.forEach((chapter: any) => {
                 chapter.verses?.forEach((verse: any) => {
                     const verseContent = sanitizeVerseText(verse.text || "")
@@ -556,20 +447,20 @@
 
             if (!scripture?.books) {
                 // Books not loaded yet, use API search as fallback
-                const referenceMatch = searchVal.match(/^(.+?)\s+(\d+)(?:[:.,]\s*(\d+)|\s+(\d+))?(?:-(\d+))?/)
+                const referenceMatch = searchVal.match(REFERENCE_REGEX)
                 const searchType = referenceMatch ? "reference" : "text"
                 send("SEARCH_SCRIPTURE", { id: openedScriptureId, searchTerm: searchVal, searchType })
                 return
             }
 
             const books = scripture.books
-            const referenceMatch = searchVal.match(/^(.+?)\s+(\d+)(?:[:.,]\s*(\d+)|\s+(\d+))?(?:-(\d+))?/)
+            const referenceMatch = searchVal.match(REFERENCE_REGEX)
 
             if (referenceMatch) {
                 const [, bookPart, chapterPart, versePart1, versePart2] = referenceMatch
                 const versePart = versePart1 || versePart2
 
-                const book = findBook(books, bookPart)
+                const book = findBookInArray(books, bookPart)
                 if (book) {
                     const chapterNumber = parseInt(chapterPart, 10)
                     const verseNumber = versePart ? parseInt(versePart, 10) : null
@@ -620,36 +511,36 @@
                             }
                             searchResults = [searchResult]
 
-                            // Only send request if we haven't already failed on this chapter
-                            if (book.keyName && !failedChapterRequests.has(requestKey)) {
-                                send("GET_SCRIPTURE", {
-                                    id: openedScriptureId,
-                                    bookKey: book.keyName,
-                                    chapterKey: chapterNumber,
-                                    bookIndex: book.number - 1,
-                                    chapterIndex: chapterNumber - 1
-                                })
-                            }
-                            return
-                        } else if (chapterNumber) {
-                            searchResult = {
-                                reference: `${book.number}.${chapterNumber}.1`,
-                                referenceFull: `${book.name} ${chapterNumber}`,
-                                verseText: ""
-                            }
-                            searchResults = [searchResult]
+                        // Only send request if we haven't already failed on this chapter
+                        if (book.keyName && !failedChapterRequests.has(requestKey)) {
+                            send("GET_SCRIPTURE", {
+                                id: openedScriptureId,
+                                bookKey: book.keyName,
+                                chapterKey: chapterNumber,
+                                bookIndex: book.number - 1,
+                                chapterIndex: chapterNumber - 1
+                            })
+                        }
+                        return
+                    } else if (chapterNumber) {
+                        searchResult = {
+                            reference: `${book.number}.${chapterNumber}.1`,
+                            referenceFull: `${book.name} ${chapterNumber}`,
+                            verseText: ""
+                        }
+                        searchResults = [searchResult]
 
-                            // Only send request if we haven't already failed on this chapter
-                            if (book.keyName && !failedChapterRequests.has(requestKey)) {
-                                send("GET_SCRIPTURE", {
-                                    id: openedScriptureId,
-                                    bookKey: book.keyName,
-                                    chapterKey: chapterNumber,
-                                    bookIndex: book.number - 1,
-                                    chapterIndex: chapterNumber - 1
-                                })
-                            }
-                            return
+                        // Only send request if we haven't already failed on this chapter
+                        if (book.keyName && !failedChapterRequests.has(requestKey)) {
+                            send("GET_SCRIPTURE", {
+                                id: openedScriptureId,
+                                bookKey: book.keyName,
+                                chapterKey: chapterNumber,
+                                bookIndex: book.number - 1,
+                                chapterIndex: chapterNumber - 1
+                            })
+                        }
+                        return
                         }
                     }
                 }
@@ -683,14 +574,13 @@
         const books = scripture.books
 
         // Try to parse as scripture reference first
-        // Matches: "John 3:16", "John 3 16", "John 3.16", "John 3,16", "Gen 1:1-3"
-        const referenceMatch = searchVal.match(/^(.+?)\s+(\d+)(?:[:.,]\s*(\d+)|\s+(\d+))?(?:-(\d+))?/)
+        const referenceMatch = searchVal.match(REFERENCE_REGEX)
 
         if (referenceMatch) {
             const [, bookPart, chapterPart, versePart1, versePart2] = referenceMatch
             const versePart = versePart1 || versePart2 // Handle both patterns
 
-            const book = findBook(books, bookPart)
+            const book = findBookInArray(books, bookPart)
             if (book) {
                 const chapter = findChapter(book, chapterPart)
                 if (chapter) {
@@ -729,11 +619,11 @@
         if (combinedQuery.book && combinedQuery.textTerm.length >= 2) {
             // Search filtered to specific book
             const textResults = searchInBible(books, combinedQuery.textTerm, combinedQuery.book)
-            searchResults = textResults.map(r => ({ reference: r.reference, referenceFull: r.referenceFull, verseText: r.verseText }))
+            searchResults = textResults.map((r) => ({ reference: r.reference, referenceFull: r.referenceFull, verseText: r.verseText }))
         } else {
             // Regular text search across all books
             const textResults = searchInBible(books, searchVal)
-            searchResults = textResults.map(r => ({ reference: r.reference, referenceFull: r.referenceFull, verseText: r.verseText }))
+            searchResults = textResults.map((r) => ({ reference: r.reference, referenceFull: r.referenceFull, verseText: r.verseText }))
         }
 
         if (searchResults.length > 0) {
@@ -812,9 +702,22 @@
         // Close search first so ScriptureContent component is rendered
         openScriptureSearch = false
         searchValue = ""
+        debouncedSearchValue = ""
+        
+        // Clear search results
+        searchResults = []
+        searchResult = { reference: "", referenceFull: "", verseText: "" }
+        scriptureSearchResults.set(null)
+        
+        // In tablet mode, also clear external search if active
+        if (tablet && usingExternalSearch) {
+            usingExternalSearch = false
+            awaitingExternalClear = true
+            dispatch("search-clear")
+        }
 
         // Send the scripture reference to display
-        send("API:start_scripture", { id: collectionId || openedScripture, reference: ref })
+        send("API:start_scripture", { id: $collectionId || $openedScripture, reference: ref })
 
         // Wait for next tick to ensure component is rendered, then navigate
         setTimeout(() => {
@@ -919,7 +822,7 @@
             searchResults = validResults
 
             if (searchResult.reference) {
-                const updatedResult = validResults.find(r => r.reference === searchResult.reference)
+                const updatedResult = validResults.find((r) => r.reference === searchResult.reference)
                 if (updatedResult) {
                     searchResult = updatedResult
                 } else if (!searchResult.verseText) {
@@ -933,8 +836,7 @@
         if (!searchTerm.trim()) return text
 
         // Don't highlight if it looks like a scripture reference
-        const referenceMatch = searchTerm.match(/^(.+?)\s+(\d+)(?:[:.,]\s*(\d+)|\s+(\d+))?(?:-(\d+))?/)
-        if (referenceMatch) return text
+        if (searchTerm.match(REFERENCE_REGEX)) return text
 
         const regex = new RegExp(`(${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi")
         return text.replace(regex, '<mark style="background-color: #ffeb3b; color: #000; padding: 0 2px;">$1</mark>')
@@ -963,7 +865,7 @@
         <div class="search-scroll" style="flex: 1; overflow-y: auto; margin: 0.5rem 0;">
             {#if searchResults.length > 0}
                 {#each searchResults.slice(0, 20) as result}
-                    <div class="verse" role="button" tabindex="0" on:click={() => playSearchVerse(result.reference)} on:keydown={e => (e.key === "Enter" ? playSearchVerse(result.reference) : null)} style="margin-bottom: 0.5rem; cursor: pointer; padding: 0.5rem; border: 1px solid #333; border-radius: 0.25rem;">
+                    <div class="verse" role="button" tabindex="0" on:click={() => playSearchVerse(result.reference)} on:keydown={(e) => (e.key === "Enter" ? playSearchVerse(result.reference) : null)} style="margin-bottom: 0.5rem; cursor: pointer; padding: 0.5rem; border: 1px solid #333; border-radius: 0.25rem;">
                         <b style="color: white;">{result.referenceFull}</b>
                         <span style="display: block; margin-top: 0.25rem;">{@html highlightSearchTerm(result.verseText, searchValue)}</span>
                     </div>
@@ -1012,7 +914,7 @@
                     <!-- Search Results for Tablet Mode -->
                     <div class="tablet-search-results">
                         {#each searchResults.slice(0, 50) as result}
-                            <div class="verse search-result" role="button" tabindex="0" on:click={() => playSearchVerse(result.reference)} on:keydown={e => (e.key === "Enter" ? playSearchVerse(result.reference) : null)}>
+                            <div class="verse search-result" role="button" tabindex="0" on:click={() => playSearchVerse(result.reference)} on:keydown={(e) => (e.key === "Enter" ? playSearchVerse(result.reference) : null)}>
                                 <b style="color: white;">{result.referenceFull}</b>
                                 <span style="display: block; margin-top: 0.25rem;">{@html highlightSearchTerm(result.verseText, searchValue)}</span>
                             </div>
@@ -1028,7 +930,7 @@
                         No results found for "{searchValue}"
                     </div>
                 {:else}
-                    <ScriptureContentTablet id={$collectionId || $openedScripture} scripture={$scriptureCache[$openedScripture]} scriptures={collectionScripturesData} {isCollection} selectedTranslationIndex={$selectedTranslationIndex} bind:currentBook bind:currentChapter bind:currentVerse bind:this={scriptureContentRef} />
+                    <ScriptureContentTablet id={$collectionId || $openedScripture} openedScriptureId={$openedScripture} scripture={$scriptureCache[$openedScripture]} scriptures={collectionScripturesData} {isCollection} selectedTranslationIndex={$selectedTranslationIndex} bind:currentBook bind:currentChapter bind:currentVerse bind:this={scriptureContentRef} />
                 {/if}
             {:else}
                 <ScriptureContent id={$collectionId || $openedScripture} scripture={$scriptureCache[$openedScripture]} scriptures={collectionScripturesData} {isCollection} bind:depth bind:currentBook bind:currentChapter bind:currentVerse bind:this={scriptureContentRef} />
@@ -1036,10 +938,10 @@
 
             {#if tablet}
                 <div class="floating-controls-container">
-                    <Button on:click={() => scriptureContentRef?.backward()} center dark class="floating-control-button" title="Previous">
+                    <Button on:click={previous} center dark class="floating-control-button" title="Previous">
                         <Icon id="previous" white size={1.2} />
                     </Button>
-                    <Button on:click={() => scriptureContentRef?.forward()} center dark class="floating-control-button" title="Next">
+                    <Button on:click={next} center dark class="floating-control-button" title="Next">
                         <Icon id="next" white size={1.2} />
                     </Button>
                     {#if isCollection && collectionScripturesData.length > 1}
@@ -1050,6 +952,28 @@
                     <Button on:click={() => scriptureViewList.set(!$scriptureViewList)} center dark class="floating-control-button" title={$scriptureViewList ? "Grid View" : "List View"}>
                         <Icon id={$scriptureViewList ? "list" : "grid"} white size={1.2} />
                     </Button>
+                    <Button 
+                        on:click={() => {
+                            scriptureMultiSelect.set(!$scriptureMultiSelect)
+                            if (!$scriptureMultiSelect) selectedVerses.set([])
+                        }} 
+                        center 
+                        dark 
+                        class="floating-control-button {$scriptureMultiSelect ? 'active' : ''}"
+                        title={$scriptureMultiSelect ? "Exit Multi-Select" : "Multi-Select Verses"}>
+                        <Icon id={$scriptureMultiSelect ? "close" : "check"} white size={1.2} />
+                    </Button>
+                    {#if $scriptureMultiSelect && $selectedVerses.length > 0}
+                        <Button 
+                            on:click={() => scriptureContentRef?.playSelectedVerses?.()} 
+                            center 
+                            dark 
+                            class="floating-control-button show-selected-button" 
+                            title="Show Selected ({$selectedVerses.length})">
+                            <Icon id="play" white size={1.2} />
+                            <span class="verse-count">{$selectedVerses.length}</span>
+                        </Button>
+                    {/if}
                 </div>
             {/if}
         {:else if checkScriptureExists($openedScripture, $collectionId)}
@@ -1061,6 +985,20 @@
         <div class="controls-section">
             {#if showPrevNext}
                 <div class="navigation-buttons">
+                    {#if depth === 2 && $scriptureViewList}
+                        <Button
+                            style="flex: 0;"
+                            on:click={() => {
+                                scriptureMultiSelect.set(!$scriptureMultiSelect)
+                                if (!$scriptureMultiSelect) selectedVerses.set([])
+                            }}
+                            center
+                            dark
+                            title={$scriptureMultiSelect ? "Exit Multi-Select" : "Multi-Select Verses"}
+                        >
+                            <Icon id={$scriptureMultiSelect ? "close" : "check"} white />
+                        </Button>
+                    {/if}
                     <Button style="flex: 1;" on:click={previous} center dark>
                         <Icon size={1.2} id="previous" />
                     </Button>
@@ -1068,16 +1006,42 @@
                         <Icon size={1.2} id="next" />
                     </Button>
                     {#if depth === 2}
-                        <Button style="flex: 0;" on:click={() => scriptureViewList.set(!$scriptureViewList)} center dark>
-                            <Icon id={$scriptureViewList ? "grid" : "list"} white />
-                        </Button>
+                        {#if $scriptureViewList && $scriptureMultiSelect && $selectedVerses.length > 0}
+                            <Button style="flex: 0;" on:click={() => scriptureContentRef?.playSelectedVerses?.()} center dark title="Show Selected ({$selectedVerses.length})">
+                                <Icon id="play" white />
+                            </Button>
+                        {:else}
+                            <Button style="flex: 0;" on:click={() => scriptureViewList.set(!$scriptureViewList)} center dark>
+                                <Icon id={$scriptureViewList ? "grid" : "list"} white />
+                            </Button>
+                        {/if}
                     {/if}
                 </div>
             {:else if depth === 2}
                 <div class="navigation-buttons center-toggle">
-                    <Button on:click={() => scriptureViewList.set(!$scriptureViewList)} center dark>
-                        <Icon id={$scriptureViewList ? "grid" : "list"} white />
-                    </Button>
+                    {#if $scriptureViewList}
+                        <Button
+                            style="flex: 0;"
+                            on:click={() => {
+                                scriptureMultiSelect.set(!$scriptureMultiSelect)
+                                if (!$scriptureMultiSelect) selectedVerses.set([])
+                            }}
+                            center
+                            dark
+                            title={$scriptureMultiSelect ? "Exit Multi-Select" : "Multi-Select Verses"}
+                        >
+                            <Icon id={$scriptureMultiSelect ? "close" : "check"} white />
+                        </Button>
+                    {/if}
+                    {#if $scriptureViewList && $scriptureMultiSelect && $selectedVerses.length > 0}
+                        <Button on:click={() => scriptureContentRef?.playSelectedVerses?.()} center dark title="Show Selected ({$selectedVerses.length})">
+                            <Icon id="play" white />
+                        </Button>
+                    {:else}
+                        <Button on:click={() => scriptureViewList.set(!$scriptureViewList)} center dark>
+                            <Icon id={$scriptureViewList ? "grid" : "list"} white />
+                        </Button>
+                    {/if}
                 </div>
             {/if}
             {#if !$isCleared.all && !tablet}
@@ -1210,9 +1174,6 @@
         background-color: var(--hover);
     }
 
-    .header-action {
-        transform: scale(1);
-    }
     .bible {
         flex: 1;
         overflow-y: hidden;
@@ -1610,14 +1571,45 @@
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
+        position: relative !important;
+    }
+
+    :global(.floating-control-button.active) {
+        background: rgba(255, 105, 180, 0.25) !important;
     }
 
     :global(.floating-control-button:hover) {
         background: rgb(255 255 255 / 0.1) !important;
     }
 
+    :global(.floating-control-button.active:hover) {
+        background: rgba(255, 105, 180, 0.35) !important;
+    }
+
     :global(.floating-control-button:active) {
         background: rgb(255 255 255 / 0.15) !important;
+    }
+
+    :global(.floating-control-button.show-selected-button) {
+        gap: 6px !important;
+    }
+
+    :global(.floating-control-button .verse-count) {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75em;
+        line-height: 18px;
+        font-weight: 600;
+        background: var(--secondary);
+        color: var(--primary-darkest);
+        height: 18px;
+        padding: 0 6px;
+        border-radius: 999px;
+        min-width: 18px;
+        text-align: center;
+        position: relative;
+        top: -1px;
     }
 
     /* Tablet Search Results */

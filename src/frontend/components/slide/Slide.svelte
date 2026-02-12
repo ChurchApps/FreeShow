@@ -1,12 +1,10 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import { Main } from "../../../types/IPC/Main"
     import type { MediaStyle } from "../../../types/Main"
     import type { Item, Media, Show, Slide, SlideData } from "../../../types/Show"
-    import { sendMain } from "../../IPC/main"
     import { removeTagsAndContent } from "../../show/slides"
-    import { activeEdit, activePage, activeTimers, activeTriggerFunction, audioFolders, checkedFiles, driveData, effects, focusMode, fullColors, groups, media, mediaFolders, outputs, overlays, refreshListBoxes, refreshSlideThumbnails, showsCache, slidesOptions, slideTimers, special, styles, textEditActive } from "../../stores"
-    import { newToast, wait } from "../../utils/common"
+    import { activeEdit, activePage, activeTimers, activeTriggerFunction, effects, focusMode, fullColors, groups, media, outputs, overlays, refreshListBoxes, refreshSlideThumbnails, slidesOptions, slideTimers, special, styles, textEditActive } from "../../stores"
+    import { wait } from "../../utils/common"
     import { translateText } from "../../utils/language"
     import { getAccess } from "../../utils/profile"
     import { slideHasAction } from "../actions/actions"
@@ -16,8 +14,8 @@
     import { clone } from "../helpers/array"
     import { getContrast, hexToRgb, splitRgb } from "../helpers/color"
     import Icon from "../helpers/Icon.svelte"
-    import { doesMediaExist, downloadOnlineMedia, getFileName, getMediaStyle, getThumbnailPath, loadThumbnail, mediaSize, splitPath } from "../helpers/media"
-    import { getActiveOutputs, getFirstActiveOutput, getResolution, getSlideFilter } from "../helpers/output"
+    import { getMedia, getMediaCached, getMediaStyle, mediaSize } from "../helpers/media"
+    import { allOutputsHasStyleTemplate, getActiveOutputs, getFirstActiveOutput, getResolution, getSlideFilter, setTemplateStyle } from "../helpers/output"
     import { getGroupName } from "../helpers/show"
     import Effect from "../output/effects/Effect.svelte"
     import SelectElem from "../system/SelectElem.svelte"
@@ -51,11 +49,8 @@
     $: background = layoutSlide.background ? show.media[layoutSlide.background] : null
 
     let ghostBackground: Media | null = null
-    let bgIndex = -1
-    let isFirstGhost = false
-    // don't show ghost backgrounds if over slide 60 (because of loading/performance!)
-    // $: capped = ghostBackground && !background && index >= 60
-    $: if (!background && index < ($special.optimizedMode ? 20 : 60) && layoutSlides.length) setTimeout(checkGhostBackground)
+    // don't show ghost slides above 40 when using optimized mode
+    $: if (!background && ($special.optimizedMode ? index < 40 : true) && layoutSlides.length) setTimeout(checkGhostBackground)
     function checkGhostBackground() {
         ghostBackground = null
         layoutSlides.forEach((a, i) => {
@@ -64,132 +59,71 @@
             if (slideHasAction(a.actions, "clear_background") && (!a.disabled || i === index)) ghostBackground = null
             else if (a.background && !a.disabled) {
                 ghostBackground = show.media[a.background]
-                bgIndex = i
             }
 
             const mediaData = a.background && show.media[a.background]
+            // WIP getMediaLayerType - use what is set in show only
             if (mediaData && (mediaData?.loop === false || $media[mediaData?.path || ""]?.videoType === "foreground")) ghostBackground = null
-
-            if (ghostBackground && i === index && bgIndex === i - 1) isFirstGhost = true
         })
     }
 
     // show loop icon if many backgrounds
     $: backgroundCount = layoutSlides.reduce((count, layoutRef) => (count += layoutRef.background ? 1 : 0), 0)
 
-    // auto find media
-    $: bg = clone(background || ghostBackground)
-    $: cloudId = $driveData.mediaId
-    $: if (bg) setTimeout(locateBackground)
-    function locateBackground() {
-        if (!background || !bg?.path) return
-
-        let mediaId = layoutSlide.background!
-        let folders = Object.values($mediaFolders).map(a => a.path!)
-        locateFile(mediaId, bg.path, folders, bg)
-    }
-
-    // auto find audio
-    $: audioIds = clone(layoutSlide.audio || [])
-    $: if (audioIds.length) setTimeout(locateAudio)
-    function locateAudio() {
-        let showMedia = $showsCache[showId]?.media
-        let folders = Object.values($audioFolders).map(a => a.path!)
-
-        audioIds.forEach(audioId => {
-            let audio = showMedia[audioId]
-            if (!audio?.path) return
-            locateFile(audioId, audio.path, folders, audio)
-        })
-    }
-
-    async function locateFile(fileId: string, path: string, folders: string[], mediaObj: Media) {
-        if (typeof path !== "string") return
-        if (path.includes("http") || path.includes("data:")) return
-
-        if (checkCloud) {
-            let cloudBg = mediaObj.cloud?.[cloudId]
-            if (cloudBg) path = cloudBg
-        }
-
-        let id = `${path}_${fileId}`
-        if ($checkedFiles.includes(id)) return
-
-        checkedFiles.set([...$checkedFiles, id])
-        let exists = await doesMediaExist(path)
-
-        // check for other potentially mathing mediaFolders
-        if (!exists) {
-            newToast("error.media")
-            if ($special.autoLocateMedia === false) return
-
-            let fileName = getFileName(path)
-            sendMain(Main.LOCATE_MEDIA_FILE, { fileName, splittedPath: splitPath(path), folders, ref: { showId, mediaId: fileId, cloudId: checkCloud ? cloudId : "" } })
-            return
-        }
-
-        if (!checkCloud || !$showsCache[showId]?.media?.[fileId] || $showsCache[showId].media[fileId].cloud?.[cloudId] === path) return
-
-        // set cloud path to path
-        showsCache.update(a => {
-            let media = a[showId].media[fileId]
-            if (!media.cloud) a[showId].media[fileId].cloud = {}
-            a[showId].media[fileId].cloud![cloudId] = path
-
-            return a
-        })
-    }
-
     let duration = 0
 
-    // CLOUD BG
-    let cloudBg = ""
-    $: checkCloud = cloudId && cloudId !== "default"
-    $: if (checkCloud) cloudBg = bg?.cloud?.[cloudId] || ""
-
     // LOAD BACKGROUND
-    $: bgPath = cloudBg || bg?.path || bg?.id || ""
-    $: if (bgPath && !disableThumbnails) setTimeout(loadBackground)
+
+    let mediaPath = ""
     let thumbnailPath = ""
+    let mediaStyle: MediaStyle = {}
+
+    let ghostSize = $special.optimizedMode || index + 1 > 20 ? mediaSize.small : mediaSize.drawerSize
+
+    $: bg = clone(background || ghostBackground)
+    $: bgPath = bg?.path || bg?.id || ""
+    $: if (bgPath && !disableThumbnails) setTimeout(loadBackground)
     async function loadBackground() {
-        if (typeof bgPath === "string" && bgPath.includes("http")) return download()
+        mediaPath = bgPath
+        thumbnailPath = ""
+        // thumbnailPath = getThumbnailPath(mediaPath, ghostBackground ? ghostSize : mediaSize.slideSize)
 
-        if (isLessons) {
-            thumbnailPath = getThumbnailPath(bgPath, mediaSize.slideSize)
-            // cache after it's downloaded
-            setTimeout(() => loadThumbnail(bgPath, mediaSize.slideSize), 1000)
-            return
-        }
+        // make sure it's downloaded
+        if (isLessons) await wait(1000)
 
+        // first ghost creates image (if not created) - as it's a different resolution
         if (ghostBackground) {
-            if (isFirstGhost) {
-                // create image (if not created) when it's first slide after actual background
-                thumbnailPath = await loadThumbnail(bgPath, mediaSize.drawerSize)
-                // WIP refresh all ghost thumbnails after created
-            } else {
-                await wait(200)
+            // ghost thumbnails does not need to be rendered right away
+            await wait(50)
 
-                // load ghost thumbnails (wait a bit to reduce loading lag)
-                thumbnailPath = getThumbnailPath(bgPath, mediaSize.drawerSize)
-            }
+            // load ghost thumbnails
+            const media = await getMediaCached(bgPath, ghostSize)
+            if (!media) return
+
+            thumbnailPath = media.thumbnail
             return
         }
+
+        // create ghost ready thumbnails
+        getMedia(bgPath, mediaSize.drawerSize)
+        if (Object.values(show.layouts).some((a) => a.slides.length > 20)) getMedia(bgPath, mediaSize.small)
+
+        const media = await getMedia(bgPath, mediaSize.slideSize)
+        if (!media) return
+
+        mediaPath = media.path
+        thumbnailPath = media.thumbnail
+        mediaStyle = getMediaStyle(media.data, currentStyle)
 
         // when zoomed in show the full res image
         // if (columns < 3 && $activePage !== "edit") {
-        //     backgroundPath = bgPath
+        //     thumbnailPath = media.path
         //     return
         // }
-
-        let newPath = await loadThumbnail(bgPath, mediaSize.slideSize)
-        if (newPath) thumbnailPath = newPath
-    }
-    async function download() {
-        thumbnailPath = await downloadOnlineMedia(bgPath)
     }
 
-    let mediaStyle: MediaStyle = {}
-    $: if (bg?.path) mediaStyle = getMediaStyle($media[bg.path], currentStyle)
+    // updater
+    $: if (bgPath) mediaStyle = getMediaStyle($media[bgPath], currentStyle)
 
     $: group = slide.group
     $: if (slide.globalGroup && $groups[slide.globalGroup]) {
@@ -260,10 +194,19 @@
     }
 
     let profile = getAccess("shows")
-    $: isLocked = show?.locked || profile.global === "read" || profile[show?.category || ""] === "read"
+    $: isGroupLocked = !!slide?.locked // WIP get group slide
+    $: isLocked = show?.locked || isGroupLocked || profile.global === "read" || profile[show?.category || ""] === "read"
 
     // correct view order based on arranged order in Items.svelte (?.reverse())
     $: itemsList = clone(slide.items) || []
+
+    // style template preview
+    $: if ($special.styleTemplatePreview !== false) updateItemsList(slide)
+    else itemsList = clone(slide.items) || []
+    function updateItemsList(_updater: any = null) {
+        if (!allOutputsHasStyleTemplate(show?.reference?.type === "scripture")) return
+        itemsList = setTemplateStyle(null, currentStyle, itemsList, outputId)
+    }
 
     // $: styleTemplate = getStyleTemplate(null, currentStyle)
     // || styleTemplate.settings?.backgroundColor
@@ -285,10 +228,10 @@
     //     sendMain(Main.URL, url)
     // }
 
-    let updater = 0
+    let conditionsUpdater = 0
     onMount(() => {
         const interval = setInterval(() => {
-            if (itemsList.find(a => a.conditions)) updater++
+            if (itemsList.find((a) => a?.conditions)) conditionsUpdater++
         }, 3000)
 
         return () => {
@@ -335,7 +278,7 @@
                     {#if !altKeyPressed && bg && (viewMode !== "lyrics" || noQuickEdit) && (background || layers.includes("background"))}
                         {#key $refreshSlideThumbnails}
                             <div class="background" style="zoom: {1 / ratio};{slideFilter}" class:ghost={!background}>
-                                <MediaLoader name={translateText("error.load")} ghost={!background} path={bgPath} {thumbnailPath} cameraGroup={bg.cameraGroup || ""} type={bg.type !== "player" ? bg.type : null} {mediaStyle} bind:duration getDuration />
+                                <MediaLoader name={translateText("error.load")} ghost={!background} path={mediaPath} {thumbnailPath} cameraGroup={bg.cameraGroup || ""} type={bg.type !== "player" ? bg.type : null} {mediaStyle} bind:duration getDuration />
                                 <!-- loadFullImage={!!(bg.path || bg.id)} -->
                             </div>
                         {/key}
@@ -364,7 +307,7 @@
                     <!-- text content -->
                     {#if slide.items}
                         {#each itemsList as item, i}
-                            {#if item && shouldItemBeShown(item, itemsList, { outputId, id: showId, slideIndex: index }, updater, true) && (viewMode !== "lyrics" || item.type === undefined || ["text", "events", "list"].includes(item.type))}
+                            {#if item && shouldItemBeShown(item, itemsList, { outputId, id: showId, slideIndex: index }, conditionsUpdater, true) && (viewMode !== "lyrics" || item.type === undefined || ["text", "events", "list"].includes(item.type))}
                                 <!-- && (!item.clickReveal || output?.clickRevealed) -->
                                 <!-- filter={layoutSlide.filterEnabled?.includes("foreground") ? layoutSlide.filter : ""} -->
                                 <!-- backdropFilter={layoutSlide.filterEnabled?.includes("foreground") ? layoutSlide["backdrop-filter"] : ""} -->
@@ -379,12 +322,14 @@
                                     ref={{
                                         showId,
                                         slideId: layoutSlide.id,
-                                        id: layoutSlide.id
+                                        id: layoutSlide.id,
+                                        origin: show.origin
                                     }}
                                     style={viewMode !== "lyrics" || noQuickEdit}
                                     smallFontSize={viewMode === "lyrics" && !noQuickEdit}
                                     clickRevealed={!!output?.clickRevealed}
                                     {centerPreview}
+                                    preview={true}
                                     chords={item.chords?.enabled}
                                 />
                             {/if}
@@ -659,6 +604,9 @@
     }
     .notes:hover {
         background-color: rgb(255 255 255 / 0.2);
+    }
+    .notes span {
+        text-align: left;
     }
 
     .label .text {

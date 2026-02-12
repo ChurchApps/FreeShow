@@ -75,6 +75,9 @@ import Variable from "../components/main/popups/Variable.svelte"
 import { activePopup, popupData } from "../stores"
 import NowPlaying from "../components/main/popups/NowPlaying.svelte"
 import Restore from "../components/main/popups/Restore.svelte"
+import CloudSync from "../components/main/popups/CloudSync.svelte"
+import Timecode from "../components/main/popups/Timecode.svelte"
+import TimelineSettings from "../components/main/popups/TimelineSettings.svelte"
 
 export const popups: { [key in Popups]: ComponentType } = {
     initialize: Initialize,
@@ -146,23 +149,26 @@ export const popups: { [key in Popups]: ComponentType } = {
     custom_action: CustomAction,
     slide_midi: SlideMidi,
     connect: Connect,
+    cloud_sync: CloudSync,
     cloud_update: CloudUpdate,
     cloud_method: CloudMethod,
     sync_categories: ChurchAppsSyncCategories,
-    effect_items: EffectItems
+    effect_items: EffectItems,
+    timeline: TimelineSettings,
+    timecode: Timecode
 }
 
 export function waitForPopupData(popupId: Popups): Promise<any> {
     popupData.set({ ...get(popupData), id: "", value: "" })
     activePopup.set(popupId)
 
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
         // check that popup is still active
         const interval = setInterval(() => {
             if (get(activePopup) !== popupId) finish(undefined)
         }, 1000)
 
-        const unsubscribe = popupData.subscribe(a => {
+        const unsubscribe = popupData.subscribe((a) => {
             if (a.id !== popupId) return
             activePopup.set(null)
             finish(a.value)

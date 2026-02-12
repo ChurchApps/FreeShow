@@ -23,16 +23,18 @@ export function tokenize(str: string): string[] {
 
 // check if all old tokens are still in new tokens
 export function isRefinement(newTokens: string[], oldTokens: string[]): boolean {
-    return oldTokens.length ? oldTokens.every(token => newTokens.includes(token)) : false
+    return oldTokens.length ? oldTokens.every((token) => newTokens.includes(token)) : false
 }
 
-export function showSearch(searchValue: string, shows: ShowList[]) {
+export function showSearch(searchValue: string, shows: ShowList[]): ShowList[] {
+    // WIP return fastSearch(searchValue, shows)
+
     let newShows: ShowList[] = []
 
     // fix invalid regular expression
     searchValue = searchValue.replace(/([.?*+^$[\]\\(){}|-])/g, "\\$1")
 
-    shows.forEach(s => {
+    shows.forEach((s) => {
         // don't search show if archived
         const isArchived = get(categories)[s.category || ""]?.isArchive
         if (isArchived && get(drawerTabsData).shows?.activeSubTab !== s.category) return
@@ -44,7 +46,7 @@ export function showSearch(searchValue: string, shows: ShowList[]) {
 
     // change all values relative to the highest value
     const highestValue = newShows[0]?.match || 0
-    newShows = newShows.map(a => ({ ...a, originalMatch: a.match, match: ((a.match || 0) / highestValue) * 100 }))
+    newShows = newShows.map((a) => ({ ...a, originalMatch: a.match, match: ((a.match || 0) / highestValue) * 100 }))
 
     return newShows
 }
@@ -69,10 +71,16 @@ export function showSearchFilter(searchValue: string, show: ShowList) {
     // Priority 1: Title Exact Match
     if (formattedSearchValue === showName || formattedSearchValue === showNameWithNumber) return 100
 
+    // Priority 1.25: Song Number Starts With Match
+    // if (songNumber && formattedSongNumber.startsWith(formattedSearchValue)) return 100
+
     // Priority 1.5: Title Word Start Match
     if (showName.startsWith(formattedSearchValue)) return 100
 
     const cache = get(textCache)[show.id] || ""
+
+    // Multi-word search - check if ALL words appear in content
+    const multiWordMatchScore = calculateMultiWordMatch(searchValue, cache, show.name)
 
     // Priority 2: Content Includes Percentage Match
     const contentIncludesMatchScore = calculateContentIncludesScore(cache, searchValue) // + calculateContentIncludesScore(cache, searchValue, true)
@@ -101,8 +109,34 @@ export function showSearchFilter(searchValue: string, show: ShowList) {
     //     contentSimilarityMatchScore = contentSimilarity * 0.05 * 100 // max 5%
     // }
 
-    const combinedScore = contentIncludesMatchScore + titleIncludesMatchScore + titleSimilarityMatchScore + contentWordMatchScore
+    const combinedScore = multiWordMatchScore + contentIncludesMatchScore + titleIncludesMatchScore + titleSimilarityMatchScore + contentWordMatchScore
     return combinedScore >= 100 ? 99 : combinedScore < 3 ? 0 : combinedScore
+}
+
+function calculateMultiWordMatch(searchValue: string, cache: string, showName: string): number {
+    const queryWords = tokenize(searchValue).filter((w) => w.length >= 3)
+    const contentLower = formatSearch(cache, false)
+    const nameLower = formatSearch(showName, false)
+
+    let wordMatchScore = 0
+    if (queryWords.length > 0) {
+        let nameMatches = 0
+        let contentMatches = 0
+
+        for (const word of queryWords) {
+            if (nameLower.includes(word)) nameMatches++
+            if (contentLower.includes(word)) contentMatches++
+        }
+
+        // Score based on percentage of words matched
+        const nameMatchRatio = nameMatches / queryWords.length
+        const contentMatchRatio = contentMatches / queryWords.length
+
+        // Name matches are more valuable
+        wordMatchScore = nameMatchRatio * 40 + contentMatchRatio * 30
+    }
+
+    return wordMatchScore
 }
 
 function calculateContentIncludesScore(cache: string, search: string, noShortWords = false): number {
@@ -136,13 +170,13 @@ function calculateContentIncludesScore(cache: string, search: string, noShortWor
 function removeShortWords(value: string) {
     return value
         .split(" ")
-        .filter(a => a.length > 2)
+        .filter((a) => a.length > 2)
         .join(" ")
 }
 
 function matchWords(text: string, value: string): number {
     const words = value.split(" ").filter(Boolean)
-    const matchCount = words.filter(word => text.includes(word)).length
+    const matchCount = words.filter((word) => text.includes(word)).length
 
     // value between 0 and 1
     return matchCount / words.length

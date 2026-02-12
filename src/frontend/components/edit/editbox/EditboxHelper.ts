@@ -13,11 +13,11 @@ export class EditboxHelper {
         const oldTexts: string[] = []
         const newTexts: string[] = []
 
-        oldLines?.forEach(line => {
+        oldLines?.forEach((line) => {
             if (line.text?.[0]?.value) oldTexts.push(line.text[0].value)
         })
 
-        newLines.forEach(line => {
+        newLines.forEach((line) => {
             if (line.text?.[0]?.value) newTexts.push(line.text[0].value)
         })
 
@@ -34,7 +34,7 @@ export class EditboxHelper {
 
     static splitAllCrlf(lines: Line[]) {
         const result: Line[] = []
-        lines.forEach(line => {
+        lines.forEach((line) => {
             const splitLines = this.splitCrlf(line)
             result.push(...splitLines)
         })
@@ -42,23 +42,27 @@ export class EditboxHelper {
     }
 
     static splitCrlf(line: Line) {
+        if (!line?.text?.length) return []
+
         const result: Line[] = []
-        let newLine = { ...line }
+        let newLine = clone(line)
         newLine.text = []
 
-        line.text?.forEach(text => {
-            const value = text.value
+        line.text?.forEach((text) => {
+            const value = text.value || ""
             const parts = value.replace("\r", "").split("\n")
             newLine.text.push({ style: text.style, value: parts[0] })
             if (parts.length > 1) {
                 for (let i = 1; i < parts.length; i++) {
-                    result.push(newLine)
-                    newLine = { ...line }
+                    result.push(clone(newLine))
+                    newLine = clone(line)
+
                     newLine.text = [{ style: text.style, value: parts[i] }]
                 }
             }
         })
         result.push(newLine)
+
         return result
     }
 
@@ -66,37 +70,68 @@ export class EditboxHelper {
         let firstLines: Line[] = []
         let secondLines: Line[] = []
 
-        lines.forEach((line: Line, i: number) => {
+        // remove empty lines and trim text (that messes up the selection)
+        // lines = lines
+        //     .map((line) => {
+        //         line.text = (line.text || []).map((text) => ({ ...text, value: (text.value || "").trim() })).filter((a) => a.value.length)
+        //         return line
+        //     }).filter((a) => a.text?.[0]?.value?.length)
+
+        // split lines in two
+        lines.forEach((line, i) => {
+            // Update start position if this line has a selection start
+            if (sel[i]?.start !== undefined) start = currentIndex + sel[i].start!
+
             if (start > -1 && currentIndex >= start) secondLines.push({ align: line.align, text: [] })
             else firstLines.push({ align: line.align, text: [] })
 
             textPos = 0
-            line.text?.forEach(text => {
-                currentIndex += text.value.length
-                if (sel[i]?.start !== undefined) start = sel[i].start
-
-                if (start > -1 && currentIndex >= start) {
-                    if (!secondLines.length) secondLines.push({ align: line.align, text: [] })
-                    const pos = sel[i].start - textPos
-                    if (pos > 0)
-                        firstLines[firstLines.length - 1].text.push({
-                            style: text.style,
-                            value: text.value.slice(0, pos)
-                        })
-                    secondLines[secondLines.length - 1].text.push({
-                        style: text.style,
-                        value: text.value.slice(pos > 0 ? pos : 0, text.value.length)
-                    })
-                } else {
-                    firstLines[firstLines.length - 1].text.push({
-                        style: text.style,
-                        value: text.value
-                    })
-                }
-                textPos += text.value.length
-            })
+            line.text?.forEach(splitLines)
 
             if (!firstLines.at(-1)?.text.length) firstLines.pop()
+            if (!secondLines.at(0)?.text.length) secondLines.shift()
+
+            function splitLines(text) {
+                const value = text.value || ""
+
+                const segmentStart = currentIndex
+                const segmentEnd = currentIndex + value.length
+                currentIndex = segmentEnd
+
+                // Entire segment is before split point
+                if (start < 0 || segmentEnd <= start) {
+                    if (!firstLines.length) firstLines.push({ align: line.align, text: [] })
+                    firstLines[firstLines.length - 1].text.push(text)
+                    textPos += value.length
+                    return
+                }
+
+                // Entire segment is after split point
+                if (segmentStart >= start) {
+                    if (!secondLines.length) secondLines.push({ align: line.align, text: [] })
+                    secondLines[secondLines.length - 1].text.push(text)
+                    textPos += value.length
+                    return
+                }
+
+                // Split point is within this segment
+                if (!secondLines.length) secondLines.push({ align: line.align, text: [] })
+                const pos = start - segmentStart
+
+                if (pos > 0) {
+                    if (!firstLines.length) firstLines.push({ align: line.align, text: [] })
+                    firstLines[firstLines.length - 1].text.push({
+                        style: text.style,
+                        value: value.slice(0, pos)
+                    })
+                }
+                secondLines[secondLines.length - 1].text.push({
+                    style: text.style,
+                    value: value.slice(pos)
+                })
+
+                textPos += value.length
+            }
         })
 
         // remove first line if empty
@@ -112,8 +147,8 @@ export class EditboxHelper {
         if (!secondLines.length) secondLines = defaultLine
 
         // add chords (currently only adding full line chords, so splitting in the middle of a line might shift chords)
-        const chordLines = clone(lines.map(a => a.chords || []))
-        ;[...firstLines, ...secondLines].forEach(line => {
+        const chordLines = clone(lines.map((a) => a.chords || []))
+        ;[...firstLines, ...secondLines].forEach((line) => {
             const oldLineChords = chordLines.shift()
             if (oldLineChords?.length) line.chords = oldLineChords
         })
@@ -121,7 +156,7 @@ export class EditboxHelper {
         return { firstLines, secondLines }
     }
 
-    static getStyleHtml(item: Item, plain: boolean, currentStyle: string) {
+    static getStyleHtml(item: Item, plain: boolean, currentStyle: string, useNormalWrap: boolean = false) {
         currentStyle = ""
         let html = ""
         let firstTextStyleArchive = ""
@@ -133,7 +168,10 @@ export class EditboxHelper {
             const align = (line.align || "").replaceAll(lineStyleBg, "").replaceAll(lineStyleRadius, "") + ";"
             currentStyle += align + lineStyleBg + lineStyleRadius // + line.chords?.map((a) => a.key)
             const style = align || lineStyleBg || lineStyleRadius || listStyle ? 'style="' + align + lineStyleBg + lineStyleRadius + listStyle + '"' : ""
-            html += `<div class="break" ${plain ? "" : style}>`
+
+            const normalWrap = useNormalWrap || align.includes("justify") || align.includes("left") || JSON.stringify(line).includes("nowrap")
+
+            html += `<div class="break ${normalWrap ? "normalWrap" : ""}" ${plain ? "" : style}>`
 
             // fix removing all text in a line
             if (i === 0 && line.text?.[0]?.style) firstTextStyleArchive = line.text?.[0]?.style || ""
@@ -147,12 +185,12 @@ export class EditboxHelper {
 
                 // SAVE CHORDS (WIP does not work well with more "text" per line)
                 const textEnd = textIndex + a.value.length
-                const textChords = currentChords.filter(chord => chord.pos >= textIndex && (chord.pos <= textEnd || line.text.length - 1 >= tIndex))
+                const textChords = currentChords.filter((chord) => chord.pos >= textIndex && (chord.pos <= textEnd || line.text.length - 1 >= tIndex))
                 textIndex = textEnd
 
                 const textStyle = a.style || listStyle ? 'style="' + this.getCustomTextStyle(a.style) + listStyle + '"' : ""
                 let value = a.value?.replaceAll("\n", "<br>") || "<br>"
-                if (value === " ") value = "&nbsp;"
+                // if (value === " ") value = "&nbsp;"
 
                 // this will "hide" any HTML tags if any in the actual text content (not chords or text editor)
                 html += `<span class="${a.customType && !a.customType.includes("jw") ? "custom" : ""}" ${plain ? "" : textStyle} data-chords='${JSON.stringify(textChords)}'>` + value + "</span>"

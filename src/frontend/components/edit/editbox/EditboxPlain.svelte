@@ -23,8 +23,12 @@
 
     const actions = [
         { id: "transition", label: "popup.transition", icon: "transition" },
+
         { id: "clickReveal", label: "actions.click_reveal", icon: "click_action", direct: true },
         { id: "lineReveal", label: "actions.line_reveal", icon: "line_reveal", direct: true },
+
+        { id: "displayDuration", label: "popup.display_duration", icon: "clock" },
+
         { id: "showTimer", label: "actions.show_timer", icon: "time_in" },
         { id: "hideTimer", label: "actions.hide_timer", icon: "time_out" }
     ]
@@ -110,11 +114,11 @@
     $: styles = getStyles(item?.lines?.[0]?.text?.[0]?.style)
     $: textTransform = !!(styles["text-transform"] && styles["text-transform"] !== "none")
 
-    let updater = 0
-    const updaterInterval = setInterval(() => updater++, 3000)
+    let conditionsUpdater = 0
+    const updaterInterval = setInterval(() => conditionsUpdater++, 3000)
     onDestroy(() => clearInterval(updaterInterval))
 
-    $: showItemState = isConditionMet(item?.conditions?.showItem, getItemText(item), "default", updater)
+    $: showItemState = isConditionMet(item?.conditions?.showItem, getItemText(item), "default", conditionsUpdater)
 </script>
 
 <!-- all icons are square, so only corner resizers need to be active -->
@@ -123,7 +127,7 @@
 <div class="actions">
     <!-- localization -->
     {#if item?.language}
-        <div data-title={isoLanguages.find(a => a.code === item.language)?.name || item.language} class="actionButton" style="zoom: {1 / ratio};left: 0;inset-inline-end: unset;">
+        <div data-title={isoLanguages.find((a) => a.code === item.language)?.name || item.language} class="actionButton" style="zoom: {1 / ratio};left: 0;inset-inline-end: unset;">
             <span style="padding: 5px;z-index: 3;font-size: 0;">
                 <Icon id="translate" white />
             </span>
@@ -211,7 +215,7 @@
     {/each}
 
     <!-- gradient -->
-    {#if item?.lines?.find(a => a.text?.find(a => a.style?.includes("-gradient")))}
+    {#if item?.lines?.find((a) => a.text?.find((a) => a.style?.includes("-gradient")))}
         <div data-title={translateText("popup.color_gradient")} class="actionButton" style="zoom: {1 / ratio};left: 0;inset-inline-end: unset;">
             <span style="padding: 5px;z-index: 3;font-size: 0;">
                 <Icon id="color" white />

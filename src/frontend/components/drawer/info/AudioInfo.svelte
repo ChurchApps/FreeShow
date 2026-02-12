@@ -24,7 +24,7 @@
     let settingsOpened = false
 
     function updateSpecial(value, key) {
-        special.update(a => {
+        special.update((a) => {
             a[key] = value
             return a
         })
@@ -59,13 +59,13 @@
 
 {#if settingsOpened}
     <main style="flex: 1;overflow-x: hidden;padding: 10px;">
-        <MaterialNumberInput label="settings.audio_fade_duration (s)" value={$special.audio_fade_duration ?? 1.5} max={30} step={0.5} on:change={e => updateSpecial(e.detail, "audio_fade_duration")} />
+        <MaterialNumberInput label="settings.audio_fade_duration (s)" value={$special.audio_fade_duration ?? 1.5} max={30} step={0.5} on:change={(e) => updateSpecial(e.detail, "audio_fade_duration")} />
 
         <!-- defaultValue={false}  -->
-        <MaterialToggleSwitch label="audio.mute_when_video_plays" checked={$special.muteAudioWhenVideoPlays || false} on:change={e => updateSpecial(e.detail, "muteAudioWhenVideoPlays")} />
+        <MaterialToggleSwitch label="audio.mute_when_video_plays" checked={$special.muteAudioWhenVideoPlays || false} on:change={(e) => updateSpecial(e.detail, "muteAudioWhenVideoPlays")} />
         <!-- <MaterialToggleSwitch label="audio.allow_gaining" checked={$special.allowGaining || false} on:change={(e) => updateSpecial(e.detail, "allowGaining")} /> -->
 
-        <MaterialDropdown label="audio.custom_output" options={audioOutputs} value={$special.audioOutput || ""} on:change={e => updateSpecial(e.detail, "audioOutput")} allowEmpty />
+        <MaterialDropdown label="audio.custom_output" options={audioOutputs} value={$special.audioOutput || ""} on:change={(e) => updateSpecial(e.detail, "audioOutput")} allowEmpty />
 
         <MaterialButton variant="outlined" style="width: 100%;" on:click={() => activePopup.set("now_playing")}>
             <Icon id="document" />

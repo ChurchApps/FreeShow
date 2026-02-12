@@ -29,7 +29,7 @@ function startWebSocket(PORT: number) {
         console.info(`WebSocket: Starting server at port ${PORT.toString()}`)
     })
 
-    server.once("error", err => {
+    server.once("error", (err) => {
         if ((err as any).code === "EADDRINUSE") server.close()
     })
 
@@ -40,8 +40,6 @@ function startWebSocket(PORT: number) {
 function connected(socket: Socket) {
     log("Client connected.")
     sendToMain(ToMain.WEBSOCKET, "connected") // TODO: respond with API_DATA
-
-    socket.on("disconnect", () => log("Client disconnected."))
 
     socket.on("data", async (data: string) => {
         let parsedData
@@ -54,22 +52,40 @@ function connected(socket: Socket) {
 
         let returnData
         if (parsedData.isVariable) {
-            returnData = { isVariable: true, values: await requestToMain(ToMain.GET_DYNAMIC_VALUES, parsedData.keys || []) }
+            returnData = { isVariable: true, values: (await requestToMain(ToMain.GET_DYNAMIC_VALUES, parsedData.keys || [])) || {} }
         } else {
             returnData = await receivedData(parsedData, log)
         }
         if (!returnData) return
 
-        socket.emit("data", returnData)
+        safeEmit("data", returnData)
     })
 
-    ipcMain.on("API_DATA", (_e, msg) => {
-        socket.emit("data", msg)
+    const apiDataHandler = (_e: any, msg: any) => safeEmit("data", msg)
+
+    ipcMain.on("API_DATA", apiDataHandler)
+
+    socket.on("disconnect", () => {
+        log("Client disconnected.")
+
+        try {
+            ipcMain.removeListener("API_DATA", apiDataHandler)
+        } catch (err) {
+            // ignore
+        }
     })
+
+    function safeEmit(event: string, payload: any) {
+        try {
+            if (socket && (socket as any).connected !== false) socket.emit(event, payload)
+        } catch (err) {
+            console.error(`Error emitting ${event} to socket:`, err)
+        }
+    }
 
     function log(msg: string, isError = false) {
         console.info(`WebSocket: ${msg}`)
-        if (isError) socket.emit("error", msg)
+        if (isError) safeEmit("error", msg)
     }
 }
 
@@ -220,6 +236,12 @@ export function apiReturnData(data: any) {
 // CLOSE
 
 export function stopApiListener(specificId = "") {
+    try {
+        ipcMain.removeAllListeners("API_DATA")
+    } catch (err) {
+        // ignore
+    }
+
     if (specificId) {
         stop(specificId)
     } else {

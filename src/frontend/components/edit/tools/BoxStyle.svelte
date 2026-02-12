@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
     import type { Item, ItemType, Slide } from "../../../../types/Show"
-    import { activeEdit, activeShow, overlays, selected, showsCache, templates, theme, themes, timers } from "../../../stores"
+    import { activeEdit, activePopup, activeShow, alertMessage, categories, overlays, selected, shownTips, showsCache, templates, theme, themes, timers } from "../../../stores"
     import { newToast } from "../../../utils/common"
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
@@ -22,7 +22,7 @@
 
     // selection
     let selection: null | { start: number; end: number }[] = null
-    const unsubscribe = activeEdit.subscribe(a => {
+    const unsubscribe = activeEdit.subscribe((a) => {
         if (!a.items.length) selection = null
     })
     onDestroy(unsubscribe)
@@ -32,7 +32,7 @@
 
         // set focus to textbox if only one without content
         if (allSlideItems.length === 1 && item && !getItemText(item).length && !$activeEdit.items.length) {
-            activeEdit.update(a => ({ ...(a || {}), items: [0] }))
+            activeEdit.update((a) => ({ ...(a || {}), items: [0] }))
             const elem = document.querySelector(".editItem")?.querySelector(".edit")
             if (elem) (elem as HTMLElement).focus()
         }
@@ -47,6 +47,11 @@
 
         if (sel?.type === "None") selection = null
         else selection = getSelectionRange() // range
+    }
+
+    function mousedown(e: any) {
+        // store if going to a text input in the tools
+        if (e.target.closest(".tools")) getTextSelection(e)
     }
 
     function keyup(e: KeyboardEvent) {
@@ -75,7 +80,7 @@
             let editElem = document.querySelector(".editArea")?.querySelectorAll(".editItem")?.[$activeEdit.items[0]]?.querySelector(".edit")
             if (!editElem) return
 
-            let selectedLine = selection.findIndex(a => a.start !== undefined)
+            let selectedLine = selection.findIndex((a) => a.start !== undefined)
             if (selectedLine > -1 && selection[selectedLine]) setCaret(editElem, { line: selectedLine, pos: selection[selectedLine].end })
         }, 10)
     }
@@ -114,7 +119,7 @@
 
     $: if (box?.sections?.font) {
         setBoxInputValue(box, "font", "font-size", "disabled", item?.textFit !== "none")
-        setBoxInputValue(box, "font", "textFit", "value", item?.textFit || "growToFit")
+        setBoxInputValue(box, "font", "textFit", "value", item?.textFit || "growToFit") // other items (like clock, timer)
         // setBoxInputValue(box2, "font", "auto", "value", item.auto ?? true)
     }
 
@@ -123,6 +128,10 @@
         // setBoxInputValue(box2, "default", "textFit", "hidden", !item?.auto)
         setBoxInputValue(box, "text", "nowrap", "value", !!styles["white-space"]?.includes("nowrap"))
         setBoxInputValue(box, "lines", "specialStyle.lineRadius", "hidden", !item?.specialStyle?.lineRadius && !item?.specialStyle?.lineBg)
+
+        setBoxInputValue(box, "default", "textFit", "value", item?.auto ? "shrinkToFit" : "none") // text items
+        // WIP disabled auto size -- don't disable if all text is selected
+        // setBoxInputValue(box, "default", "font-size", "disabled", selection?.length)
     }
 
     $: if (id === "media" && item) {
@@ -236,6 +245,8 @@
         return
 
         function updateItemValues(a: any) {
+            if (!a[$activeEdit.id!]?.items) return a
+
             allItems.forEach((i: number) => {
                 if (!a[$activeEdit.id!].items[i]) return
 
@@ -249,6 +260,7 @@
                 a[$activeEdit.id!].items[i][splitted[0]][splitted[1]] = value
             })
 
+            a[$activeEdit.id!].modified = Date.now()
             return a
         }
     }
@@ -256,6 +268,12 @@
     function updateValue(e: any) {
         let input = e.detail
         console.log("BOX INPUT:", input)
+
+        // does not work for partial text when auto size is enabled
+        // WIP doesn't need to show if disabled works correctly
+        if (id === "text" && input.key === "font-size" && selection?.length && (item?.textFit || "none") !== "none") {
+            newToast("edit.auto_size settings.enabled!")
+        }
 
         let allItems: number[] = $activeEdit.items
         // update all items if nothing is selected
@@ -267,7 +285,7 @@
 
         // only same type
         let currentType = id || allSlideItems[allItems[0]].type || "text"
-        allItems = allItems.filter(index => (allSlideItems[index].type || "text") === currentType)
+        allItems = allItems.filter((index) => (allSlideItems[index].type || "text") === currentType)
 
         if (input.id === "nowrap") input = { ...input, id: "style", key: "white-space", value: input.value ? "nowrap" : undefined }
 
@@ -304,7 +322,7 @@
                 let currentItemIndexes = currentItems.map((_item, i) => i)
 
                 // only same type
-                currentItemIndexes = currentItemIndexes.filter(index => (currentItems[index].type || "text") === currentType)
+                currentItemIndexes = currentItemIndexes.filter((index) => (currentItems[index].type || "text") === currentType)
                 slideItems.push(currentItemIndexes)
             })
         }
@@ -316,18 +334,18 @@
 
         let values: { [key: string]: any[] } = {}
         slides.forEach((slide, i) => {
-            if (!slideItems[i].length) return
+            if (!slideItems[i]?.length) return
             values[slide] = []
-            slideItems[i].forEach(i => getNewItemValues(clone(showSlides[slide]?.items?.[i] || allSlideItems[i]), slide))
+            slideItems[i].forEach((i) => getNewItemValues(clone(showSlides[slide]?.items?.[i] || allSlideItems[i]), slide))
         })
 
         function getNewItemValues(currentSlideItem: Item, slideId: string) {
             if (!currentSlideItem) return
 
             let selected = selection
-            if (!selected?.length || !selected?.filter(a => a.start !== a.end).length) {
+            if (!selected?.length || !selected?.filter((a) => a.start !== a.end).length) {
                 selected = []
-                currentSlideItem.lines?.forEach(line => {
+                currentSlideItem.lines?.forEach((line) => {
                     selected!.push({ start: 0, end: getLineText(line).length })
                 })
             }
@@ -341,9 +359,9 @@
                 values[slideId].push(newAligns)
             } else if (currentSlideItem.lines) {
                 if (input.id.includes("CSS")) {
-                    values[slideId].push(addStyle(selected, currentSlideItem, input.value).lines!.map(a => a.text))
+                    values[slideId].push(addStyle(selected, currentSlideItem, input.value).lines!.map((a) => a.text))
                 } else {
-                    values[slideId].push(aligns ? addStyleString(currentSlideItem.align || "", [input.key, input.value]) : addStyle(selected, clone(currentSlideItem), [input.key, input.value]).lines!.map(a => a.text))
+                    values[slideId].push(aligns ? addStyleString(currentSlideItem.align || "", [input.key, input.value]) : addStyle(selected, clone(currentSlideItem), [input.key, input.value]).lines!.map((a) => a.text))
                 }
             } else {
                 if (input.id.includes("CSS")) {
@@ -379,10 +397,12 @@
             // WIP changing the default "Name" overlay causes textbox swapping....
 
             allItems.forEach((_itemIndex, i) => {
+                if (!currentItems[i]) return
+
                 let allValues: any = Object.values(values)[0]
                 let currentValue: any = allValues[i] ?? allValues[0]
                 // some textboxes don't have lines, this will break things, so make sure it has lines!
-                if (currentItems[i].lines && typeof currentValue === "string") currentValue = allValues.find(a => typeof a !== "string") || allValues[0]
+                if (currentItems[i].lines && typeof currentValue === "string") currentValue = allValues.find((a) => typeof a !== "string") || allValues[0]
 
                 if (input.key === "align-items") currentItems[i].align = currentValue
                 else if (currentType !== "text") currentItems[i].style = currentValue
@@ -463,6 +483,14 @@
             input.value = input.value.replace("rgb(0 0 0 / 0)", "rgb(0 0 0 / 0.4)")
         }
 
+        // store changes for detection
+        if (!$activeEdit.id) {
+            const id = `${input.id}${input.key || ""}`
+            if (!changes[$activeEdit.slide || 0]) changes[$activeEdit.slide || 0] = {}
+            changes[$activeEdit.slide || 0][id] = JSON.stringify(input)
+            changes = changes
+        }
+
         updateValue({ detail: input })
     }
 
@@ -471,9 +499,44 @@
     onMount(() => {
         loaded = true
     })
+
+    // check if the same changes are made to multiple slides, and notify the user to consider using templates
+    let changes: { [key: string]: { [key: string]: string } } = {}
+    $: if (changes) checkChanges()
+    let shownTemplateTip = false
+    function checkChanges() {
+        if (!shownTemplateTip && ($activeEdit.type || "show") === "show") {
+            const categoryId = $showsCache[$activeShow?.id || ""]?.category || ""
+            const categoryTemplate = $categories[categoryId]?.template || ""
+            if (categoryTemplate) {
+                alertMessage.set("tips.category_template")
+                activePopup.set("alert")
+                shownTemplateTip = true
+                return
+            }
+        }
+
+        if ($shownTips.includes("consider_templates")) return
+
+        const SLIDES = 3
+        const allValues: string[] = Object.values(changes).flatMap((slide) => Object.values(slide))
+        const valueCounts = new Map<string, number>()
+
+        allValues.forEach((value) => {
+            valueCounts.set(value, (valueCounts.get(value) || 0) + 1)
+        })
+
+        const duplicates = Array.from(valueCounts.entries()).filter(([_value, count]) => count > SLIDES)
+        if (duplicates.length > 0) {
+            // openDrawer("templates")
+            alertMessage.set("tips.consider_templates")
+            activePopup.set("alert")
+            shownTips.set([...$shownTips, "consider_templates"])
+        }
+    }
 </script>
 
-<svelte:window on:keyup={keyup} on:keydown={keydown} on:mouseup={getTextSelection} />
+<svelte:window on:keyup={keyup} on:keydown={keydown} on:mouseup={getTextSelection} on:mousedown={mousedown} />
 
 {#if loaded}
     <EditValues sections={boxSections} {item} {styles} {customValues} on:change={updateValue2} />

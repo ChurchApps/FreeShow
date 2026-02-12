@@ -22,7 +22,7 @@
 
 <style>
     main {
-        min-height: 280px;
+        min-height: 310px;
         min-width: 50vw;
     }
 

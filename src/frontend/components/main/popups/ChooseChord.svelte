@@ -67,7 +67,7 @@
 
     $: germanNotation = !!$special?.germanNotation
     function updateSpecial(key: string, value: any) {
-        special.update(s => {
+        special.update((s) => {
             s[key] = value
             return s
         })
@@ -75,17 +75,17 @@
 
     let showMore = false
 
-    $: keysList = (showInvertedChords ? keysInverted : keys).map(a => (germanNotation ? (a === "B" ? "H" : a === "B♭" ? "B" : a) : a))
+    $: keysList = (showInvertedChords ? keysInverted : keys).map((a) => (germanNotation ? (a === "B" ? "H" : a === "B♭" ? "B" : a) : a))
 </script>
 
 <MaterialButton class="popup-options {showMore ? 'active' : ''}" icon="options" iconSize={1.3} title={showMore ? "actions.close" : "create_show.more_options"} on:click={() => (showMore = !showMore)} white />
 
-<MaterialToggleSwitch label="actions.roman_keys" checked={chordData.romanKeysActive} on:change={e => (chordData.romanKeysActive = e.detail)} />
+<MaterialToggleSwitch label="actions.roman_keys" checked={chordData.romanKeysActive} on:change={(e) => (chordData.romanKeysActive = e.detail)} />
 {#if showMore}
-    <MaterialToggleSwitch label="German notation (H/B)" checked={germanNotation} on:change={e => updateSpecial("germanNotation", e.detail)} />
+    <MaterialToggleSwitch label="German notation (H/B)" checked={germanNotation} on:change={(e) => updateSpecial("germanNotation", e.detail)} />
 {/if}
 
-<MaterialTextInput label="actions.custom_key" value={chordData.custom} defaultValue="" on:input={e => (chordData.custom = e.detail)} />
+<MaterialTextInput label="actions.custom_key" value={chordData.custom} defaultValue="" on:input={(e) => (chordData.custom = e.detail)} />
 
 <div class="chords" style="margin: 10px 0;">
     <div class="list">

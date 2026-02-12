@@ -37,7 +37,7 @@ export function setBoxInputValue(box: BoxContent2 | { [key: string]: EditBoxSect
     if (!newBox?.[sectionId]) return
 
     const inputs = newBox[sectionId].inputs.flat()
-    const keyIndex = inputs.findIndex(a => a.key === inputId || a.id === inputId)
+    const keyIndex = inputs.findIndex((a) => a.key === inputId || a.id === inputId)
     if (keyIndex < 0) return
 
     if (key === "values") {
@@ -249,7 +249,7 @@ export const textSections: { [key: string]: EditBoxSection } = {
     },
     outline: {
         expandAutoValue: {
-            "-webkit-text-stroke-width": 2
+            "-webkit-text-stroke-width": 10
         },
         inputs: [
             [
@@ -320,6 +320,12 @@ export const textSections: { [key: string]: EditBoxSection } = {
     }
 }
 
+const croppingRowsPercentage = splitIntoRows([
+    { id: "cropping.top", type: "number", value: 0, values: { label: "screen.top (%)", max: 100, showSlider: true } },
+    { id: "cropping.right", type: "number", value: 0, values: { label: "screen.right (%)", max: 100, showSlider: true } },
+    { id: "cropping.bottom", type: "number", value: 0, values: { label: "screen.bottom (%)", max: 100, showSlider: true } },
+    { id: "cropping.left", type: "number", value: 0, values: { label: "screen.left (%)", max: 100, showSlider: true } }
+])
 const mediaSections: { [key: string]: EditBoxSection } = {
     default: {
         inputs: splitIntoRows([
@@ -331,10 +337,10 @@ const mediaSections: { [key: string]: EditBoxSection } = {
             { id: "speed", type: "number", value: 1, values: { label: "media.speed", defaultValue: 1, step: 0.1, min: 0.1, max: 15, showSlider: true } },
             { id: "flipped", type: "checkbox", value: false, values: { label: "media.flip_horizontally" } },
             { id: "flippedY", type: "checkbox", value: false, values: { label: "media.flip_vertically" } }
-            // WIP crop image
-            // object-position: 20px 20px;
-            // transform: scale(1.2) translate(0, 5%);
         ])
+    },
+    cropping: {
+        inputs: croppingRowsPercentage
     },
     filters: {
         inputs: filterSection
@@ -344,7 +350,7 @@ const mediaSections: { [key: string]: EditBoxSection } = {
 ///
 
 export function splitIntoRows(inputs: EditInput2[]) {
-    return inputs.map(a => [a])
+    return inputs.map((a) => [a])
 }
 
 function eventText(defaultSection: any) {
@@ -515,7 +521,7 @@ export const itemBoxes: Box2 = {
             default: {
                 inputs: splitIntoRows([
                     { id: "device", type: "popup", value: "", values: { label: "popup.choose_camera", icon: "camera", popupId: "choose_camera" } },
-                    { id: "fit", type: "dropdown", value: "contain", values: { label: "media.fit", options: mediaFitOptions.filter(a => a.value !== "blur") } },
+                    { id: "fit", type: "dropdown", value: "contain", values: { label: "media.fit", options: mediaFitOptions.filter((a) => a.value !== "blur") } },
                     { id: "flipped", type: "checkbox", value: false, values: { label: "media.flip_horizontally" } },
                     { id: "flippedY", type: "checkbox", value: false, values: { label: "media.flip_vertically" } }
                 ])
@@ -612,7 +618,7 @@ export const itemBoxes: Box2 = {
         sections: {
             default: {
                 inputs: splitIntoRows([
-                    { id: "captions.language", type: "dropdown", value: "en-US", values: { label: "captions.language", options: captionLanguages.map(a => ({ value: a.id, label: a.name })) } },
+                    { id: "captions.language", type: "dropdown", value: "en-US", values: { label: "captions.language", options: captionLanguages.map((a) => ({ value: a.id, label: a.name })) } },
                     // this is very limited
                     // { id: "captions.translate", type: "dropdown", value: "en-US", values: { label: "captions.translate", options: captionTranslateLanguages } },
                     { id: "captions.showtime", type: "number", value: 5, values: { label: "captions.showtime", min: 1, max: 60 } },
@@ -641,7 +647,10 @@ export const itemBoxes: Box2 = {
     icon: {
         icon: "star",
         sections: {
-            default: { inputs: [[{ id: "style", key: "color", type: "color", value: "#FFFFFF", values: { label: "edit.color", allowOpacity: true } }]] }
+            default: { inputs: [[{ id: "style", key: "color", type: "color", value: "", values: { label: "edit.color", allowOpacity: true, allowEmpty: true } }]] },
+            special: {
+                inputs: [[{ id: "button.press", type: "dropdown", value: "", values: { label: "edit.press_action", options: "actions", allowEmpty: true } }], [{ id: "button.release", type: "dropdown", value: "", values: { label: "edit.release_action", options: "actions", allowEmpty: true } }]]
+            }
         }
     }
 }

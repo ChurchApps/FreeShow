@@ -11,12 +11,17 @@
 
     const clearEarly = [
         { if: "toast.saving", when: "toast.saved" },
-        { if: "toast.recording_started", when: "toast.recording_stopped" }
+        { if: "cloud.syncing", when: "cloud.sync_complete" },
+        { if: "error.media", when: "toast.media_replaced" },
+        { if: "settings.backup_started", when: "settings.backup_finished" },
+        { if: "settings.restore_started", when: "settings.restore_finished" },
+        { if: "toast.recording_started", when: "toast.recording_stopped" },
+        { if: "actions.copied", when: "actions.pasted" }
     ]
 
     function startTimer() {
         // clear some early
-        if (clearEarly.find(c => messages[0] === c.if && messages.find(a => a === c.when))) {
+        if (clearEarly.find((c) => messages[0] === c.if && messages.find((a) => a === c.when))) {
             if (currentTimer) clearTimeout(currentTimer)
             currentTimer = null
             removeCurrent()
@@ -32,7 +37,7 @@
     }
 
     function removeCurrent() {
-        toastMessages.update(a => {
+        toastMessages.update((a) => {
             a.shift()
             return a
         })

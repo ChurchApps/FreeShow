@@ -15,7 +15,7 @@ type PlaylistData = {
 }
 
 export class AudioPlaylist {
-    static start(playlistId: string, audioPath = "", options: AudioPlaylistOptions = {}) {
+    static start(playlistId: string, audioPath = "", index: number = 0, options: AudioPlaylistOptions = {}) {
         const playlist = get(audioPlaylists)[playlistId]
         if (!playlist) return
 
@@ -28,10 +28,10 @@ export class AudioPlaylist {
             return
         }
 
-        activePlaylist.set({ id: playlistId })
+        activePlaylist.set({ id: playlistId, index })
 
         const crossfade = Number(playlist.crossfade) || 0
-        AudioPlaylist.nextInternal(audioPath, { crossfade })
+        AudioPlaylist.nextInternal(audioPath, index, { crossfade })
     }
 
     static stop() {
@@ -43,7 +43,7 @@ export class AudioPlaylist {
     static update(id: string, key: string, value: any) {
         if (!get(audioPlaylists)[id]) return
 
-        audioPlaylists.update(a => {
+        audioPlaylists.update((a) => {
             a[id][key] = value
             return a
         })
@@ -56,7 +56,7 @@ export class AudioPlaylist {
         if (get(outLocked) || !playlist) return
 
         const crossfade = Number(playlist.crossfade) || 0
-        AudioPlaylist.nextInternal("", { crossfade, loop: playlist.loop !== false })
+        AudioPlaylist.nextInternal("", -1, { crossfade, loop: playlist.loop !== false })
     }
 
     static getPlayingPath(): string {
@@ -101,11 +101,11 @@ export class AudioPlaylist {
         const reachedEnding = playing.currentTime + customCrossfade + this.extraMargin >= endTime
         if (!reachedEnding) return 0
 
-        AudioPlaylist.nextInternal("", { crossfade: customCrossfade, loop: playlist.loop !== false })
+        AudioPlaylist.nextInternal("", -1, { crossfade: customCrossfade, loop: playlist.loop !== false })
         return crossfade
     }
 
-    protected static nextInternal(audioPath = "", data: PlaylistData) {
+    protected static nextInternal(audioPath = "", startIndex = -1, data: PlaylistData) {
         const playlist = clone(AudioPlaylist.getActivePlaylist())
         if (!playlist) return
 
@@ -113,14 +113,14 @@ export class AudioPlaylist {
         const songs = getSongs()
         if (!songs.length) return
 
-        const currentSongIndex = songs.findIndex(a => a === (audioPath || previousPath))
+        const currentSongIndex = songs.findIndex((a) => a === (audioPath || previousPath))
         let nextSong = songs[currentSongIndex + (audioPath ? 0 : 1)]
 
         if (!nextSong && data.loop) nextSong = songs[0]
         if (!nextSong) {
             if (!data.loop && !audioIsFading()) {
                 if (data.crossfade) fadeOutAudio(data.crossfade)
-                else clearAudio("", { playlistCrossfade: true })
+                else clearAudio("", { playlistCrossfade: true, clearPlaylist: true })
 
                 setTimeout(() => {
                     if (!get(playingAudio)[previousPath]) customActionActivation("audio_playlist_ended")
@@ -132,8 +132,13 @@ export class AudioPlaylist {
         // prevent playing the same song twice (while it's fading) to stop duplicate audio
         if (Object.keys(playingAudio).includes(nextSong)) return
 
-        activePlaylist.update(a => {
+        let nextIndex = startIndex > -1 ? startIndex : (get(activePlaylist)?.index ?? -1) + 1
+        if (playlist.songs[nextIndex] !== nextSong) nextIndex = songs.findIndex((a) => a === nextSong)
+
+        activePlaylist.update((a) => {
+            if (!a) a = {}
             a.active = nextSong
+            a.index = nextIndex
             return a
         })
 
@@ -150,7 +155,8 @@ export class AudioPlaylist {
             const mode = playlist.mode
             if (mode === "shuffle") songsList = shuffleArray(songsList)
 
-            activePlaylist.update(a => {
+            activePlaylist.update((a) => {
+                if (!a) a = {}
                 a.songs = songsList
                 return a
             })

@@ -12,7 +12,7 @@ Sentry.init({
     beforeSend(event) {
         // filter out known non-critical errors
         const errorMessage = event.exception?.values?.[0]?.value || ""
-        const shouldFilter = ERROR_FILTER.some(filter => errorMessage.includes(filter))
+        const shouldFilter = ERROR_FILTER.some((filter) => errorMessage.includes(filter))
         return shouldFilter ? null : event
     }
 })

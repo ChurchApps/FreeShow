@@ -69,6 +69,7 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
     volume: 1,
     gain: 1,
     audioChannelsData: {},
+    cloudSyncData: {},
     driveData: { mainFolderId: null, disabled: false, initializeMethod: null, disableUpload: false },
     calendarAddShow: "",
     metronome: {},
@@ -76,6 +77,8 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
     eqPresets: {},
     effectsLibrary: [],
     special: {},
+    timeline: {},
+    timecode: {},
     contentProviderData: {
         planningcenter: {
             localAlways: false
@@ -133,7 +136,7 @@ export const defaultSyncedSettings: { [key in SaveListSyncedSettings]: any } = {
     scriptureSettings: {
         template: "scripture",
         versesPerSlide: 3,
-        verseNumbers: false,
+        verseNumbers: true,
         showVersion: false,
         showVerse: true,
         referenceDivider: ":"
@@ -157,5 +160,6 @@ export const defaultSyncedSettings: { [key in SaveListSyncedSettings]: any } = {
     companion: {},
     globalTags: {},
     customMetadata: { disabled: [], custom: [] },
-    effects: {}
+    effects: {},
+    deletedDefaults: {}
 }

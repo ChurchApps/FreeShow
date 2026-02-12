@@ -1,4 +1,5 @@
 import type fs from "fs"
+import type { Stats } from "fs"
 import type { dataFolderNames } from "../electron/utils/files"
 import type { Cropping } from "./Settings"
 
@@ -9,6 +10,7 @@ export interface Config {
     dataPath: string | null
     disableHardwareAcceleration: boolean | null
     autoErrorReporting?: boolean
+    mediaFolderPath?: string
 }
 
 export interface OS {
@@ -151,6 +153,8 @@ export interface ActiveEdit {
     data?: any // camera data
 }
 
+export type FileFolder = { isFolder: false; path: string; name: string; thumbnailPath?: string; stats: Stats } | { isFolder: true; path: string; name: string; files: string[] }
+
 export type MediaFit = "contain" | "cover" | "fill" | "blur"
 export interface Media {
     [key: string]: MediaStyle
@@ -179,6 +183,7 @@ export interface MediaStyle {
     name?: string // display name for content provider media (encrypted videos)
     contentFile?: any // ContentFile from content provider (imported type would create circular dependency)
     licenseChecked?: boolean // whether license has been checked for this media
+    pingbackUrl?: string // URL for sending pingback after playback
     cropping?: Partial<Cropping>
 
     ignoreLayer?: boolean // foreground background type
@@ -249,7 +254,7 @@ export interface Variable {
     eachNumberOnce?: boolean
     sets?: { name: string; minValue?: number; maxValue?: number }[]
     setName?: string // chosen random set
-    setLog?: { name: string; number: number }[]
+    setLog?: { name: string; number: string }[]
 
     // text
     text?: string
@@ -282,7 +287,8 @@ export interface Profiles {
 export interface Profile {
     name: string
     color: string
-    password?: string
+    password?: string // currently admin only
+    autoOpenLastUsed?: boolean // admin only
     image: string
     access: { [key: string]: { [key: string]: AccessType } }
 }
@@ -369,10 +375,13 @@ export type Popups =
     | "custom_action"
     | "slide_midi"
     | "connect"
+    | "cloud_sync"
     | "cloud_update"
     | "cloud_method"
     | "sync_categories"
     | "effect_items"
+    | "timeline"
+    | "timecode"
 
 export type DefaultProjectNames = "date" | "today" | "sunday" | "week" | "custom" | "blank"
 

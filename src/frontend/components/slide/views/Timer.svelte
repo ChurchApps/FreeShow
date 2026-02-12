@@ -57,7 +57,7 @@
     //     if (msInterval) clearInterval(msInterval)
     // })
 
-    $: if (timer?.type) currentTime = getCurrentTimerValue(timer, ref, today, $activeTimers)
+    $: if (timer?.type) currentTime = getCurrentTimerValue(timer, ref, today, $activeTimers, updateDynamic)
     else currentTime = 0
 
     $: min = Math.min(timer.start || 0, timer.end || 0)
@@ -65,24 +65,18 @@
     $: percentage = Math.max(0, Math.min(100, ((currentTime - min) / (max - min)) * 100))
     $: itemColor = getStyles(item?.style)?.color || "#ffffff"
 
-    $: overflow = getTimerOverflow(currentTime)
+    $: overflow = timer.overflow && getTimerOverflow(currentTime)
     $: negative = (timer?.start || 0) > (timer?.end || 0) || currentTime < 0
-    function getTimerOverflow(time: number, offset = 0) {
-        if (!timer.overflow) return false
 
+    function getTimerOverflow(time: number, offset = 0) {
         if (currentTime < 0) return true
         if (timer.type !== "counter") return false
 
-        let start: number = timer.start!
-        let end: number = timer.end!
+        let start = timer.start || 0
+        let end = timer.end || 0
 
-        if (start < end) {
-            if (time + offset > end) return true
-            return false
-        }
-
-        if (time - offset < end) return true
-        return false
+        if (start < end) return time + offset > end
+        return time - offset < end
     }
 
     function openInDrawer() {
@@ -95,12 +89,13 @@
         if ($drawer.height <= 40) drawer.set({ height: $drawer.stored || 300, stored: null })
     }
 
+    $: shouldWarn = !!timer.warn && getTimerOverflow(currentTime, (timer.warnOffset || 30) + 1)
+
     // BLINKING WHEN OVERFLOWING
 
     // don't blink if paused?
     let blinkingInterval: NodeJS.Timeout | null = null
-    $: blinkingOverflow = getTimerOverflow(currentTime, timer.overflowBlinkOffset || 0)
-    $: if (blinkingOverflow && timer.overflowBlink) startBlinking()
+    $: if (shouldWarn && !overflow && timer.warnFlash) startBlinking()
     else stopBlinking()
     onDestroy(stopBlinking)
 
@@ -120,6 +115,33 @@
         if (blinkingInterval) clearInterval(blinkingInterval)
         blinkingInterval = null
     }
+
+    $: playingTimer = $activeTimers.filter((a) => a.id === ref.id)[0]
+    $: isPaused = playingTimer?.paused
+
+    // DYNAMIC VALUES
+    $: hasDynamicValues = timer.startDynamic !== undefined || timer.endDynamic !== undefined
+
+    // only update if text contains dynamic values
+    $: if (hasDynamicValues) startInterval()
+    else stopInterval()
+    let dynamicInterval: NodeJS.Timeout | null = null
+    function startInterval() {
+        stopInterval()
+        dynamicInterval = setInterval(update, 5000)
+    }
+    function stopInterval() {
+        if (dynamicInterval) clearInterval(dynamicInterval)
+        dynamicInterval = null
+    }
+
+    let updateDynamic = 0
+    function update() {
+        if (!hasDynamicValues) return
+        updateDynamic++
+    }
+
+    onDestroy(() => stopInterval())
 </script>
 
 {#if item?.timer?.viewType === "line"}
@@ -128,8 +150,8 @@
     <div class="circle" class:mask={item?.timer?.circleMask} style="--percentage: {percentage};--color: {itemColor};" on:dblclick={openInDrawer} />
 {:else}
     <div class="align autoFontSize" style="{style}{item?.alignX ? '' : (item?.align || 'justify-content: center;').replaceAll('text-align', 'justify-content')}" on:dblclick={openInDrawer}>
-        <div style="display: flex;white-space: nowrap;{overflow ? 'color: ' + (timer.overflowColor || 'red') + ';' : ''}">
-            {#if !blinkingOverflow || !blinkingOff}
+        <div style="display: flex;white-space: nowrap;{overflow ? 'color: ' + (timer.overflowColor || '#FF4136') + ';' : shouldWarn ? 'color: ' + (timer.warnColor || '#FF8000') + ';' : ''}">
+            {#if !shouldWarn || isPaused || !blinkingOff}
                 {#if overflow && negative}
                     <span>-</span>
                 {/if}

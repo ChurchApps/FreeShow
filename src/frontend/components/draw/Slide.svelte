@@ -71,7 +71,7 @@
     const wheel = (e: any) => {
         if (draw === null || !$drawSettings[$drawTool]?.size || e.target.closest(".parent") !== parent || !e.target.closest(".slide")) return
 
-        drawSettings.update(a => {
+        drawSettings.update((a) => {
             let newSize = 10
             if (e.altKey) newSize = 1
             if (e.ctrlKey || e.metaKey) newSize = 25

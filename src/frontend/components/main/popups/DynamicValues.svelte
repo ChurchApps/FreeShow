@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
-    import { activeEdit, activePage, activePopup, activeShow, activeStage, overlays, popupData, refreshEditSlide, showsCache, special, stageShows, templates } from "../../../stores"
+    import { activeEdit, activePage, activePopup, activeShow, activeStage, dynamicValuesRevealUsed, overlays, popupData, refreshEditSlide, showsCache, special, stageShows, templates } from "../../../stores"
     import { triggerClickOnEnterSpace } from "../../../utils/clickable"
     import { formatSearch } from "../../../utils/search"
     import { clone } from "../../helpers/array"
@@ -10,9 +10,9 @@
     import { _show } from "../../helpers/shows"
     import T from "../../helpers/T.svelte"
     import HRule from "../../input/HRule.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
     import Center from "../../system/Center.svelte"
-    import MaterialButton from "../../inputs/MaterialButton.svelte"
 
     const obj = $popupData.obj || {}
     const caret = $popupData.caret || {}
@@ -21,24 +21,34 @@
     let mode: null | "scripture" = null
     if ($activePage === "edit" && $activeEdit.type === "template" && ($templates[$activeEdit.id || ""]?.settings?.mode === "scripture" || $templates[$activeEdit.id || ""]?.category === "scripture")) mode = "scripture"
 
+    let showAll = $dynamicValuesRevealUsed
+    function toggleShowAll() {
+        showAll = !showAll
+        values = getValues()
+        defaultValues = clone(values)
+        dynamicValuesRevealUsed.set(showAll)
+    }
+
     const hidden: string[] = $special.disabledDynamicValues || []
 
-    const values = getValues()
+    let values = getValues()
 
     function getValues() {
-        let list = getDynamicIds(false, mode).map(id => ({ id }))
+        let list = getDynamicIds(false, mode, showAll).map((id) => ({ id }))
 
         const isStage = $activePage === "stage"
+        const nonStageHidden = ["show_text_full"]
         const stageHidden = ["slide_text_previous", "slide_text_next"]
-        if (isStage) list = list.filter(a => !stageHidden.includes(a.id))
+        if (isStage) list = list.filter((a) => !stageHidden.includes(a.id))
+        else list = list.filter((a) => !nonStageHidden.includes(a.id))
 
         let separatorId = ""
         // the ones that can have a custom name should be first (to prevent it from overwriting a category)
-        const separators = ["$", "timer_", "meta_", "rss_", "project_", "time_", "show_", "slide_text_", "video_", "audio_", "scripture_"]
+        const separators = ["$", "timer_", "meta_", "rss_", "project_", "time_", "show_", "slide_text_", "exif_", "video_", "audio_", "scripture_"]
 
         let newList: { [key: string]: typeof list } = {}
-        list.forEach(value => {
-            const separator = separators.find(a => value.id.includes(a)) || ""
+        list.forEach((value) => {
+            const separator = separators.find((a) => value.id.includes(a)) || ""
             if (separator && separatorId !== separator && separatorId !== "$" && !newList[separator]?.length) {
                 separatorId = separator
                 newList[separatorId] = []
@@ -58,6 +68,7 @@
         if (id === "project_") return "guide_title.project"
         if (id === "show_") return "guide_title.show"
         if (id === "slide_text_") return "edit.text"
+        if (id === "exif_") return "items.image (EXIF)"
         if (id === "video_") return "edit.video"
         if (id === "audio_") return "tools.audio"
         if (id === "meta_") return "tools.metadata"
@@ -89,7 +100,7 @@
         searchedValues = {
             search: Object.values(currentValuesList)
                 .flat()
-                .filter(a => formatSearch(a.id).includes(searchValue))
+                .filter((a) => formatSearch(a.id).includes(searchValue))
         }
 
         // previousSearchValue = searchValue
@@ -121,8 +132,9 @@
             let activeItemId = $activeStage?.items[0]
             if (!$stageShows[$activeStage.id!] || !activeItemId) return
 
-            stageShows.update(a => {
+            stageShows.update((a) => {
                 a[$activeStage.id!].items[activeItemId] = updateItemText(a[$activeStage.id!]?.items[activeItemId])
+                a[$activeStage.id!].modified = Date.now()
                 return a
             })
 
@@ -133,14 +145,15 @@
 
         if (edit.id) {
             if (edit.type === "overlay") {
-                overlays.update(a => {
+                overlays.update((a) => {
                     a[edit.id!].items = updateItemText(a[edit.id!].items)
+                    a[edit.id!].modified = Date.now()
                     return a
                 })
             } else if (edit.type === "template") {
-                templates.update(a => {
+                templates.update((a) => {
                     a[edit.id!].items = updateItemText(a[edit.id!].items)
-                    console.log(a[edit.id!].items)
+                    a[edit.id!].modified = Date.now()
                     return a
                 })
             }
@@ -154,7 +167,7 @@
         let ref = getLayoutRef(showId)
         let slideId = ref[edit.slide || 0]?.id || ""
 
-        showsCache.update(a => {
+        showsCache.update((a) => {
             if (!a[showId]?.slides?.[slideId]) return a
 
             a[showId].slides[slideId].items = updateItemText(a[showId].slides[slideId].items)
@@ -170,7 +183,7 @@
             let lines = items[edit.items?.[0]]?.lines || []
             if (isStage) lines = items?.lines || []
 
-            lines[caret.line]?.text?.forEach(text => {
+            lines[caret.line]?.text?.forEach((text) => {
                 if (replaced) return
 
                 let value = text.value
@@ -216,10 +229,12 @@
 
 <svelte:window on:keydown={applyValue} />
 
-<MaterialButton class="popup-options" icon="edit" iconSize={1.1} title="create_show.more_options" on:click={() => activePopup.set("manage_dynamic_values")} white />
+<MaterialButton class="popup-reset" icon="edit" iconSize={1.1} title="create_show.more_options" on:click={() => activePopup.set("manage_dynamic_values")} white />
+
+<MaterialButton class="popup-options {showAll ? 'active' : ''}" icon={showAll ? "eye" : "hide"} iconSize={1.3} title={showAll ? "actions.close" : "create_show.more_options"} on:click={toggleShowAll} white />
 
 {#key resetInput}
-    <MaterialTextInput label="main.search" value="" on:input={e => search(e.detail)} autofocus />
+    <MaterialTextInput label="main.search" value="" on:input={(e) => search(e.detail)} autofocus />
 {/key}
 
 <div style="position: relative;height: 100%;width: calc(100vw - (var(--navigation-width) + 20px) * 2);overflow-y: auto;">
@@ -233,7 +248,7 @@
                 <div class="grid">
                     {#each values as value, i}
                         {@const preview = replaceDynamicValues(`{${value.id}}`, ref, updateDynamic)}
-                        <div class="value" class:active={searchValue.length > 1 && i === 0 ? "border: 2px solid var(--secondary-opacity);" : ""} role="button" tabindex="0" on:click={e => applyValue(e, value.id)} on:keydown={triggerClickOnEnterSpace}>
+                        <div class="value" class:active={searchValue.length > 1 && i === 0 ? "border: 2px solid var(--secondary-opacity);" : ""} role="button" tabindex="0" on:click={(e) => applyValue(e, value.id)} on:keydown={triggerClickOnEnterSpace}>
                             <p class="preview">
                                 {#if preview}{@html preview}{:else}—{/if}
                             </p>

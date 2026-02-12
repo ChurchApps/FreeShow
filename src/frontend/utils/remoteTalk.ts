@@ -2,17 +2,18 @@ import { get } from "svelte/store"
 import { uid } from "uid"
 import type { Show } from "../../types/Show"
 import type { ClientMessage } from "../../types/Socket"
+import { AudioPlayer } from "../audio/audioPlayer"
 import { loadJsonBible } from "../components/drawer/bible/scripture"
 import { clone, keysToID, removeDeleted } from "../components/helpers/array"
 import { getBase64Path, getThumbnailPath, mediaSize } from "../components/helpers/media"
-import { getFirstActiveOutput, setOutput } from "../components/helpers/output"
+import { getAllNormalOutputs, getFirstActiveOutput, setOutput } from "../components/helpers/output"
 import { loadShows } from "../components/helpers/setShow"
 import { getLayoutRef } from "../components/helpers/show"
 import { updateOut } from "../components/helpers/showActions"
 import { _show } from "../components/helpers/shows"
 import { clearAll } from "../components/output/clear"
 import { REMOTE } from "./../../types/Channels"
-import { actions, actionTags, activePage, activeProject, activeShow, activeTimers, categories, connections, dictionary, driveData, folders, language, openedFolders, outLocked, overlayCategories, overlays, projects, remotePassword, runningActions, scriptures, shows, showsCache, styles, templateCategories, templates, timers, triggers, variableTags, variables } from "./../stores"
+import { actions, actionTags, activePage, activeProject, activeShow, activeTimers, audioChannelsData, categories, connections, dictionary, driveData, folders, language, openedFolders, outLocked, outputs, overlayCategories, overlays, playerVideos, projects, remotePassword, runningActions, scriptures, shows, showsCache, styles, templateCategories, templates, timers, triggers, variableTags, variables, volume } from "./../stores"
 import { lastClickTime } from "./common"
 import { translateText } from "./language"
 import { send } from "./request"
@@ -36,6 +37,49 @@ export const receiveREMOTE: any = {
         msg = { id: msg.id, channel: "SHOWS", data: get(shows) }
         initializeRemote(msg.id)
 
+        return msg
+    },
+    GET_MIXER: (msg: any) => {
+        msg.data = getMixerPayload()
+        return msg
+    },
+    SET_VOLUME: (msg: any) => {
+        const newVolume = clamp01(msg.data?.volume ?? msg.data ?? 1)
+        volume.set(newVolume)
+        AudioPlayer.updateVolume()
+
+        msg.channel = "GET_MIXER"
+        msg.data = getMixerPayload()
+        return msg
+    },
+    SET_OUTPUT_VOLUME: (msg: any) => {
+        const { id, volume: newVolumeRaw } = msg.data || {}
+        if (!id) return
+
+        const newVolume = clamp01(newVolumeRaw ?? 1)
+        updateAudioChannel(id, (a) => ({ ...a, volume: newVolume }))
+
+        msg.channel = "GET_MIXER"
+        msg.data = getMixerPayload()
+        return msg
+    },
+    TOGGLE_MUTE: (msg: any) => {
+        const muted = !!(msg.data?.muted ?? msg.data)
+        updateAudioChannel("main", (a) => ({ ...a, isMuted: muted }))
+        AudioPlayer.updateVolume()
+
+        msg.channel = "GET_MIXER"
+        msg.data = getMixerPayload()
+        return msg
+    },
+    TOGGLE_OUTPUT_MUTE: (msg: any) => {
+        const { id, muted } = msg.data || {}
+        if (!id) return
+
+        updateAudioChannel(id, (a) => ({ ...a, isMuted: !!muted }))
+
+        msg.channel = "GET_MIXER"
+        msg.data = getMixerPayload()
         return msg
     },
     ACCESS: (msg: any) => {
@@ -136,7 +180,14 @@ export const receiveREMOTE: any = {
     },
     OUT_DATA: (msg: any) => {
         const currentOutput = getFirstActiveOutput()
-        const out = currentOutput?.out || {}
+        const out = clone(currentOutput?.out || {})
+
+        // Include player video name for online media (YouTube, Vimeo, etc.)
+        if (out.background?.type === "player" && out.background?.id) {
+            const playerName = get(playerVideos)[out.background.id]?.name
+            if (playerName) out.background.name = playerName
+        }
+
         msg.data = out
 
         return msg
@@ -145,8 +196,8 @@ export const receiveREMOTE: any = {
         msg.data = removeDeleted(keysToID(clone(get(projects))))
 
         // get names
-        msg.data.forEach(project => {
-            project.shows.forEach(show => {
+        msg.data.forEach((project) => {
+            project.shows.forEach((show) => {
                 if (show.type === "overlay") show.name = get(overlays)[show.id]?.name || translateText("main.unnamed")
             })
 
@@ -173,7 +224,7 @@ export const receiveREMOTE: any = {
         if (bookKey && !chapterKey) {
             try {
                 const bookData = await jsonBible.getBook(bookKey)
-                const mapped = (bookData.data.chapters || []).map(c => ({
+                const mapped = (bookData.data.chapters || []).map((c) => ({
                     number: c.number,
                     keyName: c.number
                 }))
@@ -190,7 +241,7 @@ export const receiveREMOTE: any = {
                 const bookData = await jsonBible.getBook(bookKey)
                 const chapterData = await bookData.getChapter(chapterKey)
                 const versesData = chapterData.data.verses
-                const mappedVerses = versesData.map(v => ({
+                const mappedVerses = versesData.map((v) => ({
                     number: v.number,
                     text: v.text,
                     keyName: v.number
@@ -204,7 +255,7 @@ export const receiveREMOTE: any = {
         }
 
         const books = jsonBible.data.books
-        const mappedBooks = (books || []).map(b => ({
+        const mappedBooks = (books || []).map((b) => ({
             name: b.name,
             number: b.number,
             keyName: b.id,
@@ -357,15 +408,15 @@ export async function convertBackgrounds(show: Show, noLoad = false, init = fals
 
     show = clone(show)
     const mediaIds: string[] = []
-    show.layouts[show.settings?.activeLayout]?.slides.forEach(a => {
+    show.layouts[show.settings?.activeLayout]?.slides.forEach((a) => {
         if (a.background) mediaIds.push(a.background)
-        Object.values(a.children || {}).forEach(child => {
+        Object.values(a.children || {}).forEach((child) => {
             if (child.background) mediaIds.push(child.background)
         })
     })
 
     await Promise.all(
-        mediaIds.map(async id => {
+        mediaIds.map(async (id) => {
             let path = show.media[id]?.path || show.media[id]?.id || ""
             const cloudId = get(driveData).mediaId
             if (cloudId && cloudId !== "default") path = show.media[id]?.cloud?.[cloudId] || path
@@ -386,6 +437,39 @@ export async function convertBackgrounds(show: Show, noLoad = false, init = fals
 
     return show
 }
+
+export function getMixerPayload() {
+    const audioData = get(audioChannelsData) || {}
+    const outputsStore = get(outputs) || {}
+
+    const mixerOutputs = getAllNormalOutputs().reduce((acc: any, out) => {
+        const channel = audioData[out.id] || {}
+        acc[out.id] = {
+            name: outputsStore[out.id]?.name || out.id,
+            volume: channel.volume ?? 1,
+            isMuted: !!channel.isMuted
+        }
+        return acc
+    }, {})
+
+    return {
+        main: {
+            volume: get(volume) ?? 1,
+            isMuted: !!audioData.main?.isMuted
+        },
+        outputs: mixerOutputs
+    }
+}
+
+function updateAudioChannel(id: string, updater: (a: any) => any) {
+    audioChannelsData.update((a) => {
+        const prev = a[id] || {}
+        a[id] = updater(prev) || prev
+        return a
+    })
+}
+
+const clamp01 = (value: number) => Math.min(1, Math.max(0, Number(value ?? 0)))
 
 // const toBase64 = file => new Promise((resolve, reject) => {
 //     const reader = new FileReader();

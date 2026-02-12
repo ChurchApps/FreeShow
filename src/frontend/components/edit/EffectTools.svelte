@@ -28,7 +28,7 @@
     export function valueChanged(input: any, itemIndex: number) {
         if (!effectId) return
 
-        effects.update(a => {
+        effects.update((a) => {
             a[effectId].items[itemIndex][input.id] = input.values.value
             return a
         })
@@ -48,16 +48,16 @@
             newOpenedMenus.push(menuIndex + (menuIndex > index ? 1 : 0))
         })
         openedMenus = {}
-        newOpenedMenus.forEach(index => (openedMenus[index] = true))
+        newOpenedMenus.forEach((index) => (openedMenus[index] = true))
 
-        effects.update(a => {
+        effects.update((a) => {
             a[effectId].items.splice(index, 1)
             return a
         })
     }
 
     function toggleHidden(index: number) {
-        effects.update(a => {
+        effects.update((a) => {
             a[effectId].items[index].hidden = !a[effectId].items[index].hidden
             return a
         })
@@ -67,7 +67,7 @@
     function move(index: number, newIndex: number) {
         openedMenus = {}
 
-        effects.update(a => {
+        effects.update((a) => {
             const item = a[effectId].items.splice(index, 1)
             a[effectId].items = addToPos(a[effectId].items, item, newIndex)
             return a
@@ -116,7 +116,7 @@
 
                                 <svelte:fragment slot="menu">
                                     {#if editContent}
-                                        <EditValues sections={editContent} {item} on:change={e => valueChanged(e.detail, i)} />
+                                        <EditValues sections={editContent} {item} on:change={(e) => valueChanged(e.detail, i)} />
                                     {/if}
                                 </svelte:fragment>
                             </InputRow>
@@ -146,8 +146,8 @@
                 <MaterialColorInput
                     label="edit.background_color"
                     value={currentEffect.background}
-                    on:input={e => {
-                        effects.update(a => {
+                    on:input={(e) => {
+                        effects.update((a) => {
                             a[effectId].background = e.detail
                             return a
                         })
@@ -160,8 +160,8 @@
                     label="edit.opacity"
                     value={(currentEffect.opacity ?? 1) * 100}
                     max={100}
-                    on:change={e => {
-                        effects.update(a => {
+                    on:change={(e) => {
+                        effects.update((a) => {
                             a[effectId].opacity = e.detail / 100
                             return a
                         })

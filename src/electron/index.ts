@@ -16,7 +16,7 @@ import { autoErrorReport } from "./IPC/responsesMain"
 import { receiveNDI } from "./ndi/talk"
 import { OutputHelper } from "./output/OutputHelper"
 import { callClose, exitApp, saveAndClose } from "./utils/close"
-import { isWithinDisplayBounds, mainWindowInitialize, openDevTools, parseCommandLineArgs, waitForBundle } from "./utils/init"
+import { isWithinDisplayBounds, mainWindowInitialize, openDevTools, parseCommandLineArgs, waitForBundle, isDraggableAreaVisible } from "./utils/init"
 import { template } from "./utils/menuTemplate"
 import { spellcheck } from "./utils/spellcheck"
 import { loadingOptions, mainOptions } from "./utils/windowOptions"
@@ -85,7 +85,10 @@ protocol.registerSchemesAsPrivileged([
 
 // start when ready
 if (RECORD_STARTUP_TIME) console.time("Full startup")
-app.on("ready", startApp)
+app.on("ready", () => {
+    startApp()
+    requestHeaders()
+})
 
 export let powerSaveBlockerId: number | null = null
 function startApp() {
@@ -107,8 +110,6 @@ function startApp() {
 
     registerProtectedProtocol()
 
-    requestHeaders()
-
     // Start servers initialization early (asynchronously)
     Promise.resolve()
         .then(() => {
@@ -127,14 +128,12 @@ function startApp() {
 function requestHeaders() {
     // Fix YouTube Error 153 - set referrer policy for all requests
     // https://stackoverflow.com/questions/79802987/youtube-error-153-video-player-configuration-error-when-embedding-youtube-video
-    app.whenReady().then(() => {
-        const session = require("electron").session.defaultSession
-        session.webRequest.onBeforeSendHeaders((details: any, callback: any) => {
-            if (details.url.includes("youtube.com") || details.url.includes("youtube-nocookie.com")) {
-                details.requestHeaders["Referer"] = "https://freeshow.app/"
-            }
-            callback({ requestHeaders: details.requestHeaders })
-        })
+    const session = require("electron").session.defaultSession
+    session.webRequest.onBeforeSendHeaders((details: any, callback: any) => {
+        if (details.url.includes("youtube.com") || details.url.includes("youtube-nocookie.com")) {
+            details.requestHeaders["Referer"] = "https://freeshow.app/"
+        }
+        callback({ requestHeaders: details.requestHeaders })
     })
 }
 
@@ -168,8 +167,8 @@ function createMain() {
     if (bounds.x) options.x = bounds.x
     if (bounds.y) options.y = bounds.y
 
-    // check if window position is within a visible area
-    if (bounds.x && bounds.y && !isWithinDisplayBounds({ x: bounds.x, y: bounds.y })) {
+    // check if window position is within a visible area and draggable top area is accessible
+    if (bounds.x && bounds.y && (!isWithinDisplayBounds({ x: bounds.x, y: bounds.y }) || !isDraggableAreaVisible(bounds, options.width!))) {
         options.x = (screenBounds.width - options.width!) / 2
         options.y = (screenBounds.height - options.height!) / 2
     }

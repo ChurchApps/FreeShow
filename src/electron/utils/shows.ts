@@ -2,21 +2,21 @@ import path from "path"
 import { ToMain } from "../../types/IPC/ToMain"
 import type { Show, Shows, TrimmedShow, TrimmedShows } from "../../types/Show"
 import { sendToMain } from "../IPC/main"
-import { deleteFile, getDataFolderPath, parseShow, readFile, readFileAsync, readFolder, readFolderAsync, renameFile } from "./files"
+import { deleteFile, getDataFolderPath, parseShow, readFile, readFileAsync, readFolder, readFolderAsync, renameFileAsync } from "./files"
 
 export function getAllShows() {
     const showsPath = getDataFolderPath("shows")
-    const filesInFolder: string[] = readFolder(showsPath).filter(a => a.includes(".show") && a.length > 5)
+    const filesInFolder: string[] = readFolder(showsPath).filter((a) => a.includes(".show") && a.length > 5)
     return filesInFolder
 }
 
-export function renameShows(shows: { id: string; name: string; oldName: string }[], filePath: string) {
-    for (const show of shows) checkFile(show)
-    function checkFile(show: { id: string; name: string; oldName: string }) {
+export async function renameShows(shows: { id: string; name: string; oldName: string }[], filePath: string) {
+    await Promise.all(shows.map((show) => checkFile(show)))
+    async function checkFile(show: { id: string; name: string; oldName: string }) {
         const oldName = show.oldName + ".show"
         const newName = (show.name || show.id) + ".show"
 
-        renameFile(filePath, oldName, newName)
+        await renameFileAsync(filePath, oldName, newName)
     }
 }
 
@@ -43,15 +43,15 @@ export function trimShow(showCache: Show) {
 // let hasContent = !!Object.values(show.slides).find((slide) => slide.items.find((item) => item.lines?.find((line) => line.text?.find((text) => text.value?.length))))
 
 function showHasLayoutContent(show: Show) {
-    return !!Object.values(show.layouts || {}).find(layout => layout.slides.length)
+    return !!Object.values(show.layouts || {}).find((layout) => layout.slides.length)
 }
 
 export function getShowTextContent(show: Show) {
     let textContent = ""
-    Object.values(show.slides || {}).forEach(slide => {
-        slide.items.forEach(item => {
-            item.lines?.forEach(line => {
-                line.text?.forEach(text => {
+    Object.values(show.slides || {}).forEach((slide) => {
+        slide.items.forEach((item) => {
+            item.lines?.forEach((line) => {
+                line.text?.forEach((text) => {
                     textContent += text.value
                 })
             })

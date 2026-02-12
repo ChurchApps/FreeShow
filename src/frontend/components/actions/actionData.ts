@@ -5,6 +5,7 @@ export const actionData = {
     next_project_item: { name: "actions.next_project_item", icon: "project", incompatible: ["previous_project_item", "index_select_project_item"] },
     previous_project_item: { name: "actions.previous_project_item", icon: "project", incompatible: ["next_project_item", "index_select_project_item"] },
     index_select_project_item: { name: "actions.index_select_project_item", icon: "project", input: "index", incompatible: ["next_project_item", "previous_project_item"] },
+    mark_active_as_played: { name: "actions.mark_played", icon: "check", input: "toggle" },
 
     // SHOWS
     name_select_show: { SECTION: "guide_title.show", name: "actions.name_select_show", icon: "showIcon", input: "strval" },
@@ -20,12 +21,11 @@ export const actionData = {
     index_select_slide: { name: "actions.index_select_slide", icon: "slide", input: "index", incompatible: ["next_slide", "previous_slide", "random_slide", "name_select_slide", "id_select_group"] },
     name_select_slide: { name: "actions.name_select_slide", icon: "groups", input: "strval", incompatible: ["next_slide", "previous_slide", "random_slide", "index_select_slide", "id_select_group"] },
     id_select_group: { name: "actions.id_select_group", icon: "groups", input: "id", incompatible: ["next_slide", "previous_slide", "random_slide", "index_select_slide", "name_select_slide"] },
-    start_slide_recording: { name: "recording.action_play", icon: "record" },
 
     // CLEAR
     restore_output: { SECTION: "clear.general", name: "preview.restore_output", icon: "reset", incompatible: ["clear_all", "clear_background", "clear_slide", "clear_overlays", "clear_audio", "clear_next_timer"] },
     clear_all: { name: "clear.all", icon: "clear", incompatible: ["restore_output", "clear_background", "clear_slide", "clear_overlays", "clear_audio", "clear_next_timer"] },
-    clear_background: { slideId: "clearBackground", common: true, name: "clear.background", icon: "background", red: true, incompatible: ["restore_output", "clear_all"] },
+    clear_background: { slideId: "clearBackground", common: true, name: "clear.background", icon: "image", red: true, incompatible: ["restore_output", "clear_all"] },
     clear_slide: { common: true, name: "clear.slide", icon: "slide", red: true, incompatible: ["restore_output", "clear_all"] },
     clear_overlays: { slideId: "clearOverlays", common: true, name: "clear.overlays", icon: "overlays", red: true, incompatible: ["restore_output", "clear_all", "clear_overlay"] },
     clear_overlay: { name: "clear.overlay", icon: "overlays", input: "id", red: true, incompatible: ["restore_output", "clear_all", "clear_overlays"] }, // common: true,
@@ -36,7 +36,7 @@ export const actionData = {
     // MEDIA
     start_camera: { SECTION: "tabs.media", common: true, name: "actions.start_camera", icon: "camera", input: "camera" },
     start_screen: { common: true, name: "actions.start_screen", icon: "screen", input: "screen" },
-    toggle_playing_media: { name: "actions.toggle_playing_media", icon: "image" },
+    toggle_playing_media: { name: "actions.toggle_playing_media", icon: "pause" },
 
     // OVERLAYS
     // SECTION: "tabs.overlays",
@@ -62,6 +62,7 @@ export const actionData = {
     start_playlist: { common: true, name: "actions.start_playlist", icon: "playlist", input: "id", incompatible: ["playlist_next"] },
     playlist_next: { name: "actions.playlist_next", icon: "playlist", incompatible: ["start_playlist"] },
     start_metronome: { name: "actions.start_metronome", icon: "metronome", input: "metronome" },
+    start_audio_effect: { common: true, canAddMultiple: true, name: "actions.start_audio_effect", icon: "effect", input: "audio_effects" },
 
     // TIMERS
     id_start_timer: { SECTION: "tabs.timers", common: true, canAddMultiple: true, name: "actions.id_start_timer", icon: "timer", input: "id", incompatible: ["pause_timers", "stop_timers"] },

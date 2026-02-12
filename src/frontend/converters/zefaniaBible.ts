@@ -6,19 +6,19 @@ import { setActiveScripture } from "./bible"
 import { xml2json } from "./xml"
 
 export function convertZefaniaBible(data: any[]) {
-    data.forEach(bible => {
+    data.forEach((bible) => {
         const obj = XMLtoObject(bible.content)
         if (!obj.name) obj.name = bible.name
         obj.name = formatToFileName(obj.name)
 
         const id = uid()
         // create folder & file
-        scripturesCache.update(a => {
+        scripturesCache.update((a) => {
             a[id] = obj
             return a
         })
 
-        scriptures.update(a => {
+        scriptures.update((a) => {
             a[id] = { name: obj.name, id }
             return a
         })
@@ -60,7 +60,7 @@ function XMLtoObject(xml: string) {
                 // add styled verses
                 let styledVerses = verse.STYLE || []
                 if (!Array.isArray(styledVerses)) styledVerses = [styledVerses]
-                text += styledVerses.map(a => a?.["#text"] || "").join(" ")
+                text += styledVerses.map((a) => a?.["#text"] || "").join(" ")
 
                 // remove extra styling
                 text = text.replaceAll("\n", " ").replaceAll('<BR art="x-p"/>', "")

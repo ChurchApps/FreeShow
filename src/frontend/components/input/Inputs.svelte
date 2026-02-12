@@ -21,6 +21,6 @@
 
 {#each inputs as input}
     {#if input?.type}
-        <Input {input} on:change={e => changed(e, input)} />
+        <Input {input} on:change={(e) => changed(e, input)} />
     {/if}
 {/each}
