@@ -8,6 +8,7 @@
     import T from "../helpers/T.svelte"
     import Button from "../inputs/Button.svelte"
     import TopButton from "../inputs/TopButton.svelte"
+    import { DEFAULT_DISPLAY_NAME } from "../../utils/SocketHelper"
 
     export let isWindows = false
 
@@ -77,9 +78,14 @@
     <div class="users" style="{isWindows ? 'top: 25px;' : ''}width: calc(17px + ((22px - 5px) * {users.length}));" data-title={translateText("settings.connections")}>
         {#each users as user, i}
             {@const isSameArea = $activeShow && user.activeShow?.id === $activeShow?.id}
+            {@const name = user.displayName || DEFAULT_DISPLAY_NAME}
 
-            <div class="user" class:isSameArea data-title={user.displayName} style="background-color: {user.color};transform: translateX(-{5 * i}px);" role="none" on:click={() => goToUser(user)}>
-                {user.displayName?.[0] || "?"}
+            <div class="user" class:isSameArea data-title={name} style="background-color: {user.color};transform: translateX(-{5 * i}px);" role="none" on:click={() => goToUser(user)}>
+                {#if name === DEFAULT_DISPLAY_NAME}
+                    <Icon id="profiles" size={1.2} white />
+                {:else}
+                    {name.charAt(0)}
+                {/if}
             </div>
         {/each}
     </div>

@@ -18,6 +18,8 @@ interface SocketPayloadInterface {
     data: any
 }
 
+export const DEFAULT_DISPLAY_NAME = "Unnamed Device"
+
 // https://github.com/ChurchApps/AppHelper/blob/main/packages/apphelper/src/helpers/SocketHelper.ts
 export class SocketHelper {
     private connection: Connection
@@ -26,7 +28,7 @@ export class SocketHelper {
 
     constructor(connection: Connection) {
         if (!connection.churchId || !connection.teamId) throw new Error("Invalid connection data")
-        if (!connection.displayName) connection.displayName = "Unnamed Device"
+        if (!connection.displayName) connection.displayName = DEFAULT_DISPLAY_NAME
 
         this.connection = connection
         this.init()

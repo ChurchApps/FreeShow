@@ -39,7 +39,9 @@
         <Resizeable id="leftPanel">
             <div class="left">
                 {#if page === "show"}
-                    <Projects />
+                    {#key $activeProfile}
+                        <Projects />
+                    {/key}
                 {:else if page === "edit"}
                     <Navigation />
                 {:else if page === "stage"}

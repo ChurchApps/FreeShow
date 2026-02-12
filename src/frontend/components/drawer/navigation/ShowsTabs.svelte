@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { TrimmedShow } from "../../../../types/Show"
-    import { categories, drawerTabsData, labelsDisabled, shows } from "../../../stores"
+    import { activeProfile, categories, drawerTabsData, labelsDisabled, shows } from "../../../stores"
     import { hasNewerUpdate } from "../../../utils/common"
     import { getAccess } from "../../../utils/profile"
     import { keysToID, sortObject } from "../../helpers/array"
@@ -10,7 +10,7 @@
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import NavigationSections from "./NavigationSections.svelte"
 
-    const profile = getAccess("shows")
+    $: profile = $activeProfile ? getAccess("shows") : {}
     $: readOnly = profile.global === "read"
 
     $: activeSubTab = $drawerTabsData.shows?.activeSubTab || ""
