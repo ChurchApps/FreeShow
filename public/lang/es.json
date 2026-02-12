@@ -378,6 +378,7 @@
     },
     "tabs": {
         "shows": "Presentaciones",
+        "shows_info": "Una presentación se compone de diapositivas; puede ser una canción, exposición, elementos multimedia, pasajes bíblicos y más.",
         "media": "Multimedia",
         "overlays": "Capas",
         "audio": "Audio",
@@ -505,6 +506,8 @@
         "manage_tags": "Gestionar etiquetas",
         "sync_categories": "Sincronizar categorías",
         "effect_items": "Elementos de efecto",
+        "timeline": "Cronología",
+        "timecode": "Código de tiempo",
         "initialize": "Bienvenido a FreeShow",
         "unsaved": "¿Seguro que desea salir?",
         "cancel": "Cancelar",
@@ -612,6 +615,7 @@
         "recolor": "Cambiar color",
         "remove": "Suprimir",
         "remove_group": "Eliminar grupo del diseño",
+        "remove_group_short": "Eliminar grupo",
         "choose_group": "Elegir grupo",
         "goto_group": "Ir al grupo",
         "active_outputs": "Salidas activas",
@@ -625,7 +629,9 @@
         "import_calendar": "Importar calendario",
         "imported": "¡Importado!",
         "duplicate": "Duplicar",
+        "duplicated": "Duplicado",
         "delete": "Eliminar",
+        "delete_slide_short": "Eliminar diapositiva",
         "delete_slide": "Eliminar diapositiva de la presentación",
         "delete_group": "Eliminar grupo",
         "delete_all": "Eliminar todos",
@@ -638,7 +644,9 @@
         "redo": "Rehacer",
         "cut": "Cortar",
         "copy": "Copiar",
+        "copied": "Copiado",
         "paste": "Pegar",
+        "pasted": "Pegado",
         "pasteAndMatchStyle": "Pegar y coincidir estilo",
         "selectAll": "Seleccionar todo",
         "remove_selection": "Eliminar selección",
@@ -834,15 +842,9 @@
         "seconds": "segundos",
         "empty": "vacío"
     },
-    "recording": {
-        "remove": "Eliminar grabación",
-        "tip": "Graba y reproduce la duración de las diapositivas. Sincroniza con una pista de audio en la primera diapositiva.",
-        "layout_changed": "¡El diseño cambió desde la última grabación!",
-        "audio_synced": "¡Sincronizado con el audio!",
-        "start": "Iniciar grabación de diapositiva",
-        "action_play": "Reproducir grabación de diapositivas",
-        "use_duration": "Usar tiempo de duración",
-        "use_duration_tip": "Utilice el tiempo de duración en lugar de la hora de la marca de tiempo"
+    "timeline": {
+        "toggle_timeline": "Alternar cronología",
+        "start_time": "Hora de inicio"
     },
     "animate": {
         "change": "Cambiar",
@@ -859,7 +861,6 @@
         "info": "Sincronizar archivos con la nube para realizar copias de seguridad o para acceder a ellos desde varios ordenadores.",
         "enable": "Sincronización automática al iniciar y cerrar",
         "read_only": "Sólo Lectura",
-        "media_folder": "Carpeta de multimedia en la nube",
         "reconnect": "Reconectar",
         "sync": "Sincronizar ahora",
         "change_team": "Cambiar de equipo",
@@ -1073,7 +1074,8 @@
         "fahrenheit": "Fahrenheit",
         "longRange": "Largo alcance",
         "media_item_tip": "¿Está intentando utilizar los archivos multimedia como fondo?",
-        "convert_to_background": "Convertir en fondo"
+        "convert_to_background": "Convertir en fondo",
+        "convert_to_media_item": "Convertir el fondo en un elemento multimedia"
     },
     "items": {
         "text": "Cuadro de texto",
@@ -1384,8 +1386,10 @@
         "write": "Escribir",
         "set_active": "Establecer como activo",
         "choose_profile": "Eligir un perfil",
+        "change_profile": "Cambiar perfil",
         "choose_admin": "Continuar sólo si se sabe lo que se hace. ¿Elegir perfil de administrador?",
-        "locked": "¡Perfil seleccionado tiene acceso restringido a esto!"
+        "locked": "¡Perfil seleccionado tiene acceso restringido a esto!",
+        "auto_open_last_used": "Abrir automáticamente el último perfil utilizado al iniciar"
     },
     "sort": {
         "sort_by": "Ordenar por",
@@ -1437,6 +1441,7 @@
         "verses_on_individual_lines": "Versículos en líneas individuales",
         "divide_long_verses": "Dividir versículos largos",
         "split_long_verses_suffix": "Mostrar sufijo de letra",
+        "tolerance": "Tolerancia",
         "version": "Mostrar versión",
         "reference": "Mostrar referencia",
         "split_reference": "Referencia dividida",

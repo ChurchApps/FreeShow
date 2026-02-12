@@ -378,6 +378,7 @@
     },
     "tabs": {
         "shows": "Présentations",
+        "shows_info": "Une présentation est composé de diapositives ; il peut s'agir d'une chanson, d'une exposition, de médias, de passages bibliques, et plus encore.",
         "media": "Média",
         "overlays": "Superpositions",
         "audio": "Audio",
@@ -505,6 +506,8 @@
         "manage_tags": "Gérer les tags",
         "sync_categories": "Synchroniser les catégories",
         "effect_items": "Éléments d'effet",
+        "timeline": "Chronologie",
+        "timecode": "Code temporel",
         "initialize": "Bienvenue sur FreeShow",
         "unsaved": "Vous n'avez pas encore sauvergardé ! Êtes-vous sur de vouloir quitter ?",
         "cancel": "Annuler",
@@ -612,6 +615,7 @@
         "recolor": "Modifier la couleur",
         "remove": "Retirer",
         "remove_group": "Retirer le groupe de la mise en page",
+        "remove_group_short": "Supprimer le groupe",
         "choose_group": "Choisir le groupe",
         "goto_group": "Aller au groupe",
         "active_outputs": "Sorties actives",
@@ -625,7 +629,9 @@
         "import_calendar": "Importer le calendrier",
         "imported": "Importé !",
         "duplicate": "Dupliquer",
+        "duplicated": "Dupliqué",
         "delete": "Supprimer",
+        "delete_slide_short": "Supprimer la diapositive",
         "delete_slide": "Supprimer la diapositive de la présentation",
         "delete_group": "Supprimer le groupe",
         "delete_all": "Supprimer tout",
@@ -638,7 +644,9 @@
         "redo": "Rétablir",
         "cut": "Couper",
         "copy": "Copier",
+        "copied": "Copié",
         "paste": "Coller",
+        "pasted": "Collé",
         "pasteAndMatchStyle": "Coller et adopter la mise en forme cible",
         "selectAll": "Sélectionner Tout",
         "remove_selection": "Retirer la sélection",
@@ -834,15 +842,9 @@
         "seconds": "secondes",
         "empty": "vide"
     },
-    "recording": {
-        "remove": "Supprimer l'enregistrement",
-        "tip": "Enregistrer et relire le minutage des diapos. Synchroniser avec une piste audio sur la première diapositive.",
-        "layout_changed": "La mise en page a changé depuis le dernier enregistrement !",
-        "audio_synced": "Synchronisé avec l'audio !",
-        "start": "Démarrer l'enregistrement de la diapositive",
-        "action_play": "Lire l'enregistrement de la diapositive",
-        "use_duration": "Utiliser la durée",
-        "use_duration_tip": "Utiliser durée au lieu de l'horodatage"
+    "timeline": {
+        "toggle_timeline": "Basculer la chronologie",
+        "start_time": "Heure de début"
     },
     "animate": {
         "change": "Changer",
@@ -859,7 +861,6 @@
         "info": "Synchroniser fichiers avec le cloud pour les sauvegarder ou pour y accéder depuis plusieurs ordinateurs.",
         "enable": "Synchronisation automatique au démarrage et à la fermeture",
         "read_only": "Lecture seule",
-        "media_folder": "Dossier des médias cloud",
         "reconnect": "Reconnecter",
         "sync": "Synchroniser maintenant",
         "change_team": "Changer d'équipe",
@@ -1073,7 +1074,8 @@
         "fahrenheit": "Fahrenheit",
         "longRange": "Longue portée",
         "media_item_tip": "Utiliser les médias comme image de fond ?",
-        "convert_to_background": "Convertir en image de fond"
+        "convert_to_background": "Convertir en image de fond",
+        "convert_to_media_item": "Convertir l'arrière-plan en élément multimédia"
     },
     "items": {
         "text": "Zone de texte",
@@ -1384,8 +1386,10 @@
         "write": "Écrire",
         "set_active": "Définir comme actif",
         "choose_profile": "Choisir un profil",
+        "change_profile": "Changer de profil",
         "choose_admin": "Continuer uniquement si vous savez ce que vous faites. Choisir le profil administrateur?",
-        "locked": "Votre profil sélectionné a un accès restreint à ceci!"
+        "locked": "Votre profil sélectionné a un accès restreint à ceci!",
+        "auto_open_last_used": "Ouverture automatique du dernier profil utilisé au démarrage"
     },
     "sort": {
         "sort_by": "Trier par",
@@ -1437,6 +1441,7 @@
         "verses_on_individual_lines": "Versets sur des lignes individuelles",
         "divide_long_verses": "Séparer les longs versets",
         "split_long_verses_suffix": "Afficher suffixe de lettre",
+        "tolerance": "Tolérance",
         "version": "Afficher la version",
         "reference": "Afficher la référence",
         "split_reference": "Diviser la référence",
