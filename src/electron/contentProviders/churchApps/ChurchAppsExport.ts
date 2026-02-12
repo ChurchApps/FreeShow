@@ -78,7 +78,7 @@ export class ChurchAppsExport {
         freeShowIds.forEach((key: string) => {
             const show = shows[key]
             const showData = this.loadShowData(show.name)
-            if (!showData) return
+            if (!showData?.[1]?.slides) return
 
             const songData: ChurchAppsSongData = {
                 freeShowId: key,
@@ -91,7 +91,7 @@ export class ChurchAppsExport {
             // Add lyrics with group names
             let currentGroup = ""
             Object.keys(showData[1].slides).forEach((slideKey: string) => {
-                const slide = showData[1].slides?.[slideKey]
+                const slide = showData[1].slides[slideKey]
                 // Add group name if it's different from the current group
                 if (slide.group && slide.group !== currentGroup) {
                     songData.lyrics += `[${slide.group}]\n`
