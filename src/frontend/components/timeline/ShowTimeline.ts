@@ -135,6 +135,7 @@ export class ShowTimeline {
         // check that slide exists
         let slide: LayoutRef | undefined = layoutRef[ref.index || 0]
         if (!slide?.id || slide.id !== ref.id) slide = layoutRef.find((a) => a.id === ref.id)
+        if (!slide?.id) slide = layoutRef.find((a) => a.layoutIndex === ref.index)
         if (!slide) return
 
         const index = slide.layoutIndex

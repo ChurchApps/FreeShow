@@ -7,6 +7,7 @@ import { checkName } from "../components/helpers/show"
 import { activeDrawerTab, activePopup, activeProject, activeRename, activeShow, alertMessage, categories, drawerTabsData, shows } from "../stores"
 import { newToast } from "../utils/common"
 import { convertText } from "./txt"
+import { convertOldShowValues } from "../components/helpers/setShow"
 
 export function createCategory(name: string, icon = "song", { isDefault, isArchive }: { isDefault?: boolean; isArchive?: boolean } = {}) {
     // return selected category if it is empty
@@ -44,10 +45,12 @@ export function setTempShows(tempShows: { id: string; show: Show }[]) {
     newToast("main.finished")
 }
 
-export function importShow(files: { content: string; name?: string; extension?: string }[]) {
+export async function importShow(files: { content: string; name?: string; extension?: string }[]) {
     const tempShows: { id: string; show: Show }[] = []
 
-    files.forEach(({ content, name }) => {
+    await Promise.all(files.map(async (a) => loadShow(a as any)))
+
+    async function loadShow({ content, name }) {
         let id
         let show
 
@@ -87,8 +90,9 @@ export function importShow(files: { content: string; name?: string; extension?: 
         if (categoryId === "all" || categoryId === "unlabeled") categoryId = null
         show.category = categoryId
 
+        show = await convertOldShowValues(show)
         tempShows.push({ id, show: { ...show, name: checkName(show.name, id) } })
-    })
+    }
 
     setTempShows(tempShows)
 }
