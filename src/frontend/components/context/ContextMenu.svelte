@@ -187,7 +187,7 @@
         return groupList
     }
 
-    $: if (activeMenu) requestUpdate()
+    $: if (activeMenu !== undefined || !$contextActive) requestUpdate()
     let update = 0
     let isRequesting = false
     let requestTimeout: NodeJS.Timeout | null = null
@@ -198,6 +198,7 @@
         if (requestTimeout) return
 
         requestTimeout = setTimeout(() => {
+            requestTimeout = null
             isRequesting = false
             if (isRequesting) update++
         }, 61)

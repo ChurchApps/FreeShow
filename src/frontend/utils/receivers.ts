@@ -276,7 +276,6 @@ export const receiveOUTPUTasOUTPUT: any = {
     // SLIDE: (a: any) => outSlide.set(a),
     // OVERLAYS: (a: any) => outOverlays.set(a),
     // OVERLAY: (a: any) => overlays.set(a),
-    // META: (a: any) => displayMetadata.set(a),
     // COLOR: (a: any) => backgroundColor.set(a),
     // SCREEN: (a: any) => screen.set(a),
     SHOWS: (a: any) => showsCache.set(a),

@@ -1,6 +1,8 @@
 <script lang="ts">
     import { uid } from "uid"
+    import { Main } from "../../../types/IPC/Main"
     import type { ClickEvent } from "../../../types/Main"
+    import { sendMain } from "../../IPC/main"
     import { changeSlidesView } from "../../show/slides"
     import { actions, activeEdit, activePage, activePopup, activeProject, activeShow, activeStyle, alertMessage, labelsDisabled, openToolsTab, outputs, projects, settingsTab, showsCache, slidesOptions, special, styles, templates } from "../../stores"
     import { triggerClickOnEnterSpace } from "../../utils/clickable"
@@ -22,8 +24,6 @@
     import MaterialZoom from "../inputs/MaterialZoom.svelte"
     import SelectElem from "../system/SelectElem.svelte"
     import Reference from "./Reference.svelte"
-    import { sendMain } from "../../IPC/main"
-    import { Main } from "../../../types/IPC/Main"
 
     $: showId = $activeShow?.id || ""
     $: currentShow = $showsCache[showId] || {}
@@ -143,12 +143,6 @@
             if (typeof layoutNotes !== "string") return
             notes = { text: layoutNotes, id: "notes", title: "tools.notes", icon: "notes", tab: "notes" }
             if (layoutNotes.includes("<br>")) bottomHeight = 40 + 18 * (layoutNotes.split("<br>").length - 1)
-            return
-        }
-
-        const messageText = currentShow.message?.text
-        if (messageText?.length) {
-            notes = { text: messageText, id: "message", title: "meta.message", icon: "message", tab: "metadata" }
             return
         }
 

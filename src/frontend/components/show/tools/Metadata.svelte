@@ -4,18 +4,15 @@
     import { translateText } from "../../../utils/language"
     import { history } from "../../helpers/history"
     import { getCustomMetadata, initializeMetadata } from "../../helpers/show"
-    import HRule from "../../input/HRule.svelte"
     import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
-    import MaterialTextarea from "../../inputs/MaterialTextarea.svelte"
+    import Tip from "../../main/Tip.svelte"
 
     $: currentShow = $showsCache[$activeShow!.id]
     $: meta = currentShow.meta
     let values: { [key: string]: string } = {}
-    let message: any = {}
 
     onMount(getValues)
-    $: messageUpdate = $showsCache[$activeShow?.id || ""]?.message
-    $: if ($activeShow!.id || messageUpdate || $customMetadata) getValues()
+    $: if ($activeShow!.id || $customMetadata) getValues()
 
     function getValues() {
         values = getCustomMetadata()
@@ -25,8 +22,6 @@
             if (!value && defaultKeys.includes(key) && $customMetadata.disabled?.includes(key)) return
             values[key] = value
         })
-
-        message = currentShow.message || {}
     }
 
     const changeValue = (value: string, key: string) => {
@@ -82,13 +77,7 @@
         {/each}
     </div>
 
-    <!-- message -->
-    <HRule title="meta.message" />
-    <div style="padding: 10px;">
-        <MaterialTextarea label="meta.message_tip" class="context #meta_message" value={message.text || ""} rows={2} on:change={(e) => updateData({ ...message, text: e.detail }, "message")} />
-    </div>
-
-    <!-- WIP how to enable tip -->
+    <Tip value="tips.display_metadata" style="margin: 0 10px;" bottom={10} />
 
     <!-- <h5><T id="meta.tags" /></h5>
     <div class="tags" style="display: flex;flex-direction: column;">
@@ -98,9 +87,6 @@
 
 <style>
     section {
-        height: 100%;
-        width: 100%;
-
         display: flex;
         flex-direction: column;
     }

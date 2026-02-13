@@ -346,7 +346,6 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     show_template: ["remove_template"],
     tag: ["rename", "recolor", "SEPARATOR", "delete"],
     chord: ["set_key", "chord_list", "custom_key", "SEPARATOR", "delete"],
-    meta_message: ["dynamic_values"],
     edit_custom_action: ["edit"],
 
     // MEDIA

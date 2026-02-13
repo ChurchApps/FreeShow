@@ -269,8 +269,10 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
             if (style.displayMetadata) metadata.display = style.displayMetadata
             if (style.metadataTemplate) metadata.template = style.metadataTemplate
             if (Object.keys(metadata).length) style.metadata = metadata
+            delete style.metadataDivider
             delete style.displayMetadata
             delete style.metadataTemplate
+            delete style.messageTemplate
         })
 
         styles.set(v)

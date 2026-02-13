@@ -13,6 +13,7 @@
     import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
     import Center from "../../system/Center.svelte"
     import Loader from "../Loader.svelte"
+    import Icon from "../../helpers/Icon.svelte"
 
     let revert = $popupData.revert
     let allowEmpty = !!$popupData.allowEmpty
@@ -132,7 +133,9 @@
         <div class="grid">
             {#if allowEmpty || (customTypes && selectedType !== types[0]?.value)}
                 <Card active={!value} label={translateText(allowEmpty ? "main.none" : "example.default")} icon="templates" {resolution} on:click={() => selectTemplate("")}>
-                    <!--  -->
+                    <Center faded>
+                        <Icon id="close" size={2} white />
+                    </Center>
                 </Card>
             {/if}
 

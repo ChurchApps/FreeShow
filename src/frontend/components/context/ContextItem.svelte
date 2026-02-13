@@ -316,6 +316,19 @@
         //     if (item is bound) enabled = true
         // }
 
+        category_action: () => {
+            const categoryId = $selected.data[0]
+            enabled = !!$categories[categoryId]?.action
+        },
+        category_template: () => {
+            const categoryId = $selected.data[0]
+            enabled = !!$categories[categoryId]?.template
+        },
+        metadata_display: () => {
+            const categoryId = $selected.data[0]
+            enabled = !!$categories[categoryId]?.metadata
+        },
+
         // Media type
         type_default: () => {
             const folderId = $selected.data[0]

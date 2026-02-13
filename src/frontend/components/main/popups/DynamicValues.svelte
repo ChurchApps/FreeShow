@@ -4,7 +4,6 @@
     import { triggerClickOnEnterSpace } from "../../../utils/clickable"
     import { formatSearch } from "../../../utils/search"
     import { clone } from "../../helpers/array"
-    import { history } from "../../helpers/history"
     import { getLayoutRef } from "../../helpers/show"
     import { dynamicValueText, getDynamicIds, replaceDynamicValues } from "../../helpers/showActions"
     import { _show } from "../../helpers/shows"
@@ -112,16 +111,6 @@
             id = Object.values(searchedValues)[0]?.[0]?.id
         }
         if (!id) return
-
-        if (obj.contextElem?.classList.contains("#meta_message")) {
-            let message = _show().get("message") || {}
-            let data = { ...message, text: (message.text || "") + `{${id}}` }
-            let override = "show#" + $activeShow!.id + "_message"
-
-            history({ id: "UPDATE", newData: { data, key: "message" }, oldData: { id: $activeShow!.id }, location: { page: "show", id: "show_key", override } })
-            finish()
-            return
-        }
 
         let isStage = !!obj.contextElem?.classList.contains("stage_item")
         if (!obj.contextElem?.classList.contains("editItem") && !isStage) return

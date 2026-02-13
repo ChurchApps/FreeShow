@@ -87,7 +87,9 @@
         "category_template": "The category of this show has a template set, which will overwrite any edits.",
         "consider_templates": "You made the same changes to multiple slides. Consider using a template.",
         "style_template_active": "A style in the output is set to override the show template.",
-        "group_numbers": "Numbers are auto assigned, so you don't need to add numbers to group names."
+        "group_numbers": "Numbers are auto assigned, so you don't need to add numbers to group names.",
+        "display_metadata": "Right click a show category to change when metadata is displayed.",
+        "metadata_customize": "To customize the displayed metadata content, edit the template and use dynamic values."
     },
     "setup": {
         "good_luck": "We hope you find this software useful. Good luck with the presentation! :)",

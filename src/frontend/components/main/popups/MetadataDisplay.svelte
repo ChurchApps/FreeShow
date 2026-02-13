@@ -8,6 +8,7 @@
     import InputRow from "../../input/InputRow.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialPopupButton from "../../inputs/MaterialPopupButton.svelte"
+    import Tip from "../Tip.svelte"
 
     let data
     if ($popupData.type === "show_category" || $popupData.type === "style") {
@@ -29,8 +30,9 @@
     }
 
     $: display = currentValue.display || (type === "style" ? "default" : "never")
-    $: template = currentValue.template || "metadata"
-    $: templateSecondary = currentValue.templateSecondary || template
+    $: templateAll = currentValue.templateAll || "metadata"
+    $: template = currentValue.template || (display === "always" ? templateAll : "metadata")
+    $: templateFirst = currentValue.templateFirst || (display === "always" ? templateAll : template)
 
     // VALUES
 
@@ -47,13 +49,18 @@
     // UPDATE
 
     function changeMetadata(key: string, value: string) {
+        console.log(key, value)
+
         if (key === "display" && currentValue[key] === value) {
             activePopup.set(null)
             return
         }
 
         if (key === "template" && value === "metadata") {
-            changeMetadata("templateSecondary", value)
+            changeMetadata("templateFirst", value)
+        }
+        if (display === "always" && (key === "template" || key === "templateFirst") && value === templateAll) {
+            value = ""
         }
 
         currentValue[key] = value
@@ -127,26 +134,36 @@
     {/each}
 </div>
 
-{#if display !== "never" && display !== "default"}
+{#if display === "default"}
+    <Tip value="tips.display_metadata" top={20} />
+{:else if display !== "never"}
     <div style="margin-top: 20px;">
-        {#if display === "first_last"}
+        {#if display === "always"}
             <InputRow>
-                <MaterialPopupButton label="meta.meta_template (show_at.first)" value={templateSecondary} defaultValue={template} name={$templates[templateSecondary]?.name} popupId="select_template" icon="templates" data={{ revert: "metadata_display" }} on:change={(e) => changeMetadata("templateSecondary", e.detail)} />
-                {#if templateSecondary && $templates[templateSecondary]}
-                    <MaterialButton title="titlebar.edit" icon="edit" on:click={() => editTemplate(templateSecondary)} />
+                <MaterialPopupButton label="meta.meta_template" value={templateAll} defaultValue="metadata" name={$templates[templateAll]?.name} popupId="select_template" icon="templates" data={{ revert: "metadata_display" }} on:change={(e) => changeMetadata("templateAll", e.detail)} />
+                {#if templateAll && $templates[templateAll]}
+                    <MaterialButton title="titlebar.edit" icon="edit" on:click={() => editTemplate(templateAll)} />
                 {/if}
             </InputRow>
         {/if}
 
-        <!-- WIP text divider is not needed anymore because of dynamic values in templates -->
-        <!-- <MaterialTextInput label="meta.text_divider" value={metadataDividerValue} defaultValue={defaultDivider} on:change={(e) => updateStyle(e.detail, "metadataDivider")}></MaterialTextInput> -->
+        {#if display === "first_last" || display === "always"}
+            <InputRow>
+                <MaterialPopupButton label="meta.meta_template (show_at.first)" value={templateFirst} defaultValue={display === "always" ? templateAll : template} name={$templates[templateFirst]?.name} popupId="select_template" icon="templates" data={{ revert: "metadata_display" }} on:change={(e) => changeMetadata("templateFirst", e.detail)} />
+                {#if templateFirst && $templates[templateFirst]}
+                    <MaterialButton title="titlebar.edit" icon="edit" on:click={() => editTemplate(templateFirst)} />
+                {/if}
+            </InputRow>
+        {/if}
 
         <InputRow>
-            <MaterialPopupButton label="meta.meta_template{display === 'first_last' ? ' (show_at.last)' : ''}" value={template} defaultValue="metadata" name={$templates[template]?.name} popupId="select_template" icon="templates" data={{ revert: "metadata_display" }} on:change={(e) => changeMetadata("template", e.detail)} />
+            <MaterialPopupButton label="meta.meta_template{display === 'first_last' || display === 'always' ? ' (show_at.last)' : ''}" value={template} defaultValue={display === "always" ? templateAll : "metadata"} name={$templates[template]?.name} popupId="select_template" icon="templates" data={{ revert: "metadata_display" }} on:change={(e) => changeMetadata("template", e.detail)} />
             {#if template && $templates[template]}
                 <MaterialButton title="titlebar.edit" icon="edit" on:click={() => editTemplate(template)} />
             {/if}
         </InputRow>
+
+        <Tip value="tips.metadata_customize" top={20} />
     </div>
 {/if}
 

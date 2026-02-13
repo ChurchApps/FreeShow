@@ -12,7 +12,6 @@
     import Draw from "../draw/Draw.svelte"
     import { clone } from "../helpers/array"
     import { defaultLayers, getCurrentStyle, getMetadata, getOutputLines, getOutputTransitions, getResolution, getSlideFilter, getStyleTemplate, OutputMetadata, setTemplateStyle } from "../helpers/output"
-    import { replaceDynamicValues } from "../helpers/showActions"
     import { _show } from "../helpers/shows"
     import Image from "../media/Image.svelte"
     import Zoomed from "../slide/Zoomed.svelte"
@@ -239,7 +238,6 @@
 
     // values
     $: backgroundColor = currentOutput.transparent ? "transparent" : styleTemplate?.settings?.backgroundColor || currentSlide?.settings?.color || currentStyle.background || slide?.settings?.backgroundColor || "black"
-    $: messageText = $showsCache[slide?.id || ""]?.message?.text?.replaceAll("\n", "<br>") || ""
     // metadata display
     $: firstActiveSlideIndex = currentLayout.findIndex((a) => !a.data.disabled)
     $: lastActiveSlideIndex = currentLayout.length - 1 - [...currentLayout].reverse().findIndex((a) => !a.data.disabled)
@@ -276,28 +274,6 @@
         })
     }
 
-    let isMessageClearing = false
-    let messageVisible = false
-    let messageTransition: NodeJS.Timeout | null = null
-    $: if (messageText !== undefined) updateMessage()
-    function updateMessage() {
-        if (messageTransition) clearTimeout(messageTransition)
-        if (messageText) {
-            isMessageClearing = false
-            messageVisible = true
-        } else {
-            isMessageClearing = true
-            // wait for transition to finish
-            messageTransition = setTimeout(
-                () => {
-                    messageVisible = false
-                    isMessageClearing = false
-                },
-                (metadata.messageTransition || transitions.overlay)?.duration || 500
-            )
-        }
-    }
-
     let isMetadataClearing = false
     let metadataVisible = false
     let metadataTransition: NodeJS.Timeout | null = null
@@ -320,30 +296,6 @@
             )
         }
     }
-
-    // UPDATE DYNAMIC VALUES e.g. {time_} EVERY SECOND
-    $: hasDynamicValues = messageVisible && messageText.includes("{")
-
-    // only update if text contains dynamic values
-    $: if (hasDynamicValues) startInterval()
-    else stopInterval()
-    let dynamicInterval: NodeJS.Timeout | null = null
-    function startInterval() {
-        stopInterval()
-        dynamicInterval = setInterval(update, 1000)
-    }
-    function stopInterval() {
-        if (dynamicInterval) clearInterval(dynamicInterval)
-        dynamicInterval = null
-    }
-
-    let updateDynamic = 0
-    function update() {
-        if (!hasDynamicValues) return
-        updateDynamic++
-    }
-
-    onDestroy(() => stopInterval())
 </script>
 
 <Zoomed id={outputId} background={backgroundColor} checkered={(preview || mirror) && backgroundColor === "transparent"} backgroundDuration={transitions.media?.type === "none" ? 0 : (transitions.media?.duration ?? 800)} align={alignPosition} center {style} {resolution} {mirror} {drawZoom} {cropping} bind:ratio>
@@ -389,13 +341,9 @@
     {/if}
 
     {#if layers.includes("overlays")}
-        <!-- message -->
-        {#if messageVisible}
-            <Metadata isClearing={isMessageClearing} value={messageText.includes("{") ? replaceDynamicValues(messageText, { showId: actualSlide?.id, layoutId: actualSlide?.layout, slideIndex: actualSlide?.index }, updateDynamic) : messageText} style={metadata.messageStyle || ""} transition={metadata.messageTransition || transitions.overlay} />
-        {/if}
-
         <!-- metadata -->
         {#if metadataVisible}
+            <!-- <Metadata isClearing={isMessageClearing} value={messageText.includes("{") ? replaceDynamicValues(messageText, { showId: actualSlide?.id, layoutId: actualSlide?.layout, slideIndex: actualSlide?.index }, updateDynamic) : messageText} style={metadata.messageStyle || ""} transition={metadata.messageTransition || transitions.overlay} /> -->
             <Metadata isClearing={isMetadataClearing} value={metadata.value || $customMessageCredits || ""} style={metadata.style || ""} conditions={metadata.condition} {outputId} transition={metadata.transition || transitions.overlay} />
         {/if}
 

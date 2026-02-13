@@ -362,20 +362,6 @@ function getDefaultTemplates() {
             }
         ]
     }
-    // message
-    a.message = {
-        isDefault: true,
-        name: translateText("meta.message"),
-        color: null,
-        category: "song", // "metadata"
-        items: [
-            {
-                style: "top: 50px;left: 30px;width: 1860px;height: 150px;",
-                align: "",
-                lines: [{ align: "", text: [{ value: translateText("meta.message"), style: "font-size: 50px;color: rgb(255 255 255 / 0.8);text-shadow: 2px 2px 4px rgb(0 0 0 / 80%);" }] }]
-            }
-        ]
-    }
     // presentation
     a.header = {
         isDefault: true,
@@ -1196,6 +1182,7 @@ export function getDefaultElements() {
     createDefaultEffects()
 }
 
+// "message" is removed
 const templateIds = ["metadata", "message", "header", "text", "big", "default", "small", "bigBold", "defaultBold", "smallBold", "blur_box", "faded", "box", "trendy", "trendy_curved", "fade", "lowerThird", "lowerThirdWhite", "lowerThirdBlue", "lowerThirdColor", "lowerThirdPastel", "scripture", "scripture_2", "scripture_3", "scripture_4", "scriptureLT", "scriptureLT_2", "blueHeader", "blueMain", "bullets"]
 function getDeletedTemplates() {
     if (get(deletedDefaults).templates) return

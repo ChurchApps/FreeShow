@@ -145,7 +145,6 @@
     // METADATA
 
     $: metadataDisplayLabel = metadataDisplay === "default" ? "example.default" : metadataDisplayValues.find((a) => a.id === metadataDisplay)?.name || ""
-    $: messageTemplate = currentStyle.messageTemplate || "message"
 
     function updateCustom(e: any) {
         updateStyle(e.value, e.key)
@@ -220,11 +219,3 @@
 <Title label="preview.overlays (tools.metadata)" icon="overlays" />
 
 <MaterialPopupButton id={styleId} label="meta.display_metadata" disabled={!activeLayers.includes("overlays")} value={metadataDisplay} defaultValue="default" name={metadataDisplayLabel} popupId="metadata_display" icon="info" data={{ type: "style" }} on:change={(e) => updateStyle({ ...metadata, display: e.detail }, "metadata")} />
-
-<!-- WIP remove?: -->
-<InputRow>
-    <MaterialPopupButton label="meta.message_template" disabled={!activeLayers.includes("overlays")} value={messageTemplate} defaultValue="message" name={$templates[messageTemplate]?.name} popupId="select_template" icon="templates" on:change={(e) => updateStyle(e.detail, "messageTemplate")} />
-    {#if messageTemplate && $templates[messageTemplate]}
-        <MaterialButton title="titlebar.edit" icon="edit" on:click={() => editTemplate(messageTemplate)} />
-    {/if}
-</InputRow>

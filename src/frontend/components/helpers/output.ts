@@ -1329,19 +1329,14 @@ export function createMetadataLayout(layout: string, ref: any, _updater = 0) {
 }
 
 export interface OutputMetadata {
-    message?: { [key: string]: string }
     display?: string
     style?: string
     transition?: any
     value?: string
     media?: boolean
     condition?: any
-
-    messageStyle?: string
-    messageTransition?: any
 }
 const defaultMetadataStyle = "top: 910px;left: 50px;width: 1820px;height: 150px;opacity: 0.8;font-size: 30px;text-shadow: 2px 2px 4px rgb(0 0 0 / 80%);"
-const defaultMessageStyle = "top: 50px;left: 50px;width: 1820px;height: 150px;opacity: 0.8;font-size: 50px;text-shadow: 2px 2px 4px rgb(0 0 0 / 80%);"
 export function getMetadata(oldMetadata: any, show: Show | undefined, currentStyle: Styles, templatesUpdater = get(templates), outSlide: OutSlide | null) {
     const metadata: OutputMetadata = { style: getTemplateStyle("metadata", templatesUpdater) || defaultMetadataStyle }
     if (!show) return metadata
@@ -1349,19 +1344,29 @@ export function getMetadata(oldMetadata: any, show: Show | undefined, currentSty
     const showCategory = get(categories)[show.category || ""] || {}
     const metadataValues = currentStyle.metadata || showCategory.metadata || {}
 
-    metadata.message = metadata.media ? {} : show.meta
     metadata.display = metadataValues.display
 
     // template
     let templateId: string = metadataValues.template || "metadata"
-    if (outSlide?.index === 0 && metadataValues.display === "first_last") templateId = metadataValues.templateSecondary || templateId
+    // if first slide
+    if (metadataValues.display === "first_last" && outSlide?.index === 0) templateId = metadataValues.templateFirst || templateId
+    if (metadataValues.display === "always") {
+        templateId = metadataValues.templateAll || "metadata"
+        // if first slide
+        if (outSlide?.index === 0) templateId = metadataValues.templateFirst || templateId
+        else if (metadataValues.template && outSlide) {
+            // if last slide
+            const ref = _show(outSlide.id).layouts([outSlide.layout]).ref()[0]
+            if (outSlide?.index === ref?.length - 1) templateId = metadataValues.template
+        }
+    }
+
     metadata.style = getTemplateStyle(templateId, templatesUpdater) || defaultMetadataStyle
     metadata.style += getTemplateAlignment(templateId, templatesUpdater)
     metadata.transition = templatesUpdater[templateId]?.items?.[0]?.actions?.transition || null
     metadata.condition = templatesUpdater[templateId]?.items?.[0]?.conditions || {}
 
     const metadataTemplateValue = getItemTextArray(templatesUpdater[templateId]?.items?.[0])
-    // if (metadataTemplateValue || metadata.message || currentStyle)
     getMetaValue()
     function getMetaValue() {
         if (metadata.media) {
@@ -1376,21 +1381,16 @@ export function getMetadata(oldMetadata: any, show: Show | undefined, currentSty
             return
         }
 
-        if (!metadata.message) return
+        if (!show?.meta) return
 
         // metadata.value = currentStyle.metadataLayout || DEFAULT_META_LAYOUT
-        metadata.value = joinMetadata(metadata.message, "; ")
+        metadata.value = joinMetadata(show.meta, "; ")
     }
-
-    const messageTemplate = currentStyle.messageTemplate || "message"
-    metadata.messageStyle = getTemplateStyle(messageTemplate, templatesUpdater) || defaultMessageStyle
-    metadata.messageStyle += getTemplateAlignment(messageTemplate, templatesUpdater)
-    metadata.messageTransition = templatesUpdater[messageTemplate]?.items?.[0]?.actions?.transition || null
 
     return clone(metadata)
 }
-export function joinMetadata(message: { [key: string]: string }, divider = "; ") {
-    return Object.values(message)
+export function joinMetadata(metadata: { [key: string]: string }, divider = "; ") {
+    return Object.values(metadata)
         .filter((a: string) => a.length)
         .join(divider)
 }

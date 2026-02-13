@@ -14,10 +14,6 @@ export class ShowObj implements Show {
     settings: any
     timestamps: any
     quickAccess: any
-    message?: {
-        text: string
-        template?: string
-    }
     metadata?: {
         override: boolean
         display: string

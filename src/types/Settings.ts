@@ -32,16 +32,13 @@ export interface Styles {
     templateScripture_3?: string
     templateScripture_4?: string
     metadata?: Metadata
-    // DEPRECATED:
-    displayMetadata?: string
-    metadataTemplate?: string
-    messageTemplate?: string
 }
 
 export interface Metadata {
     display?: string
-    template?: string
-    templateSecondary?: string
+    template?: string // default or last slide only
+    templateFirst?: string // first slide only
+    templateAll?: string // all slides (old "message")
 }
 
 export interface Resolution {
