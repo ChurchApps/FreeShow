@@ -53,6 +53,15 @@
     $: contrastColor = getContrast($themes[$theme]?.colors?.secondary || "")
     $: secondaryContrast = `--secondary-text: ${contrastColor === "#000000" ? "#131313" : "#f0f0ff"};`
     $: globalStyle = `${isWindows ? "height: calc(100% - 25px);" : ""}${secondaryContrast}${blending}`
+
+    let ready = false
+    $: if ($loaded) hasLoaded()
+    function hasLoaded() {
+        setTimeout(() => {
+            // prevent brief flash
+            ready = true
+        }, 51)
+    }
 </script>
 
 <svelte:window on:keydown={keydown} on:mousedown={focusArea} on:click={mainClick} on:error={logerror} on:unhandledrejection={logerror} />
@@ -82,7 +91,7 @@
 
             <MainLayout />
 
-            {#if Object.keys($profiles).filter((a) => a !== "admin").length && $activeProfile === null}
+            {#if ready && Object.keys($profiles).filter((a) => a !== "admin").length && $activeProfile === null}
                 <ProfileSelector />
             {/if}
         {:else}

@@ -58,10 +58,10 @@ async function startupMain() {
     setupMainReceivers()
     getMainData()
 
-    await wait(100)
+    await wait(50)
     getStoredData()
 
-    await waitUntilValueIsDefined(() => get(loaded), 100, 8000)
+    await waitUntilValueIsDefined(() => get(loaded), 50, 8000)
 
     if (startupProfile) openProfileByName(startupProfile)
     else autoOpenLastUsedProfile()

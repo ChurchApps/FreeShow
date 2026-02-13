@@ -1,6 +1,6 @@
 <script lang="ts">
     import { uid } from "uid"
-    import type { Tree } from "../../../types/Projects"
+    import type { Project, Tree } from "../../../types/Projects"
     import { activeProject, activeRename, drawer, focusMode, folders, labelsDisabled, openedFolders, projects, projectTemplates, projectView, showRecentlyUsedProjects, sorted } from "../../stores"
     import { translateText } from "../../utils/language"
     import { getAccess } from "../../utils/profile"
@@ -172,6 +172,20 @@
 
         openProject(id, !e.detail.alt)
     }
+
+    function getRootFolder(project: Project) {
+        let folder = $folders[project.parent]
+        if (!folder) return "/"
+
+        let iterations = 0
+        while ($folders[folder.parent]?.parent !== "/" && iterations < 20) {
+            folder = $folders[folder.parent]
+            if (!folder) break
+            iterations++
+        }
+
+        return folder.parent
+    }
 </script>
 
 <svelte:window on:keydown={checkInput} />
@@ -202,10 +216,15 @@
     {#if recentlyUsedList.length}
         <div id="projectsArea" class="list projects" style="overflow: auto;">
             {#each recentlyUsedList as project}
-                <MaterialButton style="width: 100%;padding: 0.08rem 0.65rem;font-weight: normal;" title="actions.id_select_project: <b>{project.name}</b>" on:click={(e) => openRecentlyUsed(e, project.id)} isActive={$activeProject === project.id} tab>
-                    <Icon id="project" />
-                    <HiddenInput value={project.name} id={"project_" + project.id} allowEdit={false} />
-                </MaterialButton>
+                {@const rootParentId = getRootFolder(project)}
+                {@const isVisible = profile[rootParentId] !== "none"}
+
+                {#if isVisible}
+                    <MaterialButton style="width: 100%;padding: 0.08rem 0.65rem;font-weight: normal;" title="actions.id_select_project: <b>{project.name}</b>" on:click={(e) => openRecentlyUsed(e, project.id)} isActive={$activeProject === project.id} tab>
+                        <Icon id="project" />
+                        <HiddenInput value={project.name} id={"project_" + project.id} allowEdit={false} />
+                    </MaterialButton>
+                {/if}
             {/each}
         </div>
     {:else if !projectActive}
