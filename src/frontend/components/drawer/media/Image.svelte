@@ -55,6 +55,9 @@
 <style>
     img {
         opacity: 0;
+
+        position: absolute;
+        top: 0;
     }
 
     .transition {
