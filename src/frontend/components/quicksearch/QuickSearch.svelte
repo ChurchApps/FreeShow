@@ -10,24 +10,40 @@
     import MaterialButton from "../inputs/MaterialButton.svelte"
     import TextInput from "../inputs/TextInput.svelte"
     import Center from "../system/Center.svelte"
-    import { quicksearch, selectQuicksearchValue, type SearchCategory } from "./quicksearch"
+    import { quicksearch, quickSearchCategoryNames, selectQuicksearchValue, type SearchCategory } from "./quicksearch"
     import { getNormalizedKey } from "../../utils/shortcuts"
 
     let values: any[] = []
     let searchValue = ""
+    let activeCategory: SearchCategory | null = null
+    let actualSearchText = ""
 
     let searchId = 0
     async function search(e: any) {
-        searchValue = e.target.value
+        const inputValue = e.target.value
 
-        let value = searchValue
-        let category: null | SearchCategory = null
+        let value = inputValue
 
-        // choose specific categories with hashtags
-        const hashtagMatch = value.match(/#(show|settings|stage|overlays|projects|actions|navigation|faq|shows|media|audio|bible)\b/i)
-        if (hashtagMatch) {
-            category = hashtagMatch[1].toLowerCase() as SearchCategory
-            value = value.replace(hashtagMatch[0], "").trim()
+        // choose specific categories with colon or space syntax
+        // SearchCategory ids with a few excluded, including singular forms
+        let categoryMatch = value.match(/^(settings?|stage|overlays?|projects?|actions?|faq|shows?|media|audio|bible)[:| ]\s*/i)
+        if (categoryMatch) {
+            let matchedCategory = categoryMatch[1].toLowerCase()
+
+            // add 's' to singular forms that should be plural
+            if (!matchedCategory.endsWith("s") && !["stage", "faq", "media", "audio", "bible"].includes(matchedCategory)) matchedCategory += "s"
+
+            activeCategory = matchedCategory as SearchCategory
+            value = value.replace(categoryMatch[0], "").trim()
+            actualSearchText = value
+            searchValue = inputValue
+        } else if (activeCategory) {
+            actualSearchText = inputValue
+            value = inputValue
+        } else {
+            activeCategory = null
+            actualSearchText = inputValue
+            searchValue = inputValue
         }
 
         if (!value) {
@@ -36,11 +52,23 @@
         }
 
         const currentId = ++searchId
-        const results = await quicksearch(value, category)
+        const results = await quicksearch(value, activeCategory)
         if (currentId !== searchId) return
 
         values = results
         selectedIndex = 0
+    }
+
+    function openCategory(category: SearchCategory) {
+        if (activeCategory) return
+        activeCategory = category
+        search({ target: { value: actualSearchText } })
+    }
+
+    function removeCategoryTag() {
+        activeCategory = null
+        searchValue = actualSearchText
+        search({ target: { value: actualSearchText } })
     }
 
     let selectedIndex = 0
@@ -54,13 +82,22 @@
             return
         }
 
-        if (!$quickSearchActive || !values.length) return
+        if (!$quickSearchActive) return
 
-        if (e.key === "Enter") {
+        if (e.key === "Enter" && values.length) {
             selectQuicksearchValue(values[selectedIndex], e.ctrlKey || e.metaKey)
             selectedIndex = 0
-        } else if (e.key === "ArrowDown") selectedIndex = Math.min(values.length - 1, selectedIndex + 1)
-        else if (e.key === "ArrowUp") selectedIndex = Math.max(0, selectedIndex - 1)
+        } else if (e.key === "ArrowDown" && values.length) {
+            e.preventDefault()
+            selectedIndex = Math.min(values.length - 1, selectedIndex + 1)
+        } else if (e.key === "ArrowUp" && values.length) {
+            e.preventDefault()
+            selectedIndex = Math.max(0, selectedIndex - 1)
+        } else if (e.key === "Backspace" && activeCategory && (!actualSearchText.trim() || (e.target === document.querySelector(".quicksearch input") && (e.target as any)?.selectionStart === 0))) {
+            // Remove category tag when backspacing on empty search or at the beginning of input
+            removeCategoryTag()
+            e.preventDefault()
+        }
     }
 
     // let light = false
@@ -112,7 +149,7 @@
     let showValues = false
     $: if (values !== undefined) valuesChanged()
     function valuesChanged() {
-        if (values.length || searchValue) {
+        if (values.length || actualSearchText || activeCategory) {
             centered = false
             setTimeout(() => (showValues = true), 60)
         } else {
@@ -131,15 +168,27 @@
                 <div class="icon">
                     <Icon id="search" size={1.6} white />
                 </div>
-                <TextInput value={searchValue} placeholder={translateText("main.quick_search...")} autofocus autoselect on:input={search} />
+
+                {#if activeCategory}
+                    <div class="category-tag">
+                        <span class="tag-text">{activeCategory}</span>
+                        <button class="tag-remove" data-title={translateText("actions.remove")} on:click={() => removeCategoryTag()}>
+                            <Icon id="close" size={0.8} white />
+                        </button>
+                    </div>
+                {/if}
+
+                <TextInput value={activeCategory ? actualSearchText : searchValue} placeholder={activeCategory ? `Search in ${activeCategory}...` : translateText("main.quick_search...")} autofocus autoselect on:input={search} style={activeCategory ? "padding-left: " + (90 + activeCategory.length * 8) + "px;" : "padding-left: 47px;"} />
             </div>
 
-            {#if showValues && searchValue}
+            {#if showValues && actualSearchText.length}
                 {#if values.length}
                     <div class="values" in:fly={{ y: 10, duration: 150, delay: 50 }}>
                         {#each values as value, i}
                             {#if i === 0 || values[i - 1].category !== value.category}
-                                <div class="category-header">{value.category}</div>
+                                <div class="category-header" role="none" on:click={() => openCategory(value.category)}>
+                                    {translateText(quickSearchCategoryNames[value.category])}
+                                </div>
                             {/if}
 
                             <div id="qs-item-{i}">
@@ -157,7 +206,7 @@
                                             {/if}
                                         </p>
                                         {#if value.description}
-                                            <p class="description">{@html highlightMatch(value.description, searchValue)}</p>
+                                            <p class="description">{@html highlightMatch(value.description, actualSearchText || searchValue)}</p>
                                         {/if}
                                     </div>
                                 </MaterialButton>
@@ -296,5 +345,56 @@
         color: inherit;
         padding: 0 2px;
         border-radius: 4px;
+    }
+
+    /* tags */
+
+    .category-tag {
+        position: absolute;
+        left: 47px;
+        top: 50%;
+        transform: translateY(-50%);
+
+        display: flex;
+        align-items: center;
+
+        font-family: monospace;
+        font-size: 0.9em;
+        font-weight: 500;
+
+        background: rgb(255 255 255 / 0.1);
+        border: 1px solid var(--focus);
+        border-radius: 14px;
+        padding: 4px 6px 4px 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .tag-text {
+        margin-right: 4px;
+        text-transform: capitalize;
+    }
+
+    .tag-remove {
+        width: 16px;
+        height: 16px;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        border: none;
+        background: none;
+        color: var(--text);
+        cursor: pointer;
+
+        padding: 2px;
+        border-radius: 50%;
+        opacity: 0.8;
+
+        transition: all 0.2s ease;
+    }
+    .tag-remove:hover {
+        opacity: 1;
+        background: rgba(255, 255, 255, 0.1);
     }
 </style>

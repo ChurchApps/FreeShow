@@ -72,7 +72,7 @@ const MAX_RESULTS_NORMAL = 5
 const MAX_RESULTS_LARGE = 10
 
 export type SearchCategory = "show" | "settings" | "stage" | "overlays" | "projects" | "actions" | "navigation" | "faq" | "shows" | "media" | "audio" | "bible"
-const categoryNames: Record<SearchCategory, string> = {
+export const quickSearchCategoryNames: Record<SearchCategory, string> = {
     show: "formats.show",
     settings: "menu.settings",
     stage: "menu.stage",
@@ -218,7 +218,7 @@ export async function quicksearch(searchValue: string, categoryFilter: null | Se
             data: a.data || null,
             aliasMatch: a.aliasMatch || null,
             description: a.description || null,
-            category: translateText(categoryNames[currentCategory])
+            category: currentCategory
         }))
         values.push(...newValues)
     }
