@@ -23,7 +23,7 @@
     export let isFirst: boolean = false
     export let isProject: boolean = false
     $: type = show.type || "show"
-    $: name = type === "show" ? $shows[show.id]?.name : type === "overlay" ? $overlays[show.id]?.name : type === "player" ? ($playerVideos[id] ? $playerVideos[id].name : setNotFound(id)) : show.name
+    $: name = type === "show" ? $shows[show.id]?.name : type === "overlay" ? $overlays[show.id]?.name : type === "player" ? ($playerVideos[id] || show.data?.id ? $playerVideos[id]?.name || show.data?.id : setNotFound(id)) : show.name
     // export let page: "side" | "drawer" = "drawer"
     export let match: null | number = null
     $: showNumber = show?.quickAccess?.number || show?.meta?.number || ""
@@ -197,7 +197,7 @@
         thumbnailPath = ""
 
         if (type === "player") {
-            const player = $playerVideos[id]
+            const player = $playerVideos[id] || show.data
             if (player?.type === "youtube") {
                 thumbnailPath = `https://i.ytimg.com/vi/${player.id}/sddefault.jpg`
                 return

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { playerVideos } from "../../stores"
+    import { activeProject, activeShow, playerVideos, projects } from "../../stores"
     import Vimeo from "../drawer/player/Vimeo.svelte"
     import YouTube from "../drawer/player/YouTube.svelte"
 
@@ -7,7 +7,13 @@
     export let outputId = ""
     export let preview = false
 
-    $: video = $playerVideos[id]
+    let data: { type: "youtube" | "vimeo"; id: string; name?: string } | null = null
+    $: if (!$playerVideos[id]) getProjectData()
+    function getProjectData() {
+        data = $projects[$activeProject || ""]?.shows.find((a) => a.index === $activeShow?.index)?.data || null
+    }
+
+    $: video = $playerVideos[id] || data
 
     export let videoData = { muted: true, paused: false, loop: false, duration: 0 }
     export let videoTime = 0

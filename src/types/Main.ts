@@ -55,6 +55,8 @@ export interface ClickEvent {
 }
 
 export type SelectIds =
+    | "files"
+    | "urls"
     | "slide"
     | "slide_icon"
     | "group"
@@ -64,7 +66,6 @@ export type SelectIds =
     | "show_drawer"
     | "project"
     | "folder"
-    | "files"
     | "category_shows"
     | "category_media"
     | "category_overlays"

@@ -8,7 +8,7 @@ import type { DropData, Selected } from "../../../types/Main"
 import type { Item, Slide, SlideAction } from "../../../types/Show"
 import { sendMain } from "../../IPC/main"
 import { changeLayout, changeSlideGroups } from "../../show/slides"
-import { activeDrawerTab, activePage, activePopup, activeProject, activeShow, alertMessage, audioFolders, audioPlaylists, audioStreams, drawerTabsData, media, mediaFolders, overlays, projects, scriptureSettings, shows, showsCache, templates, timers } from "../../stores"
+import { activeDrawerTab, activePage, activePopup, activeProject, activeShow, alertMessage, audioFolders, audioPlaylists, audioStreams, drawerTabsData, media, mediaFolders, overlays, playerVideos, projects, scriptureSettings, shows, showsCache, templates, timers } from "../../stores"
 import { newToast } from "../../utils/common"
 import { getAccess } from "../../utils/profile"
 import { audioExtensions, imageExtensions, mediaExtensions, presentationExtensions, videoExtensions } from "../../values/extensions"
@@ -134,7 +134,7 @@ export const dropActions = {
         }
 
         if (drop.index === undefined) drop.index = projectShows.length
-        if (drag.id === "files" && drop.trigger?.includes("end")) drop.index++
+        if ((drag.id === "files" || drag.id === "urls") && drop.trigger?.includes("end")) drop.index++
 
         let data = drag.data
         if (drag.id === "media" || drag.id === "files") {
@@ -180,12 +180,36 @@ export const dropActions = {
             if (pptFiles.length) sendMain(Main.IMPORT_FILES, { id: "powerpoint", paths: pptFiles })
             // iport projects
             if (projectFiles.length) sendMain(Main.IMPORT_FILES, { id: "freeshow_project", paths: projectFiles })
+        } else if (drag.id === "urls") {
+            data = data.map((url) => {
+                // WIP duplicate of url trimmer in CreatePlayer.svelte
+                if (url.includes("youtube.com") || url.includes("youtu.be")) {
+                    if (url.includes("?list")) url = url.slice(0, url.indexOf("?list"))
+                    if (url.includes("?si")) url = url.slice(0, url.indexOf("?si"))
+                    url = url.slice(-11)
+                    return { id: "-", type: "player", data: { type: "youtube", id: url } }
+                }
+                if (url.includes("vimeo.com")) {
+                    if (url.includes("?")) url = url.slice(0, url.indexOf("?"))
+                    let slash = url.lastIndexOf("/")
+                    url = url.slice(slash >= 0 ? slash + 1 : 0)
+                    return { id: "-", type: "player", data: { type: "vimeo", id: url } }
+                }
+
+                return { id: url, type: "url" }
+            })
+            // WIP no URLs for now!
+            data = data.filter((a) => a.type !== "url")
         } else if (drag.id === "audio" || drag.id === "audio_effect") {
             data = data.map((a) => ({ id: a.path, name: removeExtension(a.name), type: "audio" }))
         } else if (drag.id === "overlay") {
             data = data.map((a) => ({ id: a, type: "overlay" }))
         } else if (drag.id === "player") {
-            data = data.map((a) => ({ id: a, type: "player" }))
+            data = data.map((a) => {
+                // store actual player data in project
+                const playerData = get(playerVideos)[a] || {}
+                return { id: a, type: "player", data: { type: playerData.type, id: playerData.id, name: playerData.name } }
+            })
         } else if (drag.id === "camera") {
             data = data.map((a) => ({ id: a.id, name: a.name, type: "camera", data: { groupId: a.cameraGroup } }))
         } else if (drag.id === "scripture") {

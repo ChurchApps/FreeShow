@@ -44,4 +44,4 @@
 {#if !editId}
     <MaterialTextInput label="inputs.name" value={data.name} on:change={(e) => (data.name = e.detail)} autofocus={!data.name} />
 {/if}
-<MaterialTextInput label="inputs.video_id" value={data.id || ""} placeholder="X-AJdKty74M" on:change={(e) => (data.id = e.detail)} />
+<MaterialTextInput label="inputs.video_id" value={data.id || ""} placeholder="X-AJdKty74M" disabled={!!editId} on:change={(e) => (data.id = e.detail)} />
