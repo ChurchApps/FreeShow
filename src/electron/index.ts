@@ -176,6 +176,9 @@ function createMain() {
     // create window
     mainWindow = new BrowserWindow({ ...mainOptions, ...options })
 
+    // ensure correct dimensions regardless of DPI scaling (without this, the window changed size each startup when scale was not 100%)
+    mainWindow.setSize(options.width!, options.height!)
+
     // macos min size
     mainWindow.setMinimumSize(MIN_WINDOW_SIZE, MIN_WINDOW_SIZE)
 
