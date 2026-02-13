@@ -561,7 +561,7 @@
         "create": "Opprett ny",
         "show": "Nytt show",
         "empty_show": "Nytt tomt show",
-        "show_convert": "Konverter til show",
+        "show_convert": "Gjør om til show",
         "project": "Nytt prosjekt",
         "section": "Ny seksjon",
         "style": "Ny stil",
@@ -664,7 +664,7 @@
         "project_template_tip": "Lag et nytt prosjekt fra denne malen",
         "import_project_file": "Fant en ny prosjekt-fil. Vil du importere den?",
         "pdf_single_page": "Vis som ett dokument",
-        "convert_to_images": "Konverter til bilder",
+        "convert_to_images": "Gjør om til bilder",
         "converting": "Konverterer...",
         "closing": "Lukker app...",
         "remove_template_from_show": "Fjern mal fra show",
@@ -1074,8 +1074,8 @@
         "fahrenheit": "Fahrenheit",
         "longRange": "Lang rekkevidde",
         "media_item_tip": "Prøver du å bruke media som bakgrunn?",
-        "convert_to_background": "Konverter til bakgrunn",
-        "convert_to_media_item": "Konvertér"
+        "convert_to_background": "Gjør om til bakgrunn",
+        "convert_to_media_item": "Gjør om bakgrunn til media-element"
     },
     "items": {
         "text": "Tekstboks",

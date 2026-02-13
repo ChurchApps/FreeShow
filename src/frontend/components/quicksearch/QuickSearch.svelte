@@ -93,8 +93,8 @@
         } else if (e.key === "ArrowUp" && values.length) {
             e.preventDefault()
             selectedIndex = Math.max(0, selectedIndex - 1)
-        } else if (e.key === "Backspace" && activeCategory && (!actualSearchText.trim() || (e.target === document.querySelector(".quicksearch input") && (e.target as any)?.selectionStart === 0))) {
-            // Remove category tag when backspacing on empty search or at the beginning of input
+        } else if (e.key === "Backspace" && activeCategory && (!actualSearchText.trim() || (e.target === document.querySelector(".quicksearch input") && (e.target as any)?.selectionStart === 0 && (e.target as any)?.selectionEnd === 0))) {
+            // remove category tag when backspacing on empty search or at the beginning of input
             removeCategoryTag()
             e.preventDefault()
         }

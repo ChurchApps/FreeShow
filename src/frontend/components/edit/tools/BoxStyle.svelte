@@ -1,11 +1,12 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
     import type { Item, ItemType, Slide } from "../../../../types/Show"
-    import { activeEdit, activePopup, activeShow, alertMessage, categories, overlays, selected, shownTips, showsCache, templates, theme, themes, timers } from "../../../stores"
+    import { activeEdit, activePopup, activeShow, alertMessage, categories, styles as outputStyles, overlays, selected, shownTips, showsCache, special, templates, theme, themes, timers } from "../../../stores"
     import { newToast } from "../../../utils/common"
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import { getExtension, getMediaType } from "../../helpers/media"
+    import { getAllEnabledOutputs } from "../../helpers/output"
     import { getLayoutRef } from "../../helpers/show"
     import { _show } from "../../helpers/shows"
     import { getStyles } from "../../helpers/style"
@@ -505,11 +506,25 @@
     $: if (changes) checkChanges()
     let shownTemplateTip = false
     function checkChanges() {
+        // alert if category has template
         if (!shownTemplateTip && ($activeEdit.type || "show") === "show") {
             const categoryId = $showsCache[$activeShow?.id || ""]?.category || ""
             const categoryTemplate = $categories[categoryId]?.template || ""
             if (categoryTemplate) {
                 alertMessage.set("tips.category_template")
+                activePopup.set("alert")
+                shownTemplateTip = true
+                return
+            }
+        }
+
+        // alert if all outputs has style templates
+        if (!shownTemplateTip && $special.styleTemplatePreview !== false) {
+            const outputsHasStyleTemplate = getAllEnabledOutputs().every((output) => {
+                return !!$outputStyles[output?.style || ""]?.template
+            })
+            if (outputsHasStyleTemplate) {
+                alertMessage.set("tips.style_template_active")
                 activePopup.set("alert")
                 shownTemplateTip = true
                 return

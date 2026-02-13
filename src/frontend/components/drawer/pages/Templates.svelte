@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import type { Template } from "../../../../types/Show"
-    import { activeEdit, activePage, activePopup, activeShow, alertMessage, labelsDisabled, mediaOptions, outputs, selected, showsCache, special, styles, templateCategories, templates } from "../../../stores"
+    import { activeEdit, activePage, activePopup, activeShow, alertMessage, categories, labelsDisabled, mediaOptions, outputs, selected, showsCache, special, styles, templateCategories, templates } from "../../../stores"
     import { getAccess } from "../../../utils/profile"
     import { clone, keysToID, sortByName } from "../../helpers/array"
     import { history } from "../../helpers/history"
@@ -130,8 +130,18 @@
             return
         }
 
+        // alert if show category has a template
+        const categoryId = $showsCache[$activeShow.id]?.category || ""
+        const categoryTemplate = $categories[categoryId]?.template || ""
+        if (categoryTemplate) {
+            alertMessage.set("tips.category_template")
+            activePopup.set("alert")
+            return
+        }
+
         history({ id: "TEMPLATE", newData: { id: templateId, data: { createItems: true, shiftItems: e.shiftKey } }, location: { page: "none", override: "show#" + $activeShow.id } })
 
+        // alert if first output has a style template
         if ($special.styleTemplatePreview !== false) {
             const outputStyleId = getFirstActiveOutput()?.style || ""
             const styleTemplate = $styles[outputStyleId]?.template || ""
