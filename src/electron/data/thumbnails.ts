@@ -47,6 +47,8 @@ function deleteThumbnails(filePath: string) {
 
 let currentlyGenerating: string[] = []
 export async function getThumbnail(data: { input: string; size: number }) {
+    if (!(await doesPathExistAsync(data.input))) return { ...data, output: "" }
+
     const mediaId = `${data.input}-${data.size}`
     if (currentlyGenerating.includes(mediaId)) {
         await waitUntilValueIsDefined(() => !currentlyGenerating.includes(mediaId), 50, 10000)

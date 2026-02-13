@@ -203,7 +203,7 @@
 <SelectElem id="media" class="context #media_card" data={{ name, path, type, contentProvider }} {shiftRange} draggable fill>
     <Card
         resolution={{ width: 16, height: 9 }}
-        loaded={(loaded && thumbnailPath !== "") || failed}
+        loaded={(loaded && ($mediaOptions.mode === "grid" ? thumbnailPath !== "" : true)) || failed}
         style={thumbnail ? `width: ${$mediaOptions.mode === "grid" ? 100 : 100 / $mediaOptions.columns}%;` : ""}
         mode={$mediaOptions.mode}
         width={100}
@@ -215,7 +215,7 @@
         icon={thumbnail ? icon : null}
         white={type === "image"}
         showPlayOnHover
-        checkered={mediaStyle.fit !== "blur" && !failed}
+        checkered={$mediaOptions.mode === "grid" && mediaStyle.fit !== "blur" && !failed}
         on:mousedown={mousedown}
         on:click={click}
         on:dblclick={dblclick}

@@ -114,6 +114,7 @@ export function showSearchFilter(searchValue: string, show: ShowList) {
 }
 
 function calculateMultiWordMatch(searchValue: string, cache: string, showName: string): number {
+    return 0 // WIP got worse results with this
     const queryWords = tokenize(searchValue).filter((w) => w.length >= 3)
     const contentLower = formatSearch(cache, false)
     const nameLower = formatSearch(showName, false)
