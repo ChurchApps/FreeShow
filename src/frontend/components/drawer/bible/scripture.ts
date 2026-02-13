@@ -725,7 +725,7 @@ export async function getScriptureSlidesNew(data: any, onlyOne = false, disableR
             slidesString = slidesString.replace(`{scripture${j + 1}_text}`, `{key_${i}_${j}}`)
             slidesString = slidesString.replace(`{scripture${j + 1}_verses}`, format(justVerses))
 
-            groupNames.push(reference)
+            if (j === 0) groupNames.push(reference)
         }
     }
 
