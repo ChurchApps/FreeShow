@@ -3,40 +3,47 @@ import { language } from "../../stores"
 import { translateText } from "../../utils/language"
 
 const dictionary = [
-    { fallbackValue: "dynamic values", localValue: "popup.dynamic_values", tip: "Text that can change dynamically.<br>Right click any textbox to add." },
-    { fallbackValue: "metadata", localValue: "tools.metadata", tip: "Information about the current show.<br>Often song attribution/source." },
-    { fallbackValue: "category", localValue: "info.category", tip: "Used in the drawer to organize content." }
+    { fallback: "dynamic values", key: "popup.dynamic_values", tip: "Text that can change dynamically.<br>Right click any textbox to add." },
+    { fallback: "metadata", key: "tools.metadata", tip: "Information about the current show.<br>Often song attribution/source." },
+    { fallback: "category", key: "info.category", tip: "Used in the drawer to organize content." }
 ]
 
-const localizedKeys = new Map<string, { word: string; fallbackWord: string; tip: string }>()
-function getLocalizedKeys() {
+type TipData = { tip: string }
+let compiled: { lang: string; regex: RegExp; map: Map<string, TipData> } | null = null
+
+function ensureCompiled() {
     const lang = get(language)
+    if (compiled?.lang === lang) return compiled
 
-    dictionary.forEach((entry) => {
-        const keyId = `${lang}:${entry.localValue}`
-        if (localizedKeys.has(keyId)) return
+    const escapeRegex = (str: string) => str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
 
-        const word = lang === "en" ? entry.fallbackValue : translateText(entry.localValue)
-        const fallbackWord = entry.fallbackValue
-        const tip = entry.tip
+    const map = new Map<string, TipData>()
+    const words: string[] = []
 
-        localizedKeys.set(keyId, { word, fallbackWord, tip })
-    })
+    for (const entry of dictionary) {
+        const word = lang === "en" ? entry.fallback : translateText(entry.key)
 
-    return localizedKeys
+        for (const w of [word, entry.fallback]) {
+            const lower = w.toLowerCase()
+            map.set(lower, { tip: entry.tip })
+            words.push(escapeRegex(w))
+        }
+    }
+
+    // longest first avoids partial matches ("meta" before "metadata")
+    words.sort((a, b) => b.length - a.length)
+
+    compiled = { lang, regex: new RegExp(`\\b(${words.join("|")})\\b`, "gi"), map }
+    return compiled
 }
 
 export function markTipString(value: string) {
-    const localizedKeys = getLocalizedKeys()
-    const valueLower = value.toLowerCase()
+    const { regex, map } = ensureCompiled()
 
-    localizedKeys.forEach((data) => {
-        let hasWord = valueLower.includes(data.word) ? data.word : null
-        if (!hasWord && valueLower.includes(data.fallbackWord)) hasWord = data.fallbackWord
-        if (!hasWord) return
+    return value.replace(regex, (match) => {
+        const data = map.get(match.toLowerCase())
+        if (!data) return match
 
-        value = value.replaceAll(new RegExp(hasWord, "gi"), `<span class="tip-word" data-title="${data.tip}">${hasWord}</span>`)
+        return `<span class="tip-word" data-title="${data.tip}">${match}</span>`
     })
-
-    return value
 }
