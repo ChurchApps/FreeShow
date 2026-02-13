@@ -1,7 +1,10 @@
-import { LTCDecoder, LTCEncoder } from "libltc-wrapper"
+// only types are imported at the top level, the actual require is done in the functions in case systems are missing dependencies
+import type { LTCDecoder, LTCEncoder } from "libltc-wrapper"
 import { Main } from "../../types/IPC/Main"
-import { sendMain } from "../IPC/main"
+import { sendMain, sendToMain } from "../IPC/main"
 import { processFrame } from "./timecode"
+import { isWindows } from ".."
+import { ToMain } from "../../types/IPC/ToMain"
 
 // RECEIVER
 
@@ -21,13 +24,22 @@ let decoder: LTCDecoder | null = null
 
 let framerate = 25
 const sampleRate = 48000
+let decoderFailed = false
 export function setupLTCListener(f: number = 25) {
+    if (decoderFailed) return null
     framerate = f
 
     try {
-        decoder = new LTCDecoder(sampleRate, framerate, "u8") // 48khz, 25 fps, unsigned 8 bit
+        const { LTCDecoder } = require("libltc-wrapper")
+        decoder = new LTCDecoder(sampleRate, framerate, "u8") as LTCDecoder // 48khz, 25 fps, unsigned 8 bit
     } catch (error) {
         console.error("Failed to create LTCDecoder:", error)
+
+        let msg = "Could not initialize LTC Decoder!"
+        if (isWindows) msg += "\n\nThis is likely because the required Visual C++ Redistributable is not installed.\nPlease install it from https://aka.ms/vs/17/release/vc_redist.x64.exe"
+        sendToMain(ToMain.ALERT, msg)
+
+        decoderFailed = true
         return null
     }
 
@@ -46,13 +58,23 @@ let lastTimeMs = -1
 
 // WIP can't send frames past sent time
 
+let encoderFailed = false
 export function sendLTC(timeMs: number, framerate: number) {
+    if (encoderFailed) return
+
     // using default LTC_USE_DATE encoding
     if (!encoder || currentFramerate !== framerate || timeMs < lastTimeMs) {
         try {
-            encoder = new LTCEncoder(sampleRate, framerate)
+            const { LTCEncoder } = require("libltc-wrapper")
+            encoder = new LTCEncoder(sampleRate, framerate) as LTCEncoder
         } catch (error) {
             console.error("Failed to create LTCEncoder:", error)
+
+            let msg = "Could not initialize LTC Encoder!"
+            if (isWindows) msg += "\n\nThis is likely because the required Visual C++ Redistributable is not installed.\nPlease install it from https://aka.ms/vs/17/release/vc_redist.x64.exe"
+            sendToMain(ToMain.ALERT, msg)
+
+            encoderFailed = true
             return
         }
 
