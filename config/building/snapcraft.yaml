@@ -52,6 +52,7 @@ parts:
             - libasound2t64
             - libnode109
             - libglu1-mesa
+            - libltc11
 apps:
     freeshow:
         command: command.sh
