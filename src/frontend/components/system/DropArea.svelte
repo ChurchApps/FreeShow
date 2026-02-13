@@ -32,9 +32,19 @@
         }, 10)
     }
 
-    function dropEvent(e: any) {
+    async function dropEvent(e: any) {
         const files = getFiles(e)
         if (files.length) {
+            const webMediaFiles = files.filter((file) => isWebMediaFile(file))
+            if (webMediaFiles.length) {
+                // convert web media files to base64
+                const mediaData = await Promise.all(webMediaFiles.map((file) => fileToBase64(file)))
+                selected.set({ id: "media", data: mediaData })
+                ondrop(e, id)
+                return
+            }
+
+            // Regular local files
             selected.set({ id: "files", data: files })
             ondrop(e, id)
             return
@@ -100,6 +110,26 @@
         } catch {
             return false
         }
+    }
+
+    function isWebMediaFile(file: File): boolean {
+        const isMediaFile = file.type.startsWith("image/") || file.type.startsWith("video/") || file.type.startsWith("audio/")
+        if (!isMediaFile) return false
+
+        const isFromWeb = !file.webkitRelativePath || file.name.includes("blob:") || file.size === 0
+        return isFromWeb
+    }
+
+    async function fileToBase64(file: File): Promise<{ name: string; path: string }> {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader()
+            reader.onload = () => {
+                const result = reader.result as string
+                resolve({ name: file.name, path: result })
+            }
+            reader.onerror = reject
+            reader.readAsDataURL(file)
+        })
     }
 
     let fileOver = false
