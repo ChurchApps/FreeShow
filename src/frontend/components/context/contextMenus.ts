@@ -147,7 +147,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     stage: { label: "menu.stage", id: "stage" },
     // formatting
     find_replace: { label: "actions.find_replace", icon: "find_replace", iconColor: "#90f1cc" },
-    cut_in_half: { label: "actions.cut_in_half", tooltip: "tooltip.context_cut_in_half", icon: "cut_in_half", iconColor: "#90f1b5" },
+    cut_in_half: { label: "actions.cut_in_half", tooltip: "tooltip.context_cut_in_half [Alt+Enter]", icon: "cut_in_half", iconColor: "#90f1b5" },
     merge: { label: "actions.merge", tooltip: "tooltip.context_merge", icon: "merge", iconColor: "#90f1b5" },
     uppercase: { label: "actions.uppercase", icon: "increase_text", iconColor: "#93f190" },
     lowercase: { label: "actions.lowercase", icon: "decrease_text", iconColor: "#93f190" },

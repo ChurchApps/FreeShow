@@ -217,7 +217,7 @@ export async function loadShows(s: string[], deleting = false) {
     )
 
     if (savedBeforeLoading) {
-        setTimeout(() => saved.set(true), 100)
+        setTimeout(() => saved.set(true), 200)
     }
 }
 

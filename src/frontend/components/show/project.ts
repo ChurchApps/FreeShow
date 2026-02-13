@@ -17,7 +17,7 @@ export function openProject(id: string, openFirstItem: boolean = true) {
 
 function markProjectAsUsed(id: string) {
     // set back to saved if opening, as project used time is changed
-    if (get(saved)) setTimeout(() => saved.set(true), 10)
+    if (get(saved)) setTimeout(() => saved.set(true), 300)
 
     // set last used
     projects.update((a) => {

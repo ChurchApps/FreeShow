@@ -80,9 +80,11 @@
         })
     }
 
+    // WIP take off on click if already applied? - it's auto removed when slide is edited & you can remove it in the bottom right menu
+    $: isShowActive = !!($activeShow && ($activeShow?.type || "show") === "show")
     function templateClick(e: MouseEvent, templateId: string) {
         if (e.target?.closest(".edit") || e.target?.closest(".icons")) return
-        if (!$activeShow || ($activeShow?.type || "show") !== "show" || e.ctrlKey || e.metaKey) return
+        if (!$activeShow || !isShowActive || e.ctrlKey || e.metaKey) return
 
         if ($showsCache[$activeShow.id]?.locked) {
             alertMessage.set("show.locked_info")
@@ -166,7 +168,7 @@
                     {@const isReadOnly = readOnly || profile[template.category || ""] === "read"}
 
                     <SelectElem id="template" data={template.id} class="context #template_card{template.isDefault && !isReadOnly ? '_default' : ''}{isReadOnly ? '_readonly' : ''}" draggable fill>
-                        <Card width={100} preview={$activePage === "edit" && $activeEdit.type === "template" && $activeEdit.id === template.id} active={template.id === activeTemplate} label={template.name} renameId="template_{template.id}" icon={template.isDefault ? "protected" : null} color={template.color} {resolution} on:click={(e) => templateClick(e, template.id)}>
+                        <Card width={100} preview={$activePage === "edit" && $activeEdit.type === "template" && $activeEdit.id === template.id} active={template.id === activeTemplate} label={template.name} renameId="template_{template.id}" icon={template.isDefault ? "protected" : null} color={template.color} {resolution} showApplyOnHover={isShowActive} on:click={(e) => templateClick(e, template.id)}>
                             <!-- icons -->
                             {#if template.settings?.actions?.length}
                                 <Actions columns={$mediaOptions.columns} templateId={template.id} actions={{ slideActions: template.settings?.actions }} />

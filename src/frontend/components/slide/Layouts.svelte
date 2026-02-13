@@ -15,7 +15,6 @@
     import { duplicate } from "../helpers/clipboard"
     import { history } from "../helpers/history"
     import { allOutputsHasStyleTemplate, getAllEnabledOutputs, getFirstActiveOutput } from "../helpers/output"
-    import { removeTemplatesFromShow } from "../helpers/show"
     import { _show } from "../helpers/shows"
     import { joinTime, secondsToTime } from "../helpers/time"
     import FloatingInputs from "../input/FloatingInputs.svelte"
@@ -267,11 +266,12 @@
                 >
                     <Icon size={1.1} id="templates" />
                 </MaterialButton>
-                {#if open}
+                <!-- use context menu to remove! -->
+                <!-- {#if open}
                     <MaterialButton title="actions.remove_template_from_show" on:click={() => removeTemplatesFromShow($activeShow?.id || "", true)}>
                         <Icon size={1.1} id="remove_circle" />
                     </MaterialButton>
-                {/if}
+                {/if} -->
             {/if}
 
             <!-- output style template -->
