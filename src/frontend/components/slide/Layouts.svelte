@@ -302,6 +302,22 @@
             <Icon size={1.3} id={$slidesOptions.mode} white={$slidesOptions.mode === "grid"} />
         </MaterialButton>
     </FloatingInputs>
+{:else}
+    <!-- template (so you can remove it if you want to) -->
+    {#if enableStylePreview && outputsCount === 1 ? false : showTemplateIcon && (!referenceType || referenceType === "scripture")}
+        <FloatingInputs bottom={notesVisible ? bottomHeight : 10}>
+            <MaterialButton
+                class="context #show_template"
+                title="menu.edit: <b>{$templates[showTemplateId].name || 'info.template'}</b>"
+                on:click={() => {
+                    activeEdit.set({ type: "template", id: showTemplateId, items: [] })
+                    activePage.set("edit")
+                }}
+            >
+                <Icon size={1.1} id="templates" />
+            </MaterialButton>
+        </FloatingInputs>
+    {/if}
 {/if}
 
 {#if $slidesOptions.mode !== "simple"}
