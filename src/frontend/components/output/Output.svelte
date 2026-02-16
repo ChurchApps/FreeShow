@@ -278,7 +278,7 @@
     let metadataVisible = false
     let metadataTransition: NodeJS.Timeout | null = null
     $: showMetadata = displayMetadata || ((layers.includes("background") || backgroundData?.ignoreLayer) && $customMessageCredits)
-    $: if (showMetadata !== undefined) updateMetadata()
+    $: if (showMetadata !== null) updateMetadata()
     function updateMetadata() {
         if (metadataTransition) clearTimeout(metadataTransition)
         if (displayMetadata) {
