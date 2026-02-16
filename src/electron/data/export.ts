@@ -268,9 +268,17 @@ export function exportProject(data: { type: "project"; name: string; file: any; 
     // create archive with hashed filenames
     const folderPath = data.path ? dirname(data.path) : exportFolder
     const name = data.path ? basename(data.path).replace(".project", "") : data.name
-    compressWithMedia(files, data.file, name, ".project", folderPath, (path, extension) => {
-        return `${basename(path, extension)}__${filePathHashCode(path)}${extension}`
-    })
+    compressWithMedia(
+        files,
+        data.file,
+        name,
+        ".project",
+        folderPath,
+        (path, extension) => {
+            return `${basename(path, extension)}__${filePathHashCode(path)}${extension}`
+        },
+        !!data.path
+    )
 }
 
 // ----- TEMPLATE -----
@@ -291,7 +299,7 @@ export function exportTemplate(data: { file: { template: Template; files?: strin
     compressWithMedia(files, data.file, data.name, customJSONExtensions.TEMPLATE, exportFolder, (path) => basename(path))
 }
 
-function compressWithMedia(files: string[], fileData: any, name: string, extension: string, exportFolder: string, getFileName: (path: string, ext: string) => string) {
+function compressWithMedia(files: string[], fileData: any, name: string, extension: string, exportFolder: string, getFileName: (path: string, ext: string) => string, canOverwrite = false) {
     const entries: { name: string; content?: Buffer | string; filePath?: string }[] = files
         .filter((filePath) => fs.existsSync(filePath))
         .map((filePath) => ({
@@ -301,7 +309,7 @@ function compressWithMedia(files: string[], fileData: any, name: string, extensi
 
     entries.push({ name: "data.json", content: Buffer.from(JSON.stringify(fileData)) })
 
-    const filePath = getUniquePath(join(exportFolder, name), extension)
+    const filePath = canOverwrite ? join(exportFolder, name) + extension : getUniquePath(join(exportFolder, name), extension)
 
     compressToZip(entries, filePath)
         .then(() => doneWritingFile(null, exportFolder))
