@@ -24,6 +24,7 @@ import { addToPos, getIndexes, mover } from "./mover"
 import { getLayoutRef } from "./show"
 import { getVariableNameId } from "./showActions"
 import { _show } from "./shows"
+import { getVimeoName, getYouTubeName, trimPlayerId } from "../drawer/player/playerHelper"
 
 function getId(drag: Selected): string {
     const id = ""
@@ -181,23 +182,22 @@ export const dropActions = {
             // iport projects
             if (projectFiles.length) sendMain(Main.IMPORT_FILES, { id: "freeshow_project", paths: projectFiles })
         } else if (drag.id === "urls") {
-            data = data.map((url) => {
-                // WIP duplicate of url trimmer in CreatePlayer.svelte
-                if (url.includes("youtube.com") || url.includes("youtu.be")) {
-                    if (url.includes("?list")) url = url.slice(0, url.indexOf("?list"))
-                    if (url.includes("?si")) url = url.slice(0, url.indexOf("?si"))
-                    url = url.slice(-11)
-                    return { id: "-", type: "player", data: { type: "youtube", id: url } }
-                }
-                if (url.includes("vimeo.com")) {
-                    if (url.includes("?")) url = url.slice(0, url.indexOf("?"))
-                    let slash = url.lastIndexOf("/")
-                    url = url.slice(slash >= 0 ? slash + 1 : 0)
-                    return { id: "-", type: "player", data: { type: "vimeo", id: url } }
-                }
+            data = await Promise.all(
+                data.map(async (url) => {
+                    if (url.includes("youtube.com") || url.includes("youtu.be")) {
+                        const id = trimPlayerId(url, "youtube")
+                        const name = await getYouTubeName(id)
+                        return { id: "-", type: "player", data: { type: "youtube", id, name } }
+                    }
+                    if (url.includes("vimeo.com")) {
+                        const id = trimPlayerId(url, "vimeo")
+                        const name = await getVimeoName(id)
+                        return { id: "-", type: "player", data: { type: "vimeo", id, name } }
+                    }
 
-                return { id: url, type: "url" }
-            })
+                    return { id: url, type: "url" }
+                })
+            )
             // WIP no URLs for now!
             data = data.filter((a) => a.type !== "url")
         } else if (drag.id === "audio" || drag.id === "audio_effect") {

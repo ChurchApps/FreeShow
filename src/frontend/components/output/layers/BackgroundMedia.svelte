@@ -234,7 +234,7 @@
     {:else if type === "player"}
         <!-- prevent showing controls in output -->
         {#if $special.hideCursor || $playerVideos[id]?.type !== "youtube"}<div class="overlay" />{/if}
-        <Player {outputId} {id} bind:videoData bind:videoTime title={data.title} startAt={data.startAt} on:loaded on:ended={videoEnded} />
+        <Player {outputId} {id} bind:videoData bind:videoTime startAt={data.startAt} on:loaded on:ended={videoEnded} />
     {/if}
 </OutputTransition>
 

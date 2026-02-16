@@ -1,18 +1,16 @@
 <script>
     import { createEventDispatcher, onDestroy } from "svelte"
     import { OUTPUT } from "../../../../types/Channels"
-    import { currentWindow, focusMode, playerVideos, special, volume } from "../../../stores"
+    import { currentWindow, focusMode, special, volume } from "../../../stores"
     import { send } from "../../../utils/request"
     import YouTubePlayer from "./YouTubePlayer.svelte"
 
     export let videoData = { paused: false, muted: true, loop: false, duration: 0 }
     export let videoTime = 0
-    export let playerId
     export let id
     export let outputId
     export let preview
 
-    export let title
     export let startAt = 0
 
     // <= 0.5.4
@@ -51,26 +49,6 @@
 
         // WIP captions ?
         // player.setOption("captions", "fontSize", -1)
-
-        // set name
-        if (!$currentWindow) {
-            // WIP this only works in preview now
-            setTimeout(() => {
-                let data = player.getVideoData()
-                if (!data) return
-                // console.log(player.playerInfo.videoData) // title | author
-                title = data.title
-                let noName = !$playerVideos[playerId]?.name || $playerVideos[playerId].name.includes($playerVideos[playerId].id)
-                if (title && noName) {
-                    playerVideos.update((a) => {
-                        if (!a[playerId]) return a
-
-                        a[playerId].name = title
-                        return a
-                    })
-                }
-            }, 2000)
-        }
 
         loaded = true
 

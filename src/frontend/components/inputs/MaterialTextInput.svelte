@@ -4,6 +4,7 @@
     import Icon from "../helpers/Icon.svelte"
     import MaterialButton from "./MaterialButton.svelte"
     import { dictionary } from "../../stores"
+    import { pasteText } from "../helpers/caretHelper"
 
     export let value: string
     export let defaultValue: string | null = null
@@ -18,6 +19,7 @@
     export let disabled = false
     export let autofocus = false
     export let autoselect = false
+    export let pasteBtn = false
 
     const dispatch = createEventDispatcher()
 
@@ -98,6 +100,22 @@
                     <Icon id="undo" white />
                 </MaterialButton>
             {/if}
+        </div>
+    {/if}
+
+    {#if pasteBtn}
+        <div class="remove">
+            <MaterialButton
+                on:click={(e) => {
+                    const textInput = e.detail.target?.closest(".textfield")?.querySelector("input")
+                    pasteText(textInput)
+                    if (textInput) textInput.focus()
+                }}
+                title="actions.paste"
+                white
+            >
+                <Icon id="paste" white />
+            </MaterialButton>
         </div>
     {/if}
 </div>

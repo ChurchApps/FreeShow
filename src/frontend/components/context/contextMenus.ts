@@ -237,7 +237,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     category_media: ["newFolder"],
     category_audio: ["newFolder"],
     category_scripture: ["newScripture", "createCollection"],
-    category_shows_button: ["GROUP_rename_icon", "delete", "SEPARATOR", "category_action", "category_template", "metadata_display", "SEPARATOR", "use_as_archive"],
+    category_shows_button: ["GROUP_rename_icon", "category_action", "category_template", "metadata_display", "SEPARATOR", "delete", "SEPARATOR", "use_as_archive"],
     category_shows_button_readonly: [],
     category_overlays_button: ["GROUP_rename_icon", "delete", "SEPARATOR", "use_as_archive"],
     category_templates_button: ["GROUP_rename_icon", "delete", "SEPARATOR", "use_as_archive"],
@@ -297,7 +297,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     projectsTab: ["import"],
     projectTab: ["save_to_file", "export", "SEPARATOR", "close"],
     project: ["newShowPopup", "section"], // "newShow"(empty) , "newPrivateShow"
-    project_button: ["GROUP_rename", "export", "copy_to_template", "archive"], // "open",
+    project_button: ["GROUP_rename", "export", "copy_to_template", "SEPARATOR", "archive"], // "open",
     project_button_readonly: ["export"],
     project_template: ["GROUP_rename_only", "delete"],
     folder: ["GROUP_rename_only", "delete", "SEPARATOR", "newProject", "newFolder"],

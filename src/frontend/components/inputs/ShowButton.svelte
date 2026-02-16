@@ -23,10 +23,11 @@
     export let isFirst: boolean = false
     export let isProject: boolean = false
     $: type = show.type || "show"
-    $: name = type === "show" ? $shows[show.id]?.name : type === "overlay" ? $overlays[show.id]?.name : type === "player" ? ($playerVideos[id] || show.data?.id ? $playerVideos[id]?.name || show.data?.id : setNotFound(id)) : show.name
+    $: name = type === "show" ? $shows[show.id]?.name : type === "overlay" ? $overlays[show.id]?.name : type === "player" ? ($playerVideos[id] || show.data?.id ? $playerVideos[id]?.name || show.data?.name || show.data?.id : setNotFound(id)) : show.name
     // export let page: "side" | "drawer" = "drawer"
     export let match: null | number = null
-    $: showNumber = show?.quickAccess?.number || show?.meta?.number || ""
+    $: showNumber = isProject ? "" : show?.quickAccess?.number || show?.meta?.number || ""
+    $: showDuration = isProject ? $shows[show.id]?.quickAccess?.duration || show?.scheduleLength || 0 : 0
 
     let profile = getAccess("shows")
     let readOnly = profile.global === "read" || profile[show.category] === "read"
@@ -228,16 +229,19 @@
 
                 <HiddenInput value={newName} id={index !== null ? "show_" + id + "#" + index : "show_drawer_" + id} on:edit={rename} bind:edit={editActive} allowEmpty={false} allowEdit={(!show.type || show.type === "show") && !readOnly} />
 
-                {#if !isProject && match !== null && ($activeShow?.data?.searchInput ? $activeShow?.id === id : isFirst)}
-                    <span style="opacity: 0.4;font-size: 0.9em;padding: 0 10px;">Press enter to add to project</span>
-                {/if}
+                {#if isProject}
+                    {#if show.layoutInfo?.name}
+                        <span class="layout" style="opacity: 0.6;font-style: italic;font-size: 0.9em;">{show.layoutInfo.name}</span>
+                    {/if}
 
-                {#if show.layoutInfo?.name}
-                    <span class="layout" style="opacity: 0.6;font-style: italic;font-size: 0.9em;">{show.layoutInfo.name}</span>
-                {/if}
-
-                {#if show.scheduleLength !== undefined && Number(show.scheduleLength)}
-                    <span class="layout">{joinTime(secondsToTime(show.scheduleLength))}</span>
+                    {#if showDuration && Number(showDuration)}
+                        <span class="layout">{joinTime(secondsToTime(showDuration))}</span>
+                    {/if}
+                {:else}
+                    <!-- shows drawer list -->
+                    {#if match !== null && ($activeShow?.data?.searchInput ? $activeShow?.id === id : isFirst)}
+                        <span style="opacity: 0.4;font-size: 0.9em;padding: 0 10px;">Press enter to add to project</span>
+                    {/if}
                 {/if}
             </span>
 

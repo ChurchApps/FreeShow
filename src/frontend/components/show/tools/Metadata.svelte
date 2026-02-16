@@ -6,6 +6,7 @@
     import { getCustomMetadata, initializeMetadata } from "../../helpers/show"
     import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
     import Tip from "../../main/Tip.svelte"
+    import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
 
     $: currentShow = $showsCache[$activeShow!.id]
     $: meta = currentShow.meta
@@ -24,29 +25,41 @@
         })
     }
 
+    // duration = quickaccess only
+    // number = quickaccess & metadata
+    // CCLI = quickaccess (metadata) & metadata
+    // others = metadata only
     const changeValue = (value: string, key: string) => {
+        if (key === "duration") {
+            setQuickAccess(key, value)
+            return
+        }
+
         values[key] = value
         updateData(values, "meta")
 
-        const quickAccessKeys = ["number", "CCLI"]
-        if (quickAccessKeys.includes(key)) {
-            let quickAccess = $showsCache[$activeShow!.id].quickAccess || {}
+        if (key === "number") setQuickAccess(key, value)
+        else if (key === "CCLI") setQuickAccess(key, value, true)
+    }
 
-            if (key === "number") quickAccess.number = values.number
-            else {
-                if (!quickAccess.metadata) quickAccess.metadata = {}
-                quickAccess.metadata[key] = values[key]
-            }
+    function setQuickAccess(key: string, value: string | number, asMetadata = false) {
+        let quickAccess = $showsCache[$activeShow!.id].quickAccess || {}
 
-            showsCache.update((a) => {
-                a[$activeShow!.id].quickAccess = quickAccess
-                return a
-            })
-            shows.update((a) => {
-                a[$activeShow!.id].quickAccess = quickAccess
-                return a
-            })
+        if (asMetadata) {
+            if (!quickAccess.metadata) quickAccess.metadata = {}
+            quickAccess.metadata[key] = value
+        } else {
+            quickAccess[key] = value
         }
+
+        showsCache.update((a) => {
+            a[$activeShow!.id].quickAccess = quickAccess
+            return a
+        })
+        shows.update((a) => {
+            a[$activeShow!.id].quickAccess = quickAccess
+            return a
+        })
     }
 
     function updateData(data, key) {
@@ -75,6 +88,9 @@
 
             <MaterialTextInput {label} style={numberStored ? "border-bottom: 1px solid var(--secondary);" : ""} {value} autofill={autofillValue} on:change={(e) => changeValue(e.detail, key)} />
         {/each}
+
+        <!-- not visible as metadata (only in project) -->
+        <MaterialNumberInput label="transition.duration (s)" value={currentShow?.quickAccess?.duration} on:change={(e) => changeValue(e.detail, "duration")} hideWhenZero />
     </div>
 
     <Tip value="tips.display_metadata" style="margin: 0 10px;" bottom={10} />

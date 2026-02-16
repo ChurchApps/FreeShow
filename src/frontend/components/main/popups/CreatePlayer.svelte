@@ -1,47 +1,44 @@
 <script lang="ts">
     import { uid } from "uid"
     import { playerVideos, popupData } from "../../../stores"
+    import { getVimeoName, getYouTubeName, trimPlayerId } from "../../drawer/player/playerHelper"
     import { clone } from "../../helpers/array"
     import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
 
-    let active: string | null = $popupData.active
+    let active: "youtube" | "vimeo" = $popupData.active
     let editId: string = $popupData.id || ""
     $: if (active) popupData.set({})
 
     const currentId = editId || uid()
     let data = clone($playerVideos[editId] || { name: "", id: "" })
-    $: if (data) update()
 
-    function update() {
-        if (!data.id?.length) {
-            // newToast("toast.no_video_id")
-            return
-        }
+    function setValue(key: "id" | "name", value: string) {
+        if (key === "id") value = trimPlayerId(value, active)
 
-        let id = data.id
-
-        // only get video id from any url
-        if (active === "youtube") {
-            if (id.includes("?list")) id = id.slice(0, id.indexOf("?list"))
-            if (id.includes("?si")) id = id.slice(0, id.indexOf("?si"))
-            id = id.slice(-11)
-        } else if (active === "vimeo") {
-            if (id.includes("?")) id = id.slice(0, id.indexOf("?"))
-            let slash = id.lastIndexOf("/")
-            id = id.slice(slash >= 0 ? slash + 1 : 0)
-        }
-
-        let name = data.name
-        if (!name) name = id
+        const newData = { ...data, [key]: value, type: active }
+        data = newData
 
         playerVideos.update((a) => {
-            a[currentId] = { id, name, type: active as any }
+            a[currentId] = newData
             return a
         })
+
+        if (key === "id") loadName()
+    }
+
+    async function loadName() {
+        if (data.name) return
+
+        const id = data.id || ""
+        let newName = ""
+        if (active === "youtube") newName = await getYouTubeName(id)
+        else if (active === "vimeo") newName = await getVimeoName(id)
+
+        if (newName) setValue("name", newName)
     }
 </script>
 
+<MaterialTextInput label="inputs.video_id" value={data.id || ""} placeholder="e.g. X-AJdKty74M" disabled={!!(data.id && editId)} on:change={(e) => setValue("id", e.detail)} autofocus={!data.id} pasteBtn={!data.id} />
 {#if !editId}
-    <MaterialTextInput label="inputs.name" value={data.name} on:change={(e) => (data.name = e.detail)} autofocus={!data.name} />
+    <MaterialTextInput label="inputs.name" value={data.name} disabled={!data.id} on:change={(e) => setValue("name", e.detail)} />
 {/if}
-<MaterialTextInput label="inputs.video_id" value={data.id || ""} placeholder="X-AJdKty74M" disabled={!!editId} on:change={(e) => (data.id = e.detail)} />

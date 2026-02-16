@@ -1,8 +1,8 @@
 <script>
     import Player from "@vimeo/player"
-    import { currentWindow, focusMode, theme, themes, volume } from "../../../stores"
-    import { OUTPUT } from "../../../../types/Channels"
     import { createEventDispatcher } from "svelte"
+    import { OUTPUT } from "../../../../types/Channels"
+    import { currentWindow, focusMode, theme, themes, volume } from "../../../stores"
     import { send } from "../../../utils/request"
 
     export let videoData = { paused: false, muted: true, loop: false, duration: 0 }
@@ -11,7 +11,6 @@
     export let outputId
     export let preview
 
-    export let title
     export let startAt = 0
 
     const options = {
@@ -39,12 +38,6 @@
 
         videoTime = startAt
         // WIP captions...
-
-        setTimeout(() => {
-            player.getVideoTitle().then((t) => {
-                title = t
-            })
-        }, 1000)
 
         loaded = true
 
