@@ -755,12 +755,12 @@ const slideDrop = {
         const layoutId: string = _show().get("settings.activeLayout")
 
         const slides: { [key: string]: Slide } = clone(get(showsCache)[get(activeShow)?.id || ""]?.slides)
-        if (!slides || !Object.keys(slides).length) return
+        if (!slides) return
 
         const mediaData: any = clone(get(showsCache)[get(activeShow)?.id || ""]?.media || {})
         let layout: any[] = _show().layouts([layoutId]).slides().get()[0]
 
-        if (drop.index === undefined) drop.index = layout.length
+        if (drop.index === undefined) drop.index = ref.length
         const newIndex: number = drop.index
 
         let newMedia: any = mediaData
@@ -839,7 +839,7 @@ const slideDrop = {
         const layoutId: string = _show().get("settings.activeLayout")
 
         const slides: { [key: string]: Slide } = clone(get(showsCache)[get(activeShow)?.id || ""]?.slides)
-        if (!slides || !Object.keys(slides).length) return
+        if (!slides) return
 
         let layout: any[] = _show().layouts([layoutId]).slides().get()[0] || []
 
