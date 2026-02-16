@@ -179,12 +179,13 @@
 
         let iterations = 0
         while ($folders[folder.parent]?.parent !== "/" && iterations < 20) {
+            if (!$folders[folder.parent]) break
             folder = $folders[folder.parent]
             if (!folder) break
             iterations++
         }
 
-        return folder.parent
+        return folder?.parent
     }
 </script>
 

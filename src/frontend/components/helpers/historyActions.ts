@@ -767,12 +767,14 @@ export const historyActions = ({ obj, undo = null }: any) => {
                 if (templateId && !slideId && previousTemplateId !== templateId) _show(data.remember.showId).set({ key: "settings.template", value: slideId ? null : templateId })
 
                 const template = clone(get(templates)[templateId])
-                if (template?.settings?.maxLinesPerSlide) {
-                    slides = splitToMaxLines(template.settings.maxLinesPerSlide)
+                const maxLines = template?.settings?.maxLinesPerSlide
+                if (maxLines !== "0" && !isNaN(Number(maxLines))) {
+                    slides = splitToMaxLines(Number(maxLines))
                     show.slides = slides
                 }
-                if (template?.settings?.breakLongLines) {
-                    slides = breakLongLines(data.remember.showId, template.settings.breakLongLines)
+                const brLongLines = template?.settings?.breakLongLines
+                if (brLongLines !== "0" && !isNaN(Number(brLongLines))) {
+                    slides = breakLongLines(data.remember.showId, Number(brLongLines))
                     show.slides = slides
                 }
                 updateSlidesWithTemplate(template)
@@ -794,6 +796,8 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
             function splitToMaxLines(maxLines: number) {
                 const currentSlides = clone(show.slides) || {}
+                if (!maxLines) return currentSlides
+
                 const newSlides: { [key: string]: Slide } = {}
 
                 Object.entries(currentSlides).forEach(([id, slide]) => {
