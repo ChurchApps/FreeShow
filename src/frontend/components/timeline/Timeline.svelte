@@ -4,7 +4,7 @@
     import { uid } from "uid"
     import type { TimelineAction } from "../../../types/Show"
     import { createWaveform } from "../../audio/audioWaveform"
-    import { activePopup, activeShow, activeTriggerFunction, resized, showsCache, special, timecode, timeline as timelineStore } from "../../stores"
+    import { activePopup, activeShow, activeTriggerFunction, resized, selected, showsCache, special, timecode, timeline as timelineStore } from "../../stores"
     import { DEFAULT_WIDTH } from "../../utils/common"
     import { translateText } from "../../utils/language"
     import { actionData } from "../actions/actionData"
@@ -200,6 +200,9 @@
     function startContentInteraction(e: MouseEvent) {
         if (e.button !== 0) return
 
+        // remove any selection
+        selected.set({ id: null, data: [] })
+
         // Store origin in content space (relative to track)
         const rect = trackWrapper.getBoundingClientRect()
         const offsetX = e.clientX - rect.left + trackWrapper.scrollLeft
@@ -386,6 +389,9 @@
         }
 
         if (e.button !== 0) return
+
+        // remove any selection
+        selected.set({ id: null, data: [] })
 
         if (e.ctrlKey || e.metaKey || e.shiftKey) {
             const index = selectedActionIds.indexOf(id)

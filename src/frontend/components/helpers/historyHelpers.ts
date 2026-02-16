@@ -601,9 +601,12 @@ function replaceEmptyValues(object: any, replacer: any) {
 
 function getNextWeekdayDate(currentDate: Date, targetWeekday: number): Date {
     let daysToAdd = targetWeekday - currentDate.getDay()
-    if (daysToAdd <= 0) daysToAdd += 7
-
     const result = new Date(currentDate)
+
+    // return today if it's the same day
+    if (daysToAdd === 0) return result
+
+    if (daysToAdd < 0) daysToAdd += 7
     result.setDate(result.getDate() + daysToAdd)
     return result
 }

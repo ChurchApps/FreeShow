@@ -376,7 +376,7 @@
 
 <!-- min-height: 50vh; -->
 <div style="min-width: 45vw;">
-    {#if mode === "slide" || mode === "template"}
+    {#if mode === "slide" || mode === "template" || mode === "overlay"}
         <CreateAction mainId={id} actionId={action.triggers?.[0] || ""} existingActions={action.triggers || []} actionValue={action.actionValues?.[action.triggers?.[0] || ""] || {}} customData={action.customData?.[action.triggers?.[0] || ""] || {}} {mode} on:change={changeAction} list />
     {:else}
         {#if actionActivationSelector}
