@@ -804,10 +804,10 @@ export async function getScriptureSlidesNew(data: any, onlyOne = false, disableR
                             // Verse number
                             if (verseNumbers && verse.number) {
                                 const size = verseNumberSize * (i === 0 ? 1.2 : 1)
-                                const numberStyle = `;${verseNumberStyle}font-size: ${size}px;`
+                                const numberStyle = `;${verseNumberStyle}font-size: ${size}px;margin-right: 0.3em;`
                                 newLineText.push({
                                     ...keyTextObj,
-                                    value: verse.number + " ",
+                                    value: verse.number,
                                     style: (keyTextObj.style || "") + numberStyle,
                                     customType: "disableTemplate"
                                 })
