@@ -622,6 +622,7 @@ export const itemBoxes: Box2 = {
                     // this is very limited
                     // { id: "captions.translate", type: "dropdown", value: "en-US", values: { label: "captions.translate", options: captionTranslateLanguages } },
                     { id: "captions.showtime", type: "number", value: 5, values: { label: "captions.showtime", min: 1, max: 60 } },
+                    { id: "captions.roomId", type: "string", value: "", values: { label: "Room ID", placeholder: "empty = automatic" } },
                     { id: "", type: "tip", value: "", values: { label: "captions.powered_by", subtext: "CAPTION.Ninja" } }
                 ])
             },

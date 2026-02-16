@@ -27,6 +27,8 @@
     function startRoom() {
         if (preview) return
 
+        if (captionData.roomId) roomId = captionData.roomId
+
         let language = "en-US"
         if (captionData.language) language = captionData.language
 
