@@ -1,14 +1,14 @@
 import { get } from "svelte/store"
 import type { History, HistoryNew, HistoryTypes } from "../../../types/History"
-import { activePage, driveData, historyCacheCount, isDev, undoHistory } from "../../stores"
+import { activePage, historyCacheCount, isDev, undoHistory } from "../../stores"
 import { redoHistory } from "./../../stores"
 import { clone } from "./array"
 import { historyActions } from "./historyActions"
+import { createStore, createStoreHistory, deleteStore, deleteStoreHistory, updateStore, updateStoreHistory } from "./historyStores"
 import { deselect } from "./select"
 import { loadShows } from "./setShow"
-import { _show } from "./shows"
 import { removeTemplatesFromShow } from "./show"
-import { createStore, createStoreHistory, deleteStore, deleteStoreHistory, updateStore, updateStoreHistory } from "./historyStores"
+import { _show } from "./shows"
 
 // override previous history
 const override = ["textAlign", "textStyle", "deleteItem", "setItems", "setStyle", "slideStyle", "STAGE"]
@@ -110,18 +110,12 @@ export function history(obj: History, shouldUndo: null | boolean = null) {
                 } else {
                     const layoutRefSlide = _show(showID).layouts([obj.location.layout!]).ref()[0]?.[obj.location.layoutSlide!]
                     if (layoutRefSlide) {
-                        const cloudId = get(driveData).mediaId
-                        if (layoutRefSlide.data.background && cloudId && cloudId !== "default") {
-                            bgid = layoutRefSlide.data.background
-                            _show(showID).media().add(obj.newData, bgid)
-                        } else {
-                            // look for existing media
-                            const existing = _show(showID)
-                                .media()
-                                .get()
-                                .find((a) => a.path === obj.newData.path)
-                            if (existing) bgid = existing.key
-                        }
+                        // look for existing media
+                        const existing = _show(showID)
+                            .media()
+                            .get()
+                            .find((a) => a.path === obj.newData.path)
+                        if (existing) bgid = existing.key
                         if (!bgid) bgid = _show(showID).media().add(obj.newData)
 
                         // let layoutSlide = _show(showIDs).layouts([obj.location!.layout!]).slides([ref.index]).get()[0]
@@ -159,13 +153,6 @@ export function history(obj: History, shouldUndo: null | boolean = null) {
                             .set({ key: "audio", value: audio })
                     }
                 } else {
-                    // WIP add audio at index
-                    // let cloudId = get(driveData).mediaId
-                    // if (audio[0] && cloudId && cloudId !== "default") {
-                    //     _show(showID).media().add(obj.newData)
-                    //     audioId = audio[0]
-                    //     _show(showID).media().add(obj.newData)
-                    // }
                     if (!audioId) audioId = _show(showID).media().add(obj.newData)
 
                     if (!audio.includes(audioId)) {

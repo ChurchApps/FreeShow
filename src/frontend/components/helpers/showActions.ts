@@ -21,7 +21,7 @@ import { getCurrentTimerValue, getTimeUntilClock, playPauseGlobal } from "../dra
 import { getDynamicValue } from "../edit/scripts/itemHelpers"
 import { getTextLines } from "../edit/scripts/textStyle"
 import { clearBackground, clearOverlays, clearTimers } from "../output/clear"
-import { actions, activeEdit, activeFocus, activePage, activeProject, activeShow, allOutputs, audioData, customMetadata, dictionary, driveData, dynamicValueData, focusMode, media, outLocked, outputDisplay, outputs, outputSlideCache, overlays, playingAudio, playingMetronome, projects, shows, showsCache, slideTimers, special, stageShows, styles, templates, timers, triggers, variables, videosData, videosTime } from "./../../stores"
+import { actions, activeEdit, activeFocus, activePage, activeProject, activeShow, allOutputs, audioData, customMetadata, dictionary, dynamicValueData, focusMode, media, outLocked, outputDisplay, outputs, outputSlideCache, overlays, playingAudio, playingMetronome, projects, shows, showsCache, slideTimers, special, stageShows, styles, templates, timers, triggers, variables, videosData, videosTime } from "./../../stores"
 import { clone, keysToID, sortByName } from "./array"
 import { getExtension, getFileName, getMedia, getMediaStyle, getMediaType, removeExtension } from "./media"
 import { defaultLayers, getActiveOutputs, getAllNormalOutputs, getFirstActiveOutput, getFirstOutput, getWindowOutputId, isOutCleared, refreshOut, setOutput } from "./output"
@@ -811,8 +811,6 @@ export function updateOut(showId: string, index: number, layout: LayoutRef[], ex
             setTimeout(() => {
                 data.audio?.forEach((audio: string) => {
                     const a = clone(_show(showId).get("media")?.[audio] || {})
-                    const cloudId = get(driveData).mediaId
-                    if (cloudId && cloudId !== "default") a.path = a.cloud?.[cloudId] || a.path
 
                     if (a) AudioPlayer.start(a.path, { name: a.name }, { pauseIfPlaying: false })
                 })

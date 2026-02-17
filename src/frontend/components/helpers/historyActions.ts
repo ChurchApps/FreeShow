@@ -2,7 +2,7 @@ import { get } from "svelte/store"
 import { uid } from "uid"
 import type { Item, Slide, SlideData, Template } from "../../../types/Show"
 import { breakLongLines, removeItemValues } from "../../show/slides"
-import { activeEdit, activePage, activePopup, activeProject, activeShow, alertMessage, cachedShowsData, deletedShows, driveData, groups, notFound, projects, refreshEditSlide, renamedShows, shows, showsCache, templates } from "../../stores"
+import { activeEdit, activePage, activePopup, activeProject, activeShow, alertMessage, cachedShowsData, deletedShows, groups, notFound, projects, refreshEditSlide, renamedShows, shows, showsCache, templates } from "../../stores"
 import { save } from "../../utils/save"
 import { EMPTY_SHOW_SLIDE } from "../../values/empty"
 import { customActionActivation } from "../actions/actions"
@@ -581,10 +581,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                     // backgrounds
                     if (data.layout?.backgrounds?.length) {
                         const background = data.layout.backgrounds[i] || data.layout.backgrounds[0]
-
                         let id = ""
-                        const cloudId = get(driveData).mediaId
-                        if (layoutValue.background && cloudId && cloudId !== "default") id = layoutValue.background
 
                         // find existing
                         const existingBackgrounds = _show(showId).get("media") || {}

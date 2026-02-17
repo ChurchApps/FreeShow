@@ -13,7 +13,7 @@ import { updateOut } from "../components/helpers/showActions"
 import { _show } from "../components/helpers/shows"
 import { clearAll } from "../components/output/clear"
 import { REMOTE } from "./../../types/Channels"
-import { actions, actionTags, activePage, activeProject, activeShow, activeTimers, audioChannelsData, categories, connections, dictionary, driveData, folders, language, openedFolders, outLocked, outputs, overlayCategories, overlays, playerVideos, projects, remotePassword, runningActions, scriptures, shows, showsCache, styles, templateCategories, templates, timers, triggers, variableTags, variables, volume } from "./../stores"
+import { actions, actionTags, activePage, activeProject, activeShow, activeTimers, audioChannelsData, categories, connections, dictionary, folders, language, openedFolders, outLocked, outputs, overlayCategories, overlays, playerVideos, projects, remotePassword, runningActions, scriptures, shows, showsCache, styles, templateCategories, templates, timers, triggers, variables, variableTags, volume } from "./../stores"
 import { lastClickTime } from "./common"
 import { translateText } from "./language"
 import { send } from "./request"
@@ -418,8 +418,6 @@ export async function convertBackgrounds(show: Show, noLoad = false, init = fals
     await Promise.all(
         mediaIds.map(async (id) => {
             let path = show.media[id]?.path || show.media[id]?.id || ""
-            const cloudId = get(driveData).mediaId
-            if (cloudId && cloudId !== "default") path = show.media[id]?.cloud?.[cloudId] || path
             if (!path) return
 
             if (noLoad) {

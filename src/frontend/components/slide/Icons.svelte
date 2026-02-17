@@ -100,9 +100,6 @@
 
     $: audio = layoutSlide.audio?.length ? _show().get()?.media?.[layoutSlide.audio[0]] || {} : {}
     $: audioPath = audio.path
-    // no need for cloud when audio can be stacked
-    // $: cloudId = $driveData.mediaId
-    // $: audioPath = cloudId && cloudId !== "default" ? audio.cloud?.[cloudId] || audio.path : audio.path
 
     $: zoom = 4 / columns
 </script>

@@ -2,7 +2,7 @@
     import { onMount } from "svelte"
     import type { MediaStyle } from "../../../../types/Main"
     import type { ItemType } from "../../../../types/Show"
-    import { activeEdit, activePage, activePopup, activeShow, activeTriggerFunction, alertMessage, driveData, focusMode, groups, labelsDisabled, media, outputs, overlays, refreshEditSlide, showsCache, special, styles, templates, textEditActive } from "../../../stores"
+    import { activeEdit, activePage, activePopup, activeShow, activeTriggerFunction, alertMessage, focusMode, groups, labelsDisabled, media, outputs, overlays, refreshEditSlide, showsCache, special, styles, templates, textEditActive } from "../../../stores"
     import { transposeText } from "../../../utils/chordTranspose"
     import { triggerFunction } from "../../../utils/common"
     import { translateText } from "../../../utils/language"
@@ -71,8 +71,7 @@
     }
 
     $: background = bgId && currentShowId ? currentShow?.media[bgId] : null
-    $: cloudId = $driveData.mediaId
-    $: backgroundPath = cloudId && cloudId !== "default" && background ? background.cloud?.[cloudId] || background.path || "" : background?.path || ""
+    $: backgroundPath = background?.path || ""
     // $: slideOverlays = layoutSlide.overlays || []
 
     // LOAD BACKGROUND

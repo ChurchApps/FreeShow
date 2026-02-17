@@ -6,7 +6,7 @@
     import { requestMain } from "../../../IPC/main"
     import { AudioMicrophone } from "../../../audio/audioMicrophone"
     import { AudioPlayer } from "../../../audio/audioPlayer"
-    import { activePopup, activeShow, alertMessage, driveData, media, outLocked, outputs, playingAudio, showsCache, styles } from "../../../stores"
+    import { activePopup, activeShow, alertMessage, media, outLocked, outputs, playingAudio, showsCache, styles } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { getAccess } from "../../../utils/profile"
     import { send } from "../../../utils/request"
@@ -73,8 +73,6 @@
             if (!show.media?.[a]) return
 
             let path: string = show.media[a].path || show.media[a].id || ""
-            let cloudId = $driveData.mediaId
-            if (cloudId && cloudId !== "default") path = show.media[a].cloud?.[cloudId] || path
 
             let type = (show.media[a].type || getMediaType(getExtension(path))) as MediaType
 
@@ -92,9 +90,6 @@
             if (!show.media?.[a]) return
 
             let path = show.media[a].path!
-            // no need for cloud when audio can be stacked
-            // let cloudId = $driveData.mediaId
-            // if (cloudId && cloudId !== "default") path = show.media[a].cloud?.[cloudId] || path
 
             let type: MediaType = "audio"
 
