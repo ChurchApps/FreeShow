@@ -85,8 +85,8 @@
 
         if (type === "style") {
             styles.update((a) => {
-                const id = ids[0]
-                if (!a[id]) return a
+                const id = ids[0] || "default"
+                if (!a[id]) a[id] = { name: translateText("example.default") }
 
                 if (key === "display" && value === "default") {
                     delete a[id].metadata

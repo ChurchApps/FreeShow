@@ -65,7 +65,7 @@
 {#each actualOutputtedOverlays as id (id)}
     {#if overlays?.[id]}
         <div>
-            <Overlay {id} {outputId} isClearing={isClearing.includes(id)} {overlays} {mirror} {transition} {preview} />
+            <Overlay overlay={overlays[id]} {id} {outputId} isClearing={isClearing.includes(id)} {mirror} {transition} {preview} />
         </div>
     {/if}
 {/each}

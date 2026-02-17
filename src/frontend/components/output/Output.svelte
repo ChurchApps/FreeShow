@@ -6,19 +6,19 @@
     import { OutData } from "../../../types/Output"
     import type { Styles } from "../../../types/Settings"
     import type { AnimationData, LayoutRef, OutBackground, OutSlide, Slide, SlideData, Template, Overlays as TOverlays } from "../../../types/Show"
-    import { allOutputs, colorbars, currentWindow, customMessageCredits, drawSettings, drawTool, effects, media, outputs, overlays, showsCache, styles, templates, transitionData } from "../../stores"
+    import { allOutputs, colorbars, currentWindow, drawSettings, drawTool, effects, media, outputs, overlays, showsCache, styles, templates, transitionData } from "../../stores"
     import { wait } from "../../utils/common"
     import { custom } from "../../utils/transitions"
     import Draw from "../draw/Draw.svelte"
     import { clone } from "../helpers/array"
-    import { defaultLayers, getCurrentStyle, getMetadata, getOutputLines, getOutputTransitions, getResolution, getSlideFilter, getStyleTemplate, OutputMetadata, setTemplateStyle } from "../helpers/output"
+    import { defaultLayers, getCurrentStyle, getMetadata, getOutputLines, getOutputTransitions, getResolution, getSlideFilter, getStyleTemplate, setTemplateStyle } from "../helpers/output"
     import { _show } from "../helpers/shows"
     import Image from "../media/Image.svelte"
     import Zoomed from "../slide/Zoomed.svelte"
     import { updateAnimation } from "./animation"
     import EffectOutput from "./effects/EffectOutput.svelte"
     import Background from "./layers/Background.svelte"
-    import Metadata from "./layers/Metadata.svelte"
+    import Overlay from "./layers/Overlay.svelte"
     import Overlays from "./layers/Overlays.svelte"
     import PdfOutput from "./layers/PdfOutput.svelte"
     import SlideContent from "./layers/SlideContent.svelte"
@@ -175,8 +175,7 @@
     }
 
     // metadata
-    let metadata: OutputMetadata = {}
-    $: metadata = getMetadata(metadata, $showsCache[slide?.id || ""], currentStyle, $templates, slide)
+    $: metadataItems = getMetadata($showsCache[(slide as any)?.id || ""], currentStyle, slide, $templates)
 
     // ANIMATE
     let animationData: AnimationData = {}
@@ -238,10 +237,6 @@
 
     // values
     $: backgroundColor = currentOutput.transparent ? "transparent" : styleTemplate?.settings?.backgroundColor || currentSlide?.settings?.color || currentStyle.background || slide?.settings?.backgroundColor || "black"
-    // metadata display
-    $: firstActiveSlideIndex = currentLayout.findIndex((a) => !a.data.disabled)
-    $: lastActiveSlideIndex = currentLayout.length - 1 - [...currentLayout].reverse().findIndex((a) => !a.data.disabled)
-    $: displayMetadata = metadata.value?.length && (metadata.display === "always" || (metadata.display?.includes("first") && (slide?.index === firstActiveSlideIndex || slide?.index === 0)) || (metadata.display?.includes("last") && (slide?.index === lastActiveSlideIndex || slide?.index === currentLayout.length - 1)))
     // background image
     $: styleBackground = currentStyle?.clearStyleBackgroundOnText && (slide || background) ? "" : currentStyle?.backgroundImage || ""
     $: styleBackgroundData = { path: styleBackground, ...($media[styleBackground] || {}), loop: true }
@@ -272,29 +267,6 @@
             actualCurrentSlide = clone(currentSlide)
             actualCurrentLineId = clone(currentLineId)
         })
-    }
-
-    let isMetadataClearing = false
-    let metadataVisible = false
-    let metadataTransition: NodeJS.Timeout | null = null
-    $: showMetadata = displayMetadata || ((layers.includes("background") || backgroundData?.ignoreLayer) && $customMessageCredits)
-    $: if (showMetadata !== null) updateMetadata()
-    function updateMetadata() {
-        if (metadataTransition) clearTimeout(metadataTransition)
-        if (displayMetadata) {
-            isMetadataClearing = false
-            metadataVisible = true
-        } else {
-            isMetadataClearing = true
-            // wait for transition to finish
-            metadataTransition = setTimeout(
-                () => {
-                    metadataVisible = false
-                    isMetadataClearing = false
-                },
-                (metadata.transition || transitions.overlay)?.duration || 500
-            )
-        }
     }
 </script>
 
@@ -338,15 +310,12 @@
         </span>
     {:else if actualSlide && actualSlide?.type !== "pdf"}
         <SlideContent {outputId} outSlide={actualSlide} isClearing={isSlideClearing} slideData={actualSlideData} currentSlide={actualCurrentSlide} {currentStyle} {animationData} currentLineId={actualCurrentLineId} {lines} {ratio} {mirror} {preview} transition={transitions.text} transitionEnabled={!mirror || preview} {styleIdOverride} />
+
+        <!-- metadata -->
+        <Overlay overlay={{ items: metadataItems }} isClearing={isSlideClearing} {outputId} transition={transitions.text} />
     {/if}
 
     {#if layers.includes("overlays")}
-        <!-- metadata -->
-        {#if metadataVisible}
-            <!-- <Metadata isClearing={isMessageClearing} value={messageText.includes("{") ? replaceDynamicValues(messageText, { showId: actualSlide?.id, layoutId: actualSlide?.layout, slideIndex: actualSlide?.index }, updateDynamic) : messageText} style={metadata.messageStyle || ""} transition={metadata.messageTransition || transitions.overlay} /> -->
-            <Metadata isClearing={isMetadataClearing} value={metadata.value || $customMessageCredits || ""} style={metadata.style || ""} conditions={metadata.condition} {outputId} transition={metadata.transition || transitions.overlay} />
-        {/if}
-
         <!-- effects -->
         {#if effectsOverSlide}
             <EffectOutput ids={effectsOverSlide} transition={transitions.overlay} {mirror} />

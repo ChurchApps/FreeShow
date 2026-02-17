@@ -4,20 +4,21 @@ import { OUTPUT } from "../../../types/Channels"
 import { Main } from "../../../types/IPC/Main"
 import type { Output, Outputs } from "../../../types/Output"
 import type { Resolution, Styles } from "../../../types/Settings"
-import type { Item, Layout, LayoutRef, Line, Media, OutSlide, Show, Slide, SlideData, Template, Templates, TemplateSettings, Transition } from "../../../types/Show"
+import type { Item, Layout, LayoutRef, Line, Media, OutSlide, Show, Slide, SlideData, Template, TemplateSettings, Transition } from "../../../types/Show"
 import { AudioAnalyser } from "../../audio/audioAnalyser"
 import { fadeinAllPlayingAudio, fadeoutAllPlayingAudio } from "../../audio/audioFading"
 import { sendMain } from "../../IPC/main"
-import { actions, activeProject, activeRename, activeTimers, allOutputs, categories, connections, currentOutputSettings, disabledServers, effects, lockedOverlays, media, outputDisplay, outputs, outputSlideCache, outputState, overlays, overlayTimers, playingVideos, projects, scriptures, serverData, showsCache, special, stageShows, styles, templates, theme, themes, transitionData, usageLog } from "../../stores"
+import { actions, activeProject, activeRename, activeTimers, allOutputs, categories, connections, currentOutputSettings, customMessageCredits, disabledServers, effects, lockedOverlays, media, outputDisplay, outputs, outputSlideCache, outputState, overlays, overlayTimers, playingVideos, projects, scriptures, serverData, showsCache, special, stageShows, styles, templates, theme, themes, transitionData, usageLog } from "../../stores"
 import { trackScriptureUsage } from "../../utils/analytics"
 import { isMainWindow, isOutputWindow, newToast } from "../../utils/common"
 import { translateText } from "../../utils/language"
 import { send } from "../../utils/request"
 import { sendBackgroundToStage } from "../../utils/stageTalk"
+import { TemplateHelper } from "../../utils/templates"
 import { videoExtensions } from "../../values/extensions"
 import { customActionActivation, runAction } from "../actions/actions"
 import type { API_camera, API_screen, API_stage_output_layout } from "../actions/api"
-import { getItemText, getItemTextArray, getSlideText } from "../edit/scripts/textStyle"
+import { getItemText, getSlideText } from "../edit/scripts/textStyle"
 import type { EditInput } from "../edit/values/boxes"
 import { clearBackground, clearSlide } from "../output/clear"
 import { areObjectsEqual, clone, keysToID, removeDuplicates, sortByName, sortObject } from "./array"
@@ -1336,85 +1337,59 @@ export interface OutputMetadata {
     media?: boolean
     condition?: any
 }
-const defaultMetadataStyle = "top: 910px;left: 50px;width: 1820px;height: 150px;opacity: 0.8;font-size: 30px;text-shadow: 2px 2px 4px rgb(0 0 0 / 80%);"
-export function getMetadata(oldMetadata: any, show: Show | undefined, currentStyle: Styles, templatesUpdater = get(templates), outSlide: OutSlide | null) {
-    const metadata: OutputMetadata = { style: getTemplateStyle("metadata", templatesUpdater) || defaultMetadataStyle }
-    if (!show) return metadata
+const defaultMetadataItemStyle = "top: 910px;left: 30px;width: 1860px;height: 150px;"
+const defaultMetadataTextStyle = "font-size: 30px;color: rgb(255 255 255 / 0.8);text-shadow: 2px 2px 4px rgb(0 0 0 / 80%);"
+export function getMetadata(show: Show | undefined, currentStyle: Styles, outSlide: OutSlide | null, _updater = get(templates)) {
+    if (!show || !outSlide) return []
 
     const showCategory = get(categories)[show.category || ""] || {}
     const metadataValues = currentStyle.metadata || showCategory.metadata || {}
+    const display = metadataValues.display || "never"
+    if (display === "never") return []
 
-    metadata.display = metadataValues.display
+    const ref = clone(_show(outSlide.id).layouts([outSlide.layout]).ref()[0] || [])
+    const firstActiveSlideIndex = ref.findIndex((a) => !a.data.disabled)
+    const lastActiveSlideIndex = ref.length - 1 - [...ref].reverse().findIndex((a) => !a.data.disabled)
+    const displayMetadata = display === "always" || (display?.includes("first") && outSlide?.index === firstActiveSlideIndex) || (display?.includes("last") && outSlide?.index === lastActiveSlideIndex)
+    if (!displayMetadata) return []
 
     // template
     let templateId: string = metadataValues.template || "metadata"
     // if first slide
-    if (metadataValues.display === "first_last" && outSlide?.index === 0) templateId = metadataValues.templateFirst || templateId
-    if (metadataValues.display === "always") {
+    if (display === "first_last" && outSlide?.index === firstActiveSlideIndex) templateId = metadataValues.templateFirst || templateId
+    if (display === "always") {
         templateId = metadataValues.templateAll || "metadata"
         // if first slide
-        if (outSlide?.index === 0) templateId = metadataValues.templateFirst || templateId
+        if (outSlide?.index === firstActiveSlideIndex) templateId = metadataValues.templateFirst || templateId
         else if (metadataValues.template && outSlide) {
             // if last slide
-            const ref = _show(outSlide.id).layouts([outSlide.layout]).ref()[0]
-            if (outSlide?.index === ref?.length - 1) templateId = metadataValues.template
+            if (outSlide?.index === lastActiveSlideIndex) templateId = metadataValues.template
+        }
+    }
+    if (!get(templates)[templateId]) templateId = "metadata"
+
+    const template = new TemplateHelper(templateId)
+    const items = template.getItems()
+
+    const hasDynamicValues = template.getPlainText().includes("{")
+    if (!hasDynamicValues) {
+        const value = joinMetadata(show.meta, "; ") || get(customMessageCredits)
+        const textboxItem = items.findIndex((a) => a.lines)
+        if (textboxItem === -1) {
+            items.push({ style: defaultMetadataItemStyle, type: "text", lines: [{ align: "", text: [{ value, style: defaultMetadataTextStyle }] }] })
+            return items
+        } else {
+            if (!items[textboxItem].lines?.[0].text?.[0]) items[textboxItem].lines = [{ align: "", text: [{ value, style: defaultMetadataTextStyle }] }]
+            else items[textboxItem].lines![0].text![0].value = value
         }
     }
 
-    metadata.style = getTemplateStyle(templateId, templatesUpdater) || defaultMetadataStyle
-    metadata.style += getTemplateAlignment(templateId, templatesUpdater)
-    metadata.transition = templatesUpdater[templateId]?.items?.[0]?.actions?.transition || null
-    metadata.condition = templatesUpdater[templateId]?.items?.[0]?.conditions || {}
-
-    const metadataTemplateValue = getItemTextArray(templatesUpdater[templateId]?.items?.[0])
-    getMetaValue()
-    function getMetaValue() {
-        if (metadata.media) {
-            metadata.value = oldMetadata.value || ""
-            return
-        }
-
-        if (metadataTemplateValue.find((a) => a.includes("{"))) {
-            if (!outSlide) return
-            const ref = { showId: outSlide.id, layoutId: outSlide.layout, slideIndex: outSlide.index }
-            metadata.value = replaceDynamicValues(metadataTemplateValue.join("<br>"), ref)
-            return
-        }
-
-        if (!show?.meta) return
-
-        // metadata.value = currentStyle.metadataLayout || DEFAULT_META_LAYOUT
-        metadata.value = joinMetadata(show.meta, "; ")
-    }
-
-    return clone(metadata)
+    return items
 }
 export function joinMetadata(metadata: { [key: string]: string }, divider = "; ") {
     return Object.values(metadata)
         .filter((a: string) => a.length)
         .join(divider)
-}
-
-function getTemplateStyle(templateId: string, templatesUpdater: Templates) {
-    if (!templateId) return
-    const template = templatesUpdater[templateId]
-    if (!template) return
-
-    const style = template.items?.[0]?.style || ""
-    const textStyle = template.items?.[0]?.lines?.[0]?.text?.[0]?.style || ""
-
-    return style + textStyle
-}
-
-function getTemplateAlignment(templateId: string, templatesUpdater: Templates) {
-    if (!templateId) return
-    const template = templatesUpdater[templateId]
-    if (!template) return
-
-    const itemAlign = template.items?.[0]?.align || ""
-    const lineAlign = template.items?.[0]?.lines?.[0]?.align || ""
-
-    return itemAlign + lineAlign.replace("text-align", "justify-content")
 }
 
 export function getSlideFilter(slideData: SlideData | null) {
