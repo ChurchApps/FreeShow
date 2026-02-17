@@ -46,7 +46,7 @@
     $: isLessons = show?.reference?.type === "lessons"
 
     $: viewMode = isLessons ? "grid" : $slidesOptions.mode || "grid"
-    $: background = layoutSlide.background ? show.media[layoutSlide.background] : null
+    $: background = layoutSlide.background ? show.media[layoutSlide.background] : slide?.settings?.backgroundImage ? { path: slide.settings.backgroundImage } : null
 
     let ghostBackground: Media | null = null
     // don't show ghost slides above 40 when using optimized mode

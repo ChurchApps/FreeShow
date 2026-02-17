@@ -40,7 +40,7 @@ function getId(drag: Selected): string {
 }
 
 type Data = { drag: Selected; drop: DropData }
-type Keys = { shiftKey: boolean }
+type Keys = { shiftKey: boolean; ctrlKey: boolean; altKey: boolean }
 
 export const dropActions = {
     slides: ({ drag, drop }: Data, history: History, keys?: Keys) => dropActions.slide({ drag, drop }, history, keys),
@@ -527,7 +527,7 @@ const files = {
 }
 
 const slideDrop = {
-    media: ({ drag, drop }: Data, history: History) => {
+    media: ({ drag, drop }: Data, h: History, keys: Keys) => {
         let data = clone(drag.data)
         if (!data.length) return
 
@@ -576,15 +576,15 @@ const slideDrop = {
 
         if (center) {
             if (!data[0]) return
-            history.id = "showMedia"
+            h.id = "showMedia"
 
             if (drop.trigger?.includes("end")) drop.index!--
-            history.location!.layoutSlide = drop.index
-            const newData = data[0]
+            h.location!.layoutSlide = drop.index
+            let newData = data[0]
             delete newData.index
             delete newData.id
             delete newData.contentProvider
-            history.newData = newData
+            h.newData = newData
 
             // change slide group name if same name as previous media
             const showId = get(activeShow)?.id || ""
@@ -593,6 +593,17 @@ const slideDrop = {
             const slide = _show(showId).slides([slideId]).get()?.[0] || {}
             const currentBgId = layoutRef[drop.index!]?.data.background || ""
             const mediaName = removeExtension(_show(showId).media([currentBgId]).get()?.[0]?.name || "")
+
+            // add as slide bg instead of layout bg
+            if (keys.ctrlKey) {
+                const slideSettings = _show().slides([slideId]).get("settings")
+                const oldData = { style: clone(slideSettings) }
+                newData = { style: { ...clone(slideSettings), backgroundImage: newData.path } }
+
+                history({ id: "slideStyle", oldData, newData, location: { page: "edit", show: get(activeShow)!, slide: slideId } })
+                return
+            }
+
             if (newData.name && slide.group === mediaName) {
                 showsCache.update((shows) => {
                     if (!shows[showId]) return shows
@@ -601,15 +612,15 @@ const slideDrop = {
                 })
             }
 
-            return history
+            return h
         }
 
-        history.id = "SLIDES"
+        h.id = "SLIDES"
         const slides = drag.data.map((a) => ({ id: (a.id?.length > 11 ? "" : a.id) || uid(), group: removeExtension(a.name || ""), color: null, settings: {}, notes: "", items: [] }))
 
-        history.newData = { index: drop.index, data: slides, layout: { backgrounds: data } }
+        h.newData = { index: drop.index, data: slides, layout: { backgrounds: data } }
 
-        return history
+        return h
     },
     audio: ({ drag, drop }: Data, h: History) => {
         h.id = "showAudio"

@@ -27,7 +27,7 @@
 
     $: position = $projects[$activeProject || ""]?.shows?.findIndex((a) => a.id === show?.id)
 
-    $: layoutId = (show?.type || "show") === "show" ? $showsCache[show!.id]?.settings?.activeLayout : null
+    $: layoutId = show && (show.type || "show") === "show" ? $showsCache[show.id]?.settings?.activeLayout : null
 </script>
 
 <div class="double">

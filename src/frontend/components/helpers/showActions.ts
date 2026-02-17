@@ -743,6 +743,17 @@ export function updateOut(showId: string, index: number, layout: LayoutRef[], ex
     async function activateActions(outputId: string) {
         let background = data.background || null
 
+        // get slide background
+        let isSlideBg = false
+        if (!background) {
+            const showSlide: Slide = _show(showId).slides([layout[index].id]).get()?.[0]
+            if (showSlide?.settings?.backgroundImage) {
+                background = showSlide.settings.backgroundImage
+                isSlideBg = true
+            }
+            // WIP remove layout ghost bg after actual slide bg (we don't need ghosts for slide backgrounds)
+        }
+
         // get ghost background
         if (!background) {
             layout.forEach((a, i) => {
@@ -760,8 +771,8 @@ export function updateOut(showId: string, index: number, layout: LayoutRef[], ex
         }
 
         // background
-        if (background && _show(showId).get("media")?.[background]) {
-            const bg = _show(showId).get("media")[background]
+        if (background && (isSlideBg || _show(showId).get("media")?.[background])) {
+            const bg = isSlideBg ? { path: background } : _show(showId).get("media")[background]
             const outputBg = get(outputs)[outputId]?.out?.background
             const bgPath = bg?.path || bg?.id
             const extension = getExtension(bgPath)

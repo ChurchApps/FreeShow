@@ -1,6 +1,7 @@
 <script lang="ts">
     import { activeDrawerTab, activeEdit, activePage, activeShow, activeTriggerFunction, showsCache, templates } from "../../../stores"
     import { translateText } from "../../../utils/language"
+    import { mediaExtensions } from "../../../values/extensions"
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import Icon from "../../helpers/Icon.svelte"
@@ -9,6 +10,7 @@
     import InputRow from "../../input/InputRow.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialColorInput from "../../inputs/MaterialColorInput.svelte"
+    import MaterialFilePicker from "../../inputs/MaterialFilePicker.svelte"
     import MaterialPopupButton from "../../inputs/MaterialPopupButton.svelte"
     import MaterialTextarea from "../../inputs/MaterialTextarea.svelte"
 
@@ -32,13 +34,14 @@
         }, 20)
     }
 
-    let settings: { template?: string; color?: string } = {}
+    let settings: { template?: string; color?: string; backgroundImage?: string } = {}
 
     $: if ($showsCache || editSlide) setValues()
     function setValues() {
         settings = {
             template: editSlide?.settings?.template,
-            color: editSlide?.settings?.color || ""
+            color: editSlide?.settings?.color || "",
+            backgroundImage: editSlide?.settings?.backgroundImage || ""
         }
     }
 
@@ -69,6 +72,12 @@
         activeEdit.set({ type: "template", id, items: [] })
         activePage.set("edit")
     }
+
+    $: bgImage = settings.backgroundImage
+    function editBackgroundImage() {
+        activeEdit.set({ type: "media", id: bgImage, items: [] })
+        activePage.set("edit")
+    }
 </script>
 
 <div class="tools">
@@ -83,6 +92,24 @@
             allowEmpty
             noLabel
         />
+
+        <!-- WIP TIP about layout background image -->
+        <InputRow>
+            <MaterialFilePicker
+                label="edit.background_media"
+                value={bgImage}
+                filter={{ name: "Media files", extensions: mediaExtensions }}
+                on:change={(e) => {
+                    settings.backgroundImage = e.detail
+                    update()
+                }}
+                allowEmpty
+            />
+            {#if bgImage}
+                <MaterialButton title="titlebar.edit" icon="edit" on:click={editBackgroundImage} />
+            {/if}
+        </InputRow>
+
         <InputRow>
             <!-- {#if groupTemplate && !settings.template}
                 <span style="display: flex;align-items: center;padding: 0 10px;font-size: 0.8em;opacity: 0.7;"><T id="settings.overrided_value" /></span>

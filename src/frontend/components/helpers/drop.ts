@@ -61,7 +61,7 @@ export async function ondrop(e: any, id: string) {
     console.info("DRAG: ", sel)
     console.info("DROP: ", dropdata)
 
-    const keys = { shiftKey: e?.shiftKey }
+    const keys = { shiftKey: e?.shiftKey, ctrlKey: e?.ctrlKey || e?.metaKey, altKey: e?.altKey }
 
     if (dropActions[id]) {
         const dropData = { drag: sel, drop: dropdata }

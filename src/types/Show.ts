@@ -88,6 +88,7 @@ export interface Slide {
         template?: string
         background?: boolean
         color?: string
+        backgroundImage?: string
         resolution?: Resolution
     }
     children?: string[]
