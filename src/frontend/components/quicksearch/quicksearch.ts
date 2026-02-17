@@ -44,8 +44,7 @@ import {
 import { triggerFunction } from "../../utils/common"
 import { translateText } from "../../utils/language"
 import { getAccess } from "../../utils/profile"
-import { formatSearch } from "../../utils/search"
-import { fastSearch } from "../../utils/searchFast"
+import { formatSearch, showSearch } from "../../utils/search"
 import { runAction } from "../actions/actions"
 import { sortByClosestMatch } from "../actions/apiHelper"
 import { menuClick } from "../context/menuClick"
@@ -54,7 +53,7 @@ import { keysToID } from "../helpers/array"
 import { duplicate } from "../helpers/clipboard"
 import { history } from "../helpers/history"
 import { Main } from "./../../../types/IPC/Main"
-import { getBibleResults, getMediaResults, showResult } from "./quicksearchData"
+import { getMediaResults, showResult } from "./quicksearchData"
 
 interface QuickSearchValue {
     type: keyof typeof triggerActions
@@ -77,7 +76,7 @@ export const quickSearchCategoryNames: Record<SearchCategory, string> = {
     settings: "menu.settings",
     stage: "menu.stage",
     overlays: "tabs.overlays",
-    projects: "guide.projects",
+    projects: "guide_title.projects",
     actions: "tabs.actions",
     navigation: "settings.general",
     faq: "FAQ",
@@ -176,7 +175,8 @@ export async function quicksearch(searchValue: string, categoryFilter: null | Se
     // --- SHOWS ---
     if (isVisible("shows")) {
         const allShows = get(sortedShowsList).filter((a) => !get(categories)[a.category || ""]?.isArchive)
-        const shows = fastSearch(searchValue, allShows)
+        // const shows = fastSearch(searchValue, allShows)
+        const shows = showSearch(searchValue, allShows)
         const showsWithPreview = trimValues(shows, MAX_RESULTS_LARGE).map((show) => showResult(show, rawSearchValue))
         addValues(showsWithPreview, "show", "slide")
     }
@@ -201,10 +201,10 @@ export async function quicksearch(searchValue: string, categoryFilter: null | Se
     }
 
     // --- BIBLE ---
-    if (isVisible("bible")) {
-        const bibleResults = trimValues(await getBibleResults(searchValue), MAX_RESULTS_LARGE)
-        addValues(bibleResults, "bible", "bible")
-    }
+    // if (isVisible("bible")) {
+    //     const bibleResults = trimValues(await getBibleResults(searchValue), MAX_RESULTS_LARGE)
+    //     addValues(bibleResults, "bible", "bible")
+    // }
 
     return values
 
