@@ -85,13 +85,13 @@ protocol.registerSchemesAsPrivileged([
 
 // start when ready
 if (RECORD_STARTUP_TIME) console.time("Full startup")
-app.on("ready", () => {
-    startApp()
+app.on("ready", async () => {
+    await startApp()
     requestHeaders()
 })
 
 export let powerSaveBlockerId: number | null = null
-function startApp() {
+async function startApp() {
     if (RECORD_STARTUP_TIME) console.time("Initial")
 
     // WIDEVINE
@@ -106,7 +106,7 @@ function startApp() {
 
     setTimeout(createLoading)
 
-    setupStores()
+    await setupStores()
 
     registerProtectedProtocol()
 
