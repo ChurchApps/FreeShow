@@ -955,7 +955,7 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
                 const firstChar = templateText?.value?.[0] || ""
 
                 // add dynamic values
-                if (!text.value?.length && hasDynamicValue && templateItem?.lines?.[j]) {
+                if ((!text.value?.length || text.value?.includes("{")) && hasDynamicValue && templateItem?.lines?.[j]) {
                     text.value = templateText!.value
                 }
 
