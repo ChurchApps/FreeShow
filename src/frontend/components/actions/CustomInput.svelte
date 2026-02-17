@@ -176,6 +176,8 @@
 {:else if inputId === "number"}
     <!-- action wait (seconds) -->
     <MaterialNumberInput label="timer.seconds" value={value?.number || 0} step={0.5} on:change={(e) => updateValue("number", e)} />
+{:else if inputId === "seconds"}
+    <MaterialNumberInput label="timer.seconds" value={value?.seconds || 0} on:change={(e) => updateValue("seconds", e)} />
 {:else if inputId === "index"}
     <!-- run by index -->
     <MaterialNumberInput label="variables.value" value={value?.index || 0} on:change={(e) => updateValue("index", e)} />

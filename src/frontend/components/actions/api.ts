@@ -20,6 +20,7 @@ import { startTimerById, startTimerByName, stopTimers } from "../helpers/timerTi
 import { clearAll, clearBackground, clearDrawing, clearOverlay, clearOverlays, clearSlide, clearTimers, restoreOutput } from "../output/clear"
 import { formatText } from "../show/formatTextEditor"
 import { getPlainEditorText } from "../show/getTextEditor"
+import { pauseTimeline, setTimelineTime, startTimeline, stopTimeline } from "../timeline/TimelinePlayback"
 import { runActionByName, runActionId, toggleAction } from "./actions"
 import { getOutput, getOutputGroupName, getOutputSlideText, getPlayingAudioData, getPlayingAudioDuration, getPlayingAudioTime, getPlayingPlaylist, getPlayingVideoDuration, getPlayingVideoState, getPlayingVideoTime, getPlaylists, getProject, getProjects, getShow, getShowLayout, getShows, getSlide, getVariable, getVariables } from "./apiGet"
 import {
@@ -288,6 +289,12 @@ export const API_ACTIONS = {
     name_pause_timer: (data: API_strval) => pauseTimerByName(data.value),
     id_stop_timer: (data: API_id) => stopTimerById(data.id),
     name_stop_timer: (data: API_strval) => stopTimerByName(data.value),
+
+    // TIMELINE (SHOW)
+    start_timeline: () => startTimeline("show"),
+    stop_timeline: () => stopTimeline("show"),
+    pause_timeline: () => pauseTimeline("show"),
+    set_timeline_time: (data: API_seek) => setTimelineTime("show", data.seconds * 1000),
 
     // FUNCTIONS
     change_variable: (data: API_variable) => changeVariable(data), // BC

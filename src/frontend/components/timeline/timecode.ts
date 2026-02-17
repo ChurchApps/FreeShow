@@ -6,14 +6,14 @@ import ltcProcessorUrl from "./ltcProcessor.ts?worker&url"
 import { getActiveTimelinePlayback } from "./TimelinePlayback"
 
 export function updateTimelineTime(timeMs: number) {
-    const active = getActiveTimelinePlayback()
+    const active = getActiveTimelinePlayback("project")
     if (!active) return
 
     active.setTime(timeMs)
 }
 
 export function updateTimelineStatus(status: "play" | "pause" | "stop") {
-    const active = getActiveTimelinePlayback()
+    const active = getActiveTimelinePlayback("project")
     if (!active) return
 
     if (status === "play") active.play(true)

@@ -567,6 +567,8 @@
         else player.play()
     }
 
+    $: if ($activeTriggerFunction === `start_${type}_timeline`) player.play()
+
     $: if ($activeTriggerFunction === "delete_selected_nodes") deleteSelectedNodes()
     function deleteSelectedNodes() {
         if (isClosed || !selectedActionIds.length) return

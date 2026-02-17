@@ -1,7 +1,11 @@
 import { get, Unsubscriber } from "svelte/store"
+import { Main } from "../../../types/IPC/Main"
 import type { TimelineAction } from "../../../types/Show"
+import { sendMain } from "../../IPC/main"
+import { clearAudio } from "../../audio/audioFading"
 import { AudioPlayer } from "../../audio/audioPlayer"
 import { activeShow, isTimelinePlaying, outputs, playingAudio, showsCache, timecode } from "../../stores"
+import { triggerFunction } from "../../utils/common"
 import { runAction } from "../actions/actions"
 import { clone } from "../helpers/array"
 import { getFirstActiveOutput } from "../helpers/output"
@@ -9,15 +13,42 @@ import { loadShows } from "../helpers/setShow"
 import { _show } from "../helpers/shows"
 import { ShowTimeline } from "./ShowTimeline"
 import { TimelineType } from "./TimelineActions"
-import { getProjectShowDurations } from "./timeline"
-import { sendMain } from "../../IPC/main"
-import { Main } from "../../../types/IPC/Main"
 import { startListeningLTC, stopListeningLTC } from "./timecode"
-import { clearAudio } from "../../audio/audioFading"
+import { getProjectShowDurations } from "./timeline"
 
 let activePlayback: TimelinePlayback | null = null
-export function getActiveTimelinePlayback() {
-    return activePlayback
+export function getActiveTimelinePlayback(type: TimelineType | null = null) {
+    const active = activePlayback
+    if (type !== null && active?.type !== type) return null
+    return active
+}
+
+// function getOrCreateTimeline(type: TimelineType) {
+//     const active = getActiveTimelinePlayback(type)
+//     if (active) return active
+//     return new TimelinePlayback(type)
+// }
+
+// API ACTIONS
+export function startTimeline(type: TimelineType) {
+    // const timeline = getOrCreateTimeline(type)
+    // timeline.play()
+    triggerFunction(`start_${type}_timeline`)
+}
+export function pauseTimeline(type: TimelineType) {
+    const timeline = getActiveTimelinePlayback(type)
+    if (!timeline) return
+    timeline.pause()
+}
+export function stopTimeline(type: TimelineType) {
+    const timeline = getActiveTimelinePlayback(type)
+    if (!timeline) return
+    timeline.stop()
+}
+export function setTimelineTime(type: TimelineType, timeMs: number) {
+    const timeline = getActiveTimelinePlayback(type)
+    if (!timeline) return
+    timeline.setTime(timeMs)
 }
 
 const ONE_MINUTE = 60000
@@ -26,7 +57,7 @@ const MIN_DURATION = ONE_MINUTE * 5
 export class TimelinePlayback {
     currentTime: number = 0 // ms
     isPlaying: boolean = false
-    private type: TimelineType
+    type: TimelineType
     private ref: { id: string; layoutId?: string }
 
     getId() {

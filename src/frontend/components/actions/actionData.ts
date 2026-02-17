@@ -73,6 +73,12 @@ export const actionData = {
     // id_pause_timer: { canAddMultiple: true, name: "actions.id_pause_timer", icon: "pause", input: "id", incompatible: ["id_start_timer", "start_slide_timers", "stop_timers"] },
     // id_stop_timer: { canAddMultiple: true, name: "actions.id_stop_timer", icon: "stop", input: "id", red: true, incompatible: ["id_start_timer", "start_slide_timers", "pause_timers"] },
 
+    // TIMELINE
+    start_timeline: { SECTION: "popup.timeline", name: "actions.start_timeline", icon: "timeline" },
+    stop_timeline: { name: "actions.stop_timeline", icon: "timeline" },
+    pause_timeline: { name: "actions.pause_timeline", icon: "timeline" },
+    set_timeline_time: { name: "actions.set_timeline_time", icon: "timeline", input: "seconds" },
+
     // FUNCTIONS
     change_variable: { SECTION: "tabs.functions", common: true, canAddMultiple: true, name: "actions.change_variable", icon: "variable", input: "variable" },
     start_trigger: { common: true, canAddMultiple: true, slideId: "trigger", name: "actions.start_trigger", icon: "trigger", input: "id" },
