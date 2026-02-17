@@ -462,6 +462,7 @@ async function checkCloudEntry(id: ChangeId, key: string, cloudData: any, getLoc
     }
 
     if (isDeleted(id, key)) return { action: "delete" }
+    if (isCreated(id, key)) markAsCreated(id, key) // just in case it's marked as created when it already exists
 
     let localModTime = getModifiedDate(localValue)
     if (cloudData !== null && !localModTime) localModTime = setModifiedDate()

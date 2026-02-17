@@ -104,7 +104,7 @@
                                 {:else if $groups[slide.globalGroup]?.template}
                                     <span class="info template" data-title="{translateText('groups.group_template')}: <b>{$templates[$groups[slide.globalGroup].template || '']?.name || ''}</b>"><Icon id="templates" size={0.7} white /></span>
                                 {:else if displayGlobalGroups && $groups[slide.globalGroup]}
-                                    <span class="info template" data-title={translateText("groups.global")}><Icon id="autofill" size={0.6} white /></span>
+                                    <span class="info template" data-title={translateText("groups.global")}><Icon id="bind" size={0.6} white /></span>
                                 {/if}
 
                                 {slide.group === "." ? "" : slide.group || "—"}
