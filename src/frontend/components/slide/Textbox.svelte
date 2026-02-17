@@ -534,11 +534,8 @@
             return
         }
         // Store in separate field for previews vs OUTPUT
-        if (preview) {
-            if (fontSize !== item.previewAutoFontSize) setItemPreviewAutoFontSize(fontSize)
-        } else {
-            if (fontSize !== item.autoFontSize) setItemAutoFontSize(fontSize)
-        }
+        if (preview && fontSize !== item.previewAutoFontSize) setItemPreviewAutoFontSize(fontSize)
+        if (fontSize !== item.autoFontSize) setItemAutoFontSize(fontSize)
         if (!isDynamic && cacheKey) writeAutoSizeCache(cacheKey, { signature: cacheSignature, fontSize })
 
         markAutoSizeReady()
