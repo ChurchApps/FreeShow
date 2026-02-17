@@ -4,7 +4,7 @@ import { isLocalFile } from "../components/helpers/media"
 import { loadShows } from "../components/helpers/setShow"
 import { requestMain, sendMain } from "../IPC/main"
 import { activeEdit, activePage, activePopup, activeProject, activeShow, alertMessage, cloudSyncData, cloudUsers, deletedShows, popupData, providerConnections, renamedShows, saved, scripturesCache, shows, showsCache, special } from "../stores"
-import { isMainWindow, newToast, setStatus, wait } from "./common"
+import { hasNewerUpdate, isMainWindow, newToast, setStatus, wait } from "./common"
 import { confirmCustom } from "./popup"
 import { save } from "./save"
 import { SocketHelper } from "./SocketHelper"
@@ -272,8 +272,7 @@ const CLOUD_RECEIVERS = {
         if (!name || name === currentName) return
 
         const isBye = data.action === "bye"
-        const isNewUser = data.action === "iamnew"
-        const userData = { displayName: name, activePage: data.activePage, activeShow: data.activeShow, activeProject: data.activeProject }
+        const userData = { displayName: name, lastUpdate: Date.now(), activePage: data.activePage, activeShow: data.activeShow, activeProject: data.activeProject }
 
         // store a persistent color
         let color = get(special).cloudUserColors?.[name]
@@ -285,6 +284,7 @@ const CLOUD_RECEIVERS = {
             })
         }
 
+        let isNewUser = data.action === "iamnew"
         cloudUsers.update((users) => {
             const existingIndex = users.findIndex((u) => u.displayName === name)
 
@@ -296,7 +296,10 @@ const CLOUD_RECEIVERS = {
             }
 
             // add user
-            if (existingIndex < 0) return [...users, { ...userData, color }]
+            if (existingIndex < 0) {
+                isNewUser = true
+                return [...users, { ...userData, color }]
+            }
 
             // update user
             users[existingIndex] = { ...users[existingIndex], ...userData }
@@ -304,5 +307,14 @@ const CLOUD_RECEIVERS = {
         })
 
         if (isNewUser) broadcastPresence("iamhere")
+        else if (data.action === "presence") removeInactive()
     }
+}
+
+async function removeInactive() {
+    if (await hasNewerUpdate("CLOUD_USERS", 1000)) return
+
+    const timeout = 60 * 3000 // 3 minutes
+    const now = Date.now()
+    cloudUsers.update((users) => users.filter((u) => now - (u.lastUpdate || 0) < timeout))
 }

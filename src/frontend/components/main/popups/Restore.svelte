@@ -1,13 +1,13 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import { requestMain, sendMain } from "../../../IPC/main"
     import { Main } from "../../../../types/IPC/Main"
+    import { requestMain, sendMain } from "../../../IPC/main"
     import { activePopup, popupData, showsCache } from "../../../stores"
-    import MaterialButton from "../../inputs/MaterialButton.svelte"
+    import { translateText } from "../../../utils/language"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
-    import { translateText } from "../../../utils/language"
     import InputRow from "../../input/InputRow.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
 
     let backupsList: { path: string; name: string; date: number; size: number }[] = []
     onMount(async () => {
@@ -71,7 +71,7 @@
 <div class="list">
     {#each backupsList as backup}
         <InputRow>
-            <MaterialButton variant="outlined" title="settings.restore" style="width: 100%;" on:click={() => requestMain(Main.RESTORE, { folder: backup.name })}>
+            <MaterialButton variant="outlined" title="settings.restore" style="width: 100%;" on:click={() => sendMain(Main.RESTORE, { folder: backup.name })}>
                 <div class="info">
                     <div class="name">{backup.name.endsWith("_auto") ? translateText("settings.auto") : backup.name} <span style="opacity: 0.3;font-size: 0.7em;padding: 0 8px;">{sizeToString(backup.size)}</span></div>
                     <div class="date">{getDaysAgo(backup.date)} - {new Date(backup.date).toLocaleString()}</div>
