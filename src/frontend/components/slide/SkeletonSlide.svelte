@@ -11,7 +11,7 @@
     // $: isLessons = show?.reference?.type === "lessons"
     $: viewMode = $slidesOptions.mode || "grid"
 
-    $: name = slide.group
+    $: name = slide?.group
 </script>
 
 <div class="main" class:active style="width: {viewMode === 'grid' || viewMode === 'simple' || viewMode === 'groups' ? 100 / columns : 100}%;" role="none" on:click>
