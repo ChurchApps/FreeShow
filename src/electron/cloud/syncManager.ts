@@ -107,6 +107,7 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
         if (CHANGES.version !== version) CHANGES = clone(DEFAULT_CHANGES)
         cloudChanges = clone(CHANGES)
         isNewDevice = !CHANGES.devices.find((id) => id === deviceId)
+        if (isNewDevice) CHANGES.devices.push(deviceId)
     }
     // console.log("Devices:", CHANGES.devices)
 
@@ -554,9 +555,6 @@ function markAsCreated(storeId: ChangeId, key: string) {
 
 const deviceId = getMachineId()
 function markAs(type: "deleted" | "created", instanceId: string) {
-    if (!CHANGES.devices.includes(deviceId)) CHANGES.devices.push(deviceId)
-    if (CHANGES.devices.length < 2) return
-
     // init
     if (!CHANGES[type]) CHANGES[type] = {}
     if (!CHANGES[type][instanceId]) CHANGES[type][instanceId] = []
