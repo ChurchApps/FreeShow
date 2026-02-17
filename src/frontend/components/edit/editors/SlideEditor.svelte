@@ -12,7 +12,7 @@
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { history } from "../../helpers/history"
-    import { getMedia, getMediaFileFromClipboard, getMediaLayerType, getMediaStyle, getThumbnailPath, mediaSize } from "../../helpers/media"
+    import { getExtension, getMedia, getMediaFileFromClipboard, getMediaLayerType, getMediaStyle, getMediaType, getThumbnailPath, mediaSize } from "../../helpers/media"
     import { getFirstActiveOutput, getResolution, getSlideFilter } from "../../helpers/output"
     import { getLayoutRef } from "../../helpers/show"
     import { _show } from "../../helpers/shows"
@@ -57,7 +57,7 @@
     let loadFullImage = false // true
 
     // get ghost background
-    $: if (!bgId) {
+    $: if (!bgId && !Slide?.settings?.backgroundImage) {
         ref?.forEach((a, i) => {
             if (i <= $activeEdit.slide! && !a.data.disabled) {
                 if (slideHasAction(a.data?.actions, "clear_background")) bgId = null
@@ -70,7 +70,7 @@
         })
     }
 
-    $: background = bgId && currentShowId ? currentShow?.media[bgId] : null
+    $: background = bgId && currentShowId ? currentShow?.media[bgId] : Slide?.settings?.backgroundImage ? { path: Slide.settings.backgroundImage, type: getMediaType(getExtension(Slide.settings.backgroundImage)), id: "" } : null
     $: backgroundPath = background?.path || ""
     // $: slideOverlays = layoutSlide.overlays || []
 
