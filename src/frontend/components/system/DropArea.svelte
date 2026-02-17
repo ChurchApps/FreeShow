@@ -1,5 +1,6 @@
 <script lang="ts">
     import { selected } from "../../stores"
+    import { mediaExtensions } from "../../values/extensions"
     import { DropAreas, ondrop, validateDrop } from "../helpers/drop"
     import { deselect } from "../helpers/select"
     import T from "../helpers/T.svelte"
@@ -52,6 +53,14 @@
 
         const urls = getUrls(e)
         if (urls.length) {
+            const mediaUrls = urls.filter((u) => isMediaUrl(u))
+            if (mediaUrls.length) {
+                const mediaData = mediaUrls.map((u) => ({ name: getNameFromUrl(u), path: u }))
+                selected.set({ id: "media", data: mediaData })
+                ondrop(e, id)
+                return
+            }
+
             selected.set({ id: "urls", data: urls })
             ondrop(e, id)
             return
@@ -109,6 +118,30 @@
             return url.protocol === "http:" || url.protocol === "https:" || url.protocol === "file:"
         } catch {
             return false
+        }
+    }
+
+    function isMediaUrl(string: string): boolean {
+        try {
+            const url = new URL(string)
+            const pathname = url.pathname || ""
+            const m = pathname.match(/\.([a-z0-9]{2,5})(?:$|\?)/i)
+            if (!m) return false
+            const ext = m[1].toLowerCase()
+            return mediaExtensions.includes(ext)
+        } catch {
+            return false
+        }
+    }
+
+    function getNameFromUrl(string: string): string {
+        try {
+            const url = new URL(string)
+            const parts = url.pathname.split("/")
+            const name = parts.pop() || string
+            return decodeURIComponent(name)
+        } catch {
+            return string
         }
     }
 
