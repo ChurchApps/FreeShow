@@ -13,6 +13,7 @@ import { getProjectShowDurations } from "./timeline"
 import { sendMain } from "../../IPC/main"
 import { Main } from "../../../types/IPC/Main"
 import { startListeningLTC, stopListeningLTC } from "./timecode"
+import { clearAudio } from "../../audio/audioFading"
 
 let activePlayback: TimelinePlayback | null = null
 export function getActiveTimelinePlayback() {
@@ -51,6 +52,8 @@ export class TimelinePlayback {
     play(isListener: boolean = false) {
         this.listenerPaused = false
         if (isListener) return
+
+        this.playingAudio = []
 
         this.setAsPlayer()
         isTimelinePlaying.set(true)
@@ -264,6 +267,7 @@ export class TimelinePlayback {
         }
     }
 
+    private playingAudio: string[] = []
     private hasPlayed: string[] = []
     private checkAudio(action: TimelineAction) {
         const path = action.data?.path
@@ -280,13 +284,18 @@ export class TimelinePlayback {
             return
         }
 
+        const hasBeenPlaying = this.playingAudio.includes(path)
         if (!playing) {
+            // was playing, but has been cleared
+            if (hasBeenPlaying) return
+
             AudioPlayer.start(path, { name: "" }, { pauseIfPlaying: false, playMultiple: true })
             playing = get(playingAudio)[path]
         } else if (playing.paused) {
             AudioPlayer.play(path)
         }
 
+        if (!hasBeenPlaying) this.playingAudio.push(path)
         if (!playing?.audio) return
 
         // seek to correct position (with tolerance)
@@ -321,7 +330,7 @@ export class TimelinePlayback {
             if (action.type === "audio") {
                 const a = action.data
                 if (a && a.path && get(playingAudio)[a.path]) {
-                    AudioPlayer.stop(a.path)
+                    clearAudio(a.path)
                 }
             }
 
