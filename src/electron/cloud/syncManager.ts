@@ -555,6 +555,9 @@ function markAsCreated(storeId: ChangeId, key: string) {
 
 const deviceId = getMachineId()
 function markAs(type: "deleted" | "created", instanceId: string) {
+    // if just one device, no need to keep track of changes
+    if (CHANGES.devices.length < 2) return
+
     // init
     if (!CHANGES[type]) CHANGES[type] = {}
     if (!CHANGES[type][instanceId]) CHANGES[type][instanceId] = []
