@@ -452,16 +452,20 @@ async function checkCloudEntry(id: ChangeId, key: string, cloudData: any, getLoc
 
     // exists only in cloud
     if (!localValue) {
-        if (isDeleted(id, key)) return { action: "skip" }
-
         // if marked as created and not yet created locally
-        if (isCreated(id, key) && !isCreatedLocally(id, key)) return { action: "create" }
+        if (isCreated(id, key) && !isCreatedLocally(id, key)) {
+            markAsCreated(id, key)
+            return { action: "create" }
+        }
 
         markAsDeleted(id, key)
         return { action: "skip" }
     }
 
-    if (isDeleted(id, key)) return { action: "delete" }
+    if (isDeleted(id, key)) {
+        markAsDeleted(id, key)
+        return { action: "delete" }
+    }
     if (isCreated(id, key)) markAsCreated(id, key) // just in case it's marked as created when it already exists
 
     let localModTime = getModifiedDate(localValue)
@@ -497,12 +501,12 @@ function checkLocalEntry(id: ChangeId, key: string) {
         // marked as already deleted for this device
         if (isDeletedLocally(id, key)) {
             // revert deletion when local file is restored
-            unmarkAsDeleted(id, key)
             markAsCreated(id, key)
             return { action: "upload" }
         }
 
         // delete local file/instance
+        markAsDeleted(id, key)
         return { action: "delete" }
     }
 
