@@ -237,9 +237,11 @@ export function downloadMedia({ url, contentFile }: { url: string; contentFile?:
             const encryptionKey = provider.getEncryptionKey?.()
             if (!encryptionKey) {
                 console.error(`Provider ${contentFile.providerId} requires encryption but did not provide an encryption key`)
+                downloading.splice(downloading.indexOf(url), 1)
                 return
             }
             encryptFile(url, outputPath, encryptionKey)
+                .finally(() => downloading.splice(downloading.indexOf(url), 1) )
             return
         }
     }
