@@ -366,6 +366,7 @@ function settingsListener(key: string, data: any) {
         return
     }
     if (!previousData.has(key)) return
+    if (typeof data !== "object" || data === null) return
 
     const previous = previousData.get(key)
 
