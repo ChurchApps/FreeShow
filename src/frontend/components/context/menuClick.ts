@@ -1893,9 +1893,14 @@ export async function removeSlide(initialData: any[], type: "delete" | "remove" 
     let data: any[] = []
     initialData.forEach((a: any) => {
         const slideId = ref[a.index]?.parent?.id ?? ref[a.index]?.id
-        if (!showSlides[slideId]?.locked) data.push(a)
+        if (showSlides[slideId]?.locked) {
+            newToast("output.state_locked")
+            return
+        }
+        if (type === "remove" && showSlides[slideId]?.group === ".") return
+
+        data.push(a)
     })
-    if (data.length < initialData.length) newToast("output.state_locked")
 
     if (type === "delete") {
         const selectedInDifferentLayout = checkIfAddedToDifferentLayout(ref, data)

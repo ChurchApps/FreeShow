@@ -1,8 +1,9 @@
 import { uid } from "uid"
+import type { Slide, SlideData } from "../../types/Show"
 import { ShowObj } from "../classes/Show"
-import { createCategory, setTempShows } from "./importHelpers"
-import { checkName } from "../components/helpers/show"
 import { getFileName, removeExtension } from "../components/helpers/media"
+import { checkName } from "../components/helpers/show"
+import { createCategory, setTempShows } from "./importHelpers"
 
 export function createImageShow({ images, name }: { images: string[]; name: string }) {
     // newToast("Creating show...")
@@ -16,13 +17,14 @@ export function createImageShow({ images, name }: { images: string[]; name: stri
     show.name = checkName(name, showId)
 
     const backgrounds: any[] = []
-    const slides: any = {}
-    const layoutShows: any[] = []
+    const slides: { [key: string]: Slide } = {}
+    const layoutShows: SlideData[] = []
+    let parentSlideId: string = uid()
     images.forEach((path, i) => {
-        const slideId = uid()
+        const slideId = i === 0 ? parentSlideId : uid()
         slides[slideId] = {
-            group: (i + 1).toString(),
-            color: "",
+            group: i === 0 ? "." : null,
+            color: i === 0 ? "" : null,
             settings: {},
             notes: "",
             items: []
@@ -30,10 +32,16 @@ export function createImageShow({ images, name }: { images: string[]; name: stri
 
         const backgroundId = uid()
         backgrounds.push([backgroundId, path])
-        layoutShows.push({
-            id: slideId,
-            background: backgroundId
-        })
+
+        const layoutData = { background: backgroundId, mediaTransition: { type: "none", duration: 0, easing: "linear" } as const }
+
+        if (i === 0) {
+            slides[slideId].children = []
+            layoutShows.push({ id: slideId, ...layoutData, children: {} })
+        } else {
+            slides[parentSlideId].children!.push(slideId)
+            layoutShows[0].children![slideId] = layoutData
+        }
     })
 
     show.slides = slides

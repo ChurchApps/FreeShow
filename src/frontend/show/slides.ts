@@ -169,6 +169,8 @@ function updateValues(groups: { slides: LayoutRef[]; groupData: GroupData }[], n
             const childData = layouts[activeLayoutIndex].slides?.find((a) => a.children?.[slide.id])?.children?.[slide.id] || {}
 
             let slideId = slide.id
+            if (!newData.slides?.[slideId]) return
+
             const originalHasChanged = otherSlides && hasChanged
             if (originalHasChanged) cloneOtherSlides()
 
@@ -222,6 +224,9 @@ function updateValues(groups: { slides: LayoutRef[]; groupData: GroupData }[], n
                     newValues.globalGroup = groupData.globalGroup
                     newValues.group = groupData.group || ""
                     newValues.color = ""
+
+                    // remove locked if set to "None" (should not be able to select if locked anyway)
+                    if (groupData.group === ".") delete newData.slides[slideId].locked
                 }
                 changeValues(newData.slides[slideId], newValues)
             }

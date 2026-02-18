@@ -72,12 +72,14 @@
 
         // text gradient
 
-        if (style.includes("-gradient")) {
+        const gradientCount = (style.match(/-gradient/g) || []).length
+        if (style.includes("-gradient") && (gradientCount > 1 || !style.includes("-webkit-mask-image: linear-gradient"))) {
             let styles = getStyles(style)
             const gradient = styles.color
             style += `background-image: ${gradient};color: transparent;background-clip: text;`
             // shadow will show over the gradient (this can be a cool effect, but has to be explicitly set)
             if (!style.includes("text-shadow") || style.includes("2px 2px 10px #000000;")) style += "text-shadow: none;"
+            if (style.includes("-webkit-mask-image")) style += styles["-webkit-mask-image"]
         }
 
         // alpha key output (not in use anymore)

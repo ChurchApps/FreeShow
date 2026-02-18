@@ -144,7 +144,7 @@
                 <MaterialButton style="padding: 0.3em 0.6em;" disabled={$outLocked || slideCleared} title="clear.slide  [F2]" on:click={() => clear("slide")} red>
                     <!-- PDFs are visually the background layer as it is toggled by the style "Background" layer, but it behaves as a slide in the code -->
                     <!-- display recording icon here if a slide recoring is playing -->
-                    <Icon id={isScripture ? "scripture" : outputContent?.type === "pdf" ? "background" : "slide"} size={1.2} white />
+                    <Icon id={isScripture ? "scripture" : outputContent?.type === "pdf" ? "image" : "slide"} size={1.2} white />
                 </MaterialButton>
                 {#if !allCleared}
                     <MaterialButton style="padding: {activeClear === 'slide' ? 0 : 2}px !important;min-height: 15px;" isActive={activeClear === "slide"} disabled={slideCleared} on:click={() => openPreview("slide")} title="preview.slide">

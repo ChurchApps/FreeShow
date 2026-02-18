@@ -138,35 +138,30 @@
             }
         },
         remove_group: () => {
-            if ($selected.id !== "slide" || $selected.data?.length > 1) return
+            if ($selected.id !== "slide" || !$selected.data?.length) return
 
-            const ref = getLayoutRef()
-            const slideIndex = $selected.data[0]?.index
-            const currentSlideId = ref[slideIndex]?.parent?.id || ref[slideIndex]?.id
-            if (!currentSlideId) return
+            hide = $selected.data.every(({ index }) => {
+                const ref = getLayoutRef()
+                const currentSlideId = ref[index]?.parent?.id || ref[index]?.id
+                if (!currentSlideId) return true
 
-            const show = $showsCache[$activeShow?.id || ""]
+                const show = $showsCache[$activeShow?.id || ""]
 
-            // if parent slide and has children, don't hide
-            const isParent = ref[slideIndex]?.type === "parent"
-            if (isParent && (show.slides[currentSlideId]?.children || []).length) {
-                // hide if group is set to "None"
-                if (show.slides[currentSlideId].group === ".") {
-                    hide = true
-                    return
+                // if parent slide and has children, don't hide
+                const isParent = ref[index]?.type === "parent"
+                if (isParent && (show.slides[currentSlideId]?.children || []).length) {
+                    // hide if group is set to "None"
+                    return show.slides[currentSlideId].group === "."
                 }
 
-                hide = false
-                return
-            }
+                const currentSlideInstances = Object.values(show.layouts)
+                    .map((a) => a.slides)
+                    .flat()
+                    .filter((b) => b.id === currentSlideId)
 
-            const currentSlideInstances = Object.values(show.layouts)
-                .map((a) => a.slides)
-                .flat()
-                .filter((b) => b.id === currentSlideId)
-
-            // hide if there is just one instance of the slide group across all layouts
-            hide = currentSlideInstances.length < 2
+                // hide if there is just one instance of the slide group across all layouts
+                return currentSlideInstances.length < 2
+            })
         },
         remove: () => {
             if ($selected.id !== "show" || _show($selected.data[0]?.id).get("private") !== true) return

@@ -357,7 +357,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     bible_book_local: ["rename"],
 
     // STAGE
-    stage_slide: ["move_connections", "rename", "disable", "GROUP_duplicate_delete"],
+    stage_slide: ["rename", "SEPARATOR", "move_connections", "disable", "GROUP_duplicate_delete"],
     stage_slide_readonly: ["move_connections"],
     stage_item: ["GROUP_conditions", "rearrange_stage", "GROUP_duplicate_delete"],
     stage_item_output: ["rearrange_stage", "SEPARATOR", "delete"],
