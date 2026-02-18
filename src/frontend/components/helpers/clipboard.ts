@@ -649,6 +649,10 @@ const pasteActions = {
             _show().set({ key: "media", value: { ...showMedia, ...data.media } })
         }
 
+        // fix paste order
+        newSlides.reverse()
+        layouts.reverse()
+
         history({ id: "SLIDES", newData: { data: newSlides, layouts, index: index !== undefined ? index + 1 : undefined } })
     },
     group: (data: any) => pasteActions.slide(data),
