@@ -385,7 +385,7 @@ export class PowerPointPackage {
 
         const scale = this.getScale(presentation?.slideSize)
 
-        const items = slideTree.map((n) => this.shapeToItem(n, { presentation, slide, layout, master, theme, colors, scale })).filter(Boolean) as Item[]
+        let items = slideTree.map((n) => this.shapeToItem(n, { presentation, slide, layout, master, theme, colors, scale })).filter(Boolean) as Item[]
 
         // slide background color
         // let fill = getValue(slide?.json, "p:sld", "p:cSld", "p:bg", "p:bgPr", "a:solidFill")
@@ -394,8 +394,17 @@ export class PowerPointPackage {
         const sldSlide = getValue(slide?.json, "p:sld")
         const sldLayout = getValue(layout?.json, "p:sldLayout")
         const sldMaster = getValue(master?.json, "p:sldMaster")
-        const fill = getFirstAvailable([sldSlide, sldLayout, sldMaster], "p:cSld", "p:bg", "p:bgPr", "a:solidFill")
+        let fill = getFirstAvailable([sldSlide, sldLayout, sldMaster], ["p:cSld", "p:bg", "p:bgPr", "a:solidFill"], ["p:cSld", "p:bg", "p:bgRef"])
         let bgColor = resolveColor(fill, colors)
+
+        // slide background image
+        const bgFill = getFirstAvailable([sldSlide, sldLayout, sldMaster], ["p:cSld", "p:bg", "p:bgPr", "a:blipFill"])
+        const bgImgId = getAttribute(bgFill, "r:embed", "a:blip")
+        const bgImage = this.getMediaPath(bgImgId, { slide, layout, master })
+        if (bgImage) {
+            const imageItem: Item = { type: "media", style: "width:1920px;height:1080px;top:0;left:0;", src: bgImage }
+            items = [imageItem, ...items]
+        }
 
         // const size = { width: targetWidth, height: targetHeight }
 
@@ -475,13 +484,13 @@ export class PowerPointPackage {
 
         // convert font size from 100ths of points to pixels
         function getFontSize(size: number | string) {
-            if (isNaN(Number(size))) return 0
+            if (isNaN(Number(size))) return 24 // default
 
             const points = Number(size) / 100
             const dpi = 96
             const px = (points * dpi) / 72
 
-            return round(px * ctx.scale.factor)
+            return round(px * ctx.scale.factor) || 24
         }
 
         // get layout/master fallback style
@@ -494,15 +503,34 @@ export class PowerPointPackage {
             const m = tagName ? getAttribute(getValue(master, "a:defRPr"), key, tagName) : getAttribute(master, key, "a:defRPr")
             if (m !== "") return m
             const t = tagName ? getAttribute(getValue(txStyles, "a:defRPr"), key, tagName) : getAttribute(txStyles, key, "a:defRPr")
-            if (false && t !== "") return t
+            if (t !== "") return t
             return ""
+        }
+
+        function getTypeface(typeface: string) {
+            if (!typeface) return ""
+
+            if (typeface.startsWith("+")) {
+                // const isMajor = typeface.startsWith("+mj")
+                const isMinor = typeface.startsWith("+mn")
+                const themeFont = getValue(ctx.theme?.fontScheme || [], isMinor ? "a:minorFont" : "a:majorFont")
+
+                let key = typeface.slice(typeface.indexOf("-") + 1)
+                if (key === "lt") key = "latin"
+
+                const value = getAttribute(themeFont, "typeface", "a:" + key)
+                return value
+            }
+
+            return typeface
         }
 
         function getRStyle(r: any[], pPrL: any, pPrM: any, tx: any) {
             let rPr = getValue(r, "a:rPr")
             if (!rPr.length) rPr = getValue(r, "a:endParaRPr")
 
-            const typeface = getPrioritizedStyle(rPr, pPrL, pPrM, tx, "typeface", "a:latin")
+            // getPrioritizedStyle(rPr, pPrL, pPrM, tx, "a:rFonts", "a:ascii") ||
+            const typeface = getTypeface(getPrioritizedStyle(rPr, pPrL, pPrM, tx, "typeface", "a:latin"))
             const fontSizePx = getFontSize(getPrioritizedStyle(r, pPrL, pPrM, tx, "sz"))
 
             const isBold = getPrioritizedStyle(r, pPrL, pPrM, tx, "b") === "1"
@@ -535,7 +563,7 @@ export class PowerPointPackage {
 
             let style = ""
             style += `font-family: ${typeface ? typeface + ", " : ""}Calibri;`
-            if (fontSizePx) style += `font-size: ${fontSizePx * (blEm ? 0.6 : 1)}px;`
+            style += `font-size: ${fontSizePx * (blEm ? 0.6 : 1)}px;`
             if (isBold) style += "font-weight: bold;"
             if (isItalic) style += "font-style: italic;"
             if (underline === "sng" || underline === "1") style += "text-decoration: underline;"
@@ -726,23 +754,6 @@ export class PowerPointPackage {
             return "align-items: flex-start;" // t
         }
 
-        const getMediaPath = (rid?: string) => {
-            if (!rid) return null
-            // Look for relationship in slide, then layout, then master
-            const tryFind = (part: any) => {
-                if (!part) return null
-                const rels = part.relationships || []
-                const rel = rels.find((r: any) => r.id === rid || r.Id === rid)
-                if (rel) return getTarget(part.path, rel) || rel.target
-                return null
-            }
-            let target = tryFind(ctx.slide) || tryFind(ctx.layout) || tryFind(ctx.master)
-            if (!target) target = rid
-            // Map to contentPaths if available
-            const fsPath = this.contentPaths && this.contentPaths[target]
-            return fsPath || target
-        }
-
         const pptShapeToNormalizedSvg = (node: any): string | null => {
             const spPr = getValue(node, "p:spPr")
             if (!spPr) return null
@@ -834,7 +845,8 @@ export class PowerPointPackage {
                 const customPath = getValue(spPr, "a:custGeom", "a:pathLst", "a:path")
                 if (customPath) {
                     // WIP
-                    const customShape = getCustomShapePath(customPath)
+                    const size = getAttributes(getValue(spPr, "a:custGeom", "a:pathLst"), "a:path") as { w: string; h: string }
+                    const customShape = getCustomShapePath(customPath, size)
                     if (customShape && customShape.pathData) {
                         return `<svg data-shape="custom" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${customShape.vbWidth} ${customShape.vbHeight}" style="position: absolute;">
                                 <path ${svgAttributes} d="${customShape.pathData}"></path>
@@ -876,7 +888,13 @@ export class PowerPointPackage {
                 </svg>`
         }
 
-        const fill = getValue(shape.shape, "p:blipFill")
+        let fill = getValue(shape.shape, "p:blipFill")
+        if (!fill.length) fill = getValue(spPr, "a:blipFill")
+
+        if (shape.name === "p:sp" && getAttribute(fill, "r:embed", "a:blip")) {
+            shape.name = "p:pic"
+            item.type = "media"
+        }
 
         // background
         const bgColor = resolveColor(getValue(spPr, "a:solidFill"), ctx.colors)
@@ -909,7 +927,7 @@ export class PowerPointPackage {
         } else if (item.type === "media") {
             // findAttribute(node, "r:embed") || findAttribute(node, "r:link")
             const rid = getAttribute(fill, "r:embed", "a:blip")
-            item.src = getMediaPath(rid)
+            item.src = this.getMediaPath(rid, ctx)
 
             // const mediaFit = getAttribute(fill, "method", "p:blipFill")
             item.fit = "fill"
@@ -917,7 +935,7 @@ export class PowerPointPackage {
             // is video elem
             const nvPr = getValue(shape.shape, "p:nvPicPr", "p:nvPr")
             const videoId = getAttribute(nvPr, "r:link", "a:videoFile")
-            const videoPath = getMediaPath(videoId)
+            const videoPath = this.getMediaPath(videoId, ctx)
             if (videoPath) {
                 item.src = videoPath
                 item.loop = false
@@ -955,7 +973,7 @@ export class PowerPointPackage {
 
         if (shape.isDecoration) item.decoration = true
 
-        const fallbackPadding = shape.name === "p:sp" && !svgShape ? 14 : 0
+        const fallbackPadding = shape.name === "p:sp" && !svgShape ? 12 : 0
         const paddingL = getAttribute(shape.shape, "lIns", "p:txBody") || getAttribute(getValue(shape.layoutShape, "p:txBody"), "lIns", "a:bodyPr") || getAttribute(getValue(shape.masterShape, "p:txBody"), "lIns", "a:bodyPr") || "0"
         const paddingT = getAttribute(shape.shape, "tIns", "p:txBody") || getAttribute(getValue(shape.layoutShape, "p:txBody"), "tIns", "a:bodyPr") || getAttribute(getValue(shape.masterShape, "p:txBody"), "tIns", "a:bodyPr") || "0"
         const paddingR = getAttribute(shape.shape, "rIns", "p:txBody") || getAttribute(getValue(shape.layoutShape, "p:txBody"), "rIns", "a:bodyPr") || getAttribute(getValue(shape.masterShape, "p:txBody"), "rIns", "a:bodyPr") || "0"
@@ -1022,6 +1040,7 @@ export class PowerPointPackage {
         const r = getAttribute(fill, "r", "a:srcRect")
         const b = getAttribute(fill, "b", "a:srcRect")
 
+        // should be mainly for media item
         if (l != null || t != null || r != null || b != null) {
             item.cropping = {
                 left: toFract(l), // , emuToPixels(pos.width || 0)),
@@ -1044,6 +1063,23 @@ export class PowerPointPackage {
         }
 
         return item
+    }
+
+    private getMediaPath(rid?: string, ctx?: { slide: any; layout: any; master: any }) {
+        if (!rid) return null
+        // Look for relationship in slide, then layout, then master
+        const tryFind = (part: any) => {
+            if (!part) return null
+            const rels = part.relationships || []
+            const rel = rels.find((r: any) => r.id === rid || r.Id === rid)
+            if (rel) return getTarget(part.path, rel) || rel.target
+            return null
+        }
+        let target = tryFind(ctx?.slide) || tryFind(ctx?.layout) || tryFind(ctx?.master)
+        if (!target) target = rid
+        // Map to contentPaths if available
+        const fsPath = this.contentPaths && this.contentPaths[target]
+        return fsPath || target
     }
 }
 
@@ -1400,10 +1436,13 @@ function getValues(data: any[], ...path: string[]): any[][] {
     return current
 }
 
-function getFirstAvailable(datas: any[][], ...keys: string[]): any[] {
+// [slide, layout, master]
+function getFirstAvailable(datas: any[][], ...paths: string[][]): any[] {
     for (const data of datas) {
-        const d = getValue(data, ...keys)
-        if (d.length) return d
+        for (const path of paths) {
+            const d = getValue(data, ...path)
+            if (d.length) return d
+        }
     }
     return []
 }

@@ -570,35 +570,11 @@ export function getPresetShapePath(prstGeom, x1, y1, width, height, adj = 0) {
     return path
 }
 
-export function getCustomShapePath(path: any): { pathData: string; vbWidth: number; vbHeight: number } {
-    // Collect all points to determine bounding box
-    const points: { x: number; y: number }[] = []
-    function collectPoints(cmd: any) {
-        if (cmd["a:pt"]) {
-            for (const p of cmd["a:pt"]) {
-                points.push({ x: parseFloat(p.$.x), y: parseFloat(p.$.y) })
-            }
-        }
-    }
-    ;["a:moveTo", "a:lnTo", "a:arcTo", "a:quadBezTo", "a:cubicBezTo"].forEach((type) => {
-        if (path[type]) {
-            for (const cmd of path[type]) {
-                collectPoints(cmd)
-            }
-        }
-    })
-    let minX = Infinity
-    let minY = Infinity
-    let maxX = -Infinity
-    let maxY = -Infinity
-    points.forEach((pt) => {
-        if (pt.x < minX) minX = pt.x
-        if (pt.y < minY) minY = pt.y
-        if (pt.x > maxX) maxX = pt.x
-        if (pt.y > maxY) maxY = pt.y
-    })
-    const boxWidth = maxX - minX || 1
-    const boxHeight = maxY - minY || 1
+export function getCustomShapePath(path: any[], size: { w: string; h: string }): { pathData: string; vbWidth: number; vbHeight: number } | null {
+    if (!path.length) return null
+
+    const boxWidth = parseInt(size.w, 10)
+    const boxHeight = parseInt(size.h, 10)
     const aspect = boxWidth / boxHeight
     let vbWidth = 1
     let vbHeight = 1
@@ -609,75 +585,99 @@ export function getCustomShapePath(path: any): { pathData: string; vbWidth: numb
         vbWidth = aspect
         vbHeight = 1
     }
+
     // Helper to normalize points to vbWidth/vbHeight range
     function norm(x: string, y: string) {
-        let px = boxWidth ? (parseFloat(x) - minX) / boxWidth : 0
-        let py = boxHeight ? (parseFloat(y) - minY) / boxHeight : 0
+        let px = boxWidth ? parseFloat(x) / boxWidth : 0
+        let py = boxHeight ? parseFloat(y) / boxHeight : 0
         // Scale to fit the viewBox
         px *= vbWidth
         py *= vbHeight
         return { x: px.toFixed(4), y: py.toFixed(4) }
     }
-    let d = ""
-    // MoveTo
-    if (path["a:moveTo"]) {
-        for (const move of path["a:moveTo"]) {
-            const pt = move["a:pt"]?.[0]?.$
-            if (pt) {
-                const { x, y } = norm(pt.x, pt.y)
-                d += `M ${x} ${y} `
-            }
-        }
-    }
-    // LineTo
-    if (path["a:lnTo"]) {
-        for (const ln of path["a:lnTo"]) {
-            const pt = ln["a:pt"]?.[0]?.$
-            if (pt) {
-                const { x, y } = norm(pt.x, pt.y)
-                d += `L ${x} ${y} `
-            }
-        }
-    }
-    // ArcTo (approximate as line for now)
-    if (path["a:arcTo"]) {
-        for (const arc of path["a:arcTo"]) {
-            const pts = arc["a:pt"] || []
-            if (pts.length > 1) {
-                const pt = pts[1]?.$
+
+    const customShape = {
+        // MoveTo
+        "a:moveTo": (a) => {
+            for (const move of a) {
+                const pt = move[":@"]
                 if (pt) {
                     const { x, y } = norm(pt.x, pt.y)
-                    d += `L ${x} ${y} `
+                    return `M ${x} ${y} `
                 }
             }
-        }
-    }
-    // QuadBezierTo
-    if (path["a:quadBezTo"]) {
-        for (const quad of path["a:quadBezTo"]) {
-            const pts = quad["a:pt"] || []
-            if (pts.length === 2) {
-                const c = norm(pts[0].$.x, pts[0].$.y)
-                const p = norm(pts[1].$.x, pts[1].$.y)
-                d += `Q ${c.x} ${c.y}, ${p.x} ${p.y} `
+            return ""
+        },
+        // LineTo
+        "a:lnTo": (a) => {
+            for (const ln of a) {
+                const pt = ln[":@"]
+                if (pt) {
+                    const { x, y } = norm(pt.x, pt.y)
+                    return `L ${x} ${y} `
+                }
             }
-        }
-    }
-    // CubicBezierTo
-    if (path["a:cubicBezTo"]) {
-        for (const cubic of path["a:cubicBezTo"]) {
-            const pts = cubic["a:pt"] || []
-            if (pts.length === 3) {
-                const c1 = norm(pts[0].$.x, pts[0].$.y)
-                const c2 = norm(pts[1].$.x, pts[1].$.y)
-                const p = norm(pts[2].$.x, pts[2].$.y)
-                d += `C ${c1.x} ${c1.y}, ${c2.x} ${c2.y}, ${p.x} ${p.y} `
+            return ""
+        },
+        // ArcTo (approximate as line for now)
+        "a:arcTo": (a) => {
+            for (const arc of a) {
+                const pts = arc["a:pt"] || []
+                if (pts.length > 1) {
+                    // const attr1 = pts[0]?.[":@"]
+                    const attr2 = pts[1]?.[":@"]
+                    if (!attr2) continue
+                    const { x, y } = norm(attr2.x, attr2.y)
+                    return `L ${x} ${y} `
+                }
             }
+            return ""
+        },
+        // QuadBezierTo
+        "a:quadBezTo": (a) => {
+            for (const quad of a) {
+                const pts = quad["a:pt"] || []
+                if (pts.length === 2) {
+                    const attr1 = pts[0]?.[":@"]
+                    const attr2 = pts[1]?.[":@"]
+                    if (!attr1 || !attr2) continue
+                    const c = norm(attr1.x, attr1.y)
+                    const p = norm(attr2.x, attr2.y)
+                    return `Q ${c.x} ${c.y}, ${p.x} ${p.y} `
+                }
+            }
+            return ""
+        },
+        // CubicBezierTo
+        "a:cubicBezTo": (a) => {
+            for (const cubic of a) {
+                const pts = cubic["a:pt"] || []
+                if (pts.length === 3) {
+                    const attr1 = pts[0]?.[":@"]
+                    const attr2 = pts[1]?.[":@"]
+                    const attr3 = pts[2]?.[":@"]
+                    if (!attr1 || !attr2 || !attr3) continue
+                    const c1 = norm(attr1.x, attr1.y)
+                    const c2 = norm(attr2.x, attr2.y)
+                    const p = norm(attr3.x, attr3.y)
+                    return `C ${c1.x} ${c1.y}, ${c2.x} ${c2.y}, ${p.x} ${p.y} `
+                }
+            }
+            return ""
+        },
+        // Close
+        "a:close": () => {
+            return "Z "
         }
     }
-    // Close
-    if (path["a:close"]) {
-        d += "Z "
-    }
+
+    let d = ""
+
+    path.forEach((p) => {
+        const key = Object.keys(p)[0]
+        if (!customShape[key]) return
+        d += customShape[key](p[key])
+    })
+
     return { pathData: d.trim(), vbWidth, vbHeight }
 }
