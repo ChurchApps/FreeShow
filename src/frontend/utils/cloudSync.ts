@@ -336,6 +336,7 @@ async function removeInactive() {
 }
 
 // SEND SYNCED SETTINGS CHANGES REAL-TIME
+// this can only be done for the stores that don't use the "deleted"/"created" system
 
 const activeListeners = new Map<string, Unsubscriber>()
 const previousData = new Map<string, any>()
@@ -365,7 +366,6 @@ function settingsListener(key: string, data: any) {
         return
     }
     if (!previousData.has(key)) return
-    console.log("UPDATE", key, data)
 
     const previous = previousData.get(key)
 

@@ -177,10 +177,15 @@ export function save(closeWhenFinished = false, customTriggers: SaveActions = {}
         contentProviderData: get(contentProviderData)
     }
 
+    const syncedSettings: { [key: string]: any } = {}
+    Object.entries(getSyncedSettings()).forEach(([key, store]) => {
+        syncedSettings[key] = get(store)
+    })
+
     const allSavedData: SaveData = {
         // SETTINGS
         SETTINGS: settings,
-        SYNCED_SETTINGS: Object.values(getSyncedSettings()).map(a => get(a)),
+        SYNCED_SETTINGS: syncedSettings,
         // SHOWS
         SHOWS: get(shows),
         STAGE: get(stageShows),
