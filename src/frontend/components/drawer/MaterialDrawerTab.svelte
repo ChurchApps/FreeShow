@@ -135,7 +135,7 @@
             {/if}
 
             {#if count}
-                <span class="count">{count}</span>
+                <span class="count" style={translateText(label).length > 25 ? "min-width: 10px;" : ""}>{count}</span>
             {/if}
         </div>
 
@@ -176,7 +176,7 @@
     .count {
         opacity: 0.5;
         font-size: 0.8em;
-        min-width: 10px;
+        min-width: 28px;
         text-align: end;
     }
 

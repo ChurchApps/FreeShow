@@ -540,12 +540,12 @@ export function getVideoDuration(path: string): Promise<number> {
 // CACHE
 
 // const jpegQuality = 90 // 0-100
-const capturing: string[] = []
+const capturing = new Set<string>()
 const retries: { [key: string]: number } = {}
 export function captureCanvas(data: { input: string; output: string; size: any; extension: string; config: any; id: string; seek?: number }) {
     let completed = false
-    if (capturing.includes(data.output)) return exit()
-    capturing.push(data.output)
+    if (capturing.has(data.output)) return exit()
+    capturing.add(data.output)
 
     const canvas = document.createElement("canvas")
 
@@ -565,7 +565,17 @@ export function captureCanvas(data: { input: string; output: string; size: any; 
         if (!isImage) {
             const seekTime = (mediaElem as HTMLVideoElement).duration * (data.seek ?? 0.5)
             ;(mediaElem as HTMLVideoElement).currentTime = isFinite(seekTime) ? seekTime : 3
-            await wait(400)
+
+            await new Promise((resolve) => {
+                const handler = () => {
+                    mediaElem.removeEventListener("seeked", handler)
+                    resolve(null)
+                }
+                mediaElem.addEventListener("seeked", handler)
+            })
+
+            await new Promise(requestAnimationFrame)
+            await new Promise(requestAnimationFrame)
         }
 
         // wait until loaded
@@ -596,19 +606,22 @@ export function captureCanvas(data: { input: string; output: string; size: any; 
 
         // ensure lessons are downloaded and loaded before capturing
         const isLessons = data.input.includes("Lessons")
-        const loading = isLessons ? 3000 : 200
+        const loading = isLessons ? 3000 : 0
         await wait(loading)
         ctx.drawImage(mediaElem, 0, 0, currentMediaSize.width, currentMediaSize.height, 0, 0, canvas.width, canvas.height)
+        await new Promise(requestAnimationFrame)
 
-        await wait(200)
-        const dataURL = canvas.toDataURL("image/png") // , jpegQuality
+        canvas.toBlob((blob) => {
+            if (!blob) return exit()
+            blob.arrayBuffer().then((buffer) => {
+                sendMain(Main.SAVE_IMAGE, { id: data.id, path: data.output, buffer })
+                completed = true
 
-        sendMain(Main.SAVE_IMAGE, { id: data.id, path: data.output, base64: dataURL })
-        completed = true
-
-        // unload
-        capturing.splice(capturing.indexOf(data.input), 1)
-        mediaElem.src = ""
+                // unload
+                capturing.delete(data.output)
+                mediaElem.src = ""
+            })
+        })
     }
 
     function exit() {
@@ -616,7 +629,12 @@ export function captureCanvas(data: { input: string; output: string; size: any; 
 
         completed = true
         sendMain(Main.SAVE_IMAGE, { id: data.id })
-        capturing.splice(capturing.indexOf(data.input), 1)
+        capturing.delete(data.output)
+
+        // unload
+        mediaElem.onload = null
+        mediaElem.onerror = null
+        mediaElem.src = ""
     }
 }
 

@@ -2,7 +2,7 @@ import type { NativeImage, ResizeOptions } from "electron"
 import { app, BrowserWindow, nativeImage } from "electron"
 import fs from "fs"
 import path from "path"
-import { isProd, loadWindowContent } from ".."
+import { loadWindowContent } from ".."
 import { OUTPUT } from "../../types/Channels"
 import { ToMain } from "../../types/IPC/ToMain"
 import type { Output } from "../../types/Output"
@@ -10,10 +10,10 @@ import type { Resolution } from "../../types/Settings"
 import { requestToMain, sendToMain } from "../IPC/main"
 import { OutputHelper } from "../output/OutputHelper"
 import { createFolder, deleteFile, doesPathExist, doesPathExistAsync, getDataFolderPath, getFileStatsAsync, makeDir } from "../utils/files"
-import { appDataPath } from "./store"
 import { waitUntilValueIsDefined } from "../utils/helpers"
 import { captureOptions } from "../utils/windowOptions"
 import { imageExtensions, videoExtensions } from "./media"
+import { appDataPath } from "./store"
 
 export async function doesMediaExist(data: { path: string; creationTime?: number; noCache?: boolean }) {
     if (!(await doesPathExistAsync(data.path))) {
@@ -57,11 +57,14 @@ export async function getThumbnail(data: { input: string; size: number }) {
     }
     currentlyGenerating.push(mediaId)
 
-    const output = createThumbnail(data.input, data.size || 500)
+    const outputPath = getThumbnailPath(data.input, data.size || 500)
+    if (await doesPathExistAsync(outputPath)) return finish(outputPath)
+
+    createThumbnail(data.input, data.size || 500)
 
     await waitUntilValueIsDefined(() => !currentlyGenerating.includes(mediaId), 50, 10000)
 
-    return finish(output)
+    return finish(outputPath)
 
     function finish(output: string) {
         if (failedPaths.includes(mediaId)) {
@@ -106,13 +109,10 @@ function generationFinished(mediaId: string) {
     if (currentlyGenerating.includes(mediaId)) currentlyGenerating.splice(currentlyGenerating.indexOf(mediaId), 1)
 }
 
-const exists: string[] = []
 async function generateThumbnail(data: Thumbnail) {
     const mediaId = `${data.input}-${data.size}`
     if (![...imageExtensions, ...videoExtensions].includes(getExtension(data.input))) return generationFinished(mediaId)
-    if (isProd && exists.includes(data.output)) return generationFinished(mediaId)
     if (await doesPathExistAsync(data.output)) {
-        exists.push(data.output)
         generationFinished(mediaId)
         return
     }
@@ -188,6 +188,8 @@ async function generate(input: string, output: string, size: string, config: Con
 }
 
 let mediaBeingCaptured = 0
+const captureTimeouts = new Map<string, NodeJS.Timeout>()
+const CAPTURE_TIMEOUT = 15000
 const maxAmount = 20
 const refillMargin = maxAmount * 0.6
 async function captureWithCanvas(data: { input: string; output: string; size: ResizeOptions; extension: string; config: Config; id: string }) {
@@ -197,6 +199,15 @@ async function captureWithCanvas(data: { input: string; output: string; size: Re
     }
 
     mediaBeingCaptured++
+
+    const timeout = setTimeout(() => {
+        mediaBeingCaptured = Math.max(0, mediaBeingCaptured - 1)
+        captureTimeouts.delete(data.id)
+        failedPaths.push(data.id)
+        generationFinished(data.id)
+    }, CAPTURE_TIMEOUT)
+    captureTimeouts.set(data.id, timeout)
+
     sendToMain(ToMain.CAPTURE_CANVAS, data)
 
     // let captureIndex = mediaBeingCaptured
@@ -204,15 +215,22 @@ async function captureWithCanvas(data: { input: string; output: string; size: Re
 
     // generate a max amount at the same time
     if (mediaBeingCaptured > maxAmount) await waitUntilValueIsDefined(() => mediaBeingCaptured < refillMargin)
+    // while (mediaBeingCaptured >= maxAmount)
 
     // console.timeEnd("CAPTURING: " + captureIndex + " - " + data.input)
     // generationFinished(mediaId)
 }
 
 let failedPaths: string[] = []
-export function saveImage(data: { id?: string; path?: string; base64?: string; filePath?: string[]; format?: "png" | "jpg" }) {
+export function saveImage(data: { id?: string; path?: string; base64?: string; buffer?: ArrayBuffer; filePath?: string[]; format?: "png" | "jpg" }) {
     const dataURL = data.base64
+    const buffer = data.buffer
     let savePath = data.path || ""
+
+    if (data.id && captureTimeouts.has(data.id)) {
+        clearTimeout(captureTimeouts.get(data.id)!)
+        captureTimeouts.delete(data.id)
+    }
 
     if (data.filePath?.length) {
         const fileName = data.filePath.pop()!
@@ -225,7 +243,7 @@ export function saveImage(data: { id?: string; path?: string; base64?: string; f
         if (mediaBeingCaptured === 0) currentlyGenerating = []
     }
 
-    if (!dataURL || !savePath) {
+    if ((!dataURL && !buffer) || !savePath) {
         if (!data.id) return
         failedPaths.push(data.id)
         setTimeout(() => generationFinished(data.id!))
@@ -233,7 +251,7 @@ export function saveImage(data: { id?: string; path?: string; base64?: string; f
     }
     if (data.id && failedPaths.includes(data.id)) failedPaths.splice(failedPaths.indexOf(data.id), 1)
 
-    const image = nativeImage.createFromDataURL(dataURL)
+    const image = buffer ? nativeImage.createFromBuffer(Buffer.from(buffer)) : nativeImage.createFromDataURL(dataURL!)
     saveToDisk(savePath, image, data.format || "png", data.id)
 }
 
@@ -302,10 +320,9 @@ function parseSize(sizeStr: string): ResizeOptions {
     const sizeRegex = /(\d+|\?)x(\d+|\?)/g
     const sizeResult = sizeRegex.exec(sizeStr)
     if (sizeResult) {
-        const sizeValues = sizeResult.map((x) => (x === "?" ? null : Number.parseInt(x, 10)))
-
-        if (sizeValues[1]) size.width = sizeValues[1] || 0
-        if (sizeValues[2]) size.height = sizeValues[2] || 0
+        const [, w, h] = sizeResult
+        if (w !== "?") size.width = parseInt(w, 10)
+        if (h !== "?") size.height = parseInt(h, 10)
 
         return size
     }
@@ -322,8 +339,9 @@ function saveToDisk(savePath: string, image: NativeImage, format: "png" | "jpg",
     else img = image.toPNG() // higher file size, but supports transparent images
 
     fs.writeFile(savePath, img, (err) => {
-        if (!err) exists.push(savePath)
-        if (id) generationFinished(id)
+        if (!id) return
+        if (err) failedPaths.push(id)
+        generationFinished(id)
     })
 }
 
