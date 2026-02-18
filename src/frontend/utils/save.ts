@@ -177,41 +177,10 @@ export function save(closeWhenFinished = false, customTriggers: SaveActions = {}
         contentProviderData: get(contentProviderData)
     }
 
-    // settings exclusive to the local machine (path names that shouldn't be synced with cloud)
-    const syncedSettings: { [key in SaveListSyncedSettings]: any } = {
-        categories: get(categories),
-        drawSettings: get(drawSettings),
-        groups: get(groups),
-        overlayCategories: get(overlayCategories),
-        scriptures: get(scriptures),
-        scriptureSettings: get(scriptureSettings),
-        templateCategories: get(templateCategories),
-        styles: get(styles),
-        profiles: get(profiles),
-        timers: get(timers),
-        variables: get(variables),
-        triggers: get(triggers),
-        audioStreams: get(audioStreams),
-        audioPlaylists: get(audioPlaylists),
-        midiIn: get(actions),
-        emitters: get(emitters),
-        playerVideos: get(playerVideos),
-        videoMarkers: get(videoMarkers),
-        mediaTags: get(mediaTags),
-        actionTags: get(actionTags),
-        variableTags: get(variableTags),
-        customizedIcons: get(customizedIcons),
-        companion: get(companion),
-        globalTags: get(globalTags),
-        customMetadata: get(customMetadata),
-        effects: get(effects),
-        deletedDefaults: get(deletedDefaults)
-    }
-
     const allSavedData: SaveData = {
         // SETTINGS
         SETTINGS: settings,
-        SYNCED_SETTINGS: syncedSettings,
+        SYNCED_SETTINGS: Object.values(getSyncedSettings()).map(a => get(a)),
         // SHOWS
         SHOWS: get(shows),
         STAGE: get(stageShows),
@@ -245,6 +214,38 @@ export function save(closeWhenFinished = false, customTriggers: SaveActions = {}
     if (customTriggers.backup) newToast("settings.backup_started")
     // trigger toast before saving
     setTimeout(() => sendMain(Main.SAVE, saveData))
+}
+
+export function getSyncedSettings(): { [key in SaveListSyncedSettings]: any } {
+    return {
+        categories,
+        drawSettings,
+        groups,
+        overlayCategories,
+        scriptures,
+        scriptureSettings,
+        templateCategories,
+        styles,
+        profiles,
+        timers,
+        variables,
+        triggers,
+        audioStreams,
+        audioPlaylists,
+        midiIn: actions,
+        emitters,
+        playerVideos,
+        videoMarkers,
+        mediaTags,
+        actionTags,
+        variableTags,
+        customizedIcons,
+        companion,
+        globalTags,
+        customMetadata,
+        effects,
+        deletedDefaults
+    }
 }
 
 export async function saveComplete({ closeWhenFinished, customTriggers }: { closeWhenFinished: boolean; customTriggers?: SaveActions }) {
