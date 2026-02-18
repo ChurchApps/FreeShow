@@ -61,7 +61,7 @@ export function history(obj: History, shouldUndo: null | boolean = null) {
                 // if (obj.newData?.style?.key === "text-style" && old.style.values?.[0]?.[0]) old.style.values = old.style.values[0]
 
                 // remove templates because slide has manual updates
-                if (!shouldUndo) removeTemplatesFromShow(showID || "")
+                if (!shouldUndo) removeTemplatesFromShow(showID || "", obj.location.slide)
                 break
             case "setItems":
             case "setStyle":
@@ -73,7 +73,7 @@ export function history(obj: History, shouldUndo: null | boolean = null) {
                 }
 
                 // remove templates because slide has manual updates
-                if (!shouldUndo) removeTemplatesFromShow(showID || "")
+                if (!shouldUndo) removeTemplatesFromShow(showID || "", obj.location?.slide)
                 break
             case "slideStyle":
                 old = {

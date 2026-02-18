@@ -342,7 +342,7 @@ export function updateCachedShow(showId: string, show: Show, layoutId = "") {
     return { layout, endIndex, template, groups: sortedGroups }
 }
 
-export function removeTemplatesFromShow(showId: string, enableHistory = false) {
+export function removeTemplatesFromShow(showId: string, slideId?: string, enableHistory = false) {
     if (!get(showsCache)[showId]) return
 
     // remove show template
@@ -353,14 +353,26 @@ export function removeTemplatesFromShow(showId: string, enableHistory = false) {
         _show(showId).set({ key: "settings.template", value: null })
     }
 
-    // remove any slide templates
-    showsCache.update((a) => {
-        const show = a[showId]
-        Object.values(show.slides || {}).forEach((slide) => {
-            if (slide.settings?.template) delete slide.settings.template
+    if (slideId) {
+        // remove slide template
+        showsCache.update((a) => {
+            const show = a[showId]
+            if (!show?.slides?.[slideId]?.settings?.template) return a
+
+            delete show.slides[slideId].settings.template
+
+            return a
         })
-        return a
-    })
+    } else if (enableHistory) {
+        // remove any slide templates
+        showsCache.update((a) => {
+            const show = a[showId]
+            Object.values(show.slides || {}).forEach((slide) => {
+                if (slide.settings?.template) delete slide.settings.template
+            })
+            return a
+        })
+    }
 }
 
 export function getLayoutRef(showId = "active", _updater?: Shows | Show) {

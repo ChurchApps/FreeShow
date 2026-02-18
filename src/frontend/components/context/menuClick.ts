@@ -934,7 +934,7 @@ const clickActions = {
         history({ id: "UPDATE", newData: { data: project }, oldData: { id }, location: { page: "show", id: "project_template" } })
     },
     remove_template: () => {
-        removeTemplatesFromShow(get(activeShow)?.id || "", true)
+        removeTemplatesFromShow(get(activeShow)?.id || "", "", true)
     },
 
     // slide views
@@ -1224,6 +1224,8 @@ const clickActions = {
                 })
                 return a
             })
+
+            removeTemplatesFromShow(get(activeShow)?.id || "", slideRef.id)
         }
     },
     overlay_actions: (obj: ObjData) => {
@@ -1629,6 +1631,8 @@ const clickActions = {
             location: { page: "edit", show: get(activeShow)!, slide: slideRef.id, items, override: "itembind_" + slideRef.id + "_items_" + items.join(",") }
         })
         // _show().slides([slideID!]).set({ key: "items", value: items })
+
+        removeTemplatesFromShow(get(activeShow)?.id || "", slideRef.id)
     },
     dynamic_values: (obj: ObjData) => {
         const sel = getSelectionRange()
