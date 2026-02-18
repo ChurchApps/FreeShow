@@ -279,7 +279,7 @@ const selectActions = {
     edit_items: () => {
         let itemCount = 0
 
-        if (!get(activeEdit).type || get(activeEdit).type === "show") {
+        if ((get(activeEdit).type || "show") === "show") {
             const ref = getLayoutRef()
             const editSlide = ref[get(activeEdit).slide!]
             const showItems = _show().slides([editSlide.id]).get()[0]?.items
