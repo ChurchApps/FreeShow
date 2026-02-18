@@ -132,6 +132,7 @@ type ProtectedMediaEntry = {
     filePath: string
     providerId: ContentProviderId
     mimeType: string
+    encryptionKey: string | null
 }
 
 const protectedEntries = new Map<string, ProtectedMediaEntry>()
@@ -143,7 +144,7 @@ const decryptedCache = new Map<
     }
 >()
 
-const CACHE_TTL = 1000 * 60 * 5 // 5 minutes
+const CACHE_TTL = 1000 * 60 * 30 // 30 minutes
 const PROTOCOL_SCHEME = "freeshow-protected"
 
 export function registerProtectedProtocol() {
@@ -159,17 +160,32 @@ export function registerProtectedProtocol() {
 
             const total = buffer.length
             const range = request.headers.get("range")
-            const { start, end, statusCode } = parseRange(range, total)
+            const parsedRange = parseRange(range, total)
+            if (parsedRange.statusCode === 416) {
+                const headers = new Headers({
+                    "Accept-Ranges": "bytes",
+                    "Content-Range": `bytes */${total}`,
+                    "Cache-Control": "no-store"
+                })
+                return new Response(null, { status: 416, headers })
+            }
+
+            const { start, end, statusCode } = parsedRange
             const chunk = buffer.subarray(start, end + 1)
 
             const headers = new Headers({
                 "Content-Type": entry.mimeType,
                 "Content-Length": String(chunk.length),
                 "Accept-Ranges": "bytes",
-                "Cache-Control": "no-store"
+                "Cache-Control": "no-store",
+                "Content-Disposition": "inline"
             })
             if (statusCode === 206) {
                 headers.set("Content-Range", `bytes ${start}-${end}/${total}`)
+            }
+
+            if (request.method === "HEAD") {
+                return new Response(null, { status: statusCode, headers })
             }
 
             return new Response(new Uint8Array(chunk), { status: statusCode, headers })
@@ -185,8 +201,10 @@ export function registerProtectedMediaFile({ filePath, providerId, mimeType }: {
 
     const entryId = path.basename(filePath)
     const normalizedMime = mimeType || getMimeType(filePath) || "application/octet-stream"
+    const provider = ContentProviderFactory.getProvider(providerId)
+    const encryptionKey = provider?.getEncryptionKey?.() || null
 
-    protectedEntries.set(entryId, { id: entryId, filePath, providerId, mimeType: normalizedMime })
+    protectedEntries.set(entryId, { id: entryId, filePath, providerId, mimeType: normalizedMime, encryptionKey })
     if (decryptedCache.has(entryId)) {
         decryptedCache.delete(entryId)
     }
@@ -202,7 +220,14 @@ async function getDecryptedBuffer(entry: ProtectedMediaEntry) {
     }
 
     const provider = ContentProviderFactory.getProvider(entry.providerId)
-    const key = provider?.getEncryptionKey?.()
+    let key = entry.encryptionKey
+    if (!key) {
+        key = provider?.getEncryptionKey?.() || null
+        if (key) {
+            entry.encryptionKey = key
+            protectedEntries.set(entry.id, entry)
+        }
+    }
     if (!key) {
         throw new Error(`Provider ${entry.providerId} did not provide an encryption key`)
     }
@@ -245,8 +270,12 @@ function parseRange(rangeHeader: string | null, totalLength: number) {
     }
 
     if (Number.isNaN(start) || start < 0) start = 0
-    if (Number.isNaN(end) || end >= totalLength) end = totalLength - 1
-    if (start > end) start = 0
+    if (Number.isNaN(end) || end < 0) end = totalLength - 1
+    if (end >= totalLength) end = totalLength - 1
+
+    if (start >= totalLength || start > end) {
+        return { start: 0, end: 0, statusCode: 416 as const }
+    }
 
     return { start, end, statusCode: 206 }
 }

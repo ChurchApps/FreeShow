@@ -226,6 +226,11 @@ export function downloadMedia({ url, contentFile }: { url: string; contentFile?:
     if (downloading.includes(url)) return
     downloading.push(url)
 
+    const removeFromDownloading = () => {
+        const index = downloading.indexOf(url)
+        if (index > -1) downloading.splice(index, 1)
+    }
+
     console.info("Downloading online media: " + url)
 
     const outputPath = getMediaThumbnailPath(url, contentFile)
@@ -237,11 +242,10 @@ export function downloadMedia({ url, contentFile }: { url: string; contentFile?:
             const encryptionKey = provider.getEncryptionKey?.()
             if (!encryptionKey) {
                 console.error(`Provider ${contentFile.providerId} requires encryption but did not provide an encryption key`)
-                downloading.splice(downloading.indexOf(url), 1)
+                removeFromDownloading()
                 return
             }
-            encryptFile(url, outputPath, encryptionKey)
-                .finally(() => downloading.splice(downloading.indexOf(url), 1) )
+            encryptFile(url, outputPath, encryptionKey).finally(removeFromDownloading)
             return
         }
     }
@@ -252,9 +256,8 @@ export function downloadMedia({ url, contentFile }: { url: string; contentFile?:
             if (res.statusCode !== 200) {
                 fileStream.close()
                 fs.unlink(outputPath, (err) => err && console.error(err))
-
                 console.error(`Failed to download file, status code: ${String(res.statusCode)}`)
-                sendToMain(ToMain.MEDIA_DOWNLOAD_PROGRESS, { url, progress: 0, total: 0, status: "error" })
+                error()
                 return
             }
 
@@ -271,22 +274,18 @@ export function downloadMedia({ url, contentFile }: { url: string; contentFile?:
             res.on("error", (err) => {
                 fileStream.close()
                 console.error(`Response error: ${err.message}`)
-                sendToMain(ToMain.MEDIA_DOWNLOAD_PROGRESS, { url, progress: 0, total: 0, status: "error" })
-
-                retry()
+                error()
             })
 
             fileStream.on("error", (err1) => {
                 fs.unlink(outputPath, (err2) => err2 && console.error(err2))
                 console.error(`File error: ${err1.message}`)
-                sendToMain(ToMain.MEDIA_DOWNLOAD_PROGRESS, { url, progress: 0, total: 0, status: "error" })
-
-                retry()
+                error()
             })
 
             fileStream.on("finish", async () => {
                 fileStream.close()
-                downloading.splice(downloading.indexOf(url), 1)
+                removeFromDownloading()
                 console.info(`Finished downloading file: ${url}`)
                 sendToMain(ToMain.MEDIA_DOWNLOAD_PROGRESS, { url, progress: totalSize, total: totalSize, status: "complete" })
             })
@@ -294,17 +293,12 @@ export function downloadMedia({ url, contentFile }: { url: string; contentFile?:
         .on("error", (err) => {
             fileStream.close()
             console.error(`Request error: ${err.message}`)
-            sendToMain(ToMain.MEDIA_DOWNLOAD_PROGRESS, { url, progress: 0, total: 0, status: "error" })
-
-            retry()
+            error()
         })
 
-    let errorCount2 = 0
-    function retry() {
-        if (errorCount2 > 5) {
-            return
-        }
-        errorCount2++
+    function error() {
+        sendToMain(ToMain.MEDIA_DOWNLOAD_PROGRESS, { url, progress: 0, total: 0, status: "error" })
+        removeFromDownloading()
     }
 
     // const timeout = setTimeout(

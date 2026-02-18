@@ -402,7 +402,7 @@ export class PowerPointPackage {
         const bgImgId = getAttribute(bgFill, "r:embed", "a:blip")
         const bgImage = this.getMediaPath(bgImgId, { slide, layout, master })
         if (bgImage) {
-            const imageItem: Item = { type: "media", style: "width:1920px;height:1080px;top:0;left:0;", src: bgImage }
+            const imageItem: Item = { type: "media", style: "width:1920px;height:1080px;top:0;left:0;", src: bgImage, fit: "fill" }
             items = [imageItem, ...items]
         }
 
