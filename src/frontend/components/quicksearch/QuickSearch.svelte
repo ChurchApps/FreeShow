@@ -328,6 +328,7 @@
         flex: 1;
         overflow: hidden;
         padding-left: 10px;
+        color: var(--text);
     }
     .item-text p {
         width: 100%;

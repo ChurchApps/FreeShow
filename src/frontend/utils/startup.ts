@@ -69,7 +69,6 @@ async function startupMain() {
     storeSubscriber()
     remoteListen()
     checkStartupActions()
-    autoBackup()
     startTracking()
     contentProviderSync()
 
@@ -79,7 +78,9 @@ async function startupMain() {
         activePopup.set("alert")
     }
 
-    await wait(5000)
+    await wait(2000)
+    autoBackup()
+    await wait(3000)
     unsavedUpdater()
     cameraManager.initializeCameraWarming()
 

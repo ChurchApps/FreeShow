@@ -246,13 +246,15 @@
         <MaterialButton icon="cloud_sync" on:click={syncContentProvider}>
             <T id="cloud.sync" />
         </MaterialButton>
-        <MaterialButton title="settings.sync_categories_tip" icon="options" on:click={() => activePopup.set("sync_categories")}>
-            <T id="popup.sync_categories" />
-        </MaterialButton>
+        <MaterialButton title="<b>popup.sync_categories:</b> settings.sync_categories_tip" icon="options" on:click={() => activePopup.set("sync_categories")} />
         <MaterialButton on:click={() => sendMain(Main.URL, "https://b1.church")} title="B1.Church" white>
             <Icon id="launch" white />
         </MaterialButton>
     </InputRow>
+
+    {#if $cloudSyncData.enabled}
+        <p class="tip">Note: This is unrelated to the Cloud sync found in "Files". This is for the content manager / curriculum.</p>
+    {/if}
 {:else if $providerConnections.amazinglife}
     <!-- APlay connected -->
     <Title label="Content Provider: APlay" icon="list" />
@@ -284,3 +286,11 @@
   <p><T id="settings.allowed_connections" /></p>
   <span>(all, only phones, (laptops), ...)</span>
 </div> -->
+
+<style>
+    .tip {
+        font-size: 0.8em;
+        opacity: 0.6;
+        margin: 10px 0;
+    }
+</style>

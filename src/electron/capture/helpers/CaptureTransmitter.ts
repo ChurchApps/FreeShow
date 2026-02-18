@@ -129,6 +129,8 @@ export class CaptureTransmitter {
 
     // NDI
     static sendBufferToNdi(captureId: string, image: NativeImage, { size }: { size: { width: number; height: number } }) {
+        if (!NdiSender.NDI[captureId]?.sender) return
+
         const buffer = image.toBitmap()
         const ratio = image.getAspectRatio()
         // this.ndiFrameCount++

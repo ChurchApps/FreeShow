@@ -6,14 +6,27 @@ import util from "./vingester-util"
 
 // Dynamic import for grandiose ES module to prevent TypeScript compilation issues
 let warned = false
+let grandioseModule: any | null = null
+let grandiosePromise: Promise<any | null> | null = null
 const loadGrandiose = async () => {
-    try {
-        return await import("grandiose")
-    } catch (err) {
-        if (!warned) console.warn("NDI not available:", err.message)
-        warned = true
-        return null
-    }
+    if (grandioseModule) return grandioseModule
+    if (grandiosePromise) return grandiosePromise
+
+    grandiosePromise = import("grandiose")
+        .then((imported) => {
+            grandioseModule = imported
+            return imported
+        })
+        .catch((err: any) => {
+            if (!warned) console.warn("NDI not available:", err?.message || err)
+            warned = true
+            return null
+        })
+        .finally(() => {
+            grandiosePromise = null
+        })
+
+    return grandiosePromise
 }
 
 // Resources:
@@ -23,7 +36,6 @@ const loadGrandiose = async () => {
 // https://github.com/rse/vingester
 
 export class NdiSender {
-    static ndiDisabled = false // isLinux && os.arch() !== "x64" && os.arch() !== "ia32"
     static timeStart = BigInt(Date.now()) * BigInt(1e6) - process.hrtime.bigint()
     static NDI: { [key: string]: { name: string; groups?: string; status?: string; previousStatus?: string; sender?: any; timer?: NodeJS.Timeout; sendAudio?: boolean } } = {}
 
@@ -47,7 +59,7 @@ export class NdiSender {
     }
 
     static async createSenderNDI(id: string, name = "", groups?: string) {
-        if (this.ndiDisabled || this.NDI[id]) return
+        if (this.NDI[id]) return
 
         this.NDI[id] = { name, groups }
         console.info("NDI - creating sender: " + this.NDI[id].name, groups ? `; In group: ${groups}` : "")
@@ -95,8 +107,6 @@ export class NdiSender {
 
     // static frames = 0
     static async sendVideoBufferNDI(id: string, buffer: Buffer, { size = { width: 1280, height: 720 }, ratio = 16 / 9, framerate = 1 }) {
-        if (this.ndiDisabled || !this.NDI[id]?.sender) return
-
         // DEBUG log fps
         // this.frames++
         // setTimeout(() => this.frames--, 1000)
@@ -161,7 +171,7 @@ export class NdiSender {
 
     static bytesForFloat32 = 4
     static async sendAudioBufferNDI(buffer: Buffer, { sampleRate, channelCount }: { sampleRate: number; channelCount: number }) {
-        if (this.ndiDisabled || !Object.values(this.NDI).find((a) => a?.sendAudio)) return
+        if (!Object.values(this.NDI).find((a) => a?.sendAudio)) return
 
         const ndiAudioBuffer = convertPCMtoPlanarFloat32(buffer, channelCount)
         if (!ndiAudioBuffer) return
