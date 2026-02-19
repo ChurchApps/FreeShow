@@ -29,6 +29,7 @@
     import MediaGrid from "./MediaGrid.svelte"
     import { loadFromPixabay } from "./pixabay"
     import { loadFromUnsplash } from "./unsplash"
+    import Canva from "./Canva.svelte"
 
     export let active: string | null
     export let searchValue = ""
@@ -90,6 +91,8 @@
             contentProviders = allProviders.filter((p) => p.hasContentLibrary && $providerConnections[p.providerId])
         })
     }
+
+    $: activeProviderId = (isProviderSection && active ? active : null) as ContentProviderId | null
 
     let screenTab = $drawerTabsData.media?.openedSubSubTab?.screens || "screens"
     let onlineTab = $drawerTabsData.media?.openedSubSubTab?.online || "youtube"
@@ -431,6 +434,17 @@
     }
 
     $: pathString = path.replace(rootPath, "").replace(folderName, "").replaceAll("\\", "/").split("/").filter(Boolean).join("/")
+
+    function handleDisconnect() {
+        requestMain(Main.PROVIDER_DISCONNECT, { providerId: "canva" }, (result) => {
+            if (result.success) {
+                providerConnections.update((c) => {
+                    c.canva = false
+                    return c
+                })
+            }
+        })
+    }
 </script>
 
 <!-- TODO: download pixabay images!!! -->
@@ -479,6 +493,10 @@
             <Icon style={onlineTab === "unsplash" ? "fill: #bbbbbb" : ""} size={1.2} id="unsplash" white />
             <p>Unsplash</p>
         </MaterialButton>
+        <MaterialButton style="flex: 1;" isActive={onlineTab === "canva"} on:click={() => setSubSubTab("canva")}>
+            <Icon style={onlineTab === "canva" ? "fill: #00c4ff" : ""} size={1.2} id="canva" white />
+            <p>Canva</p>
+        </MaterialButton>
     </div>
 {/if}
 
@@ -486,12 +504,14 @@
 
 <div class="scroll" style="flex: 1;overflow-y: auto;" bind:this={scrollElem}>
     <div class="grid" class:list={$mediaOptions.mode === "list"} style="height: 100%;">
-        {#if isProviderSection}
-            <ContentLibraryBrowser providerId={active} columns={$mediaOptions.columns} {searchValue} />
+        {#if isProviderSection && activeProviderId}
+            <ContentLibraryBrowser providerId={activeProviderId} columns={$mediaOptions.columns} {searchValue} />
         {:else if active === "online" && (onlineTab === "youtube" || onlineTab === "vimeo")}
             <div class="gridgap">
                 <PlayerVideos active={onlineTab} {searchValue} />
             </div>
+        {:else if active === "online" && onlineTab === "canva"}
+            <Canva />
         {:else if active === "screens"}
             <div class="gridgap">
                 {#if screenTab === "screens"}
@@ -580,7 +600,15 @@
             </MaterialButton>
         </FloatingInputs>
     {:else}
-        <FloatingInputs>
+        <FloatingInputs arrow={onlineTab === "canva"}>
+            <svelte:fragment slot="menu">
+                {#if onlineTab === "canva"}
+                    <MaterialButton title="settings.disconnect_from" replace={["Canva"]} on:click={handleDisconnect} icon="logout">
+                        <T id="settings.disconnect_from" replace={["Canva"]} />
+                    </MaterialButton>
+                {/if}
+            </svelte:fragment>
+
             {#if onlineTab === "pixabay"}
                 <MaterialButton title="media.image" on:click={() => (activeView = "image")}>
                     <Icon size={1.2} id="image" white={activeView !== "image"} />

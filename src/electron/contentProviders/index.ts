@@ -16,8 +16,9 @@ export { OAuth2Helper, PKCEHelper } from "./base/OAuth2Helper"
 export { ContentProviderError, ContentProviderErrorType, type ContentProviderSongData, type ContentProviderServicePlan, type ContentProviderPlanItem, type ContentProviderService, type LoadServicesOptions, type ExportDataOptions, type ContentProviderStatus } from "./base/types"
 
 // Provider implementations (simplified versions for now)
-export { ChurchAppsProvider, type ChurchAppsScopes, type ChurchAppsAuthData } from "./churchApps/ChurchAppsProvider"
-export { PlanningCenterProvider, type PCOScopes, type PCOAuthData } from "./planningCenter/PlanningCenterProvider"
+export { ChurchAppsProvider } from "./churchApps/ChurchAppsProvider"
+export { PlanningCenterProvider } from "./planningCenter/PlanningCenterProvider"
+export { CanvaProvider } from "./canva/CanvaProvider"
 
 // Registry and legacy functions
 export {
