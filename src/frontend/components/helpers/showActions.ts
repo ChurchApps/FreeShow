@@ -210,7 +210,7 @@ export function nextSlide(e: any, start = false, end = false, loop = false, bypa
     const isFirstLine = (slide?.line || 0) === 0
     const nextProjectItem = get(projects)[get(activeProject) || ""]?.shows?.[(currentShow?.index ?? -2) + 1]?.id
     const isPreviousProjectItem = slide?.id === nextProjectItem && isFirstSlide && isFirstLine
-    if (isPreviousProjectItem && e?.key !== " " && advanceThroughProject) {
+    if (isPreviousProjectItem && e?.key !== " " && advanceThroughProject && !isLastSlide) {
         goToNextProjectItem()
         return
     }
