@@ -175,7 +175,7 @@ export async function getMedia(path: string, size: number = mediaSize.drawerSize
     }
     currentlyGetting.push(mediaId)
 
-    if (path.includes("http")) {
+    if (path.startsWith("http")) {
         const localPath = (await downloadOnlineMedia(path)) || path
         const thumbnail = mediaData?.contentFile?.thumbnail || localPath
 

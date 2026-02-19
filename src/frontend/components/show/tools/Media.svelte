@@ -151,7 +151,7 @@
     let similarBgs: { path: string; name: string }[] = []
     $: if (bgs.length) getSimularPaths()
     function getSimularPaths() {
-        if (!bgs.filter((a) => !a.path?.includes("http") && !a.path?.includes("data:")).length) return
+        if (!bgs.filter((a) => !a.path?.startsWith("http") && !a.path?.startsWith("data:")).length) return
 
         requestMain(Main.GET_SIMILAR, { paths: bgs.map((a) => a.path || "") }, (data) => {
             similarBgs = data.filter((a) => isMediaExtension(getExtension(a.path))).slice(0, 3)

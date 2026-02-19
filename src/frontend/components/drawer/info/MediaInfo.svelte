@@ -16,7 +16,7 @@
     $: name = $activeShow?.name || ""
     let mediaData: { extension?: string; [key: string]: any } = {}
 
-    $: if ($activeShow?.id && ["media", "image", "video"].includes($activeShow.type || "") && !$activeShow?.id.includes("http") && !$activeShow?.id.includes("data:")) {
+    $: if ($activeShow?.id && ["media", "image", "video"].includes($activeShow.type || "") && !$activeShow?.id.startsWith("http") && !$activeShow?.id.startsWith("data:")) {
         mediaData = {}
         codecInfo = {}
 

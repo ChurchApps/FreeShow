@@ -221,7 +221,7 @@ function startDownload(data: DownloadFile) {
 
 const downloading = new Set<string>()
 export function downloadMedia({ url, contentFile }: { url: string; contentFile?: any }) {
-    if (!url?.includes("http") || url?.includes("blob:")) return
+    if (!url?.startsWith("http") || url?.startsWith("blob:")) return
 
     if (downloading.has(url)) return
     downloading.add(url)
@@ -308,7 +308,7 @@ export function downloadMedia({ url, contentFile }: { url: string; contentFile?:
 }
 
 export async function checkIfMediaDownloaded({ url, contentFile }: { url: string; contentFile?: any }) {
-    if (!url?.includes("http")) return null
+    if (!url?.startsWith("http")) return null
 
     // still being downloaded
     if (downloading.has(url)) return { path: url, buffer: null, isDownloading: true }

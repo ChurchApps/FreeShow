@@ -201,7 +201,7 @@
                                                 <span style="opacity: 0.5;font-style: italic;margin-left: 5px;font-size: 0.8em;">{value.aliasMatch}</span>
                                             {/if}
 
-                                            {#if value.id.includes("http")}
+                                            {#if value.id.startsWith("http")}
                                                 <Icon id="launch" size={0.8} white />
                                             {/if}
                                         </p>

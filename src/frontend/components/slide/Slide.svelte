@@ -105,8 +105,10 @@
         }
 
         // create ghost ready thumbnails
-        getMedia(bgPath, mediaSize.drawerSize)
-        if (Object.values(show.layouts).some((a) => a.slides.length > 28)) getMedia(bgPath, mediaSize.small)
+        if (!bgPath.startsWith("http")) {
+            getMedia(bgPath, mediaSize.drawerSize)
+            if (Object.values(show.layouts).some((a) => a.slides.length > 28)) getMedia(bgPath, mediaSize.small)
+        }
 
         const media = await getMedia(bgPath, mediaSize.slideSize)
         if (!media) return

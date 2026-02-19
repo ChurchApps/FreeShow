@@ -159,7 +159,7 @@ export const dropActions = {
                     }
 
                     // pre-download online media
-                    if (typeof path === "string" && path.includes("http")) {
+                    if (typeof path === "string" && path.startsWith("http")) {
                         downloadOnlineMedia(path)
                     }
 

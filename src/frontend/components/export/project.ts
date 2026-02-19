@@ -61,7 +61,7 @@ export async function exportProject(project: Project, projectId: string, savePat
             const mediaData = _show(showRef.id).get("media") || {}
             mediaIds.forEach((id) => {
                 const path = mediaData[id]?.path || mediaData[id]?.id
-                if (!path || path.includes("http")) return
+                if (!path || path.startsWith("http")) return
                 getFile(path)
             })
 
