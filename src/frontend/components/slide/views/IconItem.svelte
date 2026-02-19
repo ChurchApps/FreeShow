@@ -20,6 +20,7 @@
     .iconItem :global(svg) {
         position: absolute;
         top: 0;
+        left: 0;
     }
 
     /* custom svg icon */
