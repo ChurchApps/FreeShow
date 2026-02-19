@@ -30,6 +30,7 @@
     import { loadFromPixabay } from "./pixabay"
     import { loadFromUnsplash } from "./unsplash"
     import Canva from "./Canva.svelte"
+    import CLogo from "./CLogo.svelte"
 
     export let active: string | null
     export let searchValue = ""
@@ -494,7 +495,11 @@
             <p>Unsplash</p>
         </MaterialButton>
         <MaterialButton style="flex: 1;" isActive={onlineTab === "canva"} on:click={() => setSubSubTab("canva")}>
-            <Icon style={onlineTab === "canva" ? "fill: #00c4ff" : ""} size={1.2} id="canva" white />
+            {#if onlineTab === "canva"}
+                <CLogo />
+            {:else}
+                <Icon size={1.2} id="canva" white />
+            {/if}
             <p>Canva</p>
         </MaterialButton>
     </div>

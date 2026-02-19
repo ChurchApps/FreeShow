@@ -7,6 +7,7 @@
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import Center from "../../system/Center.svelte"
     import ContentLibraryBrowser from "./ContentLibraryBrowser.svelte"
+    import CLogo from "./CLogo.svelte"
 
     onMount(() => {
         if (!$providerConnections.canva) {
@@ -25,12 +26,18 @@
             <ContentLibraryBrowser providerId="canva" columns={5} searchValue="" />
         </div>
     </div>
+    <div style="position: absolute;bottom: 0;width: 100%;padding: 10px;display: flex;justify-content: center;">
+        <p style="font-size: 0.8em;color: rgba(255 255 255 / 0.25);">Powered by Canva</p>
+    </div>
 {:else}
     <div class="gridgap">
         <Center style="flex-direction: column; gap: 1.5em;">
-            <MaterialButton variant="contained" on:click={handleConnect} icon="login" style="width: 100%; max-width: 250px;">
+            <MaterialButton variant="outlined" on:click={handleConnect} style="width: 100%; max-width: 250px;">
+                <CLogo />
                 <T id="settings.connect_to" replace={["Canva"]} />
             </MaterialButton>
+
+            <!-- <p style="font-size: 0.8em;color: rgba(255 255 255 / 0.2);">Powered by Canva</p> -->
         </Center>
     </div>
 {/if}
