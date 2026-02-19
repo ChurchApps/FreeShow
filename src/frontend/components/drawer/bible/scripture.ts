@@ -613,8 +613,10 @@ export async function getScriptureSlidesNew(data: any, onlyOne = false, disableR
     const versesOnIndividualLines = get(scriptureSettings).versesOnIndividualLines
 
     // hide verse number if just one verse selected and a reference is showing the verse
-    const hasVerseReference = /\{scripture1?_(reference|verse)/.test(slidesString)
-    if (totalVerses === 1 && hasVerseReference) {
+    // but not if the template explicitly uses {scripture_number} (user wants inline numbers)
+    const hasVerseReference = /\{scripture1?_(reference|verse)\}/.test(slidesString)
+    const hasExplicitNumberPlaceholder = /\{scripture\d?_number\}/.test(slidesString)
+    if (totalVerses === 1 && hasVerseReference && !hasExplicitNumberPlaceholder) {
         verseNumbers = false
     }
 
