@@ -161,9 +161,9 @@ export class OAuth2Helper<TAuthData extends BaseAuthData = BaseAuthData> {
     }
 
     /**
-     * Exchanges authorization code for access tokens
+     * Exchanges authorization code for access tokens (public wrapper for providers managing their own providers)
      */
-    private async exchangeCodeForTokens(code: string): Promise<TAuthData> {
+    public async exchangeCodeForTokens(code: string, scope?: string): Promise<TAuthData> {
         return new Promise((resolve, reject) => {
             const params = new URLSearchParams({
                 grant_type: "authorization_code",
@@ -197,7 +197,7 @@ export class OAuth2Helper<TAuthData extends BaseAuthData = BaseAuthData> {
                         token_type: data.token_type || "Bearer",
                         created_at: Math.floor(Date.now() / 1000),
                         expires_in: data.expires_in,
-                        scope: data.scope
+                        scope: data.scope || scope
                     } as TAuthData)
                 } catch (error) {
                     reject(new ContentProviderError(ContentProviderErrorType.AUTHENTICATION_FAILED, `Token exchange failed: ${error.message}`))
@@ -206,7 +206,7 @@ export class OAuth2Helper<TAuthData extends BaseAuthData = BaseAuthData> {
         })
     }
 
-    private getSuccessHtml(): string {
+    public getSuccessHtml(): string {
         return `
         <head>
             <title>Success!</title>
@@ -217,7 +217,7 @@ export class OAuth2Helper<TAuthData extends BaseAuthData = BaseAuthData> {
         </body>`
     }
 
-    private getErrorHtml(error: string): string {
+    public getErrorHtml(error: string): string {
         return `
         <head>
             <title>Error!</title>

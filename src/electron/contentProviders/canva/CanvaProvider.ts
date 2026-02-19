@@ -1,7 +1,6 @@
-import type express from "express"
 import { ContentProvider } from "../base/ContentProvider"
 import type { ContentFile, ContentLibraryCategory } from "../base/types"
-import { CanvaConnect } from "./CanvaConnect"
+import { CanvaConnect, OAUTH_PORT } from "./CanvaConnect"
 import { CanvaContentLibrary } from "./CanvaContentLibrary"
 
 export type CanvaScopes = "folder:read design:meta:read"
@@ -25,7 +24,7 @@ export class CanvaProvider extends ContentProvider<CanvaScopes, CanvaAuthData> {
         super({
             providerId: "canva",
             displayName: "Canva",
-            port: 5505,
+            port: OAUTH_PORT,
             clientId: "",
             clientSecret: "",
             apiUrl: CANVA_API_URL,
@@ -82,9 +81,7 @@ export class CanvaProvider extends ContentProvider<CanvaScopes, CanvaAuthData> {
         return CanvaContentLibrary.getContent(folderId)
     }
 
-    protected handleAuthCallback(req: express.Request, res: express.Response): void {
-        CanvaConnect.handleAuthCallback(req, res)
-    }
+    protected handleAuthCallback() {}
 
     protected async refreshToken(_scope: CanvaScopes): Promise<CanvaAuthData | null> {
         return null

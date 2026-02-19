@@ -600,9 +600,9 @@
             </MaterialButton>
         </FloatingInputs>
     {:else}
-        <FloatingInputs arrow={onlineTab === "canva"}>
+        <FloatingInputs arrow={onlineTab === "canva" && $providerConnections.canva}>
             <svelte:fragment slot="menu">
-                {#if onlineTab === "canva"}
+                {#if onlineTab === "canva" && $providerConnections.canva}
                     <MaterialButton title="settings.disconnect_from" replace={["Canva"]} on:click={handleDisconnect} icon="logout">
                         <T id="settings.disconnect_from" replace={["Canva"]} />
                     </MaterialButton>
