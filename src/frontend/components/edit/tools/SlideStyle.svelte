@@ -89,6 +89,7 @@
                 settings.color = e.detail
                 update()
             }}
+            allowGradients
             allowEmpty
             noLabel
         />
