@@ -45,24 +45,27 @@ function deleteThumbnails(filePath: string) {
     })
 }
 
-let currentlyGenerating: string[] = []
+let currentlyGenerating = new Set<string>()
 export async function getThumbnail(data: { input: string; size: number }) {
     if (!(await doesPathExistAsync(data.input))) return { ...data, output: "" }
 
     const mediaId = `${data.input}-${data.size}`
-    if (currentlyGenerating.includes(mediaId)) {
-        await waitUntilValueIsDefined(() => !currentlyGenerating.includes(mediaId), 50, 10000)
+    if (currentlyGenerating.has(mediaId)) {
+        await waitUntilValueIsDefined(() => !currentlyGenerating.has(mediaId), 50, 10000)
 
         return finish(getThumbnailPath(data.input, data.size))
     }
-    currentlyGenerating.push(mediaId)
+    currentlyGenerating.add(mediaId)
 
     const outputPath = getThumbnailPath(data.input, data.size || 500)
-    if (await doesPathExistAsync(outputPath)) return finish(outputPath)
+    if (await doesPathExistAsync(outputPath)) {
+        currentlyGenerating.delete(mediaId)
+        return finish(outputPath)
+    }
 
     createThumbnail(data.input, data.size || 500)
 
-    await waitUntilValueIsDefined(() => !currentlyGenerating.includes(mediaId), 50, 10000)
+    await waitUntilValueIsDefined(() => !currentlyGenerating.has(mediaId), 50, 10000)
 
     return finish(outputPath)
 
@@ -106,7 +109,7 @@ function generationFinished(mediaId: string) {
     // working = false
     nextInQueue()
 
-    if (currentlyGenerating.includes(mediaId)) currentlyGenerating.splice(currentlyGenerating.indexOf(mediaId), 1)
+    if (currentlyGenerating.has(mediaId)) currentlyGenerating.delete(mediaId)
 }
 
 async function generateThumbnail(data: Thumbnail) {
@@ -240,7 +243,7 @@ export function saveImage(data: { id?: string; path?: string; base64?: string; b
         savePath = path.join(folderPath, fileName)
     } else {
         mediaBeingCaptured = Math.max(0, mediaBeingCaptured - 1)
-        if (mediaBeingCaptured === 0) currentlyGenerating = []
+        if (mediaBeingCaptured === 0) currentlyGenerating.clear()
     }
 
     if ((!dataURL && !buffer) || !savePath) {
