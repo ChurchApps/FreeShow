@@ -38,9 +38,6 @@ export class OutputLifecycle {
 
         // NDI
         if (output.ndi) {
-            await wait(1500) // reduce startup pressure
-            if (!outputWindow.isDestroyed()) return
-
             await NdiSender.createSenderNDI(id, NdiSender.initNameNDI(output.ndiData?.name, output.name), output.ndiData?.groups)
             if (output.ndiData) setDataNDI({ id, ...output.ndiData })
         }
