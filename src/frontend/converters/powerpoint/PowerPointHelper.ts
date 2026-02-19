@@ -528,6 +528,12 @@ export class PowerPointPackage {
                 return value
             }
 
+            // See fonts.ts:252
+            // trim subfamily names (e.g. "Bold", "Italic") since these are usually represented as separate attributes in PowerPoint and not part of the font name
+            const subfamilyIndicators = ["bold", "italic", "oblique", "regular", "light", "thin", "black", "heavy", "narrow", "condensed", "extended", "semi", "demi", "ultra", "medium", "normal"]
+            const regex = new RegExp(`\\b(${subfamilyIndicators.join("|")})\\b`, "gi")
+            typeface = typeface.replace(regex, "").replace(/\s+/g, " ").trim()
+
             return typeface
         }
 
@@ -1026,11 +1032,13 @@ export class PowerPointPackage {
 
         if (shape.isDecoration) item.decoration = true
 
+        // WIP get correct padding
         const fallbackPadding = 0 // shape.name === "p:sp" && !svgShape ? 12 : 0
-        const paddingL = getAttribute(shape.shape, "lIns", "p:txBody") || getAttribute(getValue(shape.layoutShape, "p:txBody"), "lIns", "a:bodyPr") || getAttribute(getValue(shape.masterShape, "p:txBody"), "lIns", "a:bodyPr") || "0"
-        const paddingT = getAttribute(shape.shape, "tIns", "p:txBody") || getAttribute(getValue(shape.layoutShape, "p:txBody"), "tIns", "a:bodyPr") || getAttribute(getValue(shape.masterShape, "p:txBody"), "tIns", "a:bodyPr") || "0"
-        const paddingR = getAttribute(shape.shape, "rIns", "p:txBody") || getAttribute(getValue(shape.layoutShape, "p:txBody"), "rIns", "a:bodyPr") || getAttribute(getValue(shape.masterShape, "p:txBody"), "rIns", "a:bodyPr") || "0"
-        const paddingB = getAttribute(shape.shape, "bIns", "p:txBody") || getAttribute(getValue(shape.layoutShape, "p:txBody"), "bIns", "a:bodyPr") || getAttribute(getValue(shape.masterShape, "p:txBody"), "bIns", "a:bodyPr") || "0"
+        // padding: 0 30px;
+        const paddingL = Number(getAttribute(shape.shape, "lIns", "p:txBody")) || Number(getAttribute(getValue(shape.layoutShape, "p:txBody"), "lIns", "a:bodyPr")) || Number(getAttribute(getValue(shape.masterShape, "p:txBody"), "lIns", "a:bodyPr")) || 0
+        const paddingT = Number(getAttribute(shape.shape, "tIns", "p:txBody")) || Number(getAttribute(getValue(shape.layoutShape, "p:txBody"), "tIns", "a:bodyPr")) || Number(getAttribute(getValue(shape.masterShape, "p:txBody"), "tIns", "a:bodyPr")) || 0
+        const paddingR = Number(getAttribute(shape.shape, "rIns", "p:txBody")) || Number(getAttribute(getValue(shape.layoutShape, "p:txBody"), "rIns", "a:bodyPr")) || Number(getAttribute(getValue(shape.masterShape, "p:txBody"), "rIns", "a:bodyPr")) || 0
+        const paddingB = Number(getAttribute(shape.shape, "bIns", "p:txBody")) || Number(getAttribute(getValue(shape.layoutShape, "p:txBody"), "bIns", "a:bodyPr")) || Number(getAttribute(getValue(shape.masterShape, "p:txBody"), "bIns", "a:bodyPr")) || 0
         item.style += `padding: ${round(emuToPixels(paddingT) || fallbackPadding)}px ${round(emuToPixels(paddingR) || fallbackPadding)}px ${round(emuToPixels(paddingB) || fallbackPadding)}px ${round(emuToPixels(paddingL) || fallbackPadding)}px;`
 
         if (bgColor && !svgShape) item.style += `background-color: ${bgColor};`
