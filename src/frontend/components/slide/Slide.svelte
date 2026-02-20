@@ -324,6 +324,7 @@
                                     {ratio}
                                     slideIndex={index}
                                     ref={{
+                                        type: "show",
                                         showId,
                                         slideId: layoutSlide.id,
                                         id: layoutSlide.id,

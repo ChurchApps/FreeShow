@@ -1408,10 +1408,11 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
 
         const outSlide: OutSlide | null = output?.out?.slide || null
 
-        if (!showId) {
+        if (!showId || (outSlide?.id && type !== "show")) {
             showId = outSlide?.id
             layoutId = outSlide?.layout
             slideIndex = outSlide?.index ?? -1
+            show = _show(showId).get() || null
         }
         if (!show) show = _show(showId).get() || null
 
