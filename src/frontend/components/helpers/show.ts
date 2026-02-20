@@ -115,7 +115,8 @@ export function getGlobalGroup(group: string, returnInputIfNull = false): string
 }
 
 // get group number (dynamic counter)
-export function getGroupName({ show, showId }: { show: Show; showId: string }, slideID: string, groupName: string | null, layoutIndex: number, addHTML = false, layoutNumber = true) {
+export function getGroupName({ show, showId }: { show: Show | null; showId: string }, slideID: string, groupName: string | null, layoutIndex: number, addHTML = false, layoutNumber = true) {
+    if (!show) return groupName || ""
     if (groupName === ".") return "." // . as name will be hidden
 
     let name = groupName

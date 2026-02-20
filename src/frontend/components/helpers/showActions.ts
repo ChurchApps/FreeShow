@@ -1317,7 +1317,7 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
         slideIndex = outSlide?.index ?? -1
     }
 
-    const currentShow = _show(showId).get()
+    let currentShow = _show(showId).get()
     if (type === "show" && !currentShow) return ""
 
     const customIds = ["slide_text_current", "active_layers", "active_styles", "output_windows_active", "log_song_usage"]
@@ -1339,7 +1339,7 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
         return replaceTokens(text, dynamicId, newValue)
     }
 
-    function getDynamicValueText(dynamicId: string, show: Show | object): string | string[] {
+    function getDynamicValueText(dynamicId: string, show: Show | null): string | string[] {
         // VARIABLE
         if (dynamicId.startsWith("variable_set_") || dynamicId.startsWith("$") || dynamicId.startsWith("variable_")) {
             return getVariableValue(dynamicId, { showId, layoutId, slideIndex, type, id: dynamicId })
@@ -1412,17 +1412,17 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
             showId = outSlide?.id
             layoutId = outSlide?.layout
             slideIndex = outSlide?.index ?? -1
-            show = _show(showId).get() || {}
         }
-        if (!show) show = {}
+        if (!show?.name) show = _show(showId).get() || null
+        if (!show) show = null
 
         // META
         if (dynamicId.startsWith("meta_")) {
             const key = dynamicId.slice(5).replaceAll("_", " ")
-            if (!Object.keys(show)) return ""
+            if (!show || !Object.keys(show)) return ""
             let customKey = get(customMetadata).custom.find((a) => a.toLowerCase() === key) || key
             if (customKey === "ccli") customKey = "CCLI"
-            return (show as Show).meta?.[customKey] || ""
+            return show.meta?.[customKey] || ""
         }
 
         const activeLayout = layoutId ? [layoutId] : "active"
@@ -1449,7 +1449,8 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
         // custom - only from external source (Companion)
         // or used to set variable value: https://github.com/ChurchApps/FreeShow/issues/1720
         if (dynamicId === "slide_text_current") {
-            return getTextLines(outSlide?.id === "temp" ? { items: outSlide?.previousSlides } : (show as any).slides?.[ref[slideIndex]?.id]).join("<br>")
+            if (outSlide?.id === "temp" ? !outSlide?.previousSlides?.[0] : !show?.slides?.[ref[slideIndex]?.id]) return ""
+            return getTextLines(outSlide?.id === "temp" ? { items: outSlide.previousSlides![0] } : show!.slides[ref[slideIndex]?.id]).join("<br>")
         } else if (dynamicId === "active_layers") {
             const backgroundActive = !isOutCleared("background")
             const slideActive = !isOutCleared("slide")
@@ -1519,7 +1520,7 @@ const dynamicValues = {
     },
 
     // show
-    show_name: ({ show }) => show.name || "",
+    show_name: ({ show }) => show?.name || "",
     show_name_next: ({ projectRef }) => get(shows)[get(projects)[projectRef.id]?.shows?.[projectRef.index + 1]?.id]?.name || "",
 
     layout_slides: ({ ref }) => ref.length,
@@ -1528,28 +1529,28 @@ const dynamicValues = {
     slide_number: ({ slideIndex }) => (Number(slideIndex ?? -1) + 1).toString(),
     slide_group: ({ show, ref, slideIndex, outSlide }) => {
         const parentIndex = ref[slideIndex]?.parent?.layoutIndex ?? slideIndex
-        const group = show.slides?.[ref[parentIndex]?.id]?.group || ""
+        const group = show?.slides?.[ref[parentIndex]?.id]?.group || ""
         return getGroupName({ show, showId: outSlide?.id }, ref[parentIndex]?.id, group, parentIndex, false, false)
     },
     slide_group_next: ({ show, ref, slideIndex, outSlide }) => {
         const parentIndex = ref[slideIndex + 1]?.parent?.layoutIndex ?? slideIndex + 1
-        const group = show.slides?.[ref[parentIndex]?.id]?.group || ""
+        const group = show?.slides?.[ref[parentIndex]?.id]?.group || ""
         return getGroupName({ show, showId: outSlide?.id }, ref[parentIndex]?.id, group, parentIndex, false, false)
     },
     slide_group_upcoming: ({ show, ref, slideIndex, outSlide }) => {
         if (slideIndex < 0) return ""
         let nextParentIndex = slideIndex + 1
         while (ref[nextParentIndex]?.type !== "parent" && nextParentIndex < ref.length) nextParentIndex++
-        const group = show.slides?.[ref[nextParentIndex]?.id]?.group || ""
+        const group = show?.slides?.[ref[nextParentIndex]?.id]?.group || ""
         return getGroupName({ show, showId: outSlide?.id }, ref[nextParentIndex]?.id, group, nextParentIndex, false, false)
     },
-    slide_notes: ({ show, ref, slideIndex }) => show.slides?.[ref[slideIndex]?.id]?.notes || "",
-    slide_notes_next: ({ show, ref, slideIndex }) => show.slides?.[ref[slideIndex + 1]?.id]?.notes || "",
+    slide_notes: ({ show, ref, slideIndex }) => show?.slides?.[ref[slideIndex]?.id]?.notes || "",
+    slide_notes_next: ({ show, ref, slideIndex }) => show?.slides?.[ref[slideIndex + 1]?.id]?.notes || "",
 
     // text
-    slide_text_previous: ({ show, ref, slideIndex, outSlide }) => getTextLines(outSlide?.id === "temp" ? { items: outSlide?.previousSlides } : show.slides?.[ref[slideIndex - 1]?.id]).join("<br>"),
-    slide_text_next: ({ show, ref, slideIndex, outSlide }) => getTextLines(outSlide?.id === "temp" ? { items: outSlide?.nextSlides } : show.slides?.[ref[slideIndex + 1]?.id]).join("<br>"),
-    show_text_full: ({ show, ref }) => ref.map((a) => getTextLines(show.slides?.[a.id]).join("<br>")).join("<br><br>"),
+    slide_text_previous: ({ show, ref, slideIndex, outSlide }) => getTextLines(outSlide?.id === "temp" ? { items: outSlide?.previousSlides } : show?.slides?.[ref[slideIndex - 1]?.id]).join("<br>"),
+    slide_text_next: ({ show, ref, slideIndex, outSlide }) => getTextLines(outSlide?.id === "temp" ? { items: outSlide?.nextSlides } : show?.slides?.[ref[slideIndex + 1]?.id]).join("<br>"),
+    show_text_full: ({ show, ref }) => ref.map((a) => getTextLines(show?.slides?.[a.id]).join("<br>")).join("<br><br>"),
 
     // image (exif)
     exif_datetime: ({ bgPath }) => getExifData(bgPath, "DateTimeOriginal"),
