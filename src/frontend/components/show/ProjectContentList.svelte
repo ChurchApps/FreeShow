@@ -5,7 +5,7 @@
     import { ShowType } from "../../../types/Show"
     import { addProjectItem, addToProject, updateRecentlyAddedFiles } from "../../converters/project"
     import { actions, activeFocus, activePopup, activeProject, activeShow, contextActive, drawer, focusMode, fullColors, labelsDisabled, playerVideos, projects, projectView, recentFiles, selected, shows, special } from "../../stores"
-    import { triggerFunction } from "../../utils/common"
+    import { newToast, triggerFunction } from "../../utils/common"
     import { getAccess } from "../../utils/profile"
     import { getActionIcon } from "../actions/actions"
     import { getTimeUntilClock } from "../drawer/timers/timers"
@@ -215,12 +215,13 @@
                             {@const borderRadiusStyle = `${isFirst ? "border-top-right-radius: 10px;" : ""}${isLast ? "border-bottom-right-radius: 10px;" : ""}`}
                             {@const sectionTime = show.data?.time ? getTimeUntilClock(show.data.time, today) : 0}
                             {@const isActive = show.type === "section" ? ($focusMode ? $activeFocus.id === show.id : $activeShow?.id === show.id) : false}
+                            {@const isLocked = show.type === "section" && $projects[$activeProject || ""]?.sectionsLocked}
 
-                            <SelectElem id="show" dropAbove={isFirst} triggerOnHover data={{ ...show, name: show.name || removeExtension(getFileName(show.id)), index }} {fileOver} borders="edges" trigger="column" draggable>
+                            <SelectElem id="show" dropAbove={isFirst} triggerOnHover data={{ ...show, name: show.name || removeExtension(getFileName(show.id)), index }} {fileOver} borders="edges" trigger="column" draggable={!isLocked} selectable={!isLocked}>
                                 {#if show.type === "section"}
                                     <MaterialButton
                                         {isActive}
-                                        class="section {projectReadOnly ? '' : `context #project_section ${show.color ? 'color-border' : ''}`}"
+                                        class="section {projectReadOnly || isLocked ? '' : `context #project_section ${show.color ? 'color-border' : ''}`}"
                                         style="{borderRadiusStyle}justify-content: left;background-color: var(--primary-darkest);border-top: 1px solid var(--primary-lighter);padding: 0.1em 1em;{$fullColors ? `background-color: ${show.color || 'var(--primary-darker)'} !important;color: ${getContrast(show.color || '')};` : `border-bottom: 1px solid ${show.color || 'transparent'} !important;`}"
                                         on:click={(e) => {
                                             if (e.detail.ctrl) return
@@ -356,9 +357,13 @@
             <div class="divider"></div>
         {/if}
 
-        <MaterialButton icon="section" title="new.section" on:click={addSection} white={lessVisibleSection}>
-            {#if !lessVisibleSection && !$labelsDisabled}<T id="new.section" />{/if}
-        </MaterialButton>
+        {#if $projects[$activeProject]?.sectionsLocked}
+            <MaterialButton icon="lock" title="output.state_locked" class="context #new_section" on:click={() => newToast("output.state_locked")} white={lessVisibleSection} />
+        {:else}
+            <MaterialButton icon="section" title="new.section" class="context #new_section" on:click={addSection} white={lessVisibleSection}>
+                {#if !lessVisibleSection && !$labelsDisabled}<T id="new.section" />{/if}
+            </MaterialButton>
+        {/if}
     </FloatingInputs>
 {/if}
 

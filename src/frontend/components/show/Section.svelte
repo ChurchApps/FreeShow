@@ -86,6 +86,8 @@
 
     $: currentActionId = localAction || $special.sectionTriggerAction
     $: currentAction = currentActionId ? { ...$actions[currentActionId], id: currentActionId } : null
+
+    $: isLocked = !!$projects[$activeProject || ""]?.sectionsLocked
 </script>
 
 {#if settingsOpened}
@@ -102,14 +104,14 @@
     {#key section}
         <InputRow>
             <h4 id="sectionTitle" class:empty={!sectionUpdated?.name} style="flex: 6;border-bottom: 2px solid {sectionUpdated.color || 'var(--primary-darker);'}">
-                <TextInput value={section?.name || ""} placeholder={translateText("main.unnamed")} on:input={updateName} on:keydown={keydown} />
+                <TextInput value={section?.name || ""} placeholder={translateText("main.unnamed")} disabled={isLocked} on:input={updateName} on:keydown={keydown} />
             </h4>
             <!-- WIP suggest titles based on previous titles? (maybe not needed as we have project templates) -->
 
-            <MaterialTimePicker label="calendar.time" value={section?.data?.time} style="flex: 1;" on:change={(e) => updateSectionData("time", e.detail)} />
+            <MaterialTimePicker label="calendar.time" value={section?.data?.time} disabled={isLocked} style="flex: 1;" on:change={(e) => updateSectionData("time", e.detail)} />
         </InputRow>
 
-        <Notes value={note} on:edit={edit} />
+        <Notes value={note} disabled={isLocked} on:edit={edit} />
     {/key}
 {/if}
 

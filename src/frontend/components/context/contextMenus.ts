@@ -96,6 +96,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     duplicate: { label: "actions.duplicate", icon: "duplicate", iconColor: "#97c7ff", shortcuts: ["Ctrl+D"] },
     mark_played: { label: "actions.mark_played", icon: "check", iconColor: "var(--text)" },
     section: { label: "new.section", icon: "section", iconColor: "var(--secondary)" },
+    lock_sections: { label: "actions.lock_sections", icon: "lock", iconColor: "#ff5454" },
     copy_to_template: { label: "actions.create_template", icon: "templates", iconColor: "#97c7ff" },
     // SORT
     sort_shows_by: { label: "sort.sort_by", icon: "sort", iconColor: "#979aff", items: ["LOAD_sort_shows"] },
@@ -310,6 +311,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     // "duplicate" removed as it was people did not get that it only duplicated the reference in project, and not the entire show (keyboard / menu bar shortcuts can be used)
     project_show: ["GROUP_rename_only", "remove", "SEPARATOR", "mark_played", "private"],
     pco_item: ["unlink_pco"],
+    new_section: ["lock_sections"],
     project_section: ["GROUP_recolor", "remove"],
     project_overlay: ["remove"],
     project_pdf: ["remove", "SEPARATOR", "mark_played"],

@@ -910,9 +910,25 @@ const clickActions = {
             return a
         })
     },
-    section: (obj) => {
-        const index: number = obj.sel.data[0] ? obj.sel.data[0].index + 1 : get(projects)[get(activeProject)!]?.shows?.length || 0
+    section: (obj: ObjData) => {
+        if (get(projects)[get(activeProject)!]?.sectionsLocked) {
+            newToast("output.state_locked")
+            return
+        }
+
+        const index: number = obj.sel?.data[0] ? obj.sel.data[0].index + 1 : get(projects)[get(activeProject)!]?.shows?.length || 0
         history({ id: "UPDATE", newData: { key: "shows", index }, oldData: { id: get(activeProject) }, location: { page: "show", id: "section" } })
+    },
+    lock_sections: () => {
+        const projectId = get(activeProject)
+        if (!projectId) return
+
+        projects.update((a) => {
+            if (!a[projectId]) return a
+
+            a[projectId].sectionsLocked = !a[projectId].sectionsLocked
+            return a
+        })
     },
     mark_played: (obj: ObjData) => {
         const indexes = (obj.sel?.data || []).map((item) => Number(item.index))
