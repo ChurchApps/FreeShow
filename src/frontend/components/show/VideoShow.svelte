@@ -3,7 +3,7 @@
     import { Main } from "../../../types/IPC/Main"
     import type { MediaStyle } from "../../../types/Main"
     import { requestMain, sendMain } from "../../IPC/main"
-    import { activeRename, focusMode, media, outLocked, outputs, playingVideos, videoMarkers, videosData, videosTime, volume } from "../../stores"
+    import { activeProject, activeRename, focusMode, media, outLocked, outputs, playingVideos, projects, videoMarkers, videosData, videosTime, volume } from "../../stores"
     import { translateText } from "../../utils/language"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
@@ -181,9 +181,10 @@
     let shouldLoop = false
     let shouldBeMuted = false
     $: videoType = getMediaLayerType(mediaPath, mediaStyle)
+    $: projectItem = $projects[$activeProject || ""]?.shows?.[show?.index]
     $: if (mediaPath) {
-        shouldLoop = videoType === "background" ? true : false
-        shouldBeMuted = videoType === "background" ? true : false
+        shouldLoop = typeof projectItem?.loop === "boolean" ? projectItem.loop : videoType === "background" ? true : false
+        shouldBeMuted = typeof projectItem?.muted === "boolean" ? projectItem.muted : videoType === "background" ? true : false
     }
     function playVideo(startAt = 0) {
         if ($outLocked) return
@@ -205,6 +206,25 @@
         // TODO: playing in multiple outputs will create unclearable "ghost" video
 
         setOutput("background", bg)
+    }
+
+    function toggleLoop() {
+        shouldLoop = !shouldLoop
+        saveToProject("loop", shouldLoop)
+    }
+    function toggleMute() {
+        shouldBeMuted = !shouldBeMuted
+        saveToProject("muted", shouldBeMuted)
+    }
+
+    // save in project item if any active
+    function saveToProject(key: string, value: any) {
+        if (!projectItem || projectItem.id !== showId) return
+
+        projects.update((a) => {
+            a[$activeProject || ""].shows[show.index][key] = value
+            return a
+        })
     }
 
     $: if (video && mediaStyle.speed) video.playbackRate = Number(mediaStyle.speed)
@@ -350,25 +370,13 @@
 {#if !$focusMode}
     {#if !playingInOutput && !manageSubtitles && !timeMarkersEnabled}
         <FloatingInputs side="left">
-            <MaterialButton
-                title={"media._loop" + (shouldLoop ? ": settings.enabled" : "")}
-                on:click={() => {
-                    // WIP save in project item if any
-                    shouldLoop = !shouldLoop
-                }}
-            >
+            <MaterialButton title={"media._loop" + (shouldLoop ? ": settings.enabled" : "")} on:click={toggleLoop}>
                 <Icon id="loop" size={1.2} white={!shouldLoop} />
             </MaterialButton>
 
             <!-- <div class="divider" /> -->
 
-            <MaterialButton
-                title={!shouldBeMuted ? "actions.mute" : "actions.unmute"}
-                disabled={$outLocked}
-                on:click={() => {
-                    shouldBeMuted = !shouldBeMuted
-                }}
-            >
+            <MaterialButton title={!shouldBeMuted ? "actions.mute" : "actions.unmute"} disabled={$outLocked} on:click={toggleMute}>
                 <Icon id={!shouldBeMuted ? "volume" : "muted"} size={1.2} white={shouldBeMuted} />
             </MaterialButton>
         </FloatingInputs>
