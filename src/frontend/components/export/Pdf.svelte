@@ -341,13 +341,19 @@
                     {/if}
                     {#if options.type !== "slides"}
                         <div class="text" class:margin={options.type === "text"}>
-                            {#if slide.items}
-                                {#each slide.items as item}
-                                    {#if item.type === undefined || item.type === "text" || item.type === "timer"}
-                                        <Textbox {item} ref={{ showId: shows[index].id, id: slide.id }} customFontSize={options.originalTextSize ? null : options.textSize} style={false} />
-                                    {/if}
-                                {/each}
-                            {/if}
+                            <div style="position: relative;display: flex;flex-direction: column;align-items: center;justify-content: center;flex: 1;">
+                                {#if slide.items}
+                                    {#each slide.items as item}
+                                        {#if item.type === undefined || item.type === "text" || item.type === "timer"}
+                                            <Textbox {item} ref={{ showId: shows[index].id, id: slide.id }} customFontSize={options.originalTextSize ? null : options.textSize} style={false} />
+                                        {/if}
+                                    {/each}
+                                {/if}
+
+                                {#if options.notes && slide.notes}
+                                    <p class="notes">{slide.notes}</p>
+                                {/if}
+                            </div>
                         </div>
                     {/if}
                 </div>
@@ -522,6 +528,13 @@
         color: #333;
         border-bottom: 1px solid #ccc;
         padding-bottom: 3px;
+    }
+
+    .notes {
+        width: 80%;
+        font-size: 90px;
+        text-align: center;
+        font-style: italic;
     }
 
     .verse {

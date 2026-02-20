@@ -19,12 +19,12 @@
 
             title: true,
             metadata: true,
-            invert: false,
+            pageNumbers: true,
             groups: true,
             numbers: true,
-            // repeats: false,
-            // notes: false,
-            pageNumbers: true,
+            notes: false,
+            invert: false,
+
             grid: [3, 6],
             oneFile: false,
             originalTextSize: true,
@@ -68,6 +68,9 @@
             <MaterialCheckbox label="export.page_numbers" checked={pdfOptions.pageNumbers} on:change={(e) => updatePdfOptions(e, "pageNumbers")} />
             <MaterialCheckbox label="export.groups" checked={pdfOptions.groups} on:change={(e) => updatePdfOptions(e, "groups")} />
             <MaterialCheckbox label="export.numbers" checked={pdfOptions.numbers} on:change={(e) => updatePdfOptions(e, "numbers")} />
+            {#if pdfOptions.type === "default" || pdfOptions.type === "text"}
+                <MaterialCheckbox label="tools.notes" checked={pdfOptions.notes} on:change={(e) => updatePdfOptions(e, "notes")} />
+            {/if}
             <MaterialCheckbox label="export.invert" disabled={pdfOptions.type === "text"} checked={pdfOptions.invert} on:change={(e) => updatePdfOptions(e, "invert")} />
 
             <MaterialCheckbox label="export.original_text_size" style="margin-top: 10px;" disabled={pdfOptions.type === "slides"} checked={pdfOptions.originalTextSize !== false} on:change={(e) => updatePdfOptions(e, "originalTextSize")} />
