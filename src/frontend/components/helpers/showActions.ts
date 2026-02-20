@@ -1317,7 +1317,7 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
         slideIndex = outSlide?.index ?? -1
     }
 
-    let currentShow = _show(showId).get()
+    const currentShow = _show(showId).get() || null
     if (type === "show" && !currentShow) return ""
 
     const customIds = ["slide_text_current", "active_layers", "active_styles", "output_windows_active", "log_song_usage"]
@@ -1413,8 +1413,7 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
             layoutId = outSlide?.layout
             slideIndex = outSlide?.index ?? -1
         }
-        if (!show?.name) show = _show(showId).get() || null
-        if (!show) show = null
+        if (!show) show = _show(showId).get() || null
 
         // META
         if (dynamicId.startsWith("meta_")) {
