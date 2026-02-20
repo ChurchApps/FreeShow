@@ -23,6 +23,7 @@
     import Icons from "./Icons.svelte"
     import Textbox from "./Textbox.svelte"
     import Zoomed from "./Zoomed.svelte"
+    import { _show } from "../helpers/shows"
 
     export let showId: string
     export let slide: Slide
@@ -107,7 +108,8 @@
         // create ghost ready thumbnails
         if (!bgPath.startsWith("http")) {
             getMedia(bgPath, mediaSize.drawerSize)
-            if (Object.values(show.layouts).some((a) => a.slides.length > 28)) getMedia(bgPath, mediaSize.small)
+            const refs = _show().layouts().ref()
+            if (refs.some((a) => a.length > 28)) getMedia(bgPath, mediaSize.small)
         }
 
         const media = await getMedia(bgPath, mediaSize.slideSize)
