@@ -6,7 +6,7 @@
     import { getAccess } from "../../utils/profile"
     import { historyAwait } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
-    import { encodeFilePath, getFileName, getMedia, getMediaLayerType, getMediaStyle, mediaSize, removeExtension } from "../helpers/media"
+    import { encodeFilePath, getExtension, getFileName, getMedia, getMediaLayerType, getMediaStyle, getMediaType, mediaSize, removeExtension } from "../helpers/media"
     import { findMatchingOut, getActiveOutputs, setOutput } from "../helpers/output"
     import { loadShows } from "../helpers/setShow"
     import { checkName, getLayoutRef } from "../helpers/show"
@@ -211,7 +211,9 @@
         }
 
         const media = await getMedia(id, mediaSize.small)
-        if (media?.thumbnail) thumbnailPath = media.thumbnail
+        if (media) thumbnailPath = media.thumbnail || media.altPath || media.path
+        // online videos (Pixabay) might not have a thumbnail ready
+        if (getMediaType(getExtension(thumbnailPath)) === "video") thumbnailPath = ""
     }
 </script>
 
