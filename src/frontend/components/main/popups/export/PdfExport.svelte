@@ -43,7 +43,7 @@
         }
     }
 
-    $: pdfTypeOptions = [{ value: "default", label: translateText("example.default") }, { value: "text", label: translateText("export.text") }, { value: "slides", label: translateText("export.slides") }, ...(showHasChords(previewShow) ? [{ value: "chordSheet", label: "Chord Sheet" }] : [])]
+    $: pdfTypeOptions = [{ value: "default", label: translateText("example.default") }, { value: "text", label: translateText("export.text") }, { value: "slides", label: translateText("export.slides") }, { value: "media", label: translateText("items.media") }, ...(showHasChords(previewShow) ? [{ value: "chordSheet", label: "Chord Sheet" }] : [])]
 
     function showHasChords(show: Show | null): boolean {
         if (!show) return false
@@ -63,7 +63,9 @@
 
         <!-- <MaterialCheckbox label="export.title" checked={pdfOptions.title} on:change={(e) => updatePdfOptions(e, "title")} /> -->
 
-        {#if pdfOptions.type !== "chordSheet"}
+        {#if pdfOptions.type === "media"}
+            <!-- no options needed -->
+        {:else if pdfOptions.type !== "chordSheet"}
             <MaterialCheckbox label="export.metadata" checked={pdfOptions.metadata} on:change={(e) => updatePdfOptions(e, "metadata")} />
             <MaterialCheckbox label="export.page_numbers" checked={pdfOptions.pageNumbers} on:change={(e) => updatePdfOptions(e, "pageNumbers")} />
             <MaterialCheckbox label="export.groups" checked={pdfOptions.groups} on:change={(e) => updatePdfOptions(e, "groups")} />
@@ -96,7 +98,7 @@
     <div class="previewBox">
         <div style="flex: 1;display: flex;flex-direction: column;margin: 10px;border-radius: 4px;overflow: hidden;">
             <!-- <h4 style="text-align: center;"><T id="export.preview" /></h4> -->
-            <div class="label">{translateText("export.preview")}</div>
+            <!-- <div class="label">{translateText("export.preview")}</div> -->
 
             <div class="paper" bind:this={paper}>
                 <Pdf shows={previewShow ? [previewShow] : []} options={pdfOptions} />
@@ -134,7 +136,7 @@
         position: relative;
     }
 
-    .label {
+    /* .label {
         position: absolute;
         left: 0.75rem;
         top: 0.25rem;
@@ -145,7 +147,7 @@
 
         pointer-events: none;
         z-index: 1;
-    }
+    } */
 
     .paper {
         background-color: white;

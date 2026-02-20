@@ -3,8 +3,8 @@
     import type { Show } from "../../../types/Show"
     import { currentWindow } from "../../stores"
     import { send } from "../../utils/request"
-    import Media from "../output/layers/Media.svelte"
     import Textbox from "../slide/Textbox.svelte"
+    import MediaItem from "../slide/views/MediaItem.svelte"
     import Zoomed from "../slide/Zoomed.svelte"
 
     export let shows: Show[] = []
@@ -63,7 +63,8 @@
 
     let index = 0
     function exportPDF() {
-        setTimeout(() => send(EXPORT, ["EXPORT"], { type: "pdf", name: shows[index]?.name || "" }), 20 * (pages + 1) + 400)
+        // give time for any media to load as well
+        setTimeout(() => send(EXPORT, ["EXPORT"], { type: "pdf", name: shows[index]?.name || "", options: { type: options.type } }), 20 * (pages + 1) + 1000)
     }
 
     $: pages = shows.length ? Math.ceil(layoutSlides[shows[0].id!].length / options.grid[1] / (options.type === "default" ? 1 : options.type !== "text" ? options.grid[0] : 1.5)) : 0
@@ -238,7 +239,24 @@
 
 <main class:flow={options.type === "slides"} class:chord-sheet={options.type === "chordSheet"}>
     {#if shows.length && shows[index]}
-        {#if options.type === "chordSheet"}
+        {#if options.type === "media"}
+            {#each layoutSlides[shows[index].id || ""] as slide}
+                <Zoomed style="display: flex;justify-content: center;width: 100%;" let:ratio>
+                    {#if shows[index].media?.[slide.data?.background]?.path}
+                        <div class="media" style="height: 100%;zoom: {1 / ratio};">
+                            <!-- {filter} {flipped} {fit} -->
+                            <MediaItem id="" item={{ style: "", type: "media", src: shows[index].media[slide.data.background].path }} mirror />
+                        </div>
+                    {/if}
+
+                    {#if slide.items}
+                        {#each slide.items as item}
+                            <Textbox {item} ref={{ showId: shows[index].id, id: slide.id }} chords={item.chords?.enabled} mirror />
+                        {/each}
+                    {/if}
+                </Zoomed>
+            {/each}
+        {:else if options.type === "chordSheet"}
             <!-- Chord Sheet Export - Professional layout -->
             <div class="page chord-sheet-page" style="padding: {options.margin || 20}px; --font-size: {options.fontSize || 12}px; --chord-font-size: {options.chordFontSize || 10}px; font-size: {options.fontSize || 12}px; line-height: {options.spacing || 1.5};">
                 <!-- Header -->
@@ -327,13 +345,14 @@
                                 {#if shows[index].media?.[slide.data?.background]?.path}
                                     <div class="media" style="height: 100%;zoom: {1 / ratio};">
                                         <!-- {filter} {flipped} {fit} -->
-                                        <Media path={shows[index].media[slide.data.background].path || ""} mirror />
+                                        <!-- <Media path={shows[index].media[slide.data.background].path || ""} mirror /> -->
+                                        <MediaItem id="" item={{ style: "", type: "media", src: shows[index].media[slide.data.background].path }} mirror />
                                     </div>
                                 {/if}
 
                                 {#if slide.items}
                                     {#each slide.items as item}
-                                        <Textbox {item} ref={{ showId: shows[index].id, id: slide.id }} chords={item.chords?.enabled} />
+                                        <Textbox {item} ref={{ showId: shows[index].id, id: slide.id }} chords={item.chords?.enabled} mirror />
                                     {/each}
                                 {/if}
                             </Zoomed>

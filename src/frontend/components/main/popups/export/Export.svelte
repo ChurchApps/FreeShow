@@ -107,10 +107,15 @@
                 sendMain(Main.SAVE_IMAGE, { base64, filePath: ["Images", showName, `${i + 1}.jpg`], format: "jpg" })
             })
             loading = false
-        } else {
-            const options = exportFormat === "pdf" ? (pdfOptions.chordSheet ? { ...pdfOptions, chordSheet: true } : pdfOptions) : {}
+        } else if (exportFormat === "pdf") {
             const showNames = showIds.map((id) => $shows[id]?.name || "")
-            send(EXPORT, ["GENERATE"], { type: exportFormat, showIds, showNames, options })
+            // const ratio = getResolution() // { width: 16, height: 9 }
+            // const size = { width: 1920, height: Math.round(1920 / ratio.width) * ratio.height }
+            // const micronsSize = { width: Math.round((size.width / 96) * 25400), height: Math.round((size.height / 96) * 25400) }
+            send(EXPORT, ["GENERATE"], { type: exportFormat, showIds, showNames, options: pdfOptions })
+        } else {
+            const showNames = showIds.map((id) => $shows[id]?.name || "")
+            send(EXPORT, ["GENERATE"], { type: exportFormat, showIds, showNames })
         }
 
         activePopup.set(null)
