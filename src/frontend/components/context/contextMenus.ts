@@ -51,6 +51,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     // DRAWER
     enabledTabs: { label: "context.enabledTabs", items: ["LOAD_enabled_drawer_tabs"] },
     manage_show_tags: { label: "popup.manage_tags", icon: "edit", iconColor: "#97c7ff" },
+    display_tags: { label: "context.display_tags", icon: "tag", iconColor: "#979aff" },
     tag_set: { label: "context.setTag", icon: "tag", iconColor: "#979aff", items: ["LOAD_tag_set"] },
     tag_filter: { label: "context.filterByTags", icon: "tag", iconColor: "#979aff", items: ["LOAD_tag_filter"] },
     manage_media_tags: { label: "popup.manage_tags", icon: "edit", iconColor: "#97c7ff" },
@@ -247,7 +248,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     category_scripture_button: ["GROUP_rename_only", "delete", "SEPARATOR", "favourite"],
     playlist: ["GROUP_rename_only", "delete"],
     // CONTENT
-    drawer_show: ["newShowPopup", "SEPARATOR", "manage_show_tags", "tag_filter", "sort_shows_by", "SEPARATOR", "selectAll"],
+    drawer_show: ["newShowPopup", "SEPARATOR", "manage_show_tags", "display_tags", "tag_filter", "sort_shows_by", "SEPARATOR", "selectAll"],
     // , "changeCategory" ? edit with rename & categories...
     // , "convertToOverlay"
     // , "SEPARATOR", "export"

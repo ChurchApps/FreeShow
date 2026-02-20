@@ -2,7 +2,7 @@
     import { getDocument, GlobalWorkerOptions } from "pdfjs-dist"
     import type { ClickEvent, MediaStyle } from "../../../types/Main"
     import { AudioPlayer } from "../../audio/audioPlayer"
-    import { activeEdit, activeFocus, activePage, activeProject, activeShow, categories, focusMode, media, notFound, outLocked, outputs, overlays, playerVideos, playingAudio, projects, refreshEditSlide, shows, showsCache, styles } from "../../stores"
+    import { activeEdit, activeFocus, activePage, activeProject, activeShow, categories, displayTags, focusMode, globalTags, media, notFound, outLocked, outputs, overlays, playerVideos, playingAudio, projects, refreshEditSlide, shows, showsCache, styles } from "../../stores"
     import { getAccess } from "../../utils/profile"
     import { historyAwait } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
@@ -15,6 +15,7 @@
     import { clearBackground, clearSlide } from "../output/clear"
     import HiddenInput from "./HiddenInput.svelte"
     import MaterialButton from "./MaterialButton.svelte"
+    import Tags from "../show/Tags.svelte"
 
     export let id: string
     export let show: any // ShowList | ShowRef
@@ -255,8 +256,23 @@
                 {/if}
             {:else}
                 <span class="cell">
-                    {#if showNumber}
-                        <span class="number">{showNumber}</span>
+                    <!-- tags -->
+                    {#if $displayTags}
+                        <span class="tags">
+                            <span style="font-size: 0;position: absolute;">{console.log($shows[show.id])}</span>
+                            {#each $shows[show.id]?.quickAccess?.tags || [] as tagId}
+                                {@const tag = $globalTags[tagId]}
+                                {#if tag}
+                                    <span class="tag" style="--color: {tag.color || 'white'};">
+                                        <p style="margin: 0;">{tag.name || "—"}</p>
+                                    </span>
+                                {/if}
+                            {/each}
+                        </span>
+                    {/if}
+
+                    {#if showNumber || $displayTags}
+                        <span class="number">{showNumber || ""}</span>
                     {/if}
 
                     <span class="date">{data || ""}</span>
@@ -367,5 +383,26 @@
         display: flex;
         align-items: center;
         justify-content: center;
+    }
+
+    /* tags */
+
+    .tags {
+        display: flex;
+        gap: 5px;
+        padding-left: 10px;
+    }
+
+    .tag {
+        --color: white;
+
+        display: flex;
+        padding: 0px 5px;
+
+        color: var(--color);
+        font-weight: 600;
+
+        border-radius: 20px;
+        border: 2px solid var(--color);
     }
 </style>

@@ -32,6 +32,7 @@ import {
     categories,
     colorbars,
     currentOutputSettings,
+    displayTags,
     drawer,
     drawerTabsData,
     effects,
@@ -511,6 +512,10 @@ const clickActions = {
     },
     action_history: () => {
         activePopup.set("action_history")
+    },
+
+    display_tags: () => {
+        displayTags.set(!get(displayTags))
     },
 
     addToShow: (obj: ObjData) => {

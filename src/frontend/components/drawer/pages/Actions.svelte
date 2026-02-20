@@ -109,11 +109,10 @@
                             {#if $activeActionTagFilter.length}
                                 <span class="tags">
                                     {#each action.tags as tagId}
-                                        {@const tag = $actionTags[tagId] || {}}
-
-                                        {#if !$activeActionTagFilter.includes(tagId)}
+                                        {@const tag = $actionTags[tagId]}
+                                        {#if tag && !$activeActionTagFilter.includes(tagId)}
                                             <span class="tag" style="--color: {tag.color || 'white'};">
-                                                <p>{tag.name}</p>
+                                                <p>{tag.name || "—"}</p>
                                             </span>
                                         {/if}
                                     {/each}

@@ -915,6 +915,7 @@
         "to_dictionary": "Add to dictionary",
         "correct": "Replace with this word",
         "enabledTabs": "Toggle tabs",
+        "display_tags": "Display tags",
         "setTag": "Set tag",
         "filterByTags": "Filter by tags",
         "addToProject": "Add to project",
