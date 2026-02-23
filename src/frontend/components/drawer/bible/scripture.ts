@@ -558,7 +558,7 @@ function splitContent(content: BibleContent[], perSlide: number): BibleContent[]
 export function useOldScriptureSystem(templateId: string, _updater: any = null) {
     const _template = new TemplateHelper(templateId)
 
-    return !_template.getPlainText().includes("{scripture_")
+    return !_template.getPlainText().includes("{scripture")
 }
 
 export async function getScriptureSlidesNew(data: any, onlyOne = false, disableReference = false) {
@@ -629,7 +629,8 @@ export async function getScriptureSlidesNew(data: any, onlyOne = false, disableR
         items.forEach((item) => {
             item.lines?.forEach((line) => {
                 line.text?.forEach((textObj) => {
-                    if (textObj.value?.includes("{scripture_number}")) {
+                    // WIP this does not account for "scripture2_number" etc.
+                    if (textObj.value?.includes("{scripture_number}") || textObj.value?.includes("{scripture1_number}")) {
                         const textStyle = textObj.style || ""
                         if (textStyle) verseNumberStyle = textStyle
                     }

@@ -925,21 +925,21 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
             line.text?.forEach((text, k) => {
                 // For scripture slides: match by placeholder type, not just index
                 let templateText: Line["text"][number] | undefined = templateLine?.text?.[k]
-                if (!templateText && templateLine?.text?.some((t) => t?.value?.includes("{scripture_"))) {
+                if (templateLine?.text?.some((t) => t?.value?.includes("{scripture"))) {
                     // If no exact index match and this is a scripture template, find the right placeholder
                     // Verse numbers have customType "disableTemplate", verse text doesn't
                     if (text.customType?.includes("disableTemplate")) {
-                        // This is a verse number, find {scripture_number} template
-                        templateText = templateLine.text.find((t) => t?.value?.includes("{scripture_number}"))
+                        // This is a verse number, find {scripture_number} or {scriptureN_number} template
+                        templateText = templateLine.text.find((t) => /\{scripture(?:\d+)?_number\}/.test(t?.value || ""))
                     } else {
-                        // This is verse text, find {scripture_text} template
-                        templateText = templateLine.text.find((t) => t?.value?.includes("{scripture_text}"))
+                        // This is verse text, find {scripture_text} or {scriptureN_text} template
+                        templateText = templateLine.text.find((t) => /\{scripture(?:\d+)?_text\}/.test(t?.value || ""))
                     }
                 }
                 // Final fallback to first template text
                 if (!templateText) templateText = templateLine?.text?.[0]
 
-                if (!text.customType?.includes("disableTemplate") && !templateText?.value?.includes("{scripture_number}")) {
+                if (!text.customType?.includes("disableTemplate") && !/\{scripture(?:\d+)?_number\}/.test(templateText?.value || "")) {
                     let style = templateText?.style || ""
 
                     // add original text color, if template is not clicked & slide text has multiple colors
