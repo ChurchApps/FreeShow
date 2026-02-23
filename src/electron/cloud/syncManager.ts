@@ -106,8 +106,14 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
         if (isValidJSON(changesContent)) CHANGES = JSON.parse(changesContent)
         if (CHANGES.version !== version) CHANGES = clone(DEFAULT_CHANGES)
         cloudChanges = clone(CHANGES)
-        isNewDevice = !CHANGES.devices.find((id) => id === deviceId)
-        if (isNewDevice) CHANGES.devices.push(deviceId)
+
+        const deviceExists = CHANGES.devices.find((id) => id === deviceId)
+        if (!deviceExists) {
+            markAsNewSync()
+            CHANGES.devices.push(deviceId)
+        } else if (isNewDevice) {
+            removeDeviceRecords()
+        }
     }
     // console.log("Devices:", CHANGES.devices)
 
@@ -446,17 +452,30 @@ async function checkCloudEntry(id: ChangeId, key: string, cloudData: any, getLoc
 
     // exists only in cloud
     if (!localValue) {
+        if (isNewDevice) return { action: "create" }
+
+        if (isCreated(id, key) && isCreatedLocally(id, key)) {
+            // mark as deleted when it has previously been created, but is now missing
+            markAsDeleted(id, key)
+            return { action: "skip" } // already deleted
+        }
+
         // if marked as created and not yet created locally
-        if (isCreated(id, key) && !isCreatedLocally(id, key)) {
+        if (isCreated(id, key)) {
             markAsCreated(id, key)
             return { action: "create" }
         }
 
-        markAsDeleted(id, key)
-        return { action: "skip" } // already deleted
+        if (isDeleted(id, key)) {
+            markAsDeleted(id, key)
+            return { action: "skip" } // already deleted
+        }
+
+        // download always when not marked as created or deleted
+        return { action: "create" }
     }
 
-    if (isDeleted(id, key)) {
+    if (isDeleted(id, key) && !isNewDevice) {
         markAsDeleted(id, key)
         return { action: "delete" }
     }
@@ -490,6 +509,8 @@ async function checkCloudEntry(id: ChangeId, key: string, cloudData: any, getLoc
 
 // exists only locally
 function checkLocalEntry(id: ChangeId, key: string) {
+    if (isNewDevice) return { action: "upload" }
+
     // marked as deleted in general
     if (isDeleted(id, key)) {
         // marked as already deleted for this device
@@ -592,7 +613,6 @@ function isDeleted(storeId: ChangeId, key: string): boolean {
 }
 
 function isCreated(storeId: ChangeId, key: string): boolean {
-    if (isNewDevice) return true
     const instanceId = getInstanceId(storeId, key)
     return !!CHANGES.created?.[instanceId]
 }
@@ -606,4 +626,21 @@ function isDeletedLocally(storeId: ChangeId, key: string): boolean {
 function isCreatedLocally(storeId: ChangeId, key: string): boolean {
     const instanceId = getInstanceId(storeId, key)
     return !!cloudChanges?.created?.[instanceId]?.includes(deviceId)
+}
+
+export function markAsNewSync() {
+    isNewDevice = true
+}
+
+// remove deleted/created when it's connected again after being disconnected
+function removeDeviceRecords() {
+    Object.values(CHANGES.deleted || {}).forEach((deviceIds) => {
+        const index = deviceIds.indexOf(deviceId)
+        if (index !== -1) deviceIds.splice(index, 1)
+    })
+
+    Object.values(CHANGES.created || {}).forEach((deviceIds) => {
+        const index = deviceIds.indexOf(deviceId)
+        if (index !== -1) deviceIds.splice(index, 1)
+    })
 }

@@ -8,9 +8,9 @@ import type { MainResponses } from "../../types/IPC/Main"
 import { Main } from "../../types/IPC/Main"
 import type { ErrorLog, LyricSearchResult, OS } from "../../types/Main"
 import { openNowPlaying, setPlayingState, unsetPlayingAudio } from "../audio/nowPlaying"
-import { canSync, getSyncTeams, hasDataChanged, hasTeamData, syncData } from "../cloud/syncManager"
-import { ChurchAppsChat } from "../contentProviders/churchApps/ChurchAppsChat"
+import { canSync, getSyncTeams, hasDataChanged, hasTeamData, markAsNewSync, syncData } from "../cloud/syncManager"
 import { ContentProviderRegistry } from "../contentProviders"
+import { ChurchAppsChat } from "../contentProviders/churchApps/ChurchAppsChat"
 import { deleteBackup, getBackups, restoreFiles } from "../data/backup"
 import { getLocalIPs } from "../data/bonjour"
 import { checkIfMediaDownloaded, downloadLessonsMedia, downloadMedia } from "../data/downloadMedia"
@@ -173,6 +173,7 @@ export const mainResponses: MainResponses = {
     [Main.SEND_SOCKET_MESSAGE]: (data) => sendSocketMessage(data),
     // Provider-based routing
     [Main.PROVIDER_LOAD_SERVICES]: async (data) => {
+        if (data.cloudOnly) markAsNewSync()
         await ContentProviderRegistry.loadServices(data.providerId, data.cloudOnly || false)
     },
     [Main.PROVIDER_DISCONNECT]: (data) => {
