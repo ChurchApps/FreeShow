@@ -4,11 +4,11 @@ import { OUTPUT } from "../../../types/Channels"
 import { Main } from "../../../types/IPC/Main"
 import type { Output, Outputs } from "../../../types/Output"
 import type { Resolution, Styles } from "../../../types/Settings"
-import type { Item, Layout, LayoutRef, Line, Media, OutSlide, Show, Slide, SlideData, Template, TemplateSettings, Transition } from "../../../types/Show"
+import type { Item, Layout, LayoutRef, Media, OutSlide, Show, Slide, SlideData, Template, TemplateSettings, Transition } from "../../../types/Show"
 import { AudioAnalyser } from "../../audio/audioAnalyser"
 import { fadeinAllPlayingAudio, fadeoutAllPlayingAudio } from "../../audio/audioFading"
 import { sendMain } from "../../IPC/main"
-import { actions, activeProject, activeRename, activeTimers, allOutputs, categories, connections, currentOutputSettings, customMessageCredits, disabledServers, effects, lockedOverlays, media, outputDisplay, outputs, outputSlideCache, outputState, overlays, overlayTimers, playingVideos, projects, scriptures, serverData, showsCache, special, stageShows, styles, templates, theme, themes, transitionData, usageLog } from "../../stores"
+import { actions, activeProject, activeRename, activeTimers, allOutputs, categories, connections, currentOutputSettings, customMessageCredits, disabledServers, effects, lockedOverlays, media, outputDisplay, outputs, outputSlideCache, outputState, overlays, overlayTimers, playingVideos, projects, scriptures, scriptureSettings, serverData, showsCache, special, stageShows, styles, templates, theme, themes, transitionData, usageLog } from "../../stores"
 import { trackScriptureUsage } from "../../utils/analytics"
 import { isMainWindow, isOutputWindow, newToast } from "../../utils/common"
 import { translateText } from "../../utils/language"
@@ -816,12 +816,14 @@ export function getCurrentMediaTransition() {
 
 // TEMPLATE
 
-export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], addOverflowTemplateItems = false, resetAutoSize = true, templateClicked = false, mode: string = "") {
+export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], addOverflowTemplateItems = false, resetAutoSize = true, templateClicked = false, mode: string = "", customDynamicValues: { [key: string]: string | [string, string][] } = {}) {
     slideItems = clone(slideItems || []).filter(Boolean)
     if (!templateItems.length) return slideItems
 
     // only get items that are not from a template
     slideItems = slideItems.filter((a) => !a.fromTemplate)
+
+    const originalTemplateItems = templateItems
 
     // it's the wrong way around when a template is converted to a slide/output, but it breaks more than it fixes at this time.
     // should be reversed, but people have to invert the order of their template items order.
@@ -837,8 +839,10 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
     const sorted = sortItemsByType(templateItems)
     const sortedTemplateItems = clone(sorted)
 
+    const hasScriptureDynamicValue = customDynamicValues && templateItems?.some((item) => item?.lines?.some((line) => line?.text?.some((text) => text.value?.includes("{scripture"))))
+
     // reduce template textboxes to slide items
-    const slideTextboxes = slideItems.reduce((count, a) => (count += (a?.type || "text") === "text" ? 1 : 0), 0)
+    const slideTextboxes = hasScriptureDynamicValue ? 0 : slideItems.reduce((count, a) => (count += (a?.type || "text") === "text" ? 1 : 0), 0)
     if (!templateClicked && slideTextboxes < (sortedTemplateItems.text?.length || 0)) {
         sortedTemplateItems.text = sortedTemplateItems.text.slice(0, slideTextboxes)
     }
@@ -853,6 +857,7 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
         if (!item) return
 
         const type = item.type || "text"
+        if (type === "text" && hasScriptureDynamicValue) return
 
         const templateItem = clone(sortedTemplateItems[type]?.shift())
         if (!templateItem) return finish()
@@ -911,7 +916,6 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
             )
         ] as string[]
 
-        // && !text.value?.includes("{scripture")
         const hasDynamicValue = templateItem?.lines?.some((line) => line?.text?.some((text) => text.value?.includes("{")))
 
         item.lines?.forEach((line, j) => {
@@ -923,21 +927,7 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
 
             line.align = templateLine?.align || ""
             line.text?.forEach((text, k) => {
-                // For scripture slides: match by placeholder type, not just index
-                let templateText: Line["text"][number] | undefined = templateLine?.text?.[k]
-                if (templateLine?.text?.some((t) => t?.value?.includes("{scripture"))) {
-                    // If no exact index match and this is a scripture template, find the right placeholder
-                    // Verse numbers have customType "disableTemplate", verse text doesn't
-                    if (text.customType?.includes("disableTemplate")) {
-                        // This is a verse number, find {scripture_number} or {scriptureN_number} template
-                        templateText = templateLine.text.find((t) => /\{scripture(?:\d+)?_number\}/.test(t?.value || ""))
-                    } else {
-                        // This is verse text, find {scripture_text} or {scriptureN_text} template
-                        templateText = templateLine.text.find((t) => /\{scripture(?:\d+)?_text\}/.test(t?.value || ""))
-                    }
-                }
-                // Final fallback to first template text
-                if (!templateText) templateText = templateLine?.text?.[0]
+                const templateText = templateLine?.text?.[k] || templateLine?.text?.[0]
 
                 if (!text.customType?.includes("disableTemplate") && !/\{scripture(?:\d+)?_number\}/.test(templateText?.value || "")) {
                     let style = templateText?.style || ""
@@ -970,6 +960,9 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
                     line.text[k].value = text.value.replace(text.value[0], "").trim()
                 }
             })
+
+            // remove empty values
+            // line.text = line.text?.filter((a) => a?.value?.length) || []
         })
 
         finish()
@@ -978,7 +971,7 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
         }
     })
 
-    if (addOverflowTemplateItems) {
+    if (addOverflowTemplateItems || hasScriptureDynamicValue) {
         const remainingTextTemplateItems = sorted.text?.slice(slideTextboxes) || []
         sortedTemplateItems.text = removeTextValue(remainingTextTemplateItems)
     } else {
@@ -1015,7 +1008,98 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
     // add behind existing items (any textboxes previously on top not in use will not be replaced by any underneath)
     newSlideItems = [...remainingTemplateItems, ...newSlideItems, ...(sortedTemplateItems.text || [])]
 
+    newSlideItems = replaceScriptureValues(newSlideItems, originalTemplateItems, customDynamicValues)
+
     return newSlideItems // .reverse()
+}
+
+// WIP duplicate of getScriptureSlidesNew section in scripture.ts
+function replaceScriptureValues(items: Item[], templateItems: Item[], customDynamicValues: { [key: string]: string | [string, string][] } = {}) {
+    if (Object.keys(customDynamicValues).length) {
+        // extra styles
+        let verseNumberSize = 50 // get(scriptureSettings).numberSize || 50 // %
+        let verseNumberStyle = `color: ${get(scriptureSettings).numberColor || "#919191"};text-shadow: none;`
+        let verseNumberStyles: string[] = []
+        let baseStyle = ""
+
+        // find any text object with {scripture_number} and get the style
+        templateItems.forEach((item) => {
+            item.lines?.forEach((line) => {
+                line.text?.forEach((textObj) => {
+                    for (let i = 0; i <= 4; i++) {
+                        const numberValue = `{scripture${i === 0 ? "" : i}_number}`
+                        if (textObj.value?.includes(numberValue)) verseNumberStyles[i] = textObj.style || ""
+                    }
+                    if (textObj.value?.includes("{scripture_text}")) {
+                        const textStyle = textObj.style || ""
+                        if (textStyle && (item.textFit || "none") === "none") baseStyle = textStyle
+                    }
+                })
+            })
+        })
+
+        // set custom dynamic values (scripture)
+        let slideString = JSON.stringify(items)
+        Object.keys(customDynamicValues).forEach((key) => {
+            const value = customDynamicValues[key]
+            if (typeof value === "string") {
+                slideString = slideString.replace(new RegExp(`{${key}}`, "g"), value)
+            }
+        })
+
+        // remove style only values
+        for (let i = 0; i <= 4; i++) {
+            const numberValue = `{scripture${i === 0 ? "" : i}_number}`
+            slideString = slideString.replaceAll(`${numberValue} `, "").replaceAll(numberValue, "")
+        }
+
+        items = JSON.parse(slideString)
+
+        Object.keys(customDynamicValues).forEach((key) => {
+            const value = customDynamicValues[key]
+            if (Array.isArray(value)) {
+                // verse content [number, text]
+                items.forEach((item) => {
+                    item.lines?.forEach((line) => {
+                        const newTexts: { value: string; style: string; customType?: string }[] = []
+                        let insertAtPos = -1
+                        line.text?.forEach((text, i) => {
+                            if (text.value?.includes(`{${key}}`)) {
+                                insertAtPos = i
+                                text.value = "" // remove original text
+                                const style = text.style || ""
+
+                                const bibleIndex = parseInt(key.replace(/\D/g, "")) || 0
+
+                                value.forEach(([number, value]) => {
+                                    if (number && number !== "0") {
+                                        const size = verseNumberSize * (i === 0 ? 1.2 : 1)
+                                        const numberStyle = `;${verseNumberStyles[bibleIndex] || verseNumberStyles[0] || verseNumberStyle}font-size: ${size}px;margin-right: 0.3em;`
+                                        newTexts.push({ value: number, style: style + numberStyle, customType: "disableTemplate" })
+                                    }
+
+                                    newTexts.push({ value: value, style: style + ";" + baseStyle })
+                                })
+                            }
+                        })
+
+                        if (insertAtPos > -1) {
+                            line.text = [...line.text.slice(0, insertAtPos), ...newTexts, ...line.text.slice(insertAtPos + 1)]
+                        }
+                    })
+                })
+            }
+        })
+
+        // remove empty values
+        items.forEach((item) => {
+            item.lines?.forEach((line) => {
+                line.text = line.text?.filter((text) => text.value) || []
+            })
+        })
+    }
+
+    return items
 }
 
 export function updateSlideFromTemplate(slide: Slide, template: Template, isFirst = false, removeOverflow = false, firstTemplateId?: string) {
@@ -1214,11 +1298,13 @@ export function slideHasAutoSizeItem(slide: Slide | Template) {
     return slide?.items?.find((a) => a.auto)
 }
 
-export function setTemplateStyle(outSlide: OutSlide | null, currentStyle: Styles, items: Item[] | undefined, outputId: string) {
+export function setTemplateStyle(outSlide: OutSlide | null, currentStyle: Styles, items: Item[] | undefined, outputId: string, slideDynamicValues?: { [key: string]: any }) {
     if (!Array.isArray(items)) return []
 
     const isDrawerScripture = outSlide?.id === "temp"
     const slideItems = isDrawerScripture ? outSlide.tempItems : items
+
+    const customDynamicValues = isDrawerScripture ? outSlide.customDynamicValues : slideDynamicValues
 
     const template = getStyleTemplate(outSlide, currentStyle)
     const templateItems = template.items || []
@@ -1234,7 +1320,7 @@ export function setTemplateStyle(outSlide: OutSlide | null, currentStyle: Styles
     //     outputId
     // })
 
-    const newItems = mergeWithTemplate(slideItems || [], templateItems, true, true, false, mode) || []
+    const newItems = mergeWithTemplate(slideItems || [], templateItems, true, true, false, mode, customDynamicValues) || []
     newItems.push(...getSlideItemsFromTemplate(template.settings || {}))
 
     // console.log("[DEBUG - setTemplateStyle] After merge", {

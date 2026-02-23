@@ -244,7 +244,7 @@ export async function playScripture() {
     const selectedChapters = biblesContent[0].chapters || []
     const selectedVerses = biblesContent[0].activeVerses || []
 
-    const { slides, attributions } = await getScriptureSlidesNew({ biblesContent, selectedChapters, selectedVerses }, true)
+    const { slides, attributions, slideDynamicValues } = await getScriptureSlidesNew({ biblesContent, selectedChapters, selectedVerses }, true)
 
     const fullReferenceRange = buildFullReferenceRange(selectedChapters, selectedVerses)
     // include every selected chapter/verse in the displayed reference label
@@ -289,7 +289,7 @@ export async function playScripture() {
 
     const tempItems: Item[] = slides[0] || []
     const categoryId = get(drawerTabsData).scripture?.activeSubTab || ""
-    setOutput("slide", { id: "temp", categoryId, tempItems, previousSlides: await getPreviousSlides(), nextSlides: await getNextSlides(), attributionString, translations: biblesContent.length, settings })
+    setOutput("slide", { id: "temp", categoryId, tempItems, previousSlides: await getPreviousSlides(), nextSlides: await getNextSlides(), attributionString, translations: biblesContent.length, settings, customDynamicValues: slideDynamicValues[0] })
 
     // track
     const reference = `${biblesContent[0].book} ${fullReferenceRange || biblesContent[0].chapters[0]}`.trim()
@@ -571,7 +571,7 @@ export async function getScriptureSlidesNew(data: any, onlyOne = false, disableR
     const selectedVerses = data.selectedVerses as (number | string)[][]
     // const biblesContent = (data.biblesContent || []).filter(Boolean) as BibleContent[]
     const biblesContent = (await getActiveScripturesContent(selectedVerses)) || []
-    if (!biblesContent?.length || !biblesContent[0]) return { slides: [], groupNames: [], attributions: [] }
+    if (!biblesContent?.length || !biblesContent[0]) return { slides: [], groupNames: [], attributions: [], slideDynamicValues: [] }
 
     let perSlide = get(scriptureSettings).versesPerSlide || 3
     // Count total verses across all chapters
@@ -621,6 +621,7 @@ export async function getScriptureSlidesNew(data: any, onlyOne = false, disableR
     // extra styles
     let verseNumberSize = 50 // get(scriptureSettings).numberSize || 50 // %
     let verseNumberStyle = `color: ${get(scriptureSettings).numberColor || "#919191"};text-shadow: none;`
+    let verseNumberStyles: string[] = []
     let redJesusStyle = `color: ${get(scriptureSettings).jesusColor || "#FF4136"};`
     let baseStyle = ""
 
@@ -629,10 +630,9 @@ export async function getScriptureSlidesNew(data: any, onlyOne = false, disableR
         items.forEach((item) => {
             item.lines?.forEach((line) => {
                 line.text?.forEach((textObj) => {
-                    // WIP this does not account for "scripture2_number" etc.
-                    if (textObj.value?.includes("{scripture_number}") || textObj.value?.includes("{scripture1_number}")) {
-                        const textStyle = textObj.style || ""
-                        if (textStyle) verseNumberStyle = textStyle
+                    for (let i = 0; i <= 4; i++) {
+                        const numberValue = `{scripture${i === 0 ? "" : i}_number}`
+                        if (textObj.value?.includes(numberValue)) verseNumberStyles[i] = textObj.style || ""
                     }
                     if (textObj.value?.includes("{scripture_red_jesus}")) {
                         const textStyle = textObj.style || ""
@@ -648,7 +648,7 @@ export async function getScriptureSlidesNew(data: any, onlyOne = false, disableR
     })
 
     // extract text size from baseStyle & verseNumberStyle & calculate percentage difference
-    let verseNumberFontSize = verseNumberStyle.match(/font-size:\s*(\d+)px/)
+    let verseNumberFontSize = (verseNumberStyles[0] || verseNumberStyle).match(/font-size:\s*(\d+)px/)
     let baseFontSize = baseStyle.match(/font-size:\s*(\d+)px/)
     let percentageDiff = verseNumberFontSize && baseFontSize ? Number(verseNumberFontSize[1]) / Number(baseFontSize[1]) : 1
     if (Number(baseFontSize?.[1])) verseNumberSize = Number(baseFontSize?.[1]) * percentageDiff
@@ -663,8 +663,13 @@ export async function getScriptureSlidesNew(data: any, onlyOne = false, disableR
     let groupNames: string[] = []
     if (_template.getSetting("firstSlideTemplate")) groupNames.push(fullReference)
 
+    // store values in slide for use in a different template
+    let globalCustomDynamicValues: { [key: string]: string } = {}
+    let slideDynamicValues: { [key: string]: string | [string, string][] }[] = []
+
     for (let i = 0; i < splittedSlidesContent.length; i++) {
         if (!scriptureVerseContent[i]) scriptureVerseContent[i] = []
+        if (!slideDynamicValues[i]) slideDynamicValues[i] = {}
 
         const currentSlideContent = splittedSlidesContent[i]
         for (let j = 0; j < currentSlideContent.length; j++) {
@@ -717,11 +722,17 @@ export async function getScriptureSlidesNew(data: any, onlyOne = false, disableR
                 const mergedBooks = removeDuplicates(biblesContent.map((a) => a.book)).join(" / ")
                 const mergedReference = `${mergedBooks} ${verses}`.trim()
 
+                slideDynamicValues[i].scripture_reference = format(mergedReference)
+                slideDynamicValues[i][`{key_${i}_${j}}`] = `scripture_text`
+                slideDynamicValues[i].scripture_verses = format(justVerses)
                 slidesString = slidesString.replace(`{scripture_reference}`, format(mergedReference))
                 slidesString = slidesString.replace("{scripture_text}", `{key_${i}_${j}}`)
                 slidesString = slidesString.replace("{scripture_verses}", format(justVerses))
             }
             const reference = `${bible.book} ${verses}`.trim()
+            slideDynamicValues[i][`scripture${j + 1}_reference`] = format(reference)
+            slideDynamicValues[i][`{key_${i}_${j}}`] = `scripture${j + 1}_text`
+            slideDynamicValues[i][`scripture${j + 1}_verses`] = format(justVerses)
             slidesString = slidesString.replace(`{scripture${j + 1}_reference}`, format(reference))
             slidesString = slidesString.replace(`{scripture${j + 1}_text}`, `{key_${i}_${j}}`)
             slidesString = slidesString.replace(`{scripture${j + 1}_verses}`, format(justVerses))
@@ -750,19 +761,29 @@ export async function getScriptureSlidesNew(data: any, onlyOne = false, disableR
             attributions.push(bibleVersions[i - 1] || "")
         }
 
-        slidesString = slidesString.replaceAll(`{scripture${i}_name}`, format(bibleVersions[i - 1] || ""))
-        slidesString = slidesString.replaceAll(`{scripture${i}_book}`, format(biblesContent[i - 1]?.book || ""))
-        slidesString = slidesString.replaceAll(`{scripture${i}_book_abbr}`, format(biblesContent[i - 1]?.bookAbbr || ""))
-        slidesString = slidesString.replaceAll(`{scripture${i}_chapter}`, format(selectedChapters[i - 1]?.toString() || ""))
+        globalCustomDynamicValues[`scripture${i}_name`] = format(bibleVersions[i - 1] || "")
+        globalCustomDynamicValues[`scripture${i}_book`] = format(biblesContent[i - 1]?.book || "")
+        globalCustomDynamicValues[`scripture${i}_book_abbr`] = format(biblesContent[i - 1]?.bookAbbr || "")
+        globalCustomDynamicValues[`scripture${i}_chapter`] = format(selectedChapters[i - 1]?.toString() || "")
+        slidesString = slidesString.replaceAll(`{scripture${i}_name}`, globalCustomDynamicValues[`scripture${i}_name`])
+        slidesString = slidesString.replaceAll(`{scripture${i}_book}`, globalCustomDynamicValues[`scripture${i}_book`])
+        slidesString = slidesString.replaceAll(`{scripture${i}_book_abbr}`, globalCustomDynamicValues[`scripture${i}_book_abbr`])
+        slidesString = slidesString.replaceAll(`{scripture${i}_chapter}`, globalCustomDynamicValues[`scripture${i}_chapter`])
     }
 
-    slidesString = slidesString.replaceAll("{scripture_name}", format(mergedNames))
-    slidesString = slidesString.replaceAll("{scripture_book}", format(mergedBooks))
-    slidesString = slidesString.replaceAll("{scripture_book_abbr}", format(mergedBooksAbbr))
-    slidesString = slidesString.replaceAll("{scripture_chapter}", format(selectedChapters[0]?.toString() || ""))
+    globalCustomDynamicValues.scripture_name = format(mergedNames)
+    globalCustomDynamicValues.scripture_book = format(mergedBooks)
+    globalCustomDynamicValues.scripture_book_abbr = format(mergedBooksAbbr)
+    globalCustomDynamicValues.scripture_chapter = format(selectedChapters[0]?.toString() || "")
+    slidesString = slidesString.replaceAll("{scripture_name}", globalCustomDynamicValues.scripture_name)
+    slidesString = slidesString.replaceAll("{scripture_book}", globalCustomDynamicValues.scripture_book)
+    slidesString = slidesString.replaceAll("{scripture_book_abbr}", globalCustomDynamicValues.scripture_book_abbr)
+    slidesString = slidesString.replaceAll("{scripture_chapter}", globalCustomDynamicValues.scripture_chapter)
 
-    slidesString = slidesString.replaceAll("{scripture_reference_full}", format(fullReference))
-    slidesString = slidesString.replaceAll("{scripture_reference_last}", format(fullReference))
+    globalCustomDynamicValues.scripture_reference_full = format(fullReference)
+    globalCustomDynamicValues.scripture_reference_last = format(fullReference)
+    slidesString = slidesString.replaceAll("{scripture_reference_full}", globalCustomDynamicValues.scripture_reference_full)
+    slidesString = slidesString.replaceAll("{scripture_reference_last}", globalCustomDynamicValues.scripture_reference_last)
 
     function format(text: string) {
         if (disableReference) return ""
@@ -771,7 +792,8 @@ export async function getScriptureSlidesNew(data: any, onlyOne = false, disableR
 
     // metadata, uses the default "meta_" values
     for (const [key, value] of Object.entries(biblesContent[0]?.metadata || {})) {
-        slidesString = slidesString.replaceAll(`{meta_${key.toLowerCase()}}`, value as string)
+        globalCustomDynamicValues[`meta_${key.toLowerCase()}`] = value
+        slidesString = slidesString.replaceAll(`{meta_${key.toLowerCase()}}`, globalCustomDynamicValues[`meta_${key.toLowerCase()}`])
     }
 
     const newSlides: Item[][] = JSON.parse(slidesString)
@@ -779,6 +801,15 @@ export async function getScriptureSlidesNew(data: any, onlyOne = false, disableR
     scriptureVerseContent.forEach((slideContent, contentIndex) => {
         slideContent.forEach((bibleVerses, bibleIndex) => {
             const itemKey = `{key_${contentIndex}_${bibleIndex}}`
+
+            slideDynamicValues[contentIndex] = { ...globalCustomDynamicValues, ...(slideDynamicValues[contentIndex] || {}) }
+            const valueName = slideDynamicValues[contentIndex]?.[itemKey] as string
+            if (valueName) {
+                delete slideDynamicValues[contentIndex][itemKey]
+                const content = bibleVerses.map((v) => [verseNumbers && v.number ? v.number : "0", v.text]) as [string, string][]
+                slideDynamicValues[contentIndex][valueName] = content
+                if (valueName === "scripture1_text") slideDynamicValues[contentIndex].scripture_text = content
+            }
 
             // Find the slide that contains this key
             newSlides.forEach((slideItems) => {
@@ -805,7 +836,7 @@ export async function getScriptureSlidesNew(data: any, onlyOne = false, disableR
                             // Verse number
                             if (verseNumbers && verse.number) {
                                 const size = verseNumberSize * (i === 0 ? 1.2 : 1)
-                                const numberStyle = `;${verseNumberStyle}font-size: ${size}px;margin-right: 0.3em;`
+                                const numberStyle = `;${verseNumberStyles[bibleIndex + 1] || verseNumberStyles[0] || verseNumberStyle}font-size: ${size}px;margin-right: 0.3em;`
                                 newLineText.push({
                                     ...keyTextObj,
                                     value: verse.number,
@@ -863,7 +894,7 @@ export async function getScriptureSlidesNew(data: any, onlyOne = false, disableR
         })
     })
 
-    return { slides: newSlides, groupNames, attributions }
+    return { slides: newSlides, groupNames, attributions, slideDynamicValues }
 }
 
 // DEPRECATED
@@ -1069,7 +1100,7 @@ export function getScriptureSlides({ biblesContent, selectedChapters, selectedVe
         if (get(scriptureSettings).invertItems) slides[i].reverse()
     })
 
-    return { slides, groupNames: [], attributions: [] }
+    return { slides, groupNames: [], attributions: [], slideDynamicValues: [] }
 
     function addMeta({ showVersion, showVerse, customText }, range: string, chapterNumber: number, { slideIndex, itemIndex }) {
         if (!biblesContent[0]) return
@@ -1535,10 +1566,12 @@ export async function getScriptureShow(biblesContent: BibleContent[] | null) {
 
     let slides: Item[][] = [[]]
     let groupNames: string[] = []
+    let slideDynamicValues: { [key: string]: string | [string, string][] }[] = []
     if (selectedVerses.length) {
         const data = await getScriptureSlidesNew({ biblesContent, selectedChapters, selectedVerses })
         slides = data.slides
         groupNames = data.groupNames
+        slideDynamicValues = data.slideDynamicValues
     }
     const fullReferenceRange = buildFullReferenceRange(selectedChapters, selectedVerses)
     // use the combined range so slide names show multi-chapter selections
@@ -1579,6 +1612,10 @@ export async function getScriptureShow(biblesContent: BibleContent[] | null) {
         if (backgroundColor) settings.color = backgroundColor
 
         slides2[id] = { group: groupNames[i] || referenceText, color: null, settings, notes: "", items: fixHTMLTags(items) }
+
+        const customDynamicValues = slideDynamicValues?.[i]
+        if (customDynamicValues) slides2[id].customDynamicValues = customDynamicValues
+
         const l: any = { id }
 
         if (backgroundId && i === 0) l.background = backgroundId

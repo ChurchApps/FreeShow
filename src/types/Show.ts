@@ -94,6 +94,8 @@ export interface Slide {
     children?: string[]
     notes: string
     items: Item[]
+
+    customDynamicValues?: { [key: string]: string | [string, string][] } // used for scripture slides
 }
 
 export interface Item {
@@ -565,6 +567,7 @@ export interface OutSlide {
 
     translations?: number // scripture translations count (for style template)
     attributionString?: string // scripture custom attributionString
+    customDynamicValues?: { [key: string]: string | [string, string][] } // used for scripture slides
 }
 
 export interface OutTransition {
