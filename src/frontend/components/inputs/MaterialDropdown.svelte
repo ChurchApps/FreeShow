@@ -38,7 +38,7 @@
         addNewTextbox = false
 
         open = typeof force === "boolean" && value ? force : !open
-        if (open) setTimeout(calculateMaxHeight)
+        if (open) setTimeout(() => calculateMaxHeight())
 
         if (open && value) highlightedIndex = options.findIndex((o) => o.value === value)
         else highlightedIndex = -1
@@ -47,7 +47,7 @@
     // AUTO HEIGHT
 
     let maxHeight = 350
-    function calculateMaxHeight() {
+    function calculateMaxHeight(isExpanded: boolean = false) {
         if (!dropdownEl) return
 
         const triggerRect = dropdownEl.getBoundingClientRect()
@@ -58,6 +58,21 @@
         const availableSpace = parentRect.bottom - triggerRect.bottom
 
         maxHeight = Math.min(400, Math.max(100, availableSpace - 20))
+
+        const popup = dropdownEl.closest(".popup")
+        if (!isExpanded && maxHeight < 160 && popup) {
+            let card = popup.querySelector(".card") as HTMLElement
+            if (card?.querySelector(".scroll")) card = card.querySelector(".scroll") as HTMLElement
+            if (card) card.style.paddingBottom = `160px`
+            calculateMaxHeight(true)
+        }
+    }
+
+    $: if (open === false) removeExtraPadding()
+    function removeExtraPadding() {
+        let card = dropdownEl?.closest(".popup")?.querySelector(".card") as HTMLElement
+        if (card?.querySelector(".scroll")) card = card.querySelector(".scroll") as HTMLElement
+        if (card) card.style.paddingBottom = ""
     }
 
     let scrollParent: HTMLElement | null = null
