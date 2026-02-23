@@ -43,23 +43,23 @@
 <div class="main">
     <div class="text">
         <div>
-            ● <T id="about.more" />
+            • <T id="about.more" />
             <Link url="https://churchapps.org/">ChurchApps</Link>
         </div>
         <div>
-            ● <T id="about.report" />
+            • <T id="about.report" />
             <Link url="https://github.com/ChurchApps/FreeShow/issues">GitHub Issues</Link>
         </div>
         <div>
-            ● <T id="about.translate" />
+            • <T id="about.translate" />
             <Link url="https://app.transifex.com/nettbiter/freeshow/">Transifex</Link>
         </div>
         <!-- <div>
-            ● <T id="about.mail" />
+            • <T id="about.mail" />
             <Link url="mailto:dev@freeshow.app">dev@freeshow.app</Link>
         </div> -->
         <div>
-            ● <T id="about.support" />!
+            • <T id="about.support" />!
             <Link url="https://churchapps.org/partner#give">churchapps.org/partner</Link>
         </div>
     </div>

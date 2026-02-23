@@ -215,7 +215,8 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     view: ["focus_mode", "fullscreen"], // , "resetZoom", "zoomIn", "zoomOut"
     help: ["quick_search", "shortcuts", "docs", "quick_start_guide", "about"],
     // MAIN
-    default: ["save", "settings", "history", "SEPARATOR", "about", "quit"],
+    // default: ["save", "settings", "history", "SEPARATOR", "about", "quit"],
+    default: ["quick_search"],
     splash: ["custom_text"],
     rename: ["rename"],
     close: ["close"],

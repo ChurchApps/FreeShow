@@ -78,6 +78,7 @@ import Restore from "../components/main/popups/Restore.svelte"
 import CloudSync from "../components/main/popups/CloudSync.svelte"
 import Timecode from "../components/main/popups/Timecode.svelte"
 import TimelineSettings from "../components/main/popups/TimelineSettings.svelte"
+import NewUpdate from "../components/main/popups/NewUpdate.svelte"
 
 export const popups: { [key in Popups]: ComponentType } = {
     initialize: Initialize,
@@ -141,6 +142,7 @@ export const popups: { [key in Popups]: ComponentType } = {
     restore: Restore,
     reset_all: ResetAll,
     alert: Alert,
+    new_update: NewUpdate,
     history: History,
     action_history: ActionHistory,
     manage_emitters: Emitters,

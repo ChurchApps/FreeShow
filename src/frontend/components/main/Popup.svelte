@@ -1,7 +1,7 @@
 <script lang="ts">
     import { fade, scale } from "svelte/transition"
     import type { Popups } from "../../../types/Main"
-    import { activePopup, alertMessage, os, special } from "../../stores"
+    import { activePopup, alertMessage, os, popupData, special } from "../../stores"
     import { MENU_BAR_HEIGHT } from "../../utils/common"
     import { popups } from "../../utils/popup"
     import { disablePopupClose } from "../../utils/shortcuts"
@@ -51,7 +51,13 @@
                         <div class="headerMargin">
                             {#key popupId}
                                 <!-- margin-top: -5px; -->
-                                <h2 style="font-size: 1.3em;margin-top: -2px;"><T id="popup.{popupId}" /></h2>
+                                <h2 style="font-size: 1.3em;margin-top: -2px;">
+                                    {#if popupId === "new_update"}
+                                        <T id="about.new_update" />: <span style="color: var(--secondary);">v{$popupData.latestVersion}</span>
+                                    {:else}
+                                        <T id="popup.{popupId}" />
+                                    {/if}
+                                </h2>
                             {/key}
 
                             {#if !disablePopupClose.includes(popupId)}

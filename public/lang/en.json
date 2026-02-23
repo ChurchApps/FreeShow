@@ -58,7 +58,8 @@
         "libraries": "Libraries used",
         "thanks": "Thanks to",
         "new_update": "New update available",
-        "download": "Restart the application to update, or go to freeshow.app to download manually",
+        "download_latest": "Download the latest version",
+        "download_auto": "You have auto update enabled, please wait a few minutes for the update to be downloaded and installed automatically, then restart the application.",
         "changes": "What's new"
     },
     "tooltip": {

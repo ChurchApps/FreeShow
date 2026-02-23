@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import { activePopup, activeProject, projects, projectView, showRecentlyUsedProjects, shows, special, version } from "../../stores"
+    import { activePopup, activeProject, projects, projectView, quickSearchActive, showRecentlyUsedProjects, shows, special, version } from "../../stores"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
@@ -78,6 +78,9 @@
     {/if}
 
     <span style="padding-top: 30px" class="buttons">
+        <MaterialButton icon="search" title="main.quick_search" on:click={() => quickSearchActive.set(true)}>
+            <T id="main.quick_search" />
+        </MaterialButton>
         <MaterialButton icon="project" title="tooltip.project" on:click={createProject}>
             <T id="new.project" />
         </MaterialButton>

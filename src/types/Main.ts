@@ -368,6 +368,7 @@ export type Popups =
     | "restore"
     | "reset_all"
     | "alert"
+    | "new_update"
     | "history"
     | "action_history"
     | "manage_emitters"
