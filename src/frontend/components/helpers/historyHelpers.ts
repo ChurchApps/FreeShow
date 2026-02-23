@@ -661,7 +661,15 @@ export function getDefaultProjectName() {
 export function getProjectName(updater = get(special)) {
     let name = updater.default_project_name ?? getDefaultProjectName()
 
-    const date = new Date()
+    let date = new Date()
+
+    // use Dnum date if it exists
+    const dNumMatch = name.match(/{D[0-7]}/)
+    if (dNumMatch) {
+        const dNum = parseInt(dNumMatch[0].match(/\d/)?.[0] || "0")
+        date = getNextWeekdayDate(date, dNum === 7 ? 0 : dNum)
+    }
+
     projectReplacers.forEach((a) => {
         name = name.replaceAll(`{${a.id}}`, a.value(date))
     })
