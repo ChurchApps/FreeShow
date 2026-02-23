@@ -366,7 +366,7 @@
     $: currentShow = $showsCache[$activeShow?.id || ""]
     $: isSlideLockedFn = () => {
         const slideId = ref[activeSlide]?.parent?.id || ref[activeSlide]?.id
-        return !!currentShow.slides?.[slideId]?.locked
+        return !!currentShow?.slides?.[slideId]?.locked
     }
     $: isLocked = activeId ? false : currentShow?.locked || isSlideLockedFn() || profile.global === "read" || profile[currentShow?.category || ""] === "read"
     // $: isDefault = $activeEdit.type === "overlay" ? $overlays[activeId || ""]?.isDefault : $activeEdit.type === "template" ? $templates[activeId || ""]?.isDefault : false

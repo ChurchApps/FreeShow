@@ -2,7 +2,7 @@
     import { getDocument, GlobalWorkerOptions } from "pdfjs-dist"
     import type { ClickEvent, MediaStyle } from "../../../types/Main"
     import { AudioPlayer } from "../../audio/audioPlayer"
-    import { activeEdit, activeFocus, activePage, activeProject, activeShow, categories, displayTags, focusMode, globalTags, media, notFound, outLocked, outputs, overlays, playerVideos, playingAudio, projects, refreshEditSlide, shows, showsCache, styles } from "../../stores"
+    import { activeEdit, activeFocus, activePage, activeProject, activeShow, categories, focusMode, globalTags, media, notFound, outLocked, outputs, overlays, playerVideos, playingAudio, projects, refreshEditSlide, shows, showsCache, special, styles } from "../../stores"
     import { getAccess } from "../../utils/profile"
     import { historyAwait } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
@@ -15,7 +15,6 @@
     import { clearBackground, clearSlide } from "../output/clear"
     import HiddenInput from "./HiddenInput.svelte"
     import MaterialButton from "./MaterialButton.svelte"
-    import Tags from "../show/Tags.svelte"
 
     export let id: string
     export let show: any // ShowList | ShowRef
@@ -257,9 +256,8 @@
             {:else}
                 <span class="cell">
                     <!-- tags -->
-                    {#if $displayTags}
+                    {#if $special.displayTags}
                         <span class="tags">
-                            <span style="font-size: 0;position: absolute;">{console.log($shows[show.id])}</span>
                             {#each $shows[show.id]?.quickAccess?.tags || [] as tagId}
                                 {@const tag = $globalTags[tagId]}
                                 {#if tag}
@@ -271,7 +269,7 @@
                         </span>
                     {/if}
 
-                    {#if showNumber || $displayTags}
+                    {#if showNumber || $special.displayTags}
                         <span class="number">{showNumber || ""}</span>
                     {/if}
 

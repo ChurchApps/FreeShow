@@ -32,7 +32,6 @@ import {
     categories,
     colorbars,
     currentOutputSettings,
-    displayTags,
     drawer,
     drawerTabsData,
     effects,
@@ -65,6 +64,7 @@ import {
     showsCache,
     slidesOptions,
     sorted,
+    special,
     stageShows,
     styles,
     templateCategories,
@@ -515,7 +515,10 @@ const clickActions = {
     },
 
     display_tags: () => {
-        displayTags.set(!get(displayTags))
+        special.update((a) => {
+            a.displayTags = !a.displayTags
+            return a
+        })
     },
 
     addToShow: (obj: ObjData) => {
