@@ -428,9 +428,8 @@
                 <div class="divider"></div>
 
                 <!-- open slide notes -->
-                <MaterialButton icon="notes" title="items.slide_notes" on:click={() => triggerFunction("slide_notes")} />
-
-                <div class="divider"></div>
+                <!-- <MaterialButton icon="notes" title="items.slide_notes" on:click={() => triggerFunction("slide_notes")} />
+                <div class="divider"></div> -->
 
                 {#if hasTextContent}
                     <MaterialButton title="edit.insert_virtual_break" on:click={() => triggerFunction("insert_virtual_break")}>
