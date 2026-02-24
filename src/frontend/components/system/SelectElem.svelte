@@ -152,7 +152,7 @@
         }
 
         // shift select range
-        if (e.shiftKey && (shiftRange.length || $selected.data[0]?.index !== undefined)) {
+        if (e.shiftKey && ((shiftRange.length && $selected.data[0]) || $selected.data[0]?.index !== undefined)) {
             const searchKeys = ["id", "index", "path"]
             let lastSelected = $selected.data[$selected.data.length - 1]
             if (!lastSelected) return
@@ -168,6 +168,9 @@
                     .fill("")
                     .map((_, idx) => start + idx)
             }
+
+            // nothing in between
+            if (newIndex - 1 === lastSelectedIndex || newIndex + 1 === lastSelectedIndex) selectedBetween = [selectedBetween[0]]
 
             let dataBetween = selectedBetween.map((index) => (shiftRange.length ? shiftRange[index] : { index }))
             let allNewData = [...$selected.data, ...dataBetween, data]
