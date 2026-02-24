@@ -1300,7 +1300,7 @@ const replaceTokens = (str: string, id: string, inputs: string[] = []) => {
         const value = inputs[index]
 
         // 3. Return priority: Input Value -> Fallback -> Original Match
-        if (value !== undefined) return value
+        if (value !== undefined) return value === "" ? (fallback ?? "") : value
         return fallback ?? match
     })
 }

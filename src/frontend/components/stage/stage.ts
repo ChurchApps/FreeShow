@@ -51,11 +51,19 @@ function dynamicValueString(text: string) {
     text = text.slice(1, -1)
     if (!text.length || text.includes("{") || text.includes("}")) return ""
 
+    const fallback = text.indexOf("|")
+    if (fallback !== -1) text = text.slice(0, fallback)
+
     text = text.replace("$", "").replace("variable_", "")
     // if (text.includes("$") || text.includes("variable_")) {
     //     text = text.replace("$", "variable_").replace("variable_", "variable:_")
     //     // text = (get(dictionary).items?.variable || "Variable") + ": " + (text.replace("$", "").replace("variable_", ""))
     // }
+
+    text = text.replace("meta_", "").replace("time_", "")
+    if (!text.length) return ""
+
+    if (text === "bpm" || text === "ccli") return text.toUpperCase()
 
     // return text.split("_").map((a) => `${a[0].toUpperCase()}${a.slice(1)}`).join(" ")
     return text[0].toUpperCase() + text.slice(1).replaceAll("_", " ")
