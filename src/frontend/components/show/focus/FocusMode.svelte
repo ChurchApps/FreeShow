@@ -95,8 +95,8 @@
         let scrollTop = e.target.scrollTop
 
         let focusedId = ""
-        let names = listElem.querySelectorAll(".name")
-        ;[...names].forEach((a) => {
+        let items = listElem.querySelectorAll(".focusId")
+        ;[...items].forEach((a) => {
             let top = (a as HTMLElement).offsetTop - fromTop
             if (top <= scrollTop) focusedId = a.id
         })
@@ -134,7 +134,7 @@
     {#if list.length}
         <div class="list" bind:this={listElem}>
             {#each list as item, i}
-                <div id={"id_" + getId(item.id) + "_" + i}>
+                <div id={"id_" + getId(item.id) + "_" + i} class="focusId">
                     <div class="name" style={item.color ? `border-bottom: 2px solid ${item.color}` : ""}>
                         <Icon id={item.icon || "noIcon"} custom={(item.type || "show") === "show"} white right />
                         <p>{item.name}</p>
