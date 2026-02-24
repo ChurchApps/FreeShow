@@ -137,9 +137,8 @@
             if (activeSlides[index]) refreshOut()
         })
 
-        // WIP focus mode does not auto scroll on arrow navigation when many slides (that overflow view area)
-        // always auto scroll in focus mode (if not very many slides)
-        if ($focusMode && projectIndex > -1 && index < 10) {
+        // set to active in focus mode
+        if ($focusMode) {
             activeFocus.set({ id: showId, index: projectIndex, type: "show" })
             return
         }

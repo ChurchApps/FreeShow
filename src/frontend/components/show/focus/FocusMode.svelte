@@ -11,6 +11,7 @@
     import Center from "../../system/Center.svelte"
     import { getAllProjectItems } from "./focus"
     import FocusItem from "./FocusItem.svelte"
+    import { hasNewerUpdate } from "../../../utils/common"
 
     $: projectId = $activeProject || ""
     $: project = $projects[projectId]
@@ -38,22 +39,32 @@
 
     $: active = $activeFocus
     let scrollingToActive: any = null
+    let previousId = ""
     // auto scroll to active slide when show or output changes
     $: if (active || outputIndex !== undefined) scrollToActive()
-    function scrollToActive() {
+    async function scrollToActive() {
         if (!listElem || isScrolling || projectUpdating) return
 
-        let index = active.index
-        if (index === undefined) index = project.shows.findIndex((a) => a.id === (outputShowId ?? active.id))
+        // wait until both output and active has updated if they update at mostly the same time
+        if (await hasNewerUpdate("FOCUS_SCROLL")) return
 
-        let id = "id_" + getId(outputShowId ?? active.id) + "_" + index
+        let currentId = active.id
+        let slideIndex = active.id === outputShowId ? outputIndex || 0 : 0
+
+        let index = active.index
+        if (index === undefined) {
+            if (outputShowId) currentId = outputShowId
+            index = project.shows.findIndex((a) => a.id === currentId)
+        }
+
+        if (!outputShowId && previousId && previousId === currentId) return
+        previousId = currentId
+
+        let id = "id_" + getId(currentId) + "_" + index
         let elem = listElem.querySelector("#" + id) as HTMLElement
         let elemTop = elem?.offsetTop || 0
-        const slide = elem?.querySelector(".grid")?.children[outputIndex || 0] as HTMLElement
+        const slide = elem?.querySelector(".grid")?.children[slideIndex] as HTMLElement
         let slideTop = elemTop + (slide?.offsetTop ?? elem?.offsetTop ?? 0)
-        if (!slide) return
-
-        // WIP scroll to active slide also if it's outside of view
 
         // don't scroll if already visible
         const currentScrollPos = listElem.closest(".center")?.scrollTop || 0
