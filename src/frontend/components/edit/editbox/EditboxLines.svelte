@@ -15,6 +15,7 @@
     import { getItemText, getLineText, getSelectionRange, setCaret } from "../scripts/textStyle"
     import EditboxChords from "./EditboxChords.svelte"
     import { EditboxHelper } from "./EditboxHelper"
+    import { newToast } from "../../../utils/common"
 
     export let item: Item
     export let ref: {
@@ -541,6 +542,20 @@
             navigator.clipboard.readText().then((clipText: string) => {
                 paste(e, clipText)
             })
+        }
+
+        if (e.key === "<") {
+            // Bamini font character "<" (ஈ)
+            // https://github.com/ChurchApps/FreeShow/issues/2899
+            if (item?.lines?.some((line) => line.text?.some((text) => text.style?.toLowerCase()?.includes("bamini")))) {
+                e.preventDefault()
+                document.execCommand("insertHTML", false, "ஈ")
+                return
+            }
+
+            // HTML (will be invisible in editor)
+            // &lt; is currently read and replaced as < when editing
+            newToast("Note: < is treated as HTML")
         }
     }
 
