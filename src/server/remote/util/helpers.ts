@@ -26,7 +26,7 @@ export function setError(err: string) {
 
 /** Convert object with IDs as keys to array with id property */
 export function keysToID<T>(obj: Record<string, T>): (T & { id: string })[] {
-    return Object.keys(obj || {}).map((key) => ({ id: key, ...obj[key] }))
+    return Object.keys(obj || {}).map((key) => ({ ...obj[key], id: key }))
 }
 
 /** Sort array by a string property (case-insensitive) */
@@ -233,4 +233,3 @@ export function buildCategoryData(items: any[], categoriesObj: Record<string, an
         uncategorizedCount
     }
 }
-

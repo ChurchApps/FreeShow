@@ -42,7 +42,7 @@
 
     function checkScriptureExists(scriptureId: string, collId: string): boolean {
         if (!scriptureId || Object.keys($scriptures).length === 0) return false
-        return !!($scriptures[scriptureId] || (collId && $scriptures[collId]))
+        return !!($scriptures[scriptureId] || (collId && $scriptures[collId])) || Object.values($scriptures).find((a) => a.id === scriptureId || collId)
     }
 
     $: scripturesLoaded = Object.keys($scriptures).length > 0
@@ -121,6 +121,8 @@
     let currentVerse = ""
 
     function openScripture(id: string, collection: string = "") {
+        console.log(id)
+
         openedScripture.set(id)
         collectionId.set(collection)
         // reset browsing state when switching between bibles (API/local)
@@ -304,7 +306,13 @@
     }
 
     // Normalize book name for search (handles accented characters, spaces, dots)
-    const normalizeBookName = (name: string) => (name || "").toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "").replace(/\s/g, "").replace(/\./g, "")
+    const normalizeBookName = (name: string) =>
+        (name || "")
+            .toLowerCase()
+            .normalize("NFD")
+            .replace(/\p{Diacritic}/gu, "")
+            .replace(/\s/g, "")
+            .replace(/\./g, "")
 
     // Regex for matching scripture references: "Book 3:16", "Book 3 16", "Book 3.16", "Book 3,16", "Book 1:1-3"
     const REFERENCE_REGEX = /^(.+?)\s+(\d+)(?:[:.,]\s*(\d+)|\s+(\d+))?(?:-(\d+))?/
@@ -312,15 +320,15 @@
     // Find a book in the books array using normalized search with Unicode normalization
     function findBookInArray(books: any[], value: string): any {
         const normalized = normalizeBookName(value)
-        
+
         // First try exact match
         const exactMatch = books.find((book: any) => normalizeBookName(book.name) === normalized)
         if (exactMatch) return exactMatch
-        
+
         // Then try starts with
         const startsWithMatch = books.find((book: any) => normalizeBookName(book.name).startsWith(normalized))
         if (startsWithMatch) return startsWithMatch
-        
+
         // Finally try contains
         return books.find((book: any) => normalizeBookName(book.name).includes(normalized))
     }
@@ -511,36 +519,36 @@
                             }
                             searchResults = [searchResult]
 
-                        // Only send request if we haven't already failed on this chapter
-                        if (book.keyName && !failedChapterRequests.has(requestKey)) {
-                            send("GET_SCRIPTURE", {
-                                id: openedScriptureId,
-                                bookKey: book.keyName,
-                                chapterKey: chapterNumber,
-                                bookIndex: book.number - 1,
-                                chapterIndex: chapterNumber - 1
-                            })
-                        }
-                        return
-                    } else if (chapterNumber) {
-                        searchResult = {
-                            reference: `${book.number}.${chapterNumber}.1`,
-                            referenceFull: `${book.name} ${chapterNumber}`,
-                            verseText: ""
-                        }
-                        searchResults = [searchResult]
+                            // Only send request if we haven't already failed on this chapter
+                            if (book.keyName && !failedChapterRequests.has(requestKey)) {
+                                send("GET_SCRIPTURE", {
+                                    id: openedScriptureId,
+                                    bookKey: book.keyName,
+                                    chapterKey: chapterNumber,
+                                    bookIndex: book.number - 1,
+                                    chapterIndex: chapterNumber - 1
+                                })
+                            }
+                            return
+                        } else if (chapterNumber) {
+                            searchResult = {
+                                reference: `${book.number}.${chapterNumber}.1`,
+                                referenceFull: `${book.name} ${chapterNumber}`,
+                                verseText: ""
+                            }
+                            searchResults = [searchResult]
 
-                        // Only send request if we haven't already failed on this chapter
-                        if (book.keyName && !failedChapterRequests.has(requestKey)) {
-                            send("GET_SCRIPTURE", {
-                                id: openedScriptureId,
-                                bookKey: book.keyName,
-                                chapterKey: chapterNumber,
-                                bookIndex: book.number - 1,
-                                chapterIndex: chapterNumber - 1
-                            })
-                        }
-                        return
+                            // Only send request if we haven't already failed on this chapter
+                            if (book.keyName && !failedChapterRequests.has(requestKey)) {
+                                send("GET_SCRIPTURE", {
+                                    id: openedScriptureId,
+                                    bookKey: book.keyName,
+                                    chapterKey: chapterNumber,
+                                    bookIndex: book.number - 1,
+                                    chapterIndex: chapterNumber - 1
+                                })
+                            }
+                            return
                         }
                     }
                 }
@@ -703,12 +711,12 @@
         openScriptureSearch = false
         searchValue = ""
         debouncedSearchValue = ""
-        
+
         // Clear search results
         searchResults = []
         searchResult = { reference: "", referenceFull: "", verseText: "" }
         scriptureSearchResults.set(null)
-        
+
         // In tablet mode, also clear external search if active
         if (tablet && usingExternalSearch) {
             usingExternalSearch = false
@@ -952,24 +960,20 @@
                     <Button on:click={() => scriptureViewList.set(!$scriptureViewList)} center dark class="floating-control-button" title={$scriptureViewList ? "Grid View" : "List View"}>
                         <Icon id={$scriptureViewList ? "list" : "grid"} white size={1.2} />
                     </Button>
-                    <Button 
+                    <Button
                         on:click={() => {
                             scriptureMultiSelect.set(!$scriptureMultiSelect)
                             if (!$scriptureMultiSelect) selectedVerses.set([])
-                        }} 
-                        center 
-                        dark 
+                        }}
+                        center
+                        dark
                         class="floating-control-button {$scriptureMultiSelect ? 'active' : ''}"
-                        title={$scriptureMultiSelect ? "Exit Multi-Select" : "Multi-Select Verses"}>
+                        title={$scriptureMultiSelect ? "Exit Multi-Select" : "Multi-Select Verses"}
+                    >
                         <Icon id={$scriptureMultiSelect ? "close" : "check"} white size={1.2} />
                     </Button>
                     {#if $scriptureMultiSelect && $selectedVerses.length > 0}
-                        <Button 
-                            on:click={() => scriptureContentRef?.playSelectedVerses?.()} 
-                            center 
-                            dark 
-                            class="floating-control-button show-selected-button" 
-                            title="Show Selected ({$selectedVerses.length})">
+                        <Button on:click={() => scriptureContentRef?.playSelectedVerses?.()} center dark class="floating-control-button show-selected-button" title="Show Selected ({$selectedVerses.length})">
                             <Icon id="play" white size={1.2} />
                             <span class="verse-count">{$selectedVerses.length}</span>
                         </Button>

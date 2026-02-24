@@ -1,28 +1,5 @@
 <script lang="ts">
-    import {
-        categories,
-        shows,
-        activeCategory,
-        dictionary,
-        scriptures,
-        openedScripture,
-        collectionId,
-        actions,
-        actionTags,
-        variables,
-        variableTags,
-        activeActionTagFilter,
-        activeVariableTagFilter,
-        functionsSubTab,
-        timers,
-        triggers,
-        overlays,
-        overlayCategories,
-        activeOverlayCategory,
-        templates,
-        templateCategories,
-        activeTemplateCategory
-    } from "../../../../util/stores"
+    import { categories, shows, activeCategory, dictionary, scriptures, openedScripture, collectionId, actions, actionTags, variables, variableTags, activeActionTagFilter, activeVariableTagFilter, functionsSubTab, timers, triggers, overlays, overlayCategories, activeOverlayCategory, templates, templateCategories, activeTemplateCategory } from "../../../../util/stores"
     import { translate, keysToID, sortByName, buildCategoryData, type CategoryData } from "../../../../util/helpers"
     import { _set } from "../../../../util/stores"
     import Button from "../../../../../common/components/Button.svelte"
