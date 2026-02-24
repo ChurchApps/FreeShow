@@ -127,10 +127,10 @@
         return text.replace(/[^a-zA-Z0-9]+/g, "")
     }
 
-    // don't refresh list unless count changes
+    // don't refresh list unless order changes
     let projectsItemsList: ProjectShowRef[] = []
     onMount(updateProjectItemsList)
-    $: projectItems = project?.shows?.length || 0
+    $: projectItems = (project?.shows || []).map((a) => a.id || a.name).join(",")
     $: if (projectItems) updateProjectItemsList()
     function updateProjectItemsList() {
         projectsItemsList = project?.shows || []

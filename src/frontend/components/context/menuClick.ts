@@ -30,6 +30,7 @@ import {
     activeVariableTagFilter,
     audioFolders,
     categories,
+    cloudSyncData,
     colorbars,
     currentOutputSettings,
     drawer,
@@ -157,6 +158,10 @@ const clickActions = {
 
         activePage.set("show")
         focusMode.set(!get(focusMode))
+
+        if (!get(focusMode) && get(cloudSyncData).enabled) {
+            showsCache.set({})
+        }
     },
     fullscreen: () => sendMain(Main.FULLSCREEN),
     // edit
