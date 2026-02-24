@@ -110,6 +110,8 @@
 
 <MaterialButton class="popup-options {options ? 'active' : ''}" icon="options" iconSize={1.3} title={options ? "actions.close" : "create_show.more_options"} on:click={() => (options = !options)} white />
 
+<MaterialButton class="popup-reset" icon="help" iconSize={1.1} title="titlebar.help" on:click={() => sendMain(Main.URL, "https://freeshow.app/docs/connecting")} white />
+
 {#if options}
     <div class="reserved" class:isReserved>
         <MaterialNumberInput label="settings.port" value={port} defaultValue={RESERVED_PORTS[id]?.[0]} min={1025} max={65535} on:change={(e) => updatePort(e)} />
