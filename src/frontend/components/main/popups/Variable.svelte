@@ -1,6 +1,6 @@
 <script lang="ts">
     import { uid } from "uid"
-    import { drawerTabsData, selected, variables } from "../../../stores"
+    import { activePopup, drawerTabsData, selected, variables } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { clone, moveToPos } from "../../helpers/array"
     import { createStore, updateStore } from "../../helpers/historyStores"
@@ -224,6 +224,12 @@
         })
     }
 
+    function nameKeydown(e: any) {
+        if (currentVariable.type === "text" && e.key === "Enter" && e.target?.value) {
+            activePopup.set(null)
+        }
+    }
+
     let showMoreRN = false
 </script>
 
@@ -240,7 +246,7 @@
         <MaterialButton class="popup-back" icon="back" iconSize={1.3} title="actions.back" on:click={() => (chosenType = "")} />
     {/if}
 
-    <MaterialTextInput label="inputs.name" style="margin-bottom: 10px;" disabled={!created && !!currentVariable.name} value={currentVariable.name} on:change={(e) => updateValue(e.detail, "name")} autofocus={!currentVariable.name} />
+    <MaterialTextInput label="inputs.name" style="margin-bottom: 10px;" disabled={!created && !!currentVariable.name} value={currentVariable.name} on:change={(e) => updateValue(e.detail, "name")} autofocus={!currentVariable.name} on:keydown={nameKeydown} />
 
     {#if currentVariable.type === "number"}
         <MaterialNumberInput label="variables.default_value" value={currentVariable.default || 0} step={1} {min} {max} on:change={(e) => updateValue(e.detail, "default")} />
