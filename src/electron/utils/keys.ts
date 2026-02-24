@@ -9,6 +9,8 @@ export function getKey(type: string) {
     if (type === "churchApps_id") return decrypt("1e2608317f261819055200")
     if (type === "churchApps_secret") return decrypt("02022a207f57193d5f2d13")
     if (type === "amazinglife_id") return decrypt("0825252041520b273614283b372b48552b2b0630")
+    if (type === "canva_id") return decrypt("3f2042276a0a3c39350345103a1e52")
+    if (type === "canva_secret") return decrypt("130d1905513f37181b023e33163f73203a3b5a11172d42547715240816024207052c7b313d0f3c0b061a3d53582f45300b03465a5f535203")
     if (type === "enc_general") return decrypt("11010c5702562601061239102e21550b171b0e0d3b061647")
     if (type === "enc_salt") return decrypt("1600180f43171e07")
     return "5a4104165513101501415e5b030a5d19121f03485f4603035a03"
