@@ -23,14 +23,13 @@
     import Screens from "../live/Screens.svelte"
     import Windows from "../live/Windows.svelte"
     import PlayerVideos from "../player/PlayerVideos.svelte"
+    import Canva from "./Canva.svelte"
     import ContentLibraryBrowser from "./ContentLibraryBrowser.svelte"
     import Folder from "./Folder.svelte"
     import Media from "./MediaCard.svelte"
     import MediaGrid from "./MediaGrid.svelte"
     import { loadFromPixabay } from "./pixabay"
     import { loadFromUnsplash } from "./unsplash"
-    import Canva from "./Canva.svelte"
-    import CLogo from "./CLogo.svelte"
 
     export let active: string | null
     export let searchValue = ""
@@ -494,14 +493,15 @@
             <Icon style={onlineTab === "unsplash" ? "fill: #bbbbbb" : ""} size={1.2} id="unsplash" white />
             <p>Unsplash</p>
         </MaterialButton>
-        <MaterialButton style="flex: 1;" isActive={onlineTab === "canva"} on:click={() => setSubSubTab("canva")}>
+        <!-- hidden until approved! -->
+        <!-- <MaterialButton style="flex: 1;" isActive={onlineTab === "canva"} on:click={() => setSubSubTab("canva")}>
             {#if onlineTab === "canva"}
                 <CLogo />
             {:else}
                 <Icon size={1.2} id="canva" white />
             {/if}
             <p>Canva</p>
-        </MaterialButton>
+        </MaterialButton> -->
     </div>
 {/if}
 
