@@ -127,6 +127,11 @@ export default function autosize(elem: HTMLElement, { type, textQuery, defaultFo
             ;(elemHide as HTMLElement).style.display = "none"
         }
 
+        // fix chords size
+        for (const chordElem of Array.from(cloned.querySelectorAll(".chords"))) {
+            ;(chordElem as HTMLElement).style.maxHeight = "65px"
+        }
+
         // CRITICAL FIX FOR LIST ITEMS:
         // List items have font-size on both the parent .break div AND the inner span elements
         // This causes double font-size application during measurement
