@@ -28,7 +28,7 @@
     export let allowDeleting = false
 
     const dispatch = createEventDispatcher()
-    export let open = false
+    let open = false
     let dropdownEl: HTMLDivElement
     // let triggerEl: HTMLDivElement;
     let highlightedIndex = -1

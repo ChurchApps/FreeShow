@@ -7,6 +7,7 @@
     import MaterialDropdown from "../../inputs/MaterialDropdown.svelte"
     import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
     import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
+    import { newToast } from "../../../utils/common"
 
     export let input: { [key: string]: string }
 
@@ -71,6 +72,10 @@
 
     const dispatch = createEventDispatcher()
     function setValue(conditionId: string, e: any) {
+        if (conditionId === "value" && e.detail === "empty") {
+            newToast("Did you mean to leave as empty/blank value?")
+        }
+
         dispatch("change", { key: conditionId, value: e.detail })
     }
 </script>

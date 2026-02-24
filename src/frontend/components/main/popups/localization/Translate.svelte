@@ -61,12 +61,10 @@
         translatedLangs = [...new Set(translatedLangs)]
         console.log(translatedLangs)
     })
-
-    let open = false
 </script>
 
-<div class="main" style={open ? "min-height: 330px;" : ""}>
-    <MaterialDropdown bind:open label="settings.language" options={languageList} value={$special.translationLanguage} on:change={updateLanguage} flags />
+<div class="main">
+    <MaterialDropdown label="settings.language" options={languageList} value={$special.translationLanguage} on:change={updateLanguage} flags />
 
     <MaterialButton variant="contained" style="margin-top: 20px;width: 100%;" disabled={!$special.translationLanguage} on:click={convert}>
         <Icon size={1.1} id="translate" white />

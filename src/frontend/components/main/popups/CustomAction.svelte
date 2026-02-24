@@ -20,15 +20,11 @@
 
         currentAction = id
     }
-
-    let open = false
 </script>
 
 <p class="tip"><T id="show.custom_action_tip" /></p>
 
-<div style="min-height: {open ? 350 : 0}px;">
-    <MaterialDropdown bind:open label="midi.start_action" options={actionOptions.map((a) => ({ label: a.name, value: a.id }))} value={currentAction} allowEmpty on:change={(e) => updateValue(e.detail)} />
-</div>
+<MaterialDropdown label="midi.start_action" options={actionOptions.map((a) => ({ label: a.name, value: a.id }))} value={currentAction} allowEmpty on:change={(e) => updateValue(e.detail)} />
 
 <style>
     .tip {
