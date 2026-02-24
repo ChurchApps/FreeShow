@@ -114,6 +114,8 @@
             e.preventDefault()
             updateValue(rawInput)
         }
+
+        dispatch("keydown", e)
     }
 
     onMount(() => {

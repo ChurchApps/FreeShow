@@ -87,10 +87,26 @@
     $: newTime = allTime * count
 
     const getTime = (time: number) => (time > 59 ? joinTime(secondsToTime(time)) : time + "s")
+
+    function keydown(e: any, newValue: number) {
+        if (e.detail?.key === "Enter") {
+            updateValue(newValue)
+            activePopup.set(null)
+        }
+    }
+
+    function globalKeydown(e: KeyboardEvent) {
+        if (e.key === "Enter" && !document.activeElement?.closest(".edit") && allSlides) {
+            updateValue(allTime)
+            activePopup.set(null)
+        }
+    }
 </script>
 
+<svelte:window on:keydown={globalKeydown} />
+
 {#if allSlides}
-    <MaterialNumberInput style="margin-bottom: 10px;" label="timer.seconds" value={allTime} max={3600} on:change={(e) => (allTime = e.detail)} />
+    <MaterialNumberInput style="margin-bottom: 10px;" label="timer.seconds" value={allTime} max={3600} on:change={(e) => (allTime = e.detail)} on:keydown={(e) => keydown(e, allTime)} />
 
     <!-- reset if next timer applied, but not same on all slides ?? (set input to 0) -->
     {#if isProjectItem ? !allTime || allTime === value : totalTime && (appliedToSlides === allTime || allTime === 0)}
@@ -109,5 +125,5 @@
         </p>
     {/if}
 {:else}
-    <MaterialNumberInput label="timer.seconds" {value} max={3600} on:change={updateValue} />
+    <MaterialNumberInput label="timer.seconds" {value} max={3600} on:change={updateValue} on:keydown={(e) => keydown(e, e.detail?.target?.value)} />
 {/if}
