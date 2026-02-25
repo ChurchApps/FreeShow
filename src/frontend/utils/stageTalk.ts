@@ -18,11 +18,12 @@ import { arrayToObject, filterObjectArray, sendData, setConnectedState } from ".
 export async function sendBackgroundToStage(outputId, updater = get(outputs), returnPath = false) {
     const currentOutput = updater[outputId]?.out
     const next = await getNextBackground(currentOutput?.slide || null, returnPath)
+    const next2 = await getNextBackground(currentOutput?.slide || null, returnPath, 2)
     let path = currentOutput?.background?.path || ""
     if (typeof path !== "string") path = ""
 
     if (returnPath) {
-        return clone({ path, mediaStyle: get(media)[path] || {}, next })
+        return clone({ path, mediaStyle: get(media)[path] || {}, next, next2 })
     }
 
     if (!path && !next.path?.length) {
@@ -33,7 +34,7 @@ export async function sendBackgroundToStage(outputId, updater = get(outputs), re
     const stageConnections = Object.keys(get(connections).STAGE || {})?.length || 0
     const base64path = stageConnections > 0 ? await getBase64Path(path) : ""
 
-    const bg = clone({ path: base64path, filePath: path, mediaStyle: get(media)[path] || {}, next })
+    const bg = clone({ path: base64path, filePath: path, mediaStyle: get(media)[path] || {}, next, next2 })
 
     if (returnPath) return bg
 
@@ -41,14 +42,13 @@ export async function sendBackgroundToStage(outputId, updater = get(outputs), re
     return
 }
 
-async function getNextBackground(currentOutputSlide: OutSlide | null, returnPath = false) {
+async function getNextBackground(currentOutputSlide: OutSlide | null, returnPath = false, slideOffset = 1) {
     if (!currentOutputSlide?.id) return {}
 
     const showRef = _show(currentOutputSlide.id).layouts([currentOutputSlide.layout]).ref()[0]
     if (!showRef) return {}
 
     // GET CORRECT INDEX OFFSET, EXCLUDING DISABLED SLIDES
-    const slideOffset = 1
     let layoutOffset = currentOutputSlide.index || 0
     let offsetFromCurrentExcludingDisabled = 0
     while (offsetFromCurrentExcludingDisabled < slideOffset && layoutOffset <= showRef.length) {

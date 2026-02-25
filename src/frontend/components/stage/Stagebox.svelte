@@ -330,7 +330,7 @@
                     {/if}
                 {:else if item.type === "slide_text" || id.includes("slide")}
                     {#if (item.type ? item.includeMedia : !id.includes("_text")) && currentBackground}
-                        {@const slideBackground = slideOffset === 0 ? currentBackground : slideOffset === 1 ? currentBackground.next : null}
+                        {@const slideBackground = slideOffset === 0 ? currentBackground : slideOffset === 1 ? currentBackground.next : slideOffset === 2 ? currentBackground.next2 : null}
                         <!-- WIP this only includes "next" slide background -->
                         {#if typeof slideBackground?.path === "string"}
                             <div class="image" style="position: absolute;left: 0;top: 0;width: 100%;height: 100%;">
