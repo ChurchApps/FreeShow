@@ -488,7 +488,7 @@
         const cacheSignature = buildAutoSizeSignature(elem.clientWidth, elem.clientHeight)
         const cachedResult = cacheKey ? readAutoSizeCache(cacheKey) : undefined
 
-        if (!isDynamic && !chords && cachedResult && cachedResult.signature === cacheSignature) {
+        if (!isDynamic && !chords && !Number(outputStyle?.lines || 0) && cachedResult && cachedResult.signature === cacheSignature) {
             fontSize = cachedResult.fontSize
             if (item.type === "slide_tracker") {
                 markAutoSizeReady()
