@@ -12,6 +12,7 @@ import { getSyncedSettings, save } from "./save"
 import { SocketHelper } from "./SocketHelper"
 
 export async function setupCloudSync(auto: boolean = false) {
+    if (get(cloudSyncData).enabled === false) return
     if (auto && get(cloudSyncData).id) {
         syncWithCloud()
         return

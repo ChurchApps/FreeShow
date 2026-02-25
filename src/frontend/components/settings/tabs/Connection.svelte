@@ -103,6 +103,10 @@
                     delete a.churchAppsCloudOnly
                     return a
                 })
+
+                if ($cloudSyncData.enabled === undefined) {
+                    cloudSyncData.set({ enabled: false, id: "churchApps" })
+                }
             }
 
             sendMain(Main.PROVIDER_LOAD_SERVICES, { providerId, cloudOnly: cloudOnly[providerId] || false })

@@ -186,6 +186,7 @@
     let disconnecting = false
     async function contentProviderConnect(providerId: ContentProviderId) {
         if (!$providerConnections[providerId]) {
+            cloudSyncData.set({})
             special.update((a) => {
                 a.churchAppsCloudOnly = true
                 return a
@@ -193,6 +194,13 @@
 
             sendMain(Main.PROVIDER_LOAD_SERVICES, { providerId, cloudOnly: true })
         } else {
+            if (providerId === "churchApps" && !$special.churchAppsCloudOnly) {
+                const enabled = !$cloudSyncData.enabled
+                cloudSyncData.set({ enabled, id: "churchApps" })
+                toggleSync(enabled)
+                return
+            }
+
             disconnecting = true
             await socketDisconnect()
             requestMain(Main.PROVIDER_DISCONNECT, { providerId }, (a) => {
@@ -203,13 +211,14 @@
                     return c
                 })
             })
+
+            if ($cloudSyncData.id === providerId) cloudSyncData.set({})
         }
     }
 
     let resetValue = 0
     $: if ($activePopup) resetValue++
-    function toggleSync(e) {
-        const enabled = e.detail
+    function toggleSync(enabled: boolean) {
         if (enabled) {
             setupCloudSync()
         } else {
@@ -263,7 +272,7 @@
 <!-- cloud -->
 <Title label="settings.cloud" icon="cloud" title="cloud.info" />
 
-{#if !$providerConnections.churchApps}
+{#if !$providerConnections.churchApps || (!$special.churchAppsCloudOnly && !$cloudSyncData.enabled)}
     <InputRow>
         <MaterialButton on:click={() => contentProviderConnect("churchApps")} style="flex: 1;" icon="login">
             <T id="settings.connect_to" replace={["ChurchApps"]} />
@@ -284,7 +293,7 @@
     <InputRow arrow={$cloudSyncData.enabled}>
         <InputRow style="flex: 1;">
             {#key resetValue}
-                <MaterialToggleSwitch label="Enable sync" data={$cloudSyncData?.team?.name} checked={$cloudSyncData.enabled} style="flex: 1;" on:change={toggleSync} />
+                <MaterialToggleSwitch label="Enable sync" data={$cloudSyncData?.team?.name} checked={$cloudSyncData.enabled} style="flex: 1;" on:change={(e) => toggleSync(e.detail)} />
             {/key}
 
             {#if $cloudSyncData.enabled && ($cloudSyncData.team?.count || 0) > 1}
