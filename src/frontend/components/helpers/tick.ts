@@ -47,7 +47,7 @@ export function newSlideTimer(timerId: string, duration: number, folderPath = ""
             return
         }
 
-        nextSlide(null, false, false, true, true, id)
+        nextSlide(null, false, false, true, true, id, false, true)
     }
 }
 
