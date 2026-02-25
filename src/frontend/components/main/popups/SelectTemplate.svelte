@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import { activePopup, activeStyle, outputs, popupData, scriptures, styles, templates } from "../../../stores"
+    import { activePopup, activeStyle, drawerTabsData, outputs, popupData, scriptures, styles, templates } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { formatSearch } from "../../../utils/search"
     import Card from "../../drawer/Card.svelte"
@@ -109,7 +109,30 @@
 
     $: normalTemplates = searchedTemplates.filter((a) => a.category !== "scripture")
     $: scriptureTemplates = searchedTemplates.filter((a) => a.category === "scripture")
-    $: templatesList = id.includes("scripture") ? [...scriptureTemplates, ...normalTemplates] : [...normalTemplates, ...scriptureTemplates]
+    $: templatesList = id.includes("scripture") ? [...trimScriptureTemplates(scriptureTemplates, selectedType), ...normalTemplates] : [...normalTemplates, ...scriptureTemplates]
+
+    function trimScriptureTemplates(templates: any[], _updater: any) {
+        let countId = ""
+
+        if (id === "scripture") {
+            countId = selectedType
+        } else if (id === "scripture_drawer") {
+            let count = 1
+            const activeScripture = $drawerTabsData.scripture?.activeSubTab || ""
+            const currentScripture = $scriptures[activeScripture]
+
+            if (currentScripture.collection?.versions?.length) count = currentScripture.collection.versions.length
+            countId = count > 1 ? "_" + count : ""
+        }
+
+        // only show relevant default templates (with the correct count)
+        const keepId = "scripture" + countId
+        const keepIdLT = "scriptureLT" + countId
+        const toRemove = ["scripture", "scripture_2", "scripture_3", "scripture_4", "scriptureLT", "scriptureLT_2"].filter((a) => a !== keepId && a !== keepIdLT)
+        templates = templates.filter((a) => !toRemove.includes(a.id))
+
+        return templates
+    }
 </script>
 
 <svelte:window on:keydown={chooseTemplate} />
