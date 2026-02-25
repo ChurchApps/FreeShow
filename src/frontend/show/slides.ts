@@ -37,12 +37,24 @@ export function changeSlideGroups(obj: { sel: { data: { index: number }[] }; men
     newData = updated.newData
     const newParents = updated.newParents
 
+    let childrenLayoutData: { [key: string]: { [key: string]: any } } = {}
+
     // set new children
     groups.forEach(({ slides }) => {
+        const slideId = slides[0].id
+
         // remove exising children
-        newData.slides[slides[0].id].children = []
+        newData.slides[slideId].children = []
+
         if (slides.length > 1) {
-            newData.slides[slides[0].id].children!.push(...slides.slice(1, slides.length).map(({ id }) => id))
+            const newChildren = slides.slice(1).map(({ id }) => id)
+            newData.slides[slideId].children!.push(...newChildren)
+
+            let childLayoutData: { [key: string]: any } = {}
+            newChildren.forEach((childId, childIndex) => {
+                childLayoutData[childId] = slides[childIndex + 1].data || {}
+            })
+            childrenLayoutData[slideId] = childLayoutData
         }
     })
 
@@ -52,6 +64,8 @@ export function changeSlideGroups(obj: { sel: { data: { index: number }[] }; men
     // set child layout data from old parents
     const newLayout: SlideData[] = []
     newData.layout.forEach((layoutRef) => {
+        if (childrenLayoutData[layoutRef.id]) layoutRef.children = childrenLayoutData[layoutRef.id]
+
         if (!layoutRef.remove) {
             newLayout.push(layoutRef)
             return

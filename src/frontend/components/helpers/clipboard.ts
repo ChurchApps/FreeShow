@@ -598,11 +598,13 @@ const pasteActions = {
         data.slides.forEach((slide, i) => {
             // dont add child if it is already copied
             if (slide.group === null && addedChildren.includes(slide.id)) return
+            if (slide.group === null) slide.group = ""
 
             slide.id = uid()
             newSlides.push(slide)
 
             // has children
+            let childrenLayouts: any = {}
             if (slide.children) {
                 // let children: string[] = []
                 // children = slide.children.filter((child: string) => copiedIds.includes(child))
@@ -618,10 +620,13 @@ const pasteActions = {
 
                     addedChildren.push(childId)
 
+                    const oldId = childSlide.id
                     childSlide.id = uid()
                     delete childSlide.oldChild
                     clonedChildren.push(childSlide.id)
                     newSlides.push(childSlide)
+
+                    childrenLayouts[childSlide.id] = data.layouts?.[i]?.[oldId] || {}
                 })
 
                 slide.children = clonedChildren
@@ -637,6 +642,8 @@ const pasteActions = {
             // add layout
             const layout = data.layouts?.[i]
             if (!layout) return
+
+            if (Object.keys(childrenLayouts).length) layout.children = childrenLayouts
             layouts[i] = layout
         })
         // TODO: children next to each other should be grouped
@@ -649,9 +656,11 @@ const pasteActions = {
             _show().set({ key: "media", value: { ...showMedia, ...data.media } })
         }
 
+        // WIP fix the pasting
+
         // fix paste order
-        newSlides.reverse()
-        layouts.reverse()
+        // newSlides.reverse()
+        // layouts.reverse()
 
         history({ id: "SLIDES", newData: { data: newSlides, layouts, index: index !== undefined ? index + 1 : undefined } })
     },
