@@ -238,6 +238,7 @@
         "preset": "Preset",
         "main": "Main",
         "metronome": "Metronome",
+        "click_sound": "Click sound",
         "toggle_metronome": "Toggle metronome",
         "use_metadata_bpm": "Use BPM from metadata",
         "tempo": "Tempo",
