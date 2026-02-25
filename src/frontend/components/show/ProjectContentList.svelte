@@ -334,6 +334,12 @@
                             <T id="actions.import" />
                         </MaterialButton> -->
 
+                        <!-- WIP people would not know what this does -->
+                        <!-- <MaterialButton variant="outlined" title="actions.import: formats.clipboard" on:click={clipboardToProject}>
+                            <Icon id="paste" white />
+                            <T id="formats.clipboard" />
+                        </MaterialButton> -->
+
                         {#if Object.keys($shows).length > 10}
                             <MaterialButton variant="outlined" title="tabs.search_tip [Ctrl+F]" on:click={openSearch}>
                                 <Icon id="search" white />

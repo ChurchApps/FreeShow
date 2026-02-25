@@ -1,6 +1,8 @@
 import { get } from "svelte/store"
 import { activeEdit, activeProject, activeShow, projects, projectView, saved, showRecentlyUsedProjects } from "../../stores"
 import { keysToID, sortByTimeNew } from "../helpers/array"
+import type { ProjectShowRef } from "../../../types/Projects"
+import { uid } from "uid"
 
 export function openProject(id: string, openFirstItem: boolean = true) {
     projectView.set(false)
@@ -50,4 +52,48 @@ export function getRecentlyUsedProjects() {
 
     if (recentlyUsedList.length < 2) return []
     return recentlyUsedList
+}
+
+export function clipboardToProject() {
+    const currentProject = get(activeProject)
+    if (!currentProject || !get(projects)[currentProject]) return
+
+    navigator.clipboard.readText().then((clipText: string) => {
+        if (!clipText) return
+
+        const content = clipText.toString()
+        const items = textToProjectItems(content)
+        if (!items.length) return
+
+        projects.update((a) => {
+            if (!a[currentProject]) return a
+
+            a[currentProject].shows = [...a[currentProject].shows, ...items]
+            return a
+        })
+    })
+}
+
+// each line break is one section
+function textToProjectItems(text: string) {
+    let items: ProjectShowRef[] = []
+
+    // account for bullet/number points
+    // know when there's lyrics
+
+    // too long, probably not a list of sections
+    if (text.split("\n").length > 30) return []
+
+    text.split("\n").forEach((line) => {
+        line = line.trim()
+        if (!line) return
+
+        items.push({ id: uid(5), type: "section", name: line })
+    })
+
+    // if there's two line breaks between (& there's multiple lines) it will create a show
+    // let sections: string[] = []
+    // text.split("\n\n").forEach((part) =>
+
+    return items
 }
