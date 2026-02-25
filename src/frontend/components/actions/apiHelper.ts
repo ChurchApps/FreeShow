@@ -492,7 +492,8 @@ export function getClearedState() {
     return { all, background, slide, overlays: overlaysCleared, audio, slideTimers }
 }
 
-// "1.1.1" = "Gen 1:1"
+// "1.1.1,2,3" = "Gen 1:1-3"
+// WIP allow "John 1:35-36" or "43:1:35" as well
 export function startScripture(data: API_scripture) {
     const split = data.reference.split(".")
 

@@ -7,6 +7,7 @@
     import { loadCustomFonts } from "../../helpers/fonts"
     import Textbox from "../../slide/Textbox.svelte"
     import SlideItemTransition from "../transitions/SlideItemTransition.svelte"
+    import { waitUntilValueIsDefined } from "../../../utils/common"
 
     export let outputId: string
     export let outSlide: OutSlide
@@ -155,7 +156,11 @@
         return item?.id ? String(item.id) : `idx-${index}`
     }
 
-    function updateItems() {
+    let isClearingToEmpty = false
+    async function updateItems() {
+        let betweenClearingTransition = transition.between || transition
+        if (betweenClearingTransition?.type === "none") betweenClearingTransition.duration = 0
+
         if (!currentSlideItems?.length) {
             scheduleAutoSizePrecompute([])
             currentItems = []
@@ -169,8 +174,17 @@
                 lines: clone(lines),
                 currentStyle: clone(currentStyle)
             }
+
+            // wait for items to properly clear
+            // if changing quickly from text to empty to text again, the first text will be displayed again (due to Svelte transition bug)
+            if (transitionEnabled) {
+                isClearingToEmpty = true
+                setTimeout(() => (isClearingToEmpty = false), betweenClearingTransition.duration)
+            }
             return
         }
+
+        if (isClearingToEmpty) await waitUntilValueIsDefined(() => !isClearingToEmpty, 10, betweenClearingTransition.duration)
 
         scheduleAutoSizePrecompute(currentSlide.items)
 
