@@ -1370,6 +1370,7 @@
         "backup_all": "Backup everything",
         "backup_info": "This excludes local scriptures & media files as they are located on your system.",
         "restore": "Restore",
+        "restore_confirm": "Are you sure you want to restore this backup? This will overwrite the current data.",
         "backup_started": "Backing up...",
         "restore_started": "Restoring...",
         "backup_finished": "Backup complete!",

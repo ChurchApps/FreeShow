@@ -212,7 +212,7 @@ export interface MainSendPayloads {
     [Main.CLOSE_MIDI]: { id: string }
     [Main.GET_LYRICS]: { song: LyricSearchResult }
     [Main.SEARCH_LYRICS]: { artist: string; title: string }
-    [Main.RESTORE]?: { folder: string }
+    [Main.RESTORE]?: { path: string }
     [Main.RECORDER]: { blob: ArrayBuffer; name: string }
     [Main.SYSTEM_OPEN]: string
 

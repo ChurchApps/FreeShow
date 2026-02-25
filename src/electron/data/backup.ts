@@ -139,12 +139,12 @@ export function deleteBackup(data: { path: string }) {
 // RESTORE
 
 // WIP should be case insensitive
-export function restoreFiles(data?: { folder: string }) {
+export function restoreFiles(data?: { path: string }) {
     let files: string[] = []
 
-    if (data?.folder) {
-        const backupsFolder = getDataFolderPath("backups", data.folder)
-        files = readFolder(backupsFolder).map((name) => path.join(backupsFolder, name))
+    if (data?.path) {
+        // WIP check if folder or zip file
+        files = readFolder(data.path).map((name) => path.join(data.path, name))
     } else {
         const initialPath = getDataFolderPath("backups")
         files = selectFilesDialog("", { name: "FreeShow Backup Files", extensions: ["json"] }, true, initialPath)

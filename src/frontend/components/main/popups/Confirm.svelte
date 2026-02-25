@@ -20,7 +20,12 @@
 
     let textValue = ""
     function confirm() {
-        popupData.set({ ...$popupData, id: "confirm", value: textInput ? textValue : true })
+        if ($popupData.trigger) {
+            $popupData.trigger(textValue)
+            activePopup.set(null)
+        } else {
+            popupData.set({ ...$popupData, id: "confirm", value: textInput ? textValue : true })
+        }
     }
 </script>
 
