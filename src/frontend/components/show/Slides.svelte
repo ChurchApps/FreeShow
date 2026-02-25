@@ -170,12 +170,16 @@
         if (!loaded) return
 
         let currentTemplate = currentShow?.settings?.template || ""
+        let createItems = false
 
         // override with category template if any
         const categoryTemplate = $categories[currentShow?.category || ""]?.template || ""
-        if (categoryTemplate && $templates[categoryTemplate]) currentTemplate = categoryTemplate
+        if (categoryTemplate && $templates[categoryTemplate]) {
+            currentTemplate = categoryTemplate
+            createItems = true
+        }
 
-        history({ id: "TEMPLATE", save: false, newData: { id: currentTemplate }, location: { page: "show" } })
+        history({ id: "TEMPLATE", save: false, newData: { id: currentTemplate, data: { createItems } }, location: { page: "show" } })
     }
 
     $: if (showId && $special.capitalize_words) capitalizeWords()
