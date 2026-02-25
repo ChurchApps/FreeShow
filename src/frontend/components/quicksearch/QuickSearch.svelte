@@ -19,7 +19,36 @@
     let actualSearchText = ""
 
     let searchId = 0
-    async function search(e: any) {
+    let searchDebounce: ReturnType<typeof setTimeout> | null = null
+    const SEARCH_DEBOUNCE_MS = 90
+
+    async function runSearch(value: string, category: SearchCategory | null) {
+        const currentId = ++searchId
+        const results = await quicksearch(value, category)
+        if (currentId !== searchId) return
+
+        values = results
+        selectedIndex = 0
+    }
+
+    function scheduleSearch(value: string, category: SearchCategory | null, immediate = false) {
+        if (searchDebounce) {
+            clearTimeout(searchDebounce)
+            searchDebounce = null
+        }
+
+        if (immediate) {
+            runSearch(value, category)
+            return
+        }
+
+        searchDebounce = setTimeout(() => {
+            searchDebounce = null
+            runSearch(value, category)
+        }, SEARCH_DEBOUNCE_MS)
+    }
+
+    function search(e: any) {
         const inputValue = e.target.value
 
         let value = inputValue
@@ -47,16 +76,16 @@
         }
 
         if (!value) {
+            if (searchDebounce) {
+                clearTimeout(searchDebounce)
+                searchDebounce = null
+            }
+            searchId++
             values = []
             return
         }
 
-        const currentId = ++searchId
-        const results = await quicksearch(value, activeCategory)
-        if (currentId !== searchId) return
-
-        values = results
-        selectedIndex = 0
+        scheduleSearch(value, activeCategory)
     }
 
     function openCategory(category: SearchCategory) {
