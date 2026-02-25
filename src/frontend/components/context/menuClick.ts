@@ -1926,7 +1926,10 @@ export async function removeSlide(initialData: any[], type: "delete" | "remove" 
             newToast("output.state_locked")
             return
         }
-        if (type === "remove" && showSlides[slideId]?.group === ".") return
+        if (type === "remove" && showSlides[slideId]?.group === ".") {
+            newToast("inputs.group: main.none")
+            return
+        }
 
         data.push(a)
     })

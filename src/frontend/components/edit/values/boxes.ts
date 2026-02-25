@@ -136,7 +136,7 @@ export const textSections: { [key: string]: EditBoxSection } = {
                 { id: "style", key: "color", type: "color", value: "#FFFFFF", values: { label: "edit.text_color", allowGradients: true, allowOpacity: true, noLabel: true, style: "flex: 1;" } }
             ],
             [
-                { id: "style", key: "font-size", type: "number", value: 100, extension: "px", values: { label: "edit.font_size", style: "flex: 1;" } },
+                { id: "style", key: "font-size", type: "number", value: 100, extension: "px", values: { label: "edit.font_size", style: "flex: 1;", step: 2 } },
                 {
                     id: "textFit",
                     type: "dropdown",

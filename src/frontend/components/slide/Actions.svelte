@@ -1,8 +1,10 @@
 <script lang="ts">
     import type { Output } from "../../../types/Output"
-    import type { Show } from "../../../types/Show"
+    import type { Show, Slide } from "../../../types/Show"
     import { activeShow, groups, outputs, showsCache, special, templates } from "../../stores"
+    import { newToast } from "../../utils/common"
     import { translateText } from "../../utils/language"
+    import { getAccess } from "../../utils/profile"
     import { actionData } from "../actions/actionData"
     import { getActionName, getActionTriggerId } from "../actions/actions"
     import { clone } from "../helpers/array"
@@ -12,6 +14,7 @@
     import { getLayoutRef } from "../helpers/show"
     import Button from "../inputs/Button.svelte"
 
+    export let slide: Slide
     export let columns: number
     export let index = -1
     export let templateId = ""
@@ -68,8 +71,30 @@
         return shortcut
     }
 
+    function hasAccess() {
+        if (currentShow.locked) {
+            newToast("show.locked_info")
+            return false
+        }
+
+        if (slide?.locked) {
+            newToast("output.state_locked")
+            return false
+        }
+
+        const profile = getAccess("shows")
+        const readOnly = profile.global === "read" || profile[currentShow.category || ""] === "read"
+        if (readOnly) {
+            newToast("profile.locked")
+            return false
+        }
+
+        return true
+    }
+
     function changeAction(id: string, save = true) {
-        if (templateId || currentShow.locked) return
+        if (!hasAccess()) return
+        if (templateId) return
 
         let data = { ...actions, [id]: actions[id] ? !actions[id] : true }
 
@@ -80,7 +105,7 @@
     }
 
     function deleteSlideAction(e: any, id: string) {
-        if (currentShow.locked) return
+        if (!hasAccess()) return
         e.preventDefault()
 
         let slideActions = clone(actions.slideActions)
