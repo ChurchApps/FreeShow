@@ -17,7 +17,7 @@
     import TextInput from "../../inputs/TextInput.svelte"
     import Loader from "../../main/Loader.svelte"
     import Center from "../../system/Center.svelte"
-    import { formatBibleText, getVerseIdParts, getVersePartLetter, joinRange, loadJsonBible, moveSelection, outputIsScripture, playScripture, scriptureRangeSelect, sortScriptureSelection, splitText, swapPreviewBible } from "./scripture"
+    import { createScriptureShow, formatBibleText, getVerseIdParts, getVersePartLetter, joinRange, loadJsonBible, moveSelection, outputIsScripture, playScripture, scriptureRangeSelect, sortScriptureSelection, splitText, swapPreviewBible } from "./scripture"
     import { wait } from "../../../utils/common"
 
     export let active: string | null
@@ -733,10 +733,17 @@
         }
 
         if (e.key === "Enter") {
-            // Enter in search to play
+            // Enter in search to add to project or play
             if (e.target?.closest(".search")) {
-                playScripture()
-                ;(document.activeElement as any)?.blur()
+                if (e.ctrlKey || e.metaKey) {
+                    playScripture()
+                    ;(document.activeElement as any)?.blur()
+                } else {
+                    createScriptureShow()
+
+                    const searchElem = document.activeElement
+                    setTimeout(() => (searchElem ? (searchElem as any).focus() : null))
+                }
                 return
             }
 
