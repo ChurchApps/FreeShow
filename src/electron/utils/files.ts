@@ -688,6 +688,13 @@ export function setMediaSyncFolderPath(folderPath: string) {
     setStoreValue({ file: "config", key: "mediaFolderPath", value: folderPath })
 }
 
+function fileNamesMatch(nameA: string, nameB: string) {
+    return normalizeFileNameForMatch(nameA) === normalizeFileNameForMatch(nameB)
+}
+function normalizeFileNameForMatch(name: string) {
+    return name.normalize("NFC").toLowerCase()
+}
+
 // SEARCH FOR MEDIA FILE (in drawer media folders & their following folders)
 const NESTED_SEARCH = 8 // folder levels deep
 export async function locateMediaFile({ filePath, folders }: { filePath: string; folders: string[] }) {
@@ -740,7 +747,13 @@ export async function locateMediaFile({ filePath, folders }: { filePath: string;
             return potentialPath
         }
 
-        const entries = await readFolderWithTypesAsync(folderPath)
+        let entries: fs.Dirent[] = []
+        try {
+            entries = await readFolderWithTypesAsync(folderPath)
+        } catch {
+            return null
+        }
+
         const subFolders: string[] = []
 
         // ---- Scan files & collect subfolders
@@ -755,7 +768,7 @@ export async function locateMediaFile({ filePath, folders }: { filePath: string;
                 continue
             }
 
-            if (entry.name === fileName) {
+            if (fileNamesMatch(entry.name, fileName)) {
                 return currentPath
             }
         }

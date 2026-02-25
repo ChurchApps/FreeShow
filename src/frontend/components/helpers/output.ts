@@ -187,6 +187,7 @@ export function startFolderTimer(folderPath: string, file: { type: string; path:
     setOutput("transition", { duration: timer, folderPath })
 }
 
+// WIP smarter logging (based on time or based on percentage played)
 let justLogged = ""
 function appendShowUsage(showId: string) {
     if (!get(special).logSongUsage) return
