@@ -1125,8 +1125,10 @@ export function updateLayoutsFromTemplate(layouts: { [key: string]: Layout }, me
     if (typeof layouts !== "object") layouts = {}
     if (typeof media !== "object") media = {}
 
-    // only alter layout slides if clicking on the template
-    if (templateMode === "global" && !removeOverflow) return { layouts, media }
+    const settings = template.settings || {}
+
+    // for global templates, only apply slide actions unless clicking on the template
+    if (templateMode === "global" && !removeOverflow && !settings.actions?.length) return { layouts, media }
 
     // no need to add background/actions to slide/group children
     if (slideRef.type !== "parent") return { layouts, media }
@@ -1135,7 +1137,6 @@ export function updateLayoutsFromTemplate(layouts: { [key: string]: Layout }, me
     if (!layouts[layoutId]?.slides?.[slideIndex]) return { layouts, media }
 
     const slide = layouts[layoutId].slides[slideIndex]
-    const settings = template.settings || {}
     const oldSettings = oldTemplate.settings || {}
 
     let bgId = ""
