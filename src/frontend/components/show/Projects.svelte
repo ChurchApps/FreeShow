@@ -266,7 +266,7 @@
 
 <svelte:window on:keydown={checkInput} on:mousedown={mousedown} />
 
-<div class="main">
+<div class="main" class:focusMode={$focusMode}>
     <span class="tabs">
         {#if projectActive || recentlyUsedList.length}
             {#if !$focusMode}
@@ -321,9 +321,8 @@
                 <p style="margin-right: 24px;"><T id="remote.projects" /></p>
 
                 <div class="right">
-                    <MaterialButton style="width: 32px;height: 100%;padding: 0.3em 0.5em;border-bottom-right-radius: 10px;" title="edit.options" icon="options" on:click={() => (showProjectsOptions = !showProjectsOptions)} white={!showProjectsOptions}>
-                        <!-- prevent force "white" -->
-                        <span style="display: none;"></span>
+                    <MaterialButton style="width: 32px;height: 100%;padding: 0.3em 0.5em;border-bottom-right-radius: 10px;" title="edit.options" on:click={() => (showProjectsOptions = !showProjectsOptions)}>
+                        <Icon id="options" size={0.9} white={!showProjectsOptions} />
                     </MaterialButton>
 
                     <!-- <MaterialButton style="width: 32px;height: 100%;padding: 0.3em 0.5em;border-bottom-right-radius: 10px;{showProjectDropdown ? '' : 'opacity: 0.8;'}" title="create_show.more_options" icon="more" on:click={() => (showProjectDropdown = !showProjectDropdown)} white={!showProjectDropdown}>
@@ -502,7 +501,7 @@
     /* #projectsArea :global(.scroll) {
         padding-top: 33px;
     } */
-    .main :global(.scroll .droparea) {
+    .main:not(.focusMode) :global(.scroll .droparea) {
         padding-top: 30px;
     }
 

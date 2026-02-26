@@ -25,7 +25,7 @@
             isScrolling = null
             projectUpdating = null
             // scrollToActive()
-            if ($activeFocus.id) activeFocus.set({ ...active, index: project.shows.findIndex((a) => a.id === active.id) })
+            if ($activeFocus.id) activeFocus.set({ ...active, index: project.shows.findIndex((a) => a.id === active.id && (!a.layout || a.layout === outputShowLayout)) })
         }, 100)
     }
 
@@ -35,6 +35,7 @@
     $: outputId = getActiveOutputs($outputs, true, true, true)[0] || ""
     $: output = $outputs[outputId]
     $: outputShowId = output?.out?.slide?.id
+    $: outputShowLayout = output?.out?.slide?.layout
     $: outputIndex = output?.out?.slide?.index
 
     $: active = $activeFocus
@@ -54,7 +55,7 @@
         let index = active.index
         if (index === undefined) {
             if (outputShowId) currentId = outputShowId
-            index = project.shows.findIndex((a) => a.id === currentId)
+            index = project.shows.findIndex((a) => a.id === currentId && (!a.layout || a.layout === outputShowLayout))
         }
 
         if (!outputShowId && previousId && previousId === currentId) return

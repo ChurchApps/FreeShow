@@ -162,6 +162,7 @@ export function nextSlideIndividual(e: any, start = false, end = false) {
     getActiveOutputs(get(outputs), true, false, true).forEach((id) => nextSlide(e, start, end, false, false, id, false, true))
 }
 
+let isGoingNext = false
 export function nextSlide(e: any, start = false, end = false, loop = false, bypassLock = false, customOutputId = "", nextAfterMedia = false, advanceThroughProject: boolean = false) {
     if (get(outLocked) && !bypassLock) return
     // blur to remove tab highlight from slide after clicked, and using arrows
@@ -171,11 +172,13 @@ export function nextSlide(e: any, start = false, end = false, loop = false, bypa
 
     const outputId = customOutputId || getFirstActiveOutput()?.id || ""
     const currentOutput = get(outputs)[outputId] || {}
+    let currentLayoutId = (get(focusMode) ? get(projects)[get(activeProject) || ""]?.shows?.[currentShow?.index ?? -1]?.layout : null) || get(showsCache)[currentShow?.id || ""]?.settings?.activeLayout
     let slide: null | OutSlide = currentOutput.out?.slide || null
     if (!slide) {
         const cachedSlide: null | OutSlide = get(outputSlideCache)[outputId] || null
-        if (cachedSlide && cachedSlide?.id === currentShow?.id && cachedSlide?.layout === get(showsCache)[currentShow?.id || ""]?.settings?.activeLayout) slide = cachedSlide
+        if (cachedSlide && cachedSlide?.id === currentShow?.id && cachedSlide?.layout === currentLayoutId) slide = cachedSlide
     }
+    // if (slide?.layout) currentLayoutId = slide.layout
 
     // PPT
     if (slide?.type === "ppt") {
@@ -208,9 +211,9 @@ export function nextSlide(e: any, start = false, end = false, loop = false, bypa
     // open next project item if previous has been opened and next is still active when going forward
     const isFirstSlide: boolean = slide && layout ? layout.filter((a) => !a?.data?.disabled).findIndex((a) => a.layoutIndex === slide?.index) === 0 : false
     const isFirstLine = (slide?.line || 0) === 0
-    const nextProjectItem = get(projects)[get(activeProject) || ""]?.shows?.[(currentShow?.index ?? -2) + 1]?.id
-    const isPreviousProjectItem = slide?.id === nextProjectItem && isFirstSlide && isFirstLine
-    if (isPreviousProjectItem && e?.key !== " " && advanceThroughProject && !isLastSlide) {
+    const nextProjectItem = get(projects)[get(activeProject) || ""]?.shows?.[(currentShow?.index ?? -2) + 1]
+    const isPreviousProjectItem = slide?.id === nextProjectItem?.id && (!nextProjectItem?.layout || nextProjectItem?.layout === slide?.layout) && isFirstSlide && isFirstLine && !isLastSlide
+    if (isPreviousProjectItem && e?.key !== " " && advanceThroughProject) {
         goToNextProjectItem()
         return
     }
@@ -251,7 +254,7 @@ export function nextSlide(e: any, start = false, end = false, loop = false, bypa
     }
 
     // go to beginning if live mode & ctrl | no output | last slide active
-    if (currentShow && (start || !slide || e?.ctrlKey || (isLastSlide && (currentShow.id !== slide?.id || get(showsCache)[currentShow.id]?.settings.activeLayout !== slide.layout)))) {
+    if (currentShow && (start || !slide || e?.ctrlKey || (isLastSlide && (currentShow.id !== slide?.id || currentLayoutId !== slide.layout)))) {
         if ((currentShow?.type === "section" || !get(showsCache)[currentShow.id] || !getLayoutRef(currentShow.id).length) && advanceThroughProject) return goToNextProjectItem()
 
         const id = loop ? slide?.id : currentShow.id
@@ -268,7 +271,8 @@ export function nextSlide(e: any, start = false, end = false, loop = false, bypa
         checkActionTrigger(data, index)
         // allow custom actions to trigger first
         setTimeout(() => {
-            setOutput("slide", { id, layout: _show(id).get("settings.activeLayout"), index }, false, customOutputId)
+            const currentLayoutId = (get(focusMode) ? get(projects)[get(activeProject) || ""]?.shows?.[currentShow?.index ?? -1]?.layout : null) || _show(id).get("settings.activeLayout")
+            setOutput("slide", { id, layout: currentLayoutId, index }, false, customOutputId)
             updateOut(id, index!, layout, !e?.altKey, customOutputId)
         })
         return
@@ -290,14 +294,24 @@ export function nextSlide(e: any, start = false, end = false, loop = false, bypa
     if (index !== null) newSlideOut.index = index
 
     // go to next show if end
-    if (index === null && currentShow?.id === slide?.id && get(showsCache)[currentShow?.id || ""]?.settings.activeLayout === slide.layout) {
+    if (index === null && currentShow?.id === slide?.id && currentLayoutId === slide.layout) {
         if (get(special).nextItemOnLastSlide === false && !get(focusMode)) return
 
         if (PRESENTATION_KEYS_NEXT.includes(e?.key)) {
             if (advanceThroughProject) goToNextProjectItem(e.key)
 
             // skip right to next slide without requiring "double" input in focus mode
-            if (get(focusMode)) setTimeout(() => nextSlideIndividual(e), 20)
+            if (get(focusMode)) {
+                const isLastProjectItem = currentShow?.index === (get(projects)[get(activeProject) || ""]?.shows?.length || 0) - 1
+                if (isLastSlide && isLastProjectItem) return
+
+                if (isGoingNext) return
+                isGoingNext = true
+                setTimeout(() => {
+                    nextSlideIndividual(e)
+                    isGoingNext = false
+                }, 20)
+            }
         }
         return
     }
@@ -458,6 +472,7 @@ export function previousSlideIndividual(e: any) {
     getActiveOutputs(get(outputs), true, false, true).forEach((id) => previousSlide(e, id))
 }
 
+let isGoingPrevious = false
 export function previousSlide(e: any, customOutputId?: string) {
     if (get(outLocked)) return
     if (document.activeElement?.closest(".slide") && !document.activeElement?.closest(".edit")) (document.activeElement as HTMLElement).blur()
@@ -466,11 +481,13 @@ export function previousSlide(e: any, customOutputId?: string) {
 
     const outputId = customOutputId || getFirstActiveOutput()?.id || ""
     const currentOutput = get(outputs)[outputId] || {}
+    let currentLayoutId = (get(focusMode) ? get(projects)[get(activeProject) || ""]?.shows?.[currentShow?.index ?? -1]?.layout : null) || get(showsCache)[currentShow?.id || ""]?.settings?.activeLayout
     let slide = currentOutput.out?.slide || null
     if (!slide) {
         const cachedSlide: null | OutSlide = get(outputSlideCache)[outputId] || null
-        if (cachedSlide && cachedSlide?.id === currentShow?.id && cachedSlide?.layout === get(showsCache)[currentShow?.id || ""]?.settings?.activeLayout) slide = cachedSlide
+        if (cachedSlide && cachedSlide?.id === currentShow?.id && cachedSlide?.layout === currentLayoutId) slide = cachedSlide
     }
+    // if (slide?.layout) currentLayoutId = slide.layout
 
     // PPT
     if (slide?.type === "ppt") {
@@ -497,14 +514,12 @@ export function previousSlide(e: any, customOutputId?: string) {
         _show(slide ? slide.id : "active")
             .layouts(slide ? [slide.layout] : "active")
             .ref()[0] || []
-    let activeLayout: string = _show(slide ? slide.id : "active").get("settings.activeLayout")
+    let activeLayout: string = (get(focusMode) ? get(projects)[get(activeProject) || ""]?.shows?.[currentShow?.index ?? -1]?.layout : null) || _show(slide ? slide.id : "active").get("settings.activeLayout")
     let index: number | null = slide?.index !== undefined ? slide.index - 1 : layout.length ? layout.length - 1 : null
     if (index === null) {
         if (currentShow?.type === "section" || !get(showsCache)[currentShow?.id || ""]) goToPreviousProjectItem()
         return
     }
-
-    const activeShowLayout = get(showsCache)[currentShow?.id || ""]?.settings?.activeLayout
 
     // lines
     const outputWithLines = getFewestOutputLines()
@@ -542,18 +557,18 @@ export function previousSlide(e: any, customOutputId?: string) {
     const revealEnded = !shouldLinesReveal || currentReveal === 0
     if (isFirstSlide && !revealEnded) isLastSlide = false
 
-    const previousProjectItem = get(projects)[get(activeProject) || ""]?.shows?.[(currentShow?.index ?? -2) - 1]?.id
-    const isNextProjectItem = slide?.id === previousProjectItem && isLastSlide && isLastLine
+    const previousProjectItem = get(projects)[get(activeProject) || ""]?.shows?.[(currentShow?.index ?? -2) - 1]
+    const isNextProjectItem = slide?.id === previousProjectItem?.id && (!previousProjectItem?.layout || previousProjectItem?.layout === slide?.layout) && isLastSlide && isLastLine
     if (isNextProjectItem) {
         goToPreviousProjectItem()
         return
     }
 
     // if (!hasLinesEnded && isFirstSlide) isFirstSlide = false
-    if (activeShowLayout !== slide?.layout && hasLinesEnded && revealEnded && (index < 0 || isFirstSlide)) {
+    if (currentLayoutId !== slide?.layout && hasLinesEnded && revealEnded && (index < 0 || isFirstSlide)) {
         slide = null
-        layout = getLayoutRef()
-        activeLayout = activeShowLayout
+        layout = _show("active").layouts([currentLayoutId]).ref()[0] || []
+        activeLayout = currentLayoutId
         index = (layout.length || 0) - 1
     }
 
@@ -562,14 +577,24 @@ export function previousSlide(e: any, customOutputId?: string) {
     if (hasLinesEnded && revealEnded && clickRevealEnded) {
         if (index < 0 || !layout.slice(0, index + 1).filter((a) => !a.data.disabled).length) {
             // go to previous show if out slide at start
-            if ((currentShow?.id === slide?.id && activeShowLayout === slide?.layout) || currentShow?.type === "section" || !get(showsCache)[currentShow?.id || ""] || !layout.length) {
+            if ((currentShow?.id === slide?.id && currentLayoutId === slide?.layout) || currentShow?.type === "section" || !get(showsCache)[currentShow?.id || ""] || !layout.length) {
                 if (get(special).nextItemOnLastSlide === false && !get(focusMode)) return
 
                 if (PRESENTATION_KEYS_PREV.includes(e?.key)) {
                     goToPreviousProjectItem(e.key)
 
                     // skip right to previous slide without requiring "double" input in focus mode
-                    if (get(focusMode)) setTimeout(() => previousSlideIndividual(e), 20)
+                    if (get(focusMode)) {
+                        const isFirstProjectItem = currentShow?.index === 0
+                        if (isFirstSlide && isFirstProjectItem) return
+
+                        if (isGoingPrevious) return
+                        isGoingPrevious = true
+                        setTimeout(() => {
+                            previousSlideIndividual(e)
+                            isGoingPrevious = false
+                        }, 20)
+                    }
                 }
             }
             return

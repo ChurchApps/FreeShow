@@ -1,5 +1,5 @@
 import { get } from "svelte/store"
-import { activeEdit, activeProject, activeShow, projects, projectView, saved, showRecentlyUsedProjects } from "../../stores"
+import { activeEdit, activeProject, activeShow, projects, projectView, saved, showRecentlyUsedProjects, showsCache } from "../../stores"
 import { keysToID, sortByTimeNew } from "../helpers/array"
 import type { ProjectShowRef } from "../../../types/Projects"
 import { uid } from "uid"
@@ -36,6 +36,18 @@ export function openProjectItem(id: string, index: number = 0) {
     if (!item) return
 
     activeShow.set({ ...item, index })
+
+    // open stored layout
+    if ((item.type || "show") === "show" && item.layout) {
+        // wait until loaded
+        setTimeout(() => {
+            showsCache.update((a) => {
+                if (!a[item.id]?.settings) return a
+                a[item.id].settings.activeLayout = item.layout!
+                return a
+            })
+        }, 50)
+    }
 
     let type = item.type
     // same as ShowButton
