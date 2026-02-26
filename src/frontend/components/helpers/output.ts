@@ -1284,7 +1284,7 @@ export function getStyleTemplate(outSlide: OutSlide | null, currentStyle: Styles
 
     // scripture
     const reference = _show(outSlide?.id).get("reference")
-    // also check per-slide customDynamicValues so verse slides in mixed shows (with non-scripture slides) are detected correctly
+    // also check per-slide customDynamicValues so slides in non-scripture shows are detected correctly
     const hasScriptureDynamicValues = !!slideDynamicValues && Object.keys(slideDynamicValues).some((k) => k.startsWith("scripture"))
     const isScripture = outSlide?.id === "temp" || reference?.type === "scripture" || hasScriptureDynamicValues
 

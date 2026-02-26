@@ -2,7 +2,6 @@
     import { autoOutput, dictionary, fullColors, groups, labelsDisabled, language, os, special, timeFormat } from "../../../stores"
     import { getLanguageList, setLanguage, translateText } from "../../../utils/language"
     import { sortByName } from "../../helpers/array"
-    import { getDefaultProjectName, projectReplacers } from "../../helpers/historyHelpers"
     import Title from "../../input/Title.svelte"
     import MaterialDropdown from "../../inputs/MaterialDropdown.svelte"
     import MaterialPopupButton from "../../inputs/MaterialPopupButton.svelte"
@@ -20,21 +19,8 @@
 
     /////
 
-    let projectReplacerTitle = getReplacerTitle()
-    function getReplacerTitle() {
-        let titles: string[] = []
-        projectReplacers.forEach((a) => {
-            if (a.id === "D0") titles.push("")
-            else titles.push(`• <b>${a.title}:</b> {${a.id}}`)
-        })
-
-        return titles.join("<br>")
-    }
-
     // WIP set calendar starting day
     // WIP change date format (DD.MM.YYYY, YYYY-MM-DD)
-
-    $: projectName = $special.default_project_name ?? getDefaultProjectName()
 
     $: groupsString = updateGroups($groups, $dictionary)
     function updateGroups(groups: any, _updater: any) {
@@ -55,15 +41,6 @@
 <MaterialDropdown label="settings.language" value={$language} options={getLanguageList()} on:change={(e) => setLanguage(e.detail)} flags />
 <MaterialToggleSwitch label="settings.use24hClock" checked={$timeFormat === "24"} on:change={(e) => timeFormat.set(e.detail ? "24" : "12")} />
 <MaterialToggleSwitch label="settings.disable_labels" checked={$labelsDisabled} defaultValue={false} on:change={(e) => labelsDisabled.set(e.detail)} />
-
-<!-- PROJECT -->
-
-<Title label="guide_title.project" icon="project" />
-
-<MaterialTextInput label="settings.default_project_name" title={projectReplacerTitle} value={projectName} defaultValue={getDefaultProjectName()} on:change={(e) => updateSpecial(e.detail, "default_project_name", true)} />
-<!-- WIP <span style="opacity: 0.6;display: flex;align-items: center;padding-left: 10px;font-size: 0.8em;">({getProjectName($special)})</span> -->
-
-<MaterialToggleSwitch label="settings.startup_projects_list" checked={$special.startupProjectsList} defaultValue={false} on:change={(e) => updateSpecial(e.detail, "startupProjectsList")} />
 
 <!-- OUTPUT -->
 

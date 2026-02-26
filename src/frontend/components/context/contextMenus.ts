@@ -46,7 +46,6 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     delete_all: { label: "actions.delete_all", icon: "delete", iconColor: "#ff5454" },
     import: { label: "actions.import", icon: "import" },
     export: { label: "actions.export", icon: "export" },
-    save_to_file: { label: "actions.save_to_file", icon: "save" },
     custom_text: { label: "popup.custom_text", icon: "rename", iconColor: "#6effbe" },
     // DRAWER
     enabledTabs: { label: "context.enabledTabs", items: ["LOAD_enabled_drawer_tabs"] },
@@ -98,7 +97,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     mark_played: { label: "actions.mark_played", icon: "check", iconColor: "var(--text)" },
     section: { label: "new.section", icon: "section", iconColor: "var(--secondary)" },
     lock_sections: { label: "actions.lock_sections", icon: "lock", iconColor: "#ff5454" },
-    copy_to_template: { label: "actions.create_template", icon: "templates", iconColor: "#97c7ff" },
+    copy_to_template: { label: "actions.convert_to_template", icon: "templates", iconColor: "#97c7ff" },
     // SORT
     sort_shows_by: { label: "sort.sort_by", icon: "sort", iconColor: "#979aff", items: ["LOAD_sort_shows"] },
     sort_projects_by: { label: "sort.sort_by", icon: "sort", iconColor: "#979aff", items: ["LOAD_sort_projects"] },
@@ -302,11 +301,10 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
 
     // PROJECT
     projects: ["newProject", "newFolder", "SEPARATOR", "sort_projects_by"],
-    projectsTab: ["import"],
-    projectTab: ["save_to_file", "export", "SEPARATOR", "close"],
+    projectTab: ["close"],
     project: ["newShowPopup", "section"], // "newShow"(empty) , "newPrivateShow"
-    project_button: ["GROUP_rename_only", "duplicate", "delete", "SEPARATOR", "export", "copy_to_template", "SEPARATOR", "archive"], // "open", // "GROUP_rename"
-    project_button_readonly: ["export"],
+    project_button: ["GROUP_rename_only", "duplicate", "delete", "SEPARATOR", "copy_to_template", "SEPARATOR", "archive"], // "open", // "GROUP_rename"
+    project_button_readonly: [],
     project_template: ["GROUP_rename_only", "delete"],
     folder: ["GROUP_rename_only", "delete", "SEPARATOR", "newProject", "newFolder"],
     folder_readonly: ["sort_projects_by"],

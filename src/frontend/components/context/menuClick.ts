@@ -91,7 +91,6 @@ import { playPauseGlobal } from "../drawer/timers/timers"
 import { addChords } from "../edit/scripts/chords"
 import { rearrangeItems, rearrangeStageItems } from "../edit/scripts/itemHelpers"
 import { getItemText, getSelectionRange } from "../edit/scripts/textStyle"
-import { exportProject } from "../export/project"
 import { clone, removeDuplicates, sortObjectNumbers } from "../helpers/array"
 import { copy, cut, deleteAction, duplicate, paste, selectAll } from "../helpers/clipboard"
 import { history, redo, undo } from "../helpers/history"
@@ -741,13 +740,6 @@ const clickActions = {
         history({ id: "UPDATE", newData: { replace: { parent } }, location: { page: "show", id: "project" } })
     },
     newFolder: (obj: ObjData) => {
-        if (obj.contextElem?.closest(".projectItem")) {
-            let parent = obj.sel?.data[0]?.id || obj.contextElem.id || "/"
-            if (parent === "projectsArea") parent = "/"
-            history({ id: "UPDATE", newData: { replace: { parent } }, location: { page: "show", id: "project_folder" } })
-            return
-        }
-
         if (obj.contextElem?.classList.contains("#category_media") || obj.sel?.id === "category_media") {
             sendMain(Main.OPEN_FOLDER, { channel: "MEDIA", title: translateText("new.folder") })
             return
@@ -755,6 +747,14 @@ const clickActions = {
 
         if (obj.contextElem?.classList.contains("#category_audio") || obj.sel?.id === "category_audio") {
             sendMain(Main.OPEN_FOLDER, { channel: "AUDIO", title: translateText("new.folder") })
+            return
+        }
+
+        // ?.closest(".projectItem") // might be at root
+        if (obj.contextElem) {
+            let parent = obj.sel?.data[0]?.id || obj.contextElem.id || "/"
+            if (parent === "projectsArea" || parent === "projects") parent = "/"
+            history({ id: "UPDATE", newData: { replace: { parent } }, location: { page: "show", id: "project_folder" } })
             return
         }
     },
@@ -832,30 +832,6 @@ const clickActions = {
             if (!theme) return
             send(EXPORT, ["THEME"], { content: theme })
 
-            return
-        }
-
-        if (obj.contextElem?.classList.value.includes("project")) {
-            if (obj.sel?.id !== "project" && !get(activeProject)) return
-            const projectId: string = obj.sel?.data[0]?.id || get(activeProject)
-            exportProject(get(projects)[projectId], projectId)
-            // WIP set sourcePath to export path
-            return
-        }
-    },
-    import: (obj: ObjData) => {
-        if (obj.contextElem?.classList.value.includes("#projectsTab")) {
-            const extensions = ["project", "shows", "json", "zip"]
-            const name = translateText("formats.project")
-            sendMain(Main.IMPORT, { channel: "freeshow_project", format: { extensions, name } })
-            return
-        }
-    },
-    save_to_file: (obj: ObjData) => {
-        if (obj.contextElem?.classList.value.includes("project")) {
-            if (obj.sel?.id !== "project" && !get(activeProject)) return
-            const projectId: string = obj.sel?.data[0]?.id || get(activeProject)
-            exportProject(get(projects)[projectId], projectId, get(projects)[projectId]?.sourcePath)
             return
         }
     },

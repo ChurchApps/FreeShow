@@ -1,11 +1,13 @@
 <script lang="ts">
-    import { onDestroy, onMount } from "svelte"
-    import { fade } from "svelte/transition"
+    import { createEventDispatcher, onDestroy, onMount } from "svelte"
+    import { fade, slide } from "svelte/transition"
+    import { Main } from "../../../types/IPC/Main"
     import type { ProjectShowRef, Tree } from "../../../types/Projects"
     import { ShowType } from "../../../types/Show"
     import { addProjectItem, addToProject, updateRecentlyAddedFiles } from "../../converters/project"
-    import { actions, activeFocus, activePopup, activeProject, activeShow, contextActive, drawer, focusMode, fullColors, labelsDisabled, playerVideos, projects, projectView, recentFiles, selected, shows, special } from "../../stores"
-    import { newToast, triggerFunction } from "../../utils/common"
+    import { sendMain } from "../../IPC/main"
+    import { actions, activeFocus, activeProject, activeShow, contextActive, drawer, drawerTabsData, focusMode, fullColors, playerVideos, projects, projectView, quickSearchActive, recentFiles, selected, shows, special } from "../../stores"
+    import { triggerFunction } from "../../utils/common"
     import { getAccess } from "../../utils/profile"
     import { getActionIcon } from "../actions/actions"
     import { getTimeUntilClock } from "../drawer/timers/timers"
@@ -46,6 +48,9 @@
             offset = Math.max(0, ((activeProjectItem.closest("#show") as HTMLElement)?.offsetTop || 0) + scrollElem.offsetTop - ($drawer.height < 400 ? 120 : 20))
         }, time)
     }
+
+    const dispatch = createEventDispatcher()
+    $: if (scrollElem) dispatch("scrollElem", scrollElem)
 
     // close if not existing
     $: if ($activeProject && !$projects[$activeProject]) activeProject.set(null) // projectView.set(true)
@@ -113,13 +118,20 @@
         })
     }
 
-    function createShow() {
-        activePopup.set("show")
-        openDrawer("shows")
-    }
-    function openSearch() {
-        openDrawer("shows")
+    // function createShow() {
+    //     activePopup.set("show")
+    //     openDrawer("shows")
+    // }
+    function openSearch(page: string) {
+        openDrawer(page)
         triggerFunction("drawer_search")
+    }
+
+    function importPDF() {
+        sendMain(Main.IMPORT, { channel: "pdf", format: { name: "PDF", extensions: ["pdf"] } })
+    }
+    function importPPT() {
+        sendMain(Main.IMPORT, { channel: "powerpoint", format: { name: "PowerPoint", extensions: ["ppt", "pptx"] } })
     }
 
     onMount(() => {
@@ -201,7 +213,15 @@
         data.forEach(addProjectItem)
         contextActive.set(false)
     }
+
+    let addMenuOpen = false
+
+    function mousedown(e: any) {
+        if (!e.target.closest(".addMenu") && !e.target.closest(".addButton")) addMenuOpen = false
+    }
 </script>
+
+<svelte:window on:mousedown={mousedown} />
 
 <div id="projectArea" class="list {projectReadOnly ? '' : 'context #project'}">
     <Autoscroll {offset} bind:scrollElem timeout={150}>
@@ -325,27 +345,15 @@
                     <span style="opacity: 0.5;"><T id="empty.general" /></span>
 
                     <span style="padding-top: 20px" class="buttons">
-                        <MaterialButton variant="outlined" icon="add" title="tooltip.show [Ctrl+N]" on:click={createShow}>
-                            <T id="new.show" />
+                        <MaterialButton variant="outlined" icon="search" title="main.quick_search" on:click={() => quickSearchActive.set(true)} white>
+                            <T id="main.quick_search" />
                         </MaterialButton>
-
-                        <!-- <MaterialButton variant="outlined" title="actions.import [Ctrl+I]" on:click={() => activePopup.set("import")}>
-                            <Icon id="import" white />
-                            <T id="actions.import" />
-                        </MaterialButton> -->
 
                         <!-- WIP people would not know what this does -->
                         <!-- <MaterialButton variant="outlined" title="actions.import: formats.clipboard" on:click={clipboardToProject}>
                             <Icon id="paste" white />
                             <T id="formats.clipboard" />
                         </MaterialButton> -->
-
-                        {#if Object.keys($shows).length > 10}
-                            <MaterialButton variant="outlined" title="tabs.search_tip [Ctrl+F]" on:click={openSearch}>
-                                <Icon id="search" white />
-                                <T id="main.search" />
-                            </MaterialButton>
-                        {/if}
                     </span>
                 </Center>
             {/if}
@@ -361,7 +369,7 @@
 </div>
 
 {#if $activeProject && !$projectView && !$focusMode && !recentlyUsedList.length && !projectReadOnly}
-    <FloatingInputs arrow let:open>
+    <!-- <FloatingInputs arrow let:open>
         {#if open || $special.projectTimelineActive || $projects[$activeProject]?.timeline?.actions?.length}
             <MaterialButton title="timeline.toggle_timeline" on:click={() => special.update((a) => ({ ...a, projectTimelineActive: !a.projectTimelineActive }))}>
                 <Icon size={1.3} id="timeline" white={!$special.projectTimelineActive} />
@@ -377,6 +385,84 @@
                 {#if !lessVisibleSection && !$labelsDisabled}<T id="new.section" />{/if}
             </MaterialButton>
         {/if}
+    </FloatingInputs> -->
+
+    {#if addMenuOpen}
+        <!-- new show, new media, new PDF/PPT?, new scripture, new section -->
+        <div class="addMenu" transition:slide={{ duration: 100 }} role="none" on:click={() => (addMenuOpen = false)}>
+            <!-- createShow -->
+            <MaterialButton variant="outlined" icon="slide" title="tooltip.show" on:click={() => openSearch("shows")}>
+                <div class="label">
+                    <p><T id="formats.show" /></p>
+                    <!-- <p class="description" data-title={translateText("tabs.shows_info")}><T id="tabs.shows_info" /></p> -->
+                </div>
+
+                <div class="actionType">
+                    <Icon id="search" size={0.7} white />
+                </div>
+            </MaterialButton>
+
+            {#if $drawerTabsData.scripture?.enabled !== false}
+                <MaterialButton variant="outlined" icon="scripture" title="new.scripture" on:click={() => openSearch("scripture")} white>
+                    <div class="label">
+                        <p><T id="tabs.scripture" /></p>
+                    </div>
+
+                    <div class="actionType">
+                        <Icon id="search" size={0.7} white />
+                    </div>
+                </MaterialButton>
+            {/if}
+
+            <!-- WIP popup -->
+            <!-- images, videos, audio, YouTube, webpages? -->
+            <!-- PDF & PowerPoint? -->
+            <MaterialButton variant="outlined" icon="image" title="guide_description.media" on:click={() => openSearch("media")} white>
+                <div class="label">
+                    <p><T id="items.media" /></p>
+                </div>
+
+                <div class="actionType">
+                    <Icon id="search" size={0.7} white />
+                </div>
+            </MaterialButton>
+
+            <MaterialButton variant="outlined" icon="pdf" title="PDF" on:click={importPDF} white>
+                <div class="label">
+                    <p>PDF</p>
+                </div>
+
+                <div class="actionType">
+                    <Icon id="folder" size={0.7} white />
+                </div>
+            </MaterialButton>
+
+            <MaterialButton variant="outlined" title="PowerPoint" on:click={importPPT} white>
+                <img style="height: 14px;width: 14px;margin-right: 2px;" src="./import-logos/powerpoint.webp" alt="logo" draggable={false} />
+
+                <div class="label" style="margin-right: 16px;">
+                    <p>PowerPoint</p>
+                </div>
+
+                <div class="actionType">
+                    <Icon id="folder" size={0.7} white />
+                </div>
+            </MaterialButton>
+
+            <MaterialButton variant="outlined" icon="section" title="new.section" class="context #new_section" on:click={addSection} white={lessVisibleSection}>
+                <div class="label">
+                    <p><T id="new.section" /></p>
+                    <!-- <p class="description" data-title={translateText("tabs.sections_info")}><T id="tabs.sections_info" /></p> -->
+                </div>
+            </MaterialButton>
+        </div>
+    {/if}
+
+    <FloatingInputs gradient style="width: 50px;height: 50px;border: none;">
+        <!-- {addMenuOpen ? 'border-color: white;' : ''} -->
+        <MaterialButton class="addButton" title="context.addToProject" style="width: 50px;height: 50px;" on:click={() => (addMenuOpen = !addMenuOpen)} on:dblclick={addSection}>
+            <Icon id="add" size={1.5} style={addMenuOpen ? "transform: rotate(135deg);" : ""} white />
+        </MaterialButton>
     </FloatingInputs>
 {/if}
 
@@ -396,7 +482,7 @@
         display: flex;
         flex-direction: column;
 
-        margin: 10px 0;
+        margin: 8px 0;
         margin-right: 5px;
 
         background-color: var(--primary-darker);
@@ -412,7 +498,7 @@
 
     .list#projectArea :global(.droparea) {
         /* "new section" button */
-        padding-bottom: 50px;
+        padding-bottom: 57px;
     }
 
     .listSection :global(button) {
@@ -474,5 +560,61 @@
         display: flex;
         align-items: center;
         justify-content: center;
+    }
+
+    /* add menu */
+
+    .addMenu {
+        position: absolute;
+        bottom: 70px; /* 10px + 50px + 10px */
+        right: 12px;
+
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+
+        /* background-color: var(--primary);
+        padding: 5px;
+        border-radius: 24px;
+        border: 1px solid var(--primary-lighter);
+
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3); */
+    }
+
+    .addMenu :global(button) {
+        justify-content: start;
+        padding: 10px 16px;
+
+        border-radius: 50px;
+
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+
+        backdrop-filter: blur(10px);
+    }
+
+    .addMenu .label {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+
+        align-items: flex-start;
+    }
+    /* .addMenu .description {
+        font-size: 0.8em;
+        opacity: 0.7;
+
+        max-width: 180px;
+    } */
+
+    .actionType {
+        position: absolute;
+        top: 50%;
+        right: 14px;
+        transform: translateY(-50%);
+
+        display: flex;
+        align-items: center;
+
+        opacity: 0.2;
     }
 </style>

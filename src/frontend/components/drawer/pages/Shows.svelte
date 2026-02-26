@@ -312,7 +312,7 @@
 
 <FloatingInputs onlyOne gradient>
     <div role="none" class="overflow-interact" on:click={(e) => createShow(e, true)}>
-        <MaterialButton icon="add" class="context #drawer_new_show" title="tooltip.show [Ctrl+N]" disabled={readOnly} on:click={createShow}>
+        <MaterialButton icon="add" class="context #drawer_new_show" title="tooltip.show [Ctrl+N]" disabled={readOnly} on:click={createShow} white>
             {#if !$labelsDisabled}<T id="new.show" />{/if}
         </MaterialButton>
     </div>

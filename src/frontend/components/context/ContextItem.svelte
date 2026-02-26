@@ -37,11 +37,6 @@
         delete: () => {
             hide = !!$shows[$selected.data[0]?.id]?.locked
         },
-        save_to_file: () => {
-            const project = $projects[$activeProject || ""]
-            hide = !project?.sourcePath
-            customTitle = project?.sourcePath || ""
-        },
         private: () => {
             let show = $shows[$selected.data[0]?.id]
             if (!show) return
