@@ -1279,12 +1279,14 @@ export function getOutputTransitions(slideData: SlideData | null, styleTransitio
     return clone(transitions)
 }
 
-export function getStyleTemplate(outSlide: OutSlide | null, currentStyle: Styles | undefined) {
+export function getStyleTemplate(outSlide: OutSlide | null, currentStyle: Styles | undefined, slideDynamicValues?: { [key: string]: any }) {
     if (!currentStyle) return {} as Template
 
     // scripture
     const reference = _show(outSlide?.id).get("reference")
-    const isScripture = outSlide?.id === "temp" || reference?.type === "scripture"
+    // also check per-slide customDynamicValues so verse slides in mixed shows (with non-scripture slides) are detected correctly
+    const hasScriptureDynamicValues = !!slideDynamicValues && Object.keys(slideDynamicValues).some((k) => k.startsWith("scripture"))
+    const isScripture = outSlide?.id === "temp" || reference?.type === "scripture" || hasScriptureDynamicValues
 
     const translations: number = outSlide?.id === "temp" ? outSlide.translations || 1 : reference?.data?.translations || reference?.data?.version?.split("+")?.length || 1
     const translationKey = translations > 1 ? `_${translations}` : ""
@@ -1307,7 +1309,7 @@ export function setTemplateStyle(outSlide: OutSlide | null, currentStyle: Styles
 
     const customDynamicValues = isDrawerScripture ? outSlide.customDynamicValues : slideDynamicValues
 
-    const template = getStyleTemplate(outSlide, currentStyle)
+    const template = getStyleTemplate(outSlide, currentStyle, customDynamicValues)
     const templateItems = template.items || []
     const mode = template?.settings?.mode
 
