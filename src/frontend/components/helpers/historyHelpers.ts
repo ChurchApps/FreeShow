@@ -90,7 +90,7 @@ export const _updaters = {
                 return a
             })
 
-            if (!initializing || data.shows?.length) return
+            if (!initializing || data.shows?.length || !get(projectView)) return
 
             activeRename.set("project_" + id)
         },

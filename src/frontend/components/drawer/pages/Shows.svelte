@@ -301,6 +301,13 @@
             <T id="category.create_nonexistent" />
         </MaterialButton>
     </FloatingInputs>
+{:else if active === "all" && !searchValue && filteredShows.length < 20}
+    <FloatingInputs side="left" onlyOne>
+        <MaterialButton variant="outlined" title="actions.import [Ctrl+I]" on:click={() => activePopup.set("import")}>
+            <Icon id="import" />
+            <T id="actions.import" />
+        </MaterialButton>
+    </FloatingInputs>
 {/if}
 
 <FloatingInputs onlyOne gradient>
