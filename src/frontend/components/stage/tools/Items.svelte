@@ -28,11 +28,16 @@
         // { id: "text" }, // video time/countdown ... (preset with dynamic values)
         // { id: "variable" }, // added as dynamic value in textbox
         { id: "media", icon: "image" },
-        { id: "camera" },
+        { id: "web" },
         { id: "timer" },
         { id: "clock" },
+
+        { id: "camera" },
         { id: "slide_tracker", icon: "percentage" },
         { id: "metronome", maxAmount: 1 },
+        { id: "visualizer", maxAmount: 1 },
+
+        // { id: "icon" },
         { id: "current_output", icon: "screen" }
     ]
 
