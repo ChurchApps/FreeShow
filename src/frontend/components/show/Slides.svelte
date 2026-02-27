@@ -468,9 +468,11 @@
 
 <svelte:window on:keydown={keydown} on:keyup={keyup} on:mousedown={keyup} on:blur={blurred} />
 
-<ShowHeader {showId} {layout} />
+{#if !$focusMode}
+    <ShowHeader {showId} {layout} />
+{/if}
 
-<div class="main" style="display: contents;">
+<div class="main" class:padding={!$focusMode} style="display: contents;">
     <Autoscroll class={$focusMode || isLocked ? "" : "context #shows__close"} {offset} disabled={disableAutoScroll} {shouldSkipSmooth} bind:scrollElem style="display: flex;">
         <DropArea id="all_slides" selectChildren>
             <DropArea id="slides" hoverTimeout={0} selectChildren>
@@ -518,7 +520,7 @@
         padding: 5px;
     }
 
-    .main :global(.scroll .droparea .ParentBlock .droparea) {
+    .main.padding :global(.scroll .droparea .ParentBlock .droparea) {
         padding-top: 30px;
     }
 </style>

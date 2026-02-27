@@ -16,6 +16,7 @@
     import SelectElem from "../../system/SelectElem.svelte"
     import { getSlideGroups } from "./groups"
     import { newToast } from "../../../utils/common"
+    import { hexToRgb } from "../../helpers/color"
 
     $: showId = $activeShow?.id || ""
     $: allShowGroups = getSlideGroups(showId, $showsCache, $cachedShowsData)
@@ -56,13 +57,16 @@
             {#if showGroups.length}
                 {#each showGroups as slide}
                     {@const groupCount = countGroupsInLayout(slide.id)}
+                    {@const rgb = hexToRgb(slide.color || "")}
+                    {@const isBlack = rgb.r < 30 && rgb.g < 30 && rgb.b < 30}
+
                     <SelectElem id="group" data={{ id: slide.id }} draggable={!isLocked && !slide.locked}>
                         <!-- style="{$fullColors ? 'background-' : ''}color: {slide.color};{$fullColors && slide.color ? `color: ${getContrast(slide.color)};` : ''}" -->
                         <div
                             class="slide {isLocked ? '' : 'context #group'}"
                             role="button"
                             tabindex="0"
-                            style="border-bottom: 2px solid {slide.color};{$fullColors ? '' : `color: ${slide.color};`}"
+                            style="border-bottom: 2px solid {slide.color};{$fullColors || isBlack ? '' : `color: ${slide.color};`}"
                             on:click={(e) => {
                                 if (isLocked) {
                                     alertMessage.set(currentShow?.locked ? "show.locked_info" : "profile.locked")
