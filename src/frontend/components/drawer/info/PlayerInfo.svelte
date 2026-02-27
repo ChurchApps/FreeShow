@@ -37,7 +37,7 @@
         </Button>
     {/if}
 {:else if active === $photoApiCredits.type}
-    {#if $photoApiCredits.photo}
+    {#if $photoApiCredits.photo !== undefined}
         <div style="flex: 1;margin-bottom: 25px;">
             <InfoMetadata title={$photoApiCredits.photo} {info} />
         </div>
