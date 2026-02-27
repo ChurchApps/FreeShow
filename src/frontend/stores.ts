@@ -82,6 +82,7 @@ export const cloudUsers: Writable<{ displayName: string; color: string; lastUpda
 export const isTimelinePlaying: Writable<boolean> = writable(false)
 export const timelineRecordingAction: Writable<{ id: string; data?: any }> = writable({ id: "" })
 export const currentMetadataPopupData: Writable<any> = writable(null)
+export const editingProjectTemplate: Writable<string> = writable("")
 
 // TAGS
 export const activeTagFilter: Writable<string[]> = writable([])

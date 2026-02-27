@@ -1,10 +1,13 @@
 <script lang="ts">
     import { slide } from "svelte/transition"
     import { uid } from "uid"
+    import { Main } from "../../../types/IPC/Main"
     import type { Project, Tree } from "../../../types/Projects"
-    import { activeProject, activeRename, drawer, focusMode, folders, openedFolders, projects, projectTemplates, projectView, showRecentlyUsedProjects, sorted, special } from "../../stores"
+    import { sendMain } from "../../IPC/main"
+    import { activeProject, activeRename, drawer, editingProjectTemplate, focusMode, folders, openedFolders, projects, projectTemplates, projectView, showRecentlyUsedProjects, sorted, special } from "../../stores"
     import { translateText } from "../../utils/language"
     import { getAccess } from "../../utils/profile"
+    import { exportProject } from "../export/project"
     import { clone, keysToID, removeDuplicateValues, sortByName } from "../helpers/array"
     import { history } from "../helpers/history"
     import { getDefaultProjectName, getProjectName, projectReplacers } from "../helpers/historyHelpers"
@@ -14,16 +17,13 @@
     import FloatingInputs from "../input/FloatingInputs.svelte"
     import HiddenInput from "../inputs/HiddenInput.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
+    import MaterialTextInput from "../inputs/MaterialTextInput.svelte"
+    import MaterialToggleSwitch from "../inputs/MaterialToggleSwitch.svelte"
     import Autoscroll from "../system/Autoscroll.svelte"
     import DropArea from "../system/DropArea.svelte"
     import { getRecentlyUsedProjects, openProject } from "./project"
     import ProjectContentList from "./ProjectContentList.svelte"
     import ProjectList from "./ProjectList.svelte"
-    import { sendMain } from "../../IPC/main"
-    import { Main } from "../../../types/IPC/Main"
-    import MaterialTextInput from "../inputs/MaterialTextInput.svelte"
-    import MaterialToggleSwitch from "../inputs/MaterialToggleSwitch.svelte"
-    import { exportProject } from "../export/project"
 
     let tree: Tree[] = []
 
@@ -97,6 +97,15 @@
         history({ id: "UPDATE", newData: { replace: { parent } }, location: { page: "show", id: `project${folder ? "_folder" : ""}` } })
     }
 
+    function createProjectTemplate() {
+        const id = uid()
+        const project = { name: "", parent: "/", shows: [], created: 0 }
+
+        activeRename.set("project_" + id)
+
+        history({ id: "UPDATE", newData: { data: project }, oldData: { id }, location: { page: "show", id: "project_template" } })
+    }
+
     // autoscroll
     let listScrollElem: HTMLElement | undefined
     let listOffset = -1
@@ -115,6 +124,7 @@
     function back() {
         projectView.set(true)
         showRecentlyUsedProjects.set(false)
+        editingProjectTemplate.set("")
     }
 
     // last used
@@ -343,6 +353,18 @@
                     {/if}
                 </div>
             {/if}
+        {:else if $editingProjectTemplate}
+            <div class="header {recentlyUsedList.length ? '' : 'context #projectTab'}" class:shadow={listScrollY > 0} class:isScrollbarVisible data-title={translateText("remote.project: ") + `<b>${currentProject?.name || ""}</b>`}>
+                <div class="left context">
+                    <MaterialButton style="width: 42px;height: 100%;padding: 0.3em 0.5em;" icon="back" iconSize={1.1} title="remote.projects" on:click={back} />
+                </div>
+
+                <p style="max-width: 80%;">{$projectTemplates[$editingProjectTemplate]?.name || ""}</p>
+
+                <div class="right" style="display: flex;align-items: center;margin-right: 8px;opacity: 0.6;" data-title={translateText("actions.project_template")}>
+                    <Icon id="templates" size={0.9} white />
+                </div>
+            </div>
         {:else}
             <div class="header context #projects" class:shadow={listScrollY > 0} class:isScrollbarVisible data-title={translateText("<b>remote.projects</b><br>guide_description.project_manage<br>guide_description.project_create")}>
                 {#if showProjectsOptions}
@@ -387,6 +409,8 @@
                 {/if}
             {/each}
         </div>
+    {:else if $editingProjectTemplate}
+        <ProjectContentList tree={[]} on:scrollElem={(e) => (contentScrollElem = e.detail)} isTemplate />
     {:else if !projectActive && showProjectsOptions}
         <div class="options">
             <MaterialTextInput label="settings.default_project_name<span style='opacity: 0.5;padding-left: 8px;font-size: 0.8em;color: var(--text);'>{getProjectName($special)}</span>" title={projectReplacerTitle} value={projectName} defaultValue={getDefaultProjectName()} on:change={(e) => updateSpecial(e.detail, "default_project_name", true)} />
@@ -418,10 +442,9 @@
                         <T id="media.folder_type" />
                     </MaterialButton>
 
-                    <!-- WIP directly editable project templates -->
-                    <!-- <MaterialButton variant="outlined" icon="templates" title="actions.project_template" on:click={() => console.log("add project template")} white>
+                    <MaterialButton variant="outlined" icon="templates" title="actions.project_template" on:click={createProjectTemplate} white>
                         <T id="actions.project_template" />
-                    </MaterialButton> -->
+                    </MaterialButton>
 
                     <MaterialButton variant="outlined" icon="import" title="actions.import: formats.project" on:click={importProject} white>
                         <T id="actions.import" />

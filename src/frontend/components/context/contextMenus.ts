@@ -303,7 +303,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     project: ["newShowPopup", "section"], // "newShow"(empty) , "newPrivateShow"
     project_button: ["GROUP_rename_only", "duplicate", "delete", "SEPARATOR", "copy_to_template", "SEPARATOR", "archive"], // "open", // "GROUP_rename"
     project_button_readonly: [],
-    project_template: ["GROUP_rename_only", "delete"],
+    project_template: ["GROUP_edit", "rename", "delete"],
     folder: ["GROUP_rename_only", "delete", "SEPARATOR", "newProject", "newFolder"],
     folder_readonly: ["sort_projects_by"],
     folder_noediting: ["newProject", "newFolder"],

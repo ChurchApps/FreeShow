@@ -4,7 +4,7 @@
     import type { ProjectShowRef, Tree } from "../../../types/Projects"
     import { ShowType } from "../../../types/Show"
     import { addProjectItem, addToProject, updateRecentlyAddedFiles } from "../../converters/project"
-    import { actions, activeFocus, activePopup, activeProject, activeShow, contextActive, drawer, drawerTabsData, focusMode, fullColors, playerVideos, popupData, projects, projectView, recentFiles, selected, shows, special } from "../../stores"
+    import { actions, activeFocus, activePopup, activeProject, activeShow, contextActive, drawer, drawerTabsData, editingProjectTemplate, focusMode, fullColors, playerVideos, popupData, projects, projectTemplates, projectView, recentFiles, selected, shows, special } from "../../stores"
     import { triggerFunction } from "../../utils/common"
     import { getAccess } from "../../utils/profile"
     import { getActionIcon } from "../actions/actions"
@@ -28,6 +28,7 @@
 
     export let tree: Tree[]
     export let recentlyUsedList: any[] = []
+    export let isTemplate: boolean = false
 
     let profile = getAccess("projects")
     let readOnly = profile.global === "read"
@@ -51,7 +52,9 @@
     const dispatch = createEventDispatcher()
     $: if (scrollElem) dispatch("scrollElem", scrollElem)
 
-    $: currentProject = $activeProject ? $projects[$activeProject] : null
+    $: projectId = isTemplate ? $editingProjectTemplate : $activeProject
+
+    $: currentProject = isTemplate ? $projectTemplates[$editingProjectTemplate] : $activeProject ? $projects[$activeProject] : null
 
     // close if not existing
     $: if ($activeProject && !currentProject) activeProject.set(null) // projectView.set(true)
@@ -82,7 +85,7 @@
     function addSection() {
         let activeShowIndex = $activeShow?.index !== undefined ? $activeShow?.index + 1 : null
         let index: number = activeShowIndex ?? projectItemsList.length ?? 0
-        history({ id: "UPDATE", newData: { key: "shows", index }, oldData: { id: $activeProject }, location: { page: "show", id: "section" } })
+        history({ id: "UPDATE", newData: { key: "shows", index }, oldData: { id: projectId }, location: { page: "show", id: "section" + (isTemplate ? "_template" : "") } })
     }
 
     $: activeProjectParent = $activeProject ? currentProject?.parent || "" : ""
@@ -197,12 +200,12 @@
 
     function checkCanAddToProject() {
         canAddToProject = false
-        if (readOnly || !$activeProject || !validIds.includes($selected?.id || "")) return
+        if (readOnly || !projectId || !validIds.includes($selected?.id || "")) return
         canAddToProject = true
     }
 
     function addSelectedToProject() {
-        if (readOnly || !$activeProject || !validIds.includes($selected.id || "")) return
+        if (readOnly || !projectId || !validIds.includes($selected.id || "")) return
 
         let data = clone($selected.data)
         if (!data?.length) return
@@ -374,7 +377,7 @@
     {/if}
 </div>
 
-{#if $activeProject && !$projectView && !$focusMode && !recentlyUsedList.length && !projectReadOnly}
+{#if projectId && !$projectView && !$focusMode && !recentlyUsedList.length && !projectReadOnly}
     {#if addMenuOpen}
         <!-- new show, new media, new PDF/PPT?, new scripture, new section -->
         <div class="addMenu" transition:slide={{ duration: 100 }} role="none" on:click={() => (addMenuOpen = false)}>

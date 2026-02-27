@@ -35,6 +35,7 @@ import {
     currentOutputSettings,
     drawer,
     drawerTabsData,
+    editingProjectTemplate,
     effects,
     effectsLibrary,
     eventEdit,
@@ -1058,6 +1059,10 @@ const clickActions = {
             activePopup.set("trigger")
         } else if (obj.sel.id === "audio_stream") {
             activePopup.set("audio_stream")
+        } else if (obj.contextElem?.classList?.contains("#project_template")) {
+            activeProject.set(null)
+            editingProjectTemplate.set(obj.contextElem.id)
+            projectView.set(false)
         } else if (obj.contextElem?.classList.value.includes("#event")) {
             eventEdit.set(obj.contextElem.id)
             activePopup.set("edit_event")
