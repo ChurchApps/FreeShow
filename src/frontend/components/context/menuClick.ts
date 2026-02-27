@@ -581,27 +581,6 @@ const clickActions = {
 
         history({ id: "UPDATE", newData: { data: show, remember: { project: get(activeProject) } }, location: { page: "show", id: "show" } })
     },
-    lock_show: (obj: ObjData) => {
-        if (!obj.sel) return
-        const shouldBeLocked = !get(shows)[obj.sel.data[0]?.id]?.locked
-
-        showsCache.update((a) => {
-            obj.sel!.data.forEach((b) => {
-                if (!a[b.id]) return
-                a[b.id].locked = shouldBeLocked
-
-                removeTemplatesFromShow(b.id)
-            })
-            return a
-        })
-        shows.update((a) => {
-            obj.sel!.data.forEach((b) => {
-                if (shouldBeLocked) a[b.id].locked = true
-                else delete a[b.id].locked
-            })
-            return a
-        })
-    },
     lock_group: (obj: ObjData) => {
         if (obj.sel?.id !== "group") return
 

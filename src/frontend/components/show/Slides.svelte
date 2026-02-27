@@ -20,6 +20,7 @@
     import Autoscroll from "../system/Autoscroll.svelte"
     import Center from "../system/Center.svelte"
     import DropArea from "../system/DropArea.svelte"
+    import ShowHeader from "./ShowHeader.svelte"
 
     export let showId: string
     export let layout = ""
@@ -467,49 +468,57 @@
 
 <svelte:window on:keydown={keydown} on:keyup={keyup} on:mousedown={keyup} on:blur={blurred} />
 
-<Autoscroll class={$focusMode || isLocked ? "" : "context #shows__close"} {offset} disabled={disableAutoScroll} {shouldSkipSmooth} bind:scrollElem style="display: flex;">
-    <DropArea id="all_slides" selectChildren>
-        <DropArea id="slides" hoverTimeout={0} selectChildren>
-            {#if $showsCache[showId] === undefined}
-                <Center faded={!loading}>
-                    {#if loading}
-                        <Loader />
-                    {:else}
-                        <T id="error.no_show" />
-                    {/if}
-                </Center>
-            {:else}
-                <div class="grid" style={$focusMode ? "" : "padding-bottom: 60px;"}>
-                    {#if layoutSlides.length}
-                        {#each layoutSlides as slide, i}
-                            {@const currentSlide = currentShow?.slides?.[slide.id]}
-                            {#if hasMounted && (loaded || i < lazyLoader)}
-                                {#if currentSlide && (mode === "grid" || mode === "groups" || !slide.disabled) && (mode !== "groups" || currentSlide.group !== null || activeSlides[i] !== undefined)}
-                                    <Slide {showId} slide={currentSlide} show={currentShow} {layoutSlides} layoutSlide={slide} index={i} color={slide.color} output={activeSlides[i]} active={activeSlides[i] !== undefined} {endIndex} list={!gridMode} columns={$slidesOptions.columns} icons {altKeyPressed} disableThumbnails={isLessons && !loaded} centerPreview on:click={(e) => slideClick(e, i)} />
-                                {/if}
-                            {:else}
-                                <SkeletonSlide slide={currentSlide} index={i} color={slide.color} columns={$slidesOptions.columns} active={activeSlides[i] !== undefined} on:click={(e) => slideClick(e, i)} />
-                            {/if}
-                        {/each}
-                    {:else}
-                        <Center absolute>
-                            <span style="opacity: 0.5;font-size: 2em;margin-bottom: 10px;"><T id="empty.slides" /></span>
+<ShowHeader {showId} {layout} />
 
-                            <MaterialButton variant="outlined" disabled={isLocked} icon="add" title="tooltip.project" style="justify-content: start;padding: 8px 14px;" on:click={createSlide}>
-                                <T id="new.slide" />
-                            </MaterialButton>
-                        </Center>
-                    {/if}
-                </div>
-            {/if}
+<div class="main" style="display: contents;">
+    <Autoscroll class={$focusMode || isLocked ? "" : "context #shows__close"} {offset} disabled={disableAutoScroll} {shouldSkipSmooth} bind:scrollElem style="display: flex;">
+        <DropArea id="all_slides" selectChildren>
+            <DropArea id="slides" hoverTimeout={0} selectChildren>
+                {#if $showsCache[showId] === undefined}
+                    <Center faded={!loading}>
+                        {#if loading}
+                            <Loader />
+                        {:else}
+                            <T id="error.no_show" />
+                        {/if}
+                    </Center>
+                {:else}
+                    <div class="grid" style={$focusMode ? "" : "padding-bottom: 60px;"}>
+                        {#if layoutSlides.length}
+                            {#each layoutSlides as slide, i}
+                                {@const currentSlide = currentShow?.slides?.[slide.id]}
+                                {#if hasMounted && (loaded || i < lazyLoader)}
+                                    {#if currentSlide && (mode === "grid" || mode === "groups" || !slide.disabled) && (mode !== "groups" || currentSlide.group !== null || activeSlides[i] !== undefined)}
+                                        <Slide {showId} slide={currentSlide} show={currentShow} {layoutSlides} layoutSlide={slide} index={i} color={slide.color} output={activeSlides[i]} active={activeSlides[i] !== undefined} {endIndex} list={!gridMode} columns={$slidesOptions.columns} icons {altKeyPressed} disableThumbnails={isLessons && !loaded} centerPreview on:click={(e) => slideClick(e, i)} />
+                                    {/if}
+                                {:else}
+                                    <SkeletonSlide slide={currentSlide} index={i} color={slide.color} columns={$slidesOptions.columns} active={activeSlides[i] !== undefined} on:click={(e) => slideClick(e, i)} />
+                                {/if}
+                            {/each}
+                        {:else}
+                            <Center absolute>
+                                <span style="opacity: 0.5;font-size: 2em;margin-bottom: 10px;"><T id="empty.slides" /></span>
+
+                                <MaterialButton variant="outlined" disabled={isLocked} icon="add" title="tooltip.project" style="justify-content: start;padding: 8px 14px;" on:click={createSlide}>
+                                    <T id="new.slide" />
+                                </MaterialButton>
+                            </Center>
+                        {/if}
+                    </div>
+                {/if}
+            </DropArea>
         </DropArea>
-    </DropArea>
-</Autoscroll>
+    </Autoscroll>
+</div>
 
 <style>
     .grid {
         display: flex;
         flex-wrap: wrap;
         padding: 5px;
+    }
+
+    .main :global(.scroll .droparea .ParentBlock .droparea) {
+        padding-top: 30px;
     }
 </style>

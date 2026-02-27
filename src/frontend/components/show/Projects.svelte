@@ -345,26 +345,30 @@
             {/if}
         {:else}
             <div class="header context #projects" class:shadow={listScrollY > 0} class:isScrollbarVisible data-title={translateText("<b>remote.projects</b><br>guide_description.project_manage<br>guide_description.project_create")}>
+                {#if showProjectsOptions}
+                    <div class="left context">
+                        <MaterialButton style="width: 42px;height: 100%;padding: 0.3em 0.5em;" icon="back" iconSize={1.1} title="actions.back" on:click={() => (showProjectsOptions = false)} />
+                    </div>
+                {/if}
+
                 <!-- <Icon id="folder" white right /> -->
-                <p style="margin-right: 24px;"><T id="remote.projects" /></p>
+                <p style={showProjectsOptions ? "margin-left: 20px;" : "margin-right: 20px;"}><T id="remote.projects" /></p>
 
-                <div class="right">
-                    <MaterialButton style="width: 32px;height: 100%;padding: 0.3em 0.5em;border-bottom-right-radius: 10px;" title="edit.options" on:click={() => (showProjectsOptions = !showProjectsOptions)}>
-                        <Icon id="options" size={0.9} white={!showProjectsOptions} />
-                    </MaterialButton>
+                {#if !showProjectsOptions}
+                    <div class="right">
+                        <MaterialButton style="width: 32px;height: 100%;padding: 0.3em 0.5em;border-bottom-right-radius: 10px;{showProjectDropdown ? '' : 'opacity: 0.8;'}" title="create_show.more_options" icon="more" on:click={() => (showProjectDropdown = !showProjectDropdown)} white={!showProjectDropdown}>
+                            <span style="display: none;"></span>
+                        </MaterialButton>
 
-                    <!-- <MaterialButton style="width: 32px;height: 100%;padding: 0.3em 0.5em;border-bottom-right-radius: 10px;{showProjectDropdown ? '' : 'opacity: 0.8;'}" title="create_show.more_options" icon="more" on:click={() => (showProjectDropdown = !showProjectDropdown)} white={!showProjectDropdown}>
-                        <span style="display: none;"></span>
-                    </MaterialButton>
-
-                    {#if showProjectDropdown}
-                        <div class="projectDropdown" transition:slide={{ duration: 150 }} role="none" on:click={() => (showProjectDropdown = false)}>
-                            <MaterialButton title="edit.options" icon="options" on:click={() => (showProjectsOptions = !showProjectsOptions)} white={!showProjectsOptions}>
-                                <T id="edit.options" />
-                            </MaterialButton>
-                        </div>
-                    {/if} -->
-                </div>
+                        {#if showProjectDropdown}
+                            <div class="projectDropdown" transition:slide={{ duration: 150 }} role="none" on:click={() => (showProjectDropdown = false)}>
+                                <MaterialButton title="edit.options" icon="options" on:click={() => (showProjectsOptions = !showProjectsOptions)} white>
+                                    <T id="edit.options" />
+                                </MaterialButton>
+                            </div>
+                        {/if}
+                    </div>
+                {/if}
             </div>
         {/if}
     </span>
@@ -499,7 +503,7 @@
 
         background-color: rgb(0 0 10 / 0.3);
 
-        z-index: 1;
+        z-index: 20;
         transition: box-shadow 0.2s ease;
     }
     .tabs .header.shadow {
