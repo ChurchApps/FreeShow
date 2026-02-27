@@ -1,11 +1,10 @@
 <script lang="ts">
-    import { autoOutput, dictionary, fullColors, groups, labelsDisabled, language, os, special, timeFormat } from "../../../stores"
+    import { dictionary, fullColors, groups, labelsDisabled, language, special, timeFormat } from "../../../stores"
     import { getLanguageList, setLanguage, translateText } from "../../../utils/language"
     import { sortByName } from "../../helpers/array"
     import Title from "../../input/Title.svelte"
     import MaterialDropdown from "../../inputs/MaterialDropdown.svelte"
     import MaterialPopupButton from "../../inputs/MaterialPopupButton.svelte"
-    import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
     import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
 
     function updateSpecial(value: any, key: string, allowEmpty = false) {
@@ -41,16 +40,7 @@
 <MaterialDropdown label="settings.language" value={$language} options={getLanguageList()} on:change={(e) => setLanguage(e.detail)} flags />
 <MaterialToggleSwitch label="settings.use24hClock" checked={$timeFormat === "24"} on:change={(e) => timeFormat.set(e.detail ? "24" : "12")} />
 <MaterialToggleSwitch label="settings.disable_labels" checked={$labelsDisabled} defaultValue={false} on:change={(e) => labelsDisabled.set(e.detail)} />
-
-<!-- OUTPUT -->
-
-<Title label="guide_title.output" icon="display_settings" />
-
-<MaterialToggleSwitch label="settings.auto_output" checked={$autoOutput} defaultValue={false} on:change={(e) => autoOutput.set(e.detail)} />
-<!-- apparently doesn't work on some versions of macOS -->
-{#if $os.platform !== "darwin" || $special.hideCursor}
-    <MaterialToggleSwitch label="settings.hide_cursor_in_output" checked={$special.hideCursor} defaultValue={false} on:change={(e) => updateSpecial(e.detail, "hideCursor")} />
-{/if}
+<MaterialToggleSwitch label="settings.full_colors" checked={$fullColors} defaultValue={false} on:change={(e) => fullColors.set(e.detail)} />
 
 <!-- SLIDES -->
 
@@ -58,12 +48,9 @@
 <Title label="tools.slide" icon="slide" />
 
 <MaterialPopupButton label={translateText("popup.manage_groups", $dictionary)} name={groupsString} value={groupsString ? "." : ""} popupId="manage_groups" icon="groups" />
-<MaterialTextInput label="settings.capitalize_words" title="settings.comma_seperated" value={$special.capitalize_words || ""} defaultValue="Jesus, Lord" on:change={(e) => updateSpecial(e.detail, "capitalize_words", true)} />
-<!-- "text_can_overflow": "Allow text outside of the textbox bounds", -->
-<!-- <MaterialToggleSwitch label="settings.text_can_overflow" checked={$special.textCanOverflow !== false} defaultValue={true} on:change={(e) => updateSpecial(e.detail, "textCanOverflow", true)} /> -->
 <MaterialToggleSwitch label="settings.transparent_slides" checked={$special.transparentSlides} defaultValue={false} on:change={(e) => updateSpecial(e.detail, "transparentSlides")} />
-<MaterialToggleSwitch label="settings.style_template_preview" checked={$special.styleTemplatePreview !== false} defaultValue={true} on:change={(e) => updateSpecial(e.detail, "styleTemplatePreview", true)} />
-<MaterialToggleSwitch label="settings.full_colors" checked={$fullColors} defaultValue={false} on:change={(e) => fullColors.set(e.detail)} />
+
+<!-- shortcuts: -->
 <MaterialToggleSwitch label="settings.next_item_on_last_slide" checked={$special.nextItemOnLastSlide !== false} defaultValue={true} on:change={(e) => updateSpecial(e.detail, "nextItemOnLastSlide", true)} />
 <MaterialToggleSwitch label="settings.slide_number_keys" checked={$special.numberKeys} defaultValue={false} on:change={(e) => updateSpecial(e.detail, "numberKeys")} />
 <MaterialToggleSwitch label="settings.auto_shortcut_first_letter" checked={$special.autoLetterShortcut} defaultValue={false} on:change={(e) => updateSpecial(e.detail, "autoLetterShortcut")} />

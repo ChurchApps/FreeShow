@@ -50,6 +50,8 @@ export const actionData = {
     // id_select_output_style: { name: "actions.id_select_output_style", icon: "styles", input: "id" },
     change_output_style: { slideId: "outputStyle", common: true, canAddMultiple: true, name: "actions.change_output_style", icon: "styles", input: "change_output_style" },
     change_transition: { name: "actions.change_transition", icon: "transition", input: "transition" },
+    mute_output: { name: "output.mute", icon: "muted", input: "id" },
+    unmute_output: { name: "output.unmute", icon: "volume", input: "id" },
 
     // STAGE
     // SECTION: "menu.stage",

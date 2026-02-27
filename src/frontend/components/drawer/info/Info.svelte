@@ -9,6 +9,7 @@
     import MediaInfo from "./MediaInfo.svelte"
     import ScriptureInfo from "./ScriptureInfo.svelte"
     import ShowInfo from "./ShowInfo.svelte"
+    import TemplateInfo from "./TemplateInfo.svelte"
 
     export let id: string
 </script>
@@ -21,9 +22,9 @@
     {:else if !$forceClock && id === "audio"}
         <AudioInfo />
         <!-- {:else if !$forceClock && id === "overlays"}
-        <OverlayInfo />
+        <OverlayInfo /> -->
     {:else if !$forceClock && id === "templates"}
-        <TemplateInfo /> -->
+        <TemplateInfo />
     {:else if !$forceClock && id === "scripture"}
         <ScriptureInfo />
     {:else if !$forceClock && id === "calendar"}

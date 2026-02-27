@@ -1306,7 +1306,7 @@
         "shortcuts_on_slides": "Display shortcuts on slides",
         "transparent_slides": "Transparent slide preview",
         "style_template_preview": "Use style template as slide preview",
-        "full_colors": "High contrast group colors",
+        "full_colors": "High contrast colors",
         "next_item_on_last_slide": "Arrow left/right changes project item on first/last slide",
         "slide_number_keys": "Play slides with number keys",
         "auto_shortcut_first_letter": "Auto shortcut to first letter in text",
@@ -1391,7 +1391,9 @@
     "output": {
         "state_inactive": "Inactive",
         "state_locked": "Locked",
-        "disabled_layers": "Disabled layers"
+        "disabled_layers": "Disabled layers",
+        "mute": "Mute output",
+        "unmute": "Unmute output"
     },
     "profile": {
         "profiles_hint": "Create multiple profiles/roles to limit certain users access to control/edit chosen parts of the program.",

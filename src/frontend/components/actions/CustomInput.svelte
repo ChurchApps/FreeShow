@@ -109,7 +109,9 @@
         // WIP remove all actions that reference this action and so on - to prevent infinite loop
         run_action: () => convertToOptions($actions).filter((a) => a.label && a.value !== mainId),
         set_template: () => convertToOptions($templates),
-        toggle_output: () => convertToOptions($outputs)
+        toggle_output: () => convertToOptions($outputs),
+        mute_output: () => sortByName(keysToID($outputs).filter((a) => !a.stageOutput)).map((a) => ({ value: a.id, label: a.name }), "label"),
+        unmute_output: () => sortByName(keysToID($outputs).filter((a) => !a.stageOutput)).map((a) => ({ value: a.id, label: a.name }), "label")
     }
 
     $: options = getOptions[actionId]?.() || []

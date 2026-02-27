@@ -190,10 +190,13 @@
 <MaterialToggleButtons label="settings.active_layers" value={activeLayers} options={layerOptions} on:change={(e) => updateStyle(e.detail, "layers")} />
 <!-- WIP toggle meta -->
 
-<!-- Background -->
-<Title label="preview.background" icon="image" />
+{#if (currentStyle.volume ?? 100) !== 100}
+    <!-- Background -->
+    <Title label="preview.background" icon="image" />
 
-<MaterialNumberInput label="media.volume (%)" disabled={!activeLayers.includes("background")} value={currentStyle.volume ?? 100} defaultValue={100} max={100} on:change={(e) => updateStyle(e.detail, "volume")} />
+    <!-- style volume moved to per output volume -->
+    <MaterialNumberInput label="media.volume (%)" disabled={!activeLayers.includes("background")} value={currentStyle.volume ?? 100} defaultValue={100} max={100} on:change={(e) => updateStyle(e.detail, "volume")} />
+{/if}
 
 <!-- Slide -->
 <Title label="preview.slide" icon="slide" />

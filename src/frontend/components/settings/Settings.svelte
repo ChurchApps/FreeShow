@@ -1,6 +1,8 @@
 <script lang="ts">
     import { dictionary, settingsTab } from "../../stores"
     import { translateText } from "../../utils/language"
+    import Icon from "../helpers/Icon.svelte"
+    import MaterialButton from "../inputs/MaterialButton.svelte"
     import Connection from "./tabs/Connection.svelte"
     import Files from "./tabs/Files.svelte"
     import FilesButtons from "./tabs/FilesButtons.svelte"
@@ -8,6 +10,7 @@
     import Other from "./tabs/Other.svelte"
     import OtherButtons from "./tabs/OtherButtons.svelte"
     import Outputs from "./tabs/Outputs.svelte"
+    import OutputsGeneral from "./tabs/OutputsGeneral.svelte"
     import OutputsTabs from "./tabs/OutputsTabs.svelte"
     import Profiles from "./tabs/Profiles.svelte"
     import ProfilesTabs from "./tabs/ProfilesTabs.svelte"
@@ -30,28 +33,38 @@
         styles: "settings.styles_hint",
         profiles: "profile.profiles_hint"
     }
+
+    let showMore = false
 </script>
 
 <main>
     <div class="title" style={scrolled ? "box-shadow: 2px 2px 4px 5px rgb(0 0 0 / 0.1);" : ""}>
         <h2>{translateText(`settings.${tabId}`, $dictionary)}</h2>
 
-        {#if hints[tabId]}
-            <p class="hint">{translateText(hints[tabId])}</p>
-        {/if}
+        <div style="display: flex;align-items: center;gap: 8px;">
+            {#if hints[tabId]}
+                <p class="hint">{translateText(hints[tabId])}</p>
+            {/if}
 
-        {#if tabId === "theme"}
-            <div class="buttons">
+            {#if tabId === "theme"}
                 <ThemeButtons />
-            </div>
-        {/if}
+            {:else if tabId === "display_settings"}
+                <MaterialButton title="create_show.more_options" on:click={() => (showMore = !showMore)}>
+                    <Icon id="options" white={!showMore} />
+                </MaterialButton>
+            {/if}
+        </div>
     </div>
 
     <div class="scroll" on:scroll={scroll}>
         {#if tabId === "general"}
             <General />
         {:else if tabId === "display_settings"}
-            <Outputs />
+            {#if showMore}
+                <OutputsGeneral />
+            {:else}
+                <Outputs />
+            {/if}
         {:else if tabId === "styles"}
             <Styles />
         {:else if tabId === "connection"}
@@ -67,21 +80,23 @@
         {/if}
     </div>
 
-    <div class="tabs">
-        {#if tabId === "display_settings"}
-            <OutputsTabs />
-        {:else if tabId === "styles"}
-            <StylesTabs />
-        {:else if tabId === "files"}
-            <FilesButtons />
-        {:else if tabId === "profiles"}
-            <ProfilesTabs />
-        {:else if tabId === "theme"}
-            <ThemeTabs />
-        {:else if tabId === "other"}
-            <OtherButtons />
-        {/if}
-    </div>
+    {#if !showMore}
+        <div class="tabs">
+            {#if tabId === "display_settings"}
+                <OutputsTabs />
+            {:else if tabId === "styles"}
+                <StylesTabs />
+            {:else if tabId === "files"}
+                <FilesButtons />
+            {:else if tabId === "profiles"}
+                <ProfilesTabs />
+            {:else if tabId === "theme"}
+                <ThemeTabs />
+            {:else if tabId === "other"}
+                <OtherButtons />
+            {/if}
+        </div>
+    {/if}
 </main>
 
 <style>
@@ -124,11 +139,6 @@
         text-align: right;
         max-width: 300px;
         /* align-self: flex-end; */
-    }
-
-    .buttons {
-        display: flex;
-        gap: 5px;
     }
 
     .scroll {
