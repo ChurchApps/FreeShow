@@ -198,7 +198,7 @@
     </InputRow>
 {/each}
 
-{#if $providerConnections.churchApps ? cloudOnly.churchApps : !$providerConnections.planningcenter && !$providerConnections.churchApps && !$providerConnections.amazinglife}
+{#if !$providerConnections.planningcenter && (!$providerConnections.churchApps || cloudOnly.churchApps) && !$providerConnections.amazinglife}
     <!-- No provider connected - show connection options -->
     <div class="tapping" on:click={tap}>
         <Title label="Content Provider" icon="list" />
@@ -239,7 +239,7 @@
         </MaterialButton>
     </InputRow>
     <MaterialToggleSwitch label="Always use local instance of songs" checked={$contentProviderData.planningcenter?.localAlways} defaultValue={false} on:change={(e) => updateProvider("planningcenter", "localAlways", e.detail)} />
-{:else if $providerConnections.churchApps}
+{:else if $providerConnections.churchApps && !cloudOnly.churchApps}
     <!-- ChurchApps connected -->
     <Title label="Content Provider: ChurchApps" icon="list" />
 

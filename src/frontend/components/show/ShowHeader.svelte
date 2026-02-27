@@ -11,6 +11,7 @@
 
     export let showId: string
     export let layout = ""
+    export let hideOptions = false
 
     $: currentShow = $showsCache[showId]
     $: activeLayout = layout || $showsCache[showId]?.settings?.activeLayout
@@ -99,7 +100,11 @@
 
 <div class="header" class:shadow={listScrollY > 0} class:isScrollbarVisible>
     <p style="width: 100%;max-width: 98%;display: flex;align-items: center;gap: 0.5em;" data-title={currentShow?.name}>
-        {currentShow?.name || ""}
+        {#if currentShow?.name}
+            {currentShow.name}
+        {:else}
+            <span style="opacity: 0.5;font-style: italic;"><T id="main.unnamed" /></span>
+        {/if}
 
         {#if notes && notesVisible}
             <span class="notes" role="none" data-title={translateText(notes.title)} on:click={(e) => openTab(e, notes?.tab || "")}>
@@ -110,10 +115,12 @@
     </p>
 
     <div class="right">
-        <MaterialButton style="width: 32px;height: 100%;padding: 0.3em 0.5em;border-bottom-right-radius: 10px;{showDropdown ? '' : 'opacity: 0.8;'}" title="create_show.more_options" icon="more" on:click={() => (showDropdown = !showDropdown)} white={!showDropdown}>
-            <!-- prevent force "white" -->
-            <span style="display: none;"></span>
-        </MaterialButton>
+        {#if !hideOptions}
+            <MaterialButton style="width: 32px;height: 100%;padding: 0.3em 0.5em;border-bottom-right-radius: 10px;{showDropdown ? '' : 'opacity: 0.8;'}" title="create_show.more_options" icon="more" on:click={() => (showDropdown = !showDropdown)} white={!showDropdown}>
+                <!-- prevent force "white" -->
+                <span style="display: none;"></span>
+            </MaterialButton>
+        {/if}
 
         {#if showDropdown && currentShow}
             <div class="showDropdown" transition:slide={{ duration: 150 }} role="none" on:click={() => (showDropdown = false)}>
@@ -152,6 +159,7 @@
         left: 0;
         width: 100%;
 
+        font-size: 0.9em;
         padding: 0.2em 0.8em;
         font-weight: 600;
 
@@ -167,7 +175,7 @@
 
         background-color: rgb(0 0 10 / 0.3);
 
-        z-index: 20;
+        z-index: 200;
         transition: box-shadow 0.2s ease;
     }
     .header.shadow {
@@ -207,7 +215,7 @@
         opacity: 0.7;
         font-size: 0.7em;
         font-weight: normal;
-        max-width: 75%;
+        max-width: 78%;
     }
 
     .notes p :global(*) {

@@ -301,7 +301,13 @@
                     {#if recentlyUsedList.length}
                         <p style="margin-left: 42px;font-style: italic;opacity: 0.7;"><T id="info.recently_used" /></p>
                     {:else}
-                        <p style="max-width: 80%;">{currentProject?.name || ""}</p>
+                        <p style="max-width: 80%;">
+                            {#if currentProject?.name}
+                                {currentProject.name}
+                            {:else}
+                                <span style="opacity: 0.5;font-style: italic;"><T id="main.unnamed" /></span>
+                            {/if}
+                        </p>
 
                         <div class="right context">
                             <MaterialButton style="width: 32px;height: 100%;padding: 0.3em 0.5em;border-bottom-right-radius: 10px;{showProjectDropdown ? '' : 'opacity: 0.8;'}" title="create_show.more_options" icon="more" on:click={() => (showProjectDropdown = !showProjectDropdown)} white={!showProjectDropdown}>
@@ -526,7 +532,7 @@
 
         background-color: rgb(0 0 10 / 0.3);
 
-        z-index: 20;
+        z-index: 200;
         transition: box-shadow 0.2s ease;
     }
     .tabs .header.shadow {
