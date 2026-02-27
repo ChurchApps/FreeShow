@@ -4,13 +4,16 @@
     import { Popups } from "../../../../types/Main"
     import { importFromClipboard } from "../../../converters/importHelpers"
     import { sendMain } from "../../../IPC/main"
-    import { activePopup, alertMessage } from "../../../stores"
+    import { activePopup, alertMessage, popupData } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { presentationExtensions } from "../../../values/extensions"
     import Icon from "../../helpers/Icon.svelte"
     import HRule from "../../input/HRule.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import InputRow from "../../input/InputRow.svelte"
+
+    let mode = $popupData.mode
+    popupData.set({})
 
     const freeshow_formats = [
         { name: "formats.show", title: "FreeShow Song/Presentation File", icon: "slide", extensions: ["show", "json"], id: "freeshow" },
@@ -64,6 +67,7 @@
 
     function pptText() {
         sendMain(Main.IMPORT, { channel: "powerpoint", format: { name: "PowerPoint", extensions: ["ppt", "pptx"] } })
+        activePopup.set(null)
     }
     function libreOfficeConvert() {
         sendMain(Main.LIBREOFFICE_CONVERT, { type: "powerpoint" })
@@ -109,6 +113,70 @@
     </div>
 
     <!-- <p class="tip" style="padding-top: 20px;">Making/maintaining our own PPT converter that keeps all of the formatting would be too much work.</p> -->
+{:else if mode === "project"}
+    <div style="display: flex;gap: 5px;">
+        {#each media_formats.filter((a) => ["pdf", "powerpoint"].includes(a.id)) as format}
+            <InputRow style="flex: 1;">
+                <MaterialButton
+                    variant="outlined"
+                    style="justify-content: start;flex: 1;min-height: 50px;font-weight: normal;"
+                    on:click={() => {
+                        if (format.id === "powerpoint") {
+                            pptText()
+                            return
+                        }
+
+                        sendMain(Main.IMPORT, { channel: format.id, format })
+                        displayTutorial(format)
+                    }}
+                >
+                    <img style="height: 60px;width: 70px;" src="./import-logos/{format.id}.webp" alt="{format.id}-logo" draggable={false} />
+                    <p>{format.name}</p>
+                </MaterialButton>
+            </InputRow>
+        {/each}
+    </div>
+
+    <HRule title="settings.text_import" />
+
+    <div style="display: flex;gap: 5px;">
+        {#each text_formats.filter((a) => ["txt", "chordpro"].includes(a.id)) as format}
+            <MaterialButton
+                variant="outlined"
+                style="justify-content: start;flex: 1;min-height: 50px;font-weight: normal;"
+                on:click={() => {
+                    if (format.popup) {
+                        tick().then(() => {
+                            if (format.popup) {
+                                activePopup.set(format.popup)
+                            }
+                        })
+                    } else {
+                        let name = translateText(format.name)
+                        sendMain(Main.IMPORT, { channel: format.id, format: { ...format, name } })
+                        displayTutorial(format)
+                    }
+                }}
+                title={format.shortcut ? ` [${format.shortcut}]` : ""}
+            >
+                <img style="height: 60px;width: 70px;" src="./import-logos/{format.id}.webp" alt="{format.id}-logo" draggable={false} />
+                <p>{translateText(format.name)}</p>
+            </MaterialButton>
+        {/each}
+    </div>
+
+    <MaterialButton
+        style="margin-top: 5px;"
+        variant="outlined"
+        on:click={() => {
+            importFromClipboard()
+            activePopup.set(null)
+        }}
+        title="actions.paste [Ctrl+Alt+I]"
+    >
+        <Icon id="paste" size={1.2} white />
+        {translateText("formats.clipboard")}
+    </MaterialButton>
 {:else}
     <div style="display: flex;gap: 5px;">
         {#each freeshow_formats as format}

@@ -1,12 +1,10 @@
 <script lang="ts">
     import { createEventDispatcher, onDestroy, onMount } from "svelte"
     import { fade, slide } from "svelte/transition"
-    import { Main } from "../../../types/IPC/Main"
     import type { ProjectShowRef, Tree } from "../../../types/Projects"
     import { ShowType } from "../../../types/Show"
     import { addProjectItem, addToProject, updateRecentlyAddedFiles } from "../../converters/project"
-    import { sendMain } from "../../IPC/main"
-    import { actions, activeFocus, activeProject, activeShow, contextActive, drawer, drawerTabsData, focusMode, fullColors, playerVideos, projects, projectView, quickSearchActive, recentFiles, selected, shows, special } from "../../stores"
+    import { actions, activeFocus, activePopup, activeProject, activeShow, contextActive, drawer, drawerTabsData, focusMode, fullColors, playerVideos, popupData, projects, projectView, recentFiles, selected, shows, special } from "../../stores"
     import { triggerFunction } from "../../utils/common"
     import { getAccess } from "../../utils/profile"
     import { getActionIcon } from "../actions/actions"
@@ -26,6 +24,7 @@
     import Center from "../system/Center.svelte"
     import DropArea from "../system/DropArea.svelte"
     import SelectElem from "../system/SelectElem.svelte"
+    import { clipboardToProject } from "./project"
 
     export let tree: Tree[]
     export let recentlyUsedList: any[] = []
@@ -52,15 +51,17 @@
     const dispatch = createEventDispatcher()
     $: if (scrollElem) dispatch("scrollElem", scrollElem)
 
+    $: currentProject = $activeProject ? $projects[$activeProject] : null
+
     // close if not existing
-    $: if ($activeProject && !$projects[$activeProject]) activeProject.set(null) // projectView.set(true)
+    $: if ($activeProject && !currentProject) activeProject.set(null) // projectView.set(true)
     // get pos if clicked in drawer, or position moved
-    $: if ($activeProject && $activeShow?.index !== undefined && $projects[$activeProject]?.shows?.[$activeShow.index]?.id !== $activeShow?.id) findShowInProject()
+    $: if ($activeProject && $activeShow?.index !== undefined && currentProject?.shows?.[$activeShow.index]?.id !== $activeShow?.id) findShowInProject()
 
     function findShowInProject() {
-        if (!$projects[$activeProject!]?.shows) return
+        if (!currentProject?.shows) return
 
-        let i = $projects[$activeProject!].shows.findIndex((p) => p.id === $activeShow?.id)
+        let i = currentProject.shows.findIndex((p) => p.id === $activeShow?.id)
         let pos: number = i > -1 ? i : ($activeShow?.index ?? -1)
 
         // ($activeShow?.type !== "video" && $activeShow?.type !== "image")
@@ -84,12 +85,27 @@
         history({ id: "UPDATE", newData: { key: "shows", index }, oldData: { id: $activeProject }, location: { page: "show", id: "section" } })
     }
 
-    $: activeProjectParent = $activeProject ? $projects[$activeProject]?.parent : ""
+    $: activeProjectParent = $activeProject ? currentProject?.parent || "" : ""
     $: projectReadOnly = readOnly || profile[activeProjectParent] === "read" || tree.find((a) => a.id === activeProjectParent)?.readOnly
 
-    $: projectItemsList = $projects[$activeProject || ""]?.shows || []
+    $: projectItemsList = currentProject?.shows || []
 
     $: lessVisibleSection = projectItemsList.length > 10 || projectItemsList.length < 1 || projectItemsList.some((a) => a.type === "section")
+
+    let shouldPasteText = false
+    $: if (currentProject && !currentProject.shows?.length) checkClipboard()
+    function checkClipboard() {
+        shouldPasteText = false
+        navigator.clipboard
+            .readText()
+            .then((text) => {
+                const lines = text.split("\n")
+                if (lines.length > 5 && lines.length <= 30) shouldPasteText = true
+            })
+            .catch(() => {
+                shouldPasteText = false
+            })
+    }
 
     let splittedProjectsList: { color: string; items: ProjectShowRef[] }[] = []
     $: if (projectItemsList) splitProjectItemsToSections()
@@ -125,13 +141,6 @@
     function openSearch(page: string) {
         openDrawer(page)
         triggerFunction("drawer_search")
-    }
-
-    function importPDF() {
-        sendMain(Main.IMPORT, { channel: "pdf", format: { name: "PDF", extensions: ["pdf"] } })
-    }
-    function importPPT() {
-        sendMain(Main.IMPORT, { channel: "powerpoint", format: { name: "PowerPoint", extensions: ["ppt", "pptx"] } })
     }
 
     onMount(() => {
@@ -238,7 +247,7 @@
                             {@const borderRadiusStyle = `${isFirst ? "border-top-right-radius: 10px;" : ""}${isLast ? "border-bottom-right-radius: 10px;" : ""}`}
                             {@const sectionTime = show.data?.time ? getTimeUntilClock(show.data.time, today) : 0}
                             {@const isActive = show.type === "section" ? ($focusMode ? $activeFocus.id === show.id : $activeShow?.id === show.id) : false}
-                            {@const isLocked = show.type === "section" && $projects[$activeProject || ""]?.sectionsLocked}
+                            {@const isLocked = show.type === "section" && currentProject?.sectionsLocked}
 
                             {#if show.type === "DIVIDER"}
                                 <div style="border-top: 1px solid var(--primary-lighter);margin: 5px 0;"></div>
@@ -344,17 +353,14 @@
                 <Center absolute>
                     <span style="opacity: 0.5;"><T id="empty.general" /></span>
 
-                    <span style="padding-top: 20px" class="buttons">
-                        <MaterialButton variant="outlined" icon="search" title="main.quick_search" on:click={() => quickSearchActive.set(true)} white>
-                            <T id="main.quick_search" />
-                        </MaterialButton>
-
-                        <!-- WIP people would not know what this does -->
-                        <!-- <MaterialButton variant="outlined" title="actions.import: formats.clipboard" on:click={clipboardToProject}>
-                            <Icon id="paste" white />
-                            <T id="formats.clipboard" />
-                        </MaterialButton> -->
-                    </span>
+                    {#if shouldPasteText}
+                        <span style="padding-top: 20px" class="buttons">
+                            <MaterialButton variant="outlined" title="actions.import: formats.clipboard" on:click={clipboardToProject}>
+                                <Icon id="paste" white />
+                                <T id="formats.clipboard" />
+                            </MaterialButton>
+                        </span>
+                    {/if}
                 </Center>
             {/if}
         </DropArea>
@@ -369,24 +375,6 @@
 </div>
 
 {#if $activeProject && !$projectView && !$focusMode && !recentlyUsedList.length && !projectReadOnly}
-    <!-- <FloatingInputs arrow let:open>
-        {#if open || $special.projectTimelineActive || $projects[$activeProject]?.timeline?.actions?.length}
-            <MaterialButton title="timeline.toggle_timeline" on:click={() => special.update((a) => ({ ...a, projectTimelineActive: !a.projectTimelineActive }))}>
-                <Icon size={1.3} id="timeline" white={!$special.projectTimelineActive} />
-            </MaterialButton>
-
-            <div class="divider"></div>
-        {/if}
-
-        {#if $projects[$activeProject]?.sectionsLocked}
-            <MaterialButton icon="lock" title="output.state_locked" class="context #new_section" on:click={() => newToast("output.state_locked")} white={lessVisibleSection} />
-        {:else}
-            <MaterialButton icon="section" title="new.section" class="context #new_section" on:click={addSection} white={lessVisibleSection}>
-                {#if !lessVisibleSection && !$labelsDisabled}<T id="new.section" />{/if}
-            </MaterialButton>
-        {/if}
-    </FloatingInputs> -->
-
     {#if addMenuOpen}
         <!-- new show, new media, new PDF/PPT?, new scripture, new section -->
         <div class="addMenu" transition:slide={{ duration: 100 }} role="none" on:click={() => (addMenuOpen = false)}>
@@ -415,8 +403,7 @@
             {/if}
 
             <!-- WIP popup -->
-            <!-- images, videos, audio, YouTube, webpages? -->
-            <!-- PDF & PowerPoint? -->
+            <!-- images/videos, (audio), YouTube, webpages? -->
             <MaterialButton variant="outlined" icon="image" title="guide_description.media" on:click={() => openSearch("media")} white>
                 <div class="label">
                     <p><T id="items.media" /></p>
@@ -427,29 +414,22 @@
                 </div>
             </MaterialButton>
 
-            <MaterialButton variant="outlined" icon="pdf" title="PDF" on:click={importPDF} white>
+            <MaterialButton
+                variant="outlined"
+                icon="import"
+                title="popup.import"
+                on:click={() => {
+                    popupData.set({ mode: "project" })
+                    activePopup.set("import")
+                }}
+                white
+            >
                 <div class="label">
-                    <p>PDF</p>
-                </div>
-
-                <div class="actionType">
-                    <Icon id="folder" size={0.7} white />
+                    <p><T id="popup.import" /></p>
                 </div>
             </MaterialButton>
 
-            <MaterialButton variant="outlined" title="PowerPoint" on:click={importPPT} white>
-                <img style="height: 14px;width: 14px;margin-right: 2px;" src="./import-logos/powerpoint.webp" alt="logo" draggable={false} />
-
-                <div class="label" style="margin-right: 16px;">
-                    <p>PowerPoint</p>
-                </div>
-
-                <div class="actionType">
-                    <Icon id="folder" size={0.7} white />
-                </div>
-            </MaterialButton>
-
-            <MaterialButton variant="outlined" icon="section" title="new.section" class="context #new_section" on:click={addSection} white={lessVisibleSection}>
+            <MaterialButton variant="outlined" icon="section" title="new.section" disabled={currentProject?.sectionsLocked} on:click={addSection} white={lessVisibleSection}>
                 <div class="label">
                     <p><T id="new.section" /></p>
                     <!-- <p class="description" data-title={translateText("tabs.sections_info")}><T id="tabs.sections_info" /></p> -->
@@ -460,7 +440,7 @@
 
     <FloatingInputs gradient style="width: 50px;height: 50px;border: none;">
         <!-- {addMenuOpen ? 'border-color: white;' : ''} -->
-        <MaterialButton class="addButton" title="context.addToProject" style="width: 50px;height: 50px;" on:click={() => (addMenuOpen = !addMenuOpen)} on:dblclick={addSection}>
+        <MaterialButton class="addButton" title="context.addToProject" style="width: 50px;height: 50px;" on:click={() => (addMenuOpen = !addMenuOpen)} on:dblclick={() => (addMenuOpen ? null : addSection())}>
             <Icon id="add" size={1.5} style={addMenuOpen ? "transform: rotate(135deg);" : ""} white />
         </MaterialButton>
     </FloatingInputs>

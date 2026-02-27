@@ -89,9 +89,10 @@
     }
 
     $: projectActive = !$projectView && $activeProject !== null
+    $: currentProject = $activeProject ? $projects[$activeProject] : null
 
     function createProject(folder = false) {
-        let parent = interactedFolder || ($folders[$projects[$activeProject || ""]?.parent] ? $projects[$activeProject || ""]?.parent || "/" : "/")
+        let parent = interactedFolder || ($folders[currentProject?.parent || ""] ? currentProject?.parent || "/" : "/")
         if (profile[parent] === "none" || tree.find((a) => a.id === parent)?.readOnly) parent = "/"
         history({ id: "UPDATE", newData: { replace: { parent } }, location: { page: "show", id: `project${folder ? "_folder" : ""}` } })
     }
@@ -153,7 +154,7 @@
         let project = clone($projectTemplates[id])
         if (!project) return
 
-        project.parent = interactedFolder || ($folders[$projects[$activeProject || ""]?.parent] ? $projects[$activeProject || ""]?.parent || "/" : "/")
+        project.parent = interactedFolder || ($folders[currentProject?.parent || ""] ? currentProject?.parent || "/" : "/")
 
         if (project.name.includes("{") ? !ctrl : ctrl)
             project.name = getProjectName({ default_project_name: project.name }) // replace actual name values
@@ -262,6 +263,16 @@
 
         return titles.join("<br>")
     }
+
+    function lockSections() {
+        const projectId = $activeProject || ""
+        projects.update((a) => {
+            if (!a[projectId]) return a
+
+            a[projectId].sectionsLocked = !a[projectId].sectionsLocked
+            return a
+        })
+    }
 </script>
 
 <svelte:window on:keydown={checkInput} on:mousedown={mousedown} />
@@ -270,7 +281,7 @@
     <span class="tabs">
         {#if projectActive || recentlyUsedList.length}
             {#if !$focusMode}
-                <div class="header {recentlyUsedList.length ? '' : 'context #projectTab'}" class:shadow={listScrollY > 0} class:isScrollbarVisible data-title={translateText("remote.project: ") + `<b>${$projects[$activeProject || ""]?.name || ""}</b>`}>
+                <div class="header {recentlyUsedList.length ? '' : 'context #projectTab'}" class:shadow={listScrollY > 0} class:isScrollbarVisible data-title={translateText("remote.project: ") + `<b>${currentProject?.name || ""}</b>`}>
                     <div class="left context">
                         <MaterialButton style="width: 42px;height: 100%;padding: 0.3em 0.5em;" icon="back" iconSize={1.1} title="remote.projects" on:click={back} />
                     </div>
@@ -280,7 +291,7 @@
                     {#if recentlyUsedList.length}
                         <p style="margin-left: 42px;font-style: italic;opacity: 0.7;"><T id="info.recently_used" /></p>
                     {:else}
-                        <p>{$projects[$activeProject || ""]?.name || ""}</p>
+                        <p style="max-width: 80%;">{currentProject?.name || ""}</p>
 
                         <div class="right context">
                             <MaterialButton style="width: 32px;height: 100%;padding: 0.3em 0.5em;border-bottom-right-radius: 10px;{showProjectDropdown ? '' : 'opacity: 0.8;'}" title="create_show.more_options" icon="more" on:click={() => (showProjectDropdown = !showProjectDropdown)} white={!showProjectDropdown}>
@@ -288,25 +299,42 @@
                                 <span style="display: none;"></span>
                             </MaterialButton>
 
-                            {#if showProjectDropdown}
+                            {#if showProjectDropdown && currentProject}
                                 <!-- WIP use context menu style -->
                                 <div class="projectDropdown" transition:slide={{ duration: 150 }} role="none" on:click={() => (showProjectDropdown = false)}>
-                                    {#if $projects[$activeProject || ""]?.sourcePath}
-                                        <MaterialButton title="actions.save_to_file" icon="save" on:click={() => exportProject($projects[$activeProject || ""], $activeProject || "", $projects[$activeProject || ""]?.sourcePath)} white>
+                                    {#if currentProject.sourcePath}
+                                        <MaterialButton title="actions.save_to_file" icon="save" on:click={() => exportProject(currentProject, $activeProject || "", currentProject.sourcePath)} white>
                                             <T id="actions.save_to_file" />
                                         </MaterialButton>
                                     {/if}
 
                                     <!-- export -->
                                     <!-- WIP set sourcePath to export path -->
-                                    <MaterialButton title="actions.export" icon="export" on:click={() => exportProject($projects[$activeProject || ""], $activeProject || "")} white>
+                                    <MaterialButton title="actions.export" icon="export" on:click={() => exportProject(currentProject, $activeProject || "")} white>
                                         <T id="actions.export" />
                                     </MaterialButton>
 
                                     <div class="DIVIDER"></div>
 
+                                    {#if currentProject.shows?.some((a) => a.type === "section")}
+                                        <MaterialButton title="actions.lock_sections" icon="lock" on:click={() => lockSections()} white={!currentProject.sectionsLocked}>
+                                            {#if currentProject.sectionsLocked}
+                                                <Icon id="check" size={0.7} white />
+                                            {/if}
+
+                                            <T id="actions.lock_sections" />
+                                        </MaterialButton>
+
+                                        <div class="DIVIDER"></div>
+                                    {/if}
+
                                     <MaterialButton title="timeline.toggle_timeline" on:click={() => special.update((a) => ({ ...a, projectTimelineActive: !a.projectTimelineActive }))}>
                                         <Icon id="timeline" white={!$special.projectTimelineActive} />
+
+                                        {#if $special.projectTimelineActive}
+                                            <Icon id="check" size={0.7} white />
+                                        {/if}
+
                                         <p><T id="timeline.toggle_timeline" /></p>
                                     </MaterialButton>
                                 </div>
@@ -402,7 +430,7 @@
             {/if}
 
             <FloatingInputs gradient style="width: 50px;height: 50px;border: none;">
-                <MaterialButton class="addButton" title="context.addToProject" style="width: 50px;height: 50px;" on:click={() => (addMenuOpen = !addMenuOpen)} on:dblclick={() => createProject()}>
+                <MaterialButton class="addButton" title="context.addToProject" style="width: 50px;height: 50px;" on:click={() => (addMenuOpen = !addMenuOpen)} on:dblclick={() => (addMenuOpen ? null : createProject())}>
                     <Icon id="add" size={1.5} style={addMenuOpen ? "transform: rotate(135deg);" : ""} white />
                 </MaterialButton>
             </FloatingInputs>
