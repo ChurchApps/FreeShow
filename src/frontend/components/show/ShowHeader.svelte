@@ -99,7 +99,7 @@
 <svelte:window on:mousedown={mousedown} />
 
 <div class="header" class:shadow={listScrollY > 0} class:isScrollbarVisible>
-    <p style="width: 100%;max-width: 98%;display: flex;align-items: center;gap: 0.5em;" data-title={currentShow?.name}>
+    <p style="width: 100%;max-width: 98%;display: flex;align-items: center;gap: 0.5em;font-size: 0.9em;" data-title={currentShow?.name}>
         {#if currentShow?.name}
             {currentShow.name}
         {:else}
@@ -159,7 +159,6 @@
         left: 0;
         width: 100%;
 
-        font-size: 0.9em;
         padding: 0.2em 0.8em;
         font-weight: 600;
 
@@ -270,7 +269,7 @@
         border-radius: 0;
 
         font-weight: normal;
-        font-size: 0.8em;
+        font-size: 0.9em;
     }
 
     .showDropdown .DIVIDER {

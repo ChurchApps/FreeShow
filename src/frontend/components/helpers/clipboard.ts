@@ -24,6 +24,7 @@ import {
     currentOutputSettings,
     deletedDefaults,
     drawerTabsData,
+    editingProjectTemplate,
     effects,
     events,
     focusedArea,
@@ -36,6 +37,7 @@ import {
     popupData,
     profiles,
     projects,
+    projectTemplates,
     refreshEditSlide,
     scriptures,
     scriptureSettings,
@@ -364,9 +366,12 @@ const selectActions = {
         selected.set({ id: "project", data: newSelection })
     },
     show: () => {
-        if (!get(activeProject)) return
+        const isTemplate = !!get(editingProjectTemplate)
+        const projectId = isTemplate ? get(editingProjectTemplate) : get(activeProject)
+        const currentProject = isTemplate ? get(projectTemplates)[projectId || ""] : get(projects)[projectId || ""]
+        if (!currentProject) return
 
-        const newSelection: any[] = get(projects)[get(activeProject)!]?.shows.map((a, index) => ({ ...a, name: a.name || removeExtension(getFileName(a.id)), index }))
+        const newSelection: any[] = currentProject?.shows.map((a, index) => ({ ...a, name: a.name || removeExtension(getFileName(a.id)), index }))
         selected.set({ id: "show", data: newSelection })
     },
     overlay: () => {
@@ -695,10 +700,24 @@ const pasteActions = {
     },
     // project items
     show: (data: any) => {
+        const isTemplate = !!get(editingProjectTemplate)
+        const projectId = isTemplate ? get(editingProjectTemplate) : get(activeProject)
+        if (!projectId || !data?.length) return
+
+        if (isTemplate) {
+            projectTemplates.update((a) => {
+                if (!a[projectId]?.shows) return a
+                a[projectId].shows.push(...data)
+                a[projectId].modified = Date.now()
+                return a
+            })
+            return
+        }
+
         projects.update((a) => {
-            if (!a[get(activeProject) || ""]?.shows) return a
-            a[get(activeProject) || ""].shows.push(...data)
-            a[get(activeProject) || ""].modified = Date.now()
+            if (!a[projectId]?.shows) return a
+            a[projectId].shows.push(...data)
+            a[projectId].modified = Date.now()
             return a
         })
     },
@@ -979,8 +998,12 @@ const deleteActions = {
     },
     // "remove"
     show: (data: any) => {
-        if (!get(activeProject)) return
-        const projectItems = get(projects)[get(activeProject)!]?.shows || []
+        const isTemplate = !!get(editingProjectTemplate)
+        const projectId = isTemplate ? get(editingProjectTemplate) : get(activeProject)
+        const currentProject = isTemplate ? get(projectTemplates)[projectId || ""] : get(projects)[projectId || ""]
+        if (!currentProject) return
+
+        const projectItems = currentProject.shows || []
         const indexes: number[] = []
 
         // don't remove private shows
@@ -1006,7 +1029,7 @@ const deleteActions = {
             }
         }
 
-        history({ id: "UPDATE", newData: { key: "shows", data: projectItems.filter((_a, i) => !indexes.includes(i)) }, oldData: { id: get(activeProject) }, location: { page: "show", id: "project_key" } })
+        history({ id: "UPDATE", newData: { key: "shows", data: projectItems.filter((_a, i) => !indexes.includes(i)) }, oldData: { id: projectId }, location: { page: "show", id: isTemplate ? "project_template" : "project_key" } })
     },
     layout: (data: any) => {
         if (data.length < _show().layouts().get().length) {
@@ -1130,7 +1153,9 @@ const duplicateActions = {
         history({ id: "UPDATE", newData: { data: event }, location: { page: "drawer", id: "event" } })
     },
     show: (data: any) => {
-        if (!get(activeProject)) return
+        const isTemplate = !!get(editingProjectTemplate)
+        const projectId = isTemplate ? get(editingProjectTemplate) : get(activeProject)
+        if (!projectId) return
 
         data = data.map((a) => {
             const newShowRef = clone(a)
@@ -1140,10 +1165,20 @@ const duplicateActions = {
             return newShowRef
         })
 
+        if (isTemplate) {
+            projectTemplates.update((a) => {
+                if (!a[projectId]?.shows) return a
+                a[projectId].shows.push(...data)
+                a[projectId].modified = Date.now()
+                return a
+            })
+            return
+        }
+
         projects.update((a) => {
-            if (!a[get(activeProject)!]?.shows) return a
-            a[get(activeProject)!].shows.push(...data)
-            a[get(activeProject)!].modified = Date.now()
+            if (!a[projectId]?.shows) return a
+            a[projectId].shows.push(...data)
+            a[projectId].modified = Date.now()
             return a
         })
     },

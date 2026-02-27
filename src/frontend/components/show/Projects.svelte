@@ -299,9 +299,9 @@
 
                     <!-- <Icon id="project" white right /> -->
                     {#if recentlyUsedList.length}
-                        <p style="margin-left: 42px;font-style: italic;opacity: 0.7;"><T id="info.recently_used" /></p>
+                        <p style="margin-left: 42px;font-style: italic;opacity: 0.7;font-size: 1.08em;"><T id="info.recently_used" /></p>
                     {:else}
-                        <p style="max-width: 80%;">
+                        <p style="max-width: 80%;font-size: 1.08em;">
                             {#if currentProject?.name}
                                 {currentProject.name}
                             {:else}
@@ -380,7 +380,7 @@
                 {/if}
 
                 <!-- <Icon id="folder" white right /> -->
-                <p style={showProjectsOptions ? "margin-left: 20px;" : "margin-right: 20px;"}><T id="remote.projects" /></p>
+                <p style="font-size: 1.08em;{showProjectsOptions ? 'margin-left: 20px;' : 'margin-right: 20px;'}"><T id="remote.projects" /></p>
 
                 {#if !showProjectsOptions}
                     <div class="right">
@@ -519,7 +519,6 @@
         height: 30px;
 
         /* padding: 5px 0; */
-        font-size: 1.08em;
 
         display: flex;
         justify-content: center;
@@ -695,7 +694,7 @@
         border-radius: 0;
 
         font-weight: normal;
-        font-size: 0.8em;
+        font-size: 0.9em;
     }
 
     .projectDropdown .DIVIDER {
