@@ -38,8 +38,8 @@ export const transitions: { [key in TransitionType]: any } = {
 
                 if (direction === "left_right") return `transform: translate(-${pos}%);`
                 if (direction === "right_left") return `transform: translate(${pos}%);`
-                if (direction === "bottom_top") return `transform: translateY(${pos}%);`
-                if (direction === "top_bottom") return `transform: translateY(-${pos}%);`
+                if (direction === "bottom_top") return `transform: translateY(-${pos}%);`
+                if (direction === "top_bottom") return `transform: translateY(${pos}%);`
 
                 return ""
             }

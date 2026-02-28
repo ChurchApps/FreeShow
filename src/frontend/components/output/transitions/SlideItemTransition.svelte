@@ -1,11 +1,11 @@
 <script lang="ts">
+    import { onDestroy } from "svelte"
     import { uid } from "uid"
     import type { Item, Transition } from "../../../../types/Show"
     import { currentWindow, scriptureSettings, templates } from "../../../stores"
     import { clone } from "../../helpers/array"
     import { getStyleTemplate, slideHasAutoSizeItem } from "../../helpers/output"
     import OutputTransition from "./OutputTransition.svelte"
-    // import { onMount } from "svelte"
 
     export let globalTransition: Transition
     export let transitionEnabled = false
@@ -18,14 +18,12 @@
     export let currentStyle: any = {}
 
     let currentlyTransitioning: { [key: string]: any } = {}
+    let transitionId = 0
 
     $: if (item !== undefined || lines) startTransition()
 
-    // WIP item wait out time will not clear other items without wait time if between transition
-    // WIP slide direction from top to bottom is a bit buggy
-    // WIP image is flashing a bit in scripture transition none
-
     function startTransition() {
+        const id = ++transitionId
         let itemTransition = item.actions?.transition ? clone(item.actions.transition) : null
         if (itemTransition?.type === "none") itemTransition.duration = 0
 
@@ -66,12 +64,8 @@
             }
         }
 
-        // add some time in case an identical item is "fading" in
-        if (!outDelay && itemTransition?.duration === 0 && item.type === "media") outDelay = 250
-        // the previous fallback kept the old item visible a moment longer to avoid a black flash,
-        // but the autosize precompute path already keeps the new content ready, so we let the
-        // zero-duration case swap immediately to prevent overlapping text.
-        // WIP having outDelay on just 1 item will cause all other items to not clear until that is finished!
+        // add some time in case an identical item is "fading" in (skip for "none" — no animation means no flash risk)
+        if (!outDelay && itemTransition?.duration === 0 && item.type === "media" && transition?.type !== "none") outDelay = 250
 
         // SET DELAY
 
@@ -84,6 +78,9 @@
         if (outDelay && (outTransition.type === "none" || outTransition?.duration === 0)) outTransition = { ...outTransition, type: "fade", duration: 1 }
 
         // console.log(inTransition, outTransition)
+
+        // bail if a newer startTransition() call has already superseded this one
+        if (transitionId !== id) return
 
         // SET
 
@@ -101,6 +98,10 @@
         currentlyTransitioning[stateId] = state
         currentlyTransitioning = currentlyTransitioning
     }
+
+    onDestroy(() => {
+        transitionId++ // cancel any pending startTransition callbacks
+    })
 
     // only update if new ID! Previous is removed, but output should not update until a new value is set
     let currentIds: string[] = []

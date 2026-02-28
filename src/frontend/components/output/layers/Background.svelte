@@ -25,25 +25,17 @@
     let firstFadingOut = false
     let currentlyLoadingFirst = false
 
-    // WIP changing media while another transitions is not smooth
-    // WIP changing quicly between media might make it not receive updates
-
     let loading = false
     let timeout: NodeJS.Timeout | null = null
-    let tooRapid: NodeJS.Timeout | null = null
-    let tryAgain = false
-    $: if (data) createBackground()
-    function createBackground() {
-        // prevent svelte bug creating multiple items if creating new while old clears
-        if (tooRapid) {
-            tryAgain = true
+    let pendingBackground: any = null
+    let isTransitioning = false
+    $: if (data) createBackground(data)
+    function createBackground(bgData: any = data) {
+        if (isTransitioning) {
+            pendingBackground = clone(bgData)
             return
         }
-        tooRapid = setTimeout(() => {
-            tooRapid = null
-            if (tryAgain) createBackground()
-            tryAgain = false
-        }, duration / 2)
+        isTransitioning = true
 
         if (timeout) {
             clearTimeout(timeout)
@@ -52,17 +44,18 @@
         if (loading) loading = false
 
         // clearing
-        if (!data.path && !data.id) {
+        if (!bgData.path && !bgData.id) {
             background1 = null
             background2 = null
+            isTransitioning = false
             return
         }
 
-        let newData = clone(data)
+        let newData = clone(bgData)
 
         // update existing background, if same
         let activeId = firstActive ? background1?.path || background1?.id : background2?.path || background2?.id
-        if (activeId === (data.path || data.id)) {
+        if (activeId === (bgData.path || bgData.id)) {
             if (firstActive) {
                 background1 = newData
                 transition1 = clone(transition)
@@ -70,13 +63,14 @@
                 background2 = newData
                 transition2 = clone(transition)
             }
+            isTransitioning = false
             return
         }
 
         timeout = setTimeout(
             () => {
                 loading = true
-                let loadingFirst = !background1 // && background2?.path ? background2?.path !== data.path : background2?.id !== data.id
+                let loadingFirst = !background1
                 currentlyLoadingFirst = loadingFirst
                 firstFadingOut = !loadingFirst
 
@@ -111,6 +105,13 @@
                 background1 = null
             }
             timeout = null
+
+            isTransitioning = false
+            if (pendingBackground) {
+                const pending = pendingBackground
+                pendingBackground = null
+                createBackground(pending)
+            }
         })
     }
 
