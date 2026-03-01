@@ -899,7 +899,15 @@ export async function getScriptureSlidesNew(data: any, onlyOne = false, disableR
     // match: prepend globalCustomDynamicValues so the reference slide can resolve placeholders
     // like {scripture_reference_full} and {meta_title}, while verse slides keep their own data.
     if (_template.getSetting("firstSlideTemplate") && !onlyOne) {
-        slideDynamicValues = [{ ...globalCustomDynamicValues }, ...slideDynamicValues]
+        // Pad with globalCustomDynamicValues + scripture_text/scripture1_text as the full reference
+        // string, so outputs whose template uses {scripture_text} (e.g. a secondary OBS output that
+        // has no firstSlideTemplate) show the reference instead of a raw placeholder on slide 0.
+        const referenceSliceDV = {
+            ...globalCustomDynamicValues,
+            scripture_text: format(fullReference),
+            scripture1_text: format(fullReference),
+        }
+        slideDynamicValues = [referenceSliceDV, ...slideDynamicValues]
     }
 
     return { slides: newSlides, groupNames, attributions, slideDynamicValues }
