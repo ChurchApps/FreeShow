@@ -894,6 +894,14 @@ export async function getScriptureSlidesNew(data: any, onlyOne = false, disableR
         })
     })
 
+    // When firstSlideTemplate is used, createSlides() prepends a reference slide at index 0.
+    // groupNames is already padded with that slide's name (see above). slideDynamicValues must
+    // match: prepend globalCustomDynamicValues so the reference slide can resolve placeholders
+    // like {scripture_reference_full} and {meta_title}, while verse slides keep their own data.
+    if (_template.getSetting("firstSlideTemplate") && !onlyOne) {
+        slideDynamicValues = [{ ...globalCustomDynamicValues }, ...slideDynamicValues]
+    }
+
     return { slides: newSlides, groupNames, attributions, slideDynamicValues }
 }
 
