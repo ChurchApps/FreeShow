@@ -443,35 +443,13 @@ export const historyActions = ({ obj, undo = null }: any) => {
             data = (deleting ? obj.oldData : obj.newData) || {}
 
             if (initializing) {
-                const locationShowId = obj.location?.show?.id
-                const locationLayout = obj.location?.layout
-                const activeShowId = get(activeShow)?.id
-                const showId = data.showId || locationShowId || activeShowId
-                const layout = data.layout || locationLayout || (showId ? _show(showId).get("settings.activeLayout") : undefined)
-
-                data.remember = { showId, layout }
+                data.remember = { showId: get(activeShow)?.id, layout: _show().get("settings.activeLayout") }
             }
 
             let slides = clone(data?.data) || []
 
-            const { showId } = data.remember || {}
-            if (!showId) return
-
-            let layout = data.remember?.layout
-            const showLayouts = _show(showId).get("layouts") || {}
-            if (!layout || !showLayouts[layout]) {
-                const existingLayoutIds = Object.keys(showLayouts)
-
-                if (existingLayoutIds.length) {
-                    layout = existingLayoutIds[0]
-                } else {
-                    layout = "default"
-                    _show(showId).layouts().add(layout, { name: "Default", notes: "", slides: [] })
-                }
-
-                _show(showId).set({ key: "settings.activeLayout", value: layout })
-                data.remember.layout = layout
-            }
+            const { showId, layout } = data.remember || {}
+            if (!showId || !layout) return
 
             const ref = _show(showId).layouts([layout]).ref()[0] || []
             if (!deleting) data.index = data.index ?? ref.length
@@ -649,12 +627,6 @@ export const historyActions = ({ obj, undo = null }: any) => {
                                 .slides()
                                 .add([{ ...layoutValue, id: slideId }])
                         }
-                    } else {
-                        // add regular slide to layout (images, videos, etc.)
-                        _show(showId)
-                            .layouts([layout])
-                            .slides()
-                            .add([{ ...layoutValue, id: slideId }])
                     }
 
                     increaseEditIndex()
@@ -793,25 +765,17 @@ export const historyActions = ({ obj, undo = null }: any) => {
                 if (templateId && !slideId && previousTemplateId !== templateId) _show(data.remember.showId).set({ key: "settings.template", value: slideId ? null : templateId })
 
                 const template = clone(get(templates)[templateId])
-                const hasTextContent = Object.values(slides || {}).some((currentSlide: any) => currentSlide?.items?.some((item: any) => Array.isArray(item?.lines) && item.lines.length))
                 const maxLines = template?.settings?.maxLinesPerSlide
-                if (hasTextContent && maxLines !== "0" && !isNaN(Number(maxLines))) {
+                if (maxLines !== "0" && !isNaN(Number(maxLines))) {
                     slides = splitToMaxLines(Number(maxLines))
                     show.slides = slides
                 }
                 const brLongLines = template?.settings?.breakLongLines
-                if (hasTextContent && brLongLines !== "0" && !isNaN(Number(brLongLines))) {
+                if (brLongLines !== "0" && !isNaN(Number(brLongLines))) {
                     slides = breakLongLines(data.remember.showId, Number(brLongLines))
                     show.slides = slides
                 }
                 updateSlidesWithTemplate(template)
-
-                const validSlideIds = new Set(Object.keys(show.slides || {}))
-                Object.keys(show.layouts || {}).forEach((layoutId) => {
-                    const currentLayout = show.layouts[layoutId]
-                    if (!currentLayout?.slides?.length) return
-                    currentLayout.slides = currentLayout.slides.filter((layoutSlide: any) => validSlideIds.has(layoutSlide.id))
-                })
 
                 if (get(activePage) === "edit") refreshEditSlide.set(true)
             }
@@ -838,7 +802,8 @@ export const historyActions = ({ obj, undo = null }: any) => {
                     let childrenIds: string[] = []
 
                     const totalLines = getItemWithMostLines(slide)
-                    for (let i = 0; i < totalLines; i += maxLines) {
+                    const splitLines = Math.max(totalLines, 1)
+                    for (let i = 0; i < splitLines; i += maxLines) {
                         const newItems: Item[] = []
                         slide.items.forEach((item) => {
                             if (!item.lines) {
