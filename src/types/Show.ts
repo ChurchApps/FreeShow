@@ -180,7 +180,6 @@ export interface ShowGroup {
 export interface Timer {
     id?: string
     name: string
-    tags?: string[]
     type: "counter" | "clock" | "event"
     viewType?: "time" | "line" | "circle"
     circleMask?: boolean

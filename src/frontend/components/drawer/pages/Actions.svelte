@@ -1,7 +1,7 @@
 <script lang="ts">
     import { actions, actionTags, activeActionTagFilter, activePopup, labelsDisabled, popupData, runningActions, timelineRecordingAction } from "../../../stores"
     import { translateText } from "../../../utils/language"
-    import { resolveAccessLevel } from "../../../utils/profileAccess"
+    import { getAccess } from "../../../utils/profile"
     import { getActionIcon, runAction } from "../../actions/actions"
     import { customActionActivations } from "../../actions/customActivation"
     import { convertOldMidiToNewAction, midiToNote, receivedMidi } from "../../actions/midi"
@@ -16,7 +16,8 @@
 
     export let searchValue
 
-    $: readOnly = resolveAccessLevel("actions") === "read"
+    const profile = getAccess("actions")
+    const readOnly = profile.global === "read"
 
     function newAction() {
         popupData.set({})
@@ -24,10 +25,7 @@
     }
 
     $: sortedActions = sortByName(keysToID($actions), "name", true).map(convertOldMidiToNewAction)
-    $: hiddenActionTags = new Set(keysToID($actionTags).filter((tag) => resolveAccessLevel("actions", tag.id) === "none").map((tag) => tag.id))
-    $: filteredActionsVisibility = sortedActions.filter((a) => !(a.tags || []).some((tagId) => hiddenActionTags.has(tagId)))
-    $: if ($activeActionTagFilter.some((tagId) => hiddenActionTags.has(tagId))) activeActionTagFilter.set($activeActionTagFilter.filter((tagId) => !hiddenActionTags.has(tagId)))
-    $: filteredActionsTags = filteredActionsVisibility.filter((a) => !$activeActionTagFilter.length || (a.tags?.length && !$activeActionTagFilter.find((tagId) => !a.tags?.includes(tagId))))
+    $: filteredActionsTags = sortedActions.filter((a) => !$activeActionTagFilter.length || (a.tags?.length && !$activeActionTagFilter.some((tagId) => !a.tags?.includes(tagId)))).filter((a) => !a.tags?.some((tagId) => profile[tagId] === "none"))
     $: filteredActionsSearch = searchValue.length > 1 ? filteredActionsTags.filter((a) => a.name.toLowerCase().includes(searchValue.toLowerCase())) : filteredActionsTags
 </script>
 
@@ -35,7 +33,9 @@
     {#if filteredActionsSearch.length}
         <div class="actions">
             {#each filteredActionsSearch as action}
-                <div class="action context #action{readOnly ? '_readonly' : ''}">
+                {@const isReadOnly = readOnly || action.tags?.some((tagId) => profile[tagId] === "read")}
+
+                <div class="action context #action{isReadOnly ? '_readonly' : ''}">
                     <SelectElem id="action" data={action} style="display: flex;flex: 1;" draggable>
                         <!-- WIP MIDI if slide action.action ... -->
                         <Button

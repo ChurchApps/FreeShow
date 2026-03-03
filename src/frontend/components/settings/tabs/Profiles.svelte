@@ -1,8 +1,7 @@
 <script lang="ts">
     import type { AccessType, Profile } from "../../../../types/Main"
     import { SettingsTabs } from "../../../../types/Tabs"
-    import { actionTags, activeProfile, categories, folders, globalTags, overlayCategories, profiles, selectedProfile, special, stageShows, templateCategories, timers, variableTags } from "../../../stores"
-    import { functionAccessKey } from "../../../utils/profileAccess"
+    import { actionTags, activeProfile, categories, folders, overlayCategories, profiles, selectedProfile, special, stageShows, templateCategories, variableTags } from "../../../stores"
     import { newToast } from "../../../utils/common"
     import { translateText } from "../../../utils/language"
     import { promptCustom } from "../../../utils/popup"
@@ -24,6 +23,8 @@
     $: profileId = $selectedProfile || ""
     $: currentProfile = $profiles[profileId] || clone(defaultProfile)
 
+    $: isAdmin = !$activeProfile
+
     const defaultProfile: Profile = {
         name: translateText("example.default"),
         color: "",
@@ -31,12 +32,10 @@
         access: {}
     }
 
-    $: isAdminUser = ($activeProfile ?? "") === ""
-
     // UPDATE
 
     function updateAccess(key: string, id: string, accessType: AccessType) {
-        if (!isAdminUser) return
+        if (!isAdmin) return
 
         let data = currentProfile.access
 
@@ -77,14 +76,16 @@
         // remove "read"
         if (id === "settings") inputs.splice(1, 1)
 
-        if (!isAdminUser) inputs.forEach((input) => (input.disabled = true))
+        // only admin can change access
+        if (!isAdmin) inputs.forEach((input) => (input.disabled = true))
 
         return inputs
     }
 
-    function getSectionOptions(options: { value: string; label: string; icon?: string; disabled?: boolean | string }[]) {
-        if (isAdminUser) return options
-        return options.map((option) => ({ ...option, disabled: true }))
+    function getSectionOptions(options: { value: string; label: string; icon?: string; disabled?: boolean }[]) {
+        // only admin can change access
+        if (!isAdmin) return options.map((option) => ({ ...option, disabled: true }))
+        return options
     }
 
     function getAccessLevel(a: { [key: string]: AccessType }, id: string) {
@@ -111,36 +112,15 @@
     $: templateCategoryList = sortByName(keysToID($templateCategories)).filter((a) => a.name)
     $: templateCategoryAccess = currentProfile.access.templates || {}
 
-    $: timerTagList = sortByName(
-        keysToID($timers)
-            .flatMap((a) => a.tags || [])
-            .filter((tagId, index, arr) => arr.indexOf(tagId) === index)
-            .map((id) => ({ id, name: $globalTags[id]?.name || id || "—" }))
-    )
+    $: actionsList = sortByName(keysToID($actionTags)).filter((a) => a.name)
+    $: actionsAccess = currentProfile.access.actions || {}
 
-    $: functionsList = [
-        {
-            id: "actions",
-            name: "tabs.actions",
-            list: sortByName(keysToID($actionTags)).map((a) => ({ id: a.id, name: a.name || "—" }))
-        },
-        {
-            id: "timers",
-            name: "tabs.timers",
-            list: timerTagList.map((a) => ({ id: a.id, name: a.name || "—" }))
-        },
-        {
-            id: "variables",
-            name: "tabs.variables",
-            list: sortByName(keysToID($variableTags)).map((a) => ({ id: a.id, name: a.name || "—" }))
-        },
-        {
-            id: "triggers",
-            name: "tabs.triggers",
-            list: []
-        }
-    ]
-    $: functionsAccess = currentProfile.access.functions || {}
+    $: timersAccess = currentProfile.access.timers || {}
+
+    $: variablesList = sortByName(keysToID($variableTags)).filter((a) => a.name)
+    $: variablesAccess = currentProfile.access.variables || {}
+
+    // $: triggersAccess = currentProfile.access.triggers || {}
 
     $: stageList = sortByName(keysToID($stageShows)).filter((a) => a.name)
     $: stageAccess = currentProfile.access.stage || {}
@@ -155,9 +135,16 @@
     $: ACCESS_LISTS = [
         { id: "projects", label: "remote.projects", icon: "project", access: projectsAccess, options: accessInputsRW, list: projectsList },
         { id: "shows", label: "tabs.shows", icon: "shows", access: showsCategoryAccess, options: accessInputsRW, list: showsCategoryList },
+        // WIP AUDIO PLAYLISTS?
         { id: "overlays", label: "tabs.overlays", icon: "overlays", access: overlayCategoryAccess, options: accessInputsRW, list: overlayCategoryList },
         { id: "templates", label: "tabs.templates", icon: "templates", access: templateCategoryAccess, options: accessInputs, list: templateCategoryList },
-        { id: "functions", label: "tabs.functions", icon: "functions", access: functionsAccess, options: [], list: functionsList },
+        // WIP SCRIPTURE?
+        // WIP CALENDAR?
+        { id: "actions", label: "tabs.actions", icon: "actions", access: actionsAccess, options: accessInputsRW, list: actionsList },
+        // WIP TIMERS (TAGS)
+        { id: "timers", label: "tabs.timers", icon: "timer", access: timersAccess, options: accessInputsRW, list: [] },
+        { id: "variables", label: "tabs.variables", icon: "variable", access: variablesAccess, options: accessInputsRW, list: variablesList },
+        // { id: "triggers", label: "tabs.triggers", icon: "trigger", access: triggersAccess, options: accessInputsRW, list: [] },
         { id: "stage", label: "menu.stage", icon: "stage", access: stageAccess, options: accessInputsRW, list: stageList },
         { id: "settings", label: "menu.settings", icon: "settings", access: settingsAccess, options: [], list: settingsList }
     ]
@@ -169,8 +156,6 @@
     }
 
     function updateAdmin(key: string, value: any) {
-        if (!isAdminUser) return
-
         profiles.update((a) => {
             if (!a.admin) a.admin = { name: "", color: "", image: "", access: {} }
             ;(a.admin as any)[key] = value
@@ -208,7 +193,7 @@
 {/if}
 
 {#if !profileId || !profilesList.length}
-    {#if profilesList.length && !$activeProfile}
+    {#if profilesList.length && isAdmin}
         <!-- Admin settings -->
         <MaterialTextInput label="remote.password" disabled={hasAdminPass} value={hasAdminPass ? "*****" : ""} defaultValue="" on:change={setAdminPassword} />
 
@@ -224,27 +209,11 @@
             <MaterialMultiButtons label={a.label} icon={a.icon} value={a.access.global || "write"} options={getSectionOptions(a.options)} on:click={(e) => updateAccess(a.id, "global", e.detail)} />
 
             <div slot="menu">
-                {#if a.id === "functions"}
-                    {#each a.list as item}
-                        <InputRow arrow={!!item.list?.length}>
-                            <MaterialMultiButtons label={item.name} value={getAccessLevel(a.access, item.id)} options={getInputs(a.access.global, a.id)} on:click={(e) => updateAccess(a.id, item.id, e.detail)} noLabels />
-
-                            <div slot="menu">
-                                {#each item.list as tag}
-                                    <InputRow style="margin-left: 20px;">
-                                        <MaterialMultiButtons label={tag.name} value={getAccessLevel(a.access, functionAccessKey(item.id, tag.id))} options={getInputs(a.access.global, a.id)} on:click={(e) => updateAccess(a.id, functionAccessKey(item.id, tag.id), e.detail)} noLabels />
-                                    </InputRow>
-                                {/each}
-                            </div>
-                        </InputRow>
-                    {/each}
-                {:else}
-                    {#each a.list as item}
-                        <InputRow>
-                            <MaterialMultiButtons label={item.name} value={getAccessLevel(a.access, item.id)} options={getInputs(a.access.global, a.id)} on:click={(e) => updateAccess(a.id, item.id, e.detail)} noLabels />
-                        </InputRow>
-                    {/each}
-                {/if}
+                {#each a.list as item}
+                    <InputRow>
+                        <MaterialMultiButtons label={item.name} value={getAccessLevel(a.access, item.id)} options={getInputs(a.access.global, a.id)} on:click={(e) => updateAccess(a.id, item.id, e.detail)} noLabels />
+                    </InputRow>
+                {/each}
             </div>
         </InputRow>
     {/each}

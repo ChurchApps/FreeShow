@@ -1,7 +1,7 @@
 <script lang="ts">
     import { activePopup, activeVariableTagFilter, disableDragging, labelsDisabled, randomNumberVariable, selected, variables } from "../../../stores"
     import { translateText } from "../../../utils/language"
-    import { resolveAccessLevel } from "../../../utils/profileAccess"
+    import { getAccess } from "../../../utils/profile"
     import { resetVariable } from "../../actions/apiHelper"
     import { keysToID, sortByName } from "../../helpers/array"
     import Icon from "../../helpers/Icon.svelte"
@@ -18,14 +18,12 @@
 
     export let searchValue
 
-    $: readOnly = resolveAccessLevel("variables") === "read"
+    const profile = getAccess("variables")
+    const readOnly = profile.global === "read"
 
     const typeOrder = { number: 1, text: 2 }
-    $: hiddenVariableTags = new Set(keysToID($variables).flatMap((a) => a.tags || []).filter((tagId, index, arr) => arr.indexOf(tagId) === index).filter((tagId) => resolveAccessLevel("variables", tagId) === "none"))
-    $: sortedVariables = sortByName(keysToID($variables), "name", true)
-        .filter((a) => !(a.tags || []).some((tagId) => hiddenVariableTags.has(tagId)))
-        .sort((a, b) => typeOrder[a.type] - typeOrder[b.type])
-    $: filteredVariablesTags = sortedVariables.filter((a) => !$activeVariableTagFilter.length || (a.tags?.length && !$activeVariableTagFilter.find((tagId) => !a.tags?.includes(tagId))))
+    $: sortedVariables = sortByName(keysToID($variables), "name", true).sort((a, b) => typeOrder[a.type] - typeOrder[b.type])
+    $: filteredVariablesTags = sortedVariables.filter((a) => !$activeVariableTagFilter.length || (a.tags?.length && !$activeVariableTagFilter.find((tagId) => !a.tags?.includes(tagId)))).filter((a) => !a.tags?.some((tagId) => profile[tagId] === "none"))
     $: filteredVariablesSearch = searchValue.length > 1 ? filteredVariablesTags.filter((a) => a.name.toLowerCase().includes(searchValue.toLowerCase())) : filteredVariablesTags
 
     function updateVariable(e: any, id: string, key: string) {
@@ -66,6 +64,7 @@
     {#if filteredVariablesSearch.length}
         <div class="row" style={randomNumberVariables.length + textSetVariables.length + otherVariables.length ? "" : "height: calc(100% - 15px);align-items: center;"}>
             {#each numberVariables as variable}
+                {@const isReadOnly = readOnly || variable.tags?.some((tagId) => profile[tagId] === "read")}
                 {@const number = Number(variable.number) || 0}
                 {@const stepSize = Number(variable.step) || 1}
                 {@const defaultValue = Number(variable.default) || 0}
@@ -73,7 +72,7 @@
                 {@const max = Number(variable.maxValue ?? maxDefault)}
 
                 <SelectElem style="width: calc(25% - 5px);" id="variable" data={variable} draggable>
-                    <div class="variable numberBox context #variable{readOnly ? '_readonly' : ''}">
+                    <div class="variable numberBox context #variable{isReadOnly ? '_readonly' : ''}">
                         <div class="reset">
                             <Button title={translateText("actions.reset")} on:click={() => updateVariable(defaultValue, variable.id, "number")}>
                                 <Icon id="reset" white />
