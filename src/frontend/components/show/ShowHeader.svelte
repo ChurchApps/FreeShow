@@ -2,7 +2,7 @@
     import { slide } from "svelte/transition"
     import { Main } from "../../../types/IPC/Main"
     import { sendMain } from "../../IPC/main"
-    import { openToolsTab, showNotesActive, shows, showsCache, slidesOptions, special } from "../../stores"
+    import { openToolsTab, showNotesActive, shows, showsCache, special } from "../../stores"
     import { translateText } from "../../utils/language"
     import Icon from "../helpers/Icon.svelte"
     import { removeTemplatesFromShow } from "../helpers/show"
@@ -13,9 +13,6 @@
     export let hideOptions = false
 
     $: currentShow = $showsCache[showId]
-
-    $: referenceType = currentShow?.reference?.type
-    $: notesVisible = $slidesOptions.mode !== "simple" && $slidesOptions.mode !== "groups" && referenceType !== "lessons" // $slidesOptions.mode === "grid" &&
     $: layouts = currentShow?.layouts
 
     let notes: { text: string; id: string; title: string; icon: string; tab: string } | null = null
@@ -83,7 +80,7 @@
             <span style="opacity: 0.5;font-style: italic;"><T id="main.unnamed" /></span>
         {/if}
 
-        {#if notes && notesVisible}
+        {#if notes}
             <span class="notes" role="none" data-title={translateText(notes.title)} on:click={(e) => openTab(e, notes?.tab || "")}>
                 <Icon id={notes.icon} size={0.8} right white />
                 <p>{@html notes.text}</p>

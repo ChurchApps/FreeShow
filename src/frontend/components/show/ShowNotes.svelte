@@ -61,7 +61,7 @@
 {#if $showNotesActive}
     <Resizeable id="notes" side="bottom" defaultWidth={DEFAULT_WIDTH * 0.5} maxWidth={DEFAULT_WIDTH * 0.8} minWidth={47}>
         <div class="dark" style="display: contents;">
-            <Notes on:edit={edit} value={note} />
+            <Notes on:edit={edit} value={note} autofocus />
         </div>
 
         <MaterialButton title="actions.close" on:click={() => ($showNotesActive = false)} style="position: absolute;top: 9px;right: 4.5px;opacity: 0.8;padding: 8px;" white>
