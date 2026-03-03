@@ -55,7 +55,7 @@ export const dropActions = {
         if (slideDrop[id]) {
             const show = _show().get()
             if (show?.locked) {
-                alertMessage.set("show.locked_info")
+                alertMessage.set("show.locked")
                 activePopup.set("alert")
                 return
             }
@@ -247,7 +247,7 @@ export const dropActions = {
             if (drop.center) {
                 const show = _show().get()
                 if (show?.locked) {
-                    alertMessage.set("show.locked_info")
+                    alertMessage.set("show.locked")
                     activePopup.set("alert")
                     return
                 }
@@ -301,7 +301,7 @@ export const dropActions = {
             if (drop.trigger) {
                 const show = _show().get()
                 if (show?.locked) {
-                    alertMessage.set("show.locked_info")
+                    alertMessage.set("show.locked")
                     activePopup.set("alert")
                     return
                 }

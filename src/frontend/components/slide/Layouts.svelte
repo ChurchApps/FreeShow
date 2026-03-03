@@ -164,7 +164,7 @@
             <MaterialButton
                 title="show.locked"
                 on:click={() => {
-                    alertMessage.set(currentShow?.locked ? "show.locked_info" : "profile.locked")
+                    alertMessage.set(currentShow?.locked ? "show.locked" : "profile.locked")
                     activePopup.set("alert")
                 }}
             >

@@ -18,6 +18,7 @@
     import PdfPreview from "./pdf/PdfPreview.svelte"
     import PowerPointPreview from "./ppt/PowerPointPreview.svelte"
     import Section from "./Section.svelte"
+    import ShowNotes from "./ShowNotes.svelte"
     import Slides from "./Slides.svelte"
 
     $: show = $activeShow
@@ -96,14 +97,18 @@
         {/if}
     </div>
 
-    <!-- || $showsCache[show.id || ""]?.layouts[$showsCache[show.id || ""]?.settings?.activeLayout || ""]?.timeline?.actions?.length -->
-    {#if show && (show.type || "show") === "show" && $special.timelineActive}
-        <Resizeable id="timeline" side="bottom" maxWidth={DEFAULT_WIDTH} minWidth={40}>
-            {#key $activeShow || layoutId}
-                <!-- || !$special.timelineActive -->
-                <Timeline type="show" isClosed={$resized.timeline <= 40} />
-            {/key}
-        </Resizeable>
+    {#if show && (show.type || "show") === "show"}
+        <ShowNotes />
+
+        <!-- || $showsCache[show.id || ""]?.layouts[$showsCache[show.id || ""]?.settings?.activeLayout || ""]?.timeline?.actions?.length -->
+        {#if $special.timelineActive}
+            <Resizeable id="timeline" side="bottom" maxWidth={DEFAULT_WIDTH} minWidth={40}>
+                {#key $activeShow || layoutId}
+                    <!-- || !$special.timelineActive -->
+                    <Timeline type="show" isClosed={$resized.timeline <= 40} />
+                {/key}
+            </Resizeable>
+        {/if}
     {/if}
 </div>
 

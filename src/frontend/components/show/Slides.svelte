@@ -469,7 +469,7 @@
 <svelte:window on:keydown={keydown} on:keyup={keyup} on:mousedown={keyup} on:blur={blurred} />
 
 {#if !$focusMode}
-    <ShowHeader {showId} {layout} hideOptions={!layoutSlides?.length} />
+    <ShowHeader {showId} hideOptions={!layoutSlides?.length} />
 {/if}
 
 <div class="main" class:padding={!$focusMode} style="display: contents;">

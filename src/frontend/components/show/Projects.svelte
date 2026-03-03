@@ -332,18 +332,6 @@
 
                                     <div class="DIVIDER"></div>
 
-                                    {#if currentProject.shows?.some((a) => a.type === "section")}
-                                        <MaterialButton title="actions.lock_sections" icon="lock" on:click={() => lockSections()} white={!currentProject.sectionsLocked}>
-                                            {#if currentProject.sectionsLocked}
-                                                <Icon id="check" size={0.7} white />
-                                            {/if}
-
-                                            <T id="actions.lock_sections" />
-                                        </MaterialButton>
-
-                                        <div class="DIVIDER"></div>
-                                    {/if}
-
                                     <MaterialButton title="timeline.toggle_timeline" on:click={() => special.update((a) => ({ ...a, projectTimelineActive: !a.projectTimelineActive }))}>
                                         <Icon id="timeline" white={!$special.projectTimelineActive} />
 
@@ -353,6 +341,18 @@
 
                                         <p><T id="timeline.toggle_timeline" /></p>
                                     </MaterialButton>
+
+                                    {#if currentProject.shows?.some((a) => a.type === "section")}
+                                        <div class="DIVIDER"></div>
+
+                                        <MaterialButton title="actions.lock_sections" icon="lock" on:click={() => lockSections()} white={!currentProject.sectionsLocked}>
+                                            {#if currentProject.sectionsLocked}
+                                                <Icon id="check" size={0.7} white />
+                                            {/if}
+
+                                            <T id="actions.lock_sections" />
+                                        </MaterialButton>
+                                    {/if}
                                 </div>
                             {/if}
                         </div>
@@ -620,6 +620,11 @@
     }
 
     /* add menu */
+
+    /* +/x rotate */
+    .main :global(svg) {
+        transition: transform 0.2s ease;
+    }
 
     .addMenu {
         position: absolute;

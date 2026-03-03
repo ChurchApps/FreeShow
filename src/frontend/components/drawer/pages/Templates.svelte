@@ -87,7 +87,7 @@
         if (!$activeShow || !isShowActive || e.ctrlKey || e.metaKey) return
 
         if ($showsCache[$activeShow.id]?.locked) {
-            alertMessage.set("show.locked_info")
+            alertMessage.set("show.locked")
             activePopup.set("alert")
             return
         }
