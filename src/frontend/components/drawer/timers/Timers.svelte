@@ -3,6 +3,7 @@
     import { activePopup, activeTimers, disableDragging, labelsDisabled, timers } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { getAccess } from "../../../utils/profile"
+    import { functionTimerAccessKey, resolveAccessLevel } from "../../../utils/profileAccess"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { clone, keysToID, sortByName } from "../../helpers/array"
@@ -20,12 +21,13 @@
     export let onlyPlaying: boolean = false
 
     const profile = getAccess("functions")
-    const readOnly = profile.timers === "read"
+    $: readOnly = resolveAccessLevel(profile, "timers") === "read"
 
     // $: sortedTimers = getSortedTimers($timers)
     const typeOrder = { counter: 1, clock: 2, event: 3 }
     $: sortedTimers = sortByName(keysToID(clone($timers)), "name", true)
         .filter((a) => (onlyPlaying ? a.type === "counter" && $activeTimers.some((at) => a.id === at.id) : true))
+        .filter((a) => resolveAccessLevel(profile, functionTimerAccessKey(a.id)) !== "none")
         .sort((a, b) => typeOrder[a.type] - typeOrder[b.type])
     $: sortedTimersWithProject = sortedTimers.sort((a, b) => (list.includes(a.id) && !list.includes(b.id) ? -1 : 1))
     $: filteredTimers = searchValue.length > 1 ? sortedTimersWithProject.filter((a) => a.name.toLowerCase().includes(searchValue.toLowerCase())) : sortedTimersWithProject

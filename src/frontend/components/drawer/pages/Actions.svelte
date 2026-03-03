@@ -2,6 +2,7 @@
     import { actions, actionTags, activeActionTagFilter, activePopup, labelsDisabled, popupData, runningActions, timelineRecordingAction } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { getAccess } from "../../../utils/profile"
+    import { functionActionTagAccessKey, resolveAccessLevel } from "../../../utils/profileAccess"
     import { getActionIcon, runAction } from "../../actions/actions"
     import { customActionActivations } from "../../actions/customActivation"
     import { convertOldMidiToNewAction, midiToNote, receivedMidi } from "../../actions/midi"
@@ -17,7 +18,7 @@
     export let searchValue
 
     const profile = getAccess("functions")
-    const readOnly = profile.actions === "read"
+    $: readOnly = resolveAccessLevel(profile, "actions") === "read"
 
     function newAction() {
         popupData.set({})
@@ -25,7 +26,10 @@
     }
 
     $: sortedActions = sortByName(keysToID($actions), "name", true).map(convertOldMidiToNewAction)
-    $: filteredActionsTags = sortedActions.filter((a) => !$activeActionTagFilter.length || (a.tags?.length && !$activeActionTagFilter.find((tagId) => !a.tags?.includes(tagId))))
+    $: hiddenActionTags = new Set(keysToID($actionTags).filter((tag) => resolveAccessLevel(profile, functionActionTagAccessKey(tag.id)) === "none").map((tag) => tag.id))
+    $: filteredActionsVisibility = sortedActions.filter((a) => !(a.tags || []).some((tagId) => hiddenActionTags.has(tagId)))
+    $: if ($activeActionTagFilter.some((tagId) => hiddenActionTags.has(tagId))) activeActionTagFilter.set($activeActionTagFilter.filter((tagId) => !hiddenActionTags.has(tagId)))
+    $: filteredActionsTags = filteredActionsVisibility.filter((a) => !$activeActionTagFilter.length || (a.tags?.length && !$activeActionTagFilter.find((tagId) => !a.tags?.includes(tagId))))
     $: filteredActionsSearch = searchValue.length > 1 ? filteredActionsTags.filter((a) => a.name.toLowerCase().includes(searchValue.toLowerCase())) : filteredActionsTags
 </script>
 
