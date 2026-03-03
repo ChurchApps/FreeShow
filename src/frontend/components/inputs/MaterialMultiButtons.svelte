@@ -8,7 +8,7 @@
     export let label: string
     export let icon = ""
     export let value: string
-    export let options: { value: string; label: string; icon?: string; disabled?: string }[]
+    export let options: { value: string; label: string; icon?: string; disabled?: boolean }[]
     export let noLabels = false
 
     const dispatch = createEventDispatcher()
