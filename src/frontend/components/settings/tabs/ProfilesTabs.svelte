@@ -1,7 +1,9 @@
 <script lang="ts">
     import { uid } from "uid"
+    import type { AccessType } from "../../../../types/Main"
     import type { Profile } from "../../../../types/Main"
     import { activeProfile, activeTriggerFunction, profiles, selectedProfile } from "../../../stores"
+    import { newToast } from "../../../utils/common"
     import { translateText } from "../../../utils/language"
     import Icon from "../../helpers/Icon.svelte"
     import { clone, keysToID, sortByName } from "../../helpers/array"
@@ -25,9 +27,18 @@
         access: {}
     }
 
+    $: settingsAccess = $profiles[$activeProfile || ""]?.access?.settings || {}
+    $: profilesAccess = (settingsAccess.profiles || "write") as AccessType
+    $: readOnly = profilesAccess !== "write"
+
     // UPDATE
 
     function updateProfile(e: any, key: string, currentId = "") {
+        if (readOnly) {
+            newToast("profile.locked")
+            return
+        }
+
         let value = e?.detail ?? e?.target?.value ?? e
 
         if (!currentId) currentId = profileId || "default"
@@ -48,6 +59,11 @@
 
     $: if ($activeTriggerFunction === "create_profile") setTimeout(createProfile)
     function createProfile() {
+        if (readOnly) {
+            newToast("profile.locked")
+            return
+        }
+
         // WIP presets for presenter / creator / manager
 
         if ($activeProfile === null) activeProfile.set("")
@@ -60,7 +76,7 @@
     let edit: any
 </script>
 
-<Tabs id="profile" tabs={profilesList} value={$selectedProfile || ""} newLabel="new.profile" class="context #profile_tab" on:open={(e) => selectedProfile.set(e.detail)} on:create={createProfile} let:tab>
+<Tabs id="profile" tabs={profilesList} value={$selectedProfile || ""} newLabel="new.profile" class={readOnly ? "profile_tabs_readonly" : "context #profile_tab"} on:open={(e) => selectedProfile.set(e.detail)} on:create={createProfile} let:tab>
     {#if !tab.id}
         <Icon id="admin" right white />
     {:else}
@@ -68,5 +84,11 @@
     {/if}
 
     {#if $activeProfile === tab.id}<Icon id="check" size={0.7} white right />{/if}
-    <HiddenInput value={tab.name} id={"profile_" + tab.id} on:edit={(e) => updateProfile(e.detail.value, "name", tab.id)} bind:edit />
+    <HiddenInput value={tab.name} id={"profile_" + tab.id} on:edit={(e) => updateProfile(e.detail.value, "name", tab.id)} allowEdit={!readOnly} bind:edit />
 </Tabs>
+
+<style>
+    :global(.profile_tabs_readonly button.small_add) {
+        display: none;
+    }
+</style>

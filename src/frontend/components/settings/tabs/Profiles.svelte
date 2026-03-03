@@ -31,9 +31,17 @@
         access: {}
     }
 
+    $: currentAccess = $profiles[$activeProfile || ""]?.access?.settings || {}
+    $: readOnly = (currentAccess.profiles || "write") !== "write"
+
     // UPDATE
 
     function updateAccess(key: string, id: string, accessType: AccessType) {
+        if (readOnly) {
+            newToast("profile.locked")
+            return
+        }
+
         let data = currentProfile.access
 
         let accessData = data[key] || {}
@@ -158,6 +166,11 @@
     }
 
     function updateAdmin(key: string, value: any) {
+        if (readOnly) {
+            newToast("profile.locked")
+            return
+        }
+
         profiles.update((a) => {
             if (!a.admin) a.admin = { name: "", color: "", image: "", access: {} }
             ;(a.admin as any)[key] = value
@@ -197,9 +210,9 @@
 {#if !profileId || !profilesList.length}
     {#if profilesList.length && !$activeProfile}
         <!-- Admin settings -->
-        <MaterialTextInput label="remote.password" disabled={hasAdminPass} value={hasAdminPass ? "*****" : ""} defaultValue="" on:change={setAdminPassword} />
+        <MaterialTextInput label="remote.password" disabled={hasAdminPass || readOnly} value={hasAdminPass ? "*****" : ""} defaultValue="" on:change={setAdminPassword} />
 
-        <MaterialToggleSwitch label="profile.auto_open_last_used" checked={$profiles.admin?.autoOpenLastUsed || false} defaultValue={false} on:change={(e) => updateAdmin("autoOpenLastUsed", e.detail)} />
+        <MaterialToggleSwitch label="profile.auto_open_last_used" disabled={readOnly} checked={$profiles.admin?.autoOpenLastUsed || false} defaultValue={false} on:change={(e) => updateAdmin("autoOpenLastUsed", e.detail)} />
     {/if}
 
     <Center style="height: 82%;opacity: 0.1;">
