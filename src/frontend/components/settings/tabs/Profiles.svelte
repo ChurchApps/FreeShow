@@ -37,10 +37,7 @@
     // UPDATE
 
     function updateAccess(key: string, id: string, accessType: AccessType) {
-        if (readOnly) {
-            newToast("profile.locked")
-            return
-        }
+        if (readOnly) return
 
         let data = currentProfile.access
 
@@ -166,10 +163,7 @@
     }
 
     function updateAdmin(key: string, value: any) {
-        if (readOnly) {
-            newToast("profile.locked")
-            return
-        }
+        if (readOnly) return
 
         profiles.update((a) => {
             if (!a.admin) a.admin = { name: "", color: "", image: "", access: {} }
@@ -221,18 +215,18 @@
 {:else}
     {#each ACCESS_LISTS as a}
         <InputRow arrow={!!a.list?.length}>
-            <MaterialMultiButtons label={a.label} icon={a.icon} value={a.access.global || "write"} options={a.options} on:click={(e) => updateAccess(a.id, "global", e.detail)} />
+            <MaterialMultiButtons label={a.label} icon={a.icon} value={a.access.global || "write"} options={a.options} disabled={readOnly} on:click={(e) => updateAccess(a.id, "global", e.detail)} />
 
             <div slot="menu">
                 {#if a.id === "functions"}
                     {#each a.list as item}
                         <InputRow arrow={!!item.list?.length}>
-                            <MaterialMultiButtons label={item.name} value={getAccessLevel(a.access, item.id)} options={getInputs(a.access.global, a.id)} on:click={(e) => updateAccess(a.id, item.id, e.detail)} noLabels />
+                            <MaterialMultiButtons label={item.name} value={getAccessLevel(a.access, item.id)} options={getInputs(a.access.global, a.id)} disabled={readOnly} on:click={(e) => updateAccess(a.id, item.id, e.detail)} noLabels />
 
                             <div slot="menu">
                                 {#each item.list as tag}
                                     <InputRow style="margin-left: 20px;">
-                                        <MaterialMultiButtons label={tag.name} value={getAccessLevel(a.access, functionAccessKey(item.id, tag.id))} options={getInputs(a.access.global, a.id)} on:click={(e) => updateAccess(a.id, functionAccessKey(item.id, tag.id), e.detail)} noLabels />
+                                        <MaterialMultiButtons label={tag.name} value={getAccessLevel(a.access, functionAccessKey(item.id, tag.id))} options={getInputs(a.access.global, a.id)} disabled={readOnly} on:click={(e) => updateAccess(a.id, functionAccessKey(item.id, tag.id), e.detail)} noLabels />
                                     </InputRow>
                                 {/each}
                             </div>
@@ -241,7 +235,7 @@
                 {:else}
                     {#each a.list as item}
                         <InputRow>
-                            <MaterialMultiButtons label={item.name} value={getAccessLevel(a.access, item.id)} options={getInputs(a.access.global, a.id)} on:click={(e) => updateAccess(a.id, item.id, e.detail)} noLabels />
+                            <MaterialMultiButtons label={item.name} value={getAccessLevel(a.access, item.id)} options={getInputs(a.access.global, a.id)} disabled={readOnly} on:click={(e) => updateAccess(a.id, item.id, e.detail)} noLabels />
                         </InputRow>
                     {/each}
                 {/if}

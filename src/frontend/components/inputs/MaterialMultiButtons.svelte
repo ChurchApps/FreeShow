@@ -10,6 +10,7 @@
     export let value: string
     export let options: { value: string; label: string; icon?: string; disabled?: string }[]
     export let noLabels = false
+    export let disabled = false
 
     const dispatch = createEventDispatcher()
     function click(id: string) {
@@ -25,7 +26,7 @@
 
     <InputRow>
         {#each options as option}
-            <MaterialButton style="min-width: 50px;" title={option.label} icon={option.icon} disabled={!!option.disabled} on:click={() => click(option.value)} white={noLabels}>
+            <MaterialButton style="min-width: 50px;" title={option.label} icon={option.icon} disabled={disabled || !!option.disabled} on:click={() => click(option.value)} white={noLabels}>
                 {#if !noLabels}{translateText(option.label)}{/if}
 
                 <div class="highlight" class:active={value.includes(option.value)}></div>

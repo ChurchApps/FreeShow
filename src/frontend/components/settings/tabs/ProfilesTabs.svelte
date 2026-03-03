@@ -3,7 +3,6 @@
     import type { AccessType } from "../../../../types/Main"
     import type { Profile } from "../../../../types/Main"
     import { activeProfile, activeTriggerFunction, profiles, selectedProfile } from "../../../stores"
-    import { newToast } from "../../../utils/common"
     import { translateText } from "../../../utils/language"
     import Icon from "../../helpers/Icon.svelte"
     import { clone, keysToID, sortByName } from "../../helpers/array"
@@ -34,10 +33,7 @@
     // UPDATE
 
     function updateProfile(e: any, key: string, currentId = "") {
-        if (readOnly) {
-            newToast("profile.locked")
-            return
-        }
+        if (readOnly) return
 
         let value = e?.detail ?? e?.target?.value ?? e
 
@@ -59,10 +55,7 @@
 
     $: if ($activeTriggerFunction === "create_profile") setTimeout(createProfile)
     function createProfile() {
-        if (readOnly) {
-            newToast("profile.locked")
-            return
-        }
+        if (readOnly) return
 
         // WIP presets for presenter / creator / manager
 
