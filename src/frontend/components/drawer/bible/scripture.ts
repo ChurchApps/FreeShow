@@ -601,6 +601,20 @@ export async function getScriptureSlidesNew(data: any, onlyOne = false, disableR
                 }) || -1
             if (lastRefIndex > -1) item.lines?.splice(lastRefIndex, 1)
 
+            // replaced by template in output.ts
+            // check if item has scripture value (and not {scripture_text})
+            const regex = /\{scripture(?:\d+)?_[^}]+\}/g
+            const text = getItemText(item)
+            const isDecoration = (() => {
+                const matches = text?.match(regex)
+                if (!matches) return false
+                return matches.every((a) => !a.includes("_text}"))
+            })()
+            if (isDecoration) {
+                // prevent easy edit
+                item.decoration = true
+            }
+
             return item
         })
     })
@@ -905,7 +919,7 @@ export async function getScriptureSlidesNew(data: any, onlyOne = false, disableR
         const referenceSliceDV = {
             ...globalCustomDynamicValues,
             scripture_text: format(fullReference),
-            scripture1_text: format(fullReference),
+            scripture1_text: format(fullReference)
         }
         slideDynamicValues = [referenceSliceDV, ...slideDynamicValues]
     }

@@ -974,6 +974,24 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
 
     if (addOverflowTemplateItems || hasScriptureDynamicValue) {
         const remainingTextTemplateItems = sorted.text?.slice(slideTextboxes) || []
+
+        if (hasScriptureDynamicValue) {
+            remainingTextTemplateItems.forEach((item) => {
+                // check if item has scripture value (and not {scripture_text})
+                const regex = /\{scripture(?:\d+)?_[^}]+\}/g
+                const text = getItemText(item)
+                const isDecoration = (() => {
+                    const matches = text?.match(regex)
+                    if (!matches) return false
+                    return matches.every((a) => !a.includes("_text}"))
+                })()
+                if (isDecoration) {
+                    // prevent easy edit
+                    item.decoration = true
+                }
+            })
+        }
+
         sortedTemplateItems.text = removeTextValue(remainingTextTemplateItems)
     } else {
         delete sortedTemplateItems.text
@@ -1062,7 +1080,7 @@ function replaceScriptureValues(items: Item[], templateItems: Item[], customDyna
                 // verse content [number, text]
                 items.forEach((item) => {
                     item.lines?.forEach((line) => {
-                        const newTexts: { value: string; style: string; customType?: string }[] = []
+                        const newTexts: { value: string; style: string; sourceDynamicKey?: string; customType?: string }[] = []
                         let insertAtPos = -1
                         line.text?.forEach((text, i) => {
                             if (text.value?.includes(`{${key}}`)) {
@@ -1072,14 +1090,14 @@ function replaceScriptureValues(items: Item[], templateItems: Item[], customDyna
 
                                 const bibleIndex = parseInt(key.replace(/\D/g, "")) || 0
 
-                                value.forEach(([number, value]) => {
+                                value.forEach(([number, value], index) => {
                                     if (number && number !== "0") {
                                         const size = verseNumberSize * (i === 0 ? 1.2 : 1)
                                         const numberStyle = `;${verseNumberStyles[bibleIndex] || verseNumberStyles[0] || verseNumberStyle}font-size: ${size}px;margin-right: 0.3em;`
                                         newTexts.push({ value: number, style: style + numberStyle, customType: "disableTemplate" })
                                     }
 
-                                    newTexts.push({ value: value, style: style + ";" + baseStyle })
+                                    newTexts.push({ value, sourceDynamicKey: key + ":" + index, style: style + ";" + baseStyle })
                                 })
                             }
                         })
