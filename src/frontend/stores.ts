@@ -88,6 +88,7 @@ export const editingProjectTemplate: Writable<string> = writable("")
 export const activeTagFilter: Writable<string[]> = writable([])
 export const activeMediaTagFilter: Writable<string[]> = writable([])
 export const activeActionTagFilter: Writable<string[]> = writable([])
+export const activeTimerTagFilter: Writable<string[]> = writable([])
 export const activeVariableTagFilter: Writable<string[]> = writable([])
 
 // CALENDAR

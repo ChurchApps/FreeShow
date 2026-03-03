@@ -2,7 +2,7 @@
     import { onDestroy, onMount } from "svelte"
     import { uid } from "uid"
     import type { Timer } from "../../../../types/Show"
-    import { events, timers } from "../../../stores"
+    import { drawerTabsData, events, timers } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { getDateString } from "../../drawer/calendar/calendar"
     import { getTimer, getTimerDynamicValue } from "../../drawer/timers/timers"
@@ -128,6 +128,10 @@
             // create timer
             id = uid()
             created = true
+
+            if ($drawerTabsData.functions?.activeSubTab === "timer" && $drawerTabsData.functions?.activeSubmenu) {
+                timer.tags = [$drawerTabsData.functions.activeSubmenu]
+            }
         }
 
         timers.update((a) => {
@@ -146,6 +150,7 @@
         // if (!newTimer.name && timer.type) newTimer.name = timerNames[timer.type] || $dictionary.timer?.counter || "Timer"
 
         if (timer.id) newTimer.id = timer.id
+        if (timer.tags?.length) newTimer.tags = [...new Set(timer.tags)]
         if (timer.type === "event") newTimer.event = timer.event
         else if (timer.type === "clock") newTimer.time = timer.time || "12:00"
         else {

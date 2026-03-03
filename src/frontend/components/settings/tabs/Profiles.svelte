@@ -1,8 +1,8 @@
 <script lang="ts">
     import type { AccessType, Profile } from "../../../../types/Main"
     import { SettingsTabs } from "../../../../types/Tabs"
-    import { actionTags, activeProfile, categories, folders, overlayCategories, profiles, selectedProfile, special, stageShows, templateCategories, timers, variableTags } from "../../../stores"
-    import { functionActionTagAccessKey, functionTimerAccessKey, functionVariableTagAccessKey } from "../../../utils/profileAccess"
+    import { actionTags, activeProfile, categories, folders, globalTags, overlayCategories, profiles, selectedProfile, special, stageShows, templateCategories, timers, variableTags } from "../../../stores"
+    import { functionAccessKey } from "../../../utils/profileAccess"
     import { newToast } from "../../../utils/common"
     import { translateText } from "../../../utils/language"
     import { promptCustom } from "../../../utils/popup"
@@ -100,21 +100,28 @@
     $: templateCategoryList = sortByName(keysToID($templateCategories)).filter((a) => a.name)
     $: templateCategoryAccess = currentProfile.access.templates || {}
 
-    $: functionsGroups = [
+    $: timerTagList = sortByName(
+        keysToID($timers)
+            .flatMap((a) => a.tags || [])
+            .filter((tagId, index, arr) => arr.indexOf(tagId) === index)
+            .map((id) => ({ id, name: $globalTags[id]?.name || id || "—" }))
+    )
+
+    $: functionsList = [
         {
             id: "actions",
             name: "tabs.actions",
-            list: sortByName(keysToID($actionTags)).map((a) => ({ id: functionActionTagAccessKey(a.id), name: a.name || "—" }))
+            list: sortByName(keysToID($actionTags)).map((a) => ({ id: a.id, name: a.name || "—" }))
         },
         {
             id: "timers",
             name: "tabs.timers",
-            list: sortByName(keysToID($timers)).map((a) => ({ id: functionTimerAccessKey(a.id), name: a.name || "—" }))
+            list: timerTagList.map((a) => ({ id: a.id, name: a.name || "—" }))
         },
         {
             id: "variables",
             name: "tabs.variables",
-            list: sortByName(keysToID($variableTags)).map((a) => ({ id: functionVariableTagAccessKey(a.id), name: a.name || "—" }))
+            list: sortByName(keysToID($variableTags)).map((a) => ({ id: a.id, name: a.name || "—" }))
         },
         {
             id: "triggers",
@@ -139,7 +146,7 @@
         { id: "shows", label: "tabs.shows", icon: "shows", access: showsCategoryAccess, options: accessInputsRW, list: showsCategoryList },
         { id: "overlays", label: "tabs.overlays", icon: "overlays", access: overlayCategoryAccess, options: accessInputsRW, list: overlayCategoryList },
         { id: "templates", label: "tabs.templates", icon: "templates", access: templateCategoryAccess, options: accessInputs, list: templateCategoryList },
-        { id: "functions", label: "tabs.functions", icon: "functions", access: functionsAccess, options: [], list: functionsGroups },
+        { id: "functions", label: "tabs.functions", icon: "functions", access: functionsAccess, options: [], list: functionsList },
         { id: "stage", label: "menu.stage", icon: "stage", access: stageAccess, options: accessInputsRW, list: stageList },
         { id: "settings", label: "menu.settings", icon: "settings", access: settingsAccess, options: [], list: settingsList }
     ]
@@ -205,14 +212,14 @@
 
             <div slot="menu">
                 {#if a.id === "functions"}
-                    {#each a.list as group}
-                        <InputRow arrow={!!group.list?.length}>
-                            <MaterialMultiButtons label={group.name} value={getAccessLevel(a.access, group.id)} options={getInputs(a.access.global, a.id)} on:click={(e) => updateAccess(a.id, group.id, e.detail)} noLabels />
+                    {#each a.list as item}
+                        <InputRow arrow={!!item.list?.length}>
+                            <MaterialMultiButtons label={item.name} value={getAccessLevel(a.access, item.id)} options={getInputs(a.access.global, a.id)} on:click={(e) => updateAccess(a.id, item.id, e.detail)} noLabels />
 
                             <div slot="menu">
-                                {#each group.list as item}
+                                {#each item.list as tag}
                                     <InputRow style="margin-left: 20px;">
-                                        <MaterialMultiButtons label={item.name} value={getAccessLevel(a.access, item.id)} options={getInputs(a.access.global, a.id)} on:click={(e) => updateAccess(a.id, item.id, e.detail)} noLabels />
+                                        <MaterialMultiButtons label={tag.name} value={getAccessLevel(a.access, functionAccessKey(item.id, tag.id))} options={getInputs(a.access.global, a.id)} on:click={(e) => updateAccess(a.id, functionAccessKey(item.id, tag.id), e.detail)} noLabels />
                                     </InputRow>
                                 {/each}
                             </div>

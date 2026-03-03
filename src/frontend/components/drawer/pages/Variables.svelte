@@ -1,8 +1,7 @@
 <script lang="ts">
     import { activePopup, activeVariableTagFilter, disableDragging, labelsDisabled, randomNumberVariable, selected, variables } from "../../../stores"
     import { translateText } from "../../../utils/language"
-    import { getAccess } from "../../../utils/profile"
-    import { functionVariableTagAccessKey, resolveAccessLevel } from "../../../utils/profileAccess"
+    import { resolveAccessLevel } from "../../../utils/profileAccess"
     import { resetVariable } from "../../actions/apiHelper"
     import { keysToID, sortByName } from "../../helpers/array"
     import Icon from "../../helpers/Icon.svelte"
@@ -19,11 +18,10 @@
 
     export let searchValue
 
-    const profile = getAccess("functions")
-    $: readOnly = resolveAccessLevel(profile, "variables") === "read"
+    $: readOnly = resolveAccessLevel("variables") === "read"
 
     const typeOrder = { number: 1, text: 2 }
-    $: hiddenVariableTags = new Set(keysToID($variables).flatMap((a) => a.tags || []).filter((tagId, index, arr) => arr.indexOf(tagId) === index).filter((tagId) => resolveAccessLevel(profile, functionVariableTagAccessKey(tagId)) === "none"))
+    $: hiddenVariableTags = new Set(keysToID($variables).flatMap((a) => a.tags || []).filter((tagId, index, arr) => arr.indexOf(tagId) === index).filter((tagId) => resolveAccessLevel("variables", tagId) === "none"))
     $: sortedVariables = sortByName(keysToID($variables), "name", true)
         .filter((a) => !(a.tags || []).some((tagId) => hiddenVariableTags.has(tagId)))
         .sort((a, b) => typeOrder[a.type] - typeOrder[b.type])
