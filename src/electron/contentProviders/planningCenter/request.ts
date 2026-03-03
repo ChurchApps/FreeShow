@@ -21,13 +21,76 @@ const PCO_API_version = 2
 type PCORequestData = {
     scope: PCOScopes
     endpoint: string
-    params?: Record<string, string> // Add params type
+    params?: Record<string, string>
 }
 
 type SongSection = {
     label: string
-    lyrics: string
+    chords: string
     breaks_at?: number
+}
+
+function isLikelyChordLine(line: string): boolean {
+    if (!line.trim()) return false
+    
+    const trimmed = line.trim()
+    
+    const chordPattern = /^[A-G][#b]?(?:m|maj|min|add|sus|aug|dim)?[\d]*(?:\s+[A-G][#b]?(?:m|maj|min|add|sus|aug|dim)?[\d]*)*$/
+    
+    if (chordPattern.test(trimmed)) {
+        return true
+    }
+    
+    const chordSymbols = (trimmed.match(/[A-G][#b]?/g) || []).length
+    const totalChars = trimmed.replace(/\s/g, '').length
+    
+    if (chordSymbols > 0 && (chordSymbols / (totalChars / 2)) > 0.5) {
+        return true
+    }
+    
+    return false
+}
+
+function parseChordChartIntoSections(chordChart: string): SongSection[] {
+    const sections: SongSection[] = []
+    const lines = chordChart.split(/\r?\n/)
+    let currentSectionLabel = ""
+    let currentSectionContent: string[] = []
+
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i]
+        const trimmed = line.trim()
+
+        const sectionMatch = trimmed.match(/^(VERSO|CORO|PUENTE|INTRO|OUTRO|PRE|ESTRIBILLO|BRIDGE|CHORUS|VERSE|BREAK|INSTRUMENTAL)(\s*\d+)?/i)
+        if (sectionMatch) {
+            if (currentSectionLabel && currentSectionContent.length) {
+                const content = currentSectionContent.join("\n").trim()
+                sections.push({
+                    label: currentSectionLabel,
+                    chords: content
+                })
+            }
+            currentSectionLabel = sectionMatch[0]
+            currentSectionContent = []
+            continue
+        }
+
+        if (isLikelyChordLine(line)) {
+            continue
+        }
+
+        currentSectionContent.push(line)
+    }
+
+    if (currentSectionLabel && currentSectionContent.length) {
+        const content = currentSectionContent.join("\n").trim()
+        sections.push({
+            label: currentSectionLabel,
+            chords: content
+        })
+    }
+
+    return sections
 }
 
 interface ServiceType {
@@ -77,7 +140,6 @@ export async function pcoRequest(data: PCORequestData, attempt = 0): Promise<any
         return null
     }
 
-    // Build the path with query parameters if they exist
     let apiPath = `/${data.scope || "services"}/v${PCO_API_version}/${data.endpoint}`
     if (data.params) {
         const queryParams = new URLSearchParams(data.params).toString()
@@ -89,15 +151,12 @@ export async function pcoRequest(data: PCORequestData, attempt = 0): Promise<any
     return new Promise((resolve) => {
         httpsRequest(PCO_API_URL, apiPath, "GET", headers, {}, (err, result) => {
             if (err) {
-                // handle rate limit
-                // https://developer.planning.center/docs/#/overview/rate-limiting
                 if (err.statusCode === 429) {
                     const retryAfter = parseInt(err?.headers?.["retry-after"], 10) || 2
                     rateLimit(retryAfter)
                     return
                 }
 
-                // console.log(apiPath, err)
                 const message = err.message?.includes("401") ? "Make sure you have created some 'services' in your account!" : err.message
                 sendToMain(ToMain.ALERT, "Could not get data! " + message)
                 return resolve(null)
@@ -105,10 +164,7 @@ export async function pcoRequest(data: PCORequestData, attempt = 0): Promise<any
 
             let resultData = result.data
 
-            // convert to array
             if (!Array.isArray(resultData)) resultData = [resultData]
-
-            // console.debug("PCO Request Result:", apiPath, resultData)
 
             resolve(resultData)
         })
@@ -130,8 +186,6 @@ export async function pcoRequest(data: PCORequestData, attempt = 0): Promise<any
         }
     })
 }
-
-// LOAD SERVICES
 
 const ONE_WEEK_MS = 604800000
 
@@ -207,7 +261,6 @@ async function fetchServicePlans(serviceType: ServiceType) {
         return null
     }
 
-    // Filter for the one week window
     const filteredPlans = servicePlans.filter(({ attributes: a }: any) => {
         if (a.items_count === 0) return false
         const date = new Date(a.sort_date).getTime()
@@ -215,7 +268,6 @@ async function fetchServicePlans(serviceType: ServiceType) {
         return date < today + ONE_WEEK_MS
     })
 
-    // console.debug(`Found ${filteredPlans.length} plans for service type ${serviceType.attributes.name} (${serviceType.id})`)
     return filteredPlans
 }
 
@@ -290,18 +342,24 @@ async function processSongItem(item: ProjectItem, itemsEndpoint: string) {
     const song = songArrangement.attributes
     const sequence = item.custom_arrangement_sequence || song.sequence || []
 
-    let sections: SongSection[] =
-        (
-            await pcoRequest({
-                scope: "services",
-                endpoint: `${arrangementEndpoint}/sections`
-            })
-        )[0]?.attributes.sections || []
+    let sections: SongSection[] = []
 
-    if (!sections.length) {
-        sections = sequence.map((id: any) => ({ label: id, lyrics: "" }))
+    if (song.chord_chart) {
+        sections = parseChordChartIntoSections(song.chord_chart)
     } else {
-        sections = sections.map(normalizeSongSection)
+        sections =
+            (
+                await pcoRequest({
+                    scope: "services",
+                    endpoint: `${arrangementEndpoint}/sections`
+                })
+            )[0]?.attributes.sections || []
+
+        if (!sections.length) {
+            sections = sequence.map((id: any) => ({ label: id, chords: "" }))
+        } else {
+            sections = sections.map(normalizeSongSection)
+        }
     }
 
     if (sequence.length && sections.length) {
@@ -336,7 +394,7 @@ function getOrderedSections(sections: SongSection[], sequence: any[]): SongSecti
 function normalizeSongSection(section: SongSection): SongSection {
     return {
         ...section,
-        lyrics: normalizeLineBreaks(section.lyrics)
+        chords: normalizeLineBreaks(section.chords)
     }
 }
 
@@ -416,24 +474,31 @@ function getShow(SONG_DATA: any, SONG: any, SECTIONS: any[]) {
     const slides: { [key: string]: Slide } = {}
     const layoutSlides: SlideData[] = []
     SECTIONS.forEach((section) => {
-        const slideId = uid()
+        const hasRepetition = section.chords.includes("//")
+        const repetitionCount = hasRepetition ? 2 : 1
+        
+        const cleanedChords = section.chords.replace(/\/\//g, "").trim()
 
-        const items = [
-            {
-                style: itemStyle,
-                lines: section.lyrics.split("\n").map((a: string) => ({ align: "", text: [{ style: "", value: a }] }))
+        for (let rep = 0; rep < repetitionCount; rep++) {
+            const slideId = uid()
+
+            const items = [
+                {
+                    style: itemStyle,
+                    lines: cleanedChords.split("\n").map((a: string) => ({ align: "", text: [{ style: "", value: a }] }))
+                }
+            ]
+
+            slides[slideId] = {
+                group: section.label,
+                globalGroup: section.label.toLowerCase(),
+                color: null,
+                settings: {},
+                notes: "",
+                items
             }
-        ]
-
-        slides[slideId] = {
-            group: section.label,
-            globalGroup: section.label.toLowerCase(),
-            color: null,
-            settings: {},
-            notes: "",
-            items
+            layoutSlides.push({ id: slideId })
         }
-        layoutSlides.push({ id: slideId })
     })
 
     const title = SONG_DATA.attributes.title || ""
@@ -483,7 +548,6 @@ async function getMediaStreamUrl(endpoint: string): Promise<string> {
     return new Promise((resolve) => {
         httpsRequest(PCO_API_URL, apiPath, "POST", headers, {}, (err, result) => {
             if (err) {
-                console.error("Could not get media stream URL:", err)
                 return resolve("")
             }
 
