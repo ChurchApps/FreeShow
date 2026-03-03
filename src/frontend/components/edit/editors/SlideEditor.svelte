@@ -2,7 +2,7 @@
     import { onMount } from "svelte"
     import type { MediaStyle } from "../../../../types/Main"
     import type { ItemType } from "../../../../types/Show"
-    import { activeEdit, activePage, activePopup, activeShow, activeTriggerFunction, alertMessage, focusMode, groups, labelsDisabled, media, outputs, overlays, refreshEditSlide, showsCache, slideNotesActive, special, styles, templates, textEditActive } from "../../../stores"
+    import { activeEdit, activePage, activePopup, activeShow, alertMessage, focusMode, groups, labelsDisabled, media, outputs, overlays, refreshEditSlide, showsCache, slideNotesActive, special, styles, templates, textEditActive } from "../../../stores"
     import { transposeText } from "../../../utils/chordTranspose"
     import { DEFAULT_WIDTH, triggerFunction } from "../../../utils/common"
     import { translateText } from "../../../utils/language"
@@ -266,7 +266,7 @@
         // timeout to prevent number 2 from getting typed if changing with shortcuts
         setTimeout(() => {
             // set focus to textbox if only one
-            if (Slide?.items.length === 1 && !$activeEdit.items.length && $activeTriggerFunction !== "slide_notes") {
+            if (Slide?.items.length === 1 && !$activeEdit.items.length) {
                 activeEdit.update((a) => ({ ...(a || {}), items: [0] }))
                 const elem = document.querySelector(".editItem")?.querySelector(".edit")
                 if (elem) {
@@ -455,10 +455,6 @@
 
             {#if open}
                 <div class="divider"></div>
-
-                <!-- open slide notes -->
-                <!-- <MaterialButton icon="notes" title="items.slide_notes" on:click={() => triggerFunction("slide_notes")} />
-                <div class="divider"></div> -->
 
                 {#if hasTextContent}
                     <MaterialButton title="edit.insert_virtual_break" on:click={() => triggerFunction("insert_virtual_break")}>

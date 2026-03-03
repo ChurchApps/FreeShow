@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { slide } from "svelte/transition"
+    import { fade } from "svelte/transition"
     import { showsCache, slideNotesActive } from "../../stores"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
@@ -38,7 +38,7 @@
         {/if}
 
         {#if showDropdown && currentShow}
-            <div class="showDropdown" transition:slide={{ duration: 150 }} role="none" on:click={() => (showDropdown = false)}>
+            <div class="showDropdown" transition:fade={{ duration: 100 }} role="none" on:click={() => (showDropdown = false)}>
                 <MaterialButton title="tooltip.notes" on:click={() => slideNotesActive.set(!$slideNotesActive)}>
                     <Icon id="notes" white={!$slideNotesActive} />
 

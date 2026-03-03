@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { slide } from "svelte/transition"
+    import { fade } from "svelte/transition"
     import { Main } from "../../../types/IPC/Main"
     import { sendMain } from "../../IPC/main"
     import { openToolsTab, showNotesActive, shows, showsCache, special } from "../../stores"
@@ -50,7 +50,6 @@
 
     let showDropdown = false
     let listScrollY = 0
-    let isScrollbarVisible = true
 
     function toggleShowLock() {
         const shouldBeLocked = !currentShow?.locked
@@ -72,7 +71,7 @@
 
 <svelte:window on:mousedown={mousedown} />
 
-<div class="header" class:shadow={listScrollY > 0} class:isScrollbarVisible>
+<div class="header" class:shadow={listScrollY > 0}>
     <p style="width: 100%;max-width: 98%;display: flex;align-items: center;gap: 0.5em;font-size: 0.9em;" data-title={currentShow?.name}>
         {#if currentShow?.name}
             {currentShow.name}
@@ -97,7 +96,7 @@
         {/if}
 
         {#if showDropdown && currentShow}
-            <div class="showDropdown" transition:slide={{ duration: 150 }} role="none" on:click={() => (showDropdown = false)}>
+            <div class="showDropdown" transition:fade={{ duration: 100 }} role="none" on:click={() => (showDropdown = false)}>
                 <MaterialButton title="tooltip.notes" on:click={() => showNotesActive.set(!$showNotesActive)}>
                     <Icon id="notes" white={!$showNotesActive} />
 
@@ -140,7 +139,7 @@
     /* header */
 
     .header {
-        position: absolute;
+        position: sticky;
         top: 0;
         left: 0;
         width: 100%;
@@ -166,10 +165,6 @@
     .header.shadow {
         background-color: rgb(0 0 10 / 0.12);
         box-shadow: 0 2px 4px rgb(0 0 10 / 0.3);
-    }
-    .header.isScrollbarVisible {
-        left: 0;
-        width: calc(100% - 8px);
     }
 
     .header .right {

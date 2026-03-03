@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { slide } from "svelte/transition"
+    import { fade } from "svelte/transition"
     import { uid } from "uid"
     import { Main } from "../../../types/IPC/Main"
     import type { Project, Tree } from "../../../types/Projects"
@@ -214,28 +214,43 @@
     let contentScrollElem: HTMLElement | undefined
     let listScrollY = 0
     let isScrollbarVisible = true
-    $: if (listScrollElem) startScrollListener(listScrollElem)
-    $: if (contentScrollElem) startScrollListener(contentScrollElem)
+    let stopListScrollListener: (() => void) | undefined
+    let stopContentScrollListener: (() => void) | undefined
+    $: {
+        stopListScrollListener?.()
+        stopListScrollListener = listScrollElem ? startScrollListener(listScrollElem) : undefined
+    }
+    $: {
+        stopContentScrollListener?.()
+        stopContentScrollListener = contentScrollElem ? startScrollListener(contentScrollElem) : undefined
+    }
     $: if (!listScrollElem && !contentScrollElem) {
         listScrollY = 0
-        // isScrollbarVisible = false
+        isScrollbarVisible = false
     }
     function startScrollListener(scrollElem: HTMLElement | undefined) {
         listScrollY = 0
-        // isScrollbarVisible = false
+        isScrollbarVisible = false
 
-        scrollElem = scrollElem?.querySelector(".droparea") as HTMLElement | undefined
-        if (!scrollElem) return
+        const dropAreaElem = scrollElem?.querySelector(".droparea") as HTMLElement | undefined
+        if (!dropAreaElem) return
+        const elem = dropAreaElem
 
-        // should be automatically removed when element is removed
-        scrollElem.addEventListener("scroll", scrollHandler)
+        elem.addEventListener("scroll", updateState)
+        const resizeObserver = new ResizeObserver(updateState)
+        resizeObserver.observe(elem)
 
-        function scrollHandler() {
-            listScrollY = scrollElem?.scrollTop || 0
+        updateState()
+
+        function updateState() {
+            listScrollY = elem.scrollTop || 0
+            isScrollbarVisible = elem.scrollHeight > elem.clientHeight
         }
-        // function resizeHandler() {
-        //     isScrollbarVisible = scrollElem ? scrollElem.scrollHeight > scrollElem.clientHeight : false
-        // }
+
+        return () => {
+            elem.removeEventListener("scroll", updateState)
+            resizeObserver.disconnect()
+        }
     }
 
     let addMenuOpen = false
@@ -317,7 +332,7 @@
 
                             {#if showProjectDropdown && currentProject}
                                 <!-- WIP use context menu style -->
-                                <div class="projectDropdown" transition:slide={{ duration: 150 }} role="none" on:click={() => (showProjectDropdown = false)}>
+                                <div class="projectDropdown" transition:fade={{ duration: 100 }} role="none" on:click={() => (showProjectDropdown = false)}>
                                     {#if currentProject.sourcePath}
                                         <MaterialButton title="actions.save_to_file" icon="save" on:click={() => exportProject(currentProject, $activeProject || "", currentProject.sourcePath)} white>
                                             <T id="actions.save_to_file" />
@@ -389,7 +404,7 @@
                         </MaterialButton>
 
                         {#if showProjectDropdown}
-                            <div class="projectDropdown" transition:slide={{ duration: 150 }} role="none" on:click={() => (showProjectDropdown = false)}>
+                            <div class="projectDropdown" transition:fade={{ duration: 100 }} role="none" on:click={() => (showProjectDropdown = false)}>
                                 <MaterialButton title="edit.options" icon="options" on:click={() => (showProjectsOptions = !showProjectsOptions)} white>
                                     <T id="edit.options" />
                                 </MaterialButton>
@@ -439,7 +454,7 @@
             </FloatingInputs> -->
 
             {#if addMenuOpen}
-                <div class="addMenu" transition:slide={{ duration: 100 }} role="none" on:click={() => (addMenuOpen = false)}>
+                <div class="addMenu" transition:fade={{ duration: 80 }} role="none" on:click={() => (addMenuOpen = false)}>
                     <MaterialButton variant="outlined" icon="project" title="<b>new.project</b><br>tooltip.project" on:click={() => createProject()}>
                         <T id="formats.project" />
                     </MaterialButton>

@@ -1,6 +1,6 @@
 <script lang="ts">
     import { createEventDispatcher, onDestroy, onMount } from "svelte"
-    import { fade, slide } from "svelte/transition"
+    import { fade } from "svelte/transition"
     import type { ProjectShowRef, Tree } from "../../../types/Projects"
     import { ShowType } from "../../../types/Show"
     import { addProjectItem, addToProject, updateRecentlyAddedFiles } from "../../converters/project"
@@ -103,7 +103,7 @@
             .readText()
             .then((text) => {
                 const lines = text.split("\n")
-                if (lines.length > 5 && lines.length <= 30) shouldPasteText = true
+                if (lines.length > 2 && lines.length <= 30) shouldPasteText = true
             })
             .catch(() => {
                 shouldPasteText = false
@@ -380,7 +380,7 @@
 {#if projectId && !$projectView && !$focusMode && !recentlyUsedList.length && !projectReadOnly}
     {#if addMenuOpen}
         <!-- new show, new media, new PDF/PPT?, new scripture, new section -->
-        <div class="addMenu" transition:slide={{ duration: 100 }} role="none" on:click={() => (addMenuOpen = false)}>
+        <div class="addMenu" transition:fade={{ duration: 80 }} role="none" on:click={() => (addMenuOpen = false)}>
             <!-- createShow -->
             <MaterialButton variant="outlined" icon="slide" title="tooltip.show" on:click={() => openSearch("shows")}>
                 <div class="label">
