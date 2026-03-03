@@ -88,6 +88,7 @@ import { updateSettings, updateSyncedSettings, updateThemeValues } from "../util
 import type { MainReturnPayloads } from "./../../types/IPC/Main"
 import { Main } from "./../../types/IPC/Main"
 import { invalidateSearchIndex } from "../utils/searchFast"
+import { sendMain } from "./main"
 
 type MainHandler<ID extends Main | ToMain> = (data: ID extends keyof ToMainSendPayloads ? ToMainSendPayloads[ID] : ID extends keyof MainReturnPayloads ? Awaited<MainReturnPayloads[ID]> : undefined) => void
 export type MainResponses = {
@@ -398,7 +399,11 @@ export const mainResponses: MainResponses = {
 
         const receiveFilePathIMPORT = {
             // Media
-            pdf: () => addToProject("pdf", mainData as string[]),
+            pdf: () => {
+                // convert to images directly - drag and drop to keep as PDF
+                ;(mainData as string[]).forEach((path) => sendMain(Main.PDF_TO_IMAGE, { filePath: path }))
+                // addToProject("pdf", mainData as string[])
+            },
             powerkey: () => addToProject("ppt", mainData as string[])
         }
         if (mainData.find((dataValue) => typeof dataValue === "string")) {
