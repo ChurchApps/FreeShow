@@ -1345,6 +1345,10 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
     const currentShow = _show(showId).get() || null
     if (type === "show" && !currentShow) return ""
 
+    // remove unused scripture dynamic values ({scripture_X} / {scriptureNUM_X})
+    const regex = /\{scripture(?:\d+)?_[^}]+\}/g
+    if (regex.test(text)) text = text.replace(regex, "")
+
     const customIds = ["slide_text_current", "active_layers", "active_styles", "output_windows_active", "log_song_usage"]
     ;[...getDynamicIds(false, mode), ...customIds].forEach((dynamicId) => {
         if (!exists(text, dynamicId) && !(dynamicId.startsWith("$") && exists(text, dynamicId.replace("$", "variable_")))) return
