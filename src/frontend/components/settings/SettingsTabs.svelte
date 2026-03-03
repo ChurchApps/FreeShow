@@ -10,7 +10,7 @@
 
     let activeTabs: SettingsTabs[] = []
     $: profile = $profiles[$activeProfile || ""]
-    $: if (profile) activeTabs = clone(tabs).filter((tabId) => tabId === "profiles" || profile.access.settings?.[tabId] !== "none")
+    $: if (profile) activeTabs = clone(tabs).filter((tabId) => profile.access.settings?.[tabId] !== "none")
     else activeTabs = clone(tabs)
 
     function keydown(e: KeyboardEvent) {
