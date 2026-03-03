@@ -599,6 +599,11 @@ const slideDrop = {
             const currentBgId = layoutRef[drop.index!]?.data.background || ""
             const mediaName = removeExtension(_show(showId).media([currentBgId]).get()?.[0]?.name || "")
 
+            if (slide.locked || get(showsCache)[showId]?.slides?.[layoutRef[drop.index!]?.parent?.id || ""]?.locked) {
+                newToast("output.state_locked")
+                return
+            }
+
             // add as slide bg instead of layout bg
             if (keys.ctrlKey) {
                 const slideSettings = _show().slides([slideId]).get("settings")
