@@ -6,7 +6,7 @@ import type { DropData, Selected, Variable } from "../../../types/Main"
 import { clearAudio } from "../../audio/audioFading"
 import { AudioPlayer } from "../../audio/audioPlayer"
 import { AudioPlaylist } from "../../audio/audioPlaylist"
-import { activeDrawerTab, activeEdit, activePage, activeProject, activeTimers, audioPlaylists, draw, drawSettings, drawTool, folders, groupNumbers, groups, media, openScripture, outLocked, outputs, overlays, playingAudio, playingMetronome, projects, refreshEditSlide, selected, showsCache, sortedShowsList, special, styles, timers, variables, volume } from "../../stores"
+import { activeDrawerTab, activeEdit, activePage, activeProject, activeShow, activeTimers, audioPlaylists, draw, drawSettings, drawTool, folders, groupNumbers, groups, media, openScripture, outLocked, outputs, overlays, playingAudio, playingMetronome, projects, refreshEditSlide, selected, showsCache, sortedShowsList, special, styles, timers, variables, volume } from "../../stores"
 import { newToast } from "../../utils/common"
 import { send } from "../../utils/request"
 import { getDynamicValue } from "../edit/scripts/itemHelpers"
@@ -25,7 +25,6 @@ import { _show } from "../helpers/shows"
 import { clearBackground } from "../output/clear"
 import { getPlainEditorText } from "../show/getTextEditor"
 import { getSlideGroups } from "../show/tools/groups"
-import { activeShow } from "./../../stores"
 import type { API_add_to_project, API_create_project, API_draw_zoom, API_edit_timer, API_group, API_id_index, API_id_value, API_layout, API_media, API_output_lock, API_rearrange, API_scripture, API_seek, API_slide_index, API_toggle_specific, API_variable } from "./api"
 
 // WIP combine with click() in ShowButton.svelte
@@ -460,6 +459,37 @@ export async function addGroup(data: API_group) {
     selected.set({ id: "group", data: [{ id: data.groupId, showId: data.showId }] })
     ondrop(null, "slide")
     selected.set({ id: null, data: [] })
+}
+
+export function setNextSlideTimer(time: number) {
+    const value = time || 0
+
+    const layoutRef = getLayoutRef()
+    const indexes = layoutRef.map((_, i) => i)
+
+    history({ id: "SHOW_LAYOUT", newData: { key: "nextTimer", data: value, indexes }, location: { page: "show", override: "change_slide_action_timer" } })
+
+    const allActiveSlides = layoutRef.filter((a) => !a.data.disabled)
+
+    // GO TO START
+
+    // remove existing go to start if just one applied to any slide
+    let goToStartRefs = allActiveSlides.reduce((value, ref) => (ref.data?.end ? [...value, ref] : value), [] as any[])
+    if (goToStartRefs.length === 1) {
+        const showId = get(activeShow)?.id || ""
+        const layoutId = _show().get("settings.activeLayout")
+
+        showsCache.update((a) => {
+            let ref = goToStartRefs[0]
+            if (!ref) return a
+
+            if (ref.type === "parent") delete a[showId].layouts[layoutId]?.slides?.[ref.index]?.end
+            else delete a[showId].layouts[layoutId]?.slides?.[ref.parent?.index ?? -1]?.children?.[ref.id]?.end
+            return a
+        })
+    }
+
+    history({ id: "SHOW_LAYOUT", newData: { key: "end", data: !!value, indexes: [indexes[indexes.length - 1]] }, location: { page: "show", override: "change_slide_action_loop" } })
 }
 
 export function setTemplate(templateId: string) {

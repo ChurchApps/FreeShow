@@ -60,6 +60,7 @@ import {
     selectShowByName,
     selectSlideByIndex,
     selectSlideByName,
+    setNextSlideTimer,
     setShowAPI,
     setTemplate,
     startPlaylistByName,
@@ -106,6 +107,7 @@ type API_id = { id: string }
 export type API_id_optional = { id?: string }
 type API_index = { index: number }
 type API_strval = { value: string }
+type API_numval = { value: number }
 type API_volume = { volume?: number } // no values will mute/unmute
 export type API_id_index = { id: string; index: number }
 export type API_slide = { showId?: string | "active"; slideId?: string }
@@ -208,6 +210,7 @@ export const API_ACTIONS = {
     rearrange_groups: (data: API_rearrange) => rearrangeGroups(data),
     add_group: (data: API_group) => addGroup(data),
     set_template: (data: API_id) => setTemplate(data.id),
+    set_next_slide_timer: (data: API_numval) => setNextSlideTimer(data.value),
     transpose_show_up: (data: API_id) => formatText(transposeText(getPlainEditorText(data.id), 1), data.id),
     transpose_show_down: (data: API_id) => formatText(transposeText(getPlainEditorText(data.id), -1), data.id),
 

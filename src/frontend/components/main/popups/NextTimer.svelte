@@ -49,7 +49,11 @@
             return
         }
 
+        // apiHelper.ts > setNextSlideTimer()
+
         history({ id: "SHOW_LAYOUT", newData: { key: "nextTimer", data: value, indexes }, location: { page: "show", override: "change_slide_action_timer" } })
+
+        // GO TO START
 
         if (allSlides) {
             // remove existing go to start if just one applied to any slide
