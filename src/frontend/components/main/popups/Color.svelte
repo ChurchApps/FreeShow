@@ -89,11 +89,15 @@
             })
         },
         show: () => {
-            projects.update((a) => {
-                if (!a[$activeProject || ""]?.shows) return a
+            const projectId = $activeProject || ""
 
-                a[$activeProject || ""].shows[selection.data[0].index].color = value
-                a[$activeProject || ""].modified = Date.now()
+            projects.update((a) => {
+                selection.data.forEach(({ index }) => {
+                    if (!a[projectId]?.shows?.[index]) return
+                    a[projectId].shows[index].color = value
+                })
+
+                a[projectId].modified = Date.now()
                 return a
             })
         }

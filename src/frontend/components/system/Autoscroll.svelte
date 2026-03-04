@@ -14,14 +14,17 @@
         instantScroll = true
         if (skipSmoothTimeout) clearTimeout(skipSmoothTimeout)
         skipSmoothTimeout = setTimeout(() => (instantScroll = false), smoothTimeout)
-    }
 
-    skipSmooth()
-    $: if (shouldSkipSmooth) skipSmooth()
+        if (offset === 0) scroll(0)
+    }
 
     let t: any = null
     let st: any = null
     $: if (offset >= 0) scroll(0)
+
+    skipSmooth()
+    $: if (shouldSkipSmooth) skipSmooth()
+
     function scroll(index) {
         if (t !== null || disabled) return
 
