@@ -305,6 +305,7 @@ export const mainResponses: MainResponses = {
 
         const replaceIds: { [key: string]: string } = {}
         const allShows = keysToID(get(shows))
+        const providerLocalAlways = get(contentProviderData)[data.providerId]?.localAlways ?? false
 
         // CREATE SHOWS
         const tempShows: { id: string; show: Show }[] = []
@@ -318,15 +319,25 @@ export const mainResponses: MainResponses = {
             const linkedShow = linkKey && allShows.find(({ quickAccess }) => quickAccess?.[linkKey] === id)
             if (linkedShow) {
                 replaceIds[id] = linkedShow.id
+                if (providerLocalAlways) continue
+                Object.values<Slide>(show.slides).forEach((slide) => {
+                    if (slide.globalGroup || !slide.group) return
+
+                    const globalGroup = getGlobalGroup(slide.group)
+                    if (globalGroup) slide.globalGroup = globalGroup
+                })
+
+                const origin = data.providerId === "planningcenter" ? "pco" : data.providerId
+                tempShows.push({ id: linkedShow.id, show: { ...show, origin, name: checkName(show.name, linkedShow.id), quickAccess: { ...(linkedShow.quickAccess || {}), [linkKey]: id } } })
                 continue
             }
 
             // find existing show with same name and ask to replace
             const providerName = data.providerId === "planningcenter" ? "Planning Center" : data.providerId === "churchApps" ? "ChurchApps" : "the cloud"
-            const existingShow = allShows.find(({ name }) => name.toLowerCase() === show.name.toLowerCase())
+            const existingShow = allShows.find(({ id: existingId, name }) => existingId !== id && name.toLowerCase() === show.name.toLowerCase())
             // const existingShowHasContent = existingShow && (await loadShows([existingShow.id])) && getSlidesText(get(showsCache)[existingShow.id].slides)
             if (existingShow) {
-                const useLocal = get(contentProviderData)[data.providerId]?.localAlways ?? (await confirmCustom(`There is an existing show with the same name: ${existingShow.name}.<br><br>Would you like to use the local version instead of the one from ${providerName}?`))
+                const useLocal = providerLocalAlways || (await confirmCustom(`There is an existing show with the same name: ${existingShow.name}.<br><br>Would you like to use the local version instead of the one from ${providerName}?`))
                 if (useLocal) {
                     replaceIds[id] = existingShow.id
 
@@ -341,8 +352,7 @@ export const mainResponses: MainResponses = {
                 }
             }
 
-            // don't add/update if already existing (to not mess up any set styles)
-            if (get(shows)[id]) continue
+            if (providerLocalAlways && get(shows)[id]) continue
 
             // replace group names with existing global groups
             Object.values<Slide>(show.slides).forEach((slide) => {
