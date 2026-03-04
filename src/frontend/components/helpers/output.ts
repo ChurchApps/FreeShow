@@ -1083,10 +1083,12 @@ function replaceScriptureValues(items: Item[], templateItems: Item[], customDyna
                         const newTexts: { value: string; style: string; sourceDynamicKey?: string; customType?: string }[] = []
                         let insertAtPos = -1
 
-                        // remove empty values
-                        line.text = (line.text || []).filter((text) => text.value?.trim())
+                        // remove empty values (if {scripture_text})
+                        if (line.text?.reduce((value, text) => (value += text.value), "")?.includes("_text}")) {
+                            line.text = (line.text || []).filter((text) => text.value?.trim())
+                        }
 
-                        line.text.forEach((text, i) => {
+                        line.text?.forEach((text, i) => {
                             if (text.value?.includes(`{${key}}`)) {
                                 insertAtPos = i
                                 text.value = "" // remove original text
