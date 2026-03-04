@@ -1,6 +1,7 @@
 <script lang="ts">
-    import { activePage, activeStyle, outputs, settingsTab, styles, toggleOutputEnabled } from "../../../stores"
+    import { activePage, activeStyle, audioChannelsData, outputs, settingsTab, styles, toggleOutputEnabled } from "../../../stores"
     import { translateText } from "../../../utils/language"
+    import { openDrawer } from "../../edit/scripts/edit"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { clone, keysToID, sortByName, sortObject } from "../../helpers/array"
@@ -20,6 +21,11 @@
     function toggleFullscreen(e: any) {
         // open output style settings
         if (e.target.closest(".icons")) {
+            if (e.target.closest(".muted")) {
+                openDrawer("audio")
+                return
+            }
+
             const outputId = e.target.closest(".outputPreview")?.id
             const output = $outputs[outputId]
             activeStyle.set(output.style || "")
@@ -111,13 +117,15 @@ aria-label={fullscreen ? "Exit fullscreen preview" : "Toggle fullscreen preview"
     {#each outs as output}
         {@const style = $styles[output.style || ""] || {}}
         {@const layers = Array.isArray(style.layers) ? style.layers : clone(defaultLayers)}
+        {@const isMuted = $audioChannelsData[output.id]?.isMuted}
 
         <div id={output.id} class="outputPreview output_button context #output_preview" style={fullscreen ? (fullscreenId === output.id ? "display: contents;" : "opacity: 0;position: absolute;") : outs.length > 1 ? `border: 2px solid ${output?.color};width: 50%;` : "display: contents;"}>
             <PreviewOutput outputId={output.id} {disableTransitions} disabled={outs.length > 1 && !fullscreen && !output?.active} {fullscreen} />
 
             <!-- icons -->
-            {#if !fullscreen && layers.length < 3}
+            {#if !fullscreen && (layers.length < 3 || isMuted)}
                 <div class="icons">
+                    <!-- active layers -->
                     {#if !layers.includes("background")}
                         <div class="icon" data-title={translateText("<b>output.disabled_layers:</b> preview.background")}>
                             <Icon id="media_off" size={0.8} white />
@@ -131,6 +139,13 @@ aria-label={fullscreen ? "Exit fullscreen preview" : "Toggle fullscreen preview"
                     {#if !layers.includes("overlays")}
                         <div class="icon" data-title={translateText("<b>output.disabled_layers:</b> preview.overlays")}>
                             <Icon id="overlays_off" size={0.8} white />
+                        </div>
+                    {/if}
+
+                    <!-- muted -->
+                    {#if isMuted}
+                        <div class="icon muted" data-title={translateText("output.mute")}>
+                            <Icon id="muted" size={0.8} white />
                         </div>
                     {/if}
                 </div>

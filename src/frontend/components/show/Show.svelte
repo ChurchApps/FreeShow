@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activeProject, activeShow, outLocked, projects, resized, showsCache, special } from "../../stores"
+    import { activeProject, activeShow, outLocked, projects, resized, showsCache, special, templateApplied } from "../../stores"
     import { DEFAULT_WIDTH } from "../../utils/common"
     import Capture from "../drawer/live/Capture.svelte"
     import NdiStream from "../drawer/live/NDIStream.svelte"
@@ -32,7 +32,7 @@
 </script>
 
 <div class="double">
-    <div id="showArea" class="main">
+    <div id="showArea" class="main" class:highlight={$templateApplied}>
         {#if show}
             {#if show.type === "video" || show.type === "image" || show.type === "player"}
                 <MediaPreview />
@@ -130,5 +130,10 @@
         justify-content: center;
 
         overflow: auto;
+    }
+
+    .main.highlight {
+        transition: border 0.1s ease;
+        border: 2px solid var(--secondary);
     }
 </style>
