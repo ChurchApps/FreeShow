@@ -196,7 +196,7 @@ export async function getMedia(path: string, size: number = mediaSize.drawerSize
     if (!located) return finish()
 
     const newPath = located.path
-    if (!located.hasChanged) addToMediaFolder(path)
+    if (!located.hasChanged) addToMediaFolder(newPath)
 
     if (!isMainWindow()) {
         const thumbnail = getThumbnailPath(newPath, size)
