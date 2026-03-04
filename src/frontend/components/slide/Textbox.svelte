@@ -473,7 +473,7 @@
 
             // get scripture verse ratio
             const verseItemText = allText.filter((a) => a.customType?.includes("disableTemplate")) || []
-            const verseItemSize = Number(getStyles(verseItemText[0]?.style, true)?.[" font-size"] || "") || 0
+            const verseItemSize = Number(getStyles(verseItemText[0]?.style, true)?.["font-size"] || "") || 0
             customTypeRatio = verseItemSize / 100 || 1
 
             defaultFontSize = itemFontSize
