@@ -160,9 +160,25 @@ export async function getActiveScripturesContent(selectedVerses: (number | strin
                     return id >= minVerseNumber && id <= maxVerseNumber
                 })
 
+                const offsetId = `${id}-${active?.book}-${active?.chapters[0]}`
+                const offsets = selectedScriptureData?.collection?.offsets || {}
+                const offset = offsets[offsetId] || 0
+
                 const splitLongVerses = get(scriptureSettings).splitLongVerses
-                const expandedSelectedVerses: (number | string)[][] = selectedVerses!.map((chapterVs) => [...chapterVs])
-                const allVersesText: { [key: string]: string }[] = []
+                const expandedSelectedVerses: (number | string)[][] = clone(selectedVerses)!.map((chapterVs) => {
+                    if (!offset) return [...chapterVs]
+
+                    const vs = chapterVs.map((v) => {
+                        const id = getVerseId(v)
+                        if (isNaN(id)) return v
+                        const newId = id + offset
+                        const subverse = String(v).slice(String(id).length) // preserve subverse suffix (e.g. "_1")
+                        return subverse ? `${newId}${subverse}` : newId
+                    })
+                    return vs
+                })
+
+                let allVersesText: { [key: string]: string }[] = []
                 selected.forEach((verses, i) => {
                     const versesText: { [key: string]: string } = {}
                     const expansions: Map<string, string[]> = new Map()

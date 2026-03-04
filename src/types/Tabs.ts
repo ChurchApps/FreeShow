@@ -32,6 +32,7 @@ export interface BibleCategories extends Category {
     collection?: {
         versions: string[]
         previewIndex?: number
+        offsets?: { [key: string]: number }
     }
 }
 
