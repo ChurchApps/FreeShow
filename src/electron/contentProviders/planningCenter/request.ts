@@ -26,7 +26,7 @@ type PCORequestData = {
 
 type SongSection = {
     label: string
-    chords: string
+    lyrics: string
     breaks_at?: number
 }
 
@@ -35,15 +35,19 @@ function isLikelyChordLine(line: string): boolean {
     
     const trimmed = line.trim()
     
+    // Pattern to detect musical chords: A-G followed optionally by modifiers
+    // Examples: C, F#m, Dm7, Cmaj7, Bb, etc.
     const chordPattern = /^[A-G][#b]?(?:m|maj|min|add|sus|aug|dim)?[\d]*(?:\s+[A-G][#b]?(?:m|maj|min|add|sus|aug|dim)?[\d]*)*$/
     
     if (chordPattern.test(trimmed)) {
         return true
     }
     
+    // Count the number of chord symbols
     const chordSymbols = (trimmed.match(/[A-G][#b]?/g) || []).length
     const totalChars = trimmed.replace(/\s/g, '').length
     
+    // If high proportion of chord symbols, likely a chord line
     if (chordSymbols > 0 && (chordSymbols / (totalChars / 2)) > 0.5) {
         return true
     }
@@ -61,13 +65,15 @@ function parseChordChartIntoSections(chordChart: string): SongSection[] {
         const line = lines[i]
         const trimmed = line.trim()
 
+        // Detect section headers (VERSE, CHORUS, BRIDGE, etc.)
         const sectionMatch = trimmed.match(/^(VERSO|CORO|PUENTE|INTRO|OUTRO|PRE|ESTRIBILLO|BRIDGE|CHORUS|VERSE|BREAK|INSTRUMENTAL)(\s*\d+)?/i)
         if (sectionMatch) {
+            // Save previous section if exists
             if (currentSectionLabel && currentSectionContent.length) {
                 const content = currentSectionContent.join("\n").trim()
                 sections.push({
                     label: currentSectionLabel,
-                    chords: content
+                    lyrics: content
                 })
             }
             currentSectionLabel = sectionMatch[0]
@@ -75,18 +81,21 @@ function parseChordChartIntoSections(chordChart: string): SongSection[] {
             continue
         }
 
+        // Skip chord lines
         if (isLikelyChordLine(line)) {
             continue
         }
 
+        // Keep lyric lines (even if empty)
         currentSectionContent.push(line)
     }
 
+    // Save last section
     if (currentSectionLabel && currentSectionContent.length) {
         const content = currentSectionContent.join("\n").trim()
         sections.push({
             label: currentSectionLabel,
-            chords: content
+            lyrics: content
         })
     }
 
@@ -140,6 +149,7 @@ export async function pcoRequest(data: PCORequestData, attempt = 0): Promise<any
         return null
     }
 
+    // Build the API path with query parameters if provided
     let apiPath = `/${data.scope || "services"}/v${PCO_API_version}/${data.endpoint}`
     if (data.params) {
         const queryParams = new URLSearchParams(data.params).toString()
@@ -151,6 +161,8 @@ export async function pcoRequest(data: PCORequestData, attempt = 0): Promise<any
     return new Promise((resolve) => {
         httpsRequest(PCO_API_URL, apiPath, "GET", headers, {}, (err, result) => {
             if (err) {
+                // Handle rate limiting
+                // https://developer.planning.center/docs/#/overview/rate-limiting
                 if (err.statusCode === 429) {
                     const retryAfter = parseInt(err?.headers?.["retry-after"], 10) || 2
                     rateLimit(retryAfter)
@@ -164,6 +176,7 @@ export async function pcoRequest(data: PCORequestData, attempt = 0): Promise<any
 
             let resultData = result.data
 
+            // Convert to array for consistent handling
             if (!Array.isArray(resultData)) resultData = [resultData]
 
             resolve(resultData)
@@ -344,9 +357,11 @@ async function processSongItem(item: ProjectItem, itemsEndpoint: string) {
 
     let sections: SongSection[] = []
 
+    // Use chord_chart as primary source since it contains repeat markers (//)
     if (song.chord_chart) {
         sections = parseChordChartIntoSections(song.chord_chart)
     } else {
+        // Fallback to sections endpoint if no chord_chart
         sections =
             (
                 await pcoRequest({
@@ -356,12 +371,13 @@ async function processSongItem(item: ProjectItem, itemsEndpoint: string) {
             )[0]?.attributes.sections || []
 
         if (!sections.length) {
-            sections = sequence.map((id: any) => ({ label: id, chords: "" }))
+            sections = sequence.map((id: any) => ({ label: id, lyrics: "" }))
         } else {
             sections = sections.map(normalizeSongSection)
         }
     }
 
+    // Order sections according to the arrangement sequence
     if (sequence.length && sections.length) {
         sections = getOrderedSections(sections, sequence)
     }
@@ -376,6 +392,7 @@ async function processSongItem(item: ProjectItem, itemsEndpoint: string) {
 }
 
 function getOrderedSections(sections: SongSection[], sequence: any[]): SongSection[] {
+    // Reorder sections according to the arrangement sequence
     const sectionMap: { [key: string]: SongSection } = {}
     sections.forEach((section) => {
         sectionMap[section.label] = section
@@ -394,11 +411,12 @@ function getOrderedSections(sections: SongSection[], sequence: any[]): SongSecti
 function normalizeSongSection(section: SongSection): SongSection {
     return {
         ...section,
-        chords: normalizeLineBreaks(section.chords)
+        lyrics: normalizeLineBreaks(section.lyrics)
     }
 }
 
 function normalizeLineBreaks(text: string): string {
+    // Normalize different line break formats to consistent \n
     return text.replace(/\n\r/g, "\n").replace(/\r\n/g, "\n").replace(/\r/g, "\n")
 }
 
@@ -474,10 +492,12 @@ function getShow(SONG_DATA: any, SONG: any, SECTIONS: any[]) {
     const slides: { [key: string]: Slide } = {}
     const layoutSlides: SlideData[] = []
     SECTIONS.forEach((section) => {
-        const hasRepetition = section.chords.includes("//")
+        // Check if section has repeat markers (//)
+        const hasRepetition = section.lyrics.includes("//")
         const repetitionCount = hasRepetition ? 2 : 1
         
-        const cleanedChords = section.chords.replace(/\/\//g, "").trim()
+        // Remove repeat markers from display
+        const cleanedLyrics = section.lyrics.replace(/\/\//g, "").trim()
 
         for (let rep = 0; rep < repetitionCount; rep++) {
             const slideId = uid()
@@ -485,7 +505,7 @@ function getShow(SONG_DATA: any, SONG: any, SECTIONS: any[]) {
             const items = [
                 {
                     style: itemStyle,
-                    lines: cleanedChords.split("\n").map((a: string) => ({ align: "", text: [{ style: "", value: a }] }))
+                    lines: cleanedLyrics.split("\n").map((a: string) => ({ align: "", text: [{ style: "", value: a }] }))
                 }
             ]
 
@@ -548,6 +568,7 @@ async function getMediaStreamUrl(endpoint: string): Promise<string> {
     return new Promise((resolve) => {
         httpsRequest(PCO_API_URL, apiPath, "POST", headers, {}, (err, result) => {
             if (err) {
+                console.error("Could not get media stream URL:", err)
                 return resolve("")
             }
 
