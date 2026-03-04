@@ -109,7 +109,7 @@
         if (!bgPath.startsWith("http")) {
             getMedia(bgPath, mediaSize.drawerSize)
             const refs = _show().layouts().ref()
-            if (refs.some((a) => a.length > 28)) getMedia(bgPath, mediaSize.small)
+            if ($special.optimizedMode || refs.some((a) => a.length > 28)) getMedia(bgPath, mediaSize.small)
         }
 
         const media = await getMedia(bgPath, mediaSize.slideSize)
