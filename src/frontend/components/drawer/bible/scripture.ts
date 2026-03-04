@@ -725,6 +725,7 @@ export async function getScriptureSlidesNew(data: any, onlyOne = false, disableR
                     // custom Jesus red to JSON format: !{}!
                     text = text.replace(/<span class="wj" ?>(.*?)<\/span>/g, "!{$1}!")
                     text = text.replace(/<red ?>(.*?)<\/red>/g, "!{$1}!")
+                    text = text.replace(/<span style="color:red;" ?>(.*?)<\/span>/g, "!{$1}!")
 
                     if (verseNumbers) {
                         const { id, subverse, endNumber } = getVerseIdParts(v)
