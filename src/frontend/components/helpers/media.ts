@@ -175,45 +175,46 @@ export async function getMedia(path: string, size: number = mediaSize.drawerSize
     }
     currentlyGetting.push(mediaId)
 
-    if (path.startsWith("http")) {
-        const localPath = (await downloadOnlineMedia(path)) || path
-        const thumbnail = mediaData?.contentFile?.thumbnail || localPath
+    try {
+        if (path.startsWith("http")) {
+            const localPath = (await downloadOnlineMedia(path)) || path
+            const thumbnail = mediaData?.contentFile?.thumbnail || localPath
 
-        replacedPaths.set(mediaId, { path: localPath, altPath: path, thumbnail })
-        return finish(localPath, thumbnail, path)
-    }
+            return finish(localPath, thumbnail, path)
+        }
 
-    if (!isLocalFile(path) || path.includes("freeshow-cache") || path.includes("media-cache")) {
-        return finish(path, path)
-    }
+        if (!isLocalFile(path) || path.includes("freeshow-cache") || path.includes("media-cache")) {
+            return finish(path, path)
+        }
 
-    // lessons
-    // let thumbnailPath = getThumbnailPath(path, data.size)
-    // // cache after it's downloaded
-    // setTimeout(() => loadThumbnail(path, data.size), 1000)
+        // lessons
+        // let thumbnailPath = getThumbnailPath(path, data.size)
+        // // cache after it's downloaded
+        // setTimeout(() => loadThumbnail(path, data.size), 1000)
 
-    const located = await locateMediaFile(path)
-    if (!located) return finish()
+        const located = await locateMediaFile(path)
+        if (!located) return finish()
 
-    const newPath = located.path
-    if (!located.hasChanged) addToMediaFolder(newPath)
+        const newPath = located.path
+        if (!located.hasChanged) addToMediaFolder(newPath)
 
-    if (!isMainWindow()) {
-        const thumbnail = getThumbnailPath(newPath, size)
+        if (!isMainWindow()) {
+            const thumbnail = getThumbnailPath(newPath, size)
+            return finish(newPath, thumbnail)
+        }
 
-        replacedPaths.set(mediaId, { path: newPath, thumbnail })
+        // generate thumbnails only in main window
+        const thumbnail = (await loadThumbnail(newPath, size)) || newPath
         return finish(newPath, thumbnail)
+    } finally {
+        const index = currentlyGetting.indexOf(mediaId)
+        if (index > -1) currentlyGetting.splice(index, 1)
     }
-
-    // generate thumbnails only in main window
-    const thumbnail = (await loadThumbnail(newPath, size)) || newPath
-
-    replacedPaths.set(mediaId, { path: newPath, thumbnail })
-    return finish(newPath, thumbnail)
 
     function finish(path?: string, thumbnail?: string, altPath?: string) {
-        currentlyGetting.splice(currentlyGetting.indexOf(mediaId), 1)
         if (!path || !thumbnail) return null
+        if (altPath) replacedPaths.set(mediaId, { path, altPath, thumbnail })
+        else replacedPaths.set(mediaId, { path, thumbnail })
         if (altPath) return { path, altPath, thumbnail, data: mediaData }
         return { path, thumbnail, data: mediaData }
     }
