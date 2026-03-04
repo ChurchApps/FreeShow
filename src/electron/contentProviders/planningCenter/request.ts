@@ -66,17 +66,20 @@ function parseChordChartIntoSections(chordChart: string): SongSection[] {
         const trimmed = line.trim()
 
         // Detect section headers (VERSE, CHORUS, BRIDGE, etc.)
-        const sectionMatch = trimmed.match(/^(VERSO|CORO|PUENTE|INTRO|OUTRO|PRE|ESTRIBILLO|BRIDGE|CHORUS|VERSE|BREAK|INSTRUMENTAL)(\s*\d+)?/i)
+        // Order matters: longer patterns first (PRECORO before PRE, INSTRUMENTAL before INTRO)
+        const sectionMatch = trimmed.match(/^(PRECORO|ESTRIBILLO|INSTRUMENTAL|PUENTE|VERSE|CHORUS|VERSO|CORO|BRIDGE|INTRO|OUTRO|FINAL|PRE|BREAK|TAG|VAMP|INTERLUDE|BREAKDOWN|TURNAROUND|REFRAIN)(\s*\d+)?(?:\s|$)/i)
         if (sectionMatch) {
-            // Save previous section if exists
-            if (currentSectionLabel && currentSectionContent.length) {
-                const content = currentSectionContent.join("\n").trim()
-                sections.push({
-                    label: currentSectionLabel,
-                    lyrics: content
-                })
+            // Save previous section if exists (including sections with only chords)
+            if (currentSectionLabel) {
+                const content = currentSectionContent.map(l => l.trim()).filter(l => l).join("\n").trim()
+                if (content) {
+                    sections.push({
+                        label: currentSectionLabel,
+                        lyrics: content
+                    })
+                }
             }
-            currentSectionLabel = sectionMatch[0]
+            currentSectionLabel = sectionMatch[0].trim()
             currentSectionContent = []
             continue
         }
@@ -87,16 +90,20 @@ function parseChordChartIntoSections(chordChart: string): SongSection[] {
         }
 
         // Keep lyric lines (even if empty)
-        currentSectionContent.push(line)
+        if (trimmed) {
+            currentSectionContent.push(line)
+        }
     }
 
     // Save last section
-    if (currentSectionLabel && currentSectionContent.length) {
-        const content = currentSectionContent.join("\n").trim()
-        sections.push({
-            label: currentSectionLabel,
-            lyrics: content
-        })
+    if (currentSectionLabel) {
+        const content = currentSectionContent.map(l => l.trim()).filter(l => l).join("\n").trim()
+        if (content) {
+            sections.push({
+                label: currentSectionLabel,
+                lyrics: content
+            })
+        }
     }
 
     return sections
@@ -382,6 +389,11 @@ async function processSongItem(item: ProjectItem, itemsEndpoint: string) {
         sections = getOrderedSections(sections, sequence)
     }
 
+    // Debug log if we have a sequence but no sections after ordering
+    if (sequence.length && !sections.length) {
+        console.warn(`Planning Center: Song "${songData.attributes?.title}" has sequence but no matching sections. Sequence: ${sequence.join(", ")}`)
+    }
+
     const show = getShow(songData, song, sections)
     const showId = `pcosong_${songData.id}`
 
@@ -393,17 +405,69 @@ async function processSongItem(item: ProjectItem, itemsEndpoint: string) {
 
 function getOrderedSections(sections: SongSection[], sequence: any[]): SongSection[] {
     // Reorder sections according to the arrangement sequence
+    // Create a comprehensive section map with multiple keys for flexible matching
     const sectionMap: { [key: string]: SongSection } = {}
+    
     sections.forEach((section) => {
+        const lowerLabel = section.label.toLowerCase()
+        const normalizedLabel = lowerLabel.replace(/\s+/g, " ").trim()
+        const nospaceLabel = normalizedLabel.replace(/\s+/g, "")
+        
+        // Store by all possible variations
         sectionMap[section.label] = section
+        sectionMap[lowerLabel] = section
+        sectionMap[normalizedLabel] = section
+        sectionMap[nospaceLabel] = section
     })
 
     const orderedSections: SongSection[] = []
+    const notFoundLabels: Set<string> = new Set()
+    
     sequence.forEach((label) => {
-        if (sectionMap[label]) {
-            orderedSections.push(sectionMap[label])
+        const normalizedSeqLabel = String(label).toLowerCase().replace(/\s+/g, " ").trim()
+        const nospaceSeqLabel = normalizedSeqLabel.replace(/\s+/g, "")
+        
+        // Try to find matching section with multiple strategies
+        let foundSection = sectionMap[label] ||
+                          sectionMap[normalizedSeqLabel] ||
+                          sectionMap[nospaceSeqLabel]
+        
+        // Try flexible matching for variations like "PRECORO 2" vs "PRECORO2"
+        if (!foundSection) {
+            const matchedKey = Object.keys(sectionMap).find(key => {
+                const keyNormalized = key.toLowerCase().replace(/\s+/g, "")
+                return keyNormalized === nospaceSeqLabel
+            })
+            if (matchedKey) {
+                foundSection = sectionMap[matchedKey]
+            }
+        }
+        
+        // Try partial match (useful for variations)
+        if (!foundSection) {
+            const matchedKey = Object.keys(sectionMap).find(key => {
+                const keyLower = key.toLowerCase()
+                const labelLower = label.toLowerCase()
+                return keyLower.startsWith(labelLower) || 
+                       labelLower.startsWith(keyLower)
+            })
+            if (matchedKey) {
+                foundSection = sectionMap[matchedKey]
+            }
+        }
+
+        if (foundSection) {
+            // Allow same section to appear multiple times in sequence
+            orderedSections.push(foundSection)
+        } else {
+            notFoundLabels.add(label)
         }
     })
+
+    if (notFoundLabels.size > 0) {
+        const availableSections = Array.from(new Set(sections.map(s => s.label))).join(", ")
+        console.warn(`Planning Center: Could not find sections for sequence labels: ${Array.from(notFoundLabels).join(", ")}. Available sections: ${availableSections}`)
+    }
 
     return orderedSections
 }
@@ -493,11 +557,14 @@ function getShow(SONG_DATA: any, SONG: any, SECTIONS: any[]) {
     const layoutSlides: SlideData[] = []
     SECTIONS.forEach((section) => {
         // Check if section has repeat markers (//)
-        const hasRepetition = section.lyrics.includes("//")
+        const hasRepetition = section.lyrics?.includes("//") || false
         const repetitionCount = hasRepetition ? 2 : 1
         
         // Remove repeat markers from display
-        const cleanedLyrics = section.lyrics.replace(/\/\//g, "").trim()
+        const cleanedLyrics = (section.lyrics || "").replace(/\/\//g, "").trim()
+
+        // Skip sections with no lyrics content
+        if (!cleanedLyrics) return
 
         for (let rep = 0; rep < repetitionCount; rep++) {
             const slideId = uid()
