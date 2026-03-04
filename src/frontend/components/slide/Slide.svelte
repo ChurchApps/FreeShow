@@ -3,7 +3,7 @@
     import type { MediaStyle } from "../../../types/Main"
     import type { Item, Media, Show, Slide, SlideData } from "../../../types/Show"
     import { removeTagsAndContent } from "../../show/slides"
-    import { activeEdit, activePage, activeTimers, activeTriggerFunction, effects, focusMode, fullColors, groups, media, outputs, overlays, refreshListBoxes, refreshSlideThumbnails, slidesOptions, slideTimers, special, styles, textEditActive } from "../../stores"
+    import { activeEdit, activePage, activeTimers, effects, focusMode, fullColors, groups, media, outputs, overlays, refreshListBoxes, refreshSlideThumbnails, slideNotesActive, slidesOptions, slideTimers, special, styles, textEditActive } from "../../stores"
     import { wait } from "../../utils/common"
     import { translateText } from "../../utils/language"
     import { getAccess } from "../../utils/profile"
@@ -17,13 +17,13 @@
     import { getMedia, getMediaCached, getMediaStyle, mediaSize } from "../helpers/media"
     import { allOutputsHasStyleTemplate, getActiveOutputs, getFirstActiveOutput, getResolution, getSlideFilter, setTemplateStyle } from "../helpers/output"
     import { getGroupName } from "../helpers/show"
+    import { _show } from "../helpers/shows"
     import Effect from "../output/effects/Effect.svelte"
     import SelectElem from "../system/SelectElem.svelte"
     import Actions from "./Actions.svelte"
     import Icons from "./Icons.svelte"
     import Textbox from "./Textbox.svelte"
     import Zoomed from "./Zoomed.svelte"
-    import { _show } from "../helpers/shows"
 
     export let showId: string
     export let slide: Slide
@@ -109,7 +109,7 @@
         if (!bgPath.startsWith("http")) {
             getMedia(bgPath, mediaSize.drawerSize)
             const refs = _show().layouts().ref()
-            if (refs.some((a) => a.length > 28)) getMedia(bgPath, mediaSize.small)
+            if ($special.optimizedMode || refs.some((a) => a.length > 28)) getMedia(bgPath, mediaSize.small)
         }
 
         const media = await getMedia(bgPath, mediaSize.slideSize)
@@ -195,7 +195,7 @@
 
     function openNotes() {
         if ($textEditActive) textEditActive.set(false)
-        activeTriggerFunction.set("slide_notes")
+        slideNotesActive.set(true)
 
         activeEdit.set({ slide: index, items: [], showId })
         activePage.set("edit")

@@ -85,6 +85,8 @@
     // let previousSearchValue = ""
     let resetInput = false
     function search(value = "") {
+        if (value.length && !showAll) toggleShowAll()
+
         searchValue = formatSearch(value.replaceAll(" ", "_"))
 
         if (searchValue.length < 2) {

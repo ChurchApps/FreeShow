@@ -2,7 +2,7 @@ import { get, Unsubscriber } from "svelte/store"
 import { uid } from "uid"
 import type { TimelineAction } from "../../../types/Show"
 import { activeProject, activeShow, projects, selected, shows, showsCache } from "../../stores"
-import { waitUntilValueIsDefined } from "../../utils/common"
+import { hasNewerUpdate, waitUntilValueIsDefined } from "../../utils/common"
 import { clone } from "../helpers/array"
 import { _show } from "../helpers/shows"
 import { getExtension, getMediaType } from "../helpers/media"
@@ -79,9 +79,13 @@ export class TimelineActions {
     }
 
     private hasChanged = false
-    private setChanged() {
+    private async setChanged() {
         this.hasChanged = true
         this.callback(this.actions)
+
+        // auto save from time to time
+        if (await hasNewerUpdate("TIMELINE_CHANGED", 2000)) return
+        this.saveState()
     }
     private saveState() {
         if (!this.hasChanged) return

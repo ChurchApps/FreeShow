@@ -8,7 +8,7 @@
 
 <div class="iconItem" style="display: contents;">
     {#if item.customSvg}
-        <div class="customIcon" class:customColor={item?.style?.includes("color:") && !item?.style?.includes("color:;")}>
+        <div class="customIcon" class:customColor={typeof item?.style === "string" && item.style.includes("color:") && !item.style.includes("color:;")}>
             {@html item.customSvg}
         </div>
     {:else}

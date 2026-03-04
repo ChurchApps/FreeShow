@@ -21,13 +21,92 @@ const PCO_API_version = 2
 type PCORequestData = {
     scope: PCOScopes
     endpoint: string
-    params?: Record<string, string> // Add params type
+    params?: Record<string, string>
 }
 
 type SongSection = {
     label: string
     lyrics: string
     breaks_at?: number
+}
+
+function isLikelyChordLine(line: string): boolean {
+    if (!line.trim()) return false
+    
+    const trimmed = line.trim()
+    
+    // Pattern to detect musical chords: A-G followed optionally by modifiers
+    // Examples: C, F#m, Dm7, Cmaj7, Bb, etc.
+    const chordPattern = /^[A-G][#b]?(?:m|maj|min|add|sus|aug|dim)?[\d]*(?:\s+[A-G][#b]?(?:m|maj|min|add|sus|aug|dim)?[\d]*)*$/
+    
+    if (chordPattern.test(trimmed)) {
+        return true
+    }
+    
+    // Count the number of chord symbols
+    const chordSymbols = (trimmed.match(/[A-G][#b]?/g) || []).length
+    const totalChars = trimmed.replace(/\s/g, '').length
+    
+    // If high proportion of chord symbols, likely a chord line
+    if (chordSymbols > 0 && (chordSymbols / (totalChars / 2)) > 0.5) {
+        return true
+    }
+    
+    return false
+}
+
+function parseChordChartIntoSections(chordChart: string): SongSection[] {
+    const sections: SongSection[] = []
+    const lines = chordChart.split(/\r?\n/)
+    let currentSectionLabel = ""
+    let currentSectionContent: string[] = []
+
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i]
+        const trimmed = line.trim()
+
+        // Detect section headers (VERSE, CHORUS, BRIDGE, etc.)
+        // Order matters: longer patterns first (PRECORO before PRE, INSTRUMENTAL before INTRO)
+        const sectionMatch = trimmed.match(/^(PRECORO|ESTRIBILLO|INSTRUMENTAL|PUENTE|VERSE|CHORUS|VERSO|CORO|BRIDGE|INTRO|OUTRO|FINAL|PRE|BREAK|TAG|VAMP|INTERLUDE|BREAKDOWN|TURNAROUND|REFRAIN)(\s*\d+)?(?:\s|$)/i)
+        if (sectionMatch) {
+            // Save previous section if exists (including sections with only chords)
+            if (currentSectionLabel) {
+                const content = currentSectionContent.map(l => l.trim()).filter(l => l).join("\n").trim()
+                if (content) {
+                    sections.push({
+                        label: currentSectionLabel,
+                        lyrics: content
+                    })
+                }
+            }
+            currentSectionLabel = sectionMatch[0].trim()
+            currentSectionContent = []
+            continue
+        }
+
+        // Skip chord lines
+        if (isLikelyChordLine(line)) {
+            continue
+        }
+
+        // Keep lyric lines (even if empty)
+        if (trimmed) {
+            currentSectionContent.push(line)
+        }
+    }
+
+    // Save last section
+    if (currentSectionLabel) {
+        const content = currentSectionContent.map(l => l.trim()).filter(l => l).join("\n").trim()
+        if (content) {
+            sections.push({
+                label: currentSectionLabel,
+                lyrics: content
+            })
+        }
+    }
+
+    return sections
 }
 
 interface ServiceType {
@@ -77,7 +156,7 @@ export async function pcoRequest(data: PCORequestData, attempt = 0): Promise<any
         return null
     }
 
-    // Build the path with query parameters if they exist
+    // Build the API path with query parameters if provided
     let apiPath = `/${data.scope || "services"}/v${PCO_API_version}/${data.endpoint}`
     if (data.params) {
         const queryParams = new URLSearchParams(data.params).toString()
@@ -89,7 +168,7 @@ export async function pcoRequest(data: PCORequestData, attempt = 0): Promise<any
     return new Promise((resolve) => {
         httpsRequest(PCO_API_URL, apiPath, "GET", headers, {}, (err, result) => {
             if (err) {
-                // handle rate limit
+                // Handle rate limiting
                 // https://developer.planning.center/docs/#/overview/rate-limiting
                 if (err.statusCode === 429) {
                     const retryAfter = parseInt(err?.headers?.["retry-after"], 10) || 2
@@ -97,7 +176,6 @@ export async function pcoRequest(data: PCORequestData, attempt = 0): Promise<any
                     return
                 }
 
-                // console.log(apiPath, err)
                 const message = err.message?.includes("401") ? "Make sure you have created some 'services' in your account!" : err.message
                 sendToMain(ToMain.ALERT, "Could not get data! " + message)
                 return resolve(null)
@@ -105,10 +183,8 @@ export async function pcoRequest(data: PCORequestData, attempt = 0): Promise<any
 
             let resultData = result.data
 
-            // convert to array
+            // Convert to array for consistent handling
             if (!Array.isArray(resultData)) resultData = [resultData]
-
-            // console.debug("PCO Request Result:", apiPath, resultData)
 
             resolve(resultData)
         })
@@ -130,8 +206,6 @@ export async function pcoRequest(data: PCORequestData, attempt = 0): Promise<any
         }
     })
 }
-
-// LOAD SERVICES
 
 const ONE_WEEK_MS = 604800000
 
@@ -207,7 +281,6 @@ async function fetchServicePlans(serviceType: ServiceType) {
         return null
     }
 
-    // Filter for the one week window
     const filteredPlans = servicePlans.filter(({ attributes: a }: any) => {
         if (a.items_count === 0) return false
         const date = new Date(a.sort_date).getTime()
@@ -215,7 +288,6 @@ async function fetchServicePlans(serviceType: ServiceType) {
         return date < today + ONE_WEEK_MS
     })
 
-    // console.debug(`Found ${filteredPlans.length} plans for service type ${serviceType.attributes.name} (${serviceType.id})`)
     return filteredPlans
 }
 
@@ -290,22 +362,36 @@ async function processSongItem(item: ProjectItem, itemsEndpoint: string) {
     const song = songArrangement.attributes
     const sequence = item.custom_arrangement_sequence || song.sequence || []
 
-    let sections: SongSection[] =
-        (
-            await pcoRequest({
-                scope: "services",
-                endpoint: `${arrangementEndpoint}/sections`
-            })
-        )[0]?.attributes.sections || []
+    let sections: SongSection[] = []
 
-    if (!sections.length) {
-        sections = sequence.map((id: any) => ({ label: id, lyrics: "" }))
+    // Use chord_chart as primary source since it contains repeat markers (//)
+    if (song.chord_chart) {
+        sections = parseChordChartIntoSections(song.chord_chart)
     } else {
-        sections = sections.map(normalizeSongSection)
+        // Fallback to sections endpoint if no chord_chart
+        sections =
+            (
+                await pcoRequest({
+                    scope: "services",
+                    endpoint: `${arrangementEndpoint}/sections`
+                })
+            )[0]?.attributes.sections || []
+
+        if (!sections.length) {
+            sections = sequence.map((id: any) => ({ label: id, lyrics: "" }))
+        } else {
+            sections = sections.map(normalizeSongSection)
+        }
     }
 
+    // Order sections according to the arrangement sequence
     if (sequence.length && sections.length) {
         sections = getOrderedSections(sections, sequence)
+    }
+
+    // Debug log if we have a sequence but no sections after ordering
+    if (sequence.length && !sections.length) {
+        console.warn(`Planning Center: Song "${songData.attributes?.title}" has sequence but no matching sections. Sequence: ${sequence.join(", ")}`)
     }
 
     const show = getShow(songData, song, sections)
@@ -318,17 +404,70 @@ async function processSongItem(item: ProjectItem, itemsEndpoint: string) {
 }
 
 function getOrderedSections(sections: SongSection[], sequence: any[]): SongSection[] {
+    // Reorder sections according to the arrangement sequence
+    // Create a comprehensive section map with multiple keys for flexible matching
     const sectionMap: { [key: string]: SongSection } = {}
+    
     sections.forEach((section) => {
+        const lowerLabel = section.label.toLowerCase()
+        const normalizedLabel = lowerLabel.replace(/\s+/g, " ").trim()
+        const nospaceLabel = normalizedLabel.replace(/\s+/g, "")
+        
+        // Store by all possible variations
         sectionMap[section.label] = section
+        sectionMap[lowerLabel] = section
+        sectionMap[normalizedLabel] = section
+        sectionMap[nospaceLabel] = section
     })
 
     const orderedSections: SongSection[] = []
+    const notFoundLabels: Set<string> = new Set()
+    
     sequence.forEach((label) => {
-        if (sectionMap[label]) {
-            orderedSections.push(sectionMap[label])
+        const normalizedSeqLabel = String(label).toLowerCase().replace(/\s+/g, " ").trim()
+        const nospaceSeqLabel = normalizedSeqLabel.replace(/\s+/g, "")
+        
+        // Try to find matching section with multiple strategies
+        let foundSection = sectionMap[label] ||
+                          sectionMap[normalizedSeqLabel] ||
+                          sectionMap[nospaceSeqLabel]
+        
+        // Try flexible matching for variations like "PRECORO 2" vs "PRECORO2"
+        if (!foundSection) {
+            const matchedKey = Object.keys(sectionMap).find(key => {
+                const keyNormalized = key.toLowerCase().replace(/\s+/g, "")
+                return keyNormalized === nospaceSeqLabel
+            })
+            if (matchedKey) {
+                foundSection = sectionMap[matchedKey]
+            }
+        }
+        
+        // Try partial match (useful for variations)
+        if (!foundSection) {
+            const matchedKey = Object.keys(sectionMap).find(key => {
+                const keyLower = key.toLowerCase()
+                const labelLower = label.toLowerCase()
+                return keyLower.startsWith(labelLower) || 
+                       labelLower.startsWith(keyLower)
+            })
+            if (matchedKey) {
+                foundSection = sectionMap[matchedKey]
+            }
+        }
+
+        if (foundSection) {
+            // Allow same section to appear multiple times in sequence
+            orderedSections.push(foundSection)
+        } else {
+            notFoundLabels.add(label)
         }
     })
+
+    if (notFoundLabels.size > 0) {
+        const availableSections = Array.from(new Set(sections.map(s => s.label))).join(", ")
+        console.warn(`Planning Center: Could not find sections for sequence labels: ${Array.from(notFoundLabels).join(", ")}. Available sections: ${availableSections}`)
+    }
 
     return orderedSections
 }
@@ -341,6 +480,7 @@ function normalizeSongSection(section: SongSection): SongSection {
 }
 
 function normalizeLineBreaks(text: string): string {
+    // Normalize different line break formats to consistent \n
     return text.replace(/\n\r/g, "\n").replace(/\r\n/g, "\n").replace(/\r/g, "\n")
 }
 
@@ -416,24 +556,36 @@ function getShow(SONG_DATA: any, SONG: any, SECTIONS: any[]) {
     const slides: { [key: string]: Slide } = {}
     const layoutSlides: SlideData[] = []
     SECTIONS.forEach((section) => {
-        const slideId = uid()
+        // Check if section has repeat markers (//)
+        const hasRepetition = section.lyrics?.includes("//") || false
+        const repetitionCount = hasRepetition ? 2 : 1
+        
+        // Remove repeat markers from display
+        const cleanedLyrics = (section.lyrics || "").replace(/\/\//g, "").trim()
 
-        const items = [
-            {
-                style: itemStyle,
-                lines: section.lyrics.split("\n").map((a: string) => ({ align: "", text: [{ style: "", value: a }] }))
+        // Skip sections with no lyrics content
+        if (!cleanedLyrics) return
+
+        for (let rep = 0; rep < repetitionCount; rep++) {
+            const slideId = uid()
+
+            const items = [
+                {
+                    style: itemStyle,
+                    lines: cleanedLyrics.split("\n").map((a: string) => ({ align: "", text: [{ style: "", value: a }] }))
+                }
+            ]
+
+            slides[slideId] = {
+                group: section.label,
+                globalGroup: section.label.toLowerCase(),
+                color: null,
+                settings: {},
+                notes: "",
+                items
             }
-        ]
-
-        slides[slideId] = {
-            group: section.label,
-            globalGroup: section.label.toLowerCase(),
-            color: null,
-            settings: {},
-            notes: "",
-            items
+            layoutSlides.push({ id: slideId })
         }
-        layoutSlides.push({ id: slideId })
     })
 
     const title = SONG_DATA.attributes.title || ""

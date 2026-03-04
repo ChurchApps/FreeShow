@@ -117,7 +117,7 @@
             if (!existingAction) return
 
             // remove new action if already existing
-            if (id !== existingAction.id && mode === "slide") removeEmptyAction(id)
+            if (id !== existingAction.id && mode === "slide") setTimeout(() => removeEmptyAction(id), 50)
 
             id = existingAction.id
             action = existingAction

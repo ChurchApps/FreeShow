@@ -599,71 +599,55 @@ export function getCustomShapePath(path: any[], size: { w: string; h: string }):
     const customShape = {
         // MoveTo
         "a:moveTo": (a) => {
-            for (const move of a) {
-                const pt = move[":@"]
-                if (pt) {
-                    const { x, y } = norm(pt.x, pt.y)
-                    return `M ${x} ${y} `
-                }
-            }
-            return ""
+            const pt = a[0]?.[":@"]
+            if (!pt) return ""
+
+            const { x, y } = norm(pt.x, pt.y)
+            return `M ${x} ${y} `
         },
         // LineTo
         "a:lnTo": (a) => {
-            for (const ln of a) {
-                const pt = ln[":@"]
-                if (pt) {
-                    const { x, y } = norm(pt.x, pt.y)
-                    return `L ${x} ${y} `
-                }
-            }
-            return ""
+            const pt = a[0]?.[":@"]
+            if (!pt) return ""
+
+            const { x, y } = norm(pt.x, pt.y)
+            return `L ${x} ${y} `
         },
         // ArcTo (approximate as line for now)
         "a:arcTo": (a) => {
-            for (const arc of a) {
-                const pts = arc["a:pt"] || []
-                if (pts.length > 1) {
-                    // const attr1 = pts[0]?.[":@"]
-                    const attr2 = pts[1]?.[":@"]
-                    if (!attr2) continue
-                    const { x, y } = norm(attr2.x, attr2.y)
-                    return `L ${x} ${y} `
-                }
-            }
-            return ""
+            const pts = a.map((arc) => arc[":@"])
+            if (!pts?.[1]) return ""
+
+            // const attr1 = pts[0]
+            const attr2 = pts[1]
+            const { x, y } = norm(attr2.x, attr2.y)
+            return `L ${x} ${y} `
         },
         // QuadBezierTo
         "a:quadBezTo": (a) => {
-            for (const quad of a) {
-                const pts = quad["a:pt"] || []
-                if (pts.length === 2) {
-                    const attr1 = pts[0]?.[":@"]
-                    const attr2 = pts[1]?.[":@"]
-                    if (!attr1 || !attr2) continue
-                    const c = norm(attr1.x, attr1.y)
-                    const p = norm(attr2.x, attr2.y)
-                    return `Q ${c.x} ${c.y}, ${p.x} ${p.y} `
-                }
-            }
-            return ""
+            const pts = a.map((quad) => quad[":@"])
+            if (pts.length < 2) return ""
+
+            const attr1 = pts[0]
+            const attr2 = pts[1]
+
+            const c = norm(attr1.x, attr1.y)
+            const p = norm(attr2.x, attr2.y)
+            return `Q ${c.x} ${c.y}, ${p.x} ${p.y} `
         },
         // CubicBezierTo
         "a:cubicBezTo": (a) => {
-            for (const cubic of a) {
-                const pts = cubic["a:pt"] || []
-                if (pts.length === 3) {
-                    const attr1 = pts[0]?.[":@"]
-                    const attr2 = pts[1]?.[":@"]
-                    const attr3 = pts[2]?.[":@"]
-                    if (!attr1 || !attr2 || !attr3) continue
-                    const c1 = norm(attr1.x, attr1.y)
-                    const c2 = norm(attr2.x, attr2.y)
-                    const p = norm(attr3.x, attr3.y)
-                    return `C ${c1.x} ${c1.y}, ${c2.x} ${c2.y}, ${p.x} ${p.y} `
-                }
-            }
-            return ""
+            const pts = a.map((cubic) => cubic[":@"])
+            if (pts.length < 3) return ""
+
+            const attr1 = pts[0]
+            const attr2 = pts[1]
+            const attr3 = pts[2]
+
+            const c1 = norm(attr1.x, attr1.y)
+            const c2 = norm(attr2.x, attr2.y)
+            const p = norm(attr3.x, attr3.y)
+            return `C ${c1.x} ${c1.y}, ${c2.x} ${c2.y}, ${p.x} ${p.y} `
         },
         // Close
         "a:close": () => {

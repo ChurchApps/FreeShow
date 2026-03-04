@@ -83,6 +83,9 @@ export const isTimelinePlaying: Writable<boolean> = writable(false)
 export const timelineRecordingAction: Writable<{ id: string; data?: any }> = writable({ id: "" })
 export const currentMetadataPopupData: Writable<any> = writable(null)
 export const editingProjectTemplate: Writable<string> = writable("")
+export const showNotesActive: Writable<boolean> = writable(false)
+export const slideNotesActive: Writable<boolean> = writable(false)
+export const templateApplied: Writable<boolean> = writable(false)
 
 // TAGS
 export const activeTagFilter: Writable<string[]> = writable([])

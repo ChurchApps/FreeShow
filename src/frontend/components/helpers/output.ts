@@ -840,7 +840,7 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
     const sorted = sortItemsByType(templateItems)
     const sortedTemplateItems = clone(sorted)
 
-    const hasScriptureDynamicValue = customDynamicValues && templateItems?.some((item) => item?.lines?.some((line) => line?.text?.some((text) => text.value?.includes("{scripture"))))
+    const hasScriptureDynamicValue = Object.keys(customDynamicValues).length && templateItems?.some((item) => item?.lines?.some((line) => line?.text?.some((text) => text.value?.includes("{scripture"))))
 
     // reduce template textboxes to slide items
     const slideTextboxes = hasScriptureDynamicValue ? 0 : slideItems.reduce((count, a) => (count += (a?.type || "text") === "text" ? 1 : 0), 0)
@@ -974,6 +974,24 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
 
     if (addOverflowTemplateItems || hasScriptureDynamicValue) {
         const remainingTextTemplateItems = sorted.text?.slice(slideTextboxes) || []
+
+        if (hasScriptureDynamicValue) {
+            remainingTextTemplateItems.forEach((item) => {
+                // check if item has scripture value (and not {scripture_text})
+                const regex = /\{scripture(?:\d+)?_[^}]+\}/g
+                const text = getItemText(item)
+                const isDecoration = (() => {
+                    const matches = text?.match(regex)
+                    if (!matches) return false
+                    return matches.every((a) => !a.includes("_text}"))
+                })()
+                if (isDecoration) {
+                    // prevent easy edit
+                    item.decoration = true
+                }
+            })
+        }
+
         sortedTemplateItems.text = removeTextValue(remainingTextTemplateItems)
     } else {
         delete sortedTemplateItems.text
@@ -1062,8 +1080,14 @@ function replaceScriptureValues(items: Item[], templateItems: Item[], customDyna
                 // verse content [number, text]
                 items.forEach((item) => {
                     item.lines?.forEach((line) => {
-                        const newTexts: { value: string; style: string; customType?: string }[] = []
+                        const newTexts: { value: string; style: string; sourceDynamicKey?: string; customType?: string }[] = []
                         let insertAtPos = -1
+
+                        // remove empty values (if {scripture_text})
+                        if (line.text?.reduce((value, text) => (value += text.value), "")?.includes("_text}")) {
+                            line.text = (line.text || []).filter((text) => text.value?.trim())
+                        }
+
                         line.text?.forEach((text, i) => {
                             if (text.value?.includes(`{${key}}`)) {
                                 insertAtPos = i
@@ -1072,14 +1096,14 @@ function replaceScriptureValues(items: Item[], templateItems: Item[], customDyna
 
                                 const bibleIndex = parseInt(key.replace(/\D/g, "")) || 0
 
-                                value.forEach(([number, value]) => {
+                                value.forEach(([number, value], index) => {
                                     if (number && number !== "0") {
                                         const size = verseNumberSize * (i === 0 ? 1.2 : 1)
                                         const numberStyle = `;${verseNumberStyles[bibleIndex] || verseNumberStyles[0] || verseNumberStyle}font-size: ${size}px;margin-right: 0.3em;`
                                         newTexts.push({ value: number, style: style + numberStyle, customType: "disableTemplate" })
                                     }
 
-                                    newTexts.push({ value: value, style: style + ";" + baseStyle })
+                                    newTexts.push({ value, sourceDynamicKey: key + ":" + index, style: style + ";" + baseStyle })
                                 })
                             }
                         })
@@ -1434,12 +1458,12 @@ export function getMetadata(show: Show | undefined, currentStyle: Styles, outSli
     const showCategory = get(categories)[show.category || ""] || {}
     const metadataValues = currentStyle.metadata || showCategory.metadata || {}
     const display = metadataValues.display || "never"
-    if (display === "never") return []
+    if (typeof display !== "string" || display === "never") return []
 
     const ref = clone(_show(outSlide.id).layouts([outSlide.layout]).ref()[0] || [])
     const firstActiveSlideIndex = ref.findIndex((a) => !a.data.disabled)
     const lastActiveSlideIndex = ref.length - 1 - [...ref].reverse().findIndex((a) => !a.data.disabled)
-    const displayMetadata = display === "always" || (display?.includes("first") && outSlide?.index === firstActiveSlideIndex) || (display?.includes("last") && outSlide?.index === lastActiveSlideIndex)
+    const displayMetadata = display === "always" || (display.includes("first") && outSlide?.index === firstActiveSlideIndex) || (display.includes("last") && outSlide?.index === lastActiveSlideIndex)
     if (!displayMetadata) return []
 
     // template

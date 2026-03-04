@@ -3,6 +3,7 @@ import { CLOUD, CONTROLLER, NDI, OUTPUT, OUTPUT_STREAM, REMOTE, STAGE } from "..
 import type { ClientMessage } from "../../types/Socket"
 import { AudioAnalyser } from "../audio/audioAnalyser"
 import { AudioAnalyserMerger } from "../audio/audioAnalyserMerger"
+import { setEqualizerEnabled, updateEqualizerBands } from "../audio/audioEqualizer"
 import { runAction } from "../components/actions/actions"
 import { clone } from "../components/helpers/array"
 import { checkNextAfterMedia } from "../components/helpers/showActions"
@@ -74,7 +75,6 @@ import { closeApp, save } from "./save"
 import { client } from "./sendData"
 import { playFolder, previewShortcuts } from "./shortcuts"
 import { restartOutputs } from "./updateSettings"
-import { setEqualizerEnabled, updateEqualizerBands } from "../audio/audioEqualizer"
 
 export function setupMainReceivers() {
     receiveMainGlobal()
@@ -175,7 +175,7 @@ const receiveOUTPUTasMAIN: any = {
     MAIN_LOG: (msg: any) => console.info(msg),
     MAIN_DATA: (msg: any) => videosData.update((a) => ({ ...a, ...msg })),
     MAIN_TIME: (msg: any) => videosTime.update((a) => ({ ...a, ...msg })),
-    MAIN_VIDEO_ENDED: (msg) => {
+    MAIN_VIDEO_ENDED: async (msg) => {
         if (!msg || clearing.includes(msg.id)) return
         clearing.push(msg.id)
         setTimeout(() => clearing.splice(clearing.indexOf(msg.id), 1), msg.duration || 1000)
@@ -191,7 +191,7 @@ const receiveOUTPUTasMAIN: any = {
         }
 
         // check and execute next after media regardless of loop
-        if (checkNextAfterMedia(videoPath, "media", msg.id) || msg.loop) return
+        if ((await checkNextAfterMedia(videoPath, "media", msg.id)) || msg.loop) return
 
         if (get(special).clearMediaOnFinish === false) return
 

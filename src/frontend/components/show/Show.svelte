@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activeProject, activeShow, outLocked, projects, resized, showsCache, special } from "../../stores"
+    import { activeProject, activeShow, outLocked, projects, resized, showsCache, special, templateApplied } from "../../stores"
     import { DEFAULT_WIDTH } from "../../utils/common"
     import Capture from "../drawer/live/Capture.svelte"
     import NdiStream from "../drawer/live/NDIStream.svelte"
@@ -18,6 +18,7 @@
     import PdfPreview from "./pdf/PdfPreview.svelte"
     import PowerPointPreview from "./ppt/PowerPointPreview.svelte"
     import Section from "./Section.svelte"
+    import ShowNotes from "./ShowNotes.svelte"
     import Slides from "./Slides.svelte"
 
     $: show = $activeShow
@@ -31,7 +32,7 @@
 </script>
 
 <div class="double">
-    <div id="showArea" class="main">
+    <div id="showArea" class="main" class:highlight={$templateApplied}>
         {#if show}
             {#if show.type === "video" || show.type === "image" || show.type === "player"}
                 <MediaPreview />
@@ -96,14 +97,18 @@
         {/if}
     </div>
 
-    <!-- || $showsCache[show.id || ""]?.layouts[$showsCache[show.id || ""]?.settings?.activeLayout || ""]?.timeline?.actions?.length -->
-    {#if show && (show.type || "show") === "show" && $special.timelineActive}
-        <Resizeable id="timeline" side="bottom" maxWidth={DEFAULT_WIDTH} minWidth={40}>
-            {#key $activeShow || layoutId}
-                <!-- || !$special.timelineActive -->
-                <Timeline type="show" isClosed={$resized.timeline <= 40} />
-            {/key}
-        </Resizeable>
+    {#if show && (show.type || "show") === "show"}
+        <ShowNotes />
+
+        <!-- || $showsCache[show.id || ""]?.layouts[$showsCache[show.id || ""]?.settings?.activeLayout || ""]?.timeline?.actions?.length -->
+        {#if $special.timelineActive}
+            <Resizeable id="timeline" side="bottom" maxWidth={DEFAULT_WIDTH} minWidth={40}>
+                {#key $activeShow || layoutId}
+                    <!-- || !$special.timelineActive -->
+                    <Timeline type="show" isClosed={$resized.timeline <= 40} />
+                {/key}
+            </Resizeable>
+        {/if}
     {/if}
 </div>
 
@@ -125,5 +130,10 @@
         justify-content: center;
 
         overflow: auto;
+    }
+
+    .main.highlight {
+        transition: border 0.1s ease;
+        border: 2px solid var(--secondary);
     }
 </style>

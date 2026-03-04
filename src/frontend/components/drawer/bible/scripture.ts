@@ -160,9 +160,25 @@ export async function getActiveScripturesContent(selectedVerses: (number | strin
                     return id >= minVerseNumber && id <= maxVerseNumber
                 })
 
+                const offsetId = `${id}-${active?.book}-${active?.chapters[0]}`
+                const offsets = selectedScriptureData?.collection?.offsets || {}
+                const offset = offsets[offsetId] || 0
+
                 const splitLongVerses = get(scriptureSettings).splitLongVerses
-                const expandedSelectedVerses: (number | string)[][] = selectedVerses!.map((chapterVs) => [...chapterVs])
-                const allVersesText: { [key: string]: string }[] = []
+                const expandedSelectedVerses: (number | string)[][] = clone(selectedVerses)!.map((chapterVs) => {
+                    if (!offset) return [...chapterVs]
+
+                    const vs = chapterVs.map((v) => {
+                        const id = getVerseId(v)
+                        if (isNaN(id)) return v
+                        const newId = id + offset
+                        const subverse = String(v).slice(String(id).length) // preserve subverse suffix (e.g. "_1")
+                        return subverse ? `${newId}${subverse}` : newId
+                    })
+                    return vs
+                })
+
+                let allVersesText: { [key: string]: string }[] = []
                 selected.forEach((verses, i) => {
                     const versesText: { [key: string]: string } = {}
                     const expansions: Map<string, string[]> = new Map()
@@ -601,6 +617,20 @@ export async function getScriptureSlidesNew(data: any, onlyOne = false, disableR
                 }) || -1
             if (lastRefIndex > -1) item.lines?.splice(lastRefIndex, 1)
 
+            // replaced by template in output.ts
+            // check if item has scripture value (and not {scripture_text})
+            const regex = /\{scripture(?:\d+)?_[^}]+\}/g
+            const text = getItemText(item)
+            const isDecoration = (() => {
+                const matches = text?.match(regex)
+                if (!matches) return false
+                return matches.every((a) => !a.includes("_text}"))
+            })()
+            if (isDecoration) {
+                // prevent easy edit
+                item.decoration = true
+            }
+
             return item
         })
     })
@@ -695,6 +725,7 @@ export async function getScriptureSlidesNew(data: any, onlyOne = false, disableR
                     // custom Jesus red to JSON format: !{}!
                     text = text.replace(/<span class="wj" ?>(.*?)<\/span>/g, "!{$1}!")
                     text = text.replace(/<red ?>(.*?)<\/red>/g, "!{$1}!")
+                    text = text.replace(/<span style="color:red;" ?>(.*?)<\/span>/g, "!{$1}!")
 
                     if (verseNumbers) {
                         const { id, subverse, endNumber } = getVerseIdParts(v)
@@ -893,6 +924,22 @@ export async function getScriptureSlidesNew(data: any, onlyOne = false, disableR
             })
         })
     })
+
+    // When firstSlideTemplate is used, createSlides() prepends a reference slide at index 0.
+    // groupNames is already padded with that slide's name (see above). slideDynamicValues must
+    // match: prepend globalCustomDynamicValues so the reference slide can resolve placeholders
+    // like {scripture_reference_full} and {meta_title}, while verse slides keep their own data.
+    if (_template.getSetting("firstSlideTemplate") && !onlyOne) {
+        // Pad with globalCustomDynamicValues + scripture_text/scripture1_text as the full reference
+        // string, so outputs whose template uses {scripture_text} (e.g. a secondary OBS output that
+        // has no firstSlideTemplate) show the reference instead of a raw placeholder on slide 0.
+        const referenceSliceDV = {
+            ...globalCustomDynamicValues,
+            scripture_text: format(fullReference),
+            scripture1_text: format(fullReference)
+        }
+        slideDynamicValues = [referenceSliceDV, ...slideDynamicValues]
+    }
 
     return { slides: newSlides, groupNames, attributions, slideDynamicValues }
 }

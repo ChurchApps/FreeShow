@@ -2,7 +2,6 @@
     import { onMount } from "svelte"
     import type { Tree } from "../../../types/Projects"
     import { activeProfile, activeProject, folders, labelsDisabled, openedFolders, projects } from "../../stores"
-    import { translateText } from "../../utils/language"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
@@ -150,7 +149,7 @@
                 <div class="rootFolder">
                     {#each tree as project}
                         {#if project.id === "ROOT"}
-                            <div class="title">{translateText("category.unlabeled")}</div>
+                            <div class="title"><T id="category.unlabeled" /></div>
                         {:else}
                             {@const opened = $openedFolders.includes(project.id)}
                             {@const shown = checkIfShown(project, $openedFolders)}

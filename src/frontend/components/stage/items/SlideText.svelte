@@ -107,7 +107,7 @@
     $: revealed = slideOffset === 0 ? (currentSlide?.revealCount || 0) - 1 : -1
     // WIP stage items merged (so this only works properly for the first item with linesReveal enabled (use "Item number" option))
 
-    $: useOriginalTextColor = stageItem.style?.includes("color:;")
+    $: useOriginalTextColor = typeof stageItem.style === "string" && stageItem.style.includes("color:;")
 
     // DEBUG: SlideText rendering and fontSize prop logging commented out
 </script>

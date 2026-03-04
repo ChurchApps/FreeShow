@@ -2,9 +2,9 @@
     import { onMount } from "svelte"
     import type { MediaStyle } from "../../../../types/Main"
     import type { ItemType } from "../../../../types/Show"
-    import { activeEdit, activePage, activePopup, activeShow, activeTriggerFunction, alertMessage, focusMode, groups, labelsDisabled, media, outputs, overlays, refreshEditSlide, showsCache, special, styles, templates, textEditActive } from "../../../stores"
+    import { activeEdit, activePage, activePopup, activeShow, alertMessage, focusMode, groups, labelsDisabled, media, outputs, overlays, refreshEditSlide, showsCache, slideNotesActive, special, styles, templates, textEditActive } from "../../../stores"
     import { transposeText } from "../../../utils/chordTranspose"
-    import { triggerFunction } from "../../../utils/common"
+    import { DEFAULT_WIDTH, triggerFunction } from "../../../utils/common"
     import { translateText } from "../../../utils/language"
     import { getAccess } from "../../../utils/profile"
     import { slideHasAction } from "../../actions/actions"
@@ -22,12 +22,15 @@
     import MaterialZoom from "../../inputs/MaterialZoom.svelte"
     import { formatText } from "../../show/formatTextEditor"
     import { getPlainEditorText } from "../../show/getTextEditor"
+    import Notes from "../../show/tools/Notes.svelte"
     import Textbox from "../../slide/Textbox.svelte"
     import Zoomed from "../../slide/Zoomed.svelte"
     import { getStyleResolution } from "../../slide/getStyleResolution"
     import Center from "../../system/Center.svelte"
     import DropArea from "../../system/DropArea.svelte"
+    import Resizeable from "../../system/Resizeable.svelte"
     import Snaplines from "../../system/Snaplines.svelte"
+    import EditHeader from "../EditHeader.svelte"
     import Editbox from "../editbox/Editbox.svelte"
     import { getUsedChords } from "../scripts/chords"
     import { addItem } from "../scripts/itemHelpers"
@@ -263,7 +266,7 @@
         // timeout to prevent number 2 from getting typed if changing with shortcuts
         setTimeout(() => {
             // set focus to textbox if only one
-            if (Slide?.items.length === 1 && !$activeEdit.items.length && $activeTriggerFunction !== "slide_notes") {
+            if (Slide?.items.length === 1 && !$activeEdit.items.length) {
                 activeEdit.update((a) => ({ ...(a || {}), items: [0] }))
                 const elem = document.querySelector(".editItem")?.querySelector(".edit")
                 if (elem) {
@@ -332,9 +335,25 @@
             return a
         })
     }
+
+    // NOTES
+
+    let note = ""
+    $: if ($activeEdit.slide !== null && $activeEdit.slide !== undefined) note = Slide?.notes || ""
+
+    function edit(e: any) {
+        const slideId = ref[$activeEdit.slide!]?.id
+        if (Slide.notes === e.detail || !slideId) return
+
+        _show($activeShow!.id).slides([slideId]).set({ key: "notes", value: e.detail })
+    }
 </script>
 
 <svelte:window on:keydown={keydown} on:keyup={keyup} on:blur={blurred} on:paste={paste} />
+
+{#if currentShow}
+    <EditHeader showId={currentShowId} />
+{/if}
 
 {#if template && !chordsMode && !widthOrHeight.includes("height") && !$focusMode && !isLocked}
     <div class="default" data-title={translateText(`info.template: <b>${$templates[template]?.name || "—"}</b>`)}>
@@ -402,14 +421,24 @@
         {/if}
     </div>
 
-    {#if notesVisible}
-        <div class="notes" role="none" on:click={() => triggerFunction("slide_notes")}>
+    {#if $slideNotesActive}
+        <Resizeable id="notes" side="bottom" defaultWidth={DEFAULT_WIDTH * 0.5} maxWidth={DEFAULT_WIDTH * 0.8} minWidth={47}>
+            <div class="dark" style="display: contents;">
+                <Notes on:edit={edit} value={note} autofocus />
+            </div>
+
+            <MaterialButton title="actions.close" on:click={() => ($slideNotesActive = false)} style="position: absolute;top: 9px;right: 4.5px;opacity: 0.8;padding: 8px;" white>
+                <Icon id={note ? "remove" : "close"} white />
+            </MaterialButton>
+        </Resizeable>
+    {:else if notesVisible}
+        <div class="notes" role="none" data-title={translateText("tools.notes")} on:click={() => slideNotesActive.set(true)}>
             <Icon id="notes" right white />
             <p>{@html notes}</p>
         </div>
     {/if}
 
-    {#if !$focusMode && !isLocked}
+    {#if !$focusMode && !isLocked && !$slideNotesActive}
         <!-- && Slide?.items?.length -->
         {#if !chordsMode && !widthOrHeight.includes("height")}
             <FloatingInputs bottom={notesVisible ? bottomHeight : 10} side="center">
@@ -426,10 +455,6 @@
 
             {#if open}
                 <div class="divider"></div>
-
-                <!-- open slide notes -->
-                <!-- <MaterialButton icon="notes" title="items.slide_notes" on:click={() => triggerFunction("slide_notes")} />
-                <div class="divider"></div> -->
 
                 {#if hasTextContent}
                     <MaterialButton title="edit.insert_virtual_break" on:click={() => triggerFunction("insert_virtual_break")}>
@@ -499,7 +524,7 @@
 <style>
     .default {
         position: absolute;
-        top: 10px;
+        top: 40px;
         left: 10px;
 
         width: 42px;
@@ -520,7 +545,7 @@
 
     .editArea {
         width: 100%;
-        height: 100%;
+        height: calc(100% - 30px);
         display: flex;
         flex-direction: column;
     }

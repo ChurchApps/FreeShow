@@ -55,7 +55,7 @@ export const dropActions = {
         if (slideDrop[id]) {
             const show = _show().get()
             if (show?.locked) {
-                alertMessage.set("show.locked_info")
+                alertMessage.set("show.locked")
                 activePopup.set("alert")
                 return
             }
@@ -247,7 +247,7 @@ export const dropActions = {
             if (drop.center) {
                 const show = _show().get()
                 if (show?.locked) {
-                    alertMessage.set("show.locked_info")
+                    alertMessage.set("show.locked")
                     activePopup.set("alert")
                     return
                 }
@@ -301,7 +301,7 @@ export const dropActions = {
             if (drop.trigger) {
                 const show = _show().get()
                 if (show?.locked) {
-                    alertMessage.set("show.locked_info")
+                    alertMessage.set("show.locked")
                     activePopup.set("alert")
                     return
                 }
@@ -598,6 +598,11 @@ const slideDrop = {
             const slide = _show(showId).slides([slideId]).get()?.[0] || {}
             const currentBgId = layoutRef[drop.index!]?.data.background || ""
             const mediaName = removeExtension(_show(showId).media([currentBgId]).get()?.[0]?.name || "")
+
+            if (slide.locked || get(showsCache)[showId]?.slides?.[layoutRef[drop.index!]?.parent?.id || ""]?.locked) {
+                newToast("output.state_locked")
+                return
+            }
 
             // add as slide bg instead of layout bg
             if (keys.ctrlKey) {

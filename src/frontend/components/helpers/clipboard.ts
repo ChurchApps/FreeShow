@@ -70,7 +70,7 @@ import { history } from "./history"
 import { getFileName, removeExtension } from "./media"
 import { select } from "./select"
 import { loadShows } from "./setShow"
-import { checkName, getLayoutRef } from "./show"
+import { checkName, getLayoutRef, removeTemplatesFromShow } from "./show"
 import { _show } from "./shows"
 
 export function copy(clip: Clipboard | null = null, getData = true, shouldDuplicate = false) {
@@ -606,18 +606,15 @@ const pasteActions = {
             if (slide.group === null) slide.group = ""
 
             slide.id = uid()
+            const slideIndex = newSlides.length
             newSlides.push(slide)
 
             // has children
             let childrenLayouts: any = {}
             if (slide.children) {
-                // let children: string[] = []
-                // children = slide.children.filter((child: string) => copiedIds.includes(child))
-                // if (children.length && slide.children.length > children.length) slide.children = children
-
                 // clone selected children
                 const clonedChildren: string[] = []
-                slide.children.forEach((childId: string) => {
+                slide.children.forEach((childId: string, j) => {
                     // !slides[childId]
                     if (!copiedIds.includes(childId)) return
                     const childSlide: any = clone(data.slides.find((a) => a.id === childId))
@@ -629,9 +626,14 @@ const pasteActions = {
                     childSlide.id = uid()
                     delete childSlide.oldChild
                     clonedChildren.push(childSlide.id)
+
+                    const childIndex = newSlides.length
                     newSlides.push(childSlide)
 
-                    childrenLayouts[childSlide.id] = data.layouts?.[i]?.[oldId] || {}
+                    const layout = data.layouts?.[i + j + 1] || data.layouts?.[i]?.[oldId] || {}
+                    childrenLayouts[childSlide.id] = layout
+
+                    layouts[childIndex] = layout
                 })
 
                 slide.children = clonedChildren
@@ -649,7 +651,9 @@ const pasteActions = {
             if (!layout) return
 
             if (Object.keys(childrenLayouts).length) layout.children = childrenLayouts
-            layouts[i] = layout
+            else delete layout.children
+
+            layouts[slideIndex] = layout
         })
         // TODO: children next to each other should be grouped
 
@@ -661,11 +665,11 @@ const pasteActions = {
             _show().set({ key: "media", value: { ...showMedia, ...data.media } })
         }
 
-        // WIP fix the pasting
-
-        // fix paste order
-        // newSlides.reverse()
-        // layouts.reverse()
+        // remove any template if empty
+        const showId = get(activeShow)?.id || ""
+        if (!Object.keys(get(showsCache)[showId]?.slides || {}).length) {
+            removeTemplatesFromShow(showId)
+        }
 
         history({ id: "SLIDES", newData: { data: newSlides, layouts, index: index !== undefined ? index + 1 : undefined } })
     },

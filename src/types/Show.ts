@@ -117,7 +117,7 @@ export interface Item {
     clock?: Clock
     events?: DynamicEvent
     type?: ItemType
-    decoration?: boolean // ppt imported shapes (no selection directly)
+    decoration?: boolean // ppt imported shapes & scripture items (no selection directly)
     mirror?: Mirror
     src?: string // media item path
     customSvg?: string
@@ -260,6 +260,7 @@ export interface Line {
         value: string
         style: string
         customType?: string // "disableTemplate"
+        sourceDynamicKey?: string // used for scripture slides to link back to the dynamic value key (only scripture_text currently)
     }[]
     chords?: Chords[]
 }

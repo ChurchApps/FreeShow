@@ -7,18 +7,20 @@
     import { sanitizeVerseText } from "../../../../common/scripture/sanitizeVerseText"
     import { defaultBibleBookNames } from "../../../converters/bebliaBible"
     import { activeEdit, activeScripture, activeTriggerFunction, customScriptureBooks, notFound, openScripture, outLocked, outputs, resized, scriptureHistory, scriptureHistoryUsed, scriptureMode, scriptures, scriptureSettings, selected } from "../../../stores"
+    import { wait } from "../../../utils/common"
     import { translateText } from "../../../utils/language"
     import { clone } from "../../helpers/array"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import FloatingInputs from "../../input/FloatingInputs.svelte"
+    import InputRow from "../../input/InputRow.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialCheckbox from "../../inputs/MaterialCheckbox.svelte"
+    import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
     import TextInput from "../../inputs/TextInput.svelte"
     import Loader from "../../main/Loader.svelte"
     import Center from "../../system/Center.svelte"
     import { createScriptureShow, formatBibleText, getVerseIdParts, getVersePartLetter, joinRange, loadJsonBible, moveSelection, outputIsScripture, playScripture, scriptureRangeSelect, sortScriptureSelection, splitText, swapPreviewBible } from "./scripture"
-    import { wait } from "../../../utils/common"
 
     export let active: string | null
     export let searchValue: string
@@ -122,7 +124,7 @@
     }
 
     // Get verses for all scriptures in a collection
-    function getCollectionVerses(verseId: string | number): { id: string; name: string; text: string; isSplit: boolean }[] {
+    function getCollectionVerses(verseId: string | number, _updater: any): { id: string; name: string; text: string; isSplit: boolean }[] {
         if (!isCollection) return []
 
         const { id, subverse } = getVerseIdParts(verseId)
@@ -134,12 +136,15 @@
                 const scriptureMeta = $scriptures[scriptureId]
                 const name = scriptureMeta?.customName || scriptureMeta?.name || scriptureId
 
-                if (!scriptureData?.chapterData) {
+                const offset = getOffset(scriptureId)
+                const currentId = id + offset
+
+                if (!scriptureData?.chapterData || (offset && (currentId < 1 || currentId > scriptureData.chapterData.data.verses.length))) {
                     return { id: scriptureId, name, text: "", isSplit: false }
                 }
 
                 try {
-                    const verse = scriptureData.chapterData.getVerse(id)
+                    const verse = scriptureData.chapterData.getVerse(currentId)
                     const fullText = verse.getHTML() || verse?.data?.text || ""
 
                     if (isSplit && fullText) {
@@ -883,6 +888,30 @@
         const reference = `${book} ${activeReference.chapters}${referenceDivider}${range}`
         return reference
     }
+
+    // OFFSETS
+
+    $: useOffset = Object.keys($scriptures[activeScriptureId]?.collection?.offsets || {}).length > 0
+    function updateOffset(scriptureId: string, value: number) {
+        const offsetId = `${scriptureId}-${activeReference.book}-${activeReference.chapters[0]}`
+
+        scriptures.update((a) => {
+            const collection = a[activeScriptureId]?.collection
+            if (!collection) return a
+
+            const currentOffsets = collection.offsets || {}
+            const newOffsets = { ...currentOffsets, [offsetId]: value }
+            a[activeScriptureId].collection!.offsets = newOffsets
+
+            return a
+        })
+    }
+    function getOffset(scriptureId: string, _updater: any = null) {
+        const offsetId = `${scriptureId}-${activeReference.book}-${activeReference.chapters[0]}`
+
+        const offsets = $scriptures[activeScriptureId]?.collection?.offsets || {}
+        return offsets[offsetId] || 0
+    }
 </script>
 
 <svelte:window on:keydown={keydown} on:mouseup={mouseup} />
@@ -983,6 +1012,15 @@
                         {/if}
                     </div>
                     <div class="verses context #scripture_verse" class:showFloatingButtons={$resized.rightPanelDrawer > 5 && splittedVerses.length > 10} bind:this={versesScrollElem} class:center={!splittedVerses.length}>
+                        {#if isCollection && useOffset && splittedVerses.length}
+                            <InputRow style="width: 100%;margin-bottom: 5px;">
+                                {#each activeScriptures as scriptureId, i}
+                                    {@const scripture = $scriptures[scriptureId]}
+                                    <MaterialNumberInput label={scripture.name} value={getOffset(scriptureId, activeReference)} disabled={i === 0} min={-10} max={10} on:change={(e) => updateOffset(scriptureId, e.detail)} />
+                                {/each}
+                            </InputRow>
+                        {/if}
+
                         {#if splittedVerses.length}
                             {#each splittedVerses as content}
                                 {@const { id, subverse, endNumber } = getVerseIdParts(content.id)}
@@ -991,7 +1029,7 @@
                                 {@const verseLabel = buildVerseLabel(id, subverse, endNumber, showSuffixInPicker)}
                                 {@const isActive = activeReference.verses[activeReference.verses.length - 1]?.find((vid) => vid.toString() === content.id || vid.toString() === id.toString())}
                                 {@const text = formatBibleText(content.text, true) || (isCollection ? '<span style="opacity: 0.6; font-size: 0.85em; margin: 0; padding: 0;">~</span>' : "")}
-                                {@const collectionVerses = $scriptureSettings.showAllVersions && isCollection && $scriptureMode !== "grid" ? getCollectionVerses(content.id) : []}
+                                {@const collectionVerses = $scriptureSettings.showAllVersions && isCollection && $scriptureMode !== "grid" ? getCollectionVerses(content.id, $scriptures) : []}
 
                                 <!-- custom drag -->
                                 <span
@@ -1079,6 +1117,8 @@
                             }}
                             small
                         />
+
+                        <MaterialCheckbox label="edit.offset" checked={useOffset} on:change={(e) => (useOffset = e.detail)} small />
                     {/if}
 
                     <!-- WIP had some issues with selecting multiple verses -->

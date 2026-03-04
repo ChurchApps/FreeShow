@@ -28,7 +28,8 @@ export const languages = {
     pt_PT: "Português", // Portuguese
     ja: "日本語", // Japanese
     sv: "Svenska", // Swedish
-    zh_TW: "繁體中文" // Chinese (Traditional)
+    zh_TW: "繁體中文", // Chinese (Traditional)
+    vi: "Tiếng Việt" // Vietnamese
 }
 
 // Help: https://developers.google.com/search/docs/advanced/crawling/localized-versions#language-codes
@@ -64,7 +65,8 @@ export const replace = {
     pt_PT: ["pt-PT"],
     ja: ["ja"],
     sv: ["sv"],
-    zh_TW: ["zh-TW"]
+    zh_TW: ["zh-TW"],
+    vi: ["vi"]
 }
 
 export const languageFlags = {
@@ -96,5 +98,6 @@ export const languageFlags = {
     pt_PT: "🇵🇹",
     ja: "🇯🇵",
     sv: "🇸🇪",
-    zh_TW: "🇹🇼"
+    zh_TW: "🇹🇼",
+    vi: "🇻🇳"
 }

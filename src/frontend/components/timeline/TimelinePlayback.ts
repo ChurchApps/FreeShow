@@ -237,11 +237,13 @@ export class TimelinePlayback {
 
     // TICK
 
+    // time in ms
     private offset: number = 0
     private getTimeWithOffset(time: number) {
         return time + this.offset
     }
 
+    private lastSlideTrigger = ""
     private tick() {
         if (this.listenerPaused) return
 
@@ -276,6 +278,8 @@ export class TimelinePlayback {
             }
         }
 
+        this.playClosestSlide(this.actions)
+
         // check end
         if (this.currentTime >= this.duration) {
             this.currentTime = this.duration
@@ -293,6 +297,9 @@ export class TimelinePlayback {
         } else if (action.type === "slide") {
             this.previousSlide = action.data
             ShowTimeline.playSlide(action.data, ref)
+
+            const triggerId = `${action.data.id}-${action.data.index}`
+            this.lastSlideTrigger = triggerId
         } else {
             console.log("Unknown Timeline Action:", action)
         }
@@ -429,6 +436,31 @@ export class TimelinePlayback {
                 this.playAction(action, data.ref)
             }
         }
+
+        this.playClosestSlide(showTimelineActions)
+    }
+
+    // play the closest slide with less time than current time
+    private slideCount = 0
+    private playClosestSlide(actions: TimelineAction[]) {
+        // throttle as this does not need to be as precise
+        this.slideCount++
+        if (this.slideCount < 10) return
+        this.slideCount = 0
+
+        const slideActions = actions.filter((a) => a.type === "slide")
+        const now = this.getTimeWithOffset(this.currentTime) + 50 // add small offset to not interfere with exact timing of actions
+        const closestSlide = slideActions.reduce((prev, curr) => (curr.time > (prev?.time ?? -1) && curr.time <= now ? curr : prev), null as TimelineAction | null)
+        if (!closestSlide) return
+
+        const lastAction = slideActions.reduce((prev, curr) => (curr.time > (prev?.time || 0) ? curr : prev), null as TimelineAction | null)
+        const isLastAction = lastAction?.id === closestSlide.id
+        if (isLastAction) return
+
+        const triggerId = `${closestSlide.data.id}-${closestSlide.data.index}`
+        if (this.lastSlideTrigger === triggerId) return
+
+        this.playAction(closestSlide, this.ref)
     }
 
     // TIMECODE

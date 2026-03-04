@@ -134,9 +134,9 @@
         </Center>
     {/if}
 {:else if $activeShow && ($activeShow.type === undefined || $activeShow.type === "show")}
-    <div class="title">
+    <!-- <div class="title">
         <h3 style="opacity: 0.8;">{$shows[currentShowId]?.name || ""}</h3>
-    </div>
+    </div> -->
 
     <Slides />
 

@@ -631,6 +631,11 @@
     }
 
     $: disablePlayback = type === "project" && $timecode.type === "receive"
+
+    $: actionsByTime = actions.slice().sort((a, b) => a.time - b.time)
+    $: slideActions = actionsByTime.filter((a) => a.type === "slide")
+    $: firstSlideAction = slideActions[0]
+    $: lastSlideAction = slideActions[slideActions.length - 1]
 </script>
 
 <svelte:window on:keydown={keydown} />
@@ -766,6 +771,11 @@
                             {/if}
                         {/each}
                     </div>
+
+                    <!-- Slide Action Bar -->
+                    {#if firstSlideAction}
+                        <div class="slide-action-bar" style="left: {(firstSlideAction.time / 1000) * zoomLevel}px;top: {getActionBaseY(firstSlideAction)}px;width: {((lastSlideAction.time - firstSlideAction.time) / 1000) * zoomLevel}px;"></div>
+                    {/if}
 
                     <!-- Actions -->
                     {#each actions as action (action.id)}
@@ -1058,6 +1068,17 @@
     }
     .action-marker.slide .action-head {
         border-radius: 4px;
+    }
+
+    .slide-action-bar {
+        position: absolute;
+        transform: translateY(15px);
+        height: 8px;
+        width: 100%;
+
+        border-radius: 4px;
+        background-color: var(--secondary);
+        opacity: 0.3;
     }
 
     .action-clip {

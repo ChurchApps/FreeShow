@@ -36,7 +36,7 @@
 
     function hasAccess() {
         if (currentShow.locked) {
-            newToast("show.locked_info")
+            newToast("show.locked")
             return false
         }
 

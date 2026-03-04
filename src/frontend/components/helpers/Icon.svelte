@@ -91,8 +91,6 @@
 <style>
     svg {
         fill: var(--secondary);
-
-        transition: transform 0.2s ease;
     }
 
     svg.select {

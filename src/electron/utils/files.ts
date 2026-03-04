@@ -6,6 +6,7 @@ import type { ExifData } from "exif"
 import { ExifImage } from "exif"
 import fs, { type Stats } from "fs"
 import path, { join, parse } from "path"
+import { fileURLToPath } from "url"
 import { uid } from "uid"
 import upath from "upath"
 import { OUTPUT } from "../../types/Channels"
@@ -695,29 +696,53 @@ function normalizeFileNameForMatch(name: string) {
     return name.normalize("NFC").toLowerCase()
 }
 
+function normalizeLocalPath(filePath: string) {
+    if (!filePath || typeof filePath !== "string") return ""
+
+    let normalizedPath = filePath
+
+    if (normalizedPath.startsWith("file://")) {
+        try {
+            normalizedPath = fileURLToPath(normalizedPath)
+        } catch {
+            normalizedPath = normalizedPath.replace(/^file:\/\//, "")
+        }
+    }
+
+    try {
+        normalizedPath = decodeURI(normalizedPath)
+    } catch {
+        // ignore malformed URI sequences and keep original
+    }
+
+    return normalizedPath
+}
+
 // SEARCH FOR MEDIA FILE (in drawer media folders & their following folders)
 const NESTED_SEARCH = 8 // folder levels deep
 export async function locateMediaFile({ filePath, folders }: { filePath: string; folders: string[] }) {
-    if (await doesPathExistAsync(filePath)) return { path: filePath, hasChanged: false }
+    const normalizedOriginalPath = normalizeLocalPath(filePath)
+    if (await doesPathExistAsync(normalizedOriginalPath)) return { path: normalizedOriginalPath, hasChanged: false }
 
     // Media Sync Folder
     const mediaFolder = getMediaSyncFolderPath()
-    const folderId = getFileParentFolderId(filePath)
-    const fileName = upath.basename(filePath)
+    const folderId = getFileParentFolderId(normalizedOriginalPath)
+    const fileName = upath.basename(normalizedOriginalPath)
     const mediaFilePath = path.join(mediaFolder, folderId, fileName)
     if (await doesPathExistAsync(mediaFilePath)) return { path: mediaFilePath, hasChanged: true }
-    const searchFolders = [mediaFolder, ...folders]
+    const searchFolders = [mediaFolder, ...folders].map(normalizeLocalPath).filter((folderPath) => folderPath)
 
     // lookup already replaced paths from cache
     const syncCache = getStore("CACHE_SYNC")
     if (!syncCache.replacedPaths) syncCache.replacedPaths = {}
     const cacheId = `${folderId}_${fileName}`
     const cachedPath = syncCache.replacedPaths[cacheId]
-    if (cachedPath && (await doesPathExistAsync(cachedPath))) {
+    // TEMP disable in case the wrong file is cached
+    if (false && cachedPath && (await doesPathExistAsync(cachedPath))) {
         return { path: cachedPath, hasChanged: false }
     }
 
-    const parentFolderName = upath.basename(upath.dirname(filePath))
+    const parentFolderName = upath.basename(upath.dirname(normalizedOriginalPath))
 
     const newPath = await findMatches()
     if (!newPath) return null

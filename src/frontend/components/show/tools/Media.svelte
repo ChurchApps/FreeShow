@@ -115,7 +115,7 @@
 
     function setBG(id: string, key: string, value: boolean) {
         if (show.locked) {
-            alertMessage.set("show.locked_info")
+            alertMessage.set("show.locked")
             activePopup.set("alert")
             return
         }
