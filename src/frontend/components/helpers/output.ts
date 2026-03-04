@@ -840,7 +840,7 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
     const sorted = sortItemsByType(templateItems)
     const sortedTemplateItems = clone(sorted)
 
-    const hasScriptureDynamicValue = customDynamicValues && templateItems?.some((item) => item?.lines?.some((line) => line?.text?.some((text) => text.value?.includes("{scripture"))))
+    const hasScriptureDynamicValue = Object.keys(customDynamicValues).length && templateItems?.some((item) => item?.lines?.some((line) => line?.text?.some((text) => text.value?.includes("{scripture"))))
 
     // reduce template textboxes to slide items
     const slideTextboxes = hasScriptureDynamicValue ? 0 : slideItems.reduce((count, a) => (count += (a?.type || "text") === "text" ? 1 : 0), 0)
