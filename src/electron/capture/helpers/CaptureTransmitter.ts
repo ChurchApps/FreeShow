@@ -180,7 +180,11 @@ export class CaptureTransmitter {
         let framerate = OutputHelper.getOutput(captureId)?.captureOptions?.framerates?.blackmagic
         if (!framerate) return
         // WIP blackmagic audio
-        BlackmagicSender.scheduleFrame(captureId, buffer, null, framerate, image.getSize())
+
+        // output window size should be the same as target size!
+        // const size = BlackmagicSender.getTargetDimensions(captureId) // image.getSize()
+
+        BlackmagicSender.scheduleFrame(captureId, buffer, null, framerate)
     }
 
     // MAIN (STAGE OUTPUT)

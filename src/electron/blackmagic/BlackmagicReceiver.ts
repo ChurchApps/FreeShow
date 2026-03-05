@@ -134,12 +134,18 @@ export class BlackmagicReceiver {
 
     static stopReceiver(data: any) {
         if (data?.id) {
-            if (data.outputId) this.sendToOutputs.splice(this.sendToOutputs.indexOf(data.outputId), 1)
-            else this.sendToOutputs = [] // error
+            if (data.outputId) {
+                const index = this.sendToOutputs.indexOf(data.outputId)
+                if (index > -1) this.sendToOutputs.splice(index, 1)
+            } else this.sendToOutputs = [] // error
 
             if (!this.sendToOutputs.length) {
                 clearInterval(this.BMD_RECEIVERS[data.id].interval)
-                this.BMD_RECEIVERS[data.id].receiver?.stop()
+                try {
+                    this.BMD_RECEIVERS[data.id].receiver?.stop()
+                } catch (err) {
+                    console.error("Error stopping Blackmagic receiver: ", err)
+                }
                 delete this.BMD_RECEIVERS[data.id]
             }
             return
@@ -147,7 +153,11 @@ export class BlackmagicReceiver {
 
         Object.values(this.BMD_RECEIVERS).forEach(({ receiver, interval }) => {
             clearInterval(interval)
-            receiver?.stop()
+            try {
+                receiver?.stop()
+            } catch (err) {
+                console.error("Error stopping Blackmagic receiver: ", err)
+            }
         })
         this.BMD_RECEIVERS = {}
     }
