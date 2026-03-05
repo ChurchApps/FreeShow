@@ -133,7 +133,9 @@
 
             // UPDATE OUTPUT WINDOW
 
-            if (["alwaysOnTop", "kioskMode", "transparent", "invisible", "ndi"].includes(key)) {
+            if (["blackmagic"].includes(key)) {
+                send(OUTPUT, ["SET_VALUE"], { id: outputId, key, value: a[outputId] })
+            } else if (["alwaysOnTop", "kioskMode", "transparent", "invisible", "ndi"].includes(key)) {
                 send(OUTPUT, ["SET_VALUE"], { id: outputId, key, value })
             }
 
@@ -223,7 +225,7 @@
 
                 let displayModes = device.data?.displayModes || []
                 updateBlackmagicData(displayModes, "displayModes")
-                if (displayModes.length && !newData.displayMode) {
+                if (displayModes.length) {
                     // try setting to "preferred" modes, or set to first available
                     updateBlackmagicData(displayModes.find((a) => a.name === "1080i59.94" || a.name === "1080p29.97")?.name || displayModes[0]?.name, "displayMode")
                 }
@@ -249,7 +251,7 @@
                 setTimeout(() => {
                     if (newData.displayMode && newData.pixelFormat) send(OUTPUT, ["SET_VALUE"], { id: currentOutput?.id, key: "blackmagic", value: currentOutput })
                 })
-            } else if (key === "pixelFormat") {
+            } else if (key === "pixelFormat" || key === "alphaKey") {
                 setTimeout(() => {
                     if (newData.displayMode && newData.pixelFormat) send(OUTPUT, ["SET_VALUE"], { id: currentOutput?.id, key: "blackmagic", value: currentOutput })
                 })
@@ -270,6 +272,12 @@
         }
     }
     receive(BLACKMAGIC, receiveBMD, listenerId)
+
+    // Pixel format must include an alpha channel. Only 8-bit ARGB and BGRA are supported.
+    function isAlphaSupported(pixelFormat: string) {
+        if (!pixelFormat.includes("8")) return false
+        return pixelFormat.includes("BGRA") || pixelFormat.includes("ARGB")
+    }
 
     $: outputLabel = `${currentOutput?.bounds?.width || 1920}x${currentOutput?.bounds?.height || 1080}`
 
@@ -356,7 +364,9 @@
             <Dropdown value={currentOutput.blackmagicData?.pixelFormats?.find((a) => a.name === currentOutput?.blackmagicData?.pixelFormat)?.name || "—"} options={currentOutput.blackmagicData?.pixelFormats || []} on:click={(e) => updateBlackmagicData(e, "pixelFormat")} />
         </CombinedInput>
 
-        <MaterialToggleSwitch label="settings.alpha_key" checked={currentOutput.blackmagicData?.alphaKey} on:change={(e) => updateBlackmagicData(e.detail, "alphaKey")} />
+        {#if isAlphaSupported(currentOutput.blackmagicData?.pixelFormat || "")}
+            <MaterialToggleSwitch label="settings.alpha_key" checked={currentOutput.blackmagicData?.alphaKey} on:change={(e) => updateBlackmagicData(e.detail, "alphaKey")} />
+        {/if}
     {/if}
 {/if}
 
