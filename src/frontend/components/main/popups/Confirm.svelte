@@ -7,7 +7,7 @@
     import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
 
     $: prompt = $popupData.prompt || ""
-    let textInput = !!$popupData.textInput
+    const inputType = $popupData.inputType || ""
 
     function keydown(e: KeyboardEvent) {
         if (e.key === "Enter") confirm()
@@ -24,15 +24,15 @@
             $popupData.trigger(textValue)
             activePopup.set(null)
         } else {
-            popupData.set({ ...$popupData, id: "confirm", value: textInput ? textValue : true })
+            popupData.set({ ...$popupData, id: "confirm", value: inputType ? textValue : true })
         }
     }
 </script>
 
 <svelte:window on:keydown={keydown} />
 
-{#if textInput}
-    <MaterialTextInput label={prompt} value="" on:input={(e) => (textValue = e.detail)} on:keydown={keydown} autofocus />
+{#if inputType}
+    <MaterialTextInput label={prompt} type={inputType} value="" on:input={(e) => (textValue = e.detail)} on:keydown={keydown} autofocus />
 
     <MaterialButton variant="contained" style="margin-top: 20px;" on:click={confirm}>
         <T id="remote.submit" />
