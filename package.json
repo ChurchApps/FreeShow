@@ -29,7 +29,7 @@
         "build:electron:prod": "cross-env NODE_ENV=production tsc --p config/typescript/tsconfig.electron.prod.json",
         "---RELEASE---": "",
         "prerelease": "npm run build",
-        "release": "electron-builder --config config/building/electron-builder.yaml",
+        "release": "electron-builder --config config/building/electron-builder.yaml --publish always",
         "postrelease": "node scripts/cleanBuilds.js",
         "prerelease:arm64": "npm run build",
         "release:arm64": "electron-builder --config config/building/electron-builder-lnxarm.yaml --arm64 --publish onTagOrDraft",
