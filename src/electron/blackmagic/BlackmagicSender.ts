@@ -2,7 +2,8 @@ import macadam, { PlaybackChannel } from "macadam"
 import os from "os"
 import util from "../ndi/vingester-util"
 import { BlackmagicManager } from "./BlackmagicManager"
-import { ImageBufferConverter } from "./ImageBufferConverter"
+import { ImageBufferConverter, ImageBufferConverter10Bit } from "./ImageBufferConverter"
+import { Size } from "electron"
 
 // const FPS = 30
 export class BlackmagicSender {
@@ -23,18 +24,18 @@ export class BlackmagicSender {
                 channels: audioChannels ? 0 : 0, // WIP send audio!
                 sampleRate: macadam.bmdAudioSampleRate48kHz,
                 sampleType: macadam.bmdAudioSampleType16bitInteger,
-                startTimecode: "01:00:00:00",
+                startTimecode: "01:00:00:00"
             }),
             scheduledFrames: 0,
             pixelFormat: pixelFormat,
-            displayMode: displayModeName,
+            displayMode: displayModeName
         }
 
         this.devicePixelMode = os.endianness() === "BE" ? "ARGB" : "BGRA"
     }
 
     // static alerted = false
-    static scheduleFrame(outputId: string, videoFrame: Buffer, _audioFrame: Buffer | null, framerate: number = 1000) {
+    static scheduleFrame(outputId: string, videoFrame: Buffer, _audioFrame: Buffer | null, framerate: number = 1000, size: Size) {
         if (!this.playbackData[outputId]) return
 
         // if (!this.alerted) {
@@ -54,13 +55,13 @@ export class BlackmagicSender {
         //     this.alerted = true
         // }
 
-        videoFrame = this.convertVideoFrameFormat(videoFrame, this.playbackData[outputId].pixelFormat)
+        videoFrame = this.convertVideoFrameFormat(videoFrame, this.playbackData[outputId].pixelFormat, size)
 
         this.playbackData[outputId].playback.schedule({
             video: videoFrame, // Video frame data. Decklink SDK docs have byte packing
             // audio: audioFrame, // Frames-worth of interleaved audio data
             sampleFrameCount: 1920, // Optional - otherwise based on buffer length
-            time: this.playbackData[outputId].scheduledFrames * framerate, // Relative to timescale in playback object
+            time: this.playbackData[outputId].scheduledFrames * framerate // Relative to timescale in playback object
             // Hint: Use 1001 for fractional framerates like 59.94
         })
 
@@ -81,19 +82,27 @@ export class BlackmagicSender {
         }
     }
 
-    static convertVideoFrameFormat(frame: Buffer, format: string) {
+    static convertVideoFrameFormat(frame: Buffer, format: string, size: Size) {
         // bmdPixelFormats: YUV, ARGB, BGRA, RGB, RGBLE, RGBXLE, RGBX
 
         /*  convert from ARGB (Electron/Chromium on big endian CPU)
         or from BGRA on little endian CPU
         to the currently selected Blackmagic pixel format */
 
+        // WIP 10/12 bit
+        // WIP 420 rendering
+
         if (format.includes("ARGB")) {
             if (this.devicePixelMode === "BGRA") ImageBufferConverter.BGRAtoARGB(frame)
             // do nothing if it's already ARGB
         } else if (format.includes("YUV")) {
-            if (this.devicePixelMode === "BGRA") frame = ImageBufferConverter.BGRAtoYUV(frame)
-            else frame = ImageBufferConverter.ARGBtoYUV(frame)
+            if (format.includes("10")) {
+                if (this.devicePixelMode === "BGRA") frame = ImageBufferConverter10Bit.BGRAtoYUV(frame, size)
+                else frame = ImageBufferConverter10Bit.ARGBtoYUV(frame, size)
+            } else {
+                if (this.devicePixelMode === "BGRA") frame = ImageBufferConverter.BGRAtoYUV(frame, size)
+                else frame = ImageBufferConverter.ARGBtoYUV(frame, size)
+            }
         } else if (format.includes("BGRA")) {
             if (this.devicePixelMode === "ARGB") util.ImageBufferAdjustment.ARGBtoBGRA(frame)
             // do nothing if it's already BGRA

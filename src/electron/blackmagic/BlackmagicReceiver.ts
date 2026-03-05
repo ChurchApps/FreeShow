@@ -1,3 +1,4 @@
+import { Size } from "electron"
 import macadam, { CaptureChannel, CaptureFrame } from "macadam"
 import { toApp } from ".."
 import { BLACKMAGIC } from "../../types/Channels"
@@ -33,7 +34,7 @@ export class BlackmagicReceiver {
             pixelFormat: BlackmagicManager.getPixelFormat(pixelFormat),
             channels: audioChannels,
             sampleRate: macadam.bmdAudioSampleRate48kHz,
-            sampleType: macadam.bmdAudioSampleType16bitInteger,
+            sampleType: macadam.bmdAudioSampleType16bitInteger
         }))
     }
 
@@ -49,21 +50,24 @@ export class BlackmagicReceiver {
         let frameRate = (receiver.frameRate[1] || 30000) / (receiver.frameRate[0] || 1001)
 
         let gettingFrame: boolean = false
-        this.BMD_RECEIVERS[deviceId].interval = setInterval(async () => {
-            if (gettingFrame) return
-            gettingFrame = true
+        this.BMD_RECEIVERS[deviceId].interval = setInterval(
+            async () => {
+                if (gettingFrame) return
+                gettingFrame = true
 
-            try {
-                if (!receiver) return this.stopReceiver({ id: source.id, outputId })
-                let frame = await receiver.frame()
-                this.sendFrame(source.id, frame)
-            } catch (err) {
-                console.error(err)
-                this.stopReceiver({ id: source.id, outputId })
-            }
+                try {
+                    if (!receiver) return this.stopReceiver({ id: source.id, outputId })
+                    let frame = await receiver.frame()
+                    this.sendFrame(source.id, frame, { width: receiver.width, height: receiver.height })
+                } catch (err) {
+                    console.error(err)
+                    this.stopReceiver({ id: source.id, outputId })
+                }
 
-            gettingFrame = false
-        }, Math.round(1000 / frameRate))
+                gettingFrame = false
+            },
+            Math.round(1000 / frameRate)
+        )
     }
 
     static async captureFrame({ source }: any) {
@@ -73,7 +77,7 @@ export class BlackmagicReceiver {
 
         try {
             let frame = await receiver.frame()
-            this.sendFrame(source.id, frame)
+            this.sendFrame(source.id, frame, { width: receiver.width, height: receiver.height })
         } catch (err) {
             console.error(err)
             this.stopReceiver({ id: source.id })
@@ -81,7 +85,7 @@ export class BlackmagicReceiver {
     }
 
     static lastFrameTime: number = 0
-    static sendFrame(id: string, frame: CaptureFrame) {
+    static sendFrame(id: string, frame: CaptureFrame, size: Size) {
         if (!frame) return
 
         // lagging if less than 10 fps
@@ -92,7 +96,7 @@ export class BlackmagicReceiver {
         // let displayMode = this.BMD_RECEIVERS[id].displayMode
         let pixelFormat = this.BMD_RECEIVERS[id].pixelFormat
 
-        frame.video.data = this.convertVideoFrameFormat(frame.video.data, pixelFormat)
+        frame.video.data = this.convertVideoFrameFormat(frame.video.data, pixelFormat, size)
 
         let msg = { channel: "RECEIVE_STREAM", data: { id, frame, time: Date.now() } }
         toApp(BLACKMAGIC, msg)
@@ -104,7 +108,7 @@ export class BlackmagicReceiver {
         this.lastFrameTime = Date.now()
     }
 
-    static convertVideoFrameFormat(frame: Buffer, format: string) {
+    static convertVideoFrameFormat(frame: Buffer, format: string, size: Size) {
         // bmdPixelFormats: YUV, ARGB, BGRA, RGB, RGBLE, RGBXLE, RGBX
 
         /*  convert from current input pixel format to RGBA (Web canvas)  */
@@ -112,7 +116,7 @@ export class BlackmagicReceiver {
         if (format.includes("ARGB")) {
             util.ImageBufferAdjustment.ARGBtoRGBA(frame)
         } else if (format.includes("YUV")) {
-            frame = InputImageBufferConverter.YUVtoRGBA(frame)
+            frame = InputImageBufferConverter.YUVtoRGBA(frame, size)
         } else if (format.includes("BGRA")) {
             util.ImageBufferAdjustment.BGRAtoRGBA(frame)
         } else if (format.includes("RGBXLE")) {

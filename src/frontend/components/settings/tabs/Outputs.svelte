@@ -223,7 +223,7 @@
 
                 let displayModes = device.data?.displayModes || []
                 updateBlackmagicData(displayModes, "displayModes")
-                if (displayModes.length) {
+                if (displayModes.length && !newData.displayMode) {
                     // try setting to "preferred" modes, or set to first available
                     updateBlackmagicData(displayModes.find((a) => a.name === "1080i59.94" || a.name === "1080p29.97")?.name || displayModes[0]?.name, "displayMode")
                 }
@@ -247,11 +247,11 @@
 
                 // allow data to update first
                 setTimeout(() => {
-                    send(OUTPUT, ["SET_VALUE"], { id: currentOutput?.id, key: "blackmagic", value: currentOutput })
+                    if (newData.displayMode && newData.pixelFormat) send(OUTPUT, ["SET_VALUE"], { id: currentOutput?.id, key: "blackmagic", value: currentOutput })
                 })
             } else if (key === "pixelFormat") {
                 setTimeout(() => {
-                    send(OUTPUT, ["SET_VALUE"], { id: currentOutput?.id, key: "blackmagic", value: currentOutput })
+                    if (newData.displayMode && newData.pixelFormat) send(OUTPUT, ["SET_VALUE"], { id: currentOutput?.id, key: "blackmagic", value: currentOutput })
                 })
             }
         })
