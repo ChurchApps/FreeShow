@@ -201,7 +201,7 @@
 {#if !$providerConnections.planningcenter && (!$providerConnections.churchApps || cloudOnly.churchApps) && !$providerConnections.amazinglife}
     <!-- No provider connected - show connection options -->
     <div class="tapping" on:click={tap}>
-        <Title label="Content Provider" icon="list" />
+        <Title label="settings.content_provider" icon="list" />
     </div>
 
     <InputRow>
