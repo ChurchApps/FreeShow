@@ -38,40 +38,72 @@ export class ImageBufferConverter {
     //     }
     //     return newData
     // }
-    /*  convert from BGRA to YUV 420  */
+    /*  convert from BGRA to YUV 422 packed (UYVY format)  */
     static BGRAtoYUV(data: Buffer, { width, height }: Size) {
-        const ySize = width * height // Size of Y plane
-        const uSize = (width / 2) * (height / 2) // Size of U plane (half width, half height)
-        const vSize = uSize // Size of V plane (same as U)
-        const newData = Buffer.alloc(ySize + uSize + vSize)
+        // YUV422 packed format: each 2 pixels = 4 bytes (U Y V Y)
+        const newData = Buffer.alloc(width * height * 2)
+        let outIndex = 0
 
-        let yIndex = 0 // Index for Y plane
-        let uIndex = ySize // Index for U plane
-        let vIndex = ySize + uSize // Index for V plane
+        // Validate input buffer size (should be width * height * 4 for BGRA)
+        const expectedInputSize = width * height * 4
+        if (data.length < expectedInputSize) {
+            console.warn(`Input buffer too small: ${data.length} < ${expectedInputSize}. Frame may be truncated.`)
+        }
 
-        // Loop through each pixel
+        // Process pairs of pixels to create UYVY format
         for (let y = 0; y < height; y++) {
-            for (let x = 0; x < width; x++) {
-                const i = (y * width + x) * 4 // BGRA index
-                const B = data[i]
-                const G = data[i + 1]
-                const R = data[i + 2]
+            for (let x = 0; x < width; x += 2) {
+                // Get first pixel (left)
+                const i1 = (y * width + x) * 4
 
-                // YUV conversion formulas
-                const Y = 0.299 * R + 0.587 * G + 0.114 * B
-                const U = -0.14713 * R - 0.28886 * G + 0.436 * B + 128
-                const V = 0.615 * R - 0.51499 * G - 0.10001 * B + 128
-
-                // Clamp Y, U, V to 0-255
-                const clampedY = Math.min(255, Math.max(0, Math.round(Y)))
-                newData[yIndex++] = clampedY // Store Y value
-
-                // Store U and V values at the appropriate indices for YUV420
-                if (x % 2 === 0 && y % 2 === 0) {
-                    // Only store U and V for the top-left pixel of each 2x2 block
-                    newData[uIndex++] = Math.min(255, Math.max(0, Math.round(U))) // Store U
-                    newData[vIndex++] = Math.min(255, Math.max(0, Math.round(V))) // Store V
+                // Bounds check
+                if (i1 + 4 > data.length) {
+                    console.warn(`Buffer overflow at pixel (${x}, ${y}): index ${i1} + 4 > ${data.length}`)
+                    break
                 }
+
+                const B1 = data[i1]
+                const G1 = data[i1 + 1]
+                const R1 = data[i1 + 2]
+                // const A1 = data[i1 + 3] // Alpha, not used
+
+                // Get second pixel (right), or use first pixel if at width boundary
+                let B2 = B1,
+                    G2 = G1,
+                    R2 = R1
+                if (x + 1 < width) {
+                    const i2 = (y * width + x + 1) * 4
+                    if (i2 + 4 <= data.length) {
+                        B2 = data[i2]
+                        G2 = data[i2 + 1]
+                        R2 = data[i2 + 2]
+                    }
+                }
+
+                // Calculate YUV for both pixels using standard BT.601 coefficients
+                const Y1 = 0.299 * R1 + 0.587 * G1 + 0.114 * B1
+                const U1 = (B1 - Y1) / 1.772 + 128
+                const V1 = (R1 - Y1) / 1.402 + 128
+
+                const Y2 = 0.299 * R2 + 0.587 * G2 + 0.114 * B2
+                const U2 = (B2 - Y2) / 1.772 + 128
+                const V2 = (R2 - Y2) / 1.402 + 128
+
+                // Average U and V for the pair (horizontal chroma subsampling)
+                const U = Math.round((U1 + U2) / 2)
+                const V = Math.round((V1 + V2) / 2)
+
+                // Clamp values to 0-255
+                const clampedY1 = Math.min(255, Math.max(0, Math.round(Y1)))
+                const clampedY2 = Math.min(255, Math.max(0, Math.round(Y2)))
+                const clampedU = Math.min(255, Math.max(0, U))
+                const clampedV = Math.min(255, Math.max(0, V))
+
+                // Write UYVY format: U Y V Y
+                newData[outIndex++] = clampedU
+                newData[outIndex++] = clampedY1
+                newData[outIndex++] = clampedV
+                newData[outIndex++] = clampedY2
             }
         }
 
@@ -99,52 +131,75 @@ export class ImageBufferConverter {
     //     }
     //     return newData
     // }
-    /*  convert from ARGB to YUV 420  */
+    /*  convert from ARGB to YUV 422 packed (UYVY format)  */
     static ARGBtoYUV(data: Buffer, { width, height }: Size) {
-        const numPixels = width * height
+        // YUV422 packed format: each 2 pixels = 4 bytes (U Y V Y)
+        const newData = Buffer.alloc(width * height * 2)
+        let outIndex = 0
 
-        // Create output buffers
-        const yPlane = Buffer.alloc(numPixels) // Y plane
-        const uPlane = Buffer.alloc(numPixels / 4) // U plane (subsampled)
-        const vPlane = Buffer.alloc(numPixels / 4) // V plane (subsampled)
+        // Validate input buffer size (should be width * height * 4 for ARGB)
+        const expectedInputSize = width * height * 4
+        if (data.length < expectedInputSize) {
+            console.warn(`Input buffer too small: ${data.length} < ${expectedInputSize}. Frame may be truncated.`)
+        }
 
-        let yIndex = 0
-        let uvIndex = 0
+        // Process pairs of pixels to create UYVY format
+        for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x += 2) {
+                // Get first pixel (left) - ARGB format
+                const i1 = (y * width + x) * 4
 
-        for (let i = 0; i < data.length; i += 4) {
-            const R = data[i + 1] // Red channel
-            const G = data[i + 2] // Green channel
-            const B = data[i + 3] // Blue channel
+                // Bounds check
+                if (i1 + 4 > data.length) {
+                    console.warn(`Buffer overflow at pixel (${x}, ${y}): index ${i1} + 4 > ${data.length}`)
+                    break
+                }
 
-            // YUV conversion formulas
-            const Y = 0.299 * R + 0.587 * G + 0.114 * B
-            const U = -0.14713 * R - 0.28886 * G + 0.436 * B + 128
-            const V = 0.615 * R - 0.51499 * G - 0.10001 * B + 128
+                const R1 = data[i1 + 1]
+                const G1 = data[i1 + 2]
+                const B1 = data[i1 + 3]
+                // const A1 = data[i1] // Alpha, not used
 
-            // Clamp Y, U, V to 0-255
-            const YClamped = Math.min(255, Math.max(0, Math.round(Y)))
-            const UClamped = Math.min(255, Math.max(0, Math.round(U)))
-            const VClamped = Math.min(255, Math.max(0, Math.round(V)))
+                // Get second pixel (right), or use first pixel if at width boundary
+                let R2 = R1,
+                    G2 = G1,
+                    B2 = B1
+                if (x + 1 < width) {
+                    const i2 = (y * width + x + 1) * 4
+                    if (i2 + 4 <= data.length) {
+                        R2 = data[i2 + 1]
+                        G2 = data[i2 + 2]
+                        B2 = data[i2 + 3]
+                    }
+                }
 
-            // Store Y value
-            yPlane[yIndex++] = YClamped
+                // Calculate YUV for both pixels using standard BT.601 coefficients
+                const Y1 = 0.299 * R1 + 0.587 * G1 + 0.114 * B1
+                const U1 = (B1 - Y1) / 1.772 + 128
+                const V1 = (R1 - Y1) / 1.402 + 128
 
-            // Store U and V values using 2x2 subsampling
-            if ((i / 4) % 2 === 0 && (yIndex - 1) % 2 === 0) {
-                // Average the U and V values for subsampling
-                const uAvg = (UClamped + (i + 4 < data.length ? Math.min(255, Math.max(0, Math.round(-0.14713 * data[i + 5] - 0.28886 * data[i + 6] + 0.436 * data[i + 7] + 128))) : 128)) / 2
-                const vAvg = (VClamped + (i + 4 < data.length ? Math.min(255, Math.max(0, Math.round(0.615 * data[i + 5] - 0.51499 * data[i + 6] - 0.10001 * data[i + 7] + 128))) : 128)) / 2
+                const Y2 = 0.299 * R2 + 0.587 * G2 + 0.114 * B2
+                const U2 = (B2 - Y2) / 1.772 + 128
+                const V2 = (R2 - Y2) / 1.402 + 128
 
-                uPlane[uvIndex] = Math.round(uAvg)
-                vPlane[uvIndex] = Math.round(vAvg)
-                uvIndex++
+                // Average U and V for the pair (horizontal chroma subsampling)
+                const U = Math.round((U1 + U2) / 2)
+                const V = Math.round((V1 + V2) / 2)
+
+                // Clamp values to 0-255
+                const clampedY1 = Math.min(255, Math.max(0, Math.round(Y1)))
+                const clampedY2 = Math.min(255, Math.max(0, Math.round(Y2)))
+                const clampedU = Math.min(255, Math.max(0, U))
+                const clampedV = Math.min(255, Math.max(0, V))
+
+                // Write UYVY format: U Y V Y
+                newData[outIndex++] = clampedU
+                newData[outIndex++] = clampedY1
+                newData[outIndex++] = clampedV
+                newData[outIndex++] = clampedY2
             }
         }
 
-        // Combine Y, U, V planes into a single buffer (optional)
-        // You can choose to return separate planes or a combined one based on your requirements.
-
-        const newData = Buffer.concat([yPlane, uPlane, vPlane])
         return newData
     }
 
@@ -178,30 +233,26 @@ export class ImageBufferConverter {
 
     /*  convert from BGRA to RGBLE  */
     static BGRAtoRGBLE(data: Buffer) {
-        const newData = new Uint8ClampedArray((data.length / 4) * 3)
-        for (let i = 0, j = 0; i < data.length; i += 4, j += 3) {
-            const B = data[i]
-            const G = data[i + 1]
-            const R = data[i + 2]
-
-            newData[j] = R
-            newData[j + 1] = G
-            newData[j + 2] = B
+        const newData = Buffer.alloc((data.length / 4) * 3)
+        let j = 0
+        for (let i = 0; i < data.length; i += 4) {
+            newData[j++] = data[i + 2] // R
+            newData[j++] = data[i + 1] // G
+            newData[j++] = data[i] // B
         }
-        return Buffer.from(newData)
+        return newData
     }
 
     /*  convert from ARGB to RGBLE  */
     static ARGBtoRGBLE(data: Buffer) {
-        const newData = []
+        const newData = Buffer.alloc((data.length / 4) * 3)
+        let j = 0
         for (let i = 0; i < data.length; i += 4) {
-            const R = data[i + 1]
-            const G = data[i + 2]
-            const B = data[i + 3]
-
-            newData.push(R, G, B)
+            newData[j++] = data[i + 1] // R
+            newData[j++] = data[i + 2] // G
+            newData[j++] = data[i + 3] // B
         }
-        return Buffer.from(newData)
+        return newData
     }
 
     /*  convert from ARGB to RGBX  */
@@ -220,133 +271,165 @@ export class ImageBufferConverter {
 
     /*  convert from BGRA to RGB  */
     static BGRAtoRGB(data: Buffer) {
-        const newData = []
+        const newData = Buffer.alloc((data.length / 4) * 3)
+        let j = 0
         for (let i = 0; i < data.length; i += 4) {
-            const B = data[i]
-            const G = data[i + 1]
-            const R = data[i + 2]
-
-            newData.push(R, G, B)
+            newData[j++] = data[i + 2] // R
+            newData[j++] = data[i + 1] // G
+            newData[j++] = data[i] // B
         }
-        return Buffer.from(newData)
+        return newData
     }
 
     /*  convert from ARGB to RGB  */
     static ARGBtoRGB(data: Buffer) {
-        const newData = []
+        const newData = Buffer.alloc((data.length / 4) * 3)
+        let j = 0
         for (let i = 0; i < data.length; i += 4) {
-            const R = data[i + 1]
-            const G = data[i + 2]
-            const B = data[i + 3]
-
-            newData.push(R, G, B)
+            newData[j++] = data[i + 1] // R
+            newData[j++] = data[i + 2] // G
+            newData[j++] = data[i + 3] // B
         }
-        return Buffer.from(newData)
+        return newData
     }
 }
 
 // 10 Bit
 export class ImageBufferConverter10Bit {
+    /*  convert from BGRA to v210 format (10-bit YUV422 packed) */
     static BGRAtoYUV(data: Buffer, { width, height }: Size) {
-        const ySize = width * height // Size of Y plane
-        const uSize = (width / 2) * (height / 2) // Size of U plane (half width, half height)
-        const vSize = uSize // Size of V plane (same as U)
-        const newData = Buffer.alloc(ySize * 2 + uSize * 2 + vSize * 2) // Allocate 2 bytes for each channel
+        // v210 format: 16 bytes per 6 pixels (10-bit YUV422 packed into 32-bit words)
+        // Each 128-bit block contains: U0 Y0 V0 Y1 U2 Y2 V2 Y3 U4 Y4 V4 Y5
+        // Packed as: [V0:Y0:U0] [Y2:U2:Y1] [U4:Y3:V2] [Y5:V4:Y4] (little-endian 32-bit words)
+        const totalPixels = width * height
+        const numGroups = Math.floor(totalPixels / 6)
+        const remainder = totalPixels % 6
+        const newData = Buffer.alloc(numGroups * 16 + (remainder > 0 ? 16 : 0))
+        let outIndex = 0
 
-        let yIndex = 0 // Index for Y plane
-        let uIndex = ySize * 2 // Index for U plane (shifted for 10 bits)
-        let vIndex = ySize * 2 + uSize * 2 // Index for V plane
-
-        // Loop through each pixel
         for (let y = 0; y < height; y++) {
-            for (let x = 0; x < width; x++) {
-                const i = (y * width + x) * 4 // BGRA index
-                const B = data[i] // Blue
-                const G = data[i + 1] // Green
-                const R = data[i + 2] // Red
+            for (let x = 0; x < width; x += 6) {
+                // Process 6 pixels at a time
+                const pixels: { y: number; u: number; v: number }[] = []
 
-                // YUV conversion formulas
-                const Y = 0.299 * R + 0.587 * G + 0.114 * B
-                const U = -0.14713 * R - 0.28886 * G + 0.436 * B + 128
-                const V = 0.615 * R - 0.51499 * G - 0.10001 * B + 128
+                for (let i = 0; i < 6 && x + i < width; i++) {
+                    const idx = (y * width + x + i) * 4
+                    const B = data[idx]
+                    const G = data[idx + 1]
+                    const R = data[idx + 2]
 
-                // Scale Y, U, V to 10 bits (0-1023)
-                const scaledY = Math.round(Y * 4) // Scale Y from 0-255 to 0-1020 (approx)
-                const scaledU = Math.min(1023, Math.max(0, Math.round(U * 4))) // Scale U
-                const scaledV = Math.min(1023, Math.max(0, Math.round(V * 4))) // Scale V
+                    // Convert to YUV (BT.601) and scale to 10-bit (0-1023)
+                    const Y = (0.299 * R + 0.587 * G + 0.114 * B) * 4
+                    const U = ((B - Y / 4) / 1.772 + 128) * 4
+                    const V = ((R - Y / 4) / 1.402 + 128) * 4
 
-                // Store Y value
-                newData[yIndex++] = (scaledY >> 2) & 0xff // Store high byte
-                newData[yIndex++] = (scaledY & 0x03) << 6 // Store low bits
-
-                // Store U and V values at the appropriate indices for YUV420
-                if (x % 2 === 0 && y % 2 === 0) {
-                    // Only store U and V for the top-left pixel of each 2x2 block
-                    newData[uIndex++] = (scaledU >> 2) & 0xff // Store high byte
-                    newData[uIndex++] = (scaledU & 0x03) << 6 // Store low bits
-
-                    newData[vIndex++] = (scaledV >> 2) & 0xff // Store high byte
-                    newData[vIndex++] = (scaledV & 0x03) << 6 // Store low bits
+                    pixels.push({
+                        y: Math.min(1023, Math.max(0, Math.round(Y))),
+                        u: Math.min(1023, Math.max(0, Math.round(U))),
+                        v: Math.min(1023, Math.max(0, Math.round(V)))
+                    })
                 }
+
+                // Pad with black if less than 6 pixels
+                while (pixels.length < 6) {
+                    pixels.push({ y: 64, u: 512, v: 512 })
+                }
+
+                // Average chroma for 4:2:2 subsampling
+                const u0 = Math.round((pixels[0].u + pixels[1].u) / 2)
+                const u2 = Math.round((pixels[2].u + pixels[3].u) / 2)
+                const u4 = Math.round((pixels[4].u + pixels[5].u) / 2)
+                const v0 = Math.round((pixels[0].v + pixels[1].v) / 2)
+                const v2 = Math.round((pixels[2].v + pixels[3].v) / 2)
+                const v4 = Math.round((pixels[4].v + pixels[5].v) / 2)
+
+                // Pack into v210 format (4 × 32-bit little-endian words)
+                // Word 0: [31:30]=0 [29:20]=V0 [19:10]=Y0 [9:0]=U0
+                const word0 = (v0 << 20) | (pixels[0].y << 10) | u0
+                newData.writeUInt32LE(word0, outIndex)
+
+                // Word 1: [31:30]=0 [29:20]=Y2 [19:10]=U2 [9:0]=Y1
+                const word1 = (pixels[2].y << 20) | (u2 << 10) | pixels[1].y
+                newData.writeUInt32LE(word1, outIndex + 4)
+
+                // Word 2: [31:30]=0 [29:20]=U4 [19:10]=Y3 [9:0]=V2
+                const word2 = (u4 << 20) | (pixels[3].y << 10) | v2
+                newData.writeUInt32LE(word2, outIndex + 8)
+
+                // Word 3: [31:30]=0 [29:20]=Y5 [19:10]=V4 [9:0]=Y4
+                const word3 = (pixels[5].y << 20) | (v4 << 10) | pixels[4].y
+                newData.writeUInt32LE(word3, outIndex + 12)
+
+                outIndex += 16
             }
         }
 
         return newData
     }
 
+    /*  convert from ARGB to v210 format (10-bit YUV422 packed) */
     static ARGBtoYUV(data: Buffer, { width, height }: Size) {
-        const numPixels = width * height
+        // v210 format: 16 bytes per 6 pixels
+        const totalPixels = width * height
+        const numGroups = Math.floor(totalPixels / 6)
+        const remainder = totalPixels % 6
+        const newData = Buffer.alloc(numGroups * 16 + (remainder > 0 ? 16 : 0))
+        let outIndex = 0
 
-        // Create output buffers
-        const yPlane = Buffer.alloc(numPixels * 2) // Y plane (10 bits = 2 bytes per pixel)
-        const uPlane = Buffer.alloc((numPixels / 4) * 2) // U plane (10 bits = 2 bytes per pixel, subsampled)
-        const vPlane = Buffer.alloc((numPixels / 4) * 2) // V plane (10 bits = 2 bytes per pixel, subsampled)
+        for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x += 6) {
+                // Process 6 pixels at a time
+                const pixels: { y: number; u: number; v: number }[] = []
 
-        let yIndex = 0
-        let uvIndex = 0
+                for (let i = 0; i < 6 && x + i < width; i++) {
+                    const idx = (y * width + x + i) * 4
+                    // ARGB format: A R G B
+                    const R = data[idx + 1]
+                    const G = data[idx + 2]
+                    const B = data[idx + 3]
 
-        for (let i = 0; i < data.length; i += 4) {
-            const R = data[i + 1] // Red channel
-            const G = data[i + 2] // Green channel
-            const B = data[i + 3] // Blue channel
+                    // Convert to YUV (BT.601) and scale to 10-bit
+                    const Y = (0.299 * R + 0.587 * G + 0.114 * B) * 4
+                    const U = ((B - Y / 4) / 1.772 + 128) * 4
+                    const V = ((R - Y / 4) / 1.402 + 128) * 4
 
-            // YUV conversion formulas
-            const Y = 0.299 * R + 0.587 * G + 0.114 * B
-            const U = -0.14713 * R - 0.28886 * G + 0.436 * B + 128
-            const V = 0.615 * R - 0.51499 * G - 0.10001 * B + 128
+                    pixels.push({
+                        y: Math.min(1023, Math.max(0, Math.round(Y))),
+                        u: Math.min(1023, Math.max(0, Math.round(U))),
+                        v: Math.min(1023, Math.max(0, Math.round(V)))
+                    })
+                }
 
-            // Scale Y, U, V to 10 bits (0-1023)
-            const Y10Bit = Math.min(1023, Math.max(0, Math.round(Y * 4))) // Scale Y to 0-1020
-            const U10Bit = Math.min(1023, Math.max(0, Math.round(U * 4))) // Scale U
-            const V10Bit = Math.min(1023, Math.max(0, Math.round(V * 4))) // Scale V
+                // Pad with black if less than 6 pixels
+                while (pixels.length < 6) {
+                    pixels.push({ y: 64, u: 512, v: 512 })
+                }
 
-            // Store Y value in 10-bit format
-            yPlane[yIndex++] = (Y10Bit >> 2) & 0xff // Store high byte
-            yPlane[yIndex++] = (Y10Bit & 0x03) << 6 // Store low bits
+                // Average chroma for 4:2:2 subsampling
+                const u0 = Math.round((pixels[0].u + pixels[1].u) / 2)
+                const u2 = Math.round((pixels[2].u + pixels[3].u) / 2)
+                const u4 = Math.round((pixels[4].u + pixels[5].u) / 2)
+                const v0 = Math.round((pixels[0].v + pixels[1].v) / 2)
+                const v2 = Math.round((pixels[2].v + pixels[3].v) / 2)
+                const v4 = Math.round((pixels[4].v + pixels[5].v) / 2)
 
-            // Store U and V values using 2x2 subsampling
-            if ((i / 4) % 2 === 0 && (yIndex - 1) % 2 === 0) {
-                // Average the U and V values for subsampling
-                const nextIndex = i + 4
-                const nextU = nextIndex < data.length ? -0.14713 * data[nextIndex + 1] - 0.28886 * data[nextIndex + 2] + 0.436 * data[nextIndex + 3] + 128 : 128
-                const nextV = nextIndex < data.length ? 0.615 * data[nextIndex + 1] - 0.51499 * data[nextIndex + 2] - 0.10001 * data[nextIndex + 3] + 128 : 128
+                // Pack into v210 format (4 × 32-bit little-endian words)
+                const word0 = (v0 << 20) | (pixels[0].y << 10) | u0
+                newData.writeUInt32LE(word0, outIndex)
 
-                const uAvg = (U10Bit + Math.min(1023, Math.max(0, Math.round(nextU * 4)))) / 2
-                const vAvg = (V10Bit + Math.min(1023, Math.max(0, Math.round(nextV * 4)))) / 2
+                const word1 = (pixels[2].y << 20) | (u2 << 10) | pixels[1].y
+                newData.writeUInt32LE(word1, outIndex + 4)
 
-                const u10Bit = Math.round(uAvg)
-                const v10Bit = Math.round(vAvg)
+                const word2 = (u4 << 20) | (pixels[3].y << 10) | v2
+                newData.writeUInt32LE(word2, outIndex + 8)
 
-                uPlane[uvIndex++] = (u10Bit >> 2) & 0xff // Store high byte for U
-                uPlane[uvIndex++] = (u10Bit & 0x03) << 6 // Store low bits for U
+                const word3 = (pixels[5].y << 20) | (v4 << 10) | pixels[4].y
+                newData.writeUInt32LE(word3, outIndex + 12)
 
-                vPlane[uvIndex++] = (v10Bit >> 2) & 0xff // Store high byte for V
-                vPlane[uvIndex++] = (v10Bit & 0x03) << 6 // Store low bits for V
+                outIndex += 16
             }
         }
 
-        // Combine Y, U, V planes into a single buffer (optional)
-        const newData = Buffer.concat([yPlane, uPlane, vPlane])
         return newData
     }
 }
@@ -414,74 +497,52 @@ export class InputImageBufferConverter {
 
     /*  convert from RGBXLE to RGBA  */
     static RGBXLEtoRGBA(data: Buffer) {
-        const newData = []
+        const newData = Buffer.alloc((data.length / 3) * 4)
+        let j = 0
         for (let i = 0; i < data.length; i += 3) {
-            const R = data[i]
-            const G = data[i + 1]
-            const B = data[i + 2]
-
-            newData.push(
-                R,
-                G,
-                B,
-                255 // Alpha channel
-            )
+            newData[j++] = data[i] // R
+            newData[j++] = data[i + 1] // G
+            newData[j++] = data[i + 2] // B
+            newData[j++] = 255 // A
         }
-        return Buffer.from(newData)
+        return newData
     }
 
     /*  convert from RGBLE to RGBA  */
     static RGBLEtoRGBA(data: Buffer) {
-        const newData = []
+        const newData = Buffer.alloc((data.length / 3) * 4)
+        let j = 0
         for (let i = 0; i < data.length; i += 3) {
-            const R = data[i]
-            const G = data[i + 1]
-            const B = data[i + 2]
-
-            newData.push(
-                R,
-                G,
-                B,
-                255 // Alpha channel
-            )
+            newData[j++] = data[i] // R
+            newData[j++] = data[i + 1] // G
+            newData[j++] = data[i + 2] // B
+            newData[j++] = 255 // A
         }
-        return Buffer.from(newData)
+        return newData
     }
 
     /*  convert from RGBX to RGBA  */
     static RGBXtoRGBA(data: Buffer) {
-        const newData = []
+        const newData = Buffer.alloc(data.length)
         for (let i = 0; i < data.length; i += 4) {
-            const R = data[i]
-            const G = data[i + 1]
-            const B = data[i + 2]
-            // const X = data[i + 3]; // X is not used
-
-            newData.push(
-                R,
-                G,
-                B,
-                255 // Alpha channel
-            )
+            newData[i] = data[i] // R
+            newData[i + 1] = data[i + 1] // G
+            newData[i + 2] = data[i + 2] // B
+            newData[i + 3] = 255 // A (replacing X)
         }
-        return Buffer.from(newData)
+        return newData
     }
 
     /*  convert from RGB to RGBA  */
     static RGBtoRGBA(data: Buffer) {
-        const newData = []
+        const newData = Buffer.alloc((data.length / 3) * 4)
+        let j = 0
         for (let i = 0; i < data.length; i += 3) {
-            const R = data[i]
-            const G = data[i + 1]
-            const B = data[i + 2]
-
-            newData.push(
-                R,
-                G,
-                B,
-                255 // Alpha channel
-            )
+            newData[j++] = data[i] // R
+            newData[j++] = data[i + 1] // G
+            newData[j++] = data[i + 2] // B
+            newData[j++] = 255 // A
         }
-        return Buffer.from(newData)
+        return newData
     }
 }

@@ -176,13 +176,8 @@ export class CaptureTransmitter {
     static sendBufferToBlackmagic(captureId: string, image: NativeImage) {
         if (!image) return
         const buffer = image.toBitmap()
-        // const size = image.getSize()
         let framerate = OutputHelper.getOutput(captureId)?.captureOptions?.framerates?.blackmagic
         if (!framerate) return
-        // WIP blackmagic audio
-
-        // output window size should be the same as target size!
-        // const size = BlackmagicSender.getTargetDimensions(captureId) // image.getSize()
 
         BlackmagicSender.scheduleFrame(captureId, buffer, null, framerate)
     }

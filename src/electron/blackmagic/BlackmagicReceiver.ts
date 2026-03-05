@@ -1,11 +1,19 @@
 import { Size } from "electron"
-import macadam, { CaptureChannel, CaptureFrame } from "macadam"
+import type { CaptureChannel, CaptureFrame } from "macadam"
 import { toApp } from ".."
 import { BLACKMAGIC } from "../../types/Channels"
 import util from "../ndi/vingester-util"
 import { OutputHelper } from "../output/OutputHelper"
 import { BlackmagicManager } from "./BlackmagicManager"
 import { InputImageBufferConverter } from "./ImageBufferConverter"
+
+// Dynamically require macadam to handle missing dependency gracefully
+let macadam: any = null
+try {
+    macadam = require("macadam")
+} catch (err) {
+    console.warn("Blackmagic macadam module not available:", err instanceof Error ? err.message : String(err))
+}
 
 export class BlackmagicReceiver {
     static BMD_RECEIVERS: { [key: string]: { receiver?: CaptureChannel; interval?: any; displayMode: string; pixelFormat: string } } = {}
@@ -14,6 +22,12 @@ export class BlackmagicReceiver {
 
     // set audioChannels to 0 to disable audio
     static async initialize(deviceId: string, audioChannels: number = 2) {
+        // Check if macadam is available
+        if (!macadam) {
+            console.error("Cannot initialize Blackmagic receiver: macadam module not available")
+            return
+        }
+
         if (this.BMD_RECEIVERS[deviceId]?.receiver) return this.BMD_RECEIVERS[deviceId].receiver
 
         let deviceIndex = BlackmagicManager.getIndexById(deviceId)

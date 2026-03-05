@@ -9,13 +9,10 @@
     import { newToast } from "../../../utils/common"
     import { translateText } from "../../../utils/language"
     import { destroy, receive, send } from "../../../utils/request"
-    import T from "../../helpers/T.svelte"
     import { clone, keysToID, sortByName, sortObject } from "../../helpers/array"
     import { refreshOut, toggleOutput } from "../../helpers/output"
     import InputRow from "../../input/InputRow.svelte"
     import Title from "../../input/Title.svelte"
-    import CombinedInput from "../../inputs/CombinedInput.svelte"
-    import Dropdown from "../../inputs/Dropdown.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialDropdown from "../../inputs/MaterialDropdown.svelte"
     import MaterialPopupButton from "../../inputs/MaterialPopupButton.svelte"
@@ -72,6 +69,11 @@
                 // send(BLACKMAGIC, ["GET_DEVICES"])
                 updateOutput("transparent", true)
                 updateOutput("invisible", true)
+
+                // Set default resolution (backend will adjust based on display mode)
+                const blackmagicBounds = { ...currentOutput?.bounds, width: 1920, height: 1080 }
+                updateOutput("bounds", blackmagicBounds)
+                updateOutput("screen", null)
             } else {
                 send(BLACKMAGIC, ["STOP_SENDER"], { id: outputId })
             }
@@ -267,8 +269,8 @@
     onDestroy(() => destroy(BLACKMAGIC, listenerId))
     const receiveBMD = {
         GET_DEVICES: (data) => {
-            blackmagicDevices = JSON.parse(data).map((a) => ({ id: a.deviceHandle, name: a.displayName || a.modelName, data: { displayModes: a.inputDisplayModes } }))
-            if (blackmagicDevices.length && !currentOutput?.blackmagicData?.deviceId) updateBlackmagicData(blackmagicDevices[0].id, "deviceId")
+            blackmagicDevices = JSON.parse(data).map((a) => ({ id: a.deviceHandle, name: a.displayName || a.modelName, data: { displayModes: a.outputDisplayModes || a.inputDisplayModes } }))
+            if (blackmagicDevices.length && (!currentOutput?.blackmagicData?.deviceId || !currentOutput?.blackmagicData?.displayModes?.length)) updateBlackmagicData(blackmagicDevices[0].id, "deviceId")
         }
     }
     receive(BLACKMAGIC, receiveBMD, listenerId)
@@ -343,26 +345,14 @@
 <!-- BLACKMAGIC CURRENTLY NOT WORKING -->
 <Title label="Blackmagic Design" icon="companion" />
 
-<CombinedInput>
-    <MaterialToggleSwitch label="actions.enable Blackmagic" style="width: 100%;" checked={currentOutput?.blackmagic} defaultValue={false} on:change={(e) => updateOutput("blackmagic", e.detail)} />
-</CombinedInput>
+<MaterialToggleSwitch label="actions.enable Blackmagic" style="width: 100%;" checked={currentOutput?.blackmagic} defaultValue={false} on:change={(e) => updateOutput("blackmagic", e.detail)} />
 
 {#if currentOutput?.blackmagic}
-    <CombinedInput>
-        <p><T id="settings.device" /></p>
-        <Dropdown value={blackmagicDevices.find((a) => a.id === currentOutput?.blackmagicData?.deviceId)?.name || "—"} options={blackmagicDevices} on:click={(e) => updateBlackmagicData(e, "deviceId")} />
-    </CombinedInput>
+    <MaterialDropdown label="settings.device" value={currentOutput?.blackmagicData?.deviceId} options={blackmagicDevices.map((device) => ({ label: device.name, value: device.id || "" }))} on:change={(e) => updateBlackmagicData(e.detail, "deviceId")} />
 
     {#if currentOutput.blackmagicData?.deviceId}
-        <CombinedInput>
-            <p><T id="settings.display_mode" /></p>
-            <Dropdown value={currentOutput.blackmagicData?.displayModes?.find((a) => a.name === currentOutput?.blackmagicData?.displayMode)?.name || "—"} options={currentOutput.blackmagicData?.displayModes || []} on:click={(e) => updateBlackmagicData(e, "displayMode")} />
-        </CombinedInput>
-
-        <CombinedInput>
-            <p><T id="settings.pixel_format" /></p>
-            <Dropdown value={currentOutput.blackmagicData?.pixelFormats?.find((a) => a.name === currentOutput?.blackmagicData?.pixelFormat)?.name || "—"} options={currentOutput.blackmagicData?.pixelFormats || []} on:click={(e) => updateBlackmagicData(e, "pixelFormat")} />
-        </CombinedInput>
+        <MaterialDropdown label="settings.display_mode" value={currentOutput.blackmagicData?.displayMode} options={currentOutput.blackmagicData?.displayModes?.map((mode) => ({ label: mode.name, value: mode.name })) || []} on:change={(e) => updateBlackmagicData(e.detail, "displayMode")} />
+        <MaterialDropdown label="settings.pixel_format" value={currentOutput.blackmagicData?.pixelFormat} options={currentOutput.blackmagicData?.pixelFormats?.map((format) => ({ label: format.name, value: format.name })) || []} on:change={(e) => updateBlackmagicData(e.detail, "pixelFormat")} />
 
         {#if isAlphaSupported(currentOutput.blackmagicData?.pixelFormat || "")}
             <MaterialToggleSwitch label="settings.alpha_key" checked={currentOutput.blackmagicData?.alphaKey} on:change={(e) => updateBlackmagicData(e.detail, "alphaKey")} />
