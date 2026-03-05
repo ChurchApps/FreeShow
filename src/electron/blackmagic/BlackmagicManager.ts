@@ -1,4 +1,11 @@
-import macadam from "macadam"
+// Dynamically require macadam to handle missing dependency gracefully
+let macadam: any = null
+try {
+    macadam = require("macadam")
+} catch (err) {
+    console.warn("Blackmagic macadam module not available:", err instanceof Error ? err.message : String(err))
+}
+
 import { bmdDisplayModes, bmdPixelFormats } from "./bmdFormats"
 import { DeviceConfig, DeviceData } from "./TypeData"
 import { BlackmagicSender } from "./BlackmagicSender"
@@ -6,6 +13,7 @@ import { BlackmagicSender } from "./BlackmagicSender"
 // https://github.com/Streampunk/macadam
 export class BlackmagicManager {
     static getFirstDeviceName(): string | undefined {
+        if (!macadam) return undefined
         return macadam.getFirstDevice()
     }
 
@@ -71,6 +79,8 @@ export class BlackmagicManager {
         //     ]
         // }
 
+        if (!macadam) return []
+
         let deviceInfo: any = macadam.getDeviceInfo()
         if (typeof deviceInfo === "object") deviceInfo = Object.values(deviceInfo)
         return deviceInfo
@@ -85,6 +95,8 @@ export class BlackmagicManager {
     }
 
     static getDeviceConfig(deviceHandle: string) {
+        if (!macadam) return undefined
+
         let deviceIndex = this.getIndexById(deviceHandle)
         if (deviceIndex < 0) return undefined
 
@@ -93,6 +105,8 @@ export class BlackmagicManager {
     }
 
     static setDeviceConfig(deviceHandle: string, newData: DeviceConfig) {
+        if (!macadam) return false
+
         let deviceIndex = this.getIndexById(deviceHandle)
         if (deviceIndex < 0) return false
 

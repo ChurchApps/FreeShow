@@ -1,4 +1,5 @@
 import type { NativeImage } from "electron"
+import { BlackmagicSender } from "../../blackmagic/BlackmagicSender"
 import { OutputHelper } from "../../output/OutputHelper"
 import { CaptureHelper } from "../CaptureHelper"
 import { CaptureTransmitter } from "./CaptureTransmitter"
@@ -40,7 +41,17 @@ export class CaptureLifecycle {
             if (!output?.captureOptions?.window || output.captureOptions.window.isDestroyed()) return
 
             try {
-                const image = await output.captureOptions.window.webContents.capturePage()
+                let image = await output.captureOptions.window.webContents.capturePage()
+
+                // Resize to target resolution for Blackmagic outputs (handle Retina 2x scaling)
+                if (output.captureOptions?.options?.blackmagic) {
+                    const targetSize = BlackmagicSender.getTargetDimensions(id)
+                    const currentSize = image.getSize()
+                    if (currentSize.width !== targetSize.width || currentSize.height !== targetSize.height) {
+                        image = image.resize({ width: targetSize.width, height: targetSize.height })
+                    }
+                }
+
                 processFrame(image)
             } catch (error) {
                 console.warn(`Capture failed for output ${id}:`, error)

@@ -1,9 +1,18 @@
-import macadam, { PlaybackChannel } from "macadam"
+import type { PlaybackChannel } from "macadam"
 import os from "os"
 import util from "../ndi/vingester-util"
 import { BlackmagicManager } from "./BlackmagicManager"
 import { ImageBufferConverter, ImageBufferConverter10Bit } from "./ImageBufferConverter"
 import { Size } from "electron"
+import { wait } from "../utils/helpers"
+
+// Dynamically require macadam to handle missing dependency gracefully
+let macadam: any = null
+try {
+    macadam = require("macadam")
+} catch (err) {
+    console.warn("Blackmagic macadam module not available:", err instanceof Error ? err.message : String(err))
+}
 
 interface PlaybackData {
     playback: PlaybackChannel
@@ -52,13 +61,6 @@ interface PerformanceMetrics {
     recoveryAttempts: number
 }
 
-interface FramePromiseData {
-    promise: Promise<any>
-    resolve: (value: any) => void
-    reject: (reason?: any) => void
-}
-
-const USE_FRAME_PROMISES = false
 const SEGFAULT_PRONE_DEVICES: Set<string> = new Set()
 
 // BufferManager class for memory-efficient buffer management
@@ -170,12 +172,22 @@ export class BufferManager {
 }
 
 export class BlackmagicSender {
+    // Core state
     static playbackData: { [key: string]: PlaybackData } = {}
-    static framePromises: { [outputId: string]: { [time: number]: FramePromiseData } } = {}
-    static silentAudioBuffers: { [channels: number]: Buffer } = {}
+    static initializationInProgress: { [key: string]: Promise<boolean> | undefined } = {}
+
+    // Audio buffers cache
+    static silentAudioBuffers: { [key: string]: Buffer } = {}
+
+    // Device configuration
     static devicePixelMode: "BGRA" | "ARGB" = os.endianness() === "BE" ? "ARGB" : "BGRA"
+
+    // Control state
     static isPaused: { [key: string]: boolean } = {}
     static frameSkipCounter: { [key: string]: number } = {}
+
+    // Monitoring
+    static lastDiagnosticTime: number = 0
     static safetyCircuitBreaker: {
         [outputId: string]: {
             lastErrorTime: number
@@ -186,14 +198,9 @@ export class BlackmagicSender {
     } = {}
     static performanceLog: PerformanceMetrics[] = []
 
-    // Maximum number of frame promises to keep at once
-    private static readonly MAX_FRAME_PROMISES = 100
-
-    // Maximum age for cached conversion functions (5 minutes)
-    private static readonly MAX_CACHE_AGE = 5 * 60 * 1000
-
-    // Memory cleanup interval (every 30 seconds)
-    private static readonly CLEANUP_INTERVAL = 30 * 1000
+    // Configuration constants
+    private static readonly MAX_CACHE_AGE = 5 * 60 * 1000 // 5 minutes
+    private static readonly CLEANUP_INTERVAL = 30 * 1000 // 30 seconds
 
     // Global cleanup timer
     private static globalCleanupTimer?: NodeJS.Timeout
@@ -216,6 +223,34 @@ export class BlackmagicSender {
     }
 
     static async initializeDevice(outputId: string, deviceIndex: number, displayModeName: string, pixelFormat: string, enableKeying: boolean, audioChannels: number = 2) {
+        // Check if initialization is already in progress for this device
+        if (this.initializationInProgress[outputId]) {
+            console.log(`Initialization already in progress for ${outputId}, waiting for completion...`)
+            return this.initializationInProgress[outputId]
+        }
+
+        // Create a promise that tracks this initialization
+        const initPromise = this._performInitializeDevice(outputId, deviceIndex, displayModeName, pixelFormat, enableKeying, audioChannels)
+
+        // Store the promise to prevent concurrent attempts
+        this.initializationInProgress[outputId] = initPromise
+
+        try {
+            const result = await initPromise
+            return result
+        } finally {
+            // Clean up the promise when done
+            delete this.initializationInProgress[outputId]
+        }
+    }
+
+    static async _performInitializeDevice(outputId: string, deviceIndex: number, displayModeName: string, pixelFormat: string, enableKeying: boolean, audioChannels: number = 2) {
+        // Check if macadam is available
+        if (!macadam) {
+            console.error("Cannot initialize Blackmagic device: macadam module not available")
+            return false
+        }
+
         // Skip immediately if this device is known to cause segfaults
         if (SEGFAULT_PRONE_DEVICES.has(outputId)) {
             console.warn(`Skipping initialization of problematic device ${outputId}`)
@@ -229,7 +264,7 @@ export class BlackmagicSender {
             try {
                 this.stop(outputId)
                 // Add a small delay to ensure hardware has time to reset
-                await new Promise((resolve) => setTimeout(resolve, 2000)) // Extra long delay
+                await wait(2000) // Extra long delay
             } catch (err) {
                 console.error(`Error stopping existing sender: ${err instanceof Error ? err.message : String(err)}`)
             }
@@ -271,6 +306,11 @@ export class BlackmagicSender {
                         }
 
                         // Initialize macadam playback
+                        if (!macadam) {
+                            clearTimeout(timeoutId)
+                            return reject(new Error("macadam module not available"))
+                        }
+
                         macadam
                             .playback({
                                 deviceIndex,
@@ -282,11 +322,11 @@ export class BlackmagicSender {
                                 sampleType: macadam.bmdAudioSampleType16bitInteger,
                                 startTimecode: "01:00:00:00"
                             })
-                            .then((result) => {
+                            .then((result: any) => {
                                 clearTimeout(timeoutId)
                                 resolve(result as PlaybackChannel)
                             })
-                            .catch((error) => {
+                            .catch((error: any) => {
                                 clearTimeout(timeoutId)
                                 reject(error)
                             })
@@ -336,7 +376,7 @@ export class BlackmagicSender {
                     // Wait longer between each attempt
                     const waitTime = 2000 * attempts // Longer delays between attempts
                     console.log(`Waiting ${waitTime / 1000} seconds before retrying...`)
-                    await new Promise((resolve) => setTimeout(resolve, waitTime))
+                    await wait(waitTime)
                     console.log(`Retrying initialization for ${outputId}...`)
                 }
             }
@@ -354,11 +394,6 @@ export class BlackmagicSender {
     static performGlobalCleanup() {
         const now = Date.now()
 
-        // Clean up frame promises
-        Object.keys(this.framePromises).forEach((outputId) => {
-            this.cleanupFramePromises(outputId, now)
-        })
-
         // Clean up conversion caches
         Object.keys(this.playbackData).forEach((outputId) => {
             this.cleanupConversionCache(outputId, now)
@@ -366,41 +401,6 @@ export class BlackmagicSender {
 
         // Clean up unused silent audio buffers
         this.cleanupSilentAudioBuffers()
-    }
-
-    static cleanupFramePromises(outputId: string, currentTime?: number) {
-        if (!this.framePromises[outputId]) return
-
-        const now = currentTime || Date.now()
-        const maxAge = 10000 // 10 seconds max age for promises
-        const promises = this.framePromises[outputId]
-        const promiseKeys = Object.keys(promises)
-            .map(Number)
-            .sort((a, b) => a - b)
-
-        // Remove old promises first
-        promiseKeys.forEach((time) => {
-            if (now - time > maxAge) {
-                const promise = promises[time]
-                if (promise) {
-                    promise.resolve({ status: "timeout", time })
-                    delete promises[time]
-                }
-            }
-        })
-
-        // If we still have too many promises, remove the oldest ones
-        const remainingKeys = Object.keys(promises)
-            .map(Number)
-            .sort((a, b) => a - b)
-        while (remainingKeys.length > this.MAX_FRAME_PROMISES) {
-            const oldestTime = remainingKeys.shift()!
-            const promise = promises[oldestTime]
-            if (promise) {
-                promise.resolve({ status: "overflow", time: oldestTime })
-                delete promises[oldestTime]
-            }
-        }
     }
 
     static cleanupConversionCache(outputId: string, currentTime?: number) {
@@ -413,7 +413,6 @@ export class BlackmagicSender {
         // Check if cache is too old
         if (cache.lastUsed && now - cache.lastUsed > this.MAX_CACHE_AGE) {
             delete data.conversionCache
-            console.log(`Cleared stale conversion cache for ${outputId}`)
         }
     }
 
@@ -436,7 +435,6 @@ export class BlackmagicSender {
     static resetProblematicDevice(outputId: string): boolean {
         if (SEGFAULT_PRONE_DEVICES.has(outputId)) {
             SEGFAULT_PRONE_DEVICES.delete(outputId)
-            console.log(`Reset problematic device flag for ${outputId}`)
             return true
         }
         return false
@@ -490,6 +488,62 @@ export class BlackmagicSender {
 
         // Default fallback
         return 30
+    }
+
+    // Get accurate fractional frame rate for audio calculations
+    static getAccurateFrameRate(displayMode: string): number {
+        if (displayMode.includes("23.98") || displayMode.includes("2398")) return 23.976
+        else if (displayMode.includes("24")) return 24
+        else if (displayMode.includes("25")) return 25
+        else if (displayMode.includes("29.97") || displayMode.includes("2997")) return 29.97
+        else if (displayMode.includes("30")) return 30
+        else if (displayMode.includes("50")) return 50
+        else if (displayMode.includes("59.94") || displayMode.includes("5994")) return 59.94
+        else if (displayMode.includes("60")) return 60
+
+        // Default fallback
+        return 30
+    }
+
+    // Calculate expected video frame size for validation
+    static getExpectedVideoFrameSize(size: Size, pixelFormat: string): number {
+        const { width, height } = size
+
+        if (pixelFormat.includes("YUV")) {
+            // 10-bit YUV uses v210 format: 8/3 bytes per pixel (16 bytes per 6 pixels)
+            if (pixelFormat.includes("10")) {
+                // v210 packs 6 pixels into 16 bytes, so total = (width * height / 6) * 16
+                // Simplified: width * height * 8 / 3
+                // Must be aligned to 128 bytes (48 pixels)
+                const totalPixels = width * height
+                const baseSize = Math.floor(totalPixels / 6) * 16
+                // Add padding for partial groups of 6 pixels
+                const remainder = totalPixels % 6
+                const paddingSize = remainder > 0 ? 16 : 0
+                return baseSize + paddingSize
+            }
+            // YUV420 planar: Y full res + U/V at quarter res
+            if (pixelFormat.includes("420")) {
+                return width * height + (width / 2) * (height / 2) * 2 // Y + U + V
+            }
+            // YUV422 packed (8-bit): 2 bytes per pixel for UYVY
+            if (pixelFormat.includes("422")) {
+                return width * height * 2
+            }
+            // Default YUV (assume 8-bit 422)
+            return width * height * 2
+        }
+
+        if (pixelFormat.includes("ARGB") || pixelFormat.includes("BGRA")) {
+            return width * height * 4 // 4 bytes per pixel
+        }
+
+        if (pixelFormat.includes("RGB")) {
+            return width * height * 3 // 3 bytes per pixel
+        }
+
+        // Default estimate
+        return width * height * 2
     }
 
     // get dimensions from display mode
@@ -561,6 +615,20 @@ export class BlackmagicSender {
                     // Clone video frame for safety
                     const clonedVideoFrame = Buffer.from(videoFrame)
 
+                    // Log frame info and detect actual resolution
+                    const now = Date.now()
+                    if (now - this.lastDiagnosticTime > 5000) {
+                        this.lastDiagnosticTime = now
+                        const expectedBytesForDeclaredSize = size.width * size.height * 4
+                        const actualPixels = clonedVideoFrame.length / 4
+
+                        // Detect actual resolution if mismatch
+                        if (clonedVideoFrame.length !== expectedBytesForDeclaredSize) {
+                            const actualHeight = Math.round(actualPixels / size.width)
+                            console.warn(`⚠️  RESOLUTION MISMATCH: Electron window is outputting ${size.width}x${actualHeight}, but Blackmagic expects ${size.width}x${size.height}`)
+                        }
+                    }
+
                     // Convert with safety using cached conversion
                     let convertedFrame
                     try {
@@ -570,17 +638,36 @@ export class BlackmagicSender {
                         return
                     }
 
-                    // Get audio safely
-                    const audioData = audioFrame ? Buffer.from(audioFrame) : this.getSilentAudio(data.audioChannels || 2)
+                    // Validate frame sizes
+                    const expectedVideoSize = this.getExpectedVideoFrameSize(size, data.pixelFormat)
+                    if (convertedFrame.length !== expectedVideoSize) {
+                        console.warn(`Video frame size mismatch: got ${convertedFrame.length} bytes, expected ${expectedVideoSize} bytes for ${size.width}x${size.height} in ${data.pixelFormat}`)
+                    }
+
+                    // Get audio safely with correct sample count for the display mode
+                    const audioData = audioFrame ? Buffer.from(audioFrame) : this.getSilentAudio(data.audioChannels || 2, data.displayMode)
+
+                    // Validate audio buffer size
+                    const accurateFrameRate = BlackmagicSender.getAccurateFrameRate(data.displayMode)
+                    const expectedSampleCount = Math.round(48000 / accurateFrameRate)
+                    const expectedAudioSize = expectedSampleCount * 2 * (data.audioChannels || 2)
+                    if (audioData.length !== expectedAudioSize) {
+                        console.warn(`Audio buffer size mismatch: got ${audioData.length} bytes, expected ${expectedAudioSize} bytes (samples: ${expectedSampleCount}, channels: ${data.audioChannels})`)
+                    }
 
                     // Calculate current time
                     const currentTime = data.scheduledFrames * framerate
+
+                    // Calculate correct sample frame count based on actual frame rate
+                    // For 48kHz audio: sampleFrameCount = 48000 / frameRate
+                    // Use accurate fractional frame rate for precise audio sizing
+                    const correctSampleFrameCount = expectedSampleCount
 
                     // Schedule the frame directly with playback.schedule()
                     const frameDataToSchedule = {
                         video: convertedFrame,
                         audio: audioData,
-                        sampleFrameCount: 1920,
+                        sampleFrameCount: correctSampleFrameCount,
                         time: currentTime
                     }
 
@@ -795,28 +882,36 @@ export class BlackmagicSender {
             }
 
             // Wait a bit to let hardware settle
-            await new Promise((resolve) => setTimeout(resolve, 500))
+            await wait(500)
 
             // Check if we still have the output
             if (!this.playbackData[outputId]) return
 
             // Create new playback object
             try {
+                if (!macadam) {
+                    throw new Error("macadam module not available")
+                }
+
                 this.playbackData[outputId].playback = await macadam.playback({
                     deviceIndex: currentState.deviceIndex,
                     displayMode: BlackmagicManager.getDisplayMode(currentState.displayMode),
                     pixelFormat: BlackmagicManager.getPixelFormat(currentState.pixelFormat),
                     enableKeying: currentState.enableKeying || false,
                     channels: currentState.audioChannels || 2,
-                    sampleRate: macadam.bmdAudioSampleRate48kHz,
-                    sampleType: macadam.bmdAudioSampleType16bitInteger,
+                    sampleRate: macadam!.bmdAudioSampleRate48kHz,
+                    sampleType: macadam!.bmdAudioSampleType16bitInteger,
                     startTimecode: "01:00:00:00"
                 })
 
                 // CRITICAL: Disable frame callback immediately to prevent debug spam
                 const newPlayback = this.playbackData[outputId].playback
-                if (typeof newPlayback.onFramePlayed === "function") {
-                    newPlayback.onFramePlayed(() => {
+                const playbackWithFrameCallback = newPlayback as PlaybackChannel & {
+                    onFramePlayed?: (callback: (frameInfo: { time: number }) => void) => void
+                }
+
+                if (typeof playbackWithFrameCallback.onFramePlayed === "function") {
+                    playbackWithFrameCallback.onFramePlayed(() => {
                         // Do nothing - completely disable frame callbacks
                     })
                 }
@@ -1052,13 +1147,9 @@ export class BlackmagicSender {
         }
 
         try {
-            await new Promise((resolve) => setTimeout(resolve, 1000))
+            await wait(1000)
 
             delete this.playbackData[outputId]
-
-            if (USE_FRAME_PROMISES) {
-                delete this.framePromises[outputId]
-            }
 
             const success = await this.initializeDevice(outputId, deviceIndex, displayMode, pixelFormat, enableKeying, audioChannels)
 
@@ -1081,17 +1172,29 @@ export class BlackmagicSender {
         }
     }
 
-    static ensureSilentAudioBuffer(channels: number) {
-        if (!this.silentAudioBuffers[channels]) {
-            const sampleCount = 1920
+    static ensureSilentAudioBuffer(channels: number, displayMode?: string) {
+        // Create a unique key for this buffer configuration
+        const bufferKey = displayMode ? `${channels}_${displayMode}` : `${channels}_default`
+
+        if (!this.silentAudioBuffers[bufferKey]) {
+            // Calculate sample count based on display mode (48kHz audio / frame rate)
+            let sampleCount = 1920 // Default for 25fps
+
+            if (displayMode) {
+                // Use accurate fractional frame rate for precise audio buffer sizing
+                const accurateFrameRate = BlackmagicSender.getAccurateFrameRate(displayMode)
+                sampleCount = Math.round(48000 / accurateFrameRate)
+            }
+
             const bufferSize = sampleCount * 2 * channels
-            this.silentAudioBuffers[channels] = Buffer.alloc(bufferSize)
+            this.silentAudioBuffers[bufferKey] = Buffer.alloc(bufferSize)
         }
     }
 
-    static getSilentAudio(channels: number = 2): Buffer {
-        this.ensureSilentAudioBuffer(channels)
-        return this.silentAudioBuffers[channels]
+    static getSilentAudio(channels: number = 2, displayMode?: string): Buffer {
+        this.ensureSilentAudioBuffer(channels, displayMode)
+        const bufferKey = displayMode ? `${channels}_${displayMode}` : `${channels}_default`
+        return this.silentAudioBuffers[bufferKey]
     }
 
     static convertVideoFrameFormat(frame: Buffer, format: string, size: Size) {
@@ -1161,14 +1264,6 @@ export class BlackmagicSender {
                 data.frameCallbackInterval = undefined
             }
 
-            // Clean up all pending frame promises immediately
-            if (this.framePromises[outputId]) {
-                Object.values(this.framePromises[outputId]).forEach((promise) => {
-                    promise.resolve({ status: "stopped" })
-                })
-                delete this.framePromises[outputId]
-            }
-
             // Clear conversion cache
             if (data.conversionCache) {
                 delete data.conversionCache
@@ -1185,6 +1280,7 @@ export class BlackmagicSender {
             // Remove from tracking
             delete this.playbackData[outputId]
             delete this.frameSkipCounter[outputId]
+            delete this.initializationInProgress[outputId]
 
             console.log(`Successfully stopped output ${outputId}`)
             return true
@@ -1193,8 +1289,8 @@ export class BlackmagicSender {
 
             // Force cleanup even if there was an error
             delete this.playbackData[outputId]
-            delete this.framePromises[outputId]
             delete this.frameSkipCounter[outputId]
+            delete this.initializationInProgress[outputId]
 
             return false
         }
@@ -1217,10 +1313,10 @@ export class BlackmagicSender {
 
         // Force clear all tracking data
         this.playbackData = {}
-        this.framePromises = {}
         this.isPaused = {}
         this.frameSkipCounter = {}
         this.silentAudioBuffers = {}
+        this.initializationInProgress = {}
         this.safetyCircuitBreaker = {}
 
         console.log(`Stopped ${outputIds.length} outputs`)
@@ -1238,17 +1334,13 @@ export class BlackmagicSender {
     // Memory usage monitoring
     static getMemoryUsage(): {
         totalOutputs: number
-        totalFramePromises: number
         conversionCaches: number
         audioBuffers: number
     } {
-        const totalFramePromises = Object.values(this.framePromises).reduce((sum, promises) => sum + Object.keys(promises).length, 0)
-
         const conversionCaches = Object.values(this.playbackData).filter((data) => data.conversionCache).length
 
         return {
             totalOutputs: Object.keys(this.playbackData).length,
-            totalFramePromises,
             conversionCaches,
             audioBuffers: Object.keys(this.silentAudioBuffers).length
         }
