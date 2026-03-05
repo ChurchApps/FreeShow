@@ -19,8 +19,8 @@
     export let searchValue
     export let onlyPlaying: boolean = false
 
-    const profile = getAccess("functions")
-    const readOnly = profile.timers === "read"
+    const profile = getAccess("timers")
+    const readOnly = profile.global === "read"
 
     // $: sortedTimers = getSortedTimers($timers)
     const typeOrder = { counter: 1, clock: 2, event: 3 }
