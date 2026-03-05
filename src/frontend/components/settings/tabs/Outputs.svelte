@@ -333,14 +333,11 @@
 
 <!-- Blackmagic -->
 <!-- BLACKMAGIC CURRENTLY NOT WORKING -->
-<!-- <h3>Blackmagic Design</h3>
+<Title label="Blackmagic Design" icon="companion" />
 
 <CombinedInput>
-    <p><T id="actions.enable" /> Blackmagic</p>
-    <div class="alignRight">
-        <Checkbox checked={currentOutput.blackmagic} on:change={(e) => updateOutput("blackmagic", isChecked(e))} />
-    </div>
-</CombinedInput> -->
+    <MaterialToggleSwitch label="actions.enable Blackmagic" style="width: 100%;" checked={currentOutput?.blackmagic} defaultValue={false} on:change={(e) => updateOutput("blackmagic", e.detail)} />
+</CombinedInput>
 
 {#if currentOutput?.blackmagic}
     <CombinedInput>

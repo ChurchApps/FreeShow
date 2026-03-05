@@ -7,6 +7,7 @@ import util from "../../ndi/vingester-util"
 import { OutputHelper } from "../../output/OutputHelper"
 import { getConnections, toServer } from "../../servers"
 import { CaptureHelper } from "../CaptureHelper"
+import { BlackmagicSender } from "../../blackmagic/BlackmagicSender"
 
 export type Channel = {
     key: string
@@ -28,8 +29,9 @@ export class CaptureTransmitter {
         if (!captureOptions) return
         // this.startChannel(captureId, "preview")
 
-        const { ndi, server, stage } = captureOptions.options
+        const { ndi, blackmagic, server, stage } = captureOptions.options
         if (ndi) this.startChannel(captureId, "ndi")
+        if (blackmagic) this.startChannel(captureId, "blackmagic")
         if (server) this.startChannel(captureId, "server")
         if (stage) this.startChannel(captureId, "stage")
 
@@ -114,6 +116,10 @@ export class CaptureTransmitter {
             case "ndi":
                 this.sendBufferToNdi(channel.captureId, image, { size })
                 break
+            case "blackmagic":
+                // BLACKMAGIC CURRENTLY NOT WORKING
+                this.sendBufferToBlackmagic(captureId, image)
+                break
             case "server":
                 // const options = OutputHelper.getOutput(captureId)?.captureOptions
                 // WIP base on receiving screen size
@@ -164,6 +170,17 @@ export class CaptureTransmitter {
         })
 
         this.requestList = newList
+    }
+
+    // BLACKMAGIC
+    static sendBufferToBlackmagic(captureId: string, image: NativeImage) {
+        if (!image) return
+        const buffer = image.toBitmap()
+        // const size = image.getSize()
+        let framerate = OutputHelper.getOutput(captureId)?.captureOptions?.framerates?.blackmagic
+        if (!framerate) return
+        // WIP blackmagic audio
+        BlackmagicSender.scheduleFrame(captureId, buffer, null, framerate)
     }
 
     // MAIN (STAGE OUTPUT)

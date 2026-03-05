@@ -3,7 +3,7 @@
 
 import type { Rectangle } from "electron"
 import { BrowserWindow, Menu, app, ipcMain, powerSaveBlocker, protocol, screen } from "electron"
-import { AUDIO, CLOUD, EXPORT, MAIN, NDI, OUTPUT, STARTUP } from "../types/Channels"
+import { AUDIO, BLACKMAGIC, CLOUD, EXPORT, MAIN, NDI, OUTPUT, STARTUP } from "../types/Channels"
 import { Main } from "../types/IPC/Main"
 import type { Dictionary } from "../types/Settings"
 import { receiveAudio } from "./audio/receiveAudio"
@@ -20,6 +20,7 @@ import { isWithinDisplayBounds, mainWindowInitialize, openDevTools, parseCommand
 import { template } from "./utils/menuTemplate"
 import { spellcheck } from "./utils/spellcheck"
 import { loadingOptions, mainOptions } from "./utils/windowOptions"
+import { receiveBM } from "./blackmagic/bmdTalk"
 
 // ----- STARTUP -----
 
@@ -335,6 +336,7 @@ ipcMain.on(OUTPUT, OutputHelper.receiveOutput)
 ipcMain.on(EXPORT, startExport)
 ipcMain.on(CLOUD, cloudConnect)
 ipcMain.on(NDI, receiveNDI)
+ipcMain.on(BLACKMAGIC, receiveBM)
 ipcMain.on(AUDIO, receiveAudio)
 
 // send messages to main frontend (should not be used anymore - use sendMain() instead)
