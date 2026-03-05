@@ -582,6 +582,10 @@
         z-index: 3;
     } */
 
+    .dark :global(.paper) {
+        background-color: var(--primary-darkest);
+    }
+
     .notes {
         background-color: var(--primary-darkest);
         border-top: 1px solid var(--primary-lighter);
