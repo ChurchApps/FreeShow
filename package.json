@@ -141,7 +141,6 @@
         "socket.io": "^4.8.1",
         "socket.io-client": "^4.8.1",
         "uid": "^2.0.2",
-        "ultimate-guitar": "^2.0.3",
         "upath": "^2.0.1",
         "word-extractor": "^1.0.4",
         "xml2js": "^0.6.2",
