@@ -1,3 +1,8 @@
+/**
+ * IPC message handling for Blackmagic Design devices
+ * Routes messages between the main process and renderer
+ */
+
 import { BrowserWindow } from "electron"
 import { BLACKMAGIC } from "../../types/Channels"
 import { Output } from "../../types/Output"
@@ -12,6 +17,9 @@ import { BlackmagicManager } from "./BlackmagicManager"
 import { BlackmagicReceiver } from "./BlackmagicReceiver"
 import { BlackmagicSender } from "./BlackmagicSender"
 
+/**
+ * Handle incoming Blackmagic IPC messages
+ */
 export async function receiveBM(e: any, msg: Message) {
     let data: any = {}
     if (bmResponses[msg.channel]) data = await bmResponses[msg.channel](msg.data, e)
@@ -19,7 +27,9 @@ export async function receiveBM(e: any, msg: Message) {
     if (data !== undefined) e.reply(BLACKMAGIC, { channel: msg.channel, data: JSON.stringify(data) })
 }
 
-// let activeCapture: BlackmagicSender
+/**
+ * Message handlers for Blackmagic operations
+ */
 export const bmResponses: any = {
     GET_DEVICES: () => BlackmagicManager.getDevices(),
 
@@ -31,6 +41,10 @@ export const bmResponses: any = {
     RESET_DEVICE: (data: any) => BlackmagicManager.resetDevice(data.deviceId)
 }
 
+/**
+ * Initialize Blackmagic sender for a given output window
+ * Sets up video output with appropriate resolution and configuration
+ */
 export async function initializeSender(data: Output, window: BrowserWindow, id: string) {
     let bmdData = data.blackmagicData || {}
 

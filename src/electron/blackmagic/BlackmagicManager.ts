@@ -10,7 +10,9 @@ import { bmdDisplayModes, bmdPixelFormats } from "./bmdFormats"
 import { DeviceConfig, DeviceData } from "./TypeData"
 import { BlackmagicSender } from "./BlackmagicSender"
 
-// https://github.com/Streampunk/macadam
+/**
+ * Manages Blackmagic Design device discovery, configuration, and state
+ */
 export class BlackmagicManager {
     static getFirstDeviceName(): string | undefined {
         if (!macadam) return undefined
@@ -18,67 +20,6 @@ export class BlackmagicManager {
     }
 
     static getDevices(): DeviceData[] {
-        // if (!isProd) {
-        //     // test data
-        //     return [
-        //         {
-        //             modelName: "Intensity Extreme",
-        //             displayName: "Intensity Extreme",
-        //             vendorName: "Blackmagic",
-        //             deviceHandle: "54:00000000:00360600",
-        //             hasSerialPort: false,
-        //             topologicalID: 3540480,
-        //             inputDisplayModes: [
-        //                 {
-        //                     name: "1080p29.97",
-        //                     width: 1920,
-        //                     height: 1080,
-        //                     frameRate: [1001, 30000],
-        //                     videoModes: ["8-bit YUV", "10-bit YUV"],
-        //                 },
-        //                 {
-        //                     name: "1080p30",
-        //                     width: 192,
-        //                     height: 108,
-        //                     frameRate: [1001, 20000],
-        //                     videoModes: ["10-bit YUV"],
-        //                 },
-        //             ],
-        //         } as any,
-        //         {
-        //             modelName: "DeckLink 1",
-        //             displayName: "DeckLink 1",
-        //             vendorName: "Blackmagic",
-        //             deviceHandle: "XX:00000000:00360600",
-        //             hasSerialPort: false,
-        //             topologicalID: 3540480,
-        //             inputDisplayModes: [
-        //                 {
-        //                     name: "1080p30",
-        //                     width: 1920,
-        //                     height: 1080,
-        //                     frameRate: [1001, 30000],
-        //                     videoModes: ["8-bit YUV", "10-bit YUV", "8-bit ARGB", "8-bit BGRA", "10-bit RGB", "10-bit RGBXLE", "10-bit RGBX"],
-        //                 },
-        //                 {
-        //                     name: "1080p50",
-        //                     width: 1920,
-        //                     height: 1080,
-        //                     frameRate: [1001, 50000],
-        //                     videoModes: ["8-bit YUV", "10-bit YUV"],
-        //                 },
-        //                 {
-        //                     name: "1080i50",
-        //                     width: 192,
-        //                     height: 108,
-        //                     frameRate: [1001, 50000],
-        //                     videoModes: ["8-bit YUV", "10-bit YUV", "8-bit ARGB", "8-bit BGRA", "10-bit RGB", "10-bit RGBXLE", "10-bit RGBX"],
-        //                 },
-        //             ],
-        //         } as any,
-        //     ]
-        // }
-
         if (!macadam) return []
 
         let deviceInfo: any = macadam.getDeviceInfo()
@@ -119,16 +60,18 @@ export class BlackmagicManager {
     }
 
     static getPixelFormat(pixelFormat: string) {
-        // Compatibility mapping:
-        // Some devices/drivers expose "12-bit RGB" but behave correctly only with the LE variant.
+        // Compatibility mapping for 12-bit RGB
         if ((pixelFormat === "12-bit RGB" || pixelFormat === "12BitRGB") && bmdPixelFormats.has("12-bit RGBLE")) {
             return bmdPixelFormats.get("12-bit RGBLE")
         }
         return bmdPixelFormats.get(pixelFormat)
     }
 
-    // Pixel format must include an alpha channel. Only 8-bit ARGB and BGRA are supported.
-    static isAlphaSupported(pixelFormat: string) {
+    /**
+     * Check if the pixel format supports alpha keying
+     * Only 8-bit ARGB and BGRA are supported
+     */
+    static isAlphaSupported(pixelFormat: string): boolean {
         if (!pixelFormat.includes("8")) return false
         return pixelFormat.includes("BGRA") || pixelFormat.includes("ARGB")
     }

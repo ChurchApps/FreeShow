@@ -1,3 +1,9 @@
+/**
+ * Blackmagic Design display modes and pixel format mappings
+ * Maps human-readable format names to macadam library constants
+ * Based on https://github.com/Streampunk/macadam
+ */
+
 // Dynamically require macadam to handle missing dependency gracefully
 let macadam: any = null
 try {
@@ -6,6 +12,9 @@ try {
     console.warn("Blackmagic macadam module not available:", err instanceof Error ? err.message : String(err))
 }
 
+/**
+ * Display mode mappings for various video resolutions and frame rates
+ */
 export const bmdDisplayModes = new Map([
     /* SD */
     ["525i59.94 NTSC", macadam?.bmdModeNTSC],
@@ -92,6 +101,9 @@ export const bmdDisplayModes = new Map([
     ["8kDCI60", macadam?.bmdMode8kDCI60]
 ])
 
+/**
+ * Pixel format mappings for various color spaces and bit depths
+ */
 export const bmdPixelFormats = new Map([
     ["8-bit YUV", macadam?.bmdFormat8BitYUV],
     ["8BitYUV", macadam?.bmdFormat8BitYUV], // extra

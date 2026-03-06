@@ -1,6 +1,20 @@
+/**
+ * Image buffer format converters for Blackmagic Design devices
+ *
+ * Handles conversion between various pixel formats:
+ * - 8-bit: RGBA, ARGB, BGRA, RGB, YUV422
+ * - 10-bit: YUV (v210), RGB, RGBX, RGBXLE
+ * - 12-bit: RGB, RGBLE
+ *
+ * The converters transform between web canvas formats (RGBA/ARGB/BGRA)
+ * and Blackmagic hardware formats for both output and input operations.
+ */
+
 import { Size } from "electron"
 
-// 8 Bit
+/**
+ * 8-bit image buffer converters for output operations
+ */
 export class ImageBufferConverter {
     /*  convert from BGRA to ARGB  */
     static BGRAtoARGB(data: Buffer) {
@@ -17,28 +31,10 @@ export class ImageBufferConverter {
         }
     }
 
-    /*  convert from BGRA to YUV  */
-    // static BGRAtoYUV(data: Buffer) {
-    //     const newData = Buffer.alloc((data.length / 4) * 3)
-    //     for (let i = 0, j = 0; i < data.length; i += 4, j += 3) {
-    //         const B = data[i]
-    //         const G = data[i + 1]
-    //         const R = data[i + 2]
-
-    //         // YUV conversion formulas
-    //         const Y = 0.299 * R + 0.587 * G + 0.114 * B
-    //         const U = -0.14713 * R - 0.28886 * G + 0.436 * B + 128
-    //         const V = 0.615 * R - 0.51499 * G - 0.10001 * B + 128
-
-    //         // Clamp Y, U, V to 0-255
-    //         newData[j] = Math.min(255, Math.max(0, Math.round(Y)))
-    //         newData[j + 1] = Math.min(255, Math.max(0, Math.round(U)))
-    //         newData[j + 2] = Math.min(255, Math.max(0, Math.round(V)))
-    //         // Alpha channel is removed
-    //     }
-    //     return newData
-    // }
-    /*  convert from BGRA to YUV 422 packed (UYVY format)  */
+    /**
+     * Convert from BGRA to YUV 422 packed (UYVY format)
+     * YUV422 packed format: each 2 pixels = 4 bytes (U Y V Y)
+     */
     static BGRAtoYUV(data: Buffer, { width, height }: Size) {
         // YUV422 packed format: each 2 pixels = 4 bytes (U Y V Y)
         const newData = Buffer.alloc(width * height * 2)
@@ -110,28 +106,10 @@ export class ImageBufferConverter {
         return newData
     }
 
-    /*  convert from ARGB to YUV  */
-    // static ARGBtoYUV(data: Buffer) {
-    //     const newData = Buffer.alloc((data.length / 4) * 3)
-    //     for (let i = 0, j = 0; i < data.length; i += 4, j += 3) {
-    //         const R = data[i + 1]
-    //         const G = data[i + 2]
-    //         const B = data[i + 3]
-
-    //         // YUV conversion formulas
-    //         const Y = 0.299 * R + 0.587 * G + 0.114 * B
-    //         const U = -0.14713 * R - 0.28886 * G + 0.436 * B + 128
-    //         const V = 0.615 * R - 0.51499 * G - 0.10001 * B + 128
-
-    //         // Clamp Y, U, V to 0-255
-    //         newData[j] = Math.min(255, Math.max(0, Math.round(Y)))
-    //         newData[j + 1] = Math.min(255, Math.max(0, Math.round(U)))
-    //         newData[j + 2] = Math.min(255, Math.max(0, Math.round(V)))
-    //         // Alpha channel is removed
-    //     }
-    //     return newData
-    // }
-    /*  convert from ARGB to YUV 422 packed (UYVY format)  */
+    /**
+     * Convert from ARGB to YUV 422 packed (UYVY format)
+     * YUV422 packed format: each 2 pixels = 4 bytes (U Y V Y)
+     */
     static ARGBtoYUV(data: Buffer, { width, height }: Size) {
         // YUV422 packed format: each 2 pixels = 4 bytes (U Y V Y)
         const newData = Buffer.alloc(width * height * 2)
@@ -294,7 +272,10 @@ export class ImageBufferConverter {
     }
 }
 
-// 10 Bit RGB
+/**
+ * 10-bit RGB image buffer converters for output operations
+ * Handles r210 (big-endian) and R10l (little-endian) packed formats
+ */
 export class ImageBufferConverter10BitRGB {
     private static to10BitFullRange(v8: number) {
         return (v8 << 2) & 0x3ff
@@ -411,7 +392,10 @@ export class ImageBufferConverter10BitRGB {
     }
 }
 
-// 12 Bit RGB
+/**
+ * 12-bit RGB image buffer converters for output operations
+ * Handles both big-endian (R12B) and little-endian (R12L) packed formats
+ */
 export class ImageBufferConverter12BitRGB {
     private static packRGB12(samples: number[], littleEndian: boolean, output: Buffer, outIndex: number, bitBuffer: number, bitCount: number) {
         for (const sample of samples) {
@@ -541,7 +525,10 @@ export class ImageBufferConverter12BitRGB {
     }
 }
 
-// 10 Bit
+/**
+ * 10-bit YUV image buffer converters for output operations
+ * Handles v210 format (10-bit YUV422 packed into 32-bit words)
+ */
 export class ImageBufferConverter10Bit {
     /*  convert from BGRA to v210 format (10-bit YUV422 packed) */
     static BGRAtoYUV(data: Buffer, { width, height }: Size) {
@@ -681,31 +668,13 @@ export class ImageBufferConverter10Bit {
     }
 }
 
+/**
+ * Image buffer converters for input (capture) operations
+ */
 export class InputImageBufferConverter {
-    /*  convert from YUV to RGBA  */
-    // static YUVtoRGBA(data: Buffer) {
-    //     const newData = []
-    //     for (let i = 0; i < data.length; i += 3) {
-    //         const Y = data[i]
-    //         const U = data[i + 1] - 128
-    //         const V = data[i + 2] - 128
-
-    //         // Convert YUV to RGB
-    //         const R = Y + 1.402 * V
-    //         const G = Y - 0.344136 * U - 0.714136 * V
-    //         const B = Y + 1.772 * U
-
-    //         // Ensure RGB values are within the 0-255 range
-    //         newData.push(
-    //             Math.max(0, Math.min(255, R)),
-    //             Math.max(0, Math.min(255, G)),
-    //             Math.max(0, Math.min(255, B)),
-    //             255 // Alpha channel
-    //         )
-    //     }
-    //     return Buffer.from(newData)
-    // }
-    /*  convert from YUV240 to RGBA  */
+    /**
+     * Convert from YUV 4:2:0 planar to RGBA
+     */
     static YUVtoRGBA(yuvData: Buffer, { width, height }: Size) {
         const numPixels = width * height
         const rgbaData = Buffer.alloc(numPixels * 4) // RGBA has 4 bytes per pixel

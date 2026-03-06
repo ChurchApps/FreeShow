@@ -1,10 +1,11 @@
 import type { PlaybackChannel } from "macadam"
+import { Size } from "electron"
 import os from "os"
 import util from "../ndi/vingester-util"
-import { BlackmagicManager } from "./BlackmagicManager"
-import { ImageBufferConverter, ImageBufferConverter10Bit, ImageBufferConverter10BitRGB, ImageBufferConverter12BitRGB } from "./ImageBufferConverter"
-import { Size } from "electron"
 import { wait } from "../utils/helpers"
+import { BlackmagicManager } from "./BlackmagicManager"
+import { BufferManager } from "./BufferManager"
+import { ImageBufferConverter, ImageBufferConverter10Bit, ImageBufferConverter10BitRGB, ImageBufferConverter12BitRGB } from "./ImageBufferConverter"
 
 // Dynamically require macadam to handle missing dependency gracefully
 let macadam: any = null
@@ -14,22 +15,20 @@ try {
     console.warn("Blackmagic macadam module not available:", err instanceof Error ? err.message : String(err))
 }
 
+const SEGFAULT_PRONE_DEVICES: Set<string> = new Set()
+
 interface PlaybackData {
     playback: PlaybackChannel
     scheduledFrames: number
     pixelFormat: string
     displayMode: string
     isStarted: boolean
-
-    sourceWidth?: number
-    sourceHeight?: number
     monitoringInterval?: NodeJS.Timeout
     bufferCheckInterval?: NodeJS.Timeout
     frameCallbackInterval?: NodeJS.Timeout
-    lastLogTime: number
     lastFrameTime?: number
+    lastLogTime?: number
     audioChannels?: number
-    emptyBufferCount?: number
     scheduleFailCount?: number
     framesSinceLastCheck: number
     lastPerformanceCheck: number
@@ -40,7 +39,6 @@ interface PlaybackData {
     enableKeying?: boolean
     needsReinit?: boolean
     recoveryAttempts?: number
-    startTime?: number
 }
 
 interface PerformanceMetrics {
@@ -50,120 +48,12 @@ interface PerformanceMetrics {
     frameRate: number
     droppedFrames: number
     timingDrift?: number
-    memoryUsage?: number
     recoveryAttempts: number
 }
 
-const SEGFAULT_PRONE_DEVICES: Set<string> = new Set()
-
-// BufferManager class for memory-efficient buffer management
-export class BufferManager {
-    private static readonly MIN_BUFFER_SIZE = 3
-    private static readonly MAX_BUFFER_SIZE = 15 // Reduced from 60
-
-    static calculateOptimalBufferSize(displayMode: string, pixelFormat: string): number {
-        let baseSize = 5 // Conservative starting point
-
-        // Adjust based on resolution
-        if (displayMode.includes("4K") || displayMode.includes("4k"))
-            baseSize = 8 // Reduced from higher values
-        else if (displayMode.includes("1080")) baseSize = 6
-        else if (displayMode.includes("720")) baseSize = 4
-
-        // Adjust for format complexity (but keep it reasonable)
-        if (pixelFormat.includes("10-bit"))
-            baseSize += 2 // Reduced increase
-        else if (pixelFormat.includes("RGB") || pixelFormat.includes("ARGB")) baseSize += 1
-
-        // Consider interlaced content
-        if (displayMode.includes("i")) baseSize += 1 // Minimal increase
-
-        return Math.min(Math.max(baseSize, this.MIN_BUFFER_SIZE), this.MAX_BUFFER_SIZE)
-    }
-
-    static monitorBufferHealth(outputId: string, playbackData: any) {
-        if (!playbackData[outputId]) return
-
-        const data = playbackData[outputId]
-
-        try {
-            const bufferedFrames = data.playback.bufferedFrames()
-            const now = Date.now()
-
-            // Only check periodically to reduce overhead
-            if (now - data.lastPerformanceCheck < 2000) return // Check every 2 seconds
-
-            const timeDiff = (now - data.lastPerformanceCheck) / 1000
-            const currentFPS = data.framesSinceLastCheck / timeDiff
-            const expectedFps = BlackmagicSender.getExpectedFrameRate(data.displayMode)
-
-            // Conservative buffer adjustments
-            if (currentFPS < expectedFps * 0.8 && bufferedFrames < 3) {
-                // Modest increase only when really needed
-                data.targetBufferSize = Math.min(this.MAX_BUFFER_SIZE, data.targetBufferSize + 1)
-                console.log(`Increasing buffer size to ${data.targetBufferSize} due to low FPS`)
-            }
-
-            // Aggressive reduction when buffer is too large
-            if (bufferedFrames > data.targetBufferSize * 0.8 && data.targetBufferSize > this.MIN_BUFFER_SIZE) {
-                data.targetBufferSize = Math.max(this.MIN_BUFFER_SIZE, data.targetBufferSize - 1)
-                console.log(`Reducing buffer size to ${data.targetBufferSize}`)
-            }
-
-            // Emergency reduction if buffer gets too large
-            if (data.targetBufferSize > this.MAX_BUFFER_SIZE) {
-                data.targetBufferSize = this.MAX_BUFFER_SIZE
-                console.warn(`Capping buffer size at ${this.MAX_BUFFER_SIZE}`)
-            }
-
-            // Reset counters
-            data.framesSinceLastCheck = 0
-            data.lastPerformanceCheck = now
-        } catch (err) {
-            console.error(`Error monitoring buffer: ${err.message}`)
-        }
-    }
-
-    // Memory-efficient frame scheduling
-    static scheduleFrameWithBackpressure(outputId: string, frameData: Buffer, playbackData: any): boolean {
-        const data = playbackData[outputId]
-        if (!data) return false
-
-        try {
-            const bufferedFrames = data.playback.bufferedFrames()
-
-            // Implement backpressure - drop frames if buffer is too full
-            if (bufferedFrames > data.targetBufferSize * 1.2) {
-                console.warn(`Dropping frame due to buffer overflow (${bufferedFrames}/${data.targetBufferSize})`)
-                data.totalFramesDropped = (data.totalFramesDropped || 0) + 1
-                return false
-            }
-
-            // Schedule the frame
-            const result = data.playback.schedule(frameData)
-
-            if (result) {
-                data.scheduledFrames++
-                data.framesSinceLastCheck++
-            } else {
-                data.scheduleFailCount = (data.scheduleFailCount || 0) + 1
-
-                // If we're failing too often, reduce buffer target
-                if (data.scheduleFailCount > 5) {
-                    data.targetBufferSize = Math.max(this.MIN_BUFFER_SIZE, data.targetBufferSize - 1)
-                    data.scheduleFailCount = 0
-                    console.log(`Reduced buffer target to ${data.targetBufferSize} due to schedule failures`)
-                }
-            }
-
-            return result
-        } catch (err) {
-            console.error(`Error scheduling frame: ${err.message}`)
-            return false
-        }
-    }
-}
-
+/**
+ * Manages Blackmagic Design video output devices using the macadam library
+ */
 export class BlackmagicSender {
     // Core state
     static playbackData: { [key: string]: PlaybackData } = {}
@@ -932,7 +822,7 @@ export class BlackmagicSender {
             data.lastPerformanceCheck = now
 
             // Check for buffer health using BufferManager
-            BufferManager.monitorBufferHealth(outputId, this.playbackData)
+            BufferManager.monitorBufferHealth(outputId, this.playbackData, this.getExpectedFrameRate.bind(this))
 
             if (bufferedFrames < data.targetBufferSize / 4) {
                 console.warn(`Buffer running low (${bufferedFrames} frames), may need recovery`)
@@ -961,7 +851,7 @@ export class BlackmagicSender {
 
             try {
                 // Use BufferManager for buffer health monitoring
-                BufferManager.monitorBufferHealth(outputId, this.playbackData)
+                BufferManager.monitorBufferHealth(outputId, this.playbackData, this.getExpectedFrameRate.bind(this))
             } catch (err) {
                 console.error("Error in performance monitoring:", err)
             }
@@ -974,7 +864,7 @@ export class BlackmagicSender {
                 return
             }
 
-            BufferManager.monitorBufferHealth(outputId, this.playbackData)
+            BufferManager.monitorBufferHealth(outputId, this.playbackData, this.getExpectedFrameRate.bind(this))
         }, 2000)
 
         this.playbackData[outputId].monitoringInterval = monitoringInterval
@@ -1323,13 +1213,13 @@ export class BlackmagicSender {
         console.log(`Stopped ${outputIds.length} outputs`)
     }
 
-    // Replace the old calculateOptimalBufferSize and monitorBufferHealth methods
+    // Deprecated wrapper methods for backward compatibility
     static calculateOptimalBufferSize(displayMode: string, pixelFormat: string): number {
         return BufferManager.calculateOptimalBufferSize(displayMode, pixelFormat)
     }
 
     static monitorBufferHealth(outputId: string) {
-        BufferManager.monitorBufferHealth(outputId, this.playbackData)
+        BufferManager.monitorBufferHealth(outputId, this.playbackData, this.getExpectedFrameRate.bind(this))
     }
 
     // Memory usage monitoring

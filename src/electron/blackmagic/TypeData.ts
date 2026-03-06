@@ -1,3 +1,8 @@
+/**
+ * TypeScript type definitions for Blackmagic Design devices
+ * Based on the macadam library interface
+ */
+
 export interface DeviceData {
     modelName: string // "Intensity Extreme"
     displayName: string // "Intensity Extreme"
@@ -66,50 +71,4 @@ export interface DeviceConfig {
     defaultVideoModeOutputFlags?: number // 0
     videoInputConnection?: number // 1
     deviceInformationLabel?: string
-    // and more...
 }
-
-// export interface CaptureData {
-//     type: string // 'capture'
-//     displayModeName: string // '1080i50'
-//     width: number // 1920
-//     height: number // 1080
-//     fieldDominance: string // 'upperFieldFirst'
-//     frameRate: [number, number] // [ 1000, 25000 ]
-//     pixelFormat: string // '8-bit YUV'
-//     audioEnabled: boolean // true
-//     sampleRate: number // 48000
-//     sampleType: number // 16
-//     channels: number // 2
-//     pause: any // [Function: pause]
-//     stop: any // [Function: stop]
-//     frame: any // [Function: frame]
-//     deckLinkInput: any // [External]
-// }
-
-// export interface CaptureFrame {
-//     type: "frame"
-//     video: VideoFrame
-//     audio: AudioFrame
-// }
-
-// interface VideoFrame {
-//     type: string // 'videoFrame'
-//     width: number // 1920
-//     height: number // 1080
-//     rowBytes: number // 3840
-//     frameTime: number // 200000
-//     frameDuration: number // 1000
-//     data: ArrayBuffer // <Buffer 80 10 80 10 80 10 80 10 80 ... >
-//     hasNoInputSource: boolean // true
-//     timecode: string // '10:11:12:13' (set to false when not available)
-//     userbits: number // 0 (timecode userbits)
-//     hardwareRefFrameTime: number // 17379742688
-//     hardwareRefFrameDuration: number // 1000
-// }
-
-// interface AudioFrame {
-//     type: "audioPacket"
-//     sampleFrameTime: number // 1920
-//     data: ArrayBuffer // <Buffer 00 a0 00 b0 00 c0 00 d0 ... >
-// }

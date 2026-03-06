@@ -15,12 +15,27 @@ try {
     console.warn("Blackmagic macadam module not available:", err instanceof Error ? err.message : String(err))
 }
 
-export class BlackmagicReceiver {
-    static BMD_RECEIVERS: { [key: string]: { receiver?: CaptureChannel; interval?: any; displayMode: string; pixelFormat: string } } = {}
-    static allActiveReceivers: any = {}
-    static sendToOutputs: string[] = []
+interface ReceiverData {
+    receiver?: CaptureChannel
+    interval?: NodeJS.Timeout
+    displayMode: string
+    pixelFormat: string
+}
 
-    // set audioChannels to 0 to disable audio
+/**
+ * Manages Blackmagic Design video capture (input) devices
+ */
+export class BlackmagicReceiver {
+    static BMD_RECEIVERS: { [key: string]: ReceiverData } = {}
+    static allActiveReceivers: { [key: string]: any } = {}
+    static sendToOutputs: string[] = []
+    static lastFrameTime: number = 0
+
+    /**
+     * Initialize a Blackmagic capture device
+     * @param deviceId Device handle/ID
+     * @param audioChannels Number of audio channels (0 to disable audio)
+     */
     static async initialize(deviceId: string, audioChannels: number = 2) {
         // Check if macadam is available
         if (!macadam) {
@@ -36,10 +51,8 @@ export class BlackmagicReceiver {
         let device = BlackmagicManager.getDeviceById(deviceId)
         if (!device || !device.inputDisplayModes?.[0]) return
 
-        // WIP change mode
-        let displayMode = device.inputDisplayModes[0].name // selecting first
-        let pixelFormat = device.inputDisplayModes[0].videoModes[0] // selecting first
-        // let pixelFormat = macadam.bmdFormat8BitBGRA
+        let displayMode = device.inputDisplayModes[0].name // Select first available
+        let pixelFormat = device.inputDisplayModes[0].videoModes[0] // Select first available
 
         if (!this.BMD_RECEIVERS[deviceId]) this.BMD_RECEIVERS[deviceId] = { displayMode, pixelFormat }
         return (this.BMD_RECEIVERS[deviceId].receiver = await macadam.capture({
@@ -52,6 +65,9 @@ export class BlackmagicReceiver {
         }))
     }
 
+    /**
+     * Start capturing video from a Blackmagic device
+     */
     static async startCapture({ source, outputId }: any) {
         if (!this.sendToOutputs.includes(outputId)) this.sendToOutputs.push(outputId)
 
@@ -84,6 +100,9 @@ export class BlackmagicReceiver {
         )
     }
 
+    /**
+     * Capture a single frame from a Blackmagic device
+     */
     static async captureFrame({ source }: any) {
         let deviceId: string = source.id
         let receiver = await this.initialize(deviceId)
@@ -98,18 +117,17 @@ export class BlackmagicReceiver {
         }
     }
 
-    static lastFrameTime: number = 0
+    /**
+     * Send a captured frame to all registered outputs
+     */
     static sendFrame(id: string, frame: CaptureFrame, size: Size) {
         if (!frame) return
 
-        // lagging if less than 10 fps
+        // Skip frames if system is overloaded (lagging below 10 fps)
         let timeSinceLastFrame = Date.now() - this.lastFrameTime
-        if (timeSinceLastFrame > 100 && timeSinceLastFrame < 200) return // skip frames if overloaded
+        if (timeSinceLastFrame > 100 && timeSinceLastFrame < 200) return
 
-        // mode
-        // let displayMode = this.BMD_RECEIVERS[id].displayMode
         let pixelFormat = this.BMD_RECEIVERS[id].pixelFormat
-
         frame.video.data = this.convertVideoFrameFormat(frame.video.data, pixelFormat, size)
 
         let msg = { channel: "RECEIVE_STREAM", data: { id, frame, time: Date.now() } }
@@ -122,11 +140,10 @@ export class BlackmagicReceiver {
         this.lastFrameTime = Date.now()
     }
 
-    static convertVideoFrameFormat(frame: Buffer, format: string, size: Size) {
-        // bmdPixelFormats: YUV, ARGB, BGRA, RGB, RGBLE, RGBXLE, RGBX
-
-        /*  convert from current input pixel format to RGBA (Web canvas)  */
-
+    /**
+     * Convert video frame format from Blackmagic to RGBA
+     */
+    static convertVideoFrameFormat(frame: Buffer, format: string, size: Size): Buffer {
         if (format.includes("ARGB")) {
             util.ImageBufferAdjustment.ARGBtoRGBA(frame)
         } else if (format.includes("YUV")) {
@@ -146,6 +163,9 @@ export class BlackmagicReceiver {
         return frame
     }
 
+    /**
+     * Stop capturing from a Blackmagic device
+     */
     static stopReceiver(data: any) {
         if (data?.id) {
             if (data.outputId) {
