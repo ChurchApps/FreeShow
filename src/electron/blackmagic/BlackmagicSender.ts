@@ -461,7 +461,7 @@ export class BlackmagicSender {
         return this.getDimensionsForDisplayMode(displayMode)
     }
 
-    static scheduleFrame(outputId: string, videoFrame: Buffer, audioFrame: Buffer | null, framerate: number = 1000) {
+    static scheduleFrame(outputId: string, videoFrame: Buffer, audioFrame: Buffer | null, framerate: number = 0) {
         // Skip immediately if this device is known to cause segfaults
         if (SEGFAULT_PRONE_DEVICES.has(outputId)) {
             return
@@ -478,10 +478,12 @@ export class BlackmagicSender {
             return
         }
 
-        // IMPORTANT: Only schedule a frame every X milliseconds to prevent hardware overload
-        // This dramatically reduces the frame rate but should prevent segfaults
+        // Lightweight guard against accidentally flooding schedule() calls.
+        // Keep this tied to target FPS so 59.94/60 outputs are not artificially slowed.
         const now = Date.now()
-        const minInterval = 100 // Only process frames every 100ms (10fps max)
+        const targetFps = Math.max(1, Number.isFinite(framerate) && framerate > 0 ? framerate : this.getExpectedFrameRate(data.displayMode))
+        const frameDurationMs = 1000 / targetFps
+        const minInterval = Math.max(1, Math.floor(frameDurationMs * 0.75))
         if (data.lastFrameTime && now - data.lastFrameTime < minInterval) {
             return // Skip this frame - coming too fast
         }
@@ -554,8 +556,10 @@ export class BlackmagicSender {
                         console.warn(`Audio buffer size mismatch: got ${audioData.length} bytes, expected ${expectedAudioSize} bytes (samples: ${expectedSampleCount}, channels: ${data.audioChannels})`)
                     }
 
-                    // Calculate current time
-                    const currentTime = data.scheduledFrames * framerate
+                    // Calculate stream time in milliseconds for this frame.
+                    // NOTE: `framerate` is frames-per-second, not milliseconds-per-frame.
+                    // Using FPS directly here causes slow playback (e.g. 60 -> 16.7fps timing).
+                    const currentTime = Math.round(data.scheduledFrames * frameDurationMs)
 
                     // Calculate correct sample frame count based on actual frame rate
                     // For 48kHz audio: sampleFrameCount = 48000 / frameRate
