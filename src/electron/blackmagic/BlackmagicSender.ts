@@ -42,6 +42,9 @@ interface PlaybackData {
     enableKeying?: boolean
     needsReinit?: boolean
     recoveryAttempts?: number
+    frameProcessing?: boolean
+    conversionBackoffUntil?: number
+    conversionErrorCount?: number
 }
 
 interface PerformanceMetrics {
@@ -70,7 +73,6 @@ export class BlackmagicSender {
     static audioBufferQueue: Buffer[] = []
     static audioQueueOffset: number = 0
     static audioQueueLength: number = 0
-    static latestAudioMetadata: { sampleRate: number; channelCount: number } | null = null
 
     // Device configuration
     static devicePixelMode: "BGRA" | "ARGB" = os.endianness() === "BE" ? "ARGB" : "BGRA"
@@ -91,6 +93,17 @@ export class BlackmagicSender {
     } = {}
     static performanceLog: PerformanceMetrics[] = []
     private static readonly EMPTY_BUFFER = Buffer.alloc(0)
+    private static readonly MAX_CONVERSION_BUFFER_BYTES = 128 * 1024 * 1024
+    private static readonly CONVERSION_BUFFER_POOL_SIZE = 6
+    private static conversionBufferPools: {
+        [outputId: string]: {
+            size: number
+            buffers: Buffer[]
+            index: number
+        }
+    } = {}
+    // Memory pressure detection is no longer needed - frames are streamed directly
+    // without storage, so memory stays minimal
 
     // Caches for parsing repeated display mode strings
     private static frameRateCache: { [displayMode: string]: { nominal: number; accurate: number } } = {}
@@ -270,7 +283,6 @@ export class BlackmagicSender {
                     })
                 }
 
-                console.log(`Sender initialized with buffer size: ${targetBufferSize}`)
                 return true
             } catch (err) {
                 const errorMessage = err instanceof Error ? err.message : String(err)
@@ -461,6 +473,46 @@ export class BlackmagicSender {
         return this.getDimensionsForDisplayMode(displayMode)
     }
 
+    private static getReusableConversionBuffer(outputId: string, byteSize: number): Buffer {
+        let pool = this.conversionBufferPools[outputId]
+
+        if (!pool || pool.size !== byteSize) {
+            pool = {
+                size: byteSize,
+                buffers: Array.from({ length: this.CONVERSION_BUFFER_POOL_SIZE }, () => Buffer.allocUnsafe(byteSize)),
+                index: 0
+            }
+            this.conversionBufferPools[outputId] = pool
+        }
+
+        const buffer = pool.buffers[pool.index]
+        pool.index = (pool.index + 1) % pool.buffers.length
+        return buffer
+    }
+
+    static canAcceptFrame(outputId: string): boolean {
+        if (SEGFAULT_PRONE_DEVICES.has(outputId)) return false
+
+        const data = this.playbackData[outputId]
+        if (!data || !data.playback || data.needsReinit || this.isPaused[outputId]) return false
+        if (data.frameProcessing) return false
+
+        const now = Date.now()
+        if (data.conversionBackoffUntil && now < data.conversionBackoffUntil) return false
+
+        try {
+            const bufferedFrames = data.playback.bufferedFrames()
+            // Once started, keep buffer minimal (1-2 frames) to prevent memory accumulation
+            // At startup, allow filling to targetBufferSize for smooth initial playback
+            const maxBuffer = data.isStarted ? Math.min(2, Math.max(1, Math.ceil(data.targetBufferSize / 4))) : data.targetBufferSize
+            if (bufferedFrames > maxBuffer) return false
+        } catch {
+            return false
+        }
+
+        return true
+    }
+
     static scheduleFrame(outputId: string, videoFrame: Buffer, audioFrame: Buffer | null, framerate: number = 0) {
         // Skip immediately if this device is known to cause segfaults
         if (SEGFAULT_PRONE_DEVICES.has(outputId)) {
@@ -478,9 +530,23 @@ export class BlackmagicSender {
             return
         }
 
+        // Never allow conversion/scheduling work to queue up for this output.
+        // If one frame is still processing, drop the incoming frame.
+        if (data.frameProcessing) {
+            data.totalFramesDropped = (data.totalFramesDropped || 0) + 1
+            return
+        }
+
+        const now = Date.now()
+
+        // Back off briefly after conversion allocation failures.
+        if (data.conversionBackoffUntil && now < data.conversionBackoffUntil) {
+            data.totalFramesDropped = (data.totalFramesDropped || 0) + 1
+            return
+        }
+
         // Lightweight guard against accidentally flooding schedule() calls.
         // Keep this tied to target FPS so 59.94/60 outputs are not artificially slowed.
-        const now = Date.now()
         const targetFps = Math.max(1, Number.isFinite(framerate) && framerate > 0 ? framerate : this.getExpectedFrameRate(data.displayMode))
         const frameDurationMs = 1000 / targetFps
         const minInterval = Math.max(1, Math.floor(frameDurationMs * 0.75))
@@ -491,20 +557,35 @@ export class BlackmagicSender {
 
         const size = data.targetSize
 
+        // Avoid huge accidental allocations in converters.
+        if (videoFrame.length > this.MAX_CONVERSION_BUFFER_BYTES || data.expectedVideoFrameSize > this.MAX_CONVERSION_BUFFER_BYTES) {
+            if (now - (data.lastVideoSizeWarningTime || 0) > 5000) {
+                data.lastVideoSizeWarningTime = now
+                console.error(`Skipping oversized frame conversion: input=${videoFrame.length} bytes, expectedOutput=${data.expectedVideoFrameSize} bytes, limit=${this.MAX_CONVERSION_BUFFER_BYTES} bytes`)
+            }
+            data.totalFramesDropped = (data.totalFramesDropped || 0) + 1
+            return
+        }
+
+        data.frameProcessing = true
+
         // Use setTimeout to completely isolate each frame scheduling operation
         // This prevents a crash in one frame from affecting others
         setTimeout(() => {
             try {
                 // Skip empty frames
-                if (!videoFrame || videoFrame.length === 0) return
+                if (!videoFrame || videoFrame.length === 0) {
+                    return
+                }
 
                 // Check buffer status
                 let bufferedFrames = 0
                 try {
                     bufferedFrames = data.playback.bufferedFrames()
 
-                    // Use BufferManager for backpressure checking
-                    if (bufferedFrames > data.targetBufferSize * 1.2) {
+                    // Keep buffer minimal once started to prevent accumulation
+                    const maxBuffer = data.isStarted ? Math.min(2, Math.max(1, Math.ceil(data.targetBufferSize / 4))) : data.targetBufferSize
+                    if (bufferedFrames > maxBuffer) {
                         data.totalFramesDropped = (data.totalFramesDropped || 0) + 1
                         return // Buffer too full, skip frame
                     }
@@ -516,9 +597,26 @@ export class BlackmagicSender {
                 try {
                     // Log frame info and detect actual resolution
                     const now = Date.now()
+                    const expectedBytesForDeclaredSize = size.width * size.height * 4
+                    const maxAllowedInputBytes = expectedBytesForDeclaredSize * 2
+
+                    // Guard against HiDPI/invalid frame payloads before conversion allocates.
+                    if (videoFrame.length !== expectedBytesForDeclaredSize) {
+                        const actualPixels = videoFrame.length / 4
+                        const actualHeight = Math.round(actualPixels / size.width)
+
+                        if (videoFrame.length > maxAllowedInputBytes || actualHeight <= 0 || !Number.isFinite(actualHeight)) {
+                            if (now - (data.lastVideoSizeWarningTime || 0) > 5000) {
+                                data.lastVideoSizeWarningTime = now
+                                console.warn(`Skipping invalid source frame: got ${videoFrame.length} bytes (~${size.width}x${actualHeight}), expected ${expectedBytesForDeclaredSize} bytes (${size.width}x${size.height})`)
+                            }
+                            data.totalFramesDropped = (data.totalFramesDropped || 0) + 1
+                            return
+                        }
+                    }
+
                     if (now - this.lastDiagnosticTime > 5000) {
                         this.lastDiagnosticTime = now
-                        const expectedBytesForDeclaredSize = size.width * size.height * 4
                         const actualPixels = videoFrame.length / 4
 
                         // Detect actual resolution if mismatch
@@ -531,9 +629,20 @@ export class BlackmagicSender {
                     // Convert frame format
                     let convertedFrame
                     try {
-                        convertedFrame = this.convertVideoFrameFormat(videoFrame, data.pixelFormat, size)
+                        const reusableOutputBuffer = this.getReusableConversionBuffer(outputId, data.expectedVideoFrameSize)
+                        convertedFrame = this.convertVideoFrameFormat(videoFrame, data.pixelFormat, size, reusableOutputBuffer)
+                        data.conversionErrorCount = 0
                     } catch (err) {
                         console.error(`Frame conversion error: ${err instanceof Error ? err.message : String(err)}`)
+
+                        const message = err instanceof Error ? err.message.toLowerCase() : String(err).toLowerCase()
+                        if (message.includes("allocation failed") || message.includes("out of memory")) {
+                            const failCount = (data.conversionErrorCount || 0) + 1
+                            data.conversionErrorCount = failCount
+                            const backoffMs = Math.min(2000, 100 * 2 ** Math.min(5, failCount))
+                            data.conversionBackoffUntil = Date.now() + backoffMs
+                            data.totalFramesDropped = (data.totalFramesDropped || 0) + 1
+                        }
                         return
                     }
 
@@ -583,6 +692,13 @@ export class BlackmagicSender {
                         data.scheduledFrames++
                         data.framesSinceLastCheck++
 
+                        try {
+                            data.playback.hardwareTime()
+                            data.playback.scheduledTime()
+                        } catch {
+                            // Ignore timing errors
+                        }
+
                         // Start playback if needed
                         if (!data.isStarted && bufferedFrames >= Math.min(10, data.targetBufferSize)) {
                             try {
@@ -627,6 +743,8 @@ export class BlackmagicSender {
                 }
             } catch (err) {
                 console.error(`General error in frame processing: ${err instanceof Error ? err.message : String(err)}`)
+            } finally {
+                data.frameProcessing = false
             }
         }, 0) // End setTimeout - this executes the frame scheduling in a separate tick
     }
@@ -1046,8 +1164,6 @@ export class BlackmagicSender {
             this.audioBufferQueue.push(buffer)
             this.audioQueueLength += buffer.length
         }
-        this.latestAudioMetadata = { sampleRate, channelCount }
-
         // Keep buffered audio size reasonable (max 2 seconds of audio)
         const maxBufferSize = sampleRate * 2 * channelCount * 2 // 2 seconds
         if (this.audioQueueLength > maxBufferSize) {
@@ -1119,66 +1235,70 @@ export class BlackmagicSender {
         }
     }
 
-    static convertVideoFrameFormat(frame: Buffer, format: string, size: Size) {
+    static convertVideoFrameFormat(frame: Buffer, format: string, size: Size, reusableOutputBuffer?: Buffer) {
         // Check specific bit-depth RGB formats FIRST before generic checks
         if (format.includes("12Bit") || format.includes("12-bit") || format.includes("12 bit")) {
             const isLE = format.includes("RGBLE") || format.includes("RGB LE")
             if (isLE) {
-                if (this.devicePixelMode === "BGRA") return ImageBufferConverter12BitRGB.BGRAtoRGBLE(frame, size)
-                else return ImageBufferConverter12BitRGB.ARGBtoRGBLE(frame, size)
+                if (this.devicePixelMode === "BGRA") return ImageBufferConverter12BitRGB.BGRAtoRGBLE(frame, size, reusableOutputBuffer)
+                else return ImageBufferConverter12BitRGB.ARGBtoRGBLE(frame, size, reusableOutputBuffer)
             }
             // Compatibility fallback:
             // Some setups show severe vertical artifacts with R12B packing,
             // while R12L packing is stable. Use LE packing for 12-bit RGB too.
-            if (this.devicePixelMode === "BGRA") return ImageBufferConverter12BitRGB.BGRAtoRGBLE(frame, size)
-            else return ImageBufferConverter12BitRGB.ARGBtoRGBLE(frame, size)
+            if (this.devicePixelMode === "BGRA") return ImageBufferConverter12BitRGB.BGRAtoRGBLE(frame, size, reusableOutputBuffer)
+            else return ImageBufferConverter12BitRGB.ARGBtoRGBLE(frame, size, reusableOutputBuffer)
         } else if (format.includes("RGBXLE") && (format.includes("10Bit") || format.includes("10-bit") || format.includes("10 bit"))) {
-            if (this.devicePixelMode === "BGRA") return ImageBufferConverter10BitRGB.BGRAtoRGBXLE(frame, size)
-            else return ImageBufferConverter10BitRGB.ARGBtoRGBXLE(frame, size)
+            if (this.devicePixelMode === "BGRA") return ImageBufferConverter10BitRGB.BGRAtoRGBXLE(frame, size, reusableOutputBuffer)
+            else return ImageBufferConverter10BitRGB.ARGBtoRGBXLE(frame, size, reusableOutputBuffer)
         } else if (format.includes("RGBX") && !format.includes("RGBXLE") && (format.includes("10Bit") || format.includes("10-bit") || format.includes("10 bit"))) {
-            if (this.devicePixelMode === "BGRA") return ImageBufferConverter10BitRGB.BGRAtoRGBX(frame, size)
-            else return ImageBufferConverter10BitRGB.ARGBtoRGBX(frame, size)
+            if (this.devicePixelMode === "BGRA") return ImageBufferConverter10BitRGB.BGRAtoRGBX(frame, size, reusableOutputBuffer)
+            else return ImageBufferConverter10BitRGB.ARGBtoRGBX(frame, size, reusableOutputBuffer)
         } else if ((format.includes("10Bit") || format.includes("10-bit") || format.includes("10 bit")) && format.includes("RGB")) {
-            if (this.devicePixelMode === "BGRA") return ImageBufferConverter10BitRGB.BGRAtoRGB(frame, size)
-            else return ImageBufferConverter10BitRGB.ARGBtoRGB(frame, size)
+            if (this.devicePixelMode === "BGRA") return ImageBufferConverter10BitRGB.BGRAtoRGB(frame, size, reusableOutputBuffer)
+            else return ImageBufferConverter10BitRGB.ARGBtoRGB(frame, size, reusableOutputBuffer)
         } else if (format.includes("YUV")) {
             if (format.includes("10")) {
-                if (this.devicePixelMode === "BGRA") return ImageBufferConverter10Bit.BGRAtoYUV(frame, size)
-                else return ImageBufferConverter10Bit.ARGBtoYUV(frame, size)
+                if (this.devicePixelMode === "BGRA") return ImageBufferConverter10Bit.BGRAtoYUV(frame, size, reusableOutputBuffer)
+                else return ImageBufferConverter10Bit.ARGBtoYUV(frame, size, reusableOutputBuffer)
             } else {
-                if (this.devicePixelMode === "BGRA") return ImageBufferConverter.BGRAtoYUV(frame, size)
-                else return ImageBufferConverter.ARGBtoYUV(frame, size)
+                if (this.devicePixelMode === "BGRA") return ImageBufferConverter.BGRAtoYUV(frame, size, reusableOutputBuffer)
+                else return ImageBufferConverter.ARGBtoYUV(frame, size, reusableOutputBuffer)
             }
         } else if (format.includes("RGBXLE")) {
-            const result = Buffer.from(frame)
+            const result = reusableOutputBuffer && reusableOutputBuffer.length >= frame.length ? reusableOutputBuffer : Buffer.allocUnsafe(frame.length)
+            frame.copy(result, 0, 0, frame.length)
             if (this.devicePixelMode === "BGRA") ImageBufferConverter.BGRAtoRGBXLE(result)
             else ImageBufferConverter.ARGBtoRGBXLE(result)
             return result
         } else if (format.includes("RGBLE")) {
-            if (this.devicePixelMode === "BGRA") return ImageBufferConverter.BGRAtoRGBLE(frame)
-            else return ImageBufferConverter.ARGBtoRGBLE(frame)
+            if (this.devicePixelMode === "BGRA") return ImageBufferConverter.BGRAtoRGBLE(frame, reusableOutputBuffer)
+            else return ImageBufferConverter.ARGBtoRGBLE(frame, reusableOutputBuffer)
         } else if (format.includes("RGBX")) {
-            const result = Buffer.from(frame)
+            const result = reusableOutputBuffer && reusableOutputBuffer.length >= frame.length ? reusableOutputBuffer : Buffer.allocUnsafe(frame.length)
+            frame.copy(result, 0, 0, frame.length)
             if (this.devicePixelMode === "BGRA") util.ImageBufferAdjustment.BGRAtoBGRX(result)
             else ImageBufferConverter.ARGBtoRGBX(result)
             return result
         } else if (format.includes("ARGB")) {
             if (this.devicePixelMode === "BGRA") {
-                const result = Buffer.from(frame)
+                const result = reusableOutputBuffer && reusableOutputBuffer.length >= frame.length ? reusableOutputBuffer : Buffer.allocUnsafe(frame.length)
+                frame.copy(result, 0, 0, frame.length)
                 ImageBufferConverter.BGRAtoARGB(result)
                 return result
             }
             return frame
         } else if (format.includes("BGRA")) {
             if (this.devicePixelMode === "ARGB") {
-                const result = Buffer.from(frame)
+                const result = reusableOutputBuffer && reusableOutputBuffer.length >= frame.length ? reusableOutputBuffer : Buffer.allocUnsafe(frame.length)
+                frame.copy(result, 0, 0, frame.length)
                 util.ImageBufferAdjustment.ARGBtoBGRA(result)
                 return result
             }
             return frame
         } else if (format.includes("RGB")) {
-            if (this.devicePixelMode === "BGRA") return ImageBufferConverter.BGRAtoRGB(frame)
-            else return ImageBufferConverter.ARGBtoRGB(frame)
+            if (this.devicePixelMode === "BGRA") return ImageBufferConverter.BGRAtoRGB(frame, reusableOutputBuffer)
+            else return ImageBufferConverter.ARGBtoRGB(frame, reusableOutputBuffer)
         }
 
         return frame
@@ -1214,6 +1334,7 @@ export class BlackmagicSender {
             delete this.playbackData[outputId]
             delete this.frameSkipCounter[outputId]
             delete this.initializationInProgress[outputId]
+            delete this.conversionBufferPools[outputId]
 
             // Clear queued audio if no outputs remain
             let hasOutputs = false
@@ -1238,6 +1359,7 @@ export class BlackmagicSender {
             delete this.playbackData[outputId]
             delete this.frameSkipCounter[outputId]
             delete this.initializationInProgress[outputId]
+            delete this.conversionBufferPools[outputId]
 
             return false
         }
@@ -1265,10 +1387,10 @@ export class BlackmagicSender {
         this.silentAudioBuffers = {}
         this.initializationInProgress = {}
         this.safetyCircuitBreaker = {}
+        this.conversionBufferPools = {}
         this.audioBufferQueue = []
         this.audioQueueOffset = 0
         this.audioQueueLength = 0
-        this.latestAudioMetadata = null
 
         console.log(`Stopped ${outputIds.length} outputs`)
     }
@@ -1297,13 +1419,5 @@ export class BlackmagicSender {
     static shutdown(): void {
         console.log("Shutting down BlackmagicSender...")
         this.stopAll()
-
-        // Additional cleanup
-        setTimeout(() => {
-            // Force garbage collection if available
-            if (global.gc) {
-                global.gc()
-            }
-        }, 1000)
     }
 }

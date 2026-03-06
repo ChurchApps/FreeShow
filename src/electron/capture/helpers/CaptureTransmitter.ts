@@ -6,28 +6,29 @@ import { NdiSender } from "../../ndi/NdiSender"
 import util from "../../ndi/vingester-util"
 import { OutputHelper } from "../../output/OutputHelper"
 import { getConnections, toServer } from "../../servers"
-import { CaptureHelper } from "../CaptureHelper"
 import { BlackmagicSender } from "../../blackmagic/BlackmagicSender"
 
 export type Channel = {
     key: string
     captureId: string
     timer: NodeJS.Timeout
-    // compare to not update when not changing
-    lastImage: Buffer // toBitmap
-    imageIsSame: boolean
-    lastCheck: number
+    lastFrameTime: number
 }
 export class CaptureTransmitter {
     private static readonly AUDIO_PRESENT_MARKER = Buffer.from([1])
     private static readonly IS_BIG_ENDIAN = os.endianness() === "BE"
+    private static transmitCount = 0
 
     static stageWindows: string[] = []
     static requestList: string[] = []
     // static ndiFrameCount = 0
     static channels: { [key: string]: Channel } = {}
-    // Flag to force send next frame to Blackmagic (used when resolution changes)
-    static forceFrameUpdate: Set<string> = new Set()
+    private static lastFrameState: { [channelId: string]: { signature: number; sizeKey: string; lastSentAt: number } } = {}
+    private static readonly UNCHANGED_KEEPALIVE_MS = 1000
+
+    static getTransmitCount() {
+        return this.transmitCount
+    }
 
     static startTransmitting(captureId: string) {
         const captureOptions = OutputHelper.getOutput(captureId)?.captureOptions
@@ -61,15 +62,13 @@ export class CaptureTransmitter {
 
         if (this.channels[combinedKey]?.timer) {
             clearInterval(this.channels[combinedKey].timer)
-            this.channels[combinedKey].timer = setInterval(() => this.handleChannelInterval(captureId, key), interval)
+            this.channels[combinedKey].timer = setInterval(() => {}, interval)
         } else {
             this.channels[combinedKey] = {
                 key,
                 captureId,
-                timer: setInterval(() => this.handleChannelInterval(captureId, key), interval),
-                lastImage: Buffer.alloc(0),
-                imageIsSame: false,
-                lastCheck: 0
+                timer: setInterval(() => {}, interval), // Placeholder
+                lastFrameTime: 0
             }
         }
     }
@@ -80,55 +79,82 @@ export class CaptureTransmitter {
 
         // console.log("STOP CHANNEL:", key)
         clearInterval(this.channels[combinedKey].timer)
+        // Clear buffer reference to allow GC
+        delete this.channels[combinedKey]
+
+        if (key !== "blackmagic") delete this.lastFrameState[combinedKey]
     }
 
-    private static checkImageCount = 100 // about every 3-5 seconds (50*100 / 33*100)
-    static handleChannelInterval(captureId: string, key: string) {
-        const combinedKey = `${captureId}-${key}`
-        const channel = this.channels[combinedKey]
-        if (!channel) return
+    private static getQuickSignature(buffer: Buffer): number {
+        // Lightweight sampled hash to detect unchanged frames with low overhead.
+        const len = buffer.length
+        if (len === 0) return 0
 
-        const image = CaptureHelper.storedFrames[captureId]
-        if (!image) return
+        let hash = 2166136261
+        const sampleCount = 64
+        const step = Math.max(1, Math.floor(len / sampleCount))
 
-        // check if image is the same as last once in a while
-        // if it's the same don't send a frame until it has changed
-        channel.lastCheck++
-        const compareImageCount = channel.imageIsSame ? 10 : this.checkImageCount
-        if (channel.lastCheck > compareImageCount) {
-            channel.lastCheck = 0
-
-            // console.time("toBitmap")
-            const imgData = image.toBitmap({ scaleFactor: 0.5 })
-            // https://stackoverflow.com/a/78093344
-            channel.imageIsSame = channel.lastImage.equals(imgData)
-            // console.timeEnd("toBitmap") // aprx. 4ms
-
-            if (!channel.imageIsSame) {
-                // store frame for next check
-                channel.lastImage = imgData
-            }
+        for (let i = 0; i < len; i += step) {
+            hash ^= buffer[i]
+            hash = Math.imul(hash, 16777619)
         }
 
-        const forceSend = CaptureTransmitter.forceFrameUpdate.delete(captureId)
-        if (channel.imageIsSame && !forceSend) return
+        // Fold in length to avoid collisions across different sizes.
+        hash ^= len
+        return hash >>> 0
+    }
 
+    private static shouldSkipUnchangedNonBlackmagicFrame(channelKey: string, captureId: string, buffer: Buffer, size: { width: number; height: number }): boolean {
+        const channelId = `${captureId}-${channelKey}`
+        const signature = this.getQuickSignature(buffer)
+        const sizeKey = `${size.width}x${size.height}`
+        const now = Date.now()
+        const previous = this.lastFrameState[channelId]
+
+        // Skip unchanged frames for still content, but keep low-rate keepalive frames.
+        if (previous && previous.signature === signature && previous.sizeKey === sizeKey && now - previous.lastSentAt < this.UNCHANGED_KEEPALIVE_MS) {
+            return true
+        }
+
+        this.lastFrameState[channelId] = {
+            signature,
+            sizeKey,
+            lastSentAt: now
+        }
+
+        return false
+    }
+
+    // New method: transmit frame immediately to all active channels
+    static transmitFrame(captureId: string, image: NativeImage) {
+        const now = Date.now()
+
+        for (const [, channel] of Object.entries(this.channels)) {
+            if (channel.captureId !== captureId) continue
+
+            // Respect channel framerate - only send if enough time has passed
+            const fps = OutputHelper.getOutput(captureId)?.captureOptions?.framerates?.[channel.key] || 30
+            const minInterval = 1000 / fps
+            if (now - channel.lastFrameTime < minInterval) continue
+
+            channel.lastFrameTime = now
+            this.transmitCount++
+            this.sendFrameToChannel(captureId, channel.key, image)
+        }
+    }
+
+    private static sendFrameToChannel(captureId: string, key: string, image: NativeImage) {
         const size = image.getSize()
         if (!size.width || !size.height) return
 
         switch (key) {
-            // case "preview":
-            // this.sendBufferToPreview(channel.captureId, image, { size })
-            // break
             case "ndi":
-                this.sendBufferToNdi(channel.captureId, image, { size })
+                this.sendBufferToNdi(captureId, image, { size })
                 break
             case "blackmagic":
                 this.sendBufferToBlackmagic(captureId, image)
                 break
             case "server":
-                // const options = OutputHelper.getOutput(captureId)?.captureOptions
-                // WIP base on receiving screen size
                 const outputshowConnections = getConnections("OUTPUT_STREAM")
                 const reduceSize = outputshowConnections > 20 ? 0.3 : outputshowConnections > 10 ? 0.5 : outputshowConnections > 5 ? 0.7 : 0.8
                 this.sendBufferToServer(captureId, image.resize({ width: size.width * reduceSize, height: size.height * reduceSize, quality: "good" }))
@@ -145,6 +171,9 @@ export class CaptureTransmitter {
 
         const buffer = image.toBitmap()
         const ratio = image.getAspectRatio()
+
+        if (this.shouldSkipUnchangedNonBlackmagicFrame("ndi", captureId, buffer, size)) return
+
         // this.ndiFrameCount++
         // WIP refresh on enable?
         NdiSender.sendVideoBufferNDI(captureId, buffer, { size, ratio, framerate: OutputHelper.getOutput(captureId)?.captureOptions?.framerates?.ndi || 10 })
@@ -189,7 +218,19 @@ export class CaptureTransmitter {
     // BLACKMAGIC
     static sendBufferToBlackmagic(captureId: string, image: NativeImage) {
         if (!image) return
-        const buffer = image.toBitmap()
+
+        // Check if Blackmagic can accept frame BEFORE expensive bitmap conversion
+        if (!BlackmagicSender.canAcceptFrame(captureId)) {
+            return
+        }
+
+        // Force 1x extraction to avoid Retina/HiDPI oversized buffers.
+        const buffer = image.toBitmap({ scaleFactor: 1 })
+
+        // CRITICAL: Release the NativeImage immediately after conversion to prevent memory accumulation
+        // NativeImage holds external memory that won't be GC'd until explicitly released
+        image = null as any
+
         const framerate = OutputHelper.getOutput(captureId)?.captureOptions?.framerates?.blackmagic
         if (!framerate) return
 
@@ -197,11 +238,6 @@ export class CaptureTransmitter {
         const audioBuffer = BlackmagicSender.audioQueueLength > 0 ? this.AUDIO_PRESENT_MARKER : null
 
         BlackmagicSender.scheduleFrame(captureId, buffer, audioBuffer, framerate)
-    }
-
-    // Force the next frame to be sent to Blackmagic (used when resolution changes)
-    static forceNextBlackmagicSend(captureId: string) {
-        this.forceFrameUpdate.add(captureId)
     }
 
     // MAIN (STAGE OUTPUT)
@@ -215,6 +251,8 @@ export class CaptureTransmitter {
         /*  convert from ARGB/BGRA (Electron/Chromium capture output) to RGBA (Web canvas)  */
         if (this.IS_BIG_ENDIAN) util.ImageBufferAdjustment.ARGBtoRGBA(buffer)
         else util.ImageBufferAdjustment.BGRAtoRGBA(buffer)
+
+        if (this.shouldSkipUnchangedNonBlackmagicFrame("stage", captureId, buffer, size)) return
 
         // DEBUG YUV
         // // console.log(os.endianness()) // LE
@@ -246,6 +284,8 @@ export class CaptureTransmitter {
         /*  convert from ARGB/BGRA (Electron/Chromium capture output) to RGBA (Web canvas)  */
         if (this.IS_BIG_ENDIAN) util.ImageBufferAdjustment.ARGBtoRGBA(buffer)
         else util.ImageBufferAdjustment.BGRAtoRGBA(buffer)
+
+        if (this.shouldSkipUnchangedNonBlackmagicFrame("server", outputId, buffer, size)) return
 
         toServer(OUTPUT_STREAM, { channel: "STREAM", data: { id: outputId, time: Date.now(), buffer, size } })
     }

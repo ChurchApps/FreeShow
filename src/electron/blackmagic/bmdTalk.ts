@@ -8,7 +8,6 @@ import { BLACKMAGIC } from "../../types/Channels"
 import { Output } from "../../types/Output"
 import { Message } from "../../types/Socket"
 import { CaptureHelper } from "../capture/CaptureHelper"
-import { CaptureTransmitter } from "../capture/helpers/CaptureTransmitter"
 import { OutputBounds } from "../output/helpers/OutputBounds"
 import { OutputValues } from "../output/helpers/OutputValues"
 import { OutputHelper } from "../output/OutputHelper"
@@ -103,12 +102,4 @@ export async function initializeSender(data: Output, window: BrowserWindow, id: 
     OutputHelper.setOutput(id, output)
 
     OutputValues.updateValue({ key: "capture", value: { key: "blackmagic", value: !!data.blackmagic }, id })
-
-    // Force next frame to be sent with new resolution
-    // Use a small delay to ensure sender is fully initialized with new display mode
-    if (data.blackmagic) {
-        setTimeout(() => {
-            CaptureTransmitter.forceNextBlackmagicSend(id)
-        }, 150)
-    }
 }

@@ -12,6 +12,11 @@
 
 import { Size } from "electron"
 
+function getOutputBuffer(requiredSize: number, outputBuffer?: Buffer): Buffer {
+    if (outputBuffer && outputBuffer.length >= requiredSize) return outputBuffer
+    return Buffer.allocUnsafe(requiredSize)
+}
+
 /**
  * 8-bit image buffer converters for output operations
  */
@@ -35,9 +40,10 @@ export class ImageBufferConverter {
      * Convert from BGRA to YUV 422 packed (UYVY format)
      * YUV422 packed format: each 2 pixels = 4 bytes (U Y V Y)
      */
-    static BGRAtoYUV(data: Buffer, { width, height }: Size) {
+    static BGRAtoYUV(data: Buffer, { width, height }: Size, outputBuffer?: Buffer) {
         // YUV422 packed format: each 2 pixels = 4 bytes (U Y V Y)
-        const newData = Buffer.alloc(width * height * 2)
+        const requiredSize = width * height * 2
+        const newData = getOutputBuffer(requiredSize, outputBuffer)
         let outIndex = 0
 
         // Validate input buffer size (should be width * height * 4 for BGRA)
@@ -158,9 +164,10 @@ export class ImageBufferConverter {
      * Convert from ARGB to YUV 422 packed (UYVY format)
      * YUV422 packed format: each 2 pixels = 4 bytes (U Y V Y)
      */
-    static ARGBtoYUV(data: Buffer, { width, height }: Size) {
+    static ARGBtoYUV(data: Buffer, { width, height }: Size, outputBuffer?: Buffer) {
         // YUV422 packed format: each 2 pixels = 4 bytes (U Y V Y)
-        const newData = Buffer.alloc(width * height * 2)
+        const requiredSize = width * height * 2
+        const newData = getOutputBuffer(requiredSize, outputBuffer)
         let outIndex = 0
 
         // Validate input buffer size (should be width * height * 4 for ARGB)
@@ -306,8 +313,9 @@ export class ImageBufferConverter {
     }
 
     /*  convert from BGRA to RGBLE  */
-    static BGRAtoRGBLE(data: Buffer) {
-        const newData = Buffer.allocUnsafe((data.length / 4) * 3)
+    static BGRAtoRGBLE(data: Buffer, outputBuffer?: Buffer) {
+        const requiredSize = (data.length / 4) * 3
+        const newData = getOutputBuffer(requiredSize, outputBuffer)
         let j = 0
         for (let i = 0; i < data.length; i += 4) {
             newData[j++] = data[i + 2] // R
@@ -318,8 +326,9 @@ export class ImageBufferConverter {
     }
 
     /*  convert from ARGB to RGBLE  */
-    static ARGBtoRGBLE(data: Buffer) {
-        const newData = Buffer.allocUnsafe((data.length / 4) * 3)
+    static ARGBtoRGBLE(data: Buffer, outputBuffer?: Buffer) {
+        const requiredSize = (data.length / 4) * 3
+        const newData = getOutputBuffer(requiredSize, outputBuffer)
         let j = 0
         for (let i = 0; i < data.length; i += 4) {
             newData[j++] = data[i + 1] // R
@@ -344,15 +353,15 @@ export class ImageBufferConverter {
     }
 
     /*  convert from BGRA to RGB  */
-    static BGRAtoRGB(data: Buffer) {
+    static BGRAtoRGB(data: Buffer, outputBuffer?: Buffer) {
         // Byte layout is identical to RGBLE for 8-bit packed output.
-        return this.BGRAtoRGBLE(data)
+        return this.BGRAtoRGBLE(data, outputBuffer)
     }
 
     /*  convert from ARGB to RGB  */
-    static ARGBtoRGB(data: Buffer) {
+    static ARGBtoRGB(data: Buffer, outputBuffer?: Buffer) {
         // Byte layout is identical to RGBLE for 8-bit packed output.
-        return this.ARGBtoRGBLE(data)
+        return this.ARGBtoRGBLE(data, outputBuffer)
     }
 }
 
@@ -366,10 +375,10 @@ export class ImageBufferConverter10BitRGB {
     }
 
     /*  convert from BGRA to 10-bit RGB (Blackmagic format, 30 bits per pixel packed in 32-bit words) */
-    static BGRAtoRGB(data: Buffer, { width, height }: Size) {
+    static BGRAtoRGB(data: Buffer, { width, height }: Size, outputBuffer?: Buffer) {
         // Blackmagic 10-bit RGB (r210): big-endian words
         // Packed as [9:0]=B [19:10]=G [29:20]=R [31:30]=padding
-        const newData = Buffer.allocUnsafe(width * height * 4)
+        const newData = getOutputBuffer(width * height * 4, outputBuffer)
         let outIndex = 0
 
         for (let i = 0; i < data.length; i += 4) {
@@ -386,8 +395,8 @@ export class ImageBufferConverter10BitRGB {
     }
 
     /*  convert from ARGB to 10-bit RGB (Blackmagic format) */
-    static ARGBtoRGB(data: Buffer, { width, height }: Size) {
-        const newData = Buffer.allocUnsafe(width * height * 4)
+    static ARGBtoRGB(data: Buffer, { width, height }: Size, outputBuffer?: Buffer) {
+        const newData = getOutputBuffer(width * height * 4, outputBuffer)
         let outIndex = 0
 
         for (let i = 0; i < data.length; i += 4) {
@@ -404,8 +413,8 @@ export class ImageBufferConverter10BitRGB {
     }
 
     /*  convert from BGRA to 10-bit RGBXLE (R10l, little-endian) */
-    static BGRAtoRGBXLE(data: Buffer, { width, height }: Size) {
-        const newData = Buffer.allocUnsafe(width * height * 4)
+    static BGRAtoRGBXLE(data: Buffer, { width, height }: Size, outputBuffer?: Buffer) {
+        const newData = getOutputBuffer(width * height * 4, outputBuffer)
         let outIndex = 0
 
         for (let i = 0; i < data.length; i += 4) {
@@ -422,8 +431,8 @@ export class ImageBufferConverter10BitRGB {
     }
 
     /*  convert from ARGB to 10-bit RGBXLE (R10l, little-endian) */
-    static ARGBtoRGBXLE(data: Buffer, { width, height }: Size) {
-        const newData = Buffer.allocUnsafe(width * height * 4)
+    static ARGBtoRGBXLE(data: Buffer, { width, height }: Size, outputBuffer?: Buffer) {
+        const newData = getOutputBuffer(width * height * 4, outputBuffer)
         let outIndex = 0
 
         for (let i = 0; i < data.length; i += 4) {
@@ -440,15 +449,15 @@ export class ImageBufferConverter10BitRGB {
     }
 
     /*  convert from BGRA to 10-bit RGBX (R10b, big-endian) */
-    static BGRAtoRGBX(data: Buffer, { width, height }: Size) {
+    static BGRAtoRGBX(data: Buffer, { width, height }: Size, outputBuffer?: Buffer) {
         // For 10-bit BE packing, RGB and RGBX share the same packed layout.
-        return this.BGRAtoRGB(data, { width, height })
+        return this.BGRAtoRGB(data, { width, height }, outputBuffer)
     }
 
     /*  convert from ARGB to 10-bit RGBX (R10b, big-endian) */
-    static ARGBtoRGBX(data: Buffer, { width, height }: Size) {
+    static ARGBtoRGBX(data: Buffer, { width, height }: Size, outputBuffer?: Buffer) {
         // For 10-bit BE packing, RGB and RGBX share the same packed layout.
-        return this.ARGBtoRGB(data, { width, height })
+        return this.ARGBtoRGB(data, { width, height }, outputBuffer)
     }
 }
 
@@ -458,9 +467,9 @@ export class ImageBufferConverter10BitRGB {
  */
 export class ImageBufferConverter12BitRGB {
     /*  convert from BGRA to 12-bit RGB (big-endian packed) */
-    static BGRAtoRGB(data: Buffer, { width, height }: Size) {
+    static BGRAtoRGB(data: Buffer, { width, height }: Size, outputBuffer?: Buffer) {
         const numPixels = width * height
-        const newData = Buffer.allocUnsafe(Math.ceil(numPixels * 4.5))
+        const newData = getOutputBuffer(Math.ceil(numPixels * 4.5), outputBuffer)
         let outIndex = 0
         let bitBuffer = 0
         let bitCount = 0
@@ -500,9 +509,9 @@ export class ImageBufferConverter12BitRGB {
     }
 
     /*  convert from ARGB to 12-bit RGB (big-endian packed) */
-    static ARGBtoRGB(data: Buffer, { width, height }: Size) {
+    static ARGBtoRGB(data: Buffer, { width, height }: Size, outputBuffer?: Buffer) {
         const numPixels = width * height
-        const newData = Buffer.allocUnsafe(Math.ceil(numPixels * 4.5))
+        const newData = getOutputBuffer(Math.ceil(numPixels * 4.5), outputBuffer)
         let outIndex = 0
         let bitBuffer = 0
         let bitCount = 0
@@ -542,9 +551,9 @@ export class ImageBufferConverter12BitRGB {
     }
 
     /*  convert from BGRA to 12-bit RGBLE (little-endian packed) */
-    static BGRAtoRGBLE(data: Buffer, { width, height }: Size) {
+    static BGRAtoRGBLE(data: Buffer, { width, height }: Size, outputBuffer?: Buffer) {
         const numPixels = width * height
-        const newData = Buffer.allocUnsafe(Math.ceil(numPixels * 4.5))
+        const newData = getOutputBuffer(Math.ceil(numPixels * 4.5), outputBuffer)
         let outIndex = 0
         let bitBuffer = 0
         let bitCount = 0
@@ -587,9 +596,9 @@ export class ImageBufferConverter12BitRGB {
     }
 
     /*  convert from ARGB to 12-bit RGBLE (little-endian packed) */
-    static ARGBtoRGBLE(data: Buffer, { width, height }: Size) {
+    static ARGBtoRGBLE(data: Buffer, { width, height }: Size, outputBuffer?: Buffer) {
         const numPixels = width * height
-        const newData = Buffer.allocUnsafe(Math.ceil(numPixels * 4.5))
+        const newData = getOutputBuffer(Math.ceil(numPixels * 4.5), outputBuffer)
         let outIndex = 0
         let bitBuffer = 0
         let bitCount = 0
@@ -638,13 +647,13 @@ export class ImageBufferConverter12BitRGB {
  */
 export class ImageBufferConverter10Bit {
     /*  convert from BGRA to v210 format (10-bit YUV422 packed) */
-    static BGRAtoYUV(data: Buffer, { width, height }: Size) {
+    static BGRAtoYUV(data: Buffer, { width, height }: Size, outputBuffer?: Buffer) {
         // v210 format: 16 bytes per 6 pixels (10-bit YUV422 packed into 32-bit words)
         // Each 128-bit block contains: U0 Y0 V0 Y1 U2 Y2 V2 Y3 U4 Y4 V4 Y5
         // Packed as: [V0:Y0:U0] [Y2:U2:Y1] [U4:Y3:V2] [Y5:V4:Y4] (little-endian 32-bit words)
         // Groups are padded per row, so allocation must be based on rows (not total pixels).
         const groupsPerRow = Math.ceil(width / 6)
-        const newData = Buffer.allocUnsafe(groupsPerRow * height * 16)
+        const newData = getOutputBuffer(groupsPerRow * height * 16, outputBuffer)
         let outIndex = 0
 
         for (let y = 0; y < height; y++) {
@@ -708,11 +717,11 @@ export class ImageBufferConverter10Bit {
     }
 
     /*  convert from ARGB to v210 format (10-bit YUV422 packed) */
-    static ARGBtoYUV(data: Buffer, { width, height }: Size) {
+    static ARGBtoYUV(data: Buffer, { width, height }: Size, outputBuffer?: Buffer) {
         // v210 format: 16 bytes per 6 pixels
         // Groups are padded per row, so allocation must be based on rows (not total pixels).
         const groupsPerRow = Math.ceil(width / 6)
-        const newData = Buffer.allocUnsafe(groupsPerRow * height * 16)
+        const newData = getOutputBuffer(groupsPerRow * height * 16, outputBuffer)
         let outIndex = 0
 
         for (let y = 0; y < height; y++) {
@@ -780,9 +789,9 @@ export class InputImageBufferConverter {
     /**
      * Convert from YUV 4:2:0 planar to RGBA
      */
-    static YUVtoRGBA(yuvData: Buffer, { width, height }: Size) {
+    static YUVtoRGBA(yuvData: Buffer, { width, height }: Size, outputBuffer?: Buffer) {
         const numPixels = width * height
-        const rgbaData = Buffer.allocUnsafe(numPixels * 4) // RGBA has 4 bytes per pixel
+        const rgbaData = getOutputBuffer(numPixels * 4, outputBuffer) // RGBA has 4 bytes per pixel
 
         const yPlane = yuvData.slice(0, numPixels)
         const uPlane = yuvData.slice(numPixels, numPixels + numPixels / 4)
@@ -822,8 +831,9 @@ export class InputImageBufferConverter {
     }
 
     /*  convert from RGBLE to RGBA  */
-    static RGBLEtoRGBA(data: Buffer) {
-        const newData = Buffer.allocUnsafe((data.length / 3) * 4)
+    static RGBLEtoRGBA(data: Buffer, outputBuffer?: Buffer) {
+        const requiredSize = (data.length / 3) * 4
+        const newData = getOutputBuffer(requiredSize, outputBuffer)
         let j = 0
         for (let i = 0; i < data.length; i += 3) {
             newData[j++] = data[i] // R
@@ -835,8 +845,8 @@ export class InputImageBufferConverter {
     }
 
     /*  convert from RGBX to RGBA  */
-    static RGBXtoRGBA(data: Buffer) {
-        const newData = Buffer.allocUnsafe(data.length)
+    static RGBXtoRGBA(data: Buffer, outputBuffer?: Buffer) {
+        const newData = getOutputBuffer(data.length, outputBuffer)
         for (let i = 0; i < data.length; i += 4) {
             newData[i] = data[i] // R
             newData[i + 1] = data[i + 1] // G
@@ -847,8 +857,9 @@ export class InputImageBufferConverter {
     }
 
     /*  convert from RGB to RGBA  */
-    static RGBtoRGBA(data: Buffer) {
-        const newData = Buffer.allocUnsafe((data.length / 3) * 4)
+    static RGBtoRGBA(data: Buffer, outputBuffer?: Buffer) {
+        const requiredSize = (data.length / 3) * 4
+        const newData = getOutputBuffer(requiredSize, outputBuffer)
         let j = 0
         for (let i = 0; i < data.length; i += 3) {
             newData[j++] = data[i] // R
