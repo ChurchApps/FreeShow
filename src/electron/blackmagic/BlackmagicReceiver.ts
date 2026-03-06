@@ -34,7 +34,7 @@ export class BlackmagicReceiver {
         if (deviceIndex < 0) return
 
         let device = BlackmagicManager.getDeviceById(deviceId)
-        if (!device) return
+        if (!device || !device.inputDisplayModes?.[0]) return
 
         // WIP change mode
         let displayMode = device.inputDisplayModes[0].name // selecting first

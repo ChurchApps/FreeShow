@@ -174,7 +174,6 @@
         if (!newData) newData = {}
 
         let value = e?.detail?.id ?? e
-        console.log(key, value)
 
         newData[key] = value
 
@@ -258,6 +257,8 @@
                     if (newData.displayMode && newData.pixelFormat) send(OUTPUT, ["SET_VALUE"], { id: currentOutput?.id, key: "blackmagic", value: currentOutput })
                 })
             }
+
+            saved.set(false)
         })
     }
 
@@ -269,21 +270,32 @@
     onDestroy(() => destroy(BLACKMAGIC, listenerId))
     const receiveBMD = {
         GET_DEVICES: (data) => {
-            blackmagicDevices = JSON.parse(data).map((a) => ({ id: a.deviceHandle, name: a.displayName || a.modelName, data: { displayModes: a.outputDisplayModes || a.inputDisplayModes } }))
+            const parsedData = JSON.parse(data)
+            blackmagicDevices = parsedData.map((a) => ({
+                id: a.deviceHandle,
+                name: a.displayName || a.modelName,
+                data: {
+                    displayModes: a.outputDisplayModes || a.inputDisplayModes,
+                    supportsInternalKeying: a.supportsInternalKeying || false,
+                    supportsExternalKeying: a.supportsExternalKeying || false
+                }
+            }))
             if (blackmagicDevices.length && (!currentOutput?.blackmagicData?.deviceId || !currentOutput?.blackmagicData?.displayModes?.length)) updateBlackmagicData(blackmagicDevices[0].id, "deviceId")
         }
     }
     receive(BLACKMAGIC, receiveBMD, listenerId)
 
-    // Pixel format must include an alpha channel. Only 8-bit ARGB and BGRA are supported.
-    function isAlphaSupported(pixelFormat: string) {
-        if (!pixelFormat.includes("8")) return false
-        return pixelFormat.includes("BGRA") || pixelFormat.includes("ARGB")
+    // Check if alpha keying is supported by the device
+    function isAlphaSupported(): boolean {
+        const device = blackmagicDevices.find((a) => a.id === currentOutput?.blackmagicData?.deviceId)
+        if (!device) return false
+        return device.data?.supportsInternalKeying || device.data?.supportsExternalKeying || false
     }
 
     $: outputLabel = `${currentOutput?.bounds?.width || 1920}x${currentOutput?.bounds?.height || 1080}`
 
     let ndiMenuOpened = false
+    let bmdMenuOpened = false
 </script>
 
 {#if outputsList.filter((a) => !a.stageOutput).length > 1 || !currentOutput?.enabled || currentOutput?.stageOutput}
@@ -342,23 +354,26 @@
 </InputRow>
 
 <!-- Blackmagic -->
-<!-- BLACKMAGIC CURRENTLY NOT WORKING -->
-<Title label="Blackmagic Design" icon="companion" />
+<Title label="Blackmagic Design" icon="blackmagic" />
 
-<MaterialToggleSwitch label="actions.enable Blackmagic" style="width: 100%;" checked={currentOutput?.blackmagic} defaultValue={false} on:change={(e) => updateOutput("blackmagic", e.detail)} />
+<InputRow arrow={currentOutput?.blackmagic} bind:open={bmdMenuOpened}>
+    <MaterialToggleSwitch label="actions.enable Blackmagic" style="width: 100%;" checked={currentOutput?.blackmagic} defaultValue={false} on:change={(e) => updateOutput("blackmagic", e.detail)} />
 
-{#if currentOutput?.blackmagic}
-    <MaterialDropdown label="settings.device" value={currentOutput?.blackmagicData?.deviceId} options={blackmagicDevices.map((device) => ({ label: device.name, value: device.id || "" }))} on:change={(e) => updateBlackmagicData(e.detail, "deviceId")} />
+    <svelte:fragment slot="menu">
+        <MaterialDropdown label="settings.device" value={currentOutput?.blackmagicData?.deviceId} options={blackmagicDevices.map((device) => ({ label: device.name, value: device.id || "" }))} on:change={(e) => updateBlackmagicData(e.detail, "deviceId")} />
 
-    {#if currentOutput.blackmagicData?.deviceId}
-        <MaterialDropdown label="settings.display_mode" value={currentOutput.blackmagicData?.displayMode} options={currentOutput.blackmagicData?.displayModes?.map((mode) => ({ label: mode.name, value: mode.name })) || []} on:change={(e) => updateBlackmagicData(e.detail, "displayMode")} />
-        <MaterialDropdown label="settings.pixel_format" value={currentOutput.blackmagicData?.pixelFormat} options={currentOutput.blackmagicData?.pixelFormats?.map((format) => ({ label: format.name, value: format.name })) || []} on:change={(e) => updateBlackmagicData(e.detail, "pixelFormat")} />
+        {#if currentOutput?.blackmagicData?.deviceId}
+            <InputRow>
+                <MaterialDropdown label="settings.display_mode" value={currentOutput.blackmagicData?.displayMode} options={currentOutput.blackmagicData?.displayModes?.map((mode) => ({ label: mode.name, value: mode.name })) || []} on:change={(e) => updateBlackmagicData(e.detail, "displayMode")} />
+                <MaterialDropdown label="settings.pixel_format" value={currentOutput.blackmagicData?.pixelFormat} options={currentOutput.blackmagicData?.pixelFormats?.map((format) => ({ label: format.name, value: format.name })) || []} on:change={(e) => updateBlackmagicData(e.detail, "pixelFormat")} />
+            </InputRow>
 
-        {#if isAlphaSupported(currentOutput.blackmagicData?.pixelFormat || "")}
-            <MaterialToggleSwitch label="settings.alpha_key" checked={currentOutput.blackmagicData?.alphaKey} on:change={(e) => updateBlackmagicData(e.detail, "alphaKey")} />
+            {#if isAlphaSupported()}
+                <MaterialToggleSwitch label="settings.alpha_key" checked={currentOutput.blackmagicData?.alphaKey} on:change={(e) => updateBlackmagicData(e.detail, "alphaKey")} />
+            {/if}
         {/if}
-    {/if}
-{/if}
+    </svelte:fragment>
+</InputRow>
 
 {#if currentOutput?.ndi || currentOutput?.blackmagic}
     <br />

@@ -43,7 +43,7 @@ export class CaptureLifecycle {
             try {
                 let image = await output.captureOptions.window.webContents.capturePage()
 
-                // Resize to target resolution for Blackmagic outputs (handle Retina 2x scaling)
+                // Resize to target resolution for Blackmagic outputs (if screen scaling is not 100%)
                 if (output.captureOptions?.options?.blackmagic) {
                     const targetSize = BlackmagicSender.getTargetDimensions(id)
                     const currentSize = image.getSize()

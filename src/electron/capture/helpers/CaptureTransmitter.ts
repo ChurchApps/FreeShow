@@ -23,6 +23,8 @@ export class CaptureTransmitter {
     static requestList: string[] = []
     // static ndiFrameCount = 0
     static channels: { [key: string]: Channel } = {}
+    // Flag to force send next frame to Blackmagic (used when resolution changes)
+    static forceFrameUpdate: Set<string> = new Set()
 
     static startTransmitting(captureId: string) {
         const captureOptions = OutputHelper.getOutput(captureId)?.captureOptions
@@ -104,7 +106,10 @@ export class CaptureTransmitter {
             }
         }
 
-        if (channel.imageIsSame) return
+        if (channel.imageIsSame && !CaptureTransmitter.forceFrameUpdate.has(captureId)) return
+
+        // Remove force frame
+        if (CaptureTransmitter.forceFrameUpdate.has(captureId)) CaptureTransmitter.forceFrameUpdate.delete(captureId)
 
         const size = image.getSize()
         if (!size.width || !size.height) return
@@ -117,7 +122,6 @@ export class CaptureTransmitter {
                 this.sendBufferToNdi(channel.captureId, image, { size })
                 break
             case "blackmagic":
-                // BLACKMAGIC CURRENTLY NOT WORKING
                 this.sendBufferToBlackmagic(captureId, image)
                 break
             case "server":
@@ -179,7 +183,14 @@ export class CaptureTransmitter {
         let framerate = OutputHelper.getOutput(captureId)?.captureOptions?.framerates?.blackmagic
         if (!framerate) return
 
+        // WIP send audio! (see NdiSender.ts)
+
         BlackmagicSender.scheduleFrame(captureId, buffer, null, framerate)
+    }
+
+    // Force the next frame to be sent to Blackmagic (used when resolution changes)
+    static forceNextBlackmagicSend(captureId: string) {
+        this.forceFrameUpdate.add(captureId)
     }
 
     // MAIN (STAGE OUTPUT)

@@ -294,6 +294,253 @@ export class ImageBufferConverter {
     }
 }
 
+// 10 Bit RGB
+export class ImageBufferConverter10BitRGB {
+    private static to10BitFullRange(v8: number) {
+        return (v8 << 2) & 0x3ff
+    }
+
+    /*  convert from BGRA to 10-bit RGB (Blackmagic format, 30 bits per pixel packed in 32-bit words) */
+    static BGRAtoRGB(data: Buffer, { width, height }: Size) {
+        // Blackmagic 10-bit RGB (r210): big-endian words
+        // Packed as [9:0]=B [19:10]=G [29:20]=R [31:30]=padding
+        const newData = Buffer.alloc(width * height * 4)
+        let outIndex = 0
+
+        for (let i = 0; i < data.length; i += 4) {
+            const B = this.to10BitFullRange(data[i])
+            const G = this.to10BitFullRange(data[i + 1])
+            const R = this.to10BitFullRange(data[i + 2])
+
+            const packed = (B | (G << 10) | (R << 20)) >>> 0
+            newData.writeUInt32BE(packed, outIndex)
+            outIndex += 4
+        }
+
+        return newData
+    }
+
+    /*  convert from ARGB to 10-bit RGB (Blackmagic format) */
+    static ARGBtoRGB(data: Buffer, { width, height }: Size) {
+        const newData = Buffer.alloc(width * height * 4)
+        let outIndex = 0
+
+        for (let i = 0; i < data.length; i += 4) {
+            const R = this.to10BitFullRange(data[i + 1])
+            const G = this.to10BitFullRange(data[i + 2])
+            const B = this.to10BitFullRange(data[i + 3])
+
+            const packed = (B | (G << 10) | (R << 20)) >>> 0
+            newData.writeUInt32BE(packed, outIndex)
+            outIndex += 4
+        }
+
+        return newData
+    }
+
+    /*  convert from BGRA to 10-bit RGBXLE (R10l, little-endian) */
+    static BGRAtoRGBXLE(data: Buffer, { width, height }: Size) {
+        const newData = Buffer.alloc(width * height * 4)
+        let outIndex = 0
+
+        for (let i = 0; i < data.length; i += 4) {
+            const B = this.to10BitFullRange(data[i])
+            const G = this.to10BitFullRange(data[i + 1])
+            const R = this.to10BitFullRange(data[i + 2])
+
+            const packed = (B | (G << 10) | (R << 20)) >>> 0
+            newData.writeUInt32LE(packed, outIndex)
+            outIndex += 4
+        }
+
+        return newData
+    }
+
+    /*  convert from ARGB to 10-bit RGBXLE (R10l, little-endian) */
+    static ARGBtoRGBXLE(data: Buffer, { width, height }: Size) {
+        const newData = Buffer.alloc(width * height * 4)
+        let outIndex = 0
+
+        for (let i = 0; i < data.length; i += 4) {
+            const R = this.to10BitFullRange(data[i + 1])
+            const G = this.to10BitFullRange(data[i + 2])
+            const B = this.to10BitFullRange(data[i + 3])
+
+            const packed = (B | (G << 10) | (R << 20)) >>> 0
+            newData.writeUInt32LE(packed, outIndex)
+            outIndex += 4
+        }
+
+        return newData
+    }
+
+    /*  convert from BGRA to 10-bit RGBX (R10b, big-endian) */
+    static BGRAtoRGBX(data: Buffer, { width, height }: Size) {
+        const newData = Buffer.alloc(width * height * 4)
+        let outIndex = 0
+
+        for (let i = 0; i < data.length; i += 4) {
+            const B = this.to10BitFullRange(data[i])
+            const G = this.to10BitFullRange(data[i + 1])
+            const R = this.to10BitFullRange(data[i + 2])
+
+            const packed = (B | (G << 10) | (R << 20)) >>> 0
+            newData.writeUInt32BE(packed, outIndex)
+            outIndex += 4
+        }
+
+        return newData
+    }
+
+    /*  convert from ARGB to 10-bit RGBX (R10b, big-endian) */
+    static ARGBtoRGBX(data: Buffer, { width, height }: Size) {
+        const newData = Buffer.alloc(width * height * 4)
+        let outIndex = 0
+
+        for (let i = 0; i < data.length; i += 4) {
+            const R = this.to10BitFullRange(data[i + 1])
+            const G = this.to10BitFullRange(data[i + 2])
+            const B = this.to10BitFullRange(data[i + 3])
+
+            const packed = (B | (G << 10) | (R << 20)) >>> 0
+            newData.writeUInt32BE(packed, outIndex)
+            outIndex += 4
+        }
+
+        return newData
+    }
+}
+
+// 12 Bit RGB
+export class ImageBufferConverter12BitRGB {
+    private static packRGB12(samples: number[], littleEndian: boolean, output: Buffer, outIndex: number, bitBuffer: number, bitCount: number) {
+        for (const sample of samples) {
+            if (littleEndian) {
+                bitBuffer |= sample << bitCount
+                bitCount += 12
+                while (bitCount >= 8) {
+                    output[outIndex++] = bitBuffer & 0xff
+                    bitBuffer >>>= 8
+                    bitCount -= 8
+                }
+            } else {
+                bitBuffer = (bitBuffer << 12) | sample
+                bitCount += 12
+                while (bitCount >= 8) {
+                    bitCount -= 8
+                    output[outIndex++] = (bitBuffer >> bitCount) & 0xff
+                }
+            }
+        }
+
+        return { outIndex, bitBuffer, bitCount }
+    }
+
+    /*  convert from BGRA to 12-bit RGB (big-endian packed) */
+    static BGRAtoRGB(data: Buffer, { width, height }: Size) {
+        const numPixels = width * height
+        const newData = Buffer.alloc(Math.ceil(numPixels * 4.5))
+        let outIndex = 0
+        let bitBuffer = 0
+        let bitCount = 0
+
+        for (let i = 0; i < data.length; i += 4) {
+            const R = ((data[i + 2] << 4) | (data[i + 2] >> 4)) & 0xfff
+            const G = ((data[i + 1] << 4) | (data[i + 1] >> 4)) & 0xfff
+            const B = ((data[i] << 4) | (data[i] >> 4)) & 0xfff
+
+            const packed = this.packRGB12([R, G, B], false, newData, outIndex, bitBuffer, bitCount)
+            outIndex = packed.outIndex
+            bitBuffer = packed.bitBuffer
+            bitCount = packed.bitCount
+        }
+
+        if (bitCount > 0) {
+            newData[outIndex++] = (bitBuffer << (8 - bitCount)) & 0xff
+        }
+
+        return newData
+    }
+
+    /*  convert from ARGB to 12-bit RGB (big-endian packed) */
+    static ARGBtoRGB(data: Buffer, { width, height }: Size) {
+        const numPixels = width * height
+        const newData = Buffer.alloc(Math.ceil(numPixels * 4.5))
+        let outIndex = 0
+        let bitBuffer = 0
+        let bitCount = 0
+
+        for (let i = 0; i < data.length; i += 4) {
+            const R = ((data[i + 1] << 4) | (data[i + 1] >> 4)) & 0xfff
+            const G = ((data[i + 2] << 4) | (data[i + 2] >> 4)) & 0xfff
+            const B = ((data[i + 3] << 4) | (data[i + 3] >> 4)) & 0xfff
+
+            const packed = this.packRGB12([R, G, B], false, newData, outIndex, bitBuffer, bitCount)
+            outIndex = packed.outIndex
+            bitBuffer = packed.bitBuffer
+            bitCount = packed.bitCount
+        }
+
+        if (bitCount > 0) {
+            newData[outIndex++] = (bitBuffer << (8 - bitCount)) & 0xff
+        }
+
+        return newData
+    }
+
+    /*  convert from BGRA to 12-bit RGBLE (little-endian packed) */
+    static BGRAtoRGBLE(data: Buffer, { width, height }: Size) {
+        const numPixels = width * height
+        const newData = Buffer.alloc(Math.ceil(numPixels * 4.5))
+        let outIndex = 0
+        let bitBuffer = 0
+        let bitCount = 0
+
+        for (let i = 0; i < data.length; i += 4) {
+            const R = ((data[i + 2] << 4) | (data[i + 2] >> 4)) & 0xfff
+            const G = ((data[i + 1] << 4) | (data[i + 1] >> 4)) & 0xfff
+            const B = ((data[i] << 4) | (data[i] >> 4)) & 0xfff
+
+            const packed = this.packRGB12([R, G, B], true, newData, outIndex, bitBuffer, bitCount)
+            outIndex = packed.outIndex
+            bitBuffer = packed.bitBuffer
+            bitCount = packed.bitCount
+        }
+
+        if (bitCount > 0) {
+            newData[outIndex++] = bitBuffer & 0xff
+        }
+
+        return newData
+    }
+
+    /*  convert from ARGB to 12-bit RGBLE (little-endian packed) */
+    static ARGBtoRGBLE(data: Buffer, { width, height }: Size) {
+        const numPixels = width * height
+        const newData = Buffer.alloc(Math.ceil(numPixels * 4.5))
+        let outIndex = 0
+        let bitBuffer = 0
+        let bitCount = 0
+
+        for (let i = 0; i < data.length; i += 4) {
+            const R = ((data[i + 1] << 4) | (data[i + 1] >> 4)) & 0xfff
+            const G = ((data[i + 2] << 4) | (data[i + 2] >> 4)) & 0xfff
+            const B = ((data[i + 3] << 4) | (data[i + 3] >> 4)) & 0xfff
+
+            const packed = this.packRGB12([R, G, B], true, newData, outIndex, bitBuffer, bitCount)
+            outIndex = packed.outIndex
+            bitBuffer = packed.bitBuffer
+            bitCount = packed.bitCount
+        }
+
+        if (bitCount > 0) {
+            newData[outIndex++] = bitBuffer & 0xff
+        }
+
+        return newData
+    }
+}
+
 // 10 Bit
 export class ImageBufferConverter10Bit {
     /*  convert from BGRA to v210 format (10-bit YUV422 packed) */

@@ -119,6 +119,11 @@ export class BlackmagicManager {
     }
 
     static getPixelFormat(pixelFormat: string) {
+        // Compatibility mapping:
+        // Some devices/drivers expose "12-bit RGB" but behave correctly only with the LE variant.
+        if ((pixelFormat === "12-bit RGB" || pixelFormat === "12BitRGB") && bmdPixelFormats.has("12-bit RGBLE")) {
+            return bmdPixelFormats.get("12-bit RGBLE")
+        }
         return bmdPixelFormats.get(pixelFormat)
     }
 

@@ -2,7 +2,7 @@ import type { PlaybackChannel } from "macadam"
 import os from "os"
 import util from "../ndi/vingester-util"
 import { BlackmagicManager } from "./BlackmagicManager"
-import { ImageBufferConverter, ImageBufferConverter10Bit } from "./ImageBufferConverter"
+import { ImageBufferConverter, ImageBufferConverter10Bit, ImageBufferConverter10BitRGB, ImageBufferConverter12BitRGB } from "./ImageBufferConverter"
 import { Size } from "electron"
 import { wait } from "../utils/helpers"
 
@@ -23,13 +23,6 @@ interface PlaybackData {
 
     sourceWidth?: number
     sourceHeight?: number
-    conversionCache?: {
-        sourceWidth: number
-        sourceHeight: number
-        lastFormat: string
-        converter: (frame: Buffer) => Buffer
-        lastUsed: number // Added timestamp
-    }
     monitoringInterval?: NodeJS.Timeout
     bufferCheckInterval?: NodeJS.Timeout
     frameCallbackInterval?: NodeJS.Timeout
@@ -199,7 +192,6 @@ export class BlackmagicSender {
     static performanceLog: PerformanceMetrics[] = []
 
     // Configuration constants
-    private static readonly MAX_CACHE_AGE = 5 * 60 * 1000 // 5 minutes
     private static readonly CLEANUP_INTERVAL = 30 * 1000 // 30 seconds
 
     // Global cleanup timer
@@ -369,8 +361,16 @@ export class BlackmagicSender {
                 console.log(`Sender initialized with buffer size: ${targetBufferSize}`)
                 return true
             } catch (err) {
+                const errorMessage = err instanceof Error ? err.message : String(err)
                 attempts++
-                console.error(`Failed to initialize playback (attempt ${attempts}): ${err instanceof Error ? err.message : String(err)}`)
+                console.error(`Failed to initialize playback (attempt ${attempts}): ${errorMessage}`)
+
+                // If keying is not supported, retry without keying
+                if (enableKeying && errorMessage.includes("keyer") && errorMessage.toLowerCase().includes("keying")) {
+                    console.warn(`Keying not supported on this hardware, retrying without keying...`)
+                    enableKeying = false
+                    attempts-- // Don't count this as a full attempt
+                }
 
                 if (attempts < maxAttempts) {
                     // Wait longer between each attempt
@@ -392,28 +392,8 @@ export class BlackmagicSender {
     }
 
     static performGlobalCleanup() {
-        const now = Date.now()
-
-        // Clean up conversion caches
-        Object.keys(this.playbackData).forEach((outputId) => {
-            this.cleanupConversionCache(outputId, now)
-        })
-
         // Clean up unused silent audio buffers
         this.cleanupSilentAudioBuffers()
-    }
-
-    static cleanupConversionCache(outputId: string, currentTime?: number) {
-        const data = this.playbackData[outputId]
-        if (!data?.conversionCache) return
-
-        const now = currentTime || Date.now()
-        const cache = data.conversionCache
-
-        // Check if cache is too old
-        if (cache.lastUsed && now - cache.lastUsed > this.MAX_CACHE_AGE) {
-            delete data.conversionCache
-        }
     }
 
     static cleanupSilentAudioBuffers() {
@@ -534,6 +514,16 @@ export class BlackmagicSender {
             return width * height * 2
         }
 
+        if (pixelFormat.includes("12-bit RGB") || pixelFormat.includes("12BitRGB")) {
+            // 12-bit RGB: 36 bits per pixel packed in 4.5 bytes
+            return Math.ceil(width * height * 4.5)
+        }
+
+        if (pixelFormat.includes("10-bit RGB") || pixelFormat.includes("10BitRGB")) {
+            // 10-bit RGB: 30 bits per pixel = 3.75 bytes per pixel (packed in 32-bit words = 4 bytes)
+            return width * height * 4
+        }
+
         if (pixelFormat.includes("ARGB") || pixelFormat.includes("BGRA")) {
             return width * height * 4 // 4 bytes per pixel
         }
@@ -629,10 +619,10 @@ export class BlackmagicSender {
                         }
                     }
 
-                    // Convert with safety using cached conversion
+                    // Convert frame format
                     let convertedFrame
                     try {
-                        convertedFrame = this.convertVideoFrameFormatCached(clonedVideoFrame, data.pixelFormat, size, outputId)
+                        convertedFrame = this.convertVideoFrameFormat(clonedVideoFrame, data.pixelFormat, size)
                     } catch (err) {
                         console.error(`Frame conversion error: ${err instanceof Error ? err.message : String(err)}`)
                         return
@@ -738,58 +728,6 @@ export class BlackmagicSender {
     }
 
     // Enhanced conversion function with proper cache management
-    static convertVideoFrameFormatCached(frame: Buffer, format: string, size: Size, outputId: string): Buffer {
-        const data = this.playbackData[outputId]
-        if (!data) return frame
-
-        // Check if we can reuse cached converter
-        if (data.conversionCache && data.conversionCache.sourceWidth === size.width && data.conversionCache.sourceHeight === size.height && data.conversionCache.lastFormat === format) {
-            // Update last used time
-            data.conversionCache.lastUsed = Date.now()
-            return data.conversionCache.converter(frame)
-        }
-
-        // Clear old cache before creating new one
-        if (data.conversionCache) {
-            delete data.conversionCache
-        }
-
-        // Create new converter function
-        let converter: (inputFrame: Buffer) => Buffer
-
-        if (format.includes("YUV")) {
-            converter = (inputFrame: Buffer) => {
-                if (format.includes("10")) {
-                    return this.devicePixelMode === "BGRA" ? ImageBufferConverter10Bit.BGRAtoYUV(inputFrame, size) : ImageBufferConverter10Bit.ARGBtoYUV(inputFrame, size)
-                } else {
-                    return this.devicePixelMode === "BGRA" ? ImageBufferConverter.BGRAtoYUV(inputFrame, size) : ImageBufferConverter.ARGBtoYUV(inputFrame, size)
-                }
-            }
-        } else if (format.includes("ARGB")) {
-            converter = (inputFrame: Buffer) => {
-                if (this.devicePixelMode === "BGRA") {
-                    const result = Buffer.from(inputFrame)
-                    ImageBufferConverter.BGRAtoARGB(result)
-                    return result
-                }
-                return inputFrame
-            }
-        } else {
-            // Default: return original frame
-            converter = (inputFrame: Buffer) => inputFrame
-        }
-
-        // Cache the new converter with timestamp
-        data.conversionCache = {
-            sourceWidth: size.width,
-            sourceHeight: size.height,
-            lastFormat: format,
-            converter,
-            lastUsed: Date.now()
-        }
-
-        return converter(frame)
-    }
 
     static startFrameCallbackHandler(outputId: string) {
         // COMPLETELY DISABLE frame callback handling since USE_FRAME_PROMISES = false
@@ -1198,13 +1136,27 @@ export class BlackmagicSender {
     }
 
     static convertVideoFrameFormat(frame: Buffer, format: string, size: Size) {
-        if (format.includes("ARGB")) {
-            if (this.devicePixelMode === "BGRA") {
-                const result = Buffer.from(frame)
-                ImageBufferConverter.BGRAtoARGB(result)
-                return result
+        // Check specific bit-depth RGB formats FIRST before generic checks
+        if (format.includes("12Bit") || format.includes("12-bit") || format.includes("12 bit")) {
+            const isLE = format.includes("RGBLE") || format.includes("RGB LE")
+            if (isLE) {
+                if (this.devicePixelMode === "BGRA") return ImageBufferConverter12BitRGB.BGRAtoRGBLE(frame, size)
+                else return ImageBufferConverter12BitRGB.ARGBtoRGBLE(frame, size)
             }
-            return frame
+            // Compatibility fallback:
+            // Some setups show severe vertical artifacts with R12B packing,
+            // while R12L packing is stable. Use LE packing for 12-bit RGB too.
+            if (this.devicePixelMode === "BGRA") return ImageBufferConverter12BitRGB.BGRAtoRGBLE(frame, size)
+            else return ImageBufferConverter12BitRGB.ARGBtoRGBLE(frame, size)
+        } else if (format.includes("RGBXLE") && (format.includes("10Bit") || format.includes("10-bit") || format.includes("10 bit"))) {
+            if (this.devicePixelMode === "BGRA") return ImageBufferConverter10BitRGB.BGRAtoRGBXLE(frame, size)
+            else return ImageBufferConverter10BitRGB.ARGBtoRGBXLE(frame, size)
+        } else if (format.includes("RGBX") && !format.includes("RGBXLE") && (format.includes("10Bit") || format.includes("10-bit") || format.includes("10 bit"))) {
+            if (this.devicePixelMode === "BGRA") return ImageBufferConverter10BitRGB.BGRAtoRGBX(frame, size)
+            else return ImageBufferConverter10BitRGB.ARGBtoRGBX(frame, size)
+        } else if ((format.includes("10Bit") || format.includes("10-bit") || format.includes("10 bit")) && format.includes("RGB")) {
+            if (this.devicePixelMode === "BGRA") return ImageBufferConverter10BitRGB.BGRAtoRGB(frame, size)
+            else return ImageBufferConverter10BitRGB.ARGBtoRGB(frame, size)
         } else if (format.includes("YUV")) {
             if (format.includes("10")) {
                 if (this.devicePixelMode === "BGRA") return ImageBufferConverter10Bit.BGRAtoYUV(frame, size)
@@ -1213,13 +1165,6 @@ export class BlackmagicSender {
                 if (this.devicePixelMode === "BGRA") return ImageBufferConverter.BGRAtoYUV(frame, size)
                 else return ImageBufferConverter.ARGBtoYUV(frame, size)
             }
-        } else if (format.includes("BGRA")) {
-            if (this.devicePixelMode === "ARGB") {
-                const result = Buffer.from(frame)
-                util.ImageBufferAdjustment.ARGBtoBGRA(result)
-                return result
-            }
-            return frame
         } else if (format.includes("RGBXLE")) {
             const result = Buffer.from(frame)
             if (this.devicePixelMode === "BGRA") ImageBufferConverter.BGRAtoRGBXLE(result)
@@ -1233,6 +1178,20 @@ export class BlackmagicSender {
             if (this.devicePixelMode === "BGRA") util.ImageBufferAdjustment.BGRAtoBGRX(result)
             else ImageBufferConverter.ARGBtoRGBX(result)
             return result
+        } else if (format.includes("ARGB")) {
+            if (this.devicePixelMode === "BGRA") {
+                const result = Buffer.from(frame)
+                ImageBufferConverter.BGRAtoARGB(result)
+                return result
+            }
+            return frame
+        } else if (format.includes("BGRA")) {
+            if (this.devicePixelMode === "ARGB") {
+                const result = Buffer.from(frame)
+                util.ImageBufferAdjustment.ARGBtoBGRA(result)
+                return result
+            }
+            return frame
         } else if (format.includes("RGB")) {
             if (this.devicePixelMode === "BGRA") return ImageBufferConverter.BGRAtoRGB(frame)
             else return ImageBufferConverter.ARGBtoRGB(frame)
@@ -1262,11 +1221,6 @@ export class BlackmagicSender {
             if (data.frameCallbackInterval) {
                 clearInterval(data.frameCallbackInterval)
                 data.frameCallbackInterval = undefined
-            }
-
-            // Clear conversion cache
-            if (data.conversionCache) {
-                delete data.conversionCache
             }
 
             // Stop the actual playback
@@ -1334,14 +1288,10 @@ export class BlackmagicSender {
     // Memory usage monitoring
     static getMemoryUsage(): {
         totalOutputs: number
-        conversionCaches: number
         audioBuffers: number
     } {
-        const conversionCaches = Object.values(this.playbackData).filter((data) => data.conversionCache).length
-
         return {
             totalOutputs: Object.keys(this.playbackData).length,
-            conversionCaches,
             audioBuffers: Object.keys(this.silentAudioBuffers).length
         }
     }
