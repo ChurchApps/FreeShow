@@ -168,7 +168,7 @@
     async function setCurrentAsActive() {
         // require password if setting admin profile (and password exists)
         if (profileId === "" && hasAdminPass) {
-            const pwd = await promptCustom(translateText("remote.password"))
+            const pwd = await promptCustom(translateText("remote.password"), "password")
             const adminPassword = $profiles.admin?.password || ""
             if (!checkPassword(pwd, adminPassword)) {
                 newToast("remote.wrong_password")
