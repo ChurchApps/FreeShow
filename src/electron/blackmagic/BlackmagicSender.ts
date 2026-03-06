@@ -172,6 +172,11 @@ export class BlackmagicSender {
     // Audio buffers cache
     static silentAudioBuffers: { [key: string]: Buffer } = {}
 
+    // Audio state tracking (always enabled for Blackmagic)
+    // Ring buffer to accumulate incoming audio and slice correct amounts per frame
+    static audioRingBuffer: Buffer = Buffer.alloc(0)
+    static latestAudioMetadata: { sampleRate: number; channelCount: number } | null = null
+
     // Device configuration
     static devicePixelMode: "BGRA" | "ARGB" = os.endianness() === "BE" ? "ARGB" : "BGRA"
 
@@ -635,7 +640,8 @@ export class BlackmagicSender {
                     }
 
                     // Get audio safely with correct sample count for the display mode
-                    const audioData = audioFrame ? Buffer.from(audioFrame) : this.getSilentAudio(data.audioChannels || 2, data.displayMode)
+                    // Use ring buffer to get exactly the right amount of audio for this frame
+                    const audioData = this.audioRingBuffer.length > 0 && audioFrame !== null ? this.getAudioForFrame(data.audioChannels || 2, data.displayMode) : this.getSilentAudio(data.audioChannels || 2, data.displayMode)
 
                     // Validate audio buffer size
                     const accurateFrameRate = BlackmagicSender.getAccurateFrameRate(data.displayMode)
@@ -1135,6 +1141,40 @@ export class BlackmagicSender {
         return this.silentAudioBuffers[bufferKey]
     }
 
+    static sendAudioBuffer(buffer: Buffer, { sampleRate, channelCount }: { sampleRate: number; channelCount: number }) {
+        // Accumulate audio in ring buffer for slicing exact frame amounts
+        // Blackmagic expects PCM 16-bit integer audio, which is the same format we receive
+        this.audioRingBuffer = Buffer.concat([this.audioRingBuffer, buffer])
+        this.latestAudioMetadata = { sampleRate, channelCount }
+
+        // Keep ring buffer size reasonable (max 2 seconds of audio)
+        const maxBufferSize = sampleRate * 2 * channelCount * 2 // 2 seconds
+        if (this.audioRingBuffer.length > maxBufferSize) {
+            // Remove oldest audio
+            this.audioRingBuffer = this.audioRingBuffer.slice(this.audioRingBuffer.length - maxBufferSize)
+        }
+    }
+
+    static getAudioForFrame(channelCount: number, displayMode: string): Buffer {
+        // Calculate exact audio samples needed for this frame
+        const accurateFrameRate = this.getAccurateFrameRate(displayMode)
+        const expectedSampleCount = Math.round(48000 / accurateFrameRate)
+        const expectedAudioSize = expectedSampleCount * 2 * channelCount // 2 bytes per sample (16-bit)
+
+        // If we don't have enough audio yet, return silent audio
+        if (this.audioRingBuffer.length < expectedAudioSize) {
+            return this.getSilentAudio(channelCount, displayMode)
+        }
+
+        // Extract exact amount needed for this frame
+        const audioSlice = this.audioRingBuffer.slice(0, expectedAudioSize)
+
+        // Remove used audio from buffer
+        this.audioRingBuffer = this.audioRingBuffer.slice(expectedAudioSize)
+
+        return audioSlice
+    }
+
     static convertVideoFrameFormat(frame: Buffer, format: string, size: Size) {
         // Check specific bit-depth RGB formats FIRST before generic checks
         if (format.includes("12Bit") || format.includes("12-bit") || format.includes("12 bit")) {
@@ -1236,6 +1276,11 @@ export class BlackmagicSender {
             delete this.frameSkipCounter[outputId]
             delete this.initializationInProgress[outputId]
 
+            // Clear audio ring buffer if no outputs remain
+            if (Object.keys(this.playbackData).length === 0) {
+                this.audioRingBuffer = Buffer.alloc(0)
+            }
+
             console.log(`Successfully stopped output ${outputId}`)
             return true
         } catch (err) {
@@ -1272,6 +1317,8 @@ export class BlackmagicSender {
         this.silentAudioBuffers = {}
         this.initializationInProgress = {}
         this.safetyCircuitBreaker = {}
+        this.audioRingBuffer = Buffer.alloc(0)
+        this.latestAudioMetadata = null
 
         console.log(`Stopped ${outputIds.length} outputs`)
     }

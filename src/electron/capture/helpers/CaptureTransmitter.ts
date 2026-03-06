@@ -183,9 +183,12 @@ export class CaptureTransmitter {
         let framerate = OutputHelper.getOutput(captureId)?.captureOptions?.framerates?.blackmagic
         if (!framerate) return
 
-        // WIP send audio! (see NdiSender.ts)
+        // Audio is always enabled for Blackmagic
+        // Pass a non-null buffer to indicate audio should be extracted from ring buffer
+        // The actual audio will be sliced from the ring buffer in scheduleFrame
+        const audioBuffer = BlackmagicSender.audioRingBuffer.length > 0 ? Buffer.from([1]) : null
 
-        BlackmagicSender.scheduleFrame(captureId, buffer, null, framerate)
+        BlackmagicSender.scheduleFrame(captureId, buffer, audioBuffer, framerate)
     }
 
     // Force the next frame to be sent to Blackmagic (used when resolution changes)
