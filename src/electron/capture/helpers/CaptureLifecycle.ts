@@ -1,10 +1,11 @@
-import type { NativeImage } from "electron"
 import { BlackmagicSender } from "../../blackmagic/BlackmagicSender"
 import { OutputHelper } from "../../output/OutputHelper"
 import { CaptureHelper } from "../CaptureHelper"
 import { CaptureTransmitter } from "./CaptureTransmitter"
 
 export class CaptureLifecycle {
+    private static captureLoopToken: { [key: string]: number } = {}
+
     static startCapture(id: string, toggle: { [key: string]: boolean } = {}) {
         const output = OutputHelper.getOutput(id)
         if (!output) return
@@ -20,24 +21,36 @@ export class CaptureLifecycle {
 
         if (output.captureOptions) {
             const captureOpts = output.captureOptions?.options || {}
-            Object.keys(toggle).map((key) => {
+            for (const key of Object.keys(toggle)) {
                 // turn off capture
                 if (captureOpts[key] && !toggle[key]) CaptureTransmitter.stopChannel(id, key)
                 // set capture on/off
                 captureOpts[key] = toggle[key]
-            })
+            }
             output.captureOptions.options = captureOpts
         }
 
-        if (!output.captureOptions?.options || !Object.values(output.captureOptions.options).filter((a) => a).length || output.captureOptions.window.isDestroyed()) return
+        const hasEnabledCapture = !!output.captureOptions?.options && Object.values(output.captureOptions.options).some(Boolean)
+        if (!output.captureOptions?.options || !hasEnabledCapture || output.captureOptions.window.isDestroyed()) {
+            // Ensure any existing capture loop is stopped when capture is disabled.
+            if (output.captureOptions?.frameSubscription) {
+                clearTimeout(output.captureOptions.frameSubscription)
+                output.captureOptions.frameSubscription = null
+            }
+            return
+        }
 
         CaptureHelper.updateFramerate(id)
         CaptureHelper.Transmitter.startTransmitting(id)
 
         if (output.captureOptions.frameSubscription) clearTimeout(output.captureOptions.frameSubscription)
 
+        const token = (this.captureLoopToken[id] || 0) + 1
+        this.captureLoopToken[id] = token
+
         captureFrame()
         async function captureFrame() {
+            if (CaptureLifecycle.captureLoopToken[id] !== token) return
             if (!output?.captureOptions?.window || output.captureOptions.window.isDestroyed()) return
 
             try {
@@ -52,23 +65,20 @@ export class CaptureLifecycle {
                     }
                 }
 
-                processFrame(image)
+                CaptureHelper.storedFrames[id] = image
             } catch (error) {
                 console.warn(`Capture failed for output ${id}:`, error)
             }
 
+            if (CaptureLifecycle.captureLoopToken[id] !== token) return
             if (!output.captureOptions) return
 
             // use highest frame rate
             const frameRates = output.captureOptions.framerates || {}
             const frameRate = Math.max(frameRates.ndi || 1, frameRates.blackmagic || 1, frameRates.server || 1, frameRates.stage || 1)
 
-            const ms = Math.round(1000 / frameRate)
+            const ms = Math.max(1, Math.round(1000 / Math.max(1, frameRate)))
             output.captureOptions.frameSubscription = setTimeout(captureFrame, ms)
-        }
-
-        function processFrame(image: NativeImage) {
-            CaptureHelper.storedFrames[id] = image
         }
     }
 
@@ -84,6 +94,10 @@ export class CaptureLifecycle {
         const capture = output?.captureOptions
         if (!capture) return
 
+        this.captureLoopToken[id] = (this.captureLoopToken[id] || 0) + 1
+
+        endSubscription()
+
         CaptureHelper.Transmitter.removeAllChannels(id)
         const windowIsRemoved = !capture.window || capture.window.isDestroyed()
         if (windowIsRemoved) {
@@ -92,8 +106,6 @@ export class CaptureLifecycle {
         }
 
         console.info("Capture - stopping: " + id)
-
-        endSubscription()
 
         // remove listeners
         capture?.window.removeAllListeners()

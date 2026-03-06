@@ -42,19 +42,67 @@ export class ImageBufferConverter {
 
         // Validate input buffer size (should be width * height * 4 for BGRA)
         const expectedInputSize = width * height * 4
-        if (data.length < expectedInputSize) {
+        const hasFullInput = data.length >= expectedInputSize
+        if (!hasFullInput) {
             console.warn(`Input buffer too small: ${data.length} < ${expectedInputSize}. Frame may be truncated.`)
+        }
+
+        // Fast path for complete frames: avoid per-pixel bounds checks.
+        if (hasFullInput) {
+            for (let y = 0; y < height; y++) {
+                const rowBase = y * width * 4
+                for (let x = 0; x < width; x += 2) {
+                    const i1 = rowBase + x * 4
+                    const B1 = data[i1]
+                    const G1 = data[i1 + 1]
+                    const R1 = data[i1 + 2]
+
+                    // Get second pixel (right), or reuse first for odd widths.
+                    let B2 = B1
+                    let G2 = G1
+                    let R2 = R1
+                    if (x + 1 < width) {
+                        const i2 = i1 + 4
+                        B2 = data[i2]
+                        G2 = data[i2 + 1]
+                        R2 = data[i2 + 2]
+                    }
+
+                    const Y1 = 0.299 * R1 + 0.587 * G1 + 0.114 * B1
+                    const U1 = (B1 - Y1) / 1.772 + 128
+                    const V1 = (R1 - Y1) / 1.402 + 128
+
+                    const Y2 = 0.299 * R2 + 0.587 * G2 + 0.114 * B2
+                    const U2 = (B2 - Y2) / 1.772 + 128
+                    const V2 = (R2 - Y2) / 1.402 + 128
+
+                    const U = Math.round((U1 + U2) / 2)
+                    const V = Math.round((V1 + V2) / 2)
+
+                    const clampedY1 = Math.min(255, Math.max(0, Math.round(Y1)))
+                    const clampedY2 = Math.min(255, Math.max(0, Math.round(Y2)))
+                    const clampedU = Math.min(255, Math.max(0, U))
+                    const clampedV = Math.min(255, Math.max(0, V))
+
+                    newData[outIndex++] = clampedU
+                    newData[outIndex++] = clampedY1
+                    newData[outIndex++] = clampedV
+                    newData[outIndex++] = clampedY2
+                }
+            }
+
+            return newData
         }
 
         // Process pairs of pixels to create UYVY format
         for (let y = 0; y < height; y++) {
+            const rowBase = y * width * 4
             for (let x = 0; x < width; x += 2) {
                 // Get first pixel (left)
-                const i1 = (y * width + x) * 4
+                const i1 = rowBase + x * 4
 
                 // Bounds check
                 if (i1 + 4 > data.length) {
-                    console.warn(`Buffer overflow at pixel (${x}, ${y}): index ${i1} + 4 > ${data.length}`)
                     break
                 }
 
@@ -68,7 +116,7 @@ export class ImageBufferConverter {
                     G2 = G1,
                     R2 = R1
                 if (x + 1 < width) {
-                    const i2 = (y * width + x + 1) * 4
+                    const i2 = i1 + 4
                     if (i2 + 4 <= data.length) {
                         B2 = data[i2]
                         G2 = data[i2 + 1]
@@ -117,19 +165,67 @@ export class ImageBufferConverter {
 
         // Validate input buffer size (should be width * height * 4 for ARGB)
         const expectedInputSize = width * height * 4
-        if (data.length < expectedInputSize) {
+        const hasFullInput = data.length >= expectedInputSize
+        if (!hasFullInput) {
             console.warn(`Input buffer too small: ${data.length} < ${expectedInputSize}. Frame may be truncated.`)
+        }
+
+        // Fast path for complete frames: avoid per-pixel bounds checks.
+        if (hasFullInput) {
+            for (let y = 0; y < height; y++) {
+                const rowBase = y * width * 4
+                for (let x = 0; x < width; x += 2) {
+                    const i1 = rowBase + x * 4
+                    const R1 = data[i1 + 1]
+                    const G1 = data[i1 + 2]
+                    const B1 = data[i1 + 3]
+
+                    // Get second pixel (right), or reuse first for odd widths.
+                    let R2 = R1
+                    let G2 = G1
+                    let B2 = B1
+                    if (x + 1 < width) {
+                        const i2 = i1 + 4
+                        R2 = data[i2 + 1]
+                        G2 = data[i2 + 2]
+                        B2 = data[i2 + 3]
+                    }
+
+                    const Y1 = 0.299 * R1 + 0.587 * G1 + 0.114 * B1
+                    const U1 = (B1 - Y1) / 1.772 + 128
+                    const V1 = (R1 - Y1) / 1.402 + 128
+
+                    const Y2 = 0.299 * R2 + 0.587 * G2 + 0.114 * B2
+                    const U2 = (B2 - Y2) / 1.772 + 128
+                    const V2 = (R2 - Y2) / 1.402 + 128
+
+                    const U = Math.round((U1 + U2) / 2)
+                    const V = Math.round((V1 + V2) / 2)
+
+                    const clampedY1 = Math.min(255, Math.max(0, Math.round(Y1)))
+                    const clampedY2 = Math.min(255, Math.max(0, Math.round(Y2)))
+                    const clampedU = Math.min(255, Math.max(0, U))
+                    const clampedV = Math.min(255, Math.max(0, V))
+
+                    newData[outIndex++] = clampedU
+                    newData[outIndex++] = clampedY1
+                    newData[outIndex++] = clampedV
+                    newData[outIndex++] = clampedY2
+                }
+            }
+
+            return newData
         }
 
         // Process pairs of pixels to create UYVY format
         for (let y = 0; y < height; y++) {
+            const rowBase = y * width * 4
             for (let x = 0; x < width; x += 2) {
                 // Get first pixel (left) - ARGB format
-                const i1 = (y * width + x) * 4
+                const i1 = rowBase + x * 4
 
                 // Bounds check
                 if (i1 + 4 > data.length) {
-                    console.warn(`Buffer overflow at pixel (${x}, ${y}): index ${i1} + 4 > ${data.length}`)
                     break
                 }
 
@@ -143,7 +239,7 @@ export class ImageBufferConverter {
                     G2 = G1,
                     B2 = B1
                 if (x + 1 < width) {
-                    const i2 = (y * width + x + 1) * 4
+                    const i2 = i1 + 4
                     if (i2 + 4 <= data.length) {
                         R2 = data[i2 + 1]
                         G2 = data[i2 + 2]
@@ -211,7 +307,7 @@ export class ImageBufferConverter {
 
     /*  convert from BGRA to RGBLE  */
     static BGRAtoRGBLE(data: Buffer) {
-        const newData = Buffer.alloc((data.length / 4) * 3)
+        const newData = Buffer.allocUnsafe((data.length / 4) * 3)
         let j = 0
         for (let i = 0; i < data.length; i += 4) {
             newData[j++] = data[i + 2] // R
@@ -223,7 +319,7 @@ export class ImageBufferConverter {
 
     /*  convert from ARGB to RGBLE  */
     static ARGBtoRGBLE(data: Buffer) {
-        const newData = Buffer.alloc((data.length / 4) * 3)
+        const newData = Buffer.allocUnsafe((data.length / 4) * 3)
         let j = 0
         for (let i = 0; i < data.length; i += 4) {
             newData[j++] = data[i + 1] // R
@@ -249,26 +345,14 @@ export class ImageBufferConverter {
 
     /*  convert from BGRA to RGB  */
     static BGRAtoRGB(data: Buffer) {
-        const newData = Buffer.alloc((data.length / 4) * 3)
-        let j = 0
-        for (let i = 0; i < data.length; i += 4) {
-            newData[j++] = data[i + 2] // R
-            newData[j++] = data[i + 1] // G
-            newData[j++] = data[i] // B
-        }
-        return newData
+        // Byte layout is identical to RGBLE for 8-bit packed output.
+        return this.BGRAtoRGBLE(data)
     }
 
     /*  convert from ARGB to RGB  */
     static ARGBtoRGB(data: Buffer) {
-        const newData = Buffer.alloc((data.length / 4) * 3)
-        let j = 0
-        for (let i = 0; i < data.length; i += 4) {
-            newData[j++] = data[i + 1] // R
-            newData[j++] = data[i + 2] // G
-            newData[j++] = data[i + 3] // B
-        }
-        return newData
+        // Byte layout is identical to RGBLE for 8-bit packed output.
+        return this.ARGBtoRGBLE(data)
     }
 }
 
@@ -285,7 +369,7 @@ export class ImageBufferConverter10BitRGB {
     static BGRAtoRGB(data: Buffer, { width, height }: Size) {
         // Blackmagic 10-bit RGB (r210): big-endian words
         // Packed as [9:0]=B [19:10]=G [29:20]=R [31:30]=padding
-        const newData = Buffer.alloc(width * height * 4)
+        const newData = Buffer.allocUnsafe(width * height * 4)
         let outIndex = 0
 
         for (let i = 0; i < data.length; i += 4) {
@@ -303,7 +387,7 @@ export class ImageBufferConverter10BitRGB {
 
     /*  convert from ARGB to 10-bit RGB (Blackmagic format) */
     static ARGBtoRGB(data: Buffer, { width, height }: Size) {
-        const newData = Buffer.alloc(width * height * 4)
+        const newData = Buffer.allocUnsafe(width * height * 4)
         let outIndex = 0
 
         for (let i = 0; i < data.length; i += 4) {
@@ -321,7 +405,7 @@ export class ImageBufferConverter10BitRGB {
 
     /*  convert from BGRA to 10-bit RGBXLE (R10l, little-endian) */
     static BGRAtoRGBXLE(data: Buffer, { width, height }: Size) {
-        const newData = Buffer.alloc(width * height * 4)
+        const newData = Buffer.allocUnsafe(width * height * 4)
         let outIndex = 0
 
         for (let i = 0; i < data.length; i += 4) {
@@ -339,7 +423,7 @@ export class ImageBufferConverter10BitRGB {
 
     /*  convert from ARGB to 10-bit RGBXLE (R10l, little-endian) */
     static ARGBtoRGBXLE(data: Buffer, { width, height }: Size) {
-        const newData = Buffer.alloc(width * height * 4)
+        const newData = Buffer.allocUnsafe(width * height * 4)
         let outIndex = 0
 
         for (let i = 0; i < data.length; i += 4) {
@@ -357,38 +441,14 @@ export class ImageBufferConverter10BitRGB {
 
     /*  convert from BGRA to 10-bit RGBX (R10b, big-endian) */
     static BGRAtoRGBX(data: Buffer, { width, height }: Size) {
-        const newData = Buffer.alloc(width * height * 4)
-        let outIndex = 0
-
-        for (let i = 0; i < data.length; i += 4) {
-            const B = this.to10BitFullRange(data[i])
-            const G = this.to10BitFullRange(data[i + 1])
-            const R = this.to10BitFullRange(data[i + 2])
-
-            const packed = (B | (G << 10) | (R << 20)) >>> 0
-            newData.writeUInt32BE(packed, outIndex)
-            outIndex += 4
-        }
-
-        return newData
+        // For 10-bit BE packing, RGB and RGBX share the same packed layout.
+        return this.BGRAtoRGB(data, { width, height })
     }
 
     /*  convert from ARGB to 10-bit RGBX (R10b, big-endian) */
     static ARGBtoRGBX(data: Buffer, { width, height }: Size) {
-        const newData = Buffer.alloc(width * height * 4)
-        let outIndex = 0
-
-        for (let i = 0; i < data.length; i += 4) {
-            const R = this.to10BitFullRange(data[i + 1])
-            const G = this.to10BitFullRange(data[i + 2])
-            const B = this.to10BitFullRange(data[i + 3])
-
-            const packed = (B | (G << 10) | (R << 20)) >>> 0
-            newData.writeUInt32BE(packed, outIndex)
-            outIndex += 4
-        }
-
-        return newData
+        // For 10-bit BE packing, RGB and RGBX share the same packed layout.
+        return this.ARGBtoRGB(data, { width, height })
     }
 }
 
@@ -397,33 +457,10 @@ export class ImageBufferConverter10BitRGB {
  * Handles both big-endian (R12B) and little-endian (R12L) packed formats
  */
 export class ImageBufferConverter12BitRGB {
-    private static packRGB12(samples: number[], littleEndian: boolean, output: Buffer, outIndex: number, bitBuffer: number, bitCount: number) {
-        for (const sample of samples) {
-            if (littleEndian) {
-                bitBuffer |= sample << bitCount
-                bitCount += 12
-                while (bitCount >= 8) {
-                    output[outIndex++] = bitBuffer & 0xff
-                    bitBuffer >>>= 8
-                    bitCount -= 8
-                }
-            } else {
-                bitBuffer = (bitBuffer << 12) | sample
-                bitCount += 12
-                while (bitCount >= 8) {
-                    bitCount -= 8
-                    output[outIndex++] = (bitBuffer >> bitCount) & 0xff
-                }
-            }
-        }
-
-        return { outIndex, bitBuffer, bitCount }
-    }
-
     /*  convert from BGRA to 12-bit RGB (big-endian packed) */
     static BGRAtoRGB(data: Buffer, { width, height }: Size) {
         const numPixels = width * height
-        const newData = Buffer.alloc(Math.ceil(numPixels * 4.5))
+        const newData = Buffer.allocUnsafe(Math.ceil(numPixels * 4.5))
         let outIndex = 0
         let bitBuffer = 0
         let bitCount = 0
@@ -433,10 +470,26 @@ export class ImageBufferConverter12BitRGB {
             const G = ((data[i + 1] << 4) | (data[i + 1] >> 4)) & 0xfff
             const B = ((data[i] << 4) | (data[i] >> 4)) & 0xfff
 
-            const packed = this.packRGB12([R, G, B], false, newData, outIndex, bitBuffer, bitCount)
-            outIndex = packed.outIndex
-            bitBuffer = packed.bitBuffer
-            bitCount = packed.bitCount
+            bitBuffer = (bitBuffer << 12) | R
+            bitCount += 12
+            while (bitCount >= 8) {
+                bitCount -= 8
+                newData[outIndex++] = (bitBuffer >> bitCount) & 0xff
+            }
+
+            bitBuffer = (bitBuffer << 12) | G
+            bitCount += 12
+            while (bitCount >= 8) {
+                bitCount -= 8
+                newData[outIndex++] = (bitBuffer >> bitCount) & 0xff
+            }
+
+            bitBuffer = (bitBuffer << 12) | B
+            bitCount += 12
+            while (bitCount >= 8) {
+                bitCount -= 8
+                newData[outIndex++] = (bitBuffer >> bitCount) & 0xff
+            }
         }
 
         if (bitCount > 0) {
@@ -449,7 +502,7 @@ export class ImageBufferConverter12BitRGB {
     /*  convert from ARGB to 12-bit RGB (big-endian packed) */
     static ARGBtoRGB(data: Buffer, { width, height }: Size) {
         const numPixels = width * height
-        const newData = Buffer.alloc(Math.ceil(numPixels * 4.5))
+        const newData = Buffer.allocUnsafe(Math.ceil(numPixels * 4.5))
         let outIndex = 0
         let bitBuffer = 0
         let bitCount = 0
@@ -459,10 +512,26 @@ export class ImageBufferConverter12BitRGB {
             const G = ((data[i + 2] << 4) | (data[i + 2] >> 4)) & 0xfff
             const B = ((data[i + 3] << 4) | (data[i + 3] >> 4)) & 0xfff
 
-            const packed = this.packRGB12([R, G, B], false, newData, outIndex, bitBuffer, bitCount)
-            outIndex = packed.outIndex
-            bitBuffer = packed.bitBuffer
-            bitCount = packed.bitCount
+            bitBuffer = (bitBuffer << 12) | R
+            bitCount += 12
+            while (bitCount >= 8) {
+                bitCount -= 8
+                newData[outIndex++] = (bitBuffer >> bitCount) & 0xff
+            }
+
+            bitBuffer = (bitBuffer << 12) | G
+            bitCount += 12
+            while (bitCount >= 8) {
+                bitCount -= 8
+                newData[outIndex++] = (bitBuffer >> bitCount) & 0xff
+            }
+
+            bitBuffer = (bitBuffer << 12) | B
+            bitCount += 12
+            while (bitCount >= 8) {
+                bitCount -= 8
+                newData[outIndex++] = (bitBuffer >> bitCount) & 0xff
+            }
         }
 
         if (bitCount > 0) {
@@ -475,7 +544,7 @@ export class ImageBufferConverter12BitRGB {
     /*  convert from BGRA to 12-bit RGBLE (little-endian packed) */
     static BGRAtoRGBLE(data: Buffer, { width, height }: Size) {
         const numPixels = width * height
-        const newData = Buffer.alloc(Math.ceil(numPixels * 4.5))
+        const newData = Buffer.allocUnsafe(Math.ceil(numPixels * 4.5))
         let outIndex = 0
         let bitBuffer = 0
         let bitCount = 0
@@ -485,10 +554,29 @@ export class ImageBufferConverter12BitRGB {
             const G = ((data[i + 1] << 4) | (data[i + 1] >> 4)) & 0xfff
             const B = ((data[i] << 4) | (data[i] >> 4)) & 0xfff
 
-            const packed = this.packRGB12([R, G, B], true, newData, outIndex, bitBuffer, bitCount)
-            outIndex = packed.outIndex
-            bitBuffer = packed.bitBuffer
-            bitCount = packed.bitCount
+            bitBuffer |= R << bitCount
+            bitCount += 12
+            while (bitCount >= 8) {
+                newData[outIndex++] = bitBuffer & 0xff
+                bitBuffer >>>= 8
+                bitCount -= 8
+            }
+
+            bitBuffer |= G << bitCount
+            bitCount += 12
+            while (bitCount >= 8) {
+                newData[outIndex++] = bitBuffer & 0xff
+                bitBuffer >>>= 8
+                bitCount -= 8
+            }
+
+            bitBuffer |= B << bitCount
+            bitCount += 12
+            while (bitCount >= 8) {
+                newData[outIndex++] = bitBuffer & 0xff
+                bitBuffer >>>= 8
+                bitCount -= 8
+            }
         }
 
         if (bitCount > 0) {
@@ -501,7 +589,7 @@ export class ImageBufferConverter12BitRGB {
     /*  convert from ARGB to 12-bit RGBLE (little-endian packed) */
     static ARGBtoRGBLE(data: Buffer, { width, height }: Size) {
         const numPixels = width * height
-        const newData = Buffer.alloc(Math.ceil(numPixels * 4.5))
+        const newData = Buffer.allocUnsafe(Math.ceil(numPixels * 4.5))
         let outIndex = 0
         let bitBuffer = 0
         let bitCount = 0
@@ -511,10 +599,29 @@ export class ImageBufferConverter12BitRGB {
             const G = ((data[i + 2] << 4) | (data[i + 2] >> 4)) & 0xfff
             const B = ((data[i + 3] << 4) | (data[i + 3] >> 4)) & 0xfff
 
-            const packed = this.packRGB12([R, G, B], true, newData, outIndex, bitBuffer, bitCount)
-            outIndex = packed.outIndex
-            bitBuffer = packed.bitBuffer
-            bitCount = packed.bitCount
+            bitBuffer |= R << bitCount
+            bitCount += 12
+            while (bitCount >= 8) {
+                newData[outIndex++] = bitBuffer & 0xff
+                bitBuffer >>>= 8
+                bitCount -= 8
+            }
+
+            bitBuffer |= G << bitCount
+            bitCount += 12
+            while (bitCount >= 8) {
+                newData[outIndex++] = bitBuffer & 0xff
+                bitBuffer >>>= 8
+                bitCount -= 8
+            }
+
+            bitBuffer |= B << bitCount
+            bitCount += 12
+            while (bitCount >= 8) {
+                newData[outIndex++] = bitBuffer & 0xff
+                bitBuffer >>>= 8
+                bitCount -= 8
+            }
         }
 
         if (bitCount > 0) {
@@ -535,10 +642,9 @@ export class ImageBufferConverter10Bit {
         // v210 format: 16 bytes per 6 pixels (10-bit YUV422 packed into 32-bit words)
         // Each 128-bit block contains: U0 Y0 V0 Y1 U2 Y2 V2 Y3 U4 Y4 V4 Y5
         // Packed as: [V0:Y0:U0] [Y2:U2:Y1] [U4:Y3:V2] [Y5:V4:Y4] (little-endian 32-bit words)
-        const totalPixels = width * height
-        const numGroups = Math.floor(totalPixels / 6)
-        const remainder = totalPixels % 6
-        const newData = Buffer.alloc(numGroups * 16 + (remainder > 0 ? 16 : 0))
+        // Groups are padded per row, so allocation must be based on rows (not total pixels).
+        const groupsPerRow = Math.ceil(width / 6)
+        const newData = Buffer.allocUnsafe(groupsPerRow * height * 16)
         let outIndex = 0
 
         for (let y = 0; y < height; y++) {
@@ -604,10 +710,9 @@ export class ImageBufferConverter10Bit {
     /*  convert from ARGB to v210 format (10-bit YUV422 packed) */
     static ARGBtoYUV(data: Buffer, { width, height }: Size) {
         // v210 format: 16 bytes per 6 pixels
-        const totalPixels = width * height
-        const numGroups = Math.floor(totalPixels / 6)
-        const remainder = totalPixels % 6
-        const newData = Buffer.alloc(numGroups * 16 + (remainder > 0 ? 16 : 0))
+        // Groups are padded per row, so allocation must be based on rows (not total pixels).
+        const groupsPerRow = Math.ceil(width / 6)
+        const newData = Buffer.allocUnsafe(groupsPerRow * height * 16)
         let outIndex = 0
 
         for (let y = 0; y < height; y++) {
@@ -677,7 +782,7 @@ export class InputImageBufferConverter {
      */
     static YUVtoRGBA(yuvData: Buffer, { width, height }: Size) {
         const numPixels = width * height
-        const rgbaData = Buffer.alloc(numPixels * 4) // RGBA has 4 bytes per pixel
+        const rgbaData = Buffer.allocUnsafe(numPixels * 4) // RGBA has 4 bytes per pixel
 
         const yPlane = yuvData.slice(0, numPixels)
         const uPlane = yuvData.slice(numPixels, numPixels + numPixels / 4)
@@ -713,20 +818,12 @@ export class InputImageBufferConverter {
 
     /*  convert from RGBXLE to RGBA  */
     static RGBXLEtoRGBA(data: Buffer) {
-        const newData = Buffer.alloc((data.length / 3) * 4)
-        let j = 0
-        for (let i = 0; i < data.length; i += 3) {
-            newData[j++] = data[i] // R
-            newData[j++] = data[i + 1] // G
-            newData[j++] = data[i + 2] // B
-            newData[j++] = 255 // A
-        }
-        return newData
+        return this.RGBLEtoRGBA(data)
     }
 
     /*  convert from RGBLE to RGBA  */
     static RGBLEtoRGBA(data: Buffer) {
-        const newData = Buffer.alloc((data.length / 3) * 4)
+        const newData = Buffer.allocUnsafe((data.length / 3) * 4)
         let j = 0
         for (let i = 0; i < data.length; i += 3) {
             newData[j++] = data[i] // R
@@ -739,7 +836,7 @@ export class InputImageBufferConverter {
 
     /*  convert from RGBX to RGBA  */
     static RGBXtoRGBA(data: Buffer) {
-        const newData = Buffer.alloc(data.length)
+        const newData = Buffer.allocUnsafe(data.length)
         for (let i = 0; i < data.length; i += 4) {
             newData[i] = data[i] // R
             newData[i + 1] = data[i + 1] // G
@@ -751,7 +848,7 @@ export class InputImageBufferConverter {
 
     /*  convert from RGB to RGBA  */
     static RGBtoRGBA(data: Buffer) {
-        const newData = Buffer.alloc((data.length / 3) * 4)
+        const newData = Buffer.allocUnsafe((data.length / 3) * 4)
         let j = 0
         for (let i = 0; i < data.length; i += 3) {
             newData[j++] = data[i] // R

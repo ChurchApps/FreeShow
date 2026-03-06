@@ -22,12 +22,15 @@ interface PlaybackData {
     scheduledFrames: number
     pixelFormat: string
     displayMode: string
+    targetSize: Size
+    expectedVideoFrameSize: number
+    expectedAudioSampleCount: number
+    lastVideoSizeWarningTime?: number
+    lastAudioSizeWarningTime?: number
     isStarted: boolean
     monitoringInterval?: NodeJS.Timeout
     bufferCheckInterval?: NodeJS.Timeout
-    frameCallbackInterval?: NodeJS.Timeout
     lastFrameTime?: number
-    lastLogTime?: number
     audioChannels?: number
     scheduleFailCount?: number
     framesSinceLastCheck: number
@@ -63,8 +66,10 @@ export class BlackmagicSender {
     static silentAudioBuffers: { [key: string]: Buffer } = {}
 
     // Audio state tracking (always enabled for Blackmagic)
-    // Ring buffer to accumulate incoming audio and slice correct amounts per frame
-    static audioRingBuffer: Buffer = Buffer.alloc(0)
+    // Queue-based audio buffer to avoid repeated Buffer.concat/slice copies.
+    static audioBufferQueue: Buffer[] = []
+    static audioQueueOffset: number = 0
+    static audioQueueLength: number = 0
     static latestAudioMetadata: { sampleRate: number; channelCount: number } | null = null
 
     // Device configuration
@@ -85,6 +90,11 @@ export class BlackmagicSender {
         }
     } = {}
     static performanceLog: PerformanceMetrics[] = []
+    private static readonly EMPTY_BUFFER = Buffer.alloc(0)
+
+    // Caches for parsing repeated display mode strings
+    private static frameRateCache: { [displayMode: string]: { nominal: number; accurate: number } } = {}
+    private static readonly expectedFrameRateGetter = (displayMode: string) => BlackmagicSender.getExpectedFrameRate(displayMode)
 
     // Configuration constants
     private static readonly CLEANUP_INTERVAL = 30 * 1000 // 30 seconds
@@ -225,6 +235,9 @@ export class BlackmagicSender {
 
                 // Use BufferManager for optimal buffer size calculation
                 const targetBufferSize = BufferManager.calculateOptimalBufferSize(displayModeName, pixelFormat)
+                const targetSize = this.getDimensionsForDisplayMode(displayModeName)
+                const expectedVideoFrameSize = this.getExpectedVideoFrameSize(targetSize, pixelFormat)
+                const expectedAudioSampleCount = Math.round(48000 / BlackmagicSender.getAccurateFrameRate(displayModeName))
 
                 // Setup playback data
                 this.playbackData[outputId] = {
@@ -232,8 +245,12 @@ export class BlackmagicSender {
                     scheduledFrames: 0,
                     pixelFormat,
                     displayMode: displayModeName,
+                    targetSize,
+                    expectedVideoFrameSize,
+                    expectedAudioSampleCount,
+                    lastVideoSizeWarningTime: 0,
+                    lastAudioSizeWarningTime: 0,
                     isStarted: false,
-                    lastLogTime: 0,
                     audioChannels: actualAudioChannels,
                     framesSinceLastCheck: 0,
                     lastPerformanceCheck: Date.now(),
@@ -295,12 +312,12 @@ export class BlackmagicSender {
         // Keep only commonly used channel configurations
         const commonChannels = [1, 2, 6, 8]
 
-        Object.keys(this.silentAudioBuffers).forEach((channelStr) => {
-            const channels = parseInt(channelStr)
+        for (const bufferKey in this.silentAudioBuffers) {
+            const channels = parseInt(bufferKey, 10)
             if (!commonChannels.includes(channels)) {
-                delete this.silentAudioBuffers[channels]
+                delete this.silentAudioBuffers[bufferKey]
             }
-        })
+        }
     }
 
     static isDeviceStable(outputId: string): boolean {
@@ -350,34 +367,33 @@ export class BlackmagicSender {
         }
     }
 
-    // Parse frame rate from display mode string
-    static getExpectedFrameRate(displayMode: string): number {
-        if (displayMode.includes("23.98") || displayMode.includes("2398")) return 24
-        else if (displayMode.includes("24")) return 24
-        else if (displayMode.includes("25")) return 25
-        else if (displayMode.includes("29.97") || displayMode.includes("2997")) return 30
-        else if (displayMode.includes("30")) return 30
-        else if (displayMode.includes("50")) return 50
-        else if (displayMode.includes("59.94") || displayMode.includes("5994")) return 60
-        else if (displayMode.includes("60")) return 60
+    private static resolveFrameRates(displayMode: string): { nominal: number; accurate: number } {
+        const cached = this.frameRateCache[displayMode]
+        if (cached) return cached
 
-        // Default fallback
-        return 30
+        let result: { nominal: number; accurate: number }
+        if (displayMode.includes("59.94") || displayMode.includes("5994")) result = { nominal: 60, accurate: 59.94 }
+        else if (displayMode.includes("29.97") || displayMode.includes("2997")) result = { nominal: 30, accurate: 29.97 }
+        else if (displayMode.includes("23.98") || displayMode.includes("2398")) result = { nominal: 24, accurate: 23.976 }
+        else if (displayMode.includes("60")) result = { nominal: 60, accurate: 60 }
+        else if (displayMode.includes("50")) result = { nominal: 50, accurate: 50 }
+        else if (displayMode.includes("30")) result = { nominal: 30, accurate: 30 }
+        else if (displayMode.includes("25")) result = { nominal: 25, accurate: 25 }
+        else if (displayMode.includes("24")) result = { nominal: 24, accurate: 24 }
+        else result = { nominal: 30, accurate: 30 } // Default fallback
+
+        this.frameRateCache[displayMode] = result
+        return result
     }
 
-    // Get accurate fractional frame rate for audio calculations
-    static getAccurateFrameRate(displayMode: string): number {
-        if (displayMode.includes("23.98") || displayMode.includes("2398")) return 23.976
-        else if (displayMode.includes("24")) return 24
-        else if (displayMode.includes("25")) return 25
-        else if (displayMode.includes("29.97") || displayMode.includes("2997")) return 29.97
-        else if (displayMode.includes("30")) return 30
-        else if (displayMode.includes("50")) return 50
-        else if (displayMode.includes("59.94") || displayMode.includes("5994")) return 59.94
-        else if (displayMode.includes("60")) return 60
+    // Parse nominal frame rate for FPS expectations and health checks.
+    static getExpectedFrameRate(displayMode: string): number {
+        return this.resolveFrameRates(displayMode).nominal
+    }
 
-        // Default fallback
-        return 30
+    // Get accurate fractional frame rate for audio sample count calculations.
+    static getAccurateFrameRate(displayMode: string): number {
+        return this.resolveFrameRates(displayMode).accurate
     }
 
     // Calculate expected video frame size for validation
@@ -387,15 +403,10 @@ export class BlackmagicSender {
         if (pixelFormat.includes("YUV")) {
             // 10-bit YUV uses v210 format: 8/3 bytes per pixel (16 bytes per 6 pixels)
             if (pixelFormat.includes("10")) {
-                // v210 packs 6 pixels into 16 bytes, so total = (width * height / 6) * 16
-                // Simplified: width * height * 8 / 3
-                // Must be aligned to 128 bytes (48 pixels)
-                const totalPixels = width * height
-                const baseSize = Math.floor(totalPixels / 6) * 16
-                // Add padding for partial groups of 6 pixels
-                const remainder = totalPixels % 6
-                const paddingSize = remainder > 0 ? 16 : 0
-                return baseSize + paddingSize
+                // This converter packs/pads in 6-pixel groups per row.
+                // Each group occupies 16 bytes in v210.
+                const groupsPerRow = Math.ceil(width / 6)
+                return groupsPerRow * height * 16
             }
             // YUV420 planar: Y full res + U/V at quarter res
             if (pixelFormat.includes("420")) {
@@ -431,10 +442,7 @@ export class BlackmagicSender {
         return width * height * 2
     }
 
-    // get dimensions from display mode
-    static getTargetDimensions(captureId: string): { width: number; height: number } {
-        const displayMode = this.playbackData[captureId]?.displayMode || "1080p30"
-
+    private static getDimensionsForDisplayMode(displayMode: string): { width: number; height: number } {
         if (displayMode.includes("1080")) return { width: 1920, height: 1080 }
         if (displayMode.includes("720")) return { width: 1280, height: 720 }
         if (displayMode.includes("2k")) return { width: 2048, height: 1080 }
@@ -445,6 +453,12 @@ export class BlackmagicSender {
         // default to 1080p if mode is not recognized
         console.warn(`Unrecognized display mode: ${displayMode}, defaulting to 1080p`)
         return { width: 1920, height: 1080 }
+    }
+
+    // get dimensions from display mode
+    static getTargetDimensions(captureId: string): { width: number; height: number } {
+        const displayMode = this.playbackData[captureId]?.displayMode || "1080p30"
+        return this.getDimensionsForDisplayMode(displayMode)
     }
 
     static scheduleFrame(outputId: string, videoFrame: Buffer, audioFrame: Buffer | null, framerate: number = 1000) {
@@ -473,7 +487,7 @@ export class BlackmagicSender {
         }
         data.lastFrameTime = now
 
-        const size = this.getTargetDimensions(outputId)
+        const size = data.targetSize
 
         // Use setTimeout to completely isolate each frame scheduling operation
         // This prevents a crash in one frame from affecting others
@@ -489,6 +503,7 @@ export class BlackmagicSender {
 
                     // Use BufferManager for backpressure checking
                     if (bufferedFrames > data.targetBufferSize * 1.2) {
+                        data.totalFramesDropped = (data.totalFramesDropped || 0) + 1
                         return // Buffer too full, skip frame
                     }
                 } catch (err) {
@@ -497,18 +512,15 @@ export class BlackmagicSender {
                 }
 
                 try {
-                    // Clone video frame for safety
-                    const clonedVideoFrame = Buffer.from(videoFrame)
-
                     // Log frame info and detect actual resolution
                     const now = Date.now()
                     if (now - this.lastDiagnosticTime > 5000) {
                         this.lastDiagnosticTime = now
                         const expectedBytesForDeclaredSize = size.width * size.height * 4
-                        const actualPixels = clonedVideoFrame.length / 4
+                        const actualPixels = videoFrame.length / 4
 
                         // Detect actual resolution if mismatch
-                        if (clonedVideoFrame.length !== expectedBytesForDeclaredSize) {
+                        if (videoFrame.length !== expectedBytesForDeclaredSize) {
                             const actualHeight = Math.round(actualPixels / size.width)
                             console.warn(`⚠️  RESOLUTION MISMATCH: Electron window is outputting ${size.width}x${actualHeight}, but Blackmagic expects ${size.width}x${size.height}`)
                         }
@@ -517,27 +529,28 @@ export class BlackmagicSender {
                     // Convert frame format
                     let convertedFrame
                     try {
-                        convertedFrame = this.convertVideoFrameFormat(clonedVideoFrame, data.pixelFormat, size)
+                        convertedFrame = this.convertVideoFrameFormat(videoFrame, data.pixelFormat, size)
                     } catch (err) {
                         console.error(`Frame conversion error: ${err instanceof Error ? err.message : String(err)}`)
                         return
                     }
 
                     // Validate frame sizes
-                    const expectedVideoSize = this.getExpectedVideoFrameSize(size, data.pixelFormat)
-                    if (convertedFrame.length !== expectedVideoSize) {
-                        console.warn(`Video frame size mismatch: got ${convertedFrame.length} bytes, expected ${expectedVideoSize} bytes for ${size.width}x${size.height} in ${data.pixelFormat}`)
+                    if (convertedFrame.length !== data.expectedVideoFrameSize && now - (data.lastVideoSizeWarningTime || 0) > 5000) {
+                        data.lastVideoSizeWarningTime = now
+                        console.warn(`Video frame size mismatch: got ${convertedFrame.length} bytes, expected ${data.expectedVideoFrameSize} bytes for ${size.width}x${size.height} in ${data.pixelFormat}`)
                     }
 
                     // Get audio safely with correct sample count for the display mode
-                    // Use ring buffer to get exactly the right amount of audio for this frame
-                    const audioData = this.audioRingBuffer.length > 0 && audioFrame !== null ? this.getAudioForFrame(data.audioChannels || 2, data.displayMode) : this.getSilentAudio(data.audioChannels || 2, data.displayMode)
+                    // Use queued audio to get exactly the right amount for this frame
+                    const audioChannels = data.audioChannels || 2
+                    const audioData = this.audioQueueLength > 0 && audioFrame !== null ? this.getAudioForFrame(audioChannels, data.displayMode) : this.getSilentAudio(audioChannels, data.displayMode)
 
                     // Validate audio buffer size
-                    const accurateFrameRate = BlackmagicSender.getAccurateFrameRate(data.displayMode)
-                    const expectedSampleCount = Math.round(48000 / accurateFrameRate)
-                    const expectedAudioSize = expectedSampleCount * 2 * (data.audioChannels || 2)
-                    if (audioData.length !== expectedAudioSize) {
+                    const expectedSampleCount = data.expectedAudioSampleCount
+                    const expectedAudioSize = expectedSampleCount * 2 * audioChannels
+                    if (audioData.length !== expectedAudioSize && now - (data.lastAudioSizeWarningTime || 0) > 5000) {
+                        data.lastAudioSizeWarningTime = now
                         console.warn(`Audio buffer size mismatch: got ${audioData.length} bytes, expected ${expectedAudioSize} bytes (samples: ${expectedSampleCount}, channels: ${data.audioChannels})`)
                     }
 
@@ -559,15 +572,6 @@ export class BlackmagicSender {
 
                     // Use the original schedule method but with BufferManager backpressure check
                     try {
-                        const bufferedFrames = data.playback.bufferedFrames()
-
-                        // Check backpressure before scheduling
-                        if (bufferedFrames > data.targetBufferSize * 1.2) {
-                            console.warn(`Dropping frame due to buffer overflow (${bufferedFrames}/${data.targetBufferSize})`)
-                            data.totalFramesDropped = (data.totalFramesDropped || 0) + 1
-                            return
-                        }
-
                         // Schedule the frame using the original method
                         data.playback.schedule(frameDataToSchedule)
 
@@ -822,7 +826,7 @@ export class BlackmagicSender {
             data.lastPerformanceCheck = now
 
             // Check for buffer health using BufferManager
-            BufferManager.monitorBufferHealth(outputId, this.playbackData, this.getExpectedFrameRate.bind(this))
+            BufferManager.monitorBufferHealth(outputId, this.playbackData, this.expectedFrameRateGetter)
 
             if (bufferedFrames < data.targetBufferSize / 4) {
                 console.warn(`Buffer running low (${bufferedFrames} frames), may need recovery`)
@@ -851,7 +855,7 @@ export class BlackmagicSender {
 
             try {
                 // Use BufferManager for buffer health monitoring
-                BufferManager.monitorBufferHealth(outputId, this.playbackData, this.getExpectedFrameRate.bind(this))
+                BufferManager.monitorBufferHealth(outputId, this.playbackData, this.expectedFrameRateGetter)
             } catch (err) {
                 console.error("Error in performance monitoring:", err)
             }
@@ -864,7 +868,7 @@ export class BlackmagicSender {
                 return
             }
 
-            BufferManager.monitorBufferHealth(outputId, this.playbackData, this.getExpectedFrameRate.bind(this))
+            BufferManager.monitorBufferHealth(outputId, this.playbackData, this.expectedFrameRateGetter)
         }, 2000)
 
         this.playbackData[outputId].monitoringInterval = monitoringInterval
@@ -1032,16 +1036,19 @@ export class BlackmagicSender {
     }
 
     static sendAudioBuffer(buffer: Buffer, { sampleRate, channelCount }: { sampleRate: number; channelCount: number }) {
-        // Accumulate audio in ring buffer for slicing exact frame amounts
+        // Queue incoming audio chunks for slicing exact frame amounts per output frame.
         // Blackmagic expects PCM 16-bit integer audio, which is the same format we receive
-        this.audioRingBuffer = Buffer.concat([this.audioRingBuffer, buffer])
+        if (buffer.length > 0) {
+            this.audioBufferQueue.push(buffer)
+            this.audioQueueLength += buffer.length
+        }
         this.latestAudioMetadata = { sampleRate, channelCount }
 
-        // Keep ring buffer size reasonable (max 2 seconds of audio)
+        // Keep buffered audio size reasonable (max 2 seconds of audio)
         const maxBufferSize = sampleRate * 2 * channelCount * 2 // 2 seconds
-        if (this.audioRingBuffer.length > maxBufferSize) {
-            // Remove oldest audio
-            this.audioRingBuffer = this.audioRingBuffer.slice(this.audioRingBuffer.length - maxBufferSize)
+        if (this.audioQueueLength > maxBufferSize) {
+            // Remove oldest audio while preserving chunked structure.
+            this.dropOldestAudioBytes(this.audioQueueLength - maxBufferSize)
         }
     }
 
@@ -1052,17 +1059,60 @@ export class BlackmagicSender {
         const expectedAudioSize = expectedSampleCount * 2 * channelCount // 2 bytes per sample (16-bit)
 
         // If we don't have enough audio yet, return silent audio
-        if (this.audioRingBuffer.length < expectedAudioSize) {
+        if (this.audioQueueLength < expectedAudioSize) {
             return this.getSilentAudio(channelCount, displayMode)
         }
 
-        // Extract exact amount needed for this frame
-        const audioSlice = this.audioRingBuffer.slice(0, expectedAudioSize)
+        // Extract exact amount needed for this frame.
+        return this.readAudioBytes(expectedAudioSize)
+    }
 
-        // Remove used audio from buffer
-        this.audioRingBuffer = this.audioRingBuffer.slice(expectedAudioSize)
+    private static readAudioBytes(byteCount: number): Buffer {
+        if (byteCount <= 0 || this.audioQueueLength < byteCount) {
+            return this.EMPTY_BUFFER
+        }
 
-        return audioSlice
+        const result = Buffer.allocUnsafe(byteCount)
+        let writeOffset = 0
+        let remaining = byteCount
+
+        while (remaining > 0 && this.audioBufferQueue.length > 0) {
+            const head = this.audioBufferQueue[0]
+            const availableInHead = head.length - this.audioQueueOffset
+            const take = Math.min(remaining, availableInHead)
+
+            head.copy(result, writeOffset, this.audioQueueOffset, this.audioQueueOffset + take)
+
+            writeOffset += take
+            remaining -= take
+            this.audioQueueOffset += take
+            this.audioQueueLength -= take
+
+            if (this.audioQueueOffset >= head.length) {
+                this.audioBufferQueue.shift()
+                this.audioQueueOffset = 0
+            }
+        }
+
+        return result
+    }
+
+    private static dropOldestAudioBytes(byteCount: number): void {
+        let remaining = byteCount
+        while (remaining > 0 && this.audioBufferQueue.length > 0) {
+            const head = this.audioBufferQueue[0]
+            const availableInHead = head.length - this.audioQueueOffset
+            const drop = Math.min(remaining, availableInHead)
+
+            this.audioQueueOffset += drop
+            this.audioQueueLength -= drop
+            remaining -= drop
+
+            if (this.audioQueueOffset >= head.length) {
+                this.audioBufferQueue.shift()
+                this.audioQueueOffset = 0
+            }
+        }
     }
 
     static convertVideoFrameFormat(frame: Buffer, format: string, size: Size) {
@@ -1148,11 +1198,6 @@ export class BlackmagicSender {
                 data.bufferCheckInterval = undefined
             }
 
-            if (data.frameCallbackInterval) {
-                clearInterval(data.frameCallbackInterval)
-                data.frameCallbackInterval = undefined
-            }
-
             // Stop the actual playback
             if (data.playback) {
                 data.playback.stop()
@@ -1166,9 +1211,18 @@ export class BlackmagicSender {
             delete this.frameSkipCounter[outputId]
             delete this.initializationInProgress[outputId]
 
-            // Clear audio ring buffer if no outputs remain
-            if (Object.keys(this.playbackData).length === 0) {
-                this.audioRingBuffer = Buffer.alloc(0)
+            // Clear queued audio if no outputs remain
+            let hasOutputs = false
+            for (const key in this.playbackData) {
+                if (Object.prototype.hasOwnProperty.call(this.playbackData, key)) {
+                    hasOutputs = true
+                    break
+                }
+            }
+            if (!hasOutputs) {
+                this.audioBufferQueue = []
+                this.audioQueueOffset = 0
+                this.audioQueueLength = 0
             }
 
             console.log(`Successfully stopped output ${outputId}`)
@@ -1207,7 +1261,9 @@ export class BlackmagicSender {
         this.silentAudioBuffers = {}
         this.initializationInProgress = {}
         this.safetyCircuitBreaker = {}
-        this.audioRingBuffer = Buffer.alloc(0)
+        this.audioBufferQueue = []
+        this.audioQueueOffset = 0
+        this.audioQueueLength = 0
         this.latestAudioMetadata = null
 
         console.log(`Stopped ${outputIds.length} outputs`)
