@@ -34,13 +34,13 @@
 
     $: currentShow = $shows[$activeShow?.id || ""] || {}
 
-    function hasAccess() {
+    function hasAccess(allowLockedSlide = false) {
         if (currentShow.locked) {
             newToast("show.locked")
             return false
         }
 
-        if (slide?.locked) {
+        if (slide?.locked && !allowLockedSlide) {
             newToast("output.state_locked")
             return false
         }
@@ -56,7 +56,7 @@
     }
 
     function removeLayout(key: string) {
-        if (!hasAccess()) return
+        if (!hasAccess(key === "nextTimer")) return
 
         history({ id: "SHOW_LAYOUT", newData: { key, indexes: [index] } })
     }
