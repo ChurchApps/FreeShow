@@ -834,6 +834,10 @@ export async function getScriptureSlidesNew(data: any, onlyOne = false, disableR
             const itemKey = `{key_${contentIndex}_${bibleIndex}}`
 
             slideDynamicValues[contentIndex] = { ...globalCustomDynamicValues, ...(slideDynamicValues[contentIndex] || {}) }
+            // {scripture_reference_last} should only show on the last slide
+            if (contentIndex < scriptureVerseContent.length - 1) {
+                slideDynamicValues[contentIndex].scripture_reference_last = ""
+            }
             const valueName = slideDynamicValues[contentIndex]?.[itemKey] as string
             if (valueName) {
                 delete slideDynamicValues[contentIndex][itemKey]
