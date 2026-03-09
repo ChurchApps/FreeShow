@@ -292,7 +292,7 @@
         return device.data?.supportsInternalKeying || device.data?.supportsExternalKeying || false
     }
 
-    $: outputLabel = `${currentOutput?.bounds?.width || 1920}x${currentOutput?.bounds?.height || 1080}`
+    $: outputLabel = currentOutput?.blackmagicData?.displayMode || `${currentOutput?.bounds?.width || 1920}x${currentOutput?.bounds?.height || 1080}`
 
     let ndiMenuOpened = false
     let bmdMenuOpened = false
