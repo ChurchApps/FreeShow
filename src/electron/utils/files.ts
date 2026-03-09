@@ -652,8 +652,11 @@ async function extractSubtitles(data: { path: string }): Promise<{ path: string;
     const MP4Box = require("mp4box")
 
     let arrayBuffer: (ArrayBuffer & { fileStart?: number }) | null = null
+    let buffer: Buffer
     try {
-        const buffer = fs.readFileSync(data.path)
+        buffer = fs.readFileSync(data.path)
+        if (!buffer?.length || !hasIsoBmffHeader(buffer)) return { ...data, tracks: [] }
+
         const uint8Array = new Uint8Array(buffer)
         arrayBuffer = uint8Array.buffer.slice(uint8Array.byteOffset, uint8Array.byteOffset + uint8Array.byteLength) as ArrayBuffer & { fileStart?: number }
     } catch (err) {
@@ -662,6 +665,7 @@ async function extractSubtitles(data: { path: string }): Promise<{ path: string;
     }
 
     if (!arrayBuffer) return { ...data, tracks: [] }
+    const mp4ArrayBuffer = arrayBuffer
 
     return new Promise((resolve) => {
         let settled = false
@@ -738,9 +742,9 @@ async function extractSubtitles(data: { path: string }): Promise<{ path: string;
             mp4boxfile.start()
         }
 
-        arrayBuffer.fileStart = 0
+        mp4ArrayBuffer.fileStart = 0
         try {
-            mp4boxfile.appendBuffer(arrayBuffer)
+            mp4boxfile.appendBuffer(mp4ArrayBuffer)
             mp4boxfile.flush()
         } catch (err) {
             console.error("MP4Box append/flush error:", err)
