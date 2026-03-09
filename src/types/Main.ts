@@ -1,4 +1,3 @@
-import type fs from "fs"
 import type { Stats } from "fs"
 import type { dataFolderNames } from "../electron/utils/files"
 import type { Cropping } from "./Settings"
@@ -275,7 +274,7 @@ export interface Trigger {
 
 export interface FileData {
     path: string
-    stat: fs.Stats
+    stat: Stats
     extension: string
     folder: boolean
     name: string
