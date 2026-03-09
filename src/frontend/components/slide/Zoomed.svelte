@@ -124,7 +124,7 @@
         class:relative
         class:checkered
         class:border
-        style="{$$props.style || ''}{background?.includes('-gradient') ? `background-image: ${background};` : `background-color: ${background};`}transition: {backgroundDuration}ms background-color;{aspectRatio ? `aspect-ratio: ${resolution.width}/${resolution.height};${croppedStyle}` : ''};"
+        style="{$$props.style || ''}{typeof background === 'string' && background.includes('-gradient') ? `background-image: ${background};` : `background-color: ${background};`}transition: {backgroundDuration}ms background-color;{aspectRatio ? `aspect-ratio: ${resolution.width}/${resolution.height};${croppedStyle}` : ''};"
     >
         {#if zoom}
             <span class="zoom" style="zoom: {ratio};{drawZoom === 1 ? '' : `transform: scale(${drawZoom});position: absolute;width: 100%;height: 100%;` + ($draw ? `inset-inline-start: ${drawX}%;top: ${drawY}%;` : '')}">
