@@ -56,7 +56,30 @@ export class BlackmagicManager {
     }
 
     static getDisplayMode(displayModeName: string) {
-        return bmdDisplayModes.get(displayModeName)
+        // First try direct lookup
+        let mode = bmdDisplayModes.get(displayModeName)
+        if (mode !== undefined) return mode
+
+        // Try normalizing the display mode name
+        // Convert "2K DCI 60p" -> "2kDCI60"
+        // Convert "4K 2160p 59.94" -> "4K2160p59.94"
+        let normalized = displayModeName
+            .replace(/\s+/g, "") // Remove all spaces
+            .replace(/p$/i, "") // Remove trailing 'p'
+            .replace(/i$/i, "") // Remove trailing 'i'
+
+        mode = bmdDisplayModes.get(normalized)
+        if (mode !== undefined) return mode
+
+        // Try with different case variations
+        const lowerNormalized = normalized.toLowerCase()
+        for (const [key, value] of bmdDisplayModes) {
+            if (key.toLowerCase() === lowerNormalized) {
+                return value
+            }
+        }
+
+        return undefined
     }
 
     static getPixelFormat(pixelFormat: string) {

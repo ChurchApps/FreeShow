@@ -229,8 +229,7 @@ export class BlackmagicSender {
                                 enableKeying: enableKeying ? BlackmagicManager.isAlphaSupported(pixelFormat) : false,
                                 channels: actualAudioChannels,
                                 sampleRate: macadam.bmdAudioSampleRate48kHz,
-                                sampleType: macadam.bmdAudioSampleType16bitInteger,
-                                startTimecode: "01:00:00:00"
+                                sampleType: macadam.bmdAudioSampleType16bitInteger
                             })
                             .then((result: any) => {
                                 clearTimeout(timeoutId)
@@ -251,6 +250,12 @@ export class BlackmagicSender {
                 const targetSize = this.getDimensionsForDisplayMode(displayModeName)
                 const expectedVideoFrameSize = this.getExpectedVideoFrameSize(targetSize, pixelFormat)
                 const expectedAudioSampleCount = Math.round(48000 / BlackmagicSender.getAccurateFrameRate(displayModeName))
+
+                // Clear conversion buffer pool for this output to handle resolution changes
+                delete this.conversionBufferPools[outputId]
+
+                // Clear device from problematic list if it initializes successfully
+                SEGFAULT_PRONE_DEVICES.delete(outputId)
 
                 // Setup playback data
                 this.playbackData[outputId] = {
@@ -308,9 +313,9 @@ export class BlackmagicSender {
 
         console.error(`Failed to initialize ${outputId} after ${maxAttempts} attempts`)
 
-        // Mark this device as problematic if we couldn't initialize it after multiple attempts
+        // Mark this device as problematic temporarily (will be cleared on successful init or manual reset)
         SEGFAULT_PRONE_DEVICES.add(outputId)
-        console.warn(`Blackmagic device ${outputId} has been marked as unstable and will be disabled`)
+        console.warn(`Blackmagic device ${outputId} has been temporarily disabled due to initialization failures. Try changing resolution or restarting.`)
 
         return false
     }
@@ -455,12 +460,27 @@ export class BlackmagicSender {
     }
 
     private static getDimensionsForDisplayMode(displayMode: string): { width: number; height: number } {
-        if (displayMode.includes("1080")) return { width: 1920, height: 1080 }
-        if (displayMode.includes("720")) return { width: 1280, height: 720 }
-        if (displayMode.includes("2k")) return { width: 2048, height: 1080 }
-        if (displayMode.includes("4K") || displayMode.includes("4k")) return { width: 3840, height: 2160 }
-        if (displayMode.includes("525i") || displayMode.includes("NTSC")) return { width: 720, height: 486 }
-        if (displayMode.includes("625i") || displayMode.includes("PAL")) return { width: 720, height: 576 }
+        const normalized = displayMode.toLowerCase().replace(/\s+/g, "")
+
+        // Check for 8K resolutions
+        if (normalized.includes("8k") && normalized.includes("4320")) return { width: 7680, height: 4320 }
+        if (normalized.includes("8kdci") || normalized.includes("8k dci")) return { width: 8192, height: 4320 }
+
+        // Check for 4K resolutions
+        if (normalized.includes("4k") && normalized.includes("2160")) return { width: 3840, height: 2160 }
+        if (normalized.includes("4kdci") || normalized.includes("4k dci")) return { width: 4096, height: 2160 }
+
+        // Check for 2K resolutions
+        if (normalized.includes("2kdci") || normalized.includes("2k dci")) return { width: 2048, height: 1080 }
+        if (normalized.includes("2k")) return { width: 2048, height: 1080 }
+
+        // Check for HD resolutions
+        if (normalized.includes("1080")) return { width: 1920, height: 1080 }
+        if (normalized.includes("720")) return { width: 1280, height: 720 }
+
+        // Check for SD resolutions
+        if (normalized.includes("525") || normalized.includes("ntsc")) return { width: 720, height: 486 }
+        if (normalized.includes("625") || normalized.includes("pal")) return { width: 720, height: 576 }
 
         // default to 1080p if mode is not recognized
         console.warn(`Unrecognized display mode: ${displayMode}, defaulting to 1080p`)
@@ -477,6 +497,11 @@ export class BlackmagicSender {
         let pool = this.conversionBufferPools[outputId]
 
         if (!pool || pool.size !== byteSize) {
+            // Log when we're recreating the pool (indicates resolution change)
+            if (pool && pool.size !== byteSize) {
+                console.log(`Resolution change detected for ${outputId}: ${pool.size} -> ${byteSize} bytes`)
+            }
+
             pool = {
                 size: byteSize,
                 buffers: Array.from({ length: this.CONVERSION_BUFFER_POOL_SIZE }, () => Buffer.allocUnsafe(byteSize)),
@@ -502,9 +527,9 @@ export class BlackmagicSender {
 
         try {
             const bufferedFrames = data.playback.bufferedFrames()
-            // Once started, keep buffer minimal (1-2 frames) to prevent memory accumulation
-            // At startup, allow filling to targetBufferSize for smooth initial playback
-            const maxBuffer = data.isStarted ? Math.min(2, Math.max(1, Math.ceil(data.targetBufferSize / 4))) : data.targetBufferSize
+            // Keep buffer at 1 frame once started for lowest latency
+            // During startup, allow small buffer (max 3 frames) for smooth start
+            const maxBuffer = data.isStarted ? 1 : Math.min(3, data.targetBufferSize)
             if (bufferedFrames > maxBuffer) return false
         } catch {
             return false
@@ -598,13 +623,14 @@ export class BlackmagicSender {
                     // Log frame info and detect actual resolution
                     const now = Date.now()
                     const expectedBytesForDeclaredSize = size.width * size.height * 4
-                    const maxAllowedInputBytes = expectedBytesForDeclaredSize * 2
+                    const maxAllowedInputBytes = expectedBytesForDeclaredSize * 4 // More lenient for HiDPI
 
                     // Guard against HiDPI/invalid frame payloads before conversion allocates.
                     if (videoFrame.length !== expectedBytesForDeclaredSize) {
                         const actualPixels = videoFrame.length / 4
                         const actualHeight = Math.round(actualPixels / size.width)
 
+                        // Only reject truly invalid frames (negative/zero height or extremely oversized)
                         if (videoFrame.length > maxAllowedInputBytes || actualHeight <= 0 || !Number.isFinite(actualHeight)) {
                             if (now - (data.lastVideoSizeWarningTime || 0) > 5000) {
                                 data.lastVideoSizeWarningTime = now
@@ -613,16 +639,11 @@ export class BlackmagicSender {
                             data.totalFramesDropped = (data.totalFramesDropped || 0) + 1
                             return
                         }
-                    }
 
-                    if (now - this.lastDiagnosticTime > 5000) {
-                        this.lastDiagnosticTime = now
-                        const actualPixels = videoFrame.length / 4
-
-                        // Detect actual resolution if mismatch
-                        if (videoFrame.length !== expectedBytesForDeclaredSize) {
-                            const actualHeight = Math.round(actualPixels / size.width)
-                            console.warn(`⚠️  RESOLUTION MISMATCH: Electron window is outputting ${size.width}x${actualHeight}, but Blackmagic expects ${size.width}x${size.height}`)
+                        // Log size mismatch but continue processing (might be valid HiDPI or scaling issue)
+                        if (now - (data.lastVideoSizeWarningTime || 0) > 10000) {
+                            data.lastVideoSizeWarningTime = now
+                            console.log(`Processing frame with size mismatch: got ${videoFrame.length} bytes (~${size.width}x${actualHeight}), expected ${expectedBytesForDeclaredSize} bytes (${size.width}x${size.height})`)
                         }
                     }
 
@@ -699,10 +720,10 @@ export class BlackmagicSender {
                             // Ignore timing errors
                         }
 
-                        // Start playback if needed
-                        if (!data.isStarted && bufferedFrames >= Math.min(10, data.targetBufferSize)) {
+                        // Start playback if needed - use smaller buffer for faster start and lower latency
+                        if (!data.isStarted && bufferedFrames >= Math.min(2, data.targetBufferSize)) {
                             try {
-                                console.log("Starting BlackMagic playback")
+                                console.log(`Starting BlackMagic playback with ${bufferedFrames} buffered frames`)
                                 data.playback.start({ startTime: 0 })
                                 data.isStarted = true
                             } catch (err) {
@@ -860,8 +881,7 @@ export class BlackmagicSender {
                     enableKeying: currentState.enableKeying || false,
                     channels: currentState.audioChannels || 2,
                     sampleRate: macadam!.bmdAudioSampleRate48kHz,
-                    sampleType: macadam!.bmdAudioSampleType16bitInteger,
-                    startTimecode: "01:00:00:00"
+                    sampleType: macadam!.bmdAudioSampleType16bitInteger
                 })
 
                 // CRITICAL: Disable frame callback immediately to prevent debug spam
