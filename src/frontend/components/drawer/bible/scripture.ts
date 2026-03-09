@@ -717,6 +717,8 @@ export async function getScriptureSlidesNew(data: any, onlyOne = false, disableR
                 const chapterVerses = sortScriptureSelection(bible.activeVerses[chapterIndex] || [])
 
                 chapterVerses.forEach((v) => {
+                    if (typeof v !== "number" && typeof v !== "string") return
+
                     let text = versesText[v] || ""
                     let number = ""
                     // Include chapter number in verseId when multiple chapters are selected

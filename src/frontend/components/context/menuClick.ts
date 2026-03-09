@@ -953,9 +953,10 @@ const clickActions = {
                     if (!slides) return
 
                     if (ref.type === "child") {
+                        if (!slides[ref.parent!.index]) return
                         if (!slides[ref.parent!.index].children) slides[ref.parent!.index].children = {}
                         slides[ref.parent!.index].children![ref.id] = { ...slides[ref.parent!.index].children![ref.id], disabled: !obj.enabled }
-                    } else slides[ref.index].disabled = !obj.enabled
+                    } else if (slides[ref.index]) slides[ref.index].disabled = !obj.enabled
                 })
                 return a
             })
@@ -1648,6 +1649,8 @@ const clickActions = {
     },
     cut_in_half: (obj: ObjData) => {
         if (obj.sel?.id === "slide") {
+            if (!Array.isArray(obj.sel?.data) || !obj.sel.data.length) return
+
             const oldLayoutRef = clone(getLayoutRef())
             const previousSpiltIds: string[] = []
 
@@ -1895,6 +1898,8 @@ export async function removeSlide(initialData: any[], type: "delete" | "remove" 
         if (selectedInDifferentLayout && !(await confirmCustom(prompt))) return
     }
 
+    if (!Array.isArray(data) || !data.length) return
+
     // sort so the correct slide indexes are removed
     data = sortObjectNumbers(data, "index")
 
@@ -2018,12 +2023,17 @@ function checkIfAddedToDifferentLayout(ref: LayoutRef[], data: any[]) {
 
 const formatting = {
     find_replace: (t: string, data) => {
+        if (!t) return ""
         if (!data.findValue) return t
 
         let flags = "g"
         if (data.caseSentitive === false) flags += "i"
-        const regExp = new RegExp(data.findValue, flags)
-        return t.replace(regExp, data.replaceValue)
+        try {
+            const regExp = new RegExp(data.findValue, flags)
+            return t.replace(regExp, data.replaceValue)
+        } catch {
+            return t
+        }
     },
     uppercase: (t: string) => t.toUpperCase(),
     lowercase: (t: string) => t.toLowerCase(),

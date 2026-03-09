@@ -64,13 +64,19 @@
 
     $: if (!videoElem) duration = 0
     function getCurrentDuration() {
-        if (!videoElem || duration === videoElem.duration) return
+        if (!videoElem) return
 
-        duration = videoElem.duration
+        const videoDuration = videoElem.duration
+        if (!Number.isFinite(videoDuration) || videoDuration <= 0) {
+            duration = 0
+            return
+        }
+
+        duration = videoDuration
 
         // set video time
         if (hover || !useOriginal) return
-        videoElem.currentTime = duration / 2
+        videoElem.currentTime = videoDuration / 2
     }
 
     // retry on error
@@ -102,7 +108,8 @@
         setTimeout(() => {
             let video = document.createElement("video")
             video.onloadeddata = () => {
-                duration = video.duration || 0
+                const loadedDuration = video.duration
+                duration = Number.isFinite(loadedDuration) ? loadedDuration : 0
                 // video.pause()
                 video.src = ""
             }

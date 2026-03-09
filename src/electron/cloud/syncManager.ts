@@ -91,10 +91,20 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
 
     // extract cloud data
     createFolder(EXTRACT_LOCATION) // should already be created
-    const extractedFiles = await decompressZipStream(cloudDataPath, true, {
-        getOutputPath: (fileName: string) => path.join(EXTRACT_LOCATION, fileName)
-    })
-    const modifiedDates = await getZipModifiedDates(cloudDataPath)
+
+    let extractedFiles: Awaited<ReturnType<typeof decompressZipStream>> = []
+    let modifiedDates: Awaited<ReturnType<typeof getZipModifiedDates>> = {}
+
+    try {
+        extractedFiles = await decompressZipStream(cloudDataPath, true, {
+            getOutputPath: (fileName: string) => path.join(EXTRACT_LOCATION, fileName)
+        })
+        modifiedDates = await getZipModifiedDates(cloudDataPath)
+    } catch (err) {
+        console.error("Could not decompress cloud sync zip:", cloudDataPath, err)
+        return finish(false)
+    }
+
     console.log("Files:", extractedFiles.length)
 
     const showsFolder = getDataFolderPath("shows")
@@ -121,6 +131,7 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
     let cloudBibleNames: string[] = []
     await Promise.all(
         extractedFiles.map(async (file) => {
+            if (!file) return
             if (file.name === changes_name) return
             if (typeof file.content !== "string") return
             const cloudPath = file.content
@@ -145,7 +156,7 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
                     if (result.action === "delete") deleteFile(localBiblePath)
                     else if (result.action === "create" || result.action === "download") await moveFileAsync(cloudPath, localBiblePath)
                 } catch (err) {
-                    console.error("Failed to write bible:", file.name, err)
+                    console.error("Failed to write bible:", file?.name, err)
                 }
                 return
             }
@@ -190,7 +201,7 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
                                 await writeFileAsync(localShowPath, JSON.stringify([id, show]))
                             }
                         } catch (err) {
-                            console.error("Failed to write show:", show.name, err)
+                            console.error("Failed to write show:", show?.name, err)
                         }
                     })
                 )

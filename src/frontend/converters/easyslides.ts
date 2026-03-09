@@ -28,6 +28,8 @@ export function convertEasyslides(data: any) {
         data?.forEach(({ content }: any) => {
             const json = xml2json(content)
             const songs = json.Easyslides?.Item || json.EasiSlides?.Item || []
+            if (!Array.isArray(songs) || !songs.length) return
+
             songs.forEach(convertSong)
         })
 

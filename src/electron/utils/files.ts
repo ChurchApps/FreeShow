@@ -27,6 +27,13 @@ function actionComplete(err: Error | null, actionFailedMessage: string) {
     if (err) console.error(actionFailedMessage + ":", err)
 }
 
+function isPermissionDeniedError(err: unknown): boolean {
+    // the user has not granted permission to access the file/folder, or the file/folder is locked by another process
+    if (!err || typeof err !== "object") return false
+    const code = (err as NodeJS.ErrnoException).code
+    return code === "EPERM" || code === "EACCES"
+}
+
 // GENERAL
 
 export function doesPathExist(filePath: string): boolean {
@@ -43,7 +50,8 @@ export function doesPathExist(filePath: string): boolean {
 
 export function readFile(filePath: string, encoding: BufferEncoding = "utf8", disableLog = false): string {
     try {
-        return fs.readFileSync(filePath, encoding)
+        const buffer = fs.readFileSync(filePath)
+        return safeBufferToString(buffer, encoding, filePath)
     } catch (err) {
         if (!disableLog) actionComplete(err as Error, "Error when reading file")
         return ""
@@ -54,6 +62,7 @@ export function readFolder(filePath: string): string[] {
     try {
         return fs.readdirSync(filePath)
     } catch (err) {
+        if (isPermissionDeniedError(err)) return []
         actionComplete(err as Error, "Error when reading folder")
         return []
     }
@@ -81,9 +90,27 @@ export function readFileAsync(filePath: string, encoding: BufferEncoding = "utf8
     return new Promise((resolve) =>
         fs.readFile(filePath, (err, buffer) => {
             if (err) console.error(err)
-            resolve(err ? "" : buffer.toString(encoding))
+            resolve(err ? "" : safeBufferToString(buffer, encoding, filePath))
         })
     )
+}
+
+const MAX_NODE_STRING_LENGTH = 0x1fffffe8
+function safeBufferToString(buffer: Buffer, encoding: BufferEncoding, filePath: string): string {
+    if (!buffer?.length) return ""
+
+    // Guard against Node's maximum string length to avoid runtime RangeError.
+    if (buffer.length > MAX_NODE_STRING_LENGTH) {
+        console.error(`Skipped string conversion for oversized file: ${filePath}`)
+        return ""
+    }
+
+    try {
+        return buffer.toString(encoding)
+    } catch (err) {
+        console.error(err, `Error when converting file buffer to string (${filePath})`)
+        return ""
+    }
 }
 
 export function readFileBufferAsync(filePath: string): Promise<Buffer> {
@@ -98,7 +125,7 @@ export function readFileBufferAsync(filePath: string): Promise<Buffer> {
 export function readFolderAsync(filePath: string): Promise<string[]> {
     return new Promise((resolve) =>
         fs.readdir(filePath, (err, files) => {
-            if (err) console.error(err)
+            if (err && !isPermissionDeniedError(err)) console.error(err)
             resolve(err ? [] : files)
         })
     )
@@ -107,8 +134,10 @@ export function readFolderAsync(filePath: string): Promise<string[]> {
 async function readFolderWithTypesAsync(folderPath: string): Promise<fs.Dirent[]> {
     return new Promise((resolve, reject) => {
         fs.readdir(folderPath, { withFileTypes: true }, (err, entries) => {
-            if (err) reject(err)
-            else resolve(entries)
+            if (err) {
+                if (isPermissionDeniedError(err)) return resolve([])
+                return reject(err)
+            } else resolve(entries)
         })
     })
 }
@@ -1048,6 +1077,7 @@ export function bundleMediaFiles({ openFolder = false }: { openFolder?: boolean 
     // projects
     function readProject(project: Project) {
         project?.shows?.forEach((show) => {
+            if (!show) return
             const type = show.type || "show"
             if (["image", "video", "audio", "pdf", "ppt"].includes(type)) {
                 addFile(show.id)
@@ -1057,19 +1087,19 @@ export function bundleMediaFiles({ openFolder = false }: { openFolder?: boolean 
         })
     }
     const projects = getStore("PROJECTS").projects as Project
-    Object.values(projects).forEach(readProject)
+    Object.values(projects || {}).forEach(readProject)
 
     // get overlays media
     const overlays = getStore("OVERLAYS")
-    Object.values(overlays).forEach((a) => getItemsMedia(a.items || []))
+    Object.values(overlays || {}).forEach((a) => getItemsMedia(a.items || []))
 
     // get templates media
     const templates = getStore("TEMPLATES")
-    Object.values(templates).forEach((a) => getItemsMedia(a.items || []))
+    Object.values(templates || {}).forEach((a) => getItemsMedia(a.items || []))
 
     function getItemsMedia(items: Item[]) {
         items.forEach((item) => {
-            if (item.type === "media") addFile(item.src)
+            if (item?.type === "media") addFile(item.src)
         })
     }
 

@@ -48,12 +48,11 @@ export async function startBackup({ customTriggers, customOutputLocation }: { cu
     /// //
 
     async function syncStores(id: keyof typeof _store) {
-        const store = _store[id]
-        if (!store) return
+        const currentData = getStore(id)
+        if (!currentData) return
 
         const name = id + ".json"
-
-        const content: string = JSON.stringify(store.store)
+        const content: string = JSON.stringify(currentData)
         const filePath: string = path.resolve(backupFolder, name)
         await writeFileAsync(filePath, content)
     }

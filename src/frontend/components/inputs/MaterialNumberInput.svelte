@@ -27,9 +27,9 @@
     $: numberValue = Number(value || 0)
 
     // Slider values and percent for filled track
-    $: sliderMin = sliderValues.min ?? min ?? 0
-    $: sliderMax = sliderValues.max ?? max ?? 100
-    $: sliderStep = sliderValues.step ?? step
+    $: sliderMin = sliderValues?.min ?? min ?? 0
+    $: sliderMax = sliderValues?.max ?? max ?? 100
+    $: sliderStep = sliderValues?.step ?? step
     $: sliderPercent = sliderMax > sliderMin ? ((Number(numberValue) - Number(sliderMin)) / (Number(sliderMax) - Number(sliderMin))) * 100 : 0
 
     const dispatch = createEventDispatcher()

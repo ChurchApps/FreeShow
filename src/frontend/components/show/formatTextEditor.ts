@@ -170,7 +170,7 @@ export function formatText(text: string, showId = "") {
     allOldSlideIds.forEach((slideId) => {
         if (oldLayoutSlideIds.includes(slideId) && !allUsedSlidesIds.includes(slideId)) {
             // delete children
-            const children = newSlides[slideId].children || []
+            const children = newSlides[slideId]?.children || []
             children.forEach((childId) => {
                 delete newSlides[childId]
             })

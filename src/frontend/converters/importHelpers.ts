@@ -153,6 +153,8 @@ export function importSpecific(data: { content: string; name?: string; extension
 }
 
 export function fixShowIssues(show: Show) {
+    if (!show) return null
+
     if (typeof show.name !== "string") show.name = ""
     if (!show.category) show.category = null
     if (!show.slides) show.slides = {}

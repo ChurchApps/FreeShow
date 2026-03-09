@@ -305,7 +305,7 @@ function createSlides(labeled: { type: string; text: string }[], noFormatting) {
     // add children
     Object.entries(addedChildren).forEach(([parentId, children]) => {
         if (!slides[parentId]) return
-        slides[parentId].children = [...(slides[parentId].children || []), ...(children || [])]
+        slides[parentId].children = [...(slides[parentId]?.children || []), ...(children || [])]
     })
 
     return removeSlideDuplicates(slides, layouts)
@@ -342,7 +342,7 @@ function createSlides(labeled: { type: string; text: string }[], noFormatting) {
 
         // split slide notes from text ("---")
         const slideTextAndNotes = slideText.split("---")
-        if (!slideTextAndNotes[0]) return
+        if (!slideTextAndNotes[0]?.length) return
 
         while (new Set(slideTextAndNotes[0].split("")).size === 1 && slideTextAndNotes[0][0] === "-") slideTextAndNotes.shift()
         let allLines: string[] = [slideTextAndNotes.shift() || ""]

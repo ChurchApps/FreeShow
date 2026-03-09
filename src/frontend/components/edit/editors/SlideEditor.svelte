@@ -62,8 +62,8 @@
     // get ghost background
     $: if (!bgId && !Slide?.settings?.backgroundImage) {
         ref?.forEach((a, i) => {
-            if (i <= $activeEdit.slide! && !a.data.disabled) {
-                if (slideHasAction(a.data?.actions, "clear_background")) bgId = null
+            if (a.data && i <= $activeEdit.slide! && !a.data.disabled) {
+                if (slideHasAction(a.data.actions, "clear_background")) bgId = null
                 else if (a.data.background) bgId = a.data.background
 
                 const mediaData = a.data.background ? currentShow?.media[a.data.background] : null
