@@ -148,7 +148,7 @@ export async function importShow(id: string, files: string[] | null, importSetti
         // TXT | FreeShow | ProPresenter | VidoePsalm | OpenLP | OpenSong | XML Bible | Lessons.church
         for (let i = 0; i < files.length; i += BATCH_SIZE) {
             const batch = files.slice(i, i + BATCH_SIZE)
-            const batchData = await Promise.all(batch.map((file) => readFile(file)))
+            const batchData = await Promise.all(batch.map((file) => readFile(file, "utf8", id)))
             data.push(...batchData)
         }
     }
@@ -163,14 +163,14 @@ export async function importShow(id: string, files: string[] | null, importSetti
     sendToMain(ToMain.IMPORT2, { channel: id, data })
 }
 
-async function readFile(filePath: string, encoding: BufferEncoding = "utf8") {
+async function readFile(filePath: string, encoding: BufferEncoding = "utf8", id?: string) {
     let content = ""
 
     const name: string = getFileName(filePath) || ""
     const extension: string = getExtension(filePath)
 
     try {
-        if (extension === "pro") content = await decodeProto(filePath)
+        if (id === "propresenter" && extension === "pro") content = await decodeProto(filePath)
         else content = await readFileAsync(filePath, encoding)
     } catch (err) {
         console.error("Error reading file:", (err as Error).stack)
