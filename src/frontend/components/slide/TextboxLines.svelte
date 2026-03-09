@@ -279,7 +279,7 @@
                 <!-- class:height={!line.text[0]?.value.length} -->
                 <div
                     class="break"
-                    class:normalWrap={normalWrap || (isStage ? stageItem.style.includes("justify") || stageItem.style.includes("nowrap") : line.align?.includes("justify") || line.align?.includes("left") || JSON.stringify(line).includes("nowrap"))}
+                    class:normalWrap={normalWrap || (isStage ? typeof stageItem?.style === "string" && (stageItem?.style.includes("justify") || stageItem?.style.includes("nowrap")) : line.align?.includes("justify") || line.align?.includes("left") || JSON.stringify(line).includes("nowrap"))}
                     class:reveal={(centerPreview || isStage) && item?.lineReveal && revealed < i}
                     class:smallFontSize={smallFontSize || customFontSize || textAnimation.includes("font-size")}
                     style="{style ? lineStyle : ''}{style ? line.align : ''}{item?.list?.enabled && line.text?.reduce((value, t) => (value += t.value || ''), '')?.length ? listStyle : ''}{item?.list?.enabled ? `color: ${getStyles(line.text[0]?.style).color || ''};` : ''}"
