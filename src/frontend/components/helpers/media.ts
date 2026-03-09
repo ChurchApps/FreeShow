@@ -105,7 +105,7 @@ export async function getThumbnail(data: API_media) {
         path = getThumbnailPath(path, mediaSize.drawerSize)
     }
 
-    return await toDataURL(path)
+    return await toDataURL(encodeFilePath(path))
 }
 
 export async function getSlideThumbnail(data: API_slide_thumbnail, extraOutData: { backgroundImage?: string; overlays?: string[] } = {}, plainSlide = false) {
