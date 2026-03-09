@@ -48,6 +48,7 @@
 
         // wait until both output and active has updated if they update at mostly the same time
         if (await hasNewerUpdate("FOCUS_SCROLL")) return
+        if (!listElem) return
 
         let currentId = active.id
         let slideIndex = active.id === outputShowId ? outputIndex || 0 : 0
