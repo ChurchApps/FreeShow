@@ -134,7 +134,7 @@
         "node-machine-id": "^1.1.12",
         "osc-js": "^2.4.1",
         "pcm-convert": "^1.6.5",
-        "pdfjs-dist": "^5.4.54",
+        "pdfjs-dist": "^5.5.207",
         "protobufjs": "^7.5.3",
         "qrcode-generator": "^1.5.2",
         "slideshow": "github:vassbo/slideshow#224d50f",
