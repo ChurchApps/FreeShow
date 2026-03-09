@@ -544,40 +544,95 @@ export async function getMediaCodec(data: { path: string }) {
     return await extractCodecInfo(data)
 }
 
-async function extractCodecInfo(data: { path: string }): Promise<{ path: string; codecs: string[]; mimeType: string; mimeCodec: string }> {
+type MediaCodecInfo = { path: string; codecs: string[]; mimeType: string; mimeCodec: string }
+
+function getEmptyCodecInfo(data: { path: string }): MediaCodecInfo {
+    return { ...data, codecs: [], mimeType: getMimeType(data.path), mimeCodec: "" }
+}
+
+async function extractCodecInfo(data: { path: string }): Promise<MediaCodecInfo> {
     const MP4Box = require("mp4box")
 
     return new Promise((resolve) => {
+        const emptyResult = getEmptyCodecInfo(data)
+        const mimeType = emptyResult.mimeType
+
         try {
             const buffer = fs.readFileSync(data.path)
+            if (!buffer?.length || !hasIsoBmffHeader(buffer)) return resolve(emptyResult)
+
             const uint8Array = new Uint8Array(buffer)
-            const arrayBuffer: any = uint8Array.buffer.slice(uint8Array.byteOffset, uint8Array.byteOffset + uint8Array.byteLength)
-            if (!arrayBuffer) return resolve({ ...data, codecs: [], mimeType: getMimeType(data.path), mimeCodec: "" })
+            const arrayBuffer = uint8Array.buffer.slice(uint8Array.byteOffset, uint8Array.byteOffset + uint8Array.byteLength) as ArrayBuffer & { fileStart?: number }
+            if (!arrayBuffer) return resolve(emptyResult)
 
             const mp4boxfile = MP4Box.createFile()
-            mp4boxfile.onError = (err: Error) => console.error("MP4Box error:", err)
-            mp4boxfile.onReady = (info: { tracks: { codec: string }[]; [key: string]: any }) => {
-                const mimeType = getMimeType(data.path)
+            let settled = false
+            const resolveOnce = (result: MediaCodecInfo) => {
+                if (settled) return
+                settled = true
+                resolve(result)
+            }
 
+            mp4boxfile.onError = (err: Error) => {
+                console.error("MP4Box error:", err)
+                resolveOnce(emptyResult)
+            }
+            mp4boxfile.onReady = (info: { tracks: { codec: string }[]; [key: string]: any }) => {
                 if (!Array.isArray(info?.tracks)) {
-                    resolve({ ...data, codecs: [], mimeType, mimeCodec: "" })
+                    resolveOnce(emptyResult)
                     return
                 }
 
-                const codecs = info.tracks.map((track: { codec: string }) => track.codec)
+                const codecs = info.tracks.map((track: { codec: string }) => track?.codec).filter((codec: string | undefined): codec is string => Boolean(codec))
+                if (!codecs.length) return resolveOnce(emptyResult)
+
                 const mimeCodec = `${mimeType}; codecs="${codecs.join(", ")}"`
-                resolve({ ...data, codecs, mimeType, mimeCodec })
+                resolveOnce({ ...data, codecs, mimeType, mimeCodec })
             }
 
             arrayBuffer.fileStart = 0
-            mp4boxfile.appendBuffer(arrayBuffer)
-            mp4boxfile.flush()
+            try {
+                mp4boxfile.appendBuffer(arrayBuffer)
+                mp4boxfile.flush()
+            } catch (err) {
+                console.error("MP4Box append/flush error:", err)
+                resolveOnce(emptyResult)
+            }
         } catch (err) {
             console.error("MP4Box error catch:", err)
-            resolve({ ...data, codecs: [], mimeType: getMimeType(data.path), mimeCodec: "" })
+            resolve(emptyResult)
             return
         }
     })
+}
+
+function hasIsoBmffHeader(buffer: Buffer) {
+    // MP4/ISO-BMFF files should contain an 'ftyp' box near the beginning.
+    let offset = 0
+    const maxBytes = Math.min(buffer.length, 256 * 1024)
+
+    while (offset + 8 <= maxBytes) {
+        const size32 = buffer.readUInt32BE(offset)
+        const type = buffer.toString("ascii", offset + 4, offset + 8)
+        if (type === "ftyp") return true
+
+        // size==0 means box extends to EOF; size==1 means extended 64-bit size follows.
+        if (size32 === 0) break
+
+        if (size32 === 1) {
+            if (offset + 16 > maxBytes) break
+            const size64 = Number(buffer.readBigUInt64BE(offset + 8))
+            if (!Number.isFinite(size64) || size64 < 16) break
+            offset += size64
+            continue
+        }
+
+        // Invalid box size, stop scanning to avoid infinite loops.
+        if (size32 < 8) break
+        offset += size32
+    }
+
+    return false
 }
 
 export function getMimeType(filePath: string) {
@@ -596,11 +651,11 @@ export function getMediaTracks(data: { path: string }) {
 async function extractSubtitles(data: { path: string }): Promise<{ path: string; tracks: Subtitle[] }> {
     const MP4Box = require("mp4box")
 
-    let arrayBuffer: any
+    let arrayBuffer: (ArrayBuffer & { fileStart?: number }) | null = null
     try {
         const buffer = fs.readFileSync(data.path)
         const uint8Array = new Uint8Array(buffer)
-        arrayBuffer = uint8Array.buffer.slice(uint8Array.byteOffset, uint8Array.byteOffset + uint8Array.byteLength)
+        arrayBuffer = uint8Array.buffer.slice(uint8Array.byteOffset, uint8Array.byteOffset + uint8Array.byteLength) as ArrayBuffer & { fileStart?: number }
     } catch (err) {
         console.error(err)
         return { ...data, tracks: [] }
@@ -609,63 +664,88 @@ async function extractSubtitles(data: { path: string }): Promise<{ path: string;
     if (!arrayBuffer) return { ...data, tracks: [] }
 
     return new Promise((resolve) => {
+        let settled = false
+        const resolveOnce = (result: { path: string; tracks: Subtitle[] }) => {
+            if (settled) return
+            settled = true
+            resolve(result)
+        }
+
         const mp4boxfile = MP4Box.createFile()
-        mp4boxfile.onError = (e: Error) => console.error("MP4Box error:", e)
+        mp4boxfile.onError = (e: Error) => {
+            console.error("MP4Box error:", e)
+            resolveOnce({ ...data, tracks: [] })
+        }
         mp4boxfile.onReady = (info: any) => {
             if (!Array.isArray(info?.tracks)) {
-                resolve({ ...data, tracks: [] })
+                resolveOnce({ ...data, tracks: [] })
+                return
+            }
+
+            const subtitleTracks = info.tracks.filter((track: any) => track?.type === "subtitles" || track?.type === "text")
+            if (!subtitleTracks.length) {
+                resolveOnce({ ...data, tracks: [] })
                 return
             }
 
             const tracks: Subtitle[] = []
-            let trackCount = 0
             let completed = 0
-            info.tracks.forEach((track: any) => {
-                if (track.type !== "subtitles" && track.type !== "text") {
-                    resolve({ ...data, tracks: [] })
-                    return
-                }
-                trackCount++
+            const pendingByTrackId = new Set<number>(subtitleTracks.map((track: any) => track.id))
+            const trackVtt = new Map<number, { lines: string[]; index: number; language: string }>()
 
-                // console.log(`Found subtitle track ID ${track.id}, language: ${track.language}`)
+            subtitleTracks.forEach((track: any) => {
                 const vttLines = ["WEBVTT\n"]
-                const timescale = track.timescale
+                trackVtt.set(track.id, { lines: vttLines, index: 1, language: track.language || "" })
 
                 mp4boxfile.setExtractionOptions(track.id, null, { nbSamples: track.nb_samples })
-                mp4boxfile.start()
-
-                mp4boxfile.onSamples = (_id: number, _user: any, samples: { data: BufferSource; cts: number; duration: number }[]) => {
-                    let index = 1
-                    samples.forEach((sample) => {
-                        const utf8Decoder = new TextDecoder("utf-8")
-                        let subtitleText = utf8Decoder.decode(sample.data).trim()
-                        // remove any non-printable characters (excluding line breaks)
-                        subtitleText = subtitleText.replace(/[^\x20-\x7E\n\r]+/g, "")
-                        if (!subtitleText) {
-                            resolve({ ...data, tracks: [] })
-                            return
-                        }
-
-                        const startTime = formatTimestamp((sample.cts / timescale) * 1000)
-                        const endTime = formatTimestamp(((sample.cts + sample.duration) / timescale) * 1000)
-
-                        vttLines.push(`${index}`)
-                        vttLines.push(`${startTime} --> ${endTime}`)
-                        vttLines.push(`${subtitleText}\n`)
-
-                        index++
-                    })
-
-                    completed++
-                    if (vttLines.length > 1) tracks.push({ lang: track.language?.slice(0, 2), name: track.language || "", vtt: vttLines.join("\n"), embedded: true })
-                    if (completed === trackCount) resolve({ ...data, tracks })
-                }
             })
+
+            mp4boxfile.onSamples = (id: number, _user: any, samples: { data: BufferSource; cts: number; duration: number }[]) => {
+                if (!pendingByTrackId.has(id)) return
+
+                const trackInfo = subtitleTracks.find((track: any) => track.id === id)
+                const vttInfo = trackVtt.get(id)
+                if (!trackInfo || !vttInfo) return
+
+                const timescale = trackInfo.timescale || 1
+                const utf8Decoder = new TextDecoder("utf-8")
+
+                samples.forEach((sample) => {
+                    let subtitleText = utf8Decoder.decode(sample.data).trim()
+                    // remove any non-printable characters (excluding line breaks)
+                    subtitleText = subtitleText.replace(/[^\x20-\x7E\n\r]+/g, "")
+                    if (!subtitleText) return
+
+                    const startTime = formatTimestamp((sample.cts / timescale) * 1000)
+                    const endTime = formatTimestamp(((sample.cts + sample.duration) / timescale) * 1000)
+
+                    vttInfo.lines.push(`${vttInfo.index}`)
+                    vttInfo.lines.push(`${startTime} --> ${endTime}`)
+                    vttInfo.lines.push(`${subtitleText}\n`)
+                    vttInfo.index++
+                })
+
+                pendingByTrackId.delete(id)
+                completed++
+
+                if (vttInfo.lines.length > 1) {
+                    tracks.push({ lang: vttInfo.language.slice(0, 2), name: vttInfo.language, vtt: vttInfo.lines.join("\n"), embedded: true })
+                }
+
+                if (completed === subtitleTracks.length) resolveOnce({ ...data, tracks })
+            }
+
+            mp4boxfile.start()
         }
 
         arrayBuffer.fileStart = 0
-        mp4boxfile.appendBuffer(arrayBuffer)
-        mp4boxfile.flush()
+        try {
+            mp4boxfile.appendBuffer(arrayBuffer)
+            mp4boxfile.flush()
+        } catch (err) {
+            console.error("MP4Box append/flush error:", err)
+            resolveOnce({ ...data, tracks: [] })
+        }
     })
 }
 
