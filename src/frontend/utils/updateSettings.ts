@@ -162,8 +162,8 @@ export function updateSettings(data: any) {
 
 let videoDataUpdating = false
 export function restartOutputs(specificId = "") {
-    const data = clone(videosData)
-    const time = clone(videosTime)
+    const data = clone(get(videosData))
+    const time = clone(get(videosTime))
 
     const allOutputs = keysToID(get(outputs))
     const outputIds = specificId ? [specificId] : allOutputs.filter((a) => a.enabled).map(({ id }) => id)
