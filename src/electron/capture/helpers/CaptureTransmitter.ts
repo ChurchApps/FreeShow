@@ -18,13 +18,13 @@ export class CaptureTransmitter {
     private static readonly AUDIO_PRESENT_MARKER = Buffer.from([1])
     private static readonly IS_BIG_ENDIAN = os.endianness() === "BE"
     private static transmitCount = 0
+    private static readonly UNCHANGED_KEEPALIVE_MS = 250
 
     static stageWindows: string[] = []
     static requestList: string[] = []
-    // static ndiFrameCount = 0
     static channels: { [key: string]: Channel } = {}
     private static lastFrameState: { [channelId: string]: { signature: number; sizeKey: string; lastSentAt: number } } = {}
-    private static readonly UNCHANGED_KEEPALIVE_MS = 1000
+    private static signatureOffsetCache: { [sizeKey: string]: number[] } = {}
 
     static getTransmitCount() {
         return this.transmitCount
@@ -33,32 +33,18 @@ export class CaptureTransmitter {
     static startTransmitting(captureId: string) {
         const captureOptions = OutputHelper.getOutput(captureId)?.captureOptions
         if (!captureOptions) return
-        // this.startChannel(captureId, "preview")
 
         const { ndi, blackmagic, server, stage } = captureOptions.options
         if (ndi) this.startChannel(captureId, "ndi")
         if (blackmagic) this.startChannel(captureId, "blackmagic")
         if (server) this.startChannel(captureId, "server")
         if (stage) this.startChannel(captureId, "stage")
-
-        if (ndi) {
-            // ENABLE TO TRACK NDI FRAME RATES
-            /*
-            console.log("SETTING INTERVAL");
-            setInterval(() => {
-                console.log("NDI FRAMES:", this.ndiFrameCount, " - ", captureId);
-                this.ndiFrameCount = 0
-            },1000);
-            */
-        }
     }
 
-    // WIP one global capture (on the highest frame rate) instead of multiple per frame rate - but using multipe at once is probably an edge case
     static startChannel(captureId: string, key: string) {
         const combinedKey = `${captureId}-${key}`
         const fps = OutputHelper.getOutput(captureId)?.captureOptions?.framerates?.[key] || 30
         const interval = Math.max(1, Math.round(1000 / Math.max(1, fps)))
-        // console.log("START CHANNEL:", key, interval)
 
         if (this.channels[combinedKey]?.timer) {
             clearInterval(this.channels[combinedKey].timer)
@@ -77,7 +63,6 @@ export class CaptureTransmitter {
         const combinedKey = `${captureId}-${key}`
         if (!this.channels[combinedKey]?.timer) return
 
-        // console.log("STOP CHANNEL:", key)
         clearInterval(this.channels[combinedKey].timer)
         // Clear buffer reference to allow GC
         delete this.channels[combinedKey]
@@ -85,34 +70,82 @@ export class CaptureTransmitter {
         if (key !== "blackmagic") delete this.lastFrameState[combinedKey]
     }
 
-    private static getQuickSignature(buffer: Buffer): number {
-        // Lightweight sampled hash to detect unchanged frames with low overhead.
+    private static getSignatureOffsets(width: number, height: number): number[] {
+        const sizeKey = `${width}x${height}`
+        const cached = this.signatureOffsetCache[sizeKey]
+        if (cached) return cached
+
+        const stride = width * 4
+        const offsets: number[] = []
+        const gridX = 24
+        const gridY = 14
+        const xStep = Math.max(1, Math.floor(width / gridX))
+        const yStep = Math.max(1, Math.floor(height / gridY))
+
+        for (let y = Math.floor(yStep / 2); y < height; y += yStep) {
+            const rowOffset = y * stride
+            for (let x = Math.floor(xStep / 2); x < width; x += xStep) {
+                offsets.push(rowOffset + x * 4)
+            }
+        }
+
+        this.signatureOffsetCache[sizeKey] = offsets
+        return offsets
+    }
+
+    private static getQuickSignature(buffer: Buffer, size: { width: number; height: number }): number {
         const len = buffer.length
         if (len === 0) return 0
 
-        let hash = 2166136261
-        const sampleCount = 64
-        const step = Math.max(1, Math.floor(len / sampleCount))
+        const width = Math.max(1, size.width | 0)
+        const height = Math.max(1, size.height | 0)
+        const expectedLen = width * height * 4
+        if (expectedLen <= 0 || len < 4) return len >>> 0
 
-        for (let i = 0; i < len; i += step) {
-            hash ^= buffer[i]
+        if (len < expectedLen) {
+            let fallbackHash = 2166136261
+            const fallbackSamples = 128
+            const step = Math.max(1, Math.floor(len / fallbackSamples))
+            for (let i = 0; i < len; i += step) {
+                fallbackHash ^= buffer[i]
+                fallbackHash = Math.imul(fallbackHash, 16777619)
+            }
+            fallbackHash ^= len
+            return fallbackHash >>> 0
+        }
+
+        let hash = 2166136261
+        const offsets = this.getSignatureOffsets(width, height)
+        for (const pixelOffset of offsets) {
+            if (pixelOffset + 2 >= len) break
+
+            // Sample B, G and R bytes (alpha is often constant and adds little value).
+            hash ^= buffer[pixelOffset]
+            hash = Math.imul(hash, 16777619)
+            hash ^= buffer[pixelOffset + 1]
+            hash = Math.imul(hash, 16777619)
+            hash ^= buffer[pixelOffset + 2]
             hash = Math.imul(hash, 16777619)
         }
 
-        // Fold in length to avoid collisions across different sizes.
+        hash ^= width
+        hash = Math.imul(hash, 16777619)
+        hash ^= height
+        hash = Math.imul(hash, 16777619)
         hash ^= len
         return hash >>> 0
     }
 
     private static shouldSkipUnchangedNonBlackmagicFrame(channelKey: string, captureId: string, buffer: Buffer, size: { width: number; height: number }): boolean {
         const channelId = `${captureId}-${channelKey}`
-        const signature = this.getQuickSignature(buffer)
+        const signature = this.getQuickSignature(buffer, size)
         const sizeKey = `${size.width}x${size.height}`
         const now = Date.now()
         const previous = this.lastFrameState[channelId]
+        const keepAliveMs = this.UNCHANGED_KEEPALIVE_MS
 
         // Skip unchanged frames for still content, but keep low-rate keepalive frames.
-        if (previous && previous.signature === signature && previous.sizeKey === sizeKey && now - previous.lastSentAt < this.UNCHANGED_KEEPALIVE_MS) {
+        if (previous && previous.signature === signature && previous.sizeKey === sizeKey && now - previous.lastSentAt < keepAliveMs) {
             return true
         }
 
@@ -125,7 +158,6 @@ export class CaptureTransmitter {
         return false
     }
 
-    // New method: transmit frame immediately to all active channels
     static transmitFrame(captureId: string, image: NativeImage) {
         const now = Date.now()
 
@@ -174,9 +206,7 @@ export class CaptureTransmitter {
 
         if (this.shouldSkipUnchangedNonBlackmagicFrame("ndi", captureId, buffer, size)) return
 
-        // this.ndiFrameCount++
-        // WIP refresh on enable?
-        NdiSender.sendVideoBufferNDI(captureId, buffer, { size, ratio, framerate: OutputHelper.getOutput(captureId)?.captureOptions?.framerates?.ndi || 10 })
+        NdiSender.sendVideoBufferNDI(captureId, buffer, { size, ratio, framerate: OutputHelper.getOutput(captureId)?.captureOptions?.framerates?.ndi || 30 })
     }
 
     static resizeImage(image: NativeImage, initialSize: Size, newSize: Size) {

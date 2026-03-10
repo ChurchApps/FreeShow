@@ -84,6 +84,8 @@ export class CaptureLifecycle {
         captureFrame()
 
         async function captureFrame() {
+            const loopStartedAt = Date.now()
+
             if (CaptureLifecycle.captureLoopToken[id] !== token) {
                 CaptureLifecycle.activeCaptures.delete(id)
                 return
@@ -95,7 +97,8 @@ export class CaptureLifecycle {
 
             // If Blackmagic is active but can't accept frames, skip capture entirely
             // This includes checking if previous frame is still being processed
-            if (output.captureOptions?.options?.blackmagic && !BlackmagicSender.canAcceptFrame(id)) {
+            const isBMD = output.captureOptions?.options?.blackmagic
+            if (isBMD && !BlackmagicSender.canAcceptFrame(id)) {
                 // Skip this frame - Blackmagic is still processing previous frame or queue is full
                 const ms = Math.max(1, Math.round(1000 / 60))
                 output.captureOptions.frameSubscription = setTimeout(captureFrame, ms)
@@ -108,7 +111,7 @@ export class CaptureLifecycle {
                 // Resize to target resolution for Blackmagic outputs (if screen scaling is not 100%)
                 let finalImage = image
 
-                if (output.captureOptions?.options?.blackmagic) {
+                if (isBMD) {
                     const targetSize = BlackmagicSender.getTargetDimensions(id)
                     const currentSize = image.getSize()
                     if (currentSize.width !== targetSize.width || currentSize.height !== targetSize.height) {
@@ -143,14 +146,16 @@ export class CaptureLifecycle {
             // Adaptive backpressure: reduce capture FPS only at high memory levels.
             const externalMB = process.memoryUsage().external / (1024 * 1024)
             let captureFrameRate = baseCaptureFrameRate
-            if (output.captureOptions?.options?.blackmagic) {
+            if (isBMD) {
                 if (externalMB > 6144) captureFrameRate = Math.min(baseCaptureFrameRate, 4)
                 else if (externalMB > 5120) captureFrameRate = Math.min(baseCaptureFrameRate, 6)
                 else if (externalMB > 4096) captureFrameRate = Math.min(baseCaptureFrameRate, 8)
                 else if (externalMB > 3072) captureFrameRate = Math.min(baseCaptureFrameRate, 10)
             }
 
-            const ms = Math.max(1, Math.round(1000 / Math.max(1, captureFrameRate)))
+            const targetIntervalMs = Math.max(1, Math.round(1000 / Math.max(1, captureFrameRate)))
+            const loopElapsedMs = Date.now() - loopStartedAt
+            const ms = Math.max(1, targetIntervalMs - loopElapsedMs)
             output.captureOptions.frameSubscription = setTimeout(captureFrame, ms)
         }
     }
