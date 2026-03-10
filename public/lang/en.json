@@ -83,6 +83,7 @@
         "context_trim": "Trim whitespace and punctuation from start/end of each line, and remove double spaces."
     },
     "tips": {
+        "show_add_project": "Press enter to add to project",
         "trigger": "Triggers are commonly used to send a HTTP request to change the preset of cameras.",
         "global_options": "These options are applied globally.",
         "consider_templates": "You made the same changes to multiple slides. Consider using a template.",
