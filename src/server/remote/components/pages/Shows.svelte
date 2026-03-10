@@ -106,13 +106,24 @@
     // shows list
     let searchElem: HTMLInputElement | undefined
     function openShow(id: string) {
+        const showData = $shows.find(s => s.id === id)
+        console.log("🎯 [Shows] OPENING SHOW:", id)
+        console.log("   Full show object:", showData)
+        console.log("   Category:", showData?.category)
+        
+        // Determine type based on category if not explicitly set
+        let showType = showData?.type || (showData?.category === "converted" ? "pdf" : "show")
+        console.log("   Determined type:", showType)
+        
         send("SHOW", id)
 
         if ($quickPlay) {
+            console.log("⚡ [Shows] Quick play mode - selecting slide 0")
             send("API:index_select_slide", { showId: id, index: 0 })
             searchElem?.select()
         } else {
-            _set("active", { id, type: "show" })
+            console.log("📂 [Shows] Setting active show with type:", showType)
+            _set("active", { id, type: showType })
             _set("activeTab", "show")
         }
     }

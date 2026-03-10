@@ -5,6 +5,9 @@ import type { IpcRendererEvent } from "electron"
 import { contextBridge, ipcRenderer, webUtils } from "electron"
 import type { ValidChannels } from "../types/Channels"
 
+// prevent "Possible EventEmitter memory leak" warnings by raising listener limit
+ipcRenderer.setMaxListeners(0) // unlimited
+
 // const maxInterval: number = 500
 // const useTimeout: ValidChannels[] = ["STAGE", "REMOTE", "CONTROLLER", "OUTPUT_STREAM"]
 // let lastChannel: string = ""

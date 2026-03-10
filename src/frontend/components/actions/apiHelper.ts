@@ -6,7 +6,7 @@ import type { DropData, Selected, Variable } from "../../../types/Main"
 import { clearAudio } from "../../audio/audioFading"
 import { AudioPlayer } from "../../audio/audioPlayer"
 import { AudioPlaylist } from "../../audio/audioPlaylist"
-import { activeDrawerTab, activeEdit, activePage, activeProject, activeShow, activeTimers, audioPlaylists, draw, drawSettings, drawTool, folders, groupNumbers, groups, media, openScripture, outLocked, outputs, overlays, playingAudio, playingMetronome, projects, refreshEditSlide, selected, showsCache, sortedShowsList, special, styles, timers, variables, volume } from "../../stores"
+import { activeDrawerTab, activeEdit, activePage, activeProject, activeShow, activeTimers, audioPlaylists, draw, drawSettings, drawTool, folders, groupNumbers, groups, media, openScripture, outLocked, outputs, overlays, playingAudio, playingMetronome, projects, refreshEditSlide, selected, shows, showsCache, sortedShowsList, special, styles, timers, variables, volume } from "../../stores"
 import { newToast } from "../../utils/common"
 import { send } from "../../utils/request"
 import { getDynamicValue } from "../edit/scripts/itemHelpers"
@@ -554,8 +554,12 @@ export function playMedia(data: API_media) {
     const mediaType = data.data?.type
     const extension = getMediaType(getExtension(data.path))
 
-    if (extension === "pdf") {
-        const name = removeExtension(getFileName(data.path))
+    // Check if this is a converted PDF show (no actual PDF file, just PNG images)
+    const showData = get(shows)[data.path]
+    const isConvertedPdf = showData?.category === "converted"
+
+    if (extension === "pdf" || isConvertedPdf) {
+        const name = isConvertedPdf ? showData?.name : removeExtension(getFileName(data.path))
         setOutput("slide", { type: "pdf", id: data.path, page: data.index || 0, pages: data.data?.pageCount ?? 1, name })
         clearBackground()
         return
@@ -814,29 +818,62 @@ function levenshteinDistance(a, b) {
 
 export async function getPDFThumbnails({ path }: API_media) {
     if (!path) return []
+    
+    const logMsg = (msg: string) => {
+        console.log("[getPDFThumbnails]", msg)
+        // También mostrar en la página para iOS
+        const debugDiv = document.getElementById("debug-pdf-log") || (() => {
+            const div = document.createElement("div")
+            div.id = "debug-pdf-log"
+            div.style.cssText = "position: fixed; top: 0; left: 0; background: black; color: lime; font-family: monospace; font-size: 10px; width: 100%; max-height: 200px; overflow-y: auto; z-index: 9999; padding: 5px;"
+            document.body.appendChild(div)
+            return div
+        })()
+        const line = document.createElement("div")
+        line.textContent = new Date().toLocaleTimeString() + " | " + msg
+        debugDiv.appendChild(line)
+        debugDiv.scrollTop = debugDiv.scrollHeight
+    }
+    
+    logMsg("Starting PDF processing for: " + path)
+    const totalStart = Date.now()
 
     GlobalWorkerOptions.workerSrc = "./assets/pdf.worker.min.mjs"
     const loadingTask = getDocument(path)
     const pdfDoc = await loadingTask.promise
     const pageCount = pdfDoc.numPages
+    logMsg("PDF loaded with " + pageCount + " pages in " + (Date.now() - totalStart) + "ms")
 
     const canvas = document.createElement("canvas")
     const context = canvas.getContext("2d")
-    if (!context) return []
+    if (!context) {
+        logMsg("ERROR: No canvas context!")
+        return []
+    }
 
     const pages: string[] = []
     for (let i = 0; i < pageCount; i++) {
-        const page = await pdfDoc.getPage(i + 1)
-        const viewport = page.getViewport({ scale: 1.5 })
+        const pageStart = Date.now()
+        logMsg("Processing page " + (i + 1) + " of " + pageCount)
+        
+        try {
+            const page = await pdfDoc.getPage(i + 1)
+            const viewport = page.getViewport({ scale: 1.5 })
 
-        canvas.height = viewport.height
-        canvas.width = viewport.width
+            canvas.height = viewport.height
+            canvas.width = viewport.width
 
-        await page.render({ canvas, canvasContext: context, viewport }).promise
-        const base64 = canvas.toDataURL("image/jpeg")
-        pages.push(base64)
+            await page.render({ canvas, canvasContext: context, viewport }).promise
+            const base64 = canvas.toDataURL("image/jpeg", 0.7)
+            pages.push(base64)
+            
+            logMsg("Page " + (i + 1) + " done in " + (Date.now() - pageStart) + "ms, size: " + Math.round(base64.length / 1024) + "KB")
+        } catch (error) {
+            logMsg("ERROR on page " + (i + 1) + ": " + (error as any).message)
+        }
     }
 
+    logMsg("All pages processed in " + (Date.now() - totalStart) + "ms, total size: " + Math.round(pages.reduce((a, b) => a + b.length, 0) / 1024 / 1024) + "MB")
     loadingTask.destroy()
     return { path, pages }
 }

@@ -159,9 +159,14 @@
                                         {#if isMediaType(showType)}
                                             <Button
                                                 on:click={() => {
-                                                    _set("active", show)
+                                                    // ensure we have an id and computed type (fallback for converted PDFs)
+                                                    const targetType = showType || (show?.category === "converted" ? "pdf" : "show")
+                                                    console.log("📁 [Project] opening media show from project", showId, "type", targetType)
+
+                                                    _set("active", { id: showId || "", type: targetType })
                                                     _set("activeTab", "show")
-                                                    if (showId && needsThumbnail(showType) && !$mediaCache[showId]) send("API:get_thumbnail", { path: showId })
+                                                    if (showId && needsThumbnail(targetType) && !$mediaCache[showId]) send("API:get_thumbnail", { path: showId })
+                                                    if (showId) send("SHOW", showId)
                                                 }}
                                                 active={$active.id === showId}
                                                 bold={false}
@@ -183,7 +188,11 @@
                                                 <ShowButton
                                                     class="project-show-button"
                                                     on:click={(e) => {
-                                                        _set("active", show)
+                                                        // set basic active ref and request full show
+                                                        const id = showId || ""
+                                                        const typeHint = showData?.type || (showData?.category === "converted" ? "pdf" : "show")
+                                                        console.log("📁 [Project] opening show via ShowButton", id, "typeHint", typeHint)
+                                                        _set("active", { id, type: typeHint })
                                                         _set("activeTab", "show")
                                                         send("SHOW", e.detail)
                                                     }}

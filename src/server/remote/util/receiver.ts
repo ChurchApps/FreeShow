@@ -58,9 +58,6 @@ export const receiver = {
     ACCESS: () => {
         if (_get("password").remember && _get("password").stored.length) localStorage.password = _get("password").stored
         _set("isConnected", true)
-
-        // Request current output data which should include scripture state
-        send("API:get_output")
     },
 
     /////
@@ -429,6 +426,8 @@ export const receiver = {
     },
 
     "API:get_pdf_thumbnails": (data: { path: string; pages: string[] }) => {
+        console.log("[Remote Receiver] Got PDF pages:", data.pages?.length, "pages, total size:", data.pages?.reduce((a, b) => a + b.length, 0) / 1024 / 1024, "MB")
+        if (!data.pages || data.pages.length === 0) console.error("[Remote Receiver] ERROR: No pages received!")
         _update("pdfPages", data.path, data.pages)
     },
 
