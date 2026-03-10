@@ -131,9 +131,9 @@
 
 {#if value.emitter}
     {#if emitter?.description}
-        <InputRow>
+        <InputRow style="padding: 10px;display: flex;gap: 8px;background: var(--primary-darker);font-size: 0.9em;">
             <p><T id="midi.description" /></p>
-            <p style="opacity: 0.5;overflow: hidden;" data-title={emitter.description}>{emitter.description}</p>
+            <p style="font-style: italic;opacity: 0.5;overflow: hidden;" data-title={emitter.description}>{emitter.description}</p>
         </InputRow>
     {/if}
 
@@ -141,9 +141,9 @@
 
     {#if templateInputs.length}
         {#if emitter?.templates?.[activeTemplate]?.description}
-            <InputRow>
+            <InputRow style="padding: 10px;display: flex;gap: 8px;background: var(--primary-darker);font-size: 0.9em;">
                 <p><T id="midi.description" /></p>
-                <p style="opacity: 0.5;overflow: hidden;" data-title={emitter.templates[activeTemplate].description}>{emitter.templates[activeTemplate].description}</p>
+                <p style="font-style: italic;opacity: 0.5;overflow: hidden;" data-title={emitter.templates[activeTemplate].description}>{emitter.templates[activeTemplate].description}</p>
             </InputRow>
         {/if}
 
