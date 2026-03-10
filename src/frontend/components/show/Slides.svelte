@@ -193,8 +193,8 @@
         Object.keys(slides).forEach((slideId) => {
             let slide = slides[slideId]
 
-            slide.items.forEach((item) => {
-                if (!item.lines) return
+            slide?.items?.forEach((item) => {
+                if (!item?.lines) return
 
                 item.lines.forEach((line) => {
                     if (!Array.isArray(line?.text)) return

@@ -342,7 +342,7 @@ export class PowerPointPackage {
     private getColorScheme(theme: ThemePart | null, master: SlideMasterPart | null, layout: SlideLayoutPart | null, slide: SlidePart | null): { [key: string]: any }[] {
         if (!theme) return []
 
-        const colors = clone(theme.colorScheme)
+        const colors = clone(theme.colorScheme || [])
 
         const masterColorMap = getAttributes(getValue(master?.json, "p:sldMaster"), "p:clrMap")
         const layoutColorMap = getAttributes(getValue(layout?.json, "p:sldLayout"), "p:clrMap")

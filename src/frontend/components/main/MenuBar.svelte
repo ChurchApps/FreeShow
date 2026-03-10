@@ -2,7 +2,7 @@
     import { fade } from "svelte/transition"
     import { Main } from "../../../types/IPC/Main"
     import { sendMain } from "../../IPC/main"
-    import { saved, topContextActive, windowState } from "../../stores"
+    import { activeProfile, profiles, saved, topContextActive, windowState } from "../../stores"
     import { initializeClosing } from "../../utils/save"
     import ContextChild from "../context/ContextChild.svelte"
     import ContextItem from "../context/ContextItem.svelte"
@@ -71,6 +71,13 @@
             </Button>
         {/each}
     </div>
+
+    {#if $activeProfile && Object.keys($profiles).filter((a) => a !== "admin").length > 1}
+        <div class="info">
+            <T id="profile.profile" />: {$profiles[$activeProfile]?.name || "—"}
+        </div>
+    {/if}
+
     <div class="window">
         <Button on:click={() => sendMain(Main.MINIMIZE)} center>
             <Icon id="remove" size={1.2} white />
@@ -147,5 +154,17 @@
         height: 1px;
         border: none;
         background-color: var(--primary);
+    }
+
+    /* info */
+
+    .info {
+        pointer-events: none;
+
+        font-size: 0.8em;
+        opacity: 0.7;
+
+        display: flex;
+        align-items: center;
     }
 </style>

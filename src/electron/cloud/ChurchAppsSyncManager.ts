@@ -2,7 +2,8 @@ import axios from "axios"
 import fs from "fs"
 import { join } from "path"
 import { ToMain } from "../../types/IPC/ToMain"
-import { ChurchAppsProvider, ContentProviderRegistry } from "../contentProviders"
+import type { ChurchAppsProvider } from "../contentProviders"
+import { ContentProviderRegistry } from "../contentProviders"
 import { sendToMain } from "../IPC/main"
 import { httpsRequest } from "../utils/requests"
 import { getContentProviderAccess } from "../data/contentProviders"
@@ -53,7 +54,7 @@ class ChurchAppsSyncManager {
     }
 
     // Simple HTTP GET to content S3 web server.  No auth needed.
-    private async getHeaders(churchId: string, teamId: string, fileName: string = "current.zip"): Promise<any> {
+    private async getHeaders(churchId: string, teamId: string, fileName = "current.zip"): Promise<any> {
         const path = `/${churchId}/files/group/${teamId}/${fileName}`
         console.log("Checking data...")
 
@@ -74,7 +75,7 @@ class ChurchAppsSyncManager {
     }
 
     // Fetch from S3 content server. No auth needed.
-    async getData(churchId: string, teamId: string, outputFolderPath: string, fileName: string = "current.zip"): Promise<string | null> {
+    async getData(churchId: string, teamId: string, outputFolderPath: string, fileName = "current.zip"): Promise<string | null> {
         const randomNumber = Math.floor(Math.random() * 1000000)
         const path = `/${churchId}/files/group/${teamId}/${fileName}?cacheBuster=${randomNumber}`
         console.log("Downloading data...")
@@ -101,7 +102,7 @@ class ChurchAppsSyncManager {
 
     async getWriteToken(teamId: string, fileName: string): Promise<any> {
         const path = `/content/files/postUrl`
-        let params: { [key: string]: string } = { fileName, contentType: "group", contentId: teamId }
+        const params: { [key: string]: string } = { fileName, contentType: "group", contentId: teamId }
 
         const token = await this.provider.getToken(SCOPE)
         const headers = token ? { Authorization: `Bearer ${token}` } : {}
@@ -123,7 +124,7 @@ class ChurchAppsSyncManager {
         })
     }
 
-    async uploadData(teamId: string, filePath: string, fileName: string = "current.zip"): Promise<boolean> {
+    async uploadData(teamId: string, filePath: string, fileName = "current.zip"): Promise<boolean> {
         const presigned = await this.getWriteToken(teamId, fileName)
         if (!presigned?.url) return false
 

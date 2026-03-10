@@ -320,6 +320,10 @@ export class AudioAnalyser {
 
         // any outputs with ndi audio enabled
         if (outputList.find((a) => a.enabled && a.ndi && a.ndiData?.audio)) return true
+
+        // any outputs with blackmagic enabled (audio always enabled for blackmagic)
+        if (outputList.find((a) => a.enabled && a.blackmagic)) return true
+
         return false
     }
 

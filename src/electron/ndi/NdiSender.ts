@@ -1,7 +1,6 @@
 import os from "os"
 import { toApp } from ".."
 import { CaptureHelper } from "../capture/CaptureHelper"
-import { CaptureTransmitter } from "../capture/helpers/CaptureTransmitter"
 import util from "./vingester-util"
 
 // Dynamic import for grandiose ES module to prevent TypeScript compilation issues
@@ -94,12 +93,9 @@ export class NdiSender {
                 this.NDI[id].previousStatus = newStatus
 
                 if (this.NDI[id].status === "connected") {
-                    Object.keys(CaptureTransmitter.channels).forEach((key) => {
-                        if (key.includes("ndi")) {
-                            // force an instant check / output refresh when reconnected
-                            CaptureTransmitter.channels[key].lastCheck = 999
-                        }
-                    })
+                    // Force a frame update when NDI reconnects
+                    // (frames now stream directly, so just log reconnection)
+                    console.log(`[NDI] Reconnected for ${id}`)
                 }
             }
         }, 1000)

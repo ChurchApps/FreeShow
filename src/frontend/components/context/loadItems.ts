@@ -202,6 +202,8 @@ const loadActions = {
         return itemActions
     },
     remove_layers: () => {
+        if (!Array.isArray(get(selected).data) || !get(selected).data.length) return []
+
         const layoutSlides = getLayoutRef()
         const layoutSlide = layoutSlides[get(selected).data[0]?.index] || {}
 

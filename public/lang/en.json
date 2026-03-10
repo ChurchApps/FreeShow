@@ -83,6 +83,7 @@
         "context_trim": "Trim whitespace and punctuation from start/end of each line, and remove double spaces."
     },
     "tips": {
+        "show_add_project": "Press enter to add to project",
         "trigger": "Triggers are commonly used to send a HTTP request to change the preset of cameras.",
         "global_options": "These options are applied globally.",
         "consider_templates": "You made the same changes to multiple slides. Consider using a template.",
@@ -874,6 +875,7 @@
         "enable": "Automatic sync on startup and close",
         "read_only": "Read-only",
         "reconnect": "Reconnect",
+        "enable_sync": "Enable sync",
         "sync": "Sync now",
         "change_team": "Change team",
         "choose_method_tip": "There is existing data in the cloud. What would you like to do?",
@@ -1362,6 +1364,7 @@
         "connect": "Connect by typing this in a web browser",
         "connect_qr": "Or scan this QR code",
         "restart": "Restart servers",
+        "content_provider": "Content provider",
         "connect_to": "Connect to $1",
         "disconnect_from": "Disconnect from $1",
         "sync_categories_tip": "Select which categories to upload as songs",
@@ -1395,6 +1398,7 @@
         "unmute": "Unmute output"
     },
     "profile": {
+        "profile": "Profile",
         "profiles_hint": "Create multiple profiles/roles to limit certain users access to control/edit chosen parts of the program.",
         "admin": "Admin",
         "none": "None",

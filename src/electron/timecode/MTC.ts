@@ -3,11 +3,11 @@ import { processFrame, updateTimecodeStatus } from "./timecode"
 
 // RECEIVING
 
-export async function setupMTCListener(_f: number = 25, data: any) {
+export async function setupMTCListener(_f = 25, data: any) {
     const port = await JZZ().openMidiIn(data.midiInput).or("Cannot open MIDI In")
     if (port.name()) console.info("Opened MIDI listener")
 
-    let mtc = new Array(8).fill(0)
+    const mtc = new Array(8).fill(0)
     let midiClockTime = 0
     let lastTickTime = 0
 

@@ -1554,7 +1554,7 @@ const dynamicValues = {
 
     // show
     show_name: ({ show }) => show?.name || "",
-    show_name_next: ({ projectRef }) => get(shows)[get(projects)[projectRef.id]?.shows?.[projectRef.index + 1]?.id]?.name || "",
+    show_name_next: ({ projectRef }) => get(shows)[get(projects)[projectRef.id]?.shows?.find((a, i) => a.type !== "section" && i > projectRef.index)?.id ?? -1]?.name || "",
 
     layout_slides: ({ ref }) => ref.length,
     layout_notes: ({ layout }) => layout.notes || "",

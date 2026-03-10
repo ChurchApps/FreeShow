@@ -128,7 +128,8 @@
 
         if (!input) {
             // close popup if no custom inputs
-            activePopup.set(null)
+            // let action update first
+            setTimeout(() => activePopup.set(null), 50)
             return
         }
     }

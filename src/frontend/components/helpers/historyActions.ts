@@ -998,6 +998,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
                     let currentIndex = -1
                     layoutSlides.forEach((l, i) => {
+                        if (!l) return
                         if (!a[data.remember.showId].slides[l.id]) {
                             console.error("MISSING SLIDE")
                             return

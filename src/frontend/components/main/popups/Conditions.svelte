@@ -63,6 +63,8 @@
 
         // dynamic value / variable
         if (text.includes("{")) {
+            if (text.includes("{scripture")) return
+
             const isVariable = text.includes("{$") || text.includes("{variable_")
             setLikelyValue(isVariable ? "variable" : "dynamicValue", "element")
 

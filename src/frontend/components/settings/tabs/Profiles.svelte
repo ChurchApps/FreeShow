@@ -82,7 +82,7 @@
         return inputs
     }
 
-    function getSectionOptions(options: { value: string; label: string; icon?: string; disabled?: boolean }[]) {
+    function getSectionOptions(options: { value: string; label: string; icon?: string; disabled?: boolean }[], _updater: any) {
         // only admin can change access
         if (!isAdmin) return options.map((option) => ({ ...option, disabled: true }))
         return options
@@ -120,7 +120,7 @@
     $: variablesList = sortByName(keysToID($variableTags)).filter((a) => a.name)
     $: variablesAccess = currentProfile.access.variables || {}
 
-    // $: triggersAccess = currentProfile.access.triggers || {}
+    $: triggersAccess = currentProfile.access.triggers || {}
 
     $: stageList = sortByName(keysToID($stageShows)).filter((a) => a.name)
     $: stageAccess = currentProfile.access.stage || {}
@@ -144,7 +144,7 @@
         // WIP TIMERS (TAGS)
         { id: "timers", label: "tabs.timers", icon: "timer", access: timersAccess, options: accessInputsRW, list: [] },
         { id: "variables", label: "tabs.variables", icon: "variable", access: variablesAccess, options: accessInputsRW, list: variablesList },
-        // { id: "triggers", label: "tabs.triggers", icon: "trigger", access: triggersAccess, options: accessInputsRW, list: [] },
+        { id: "triggers", label: "tabs.triggers", icon: "trigger", access: triggersAccess, options: accessInputsRW, list: [] },
         { id: "stage", label: "menu.stage", icon: "stage", access: stageAccess, options: accessInputsRW, list: stageList },
         { id: "settings", label: "menu.settings", icon: "settings", access: settingsAccess, options: [], list: settingsList }
     ]
@@ -168,7 +168,7 @@
     async function setCurrentAsActive() {
         // require password if setting admin profile (and password exists)
         if (profileId === "" && hasAdminPass) {
-            const pwd = await promptCustom(translateText("remote.password"))
+            const pwd = await promptCustom(translateText("remote.password"), "password")
             const adminPassword = $profiles.admin?.password || ""
             if (!checkPassword(pwd, adminPassword)) {
                 newToast("remote.wrong_password")
@@ -206,7 +206,7 @@
 {:else}
     {#each ACCESS_LISTS as a}
         <InputRow arrow={!!a.list?.length}>
-            <MaterialMultiButtons label={a.label} icon={a.icon} value={a.access.global || "write"} options={getSectionOptions(a.options)} on:click={(e) => updateAccess(a.id, "global", e.detail)} />
+            <MaterialMultiButtons label={a.label} icon={a.icon} value={a.access.global || "write"} options={getSectionOptions(a.options, isAdmin)} on:click={(e) => updateAccess(a.id, "global", e.detail)} />
 
             <div slot="menu">
                 {#each a.list as item}

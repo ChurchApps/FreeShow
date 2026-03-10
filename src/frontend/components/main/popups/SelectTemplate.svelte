@@ -120,6 +120,7 @@
             let count = 1
             const activeScripture = $drawerTabsData.scripture?.activeSubTab || ""
             const currentScripture = $scriptures[activeScripture]
+            if (!currentScripture) return templates
 
             if (currentScripture.collection?.versions?.length) count = currentScripture.collection.versions.length
             countId = count > 1 ? "_" + count : ""

@@ -889,7 +889,9 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
 
         // Apply textFit if template defines it
         if (templateItem.textFit) item.textFit = templateItem.textFit
+        else if (!templateItem.auto) delete item.textFit
         if (templateItem.list) item.list = templateItem.list
+        else delete item.list
 
         // use original line reveal if style template does not have the value set
         const hasLineReveal = item.lineReveal

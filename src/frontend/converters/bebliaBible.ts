@@ -54,6 +54,7 @@ function getBooks(oldBooks: any[]) {
     if (!Array.isArray(oldBooks)) oldBooks = [oldBooks]
     // console.log("Books:", oldBooks)
     oldBooks.forEach((book) => {
+        if (!book) return
         const currentBook = {
             number: book["@number"],
             name: book["@name"] || defaultBibleBookNames[book["@number"]],

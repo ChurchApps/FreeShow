@@ -802,7 +802,7 @@ export function mergeSlides(indexes: { index: number }[]) {
     // delete slides
     allMergedSlideIds.forEach((id) => {
         // only delete if no children or they are selected!
-        const children = newShow.slides[id].children || []
+        const children = newShow.slides[id]?.children || []
         // return if at least one children is not selected
         if (children.find((childId) => !allMergedSlideIds.includes(childId))) {
             if (id === firstSlideId) {

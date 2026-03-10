@@ -53,6 +53,12 @@ export interface DecompressStreamOptions {
     getOutputPath?: (fileName: string) => string | undefined
 }
 
+function getZipErrorAlert(file: string, error: unknown) {
+    const message = (error as Error)?.message?.toLowerCase() || ""
+    if (message.includes("encrypted")) return "Can't decompress, this file is password protected!"
+    return `Failed to open zip file: ${file}`
+}
+
 export async function decompressZip(files: string[], asBuffer = false, options?: DecompressStreamOptions) {
     const data: { content: Buffer | string; name: string; extension: string }[] = []
 
@@ -61,12 +67,7 @@ export async function decompressZip(files: string[], asBuffer = false, options?:
             const fileData = await decompressZipStream(file, asBuffer, options)
             data.push(...fileData)
         } catch (err) {
-            const errorMsg = (err as Error).message.toLowerCase()
-            if (errorMsg.includes("encrypted")) {
-                sendToMain(ToMain.ALERT, "Can't decompress, this file is password protected!")
-            } else {
-                sendToMain(ToMain.ALERT, `Failed to open zip file: ${file}`)
-            }
+            sendToMain(ToMain.ALERT, getZipErrorAlert(file, err))
             console.error("Could not decompress zip file:", file, err)
         }
     }
@@ -77,19 +78,43 @@ export async function decompressZip(files: string[], asBuffer = false, options?:
 export async function decompressZipStream(file: string, asBuffer = false, options?: DecompressStreamOptions): Promise<{ content: Buffer | string; name: string; extension: string }[]> {
     return new Promise((resolve, reject) => {
         const data: { content: Buffer | string; name: string; extension: string }[] = []
+        let hasFinished = false
+
+        const rejectOnce = (error: unknown, zipfile?: yauzl.ZipFile) => {
+            if (hasFinished) return
+            hasFinished = true
+
+            if (zipfile) {
+                try {
+                    zipfile.close()
+                } catch {
+                    // ignore close errors during error cleanup
+                }
+            }
+
+            reject(error instanceof Error ? error : new Error(String(error)))
+        }
+
+        const resolveOnce = () => {
+            if (hasFinished) return
+            hasFinished = true
+            resolve(data)
+        }
 
         yauzl.open(file, { lazyEntries: true }, (err, zipfile) => {
             if (err) {
-                reject(err)
+                rejectOnce(err)
                 return
             }
 
             if (!zipfile) {
-                reject(new Error("Failed to open zipfile"))
+                rejectOnce(new Error("Failed to open zipfile"))
                 return
             }
 
             zipfile.on("entry", (entry: yauzl.Entry) => {
+                if (hasFinished) return
+
                 // Skip directories
                 if (/\/$/.test(entry.fileName)) {
                     zipfile.readEntry()
@@ -99,15 +124,15 @@ export async function decompressZipStream(file: string, asBuffer = false, option
                 processEntry(entry, zipfile, data, asBuffer, options)
             })
 
-            zipfile.on("end", () => resolve(data))
-            zipfile.on("error", reject)
+            zipfile.on("end", resolveOnce)
+            zipfile.on("error", (zipErr) => rejectOnce(zipErr, zipfile))
 
             zipfile.readEntry()
         })
     })
 }
 
-function processEntry(entry: yauzl.Entry, zipfile: yauzl.ZipFile, data: { content: Buffer | string; name: string; extension: string }[], asBuffer: boolean, options?: DecompressStreamOptions) {
+function processEntry(entry: yauzl.Entry, zipfile: yauzl.ZipFile, data: { content: Buffer | string; name: string; extension: string }[], asBuffer: boolean, options: DecompressStreamOptions | undefined) {
     const name = entry.fileName
     const extension = getExtension(name)
     const outputPath = options?.getOutputPath?.(name)
@@ -115,11 +140,11 @@ function processEntry(entry: yauzl.Entry, zipfile: yauzl.ZipFile, data: { conten
     zipfile.openReadStream(entry, (err, readStream) => {
         if (err || !readStream) {
             if (err) {
-                const errorMsg = (err as Error).message.toLowerCase()
+                const errorMsg = err.message.toLowerCase()
                 if (errorMsg.includes("encrypted")) {
                     sendToMain(ToMain.ALERT, "Can't decompress, this file is password protected!")
                 }
-                console.error(err)
+                console.error("Failed to open zip entry stream:", name, err)
             }
 
             zipfile.readEntry()
@@ -135,17 +160,30 @@ function processEntry(entry: yauzl.Entry, zipfile: yauzl.ZipFile, data: { conten
 }
 
 function streamToDisk(readStream: NodeJS.ReadableStream, outputPath: string, name: string, extension: string, data: { content: Buffer | string; name: string; extension: string }[], zipfile: yauzl.ZipFile) {
+    let hasAdvanced = false
+    const readNextEntry = () => {
+        if (hasAdvanced) return
+        hasAdvanced = true
+        zipfile.readEntry()
+    }
+
     const writeStream = fs.createWriteStream(outputPath)
     readStream.pipe(writeStream)
 
     writeStream.on("finish", () => {
         data.push({ content: outputPath, name, extension })
-        zipfile.readEntry()
+        readNextEntry()
     })
 
     writeStream.on("error", (err) => {
         console.error("Failed to write file to disk:", outputPath, err)
-        zipfile.readEntry()
+        readNextEntry()
+    })
+
+    readStream.on("error", (err) => {
+        console.error("Failed to read zip entry stream:", name, err)
+        writeStream.destroy()
+        readNextEntry()
     })
 }
 
@@ -175,7 +213,7 @@ function bufferInMemory(readStream: NodeJS.ReadableStream, name: string, extensi
     })
 
     readStream.on("error", (err) => {
-        console.error(err)
+        console.error("Failed to read zip entry stream:", name, err)
         zipfile.readEntry()
     })
 }

@@ -552,16 +552,29 @@ function getDateTitle(dateString: string) {
 }
 
 const itemStyle = "left:50px;top:120px;width:1820px;height:840px;"
+
+// Extract the maximum number of consecutive slashes in a string to determine repetition count
+function getRepetitionCount(text: string): number {
+    const matches = text.match(/\/{2,}/g) // Find sequences of 2 or more slashes
+    if (!matches || matches.length === 0) return 1
+    
+    // Get the longest sequence of slashes
+    const maxSlashSequence = matches.reduce((max, current) => 
+        current.length > max.length ? current : max
+    )
+    
+    return maxSlashSequence.length
+}
+
 function getShow(SONG_DATA: any, SONG: any, SECTIONS: any[]) {
     const slides: { [key: string]: Slide } = {}
     const layoutSlides: SlideData[] = []
     SECTIONS.forEach((section) => {
-        // Check if section has repeat markers (//)
-        const hasRepetition = section.lyrics?.includes("//") || false
-        const repetitionCount = hasRepetition ? 2 : 1
+        // Check if section has repeat markers (// for 2x, /// for 3x, etc.)
+        const repetitionCount = getRepetitionCount(section.lyrics || "")
         
-        // Remove repeat markers from display
-        const cleanedLyrics = (section.lyrics || "").replace(/\/\//g, "").trim()
+        // Remove repeat markers (all sequences of 2+ slashes) from display
+        const cleanedLyrics = (section.lyrics || "").replace(/\/{2,}/g, "").trim()
 
         // Skip sections with no lyrics content
         if (!cleanedLyrics) return
@@ -573,6 +586,7 @@ function getShow(SONG_DATA: any, SONG: any, SECTIONS: any[]) {
                 {
                     style: itemStyle,
                     lines: cleanedLyrics.split("\n").map((a: string) => ({ align: "", text: [{ style: "", value: a }] }))
+
                 }
             ]
 

@@ -367,7 +367,12 @@
         if (!currentData) return
 
         // load new data
-        data[previewBibleId].verseData = currentData.getVerses(verseNumbers.map(Number))
+        try {
+            data[previewBibleId].verseData = currentData.getVerses(verseNumbers.map(Number))
+        } catch {
+            // failed to load
+            return
+        }
 
         // newToast(translateText("toast.verse_undefined").replace("{}", verse))
 

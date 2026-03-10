@@ -29,7 +29,8 @@ export const languages = {
     ja: "日本語", // Japanese
     sv: "Svenska", // Swedish
     zh_TW: "繁體中文", // Chinese (Traditional)
-    vi: "Tiếng Việt" // Vietnamese
+    vi: "Tiếng Việt", // Vietnamese
+    id_ID: "Indonesia" // Indonesian
 }
 
 // Help: https://developers.google.com/search/docs/advanced/crawling/localized-versions#language-codes
@@ -66,7 +67,8 @@ export const replace = {
     ja: ["ja"],
     sv: ["sv"],
     zh_TW: ["zh-TW"],
-    vi: ["vi"]
+    vi: ["vi"],
+    id_ID: ["id-ID", "id"]
 }
 
 export const languageFlags = {
@@ -99,5 +101,6 @@ export const languageFlags = {
     ja: "🇯🇵",
     sv: "🇸🇪",
     zh_TW: "🇹🇼",
-    vi: "🇻🇳"
+    vi: "🇻🇳",
+    id_ID: "🇮🇩"
 }

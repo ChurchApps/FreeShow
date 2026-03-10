@@ -3,8 +3,13 @@ import os from "os"
 
 // clone objects
 export function clone<T>(object: T): T {
-    if (typeof object !== "object") return object
-    return JSON.parse(JSON.stringify(object))
+    if (object === null || typeof object !== "object") return object
+
+    try {
+        return structuredClone(object)
+    } catch {
+        return object
+    }
 }
 
 // a few keys might not be placed in the same order in JS object vs store file

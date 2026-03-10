@@ -214,6 +214,6 @@ export async function pcoStartupLoad(scope: PCOScopes = "services") {
     await pcoLoadServices()
 }
 
-function connectionInitialized(isFirstConnection: boolean = false): void {
+function connectionInitialized(isFirstConnection = false): void {
     sendToMain(ToMain.PROVIDER_CONNECT, { providerId: "planningcenter", success: true, isFirstConnection })
 }

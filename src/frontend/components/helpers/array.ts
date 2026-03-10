@@ -202,8 +202,13 @@ export function changeValues<T>(object: T, values: { [key: string]: any }) {
 
 // clone objects
 export function clone<T>(object: T): T {
-    if (typeof object !== "object") return object
-    return JSON.parse(JSON.stringify(object))
+    if (object === null || typeof object !== "object") return object
+
+    try {
+        return structuredClone(object)
+    } catch {
+        return object
+    }
 }
 
 // not currently in use, but could be handy
