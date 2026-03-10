@@ -57,6 +57,12 @@ interface PerformanceMetrics {
     recoveryAttempts: number
 }
 
+interface AudioQueueState {
+    queue: Buffer[]
+    offset: number
+    length: number
+}
+
 /**
  * Manages Blackmagic Design video output devices using the macadam library
  */
@@ -69,10 +75,8 @@ export class BlackmagicSender {
     static silentAudioBuffers: { [key: string]: Buffer } = {}
 
     // Audio state tracking (always enabled for Blackmagic)
-    // Queue-based audio buffer to avoid repeated Buffer.concat/slice copies.
-    static audioBufferQueue: Buffer[] = []
-    static audioQueueOffset: number = 0
-    static audioQueueLength: number = 0
+    // Keep independent read cursors per output to avoid cross-output audio starvation.
+    static audioQueuesByOutput: { [outputId: string]: AudioQueueState } = {}
 
     // Device configuration
     static devicePixelMode: "BGRA" | "ARGB" = os.endianness() === "BE" ? "ARGB" : "BGRA"
@@ -281,6 +285,8 @@ export class BlackmagicSender {
                     lastFrameTime: Date.now()
                 }
 
+                this.audioQueuesByOutput[outputId] = { queue: [], offset: 0, length: 0 }
+
                 // CRITICAL: Disable frame callback immediately to prevent debug spam
                 if (typeof playback.onFramePlayed === "function") {
                     playback.onFramePlayed(() => {
@@ -328,10 +334,14 @@ export class BlackmagicSender {
     static cleanupSilentAudioBuffers() {
         // Keep only commonly used channel configurations
         const commonChannels = [1, 2, 6, 8]
+        const activeDisplayModes = new Set(Object.values(this.playbackData).map((d) => d.displayMode))
 
         for (const bufferKey in this.silentAudioBuffers) {
-            const channels = parseInt(bufferKey, 10)
-            if (!commonChannels.includes(channels)) {
+            const separatorIndex = bufferKey.indexOf("_")
+            const channels = parseInt(separatorIndex === -1 ? bufferKey : bufferKey.slice(0, separatorIndex), 10)
+            const displayMode = separatorIndex === -1 ? "default" : bufferKey.slice(separatorIndex + 1)
+
+            if (!commonChannels.includes(channels) || (displayMode !== "default" && !activeDisplayModes.has(displayMode))) {
                 delete this.silentAudioBuffers[bufferKey]
             }
         }
@@ -464,14 +474,14 @@ export class BlackmagicSender {
 
         // Check for 8K resolutions
         if (normalized.includes("8k") && normalized.includes("4320")) return { width: 7680, height: 4320 }
-        if (normalized.includes("8kdci") || normalized.includes("8k dci")) return { width: 8192, height: 4320 }
+        if (normalized.includes("8kdci")) return { width: 8192, height: 4320 }
 
         // Check for 4K resolutions
         if (normalized.includes("4k") && normalized.includes("2160")) return { width: 3840, height: 2160 }
-        if (normalized.includes("4kdci") || normalized.includes("4k dci")) return { width: 4096, height: 2160 }
+        if (normalized.includes("4kdci")) return { width: 4096, height: 2160 }
 
         // Check for 2K resolutions
-        if (normalized.includes("2kdci") || normalized.includes("2k dci")) return { width: 2048, height: 1080 }
+        if (normalized.includes("2kdci")) return { width: 2048, height: 1080 }
         if (normalized.includes("2k")) return { width: 2048, height: 1080 }
 
         // Check for HD resolutions
@@ -676,7 +686,8 @@ export class BlackmagicSender {
                     // Get audio safely with correct sample count for the display mode
                     // Use queued audio to get exactly the right amount for this frame
                     const audioChannels = data.audioChannels || 2
-                    const audioData = this.audioQueueLength > 0 && audioFrame !== null ? this.getAudioForFrame(audioChannels, data.displayMode) : this.getSilentAudio(audioChannels, data.displayMode)
+                    const outputAudioQueue = this.audioQueuesByOutput[outputId]
+                    const audioData = outputAudioQueue && outputAudioQueue.length > 0 && audioFrame !== null ? this.getAudioForFrame(outputId, audioChannels, data.displayMode) : this.getSilentAudio(audioChannels, data.displayMode)
 
                     // Validate audio buffer size
                     const expectedSampleCount = data.expectedAudioSampleCount
@@ -793,7 +804,8 @@ export class BlackmagicSender {
         try {
             // Check buffer health
             const bufferedFrames = data.playback.bufferedFrames()
-            if (bufferedFrames < 3) {
+            const criticalBufferThreshold = data.isStarted ? 1 : Math.min(2, data.targetBufferSize)
+            if (bufferedFrames < criticalBufferThreshold) {
                 issues.push("Critical buffer underrun")
                 healthy = false
             } else if (bufferedFrames < data.targetBufferSize / 4) {
@@ -973,7 +985,8 @@ export class BlackmagicSender {
             if (bufferedFrames < data.targetBufferSize / 4) {
                 console.warn(`Buffer running low (${bufferedFrames} frames), may need recovery`)
 
-                if (bufferedFrames < 3) {
+                const criticalBufferThreshold = data.isStarted ? 1 : Math.min(2, data.targetBufferSize)
+                if (bufferedFrames < criticalBufferThreshold) {
                     const hwTime = data.playback.hardwareTime()
                     if (hwTime) {
                         this.recoverPlayback(outputId, hwTime.hardwareTime)
@@ -1180,35 +1193,52 @@ export class BlackmagicSender {
     static sendAudioBuffer(buffer: Buffer, { sampleRate, channelCount }: { sampleRate: number; channelCount: number }) {
         // Queue incoming audio chunks for slicing exact frame amounts per output frame.
         // Blackmagic expects PCM 16-bit integer audio, which is the same format we receive
-        if (buffer.length > 0) {
-            this.audioBufferQueue.push(buffer)
-            this.audioQueueLength += buffer.length
+        const outputIds = Object.keys(this.playbackData)
+        if (buffer.length > 0 && outputIds.length > 0) {
+            for (const outputId of outputIds) {
+                if (!this.audioQueuesByOutput[outputId]) {
+                    this.audioQueuesByOutput[outputId] = { queue: [], offset: 0, length: 0 }
+                }
+
+                const outputQueue = this.audioQueuesByOutput[outputId]
+                outputQueue.queue.push(buffer)
+                outputQueue.length += buffer.length
+            }
         }
+
         // Keep buffered audio size reasonable (max 2 seconds of audio)
         const maxBufferSize = sampleRate * 2 * channelCount * 2 // 2 seconds
-        if (this.audioQueueLength > maxBufferSize) {
-            // Remove oldest audio while preserving chunked structure.
-            this.dropOldestAudioBytes(this.audioQueueLength - maxBufferSize)
+        for (const outputId of outputIds) {
+            const outputQueue = this.audioQueuesByOutput[outputId]
+            if (outputQueue && outputQueue.length > maxBufferSize) {
+                // Remove oldest audio while preserving chunked structure.
+                this.dropOldestAudioBytes(outputQueue, outputQueue.length - maxBufferSize)
+            }
         }
     }
 
-    static getAudioForFrame(channelCount: number, displayMode: string): Buffer {
+    static getAudioForFrame(outputId: string, channelCount: number, displayMode: string): Buffer {
         // Calculate exact audio samples needed for this frame
         const accurateFrameRate = this.getAccurateFrameRate(displayMode)
         const expectedSampleCount = Math.round(48000 / accurateFrameRate)
         const expectedAudioSize = expectedSampleCount * 2 * channelCount // 2 bytes per sample (16-bit)
 
+        const outputQueue = this.audioQueuesByOutput[outputId]
+        if (!outputQueue) {
+            return this.getSilentAudio(channelCount, displayMode)
+        }
+
         // If we don't have enough audio yet, return silent audio
-        if (this.audioQueueLength < expectedAudioSize) {
+        if (outputQueue.length < expectedAudioSize) {
             return this.getSilentAudio(channelCount, displayMode)
         }
 
         // Extract exact amount needed for this frame.
-        return this.readAudioBytes(expectedAudioSize)
+        return this.readAudioBytes(outputQueue, expectedAudioSize)
     }
 
-    private static readAudioBytes(byteCount: number): Buffer {
-        if (byteCount <= 0 || this.audioQueueLength < byteCount) {
+    private static readAudioBytes(outputQueue: AudioQueueState, byteCount: number): Buffer {
+        if (byteCount <= 0 || outputQueue.length < byteCount) {
             return this.EMPTY_BUFFER
         }
 
@@ -1216,41 +1246,41 @@ export class BlackmagicSender {
         let writeOffset = 0
         let remaining = byteCount
 
-        while (remaining > 0 && this.audioBufferQueue.length > 0) {
-            const head = this.audioBufferQueue[0]
-            const availableInHead = head.length - this.audioQueueOffset
+        while (remaining > 0 && outputQueue.queue.length > 0) {
+            const head = outputQueue.queue[0]
+            const availableInHead = head.length - outputQueue.offset
             const take = Math.min(remaining, availableInHead)
 
-            head.copy(result, writeOffset, this.audioQueueOffset, this.audioQueueOffset + take)
+            head.copy(result, writeOffset, outputQueue.offset, outputQueue.offset + take)
 
             writeOffset += take
             remaining -= take
-            this.audioQueueOffset += take
-            this.audioQueueLength -= take
+            outputQueue.offset += take
+            outputQueue.length -= take
 
-            if (this.audioQueueOffset >= head.length) {
-                this.audioBufferQueue.shift()
-                this.audioQueueOffset = 0
+            if (outputQueue.offset >= head.length) {
+                outputQueue.queue.shift()
+                outputQueue.offset = 0
             }
         }
 
         return result
     }
 
-    private static dropOldestAudioBytes(byteCount: number): void {
+    private static dropOldestAudioBytes(outputQueue: AudioQueueState, byteCount: number): void {
         let remaining = byteCount
-        while (remaining > 0 && this.audioBufferQueue.length > 0) {
-            const head = this.audioBufferQueue[0]
-            const availableInHead = head.length - this.audioQueueOffset
+        while (remaining > 0 && outputQueue.queue.length > 0) {
+            const head = outputQueue.queue[0]
+            const availableInHead = head.length - outputQueue.offset
             const drop = Math.min(remaining, availableInHead)
 
-            this.audioQueueOffset += drop
-            this.audioQueueLength -= drop
+            outputQueue.offset += drop
+            outputQueue.length -= drop
             remaining -= drop
 
-            if (this.audioQueueOffset >= head.length) {
-                this.audioBufferQueue.shift()
-                this.audioQueueOffset = 0
+            if (outputQueue.offset >= head.length) {
+                outputQueue.queue.shift()
+                outputQueue.offset = 0
             }
         }
     }
@@ -1356,19 +1386,8 @@ export class BlackmagicSender {
             delete this.initializationInProgress[outputId]
             delete this.conversionBufferPools[outputId]
 
-            // Clear queued audio if no outputs remain
-            let hasOutputs = false
-            for (const key in this.playbackData) {
-                if (Object.prototype.hasOwnProperty.call(this.playbackData, key)) {
-                    hasOutputs = true
-                    break
-                }
-            }
-            if (!hasOutputs) {
-                this.audioBufferQueue = []
-                this.audioQueueOffset = 0
-                this.audioQueueLength = 0
-            }
+            // Clear per-output queued audio
+            delete this.audioQueuesByOutput[outputId]
 
             console.log(`Successfully stopped output ${outputId}`)
             return true
@@ -1380,6 +1399,7 @@ export class BlackmagicSender {
             delete this.frameSkipCounter[outputId]
             delete this.initializationInProgress[outputId]
             delete this.conversionBufferPools[outputId]
+            delete this.audioQueuesByOutput[outputId]
 
             return false
         }
@@ -1408,9 +1428,7 @@ export class BlackmagicSender {
         this.initializationInProgress = {}
         this.safetyCircuitBreaker = {}
         this.conversionBufferPools = {}
-        this.audioBufferQueue = []
-        this.audioQueueOffset = 0
-        this.audioQueueLength = 0
+        this.audioQueuesByOutput = {}
 
         console.log(`Stopped ${outputIds.length} outputs`)
     }
