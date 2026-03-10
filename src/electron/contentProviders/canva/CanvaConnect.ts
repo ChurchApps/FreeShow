@@ -4,7 +4,7 @@ import { getContentProviderAccess, setContentProviderAccess } from "../../data/c
 import { sendToMain } from "../../IPC/main"
 import { getKey } from "../../utils/keys"
 import { OAuth2Helper } from "../base/OAuth2Helper"
-import { CanvaAuthData, CanvaScopes } from "./CanvaProvider"
+import type { CanvaAuthData, CanvaScopes } from "./CanvaProvider"
 
 const CANVA_OAUTH_AUTHORIZE_URL = "https://www.canva.com/api/oauth/authorize"
 const CANVA_OAUTH_TOKEN_URL = "https://api.canva.com/rest/v1/oauth/token"
@@ -177,6 +177,6 @@ export class CanvaConnect {
     }
 }
 
-function connectionInitialized(isFirstConnection: boolean = false): void {
+function connectionInitialized(isFirstConnection = false): void {
     sendToMain(ToMain.PROVIDER_CONNECT, { providerId: "canva", success: true, isFirstConnection })
 }

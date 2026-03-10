@@ -140,7 +140,7 @@ function processEntry(entry: yauzl.Entry, zipfile: yauzl.ZipFile, data: { conten
     zipfile.openReadStream(entry, (err, readStream) => {
         if (err || !readStream) {
             if (err) {
-                const errorMsg = (err as Error).message.toLowerCase()
+                const errorMsg = err.message.toLowerCase()
                 if (errorMsg.includes("encrypted")) {
                     sendToMain(ToMain.ALERT, "Can't decompress, this file is password protected!")
                 }

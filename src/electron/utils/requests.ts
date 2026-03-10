@@ -5,7 +5,7 @@ import type { ErrorLog } from "../../types/Main"
 import { createLog, logError } from "../IPC/responsesMain"
 import { createFolder } from "./files"
 
-export function httpsRequest(hostname: string, path: string, method: "POST" | "GET" | "HEAD", headers: object = {}, content: object = {}, cb: (err: (Error & { statusCode?: number; headers?: any }) | null, result?: any) => void, outputFilePath?: string, onlyHeaders: boolean = false) {
+export function httpsRequest(hostname: string, path: string, method: "POST" | "GET" | "HEAD", headers: object = {}, content: object = {}, cb: (err: (Error & { statusCode?: number; headers?: any }) | null, result?: any) => void, outputFilePath?: string, onlyHeaders = false) {
     const headersObj = headers as Record<string, string>
     const isFormEncoded = headersObj["Content-Type"] === "application/x-www-form-urlencoded"
     let dataString = ""

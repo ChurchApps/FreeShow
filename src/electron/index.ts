@@ -3,7 +3,7 @@
 
 import type { Rectangle } from "electron"
 import { BrowserWindow, Menu, app, ipcMain, powerSaveBlocker, protocol, screen } from "electron"
-import { AUDIO, CLOUD, EXPORT, MAIN, NDI, OUTPUT, STARTUP } from "../types/Channels"
+import { AUDIO, BLACKMAGIC, CLOUD, EXPORT, MAIN, NDI, OUTPUT, STARTUP } from "../types/Channels"
 import { Main } from "../types/IPC/Main"
 import type { Dictionary } from "../types/Settings"
 import { receiveAudio } from "./audio/receiveAudio"
@@ -20,6 +20,7 @@ import { isWithinDisplayBounds, mainWindowInitialize, openDevTools, parseCommand
 import { template } from "./utils/menuTemplate"
 import { spellcheck } from "./utils/spellcheck"
 import { loadingOptions, mainOptions } from "./utils/windowOptions"
+import { receiveBM } from "./blackmagic/bmdTalk"
 
 // ----- STARTUP -----
 
@@ -131,7 +132,7 @@ function requestHeaders() {
     const session = require("electron").session.defaultSession
     session.webRequest.onBeforeSendHeaders((details: any, callback: any) => {
         if (details.url.includes("youtube.com") || details.url.includes("youtube-nocookie.com")) {
-            details.requestHeaders["Referer"] = "https://freeshow.app/"
+            details.requestHeaders.Referer = "https://freeshow.app/"
         }
         callback({ requestHeaders: details.requestHeaders })
     })
@@ -260,7 +261,7 @@ const windowBounds = {
     get(): Rectangle {
         try {
             const bounds = config.get("bounds")
-            if (bounds?.width && bounds?.height) return bounds as Rectangle
+            if (bounds?.width && bounds?.height) return bounds 
         } catch (err) {
             console.warn("Failed to load saved bounds:", err)
         }
@@ -335,6 +336,7 @@ ipcMain.on(OUTPUT, OutputHelper.receiveOutput)
 ipcMain.on(EXPORT, startExport)
 ipcMain.on(CLOUD, cloudConnect)
 ipcMain.on(NDI, receiveNDI)
+ipcMain.on(BLACKMAGIC, receiveBM)
 ipcMain.on(AUDIO, receiveAudio)
 
 // send messages to main frontend (should not be used anymore - use sendMain() instead)

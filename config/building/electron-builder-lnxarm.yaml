@@ -19,6 +19,7 @@ extraResources:
 linux:
     asarUnpack:
         - "**/node_modules/grandiose/**"
+        - "**/node_modules/macadam/**/*.node"
         - "**/node_modules/libltc-wrapper/**/*"
     category: AudioVideo
     target:
