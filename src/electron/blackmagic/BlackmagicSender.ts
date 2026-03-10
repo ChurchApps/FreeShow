@@ -1388,7 +1388,15 @@ export class BlackmagicSender {
 
             // Stop the actual playback
             if (data.playback) {
-                data.playback.stop()
+                try {
+                    data.playback.stop()
+                } catch (stopErr) {
+                    const stopMessage = stopErr instanceof Error ? stopErr.message : String(stopErr)
+                    const ignorableStopError = stopMessage.includes("Failed to stop scheduled playback") || stopMessage.includes("Already stopped")
+
+                    if (ignorableStopError) console.warn(`Blackmagic output ${outputId} already stopping/stopped: ${stopMessage}`)
+                    else console.error(`Error stopping Blackmagic output: ${stopMessage}`)
+                }
             }
 
             // Set paused flag
@@ -1406,7 +1414,8 @@ export class BlackmagicSender {
             console.log(`Successfully stopped output ${outputId}`)
             return true
         } catch (err) {
-            console.error(`Error stopping output ${outputId}: ${err.message}`)
+            const message = err instanceof Error ? err.message : String(err)
+            console.error(`Error stopping output ${outputId}: ${message}`)
 
             // Force cleanup even if there was an error
             delete this.playbackData[outputId]

@@ -128,7 +128,7 @@
         "jzz": "^1.9.5",
         "libltc-wrapper": "github:bitfocus/libltc-wrapper#9637e39",
         "libreoffice-convert": "^1.6.1",
-        "macadam": "github:vassbo/macadam#c4765e1",
+        "macadam": "github:vassbo/macadam#d40f0a3",
         "mdb-reader": "^1.2.1",
         "mp4box": "^0.6.5",
         "music-metadata": "^7.14.0",
