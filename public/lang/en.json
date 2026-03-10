@@ -1403,6 +1403,7 @@
         "unmute": "Unmute output"
     },
     "profile": {
+        "profile": "Profile",
         "profiles_hint": "Create multiple profiles/roles to limit certain users access to control/edit chosen parts of the program.",
         "admin": "Admin",
         "none": "None",

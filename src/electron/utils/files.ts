@@ -262,7 +262,7 @@ export function getValidFileName(filePath: string) {
 
 // SELECT DIALOGS
 
-export function selectFilesDialog(title = "", filters: Electron.FileFilter, multiple = true, initialPath: string = ""): string[] {
+export function selectFilesDialog(title = "", filters: Electron.FileFilter, multiple = true, initialPath = ""): string[] {
     // crashes if empty in electron v37
     if (!filters.extensions?.length) filters.extensions = ["*"]
 
@@ -394,7 +394,7 @@ function getMediaFolderPath(name: Parameters<typeof app.getPath>[0]): string {
 
 // READ_FOLDER
 export async function readFolderContent(data: { path: string | string[]; depth?: number; generateThumbnails?: boolean; captureFolderContent?: boolean }) {
-    let folderContent = new Map<string, FileFolder>()
+    const folderContent = new Map<string, FileFolder>()
 
     if (!Array.isArray(data.path)) data.path = [data.path]
     if (data.depth === undefined) data.depth = 0
@@ -408,8 +408,8 @@ export async function readFolderContent(data: { path: string | string[]; depth?:
         })
     )
 
-    async function getFolderContentRecursive(folderPath: string, currentDepth: number = 0) {
-        let exceededDepth = currentDepth > data.depth!
+    async function getFolderContentRecursive(folderPath: string, currentDepth = 0) {
+        const exceededDepth = currentDepth > data.depth!
         if ((data.captureFolderContent && currentDepth < 2 ? false : exceededDepth) || folderContent.has(folderPath)) {
             let filePaths: string[] = []
             if (currentDepth === 1) {
@@ -424,8 +424,8 @@ export async function readFolderContent(data: { path: string | string[]; depth?:
         const fileList = await readFolderAsync(folderPath)
         const filePaths: string[] = fileList.map((name) => path.join(folderPath, name))
 
-        let captureThumbnailPaths = data.captureFolderContent && currentDepth === 1 ? getFirstMediaFiles(filePaths, 4) : []
-        let currentPaths = data.captureFolderContent && exceededDepth ? captureThumbnailPaths : filePaths
+        const captureThumbnailPaths = data.captureFolderContent && currentDepth === 1 ? getFirstMediaFiles(filePaths, 4) : []
+        const currentPaths = data.captureFolderContent && exceededDepth ? captureThumbnailPaths : filePaths
 
         await Promise.all(
             currentPaths.map(async (filePath) => {
@@ -952,7 +952,7 @@ async function asyncPool<T>(poolLimit: number, array: T[], iteratorFn: (item: T)
     await Promise.all(ret)
 }
 
-/////
+/// //
 
 // detect new files in downloads folder for easy importing
 // - auto import .project files
@@ -1038,6 +1038,7 @@ export async function detectNewFiles() {
 let currentlyBundling = false
 /**
  * Bundles media files from all shows and projects
+ *
  * @param openFolderWhenDone [default=false] Whether to open the output folder when done
  */
 export function bundleMediaFiles({ openFolder = false }: { openFolder?: boolean } = {}) {

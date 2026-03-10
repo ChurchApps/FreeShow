@@ -468,11 +468,10 @@
             <Icon size={1.1} id="ndi" white />
             <p>NDI</p>
         </MaterialButton>
-        <!-- BLACKMAGIC CURRENTLY NOT WORKING -->
-        <!-- <MaterialButton style="flex: 1;" isActive={screenTab === "blackmagic"} on:click={() => setSubSubTab("blackmagic")}>
+        <MaterialButton style="flex: 1;" isActive={screenTab === "blackmagic"} on:click={() => setSubSubTab("blackmagic")}>
             <Icon size={1.2} id="blackmagic" white />
             <p>Blackmagic</p>
-        </MaterialButton> -->
+        </MaterialButton>
     </div>
 {:else if active === "online"}
     <div class="tabs">

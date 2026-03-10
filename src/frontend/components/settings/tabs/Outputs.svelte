@@ -9,13 +9,10 @@
     import { newToast } from "../../../utils/common"
     import { translateText } from "../../../utils/language"
     import { destroy, receive, send } from "../../../utils/request"
-    import T from "../../helpers/T.svelte"
     import { clone, keysToID, sortByName, sortObject } from "../../helpers/array"
     import { refreshOut, toggleOutput } from "../../helpers/output"
     import InputRow from "../../input/InputRow.svelte"
     import Title from "../../input/Title.svelte"
-    import CombinedInput from "../../inputs/CombinedInput.svelte"
-    import Dropdown from "../../inputs/Dropdown.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialDropdown from "../../inputs/MaterialDropdown.svelte"
     import MaterialPopupButton from "../../inputs/MaterialPopupButton.svelte"
@@ -72,6 +69,11 @@
                 // send(BLACKMAGIC, ["GET_DEVICES"])
                 updateOutput("transparent", true)
                 updateOutput("invisible", true)
+
+                // Set default resolution (backend will adjust based on display mode)
+                const blackmagicBounds = { ...currentOutput?.bounds, width: 1920, height: 1080 }
+                updateOutput("bounds", blackmagicBounds)
+                updateOutput("screen", null)
             } else {
                 send(BLACKMAGIC, ["STOP_SENDER"], { id: outputId })
             }
@@ -133,7 +135,9 @@
 
             // UPDATE OUTPUT WINDOW
 
-            if (["alwaysOnTop", "kioskMode", "transparent", "invisible", "ndi"].includes(key)) {
+            if (["blackmagic"].includes(key)) {
+                send(OUTPUT, ["SET_VALUE"], { id: outputId, key, value: a[outputId] })
+            } else if (["alwaysOnTop", "kioskMode", "transparent", "invisible", "ndi"].includes(key)) {
                 send(OUTPUT, ["SET_VALUE"], { id: outputId, key, value })
             }
 
@@ -170,7 +174,6 @@
         if (!newData) newData = {}
 
         let value = e?.detail?.id ?? e
-        console.log(key, value)
 
         newData[key] = value
 
@@ -247,13 +250,15 @@
 
                 // allow data to update first
                 setTimeout(() => {
-                    send(OUTPUT, ["SET_VALUE"], { id: currentOutput?.id, key: "blackmagic", value: currentOutput })
+                    if (newData.displayMode && newData.pixelFormat) send(OUTPUT, ["SET_VALUE"], { id: currentOutput?.id, key: "blackmagic", value: currentOutput })
                 })
-            } else if (key === "pixelFormat") {
+            } else if (key === "pixelFormat" || key === "alphaKey") {
                 setTimeout(() => {
-                    send(OUTPUT, ["SET_VALUE"], { id: currentOutput?.id, key: "blackmagic", value: currentOutput })
+                    if (newData.displayMode && newData.pixelFormat) send(OUTPUT, ["SET_VALUE"], { id: currentOutput?.id, key: "blackmagic", value: currentOutput })
                 })
             }
+
+            saved.set(false)
         })
     }
 
@@ -265,15 +270,32 @@
     onDestroy(() => destroy(BLACKMAGIC, listenerId))
     const receiveBMD = {
         GET_DEVICES: (data) => {
-            blackmagicDevices = JSON.parse(data).map((a) => ({ id: a.deviceHandle, name: a.displayName || a.modelName, data: { displayModes: a.inputDisplayModes } }))
-            if (blackmagicDevices.length && !currentOutput?.blackmagicData?.deviceId) updateBlackmagicData(blackmagicDevices[0].id, "deviceId")
+            const parsedData = JSON.parse(data)
+            blackmagicDevices = parsedData.map((a) => ({
+                id: a.deviceHandle,
+                name: a.displayName || a.modelName,
+                data: {
+                    displayModes: a.outputDisplayModes || a.inputDisplayModes,
+                    supportsInternalKeying: a.supportsInternalKeying || false,
+                    supportsExternalKeying: a.supportsExternalKeying || false
+                }
+            }))
+            if (blackmagicDevices.length && (!currentOutput?.blackmagicData?.deviceId || !currentOutput?.blackmagicData?.displayModes?.length)) updateBlackmagicData(blackmagicDevices[0].id, "deviceId")
         }
     }
     receive(BLACKMAGIC, receiveBMD, listenerId)
 
-    $: outputLabel = `${currentOutput?.bounds?.width || 1920}x${currentOutput?.bounds?.height || 1080}`
+    // Check if alpha keying is supported by the device
+    function isAlphaSupported(): boolean {
+        const device = blackmagicDevices.find((a) => a.id === currentOutput?.blackmagicData?.deviceId)
+        if (!device) return false
+        return device.data?.supportsInternalKeying || device.data?.supportsExternalKeying || false
+    }
+
+    $: outputLabel = currentOutput?.blackmagicData?.displayMode || `${currentOutput?.bounds?.width || 1920}x${currentOutput?.bounds?.height || 1080}`
 
     let ndiMenuOpened = false
+    let bmdMenuOpened = false
 </script>
 
 {#if outputsList.filter((a) => !a.stageOutput).length > 1 || !currentOutput?.enabled || currentOutput?.stageOutput}
@@ -332,36 +354,26 @@
 </InputRow>
 
 <!-- Blackmagic -->
-<!-- BLACKMAGIC CURRENTLY NOT WORKING -->
-<!-- <h3>Blackmagic Design</h3>
+<Title label="Blackmagic Design" icon="blackmagic" />
 
-<CombinedInput>
-    <p><T id="actions.enable" /> Blackmagic</p>
-    <div class="alignRight">
-        <Checkbox checked={currentOutput.blackmagic} on:change={(e) => updateOutput("blackmagic", isChecked(e))} />
-    </div>
-</CombinedInput> -->
+<InputRow arrow={currentOutput?.blackmagic} bind:open={bmdMenuOpened}>
+    <MaterialToggleSwitch label="actions.enable Blackmagic" style="width: 100%;" checked={currentOutput?.blackmagic} defaultValue={false} on:change={(e) => updateOutput("blackmagic", e.detail)} />
 
-{#if currentOutput?.blackmagic}
-    <CombinedInput>
-        <p><T id="settings.device" /></p>
-        <Dropdown value={blackmagicDevices.find((a) => a.id === currentOutput?.blackmagicData?.deviceId)?.name || "—"} options={blackmagicDevices} on:click={(e) => updateBlackmagicData(e, "deviceId")} />
-    </CombinedInput>
+    <svelte:fragment slot="menu">
+        <MaterialDropdown label="settings.device" value={currentOutput?.blackmagicData?.deviceId} options={blackmagicDevices.map((device) => ({ label: device.name, value: device.id || "" }))} on:change={(e) => updateBlackmagicData(e.detail, "deviceId")} />
 
-    {#if currentOutput.blackmagicData?.deviceId}
-        <CombinedInput>
-            <p><T id="settings.display_mode" /></p>
-            <Dropdown value={currentOutput.blackmagicData?.displayModes?.find((a) => a.name === currentOutput?.blackmagicData?.displayMode)?.name || "—"} options={currentOutput.blackmagicData?.displayModes || []} on:click={(e) => updateBlackmagicData(e, "displayMode")} />
-        </CombinedInput>
+        {#if currentOutput?.blackmagicData?.deviceId}
+            <InputRow>
+                <MaterialDropdown label="settings.display_mode" value={currentOutput.blackmagicData?.displayMode} options={currentOutput.blackmagicData?.displayModes?.map((mode) => ({ label: mode.name, value: mode.name })) || []} on:change={(e) => updateBlackmagicData(e.detail, "displayMode")} />
+                <MaterialDropdown label="settings.pixel_format" value={currentOutput.blackmagicData?.pixelFormat} options={currentOutput.blackmagicData?.pixelFormats?.map((format) => ({ label: format.name, value: format.name })) || []} on:change={(e) => updateBlackmagicData(e.detail, "pixelFormat")} />
+            </InputRow>
 
-        <CombinedInput>
-            <p><T id="settings.pixel_format" /></p>
-            <Dropdown value={currentOutput.blackmagicData?.pixelFormats?.find((a) => a.name === currentOutput?.blackmagicData?.pixelFormat)?.name || "—"} options={currentOutput.blackmagicData?.pixelFormats || []} on:click={(e) => updateBlackmagicData(e, "pixelFormat")} />
-        </CombinedInput>
-
-        <MaterialToggleSwitch label="settings.alpha_key" checked={currentOutput.blackmagicData?.alphaKey} on:change={(e) => updateBlackmagicData(e.detail, "alphaKey")} />
-    {/if}
-{/if}
+            {#if isAlphaSupported()}
+                <MaterialToggleSwitch label="settings.alpha_key" checked={currentOutput.blackmagicData?.alphaKey} on:change={(e) => updateBlackmagicData(e.detail, "alphaKey")} />
+            {/if}
+        {/if}
+    </svelte:fragment>
+</InputRow>
 
 {#if currentOutput?.ndi || currentOutput?.blackmagic}
     <br />

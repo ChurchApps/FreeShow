@@ -234,7 +234,7 @@ export function downloadMedia({ url, contentFile }: { url: string; contentFile?:
 
     // Check if provider-based encryption is needed
     if (contentFile?.providerId) {
-        const provider = ContentProviderFactory.getProvider(contentFile.providerId as any)
+        const provider = ContentProviderFactory.getProvider(contentFile.providerId)
         if (provider?.shouldEncrypt?.(url, contentFile.pingbackUrl)) {
             const encryptionKey = provider.getEncryptionKey?.()
             if (!encryptionKey) {
@@ -318,7 +318,7 @@ export async function checkIfMediaDownloaded({ url, contentFile }: { url: string
 
     // Check if provider-based encryption is needed
     if (contentFile?.providerId) {
-        const provider = ContentProviderFactory.getProvider(contentFile.providerId as any)
+        const provider = ContentProviderFactory.getProvider(contentFile.providerId)
         if (provider?.shouldEncrypt?.(url, contentFile.pingbackUrl)) {
             try {
                 const protectedUrl = registerProtectedMediaFile({
@@ -344,7 +344,7 @@ export async function checkIfMediaDownloaded({ url, contentFile }: { url: string
 function getMediaThumbnailPath(url: string, contentFile?: any) {
     // Check if provider-based encryption is needed
     if (contentFile?.providerId) {
-        const provider = ContentProviderFactory.getProvider(contentFile.providerId as any)
+        const provider = ContentProviderFactory.getProvider(contentFile.providerId)
         if (provider?.shouldEncrypt?.(url, contentFile.pingbackUrl)) {
             return getProtectedPath(url)
         }

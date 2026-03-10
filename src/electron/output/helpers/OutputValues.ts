@@ -1,8 +1,10 @@
 import type { BrowserWindow } from "electron"
+import { initializeSender } from "../../blackmagic/bmdTalk"
 import { CaptureHelper } from "../../capture/CaptureHelper"
 import { NdiSender } from "../../ndi/NdiSender"
+import type { Output as OutputWindow } from "../Output"
 import { OutputHelper } from "../OutputHelper"
-import type { Output } from "../Output"
+import type { Output } from "../../../types/Output"
 
 const setValues = {
     ndi: async (value: boolean, window: BrowserWindow, id: string) => {
@@ -11,6 +13,9 @@ const setValues = {
 
         setValues.capture({ key: "ndi", value }, window, id)
     },
+    blackmagic: (data: Output, window: BrowserWindow, id: string) => {
+        initializeSender(data, window, id)
+    },
     capture: (data: { key: string; value: boolean }, _window: BrowserWindow, id: string) => {
         CaptureHelper.Lifecycle.startCapture(id, { [data.key]: data.value })
         // if (data.value) sendFrames(id, storedFrames[id], {[data.key]: true})
@@ -18,7 +23,7 @@ const setValues = {
     transparent: (value: boolean, window: BrowserWindow) => {
         window.setBackgroundColor(value ? "#00000000" : "#000000")
     },
-    alwaysOnTop: (value: boolean, window: BrowserWindow, _id: string, output: Output) => {
+    alwaysOnTop: (value: boolean, window: BrowserWindow, _id: string, output: OutputWindow) => {
         window.setAlwaysOnTop(value, "pop-up-menu", 1)
         window.setSkipTaskbar(value)
         if (output.boundsLocked !== true) window.setResizable(!value)

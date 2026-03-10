@@ -128,7 +128,7 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
     // console.log("Devices:", CHANGES.devices)
 
     // MERGE
-    let cloudBibleNames: string[] = []
+    const cloudBibleNames: string[] = []
     await Promise.all(
         extractedFiles.map(async (file) => {
             if (!file) return
@@ -169,8 +169,8 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
 
             // download new/modified shows
             if (file.name === "SHOWS_CONTENT.json") {
-                let cloudShowNames: string[] = []
-                let replacedShows: string[] = []
+                const cloudShowNames: string[] = []
+                const replacedShows: string[] = []
 
                 await Promise.all(
                     Object.entries<Show>(cloudFileData).map(async ([id, show]) => {
@@ -368,7 +368,7 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
         }
     }
 
-    function finish(success: boolean = true) {
+    function finish(success = true) {
         if (!DEBUG_MODE) deleteFolder(EXTRACT_LOCATION)
         console.log("Sync completed!")
         isNewDevice = false

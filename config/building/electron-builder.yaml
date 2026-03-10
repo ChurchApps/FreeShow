@@ -24,6 +24,8 @@ extraResources:
 win:
     target: NSIS
     icon: build/public/icon.png
+    asarUnpack:
+        - "**/node_modules/macadam/**/*.node"
     azureSignOptions:
         publisherName: Live Church Solutions
         endpoint: https://wus2.codesigning.azure.net/
@@ -35,6 +37,7 @@ win:
 linux:
     asarUnpack:
         - "**/node_modules/grandiose/**"
+        - "**/node_modules/macadam/**/*.node"
         - "**/node_modules/libltc-wrapper/**/*"
     category: AudioVideo
     target:
@@ -53,6 +56,8 @@ deb:
 
 mac:
     icon: build/public/icon.png
+    asarUnpack:
+        - "**/node_modules/macadam/**/*.node"
     target:
         - target: dmg
           arch:
