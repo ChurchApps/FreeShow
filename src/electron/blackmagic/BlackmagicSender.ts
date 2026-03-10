@@ -1,5 +1,5 @@
 import type { PlaybackChannel } from "macadam"
-import { Size } from "electron"
+import type { Size } from "electron"
 import os from "os"
 import util from "../ndi/vingester-util"
 import { wait } from "../utils/helpers"
@@ -86,7 +86,7 @@ export class BlackmagicSender {
     static frameSkipCounter: { [key: string]: number } = {}
 
     // Monitoring
-    static lastDiagnosticTime: number = 0
+    static lastDiagnosticTime = 0
     static safetyCircuitBreaker: {
         [outputId: string]: {
             lastErrorTime: number
@@ -119,7 +119,21 @@ export class BlackmagicSender {
     // Global cleanup timer
     private static globalCleanupTimer?: NodeJS.Timeout
 
-    static initialize(outputId?: string, deviceIndex?: number, displayModeName?: string, pixelFormat?: string, enableKeying?: boolean, audioChannels: number = 2) {
+    /**
+     * Get total audio queue length across all outputs
+     * Used to determine if audio data is available for scheduling
+     */
+    static get audioQueueLength(): number {
+        let totalLength = 0
+        for (const outputId in this.audioQueuesByOutput) {
+            if (Object.prototype.hasOwnProperty.call(this.audioQueuesByOutput, outputId)) {
+                totalLength += this.audioQueuesByOutput[outputId].length
+            }
+        }
+        return totalLength
+    }
+
+    static initialize(outputId?: string, deviceIndex?: number, displayModeName?: string, pixelFormat?: string, enableKeying?: boolean, audioChannels = 2) {
         // Start global memory cleanup
         if (!this.globalCleanupTimer) {
             this.globalCleanupTimer = setInterval(() => {
@@ -136,7 +150,7 @@ export class BlackmagicSender {
         return Promise.resolve(undefined)
     }
 
-    static async initializeDevice(outputId: string, deviceIndex: number, displayModeName: string, pixelFormat: string, enableKeying: boolean, audioChannels: number = 2) {
+    static async initializeDevice(outputId: string, deviceIndex: number, displayModeName: string, pixelFormat: string, enableKeying: boolean, audioChannels = 2) {
         // Check if initialization is already in progress for this device
         if (this.initializationInProgress[outputId]) {
             console.log(`Initialization already in progress for ${outputId}, waiting for completion...`)
@@ -158,7 +172,7 @@ export class BlackmagicSender {
         }
     }
 
-    static async _performInitializeDevice(outputId: string, deviceIndex: number, displayModeName: string, pixelFormat: string, enableKeying: boolean, audioChannels: number = 2) {
+    static async _performInitializeDevice(outputId: string, deviceIndex: number, displayModeName: string, pixelFormat: string, enableKeying: boolean, audioChannels = 2) {
         // Check if macadam is available
         if (!macadam) {
             console.error("Cannot initialize Blackmagic device: macadam module not available")
@@ -548,7 +562,7 @@ export class BlackmagicSender {
         return true
     }
 
-    static scheduleFrame(outputId: string, videoFrame: Buffer, audioFrame: Buffer | null, framerate: number = 0) {
+    static scheduleFrame(outputId: string, videoFrame: Buffer, audioFrame: Buffer | null, framerate = 0) {
         // Skip immediately if this device is known to cause segfaults
         if (SEGFAULT_PRONE_DEVICES.has(outputId)) {
             return
@@ -892,8 +906,8 @@ export class BlackmagicSender {
                     pixelFormat: BlackmagicManager.getPixelFormat(currentState.pixelFormat),
                     enableKeying: currentState.enableKeying || false,
                     channels: currentState.audioChannels || 2,
-                    sampleRate: macadam!.bmdAudioSampleRate48kHz,
-                    sampleType: macadam!.bmdAudioSampleType16bitInteger
+                    sampleRate: macadam.bmdAudioSampleRate48kHz,
+                    sampleType: macadam.bmdAudioSampleType16bitInteger
                 })
 
                 // CRITICAL: Disable frame callback immediately to prevent debug spam
@@ -1102,7 +1116,7 @@ export class BlackmagicSender {
         }
     }
 
-    static async reinitializePlayback(outputId: string, deviceIndex: number, displayMode: string, pixelFormat: string, enableKeying: boolean, audioChannels: number = 2) {
+    static async reinitializePlayback(outputId: string, deviceIndex: number, displayMode: string, pixelFormat: string, enableKeying: boolean, audioChannels = 2) {
         console.log(`Reinitializing playback for ${outputId}`)
 
         this.isPaused[outputId] = true
@@ -1184,7 +1198,7 @@ export class BlackmagicSender {
         }
     }
 
-    static getSilentAudio(channels: number = 2, displayMode?: string): Buffer {
+    static getSilentAudio(channels = 2, displayMode?: string): Buffer {
         this.ensureSilentAudioBuffer(channels, displayMode)
         const bufferKey = displayMode ? `${channels}_${displayMode}` : `${channels}_default`
         return this.silentAudioBuffers[bufferKey]

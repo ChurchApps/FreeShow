@@ -1,4 +1,4 @@
-import { Size } from "electron"
+import type { Size } from "electron"
 import type { CaptureChannel, CaptureFrame } from "macadam"
 import { toApp } from ".."
 import { BLACKMAGIC } from "../../types/Channels"
@@ -29,14 +29,15 @@ export class BlackmagicReceiver {
     static BMD_RECEIVERS: { [key: string]: ReceiverData } = {}
     static allActiveReceivers: { [key: string]: any } = {}
     static sendToOutputs: string[] = []
-    static lastFrameTime: number = 0
+    static lastFrameTime = 0
 
     /**
      * Initialize a Blackmagic capture device
+     *
      * @param deviceId Device handle/ID
      * @param audioChannels Number of audio channels (0 to disable audio)
      */
-    static async initialize(deviceId: string, audioChannels: number = 2) {
+    static async initialize(deviceId: string, audioChannels = 2) {
         // Check if macadam is available
         if (!macadam) {
             console.error("Cannot initialize Blackmagic receiver: macadam module not available")
@@ -45,14 +46,14 @@ export class BlackmagicReceiver {
 
         if (this.BMD_RECEIVERS[deviceId]?.receiver) return this.BMD_RECEIVERS[deviceId].receiver
 
-        let deviceIndex = BlackmagicManager.getIndexById(deviceId)
+        const deviceIndex = BlackmagicManager.getIndexById(deviceId)
         if (deviceIndex < 0) return
 
-        let device = BlackmagicManager.getDeviceById(deviceId)
+        const device = BlackmagicManager.getDeviceById(deviceId)
         if (!device || !device.inputDisplayModes?.[0]) return
 
-        let displayMode = device.inputDisplayModes[0].name // Select first available
-        let pixelFormat = device.inputDisplayModes[0].videoModes[0] // Select first available
+        const displayMode = device.inputDisplayModes[0].name // Select first available
+        const pixelFormat = device.inputDisplayModes[0].videoModes[0] // Select first available
 
         if (!this.BMD_RECEIVERS[deviceId]) this.BMD_RECEIVERS[deviceId] = { displayMode, pixelFormat }
         return (this.BMD_RECEIVERS[deviceId].receiver = await macadam.capture({
@@ -71,15 +72,15 @@ export class BlackmagicReceiver {
     static async startCapture({ source, outputId }: any) {
         if (!this.sendToOutputs.includes(outputId)) this.sendToOutputs.push(outputId)
 
-        let deviceId: string = source.id
+        const deviceId: string = source.id
         if (this.BMD_RECEIVERS[deviceId]?.interval) return
 
-        let receiver = await this.initialize(deviceId)
+        const receiver = await this.initialize(deviceId)
         if (!receiver) return
 
-        let frameRate = (receiver.frameRate[1] || 30000) / (receiver.frameRate[0] || 1001)
+        const frameRate = (receiver.frameRate[1] || 30000) / (receiver.frameRate[0] || 1001)
 
-        let gettingFrame: boolean = false
+        let gettingFrame = false
         this.BMD_RECEIVERS[deviceId].interval = setInterval(
             async () => {
                 if (gettingFrame) return
@@ -87,7 +88,7 @@ export class BlackmagicReceiver {
 
                 try {
                     if (!receiver) return this.stopReceiver({ id: source.id, outputId })
-                    let frame = await receiver.frame()
+                    const frame = await receiver.frame()
                     this.sendFrame(source.id, frame, { width: receiver.width, height: receiver.height })
                 } catch (err) {
                     console.error(err)
@@ -104,12 +105,12 @@ export class BlackmagicReceiver {
      * Capture a single frame from a Blackmagic device
      */
     static async captureFrame({ source }: any) {
-        let deviceId: string = source.id
-        let receiver = await this.initialize(deviceId)
+        const deviceId: string = source.id
+        const receiver = await this.initialize(deviceId)
         if (!receiver) return
 
         try {
-            let frame = await receiver.frame()
+            const frame = await receiver.frame()
             this.sendFrame(source.id, frame, { width: receiver.width, height: receiver.height })
         } catch (err) {
             console.error(err)
@@ -124,13 +125,13 @@ export class BlackmagicReceiver {
         if (!frame) return
 
         // Skip frames if system is overloaded (lagging below 10 fps)
-        let timeSinceLastFrame = Date.now() - this.lastFrameTime
+        const timeSinceLastFrame = Date.now() - this.lastFrameTime
         if (timeSinceLastFrame > 100 && timeSinceLastFrame < 200) return
 
-        let pixelFormat = this.BMD_RECEIVERS[id].pixelFormat
+        const pixelFormat = this.BMD_RECEIVERS[id].pixelFormat
         frame.video.data = this.convertVideoFrameFormat(frame.video.data, pixelFormat, size)
 
-        let msg = { channel: "RECEIVE_STREAM", data: { id, frame, time: Date.now() } }
+        const msg = { channel: "RECEIVE_STREAM", data: { id, frame, time: Date.now() } }
         toApp(BLACKMAGIC, msg)
 
         this.sendToOutputs.forEach((outputId) => {

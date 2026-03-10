@@ -40,14 +40,14 @@ export interface DeviceData {
     supportsHDRMetadata: boolean // false
     supportsColorspaceMetadata: boolean // false
     deviceInterface: string // "Thunderbolt"
-    deviceSupports: Array<"Capture" | "Playback">
+    deviceSupports: ("Capture" | "Playback")[]
     controlConnections: any[] // []
-    videoInputConnections: Array<"HDMI" | "Component" | "Composite" | "S-Video">
-    audioInputConnections: Array<"Embedded" | "Analog" | "AnalogRCA">
+    videoInputConnections: ("HDMI" | "Component" | "Composite" | "S-Video")[]
+    audioInputConnections: ("Embedded" | "Analog" | "AnalogRCA")[]
     audioInputRCAChannelCount: number // 2
     audioInputXLRChannelCount: number // 0
-    videoOutputConnections: Array<"HDMI" | "Component" | "Composite" | "S-Video">
-    audioOutputConnections: Array<"Embedded" | "AESEBU" | "Analog" | "AnalogRCA">
+    videoOutputConnections: ("HDMI" | "Component" | "Composite" | "S-Video")[]
+    audioOutputConnections: ("Embedded" | "AESEBU" | "Analog" | "AnalogRCA")[]
     audioOutputRCAChannelCount: number // 2
     audioOutputXLRChannelCount: number // 0
     inputDisplayModes: {

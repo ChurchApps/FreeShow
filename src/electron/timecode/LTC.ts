@@ -25,7 +25,7 @@ let decoder: LTCDecoder | null = null
 let framerate = 25
 const sampleRate = 48000
 let decoderFailed = false
-export function setupLTCListener(f: number = 25) {
+export function setupLTCListener(f = 25) {
     if (decoderFailed) return null
     framerate = f
 

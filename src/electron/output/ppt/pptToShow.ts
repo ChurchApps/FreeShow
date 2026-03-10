@@ -42,7 +42,7 @@ export async function pptToShow(filePath: string) {
 
             // XML files (and rels) -> parse to JSON using xml2js
             if (entryName.endsWith(".xml") || entryName.endsWith(".rels")) {
-                const xmlText = typeof entry.content === "string" ? entry.content : (entry.content as Buffer).toString("utf8")
+                const xmlText = typeof entry.content === "string" ? entry.content : entry.content.toString("utf8")
                 try {
                     const options = {
                         ignoreAttributes: false,

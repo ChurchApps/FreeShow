@@ -1,4 +1,4 @@
-import { PlaybackChannel } from "macadam"
+import type { PlaybackChannel } from "macadam"
 
 interface PlaybackData {
     playback: PlaybackChannel

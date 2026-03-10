@@ -3,10 +3,10 @@
  * Routes messages between the main process and renderer
  */
 
-import { BrowserWindow } from "electron"
+import type { BrowserWindow } from "electron"
 import { BLACKMAGIC } from "../../types/Channels"
-import { Output } from "../../types/Output"
-import { Message } from "../../types/Socket"
+import type { Output } from "../../types/Output"
+import type { Message } from "../../types/Socket"
 import { CaptureHelper } from "../capture/CaptureHelper"
 import { OutputBounds } from "../output/helpers/OutputBounds"
 import { OutputValues } from "../output/helpers/OutputValues"
@@ -45,7 +45,7 @@ export const bmResponses: any = {
  * Sets up video output with appropriate resolution and configuration
  */
 export async function initializeSender(data: Output, window: BrowserWindow, id: string) {
-    let bmdData = data.blackmagicData || {}
+    const bmdData = data.blackmagicData || {}
 
     // Get target resolution from display mode
     const displayMode = bmdData.displayMode || "1080p30"
@@ -85,8 +85,8 @@ export async function initializeSender(data: Output, window: BrowserWindow, id: 
     // Wait for window to resize
     await wait(100)
 
-    let deviceId = bmdData.deviceId
-    let deviceIndex = BlackmagicManager.getIndexById(deviceId)
+    const deviceId = bmdData.deviceId
+    const deviceIndex = BlackmagicManager.getIndexById(deviceId)
     if (deviceIndex < 0) return
 
     if (data.blackmagic) await BlackmagicSender.initialize(id, deviceIndex, bmdData.displayMode, bmdData.pixelFormat, bmdData.alphaKey)
@@ -96,7 +96,7 @@ export async function initializeSender(data: Output, window: BrowserWindow, id: 
     const output = OutputHelper.getOutput(id)
     if (!output.captureOptions) output.captureOptions = CaptureHelper.getDefaultCapture(window, id)
     if (!bmdData.framerate[1] || !bmdData.framerate[0]) return
-    let bmdFramerate = bmdData.framerate[1] / bmdData.framerate[0] // [ 1001, 30000 ]
+    const bmdFramerate = bmdData.framerate[1] / bmdData.framerate[0] // [ 1001, 30000 ]
     if (bmdFramerate < 10) return
     output.captureOptions.framerates.blackmagic = bmdFramerate
     OutputHelper.setOutput(id, output)

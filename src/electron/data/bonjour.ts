@@ -67,5 +67,5 @@ export function getLocalIPs() {
         }
     }
 
-    return [...(results["en0"] || []), ...(results["eth0"] || []), ...(results["Wi-Fi"] || []), ...Object.values(results).flat(), "localhost"]
+    return [...(results.en0 || []), ...(results.eth0 || []), ...(results["Wi-Fi"] || []), ...Object.values(results).flat(), "localhost"]
 }

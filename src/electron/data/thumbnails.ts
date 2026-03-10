@@ -45,7 +45,7 @@ function deleteThumbnails(filePath: string) {
     })
 }
 
-let currentlyGenerating = new Set<string>()
+const currentlyGenerating = new Set<string>()
 export async function getThumbnail(data: { input: string; size: number }) {
     if (!(await doesPathExistAsync(data.input))) return { ...data, output: "" }
 
@@ -224,14 +224,14 @@ async function captureWithCanvas(data: { input: string; output: string; size: Re
     // generationFinished(mediaId)
 }
 
-let failedPaths: string[] = []
+const failedPaths: string[] = []
 export function saveImage(data: { id?: string; path?: string; base64?: string; buffer?: ArrayBuffer; filePath?: string[]; format?: "png" | "jpg" }) {
     const dataURL = data.base64
     const buffer = data.buffer
     let savePath = data.path || ""
 
     if (data.id && captureTimeouts.has(data.id)) {
-        clearTimeout(captureTimeouts.get(data.id)!)
+        clearTimeout(captureTimeouts.get(data.id))
         captureTimeouts.delete(data.id)
     }
 

@@ -10,7 +10,7 @@
  * and Blackmagic hardware formats for both output and input operations.
  */
 
-import { Size } from "electron"
+import type { Size } from "electron"
 
 function getOutputBuffer(requiredSize: number, outputBuffer?: Buffer): Buffer {
     if (outputBuffer && outputBuffer.length >= requiredSize) return outputBuffer
@@ -118,9 +118,9 @@ export class ImageBufferConverter {
                 // const A1 = data[i1 + 3] // Alpha, not used
 
                 // Get second pixel (right), or use first pixel if at width boundary
-                let B2 = B1,
-                    G2 = G1,
-                    R2 = R1
+                let B2 = B1
+                let G2 = G1
+                let R2 = R1
                 if (x + 1 < width) {
                     const i2 = i1 + 4
                     if (i2 + 4 <= data.length) {
@@ -242,9 +242,9 @@ export class ImageBufferConverter {
                 // const A1 = data[i1] // Alpha, not used
 
                 // Get second pixel (right), or use first pixel if at width boundary
-                let R2 = R1,
-                    G2 = G1,
-                    B2 = B1
+                let R2 = R1
+                let G2 = G1
+                let B2 = B1
                 if (x + 1 < width) {
                     const i2 = i1 + 4
                     if (i2 + 4 <= data.length) {

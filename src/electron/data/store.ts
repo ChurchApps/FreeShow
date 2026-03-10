@@ -88,9 +88,9 @@ function checkStores(dataPath: string) {
     })
 }
 
-export let _store: { [key in keyof typeof storeFilesData]?: Store<any> } = {}
+export const _store: { [key in keyof typeof storeFilesData]?: Store<any> } = {}
 
-export function createStores(previousLocation?: string | null, setup: boolean = false) {
+export function createStores(previousLocation?: string | null, setup = false) {
     const configFolderPath = getWritableConfigPath(previousLocation, setup)
     if (!configFolderPath) return
     if (previousLocation === configFolderPath) previousLocation = ""
@@ -123,7 +123,7 @@ export function createStores(previousLocation?: string | null, setup: boolean = 
     })
 }
 
-function getWritableConfigPath(previousLocation?: string | null, setup: boolean = false): string | null {
+function getWritableConfigPath(previousLocation?: string | null, setup = false): string | null {
     let configFolderPath = getDataFolderPath("userData")
 
     if (doesPathExist(configFolderPath)) return configFolderPath
@@ -239,7 +239,7 @@ export function setStore(store: Store<any> | undefined, newData: any) {
 
 /// MIGRATE
 
-function moveStore(key: keyof typeof storeFilesData, previousLocation: string, setup: boolean = false) {
+function moveStore(key: keyof typeof storeFilesData, previousLocation: string, setup = false) {
     const store = _store[key]
     if (!store) return
 

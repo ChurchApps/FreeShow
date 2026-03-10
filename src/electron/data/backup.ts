@@ -9,7 +9,7 @@ import { wait } from "../utils/helpers"
 import { _store, getStore, setStore, storeFilesData } from "./store"
 
 export async function startBackup({ customTriggers, customOutputLocation }: { customTriggers?: SaveActions; customOutputLocation?: string } = {}): Promise<void> {
-    let shows = getStore("SHOWS")
+    const shows = getStore("SHOWS")
 
     const isCloudSync = !!customOutputLocation
 
@@ -108,7 +108,7 @@ export function getBackups() {
     const backupsFolder = getDataFolderPath("backups")
     const files = readFolder(backupsFolder)
 
-    let backups: { path: string; name: string; date: number; size: number }[] = []
+    const backups: { path: string; name: string; date: number; size: number }[] = []
     files.forEach((name) => {
         const filePath = path.resolve(backupsFolder, name)
         const stat = getFileStats(filePath)

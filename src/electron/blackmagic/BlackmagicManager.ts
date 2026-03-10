@@ -7,7 +7,7 @@ try {
 }
 
 import { bmdDisplayModes, bmdPixelFormats } from "./bmdFormats"
-import { DeviceConfig, DeviceData } from "./TypeData"
+import type { DeviceConfig, DeviceData } from "./TypeData"
 import { BlackmagicSender } from "./BlackmagicSender"
 
 /**
@@ -38,17 +38,17 @@ export class BlackmagicManager {
     static getDeviceConfig(deviceHandle: string) {
         if (!macadam) return undefined
 
-        let deviceIndex = this.getIndexById(deviceHandle)
+        const deviceIndex = this.getIndexById(deviceHandle)
         if (deviceIndex < 0) return undefined
 
-        let config: DeviceConfig = macadam.getDeviceConfig(deviceIndex) as any
+        const config: DeviceConfig = macadam.getDeviceConfig(deviceIndex)
         return config
     }
 
     static setDeviceConfig(deviceHandle: string, newData: DeviceConfig) {
         if (!macadam) return false
 
-        let deviceIndex = this.getIndexById(deviceHandle)
+        const deviceIndex = this.getIndexById(deviceHandle)
         if (deviceIndex < 0) return false
 
         macadam.setDeviceConfig({ ...newData, deviceIndex })
@@ -63,7 +63,7 @@ export class BlackmagicManager {
         // Try normalizing the display mode name
         // Convert "2K DCI 60p" -> "2kDCI60"
         // Convert "4K 2160p 59.94" -> "4K2160p59.94"
-        let normalized = displayModeName
+        const normalized = displayModeName
             .replace(/\s+/g, "") // Remove all spaces
             .replace(/p$/i, "") // Remove trailing 'p'
             .replace(/i$/i, "") // Remove trailing 'i'
@@ -101,6 +101,7 @@ export class BlackmagicManager {
 
     /**
      * Resets a Blackmagic device that has been marked as unstable
+     *
      * @param deviceId The ID of the device to reset
      * @returns Object with success status and message
      */

@@ -154,6 +154,6 @@ export class AmazingLifeConnect {
     }
 }
 
-function connectionInitialized(isFirstConnection: boolean = false): void {
+function connectionInitialized(isFirstConnection = false): void {
     sendToMain(ToMain.PROVIDER_CONNECT, { providerId: "amazinglife", success: true, isFirstConnection })
 }
