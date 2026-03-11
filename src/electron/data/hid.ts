@@ -2,85 +2,221 @@ import { type Device, devicesAsync, HID } from "node-hid"
 import { ToMain } from "../../types/IPC/ToMain"
 import { sendToMain } from "../IPC/main"
 
-export function getHidDevices(): Promise<Device[]> {
-    return new Promise(async (resolve) => {
-        let devices = await devicesAsync()
+function isUnsupportedPath(path: string): boolean {
+    // macOS virtual service entries are not openable with node-hid
+    return path.startsWith("DevSrvsID:")
+}
 
-        // remove unknown devices
-        devices = devices.filter((a) => a.vendorId || a.productId)
+let supportedDevicesCache: Device[] = []
 
-        // remove duplicates
-        // let existing: string[] = []
-        // devices = devices.filter((a) => {
-        //     const deviceId = a.vendorId + "_" + a.productId
-        //     if (existing.includes(deviceId)) return false
-        //     existing.push(deviceId)
-        //     return true
-        // })
+type HidEntry = {
+    device: HID
+    closed: boolean
+}
 
-        // remove devices not readable (might be in use by Windows)
+type HidGroup = {
+    entries: Record<string, HidEntry>
+    closed: boolean
+}
+
+const devices: Record<string, HidGroup> = {}
+
+function safeClose(device: HID) {
+    try {
+        device.close()
+    } catch {}
+}
+
+function emitHidData(path: string, data: Buffer | number[]) {
+    if (!data?.length) return
+    console.log("HID RECEIVED DATA:", path)
+    sendToMain(ToMain.HID_DATA, data)
+}
+
+function isRelevantDevice(device: Device): boolean {
+    return !!device.path && !isUnsupportedPath(device.path) && !!device.product && !!device.manufacturer
+}
+
+export async function getHidDevices(): Promise<Device[]> {
+    try {
+        const devices = (await devicesAsync()).filter((d) => d.vendorId || d.productId)
+
+        // only keep user-relevant devices
         let filteredDevices: Device[] = []
         for (const device of devices) {
-            if (await isReadable(device)) filteredDevices.push(device)
+            if (!isRelevantDevice(device)) continue
+
+            // keep windows readability check
+            if (process.platform === "win32" && !(await isReadable(device))) continue
+
+            filteredDevices.push(device)
         }
 
-        resolve(filteredDevices)
-    })
+        // keep unique paths only (preserve multiple valid interfaces)
+        const existingPaths = new Set<string>()
+        filteredDevices = filteredDevices.filter((d) => {
+            if (!d.path || existingPaths.has(d.path)) return false
+            existingPaths.add(d.path)
+            return true
+        })
+
+        supportedDevicesCache = filteredDevices
+        return filteredDevices
+    } catch (err) {
+        console.log("HID DEVICES ERROR:", err)
+        supportedDevicesCache = []
+        return []
+    }
 }
 
 async function isReadable(d: Device): Promise<boolean> {
     return new Promise((resolve) => {
-        const device = new HID(d.path!)
+        if (!d.path) {
+            resolve(false)
+            return
+        }
 
-        device.on("error", error)
+        let device: HID
+        try {
+            device = new HID(d.path)
+        } catch {
+            resolve(false)
+            return
+        }
+
+        const onError = () => complete(false)
+        const onData = () => {}
+
+        device.on("error", onError)
 
         // needed to check for errors
-        device.on("data", () => {})
+        device.on("data", onData)
 
         // give time to connect and check for connection errors
         // if no errors after 10 ms, close as valid
-        setTimeout(valid, 10)
+        setTimeout(() => complete(true), 10)
 
         let done = false
-        function error() {
+        function complete(isValid: boolean) {
             if (done) return
             done = true
-            device.close()
-            resolve(false)
-        }
-        function valid() {
-            if (done) return
-            done = true
-            device.close()
-            resolve(true)
+
+            device.removeListener("error", onError)
+            device.removeListener("data", onData)
+            safeClose(device)
+
+            resolve(isValid)
         }
     })
 }
 
-const devices: { [key: string]: HID } = {}
-export function hidAwaitInput(data: { path: string }) {
+async function getCandidatePaths(deviceId: string): Promise<string[]> {
+    const fallbackPaths: string[] = [deviceId]
+
+    try {
+        const list = supportedDevicesCache.length ? supportedDevicesCache : await devicesAsync()
+        const selected = list.find((d) => d.path === deviceId)
+        if (!selected) return fallbackPaths
+
+        const candidatePaths = list
+            .filter((d) => {
+                if (!d.path) return false
+                if (d.vendorId !== selected.vendorId || d.productId !== selected.productId) return false
+
+                // prefer matching serial when available, otherwise allow all same VID/PID interfaces
+                if (selected.serialNumber) return d.serialNumber === selected.serialNumber
+                return true
+            })
+            .map((d) => d.path!)
+
+        return Array.from(new Set(candidatePaths))
+    } catch (err) {
+        console.log("HID LIST MATCH ERROR:", err)
+    }
+
+    return fallbackPaths
+}
+
+export async function hidAwaitInput(data: { path: string }) {
     const deviceId = data.path
+    if (isUnsupportedPath(deviceId)) {
+        console.log("HID UNSUPPORTED PATH:", deviceId)
+        return
+    }
     if (devices[deviceId]) return
 
-    const device = new HID(data.path)
-    console.log("HID LISTENING: ", data.path)
+    const group: HidGroup = { entries: {}, closed: false }
+    devices[deviceId] = group
+    const candidatePaths = await getCandidatePaths(deviceId)
+    let openedAny = false
 
-    device.on("error", (err) => {
-        console.log("HID ERROR:", err)
-    })
+    for (const path of candidatePaths) {
+        if (group.closed) break
+        if (isUnsupportedPath(path)) continue
 
-    device.on("data", (data) => {
-        console.log("HID RECEIVED DATA")
-        sendToMain(ToMain.HID_DATA, data)
-    })
+        let device: HID
+        try {
+            device = new HID(path)
+        } catch {
+            continue
+        }
 
-    devices[deviceId] = device
+        if (group.closed) {
+            safeClose(device)
+            break
+        }
+
+        openedAny = true
+
+        console.log("HID LISTENING: ", path)
+
+        const entry = { device, closed: false }
+        group.entries[path] = entry
+
+        const isClosed = () => entry.closed || group.closed
+
+        device.on("error", (err) => {
+            console.log("HID ERROR:", path, err)
+        })
+
+        const readLoop = () => {
+            if (isClosed()) return
+
+            device.read((err, data) => {
+                if (isClosed()) return
+
+                if (err) {
+                    console.log("HID READ ERROR:", path, err)
+                    // retry to keep listening for transient read failures
+                    setTimeout(readLoop, 50)
+                    return
+                }
+
+                if (data?.length) {
+                    emitHidData(path, data)
+                }
+
+                readLoop()
+            })
+        }
+        readLoop()
+    }
+
+    if (!openedAny && !group.closed) {
+        delete devices[deviceId]
+        console.log("HID NO OPENABLE PATHS:", deviceId)
+    }
 }
 
 export function hidClose(data: { path: string }) {
     const deviceId = data.path
-    if (!devices[deviceId]) return
+    const group = devices[deviceId]
+    if (!group) return
 
-    devices[deviceId].close()
+    group.closed = true
+    for (const entry of Object.values(group.entries)) {
+        entry.closed = true
+        safeClose(entry.device)
+    }
     delete devices[deviceId]
 }
