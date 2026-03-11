@@ -1,7 +1,7 @@
 {
     "main": {
         "welcome": "Vítejte",
-        "quit": "Zavřít",
+        "quit": "Odejít",
         "docs": "Dokumentace",
         "about": "O Freeshow",
         "unnamed": "Nezařazené",
@@ -58,7 +58,8 @@
         "libraries": "Použité knihovny",
         "thanks": "Poděkování",
         "new_update": "Nové aktualizace jsou k dispozici",
-        "download": "Pro aktualizaci restartuj aplikaci, nebo na webu freeshow.app stáhni novou verzi.",
+        "download_latest": "Stáhnout nejnovější verzi",
+        "download_auto": "Automatická aktualizace je zapnutá, vyčkejte prosím pár minut pro stažení a instalaci. Poté restartujte aplikaci.",
         "changes": "Co je nového?"
     },
     "tooltip": {
@@ -85,8 +86,11 @@
         "trigger": "Spouštěče jsou běžně používány k odesílání HTTP požadavků ke změně přednastavení kamer.",
         "global_options": "Tyto úpravy budou všeobecně aplikovány.",
         "consider_templates": "Provedli jste stejné změny na více snímků. Zvažte užití šablony.",
+        "category_template": "Tato prezentace se nachází v kategorii s automatickou šablonou. Všechny vaše úpravy budou tudíž přepsány.",
         "style_template_active": "Styl na výstupu přepisuje šablony prezentací.",
-        "group_numbers": "Čísla jsou automaticky přiřazena, tudíž je nemusíte k názvům manuálně přidávat."
+        "group_numbers": "Čísla jsou automaticky přiřazena, tudíž je nemusíte k názvům manuálně přidávat.",
+        "display_metadata": "Klikněte pravým tlačítkem na kategorii pro úpravy, když jsou metadata zobrazeny.",
+        "metadata_customize": "Pro úpravu zobrazených metadat změnte šablonu a využijte dynamických hodnot."
     },
     "setup": {
         "good_luck": "Doufáme, že shledáš tento program užitečným. Hodně štěstí s prezentací! :)",
@@ -202,6 +206,7 @@
         "flip_horizontally": "Překlopit horizontálně",
         "flip_vertically": "Překlopit vertikálně",
         "folders": "Složky",
+        "folder_type": "Složka",
         "all": "Složky, obrázky a video",
         "folder": "Pouze složky",
         "image": "Pouze obrázky",
@@ -234,6 +239,7 @@
         "preset": "Presety",
         "main": "Hlavní",
         "metronome": "Metronom",
+        "click_sound": "Click tón",
         "toggle_metronome": "Zapnout/vypnout metronom",
         "use_metadata_bpm": "Použít BPM z metadat ",
         "tempo": "Tempo",
@@ -328,7 +334,6 @@
         "autofill": "Automaticky vyplnit",
         "message": "Zpráva",
         "message_tip": "Zobrazit na všech snímcích",
-        "override_output": "Přepsat výstupní styl",
         "display_metadata": "Zobrazit metadata",
         "meta_template": "Šablona metadat",
         "text_divider": "Textové dělítko",
@@ -598,7 +603,6 @@
         "text": "Úprava textu",
         "update": "Aktualizovat prezentaci",
         "locked": "Tato prezentace byla uzamčena!",
-        "locked_info": "Tato prezentace byla uzamčena před úpravami. Odemknete ji znovu v sekci prezentace.",
         "slide_template": "Šablona snímku",
         "source": "Zdroj",
         "artist": "Umělec",
@@ -626,6 +630,7 @@
         "unlink_pco": "Odpojit od Planning Center",
         "import": "Importovat",
         "export": "Exportovat",
+        "save_to_file": "Uložit do souboru",
         "import_calendar": "Importovat kalendář",
         "imported": "Importováno!",
         "duplicate": "Duplikovat",
@@ -660,6 +665,9 @@
         "zoomIn": "Přiblížit",
         "zoomOut": "Oddálit",
         "reset": "Resetovat",
+        "lock_sections": "Uzamknout sekce",
+        "project_template": "Šablona projektu",
+        "convert_to_template": "Převést do šablony",
         "create_template": "Vytvořit šablonu",
         "project_template_tip": "Vytvořit nový projekt z této šablony",
         "import_project_file": "Nový soubor projektu nalezen. Přejete si jej importovat?",
@@ -760,6 +768,10 @@
         "stop_timers": "Ukončit aktivní odpočty",
         "id_pause_timer": "Pozastavit konkrétní odpočet",
         "id_stop_timer": "Zastavit konkrétní odpočet",
+        "start_timeline": "Spustit časovou osu",
+        "stop_timeline": "Zastavit časovou osu",
+        "pause_timeline": "Pozastavit časovou osu",
+        "set_timeline_time": "Nastavit čas časové osy",
         "next_after_media": "Další na dokončené médium",
         "remove_media": "Odstranit média",
         "remove_layers": "Odstranit vrstvy",
@@ -862,6 +874,7 @@
         "enable": "Automaticky synchronizovat při spuštění a zavření",
         "read_only": "Pouze čtení",
         "reconnect": "Znovu připojit",
+        "enable_sync": "Zapnout synchronizaci",
         "sync": "Synchronizovat nyní",
         "change_team": "Změnit tým",
         "choose_method_tip": "V cloudu se nacházejí data. Jak si přejete pokračovat?",
@@ -907,6 +920,7 @@
         "to_dictionary": "Přidat do slovníku",
         "correct": "Nahradit tímto slovem",
         "enabledTabs": "Přepnout záložky",
+        "display_tags": "Zobrazit štítky",
         "setTag": "Nastavit štítek",
         "filterByTags": "Třídit dle štítků",
         "addToProject": "Přidat do projektu",
@@ -1292,7 +1306,7 @@
         "shortcuts_on_slides": "Zobrazovat zkratky na snímcích",
         "transparent_slides": "Průhledný náhled snímku",
         "style_template_preview": "Užít šablonu stylu jako náhled snímku",
-        "full_colors": "Vysoký kontrast skupinových barev",
+        "full_colors": "Vysoko-kontrastní barvy",
         "next_item_on_last_slide": "Šipky vlevo/vpravo upravují předmět na prvním/posledním snímku.",
         "slide_number_keys": "Přehrát snímky s klávesami čísel",
         "auto_shortcut_first_letter": "Automatická zkratka k prvnímu písmenu textu",
@@ -1349,6 +1363,7 @@
         "connect": "Připojte se napsaním tohoto do webového prohlížeče",
         "connect_qr": "Nebo naskenujte tento QR kód",
         "restart": "Restart serverů",
+        "content_provider": "Poskytovatel obsahu",
         "connect_to": "Připojit k $1",
         "disconnect_from": "Odpojit z $1",
         "sync_categories_tip": "Vyberte kategorie k náhrání jako písně",
@@ -1360,6 +1375,7 @@
         "backup_all": "Zálohovat všechno",
         "backup_info": "Toto vylučuje místní Bible a soubory médií, jelikož se nachází na vašem zařízení.",
         "restore": "Obnovit",
+        "restore_confirm": "Jste si jisti, že chcete načíst zálohu? Přepíšou se tím aktuální data.",
         "backup_started": "Zálohování...",
         "restore_started": "Obnovování...",
         "backup_finished": "Zálohování dokončeno!",
@@ -1376,7 +1392,9 @@
     "output": {
         "state_inactive": "Neaktivní",
         "state_locked": "Uzamčeno",
-        "disabled_layers": "Deaktivované vrstvy"
+        "disabled_layers": "Deaktivované vrstvy",
+        "mute": "Ztlumit výstup",
+        "unmute": "Odtlumit výstup"
     },
     "profile": {
         "profiles_hint": "Vytvořit více profilů k omezení přístupu uživatelům při ovládání či upravování vybraných částí programu.",
@@ -1499,7 +1517,8 @@
         "blur": "Rozmázání",
         "scale": "Rozsah",
         "spin": "Točení",
-        "slide": "Snímek"
+        "slide": "Snímek",
+        "fade_in_offset": "Odsazenost mizení"
     },
     "easings": {
         "linear": "Lineární",
