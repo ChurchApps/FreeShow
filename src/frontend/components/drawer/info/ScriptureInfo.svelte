@@ -1,8 +1,12 @@
 <script lang="ts">
+    import qrcode from "qrcode-generator"
+    import { Main } from "../../../../types/IPC/Main"
     import type { BibleContent } from "../../../../types/Scripture"
     import type { Item } from "../../../../types/Show"
+    import { sendMain } from "../../../IPC/main"
     import { activeEdit, activePage, activePopup, activeScripture, activeStyle, drawerTabsData, outputs, popupData, scriptureSettings, settingsTab, styles, templates } from "../../../stores"
     import { setDefaultScriptureTemplates } from "../../../utils/createData"
+    import { setStatus } from "../../../utils/common"
     import { translateText } from "../../../utils/language"
     import { confirmCustom } from "../../../utils/popup"
     import { mediaExtensions } from "../../../values/extensions"
@@ -25,7 +29,8 @@
     import Media from "../../output/layers/Media.svelte"
     import Textbox from "../../slide/Textbox.svelte"
     import Zoomed from "../../slide/Zoomed.svelte"
-    import { createScriptureShow, getActiveScripturesContent, getMergedAttribution, getScriptureSlidesNew, textKeys, useOldScriptureSystem } from "../bible/scripture"
+    import { createScriptureShow, getActiveScripturesContent, getMergedAttribution, getReferenceText, getScriptureSlidesNew, textKeys, useOldScriptureSystem } from "../bible/scripture"
+    import { buildRouteBibleUrl, hasRouteBibleReference } from "../bible/routeBible"
 
     let biblesContent: BibleContent[] = []
     let selectedChapters: number[] = []
@@ -160,6 +165,12 @@
     let verseMenuOpened = false
     let redMenuOpened = false
     let referenceMenuOpened = false
+    let routeBibleQrVisible = false
+
+    $: routeBibleReference = biblesContent.length ? getReferenceText(biblesContent) : ""
+    $: routeBibleUrl = hasRouteBibleReference(routeBibleReference) ? buildRouteBibleUrl(routeBibleReference) : ""
+    $: routeBibleQrImg = routeBibleQrVisible && routeBibleUrl ? generateRouteBibleQr(routeBibleUrl) : ""
+    $: if (!routeBibleUrl) routeBibleQrVisible = false
 
     $: onlyOneNormalOutput = getAllNormalOutputs().length === 1
     $: styleScriptureTemplate = onlyOneNormalOutput ? $styles[styleId]?.templateScripture || "" : ""
@@ -192,6 +203,24 @@
         let newData = { key: "settings", data: clone(settings) }
 
         history({ id: "UPDATE", newData, oldData: { id: templateId }, location: { page: "edit", id: "template_settings", override: templateId } })
+    }
+
+    function generateRouteBibleQr(url: string) {
+        const qr = qrcode(0, "L")
+        qr.addData(url)
+        qr.make()
+        return qr.createImgTag(6, 6)
+    }
+
+    function copyRouteBibleLink() {
+        if (!routeBibleUrl) return
+        navigator.clipboard.writeText(routeBibleUrl)
+        setStatus("copied", 5)
+    }
+
+    function openRouteBible() {
+        if (!routeBibleUrl) return
+        sendMain(Main.URL, routeBibleUrl)
     }
 </script>
 
@@ -377,6 +406,23 @@
     </FloatingInputs>
 {/if}
 
+{#if routeBibleUrl}
+    <FloatingInputs onlyOne>
+        <MaterialButton title="Copy Route Bible Link" on:click={copyRouteBibleLink}>Copy Route Bible Link</MaterialButton>
+        <MaterialButton title="Open in Route Bible" on:click={openRouteBible}>Open in Route Bible</MaterialButton>
+        <MaterialButton title={routeBibleQrVisible ? "Hide Route Bible QR" : "Show Route Bible QR"} on:click={() => (routeBibleQrVisible = !routeBibleQrVisible)}>
+            {routeBibleQrVisible ? "Hide Route Bible QR" : "Show Route Bible QR"}
+        </MaterialButton>
+    </FloatingInputs>
+
+    {#if routeBibleQrVisible && routeBibleQrImg}
+        <div class="routeBibleQr border">
+            <p>Route Bible QR</p>
+            {@html routeBibleQrImg}
+        </div>
+    {/if}
+{/if}
+
 <style>
     .scroll {
         display: flex;
@@ -412,6 +458,23 @@
         font-size: 28px;
         font-style: italic;
         opacity: 0.7;
+    }
+
+    .routeBibleQr {
+        margin: 12px 10px 0;
+        padding: 12px;
+        text-align: center;
+    }
+
+    .routeBibleQr p {
+        margin-bottom: 8px;
+        opacity: 0.8;
+    }
+
+    .routeBibleQr :global(img) {
+        max-width: 180px;
+        width: 100%;
+        height: auto;
     }
 
     /* title */
