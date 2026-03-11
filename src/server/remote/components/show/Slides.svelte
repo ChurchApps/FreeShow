@@ -1,10 +1,11 @@
 <script lang="ts">
-    import { createEventDispatcher, onMount } from "svelte"
+    import { createEventDispatcher, onDestroy, onMount } from "svelte"
     import type { Resolution } from "../../../../types/Settings"
     import Center from "../../../common/components/Center.svelte"
     import { translate } from "../../util/helpers"
     import { GetLayout } from "../../util/output"
-    import { activeShow, outShow, styleRes } from "../../util/stores"
+    import { send } from "../../util/socket"
+    import { activeShow, mediaCache, outShow, styleRes } from "../../util/stores"
     import Slide from "./ShowSlide.svelte"
 
     export let outSlide: number | null
@@ -20,13 +21,43 @@
     // auto scroll
     export let scrollElem: HTMLElement | undefined
     let lastScrollId = "-1"
+    let pendingScrollIndex: number | null = null
+    let pendingScrollTries = 0
+    let pendingScrollTimer: ReturnType<typeof setTimeout> | null = null
+
+    function runAutoScroll() {
+        if (!scrollElem || pendingScrollIndex === null) return
+
+        const slideElem = scrollElem.querySelector(`.grid [data-index=\"${pendingScrollIndex}\"]`) as HTMLElement | null
+        if (!slideElem) {
+            if (pendingScrollTries < 80) {
+                pendingScrollTries++
+                if (pendingScrollTimer) clearTimeout(pendingScrollTimer)
+                pendingScrollTimer = setTimeout(runAutoScroll, 80)
+            }
+            return
+        }
+
+        const slideRect = slideElem.getBoundingClientRect()
+        const containerRect = scrollElem.getBoundingClientRect()
+        const offset = slideRect.top - containerRect.top + scrollElem.scrollTop - 54
+        scrollElem.scrollTo(0, offset)
+        pendingScrollIndex = null
+        pendingScrollTries = 0
+        if (pendingScrollTimer) {
+            clearTimeout(pendingScrollTimer)
+            pendingScrollTimer = null
+        }
+    }
+
     $: {
-        if (scrollElem?.querySelector(".grid") && outSlide !== null && $outShow?.id === $activeShow?.id) {
-            let index = Math.max(0, outSlide)
+        if (outSlide !== null && $outShow?.id === $activeShow?.id) {
+            const index = Math.max(0, outSlide)
             if (($outShow?.id || "") + index !== lastScrollId) {
                 lastScrollId = ($outShow?.id || "") + index
-                let offset = (scrollElem.querySelector(".grid")?.children[index] as HTMLElement)?.offsetTop - scrollElem.offsetTop - 4 - 50
-                scrollElem.scrollTo(0, offset)
+                pendingScrollIndex = index
+                pendingScrollTries = 0
+                runAutoScroll()
             }
         }
     }
@@ -70,29 +101,95 @@
     onMount(() => {
         loadingStarted = true
     })
+
+    // Keep thumbnail requests slow, but enqueue all slides immediately on show open.
+    const THUMB_REQUEST_DELAY = 180
+    let lastShowId = ""
+    const queuedThumbs = new Set<string>()
+    const thumbQueue: string[] = []
+    let drainingThumbs = false
+
+    function isDirectPath(path: string) {
+        return path.startsWith("data:") || path.startsWith("http://") || path.startsWith("https://") || path.startsWith("blob:")
+    }
+
+    function queueThumbnail(path: string) {
+        if (!path || queuedThumbs.has(path)) return
+        queuedThumbs.add(path)
+        thumbQueue.push(path)
+        if (!drainingThumbs) void drainThumbnailQueue()
+    }
+
+    async function drainThumbnailQueue() {
+        if (drainingThumbs) return
+        drainingThumbs = true
+
+        while (thumbQueue.length) {
+            const path = thumbQueue.shift()
+            if (!path) continue
+            send("API:get_thumbnail", { path })
+            await new Promise((resolve) => setTimeout(resolve, THUMB_REQUEST_DELAY))
+        }
+
+        drainingThumbs = false
+    }
+
+    $: currentShowId = $activeShow?.id || ""
+    $: if (currentShowId !== lastShowId) {
+        lastShowId = currentShowId
+        thumbQueue.length = 0
+        queuedThumbs.clear()
+    }
+
+    $: allSlides = layoutSlides.map((slide, index) => {
+        const backgroundPath = $activeShow?.media?.[slide.background || ""]?.path || ""
+        return { slide, index, backgroundPath }
+    })
+
+    $: allSlides.forEach(({ backgroundPath }) => {
+        if (!backgroundPath || isDirectPath(backgroundPath) || $mediaCache[backgroundPath]) return
+        queueThumbnail(backgroundPath)
+    })
+
+    $: readySlides = allSlides.filter(({ backgroundPath }) => {
+        if (!backgroundPath) return true
+        return isDirectPath(backgroundPath) || !!$mediaCache[backgroundPath]
+    })
+
+    onDestroy(() => {
+        thumbQueue.length = 0
+        queuedThumbs.clear()
+        if (pendingScrollTimer) clearTimeout(pendingScrollTimer)
+    })
 </script>
 
 <div class="grid" on:touchstart={touchstart} on:touchmove={touchmove} on:touchend={touchend}>
     {#if layoutSlides.length}
         {#if layoutSlides.length < 10 || loadingStarted}
-            {#each layoutSlides as slide, i (`${$activeShow?.id || "show"}-${slide.id || "slide"}-${i}`)}
+            {#each readySlides as entry (`${$activeShow?.id || "show"}-${entry.slide.id || "slide"}-${entry.index}`)}
+                {@const isActive = outSlide === entry.index && $outShow?.id === $activeShow?.id}
+                {@const useLightMode = layoutSlides.length > 12 && !isActive}
                 <Slide
                     {resolution}
                     media={$activeShow?.media}
-                    layoutSlide={slide}
-                    slide={$activeShow?.slides[slide.id]}
-                    index={i}
-                    color={slide.color}
-                    active={outSlide === i && $outShow?.id === $activeShow?.id}
+                    layoutSlide={entry.slide}
+                    slide={$activeShow?.slides[entry.slide.id]}
+                    index={entry.index}
+                    color={entry.slide.color}
+                    active={isActive}
+                    renderItems={!useLightMode}
                     {columns}
                     on:click={() => {
                         // if (!$outLocked && !e.ctrlKey) {
                         //   outSlide.set({ id, index: i })
                         // }
-                        click(i)
+                        click(entry.index)
                     }}
                 />
             {/each}
+            {#if readySlides.length < allSlides.length}
+                <Center faded>{translate("remote.loading", $dictionary)}</Center>
+            {/if}
         {:else}
             <Center faded>{translate("remote.loading", $dictionary)}</Center>
         {/if}

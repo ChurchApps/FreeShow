@@ -1,6 +1,5 @@
 <script lang="ts">
     import { getGroupName } from "../../../common/util/show"
-    import { send } from "../../util/socket"
     import { activeShow, mediaCache } from "../../util/stores"
     import Textbox from "./Textbox.svelte"
     import Zoomed from "./Zoomed.svelte"
@@ -13,6 +12,7 @@
     export let columns: number = 1
     export let active: boolean = false
     export let resolution: any
+    export let renderItems: boolean = true
 
     let ratio = 0
 
@@ -23,9 +23,10 @@
 
     $: name = $activeShow ? getGroupName({ show: $activeShow, showId: $activeShow.id || "" }, layoutSlide.id, slide.group, index) || slide.group || "" : ""
 
-    $: slide?.items?.forEach((item: any) => {
-        if (item.type === "media" && item.src && !$mediaCache[item.src]) send("API:get_thumbnail", { path: item.src })
-    })
+    $: backgroundPath = media?.[layoutSlide.background]?.path || ""
+    $: backgroundThumb = backgroundPath ? $mediaCache[backgroundPath] : ""
+    $: canRenderPath = backgroundPath.startsWith("data:") || backgroundPath.startsWith("http://") || backgroundPath.startsWith("https://") || backgroundPath.startsWith("blob:")
+    $: isSlideReady = !backgroundPath || !!backgroundThumb || canRenderPath
 </script>
 
 <!-- TODO: disabled -->
@@ -35,18 +36,32 @@
 class:left={overIndex === index && (!selected.length || index <= selected[0])} -->
 <div class="main" style="width: {100 / columns}%">
     <div class="slide context #slide" class:disabled={layoutSlide.disabled} class:active style="background-color: {color};" tabindex={0} data-index={index} on:click>
-        <Zoomed resolution={newResolution} background={slide.settings?.color || (slide.items.length ? "black" : "transparent")} bind:ratio>
-            <!-- class:ghost={!background} -->
-            <div class="background" style="zoom: {1 / ratio}">
-                {#if media[layoutSlide.background]?.path && !media[layoutSlide.background].path.includes("freeshow-cache") && !media[layoutSlide.background].path.includes("media-cache")}
-                    <img src={media[layoutSlide.background].path} />
+        {#if isSlideReady && renderItems}
+            <Zoomed resolution={newResolution} background={slide.settings?.color || (slide.items.length ? "black" : "transparent")} bind:ratio>
+                <!-- class:ghost={!background} -->
+                <div class="background" style="zoom: {1 / ratio}">
+                    {#if backgroundThumb}
+                        <img src={backgroundThumb} alt="" loading="lazy" decoding="async" />
+                    {:else if canRenderPath}
+                        <img src={backgroundPath} alt="" loading="lazy" decoding="async" />
+                    {/if}
+                </div>
+                <!-- TODO: check if showid exists in shows -->
+                {#each slide.items as item}
+                    <Textbox {item} />
+                {/each}
+            </Zoomed>
+        {:else if isSlideReady}
+            <div class="light-background">
+                {#if backgroundThumb}
+                    <img src={backgroundThumb} alt="" loading="lazy" decoding="async" />
+                {:else if canRenderPath}
+                    <img src={backgroundPath} alt="" loading="lazy" decoding="async" />
                 {/if}
             </div>
-            <!-- TODO: check if showid exists in shows -->
-            {#each slide.items as item}
-                <Textbox {item} />
-            {/each}
-        </Zoomed>
+        {:else}
+            <div class="thumb-placeholder"></div>
+        {/if}
         <!-- TODO: BG: white, color: black -->
         <!-- style="width: {newResolution.width * zoom}px;" -->
 
@@ -98,6 +113,37 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
         width: 100%;
         height: 100%;
         object-fit: contain;
+    }
+
+    .light-background {
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        position: relative;
+        background: black;
+        overflow: hidden;
+    }
+
+    .light-background :global(img) {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
+
+    .thumb-placeholder {
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        background: linear-gradient(90deg, var(--primary-darkest), var(--primary-darker), var(--primary-darkest));
+        background-size: 200% 100%;
+        animation: thumb-loading 1.1s linear infinite;
+    }
+
+    @keyframes thumb-loading {
+        0% {
+            background-position: 200% 0;
+        }
+        100% {
+            background-position: -200% 0;
+        }
     }
 
     .label {
