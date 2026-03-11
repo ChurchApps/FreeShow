@@ -1,9 +1,8 @@
 <script lang="ts">
     import { getDocument, GlobalWorkerOptions, type PDFDocumentLoadingTask, type PDFDocumentProxy } from "pdfjs-dist"
+    import { onDestroy } from "svelte"
     import type { Transition } from "../../../../types/Show"
     import OutputTransition from "../transitions/OutputTransition.svelte"
-    import { onDestroy } from "svelte"
-    import { shows } from "../../../stores"
 
     export let slide
     export let currentStyle
@@ -27,31 +26,6 @@
     let loadedPath = ""
     async function loadPage(pageNumber: number) {
         if (!canvasElem) return
-
-        // Check if this is a converted PDF show
-        const show = $shows[path]
-        if (show?.category === "converted") {
-            // For converted shows, display the PNG image instead of PDF
-            const imagePath = show.media?.[pageNumber - 1]
-            if (imagePath) {
-                const img = new Image()
-                img.onload = () => {
-                    const ctx = canvasElem?.getContext("2d")
-                    if (ctx) {
-                        canvasElem.width = img.width
-                        canvasElem.height = img.height
-                        ctx.drawImage(img, 0, 0)
-                    }
-                }
-                img.onerror = () => {
-                    console.error("Failed to load converted PDF image:", imagePath)
-                }
-                img.src = imagePath.startsWith("data:") ? imagePath : `file://${imagePath}`
-            } else {
-                console.warn("No image found for converted PDF page:", pageNumber, "in show:", path)
-            }
-            return
-        }
 
         if (loadedPath !== path) {
             if (loadingTask) loadingTask.destroy()

@@ -47,22 +47,17 @@ function deleteThumbnails(filePath: string) {
 
 const currentlyGenerating = new Set<string>()
 export async function getThumbnail(data: { input: string; size: number }) {
-    if (!(await doesPathExistAsync(data.input))) {
-        console.error("[getThumbnail] File does not exist:", data.input)
-        return { ...data, output: "" }
-    }
+    if (!(await doesPathExistAsync(data.input))) return { ...data, output: "" }
 
     const mediaId = `${data.input}-${data.size}`
-
     if (currentlyGenerating.has(mediaId)) {
         await waitUntilValueIsDefined(() => !currentlyGenerating.has(mediaId), 50, 10000)
+
         return finish(getThumbnailPath(data.input, data.size))
     }
-
     currentlyGenerating.add(mediaId)
 
     const outputPath = getThumbnailPath(data.input, data.size || 500)
-
     if (await doesPathExistAsync(outputPath)) {
         currentlyGenerating.delete(mediaId)
         return finish(outputPath)
@@ -76,8 +71,7 @@ export async function getThumbnail(data: { input: string; size: number }) {
 
     function finish(output: string) {
         if (failedPaths.includes(mediaId)) {
-            console.error("[getThumbnail] FAILED - removing from failedPaths")
-            failedPaths.splice(failedPaths.indexOf(mediaId), 1)
+            failedPaths.splice(failedPaths.indexOf(mediaId), 1) // allow retrying
             return { ...data, output: "" }
         }
 
@@ -86,10 +80,7 @@ export async function getThumbnail(data: { input: string; size: number }) {
 }
 
 export function createThumbnail(filePath: string, size = 250) {
-    if (!filePath) {
-        console.error("[createThumbnail] No filepath provided")
-        return ""
-    }
+    if (!filePath) return ""
 
     const outputPath = getThumbnailPath(filePath, size)
 
@@ -123,14 +114,7 @@ function generationFinished(mediaId: string) {
 
 async function generateThumbnail(data: Thumbnail) {
     const mediaId = `${data.input}-${data.size}`
-
-    const ext = getExtension(data.input)
-    const isValidMedia = [...imageExtensions, ...videoExtensions].includes(ext)
-
-    if (!isValidMedia) {
-        return generationFinished(mediaId)
-    }
-
+    if (![...imageExtensions, ...videoExtensions].includes(getExtension(data.input))) return generationFinished(mediaId)
     if (await doesPathExistAsync(data.output)) {
         generationFinished(mediaId)
         return
@@ -139,7 +123,7 @@ async function generateThumbnail(data: Thumbnail) {
     try {
         await generate(data.input, data.output, String(data.size) + "x?", { seek: 0.5 }, mediaId)
     } catch (err) {
-        console.error("[generateThumbnail] ERROR in generate():", err)
+        console.error(err)
         generationFinished(mediaId)
     }
 }
@@ -280,10 +264,7 @@ export async function pdfToImage({ filePath }: { filePath: string }) {
     const pathName = createFolder(path.join(pdfImportPath, pdfName))
 
     const { pages: pdfImages }: { pages: string[] } = (await requestToMain(ToMain.API, { action: "get_pdf_thumbnails", data: { path: filePath } })) || { pages: [] }
-    if (!Array.isArray(pdfImages)) {
-        console.error("[pdfToImage] ERROR: pdfImages is not an array!", typeof pdfImages, pdfImages)
-        return
-    }
+    if (!Array.isArray(pdfImages)) return
 
     const images: string[] = []
     for (let i = 0; i < pdfImages.length; i++) {

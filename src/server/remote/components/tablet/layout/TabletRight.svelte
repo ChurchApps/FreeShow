@@ -1,15 +1,14 @@
 <script lang="ts">
-    import { dictionary, isCleared, outLayout, outShow, outSlide, outData, overlays, mediaCache } from "../../../util/stores"
     import { translate } from "../../../util/helpers"
     import { GetLayout, getNextSlide, nextSlide } from "../../../util/output"
     import { send } from "../../../util/socket"
-    import { _set } from "../../../util/stores"
+    import { _set, dictionary, isCleared, mediaCache, outData, outLayout, outShow, outSlide, overlays } from "../../../util/stores"
 
-    import Slide from "../../show/Slide.svelte"
-    import Clear from "../../show/Clear.svelte"
-    import MediaPlaybackControls from "../../show/MediaPlaybackControls.svelte"
     import Button from "../../../../common/components/Button.svelte"
     import Icon from "../../../../common/components/Icon.svelte"
+    import Clear from "../../show/Clear.svelte"
+    import MediaPlaybackControls from "../../show/MediaPlaybackControls.svelte"
+    import Slide from "../../show/Slide.svelte"
     import Textbox from "../../show/Textbox.svelte"
     import Zoomed from "../../show/Zoomed.svelte"
 
@@ -44,11 +43,9 @@
     function openOutShow() {
         const showId = $outShow?.id
         if (!showId) return
-        const outShowRef: any = $outShow
-        const showType = outShowRef?.category === "converted" ? "pdf" : outShowRef?.type || "show"
 
         send("SHOW", showId)
-        _set("active", { id: showId, type: showType })
+        _set("active", { id: showId, type: "show" })
         _set("activeTab", "show")
         _set("activeShow", $outShow)
     }

@@ -1,5 +1,6 @@
 <script lang="ts">
-    import { active, activeShow, shows } from "../../util/stores"
+    import { getFileName, removeExtension } from "../../../common/util/media"
+    import { active } from "../../util/stores"
     import AudioPreview from "../show/AudioPreview.svelte"
     import OverlayPreview from "../show/OverlayPreview.svelte"
     import Media from "./Media.svelte"
@@ -7,46 +8,30 @@
 
     export let tablet: boolean = false
 
-    let currentShow: any = null
+    $: activeShow = $active
 
-    // `active` contains just {id,type} and is set when you click a show/project entry.
-    // `activeShow` is populated by the server when it responds to a SHOW message and contains
-    // the full show object (including media paths) which we need for PDF thumbnails.
-    $: activeRef = $active
-    $: serverShow = $activeShow
-
-    // fall back to shows store (trimmed list) if server hasn't sent the full show yet
-    // always ensure we carry the type hint from activeRef so `currentShow.type` is never undefined
-    $: {
-        let base: any = serverShow || $shows.find((s: any) => s.id === activeRef?.id) || { id: activeRef?.id, type: activeRef?.type }
-        if (base) {
-            if (!base.type && activeRef?.type) base.type = activeRef.type
-            currentShow = base
-        } else {
-            currentShow = null
-        }
-    }
-
+    $: name = removeExtension(getFileName(activeShow?.id) || "")
 </script>
 
 <div class="content-page">
-    {#if currentShow?.name}
-        <h2 class="header">{currentShow.name}</h2>
+    {#if name}
+        <h2 class="header">{name}</h2>
     {/if}
 
     <div class="content-body">
-        {#if currentShow?.type === "image" || currentShow?.type === "video"}
+        {#if activeShow.type === "image" || activeShow.type === "video"}
             <Media />
-        {:else if currentShow?.type === "audio"}
-            <AudioPreview active={currentShow} />
-        {:else if currentShow?.type === "overlay"}
-            <OverlayPreview show={currentShow} />
-        {:else if currentShow?.type === "pdf"}
-            <PdfPreview active={currentShow} {tablet} />
-        {:else if currentShow?.type === "player"}
+        {:else if activeShow.type === "audio"}
+            <AudioPreview active={activeShow} />
+        {:else if activeShow.type === "overlay"}
+            <OverlayPreview show={activeShow} />
+        {:else if activeShow.type === "pdf"}
+            <PdfPreview active={activeShow} {tablet} />
+        {:else if activeShow.type === "player"}
+            <!-- Online media / player content -->
             <Media />
         {:else}
-            <p class="fallback">{currentShow?.type}</p>
+            <p class="fallback">{activeShow?.type}</p>
         {/if}
     </div>
 </div>
@@ -81,4 +66,3 @@
         text-transform: capitalize;
     }
 </style>
-

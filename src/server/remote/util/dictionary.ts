@@ -115,11 +115,6 @@ export const DEFAULT_DICTIONARY = {
     media: {
         play: "Play"
     },
-    size: {
-        large: "Large",
-        medium: "Medium",
-        small: "Small"
-    },
     context: {
         addToProject: "Add to project"
     },

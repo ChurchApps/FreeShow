@@ -24,14 +24,8 @@
     // Tablet mode component (lazy-loaded for performance)
     let TabletMode: any = null
 
-    function resolveShowType(show: any, fallbackType?: string) {
-        if (show?.category === "converted") return "pdf"
-        return show?.type || fallbackType || "show"
-    }
-
     $: tab = $activeTab
     $: if (tab) _set("activeTab", tab)
-    $: activeShowType = resolveShowType($activeShow, $active?.type)
 
     let tabs: TabsObj = {}
     $: tabs = {
@@ -46,7 +40,7 @@
         shows: $shows.length,
         scripture: Object.keys($scriptures).length,
         project: $projects.length || $activeProject,
-        show: $activeShow || activeShowType !== "show",
+        show: $activeShow || ($active?.type || "show") !== "show",
         slide: $outShow,
         lyrics: $outShow
     }
@@ -151,7 +145,7 @@
             {:else if tab === "project"}
                 <Project />
             {:else if tab === "show"}
-                {#if activeShowType === "show"}
+                {#if ($active.type || "show") === "show"}
                     <Show />
                 {:else}
                     <ShowContent />

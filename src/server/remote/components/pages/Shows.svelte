@@ -1,15 +1,14 @@
 <script lang="ts">
     import { onMount } from "svelte"
+    import Button from "../../../common/components/Button.svelte"
     import Center from "../../../common/components/Center.svelte"
     import Checkbox from "../../../common/components/Checkbox.svelte"
+    import Icon from "../../../common/components/Icon.svelte"
     import { dateToString } from "../../../common/util/time"
     import { translate } from "../../util/helpers"
     import { send } from "../../util/socket"
     import { _set, activeShow, createShow, dictionary, quickPlay, shows, showSearchValue } from "../../util/stores"
     import ShowButton from "../ShowButton.svelte"
-    import Button from "../../../common/components/Button.svelte"
-    import Icon from "../../../common/components/Icon.svelte"
-    import type { ShowType } from "../../../../types/Show"
 
     export let tablet: boolean = false
 
@@ -107,22 +106,14 @@
     // shows list
     let searchElem: HTMLInputElement | undefined
 
-    function resolveShowType(showData: any): ShowType {
-        if (showData?.category === "converted") return "pdf"
-        return (showData?.type || "show") as ShowType
-    }
-
     function openShow(id: string) {
-        const showData = $shows.find((s) => s.id === id)
-        const showType = resolveShowType(showData)
-
         send("SHOW", id)
 
         if ($quickPlay) {
             send("API:index_select_slide", { showId: id, index: 0 })
             searchElem?.select()
         } else {
-            _set("active", { id, type: showType })
+            _set("active", { id, type: "show" })
             _set("activeTab", "show")
         }
     }

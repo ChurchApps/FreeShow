@@ -6,7 +6,7 @@ import type { DropData, Selected, Variable } from "../../../types/Main"
 import { clearAudio } from "../../audio/audioFading"
 import { AudioPlayer } from "../../audio/audioPlayer"
 import { AudioPlaylist } from "../../audio/audioPlaylist"
-import { activeDrawerTab, activeEdit, activePage, activeProject, activeShow, activeTimers, audioPlaylists, draw, drawSettings, drawTool, folders, groupNumbers, groups, media, openScripture, outLocked, outputs, overlays, playingAudio, playingMetronome, projects, refreshEditSlide, selected, shows, showsCache, sortedShowsList, special, styles, timers, variables, volume } from "../../stores"
+import { activeDrawerTab, activeEdit, activePage, activeProject, activeShow, activeTimers, audioPlaylists, draw, drawSettings, drawTool, folders, groupNumbers, groups, media, openScripture, outLocked, outputs, overlays, playingAudio, playingMetronome, projects, refreshEditSlide, selected, showsCache, sortedShowsList, special, styles, timers, variables, volume } from "../../stores"
 import { newToast } from "../../utils/common"
 import { send } from "../../utils/request"
 import { getDynamicValue } from "../edit/scripts/itemHelpers"
@@ -554,12 +554,8 @@ export function playMedia(data: API_media) {
     const mediaType = data.data?.type
     const extension = getMediaType(getExtension(data.path))
 
-    // Check if this is a converted PDF show (no actual PDF file, just PNG images)
-    const showData = get(shows)[data.path]
-    const isConvertedPdf = showData?.category === "converted"
-
-    if (extension === "pdf" || isConvertedPdf) {
-        const name = isConvertedPdf ? showData?.name : removeExtension(getFileName(data.path))
+    if (extension === "pdf") {
+        const name = removeExtension(getFileName(data.path))
         setOutput("slide", { type: "pdf", id: data.path, page: data.index || 0, pages: data.data?.pageCount ?? 1, name })
         clearBackground()
         return
@@ -826,9 +822,7 @@ export async function getPDFThumbnails({ path }: API_media) {
 
     const canvas = document.createElement("canvas")
     const context = canvas.getContext("2d")
-    if (!context) {
-        return []
-    }
+    if (!context) return []
 
     const pages: string[] = []
     for (let i = 0; i < pageCount; i++) {

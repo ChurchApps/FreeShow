@@ -1,4 +1,5 @@
 <script lang="ts">
+    import type { ShowList } from "../../../../types/Show"
     import Button from "../../../common/components/Button.svelte"
     import Center from "../../../common/components/Center.svelte"
     import Icon from "../../../common/components/Icon.svelte"
@@ -8,7 +9,6 @@
     import { _set, active, activeProject, activeShow, dictionary, mediaCache, project, projectsOpened, shows } from "../../util/stores"
     import ShowButton from "../ShowButton.svelte"
     import Projects from "./Projects.svelte"
-    import type { ShowList, ShowType } from "../../../../types/Show"
 
     type ProjectSection = {
         id: string
@@ -22,23 +22,35 @@
 
     let editProject = false
     let showLookup: Record<string, ShowList> = {}
+    let projectSections: ProjectSection[] = []
+    let canAddActiveShow = false
 
     $: showLookup = Array.isArray($shows) ? Object.fromEntries(($shows as unknown as ShowList[]).map((show) => [show.id, show])) : {}
 
     $: projectSections = buildProjectSections($activeProject?.shows || [])
-    $: canAddActiveShow = ($active.type || "show") === "show" && $activeShow && !!$activeProject?.shows && !$activeProject.shows.some((show) => getShowId(show) === $activeShow?.id)
+    $: canAddActiveShow = ($active.type || "show") === "show" && !!$activeShow && !!$activeProject?.shows && !$activeProject.shows.some((show) => show.id === $activeShow?.id)
 
-    function getShowId(show: any): string | undefined {
-        return show?.id
+    function openProjectMediaItem(show: any) {
+        _set("active", show)
+        _set("activeTab", "show")
+
+        if (show.id && needsThumbnail(show.type || "show") && !$mediaCache[show.id]) {
+            send("API:get_thumbnail", { path: show.id })
+        }
+        if (show.id) send("SHOW", show.id)
     }
 
-    function getShowType(show: any): string {
-        return (show?.type || "").toString()
+    function openProjectShowItem(show: any, showId: string) {
+        _set("active", show)
+        _set("activeTab", "show")
+        send("SHOW", showId)
     }
 
-    function resolveShowType(show: any): ShowType {
-        if (show?.category === "converted") return "pdf"
-        return (show?.type || "show") as ShowType
+    function addActiveShowToProject() {
+        if (!$activeProject?.id || !$activeShow?.id) return
+
+        project.set($activeProject.id)
+        send("API:add_to_project", { projectId: $activeProject.id, id: $activeShow.id })
     }
 
     function isMediaType(type: string): boolean {
@@ -64,7 +76,7 @@
         current = startSection("section-root", null)
 
         shows.forEach((show, index) => {
-            if (getShowType(show).toLowerCase() === "section") {
+            if (show?.type === "section") {
                 current = startSection(`section-${index}`, show?.name?.trim() || null)
                 return
             }
@@ -125,10 +137,9 @@
 
                 <div class="list edit-list">
                     {#each $activeProject.shows as show, i}
-                        {@const showId = getShowId(show)}
-                        {@const lookupShow = showId ? (showLookup[showId] ?? null) : null}
+                        {@const lookupShow = show.id ? (showLookup[show.id] ?? null) : null}
                         <div class="item">
-                            <p style="padding: 4px 8px;">{lookupShow?.name || show.name || (showId ? getFileName(removeExtension(showId)) : show.type)}</p>
+                            <p style="padding: 4px 8px;">{lookupShow?.name || show.name || (show.id ? getFileName(removeExtension(show.id)) : show.type)}</p>
 
                             <Button style="padding: 4px 8px;" on:click={() => removeProjectItem(i)} dark>
                                 <Icon id="delete" />
@@ -157,50 +168,24 @@
                                 {/if}
                                 <div class="section-items">
                                     {#each section.items as show, idx (`${section.id}-${idx}`)}
-                                        {@const showId = getShowId(show)}
-                                        {@const showType = getShowType(show)}
-                                        {@const showData = showId ? (showLookup[showId] ?? null) : null}
+                                        {@const showType = show.type || "show"}
+                                        {@const showData = show.id ? (showLookup[show.id] ?? null) : null}
 
                                         {#if isMediaType(showType)}
-                                            <Button
-                                                on:click={() => {
-                                                    const targetType = resolveShowType(show)
-
-                                                    _set("active", { id: showId || "", type: targetType })
-                                                    _set("activeTab", "show")
-                                                    if (showId && needsThumbnail(targetType) && !$mediaCache[showId]) send("API:get_thumbnail", { path: showId })
-                                                    if (showId) send("SHOW", showId)
-                                                }}
-                                                active={$active.id === showId}
-                                                bold={false}
-                                                border
-                                                class="section-item-button"
-                                            >
+                                            <Button on:click={() => openProjectMediaItem(show)} active={$active.id === show.id} bold={false} border class="section-item-button">
                                                 <Icon id={showType === "audio" ? "music" : showType === "overlay" ? "overlays" : showType} right />
                                                 <span style="display: flex;align-items: center;flex: 1;overflow: hidden;min-width: 0;">
-                                                    <p style="margin: 0;white-space: nowrap;text-overflow: ellipsis;overflow: hidden;">{show.name || (showId ? getFileName(removeExtension(showId)) : "")}</p>
+                                                    <p style="margin: 0;white-space: nowrap;text-overflow: ellipsis;overflow: hidden;">{show.name || (show.id ? getFileName(removeExtension(show.id)) : "")}</p>
                                                 </span>
                                             </Button>
-                                        {:else if showType && showType !== "show"}
+                                        {:else if showType !== "show"}
                                             <div class="section-item info">
                                                 <Icon id={showType} box={showType === "ppt" ? 50 : 24} right />
                                                 <p>{showType}</p>
                                             </div>
                                         {:else if showData}
                                             <div class="show-button-wrapper" class:active={($active.type || "show") === "show" && $activeShow?.id === showData.id}>
-                                                <ShowButton
-                                                    class="project-show-button"
-                                                    on:click={(e) => {
-                                                        const id = showId || ""
-                                                        const typeHint = resolveShowType(showData)
-                                                        _set("active", { id, type: typeHint })
-                                                        _set("activeTab", "show")
-                                                        send("SHOW", e.detail)
-                                                    }}
-                                                    activeShow={($active.type || "show") === "show" && $activeShow}
-                                                    show={showData}
-                                                    icon={showData.private ? "private" : "slide"}
-                                                />
+                                                <ShowButton class="project-show-button" on:click={(e) => openProjectShowItem(show, e.detail)} activeShow={($active.type || "show") === "show" && $activeShow} show={showData} icon={showData.private ? "private" : "slide"} />
                                             </div>
                                         {/if}
                                     {/each}
@@ -210,15 +195,7 @@
                     </div>
 
                     {#if canAddActiveShow}
-                        <Button
-                            on:click={() => {
-                                project.set($activeProject.id || "")
-                                send("API:add_to_project", { projectId: $activeProject.id, id: $activeShow?.id })
-                            }}
-                            style="width: 100%;"
-                            dark
-                            center
-                        >
+                        <Button on:click={addActiveShowToProject} style="width: 100%;" dark center>
                             <Icon id="add" right />
                             <p style="font-size: 0.8em;">{translate("context.addToProject", $dictionary)}</p>
                         </Button>
@@ -228,15 +205,7 @@
                 <Center faded>{translate("empty.general", $dictionary)}</Center>
 
                 {#if canAddActiveShow}
-                    <Button
-                        on:click={() => {
-                            project.set($activeProject.id || "")
-                            send("API:add_to_project", { projectId: $activeProject.id, id: $activeShow?.id })
-                        }}
-                        style="width: 100%;"
-                        dark
-                        center
-                    >
+                    <Button on:click={addActiveShowToProject} style="width: 100%;" dark center>
                         <Icon id="add" right />
                         <p style="font-size: 0.8em;">{translate("context.addToProject", $dictionary)}</p>
                     </Button>

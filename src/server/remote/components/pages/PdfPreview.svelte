@@ -12,54 +12,47 @@
     let path = ""
     let pagesPaths: string[] | null = null
     let pages: string[] = []
+    let out: any = null
+    let isOutputCurrentShow = false
+    let showClearControls = false
+    let hasRenderedPage = false
 
-    $: {
-        pagesPaths = null
-        path = ""
+    function getMediaPaths(current: any): string[] | null {
+        if (!current?.media) return null
 
-        if (active?.media) {
-            const mediaItems: any[] = Array.isArray(active.media) ? active.media : Object.values(active.media)
-            const paths = mediaItems.map((m) => m.path).filter((p) => typeof p === "string")
-            if (paths.length) {
-                pagesPaths = paths
-            }
-        }
-
-        if (pagesPaths) {
-            const pdfEntry = pagesPaths.find((p) => typeof p === "string" && p.toLowerCase().endsWith(".pdf"))
-            if (pdfEntry) {
-                path = pdfEntry
-            }
-        }
-
-        if (!path && active?.id && typeof active.id === "string") {
-            if (active.id.includes("/") || active.id.includes("\\") || active.id.startsWith("data:")) {
-                path = active.id
-            }
-        }
+        const mediaItems: any[] = Array.isArray(current.media) ? current.media : Object.values(current.media)
+        const paths = mediaItems.map((m) => m.path).filter((p) => typeof p === "string")
+        return paths.length ? paths : null
     }
 
-    $: if (pagesPaths) {
-        pages = pagesPaths.map((p) => {
-            if (typeof p !== "string") return ""
-            if (p.startsWith("data:")) return p
-            return $mediaCache[p] || ""
-        })
+    function resolvePath(current: any, paths: string[] | null): string {
+        if (paths) {
+            const pdfEntry = paths.find((p) => p.toLowerCase().endsWith(".pdf"))
+            if (pdfEntry) return pdfEntry
+        }
 
+        if (!current?.id || typeof current.id !== "string") return ""
+        if (current.id.includes("/") || current.id.includes("\\") || current.id.startsWith("data:")) {
+            return current.id
+        }
+
+        return ""
+    }
+
+    function resolvePages(paths: string[] | null, cache: Record<string, string>): string[] {
+        if (!paths) return []
+        return paths.map((p) => (p.startsWith("data:") ? p : cache[p] || ""))
+    }
+
+    $: pagesPaths = getMediaPaths(active)
+    $: path = resolvePath(active, pagesPaths)
+    $: pages = resolvePages(pagesPaths, $mediaCache)
+
+    $: if (pagesPaths) {
         pagesPaths.forEach((p, idx) => {
             if (!pages[idx] && !p.startsWith("data:")) {
                 send("API:get_thumbnail", { path: p })
             }
-        })
-    } else {
-        pages = []
-    }
-
-    $: if (pagesPaths && $mediaCache) {
-        pages = pagesPaths.map((p) => {
-            if (typeof p !== "string") return ""
-            if (p.startsWith("data:")) return p
-            return $mediaCache[p] || ""
         })
     }
 
@@ -77,28 +70,18 @@
         }
     }
 
-
     let loading = true
-    $: {
-        if (pages.length > 0 && pages.some((p) => p && p.length > 0)) {
-            loading = false
-        } else if ((pagesPaths && pagesPaths.length > 0) || path) {
-            loading = true
-        } else {
-            loading = false
-        }
-    }
-
+    $: hasRenderedPage = pages.some((p) => !!p && p.length > 0)
+    $: loading = !hasRenderedPage && (!!path || !!pagesPaths?.length)
 
     let activePage = -1
     $: out = $outData?.slide
     $: {
         const isCurrentOutputShow = !!active?.id && $outShow?.id === active.id && typeof $outSlide === "number"
-        const matchesConvertedPdf = out?.type === "pdf" && active?.id && out?.id === active.id
         const matchesFilePdf = out?.type === "pdf" && path && out?.id === path
 
         if (isCurrentOutputShow) activePage = $outSlide ?? -1
-        else if (matchesConvertedPdf || matchesFilePdf) activePage = out?.page || 0
+        else if (matchesFilePdf) activePage = out?.page || 0
         else activePage = -1
     }
 
@@ -107,9 +90,8 @@
 
     const columns = tablet ? 2 : 2
 
-    function onSlideClick(page: number) {
-        // Use index_select_slide API to navigate to the slide by index
-        send("API:index_select_slide", { showId: active?.id, layoutId: "", index: page })
+    function outputPdf(page: number) {
+        send("API:play_media", { path, index: page, data: { pageCount: pages?.length } })
     }
 
     function previousSlide() {
@@ -119,7 +101,6 @@
     function nextSlide() {
         send("API:next_slide")
     }
-
 </script>
 
 <div class="page">
@@ -131,7 +112,7 @@
         {:else if pages.length > 0}
             {#each pages as page, i}
                 <div class="main" class:active={activePage === i} style="width: {100 / Math.max(1, columns)}%;">
-                    <button type="button" class="slide" on:click={() => onSlideClick(i)}>
+                    <button type="button" class="slide" on:click={() => outputPdf(i)}>
                         {#if page}
                             <img src={page} alt="" />
                         {:else}
@@ -190,7 +171,6 @@
         justify-content: center;
         align-items: center;
         background-color: var(--primary-darker);
-        /* removed border to avoid green box */
         border: none;
     }
 
@@ -279,7 +259,6 @@
     .main {
         display: flex;
         position: relative;
-        /* height: fit-content; */
         padding: 2px;
     }
 

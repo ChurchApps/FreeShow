@@ -33,11 +33,6 @@ function sanitizeChapterVerses(verses: any) {
 
 export type ReceiverKey = keyof typeof receiver
 
-function resolveShowType(show: any, fallbackType?: string) {
-    if (show?.category === "converted") return "pdf"
-    return show?.type || fallbackType || "show"
-}
-
 export const receiver = {
     PASSWORD: (data: any) => {
         if (data.dictionary) _set("dictionary", data.dictionary)
@@ -64,6 +59,9 @@ export const receiver = {
     ACCESS: () => {
         if (_get("password").remember && _get("password").stored.length) localStorage.password = _get("password").stored
         _set("isConnected", true)
+
+        // Request current output data which should include scripture state
+        send("API:get_output")
     },
 
     /////
@@ -85,12 +83,6 @@ export const receiver = {
         // activeShow = data.id
 
         _set("activeShow", data)
-
-        const currentActive = _get("active")
-        const nextType = resolveShowType(data, currentActive?.type)
-        if (data?.id) {
-            _set("active", { id: data.id, type: nextType })
-        }
     },
     OUT: (data: any) => {
         if (!_get("isConnected")) return
@@ -438,7 +430,6 @@ export const receiver = {
     },
 
     "API:get_pdf_thumbnails": (data: { path: string; pages: string[] }) => {
-        if (!data.pages || data.pages.length === 0) console.error("[Remote Receiver] ERROR: No pages received!")
         _update("pdfPages", data.path, data.pages)
     },
 
