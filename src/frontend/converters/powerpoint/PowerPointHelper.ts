@@ -450,7 +450,8 @@ export class PowerPointPackage {
                     left: toFract(r),
                     top: toFract(b),
                     right: toFract(l),
-                    bottom: toFract(t)
+                    bottom: toFract(t),
+                    type: "ppt"
                 }
                 if (imageItem.cropping.left + imageItem.cropping.right + imageItem.cropping.top + imageItem.cropping.bottom === 0) delete imageItem.cropping
             }
@@ -1227,12 +1228,13 @@ export class PowerPointPackage {
             const b = getAttribute(blipFill, "b", "a:srcRect")
 
             // should be mainly for media item
-            if (l != null || t != null || r != null || b != null) {
+            if (l !== "" || t !== "" || r !== "" || b !== "") {
                 item.cropping = {
                     left: toFract(l), // , emuToPixels(pos.width || 0)),
                     top: toFract(t), // , emuToPixels(pos.height || 0)),
                     right: toFract(r), // , emuToPixels(pos.width || 0)),
-                    bottom: toFract(b) // , emuToPixels(pos.height || 0))
+                    bottom: toFract(b), // , emuToPixels(pos.height || 0))
+                    type: "ppt"
                 }
                 if (item.cropping.left + item.cropping.right + item.cropping.top + item.cropping.bottom === 0) delete item.cropping
             }

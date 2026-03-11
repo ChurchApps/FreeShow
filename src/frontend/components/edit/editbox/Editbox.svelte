@@ -10,6 +10,7 @@
     import { getNumberVariables } from "../../helpers/showActions"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import SlideItems from "../../slide/SlideItems.svelte"
+    import EditboxCropping from "./EditboxCropping.svelte"
     import EditboxLines from "./EditboxLines.svelte"
     import EditboxPlain from "./EditboxPlain.svelte"
 
@@ -30,11 +31,14 @@
     export let chordsAction = ""
 
     let itemElem: HTMLElement | undefined
+    let cropElem: EditboxCropping | undefined
+    let cropActive = false
+    let cropPreview = { top: 0, right: 0, bottom: 0, left: 0 }
 
     export let mouse: any = {}
     function mousedown(e: any) {
         if (e.target.closest(".chords") || e.target.closest(".editTools")) return
-        if (!e.target.closest(".line") && !e.target.closest(".square") && !e.target.closest(".rotate") && !e.target.closest(".radius")) openToolsTab.set("text")
+        if (!e.target.closest(".line") && !e.target.closest(".square") && !e.target.closest(".rotate") && !e.target.closest(".radius") && !e.target.closest(".cropHandle") && !e.target.closest(".cropOverlay")) openToolsTab.set("text")
 
         const rightClick: boolean = e.button === 2 || e.buttons === 2 || ($os.platform === "darwin" && e.ctrlKey)
 
@@ -88,6 +92,8 @@
     // $: slide = layout && $activeEdit.slide !== null && $activeEdit.slide !== undefined ? [$showsCache, GetLayoutRef(active, layout)[$activeEdit.slide].id][1] : null
 
     function keydown(e: KeyboardEvent) {
+        if (cropElem?.handleKeydown(e)) return
+
         if (e.key === "Escape") {
             ;(document.activeElement as HTMLElement).blur()
             window.getSelection()?.removeAllRanges()
@@ -161,6 +167,10 @@
         deleteAction({ id: "item", data: { layout, slideId: ref.id } })
     }
 
+    function dblclick(e: MouseEvent) {
+        cropElem?.handleDblclick(e)
+    }
+
     $: isDisabledVariable = item?.type === "variable" && $variables[item.variable?.id]?.enabled === false
     // SHOW IS LOCKED FOR EDITING
     let profile = getAccess("shows")
@@ -171,6 +181,9 @@
     $: cssVariables = getNumberVariables($variables)
 
     const isOptimized = $special.optimizedMode
+    let previewCropType: "clip" | "ppt" = "clip"
+    $: previewCropType = item?.cropping?.type === "ppt" ? "ppt" : "clip"
+    $: previewItem = cropActive && item ? { ...item, cropping: { ...cropPreview, type: previewCropType } } : item
 
     // fixed letter width
     $: fixedWidth = item?.type === "timer" || item?.type === "clock" ? "font-feature-settings: 'tnum' 1;" : ""
@@ -196,15 +209,24 @@ bind:offsetWidth={width} -->
     style="{plain ? 'width: 100%;' : `${getCustomStyle(item?.style || '', customOutputId)}; outline: ${3 / ratio}px solid rgb(255 255 255 / 0.2);z-index: ${index + 1 + ($activeEdit.items.includes(index) ? 100 : 0)};${filter ? 'filter: ' + filter + ';' : ''}${backdropFilter ? 'backdrop-filter: ' + backdropFilter + ';' : ''}`}{cssVariables}{fixedWidth}"
     data-index={index}
     on:mousedown={mousedown}
+    on:dblclick={dblclick}
 >
     {#if !plain}
-        <EditboxPlain {item} {index} {ratio} />
+        <EditboxPlain {item} {index} {ratio} hideMovebox={cropActive} />
     {/if}
     {#if item?.lines && !noTextMode}
         <EditboxLines {item} {ref} {index} {editIndex} {plain} {chordsMode} {chordsAction} {isLocked} />
-    {:else if item}
-        <SlideItems {item} {ratio} {ref} {itemElem} slideIndex={$activeEdit.slide || 0} edit />
+    {:else if previewItem}
+        {#if previewItem.type === "media"}
+            <div class="mediaFrame" class:showOverflow={cropActive}>
+                <SlideItems item={previewItem} {ratio} {ref} {itemElem} slideIndex={$activeEdit.slide || 0} edit cropPreviewMode={cropActive} />
+            </div>
+        {:else}
+            <SlideItems item={previewItem} {ratio} {ref} {itemElem} slideIndex={$activeEdit.slide || 0} edit />
+        {/if}
     {/if}
+
+    <EditboxCropping bind:this={cropElem} {item} {index} {ref} {itemElem} {plain} {isLocked} selected={$activeEdit.items.includes(index)} bind:cropActive bind:cropPreview />
 
     {#if mediaShouldBeBackground}
         <div class="tip">
@@ -244,6 +266,15 @@ bind:offsetWidth={width} -->
         /* .item:hover > .edit { */
         background-color: rgb(255 255 255 / 0.05);
         backdrop-filter: blur(20px);
+    }
+
+    .mediaFrame {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+    }
+    .mediaFrame.showOverflow {
+        overflow: visible;
     }
 
     .item.decoration:not(.selected) {

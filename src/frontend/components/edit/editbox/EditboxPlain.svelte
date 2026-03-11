@@ -20,6 +20,7 @@
     export let item: Item | null
     export let index: number
     export let ratio: number
+    export let hideMovebox = false
 
     const actions = [
         { id: "transition", label: "popup.transition", icon: "transition" },
@@ -122,7 +123,9 @@
 </script>
 
 <!-- all icons are square, so only corner resizers need to be active -->
-<Movebox {ratio} itemStyle={item?.style} active={$activeEdit.items.includes(index)} onlyCorners={item?.type === "icon"} />
+{#if !hideMovebox}
+    <Movebox {ratio} itemStyle={item?.style} active={$activeEdit.items.includes(index)} onlyCorners={item?.type === "icon"} />
+{/if}
 
 <div class="actions">
     <!-- localization -->
