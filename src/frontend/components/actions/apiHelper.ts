@@ -818,44 +818,20 @@ function levenshteinDistance(a, b) {
 
 export async function getPDFThumbnails({ path }: API_media) {
     if (!path) return []
-    
-    const logMsg = (msg: string) => {
-        console.log("[getPDFThumbnails]", msg)
-        // También mostrar en la página para iOS
-        const debugDiv = document.getElementById("debug-pdf-log") || (() => {
-            const div = document.createElement("div")
-            div.id = "debug-pdf-log"
-            div.style.cssText = "position: fixed; top: 0; left: 0; background: black; color: lime; font-family: monospace; font-size: 10px; width: 100%; max-height: 200px; overflow-y: auto; z-index: 9999; padding: 5px;"
-            document.body.appendChild(div)
-            return div
-        })()
-        const line = document.createElement("div")
-        line.textContent = new Date().toLocaleTimeString() + " | " + msg
-        debugDiv.appendChild(line)
-        debugDiv.scrollTop = debugDiv.scrollHeight
-    }
-    
-    logMsg("Starting PDF processing for: " + path)
-    const totalStart = Date.now()
 
     GlobalWorkerOptions.workerSrc = "./assets/pdf.worker.min.mjs"
     const loadingTask = getDocument(path)
     const pdfDoc = await loadingTask.promise
     const pageCount = pdfDoc.numPages
-    logMsg("PDF loaded with " + pageCount + " pages in " + (Date.now() - totalStart) + "ms")
 
     const canvas = document.createElement("canvas")
     const context = canvas.getContext("2d")
     if (!context) {
-        logMsg("ERROR: No canvas context!")
         return []
     }
 
     const pages: string[] = []
     for (let i = 0; i < pageCount; i++) {
-        const pageStart = Date.now()
-        logMsg("Processing page " + (i + 1) + " of " + pageCount)
-        
         try {
             const page = await pdfDoc.getPage(i + 1)
             const viewport = page.getViewport({ scale: 1.5 })
@@ -866,14 +842,11 @@ export async function getPDFThumbnails({ path }: API_media) {
             await page.render({ canvas, canvasContext: context, viewport }).promise
             const base64 = canvas.toDataURL("image/jpeg", 0.7)
             pages.push(base64)
-            
-            logMsg("Page " + (i + 1) + " done in " + (Date.now() - pageStart) + "ms, size: " + Math.round(base64.length / 1024) + "KB")
-        } catch (error) {
-            logMsg("ERROR on page " + (i + 1) + ": " + (error as any).message)
+        } catch {
+            continue
         }
     }
 
-    logMsg("All pages processed in " + (Date.now() - totalStart) + "ms, total size: " + Math.round(pages.reduce((a, b) => a + b.length, 0) / 1024 / 1024) + "MB")
     loadingTask.destroy()
     return { path, pages }
 }
