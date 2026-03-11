@@ -8,21 +8,97 @@
     export let active: boolean
     export let onlyCorners = false
 
-    let corners = ["nw", "n", "ne", "e", "se", "s", "sw", "w"]
-    let sides = ["n", "e", "s", "w"]
+    const corners = ["nw", "n", "ne", "e", "se", "s", "sw", "w"]
+    const sides = ["n", "e", "s", "w"]
+    const DEG_PER_RAD = 180 / Math.PI
+    let moveboxElem: HTMLElement | undefined
 
     $: styles = getStyles(itemStyle, true)
+    $: styleRotationDeg = getRotationDeg(itemStyle)
 
+    function getRotationDeg(style: string) {
+        if (!style) return 0
+        const match = style.match(/rotate\((-?\d+(?:\.\d+)?)deg\)/)
+        const rotation = Number(match?.[1])
+        return Number.isFinite(rotation) ? rotation : 0
+    }
+
+    function getRotationDegFromComputedTransform(transform: string) {
+        if (!transform || transform === "none") return null
+
+        const values = parseMatrixValues(transform)
+        if (values.length >= 2 && Number.isFinite(values[0]) && Number.isFinite(values[1])) {
+            return Math.atan2(values[1], values[0]) * DEG_PER_RAD
+        }
+
+        return null
+    }
+
+    function parseMatrixValues(transform: string) {
+        const match = transform.match(/matrix3d?\(([^)]+)\)/)
+        if (!match) return []
+        return match[1].split(",").map((v) => Number(v.trim()))
+    }
+
+    function readLiveRotation() {
+        if (!moveboxElem) return null
+        const itemElem = moveboxElem.closest(".item") as HTMLElement | null
+        if (!itemElem) return null
+
+        const inlineRotation = getRotationDeg(itemElem.getAttribute("style") || "")
+        if (inlineRotation) return inlineRotation
+
+        const transform = getComputedStyle(itemElem).transform
+        return getRotationDegFromComputedTransform(transform)
+    }
+
+    function getHandleVector(handle: string) {
+        return {
+            x: handle.includes("w") ? -1 : handle.includes("e") ? 1 : 0,
+            y: handle.includes("n") ? -1 : handle.includes("s") ? 1 : 0
+        }
+    }
+
+    function rotateVector(vector: { x: number; y: number }, degrees: number) {
+        if (!degrees || !Number.isFinite(degrees)) return vector
+        const rad = (degrees * Math.PI) / 180
+        const cos = Math.cos(rad)
+        const sin = Math.sin(rad)
+        return {
+            x: vector.x * cos - vector.y * sin,
+            y: vector.x * sin + vector.y * cos
+        }
+    }
+
+    function getResizeCursor(handle: string, degrees = styleRotationDeg) {
+        const { x, y } = rotateVector(getHandleVector(handle), degrees)
+
+        if (handle.length === 1) {
+            return Math.abs(x) > Math.abs(y) ? "ew-resize" : "ns-resize"
+        }
+
+        const invSqrt2 = 1 / Math.sqrt(2)
+        const dotNwSe = Math.abs(x * invSqrt2 + y * invSqrt2)
+        const dotNeSw = Math.abs(x * invSqrt2 + y * -invSqrt2)
+        return dotNwSe >= dotNeSw ? "nwse-resize" : "nesw-resize"
+    }
+
+    function syncHandleCursor(e: MouseEvent, handle: string) {
+        const target = e.currentTarget as HTMLElement | null
+        if (!target) return
+        const liveDeg = readLiveRotation() ?? styleRotationDeg
+        target.style.cursor = getResizeCursor(handle, liveDeg)
+    }
     // WIP radius icon should be max styles.width and relative to height (max possible radius)
 </script>
 
-<section class="hideFromAutosize">
+<section bind:this={moveboxElem} class="hideFromAutosize">
     {#each sides as line}
         <div class="line {line}l" class:active style="{line === 'n' || line === 's' ? 'height' : 'width'}: {active ? 25 : 50}px;" />
     {/each}
     {#each corners as square}
         {#if !onlyCorners || square.length > 1}
-            <div on:mousedown={() => openToolsTab.set("item")} class="square {square}" class:active style="width: {10 / ratio}px; cursor: {square}-resize;" />
+            <div on:mousedown={() => openToolsTab.set("item")} on:mouseenter={(e) => syncHandleCursor(e, square)} on:mousemove={(e) => syncHandleCursor(e, square)} class="square {square}" class:active style="width: {10 / ratio}px; cursor: {getResizeCursor(square)};" />
         {/if}
     {/each}
     <div class="rotate" style="width: {8 / ratio}px;--line-width: {3 / ratio}px;" class:active></div>
