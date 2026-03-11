@@ -29,17 +29,56 @@
 
 </script>
 
-{#if currentShow?.type === "image" || currentShow?.type === "video"}
-    <Media />
-{:else if currentShow?.type === "audio"}
-    <AudioPreview active={currentShow} />
-{:else if currentShow?.type === "overlay"}
-    <OverlayPreview show={currentShow} />
-{:else if currentShow?.type === "pdf"}
-    <PdfPreview active={currentShow} {tablet} />
-{:else if currentShow?.type === "player"}
-    <!-- Online media / player content -->
-    <Media />
-{:else}
-    <p style="text-transform: capitalize;">{currentShow?.type}</p>
-{/if}
+<div class="content-page">
+    {#if currentShow?.name}
+        <h2 class="header">{currentShow.name}</h2>
+    {/if}
+
+    <div class="content-body">
+        {#if currentShow?.type === "image" || currentShow?.type === "video"}
+            <Media />
+        {:else if currentShow?.type === "audio"}
+            <AudioPreview active={currentShow} />
+        {:else if currentShow?.type === "overlay"}
+            <OverlayPreview show={currentShow} />
+        {:else if currentShow?.type === "pdf"}
+            <PdfPreview active={currentShow} {tablet} />
+        {:else if currentShow?.type === "player"}
+            <Media />
+        {:else}
+            <p class="fallback">{currentShow?.type}</p>
+        {/if}
+    </div>
+</div>
+
+<style>
+    .content-page {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        height: 100%;
+        min-height: 0;
+        overflow: hidden;
+    }
+
+    .header {
+        flex: 0 0 auto;
+        margin: 0;
+        padding: 0.83em 0;
+        font-size: 1rem;
+        text-align: center;
+    }
+
+    .content-body {
+        flex: 1;
+        min-height: 0;
+        overflow: hidden;
+    }
+
+    .fallback {
+        margin: 0;
+        padding: 12px;
+        text-transform: capitalize;
+    }
+</style>
+

@@ -44,9 +44,11 @@
     function openOutShow() {
         const showId = $outShow?.id
         if (!showId) return
+        const outShowRef: any = $outShow
+        const showType = outShowRef?.category === "converted" ? "pdf" : outShowRef?.type || "show"
 
         send("SHOW", showId)
-        _set("active", { id: showId, type: "show" })
+        _set("active", { id: showId, type: showType })
         _set("activeTab", "show")
         _set("activeShow", $outShow)
     }

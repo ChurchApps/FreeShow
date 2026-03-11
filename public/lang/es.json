@@ -6,11 +6,6 @@
         "about": "Acerca",
         "unnamed": "Sin nombre",
         "drop": "Soltar aquí",
-    "size": {
-        "large": "Grande",
-        "medium": "Medio",
-        "small": "Peque"
-    },
         "search": "Buscar",
         "quick_search": "Búsqueda rápida",
         "search_active": "La búsqueda está activa",

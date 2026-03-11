@@ -8,7 +8,7 @@
     import { _set, active, activeProject, activeShow, dictionary, mediaCache, project, projectsOpened, shows } from "../../util/stores"
     import ShowButton from "../ShowButton.svelte"
     import Projects from "./Projects.svelte"
-    import type { ShowList } from "../../../../types/Show"
+    import type { ShowList, ShowType } from "../../../../types/Show"
 
     type ProjectSection = {
         id: string
@@ -34,6 +34,11 @@
 
     function getShowType(show: any): string {
         return (show?.type || "").toString()
+    }
+
+    function resolveShowType(show: any): ShowType {
+        if (show?.category === "converted") return "pdf"
+        return (show?.type || "show") as ShowType
     }
 
     function isMediaType(type: string): boolean {
@@ -159,9 +164,7 @@
                                         {#if isMediaType(showType)}
                                             <Button
                                                 on:click={() => {
-                                                    // ensure we have an id and computed type (fallback for converted PDFs)
-                                                    const targetType = showType || (show?.category === "converted" ? "pdf" : "show")
-                                                    console.log("📁 [Project] opening media show from project", showId, "type", targetType)
+                                                    const targetType = resolveShowType(show)
 
                                                     _set("active", { id: showId || "", type: targetType })
                                                     _set("activeTab", "show")
@@ -188,10 +191,8 @@
                                                 <ShowButton
                                                     class="project-show-button"
                                                     on:click={(e) => {
-                                                        // set basic active ref and request full show
                                                         const id = showId || ""
-                                                        const typeHint = showData?.type || (showData?.category === "converted" ? "pdf" : "show")
-                                                        console.log("📁 [Project] opening show via ShowButton", id, "typeHint", typeHint)
+                                                        const typeHint = resolveShowType(showData)
                                                         _set("active", { id, type: typeHint })
                                                         _set("activeTab", "show")
                                                         send("SHOW", e.detail)

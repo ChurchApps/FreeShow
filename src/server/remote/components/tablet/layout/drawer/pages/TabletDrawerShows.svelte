@@ -84,8 +84,9 @@
 
     function openShow(show: any) {
         if (!show) return
+        const showType = show?.category === "converted" ? "pdf" : show?.type || "show"
         send("SHOW", show.id)
-        _set("active", { id: show.id, type: "show" })
+        _set("active", { id: show.id, type: showType })
         _set("activeTab", "show")
     }
 

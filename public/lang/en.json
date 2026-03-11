@@ -6,11 +6,6 @@
         "about": "About",
         "unnamed": "Unnamed",
         "drop": "Drop here",
-    "size": {
-        "large": "Large",
-        "medium": "Medium",
-        "small": "Small"
-    },
         "search": "Search",
         "quick_search": "Quick search",
         "search_active": "Search is active",

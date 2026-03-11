@@ -47,54 +47,40 @@ function deleteThumbnails(filePath: string) {
 
 const currentlyGenerating = new Set<string>()
 export async function getThumbnail(data: { input: string; size: number }) {
-    console.log("[getThumbnail] START - input:", data.input, "size:", data.size)
-    
     if (!(await doesPathExistAsync(data.input))) {
         console.error("[getThumbnail] File does not exist:", data.input)
         return { ...data, output: "" }
     }
 
     const mediaId = `${data.input}-${data.size}`
-    console.log("[getThumbnail] mediaId:", mediaId)
-    
+
     if (currentlyGenerating.has(mediaId)) {
-        console.log("[getThumbnail] Already generating, waiting...")
         await waitUntilValueIsDefined(() => !currentlyGenerating.has(mediaId), 50, 10000)
-        console.log("[getThumbnail] Finished waiting, returning cached path")
         return finish(getThumbnailPath(data.input, data.size))
     }
-    
+
     currentlyGenerating.add(mediaId)
-    console.log("[getThumbnail] Added to queue, currently generating:", currentlyGenerating.size)
 
     const outputPath = getThumbnailPath(data.input, data.size || 500)
-    console.log("[getThumbnail] Output path:", outputPath)
-    
+
     if (await doesPathExistAsync(outputPath)) {
-        console.log("[getThumbnail] Cache exists, returning")
         currentlyGenerating.delete(mediaId)
         return finish(outputPath)
     }
 
-    console.log("[getThumbnail] Cache miss, creating thumbnail...")
     createThumbnail(data.input, data.size || 500)
-    console.log("[getThumbnail] Thumbnail queued, waiting for generation...")
 
-    const waitStart = Date.now()
     await waitUntilValueIsDefined(() => !currentlyGenerating.has(mediaId), 50, 10000)
-    console.log("[getThumbnail] Generation complete in", Date.now() - waitStart, "ms")
 
     return finish(outputPath)
 
     function finish(output: string) {
-        console.log("[getThumbnail] finish() - output:", output, "failedPaths:", failedPaths)
         if (failedPaths.includes(mediaId)) {
             console.error("[getThumbnail] FAILED - removing from failedPaths")
             failedPaths.splice(failedPaths.indexOf(mediaId), 1)
             return { ...data, output: "" }
         }
 
-        console.log("[getThumbnail] SUCCESS - returning", { ...data, output })
         return { ...data, output }
     }
 }
@@ -105,9 +91,7 @@ export function createThumbnail(filePath: string, size = 250) {
         return ""
     }
 
-    console.log("[createThumbnail] Creating thumbnail for:", filePath, "size:", size)
     const outputPath = getThumbnailPath(filePath, size)
-    console.log("[createThumbnail] Output path:", outputPath)
 
     addToGenerateQueue({ input: filePath, output: outputPath, size })
 
@@ -139,27 +123,21 @@ function generationFinished(mediaId: string) {
 
 async function generateThumbnail(data: Thumbnail) {
     const mediaId = `${data.input}-${data.size}`
-    console.log("[generateThumbnail] START - input:", data.input, "output:", data.output)
-    
+
     const ext = getExtension(data.input)
     const isValidMedia = [...imageExtensions, ...videoExtensions].includes(ext)
-    console.log("[generateThumbnail] Extension:", ext, "isValidMedia:", isValidMedia)
-    
+
     if (!isValidMedia) {
-        console.log("[generateThumbnail] Not a valid media type, skipping")
         return generationFinished(mediaId)
     }
-    
+
     if (await doesPathExistAsync(data.output)) {
-        console.log("[generateThumbnail] Output already exists, skipping")
         generationFinished(mediaId)
         return
     }
 
     try {
-        console.log("[generateThumbnail] Calling generate()...")
         await generate(data.input, data.output, String(data.size) + "x?", { seek: 0.5 }, mediaId)
-        console.log("[generateThumbnail] generate() completed")
     } catch (err) {
         console.error("[generateThumbnail] ERROR in generate():", err)
         generationFinished(mediaId)
@@ -297,15 +275,11 @@ export function saveImage(data: { id?: string; path?: string; base64?: string; b
 }
 
 export async function pdfToImage({ filePath }: { filePath: string }) {
-    console.log("[pdfToImage] Starting PDF conversion for:", filePath)
-    const startTime = Date.now()
     const pdfName = path.basename(filePath, path.extname(filePath))
     const pdfImportPath = getDataFolderPath("imports", "PDF")
     const pathName = createFolder(path.join(pdfImportPath, pdfName))
 
-    console.log("[pdfToImage] Requesting thumbnails from API...")
     const { pages: pdfImages }: { pages: string[] } = (await requestToMain(ToMain.API, { action: "get_pdf_thumbnails", data: { path: filePath } })) || { pages: [] }
-    console.log("[pdfToImage] Got response in", Date.now() - startTime, "ms, pages:", pdfImages?.length)
     if (!Array.isArray(pdfImages)) {
         console.error("[pdfToImage] ERROR: pdfImages is not an array!", typeof pdfImages, pdfImages)
         return
