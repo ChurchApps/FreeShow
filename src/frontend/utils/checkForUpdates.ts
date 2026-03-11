@@ -18,7 +18,8 @@ export function checkForUpdates(currentVersion: string) {
             const latestVersion = includeBeta ? latestVersionAll : latestRelease.tag_name.slice(1)
             if (currentVersion === latestVersion) return
 
-            popupData.set({ changelog: latestRelease.body, latestVersion })
+            const changelog = includeBeta ? latestAll.body : latestRelease.body
+            popupData.set({ changelog, latestVersion })
             activePopup.set("new_update")
         })
         .catch((error) => {
