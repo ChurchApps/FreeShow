@@ -5,7 +5,8 @@
     import Zoomed from "./Zoomed.svelte"
     import { GetLayout } from "../../util/output"
     import { getStyleResolution } from "../../../common/util/getStyleResolution"
-    import { outLayout, outShow, styleRes } from "../../util/stores"
+    import { send } from "../../util/socket"
+    import { mediaCache, outLayout, outShow, styleRes } from "../../util/stores"
 
     export let outSlide: number
     export let preview: boolean = false
@@ -20,6 +21,13 @@
     $: layout = GetLayout($outShow, $outLayout)[outSlide]
 
     $: showSlide = $outShow?.slides?.[layout?.id] || null
+    $: backgroundPath = $outShow?.media?.[layout?.background || ""]?.path || ""
+    $: backgroundThumb = backgroundPath ? $mediaCache[backgroundPath] : ""
+    $: canRenderPath = backgroundPath.startsWith("data:") || backgroundPath.startsWith("http://") || backgroundPath.startsWith("https://") || backgroundPath.startsWith("blob:")
+    $: backgroundSrc = backgroundThumb || (canRenderPath ? backgroundPath : "")
+    $: if (backgroundPath && !canRenderPath && !$mediaCache[backgroundPath]) {
+        send("API:get_thumbnail", { path: backgroundPath })
+    }
 
     $: isCustomRes = resolution.width !== 1920 || resolution.height !== 1080
     // WIP get layout resolution
@@ -33,8 +41,8 @@
     <MediaOutput {...$outBackground} {transition} bind:video bind:videoData />
   {/if} -->
         <div class="background" style="zoom: {1 / ratio}">
-            {#if $outShow?.media?.[layout?.background || ""]}
-                <img src={$outShow.media[layout.background || ""].path} />
+            {#if backgroundSrc}
+                <img src={backgroundSrc} alt="" loading="lazy" decoding="async" />
             {/if}
         </div>
         {#if $outShow}
