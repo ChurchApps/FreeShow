@@ -51,6 +51,7 @@
     }
 
     $: lightPreviewLines = getLightPreviewLines(slide?.items || [])
+    $: shouldRenderItems = renderItems || !isIphone
 </script>
 
 <!-- TODO: disabled -->
@@ -60,7 +61,7 @@
 class:left={overIndex === index && (!selected.length || index <= selected[0])} -->
 <div class="main" style="width: {100 / columns}%">
     <div class="slide context #slide" class:disabled={layoutSlide.disabled} class:active style="background-color: {color};" tabindex={0} data-index={index} on:click>
-        {#if renderItems}
+        {#if shouldRenderItems}
             <Zoomed resolution={newResolution} background={slide.settings?.color || (slide.items.length ? "black" : "transparent")} bind:ratio>
                 <!-- class:ghost={!background} -->
                 <div class="background" style="zoom: {1 / ratio}">
