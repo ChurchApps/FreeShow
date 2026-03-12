@@ -110,8 +110,8 @@ export const receiveREMOTE: any = {
         loadingShow = showID
         await loadShows([showID])
 
-        // Send once to avoid duplicate renders and thumbnail request bursts on remote clients.
-        msg.data = clone({ ...(await convertBackgrounds(get(showsCache)[showID], true)), id: showID })
+        msg.data = clone({ ...(await convertBackgrounds(get(showsCache)[showID])), id: showID })
+        // send(REMOTE, ["MEDIA"], { media: msg.data.media })
 
         if (loadingShow !== showID) return
 
@@ -409,7 +409,6 @@ export async function convertBackgrounds(show: Show, noLoad = false, init = fals
             if (child.background) mediaIds.add(child.background)
         })
     })
-
     ;[...mediaIds].forEach((id) => {
         let path = show.media[id]?.path || show.media[id]?.id || ""
         if (!path) return
@@ -422,8 +421,9 @@ export async function convertBackgrounds(show: Show, noLoad = false, init = fals
         const remoteConnections = Object.keys(get(connections).REMOTE || {})?.length || 0
         if (!init && remoteConnections === 0) return
 
-        // Keep paths as thumbnails for remote and let remote request them lazily.
-        show.media[id].path = getThumbnailPath(path, mediaSize.slideSize)
+        // const base64Path: string = await getBase64Path(path, mediaSize.slideSize)
+        // keep paths and let remote request them lazily.
+        show.media[id].path = path
     })
 
     return show

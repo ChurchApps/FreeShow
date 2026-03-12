@@ -101,6 +101,11 @@ export function encodeFilePath(path: string): string {
 
 export async function getThumbnail(data: API_media) {
     let path = data.path
+
+    const located = await locateMediaFile(path)
+    if (!located?.path) return ""
+    path = located.path
+
     if (videoExtensions.includes(getExtension(path))) {
         path = getThumbnailPath(path, mediaSize.drawerSize)
     }
