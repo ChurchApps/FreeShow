@@ -12,7 +12,6 @@
     export let columns: number = 1
     export let active: boolean = false
     export let resolution: any
-    export let renderItems: boolean = true
 
     let ratio = 0
 
@@ -36,26 +35,18 @@
 class:left={overIndex === index && (!selected.length || index <= selected[0])} -->
 <div class="main" style="width: {100 / columns}%">
     <div class="slide context #slide" class:disabled={layoutSlide.disabled} class:active style="background-color: {color};" tabindex={0} data-index={index} on:click>
-        {#if renderItems}
-            <Zoomed resolution={newResolution} background={slide.settings?.color || (slide.items.length ? "black" : "transparent")} bind:ratio>
-                <!-- class:ghost={!background} -->
-                <div class="background" style="zoom: {1 / ratio}">
-                    {#if backgroundPath}
-                        <img src={backgroundSrc} alt="" loading="lazy" decoding="async" />
-                    {/if}
-                </div>
-                <!-- TODO: check if showid exists in shows -->
-                {#each slide.items as item}
-                    <Textbox {item} />
-                {/each}
-            </Zoomed>
-        {:else}
-            <div class="light-background">
+        <Zoomed resolution={newResolution} background={slide.settings?.color || (slide.items.length ? "black" : "transparent")} bind:ratio>
+            <!-- class:ghost={!background} -->
+            <div class="background" style="zoom: {1 / ratio}">
                 {#if backgroundPath}
                     <img src={backgroundSrc} alt="" loading="lazy" decoding="async" />
                 {/if}
             </div>
-        {/if}
+            <!-- TODO: check if showid exists in shows -->
+            {#each slide.items as item}
+                <Textbox {item} />
+            {/each}
+        </Zoomed>
         <!-- TODO: BG: white, color: black -->
         <!-- style="width: {newResolution.width * zoom}px;" -->
 
@@ -104,20 +95,6 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
     opacity: 0.4;
   } */
     .background :global(img) {
-        width: 100%;
-        height: 100%;
-        object-fit: contain;
-    }
-
-    .light-background {
-        width: 100%;
-        aspect-ratio: 16 / 9;
-        position: relative;
-        background: black;
-        overflow: hidden;
-    }
-
-    .light-background :global(img) {
         width: 100%;
         height: 100%;
         object-fit: contain;

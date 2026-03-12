@@ -86,10 +86,8 @@
             e.preventDefault()
             let dist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY)
 
-            let newColumns = 1
             scaled = initialDistance / margin - dist / margin
-            if (scaled < 0) newColumns = initialColumns + scaled
-            else newColumns = initialColumns + scaled
+            const newColumns = initialColumns + scaled
 
             columns = Math.min(4, Math.max(1, Math.floor(newColumns)))
         }
@@ -105,12 +103,24 @@
     // Keep thumbnail requests slow, but enqueue all slides immediately on show open.
     const THUMB_REQUEST_DELAY = 180
     let lastShowId = ""
+    let currentShowId = ""
+    let allSlides: Array<{ slide: any; index: number; backgroundPath: string }> = []
     const queuedThumbs = new Set<string>()
     const thumbQueue: string[] = []
     let drainingThumbs = false
+    let destroyed = false
+
+    function resetThumbnailQueue() {
+        thumbQueue.length = 0
+        queuedThumbs.clear()
+    }
 
     function isDirectPath(path: string) {
-        return path.startsWith("data:") || path.startsWith("http://") || path.startsWith("https://") || path.startsWith("blob:")
+        return /^(data:|https?:\/\/|blob:)/.test(path)
+    }
+
+    function sleep(ms: number) {
+        return new Promise<void>((resolve) => setTimeout(resolve, ms))
     }
 
     function queueThumbnail(path: string) {
@@ -124,21 +134,22 @@
         if (drainingThumbs) return
         drainingThumbs = true
 
-        while (thumbQueue.length) {
-            const path = thumbQueue.shift()
-            if (!path) continue
-            send("API:get_thumbnail", { path })
-            await new Promise((resolve) => setTimeout(resolve, THUMB_REQUEST_DELAY))
+        try {
+            while (thumbQueue.length && !destroyed) {
+                const path = thumbQueue.shift()
+                if (!path) continue
+                send("API:get_thumbnail", { path })
+                await sleep(THUMB_REQUEST_DELAY)
+            }
+        } finally {
+            drainingThumbs = false
         }
-
-        drainingThumbs = false
     }
 
     $: currentShowId = $activeShow?.id || ""
     $: if (currentShowId !== lastShowId) {
         lastShowId = currentShowId
-        thumbQueue.length = 0
-        queuedThumbs.clear()
+        resetThumbnailQueue()
     }
 
     $: allSlides = layoutSlides.map((slide, index) => {
@@ -152,8 +163,8 @@
     })
 
     onDestroy(() => {
-        thumbQueue.length = 0
-        queuedThumbs.clear()
+        destroyed = true
+        resetThumbnailQueue()
         if (pendingScrollTimer) clearTimeout(pendingScrollTimer)
     })
 </script>
@@ -171,7 +182,6 @@
                     index={entry.index}
                     color={entry.slide.color}
                     active={isActive}
-                    renderItems={true}
                     {columns}
                     on:click={() => {
                         // if (!$outLocked && !e.ctrlKey) {
