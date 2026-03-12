@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { onMount } from "svelte"
     import { getGroupName } from "../../../common/util/show"
     import { activeShow, mediaCache } from "../../util/stores"
     import Textbox from "./Textbox.svelte"
@@ -15,6 +16,11 @@
     export let renderItems: boolean = true
 
     let ratio = 0
+    let isIphone = false
+
+    onMount(() => {
+        isIphone = /iPhone/i.test(navigator.userAgent || "")
+    })
 
     $: isCustomRes = resolution.width !== 1920 || resolution.height !== 1080
     // WIP get layout resolution
@@ -72,7 +78,7 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
                 {#if backgroundSrc}
                     <img src={backgroundSrc} alt="" loading="lazy" decoding="async" />
                 {/if}
-                {#if lightPreviewLines.length}
+                {#if isIphone && lightPreviewLines.length}
                     <div class="light-text">
                         {#each lightPreviewLines as line}
                             <span>{line}</span>
@@ -84,9 +90,9 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
         <!-- TODO: BG: white, color: black -->
         <!-- style="width: {newResolution.width * zoom}px;" -->
 
-        <div class="label" title={slide.group === null ? "" : name || "-"} style={`color: ${color};border-bottom: 2px solid ${color || "var(--primary-darkest)"};`}>
+        <div class="label" title={slide.group === null ? "" : name || "—"} style={`color: ${color};border-bottom: 2px solid ${color || "var(--primary-darkest)"};`}>
             <span style="position: absolute;display: contents;">{index + 1}</span>
-            <span class="text">{slide.group === null ? "" : name || "-"}</span>
+            <span class="text">{slide.group === null ? "" : name || "—"}</span>
         </div>
     </div>
 </div>
