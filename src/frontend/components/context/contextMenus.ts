@@ -184,6 +184,8 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     overlay_actions: { label: "tabs.actions", icon: "actions", iconColor: "#d497ff" },
     // TEMPLATES
     template_actions: { label: "tabs.actions", icon: "actions", iconColor: "#d497ff" },
+    // SCRIPTUES
+    route_bible: { label: "main.open: Route Bible", icon: "launch" },
     // STAGE
     move_connections: { label: "context.move_connections", icon: "up" },
     // SETTINGS
@@ -294,7 +296,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     actions_readonly: ["action_tag_filter"],
     action: ["GROUP_edit", "disable", "action_tag_set", "action_tag_filter", "SEPARATOR", "duplicate", "delete"], // GROUP_duplicate_delete
     action_readonly: ["action_tag_filter"],
-    scripture_verse: ["create_show", "SEPARATOR", "selectAll"],
+    scripture_verse: ["create_show", "SEPARATOR", "selectAll", "SEPARATOR", "route_bible"],
     scripture_chapter: ["create_show"],
 
     // PROJECT
