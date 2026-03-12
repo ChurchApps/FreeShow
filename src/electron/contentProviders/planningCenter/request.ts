@@ -37,6 +37,38 @@ type ParsedSectionLine = {
 
 const chordTokenRegex = /^[A-G](?:#|b)?(?:m|maj|min|sus|add|aug|dim)?\d*(?:\/[A-G](?:#|b)?)?$/i
 
+function isColumnBreakLine(line: string): boolean {
+    return line.trim().toUpperCase() === "COLUMN_BREAK"
+}
+
+function isChordProgressionLine(line: string): boolean {
+    const trimmed = line.trim()
+    if (!trimmed) return false
+
+    const withoutLabel = trimmed.replace(/^[A-ZÁÉÍÓÚÑ_ ]+:\s*/i, "").trim()
+    if (!withoutLabel) return false
+
+    const tokens = withoutLabel.split(/\s+/).filter(Boolean)
+    if (!tokens.length) return false
+
+    let chordCount = 0
+    for (const rawToken of tokens) {
+        const token = rawToken.replace(/[.,;:]+$/, "")
+        if (chordTokenRegex.test(token)) {
+            chordCount++
+            continue
+        }
+
+        if (/^x\d+$/i.test(token) || /^\(x\d+\)$/i.test(token) || /^\|+$/.test(token) || /^-+$/.test(token) || /^\/+$/i.test(token)) {
+            continue
+        }
+
+        return false
+    }
+
+    return chordCount >= 2
+}
+
 function parseChordChartIntoSections(chordChart: string): SongSection[] {
     const sections: SongSection[] = []
     const lines = chordChart.split(/\r?\n/)
@@ -45,6 +77,8 @@ function parseChordChartIntoSections(chordChart: string): SongSection[] {
 
     for (const line of lines) {
         const trimmed = line.trim()
+
+        if (isColumnBreakLine(trimmed)) continue
 
         // Detect section headers (VERSE, CHORUS, BRIDGE, etc.)
         // Order matters: longer patterns first (PRECORO before PRE, INSTRUMENTAL before INTRO)
@@ -543,6 +577,7 @@ function alignChordsToLyricLine(chords: Chords[], rawLyricLine: string, sectionB
 function parseSectionLines(lyrics: string): ParsedSectionLine[] {
     const rawLines = normalizeLineBreaks(lyrics)
         .split("\n")
+        .filter((line) => !isColumnBreakLine(line))
         .map((line) => line.replace(/\/{2,}/g, ""))
 
     // Planning Center often includes a common left indent in chord-only lines.
@@ -569,6 +604,10 @@ function parseSectionLines(lyrics: string): ParsedSectionLine[] {
             continue
         }
 
+        if (isChordProgressionLine(currentLine)) {
+            continue
+        }
+
         const inline = parseInlineBracketLine(currentLine)
         if (inline && inline.text.trim()) {
             parsedLines.push({ text: inline.text.trim(), chords: inline.chords })
@@ -578,7 +617,7 @@ function parseSectionLines(lyrics: string): ParsedSectionLine[] {
         const chordLine = getChordLineData(currentLine)
         if (chordLine && i + 1 < rawLines.length) {
             const nextLine = rawLines[i + 1]
-            if (nextLine.trim() && !getChordLineData(nextLine) && !parseInlineBracketLine(nextLine)) {
+            if (nextLine.trim() && !isChordProgressionLine(nextLine) && !getChordLineData(nextLine) && !parseInlineBracketLine(nextLine)) {
                 const alignedLine = alignChordsToLyricLine(chordLine, nextLine, sectionBaseOffset || 0)
                 parsedLines.push({ text: alignedLine.text, chords: alignedLine.chords })
                 i++
