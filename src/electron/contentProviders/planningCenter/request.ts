@@ -9,7 +9,7 @@ import { uid } from "uid"
 import { ToMain } from "../../../types/IPC/ToMain"
 import type { LessonsData } from "../../../types/Main"
 import type { Project } from "../../../types/Projects"
-import type { Show, Slide, SlideData } from "../../../types/Show"
+import type { Chords, Show, Slide, SlideData } from "../../../types/Show"
 import { downloadLessonsMedia } from "../../data/downloadMedia"
 import { sendToMain } from "../../IPC/main"
 import { getDataFolderPath } from "../../utils/files"
@@ -30,30 +30,12 @@ type SongSection = {
     breaks_at?: number
 }
 
-function isLikelyChordLine(line: string): boolean {
-    if (!line.trim()) return false
-    
-    const trimmed = line.trim()
-    
-    // Pattern to detect musical chords: A-G followed optionally by modifiers
-    // Examples: C, F#m, Dm7, Cmaj7, Bb, etc.
-    const chordPattern = /^[A-G][#b]?(?:m|maj|min|add|sus|aug|dim)?[\d]*(?:\s+[A-G][#b]?(?:m|maj|min|add|sus|aug|dim)?[\d]*)*$/
-    
-    if (chordPattern.test(trimmed)) {
-        return true
-    }
-    
-    // Count the number of chord symbols
-    const chordSymbols = (trimmed.match(/[A-G][#b]?/g) || []).length
-    const totalChars = trimmed.replace(/\s/g, '').length
-    
-    // If high proportion of chord symbols, likely a chord line
-    if (chordSymbols > 0 && (chordSymbols / (totalChars / 2)) > 0.5) {
-        return true
-    }
-    
-    return false
+type ParsedSectionLine = {
+    text: string
+    chords?: Chords[]
 }
+
+const chordTokenRegex = /^[A-G](?:#|b)?(?:m|maj|min|sus|add|aug|dim)?\d*(?:\/[A-G](?:#|b)?)?$/i
 
 function parseChordChartIntoSections(chordChart: string): SongSection[] {
     const sections: SongSection[] = []
@@ -61,8 +43,7 @@ function parseChordChartIntoSections(chordChart: string): SongSection[] {
     let currentSectionLabel = ""
     let currentSectionContent: string[] = []
 
-    for (let i = 0; i < lines.length; i++) {
-        const line = lines[i]
+    for (const line of lines) {
         const trimmed = line.trim()
 
         // Detect section headers (VERSE, CHORUS, BRIDGE, etc.)
@@ -71,7 +52,7 @@ function parseChordChartIntoSections(chordChart: string): SongSection[] {
         if (sectionMatch) {
             // Save previous section if exists (including sections with only chords)
             if (currentSectionLabel) {
-                const content = currentSectionContent.map(l => l.trim()).filter(l => l).join("\n").trim()
+                const content = currentSectionContent.filter((l) => l.trim()).join("\n")
                 if (content) {
                     sections.push({
                         label: currentSectionLabel,
@@ -84,11 +65,6 @@ function parseChordChartIntoSections(chordChart: string): SongSection[] {
             continue
         }
 
-        // Skip chord lines
-        if (isLikelyChordLine(line)) {
-            continue
-        }
-
         // Keep lyric lines (even if empty)
         if (trimmed) {
             currentSectionContent.push(line)
@@ -97,7 +73,7 @@ function parseChordChartIntoSections(chordChart: string): SongSection[] {
 
     // Save last section
     if (currentSectionLabel) {
-        const content = currentSectionContent.map(l => l.trim()).filter(l => l).join("\n").trim()
+        const content = currentSectionContent.filter((l) => l.trim()).join("\n")
         if (content) {
             sections.push({
                 label: currentSectionLabel,
@@ -484,6 +460,138 @@ function normalizeLineBreaks(text: string): string {
     return text.replace(/\n\r/g, "\n").replace(/\r\n/g, "\n").replace(/\r/g, "\n")
 }
 
+function parseInlineBracketLine(line: string): { text: string; chords: Chords[] } | null {
+    if (!line.includes("[") || !line.includes("]")) return null
+
+    let text = ""
+    const chords: Chords[] = []
+    let cursor = 0
+
+    while (cursor < line.length) {
+        const start = line.indexOf("[", cursor)
+        if (start < 0) {
+            text += line.slice(cursor)
+            break
+        }
+
+        text += line.slice(cursor, start)
+        const end = line.indexOf("]", start + 1)
+        if (end < 0) {
+            text += line.slice(start)
+            break
+        }
+
+        const chord = line.slice(start + 1, end).trim()
+        if (chord) {
+            chords.push({ id: uid(5), pos: text.length, key: chord })
+        }
+
+        cursor = end + 1
+    }
+
+    if (!chords.length) return null
+    return { text, chords }
+}
+
+function parsePlainChordLine(line: string): Chords[] | null {
+    const matches = [...line.matchAll(/\S+/g)]
+    if (!matches.length) return null
+
+    const chords: Chords[] = []
+    for (const match of matches) {
+        const token = match[0]
+        const pos = match.index ?? 0
+        if (!chordTokenRegex.test(token)) return null
+        chords.push({ id: uid(5), pos, key: token })
+    }
+
+    return chords.length ? chords : null
+}
+
+function getChordLineData(line: string): Chords[] | null {
+    const inline = parseInlineBracketLine(line)
+    if (inline && !inline.text.trim()) return inline.chords
+    return parsePlainChordLine(line)
+}
+
+function alignChordsToLyricLine(chords: Chords[], rawLyricLine: string, sectionBaseOffset: number): { text: string; chords: Chords[] } {
+    const lyricText = rawLyricLine.trim()
+    const leadingWhitespace = rawLyricLine.length - rawLyricLine.trimStart().length
+    const alignedChords: Chords[] = []
+
+    chords
+        .slice()
+        .sort((a, b) => a.pos - b.pos)
+        .forEach((chord) => {
+            let pos = chord.pos - sectionBaseOffset - leadingWhitespace
+            if (!lyricText.length) pos = 0
+            else {
+                if (pos < 0) pos = 0
+                if (pos >= lyricText.length) pos = lyricText.length - 1
+            }
+
+            if (alignedChords.some((existingChord) => existingChord.pos === pos)) {
+                pos++
+            }
+
+            alignedChords.push({ id: chord.id, key: chord.key, pos })
+        })
+
+    return { text: lyricText, chords: alignedChords }
+}
+
+function parseSectionLines(lyrics: string): ParsedSectionLine[] {
+    const rawLines = normalizeLineBreaks(lyrics)
+        .split("\n")
+        .map((line) => line.replace(/\/{2,}/g, ""))
+
+    // Planning Center often includes a common left indent in chord-only lines.
+    // Remove that shared baseline so chord positions match lyric content columns.
+    const sectionBaseOffset = rawLines.reduce((minOffset, line, i) => {
+        const lineChords = getChordLineData(line)
+        if (!lineChords?.length || i + 1 >= rawLines.length) return minOffset
+
+        const nextLine = rawLines[i + 1]
+        if (!nextLine.trim() || getChordLineData(nextLine) || parseInlineBracketLine(nextLine)) return minOffset
+
+        const firstChordPos = lineChords[0].pos
+        if (minOffset === null) return firstChordPos
+        return Math.min(minOffset, firstChordPos)
+    }, null as number | null)
+
+    const parsedLines: ParsedSectionLine[] = []
+
+    for (let i = 0; i < rawLines.length; i++) {
+        const currentLine = rawLines[i]
+
+        if (!currentLine.trim()) {
+            parsedLines.push({ text: "" })
+            continue
+        }
+
+        const inline = parseInlineBracketLine(currentLine)
+        if (inline && inline.text.trim()) {
+            parsedLines.push({ text: inline.text.trim(), chords: inline.chords })
+            continue
+        }
+
+        const chordLine = getChordLineData(currentLine)
+        if (chordLine && i + 1 < rawLines.length) {
+            const nextLine = rawLines[i + 1]
+            if (nextLine.trim() && !getChordLineData(nextLine) && !parseInlineBracketLine(nextLine)) {
+                const alignedLine = alignChordsToLyricLine(chordLine, nextLine, sectionBaseOffset || 0)
+                parsedLines.push({ text: alignedLine.text, chords: alignedLine.chords })
+                i++
+                continue
+            }
+        }
+
+        parsedLines.push({ text: currentLine.trim() })
+    }
+
+    return parsedLines
+}
+
 function processRegularItem(item: ProjectItem) {
     const showId = `pcosong_${item.id}`
     const show = getShow(item, {}, [])
@@ -572,12 +680,11 @@ function getShow(SONG_DATA: any, SONG: any, SECTIONS: any[]) {
     SECTIONS.forEach((section) => {
         // Check if section has repeat markers (// for 2x, /// for 3x, etc.)
         const repetitionCount = getRepetitionCount(section.lyrics || "")
-        
-        // Remove repeat markers (all sequences of 2+ slashes) from display
-        const cleanedLyrics = (section.lyrics || "").replace(/\/{2,}/g, "").trim()
+
+        const parsedLines = parseSectionLines(section.lyrics || "")
 
         // Skip sections with no lyrics content
-        if (!cleanedLyrics) return
+        if (!parsedLines.some((line) => line.text.trim())) return
 
         for (let rep = 0; rep < repetitionCount; rep++) {
             const slideId = uid()
@@ -585,7 +692,14 @@ function getShow(SONG_DATA: any, SONG: any, SECTIONS: any[]) {
             const items = [
                 {
                     style: itemStyle,
-                    lines: cleanedLyrics.split("\n").map((a: string) => ({ align: "", text: [{ style: "", value: a }] }))
+                    lines: parsedLines.map((line) => {
+                        const parsedLine: { align: string; text: { style: string; value: string }[]; chords?: Chords[] } = {
+                            align: "",
+                            text: [{ style: "", value: line.text }]
+                        }
+                        if (line.chords?.length) parsedLine.chords = line.chords
+                        return parsedLine
+                    })
 
                 }
             ]
