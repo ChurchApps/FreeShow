@@ -86,7 +86,7 @@ import { closeContextMenu } from "../../utils/shortcuts"
 import { updateThemeValues } from "../../utils/updateSettings"
 import { getActionTriggerId } from "../actions/actions"
 import { moveStageConnection } from "../actions/apiHelper"
-import { createScriptureShow } from "../drawer/bible/scripture"
+import { createScriptureShow, openActiveInRouteBible } from "../drawer/bible/scripture"
 import { stopMediaRecorder } from "../drawer/live/recorder"
 import { playPauseGlobal } from "../drawer/timers/timers"
 import { addChords } from "../edit/scripts/chords"
@@ -750,6 +750,7 @@ const clickActions = {
     },
     newScripture: () => activePopup.set("import_scripture"),
 
+    route_bible: () => openActiveInRouteBible(),
     createCollection: () => {
         activePopup.set("create_collection")
     },

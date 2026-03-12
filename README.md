@@ -26,8 +26,6 @@
 
 FreeShow is a free and open-source presentation program that makes it easy to show text on a big screen. It supports stage display, remote control, media, and many other advanced features. It is open-sourced meaning anyone can contribute.
 
-When you are working with scripture references, the scripture info panel also includes optional Route Bible actions for copying the outbound link, opening it externally, and previewing a QR code generated from the same reference.
-
 FreeShow exists because the creator found that other similar programs were either expensive or complex to use. He wanted to create a program that is easy to use and affordable for everyone, from small churches to large venues. FreeShow is now used by people all over the world.
 
 ## Support Us

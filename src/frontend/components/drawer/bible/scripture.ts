@@ -10,7 +10,7 @@ import type { BibleContent } from "../../../../types/Scripture"
 import type { Item, Show } from "../../../../types/Show"
 import { ShowObj } from "../../../classes/Show"
 import { createCategory } from "../../../converters/importHelpers"
-import { requestMain } from "../../../IPC/main"
+import { requestMain, sendMain } from "../../../IPC/main"
 import { splitTextContentInHalf } from "../../../show/slides"
 import { activeProject, activeScripture, drawerTabsData, media, notFound, outLocked, overlays, scriptureHistory, scriptures, scripturesCache, scriptureSettings, styles, templates } from "../../../stores"
 import { trackScriptureUsage } from "../../../utils/analytics"
@@ -1965,4 +1965,33 @@ export function scriptureRangeSelect(e: any, currentlySelected: (number | string
     }
 
     return currentlySelected
+}
+
+export async function openActiveInRouteBible() {
+    const biblesContent = await getActiveScripturesContent()
+    if (!biblesContent?.length) return
+
+    const routeBibleReference = biblesContent?.length ? getReferenceText(biblesContent) : ""
+    const routeBibleURL = buildRouteBibleUrl(routeBibleReference)
+    if (!routeBibleURL) return
+
+    sendMain(Main.URL, routeBibleURL)
+}
+
+// buildRouteBibleUrl("John 3:16") = "https://route.bible/?q=John+3%3A16&utm_source=freeshow&utm_medium=link"
+function buildRouteBibleUrl(referenceLabel: string, translation = "") {
+    if (typeof referenceLabel !== "string") return ""
+    referenceLabel = referenceLabel.trim()
+    if (!referenceLabel) return ""
+
+    const url = new URL("https://route.bible/")
+    url.searchParams.set("q", referenceLabel)
+    url.searchParams.set("utm_source", "freeshow")
+    url.searchParams.set("utm_medium", "link")
+
+    if (translation.trim()) {
+        url.searchParams.set("v", translation.trim())
+    }
+
+    return url.toString()
 }
