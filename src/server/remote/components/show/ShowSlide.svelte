@@ -1,6 +1,5 @@
 <script lang="ts">
     import { getGroupName } from "../../../common/util/show"
-    import { send } from "../../util/socket"
     import { activeShow, mediaCache } from "../../util/stores"
     import Textbox from "./Textbox.svelte"
     import Zoomed from "./Zoomed.svelte"
@@ -23,9 +22,10 @@
 
     $: name = $activeShow ? getGroupName({ show: $activeShow, showId: $activeShow.id || "" }, layoutSlide.id, slide.group, index) || slide.group || "" : ""
 
-    $: slide?.items?.forEach((item: any) => {
-        if (item.type === "media" && item.src && !$mediaCache[item.src]) send("API:get_thumbnail", { path: item.src })
-    })
+    $: backgroundPath = media?.[layoutSlide.background]?.path || ""
+    $: backgroundThumb = backgroundPath ? $mediaCache[backgroundPath] : ""
+    $: canRenderPath = backgroundPath.startsWith("data:") || backgroundPath.startsWith("http://") || backgroundPath.startsWith("https://") || backgroundPath.startsWith("blob:")
+    $: backgroundSrc = backgroundThumb || (canRenderPath ? backgroundPath : backgroundPath || "")
 </script>
 
 <!-- TODO: disabled -->
@@ -38,8 +38,8 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
         <Zoomed resolution={newResolution} background={slide.settings?.color || (slide.items.length ? "black" : "transparent")} bind:ratio>
             <!-- class:ghost={!background} -->
             <div class="background" style="zoom: {1 / ratio}">
-                {#if media[layoutSlide.background]?.path && !media[layoutSlide.background].path.includes("freeshow-cache") && !media[layoutSlide.background].path.includes("media-cache")}
-                    <img src={media[layoutSlide.background].path} />
+                {#if backgroundPath}
+                    <img src={backgroundSrc} alt="" loading="lazy" decoding="async" />
                 {/if}
             </div>
             <!-- TODO: check if showid exists in shows -->
