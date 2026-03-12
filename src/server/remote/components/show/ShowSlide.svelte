@@ -26,7 +26,7 @@
     $: backgroundPath = media?.[layoutSlide.background]?.path || ""
     $: backgroundThumb = backgroundPath ? $mediaCache[backgroundPath] : ""
     $: canRenderPath = backgroundPath.startsWith("data:") || backgroundPath.startsWith("http://") || backgroundPath.startsWith("https://") || backgroundPath.startsWith("blob:")
-    $: isSlideReady = !backgroundPath || !!backgroundThumb || canRenderPath
+    $: backgroundSrc = backgroundThumb || (canRenderPath ? backgroundPath : backgroundPath || "")
 </script>
 
 <!-- TODO: disabled -->
@@ -36,14 +36,12 @@
 class:left={overIndex === index && (!selected.length || index <= selected[0])} -->
 <div class="main" style="width: {100 / columns}%">
     <div class="slide context #slide" class:disabled={layoutSlide.disabled} class:active style="background-color: {color};" tabindex={0} data-index={index} on:click>
-        {#if isSlideReady && renderItems}
+        {#if renderItems}
             <Zoomed resolution={newResolution} background={slide.settings?.color || (slide.items.length ? "black" : "transparent")} bind:ratio>
                 <!-- class:ghost={!background} -->
                 <div class="background" style="zoom: {1 / ratio}">
-                    {#if backgroundThumb}
-                        <img src={backgroundThumb} alt="" loading="lazy" decoding="async" />
-                    {:else if canRenderPath}
-                        <img src={backgroundPath} alt="" loading="lazy" decoding="async" />
+                    {#if backgroundPath}
+                        <img src={backgroundSrc} alt="" loading="lazy" decoding="async" />
                     {/if}
                 </div>
                 <!-- TODO: check if showid exists in shows -->
@@ -51,16 +49,12 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
                     <Textbox {item} />
                 {/each}
             </Zoomed>
-        {:else if isSlideReady}
+        {:else}
             <div class="light-background">
-                {#if backgroundThumb}
-                    <img src={backgroundThumb} alt="" loading="lazy" decoding="async" />
-                {:else if canRenderPath}
-                    <img src={backgroundPath} alt="" loading="lazy" decoding="async" />
+                {#if backgroundPath}
+                    <img src={backgroundSrc} alt="" loading="lazy" decoding="async" />
                 {/if}
             </div>
-        {:else}
-            <div class="thumb-placeholder"></div>
         {/if}
         <!-- TODO: BG: white, color: black -->
         <!-- style="width: {newResolution.width * zoom}px;" -->
@@ -127,23 +121,6 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
         width: 100%;
         height: 100%;
         object-fit: contain;
-    }
-
-    .thumb-placeholder {
-        width: 100%;
-        aspect-ratio: 16 / 9;
-        background: linear-gradient(90deg, var(--primary-darkest), var(--primary-darker), var(--primary-darkest));
-        background-size: 200% 100%;
-        animation: thumb-loading 1.1s linear infinite;
-    }
-
-    @keyframes thumb-loading {
-        0% {
-            background-position: 200% 0;
-        }
-        100% {
-            background-position: -200% 0;
-        }
     }
 
     .label {

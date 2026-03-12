@@ -151,11 +151,6 @@
         queueThumbnail(backgroundPath)
     })
 
-    $: readySlides = allSlides.filter(({ backgroundPath }) => {
-        if (!backgroundPath) return true
-        return isDirectPath(backgroundPath) || !!$mediaCache[backgroundPath]
-    })
-
     onDestroy(() => {
         thumbQueue.length = 0
         queuedThumbs.clear()
@@ -166,9 +161,8 @@
 <div class="grid" on:touchstart={touchstart} on:touchmove={touchmove} on:touchend={touchend}>
     {#if layoutSlides.length}
         {#if layoutSlides.length < 10 || loadingStarted}
-            {#each readySlides as entry (`${$activeShow?.id || "show"}-${entry.slide.id || "slide"}-${entry.index}`)}
+            {#each allSlides as entry (`${$activeShow?.id || "show"}-${entry.slide.id || "slide"}-${entry.index}`)}
                 {@const isActive = outSlide === entry.index && $outShow?.id === $activeShow?.id}
-                {@const useLightMode = layoutSlides.length > 12 && !isActive}
                 <Slide
                     {resolution}
                     media={$activeShow?.media}
@@ -177,7 +171,7 @@
                     index={entry.index}
                     color={entry.slide.color}
                     active={isActive}
-                    renderItems={!useLightMode}
+                    renderItems={true}
                     {columns}
                     on:click={() => {
                         // if (!$outLocked && !e.ctrlKey) {
@@ -187,9 +181,6 @@
                     }}
                 />
             {/each}
-            {#if readySlides.length < allSlides.length}
-                <Center faded>{translate("remote.loading", $dictionary)}</Center>
-            {/if}
         {:else}
             <Center faded>{translate("remote.loading", $dictionary)}</Center>
         {/if}
