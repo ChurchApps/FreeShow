@@ -847,8 +847,12 @@ export function updateOut(showId: string, index: number, layout: LayoutRef[], ex
             setTimeout(() => {
                 data.audio?.forEach((audio: string) => {
                     const a = clone(_show(showId).get("media")?.[audio] || {})
+                    if (!a) return
 
-                    if (a) AudioPlayer.start(a.path, { name: a.name }, { pauseIfPlaying: false })
+                    // don't start from 0 again if already playing
+                    if (AudioPlayer.getPlaying(a.path)) return
+
+                    AudioPlayer.start(a.path, { name: a.name }, { pauseIfPlaying: false })
                 })
             }, 200)
         }
