@@ -5,7 +5,7 @@
     import { uid } from "uid"
     import { OutData } from "../../../types/Output"
     import type { Styles } from "../../../types/Settings"
-    import type { AnimationData, LayoutRef, OutBackground, OutSlide, Slide, SlideData, Template, Overlays as TOverlays } from "../../../types/Show"
+    import type { AnimationData, Item, LayoutRef, OutBackground, OutSlide, Slide, SlideData, Template, Overlays as TOverlays } from "../../../types/Show"
     import { allOutputs, colorbars, currentWindow, drawSettings, drawTool, effects, media, outputs, overlays, showsCache, styles, templates, transitionData } from "../../stores"
     import { wait } from "../../utils/common"
     import { custom } from "../../utils/transitions"
@@ -176,6 +176,17 @@
 
     // metadata
     $: metadataItems = getMetadata($showsCache[(slide as any)?.id || ""], currentStyle, slide, $templates)
+    let currentMetadataItems: Item[] = []
+    let isMetadataClearing = false
+    $: if (metadataItems !== null) {
+        isMetadataClearing = false
+        if (JSON.stringify(metadataItems) !== JSON.stringify(currentMetadataItems)) currentMetadataItems = clone(metadataItems)
+    } else {
+        isMetadataClearing = true
+        setTimeout(() => {
+            currentMetadataItems = []
+        })
+    }
 
     // ANIMATE
     let animationData: AnimationData = {}
@@ -312,7 +323,7 @@
         <SlideContent {outputId} outSlide={actualSlide} isClearing={isSlideClearing} slideData={actualSlideData} currentSlide={actualCurrentSlide} {currentStyle} {animationData} currentLineId={actualCurrentLineId} {lines} {ratio} {mirror} {preview} transition={transitions.text} transitionEnabled={!mirror || preview} {styleIdOverride} />
 
         <!-- metadata -->
-        <Overlay overlay={{ items: metadataItems }} isClearing={isSlideClearing} {outputId} transition={transitions.text} />
+        <Overlay overlay={{ items: currentMetadataItems }} isClearing={isMetadataClearing || isSlideClearing} {outputId} transition={transitions.text} />
     {/if}
 
     {#if layers.includes("overlays")}

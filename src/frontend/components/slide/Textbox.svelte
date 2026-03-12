@@ -63,6 +63,7 @@
     export let styleIdOverride = ""
     // expose an optional key so parents can track autosize readiness per item
     export let autoSizeKey = ""
+    export let updateDynamicValues = true
 
     // reuse autosize work across components by caching measurements alongside a signature
     // surface measurement completion for parents that want to precompute autosize
@@ -801,7 +802,37 @@
     on:mouseup={release}
 >
     {#if lines && !noTextMode}
-        <TextboxLines {item} {slideIndex} {isMirrorItem} {key} {smallFontSize} {animationStyle} {dynamicValues} {isStage} {customFontSize} {outputStyle} {ref} {style} {customStyle} {stageItem} {chords} {linesStart} {linesEnd} fontSize={smallFontSize ? 20 : fontSize} {customTypeRatio} {maxLines} {maxLinesInvert} {centerPreview} {revealed} styleOverrides={templateStyleOverrides} {useOriginalTextColor} hideContent={hideUntilAutosized} {normalWrap} on:updateAutoSize={calculateAutosize} />
+        <TextboxLines
+            {item}
+            {slideIndex}
+            {isMirrorItem}
+            {key}
+            {smallFontSize}
+            {animationStyle}
+            {dynamicValues}
+            {isStage}
+            {customFontSize}
+            {outputStyle}
+            {ref}
+            {style}
+            {customStyle}
+            {stageItem}
+            {chords}
+            {linesStart}
+            {linesEnd}
+            fontSize={smallFontSize ? 20 : fontSize}
+            {customTypeRatio}
+            {maxLines}
+            {maxLinesInvert}
+            {centerPreview}
+            {revealed}
+            styleOverrides={templateStyleOverrides}
+            {useOriginalTextColor}
+            hideContent={hideUntilAutosized}
+            {normalWrap}
+            on:updateAutoSize={calculateAutosize}
+            {updateDynamicValues}
+        />
     {:else}
         <SlideItems {item} {slideIndex} {preview} {isTemplatePreview} {mirror} {isMirrorItem} {ratio} {disableListTransition} {smallFontSize} {ref} {fontSize} {outputId} />
     {/if}

@@ -50,7 +50,7 @@
     {#each currentItems as item}
         {#if show && shouldItemBeShown(item, currentItems, showItemRef, conditionsUpdater)}
             <SlideItemTransition {transitionEnabled} globalTransition={transition} {item} let:customItem>
-                <Textbox item={customItem} ref={{ type: "overlay", id }} {mirror} {preview} {outputId} />
+                <Textbox item={customItem} ref={{ type: "overlay", id }} {mirror} {preview} {outputId} updateDynamicValues={!isClearing} />
             </SlideItemTransition>
         {/if}
     {/each}

@@ -1455,18 +1455,18 @@ export interface OutputMetadata {
 const defaultMetadataItemStyle = "top: 910px;left: 30px;width: 1860px;height: 150px;"
 const defaultMetadataTextStyle = "font-size: 30px;color: rgb(255 255 255 / 0.8);text-shadow: 2px 2px 4px rgb(0 0 0 / 80%);"
 export function getMetadata(show: Show | undefined, currentStyle: Styles, outSlide: OutSlide | null, _updater = get(templates)) {
-    if (!show || !outSlide) return []
+    if (!show || !outSlide) return null
 
     const showCategory = get(categories)[show.category || ""] || {}
     const metadataValues = currentStyle.metadata || showCategory.metadata || {}
     const display = metadataValues.display || "never"
-    if (typeof display !== "string" || display === "never") return []
+    if (typeof display !== "string" || display === "never") return null
 
     const ref = clone(_show(outSlide.id).layouts([outSlide.layout]).ref()[0] || [])
     const firstActiveSlideIndex = ref.findIndex((a) => !a.data.disabled)
     const lastActiveSlideIndex = ref.length - 1 - [...ref].reverse().findIndex((a) => !a.data.disabled)
     const displayMetadata = display === "always" || (display.includes("first") && outSlide?.index === firstActiveSlideIndex) || (display.includes("last") && outSlide?.index === lastActiveSlideIndex)
-    if (!displayMetadata) return []
+    if (!displayMetadata) return null
 
     // template
     let templateId: string = metadataValues.template || "metadata"

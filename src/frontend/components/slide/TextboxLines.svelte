@@ -44,6 +44,7 @@
     export let styleOverrides: TemplateStyleOverride[] = []
     export let hideContent = false
     export let normalWrap = false
+    export let updateDynamicValues = true
 
     $: lines = createVirtualBreaks(clone(item?.lines || []), outputStyle?.skipVirtualBreaks)
     $: if (linesStart !== null && linesEnd !== null && lines.length) {
@@ -238,7 +239,7 @@
     $: if ($variables) setTimeout(update)
     $: if ($outputs) setTimeout(update, isStage ? 250 : 0) // time with auto size
     function update() {
-        if (!hasDynamicValues || !hasMounted) return
+        if (!hasDynamicValues || !hasMounted || !updateDynamicValues) return
         updateDynamic++
     }
 
