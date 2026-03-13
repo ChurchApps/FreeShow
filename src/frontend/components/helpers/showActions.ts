@@ -1338,7 +1338,7 @@ const replaceTokens = (str: string, id: string, inputs: string[] = []) => {
     })
 }
 
-export function replaceDynamicValues(text: string, { showId, layoutId, slideIndex, type, id, mode }: any, _updater = 0) {
+export function replaceDynamicValues(text: string, { showId, layoutId, slideIndex, type, id, mode }: any, _updater = 0, popup = false) {
     const isOutputWin = isOutputWindow()
 
     if (type === "stage") {
@@ -1355,7 +1355,7 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
 
     // remove unused scripture dynamic values ({scripture_X} / {scriptureNUM_X})
     const regex = /\{scripture(?:\d+)?_[^}]+\}/g
-    if (regex.test(text)) text = text.replace(regex, "")
+    if (regex.test(text) && !popup) text = text.replace(regex, "")
 
     const customIds = ["slide_text_current", "active_layers", "active_styles", "output_windows_active", "log_song_usage"]
     ;[...getDynamicIds(false, mode), ...customIds].forEach((dynamicId) => {

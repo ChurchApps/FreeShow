@@ -238,7 +238,7 @@
 
                 <div class="grid">
                     {#each values as value, i}
-                        {@const preview = replaceDynamicValues(`{${value.id}}`, ref, updateDynamic)}
+                        {@const preview = replaceDynamicValues(`{${value.id}}`, ref, updateDynamic, true)}
                         <div class="value" class:active={searchValue.length > 1 && i === 0 ? "border: 2px solid var(--secondary-opacity);" : ""} role="button" tabindex="0" on:click={(e) => applyValue(e, value.id)} on:keydown={triggerClickOnEnterSpace}>
                             <p class="preview">
                                 {#if preview}{@html preview}{:else}—{/if}
