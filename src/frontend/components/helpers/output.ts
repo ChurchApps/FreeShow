@@ -817,6 +817,114 @@ export function getCurrentMediaTransition() {
 
 // TEMPLATE
 
+type TextFormatSets = {
+    colors: Set<string>
+    bold: Set<boolean>
+    italic: Set<boolean>
+    underline: Set<boolean>
+    lineThrough: Set<boolean>
+}
+
+function isTextBold(fontWeight = "") {
+    const lowerWeight = fontWeight.toLowerCase()
+    if (lowerWeight === "bold") return true
+
+    const numericWeight = Number(lowerWeight)
+    return !isNaN(numericWeight) && numericWeight >= 600
+}
+
+function hasTextDecoration(textDecoration = "", value = "") {
+    return textDecoration
+        .split(" ")
+        .map((a) => a.trim().toLowerCase())
+        .includes(value)
+}
+
+function mergeTextDecoration(templateTextStyle = "", originalTextStyle = "", preserveUnderline = false, preserveLineThrough = false) {
+    const templateStyles = getStyles(templateTextStyle)
+    const originalStyles = getStyles(originalTextStyle)
+
+    const toDecorationSet = (value = "") =>
+        new Set(
+            value
+                .split(" ")
+                .map((a) => a.trim().toLowerCase())
+                .filter(Boolean)
+        )
+
+    const templateDecorations = toDecorationSet(templateStyles["text-decoration"])
+    const originalDecorations = toDecorationSet(originalStyles["text-decoration"])
+
+    ;(
+        [
+            [preserveUnderline, "underline"],
+            [preserveLineThrough, "line-through"]
+        ] as const
+    ).forEach(([preserve, decoration]) => {
+        if (!preserve) return
+        if (originalDecorations.has(decoration)) templateDecorations.add(decoration)
+        else templateDecorations.delete(decoration)
+    })
+
+    if (!templateDecorations.size) return "none"
+
+    return Array.from(templateDecorations).join(" ")
+}
+
+function applyMixedTextFormatting(style: string, textStyle: string | undefined, templateStyle: string | undefined, textFormatSets: TextFormatSets, templateClicked: boolean) {
+    if (templateClicked) return style
+
+    const textStyles = getStyles(textStyle)
+
+    // add original text color, if template is not clicked & slide text has multiple colors
+    // - use template color if item text has just one color
+    if (textFormatSets.colors.size > 1) {
+        const textColor = textStyles.color || "#FFFFFF"
+        style += `color: ${textColor};`
+    }
+
+    if (textFormatSets.bold.size > 1) {
+        const isBold = isTextBold(textStyles["font-weight"] || "")
+        style += `font-weight: ${isBold ? textStyles["font-weight"] || "bold" : "normal"};`
+    }
+
+    if (textFormatSets.italic.size > 1) {
+        const isItalic = (textStyles["font-style"] || "").toLowerCase() === "italic"
+        style += `font-style: ${isItalic ? "italic" : "normal"};`
+    }
+
+    if (textFormatSets.underline.size > 1 || textFormatSets.lineThrough.size > 1) {
+        const textDecoration = mergeTextDecoration(templateStyle || "", textStyle || "", textFormatSets.underline.size > 1, textFormatSets.lineThrough.size > 1)
+        style += `text-decoration: ${textDecoration};`
+    }
+
+    return style
+}
+
+function getTextFormatSets(item: Item): TextFormatSets {
+    return (
+        item.lines?.reduce(
+            (acc, line) => {
+                line.text
+                    ?.filter((a) => !a.customType)
+                    .forEach((text) => {
+                        const styleData = getStyles(text.style)
+                        const textDecoration = styleData["text-decoration"] || ""
+
+                        acc.colors.add(styleData.color || "#FFFFFF")
+                        acc.bold.add(isTextBold(styleData["font-weight"] || ""))
+                        acc.italic.add((styleData["font-style"] || "").toLowerCase() === "italic")
+                        acc.underline.add(hasTextDecoration(textDecoration, "underline"))
+                        acc.lineThrough.add(hasTextDecoration(textDecoration, "line-through"))
+                    })
+
+                return acc
+            },
+            { colors: new Set<string>(), bold: new Set<boolean>(), italic: new Set<boolean>(), underline: new Set<boolean>(), lineThrough: new Set<boolean>() }
+        ) || { colors: new Set<string>(), bold: new Set<boolean>(), italic: new Set<boolean>(), underline: new Set<boolean>(), lineThrough: new Set<boolean>() }
+    )
+}
+
 export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], addOverflowTemplateItems = false, resetAutoSize = true, templateClicked = false, mode: string = "", customDynamicValues: { [key: string]: string | [string, string][] } = {}) {
     slideItems = clone(slideItems || []).filter(Boolean)
     if (!templateItems.length) return slideItems
@@ -910,14 +1018,7 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
 
         if (type !== "text") return finish()
 
-        const allTextColors = [
-            ...new Set(
-                item.lines
-                    ?.map((line) => line.text?.filter((a) => !a.customType).map((text) => getStyles(text.style).color || "#FFFFFF"))
-                    .flat()
-                    .filter(Boolean)
-            )
-        ] as string[]
+        const textFormatSets = getTextFormatSets(item)
 
         const hasDynamicValue = templateItem?.lines?.some((line) => line?.text?.some((text) => text.value?.includes("{")))
 
@@ -934,13 +1035,7 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
 
                 if (!text.customType?.includes("disableTemplate") && !/\{scripture(?:\d+)?_number\}/.test(templateText?.value || "")) {
                     let style = templateText?.style || ""
-
-                    // add original text color, if template is not clicked & slide text has multiple colors
-                    // - use template color if item text has just one color
-                    if (!templateClicked && allTextColors.length > 1) {
-                        const textColor = getStyles(text.style).color || "#FFFFFF"
-                        style += `color: ${textColor};`
-                    }
+                    style = applyMixedTextFormatting(style, text.style, templateText?.style, textFormatSets, templateClicked)
 
                     text.style = style
                 }
