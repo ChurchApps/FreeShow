@@ -122,7 +122,7 @@ const keys = {
             if (lastUsedProject) openProject(lastUsedProject.id)
         }
     },
-    Delete: () => (get(contextActive) ? null : deleteAction(get(selected), "remove")),
+    Delete: () => (get(contextActive) ? null : deleteAction(get(selected))),
     Backspace: () => keys.Delete(),
     // give time so it don't clear slide
     F2: () => (get(focusMode) ? null : setTimeout(() => menuClick("rename", true, null, null, null, get(selected)))),
