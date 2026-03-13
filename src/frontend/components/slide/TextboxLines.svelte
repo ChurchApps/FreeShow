@@ -292,9 +292,8 @@
                             {@const value = text.value?.replaceAll("\n", "<br>") || "<br>"}
                             {@const fontRatio = text.customType?.includes("disableTemplate") && !text.customType?.includes("jw") ? customTypeRatio : 1}
 
-                            <span class="textContainer" style="{style ? getCustomStyle(text.style) : ''}{getColor(text.style)}{customStyle}{text.customType?.includes('disableTemplate') ? text.style : ''}{fontSize ? `;font-size: ${fontSize * fontRatio}px;` : style ? getCustomFontSize(text.style, outputStyle) : ''}">
-                                {@html getTextValue(value, i, ti, updateDynamic)}
-                            </span>
+                            <!-- NOTE: must be on the same line for rendering ...>{@html -->
+                            <span class="textContainer" style="{style ? getCustomStyle(text.style) : ''}{getColor(text.style)}{customStyle}{text.customType?.includes('disableTemplate') ? text.style : ''}{fontSize ? `;font-size: ${fontSize * fontRatio}px;` : style ? getCustomFontSize(text.style, outputStyle) : ''}">{@html getTextValue(value, i, ti, updateDynamic)}</span>
                         {/each}
                     {/if}
                 </div>
