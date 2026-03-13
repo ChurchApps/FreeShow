@@ -44,6 +44,7 @@ import {
     fullColors,
     gain,
     globalTags,
+    globalRegexes,
     groupNumbers,
     groups,
     labelsDisabled,
@@ -249,6 +250,7 @@ export function getSyncedSettings(): { [key in SaveListSyncedSettings]: any } {
         customizedIcons,
         companion,
         globalTags,
+        globalRegexes,
         customMetadata,
         effects,
         deletedDefaults
@@ -446,6 +448,7 @@ const saveList: { [key in SaveList]: any } = {
     timecode: null,
     companion: null,
     globalTags,
+    globalRegexes: null,
     customMetadata: null,
     contentProviderData,
     effects,

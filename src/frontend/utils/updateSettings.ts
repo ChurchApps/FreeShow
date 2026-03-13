@@ -41,6 +41,7 @@ import {
     fullColors,
     gain,
     globalTags,
+    globalRegexes,
     groupNumbers,
     groups,
     labelsDisabled,
@@ -328,6 +329,7 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
     eqPresets: (v: any) => eqPresets.set(v),
     effectsLibrary: (v: any) => effectsLibrary.set(v),
     globalTags: (v: any) => globalTags.set(v),
+    globalRegexes: (v: any) => globalRegexes.set(v),
     customMetadata: (v: any) => customMetadata.set(v),
     companion: (v: any) => {
         companion.set(v)
