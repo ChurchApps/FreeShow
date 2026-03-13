@@ -19,6 +19,7 @@ import {
     activeFocus,
     activeMediaTagFilter,
     activePage,
+    activePlayerTagFilter,
     activePopup,
     activeRecording,
     activeRename,
@@ -50,6 +51,7 @@ import {
     outputs,
     overlayCategories,
     overlays,
+    playerVideos,
     popupData,
     previousShow,
     profiles,
@@ -82,7 +84,6 @@ import { translateText } from "../../utils/language"
 import { confirmCustom } from "../../utils/popup"
 import { send } from "../../utils/request"
 import { initializeClosing, save } from "../../utils/save"
-import { closeContextMenu } from "../../utils/shortcuts"
 import { updateThemeValues } from "../../utils/updateSettings"
 import { getActionTriggerId } from "../actions/actions"
 import { moveStageConnection } from "../actions/apiHelper"
@@ -101,6 +102,7 @@ import { select } from "../helpers/select"
 import { checkName, formatToFileName, getLayoutRef, openShow, removeTemplatesFromShow, updateShowsList } from "../helpers/show"
 import { sendMidi } from "../helpers/showActions"
 import { _show } from "../helpers/shows"
+import { getMenuTagId, openTagManager, toggleSelectionTags, toggleTagFilter } from "../helpers/tags"
 import { clearSlide } from "../output/clear"
 import { defaultThemes } from "../settings/tabs/defaultThemes"
 import { activeProject } from "./../../stores"
@@ -343,12 +345,10 @@ const clickActions = {
 
     // TAGS
     manage_show_tags: () => {
-        closeContextMenu()
-        popupData.set({ type: "show" })
-        activePopup.set("manage_tags")
+        openTagManager("show")
     },
     tag_set: (obj: ObjData) => {
-        const tagId = obj.menu.id
+        const tagId = getMenuTagId(obj.menu)
         if (tagId === "create") {
             clickActions.manage_show_tags()
             return
@@ -356,51 +356,36 @@ const clickActions = {
 
         const disable = get(shows)[obj.sel?.data[0]?.id]?.quickAccess?.tags?.includes(tagId)
 
-        obj.sel?.data?.forEach(({ id }) => {
-            // WIP similar to Tag.svelte - toggleTag()
-            const quickAccess = get(shows)[id]?.quickAccess || {}
+        toggleSelectionTags({
+            data: obj.sel?.data,
+            tagId,
+            disable: !!disable,
+            getTags: ({ id }) => get(shows)[id]?.quickAccess?.tags,
+            applyTags: ({ id }, tags) => {
+                const quickAccess = get(shows)[id]?.quickAccess || {}
+                quickAccess.tags = tags
 
-            const tags = quickAccess.tags || []
-            const existingIndex = tags.indexOf(tagId)
-            if (disable) {
-                if (existingIndex > -1) tags.splice(existingIndex, 1)
-            } else {
-                if (existingIndex < 0) tags.push(tagId)
-            }
-
-            quickAccess.tags = tags
-
-            shows.update((a) => {
-                a[id].quickAccess = quickAccess
-                return a
-            })
-            if (get(showsCache)[id]) {
-                showsCache.update((a) => {
+                shows.update((a) => {
                     a[id].quickAccess = quickAccess
                     return a
                 })
+                if (get(showsCache)[id]) {
+                    showsCache.update((a) => {
+                        a[id].quickAccess = quickAccess
+                        return a
+                    })
+                }
             }
-
-            // history({ id: "UPDATE", newData: { data: quickAccess, key: "quickAccess" }, oldData: { id }, location: { page: "show", id: "show_key", override: "toggle_tag" } })
         })
     },
     tag_filter: (obj: ObjData) => {
-        const tagId = obj.menu.id || ""
-
-        const activeTags = get(activeTagFilter)
-        const currentIndex = activeTags.indexOf(tagId)
-        if (currentIndex < 0) activeTags.push(tagId)
-        else activeTags.splice(currentIndex, 1)
-
-        activeTagFilter.set(activeTags || [])
+        toggleTagFilter(activeTagFilter, getMenuTagId(obj.menu))
     },
     manage_media_tags: () => {
-        closeContextMenu()
-        popupData.set({ type: "media" })
-        activePopup.set("manage_tags")
+        openTagManager("media")
     },
     media_tag_set: (obj: ObjData) => {
-        const tagId = obj.menu.id || ""
+        const tagId = getMenuTagId(obj.menu)
         if (tagId === "create") {
             clickActions.manage_media_tags()
             return
@@ -408,40 +393,56 @@ const clickActions = {
 
         const disable = get(media)[get(selected).data[0]?.path]?.tags?.includes(tagId)
 
-        obj.sel?.data?.forEach(({ path }) => {
-            const tags = get(media)[path]?.tags || []
-
-            const existingIndex = tags.indexOf(tagId)
-            if (disable) {
-                if (existingIndex > -1) tags.splice(existingIndex, 1)
-            } else {
-                if (existingIndex < 0) tags.push(tagId)
+        toggleSelectionTags({
+            data: obj.sel?.data,
+            tagId,
+            disable: !!disable,
+            getTags: ({ path }) => get(media)[path]?.tags,
+            applyTags: ({ path }, tags) => {
+                media.update((a) => {
+                    if (!a[path]) a[path] = {}
+                    a[path].tags = tags
+                    return a
+                })
             }
-
-            media.update((a) => {
-                if (!a[path]) a[path] = {}
-                a[path].tags = tags
-                return a
-            })
         })
     },
     media_tag_filter: (obj: ObjData) => {
-        const tagId = obj.menu.id || ""
+        toggleTagFilter(activeMediaTagFilter, getMenuTagId(obj.menu))
+    },
+    manage_player_tags: () => {
+        openTagManager("player")
+    },
+    player_tag_set: (obj: ObjData) => {
+        const tagId = getMenuTagId(obj.menu)
+        if (tagId === "create") {
+            clickActions.manage_player_tags()
+            return
+        }
 
-        const activeTags = get(activeMediaTagFilter)
-        const currentIndex = activeTags.indexOf(tagId)
-        if (currentIndex < 0) activeTags.push(tagId)
-        else activeTags.splice(currentIndex, 1)
+        const disable = get(playerVideos)[get(selected).data[0]]?.tags?.includes(tagId)
 
-        activeMediaTagFilter.set(activeTags || [])
+        toggleSelectionTags({
+            data: obj.sel?.data,
+            tagId,
+            disable: !!disable,
+            getTags: (id) => get(playerVideos)[id]?.tags,
+            applyTags: (id, tags) => {
+                playerVideos.update((a) => {
+                    if (a[id]) a[id].tags = tags
+                    return a
+                })
+            }
+        })
+    },
+    player_tag_filter: (obj: ObjData) => {
+        toggleTagFilter(activePlayerTagFilter, getMenuTagId(obj.menu))
     },
     manage_action_tags: () => {
-        closeContextMenu()
-        popupData.set({ type: "action" })
-        activePopup.set("manage_tags")
+        openTagManager("action")
     },
     action_tag_set: (obj: ObjData) => {
-        const tagId = obj.menu.id || ""
+        const tagId = getMenuTagId(obj.menu)
         if (tagId === "create") {
             clickActions.manage_action_tags()
             return
@@ -449,39 +450,27 @@ const clickActions = {
 
         const disable = get(actions)[get(selected).data[0]?.id]?.tags?.includes(tagId)
 
-        obj.sel?.data?.forEach(({ id }) => {
-            const tags = get(actions)[id]?.tags || []
-
-            const existingIndex = tags.indexOf(tagId)
-            if (disable) {
-                if (existingIndex > -1) tags.splice(existingIndex, 1)
-            } else {
-                if (existingIndex < 0) tags.push(tagId)
+        toggleSelectionTags({
+            data: obj.sel?.data,
+            tagId,
+            disable: !!disable,
+            getTags: ({ id }) => get(actions)[id]?.tags,
+            applyTags: ({ id }, tags) => {
+                actions.update((a) => {
+                    if (a[id]) a[id].tags = tags
+                    return a
+                })
             }
-
-            actions.update((a) => {
-                if (a[id]) a[id].tags = tags
-                return a
-            })
         })
     },
     manage_variable_tags: () => {
-        closeContextMenu()
-        popupData.set({ type: "variable" })
-        activePopup.set("manage_tags")
+        openTagManager("variable")
     },
     action_tag_filter: (obj: ObjData) => {
-        const tagId = obj.menu.id || ""
-
-        const activeTags = get(activeActionTagFilter)
-        const currentIndex = activeTags.indexOf(tagId)
-        if (currentIndex < 0) activeTags.push(tagId)
-        else activeTags.splice(currentIndex, 1)
-
-        activeActionTagFilter.set(activeTags || [])
+        toggleTagFilter(activeActionTagFilter, getMenuTagId(obj.menu))
     },
     variable_tag_set: (obj: ObjData) => {
-        const tagId = obj.menu.id || ""
+        const tagId = getMenuTagId(obj.menu)
         if (tagId === "create") {
             clickActions.manage_variable_tags()
             return
@@ -489,31 +478,21 @@ const clickActions = {
 
         const disable = get(variables)[get(selected).data[0]?.id]?.tags?.includes(tagId)
 
-        obj.sel?.data?.forEach(({ id }) => {
-            const tags = get(variables)[id]?.tags || []
-
-            const existingIndex = tags.indexOf(tagId)
-            if (disable) {
-                if (existingIndex > -1) tags.splice(existingIndex, 1)
-            } else {
-                if (existingIndex < 0) tags.push(tagId)
+        toggleSelectionTags({
+            data: obj.sel?.data,
+            tagId,
+            disable: !!disable,
+            getTags: ({ id }) => get(variables)[id]?.tags,
+            applyTags: ({ id }, tags) => {
+                variables.update((a) => {
+                    if (a[id]) a[id].tags = tags
+                    return a
+                })
             }
-
-            variables.update((a) => {
-                if (a[id]) a[id].tags = tags
-                return a
-            })
         })
     },
     variable_tag_filter: (obj: ObjData) => {
-        const tagId = obj.menu.id || ""
-
-        const activeTags = get(activeVariableTagFilter)
-        const currentIndex = activeTags.indexOf(tagId)
-        if (currentIndex < 0) activeTags.push(tagId)
-        else activeTags.splice(currentIndex, 1)
-
-        activeVariableTagFilter.set(activeTags || [])
+        toggleTagFilter(activeVariableTagFilter, getMenuTagId(obj.menu))
     },
     action_history: () => {
         activePopup.set("action_history")

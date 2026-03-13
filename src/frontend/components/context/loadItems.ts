@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
 import type { Media } from "../../../types/Show"
-import { actions, actionTags, activeActionTagFilter, activeEdit, activeMediaTagFilter, activeTagFilter, activeVariableTagFilter, contextData, drawerTabsData, globalTags, groups, media, mediaTags, outputs, overlays, selected, shows, sorted, variables, variableTags } from "../../stores"
+import { actions, actionTags, activeActionTagFilter, activeEdit, activeMediaTagFilter, activePlayerTagFilter, activeTagFilter, activeVariableTagFilter, contextData, drawerTabsData, globalTags, groups, media, mediaTags, outputs, overlays, playerTags, playerVideos, selected, shows, sorted, variables, variableTags } from "../../stores"
 import { translateText } from "../../utils/language"
 import { drawerTabs } from "../../values/tabs"
 import { actionData } from "../actions/actionData"
@@ -8,10 +8,11 @@ import { getActionName, getActionTriggerId } from "../actions/actions"
 import { getEditItems, getEditSlide } from "../edit/scripts/itemHelpers"
 import { getSlideText } from "../edit/scripts/textStyle"
 import { chordTypes, keys } from "../edit/values/chords"
-import { clone, keysToID, sortByName, sortObject } from "../helpers/array"
+import { clone, keysToID, sortByName } from "../helpers/array"
 import { removeExtension } from "../helpers/media"
 import { getLayoutRef } from "../helpers/show"
 import { _show } from "../helpers/shows"
+import { createTagItems, getSelectedTagIds } from "../helpers/tags"
 import type { ContextMenuItem } from "./contextMenus"
 
 const loadActions = {
@@ -28,56 +29,52 @@ const loadActions = {
 
     // TAGS
     tag_set: () => {
-        const selectedShowTags = get(shows)[get(selected).data[0]?.id]?.quickAccess?.tags || []
-        const sortedTags: (ContextMenuItem | "SEPARATOR")[] = sortObject(sortByName(keysToID(get(globalTags))), "color").map((a) => ({ ...a, label: a.name, enabled: selectedShowTags.includes(a.id), translate: false }))
-        const create = { label: "popup.manage_tags", icon: "edit", iconColor: "#97c7ff", id: "create" }
-        if (sortedTags.length) sortedTags.push("SEPARATOR")
-        sortedTags.push(create)
-        return sortedTags
+        const selectedShowTags = getSelectedTagIds<{ id?: string }>(get(selected), (item) => get(shows)[item.id || ""]?.quickAccess?.tags)
+        return createTagItems(globalTags, selectedShowTags, true)
     },
     tag_filter: () => {
-        const sortedTags = sortObject(sortByName(keysToID(get(globalTags))), "color").map((a) => ({ ...a, label: a.name, enabled: get(activeTagFilter).includes(a.id), translate: false }))
+        const sortedTags = createTagItems(globalTags, get(activeTagFilter))
         setContextData("tags", sortedTags.length)
         return sortedTags
     },
     media_tag_set: () => {
-        const selectedTags = get(media)[get(selected).data[0]?.path]?.tags || []
-        const sortedTags: (ContextMenuItem | "SEPARATOR")[] = sortObject(sortByName(keysToID(get(mediaTags))), "color").map((a) => ({ ...a, label: a.name, enabled: selectedTags.includes(a.id), translate: false }))
-        const create = { label: "popup.manage_tags", icon: "edit", iconColor: "#97c7ff", id: "create" }
-        if (sortedTags.length) sortedTags.push("SEPARATOR")
-        sortedTags.push(create)
-        return sortedTags
+        const selectedTags = getSelectedTagIds<{ path?: string }>(get(selected), (item) => get(media)[item.path || ""]?.tags)
+        return createTagItems(mediaTags, selectedTags, true)
     },
     media_tag_filter: () => {
-        const sortedTags = sortObject(sortByName(keysToID(get(mediaTags))), "color").map((a) => ({ ...a, label: a.name, enabled: get(activeMediaTagFilter).includes(a.id), translate: false }))
+        const sortedTags = createTagItems(mediaTags, get(activeMediaTagFilter))
         setContextData("media_tags", sortedTags.length)
         return sortedTags
     },
-    action_tag_set: () => {
-        const selectedTags = get(actions)[get(selected).data[0]?.id]?.tags || []
-        const sortedTags: (ContextMenuItem | "SEPARATOR")[] = sortObject(sortByName(keysToID(get(actionTags))), "color").map((a) => ({ ...a, label: a.name, enabled: selectedTags.includes(a.id), translate: false }))
-        const create = { label: "popup.manage_tags", icon: "edit", iconColor: "#97c7ff", id: "create" }
-        if (sortedTags.length) sortedTags.push("SEPARATOR")
-        sortedTags.push(create)
+    player_tag_set: () => {
+        const selectedTags = getSelectedTagIds<string | { id?: string; path?: string }>(get(selected), (item) => {
+            const itemId = typeof item === "string" ? item : item.path || item.id || ""
+            return get(playerVideos)[itemId]?.tags
+        })
+        return createTagItems(playerTags, selectedTags, true)
+    },
+    player_tag_filter: () => {
+        const sortedTags = createTagItems(playerTags, get(activePlayerTagFilter))
+        setContextData("player_tags", sortedTags.length)
         return sortedTags
     },
+    action_tag_set: () => {
+        const selectedTags = getSelectedTagIds<{ id?: string }>(get(selected), (item) => get(actions)[item.id || ""]?.tags)
+        return createTagItems(actionTags, selectedTags, true)
+    },
     action_tag_filter: () => {
-        let sortedTags = sortObject(sortByName(keysToID(get(actionTags))), "color").map((a) => ({ ...a, label: a.name, enabled: get(activeActionTagFilter).includes(a.id), translate: false }))
-        if (get(activeActionTagFilter).length) sortedTags = sortedTags.filter((a) => a.id !== get(drawerTabsData).functions?.activeSubmenu)
+        let sortedTags = createTagItems(actionTags, get(activeActionTagFilter))
+        if (get(activeActionTagFilter).length) sortedTags = sortedTags.filter((a) => typeof a === "string" || a.id !== get(drawerTabsData).functions?.activeSubmenu)
         setContextData("action_tags", sortedTags.length)
         return sortedTags
     },
     variable_tag_set: () => {
-        const selectedTags = get(variables)[get(selected).data[0]?.id]?.tags || []
-        const sortedTags: (ContextMenuItem | "SEPARATOR")[] = sortObject(sortByName(keysToID(get(variableTags))), "color").map((a) => ({ ...a, label: a.name, enabled: selectedTags.includes(a.id), translate: false }))
-        const create = { label: "popup.manage_tags", icon: "edit", iconColor: "#97c7ff", id: "create" }
-        if (sortedTags.length) sortedTags.push("SEPARATOR")
-        sortedTags.push(create)
-        return sortedTags
+        const selectedTags = getSelectedTagIds<{ id?: string }>(get(selected), (item) => get(variables)[item.id || ""]?.tags)
+        return createTagItems(variableTags, selectedTags, true)
     },
     variable_tag_filter: () => {
-        let sortedTags = sortObject(sortByName(keysToID(get(variableTags))), "color").map((a) => ({ ...a, label: a.name, enabled: get(activeVariableTagFilter).includes(a.id), translate: false }))
-        sortedTags = sortedTags.filter((a) => a.id !== get(drawerTabsData).functions?.activeSubmenu)
+        let sortedTags = createTagItems(variableTags, get(activeVariableTagFilter))
+        sortedTags = sortedTags.filter((a) => typeof a === "string" || a.id !== get(drawerTabsData).functions?.activeSubmenu)
         setContextData("variable_tags", sortedTags.length)
         return sortedTags
     },

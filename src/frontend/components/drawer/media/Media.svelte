@@ -511,7 +511,7 @@
         {#if isProviderSection && activeProviderId}
             <ContentLibraryBrowser providerId={activeProviderId} columns={$mediaOptions.columns} {searchValue} />
         {:else if active === "online" && (onlineTab === "youtube" || onlineTab === "vimeo")}
-            <div class="gridgap">
+            <div class="gridgap context #player">
                 <PlayerVideos active={onlineTab} {searchValue} />
             </div>
         {:else if active === "online" && onlineTab === "canva"}

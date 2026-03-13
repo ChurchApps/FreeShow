@@ -14,6 +14,7 @@ export interface Category {
     default?: boolean
     description?: string
     isArchive?: boolean
+    tags?: string[] // currently for player videos
     metadata?: Metadata // show category
     action?: string // trigger custom action on content presentation
     template?: string // set a custom template all shows within this category will use by default (if no other template is set)

@@ -90,6 +90,7 @@ export const templateApplied: Writable<boolean> = writable(false)
 // TAGS
 export const activeTagFilter: Writable<string[]> = writable([])
 export const activeMediaTagFilter: Writable<string[]> = writable([])
+export const activePlayerTagFilter: Writable<string[]> = writable([])
 export const activeActionTagFilter: Writable<string[]> = writable([])
 export const activeVariableTagFilter: Writable<string[]> = writable([])
 
@@ -298,6 +299,7 @@ export const drawer: Writable<{ height: number; stored: null | number; autoclose
 // TAGS
 export const globalTags: Writable<{ [key: string]: Tag }> = writable({}) // {}
 export const mediaTags: Writable<{ [key: string]: Tag }> = writable({}) // {}
+export const playerTags: Writable<{ [key: string]: Tag }> = writable({}) // {}
 export const actionTags: Writable<{ [key: string]: Tag }> = writable({}) // {}
 export const variableTags: Writable<{ [key: string]: Tag }> = writable({}) // {}
 
