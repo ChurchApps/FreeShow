@@ -188,7 +188,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     // TEMPLATES
     template_actions: { label: "tabs.actions", icon: "actions", iconColor: "#d497ff" },
     // SCRIPTUES
-    route_bible: { label: "main.open: Route Bible", icon: "launch" },
+    route_bible: { label: "main.open: route.bible", icon: "launch" },
     // STAGE
     move_connections: { label: "context.move_connections", icon: "up" },
     // SETTINGS
