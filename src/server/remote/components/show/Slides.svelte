@@ -28,7 +28,7 @@
     function runAutoScroll() {
         if (!scrollElem || pendingScrollIndex === null) return
 
-        const slideElem = scrollElem.querySelector(`.grid [data-index=\"${pendingScrollIndex}\"]`) as HTMLElement | null
+        const slideElem = scrollElem.querySelector(`.grid [data-index="${pendingScrollIndex}"]`) as HTMLElement | null
         if (!slideElem) {
             if (pendingScrollTries < 80) {
                 pendingScrollTries++
@@ -53,6 +53,9 @@
     $: {
         if (outSlide !== null && $outShow?.id === $activeShow?.id) {
             const index = Math.max(0, outSlide)
+            if (index + 1 > renderedCount) {
+                renderedCount = Math.min(allSlides.length, index + 1)
+            }
             if (($outShow?.id || "") + index !== lastScrollId) {
                 lastScrollId = ($outShow?.id || "") + index
                 pendingScrollIndex = index
@@ -86,8 +89,10 @@
             e.preventDefault()
             let dist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY)
 
+            let newColumns = 1
             scaled = initialDistance / margin - dist / margin
-            const newColumns = initialColumns + scaled
+            if (scaled < 0) newColumns = initialColumns + scaled
+            else newColumns = initialColumns + scaled
 
             columns = Math.min(4, Math.max(1, Math.floor(newColumns)))
         }
@@ -102,25 +107,18 @@
 
     // Keep thumbnail requests slow, but enqueue all slides immediately on show open.
     const THUMB_REQUEST_DELAY = 180
+    const RENDER_BATCH_SIZE = 2
+    const RENDER_BATCH_DELAY = 40
     let lastShowId = ""
-    let currentShowId = ""
-    let allSlides: Array<{ slide: any; index: number; backgroundPath: string }> = []
     const queuedThumbs = new Set<string>()
     const thumbQueue: string[] = []
     let drainingThumbs = false
-    let destroyed = false
-
-    function resetThumbnailQueue() {
-        thumbQueue.length = 0
-        queuedThumbs.clear()
-    }
+    let renderedCount = 0
+    let lastRenderShowId = ""
+    let renderBatchTimer: ReturnType<typeof setTimeout> | null = null
 
     function isDirectPath(path: string) {
-        return /^(data:|https?:\/\/|blob:)/.test(path)
-    }
-
-    function sleep(ms: number) {
-        return new Promise<void>((resolve) => setTimeout(resolve, ms))
+        return path.startsWith("data:") || path.startsWith("http://") || path.startsWith("https://") || path.startsWith("blob:")
     }
 
     function queueThumbnail(path: string) {
@@ -130,26 +128,47 @@
         if (!drainingThumbs) void drainThumbnailQueue()
     }
 
+    function clearRenderBatchTimer() {
+        if (!renderBatchTimer) return
+        clearTimeout(renderBatchTimer)
+        renderBatchTimer = null
+    }
+
+    function queueRenderBatch() {
+        if (renderBatchTimer || renderedCount >= allSlides.length) return
+
+        renderBatchTimer = setTimeout(() => {
+            renderBatchTimer = null
+            renderedCount = Math.min(allSlides.length, renderedCount + RENDER_BATCH_SIZE)
+            if (renderedCount < allSlides.length) queueRenderBatch()
+        }, RENDER_BATCH_DELAY)
+    }
+
     async function drainThumbnailQueue() {
         if (drainingThumbs) return
         drainingThumbs = true
 
-        try {
-            while (thumbQueue.length && !destroyed) {
-                const path = thumbQueue.shift()
-                if (!path) continue
-                send("API:get_thumbnail", { path })
-                await sleep(THUMB_REQUEST_DELAY)
-            }
-        } finally {
-            drainingThumbs = false
+        while (thumbQueue.length) {
+            const path = thumbQueue.shift()
+            if (!path) continue
+            send("API:get_thumbnail", { path })
+            await new Promise((resolve) => setTimeout(resolve, THUMB_REQUEST_DELAY))
         }
+
+        drainingThumbs = false
     }
 
     $: currentShowId = $activeShow?.id || ""
     $: if (currentShowId !== lastShowId) {
         lastShowId = currentShowId
-        resetThumbnailQueue()
+        thumbQueue.length = 0
+        queuedThumbs.clear()
+    }
+
+    $: if (currentShowId !== lastRenderShowId) {
+        lastRenderShowId = currentShowId
+        renderedCount = 0
+        clearRenderBatchTimer()
     }
 
     $: allSlides = layoutSlides.map((slide, index) => {
@@ -157,14 +176,23 @@
         return { slide, index, backgroundPath }
     })
 
+    $: if (renderedCount > allSlides.length) renderedCount = allSlides.length
+
+    $: if (loadingStarted && renderedCount < allSlides.length) {
+        queueRenderBatch()
+    }
+
+    $: visibleSlides = allSlides.slice(0, renderedCount)
+
     $: allSlides.forEach(({ backgroundPath }) => {
         if (!backgroundPath || isDirectPath(backgroundPath) || $mediaCache[backgroundPath]) return
         queueThumbnail(backgroundPath)
     })
 
     onDestroy(() => {
-        destroyed = true
-        resetThumbnailQueue()
+        thumbQueue.length = 0
+        queuedThumbs.clear()
+        clearRenderBatchTimer()
         if (pendingScrollTimer) clearTimeout(pendingScrollTimer)
     })
 </script>
@@ -172,8 +200,9 @@
 <div class="grid" on:touchstart={touchstart} on:touchmove={touchmove} on:touchend={touchend}>
     {#if layoutSlides.length}
         {#if layoutSlides.length < 10 || loadingStarted}
-            {#each allSlides as entry (`${$activeShow?.id || "show"}-${entry.slide.id || "slide"}-${entry.index}`)}
+            {#each visibleSlides as entry (`${$activeShow?.id || "show"}-${entry.slide.id || "slide"}-${entry.index}`)}
                 {@const isActive = outSlide === entry.index && $outShow?.id === $activeShow?.id}
+                {@const useLightMode = layoutSlides.length > 12 && !isActive}
                 <Slide
                     {resolution}
                     media={$activeShow?.media}
@@ -182,6 +211,7 @@
                     index={entry.index}
                     color={entry.slide.color}
                     active={isActive}
+                    renderItems={!useLightMode}
                     {columns}
                     on:click={() => {
                         // if (!$outLocked && !e.ctrlKey) {
@@ -191,6 +221,9 @@
                     }}
                 />
             {/each}
+            {#if visibleSlides.length < allSlides.length}
+                <Center faded>{translate("remote.loading", $dictionary)}</Center>
+            {/if}
         {:else}
             <Center faded>{translate("remote.loading", $dictionary)}</Center>
         {/if}

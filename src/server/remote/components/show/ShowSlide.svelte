@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { onMount } from "svelte"
     import { getGroupName } from "../../../common/util/show"
     import { activeShow, mediaCache } from "../../util/stores"
     import Textbox from "./Textbox.svelte"
@@ -12,8 +13,14 @@
     export let columns: number = 1
     export let active: boolean = false
     export let resolution: any
+    export let renderItems: boolean = true
 
     let ratio = 0
+    let isIphone = false
+
+    onMount(() => {
+        isIphone = /iPhone/i.test(navigator.userAgent || "")
+    })
 
     $: isCustomRes = resolution.width !== 1920 || resolution.height !== 1080
     // WIP get layout resolution
@@ -25,7 +32,26 @@
     $: backgroundPath = media?.[layoutSlide.background]?.path || ""
     $: backgroundThumb = backgroundPath ? $mediaCache[backgroundPath] : ""
     $: canRenderPath = backgroundPath.startsWith("data:") || backgroundPath.startsWith("http://") || backgroundPath.startsWith("https://") || backgroundPath.startsWith("blob:")
-    $: backgroundSrc = backgroundThumb || (canRenderPath ? backgroundPath : backgroundPath || "")
+    $: backgroundSrc = backgroundThumb || (canRenderPath ? backgroundPath : "")
+
+    function getLightPreviewLines(items: any[] = []) {
+        const lines: string[] = []
+        for (const item of items) {
+            if ((item?.type || "text") !== "text" || !Array.isArray(item?.lines)) continue
+            for (const line of item.lines) {
+                const text = (line?.text || [])
+                    .map((part: any) => (part?.value || "").replaceAll("\n", " ").trim())
+                    .filter(Boolean)
+                    .join(" ")
+                if (text) lines.push(text)
+                if (lines.length >= 6) return lines
+            }
+        }
+        return lines
+    }
+
+    $: lightPreviewLines = getLightPreviewLines(slide?.items || [])
+    $: shouldRenderItems = renderItems || !isIphone
 </script>
 
 <!-- TODO: disabled -->
@@ -35,18 +61,33 @@
 class:left={overIndex === index && (!selected.length || index <= selected[0])} -->
 <div class="main" style="width: {100 / columns}%">
     <div class="slide context #slide" class:disabled={layoutSlide.disabled} class:active style="background-color: {color};" tabindex={0} data-index={index} on:click>
-        <Zoomed resolution={newResolution} background={slide.settings?.color || (slide.items.length ? "black" : "transparent")} bind:ratio>
-            <!-- class:ghost={!background} -->
-            <div class="background" style="zoom: {1 / ratio}">
-                {#if backgroundPath}
+        {#if shouldRenderItems}
+            <Zoomed resolution={newResolution} background={slide.settings?.color || (slide.items.length ? "black" : "transparent")} bind:ratio>
+                <!-- class:ghost={!background} -->
+                <div class="background" style="zoom: {1 / ratio}">
+                    {#if backgroundSrc}
+                        <img src={backgroundSrc} alt="" loading="lazy" decoding="async" />
+                    {/if}
+                </div>
+                <!-- TODO: check if showid exists in shows -->
+                {#each slide.items as item}
+                    <Textbox {item} />
+                {/each}
+            </Zoomed>
+        {:else}
+            <div class="light-background">
+                {#if backgroundSrc}
                     <img src={backgroundSrc} alt="" loading="lazy" decoding="async" />
                 {/if}
+                {#if isIphone && lightPreviewLines.length}
+                    <div class="light-text">
+                        {#each lightPreviewLines as line}
+                            <span>{line}</span>
+                        {/each}
+                    </div>
+                {/if}
             </div>
-            <!-- TODO: check if showid exists in shows -->
-            {#each slide.items as item}
-                <Textbox {item} />
-            {/each}
-        </Zoomed>
+        {/if}
         <!-- TODO: BG: white, color: black -->
         <!-- style="width: {newResolution.width * zoom}px;" -->
 
@@ -98,6 +139,46 @@ class:left={overIndex === index && (!selected.length || index <= selected[0])} -
         width: 100%;
         height: 100%;
         object-fit: contain;
+    }
+
+    .light-background {
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        position: relative;
+        background: black;
+        overflow: hidden;
+    }
+
+    .light-background :global(img) {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
+
+    .light-text {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 2px;
+        padding: 6px;
+        pointer-events: none;
+        text-align: center;
+        overflow: hidden;
+    }
+
+    .light-text span {
+        color: white;
+        font-size: 0.52rem;
+        font-weight: 700;
+        line-height: 1.1;
+        text-shadow: 1px 1px 6px #000;
+        overflow: hidden;
+        white-space: normal;
+        overflow-wrap: anywhere;
+        width: 100%;
     }
 
     .label {
