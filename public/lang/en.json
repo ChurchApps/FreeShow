@@ -508,6 +508,7 @@
         "manage_metadata": "Manage metadata",
         "manage_dynamic_values": "Manage dynamic values",
         "template_style_overrides": "Style overwrites",
+        "regex_manager": "Regex manager",
         "choose_camera": "Choose camera",
         "manage_tags": "Manage tags",
         "sync_categories": "Sync categories",

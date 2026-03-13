@@ -264,6 +264,7 @@ export const playerVideos: Writable<Categories> = writable({}) // {default}
 // TEMPLATES
 export const templateCategories: Writable<Categories> = writable({}) // {default}
 export const templates: Writable<Templates> = writable({}) // {default}
+export const globalRegexes: Writable<{ [key: string]: { label: string; value: string } }> = writable({}) // {}
 
 // CALENDAR
 export const events: Writable<{ [key: string]: Event }> = writable({}) // {}

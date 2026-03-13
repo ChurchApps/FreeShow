@@ -511,6 +511,7 @@ export interface Template {
 export interface TemplateStyleOverride {
     id: string
     pattern: string
+    globalRegex?: string
     templateId?: string
 }
 export interface TemplateSettings {

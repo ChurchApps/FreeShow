@@ -327,6 +327,7 @@ export type Popups =
     | "manage_dynamic_values"
     | "player"
     | "template_style_overrides"
+    | "regex_manager"
     | "rename"
     | "color"
     | "color_gradient"
