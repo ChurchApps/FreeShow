@@ -82,6 +82,7 @@
 
     // WIP take off on click if already applied? - it's auto removed when slide is edited & you can remove it in the bottom right menu
     $: isShowActive = !!($activeShow && ($activeShow?.type || "show") === "show")
+    let alerted = false
     function templateClick(e: MouseEvent, templateId: string) {
         if (e.target?.closest(".edit") || e.target?.closest(".icons")) return
         if (!$activeShow || !isShowActive || e.ctrlKey || e.metaKey) return
@@ -136,8 +137,11 @@
         const categoryId = $showsCache[$activeShow.id]?.category || ""
         const categoryTemplate = $categories[categoryId]?.template || ""
         if (categoryTemplate) {
-            alertMessage.set("tips.category_template")
-            activePopup.set("alert")
+            if (!alerted) {
+                alertMessage.set("tips.category_template")
+                activePopup.set("alert")
+                alerted = true
+            }
             return
         }
 
@@ -150,9 +154,10 @@
         if ($special.styleTemplatePreview !== false) {
             const outputStyleId = getFirstActiveOutput()?.style || ""
             const styleTemplate = $styles[outputStyleId]?.template || ""
-            if (styleTemplate) {
+            if (styleTemplate && !alerted) {
                 alertMessage.set("tips.style_template_active")
                 activePopup.set("alert")
+                alerted = true
             }
         }
     }
