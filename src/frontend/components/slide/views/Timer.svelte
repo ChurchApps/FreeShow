@@ -70,7 +70,10 @@
 
     function getTimerOverflow(time: number, offset = 0) {
         if (currentTime < 0) return true
-        if (timer.type !== "counter") return false
+        if (timer.type !== "counter") {
+            // For clock/event timers, check if remaining time is within offset
+            return time <= offset
+        }
 
         let start = timer.start || 0
         let end = timer.end || 0
