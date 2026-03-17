@@ -9,8 +9,8 @@
     let dismissed = false
     let seenUrls = new Set<string>()
 
-    $: activeDownloads = Array.from($mediaDownloads.entries()).filter(([_, data]) => data.status === "downloading")
-    $: hasDownloads = activeDownloads.length > 0 && !dismissed
+    $: mediaEntries = Array.from($mediaDownloads.entries())
+    $: hasDownloads = mediaEntries.length > 0 && !dismissed
 
     $: imports = Array.from($pdfImports.entries())
     $: hasPdfImports = imports.length > 0
@@ -18,7 +18,7 @@
 
     // reset dismissed state when a new download appears
     $: {
-        const currentUrls = new Set(activeDownloads.map(([url]) => url))
+        const currentUrls = new Set(mediaEntries.map(([url]) => url))
         const hasNewDownload = Array.from(currentUrls).some((url) => !seenUrls.has(url))
 
         if (hasNewDownload && dismissed) {
@@ -28,14 +28,6 @@
         seenUrls = currentUrls
     }
 
-    // WIP duplicated functions
-    function formatBytes(bytes: number): string {
-        if (bytes === 0) return "0 B"
-        const k = 1024
-        const sizes = ["B", "KB", "MB", "GB"]
-        const i = Math.floor(Math.log(bytes) / Math.log(k))
-        return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i]
-    }
     function getFileName(url: string): string {
         try {
             const urlObj = new URL(url)
@@ -60,6 +52,12 @@
     function getPercentLabel(progress: number, total: number) {
         return `${Math.round(getPercent(progress, total))}%`
     }
+
+    function getStatusLabel(status: string, progress: number, total: number) {
+        if (status === "error") return translateText("error.import")
+        if (status === "complete") return "100%"
+        return getPercentLabel(progress, total)
+    }
 </script>
 
 {#if hasProgress}
@@ -71,17 +69,18 @@
                 <MaterialButton style="padding: 5px;" icon="close" on:click={dismiss} title="actions.close" white />
             </div>
 
-            {#each activeDownloads as [url, data] (url)}
+            {#each mediaEntries as [url, data] (url)}
                 <div class="download-item" transition:fade={{ duration: 150 }}>
-                    <div class="file-name">{getFileName(url)}</div>
-                    <div class="progress-container">
-                        <div class="progress-bar">
-                            <div class="progress-fill media" style="width: {(data.progress / data.total) * 100}%" />
-                        </div>
-                        <div class="progress-text">
-                            {formatBytes(data.progress)} / {formatBytes(data.total)}
-                        </div>
+                    <div class="pdf-top-row">
+                        <div class="file-name" title={getFileName(url)}>{getFileName(url)}</div>
+                        <span class="status {data.status === 'error' ? 'error' : data.status === 'complete' ? 'ok' : ''}">{getStatusLabel(data.status, data.progress, data.total)}</span>
                     </div>
+
+                    {#if data.status !== "error"}
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: {getPercent(data.progress, data.total)}%" />
+                        </div>
+                    {/if}
                 </div>
             {/each}
         {/if}
@@ -96,18 +95,12 @@
                 <div class="download-item" transition:fade={{ duration: 150 }}>
                     <div class="pdf-top-row">
                         <div class="file-name" title={data.name}>{data.name}</div>
-                        {#if data.status === "complete"}
-                            <span class="status ok"><T id="actions.imported" /></span>
-                        {:else if data.status === "error"}
-                            <span class="status error"><T id="error.import" /></span>
-                        {:else}
-                            <span class="status">{getPercentLabel(data.progress, data.total)}</span>
-                        {/if}
+                        <span class="status {data.status === 'error' ? 'error' : data.status === 'complete' ? 'ok' : ''}">{getStatusLabel(data.status, data.progress, data.total)}</span>
                     </div>
 
                     {#if data.status === "importing"}
                         <div class="progress-bar">
-                            <div class="progress-fill pdf" style="width: {getPercent(data.progress, data.total)}%" />
+                            <div class="progress-fill" style="width: {getPercent(data.progress, data.total)}%" />
                         </div>
                     {:else if data.status === "error"}
                         <div class="progress-text error-text" title={data.message}>{data.message || translateText("error.import")}</div>
@@ -174,12 +167,6 @@
         text-overflow: ellipsis;
     }
 
-    .progress-container {
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-    }
-
     .progress-bar {
         width: 100%;
         height: 6px;
@@ -190,16 +177,9 @@
 
     .progress-fill {
         height: 100%;
+        background: linear-gradient(90deg, #8000f0 0%, var(--secondary) 100%);
         transition: width 0.3s ease;
         border-radius: 3px;
-    }
-
-    .progress-fill.media {
-        background: linear-gradient(90deg, #8000f0 0%, var(--secondary) 100%);
-    }
-
-    .progress-fill.pdf {
-        background: linear-gradient(90deg, #3fbf7f 0%, #8fe388 100%);
     }
 
     .progress-text {

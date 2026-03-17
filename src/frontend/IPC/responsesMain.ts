@@ -222,6 +222,8 @@ export const mainResponses: MainResponses = {
     [ToMain.MEDIA_DOWNLOAD_PROGRESS]: (data) => {
         mediaDownloads.update((downloads) => {
             const newDownloads = new Map(downloads)
+            const total = Math.max(1, data.total || 0)
+            const progress = data.status === "complete" ? total : Math.min(data.progress || 0, total)
             if (data.status === "complete" || data.status === "error") {
                 // Remove completed/errored downloads after a short delay
                 setTimeout(() => {
@@ -232,7 +234,7 @@ export const mainResponses: MainResponses = {
                     })
                 }, 2000)
             }
-            newDownloads.set(data.url, { progress: data.progress, total: data.total, status: data.status })
+            newDownloads.set(data.url, { progress, total, status: data.status })
             return newDownloads
         })
     },
