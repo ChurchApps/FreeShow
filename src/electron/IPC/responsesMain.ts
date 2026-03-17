@@ -4,6 +4,7 @@ import { app, desktopCapturer, screen, shell, systemPreferences } from "electron
 import os from "os"
 import path from "path"
 import { getMainWindow, isProd, mainWindow, maximizeMain, setGlobalMenu } from ".."
+import { ToMain } from "../../types/IPC/ToMain"
 import type { MainResponses } from "../../types/IPC/Main"
 import { Main } from "../../types/IPC/Main"
 import type { ErrorLog, LyricSearchResult, OS } from "../../types/Main"
@@ -32,6 +33,7 @@ import { closeMidiInPorts, getMidiInputs, getMidiOutputs, receiveMidi, sendMidi 
 import { deleteShows, deleteShowsNotIndexed, getAllShows, getEmptyShows, refreshAllShows } from "../utils/shows"
 import { correctSpelling } from "../utils/spellcheck"
 import checkForUpdates from "../utils/updater"
+import { sendToMain } from "./main"
 
 export const mainResponses: MainResponses = {
     // DEV
@@ -109,6 +111,7 @@ export const mainResponses: MainResponses = {
     [Main.GET_THUMBNAIL]: async (data) => await getThumbnail(data),
     [Main.SAVE_IMAGE]: (data) => saveImage(data),
     [Main.PDF_TO_IMAGE]: (data) => pdfToImage(data),
+    [Main.PDF_IMPORT_PROGRESS]: (data) => sendToMain(ToMain.PDF_IMPORT_PROGRESS, data),
     [Main.READ_EXIF]: (data) => readExifData(data),
     [Main.MEDIA_CODEC]: (data) => getMediaCodec(data),
     [Main.MEDIA_TRACKS]: (data) => getMediaTracks(data),

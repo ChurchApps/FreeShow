@@ -57,6 +57,7 @@ import {
     lessonsLoaded,
     media,
     mediaDownloads,
+    pdfImports,
     outputs,
     overlays,
     popupData,
@@ -233,6 +234,30 @@ export const mainResponses: MainResponses = {
             }
             newDownloads.set(data.url, { progress: data.progress, total: data.total, status: data.status })
             return newDownloads
+        })
+    },
+    [ToMain.PDF_IMPORT_PROGRESS]: (data) => {
+        pdfImports.update((imports) => {
+            const updated = new Map(imports)
+            updated.set(data.filePath, {
+                name: data.name,
+                progress: data.progress,
+                total: data.total,
+                status: data.status,
+                message: data.message
+            })
+
+            if (data.status === "complete" || data.status === "error") {
+                setTimeout(() => {
+                    pdfImports.update((current) => {
+                        const cleaned = new Map(current)
+                        cleaned.delete(data.filePath)
+                        return cleaned
+                    })
+                }, data.status === "error" ? 7000 : 3000)
+            }
+
+            return updated
         })
     },
     [ToMain.AUDIO_METADATA]: (data) => {

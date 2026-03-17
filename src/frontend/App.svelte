@@ -10,6 +10,7 @@
     import Loader from "./components/main/Loader.svelte"
     import MediaDownloadProgress from "./components/main/MediaDownloadProgress.svelte"
     import MenuBar from "./components/main/MenuBar.svelte"
+    import PdfImportProgress from "./components/main/PdfImportProgress.svelte"
     import Popup from "./components/main/Popup.svelte"
     import ProfileSelector from "./components/main/ProfileSelector.svelte"
     import Recorder from "./components/main/Recorder.svelte"
@@ -88,6 +89,7 @@
             <Recorder />
             <Guide />
             <MediaDownloadProgress />
+            <PdfImportProgress />
 
             <MainLayout />
 
