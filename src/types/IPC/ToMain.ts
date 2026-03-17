@@ -16,6 +16,7 @@ export enum ToMain {
     LESSONS_DONE = "LESSONS_DONE",
     IMAGES_TO_SHOW = "IMAGES_TO_SHOW",
     MEDIA_DOWNLOAD_PROGRESS = "MEDIA_DOWNLOAD_PROGRESS",
+    PDF_IMPORT_PROGRESS = "PDF_IMPORT_PROGRESS",
     // Unified provider callbacks
     PROVIDER_CONNECT = "PROVIDER_CONNECT",
     PROVIDER_PROJECTS = "PROVIDER_PROJECTS",
@@ -47,6 +48,7 @@ export interface ToMainSendPayloads {
     [ToMain.LESSONS_DONE]: { showId: string; status: { finished: number; failed: number } }
     [ToMain.IMAGES_TO_SHOW]: { images: string[]; name: string }
     [ToMain.MEDIA_DOWNLOAD_PROGRESS]: { url: string; progress: number; total: number; status: "downloading" | "complete" | "error" }
+    [ToMain.PDF_IMPORT_PROGRESS]: { filePath: string; name: string; progress: number; total: number; status: "importing" | "complete" | "error"; message?: string }
     // Unified provider callbacks
     [ToMain.PROVIDER_CONNECT]: { providerId: ContentProviderId; success: boolean; isFirstConnection?: boolean }
     [ToMain.PROVIDER_PROJECTS]: { providerId: ContentProviderId; categoryName: string; shows: any; projects: any }

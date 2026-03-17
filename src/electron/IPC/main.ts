@@ -39,14 +39,14 @@ export async function receiveMain(e: Electron.IpcMainEvent, msg: MainReceiveValu
 
 const currentlyAwaiting: string[] = []
 // @ts-ignore
-export async function requestToMain<ID extends ToMain, R = Awaited<ToMainReturnPayloads[ID]>>(id: ID, value: ToMainSendValue<ID>, callback?: (data: R | null) => void) {
+export async function requestToMain<ID extends ToMain, R = Awaited<ToMainReturnPayloads[ID]>>(id: ID, value: ToMainSendValue<ID>, callback?: (data: R | null) => void, timeoutMs = 15000) {
     const listenerId = id + uid(5)
     currentlyAwaiting.push(listenerId)
 
     sendToMain(id, value, listenerId)
 
     // LISTENER
-    const waitingTimeout = 15000
+    const waitingTimeout = timeoutMs
     let timeout: NodeJS.Timeout | null = null
     const returnData: R | null = await new Promise((resolve) => {
         timeout = setTimeout(() => {

@@ -57,6 +57,7 @@ import {
     lessonsLoaded,
     media,
     mediaDownloads,
+    pdfImports,
     outputs,
     overlays,
     popupData,
@@ -221,6 +222,8 @@ export const mainResponses: MainResponses = {
     [ToMain.MEDIA_DOWNLOAD_PROGRESS]: (data) => {
         mediaDownloads.update((downloads) => {
             const newDownloads = new Map(downloads)
+            const total = Math.max(1, data.total || 0)
+            const progress = data.status === "complete" ? total : Math.min(data.progress || 0, total)
             if (data.status === "complete" || data.status === "error") {
                 // Remove completed/errored downloads after a short delay
                 setTimeout(() => {
@@ -231,8 +234,32 @@ export const mainResponses: MainResponses = {
                     })
                 }, 2000)
             }
-            newDownloads.set(data.url, { progress: data.progress, total: data.total, status: data.status })
+            newDownloads.set(data.url, { progress, total, status: data.status })
             return newDownloads
+        })
+    },
+    [ToMain.PDF_IMPORT_PROGRESS]: (data) => {
+        pdfImports.update((imports) => {
+            const updated = new Map(imports)
+            updated.set(data.filePath, {
+                name: data.name,
+                progress: data.progress,
+                total: data.total,
+                status: data.status,
+                message: data.message
+            })
+
+            if (data.status === "complete" || data.status === "error") {
+                setTimeout(() => {
+                    pdfImports.update((current) => {
+                        const cleaned = new Map(current)
+                        cleaned.delete(data.filePath)
+                        return cleaned
+                    })
+                }, data.status === "error" ? 7000 : 3000)
+            }
+
+            return updated
         })
     },
     [ToMain.AUDIO_METADATA]: (data) => {

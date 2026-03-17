@@ -6,7 +6,7 @@ import type { DropData, Selected, Variable } from "../../../types/Main"
 import { clearAudio } from "../../audio/audioFading"
 import { AudioPlayer } from "../../audio/audioPlayer"
 import { AudioPlaylist } from "../../audio/audioPlaylist"
-import { activeDrawerTab, activeEdit, activePage, activeProject, activeShow, activeTimers, audioPlaylists, draw, drawSettings, drawTool, folders, groupNumbers, groups, media, openScripture, outLocked, outputs, overlays, playingAudio, playingMetronome, projects, refreshEditSlide, selected, showsCache, sortedShowsList, special, styles, timers, variables, volume } from "../../stores"
+import { activeDrawerTab, activeEdit, activePage, activeProject, activeShow, activeTimers, audioPlaylists, draw, drawSettings, drawTool, folders, groupNumbers, groups, media, openScripture, outLocked, outputs, overlays, pdfImports, playingAudio, playingMetronome, projects, refreshEditSlide, selected, showsCache, sortedShowsList, special, styles, timers, variables, volume } from "../../stores"
 import { newToast } from "../../utils/common"
 import { send } from "../../utils/request"
 import { getDynamicValue } from "../edit/scripts/itemHelpers"
@@ -814,31 +814,63 @@ function levenshteinDistance(a, b) {
 
 export async function getPDFThumbnails({ path }: API_media) {
     if (!path) return []
+    const name = path.split(/[/\\]/).pop()?.replace(/\.pdf$/i, "") || "PDF"
+    const renderPhasePercent = 80
+    const totalPercent = 100
 
     GlobalWorkerOptions.workerSrc = "./assets/pdf.worker.min.mjs"
     const loadingTask = getDocument(path)
     const pdfDoc = await loadingTask.promise
     const pageCount = pdfDoc.numPages
 
+    pdfImports.update((imports) => {
+        const updated = new Map(imports)
+        updated.set(path, { name, progress: 0, total: totalPercent, status: "importing" })
+        return updated
+    })
+
     const canvas = document.createElement("canvas")
     const context = canvas.getContext("2d")
     if (!context) return []
 
     const pages: string[] = []
-    for (let i = 0; i < pageCount; i++) {
-        const page = await pdfDoc.getPage(i + 1)
-        const viewport = page.getViewport({ scale: 1.5 })
+    try {
+        for (let i = 0; i < pageCount; i++) {
+            const page = await pdfDoc.getPage(i + 1)
+            const viewport = page.getViewport({ scale: 1.5 })
 
-        canvas.height = viewport.height
-        canvas.width = viewport.width
+            canvas.height = viewport.height
+            canvas.width = viewport.width
 
-        await page.render({ canvas, canvasContext: context, viewport }).promise
-        const base64 = canvas.toDataURL("image/jpeg")
-        pages.push(base64)
+            await page.render({ canvas, canvasContext: context, viewport }).promise
+            const base64 = canvas.toDataURL("image/jpeg")
+            pages.push(base64)
+
+            const renderProgress = Math.round(((i + 1) / Math.max(1, pageCount)) * renderPhasePercent)
+            pdfImports.update((imports) => {
+                const updated = new Map(imports)
+                updated.set(path, { name, progress: renderProgress, total: totalPercent, status: "importing" })
+                return updated
+            })
+        }
+
+        return { path, pages }
+    } catch (error: any) {
+        pdfImports.update((imports) => {
+            const updated = new Map(imports)
+            updated.set(path, {
+                name,
+                progress: Math.round((pages.length / Math.max(1, pageCount)) * renderPhasePercent),
+                total: totalPercent,
+                status: "error",
+                message: `PDF processing failed: ${error?.message || "Unknown error"}`
+            })
+            return updated
+        })
+        throw error
+    } finally {
+        loadingTask.destroy()
     }
-
-    loadingTask.destroy()
-    return { path, pages }
 }
 
 // DRAW

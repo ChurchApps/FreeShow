@@ -262,21 +262,51 @@ export async function pdfToImage({ filePath }: { filePath: string }) {
     const pdfName = path.basename(filePath, path.extname(filePath))
     const pdfImportPath = getDataFolderPath("imports", "PDF")
     const pathName = createFolder(path.join(pdfImportPath, pdfName))
+    const renderPhasePercent = 80
+    const savePhasePercent = 20
 
-    const { pages: pdfImages }: { pages: string[] } = (await requestToMain(ToMain.API, { action: "get_pdf_thumbnails", data: { path: filePath } })) || { pages: [] }
-    if (!Array.isArray(pdfImages)) return
-
-    const images: string[] = []
-    for (let i = 0; i < pdfImages.length; i++) {
-        const base64 = pdfImages[i]
-        const image = nativeImage.createFromDataURL(base64)
-        const imagePath = path.join(pathName, `${i + 1}.jpg`)
-
-        saveToDisk(imagePath, image, "jpg")
-        images.push(imagePath)
+    const sendPdfImportProgress = (data: { progress: number; total?: number; status: "importing" | "complete" | "error"; message?: string }) => {
+        sendToMain(ToMain.PDF_IMPORT_PROGRESS, {
+            filePath,
+            name: pdfName,
+            progress: data.progress,
+            total: data.total || 100,
+            status: data.status,
+            ...(data.message ? { message: data.message } : {})
+        })
     }
 
-    if (images.length) sendToMain(ToMain.IMAGES_TO_SHOW, { images, name: pdfName })
+    try {
+        // Large PDFs can take significantly longer than the default 15s IPC timeout.
+        const response: { pages?: string[] } | null = await requestToMain(ToMain.API, { action: "get_pdf_thumbnails", data: { path: filePath } }, undefined, 5 * 60 * 1000)
+        const pdfImages = response?.pages
+
+        if (!Array.isArray(pdfImages) || !pdfImages.length) {
+            sendPdfImportProgress({ progress: 0, total: 1, status: "error", message: "PDF import failed (timeout or unsupported file)." })
+            return
+        }
+
+        const images: string[] = []
+        for (let i = 0; i < pdfImages.length; i++) {
+            const base64 = pdfImages[i]
+            const image = nativeImage.createFromDataURL(base64)
+            const imagePath = path.join(pathName, `${i + 1}.jpg`)
+
+            saveToDisk(imagePath, image, "jpg")
+            images.push(imagePath)
+
+            const saveProgress = renderPhasePercent + Math.round(((i + 1) / Math.max(1, pdfImages.length)) * savePhasePercent)
+            sendPdfImportProgress({ progress: saveProgress, status: "importing" })
+
+        }
+
+        if (images.length) {
+            sendToMain(ToMain.IMAGES_TO_SHOW, { images, name: pdfName })
+            sendPdfImportProgress({ progress: 100, status: "complete" })
+        }
+    } catch (error: any) {
+        sendPdfImportProgress({ progress: 0, total: 1, status: "error", message: `PDF import failed: ${error?.message || "Unknown error"}` })
+    }
 
     // const loadingTask = getDocument(filePath)
     // const pdfDoc = await loadingTask.promise
