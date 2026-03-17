@@ -265,20 +265,24 @@ export async function pdfToImage({ filePath }: { filePath: string }) {
     const renderPhasePercent = 80
     const savePhasePercent = 20
 
+    const sendPdfImportProgress = (data: { progress: number; total?: number; status: "importing" | "complete" | "error"; message?: string }) => {
+        sendToMain(ToMain.PDF_IMPORT_PROGRESS, {
+            filePath,
+            name: pdfName,
+            progress: data.progress,
+            total: data.total || 100,
+            status: data.status,
+            ...(data.message ? { message: data.message } : {})
+        })
+    }
+
     try {
         // Large PDFs can take significantly longer than the default 15s IPC timeout.
         const response: { pages?: string[] } | null = await requestToMain(ToMain.API, { action: "get_pdf_thumbnails", data: { path: filePath } }, undefined, 5 * 60 * 1000)
         const pdfImages = response?.pages
 
         if (!Array.isArray(pdfImages) || !pdfImages.length) {
-            sendToMain(ToMain.PDF_IMPORT_PROGRESS, {
-                filePath,
-                name: pdfName,
-                progress: 0,
-                total: 1,
-                status: "error",
-                message: "PDF import failed (timeout or unsupported file)."
-            })
+            sendPdfImportProgress({ progress: 0, total: 1, status: "error", message: "PDF import failed (timeout or unsupported file)." })
             return
         }
 
@@ -292,35 +296,16 @@ export async function pdfToImage({ filePath }: { filePath: string }) {
             images.push(imagePath)
 
             const saveProgress = renderPhasePercent + Math.round(((i + 1) / Math.max(1, pdfImages.length)) * savePhasePercent)
-            sendToMain(ToMain.PDF_IMPORT_PROGRESS, {
-                filePath,
-                name: pdfName,
-                progress: saveProgress,
-                total: 100,
-                status: "importing"
-            })
+            sendPdfImportProgress({ progress: saveProgress, status: "importing" })
 
         }
 
         if (images.length) {
             sendToMain(ToMain.IMAGES_TO_SHOW, { images, name: pdfName })
-            sendToMain(ToMain.PDF_IMPORT_PROGRESS, {
-                filePath,
-                name: pdfName,
-                progress: 100,
-                total: 100,
-                status: "complete"
-            })
+            sendPdfImportProgress({ progress: 100, status: "complete" })
         }
     } catch (error: any) {
-        sendToMain(ToMain.PDF_IMPORT_PROGRESS, {
-            filePath,
-            name: pdfName,
-            progress: 0,
-            total: 1,
-            status: "error",
-            message: `PDF import failed: ${error?.message || "Unknown error"}`
-        })
+        sendPdfImportProgress({ progress: 0, total: 1, status: "error", message: `PDF import failed: ${error?.message || "Unknown error"}` })
     }
 
     // const loadingTask = getDocument(filePath)
