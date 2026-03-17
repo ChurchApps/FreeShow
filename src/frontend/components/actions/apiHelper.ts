@@ -855,7 +855,7 @@ export async function getPDFThumbnails({ path }: API_media) {
             progress: Math.round((pages.length / Math.max(1, pageCount)) * renderPhasePercent),
             total: 100,
             status: "error",
-            message: `No se pudo procesar el PDF: ${error?.message || "Error desconocido"}`
+            message: `PDF processing failed: ${error?.message || "Unknown error"}`
         })
         throw error
     } finally {

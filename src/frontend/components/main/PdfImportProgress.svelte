@@ -1,6 +1,8 @@
 <script lang="ts">
     import { fade, slide } from "svelte/transition"
     import { mediaDownloads, pdfImports } from "../../stores"
+    import { translateText } from "../../utils/language"
+    import T from "../helpers/T.svelte"
     import Icon from "../helpers/Icon.svelte"
 
     $: imports = Array.from($pdfImports.entries())
@@ -21,7 +23,7 @@
     <div class="container" style={hasMediaDownloads ? "bottom: 170px;" : "bottom: 12px;"} transition:slide={{ duration: 200 }}>
         <div class="header">
             <Icon id="pdf" size={0.9} white />
-            <span>Importando PDF</span>
+            <span><T id="popup.importing" /> PDF</span>
         </div>
 
         {#each imports as [filePath, data] (filePath)}
@@ -29,9 +31,9 @@
                 <div class="top-row">
                     <div class="name" title={data.name}>{data.name}</div>
                     {#if data.status === "complete"}
-                        <span class="status ok">Completado</span>
+                        <span class="status ok"><T id="actions.imported" /></span>
                     {:else if data.status === "error"}
-                        <span class="status error">Error</span>
+                        <span class="status error"><T id="error.import" /></span>
                     {:else}
                         <span class="status">{getPercentLabel(data.progress, data.total)}</span>
                     {/if}
@@ -42,7 +44,7 @@
                         <div class="fill" style="width: {getPercent(data.progress, data.total)}%" />
                     </div>
                 {:else if data.status === "error"}
-                    <div class="message" title={data.message}>{data.message || "No se pudo importar este PDF."}</div>
+                    <div class="message" title={data.message}>{data.message || translateText("error.import")}</div>
                 {/if}
             </div>
         {/each}

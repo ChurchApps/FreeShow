@@ -277,7 +277,7 @@ export async function pdfToImage({ filePath }: { filePath: string }) {
                 progress: 0,
                 total: 1,
                 status: "error",
-                message: "No se pudo importar el PDF (timeout o archivo no compatible)."
+                message: "PDF import failed (timeout or unsupported file)."
             })
             return
         }
@@ -319,7 +319,7 @@ export async function pdfToImage({ filePath }: { filePath: string }) {
             progress: 0,
             total: 1,
             status: "error",
-            message: `No se pudo importar el PDF: ${error?.message || "Error desconocido"}`
+            message: `PDF import failed: ${error?.message || "Unknown error"}`
         })
     }
 
