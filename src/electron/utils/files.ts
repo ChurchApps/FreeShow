@@ -17,7 +17,7 @@ import type { Project } from "../../types/Projects"
 import type { Item, Show, TrimmedShows } from "../../types/Show"
 import { imageExtensions, mimeTypes, videoExtensions } from "../data/media"
 import { _store, appDataPath, config, getStore, setStore, setStoreValue } from "../data/store"
-import { createThumbnail, filePathHashCode } from "../data/thumbnails"
+import { createThumbnail, doesMediaExist, filePathHashCode } from "../data/thumbnails"
 import { sendMain, sendToMain } from "../IPC/main"
 import { OutputHelper } from "../output/OutputHelper"
 import { mainWindow, setAutoProfile, toApp } from "./../index"
@@ -835,14 +835,14 @@ function normalizeLocalPath(filePath: string) {
 const NESTED_SEARCH = 8 // folder levels deep
 export async function locateMediaFile({ filePath, folders }: { filePath: string; folders: string[] }) {
     const normalizedOriginalPath = normalizeLocalPath(filePath)
-    if (await doesPathExistAsync(normalizedOriginalPath)) return { path: normalizedOriginalPath, hasChanged: false }
+    if ((await doesMediaExist({ path: normalizedOriginalPath })).exists) return { path: normalizedOriginalPath, hasChanged: false }
 
     // Media Sync Folder
     const mediaFolder = getMediaSyncFolderPath()
     const folderId = getFileParentFolderId(normalizedOriginalPath)
     const fileName = upath.basename(normalizedOriginalPath)
     const mediaFilePath = path.join(mediaFolder, folderId, fileName)
-    if (await doesPathExistAsync(mediaFilePath)) return { path: mediaFilePath, hasChanged: true }
+    if ((await doesMediaExist({ path: mediaFilePath })).exists) return { path: mediaFilePath, hasChanged: true }
     const searchFolders = [mediaFolder, ...folders].map(normalizeLocalPath).filter((folderPath) => folderPath)
 
     // lookup already replaced paths from cache
@@ -851,7 +851,7 @@ export async function locateMediaFile({ filePath, folders }: { filePath: string;
     const cacheId = `${folderId}_${fileName}`
     const cachedPath = syncCache.replacedPaths[cacheId]
     // TEMP disable in case the wrong file is cached
-    if (false && cachedPath && (await doesPathExistAsync(cachedPath))) {
+    if (false && cachedPath && (await doesMediaExist({ path: cachedPath })).exists) {
         return { path: cachedPath, hasChanged: false }
     }
 
