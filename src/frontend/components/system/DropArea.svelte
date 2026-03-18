@@ -9,12 +9,8 @@
     export let selectChildren = false
     export let hoverTimeout = 500
     export let file = false
-    export let autoScroll = false
-    export let autoScrollEdge = 80
-    export let autoScrollSpeed = 22
     let active = false
     let hover = false
-    let dropElem: HTMLElement | undefined
 
     $: active = validateDrop(id, $selected.id)
 
@@ -35,14 +31,6 @@
         setTimeout(() => {
             if (count === 0) hover = true
         }, 10)
-    }
-
-    function handleDragLeave(e: DragEvent) {
-        leave()
-
-        const currentTarget = e.currentTarget as HTMLElement | null
-        const related = e.relatedTarget
-        if (!currentTarget || !(related instanceof Node) || !currentTarget.contains(related)) stopAutoScroll()
     }
 
     async function dropEvent(e: any) {
@@ -188,67 +176,9 @@
 
     let fileOver = false
 
-    let autoScrollDelta = 0
-    let autoScrollFrame: number | null = null
-
-    function updateAutoScroll(event: DragEvent) {
-        if (!autoScroll || !dropElem) {
-            stopAutoScroll()
-            return
-        }
-
-        const rect = dropElem.getBoundingClientRect()
-        const topDistance = event.clientY - rect.top
-        const bottomDistance = rect.bottom - event.clientY
-
-        autoScrollDelta = 0
-        if (topDistance < autoScrollEdge) {
-            const ratio = (autoScrollEdge - Math.max(topDistance, 0)) / autoScrollEdge
-            autoScrollDelta = -Math.max(2, Math.round(ratio * autoScrollSpeed))
-        } else if (bottomDistance < autoScrollEdge) {
-            const ratio = (autoScrollEdge - Math.max(bottomDistance, 0)) / autoScrollEdge
-            autoScrollDelta = Math.max(2, Math.round(ratio * autoScrollSpeed))
-        }
-
-        if (autoScrollDelta) startAutoScroll()
-        else stopAutoScroll()
-    }
-
-    function startAutoScroll() {
-        if (autoScrollFrame !== null) return
-
-        const loop = () => {
-            if (!dropElem || !autoScrollDelta) {
-                autoScrollFrame = null
-                return
-            }
-
-            if (dropElem.scrollHeight > dropElem.clientHeight) {
-                const previous = dropElem.scrollTop
-                dropElem.scrollTop = previous + autoScrollDelta
-
-                if (previous === dropElem.scrollTop) {
-                    autoScrollFrame = null
-                    return
-                }
-            }
-
-            autoScrollFrame = requestAnimationFrame(loop)
-        }
-
-        autoScrollFrame = requestAnimationFrame(loop)
-    }
-
-    function stopAutoScroll() {
-        autoScrollDelta = 0
-        if (autoScrollFrame !== null) cancelAnimationFrame(autoScrollFrame)
-        autoScrollFrame = null
-    }
-
     function endDrag() {
         deselect()
         hover = false
-        stopAutoScroll()
         // fileOver = false
     }
 
@@ -275,13 +205,11 @@
     on:drop|preventDefault={dropEvent}
     on:dragover|preventDefault={(e) => {
         if (file && e.dataTransfer?.items[0]?.kind === "file") fileOver = true
-        updateAutoScroll(e)
     }}
     on:dragenter={enter}
-    on:dragleave={handleDragLeave}
+    on:dragleave={leave}
     on:touchstart={onTouchStart}
     on:touchend={onTouchEnd}
-    bind:this={dropElem}
 >
     <span class="ParentBlock">
         <slot {fileOver} />

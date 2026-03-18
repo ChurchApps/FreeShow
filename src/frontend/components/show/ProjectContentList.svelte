@@ -238,7 +238,7 @@
 <div id="projectArea" class="list {projectReadOnly ? '' : 'context #project'}">
     <Autoscroll {offset} bind:scrollElem timeout={150}>
         <!-- WIP dragging content to this sometimes does not drop it -->
-        <DropArea id="project" selectChildren hoverTimeout={150} let:fileOver file autoScroll>
+        <DropArea id="project" selectChildren hoverTimeout={150} let:fileOver file>
             {#if projectItemsList.length}
                 {#each splittedProjectsList as splittedItemsList}
                     <div class="listSection" style="--border-color: {splittedItemsList.color};">
