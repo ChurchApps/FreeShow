@@ -515,7 +515,7 @@ function fixText(text: string, formatText: boolean): string {
 
     // remove group from text
     if (text[0] === "[" && text.includes("]")) text = text.slice(text.indexOf("]") + 1)
-    if (text.indexOf(":") === text.split("\n")[0].length - 1) text = text.slice(text.indexOf(":") + 1)
+    if (text.indexOf(":") === text.split("\n")[0].length - 1 && (formatText || text.split(" ").length < 3)) text = text.slice(text.indexOf(":") + 1)
 
     if (formatText) {
         // repeat text
