@@ -112,6 +112,8 @@ export function updateSettings(data: any) {
         else console.info("RECEIVED UNKNOWN SETTINGS KEY:", key)
     })
 
+    migrateLegacyConnectionHostnameSetting()
+
     if (!isMainWindow()) return
 
     // output
@@ -158,6 +160,23 @@ export function updateSettings(data: any) {
     loaded.set(true)
 
     window.api.send("LOADED")
+}
+
+function migrateLegacyConnectionHostnameSetting() {
+    const legacyUseHostname = get(special).connectionHostname
+    if (typeof legacyUseHostname !== "boolean") return
+
+    const connectionIds = ["remote", "stage", "controller", "output_stream"]
+    const currentServerData = clone(get(serverData) || {})
+    const hasPerConnectionSetting = connectionIds.some((id) => typeof currentServerData?.[id]?.useHostname === "boolean")
+    if (hasPerConnectionSetting) return
+
+    connectionIds.forEach((id) => {
+        if (!currentServerData[id]) currentServerData[id] = {}
+        currentServerData[id].useHostname = legacyUseHostname
+    })
+
+    serverData.set(currentServerData)
 }
 
 let videoDataUpdating = false
