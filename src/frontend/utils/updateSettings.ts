@@ -166,19 +166,27 @@ export function updateSettings(data: any) {
 
 function migrateLegacyConnectionHostnameSetting() {
     const legacyUseHostname = get(special).connectionHostname
+    
     if (typeof legacyUseHostname !== "boolean") return
 
     const connectionIds = ["remote", "stage", "controller", "output_stream"]
     const currentServerData = clone(get(serverData) || {})
-    const hasPerConnectionSetting = connectionIds.some((id) => typeof currentServerData?.[id]?.useHostname === "boolean")
-    if (hasPerConnectionSetting) return
 
+    let didUpdate = false
     connectionIds.forEach((id) => {
+        const existing = currentServerData[id]
+        if (existing && typeof existing.useHostname === "boolean") return
         if (!currentServerData[id]) currentServerData[id] = {}
         currentServerData[id].useHostname = legacyUseHostname
+        didUpdate = true
     })
-
-    serverData.set(currentServerData)
+    if (didUpdate) {
+        serverData.set(currentServerData)
+        // Remove the deprecated global toggle after migration
+        const specialData = get(special)
+        delete (specialData as any).connectionHostname
+        special.set(specialData)
+    }
 }
 
 let videoDataUpdating = false
