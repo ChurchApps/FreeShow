@@ -170,7 +170,7 @@ export function toServer(id: ServerName, msg: any) {
         const state = outputStreamState[streamId]
         const inFlightTimedOut = state.inFlight && Date.now() - state.sentAt > OUTPUT_STREAM_INFLIGHT_TIMEOUT_MS
         if (inFlightTimedOut) {
-            // Timed-out in-flight frames are stale; drop queued pending frame and reset sequence tracking state.
+            // Timed-out in-flight frames are stale; drop queued pending frame and reset in-flight tracking state.
             state.inFlight = false
             state.sentAt = 0
             state.inFlightSeq = null

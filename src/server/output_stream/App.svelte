@@ -85,6 +85,8 @@
 
         checkSize()
 
+        if (pendingCapture && ctx) scheduleDraw()
+
         // TODO: request frame on load
     })
 
@@ -103,7 +105,7 @@
                 console.error("Error while drawing latest frame:", error)
             } finally {
                 drawScheduled = false
-                if (pendingCapture) scheduleDraw()
+                if (pendingCapture && canvas && ctx) scheduleDraw()
             }
         })
     }
