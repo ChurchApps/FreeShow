@@ -132,12 +132,37 @@ function createBridge(id: ServerName, server: ServerValues) {
     })
 }
 
-let responded: { [key: string]: boolean } = {}
+type OutputStreamState = {
+    inFlight: boolean
+    sentAt: number
+    pending: Message | null
+}
+const outputStreamState: { [key: string]: OutputStreamState } = {}
+const OUTPUT_STREAM_INFLIGHT_TIMEOUT_MS = 250
+
 export function toServer(id: ServerName, msg: any) {
     if (msg.channel === "STREAM") {
-        // only send if responded
-        if (responded[msg.data.id] === false) return
-        responded[msg.data.id] = false
+        const streamId = msg.data?.id
+        if (!streamId) return
+
+        if (!outputStreamState[streamId]) {
+            outputStreamState[streamId] = { inFlight: false, sentAt: 0, pending: null }
+        }
+
+        const state = outputStreamState[streamId]
+        const inFlightTimedOut = state.inFlight && Date.now() - state.sentAt > OUTPUT_STREAM_INFLIGHT_TIMEOUT_MS
+        if (inFlightTimedOut) state.inFlight = false
+
+        // Drop-old policy: keep only the latest pending frame while one is in-flight.
+        if (state.inFlight) {
+            state.pending = msg
+            return
+        }
+
+        state.inFlight = true
+        state.sentAt = Date.now()
+        ioServers[id]?.emit(id, msg)
+        return
     }
 
     ioServers[id]?.emit(id, msg)
@@ -155,12 +180,32 @@ function initialize(id: ServerName, socket: Socket) {
     servers[id]!.connections[socket.id] = { name }
 
     // reset with new connection
-    if (id === "OUTPUT_STREAM") responded = {}
+    if (id === "OUTPUT_STREAM") {
+        Object.keys(outputStreamState).forEach((key) => delete outputStreamState[key])
+    }
 
     // SEND DATA FROM CLIENT TO APP
     socket.on(id, async (msg: Message) => {
         if (msg.channel === "STREAM_DONE") {
-            responded[msg.data.id] = true
+            const streamId = msg.data?.id
+            if (!streamId) return
+
+            if (!outputStreamState[streamId]) {
+                outputStreamState[streamId] = { inFlight: false, sentAt: 0, pending: null }
+            }
+
+            const state = outputStreamState[streamId]
+            const pending = state.pending
+            state.pending = null
+
+            if (pending) {
+                state.inFlight = true
+                state.sentAt = Date.now()
+                ioServers[id]?.emit(id, pending)
+            } else {
+                state.inFlight = false
+                state.sentAt = 0
+            }
         } else if (msg.channel === "OUTPUT_FRAME") {
             const window = OutputHelper.getOutput(msg.data.outputId)?.window
             if (!window || window.isDestroyed()) return
