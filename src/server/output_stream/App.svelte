@@ -53,7 +53,7 @@
                 pendingCapture = msg.data
                 scheduleDraw()
 
-                socket.emit("OUTPUT_STREAM", { channel: "STREAM_DONE", data: { id: msg.data.id, success: true } })
+                socket.emit("OUTPUT_STREAM", { channel: "STREAM_DONE", data: { id: msg.data.id, seq: msg.data.seq, success: true } })
                 break
             case "AUDIO_BUFFER":
                 if (audioSignal && audioMuted) return
@@ -97,8 +97,14 @@
         drawScheduled = true
 
         requestAnimationFrame(async () => {
-            drawScheduled = false
-            await drawLatestFrame()
+            try {
+                await drawLatestFrame()
+            } catch (error) {
+                console.error("Error while drawing latest frame:", error)
+            } finally {
+                drawScheduled = false
+                if (pendingCapture) scheduleDraw()
+            }
         })
     }
 

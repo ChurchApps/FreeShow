@@ -17,8 +17,12 @@
 
     let id: keyof typeof defaultPorts = "stage"
     let ip = "localhost"
+    let useHostname = false
 
-    $: useHostname = getUseHostname(id)
+    $: {
+        const perConnectionValue = $serverData?.[id]?.useHostname
+        useHostname = typeof perConnectionValue === "boolean" ? perConnectionValue : !!$special.connectionHostname
+    }
 
     onMount(() => {
         id = $popupData.id
@@ -98,18 +102,8 @@
         sendMain(Main.SERVER_DATA, $serverData)
     }
 
-    function getUseHostname(connectionId: string) {
-        const perConnectionValue = $serverData?.[connectionId]?.useHostname
-        if (typeof perConnectionValue === "boolean") return perConnectionValue
-        return !!$special.connectionHostname
-    }
-
     function updateUseHostname(value: boolean) {
-        serverData.update((a) => {
-            if (!a[id]) a[id] = {}
-            a[id].useHostname = value
-            return a
-        })
+        updateData(value, "useHostname")
     }
 
     // $: enableOutputSelector = ($serverData?.output_stream?.outputId && $outputs[$serverData.output_stream.outputId]) || getActiveOutputs($outputs, false, true).length > 1
