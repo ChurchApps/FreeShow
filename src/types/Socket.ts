@@ -22,4 +22,5 @@ type ClientChannels = "API" | "CONNECTION" | "DISCONNECT" | "ERROR" | "DATA" | "
 export interface ServerData {
     outputId?: string
     sendAudio?: boolean
+    useHostname?: boolean
 }

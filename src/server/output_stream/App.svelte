@@ -29,6 +29,7 @@
     let audioSignal = false
     let audioMuted = true
     let showAudioIcon = false
+    const targetDrawFps = 30
 
     // let initialDelay = 0
     socket.on("OUTPUT_STREAM", (msg) => {
@@ -49,8 +50,10 @@
                 // }
 
                 capture = msg.data
+                pendingCapture = msg.data
+                scheduleDraw()
 
-                socket.emit("OUTPUT_STREAM", { channel: "STREAM_DONE", data: { id: msg.data.id, success: true } })
+                socket.emit("OUTPUT_STREAM", { channel: "STREAM_DONE", data: { id: msg.data.id, seq: msg.data.seq, success: true } })
                 break
             case "AUDIO_BUFFER":
                 if (audioSignal && audioMuted) return
@@ -66,6 +69,7 @@
     })
 
     let capture: any = {}
+    let pendingCapture: any = null
 
     let canvas: any
     let ctx = canvas?.getContext("2d")
@@ -81,31 +85,61 @@
 
         checkSize()
 
+        if (pendingCapture && ctx) scheduleDraw()
+
         // TODO: request frame on load
     })
 
-    let lastUpdate = 0
-    const frameRateLimit = 1000 / 30 // Limit to 30 FPS
-    $: if (capture) throttledUpdateCanvas()
-    function throttledUpdateCanvas() {
-        const now = Date.now()
-        if (now - lastUpdate < frameRateLimit) return
-        lastUpdate = now
-        updateCanvas()
+    let lastDrawAt = 0
+    let drawScheduled = false
+    let drawing = false
+
+    function scheduleDraw() {
+        if (drawScheduled) return
+        drawScheduled = true
+
+        requestAnimationFrame(async () => {
+            try {
+                await drawLatestFrame()
+            } catch (error) {
+                console.error("Error while drawing latest frame:", error)
+            } finally {
+                drawScheduled = false
+                if (pendingCapture && canvas && ctx) scheduleDraw()
+            }
+        })
     }
 
-    async function updateCanvas() {
-        if (!canvas) return
+    async function drawLatestFrame() {
+        if (!canvas || !ctx || !pendingCapture) return
+        if (drawing) {
+            scheduleDraw()
+            return
+        }
 
-        const arr = new Uint8ClampedArray(capture.buffer)
-        const pixels = new ImageData(arr, capture.size.width, capture.size.height)
-        const bitmap = await createImageBitmap(pixels)
+        const now = performance.now()
+        const minInterval = 1000 / targetDrawFps
+        if (now - lastDrawAt < minInterval) {
+            scheduleDraw()
+            return
+        }
 
-        ctx.clearRect(0, 0, canvas.width, canvas.height)
-        ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height)
+        const frame = pendingCapture
+        pendingCapture = null
+        drawing = true
 
-        // Clean up bitmap to prevent memory leaks
-        bitmap.close()
+        try {
+            const arr = new Uint8ClampedArray(frame.buffer)
+            const pixels = new ImageData(arr, frame.size.width, frame.size.height)
+            const bitmap = await createImageBitmap(pixels)
+
+            ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height)
+            bitmap.close()
+            lastDrawAt = now
+        } finally {
+            drawing = false
+            if (pendingCapture) scheduleDraw()
+        }
     }
 
     // screen stretch

@@ -12,7 +12,7 @@ export class CaptureHelper {
 
     private static framerates: { [key: string]: number } = {
         stage: 20, // StageShow
-        server: 10, // 30 // OutputShow
+        server: 30, // OutputShow
         unconnected: 1,
         connected: 30 // NDI
     }

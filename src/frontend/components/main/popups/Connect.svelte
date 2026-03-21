@@ -17,8 +17,12 @@
 
     let id: keyof typeof defaultPorts = "stage"
     let ip = "localhost"
+    let useHostname = false
 
-    $: useHostname = $special.connectionHostname
+    $: {
+        const perConnectionValue = $serverData?.[id]?.useHostname
+        useHostname = typeof perConnectionValue === "boolean" ? perConnectionValue : !!$special.connectionHostname
+    }
 
     onMount(() => {
         id = $popupData.id
@@ -98,11 +102,8 @@
         sendMain(Main.SERVER_DATA, $serverData)
     }
 
-    function updateSpecial(key: string, value: any) {
-        special.update((a) => {
-            a[key] = value
-            return a
-        })
+    function updateUseHostname(value: boolean) {
+        updateData(value, "useHostname")
     }
 
     // $: enableOutputSelector = ($serverData?.output_stream?.outputId && $outputs[$serverData.output_stream.outputId]) || getActiveOutputs($outputs, false, true).length > 1
@@ -131,7 +132,7 @@
         <hr />
 
         <MaterialNumberInput label="settings.max_connections" value={$maxConnections} max={100} on:change={(e) => maxConnections.set(e.detail)} />
-        <MaterialToggleSwitch label="settings.use_hostname" checked={$special.connectionHostname} defaultValue={false} on:change={(e) => updateSpecial("connectionHostname", e.detail)} />
+        <MaterialToggleSwitch label="settings.use_hostname" checked={useHostname} defaultValue={false} on:change={(e) => updateUseHostname(e.detail)} />
     {/if}
 {:else}
     <div on:mouseup={mouseup}>

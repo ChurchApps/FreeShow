@@ -132,12 +132,59 @@ function createBridge(id: ServerName, server: ServerValues) {
     })
 }
 
-let responded: { [key: string]: boolean } = {}
+type OutputStreamState = {
+    inFlight: boolean
+    sentAt: number
+    pending: Message | null
+    nextSeq: number
+    inFlightSeq: number | null
+}
+const outputStreamState: { [key: string]: OutputStreamState } = {}
+const OUTPUT_STREAM_INFLIGHT_TIMEOUT_MS = 250
+
+function emitOutputStream(id: ServerName, msg: Message, state: OutputStreamState) {
+    const seq = state.nextSeq++
+    const outgoingMsg: Message = {
+        ...msg,
+        data: {
+            ...(msg.data || {}),
+            seq
+        }
+    }
+
+    state.inFlight = true
+    state.sentAt = Date.now()
+    state.inFlightSeq = seq
+    ioServers[id]?.emit(id, outgoingMsg)
+}
+
 export function toServer(id: ServerName, msg: any) {
     if (msg.channel === "STREAM") {
-        // only send if responded
-        if (responded[msg.data.id] === false) return
-        responded[msg.data.id] = false
+        const streamId = msg.data?.id
+        if (!streamId) return
+
+        if (!outputStreamState[streamId]) {
+            outputStreamState[streamId] = { inFlight: false, sentAt: 0, pending: null, nextSeq: 1, inFlightSeq: null }
+        }
+
+        const state = outputStreamState[streamId]
+        const inFlightTimedOut = state.inFlight && Date.now() - state.sentAt > OUTPUT_STREAM_INFLIGHT_TIMEOUT_MS
+        if (inFlightTimedOut) {
+            // Timed-out in-flight frames are stale; drop queued pending frame and reset in-flight tracking state.
+            state.inFlight = false
+            state.sentAt = 0
+            state.inFlightSeq = null
+            state.pending = null
+        }
+
+        // Drop-old policy: keep only the latest pending frame while one is in-flight.
+        if (state.inFlight) {
+            state.pending = msg
+            return
+        }
+
+        emitOutputStream(id, msg, state)
+        return
     }
 
     ioServers[id]?.emit(id, msg)
@@ -155,12 +202,34 @@ function initialize(id: ServerName, socket: Socket) {
     servers[id]!.connections[socket.id] = { name }
 
     // reset with new connection
-    if (id === "OUTPUT_STREAM") responded = {}
+    if (id === "OUTPUT_STREAM") {
+        Object.keys(outputStreamState).forEach((key) => delete outputStreamState[key])
+    }
 
     // SEND DATA FROM CLIENT TO APP
     socket.on(id, async (msg: Message) => {
         if (msg.channel === "STREAM_DONE") {
-            responded[msg.data.id] = true
+            const streamId = msg.data?.id
+            if (!streamId) return
+
+            if (!outputStreamState[streamId]) {
+                outputStreamState[streamId] = { inFlight: false, sentAt: 0, pending: null, nextSeq: 1, inFlightSeq: null }
+            }
+
+            const state = outputStreamState[streamId]
+            const ackSeq = msg.data?.seq
+            if (typeof ackSeq === "number" && state.inFlightSeq !== ackSeq) return
+
+            const pending = state.pending
+            state.pending = null
+
+            if (pending) {
+                emitOutputStream(id, pending, state)
+            } else {
+                state.inFlight = false
+                state.sentAt = 0
+                state.inFlightSeq = null
+            }
         } else if (msg.channel === "OUTPUT_FRAME") {
             const window = OutputHelper.getOutput(msg.data.outputId)?.window
             if (!window || window.isDestroyed()) return
