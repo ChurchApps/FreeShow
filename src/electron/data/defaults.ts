@@ -81,7 +81,8 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
     timecode: {},
     contentProviderData: {
         planningcenter: {
-            localAlways: false
+            localAlways: false,
+            projectTemplate: ""
         },
         churchApps: {
             syncCategories: ["song"]
