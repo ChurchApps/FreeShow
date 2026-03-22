@@ -94,6 +94,23 @@ export type MainResponses = {
     [ID in Main | ToMain]?: MainHandler<ID>
 }
 
+function getPlanningCenterProjectTemplate(): Project | null {
+    const templateId = get(contentProviderData).planningcenter?.projectTemplate || ""
+    if (!templateId) return null
+
+    const projectTemplate = clone(get(projectTemplates)[templateId])
+    if (!projectTemplate || projectTemplate.deleted) return null
+
+    delete projectTemplate.id
+    delete projectTemplate.deleted
+    delete projectTemplate.modified
+    delete projectTemplate.used
+    delete projectTemplate.archived
+    delete projectTemplate.sourcePath
+
+    return projectTemplate
+}
+
 export const mainResponses: MainResponses = {
     // STORES
     [ToMain.SAVE2]: (a) => saveComplete(a),
@@ -365,13 +382,16 @@ export const mainResponses: MainResponses = {
             }
 
             // CREATE PROJECT
-            const project: Project = {
+            const syncedItems = currentProject.items || []
+            const syncedProject: Project = {
                 name: currentProject.name,
                 created: currentProject.created,
                 used: Date.now(), // show on top in last used list
                 parent: folderId || "/",
-                shows: currentProject.items || []
+                shows: syncedItems
             }
+            const templateProject = data.providerId === "planningcenter" ? getPlanningCenterProjectTemplate() : null
+            const project: Project = templateProject ? { ...templateProject, ...syncedProject, shows: [...(templateProject.shows || []), ...syncedItems] } : syncedProject
 
             // REPLACE IDS
             project.shows = project.shows.map((a) => ({ ...a, id: replaceIds[a.id] || a.id }))
