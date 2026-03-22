@@ -12,8 +12,8 @@
 
     export let searchValue
 
-    const profile = getAccess("functions")
-    const readOnly = profile.triggers === "read"
+    const profile = getAccess("triggers")
+    const readOnly = profile.global === "read"
 
     $: sortedTriggers = sortByName(keysToID($triggers))
     $: filteredTriggersSearch = searchValue.length > 1 ? sortedTriggers.filter((a) => a.name.toLowerCase().includes(searchValue.toLowerCase())) : sortedTriggers

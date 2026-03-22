@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { actions, activeProject, activeShow, projects, special } from "../../stores"
+    import { actions, activeProject, activeShow, editingProjectTemplate, projects, projectTemplates, special } from "../../stores"
     import { translateText } from "../../utils/language"
     import { getActionIcon, runAction } from "../actions/actions"
     import { keysToID, sortByName } from "../helpers/array"
@@ -15,21 +15,25 @@
 
     export let section: any
 
+    $: isTemplate = !!$editingProjectTemplate
+    $: projectId = isTemplate ? $editingProjectTemplate : $activeProject
+    $: currentProject = isTemplate ? $projectTemplates[projectId || ""] : $projects[projectId || ""]
+
     let note = ""
     $: if ($activeShow !== null || section) updateNote()
 
     function updateNote() {
-        note = $projects[$activeProject || ""]?.shows?.[section.index]?.notes || ""
+        note = $projects[projectId || ""]?.shows?.[section.index]?.notes || ""
     }
 
     function edit(e: any) {
-        if (section.notes === e.detail || !$activeProject) return
+        if (section.notes === e.detail || !projectId) return
 
-        projects.update((a) => {
-            if (!a[$activeProject!]?.shows) return a
-            let index = a[$activeProject!].shows.findIndex((a) => a.id === section.id)
-            if (index >= 0) a[$activeProject!].shows[index].notes = e.detail
-            a[$activeProject!].modified = Date.now()
+        ;(isTemplate ? projectTemplates : projects).update((a) => {
+            if (!a[projectId!]?.shows) return a
+            let index = a[projectId!].shows.findIndex((a) => a.id === section.id)
+            if (index >= 0) a[projectId!].shows[index].notes = e.detail
+            a[projectId!].modified = Date.now()
             return a
         })
     }
@@ -39,13 +43,13 @@
     }
 
     function updateSection(key: string, value: any) {
-        if (!$activeProject) return
+        if (!projectId) return
 
-        projects.update((a) => {
-            if (!a[$activeProject!]?.shows) return a
-            let index = a[$activeProject!].shows.findIndex((a) => a.id === section.id)
-            if (index >= 0) a[$activeProject!].shows[index][key] = value
-            a[$activeProject!].modified = Date.now()
+        ;(isTemplate ? projectTemplates : projects).update((a) => {
+            if (!a[projectId!]?.shows) return a
+            let index = a[projectId!].shows.findIndex((a) => a.id === section.id)
+            if (index >= 0) a[projectId!].shows[index][key] = value
+            a[projectId!].modified = Date.now()
             return a
         })
     }
@@ -70,24 +74,24 @@
     }
 
     function updateSectionData(key: string, value: any) {
-        projects.update((a) => {
-            if (!a[$activeProject!]?.shows?.[section.index]) return a
-            const currentData = a[$activeProject!].shows[section.index].data || {}
-            a[$activeProject!].shows[section.index].data = { ...currentData, [key]: value }
-            a[$activeProject!].modified = Date.now()
+        ;(isTemplate ? projectTemplates : projects).update((a) => {
+            if (!a[projectId!]?.shows?.[section.index]) return a
+            const currentData = a[projectId!].shows[section.index].data || {}
+            a[projectId!].shows[section.index].data = { ...currentData, [key]: value }
+            a[projectId!].modified = Date.now()
             return a
         })
     }
 
     let settingsOpened = false
 
-    $: sectionUpdated = $projects[$activeProject || ""]?.shows?.[section.index] || {}
-    $: localAction = $projects[$activeProject || ""]?.shows?.[section.index]?.data?.settings?.triggerAction || ""
+    $: sectionUpdated = currentProject?.shows?.[section.index] || {}
+    $: localAction = currentProject?.shows?.[section.index]?.data?.settings?.triggerAction || ""
 
     $: currentActionId = localAction || $special.sectionTriggerAction
     $: currentAction = currentActionId ? { ...$actions[currentActionId], id: currentActionId } : null
 
-    $: isLocked = !!$projects[$activeProject || ""]?.sectionsLocked
+    $: isLocked = !!currentProject?.sectionsLocked
 </script>
 
 {#if settingsOpened}

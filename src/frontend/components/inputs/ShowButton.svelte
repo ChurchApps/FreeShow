@@ -15,6 +15,7 @@
     import { clearBackground, clearSlide } from "../output/clear"
     import HiddenInput from "./HiddenInput.svelte"
     import MaterialButton from "./MaterialButton.svelte"
+    import T from "../helpers/T.svelte"
 
     export let id: string
     export let show: any // ShowList | ShowRef
@@ -220,7 +221,7 @@
 <div id="show_{id}" class="main" class:played={show.played}>
     <MaterialButton on:click={click} on:dblclick={doubleClick} {isActive} showOutline={outline} class="context {$$props.class}{readOnly ? '_readonly' : ''}" style="font-weight: normal;--outline-color: {activeOutput || 'var(--secondary)'};{$notFound.show?.includes(id) ? 'background-color: rgb(255 0 0 / 0.2);' : ''}{style}{$$props.style || ''}" tab>
         <div class="row">
-            <span class="cell" style={isProject ? `width: 100%;max-width: ${show.layoutInfo?.name || show.scheduleLength ? 92 : 100}%;` : `width: 75%;max-width: calc(100% ${showNumber ? "- var(--number-width)" : ""} - var(--modified-width, 0px));`}>
+            <span class="cell" style={isProject ? `width: 100%;max-width: ${show.layoutInfo?.name || show.scheduleLength ? 92 : 100}%;` : `width: 75%;min-width: 120px;max-width: calc(100% ${showNumber ? "- var(--number-width)" : ""} - var(--modified-width, 0px));`}>
                 <div class="icon" class:isMedia>
                     {#if thumbnailPath}
                         <img class="thumbnail" src={encodeFilePath(thumbnailPath)} alt="thumbnail" style={mediaStyleString} />
@@ -242,7 +243,7 @@
                 {:else}
                     <!-- shows drawer list -->
                     {#if match !== null && ($activeShow?.data?.searchInput ? $activeShow?.id === id : isFirst)}
-                        <span style="opacity: 0.4;font-size: 0.9em;padding: 0 10px;">Press enter to add to project</span>
+                        <span style="opacity: 0.4;font-size: 0.9em;padding: 0 10px;max-width: 40%;"><T id="tips.show_add_project" /></span>
                     {/if}
                 {/if}
             </span>

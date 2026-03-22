@@ -101,11 +101,16 @@ export function encodeFilePath(path: string): string {
 
 export async function getThumbnail(data: API_media) {
     let path = data.path
+
+    const located = await locateMediaFile(path)
+    if (!located?.path) return ""
+    path = located.path
+
     if (videoExtensions.includes(getExtension(path))) {
         path = getThumbnailPath(path, mediaSize.drawerSize)
     }
 
-    return await toDataURL(path)
+    return await toDataURL(encodeFilePath(path))
 }
 
 export async function getSlideThumbnail(data: API_slide_thumbnail, extraOutData: { backgroundImage?: string; overlays?: string[] } = {}, plainSlide = false) {
@@ -175,45 +180,46 @@ export async function getMedia(path: string, size: number = mediaSize.drawerSize
     }
     currentlyGetting.push(mediaId)
 
-    if (path.startsWith("http")) {
-        const localPath = (await downloadOnlineMedia(path)) || path
-        const thumbnail = mediaData?.contentFile?.thumbnail || localPath
+    try {
+        if (path.startsWith("http")) {
+            const localPath = (await downloadOnlineMedia(path)) || path
+            const thumbnail = mediaData?.contentFile?.thumbnail || localPath
 
-        replacedPaths.set(mediaId, { path: localPath, altPath: path, thumbnail })
-        return finish(localPath, thumbnail, path)
-    }
+            return finish(localPath, thumbnail, path)
+        }
 
-    if (!isLocalFile(path) || path.includes("freeshow-cache") || path.includes("media-cache")) {
-        return finish(path, path)
-    }
+        if (!isLocalFile(path) || path.includes("freeshow-cache") || path.includes("media-cache")) {
+            return finish(path, path)
+        }
 
-    // lessons
-    // let thumbnailPath = getThumbnailPath(path, data.size)
-    // // cache after it's downloaded
-    // setTimeout(() => loadThumbnail(path, data.size), 1000)
+        // lessons
+        // let thumbnailPath = getThumbnailPath(path, data.size)
+        // // cache after it's downloaded
+        // setTimeout(() => loadThumbnail(path, data.size), 1000)
 
-    const located = await locateMediaFile(path)
-    if (!located) return finish()
+        const located = await locateMediaFile(path)
+        if (!located) return finish()
 
-    const newPath = located.path
-    if (!located.hasChanged) addToMediaFolder(path)
+        const newPath = located.path
+        if (!located.hasChanged) addToMediaFolder(newPath)
 
-    if (!isMainWindow()) {
-        const thumbnail = getThumbnailPath(newPath, size)
+        if (!isMainWindow()) {
+            const thumbnail = getThumbnailPath(newPath, size)
+            return finish(newPath, thumbnail)
+        }
 
-        replacedPaths.set(mediaId, { path: newPath, thumbnail })
+        // generate thumbnails only in main window
+        const thumbnail = (await loadThumbnail(newPath, size)) || newPath
         return finish(newPath, thumbnail)
+    } finally {
+        const index = currentlyGetting.indexOf(mediaId)
+        if (index > -1) currentlyGetting.splice(index, 1)
     }
-
-    // generate thumbnails only in main window
-    const thumbnail = (await loadThumbnail(newPath, size)) || newPath
-
-    replacedPaths.set(mediaId, { path: newPath, thumbnail })
-    return finish(newPath, thumbnail)
 
     function finish(path?: string, thumbnail?: string, altPath?: string) {
-        currentlyGetting.splice(currentlyGetting.indexOf(mediaId), 1)
         if (!path || !thumbnail) return null
+        if (altPath) replacedPaths.set(mediaId, { path, altPath, thumbnail })
+        else replacedPaths.set(mediaId, { path, thumbnail })
         if (altPath) return { path, altPath, thumbnail, data: mediaData }
         return { path, thumbnail, data: mediaData }
     }
@@ -552,8 +558,8 @@ export function captureCanvas(data: { input: string; output: string; size: any; 
     const isImage = imageExtensions.includes(data.extension)
     const mediaElem = document.createElement(isImage ? "img" : "video")
 
-    // set crossOrigin to prevent canvas tainting
-    ;(mediaElem as any).crossOrigin = "anonymous"
+    // Only request CORS for non-local sources.
+    if (!isLocalFile(data.input)) (mediaElem as any).crossOrigin = "anonymous"
 
     mediaElem.addEventListener(isImage ? "load" : "loadeddata", async () => {
         const currentMediaSize = isImage ? { width: (mediaElem as HTMLImageElement).naturalWidth, height: (mediaElem as HTMLImageElement).naturalHeight } : { width: (mediaElem as HTMLVideoElement).videoWidth, height: (mediaElem as HTMLVideoElement).videoHeight }
@@ -611,17 +617,25 @@ export function captureCanvas(data: { input: string; output: string; size: any; 
         ctx.drawImage(mediaElem, 0, 0, currentMediaSize.width, currentMediaSize.height, 0, 0, canvas.width, canvas.height)
         await new Promise(requestAnimationFrame)
 
-        canvas.toBlob((blob) => {
-            if (!blob) return exit()
-            blob.arrayBuffer().then((buffer) => {
-                sendMain(Main.SAVE_IMAGE, { id: data.id, path: data.output, buffer })
-                completed = true
+        try {
+            canvas.toBlob((blob) => {
+                if (!blob) return exit()
+                blob.arrayBuffer()
+                    .then((buffer) => {
+                        sendMain(Main.SAVE_IMAGE, { id: data.id, path: data.output, buffer })
+                        completed = true
 
-                // unload
-                capturing.delete(data.output)
-                mediaElem.src = ""
+                        // unload
+                        capturing.delete(data.output)
+                        mediaElem.src = ""
+                    })
+                    .catch(() => exit())
             })
-        })
+        } catch (error) {
+            // Source is likely cross-origin without CORS if failing
+            console.warn("Could not export thumbnail canvas.:", data.input, error)
+            exit()
+        }
     }
 
     function exit() {

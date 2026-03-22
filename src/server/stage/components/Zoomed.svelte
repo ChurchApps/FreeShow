@@ -26,6 +26,7 @@
 <style>
     .slide {
         position: relative;
+        overflow: hidden;
     }
 
     .slide:not(.relative) :global(.item) {

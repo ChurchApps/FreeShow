@@ -301,11 +301,18 @@
             <T id="category.create_nonexistent" />
         </MaterialButton>
     </FloatingInputs>
+{:else if active === "all" && !searchValue && filteredShows.length < 20}
+    <FloatingInputs side="left" onlyOne>
+        <MaterialButton variant="outlined" title="actions.import [Ctrl+I]" on:click={() => activePopup.set("import")}>
+            <Icon id="import" />
+            <T id="actions.import" />
+        </MaterialButton>
+    </FloatingInputs>
 {/if}
 
 <FloatingInputs onlyOne gradient>
     <div role="none" class="overflow-interact" on:click={(e) => createShow(e, true)}>
-        <MaterialButton icon="add" class="context #drawer_new_show" title="tooltip.show [Ctrl+N]" disabled={readOnly} on:click={createShow}>
+        <MaterialButton icon="add" class="context #drawer_new_show" title="tooltip.show [Ctrl+N]" disabled={readOnly} on:click={createShow} white>
             {#if !$labelsDisabled}<T id="new.show" />{/if}
         </MaterialButton>
     </div>

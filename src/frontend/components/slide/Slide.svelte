@@ -3,7 +3,7 @@
     import type { MediaStyle } from "../../../types/Main"
     import type { Item, Media, Show, Slide, SlideData } from "../../../types/Show"
     import { removeTagsAndContent } from "../../show/slides"
-    import { activeEdit, activePage, activeTimers, activeTriggerFunction, effects, focusMode, fullColors, groups, media, outputs, overlays, refreshListBoxes, refreshSlideThumbnails, slidesOptions, slideTimers, special, styles, textEditActive } from "../../stores"
+    import { activeEdit, activePage, activeTimers, effects, focusMode, fullColors, groups, media, outputs, overlays, refreshListBoxes, refreshSlideThumbnails, slideNotesActive, slidesOptions, slideTimers, special, styles, textEditActive } from "../../stores"
     import { wait } from "../../utils/common"
     import { translateText } from "../../utils/language"
     import { getAccess } from "../../utils/profile"
@@ -17,13 +17,13 @@
     import { getMedia, getMediaCached, getMediaStyle, mediaSize } from "../helpers/media"
     import { allOutputsHasStyleTemplate, getActiveOutputs, getFirstActiveOutput, getResolution, getSlideFilter, setTemplateStyle } from "../helpers/output"
     import { getGroupName } from "../helpers/show"
+    import { _show } from "../helpers/shows"
     import Effect from "../output/effects/Effect.svelte"
     import SelectElem from "../system/SelectElem.svelte"
     import Actions from "./Actions.svelte"
     import Icons from "./Icons.svelte"
     import Textbox from "./Textbox.svelte"
     import Zoomed from "./Zoomed.svelte"
-    import { _show } from "../helpers/shows"
 
     export let showId: string
     export let slide: Slide
@@ -109,7 +109,7 @@
         if (!bgPath.startsWith("http")) {
             getMedia(bgPath, mediaSize.drawerSize)
             const refs = _show().layouts().ref()
-            if (refs.some((a) => a.length > 28)) getMedia(bgPath, mediaSize.small)
+            if ($special.optimizedMode || refs.some((a) => a.length > 28)) getMedia(bgPath, mediaSize.small)
         }
 
         const media = await getMedia(bgPath, mediaSize.slideSize)
@@ -167,7 +167,11 @@
         style = ""
         // $fullColors &&
         if (viewMode !== "lyrics" || noQuickEdit) colorStyle += `background-color: black;` // ${color}
-        if (!$fullColors && (viewMode !== "lyrics" || noQuickEdit)) colorStyle += `color: ${color};`
+        if (!$fullColors && (viewMode !== "lyrics" || noQuickEdit)) {
+            const rgb = hexToRgb(color || "")
+            const isBlack = rgb.r < 30 && rgb.g < 30 && rgb.b < 30
+            if (!isBlack) colorStyle += `color: ${color};`
+        }
         if (viewMode === "lyrics" && !noQuickEdit) colorStyle += "background-color: transparent;"
         if (viewMode !== "grid" && viewMode !== "simple" && viewMode !== "groups" && !noQuickEdit && viewMode !== "lyrics") style += `width: calc(${100 / columns}% - 6px)`
     }
@@ -191,7 +195,7 @@
 
     function openNotes() {
         if ($textEditActive) textEditActive.set(false)
-        activeTriggerFunction.set("slide_notes")
+        slideNotesActive.set(true)
 
         activeEdit.set({ slide: index, items: [], showId })
         activePage.set("edit")
@@ -272,7 +276,7 @@
                     <!-- border-bottom: 1px dashed {color}; -->
                     <div class="label" data-title={removeTagsAndContent(name || "")} style="color: {color};margin-bottom: 5px;">
                         <span style="color: var(--text);opacity: 0.85;font-size: 0.9em;">{index + 1}</span>
-                        <span class="text">{@html name === null ? "" : name === "." ? "" : name || "—"}</span>
+                        <span class="text">{@html name === null || name === "." ? "" : name || "—"}</span>
                     </div>
                 {/if}
                 <Zoomed
@@ -341,7 +345,7 @@
                                     smallFontSize={viewMode === "lyrics" && !noQuickEdit}
                                     clickRevealed={!!output?.clickRevealed}
                                     {centerPreview}
-                                    preview={true}
+                                    fontPreview={true}
                                     chords={item.chords?.enabled}
                                 />
                             {/if}
@@ -409,7 +413,13 @@
                         <!-- <div class="label" title={name || ""} style="border-bottom: 2px solid {color};"> -->
                         <!-- font-size: 0.8em; -->
                         <span style="color: {$fullColors ? getContrast(color || '') : 'var(--text)'};opacity: 0.85;font-size: 0.9em;">{index + 1}</span>
-                        <span class="text" style={name === null ? "opacity: 0;" : ""}>{@html name === null ? "-" : name === "." ? "" : name || "—"}</span>
+                        <span class="text" style={name === null || name === "." ? "opacity: 0;" : ""}>{@html name === null || name === "." ? "-" : name || "—"}</span>
+
+                        <!-- group is locked! -->
+                        {#if slide.locked || show?.slides?.[layoutSlide?.parent || ""]?.locked}
+                            <span class="lock"><Icon id="lock" size={0.7} style="color: var(--text);opacity: 0.3;" white /></span>
+                        {/if}
+
                         <!--HTML SHOW
                         <button class="open-in-browser-btn" title="Open slide in browser" on:click={handleOpenInBrowserClick}>
                             <Icon id="open_in_new" />

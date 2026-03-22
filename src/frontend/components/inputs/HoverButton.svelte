@@ -1,11 +1,12 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import Icon from "../helpers/Icon.svelte"
     import { translateText } from "../../utils/language"
+    import Icon from "../helpers/Icon.svelte"
 
     export let icon: string
     export let size = 5
     export let title = "media.play"
+    export let hide = false
 
     // fade out (to show itself)
     let reveal = true
@@ -18,9 +19,10 @@
 </script>
 
 <!-- on:keydown={triggerClickOnEnterSpace} tabindex="0" role="button" -->
-<div style={$$props.style} role="none" on:click data-title={translateText(title)}>
+<div style={$$props.style} role="none" on:click data-title={hide ? "" : translateText(title)}>
     <slot />
-    <div class="overlay" class:reveal>
+
+    <div class="overlay" class:reveal class:hidden={hide}>
         <Icon id={icon} {size} white />
     </div>
 </div>
@@ -51,5 +53,10 @@
     }
     .overlay:hover {
         opacity: 0.8;
+    }
+    .overlay.hidden {
+        transition: 0.4s opacity;
+        cursor: default;
+        opacity: 0;
     }
 </style>

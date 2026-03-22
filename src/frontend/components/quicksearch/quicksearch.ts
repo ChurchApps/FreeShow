@@ -244,7 +244,7 @@ const triggerActions = {
         if (data.globalGroup) {
             const show = get(showsCache)[get(activeShow)!.id]
             if (show?.locked) {
-                alertMessage.set("show.locked_info")
+                alertMessage.set("show.locked")
                 activePopup.set("alert")
                 return
             }

@@ -348,7 +348,7 @@
 {#key mediaPath || showId}
     <div id={mediaPath || showId} class="media context #media_preview" style="flex: 1;overflow: hidden;">
         <!-- TODO: info about: CTRL click to play at current pos -->
-        <HoverButton icon="play" size={10} on:click={(e) => playVideo(e.ctrlKey || e.metaKey ? videoTime : 0)}>
+        <HoverButton hide={playingInOutput} icon="play" size={10} on:click={(e) => playVideo(e.ctrlKey || e.metaKey ? videoTime : 0)}>
             {#if type === "player"}
                 <Player id={showId} bind:videoData bind:videoTime preview />
             {:else if mediaPath}

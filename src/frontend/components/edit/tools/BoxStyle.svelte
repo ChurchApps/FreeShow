@@ -497,8 +497,10 @@
 
     // don't load right away (because that will load content twice)
     let loaded = false
+    let hasLoaded = false
     onMount(() => {
         loaded = true
+        setTimeout(() => (hasLoaded = true), 100)
     })
 
     // check if the same changes are made to multiple slides, and notify the user to consider using templates
@@ -507,7 +509,7 @@
     let shownTemplateTip = false
     function checkChanges() {
         // alert if category has template
-        if (!shownTemplateTip && ($activeEdit.type || "show") === "show") {
+        if (hasLoaded && !shownTemplateTip && ($activeEdit.type || "show") === "show") {
             const categoryId = $showsCache[$activeShow?.id || ""]?.category || ""
             const categoryTemplate = $categories[categoryId]?.template || ""
             if (categoryTemplate) {
@@ -519,7 +521,7 @@
         }
 
         // alert if all outputs has style templates
-        if (!shownTemplateTip && $special.styleTemplatePreview !== false) {
+        if (hasLoaded && !shownTemplateTip && $special.styleTemplatePreview !== false) {
             const outputsHasStyleTemplate = getAllEnabledOutputs().every((output) => {
                 return !!$outputStyles[output?.style || ""]?.template
             })

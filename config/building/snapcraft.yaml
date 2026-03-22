@@ -53,6 +53,7 @@ parts:
             - libnode109
             - libglu1-mesa
             - libltc11
+            - libproxy1v5
 apps:
     freeshow:
         command: command.sh

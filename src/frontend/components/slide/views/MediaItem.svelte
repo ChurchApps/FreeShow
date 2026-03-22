@@ -10,6 +10,7 @@
     import { encodeFilePath, getExtension, getMedia, getMediaType, getThumbnailPath, mediaSize } from "../../helpers/media"
     import { defaultLayers } from "../../helpers/output"
     import { _show } from "../../helpers/shows"
+    import { getCropState } from "../../helpers/cropping"
 
     export let id: string
     export let item: Item
@@ -19,6 +20,7 @@
     export let preview = false
     export let mirror = true
     export let edit = false
+    export let cropPreviewMode = false
 
     // replace any media items (with unset path) to the set slide background -- if the background layer is turned off
     function getCustomPath() {
@@ -78,9 +80,17 @@
         mediaPath = thumbnailPath
     }
 
+    $: cropState = getCropState(item?.cropping, cropPreviewMode)
+    $: showCropOverflowPreview = cropState.showCropOverflowPreview
+    $: mediaCropGeometry = cropState.mediaCropGeometry
+    $: flipX = item?.flipped ? -1 : 1
+    $: flipY = item?.flippedY ? -1 : 1
+    $: transformString = `scale(${flipX}, ${flipY})`
+
     $: mediaStyleString = `filter: ${item?.filter};object-fit: ${item?.fit === "blur" ? "contain" : item?.fit || "contain"};`
     $: mediaStyleBlurString = `position: absolute;filter: ${item?.filter || ""} blur(6px) opacity(0.3);object-fit: cover;`
-    $: mediaStyleCombinedString = `width: 100%;height: 100%;transform: scale(${item?.flipped ? "-1" : "1"}, ${item?.flippedY ? "-1" : "1"});${edit ? "pointer-events: none;" : ""}`
+    $: mediaStyleCombinedString = `${mediaCropGeometry}transform-origin: center;transform: ${transformString};${edit ? "pointer-events: none;" : ""}`
+    $: mediaOverflowPreviewStyle = `position: absolute;width: 100%;height: 100%;left: 0;top: 0;opacity: 0.35;pointer-events: none;transform-origin: center;transform: ${transformString};`
 
     // VIDEO UPDATE
 
@@ -161,10 +171,13 @@
         <!-- {#key updater} -->
         <!-- WIP image flashes when loading new image (when changing slides with the same image) -->
         <!-- TODO: use custom transition... -->
-        {#if item.fit === "blur"}
-            <Image style="{mediaStyleBlurString}{mediaStyleCombinedString}" src={mediaPath} {updater} alt="" transition={!edit && item.actions?.transition?.duration && item.actions?.transition?.type !== "none"} cropping={item.cropping} />
+        {#if showCropOverflowPreview}
+            <Image style="{mediaStyleString}{mediaOverflowPreviewStyle}" src={mediaPath} {updater} alt="" transition={false} />
         {/if}
-        <Image style="{mediaStyleString}{mediaStyleCombinedString}" src={mediaPath} {updater} alt="" transition={!edit && item.actions?.transition?.duration && item.actions?.transition?.type !== "none"} cropping={item.cropping} />
+        {#if item.fit === "blur"}
+            <Image style="{mediaStyleBlurString}{mediaStyleCombinedString}" src={mediaPath} {updater} alt="" transition={!edit && item.actions?.transition?.duration && item.actions?.transition?.type !== "none"} />
+        {/if}
+        <Image style="{mediaStyleString}{mediaStyleCombinedString}" src={mediaPath} {updater} alt="" transition={!edit && item.actions?.transition?.duration && item.actions?.transition?.type !== "none"} />
         <!-- {/key} -->
     {/if}
 {/if}

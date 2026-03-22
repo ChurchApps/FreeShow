@@ -51,6 +51,7 @@
     const elementOptions = {
         timer: [{ value: "", label: translateText("stage.first_active_timer") }, ...convertToOptions($timers)],
         variable: getVariables(),
+        // , text.includes("{scripture") ? "scripture" : null
         dynamicValue: getDynamicIds(true).map((a) => ({ value: a, label: a }))
     }
     export function convertToOptions(object) {

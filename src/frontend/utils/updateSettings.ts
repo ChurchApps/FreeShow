@@ -41,6 +41,7 @@ import {
     fullColors,
     gain,
     globalTags,
+    globalRegexes,
     groupNumbers,
     groups,
     labelsDisabled,
@@ -57,6 +58,7 @@ import {
     outLocked,
     overlayCategories,
     overlays,
+    playerTags,
     playerVideos,
     ports,
     profiles,
@@ -162,8 +164,8 @@ export function updateSettings(data: any) {
 
 let videoDataUpdating = false
 export function restartOutputs(specificId = "") {
-    const data = clone(videosData)
-    const time = clone(videosTime)
+    const data = clone(get(videosData))
+    const time = clone(get(videosTime))
 
     const allOutputs = keysToID(get(outputs))
     const outputIds = specificId ? [specificId] : allOutputs.filter((a) => a.enabled).map(({ id }) => id)
@@ -315,6 +317,7 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
     midiIn: (v: any) => actions.set(v),
     videoMarkers: (v: any) => videoMarkers.set(v),
     mediaTags: (v: any) => mediaTags.set(v),
+    playerTags: (v: any) => playerTags.set(v),
     actionTags: (v: any) => actionTags.set(v),
     variableTags: (v: any) => variableTags.set(v),
     customizedIcons: (v: any) => customizedIcons.set(v),
@@ -326,6 +329,7 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
     eqPresets: (v: any) => eqPresets.set(v),
     effectsLibrary: (v: any) => effectsLibrary.set(v),
     globalTags: (v: any) => globalTags.set(v),
+    globalRegexes: (v: any) => globalRegexes.set(v),
     customMetadata: (v: any) => customMetadata.set(v),
     companion: (v: any) => {
         companion.set(v)

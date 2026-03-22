@@ -24,6 +24,7 @@ import {
     currentOutputSettings,
     deletedDefaults,
     drawerTabsData,
+    editingProjectTemplate,
     effects,
     events,
     focusedArea,
@@ -36,6 +37,7 @@ import {
     popupData,
     profiles,
     projects,
+    projectTemplates,
     refreshEditSlide,
     scriptures,
     scriptureSettings,
@@ -68,7 +70,7 @@ import { history } from "./history"
 import { getFileName, removeExtension } from "./media"
 import { select } from "./select"
 import { loadShows } from "./setShow"
-import { checkName, getLayoutRef } from "./show"
+import { checkName, getLayoutRef, removeTemplatesFromShow } from "./show"
 import { _show } from "./shows"
 
 export function copy(clip: Clipboard | null = null, getData = true, shouldDuplicate = false) {
@@ -364,9 +366,12 @@ const selectActions = {
         selected.set({ id: "project", data: newSelection })
     },
     show: () => {
-        if (!get(activeProject)) return
+        const isTemplate = !!get(editingProjectTemplate)
+        const projectId = isTemplate ? get(editingProjectTemplate) : get(activeProject)
+        const currentProject = isTemplate ? get(projectTemplates)[projectId || ""] : get(projects)[projectId || ""]
+        if (!currentProject) return
 
-        const newSelection: any[] = get(projects)[get(activeProject)!]?.shows.map((a, index) => ({ ...a, name: a.name || removeExtension(getFileName(a.id)), index }))
+        const newSelection: any[] = currentProject?.shows.map((a, index) => ({ ...a, name: a.name || removeExtension(getFileName(a.id)), index }))
         selected.set({ id: "show", data: newSelection })
     },
     overlay: () => {
@@ -601,18 +606,15 @@ const pasteActions = {
             if (slide.group === null) slide.group = ""
 
             slide.id = uid()
+            const slideIndex = newSlides.length
             newSlides.push(slide)
 
             // has children
             let childrenLayouts: any = {}
             if (slide.children) {
-                // let children: string[] = []
-                // children = slide.children.filter((child: string) => copiedIds.includes(child))
-                // if (children.length && slide.children.length > children.length) slide.children = children
-
                 // clone selected children
                 const clonedChildren: string[] = []
-                slide.children.forEach((childId: string) => {
+                slide.children.forEach((childId: string, j) => {
                     // !slides[childId]
                     if (!copiedIds.includes(childId)) return
                     const childSlide: any = clone(data.slides.find((a) => a.id === childId))
@@ -624,9 +626,14 @@ const pasteActions = {
                     childSlide.id = uid()
                     delete childSlide.oldChild
                     clonedChildren.push(childSlide.id)
+
+                    const childIndex = newSlides.length
                     newSlides.push(childSlide)
 
-                    childrenLayouts[childSlide.id] = data.layouts?.[i]?.[oldId] || {}
+                    const layout = data.layouts?.[i + j + 1] || data.layouts?.[i]?.[oldId] || {}
+                    childrenLayouts[childSlide.id] = layout
+
+                    layouts[childIndex] = layout
                 })
 
                 slide.children = clonedChildren
@@ -644,7 +651,9 @@ const pasteActions = {
             if (!layout) return
 
             if (Object.keys(childrenLayouts).length) layout.children = childrenLayouts
-            layouts[i] = layout
+            else delete layout.children
+
+            layouts[slideIndex] = layout
         })
         // TODO: children next to each other should be grouped
 
@@ -656,11 +665,11 @@ const pasteActions = {
             _show().set({ key: "media", value: { ...showMedia, ...data.media } })
         }
 
-        // WIP fix the pasting
-
-        // fix paste order
-        // newSlides.reverse()
-        // layouts.reverse()
+        // remove any template if empty
+        const showId = get(activeShow)?.id || ""
+        if (!Object.keys(get(showsCache)[showId]?.slides || {}).length) {
+            removeTemplatesFromShow(showId)
+        }
 
         history({ id: "SLIDES", newData: { data: newSlides, layouts, index: index !== undefined ? index + 1 : undefined } })
     },
@@ -695,10 +704,24 @@ const pasteActions = {
     },
     // project items
     show: (data: any) => {
+        const isTemplate = !!get(editingProjectTemplate)
+        const projectId = isTemplate ? get(editingProjectTemplate) : get(activeProject)
+        if (!projectId || !data?.length) return
+
+        if (isTemplate) {
+            projectTemplates.update((a) => {
+                if (!a[projectId]?.shows) return a
+                a[projectId].shows.push(...data)
+                a[projectId].modified = Date.now()
+                return a
+            })
+            return
+        }
+
         projects.update((a) => {
-            if (!a[get(activeProject) || ""]?.shows) return a
-            a[get(activeProject) || ""].shows.push(...data)
-            a[get(activeProject) || ""].modified = Date.now()
+            if (!a[projectId]?.shows) return a
+            a[projectId].shows.push(...data)
+            a[projectId].modified = Date.now()
             return a
         })
     },
@@ -979,8 +1002,12 @@ const deleteActions = {
     },
     // "remove"
     show: (data: any) => {
-        if (!get(activeProject)) return
-        const projectItems = get(projects)[get(activeProject)!]?.shows || []
+        const isTemplate = !!get(editingProjectTemplate)
+        const projectId = isTemplate ? get(editingProjectTemplate) : get(activeProject)
+        const currentProject = isTemplate ? get(projectTemplates)[projectId || ""] : get(projects)[projectId || ""]
+        if (!currentProject) return
+
+        const projectItems = currentProject.shows || []
         const indexes: number[] = []
 
         // don't remove private shows
@@ -1006,7 +1033,7 @@ const deleteActions = {
             }
         }
 
-        history({ id: "UPDATE", newData: { key: "shows", data: projectItems.filter((_a, i) => !indexes.includes(i)) }, oldData: { id: get(activeProject) }, location: { page: "show", id: "project_key" } })
+        history({ id: "UPDATE", newData: { key: "shows", data: projectItems.filter((_a, i) => !indexes.includes(i)) }, oldData: { id: projectId }, location: { page: "show", id: isTemplate ? "project_template" : "project_key" } })
     },
     layout: (data: any) => {
         if (data.length < _show().layouts().get().length) {
@@ -1130,7 +1157,9 @@ const duplicateActions = {
         history({ id: "UPDATE", newData: { data: event }, location: { page: "drawer", id: "event" } })
     },
     show: (data: any) => {
-        if (!get(activeProject)) return
+        const isTemplate = !!get(editingProjectTemplate)
+        const projectId = isTemplate ? get(editingProjectTemplate) : get(activeProject)
+        if (!projectId) return
 
         data = data.map((a) => {
             const newShowRef = clone(a)
@@ -1140,10 +1169,20 @@ const duplicateActions = {
             return newShowRef
         })
 
+        if (isTemplate) {
+            projectTemplates.update((a) => {
+                if (!a[projectId]?.shows) return a
+                a[projectId].shows.push(...data)
+                a[projectId].modified = Date.now()
+                return a
+            })
+            return
+        }
+
         projects.update((a) => {
-            if (!a[get(activeProject)!]?.shows) return a
-            a[get(activeProject)!].shows.push(...data)
-            a[get(activeProject)!].modified = Date.now()
+            if (!a[projectId]?.shows) return a
+            a[projectId].shows.push(...data)
+            a[projectId].modified = Date.now()
             return a
         })
     },

@@ -208,10 +208,10 @@
     </InputRow>
 {/each}
 
-{#if $providerConnections.churchApps ? cloudOnly.churchApps : !$providerConnections.planningcenter && !$providerConnections.churchApps && !$providerConnections.amazinglife}
+{#if !$providerConnections.planningcenter && (!$providerConnections.churchApps || cloudOnly.churchApps) && !$providerConnections.amazinglife}
     <!-- No provider connected - show connection options -->
     <div class="tapping" on:click={tap}>
-        <Title label="Content Provider" icon="list" />
+        <Title label="settings.content_provider" icon="list" />
     </div>
 
     <InputRow>
@@ -252,7 +252,7 @@
     <InputRow>
         <MaterialDropdown label="Project template for synced plans" value={$contentProviderData.planningcenter?.projectTemplate || ""} options={projectTemplateOptions} on:change={(e) => updateProvider("planningcenter", "projectTemplate", e.detail)} disabled={projectTemplateOptions.length < 2} />
     </InputRow>
-{:else if $providerConnections.churchApps}
+{:else if $providerConnections.churchApps && !cloudOnly.churchApps}
     <!-- ChurchApps connected -->
     <Title label="Content Provider: ChurchApps" icon="list" />
 

@@ -88,7 +88,7 @@
 
     $: mode = Slide?.settings?.mode || "default"
 
-    $: styleOverrides = (Slide?.settings?.styleOverrides || []).filter((a) => a.pattern && a.templateId).length
+    $: styleOverrides = (Slide?.settings?.styleOverrides || []).filter((a) => (a.globalRegex || a.pattern) && a.templateId).length
 </script>
 
 {#if Slide?.isDefault}

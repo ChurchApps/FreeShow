@@ -37,11 +37,6 @@
         delete: () => {
             hide = !!$shows[$selected.data[0]?.id]?.locked
         },
-        save_to_file: () => {
-            const project = $projects[$activeProject || ""]
-            hide = !project?.sourcePath
-            customTitle = project?.sourcePath || ""
-        },
         private: () => {
             let show = $shows[$selected.data[0]?.id]
             if (!show) return
@@ -85,14 +80,6 @@
             menu.icon = "styles"
             if (!$styles[styleId]) disabled = true
             menu.label += `: ${styleId ? $styles[styleId]?.name || "error.not_found" : "main.none"}`
-        },
-        lock_sections: () => {
-            const projectId = $activeProject || ""
-            enabled = !!$projects[projectId]?.sectionsLocked
-        },
-        lock_show: () => {
-            if (!$shows[$selected.data[0]?.id]?.locked) return
-            enabled = !!$shows[$selected.data[0].id].locked
         },
         lock_group: () => {
             if ($selected.id !== "group") return
@@ -366,7 +353,7 @@
         // don't hide context menu
         const keepOpen = ["uppercase", "lowercase", "capitalize", "trim"] // "dynamic_values" (caret position is lost)
         if (keepOpen.includes(id)) return
-        const keepOpenToggle = ["enabled_drawer_tabs", "tag_set", "tag_filter", "media_tag_set", "media_tag_filter", "action_tag_set", "action_tag_filter", "variable_tag_set", "variable_tag_filter", "bind_slide", "bind_item"]
+        const keepOpenToggle = ["enabled_drawer_tabs", "tag_set", "tag_filter", "media_tag_set", "media_tag_filter", "player_tag_set", "player_tag_filter", "action_tag_set", "action_tag_filter", "variable_tag_set", "variable_tag_filter", "bind_slide", "bind_item"]
         if (keepOpenToggle.includes(id)) {
             enabled = !enabled
             return

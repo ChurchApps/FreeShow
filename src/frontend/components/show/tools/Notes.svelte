@@ -6,6 +6,7 @@
     export let placeholder = ""
     export let disabled = false
     export let lines = 4
+    export let autofocus = false
 
     const TIME = 100
     let dispatch = createEventDispatcher()
@@ -28,7 +29,7 @@
 </script>
 
 <div class="paper">
-    <textarea placeholder={placeholder || translateText("empty.text...")} class="edit {$$props.class}" name="" id="" cols="1" rows={lines} style={$$props.style || ""} bind:value on:input={input} on:change={change} on:keydown {disabled} />
+    <textarea placeholder={placeholder || translateText("empty.text...")} class="edit {$$props.class}" name="" id="" cols="1" rows={lines} style={$$props.style || ""} bind:value on:input={input} on:change={change} on:keydown {disabled} {autofocus} />
 </div>
 
 <style>

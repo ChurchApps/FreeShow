@@ -44,6 +44,7 @@
     export let styleOverrides: TemplateStyleOverride[] = []
     export let hideContent = false
     export let normalWrap = false
+    export let updateDynamicValues = true
 
     $: lines = createVirtualBreaks(clone(item?.lines || []), outputStyle?.skipVirtualBreaks)
     $: if (linesStart !== null && linesEnd !== null && lines.length) {
@@ -238,7 +239,7 @@
     $: if ($variables) setTimeout(update)
     $: if ($outputs) setTimeout(update, isStage ? 250 : 0) // time with auto size
     function update() {
-        if (!hasDynamicValues || !hasMounted) return
+        if (!hasDynamicValues || !hasMounted || !updateDynamicValues) return
         updateDynamic++
     }
 
@@ -279,7 +280,7 @@
                 <!-- class:height={!line.text[0]?.value.length} -->
                 <div
                     class="break"
-                    class:normalWrap={normalWrap || (isStage ? stageItem.style.includes("justify") || stageItem.style.includes("nowrap") : line.align?.includes("justify") || line.align?.includes("left") || JSON.stringify(line).includes("nowrap"))}
+                    class:normalWrap={normalWrap || (isStage ? typeof stageItem?.style === "string" && (stageItem?.style.includes("justify") || stageItem?.style.includes("nowrap")) : line.align?.includes("justify") || line.align?.includes("left") || JSON.stringify(line).includes("nowrap"))}
                     class:reveal={(centerPreview || isStage) && item?.lineReveal && revealed < i}
                     class:smallFontSize={smallFontSize || customFontSize || textAnimation.includes("font-size")}
                     style="{style ? lineStyle : ''}{style ? line.align : ''}{item?.list?.enabled && line.text?.reduce((value, t) => (value += t.value || ''), '')?.length ? listStyle : ''}{item?.list?.enabled ? `color: ${getStyles(line.text[0]?.style).color || ''};` : ''}"
@@ -289,7 +290,10 @@
                     {:else}
                         {#each line.text || [] as text, ti}
                             {@const value = text.value?.replaceAll("\n", "<br>") || "<br>"}
-                            <span class="textContainer" style="{style ? getCustomStyle(text.style) : ''}{getColor(text.style)}{customStyle}{text.customType?.includes('disableTemplate') ? text.style : ''}{fontSize ? `;font-size: ${fontSize * (text.customType?.includes('disableTemplate') && !text.customType?.includes('jw') ? customTypeRatio : 1)}px;` : style ? getCustomFontSize(text.style, outputStyle) : ''}">{@html getTextValue(value, i, ti, updateDynamic)}</span>
+                            {@const fontRatio = text.customType?.includes("disableTemplate") && !text.customType?.includes("jw") ? customTypeRatio : 1}
+
+                            <!-- NOTE: must be on the same line for rendering ...>{@html -->
+                            <span class="textContainer" style="{style ? getCustomStyle(text.style) : ''}{getColor(text.style)}{customStyle}{text.customType?.includes('disableTemplate') ? text.style : ''}{fontSize ? `;font-size: ${fontSize * fontRatio}px;` : style ? getCustomFontSize(text.style, outputStyle) : ''}">{@html getTextValue(value, i, ti, updateDynamic)}</span>
                         {/each}
                     {/if}
                 </div>

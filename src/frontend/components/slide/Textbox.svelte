@@ -20,6 +20,7 @@
     export let itemIndex = -1
     export let slideIndex = 0
     export let preview = false
+    export let fontPreview = false
     export let isTemplatePreview = false
     export let mirror = true
     export let isMirrorItem = false
@@ -62,6 +63,7 @@
     export let styleIdOverride = ""
     // expose an optional key so parents can track autosize readiness per item
     export let autoSizeKey = ""
+    export let updateDynamicValues = true
 
     // reuse autosize work across components by caching measurements alongside a signature
     // surface measurement completion for parents that want to precompute autosize
@@ -108,7 +110,7 @@
     // remember which item signature we already reset local font size for
     let lastRenderedSignature = ""
     onMount(() => {
-        if (preview) {
+        if (preview || fontPreview) {
             // Defer slightly to ensure DOM layout is ready for measurement, preventing 0-width errors
             setTimeout(() => (loaded = true), 20)
         } else setTimeout(() => (loaded = true), 100)
@@ -316,7 +318,7 @@
             } else if (willHide) {
                 // Cache is invalid - start at 0 to avoid displaying wrong fontSize while recalculating
                 fontSize = 0
-            } else if (preview) {
+            } else if (preview || fontPreview) {
                 // Preview uses its own cache, fallback to OUTPUT cache, then default
                 fontSize = item?.previewAutoFontSize || item?.autoFontSize || 100
             } else {
@@ -414,7 +416,7 @@
             const maxWait = 500 // Maximum 500ms - reasonable buffer for slow computers without painful delays
 
             // Output window needs longer initial wait for CSS cascade in separate Electron window
-            const isOutputContext = ratio < 0.5 && !preview && !isStage
+            const isOutputContext = ratio < 0.5 && !preview && !fontPreview && !isStage
 
             while (attempts < maxAttempts && totalWait < maxWait) {
                 const waitTime = attempts === 0 ? (isOutputContext ? 150 : 100) : attempts === 1 ? 50 : 20
@@ -473,7 +475,7 @@
 
             // get scripture verse ratio
             const verseItemText = allText.filter((a) => a.customType?.includes("disableTemplate")) || []
-            const verseItemSize = Number(getStyles(verseItemText[0]?.style, true)?.[" font-size"] || "") || 0
+            const verseItemSize = Number(getStyles(verseItemText[0]?.style, true)?.["font-size"] || "") || 0
             customTypeRatio = verseItemSize / 100 || 1
 
             defaultFontSize = itemFontSize
@@ -535,7 +537,7 @@
             return
         }
         // Store in separate field for previews vs OUTPUT
-        if (preview && fontSize !== item.previewAutoFontSize) setItemPreviewAutoFontSize(fontSize)
+        if ((preview || fontPreview) && fontSize !== item.previewAutoFontSize) setItemPreviewAutoFontSize(fontSize)
         if (fontSize !== item.autoFontSize) setItemAutoFontSize(fontSize)
         if (!isDynamic && cacheKey) writeAutoSizeCache(cacheKey, { signature: cacheSignature, fontSize })
 
@@ -563,14 +565,14 @@
         }
 
         // Fix for thumbnails getting stuck with wrong cache when dimensions change via CSS classes
-        if (preview) {
+        if (preview || fontPreview) {
             boxDimensions.measuredWidth = measuredWidth
             boxDimensions.measuredHeight = measuredHeight
         }
 
         // Fix for OUTPUT getting stuck with wrong cache when output window dimensions change
         // Include container dimensions to invalidate cache when OUTPUT resolution/size changes
-        if (!preview && !isStage && itemElem) {
+        if (!preview && !fontPreview && !isStage && itemElem) {
             const container = itemElem.parentElement
             if (container) {
                 boxDimensions.containerWidth = container.clientWidth
@@ -592,7 +594,7 @@
             outputStyle,
             styleIdOverride,
             mirror,
-            preview,
+            preview: preview || fontPreview,
             smallFontSize,
             maxLines,
             maxLinesInvert,
@@ -615,7 +617,7 @@
         // NOTE: Stage uses its own loading mechanism in SlideText.svelte (.loading class)
         // but for the first render, that mechanism shows nothing while the new content loads
         // We need to hide content until autosize is ready for stage too
-        if (preview) return false
+        if (preview || fontPreview) return false
         const type = item?.type || "text"
         if (type !== "text") return false
 
@@ -800,7 +802,37 @@
     on:mouseup={release}
 >
     {#if lines && !noTextMode}
-        <TextboxLines {item} {slideIndex} {isMirrorItem} {key} {smallFontSize} {animationStyle} {dynamicValues} {isStage} {customFontSize} {outputStyle} {ref} {style} {customStyle} {stageItem} {chords} {linesStart} {linesEnd} fontSize={smallFontSize ? 20 : fontSize} {customTypeRatio} {maxLines} {maxLinesInvert} {centerPreview} {revealed} styleOverrides={templateStyleOverrides} {useOriginalTextColor} hideContent={hideUntilAutosized} {normalWrap} on:updateAutoSize={calculateAutosize} />
+        <TextboxLines
+            {item}
+            {slideIndex}
+            {isMirrorItem}
+            {key}
+            {smallFontSize}
+            {animationStyle}
+            {dynamicValues}
+            {isStage}
+            {customFontSize}
+            {outputStyle}
+            {ref}
+            {style}
+            {customStyle}
+            {stageItem}
+            {chords}
+            {linesStart}
+            {linesEnd}
+            fontSize={smallFontSize ? 20 : fontSize}
+            {customTypeRatio}
+            {maxLines}
+            {maxLinesInvert}
+            {centerPreview}
+            {revealed}
+            styleOverrides={templateStyleOverrides}
+            {useOriginalTextColor}
+            hideContent={hideUntilAutosized}
+            {normalWrap}
+            on:updateAutoSize={calculateAutosize}
+            {updateDynamicValues}
+        />
     {:else}
         <SlideItems {item} {slideIndex} {preview} {isTemplatePreview} {mirror} {isMirrorItem} {ratio} {disableListTransition} {smallFontSize} {ref} {fontSize} {outputId} />
     {/if}

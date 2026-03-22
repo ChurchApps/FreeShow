@@ -14,9 +14,10 @@
         side = originalSide
     }
 
-    let width: number = DEFAULT_WIDTH
+    export let defaultWidth = DEFAULT_WIDTH
+    let width: number = defaultWidth
     let handleWidth = 4
-    export let maxWidth: number = DEFAULT_WIDTH * 2.2
+    export let maxWidth: number = defaultWidth * 2.2
     export let minWidth: number = handleWidth
 
     $: if (!mouse && $resized[id]) width = $resized[id]
@@ -24,9 +25,9 @@
     let loaded = false
     onMount(() => {
         setTimeout(() => {
-            width = $resized[id] ?? DEFAULT_WIDTH
+            width = $resized[id] ?? defaultWidth
             // reset to default if closed on startup
-            if ((id === "leftPanel" || id === "rightPanel") && width <= handleWidth) width = DEFAULT_WIDTH
+            if ((id === "leftPanel" || id === "rightPanel") && width <= handleWidth) width = defaultWidth
             loaded = true
         }, 2000)
     })
@@ -64,9 +65,9 @@
 
     const MIN_WIDTH = 0.69
     function getWidth(width: number) {
-        if (width < (DEFAULT_WIDTH * MIN_WIDTH) / 2) return minWidth
-        if (width < DEFAULT_WIDTH * MIN_WIDTH) return DEFAULT_WIDTH * MIN_WIDTH
-        if (width > DEFAULT_WIDTH - 20 && width < DEFAULT_WIDTH + 20) return DEFAULT_WIDTH
+        if (width < (defaultWidth * MIN_WIDTH) / 2) return minWidth
+        if (width < defaultWidth * MIN_WIDTH) return defaultWidth * MIN_WIDTH
+        if (width > defaultWidth - 20 && width < defaultWidth + 20) return defaultWidth
         if (width > maxWidth) return maxWidth
         if (side === "bottom") {
             const availableHeight = window.innerHeight - ($os.platform === "win32" ? 25 : 0) - $drawer.height - 40
@@ -94,13 +95,13 @@
             return
         }
 
-        width = storeWidth === null || storeWidth < DEFAULT_WIDTH / 2 ? DEFAULT_WIDTH : storeWidth
+        width = storeWidth === null || storeWidth < defaultWidth / 2 ? defaultWidth : storeWidth
         storeWidth = null
     }
 
     // const handleKeydown = createKeydownHandler((_e: KeyboardEvent) => {
     //     if (width <= minWidth) {
-    //         width = storeWidth === null || storeWidth < DEFAULT_WIDTH / 2 ? DEFAULT_WIDTH : storeWidth
+    //         width = storeWidth === null || storeWidth < defaultWidth / 2 ? defaultWidth : storeWidth
     //         storeWidth = null
     //     }
     // })
@@ -115,9 +116,9 @@
         })
 
         if (side === "left") {
-            let gap = maxWidth - DEFAULT_WIDTH
-            let triple = DEFAULT_WIDTH + gap * 0.8
-            let double = DEFAULT_WIDTH + gap * 0.4
+            let gap = maxWidth - defaultWidth
+            let triple = defaultWidth + gap * 0.8
+            let double = defaultWidth + gap * 0.4
             if (width > triple && $editColumns === 2) {
                 editColumns.set(3)
             } else if (width > double && width < triple && ($editColumns === 1 || $editColumns === 3)) {

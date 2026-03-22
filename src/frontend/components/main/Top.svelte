@@ -166,6 +166,8 @@
         min-height: 40px;
         height: 40px;
 
+        box-shadow: 0 0 4px rgb(0 0 0 / 0.4);
+
         /* disabled because it's causing unexpected behaviour in Windows 11 */
         /* -webkit-app-region: drag; */
     }

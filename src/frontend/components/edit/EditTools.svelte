@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { Item, ItemType, Line, Slide } from "../../../types/Show"
     import type { TabsObj } from "../../../types/Tabs"
-    import { activeEdit, activeShow, activeTriggerFunction, copyPasteEdit, overlays, selected, showsCache, storedEditMenuState, templates } from "../../stores"
+    import { activeEdit, activeShow, copyPasteEdit, overlays, selected, showsCache, storedEditMenuState, templates } from "../../stores"
     import { getAccess } from "../../utils/profile"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
@@ -66,8 +66,6 @@
     $: showIsActive = $activeShow && ($activeShow.type === undefined || $activeShow.type === "show")
     $: editSlideSelected = $activeEdit.slide !== null && $activeEdit.slide !== undefined
     $: activeIsShow = $activeShow && ($activeShow.type || "show") === "show"
-
-    $: if ($activeTriggerFunction === "slide_notes") active = "slide"
 
     let slides: Slide[] = []
     $: if (allSlideItems && (($activeEdit?.id && editSlideSelected) || showIsActive))

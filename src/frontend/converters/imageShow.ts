@@ -52,5 +52,5 @@ export function createImageShow({ images, name }: { images: string[]; name: stri
         show.media[id] = media
     })
 
-    setTempShows([{ id: showId, show }])
+    setTempShows([{ id: showId, show }], { suppressFinishedToast: true })
 }

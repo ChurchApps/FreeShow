@@ -1,11 +1,11 @@
 <script lang="ts">
-    import { onDestroy, onMount } from "svelte"
+    import { createEventDispatcher, onDestroy, onMount } from "svelte"
     import { fade } from "svelte/transition"
     import type { ProjectShowRef, Tree } from "../../../types/Projects"
     import { ShowType } from "../../../types/Show"
     import { addProjectItem, addToProject, updateRecentlyAddedFiles } from "../../converters/project"
-    import { actions, activeFocus, activePopup, activeProject, activeShow, contextActive, drawer, focusMode, fullColors, labelsDisabled, playerVideos, projects, projectView, recentFiles, selected, shows, special } from "../../stores"
-    import { newToast, triggerFunction } from "../../utils/common"
+    import { actions, activeFocus, activePopup, activeProject, activeShow, contextActive, drawer, drawerTabsData, editingProjectTemplate, focusMode, fullColors, playerVideos, popupData, projects, projectTemplates, projectView, recentFiles, selected, shows, special } from "../../stores"
+    import { triggerFunction } from "../../utils/common"
     import { getAccess } from "../../utils/profile"
     import { getActionIcon } from "../actions/actions"
     import { getTimeUntilClock } from "../drawer/timers/timers"
@@ -24,9 +24,11 @@
     import Center from "../system/Center.svelte"
     import DropArea from "../system/DropArea.svelte"
     import SelectElem from "../system/SelectElem.svelte"
+    import { clipboardToProject } from "./project"
 
     export let tree: Tree[]
     export let recentlyUsedList: any[] = []
+    export let isTemplate: boolean = false
 
     let profile = getAccess("projects")
     let readOnly = profile.global === "read"
@@ -47,15 +49,22 @@
         }, time)
     }
 
+    const dispatch = createEventDispatcher()
+    $: if (scrollElem) dispatch("scrollElem", scrollElem)
+
+    $: projectId = isTemplate ? $editingProjectTemplate : $activeProject
+
+    $: currentProject = isTemplate ? $projectTemplates[$editingProjectTemplate] : $activeProject ? $projects[$activeProject] : null
+
     // close if not existing
-    $: if ($activeProject && !$projects[$activeProject]) activeProject.set(null) // projectView.set(true)
+    $: if ($activeProject && !currentProject) activeProject.set(null) // projectView.set(true)
     // get pos if clicked in drawer, or position moved
-    $: if ($activeProject && $activeShow?.index !== undefined && $projects[$activeProject]?.shows?.[$activeShow.index]?.id !== $activeShow?.id) findShowInProject()
+    $: if ($activeProject && $activeShow?.index !== undefined && currentProject?.shows?.[$activeShow.index]?.id !== $activeShow?.id) findShowInProject()
 
     function findShowInProject() {
-        if (!$projects[$activeProject!]?.shows) return
+        if (!currentProject?.shows) return
 
-        let i = $projects[$activeProject!].shows.findIndex((p) => p.id === $activeShow?.id)
+        let i = currentProject.shows.findIndex((p) => p.id === $activeShow?.id)
         let pos: number = i > -1 ? i : ($activeShow?.index ?? -1)
 
         // ($activeShow?.type !== "video" && $activeShow?.type !== "image")
@@ -76,15 +85,30 @@
     function addSection() {
         let activeShowIndex = $activeShow?.index !== undefined ? $activeShow?.index + 1 : null
         let index: number = activeShowIndex ?? projectItemsList.length ?? 0
-        history({ id: "UPDATE", newData: { key: "shows", index }, oldData: { id: $activeProject }, location: { page: "show", id: "section" } })
+        history({ id: "UPDATE", newData: { key: "shows", index }, oldData: { id: projectId }, location: { page: "show", id: "section" + (isTemplate ? "_template" : "") } })
     }
 
-    $: activeProjectParent = $activeProject ? $projects[$activeProject]?.parent : ""
+    $: activeProjectParent = $activeProject ? currentProject?.parent || "" : ""
     $: projectReadOnly = readOnly || profile[activeProjectParent] === "read" || tree.find((a) => a.id === activeProjectParent)?.readOnly
 
-    $: projectItemsList = $projects[$activeProject || ""]?.shows || []
+    $: projectItemsList = currentProject?.shows || []
 
     $: lessVisibleSection = projectItemsList.length > 10 || projectItemsList.length < 1 || projectItemsList.some((a) => a.type === "section")
+
+    let shouldPasteText = false
+    $: if (currentProject && !currentProject.shows?.length) checkClipboard()
+    function checkClipboard() {
+        shouldPasteText = false
+        navigator.clipboard
+            .readText()
+            .then((text) => {
+                const lines = text.split("\n")
+                if (lines.length > 2 && lines.length <= 30) shouldPasteText = true
+            })
+            .catch(() => {
+                shouldPasteText = false
+            })
+    }
 
     let splittedProjectsList: { color: string; items: ProjectShowRef[] }[] = []
     $: if (projectItemsList) splitProjectItemsToSections()
@@ -113,12 +137,12 @@
         })
     }
 
-    function createShow() {
-        activePopup.set("show")
-        openDrawer("shows")
-    }
-    function openSearch() {
-        openDrawer("shows")
+    // function createShow() {
+    //     activePopup.set("show")
+    //     openDrawer("shows")
+    // }
+    function openSearch(page: string) {
+        openDrawer(page)
         triggerFunction("drawer_search")
     }
 
@@ -176,12 +200,12 @@
 
     function checkCanAddToProject() {
         canAddToProject = false
-        if (readOnly || !$activeProject || !validIds.includes($selected?.id || "")) return
+        if (readOnly || !projectId || !validIds.includes($selected?.id || "")) return
         canAddToProject = true
     }
 
     function addSelectedToProject() {
-        if (readOnly || !$activeProject || !validIds.includes($selected.id || "")) return
+        if (readOnly || !projectId || !validIds.includes($selected.id || "")) return
 
         let data = clone($selected.data)
         if (!data?.length) return
@@ -201,11 +225,20 @@
         data.forEach(addProjectItem)
         contextActive.set(false)
     }
+
+    let addMenuOpen = false
+
+    function mousedown(e: any) {
+        if (!e.target.closest(".addMenu") && !e.target.closest(".addButton")) addMenuOpen = false
+    }
 </script>
+
+<svelte:window on:mousedown={mousedown} />
 
 <div id="projectArea" class="list {projectReadOnly ? '' : 'context #project'}">
     <Autoscroll {offset} bind:scrollElem timeout={150}>
-        <DropArea id="project" selectChildren let:fileOver file>
+        <!-- WIP dragging content to this sometimes does not drop it -->
+        <DropArea id="project" selectChildren hoverTimeout={150} let:fileOver file>
             {#if projectItemsList.length}
                 {#each splittedProjectsList as splittedItemsList}
                     <div class="listSection" style="--border-color: {splittedItemsList.color};">
@@ -218,7 +251,7 @@
                             {@const borderRadiusStyle = `${isFirst ? "border-top-right-radius: 10px;" : ""}${isLast ? "border-bottom-right-radius: 10px;" : ""}`}
                             {@const sectionTime = show.data?.time ? getTimeUntilClock(show.data.time, today) : 0}
                             {@const isActive = show.type === "section" ? ($focusMode ? $activeFocus.id === show.id : $activeShow?.id === show.id) : false}
-                            {@const isLocked = show.type === "section" && $projects[$activeProject || ""]?.sectionsLocked}
+                            {@const isLocked = show.type === "section" && currentProject?.sectionsLocked}
 
                             {#if show.type === "DIVIDER"}
                                 <div style="border-top: 1px solid var(--primary-lighter);margin: 5px 0;"></div>
@@ -324,29 +357,14 @@
                 <Center absolute>
                     <span style="opacity: 0.5;"><T id="empty.general" /></span>
 
-                    <span style="padding-top: 20px" class="buttons">
-                        <MaterialButton variant="outlined" icon="add" title="tooltip.show [Ctrl+N]" on:click={createShow}>
-                            <T id="new.show" />
-                        </MaterialButton>
-
-                        <!-- <MaterialButton variant="outlined" title="actions.import [Ctrl+I]" on:click={() => activePopup.set("import")}>
-                            <Icon id="import" white />
-                            <T id="actions.import" />
-                        </MaterialButton> -->
-
-                        <!-- WIP people would not know what this does -->
-                        <!-- <MaterialButton variant="outlined" title="actions.import: formats.clipboard" on:click={clipboardToProject}>
-                            <Icon id="paste" white />
-                            <T id="formats.clipboard" />
-                        </MaterialButton> -->
-
-                        {#if Object.keys($shows).length > 10}
-                            <MaterialButton variant="outlined" title="tabs.search_tip [Ctrl+F]" on:click={openSearch}>
-                                <Icon id="search" white />
-                                <T id="main.search" />
+                    {#if shouldPasteText}
+                        <span style="padding-top: 20px" class="buttons">
+                            <MaterialButton variant="outlined" title="actions.import: formats.clipboard" on:click={clipboardToProject}>
+                                <Icon id="paste" white />
+                                <T id="formats.clipboard" />
                             </MaterialButton>
-                        {/if}
-                    </span>
+                        </span>
+                    {/if}
                 </Center>
             {/if}
         </DropArea>
@@ -360,23 +378,75 @@
     {/if}
 </div>
 
-{#if $activeProject && !$projectView && !$focusMode && !recentlyUsedList.length && !projectReadOnly}
-    <FloatingInputs arrow let:open>
-        {#if open || $special.projectTimelineActive || $projects[$activeProject]?.timeline?.actions?.length}
-            <MaterialButton title="timeline.toggle_timeline" on:click={() => special.update((a) => ({ ...a, projectTimelineActive: !a.projectTimelineActive }))}>
-                <Icon size={1.3} id="timeline" white={!$special.projectTimelineActive} />
+{#if projectId && !$projectView && !$focusMode && !recentlyUsedList.length && !projectReadOnly}
+    {#if addMenuOpen}
+        <!-- new show, new media, new PDF/PPT?, new scripture, new section -->
+        <div class="addMenu" transition:fade={{ duration: 80 }} role="none" on:click={() => (addMenuOpen = false)}>
+            <!-- createShow -->
+            <MaterialButton variant="outlined" icon="slide" title="tooltip.show" on:click={() => openSearch("shows")}>
+                <div class="label">
+                    <p><T id="formats.show" /></p>
+                    <!-- <p class="description" data-title={translateText("tabs.shows_info")}><T id="tabs.shows_info" /></p> -->
+                </div>
+
+                <div class="actionType">
+                    <Icon id="search" size={0.7} white />
+                </div>
             </MaterialButton>
 
-            <div class="divider"></div>
-        {/if}
+            {#if $drawerTabsData.scripture?.enabled !== false}
+                <MaterialButton variant="outlined" icon="scripture" title="new.scripture" on:click={() => openSearch("scripture")} white>
+                    <div class="label">
+                        <p><T id="tabs.scripture" /></p>
+                    </div>
 
-        {#if $projects[$activeProject]?.sectionsLocked}
-            <MaterialButton icon="lock" title="output.state_locked" class="context #new_section" on:click={() => newToast("output.state_locked")} white={lessVisibleSection} />
-        {:else}
-            <MaterialButton icon="section" title="new.section" class="context #new_section" on:click={addSection} white={lessVisibleSection}>
-                {#if !lessVisibleSection && !$labelsDisabled}<T id="new.section" />{/if}
+                    <div class="actionType">
+                        <Icon id="search" size={0.7} white />
+                    </div>
+                </MaterialButton>
+            {/if}
+
+            <!-- WIP popup -->
+            <!-- images/videos, (audio), YouTube, webpages? -->
+            <MaterialButton variant="outlined" icon="image" title="guide_description.media" on:click={() => openSearch("media")} white>
+                <div class="label">
+                    <p><T id="items.media" /></p>
+                </div>
+
+                <div class="actionType">
+                    <Icon id="search" size={0.7} white />
+                </div>
             </MaterialButton>
-        {/if}
+
+            <MaterialButton
+                variant="outlined"
+                icon="import"
+                title="popup.import"
+                on:click={() => {
+                    popupData.set({ mode: "project" })
+                    activePopup.set("import")
+                }}
+                white
+            >
+                <div class="label">
+                    <p><T id="popup.import" /></p>
+                </div>
+            </MaterialButton>
+
+            <MaterialButton variant="outlined" icon="section" title="new.section" disabled={currentProject?.sectionsLocked} on:click={addSection} white={lessVisibleSection}>
+                <div class="label">
+                    <p><T id="new.section" /></p>
+                    <!-- <p class="description" data-title={translateText("tabs.sections_info")}><T id="tabs.sections_info" /></p> -->
+                </div>
+            </MaterialButton>
+        </div>
+    {/if}
+
+    <FloatingInputs gradient style="width: 50px;height: 50px;border: none;">
+        <!-- {addMenuOpen ? 'border-color: white;' : ''} -->
+        <MaterialButton class="addButton" title="context.addToProject" style="width: 50px;height: 50px;" on:click={() => (addMenuOpen = !addMenuOpen)} on:dblclick={() => (addMenuOpen ? null : addSection())}>
+            <Icon id="add" size={1.5} style={addMenuOpen ? "transform: rotate(135deg);" : ""} white />
+        </MaterialButton>
     </FloatingInputs>
 {/if}
 
@@ -396,7 +466,7 @@
         display: flex;
         flex-direction: column;
 
-        margin: 10px 0;
+        margin: 8px 0;
         margin-right: 5px;
 
         background-color: var(--primary-darker);
@@ -412,7 +482,7 @@
 
     .list#projectArea :global(.droparea) {
         /* "new section" button */
-        padding-bottom: 50px;
+        padding-bottom: 57px;
     }
 
     .listSection :global(button) {
@@ -474,5 +544,61 @@
         display: flex;
         align-items: center;
         justify-content: center;
+    }
+
+    /* add menu */
+
+    .addMenu {
+        position: absolute;
+        bottom: 70px; /* 10px + 50px + 10px */
+        right: 12px;
+
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+
+        /* background-color: var(--primary);
+        padding: 5px;
+        border-radius: 24px;
+        border: 1px solid var(--primary-lighter);
+
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3); */
+    }
+
+    .addMenu :global(button) {
+        justify-content: start;
+        padding: 10px 16px;
+
+        border-radius: 50px;
+
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+
+        backdrop-filter: blur(10px);
+    }
+
+    .addMenu .label {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+
+        align-items: flex-start;
+    }
+    /* .addMenu .description {
+        font-size: 0.8em;
+        opacity: 0.7;
+
+        max-width: 180px;
+    } */
+
+    .actionType {
+        position: absolute;
+        top: 50%;
+        right: 14px;
+        transform: translateY(-50%);
+
+        display: flex;
+        align-items: center;
+
+        opacity: 0.2;
     }
 </style>

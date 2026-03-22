@@ -79,6 +79,7 @@ import CloudSync from "../components/main/popups/CloudSync.svelte"
 import Timecode from "../components/main/popups/Timecode.svelte"
 import TimelineSettings from "../components/main/popups/TimelineSettings.svelte"
 import NewUpdate from "../components/main/popups/NewUpdate.svelte"
+import RegexManager from "../components/main/popups/RegexManager.svelte"
 
 export const popups: { [key in Popups]: ComponentType } = {
     initialize: Initialize,
@@ -101,6 +102,7 @@ export const popups: { [key in Popups]: ComponentType } = {
     manage_metadata: ManageMetadata,
     manage_dynamic_values: ManageDynamicValues,
     template_style_overrides: TemplateStyleOverrides,
+    regex_manager: RegexManager,
     choose_chord: ChooseChord,
     choose_camera: ChooseCamera,
     player: CreatePlayer,
@@ -190,8 +192,8 @@ export async function confirmCustom(prompt: string) {
     return !!data
 }
 
-export async function promptCustom(prompt: string) {
-    popupData.set({ prompt, textInput: true })
+export async function promptCustom(prompt: string, inputType: string = "text") {
+    popupData.set({ prompt, inputType })
     const data = (await waitForPopupData("confirm")) || ""
     return data as string
 }

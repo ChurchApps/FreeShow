@@ -16,8 +16,8 @@
 
     export let searchValue
 
-    const profile = getAccess("functions")
-    const readOnly = profile.actions === "read"
+    const profile = getAccess("actions")
+    const readOnly = profile.global === "read"
 
     function newAction() {
         popupData.set({})
@@ -25,7 +25,7 @@
     }
 
     $: sortedActions = sortByName(keysToID($actions), "name", true).map(convertOldMidiToNewAction)
-    $: filteredActionsTags = sortedActions.filter((a) => !$activeActionTagFilter.length || (a.tags?.length && !$activeActionTagFilter.find((tagId) => !a.tags?.includes(tagId))))
+    $: filteredActionsTags = sortedActions.filter((a) => !$activeActionTagFilter.length || (a.tags?.length && !$activeActionTagFilter.some((tagId) => !a.tags?.includes(tagId)))).filter((a) => !a.tags?.some((tagId) => profile[tagId] === "none"))
     $: filteredActionsSearch = searchValue.length > 1 ? filteredActionsTags.filter((a) => a.name.toLowerCase().includes(searchValue.toLowerCase())) : filteredActionsTags
 </script>
 
@@ -33,7 +33,9 @@
     {#if filteredActionsSearch.length}
         <div class="actions">
             {#each filteredActionsSearch as action}
-                <div class="action context #action{readOnly ? '_readonly' : ''}">
+                {@const isReadOnly = readOnly || action.tags?.some((tagId) => profile[tagId] === "read")}
+
+                <div class="action context #action{isReadOnly ? '_readonly' : ''}">
                     <SelectElem id="action" data={action} style="display: flex;flex: 1;" draggable>
                         <!-- WIP MIDI if slide action.action ... -->
                         <Button

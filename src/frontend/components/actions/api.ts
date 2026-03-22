@@ -17,6 +17,7 @@ import { getSlideThumbnail, getThumbnail } from "../helpers/media"
 import { changeStageOutputLayout, startCamera, startScreen, toggleOutput, toggleOutputs } from "../helpers/output"
 import { activateTriggerSync, changeOutputStyle, nextSlideIndividual, playSlideTimers, previousSlideIndividual, randomSlide, replaceDynamicValues, selectProjectShow, sendMidi, startShowSync } from "../helpers/showActions"
 import { startTimerById, startTimerByName, stopTimers } from "../helpers/timerTick"
+import { muteOutput, unmuteOutput } from "../helpers/video"
 import { clearAll, clearBackground, clearDrawing, clearOverlay, clearOverlays, clearSlide, clearTimers, restoreOutput } from "../output/clear"
 import { formatText } from "../show/formatTextEditor"
 import { getPlainEditorText } from "../show/getTextEditor"
@@ -59,6 +60,7 @@ import {
     selectShowByName,
     selectSlideByIndex,
     selectSlideByName,
+    setNextSlideTimer,
     setShowAPI,
     setTemplate,
     startPlaylistByName,
@@ -105,6 +107,7 @@ type API_id = { id: string }
 export type API_id_optional = { id?: string }
 type API_index = { index: number }
 type API_strval = { value: string }
+type API_numval = { value: number }
 type API_volume = { volume?: number } // no values will mute/unmute
 export type API_id_index = { id: string; index: number }
 export type API_slide = { showId?: string | "active"; slideId?: string }
@@ -207,6 +210,7 @@ export const API_ACTIONS = {
     rearrange_groups: (data: API_rearrange) => rearrangeGroups(data),
     add_group: (data: API_group) => addGroup(data),
     set_template: (data: API_id) => setTemplate(data.id),
+    set_next_slide_timer: (data: API_numval) => setNextSlideTimer(data.value),
     transpose_show_up: (data: API_id) => formatText(transposeText(getPlainEditorText(data.id), 1), data.id),
     transpose_show_down: (data: API_id) => formatText(transposeText(getPlainEditorText(data.id), -1), data.id),
 
@@ -259,6 +263,8 @@ export const API_ACTIONS = {
     change_output_style: (data: API_output_style) => changeOutputStyle(data),
     change_stage_output_layout: (data: API_stage_output_layout) => changeStageOutputLayout(data),
     change_transition: (data: API_transition) => updateTransition(data), // BC
+    mute_output: (data: API_id) => muteOutput(data.id),
+    unmute_output: (data: API_id) => unmuteOutput(data.id),
 
     // STAGE
     id_select_stage_layout: (data: API_id) => moveStageConnection(data.id), // BC

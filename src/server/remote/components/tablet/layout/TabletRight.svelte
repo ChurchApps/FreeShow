@@ -104,7 +104,7 @@
 
         <div class="buttons">
             {#key outNumber}
-                <Clear outSlide={outNumber} tablet />
+                <Clear outSlide={outNumber > -1 ? outNumber : null} tablet />
             {/key}
         </div>
 

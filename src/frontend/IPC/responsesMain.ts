@@ -57,6 +57,7 @@ import {
     lessonsLoaded,
     media,
     mediaDownloads,
+    pdfImports,
     outputs,
     overlays,
     popupData,
@@ -88,6 +89,7 @@ import { updateSettings, updateSyncedSettings, updateThemeValues } from "../util
 import type { MainReturnPayloads } from "./../../types/IPC/Main"
 import { Main } from "./../../types/IPC/Main"
 import { invalidateSearchIndex } from "../utils/searchFast"
+import { sendMain } from "./main"
 
 type MainHandler<ID extends Main | ToMain> = (data: ID extends keyof ToMainSendPayloads ? ToMainSendPayloads[ID] : ID extends keyof MainReturnPayloads ? Awaited<MainReturnPayloads[ID]> : undefined) => void
 export type MainResponses = {
@@ -260,6 +262,8 @@ export const mainResponses: MainResponses = {
     [ToMain.MEDIA_DOWNLOAD_PROGRESS]: (data) => {
         mediaDownloads.update((downloads) => {
             const newDownloads = new Map(downloads)
+            const total = Math.max(1, data.total || 0)
+            const progress = data.status === "complete" ? total : Math.min(data.progress || 0, total)
             if (data.status === "complete" || data.status === "error") {
                 // Remove completed/errored downloads after a short delay
                 setTimeout(() => {
@@ -270,8 +274,32 @@ export const mainResponses: MainResponses = {
                     })
                 }, 2000)
             }
-            newDownloads.set(data.url, { progress: data.progress, total: data.total, status: data.status })
+            newDownloads.set(data.url, { progress, total, status: data.status })
             return newDownloads
+        })
+    },
+    [ToMain.PDF_IMPORT_PROGRESS]: (data) => {
+        pdfImports.update((imports) => {
+            const updated = new Map(imports)
+            updated.set(data.filePath, {
+                name: data.name,
+                progress: data.progress,
+                total: data.total,
+                status: data.status,
+                message: data.message
+            })
+
+            if (data.status === "complete" || data.status === "error") {
+                setTimeout(() => {
+                    pdfImports.update((current) => {
+                        const cleaned = new Map(current)
+                        cleaned.delete(data.filePath)
+                        return cleaned
+                    })
+                }, data.status === "error" ? 7000 : 3000)
+            }
+
+            return updated
         })
     },
     [ToMain.AUDIO_METADATA]: (data) => {
@@ -344,6 +372,7 @@ export const mainResponses: MainResponses = {
 
         const replaceIds: { [key: string]: string } = {}
         const allShows = keysToID(get(shows))
+        const providerLocalAlways = get(contentProviderData)[data.providerId]?.localAlways ?? false
 
         // CREATE SHOWS
         const tempShows: { id: string; show: Show }[] = []
@@ -357,15 +386,25 @@ export const mainResponses: MainResponses = {
             const linkedShow = linkKey && allShows.find(({ quickAccess }) => quickAccess?.[linkKey] === id)
             if (linkedShow) {
                 replaceIds[id] = linkedShow.id
+                if (providerLocalAlways) continue
+                Object.values<Slide>(show.slides).forEach((slide) => {
+                    if (slide.globalGroup || !slide.group) return
+
+                    const globalGroup = getGlobalGroup(slide.group)
+                    if (globalGroup) slide.globalGroup = globalGroup
+                })
+
+                const origin = data.providerId === "planningcenter" ? "pco" : data.providerId
+                tempShows.push({ id: linkedShow.id, show: { ...show, origin, name: checkName(show.name, linkedShow.id), quickAccess: { ...(linkedShow.quickAccess || {}), [linkKey]: id } } })
                 continue
             }
 
             // find existing show with same name and ask to replace
             const providerName = data.providerId === "planningcenter" ? "Planning Center" : data.providerId === "churchApps" ? "ChurchApps" : "the cloud"
-            const existingShow = allShows.find(({ name }) => name.toLowerCase() === show.name.toLowerCase())
+            const existingShow = allShows.find(({ id: existingId, name }) => existingId !== id && name.toLowerCase() === show.name.toLowerCase())
             // const existingShowHasContent = existingShow && (await loadShows([existingShow.id])) && getSlidesText(get(showsCache)[existingShow.id].slides)
             if (existingShow) {
-                const useLocal = get(contentProviderData)[data.providerId]?.localAlways ?? (await confirmCustom(`There is an existing show with the same name: ${existingShow.name}.<br><br>Would you like to use the local version instead of the one from ${providerName}?`))
+                const useLocal = providerLocalAlways || (await confirmCustom(`There is an existing show with the same name: ${existingShow.name}.<br><br>Would you like to use the local version instead of the one from ${providerName}?`))
                 if (useLocal) {
                     replaceIds[id] = existingShow.id
 
@@ -380,8 +419,7 @@ export const mainResponses: MainResponses = {
                 }
             }
 
-            // don't add/update if already existing (to not mess up any set styles)
-            if (get(shows)[id]) continue
+            if (providerLocalAlways && get(shows)[id]) continue
 
             // replace group names with existing global groups
             Object.values<Slide>(show.slides).forEach((slide) => {
@@ -441,7 +479,11 @@ export const mainResponses: MainResponses = {
 
         const receiveFilePathIMPORT = {
             // Media
-            pdf: () => addToProject("pdf", mainData as string[]),
+            pdf: () => {
+                // convert to images directly - drag and drop to keep as PDF
+                ;(mainData as string[]).forEach((path) => sendMain(Main.PDF_TO_IMAGE, { filePath: path }))
+                // addToProject("pdf", mainData as string[])
+            },
             powerkey: () => addToProject("ppt", mainData as string[])
         }
         if (mainData.find((dataValue) => typeof dataValue === "string")) {

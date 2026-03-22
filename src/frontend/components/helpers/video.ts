@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
 import { OUTPUT } from "../../../types/Channels"
-import { outputs, styles } from "../../stores"
+import { audioChannelsData, outputs, styles } from "../../stores"
 import { send } from "../../utils/request"
 import { getAllNormalOutputs } from "./output"
 
@@ -41,6 +41,12 @@ export function getFirstOutputIdWithAudableBackground(outputIds: string[] = [], 
             const output = get(outputs)[id]
             if (!output || output.stageOutput) return false
 
+            const data = get(audioChannelsData)[id]
+            // only skip if muted, not if volume is 0, for more customization
+            // if (data.volume === 0) return false
+            if (data?.isMuted) return false
+
+            // style volume moved to per output volume (controllable by actions)
             const style = get(styles)[output.style || ""]
             let layers = style?.layers
             if (!Array.isArray(layers)) layers = ["background"]
@@ -48,4 +54,21 @@ export function getFirstOutputIdWithAudableBackground(outputIds: string[] = [], 
             return layers.includes("background") && style?.volume !== 0
         }) || null
     )
+}
+
+export function muteOutput(id: string) {
+    setOutputMute(id, true)
+}
+export function unmuteOutput(id: string) {
+    setOutputMute(id, false)
+}
+
+function setOutputMute(id: string, state: boolean) {
+    if (!get(outputs)[id]) return
+
+    audioChannelsData.update((data) => {
+        if (!data[id]) data[id] = { volume: 1, isMuted: false }
+        data[id].isMuted = state
+        return data
+    })
 }

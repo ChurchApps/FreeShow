@@ -209,8 +209,28 @@ export class EffectRender {
         this.ctx.fill()
     }
 
+    private clamp01(value: number) {
+        return Math.min(1, Math.max(0, value))
+    }
+
+    private createSafeRadialGradient(ctx: CanvasRenderingContext2D, x: number, y: number, innerR: number, outerR: number) {
+        if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(innerR) || !Number.isFinite(outerR)) return null
+
+        const safeInnerR = Math.max(0, innerR)
+        const safeOuterR = Math.max(0, outerR)
+        if (safeOuterR <= 0 || safeOuterR < safeInnerR) return null
+
+        return {
+            gradient: ctx.createRadialGradient(x, y, safeInnerR, x, y, safeOuterR),
+            safeOuterR
+        }
+    }
+
     setGlow(x: number, y: number, radius: number, color = "white") {
-        const gradient = this.ctx.createRadialGradient(x, y, 0, x, y, radius)
+        const safe = this.createSafeRadialGradient(this.ctx, x, y, 0, radius)
+        if (!safe) return
+
+        const gradient = safe.gradient
         gradient.addColorStop(0, color)
         gradient.addColorStop(1, "transparent")
 
@@ -755,7 +775,10 @@ export class EffectRender {
             const stopsStr = match[2]
             const r = Math.min(width, height) / 2
 
-            const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, r)
+            const safe = this.createSafeRadialGradient(ctx, 0, 0, 0, r)
+            if (!safe) return { gradient: gradientStr, plainColor: gradientStr }
+
+            const gradient = safe.gradient
 
             const stops = splitStops(stopsStr)
 
@@ -989,11 +1012,17 @@ export class EffectRender {
 
     fillRadialGradient(x: number, y: number, innerR: number, outerR: number, stops: [string, number][]) {
         const ctx = this.ctx
-        const grad = ctx.createRadialGradient(x, y, innerR, x, y, outerR)
-        for (const [color, stop] of stops) grad.addColorStop(stop, color)
+        const safe = this.createSafeRadialGradient(ctx, x, y, innerR, outerR)
+        if (!safe) return
+
+        const grad = safe.gradient
+        for (const [color, stop] of stops) {
+            if (!Number.isFinite(stop)) continue
+            grad.addColorStop(this.clamp01(stop), color)
+        }
         ctx.fillStyle = grad
         ctx.beginPath()
-        ctx.arc(x, y, outerR, 0, this.doublePI)
+        ctx.arc(x, y, safe.safeOuterR, 0, this.doublePI)
         ctx.fill()
     }
 
@@ -1070,7 +1099,10 @@ export class EffectRender {
             const discX = (centerX - x) * offset + centerX
             const discY = (centerY - y) * offset + centerY
 
-            const grad = ctx.createRadialGradient(discX, discY, 0, discX, discY, discData.dia)
+            const safe = this.createSafeRadialGradient(ctx, discX, discY, 0, discData.dia)
+            if (!safe) continue
+
+            const grad = safe.gradient
             this.setColorStops(grad, [
                 [0, `hsla(${discData.hue},100%,90%,${0 * dist})`],
                 [0.9, `hsla(${discData.hue},100%,90%,${0.15 * dist})`],
@@ -1079,7 +1111,7 @@ export class EffectRender {
 
             ctx.beginPath()
             ctx.fillStyle = grad
-            ctx.arc(discX, discY, discData.dia, 0, this.doublePI)
+            ctx.arc(discX, discY, safe.safeOuterR, 0, this.doublePI)
             ctx.fill()
 
             if (i === 0) {
@@ -1092,21 +1124,25 @@ export class EffectRender {
         const ctx = this.ctx
 
         // Glow
-        const grad1 = ctx.createRadialGradient(disc.x, disc.y, 0, disc.x, disc.y, disc.dia * 2)
+        const safeGrad1 = this.createSafeRadialGradient(ctx, disc.x, disc.y, 0, disc.dia * 2)
+        if (!safeGrad1) return
+        const grad1 = safeGrad1.gradient
         this.setColorStops(grad1, [
             [0, `rgba(200,220,255,${0.2 * dist})`],
             [1, "rgba(200,220,255,0)"]
         ])
         ctx.beginPath()
         ctx.fillStyle = grad1
-        ctx.arc(disc.x, disc.y, disc.dia * 2, 0, this.doublePI)
+        ctx.arc(disc.x, disc.y, safeGrad1.safeOuterR, 0, this.doublePI)
         ctx.fill()
 
         // Spectral disc
         const ease = (a: number, b: number, t: number) => (b - a) * (1 - Math.pow(t - 1, 2)) + a
         const spec = ease(disc.dia / 5, disc.dia / 2.5, dist)
         const sdist = 1 - Math.pow(Math.abs(dist - 1), 3)
-        const grad2 = ctx.createRadialGradient(disc.x, disc.y, 0, disc.x, disc.y, spec)
+        const safeGrad2 = this.createSafeRadialGradient(ctx, disc.x, disc.y, 0, spec)
+        if (!safeGrad2) return
+        const grad2 = safeGrad2.gradient
         this.setColorStops(grad2, [
             [0.2 * sdist, `rgba(255,255,255,${sdist})`],
             [0.6, `hsla(${disc.hue},100%,75%,${0.3 * sdist})`],
@@ -1279,7 +1315,9 @@ export class EffectRender {
 
         const baseColor = item.color
 
-        const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, length * 0.9)
+        const safeGradient = this.createSafeRadialGradient(ctx, 0, 0, 0, length * 0.9)
+        if (!safeGradient) return
+        const gradient = safeGradient.gradient
         this.setColorStops(gradient, [
             [0, this.colorWithOpacity(baseColor, 0.3)],
             [0.5, this.colorWithOpacity(baseColor, 0.15)],
@@ -1293,7 +1331,13 @@ export class EffectRender {
         ctx.closePath()
         ctx.fill()
 
-        const glowGradient = ctx.createRadialGradient(0, 0, 0, 0, 0, 200)
+        const safeGlowGradient = this.createSafeRadialGradient(ctx, 0, 0, 0, 200)
+        if (!safeGlowGradient) {
+            ctx.restore()
+            return
+        }
+
+        const glowGradient = safeGlowGradient.gradient
         this.setColorStops(glowGradient, [
             [0, this.colorWithOpacity(baseColor, 0.3)],
             [0.8, this.colorWithOpacity(baseColor, 0)]
@@ -1444,7 +1488,13 @@ export class EffectRender {
             bufferCtx.translate(x, y)
             bufferCtx.rotate(rotation)
 
-            const grad = bufferCtx.createRadialGradient(0, 0, 0, 0, 0, radiusX)
+            const safe = this.createSafeRadialGradient(bufferCtx, 0, 0, 0, radiusX)
+            if (!safe) {
+                bufferCtx.restore()
+                continue
+            }
+
+            const grad = safe.gradient
             grad.addColorStop(0, `hsla(${color}, 90%, 70%, ${alpha})`)
             grad.addColorStop(1, "transparent")
 

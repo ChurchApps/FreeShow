@@ -8,7 +8,7 @@ import type { DropData, Selected } from "../../../types/Main"
 import type { Item, Slide, SlideAction } from "../../../types/Show"
 import { sendMain } from "../../IPC/main"
 import { changeLayout, changeSlideGroups } from "../../show/slides"
-import { activeDrawerTab, activePage, activePopup, activeProject, activeShow, alertMessage, audioFolders, audioPlaylists, audioStreams, drawerTabsData, media, mediaFolders, overlays, playerVideos, projects, scriptureSettings, shows, showsCache, templates, timers } from "../../stores"
+import { activeDrawerTab, activePage, activePopup, activeProject, activeShow, alertMessage, audioFolders, audioPlaylists, audioStreams, drawerTabsData, editingProjectTemplate, media, mediaFolders, overlays, playerVideos, projects, projectTemplates, scriptureSettings, shows, showsCache, templates, timers } from "../../stores"
 import { newToast } from "../../utils/common"
 import { getAccess } from "../../utils/profile"
 import { audioExtensions, imageExtensions, mediaExtensions, presentationExtensions, videoExtensions } from "../../values/extensions"
@@ -55,7 +55,7 @@ export const dropActions = {
         if (slideDrop[id]) {
             const show = _show().get()
             if (show?.locked) {
-                alertMessage.set("show.locked_info")
+                alertMessage.set("show.locked")
                 activePopup.set("alert")
                 return
             }
@@ -117,10 +117,15 @@ export const dropActions = {
     },
     project: async ({ drag, drop }: Data, h: History) => {
         h.id = "UPDATE"
-        h.location = { page: "show", id: "project_ref" }
-        h.oldData = { id: get(activeProject) }
+        const isTemplate = get(editingProjectTemplate)
+        const projectId = isTemplate ? get(editingProjectTemplate) : get(activeProject)
+        if (!projectId) return
 
-        const projectShows = get(projects)[h.oldData.id]?.shows || []
+        h.location = { page: "show", id: isTemplate ? "project_template" : "project_ref" }
+        h.oldData = { id: projectId }
+
+        const currentProject = isTemplate ? get(projectTemplates)[projectId] : get(projects)[projectId]
+        const projectShows = currentProject?.shows || []
 
         if (drag.id === "action") {
             let index = drop.index
@@ -220,7 +225,7 @@ export const dropActions = {
             let index = drop.index
             if (drop.trigger?.includes("end")) index++
 
-            history({ id: "UPDATE", newData: { data: show, remember: { project: get(activeProject), index } }, location: { page: "show", id: "show" } })
+            history({ id: "UPDATE", newData: { data: show, remember: { project: projectId, index } }, location: { page: "show", id: "show" } })
             return
         }
 
@@ -242,7 +247,7 @@ export const dropActions = {
             if (drop.center) {
                 const show = _show().get()
                 if (show?.locked) {
-                    alertMessage.set("show.locked_info")
+                    alertMessage.set("show.locked")
                     activePopup.set("alert")
                     return
                 }
@@ -296,7 +301,7 @@ export const dropActions = {
             if (drop.trigger) {
                 const show = _show().get()
                 if (show?.locked) {
-                    alertMessage.set("show.locked_info")
+                    alertMessage.set("show.locked")
                     activePopup.set("alert")
                     return
                 }
@@ -593,6 +598,11 @@ const slideDrop = {
             const slide = _show(showId).slides([slideId]).get()?.[0] || {}
             const currentBgId = layoutRef[drop.index!]?.data.background || ""
             const mediaName = removeExtension(_show(showId).media([currentBgId]).get()?.[0]?.name || "")
+
+            if (slide.locked || get(showsCache)[showId]?.slides?.[layoutRef[drop.index!]?.parent?.id || ""]?.locked) {
+                newToast("output.state_locked")
+                return
+            }
 
             // add as slide bg instead of layout bg
             if (keys.ctrlKey) {

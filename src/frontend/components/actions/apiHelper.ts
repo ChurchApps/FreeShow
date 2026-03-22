@@ -6,7 +6,7 @@ import type { DropData, Selected, Variable } from "../../../types/Main"
 import { clearAudio } from "../../audio/audioFading"
 import { AudioPlayer } from "../../audio/audioPlayer"
 import { AudioPlaylist } from "../../audio/audioPlaylist"
-import { activeDrawerTab, activeEdit, activePage, activeProject, activeTimers, audioPlaylists, draw, drawSettings, drawTool, folders, groupNumbers, groups, media, openScripture, outLocked, outputs, overlays, playingAudio, playingMetronome, projects, refreshEditSlide, selected, showsCache, sortedShowsList, special, styles, timers, variables, volume } from "../../stores"
+import { activeDrawerTab, activeEdit, activePage, activeProject, activeShow, activeTimers, audioPlaylists, draw, drawSettings, drawTool, folders, groupNumbers, groups, media, openScripture, outLocked, outputs, overlays, pdfImports, playingAudio, playingMetronome, projects, refreshEditSlide, selected, showsCache, sortedShowsList, special, styles, timers, variables, volume } from "../../stores"
 import { newToast } from "../../utils/common"
 import { send } from "../../utils/request"
 import { getDynamicValue } from "../edit/scripts/itemHelpers"
@@ -25,7 +25,6 @@ import { _show } from "../helpers/shows"
 import { clearBackground } from "../output/clear"
 import { getPlainEditorText } from "../show/getTextEditor"
 import { getSlideGroups } from "../show/tools/groups"
-import { activeShow } from "./../../stores"
 import type { API_add_to_project, API_create_project, API_draw_zoom, API_edit_timer, API_group, API_id_index, API_id_value, API_layout, API_media, API_output_lock, API_rearrange, API_scripture, API_seek, API_slide_index, API_toggle_specific, API_variable } from "./api"
 
 // WIP combine with click() in ShowButton.svelte
@@ -462,6 +461,37 @@ export async function addGroup(data: API_group) {
     selected.set({ id: null, data: [] })
 }
 
+export function setNextSlideTimer(time: number) {
+    const value = time || 0
+
+    const layoutRef = getLayoutRef()
+    const indexes = layoutRef.map((_, i) => i)
+
+    history({ id: "SHOW_LAYOUT", newData: { key: "nextTimer", data: value, indexes }, location: { page: "show", override: "change_slide_action_timer" } })
+
+    const allActiveSlides = layoutRef.filter((a) => !a.data.disabled)
+
+    // GO TO START
+
+    // remove existing go to start if just one applied to any slide
+    let goToStartRefs = allActiveSlides.reduce((value, ref) => (ref.data?.end ? [...value, ref] : value), [] as any[])
+    if (goToStartRefs.length === 1) {
+        const showId = get(activeShow)?.id || ""
+        const layoutId = _show().get("settings.activeLayout")
+
+        showsCache.update((a) => {
+            let ref = goToStartRefs[0]
+            if (!ref) return a
+
+            if (ref.type === "parent") delete a[showId].layouts[layoutId]?.slides?.[ref.index]?.end
+            else delete a[showId].layouts[layoutId]?.slides?.[ref.parent?.index ?? -1]?.children?.[ref.id]?.end
+            return a
+        })
+    }
+
+    history({ id: "SHOW_LAYOUT", newData: { key: "end", data: !!value, indexes: [indexes[indexes.length - 1]] }, location: { page: "show", override: "change_slide_action_loop" } })
+}
+
 export function setTemplate(templateId: string) {
     const showId = get(activeShow)?.id
     if (!showId) {
@@ -784,31 +814,63 @@ function levenshteinDistance(a, b) {
 
 export async function getPDFThumbnails({ path }: API_media) {
     if (!path) return []
+    const name = path.split(/[/\\]/).pop()?.replace(/\.pdf$/i, "") || "PDF"
+    const renderPhasePercent = 80
+    const totalPercent = 100
 
     GlobalWorkerOptions.workerSrc = "./assets/pdf.worker.min.mjs"
     const loadingTask = getDocument(path)
     const pdfDoc = await loadingTask.promise
     const pageCount = pdfDoc.numPages
 
+    pdfImports.update((imports) => {
+        const updated = new Map(imports)
+        updated.set(path, { name, progress: 0, total: totalPercent, status: "importing" })
+        return updated
+    })
+
     const canvas = document.createElement("canvas")
     const context = canvas.getContext("2d")
     if (!context) return []
 
     const pages: string[] = []
-    for (let i = 0; i < pageCount; i++) {
-        const page = await pdfDoc.getPage(i + 1)
-        const viewport = page.getViewport({ scale: 1.5 })
+    try {
+        for (let i = 0; i < pageCount; i++) {
+            const page = await pdfDoc.getPage(i + 1)
+            const viewport = page.getViewport({ scale: 1.5 })
 
-        canvas.height = viewport.height
-        canvas.width = viewport.width
+            canvas.height = viewport.height
+            canvas.width = viewport.width
 
-        await page.render({ canvas, canvasContext: context, viewport }).promise
-        const base64 = canvas.toDataURL("image/jpeg")
-        pages.push(base64)
+            await page.render({ canvas, canvasContext: context, viewport }).promise
+            const base64 = canvas.toDataURL("image/jpeg")
+            pages.push(base64)
+
+            const renderProgress = Math.round(((i + 1) / Math.max(1, pageCount)) * renderPhasePercent)
+            pdfImports.update((imports) => {
+                const updated = new Map(imports)
+                updated.set(path, { name, progress: renderProgress, total: totalPercent, status: "importing" })
+                return updated
+            })
+        }
+
+        return { path, pages }
+    } catch (error: any) {
+        pdfImports.update((imports) => {
+            const updated = new Map(imports)
+            updated.set(path, {
+                name,
+                progress: Math.round((pages.length / Math.max(1, pageCount)) * renderPhasePercent),
+                total: totalPercent,
+                status: "error",
+                message: `PDF processing failed: ${error?.message || "Unknown error"}`
+            })
+            return updated
+        })
+        throw error
+    } finally {
+        loadingTask.destroy()
     }
-
-    loadingTask.destroy()
-    return { path, pages }
 }
 
 // DRAW

@@ -8,7 +8,7 @@
     import { newToast, wait } from "../../../utils/common"
     import { translateText } from "../../../utils/language"
     import Icon from "../../helpers/Icon.svelte"
-    import { getFileName, removeExtension } from "../../helpers/media"
+    import { encodeFilePath, getFileName, removeExtension } from "../../helpers/media"
     import { getActiveOutputs, setOutput, startFolderTimer } from "../../helpers/output"
     import T from "../../helpers/T.svelte"
     import FloatingInputs from "../../input/FloatingInputs.svelte"
@@ -23,7 +23,7 @@
     let data: { timer?: number } | undefined
     $: data = $projects[$activeProject || ""]?.shows?.[index]?.data
 
-    $: path = show.id
+    $: path = encodeFilePath(show.id)
 
     $: activeOutput = getActiveOutputs($outputs, false, true, true)[0]
 

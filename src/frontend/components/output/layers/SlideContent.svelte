@@ -316,6 +316,7 @@
                 slideIndex={current.outSlide?.index}
                 {styleIdOverride}
                 autoSizeKey={createAutoSizeKey(item, index)}
+                updateDynamicValues={!isClearing}
             />
         {:else}
             <!-- Transitioning item: render with animation wrapper inside {#key} -->
@@ -341,6 +342,7 @@
                             slideIndex={customOut?.index}
                             {styleIdOverride}
                             autoSizeKey={createAutoSizeKey(item, index)}
+                            updateDynamicValues={!isClearing}
                         />
                     </SlideItemTransition>
                 {/if}
@@ -352,7 +354,7 @@
 {#if precomputeTargets.length}
     <div class="autosize-precompute" aria-hidden="true">
         {#each precomputeTargets as target (target.key)}
-            <Textbox item={target.item} {ratio} {outputId} outputStyle={currentStyle} {mirror} {preview} {styleIdOverride} ref={{ type: "show", showId: outSlide?.id, slideId: currentSlide?.id, id: currentSlide?.id || "", layoutId: outSlide?.layout }} autoSizeKey={target.key} on:autosizeReady={handlePrecomputeReady} />
+            <Textbox item={target.item} {ratio} {outputId} outputStyle={currentStyle} {mirror} {preview} {styleIdOverride} ref={{ type: "show", showId: outSlide?.id, slideId: currentSlide?.id, id: currentSlide?.id || "", layoutId: outSlide?.layout }} autoSizeKey={target.key} on:autosizeReady={handlePrecomputeReady} updateDynamicValues={!isClearing} />
         {/each}
     </div>
 {/if}

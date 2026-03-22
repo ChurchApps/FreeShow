@@ -113,7 +113,6 @@
         // For actions that can't have multiple instances, find and replace existing
         if (!canAddMultiple) {
             let existingAction = slideActions.find((a) => a.triggers?.[0] === triggerId && (!id || a.id !== id))
-
             if (!existingAction) return
 
             // remove new action if already existing
@@ -303,6 +302,7 @@
 
             let currentSlideActionIndex = slideDataActions.slideActions.findIndex((a) => a.id === id)
             if (currentSlideActionIndex < 0) {
+                changed = true
                 newActions.push(slideDataActions)
                 return
             }

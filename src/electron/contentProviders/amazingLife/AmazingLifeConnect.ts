@@ -95,10 +95,32 @@ export class AmazingLifeConnect {
     }
 
     private static isTokenExpired(access: AmazingLifeAuthData | null): boolean {
-        if (!access?.created_at) return true
-        // Check if token is expired or about to expire (within 5 minutes)
-        const bufferTime = 5 * 60 * 1000 // 5 minutes in milliseconds
-        return (access.created_at + access.expires_in) * 1000 < Date.now() + bufferTime
+        try {
+            // Decode JWT token to get expiration time
+            const tokenParts = access?.access_token.split(".")
+            if (!tokenParts || tokenParts.length !== 3) {
+                console.warn("Invalid JWT token format")
+                return true
+            }
+
+            // Decode the payload (second part of JWT)
+            const payload = JSON.parse(Buffer.from(tokenParts[1], "base64").toString("utf-8"))
+            //console.log("payload---------------", payload)
+
+            if (!payload.exp) {
+                console.warn("No exp claim found in JWT token")
+                return true
+            }
+
+            // exp is in seconds, Date.now() is in milliseconds
+            const isExpired = payload.exp * 1000 < Date.now()
+            //console.log(`APlay: Token ${isExpired ? "expired" : "valid"} (exp: ${new Date(payload.exp * 1000).toISOString()})`)
+
+            return isExpired
+        } catch (error) {
+            console.error("Failed to decode JWT token:", error)
+            return true
+        }
     }
 
     private static async refreshToken(scope: AmazingLifeScopes): Promise<AmazingLifeAuthData | null> {
@@ -154,6 +176,6 @@ export class AmazingLifeConnect {
     }
 }
 
-function connectionInitialized(isFirstConnection: boolean = false): void {
+function connectionInitialized(isFirstConnection = false): void {
     sendToMain(ToMain.PROVIDER_CONNECT, { providerId: "amazinglife", success: true, isFirstConnection })
 }

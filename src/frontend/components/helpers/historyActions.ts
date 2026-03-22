@@ -450,6 +450,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
             const { showId, layout } = data.remember || {}
             if (!showId || !layout) return
+
             const ref = _show(showId).layouts([layout]).ref()[0] || []
             if (!deleting) data.index = data.index ?? ref.length
             let index = data.index
@@ -801,7 +802,8 @@ export const historyActions = ({ obj, undo = null }: any) => {
                     let childrenIds: string[] = []
 
                     const totalLines = getItemWithMostLines(slide)
-                    for (let i = 0; i < totalLines; i += maxLines) {
+                    const splitLines = Math.max(totalLines, 1)
+                    for (let i = 0; i < splitLines; i += maxLines) {
                         const newItems: Item[] = []
                         slide.items.forEach((item) => {
                             if (!item.lines) {
@@ -996,6 +998,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
                     let currentIndex = -1
                     layoutSlides.forEach((l, i) => {
+                        if (!l) return
                         if (!a[data.remember.showId].slides[l.id]) {
                             console.error("MISSING SLIDE")
                             return

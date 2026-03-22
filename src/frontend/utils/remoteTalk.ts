@@ -5,7 +5,7 @@ import type { ClientMessage } from "../../types/Socket"
 import { AudioPlayer } from "../audio/audioPlayer"
 import { loadJsonBible } from "../components/drawer/bible/scripture"
 import { clone, keysToID, removeDeleted } from "../components/helpers/array"
-import { getBase64Path, getThumbnailPath, mediaSize } from "../components/helpers/media"
+import { getThumbnailPath, mediaSize } from "../components/helpers/media"
 import { getAllNormalOutputs, getFirstActiveOutput, setOutput } from "../components/helpers/output"
 import { loadShows } from "../components/helpers/setShow"
 import { getLayoutRef } from "../components/helpers/show"
@@ -109,11 +109,6 @@ export const receiveREMOTE: any = {
 
         loadingShow = showID
         await loadShows([showID])
-
-        // send before any backgrounds has loaded
-        msg.data = clone({ ...(await convertBackgrounds(get(showsCache)[showID], true)), id: showID })
-        if (loadingShow !== showID) return
-        window.api.send(REMOTE, msg)
 
         msg.data = clone({ ...(await convertBackgrounds(get(showsCache)[showID])), id: showID })
         // send(REMOTE, ["MEDIA"], { media: msg.data.media })
@@ -407,31 +402,29 @@ export async function convertBackgrounds(show: Show, noLoad = false, init = fals
     if (!show?.media) return {}
 
     show = clone(show)
-    const mediaIds: string[] = []
+    const mediaIds = new Set<string>()
     show.layouts[show.settings?.activeLayout]?.slides.forEach((a) => {
-        if (a.background) mediaIds.push(a.background)
+        if (a.background) mediaIds.add(a.background)
         Object.values(a.children || {}).forEach((child) => {
-            if (child.background) mediaIds.push(child.background)
+            if (child.background) mediaIds.add(child.background)
         })
     })
+    ;[...mediaIds].forEach((id) => {
+        let path = show.media[id]?.path || show.media[id]?.id || ""
+        if (!path) return
 
-    await Promise.all(
-        mediaIds.map(async (id) => {
-            let path = show.media[id]?.path || show.media[id]?.id || ""
-            if (!path) return
+        if (noLoad) {
+            show.media[id].path = getThumbnailPath(path, mediaSize.slideSize)
+            return
+        }
 
-            if (noLoad) {
-                show.media[id].path = getThumbnailPath(path, mediaSize.slideSize)
-                return
-            }
+        const remoteConnections = Object.keys(get(connections).REMOTE || {})?.length || 0
+        if (!init && remoteConnections === 0) return
 
-            const remoteConnections = Object.keys(get(connections).REMOTE || {})?.length || 0
-            if (!init && remoteConnections === 0) return
-
-            const base64Path: string = await getBase64Path(path, mediaSize.slideSize)
-            if (base64Path) show.media[id].path = base64Path
-        })
-    )
+        // const base64Path: string = await getBase64Path(path, mediaSize.slideSize)
+        // keep paths and let remote request them lazily.
+        show.media[id].path = path
+    })
 
     return show
 }

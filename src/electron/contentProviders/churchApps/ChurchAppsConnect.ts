@@ -199,6 +199,6 @@ export class ChurchAppsConnect {
     }
 }
 
-function connectionInitialized(isFirstConnection: boolean = false) {
+function connectionInitialized(isFirstConnection = false) {
     sendToMain(ToMain.PROVIDER_CONNECT, { providerId: "churchApps", success: true, isFirstConnection })
 }

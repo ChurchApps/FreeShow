@@ -9,7 +9,7 @@ import type { StageLayouts } from "./Stage"
 
 export type SaveList = SaveListSettings | SaveListSyncedSettings | "themes" | "events" | "templates" | "overlays" | "driveKeys"
 
-export type SaveListSyncedSettings = "categories" | "drawSettings" | "overlayCategories" | "templateCategories" | "styles" | "profiles" | "timers" | "variables" | "triggers" | "audioStreams" | "audioPlaylists" | "scriptures" | "scriptureSettings" | "groups" | "midiIn" | "emitters" | "playerVideos" | "videoMarkers" | "mediaTags" | "actionTags" | "variableTags" | "customizedIcons" | "companion" | "globalTags" | "customMetadata" | "effects" | "deletedDefaults"
+export type SaveListSyncedSettings = "categories" | "drawSettings" | "overlayCategories" | "templateCategories" | "styles" | "profiles" | "timers" | "variables" | "triggers" | "audioStreams" | "audioPlaylists" | "scriptures" | "scriptureSettings" | "groups" | "midiIn" | "emitters" | "playerVideos" | "videoMarkers" | "mediaTags" | "playerTags" | "actionTags" | "variableTags" | "customizedIcons" | "companion" | "globalTags" | "globalRegexes" | "customMetadata" | "effects" | "deletedDefaults"
 
 export type SaveListSettings =
     | "initialized"

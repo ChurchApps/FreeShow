@@ -90,7 +90,7 @@ export const _updaters = {
                 return a
             })
 
-            if (!initializing || data.shows?.length) return
+            if (!initializing || data.shows?.length || !get(projectView)) return
 
             activeRename.set("project_" + id)
         },
@@ -174,6 +174,22 @@ export const _updaters = {
         }
     },
     project_template: { store: projectTemplates, empty: EMPTY_PROJECT, timestamp: true },
+    section_template: {
+        store: projectTemplates,
+        empty: EMPTY_SECTION,
+        initialize: (data) => {
+            return replaceEmptyValues(data, { id: uid(5) })
+        },
+        select: (_id: string, data: any) => {
+            activeShow.set({ id: data.data.id, index: data.index, type: "section" })
+
+            // focus on section title input
+            setTimeout(() => {
+                document.getElementById("sectionTitle")?.querySelector("input")?.focus()
+            }, 10)
+        },
+        timestamp: true
+    },
 
     project_key: { store: projects, timestamp: true },
     project_folder_key: { store: folders, timestamp: true },

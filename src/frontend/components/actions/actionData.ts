@@ -11,6 +11,7 @@ export const actionData = {
     name_select_show: { SECTION: "guide_title.show", name: "actions.name_select_show", icon: "showIcon", input: "strval" },
     start_show: { slideId: "startShow", common: true, name: "preview._start", icon: "showIcon", input: "start_show" }, // any play actions are incompatible with clear actions...
     set_template: { name: "actions.set_template_active", icon: "templates", input: "id" },
+    set_next_slide_timer: { name: "preview.nextTimer", icon: "timer", input: "numval" },
     transpose_show_up: { name: "edit.transpose_up", icon: "up" },
     transpose_show_down: { name: "edit.transpose_down", icon: "down" },
 
@@ -50,6 +51,8 @@ export const actionData = {
     // id_select_output_style: { name: "actions.id_select_output_style", icon: "styles", input: "id" },
     change_output_style: { slideId: "outputStyle", common: true, canAddMultiple: true, name: "actions.change_output_style", icon: "styles", input: "change_output_style" },
     change_transition: { name: "actions.change_transition", icon: "transition", input: "transition" },
+    mute_output: { name: "output.mute", icon: "muted", input: "id" },
+    unmute_output: { name: "output.unmute", icon: "volume", input: "id" },
 
     // STAGE
     // SECTION: "menu.stage",

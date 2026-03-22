@@ -1,7 +1,8 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import type { Template } from "../../../../types/Show"
-    import { activeEdit, activePage, activePopup, activeShow, alertMessage, categories, labelsDisabled, mediaOptions, outputs, selected, showsCache, special, styles, templateCategories, templates } from "../../../stores"
+    import { activeEdit, activePage, activePopup, activeShow, alertMessage, categories, labelsDisabled, mediaOptions, outputs, selected, showsCache, special, styles, templateApplied, templateCategories, templates } from "../../../stores"
+    import { translateText } from "../../../utils/language"
     import { getAccess } from "../../../utils/profile"
     import { clone, keysToID, sortByName } from "../../helpers/array"
     import { history } from "../../helpers/history"
@@ -19,7 +20,6 @@
     import SelectElem from "../../system/SelectElem.svelte"
     import Card from "../Card.svelte"
     import TemplateSlide from "./TemplateSlide.svelte"
-    import { translateText } from "../../../utils/language"
 
     export let active: string | null
     export let searchValue = ""
@@ -82,12 +82,13 @@
 
     // WIP take off on click if already applied? - it's auto removed when slide is edited & you can remove it in the bottom right menu
     $: isShowActive = !!($activeShow && ($activeShow?.type || "show") === "show")
+    let alerted = false
     function templateClick(e: MouseEvent, templateId: string) {
         if (e.target?.closest(".edit") || e.target?.closest(".icons")) return
         if (!$activeShow || !isShowActive || e.ctrlKey || e.metaKey) return
 
         if ($showsCache[$activeShow.id]?.locked) {
-            alertMessage.set("show.locked_info")
+            alertMessage.set("show.locked")
             activePopup.set("alert")
             return
         }
@@ -136,10 +137,16 @@
         const categoryId = $showsCache[$activeShow.id]?.category || ""
         const categoryTemplate = $categories[categoryId]?.template || ""
         if (categoryTemplate) {
-            alertMessage.set("tips.category_template")
-            activePopup.set("alert")
+            if (!alerted) {
+                alertMessage.set("tips.category_template")
+                activePopup.set("alert")
+                alerted = true
+            }
             return
         }
+
+        templateApplied.set(true)
+        setTimeout(() => templateApplied.set(false), 500)
 
         history({ id: "TEMPLATE", newData: { id: templateId, data: { createItems: true, shiftItems: e.shiftKey } }, location: { page: "none", override: "show#" + $activeShow.id } })
 
@@ -147,9 +154,10 @@
         if ($special.styleTemplatePreview !== false) {
             const outputStyleId = getFirstActiveOutput()?.style || ""
             const styleTemplate = $styles[outputStyleId]?.template || ""
-            if (styleTemplate) {
+            if (styleTemplate && !alerted) {
                 alertMessage.set("tips.style_template_active")
                 activePopup.set("alert")
+                alerted = true
             }
         }
     }

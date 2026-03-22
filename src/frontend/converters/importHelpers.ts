@@ -33,7 +33,7 @@ export function createCategory(name: string, icon = "song", { isDefault, isArchi
     return id
 }
 
-export function setTempShows(tempShows: { id: string; show: Show }[]) {
+export function setTempShows(tempShows: { id: string; show: Show }[], options: { suppressFinishedToast?: boolean } = {}) {
     if (tempShows.length === 1) {
         const selectedIndex = get(activeShow)?.index === undefined ? undefined : get(activeShow)!.index! + 1
         history({ id: "UPDATE", newData: { data: tempShows[0].show, remember: { project: get(activeProject), index: selectedIndex } }, oldData: { id: tempShows[0].id }, location: { page: "show", id: "show" } })
@@ -42,7 +42,7 @@ export function setTempShows(tempShows: { id: string; show: Show }[]) {
     }
 
     activePopup.set(null)
-    newToast("main.finished")
+    if (!options.suppressFinishedToast) newToast("main.finished")
 }
 
 export async function importShow(files: { content: string; name?: string; extension?: string }[]) {
@@ -153,6 +153,8 @@ export function importSpecific(data: { content: string; name?: string; extension
 }
 
 export function fixShowIssues(show: Show) {
+    if (!show) return null
+
     if (typeof show.name !== "string") show.name = ""
     if (!show.category) show.category = null
     if (!show.slides) show.slides = {}

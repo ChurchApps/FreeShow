@@ -9,7 +9,7 @@ import { uid } from "uid"
 import { ToMain } from "../../../types/IPC/ToMain"
 import type { LessonsData } from "../../../types/Main"
 import type { Project } from "../../../types/Projects"
-import type { Show, Slide, SlideData } from "../../../types/Show"
+import type { Chords, Show, Slide, SlideData } from "../../../types/Show"
 import { downloadLessonsMedia } from "../../data/downloadMedia"
 import { sendToMain } from "../../IPC/main"
 import { getDataFolderPath } from "../../utils/files"
@@ -21,13 +21,102 @@ const PCO_API_version = 2
 type PCORequestData = {
     scope: PCOScopes
     endpoint: string
-    params?: Record<string, string> // Add params type
+    params?: Record<string, string>
 }
 
 type SongSection = {
     label: string
     lyrics: string
     breaks_at?: number
+}
+
+type ParsedSectionLine = {
+    text: string
+    chords?: Chords[]
+}
+
+const chordTokenRegex = /^[A-G](?:#|b)?(?:m|maj|min|sus|add|aug|dim)?\d*(?:\/[A-G](?:#|b)?)?$/i
+
+function isColumnBreakLine(line: string): boolean {
+    return line.trim().toUpperCase() === "COLUMN_BREAK"
+}
+
+function isChordProgressionLine(line: string): boolean {
+    const trimmed = line.trim()
+    if (!trimmed) return false
+
+    const withoutLabel = trimmed.replace(/^[A-ZÁÉÍÓÚÑ_ ]+:\s*/i, "").trim()
+    if (!withoutLabel) return false
+
+    const tokens = withoutLabel.split(/\s+/).filter(Boolean)
+    if (!tokens.length) return false
+
+    let chordCount = 0
+    for (const rawToken of tokens) {
+        const token = rawToken.replace(/[.,;:]+$/, "")
+        if (chordTokenRegex.test(token)) {
+            chordCount++
+            continue
+        }
+
+        if (/^x\d+$/i.test(token) || /^\(x\d+\)$/i.test(token) || /^\|+$/.test(token) || /^-+$/.test(token) || /^\/+$/i.test(token)) {
+            continue
+        }
+
+        return false
+    }
+
+    return chordCount >= 2
+}
+
+function parseChordChartIntoSections(chordChart: string): SongSection[] {
+    const sections: SongSection[] = []
+    const lines = chordChart.split(/\r?\n/)
+    let currentSectionLabel = ""
+    let currentSectionContent: string[] = []
+
+    for (const line of lines) {
+        const trimmed = line.trim()
+
+        if (isColumnBreakLine(trimmed)) continue
+
+        // Detect section headers (VERSE, CHORUS, BRIDGE, etc.)
+        // Order matters: longer patterns first (PRECORO before PRE, INSTRUMENTAL before INTRO)
+        const sectionMatch = trimmed.match(/^(PRECORO|ESTRIBILLO|INSTRUMENTAL|PUENTE|VERSE|CHORUS|VERSO|CORO|BRIDGE|INTRO|OUTRO|FINAL|PRE|BREAK|TAG|VAMP|INTERLUDE|BREAKDOWN|TURNAROUND|REFRAIN)(\s*\d+)?(?:\s|$)/i)
+        if (sectionMatch) {
+            // Save previous section if exists (including sections with only chords)
+            if (currentSectionLabel) {
+                const content = currentSectionContent.filter((l) => l.trim()).join("\n")
+                if (content) {
+                    sections.push({
+                        label: currentSectionLabel,
+                        lyrics: content
+                    })
+                }
+            }
+            currentSectionLabel = sectionMatch[0].trim()
+            currentSectionContent = []
+            continue
+        }
+
+        // Keep lyric lines (even if empty)
+        if (trimmed) {
+            currentSectionContent.push(line)
+        }
+    }
+
+    // Save last section
+    if (currentSectionLabel) {
+        const content = currentSectionContent.filter((l) => l.trim()).join("\n")
+        if (content) {
+            sections.push({
+                label: currentSectionLabel,
+                lyrics: content
+            })
+        }
+    }
+
+    return sections
 }
 
 interface ServiceType {
@@ -77,7 +166,7 @@ export async function pcoRequest(data: PCORequestData, attempt = 0): Promise<any
         return null
     }
 
-    // Build the path with query parameters if they exist
+    // Build the API path with query parameters if provided
     let apiPath = `/${data.scope || "services"}/v${PCO_API_version}/${data.endpoint}`
     if (data.params) {
         const queryParams = new URLSearchParams(data.params).toString()
@@ -89,7 +178,7 @@ export async function pcoRequest(data: PCORequestData, attempt = 0): Promise<any
     return new Promise((resolve) => {
         httpsRequest(PCO_API_URL, apiPath, "GET", headers, {}, (err, result) => {
             if (err) {
-                // handle rate limit
+                // Handle rate limiting
                 // https://developer.planning.center/docs/#/overview/rate-limiting
                 if (err.statusCode === 429) {
                     const retryAfter = parseInt(err?.headers?.["retry-after"], 10) || 2
@@ -97,7 +186,6 @@ export async function pcoRequest(data: PCORequestData, attempt = 0): Promise<any
                     return
                 }
 
-                // console.log(apiPath, err)
                 const message = err.message?.includes("401") ? "Make sure you have created some 'services' in your account!" : err.message
                 sendToMain(ToMain.ALERT, "Could not get data! " + message)
                 return resolve(null)
@@ -105,10 +193,8 @@ export async function pcoRequest(data: PCORequestData, attempt = 0): Promise<any
 
             let resultData = result.data
 
-            // convert to array
+            // Convert to array for consistent handling
             if (!Array.isArray(resultData)) resultData = [resultData]
-
-            // console.debug("PCO Request Result:", apiPath, resultData)
 
             resolve(resultData)
         })
@@ -130,8 +216,6 @@ export async function pcoRequest(data: PCORequestData, attempt = 0): Promise<any
         }
     })
 }
-
-// LOAD SERVICES
 
 const ONE_WEEK_MS = 604800000
 
@@ -207,7 +291,6 @@ async function fetchServicePlans(serviceType: ServiceType) {
         return null
     }
 
-    // Filter for the one week window
     const filteredPlans = servicePlans.filter(({ attributes: a }: any) => {
         if (a.items_count === 0) return false
         const date = new Date(a.sort_date).getTime()
@@ -215,7 +298,6 @@ async function fetchServicePlans(serviceType: ServiceType) {
         return date < today + ONE_WEEK_MS
     })
 
-    // console.debug(`Found ${filteredPlans.length} plans for service type ${serviceType.attributes.name} (${serviceType.id})`)
     return filteredPlans
 }
 
@@ -290,22 +372,36 @@ async function processSongItem(item: ProjectItem, itemsEndpoint: string) {
     const song = songArrangement.attributes
     const sequence = item.custom_arrangement_sequence || song.sequence || []
 
-    let sections: SongSection[] =
-        (
-            await pcoRequest({
-                scope: "services",
-                endpoint: `${arrangementEndpoint}/sections`
-            })
-        )[0]?.attributes.sections || []
+    let sections: SongSection[] = []
 
-    if (!sections.length) {
-        sections = sequence.map((id: any) => ({ label: id, lyrics: "" }))
+    // Use chord_chart as primary source since it contains repeat markers (//)
+    if (song.chord_chart) {
+        sections = parseChordChartIntoSections(song.chord_chart)
     } else {
-        sections = sections.map(normalizeSongSection)
+        // Fallback to sections endpoint if no chord_chart
+        sections =
+            (
+                await pcoRequest({
+                    scope: "services",
+                    endpoint: `${arrangementEndpoint}/sections`
+                })
+            )[0]?.attributes.sections || []
+
+        if (!sections.length) {
+            sections = sequence.map((id: any) => ({ label: id, lyrics: "" }))
+        } else {
+            sections = sections.map(normalizeSongSection)
+        }
     }
 
+    // Order sections according to the arrangement sequence
     if (sequence.length && sections.length) {
         sections = getOrderedSections(sections, sequence)
+    }
+
+    // Debug log if we have a sequence but no sections after ordering
+    if (sequence.length && !sections.length) {
+        console.warn(`Planning Center: Song "${songData.attributes?.title}" has sequence but no matching sections. Sequence: ${sequence.join(", ")}`)
     }
 
     const show = getShow(songData, song, sections)
@@ -318,17 +414,70 @@ async function processSongItem(item: ProjectItem, itemsEndpoint: string) {
 }
 
 function getOrderedSections(sections: SongSection[], sequence: any[]): SongSection[] {
+    // Reorder sections according to the arrangement sequence
+    // Create a comprehensive section map with multiple keys for flexible matching
     const sectionMap: { [key: string]: SongSection } = {}
+    
     sections.forEach((section) => {
+        const lowerLabel = section.label.toLowerCase()
+        const normalizedLabel = lowerLabel.replace(/\s+/g, " ").trim()
+        const nospaceLabel = normalizedLabel.replace(/\s+/g, "")
+        
+        // Store by all possible variations
         sectionMap[section.label] = section
+        sectionMap[lowerLabel] = section
+        sectionMap[normalizedLabel] = section
+        sectionMap[nospaceLabel] = section
     })
 
     const orderedSections: SongSection[] = []
+    const notFoundLabels: Set<string> = new Set()
+    
     sequence.forEach((label) => {
-        if (sectionMap[label]) {
-            orderedSections.push(sectionMap[label])
+        const normalizedSeqLabel = String(label).toLowerCase().replace(/\s+/g, " ").trim()
+        const nospaceSeqLabel = normalizedSeqLabel.replace(/\s+/g, "")
+        
+        // Try to find matching section with multiple strategies
+        let foundSection = sectionMap[label] ||
+                          sectionMap[normalizedSeqLabel] ||
+                          sectionMap[nospaceSeqLabel]
+        
+        // Try flexible matching for variations like "PRECORO 2" vs "PRECORO2"
+        if (!foundSection) {
+            const matchedKey = Object.keys(sectionMap).find(key => {
+                const keyNormalized = key.toLowerCase().replace(/\s+/g, "")
+                return keyNormalized === nospaceSeqLabel
+            })
+            if (matchedKey) {
+                foundSection = sectionMap[matchedKey]
+            }
+        }
+        
+        // Try partial match (useful for variations)
+        if (!foundSection) {
+            const matchedKey = Object.keys(sectionMap).find(key => {
+                const keyLower = key.toLowerCase()
+                const labelLower = label.toLowerCase()
+                return keyLower.startsWith(labelLower) || 
+                       labelLower.startsWith(keyLower)
+            })
+            if (matchedKey) {
+                foundSection = sectionMap[matchedKey]
+            }
+        }
+
+        if (foundSection) {
+            // Allow same section to appear multiple times in sequence
+            orderedSections.push(foundSection)
+        } else {
+            notFoundLabels.add(label)
         }
     })
+
+    if (notFoundLabels.size > 0) {
+        const availableSections = Array.from(new Set(sections.map(s => s.label))).join(", ")
+        console.warn(`Planning Center: Could not find sections for sequence labels: ${Array.from(notFoundLabels).join(", ")}. Available sections: ${availableSections}`)
+    }
 
     return orderedSections
 }
@@ -341,7 +490,145 @@ function normalizeSongSection(section: SongSection): SongSection {
 }
 
 function normalizeLineBreaks(text: string): string {
+    // Normalize different line break formats to consistent \n
     return text.replace(/\n\r/g, "\n").replace(/\r\n/g, "\n").replace(/\r/g, "\n")
+}
+
+function parseInlineBracketLine(line: string): { text: string; chords: Chords[] } | null {
+    if (!line.includes("[") || !line.includes("]")) return null
+
+    let text = ""
+    const chords: Chords[] = []
+    let cursor = 0
+
+    while (cursor < line.length) {
+        const start = line.indexOf("[", cursor)
+        if (start < 0) {
+            text += line.slice(cursor)
+            break
+        }
+
+        text += line.slice(cursor, start)
+        const end = line.indexOf("]", start + 1)
+        if (end < 0) {
+            text += line.slice(start)
+            break
+        }
+
+        const chord = line.slice(start + 1, end).trim()
+        if (chord) {
+            chords.push({ id: uid(5), pos: text.length, key: chord })
+        }
+
+        cursor = end + 1
+    }
+
+    if (!chords.length) return null
+    return { text, chords }
+}
+
+function parsePlainChordLine(line: string): Chords[] | null {
+    const matches = [...line.matchAll(/\S+/g)]
+    if (!matches.length) return null
+
+    const chords: Chords[] = []
+    for (const match of matches) {
+        const token = match[0]
+        const pos = match.index ?? 0
+        if (!chordTokenRegex.test(token)) return null
+        chords.push({ id: uid(5), pos, key: token })
+    }
+
+    return chords.length ? chords : null
+}
+
+function getChordLineData(line: string): Chords[] | null {
+    const inline = parseInlineBracketLine(line)
+    if (inline && !inline.text.trim()) return inline.chords
+    return parsePlainChordLine(line)
+}
+
+function alignChordsToLyricLine(chords: Chords[], rawLyricLine: string, sectionBaseOffset: number): { text: string; chords: Chords[] } {
+    const lyricText = rawLyricLine.trim()
+    const leadingWhitespace = rawLyricLine.length - rawLyricLine.trimStart().length
+    const alignedChords: Chords[] = []
+
+    chords
+        .slice()
+        .sort((a, b) => a.pos - b.pos)
+        .forEach((chord) => {
+            let pos = chord.pos - sectionBaseOffset - leadingWhitespace
+            if (!lyricText.length) pos = 0
+            else {
+                if (pos < 0) pos = 0
+                if (pos >= lyricText.length) pos = lyricText.length - 1
+            }
+
+            if (alignedChords.some((existingChord) => existingChord.pos === pos)) {
+                pos++
+            }
+
+            alignedChords.push({ id: chord.id, key: chord.key, pos })
+        })
+
+    return { text: lyricText, chords: alignedChords }
+}
+
+function parseSectionLines(lyrics: string): ParsedSectionLine[] {
+    const rawLines = normalizeLineBreaks(lyrics)
+        .split("\n")
+        .filter((line) => !isColumnBreakLine(line))
+        .map((line) => line.replace(/\/{2,}/g, ""))
+
+    // Planning Center often includes a common left indent in chord-only lines.
+    // Remove that shared baseline so chord positions match lyric content columns.
+    const sectionBaseOffset = rawLines.reduce((minOffset, line, i) => {
+        const lineChords = getChordLineData(line)
+        if (!lineChords?.length || i + 1 >= rawLines.length) return minOffset
+
+        const nextLine = rawLines[i + 1]
+        if (!nextLine.trim() || getChordLineData(nextLine) || parseInlineBracketLine(nextLine)) return minOffset
+
+        const firstChordPos = lineChords[0].pos
+        if (minOffset === null) return firstChordPos
+        return Math.min(minOffset, firstChordPos)
+    }, null as number | null)
+
+    const parsedLines: ParsedSectionLine[] = []
+
+    for (let i = 0; i < rawLines.length; i++) {
+        const currentLine = rawLines[i]
+
+        if (!currentLine.trim()) {
+            parsedLines.push({ text: "" })
+            continue
+        }
+
+        if (isChordProgressionLine(currentLine)) {
+            continue
+        }
+
+        const inline = parseInlineBracketLine(currentLine)
+        if (inline && inline.text.trim()) {
+            parsedLines.push({ text: inline.text.trim(), chords: inline.chords })
+            continue
+        }
+
+        const chordLine = getChordLineData(currentLine)
+        if (chordLine && i + 1 < rawLines.length) {
+            const nextLine = rawLines[i + 1]
+            if (nextLine.trim() && !isChordProgressionLine(nextLine) && !getChordLineData(nextLine) && !parseInlineBracketLine(nextLine)) {
+                const alignedLine = alignChordsToLyricLine(chordLine, nextLine, sectionBaseOffset || 0)
+                parsedLines.push({ text: alignedLine.text, chords: alignedLine.chords })
+                i++
+                continue
+            }
+        }
+
+        parsedLines.push({ text: currentLine.trim() })
+    }
+
+    return parsedLines
 }
 
 function processRegularItem(item: ProjectItem) {
@@ -412,28 +699,60 @@ function getDateTitle(dateString: string) {
 }
 
 const itemStyle = "left:50px;top:120px;width:1820px;height:840px;"
+
+// Extract the maximum number of consecutive slashes in a string to determine repetition count
+function getRepetitionCount(text: string): number {
+    const matches = text.match(/\/{2,}/g) // Find sequences of 2 or more slashes
+    if (!matches || matches.length === 0) return 1
+    
+    // Get the longest sequence of slashes
+    const maxSlashSequence = matches.reduce((max, current) => 
+        current.length > max.length ? current : max
+    )
+    
+    return maxSlashSequence.length
+}
+
 function getShow(SONG_DATA: any, SONG: any, SECTIONS: any[]) {
     const slides: { [key: string]: Slide } = {}
     const layoutSlides: SlideData[] = []
     SECTIONS.forEach((section) => {
-        const slideId = uid()
+        // Check if section has repeat markers (// for 2x, /// for 3x, etc.)
+        const repetitionCount = getRepetitionCount(section.lyrics || "")
 
-        const items = [
-            {
-                style: itemStyle,
-                lines: section.lyrics.split("\n").map((a: string) => ({ align: "", text: [{ style: "", value: a }] }))
+        const parsedLines = parseSectionLines(section.lyrics || "")
+
+        // Skip sections with no lyrics content
+        if (!parsedLines.some((line) => line.text.trim())) return
+
+        for (let rep = 0; rep < repetitionCount; rep++) {
+            const slideId = uid()
+
+            const items = [
+                {
+                    style: itemStyle,
+                    lines: parsedLines.map((line) => {
+                        const parsedLine: { align: string; text: { style: string; value: string }[]; chords?: Chords[] } = {
+                            align: "",
+                            text: [{ style: "", value: line.text }]
+                        }
+                        if (line.chords?.length) parsedLine.chords = line.chords
+                        return parsedLine
+                    })
+
+                }
+            ]
+
+            slides[slideId] = {
+                group: section.label,
+                globalGroup: section.label.toLowerCase(),
+                color: null,
+                settings: {},
+                notes: "",
+                items
             }
-        ]
-
-        slides[slideId] = {
-            group: section.label,
-            globalGroup: section.label.toLowerCase(),
-            color: null,
-            settings: {},
-            notes: "",
-            items
+            layoutSlides.push({ id: slideId })
         }
-        layoutSlides.push({ id: slideId })
     })
 
     const title = SONG_DATA.attributes.title || ""

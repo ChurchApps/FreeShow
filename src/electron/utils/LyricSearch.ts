@@ -1,4 +1,5 @@
 import axios from "axios"
+import { net } from "electron"
 import type { LyricSearchResult } from "../../types/Main"
 
 const lyricsSearchCache: Map<string, LyricSearchResult[]> = new Map()
@@ -167,21 +168,43 @@ export class LyricSearch {
     }
 
     // ULTIMATE GUITAR
+    private static ugHeaders = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    }
+
+    private static parseUGStore = (html: string) => {
+        const match = html.match(/class=['"]js-store['"][^>]*data-content=['"]([^'"]+)['"]/)
+        if (!match) return null
+        try {
+            return JSON.parse(match[1].replace(/&quot;/g, '"').replace(/&#039;/g, "'").replace(/&amp;/g, "&"))
+        } catch {
+            return null
+        }
+    }
+
+    private static ugFetch = async (url: string) => {
+        const response = await net.fetch(url, { headers: LyricSearch.ugHeaders })
+        if (!response.ok) throw new Error(`HTTP ${response.status}`)
+        return response.text()
+    }
+
     private static searchUltimateGuitar = async (artist: string, title: string) => {
         try {
-            const { searchSong, CHORDS } = require("ultimate-guitar")
             const query = artist ? `${title} ${artist}` : title
+            const url = `https://www.ultimate-guitar.com/search.php?title=${encodeURIComponent(title)}&type=300`
+            const html = await LyricSearch.ugFetch(url)
+            const store = LyricSearch.parseUGStore(html)
+            let results: any[] = store?.store?.page?.data?.results
+            if (!Array.isArray(results)) return []
 
-            const response = await searchSong(title, artist, CHORDS)
-
-            if (!response || !response.responses || !Array.isArray(response.responses)) {
-                console.error("No valid response from Ultimate Guitar")
-                return []
+            results = results.filter((r: any) => r.type?.toLowerCase() !== "pro" && r.marketing_type === undefined)
+            if (artist) {
+                const artistRegex = new RegExp(artist, "gi")
+                results = results.filter((r: any) => r.artist_name && artistRegex.test(r.artist_name))
             }
 
-            const limitedResults = response.responses.slice(0, 3)
-
-            return limitedResults.map((song: any) => LyricSearch.convertUltimateGuitarToResult(song, query))
+            return results.slice(0, 3).map((song: any) => LyricSearch.convertUltimateGuitarToResult(song, query))
         } catch (err) {
             console.error("Ultimate Guitar search error:", err)
             return []
@@ -190,12 +213,10 @@ export class LyricSearch {
 
     private static getUltimateGuitar = async (song: LyricSearchResult) => {
         try {
-            const { fetchChords } = require("ultimate-guitar")
-            const result = await fetchChords(song.key)
-
-            if (result && result.response) {
-                return result.response
-            }
+            const html = await LyricSearch.ugFetch(song.key)
+            const store = LyricSearch.parseUGStore(html)
+            const content: string = store?.store?.page?.data?.tab_view?.wiki_tab?.content
+            if (content) return content.replace(/(\[\/ch\]|\[\/tab\]|\[tab\]|\[ch\])/gi, "").replace(/^[ \t]+/gm, "")
             return ""
         } catch (err) {
             console.error(err)

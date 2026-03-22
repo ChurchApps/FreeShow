@@ -151,7 +151,10 @@
     function updateStyle(e: any) {
         let input = e.detail
 
-        if (input.key === "text-align" || input.key === "align-items") updateAlign(input)
+        if (input.key === "text-align" || input.key === "align-items") {
+            updateAlign(input)
+            return
+        }
 
         if (input.id === "nowrap") input = { ...input, id: "style", key: "white-space", value: input.value ? "nowrap" : undefined }
 

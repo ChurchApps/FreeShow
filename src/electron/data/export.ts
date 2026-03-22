@@ -107,7 +107,7 @@ const PDFOptions = {
 }
 
 export function generatePDF(path: string, options: any = {}) {
-    let pageOptions: Electron.PrintToPDFOptions = PDFOptions
+    const pageOptions: Electron.PrintToPDFOptions = PDFOptions
 
     if (options.type === "media") {
         // landscape 16:9
@@ -272,7 +272,7 @@ export function exportProject(data: { type: "project"; name: string; file: any; 
 
     const files: string[] = data.file.files || []
     if (!files.length) {
-        let exportPath = data.path ? data.path.replace(".project", "") : join(exportFolder, data.name)
+        const exportPath = data.path ? data.path.replace(".project", "") : join(exportFolder, data.name)
         // export as plain JSON
         writeFile(exportPath, ".project", JSON.stringify(data.file), "utf-8", (err) => doneWritingFile(err, data.path ? "" : exportFolder))
         return

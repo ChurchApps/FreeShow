@@ -18,7 +18,7 @@
             // admin profile
             const adminPassword = $profiles.admin?.password || ""
             if (adminPassword) {
-                const pwd = await promptCustom(translateText("remote.password"))
+                const pwd = await promptCustom(translateText("remote.password"), "password")
                 if (!checkPassword(pwd, adminPassword)) {
                     newToast("remote.wrong_password")
                     return

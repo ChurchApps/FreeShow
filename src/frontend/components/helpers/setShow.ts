@@ -212,6 +212,8 @@ export async function loadShows(s: string[], deleting = false) {
             }
 
             const show = fixShowIssues(data.content[1])
+            if (!show) return
+
             await setShow(data.id || data.content[0], show)
         })
     )
