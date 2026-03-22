@@ -98,17 +98,40 @@ function getPlanningCenterProjectTemplate(): Project | null {
     const templateId = get(contentProviderData).planningcenter?.projectTemplate || ""
     if (!templateId) return null
 
-    const projectTemplate = clone(get(projectTemplates)[templateId])
+    const selectedTemplate = get(projectTemplates)[templateId]
+    if (!selectedTemplate) return null
+
+    const projectTemplate = clone(selectedTemplate)
     if (!projectTemplate || projectTemplate.deleted) return null
 
-    delete projectTemplate.id
-    delete projectTemplate.deleted
-    delete projectTemplate.modified
-    delete projectTemplate.used
-    delete projectTemplate.archived
-    delete projectTemplate.sourcePath
+    return stripProjectTemplateState(projectTemplate)
+}
 
-    return projectTemplate
+function stripProjectTemplateState(projectTemplate: Project): Project {
+    const cleanTemplate = clone(projectTemplate)
+
+    delete cleanTemplate.id
+    delete cleanTemplate.deleted
+    delete cleanTemplate.modified
+    delete cleanTemplate.used
+    delete cleanTemplate.archived
+    delete cleanTemplate.sourcePath
+
+    return cleanTemplate
+}
+
+function createPlanningCenterProject(templateProject: Project | null, syncedProject: Project, syncedItems: Project["shows"]): Project {
+    if (!templateProject) return syncedProject
+
+    return {
+        ...templateProject,
+        name: syncedProject.name,
+        created: syncedProject.created,
+        used: syncedProject.used,
+        parent: syncedProject.parent,
+        // Keep the template order first, then append the synced Planning Center items.
+        shows: [...(templateProject.shows || []), ...syncedItems]
+    }
 }
 
 export const mainResponses: MainResponses = {
@@ -391,7 +414,7 @@ export const mainResponses: MainResponses = {
                 shows: syncedItems
             }
             const templateProject = data.providerId === "planningcenter" ? getPlanningCenterProjectTemplate() : null
-            const project: Project = templateProject ? { ...templateProject, ...syncedProject, shows: [...(templateProject.shows || []), ...syncedItems] } : syncedProject
+            const project: Project = createPlanningCenterProject(templateProject, syncedProject, syncedItems)
 
             // REPLACE IDS
             project.shows = project.shows.map((a) => ({ ...a, id: replaceIds[a.id] || a.id }))
