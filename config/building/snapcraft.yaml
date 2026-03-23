@@ -24,26 +24,11 @@ platforms:
 base: core24
 grade: stable
 confinement: strict
-plugs:
-    gnome-46-2404:
-        interface: content
-        target: $SNAP/gnome-platform
-        default-provider: gnome-46-2404
-    gtk-3-themes:
-        interface: content
-        target: $SNAP/data-dir/themes
-        default-provider: gtk-common-themes
-    icon-themes:
-        interface: content
-        target: $SNAP/data-dir/icons
-        default-provider: gtk-common-themes
-    sound-themes:
-        interface: content
-        target: $SNAP/data-dir/sounds
-        default-provider: gtk-common-themes
 layout:
     /usr/share/alsa:
         bind: $SNAP/usr/share/alsa
+    /usr/share/libdrm:
+        bind: $SNAP/usr/share/libdrm
 parts:
     freeshow:
         source: dist/linux-unpacked/
@@ -54,6 +39,7 @@ parts:
             - libglu1-mesa
             - libltc11
             - libproxy1v5
+            - libdrm-common
 apps:
     freeshow:
         command: command.sh
@@ -64,25 +50,16 @@ apps:
             - avahi-control
             - browser-support
             - camera
-            - desktop
-            - desktop-legacy
             - home
-            - gsettings
             - network
             - network-bind
-            - network-control
             - network-observe
-            - network-manager
-            - network-manager-observe
             - network-setup-observe
-            - opengl
             - pulseaudio
             - pipewire
             - removable-media
-            - unity7
-            - wayland
-            - x11
+            - screen-inhibit-control
         environment:
             PATH: $SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH
             SNAP_DESKTOP_RUNTIME: $SNAP/gnome-platform
-            LD_LIBRARY_PATH: $SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu
+            LD_LIBRARY_PATH: $SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$LD_LIBRARY_PATH
