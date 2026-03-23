@@ -53,7 +53,12 @@ function isChordProgressionLine(line: string): boolean {
 
     let chordCount = 0
     for (const rawToken of tokens) {
-        const token = rawToken.replace(/[.,;:]+$/, "")
+        // Strip trailing punctuation, then strip surrounding parentheses used as grouping markers
+        const token = rawToken.replace(/[.,;:]+$/, "").replace(/^\(+/, "").replace(/\)+$/, "")
+
+        // Token was composed entirely of parentheses (grouping markers like a lone "(" or ")")
+        if (!token) continue
+
         if (chordTokenRegex.test(token)) {
             chordCount++
             continue
@@ -533,8 +538,13 @@ function parsePlainChordLine(line: string): Chords[] | null {
 
     const chords: Chords[] = []
     for (const match of matches) {
-        const token = match[0]
+        // Strip surrounding parentheses used as grouping markers, e.g. "(G)" -> "G", "G)" -> "G"
+        const token = match[0].replace(/^\(+/, "").replace(/\)+$/, "")
         const pos = match.index ?? 0
+
+        // Token was just parentheses, or a separator character — skip without rejecting the line
+        if (!token || /^\|+$/.test(token) || /^-+$/.test(token) || /^\/+$/i.test(token)) continue
+
         if (!chordTokenRegex.test(token)) return null
         chords.push({ id: uid(5), pos, key: token })
     }
