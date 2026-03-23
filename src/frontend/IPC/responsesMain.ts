@@ -1,4 +1,5 @@
 import { get } from "svelte/store"
+import type { ContentProviderId } from "../../electron/contentProviders/base/types"
 import type { ToMainSendPayloads } from "../../types/IPC/ToMain"
 import { ToMain } from "../../types/IPC/ToMain"
 import type { Project } from "../../types/Projects"
@@ -57,9 +58,9 @@ import {
     lessonsLoaded,
     media,
     mediaDownloads,
-    pdfImports,
     outputs,
     overlays,
+    pdfImports,
     popupData,
     presentationData,
     projects,
@@ -85,55 +86,15 @@ import { setupCloudSync } from "../utils/cloudSync"
 import { newToast } from "../utils/common"
 import { confirmCustom } from "../utils/popup"
 import { initializeClosing, saveComplete } from "../utils/save"
+import { invalidateSearchIndex } from "../utils/searchFast"
 import { updateSettings, updateSyncedSettings, updateThemeValues } from "../utils/updateSettings"
 import type { MainReturnPayloads } from "./../../types/IPC/Main"
 import { Main } from "./../../types/IPC/Main"
-import { invalidateSearchIndex } from "../utils/searchFast"
 import { sendMain } from "./main"
 
 type MainHandler<ID extends Main | ToMain> = (data: ID extends keyof ToMainSendPayloads ? ToMainSendPayloads[ID] : ID extends keyof MainReturnPayloads ? Awaited<MainReturnPayloads[ID]> : undefined) => void
 export type MainResponses = {
     [ID in Main | ToMain]?: MainHandler<ID>
-}
-
-function getPlanningCenterProjectTemplate(): Project | null {
-    const templateId = get(contentProviderData).planningcenter?.projectTemplate || ""
-    if (!templateId) return null
-
-    const selectedTemplate = get(projectTemplates)[templateId]
-    if (!selectedTemplate) return null
-
-    const projectTemplate = clone(selectedTemplate)
-    if (!projectTemplate || projectTemplate.deleted) return null
-
-    return stripProjectTemplateState(projectTemplate)
-}
-
-function stripProjectTemplateState(projectTemplate: Project): Project {
-    const cleanTemplate = clone(projectTemplate)
-
-    delete cleanTemplate.id
-    delete cleanTemplate.deleted
-    delete cleanTemplate.modified
-    delete cleanTemplate.used
-    delete cleanTemplate.archived
-    delete cleanTemplate.sourcePath
-
-    return cleanTemplate
-}
-
-function createPlanningCenterProject(templateProject: Project | null, syncedProject: Project, syncedItems: Project["shows"]): Project {
-    if (!templateProject) return syncedProject
-
-    return {
-        ...templateProject,
-        name: syncedProject.name,
-        created: syncedProject.created,
-        used: syncedProject.used,
-        parent: syncedProject.parent,
-        // Keep the template order first, then append the synced Planning Center items.
-        shows: [...(templateProject.shows || []), ...syncedItems]
-    }
 }
 
 export const mainResponses: MainResponses = {
@@ -435,6 +396,18 @@ export const mainResponses: MainResponses = {
         }
         setTempShows(tempShows)
 
+        function createProviderProject(providerId: ContentProviderId, projectBase: Project) {
+            const templateId = get(contentProviderData)[providerId]?.projectTemplate || ""
+            if (!templateId) return projectBase
+
+            const templateItems = get(projectTemplates)[templateId]?.shows || []
+
+            // project template first, then append the synced items
+            projectBase.shows = clone([...templateItems, ...(projectBase.shows || [])])
+
+            return projectBase
+        }
+
         data.projects.forEach((currentProject) => {
             // CREATE PROJECT FOLDER
             const folderId = currentProject.folderId
@@ -443,16 +416,14 @@ export const mainResponses: MainResponses = {
             }
 
             // CREATE PROJECT
-            const syncedItems = currentProject.items || []
-            const syncedProject: Project = {
+            const projectBase: Project = {
                 name: currentProject.name,
                 created: currentProject.created,
                 used: Date.now(), // show on top in last used list
                 parent: folderId || "/",
-                shows: syncedItems
+                shows: currentProject.items || []
             }
-            const templateProject = data.providerId === "planningcenter" ? getPlanningCenterProjectTemplate() : null
-            const project: Project = createPlanningCenterProject(templateProject, syncedProject, syncedItems)
+            const project = createProviderProject(data.providerId, projectBase)
 
             // REPLACE IDS
             project.shows = project.shows.map((a) => ({ ...a, id: replaceIds[a.id] || a.id }))

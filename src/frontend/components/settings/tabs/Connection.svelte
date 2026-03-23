@@ -4,12 +4,12 @@
     import { Main } from "../../../../types/IPC/Main"
     import { requestMain, sendMain } from "../../../IPC/main"
     import { activePage, activePopup, activeShow, activeTriggerFunction, cloudSyncData, companion, connections, contentProviderData, disabledServers, maxConnections, outputs, popupData, ports, projectTemplates, providerConnections, serverData, special } from "../../../stores"
-    import { contentProviderSync } from "../../../utils/startup"
     import { translateText } from "../../../utils/language"
+    import { contentProviderSync } from "../../../utils/startup"
     import { keysToID, sortByName } from "../../helpers/array"
     import Icon from "../../helpers/Icon.svelte"
-    import T from "../../helpers/T.svelte"
     import { checkWindowCapture } from "../../helpers/output"
+    import T from "../../helpers/T.svelte"
     import InputRow from "../../input/InputRow.svelte"
     import Title from "../../input/Title.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
@@ -147,12 +147,7 @@
         })
     }
 
-    $: projectTemplateOptions = [
-        { value: "", label: translateText("main.none") },
-        ...sortByName(keysToID($projectTemplates))
-            .filter((a) => !a.deleted)
-            .map(({ id, name }) => ({ value: id, label: name }))
-    ]
+    $: projectTemplateOptions = [{ value: "", label: translateText("main.none") }, ...sortByName(keysToID($projectTemplates)).map(({ id, name }) => ({ value: id, label: name }))]
 
     // TEMP solution
     let showAll = false
@@ -249,9 +244,9 @@
         </MaterialButton>
     </InputRow>
     <MaterialToggleSwitch label="Always use local instance of songs" checked={$contentProviderData.planningcenter?.localAlways} defaultValue={false} on:change={(e) => updateProvider("planningcenter", "localAlways", e.detail)} />
-    <InputRow>
-        <MaterialDropdown label="Project template for synced plans" value={$contentProviderData.planningcenter?.projectTemplate || ""} options={projectTemplateOptions} on:change={(e) => updateProvider("planningcenter", "projectTemplate", e.detail)} disabled={projectTemplateOptions.length < 2} />
-    </InputRow>
+    {#if Object.keys($projectTemplates).length}
+        <MaterialDropdown label="actions.project_template" options={projectTemplateOptions} value={$contentProviderData.planningcenter?.projectTemplate || ""} on:change={(e) => updateProvider("planningcenter", "projectTemplate", e.detail)} />
+    {/if}
 {:else if $providerConnections.churchApps && !cloudOnly.churchApps}
     <!-- ChurchApps connected -->
     <Title label="Content Provider: ChurchApps" icon="list" />
