@@ -1,4 +1,5 @@
 import { get } from "svelte/store"
+import type { ContentProviderId } from "../../electron/contentProviders/base/types"
 import type { ToMainSendPayloads } from "../../types/IPC/ToMain"
 import { ToMain } from "../../types/IPC/ToMain"
 import type { Project } from "../../types/Projects"
@@ -57,9 +58,9 @@ import {
     lessonsLoaded,
     media,
     mediaDownloads,
-    pdfImports,
     outputs,
     overlays,
+    pdfImports,
     popupData,
     presentationData,
     projects,
@@ -85,10 +86,10 @@ import { setupCloudSync } from "../utils/cloudSync"
 import { newToast } from "../utils/common"
 import { confirmCustom } from "../utils/popup"
 import { initializeClosing, saveComplete } from "../utils/save"
+import { invalidateSearchIndex } from "../utils/searchFast"
 import { updateSettings, updateSyncedSettings, updateThemeValues } from "../utils/updateSettings"
 import type { MainReturnPayloads } from "./../../types/IPC/Main"
 import { Main } from "./../../types/IPC/Main"
-import { invalidateSearchIndex } from "../utils/searchFast"
 import { sendMain } from "./main"
 
 type MainHandler<ID extends Main | ToMain> = (data: ID extends keyof ToMainSendPayloads ? ToMainSendPayloads[ID] : ID extends keyof MainReturnPayloads ? Awaited<MainReturnPayloads[ID]> : undefined) => void
@@ -395,6 +396,18 @@ export const mainResponses: MainResponses = {
         }
         setTempShows(tempShows)
 
+        function createProviderProject(providerId: ContentProviderId, projectBase: Project) {
+            const templateId = get(contentProviderData)[providerId]?.projectTemplate || ""
+            if (!templateId) return projectBase
+
+            const templateItems = get(projectTemplates)[templateId]?.shows || []
+
+            // project template first, then append the synced items
+            projectBase.shows = clone([...templateItems, ...(projectBase.shows || [])])
+
+            return projectBase
+        }
+
         data.projects.forEach((currentProject) => {
             // CREATE PROJECT FOLDER
             const folderId = currentProject.folderId
@@ -403,13 +416,14 @@ export const mainResponses: MainResponses = {
             }
 
             // CREATE PROJECT
-            const project: Project = {
+            const projectBase: Project = {
                 name: currentProject.name,
                 created: currentProject.created,
                 used: Date.now(), // show on top in last used list
                 parent: folderId || "/",
                 shows: currentProject.items || []
             }
+            const project = createProviderProject(data.providerId, projectBase)
 
             // REPLACE IDS
             project.shows = project.shows.map((a) => ({ ...a, id: replaceIds[a.id] || a.id }))

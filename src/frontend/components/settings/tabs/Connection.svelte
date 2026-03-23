@@ -3,14 +3,17 @@
     import type { ContentProviderId } from "../../../../electron/contentProviders/base/types"
     import { Main } from "../../../../types/IPC/Main"
     import { requestMain, sendMain } from "../../../IPC/main"
-    import { activePage, activePopup, activeShow, activeTriggerFunction, cloudSyncData, companion, connections, contentProviderData, disabledServers, maxConnections, outputs, popupData, ports, providerConnections, serverData, special } from "../../../stores"
+    import { activePage, activePopup, activeShow, activeTriggerFunction, cloudSyncData, companion, connections, contentProviderData, disabledServers, maxConnections, outputs, popupData, ports, projectTemplates, providerConnections, serverData, special } from "../../../stores"
+    import { translateText } from "../../../utils/language"
     import { contentProviderSync } from "../../../utils/startup"
+    import { keysToID, sortByName } from "../../helpers/array"
     import Icon from "../../helpers/Icon.svelte"
-    import T from "../../helpers/T.svelte"
     import { checkWindowCapture } from "../../helpers/output"
+    import T from "../../helpers/T.svelte"
     import InputRow from "../../input/InputRow.svelte"
     import Title from "../../input/Title.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
+    import MaterialDropdown from "../../inputs/MaterialDropdown.svelte"
     import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
 
     let ip = "localhost"
@@ -144,6 +147,8 @@
         })
     }
 
+    $: projectTemplateOptions = [{ value: "", label: translateText("main.none") }, ...sortByName(keysToID($projectTemplates)).map(({ id, name }) => ({ value: id, label: name }))]
+
     // TEMP solution
     let showAll = false
     let taps = 0
@@ -239,6 +244,9 @@
         </MaterialButton>
     </InputRow>
     <MaterialToggleSwitch label="Always use local instance of songs" checked={$contentProviderData.planningcenter?.localAlways} defaultValue={false} on:change={(e) => updateProvider("planningcenter", "localAlways", e.detail)} />
+    {#if Object.keys($projectTemplates).length}
+        <MaterialDropdown label="actions.project_template" options={projectTemplateOptions} value={$contentProviderData.planningcenter?.projectTemplate || ""} on:change={(e) => updateProvider("planningcenter", "projectTemplate", e.detail)} />
+    {/if}
 {:else if $providerConnections.churchApps && !cloudOnly.churchApps}
     <!-- ChurchApps connected -->
     <Title label="Content Provider: ChurchApps" icon="list" />
