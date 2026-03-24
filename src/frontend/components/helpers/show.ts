@@ -52,6 +52,8 @@ export function getLabelId(label: string, replaceNumbers = true) {
     if (!get(groupNumbers)) replaceNumbers = false
     if (replaceNumbers) label = label.replace(/[0-9]/g, "")
 
+    if (label.endsWith("_")) label = label.slice(0, -1)
+
     return label
     // .replace(/[0-9-]/g, "")
 }

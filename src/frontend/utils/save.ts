@@ -110,6 +110,7 @@ import { audioStreams, companion } from "./../stores"
 import { socketDisconnect, syncWithCloud } from "./cloudSync"
 import { newToast, setStatus } from "./common"
 import { syncDrive } from "./drive"
+import { isOutCleared } from "../components/helpers/output"
 
 export function save(closeWhenFinished = false, customTriggers: SaveActions = {}) {
     // don't save again while saving
@@ -266,15 +267,21 @@ export async function saveComplete({ closeWhenFinished, customTriggers }: { clos
         console.info("SAVED!")
     }
 
-    // cloud sync
+    // cloud sync (only when autosaving or closing)
     if ((customTriggers?.autosave || closeWhenFinished) && (get(providerConnections).churchApps || !get(driveData)?.mainFolderId)) {
         if (closeWhenFinished) {
             alertMessage.set("actions.closing")
             activePopup.set("alert")
         }
 
-        // only sync when autosaving or closing
-        if (!customTriggers?.autosave || !alreadySaved) await syncWithCloud(false, closeWhenFinished)
+        let shouldSync = true
+        if (customTriggers?.autosave) {
+            // don't sync if already saved or if a slide is currently outputted
+            if (alreadySaved || !isOutCleared("slide")) shouldSync = false
+        }
+
+        if (shouldSync) await syncWithCloud(false, closeWhenFinished)
+
         if (closeWhenFinished) {
             await socketDisconnect()
             closeApp()

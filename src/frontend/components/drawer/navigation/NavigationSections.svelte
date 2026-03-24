@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activeActionTagFilter, activeDrawerTab, activeEdit, activeVariableTagFilter, drawerTabsData, labelsDisabled } from "../../../stores"
+    import { activeActionTagFilter, activeDrawerTab, activeEdit, activeVariableTagFilter, dictionary, drawerTabsData, labelsDisabled } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import MaterialDrawerTab from "../MaterialDrawerTab.svelte"
 
@@ -71,7 +71,7 @@
                 {#if buttons.length}
                     {#each buttons as category}
                         {#if category?.id === "TITLE"}
-                            <div class="title">{translateText(category.label)}</div>
+                            <div class="title">{translateText(category.label, $dictionary)}</div>
 
                             {#if $labelsDisabled}
                                 <div class="add_button">
@@ -90,7 +90,7 @@
                             {/if}
                         {:else if category === "SEPARATOR" || category?.id === "SEPARATOR"}
                             <div class="separator">
-                                {#if category?.label}<div class="sepLabel">{translateText(category.label)}</div>{/if}
+                                {#if category?.label}<div class="sepLabel">{translateText(category.label, $dictionary)}</div>{/if}
                                 <hr />
                             </div>
                         {:else if !category.hidden}
