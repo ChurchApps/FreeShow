@@ -278,11 +278,11 @@ export class CaptureTransmitter {
         const buffer = image.toBitmap()
         const size = image.getSize()
 
+        if (this.shouldSkipUnchangedNonBlackmagicFrame("stage", captureId, buffer, size)) return
+
         /*  convert from ARGB/BGRA (Electron/Chromium capture output) to RGBA (Web canvas)  */
         if (this.IS_BIG_ENDIAN) util.ImageBufferAdjustment.ARGBtoRGBA(buffer)
         else util.ImageBufferAdjustment.BGRAtoRGBA(buffer)
-
-        if (this.shouldSkipUnchangedNonBlackmagicFrame("stage", captureId, buffer, size)) return
 
         // DEBUG YUV
         // // console.log(os.endianness()) // LE
@@ -311,11 +311,11 @@ export class CaptureTransmitter {
         const buffer = image.toBitmap() // {scaleFactor: 0.5}
         const size = image.getSize()
 
+        if (this.shouldSkipUnchangedNonBlackmagicFrame("server", outputId, buffer, size)) return
+
         /*  convert from ARGB/BGRA (Electron/Chromium capture output) to RGBA (Web canvas)  */
         if (this.IS_BIG_ENDIAN) util.ImageBufferAdjustment.ARGBtoRGBA(buffer)
         else util.ImageBufferAdjustment.BGRAtoRGBA(buffer)
-
-        if (this.shouldSkipUnchangedNonBlackmagicFrame("server", outputId, buffer, size)) return
 
         toServer(OUTPUT_STREAM, { channel: "STREAM", data: { id: outputId, time: Date.now(), buffer, size } })
     }

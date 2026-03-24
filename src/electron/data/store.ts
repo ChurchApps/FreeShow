@@ -46,7 +46,7 @@ export const storeFilesData = {
     ERROR_LOG: { fileName: "error_log", portable: false, defaults: {} as { renderer?: ErrorLog[]; main?: ErrorLog[]; request?: ErrorLog[] } },
 
     DRIVE_API_KEY: { fileName: "DRIVE_API_KEY", portable: false, defaults: {} as any },
-    ACCESS: { fileName: "ACCESS", portable: false, defaults: { contentProviders: {} as { [key in ContentProviderId]?: any } } }
+    ACCESS: { fileName: "ACCESS", portable: false, defaults: { contentProviders: {} as { [key in ContentProviderId]?: any }, secrets: {} as { [key: string]: any } } }
 }
 
 export const appDataPath = path.dirname(config.path)

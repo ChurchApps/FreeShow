@@ -89,7 +89,7 @@ export class ContentProviderRegistry {
     /**
      * Load services from a content provider
      */
-    static async loadServices(providerId: ContentProviderId, cloudOnly: boolean): Promise<void> {
+    static async loadServices(providerId: ContentProviderId, cloudOnly: boolean, data: any): Promise<void> {
         this.ensureInitialized()
 
         const provider = this.getProvider(providerId)
@@ -104,7 +104,7 @@ export class ContentProviderRegistry {
         }
 
         try {
-            await provider.loadServices()
+            await provider.loadServices(data)
         } catch (error) {
             console.error(`Failed to load services from ${providerId}:`, error)
             throw error

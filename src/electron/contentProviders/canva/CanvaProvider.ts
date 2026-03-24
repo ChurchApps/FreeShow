@@ -1,3 +1,4 @@
+import type { Request, Response } from "express"
 import { ContentProvider } from "../base/ContentProvider"
 import type { ContentFile, ContentLibraryCategory } from "../base/types"
 import { CanvaConnect, OAUTH_PORT } from "./CanvaConnect"
@@ -37,8 +38,8 @@ export class CanvaProvider extends ContentProvider<CanvaScopes, CanvaAuthData> {
         return this.access !== null && this.access.scope === scope
     }
 
-    async connect(scope: CanvaScopes): Promise<CanvaAuthData | null> {
-        const result = await CanvaConnect.connect(scope)
+    async connect(scope: CanvaScopes, data?: any): Promise<CanvaAuthData | null> {
+        const result = await CanvaConnect.connect(scope, data)
         this.access = result
         return result
     }
@@ -53,8 +54,8 @@ export class CanvaProvider extends ContentProvider<CanvaScopes, CanvaAuthData> {
         return null
     }
 
-    async loadServices(): Promise<void> {
-        const connected = await this.connect("folder:read design:meta:read")
+    async loadServices(data?: any): Promise<void> {
+        const connected = await this.connect("folder:read design:meta:read", data)
         if (!connected) {
             console.error("Failed to connect to Canva")
         }
@@ -81,7 +82,9 @@ export class CanvaProvider extends ContentProvider<CanvaScopes, CanvaAuthData> {
         return CanvaContentLibrary.getContent(folderId)
     }
 
-    protected handleAuthCallback() {}
+    protected handleAuthCallback(req: Request, res: Response): void {
+        CanvaConnect.handleAuthCallback(req, res)
+    }
 
     protected async refreshToken(_scope: CanvaScopes): Promise<CanvaAuthData | null> {
         return null

@@ -174,7 +174,7 @@ export const mainResponses: MainResponses = {
     // Provider-based routing
     [Main.PROVIDER_LOAD_SERVICES]: async (data) => {
         if (data.cloudOnly) markAsNewSync()
-        await ContentProviderRegistry.loadServices(data.providerId, data.cloudOnly || false)
+        await ContentProviderRegistry.loadServices(data.providerId, data.cloudOnly || false, data.data)
     },
     [Main.PROVIDER_DISCONNECT]: (data) => {
         ContentProviderRegistry.disconnect(data.providerId, data.scope)

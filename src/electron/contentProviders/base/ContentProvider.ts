@@ -52,7 +52,7 @@ export abstract class ContentProvider<TScope extends string = string, TAuthData 
     /**
      * Establishes connection to the content provider
      */
-    abstract connect(scope: TScope): Promise<TAuthData | null>
+    abstract connect(scope: TScope, data?: any): Promise<TAuthData | null>
 
     /**
      * Disconnects from the content provider
@@ -69,7 +69,7 @@ export abstract class ContentProvider<TScope extends string = string, TAuthData 
     /**
      * Loads services/plans from the content provider
      */
-    abstract loadServices(): Promise<void>
+    abstract loadServices(data?: any): Promise<void>
 
     /**
      * Handles startup load operations

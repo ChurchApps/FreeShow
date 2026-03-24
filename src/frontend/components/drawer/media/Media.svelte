@@ -23,6 +23,7 @@
     import Screens from "../live/Screens.svelte"
     import Windows from "../live/Windows.svelte"
     import PlayerVideos from "../player/PlayerVideos.svelte"
+    import CLogo from "./CLogo.svelte"
     import Canva from "./Canva.svelte"
     import ContentLibraryBrowser from "./ContentLibraryBrowser.svelte"
     import Folder from "./Folder.svelte"
@@ -492,15 +493,14 @@
             <Icon style={onlineTab === "unsplash" ? "fill: #bbbbbb" : ""} size={1.2} id="unsplash" white />
             <p>Unsplash</p>
         </MaterialButton>
-        <!-- hidden until approved! -->
-        <!-- <MaterialButton style="flex: 1;" isActive={onlineTab === "canva"} on:click={() => setSubSubTab("canva")}>
+        <MaterialButton style="flex: 1;" isActive={onlineTab === "canva"} on:click={() => setSubSubTab("canva")}>
             {#if onlineTab === "canva"}
                 <CLogo />
             {:else}
                 <Icon size={1.2} id="canva" white />
             {/if}
             <p>Canva</p>
-        </MaterialButton> -->
+        </MaterialButton>
     </div>
 {/if}
 
@@ -603,10 +603,10 @@
                 {#if !$labelsDisabled}<T id="settings.add" />{/if}
             </MaterialButton>
         </FloatingInputs>
-    {:else}
-        <FloatingInputs arrow={onlineTab === "canva" && $providerConnections.canva}>
+    {:else if onlineTab !== "canva" || $providerConnections.canva}
+        <FloatingInputs arrow={onlineTab === "canva"}>
             <svelte:fragment slot="menu">
-                {#if onlineTab === "canva" && $providerConnections.canva}
+                {#if onlineTab === "canva"}
                     <MaterialButton title="settings.disconnect_from" replace={["Canva"]} on:click={handleDisconnect} icon="logout">
                         <T id="settings.disconnect_from" replace={["Canva"]} />
                     </MaterialButton>
