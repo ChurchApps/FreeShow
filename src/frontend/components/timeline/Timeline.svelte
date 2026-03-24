@@ -698,7 +698,7 @@
                 </div>
             </div>
 
-            <MaterialButton style="min-width: 40px;padding: 10px;" title="main.open" on:click={() => resized.update((a) => ({ ...a, [(type === "project" ? "project_" : "") + "timeline"]: DEFAULT_WIDTH }))}>
+            <MaterialButton style="min-width: 40px;padding: 10px;" title="main.open" on:click={() => resized.update((a) => ({ ...a, [(type === "project" ? "project_" : type === "slide" ? "slide_" : "") + "timeline"]: DEFAULT_WIDTH }))}>
                 <Icon id="up" white />
             </MaterialButton>
         </div>
@@ -798,6 +798,12 @@
                                         <Icon id={action.data.triggers?.length === 1 ? actionData[action.data.triggers[0]]?.icon : "actions"} size={0.9} white />
                                     {:else if typeof action.data?.index === "number"}
                                         {action.data.index + 1}
+                                    {:else if action.type === "item_style"}
+                                        {#if typeof action.data.value === "number"}
+                                            {action.data.value.toFixed(1)}
+                                        {:else}
+                                            {action.data.value}
+                                        {/if}
                                     {/if}
                                 </div>
                                 <div class="action-label">{translateText(action.name)}</div>
@@ -1068,6 +1074,10 @@
     }
     .action-marker.slide .action-head {
         border-radius: 4px;
+    }
+    .action-marker.item_style .action-head {
+        border-radius: 3px;
+        font-size: 0.5em;
     }
 
     .slide-action-bar {

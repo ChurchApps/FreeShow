@@ -17,6 +17,10 @@ export const timelineSections = {
         action: { name: "tabs.actions", icon: "actions", hasData: false },
         show: { name: "formats.show", icon: "slide", hasData: false },
         audio: { name: "tabs.audio", icon: "audio", hasData: false }
+    },
+    slide: {
+        item_style: { name: "tools.item", icon: "item", hasData: false },
+        text_style: { name: "items.text", icon: "text", hasData: false }
     }
 }
 

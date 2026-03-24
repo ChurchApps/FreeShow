@@ -1,7 +1,7 @@
 import { get, Unsubscriber } from "svelte/store"
 import { uid } from "uid"
 import type { TimelineAction } from "../../../types/Show"
-import { activeProject, activeShow, projects, selected, shows, showsCache } from "../../stores"
+import { activeEdit, activeProject, activeShow, projects, selected, shows, showsCache } from "../../stores"
 import { hasNewerUpdate, waitUntilValueIsDefined } from "../../utils/common"
 import { clone } from "../helpers/array"
 import { _show } from "../helpers/shows"
@@ -14,7 +14,7 @@ import { loadShows } from "../helpers/setShow"
 export type TimelineType = "slide" | "show" | "project"
 export class TimelineActions {
     private type: TimelineType
-    private ref: { id: string; layoutId?: string } | null = null
+    private ref: { id: string; layoutId?: string; slideId?: string } | null = null
     private actions: TimelineAction[] = []
     private unsubscriber: Unsubscriber | null = null
     private callback: (s: TimelineAction[]) => void
@@ -36,6 +36,25 @@ export class TimelineActions {
         } else if (type === "project") {
             this.unsubscriber = activeProject.subscribe((id) => {
                 if (!id) return
+
+                this.updateRef()
+            })
+        } else if (type === "slide") {
+            // this.unsubscriber = activeShow.subscribe((a) => {
+            //     if (!a) return
+
+            //     const type = a.type || "show"
+            //     const id = a.id
+            //     if (type !== "show" || !id) return
+
+            //     this.updateRef()
+            // })
+            this.unsubscriber = activeEdit.subscribe((a) => {
+                if (!a) return
+
+                const type = a.type || "show"
+                const slideIndex = a.slide
+                if (type !== "show" || typeof slideIndex !== "number") return
 
                 this.updateRef()
             })
@@ -61,6 +80,16 @@ export class TimelineActions {
         } else if (this.type === "project") {
             const projectId = get(activeProject) || ""
             this.ref = { id: projectId }
+        } else if (this.type === "slide") {
+            const showId = get(activeShow)?.id
+            if (!showId) return
+
+            const showRef = _show().layouts("active").ref()[0] || []
+            const slideIndex = get(activeEdit)?.slide
+            const slideId = showRef[slideIndex ?? -1]?.id
+            if (!slideId) return
+
+            this.ref = { id: showId, slideId }
         }
 
         this.loadActions()
@@ -115,6 +144,18 @@ export class TimelineActions {
 
                 return a
             })
+        } else if (this.type === "slide") {
+            const showId = this.ref?.id
+            const slideId = this.ref?.slideId || ""
+
+            showsCache.update((a) => {
+                if (!a[showId]?.slides?.[slideId]) return a
+
+                if (!a[showId].slides[slideId].timeline) a[showId].slides[slideId].timeline = { actions: [] }
+                a[showId].slides[slideId].timeline!.actions = clone(this.actions)
+
+                return a
+            })
         }
     }
 
@@ -127,6 +168,8 @@ export class TimelineActions {
             this.actions = clone(_show(this.ref.id).layouts([this.ref.layoutId]).get()[0]?.timeline?.actions || [])
         } else if (this.type === "project") {
             this.actions = clone(get(projects)[this.ref.id]?.timeline?.actions || [])
+        } else if (this.type === "slide") {
+            this.actions = clone(get(showsCache)[this.ref.id]?.slides?.[this.ref.slideId || ""]?.timeline?.actions || [])
         }
 
         this.callback(this.actions)

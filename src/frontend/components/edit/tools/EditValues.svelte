@@ -1,6 +1,6 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte"
-    import { actions, activeEdit, activeStage, outputs, timers } from "../../../stores"
+    import { actions, activeEdit, activeStage, outputs, special, timers } from "../../../stores"
     import { throttle } from "../../../utils/common"
     import { translateText } from "../../../utils/language"
     import { mediaExtensions } from "../../../values/extensions"
@@ -19,6 +19,7 @@
     import { filterItemStyle, mergeWithStyle } from "../scripts/itemClipboard"
     import type { EditBoxSection, EditInput2 } from "../values/boxes"
     import { sectionColors } from "../values/item"
+    import { SlideTimeline } from "../../timeline/SlideTimeline"
 
     export let sections: { [key: string]: EditBoxSection } = {}
     export let styles: { [key: string]: string } = {}
@@ -109,6 +110,11 @@
 
     const dispatch = createEventDispatcher()
     function changed(e: any, input: any, sectionId = "") {
+        if ($special.slideTimelineActive) {
+            // update on change
+            SlideTimeline.addKeyframe({ name: input.values?.label, key: input.key, value: e.detail })
+        }
+
         let value = e.detail
 
         if (input.multiplier) value = value / input.multiplier
@@ -328,7 +334,7 @@
                                         {#if input.values?.subtext.includes("<a href=")}<Icon id="launch" white />{/if}
                                     </p>
                                 {:else}
-                                    <Input input={{ type: input.type, ...values, value }} on:change={(e) => changed(e, input, id)} />
+                                    <Input input={{ type: input.type, ...values, value }} on:change={(e) => changed(e, input, id)} on:keyframe={(e) => SlideTimeline.addKeyframe({ name: input.values?.label, key: input.key, value: e.detail })} />
                                 {/if}
                             {/if}
                         {/each}

@@ -4,7 +4,7 @@ import type { TimelineAction } from "../../../types/Show"
 import { sendMain } from "../../IPC/main"
 import { clearAudio } from "../../audio/audioFading"
 import { AudioPlayer } from "../../audio/audioPlayer"
-import { activeShow, isTimelinePlaying, outputs, playingAudio, showsCache, timecode } from "../../stores"
+import { activeEdit, activeShow, isTimelinePlaying, outputs, playingAudio, showsCache, timecode } from "../../stores"
 import { triggerFunction } from "../../utils/common"
 import { runAction } from "../actions/actions"
 import { clone } from "../helpers/array"
@@ -15,6 +15,7 @@ import { ShowTimeline } from "./ShowTimeline"
 import { TimelineType } from "./TimelineActions"
 import { startListeningLTC, stopListeningLTC } from "./timecode"
 import { getProjectShowDurations } from "./timeline"
+import { SlideTimeline } from "./SlideTimeline"
 
 let activePlayback: TimelinePlayback | null = null
 export function getActiveTimelinePlayback(type: TimelineType | null = null) {
@@ -58,7 +59,7 @@ export class TimelinePlayback {
     currentTime: number = 0 // ms
     isPlaying: boolean = false
     type: TimelineType
-    private ref: { id: string; layoutId?: string }
+    private ref: { id: string; layoutId?: string; slideId?: string }
 
     getId() {
         return JSON.stringify(this.ref)
@@ -71,6 +72,11 @@ export class TimelinePlayback {
             this.ref = { id: get(activeShow)?.id || "", layoutId: _show().get("settings.activeLayout") }
         } else if (type === "project") {
             this.ref = { id: get(activeShow)?.id || "" }
+        } else if (type === "slide") {
+            const showRef = _show().layouts("active").ref()[0] || []
+            const slideIndex = get(activeEdit)?.slide
+            const slideId = showRef[slideIndex ?? -1]?.id
+            this.ref = { id: get(activeShow)?.id || "", slideId }
         }
 
         // restore playing
@@ -148,6 +154,7 @@ export class TimelinePlayback {
     }
 
     setTime(time: number) {
+        this.setAsPlayer()
         this.currentTime = time
         if (this.onTimeCallback) this.onTimeCallback(this.currentTime)
     }
@@ -300,6 +307,8 @@ export class TimelinePlayback {
 
             const triggerId = `${action.data.id}-${action.data.index}`
             this.lastSlideTrigger = triggerId
+        } else if (action.type === "item_style") {
+            SlideTimeline.triggerAction(action, ref)
         } else {
             console.log("Unknown Timeline Action:", action)
         }
