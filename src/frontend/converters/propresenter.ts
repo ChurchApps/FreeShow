@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
-import type { Item, Layout, Line, Slide, SlideData } from "../../types/Show"
+import type { Item, Layout, Line, Slide, SlideData, Timeline } from "../../types/Show"
 import { DEFAULT_ITEM_STYLE } from "../components/edit/scripts/itemHelpers"
 import { getExtension, getFileName, getMediaType } from "../components/helpers/media"
 import { checkName, getGlobalGroup, initializeMetadata, newSlide } from "../components/helpers/show"
@@ -101,11 +101,13 @@ export function convertProPresenter(data: any) {
             })
 
             layouts.forEach((layout: any, i: number) => {
-                show.layouts[i === 0 ? layoutID : layout.id] = {
+                let layoutId = i === 0 ? layoutID : layout.id
+                show.layouts[layoutId] = {
                     name: layout.name || translateText("example.default"),
                     notes: i === 0 ? song["@notes"] || "" : "",
                     slides: layout.slides
                 }
+                if (layout.timeline) show.layouts[layoutId].timeline = layout.timeline
             })
 
             tempShows.push({ id: showId, show })
@@ -587,6 +589,8 @@ function convertProToSlides(song: any) {
     const tempSlides: any[] = getSlides(song.cues || [])
     // console.log(tempArrangements, tempGroups, tempSlides)
 
+    let idMap = new Map<string, string>()
+
     if (!tempArrangements.length) {
         tempArrangements.push({ groups: Object.keys(tempGroups), name: "" })
     }
@@ -623,6 +627,7 @@ function convertProToSlides(song: any) {
 
         const slideId = uid()
         const layoutSlide: SlideData = { id: slideId }
+        idMap.set(id, slideId)
 
         const tempSlide = tempSlides[id]
 
@@ -657,6 +662,43 @@ function convertProToSlides(song: any) {
         slides[slideId] = slide
         tempLayouts[id] = layoutSlide
         return layoutSlide
+    }
+
+    // TIMELINE
+    const timelineCues = song.timeline?.cues || []
+    if (timelineCues.length) {
+        let slideIndexMap: string[] = []
+        layouts[0].slides.forEach((slide) => {
+            slideIndexMap.push(slide.id)
+            if (slides[slide.id].children) slideIndexMap.push(...(slides[slide.id].children || []))
+        })
+        let currentIndex = -1
+
+        const timeline: Timeline = {
+            actions: timelineCues
+                .map((cue) => {
+                    const id = idMap.get(cue.cueId?.string) || cue.cueId?.string
+                    if (!id) return null
+
+                    let slideIndex = slideIndexMap.findIndex((slideId, i) => slideId === id && i >= currentIndex)
+                    if (slideIndex === -1) slideIndex = slideIndexMap.findIndex((slideId) => slideId === id)
+                    currentIndex = slideIndex
+
+                    return {
+                        id: uid(6),
+                        time: (cue.triggerTime || 0) * 1000,
+                        name: cue.name || "",
+                        type: "slide",
+                        data: {
+                            id,
+                            index: slideIndex > -1 ? slideIndex : undefined
+                        }
+                    }
+                })
+                .filter(Boolean)
+        }
+
+        layouts[0].timeline = timeline
     }
 
     return { slides, layouts, media }
