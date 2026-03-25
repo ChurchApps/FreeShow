@@ -957,7 +957,7 @@
                             class="verse"
                             class:showAllText={$resized.rightPanelDrawer <= 5}
                             on:dblclick={() => {
-                                openBook(verse.book, [verse.chapter], [[verse.verse]])
+                                openBook(verse.book, [verse.chapter], [verse.verse])
                                 playWhenLoaded = true
                             }}
                             data-title={formatBibleText(verse.text)}
