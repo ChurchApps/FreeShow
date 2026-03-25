@@ -1408,7 +1408,7 @@ function historyDelete(id, data, { updater } = { updater: "" }) {
             return a
 
             function getDeletedArray(key: string) {
-                let deletedIds = [...(a[key] || []), ...data.map((a) => a.id || a)]
+                let deletedIds = data.map((a) => a.id || a)
 
                 // only defaults
                 deletedIds = deletedIds.filter((id) => {
@@ -1419,7 +1419,7 @@ function historyDelete(id, data, { updater } = { updater: "" }) {
                 })
 
                 // remove any duplicates
-                deletedIds = [...new Set(deletedIds)]
+                deletedIds = [...(a[key] || []), ...new Set(deletedIds)]
 
                 return deletedIds
             }
