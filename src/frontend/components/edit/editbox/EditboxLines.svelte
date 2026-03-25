@@ -180,6 +180,50 @@
         newSlide.group = null
         newSlide.color = null
 
+        // update scripture dynamic values
+        // WIP duplicate of splitItemInTwo
+        // TODO: use "sourceDynamicKey" from text instead
+        let numbersAdded: string[] = []
+        // newSlide here is a clone of "oldSlide"
+        if (newSlide.customDynamicValues?.scripture_text) {
+            const texts = firstLines
+                .flat()[0]
+                ?.text.filter((a) => !a.customType)
+                .map((a) => a.value)
+            showsCache.update((a) => {
+                const showId = ref.showId || $activeShow?.id || ""
+                const slide = a[showId]?.slides[ref.id]
+                if (!slide?.customDynamicValues?.scripture_text) return a
+
+                texts.forEach((t, i) => {
+                    if (!slide.customDynamicValues!.scripture_text[i]) return
+
+                    numbersAdded.push(slide.customDynamicValues!.scripture_text[i][0])
+                    ;(slide.customDynamicValues!.scripture_text[i] as [string, string])[1] = t
+                    ;(slide.customDynamicValues!.scripture1_text[i] as [string, string])[1] = t
+                })
+                return a
+            })
+        }
+        if (newSlide.customDynamicValues?.scripture_text) {
+            const texts = secondLines
+                .flat()[0]
+                ?.text.filter((a) => !a.customType)
+                .map((a) => a.value)
+            texts.forEach((t, i) => {
+                if (!newSlide.customDynamicValues.scripture_text[i]) return
+
+                newSlide.customDynamicValues.scripture_text[i][1] = t
+                newSlide.customDynamicValues.scripture1_text[i][1] = t
+
+                let removeNumber = numbersAdded.find((a) => a === newSlide.customDynamicValues.scripture_text[i][0])
+                if (removeNumber) {
+                    newSlide.customDynamicValues.scripture_text[i][0] = "0"
+                    newSlide.customDynamicValues.scripture1_text[i][0] = "0"
+                }
+            })
+        }
+
         // add new slide
         let id = uid()
         _show()
@@ -427,10 +471,12 @@
                 let customIndex = style.indexOf("--custom")
                 if (customIndex > -1) style = style.slice(0, customIndex)
 
-                // GET sourceDynamicKey
+                // GET custom values
+                let customType = child.getAttribute("data-customtype") || undefined
                 let sourceDynamicKey = child.getAttribute("data-sourcedynamickey") || undefined
 
                 const text: any = { style, value: lineText }
+                if (customType) text.customType = customType
                 if (sourceDynamicKey) text.sourceDynamicKey = sourceDynamicKey
 
                 newLines[pos].text.push(text)

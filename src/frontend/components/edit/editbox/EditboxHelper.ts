@@ -122,12 +122,16 @@ export class EditboxHelper {
                     if (!firstLines.length) firstLines.push({ align: line.align, text: [] })
                     firstLines[firstLines.length - 1].text.push({
                         style: text.style,
-                        value: value.slice(0, pos)
+                        value: value.slice(0, pos),
+                        customType: text.customType,
+                        sourceDynamicKey: text.sourceDynamicKey
                     })
                 }
                 secondLines[secondLines.length - 1].text.push({
                     style: text.style,
-                    value: value.slice(pos)
+                    value: value.slice(pos),
+                    customType: text.customType,
+                    sourceDynamicKey: text.sourceDynamicKey
                 })
 
                 textPos += value.length
@@ -193,7 +197,7 @@ export class EditboxHelper {
                 // if (value === " ") value = "&nbsp;"
 
                 // this will "hide" any HTML tags if any in the actual text content (not chords or text editor)
-                html += `<span class="${a.customType && !a.customType.includes("jw") ? "custom" : ""}" ${plain ? "" : textStyle} data-sourcedynamickey='${a.sourceDynamicKey || ""}' data-chords='${JSON.stringify(textChords)}'>` + value + "</span>"
+                html += `<span class="${a.customType && !a.customType.includes("jw") ? "custom" : ""}" ${plain ? "" : textStyle} data-customtype='${a.customType || ""}' data-sourcedynamickey='${a.sourceDynamicKey || ""}' data-chords='${JSON.stringify(textChords)}'>` + value + "</span>"
             })
             html += "</div>"
         })
