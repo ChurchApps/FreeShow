@@ -135,7 +135,10 @@ export function updateSettings(data: any) {
     if (disabled.remote === undefined) disabled.remote = false
     if (disabled.stage === undefined) disabled.stage = false
     const customPorts: { [key: string]: number } = data.ports || { remote: 5510, stage: 5511 }
-    sendMain(Main.START, { ports: customPorts, max: data.maxConnections === undefined ? 10 : data.maxConnections, disabled, data: get(serverData) })
+    // let potential NDI output start first
+    setTimeout(() => {
+        sendMain(Main.START, { ports: customPorts, max: data.maxConnections === undefined ? 10 : data.maxConnections, disabled, data: get(serverData) })
+    }, 4000)
 
     // theme
     let currentTheme = get(themes)[data.theme]
