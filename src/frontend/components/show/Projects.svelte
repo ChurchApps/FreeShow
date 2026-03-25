@@ -119,6 +119,8 @@
 
             listOffset = Math.max(0, ((activeProject.closest(".projectItem") as HTMLElement)?.offsetTop || 0) + listScrollElem.offsetTop - ($drawer.height < 400 ? 120 : 20))
         }, time)
+    } else {
+        listOffset = -1
     }
 
     function back() {

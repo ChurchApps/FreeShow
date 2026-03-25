@@ -1633,11 +1633,11 @@ const scriptureDynamicValues = {
     scripture_text: () => "In the beginning...",
     scripture_book: () => "Genesis",
     scripture_book_abbr: () => "Gen",
-    scripture_verses: () => "1",
     scripture_chapter: () => "1",
-    scripture_reference: () => "Genesis 1:1", // current slide only
-    scripture_reference_full: () => "Genesis 1:1-3", // across all slides
-    scripture_reference_last: () => "", // full reference, only on last slide
+    scripture_verses: () => "1-3",
+    scripture_reference: () => "Genesis 1:1-3", // current slide only
+    scripture_reference_full: () => "Genesis 1:1-10", // across all slides
+    scripture_reference_last: () => "Last slide only", // full reference, only on last slide
     scripture_name: () => "King James Version", // version
     // scripture_name_abbr: () => "KJV",
     // chapter_verses, book_chapters
