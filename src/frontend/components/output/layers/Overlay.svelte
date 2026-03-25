@@ -20,7 +20,7 @@
     let currentItems: Item[] = []
     let show = false
 
-    $: if (overlay?.items !== undefined) updateItems()
+    $: if (overlay?.items !== undefined && JSON.stringify(overlay.items) !== JSON.stringify(currentItems)) updateItems()
 
     // WIP similar to SlideContent.svelte
     let timeout: NodeJS.Timeout | null = null
