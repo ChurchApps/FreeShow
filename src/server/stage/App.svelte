@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { onMount } from "svelte"
     import Button from "../common/components/Button.svelte"
     import Center from "../common/components/Center.svelte"
     import Icon from "../common/components/Icon.svelte"
@@ -6,6 +7,7 @@
     import { openLayout } from "./util/helpers"
     import { initSocket } from "./util/socket"
     import { _set, dictionary, errors, layouts, selectedLayout, stageLayout } from "./util/stores"
+    import { requestWakeLock } from "../common/util/wakeLock"
 
     initSocket()
 
@@ -55,6 +57,16 @@
             isFullscreen = false
         }
     }
+
+    onMount(() => {
+        const handler = async () => {
+            requestWakeLock()
+            window.removeEventListener("click", handler)
+            window.removeEventListener("touchstart", handler)
+        }
+        window.addEventListener("click", handler, { once: true })
+        window.addEventListener("touchstart", handler, { once: true })
+    })
 </script>
 
 <svelte:window on:click={click} />
