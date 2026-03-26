@@ -19,8 +19,8 @@ export const timelineSections = {
         audio: { name: "tabs.audio", icon: "audio", hasData: false }
     },
     slide: {
-        item_style: { name: "tools.item", icon: "item", hasData: false },
-        text_style: { name: "items.text", icon: "text", hasData: false }
+        style: { name: "tools.item", icon: "item", hasData: false } // split each key into its own layer
+        // text_style: { name: "items.text", icon: "text", hasData: false }
     }
 }
 

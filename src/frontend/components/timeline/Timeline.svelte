@@ -133,8 +133,10 @@
     $: visibleTicksEndIndex = Math.min(totalTickCount, Math.ceil((scrollLeft + containerWidth) / (tickInterval * zoomLevel)))
     $: visibleTickCount = Math.max(0, visibleTicksEndIndex - visibleTicksStartIndex + 1)
 
+    $: if ($activeTriggerFunction === "reset_timeline_view") resetView()
     async function resetView() {
         zoomLevel = 10
+        tickInterval = getTickInterval(zoomLevel) // this should have auto updated but it doesn't sometimes
         autoFollow = true
         await tick()
         centerPlayhead()
@@ -292,7 +294,7 @@
 
         const snappedTime = isClosed ? Math.round(seekTime / 10) * 10 : Math.round(seekTime / snapInterval) * snapInterval
         const time = Math.max(0, Math.min(snappedTime, timelineDuration))
-        player.setTime(time)
+        player.setTime(time, true)
     }
 
     function checkAutoScroll() {
@@ -602,6 +604,8 @@
         })
     }
 
+    $: if ($activeTriggerFunction === "timeline_update") timeline.refreshActions()
+
     // Waveform
     function useWaveform(node: HTMLElement, path: string) {
         const settings = { height: 2.2, samples: 256, type: "line" as const, fill: true, fillOpacity: 0.3 }
@@ -798,7 +802,7 @@
                                         <Icon id={action.data.triggers?.length === 1 ? actionData[action.data.triggers[0]]?.icon : "actions"} size={0.9} white />
                                     {:else if typeof action.data?.index === "number"}
                                         {action.data.index + 1}
-                                    {:else if action.type === "item_style"}
+                                    {:else if action.type === "style"}
                                         {#if typeof action.data.value === "number"}
                                             {action.data.value.toFixed(1)}
                                         {:else}
@@ -845,9 +849,9 @@
                 </MaterialButton>
             {/if}
 
-            <div class="divider" />
+            <!-- <div class="divider" />
 
-            <MaterialButton icon="focus" title="actions.resetZoom" on:click={resetView} />
+            <MaterialButton icon="focus" title="actions.resetZoom" on:click={resetView} /> -->
         </FloatingInputs>
 
         {#if type === "project"}
@@ -1075,7 +1079,7 @@
     .action-marker.slide .action-head {
         border-radius: 4px;
     }
-    .action-marker.item_style .action-head {
+    .action-marker.style .action-head {
         border-radius: 3px;
         font-size: 0.5em;
     }

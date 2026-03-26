@@ -91,7 +91,7 @@ export function storeSubscriber() {
     })
 
     showsCache.subscribe(async (data) => {
-        if (await hasNewerUpdate("LISTENER_SHOWSCACHE")) return
+        if (await hasNewerUpdate("LISTENER_SHOWSCACHE")) return // TIMELINE style updates everytime unless set to 20ms
 
         // needs to be sent before output data
         send(OUTPUT, ["SHOWS"], data)

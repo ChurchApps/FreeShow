@@ -850,8 +850,8 @@
         /* filter & dynamic CSS variable transition */
         transition:
             filter 500ms,
-            /* not supported */ backdrop-filter 500ms,
-            all 0.1s;
+            /* not supported */ backdrop-filter 500ms;
+        /* all 0.1s; */ /* with slide timeline items should not have a transition */
     }
     .item.isStage {
         width: 100%;

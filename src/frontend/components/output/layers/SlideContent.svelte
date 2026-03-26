@@ -1,13 +1,14 @@
 <script lang="ts">
-    import { onDestroy } from "svelte"
-    import type { Item, OutSlide, SlideData, Transition } from "../../../../types/Show"
+    import { onDestroy, onMount } from "svelte"
+    import type { Item, OutSlide, SlideData, TimelineAction, Transition } from "../../../../types/Show"
     import { showsCache } from "../../../stores"
+    import { waitUntilValueIsDefined } from "../../../utils/common"
     import { shouldItemBeShown } from "../../edit/scripts/itemHelpers"
     import { clone } from "../../helpers/array"
     import { loadCustomFonts } from "../../helpers/fonts"
     import Textbox from "../../slide/Textbox.svelte"
+    import { SlideTimeline } from "../../timeline/SlideTimeline"
     import SlideItemTransition from "../transitions/SlideItemTransition.svelte"
-    import { waitUntilValueIsDefined } from "../../../utils/common"
 
     export let outputId: string
     export let outSlide: OutSlide
@@ -290,6 +291,87 @@
             })
         })
     }
+
+    // OUTPUT SLIDE TIMELINE
+    // get current slide timeline position
+    let timelinePos = 0
+    let timelineItems = new Map<string, Item[]>()
+    let timelineActions: TimelineAction[] = []
+    let isReady = false
+    $: if (outSlide) isReady = false
+    $: if (currentSlide) setupTimeline()
+    function setupTimeline() {
+        if (isReady) return
+        timelinePos = 0
+        timelineActions = currentSlide?.timeline?.actions || []
+        // timelineItems = new Set<Item[]>() // WIP reset eventually?
+        setTimeout(() => (isReady = true))
+    }
+    onMount(() => {
+        const interval = setInterval(() => {
+            if (isClearing || !isReady) return
+            // WIP use actual slide timeline pos when available?
+            timelinePos += 10
+            styleActions(timelineActions)
+        }, 10)
+
+        function styleActions(actions: TimelineAction[]) {
+            const itemStyleActions = actions.filter((a) => a.type === "style")
+            // group by style key
+            const groupedActions = new Map<string, TimelineAction[]>()
+            for (const action of itemStyleActions) {
+                const key = action.data?.key
+                if (!key) continue
+
+                if (!groupedActions.has(key)) groupedActions.set(key, [])
+                groupedActions.get(key)?.push(action)
+            }
+
+            const slideKey = `${outSlide?.id}-${outSlide?.index}`
+            const items = clone(timelineItems.get(slideKey) || currentItems)
+
+            const currentTime = timelinePos
+            groupedActions.forEach((actions, _key) => {
+                const previous = getPreviousAction(actions)
+                const next = getNextAction(actions)
+                const value = SlideTimeline.interpolateValue(previous, next, currentTime)
+                if (value === null) return
+
+                const action = (previous || next)!
+                // const ref = _show(outSlide?.id || "").layouts([outSlide?.layout]).ref()[0] || []
+                // const slideId = ref[outSlide?.index || 0]?.id
+                // SlideTimeline.triggerAction(action, value, { id: outSlide.id, slideId: slideId })
+
+                // TODO: item index
+                const itemIndexes = [0]
+
+                itemIndexes.forEach((itemIndex) => {
+                    const item = items[itemIndex]
+                    if (!item) return
+
+                    const updatedItem = SlideTimeline.updateStyle(action, item, value)
+                    items[itemIndex] = updatedItem
+                })
+            })
+
+            timelineItems.set(slideKey, items)
+            timelineItems = timelineItems
+        }
+
+        function getPreviousAction(actions: TimelineAction[]) {
+            const now = timelinePos
+            return actions.reduce((prev, curr) => (curr.time > (prev?.time ?? -1) && curr.time <= now ? curr : prev), null as TimelineAction | null)
+        }
+
+        function getNextAction(actions: TimelineAction[]) {
+            const now = timelinePos
+            return actions.reduce((next, curr) => (curr.time > now && (next === null || curr.time < next.time) ? curr : next), null as TimelineAction | null)
+        }
+
+        return () => {
+            clearInterval(interval)
+        }
+    })
 </script>
 
 <!-- Render all items in original order to maintain z-index layering -->
@@ -302,7 +384,7 @@
                 disableListTransition={mirror}
                 chords={item.chords?.enabled}
                 animationStyle={animationData.style || {}}
-                {item}
+                item={timelineItems.get(`${current.outSlide?.id}-${current.outSlide?.index}`)?.[index] || item}
                 transition={null}
                 {ratio}
                 {outputId}
@@ -328,7 +410,7 @@
                             disableListTransition={mirror}
                             chords={customItem.chords?.enabled}
                             animationStyle={animationData.style || {}}
-                            item={customItem}
+                            item={timelineItems.get(`${customOut?.id}-${customOut?.index}`)?.[index] || customItem}
                             {transition}
                             {ratio}
                             {outputId}

@@ -11,6 +11,7 @@
     import { commonInputs } from "./inputs"
 
     export let input: Input
+    export let hasTimelineAction: boolean = false
 
     $: label = input.label ?? input.name ?? ""
 
@@ -41,5 +42,5 @@
 {:else if input.type === "color"}
     <MaterialColorInput {label} {...input} {...input.settings || {}} on:input={changed} />
 {:else}
-    <svelte:component this={commonInputs[input.type]} {label} {...input} {...input.settings || {}} on:change={changed} on:keyframe {enableKeyframe} />
+    <svelte:component this={commonInputs[input.type]} {label} {...input} {...input.settings || {}} {hasTimelineAction} on:change={changed} on:keyframe {enableKeyframe} />
 {/if}

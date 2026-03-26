@@ -40,21 +40,18 @@ export class TimelineActions {
                 this.updateRef()
             })
         } else if (type === "slide") {
-            // this.unsubscriber = activeShow.subscribe((a) => {
-            //     if (!a) return
-
-            //     const type = a.type || "show"
-            //     const id = a.id
-            //     if (type !== "show" || !id) return
-
-            //     this.updateRef()
-            // })
+            // activeShow subscriber? - not needed because editor refreshes when show changes
+            let previousEdit = { id: "", slide: -1 }
             this.unsubscriber = activeEdit.subscribe((a) => {
                 if (!a) return
 
                 const type = a.type || "show"
                 const slideIndex = a.slide
                 if (type !== "show" || typeof slideIndex !== "number") return
+
+                const showId = get(activeShow)?.id || ""
+                if (previousEdit.id === showId && previousEdit.slide === slideIndex) return
+                previousEdit = { id: showId, slide: slideIndex }
 
                 this.updateRef()
             })
@@ -101,10 +98,12 @@ export class TimelineActions {
         this.onUpdateCallbacks.push(callback)
     }
 
+    private closed = false
     close() {
         if (!this) return
         if (this.unsubscriber) this.unsubscriber()
         this.saveState()
+        this.closed = true
     }
 
     private hasChanged = false
@@ -114,6 +113,7 @@ export class TimelineActions {
 
         // auto save from time to time
         if (await hasNewerUpdate("TIMELINE_CHANGED", 2000)) return
+        if (this.closed) return
         this.saveState()
     }
     private saveState() {
@@ -160,6 +160,10 @@ export class TimelineActions {
     }
 
     // ACTIONS
+
+    refreshActions() {
+        this.loadActions()
+    }
 
     private loadActions() {
         if (!this.ref) return
