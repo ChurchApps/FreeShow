@@ -57,13 +57,17 @@ export class SlideTimeline {
 
     static hasActionWithKey(key: string, type: string) {
         const timelineActions = new TimelineActions("slide", () => {})
-        return timelineActions.getActions().some((a) => a.type === "style" && a.data.key === key && a.data.type === type)
+        const actions = timelineActions.getActions().some((a) => a.type === "style" && a.data.key === key && a.data.type === type)
+        timelineActions.close()
+        return actions
     }
 
     static hasActionAtTime(key: string, type: string, _updater: number = -1) {
         const timelineActions = new TimelineActions("slide", () => {})
         const currentTime = getActiveTimelinePlayback("slide")?.currentTime || 0
-        return timelineActions.getActions().some((a) => a.type === "style" && a.data.key === key && a.data.type === type && a.time === currentTime)
+        const actions = timelineActions.getActions().some((a) => a.type === "style" && a.data.key === key && a.data.type === type && a.time === currentTime)
+        timelineActions.close()
+        return actions
     }
 
     static triggerAction(action: TimelineAction, value: string | number, ref?: { id?: string; slideId?: string }) {

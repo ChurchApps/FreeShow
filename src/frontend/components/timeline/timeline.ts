@@ -1,8 +1,8 @@
 import { get } from "svelte/store"
 import type { Timeline, TimelineAction } from "../../../types/Show"
 import { showsCache, timeline } from "../../stores"
-import type { TimelineType } from "./TimelineActions"
 import { loadShows } from "../helpers/setShow"
+import type { TimelineType } from "./TimelineActions"
 
 // SECTIONS
 
@@ -20,7 +20,6 @@ export const timelineSections = {
     },
     slide: {
         style: { name: "tools.item", icon: "item", hasData: false } // split each key into its own layer
-        // text_style: { name: "items.text", icon: "text", hasData: false }
     }
 }
 
@@ -106,7 +105,7 @@ export function parseTime(str: string): number {
 
 // ACTIONS
 
-export function getActionsAtPosition(e: MouseEvent, trackWrapper: HTMLElement, actions: TimelineAction[], actionOrder: string[], zoomLevel: number, box: { x: number; y: number; w: number; h: number } | null = null, projectShowDurations: Record<string, number> = {}): string[] {
+export function getActionsAtPosition(e: MouseEvent, trackWrapper: HTMLElement, actions: TimelineAction[], actionOrder: TimelineAction[][] | string[], zoomLevel: number, box: { x: number; y: number; w: number; h: number } | null = null, projectShowDurations: Record<string, number> = {}): string[] {
     if (!trackWrapper) return []
 
     const rect = trackWrapper.getBoundingClientRect()
@@ -147,7 +146,14 @@ export function getActionsAtPosition(e: MouseEvent, trackWrapper: HTMLElement, a
     return currentActionIds
 
     function getActionBaseY(action: TimelineAction): number {
-        return TIMELINE_SECTION_TOP + actionOrder.indexOf(action.type) * (TIMELINE_SECTION_HEIGHT + TIMELINE_SECTION_GAP)
+        let index = -1
+        if (typeof actionOrder[0] === "string") {
+            index = (actionOrder as string[]).indexOf(action.type)
+        } else {
+            index = (actionOrder as TimelineAction[][]).findIndex((group) => group[0].data?.type === action.data?.type && group[0].data?.key === action.data?.key)
+        }
+
+        return TIMELINE_SECTION_TOP + index * (TIMELINE_SECTION_HEIGHT + TIMELINE_SECTION_GAP)
     }
 }
 

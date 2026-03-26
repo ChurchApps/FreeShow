@@ -25,22 +25,28 @@
     const sections = clone(timelineSections[type] || {})
     let tabIds = Object.keys(sections)
 
-    const maxTrackIndex = tabIds.length
-    $: totalTrackHeight = TIMELINE_SECTION_TOP + maxTrackIndex * (TIMELINE_SECTION_HEIGHT + TIMELINE_SECTION_GAP) - TIMELINE_SECTION_GAP + TIMELINE_SECTION_TOP
+    // smaller height (that broke right click select)
+    const SECTION_GAP = TIMELINE_SECTION_GAP // type === "slide" ? 5 : TIMELINE_SECTION_GAP
+    const SECTION_HEIGHT = TIMELINE_SECTION_HEIGHT // type === "slide" ? 42 : TIMELINE_SECTION_HEIGHT
+
+    let maxTrackIndex = tabIds.length
+    $: totalTrackHeight = TIMELINE_SECTION_TOP + maxTrackIndex * (SECTION_HEIGHT + SECTION_GAP) - SECTION_GAP + TIMELINE_SECTION_TOP
 
     function getTrackData(index: number, _updater: any) {
         return sections[tabIds[index]] || { name: "Unknown", icon: "unknown" }
     }
     function getActionTrack(action: TimelineAction): number {
+        if (type === "slide") return groupedActions.findIndex((group) => group[0].data?.type === action.data?.type && group[0].data?.key === action.data?.key)
         return tabIds.indexOf(action.type)
     }
     function getActionBaseY(action: TimelineAction): number {
-        return TIMELINE_SECTION_TOP + getActionTrack(action) * (TIMELINE_SECTION_HEIGHT + TIMELINE_SECTION_GAP)
+        return TIMELINE_SECTION_TOP + getActionTrack(action) * (SECTION_HEIGHT + SECTION_GAP)
     }
 
     // TIMELINE
 
     let actions: TimelineAction[] = []
+    let groupedActions: TimelineAction[][] = []
     let isDestroyed = false
 
     const player = new TimelinePlayback(type)
@@ -53,6 +59,25 @@
         actions = a
         player.setActions(a)
         tabIds = getTimelineSections(sections, a)
+
+        // group based on type
+        if (type !== "slide") return
+
+        const newGroups = new Map<string, TimelineAction[]>()
+        a.forEach((action) => {
+            const groupKey = `${action.data?.type}_${action.data?.key}`
+            if (!newGroups.has(groupKey)) newGroups.set(groupKey, [])
+            newGroups.get(groupKey)?.push(action)
+        })
+
+        groupedActions = Array.from(newGroups.values())
+        // sort by action type (item/text)
+        groupedActions = groupedActions.sort((a, b) => {
+            const aType = a[0].data?.type || ""
+            const bType = b[0].data?.type || ""
+            return aType.localeCompare(bType)
+        })
+        maxTrackIndex = groupedActions.length
     })
     timeline.onUpdate(() => {
         currentTime = 0
@@ -261,7 +286,7 @@
 
         selectionRect = { x: visualX, y: visualY, w: visualW, h: visualH }
 
-        const newSelectedIds = getActionsAtPosition(e, trackWrapper, actions, tabIds, zoomLevel, selectionRect, projectShowDurations)
+        const newSelectedIds = getActionsAtPosition(e, trackWrapper, actions, type === "slide" ? groupedActions : tabIds, zoomLevel, selectionRect, projectShowDurations)
 
         if (selectionStartIds.length > 0) {
             const combined = new Set([...selectionStartIds, ...newSelectedIds])
@@ -382,7 +407,7 @@
     function startActionDrag(e: MouseEvent, id: string) {
         // select on right-click
         if (e.button === 2) {
-            const clickedActions = getActionsAtPosition(e, trackWrapper, actions, tabIds, zoomLevel, null, projectShowDurations)
+            const clickedActions = getActionsAtPosition(e, trackWrapper, actions, type === "slide" ? groupedActions : tabIds, zoomLevel, null, projectShowDurations)
             // skip if selection includes any clicked action
             if (clickedActions.some((a) => selectedActionIds.includes(a))) return
             // select all right clicked actions
@@ -747,13 +772,22 @@
             <!-- Track Headers (Sticky Left) -->
             <div class="headers-container" bind:this={headersContainer} style="width: {usedHeaderWidth}px; min-width: {usedHeaderWidth}px;">
                 <div class="track-headers" style="height: {totalTrackHeight}px;">
-                    {#each Array(maxTrackIndex) as _, i}
-                        {@const track = getTrackData(i, actions)}
-                        <div class="track-header" style="top: {TIMELINE_SECTION_TOP + i * (TIMELINE_SECTION_HEIGHT + TIMELINE_SECTION_GAP)}px;width: 100%;{track.hasData ? '' : 'opacity: 0.3;'}">
-                            <Icon id={track.icon} white />
-                            <span class="track-name">{translateText(track.name)}</span>
-                        </div>
-                    {/each}
+                    {#if type === "slide"}
+                        {#each groupedActions as actions, i}
+                            <div class="track-header" style="top: {TIMELINE_SECTION_TOP + i * (SECTION_HEIGHT + SECTION_GAP)}px;height: {SECTION_HEIGHT}px;width: 100%;">
+                                <Icon id={actions[0]?.data?.type === "text" ? "text" : "item"} white />
+                                <span class="track-name">{translateText(actions[0]?.name)}</span>
+                            </div>
+                        {/each}
+                    {:else}
+                        {#each Array(maxTrackIndex) as _, i}
+                            {@const track = getTrackData(i, actions)}
+                            <div class="track-header" style="top: {TIMELINE_SECTION_TOP + i * (SECTION_HEIGHT + SECTION_GAP)}px;height: {SECTION_HEIGHT}px;width: 100%;{track.hasData ? '' : 'opacity: 0.3;'}">
+                                <Icon id={track.icon} white />
+                                <span class="track-name">{translateText(track.name)}</span>
+                            </div>
+                        {/each}
+                    {/if}
                 </div>
             </div>
 
@@ -787,7 +821,7 @@
                         {@const baseY = getActionBaseY(action)}
 
                         {#if duration}
-                            <div class="action-clip context #timeline_node" class:selected={selectedActionIds.includes(action.id)} style="left: {(action.time / 1000) * zoomLevel}px; width: {duration * zoomLevel}px; top: {baseY}px;height: {TIMELINE_SECTION_HEIGHT + 4}px;" data-title="{formatTime(action.time, type, $timelineStore)}-{formatTime(duration * 1000, type, $timelineStore)}: {action.name}" on:mousedown|stopPropagation={(e) => startActionDrag(e, action.id)}>
+                            <div class="action-clip context #timeline_node" class:selected={selectedActionIds.includes(action.id)} style="left: {(action.time / 1000) * zoomLevel}px; width: {duration * zoomLevel}px; top: {baseY}px;height: {SECTION_HEIGHT + 4}px;" data-title="{formatTime(action.time, type, $timelineStore)}-{formatTime(duration * 1000, type, $timelineStore)}: {action.name}" on:mousedown|stopPropagation={(e) => startActionDrag(e, action.id)}>
                                 <div class="action-clip-content">
                                     {#if action.type === "audio"}
                                         <div class="waveform-container" use:useWaveform={action.data.path || ""}></div>
@@ -802,15 +836,19 @@
                                         <Icon id={action.data.triggers?.length === 1 ? actionData[action.data.triggers[0]]?.icon : "actions"} size={0.9} white />
                                     {:else if typeof action.data?.index === "number"}
                                         {action.data.index + 1}
-                                    {:else if action.type === "style"}
+                                    {/if}
+                                </div>
+                                <div class="action-label" style={type === "slide" ? "font-size: 0.7em;" : ""}>
+                                    {#if action.type === "style"}
                                         {#if typeof action.data.value === "number"}
-                                            {action.data.value.toFixed(1)}
+                                            {parseFloat(action.data.value.toFixed(1))}
                                         {:else}
                                             {action.data.value}
                                         {/if}
+                                    {:else}
+                                        {translateText(action.name)}
                                     {/if}
                                 </div>
-                                <div class="action-label">{translateText(action.name)}</div>
                             </div>
                         {/if}
                     {/each}
@@ -1080,7 +1118,10 @@
         border-radius: 4px;
     }
     .action-marker.style .action-head {
-        border-radius: 3px;
+        border-radius: 2px;
+        transform: rotate(45deg);
+        width: 12px;
+        height: 12px;
         font-size: 0.5em;
     }
 
