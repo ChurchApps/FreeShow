@@ -482,8 +482,8 @@ async function checkCloudEntry(id: ChangeId, key: string, cloudData: any, getLoc
             return { action: "skip" } // already deleted
         }
 
-        // download always when not marked as created or deleted
-        return { action: "create" }
+        markAsDeleted(id, key)
+        return { action: "skip" } // deleted locally
     }
 
     if (isDeleted(id, key) && !isNewDevice) {
