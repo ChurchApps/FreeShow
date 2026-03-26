@@ -1,6 +1,6 @@
 <script lang="ts">
     import { fade } from "svelte/transition"
-    import { showsCache, slideNotesActive } from "../../stores"
+    import { showsCache, slideNotesActive, special } from "../../stores"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
@@ -52,7 +52,7 @@
                 <div class="DIVIDER"></div>
 
                 <!-- comming soon -->
-                <!-- <MaterialButton title="timeline.toggle_timeline" on:click={() => special.update((a) => ({ ...a, slideTimelineActive: !a.slideTimelineActive }))}>
+                <MaterialButton title="timeline.toggle_timeline" on:click={() => special.update((a) => ({ ...a, slideTimelineActive: !a.slideTimelineActive }))}>
                     <Icon id="timeline" white={!$special.slideTimelineActive} />
 
                     {#if $special.slideTimelineActive}
@@ -62,7 +62,7 @@
                     <p><T id="timeline.toggle_timeline" /></p>
                 </MaterialButton>
 
-                <div class="DIVIDER"></div> -->
+                <!-- <div class="DIVIDER"></div> -->
 
                 <!-- lock slide group from here? -->
                 <!-- <MaterialButton title="context.lockForChanges" on:click={toggleSlideGroupLock}>

@@ -556,5 +556,5 @@
 <svelte:window on:keyup={keyup} on:keydown={keydown} on:mouseup={getTextSelection} on:mousedown={mousedown} />
 
 {#if loaded}
-    <EditValues sections={boxSections} {item} {styles} {customValues} on:change={updateValue2} />
+    <EditValues sections={boxSections} {item} {styles} {customValues} type="text" on:change={updateValue2} />
 {/if}

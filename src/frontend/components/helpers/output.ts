@@ -614,6 +614,7 @@ export function percentageStylePos(style: string, resolution: Resolution) {
     const width = DEFAULT_BOUNDS.width
     const height = DEFAULT_BOUNDS.width / aspectRatio
 
+    style += ";"
     if (stylesData.left) style += "left: " + width * (Number(stylesData.left) / 100) + "px;"
     if (stylesData.top) style += "top: " + height * (Number(stylesData.top) / 100) + "px;"
     if (stylesData.width) style += "width: " + width * (Number(stylesData.width) / 100) + "px;"

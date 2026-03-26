@@ -1,7 +1,7 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte"
     import type { Input } from "../../../types/Input"
-    import { activePopup } from "../../stores"
+    import { activePopup, special } from "../../stores"
     import { translateText } from "../../utils/language"
     import { select } from "../helpers/select"
     import MaterialButton from "../inputs/MaterialButton.svelte"
@@ -11,6 +11,7 @@
     import { commonInputs } from "./inputs"
 
     export let input: Input
+    export let hasTimelineAction: boolean = false
 
     $: label = input.label ?? input.name ?? ""
 
@@ -19,6 +20,8 @@
         let value = e.detail
         dispatch("change", value)
     }
+
+    $: enableKeyframe = $special.slideTimelineActive
 </script>
 
 {#if input.type === "dropdown"}
@@ -39,5 +42,5 @@
 {:else if input.type === "color"}
     <MaterialColorInput {label} {...input} {...input.settings || {}} on:input={changed} />
 {:else}
-    <svelte:component this={commonInputs[input.type]} {label} {...input} {...input.settings || {}} on:change={changed} />
+    <svelte:component this={commonInputs[input.type]} {label} {...input} {...input.settings || {}} {hasTimelineAction} on:change={changed} on:keyframe {enableKeyframe} />
 {/if}

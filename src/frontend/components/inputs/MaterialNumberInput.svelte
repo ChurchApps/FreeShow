@@ -21,6 +21,8 @@
     export let max: number | null = null // 1000
     export let maxDecimals = 2
     export let padLength = 0
+    export let enableKeyframe = false
+    export let hasTimelineAction = false
 
     // a string might be passed in
     $: rawInput = padLength ? String(numberValue).padStart(padLength, "0") : String(Number(numberValue.toFixed(maxDecimals)))
@@ -139,6 +141,14 @@
         dispatch("change", resetFromValue)
         resetFromValue = null
     }
+
+    // KEYFRAME
+
+    $: keyframeActive = hasTimelineAction
+    function addKeyframe() {
+        keyframeActive = !keyframeActive
+        dispatch("keyframe", numberValue)
+    }
 </script>
 
 <div class="textfield numberfield {center ? 'centered' : ''} {disabled ? 'disabled' : ''}" style={$$props.style || null}>
@@ -182,6 +192,17 @@
                     <Icon id="undo" white />
                 </MaterialButton>
             {/if}
+        </div>
+    {/if}
+
+    {#if enableKeyframe}
+        <div class="remove">
+            <MaterialButton style="width: 20px;height: 20px;padding: 0;" on:click={addKeyframe} title="timeline.add_keyframe">
+                <!-- diamond -->
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2L22 12L12 22L2 12L12 2Z" fill={keyframeActive ? "var(--secondary)" : "currentColor"} />
+                </svg>
+            </MaterialButton>
         </div>
     {/if}
 </div>

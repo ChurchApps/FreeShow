@@ -149,7 +149,7 @@
 
         const customFontSizeRatio = (outputStyle.aspectRatio?.fontSizeRatio ?? 100) / 100
         cssFontSize = fontSize * customFontSizeRatio
-        return `font-size: ${fontSize * customFontSizeRatio}px;`
+        return `;font-size: ${fontSize * customFontSizeRatio}px;`
     }
 
     // CHORDS

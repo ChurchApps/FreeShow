@@ -858,7 +858,8 @@
     },
     "timeline": {
         "toggle_timeline": "Toggle timeline",
-        "start_time": "Start time"
+        "start_time": "Start time",
+        "add_keyframe": "Add keyframe"
     },
     "animate": {
         "change": "Change",

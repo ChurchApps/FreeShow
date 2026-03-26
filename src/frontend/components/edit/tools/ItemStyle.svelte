@@ -177,4 +177,4 @@
     }
 </script>
 
-<EditValues sections={currentItemSections} {item} styles={data} on:change={updateStyle2} />
+<EditValues sections={currentItemSections} {item} styles={data} type="item" on:change={updateStyle2} />

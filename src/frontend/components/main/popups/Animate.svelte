@@ -30,8 +30,8 @@
         { id: "wait", name: translateText("animate.wait") }
     ]
     const ids = [
-        { id: "text", name: translateText("animate.text") },
-        { id: "item", name: translateText("animate.item") },
+        // { id: "text", name: translateText("animate.text") },
+        // { id: "item", name: translateText("animate.item") },
         { id: "background", name: translateText("animate.background") }
     ]
     // const setIds = [
@@ -62,7 +62,7 @@
         { id: "border-radius", values: { step: 10, max: 500, inputMultiplier: 0.1 }, data: { extension: "px" }, name: translateText("edit.corner_radius") }
     ]
 
-    const DEFAULT_ANIMATION: AnimationAction = { type: "change", duration: 3, id: "text", key: "font-size", extension: "px" }
+    const DEFAULT_ANIMATION: AnimationAction = { type: "change", duration: 3, id: "background", key: "zoom", extension: "px" }
 
     let animation: Animation = $popupData.data || { actions: [] }
 
@@ -136,6 +136,8 @@
 <!-- WAIT 10 seconds -->
 
 <div class="list">
+    <p style="text-align: center;margin-bottom: 20px;">DEPRECATED!</p>
+
     {#each animation.actions as animate, i}
         <CombinedInput style={currentActive && $activeAnimate.index === i ? "outline: 2px solid var(--secondary);outline-offset: 0;z-index: 1;" : ""}>
             <Dropdown options={types} value={getOptionName(animate.type, types) || "—"} on:click={(e) => (animation.actions[i].type = e.detail.id)} />
@@ -168,7 +170,7 @@
                     }}
                 />
 
-                {#if !animate.id || animate.id === "text"}
+                {#if animate.id === "text"}
                     <!-- style="text-transform: lowercase;" -->
                     <Dropdown
                         options={textKeys}
@@ -187,11 +189,11 @@
                             animation.actions[i].extension = e.detail.data?.extension || ""
                         }}
                     />
-                {:else if animate.id === "background"}
+                {:else if !animate.id || animate.id === "background"}
                     <Dropdown options={backgroundKeys} value={getOptionName(animate.key, backgroundKeys) || backgroundKeys[0].name} on:click={(e) => (animation.actions[i].key = e.detail.id)} />
                 {/if}
 
-                {#if !animate.id || animate.id === "text"}
+                {#if animate.id === "text"}
                     <span><T id="animate.to" /></span>
                     <!-- <TextInput value={animate.value || "0"} on:change={(e) => updateValue(e, i)} /> -->
                     {#key animate.key}

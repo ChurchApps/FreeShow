@@ -4,7 +4,7 @@ import type { TimelineAction } from "../../../types/Show"
 import { sendMain } from "../../IPC/main"
 import { clearAudio } from "../../audio/audioFading"
 import { AudioPlayer } from "../../audio/audioPlayer"
-import { activeShow, isTimelinePlaying, outputs, playingAudio, showsCache, timecode } from "../../stores"
+import { activeEdit, activeShow, isTimelinePlaying, outputs, playingAudio, showsCache, timecode } from "../../stores"
 import { triggerFunction } from "../../utils/common"
 import { runAction } from "../actions/actions"
 import { clone } from "../helpers/array"
@@ -12,6 +12,7 @@ import { getFirstActiveOutput } from "../helpers/output"
 import { loadShows } from "../helpers/setShow"
 import { _show } from "../helpers/shows"
 import { ShowTimeline } from "./ShowTimeline"
+import { SlideTimeline } from "./SlideTimeline"
 import { TimelineType } from "./TimelineActions"
 import { startListeningLTC, stopListeningLTC } from "./timecode"
 import { getProjectShowDurations } from "./timeline"
@@ -58,7 +59,7 @@ export class TimelinePlayback {
     currentTime: number = 0 // ms
     isPlaying: boolean = false
     type: TimelineType
-    private ref: { id: string; layoutId?: string }
+    private ref: { id: string; layoutId?: string; slideId?: string }
 
     getId() {
         return JSON.stringify(this.ref)
@@ -71,6 +72,17 @@ export class TimelinePlayback {
             this.ref = { id: get(activeShow)?.id || "", layoutId: _show().get("settings.activeLayout") }
         } else if (type === "project") {
             this.ref = { id: get(activeShow)?.id || "" }
+        } else if (type === "slide") {
+            const showRef = _show().layouts("active").ref()[0] || []
+            const slideIndex = get(activeEdit)?.slide
+            const slideId = showRef[slideIndex ?? -1]?.id
+            this.ref = { id: get(activeShow)?.id || "", slideId }
+
+            // update item styles to state 0
+            setTimeout(() => {
+                if (activePlayback && activePlayback.getId() === JSON.stringify(this.ref)) activePlayback.tick(false)
+                else this.tick(false)
+            })
         }
 
         // restore playing
@@ -147,9 +159,12 @@ export class TimelinePlayback {
         this.stop()
     }
 
-    setTime(time: number) {
+    setTime(time: number, isSeeking: boolean = false) {
+        this.setAsPlayer()
         this.currentTime = time
         if (this.onTimeCallback) this.onTimeCallback(this.currentTime)
+
+        if (isSeeking && !this.isPlaying) this.tick(false)
     }
 
     reset() {
@@ -244,7 +259,7 @@ export class TimelinePlayback {
     }
 
     private lastSlideTrigger = ""
-    private tick() {
+    private tick(updateTime: boolean = true) {
         if (this.listenerPaused) return
 
         if (!this.receiveTime) {
@@ -252,7 +267,7 @@ export class TimelinePlayback {
             const delta = now - this.lastTime
             this.lastTime = now
 
-            this.currentTime += delta
+            if (updateTime) this.currentTime += delta
         }
 
         const previousTime = this.previousTickTime
@@ -272,6 +287,8 @@ export class TimelinePlayback {
                 continue
             }
 
+            if (action.type === "style") continue
+
             const shouldPlay = action.time >= this.getTimeWithOffset(previousTime) && action.time < this.getTimeWithOffset(this.currentTime)
             if (shouldPlay) {
                 this.playAction(action, this.ref)
@@ -279,6 +296,7 @@ export class TimelinePlayback {
         }
 
         this.playClosestSlide(this.actions)
+        this.styleActions(this.actions)
 
         // check end
         if (this.currentTime >= this.duration) {
@@ -449,8 +467,10 @@ export class TimelinePlayback {
         this.slideCount = 0
 
         const slideActions = actions.filter((a) => a.type === "slide")
-        const now = this.getTimeWithOffset(this.currentTime) + 50 // add small offset to not interfere with exact timing of actions
-        const closestSlide = slideActions.reduce((prev, curr) => (curr.time > (prev?.time ?? -1) && curr.time <= now ? curr : prev), null as TimelineAction | null)
+        // const now = this.getTimeWithOffset(this.currentTime) + 50 // add small offset to not interfere with exact timing of actions
+        // const closestSlide = slideActions.reduce((prev, curr) => (curr.time > (prev?.time ?? -1) && curr.time <= now ? curr : prev), null as TimelineAction | null)
+        // add small offset to not interfere with exact timing of actions
+        const closestSlide = this.getPreviousAction(slideActions, 50)
         if (!closestSlide) return
 
         const lastAction = slideActions.reduce((prev, curr) => (curr.time > (prev?.time || 0) ? curr : prev), null as TimelineAction | null)
@@ -461,6 +481,39 @@ export class TimelinePlayback {
         if (this.lastSlideTrigger === triggerId) return
 
         this.playAction(closestSlide, this.ref)
+    }
+
+    private styleActions(actions: TimelineAction[]) {
+        const itemStyleActions = actions.filter((a) => a.type === "style")
+        // group by style key
+        const groupedActions = new Map<string, TimelineAction[]>()
+        for (const action of itemStyleActions) {
+            const key = action.data?.key
+            if (!key) continue
+
+            if (!groupedActions.has(key)) groupedActions.set(key, [])
+            groupedActions.get(key)?.push(action)
+        }
+
+        const currentTime = this.getTimeWithOffset(this.currentTime)
+        groupedActions.forEach((actions, _key) => {
+            const previous = this.getPreviousAction(actions)
+            const next = this.getNextAction(actions)
+            const value = SlideTimeline.interpolateValue(previous, next, currentTime)
+            if (value === null) return
+
+            SlideTimeline.triggerAction((previous || next)!, value, this.ref)
+        })
+    }
+
+    private getPreviousAction(actions: TimelineAction[], offset: number = 0) {
+        const now = this.getTimeWithOffset(this.currentTime) + offset
+        return actions.reduce((prev, curr) => (curr.time > (prev?.time ?? -1) && curr.time <= now ? curr : prev), null as TimelineAction | null)
+    }
+
+    private getNextAction(actions: TimelineAction[]) {
+        const now = this.getTimeWithOffset(this.currentTime)
+        return actions.reduce((next, curr) => (curr.time > now && (next === null || curr.time < next.time) ? curr : next), null as TimelineAction | null)
     }
 
     // TIMECODE

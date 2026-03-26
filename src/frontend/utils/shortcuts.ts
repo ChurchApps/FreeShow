@@ -24,7 +24,7 @@ import { activeDrawerTab, activeEdit, activeFocus, activePage, activePopup, acti
 import { audioExtensions, imageExtensions, videoExtensions } from "../values/extensions"
 import { drawerTabs } from "../values/tabs"
 import { activeShow } from "./../stores"
-import { hideDisplay, isOutputWindow, togglePanels } from "./common"
+import { hideDisplay, isOutputWindow, togglePanels, triggerFunction } from "./common"
 import { send } from "./request"
 import { save } from "./save"
 import { runActionId } from "../components/actions/actions"
@@ -382,7 +382,7 @@ export const previewShortcuts = {
         }
 
         // space bar should toggle timeline for show when active
-        if (get(special).timelineActive || get(special).projectTimelineActive) return
+        if (isTimelineActive()) return
 
         const outputId = getFirstActiveOutput()?.id || ""
         const currentOutput = outputId ? get(outputs)[outputId] || null : null
@@ -397,6 +397,11 @@ export const previewShortcuts = {
         }
     },
     Home: (e: KeyboardEvent) => {
+        if (isTimelineActive()) {
+            triggerFunction("reset_timeline_view")
+            return
+        }
+
         const currentShow = get(focusMode) ? get(activeFocus) : get(activeShow)
         if (!get(showsCache)[currentShow?.id || ""]) return
         if (presentationControllersKeysDisabled()) return
@@ -412,6 +417,12 @@ export const previewShortcuts = {
         e.preventDefault()
         nextSlideIndividual(e, false, true)
     }
+}
+
+function isTimelineActive() {
+    if (get(activePage) === "show") return get(special).timelineActive || get(special).projectTimelineActive
+    if (get(activePage) === "edit") return get(special).slideTimelineActive
+    return false
 }
 
 export function presentationControllersKeysDisabled() {
