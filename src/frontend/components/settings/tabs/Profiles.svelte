@@ -1,17 +1,19 @@
 <script lang="ts">
     import type { AccessType, Profile } from "../../../../types/Main"
     import { SettingsTabs } from "../../../../types/Tabs"
-    import { actionTags, activeProfile, categories, folders, overlayCategories, profiles, selectedProfile, special, stageShows, templateCategories, variableTags } from "../../../stores"
+    import { actions, actionTags, activeProfile, categories, folders, overlayCategories, profiles, selectedProfile, special, stageShows, templateCategories, variableTags } from "../../../stores"
     import { newToast } from "../../../utils/common"
     import { translateText } from "../../../utils/language"
     import { promptCustom } from "../../../utils/popup"
     import { checkPassword, encodePassword } from "../../../utils/profile"
+    import { runActionId } from "../../actions/actions"
     import { clone, keysToID, sortByName } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import InputRow from "../../input/InputRow.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
+    import MaterialDropdown from "../../inputs/MaterialDropdown.svelte"
     import MaterialMultiButtons from "../../inputs/MaterialMultiButtons.svelte"
     import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
     import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
@@ -163,6 +165,15 @@
         })
     }
 
+    function updateProfile(key: string, value: any) {
+        if (!profileId) return
+        profiles.update((a) => {
+            if (!a[profileId]) a[profileId] = clone(currentProfile)
+            a[profileId][key] = value
+            return a
+        })
+    }
+
     $: profilesList = Object.keys($profiles).filter((a) => a !== "admin")
 
     async function setCurrentAsActive() {
@@ -178,12 +189,21 @@
 
         activeProfile.set(profileId)
 
+        // run action
+        const actionId = currentProfile.action
+        if (actionId) runActionId(actionId)
+
         // store last used profile
         special.update((a) => {
             a.lastUsedProfile = profileId
             return a
         })
     }
+
+    $: currentAction = currentProfile?.action || ""
+    let actionOptions = Object.entries($actions)
+        .map(([id, a]) => ({ id, name: a.name }))
+        .sort((a, b) => a.name?.localeCompare(b.name))
 </script>
 
 {#if $activeProfile !== profileId && profilesList.length}
@@ -217,4 +237,7 @@
             </div>
         </InputRow>
     {/each}
+
+    <!-- profile action -->
+    <MaterialDropdown label="midi.start_action" options={actionOptions.map((a) => ({ label: a.name, value: a.id }))} value={currentAction} style="margin-top: 20px;" on:change={(e) => updateProfile("action", e.detail)} allowEmpty />
 {/if}

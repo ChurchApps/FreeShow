@@ -1,5 +1,6 @@
 import { get } from "svelte/store"
 import { activeProfile, profiles, showChangeProfileMenu, special } from "../stores"
+import { runActionId } from "../components/actions/actions"
 
 export function getAccess(id: string) {
     return get(activeProfile) ? get(profiles)[get(activeProfile)!]?.access[id] || {} : {}
@@ -14,9 +15,13 @@ export function openProfileByName(profileName: string) {
 
     // find profile by name (case-insensitive)
     const profileId = Object.keys(get(profiles)).find((id) => (get(profiles)[id].name || "").toLowerCase() === profileName.toLowerCase())
-
     if (!profileId) return
+
     activeProfile.set(profileId)
+
+    // run action
+    const actionId = get(profiles)[profileId]?.action
+    if (actionId) runActionId(actionId)
 }
 
 export function autoOpenLastUsedProfile() {

@@ -4,6 +4,7 @@
     import { translateText } from "../../utils/language"
     import { confirmCustom, promptCustom } from "../../utils/popup"
     import { checkPassword } from "../../utils/profile"
+    import { runActionId } from "../actions/actions"
     import { keysToID, sortByName } from "../helpers/array"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
@@ -30,6 +31,10 @@
         await wait(50)
 
         activeProfile.set(id)
+
+        // run action
+        const actionId = $profiles[id || "admin"]?.action
+        if (actionId) runActionId(actionId)
 
         // store last used profile
         special.update((a) => {
