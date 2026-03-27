@@ -522,6 +522,8 @@
     {/if}
 
     {#if $special.slideTimelineActive}
+        <MaterialZoom hidden columns={zoom} min={0.2} max={4} defaultValue={1} addValue={0.1} on:change={updateZoom} />
+
         <Resizeable id="slide_timeline" side="bottom" maxWidth={DEFAULT_WIDTH} minWidth={40}>
             {#key currentShowId + "-" + $activeEdit.slide}
                 <Timeline type="slide" isClosed={$resized.slide_timeline <= 40} />

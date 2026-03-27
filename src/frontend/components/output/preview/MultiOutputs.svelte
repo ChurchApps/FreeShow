@@ -128,7 +128,7 @@ aria-label={fullscreen ? "Exit fullscreen preview" : "Toggle fullscreen preview"
             <PreviewOutput outputId={output.id} {disableTransitions} disabled={outs.length > 1 && !fullscreen && !output?.active} {fullscreen} />
 
             <!-- icons -->
-            {#if !fullscreen && (layers.length < 3 || isMuted)}
+            {#if !fullscreen && (layers.length < 3 || styleTemplate || isMuted)}
                 <div class="icons">
                     <!-- active layers -->
                     {#if !layers.includes("background")}
