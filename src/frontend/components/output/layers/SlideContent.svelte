@@ -309,7 +309,7 @@
     }
     onMount(() => {
         const interval = setInterval(() => {
-            if (isClearing || !isReady) return
+            if (isClearing || !isReady || !timelineActions.length) return
             // WIP use actual slide timeline pos when available?
             timelinePos += 10
             styleActions(timelineActions)
@@ -327,7 +327,7 @@
                 groupedActions.get(key)?.push(action)
             }
 
-            const slideKey = `${outSlide?.id}-${outSlide?.index}`
+            const slideKey = `${outSlide?.id}-${outSlide?.layout}-${outSlide?.index}`
             const items = clone(timelineItems.get(slideKey) || currentItems)
 
             const currentTime = timelinePos
@@ -384,7 +384,7 @@
                 disableListTransition={mirror}
                 chords={item.chords?.enabled}
                 animationStyle={animationData.style || {}}
-                item={timelineItems.get(`${current.outSlide?.id}-${current.outSlide?.index}`)?.[index] || item}
+                item={timelineItems.get(`${current.outSlide?.id}-${current.outSlide?.layout}-${current.outSlide?.index}`)?.[index] || item}
                 transition={null}
                 {ratio}
                 {outputId}
@@ -410,7 +410,7 @@
                             disableListTransition={mirror}
                             chords={customItem.chords?.enabled}
                             animationStyle={animationData.style || {}}
-                            item={timelineItems.get(`${customOut?.id}-${customOut?.index}`)?.[index] || customItem}
+                            item={timelineItems.get(`${customOut?.id}-${customOut?.layout}-${customOut?.index}`)?.[index] || customItem}
                             {transition}
                             {ratio}
                             {outputId}

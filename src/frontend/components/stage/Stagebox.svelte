@@ -79,6 +79,9 @@
         if (!edit) return
 
         if ((e.key === "Backspace" || e.key === "Delete") && $activeStage.items.includes(id) && !document.activeElement?.closest(".stage_item") && !document.activeElement?.closest(".edit")) {
+            // selected timeline actions
+            if (document.querySelector(".timeline-track .action-marker.selected")) return
+
             // TODO: history??
             stageShows.update((a) => {
                 delete a[$activeStage.id!].items[id]

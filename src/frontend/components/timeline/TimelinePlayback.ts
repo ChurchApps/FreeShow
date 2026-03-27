@@ -152,6 +152,8 @@ export class TimelinePlayback {
         this.checkAudioStop(this.actions)
 
         this.runCallbacks(this.onStopCallbacks)
+
+        if (this.type === "slide") this.tick(false)
     }
 
     close() {

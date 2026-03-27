@@ -109,6 +109,8 @@
         }
 
         if (!$activeEdit.items.includes(index) || document.activeElement?.closest(".item") || document.activeElement?.closest("input")) return
+        // selected timeline actions
+        if (document.querySelector(".timeline-track .action-marker.selected")) return
 
         if (e.key === "Backspace" || e.key === "Delete") {
             // delete slide item using shortcut

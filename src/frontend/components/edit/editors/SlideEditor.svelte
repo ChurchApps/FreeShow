@@ -270,7 +270,7 @@
             if (Slide?.items.length === 1 && !$activeEdit.items.length) {
                 activeEdit.update((a) => ({ ...(a || {}), items: [0] }))
                 const elem = document.querySelector(".editItem")?.querySelector(".edit")
-                if (elem) {
+                if (elem && !$special.slideTimelineActive) {
                     elem.addEventListener("focus", () => setCaretAtEnd(elem))
                     ;(elem as HTMLElement).focus()
                 }

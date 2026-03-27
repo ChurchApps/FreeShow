@@ -168,6 +168,9 @@ export function cut(clip: Clipboard | null = null) {
 }
 
 export function deleteAction(clip: Clipboard | { id: null; data: Clipboard; index: any }, type = "delete") {
+    // selected timeline actions
+    if (document.querySelector(".timeline-track .action-marker.selected")) return
+
     console.info("DELETE", clip.id, clip.data)
     if (!clip?.id) return false
     if (!deleteActions[clip.id]) return false
