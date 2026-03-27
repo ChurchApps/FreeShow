@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
     import type { Item, OutSlide, SlideData, TimelineAction, Transition } from "../../../../types/Show"
-    import { showsCache } from "../../../stores"
+    import { showsCache, slideTimelineSpeedMultiplier } from "../../../stores"
     import { waitUntilValueIsDefined } from "../../../utils/common"
     import { shouldItemBeShown } from "../../edit/scripts/itemHelpers"
     import { clone } from "../../helpers/array"
@@ -311,7 +311,7 @@
         const interval = setInterval(() => {
             if (isClearing || !isReady || !timelineActions.length) return
             // WIP use actual slide timeline pos when available?
-            timelinePos += 10
+            timelinePos += 10 * $slideTimelineSpeedMultiplier
             styleActions(timelineActions)
 
             // loop back when reached last action

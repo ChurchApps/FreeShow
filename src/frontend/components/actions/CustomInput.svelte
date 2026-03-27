@@ -188,6 +188,8 @@
     <MaterialTextInput label="inputs.name" value={value?.value || ""} on:change={(e) => updateValue("value", e)} />
 {:else if inputId === "numval"}
     <MaterialNumberInput label="variables.value" value={value?.value || 0} on:change={(e) => updateValue("value", e)} />
+{:else if inputId === "percentage"}
+    <MaterialNumberInput label="variables.value" value={(value?.value ?? 1) * 100} min={-1000} on:change={(e) => updateValue("value", e.detail / 100)} />
 {:else if inputId === "toggle"}
     <MaterialDropdown label="variables.value" options={stateOptions} value={typeof value?.value === "boolean" ? (value.value ? "on" : "off") : ""} on:change={textStateChange} />
 {:else if inputId === "output_lock"}

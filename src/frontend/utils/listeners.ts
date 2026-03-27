@@ -47,6 +47,7 @@ import {
     scriptures,
     shows,
     showsCache,
+    slideTimelineSpeedMultiplier,
     special,
     stageShows,
     styles,
@@ -331,6 +332,10 @@ export function storeSubscriber() {
         send(OUTPUT, ["SPECIAL"], data)
     })
 
+    slideTimelineSpeedMultiplier.subscribe((data) => {
+        send(OUTPUT, ["SLIDE_TIMELINE_SPEED_MULTIPLIER"], data)
+    })
+
     volume.subscribe((data) => {
         send(OUTPUT, ["VOLUME"], data)
 
@@ -475,6 +480,8 @@ const initalOutputData = {
     TIME_FORMAT: "timeFormat",
 
     SPECIAL: "special",
+
+    SLIDE_TIMELINE_SPEED_MULTIPLIER: "slideTimelineSpeedMultiplier",
 
     PLAYER_VIDEOS: "playerVideos",
     STAGE: "stageShows",

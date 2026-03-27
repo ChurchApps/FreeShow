@@ -787,6 +787,7 @@
         "index_select_project_item": "Open project item at index",
         "name_select_show": "Open show with name",
         "set_template_active": "Set template on active show",
+        "change_slide_timeline_speed": "Change slide timeline speed",
         "random_slide": "Play random slide",
         "index_select_slide": "Play slide at index",
         "name_select_slide": "Play slide with name",
