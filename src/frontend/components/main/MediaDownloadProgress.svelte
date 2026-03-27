@@ -222,7 +222,7 @@
     }
 
     .status.ok {
-        color: #7ddc96;
+        /* color: #7ddc96; */
         opacity: 1;
     }
 

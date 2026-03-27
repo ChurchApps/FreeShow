@@ -9,7 +9,6 @@
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import Center from "../../system/Center.svelte"
     import Media from "./MediaCard.svelte"
-    import MediaGrid from "./MediaGrid.svelte"
 
     export let providerId: ContentProviderId
     export let columns: number = 5
@@ -18,7 +17,9 @@
     let library: ContentLibraryCategory[] = []
     let currentPath: ContentLibraryCategory[] = []
     let currentCategory: ContentLibraryCategory | null = null
-    let content: ContentFile[] = []
+    // Extend ContentFile for presentation support
+    type ContentFileWithPresentation = ContentFile & { isPresentation?: boolean; slideCount?: number }
+    let content: ContentFileWithPresentation[] = []
     let loading = false
     let error: string | null = null
     let viewingContent = false
@@ -69,6 +70,7 @@
             currentPath = currentPath.slice(0, -1)
             content = []
             viewingContent = currentCategory?.key ? true : false
+            if (currentCategory?.key) loadContent(currentCategory.key)
         }
     }
 
@@ -125,12 +127,42 @@
             <p style="color: var(--error); opacity: 0.8;">{error}</p>
         </Center>
     {:else if content.length > 0}
-        <div class="grid" class:list={$mediaOptions.mode === "list"}>
-            <div class="context #media" style="display: contents;">
+        <div class="grid" style="padding: 10px;" class:list={$mediaOptions.mode === "list"}>
+            <!-- <div class="context #media" style="display: contents;">
                 <MediaGrid items={filteredContent} {columns} let:item>
                     <Media credits={{}} name={item.name || ""} path={item.url} thumbnailPath={item.thumbnail || ""} type={item.type} shiftRange={[]} active="online" contentProvider={providerId} contentFileData={item} />
                 </MediaGrid>
-            </div>
+            </div> -->
+            {#each filteredContent as item}
+                {#if item.isPresentation}
+                    <button
+                        class="category-card"
+                        style="width: calc({100 / columns}% - 4px);"
+                        on:click={() =>
+                            navigateToCategory({
+                                name: item.name || "Untitled presentation",
+                                thumbnail: item.thumbnail,
+                                key: `presentation:${item.mediaId}`
+                            })}
+                    >
+                        {#if item.thumbnail}
+                            <img src={item.thumbnail} alt={item.name} />
+                        {:else}
+                            <div class="placeholder">
+                                <Icon id="folder" size={3} white />
+                            </div>
+                        {/if}
+                        <span class="category-name">
+                            {item.name}
+                            <span style="margin-left: 10px;opacity: 0.5;font-size: 0.9em;">{item.slideCount || 1}</span>
+                        </span>
+                    </button>
+                {:else}
+                    <div class="card" style="width: {100 / columns}%;">
+                        <Media credits={{}} name={item.name || ""} path={item.url} thumbnailPath={item.thumbnail || ""} type={item.type} shiftRange={[]} active="online" contentProvider={providerId} contentFileData={item} />
+                    </div>
+                {/if}
+            {/each}
         </div>
     {:else if categories.length > 0}
         <div class="categories">

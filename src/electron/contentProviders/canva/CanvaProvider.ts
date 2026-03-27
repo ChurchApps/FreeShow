@@ -4,7 +4,7 @@ import type { ContentFile, ContentLibraryCategory } from "../base/types"
 import { CanvaConnect, OAUTH_PORT } from "./CanvaConnect"
 import { CanvaContentLibrary } from "./CanvaContentLibrary"
 
-export type CanvaScopes = "folder:read design:meta:read"
+export type CanvaScopes = "folder:read design:content:read design:meta:read"
 
 export interface CanvaAuthData {
     access_token: string
@@ -30,7 +30,7 @@ export class CanvaProvider extends ContentProvider<CanvaScopes, CanvaAuthData> {
             clientSecret: "",
             apiUrl: CANVA_API_URL,
             appUrl: CANVA_APP_URL,
-            scopes: ["folder:read design:meta:read"] as const
+            scopes: ["folder:read design:content:read design:meta:read"] as const
         })
     }
 
@@ -44,7 +44,7 @@ export class CanvaProvider extends ContentProvider<CanvaScopes, CanvaAuthData> {
         return result
     }
 
-    disconnect(scope: CanvaScopes = "folder:read design:meta:read"): void {
+    disconnect(scope: CanvaScopes = "folder:read design:content:read design:meta:read"): void {
         CanvaConnect.disconnect(scope)
         CanvaContentLibrary.clearCache()
         this.access = null
@@ -55,7 +55,7 @@ export class CanvaProvider extends ContentProvider<CanvaScopes, CanvaAuthData> {
     }
 
     async loadServices(data?: any): Promise<void> {
-        const connected = await this.connect("folder:read design:meta:read", data)
+        const connected = await this.connect("folder:read design:content:read design:meta:read", data)
         if (!connected) {
             console.error("Failed to connect to Canva")
         }

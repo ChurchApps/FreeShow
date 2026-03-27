@@ -14,7 +14,7 @@
 
     onMount(() => {
         if (!$providerConnections.canva) {
-            requestMain(Main.PROVIDER_STARTUP_LOAD, { providerId: "canva", scope: "folder:read design:meta:read" })
+            requestMain(Main.PROVIDER_STARTUP_LOAD, { providerId: "canva", scope: "folder:read design:content:read design:meta:read" })
         }
     })
 

@@ -37,7 +37,7 @@ export class CanvaConnect {
                 authUrl: CANVA_OAUTH_AUTHORIZE_URL,
                 tokenUrl: CANVA_OAUTH_TOKEN_URL,
                 redirectUri: AUTH_REDIRECT_URL,
-                scopes: ["folder:read", "design:meta:read"],
+                scopes: ["folder:read", "design:content:read", "design:meta:read"],
                 usePKCE: true,
                 additionalParams: { state: "freeshow_canva" }
             })
@@ -73,12 +73,12 @@ export class CanvaConnect {
         return accessData
     }
 
-    public static disconnect(scope: CanvaScopes = "folder:read design:meta:read"): void {
+    public static disconnect(scope: CanvaScopes = "folder:read design:content:read design:meta:read"): void {
         setContentProviderAccess("canva", scope, null)
         this.CANVA_ACCESS = null
     }
 
-    public static async ensureValidToken(scope: CanvaScopes = "folder:read design:meta:read"): Promise<string | null> {
+    public static async ensureValidToken(scope: CanvaScopes = "folder:read design:content:read design:meta:read"): Promise<string | null> {
         let accessData = this.CANVA_ACCESS || (getContentProviderAccess("canva", scope) as CanvaAuthData | null)
 
         if (!accessData) {
