@@ -4,7 +4,7 @@
     import { uid } from "uid"
     import type { TimelineAction } from "../../../types/Show"
     import { createWaveform } from "../../audio/audioWaveform"
-    import { activePopup, activeShow, activeTriggerFunction, dictionary, resized, selected, showsCache, special, timecode, timeline as timelineStore } from "../../stores"
+    import { activeEdit, activePopup, activeShow, activeTriggerFunction, dictionary, resized, selected, showsCache, special, timecode, timeline as timelineStore } from "../../stores"
     import { DEFAULT_WIDTH } from "../../utils/common"
     import { translateText } from "../../utils/language"
     import { actionData } from "../actions/actionData"
@@ -263,6 +263,8 @@
     function selectAll() {
         const allActionIds = actions.map((a) => a.id)
         selectedActionIds = allActionIds
+
+        selectOnlyActiveActions()
     }
 
     function updateSelection(e: MouseEvent) {
@@ -298,6 +300,23 @@
         } else {
             selectedActionIds = newSelectedIds
         }
+
+        selectOnlyActiveActions()
+    }
+
+    function selectOnlyActiveActions() {
+        selectedActionIds = selectedActionIds.filter((id) => {
+            const action = actions.find((a) => a.id === id)
+            if (!action) return false
+
+            if (type === "slide") {
+                // only select "active" actions
+                const itemIndexes = action.data?.indexes ?? [0]
+                return itemIndexes.some((index) => selectedItemIndexes.includes(index))
+            }
+
+            return true
+        })
     }
 
     function endSelection() {
@@ -669,6 +688,8 @@
     $: slideActions = actionsByTime.filter((a) => a.type === "slide")
     $: firstSlideAction = slideActions[0]
     $: lastSlideAction = slideActions[slideActions.length - 1]
+
+    $: selectedItemIndexes = type === "slide" ? ($activeEdit?.items?.length ? $activeEdit?.items : [0]) : []
 </script>
 
 <svelte:window on:keydown={keydown} />
@@ -834,7 +855,7 @@
                                 </div>
                             </div>
                         {:else}
-                            <div class="action-marker {action.type} context #timeline_node" class:selected={selectedActionIds.includes(action.id)} style="left: {(action.time / 1000) * zoomLevel}px; top: {baseY + 10}px;" data-title="{formatTime(action.time, type, $timelineStore)}: {action.name}" on:mousedown|stopPropagation={(e) => startActionDrag(e, action.id)}>
+                            <div class="action-marker {action.type} context #timeline_node" class:selected={selectedActionIds.includes(action.id)} class:faded={!(action.data?.indexes ?? [0])?.some((a) => selectedItemIndexes.includes(a))} style="left: {(action.time / 1000) * zoomLevel}px; top: {baseY + 10}px;" data-title="{formatTime(action.time, type, $timelineStore)}: {action.name}" on:mousedown|stopPropagation={(e) => startActionDrag(e, action.id)}>
                                 <div class="action-head">
                                     {#if action.type === "action"}
                                         <Icon id={action.data.triggers?.length === 1 ? actionData[action.data.triggers[0]]?.icon : "actions"} size={0.9} white />
@@ -1106,8 +1127,13 @@
         pointer-events: none;
     }
 
-    .action-marker > * {
+    .action-marker:not(.faded) > * {
         pointer-events: auto;
+    }
+
+    .action-marker.faded {
+        pointer-events: none;
+        opacity: 0.5;
     }
 
     .action-head {

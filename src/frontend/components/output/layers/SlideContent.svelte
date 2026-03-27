@@ -348,9 +348,7 @@
                 // const slideId = ref[outSlide?.index || 0]?.id
                 // SlideTimeline.triggerAction(action, value, { id: outSlide.id, slideId: slideId })
 
-                // TODO: item index
-                const itemIndexes = [0]
-
+                const itemIndexes = action.data.indexes ?? [0]
                 itemIndexes.forEach((itemIndex) => {
                     const item = items[itemIndex]
                     if (!item) return

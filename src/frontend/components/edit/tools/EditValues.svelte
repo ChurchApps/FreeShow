@@ -126,7 +126,8 @@
             if (input.key === "width" || input.key === "left") timelineValue = 1920 * (timelineValue / 100)
             if (input.key === "height" || input.key === "top") timelineValue = 1080 * (timelineValue / 100)
 
-            SlideTimeline.addKeyframe({ name: input.values?.label, key: input.key, value: timelineValue, type }, onlyTimeline)
+            const indexes = $activeEdit?.items?.length ? $activeEdit.items : [0]
+            SlideTimeline.addKeyframe({ name: input.values?.label, key: input.key, value: timelineValue, type, indexes }, onlyTimeline)
             if (onlyTimeline) return
         }
 
@@ -325,7 +326,7 @@
                             {#if !input.hidden}
                                 {@const value = getValue(input, { styles, item })}
                                 {@const values = getValues(input)}
-                                {@const hasTimelineAction = $special.slideTimelineActive && SlideTimeline.hasActionAtTime(input.key || "", type, timelineUpdater)}
+                                {@const hasTimelineAction = $special.slideTimelineActive && SlideTimeline.hasActionAtTime(input.key || "", type, $activeEdit?.items?.length ? $activeEdit.items : [0], timelineUpdater)}
 
                                 {#if input.type === "fontDropdown"}
                                     <MaterialFontDropdown label={values.label} {value} style={values.style} fontStyleValue={input.styleValue} on:change={(e) => changed(e, input)} on:fontStyle={(e) => changed(e, { ...input, key: "font" })} enableFontStyles />

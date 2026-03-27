@@ -11,7 +11,7 @@ import { getActiveTimelinePlayback } from "./TimelinePlayback"
 
 // let slideTimelineActions = new TimelineActions("slide", () => {})
 export class SlideTimeline {
-    static async addKeyframe({ name, key, value, type }: { name: string | undefined; key: string | undefined; value: string | number; type?: string }, toggle: boolean = false) {
+    static async addKeyframe({ name, key, value, type, indexes }: { name: string | undefined; key: string | undefined; value: string | number; type: string; indexes: number[] }, toggle: boolean = false) {
         if (!key) return
 
         const showRef = _show().layouts("active").ref()[0] || []
@@ -29,11 +29,14 @@ export class SlideTimeline {
             .replace(/\s*\(.*?\)\s*/g, "")
             .trim()
 
+        // sort indexes
+        indexes = indexes.sort((a, b) => a - b)
+
         // has existing value on same frame
-        const existingAction = timelineActions.getActions().find((a) => a.time === currentTime && a.type === "style" && a.data.type === type && a.data.key === key)
+        const existingAction = timelineActions.getActions().find((a) => a.time === currentTime && a.type === "style" && JSON.stringify(a.data.indexes) === JSON.stringify(indexes) && a.data.type === type && a.data.key === key)
         if (existingAction) {
             if (toggle) timelineActions.deleteActions([existingAction.id])
-            else timelineActions.updateAction(existingAction.id, { data: { key, value, type } })
+            else timelineActions.updateAction(existingAction.id, { data: { indexes, key, value, type } })
         } else {
             timelineActions.addAction({
                 id: uid(6),
@@ -41,6 +44,7 @@ export class SlideTimeline {
                 name,
                 type: "style",
                 data: {
+                    indexes,
                     key,
                     value,
                     type // "item" | "text"
@@ -62,10 +66,15 @@ export class SlideTimeline {
         return actions
     }
 
-    static hasActionAtTime(key: string, type: string, _updater: number = -1) {
+    static hasActionAtTime(key: string, type: string, indexes: number[], _updater: number = -1) {
         const timelineActions = new TimelineActions("slide", () => {})
         const currentTime = getActiveTimelinePlayback("slide")?.currentTime || 0
-        const actions = timelineActions.getActions().some((a) => a.type === "style" && a.data.key === key && a.data.type === type && a.time === currentTime)
+
+        // sort indexes
+        indexes = indexes.sort((a, b) => a - b)
+
+        const actions = timelineActions.getActions().some((a) => a.type === "style" && JSON.stringify(a.data.indexes) === JSON.stringify(indexes) && a.data.key === key && a.data.type === type && a.time === currentTime)
+
         timelineActions.close()
         return actions
     }
@@ -77,9 +86,7 @@ export class SlideTimeline {
                 const slide = a[ref?.id || ""]?.slides?.[ref?.slideId || ""]
                 if (!slide) return a
 
-                // TODO: item index
-                const itemIndexes = [0] // for now only first item
-
+                const itemIndexes = action.data.indexes ?? [0]
                 itemIndexes.forEach((index) => {
                     const item = slide.items[index]
                     if (!item) return

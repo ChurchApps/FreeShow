@@ -314,6 +314,7 @@ export interface TimelineAction {
         actionValues?: any // action
         // "style":
         // text currently changes all the "text" styles in the item
+        indexes?: number[] // item indexes
         type?: string // "item" | "text"
         key?: string // style key
         value?: string | number // style key value
