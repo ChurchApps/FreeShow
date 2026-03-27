@@ -296,6 +296,7 @@ export interface Timeline {
     // id: string
     // name: string
     actions: TimelineAction[]
+    loop?: boolean
 }
 
 export interface TimelineAction {

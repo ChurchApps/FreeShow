@@ -4,7 +4,7 @@
     import { uid } from "uid"
     import type { TimelineAction } from "../../../types/Show"
     import { createWaveform } from "../../audio/audioWaveform"
-    import { activePopup, activeShow, activeTriggerFunction, resized, selected, showsCache, special, timecode, timeline as timelineStore } from "../../stores"
+    import { activePopup, activeShow, activeTriggerFunction, dictionary, resized, selected, showsCache, special, timecode, timeline as timelineStore } from "../../stores"
     import { DEFAULT_WIDTH } from "../../utils/common"
     import { translateText } from "../../utils/language"
     import { actionData } from "../actions/actionData"
@@ -51,10 +51,14 @@
 
     const player = new TimelinePlayback(type)
 
-    const timeline = new TimelineActions(type, async (a) => {
+    let shouldLoop: boolean = false
+    const timeline = new TimelineActions(type, async (a, data) => {
         await tick()
 
         if (isDestroyed) return
+
+        shouldLoop = data?.shouldLoop || false
+        player.setLoopState(shouldLoop)
 
         actions = a
         player.setActions(a)
@@ -882,8 +886,16 @@
             {/if}
 
             {#if type === "show"}
+                <div class="divider"></div>
+
                 <MaterialButton disabled={isPlaying && !isRecording} title="actions.{isRecording ? 'stop_recording' : 'start_recording'}" on:click={toggleRecording} red={isRecording}>
                     <Icon size={1.3} id="record" white />
+                </MaterialButton>
+            {:else if type === "slide"}
+                <div class="divider"></div>
+
+                <MaterialButton title={translateText("media._loop" + (shouldLoop ? ": settings.enabled" : ""), $dictionary) || "Loop"} on:click={() => (shouldLoop = timeline.toggleLoop())} active={shouldLoop}>
+                    <Icon size={1.1} id="loop" white={!shouldLoop} />
                 </MaterialButton>
             {/if}
 

@@ -17,9 +17,10 @@ export class TimelineActions {
     private ref: { id: string; layoutId?: string; slideId?: string } | null = null
     private actions: TimelineAction[] = []
     private unsubscriber: Unsubscriber | null = null
-    private callback: (s: TimelineAction[]) => void
+    private callback: (s: TimelineAction[], data?: { shouldLoop: boolean }) => void
+    shouldLoop = false
 
-    constructor(type: TimelineType, actionUpdateCallback: (s: TimelineAction[]) => void) {
+    constructor(type: TimelineType, actionUpdateCallback: (s: TimelineAction[], data?: { shouldLoop: boolean }) => void) {
         this.type = type
         this.callback = actionUpdateCallback
 
@@ -109,7 +110,7 @@ export class TimelineActions {
     private hasChanged = false
     private async setChanged() {
         this.hasChanged = true
-        this.callback(this.actions)
+        this.callback(this.actions, { shouldLoop: this.shouldLoop })
 
         // auto save from time to time
         if (await hasNewerUpdate("TIMELINE_CHANGED", 2000)) return
@@ -153,6 +154,7 @@ export class TimelineActions {
 
                 if (!a[showId].slides[slideId].timeline) a[showId].slides[slideId].timeline = { actions: [] }
                 a[showId].slides[slideId].timeline!.actions = clone(this.actions)
+                a[showId].slides[slideId].timeline!.loop = this.shouldLoop
 
                 return a
             })
@@ -173,10 +175,18 @@ export class TimelineActions {
         } else if (this.type === "project") {
             this.actions = clone(get(projects)[this.ref.id]?.timeline?.actions || [])
         } else if (this.type === "slide") {
-            this.actions = clone(get(showsCache)[this.ref.id]?.slides?.[this.ref.slideId || ""]?.timeline?.actions || [])
+            const timeline = get(showsCache)[this.ref.id]?.slides?.[this.ref.slideId || ""]?.timeline
+            this.actions = clone(timeline?.actions || [])
+            this.shouldLoop = !!timeline?.loop
         }
 
-        this.callback(this.actions)
+        this.callback(this.actions, { shouldLoop: this.shouldLoop })
+    }
+
+    toggleLoop() {
+        this.shouldLoop = !this.shouldLoop
+        this.setChanged()
+        return this.shouldLoop
     }
 
     private getActionIndex(actionId: string) {

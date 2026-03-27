@@ -313,6 +313,12 @@
             // WIP use actual slide timeline pos when available?
             timelinePos += 10
             styleActions(timelineActions)
+
+            // loop back when reached last action
+            if (currentSlide?.timeline?.loop) {
+                const lastActionTime = Math.max(...timelineActions.map((a) => a.time + (a.duration || 0) * 1000))
+                if (timelinePos >= lastActionTime) timelinePos = 0
+            }
         }, 10)
 
         function styleActions(actions: TimelineAction[]) {
