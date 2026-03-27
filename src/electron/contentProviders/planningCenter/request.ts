@@ -33,6 +33,25 @@ type SongSection = {
 type ParsedSectionLine = {
     text: string
     chords?: Chords[]
+    repeatStartCount?: number
+    repeatEndCount?: number
+    hidden?: boolean
+}
+
+type RepeatConfig = {
+    count: number
+    startIndex: number
+}
+
+type RepeatDelimiterData = {
+    cleanLine: string
+    repeatStartCount?: number
+    repeatEndCount?: number
+    markerOnly: boolean
+}
+
+type SectionSourceLine = RepeatDelimiterData & {
+    line: string
 }
 
 const chordTokenRegex = /^[A-G](?:#|b)?(?:m|maj|min|sus|add|aug|dim)?\d*(?:\/[A-G](?:#|b)?)?$/i
@@ -499,6 +518,59 @@ function normalizeLineBreaks(text: string): string {
     return text.replace(/\n\r/g, "\n").replace(/\r\n/g, "\n").replace(/\r/g, "\n")
 }
 
+function getRepeatMarkerCount(value: string): number | undefined {
+    if (!/^\/{2,}$/.test(value)) return undefined
+    return value.length
+}
+
+function extractRepeatDelimiters(line: string): RepeatDelimiterData {
+    let cleanLine = line
+    let repeatStartCount: number | undefined
+    let repeatEndCount: number | undefined
+
+    const startMatch = cleanLine.match(/^(\s*)(\/{2,})(?=\s|$)/)
+    if (startMatch) {
+        repeatStartCount = getRepeatMarkerCount(startMatch[2])
+        cleanLine = cleanLine.slice(startMatch[0].length)
+    }
+
+    const endMatch = cleanLine.match(/(?:(?<=\s)|^)(\/{2,})(\s*)$/)
+    if (endMatch) {
+        repeatEndCount = getRepeatMarkerCount(endMatch[1])
+        cleanLine = cleanLine.slice(0, cleanLine.length - endMatch[0].length)
+    }
+
+    const markerOnly = Boolean((repeatStartCount || repeatEndCount) && !cleanLine.trim())
+
+    return { cleanLine, repeatStartCount, repeatEndCount, markerOnly }
+}
+
+function toSectionSourceLine(line: string): SectionSourceLine {
+    const repeatData = extractRepeatDelimiters(line)
+    return {
+        ...repeatData,
+        line: repeatData.cleanLine
+    }
+}
+
+function toParsedSectionLine(source: SectionSourceLine, overrides: Partial<ParsedSectionLine> = {}): ParsedSectionLine {
+    return {
+        text: source.line.trim(),
+        repeatStartCount: source.repeatStartCount,
+        repeatEndCount: source.repeatEndCount,
+        hidden: source.markerOnly,
+        ...overrides
+    }
+}
+
+function canAlignChordLineWithLyricLine(line: string): boolean {
+    return Boolean(line.trim() && !isChordProgressionLine(line) && !getChordLineData(line) && !parseInlineBracketLine(line))
+}
+
+function copyChords(chords?: Chords[], generateIds = false): Chords[] | undefined {
+    return chords?.map((chord) => ({ ...chord, ...(generateIds ? { id: uid(5) } : {}) }))
+}
+
 function parseInlineBracketLine(line: string): { text: string; chords: Chords[] } | null {
     if (!line.includes("[") || !line.includes("]")) return null
 
@@ -585,19 +657,20 @@ function alignChordsToLyricLine(chords: Chords[], rawLyricLine: string, sectionB
 }
 
 function parseSectionLines(lyrics: string): ParsedSectionLine[] {
-    const rawLines = normalizeLineBreaks(lyrics)
+    const sourceLines = normalizeLineBreaks(lyrics)
         .split("\n")
         .filter((line) => !isColumnBreakLine(line))
-        .map((line) => line.replace(/\/{2,}/g, ""))
+        .map(toSectionSourceLine)
 
     // Planning Center often includes a common left indent in chord-only lines.
     // Remove that shared baseline so chord positions match lyric content columns.
-    const sectionBaseOffset = rawLines.reduce((minOffset, line, i) => {
+    const sectionBaseOffset = sourceLines.reduce((minOffset, entry, i) => {
+        const line = entry.line
         const lineChords = getChordLineData(line)
-        if (!lineChords?.length || i + 1 >= rawLines.length) return minOffset
+        if (!lineChords?.length || i + 1 >= sourceLines.length) return minOffset
 
-        const nextLine = rawLines[i + 1]
-        if (!nextLine.trim() || getChordLineData(nextLine) || parseInlineBracketLine(nextLine)) return minOffset
+        const nextLine = sourceLines[i + 1].line
+        if (!canAlignChordLineWithLyricLine(nextLine)) return minOffset
 
         const firstChordPos = lineChords[0].pos
         if (minOffset === null) return firstChordPos
@@ -606,11 +679,12 @@ function parseSectionLines(lyrics: string): ParsedSectionLine[] {
 
     const parsedLines: ParsedSectionLine[] = []
 
-    for (let i = 0; i < rawLines.length; i++) {
-        const currentLine = rawLines[i]
+    for (let i = 0; i < sourceLines.length; i++) {
+        const currentEntry = sourceLines[i]
+        const currentLine = currentEntry.line
 
         if (!currentLine.trim()) {
-            parsedLines.push({ text: "" })
+            parsedLines.push(toParsedSectionLine(currentEntry, { text: "" }))
             continue
         }
 
@@ -620,25 +694,79 @@ function parseSectionLines(lyrics: string): ParsedSectionLine[] {
 
         const inline = parseInlineBracketLine(currentLine)
         if (inline && inline.text.trim()) {
-            parsedLines.push({ text: inline.text.trim(), chords: inline.chords })
+            parsedLines.push(toParsedSectionLine(currentEntry, { text: inline.text.trim(), chords: inline.chords, hidden: false }))
             continue
         }
 
-        const chordLine = getChordLineData(currentLine)
-        if (chordLine && i + 1 < rawLines.length) {
-            const nextLine = rawLines[i + 1]
-            if (nextLine.trim() && !isChordProgressionLine(nextLine) && !getChordLineData(nextLine) && !parseInlineBracketLine(nextLine)) {
-                const alignedLine = alignChordsToLyricLine(chordLine, nextLine, sectionBaseOffset || 0)
-                parsedLines.push({ text: alignedLine.text, chords: alignedLine.chords })
+        const chordLineData = getChordLineData(currentLine)
+        if (chordLineData && i + 1 < sourceLines.length) {
+            const nextEntry = sourceLines[i + 1]
+            const nextLine = nextEntry.line
+            if (canAlignChordLineWithLyricLine(nextLine)) {
+                const alignedLine = alignChordsToLyricLine(chordLineData, nextLine, sectionBaseOffset || 0)
+                parsedLines.push(toParsedSectionLine(nextEntry, { text: alignedLine.text, chords: alignedLine.chords }))
                 i++
                 continue
             }
         }
 
-        parsedLines.push({ text: currentLine.trim() })
+        parsedLines.push(toParsedSectionLine(currentEntry))
     }
 
     return parsedLines
+}
+
+function cloneParsedSectionLine(line: ParsedSectionLine): ParsedSectionLine {
+    return {
+        text: line.text,
+        hidden: line.hidden,
+        chords: copyChords(line.chords, true)
+    }
+}
+
+function appendRepeatedBlock(targetLines: ParsedSectionLine[], repeatConfig: RepeatConfig) {
+    const repeatedBlock = targetLines.slice(repeatConfig.startIndex)
+    for (let repeatIndex = 1; repeatIndex < repeatConfig.count; repeatIndex++) {
+        targetLines.push(...repeatedBlock.map(cloneParsedSectionLine))
+    }
+}
+
+function expandRepeatedSectionLines(lines: ParsedSectionLine[]): ParsedSectionLine[] {
+    const expandedLines: ParsedSectionLine[] = []
+    let activeRepeat: RepeatConfig | null = null
+
+    lines.forEach((line) => {
+        const cleanLine: ParsedSectionLine = {
+            text: line.text,
+            hidden: line.hidden,
+            chords: copyChords(line.chords)
+        }
+
+        if (line.repeatStartCount && !activeRepeat) {
+            activeRepeat = {
+                count: line.repeatStartCount,
+                startIndex: expandedLines.length + (line.hidden ? 1 : 0)
+            }
+        }
+
+        expandedLines.push(cleanLine)
+
+        if (line.repeatEndCount && activeRepeat) {
+            const endIndex = expandedLines.length - (line.hidden ? 1 : 0)
+            const repeatedBlock = expandedLines.slice(activeRepeat.startIndex, endIndex)
+            const repeatCount = Math.max(activeRepeat.count, line.repeatEndCount)
+
+            for (let repeatIndex = 1; repeatIndex < repeatCount; repeatIndex++) {
+                expandedLines.push(...repeatedBlock.map(cloneParsedSectionLine))
+            }
+
+            activeRepeat = null
+        }
+    })
+
+    if (activeRepeat !== null) appendRepeatedBlock(expandedLines, activeRepeat)
+
+    return expandedLines.filter((line) => !line.hidden)
 }
 
 function processRegularItem(item: ProjectItem) {
@@ -710,59 +838,41 @@ function getDateTitle(dateString: string) {
 
 const itemStyle = "left:50px;top:120px;width:1820px;height:840px;"
 
-// Extract the maximum number of consecutive slashes in a string to determine repetition count
-function getRepetitionCount(text: string): number {
-    const matches = text.match(/\/{2,}/g) // Find sequences of 2 or more slashes
-    if (!matches || matches.length === 0) return 1
-    
-    // Get the longest sequence of slashes
-    const maxSlashSequence = matches.reduce((max, current) => 
-        current.length > max.length ? current : max
-    )
-    
-    return maxSlashSequence.length
-}
-
 function getShow(SONG_DATA: any, SONG: any, SECTIONS: any[]) {
     const slides: { [key: string]: Slide } = {}
     const layoutSlides: SlideData[] = []
     SECTIONS.forEach((section) => {
-        // Check if section has repeat markers (// for 2x, /// for 3x, etc.)
-        const repetitionCount = getRepetitionCount(section.lyrics || "")
-
-        const parsedLines = parseSectionLines(section.lyrics || "")
+        const parsedLines = expandRepeatedSectionLines(parseSectionLines(section.lyrics || ""))
 
         // Skip sections with no lyrics content
         if (!parsedLines.some((line) => line.text.trim())) return
 
-        for (let rep = 0; rep < repetitionCount; rep++) {
-            const slideId = uid()
+        const slideId = uid()
 
-            const items = [
-                {
-                    style: itemStyle,
-                    lines: parsedLines.map((line) => {
-                        const parsedLine: { align: string; text: { style: string; value: string }[]; chords?: Chords[] } = {
-                            align: "",
-                            text: [{ style: "", value: line.text }]
-                        }
-                        if (line.chords?.length) parsedLine.chords = line.chords
-                        return parsedLine
-                    })
+        const items = [
+            {
+                style: itemStyle,
+                lines: parsedLines.map((line) => {
+                    const parsedLine: { align: string; text: { style: string; value: string }[]; chords?: Chords[] } = {
+                        align: "",
+                        text: [{ style: "", value: line.text }]
+                    }
+                    if (line.chords?.length) parsedLine.chords = line.chords
+                    return parsedLine
+                })
 
-                }
-            ]
-
-            slides[slideId] = {
-                group: section.label,
-                globalGroup: section.label.toLowerCase(),
-                color: null,
-                settings: {},
-                notes: "",
-                items
             }
-            layoutSlides.push({ id: slideId })
+        ]
+
+        slides[slideId] = {
+            group: section.label,
+            globalGroup: section.label.toLowerCase(),
+            color: null,
+            settings: {},
+            notes: "",
+            items
         }
+        layoutSlides.push({ id: slideId })
     })
 
     const title = SONG_DATA.attributes.title || ""
