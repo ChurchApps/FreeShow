@@ -528,13 +528,13 @@ function extractRepeatDelimiters(line: string): RepeatDelimiterData {
     let repeatStartCount: number | undefined
     let repeatEndCount: number | undefined
 
-    const startMatch = cleanLine.match(/^(\s*)(\/{2,})(?=\s|$)/)
+    const startMatch = cleanLine.match(/^(\s*)(\/{2,})/)
     if (startMatch) {
         repeatStartCount = getRepeatMarkerCount(startMatch[2])
         cleanLine = cleanLine.slice(startMatch[0].length)
     }
 
-    const endMatch = cleanLine.match(/(?:(?<=\s)|^)(\/{2,})(\s*)$/)
+    const endMatch = cleanLine.match(/(\/{2,})(\s*)$/)
     if (endMatch) {
         repeatEndCount = getRepeatMarkerCount(endMatch[1])
         cleanLine = cleanLine.slice(0, cleanLine.length - endMatch[0].length)
@@ -731,6 +731,36 @@ function appendRepeatedBlock(targetLines: ParsedSectionLine[], repeatConfig: Rep
     }
 }
 
+function getWholeSectionRepeatCount(lines: ParsedSectionLine[]): number {
+    let activeRepeatCount: number | null = null
+    let wholeSectionRepeatCount = 1
+    let hasRepeatMarkers = false
+    let hasContentOutsideRepeat = false
+
+    lines.forEach((line) => {
+        if (line.repeatStartCount && activeRepeatCount === null) {
+            activeRepeatCount = line.repeatStartCount
+            wholeSectionRepeatCount = Math.max(wholeSectionRepeatCount, line.repeatStartCount)
+            hasRepeatMarkers = true
+        }
+
+        if (line.text.trim() && !line.hidden && activeRepeatCount === null) {
+            hasContentOutsideRepeat = true
+        }
+
+        if (line.repeatEndCount && activeRepeatCount !== null) {
+            wholeSectionRepeatCount = Math.max(wholeSectionRepeatCount, activeRepeatCount, line.repeatEndCount)
+            activeRepeatCount = null
+        }
+    })
+
+    if (activeRepeatCount !== null) {
+        wholeSectionRepeatCount = Math.max(wholeSectionRepeatCount, activeRepeatCount)
+    }
+
+    return hasRepeatMarkers && !hasContentOutsideRepeat ? wholeSectionRepeatCount : 1
+}
+
 function expandRepeatedSectionLines(lines: ParsedSectionLine[]): ParsedSectionLine[] {
     const expandedLines: ParsedSectionLine[] = []
     let activeRepeat: RepeatConfig | null = null
@@ -842,37 +872,44 @@ function getShow(SONG_DATA: any, SONG: any, SECTIONS: any[]) {
     const slides: { [key: string]: Slide } = {}
     const layoutSlides: SlideData[] = []
     SECTIONS.forEach((section) => {
-        const parsedLines = expandRepeatedSectionLines(parseSectionLines(section.lyrics || ""))
+        const sectionLines = parseSectionLines(section.lyrics || "")
+        const wholeSectionRepeatCount = getWholeSectionRepeatCount(sectionLines)
+        const parsedLines =
+            wholeSectionRepeatCount > 1
+                ? sectionLines.filter((line) => !line.hidden)
+                : expandRepeatedSectionLines(sectionLines)
 
         // Skip sections with no lyrics content
         if (!parsedLines.some((line) => line.text.trim())) return
 
-        const slideId = uid()
+        for (let repeatIndex = 0; repeatIndex < wholeSectionRepeatCount; repeatIndex++) {
+            const slideId = uid()
 
-        const items = [
-            {
-                style: itemStyle,
-                lines: parsedLines.map((line) => {
-                    const parsedLine: { align: string; text: { style: string; value: string }[]; chords?: Chords[] } = {
-                        align: "",
-                        text: [{ style: "", value: line.text }]
-                    }
-                    if (line.chords?.length) parsedLine.chords = line.chords
-                    return parsedLine
-                })
+            const items = [
+                {
+                    style: itemStyle,
+                    lines: parsedLines.map((line) => {
+                        const parsedLine: { align: string; text: { style: string; value: string }[]; chords?: Chords[] } = {
+                            align: "",
+                            text: [{ style: "", value: line.text }]
+                        }
+                        if (line.chords?.length) parsedLine.chords = line.chords
+                        return parsedLine
+                    })
 
+                }
+            ]
+
+            slides[slideId] = {
+                group: section.label,
+                globalGroup: section.label.toLowerCase(),
+                color: null,
+                settings: {},
+                notes: "",
+                items
             }
-        ]
-
-        slides[slideId] = {
-            group: section.label,
-            globalGroup: section.label.toLowerCase(),
-            color: null,
-            settings: {},
-            notes: "",
-            items
+            layoutSlides.push({ id: slideId })
         }
-        layoutSlides.push({ id: slideId })
     })
 
     const title = SONG_DATA.attributes.title || ""
