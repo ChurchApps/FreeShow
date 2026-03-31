@@ -18,6 +18,9 @@ test.describe("Planning Center song keywords", () => {
     })
 
     test("filters Planning Center keyword lines out of imported lyrics", () => {
-        expect(filterPlanningCenterKeywordLines("Verse line 1\r\nLINE_BREAK\r\nTRANSPOSE KEY + 2\r\nCOLUMN_BREAK\r\nVerse line 2\r\nPAGE_BREAK")).toBe("Verse line 1\nVerse line 2")
+        const inputWithKeywords = "Verse line 1\r\nLINE_BREAK\r\nTRANSPOSE KEY + 2\r\nCOLUMN_BREAK\r\nVerse line 2\r\nPAGE_BREAK"
+        const expectedFilteredOutput = "Verse line 1\nVerse line 2"
+
+        expect(filterPlanningCenterKeywordLines(inputWithKeywords)).toBe(expectedFilteredOutput)
     })
 })

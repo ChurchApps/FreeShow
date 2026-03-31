@@ -2,14 +2,14 @@ export function isColumnBreakLine(line: string): boolean {
     return line.trim().toUpperCase() === "COLUMN_BREAK"
 }
 
-const planningCenterKeywordLinePatterns = [/^[A-Z]+_(?:BREAK|BRAKE)$/i, /^TRANSPOSE(?:\s+KEY)?(?:\s*[+-]\s*\d+)?$/i]
+const KEYWORD_PATTERNS = [/^[A-Z]+_(?:BREAK|BRAKE)$/i, /^TRANSPOSE(?:\s+KEY)?(?:\s*[+-]\s*\d+)?$/i]
 
 export function isPlanningCenterKeywordLine(line: string): boolean {
     const trimmed = line.trim()
     if (!trimmed) return false
     if (isColumnBreakLine(trimmed)) return true
 
-    return planningCenterKeywordLinePatterns.some((pattern) => pattern.test(trimmed))
+    return KEYWORD_PATTERNS.some((pattern) => pattern.test(trimmed))
 }
 
 export function normalizeLineBreaks(text: string): string {
