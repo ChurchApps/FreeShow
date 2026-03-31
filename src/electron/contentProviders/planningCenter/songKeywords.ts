@@ -2,7 +2,7 @@ export function isColumnBreakLine(line: string): boolean {
     return line.trim().toUpperCase() === "COLUMN_BREAK"
 }
 
-const KEYWORD_PATTERNS = [/^[A-Z]+_(?:BREAK|BRAKE)$/i, /^TRANSPOSE(?:\s+KEY)?(?:\s*[+-]\s*\d+)?$/i]
+const KEYWORD_PATTERNS = [/^[A-Z]+_(?:BREAK|BRAKE)$/i, /^SECTION(?:[\s_]+HEADING)?$/i, /^(?:TRANSPOSE|REDEFINE)(?:\s+KEY)?(?:\s*[+-]\s*\d+)?$/i]
 
 export function isPlanningCenterKeywordLine(line: string): boolean {
     const trimmed = line.trim()
