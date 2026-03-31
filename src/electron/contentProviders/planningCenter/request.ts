@@ -15,6 +15,7 @@ import { sendToMain } from "../../IPC/main"
 import { getDataFolderPath } from "../../utils/files"
 import { httpsRequest } from "../../utils/requests"
 import { PCO_API_URL, pcoConnect, type PCOScopes } from "./connect"
+import { filterPlanningCenterKeywordLines, isPlanningCenterKeywordLine } from "./songKeywords"
 
 const PCO_API_version = 2
 
@@ -56,10 +57,6 @@ type SectionSourceLine = RepeatDelimiterData & {
 
 const chordTokenRegex = /^[A-G](?:#|b)?(?:m|maj|min|sus|add|aug|dim)?\d*(?:\/[A-G](?:#|b)?)?$/i
 
-function isColumnBreakLine(line: string): boolean {
-    return line.trim().toUpperCase() === "COLUMN_BREAK"
-}
-
 function isChordProgressionLine(line: string): boolean {
     const trimmed = line.trim()
     if (!trimmed) return false
@@ -73,7 +70,10 @@ function isChordProgressionLine(line: string): boolean {
     let chordCount = 0
     for (const rawToken of tokens) {
         // Strip trailing punctuation, then strip surrounding parentheses used as grouping markers
-        const token = rawToken.replace(/[.,;:]+$/, "").replace(/^\(+/, "").replace(/\)+$/, "")
+        const token = rawToken
+            .replace(/[.,;:]+$/, "")
+            .replace(/^\(+/, "")
+            .replace(/\)+$/, "")
 
         // Token was composed entirely of parentheses (grouping markers like a lone "(" or ")")
         if (!token) continue
@@ -102,7 +102,7 @@ function parseChordChartIntoSections(chordChart: string): SongSection[] {
     for (const line of lines) {
         const trimmed = line.trim()
 
-        if (isColumnBreakLine(trimmed)) continue
+        if (isPlanningCenterKeywordLine(trimmed)) continue
 
         // Detect section headers (VERSE, CHORUS, BRIDGE, etc.)
         // Order matters: longer patterns first (PRECORO before PRE, INSTRUMENTAL before INTRO)
@@ -441,12 +441,12 @@ function getOrderedSections(sections: SongSection[], sequence: any[]): SongSecti
     // Reorder sections according to the arrangement sequence
     // Create a comprehensive section map with multiple keys for flexible matching
     const sectionMap: { [key: string]: SongSection } = {}
-    
+
     sections.forEach((section) => {
         const lowerLabel = section.label.toLowerCase()
         const normalizedLabel = lowerLabel.replace(/\s+/g, " ").trim()
         const nospaceLabel = normalizedLabel.replace(/\s+/g, "")
-        
+
         // Store by all possible variations
         sectionMap[section.label] = section
         sectionMap[lowerLabel] = section
@@ -456,19 +456,17 @@ function getOrderedSections(sections: SongSection[], sequence: any[]): SongSecti
 
     const orderedSections: SongSection[] = []
     const notFoundLabels: Set<string> = new Set()
-    
+
     sequence.forEach((label) => {
         const normalizedSeqLabel = String(label).toLowerCase().replace(/\s+/g, " ").trim()
         const nospaceSeqLabel = normalizedSeqLabel.replace(/\s+/g, "")
-        
+
         // Try to find matching section with multiple strategies
-        let foundSection = sectionMap[label] ||
-                          sectionMap[normalizedSeqLabel] ||
-                          sectionMap[nospaceSeqLabel]
-        
+        let foundSection = sectionMap[label] || sectionMap[normalizedSeqLabel] || sectionMap[nospaceSeqLabel]
+
         // Try flexible matching for variations like "PRECORO 2" vs "PRECORO2"
         if (!foundSection) {
-            const matchedKey = Object.keys(sectionMap).find(key => {
+            const matchedKey = Object.keys(sectionMap).find((key) => {
                 const keyNormalized = key.toLowerCase().replace(/\s+/g, "")
                 return keyNormalized === nospaceSeqLabel
             })
@@ -476,14 +474,13 @@ function getOrderedSections(sections: SongSection[], sequence: any[]): SongSecti
                 foundSection = sectionMap[matchedKey]
             }
         }
-        
+
         // Try partial match (useful for variations)
         if (!foundSection) {
-            const matchedKey = Object.keys(sectionMap).find(key => {
+            const matchedKey = Object.keys(sectionMap).find((key) => {
                 const keyLower = key.toLowerCase()
                 const labelLower = label.toLowerCase()
-                return keyLower.startsWith(labelLower) || 
-                       labelLower.startsWith(keyLower)
+                return keyLower.startsWith(labelLower) || labelLower.startsWith(keyLower)
             })
             if (matchedKey) {
                 foundSection = sectionMap[matchedKey]
@@ -499,7 +496,7 @@ function getOrderedSections(sections: SongSection[], sequence: any[]): SongSecti
     })
 
     if (notFoundLabels.size > 0) {
-        const availableSections = Array.from(new Set(sections.map(s => s.label))).join(", ")
+        const availableSections = Array.from(new Set(sections.map((s) => s.label))).join(", ")
         console.warn(`Planning Center: Could not find sections for sequence labels: ${Array.from(notFoundLabels).join(", ")}. Available sections: ${availableSections}`)
     }
 
@@ -509,13 +506,8 @@ function getOrderedSections(sections: SongSection[], sequence: any[]): SongSecti
 function normalizeSongSection(section: SongSection): SongSection {
     return {
         ...section,
-        lyrics: normalizeLineBreaks(section.lyrics)
+        lyrics: filterPlanningCenterKeywordLines(section.lyrics)
     }
-}
-
-function normalizeLineBreaks(text: string): string {
-    // Normalize different line break formats to consistent \n
-    return text.replace(/\n\r/g, "\n").replace(/\r\n/g, "\n").replace(/\r/g, "\n")
 }
 
 function getRepeatMarkerCount(value: string): number | undefined {
@@ -657,25 +649,25 @@ function alignChordsToLyricLine(chords: Chords[], rawLyricLine: string, sectionB
 }
 
 function parseSectionLines(lyrics: string): ParsedSectionLine[] {
-    const sourceLines = normalizeLineBreaks(lyrics)
-        .split("\n")
-        .filter((line) => !isColumnBreakLine(line))
-        .map(toSectionSourceLine)
+    const sourceLines = filterPlanningCenterKeywordLines(lyrics).split("\n").map(toSectionSourceLine)
 
     // Planning Center often includes a common left indent in chord-only lines.
     // Remove that shared baseline so chord positions match lyric content columns.
-    const sectionBaseOffset = sourceLines.reduce((minOffset, entry, i) => {
-        const line = entry.line
-        const lineChords = getChordLineData(line)
-        if (!lineChords?.length || i + 1 >= sourceLines.length) return minOffset
+    const sectionBaseOffset = sourceLines.reduce(
+        (minOffset, entry, i) => {
+            const line = entry.line
+            const lineChords = getChordLineData(line)
+            if (!lineChords?.length || i + 1 >= sourceLines.length) return minOffset
 
-        const nextLine = sourceLines[i + 1].line
-        if (!canAlignChordLineWithLyricLine(nextLine)) return minOffset
+            const nextLine = sourceLines[i + 1].line
+            if (!canAlignChordLineWithLyricLine(nextLine)) return minOffset
 
-        const firstChordPos = lineChords[0].pos
-        if (minOffset === null) return firstChordPos
-        return Math.min(minOffset, firstChordPos)
-    }, null as number | null)
+            const firstChordPos = lineChords[0].pos
+            if (minOffset === null) return firstChordPos
+            return Math.min(minOffset, firstChordPos)
+        },
+        null as number | null
+    )
 
     const parsedLines: ParsedSectionLine[] = []
 
@@ -874,10 +866,7 @@ function getShow(SONG_DATA: any, SONG: any, SECTIONS: any[]) {
     SECTIONS.forEach((section) => {
         const sectionLines = parseSectionLines(section.lyrics || "")
         const wholeSectionRepeatCount = getWholeSectionRepeatCount(sectionLines)
-        const parsedLines =
-            wholeSectionRepeatCount > 1
-                ? sectionLines.filter((line) => !line.hidden)
-                : expandRepeatedSectionLines(sectionLines)
+        const parsedLines = wholeSectionRepeatCount > 1 ? sectionLines.filter((line) => !line.hidden) : expandRepeatedSectionLines(sectionLines)
 
         // Skip sections with no lyrics content
         if (!parsedLines.some((line) => line.text.trim())) return
@@ -896,7 +885,6 @@ function getShow(SONG_DATA: any, SONG: any, SECTIONS: any[]) {
                         if (line.chords?.length) parsedLine.chords = line.chords
                         return parsedLine
                     })
-
                 }
             ]
 
