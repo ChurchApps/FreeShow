@@ -860,7 +860,8 @@
     "timeline": {
         "toggle_timeline": "Toggle timeline",
         "start_time": "Start time",
-        "add_keyframe": "Add keyframe"
+        "add_keyframe": "Add keyframe",
+        "toggle_curve_editor": "Toggle curve editor"
     },
     "animate": {
         "change": "Change",
