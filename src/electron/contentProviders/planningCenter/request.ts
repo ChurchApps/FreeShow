@@ -553,9 +553,17 @@ function toSectionSourceLine(line: string): SectionSourceLine {
     }
 }
 
+function addRepeatMarkers(source: SectionSourceLine, text: string): string {
+    if (source.markerOnly) return text
+    const startMarker = source.repeatStartCount ? "/".repeat(source.repeatStartCount) : ""
+    const endMarker = source.repeatEndCount ? "/".repeat(source.repeatEndCount) : ""
+    if (!startMarker && !endMarker) return text
+    return `${startMarker}${text}${endMarker}`
+}
+
 function toParsedSectionLine(source: SectionSourceLine, overrides: Partial<ParsedSectionLine> = {}): ParsedSectionLine {
     return {
-        text: source.line.trim(),
+        text: addRepeatMarkers(source, source.line.trim()),
         repeatStartCount: source.repeatStartCount,
         repeatEndCount: source.repeatEndCount,
         hidden: source.markerOnly,
@@ -694,7 +702,7 @@ function parseSectionLines(lyrics: string): ParsedSectionLine[] {
 
         const inline = parseInlineBracketLine(currentLine)
         if (inline && inline.text.trim()) {
-            parsedLines.push(toParsedSectionLine(currentEntry, { text: inline.text.trim(), chords: inline.chords, hidden: false }))
+            parsedLines.push(toParsedSectionLine(currentEntry, { text: addRepeatMarkers(currentEntry, inline.text.trim()), chords: inline.chords, hidden: false }))
             continue
         }
 
@@ -704,7 +712,7 @@ function parseSectionLines(lyrics: string): ParsedSectionLine[] {
             const nextLine = nextEntry.line
             if (canAlignChordLineWithLyricLine(nextLine)) {
                 const alignedLine = alignChordsToLyricLine(chordLineData, nextLine, sectionBaseOffset || 0)
-                parsedLines.push(toParsedSectionLine(nextEntry, { text: alignedLine.text, chords: alignedLine.chords }))
+                parsedLines.push(toParsedSectionLine(nextEntry, { text: addRepeatMarkers(nextEntry, alignedLine.text), chords: alignedLine.chords }))
                 i++
                 continue
             }
