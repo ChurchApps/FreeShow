@@ -12,6 +12,8 @@
     import Icon from "../helpers/Icon.svelte"
     import FloatingInputs from "../input/FloatingInputs.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
+    import { getActionEasing, getSegmentCurve, getSegmentCurvePoints, toStoredActionEasing } from "./easingHelper"
+    import type { EasingHandles } from "./easingHelper"
     import { ShowTimeline } from "./ShowTimeline"
     import { formatTime, getActionsAtPosition, getProjectShowDurations, getTickInterval, getTimelineSections, parseTime, TIMELINE_SECTION_GAP, TIMELINE_SECTION_HEIGHT, TIMELINE_SECTION_TOP, timelineSections, timelineZoom } from "./timeline"
     import { TimelineActions, type TimelineType } from "./TimelineActions"
@@ -695,26 +697,16 @@
 
     let easingActive: number | null = null
 
-    // WIP move out into seperate class
     // --- Cubic Bezier Easing Points Calculation ---
     interface EasingPoint {
         id: string
         x: number
         y: number
         action: TimelineAction
-        selected: boolean
     }
 
-    interface EasingCurve {
-        // Relative positions (0-1) between p1 and p2
-        t1: number // 0-1, relative time between p1 and p2
-        v1: number // 0-1, relative value between p1 and p2
-        t2: number
-        v2: number
-    }
     let points: EasingPoint[] = []
-    let easingCurves: EasingCurve[] = []
-    let easingCurvesPx: { x1: number; y1: number; x2: number; y2: number }[] = []
+    let easingCurvesPx: EasingHandles[] = []
     $: if (easingActive !== null && type === "slide" && groupedActions && groupedActions[easingActive]) {
         const minValue = Math.min(...groupedActions[easingActive].map((a) => (typeof a.data?.value === "number" ? a.data.value : Infinity)))
         const maxValue = Math.max(...groupedActions[easingActive].map((a) => (typeof a.data?.value === "number" ? a.data.value : -Infinity)))
@@ -732,56 +724,20 @@
                     id: action.id,
                     x: (action.time / 1000) * zoomLevel,
                     y: top,
-                    action: action,
-                    selected: selectedActionIds.includes(action.id)
+                    action: action
                 } as EasingPoint
             })
             .filter((p): p is EasingPoint => p !== null)
             .sort((a, b) => a.action.time - b.action.time)
 
-        // Initialize or update control points for each segment (relative), store in action.easing
-        easingCurves = []
-        for (let i = 0; i < points.length - 1; i++) {
-            // For segment from points[i] to points[i+1]:
-            // - t2/v2 (out) is stored in points[i].action.easing
-            // - t1/v1 (in) is stored in points[i+1].action.easing
-            let out = points[i].action.easing
-            let inn = points[i + 1].action.easing
-            // Always provide all four properties for type safety
-            // Ease-in-out: t1=0.42,v1=0, t2=0.58,v2=1
-            const safeOut = {
-                t1: typeof out !== "undefined" && typeof out.t1 === "number" ? out.t1 : 0.42,
-                v1: typeof out !== "undefined" && typeof out.v1 === "number" ? out.v1 : 0,
-                t2: typeof out !== "undefined" && typeof out.t2 === "number" ? out.t2 : 0.58,
-                v2: typeof out !== "undefined" && typeof out.v2 === "number" ? out.v2 : 1
-            }
-            const safeInn = {
-                t1: typeof inn !== "undefined" && typeof inn.t1 === "number" ? inn.t1 : 0.42,
-                v1: typeof inn !== "undefined" && typeof inn.v1 === "number" ? inn.v1 : 0,
-                t2: typeof inn !== "undefined" && typeof inn.t2 === "number" ? inn.t2 : 0.58,
-                v2: typeof inn !== "undefined" && typeof inn.v2 === "number" ? inn.v2 : 1
-            }
-            easingCurves.push({
-                t1: safeInn.t1,
-                v1: safeInn.v1,
-                t2: safeOut.t2,
-                v2: safeOut.v2
-            })
-        }
-
         // Calculate pixel positions for control points based on current zoom/value
         easingCurvesPx = points.slice(0, -1).map((p1, i) => {
             const p2 = points[i + 1]
-            const curve = easingCurves[i]
-            const x1 = p1.x + (p2.x - p1.x) * curve.t1
-            const y1 = p1.y + (p2.y - p1.y) * curve.v1
-            const x2 = p1.x + (p2.x - p1.x) * curve.t2
-            const y2 = p1.y + (p2.y - p1.y) * curve.v2
-            return { x1, y1, x2, y2 }
+            const curve = getSegmentCurve(p1.action, p2.action)
+            return getSegmentCurvePoints(p1, p2, curve)
         })
     } else {
         points = []
-        easingCurves = []
         easingCurvesPx = []
     }
 
@@ -789,6 +745,12 @@
     let draggingCurveIndex: number | null = null
     let draggingPin: 1 | 2 | null = null
     let dragCurveOffset = { x: 0, y: 0 }
+
+    const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value))
+
+    function updateStoredEasing(action: TimelineAction, updater: (easing: EasingHandles) => EasingHandles) {
+        action.easing = toStoredActionEasing(updater(getActionEasing(action)))
+    }
 
     function startCurvePinDrag(e: MouseEvent, curveIndex: number, pin: 1 | 2) {
         e.stopPropagation()
@@ -812,26 +774,23 @@
         const dt = p2.x - p1.x || 1
         const dv = p2.y - p1.y || 1
         if (pin === 1) {
-            // Update t1/v1 (in) on p2.action.easing
-            let easing = p2.action.easing || { t1: 0.42, v1: 0, t2: 0.58, v2: 1 }
-            p2.action.easing = {
-                t1: Math.max(0, Math.min(1, (typeof easing.t1 === "number" ? easing.t1 : 0.42) + dx / dt)),
-                v1: Math.max(-2, Math.min(2, (typeof easing.v1 === "number" ? easing.v1 : 0) + dy / dv)),
-                t2: typeof easing.t2 === "number" ? easing.t2 : 0.58,
-                v2: typeof easing.v2 === "number" ? easing.v2 : 1
-            }
+            // Update the incoming handle on the current keyframe.
+            updateStoredEasing(p2.action, (easing) => ({
+                x1: clamp(easing.x1 + dx / dt, 0, 1),
+                y1: clamp(easing.y1 + dy / dv, -2, 2),
+                x2: easing.x2,
+                y2: easing.y2
+            }))
         } else {
-            // Update t2/v2 (out) on p1.action.easing
-            let easing = p1.action.easing || { t1: 0.42, v1: 0, t2: 0.58, v2: 1 }
-            p1.action.easing = {
-                t1: typeof easing.t1 === "number" ? easing.t1 : 0.42,
-                v1: typeof easing.v1 === "number" ? easing.v1 : 0,
-                t2: Math.max(0, Math.min(1, (typeof easing.t2 === "number" ? easing.t2 : 0.58) + dx / dt)),
-                v2: Math.max(-2, Math.min(2, (typeof easing.v2 === "number" ? easing.v2 : 1) + dy / dv))
-            }
+            // Update the outgoing handle on the current keyframe.
+            updateStoredEasing(p1.action, (easing) => ({
+                x1: easing.x1,
+                y1: easing.y1,
+                x2: clamp(easing.x2 + dx / dt, 0, 1),
+                y2: clamp(easing.y2 + dy / dv, -2, 2)
+            }))
         }
-        // Force Svelte to update
-        easingCurves = [...easingCurves]
+        actions = [...actions]
     }
 
     function endCurvePinDrag() {
@@ -844,26 +803,22 @@
     function setCurvePinLinear(i: number, pin: 1 | 2) {
         if (!points[i]) return
         const p = points[i]
-        const old = p.action.easing || {}
         if (pin === 1) {
-            // Set in handle (t1/v1) on current action
-            p.action.easing = {
-                t1: 0.5,
-                v1: 0,
-                t2: typeof old.t2 === "number" ? old.t2 : 0.58,
-                v2: typeof old.v2 === "number" ? old.v2 : 1
-            }
+            // Reset the incoming handle onto the segment diagonal for a 45-degree linear angle.
+            updateStoredEasing(p.action, (easing) => ({ x1: 0.5, y1: 0.5, x2: easing.x2, y2: easing.y2 }))
         } else if (pin === 2) {
-            // Set out handle (t2/v2) on current action
-            p.action.easing = {
-                t1: typeof old.t1 === "number" ? old.t1 : 0.42,
-                v1: typeof old.v1 === "number" ? old.v1 : 0,
-                t2: 0.5,
-                v2: 0
-            }
+            // Reset the outgoing handle onto the segment diagonal for a 45-degree linear angle.
+            updateStoredEasing(p.action, (easing) => ({ x1: easing.x1, y1: easing.y1, x2: 0.5, y2: 0.5 }))
         }
         actions = [...actions]
-        easingCurves = [...easingCurves]
+    }
+
+    function getLineStyle(x1: number, y1: number, x2: number, y2: number): string {
+        const dx = x2 - x1
+        const dy = y2 - y1
+        const distance = Math.sqrt(dx * dx + dy * dy)
+        const angle = Math.atan2(dy, dx) * (180 / Math.PI)
+        return `position: absolute; left: ${x1}px; top: ${y1}px; width: ${distance}px; height: 1px; border-top: 1px dashed var(--secondary); transform: rotate(${angle}deg); transform-origin: 0 0; pointer-events: none; z-index: 3;`
     }
 
     const Y_OFFSET = 12
@@ -1069,7 +1024,7 @@
 
                     <!-- Easing -->
                     {#if easingActive !== null && type === "slide"}
-                        <div class="track-header easing" style="top: {TIMELINE_SECTION_TOP + easingActive * (SECTION_HEIGHT + SECTION_GAP) + SECTION_HEIGHT}px;height: 120px;width: 100%;">
+                        <div class="track-header easing" style="top: {TIMELINE_SECTION_TOP + easingActive * (SECTION_HEIGHT + SECTION_GAP) + SECTION_HEIGHT}px;height: 120px;width: 100%;" on:mousedown={() => (selectedActionIds = [])}>
                             {#if groupedActions && groupedActions[easingActive]}
                                 <!-- Calculate points for the bezier curve in a reactive statement in <script>. -->
                                 {#if points.length > 1}
@@ -1078,60 +1033,61 @@
                                             {@const p1 = p}
                                             {@const p2 = points[i + 1]}
                                             {@const px = easingCurvesPx[i]}
-                                            <path d={`M ${p1.x},${p1.y - Y_OFFSET} C ${px.x1},${px.y1} ${px.x2},${px.y2} ${p2.x},${p2.y - Y_OFFSET}`} stroke="var(--secondary)" stroke-width="2" fill="none" opacity="0.7" style="pointer-events:none;" />
-                                        {/each}
-                                        {#each points as p, i}
-                                            {#if selectedActionIds.includes(p.id)}
-                                                {#if i > 0}
-                                                    <!-- In pin for selected action (from prev) -->
-                                                    <!-- TODO: don't use prev (use itself) -->
-                                                    <line x1={easingCurvesPx[i - 1].x2} y1={easingCurvesPx[i - 1].y2 - Y_OFFSET} x2={points[i].x} y2={points[i].y - Y_OFFSET} stroke="var(--secondary)" stroke-width="1" stroke-dasharray="3 2" />
-                                                    <circle
-                                                        cx={easingCurvesPx[i - 1].x2}
-                                                        cy={easingCurvesPx[i - 1].y2 - Y_OFFSET}
-                                                        r="4"
-                                                        fill="var(--secondary-opacity)"
-                                                        style="cursor:pointer;"
-                                                        on:mousedown={(e) => {
-                                                            if (e.button === 1) {
-                                                                console.log("mousedown in pin (in)", i, 1)
-                                                                e.preventDefault()
-                                                                e.stopPropagation()
-                                                                setCurvePinLinear(i, 1)
-                                                            } else if (e.button === 0) {
-                                                                startCurvePinDrag(e, i - 1, 2)
-                                                            }
-                                                        }}
-                                                    />
-                                                {/if}
-                                                {#if i < points.length - 1}
-                                                    <!-- Out pin for selected action (to next) -->
-                                                    <line x1={easingCurvesPx[i].x1} y1={easingCurvesPx[i].y1 - Y_OFFSET} x2={points[i].x} y2={points[i].y - Y_OFFSET} stroke="var(--secondary)" stroke-width="1" stroke-dasharray="3 2" />
-                                                    <circle
-                                                        cx={easingCurvesPx[i].x1}
-                                                        cy={easingCurvesPx[i].y1 - Y_OFFSET}
-                                                        r="4"
-                                                        fill="var(--secondary)"
-                                                        style="cursor:pointer;"
-                                                        on:mousedown={(e) => {
-                                                            if (e.button === 1) {
-                                                                console.log("mousedown in pin (out)", i, 1)
-                                                                e.preventDefault()
-                                                                e.stopPropagation()
-                                                                setCurvePinLinear(i, 1)
-                                                            } else if (e.button === 0) {
-                                                                startCurvePinDrag(e, i, 1)
-                                                            }
-                                                        }}
-                                                    />
-                                                {/if}
-                                            {/if}
+                                            <path d={`M ${p1.x},${p1.y - Y_OFFSET} C ${px.x1},${px.y1 - Y_OFFSET} ${px.x2},${px.y2 - Y_OFFSET} ${p2.x},${p2.y - Y_OFFSET}`} stroke="var(--secondary)" stroke-width="2" fill="none" opacity="0.7" style="pointer-events:none;" />
                                         {/each}
                                     </svg>
+
+                                    <!-- Dashed lines connecting points to handles (rendered as HTML divs to allow overflow) -->
+                                    {#each points as p, i}
+                                        {#if selectedActionIds.includes(p.id)}
+                                            {#if i > 0}
+                                                <div class="easing-line" style={getLineStyle(easingCurvesPx[i - 1].x2, easingCurvesPx[i - 1].y2 - Y_OFFSET, points[i].x, points[i].y - Y_OFFSET)} />
+                                            {/if}
+                                            {#if i < points.length - 1}
+                                                <div class="easing-line" style={getLineStyle(easingCurvesPx[i].x1, easingCurvesPx[i].y1 - Y_OFFSET, points[i].x, points[i].y - Y_OFFSET)} />
+                                            {/if}
+                                        {/if}
+                                    {/each}
+
+                                    <!-- Control point circles rendered as HTML divs to allow overflow -->
+                                    {#each points as p, i}
+                                        {#if selectedActionIds.includes(p.id)}
+                                            {#if i > 0}
+                                                <div
+                                                    class="easing-control-point"
+                                                    style="left: {easingCurvesPx[i - 1].x2}px; top: {easingCurvesPx[i - 1].y2 - Y_OFFSET}px;"
+                                                    on:mousedown={(e) => {
+                                                        if (e.button === 1) {
+                                                            e.preventDefault()
+                                                            e.stopPropagation()
+                                                            setCurvePinLinear(i, 1)
+                                                        } else if (e.button === 0) {
+                                                            startCurvePinDrag(e, i - 1, 1)
+                                                        }
+                                                    }}
+                                                />
+                                            {/if}
+                                            {#if i < points.length - 1}
+                                                <div
+                                                    class="easing-control-point"
+                                                    style="left: {easingCurvesPx[i].x1}px; top: {easingCurvesPx[i].y1 - Y_OFFSET}px;"
+                                                    on:mousedown={(e) => {
+                                                        if (e.button === 1) {
+                                                            e.preventDefault()
+                                                            e.stopPropagation()
+                                                            setCurvePinLinear(i, 2)
+                                                        } else if (e.button === 0) {
+                                                            startCurvePinDrag(e, i, 2)
+                                                        }
+                                                    }}
+                                                />
+                                            {/if}
+                                        {/if}
+                                    {/each}
                                 {/if}
 
                                 {#each points as p}
-                                    <div class="action-marker {p.action.type} context #timeline_node" class:selected={selectedActionIds.includes(p.action.id)} style="left: {p.x}px;top: {p.y}px;transform: translate(-50%, -50%);" data-title="{formatTime(p.action.time, type, $timelineStore)}: {p.action.name}" on:mousedown|stopPropagation={(e) => startActionDrag(e, p.action.id)}>
+                                    <div class="action-marker {p.action.type} context #timeline_node" class:selected={selectedActionIds.includes(p.action.id)} style="left: {p.x}px;top: {p.y}px;transform: translate(-50%, -50%);" on:mousedown|stopPropagation={(e) => startActionDrag(e, p.action.id)}>
                                         <div class="action-head">
                                             {#if p.action.type === "action"}
                                                 <Icon id={p.action.data.triggers?.length === 1 ? actionData[p.action.data.triggers[0]]?.icon : "actions"} size={0.9} white />
@@ -1371,6 +1327,23 @@
         border-top: 2px solid rgba(255, 255, 255, 0.05);
         box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
         z-index: 198;
+        overflow: visible;
+    }
+
+    .easing-control-point {
+        position: absolute;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background-color: var(--secondary);
+        cursor: pointer;
+        transform: translate(-50%, -50%);
+        z-index: 3;
+    }
+
+    .easing-line {
+        pointer-events: none;
+        z-index: 3;
     }
 
     .playhead {

@@ -6,6 +6,7 @@ import { hasNewerUpdate, triggerFunction } from "../../utils/common"
 import { translateText } from "../../utils/language"
 import { _show } from "../helpers/shows"
 import { getStyles } from "../helpers/style"
+import { evaluateTimelineCurve } from "./easingHelper"
 import { TimelineActions } from "./TimelineActions"
 import { getActiveTimelinePlayback } from "./TimelinePlayback"
 
@@ -152,33 +153,19 @@ export class SlideTimeline {
 
         const prevTime = previous?.time || 0
         const nextTime = next?.time || 0
+        if (nextTime <= prevTime) return end
 
         // calculate progress between previous and next action
         const progress = (currentTime - prevTime) / (nextTime - prevTime)
         if (progress < 0) return start
         if (progress > 1) return end
 
-        // apply easing if any
-        const easing = "ease_in_out" // "linear"
-        const easedProgress = SlideTimeline.applyEasing(progress, easing)
+        const easedProgress = evaluateTimelineCurve(progress, previous, next)
 
         if (typeof start === "number" && typeof end === "number") {
             return start + (end - start) * easedProgress
         }
 
         return end
-    }
-
-    // 0-1 value into ease wave
-    // WIP custom easing curves per action
-    private static applyEasing(value: number, easing: string) {
-        if (easing === "ease_in") {
-            return value * value
-        } else if (easing === "ease_out") {
-            return value * (2 - value)
-        } else if (easing === "ease_in_out") {
-            return value < 0.5 ? 2 * value * value : -1 + (4 - 2 * value) * value
-        }
-        return value
     }
 }
