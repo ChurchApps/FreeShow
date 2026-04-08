@@ -308,7 +308,8 @@ export const textSections: { [key: string]: EditBoxSection } = {
                     }
                 }
             ],
-            [{ id: "scrolling.speed", type: "number", value: 30, values: { label: "edit.scrolling_speed", min: 1, max: 100 } }]
+            [{ id: "scrolling.speed", type: "number", value: 30, values: { label: "edit.scrolling_speed", min: 1, max: 100 } }],
+            [{ id: "scrolling.gap", type: "number", value: 100, values: {label: "edit.gap", min: 0, max: 500}}]
         ]
     },
     special: {
