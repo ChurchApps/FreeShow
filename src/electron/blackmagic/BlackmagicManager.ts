@@ -10,21 +10,31 @@ import { bmdDisplayModes, bmdPixelFormats } from "./bmdFormats"
 import type { DeviceConfig, DeviceData } from "./TypeData"
 import { BlackmagicSender } from "./BlackmagicSender"
 
+function safeMacadamCall<T>(fallback: T, fn: () => T): T {
+    if (!macadam) return fallback
+
+    try {
+        return fn()
+    } catch (err) {
+        console.warn(`Blackmagic error: ${err instanceof Error ? err.message : String(err)}`)
+        return fallback
+    }
+}
+
 /**
  * Manages Blackmagic Design device discovery, configuration, and state
  */
 export class BlackmagicManager {
     static getFirstDeviceName(): string | undefined {
-        if (!macadam) return undefined
-        return macadam.getFirstDevice()
+        return safeMacadamCall(undefined, () => macadam.getFirstDevice())
     }
 
     static getDevices(): DeviceData[] {
-        if (!macadam) return []
-
-        let deviceInfo: any = macadam.getDeviceInfo()
-        if (typeof deviceInfo === "object") deviceInfo = Object.values(deviceInfo)
-        return deviceInfo
+        return safeMacadamCall([], () => {
+            let deviceInfo: any = macadam.getDeviceInfo()
+            if (typeof deviceInfo === "object") deviceInfo = Object.values(deviceInfo)
+            return deviceInfo
+        })
     }
 
     static getDeviceById(deviceHandle: string) {
@@ -36,23 +46,23 @@ export class BlackmagicManager {
     }
 
     static getDeviceConfig(deviceHandle: string) {
-        if (!macadam) return undefined
-
         const deviceIndex = this.getIndexById(deviceHandle)
         if (deviceIndex < 0) return undefined
 
-        const config: DeviceConfig = macadam.getDeviceConfig(deviceIndex)
-        return config
+        return safeMacadamCall(undefined, () => {
+            const config: DeviceConfig = macadam.getDeviceConfig(deviceIndex)
+            return config
+        })
     }
 
     static setDeviceConfig(deviceHandle: string, newData: DeviceConfig) {
-        if (!macadam) return false
-
         const deviceIndex = this.getIndexById(deviceHandle)
         if (deviceIndex < 0) return false
 
-        macadam.setDeviceConfig({ ...newData, deviceIndex })
-        return true
+        return safeMacadamCall(false, () => {
+            macadam.setDeviceConfig({ ...newData, deviceIndex })
+            return true
+        })
     }
 
     static getDisplayMode(displayModeName: string) {

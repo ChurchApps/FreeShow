@@ -89,7 +89,7 @@
                 project = {
                     name: previewShow.name,
                     notes: "",
-                    created: previewShow.timestamps.created,
+                    created: previewShow.timestamps?.created || Date.now(),
                     parent: "/",
                     shows: showIds.map((id) => ({ type: "show", id }))
                 }
