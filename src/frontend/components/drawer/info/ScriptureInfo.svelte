@@ -387,7 +387,7 @@
         overflow-x: hidden;
     }
 
-    div :global(.zoomed) {
+    div.scroll :global(.zoomed) {
         height: initial !important;
     }
 

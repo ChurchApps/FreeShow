@@ -802,7 +802,6 @@
         <TextboxLines
             {item}
             {slideIndex}
-            {isMirrorItem}
             {key}
             {smallFontSize}
             {animationStyle}

@@ -6,14 +6,14 @@
     import { outputs, slidesOptions, styles, variables } from "../../stores"
     import { getItemText } from "../edit/scripts/textStyle"
     import { clone } from "../helpers/array"
-    import { getFirstActiveOutput, getOutputResolution, percentageStylePos } from "../helpers/output"
+    import { getFirstActiveOutput } from "../helpers/output"
     import { replaceDynamicValues } from "../helpers/showActions"
     import { getStyles } from "../helpers/style"
     import { applyStyleOverrides } from "./wordOverride"
 
     export let item: Item
     export let slideIndex = 0
-    export let isMirrorItem = false
+    // export let isMirrorItem = false
     export let key = false
     export let smallFontSize = false
     export let animationStyle: any = {}
@@ -21,6 +21,7 @@
     export let isStage = false
     export let customFontSize: number | null = null
     export let outputStyle: Styles | null = null
+    // export let outputId = ""
     export let ref: {
         type?: "show" | "stage" | "overlay" | "template"
         showId?: string
@@ -63,13 +64,13 @@
     let renderedLines: any[] = []
     $: renderedLines = styleOverrides?.length ? applyStyleOverrides(lines, styleOverrides) : lines
 
-    function getCustomStyle(style: string, outputId = "", _updater: any = null) {
+    function getCustomStyle(style: string) {
         if (!style) return ""
 
-        if (outputId && !isMirrorItem) {
-            let outputResolution = getOutputResolution(outputId, $outputs, true)
-            style = percentageStylePos(style, outputResolution)
-        }
+        // if (outputId && !isMirrorItem) {
+        //     const outputResolution = getOutputResolution(outputId, $outputs, true)
+        //     style = percentageStylePos(style, outputResolution)
+        // }
 
         // text gradient
 
@@ -103,8 +104,8 @@
     let contentHeight = 0
     let alignHeight = 0
 
-    $: copyCountHorizontal = contentWidth > 0 ? Math.ceil(alignWidth/(contentWidth + (item?.scrolling?.gap ?? 0))) + 2 : 2
-    $: copyCountVertical = contentHeight > 0 ? Math.ceil(alignHeight/(contentHeight + (item?.scrolling?.gap ?? 0))) + 2 : 2
+    $: copyCountHorizontal = contentWidth > 0 ? Math.ceil(alignWidth / (contentWidth + (item?.scrolling?.gap ?? 0))) + 2 : 2
+    $: copyCountVertical = contentHeight > 0 ? Math.ceil(alignHeight / (contentHeight + (item?.scrolling?.gap ?? 0))) + 2 : 2
 
     function getColor(style: string | undefined) {
         if (!isStage || !useOriginalTextColor || !style) return ""
@@ -144,21 +145,22 @@
 
     // FONT SIZE
 
-    let cssFontSize = 0
-    function getCustomFontSize(style: string, outputStyle: Styles | null) {
-        const fontSize = Number(getStyles(style, true)["font-size"] || 100)
-        cssFontSize = fontSize
+    function resolveFontSize(style: string, outputStyle: Styles | null) {
+        const baseFontSize = Number(getStyles(style, true)["font-size"] || 100) || 100
 
-        // get first output style
-        if (!outputStyle) {
+        let resolvedOutputStyle = outputStyle
+        if (!resolvedOutputStyle) {
             const currentOutput = getFirstActiveOutput()
-            outputStyle = $styles[currentOutput?.style || ""] || null
+            resolvedOutputStyle = $styles[currentOutput?.style || ""] || null
         }
-        if (!outputStyle) return ""
+        if (!resolvedOutputStyle) return baseFontSize
 
-        const customFontSizeRatio = (outputStyle.aspectRatio?.fontSizeRatio ?? 100) / 100
-        cssFontSize = fontSize * customFontSizeRatio
-        return `;font-size: ${fontSize * customFontSizeRatio}px;`
+        const customFontSizeRatio = (resolvedOutputStyle.aspectRatio?.fontSizeRatio ?? 100) / 100
+        return baseFontSize * customFontSizeRatio
+    }
+
+    function getCustomFontSize(style: string, outputStyle: Styles | null) {
+        return `;font-size: ${resolveFontSize(style, outputStyle)}px;`
     }
 
     // CHORDS
@@ -206,7 +208,12 @@
 
     // list-style${item.list?.style?.includes("disclosure") ? "-type:" : ": inside"} ${item.list?.style || "disc"};
     // font-size: inherit;
-    $: listStyle = item?.list?.enabled ? `;font-size: ${fontSize || cssFontSize || 100}px;display: list-item;list-style: inside ${item.list?.style || "disc"};` : ""
+    $: defaultResolvedFontSize = (() => {
+        const firstTextStyle = item?.lines?.[0]?.text?.[0]?.style
+        if (!firstTextStyle) return 100
+        return resolveFontSize(firstTextStyle, outputStyle)
+    })()
+    $: listStyle = item?.list?.enabled ? `;font-size: ${fontSize || defaultResolvedFontSize || 100}px;display: list-item;list-style: inside ${item.list?.style || "disc"};` : ""
 
     const dispatch = createEventDispatcher()
     const previousValue: { [key: string]: string } = {}
@@ -261,48 +268,30 @@
     })
 
     $: chordFontSize = chordLines.length ? stageItem?.chords?.size || stageItem?.chordsData?.size || item?.chords?.size || 50 : 0
-    $: chordsStyle = `--chord-size: ${chordLines.length ? (fontSize || cssFontSize || 100) * (chordFontSize / 100) : "undefined"}px;--chord-color: ${stageItem?.chords?.color || stageItem?.chordsData?.color || item?.chords?.color || "#FF851B"};`
+    $: chordsStyle = `--chord-size: ${chordLines.length ? (fontSize || defaultResolvedFontSize || 100) * (chordFontSize / 100) : "undefined"}px;--chord-color: ${stageItem?.chords?.color || stageItem?.chordsData?.color || item?.chords?.color || "#FF851B"};`
 
     // $: isScripture = ref?.id === "scripture" || ref?.showId === "temp" || $showsCache[ref.showId || ""]?.reference?.type === "scripture"
+
+    $: baseFontSize = fontSize || (style ? resolveFontSize(renderedLines[0]?.text[0]?.style, outputStyle) : 100)
 </script>
 
-<div
-    class="align"
-    class:hidden={hideContent}
-    class:isStage
-    class:scrolling={!isStage && item?.scrolling?.type}
-    style="--scrollSpeed: {item?.scrolling?.speed ?? 30}s;{style ? item?.align : null};"
-    bind:clientWidth={alignWidth}
-    bind:clientHeight={alignHeight}
->
+<div class="align" class:hidden={hideContent} class:isStage class:scrolling={!isStage && item?.scrolling?.type} style="--scrollSpeed: {item?.scrolling?.speed ?? 30}s;{style ? item?.align : null};" bind:clientWidth={alignWidth} bind:clientHeight={alignHeight}>
     {#if !isStage && item?.scrolling?.type && item?.scrolling?.type !== "none"}
-        <div 
-            class="scrollWrapper" 
-            style="--copyCountHorizontal: {copyCountHorizontal}; --copyCountVertical: {copyCountVertical};"
-            class:topBottomContinuousScrolling={!isStage && item?.scrolling?.type === "top_bottom"}
-            class:bottomTopContinuousScrolling={!isStage && item?.scrolling?.type === "bottom_top"}
-            class:leftRightContinuousScrolling={!isStage && item?.scrolling?.type === "left_right"}
-            class:rightLeftContinuousScrolling={!isStage && item?.scrolling?.type === "right_left"}           
-        >
-            {#each Array.from({length: (item?.scrolling?.type === "top_bottom" || item?.scrolling?.type === "bottom_top" ? copyCountVertical : copyCountHorizontal)}) as _}
-                <div 
-                    class="scrollContent"
-                    style="{item?.scrolling?.type === "top_bottom" || item?.scrolling?.type === "bottom_top" ? "margin-bottom" : "margin-right"}: {item?.scrolling?.gap ?? 100}px;"
-                    bind:clientHeight={contentHeight} 
-                    bind:clientWidth={contentWidth}
-                >
+        <div class="scrollWrapper" style="--copyCountHorizontal: {copyCountHorizontal}; --copyCountVertical: {copyCountVertical};" class:topBottomContinuousScrolling={!isStage && item?.scrolling?.type === "top_bottom"} class:bottomTopContinuousScrolling={!isStage && item?.scrolling?.type === "bottom_top"} class:leftRightContinuousScrolling={!isStage && item?.scrolling?.type === "left_right"} class:rightLeftContinuousScrolling={!isStage && item?.scrolling?.type === "right_left"}>
+            {#each Array.from({ length: item?.scrolling?.type === "top_bottom" || item?.scrolling?.type === "bottom_top" ? copyCountVertical : copyCountHorizontal }) as _}
+                <div class="scrollContent" style="{item?.scrolling?.type === 'top_bottom' || item?.scrolling?.type === 'bottom_top' ? 'margin-bottom' : 'margin-right'}: {item?.scrolling?.gap ?? 100}px;" bind:clientHeight={contentHeight} bind:clientWidth={contentWidth}>
                     <div class="lines" style="{style ? lineStyleBox : ''}{smallFontSize || customFontSize !== null ? '--font-size: ' + (smallFontSize ? (-1.1 * $slidesOptions.columns + 10) * 5 : customFontSize) + 'px;' : ''}{textAnimation}{chordsStyle}">
                         {#each renderedLines as line, i}
                             <!-- set div height if chords, not last line, and no text content -->
                             {@const height = chords && chordLines[i] && i < renderedLines.length - 1 && !line.text?.reduce((value, t) => (value += t.value || ""), "")?.trim()?.length ? 80 : 0}
-            
+
                             {#if (linesStart === null || linesEnd === null || (i >= linesStart && i < linesEnd)) && (!maxLines || (maxLinesInvert ? i > lines.length - maxLines - 1 : i < maxLines))}
                                 {#if chords && chordLines[i]}
                                     <div class:first={i === 0} class="break chords" class:stageChords={!!stageItem} style="--offsetY: {(stageItem?.chords ? stageItem.chords.offsetY : item?.chords?.offsetY) || 0}px;{style ? line.align : ''}">
                                         {@html chordLines[i]}
                                     </div>
                                 {/if}
-            
+
                                 <!-- class:height={!line.text[0]?.value.length} -->
                                 <div
                                     class="break"
@@ -317,9 +306,9 @@
                                         {#each line.text || [] as text, ti}
                                             {@const value = text.value?.replaceAll("\n", "<br>") || "<br>"}
                                             {@const fontRatio = text.customType?.includes("disableTemplate") && !text.customType?.includes("jw") ? customTypeRatio : 1}
-                                            <span class="textContainer" style="{style ? getCustomStyle(text.style) : ''}{getColor(text.style)}{customStyle}{text.customType?.includes('disableTemplate') ? text.style : ''}{fontSize ? `;font-size: ${fontSize * fontRatio}px;` : style ? getCustomFontSize(text.style, outputStyle) : ''}">
-                                                {@html getTextValue(value, i, ti, updateDynamic)}
-                                            </span>
+
+                                            <!-- NOTE: must be on the same line for rendering ...>{@html -->
+                                            <span class="textContainer" style="{style ? getCustomStyle(text.style) : ''}{getColor(text.style)}{customStyle}{text.customType?.includes('disableTemplate') ? text.style : ''}{fontSize ? `;font-size: ${fontSize * fontRatio}px;` : style ? getCustomFontSize(text.style, outputStyle) : ''};--base-font-size: {baseFontSize}px;">{@html getTextValue(value, i, ti, updateDynamic)}</span>
                                         {/each}
                                     {/if}
                                 </div>
@@ -356,9 +345,9 @@
                             {#each line.text || [] as text, ti}
                                 {@const value = text.value?.replaceAll("\n", "<br>") || "<br>"}
                                 {@const fontRatio = text.customType?.includes("disableTemplate") && !text.customType?.includes("jw") ? customTypeRatio : 1}
-                                <span class="textContainer" style="{style ? getCustomStyle(text.style) : ''}{getColor(text.style)}{customStyle}{text.customType?.includes('disableTemplate') ? text.style : ''}{fontSize ? `;font-size: ${fontSize * fontRatio}px;` : style ? getCustomFontSize(text.style, outputStyle) : ''}">
-                                    {@html getTextValue(value, i, ti, updateDynamic)}
-                                </span>
+
+                                <!-- NOTE: must be on the same line for rendering ...>{@html -->
+                                <span class="textContainer" style="{style ? getCustomStyle(text.style) : ''}{getColor(text.style)}{customStyle}{text.customType?.includes('disableTemplate') ? text.style : ''}{fontSize ? `;font-size: ${fontSize * fontRatio}px;` : style ? getCustomFontSize(text.style, outputStyle) : ''};--base-font-size: {baseFontSize}px;">{@html getTextValue(value, i, ti, updateDynamic)}</span>
                             {/each}
                         {/if}
                     </div>
@@ -509,58 +498,74 @@
         line-height: calc(var(--chord-size) * 1.2 + 4px) !important;
     }
 
-    .scrollWrapper{
+    .scrollWrapper {
         display: flex;
         flex-wrap: nowrap;
     }
-    .scrollContent{
+    .scrollContent {
         flex-shrink: 0;
     }
     .topBottomContinuousScrolling {
-        animation: topBottomContinuous calc(var(--scrollSpeed)/var(--copyCountVertical)) linear infinite normal;
+        animation: topBottomContinuous calc(var(--scrollSpeed) / var(--copyCountVertical)) linear infinite normal;
         flex-direction: column;
         height: max-content;
     }
     .bottomTopContinuousScrolling {
-        animation: bottomTopContinuous calc(var(--scrollSpeed)/var(--copyCountVertical)) linear infinite normal;
+        animation: bottomTopContinuous calc(var(--scrollSpeed) / var(--copyCountVertical)) linear infinite normal;
         flex-direction: column;
         height: max-content;
     }
     .leftRightContinuousScrolling {
-        animation: leftRightContinuous calc(var(--scrollSpeed)/var(--copyCountHorizontal)) linear infinite normal;
+        animation: leftRightContinuous calc(var(--scrollSpeed) / var(--copyCountHorizontal)) linear infinite normal;
         flex-direction: row;
         width: max-content;
     }
     .rightLeftContinuousScrolling {
-        animation: rightLeftContinuous calc(var(--scrollSpeed)/var(--copyCountHorizontal)) linear infinite normal;
+        animation: rightLeftContinuous calc(var(--scrollSpeed) / var(--copyCountHorizontal)) linear infinite normal;
         flex-direction: row;
         width: max-content;
     }
 
     .leftRightContinuousScrolling .break,
-    .rightLeftContinuousScrolling .break{
+    .rightLeftContinuousScrolling .break {
         white-space: nowrap;
         width: auto;
         text-wrap: none;
     }
 
     @keyframes rightLeftContinuous {
-        from {transform: translateX(0);}
-        to {transform: translateX(calc(-100% / var(--copyCountHorizontal)));}
+        from {
+            transform: translateX(0);
+        }
+        to {
+            transform: translateX(calc(-100% / var(--copyCountHorizontal)));
+        }
     }
-    
+
     @keyframes leftRightContinuous {
-        from {transform: translateX(calc(-100% / var(--copyCountHorizontal)));}
-        to {transform: translateX(0);}
+        from {
+            transform: translateX(calc(-100% / var(--copyCountHorizontal)));
+        }
+        to {
+            transform: translateX(0);
+        }
     }
 
     @keyframes bottomTopContinuous {
-        from {transform: translateY(0);}
-        to {transform: translateY(calc(-100% / var(--copyCountVertical)));}
+        from {
+            transform: translateY(0);
+        }
+        to {
+            transform: translateY(calc(-100% / var(--copyCountVertical)));
+        }
     }
 
     @keyframes topBottomContinuous {
-        from {transform: translateY(calc(-100% / var(--copyCountVertical)));}
-        to {transform: translateY(0);}
+        from {
+            transform: translateY(calc(-100% / var(--copyCountVertical)));
+        }
+        to {
+            transform: translateY(0);
+        }
     }
 </style>
