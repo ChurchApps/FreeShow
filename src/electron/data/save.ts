@@ -17,6 +17,15 @@ export async function save(data: SaveData) {
     if (isSaving) return
     isSaving = true
 
+    // auto backup right after startup does not need to write again
+    const isAutoBackupOnly = !!data.customTriggers?.backup && !!data.customTriggers?.isAutoBackup && !data.customTriggers?.autosave && !data.closeWhenFinished
+    if (isAutoBackupOnly) {
+        startBackup({ customTriggers: data.customTriggers })
+        sendToMain(ToMain.SAVE2, { closeWhenFinished: false, customTriggers: data.customTriggers })
+        isSaving = false
+        return
+    }
+
     const reset = !!data.customTriggers?.reset
     if (reset) {
         data.SETTINGS = clone(defaultSettings)

@@ -174,7 +174,7 @@ export function deleteFile(filePath: string) {
         fs.unlinkSync(filePath)
         return true
     } catch (err) {
-        actionComplete(err, "Could not delete file")
+        actionComplete(err as Error, "Could not delete file")
         return false
     }
 }
@@ -1221,6 +1221,77 @@ export function loadShows(returnShows = false, reCacheNames: string[] = []) {
         // cache text content
         const txt = getTextCacheString(show[1])
         if (txt) textCache[id] = txt
+    }
+
+    // send updated text cache
+    if (Object.keys(textCache).length) {
+        const cache = getStore("CACHE")
+        cache.text = { ...cache.text, ...textCache }
+        sendMain(Main.CACHE, cache)
+    }
+
+    if (returnShows) return newCachedShows
+
+    // save this (for cloud sync)
+    setStore(_store.SHOWS, newCachedShows)
+
+    return newCachedShows
+}
+
+export async function loadShowsAsync(returnShows = false, reCacheNames: string[] = []) {
+    const showsPath = getDataFolderPath("shows")
+
+    specialCaseFixer()
+
+    // list all shows in folder
+    const filesInFolder = readFolder(showsPath)
+        .filter((name) => name.toLowerCase().endsWith(".show"))
+        .map((name) => name.slice(0, -5)) // remove .show extension
+        .filter((trimmedName) => trimmedName) // remove files with no name
+
+    const cachedShows = getStore("SHOWS") || {}
+    const newCachedShows: TrimmedShows = {}
+    const textCache: { [key: string]: string } = {}
+
+    // create a map for quick lookup of cached shows by name
+    const cachedShowNames = new Map<string, string>()
+    for (const [id, show] of Object.entries(cachedShows)) {
+        if (show?.name && !reCacheNames.includes(show.name)) cachedShowNames.set(show.name, id)
+    }
+
+    const BATCH_SIZE = 20
+    for (let i = 0; i < filesInFolder.length; i += BATCH_SIZE) {
+        const batch = filesInFolder.slice(i, i + BATCH_SIZE)
+
+        await Promise.all(
+            batch.map(async (name) => {
+                const matchingShowId = cachedShowNames.get(name)
+                if (matchingShowId && !newCachedShows[matchingShowId]) {
+                    newCachedShows[matchingShowId] = cachedShows[matchingShowId]
+                    return
+                }
+
+                const showPath: string = path.join(showsPath, `${name}.show`)
+                const jsonData = (await readFileAsync(showPath)) || "{}"
+                const show = parseShow(jsonData)
+
+                if (!show || !show[1]) return
+
+                let id = show[0]
+                // some old duplicated shows might have the same id
+                if (newCachedShows[id]) id = uid()
+
+                const trimmedShow = trimShow({ ...show[1], name })
+                if (trimmedShow) newCachedShows[id] = trimmedShow
+
+                // cache text content
+                const txt = getTextCacheString(show[1])
+                if (txt) textCache[id] = txt
+            })
+        )
+
+        // Yield between batches so other IPC requests can be handled.
+        await new Promise((resolve) => setTimeout(resolve, 0))
     }
 
     // send updated text cache

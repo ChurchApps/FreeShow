@@ -25,7 +25,7 @@ import { closeServers, startServers, updateServerData } from "../servers"
 import { processAudioData, timecodeStart, timecodeStop, updateTimecodeValue } from "../timecode/timecode"
 import { apiReturnData, emitOSC, startWebSocketAndRest, stopApiListener } from "../utils/api"
 import { closeMain } from "../utils/close"
-import { addToMediaFolder, bundleMediaFiles, getDataFolderPath, getDataFolderRoot, getFileInfo, getMediaCodec, getMediaSyncFolderPath, getMediaTracks, getPaths, getSimularPaths, loadFile, loadShows, locateMediaFile, openInSystem, readExifData, readFile, readFolder, readFolderContent, selectFiles, selectFilesDialog, selectFolder, setMediaSyncFolderPath, writeFile } from "../utils/files"
+import { addToMediaFolder, bundleMediaFiles, getDataFolderPath, getDataFolderRoot, getFileInfo, getMediaCodec, getMediaSyncFolderPath, getMediaTracks, getPaths, getSimularPaths, loadFile, loadShowsAsync, locateMediaFile, openInSystem, readExifData, readFile, readFolder, readFolderContent, selectFiles, selectFilesDialog, selectFolder, setMediaSyncFolderPath, writeFile } from "../utils/files"
 import { getMachineId } from "../utils/helpers"
 import { LyricSearch } from "../utils/LyricSearch"
 import { closeMidiInPorts, getMidiInputs, getMidiOutputs, receiveMidi, sendMidi } from "../utils/midi"
@@ -75,7 +75,7 @@ export const mainResponses: MainResponses = {
     [Main.BIBLE]: (data) => loadScripture(data),
     [Main.SHOW]: (data) => loadShow(data),
     // MAIN
-    [Main.SHOWS]: () => loadShows(),
+    [Main.SHOWS]: (() => loadShowsAsync()) as any,
     [Main.AUTO_UPDATE]: () => checkForUpdates(),
     [Main.URL]: (data) => openURL(data),
     [Main.LANGUAGE]: (data) => setGlobalMenu(data.strings),
