@@ -93,10 +93,12 @@ export function receivedMidi(msg) {
     const action: Action = convertOldMidiToNewAction(msgAction)
     if (action.enabled === false) return
 
+    const hasindex = action.triggers?.[0]?.includes("index_") ?? false
+
     // get index
     if (!msg.values) msg.values = {}
     let index = msg.values.velocity ?? -1
-    if (action.midi?.values?.velocity !== undefined && action.midi.values.velocity < 0) index = -1
+    if (!hasindex && action.midi?.values?.velocity !== undefined && action.midi.values.velocity < 0) index = -1
 
     if (msg.type === "control") {
         index = msg.values.value || 0
@@ -112,7 +114,6 @@ export function receivedMidi(msg) {
     // some programs send note off with velocity 0 upon release/stop, these should not be detected
     if (diff_type && index === 0) return
 
-    const hasindex = action.triggers?.[0]?.includes("index_") ?? false
     if (hasindex && index < 0) {
         newToast("toast.midi_no_velocity")
         index = 0
