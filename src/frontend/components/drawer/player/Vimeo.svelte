@@ -18,7 +18,7 @@
         autopause: false,
         loop: videoData.loop,
         muted: videoData.muted,
-        color: $themes[$theme]?.colors?.secondary,
+        color: $themes[$theme]?.colors?.secondary || "#ffffff",
         controls: false
         // title: false,
         // byline: false,
