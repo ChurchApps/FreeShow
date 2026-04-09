@@ -1369,10 +1369,10 @@ export class BlackmagicSender {
     }
 
     static stop(outputId: string): boolean {
-        console.log(`Stopping Blackmagic output: ${outputId}`)
-
         const data = this.playbackData[outputId]
         if (!data) return false
+
+        console.log(`Stopping Blackmagic output: ${outputId}`)
 
         try {
             // Stop all timers immediately

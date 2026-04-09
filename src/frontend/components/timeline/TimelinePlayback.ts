@@ -136,8 +136,6 @@ export class TimelinePlayback {
     }
 
     stop() {
-        console.trace("Timeline stopped")
-
         if (activePlayback === this) {
             activePlayback = null
             isTimelinePlaying.set(false)
