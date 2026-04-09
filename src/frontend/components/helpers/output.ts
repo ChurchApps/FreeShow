@@ -189,6 +189,7 @@ export function startFolderTimer(folderPath: string, file: { type: string; path:
 
 // WIP smarter logging (based on time or based on percentage played)
 let justLogged = ""
+const MAX_USAGE_LOG_ENTRIES = 1500
 function appendShowUsage(showId: string) {
     if (!get(special).logSongUsage) return
 
@@ -212,6 +213,10 @@ function appendShowUsage(showId: string) {
             time: Date.now(),
             metadata
         })
+
+        if (a.all.length > MAX_USAGE_LOG_ENTRIES) {
+            a.all = a.all.slice(-MAX_USAGE_LOG_ENTRIES)
+        }
 
         return a
     })

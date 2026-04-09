@@ -24,26 +24,38 @@ export async function requestMain<ID extends Main, R = Awaited<MainReturnPayload
 
     // LISTENER
     let timeout: NodeJS.Timeout | null = null
+    let settled = false
+    const cleanup = () => {
+        if (timeout) clearTimeout(timeout)
+        window.api.removeListener(MAIN, listenerId)
+
+        const waitIndex = currentlyAwaiting.indexOf(listenerId)
+        if (waitIndex > -1) currentlyAwaiting.splice(waitIndex, 1)
+    }
+
     const returnData: R = await new Promise((resolve) => {
         timeout = setTimeout(() => {
-            if (get(isDev)) throw new Error(`IPC Message Timed Out: ${id}`)
+            if (settled) return
+            settled = true
+
+            if (get(isDev)) console.error(`IPC Message Timed Out: ${id}`)
+            cleanup()
+            resolve(undefined as R)
         }, waitingTimeout)
 
         window.api.receive(
             MAIN,
             (msg: MainReceiveValue, listenId: string) => {
+                if (settled) return
                 if (msg.channel !== id || listenId !== listenerId) return
 
-                if (timeout) clearTimeout(timeout)
+                settled = true
+                cleanup()
                 resolve(msg.data as R)
             },
             listenerId
         )
     })
-
-    const waitIndex = currentlyAwaiting.indexOf(listenerId)
-    if (waitIndex > -1) currentlyAwaiting.splice(waitIndex, 1)
-    window.api.removeListener(MAIN, listenerId)
 
     if (callback) callback(returnData)
     return returnData
@@ -60,7 +72,11 @@ export function sendMain<ID extends Main>(id: ID, value?: MainSendValue<ID>, lis
     window.api.send(MAIN, { channel: id, data: value }, listenerId)
 }
 
+let mainGlobalReceiverRegistered = false
 export function receiveMainGlobal() {
+    if (mainGlobalReceiverRegistered) return
+    mainGlobalReceiverRegistered = true
+
     window.api.receive(MAIN, async (msg: MainReceiveValue | ToMainReceiveValue, listenerId?: string) => {
         const id = msg.channel
         if (!Object.values({ ...Main, ...ToMain }).includes(id)) throw new Error(`Invalid channel: ${id}`)

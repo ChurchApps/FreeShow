@@ -255,7 +255,7 @@ export function historyNew(type: HistoryTypes, value: any) {
     const historyValue: HistoryNew = { version: 1, time: Date.now(), type, value }
     undoHistory.update((a) => {
         a.push(historyValue)
-        return a
+        return a.slice(-get(historyCacheCount))
     })
 }
 
@@ -281,7 +281,7 @@ export const undo = () => {
 
         redoHistory.update((rh) => {
             rh.push(lastUndo)
-            return rh
+            return rh.slice(-get(historyCacheCount))
         })
         return
     }
@@ -319,7 +319,7 @@ export const redo = () => {
             // a[a.length - 1].time = Date.now()
             lastRedo.time = Date.now()
             a.push(lastRedo)
-            return a
+            return a.slice(-get(historyCacheCount))
         })
         return
     }

@@ -48,26 +48,37 @@ export async function requestToMain<ID extends ToMain, R = Awaited<ToMainReturnP
     // LISTENER
     const waitingTimeout = timeoutMs
     let timeout: NodeJS.Timeout | null = null
+    let settled = false
+    let receive: null | ((_e: IpcMainEvent, msg: ToMainReceiveValue, listenId: string) => void) = null
+    const cleanup = () => {
+        if (timeout) clearTimeout(timeout)
+        if (receive) ipcMain.removeListener(MAIN, receive)
+
+        const waitIndex = currentlyAwaiting.indexOf(listenerId)
+        if (waitIndex > -1) currentlyAwaiting.splice(waitIndex, 1)
+    }
+
     const returnData: R | null = await new Promise((resolve) => {
         timeout = setTimeout(() => {
+            if (settled) return
+            settled = true
+
             if (!isProd) console.error(`IPC Message Timed Out: ${id}`)
-            ipcMain.removeListener(MAIN, receive)
+            cleanup()
             resolve(null)
         }, waitingTimeout)
 
-        ipcMain.on(MAIN, receive)
-
-        function receive(_e: IpcMainEvent, msg: ToMainReceiveValue, listenId: string) {
+        receive = (_e: IpcMainEvent, msg: ToMainReceiveValue, listenId: string) => {
+            if (settled) return
             if (msg.channel !== id || listenId !== listenerId) return
 
-            if (timeout) clearTimeout(timeout)
+            settled = true
+            cleanup()
             resolve(msg.data as R)
-            ipcMain.removeListener(MAIN, receive)
         }
-    })
 
-    const waitIndex = currentlyAwaiting.indexOf(listenerId)
-    if (waitIndex > -1) currentlyAwaiting.splice(waitIndex, 1)
+        ipcMain.on(MAIN, receive)
+    })
 
     if (callback) callback(returnData)
     return returnData

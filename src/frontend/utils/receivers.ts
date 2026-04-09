@@ -77,7 +77,11 @@ import { client } from "./sendData"
 import { playFolder, previewShortcuts } from "./shortcuts"
 import { restartOutputs } from "./updateSettings"
 
+let mainReceiversInitialized = false
 export function setupMainReceivers() {
+    if (mainReceiversInitialized) return
+    mainReceiversInitialized = true
+
     receiveMainGlobal()
 
     receive(OUTPUT, receiveOUTPUTasMAIN)
@@ -85,7 +89,11 @@ export function setupMainReceivers() {
     receive(CLOUD, receiveCLOUD)
 }
 
+let remoteReceiversInitialized = false
 export function remoteListen() {
+    if (remoteReceiversInitialized) return
+    remoteReceiversInitialized = true
+
     // FROM CLIENT (EXPRESS SERVERS)
     window.api.receive(REMOTE, (msg: ClientMessage) => client(REMOTE, msg))
     window.api.receive(STAGE, (msg: ClientMessage) => client(STAGE, msg))

@@ -26,6 +26,7 @@ export function runActionByName(name: string) {
     runAction(sortedActions[0])
 }
 
+const MAX_ACTION_HISTORY_ENTRIES = 200
 const loopPrevention = { actionId: "", count: 0, timeout: null as NodeJS.Timeout | null }
 export async function runAction(action, { midiIndex = -1, slideIndex = -1 } = {}, isCategoryAction = false) {
     // console.log(action)
@@ -120,6 +121,10 @@ export async function runAction(action, { midiIndex = -1, slideIndex = -1 } = {}
                 a[0].count++
             } else {
                 a.unshift(data)
+            }
+
+            if (a.length > MAX_ACTION_HISTORY_ENTRIES) {
+                a = a.slice(0, MAX_ACTION_HISTORY_ENTRIES)
             }
 
             return a

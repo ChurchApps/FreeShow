@@ -91,6 +91,7 @@ function connected(socket: Socket) {
 
 // REST
 
+let restHandlersInitialized = false
 function startRestListener(PORT: number) {
     const server = (servers.REST = app.listen(PORT, () => {
         console.info(`REST: Listening for data at port ${PORT.toString()}`)
@@ -99,6 +100,9 @@ function startRestListener(PORT: number) {
     server.once("error", (err: any) => {
         if (err.code === "EADDRINUSE") server.close()
     })
+
+    if (restHandlersInitialized) return
+    restHandlersInitialized = true
 
     app.use(express.json())
     // app.use(cors()) // if a browser should send body data (https://stackoverflow.com/a/63547498/10803046)

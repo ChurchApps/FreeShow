@@ -67,7 +67,10 @@ class CameraManager {
             if (!selectedCameraIds.includes(cameraId)) this.cleanupCamera(cameraId)
         }
 
-        if (!selectedCameraIds.length) return
+        if (!selectedCameraIds.length) {
+            this.stopKeepaliveMonitor()
+            return
+        }
 
         const camerasToWarm = allCameras.filter((camera) => selectedCameraIds.includes(camera.id))
         for (const camera of camerasToWarm) {
@@ -239,6 +242,7 @@ class CameraManager {
             this.cleanupCamera(cameraId)
         }
         this.activeCameras.clear()
+        this.stopKeepaliveMonitor()
     }
 
     private cleanupCamera(cameraId: string) {
@@ -258,6 +262,10 @@ class CameraManager {
         }
 
         this.activeCameras.delete(cameraId)
+
+        if (!this.activeCameras.size) {
+            this.stopKeepaliveMonitor()
+        }
     }
 
     stopTracks(cameraStream: MediaStream | null | undefined) {
@@ -269,6 +277,13 @@ class CameraManager {
     private startKeepaliveMonitor() {
         if (this.keepaliveInterval) return
         this.keepaliveInterval = setInterval(() => this.checkAndRestartDeadCameras(), HALF_MINUTE)
+    }
+
+    private stopKeepaliveMonitor() {
+        if (!this.keepaliveInterval) return
+
+        clearInterval(this.keepaliveInterval)
+        this.keepaliveInterval = null
     }
 
     private async checkAndRestartDeadCameras() {

@@ -35,6 +35,10 @@ contextBridge.exposeInMainWorld("api", {
             func(args, listenedId)
         }
 
+        if (id && storedReceivers[id]) {
+            ipcRenderer.removeListener(channel, storedReceivers[id])
+        }
+
         ipcRenderer.on(channel, receiver)
         if (id) storedReceivers[id] = receiver
     },

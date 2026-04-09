@@ -94,7 +94,7 @@ async function startupMain() {
 
 async function checkRamUsage() {
     const ram = await requestMain(Main.CHECK_RAM_USAGE)
-    if (ram.performanceMode ? ram.performanceMode !== get(special).optimizedMode : get(special).optimizedMode) special.set({ ...get(special), optimizedMode: ram.performanceMode })
+    if (ram && (ram.performanceMode ? ram.performanceMode !== get(special).optimizedMode : get(special).optimizedMode)) special.set({ ...get(special), optimizedMode: ram.performanceMode })
 }
 
 function autoBackup() {
