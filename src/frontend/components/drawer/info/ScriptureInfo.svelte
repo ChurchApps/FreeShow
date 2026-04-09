@@ -152,7 +152,8 @@
     }
 
     $: styleId = getFirstActiveOutput($outputs)?.style || ""
-    $: background = $templates[templateId]?.settings?.backgroundColor || $styles[styleId]?.background || "#000000"
+    $: outputStyle = $styles[styleId]
+    $: background = $templates[templateId]?.settings?.backgroundColor || outputStyle?.background || "#000000"
 
     $: attributionString = getMergedAttribution(biblesContent)
 
@@ -206,7 +207,7 @@
 
             {#key currentOutputSlides}
                 {#each currentOutputSlides as item}
-                    <Textbox {item} ref={{ id: "scripture" }} />
+                    <Textbox {item} {outputStyle} ref={{ id: "scripture" }} />
                 {/each}
             {/key}
 

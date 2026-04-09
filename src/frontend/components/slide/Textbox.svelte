@@ -248,11 +248,8 @@
         if (ref?.type === "overlay") return ""
         if (slideData?.settings?.template) return slideData.settings.template
 
-        // favor output-driven templates/scripture layouts first so overrides don't bleed between outputs
-        const styleScriptureResolved = resolveTemplate(styleScriptureTemplateId)
-        if (styleScriptureResolved) return styleScriptureResolved
-
-        const styleResolved = resolveTemplate(outputStyle?.template || "")
+        // favor output-driven templates first so overrides don't bleed between outputs
+        const styleResolved = resolveTemplate(isScriptureContext ? styleScriptureTemplateId : outputStyle?.template || "")
         if (styleResolved) return styleResolved
 
         // group templates provide per-group defaults
