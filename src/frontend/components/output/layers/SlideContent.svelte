@@ -108,6 +108,7 @@
 
     $: if (currentSlideItems !== undefined || currentOutSlide || currentLines) updateItems()
     let timeout: NodeJS.Timeout | null = null
+    let updateGeneration = 0
 
     // if anything is outputted & changing to something that's outputted
     let transitioningBetween = false
@@ -262,12 +263,16 @@
             return
         }
 
+        const gen = ++updateGeneration
+
         // wait for between to update out transition
         timeout = setTimeout(() => {
+            if (gen !== updateGeneration) return
             show = false
 
             // wait for previous items to start fading out (svelte will keep them until the transition is done!)
             timeout = setTimeout(() => {
+                if (gen !== updateGeneration) return
                 // Only include items that need transitioning in currentItems
                 // Persistent items are rendered separately
                 currentItems = clone(currentSlide.items || [])
@@ -281,10 +286,12 @@
 
                 // wait until half transition duration of previous items have passed as it looks better visually
                 timeout = setTimeout(() => {
+                    if (gen !== updateGeneration) return
                     show = true
 
                     // wait for between to set in transition
                     timeout = setTimeout(() => {
+                        if (gen !== updateGeneration) return
                         transitioningBetween = false
                     })
                 }, waitToShow)

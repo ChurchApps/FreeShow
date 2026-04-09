@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { onDestroy } from "svelte"
     import type { StageLayout } from "../../../types/Stage"
     import Center from "../../common/components/Center.svelte"
     import Icon from "../../common/components/Icon.svelte"
@@ -28,7 +29,8 @@
 
     // timer
     let today = new Date()
-    setInterval(() => (today = new Date()), 1000)
+    const dateInterval = setInterval(() => (today = new Date()), 1000)
+    onDestroy(() => clearInterval(dateInterval))
 
     let itemStyles: any = getStyles(item.style, true)
     $: fontSize = Number(itemStyles?.["font-size"] || 0) || 100 // item.autoFontSize ||

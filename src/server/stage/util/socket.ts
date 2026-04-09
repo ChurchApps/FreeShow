@@ -26,37 +26,38 @@ export function initSocket() {
 export const send = (channel: string, data: any = null) => socket.emit("STAGE", { id, channel, data })
 
 const requestChannels = ["get_dynamic_value"]
-// let currentlyAwaiting: string[] = []
-export async function awaitRequest(channel: string, data: any = null) {
-    let listenerId = channel + uid(5)
-    // currentlyAwaiting.push(listenerId)
 
+const pendingRequests = new Map<string, { resolve: (value: any) => void; timeout: NodeJS.Timeout }>()
+
+let requestListenerInitialized = false
+function initRequestListener() {
+    if (requestListenerInitialized) return
+    requestListenerInitialized = true
+
+    socket.on("STAGE", (msg: any) => {
+        if (!msg.listenerId) return
+        const pending = pendingRequests.get(msg.listenerId)
+        if (!pending) return
+
+        clearTimeout(pending.timeout)
+        pendingRequests.delete(msg.listenerId)
+        pending.resolve(msg.data)
+    })
+}
+
+export async function awaitRequest(channel: string, data: any = null) {
+    initRequestListener()
+
+    const listenerId = channel + uid(5)
     socket.emit("STAGE", { id, channel, data, listenerId })
 
-    // LISTENER
     const waitingTimeout = 3000
-    let timeout: NodeJS.Timeout | null = null
-    const returnData: any = await new Promise((resolve) => {
-        timeout = setTimeout(() => done(null), waitingTimeout)
+    return new Promise((resolve) => {
+        const timeout = setTimeout(() => {
+            pendingRequests.delete(listenerId)
+            resolve(null)
+        }, waitingTimeout)
 
-        socket.on("STAGE", receiver)
-        function receiver(msg: any) {
-            if (!msg.listenerId || msg.listenerId !== listenerId) return
-
-            if (timeout) clearTimeout(timeout)
-            delete msg.listenerId
-
-            done(msg.data)
-        }
-
-        function done(data: any) {
-            socket.removeListener("STAGE", receiver)
-            resolve(data)
-        }
+        pendingRequests.set(listenerId, { resolve, timeout })
     })
-
-    // let waitIndex = currentlyAwaiting.indexOf(listenerId)
-    // if (waitIndex > -1) currentlyAwaiting.splice(waitIndex, 1)
-
-    return returnData
 }

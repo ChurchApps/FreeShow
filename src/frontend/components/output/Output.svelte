@@ -37,8 +37,15 @@
     // output styling
     $: currentStyling = getCurrentStyle($styles, styleIdOverride || currentOutput.style)
     let currentStyle: Styles = { name: "" }
+    let cachedStyleStr = ""
     // don't refresh content unless it changes
-    $: if (JSON.stringify(currentStyling) !== JSON.stringify(currentStyle)) currentStyle = clone(currentStyling)
+    $: {
+        const newStr = JSON.stringify(currentStyling)
+        if (newStr !== cachedStyleStr) {
+            cachedStyleStr = newStr
+            currentStyle = clone(currentStyling)
+        }
+    }
 
     $: alignPosition = currentStyle?.aspectRatio?.alignPosition || "center"
 
@@ -56,15 +63,40 @@
 
     // don't update when layer content changes, only when refreshing or adding/removing layer
     // currentOutput is set to refresh state when changed in preview
-    $: if (currentOutput && JSON.stringify(layers) !== JSON.stringify(currentStyle.layers || defaultLayers)) setNewLayers()
-    function setNewLayers() {
-        layers = clone(Array.isArray(currentStyle.layers) ? currentStyle.layers : defaultLayers)
-        if (!Array.isArray(layers)) layers = []
+    let cachedLayersStr = ""
+    $: if (currentOutput) {
+        const newLayersStr = JSON.stringify(currentStyle.layers || defaultLayers)
+        if (newLayersStr !== cachedLayersStr) {
+            cachedLayersStr = newLayersStr
+            layers = clone(Array.isArray(currentStyle.layers) ? currentStyle.layers : defaultLayers)
+            if (!Array.isArray(layers)) layers = []
+        }
     }
-    $: if (JSON.stringify(out) !== JSON.stringify(outOverride || currentOutput?.out || {})) out = clone(outOverride || currentOutput?.out || {})
+    let cachedOutStr = ""
+    $: {
+        const newOutStr = JSON.stringify(outOverride || currentOutput?.out || {})
+        if (newOutStr !== cachedOutStr) {
+            cachedOutStr = newOutStr
+            out = clone(outOverride || currentOutput?.out || {})
+        }
+    }
 
-    $: if (JSON.stringify(slide) !== JSON.stringify(out.slide || null)) updateOutData("slide")
-    $: if (JSON.stringify(background) !== JSON.stringify(out.background || null)) updateOutData("background")
+    let cachedSlideStr = ""
+    $: {
+        const newSlideStr = JSON.stringify(out.slide || null)
+        if (newSlideStr !== cachedSlideStr) {
+            cachedSlideStr = newSlideStr
+            updateOutData("slide")
+        }
+    }
+    let cachedBgStr = ""
+    $: {
+        const newBgStr = JSON.stringify(out.background || null)
+        if (newBgStr !== cachedBgStr) {
+            cachedBgStr = newBgStr
+            updateOutData("background")
+        }
+    }
 
     $: refreshOutput = out.refresh
     $: if (outputId || refreshOutput) updateOutData()
@@ -101,7 +133,10 @@
     $: overlayIds = out.overlays
     let storedOverlayIds = ""
     let storedOverlays = ""
-    $: if (JSON.stringify(overlayIds) !== storedOverlayIds) updateOutData("overlays")
+    $: {
+        const newOverlayIdsStr = JSON.stringify(overlayIds)
+        if (newOverlayIdsStr !== storedOverlayIds) updateOutData("overlays")
+    }
     $: outOverlays = out.overlays?.filter((id) => !clonedOverlays?.[id]?.placeUnderSlide) || []
     $: outUnderlays = out.overlays?.filter((id) => clonedOverlays?.[id]?.placeUnderSlide) || []
 
@@ -124,7 +159,9 @@
 
         // don't refresh content unless it changes
         let newCurrentSlide = getCurrentSlide()
-        if (JSON.stringify(formatSlide(newCurrentSlide)) !== JSON.stringify(currentSlide)) currentSlide = newCurrentSlide
+        const newSlideFormatStr = JSON.stringify(formatSlide(newCurrentSlide))
+        const curSlideStr = JSON.stringify(currentSlide)
+        if (newSlideFormatStr !== curSlideStr) currentSlide = newCurrentSlide
 
         function getCurrentSlide() {
             if (!slide && !outputId) return null
@@ -177,10 +214,15 @@
     // metadata
     $: metadataItems = getMetadata($showsCache[(slide as any)?.id || ""], currentStyle, slide, $templates)
     let currentMetadataItems: Item[] = []
+    let cachedMetadataStr = ""
     let isMetadataClearing = false
     $: if (metadataItems !== null) {
         isMetadataClearing = false
-        if (JSON.stringify(metadataItems) !== JSON.stringify(currentMetadataItems)) currentMetadataItems = clone(metadataItems)
+        const newMetaStr = JSON.stringify(metadataItems)
+        if (newMetaStr !== cachedMetadataStr) {
+            cachedMetadataStr = newMetaStr
+            currentMetadataItems = clone(metadataItems)
+        }
     } else {
         isMetadataClearing = true
         setTimeout(() => {

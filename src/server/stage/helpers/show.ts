@@ -14,6 +14,7 @@ export function getDynamicValue(value: string) {
     return cached[value] ?? value
 }
 let isRequested = new Map<string, number>()
+
 export async function replaceDynamicValues(value: string, _updater: number = 0) {
     if (!value.includes("{")) return value
 
@@ -23,6 +24,6 @@ export async function replaceDynamicValues(value: string, _updater: number = 0) 
     isRequested.set(value, now)
 
     const newValue = await awaitRequest("API:get_dynamic_value", { value, ref: { type: "stage" } })
-    if (newValue !== undefined) cached[value] = newValue
+    if (typeof newValue === "string") cached[value] = newValue
     return newValue ?? cached[value] ?? value
 }

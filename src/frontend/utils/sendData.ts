@@ -128,12 +128,12 @@ export function timedout(id: Clients, msg: ClientMessage, run: () => void) {
 // check previous
 const sent: any = { REMOTE: {}, STAGE: {} }
 function checkSent(id: Clients, msg: any): boolean {
-    let match = true
-    if (sent[id][msg.channel] !== JSON.stringify(msg.data)) {
-        sent[id][msg.channel] = JSON.stringify(msg.data)
-        match = false
+    const serialized = JSON.stringify(msg.data)
+    if (sent[id][msg.channel] !== serialized) {
+        sent[id][msg.channel] = serialized
+        return false
     }
-    return match
+    return true
 }
 
 // send data per connection to all

@@ -197,6 +197,8 @@ export function storeSubscriber() {
     outputs.subscribe(async (data) => {
         // wait in case multiple slide layers get activated right after each other - to reduce the amount of updates
         if (await hasNewerUpdate("LISTENER_OUTPUTS", 1)) return
+        // having more is probably better, but breaks some things including slide timeline updates
+        // if (await hasNewerUpdate("LISTENER_OUTPUTS", 15)) return
 
         send(OUTPUT, ["OUTPUTS"], data)
         // used for stage mirror data
