@@ -918,6 +918,7 @@ const clickActions = {
     slide_transition: (obj: ObjData) => {
         if (obj.sel?.id !== "slide") return
 
+        popupData.set({})
         activePopup.set("transition")
     },
     disable: (obj: ObjData) => {

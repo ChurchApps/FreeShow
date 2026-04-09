@@ -56,7 +56,7 @@
         })
     }
 
-    $: curriculumProviders = contentProviders.filter((a) => a.providerId !== "churchApps" || $special.churchAppsCloudOnly !== true)
+    $: curriculumProviders = contentProviders.filter((a) => (a.providerId !== "churchApps" || $special.churchAppsCloudOnly !== true) && a.providerId !== "canva")
 
     let sections: any[] = []
     $: sections = [

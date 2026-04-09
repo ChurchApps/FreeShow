@@ -85,7 +85,7 @@
             else slideMediaTransition = value
 
             let globalValues = $transitionData[id]
-            if (value.type === globalValues.type && value.duration === globalValues.duration && value.easing === globalValues.easing && !specificScenatios.find((a) => value[a])) value = null
+            if (value.type === globalValues.type && value.duration === globalValues.duration && value.easing === globalValues.easing && !specificScenatios.find((a) => value[a])) value = undefined
 
             let type = id === "text" ? "transition" : "mediaTransition"
             let indexes = $selected.data.map((a) => a.index)

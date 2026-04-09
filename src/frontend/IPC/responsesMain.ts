@@ -324,6 +324,7 @@ export const mainResponses: MainResponses = {
 
         if (data.isFirstConnection) newToast("main.finished")
 
+        if (data.providerId !== "churchApps") return
         setTimeout(() => {
             setupCloudSync(!data.isFirstConnection)
         }, 1000)
