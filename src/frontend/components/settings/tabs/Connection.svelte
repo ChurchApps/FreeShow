@@ -264,6 +264,8 @@
         </MaterialButton>
     </InputRow>
 
+    <MaterialToggleSwitch label="Always use local instance of plans" checked={$contentProviderData.churchApps?.localAlways} defaultValue={false} on:change={(e) => updateProvider("churchApps", "localAlways", e.detail)} />
+
     {#if $cloudSyncData.enabled}
         <p class="tip">Note: This is unrelated to the Cloud sync found in "Files". This is for the content manager / curriculum.</p>
     {/if}

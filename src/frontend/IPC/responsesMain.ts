@@ -251,13 +251,16 @@ export const mainResponses: MainResponses = {
             })
 
             if (data.status === "complete" || data.status === "error") {
-                setTimeout(() => {
-                    pdfImports.update((current) => {
-                        const cleaned = new Map(current)
-                        cleaned.delete(data.filePath)
-                        return cleaned
-                    })
-                }, data.status === "error" ? 7000 : 3000)
+                setTimeout(
+                    () => {
+                        pdfImports.update((current) => {
+                            const cleaned = new Map(current)
+                            cleaned.delete(data.filePath)
+                            return cleaned
+                        })
+                    },
+                    data.status === "error" ? 7000 : 3000
+                )
             }
 
             return updated
@@ -348,15 +351,22 @@ export const mainResponses: MainResponses = {
             if (linkedShow) {
                 replaceIds[id] = linkedShow.id
                 if (providerLocalAlways) continue
-                Object.values<Slide>(show.slides).forEach((slide) => {
-                    if (slide.globalGroup || !slide.group) return
-
-                    const globalGroup = getGlobalGroup(slide.group)
-                    if (globalGroup) slide.globalGroup = globalGroup
-                })
 
                 const origin = data.providerId === "planningcenter" ? "pco" : data.providerId
-                tempShows.push({ id: linkedShow.id, show: { ...show, origin, name: checkName(show.name, linkedShow.id), quickAccess: { ...(linkedShow.quickAccess || {}), [linkKey]: id } } })
+                showsCache.update((a) => {
+                    if (a[linkedShow.id]?.slides) {
+                        Object.values<Slide>(a[linkedShow.id].slides).forEach((slide) => {
+                            if (slide.globalGroup || !slide.group) return
+                            const globalGroup = getGlobalGroup(slide.group)
+                            if (globalGroup) slide.globalGroup = globalGroup
+                        })
+                    }
+
+                    if (!a[linkedShow.id].quickAccess) a[linkedShow.id].quickAccess = {}
+                    if (linkKey) a[linkedShow.id].quickAccess[linkKey] = id
+                    a[linkedShow.id].origin = origin
+                    return a
+                })
                 continue
             }
 
