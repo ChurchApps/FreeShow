@@ -125,15 +125,21 @@ export function timedout(id: Clients, msg: ClientMessage, run: () => void) {
     }
 }
 
-// check previous
+// check previous (capped to prevent unbounded growth)
+const MAX_SENT_CHANNELS = 50
 const sent: any = { REMOTE: {}, STAGE: {} }
 function checkSent(id: Clients, msg: any): boolean {
-    let match = true
-    if (sent[id][msg.channel] !== JSON.stringify(msg.data)) {
-        sent[id][msg.channel] = JSON.stringify(msg.data)
-        match = false
+    const serialized = JSON.stringify(msg.data)
+    if (sent[id][msg.channel] === serialized) return true
+
+    sent[id][msg.channel] = serialized
+
+    const keys = Object.keys(sent[id])
+    if (keys.length > MAX_SENT_CHANNELS) {
+        keys.slice(0, keys.length - MAX_SENT_CHANNELS).forEach((key) => delete sent[id][key])
     }
-    return match
+
+    return false
 }
 
 // send data per connection to all

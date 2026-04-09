@@ -109,7 +109,7 @@ export function swichProjectItem(pos: number, id: string) {
 export function getItemWithMostLines(slide: Slide | { items: Item[] }) {
     let amount = 0
     slide.items?.forEach((item) => {
-        const lines: number = item?.lines?.filter((line) => line.text?.filter((text) => text.value.length)?.length)?.length || 0
+        const lines: number = item?.lines?.filter((line) => line.text?.filter((text) => text.value !== undefined)?.length)?.length || 0
         if (lines > amount) amount = lines
     })
     return amount
