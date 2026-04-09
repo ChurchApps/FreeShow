@@ -1,7 +1,7 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte"
     import type { Input } from "../../../types/Input"
-    import { activePage, activePopup, special } from "../../stores"
+    import { activeEdit, activePage, activePopup, special } from "../../stores"
     import { translateText } from "../../utils/language"
     import { select } from "../helpers/select"
     import MaterialButton from "../inputs/MaterialButton.svelte"
@@ -21,7 +21,7 @@
         dispatch("change", value)
     }
 
-    $: enableKeyframe = $special.slideTimelineActive && $activePage === "edit"
+    $: enableKeyframe = $special.slideTimelineActive && $activePage === "edit" && ($activeEdit.type || "show") === "show"
 </script>
 
 {#if input.type === "dropdown"}

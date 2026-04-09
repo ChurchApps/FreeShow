@@ -308,7 +308,7 @@ export class TimelinePlayback {
         this.styleActions(this.actions)
 
         // loop back when reached last action
-        if (this.shouldLoop) {
+        if (this.isPlaying && this.shouldLoop) {
             const lastActionTime = this.actions.length > 0 ? Math.max(...this.actions.map((a) => a.time + (a.duration || 0) * 1000)) : 0
             if (this.getTimeWithOffset(this.currentTime) >= lastActionTime) {
                 this.currentTime = 0
