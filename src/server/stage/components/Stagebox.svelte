@@ -29,8 +29,8 @@
 
     // timer
     let today = new Date()
-    const clockInterval = setInterval(() => (today = new Date()), 1000)
-    onDestroy(() => clearInterval(clockInterval))
+    const dateInterval = setInterval(() => (today = new Date()), 1000)
+    onDestroy(() => clearInterval(dateInterval))
 
     let itemStyles: any = getStyles(item.style, true)
     $: fontSize = Number(itemStyles?.["font-size"] || 0) || 100 // item.autoFontSize ||
@@ -101,8 +101,7 @@
             if (textStyleKeys.includes(key)) textStyle += `${key}: ${value};`
             else if (key === "font-size" && isSlideTextWithAutosize) {
                 // Skip font-size for autosize items - let Textbox's autosize compute it
-            }
-            else itemStyle += `${key}: ${value};`
+            } else itemStyle += `${key}: ${value};`
         })
     }
 
