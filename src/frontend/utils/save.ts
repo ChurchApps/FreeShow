@@ -354,6 +354,7 @@ export function unsavedUpdater() {
 
 const customSavedListener = {
     showsCache: (data: Shows) => {
+        if (!data) return data
         Object.keys(data).forEach((id) => {
             if (!data[id]?.slides) return
 
@@ -368,6 +369,7 @@ const customSavedListener = {
         return data
     },
     projects: (data: Projects) => {
+        if (!data) return data
         removeDeleted(keysToID(data)).forEach((a) => {
             data[a.id].shows?.map((show) => {
                 delete show.layout

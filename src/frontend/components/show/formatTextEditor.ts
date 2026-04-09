@@ -162,7 +162,7 @@ export function formatText(text: string, showId = "") {
 
     let allUsedSlidesIds: string[] = []
     Object.values(show.layouts).forEach(({ slides: layoutSlides }) => {
-        allUsedSlidesIds.push(...layoutSlides.map(({ id }) => id))
+        allUsedSlidesIds = allUsedSlidesIds.concat(layoutSlides.map(({ id }) => id))
     })
     allUsedSlidesIds = removeDuplicates(allUsedSlidesIds)
 
@@ -267,7 +267,7 @@ export function formatText(text: string, showId = "") {
 
                 // new items added
                 if (newItems.length) {
-                    items.push(...newItems)
+                    items = items.concat(newItems)
                     // remove empty items
                     items = items.filter((item) => (item.type || "text") !== "text" || getItemText(item).length)
                 }

@@ -35,6 +35,7 @@ export function _show(id = "active") {
 
                 const double = key.split(".")
                 if (double.length > 1) {
+                    if (!a[id][double[0]]?.[double[1]]) return a
                     prev = a[id][double[0]][double[1]]
                     a[id][double[0]][double[1]] = value
                 } else {
@@ -181,6 +182,7 @@ export function _show(id = "active") {
                 set: ({ key, values }: any) => {
                     const prev: any = { values: [] }
                     if (key) prev.key = key
+                    if (!values) return prev
                     showsCache.update((a) => {
                         if (!a[id]) return a
                         if (!slideIds.length) slideIds = Object.keys(a[id].layouts)

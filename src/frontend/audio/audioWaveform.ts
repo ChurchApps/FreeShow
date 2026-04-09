@@ -12,28 +12,60 @@ type WaveformSettings = {
 }
 
 const cachedWaveformData: Map<string, Float32Array> = new Map()
+
 export async function createWaveform(container: HTMLElement, path: string, settings: WaveformSettings = {}) {
-    const audioCtx = new AudioContext()
+    if (!path) {
+        container.innerHTML = ""
+        return
+    }
 
     if (cachedWaveformData.has(path)) {
         renderWaveform(container, cachedWaveformData.get(path)!, settings)
         return
     }
 
-    const response = await fetch(encodeFilePath(path))
-    const arrayBuffer = await response.arrayBuffer()
-    const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer)
+    try {
+        const rawData = await loadWaveformData(path)
+        if (!rawData) {
+            container.innerHTML = ""
+            return
+        }
 
-    const rawData = audioBuffer.getChannelData(0)
-    cachedWaveformData.set(path, rawData)
+        cachedWaveformData.set(path, rawData)
+        renderWaveform(container, rawData, settings)
+    } catch (error) {
+        console.warn("Failed to create waveform", path, error)
+        container.innerHTML = ""
+    }
+}
 
-    renderWaveform(container, rawData, settings)
+async function loadWaveformData(path: string): Promise<Float32Array | null> {
+    const encodedPath = encodeFilePath(path)
+    const candidatePaths = encodedPath === path ? [path] : [encodedPath, path]
+
+    for (const candidatePath of candidatePaths) {
+        try {
+            const audioCtx = new AudioContext()
+            const response = await fetch(candidatePath)
+            if (!response.ok && response.status !== 0) continue
+
+            const arrayBuffer = await response.arrayBuffer()
+            if (!arrayBuffer.byteLength) continue
+
+            const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer)
+            return audioBuffer.getChannelData(0)
+        } catch {
+            // Try the next path variant before failing.
+        }
+    }
+
+    return null
 }
 
 export const WAVEFORM_SAMPLES = 150
 function renderWaveform(container: HTMLElement, rawData: Float32Array, settings: WaveformSettings = {}) {
     const samples = settings.samples || WAVEFORM_SAMPLES
-    const blockSize = Math.floor(rawData.length / samples)
+    const blockSize = Math.max(1, Math.floor(rawData.length / samples))
     const waveform = new Float32Array(samples)
 
     for (let i = 0; i < samples; i++) {

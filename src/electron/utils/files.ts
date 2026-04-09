@@ -6,9 +6,9 @@ import type { ExifData } from "exif"
 import { ExifImage } from "exif"
 import fs, { type Stats } from "fs"
 import path, { join, parse } from "path"
-import { fileURLToPath } from "url"
 import { uid } from "uid"
 import upath from "upath"
+import { fileURLToPath } from "url"
 import { OUTPUT } from "../../types/Channels"
 import { Main } from "../../types/IPC/Main"
 import { ToMain } from "../../types/IPC/ToMain"
@@ -961,7 +961,13 @@ async function asyncPool<T>(poolLimit: number, array: T[], iteratorFn: (item: T)
 export async function detectNewFiles() {
     if (!getStore("SETTINGS").initialized) return
 
-    const downloadsFolder = app.getPath("downloads")
+    let downloadsFolder: string
+    try {
+        downloadsFolder = app.getPath("downloads")
+    } catch {
+        return
+    }
+
     const MAX_TIME = 16 * 60 * 60 * 1000 // 16 hours
     const ONE_MINUTE = 60 * 1000
     const WRITE_WAIT_MS = 2000

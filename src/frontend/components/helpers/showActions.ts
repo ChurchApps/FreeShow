@@ -407,7 +407,7 @@ export function goToNextProjectItem(key = "") {
 
             // mark as played
             projects.update((a) => {
-                if (!a[get(activeProject)!]?.shows?.[index - 1]) return a
+                if (typeof a[get(activeProject)!]?.shows?.[index - 1] !== "object") return a
                 a[get(activeProject)!].shows[index - 1].played = true
                 return a
             })

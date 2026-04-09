@@ -150,7 +150,13 @@ export const dropActions = {
 
             data = data
                 .map((a) => {
-                    const path = a.path || window.api.showFilePath(a)
+                    let path: string
+                    try {
+                        path = a.path || window.api.showFilePath(a)
+                    } catch (error) {
+                        console.error("Error getting file path:", error)
+                        return null
+                    }
                     const extension: string = getExtension(path || a.name)
 
                     if (extension === "project") {
