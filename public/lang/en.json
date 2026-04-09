@@ -785,6 +785,7 @@
         "next_project_item": "Next project item",
         "previous_project_item": "Previous project item",
         "index_select_project_item": "Open project item at index",
+        "name_start_project_item": "Start project item by name",
         "name_select_show": "Open show with name",
         "set_template_active": "Set template on active show",
         "change_slide_timeline_speed": "Change slide timeline speed",

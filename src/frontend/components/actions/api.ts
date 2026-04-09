@@ -65,6 +65,7 @@ import {
     setShowAPI,
     setTemplate,
     startPlaylistByName,
+    startProjectItemByName,
     startScripture,
     stopAudio,
     stopTimerById,
@@ -200,6 +201,7 @@ export const API_ACTIONS = {
     next_project_item: () => selectProjectShow("next"), // BC
     previous_project_item: () => selectProjectShow("previous"), // BC
     index_select_project_item: (data: API_index) => selectProjectShow(data.index), // BC
+    name_start_project_item: (data: API_strval) => startProjectItemByName(data.value),
     mark_active_as_played: (data: API_toggle_specific) => markItemsAsPlayed("active", data.value),
 
     // SHOWS

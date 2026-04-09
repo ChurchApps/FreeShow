@@ -16,11 +16,11 @@ import { dropActions } from "../helpers/dropActions"
 import { history } from "../helpers/history"
 import { setDrawerTabData } from "../helpers/historyHelpers"
 import { getExtension, getFileName, getMediaStyle, getMediaType, removeExtension } from "../helpers/media"
-import { getAllActiveOutputs, getAllEnabledOutputs, getCurrentStyle, getFirstActiveOutput, isOutCleared, setOutput } from "../helpers/output"
+import { getActiveOutputs, getAllActiveOutputs, getAllEnabledOutputs, getCurrentStyle, getFirstActiveOutput, isOutCleared, setOutput } from "../helpers/output"
 import { setRandomValue } from "../helpers/randomValue"
 import { loadShows, setShow } from "../helpers/setShow"
 import { getLabelId, getLayoutRef } from "../helpers/show"
-import { playNextGroup, updateOut } from "../helpers/showActions"
+import { playNextGroup, selectProjectShow, updateOut } from "../helpers/showActions"
 import { _show } from "../helpers/shows"
 import { clearBackground } from "../output/clear"
 import { getPlainEditorText } from "../show/getTextEditor"
@@ -96,6 +96,46 @@ export function selectProjectByName(name: string) {
     if (!projectId) return
 
     activeProject.set(projectId)
+}
+
+export async function startProjectItemByName(name: string) {
+    const activeProjectItems = get(projects)[get(activeProject) || ""]?.shows || []
+    if (!activeProjectItems.length) return
+
+    name = name.toLowerCase().trim()
+
+    // check for any match after the active first
+    const activeIndex = get(activeShow)?.index ?? -1
+    let match = activeProjectItems.findIndex((item, i) => i > activeIndex && item.name?.toLowerCase().trim() === name)
+    if (match === -1) match = activeProjectItems.findIndex((item) => item.name?.toLowerCase().trim() === name)
+
+    // get next available after the section
+    while (match !== -1 && activeProjectItems[match]?.type === "section") match++
+
+    const item = activeProjectItems[match]
+    if (!item) return
+
+    // load any shows
+    if ((item.type || "show") === "show") await loadShows([item.id])
+
+    // open
+    selectProjectShow(match)
+
+    // play
+    let outputId: string = getActiveOutputs(get(outputs), false, true, true)[0]
+    let currentOutput = get(outputs)[outputId] || {}
+
+    // WIP duplicate of ShowButton.svelte doubleClick() & missing other types
+    if ((item.type || "show") === "show" && get(showsCache)[item.id]?.settings && get(showsCache)[item.id].layouts[get(showsCache)[item.id].settings.activeLayout]?.slides?.length) {
+        let layoutRef = getLayoutRef()
+        let firstEnabledIndex = layoutRef.findIndex((a) => !a.data.disabled)
+        updateOut("active", firstEnabledIndex, layoutRef)
+
+        let slide = currentOutput.out?.slide || null
+        if (slide?.id === item.id && slide?.index === firstEnabledIndex && slide?.layout === get(showsCache)[item.id].settings.activeLayout) return
+
+        setOutput("slide", { id: item.id, layout: get(showsCache)[item.id].settings.activeLayout, index: firstEnabledIndex })
+    }
 }
 
 export async function selectSlideByIndex(data: API_slide_index) {
@@ -814,7 +854,11 @@ function levenshteinDistance(a, b) {
 
 export async function getPDFThumbnails({ path }: API_media) {
     if (!path) return []
-    const name = path.split(/[/\\]/).pop()?.replace(/\.pdf$/i, "") || "PDF"
+    const name =
+        path
+            .split(/[/\\]/)
+            .pop()
+            ?.replace(/\.pdf$/i, "") || "PDF"
     const renderPhasePercent = 80
     const totalPercent = 100
 
