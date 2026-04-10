@@ -94,7 +94,7 @@
     //     }
     // }
 
-    $: slideId = outs[0].out?.slide?.id || ""
+    $: slideId = outs[0]?.out?.slide?.id || ""
     $: isScriptureOutput = slideId === "temp" || _show(slideId).get("reference")?.type === "scripture"
 </script>
 

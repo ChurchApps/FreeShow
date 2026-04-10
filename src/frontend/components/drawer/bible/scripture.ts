@@ -752,7 +752,7 @@ export async function getScriptureSlidesNew(data: any, onlyOne = false, disableR
             const verses = buildFullReferenceRange(bible.chapters, bible.activeVerses)
             const justVerses = verses.split(divider)[1] || ""
             if (j === 0) {
-                const mergedBooks = removeDuplicates(biblesContent.map((a) => a.book)).join(" / ")
+                const mergedBooks = removeDuplicates(biblesContent.map((a) => a?.book).filter(Boolean)).join(" / ")
                 const mergedReference = `${mergedBooks} ${verses}`.trim()
 
                 slideDynamicValues[i].scripture_reference = format(mergedReference)
@@ -784,8 +784,8 @@ export async function getScriptureSlidesNew(data: any, onlyOne = false, disableR
     // remove text in () on scripture names
     const bibleVersions = biblesContent.map((a) => (a?.version || "").replace(/\([^)]*\)/g, "").trim())
     const mergedNames = bibleVersions.join(" + ")
-    const mergedBooks = removeDuplicates(biblesContent.map((a) => a.book)).join(" / ")
-    const mergedBooksAbbr = removeDuplicates(biblesContent.map((a) => a.bookAbbr)).join(" / ")
+    const mergedBooks = removeDuplicates(biblesContent.map((a) => a?.book).filter(Boolean)).join(" / ")
+    const mergedBooksAbbr = removeDuplicates(biblesContent.map((a) => a?.bookAbbr).filter(Boolean)).join(" / ")
 
     const attributions: string[] = []
 
@@ -1169,7 +1169,7 @@ export function getScriptureSlides({ biblesContent, selectedChapters, selectedVe
         // remove text in () on scripture names
         const bibleVersions = biblesContent.map((a) => (a?.version || "").replace(/\([^)]*\)/g, "").trim())
         const versions = combineWithText ? bibleVersions[itemIndex] : bibleVersions.join(" + ")
-        const books = combineWithText ? biblesContent[itemIndex]?.book : removeDuplicates(biblesContent.map((a) => a.book)).join(" / ")
+        const books = combineWithText ? biblesContent[itemIndex]?.book : removeDuplicates(biblesContent.map((a) => a?.book).filter(Boolean)).join(" / ")
 
         // custom value (API)
         if (biblesContent.find((a) => a?.attributionRequired)) {
@@ -1720,7 +1720,10 @@ export async function getScriptureShow(biblesContent: BibleContent[] | null) {
     show.layouts = { [layoutID]: { name: biblesContent[0].version || "", notes: "", slides: layouts } }
     show.media = media
 
-    const versions = biblesContent.map((a) => a.version).join(" + ")
+    const versions = biblesContent
+        .map((a) => a?.version)
+        .filter(Boolean)
+        .join(" + ")
     show.reference = {
         type: "scripture",
         data: {
@@ -1773,7 +1776,7 @@ export function getReferenceText(biblesContent: BibleContent[]) {
     // const referenceTextItem = items.find((a) => a.lines?.find((a) => a.text?.find((a) => a.value.includes(":") && a.value.length < 25)))
     // if (referenceTextItem) return referenceTextItem.lines?.[0]?.text?.[0]?.value
 
-    const books = removeDuplicates(biblesContent.map((a) => a.book)).join(" / ")
+    const books = removeDuplicates(biblesContent.map((a) => a?.book).filter(Boolean)).join(" / ")
     // reflect all selected chapters when labeling slides/previews
     const range = buildFullReferenceRange(biblesContent[0].chapters, biblesContent[0].activeVerses)
     const reference = `${books} ${range || biblesContent[0].chapters[0]}`.trim()

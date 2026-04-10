@@ -28,6 +28,8 @@ export function checkName(name = "", showId = "") {
 }
 
 export function formatToFileName(name = "") {
+    if (typeof name !== "string") return ""
+
     name = name.replaceAll(":", ",")
     // remove illegal file name characters
     name = name.trim().replace(/[/\\?%*:|│"<>╠┤╡╝╖┐¬]/g, "")
