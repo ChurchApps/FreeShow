@@ -64,7 +64,12 @@ export async function loadJsonBible(id: string) {
     // load custom book names for local bibles (as many xml names are missing or in English)
     localBible.books = localBible.books.map((a) => ({ ...a, name: (a as any).customName || a.name }))
 
-    return await JsonBible(localBible)
+    try {
+        return await JsonBible(localBible)
+    } catch (err) {
+        console.error("Error loading local Bible:", err)
+        return null
+    }
 }
 
 async function getLocalBible(id: string) {

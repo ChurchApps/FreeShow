@@ -51,6 +51,7 @@ function XMLtoObject(xml: string) {
             chapter.VERS.forEach((verse: { ["@vnumber"]: string; ["#text"]?: string; STYLE?: string[] }) => {
                 if (!verse) return
                 let text = verse["#text"] || ""
+                if (!text.trim()) return
 
                 // remove <NOTE></NOTE>
                 while (text.indexOf("<NOTE") > -1) {

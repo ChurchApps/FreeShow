@@ -230,12 +230,12 @@
                 <div class="clearSearch autocomplete">
                     <Icon id="autofill" white />
                 </div>
+                <div class="clearSearch options" on:mousedown|stopPropagation on:mouseup|stopPropagation>
+                    <Button style="height: 100%;" title={translateText("edit.options")} on:click={() => activePopup.set("drawer_search_options")}>
+                        <Icon id="options" white={!$scriptureSettings.enterSwapped} />
+                    </Button>
+                </div>
             {/if}
-            <div class="clearSearch options" on:mousedown|stopPropagation on:mouseup|stopPropagation>
-                <Button style="height: 100%;" title={translateText("edit.options")} on:click={() => activePopup.set("drawer_search_options")}>
-                    <Icon id="options" white={!$scriptureSettings.enterSwapped} />
-                </Button>
-            </div>
             <div class="clearSearch">
                 <Button
                     style="height: 100%;"

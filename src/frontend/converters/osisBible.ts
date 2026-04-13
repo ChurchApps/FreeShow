@@ -4,10 +4,11 @@ import { formatToFileName } from "../components/helpers/show"
 import { scriptures, scripturesCache } from "../stores"
 import { setActiveScripture } from "./bible"
 import { xml2json } from "./xml"
+import { confirmCustom, promptCustom } from "../utils/popup"
 
-export function convertOSISBible(data: any[]) {
-    data.forEach((bible) => {
-        const obj = XMLtoObject(bible.content)
+export async function convertOSISBible(data: any[]) {
+    for (const bible of data) {
+        const obj = await XMLtoObject(bible.content)
         if (!obj.name) obj.name = bible.name
         obj.name = formatToFileName(obj.name)
 
@@ -24,18 +25,18 @@ export function convertOSISBible(data: any[]) {
         })
 
         setActiveScripture(id)
-    })
+    }
 }
 
-function XMLtoObject(xml: string) {
+async function XMLtoObject(xml: string) {
     const bible = xml2json(xml, true)?.osis?.osisText || {}
-    const books: Book[] = []
+    let books: Book[] = []
 
     bible.div?.forEach((book, bookIndex) => {
         if (!book) return
 
         const bookId = book["@osisID"]
-        const name = book["@name"] || defaultNames[bookId]
+        const name = book["@name"]
         const abbreviation = book["@abbr"]
         const bookNumber = (Object.keys(defaultNames).findIndex((a) => a === bookId) ?? bookIndex) + 1
         const chapters: Chapter[] = []
@@ -52,6 +53,8 @@ function XMLtoObject(xml: string) {
                 if (!verse) return
 
                 let text = verse["#text"] || ""
+                if (!text.trim()) return
+
                 text = text.replace(/<q(?:\s+xmlns="[^"]*")?\s+who="Jesus"\s+marker="">(.*?)<\/q>/g, '<span class="wj">$1</span>')
 
                 const verseNumber = verse["@osisID"].split(".")?.[2] ?? verseIndex + 1
@@ -62,13 +65,42 @@ function XMLtoObject(xml: string) {
             chapters.push({ number: chapterNumber, verses })
         })
 
-        const bookData = { name, abbreviation, number: bookNumber, chapters }
+        const bookData = { id: bookId, name, abbreviation, number: bookNumber, chapters }
         if (abbreviation) bookData.abbreviation = abbreviation
         books.push(bookData)
     })
 
     // header.work: title, contributor, creator, subject, date, description, publisher, type, identifier, source, language, relation, coverage, rights, scope, refSystem
     const info = bible.header?.work || {}
+
+    // request manual translate
+    // WIP duplicate of bebliaBible.ts
+    const booksWithNoName = books.filter((a) => !a.name)
+    if (booksWithNoName.length > 0) {
+        if (await confirmCustom("Books are missing names, and are defaulting to English.<br>Would you like to translate them?")) {
+            let newBooks: Book[] = []
+
+            // prompt each book with no name
+            for (const book of booksWithNoName) {
+                if (book.name) {
+                    newBooks.push(book)
+                    continue
+                }
+
+                const defaultName = defaultNames[book.id || ""] || ""
+                const newName = await promptCustom(`Name book ${book.number} (${defaultName}):`)
+                newBooks.push({ ...book, name: newName || defaultName })
+            }
+
+            books = newBooks
+        } else {
+            books = books.map((a) => ({ ...a, name: a.name || defaultNames[a.id || ""] || "" }))
+        }
+    }
+    books = books.map((a) => {
+        delete a.id
+        return a
+    })
 
     return { name: info.title || info.description || "", metadata: { ...info, copyright: info.rights || "" }, books } as Bible
 }

@@ -4,10 +4,11 @@ import { formatToFileName } from "../components/helpers/show"
 import { scriptures, scripturesCache } from "./../stores"
 import { setActiveScripture } from "./bible"
 import { xml2json } from "./xml"
+import { confirmCustom, promptCustom } from "../utils/popup"
 
-export function convertBebliaBible(data: any[]) {
-    data.forEach((bible) => {
-        const obj = convertToBible(xml2json(bible.content))
+export async function convertBebliaBible(data: any[]) {
+    for (const bible of data) {
+        const obj = await convertToBible(xml2json(bible.content))
         if (!obj.name) obj.name = bible.name
         obj.name = formatToFileName(obj.name)
 
@@ -24,10 +25,10 @@ export function convertBebliaBible(data: any[]) {
         })
 
         setActiveScripture(id)
-    })
+    }
 }
 
-function convertToBible(content: any) {
+async function convertToBible(content: any) {
     const bible: Bible = {
         name: content.bible["@name"] || content.bible["@translation"] || "",
         metadata: { copyright: content.bible["@info"] || "" },
@@ -45,6 +46,30 @@ function convertToBible(content: any) {
     })
     bible.books = books
 
+    // request manual translate
+    const booksWithNoName = bible.books.filter((a) => !a.name)
+    if (booksWithNoName.length > 0) {
+        if (await confirmCustom("Books are missing names, and are defaulting to English.<br>Would you like to translate them?")) {
+            let newBooks: Book[] = []
+
+            // prompt each book with no name
+            for (const book of booksWithNoName) {
+                if (book.name) {
+                    newBooks.push(book)
+                    continue
+                }
+
+                const defaultName = defaultBibleBookNames[book.number] || ""
+                const newName = await promptCustom(`Name book ${book.number} (${defaultName}):`)
+                newBooks.push({ ...book, name: newName || defaultName })
+            }
+
+            bible.books = newBooks
+        } else {
+            bible.books = bible.books.map((a) => ({ ...a, name: a.name || defaultBibleBookNames[a.number] || "" }))
+        }
+    }
+
     return bible
 }
 
@@ -57,7 +82,7 @@ function getBooks(oldBooks: any[]) {
         if (!book) return
         const currentBook = {
             number: book["@number"],
-            name: book["@name"] || defaultBibleBookNames[book["@number"]],
+            name: book["@name"] || "",
             chapters: getChapters(book.chapter)
         }
 
@@ -92,13 +117,13 @@ function getVerses(oldVerses: any[]) {
     oldVerses.forEach((verse) => {
         const currentVerse = {
             number: verse["@number"],
-            text: verse["#text"]
+            text: verse["#text"] || ""
         }
 
         verses.push(currentVerse)
     })
 
-    return verses
+    return verses.filter((a) => a.text.trim() !== "")
 }
 
 export const defaultBibleBookNames: any = {
