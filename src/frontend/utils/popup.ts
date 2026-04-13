@@ -80,6 +80,7 @@ import Timecode from "../components/main/popups/Timecode.svelte"
 import TimelineSettings from "../components/main/popups/TimelineSettings.svelte"
 import NewUpdate from "../components/main/popups/NewUpdate.svelte"
 import RegexManager from "../components/main/popups/RegexManager.svelte"
+import DrawerSearchOptions from "../components/main/popups/DrawerSearchOptions.svelte"
 
 export const popups: { [key in Popups]: ComponentType } = {
     initialize: Initialize,
@@ -159,7 +160,8 @@ export const popups: { [key in Popups]: ComponentType } = {
     sync_categories: ChurchAppsSyncCategories,
     effect_items: EffectItems,
     timeline: TimelineSettings,
-    timecode: Timecode
+    timecode: Timecode,
+    drawer_search_options: DrawerSearchOptions
 }
 
 export function waitForPopupData(popupId: Popups): Promise<any> {

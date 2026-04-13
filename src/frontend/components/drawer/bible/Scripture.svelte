@@ -745,7 +745,9 @@
         if (e.key === "Enter") {
             // Enter in search to add to project or play
             if (e.target?.closest(".search")) {
-                if (e.ctrlKey || e.metaKey) {
+                const enterSwapped = $scriptureSettings.enterSwapped
+                const ctrlKey = e.ctrlKey || e.metaKey
+                if (enterSwapped ? !ctrlKey : ctrlKey) {
                     playScripture()
                     ;(document.activeElement as any)?.blur()
                 } else {

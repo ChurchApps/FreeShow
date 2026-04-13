@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { DrawerTabIds } from "../../../types/Tabs"
-    import { activeDrawerTab, activeEdit, activePage, activePopup, activeProject, activeShow, activeTriggerFunction, dictionary, drawer, drawerOpenedInEdit, drawerTabsData, focusMode, labelsDisabled, os, previousShow, projects, quickTextCache, selected } from "../../stores"
+    import { activeDrawerTab, activeEdit, activePage, activePopup, activeProject, activeShow, activeTriggerFunction, dictionary, drawer, drawerOpenedInEdit, drawerTabsData, focusMode, labelsDisabled, os, previousShow, projects, quickTextCache, scriptureSettings, selected } from "../../stores"
     import { DEFAULT_DRAWER_HEIGHT, DEFAULT_WIDTH, MENU_BAR_HEIGHT } from "../../utils/common"
     import { translateText } from "../../utils/language"
     import { getAccess } from "../../utils/profile"
@@ -231,6 +231,11 @@
                     <Icon id="autofill" white />
                 </div>
             {/if}
+            <div class="clearSearch options" on:mousedown|stopPropagation on:mouseup|stopPropagation>
+                <Button style="height: 100%;" title={translateText("edit.options")} on:click={() => activePopup.set("drawer_search_options")}>
+                    <Icon id="options" white={!$scriptureSettings.enterSwapped} />
+                </Button>
+            </div>
             <div class="clearSearch">
                 <Button
                     style="height: 100%;"
@@ -328,11 +333,14 @@
         height: calc(100% - 4px);
         z-index: 1;
     }
+    .clearSearch.options {
+        right: 40px;
+    }
     .clearSearch.autocomplete {
-        right: 45px;
+        right: 90px;
         display: flex;
         align-items: center;
-        opacity: 0.3;
+        opacity: 0.2;
         pointer-events: none;
     }
 
