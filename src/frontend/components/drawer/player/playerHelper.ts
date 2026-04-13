@@ -1,9 +1,36 @@
 export function trimPlayerId(id: string, type: "youtube" | "vimeo") {
     if (type === "youtube") {
-        if (id.includes("?list")) id = id.slice(0, id.indexOf("?list"))
-        if (id.includes("?si")) id = id.slice(0, id.indexOf("?si"))
-        id = id.slice(-11)
-        return id
+        let value = id.trim()
+
+        try {
+            const url = new URL(value)
+            const host = url.hostname.replace("www.", "")
+
+            if (host === "youtu.be") {
+                const shortId = url.pathname.split("/").filter(Boolean)[0]
+                if (shortId) return shortId.slice(0, 11)
+            }
+
+            if (host.endsWith("youtube.com")) {
+                const videoId = url.searchParams.get("v")
+                if (videoId) return videoId.slice(0, 11)
+
+                const segments = url.pathname.split("/").filter(Boolean)
+                const routeIndex = segments.findIndex((segment) => ["shorts", "embed", "live"].includes(segment))
+                if (routeIndex >= 0 && segments[routeIndex + 1]) return segments[routeIndex + 1].slice(0, 11)
+            }
+        } catch {
+            // invalid URL, continue with manual parsing
+        }
+
+        const queryMatch = value.match(/[?&]v=([^&]+)/)
+        if (queryMatch?.[1]) return queryMatch[1].slice(0, 11)
+
+        const shortMatch = value.match(/youtu\.be\/([^?&/]+)/)
+        if (shortMatch?.[1]) return shortMatch[1].slice(0, 11)
+
+        if (value.includes("?")) value = value.slice(0, value.indexOf("?"))
+        return value.slice(-11)
     }
 
     if (type === "vimeo") {
