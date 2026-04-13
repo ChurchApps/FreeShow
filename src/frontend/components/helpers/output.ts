@@ -1033,11 +1033,11 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
             if (!templateLine) return
 
             // remove empty text parts (if not completely empty)
-            if (templateLine.text.some((a) => a?.value?.trim().length)) templateLine.text = templateLine.text.filter((a) => a?.value?.trim().length)
+            if (templateLine.text?.some((a) => a?.value?.trim().length)) templateLine.text = templateLine.text.filter((a) => a?.value?.trim().length)
 
-            line.align = templateLine?.align || ""
+            line.align = templateLine.align || ""
             line.text?.forEach((text, k) => {
-                const templateText = templateLine?.text?.[k] || templateLine?.text?.[0]
+                const templateText = templateLine.text?.[k] || templateLine.text?.[0]
 
                 if (!text.customType?.includes("disableTemplate") && !/\{scripture(?:\d+)?_number\}/.test(templateText?.value || "")) {
                     let style = templateText?.style || ""
@@ -1478,7 +1478,7 @@ export function getOutputLines(outSlide: OutSlide, styleLines = 0) {
             .get()[0] || null
     const maxLines = showSlide ? getItemWithMostLines(showSlide) : 0
 
-    const clickRevealItems = (showSlide?.items || []).filter((a) => a.clickReveal)
+    const clickRevealItems = (showSlide?.items || []).filter((a) => a?.clickReveal)
     const clickRevealed = clickRevealItems.length ? !!outSlide.itemClickReveal : true
 
     if (!maxLines) return { start: null, end: null, clickRevealed } // , index: 0, max: 0

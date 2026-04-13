@@ -176,6 +176,11 @@ export function fixShowIssues(show: Show) {
 
     Object.keys(show.slides).forEach((slideId: string) => {
         const slide = show.slides[slideId]
+        if (typeof slide !== "object") {
+            // something is wrong
+            delete show.slides[slideId]
+            return
+        }
 
         // remove if unused
         if (!allUsedSlides.includes(slideId) && slide.group === null) {

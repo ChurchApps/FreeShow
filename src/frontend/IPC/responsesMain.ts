@@ -315,7 +315,7 @@ export const mainResponses: MainResponses = {
     // CONNECTION
     // UNIFIED PROVIDER CALLBACKS
     [ToMain.PROVIDER_CONNECT]: (data) => {
-        if (!data.success) return
+        if (!data?.success) return
 
         providerConnections.update((c) => {
             c[data.providerId] = true

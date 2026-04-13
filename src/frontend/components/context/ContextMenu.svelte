@@ -161,7 +161,7 @@
     let rgb = { r: 35, g: 35, b: 45 }
     $: if ($theme) updateColor()
     function updateColor() {
-        const color = $themes[$theme]?.colors["primary"]
+        const color = $themes[$theme]?.colors?.["primary"]
         if (!color) return
 
         const newRgb = hexToRgb(color)

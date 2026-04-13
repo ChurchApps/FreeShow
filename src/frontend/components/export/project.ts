@@ -151,7 +151,7 @@ export async function exportProject(project: Project, projectId: string, savePat
         overlays[id] = clone(get(overlayStores)[id])
 
         // get media data from overlay "Media" items
-        get(overlayStores)[id].items.forEach((item) => {
+        get(overlayStores)[id].items?.forEach((item) => {
             if (item.type === "media" && item.src) {
                 getFile(item.src)
             }

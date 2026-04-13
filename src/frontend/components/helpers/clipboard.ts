@@ -734,6 +734,7 @@ const pasteActions = {
 
         const stage = clone(get(stageShows)[stageId])
         const newItemIds: string[] = []
+        if (!stage?.items) return
 
         data.forEach((item) => {
             const newItemId = uid(5)
@@ -1136,6 +1137,8 @@ const deleteActions = {
         if (!data.id || !activeItems.length) return
 
         stageShows.update((a) => {
+            if (!a[data.id]) return a
+
             activeItems.forEach((itemId) => {
                 delete a[data.id].items[itemId]
             })
@@ -1199,6 +1202,7 @@ const duplicateActions = {
         const stageId: string = data.id || ""
         const selectedItemIds: string[] = data.items || []
         const stage = clone(get(stageShows)[stageId])
+        if (!stage?.items) return
 
         selectedItemIds.forEach((itemId) => {
             const item = clone(stage.items[itemId])

@@ -35,7 +35,7 @@
         if (value) value = Number(value)
 
         slideItems.forEach((_, i: number) => {
-            if (!indexes.includes(i)) return
+            if (!indexes.includes(i) || !slideItems[i]) return
 
             if (!slideItems[i].actions) slideItems[i].actions = {}
 
@@ -43,6 +43,7 @@
             else delete slideItems[i].actions[action]
         })
 
+        if (indexes.some((i) => !slideItems[i])) return
         let actions = indexes.map((i) => slideItems[i].actions)
 
         if (type === "overlay" || type === "template") {

@@ -124,7 +124,7 @@
             }
 
             requestMain(Main.PROVIDER_DISCONNECT, { providerId }, (a) => {
-                if (!a.success) return
+                if (!a?.success) return
                 providerConnections.update((c) => {
                     c[providerId] = false
                     return c

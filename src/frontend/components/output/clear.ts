@@ -140,7 +140,8 @@ export function clearOverlay(overlayId: string) {
     activeOutputs.forEach((output) => {
         let outOverlays = output?.out?.overlays || []
         outOverlays = outOverlays.filter((id) => id !== overlayId)
-        lockedOverlays.set(get(lockedOverlays).filter((id) => id !== overlayId))
+        if (!Array.isArray(get(lockedOverlays))) lockedOverlays.set([])
+        else lockedOverlays.set(get(lockedOverlays).filter((id) => id !== overlayId))
 
         setOutput("overlays", outOverlays, false, output.id)
 

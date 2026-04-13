@@ -231,7 +231,7 @@ export function nextSlide(e: any, start = false, end = false, loop = false, bypa
     if (isLastSlide && !hasLinesEnded) isLastSlide = false
 
     // item/click reveal
-    const clickRevealItems = (showSlide?.items || []).filter((a) => a.clickReveal)
+    const clickRevealItems = (showSlide?.items || []).filter((a) => a?.clickReveal)
     const itemsRevealed = clickRevealItems.length ? !!slide?.itemClickReveal : true
     if (isLastSlide && !itemsRevealed) isLastSlide = false
 
@@ -545,7 +545,7 @@ export function previousSlide(e: any, customOutputId?: string) {
             .get()[0] || null
 
     // item/click reveal
-    const clickRevealItems = (currentShowSlide?.items || []).filter((a) => a.clickReveal)
+    const clickRevealItems = (currentShowSlide?.items || []).filter((a) => a?.clickReveal)
     const itemsRevealed = !!slide?.itemClickReveal
     const clickRevealEnded = !clickRevealItems.length || !itemsRevealed
     if (isFirstSlide && !clickRevealEnded) isLastSlide = false

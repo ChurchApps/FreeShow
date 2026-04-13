@@ -121,6 +121,7 @@
             let splitted = input.id.split(".")
             input.id = splitted[0]
             let newValue = item?.[input.id] || {}
+            if (typeof newValue === "string") return // something is wrong
             newValue[splitted[1]] = value
             value = newValue
         }

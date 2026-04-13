@@ -92,6 +92,8 @@
             const projectId = $activeProject || ""
 
             projects.update((a) => {
+                if (!a[projectId]) return a
+
                 selection.data.forEach(({ index }) => {
                     if (!a[projectId]?.shows?.[index]) return
                     a[projectId].shows[index].color = value

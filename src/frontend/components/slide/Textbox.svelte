@@ -791,44 +791,15 @@
     class:isDisabledVariable
     class:noTransition
     class:chords={chordLines.length}
-    class:clickable={$currentWindow === "output" && (item.button?.press || item.button?.release)}
-    class:reveal={(centerPreview || isStage) && item.clickReveal && !clickRevealed}
+    class:clickable={$currentWindow === "output" && (item?.button?.press || item?.button?.release)}
+    class:reveal={(centerPreview || isStage) && item?.clickReveal && !clickRevealed}
     class:hidden
     bind:this={itemElem}
     on:mousedown={press}
     on:mouseup={release}
 >
     {#if lines && !noTextMode}
-        <TextboxLines
-            {item}
-            {slideIndex}
-            {key}
-            {smallFontSize}
-            {animationStyle}
-            {dynamicValues}
-            {isStage}
-            {customFontSize}
-            {outputStyle}
-            {ref}
-            {style}
-            {customStyle}
-            {stageItem}
-            {chords}
-            {linesStart}
-            {linesEnd}
-            fontSize={smallFontSize ? 20 : fontSize}
-            {customTypeRatio}
-            {maxLines}
-            {maxLinesInvert}
-            {centerPreview}
-            {revealed}
-            styleOverrides={templateStyleOverrides}
-            {useOriginalTextColor}
-            hideContent={hideUntilAutosized}
-            {normalWrap}
-            on:updateAutoSize={calculateAutosize}
-            {updateDynamicValues}
-        />
+        <TextboxLines {item} {slideIndex} {key} {smallFontSize} {animationStyle} {dynamicValues} {isStage} {customFontSize} {outputStyle} {ref} {style} {customStyle} {stageItem} {chords} {linesStart} {linesEnd} fontSize={smallFontSize ? 20 : fontSize} {customTypeRatio} {maxLines} {maxLinesInvert} {centerPreview} {revealed} styleOverrides={templateStyleOverrides} {useOriginalTextColor} hideContent={hideUntilAutosized} {normalWrap} on:updateAutoSize={calculateAutosize} {updateDynamicValues} />
     {:else}
         <SlideItems {item} {slideIndex} {preview} {isTemplatePreview} {mirror} {isMirrorItem} {ratio} {disableListTransition} {smallFontSize} {ref} {fontSize} {outputId} />
     {/if}

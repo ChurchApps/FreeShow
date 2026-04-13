@@ -387,7 +387,7 @@
 
 <!-- Render all items in original order to maintain z-index layering -->
 {#each currentItems as item, index}
-    {#if shouldItemBeShown(item, currentItems, showItemRef, conditionsUpdater) && (!item.clickReveal || current.outSlide?.itemClickReveal)}
+    {#if item && shouldItemBeShown(item, currentItems, showItemRef, conditionsUpdater) && (!item.clickReveal || current.outSlide?.itemClickReveal)}
         {#if persistentItemIndexes.includes(index)}
             <!-- Persistent item: unchanged content, render outside transition to avoid flicker -->
             <Textbox

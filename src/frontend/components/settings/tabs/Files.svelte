@@ -205,7 +205,7 @@
             await socketDisconnect()
             requestMain(Main.PROVIDER_DISCONNECT, { providerId }, (a) => {
                 disconnecting = false
-                if (!a.success) return
+                if (!a?.success) return
                 providerConnections.update((c) => {
                     c[providerId] = false
                     return c

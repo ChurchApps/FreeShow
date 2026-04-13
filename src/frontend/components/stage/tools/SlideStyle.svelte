@@ -9,7 +9,7 @@
     import MaterialDropdown from "../../inputs/MaterialDropdown.svelte"
 
     $: currentStage = $stageShows[$activeStage.id || ""]
-    $: settings = currentStage.settings
+    $: settings = currentStage?.settings
 
     function updateStageSettings(e: any, key: string) {
         let value = e.target?.value || e

@@ -89,7 +89,7 @@
             slideItems = slide[$activeEdit.id!]?.items
         }
 
-        if (!slideItems) return
+        if (!slideItems?.[index]) return
 
         let actions = clone(slideItems[index].actions)
         delete actions[action]

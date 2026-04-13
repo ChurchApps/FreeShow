@@ -829,7 +829,12 @@ export async function getScriptureSlidesNew(data: any, onlyOne = false, disableR
         slidesString = slidesString.replaceAll(`{meta_${key.toLowerCase()}}`, globalCustomDynamicValues[`meta_${key.toLowerCase()}`])
     }
 
-    const newSlides: Item[][] = JSON.parse(slidesString)
+    let newSlides: Item[][]
+    try {
+        newSlides = JSON.parse(slidesString)
+    } catch {
+        return { slides: [], groupNames: [], attributions: [], slideDynamicValues: [] }
+    }
 
     scriptureVerseContent.forEach((slideContent, contentIndex) => {
         slideContent.forEach((bibleVerses, bibleIndex) => {

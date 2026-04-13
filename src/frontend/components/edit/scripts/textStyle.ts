@@ -73,6 +73,7 @@ function combine(item: Item): Item {
 // add new style to string and remove old
 export function addStyleString(oldStyle: string, style: any[]): string {
     if (!oldStyle) return style[1] !== null ? style.join(":") + ";" : ""
+    if (typeof oldStyle !== "string") return ""
 
     let array: string[] = oldStyle.split(";")
     // remove last if empty
@@ -215,7 +216,7 @@ export function getItemStyleAtPos(lines: Line[], pos: null | { start: number; en
     })
 
     // filter out empty lines
-    lines = lines.filter((a) => a.text.length)
+    lines = lines.filter((a) => a?.text?.length)
 
     if (!style.length && lines.length) style = lines[lines.length - 1].text[lines[lines.length - 1].text.length - 1]?.style || ""
 

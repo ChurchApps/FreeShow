@@ -58,6 +58,7 @@
                 slideItems[i].actions.transition = value
             })
 
+            if (indexes.some((i) => !slideItems[i])) return
             let actions = indexes.map((i) => slideItems[i].actions)
 
             if ($activeEdit.type === "overlay" || $activeEdit.type === "template") {

@@ -101,7 +101,7 @@
         let count = 0
         const lineChildren = Array.from(lineElem.childNodes)
         for (const [childIndex, child] of lineChildren.entries()) {
-            const textLength = ((child as HTMLElement).innerText?.replaceAll("\n", "")?.length ?? child.textContent?.length ?? 0)
+            const textLength = (child as HTMLElement).innerText?.replaceAll("\n", "")?.length ?? child.textContent?.length ?? 0
             const isLastChild = childIndex === lineChildren.length - 1
             if (pos <= count + textLength || isLastChild) {
                 const localOffset = Math.max(0, pos - count)
@@ -140,9 +140,7 @@
     }
 
     function restoreTextSelection(editElem: Element, savedSelection: { start: number; end: number }[], keepBackwardSelection = false) {
-        const selectedLines = savedSelection
-            .map((line, i) => ({ ...line, line: i }))
-            .filter((line) => line.start !== undefined && line.end !== undefined)
+        const selectedLines = savedSelection.map((line, i) => ({ ...line, line: i })).filter((line) => line.start !== undefined && line.end !== undefined)
 
         if (!selectedLines.length) return false
 
@@ -533,7 +531,7 @@
             // WIP if top textbox is empty, and another has text, that will update (but the right side won't update (as top is empty as not changed)), that is confusing
 
             // no text
-            if (currentItems[0].lines) {
+            if (currentItems[0]?.lines) {
                 let textLength = currentItems.reduce((length, item) => (length += getItemText(item).length), 0)
                 if (!textLength) {
                     newToast("empty.text")

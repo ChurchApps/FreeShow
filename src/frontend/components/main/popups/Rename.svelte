@@ -141,7 +141,8 @@
 
             let newLines = clone(lines)
             let chords = newLines[chord.index].chords
-            chords?.forEach((a, i: number) => {
+            if (!Array.isArray(chords)) chords = []
+            chords.forEach((a, i: number) => {
                 if (a.id === chord.chord.id) newLines[chord.index].chords![i].key = groupName
             })
 

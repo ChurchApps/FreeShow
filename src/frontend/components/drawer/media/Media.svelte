@@ -441,7 +441,7 @@
 
     function handleDisconnect() {
         requestMain(Main.PROVIDER_DISCONNECT, { providerId: "canva" }, (result) => {
-            if (result.success) {
+            if (result?.success) {
                 providerConnections.update((c) => {
                     c.canva = false
                     return c
