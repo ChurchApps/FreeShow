@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onMount } from "svelte"
+    import { onMount, tick } from "svelte"
     import { uid } from "uid"
     import type { Item, Line } from "../../../../types/Show"
     import { VIRTUAL_BREAK_CHAR } from "../../../show/slides"
@@ -111,6 +111,12 @@
         setTimeout(() => {
             setCaret(textElem, { line, pos })
         }, 10)
+    }
+
+    async function refreshStyleAndRestoreCaret(caret: { line: number; pos: number }) {
+        getStyle()
+        await tick()
+        setCaret(textElem, caret)
     }
 
     function keydown(e: KeyboardEvent) {
@@ -265,6 +271,7 @@
 
     let HISTORY_UPDATE_KEY = 0
     let updates = 0
+    let recentKeyboardLineMutationAt = 0
     function updateLines(newLines: Line[] = []) {
         // updateItem = true
         if (!newLines?.length) newLines = getNewLines()
@@ -292,7 +299,11 @@
 
             // only reset caret when lines are added/removed, not when line content changes
             let lastChangedLine = EditboxHelper.determineCaretLine(item?.lines || [], newLines)
-            if (lastChangedLine > -1 && (item?.lines || []).length !== newLines.length) setCaretDelayed(lastChangedLine, 0) // create new history store, when passing 15 steps
+            const keyboardLineMutation = Date.now() - recentKeyboardLineMutationAt < 250
+            const domSelection = window.getSelection()
+            const anchorElem = (domSelection?.anchorNode as Element)?.nodeType === Node.ELEMENT_NODE ? (domSelection?.anchorNode as Element) : domSelection?.anchorNode?.parentElement
+            const editingThisTextElem = !!textElem && (document.activeElement === textElem || anchorElem?.closest(".edit") === textElem)
+            if (lastChangedLine > -1 && (item?.lines || []).length !== newLines.length && !keyboardLineMutation && !editingThisTextElem) setCaretDelayed(lastChangedLine, 0) // create new history store, when passing 15 steps
             updates++
             if (updates >= 15) {
                 HISTORY_UPDATE_KEY++
@@ -362,7 +373,6 @@
         changedTimeout = setTimeout(() => (textChanged = false), 500)
     }
 
-    // typing
     let isTyping = false
     $: if (isAuto && textChanged) checkTyping()
     let typingTimeout: NodeJS.Timeout | null = null
@@ -511,25 +521,24 @@
 
         if (pasting) return newLines
 
-        if (updateHTML) {
+        const keyboardLineMutation = Date.now() - recentKeyboardLineMutationAt < 250
+
+        if (updateHTML && !keyboardLineMutation) {
             // get caret pos
             let sel = getSelectionRange()
             let lineIndex = sel.findIndex((a) => a?.start !== undefined)
             if (lineIndex >= 0) {
                 let caret = { line: lineIndex || 0, pos: sel[lineIndex]?.start || 0 }
-
-                setTimeout(() => {
-                    getStyle()
-                    // set caret position back
-                    setTimeout(() => {
-                        setCaret(textElem, caret)
-                    }, 10)
-                }, 10)
+                void refreshStyleAndRestoreCaret(caret)
             }
         }
 
         // fix removing all text in a line
         let caret: any = null
+        let liveSel = getSelectionRange()
+        let liveSelLine = liveSel.findIndex((a) => a?.start !== undefined)
+        const liveCaret = liveSelLine > -1 ? { line: liveSelLine, pos: liveSel[liveSelLine]?.start || 0 } : null
+
         let align = item.lines?.[0]?.align || ""
         let textStyle = item.lines?.[0]?.text?.[0]?.style || ""
 
@@ -539,7 +548,8 @@
         } else {
             newLines.forEach((line, i) => {
                 if (!line.text?.length) {
-                    newLines[i].text = [{ style: textStyle, value: "" }]
+                    const lineStyle = item.lines?.[i]?.text?.[0]?.style || textStyle
+                    newLines[i].text = [{ style: lineStyle, value: "" }]
                     caret = { line: i, pos: 0 }
                 }
             })
@@ -559,17 +569,12 @@
             }
         }
 
+        // For keyboard line operations, prefer the live caret from the contenteditable DOM.
+        if (keyboardLineMutation && liveCaret) caret = liveCaret
+
         if (caret) {
             item.lines = newLines
-            setTimeout(() => {
-                getStyle()
-                if (newLines.length < 1) return
-
-                // set caret position back
-                setTimeout(() => {
-                    setCaret(textElem, caret)
-                }, 10)
-            }, 10)
+            if (newLines.length > 0) void refreshStyleAndRestoreCaret(caret)
 
             lastCaretPos = caret
         } else {
@@ -607,6 +612,19 @@
     }
 
     function textElemKeydown(e: KeyboardEvent) {
+        if (e.key === "Enter" || e.key === "Backspace" || e.key === "Delete") {
+            recentKeyboardLineMutationAt = Date.now()
+        }
+
+        if (e.ctrlKey || e.metaKey) {
+            const key = (e.key || "").toLowerCase()
+            const code = (e.code || "").toLowerCase()
+            const isFormattingShortcut = key === "b" || key === "i" || key === "u" || code === "keyb" || code === "keyi" || code === "keyu"
+
+            // Keep rich text changes in BoxStyle handler only.
+            if (isFormattingShortcut) e.preventDefault()
+        }
+
         if (e.key === "v" && (e.ctrlKey || e.metaKey)) {
             e.preventDefault()
             navigator.clipboard.readText().then((clipText: string) => {

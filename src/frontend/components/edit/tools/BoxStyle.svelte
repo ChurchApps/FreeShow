@@ -11,7 +11,7 @@
     import { _show } from "../../helpers/shows"
     import { getStyles } from "../../helpers/style"
     import { MAX_FONT_SIZE } from "../scripts/autosize"
-    import { addFilterString, addStyle, addStyleString, getItemStyleAtPos, getItemText, getLastLineAlign, getLineText, getSelectionRange, setCaret } from "../scripts/textStyle"
+    import { addFilterString, addStyle, addStyleString, getItemStyleAtPos, getItemText, getLastLineAlign, getLineText, getSelectionRange } from "../scripts/textStyle"
     import { itemBoxes, setBoxInputValue } from "../values/boxes"
     import EditValues from "./EditValues.svelte"
 
@@ -24,12 +24,19 @@
     // selection
     let selection: null | { start: number; end: number }[] = null
     const unsubscribe = activeEdit.subscribe((a) => {
-        if (!a.items.length) selection = null
+        if (!a.items.length) {
+            selection = null
+        }
     })
     onDestroy(unsubscribe)
 
+    let selectionChangeListener: null | (() => void) = null
+
     onMount(() => {
         getTextSelection()
+
+        selectionChangeListener = () => getTextSelection()
+        document.addEventListener("selectionchange", selectionChangeListener)
 
         // set focus to textbox if only one without content
         if (allSlideItems.length === 1 && item && !getItemText(item).length && !$activeEdit.items.length) {
@@ -39,6 +46,10 @@
         }
     })
 
+    onDestroy(() => {
+        if (selectionChangeListener) document.removeEventListener("selectionchange", selectionChangeListener)
+    })
+
     function getTextSelection(e: any = null) {
         if (e) {
             if (e.target.closest(".menus") || e.target.closest(".popup") || e.target.closest(".drawer") || e.target.closest(".chords") || e.target.closest(".contextMenu") || e.target.closest(".editTools")) return
@@ -46,8 +57,16 @@
 
         let sel = window.getSelection()
 
-        if (sel?.type === "None") selection = null
-        else selection = getSelectionRange() // range
+        if (sel?.type === "None") {
+            if ((document.activeElement as HTMLElement | null)?.closest(".tools")) return
+            selection = null
+            return
+        }
+
+        const anchorElem = (sel?.anchorNode as Element)?.nodeType === Node.ELEMENT_NODE ? (sel?.anchorNode as Element) : sel?.anchorNode?.parentElement
+        if (!anchorElem?.closest(".edit")) return
+
+        selection = getSelectionRange() // range
     }
 
     function mousedown(e: any) {
@@ -56,7 +75,7 @@
     }
 
     function keyup(e: KeyboardEvent) {
-        if (e.key.includes("Arrow") || e.key.toUpperCase() === "A") getTextSelection(e)
+        if (e.key.includes("Arrow") || e.key === "Home" || e.key === "End" || e.key.toUpperCase() === "A") getTextSelection(e)
     }
 
     const formatting = {
@@ -64,26 +83,122 @@
         i: () => ({ id: "style", key: "font-style", value: "italic" }),
         u: () => ({ id: "style", key: "text-decoration", value: "underline" })
     }
+
+    function getFormattingShortcut(e: KeyboardEvent) {
+        const byKey = formatting[(e.key || "").toLowerCase()]
+        if (byKey) return byKey
+
+        const code = e.code || ""
+        if (code.startsWith("Key")) return formatting[code.slice(3).toLowerCase()]
+
+        return null
+    }
+
+    function getSelectionPoint(editElem: Element, line: number, pos: number) {
+        const lineElem = editElem.childNodes[line]
+        if (!lineElem) return null
+
+        let count = 0
+        const lineChildren = Array.from(lineElem.childNodes)
+        for (const [childIndex, child] of lineChildren.entries()) {
+            const textLength = ((child as HTMLElement).innerText?.replaceAll("\n", "")?.length ?? child.textContent?.length ?? 0)
+            const isLastChild = childIndex === lineChildren.length - 1
+            if (pos <= count + textLength || isLastChild) {
+                const localOffset = Math.max(0, pos - count)
+
+                // child can be a raw #text node or an element containing text.
+                if (child.nodeType === Node.TEXT_NODE) {
+                    const nodeLength = child.textContent?.length ?? 0
+                    return { node: child, offset: Math.min(nodeLength, localOffset) }
+                }
+
+                const textNode = child.childNodes?.[0]
+                if (!textNode || textNode.nodeName === "BR") return { node: child, offset: 0 }
+
+                if (textNode.nodeType === Node.TEXT_NODE) {
+                    const nodeLength = textNode.textContent?.length ?? 0
+                    return { node: textNode, offset: Math.min(nodeLength, localOffset) }
+                }
+
+                const nodeLength = textNode.textContent?.length ?? 0
+                return { node: textNode, offset: Math.min(nodeLength, localOffset) }
+            }
+
+            count += textLength
+        }
+
+        return null
+    }
+
+    function isSelectionBackward(sel: Selection) {
+        if (!sel.anchorNode || !sel.focusNode) return false
+        if (sel.anchorNode === sel.focusNode) return sel.anchorOffset > sel.focusOffset
+
+        const position = sel.anchorNode.compareDocumentPosition(sel.focusNode)
+        if (position & Node.DOCUMENT_POSITION_PRECEDING) return true
+        return false
+    }
+
+    function restoreTextSelection(editElem: Element, savedSelection: { start: number; end: number }[], keepBackwardSelection = false) {
+        const selectedLines = savedSelection
+            .map((line, i) => ({ ...line, line: i }))
+            .filter((line) => line.start !== undefined && line.end !== undefined)
+
+        if (!selectedLines.length) return false
+
+        const first = selectedLines[0]
+        const last = selectedLines[selectedLines.length - 1]
+        const startPoint = getSelectionPoint(editElem, first.line, first.start)
+        const endPoint = getSelectionPoint(editElem, last.line, last.end)
+        if (!startPoint || !endPoint) return false
+
+        const range = document.createRange()
+        range.setStart(startPoint.node, startPoint.offset)
+        range.setEnd(endPoint.node, endPoint.offset)
+
+        const sel = window.getSelection()
+        if (!sel) return false
+
+        if (sel.setBaseAndExtent) {
+            if (keepBackwardSelection) sel.setBaseAndExtent(endPoint.node, endPoint.offset, startPoint.node, startPoint.offset)
+            else sel.setBaseAndExtent(startPoint.node, startPoint.offset, endPoint.node, endPoint.offset)
+        } else {
+            sel.removeAllRanges()
+            sel.addRange(range)
+        }
+
+        return true
+    }
+
     function keydown(e: KeyboardEvent) {
-        if (!selection || (!e.ctrlKey && !e.metaKey) || !formatting[e.key]) return
+        const shortcut = getFormattingShortcut(e)
+        if ((!e.ctrlKey && !e.metaKey) || !shortcut) return
+
+        const liveSelection = getSelectionRange()
+        const hasSelectionRange = !!liveSelection?.some((line) => line.start !== undefined && line.end !== undefined && line.start !== line.end)
+        if (!hasSelectionRange) return
+
         e.preventDefault()
 
-        let value = formatting[e.key]()
+        const selectionSnapshot = liveSelection.map((line) => ({ ...line }))
+        selection = selectionSnapshot.map((line) => ({ ...line }))
+        const currentDomSelection = window.getSelection()
+        const backwardSelection = currentDomSelection ? isSelectionBackward(currentDomSelection) : false
+
+        let value = shortcut()
         // WIP line-through is removed
         if (styles[value.key]?.includes(value.value)) value.value = ""
 
         updateValue({ detail: value })
 
-        // reset caret position (styles can be changed without this also)
-        setTimeout(() => {
-            if (!selection) return
-
-            let editElem = document.querySelector(".editArea")?.querySelectorAll(".editItem")?.[$activeEdit.items[0]]?.querySelector(".edit")
+        requestAnimationFrame(() => {
+            const editElem = document.querySelector(".editArea")?.querySelectorAll(".editItem")?.[$activeEdit.items[0]]?.querySelector(".edit")
             if (!editElem) return
 
-            let selectedLine = selection.findIndex((a) => a.start !== undefined)
-            if (selectedLine > -1 && selection[selectedLine]) setCaret(editElem, { line: selectedLine, pos: selection[selectedLine].end })
-        }, 10)
+            restoreTextSelection(editElem, selectionSnapshot, backwardSelection)
+
+            selection = selectionSnapshot.map((line) => ({ ...line }))
+        })
     }
 
     // -----

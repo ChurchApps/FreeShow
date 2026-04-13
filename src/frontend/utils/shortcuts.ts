@@ -155,6 +155,15 @@ export function keydown(e: KeyboardEvent) {
     // clicking e.g. "Show" tab button will focus that making number tab change not work
     if (document.activeElement?.nodeName === "BUTTON") (document.activeElement as any).blur()
 
+    const isEditingText = () => {
+        const activeElem = document.activeElement as HTMLElement | null
+        if (activeElem?.closest(".editItem") || activeElem?.classList?.contains("edit")) return true
+
+        const selection = window.getSelection()
+        const anchorElem = (selection?.anchorNode as Element)?.nodeType === Node.ELEMENT_NODE ? (selection?.anchorNode as Element) : selection?.anchorNode?.parentElement
+        return !!anchorElem?.closest(".edit")
+    }
+
     if (e.ctrlKey || e.metaKey) {
         const drawerMenus = Object.keys(drawerTabs) as DrawerTabIds[]
         if (document.activeElement === document.body && Object.keys(drawerMenus).includes((Number(e.key) - 1).toString())) {
@@ -168,6 +177,9 @@ export function keydown(e: KeyboardEvent) {
         let key = getNormalizedKey(e)
         // Handle shift+Z for redo
         if (key === "z" && e.shiftKey) key = "Z"
+
+        // Let text formatting shortcuts be handled by edit tools when a text box is active.
+        if (["b", "i", "u"].includes(key.toLowerCase()) && isEditingText()) return
 
         // use default input shortcuts on supported devices
         const exeption = ["e", "i", "n", "o", "s", "a", "z", "Z", "y"]
