@@ -13,7 +13,7 @@
         })
     }
 
-    const ctrl = $os.platform === "darwin" ? "cmd" : "ctrl"
+    const ctrl = $os.platform === "darwin" ? "Cmd" : "Ctrl"
     $: addToProjectShortcut = enterSwapped ? `${ctrl} + Enter` : "Enter"
     $: playShortcut = enterSwapped ? "Enter" : `${ctrl} + Enter`
 </script>
@@ -31,10 +31,13 @@
     key {
         background: var(--primary-darker);
         color: var(--primary-text);
-        border-radius: 4px;
-        padding: 2px 6px;
+
         font-size: 0.9em;
         font-family: monospace;
+        text-transform: uppercase;
+
+        padding: 2px 6px;
+        border-radius: 4px;
         border: 1px solid var(--primary-lighter);
     }
 
