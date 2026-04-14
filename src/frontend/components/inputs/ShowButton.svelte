@@ -1,6 +1,6 @@
 <script lang="ts">
     import { getDocument, GlobalWorkerOptions } from "pdfjs-dist"
-    import type { ClickEvent, MediaStyle } from "../../../types/Main"
+    import type { ClickEvent } from "../../../types/Main"
     import { AudioPlayer } from "../../audio/audioPlayer"
     import { activeEdit, activeFocus, activePage, activeProject, activeShow, categories, focusMode, globalTags, media, notFound, outLocked, outputs, overlays, playerVideos, playingAudio, projects, refreshEditSlide, shows, showsCache, special, styles } from "../../stores"
     import { getAccess } from "../../utils/profile"
@@ -11,11 +11,11 @@
     import { loadShows } from "../helpers/setShow"
     import { checkName, getLayoutRef } from "../helpers/show"
     import { swichProjectItem, updateOut } from "../helpers/showActions"
+    import T from "../helpers/T.svelte"
     import { joinTime, secondsToTime } from "../helpers/time"
     import { clearBackground, clearSlide } from "../output/clear"
     import HiddenInput from "./HiddenInput.svelte"
     import MaterialButton from "./MaterialButton.svelte"
-    import T from "../helpers/T.svelte"
 
     export let id: string
     export let show: any // ShowList | ShowRef
@@ -139,7 +139,7 @@
         } else if (type === "image" || type === "video") {
             let outputStyle = $styles[currentOutput.style || ""]
             const mediaData = $media[id] || {}
-            let mediaStyle: MediaStyle = getMediaStyle(mediaData, outputStyle)
+            const mediaStyle = getMediaStyle(mediaData, outputStyle)
 
             const videoType = getMediaLayerType(id, mediaStyle)
             const shouldLoop = videoType === "background" ? show.loop || true : false
