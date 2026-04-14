@@ -257,8 +257,23 @@ export function nextSlide(e: any, start = false, end = false, loop = false, bypa
     if (currentShow && (start || !slide || e?.ctrlKey || (isLastSlide && (currentShow.id !== slide?.id || currentLayoutId !== slide.layout)))) {
         if ((currentShow?.type === "section" || !get(showsCache)[currentShow.id] || !getLayoutRef(currentShow.id).length) && advanceThroughProject) return goToNextProjectItem()
 
-        const id = loop ? slide?.id : currentShow.id
+        let id = loop ? slide?.id : currentShow.id
         if (!id) return
+
+        const projectItems = get(projects)[get(activeProject) || ""]?.shows || []
+        let currentLayoutId = (get(focusMode) ? projectItems[currentShow?.index ?? -1]?.layout : null) || _show(id).get("settings.activeLayout")
+
+        // when pressing arrow right on the last slide in focus mode we should always continue from the outputted show (if any) and not the selected show
+        if (get(focusMode) && !start && !loop && currentOutput.out?.slide?.id && slide?.id !== currentShow.id && (slide?.type || "show") === "show") {
+            // get next show after current one
+            const currentId = currentOutput.out.slide.id
+            const projectIndex = projectItems.findIndex((a) => a.id === currentId && (a.type || "show") === "show")
+            const nextProjectShowIndex = projectIndex > -1 ? projectItems.findIndex((a, i) => i > projectIndex && (a.type || "show") === "show") : -1
+            if (nextProjectShowIndex > -1) {
+                id = projectItems[nextProjectShowIndex].id || id
+                currentLayoutId = projectItems[nextProjectShowIndex]?.layout || _show(id).get("settings.activeLayout")
+            }
+        }
 
         // layout = GetLayout()
         layout = getLayoutRef(id)
@@ -271,7 +286,6 @@ export function nextSlide(e: any, start = false, end = false, loop = false, bypa
         checkActionTrigger(data, index)
         // allow custom actions to trigger first
         setTimeout(() => {
-            const currentLayoutId = (get(focusMode) ? get(projects)[get(activeProject) || ""]?.shows?.[currentShow?.index ?? -1]?.layout : null) || _show(id).get("settings.activeLayout")
             setOutput("slide", { id, layout: currentLayoutId, index }, false, customOutputId)
             updateOut(id, index!, layout, !e?.altKey, customOutputId)
         })
@@ -570,6 +584,8 @@ export function previousSlide(e: any, customOutputId?: string) {
         layout = _show("active").layouts([currentLayoutId]).ref()[0] || []
         activeLayout = currentLayoutId
         index = (layout.length || 0) - 1
+
+        // WIP when pressing arrow left on the first slide in focus mode we should always continue from the outputted show (if any) and not the selected show ?
     }
 
     let line: number = linesIndex || 0
