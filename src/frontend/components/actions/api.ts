@@ -15,7 +15,7 @@ import { updateTransition } from "../../utils/transitions"
 import { startMetronome } from "../drawer/audio/metronome"
 import { pauseAllTimers } from "../drawer/timers/timers"
 import { getSlideThumbnail, getThumbnail } from "../helpers/media"
-import { changeStageOutputLayout, startCamera, startScreen, toggleOutput, toggleOutputs } from "../helpers/output"
+import { changeOutputScreen, changeStageOutputLayout, startCamera, startScreen, toggleOutput, toggleOutputs } from "../helpers/output"
 import { activateTriggerSync, changeOutputStyle, nextSlideIndividual, playSlideTimers, previousSlideIndividual, randomSlide, replaceDynamicValues, selectProjectShow, sendMidi, startShowSync } from "../helpers/showActions"
 import { startTimerById, startTimerByName, stopTimers } from "../helpers/timerTick"
 import { muteOutput, unmuteOutput } from "../helpers/video"
@@ -127,6 +127,7 @@ export type API_toggle_specific = { value?: boolean }
 export type API_stage_output_layout = { outputId?: string; stageLayoutId: string }
 export type API_output_style = { outputId?: string; styleId?: string }
 export type API_output_lock = { value?: boolean; outputId?: string }
+export type API_output_screen = { outputId?: string; id: string; bounds?: { x: number; y: number; width: number; height: number } }
 export type API_camera = { name?: string; id: string; groupId?: string }
 export type API_screen = { name?: string; id: string }
 export type API_dynamic_value = { value: string; ref?: any }
@@ -263,6 +264,7 @@ export const API_ACTIONS = {
     lock_output: (data: API_output_lock) => toggleLock(data), // BC
     toggle_output_windows: () => toggleOutputs(), // BC
     toggle_output: (data: API_id) => toggleOutput(data.id),
+    change_output_screen: (data: API_output_screen) => changeOutputScreen(data),
     id_select_output_style: (data: API_id) => changeOutputStyle({ styleId: data.id }), // BC
     change_output_style: (data: API_output_style) => changeOutputStyle(data),
     change_stage_output_layout: (data: API_stage_output_layout) => changeStageOutputLayout(data),

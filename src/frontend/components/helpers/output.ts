@@ -17,7 +17,7 @@ import { sendBackgroundToStage } from "../../utils/stageTalk"
 import { TemplateHelper } from "../../utils/templates"
 import { videoExtensions } from "../../values/extensions"
 import { customActionActivation, runAction } from "../actions/actions"
-import type { API_camera, API_screen, API_stage_output_layout } from "../actions/api"
+import type { API_camera, API_output_screen, API_screen, API_stage_output_layout } from "../actions/api"
 import { getItemText, getSlideText } from "../edit/scripts/textStyle"
 import type { EditInput } from "../edit/values/boxes"
 import { clearBackground, clearSlide } from "../output/clear"
@@ -283,6 +283,34 @@ export function startCamera(cam: API_camera) {
 
 export function startScreen(screen: API_screen) {
     setOutput("background", { name: screen.name || "", id: screen.id, type: "screen" })
+}
+
+export function changeOutputScreen(data: API_output_screen) {
+    if (!data?.id) return
+
+    const outputId = data.outputId || getAllNormalOutputs()[0]?.id || ""
+    if (!outputId || !get(outputs)[outputId]) return
+
+    outputs.update((a) => {
+        if (!a[outputId]) return a
+
+        if (data.bounds) {
+            a[outputId].bounds = {
+                x: data.bounds.x,
+                y: data.bounds.y,
+                width: data.bounds.width,
+                height: data.bounds.height
+            }
+        }
+
+        a[outputId].screen = data.id.toString()
+        return a
+    })
+
+    setTimeout(() => {
+        toggleOutputs([outputId], { state: true })
+        send(OUTPUT, ["UPDATE_BOUNDS"], { id: outputId, ...get(outputs)[outputId] })
+    }, 100)
 }
 
 /// OVERLAY TIMERS

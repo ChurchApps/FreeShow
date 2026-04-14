@@ -79,6 +79,17 @@
         screens = [...screenList, ...windowList]
     }
 
+    let outputScreens: { value: string; label: string; bounds: { x: number; y: number; width: number; height: number } }[] = []
+    if (inputId === "output_screen") getOutputScreens()
+    async function getOutputScreens() {
+        const displays = await requestMain(Main.GET_DISPLAYS)
+        outputScreens = (displays || []).map((display, i) => ({
+            value: display.id?.toString?.() || String(display.id || ""),
+            label: display.name || `Display ${i + 1} (${display.bounds?.width || 0}x${display.bounds?.height || 0})`,
+            bounds: display.bounds
+        }))
+    }
+
     function convertToOptions(a) {
         const options = Object.keys(a).map((id) => ({ value: id, label: a[id].name }))
         return sortByName(options, "label")
@@ -144,6 +155,17 @@
         on:change={(e) => {
             const screen = screens.find((a) => a.id === e.detail)
             updateValue("", screen)
+        }}
+    />
+{:else if inputId === "output_screen"}
+    <MaterialDropdown label="stage.output" options={getOptions.normal_outputs().slice(1)} value={value?.outputId || ""} on:change={(e) => updateValue("outputId", e.detail)} />
+    <MaterialDropdown
+        label="settings.output_screen"
+        options={outputScreens}
+        value={value?.id || ""}
+        on:change={(e) => {
+            const selectedScreen = outputScreens.find((a) => a.value === e.detail)
+            updateValue("", { ...value, id: e.detail, bounds: selectedScreen?.bounds })
         }}
     />
 {:else if inputId === "midi"}

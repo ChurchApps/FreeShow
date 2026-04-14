@@ -796,6 +796,7 @@
         "toggle_output_lock": "Toggle output lock",
         "toggle_output_window": "Toggle output window",
         "toggle_output_windows": "Toggle output windows",
+        "change_output_screen": "Change output screen",
         "id_select_group": "Play specific group",
         "id_change_stage_layout": "Change stage connections layout",
         "start_camera": "Start camera",
