@@ -48,8 +48,8 @@ export const actionData = {
 
     // OUTPUT
     lock_output: { SECTION: "guide_title.output", canAddMultiple: true, name: "actions.toggle_output_lock", icon: "locked", input: "output_lock" },
-    toggle_output_windows: { name: "actions.toggle_output_windows", icon: "outputs", incompatible: ["toggle_output"] },
-    toggle_output: { canAddMultiple: true, name: "actions.toggle_output_window", icon: "outputs", input: "id", incompatible: ["toggle_output_windows"] },
+    toggle_output_windows: { name: "actions.toggle_output_windows", icon: "outputs", input: "toggle", incompatible: ["toggle_output"] },
+    toggle_output: { canAddMultiple: true, name: "actions.toggle_output_window", icon: "outputs", input: "toggle_output", incompatible: ["toggle_output_windows"] },
     // id_select_output_style: { name: "actions.id_select_output_style", icon: "styles", input: "id" },
     change_output_style: { slideId: "outputStyle", common: true, canAddMultiple: true, name: "actions.change_output_style", icon: "styles", input: "change_output_style" },
     change_transition: { name: "actions.change_transition", icon: "transition", input: "transition" },
