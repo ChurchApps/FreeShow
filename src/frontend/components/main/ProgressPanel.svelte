@@ -8,14 +8,11 @@
 
     let dismissed = false
     let seenUrls = new Set<string>()
-    let errorPaths = new Set<string>()
 
-    $: rawMediaEntries = Array.from($mediaDownloads.entries())
-    $: mediaEntries = rawMediaEntries.filter(([url, data]) => !(data.status === "error" && errorPaths.has(url)))
+    $: mediaEntries = Array.from($mediaDownloads.entries())
     $: hasDownloads = mediaEntries.length > 0 && !dismissed
 
-    $: rawImports = Array.from($pdfImports.entries())
-    $: imports = rawImports.filter(([filePath, data]) => !(data.status === "error" && errorPaths.has(filePath)))
+    $: imports = Array.from($pdfImports.entries())
     $: hasPdfImports = imports.length > 0
     $: hasProgress = hasDownloads || hasPdfImports
 
@@ -56,11 +53,8 @@
         return `${Math.round(getPercent(progress, total))}%`
     }
 
-    function getStatusLabel(status: string, progress: number, total: number, path?: string) {
-        if (status === "error") {
-            if (path) errorPaths.add(path)
-            return translateText("error.import")
-        }
+    function getStatusLabel(status: string, progress: number, total: number) {
+        if (status === "error") return translateText("error.import")
         if (status === "complete") return "100%"
         return getPercentLabel(progress, total)
     }
@@ -79,7 +73,7 @@
                 <div class="download-item" transition:fade={{ duration: 150 }}>
                     <div class="pdf-top-row">
                         <div class="file-name" title={getFileName(url)}>{getFileName(url)}</div>
-                        <span class="status {data.status === 'error' ? 'error' : data.status === 'complete' ? 'ok' : ''}">{getStatusLabel(data.status, data.progress, data.total, url)}</span>
+                        <span class="status {data.status === 'error' ? 'error' : data.status === 'complete' ? 'ok' : ''}">{getStatusLabel(data.status, data.progress, data.total)}</span>
                     </div>
 
                     {#if data.status !== "error"}
@@ -101,7 +95,7 @@
                 <div class="download-item" transition:fade={{ duration: 150 }}>
                     <div class="pdf-top-row">
                         <div class="file-name" title={data.name}>{data.name}</div>
-                        <span class="status {data.status === 'error' ? 'error' : data.status === 'complete' ? 'ok' : ''}">{getStatusLabel(data.status, data.progress, data.total, filePath)}</span>
+                        <span class="status {data.status === 'error' ? 'error' : data.status === 'complete' ? 'ok' : ''}">{getStatusLabel(data.status, data.progress, data.total)}</span>
                     </div>
 
                     {#if data.status === "importing"}
