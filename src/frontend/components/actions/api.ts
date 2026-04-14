@@ -262,7 +262,7 @@ export const API_ACTIONS = {
     // OUTPUT
     lock_output: (data: API_output_lock) => toggleLock(data), // BC
     toggle_output_windows: (data: API_toggle_specific = {}) => toggleOutputs(null, { state: data.value }), // BC
-    toggle_output: (data: API_id) => toggleOutput(data.id),
+    toggle_output: (data: API_toggle) => toggleOutputs([data.id], { state: data.value }),
     id_select_output_style: (data: API_id) => changeOutputStyle({ styleId: data.id }), // BC
     change_output_style: (data: API_output_style) => changeOutputStyle(data),
     change_stage_output_layout: (data: API_stage_output_layout) => changeStageOutputLayout(data),
