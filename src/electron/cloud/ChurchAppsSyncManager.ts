@@ -14,6 +14,7 @@ const SCOPE = "plans"
 const ZIP_TYPE = "application/zip"
 
 class ChurchAppsSyncManager {
+    private static offlineAlerted = false;
     provider: ChurchAppsProvider
 
     constructor(provider: ChurchAppsProvider) {
@@ -88,6 +89,12 @@ class ChurchAppsSyncManager {
                     // likely not existing yet
                     if (err.statusCode === 404 || err.statusCode === 403) return resolve(null)
 
+                    // likely offline
+                    if (err.code === "ENOTFOUND") {
+                        ChurchAppsSyncManager.isOffline()
+                        return resolve(null);
+                    }
+
                     console.error("Failed to fetch content:", err)
                     if (fileName !== "current.zip") return resolve(null)
 
@@ -95,6 +102,8 @@ class ChurchAppsSyncManager {
                     return resolve(null)
                 }
 
+                // Reset offline alert state if successful
+                ChurchAppsSyncManager.offlineAlerted = false;
                 return resolve(filePath || null)
             }
         })
@@ -113,15 +122,29 @@ class ChurchAppsSyncManager {
                     console.error("Failed to get token:", err)
                     if (fileName !== "current.zip") return resolve(null)
 
+                    // likely offline
+                    if (err.code === "ENOTFOUND") {
+                        ChurchAppsSyncManager.isOffline()
+                        return resolve(null);
+                    }
+
                     if (err.statusCode === 401) sendToMain(ToMain.ALERT, "Could not upload data. Make sure you are member of a team, then log out and back in.")
                     else sendToMain(ToMain.ALERT, "Failed to upload data: " + err.message)
 
                     return resolve(null)
                 }
 
+                // Reset offline alert state if successful
+                ChurchAppsSyncManager.offlineAlerted = false;
                 return resolve(data)
             })
         })
+    }
+
+    private static isOffline(){
+        if (ChurchAppsSyncManager.offlineAlerted) return
+        ChurchAppsSyncManager.offlineAlerted = true;
+        sendToMain(ToMain.ALERT, "Offline: Data will not be synced to the cloud.");
     }
 
     async uploadData(teamId: string, filePath: string, fileName = "current.zip"): Promise<boolean> {

@@ -150,8 +150,7 @@ export class ChurchAppsImport {
 
         if (!data?.arrangementKey) return null
 
-        const sections = ChurchAppsShowBuilder.parseLyrics(data.arrangement.lyrics)
-        return ChurchAppsShowBuilder.createSongShow(data.arrangementKey, data.arrangement, data.song, data.songDetail, sections)
+        return ChurchAppsShowBuilder.createSongShow(data.arrangementKey, data.arrangement, data.song, data.songDetail)
     }
 
     private static async fetchVenueFeed(venueId: string): Promise<VenueFeed | null> {

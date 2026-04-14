@@ -6,7 +6,7 @@ import type { DropData, Selected, Variable } from "../../../types/Main"
 import { clearAudio } from "../../audio/audioFading"
 import { AudioPlayer } from "../../audio/audioPlayer"
 import { AudioPlaylist } from "../../audio/audioPlaylist"
-import { activeDrawerTab, activeEdit, activePage, activeProject, activeShow, activeTimers, audioPlaylists, draw, drawSettings, drawTool, folders, groupNumbers, groups, media, openScripture, outLocked, outputs, overlays, pdfImports, playingAudio, playingMetronome, projects, refreshEditSlide, selected, showsCache, sortedShowsList, special, styles, timers, variables, volume } from "../../stores"
+import { activeDrawerTab, activeEdit, activePage, activeProject, activeShow, activeTimers, audioPlaylists, draw, drawSettings, drawTool, folders, groupNumbers, groups, media, openScripture, outLocked, outputs, overlays, pdfImports, playingAudio, playingMetronome, projects, refreshEditSlide, selected, shows, showsCache, sortedShowsList, special, styles, timers, variables, volume } from "../../stores"
 import { newToast } from "../../utils/common"
 import { send } from "../../utils/request"
 import { getDynamicValue } from "../edit/scripts/itemHelpers"
@@ -15,14 +15,14 @@ import { ondrop } from "../helpers/drop"
 import { dropActions } from "../helpers/dropActions"
 import { history } from "../helpers/history"
 import { setDrawerTabData } from "../helpers/historyHelpers"
-import { getExtension, getFileName, getMediaStyle, getMediaType, removeExtension } from "../helpers/media"
+import { getExtension, getFileName, getMediaLayerType, getMediaStyle, getMediaType, removeExtension } from "../helpers/media"
 import { getActiveOutputs, getAllActiveOutputs, getAllEnabledOutputs, getCurrentStyle, getFirstActiveOutput, isOutCleared, setOutput } from "../helpers/output"
 import { setRandomValue } from "../helpers/randomValue"
 import { loadShows, setShow } from "../helpers/setShow"
 import { getLabelId, getLayoutRef } from "../helpers/show"
 import { playNextGroup, selectProjectShow, updateOut } from "../helpers/showActions"
 import { _show } from "../helpers/shows"
-import { clearBackground } from "../output/clear"
+import { clearBackground, clearSlide } from "../output/clear"
 import { getPlainEditorText } from "../show/getTextEditor"
 import { getSlideGroups } from "../show/tools/groups"
 import type { API_add_to_project, API_create_project, API_draw_zoom, API_edit_timer, API_group, API_id_index, API_id_value, API_layout, API_media, API_output_lock, API_rearrange, API_scripture, API_seek, API_slide_index, API_toggle_specific, API_variable } from "./api"
@@ -104,10 +104,17 @@ export async function startProjectItemByName(name: string) {
 
     name = name.toLowerCase().trim()
 
+    const checkName = (item: any) => {
+        let itemName = item.name
+        if (!itemName && (item.type || "show") === "show") itemName = get(shows)[item.id]?.name
+        if (!itemName) return false
+        return itemName.toLowerCase().trim() === name
+    }
+
     // check for any match after the active first
     const activeIndex = get(activeShow)?.index ?? -1
-    let match = activeProjectItems.findIndex((item, i) => i > activeIndex && item.name?.toLowerCase().trim() === name)
-    if (match === -1) match = activeProjectItems.findIndex((item) => item.name?.toLowerCase().trim() === name)
+    let match = activeProjectItems.findIndex((item, i) => i > activeIndex && checkName(item))
+    if (match === -1) match = activeProjectItems.findIndex((item) => checkName(item))
 
     // get next available after the section
     while (match !== -1 && activeProjectItems[match]?.type === "section") match++
@@ -135,7 +142,35 @@ export async function startProjectItemByName(name: string) {
         if (slide?.id === item.id && slide?.index === firstEnabledIndex && slide?.layout === get(showsCache)[item.id].settings.activeLayout) return
 
         setOutput("slide", { id: item.id, layout: get(showsCache)[item.id].settings.activeLayout, index: firstEnabledIndex })
-    }
+    } else if (item.type === "image" || item.type === "video") {
+        let outputStyle = get(styles)[currentOutput.style || ""]
+        const mediaData = get(media)[item.id] || {}
+        const mediaStyle = getMediaStyle(mediaData, outputStyle)
+
+        const videoType = getMediaLayerType(item.id, mediaStyle)
+        const shouldLoop = videoType === "background" ? item.loop || true : false
+        const shouldBeMuted = videoType === "background" ? item.muted || true : false
+
+        let out = { path: item.id, muted: shouldBeMuted, loop: shouldLoop, startAt: 0, type: item.type, ...mediaStyle }
+
+        // clear slide
+        if (videoType === "foreground" || (videoType !== "background" && (item.type === "image" || !shouldLoop))) clearSlide()
+
+        setOutput("background", out)
+    } else if (item.type === "pdf") {
+        // get PDF data
+        GlobalWorkerOptions.workerSrc = "./assets/pdf.worker.min.mjs"
+        const loadingTask = getDocument(item.id)
+        const pdfDoc = await loadingTask.promise
+        const pages = pdfDoc.numPages
+        loadingTask.destroy()
+
+        let name = item.name || removeExtension(getFileName(item.id))
+        setOutput("slide", { type: "pdf", id: item.id, page: 0, pages, name })
+        clearBackground()
+    } else if (item.type === "audio") AudioPlayer.start(item.id, { name: item.name || "" })
+    else if (item.type === "overlay") setOutput("overlays", item.id, false, "", true)
+    else if (item.type === "player") setOutput("background", { id: item.id, type: "player" })
 }
 
 export async function selectSlideByIndex(data: API_slide_index) {
