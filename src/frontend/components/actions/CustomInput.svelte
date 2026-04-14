@@ -156,6 +156,9 @@
 {:else if inputId === "toggle_action"}
     <MaterialDropdown label="popup.action" options={getOptions.run_action()} value={value?.id} on:change={(e) => updateValue("id", e.detail)} />
     <MaterialDropdown label="variables.value" options={stateOptions} value={typeof value?.value === "boolean" ? (value.value ? "on" : "off") : ""} on:change={textStateChange} />
+{:else if inputId === "toggle_output"}
+    <MaterialDropdown label="stage.output" options={getOptions.toggle_output()} value={value?.id} on:change={(e) => updateValue("id", e.detail)} />
+    <MaterialDropdown label="variables.value" options={stateOptions} value={typeof value?.value === "boolean" ? (value.value ? "on" : "off") : ""} on:change={textStateChange} />
 {:else if inputId === "rest"}
     <!-- deprecated -->
     <RestValues value={value || {}} on:change={(e) => updateValue("", e)} />
