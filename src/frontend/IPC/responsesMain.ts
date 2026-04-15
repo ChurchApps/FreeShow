@@ -15,7 +15,7 @@ import { history } from "../components/helpers/history"
 import { captureCanvas, setMediaTracks } from "../components/helpers/media"
 import { getActiveOutputs } from "../components/helpers/output"
 import { loadShows, saveTextCache } from "../components/helpers/setShow"
-import { checkName, getGlobalGroup, getLabelId } from "../components/helpers/show"
+import { checkName, getGlobalGroup, getLabelId, getShowCacheId, updateCachedShow } from "../components/helpers/show"
 import { joinTimeBig } from "../components/helpers/time"
 import { defaultThemes } from "../components/settings/tabs/defaultThemes"
 import { processTimecodeFrame, updateTimelineStatus, updateTimelineTime } from "../components/timeline/timecode"
@@ -49,6 +49,7 @@ import {
     activeTimers,
     alertMessage,
     audioData,
+    cachedShowsData,
     contentProviderData,
     currentOutputSettings,
     dataPath,
@@ -341,6 +342,50 @@ export const mainResponses: MainResponses = {
         const linkKey = data.providerId === "planningcenter" ? "pcoLink" : data.providerId === "churchApps" ? "chumsLink" : data.providerId === "amazinglife" ? "alLink" : ""
         const origin = data.providerId === "planningcenter" ? "pco" : data.providerId
 
+        function replaceProviderShow(showId: string, providerShowId: string, syncedShow: Show) {
+            const nextShow: Show = {
+                ...syncedShow,
+                origin,
+                name: checkName(syncedShow.name, showId),
+                quickAccess: { ...(get(shows)[showId]?.quickAccess || {}), [linkKey]: providerShowId }
+            }
+
+            showsCache.update((a) => {
+                a[showId] = nextShow
+                return a
+            })
+
+            shows.update((a) => {
+                if (!a[showId]) return a
+
+                a[showId] = {
+                    ...a[showId],
+                    name: nextShow.name,
+                    category: nextShow.category,
+                    timestamps: nextShow.timestamps,
+                    quickAccess: nextShow.quickAccess || {}
+                }
+
+                if (nextShow.origin) a[showId].origin = nextShow.origin
+                else if (a[showId].origin) delete a[showId].origin
+
+                if (nextShow.private) a[showId].private = true
+                else if (a[showId].private) delete a[showId].private
+
+                if (nextShow.locked) a[showId].locked = true
+                else if (a[showId].locked) delete a[showId].locked
+
+                return a
+            })
+
+            saveTextCache(showId, nextShow)
+            cachedShowsData.update((a) => {
+                const customId = getShowCacheId(showId, nextShow)
+                a[customId] = updateCachedShow(showId, nextShow)
+                return a
+            })
+        }
+
         function persistProviderLink(showId: string, providerShowId: string) {
             shows.update((a) => {
                 if (!a[showId]) return a
@@ -381,7 +426,7 @@ export const mainResponses: MainResponses = {
                     if (globalGroup) slide.globalGroup = globalGroup
                 })
 
-                tempShows.push({ id: linkedShow.id, show: { ...show, origin, name: checkName(show.name, linkedShow.id), quickAccess: { ...(linkedShow.quickAccess || {}), [linkKey]: id } } })
+                replaceProviderShow(linkedShow.id, id, show)
                 continue
             }
 
