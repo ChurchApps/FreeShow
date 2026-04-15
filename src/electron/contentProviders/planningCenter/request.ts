@@ -532,6 +532,12 @@ function extractRepeatDelimiters(line: string): RepeatDelimiterData {
         cleanLine = cleanLine.slice(0, cleanLine.length - endMatch[0].length)
     }
 
+    const endMatchBeforeTrailingChords = !repeatEndCount ? cleanLine.match(/^(.*?)(\/{2,})((?:\s*\[[^\]]+\])+\s*)$/) : null
+    if (endMatchBeforeTrailingChords) {
+        repeatEndCount = getRepeatMarkerCount(endMatchBeforeTrailingChords[2])
+        cleanLine = `${endMatchBeforeTrailingChords[1].trimEnd()}${endMatchBeforeTrailingChords[3].trimStart()}`
+    }
+
     const markerOnly = Boolean((repeatStartCount || repeatEndCount) && !cleanLine.trim())
 
     return { cleanLine, repeatStartCount, repeatEndCount, markerOnly }
