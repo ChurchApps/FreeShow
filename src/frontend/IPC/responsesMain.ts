@@ -338,6 +338,41 @@ export const mainResponses: MainResponses = {
         const replaceIds: { [key: string]: string } = {}
         const allShows = keysToID(get(shows))
         const providerLocalAlways = get(contentProviderData)[data.providerId]?.localAlways ?? false
+        const linkKey = data.providerId === "planningcenter" ? "pcoLink" : data.providerId === "churchApps" ? "chumsLink" : data.providerId === "amazinglife" ? "alLink" : ""
+        const origin = data.providerId === "planningcenter" ? "pco" : data.providerId
+
+        function updateExistingShow(showId: string, originId: string, setGlobalGroup = false) {
+            shows.update((a) => {
+                if (!a[showId]) return a // should always exist
+
+                if (!a[showId].quickAccess) a[showId].quickAccess = {}
+                if (linkKey) a[showId].quickAccess[linkKey] = originId
+
+                a[showId].origin = origin
+
+                return a
+            })
+
+            showsCache.update((a) => {
+                if (!a[showId]) return a
+
+                // this might not be needed, as it's done on first link
+                if (setGlobalGroup && a[showId].slides) {
+                    Object.values<Slide>(a[showId].slides).forEach((slide) => {
+                        if (slide.globalGroup || !slide.group) return
+                        const globalGroup = getGlobalGroup(slide.group)
+                        if (globalGroup) slide.globalGroup = globalGroup
+                    })
+                }
+
+                if (!a[showId].quickAccess) a[showId].quickAccess = {}
+                if (linkKey) a[showId].quickAccess[linkKey] = originId
+
+                a[showId].origin = origin
+
+                return a
+            })
+        }
 
         // CREATE SHOWS
         const tempShows: { id: string; show: Show }[] = []
@@ -347,27 +382,12 @@ export const mainResponses: MainResponses = {
             // TODO: check if name contains scripture reference (and is empty), and load from active scripture
 
             // first find any shows linked to the id
-            const linkKey = data.providerId === "planningcenter" ? "pcoLink" : data.providerId === "churchApps" ? "chumsLink" : data.providerId === "amazinglife" ? "alLink" : ""
             const linkedShow = linkKey && allShows.find(({ quickAccess }) => quickAccess?.[linkKey] === id)
             if (linkedShow) {
                 replaceIds[id] = linkedShow.id
                 if (providerLocalAlways) continue
 
-                const origin = data.providerId === "planningcenter" ? "pco" : data.providerId
-                showsCache.update((a) => {
-                    if (a[linkedShow.id]?.slides) {
-                        Object.values<Slide>(a[linkedShow.id].slides).forEach((slide) => {
-                            if (slide.globalGroup || !slide.group) return
-                            const globalGroup = getGlobalGroup(slide.group)
-                            if (globalGroup) slide.globalGroup = globalGroup
-                        })
-                    }
-
-                    if (!a[linkedShow.id].quickAccess) a[linkedShow.id].quickAccess = {}
-                    if (linkKey) a[linkedShow.id].quickAccess[linkKey] = id
-                    a[linkedShow.id].origin = origin
-                    return a
-                })
+                updateExistingShow(linkedShow.id, id, true)
                 continue
             }
 
@@ -380,13 +400,7 @@ export const mainResponses: MainResponses = {
                 if (useLocal) {
                     replaceIds[id] = existingShow.id
 
-                    await loadShows([existingShow.id])
-                    showsCache.update((a) => {
-                        if (!a[existingShow.id].quickAccess) a[existingShow.id].quickAccess = {}
-                        if (linkKey) a[existingShow.id].quickAccess[linkKey] = id
-                        return a
-                    })
-
+                    updateExistingShow(existingShow.id, id)
                     continue
                 }
             }
@@ -402,7 +416,6 @@ export const mainResponses: MainResponses = {
             })
 
             delete show.id
-            const origin = data.providerId === "planningcenter" ? "pco" : data.providerId
             tempShows.push({ id, show: { ...show, origin, name: checkName(show.name, id), quickAccess: { [linkKey]: id } } })
         }
         setTempShows(tempShows)
