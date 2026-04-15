@@ -341,29 +341,15 @@ export const mainResponses: MainResponses = {
         const linkKey = data.providerId === "planningcenter" ? "pcoLink" : data.providerId === "churchApps" ? "chumsLink" : data.providerId === "amazinglife" ? "alLink" : ""
         const origin = data.providerId === "planningcenter" ? "pco" : data.providerId
 
-        function updateExistingShow(showId: string, originId: string, setGlobalGroup = false) {
-            shows.update((a) => {
-                if (!a[showId]) return a // should always exist
-
-                if (!a[showId].quickAccess) a[showId].quickAccess = {}
-                if (linkKey) a[showId].quickAccess[linkKey] = originId
-
-                a[showId].origin = origin
-
+        function updateExistingShow(showId: string, originId: string) {
+            // unset if already loaded
+            showsCache.update((a) => {
+                if (a[showId]) delete a[showId]
                 return a
             })
 
-            showsCache.update((a) => {
-                if (!a[showId]) return a
-
-                // this might not be needed, as it's done on first link
-                if (setGlobalGroup && a[showId].slides) {
-                    Object.values<Slide>(a[showId].slides).forEach((slide) => {
-                        if (slide.globalGroup || !slide.group) return
-                        const globalGroup = getGlobalGroup(slide.group)
-                        if (globalGroup) slide.globalGroup = globalGroup
-                    })
-                }
+            shows.update((a) => {
+                if (!a[showId]) return a // should always exist
 
                 if (!a[showId].quickAccess) a[showId].quickAccess = {}
                 if (linkKey) a[showId].quickAccess[linkKey] = originId
@@ -387,7 +373,7 @@ export const mainResponses: MainResponses = {
                 replaceIds[id] = linkedShow.id
                 if (providerLocalAlways) continue
 
-                updateExistingShow(linkedShow.id, id, true)
+                updateExistingShow(linkedShow.id, id)
                 continue
             }
 
