@@ -341,9 +341,15 @@ export const mainResponses: MainResponses = {
         const linkKey = data.providerId === "planningcenter" ? "pcoLink" : data.providerId === "churchApps" ? "chumsLink" : data.providerId === "amazinglife" ? "alLink" : ""
         const origin = data.providerId === "planningcenter" ? "pco" : data.providerId
 
-        function syncProviderLink(showId: string, providerShowId: string, syncLoadedSlides = false) {
-            shows.update((a) => {
+        function syncLoadedProviderShow(showId: string, providerShowId: string) {
+            showsCache.update((a) => {
                 if (!a[showId]) return a
+
+                Object.values<Slide>(a[showId].slides || {}).forEach((slide) => {
+                    if (slide.globalGroup || !slide.group) return
+                    const globalGroup = getGlobalGroup(slide.group)
+                    if (globalGroup) slide.globalGroup = globalGroup
+                })
 
                 if (!a[showId].quickAccess) a[showId].quickAccess = {}
                 if (linkKey) a[showId].quickAccess[linkKey] = providerShowId
@@ -351,21 +357,23 @@ export const mainResponses: MainResponses = {
 
                 return a
             })
+        }
+
+        function persistProviderLink(showId: string, providerShowId: string) {
+            shows.update((a) => {
+                if (!a[showId]) return a
+
+                if (!a[showId].quickAccess) a[showId].quickAccess = {}
+                if (linkKey) a[showId].quickAccess[linkKey] = providerShowId
+
+                return a
+            })
 
             showsCache.update((a) => {
                 if (!a[showId]) return a
 
-                if (syncLoadedSlides && a[showId].slides) {
-                    Object.values<Slide>(a[showId].slides).forEach((slide) => {
-                        if (slide.globalGroup || !slide.group) return
-                        const globalGroup = getGlobalGroup(slide.group)
-                        if (globalGroup) slide.globalGroup = globalGroup
-                    })
-                }
-
                 if (!a[showId].quickAccess) a[showId].quickAccess = {}
                 if (linkKey) a[showId].quickAccess[linkKey] = providerShowId
-                a[showId].origin = origin
 
                 return a
             })
@@ -384,7 +392,7 @@ export const mainResponses: MainResponses = {
                 replaceIds[id] = linkedShow.id
                 if (providerLocalAlways) continue
 
-                syncProviderLink(linkedShow.id, id, true)
+                syncLoadedProviderShow(linkedShow.id, id)
                 continue
             }
 
@@ -398,7 +406,7 @@ export const mainResponses: MainResponses = {
                     replaceIds[id] = existingShow.id
 
                     await loadShows([existingShow.id])
-                    syncProviderLink(existingShow.id, id)
+                    persistProviderLink(existingShow.id, id)
 
                     continue
                 }
