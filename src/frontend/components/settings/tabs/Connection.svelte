@@ -151,6 +151,12 @@
 
     $: projectTemplateOptions = [{ value: "", label: translateText("main.none") }, ...sortByName(keysToID($projectTemplates)).map(({ id, name }) => ({ value: id, label: name }))]
 
+    $: providerOriginOptions = [
+        { value: "", label: "Ask when existing show is found" },
+        { value: "local", label: "Always use local instance" },
+        { value: "online", label: "Always use online instance" }
+    ]
+
     // TEMP solution
     let showAll = false
     let taps = 0
@@ -245,7 +251,7 @@
             <Icon id="launch" white />
         </MaterialButton>
     </InputRow>
-    <MaterialToggleSwitch label="Always use local instance of songs" checked={$contentProviderData.planningcenter?.localAlways} defaultValue={false} on:change={(e) => updateProvider("planningcenter", "localAlways", e.detail)} />
+    <MaterialDropdown label="Song origin" options={providerOriginOptions} value={$contentProviderData.planningcenter?.songOrigin || ""} on:change={(e) => updateProvider("planningcenter", "songOrigin", e.detail)} />
     {#if Object.keys($projectTemplates).length}
         <MaterialDropdown label="actions.project_template" options={projectTemplateOptions} value={$contentProviderData.planningcenter?.projectTemplate || ""} on:change={(e) => updateProvider("planningcenter", "projectTemplate", e.detail)} />
     {/if}
@@ -266,7 +272,7 @@
         </MaterialButton>
     </InputRow>
 
-    <MaterialToggleSwitch label="Always use local instance of plans" checked={$contentProviderData.churchApps?.localAlways} defaultValue={false} on:change={(e) => updateProvider("churchApps", "localAlways", e.detail)} />
+    <MaterialDropdown label="Song origin" options={providerOriginOptions} value={$contentProviderData.churchApps?.songOrigin || ""} on:change={(e) => updateProvider("churchApps", "songOrigin", e.detail)} />
 
     {#if $cloudSyncData.enabled}
         <p class="tip">Note: This is unrelated to the Cloud sync found in "Files". This is for the content manager / curriculum.</p>
