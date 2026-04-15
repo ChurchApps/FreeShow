@@ -57,8 +57,9 @@ export async function setShow(id: string, value: "delete" | Show): Promise<Show>
 
     shows.update((a) => {
         if (value === "delete") delete a[id]
-        else if (!a[id] && value) {
+        else if (value) {
             a[id] = {
+                ...(a[id] || {}),
                 name: value.name,
                 category: value.category,
                 timestamps: value.timestamps,
@@ -66,8 +67,11 @@ export async function setShow(id: string, value: "delete" | Show): Promise<Show>
             }
 
             if (value.origin) a[id].origin = value.origin
+            else if (a[id].origin) delete a[id].origin
             if (value.private) a[id].private = true
+            else if (a[id].private) delete a[id].private
             if (value.locked) a[id].locked = true
+            else if (a[id].locked) delete a[id].locked
         }
 
         return a
