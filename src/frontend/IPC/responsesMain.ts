@@ -341,13 +341,7 @@ export const mainResponses: MainResponses = {
         const linkKey = data.providerId === "planningcenter" ? "pcoLink" : data.providerId === "churchApps" ? "chumsLink" : data.providerId === "amazinglife" ? "alLink" : ""
         const origin = data.providerId === "planningcenter" ? "pco" : data.providerId
 
-        function updateExistingShow(showId: string, originId: string) {
-            // unset if already loaded
-            showsCache.update((a) => {
-                if (a[showId]) delete a[showId]
-                return a
-            })
-
+        function updateExistingShow(showId: string, originId: string, setGlobalGroup = false) {
             shows.update((a) => {
                 if (!a[showId]) return a // should always exist
 
@@ -355,7 +349,26 @@ export const mainResponses: MainResponses = {
                 if (linkKey) a[showId].quickAccess[linkKey] = originId
 
                 a[showId].origin = origin
+                return a
+            })
 
+            // update showsCache directly in case it's not yet saved to a local file
+            showsCache.update((a) => {
+                if (!a[showId]) return a
+
+                // this might not be needed, as it's done on first link
+                if (setGlobalGroup && a[showId].slides) {
+                    Object.values<Slide>(a[showId].slides).forEach((slide) => {
+                        if (slide.globalGroup || !slide.group) return
+                        const globalGroup = getGlobalGroup(slide.group)
+                        if (globalGroup) slide.globalGroup = globalGroup
+                    })
+                }
+
+                if (!a[showId].quickAccess) a[showId].quickAccess = {}
+                if (linkKey) a[showId].quickAccess[linkKey] = originId
+
+                a[showId].origin = origin
                 return a
             })
         }
@@ -373,7 +386,7 @@ export const mainResponses: MainResponses = {
                 replaceIds[id] = linkedShow.id
                 if (providerLocalAlways) continue
 
-                updateExistingShow(linkedShow.id, id)
+                updateExistingShow(linkedShow.id, id, true)
                 continue
             }
 

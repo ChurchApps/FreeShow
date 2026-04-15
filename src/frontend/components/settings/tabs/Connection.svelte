@@ -3,7 +3,7 @@
     import type { ContentProviderId } from "../../../../electron/contentProviders/base/types"
     import { Main } from "../../../../types/IPC/Main"
     import { requestMain, sendMain } from "../../../IPC/main"
-    import { activePage, activePopup, activeShow, activeTriggerFunction, cloudSyncData, companion, connections, contentProviderData, disabledServers, maxConnections, outputs, popupData, ports, projectTemplates, providerConnections, serverData, special } from "../../../stores"
+    import { activePage, activePopup, activeShow, activeTriggerFunction, cloudSyncData, companion, connections, contentProviderData, disabledServers, maxConnections, notFound, outputs, popupData, ports, projectTemplates, providerConnections, serverData, special } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { contentProviderSync } from "../../../utils/startup"
     import { keysToID, sortByName } from "../../helpers/array"
@@ -135,8 +135,10 @@
 
     function syncContentProvider() {
         contentProviderSync()
+
         activeShow.set(null)
         activePage.set("show")
+        notFound.set({ show: [], bible: [] })
     }
 
     function updateProvider(id: ContentProviderId, key: string, value: any) {
