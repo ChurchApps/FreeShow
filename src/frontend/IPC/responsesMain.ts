@@ -341,12 +341,9 @@ export const mainResponses: MainResponses = {
         const linkKey = data.providerId === "planningcenter" ? "pcoLink" : data.providerId === "churchApps" ? "chumsLink" : data.providerId === "amazinglife" ? "alLink" : ""
         const origin = data.providerId === "planningcenter" ? "pco" : data.providerId
 
-        function updateExistingShow(showId: string, originId: string) {
+        function updateExistingShow(showId: string) {
             shows.update((a) => {
                 if (!a[showId]) return a // should always exist
-
-                if (!a[showId].quickAccess) a[showId].quickAccess = {}
-                if (linkKey) a[showId].quickAccess[linkKey] = originId
 
                 a[showId].origin = origin
                 return a
@@ -356,8 +353,9 @@ export const mainResponses: MainResponses = {
             showsCache.update((a) => {
                 if (!a[showId]) return a
 
-                if (!a[showId].quickAccess) a[showId].quickAccess = {}
-                if (linkKey) a[showId].quickAccess[linkKey] = originId
+                // we should not set link when requesting to use local show, that way it will ask next time as well
+                // if (!a[showId].quickAccess) a[showId].quickAccess = {}
+                // if (linkKey) a[showId].quickAccess[linkKey] = originId
 
                 a[showId].origin = origin
                 return a
@@ -377,7 +375,7 @@ export const mainResponses: MainResponses = {
                 replaceIds[id] = linkedShow.id
                 if (providerLocalAlways) continue
 
-                // replace local show with Planning Center song
+                // replace local show with provider song
                 Object.values<Slide>(show.slides).forEach((slide) => {
                     if (slide.globalGroup || !slide.group) return
 
@@ -385,7 +383,7 @@ export const mainResponses: MainResponses = {
                     if (globalGroup) slide.globalGroup = globalGroup
                 })
 
-                tempShows.push({ id, show: { ...show, origin, name: checkName(show.name, id), quickAccess: { [linkKey]: id } } })
+                tempShows.push({ id, show: { ...show, origin, name: checkName(show.name, id) } })
                 continue
             }
 
@@ -397,13 +395,16 @@ export const mainResponses: MainResponses = {
                 const useLocal = providerLocalAlways || (await confirmCustom(`There is an existing show with the same name: ${existingShow.name}.<br><br>Would you like to use the local version instead of the one from ${providerName}?`))
                 if (useLocal) {
                     replaceIds[id] = existingShow.id
-
-                    updateExistingShow(existingShow.id, id)
+                    updateExistingShow(existingShow.id)
                     continue
                 }
+
+                // set link so we will automatically update from the provider in the future
+                if (!show.quickAccess) show.quickAccess = {}
+                show.quickAccess[linkKey] = id
             }
 
-            if (providerLocalAlways && get(shows)[id]) continue
+            // download:
 
             // replace group names with existing global groups
             Object.values<Slide>(show.slides).forEach((slide) => {
@@ -414,7 +415,7 @@ export const mainResponses: MainResponses = {
             })
 
             delete show.id
-            tempShows.push({ id, show: { ...show, origin, name: checkName(show.name, id), quickAccess: { [linkKey]: id } } })
+            tempShows.push({ id, show: { ...show, origin, name: checkName(show.name, id) } })
         }
         setTempShows(tempShows)
 
