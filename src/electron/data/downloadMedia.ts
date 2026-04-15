@@ -232,6 +232,18 @@ export function downloadMedia({ url, contentFile }: { url: string; contentFile?:
 
     const outputPath = getMediaThumbnailPath(url, contentFile)
 
+    // not working at the moment:
+    // if (url.includes("canva.com")) {
+    //     const canvaDownloadUrl = await CanvaContentLibrary.exportDesignAsPng(url, 1)
+    //     if (!canvaDownloadUrl) {
+    //         console.error("Failed to get Canva download URL from source:", url)
+    //         removeFromDownloading()
+    //         return
+    //     }
+
+    //     url = canvaDownloadUrl
+    // }
+
     // Check if provider-based encryption is needed
     if (contentFile?.providerId) {
         const provider = ContentProviderFactory.getProvider(contentFile.providerId)

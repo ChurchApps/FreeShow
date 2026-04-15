@@ -19,6 +19,7 @@ type ListItemsResponse = {
 
 export class CanvaContentLibrary {
     private static contentLibraryCache: ContentLibraryCategory[] | null = null
+    public static urlToContentIdMap: Record<string, string> = {}
 
     public static clearCache(): void {
         this.contentLibraryCache = null
@@ -104,11 +105,16 @@ export class CanvaContentLibrary {
         const items = await this.listFolderItems(folderId, ["image", "design"])
 
         // Always return files, but for presentations, add isPresentation and slideCount
-        return items
+        const files = items
             .map((item): ContentFile | null => {
                 if (item.type === "image" && item.image) {
                     const url = item.image.url || item.image.thumbnail?.url
                     if (!url) return null
+
+                    if (url && item.image.id) {
+                        this.urlToContentIdMap[url] = item.image.id
+                    }
+
                     return {
                         url,
                         thumbnail: item.image.thumbnail?.url || url,
@@ -118,10 +124,16 @@ export class CanvaContentLibrary {
                         mediaId: item.image.id
                     }
                 }
+
                 // Designs (including presentations)
                 if (item.type === "design" && item.design) {
                     const url = item.design.url || item.design.thumbnail?.url
                     if (!url) return null
+
+                    if (url && item.design.id) {
+                        this.urlToContentIdMap[url] = item.design.id
+                    }
+
                     const isPresentation = item.design?.type === "presentation" || item.design?.title?.toLowerCase().includes("presentation") || (typeof item.design?.page_count === "number" && item.design.page_count > 1)
                     return {
                         url,
@@ -139,6 +151,8 @@ export class CanvaContentLibrary {
                 return null
             })
             .filter((file): file is ContentFile => !!file)
+
+        return files
     }
 
     /**
@@ -171,35 +185,45 @@ export class CanvaContentLibrary {
     }
 
     // TODO: download full quality image
+    // this is seemingly not possible at the moment
     /**
-     * Requests a high-res PNG export for a specific slide (page) of a design.
-     * Returns the download URL when ready.
-     * @param designId Canva design ID
+     * Requests a high-res PNG export for a specific slide (page) of a design using Canva's resizes API.
+     * @param designIdOrUrl Canva design ID or URL
      * @param pageIndex 1-based index of the slide/page
      */
-    public static async exportSlideAsPng(designId: string, pageIndex: number): Promise<string | null> {
-        // 1. Request export
-        const exportReqPath = `/v1/designs/${encodeURIComponent(designId)}/exports`
-        const exportReqBody = {
-            format: "png",
-            page_indexes: [pageIndex] // 1-based
+    public static async exportDesignAsPng(designIdOrUrl: string, pageIndex: number): Promise<string | null> {
+        let designId = designIdOrUrl
+        if (designIdOrUrl.startsWith("http://") || designIdOrUrl.startsWith("https://")) {
+            designId = this.urlToContentIdMap[designIdOrUrl]
+            if (!designId) return null
         }
+
+        // --- Canva resizes API (seemingly not available for public use) ---
+        const resizeReqPath = `/v1/resizes`
+        const resizeReqBody = {
+            design_id: designId,
+            format: "png",
+            page_indexes: [pageIndex],
+            quality: 100
+        }
+
         const accessToken = await CanvaConnect.ensureValidToken(DEFAULT_SCOPE)
         if (!accessToken) return null
-        const url = new URL(CANVA_API_URL + exportReqPath)
-        let exportResponse: any
+
+        const resizeUrl = new URL(CANVA_API_URL + resizeReqPath)
+        let resizeResponse: any
         try {
-            exportResponse = await new Promise((resolve, reject) => {
+            resizeResponse = await new Promise((resolve, reject) => {
                 httpsRequest(
-                    url.hostname,
-                    url.pathname + (url.search ? url.search : ""),
+                    resizeUrl.hostname,
+                    resizeUrl.pathname + (resizeUrl.search ? resizeUrl.search : ""),
                     "POST",
                     {
                         Authorization: `Bearer ${accessToken}`,
                         accept: "application/json",
                         "content-type": "application/json"
                     },
-                    exportReqBody,
+                    resizeReqBody,
                     (err, data) => {
                         if (err) reject(err)
                         else resolve(data)
@@ -207,37 +231,36 @@ export class CanvaContentLibrary {
                 )
             })
         } catch (e) {
-            console.error("Canva export request failed", e)
             return null
         }
-        const exportId = exportResponse?.id
-        if (!exportId) return null
 
-        // 2. Poll for export completion
+        const jobId = resizeResponse?.id
+        if (!jobId) return null
+
         let status = "pending"
         let downloadUrl: string | null = null
         for (let i = 0; i < 20; ++i) {
-            // Poll up to 20 times (about 20s)
             await new Promise((res) => setTimeout(res, 1000))
-            const pollPath = `/v1/designs/${encodeURIComponent(designId)}/exports/${encodeURIComponent(exportId)}`
+
+            const pollPath = `/v1/resizes/${encodeURIComponent(jobId)}`
             let pollResponse: any
             try {
                 pollResponse = await this.request(pollPath)
             } catch (e) {
                 continue
             }
+
             status = pollResponse?.status
+
             if (status === "completed" && Array.isArray(pollResponse.files) && pollResponse.files[0]?.url) {
                 downloadUrl = pollResponse.files[0].url
                 break
             }
+
             if (status === "failed") break
         }
+
         if (!downloadUrl) return null
-
-        // 3. Save to local file system
-        // WIP
-
         return downloadUrl
     }
 }
