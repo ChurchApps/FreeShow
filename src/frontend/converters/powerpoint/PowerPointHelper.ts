@@ -312,7 +312,7 @@ export class PowerPointPackage {
     getSlides() {
         const presentation = this.getPresentation()
         if (!presentation) return []
-        // console.log("Presentation:", presentation)
+        console.log("Presentation:", presentation)
 
         const slides: ReturnType<typeof this.getSlide>[] = []
 
@@ -632,17 +632,18 @@ export class PowerPointPackage {
 
             const effects = getValue(rPr, "a:effectLst")
             const glow = getValue(effects, "a:glow")
-            // const outerShadow = getValue(effects, "a:outerShdw")
-            // if (outerShadow.length) {
-            //     const shadowColor = resolveColor(outerShadow, ctx.colors) || "rgb(0 0 0)"
-            //     const blur = ptsToPx(getAttribute(outerShadow, "blurRad")) || 0
-            //     const dist = ptsToPx(getAttribute(outerShadow, "dist")) || 0
-            //     const dir = Number(getAttribute(outerShadow, "dir") || "0")
-            //     const angle = ((90 - dir) * Math.PI) / 180
-            //     const x = round(Math.cos(angle) * dist)
-            //     const y = round(Math.sin(angle) * dist)
-            //     shadowVal = `text-shadow: ${x}px ${y}px ${blur}px ${shadowColor};`
-            if (glow.length) {
+            const outerShadow = getValue(effects, "a:outerShdw")
+            if (outerShadow.length) {
+                const shadowColor = resolveColor(outerShadow, ctx.colors) || "rgb(0 0 0)"
+                const blur = emuToPixels(getAttribute(effects, "blurRad", "a:outerShdw")) || 0
+                const dist = emuToPixels(getAttribute(effects, "dist", "a:outerShdw")) || 0
+                const dirRaw = Number(getAttribute(effects, "dir", "a:outerShdw") || "0")
+                const dir = dirRaw / 60000 // convert from 60000ths of a degree to degrees
+                const angle = ((90 - dir) * Math.PI) / 180
+                const x = round(Math.cos(angle) * dist)
+                const y = round(Math.sin(angle) * dist)
+                shadowVal = `text-shadow: ${x}px ${y}px ${blur}px ${shadowColor};`
+            } else if (glow.length) {
                 const glowColor = resolveColor(glow, ctx.colors) || "rgb(255 255 255)"
                 const glowSize = ptsToPx(getAttribute(effects, "rad", "a:glow")) / 100
                 shadowVal = `text-shadow: 0 0 ${glowSize}px ${glowColor};`
