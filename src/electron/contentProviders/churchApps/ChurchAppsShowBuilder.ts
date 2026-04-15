@@ -13,63 +13,97 @@ import type { FeedFile } from "./types"
 export class ChurchAppsShowBuilder {
     private static readonly ITEM_STYLE = "left:50px;top:120px;width:1820px;height:840px;"
 
-    public static parseLyrics(lyrics: string): { label: string; lyrics: string }[] {
+    public static parseLyrics(lyrics: string): { label: string; lyrics: string[] }[] {
         if (!lyrics) return []
-        if (!lyrics.startsWith("[")) return [{ label: "Lyrics", lyrics }]
+        if (!lyrics.startsWith("[")) {
+            return [
+                {
+                    label: "Lyrics",
+                    lyrics: lyrics
+                        .split(/\n{2,}/)
+                        .map((s) => s.trim())
+                        .filter(Boolean)
+                }
+            ]
+        }
 
-        const sections: { label: string; lyrics: string }[] = []
-        const lines = lyrics.split("\n")
-        lines.forEach((line) => {
+        const sections: { label: string; lyrics: string[] }[] = []
+        let currentSection: { label: string; lyrics: string[] } | undefined
+        let buffer: string[] = []
+
+        for (const line of lyrics.split("\n")) {
             if (line.startsWith("[") && line.endsWith("]")) {
-                sections.push({ label: line.slice(1, -1), lyrics: "" })
+                if (currentSection) {
+                    if (buffer.length) currentSection.lyrics.push(buffer.join("\n").trim())
+                    sections.push(currentSection)
+                }
+                const label = line
+                    .slice(1, -1)
+                    .trim()
+                    .replace(/\s*\d+$/, "")
+                currentSection = { label, lyrics: [] }
+                buffer = []
+            } else if (line.trim() === "" && buffer.length) {
+                if (currentSection) {
+                    currentSection.lyrics.push(buffer.join("\n").trim())
+                    buffer = []
+                }
             } else {
-                const lastSection = sections[sections.length - 1]
-                if (lastSection) lastSection.lyrics += line + "\n"
+                buffer.push(line)
             }
-        })
+        }
+
+        if (currentSection) {
+            if (buffer.length) currentSection.lyrics.push(buffer.join("\n").trim())
+            sections.push(currentSection)
+        }
+
         return sections
     }
 
-    public static createSongShow(
-        arrangementKey: any,
-        arrangement: any,
-        song: any,
-        songDetails: any,
-        sections: { label: string; lyrics: string }[]
-    ): { showId: string; show: Show; seconds: number } {
+    public static createSongShow(arrangementKey: any, arrangement: any, song: any, songDetails: any): { showId: string; show: Show; seconds: number } {
         const slides: { [key: string]: Slide } = {}
         const layoutSlides: SlideData[] = []
 
+        const sections = ChurchAppsShowBuilder.parseLyrics(arrangement.lyrics)
+
+        const slideDedupMap = new Map<string, string>()
         sections.forEach((section) => {
-            const linesPerPage = 2
-            const pages: { lines: string[] }[] = []
-            const allLines = section.lyrics.split("\n").filter((line: string) => line.trim() !== "")
+            let children: string[] = []
+            let parentId: string | undefined
 
-            allLines.forEach((line: string, index: number) => {
-                if (index % linesPerPage === 0) pages.push({ lines: [] })
-                pages[pages.length - 1].lines.push(line)
-            })
+            section.lyrics.forEach((slideText, i) => {
+                const lines = slideText.split("\n").filter((line) => line.trim() !== "")
+                const key = section.label + "\n" + lines.join("\n")
 
-            pages.forEach((page) => {
-                const slideId = uid()
-                slides[slideId] = {
-                    group: section.label,
-                    globalGroup: section.label.toLowerCase(),
-                    color: null,
-                    settings: {},
-                    notes: "",
-                    items: [
-                        {
-                            style: this.ITEM_STYLE,
-                            lines: page.lines.map((a: string) => ({
-                                align: "",
-                                text: [{ style: "", value: a }]
-                            }))
-                        }
-                    ]
+                let slideId = slideDedupMap.get(key)
+                if (!slideId) {
+                    slideId = uid()
+                    slides[slideId] = {
+                        group: section.label,
+                        globalGroup: section.label.toLowerCase(),
+                        color: null,
+                        settings: {},
+                        notes: "",
+                        items: [
+                            {
+                                style: this.ITEM_STYLE,
+                                lines: lines.map((a) => ({ align: "", text: [{ style: "", value: a }] }))
+                            }
+                        ]
+                    }
+                    slideDedupMap.set(key, slideId)
                 }
-                layoutSlides.push({ id: slideId })
+
+                if (i === 0) {
+                    parentId = slideId
+                    layoutSlides.push({ id: slideId })
+                } else {
+                    children.push(slideId)
+                }
             })
+
+            if (children.length && parentId) slides[parentId].children = children
         })
 
         const title = `${songDetails.title} (${arrangement.name} - ${arrangementKey.keySignature})`
