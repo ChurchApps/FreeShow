@@ -63,7 +63,7 @@
             if ($selected.id !== "show_drawer" || !$shows[$selected.data[0]?.id]?.locked) return
             disabled = !!$shows[$selected.data[0].id].locked
         },
-        edit_style: () => {
+        change_style: () => {
             let outputId = contextElem?.id || ""
             const styleId = $outputs[outputId]?.style || ""
             const stageId = $outputs[outputId]?.stageOutput || ""
@@ -78,6 +78,22 @@
 
             menu.label = "edit.style"
             menu.icon = "styles"
+            if (!$styles[styleId]) disabled = true
+            menu.label += `: ${styleId ? $styles[styleId]?.name || "error.not_found" : "main.none"}`
+        },
+        edit_style: () => {
+            let outputId = contextElem?.id || ""
+            const styleId = $outputs[outputId]?.style || ""
+            const stageId = $outputs[outputId]?.stageOutput || ""
+
+            if (stageId) {
+                menu.label = "menu.edit"
+                if (!$stageShows[stageId]) disabled = true
+                menu.label += `: ${stageId ? $stageShows[stageId]?.name || "error.not_found" : "main.none"}`
+                return
+            }
+
+            menu.label = "menu.edit"
             if (!$styles[styleId]) disabled = true
             menu.label += `: ${styleId ? $styles[styleId]?.name || "error.not_found" : "main.none"}`
         },
