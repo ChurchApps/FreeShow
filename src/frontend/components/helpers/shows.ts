@@ -35,7 +35,7 @@ export function _show(id = "active") {
 
                 const double = key.split(".")
                 if (double.length > 1) {
-                    if (!a[id][double[0]]?.[double[1]]) return a
+                    if (typeof a[id][double[0]] !== "object") return a
                     prev = a[id][double[0]][double[1]]
                     a[id][double[0]][double[1]] = value
                 } else {
