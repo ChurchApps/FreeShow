@@ -343,7 +343,17 @@
                             {@const borderRadiusStyle = `${isFirst ? "border-top-right-radius: 10px;" : ""}${isLast ? "border-bottom-right-radius: 10px;" : ""}`}
                             {@const icon = type === "audio" ? "music" : type}
 
-                            <MaterialButton class="show context #recent_file__project" style="justify-content: space-between;padding: 0.35em 0.8em;font-weight: normal;{borderRadiusStyle}" on:click={() => addToProject(null, [path])} title="context.addToProject: <b>{name}</b>" tab>
+                            <MaterialButton
+                                class="show context #recent_file__project"
+                                style="justify-content: space-between;padding: 0.35em 0.8em;font-weight: normal;{borderRadiusStyle}"
+                                on:click={() => {
+                                    // convert to image? - probably better not to, this can be done via import
+                                    // if (type === "pdf") sendMain(Main.PDF_TO_IMAGE, { filePath: path })
+                                    addToProject(null, [path])
+                                }}
+                                title="context.addToProject: <b>{name}</b>"
+                                tab
+                            >
                                 <span style="display: flex;align-items: center;gap: 8px;">
                                     <Icon id={icon} size={0.9} white right />
                                     <p style="min-height: 10px;">{removeExtension(name)}</p>

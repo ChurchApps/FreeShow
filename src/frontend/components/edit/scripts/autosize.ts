@@ -132,6 +132,17 @@ export default function autosize(elem: HTMLElement, { type, textQuery, defaultFo
             ;(chordElem as HTMLElement).style.maxHeight = "65px"
         }
 
+        // scrolling text should not include repeated text in measurement
+        const scrollWrapper = cloned.querySelector(".scrollWrapper") as HTMLElement
+        if (scrollWrapper) scrollWrapper.style.setProperty("--copyCountHorizontal", "0")
+        // only keep first scrollContent element
+        const scrollContents = cloned.querySelectorAll(".scrollContent")
+        if (scrollContents.length > 1) {
+            scrollContents.forEach((elem, index) => {
+                if (index > 0) elem.remove()
+            })
+        }
+
         // CRITICAL FIX FOR LIST ITEMS:
         // List items have font-size on both the parent .break div AND the inner span elements
         // This causes double font-size application during measurement
