@@ -80,6 +80,7 @@ import Trigger from "../components/main/popups/Trigger.svelte"
 import Unsaved from "../components/main/popups/Unsaved.svelte"
 import Variable from "../components/main/popups/Variable.svelte"
 import { activePopup, popupData } from "../stores"
+import TemplateInfo from "../components/main/popups/TemplateInfo.svelte"
 
 export const popups: { [key in Popups]: ComponentType } = {
     initialize: Initialize,
@@ -159,7 +160,8 @@ export const popups: { [key in Popups]: ComponentType } = {
     effect_items: EffectItems,
     timeline: TimelineSettings,
     timecode: Timecode,
-    drawer_search_options: DrawerSearchOptions
+    drawer_search_options: DrawerSearchOptions,
+    template_info: TemplateInfo
 }
 
 export function waitForPopupData(popupId: Popups): Promise<any> {

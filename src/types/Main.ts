@@ -385,6 +385,7 @@ export type Popups =
     | "timeline"
     | "timecode"
     | "drawer_search_options"
+    | "template_info"
 
 export type DefaultProjectNames = "date" | "today" | "sunday" | "week" | "custom" | "blank"
 

@@ -2,9 +2,10 @@
     import { fade } from "svelte/transition"
     import { Main } from "../../../types/IPC/Main"
     import { sendMain } from "../../IPC/main"
-    import { openToolsTab, showNotesActive, shows, showsCache, special } from "../../stores"
+    import { activePopup, openToolsTab, outputs, showNotesActive, shows, showsCache, special, styles, templates } from "../../stores"
     import { translateText } from "../../utils/language"
     import Icon from "../helpers/Icon.svelte"
+    import { allOutputsHasStyleTemplate, getFirstActiveOutput } from "../helpers/output"
     import { removeTemplatesFromShow } from "../helpers/show"
     import T from "../helpers/T.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
@@ -67,6 +68,17 @@
             return a
         })
     }
+
+    // TEMPLATE
+
+    $: referenceType = currentShow?.reference?.type
+    $: outputStyleId = getFirstActiveOutput($outputs)?.style || ""
+    $: outputStyleTemplate = allOutputsHasStyleTemplate(referenceType === "scripture") ? $styles[outputStyleId]?.[referenceType === "scripture" ? "templateScripture" : "template"] || "" : ""
+    $: enableStylePreview = !!(outputStyleTemplate && $special.styleTemplatePreview !== false && $templates[outputStyleTemplate])
+
+    $: showTemplateId = currentShow?.settings?.template || ""
+    $: showTemplateIcon = !!(showTemplateId && $templates[showTemplateId])
+    $: enableShowTemplate = showTemplateIcon && (!referenceType || referenceType === "scripture" || open)
 </script>
 
 <svelte:window on:mousedown={mousedown} />
@@ -88,7 +100,19 @@
     </p>
 
     <div class="right">
+        <!-- template icon -->
+        {#if enableStylePreview}
+            <MaterialButton style="width: 32px;height: 100%;padding: 0.3em 0.5em;" title="formats.template: <b>{$templates[outputStyleTemplate]?.name || ''}</b>" on:click={() => activePopup.set("template_info")}>
+                <Icon size={0.8} id="styles" white />
+            </MaterialButton>
+        {:else if enableShowTemplate}
+            <MaterialButton style="width: 32px;height: 100%;padding: 0.3em 0.5em;" class="context #show_template" title="formats.template: <b>{$templates[showTemplateId]?.name || 'info.template'}</b>" on:click={() => activePopup.set("template_info")}>
+                <Icon size={0.8} id="templates" white />
+            </MaterialButton>
+        {/if}
+
         {#if !hideOptions}
+            <!-- show more -->
             <MaterialButton style="width: 32px;height: 100%;padding: 0.3em 0.5em;border-bottom-right-radius: 10px;{showDropdown ? '' : 'opacity: 0.8;'}" title="create_show.more_options" icon="more" on:click={() => (showDropdown = !showDropdown)} white={!showDropdown}>
                 <!-- prevent force "white" -->
                 <span style="display: none;"></span>
@@ -171,6 +195,8 @@
         position: absolute;
         top: 0;
         height: 100%;
+
+        display: flex;
     }
     .header .right {
         right: 0;

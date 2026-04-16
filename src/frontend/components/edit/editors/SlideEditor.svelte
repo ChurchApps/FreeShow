@@ -2,7 +2,7 @@
     import { onMount } from "svelte"
     import type { MediaStyle } from "../../../../types/Main"
     import type { ItemType } from "../../../../types/Show"
-    import { activeEdit, activePage, activePopup, activeShow, alertMessage, focusMode, groups, labelsDisabled, media, outputs, overlays, refreshEditSlide, resized, showsCache, slideNotesActive, special, styles, templates, textEditActive } from "../../../stores"
+    import { activeEdit, activePopup, activeShow, alertMessage, focusMode, labelsDisabled, media, outputs, overlays, refreshEditSlide, resized, showsCache, slideNotesActive, special, styles, textEditActive } from "../../../stores"
     import { transposeText } from "../../../utils/chordTranspose"
     import { DEFAULT_WIDTH, triggerFunction } from "../../../utils/common"
     import { translateText } from "../../../utils/language"
@@ -30,12 +30,12 @@
     import DropArea from "../../system/DropArea.svelte"
     import Resizeable from "../../system/Resizeable.svelte"
     import Snaplines from "../../system/Snaplines.svelte"
+    import Timeline from "../../timeline/Timeline.svelte"
     import EditHeader from "../EditHeader.svelte"
     import Editbox from "../editbox/Editbox.svelte"
     import { getUsedChords } from "../scripts/chords"
     import { addItem } from "../scripts/itemHelpers"
     import { getSlideText, setCaretAtEnd } from "../scripts/textStyle"
-    import Timeline from "../../timeline/Timeline.svelte"
 
     $: currentShowId = $activeShow?.id || $activeEdit.showId || ""
     $: currentShow = $showsCache[currentShowId]
@@ -318,10 +318,6 @@
 
     $: hasTextContent = getSlideText(Slide)?.length
 
-    $: parentId = $activeEdit.slide !== null && ref?.[$activeEdit.slide!] ? ref[$activeEdit.slide!]?.parent?.id || ref[$activeEdit.slide!]?.id : ""
-    $: slideGroup = _show(currentShowId).slides([parentId]).get()?.[0]?.globalGroup || ""
-    $: template = Slide?.settings?.template || $groups[slideGroup]?.template || currentShow?.settings?.template || ""
-
     // BACKGROUND
 
     $: currentBackgroundPath = currentShow?.media?.[ref[$activeEdit.slide || 0]?.data.background || ""]?.path || ""
@@ -354,20 +350,6 @@
 
 {#if currentShow}
     <EditHeader showId={currentShowId} />
-{/if}
-
-{#if template && !chordsMode && !widthOrHeight.includes("height") && !$focusMode && !isLocked}
-    <div class="default" data-title={translateText(`info.template: <b>${$templates[template]?.name || "—"}</b>`)}>
-        <MaterialButton
-            style="border-radius: 50%;"
-            on:click={() => {
-                activeEdit.set({ type: "template", id: template, items: [] })
-                activePage.set("edit")
-            }}
-        >
-            <Icon id="templates" white />
-        </MaterialButton>
-    </div>
 {/if}
 
 <div class="editArea">
@@ -533,27 +515,6 @@
 </div>
 
 <style>
-    .default {
-        position: absolute;
-        top: 40px;
-        left: 10px;
-
-        width: 42px;
-        height: 42px;
-
-        display: flex;
-        align-items: center;
-        justify-content: center;
-
-        background-color: var(--primary-darkest);
-        border: 1px solid var(--primary-lighter);
-
-        padding: 10px;
-        border-radius: 50%;
-
-        z-index: 999;
-    }
-
     .editArea {
         width: 100%;
         height: calc(100% - 30px);

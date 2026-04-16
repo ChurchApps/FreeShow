@@ -2,7 +2,8 @@
     import { uid } from "uid"
     import type { ClickEvent } from "../../../types/Main"
     import { changeSlidesView } from "../../show/slides"
-    import { actions, activeEdit, activePage, activePopup, activeProject, activeShow, activeStyle, alertMessage, labelsDisabled, outputs, projects, settingsTab, showsCache, slidesOptions, special, styles, templates } from "../../stores"
+    import { actions, activePopup, activeProject, activeShow, alertMessage, labelsDisabled, projects, showsCache, slidesOptions } from "../../stores"
+    import { translateText } from "../../utils/language"
     import { getAccess } from "../../utils/profile"
     import { getActionIcon, runAction } from "../actions/actions"
     import Icon from "../helpers/Icon.svelte"
@@ -10,7 +11,6 @@
     import { keysToID, sortByName } from "../helpers/array"
     import { duplicate } from "../helpers/clipboard"
     import { history } from "../helpers/history"
-    import { allOutputsHasStyleTemplate, getAllEnabledOutputs, getFirstActiveOutput } from "../helpers/output"
     import { _show } from "../helpers/shows"
     import { joinTime, secondsToTime } from "../helpers/time"
     import FloatingInputs from "../input/FloatingInputs.svelte"
@@ -19,7 +19,6 @@
     import MaterialZoom from "../inputs/MaterialZoom.svelte"
     import SelectElem from "../system/SelectElem.svelte"
     import Reference from "./Reference.svelte"
-    import { translateText } from "../../utils/language"
 
     $: showId = $activeShow?.id || ""
     $: currentShow = $showsCache[showId] || {}
@@ -114,24 +113,6 @@
     $: isLocked = currentShow?.locked || profile.global === "read" || profile[currentShow?.category || ""] === "read"
 
     $: referenceType = currentShow?.reference?.type
-
-    // style template
-    $: outputStyleId = getFirstActiveOutput($outputs)?.style || ""
-    $: outputStyleTemplate = allOutputsHasStyleTemplate(referenceType === "scripture") ? $styles[outputStyleId]?.[referenceType === "scripture" ? "templateScripture" : "template"] || "" : ""
-    function editStyleTemplate() {
-        activeStyle.set(outputStyleId)
-        settingsTab.set("styles")
-        activePage.set("settings")
-        // scroll to bottom
-        setTimeout(() => {
-            document.querySelector(".row")?.querySelector(".center")?.querySelector(".scroll")?.scrollTo(0, 1000)
-        }, 80)
-    }
-
-    const outputsCount = getAllEnabledOutputs().length
-    $: enableStylePreview = !!(outputStyleTemplate && $special.styleTemplatePreview !== false && $templates[outputStyleTemplate])
-    $: showTemplateId = currentShow?.settings?.template || ""
-    $: showTemplateIcon = !!(showTemplateId && $templates[showTemplateId])
 </script>
 
 {#if referenceType === "lessons"}
@@ -183,40 +164,6 @@
                     <Icon size={1.1} id="clock" white={totalTime === "0s"} />
                 </MaterialButton>
             {/if}
-
-            {#if enableStylePreview && outputsCount === 1 ? false : showTemplateIcon && (!referenceType || referenceType === "scripture" || open)}
-                {#if open}
-                    <div class="divider"></div>
-                {/if}
-
-                <MaterialButton
-                    class="context #show_template"
-                    title="menu.edit: <b>{$templates[showTemplateId].name || 'info.template'}</b>"
-                    on:click={() => {
-                        activeEdit.set({ type: "template", id: showTemplateId, items: [] })
-                        activePage.set("edit")
-                    }}
-                >
-                    <Icon size={1.1} id="templates" />
-                </MaterialButton>
-                <!-- use context menu to remove! -->
-                <!-- {#if open}
-                    <MaterialButton title="actions.remove_template_from_show" on:click={() => removeTemplatesFromShow($activeShow?.id || "", true)}>
-                        <Icon size={1.1} id="remove_circle" />
-                    </MaterialButton>
-                {/if} -->
-            {/if}
-
-            <!-- output style template -->
-            {#if enableStylePreview}
-                {#if open}
-                    <div class="divider"></div>
-                {/if}
-
-                <MaterialButton title="formats.template: {$templates[outputStyleTemplate].name || ''}" on:click={editStyleTemplate}>
-                    <Icon size={1.1} id="styles" />
-                </MaterialButton>
-            {/if}
         {/if}
 
         {#if open}
@@ -229,22 +176,6 @@
             <Icon size={1.3} id={$slidesOptions.mode} white={$slidesOptions.mode === "grid"} />
         </MaterialButton>
     </FloatingInputs>
-{:else}
-    <!-- template (so you can remove it if you want to) -->
-    {#if enableStylePreview && outputsCount === 1 ? false : showTemplateIcon && (!referenceType || referenceType === "scripture")}
-        <FloatingInputs>
-            <MaterialButton
-                class="context #show_template"
-                title="menu.edit: <b>{$templates[showTemplateId].name || 'info.template'}</b>"
-                on:click={() => {
-                    activeEdit.set({ type: "template", id: showTemplateId, items: [] })
-                    activePage.set("edit")
-                }}
-            >
-                <Icon size={1.1} id="templates" />
-            </MaterialButton>
-        </FloatingInputs>
-    {/if}
 {/if}
 
 {#if $slidesOptions.mode !== "simple"}
