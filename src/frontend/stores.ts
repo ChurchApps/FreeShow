@@ -457,6 +457,7 @@ export const $ = {
     styles,
     customMetadata,
     customMessageCredits,
+    slideTimelineSpeedMultiplier,
     outLocked,
     ports,
     maxConnections,
