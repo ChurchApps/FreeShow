@@ -791,18 +791,63 @@ const deleteActions = {
 
         const slideRef = ref.find((a) => a.id === slideId)
         const groupId = slideRef?.parent?.id || slideRef?.id
-        const currentShow = get(showsCache)[get(activeShow)?.id || ""]
+        const showId = get(activeShow)?.id || ""
+        const items = get(activeEdit).items || []
+        const currentShow = get(showsCache)[showId]
         if (currentShow.locked || currentShow?.slides?.[groupId || ""]?.locked) {
             newToast("output.state_locked")
             return
         }
+
+        // WIP keyframes should be bound by id and not index, as item index position can change
+        // remove any associated slide timeline keyframes
+        // WIP history
+        // if (currentShow.slides?.[slideId]?.timeline) {
+        //     showsCache.update((a) => {
+        //         const timeline = a[showId].slides[slideId].timeline
+        //         if (!timeline?.actions) return a
+
+        //         const newActions: TimelineAction[] = []
+        //         timeline.actions.forEach((action) => {
+        //             const indexes = action.data.indexes || []
+        //             if (!indexes.length) {
+        //                 newActions.push(action)
+        //                 return
+        //             }
+
+        //             const newIndexes = indexes.filter((i) => !items.includes(i))
+        //             if (!newIndexes.length) return
+
+        //             if (newIndexes.length !== indexes.length) action.data.indexes = newIndexes
+        //             newActions.push(action)
+        //         })
+
+        //         // we then have to decrease the existing indexes to match the new items
+        //         newActions.forEach((action) => {
+        //             const indexes = action.data.indexes || []
+        //             if (!indexes.length) return
+
+        //             const newIndexes = indexes.map((i) => {
+        //                 let newIndex = i
+        //                 items.forEach((removedIndex) => {
+        //                     if (i > removedIndex) newIndex = newIndex - 1
+        //                 })
+        //                 return newIndex
+        //             })
+        //             action.data.indexes = newIndexes
+        //         })
+
+        //         timeline.actions = newActions
+        //         return a
+        //     })
+        // }
 
         history({
             id: "deleteItem",
             location: {
                 page: "edit",
                 show: get(activeShow)!,
-                items: get(activeEdit).items,
+                items,
                 layout,
                 slide: slideId
             }

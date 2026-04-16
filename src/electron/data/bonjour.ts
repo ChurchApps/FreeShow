@@ -13,19 +13,20 @@ const ips = getLocalIPs()
 const instanceID = crypto.randomBytes(3).toString("hex")
 const publishedServices: Partial<Record<string, Service>> = {}
 
-// broadcast port over LAN
-export function publishPort(name: string, port: number) {
-    if (!bonjour) return
-    if (!ips) {
-        console.warn(`Bonjour: Skipping publish for ${name} - no network interface available`)
-        return
-    }
+// check for existing freeshow services before publishing
+function checkAndPublish(name: string, port: number, uniqueName: string, customData: any) {
+    let found = false
+    const browser = bonjour.find({ type: "freeshow", protocol: "udp" }, (service: any) => {
+        if (service.name.startsWith(`freeshow-${name}-`)) {
+            found = true
+            console.warn(`Bonjour: A service named 'freeshow-${name}-*' is already published on the network.`)
+            browser.stop()
+        }
+    })
 
-    // Format: freeshow-REMOTE-a4f2d9
-    const uniqueName = `freeshow-${name}-${instanceID}`
-    const customData = { ip: ips[0], ips }
+    setTimeout(() => {
+        if (found) return
 
-    const publish = () => {
         try {
             publishedServices[name] = bonjour.publish({
                 name: uniqueName,
@@ -34,25 +35,31 @@ export function publishPort(name: string, port: number) {
                 port,
                 txt: customData
             })
+
+            console.info(`Bonjour: Published '${uniqueName}' on port ${port}`)
         } catch (err) {
             console.warn(`Bonjour: Failed to publish ${name} on port ${port}:`, err instanceof Error ? err.message : String(err))
         }
+
+        browser.stop()
+    }, 1000)
+}
+
+// broadcast port over LAN
+export function publishPort(name: string, port: number) {
+    if (!bonjour) return
+    if (!ips) {
+        console.warn(`Bonjour: Skipping publish for ${name} - no network interface available`)
+        return
     }
+
+    const uniqueName = `freeshow-${name}-${instanceID}`
+    const customData = { ip: ips[0], ips }
 
     const previousService = publishedServices[name]
-    if (previousService?.stop) {
-        try {
-            previousService.stop(() => {
-                delete publishedServices[name]
-                publish()
-            })
-            return
-        } catch (err) {
-            console.warn(`Bonjour: Failed to stop previous ${name} service:`, err instanceof Error ? err.message : String(err))
-        }
-    }
+    if (previousService) return // already published (changes to data/port will require a restart)
 
-    publish()
+    checkAndPublish(name, port, uniqueName, customData)
 }
 
 export function unpublishPorts() {
@@ -60,11 +67,19 @@ export function unpublishPorts() {
 
     try {
         Object.keys(publishedServices).forEach((key) => {
-            publishedServices[key]?.stop?.()
+            const service = publishedServices[key]
+            if (service?.stop) {
+                service.stop((err?: Error) => {
+                    if (err) console.warn(`Bonjour: Failed to stop service '${key}':`, err.message)
+                })
+            }
+
             delete publishedServices[key]
         })
 
-        bonjour.unpublishAll()
+        bonjour.unpublishAll((err?: Error) => {
+            if (err) console.warn("Bonjour: Failed to unpublish all services:", err.message)
+        })
     } catch (err) {
         console.warn("Bonjour: Failed to unpublish ports:", err instanceof Error ? err.message : String(err))
     }
