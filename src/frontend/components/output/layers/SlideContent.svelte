@@ -330,14 +330,17 @@
 
         function styleActions(actions: TimelineAction[]) {
             const itemStyleActions = actions.filter((a) => a.type === "style")
-            // group by style key
+            // group by style key & indexes
             const groupedActions = new Map<string, TimelineAction[]>()
             for (const action of itemStyleActions) {
                 const key = action.data?.key
                 if (!key) continue
 
-                if (!groupedActions.has(key)) groupedActions.set(key, [])
-                groupedActions.get(key)?.push(action)
+                const indexes = action.data?.indexes ? action.data.indexes.join(",") : ""
+                const groupKey = `${key}-${indexes}`
+
+                if (!groupedActions.has(groupKey)) groupedActions.set(groupKey, [])
+                groupedActions.get(groupKey)?.push(action)
             }
 
             const slideKey = `${outSlide?.id}-${outSlide?.layout}-${outSlide?.index}`
