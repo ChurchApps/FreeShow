@@ -361,7 +361,7 @@ export interface SlideData {
 
         receiveMidi?: string
         nextAfterMedia?: boolean
-        animate?: Animation
+        animate?: Animation // DEPRECATED!!
         slide_shortcut?: { key: string }
         startShow?: { id: string }
 

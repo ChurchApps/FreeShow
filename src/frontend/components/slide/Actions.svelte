@@ -130,7 +130,7 @@
 
     const actionsList = [
         { id: "nextAfterMedia", title: translateText("actions.next_after_media"), icon: "forward" },
-        { id: "animate", title: translateText("popup.animate"), icon: "stars" },
+        { id: "animate", title: translateText("popup.animate"), icon: "stars" }, // DEPRECATED!!
         { id: "receiveMidi", title: translateText("actions.play_on_midi"), icon: "play" }
     ]
 

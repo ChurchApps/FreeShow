@@ -1823,20 +1823,6 @@ function changeSlideAction(obj: ObjData, id: string) {
         return
     }
 
-    if (id === "animate") {
-        if (!layoutActions[id]) {
-            layoutActions[id] = { actions: [{ type: "change", duration: 3, id: "text", key: "font-size", extension: "px" }] }
-            history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: layoutActions, indexes }, location: { page: "show", override: "animate_slide" } })
-        }
-
-        const data = { data: layoutActions[id], indexes }
-
-        popupData.set(data)
-        activePopup.set("animate")
-
-        return
-    }
-
     if (id === "nextTimer") {
         const nextTimer = clone(ref[layoutSlide]?.data?.nextTimer) || 0
 

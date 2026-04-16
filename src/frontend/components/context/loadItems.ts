@@ -164,9 +164,7 @@ const loadActions = {
             "SEPARATOR",
             { id: "nextTimer", label: "preview.nextTimer", icon: "clock", iconColor: "#fca4ff", enabled: Number(slideRef?.data?.nextTimer || 0) || false },
             { id: "loop", label: "preview.to_start", icon: "restart", iconColor: "#fca4ff", enabled: slideRef?.data?.end || false },
-            { id: "nextAfterMedia", label: "actions.next_after_media", iconColor: "#fca4ff", icon: "forward", enabled: currentActions?.nextAfterMedia || false },
-            "SEPARATOR",
-            { id: "animate", label: "popup.animate", icon: "stars", iconColor: "#fff1ad", enabled: currentActions?.animate || false }
+            { id: "nextAfterMedia", label: "actions.next_after_media", iconColor: "#fca4ff", icon: "forward", enabled: currentActions?.nextAfterMedia || false }
         ]
 
         return slideActions

@@ -242,7 +242,7 @@
         currentAnimationId = ""
     }
 
-    // TODO: play slide animations on each textbox so animation can continue while transitioning
+    // DEPRECATED!!
     $: if (slideAnimation) initializeAnimation()
     async function initializeAnimation() {
         if (!Object.keys(slideAnimation || {}).length) {
