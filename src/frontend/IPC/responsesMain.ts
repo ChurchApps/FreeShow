@@ -446,12 +446,24 @@ export const mainResponses: MainResponses = {
                 parent: folderId || "/",
                 shows: currentProject.items || []
             }
-            const project = createProviderProject(data.providerId, projectBase)
-
-            // REPLACE IDS
-            project.shows = project.shows.map((a) => ({ ...a, id: replaceIds[a.id] || a.id }))
 
             const projectId = currentProject.id
+            const existingProject = get(projects)[projectId]
+
+            let project: Project
+            if (existingProject?.shows?.length) {
+                // Re-sync: preserve existing show positions, only append new shows
+                const newItems: typeof projectBase.shows = (currentProject.items || []).map((a) => ({ ...a, id: replaceIds[a.id] || a.id }))
+                const existingIds = new Set(existingProject.shows.map((s) => s.id))
+                const addedItems = newItems.filter((a) => !existingIds.has(a.id))
+                project = { ...projectBase, shows: clone([...existingProject.shows, ...addedItems]) }
+            } else {
+                // New project: apply template then append synced items
+                project = createProviderProject(data.providerId, projectBase)
+                // REPLACE IDS
+                project.shows = project.shows.map((a) => ({ ...a, id: replaceIds[a.id] || a.id }))
+            }
+
             history({ id: "UPDATE", newData: { data: project }, oldData: { id: projectId }, location: { page: "show", id: "project" } })
         })
 
