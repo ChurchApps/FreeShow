@@ -408,6 +408,34 @@ export const mainResponses: MainResponses = {
                 continue
             }
 
+            // show already exists with the same id (common for previously synced provider songs)
+            const sameIdShow = get(shows)[id]
+            if (sameIdShow) {
+                if (alwaysUseLocal) {
+                    updateExistingShow(id)
+                    continue
+                }
+
+                if (!alwaysUseOnline) {
+                    const providerName = data.providerId === "planningcenter" ? "Planning Center" : data.providerId === "churchApps" ? "ChurchApps" : "the cloud"
+                    const useLocal = await confirmCustom(`There is an existing show with the same name: ${sameIdShow.name}.<br><br>Would you like to use the local version instead of the one from ${providerName}?`)
+                    if (useLocal) {
+                        updateExistingShow(id)
+                        continue
+                    }
+                }
+
+                Object.values<Slide>(show.slides).forEach((slide) => {
+                    if (slide.globalGroup || !slide.group) return
+
+                    const globalGroup = getGlobalGroup(slide.group)
+                    if (globalGroup) slide.globalGroup = globalGroup
+                })
+
+                tempShows.push({ id, show: createOnlineOverwriteShow({ ...show, origin, name: checkName(show.name, id) }) })
+                continue
+            }
+
             // find existing show with same name and ask to replace
             const providerName = data.providerId === "planningcenter" ? "Planning Center" : data.providerId === "churchApps" ? "ChurchApps" : "the cloud"
             const existingShow = allShows.find(({ id: existingId, name }) => existingId !== id && name.toLowerCase() === show.name.toLowerCase())
