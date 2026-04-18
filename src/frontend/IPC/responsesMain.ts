@@ -338,6 +338,8 @@ export const mainResponses: MainResponses = {
         const replaceIds: { [key: string]: string } = {}
         const allShows = keysToID(get(shows))
         const songOrigin = get(contentProviderData)[data.providerId]?.songOrigin
+        const alwaysUseLocal = songOrigin === "local"
+        const alwaysUseOnline = songOrigin === "online" || songOrigin === "cloud"
         const linkKey = data.providerId === "planningcenter" ? "pcoLink" : data.providerId === "churchApps" ? "chumsLink" : data.providerId === "amazinglife" ? "alLink" : ""
         const origin = data.providerId === "planningcenter" ? "pco" : data.providerId
 
@@ -373,7 +375,16 @@ export const mainResponses: MainResponses = {
             const linkedShow = linkKey && allShows.find(({ quickAccess }) => quickAccess?.[linkKey] === id)
             if (linkedShow) {
                 replaceIds[id] = linkedShow.id
-                if (songOrigin === "local") continue
+                if (alwaysUseLocal) continue
+
+                if (!alwaysUseOnline) {
+                    const providerName = data.providerId === "planningcenter" ? "Planning Center" : data.providerId === "churchApps" ? "ChurchApps" : "the cloud"
+                    const useLocal = await confirmCustom(`There is an existing show with the same name: ${linkedShow.name}.<br><br>Would you like to use the local version instead of the one from ${providerName}?`)
+                    if (useLocal) {
+                        updateExistingShow(linkedShow.id)
+                        continue
+                    }
+                }
 
                 // replace local show with provider song
                 Object.values<Slide>(show.slides).forEach((slide) => {
@@ -383,7 +394,7 @@ export const mainResponses: MainResponses = {
                     if (globalGroup) slide.globalGroup = globalGroup
                 })
 
-                tempShows.push({ id, show: { ...show, origin, name: checkName(show.name, id) } })
+                tempShows.push({ id: linkedShow.id, show: { ...show, origin, name: checkName(show.name, linkedShow.id) } })
                 continue
             }
 
@@ -391,8 +402,8 @@ export const mainResponses: MainResponses = {
             const providerName = data.providerId === "planningcenter" ? "Planning Center" : data.providerId === "churchApps" ? "ChurchApps" : "the cloud"
             const existingShow = allShows.find(({ id: existingId, name }) => existingId !== id && name.toLowerCase() === show.name.toLowerCase())
             // const existingShowHasContent = existingShow && (await loadShows([existingShow.id])) && getSlidesText(get(showsCache)[existingShow.id].slides)
-            if (existingShow && songOrigin !== "cloud") {
-                const useLocal = songOrigin === "local" || (await confirmCustom(`There is an existing show with the same name: ${existingShow.name}.<br><br>Would you like to use the local version instead of the one from ${providerName}?`))
+            if (existingShow) {
+                const useLocal = alwaysUseLocal || (!alwaysUseOnline && (await confirmCustom(`There is an existing show with the same name: ${existingShow.name}.<br><br>Would you like to use the local version instead of the one from ${providerName}?`)))
                 if (useLocal) {
                     replaceIds[id] = existingShow.id
                     updateExistingShow(existingShow.id)
@@ -402,6 +413,18 @@ export const mainResponses: MainResponses = {
                 // set link so we will automatically update from the provider in the future
                 if (!show.quickAccess) show.quickAccess = {}
                 show.quickAccess[linkKey] = id
+
+                // replace local show with provider song
+                Object.values<Slide>(show.slides).forEach((slide) => {
+                    if (slide.globalGroup || !slide.group) return
+
+                    const globalGroup = getGlobalGroup(slide.group)
+                    if (globalGroup) slide.globalGroup = globalGroup
+                })
+
+                replaceIds[id] = existingShow.id
+                tempShows.push({ id: existingShow.id, show: { ...show, origin, name: checkName(show.name, existingShow.id) } })
+                continue
             }
 
             // download:
