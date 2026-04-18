@@ -364,6 +364,16 @@ export const mainResponses: MainResponses = {
             })
         }
 
+        function createOnlineOverwriteShow(show: Show): Show {
+            return {
+                ...show,
+                timestamps: {
+                    ...(show.timestamps || {}),
+                    modified: Date.now()
+                }
+            }
+        }
+
         // CREATE SHOWS
         const tempShows: { id: string; show: Show }[] = []
         for (const show of data.shows) {
@@ -394,7 +404,7 @@ export const mainResponses: MainResponses = {
                     if (globalGroup) slide.globalGroup = globalGroup
                 })
 
-                tempShows.push({ id: linkedShow.id, show: { ...show, origin, name: checkName(show.name, linkedShow.id) } })
+                tempShows.push({ id: linkedShow.id, show: createOnlineOverwriteShow({ ...show, origin, name: checkName(show.name, linkedShow.id) }) })
                 continue
             }
 
@@ -423,7 +433,7 @@ export const mainResponses: MainResponses = {
                 })
 
                 replaceIds[id] = existingShow.id
-                tempShows.push({ id: existingShow.id, show: { ...show, origin, name: checkName(show.name, existingShow.id) } })
+                tempShows.push({ id: existingShow.id, show: createOnlineOverwriteShow({ ...show, origin, name: checkName(show.name, existingShow.id) }) })
                 continue
             }
 
