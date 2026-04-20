@@ -33,12 +33,12 @@ export function createCategory(name: string, icon = "song", { isDefault, isArchi
     return id
 }
 
-export function setTempShows(tempShows: { id: string; show: Show }[], options: { suppressFinishedToast?: boolean } = {}) {
+export function setTempShows(tempShows: { id: string; show: Show }[], options: { suppressFinishedToast?: boolean; forceTimestampReplace?: boolean } = {}) {
     if (tempShows.length === 1) {
         const selectedIndex = get(activeShow)?.index === undefined ? undefined : get(activeShow)!.index! + 1
         history({ id: "UPDATE", newData: { data: tempShows[0].show, remember: { project: get(activeProject), index: selectedIndex } }, oldData: { id: tempShows[0].id }, location: { page: "show", id: "show" } })
     } else {
-        history({ id: "SHOWS", newData: { data: tempShows, replace: true }, location: { page: "show" } })
+        history({ id: "SHOWS", newData: { data: tempShows, replace: true, forceTimestampReplace: options.forceTimestampReplace }, location: { page: "show" } })
     }
 
     activePopup.set(null)

@@ -425,7 +425,7 @@ export const mainResponses: MainResponses = {
             delete show.id
             tempShows.push({ id, show: { ...show, origin, name: checkName(show.name, id) } })
         }
-        setTempShows(tempShows)
+        setTempShows(tempShows, { forceTimestampReplace: true })
 
         function createProviderProject(providerId: ContentProviderId, projectBase: Project) {
             const templateId = get(contentProviderData)[providerId]?.projectTemplate || ""
