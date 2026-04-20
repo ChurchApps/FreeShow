@@ -2,7 +2,7 @@ import { get } from "svelte/store"
 import type { ContentProviderId } from "../../electron/contentProviders/base/types"
 import type { ToMainSendPayloads } from "../../types/IPC/ToMain"
 import { ToMain } from "../../types/IPC/ToMain"
-import type { Project, ProjectShowRef } from "../../types/Projects"
+import type { Project } from "../../types/Projects"
 import type { Show, Slide } from "../../types/Show"
 import { API_ACTIONS, triggerAction } from "../components/actions/api"
 import { receivedMidi } from "../components/actions/midi"
@@ -485,11 +485,8 @@ export const mainResponses: MainResponses = {
 
             let project: Project
             if (existingProject?.shows?.length) {
-                // Re-sync: preserve existing FreeShow order, only append truly new items at the end
-                const newItems = (currentProject.items || []).map((a: ProjectShowRef) => ({ ...a, id: replaceIds[a.id] || a.id }))
-                const existingIds = new Set(existingProject.shows.map((s: ProjectShowRef) => s.id))
-                const addedItems = newItems.filter((a: ProjectShowRef) => !existingIds.has(a.id))
-                project = { ...projectBase, shows: clone([...existingProject.shows, ...addedItems]) }
+                // Re-sync: preserve existing FreeShow order as-is
+                project = { ...projectBase, shows: clone(existingProject.shows) }
             } else {
                 // New project: apply template then use PCO order
                 project = createProviderProject(data.providerId, projectBase)
