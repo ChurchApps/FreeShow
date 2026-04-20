@@ -341,9 +341,14 @@ export const mainResponses: MainResponses = {
         const linkKey = data.providerId === "planningcenter" ? "pcoLink" : data.providerId === "churchApps" ? "chumsLink" : data.providerId === "amazinglife" ? "alLink" : ""
         const origin = data.providerId === "planningcenter" ? "pco" : data.providerId
 
-        function updateExistingShow(showId: string) {
+        function updateExistingShow(showId: string, providerShowId?: string) {
             shows.update((a) => {
                 if (!a[showId]) return a // should always exist
+
+                if (providerShowId && linkKey) {
+                    if (!a[showId].quickAccess) a[showId].quickAccess = {}
+                    a[showId].quickAccess[linkKey] = providerShowId
+                }
 
                 a[showId].origin = origin
                 return a
@@ -353,9 +358,10 @@ export const mainResponses: MainResponses = {
             showsCache.update((a) => {
                 if (!a[showId]) return a
 
-                // we should not set link when requesting to use local show, that way it will ask next time as well
-                // if (!a[showId].quickAccess) a[showId].quickAccess = {}
-                // if (linkKey) a[showId].quickAccess[linkKey] = originId
+                if (providerShowId && linkKey) {
+                    if (!a[showId].quickAccess) a[showId].quickAccess = {}
+                    a[showId].quickAccess[linkKey] = providerShowId
+                }
 
                 a[showId].origin = origin
                 return a
@@ -395,7 +401,7 @@ export const mainResponses: MainResponses = {
                 const useLocal = songOrigin === "local" || (await confirmCustom(`There is an existing show with the same name: ${existingShow.name}.<br><br>Would you like to use the local version instead of the one from ${providerName}?`))
                 if (useLocal) {
                     replaceIds[id] = existingShow.id
-                    updateExistingShow(existingShow.id)
+                    updateExistingShow(existingShow.id, id)
                     continue
                 }
             }
