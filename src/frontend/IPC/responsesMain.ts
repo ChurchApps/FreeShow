@@ -2,7 +2,7 @@ import { get } from "svelte/store"
 import type { ContentProviderId } from "../../electron/contentProviders/base/types"
 import type { ToMainSendPayloads } from "../../types/IPC/ToMain"
 import { ToMain } from "../../types/IPC/ToMain"
-import type { Project } from "../../types/Projects"
+import type { Project, ProjectShowRef } from "../../types/Projects"
 import type { Show, Slide } from "../../types/Show"
 import { API_ACTIONS, triggerAction } from "../components/actions/api"
 import { receivedMidi } from "../components/actions/midi"
@@ -452,8 +452,14 @@ export const mainResponses: MainResponses = {
 
             let project: Project
             if (existingProject?.shows?.length) {
-                // Re-sync: preserve existing FreeShow order as-is
-                project = { ...projectBase, shows: clone(existingProject.shows) }
+                // Re-sync: preserve FreeShow order, but refresh matching service items.
+                const syncedItems = (currentProject.items || []).map((item: ProjectShowRef) => ({ ...item, id: replaceIds[item.id] || item.id }))
+                const syncedItemsById = Object.fromEntries(syncedItems.map((item: ProjectShowRef) => [item.id, item])) as Record<string, ProjectShowRef>
+
+                project = {
+                    ...projectBase,
+                    shows: clone(existingProject.shows.map((item: ProjectShowRef) => (syncedItemsById[item.id] ? { ...item, ...syncedItemsById[item.id] } : item)))
+                }
             } else {
                 // New project: apply template then use PCO order
                 project = createProviderProject(data.providerId, projectBase)
