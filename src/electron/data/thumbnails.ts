@@ -259,6 +259,8 @@ export function saveImage(data: { id?: string; path?: string; base64?: string; b
 }
 
 export async function pdfToImage({ filePath }: { filePath: string }) {
+    // normalize filePath to handle special characters robustly
+    filePath = path.normalize(filePath)
     const pdfName = path.basename(filePath, path.extname(filePath))
     const pdfImportPath = getDataFolderPath("imports", "PDF")
     const pathName = createFolder(path.join(pdfImportPath, pdfName))
@@ -292,12 +294,12 @@ export async function pdfToImage({ filePath }: { filePath: string }) {
             const image = nativeImage.createFromDataURL(base64)
             const imagePath = path.join(pathName, `${i + 1}.jpg`)
 
+            createFolder(pathName)
             saveToDisk(imagePath, image, "jpg")
             images.push(imagePath)
 
             const saveProgress = renderPhasePercent + Math.round(((i + 1) / Math.max(1, pdfImages.length)) * savePhasePercent)
             sendPdfImportProgress({ progress: saveProgress, status: "importing" })
-
         }
 
         if (images.length) {
