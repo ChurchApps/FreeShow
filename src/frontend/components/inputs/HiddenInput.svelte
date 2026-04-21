@@ -88,7 +88,12 @@
 
     $: editingActive = edit === id && allowEdit
     function cancelEdit() {
-        if (!editingActive) return
+        if (!edit && $activeRename === null) return
+
+        // check if active rename actually exists anywhere
+        const renameIsActive = !!document.querySelector(".edit.nocontext._rename.name")
+        // can only be canceled by itself or any rename elem if it's not actually active
+        if (renameIsActive && !editingActive) return
 
         edit = false
         activeRename.set(null)
