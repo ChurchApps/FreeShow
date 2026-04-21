@@ -428,11 +428,20 @@ export const mainResponses: MainResponses = {
             const templateId = get(contentProviderData)[providerId]?.projectTemplate || ""
             if (!templateId) return projectBase
 
-            const templateItems = get(projectTemplates)[templateId]?.shows || []
+            let templateItems = clone(get(projectTemplates)[templateId]?.shows || [])
+            let pcoItems = clone(projectBase.shows || [])
 
-            // project template first, then append the synced items
-            projectBase.shows = clone([...templateItems, ...(projectBase.shows || [])])
+            // project template first, then append the synced items (first to any placeholders, then to the end)
+            templateItems = templateItems.map((item) => {
+                if (item.type === "show_placeholder") {
+                    const show = pcoItems.shift()
+                    if (show) return show
+                }
 
+                return item
+            })
+
+            projectBase.shows = [...templateItems, ...pcoItems]
             return projectBase
         }
 
