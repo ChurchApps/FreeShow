@@ -190,6 +190,14 @@ export const _updaters = {
         },
         timestamp: true
     },
+    project_show_placeholder: {
+        store: projectTemplates,
+        empty: { id: "", type: "show_placeholder", name: "—" },
+        initialize: (data) => {
+            return replaceEmptyValues(data, { id: uid(5) }) // name: translateText("formats.show")
+        },
+        timestamp: true
+    },
 
     project_key: { store: projects, timestamp: true },
     project_folder_key: { store: folders, timestamp: true },

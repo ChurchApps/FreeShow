@@ -182,6 +182,13 @@
         // if (editActive) return
 
         history({ id: "UPDATE", newData: { key: "name", data: value }, oldData: { id }, location: { page: "show", id: "project_template" } })
+
+        // open template when renamed if empty
+        if (!$projectTemplates[id]?.shows?.length) {
+            activeProject.set(null)
+            editingProjectTemplate.set(id)
+            projectView.set(false)
+        }
     }
 
     // RECENTLY USED

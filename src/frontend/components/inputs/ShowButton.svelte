@@ -2,7 +2,7 @@
     import { getDocument, GlobalWorkerOptions } from "pdfjs-dist"
     import type { ClickEvent } from "../../../types/Main"
     import { AudioPlayer } from "../../audio/audioPlayer"
-    import { activeEdit, activeFocus, activePage, activeProject, activeShow, categories, focusMode, globalTags, media, notFound, outLocked, outputs, overlays, playerVideos, playingAudio, projects, refreshEditSlide, shows, showsCache, special, styles } from "../../stores"
+    import { activeEdit, activeFocus, activePage, activeProject, activeShow, categories, editingProjectTemplate, focusMode, globalTags, media, notFound, outLocked, outputs, overlays, playerVideos, playingAudio, projects, projectTemplates, refreshEditSlide, shows, showsCache, special, styles } from "../../stores"
     import { getAccess } from "../../utils/profile"
     import { historyAwait } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
@@ -16,6 +16,7 @@
     import { clearBackground, clearSlide } from "../output/clear"
     import HiddenInput from "./HiddenInput.svelte"
     import MaterialButton from "./MaterialButton.svelte"
+    import { translateText } from "../../utils/language"
 
     export let id: string
     export let show: any // ShowList | ShowRef
@@ -122,6 +123,7 @@
     }
 
     async function doubleClick(e: ClickEvent) {
+        if (type === "show_placeholder") return
         if (editActive || $outLocked || e.detail.target.closest("input")) return
 
         let outputId: string = getActiveOutputs($outputs, false, true, true)[0]
@@ -216,21 +218,25 @@
         // online videos (Pixabay) might not have a thumbnail ready
         if (getMediaType(getExtension(thumbnailPath)) === "video") thumbnailPath = ""
     }
+
+    $: showTemplateName = type === "show_placeholder" ? `${translateText("new.placeholder: formats.show")} ${index !== null ? ($editingProjectTemplate ? $projectTemplates[$editingProjectTemplate] : $projects[$activeProject || ""])?.shows?.reduce((c, show, i) => (show.type === "show_placeholder" && i < index ? c + 1 : c), 1) : ""}` : ""
 </script>
 
 <div id="show_{id}" class="main" class:played={show.played}>
     <MaterialButton on:click={click} on:dblclick={doubleClick} {isActive} showOutline={outline} class="context {$$props.class}{readOnly ? '_readonly' : ''}" style="font-weight: normal;--outline-color: {activeOutput || 'var(--secondary)'};{$notFound.show?.includes(id) ? 'background-color: rgb(255 0 0 / 0.2);' : ''}{style}{$$props.style || ''}" tab>
-        <div class="row">
+        <div class="row" style={type === "show_placeholder" ? "font-style: italic;" : ""}>
             <span class="cell" style={isProject ? `width: 100%;max-width: ${show.layoutInfo?.name || show.scheduleLength ? 92 : 100}%;` : `width: 75%;min-width: 120px;max-width: calc(100% ${showNumber ? "- var(--number-width)" : ""} - var(--modified-width, 0px));`}>
                 <div class="icon" class:isMedia>
-                    {#if thumbnailPath}
+                    {#if type === "show_placeholder"}
+                        <Icon id="swap" white right />
+                    {:else if thumbnailPath}
                         <img class="thumbnail" src={encodeFilePath(thumbnailPath)} alt="thumbnail" style={mediaStyleString} />
                     {:else if icon || show.locked}
                         <Icon id={show.played ? "check" : iconID ? iconID : show.locked ? "locked" : "noIcon"} custom={!show.played && custom} box={iconID === "ppt" ? 50 : 24} white={show.played} right={!isMedia} />
                     {/if}
                 </div>
 
-                <HiddenInput value={newName} id={index !== null ? "show_" + id + "#" + index : "show_drawer_" + id} on:edit={rename} bind:edit={editActive} allowEmpty={false} allowEdit={(!show.type || show.type === "show") && !readOnly} />
+                <HiddenInput value={type === "show_placeholder" ? showTemplateName : newName} id={index !== null ? "show_" + id + "#" + index : "show_drawer_" + id} on:edit={rename} bind:edit={editActive} allowEmpty={false} allowEdit={(!show.type || show.type === "show") && !readOnly && type !== "show_placeholder"} />
 
                 {#if isProject}
                     {#if show.layoutInfo?.name}

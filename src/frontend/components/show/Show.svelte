@@ -16,6 +16,7 @@
     import MediaPreview from "./media/MediaPreview.svelte"
     import OverlayPreview from "./overlay/OverlayPreview.svelte"
     import PdfPreview from "./pdf/PdfPreview.svelte"
+    import ProjectShowPlaceholder from "./placeholder/ProjectShowPlaceholder.svelte"
     import PowerPointPreview from "./ppt/PowerPointPreview.svelte"
     import Section from "./Section.svelte"
     import ShowNotes from "./ShowNotes.svelte"
@@ -89,6 +90,8 @@
             {:else if (show.type || "show") === "show"}
                 <Slides showId={$activeShow?.id || ""} />
                 <Layouts />
+            {:else if show.type === "show_placeholder"}
+                <ProjectShowPlaceholder />
             {:else}
                 <p style="text-align: center;text-transform: capitalize;opacity: 0.8;">{show.type}</p>
             {/if}
