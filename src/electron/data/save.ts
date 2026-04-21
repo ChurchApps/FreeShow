@@ -6,7 +6,7 @@ import type { SaveData } from "../../types/Save"
 import { currentlyDeletedShows } from "../cloud/drive"
 import { startBackup } from "../data/backup"
 import { defaultSettings, defaultSyncedSettings } from "../data/defaults"
-import { _store, getStore, safeStoreSet } from "../data/store"
+import { _store, safeStoreSet } from "../data/store"
 import { sendMain, sendToMain } from "../IPC/main"
 import { deleteFile, doesPathExist, getDataFolderPath, parseShow, readFile, writeFile } from "../utils/files"
 import { checkIfMatching, clone, wait } from "../utils/helpers"
@@ -40,7 +40,12 @@ export async function save(data: SaveData) {
         const newData = (data as any)[key]
         if (!newData || !isValidJSON(newData)) return
 
-        const currentData = getStore(key as keyof typeof _store)
+        let currentData
+        try {
+            currentData = store.store
+        } catch {
+            currentData = {}
+        }
         if (checkIfMatching(currentData, newData)) return
 
         await safeStoreSet(store, newData, key)
