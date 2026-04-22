@@ -206,6 +206,12 @@
 
     // blackmagic
     let blackmagicDevices: Option[] = []
+    function getUsedBlackmagicDeviceIds(excludeId = "") {
+        return Object.values($outputs)
+            .filter((o: any) => o.id !== excludeId && o.blackmagic && o.blackmagicData?.deviceId)
+            .map((o: any) => o.blackmagicData.deviceId)
+    }
+
     function updateBlackmagicData(e: any, key: string) {
         let id = currentOutput?.id
         if (!id) return
@@ -213,6 +219,15 @@
         let newData = $outputs[id]?.blackmagicData
         if (!newData) newData = {}
         let value = e?.detail?.id || e?.detail?.name || e
+
+        if (key === "deviceId") {
+            const usedIds = getUsedBlackmagicDeviceIds(id)
+            if (usedIds.includes(value)) {
+                newToast("Device already in use by another output.")
+                return
+            }
+        }
+
         newData[key] = value
 
         updateOutput("blackmagicData", newData)
@@ -280,7 +295,12 @@
                     supportsExternalKeying: a.supportsExternalKeying || false
                 }
             }))
-            if (blackmagicDevices.length && (!currentOutput?.blackmagicData?.deviceId || !currentOutput?.blackmagicData?.displayModes?.length)) updateBlackmagicData(blackmagicDevices[0].id, "deviceId")
+            // auto-select first available device (not in use)
+            if (blackmagicDevices.length && (!currentOutput?.blackmagicData?.deviceId || !currentOutput?.blackmagicData?.displayModes?.length)) {
+                const usedIds = getUsedBlackmagicDeviceIds(currentOutput?.id)
+                const availableDevice = blackmagicDevices.find((d) => !usedIds.includes(d.id))
+                if (availableDevice) updateBlackmagicData({ detail: { id: availableDevice.id } }, "deviceId")
+            }
         }
     }
     receive(BLACKMAGIC, receiveBMD, listenerId)
@@ -360,7 +380,19 @@
     <MaterialToggleSwitch label="actions.enable Blackmagic" style="width: 100%;" checked={currentOutput?.blackmagic} defaultValue={false} on:change={(e) => updateOutput("blackmagic", e.detail)} />
 
     <svelte:fragment slot="menu">
-        <MaterialDropdown label="settings.device" value={currentOutput?.blackmagicData?.deviceId} options={blackmagicDevices.map((device) => ({ label: device.name, value: device.id || "" }))} on:change={(e) => updateBlackmagicData(e.detail, "deviceId")} />
+        <MaterialDropdown
+            label="settings.device"
+            value={currentOutput?.blackmagicData?.deviceId || ""}
+            options={(() => {
+                const usedIds = getUsedBlackmagicDeviceIds(currentOutput?.id)
+                return blackmagicDevices.map((device) => ({
+                    label: usedIds.includes(device.id) ? `${device.name} (in use)` : device.name,
+                    value: device.id ? String(device.id) : "",
+                    disabled: usedIds.includes(device.id)
+                }))
+            })()}
+            on:change={(e) => updateBlackmagicData(e.detail, "deviceId")}
+        />
 
         {#if currentOutput?.blackmagicData?.deviceId}
             <InputRow>

@@ -67,6 +67,8 @@ interface AudioQueueState {
  * Manages Blackmagic Design video output devices using the macadam library
  */
 export class BlackmagicSender {
+    // Track used device indices globally, to prevent multiple outputs from trying to use the same device
+    private static usedDeviceIndices: Set<number> = new Set()
     // Core state
     static playbackData: { [key: string]: PlaybackData } = {}
     static initializationInProgress: { [key: string]: Promise<boolean> | undefined } = {}
@@ -151,11 +153,19 @@ export class BlackmagicSender {
     }
 
     static async initializeDevice(outputId: string, deviceIndex: number, displayModeName: string, pixelFormat: string, enableKeying: boolean, audioChannels = 2) {
+        // prevent using a device if already in use by another output
+        if (this.usedDeviceIndices.has(deviceIndex)) {
+            console.error(`Device index ${deviceIndex} is already in use by another output. Initialization aborted.`)
+            return false
+        }
+
         // Check if initialization is already in progress for this device
         if (this.initializationInProgress[outputId]) {
             console.log(`Initialization already in progress for ${outputId}, waiting for completion...`)
             return this.initializationInProgress[outputId]
         }
+
+        this.usedDeviceIndices.add(deviceIndex)
 
         // Create a promise that tracks this initialization
         const initPromise = this._performInitializeDevice(outputId, deviceIndex, displayModeName, pixelFormat, enableKeying, audioChannels)
@@ -165,6 +175,7 @@ export class BlackmagicSender {
 
         try {
             const result = await initPromise
+            if (!result) this.usedDeviceIndices.delete(deviceIndex)
             return result
         } finally {
             // Clean up the promise when done
@@ -190,6 +201,9 @@ export class BlackmagicSender {
         // Proper cleanup if sender already exists
         if (this.playbackData[outputId]) {
             try {
+                const prevDeviceIndex = this.playbackData[outputId].deviceIndex
+                if (typeof prevDeviceIndex === "number") this.usedDeviceIndices.delete(prevDeviceIndex)
+
                 this.stop(outputId)
                 // Add a small delay to ensure hardware has time to reset
                 await wait(2000) // Extra long delay
@@ -1371,6 +1385,8 @@ export class BlackmagicSender {
     static stop(outputId: string): boolean {
         const data = this.playbackData[outputId]
         if (!data) return false
+
+        if (typeof data.deviceIndex === "number") this.usedDeviceIndices.delete(data.deviceIndex)
 
         console.log(`Stopping Blackmagic output: ${outputId}`)
 
