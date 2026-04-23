@@ -1,89 +1,168 @@
 import { SoundTouchNode } from "@soundtouchjs/audio-worklet"
-import soundtouchProcessorUrl from "@soundtouchjs/audio-worklet/processor?url"
 
 // Pitch & Tempo
 
+/**
+ * Global manager for the SoundTouch AudioWorklet.
+ * Handles lazy registration to ensure fast startup for standard playback.
+ */
 export class AudioProcessor {
     private static registeredContexts = new WeakSet<BaseAudioContext>()
+    private static registeringPromise: Promise<boolean> | null = null
 
-    static async createNode(context: BaseAudioContext): Promise<PitchShiftNode> {
-        if (!this.registeredContexts.has(context)) {
-            await SoundTouchNode.register(context, soundtouchProcessorUrl)
-            this.registeredContexts.add(context)
+    /** Check if the worklet is already registered for this context (synchronous) */
+    static isRegistered(context: BaseAudioContext): boolean {
+        return this.registeredContexts.has(context)
+    }
+
+    /** Register the worklet with the context (idempotent, handling concurrent calls) */
+    static async register(context: BaseAudioContext): Promise<boolean> {
+        if (this.isRegistered(context)) return true
+
+        if (!this.registeringPromise) {
+            this.registeringPromise = (async () => {
+                try {
+                    await context.audioWorklet.addModule("./assets/soundtouch-processor.js")
+                    this.registeredContexts.add(context)
+                    return true
+                } catch (err) {
+                    console.error("SoundTouch registration failed:", err)
+                    return false
+                } finally {
+                    this.registeringPromise = null
+                }
+            })()
         }
-        return await PitchShiftNode.create(context)
+
+        return await this.registeringPromise
+    }
+
+    /** Create a new PitchShiftNode wrapper */
+    static createNode(context: BaseAudioContext): PitchShiftNode {
+        return new PitchShiftNode(context)
     }
 }
 
+/**
+ * A composite AudioNode wrapper that enables real-time pitch and tempo shifting.
+ * Uses a dry/wet architecture for zero-latency bypass and glitch-free initialization.
+ */
 export class PitchShiftNode {
     readonly input: GainNode
     readonly output: GainNode
-    private soundTouch!: SoundTouchNode
+    
+    private soundTouch: SoundTouchNode | null = null
     private dryGain: GainNode
     private wetGain: GainNode
 
     private _pitch = 0
     private _tempo = 1
+    private _isInitializing = false
+    private _isFirstSync = true
 
-    private constructor(context: BaseAudioContext) {
+    constructor(context: BaseAudioContext) {
         this.input = context.createGain()
         this.output = context.createGain()
         this.dryGain = context.createGain()
         this.wetGain = context.createGain()
+
+        // Default path: Dry (Bypass) is active, Wet is silent
+        this.input.connect(this.dryGain).connect(this.output)
+        
+        this.dryGain.gain.value = 1
+        this.wetGain.gain.value = 0
     }
 
-    static async create(context: BaseAudioContext) {
-        const node = new PitchShiftNode(context)
-        node.soundTouch = new SoundTouchNode(context)
-
-        // Path 1: Dry (Bypass)
-        node.input.connect(node.dryGain).connect(node.output)
-
-        // Path 2: Wet (Processed)
-        node.input.connect(node.soundTouch).connect(node.wetGain).connect(node.output)
-
-        // Default state: Bypassed
-        node.dryGain.gain.value = 1
-        node.wetGain.gain.value = 0
-
-        return node
-    }
-
-    get pitch() {
-        return this._pitch
-    }
+    get pitch() { return this._pitch }
     set pitch(value: number) {
         this._pitch = value
-        this.soundTouch.pitchSemitones.value = value
-        this.sync()
+        this.apply()
     }
 
-    get tempo() {
-        return this._tempo
-    }
+    get tempo() { return this._tempo }
     set tempo(value: number) {
         this._tempo = value
-        this.soundTouch.tempo.value = value
+        this.apply()
+    }
+
+    /** 
+     * Applies the current pitch/tempo settings.
+     * Initializes the SoundTouch processor lazily if needed.
+     */
+    private apply() {
+        const needsProcessing = this._pitch !== 0 || this._tempo !== 1
+        
+        if (needsProcessing && !this.soundTouch && !this._isInitializing) {
+            if (AudioProcessor.isRegistered(this.input.context)) {
+                this.initSoundTouch()
+            } else {
+                this.initAsync()
+                return 
+            }
+        }
+
+        if (this.soundTouch) {
+            try {
+                this.soundTouch.pitchSemitones.value = this._pitch
+                this.soundTouch.tempo.value = this._tempo
+            } catch { /* Stale worklet node */ }
+        }
+
         this.sync()
     }
 
-    private sync() {
-        const isActive = this._pitch !== 0 || this._tempo !== 1
-        const now = this.input.context.currentTime
-        const rampTime = 0.05
-
-        this.dryGain.gain.setTargetAtTime(isActive ? 0 : 1, now, rampTime)
-        this.wetGain.gain.setTargetAtTime(isActive ? 1 : 0, now, rampTime)
+    private async initAsync() {
+        if (this._isInitializing) return
+        this._isInitializing = true
+        
+        try {
+            if (await AudioProcessor.register(this.input.context)) {
+                this.initSoundTouch()
+                this.apply() // Re-run to set values and sync gain
+            }
+        } finally {
+            this._isInitializing = false
+        }
     }
 
-    // Helper to treat as standard node in simple cases
+    private initSoundTouch() {
+        if (this.soundTouch) return
+        try {
+            this.soundTouch = new SoundTouchNode(this.input.context)
+            this.input.connect(this.soundTouch).connect(this.wetGain).connect(this.output)
+        } catch (e) {
+            console.error("SoundTouch init failed:", e)
+        }
+    }
+
+    /** Manages the crossfade between the dry and wet signals */
+    private sync() {
+        const isActive = !!this.soundTouch && (this._pitch !== 0 || this._tempo !== 1)
+        const now = this.input.context.currentTime
+        
+        // Use instant gain jump on first application to avoid flanging artifacts
+        if (this._isFirstSync) {
+            this.dryGain.gain.cancelScheduledValues(now)
+            this.wetGain.gain.setTargetAtTime(isActive ? 1 : 0, now, 0.001) // Near-instant 
+            this.dryGain.gain.setTargetAtTime(isActive ? 0 : 1, now, 0.001)
+            this._isFirstSync = false
+        } else {
+            // Smooth 50ms ramp for real-time adjustments (e.g. sliders)
+            const rampTime = 0.05
+            this.dryGain.gain.setTargetAtTime(isActive ? 0 : 1, now, rampTime)
+            this.wetGain.gain.setTargetAtTime(isActive ? 1 : 0, now, rampTime)
+        }
+    }
+
     connect(dest: AudioNode | AudioParam) {
         return dest instanceof AudioNode ? this.output.connect(dest) : this.output.connect(dest)
     }
 
     disconnect(dest?: AudioNode | AudioParam) {
-        if (dest instanceof AudioNode) this.output.disconnect(dest)
-        else if (dest instanceof AudioParam) this.output.disconnect(dest)
-        else this.output.disconnect()
+        try {
+            if (dest instanceof AudioNode) this.output.disconnect(dest)
+            else if (dest instanceof AudioParam) this.output.disconnect(dest)
+            else this.output.disconnect()
+        } catch { /* Already disconnected */ }
     }
 }

@@ -75,7 +75,7 @@ export class AudioAnalyser {
 
         if (eqOutputNode && this.splitter) {
             // Add PitchShift processor
-            const processor = await AudioProcessor.createNode(this.ac)
+            const processor = AudioProcessor.createNode(this.ac)
             this.processors[id] = processor
 
             // Connect: Source -> EQ -> Processor -> Sinks (Splitter, Gain, Destination)
