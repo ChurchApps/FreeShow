@@ -202,6 +202,7 @@
         "forward10": "Go forward 10 seconds",
         "volume": "Volume",
         "gain": "Gain",
+        "pitch": "Pitch",
         "speed": "Speed",
         "flip": "Flip",
         "flip_horizontally": "Flip horizontally",

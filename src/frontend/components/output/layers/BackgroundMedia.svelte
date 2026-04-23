@@ -200,6 +200,9 @@
         })
     })
 
+    $: videoPitch = $media[id]?.pitch ?? 0
+    $: if (video && videoPitch !== undefined) AudioAnalyser.setPitch(id, videoPitch)
+
     // analyse video audio
     let video: HTMLVideoElement | undefined
     // previousPath is probably not needed as component is unmounted on new path
@@ -214,6 +217,11 @@
         playingVideos.set([{ id, video }])
         AudioAnalyser.attach(id, video)
         AudioAnalyser.recorderActivate()
+
+        // Sync initial processing state
+        AudioAnalyser.setPitch(id, videoPitch)
+        AudioAnalyser.setTempo(id, 1) // Browser handles speed via playbackRate
+
         previousPath = id
     }
 </script>

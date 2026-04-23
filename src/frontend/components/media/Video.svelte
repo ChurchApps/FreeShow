@@ -100,6 +100,7 @@
     }
 
     $: playbackRate = Number(mediaStyle.speed) || 1
+    $: if (video) video.preservesPitch = true
     // $: audioVolume = Math.max(0, Math.min(1, $volume ?? 1))
 
     $: isVideoSupported(path)

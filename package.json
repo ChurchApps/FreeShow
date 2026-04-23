@@ -108,6 +108,7 @@
         "@discordjs/opus": "^0.10.0",
         "@googleapis/drive": "^8.16.0",
         "@sentry/electron": "^7.3.0",
+        "@soundtouchjs/audio-worklet": "^1.0.10",
         "@tanstack/pacer": "^0.14.0",
         "@vimeo/player": "^2.29.3",
         "axios": "^1.12.2",

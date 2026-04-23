@@ -29,9 +29,11 @@
     }
 
     function reset() {
-        let deleteKeys: string[] = ["audioType", "volume", "fromTime", "toTime"]
+        let deleteKeys: string[] = ["audioType", "volume", "pitch", "tempo", "fromTime", "toTime"]
 
         if (currentMedia.volume) setTimeout(() => AudioPlayer.updateVolume(audioId))
+        if (currentMedia.pitch) setTimeout(() => AudioPlayer.setPitch(audioId, 0))
+        if (currentMedia.tempo) setTimeout(() => AudioPlayer.setTempo(audioId, 1))
 
         // reset
         deleteKeys.forEach((key) => removeStore("media", { keys: [audioId, key] }))
@@ -53,6 +55,12 @@
         if (input.id === "volume") {
             // value = Math.min(1, Math.max(0, value / 100))
             setTimeout(() => AudioPlayer.updateVolume(audioId))
+        }
+        if (input.id === "pitch") {
+            setTimeout(() => AudioPlayer.setPitch(audioId, value))
+        }
+        if (input.id === "tempo") {
+            setTimeout(() => AudioPlayer.setTempo(audioId, value))
         }
 
         updateStore("media", { keys: [audioId, input.id], value })

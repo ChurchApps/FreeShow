@@ -192,7 +192,7 @@ export class AudioPlayer {
     // }
 
     private static initAudio(id: string, waitToPlay = 0) {
-        setTimeout(() => {
+        setTimeout(async () => {
             // audio might have been cleared
             const audio = this.getAudio(id)
             if (!audio) return
@@ -202,8 +202,17 @@ export class AudioPlayer {
 
             // WIP get microphone input stream (audio will have to be muted in that case)
             // let stream = this.getPlaying(id)?.stream || audio
-            AudioAnalyser.attach(id, audio)
+            await AudioAnalyser.attach(id, audio)
+            this.applyProcessing(id)
         }, waitToPlay * 1000)
+    }
+
+    static applyProcessing(id: string) {
+        const mediaData = get(media)[id]
+        if (!mediaData) return
+
+        this.setPitch(id, mediaData.pitch ?? 0)
+        this.setTempo(id, mediaData.tempo ?? 1)
     }
 
     //
@@ -274,6 +283,19 @@ export class AudioPlayer {
 
     static setGain(value: number) {
         AudioAnalyser.setGain(value)
+    }
+
+    static setPitch(id: string, value: number) {
+        if (this.audioExists(id)) AudioAnalyser.setPitch(id, value)
+    }
+
+    static setTempo(id: string, value: number) {
+        const audio = this.getAudio(id)
+        if (!audio) return
+
+        audio.playbackRate = value
+        if ("preservesPitch" in audio) audio.preservesPitch = true
+        AudioAnalyser.setTempo(id, 1)
     }
 
     static setTime(id: string, time: number) {

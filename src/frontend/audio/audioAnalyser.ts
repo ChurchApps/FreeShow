@@ -1,13 +1,14 @@
 import { get } from "svelte/store"
 import type { AudioChannel } from "../../types/Audio"
 import { AUDIO, OUTPUT } from "../../types/Channels"
-import { disabledServers, outputs, playingAudio, playingVideos, serverData, special } from "../stores"
+import { disabledServers, media, outputs, playingAudio, playingVideos, serverData, special } from "../stores"
 import { isOutputWindow } from "../utils/common"
 import { send } from "../utils/request"
 import { AudioAnalyserMerger } from "./audioAnalyserMerger"
 import { connectAudioSourceToEqualizer, disconnectAudioSourceFromEqualizer, getConnectedSourceOutput, initializeEqualizer, setAutoInitializeCallback } from "./audioEqualizer"
 import { AudioMultichannel, MultichannelInfo } from "./audioMultichannel"
 import { AudioPlayer } from "./audioPlayer"
+import { AudioProcessor, PitchShiftNode } from "./audioProcessor"
 
 export class AudioAnalyser {
     static sampleRate = 48000 // Hz
@@ -20,6 +21,7 @@ export class AudioAnalyser {
     private static splitter: ChannelSplitterNode | null = null
     private static analysers: AnalyserNode[] = []
     private static sources: { [key: string]: AudioNode } = {}
+    private static processors: { [key: string]: PitchShiftNode } = {}
 
     // Expose the AudioContext for other audio systems to use the same context
     static getAudioContext(): AudioContext {
@@ -71,12 +73,23 @@ export class AudioAnalyser {
         // Connect through equalizer first, then to analysis chain
         const eqOutputNode = await connectAudioSourceToEqualizer(id, this.sources[id])
 
-        // Connect the equalizer output (or original source if EQ bypassed) to analysis chain
         if (eqOutputNode && this.splitter) {
-            eqOutputNode.connect(this.splitter)
-            this.connectGain(eqOutputNode)
-            this.connectDestination(eqOutputNode)
-            console.log(`Audio source "${id}" connected to equalizer and analysis chain`)
+            // Add PitchShift processor
+            const processor = await AudioProcessor.createNode(this.ac)
+            this.processors[id] = processor
+
+            // Connect: Source -> EQ -> Processor -> Sinks (Splitter, Gain, Destination)
+            eqOutputNode.connect(processor.input)
+            this.connectToSinks(processor)
+
+            // Sync initial state
+            const mediaData = get(media)[id]
+            if (mediaData) {
+                processor.pitch = mediaData.pitch ?? 0
+                processor.tempo = mediaData.tempo ?? 1
+            }
+
+            console.log(`Audio source "${id}" connected to analysis chain (PitchShift ready)`)
 
             // Perform runtime channel detection after connection and audio stabilization
             // timeout to give more time for audio to stabilize
@@ -100,9 +113,16 @@ export class AudioAnalyser {
         const source = this.sources[id]
         if (!source) return
 
+        const processor = this.processors[id]
+        const outputNode = processor || getConnectedSourceOutput(id) || source
+
         this.recorderDeactivate()
-        this.disconnectGain(source)
-        this.disconnectDestination(source)
+        this.disconnectFromSinks(outputNode)
+
+        // Disconnect and remove processor
+        if (processor) {
+            delete this.processors[id]
+        }
 
         // Disconnect from equalizer
         disconnectAudioSourceFromEqualizer(id)
@@ -245,16 +265,49 @@ export class AudioAnalyser {
         this.gainNode!.gain.value = Math.max(1, value)
     }
 
-    private static connectGain(source: AudioNode) {
-        this.initGain()
-        source.connect(this.gainNode!)
+    static setPitch(id: string, value: number) {
+        const processor = this.processors[id]
+        if (processor) {
+            processor.pitch = value
+        }
     }
 
-    private static disconnectGain(source: AudioNode) {
-        if (!this.gainNode) return
+    static setTempo(id: string, value: number) {
+        const processor = this.processors[id]
+        if (processor) {
+            processor.tempo = value
+        }
+    }
 
+    static connectToSinks(source: AudioNode | PitchShiftNode) {
+        if (!this.splitter) return
+        source.connect(this.splitter)
+        this.connectGain(source)
+        this.connectDestination(source)
+    }
+
+    static disconnectFromSinks(source: AudioNode | PitchShiftNode) {
+        const node = source instanceof PitchShiftNode ? source.output : source
         try {
-            source.disconnect(this.gainNode)
+            if (this.splitter) node.disconnect(this.splitter)
+        } catch (e) {
+            /* ignore */
+        }
+        this.disconnectGain(source)
+        this.disconnectDestination(source)
+    }
+
+    static connectGain(source: AudioNode | PitchShiftNode) {
+        this.initGain()
+        const node = source instanceof PitchShiftNode ? source.output : source
+        node.connect(this.gainNode!)
+    }
+
+    static disconnectGain(source: AudioNode | PitchShiftNode) {
+        if (!this.gainNode) return
+        const node = source instanceof PitchShiftNode ? source.output : source
+        try {
+            node.disconnect(this.gainNode)
         } catch (err) {
             // Node was already disconnected, ignore the error
         }
@@ -267,19 +320,18 @@ export class AudioAnalyser {
         this.destNode = AudioMultichannel.createMultichannelDestination(this.ac, this.channels)
     }
 
-    private static connectDestination(source: AudioNode) {
+    static connectDestination(source: AudioNode | PitchShiftNode) {
         this.initDestination()
-
-        AudioMultichannel.configureNodeForMultichannel(source, this.channels)
-
-        source.connect(this.destNode!)
+        const node = source instanceof PitchShiftNode ? source.output : source
+        AudioMultichannel.configureNodeForMultichannel(node, this.channels)
+        node.connect(this.destNode!)
     }
 
-    private static disconnectDestination(source: AudioNode) {
+    static disconnectDestination(source: AudioNode | PitchShiftNode) {
         if (!this.destNode) return
-
+        const node = source instanceof PitchShiftNode ? source.output : source
         try {
-            source.disconnect(this.destNode)
+            node.disconnect(this.destNode)
         } catch (err) {
             // Node was already disconnected, ignore the error
         }
@@ -433,9 +485,14 @@ export class AudioAnalyser {
 
                         // Connect new equalizer output to analysis chain
                         if (this.splitter) {
-                            newEqOutputNode.connect(this.splitter)
-                            this.connectGain(newEqOutputNode)
-                            this.connectDestination(newEqOutputNode)
+                            const processor = this.processors[id]
+                            const outputNode = processor || newEqOutputNode
+
+                            if (processor) {
+                                newEqOutputNode.connect(processor.input)
+                            }
+
+                            this.connectToSinks(outputNode)
                         }
 
                         console.log(`Seamlessly switched equalizer connection for audio source: ${id}`)
