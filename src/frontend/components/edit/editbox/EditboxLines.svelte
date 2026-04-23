@@ -4,6 +4,7 @@
     import type { Item, Line } from "../../../../types/Show"
     import { VIRTUAL_BREAK_CHAR } from "../../../show/slides"
     import { activeEdit, activeShow, activeStage, activeTriggerFunction, overlays, redoHistory, refreshListBoxes, showsCache, stageShows, templates } from "../../../stores"
+    import { getNormalizedKey, isFormattingKey } from "../../../utils/shortcuts"
     import { newToast } from "../../../utils/common"
     import T from "../../helpers/T.svelte"
     import { clone } from "../../helpers/array"
@@ -617,12 +618,8 @@
         }
 
         if (e.ctrlKey || e.metaKey) {
-            const key = (e.key || "").toLowerCase()
-            const code = (e.code || "").toLowerCase()
-            const isFormattingShortcut = key === "b" || key === "i" || key === "u" || code === "keyb" || code === "keyi" || code === "keyu"
-
             // Keep rich text changes in BoxStyle handler only.
-            if (isFormattingShortcut) e.preventDefault()
+            if (isFormattingKey(e)) e.preventDefault()
         }
 
         if (e.key === "v" && (e.ctrlKey || e.metaKey)) {

@@ -179,7 +179,7 @@ export function keydown(e: KeyboardEvent) {
         if (key === "z" && e.shiftKey) key = "Z"
 
         // Let text formatting shortcuts be handled by edit tools when a text box is active.
-        if (["b", "i", "u"].includes(key.toLowerCase()) && isEditingText()) return
+        if (isFormattingKey(e) && isEditingText()) return
 
         // use default input shortcuts on supported devices
         const exeption = ["e", "i", "n", "o", "s", "a", "z", "Z", "y"]
@@ -259,6 +259,13 @@ export function getNormalizedKey(e: KeyboardEvent): string {
     if (!keyCodeMap[e.code]) return e.key
     if (e.shiftKey) return keyCodeMap[e.code].toUpperCase()
     return keyCodeMap[e.code]
+}
+
+const formattingKeys = ["b", "i", "u"]
+export function isFormattingKey(e: KeyboardEvent): boolean {
+    if (!e.ctrlKey && !e.metaKey) return false
+    const key = getNormalizedKey(e).toLowerCase()
+    return formattingKeys.includes(key)
 }
 
 /// // PREVIEW /////

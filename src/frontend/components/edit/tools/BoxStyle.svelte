@@ -2,6 +2,7 @@
     import { onDestroy, onMount } from "svelte"
     import type { Item, ItemType, Slide } from "../../../../types/Show"
     import { activeEdit, activePopup, activeShow, alertMessage, categories, styles as outputStyles, overlays, selected, shownTips, showsCache, special, templates, theme, themes, timers } from "../../../stores"
+    import { getNormalizedKey, isFormattingKey } from "../../../utils/shortcuts"
     import { newToast } from "../../../utils/common"
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
@@ -85,13 +86,8 @@
     }
 
     function getFormattingShortcut(e: KeyboardEvent) {
-        const byKey = formatting[(e.key || "").toLowerCase()]
-        if (byKey) return byKey
-
-        const code = e.code || ""
-        if (code.startsWith("Key")) return formatting[code.slice(3).toLowerCase()]
-
-        return null
+        if (!isFormattingKey(e)) return null
+        return formatting[getNormalizedKey(e).toLowerCase()] || null
     }
 
     function getSelectionPoint(editElem: Element, line: number, pos: number) {
