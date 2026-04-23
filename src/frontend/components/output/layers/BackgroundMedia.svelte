@@ -35,7 +35,7 @@
     $: if (type === "video" || type === "image") type = "media"
 
     let mediaStyle: MediaStyle = {}
-    $: if (data && currentStyle) mediaStyle = getMediaStyle(data, currentStyle)
+    $: if (data && currentStyle) mediaStyle = getMediaStyle({ ...$media[id], ...data }, currentStyle)
 
     // VIDEO
 
@@ -54,7 +54,7 @@
         if (fadingOut) return
 
         videoData.muted = data.muted ?? true
-        videoData.loop = data.loop ?? false
+        videoData.loop = data.loop ?? styleBackground
     }
     // draw
 
@@ -140,7 +140,7 @@
     }
 
     // call end just before (to make room for transition) - this also triggers video ended on loop
-    $: if (videoData.duration && videoTime >= videoData.duration - (duration / 1000 + 0.1)) videoEnded()
+    $: if (videoData.duration && videoTime >= videoData.duration - (duration / 1000 + 0.1) && !mediaStyle.softLoop) videoEnded()
 
     let endedCalled = false
     function videoEnded() {
@@ -156,14 +156,12 @@
 
     $: audioChannelVolume = $audioChannelsData[outputId]?.volume ?? 1
     $: isMuted = !!($audioChannelsData[outputId]?.isMuted || $audioChannelsData.main?.isMuted)
-    // $: if (isMuted !== undefined) setMuted(isMuted)
-    // function setMuted(muted: boolean) {
-    //     if (!video) return
-    //     video.muted = muted
-    // }
+    let fadeoutVolume = 1
+    $: if (!fadingOut) fadeoutVolume = 1
+    $: calculatedVolume = $volume * (isMuted ? 0 : 1) * audioChannelVolume * (($media[id]?.volume ?? currentStyle?.volume ?? 100) / 100)
+    $: videoVolumeProp = calculatedVolume * fadeoutVolume
 
     $: if (fadingOut && !videoData.muted) fadeoutVideo()
-    $: if (!fadingOut && !videoData.muted && id) setVolume($volume * (isMuted ? 0 : 1) * audioChannelVolume * (($media[id]?.volume ?? currentStyle?.volume ?? 100) / 100))
     const speed = 0.01
     const margin = 0.9 // video should fade to 0 before clearing
     function fadeoutVideo() {
@@ -171,15 +169,9 @@
 
         let time = duration * speed * margin
         setTimeout(() => {
-            if (!video) return
-
-            video.volume = Math.max(0, Number((video.volume - speed).toFixed(3)))
+            fadeoutVolume = Math.max(0, Number((fadeoutVolume - speed).toFixed(3)))
             fadeoutVideo()
         }, time)
-    }
-    function setVolume(volume: number) {
-        if (!video || !isFinite(volume) || isNaN(volume)) return
-        video.volume = Math.max(0, Math.min(1, volume))
     }
 
     // AUDIO
@@ -228,7 +220,7 @@
 
 <OutputTransition {transition} inTransition={transition.in} outTransition={transition.out} on:outrostart={() => (fadingOut = true)}>
     {#if type === "media"}
-        <Media path={id} {data} {animationStyle} bind:video bind:videoData bind:videoTime {mirror} {mediaStyle} on:loaded on:ended={videoEnded} />
+        <Media path={id} {data} {animationStyle} bind:video bind:videoData bind:videoTime {mirror} {mediaStyle} volume={videoVolumeProp} on:loaded on:ended={videoEnded} />
     {:else if type === "screen"}
         <Window {id} class="media" style="width: 100%;height: 100%;" on:loaded />
     {:else if type === "ndi"}

@@ -550,6 +550,7 @@ export interface OutBackground {
     startAt?: number
     muted?: boolean
     loop?: boolean
+    softLoop?: number
     // media
     filter?: string
     flipped?: boolean

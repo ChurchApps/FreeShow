@@ -186,6 +186,7 @@
     },
     "media": {
         "_loop": "Loop",
+        "soft_loop": "Soft loop",
         "play": "Play",
         "play_multiple": "Play multiple",
         "toggle_shuffle": "Toggle shuffle",

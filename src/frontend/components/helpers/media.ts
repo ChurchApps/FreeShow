@@ -373,6 +373,7 @@ export function getMediaStyle(mediaObj: MediaStyle | undefined, currentStyle: St
         speed: "1",
         fromTime: 0,
         toTime: 0,
+        softLoop: 0,
         videoType: "",
         cropping: {}
     }
