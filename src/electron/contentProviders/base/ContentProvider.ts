@@ -1,5 +1,5 @@
 import express from "express"
-import type { ContentFile, ContentLibraryCategory, ContentProviderId } from "./types"
+import type { ContentFile, ContentLibraryCategory, ContentProviderId, MediaLicense } from "./types"
 
 /**
  * Base types for content provider authentication and requests
@@ -97,9 +97,11 @@ export abstract class ContentProvider<TScope extends string = string, TAuthData 
     getContent?(key: string): Promise<ContentFile[]>
 
     /**
-     * Checks if a media item is licensed and returns its pingback URL (optional)
+     * Checks if a media item is licensed and returns its pingback URL + expiration (optional).
+     * Providers that don't implement expiration should return a MediaLicense with
+     * a far-future expiresAt.
      */
-    checkMediaLicense?(mediaId: string): Promise<string | null>
+    checkMediaLicense?(mediaId: string): Promise<MediaLicense | null>
 
     /**
      * Determines if a specific URL from this provider should be encrypted (optional)

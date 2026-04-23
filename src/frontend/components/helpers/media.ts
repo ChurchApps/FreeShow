@@ -737,35 +737,64 @@ export async function downloadOnlineMedia(url: string) {
     const downloadedPath = await requestMain(Main.MEDIA_IS_DOWNLOADED, { url, contentFile: mediaData?.contentFile })
 
     if (downloadedPath?.isDownloading) return url
-    if (downloadedPath?.protectedUrl) return downloadedPath.protectedUrl
+
+    const providerId = mediaData?.contentFile?.providerId
+    const mediaId = mediaData?.contentFile?.mediaId
+    const needsLicense = !!(providerId && mediaId)
+
+    if (downloadedPath?.protectedUrl) {
+        if (!needsLicense || isLicenseValid(mediaData)) return downloadedPath.protectedUrl
+        const refreshed = await refreshMediaLicense(url, providerId, mediaId)
+        if (refreshed) return downloadedPath.protectedUrl
+        return url
+    }
     if (downloadedPath?.path) return downloadedPath.path
 
-    // Check license before downloading (for content providers like APlay)
-    if (mediaData?.contentFile?.mediaId && mediaData?.contentFile?.providerId && !mediaData?.licenseChecked) {
-        media.update((m) => {
-            if (!m[url]) m[url] = {}
-            m[url].licenseChecked = true
-            return m
-        })
+    if (needsLicense && !isLicenseValid(mediaData)) await refreshMediaLicense(url, providerId, mediaId)
 
-        const pingbackUrl = await requestMain(Main.CHECK_MEDIA_LICENSE, {
-            providerId: mediaData.contentFile.providerId,
-            mediaId: mediaData.contentFile.mediaId
-        })
-        if (pingbackUrl) {
-            media.update((m) => {
-                if (!m[url]) m[url] = {}
-                if (!m[url].contentFile) m[url].contentFile = {}
-                m[url].contentFile.pingbackUrl = pingbackUrl
-                return m
-            })
-        }
-    }
-
-    // not downloaded yet - get updated media data in case pingbackUrl was just set
     const updatedMediaData = get(media)[url]
     sendMain(Main.MEDIA_DOWNLOAD, { url, contentFile: updatedMediaData?.contentFile })
     return url
+}
+
+function isLicenseValid(mediaData: MediaStyle | undefined): boolean {
+    const exp = mediaData?.licenseExpiresAt
+    return typeof exp === "number" && exp > Date.now()
+}
+
+// share one IPC call instead of racing.
+const licenseRefreshInFlight = new Map<string, Promise<boolean>>()
+
+function refreshMediaLicense(url: string, providerId: string, mediaId: string): Promise<boolean> {
+    const existing = licenseRefreshInFlight.get(url)
+    if (existing) return existing
+
+    const promise = (async () => {
+        const license = await requestMain(Main.CHECK_MEDIA_LICENSE, { providerId, mediaId })
+        if (!license) {
+            if (get(media)[url]?.licenseExpiresAt !== undefined) {
+                media.update((m) => {
+                    if (m[url]) delete m[url].licenseExpiresAt
+                    return m
+                })
+            }
+            return false
+        }
+
+        media.update((m) => {
+            if (!m[url]) m[url] = {}
+            m[url].licenseExpiresAt = license.expiresAt
+            if (!m[url].contentFile) m[url].contentFile = {}
+            m[url].contentFile.pingbackUrl = license.pingbackUrl
+            return m
+        })
+        return true
+    })().finally(() => {
+        licenseRefreshInFlight.delete(url)
+    })
+
+    licenseRefreshInFlight.set(url, promise)
+    return promise
 }
 
 export async function getMediaFileFromClipboard(e: ClipboardEvent): Promise<string | null> {
