@@ -47,7 +47,18 @@ export class AudioAnalyser {
             const detectedChannels = AudioMultichannel.detectChannelCount(source, audio, this.maxChannels)
             if (detectedChannels > this.channels) this.updateChannelCount(detectedChannels)
 
-            this.sources[id] = source
+            const audioChannel = get(special).audioChannel || ""
+            if (audioChannel === "mono_left" || audioChannel === "mono_right") {
+                const merger = this.ac.createChannelMerger(2)
+
+                const channel = audioChannel === "mono_left" ? 0 : 1
+                source.connect(merger, 0, channel)
+
+                this.sources[id] = merger
+            } else {
+                // Stereo (default)
+                this.sources[id] = source
+            }
         } catch (err) {
             console.error("Could not create media source:", err)
             return
@@ -58,7 +69,7 @@ export class AudioAnalyser {
         this.customOutput(get(special).audioOutput)
 
         // Connect through equalizer first, then to analysis chain
-        const eqOutputNode = await connectAudioSourceToEqualizer(id, source)
+        const eqOutputNode = await connectAudioSourceToEqualizer(id, this.sources[id])
 
         // Connect the equalizer output (or original source if EQ bypassed) to analysis chain
         if (eqOutputNode && this.splitter) {

@@ -61,6 +61,7 @@ export function updateMetronome(values: API_metronome, starting = false) {
     if (values.beats) metronomeValues.beats = values.beats
     if (values.volume) metronomeValues.volume = values.volume
     if (values.audioOutput !== undefined) metronomeValues.audioOutput = values.audioOutput
+    if (values.audioChannel !== undefined) metronomeValues.audioChannel = values.audioChannel
 
     metronome.set(metronomeValues)
 }
@@ -173,8 +174,20 @@ async function playNote(time: number, first = false) {
 
     // volume control
     const gainNode = audioContext.createGain()
-    source.connect(gainNode)
-    gainNode.connect(audioContext.destination)
+    const audioChannel = metronomeValues.audioChannel || ""
+    if (audioChannel === "mono_left" || audioChannel === "mono_right") {
+        const merger = audioContext.createChannelMerger(2)
+        source.connect(gainNode)
+
+        const channel = audioChannel === "mono_left" ? 0 : 1
+        gainNode.connect(merger, 0, channel)
+
+        merger.connect(audioContext.destination)
+    } else {
+        // Stereo (default)
+        source.connect(gainNode)
+        gainNode.connect(audioContext.destination)
+    }
 
     // WIP connect getAnalyser()
 

@@ -53,6 +53,12 @@
     onMount(async () => {
         audioOutputs = await AudioPlayer.getOutputs()
     })
+
+    const audioChannels = [
+        { value: "", label: "Stereo" },
+        { value: "mono_left", label: "Mono left" },
+        { value: "mono_right", label: "Mono right" }
+    ]
 </script>
 
 <!-- TODO: effects?: https://alemangui.github.io/pizzicato/ -->
@@ -66,6 +72,7 @@
         <!-- <MaterialToggleSwitch label="audio.allow_gaining" checked={$special.allowGaining || false} on:change={(e) => updateSpecial(e.detail, "allowGaining")} /> -->
 
         <MaterialDropdown label="audio.custom_output" options={audioOutputs} value={$special.audioOutput || ""} on:change={(e) => updateSpecial(e.detail, "audioOutput")} allowEmpty />
+        <MaterialDropdown label="audio.channel" options={audioChannels} value={$special.audioChannel || ""} defaultValue="" on:change={(e) => updateSpecial(e.detail, "audioChannel")} />
 
         <MaterialButton variant="outlined" style="width: 100%;" on:click={() => activePopup.set("now_playing")}>
             <Icon id="document" />

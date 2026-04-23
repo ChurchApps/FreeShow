@@ -232,6 +232,7 @@
         "open_audio_folder": "Open related audio folder",
         "create_audio_folder": "Create audio folder",
         "custom_output": "Custom audio output",
+        "channel": "Audio channel",
         "mute_when_video_plays": "Mute when video plays",
         "allow_gaining": "Allow gaining",
         "allow_gaining_tip": "Allow setting volume above 100% (May cause distortion)",
