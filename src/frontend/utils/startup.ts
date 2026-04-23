@@ -6,7 +6,7 @@ import { checkStartupActions } from "../components/actions/actions"
 import { getTimeFromInterval } from "../components/helpers/time"
 import { requestMain, requestMainMultiple, sendMain, sendMainMultiple } from "../IPC/main"
 import { cameraManager } from "../media/cameraManager"
-import { activePopup, alertMessage, cachePath, contentProviderData, currentWindow, deviceId, driveKeys, isDev, language, loaded, loadedState, os, providerConnections, scriptures, shows, special, version, windowState } from "../stores"
+import { activePopup, alertMessage, cachePath, cloudSyncData, contentProviderData, currentWindow, deviceId, driveKeys, isDev, language, loaded, loadedState, os, providerConnections, scriptures, shows, special, version, windowState } from "../stores"
 import { startTracking } from "./analytics"
 import { wait, waitUntilValueIsDefined } from "./common"
 import { getDefaultElements } from "./createData"
@@ -130,6 +130,8 @@ export function contentProviderSync() {
     })
 
     setTimeout(() => {
+        if (get(cloudSyncData).id) return
+
         const hasDriveSync = typeof get(driveKeys) === "object" && Object.keys(get(driveKeys)).length
         if (!Object.keys(get(providerConnections)).length && !get(activePopup) && Math.random() < (hasDriveSync ? 0.3 : 0.03)) {
             alertMessage.set("You can now set up free cloud sync with ChurchApps! Go to Settings>Files to log in." + (hasDriveSync ? "<br>It's recommended to switch over from your current Google Sync!" : ""))
