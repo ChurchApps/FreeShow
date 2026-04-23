@@ -9,7 +9,7 @@ import type { Dictionary } from "../types/Settings"
 import { receiveAudio } from "./audio/receiveAudio"
 import { cloudConnect } from "./cloud/cloud"
 import { startExport } from "./data/export"
-import { registerProtectedProtocol } from "./data/protected"
+import { cleanupProtectedCache, registerProtectedProtocol } from "./data/protected"
 import { config, setupStores } from "./data/store"
 import { receiveMain, sendMain } from "./IPC/main"
 import { autoErrorReport } from "./IPC/responsesMain"
@@ -110,6 +110,7 @@ async function startApp() {
     await setupStores()
 
     registerProtectedProtocol()
+    cleanupProtectedCache().catch((err) => console.error("Protected cache cleanup failed:", err))
 
     // Start servers initialization early (asynchronously)
     Promise.resolve()

@@ -77,6 +77,15 @@ export function deleteFolder(filePath: string) {
     }
 }
 
+export function deleteFolderAsync(filePath: string) {
+    return new Promise<void>((resolve) => {
+        fs.rm(filePath, { recursive: true, force: true }, (err) => {
+            if (err) actionComplete(err, "Error when deleting folder")
+            resolve()
+        })
+    })
+}
+
 export function doesPathExistAsync(filePath: string): Promise<boolean> {
     return new Promise((resolve) => {
         fs.access(filePath, (err) => {
