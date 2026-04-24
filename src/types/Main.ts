@@ -185,7 +185,7 @@ export interface MediaStyle {
     tags?: string[] // media tags
     name?: string // display name for content provider media (encrypted videos)
     contentFile?: any // ContentFile from content provider (imported type would create circular dependency)
-    licenseChecked?: boolean // whether license has been checked for this media
+    licenseExpiresAt?: number // unix ms; content provider license is valid while Date.now() < licenseExpiresAt
     pingbackUrl?: string // URL for sending pingback after playback
     cropping?: Partial<Cropping>
 

@@ -8,14 +8,48 @@ import { ToMain } from "../../types/IPC/ToMain"
 import { ContentProviderFactory } from "../contentProviders/base/ContentProvider"
 import type { ContentProviderId } from "../contentProviders/base/types"
 import { sendToMain } from "../IPC/main"
-import { createFolder, getMimeType } from "../utils/files"
+import { createFolder, deleteFolderAsync, getMimeType } from "../utils/files"
 import { getKey } from "../utils/keys"
+import { appDataPath } from "./store"
 import { filePathHashCode } from "./thumbnails"
 
+const PROTECTED_CACHE_DIR_NAME = "protected-cache"
+const PROTECTED_CACHE_MAX_AGE_MS = 1000 * 60 * 60 * 24 * 30 // 30 days
+
+function getProtectedCacheDir() {
+    return path.join(appDataPath, PROTECTED_CACHE_DIR_NAME)
+}
+
 export function getProtectedPath(url: string) {
-    const protectedDir = path.join(app.getPath("temp"), "freeshow-protected")
+    const protectedDir = getProtectedCacheDir()
     createFolder(protectedDir)
     return path.join(protectedDir, filePathHashCode(url))
+}
+
+export async function cleanupProtectedCache() {
+    const dir = getProtectedCacheDir()
+    try {
+        const entries = await fs.promises.readdir(dir)
+        const now = Date.now()
+        await Promise.all(
+            entries.map(async (name) => {
+                const filePath = path.join(dir, name)
+                try {
+                    const stats = await fs.promises.stat(filePath)
+                    if (now - stats.mtimeMs > PROTECTED_CACHE_MAX_AGE_MS) {
+                        await fs.promises.unlink(filePath)
+                    }
+                } catch {
+                    // ignore per-file errors
+                }
+            })
+        )
+    } catch {
+        // dir may not exist yet — nothing to clean
+    }
+
+    // one-time sweep of the pre-migration temp location from older versions
+    await deleteFolderAsync(path.join(app.getPath("temp"), "freeshow-protected"))
 }
 
 const alg = "aes-256-cbc"
@@ -234,6 +268,11 @@ async function getDecryptedBuffer(entry: ProtectedMediaEntry) {
 
     const decrypted = await decryptFile(entry.filePath, key)
     if (!decrypted) return null
+
+    // Bump the file's mtime so cleanupProtectedCache keeps it for another 30 days.
+    // Only on disk-read path — in-memory cache hits don't count as disk activity.
+    const nowSeconds = Date.now() / 1000
+    fs.promises.utimes(entry.filePath, nowSeconds, nowSeconds).catch(() => null)
 
     decryptedCache.set(entry.id, { buffer: decrypted, timeout: null })
     refreshCache(entry.id)

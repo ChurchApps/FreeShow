@@ -3,7 +3,7 @@ import type { ExifData } from "exif"
 import type { Stats } from "fs"
 import type { Bible } from "json-bible/lib/Bible"
 import type { SyncProviderId } from "../../electron/cloud/syncManager"
-import type { ContentFile, ContentLibraryCategory, ContentProviderId } from "../../electron/contentProviders/base/types"
+import type { ContentFile, ContentLibraryCategory, ContentProviderId, MediaLicense } from "../../electron/contentProviders/base/types"
 import type { _store } from "../../electron/data/store"
 import type { TimecodeMode } from "../../electron/timecode/timecode"
 import type { ErrorLog, FileFolder, LessonsData, LyricSearchResult, MainFilePaths, Media, OS, Subtitle } from "../Main"
@@ -330,7 +330,7 @@ export interface MainReturnPayloads {
     [Main.GET_CONTENT_PROVIDERS]: { providerId: ContentProviderId; displayName: string; hasContentLibrary: boolean }[]
     [Main.GET_CONTENT_LIBRARY]: Promise<ContentLibraryCategory[]>
     [Main.GET_PROVIDER_CONTENT]: Promise<ContentFile[]>
-    [Main.CHECK_MEDIA_LICENSE]: Promise<string | null>
+    [Main.CHECK_MEDIA_LICENSE]: Promise<MediaLicense | null>
     // Timecode
     [Main.TIMECODE_VALUE]: number | void
     [Main.TIMECODE_AUDIO_DATA]: Buffer | void

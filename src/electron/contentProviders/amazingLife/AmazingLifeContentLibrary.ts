@@ -1,7 +1,9 @@
 import { httpsRequest } from "../../utils/requests"
-import type { ContentFile, ContentLibraryCategory } from "../base/types"
+import type { ContentFile, ContentLibraryCategory, MediaLicense } from "../base/types"
 import { AmazingLifeConnect } from "./AmazingLifeConnect"
 import { AMAZING_LIFE_API_BASE } from "./types"
+
+const LICENSE_TTL_MS = 30 * 24 * 60 * 60 * 1000 // 30 days
 
 /**
  * Handles content library operations for AmazingLife (APlay).
@@ -123,10 +125,10 @@ export class AmazingLifeContentLibrary {
     }
 
     /**
-     * Checks if a single media item is licensed
-     * Returns the pingback URL if licensed, null otherwise
+     * Checks if a single media item is licensed.
+     * Returns a MediaLicense (pingback URL + expiration) if licensed, null otherwise.
      */
-    public static async checkMediaLicense(mediaId: string): Promise<string | null> {
+    public static async checkMediaLicense(mediaId: string): Promise<MediaLicense | null> {
         const accessToken = AmazingLifeConnect.getAccessToken()
         if (!accessToken) {
             console.warn("Not authenticated with APlay, cannot check license")
@@ -149,7 +151,7 @@ export class AmazingLifeContentLibrary {
 
                     if (result?.isLicensed) {
                         const pingbackUrl = `${AMAZING_LIFE_API_BASE}/prod/reports/media/${mediaId}/stream-count?source=aplay-pro`
-                        resolve(pingbackUrl)
+                        resolve({ pingbackUrl, expiresAt: Date.now() + LICENSE_TTL_MS })
                     } else {
                         resolve(null)
                     }

@@ -1,7 +1,7 @@
 import type express from "express"
 import { getKey } from "../../utils/keys"
 import { ContentProvider } from "../base/ContentProvider"
-import type { ContentFile, ContentLibraryCategory } from "../base/types"
+import type { ContentFile, ContentLibraryCategory, MediaLicense } from "../base/types"
 import { AmazingLifeConnect } from "./AmazingLifeConnect"
 import { AmazingLifeContentLibrary } from "./AmazingLifeContentLibrary"
 import { AMAZING_LIFE_API_URL } from "./types"
@@ -91,10 +91,10 @@ export class AmazingLifeProvider extends ContentProvider<AmazingLifeScopes, Amaz
     }
 
     /**
-     * Checks if a media item is licensed and returns its pingback URL
-     * This should be called when the user actually tries to use/play a media item
+     * Checks if a media item is licensed and returns its pingback URL + expiration.
+     * This should be called when the user actually tries to use/play a media item.
      */
-    async checkMediaLicense(mediaId: string): Promise<string | null> {
+    async checkMediaLicense(mediaId: string): Promise<MediaLicense | null> {
         return AmazingLifeContentLibrary.checkMediaLicense(mediaId)
     }
 
