@@ -58,7 +58,8 @@
         "libraries": "Bibliotheken gebruikt",
         "thanks": "Met dank aan",
         "new_update": "Nieuwe update beschikbaar",
-        "download": "Start de applicatie opnieuw om te updaten, of ga naar freeshow.app om handmatig te downloaden",
+        "download_latest": "Download de nieuwste versie",
+        "download_auto": "U hebt automatische update ingeschakeld, wacht alstublieft een paar minuten tot de update wordt gedownload en automatisch wordt geïnstalleerd en start de toepassing opnieuw op.",
         "changes": "Wat is nieuw"
     },
     "tooltip": {
@@ -85,8 +86,11 @@
         "trigger": "Triggers worden vaak gebruikt om een HTTP-verzoek te verzenden om de voorinstelling van camera’s te wijzigen.",
         "global_options": "Deze opties worden globaal toegepast.",
         "consider_templates": "Je hebt dezelfde wijzigingen aangebracht in meerdere dia's. Overweeg om een template te gebruiken.",
+        "category_template": "Deze show bevindt zich in een categorie met een sjabloonset, die alle wijzigingen die u aanbrengt zal overschrijven.",
         "style_template_active": "Een stijl in de uitvoer is ingesteld om de showsjabloon te overschrijven.",
-        "group_numbers": "Nummers zijn automatisch toegewezen, zodat u geen nummers aan groepsnamen hoeft toe te voegen."
+        "group_numbers": "Nummers zijn automatisch toegewezen, zodat u geen nummers aan groepsnamen hoeft toe te voegen.",
+        "display_metadata": "Klik met de rechtermuisknop op een showcategorie om te wijzigen wanneer metadata worden weergegeven.",
+        "metadata_customize": "Om de weergegeven metadata-inhoud aan te passen, bewerkt u de sjabloon en gebruikt u dynamische waarden."
     },
     "setup": {
         "good_luck": "We hopen dat je deze software nuttig vindt. Veel succes met de presentatie! :)",
@@ -202,6 +206,7 @@
         "flip_horizontally": "Horizontaal omkeren",
         "flip_vertically": "Verticaal omkeren",
         "folders": "Mappen",
+        "folder_type": "Map",
         "all": "Mappen, afbeeldingingen & video's",
         "folder": "Alleen mappen",
         "image": "Alleen afbeeldingingen",
@@ -234,6 +239,7 @@
         "preset": "Voorinstelling",
         "main": "Hoofd",
         "metronome": "Metronoom",
+        "click_sound": "Klik geluid",
         "toggle_metronome": "Metronoom in-/uitschakelen",
         "use_metadata_bpm": "BPM van metagegevens gebruiken",
         "tempo": "Tempo",
@@ -328,7 +334,6 @@
         "autofill": "Automatisch invullen",
         "message": "Bericht",
         "message_tip": "Laat iets zien op alle dia's",
-        "override_output": "Uitvoerstijl overschrijven",
         "display_metadata": "Metadata weergeven",
         "meta_template": "Metadata sjabloon",
         "text_divider": "Tekstscheidingsteken",
@@ -378,6 +383,7 @@
     },
     "tabs": {
         "shows": "Shows",
+        "shows_info": "Een show bestaat uit dia's; het kan een lied, presentatie, media, schrift, en meer.",
         "media": "Media",
         "overlays": "Overlays",
         "audio": "Audio",
@@ -505,6 +511,8 @@
         "manage_tags": "Labels beheren",
         "sync_categories": "Categorieën synchroniseren",
         "effect_items": "Effecten",
+        "timeline": "Tijdlijn",
+        "timecode": "Tijdcode",
         "initialize": "Welkom bij FreeShow",
         "unsaved": "Weet je zeker dat je wilt afsluiten?",
         "cancel": "Annuleren",
@@ -595,7 +603,6 @@
         "text": "Tekst bewerken",
         "update": "Show bijwerken",
         "locked": "Deze show is vergrendeld!",
-        "locked_info": "Deze show is vergrendeld voor bewerking. Ontgrendel hem weer in de lade van de show.",
         "slide_template": "Dia sjabloon",
         "source": "Bron",
         "artist": "Artiest",
@@ -612,6 +619,7 @@
         "recolor": "Kleur wijzigen",
         "remove": "Verwijderen",
         "remove_group": "Groep uit lay-out verwijderen",
+        "remove_group_short": "Groep verwijderen ",
         "choose_group": "Groep kiezen",
         "goto_group": "Naar groep gaan",
         "active_outputs": "Actieve uitgangen",
@@ -622,10 +630,13 @@
         "unlink_pco": "Loskoppelen van Planning Center",
         "import": "Importeren",
         "export": "Exporteren",
+        "save_to_file": "Opslaan in bestand",
         "import_calendar": "Kalender importeren",
         "imported": "Geïmporteerd!",
         "duplicate": "Dupliceren",
+        "duplicated": "Gedupliceerd",
         "delete": "Verwijderen",
+        "delete_slide_short": "Dia verwijderen",
         "delete_slide": "Dia uit de voorstelling verwijderen",
         "delete_group": "Groep verijwderen",
         "delete_all": "Alles verwijderen",
@@ -638,7 +649,9 @@
         "redo": "Opnieuw doen",
         "cut": "Knippen",
         "copy": "Kopiëren",
+        "copied": "Gekopieerd",
         "paste": "Plakken",
+        "pasted": "Geplakt",
         "pasteAndMatchStyle": "Stijl plakken en matchen",
         "selectAll": "Alles selecteren",
         "remove_selection": "Selectie verwijderen",
@@ -652,6 +665,9 @@
         "zoomIn": "Inzoomen",
         "zoomOut": "Uitzoomen",
         "reset": "Opnieuw instellen",
+        "lock_sections": "Vergrendel secties",
+        "project_template": "Project sjabloon",
+        "convert_to_template": "Converteren naar sjabloon",
         "create_template": "Sjabloon aanmaken",
         "project_template_tip": "Maar een nieuw project met dit sjabloon",
         "import_project_file": "Een nieuw projectbestand gevonden. Wilt u het importeren?",
@@ -752,6 +768,10 @@
         "stop_timers": "Actieve timers stoppen",
         "id_pause_timer": "Specifieke timer pauzeren",
         "id_stop_timer": "Specifieke timer stoppen",
+        "start_timeline": "Start tijdlijn",
+        "stop_timeline": "Stop tijdlijn",
+        "pause_timeline": "Pauzeer tijdlijn",
+        "set_timeline_time": "Tijdlijntijd instellen",
         "next_after_media": "Volgende wanneer media klaar is",
         "remove_media": "Media verwijderen",
         "remove_layers": "Lagen verwijderen",
@@ -834,15 +854,9 @@
         "seconds": "seconden",
         "empty": "leeg"
     },
-    "recording": {
-        "remove": "Opname verwijderen",
-        "tip": "Neem de timing van dia's op en speel ze opnieuw af. Synchroniseer met een audiotrack op de eerste dia.",
-        "layout_changed": "De lay-out is gewijzigd sinds de laatste opname!",
-        "audio_synced": "Gesynchroniseerd met geluid!",
-        "start": "Dia-opname starten",
-        "action_play": "Dia-opname afspelen",
-        "use_duration": "Gebruik tijdsduur",
-        "use_duration_tip": "Gebruik duur in plaats van tijdstempel"
+    "timeline": {
+        "toggle_timeline": "Tijdlijn inschakelen",
+        "start_time": "Starttijd"
     },
     "animate": {
         "change": "Wijzigen",
@@ -859,8 +873,8 @@
         "info": "Synchroniseer bestanden met de cloud voor back-ups of om toegang te krijgen tussen meerdere computers.",
         "enable": "Automatische synchronisatie bij opstarten en afsluiten",
         "read_only": "Alleen-lezen",
-        "media_folder": "Map voor cloudmedia",
         "reconnect": "Maak opnieuw verbinding",
+        "enable_sync": "Synchronisatie inschakelen",
         "sync": "Nu synchroniseren",
         "change_team": "Verander team",
         "choose_method_tip": "Er zijn bestaande data in de cloud. Wat zou je willen doen?",
@@ -906,6 +920,7 @@
         "to_dictionary": "Toevoegen aan woordenboek",
         "correct": "Vervangen door dit woord",
         "enabledTabs": "Tabbladen in-/uitschakelen",
+        "display_tags": "Tags weergeven",
         "setTag": "Label instellen",
         "filterByTags": "Filteren bij labels",
         "addToProject": "Toevoegen aan project",
@@ -1073,7 +1088,8 @@
         "fahrenheit": "Fahrenheit",
         "longRange": "Groot bereik",
         "media_item_tip": "Probeer je de media als achtergrond te gebruiken?",
-        "convert_to_background": "Converteren naar achtergrond"
+        "convert_to_background": "Converteren naar achtergrond",
+        "convert_to_media_item": "Achtergrond converteren naar media-item"
     },
     "items": {
         "text": "Tekstvak",
@@ -1290,7 +1306,7 @@
         "shortcuts_on_slides": "Snelkoppelingen weergeven op dia's",
         "transparent_slides": "Transparant dia voorbeeld",
         "style_template_preview": "Stijlsjabloon gebruiken als diavoorbeeld",
-        "full_colors": "Groepskleuren met hoog contrast",
+        "full_colors": "Hoge contrast kleuren",
         "next_item_on_last_slide": "Pijl naar links/rechts verandert projectitem op eerste/laatste dia",
         "slide_number_keys": "Dia's afspelen met cijfertoetsen",
         "auto_shortcut_first_letter": "Automatische snelkoppeling naar de eerste letter in de tekst",
@@ -1347,6 +1363,7 @@
         "connect": "Maak verbinding door dit in een webbrowser te typen",
         "connect_qr": "Of scan deze QR-code",
         "restart": "Start servers opnieuw op",
+        "content_provider": "Content provider",
         "connect_to": "Verbinding maken met $1",
         "disconnect_from": "Verbinding verbreken met $1",
         "sync_categories_tip": "Selecteer welke categorieën u wilt uploaden als nummers",
@@ -1358,6 +1375,7 @@
         "backup_all": "Maak een back-up van alles",
         "backup_info": "Dit geldt niet voor lokale geschriften en mediabestanden, omdat deze zich op je systeem bevinden.",
         "restore": "Herstel",
+        "restore_confirm": "Weet u zeker dat u deze back-up wilt herstellen? Dit zal de huidige gegevens overschrijven.",
         "backup_started": "Back-up aan het maken...",
         "restore_started": "Herstellen...",
         "backup_finished": "Back-up voltooid!",
@@ -1374,7 +1392,9 @@
     "output": {
         "state_inactive": "Inactief",
         "state_locked": "Vergrendeld",
-        "disabled_layers": "Uitgeschakelde lagen"
+        "disabled_layers": "Uitgeschakelde lagen",
+        "mute": "Mute output",
+        "unmute": "Unmute output"
     },
     "profile": {
         "profiles_hint": "Maak meerdere profielen/rollen aan om de toegang van bepaalde gebruikers tot het beheren/bewerken van bepaalde onderdelen van het programma te beperken.",
@@ -1384,8 +1404,10 @@
         "write": "Schrijven",
         "set_active": "Als actief instellen",
         "choose_profile": "Kies een profiel",
+        "change_profile": "Profiel wijzigen",
         "choose_admin": "Ga alleen verder als u weet wat u doet. Het beheerders-profiel kiezen?",
-        "locked": "De toegang tot dit onderdeel is beperkt door het door u geselecteerde profiel!"
+        "locked": "De toegang tot dit onderdeel is beperkt door het door u geselecteerde profiel!",
+        "auto_open_last_used": "Auto open laatste gebruikte profiel bij het opstarten"
     },
     "sort": {
         "sort_by": "Sorteer op",
@@ -1437,6 +1459,7 @@
         "verses_on_individual_lines": "Verzen op afzonderlijke regels",
         "divide_long_verses": "Lange verzen splitsen",
         "split_long_verses_suffix": "Toon letter achtervoegsel",
+        "tolerance": "Tolerantie",
         "version": "Toon versie",
         "reference": "Toon referentie",
         "split_reference": "Split referentie",
@@ -1494,7 +1517,8 @@
         "blur": "Vervagen",
         "scale": "Schalen",
         "spin": "Draaien",
-        "slide": "Dia"
+        "slide": "Dia",
+        "fade_in_offset": "Vervagen in offset"
     },
     "easings": {
         "linear": "Lineair",
