@@ -20,10 +20,21 @@
     export let startAt = 0
 
     // TODO: looping player videos does not work!
+
+    // YouTube needs to refresh properly when changing video
+    let shouldLoad = true
+    let previousId = ""
+    $: if (video?.id && previousId) {
+        shouldLoad = false
+        previousId = video.id
+        setTimeout(() => (shouldLoad = true), 3000)
+    } else previousId = video?.id || ""
 </script>
 
 {#if video?.type === "youtube"}
-    <YouTube {outputId} id={video.id} bind:videoData bind:videoTime {startAt} {preview} on:loaded on:ended />
+    {#if shouldLoad}
+        <YouTube {outputId} id={video.id} bind:videoData bind:videoTime {startAt} {preview} on:loaded on:ended />
+    {/if}
 {:else if video?.type === "vimeo"}
     <Vimeo {outputId} id={video.id} bind:videoData bind:videoTime {startAt} {preview} on:loaded />
 {/if}
