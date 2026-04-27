@@ -1366,7 +1366,7 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
         slideIndex = outSlide?.index ?? -1
     }
 
-    const currentShow = _show(showId).get() || null
+    const currentShow = showId ? _show(showId).get() || null : null
     if (type === "show" && !currentShow) return ""
 
     // remove unused scripture dynamic values ({scripture_X} / {scriptureNUM_X})
@@ -1465,9 +1465,9 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
             showId = outSlide?.id
             layoutId = outSlide?.layout
             slideIndex = outSlide?.index ?? -1
-            show = _show(showId).get() || null
+            show = showId ? _show(showId).get() || null : null
         }
-        if (!show) show = _show(showId).get() || null
+        if (!show) show = showId ? _show(showId).get() || null : null
 
         // META
         if (dynamicId.startsWith("meta_")) {
@@ -1494,7 +1494,7 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
         const audioDuration = (isOutputWin ? get(dynamicValueData).audioDuration : activeAudio?.duration) || 0
 
         let projectIndex = get(projects)[get(activeProject) || ""]?.shows?.findIndex((a) => a.id === showId) ?? -1
-        if (projectIndex < 0) projectIndex = get(activeShow)?.index ?? -2
+        // if (projectIndex < 0) projectIndex = get(activeShow)?.index ?? -2
         const projectRef = { id: get(activeProject) || "", index: projectIndex }
 
         const audioPath = playingAudioIds[playingAudioIds.length - 1] // get newest
