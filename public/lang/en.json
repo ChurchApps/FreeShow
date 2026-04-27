@@ -836,6 +836,7 @@
         "activate_output_changed": "Activate when output changes",
         "activate_slide_clicked": "Activate on slide click",
         "activate_group_start": "Activate when group is started",
+        "activate_pdf_start": "Activate when PDF is started",
         "activate_video_starting": "Activate when video is starting",
         "activate_video_ending": "Activate when video is ending",
         "activate_audio_starting": "Activate when audio is starting",

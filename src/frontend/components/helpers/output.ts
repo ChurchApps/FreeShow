@@ -62,6 +62,10 @@ export function setOutput(type: string, data: any, toggle = false, outputId = ""
 
     customActionActivation("output_changed")
 
+    const bindings = data?.bindings || (data?.layout ? ref[data.index]?.data?.bindings || [] : [])
+    const allOutputIds = bindings.length ? bindings : getActiveOutputs(get(outputs), true, false, true)
+    const outs = outputId ? [outputId] : allOutputIds
+
     // track usage (& set attributionString)
     if (type === "slide" && data?.id) {
         const showReference = _show(data.id).get("reference")
@@ -82,18 +86,19 @@ export function setOutput(type: string, data: any, toggle = false, outputId = ""
             if (translation.attributionString) data.attributionString = translation.attributionString
         }
 
-        const groupId = slide.globalGroup
-        if (groupId) customActionActivation("group_start", groupId)
+        if (data.type === "pdf") {
+            const out = get(outputs)[outs[0]]?.out?.slide
+            if (out?.type !== "pdf") customActionActivation("pdf_start")
+        } else {
+            const groupId = slide.globalGroup
+            if (groupId) customActionActivation("group_start", groupId)
+        }
     }
 
+    const inputData = clone(data)
+    const backgroundId = getFirstOutputIdWithAudableBackground(allOutputIds)
+
     outputs.update((a) => {
-        const bindings = data?.bindings || (data?.layout ? ref[data.index]?.data?.bindings || [] : [])
-        const allOutputIds = bindings.length ? bindings : getActiveOutputs(a, true, false, true)
-        const outs = outputId ? [outputId] : allOutputIds
-        const inputData = clone(data)
-
-        const backgroundId = getFirstOutputIdWithAudableBackground(allOutputIds)
-
         if (type === "slide" && data?.id) {
             // reset slide cache (after update)
             setTimeout(() => outputSlideCache.set({}), 50)
