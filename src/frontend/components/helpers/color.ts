@@ -87,6 +87,13 @@ function componentToHex(c) {
     return hex.length === 1 ? "0" + hex : hex
 }
 
+// FADED
+
+export function fadeColor(hex: string, alpha: number = 0.5) {
+    const rgb = hexToRgb(hex)
+    return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha})`
+}
+
 // CONTRAST
 
 export function getContrast(hex: string) {

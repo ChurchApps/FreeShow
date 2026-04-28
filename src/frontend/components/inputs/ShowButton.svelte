@@ -2,7 +2,7 @@
     import { getDocument, GlobalWorkerOptions } from "pdfjs-dist"
     import type { ClickEvent } from "../../../types/Main"
     import { AudioPlayer } from "../../audio/audioPlayer"
-    import { activeEdit, activeFocus, activePage, activeProject, activeShow, categories, editingProjectTemplate, focusMode, globalTags, media, notFound, outLocked, outputs, overlays, playerVideos, playingAudio, projects, projectTemplates, refreshEditSlide, shows, showsCache, special, styles } from "../../stores"
+    import { activeEdit, activeFocus, activePage, activeProject, activeShow, categories, editingProjectTemplate, focusMode, globalTags, media, notFound, outLocked, outputs, overlayCategories, overlays, playerVideos, playingAudio, projects, projectTemplates, refreshEditSlide, shows, showsCache, special, styles } from "../../stores"
     import { getAccess } from "../../utils/profile"
     import { historyAwait } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
@@ -51,10 +51,12 @@
     export let icon = false
     let iconID: null | string = null
     let custom = false
+    let subicon = ""
     $: {
         // WIP similar to focus.ts
         if (icon) {
             custom = false
+            subicon = ""
             if (type === "show") {
                 if ($shows[show.id]?.private) iconID = "private"
                 else if ($showsCache[show.id]?.reference?.type === "scripture") {
@@ -68,7 +70,15 @@
                     iconID = $categories[$shows[show.id].category || ""].icon || null
                 } else iconID = "noIcon"
             } else if (type === "audio") iconID = "music"
-            else if (type === "overlay") iconID = "overlays"
+            else if (type === "overlay") {
+                if ($overlays[show.id]?.category && $overlayCategories[$overlays[show.id].category || ""]) {
+                    custom = true
+                    iconID = $overlayCategories[$overlays[show.id].category || ""].icon || null
+                    subicon = "overlays"
+                } else {
+                    iconID = "overlays"
+                }
+            }
             // else if (type === "player") iconID = "live"
             else iconID = type
         }
@@ -227,13 +237,17 @@
     <MaterialButton on:click={click} on:dblclick={doubleClick} {isActive} showOutline={outline} class="context {$$props.class}{readOnly ? '_readonly' : ''}" style="font-weight: normal;--outline-color: {activeOutput || 'var(--secondary)'};{$notFound.show?.includes(id) ? 'background-color: rgb(255 0 0 / 0.2);' : ''}{style}{$$props.style || ''}" tab>
         <div class="row" style={type === "show_placeholder" ? "font-style: italic;" : ""}>
             <span class="cell" style={isProject ? `width: 100%;max-width: ${show.layoutInfo?.name || show.scheduleLength ? 92 : 100}%;` : `width: 75%;min-width: 120px;max-width: calc(100% ${showNumber ? "- var(--number-width)" : ""} - var(--modified-width, 0px));`}>
-                <div class="icon" class:isMedia>
+                <div class="icon" class:isMedia style="position: relative;">
                     {#if type === "show_placeholder"}
                         <Icon id="swap" white right />
                     {:else if thumbnailPath}
                         <img class="thumbnail" src={encodeFilePath(thumbnailPath)} alt="thumbnail" style={mediaStyleString} />
                     {:else if icon || show.locked}
-                        <Icon id={show.played ? "check" : iconID ? iconID : show.locked ? "locked" : "noIcon"} custom={!show.played && custom} box={iconID === "ppt" ? 50 : 24} style="color: {show.played ? '' : customIconsColors[iconID || ''] || ''};" white right={!isMedia} />
+                        <Icon id={show.played ? "check" : iconID ? iconID : show.locked ? "locked" : "noIcon"} custom={!show.played && custom} box={iconID === "ppt" ? 50 : 24} color={show.played ? "#97ff95" : customIconsColors[iconID || ""] || ""} white right={!isMedia} boxed={!show.locked} />
+                    {/if}
+
+                    {#if subicon}
+                        <Icon id={subicon} size={0.7} white style="position: absolute;bottom: -3px;right: 1px;opacity: 0.8;" />
                     {/if}
                 </div>
 

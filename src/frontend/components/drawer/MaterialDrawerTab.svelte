@@ -3,15 +3,15 @@
     import type { SelectIds } from "../../../types/Main"
     import { actions, activeActionTagFilter, activeDrawerTab, activePlaylist, activeVariableTagFilter, audioPlaylists, drawerTabsData, outputs, templates } from "../../stores"
     import { translateText } from "../../utils/language"
+    import { customIconsColors } from "../../values/customIcons"
     import { getActionIcon } from "../actions/actions"
     import { clone } from "../helpers/array"
     import Icon from "../helpers/Icon.svelte"
     import { getFirstActiveOutput } from "../helpers/output"
+    import { metadataDisplayValues } from "../helpers/show"
     import HiddenInput from "../inputs/HiddenInput.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
     import SelectElem from "../system/SelectElem.svelte"
-    import { metadataDisplayValues } from "../helpers/show"
-    import { customIconsColors } from "../../values/customIcons"
 
     export let category: any
 
@@ -24,6 +24,8 @@
     $: metadata = category.metadata || ""
     $: count = category.count || 0
     $: readOnly = category.readOnly || false
+    $: customIcon = category.customIcon || false
+    $: boxedIcon = category.boxedIcon || false
 
     export let parentId = ""
     export let isSubmenu = false
@@ -99,7 +101,7 @@
 <SelectElem style="width: 100%;" id={selectId} selectable={!noEdit} {draggable} borders="center" trigger="column" data={id}>
     <MaterialButton class={className} style="width: 100%;font-weight: normal;padding: 0.2em 0.8em;" {isActive} {showOutline} on:click={click} on:dblclick={dblclick} tab>
         <div style="max-width: 85%;" data-title={translateText(label)}>
-            <Icon style={isSubmenu ? `color: ${category.color};` : `color: ${customIconsColors[icon] || ""};`} id={icon} size={isSubmenu ? 0.8 : 1} white />
+            <Icon id={icon} size={isSubmenu ? 0.85 : 1} color={isSubmenu ? category.color : boxedIcon ? customIconsColors[icon] || "" : ""} white custom={customIcon} boxed={isSubmenu || boxedIcon} />
 
             {#if noEdit || isSubmenu}
                 <p style="margin: {isSubmenu ? 3 : 5}px;">

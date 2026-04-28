@@ -73,7 +73,7 @@
         return sortObject(categories, "name").map((a) => {
             const type = a.mediaType
             const option = type ? { title: `clock.type: <b>preview.${type}</b>`, icon: `type_${type}`, style: "opacity: 0.6;" } : null
-            return { id: a.id, label: a.name, icon: a.icon || "folder", option, count: lengths[a.path] }
+            return { id: a.id, label: a.name, icon: a.icon || "folder", option, count: lengths[a.path], boxedIcon: true }
         })
     }
 

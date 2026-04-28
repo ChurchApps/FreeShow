@@ -51,7 +51,7 @@
             const metadata = a.metadata?.display
             const count = allVisibleShows.reduce((count, show) => count + (show.category === a.id ? 1 : 0), 0)
             const readOnly = profile.global === "read" || profile[a.id] === "read"
-            return { id: a.id, label: a.name, icon: a.icon, action, template, metadata, count, readOnly }
+            return { id: a.id, label: a.name, icon: a.icon, action, template, metadata, count, readOnly, customIcon: true, boxedIcon: true }
         })
     }
 

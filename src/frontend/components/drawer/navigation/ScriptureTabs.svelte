@@ -29,7 +29,7 @@
             .map((a: any) => {
                 const icon = a.api ? "scripture_alt" : a.collection ? "collection" : "scripture"
                 const count = a.collection?.versions?.length || 0
-                return { id: a.id, label: a.customName || a.name, icon, count, onDoubleClick: () => startScripture() }
+                return { id: a.id, label: a.customName || a.name, icon, count, onDoubleClick: () => startScripture(), boxedIcon: true }
             })
     }
 

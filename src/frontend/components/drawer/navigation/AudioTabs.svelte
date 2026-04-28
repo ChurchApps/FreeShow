@@ -64,7 +64,7 @@
         let playlists = sortObject(keysToID(playlistUpdater), "name")
         playlists = playlists.map((a) => {
             const count = a.songs?.length
-            return { id: a.id, label: a.name, icon: "playlist", count, onDoubleClick: () => AudioPlaylist.start(a.id) }
+            return { id: a.id, label: a.name, icon: "playlist", count, onDoubleClick: () => AudioPlaylist.start(a.id), boxedIcon: true }
         })
         if (!playlists.length) return []
 
@@ -73,7 +73,7 @@
 
     function convertToButton(categories: any[], lengths: { [key: string]: number }) {
         return sortObject(categories, "name").map((a) => {
-            return { id: a.id, label: a.name, icon: a.icon || "folder", count: lengths[a.path] }
+            return { id: a.id, label: a.name, icon: a.icon || "folder", count: lengths[a.path], boxedIcon: true }
         })
     }
 

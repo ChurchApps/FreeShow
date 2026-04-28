@@ -34,7 +34,7 @@
         return sortObject(categories, "name").map((a: any) => {
             const count = allVisibleTemplates.reduce((count, template) => count + (template.category === a.id ? 1 : 0), 0)
             const readOnly = profile.global === "read" || profile[a.id] === "read"
-            return { id: a.id, label: a.name, icon: a.icon, count, readOnly }
+            return { id: a.id, label: a.name, icon: a.icon, count, readOnly, customIcon: true, boxedIcon: true }
         })
     }
 
