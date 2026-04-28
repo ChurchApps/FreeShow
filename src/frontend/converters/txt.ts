@@ -248,41 +248,44 @@ function insertChordsIntoLyrics(chordLine: string, lyricLine: string): string {
     const chords: { chord: string; position: number }[] = []
     let match: RegExpExecArray | null
 
+    // Only allow chord positions within the lyric line length
     while ((match = chordRegex.exec(chordLine)) !== null) {
-        // Adjust chord position to attach to words instead of spaces
-        let position = match.index
+        // Ignore if the chord name is longer than 12 characters or contains spaces
+        if (match[0].length > 12 || /\s/.test(match[0])) continue
 
+        let position = match.index
         // If chord position is at a space, move it to the next word
         if (position < lyricLine.length && lyricLine[position] === " ") {
-            // Find the next non-space character
             while (position < lyricLine.length && lyricLine[position] === " ") {
                 position++
             }
         }
 
-        chords.push({
-            chord: match[0],
-            position
-        })
+        // Prevent runaway: only allow chord insertions up to lyricLine.length + 2
+        if (position > lyricLine.length + 2) continue
+
+        chords.push({ chord: match[0], position })
     }
 
     if (chords.length === 0) return lyricLine
 
     let result = ""
     let chordIdx = 0
-    const maxLen = Math.max(chordLine.length, lyricLine.length)
-
-    for (let pos = 0; pos < maxLen; pos++) {
+    // Only iterate up to the lyric line length
+    for (let pos = 0; pos < lyricLine.length; pos++) {
         // Insert chord if it starts at this position
-        if (chordIdx < chords.length && chords[chordIdx].position === pos) {
+        while (chordIdx < chords.length && chords[chordIdx].position === pos) {
             result += `[${chords[chordIdx].chord}]`
             chordIdx++
         }
-
         // Add lyric character at this position
-        if (pos < lyricLine.length) {
-            result += lyricLine[pos]
-        }
+        result += lyricLine[pos]
+    }
+
+    // If any chords remain that are positioned at or after the end, append them at the end
+    while (chordIdx < chords.length && chords[chordIdx].position >= lyricLine.length && chords[chordIdx].position <= lyricLine.length + 2) {
+        result += `[${chords[chordIdx].chord}]`
+        chordIdx++
     }
 
     return result
