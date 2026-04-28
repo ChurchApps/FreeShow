@@ -6,7 +6,7 @@
     import { getAccess } from "../../utils/profile"
     import { historyAwait } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
-    import { encodeFilePath, getExtension, getFileName, getMedia, getMediaLayerType, getMediaStyle, getMediaType, mediaSize, removeExtension } from "../helpers/media"
+    import { encodeFilePath, getExtension, getFileName, getMedia, getMediaLayerType, getMediaStyle, getMediaType, getVideoDuration, mediaSize, removeExtension } from "../helpers/media"
     import { findMatchingOut, getActiveOutputs, setOutput } from "../helpers/output"
     import { loadShows } from "../helpers/setShow"
     import { checkName, getLayoutRef } from "../helpers/show"
@@ -69,8 +69,9 @@
                     custom = true
                     iconID = $categories[$shows[show.id].category || ""].icon || null
                 } else iconID = "noIcon"
-            } else if (type === "audio") iconID = "music"
-            else if (type === "overlay") {
+            } else if (type === "audio") {
+                iconID = "music"
+            } else if (type === "overlay") {
                 if ($overlays[show.id]?.category && $overlayCategories[$overlays[show.id].category || ""]) {
                     custom = true
                     iconID = $overlayCategories[$overlays[show.id].category || ""].icon || null
@@ -78,6 +79,8 @@
                 } else {
                     iconID = "overlays"
                 }
+                // } else if (type === "image" || type === "video") {
+                //     subicon = type
             }
             // else if (type === "player") iconID = "live"
             else iconID = type
@@ -203,13 +206,18 @@
     $: outline = activeOutput !== null || !!$playingAudio[id]
 
     let thumbnailPath: string | null = null
+    let duration = 0
     $: isMedia = type === "image" || type === "video" || type === "player"
     $: mediaStyle = isMedia ? getMediaStyle($media[id], undefined) : {} // , $styles[getFirstActiveOutput($outputs)?.style || ""]
     $: mediaStyleString = `pointer-events: none;filter: ${mediaStyle.filter || ""};transform: scale(${mediaStyle.flipped ? "-1" : "1"}, ${mediaStyle.flippedY ? "-1" : "1"});`
     $: if (id && isMedia) getThumbnail()
-    else thumbnailPath = ""
+    else {
+        thumbnailPath = ""
+        duration = 0
+    }
     async function getThumbnail() {
         thumbnailPath = ""
+        duration = 0
 
         if (type === "player") {
             const player = $playerVideos[id] || show.data
@@ -226,8 +234,13 @@
 
         const media = await getMedia(id, mediaSize.small)
         if (media) thumbnailPath = media.thumbnail || media.altPath || media.path
+
         // online videos (Pixabay) might not have a thumbnail ready
         if (getMediaType(getExtension(thumbnailPath)) === "video") thumbnailPath = ""
+
+        if (type === "video") {
+            duration = await getVideoDuration(id)
+        }
     }
 
     $: showTemplateName = type === "show_placeholder" ? `${translateText("new.placeholder: formats.show")} ${index !== null ? ($editingProjectTemplate ? $projectTemplates[$editingProjectTemplate] : $projects[$activeProject || ""])?.shows?.reduce((c, show, i) => (show.type === "show_placeholder" && i < index ? c + 1 : c), 1) : ""}` : ""
@@ -246,6 +259,9 @@
                         <Icon id={show.played ? "check" : iconID ? iconID : show.locked ? "locked" : "noIcon"} custom={!show.played && custom} box={iconID === "ppt" ? 50 : 24} color={show.played ? "#97ff95" : customIconsColors[iconID || ""] || ""} white right={!isMedia} boxed={!show.locked} />
                     {/if}
 
+                    {#if duration}
+                        <span class="duration">{joinTime(secondsToTime(duration))}</span>
+                    {/if}
                     {#if subicon}
                         <Icon id={subicon} size={0.7} white style="position: absolute;bottom: -3px;right: 1px;opacity: 0.8;" />
                     {/if}
@@ -391,6 +407,21 @@
         text-indent: 100%;
         white-space: nowrap;
         overflow: hidden;
+    }
+    .duration {
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+
+        font-family: monospace;
+        font-size: 0.85em;
+
+        padding: 0px 5px;
+        border-radius: 2px;
+
+        background-color: rgb(0 0 0 / 0.5);
+        color: white;
     }
 
     .arrow {
