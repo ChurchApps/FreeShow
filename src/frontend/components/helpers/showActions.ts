@@ -1684,7 +1684,9 @@ function getActiveProjectSection(data: any = {}, next = false): ProjectShowRef |
     if (!hasTime) {
         // get active outputted if any
         const showId = data.outSlide?.id
-        const showIndex = project.shows.findIndex((a) => a.id === showId)
+        let showIndex = project.shows.findIndex((a, i) => a.id === showId && (data.outSlide?.projectIndex === undefined || i === data.outSlide.projectIndex))
+        if (showIndex < 0) showIndex = project.shows.findIndex((a) => a.id === showId)
+
         if (next) return project.shows.find((a, i) => i > showIndex && a.type === "section") || null
         return project.shows.findLast((a, i) => i <= showIndex && a.type === "section") || null
     }
