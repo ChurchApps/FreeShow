@@ -17,6 +17,7 @@
     import HiddenInput from "./HiddenInput.svelte"
     import MaterialButton from "./MaterialButton.svelte"
     import { translateText } from "../../utils/language"
+    import { customIconsColors } from "../../values/customIcons"
 
     export let id: string
     export let show: any // ShowList | ShowRef
@@ -232,7 +233,7 @@
                     {:else if thumbnailPath}
                         <img class="thumbnail" src={encodeFilePath(thumbnailPath)} alt="thumbnail" style={mediaStyleString} />
                     {:else if icon || show.locked}
-                        <Icon id={show.played ? "check" : iconID ? iconID : show.locked ? "locked" : "noIcon"} custom={!show.played && custom} box={iconID === "ppt" ? 50 : 24} white={show.played} right={!isMedia} />
+                        <Icon id={show.played ? "check" : iconID ? iconID : show.locked ? "locked" : "noIcon"} custom={!show.played && custom} box={iconID === "ppt" ? 50 : 24} style="color: {show.played ? '' : customIconsColors[iconID || ''] || ''};" white right={!isMedia} />
                     {/if}
                 </div>
 

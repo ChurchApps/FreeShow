@@ -14,7 +14,7 @@
         slide_icon: (icon: string, path: string) => addItem("icon", icon, path ? { path } : { color: customIconsColors[icon] })
     }
 
-    $: colors = $selected.id === "slide_icon"
+    const colors = true // $selected.id === "slide_icon"
 
     const changeIcon = (a: any, icon: string) => {
         $selected.data.forEach((b) => {
