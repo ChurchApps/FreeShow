@@ -375,47 +375,18 @@ function splitTextToLines(text: string) {
     return lines
 }
 
-const latin1 = {
-    "92": "'",
-    "93": "‘", // “
-    "94": "’", // ”
-    "96": "–",
-    "97": "—",
-    e6: "æ",
-    f8: "ø",
-    e5: "å",
-    c6: "Æ",
-    d8: "Ø",
-    c5: "Å",
-    f6: "ö",
-    e4: "ä",
-    d6: "Ö",
-    c4: "Ä",
-    "89": "ä", // ‰
-    "88": "ö", // ∘
-    c2: "å", // Â
-    a5: "ra", // ¥
-    e1: "á",
-    "9a": "š",
-    fd: "ý",
-    e9: "é",
-    fa: "ú",
-    ed: "í",
-    f2: "ò",
-    f3: "ó",
-    f4: "ô",
-    "9e": "ž",
-    c1: "Á",
-    c9: "É",
-    cd: "Í",
-    d3: "Ó",
-    da: "Ú",
-    fc: "ü",
-    dc: "Ü",
-    f1: "ñ",
-    d1: "Ñ",
-    a1: "¡",
-    bf: "¿"
+// replace all RTF hex codes (e.g., \'e5) with their latin1 character (e.g., å)
+function decodeLatin1HexRTF(input: string): string {
+    return input.replace(/\\'([0-9a-fA-F]{2})/g, (_, hex) => {
+        const byte = parseInt(hex, 16)
+
+        if (typeof TextDecoder !== "undefined") {
+            return new TextDecoder("latin1").decode(Uint8Array.from([byte]))
+        }
+
+        // fallback
+        return String.fromCharCode(byte)
+    })
 }
 
 function decodeBase64(text: string) {
@@ -441,10 +412,8 @@ function decodeBase64(text: string) {
     // convert ‘ & ’ to '
     r = r.replaceAll("‘", "'").replaceAll("’", "'")
 
-    // decode Latin-1
-    for (const [key, value] of Object.entries(latin1)) {
-        r = r.replaceAll(`\\'${key}`, value)
-    }
+    // decode Latin-1 hex codes
+    r = decodeLatin1HexRTF(r)
 
     // decode encoded unicode dec letters
     // https://unicodelookup.com/
