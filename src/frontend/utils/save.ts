@@ -103,7 +103,8 @@ import {
     variableTags,
     variables,
     videoMarkers,
-    volume
+    volume,
+    obsData
 } from "../stores"
 import type { SaveActions, SaveData, SaveList, SaveListSettings, SaveListSyncedSettings } from "./../../types/Save"
 import { audioStreams, companion } from "./../stores"
@@ -177,7 +178,8 @@ export function save(closeWhenFinished = false, customTriggers: SaveActions = {}
         special: get(special),
         timeline: get(timeline),
         timecode: get(timecode),
-        contentProviderData: get(contentProviderData)
+        contentProviderData: get(contentProviderData),
+        obsData: get(obsData)
     }
 
     const syncedSettings: { [key: string]: any } = {}
@@ -460,6 +462,7 @@ const saveList: { [key in SaveList]: any } = {
     globalRegexes: null,
     customMetadata: null,
     contentProviderData,
+    obsData: null,
     effects,
     deletedDefaults: null
 }

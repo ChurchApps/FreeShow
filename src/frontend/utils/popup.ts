@@ -194,8 +194,8 @@ export async function confirmCustom(prompt: string) {
     return !!data
 }
 
-export async function promptCustom(prompt: string, inputType: string = "text") {
-    popupData.set({ prompt, inputType })
+export async function promptCustom(prompt: string, inputType: string = "text", message: string = "") {
+    popupData.set({ prompt, inputType, message })
     const data = (await waitForPopupData("confirm")) || ""
     return data as string
 }

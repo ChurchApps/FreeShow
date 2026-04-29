@@ -6,8 +6,9 @@
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
 
-    $: prompt = $popupData.prompt || ""
+    const prompt = $popupData.prompt || ""
     const inputType = $popupData.inputType || ""
+    const message = $popupData.message || ""
 
     function keydown(e: KeyboardEvent) {
         if (e.key === "Enter") confirm()
@@ -32,6 +33,10 @@
 <svelte:window on:keydown={keydown} />
 
 {#if inputType}
+    {#if message}
+        <p class="message">{@html message}</p>
+    {/if}
+
     <MaterialTextInput label={prompt} type={inputType} value="" on:input={(e) => (textValue = e.detail)} on:keydown={keydown} autofocus />
 
     <MaterialButton variant="contained" style="margin-top: 20px;" on:click={confirm}>
@@ -57,5 +62,11 @@
 <style>
     p {
         white-space: initial;
+    }
+
+    .message {
+        font-size: 0.8em;
+        opacity: 0.9;
+        margin-bottom: 20px;
     }
 </style>
