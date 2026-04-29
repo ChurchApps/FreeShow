@@ -86,7 +86,8 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
         churchApps: {
             syncCategories: ["song"]
         }
-    }
+    },
+    obsData: {}
 }
 
 export const defaultSyncedSettings: { [key in SaveListSyncedSettings]: any } = {

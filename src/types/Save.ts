@@ -59,6 +59,7 @@ export type SaveListSettings =
     | "timeline"
     | "timecode"
     | "contentProviderData"
+    | "obsData"
 
 export interface SaveData {
     // SETTINGS

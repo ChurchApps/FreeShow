@@ -67,7 +67,8 @@
                       }
                   ]
               ]),
-        [{ id: "triggers", label: "tabs.triggers", icon: "trigger" }]
+        [{ id: "triggers", label: "tabs.triggers", icon: "trigger" }],
+        [{ id: "obs", label: "OBS", icon: "player" }]
     ]
 </script>
 

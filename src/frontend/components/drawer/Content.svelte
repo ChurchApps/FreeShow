@@ -7,6 +7,7 @@
     import Calendar from "./calendar/Calendar.svelte"
     import Media from "./media/Media.svelte"
     import Actions from "./pages/Actions.svelte"
+    import OBS from "./pages/OBS.svelte"
     import Overlays from "./pages/Overlays.svelte"
     import Shows from "./pages/Shows.svelte"
     import Templates from "./pages/Templates.svelte"
@@ -72,6 +73,8 @@
             <Variables {searchValue} />
         {:else if active === "triggers"}
             <Triggers {searchValue} />
+        {:else if active === "obs"}
+            <OBS {searchValue} />
         {/if}
     {/if}
 </div>

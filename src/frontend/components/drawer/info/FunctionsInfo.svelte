@@ -3,6 +3,7 @@
     import { actionHistory, activeTimers, drawerTabsData } from "../../../stores"
     import T from "../../helpers/T.svelte"
     import TimerInfo from "../timers/TimerInfo.svelte"
+    import OBSInfo from "./OBSInfo.svelte"
 
     $: type = $drawerTabsData.functions?.activeSubTab || ""
 
@@ -39,6 +40,8 @@
     <div class="scroll" style="padding: 10px;">
         <T id="tips.trigger" />
     </div>
+{:else if type === "obs"}
+    <OBSInfo />
 {/if}
 
 <style>
