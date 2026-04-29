@@ -643,6 +643,7 @@
         "imported": "Imported!",
         "duplicate": "Duplicate",
         "duplicated": "Duplicated",
+        "make_unique": "Make unique",
         "delete": "Delete",
         "delete_slide_short": "Delete slide",
         "delete_slide": "Delete slide from show",

@@ -322,6 +322,54 @@ const clickActions = {
             return
         }
     },
+    make_unique: (obj: ObjData) => {
+        const ref = getLayoutRef()
+        const slideIndex = obj.sel?.data?.[0]?.index ?? -1 // only one group should be selected
+        const groupId = ref[slideIndex]?.parent?.id || ref[slideIndex]?.id
+        const groupIndex = ref[slideIndex]?.parent?.index || ref[slideIndex]?.index
+
+        const showId = get(activeShow)?.id
+        if (!groupId || !showId) return
+
+        // WIP history
+        showsCache.update((a) => {
+            if (!a[showId]) return a
+
+            const newId = uid()
+            const newSlide = clone(a[showId].slides[groupId])
+            // delete newSlide.id // should not be there
+
+            // group children
+            let newChildren: string[] = []
+            let newChildIds = new Map()
+            const children = newSlide.children || []
+            children.forEach((childId) => {
+                const newChildId = uid()
+                a[showId].slides[newChildId] = clone(a[showId].slides[childId])
+                newChildren.push(newChildId)
+                newChildIds.set(childId, newChildId)
+            })
+
+            if (newChildren.length) newSlide.children = newChildren
+            a[showId].slides[newId] = newSlide
+
+            // layout
+            const activeLayout = a[showId].settings?.activeLayout
+            a[showId].layouts[activeLayout].slides[groupIndex].id = newId
+            // children data
+            if (a[showId].layouts[activeLayout].slides[groupIndex].children) {
+                Object.keys(a[showId].layouts[activeLayout].slides[groupIndex].children).forEach((childId) => {
+                    const newChildId = newChildIds.get(childId)
+                    if (newChildId) {
+                        a[showId].layouts[activeLayout].slides[groupIndex].children![newChildId] = clone(a[showId].layouts[activeLayout].slides[groupIndex].children![childId])
+                        delete a[showId].layouts[activeLayout].slides[groupIndex].children![childId]
+                    }
+                })
+            }
+
+            return a
+        })
+    },
 
     // drawer
     enabled_drawer_tabs: (obj: ObjData) => {

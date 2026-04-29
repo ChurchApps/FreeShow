@@ -148,31 +148,15 @@
                 // enabled = ref[$selected.data[0]?.index]?.data?.transition || false
             }
         },
+        make_unique: () => {
+            if ($selected.id !== "slide" || !$selected.data?.length) return
+
+            hide = isNotMultiGroupSlide($selected.data, true)
+        },
         remove_group: () => {
             if ($selected.id !== "slide" || !$selected.data?.length) return
 
-            hide = $selected.data.every(({ index }) => {
-                const ref = getLayoutRef()
-                const currentSlideId = ref[index]?.parent?.id || ref[index]?.id
-                if (!currentSlideId) return true
-
-                const show = $showsCache[$activeShow?.id || ""]
-
-                // if parent slide and has children, don't hide
-                const isParent = ref[index]?.type === "parent"
-                if (isParent && (show.slides[currentSlideId]?.children || []).length) {
-                    // hide if group is set to "None"
-                    return show.slides[currentSlideId].group === "."
-                }
-
-                const currentSlideInstances = Object.values(show.layouts)
-                    .map((a) => a.slides)
-                    .flat()
-                    .filter((b) => b.id === currentSlideId)
-
-                // hide if there is just one instance of the slide group across all layouts
-                return currentSlideInstances.length < 2
-            })
+            hide = isNotMultiGroupSlide($selected.data)
         },
         remove: () => {
             if ($selected.id !== "show" || _show($selected.data[0]?.id).get("private") !== true) return
@@ -354,6 +338,42 @@
             const folder = $mediaFolders[folderId]
             enabled = folder?.mediaType === "foreground"
         }
+    }
+
+    function isNotMultiGroupSlide(data: { index: number }[], unique = false) {
+        if (!Array.isArray(data)) return false
+
+        const ref = getLayoutRef()
+        const getParentId = (index: number) => ref[index]?.parent?.id || ref[index]?.id
+
+        // check that only one group is selected
+        if (unique && data.length > 1) {
+            const firstGroupId = getParentId(data[0].index)
+            if (!data.every(({ index }) => getParentId(index) === firstGroupId)) return true
+            // same group might be selected multiple places (check by index instead?)
+        }
+
+        return data.every(({ index }) => {
+            const currentSlideId = getParentId(index)
+            if (!currentSlideId) return true
+
+            const show = $showsCache[$activeShow?.id || ""]
+
+            // if parent slide and has children, don't hide
+            const isParent = ref[index]?.type === "parent"
+            if (!unique && isParent && (show.slides[currentSlideId]?.children || []).length) {
+                // hide if group is set to "None"
+                return show.slides[currentSlideId].group === "."
+            }
+
+            const currentSlideInstances = Object.values(show.layouts)
+                .map((a) => a.slides)
+                .flat()
+                .filter((b) => b.id === currentSlideId)
+
+            // hide if there is just one instance of the slide group across all layouts
+            return currentSlideInstances.length < 2
+        })
     }
 
     if (conditions[id]) conditions[id]()
