@@ -129,7 +129,6 @@
         "jzz": "^1.9.5",
         "libltc-wrapper": "github:bitfocus/libltc-wrapper#9637e39",
         "libreoffice-convert": "^1.6.1",
-        "libspotifyctl": "^0.3.4",
         "macadam": "github:vassbo/macadam#d40f0a3",
         "mdb-reader": "^1.2.1",
         "mp4box": "^0.6.5",
@@ -150,5 +149,8 @@
         "yauzl": "^3.2.0",
         "yazl": "^3.3.1",
         "youtube-player": "^5.6.0"
+    },
+    "optionalDependencies": {
+        "libspotifyctl": "^0.3.4"
     }
 }
