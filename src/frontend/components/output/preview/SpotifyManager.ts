@@ -14,8 +14,26 @@ let lock = 0
 let lastArt: string | null = null
 
 export function initSpotifyManager() {
-    fetchState()
-    fetchInt = setInterval(fetchState, 1000)
+    let currentInterval = 1000
+    let lastUsed = Date.now()
+    spotifyState.subscribe((s) => {
+        if (s && (s.isPlaying || s.positionSec > 0)) lastUsed = Date.now()
+    })
+
+    function scheduleFetch(interval: number) {
+        clearInterval(fetchInt)
+        fetchInt = setInterval(checkAndFetch, interval)
+        currentInterval = interval
+    }
+    function checkAndFetch() {
+        fetchState()
+        // if used recently (less than 5 mins ago)
+        const interval = Date.now() - lastUsed < 300000 ? 1000 : 3000
+        if (interval !== currentInterval) scheduleFetch(interval)
+    }
+
+    scheduleFetch(1000)
+
     progressInt = setInterval(() => {
         spotifyState.update((s) => (s?.isPlaying && s.positionSec < s.durationSec ? { ...s, positionSec: s.positionSec + 0.05 } : s))
     }, 50)
