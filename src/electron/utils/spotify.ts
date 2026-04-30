@@ -4,14 +4,17 @@ import type { SpotifyState } from "../../types/Main"
 
 // ----- BRIDGE LOGIC (Windows only) -----
 if (process.env.SPOTIFY_BRIDGE === "true") {
-    const { SpotifyClient } = require("libspotifyctl")
     let client: any = null
 
     process.on("message", (msg: any) => {
         try {
             if (msg.type === "init") {
-                ;(client = new SpotifyClient()).start()
-                process.send?.({ type: "ready" })
+                try {
+                    const isProd = process.env.NODE_ENV === "production" || !/[\\/]electron/.exec(process.execPath)
+                    const mPath = isProd ? require("path").join(process.resourcesPath, "app.asar.unpacked/node_modules/libspotifyctl") : "libspotifyctl"
+                    client = new (require(mPath).SpotifyClient)()
+                    client.start(); process.send?.({ type: "ready" })
+                } catch (e: any) { process.send?.({ type: "error", error: `Failed to load libspotifyctl: ${e.message}` }) }
             } else if (msg.type === "getState") {
                 const s = client?.latestState()
                 if (s) {
@@ -37,11 +40,12 @@ if (process.env.SPOTIFY_BRIDGE === "true") {
 }
 
 // ----- CLIENT LOGIC (Main Process) -----
-const isMac = os.platform() === "darwin",
-    isWin = os.platform() === "win32"
-let bridge: ChildProcess | null = null,
-    initialized = false,
-    pending: ((s: SpotifyState | null) => void) | null = null
+const isMac = os.platform() === "darwin"
+const isWin = os.platform() === "win32"
+const isLinux = os.platform() === "linux"
+let bridge: ChildProcess | null = null
+let initialized = false
+let pending: ((s: SpotifyState | null) => void) | null = null
 
 export function initSpotify() {
     if (initialized || !isWin) return
@@ -102,6 +106,21 @@ export async function getSpotifyState(): Promise<SpotifyState | null> {
             setTimeout(() => pending === res && (pending(null), (pending = null)), 500)
         })
     }
+    if (isLinux) {
+        return new Promise((res) => {
+            const dbus = "dbus-send --print-reply --dest=org.mpris.MediaPlayer2.spotify /org/mpris/MediaPlayer2 org.freedesktop.DBus.Properties.Get string:'org.mpris.MediaPlayer2.Player'"
+            exec(`${dbus} string:'Metadata' && ${dbus} string:'PlaybackStatus' && ${dbus} string:'Position' && ${dbus} string:'Volume'`, (e, out) => {
+                if (e) return res(null)
+                const title = out.match(/string\s+"xesam:title"\s+variant\s+string\s+"([^"]+)"/)?.[1]
+                const artist = out.match(/string\s+"xesam:artist"\s+variant\s+array\s+\[\s+string\s+"([^"]+)"/)?.[1]
+                const len = parseInt(out.match(/string\s+"mpris:length"\s+variant\s+uint64\s+(\d+)/)?.[1] || "0")
+                const art = out.match(/string\s+"mpris:artUrl"\s+variant\s+string\s+"([^"]+)"/)?.[1]
+                const pos = parseInt(out.match(/uint64\s+(\d+)/)?.[1] || "0")
+                const vol = parseFloat(out.match(/double\s+([\d.]+)/)?.[1] || "1")
+                res(title ? { isPlaying: out.includes("Playing"), title, artist: artist || "Unknown", positionSec: pos / 1000000, durationSec: len / 1000000, albumArt: art, volume: vol, platform: "linux" } : null)
+            })
+        })
+    }
     return null
 }
 
@@ -113,5 +132,19 @@ export async function executeSpotifyCommand(cmd: string, val?: number): Promise<
     else if (isWin) {
         initSpotify()
         setTimeout(() => bridge?.send({ type: "command", command: cmd, value: val }), 500)
+    } else if (isLinux) {
+        const dest = "--dest=org.mpris.MediaPlayer2.spotify /org/mpris/MediaPlayer2"
+        const mpris = "org.mpris.MediaPlayer2.Player"
+        if (cmd === "playpause") exec(`dbus-send ${dest} ${mpris}.PlayPause`)
+        else if (cmd === "next") exec(`dbus-send ${dest} ${mpris}.Next`)
+        else if (cmd === "prev") exec(`dbus-send ${dest} ${mpris}.Previous`)
+        else if (cmd === "pause") exec(`dbus-send ${dest} ${mpris}.Pause`)
+        else if (cmd === "setVolume" && val !== undefined) exec(`dbus-send ${dest} org.freedesktop.DBus.Properties.Set string:${mpris} string:'Volume' variant:double:${val}`)
+        else if (cmd === "seek" && val !== undefined) {
+            exec(`dbus-send --print-reply ${dest} org.freedesktop.DBus.Properties.Get string:${mpris} string:'Metadata'`, (_e, out) => {
+                const id = out?.match(/string\s+"mpris:trackid"\s+variant\s+string\s+"([^"]+)"/)?.[1]
+                if (id) exec(`dbus-send ${dest} ${mpris}.SetPosition objpath:${id} x64:${Math.round(val * 1000000)}`)
+            })
+        }
     }
 }

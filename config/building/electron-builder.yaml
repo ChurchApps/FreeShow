@@ -26,6 +26,7 @@ win:
     icon: build/public/icon.png
     asarUnpack:
         - "**/node_modules/macadam/**/*.node"
+        - "**/node_modules/libspotifyctl/**/*"
     azureSignOptions:
         publisherName: Live Church Solutions
         endpoint: https://wus2.codesigning.azure.net/
