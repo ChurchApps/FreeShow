@@ -47,7 +47,8 @@ function deleteThumbnails(filePath: string) {
 
 const currentlyGenerating = new Set<string>()
 export async function getThumbnail(data: { input: string; size: number }) {
-    if (!(await doesPathExistAsync(data.input))) return { ...data, output: "" }
+    const inputStats = await getFileStatsAsync(data.input)
+    if (!inputStats) return { ...data, output: "" }
 
     const mediaId = `${data.input}-${data.size}`
     if (currentlyGenerating.has(mediaId)) {
@@ -58,9 +59,15 @@ export async function getThumbnail(data: { input: string; size: number }) {
     currentlyGenerating.add(mediaId)
 
     const outputPath = getThumbnailPath(data.input, data.size || 500)
-    if (await doesPathExistAsync(outputPath)) {
-        currentlyGenerating.delete(mediaId)
-        return finish(outputPath)
+    const outputStats = await getFileStatsAsync(outputPath)
+    if (outputStats) {
+        if (inputStats.mtimeMs > outputStats.mtimeMs) {
+            // source file is newer than thumbnail, delete old thumbnail
+            deleteFile(outputPath)
+        } else {
+            currentlyGenerating.delete(mediaId)
+            return finish(outputPath)
+        }
     }
 
     createThumbnail(data.input, data.size || 500)
