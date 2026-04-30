@@ -20,11 +20,11 @@ import type { API_output_style } from "../actions/api"
 import { getCurrentTimerValue, getTimeUntilClock, playPauseGlobal } from "../drawer/timers/timers"
 import { getDynamicValue } from "../edit/scripts/itemHelpers"
 import { getTextLines } from "../edit/scripts/textStyle"
-import { clearBackground, clearOverlays, clearTimers } from "../output/clear"
+import { clearBackground, clearOverlays, clearSlide, clearTimers } from "../output/clear"
 import { actions, activeEdit, activeFocus, activePage, activeProject, activeShow, allOutputs, audioData, customMetadata, dictionary, dynamicValueData, focusMode, media, outLocked, outputDisplay, outputs, outputSlideCache, overlays, playingAudio, playingMetronome, projects, shows, showsCache, slideTimers, special, stageShows, styles, templates, timers, triggers, variables, videosData, videosTime } from "./../../stores"
 import { clone, keysToID, sortByName } from "./array"
-import { downloadOnlineMedia, getExtension, getFileName, getMedia, getMediaStyle, getMediaType, removeExtension } from "./media"
-import { defaultLayers, getActiveOutputs, getAllNormalOutputs, getFirstActiveOutput, getFirstOutput, getWindowOutputId, isOutCleared, refreshOut, setOutput } from "./output"
+import { downloadOnlineMedia, getExtension, getFileName, getMedia, getMediaLayerType, getMediaStyle, getMediaType, removeExtension } from "./media"
+import { defaultLayers, getActiveOutputs, getAllNormalOutputs, getCurrentStyle, getFirstActiveOutput, getFirstOutput, getWindowOutputId, isOutCleared, refreshOut, setOutput } from "./output"
 import { getSetChars } from "./randomValue"
 import { loadShows } from "./setShow"
 import { getCustomMetadata, getGroupName, getLayoutRef } from "./show"
@@ -162,6 +162,8 @@ export function nextSlideIndividual(e: any, start = false, end = false) {
     getActiveOutputs(get(outputs), true, false, true).forEach((id) => nextSlide(e, start, end, false, false, id, false, true))
 }
 
+// TODO: update next/previous logic for focus/normal mode, outputted/active, show/media types, etc.
+
 let isGoingNext = false
 export function nextSlide(e: any, start = false, end = false, loop = false, bypassLock = false, customOutputId = "", nextAfterMedia = false, advanceThroughProject: boolean = false) {
     if (get(outLocked) && !bypassLock) return
@@ -179,6 +181,22 @@ export function nextSlide(e: any, start = false, end = false, loop = false, bypa
         if (cachedSlide && cachedSlide?.id === currentShow?.id && cachedSlide?.layout === currentLayoutId) slide = cachedSlide
     }
     // if (slide?.layout) currentLayoutId = slide.layout
+
+    if (get(focusMode)) {
+        // get and play media items in focus mode
+        const mediaPath = currentOutput.out?.background?.path
+        if (!slide && mediaPath) {
+            const projectItems = get(projects)[get(activeProject) || ""]?.shows || []
+            const projectIndex = projectItems.findIndex((a) => a.id === mediaPath)
+            const nextProjectShowIndex = projectIndex > -1 ? projectItems.findIndex((_a, i) => i > projectIndex) : -1
+            if (nextProjectShowIndex > -1) {
+                const next = projectItems[nextProjectShowIndex]
+                if (next.type === "image" || next.type === "video" || next.type === "player") {
+                    playProjectItemMedia(next.id)
+                }
+            }
+        }
+    }
 
     // PPT
     if (slide?.type === "ppt") {
@@ -267,11 +285,21 @@ export function nextSlide(e: any, start = false, end = false, loop = false, bypa
         if (get(focusMode) && !start && !loop && currentOutput.out?.slide?.id && slide?.id !== currentShow.id && (slide?.type || "show") === "show") {
             // get next show after current one
             const currentId = currentOutput.out.slide.id
-            const projectIndex = projectItems.findIndex((a) => a.id === currentId && (a.type || "show") === "show")
-            const nextProjectShowIndex = projectIndex > -1 ? projectItems.findIndex((a, i) => i > projectIndex && (a.type || "show") === "show") : -1
-            if (nextProjectShowIndex > -1) {
-                id = projectItems[nextProjectShowIndex].id || id
-                currentLayoutId = projectItems[nextProjectShowIndex]?.layout || _show(id).get("settings.activeLayout")
+            const projectIndex = projectItems.findIndex((a) => a.id === currentId && (!a.layout || a.layout === currentLayoutId) && (a.type || "show") === "show")
+            const nextProjectItemIndex = projectIndex > -1 ? projectItems.findIndex((a, i) => i > projectIndex && a.type !== "section") : -1
+            if (nextProjectItemIndex > -1) {
+                const next = projectItems[nextProjectItemIndex]
+                id = next.id || id
+
+                // play media (this only runs if the current show is not selected)
+                if ((next.type || "show") !== "show") {
+                    if (next.type === "image" || next.type === "video" || next.type === "player") {
+                        playProjectItemMedia(next.id)
+                    }
+                    return
+                }
+
+                currentLayoutId = projectItems[nextProjectItemIndex]?.layout || _show(id).get("settings.activeLayout")
             }
         }
 
@@ -339,6 +367,19 @@ export function nextSlide(e: any, start = false, end = false, loop = false, bypa
             updateOut(slide ? slide.id : "active", index!, layout, !e?.altKey, customOutputId)
         })
     }
+}
+
+function playProjectItemMedia(path: string) {
+    const currentOutput = getFirstActiveOutput()
+    const currentStyle = getCurrentStyle(get(styles), currentOutput?.style)
+
+    const mediaData = get(media)[path] || {}
+    const mediaStyle = getMediaStyle(mediaData, currentStyle)
+
+    const type = getMediaLayerType(path, mediaStyle)
+    if (type === "foreground" || type !== "background") clearSlide()
+
+    setOutput("background", { path: path, ...mediaStyle })
 }
 
 const triggerActionsBeforeOutput = {
