@@ -165,9 +165,9 @@
     <div style="display: flex;flex-direction: column;flex: 1;height: 100%;">
         <!-- Preview Canvas -->
         <div style="background: #101216;position: relative;font-family: 'Segoe UI', system-ui, sans-serif;">
-            <div style="position: absolute;top: 0.25em;left: 0.25em;background: rgba(22, 25, 28, 0.85);color: #cbd5e1;padding: 0.2em 0.5em;border-radius: 4px;font-size: 0.7em;font-weight: 600;border: 1px solid #101216;letter-spacing: 0.05em;">
+            <!-- <div style="position: absolute;top: 0.25em;left: 0.25em;background: rgba(22, 25, 28, 0.85);color: #cbd5e1;padding: 0.2em 0.5em;border-radius: 4px;font-size: 0.7em;font-weight: 600;border: 1px solid #101216;letter-spacing: 0.05em;">
                 {currentScene || "No Scene"}
-            </div>
+            </div> -->
             {#if previewImg}
                 <img id="preview-img" src={previewImg} alt="Scene Preview" style="width: 100%;display: block;" />
             {:else}
@@ -176,7 +176,7 @@
         </div>
 
         <!-- Status Indicators -->
-        <div style="display: flex;align-items: center;justify-content: center;gap: 1em;background: #1f232a;padding: 0.6em 1em;border-radius: 6px;font-family: 'Segoe UI', system-ui, sans-serif;">
+        <!-- <div style="display: flex;align-items: center;justify-content: center;gap: 1.5em;background: #1f232a;padding: 0.6em 1em;border-radius: 6px;font-family: 'Segoe UI', system-ui, sans-serif;">
             <div style="display: flex;align-items: center;gap: 0.4em;">
                 <span style="display: inline-block;width: 8px;height: 8px;border-radius: 50%;background: {isLive ? '#ef4444' : 'rgba(255,255,255,0.2)'};box-shadow: {isLive ? '0 0 6px #ef4444' : 'none'};transition: all 0.3s;"></span>
                 <span style="color: {isLive ? '#f1f3f5' : '#94a3b8'};font-weight: 700;font-size: 0.8em;letter-spacing: 0.05em;">LIVE</span>
@@ -186,13 +186,22 @@
                 <span style="display: inline-block;width: 8px;height: 8px;border-radius: 50%;background: {isRecording ? '#ef4444' : 'rgba(255,255,255,0.2)'};box-shadow: {isRecording ? '0 0 6px #ef4444' : 'none'};transition: all 0.3s;"></span>
                 <span style="color: {isRecording ? '#f1f3f5' : '#94a3b8'};font-weight: 700;font-size: 0.8em;letter-spacing: 0.05em;">REC</span>
             </div>
-        </div>
+        </div> -->
 
         <!-- Spacer to push the metrics to the bottom -->
         <div style="flex: 1;"></div>
 
         <!-- Metrics Grid -->
         <div style="display: grid;grid-template-columns: 1fr 1fr;justify-items: center;text-align: center;gap: 0.5em;background: #1f232a;padding: 0.5em 0.75em;border-radius: 6px;font-family: 'Segoe UI', system-ui, sans-serif;">
+            <div style="display: flex;align-items: center;flex-direction: column;gap: 0.35em;margin-bottom: 5px;">
+                <span style="color: {isLive ? '#f1f3f5' : '#94a3b8'};font-size: 0.7em;font-weight: 600;letter-spacing: 0.05em;">LIVE</span>
+                <span style="display: inline-block;width: 15px;height: 15px;border-radius: 50%;background: {isLive ? '#ef4444' : 'rgba(255,255,255,0.2)'};box-shadow: {isLive ? '0 0 6px #ef4444' : 'none'};transition: all 0.3s;"></span>
+            </div>
+            <div style="display: flex;align-items: center;flex-direction: column;gap: 0.35em;margin-bottom: 5px;">
+                <span style="color: {isRecording ? '#f1f3f5' : '#94a3b8'};font-size: 0.7em;font-weight: 600;letter-spacing: 0.05em;">REC</span>
+                <span style="display: inline-block;width: 15px;height: 15px;border-radius: 50%;background: {isRecording ? '#ef4444' : 'rgba(255,255,255,0.2)'};box-shadow: {isRecording ? '0 0 6px #ef4444' : 'none'};transition: all 0.3s;"></span>
+            </div>
+
             <div style="display: flex;flex-direction: column;gap: 0.15em;">
                 <span style="color: #64748b;font-size: 0.65em;font-weight: 600;letter-spacing: 0.05em;text-transform: uppercase;">CPU Usage</span>
                 <span style="color: #cbd5e1;font-size: 0.95em;font-weight: 700;">{cpuUsage.toFixed(1)}%</span>
@@ -201,6 +210,7 @@
                 <span style="color: #64748b;font-size: 0.65em;font-weight: 600;letter-spacing: 0.05em;text-transform: uppercase;">Framerate</span>
                 <span style="color: #cbd5e1;font-size: 0.95em;font-weight: 700;">{activeFps.toFixed(0)} FPS</span>
             </div>
+
             {#if isLive}
                 <div style="display: flex;flex-direction: column;gap: 0.15em;grid-column: span 2;">
                     <div style="width: 100%;height: 1px;background: #2b303c;margin: 0.15em 0;"></div>

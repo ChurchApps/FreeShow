@@ -9,6 +9,7 @@
     import Center from "../../system/Center.svelte"
     import T from "../../helpers/T.svelte"
     import Link from "../../inputs/Link.svelte"
+    import FloatingInputs from "../../input/FloatingInputs.svelte"
 
     export let searchValue: string
     console.log(searchValue)
@@ -132,6 +133,37 @@
                     case "InputMuteStateChanged":
                         audioInputs = audioInputs.map((input) => (input.inputName === evt.inputName ? { ...input, inputMuted: evt.inputMuted } : input))
                         break
+                    case "InputVolumeMeters":
+                        if (evt.inputs) {
+                            evt.inputs.forEach((meterData: any) => {
+                                const target = audioInputs.find((i) => i.inputName === meterData.inputName)
+                                if (target) {
+                                    if (meterData.inputLevelsMul) {
+                                        target.channels = meterData.inputLevelsMul.map((channel: number[]) => {
+                                            const mag = channel[1] ?? channel[0] ?? 0
+                                            // -100dB is 0.00001, anything above this means the line is active
+                                            const channelHasSound = mag > 0.00001
+
+                                            const db = mag > 0 ? 20 * Math.log10(mag) : -100
+
+                                            // Piecewise mapping to match OBS exact visual meter spacing
+                                            let percent = 0
+                                            if (db <= -60) percent = 0
+                                            else if (db <= -20) percent = ((db + 60) / 40) * 75
+                                            else if (db <= -9) percent = 75 + ((db + 20) / 11) * 15
+                                            else if (db <= 0) percent = 90 + ((db + 9) / 9) * 10
+                                            else percent = 100
+
+                                            return { db, percent, hasSound: channelHasSound }
+                                        })
+                                    } else {
+                                        target.channels = []
+                                    }
+                                }
+                            })
+                            audioInputs = audioInputs
+                        }
+                        break
                 }
             }
         })
@@ -226,6 +258,8 @@
             }, 500)
         }
     }
+
+    let showAll = false
 </script>
 
 {#if connected}
@@ -247,26 +281,28 @@
         </div>
 
         <!-- Sources List Dock -->
-        <div class="obs-dock">
-            <div class="obs-dock-header">
-                <h4 class="obs-dock-title">Sources</h4>
+        {#if showAll}
+            <div class="obs-dock">
+                <div class="obs-dock-header">
+                    <h4 class="obs-dock-title">Sources</h4>
+                </div>
+                <ul class="obs-dock-list">
+                    {#each sources as source}
+                        <li style="width: 100%;display: flex;justify-content: space-between;align-items: center;padding: 0.3em 0.7em;background: #2b303c;border-radius: 4px;">
+                            <span style="color: {source.sceneItemEnabled ? '#f1f3f5' : '#64748b'};font-size: 0.85em;text-overflow: ellipsis;overflow: hidden;white-space: nowrap;max-width: 140px;" title={source.sourceName}>
+                                {source.sourceName}
+                            </span>
+                            <MaterialButton on:click={() => toggleSource(source)} class="obs-btn-icon" title={source.sceneItemEnabled ? "Hide Layer" : "Show Layer"}>
+                                <Icon id={source.sceneItemEnabled ? "eye" : "hide"} style="opacity: {source.sceneItemEnabled ? 1 : 0.35};" white />
+                            </MaterialButton>
+                        </li>
+                    {/each}
+                    {#if sources.length === 0}
+                        <div style="padding: 1em;color: #555;font-size: 0.8em;text-align: center;">No Sources</div>
+                    {/if}
+                </ul>
             </div>
-            <ul class="obs-dock-list">
-                {#each sources as source}
-                    <li style="width: 100%;display: flex;justify-content: space-between;align-items: center;padding: 0.3em 0.7em;background: #2b303c;border-radius: 4px;">
-                        <span style="color: {source.sceneItemEnabled ? '#f1f3f5' : '#64748b'};font-size: 0.85em;text-overflow: ellipsis;overflow: hidden;white-space: nowrap;max-width: 140px;" title={source.sourceName}>
-                            {source.sourceName}
-                        </span>
-                        <MaterialButton on:click={() => toggleSource(source)} class="obs-btn-icon" title={source.sceneItemEnabled ? "Hide Layer" : "Show Layer"}>
-                            <Icon id={source.sceneItemEnabled ? "eye" : "hide"} style="opacity: {source.sceneItemEnabled ? 1 : 0.35};" white />
-                        </MaterialButton>
-                    </li>
-                {/each}
-                {#if sources.length === 0}
-                    <div style="padding: 1em;color: #555;font-size: 0.8em;text-align: center;">No Sources</div>
-                {/if}
-            </ul>
-        </div>
+        {/if}
 
         <!-- Audio Mixer Dock -->
         <div class="obs-dock">
@@ -275,13 +311,25 @@
             </div>
             <ul class="obs-dock-list">
                 {#each audioInputs.filter((input) => input.hasAudio) as input}
-                    <li style="width: 100%;display: flex;justify-content: space-between;align-items: center;padding: 0.3em 0.7em;background: #2b303c;border-radius: 4px;">
-                        <span style="color: {input.inputMuted ? '#64748b' : '#f1f3f5'};font-size: 0.85em;text-overflow: ellipsis;overflow: hidden;white-space: nowrap;max-width: 140px;" title={input.inputName}>
-                            {input.inputName}
-                        </span>
-                        <MaterialButton on:click={() => toggleMute(input)} class="obs-btn-icon" title={input.inputMuted ? "Unmute" : "Mute"}>
-                            <Icon id={input.inputMuted ? "volume_off" : "volume"} style="opacity: {input.inputMuted ? 0.7 : 1};" color={input.inputMuted ? "red" : ""} white />
-                        </MaterialButton>
+                    <li style="width: 100%;display: flex;flex-direction: column;padding: 0.3em 0.7em;background: #2b303c;border-radius: 4px;">
+                        <div style="display: flex;justify-content: space-between;align-items: center;width: 100%;">
+                            <span style="color: {input.inputMuted ? '#64748b' : '#f1f3f5'};font-size: 0.85em;text-overflow: ellipsis;overflow: hidden;white-space: nowrap;" title={input.inputName}>
+                                {input.inputName}
+                            </span>
+                            <MaterialButton on:click={() => toggleMute(input)} class="obs-btn-icon" title={input.inputMuted ? "Unmute" : "Mute"}>
+                                <Icon id={input.inputMuted ? "volume_off" : "volume"} style="opacity: {input.inputMuted ? 0.7 : 1};" color={input.inputMuted ? "red" : ""} white />
+                            </MaterialButton>
+                        </div>
+                        <div style="width: 100%;display: flex;flex-direction: column;gap: 2px;margin-top: 4px;opacity: {input.inputMuted ? 0.3 : 1};">
+                            {#each input.channels || [] as channel}
+                                <div style="display: flex;align-items: center;gap: 2px;width: 100%;">
+                                    <div style="width: 10px;height: 4px;border-radius: 1.5px;background: {channel.hasSound ? '#22c55e' : '#101216'};transition: background-color 0.1s ease-out;flex-shrink: 0;" title={channel.hasSound ? "Signal Active" : "No Signal"}></div>
+                                    <div style="flex: 1;height: 4px;background: #101216;border-radius: 1.5px;overflow: hidden;">
+                                        <div style="width: {channel.percent || 0}%;height: 100%;background: {(channel.db || -100) > -9 ? '#ef4444' : (channel.db || -100) > -20 ? '#eab308' : '#22c55e'};transition: width 0.1s ease-out, background-color 0.1s ease-out;max-width: 100%;"></div>
+                                    </div>
+                                </div>
+                            {/each}
+                        </div>
                     </li>
                 {/each}
                 {#if audioInputs.filter((input) => input.hasAudio).length === 0}
@@ -291,20 +339,22 @@
         </div>
 
         <!-- Scene Transitions Dock -->
-        <div class="obs-dock">
-            <div class="obs-dock-header">
-                <h4 class="obs-dock-title">Scene Transitions</h4>
+        {#if showAll}
+            <div class="obs-dock">
+                <div class="obs-dock-header">
+                    <h4 class="obs-dock-title">Scene Transitions</h4>
+                </div>
+                <ul class="obs-dock-list">
+                    {#each transitions as transition}
+                        <li style="width: 100%;display: flex;justify-content: flex-start;">
+                            <MaterialButton on:click={() => changeTransition(transition)} id={transition === currentTransition ? "active-transition-btn" : ""} class="obs-btn {transition === currentTransition ? 'active-scene' : ''}">
+                                {transition}
+                            </MaterialButton>
+                        </li>
+                    {/each}
+                </ul>
             </div>
-            <ul class="obs-dock-list">
-                {#each transitions as transition}
-                    <li style="width: 100%;display: flex;justify-content: flex-start;">
-                        <MaterialButton on:click={() => changeTransition(transition)} id={transition === currentTransition ? "active-transition-btn" : ""} class="obs-btn {transition === currentTransition ? 'active-scene' : ''}">
-                            {transition}
-                        </MaterialButton>
-                    </li>
-                {/each}
-            </ul>
-        </div>
+        {/if}
 
         <!-- Controls Dock -->
         <div class="obs-dock">
@@ -325,6 +375,12 @@
             </div>
         </div>
     </div>
+
+    <FloatingInputs round>
+        <MaterialButton isActive={showAll} title="create_show.more_options" on:click={() => (showAll = !showAll)}>
+            <Icon id={showAll ? "eye" : "hide"} white={!showAll} />
+        </MaterialButton>
+    </FloatingInputs>
 {:else}
     <Center>
         <Link url="https://freeshow.app/docs/livestreaming#setting-up-obs-control-from-freeshow">
