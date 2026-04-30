@@ -748,7 +748,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
             let ref = _show(data.remember.showId).layouts([data.remember.layout]).ref()[0] || []
             const slideId: string = data.indexes ? ref[data.indexes[0]]?.id : ""
 
-            const createItems = !!data.data?.createItems
+            let createItems = !!data.data?.createItems
             const shiftItems = !!data.data?.shiftItems
             const previousTemplateId = show.settings?.template
 
@@ -871,6 +871,8 @@ export const historyActions = ({ obj, undo = null }: any) => {
                             slideTemplate = clone(get(templates)[get(groups)[globalGroup]?.template || ""]) || template
                             templateMode = "group"
                         }
+                        // always create items in group template
+                        createItems = true
                     }
 
                     // first slide template
