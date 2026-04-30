@@ -18,6 +18,18 @@ export interface OS {
     arch: string
 }
 
+export interface SpotifyState {
+    isPlaying: boolean
+    title: string
+    artist: string
+    albumArt?: string
+    positionSec: number
+    durationSec: number
+    platform: NodeJS.Platform
+    volume: number
+    bgColor?: string
+}
+
 export interface Option {
     name: string
     extra?: string

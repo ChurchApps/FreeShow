@@ -194,6 +194,7 @@
         "previous": "Previous",
         "play_no_audio": "Play without audio",
         "play_no_filters": "Play without filters",
+        "fade_out": "Fade out",
         "favourite": "Favorite",
         "effects_library_add": "Add to effects library",
         "effects_library_remove": "Remove from effects library",

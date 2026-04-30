@@ -3,6 +3,7 @@ import path from "path"
 import { isProd, isWindows, setAutoProfile } from ".."
 import { catchErrors } from "../IPC/responsesMain"
 import { detectNewFiles, doesPathExist } from "./files"
+import { initSpotify } from "./spotify"
 
 export function parseCommandLineArgs() {
     const result: { profile?: string } = {}
@@ -32,6 +33,8 @@ export function mainWindowInitialize() {
     if (isWindows) app.setAppUserModelId(app.name)
 
     detectNewFiles()
+
+    initSpotify()
 
     if (!isProd) return
 

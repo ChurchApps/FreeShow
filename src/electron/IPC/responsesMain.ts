@@ -31,6 +31,7 @@ import { LyricSearch } from "../utils/LyricSearch"
 import { closeMidiInPorts, getMidiInputs, getMidiOutputs, receiveMidi, sendMidi } from "../utils/midi"
 import { deleteShows, deleteShowsNotIndexed, getAllShows, getEmptyShows, refreshAllShows } from "../utils/shows"
 import { correctSpelling } from "../utils/spellcheck"
+import { executeSpotifyCommand, getSpotifyState } from "../utils/spotify"
 import checkForUpdates from "../utils/updater"
 
 export const mainResponses: MainResponses = {
@@ -224,7 +225,13 @@ export const mainResponses: MainResponses = {
     [Main.TIMECODE_STOP]: () => timecodeStop(),
     [Main.TIMECODE_VALUE]: (data) => updateTimecodeValue(data),
     [Main.TIMECODE_STATUS]: (data) => console.log(data),
-    [Main.TIMECODE_AUDIO_DATA]: (data) => processAudioData(data)
+    [Main.TIMECODE_AUDIO_DATA]: (data) => processAudioData(data),
+    // Spotify
+    [Main.SPOTIFY_GET_STATE]: () => getSpotifyState(),
+    [Main.SPOTIFY_COMMAND]: async (data) => {
+        await executeSpotifyCommand(data.command, data.value)
+        return true
+    }
 }
 
 /// ///////
