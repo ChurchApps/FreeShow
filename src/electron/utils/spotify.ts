@@ -13,8 +13,11 @@ if (process.env.SPOTIFY_BRIDGE === "true") {
                     const isProd = process.env.NODE_ENV === "production" || !/[\\/]electron/.exec(process.execPath)
                     const mPath = isProd ? require("path").join(process.resourcesPath, "app.asar.unpacked/node_modules/libspotifyctl") : "libspotifyctl"
                     client = new (require(mPath).SpotifyClient)()
-                    client.start(); process.send?.({ type: "ready" })
-                } catch (e: any) { process.send?.({ type: "error", error: `Failed to load libspotifyctl: ${e.message}` }) }
+                    client.start()
+                    process.send?.({ type: "ready" })
+                } catch (e: any) {
+                    process.send?.({ type: "error", error: `Failed to load libspotifyctl: ${e.message}` })
+                }
             } else if (msg.type === "getState") {
                 const s = client?.latestState()
                 if (s) {
@@ -89,62 +92,76 @@ const macScript = (c?: string) => `tell application "Spotify"
 end tell`
 
 export async function getSpotifyState(): Promise<SpotifyState | null> {
-    if (isMac)
-        return new Promise((res) =>
-            exec(`osascript -e '${macScript().replace(/'/g, "'\\''")}'`, (e, out) => {
-                const p = out?.trim().split("|SEC|")
-                res(e || out.includes("NOT_RUNNING") || p.length < 5 ? null : { isPlaying: p[0] === "true", title: p[1], artist: p[2], positionSec: parseFloat(p[3]) || 0, durationSec: parseFloat(p[4]) || 0, albumArt: p[5] || undefined, volume: (parseInt(p[6]) || 0) / 100, platform: "darwin" })
+    try {
+        if (isMac)
+            return new Promise((res) =>
+                exec(`osascript -e '${macScript().replace(/'/g, "'\\''")}'`, (e, out) => {
+                    if (e && !out.includes("NOT_RUNNING")) console.error("[Spotify] Mac error:", e)
+                    const p = out?.trim().split("|SEC|")
+                    res(e || out.includes("NOT_RUNNING") || p.length < 5 ? null : { isPlaying: p[0] === "true", title: p[1], artist: p[2], positionSec: parseFloat(p[3]) || 0, durationSec: parseFloat(p[4]) || 0, albumArt: p[5] || undefined, volume: (parseInt(p[6]) || 0) / 100, platform: "darwin" })
+                })
+            )
+        if (isWin) {
+            if (!initialized) initSpotify()
+            if (!bridge?.connected) return null
+            return new Promise((res) => {
+                pending?.(null)
+                pending = res
+                bridge?.send({ type: "getState" })
+                setTimeout(() => pending === res && (pending(null), (pending = null)), 500)
             })
-        )
-    if (isWin) {
-        if (!initialized) initSpotify()
-        if (!bridge?.connected) return null
-        return new Promise((res) => {
-            pending?.(null)
-            pending = res
-            bridge?.send({ type: "getState" })
-            setTimeout(() => pending === res && (pending(null), (pending = null)), 500)
-        })
-    }
-    if (isLinux) {
-        return new Promise((res) => {
-            const dbus = "dbus-send --print-reply --dest=org.mpris.MediaPlayer2.spotify /org/mpris/MediaPlayer2 org.freedesktop.DBus.Properties.Get string:'org.mpris.MediaPlayer2.Player'"
-            exec(`${dbus} string:'Metadata' && ${dbus} string:'PlaybackStatus' && ${dbus} string:'Position' && ${dbus} string:'Volume'`, (e, out) => {
-                if (e) return res(null)
-                const title = out.match(/string\s+"xesam:title"\s+variant\s+string\s+"([^"]+)"/)?.[1]
-                const artist = out.match(/string\s+"xesam:artist"\s+variant\s+array\s+\[\s+string\s+"([^"]+)"/)?.[1]
-                const len = parseInt(out.match(/string\s+"mpris:length"\s+variant\s+uint64\s+(\d+)/)?.[1] || "0")
-                const art = out.match(/string\s+"mpris:artUrl"\s+variant\s+string\s+"([^"]+)"/)?.[1]
-                const pos = parseInt(out.match(/uint64\s+(\d+)/)?.[1] || "0")
-                const vol = parseFloat(out.match(/double\s+([\d.]+)/)?.[1] || "1")
-                res(title ? { isPlaying: out.includes("Playing"), title, artist: artist || "Unknown", positionSec: pos / 1000000, durationSec: len / 1000000, albumArt: art, volume: vol, platform: "linux" } : null)
+        }
+        if (isLinux) {
+            return new Promise((res) => {
+                const dbus = "dbus-send --print-reply --dest=org.mpris.MediaPlayer2.spotify /org/mpris/MediaPlayer2 org.freedesktop.DBus.Properties.Get string:'org.mpris.MediaPlayer2.Player'"
+                exec(`${dbus} string:'Metadata' && ${dbus} string:'PlaybackStatus' && ${dbus} string:'Position' && ${dbus} string:'Volume'`, (e, out) => {
+                    if (e) {
+                        if (!out.includes("org.mpris.MediaPlayer2.spotify")) console.error("[Spotify] Linux error:", e)
+                        return res(null)
+                    }
+                    const title = out.match(/string\s+"xesam:title"\s+variant\s+string\s+"([^"]+)"/)?.[1]
+                    const artist = out.match(/string\s+"xesam:artist"\s+variant\s+array\s+\[\s+string\s+"([^"]+)"/)?.[1]
+                    const len = parseInt(out.match(/string\s+"mpris:length"\s+variant\s+uint64\s+(\d+)/)?.[1] || "0")
+                    const art = out.match(/string\s+"mpris:artUrl"\s+variant\s+string\s+"([^"]+)"/)?.[1]
+                    const pos = parseInt(out.match(/uint64\s+(\d+)/)?.[1] || "0")
+                    const vol = parseFloat(out.match(/double\s+([\d.]+)/)?.[1] || "1")
+                    res(title ? { isPlaying: out.includes("Playing"), title, artist: artist || "Unknown", positionSec: pos / 1000000, durationSec: len / 1000000, albumArt: art, volume: vol, platform: "linux" } : null)
+                })
             })
-        })
+        }
+    } catch (e) {
+        console.error("[Spotify] State error:", e)
     }
     return null
 }
 
 export async function executeSpotifyCommand(cmd: string, val?: number): Promise<void> {
-    if (isMac) {
-        const scripts: any = { playpause: "playpause", next: "next track", prev: "previous track", seek: `set player position to ${val}`, setVolume: `set sound volume to ${Math.round(val! * 100)}`, pause: "pause" }
-        if (scripts[cmd]) exec(`osascript -e '${macScript(scripts[cmd]).replace(/'/g, "'\\''")}'`)
-    } else if (isWin && bridge?.connected) bridge.send({ type: "command", command: cmd, value: val })
-    else if (isWin) {
-        initSpotify()
-        setTimeout(() => bridge?.send({ type: "command", command: cmd, value: val }), 500)
-    } else if (isLinux) {
-        const dest = "--dest=org.mpris.MediaPlayer2.spotify /org/mpris/MediaPlayer2"
-        const mpris = "org.mpris.MediaPlayer2.Player"
-        if (cmd === "playpause") exec(`dbus-send ${dest} ${mpris}.PlayPause`)
-        else if (cmd === "next") exec(`dbus-send ${dest} ${mpris}.Next`)
-        else if (cmd === "prev") exec(`dbus-send ${dest} ${mpris}.Previous`)
-        else if (cmd === "pause") exec(`dbus-send ${dest} ${mpris}.Pause`)
-        else if (cmd === "setVolume" && val !== undefined) exec(`dbus-send ${dest} org.freedesktop.DBus.Properties.Set string:${mpris} string:'Volume' variant:double:${val}`)
-        else if (cmd === "seek" && val !== undefined) {
-            exec(`dbus-send --print-reply ${dest} org.freedesktop.DBus.Properties.Get string:${mpris} string:'Metadata'`, (_e, out) => {
-                const id = out?.match(/string\s+"mpris:trackid"\s+variant\s+string\s+"([^"]+)"/)?.[1]
-                if (id) exec(`dbus-send ${dest} ${mpris}.SetPosition objpath:${id} x64:${Math.round(val * 1000000)}`)
-            })
+    try {
+        if (isMac) {
+            const scripts: any = { playpause: "playpause", next: "next track", prev: "previous track", seek: `set player position to ${val}`, setVolume: `set sound volume to ${Math.round(val! * 100)}`, pause: "pause" }
+            if (scripts[cmd]) exec(`osascript -e '${macScript(scripts[cmd]).replace(/'/g, "'\\''")}'`, (e) => e && console.error("[Spotify] Mac command error:", e))
+        } else if (isWin && bridge?.connected) bridge.send({ type: "command", command: cmd, value: val })
+        else if (isWin) {
+            initSpotify()
+            setTimeout(() => bridge?.send({ type: "command", command: cmd, value: val }), 500)
+        } else if (isLinux) {
+            const dest = "--dest=org.mpris.MediaPlayer2.spotify /org/mpris/MediaPlayer2",
+                mpris = "org.mpris.MediaPlayer2.Player"
+            const run = (c: string) => exec(`dbus-send ${dest} ${c}`, (e) => e && console.error("[Spotify] Linux command error:", e))
+            if (cmd === "playpause") run(`${mpris}.PlayPause`)
+            else if (cmd === "next") run(`${mpris}.Next`)
+            else if (cmd === "prev") run(`${mpris}.Previous`)
+            else if (cmd === "pause") run(`${mpris}.Pause`)
+            else if (cmd === "setVolume" && val !== undefined) run(`org.freedesktop.DBus.Properties.Set string:${mpris} string:'Volume' variant:double:${val}`)
+            else if (cmd === "seek" && val !== undefined) {
+                exec(`dbus-send --print-reply ${dest} org.freedesktop.DBus.Properties.Get string:${mpris} string:'Metadata'`, (e, out) => {
+                    if (e) return console.error("[Spotify] Linux seek error:", e)
+                    const id = out?.match(/string\s+"mpris:trackid"\s+variant\s+string\s+"([^"]+)"/)?.[1]
+                    if (id) run(`${mpris}.SetPosition objpath:${id} x64:${Math.round(val * 1000000)}`)
+                })
+            }
         }
+    } catch (e) {
+        console.error("[Spotify] Command error:", e)
     }
 }
