@@ -33,8 +33,10 @@ if (process.env.SPOTIFY_BRIDGE === "true") {
                 else if (c === "next") client.next()
                 else if (c === "prev") client.previous()
                 else if (c === "seek") client.seekMs(v * 1000)
-                else if (c === "setVolume") client.appVolume = v
-                else if (c === "pause") client.pause()
+                else if (c === "setVolume") {
+                    if (typeof client.setVolume === "function") client.setVolume(v)
+                    else client.appVolume = v
+                } else if (c === "pause") client.pause()
             }
         } catch (e: any) {
             process.send?.({ type: "error", error: e.message })

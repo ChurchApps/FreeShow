@@ -1,9 +1,9 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
     import Icon from "../../helpers/Icon.svelte"
-    import MaterialButton from "../../inputs/MaterialButton.svelte"
-    import { fadePause, destroySpotifyManager, initSpotifyManager, seekTo, skipNext, skipPrev, spotifyState, togglePlay, spotifyIsFading } from "./SpotifyManager"
     import T from "../../helpers/T.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
+    import { destroySpotifyManager, fadePause, initSpotifyManager, seekTo, skipNext, skipPrev, spotifyIsFading, spotifyState, togglePlay } from "./SpotifyManager"
 
     onMount(() => {
         initSpotifyManager()
@@ -13,10 +13,39 @@
         destroySpotifyManager()
     })
 
+    let isDragging = false
+    let dragPercentage = 0
+    let barEl: HTMLDivElement
+
+    function getBarPercentageFromEvent(e: PointerEvent) {
+        const rect = barEl.getBoundingClientRect()
+        return Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width))
+    }
+
+    function handleBarPointerDown(e: PointerEvent) {
+        if ($spotifyIsFading) return
+        isDragging = true
+        dragPercentage = getBarPercentageFromEvent(e)
+        window.addEventListener("pointermove", handleBarPointerMove)
+        window.addEventListener("pointerup", handleBarPointerUp)
+    }
+
+    function handleBarPointerMove(e: PointerEvent) {
+        if (!isDragging) return
+        dragPercentage = getBarPercentageFromEvent(e)
+    }
+
+    function handleBarPointerUp() {
+        if (!isDragging) return
+        isDragging = false
+        window.removeEventListener("pointermove", handleBarPointerMove)
+        window.removeEventListener("pointerup", handleBarPointerUp)
+        if ($spotifyState) seekTo(dragPercentage * $spotifyState.durationSec)
+    }
+
     function handleSeek(e: MouseEvent) {
         if ($spotifyIsFading) return
-        const bar = e.currentTarget as HTMLDivElement
-        const rect = bar.getBoundingClientRect()
+        const rect = barEl.getBoundingClientRect()
         const percentage = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width))
         if ($spotifyState) seekTo(percentage * $spotifyState.durationSec)
     }
@@ -56,15 +85,16 @@
         </div>
 
         <div class="progress" class:disabled={$spotifyIsFading}>
-            <span class="time">{formatTime($spotifyState.positionSec)}</span>
-            <div class="bar" on:click={handleSeek}>
-                <div class="fill" style="width: {Math.min(($spotifyState.positionSec / Math.max($spotifyState.durationSec, 1)) * 100, 100)}%"></div>
+            <span class="time">{formatTime(isDragging && $spotifyState ? dragPercentage * $spotifyState.durationSec : $spotifyState.positionSec)}</span>
+            <div class="bar" bind:this={barEl} on:pointerdown={handleBarPointerDown} on:click={handleSeek} style="touch-action: none;">
+                <!-- transition: {isDragging ? 'none' : 'width 0.1s linear'}; -->
+                <div class="fill" style="width: {isDragging && $spotifyState ? Math.min(dragPercentage * 100, 100) : Math.min(($spotifyState.positionSec / Math.max($spotifyState.durationSec, 1)) * 100, 100)}%;"></div>
             </div>
             <span class="time">{formatTime($spotifyState.durationSec)}</span>
         </div>
 
         {#if $spotifyState.isPlaying}
-            <MaterialButton on:click={fadePause} style="padding: 4px 8px;margin-top: 5px;" title="media.fade_out" disabled={$spotifyIsFading}>
+            <MaterialButton variant="outlined" on:click={fadePause} style="padding: 4px 8px;margin-top: 5px;background: none;" title="media.fade_out" disabled={$spotifyIsFading}>
                 <!-- <Icon id="volume_down" white /> -->
                 <Icon id="clear" white />
                 <p><T id="media.fade_out" /></p>
@@ -143,8 +173,10 @@
 
     .controls {
         display: flex;
-        gap: 20px;
         align-items: center;
+        justify-content: space-evenly;
+
+        width: 100%;
         margin-bottom: 2px;
     }
 
@@ -182,6 +214,5 @@
         height: 100%;
         background: #1db954; /* Spotify green */
         border-radius: 2px;
-        transition: width 0.1s linear;
     }
 </style>
