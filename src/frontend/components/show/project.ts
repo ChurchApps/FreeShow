@@ -1,8 +1,9 @@
 import { get } from "svelte/store"
-import { activeEdit, activeProject, activeShow, projects, projectView, saved, showRecentlyUsedProjects, showsCache } from "../../stores"
+import { activeEdit, activeProject, activeShow, projects, projectView, saved, showRecentlyUsedProjects, shows, showsCache } from "../../stores"
 import { keysToID, sortByTimeNew } from "../helpers/array"
 import type { ProjectShowRef } from "../../../types/Projects"
 import { uid } from "uid"
+import { similarity } from "../../converters/txt"
 
 export function openProject(id: string, openFirstItem: boolean = true) {
     projectView.set(false)
@@ -96,11 +97,30 @@ function textToProjectItems(text: string) {
     // too long, probably not a list of sections
     if (text.split("\n").length > 30) return []
 
+    const showsList = get(shows)
     text.split("\n").forEach((line) => {
-        line = line.trim()
-        if (!line) return
+        let name = line.trim()
+        if (!name) return
 
-        items.push({ id: uid(5), type: "section", name: line })
+        // remove any "- " or "* " from the start of the line
+        name = name.replace(/^[-*]\s+/, "")
+
+        // find a show with the closest title match (must be at least 70% similarity)
+        const searchName = name.toLowerCase()
+        const mostSimilar = Object.entries(showsList).reduce(
+            (best, [id, show]) => {
+                const showName = (show.name || "").toLowerCase()
+                const percentage = similarity(searchName, showName)
+                return percentage > 0.7 && percentage > best.percentage ? { id, percentage } : best
+            },
+            { id: "", percentage: 0 }
+        )
+
+        if (mostSimilar.id) {
+            items.push({ id: mostSimilar.id, type: "show", name })
+        } else {
+            items.push({ id: uid(5), type: "section", name })
+        }
     })
 
     // if there's two line breaks between (& there's multiple lines) it will create a show
