@@ -1,6 +1,5 @@
 <script lang="ts">
     import Button from "../../../common/components/Button.svelte"
-    import Center from "../../../common/components/Center.svelte"
     import Icon from "../../../common/components/Icon.svelte"
     import { getFileName, removeExtension } from "../../../common/util/media"
     import { translate } from "../../util/helpers"
@@ -215,7 +214,7 @@
                     {/if}
                 </div>
             {:else}
-                <Center faded>{translate("empty.general", $dictionary)}</Center>
+                <p class="empty-project-message">{translate("empty.general", $dictionary)}</p>
 
                 {#if canAddActiveShow}
                     <Button
@@ -319,6 +318,14 @@
         /* FreeShow UI scrollbar */
         scrollbar-width: thin; /* Firefox */
         scrollbar-color: rgb(255 255 255 / 0.3) rgb(255 255 255 / 0.05);
+    }
+
+    .empty-project-message {
+        margin: 12px 0;
+        color: var(--text);
+        opacity: 0.5;
+        text-align: center;
+        font-size: 0.95em;
     }
 
     .project-shows-list::-webkit-scrollbar {

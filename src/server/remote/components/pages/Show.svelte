@@ -54,13 +54,26 @@
 
     let editOpened: boolean = false
     let textValue = ""
-    $: if (editOpened && $textCache[$activeShow?.id || ""]) setText()
-    else reset()
+    let editSeedValue = ""
+
+    $: {
+        const showId = $activeShow?.id || ""
+
+        if (!editOpened) {
+            reset()
+            editSeedValue = ""
+        } else {
+            const cachedText = $textCache[showId]
+            // Only hydrate from cache while the draft is still untouched.
+            if (typeof cachedText === "string" && textValue === editSeedValue && cachedText !== editSeedValue) {
+                textValue = cachedText
+                editSeedValue = cachedText
+            }
+        }
+    }
+
     function reset() {
         textValue = ""
-    }
-    function setText() {
-        textValue = $textCache[$activeShow?.id || ""]
     }
     function done() {
         if (addGroups) {
