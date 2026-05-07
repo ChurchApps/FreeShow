@@ -27,14 +27,26 @@
     let addGroups: boolean = false
     let editOpened: boolean = false
     let textValue = ""
+    let editSeedValue = ""
 
-    $: if (editOpened && $textCache[$activeShow?.id || ""]) setText()
-    else reset()
+    $: {
+        const showId = $activeShow?.id || ""
+
+        if (!editOpened) {
+            reset()
+            editSeedValue = ""
+        } else {
+            const cachedText = $textCache[showId]
+            // Only hydrate from cache while the draft is still untouched.
+            if (typeof cachedText === "string" && textValue === editSeedValue && cachedText !== editSeedValue) {
+                textValue = cachedText
+                editSeedValue = cachedText
+            }
+        }
+    }
+
     function reset() {
         textValue = ""
-    }
-    function setText() {
-        textValue = $textCache[$activeShow?.id || ""]
     }
     function cancel() {
         editOpened = false
