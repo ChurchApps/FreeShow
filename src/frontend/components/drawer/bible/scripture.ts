@@ -624,7 +624,7 @@ export async function getScriptureSlidesNew(data: any, onlyOne = false, disableR
 
             // replaced by template in output.ts
             // check if item has scripture value (and not {scripture_text})
-            const regex = /\{scripture(?:\d+)?_[^}]+\}/g
+            const regex = /\{scripture(?:\d+)?_[^}]*\}/g
             const text = getItemText(item)
             const isDecoration = (() => {
                 const matches = text?.match(regex)

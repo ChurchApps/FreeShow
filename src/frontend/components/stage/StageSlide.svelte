@@ -44,6 +44,7 @@
     // { $activeTimers, $variables, $playingAudio, $playingAudioPaths, videoTime }
     let conditionsUpdater = 0
     const updaterInterval = setInterval(() => {
+        if (!Array.isArray(stageItems)) return
         if (stageItems.some((a) => a?.conditions)) conditionsUpdater++
     }, 1000)
     onDestroy(() => clearInterval(updaterInterval))

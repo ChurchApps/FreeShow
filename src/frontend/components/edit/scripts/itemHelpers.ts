@@ -298,6 +298,7 @@ export function shouldItemBeShown(item: Item, allItems: Item[] = [], { outputId,
 }
 
 // get "temp" items (scripture) if stage
+// TODO: fix "Maximum call stack size exceeded"
 function getTempItems(item: Item, allItems: Item[]) {
     const stageOutputId = getStageOutputId(get(outputs))
     const currentOutput = get(outputs)[stageOutputId] || get(allOutputs)[stageOutputId] || {}
@@ -327,7 +328,7 @@ export function isConditionMet(condition: Condition | undefined, itemsText: stri
     }
 
     // remove unused scripture dynamic values ({scripture_X} / {scriptureNUM_X})
-    const regex = /\{scripture(?:\d+)?_[^}]+\}/g
+    const regex = /\{scripture(?:\d+)?_[^}]*\}/g
     if (regex.test(itemsText)) itemsText = itemsText.replace(regex, "").trim()
 
     // outerOr
