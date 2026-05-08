@@ -7,6 +7,7 @@ import { AUDIO, BLACKMAGIC, CLOUD, EXPORT, MAIN, NDI, OUTPUT, STARTUP } from "..
 import { Main } from "../types/IPC/Main"
 import type { Dictionary } from "../types/Settings"
 import { receiveAudio } from "./audio/receiveAudio"
+import { receiveBM } from "./blackmagic/bmdTalk"
 import { cloudConnect } from "./cloud/cloud"
 import { startExport } from "./data/export"
 import { cleanupProtectedCache, registerProtectedProtocol } from "./data/protected"
@@ -16,11 +17,10 @@ import { autoErrorReport } from "./IPC/responsesMain"
 import { receiveNDI } from "./ndi/talk"
 import { OutputHelper } from "./output/OutputHelper"
 import { callClose, exitApp, saveAndClose } from "./utils/close"
-import { isWithinDisplayBounds, mainWindowInitialize, openDevTools, parseCommandLineArgs, waitForBundle, isDraggableAreaVisible } from "./utils/init"
+import { isDraggableAreaVisible, isWithinDisplayBounds, mainWindowInitialize, openDevTools, parseCommandLineArgs, waitForBundle } from "./utils/init"
 import { template } from "./utils/menuTemplate"
 import { spellcheck } from "./utils/spellcheck"
 import { loadingOptions, mainOptions } from "./utils/windowOptions"
-import { receiveBM } from "./blackmagic/bmdTalk"
 
 // ----- STARTUP -----
 
@@ -262,7 +262,7 @@ const windowBounds = {
     get(): Rectangle {
         try {
             const bounds = config.get("bounds")
-            if (bounds?.width && bounds?.height) return bounds 
+            if (bounds?.width && bounds?.height) return bounds
         } catch (err) {
             console.warn("Failed to load saved bounds:", err)
         }
@@ -302,11 +302,13 @@ export function setGlobalMenu(strings: Dictionary = {}) {
 
 // quit app when all windows have been closed
 app.on("window-all-closed", () => {
+    cleanupBeforeQuit()
     app.quit()
 })
 
 // close app completely on mac
 app.on("will-quit", () => {
+    cleanupBeforeQuit()
     if (isMac) app.exit()
 })
 
@@ -328,6 +330,22 @@ process.on("SIGTERM", () => {
     console.info("Received SIGTERM, closing app...")
     saveAndClose()
 })
+
+function cleanupBeforeQuit() {
+    ipcMain.removeAllListeners()
+
+    // Remove window listeners and destroy windows if not already destroyed
+    if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.removeAllListeners()
+        mainWindow.destroy()
+    }
+
+    // Stop powerSaveBlocker if active
+    if (powerSaveBlockerId !== null && powerSaveBlocker.isStarted(powerSaveBlockerId)) {
+        powerSaveBlocker.stop(powerSaveBlockerId)
+        powerSaveBlockerId = null
+    }
+}
 
 // ----- LISTENERS -----
 

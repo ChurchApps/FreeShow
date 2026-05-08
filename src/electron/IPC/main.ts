@@ -8,14 +8,14 @@ import { mainResponses } from "./responsesMain"
 
 export function sendToMain<ID extends ToMain>(id: ID, value: ToMainSendValue<ID>, listenerId?: string) {
     if (!Object.values(ToMain).includes(id)) throw new Error(`Invalid channel: ${id}`)
-    if (!mainWindow || mainWindow.isDestroyed()) return
+    if (!mainWindow || mainWindow.isDestroyed() || !mainWindow.webContents || mainWindow.webContents.isDestroyed?.()) return
 
     mainWindow.webContents.send(MAIN, { channel: id, data: value }, listenerId)
 }
 
 export function sendMain<ID extends Main>(id: ID, value: ToMainSendValue2<ID>, listenerId?: string) {
     if (!Object.values(Main).includes(id)) throw new Error(`Invalid channel: ${id}`)
-    if (!mainWindow || mainWindow.isDestroyed()) return
+    if (!mainWindow || mainWindow.isDestroyed() || !mainWindow.webContents || mainWindow.webContents.isDestroyed?.()) return
 
     mainWindow.webContents.send(MAIN, { channel: id, data: value }, listenerId)
 }

@@ -364,6 +364,7 @@ const customSavedListener = {
             delete (data[id] as any).settings
 
             Object.values(data[id].slides).forEach((slide) => {
+                if (!slide) return
                 delete slide.id
             })
         })

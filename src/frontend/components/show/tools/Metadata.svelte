@@ -18,6 +18,8 @@
     function getValues() {
         values = getCustomMetadata()
 
+        if (!meta || !Object.keys(meta).length) return
+
         const defaultKeys = Object.keys(initializeMetadata({}))
         Object.entries(meta).forEach(([key, value]) => {
             if (!value && defaultKeys.includes(key) && $customMetadata.disabled?.includes(key)) return

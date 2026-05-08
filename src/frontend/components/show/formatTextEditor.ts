@@ -190,6 +190,8 @@ export function formatText(text: string, showId = "") {
     const parentAlign: { [key: string]: string } = {}
     Object.keys(newSlides).forEach((slideId) => {
         let slide = newSlides[slideId]
+        if (!slide) return
+
         const oldSlideId = replacedIds[slideId] || slideId
 
         // add back previous textbox styles

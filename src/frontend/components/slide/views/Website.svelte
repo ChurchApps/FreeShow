@@ -34,6 +34,7 @@
 
     let loaded = false
     $: if (parsedSrc) loaded = false
+    let webviewReady = false
 
     $: if (webview && ratio) setWebpageRatio()
     function setWebpageRatio() {
@@ -47,7 +48,11 @@
 
         if (loaded) setStyle()
         else {
-            webview?.addEventListener("dom-ready", websiteLoaded)
+            webview?.addEventListener("dom-ready", () => {
+                webviewReady = true
+                websiteLoaded()
+                checkNavigation()
+            })
             webview?.addEventListener("did-finish-load", setStyle)
             webview?.addEventListener("did-navigate", () => {
                 checkNavigation()
@@ -99,8 +104,14 @@
     }
 
     function checkNavigation() {
-        backDisabled = !webview?.canGoBack()
-        forwardDisabled = !webview?.canGoForward()
+        if (!webviewReady || !webview) {
+            backDisabled = true
+            forwardDisabled = true
+            return
+        }
+
+        backDisabled = !webview.canGoBack()
+        forwardDisabled = !webview.canGoForward()
     }
 
     $: url = parsedSrc

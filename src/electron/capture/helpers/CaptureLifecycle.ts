@@ -90,7 +90,9 @@ export class CaptureLifecycle {
                 CaptureLifecycle.activeCaptures.delete(id)
                 return
             }
-            if (!output?.captureOptions?.window || output.captureOptions.window.isDestroyed()) {
+
+            // Check window and webContents validity before every use
+            if (!output?.captureOptions?.window || output.captureOptions.window.isDestroyed() || !output.captureOptions.window.webContents || output.captureOptions.window.webContents.isDestroyed?.()) {
                 CaptureLifecycle.activeCaptures.delete(id)
                 return
             }
@@ -181,17 +183,16 @@ export class CaptureLifecycle {
         CaptureHelper.Transmitter.stopChannel(id, "blackmagic")
         CaptureHelper.Transmitter.stopChannel(id, "server")
         CaptureHelper.Transmitter.stopChannel(id, "stage")
-        const windowIsRemoved = !capture.window || capture.window.isDestroyed()
-        if (windowIsRemoved) {
-            delete output.captureOptions
-            return
-        }
 
         console.info("Capture - stopping: " + id)
 
         // remove listeners
-        capture?.window.removeAllListeners()
-        capture?.window.webContents.removeAllListeners()
+        if (capture.window && !capture.window.isDestroyed()) {
+            capture.window.removeAllListeners()
+            if (capture.window.webContents && !capture.window.webContents.isDestroyed?.()) {
+                capture.window.webContents.removeAllListeners()
+            }
+        }
 
         delete output.captureOptions
 

@@ -1782,10 +1782,8 @@ function getExif(path: string) {
     if (exifCache.has(path)) return exifCache.get(path)!
 
     requestMain(Main.READ_EXIF, { id: path }, (data) => {
-        const exif = data.exif
-        if (!exif) return
-
-        exifCache.set(path, exif)
+        if (!data?.exif) return
+        exifCache.set(path, data.exif)
     })
 
     return null

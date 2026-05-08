@@ -61,7 +61,7 @@
             // remove children if parent is selected
             ids.map((id) => {
                 const slide = _show().slides([id]).get()[0]
-                if (slide.children?.length) ids = ids.filter((id) => !slide.children.includes(id))
+                if (slide?.children?.length) ids = ids.filter((id) => !slide.children.includes(id))
             })
 
             // get slide refs

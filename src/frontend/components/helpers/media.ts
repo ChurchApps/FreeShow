@@ -266,8 +266,10 @@ export async function doesMediaExist(path: string, noCache = false) {
 
     if (noCache) {
         const existsDataNoCache = await requestMain(Main.DOES_MEDIA_EXIST, { path, noCache })
-        if (existsDataNoCache.exists) existingMedia.push(path)
-        return existsDataNoCache.exists
+        if (!existsDataNoCache?.exists) return false
+
+        existingMedia.push(path)
+        return true
     }
 
     const creationTime = get(media)[path]?.creationTime || 0

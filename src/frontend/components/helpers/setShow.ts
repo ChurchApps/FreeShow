@@ -180,7 +180,8 @@ export async function loadShows(s: string[], deleting = false) {
 
     await Promise.all(
         notLoaded.map(async (showId) => {
-            const data = await requestMain(Main.SHOW, { name: get(shows)[showId].name, id: showId })
+            const data = await requestMain(Main.SHOW, { name: get(shows)[showId]?.name, id: showId })
+            if (!data) return
 
             if (data.error || !data.content) {
                 notFound.update((a) => {

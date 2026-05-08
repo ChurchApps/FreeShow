@@ -353,11 +353,10 @@ function createSlides(labeled: { type: string; text: string }[], noFormatting) {
 
         // split slide notes from text ("---")
         const slideTextAndNotes = slideText.split("---")
-        if (!slideTextAndNotes[0]?.length) return
 
-        while (new Set(slideTextAndNotes[0].split("")).size === 1 && slideTextAndNotes[0][0] === "-") slideTextAndNotes.shift()
-        let allLines: string[] = [slideTextAndNotes.shift() || ""]
-        if (allLines[0].endsWith("\n")) allLines[0] = allLines[0].slice(0, -1)
+        while (slideTextAndNotes[0] && new Set(slideTextAndNotes[0].split("")).size === 1 && slideTextAndNotes[0][0] === "-") slideTextAndNotes.shift()
+        let allLines: string[] = [slideTextAndNotes.length > 0 ? slideTextAndNotes.shift() || "" : ""]
+        if (allLines[0] && allLines[0].endsWith("\n")) allLines[0] = allLines[0].slice(0, -1)
 
         while (slideTextAndNotes[0] === "") slideTextAndNotes.shift()
         const slideNotes = slideTextAndNotes.join("\n").slice(1)
