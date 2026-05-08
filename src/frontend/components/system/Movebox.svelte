@@ -17,7 +17,7 @@
     $: styleRotationDeg = getRotationDeg(itemStyle)
 
     function getRotationDeg(style: string) {
-        if (!style) return 0
+        if (typeof style !== "string" || !style) return 0
         const match = style.match(/rotate\((-?\d+(?:\.\d+)?)deg\)/)
         const rotation = Number(match?.[1])
         return Number.isFinite(rotation) ? rotation : 0

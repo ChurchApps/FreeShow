@@ -40,6 +40,7 @@
     function getWords() {
         words = 0
         allLines.forEach((lines) => {
+            if (!Array.isArray(lines)) return
             lines.forEach((line) => {
                 line?.text?.forEach((text) => (words += text.value?.split(" ").length))
             })

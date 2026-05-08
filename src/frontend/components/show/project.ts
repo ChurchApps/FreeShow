@@ -89,6 +89,8 @@ export function clipboardToProject() {
 
 // each line break is one section
 function textToProjectItems(text: string) {
+    if (typeof text !== "string") return []
+
     let items: ProjectShowRef[] = []
 
     // account for bullet/number points

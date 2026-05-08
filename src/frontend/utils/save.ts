@@ -329,7 +329,12 @@ export function unsavedUpdater() {
         s[id].subscribe((a: any) => {
             if (customSavedListener[id] && a) {
                 a = customSavedListener[id](clone(a))
-                const stringObj = JSON.stringify(a)
+                let stringObj
+                try {
+                    stringObj = JSON.stringify(a)
+                } catch {
+                    return
+                }
                 if (cachedValues[id] === stringObj) return
 
                 cachedValues[id] = stringObj
@@ -347,7 +352,9 @@ export function unsavedUpdater() {
         let store = get(s[id])
         if (customSavedListener[id] && store) {
             store = customSavedListener[id](clone(store))
-            cachedValues[id] = JSON.stringify(store)
+            try {
+                cachedValues[id] = JSON.stringify(store)
+            } catch {}
         }
     })
 
