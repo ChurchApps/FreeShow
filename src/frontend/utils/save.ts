@@ -109,11 +109,13 @@ import {
 import type { SaveActions, SaveData, SaveList, SaveListSettings, SaveListSyncedSettings } from "./../../types/Save"
 import { audioStreams, companion } from "./../stores"
 import { socketDisconnect, syncWithCloud } from "./cloudSync"
-import { newToast, setStatus } from "./common"
+import { newToast, setStatus, startAutosave } from "./common"
 import { syncDrive } from "./drive"
 import { isOutCleared } from "../components/helpers/output"
 
 export function save(closeWhenFinished = false, customTriggers: SaveActions = {}) {
+    startAutosave() // reset auto save timer
+
     // don't save again while saving
     if (get(statusIndicator) === "saving") return
 

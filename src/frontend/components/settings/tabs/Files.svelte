@@ -36,7 +36,9 @@
         { value: "5min", label: translateText("5 settings.minutes") },
         { value: "10min", label: translateText("10 settings.minutes") },
         { value: "15min", label: translateText("15 settings.minutes") },
-        { value: "30min", label: translateText("30 settings.minutes") }
+        { value: "30min", label: translateText("30 settings.minutes") },
+        { value: "60min", label: translateText("60 settings.minutes") },
+        { value: "120min", label: translateText("120 settings.minutes") }
     ]
 
     // NOTE: monthly is misspelled as "mothly"
