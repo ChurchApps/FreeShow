@@ -9,7 +9,7 @@ import type { Output } from "../../types/Output"
 import type { Resolution } from "../../types/Settings"
 import { requestToMain, sendToMain } from "../IPC/main"
 import { OutputHelper } from "../output/OutputHelper"
-import { createFolder, deleteFile, doesPathExist, doesPathExistAsync, getDataFolderPath, getFileStatsAsync, makeDir } from "../utils/files"
+import { createFolder, deleteFile, doesPathExist, doesPathExistAsync, getDataFolderPath, getFileStatsAsync, makeDir, openInSystem } from "../utils/files"
 import { waitUntilValueIsDefined } from "../utils/helpers"
 import { captureOptions } from "../utils/windowOptions"
 import { imageExtensions, videoExtensions } from "./media"
@@ -232,7 +232,7 @@ async function captureWithCanvas(data: { input: string; output: string; size: Re
 }
 
 const failedPaths: string[] = []
-export function saveImage(data: { id?: string; path?: string; base64?: string; buffer?: ArrayBuffer; filePath?: string[]; format?: "png" | "jpg" }) {
+export function saveImage(data: { id?: string; path?: string; base64?: string; buffer?: ArrayBuffer; filePath?: string[]; format?: "png" | "jpg"; openFolder?: boolean }) {
     const dataURL = data.base64
     const buffer = data.buffer
     let savePath = data.path || ""
@@ -248,6 +248,8 @@ export function saveImage(data: { id?: string; path?: string; base64?: string; b
         const folderPath = path.join(exportFolder, ...data.filePath)
         createFolder(folderPath)
         savePath = path.join(folderPath, fileName)
+
+        if (data.openFolder) openInSystem(folderPath, true)
     } else {
         mediaBeingCaptured = Math.max(0, mediaBeingCaptured - 1)
         if (mediaBeingCaptured === 0) currentlyGenerating.clear()

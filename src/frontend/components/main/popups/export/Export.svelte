@@ -104,7 +104,7 @@
             const images = await convertShowSlidesToImages(showIds[0])
             images.forEach((base64, i) => {
                 if (!base64) return
-                sendMain(Main.SAVE_IMAGE, { base64, filePath: ["Images", showName, `${i + 1}.jpg`], format: "jpg" })
+                sendMain(Main.SAVE_IMAGE, { base64, filePath: ["Images", showName, `${i + 1}.jpg`], format: "jpg", openFolder: i === 0 })
             })
             loading = false
         } else if (exportFormat === "pdf") {
