@@ -1091,6 +1091,7 @@ const clickActions = {
         } else if (obj.sel.id === "action") {
             const firstActionId = obj.sel.data[0]?.id
             const action = get(actions)[firstActionId]
+            if (!action) return
 
             popupData.set({ id: firstActionId })
 
@@ -1301,7 +1302,7 @@ const clickActions = {
         const overlay = get(overlays)[overlayId]
         if (!overlay) return
 
-        const existingActions = overlay.actions || []
+        const existingActions = Array.isArray(overlay.actions) ? overlay.actions : []
 
         popupData.set({ mode: "overlay", overlayId, existing: existingActions.map((a) => a.triggers?.[0]) })
         activePopup.set("action")

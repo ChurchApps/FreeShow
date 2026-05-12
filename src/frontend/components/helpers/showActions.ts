@@ -513,7 +513,7 @@ export function goToPreviousProjectItem(key = "") {
             // mark as not played
             if (newShow.type !== "section") {
                 projects.update((a) => {
-                    if (!a[get(activeProject)!]?.shows?.[index]) return a
+                    if (typeof a[get(activeProject)!]?.shows?.[index] !== "object") return a
                     a[get(activeProject)!].shows[index].played = false
                     return a
                 })

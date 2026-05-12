@@ -1783,6 +1783,8 @@ function getScriptureTemplateId() {
 }
 
 export function getReferenceText(biblesContent: BibleContent[]) {
+    if (!biblesContent[0]) return ""
+
     // const referenceTextItem = items.find((a) => a.lines?.find((a) => a.text?.find((a) => a.value.includes(":") && a.value.length < 25)))
     // if (referenceTextItem) return referenceTextItem.lines?.[0]?.text?.[0]?.value
 

@@ -29,7 +29,7 @@
 
             const outputId = e.target.closest(".outputPreview")?.id
             const output = $outputs[outputId]
-            activeStyle.set(output.style || "")
+            activeStyle.set(output?.style || "")
             settingsTab.set("styles")
             activePage.set("settings")
             return

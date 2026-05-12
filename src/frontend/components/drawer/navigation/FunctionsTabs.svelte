@@ -10,7 +10,7 @@
 
     $: activeSubTab = $drawerTabsData.functions?.activeSubTab || ""
 
-    $: actionsTagsOnly = Object.values($actions).map((a) => a.tags || [])
+    $: actionsTagsOnly = Object.values($actions).map((a) => a?.tags || [])
     $: visibleActionTags = sortObject(sortByName(keysToID($actionTags)), "color").filter((a) => actionsAccess[a.id] !== "none")
     $: sortedActions = visibleActionTags.map((a) => ({
         ...a,
@@ -20,7 +20,7 @@
         count: actionsTagsOnly.filter((b) => b.includes(a.id)).length
     }))
 
-    $: variablesTagsOnly = Object.values($variables).map((a) => a.tags || [])
+    $: variablesTagsOnly = Object.values($variables).map((a) => a?.tags || [])
     $: visibleVariableTags = sortObject(sortByName(keysToID($variableTags)), "color").filter((a) => variablesAccess[a.id] !== "none")
     $: sortedVariables = visibleVariableTags.map((a) => ({
         ...a,

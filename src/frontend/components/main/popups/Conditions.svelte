@@ -37,7 +37,7 @@
 
     let conditions = item?.conditions || clone(DEFAULT_CONDITIONS)
 
-    const itemOptions = Object.entries(slide?.items)?.map(([a, i]) => ({ value: a, label: getItemText(i).slice(0, 30) || i.type, data: (isStage ? "" : Number(a) + 1).toString() }))
+    const itemOptions = Object.entries(slide?.items || {})?.map(([a, i]) => ({ value: a, label: getItemText(i).slice(0, 30) || i.type, data: (isStage ? "" : Number(a) + 1).toString() }))
     function updateItemIndex(e: any) {
         itemIndex = isStage ? e.detail : Number(e.detail)
         slide = isStage ? $stageShows[$activeStage.id || ""] : isOverlay ? $overlays[edit.id!] : isTemplate ? $templates[edit.id!] : $showsCache[showId]?.slides?.[slideId]

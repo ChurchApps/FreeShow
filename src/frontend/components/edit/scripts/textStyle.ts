@@ -303,7 +303,8 @@ export function getItemTextArray(item: Item): string[] {
 
 export function getLineText(line: Line): string {
     let text = ""
-    line?.text?.forEach((content) => {
+    if (!Array.isArray(line?.text)) return ""
+    line.text.forEach((content) => {
         text += content.value
     })
     return text
@@ -346,7 +347,8 @@ export function setCaret(element: any, { line = 0, pos = 0 }, toEnd = false) {
 
     // get end child elem
     const lastEndChild = lastLineElem.childNodes[lastLineElem.childNodes.length - 1]
-    let currentEndTextLength = lastEndChild?.innerText?.length ?? 0
+    if (!lastEndChild) return
+    let currentEndTextLength = lastEndChild.innerText?.length ?? 0
 
     const breakElem = lastEndChild.childNodes[0]?.nodeName === "BR"
     if (line === 0 && breakElem) return

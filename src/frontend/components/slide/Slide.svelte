@@ -437,7 +437,7 @@
             {#key $refreshListBoxes >= 0 && $refreshListBoxes !== index}
                 {#if slide.items}
                     {#each itemsList as item, itemIndex}
-                        {#if item.lines}
+                        {#if item?.lines}
                             <Editbox {item} ref={{ showId, id: layoutSlide.id }} editIndex={index} index={itemIndex} plain />
                         {/if}
                     {/each}

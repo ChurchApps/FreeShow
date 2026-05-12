@@ -29,19 +29,24 @@
 
     let clipboardColors: string[] = []
     onMount(() => {
-        navigator.clipboard.readText().then((text) => {
-            text = text.trim().replaceAll('"', "").replaceAll("'", "").replace("[", "").replace("]", "")
+        navigator.clipboard
+            .readText()
+            .then((text) => {
+                text = text.trim().replaceAll('"', "").replaceAll("'", "").replace("[", "").replace("]", "")
 
-            const parts = text.includes("rgb") ? [text] : text.split(/[\s,]+/)
-            parts.forEach((c) => {
-                c = c.trim()
+                const parts = text.includes("rgb") ? [text] : text.split(/[\s,]+/)
+                parts.forEach((c) => {
+                    c = c.trim()
 
-                // let isHex = c.match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i)
-                if (isValidColor(c) && !$special.customColors?.includes(c)) clipboardColors.push(c)
+                    // let isHex = c.match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i)
+                    if (isValidColor(c) && !$special.customColors?.includes(c)) clipboardColors.push(c)
+                })
+
+                clipboardColors = [...new Set(clipboardColors)]
             })
-
-            clipboardColors = [...new Set(clipboardColors)]
-        })
+            .catch((e) => {
+                console.warn("Could not read clipboard:", e)
+            })
 
         function isValidColor(color) {
             const s = new Option().style

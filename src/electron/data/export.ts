@@ -188,7 +188,7 @@ function getSlidesText(show: Show) {
     let text = ""
 
     const slides: Slide[] = []
-    show.layouts?.[show.settings?.activeLayout].slides.forEach((layoutSlide) => {
+    show.layouts?.[show.settings?.activeLayout]?.slides?.forEach((layoutSlide) => {
         const slide = show.slides[layoutSlide.id]
         if (!slide) return
 

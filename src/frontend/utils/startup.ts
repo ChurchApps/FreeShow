@@ -142,12 +142,12 @@ export function contentProviderSync() {
 
 function getMainData() {
     requestMainMultiple({
-        [Main.VERSION]: (a) => version.set(a),
-        [Main.IS_DEV]: (a) => isDev.set(a),
-        [Main.GET_OS]: (a) => os.set(a),
-        [Main.GET_CACHE_PATH]: (a) => cachePath.set(a),
-        [Main.DEVICE_ID]: (a) => deviceId.set(a),
-        [Main.MAXIMIZED]: (a) => windowState.set({ ...windowState, maximized: a })
+        [Main.VERSION]: (a) => (a ? version.set(a) : null),
+        [Main.IS_DEV]: (a) => isDev.set(a || false),
+        [Main.GET_OS]: (a) => (a ? os.set(a) : null),
+        [Main.GET_CACHE_PATH]: (a) => cachePath.set(a || ""),
+        [Main.DEVICE_ID]: (a) => deviceId.set(a || ""),
+        [Main.MAXIMIZED]: (a) => windowState.set({ ...get(windowState), maximized: a ?? false })
     })
 }
 

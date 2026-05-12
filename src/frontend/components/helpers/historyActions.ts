@@ -60,6 +60,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                 // cloud sync update
                 if (initializing && obj.location.id === "project_ref") {
                     projects.update((a) => {
+                        if (!a[id]) return a
                         a[id].modified = Date.now()
                         return a
                     })
@@ -846,6 +847,8 @@ export const historyActions = ({ obj, undo = null }: any) => {
                 const previousFirstSlideTemplateId = get(templates)[data.previousData?.template || ""]?.settings?.firstSlideTemplate || ""
 
                 Object.entries(slides).forEach(([id, slide]) => {
+                    if (!slide) return
+
                     const isGroupLocked = !!slide.locked // WIP get group slide
                     if ((slideId && slideId !== id) || !slide || isGroupLocked) return
 

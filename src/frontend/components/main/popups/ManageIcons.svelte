@@ -26,7 +26,12 @@
     }
 
     async function importSVG() {
-        const text = await navigator.clipboard.readText()
+        let text
+        try {
+            text = await navigator.clipboard.readText()
+        } catch (e) {
+            console.warn("Could not read clipboard:", e)
+        }
         if (!text || !text.includes("<svg")) return
 
         customizedIcons.update((a) => {

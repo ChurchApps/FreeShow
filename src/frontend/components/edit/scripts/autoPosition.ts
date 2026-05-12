@@ -21,7 +21,7 @@ export function getLikelyPosition(currentItems: (Item | StageItem)[], defaultSty
 
     const rects = (currentItems || [])
         .map((it) => {
-            const style = getStyles(it.style || defaultStyleStr)
+            const style = getStyles(it?.style || defaultStyleStr)
             const left = Number(removeText(style.left || "0")) || 0
             const top = Number(removeText(style.top || "0")) || 0
             const width = Number(removeText(style.width || "0")) || 0

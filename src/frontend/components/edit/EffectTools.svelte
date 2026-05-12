@@ -148,6 +148,7 @@
                     value={currentEffect.background}
                     on:input={(e) => {
                         effects.update((a) => {
+                            if (!a[effectId]) return a
                             a[effectId].background = e.detail
                             return a
                         })

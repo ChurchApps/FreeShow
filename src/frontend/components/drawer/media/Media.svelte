@@ -373,6 +373,7 @@
             if (fileCount) {
                 // let file = mediaFilesOnly[0] // not updating
                 let file = searchedFiles.filter((a) => !a.isFolder)[0]
+                if (!file) return
 
                 // add to project
                 const data = { id: file.path, name: file.name, type: getMediaType(getExtension(file.name)) }

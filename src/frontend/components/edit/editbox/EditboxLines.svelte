@@ -4,8 +4,8 @@
     import type { Item, Line } from "../../../../types/Show"
     import { VIRTUAL_BREAK_CHAR } from "../../../show/slides"
     import { activeEdit, activeShow, activeStage, activeTriggerFunction, overlays, redoHistory, refreshListBoxes, showsCache, stageShows, templates } from "../../../stores"
-    import { getNormalizedKey, isFormattingKey } from "../../../utils/shortcuts"
     import { newToast } from "../../../utils/common"
+    import { isFormattingKey } from "../../../utils/shortcuts"
     import T from "../../helpers/T.svelte"
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
@@ -64,8 +64,9 @@
         clone(item?.lines)?.forEach((line) => {
             let align = (line.align || "").replaceAll(lineStyleBg, "").replaceAll(lineStyleRadius, "") + ";"
             s += align + lineStyleBg + lineStyleRadius // + line.chords?.map((a) => a.key)
-            console.assert(Array.isArray(line?.text), "Text is not an array!")
-            line?.text?.forEach((a) => {
+            if (!line?.text) return
+            if (!Array.isArray(line.text)) line.text = []
+            line.text.forEach((a) => {
                 s += EditboxHelper.getTextStyle(a)
             })
         })
@@ -624,9 +625,14 @@
 
         if (e.key === "v" && (e.ctrlKey || e.metaKey)) {
             e.preventDefault()
-            navigator.clipboard.readText().then((clipText: string) => {
-                paste(e, clipText)
-            })
+            navigator.clipboard
+                .readText()
+                .then((clipText: string) => {
+                    paste(e, clipText)
+                })
+                .catch((e) => {
+                    console.warn("Could not read clipboard:", e)
+                })
         }
 
         if (e.key === "<") {

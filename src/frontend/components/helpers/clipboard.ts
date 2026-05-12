@@ -287,7 +287,7 @@ const selectActions = {
         if ((get(activeEdit).type || "show") === "show") {
             const ref = getLayoutRef()
             const editSlide = ref[get(activeEdit).slide!]
-            const showItems = _show().slides([editSlide.id]).get()[0]?.items
+            const showItems = _show().slides([editSlide?.id]).get()[0]?.items
             itemCount = showItems.length
         } else if (get(activeEdit).id) {
             if (get(activeEdit).type === "overlay") {
@@ -544,6 +544,7 @@ const pasteActions = {
 
         if (get(activeEdit).id) {
             if (get(activeEdit).type === "overlay") {
+                if (!get(overlays)[get(activeEdit).id!]) return
                 const overlayItems = clone(get(overlays)[get(activeEdit).id!].items || [])
                 data.forEach((item) => {
                     overlayItems.push(clone(item))
@@ -553,6 +554,7 @@ const pasteActions = {
             }
 
             if (get(activeEdit).type === "template") {
+                if (!get(templates)[get(activeEdit).id!]) return
                 const templateItems = clone(get(templates)[get(activeEdit).id!].items || [])
                 data.forEach((item) => {
                     templateItems.push(clone(item))

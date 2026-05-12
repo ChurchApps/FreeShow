@@ -246,6 +246,7 @@ export function getFileStats(filePath: string, disableLog = false) {
 
 export function getFileStatsAsync(filePath: string): Promise<null | Stats> {
     return new Promise((resolve) => {
+        if (!filePath) return resolve(null)
         fs.stat(filePath, (err, stats) => {
             if (err) return resolve(null)
             resolve(stats)

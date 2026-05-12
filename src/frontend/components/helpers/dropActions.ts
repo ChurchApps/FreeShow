@@ -769,7 +769,7 @@ const slideDrop = {
     },
     global_group: ({ drag, drop }: Data, history: History) => {
         const ref = getLayoutRef()
-        if (!drag.data[0].slide) return
+        if (!drag.data[0]?.slide) return
 
         if (drop.center) {
             if (drop.trigger?.includes("end")) drop.index!--

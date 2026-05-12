@@ -406,7 +406,7 @@ export async function convertBackgrounds(show: Show, noLoad = false, init = fals
     show.layouts[show.settings?.activeLayout]?.slides.forEach((a) => {
         if (a.background) mediaIds.add(a.background)
         Object.values(a.children || {}).forEach((child) => {
-            if (child.background) mediaIds.add(child.background)
+            if (child?.background) mediaIds.add(child.background)
         })
     })
     ;[...mediaIds].forEach((id) => {

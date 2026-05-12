@@ -16,7 +16,13 @@ let cachedFonts: Family[] = []
 export async function getFontsList() {
     if (cachedFonts.length) return cachedFonts
 
-    const localFonts = await window.queryLocalFonts()
+    let localFonts: FontData[] = []
+    try {
+        localFonts = await window.queryLocalFonts()
+    } catch (err) {
+        console.warn("Could not load local fonts:", err)
+        return []
+    }
 
     const families: { [key: string]: FontData[] } = {}
     localFonts.forEach((font) => {

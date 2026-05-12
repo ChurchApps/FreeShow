@@ -71,20 +71,25 @@ export function clipboardToProject() {
     const currentProject = get(activeProject)
     if (!currentProject || !get(projects)[currentProject]) return
 
-    navigator.clipboard.readText().then((clipText: string) => {
-        if (!clipText) return
+    navigator.clipboard
+        .readText()
+        .then((clipText: string) => {
+            if (!clipText) return
 
-        const content = clipText.toString()
-        const items = textToProjectItems(content)
-        if (!items.length) return
+            const content = clipText.toString()
+            const items = textToProjectItems(content)
+            if (!items.length) return
 
-        projects.update((a) => {
-            if (!a[currentProject]) return a
+            projects.update((a) => {
+                if (!a[currentProject]) return a
 
-            a[currentProject].shows = [...a[currentProject].shows, ...items]
-            return a
+                a[currentProject].shows = [...a[currentProject].shows, ...items]
+                return a
+            })
         })
-    })
+        .catch((e) => {
+            console.warn("Could not read clipboard:", e)
+        })
 }
 
 // each line break is one section

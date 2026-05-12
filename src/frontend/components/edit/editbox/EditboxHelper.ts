@@ -48,7 +48,8 @@ export class EditboxHelper {
         let newLine = clone(line)
         newLine.text = []
 
-        line.text?.forEach((text) => {
+        if (!Array.isArray(line.text)) line.text = []
+        line.text.forEach((text) => {
             const value = text.value || ""
             const parts = value.replace("\r", "").split("\n")
             newLine.text.push({ style: text.style, value: parts[0] })
@@ -86,7 +87,8 @@ export class EditboxHelper {
             else firstLines.push({ align: line.align, text: [] })
 
             textPos = 0
-            line.text?.forEach(splitLines)
+            if (!Array.isArray(line.text)) line.text = []
+            line.text.forEach(splitLines)
 
             if (!firstLines.at(-1)?.text.length) firstLines.pop()
             if (!secondLines.at(0)?.text.length) secondLines.shift()
@@ -184,7 +186,8 @@ export class EditboxHelper {
             const currentChords = line.chords || []
             let textIndex = 0
 
-            line.text?.forEach((a, tIndex) => {
+            if (!Array.isArray(line.text)) line.text = []
+            line.text.forEach((a, tIndex) => {
                 currentStyle += this.getTextStyle(a)
 
                 // SAVE CHORDS (WIP does not work well with more "text" per line)

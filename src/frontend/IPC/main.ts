@@ -8,7 +8,7 @@ import { isDev } from "../stores"
 import { get } from "svelte/store"
 
 // @ts-ignore // T extends keyof typeof Main
-export function requestMainMultiple<T extends Main>(object: { [K in T]: (data: MainReturnPayloads[K]) => void }) {
+export function requestMainMultiple<T extends Main>(object: { [K in T]: (data: MainReturnPayloads[K] | undefined) => void }) {
     Object.keys(object).forEach((id) => {
         requestMain(id as T, undefined, object[id])
     })

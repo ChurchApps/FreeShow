@@ -147,8 +147,12 @@
         if (!startPoint || !endPoint) return false
 
         const range = document.createRange()
-        range.setStart(startPoint.node, startPoint.offset)
-        range.setEnd(endPoint.node, endPoint.offset)
+        try {
+            range.setStart(startPoint.node, startPoint.offset)
+            range.setEnd(endPoint.node, endPoint.offset)
+        } catch {
+            return false
+        }
 
         const sel = window.getSelection()
         if (!sel) return false
