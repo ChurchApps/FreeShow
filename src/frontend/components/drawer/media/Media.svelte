@@ -183,7 +183,7 @@
         requesting++
         let currentRequest = requesting
         const data = await requestMain(Main.READ_FOLDER, { path, depth, captureFolderContent })
-        if (requesting !== currentRequest) return
+        if (!data || requesting !== currentRequest) return
 
         // check if there's any audio files that the user might want to find
         if (!Array.isArray(path)) {

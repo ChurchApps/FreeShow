@@ -16,7 +16,7 @@ export function requestMainMultiple<T extends Main>(object: { [K in T]: (data: M
 
 const currentlyAwaiting: string[] = []
 // @ts-ignore
-export async function requestMain<ID extends Main, R = Awaited<MainReturnPayloads[ID]>>(id: ID, value?: MainSendValue<ID>, callback?: (data: R) => void, waitingTimeout: number = 15000) {
+export async function requestMain<ID extends Main, R = Awaited<MainReturnPayloads[ID]>>(id: ID, value?: MainSendValue<ID>, callback?: (data: R | undefined) => void, waitingTimeout: number = 15000) {
     const listenerId = id + uid(5)
     currentlyAwaiting.push(listenerId)
 
@@ -33,14 +33,14 @@ export async function requestMain<ID extends Main, R = Awaited<MainReturnPayload
         if (waitIndex > -1) currentlyAwaiting.splice(waitIndex, 1)
     }
 
-    const returnData: R = await new Promise((resolve) => {
+    const returnData: R | undefined = await new Promise((resolve) => {
         timeout = setTimeout(() => {
             if (settled) return
             settled = true
 
             if (get(isDev)) console.error(`IPC Message Timed Out: ${id}`)
             cleanup()
-            resolve(undefined as R)
+            resolve(undefined)
         }, waitingTimeout)
 
         window.api.receive(

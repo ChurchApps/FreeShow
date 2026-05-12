@@ -19,7 +19,7 @@
     let ip = "localhost"
 
     onMount(async () => {
-        ip = (await requestMain(Main.IP))[0]
+        ip = ((await requestMain(Main.IP)) || ["localhost"])[0]
     })
 
     // WIP reset in popups

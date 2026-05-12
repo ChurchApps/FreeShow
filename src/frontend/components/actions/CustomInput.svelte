@@ -73,8 +73,8 @@
     let screens: { name: string; id: string }[] = []
     if (inputId === "screen") getScreens()
     async function getScreens() {
-        let screenList = await requestMain(Main.GET_SCREENS)
-        let windowList = await requestMain(Main.GET_WINDOWS)
+        let screenList = (await requestMain(Main.GET_SCREENS)) || []
+        let windowList = (await requestMain(Main.GET_WINDOWS)) || []
         // screens = sortByName(screensList)
         screens = [...screenList, ...windowList]
     }

@@ -16,7 +16,7 @@
     let windows: { name: string; id: string }[] = []
 
     onMount(async () => {
-        windows = await requestMain(Main.GET_WINDOWS)
+        windows = (await requestMain(Main.GET_WINDOWS)) || []
     })
 
     // search

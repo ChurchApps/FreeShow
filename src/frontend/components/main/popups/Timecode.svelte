@@ -54,11 +54,11 @@
         } else if (mode === "MTC") {
             if (type === "send") {
                 if (midiOutputs.length) return
-                const data = await requestMain(Main.GET_MIDI_OUTPUTS)
+                const data = (await requestMain(Main.GET_MIDI_OUTPUTS)) || []
                 midiOutputs = data.map((a) => ({ value: a.name, label: a.name }))
             } else {
                 if (midiInputs.length) return
-                const data = await requestMain(Main.GET_MIDI_INPUTS)
+                const data = (await requestMain(Main.GET_MIDI_INPUTS)) || []
                 midiInputs = data.map((a) => ({ value: a.name, label: a.name }))
             }
         }

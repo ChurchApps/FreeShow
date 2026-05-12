@@ -94,7 +94,7 @@
         requesting++
         let currentRequest = requesting
         const data = await requestMain(Main.READ_FOLDER, { path, depth })
-        if (requesting !== currentRequest) return
+        if (!data || requesting !== currentRequest) return
 
         allRelevantFiles = Object.values(data).filter((a) => {
             // remove folders with no content

@@ -101,7 +101,7 @@
     let localBibles: { path: string; name: string }[] = []
     $: if (importType === "local") getLocalBibles()
     async function getLocalBibles() {
-        localBibles = await requestMain(Main.READ_BIBLES_FOLDER)
+        localBibles = (await requestMain(Main.READ_BIBLES_FOLDER)) || []
         const existingBibles = Object.values($scriptures).map((a) => a.name.replace(/\.fsb$/i, ""))
         console.log(localBibles, existingBibles, $scriptures)
         // remove already existing

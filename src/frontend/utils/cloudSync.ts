@@ -19,7 +19,7 @@ export async function setupCloudSync(auto: boolean = false) {
     }
     if (!(await requestMain(Main.CAN_SYNC))) return
 
-    const teams = await requestMain(Main.GET_TEAMS)
+    const teams = (await requestMain(Main.GET_TEAMS)) || []
     if (!teams.length) {
         const addTeam = "Get added to a team, or create one in B1.church>Serving>Plans>Ministry>Teams!"
         const msg = auto ? "You can setup cloud sync with ChurchApps, but no teams were found in your account. " + addTeam : "No teams were found in your account. " + addTeam
@@ -41,7 +41,7 @@ export async function setupCloudSync(auto: boolean = false) {
 }
 
 export async function changeTeam() {
-    const teams = await requestMain(Main.GET_TEAMS)
+    const teams = (await requestMain(Main.GET_TEAMS)) || []
     const currentTeam = get(cloudSyncData).enabled ? get(cloudSyncData).team?.id : ""
     const teamsOptions = teams.map((a) => ({ id: a.id, churchId: a.churchId, name: a.name, icon: "people", disabled: a.id === currentTeam }))
 
@@ -181,7 +181,7 @@ async function createCloudSocket(): Promise<SocketHelper | null> {
     if (!team) return null
 
     const name = get(cloudSyncData).deviceName || ""
-    if (!cachedConversationId) cachedConversationId = await requestMain(Main.GET_CONVERSATION_ID, { teamId: team.id })
+    if (!cachedConversationId) cachedConversationId = (await requestMain(Main.GET_CONVERSATION_ID, { teamId: team.id })) || null
 
     try {
         cloudSocketHelper = new SocketHelper({ churchId: team.churchId, teamId: team.id, displayName: name, conversationId: cachedConversationId || undefined })

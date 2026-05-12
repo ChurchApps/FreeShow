@@ -33,6 +33,7 @@
         error = null
         try {
             requestMain(Main.GET_CONTENT_LIBRARY, { providerId }, (data) => {
+                if (!data) return
                 library = data
                 loading = false
                 viewingContent = false
@@ -79,6 +80,7 @@
         error = null
         try {
             requestMain(Main.GET_PROVIDER_CONTENT, { providerId, key }, (data) => {
+                if (!data) return
                 content = data
                 loading = false
             })

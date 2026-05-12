@@ -546,7 +546,7 @@ export async function playFolder(path: string, back = false) {
     const currentlyPlaying = currentOutput?.out?.background?.path
 
     const mediaExtensions = [...videoExtensions, ...imageExtensions, ...audioExtensions]
-    const files = keysToID(await requestMain(Main.READ_FOLDER, { path }))
+    const files = keysToID((await requestMain(Main.READ_FOLDER, { path })) || {})
     const folderFiles = sortByName(files.filter((a) => mediaExtensions.includes(getExtension(a.name))).map((a) => ({ path: a.path, name: a.name, type: getMediaType(getExtension(a.name)) })))
     if (!folderFiles.length) return
 

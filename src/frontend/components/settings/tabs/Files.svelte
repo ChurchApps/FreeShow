@@ -73,7 +73,7 @@
         sendMain(Main.SET_MEDIA_FOLDER_PATH, mediaFolderPath)
 
         // get default path again if reset
-        if (!mediaFolderPath) mediaFolderPath = await requestMain(Main.GET_MEDIA_FOLDER_PATH)
+        if (!mediaFolderPath) mediaFolderPath = (await requestMain(Main.GET_MEDIA_FOLDER_PATH)) || ""
     }
 
     // get times
@@ -85,7 +85,7 @@
         checkTimes()
         updater = setInterval(checkTimes, 1000)
 
-        if ($special.cloudSyncMediaFolder) mediaFolderPath = await requestMain(Main.GET_MEDIA_FOLDER_PATH)
+        if ($special.cloudSyncMediaFolder) mediaFolderPath = (await requestMain(Main.GET_MEDIA_FOLDER_PATH)) || ""
     })
     onDestroy(() => {
         if (updater) clearInterval(updater)
@@ -125,7 +125,7 @@
             return
         }
 
-        const contents = (await requestMain(Main.READ_FILE, { path })).content
+        const contents = ((await requestMain(Main.READ_FILE, { path })) || {}).content
         if (contents) validateKeys(contents)
     }
 
@@ -249,7 +249,7 @@
             // activePopup.set("alert")
 
             sendMain(Main.BUNDLE_MEDIA_FILES, { openFolder: true })
-            mediaFolderPath = await requestMain(Main.GET_MEDIA_FOLDER_PATH)
+            mediaFolderPath = (await requestMain(Main.GET_MEDIA_FOLDER_PATH)) || ""
         }
     }
 </script>

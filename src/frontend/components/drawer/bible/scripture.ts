@@ -79,9 +79,9 @@ async function getLocalBible(id: string) {
     if (!scriptureData) return null
 
     const localBibleResponse = await requestMain(Main.BIBLE, { name: scriptureData.name, id })
-    const localBible = localBibleResponse.content?.[1]
+    const localBible = localBibleResponse?.content?.[1]
 
-    if (localBibleResponse.error === "not_found" || !localBible) {
+    if (localBibleResponse?.error === "not_found" || !localBible) {
         notFound.update((a) => {
             a.bible.push(id)
             return a

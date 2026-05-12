@@ -11,7 +11,7 @@
     export let streams: MediaStream[]
 
     onMount(async () => {
-        screens = await requestMain(Main.GET_SCREENS)
+        screens = (await requestMain(Main.GET_SCREENS)) || []
     })
 
     $: currentOutput = getFirstActiveOutput($outputs)

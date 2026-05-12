@@ -20,7 +20,7 @@
     // WIP use savedScreen = $projects[$activeProject || ""].shows.find((a) => a.id === path)?.data?.screenName to determine if it is active or not
 
     onMount(() => {
-        requestMain(Main.SLIDESHOW_GET_APPS, undefined, (a) => presentationApps.set(a))
+        requestMain(Main.SLIDESHOW_GET_APPS, undefined, (a) => presentationApps.set(a || []))
     })
 
     let opening = false

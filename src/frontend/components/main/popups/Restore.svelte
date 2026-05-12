@@ -11,7 +11,7 @@
 
     let backupsList: { path: string; name: string; date: number; size: number }[] = []
     onMount(async () => {
-        backupsList = await requestMain(Main.BACKUPS)
+        backupsList = (await requestMain(Main.BACKUPS)) || []
         backupsList = backupsList.sort((a, b) => b.date - a.date)
 
         if (!backupsList.length) restoreCustom()

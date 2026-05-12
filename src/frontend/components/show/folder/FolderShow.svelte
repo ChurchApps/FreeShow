@@ -31,7 +31,7 @@
     let folderFiles: TFile[] = []
     const mediaExtensions = [...videoExtensions, ...imageExtensions, ...audioExtensions]
     onMount(async () => {
-        const files = keysToID(await requestMain(Main.READ_FOLDER, { path, generateThumbnails: true }))
+        const files = keysToID((await requestMain(Main.READ_FOLDER, { path, generateThumbnails: true })) || {})
         folderFiles = sortByName(files.filter((a) => mediaExtensions.includes(getExtension(a.name))).map((a) => ({ path: a.path, name: a.name, type: getMediaType(getExtension(a.name)), thumbnail: (a as any).thumbnailPath })))
 
         // get total time

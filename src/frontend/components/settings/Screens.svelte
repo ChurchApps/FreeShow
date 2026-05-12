@@ -46,7 +46,7 @@
     let totalScreensHeight = 0
 
     onMount(async () => {
-        const displays = await requestMain(Main.GET_DISPLAYS)
+        const displays = (await requestMain(Main.GET_DISPLAYS)) || []
         let sortedScreens = displays.sort(sortScreensByPosition)
         screens = sortedScreens.sort(internalFirst)
 

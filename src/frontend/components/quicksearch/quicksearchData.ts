@@ -33,7 +33,7 @@ export async function getMediaResults(searchValue: string, folderPaths: string[]
     const key = `${folderPaths[0]}_${folderPaths.length}`
     let data: { [key: string]: FileFolder } = mediaCache.get(key)
     if (!data) {
-        data = await requestMain(Main.READ_FOLDER, { path: folderPaths })
+        data = (await requestMain(Main.READ_FOLDER, { path: folderPaths })) || {}
         mediaCache.set(key, data)
     }
     const matches: any[] = []

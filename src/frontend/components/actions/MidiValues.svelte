@@ -52,7 +52,7 @@
     function requestData() {
         if (type === "input") {
             requestMain(Main.GET_MIDI_INPUTS, undefined, (data) => {
-                if (!data.length) return
+                if (!data?.length) return
                 inputs = data
                 if (!midi.input) midi.input = data[0]?.name
 
@@ -60,7 +60,7 @@
             })
         } else {
             requestMain(Main.GET_MIDI_OUTPUTS, undefined, (data) => {
-                if (!data.length) return
+                if (!data?.length) return
                 outputs = data
                 if (!midi.output) midi.output = data[0]?.name
 

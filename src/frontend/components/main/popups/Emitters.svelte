@@ -155,7 +155,7 @@
         if (signalInputs[0].type !== "dropdown" || signalInputs[0].options[0]?.value) return
 
         requestMain(Main.GET_MIDI_OUTPUTS, undefined, (data) => {
-            if (!data.length || signalInputs[0].type !== "dropdown") return
+            if (!data?.length || signalInputs[0].type !== "dropdown") return
 
             signalInputs[0].options = data.map((a) => ({ value: a.name, label: a.name, ...a }))
             if (!emitter?.signal?.output) updateValue("signal", { output: data[0].name })

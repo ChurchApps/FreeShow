@@ -2,6 +2,7 @@
 // This is for media/file functions
 
 import { get } from "svelte/store"
+import type { ContentProviderId } from "../../../electron/contentProviders/base/types"
 import { Main } from "../../../types/IPC/Main"
 import type { FileFolder, MediaStyle, Subtitle } from "../../../types/Main"
 import type { Cropping, Styles } from "../../../types/Settings"
@@ -274,6 +275,7 @@ export async function doesMediaExist(path: string, noCache = false) {
 
     const creationTime = get(media)[path]?.creationTime || 0
     const existsData = await requestMain(Main.DOES_MEDIA_EXIST, { path, creationTime })
+    if (!existsData) return false
 
     // update "media"
     if (!existsData.exists || !creationTime) {
@@ -301,7 +303,7 @@ export async function getMediaInfo(path: string): Promise<{ codecs: string[]; mi
     if (cachedInfo?.codecs?.length) return cachedInfo
 
     try {
-        info = await requestMain(Main.MEDIA_CODEC, { path })
+        info = (await requestMain(Main.MEDIA_CODEC, { path })) || null
     } catch (err) {
         return info
     }
@@ -767,7 +769,7 @@ function isLicenseValid(mediaData: MediaStyle | undefined): boolean {
 // share one IPC call instead of racing.
 const licenseRefreshInFlight = new Map<string, Promise<boolean>>()
 
-function refreshMediaLicense(url: string, providerId: string, mediaId: string): Promise<boolean> {
+function refreshMediaLicense(url: string, providerId: ContentProviderId, mediaId: string): Promise<boolean> {
     const existing = licenseRefreshInFlight.get(url)
     if (existing) return existing
 

@@ -95,7 +95,7 @@ export async function initializeSender(data: Output, window: BrowserWindow, id: 
     // get & set custom frame rate
     const output = OutputHelper.getOutput(id)
     if (!output.captureOptions) output.captureOptions = CaptureHelper.getDefaultCapture(window, id)
-    if (!bmdData.framerate[1] || !bmdData.framerate[0]) return
+    if (!bmdData.framerate?.[1] || !bmdData.framerate?.[0]) return
     const bmdFramerate = bmdData.framerate[1] / bmdData.framerate[0] // [ 1001, 30000 ]
     if (bmdFramerate < 10) return
     output.captureOptions.framerates.blackmagic = bmdFramerate

@@ -24,7 +24,7 @@
     })
 
     function create() {
-        requestMain(Main.GET_PATHS, undefined, (a) => createData(a))
+        requestMain(Main.GET_PATHS, undefined, (a) => (a ? createData(a) : null))
 
         sendMain(Main.REFRESH_SHOWS)
 
