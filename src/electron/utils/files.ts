@@ -1276,7 +1276,8 @@ export async function loadShowsAsync(returnShows = false, reCacheNames: string[]
     specialCaseFixer()
 
     // list all shows in folder
-    const filesInFolder = readFolder(showsPath)
+    const allFiles = await readFolderAsync(showsPath)
+    const filesInFolder = allFiles
         .filter((name) => name.toLowerCase().endsWith(".show"))
         .map((name) => name.slice(0, -5)) // remove .show extension
         .filter((trimmedName) => trimmedName) // remove files with no name
@@ -1285,15 +1286,21 @@ export async function loadShowsAsync(returnShows = false, reCacheNames: string[]
     const newCachedShows: TrimmedShows = {}
     const textCache: { [key: string]: string } = {}
 
+    // send already cached shows to the frontend immediately
+    if (!returnShows && !reCacheNames.length && Object.keys(cachedShows).length) {
+        sendMain(Main.SHOWS, cachedShows as TrimmedShows)
+    }
+
     // create a map for quick lookup of cached shows by name
     const cachedShowNames = new Map<string, string>()
     for (const [id, show] of Object.entries(cachedShows)) {
         if (show?.name && !reCacheNames.includes(show.name)) cachedShowNames.set(show.name, id)
     }
 
-    const BATCH_SIZE = 20
+    const BATCH_SIZE = 50
     for (let i = 0; i < filesInFolder.length; i += BATCH_SIZE) {
         const batch = filesInFolder.slice(i, i + BATCH_SIZE)
+        let hadIo = false
 
         await Promise.all(
             batch.map(async (name) => {
@@ -1303,6 +1310,7 @@ export async function loadShowsAsync(returnShows = false, reCacheNames: string[]
                     return
                 }
 
+                hadIo = true
                 const showPath: string = path.join(showsPath, `${name}.show`)
                 const jsonData = (await readFileAsync(showPath)) || "{}"
                 const show = parseShow(jsonData)
@@ -1322,8 +1330,7 @@ export async function loadShowsAsync(returnShows = false, reCacheNames: string[]
             })
         )
 
-        // Yield between batches so other IPC requests can be handled.
-        await new Promise((resolve) => setTimeout(resolve, 0))
+        if (hadIo) await new Promise((resolve) => setImmediate(resolve))
     }
 
     // send updated text cache
@@ -1335,8 +1342,7 @@ export async function loadShowsAsync(returnShows = false, reCacheNames: string[]
 
     if (returnShows) return newCachedShows
 
-    // save this (for cloud sync)
-    setStore(_store.SHOWS, newCachedShows)
+    setImmediate(() => setStore(_store.SHOWS, newCachedShows))
 
     return newCachedShows
 }
