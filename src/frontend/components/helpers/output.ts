@@ -1210,14 +1210,17 @@ function replaceScriptureValues(items: Item[], templateItems: Item[], customDyna
 
                                 const bibleIndex = parseInt(key.replace(/\D/g, "")) || 0
 
-                                value.forEach(([number, value], index) => {
+                                value.forEach(([number, verseText], index) => {
                                     if (number && number !== "0") {
                                         const size = verseNumberSize * (i === 0 ? 1.2 : 1)
                                         const numberStyle = `;${verseNumberStyles[bibleIndex] || verseNumberStyles[0] || verseNumberStyle}font-size: ${size}px;margin-right: 0.3em;`
                                         newTexts.push({ value: number, style: style + numberStyle, customType: "disableTemplate" })
                                     }
 
-                                    newTexts.push({ value, sourceDynamicKey: key + ":" + index, style: style + ";" + baseStyle })
+                                    // Add trailing space if the next item is a continuation with no verse number
+                                    const nextItem = (value as [string, string][])[index + 1]
+                                    const needsSpace = nextItem && (!nextItem[0] || nextItem[0] === "0")
+                                    newTexts.push({ value: needsSpace ? verseText + " " : verseText, sourceDynamicKey: key + ":" + index, style: style + ";" + baseStyle })
                                 })
                             }
                         })
