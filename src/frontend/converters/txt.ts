@@ -663,7 +663,7 @@ function findPatterns(sections: string[]) {
 
         // if (length < 10 && !sections[i].includes("\n")) return sections[i].trim()
         if (length < 30 || linesSimilarity(sections[i])) return "tag"
-        if (splitted[0].length < 8 && splitted[1].length > 20) {
+        if (splitted[0].length < 8 && splitted[1]?.length > 20 && !/[,.!?-]/.test(splitted[0])) {
             sections[i] = splitted.slice(1, splitted.length).join("\n")
             let group = splitted[0]
             if (get(groupNumbers)) group = group.replace(/\d+/g, "").trim()
