@@ -10,6 +10,7 @@
     import { contextMenuGroups, contextMenuItems, contextMenuLayouts } from "./contextMenus"
     import { flattenMenuItems, handleKeydown as handleSearchKeydown, searchMenuItems, type FlatMenuItem } from "./contextMenuSearch"
     import { quickLoadItems } from "./loadItems"
+    import { saveTextSelectionRange } from "./menuClick"
     import SpellCheckMenu from "./SpellCheckMenu.svelte"
 
     let contextElem: HTMLDivElement | null = null
@@ -27,6 +28,7 @@
     let lastTriggeredElem: HTMLDivElement | null = null // doesn't store the $selected state
     function onContextMenu(e: MouseEvent) {
         spellcheck.set(null)
+        saveTextSelectionRange()
 
         let target: any = e.target
         if (!target || closingMenuTimeout) return

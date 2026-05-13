@@ -172,6 +172,41 @@ const clickActions = {
     history: () => activePopup.set("history"),
     cut: () => cut(),
     copy: () => copy(),
+    text_copy: () => copy(),
+    text_cut: (obj: ObjData) => {
+        const editElem = obj.contextElem?.closest(".edit") as HTMLElement | null
+        if (!editElem || !savedTextRange) return
+        const text = savedTextRange.toString()
+        if (!text) return
+        navigator.clipboard.writeText(text).then(() => {
+            editElem.focus()
+            const sel = window.getSelection()
+            if (sel) {
+                sel.removeAllRanges()
+                sel.addRange(savedTextRange!)
+                document.execCommand("delete")
+            }
+        })
+    },
+    text_paste: (obj: ObjData) => {
+        const editElem = obj.contextElem?.closest(".edit") as HTMLElement | null
+        if (!editElem) return
+        navigator.clipboard
+            .readText()
+            .then((text) => {
+                if (!text) return
+                editElem.focus()
+                if (savedTextRange) {
+                    const sel = window.getSelection()
+                    if (sel) {
+                        sel.removeAllRanges()
+                        sel.addRange(savedTextRange)
+                    }
+                }
+                document.execCommand("insertText", false, text)
+            })
+            .catch(() => {})
+    },
     paste: (obj: ObjData) => paste(null, {}, obj.contextElem),
     // view
     // help
@@ -1630,6 +1665,18 @@ const clickActions = {
     changeIcon: () => activePopup.set("icon"),
 
     selectAll: (obj: ObjData) => selectAll(obj.sel),
+    text_select_all: (obj: ObjData) => {
+        const editElem = obj.contextElem?.closest(".edit") as HTMLElement | null
+        if (!editElem) return
+        editElem.focus()
+        const range = document.createRange()
+        range.selectNodeContents(editElem)
+        const selection = window.getSelection()
+        if (selection) {
+            selection.removeAllRanges()
+            selection.addRange(range)
+        }
+    },
 
     bind_slide: (obj: ObjData) => {
         const ref = getLayoutRef()
@@ -1845,6 +1892,16 @@ const clickActions = {
 
             return
         }
+    }
+}
+
+let savedTextRange: Range | null = null
+export function saveTextSelectionRange() {
+    const sel = window.getSelection()
+    if (sel && sel.rangeCount > 0) {
+        savedTextRange = sel.getRangeAt(0).cloneRange()
+    } else {
+        savedTextRange = null
     }
 }
 

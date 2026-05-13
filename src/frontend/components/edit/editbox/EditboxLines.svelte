@@ -779,7 +779,7 @@
             <div
                 bind:this={textElem}
                 on:mouseup={() => storeCurrentCaretPos()}
-                class="edit"
+                class="edit context {plain ? '#editbox_text' : '#edit_box__editbox_text'}"
                 class:hidden={chordsMode}
                 class:autoSize={item.auto && autoSize}
                 contenteditable

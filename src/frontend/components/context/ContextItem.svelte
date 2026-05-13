@@ -168,6 +168,12 @@
         redo: () => {
             if (!$redoHistory.length) disabled = true
         },
+        text_copy: () => {
+            if (!window.getSelection()?.toString()) disabled = true
+        },
+        text_cut: () => {
+            if (!window.getSelection()?.toString()) disabled = true
+        },
         createSlideshow: () => {
             hide = $selected.id !== "media" || $selected.data.length < 2
         },

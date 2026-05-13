@@ -116,6 +116,10 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     slideGroups: { label: "context.changeGroup", icon: "groups", iconColor: "#ff97d9", items: ["rename", "recolor", "SEPARATOR", "LOAD_slide_groups"] },
     editSlideText: { label: "menu.edit", icon: "edit", iconColor: "#97c7ff" }, // actions.edit_slide_text
     selectAll: { label: "context.selectAll", icon: "select", shortcuts: ["Ctrl+A"] },
+    text_copy: { label: "actions.copy", icon: "copy", iconColor: "#97c7ff", shortcuts: ["Ctrl+C"] },
+    text_cut: { label: "actions.cut", icon: "cut", iconColor: "#97c7ff", shortcuts: ["Ctrl+X"] },
+    text_paste: { label: "actions.paste", icon: "paste", iconColor: "#97c7ff", shortcuts: ["Ctrl+V"] },
+    text_select_all: { label: "context.selectAll", icon: "select", shortcuts: ["Ctrl+A"] },
     newSlide: { label: "new.slide", icon: "add", iconColor: "var(--secondary)" },
     // newGroup: { label: "context.createNew", icon: "add", iconColor: "var(--secondary)" },
     remove_template: { label: "actions.remove_template_from_show", icon: "remove_circle", iconColor: "#ff6b54" },
@@ -380,6 +384,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
 
     // EDIT
     edit_box: ["GROUP_dynamic", "item_actions", "item_bind_to", "format", "rearrange", "transition", "SEPARATOR", "duplicate", "delete"], // "copy", "paste" (shortcut or top menubar) // "GROUP_duplicate_delete"
+    editbox_text: ["text_copy", "text_cut", "SEPARATOR", "text_paste", "SEPARATOR", "text_select_all"],
     items_list_item: ["to_front", "forward", "backward", "to_back"],
 
     // TIMELINE
