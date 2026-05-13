@@ -59,7 +59,7 @@
         autoPause = false
     }
     function setVideoData() {
-        videoData = { ...$videosData[outputId], muted: true }
+        videoData = { ...$videosData[outputId], muted: true, ...($focusMode ? { paused: true } : {}) }
     }
 
     let prevId: string | undefined = undefined

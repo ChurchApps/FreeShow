@@ -410,10 +410,25 @@ async function goToNextShowInProject(slide, customOutputId) {
     const currentOutputProjectShowIndex = currentProject.shows[projectIndex]
     if (currentOutputProjectShowIndex.id !== slide.id) return
 
-    const nextShowInProjectIndex = currentProject.shows.findIndex((a, i) => i > projectIndex && (a.type || "show") === "show")
+    const nextShowInProjectIndex = currentProject.shows.findIndex((a, i) => {
+        if (i <= projectIndex) return false
+        const type = a.type || "show"
+        return type === "show" || type === "video" || type === "image" || type === "player"
+    })
     if (nextShowInProjectIndex < 0) return
 
     const nextShow = currentProject.shows[nextShowInProjectIndex]
+    const nextType = nextShow.type || "show"
+
+    if (nextType !== "show") {
+        playProjectItemMedia(nextShow.id)
+        if (get(activeShow)?.index === projectIndex || get(focusMode)) {
+            if (get(focusMode)) activeFocus.set({ id: nextShow.id, index: nextShowInProjectIndex, type: nextShow.type })
+            else activeShow.set({ ...nextShow, index: nextShowInProjectIndex })
+        }
+        return
+    }
+
     await loadShows([nextShow.id])
     const activeLayout = nextShow.layout || _show(nextShow.id).get("settings.activeLayout")
     const layout = _show(nextShow.id).layouts([activeLayout]).ref()[0]
@@ -435,7 +450,8 @@ async function goToNextShowInProject(slide, customOutputId) {
 let changeProjectItemTimeout: NodeJS.Timeout | null = null
 export function goToNextProjectItem(key = "") {
     // play project media with arrow right if not already playing
-    const currentProjectItem = get(projects)[get(activeProject) || ""]?.shows?.[get(activeShow)?.index ?? -1]
+    const currentProjectItemIndex = (get(focusMode) ? get(activeFocus)?.index : get(activeShow)?.index) ?? -1
+    const currentProjectItem = get(projects)[get(activeProject) || ""]?.shows?.[currentProjectItemIndex]
     if (currentProjectItem?.type === "video" || currentProjectItem?.type === "image" || currentProjectItem?.type === "player") {
         const outBg = getFirstOutput()?.out?.background
         if ((outBg?.path || outBg?.id) !== currentProjectItem?.id) {
@@ -481,6 +497,15 @@ export function goToNextProjectItem(key = "") {
 }
 
 export function goToPreviousProjectItem(key = "") {
+    const currentProjectItemIndex = (get(focusMode) ? get(activeFocus)?.index : get(activeShow)?.index) ?? -1
+    const currentProjectItem = get(projects)[get(activeProject) || ""]?.shows?.[currentProjectItemIndex]
+    if (currentProjectItem?.type === "video" || currentProjectItem?.type === "image" || currentProjectItem?.type === "player") {
+        const outBg = getFirstOutput()?.out?.background
+        if ((outBg?.path || outBg?.id) !== currentProjectItem?.id) {
+            return togglePlayingMedia()
+        }
+    }
+
     if (changeProjectItemTimeout) return
     changeProjectItemTimeout = setTimeout(() => {
         changeProjectItemTimeout = null
