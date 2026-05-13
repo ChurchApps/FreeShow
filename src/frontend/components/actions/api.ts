@@ -20,6 +20,7 @@ import { activateTriggerSync, changeOutputStyle, nextSlideIndividual, playSlideT
 import { startTimerById, startTimerByName, stopTimers } from "../helpers/timerTick"
 import { muteOutput, unmuteOutput } from "../helpers/video"
 import { clearAll, clearBackground, clearDrawing, clearOverlay, clearOverlays, clearSlide, clearTimers, restoreOutput } from "../output/clear"
+import { fadePause, skipNext, skipPrev, spotifyPause, spotifyPlay } from "../output/preview/SpotifyManager"
 import { formatText } from "../show/formatTextEditor"
 import { getPlainEditorText } from "../show/getTextEditor"
 import { pauseTimeline, setTimelineTime, startTimeline, stopTimeline } from "../timeline/TimelinePlayback"
@@ -322,6 +323,13 @@ export const API_ACTIONS = {
     send_midi: (data: API_midi) => sendMidi(data), // DEPRECATED, use emit_action instead
     send_rest_command: (data: API_rest_command) => sendRestCommandSync(data), // DEPRECATED, use emit_action instead
     emit_action: (data: API_emitter) => emitData(data),
+
+    // Spotify
+    spotify_play: () => spotifyPlay(),
+    spotify_pause: () => spotifyPause(),
+    spotify_fade_out: () => fadePause(),
+    spotify_next: () => skipNext(),
+    spotify_previous: () => skipPrev(),
 
     // OTHER
     toggle_log_song_usage: (data: API_toggle_specific) => toggleLogSongUsage(data),

@@ -138,6 +138,17 @@ export const togglePlay = async () => {
     await runCmd("playpause")
 }
 
+export function spotifyPlay() {
+    if (get(spotifyState)?.isPlaying) return
+    spotifyState.update((s) => (s ? ((lock = Date.now() + 2000), { ...s, isPlaying: true }) : s))
+    return runCmd("playpause")
+}
+export function spotifyPause() {
+    if (!get(spotifyState)?.isPlaying) return
+    spotifyState.update((s) => (s ? ((lock = Date.now() + 2000), { ...s, isPlaying: false }) : s))
+    return runCmd("playpause")
+}
+
 const skip = async (command: string) => {
     spotifyState.update((s) => (s ? ((lock = Date.now() + 2000), { ...s, positionSec: 0, isPlaying: true }) : s))
     await runCmd(command)
