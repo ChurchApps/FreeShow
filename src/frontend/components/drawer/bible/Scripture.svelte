@@ -308,16 +308,19 @@
         } else openChapter([id])
     }
 
-    async function openBook(bookNumber?: number | string, chapterNumbers?: (number | string)[], verseNumbers?: (number | string)[][]) {
-        // reset chapter and verse when changing book
-        if (bookNumber && !chapterNumbers) activeReference.chapters = []
-        if (bookNumber && !verseNumbers) activeReference.verses = []
+    let navigationId = 0
 
-        bookNumber = bookNumber ?? activeReference.book ?? 1
-        activeReference.book = bookNumber
+    let pendingBookNumber: number | string | null = null
+    let pendingBookPromise: any | null = null
 
+    let pendingChapterNumber: number | string | null = null
+    let pendingChapterPromise: any | null = null
+
+    async function openBook(bookNumber?: number | string, chapterNumbers?: (number | string)[], verseNumbers?: (number | string)[][], navId?: number): Promise<boolean> {
+        const currentNavId = navId ?? ++navigationId
+        const targetBookNumber = bookNumber ?? activeReference.book ?? 1
         const currentData = data[previewBibleId]?.bibleData
-        if (!currentData) return
+        if (!currentData) return false
 
         // remove current data so loading shows again
         delete data[previewBibleId].bookData
@@ -326,20 +329,27 @@
         data = data
 
         // load new data
-        data[previewBibleId].bookData = await currentData.getBook(bookNumber)
+        if (pendingBookNumber !== targetBookNumber) {
+            pendingBookNumber = targetBookNumber
+            pendingBookPromise = currentData.getBook(targetBookNumber)
+        }
+        data[previewBibleId].bookData = await pendingBookPromise
 
-        openChapter(chapterNumbers, verseNumbers)
+        if (currentNavId !== navigationId) return false
+
+        // reset chapter and verse when changing book
+        if (bookNumber && !chapterNumbers) activeReference.chapters = []
+        if (bookNumber && !verseNumbers) activeReference.verses = []
+        activeReference.book = targetBookNumber
+
+        return await openChapter(chapterNumbers, verseNumbers, currentNavId)
     }
 
-    async function openChapter(chapterNumbers?: (number | string)[], verseNumbers?: (number | string)[][]) {
-        // reset verse when changing chapter
-        if (chapterNumbers && !verseNumbers) activeReference.verses = []
-
-        chapterNumbers = chapterNumbers?.length ? chapterNumbers : activeReference.chapters?.length ? activeReference.chapters : [1]
-        activeReference.chapters = chapterNumbers
-
+    async function openChapter(chapterNumbers?: (number | string)[], verseNumbers?: (number | string)[][], navId?: number): Promise<boolean> {
+        const currentNavId = navId ?? ++navigationId
+        const targetChapterNumbers = chapterNumbers?.length ? chapterNumbers : activeReference.chapters?.length ? activeReference.chapters : [1]
         const currentData = data[previewBibleId]?.bookData
-        if (!currentData) return
+        if (!currentData) return false
 
         // remove current data so loading shows again
         delete data[previewBibleId].chapterData
@@ -348,14 +358,22 @@
 
         // load new data
         // NOTE: if chapter is not a number it does not work
-        const chapterNumber = Number(chapterNumbers[chapterNumbers.length - 1])
-        // const chapterId = chapterNumbers[chapterNumbers.length - 1]?.toString()
-        // const chapterIndex = (chapters || []).findIndex((a) => a.number?.toString() === chapterId)
-        data[previewBibleId].chapterData = await currentData.getChapter(chapterNumber)
+        const chapterNumber = Number(targetChapterNumbers[targetChapterNumbers.length - 1])
 
-        // newToast(translateText("toast.chapter_undefined").replace("{}", chapter))
+        if (pendingChapterNumber !== chapterNumber) {
+            pendingChapterNumber = chapterNumber
+            pendingChapterPromise = currentData.getChapter(chapterNumber)
+        }
+        data[previewBibleId].chapterData = await pendingChapterPromise
+
+        if (currentNavId !== navigationId) return false
+
+        // reset verse when changing chapter
+        if (chapterNumbers && !verseNumbers) activeReference.verses = []
+        activeReference.chapters = targetChapterNumbers
 
         openVerse(verseNumbers)
+        return true
     }
 
     let playWhenLoaded = false
@@ -509,7 +527,11 @@
     let selectAllTimeout: NodeJS.Timeout | null = null
     let freezeTimeout: NodeJS.Timeout | null = null
     let freezeInput: string | null = null
+
+    let currentSearchId = 0
     async function referenceSearch() {
+        const searchId = ++currentSearchId
+
         if (selectAllTimeout) clearTimeout(selectAllTimeout)
 
         // if search value ends with any number, unfreeze
@@ -522,43 +544,60 @@
         }
 
         const multiReference = await parseMultiChapterReference(searchValue)
+
+        if (searchId !== currentSearchId) return
+
         if (multiReference) {
             // normalize the search box so it reflects the exact selection the user will get
             searchValue = multiReference.referenceLabel
-            openBook(multiReference.bookNumber, multiReference.chapters, multiReference.verses)
+            await openBook(multiReference.bookNumber, multiReference.chapters, multiReference.verses)
             return
         }
 
         const result = currentBibleData?.bibleData?.bookSearch(searchValue)
         if (!result) return
 
+        // json-bible returns empty verses when chapter is not loaded, this fixes search issues
+        if (result.chapter && !result.verses?.length) {
+            const verseMatch = searchValue.match(/[:.,]\s*(\d+)(?:-(\d+))?[^a-zA-Z]*$/)
+            if (verseMatch) {
+                const start = parseInt(verseMatch[1])
+                const end = verseMatch[2] ? parseInt(verseMatch[2]) : start
+                if (start > 0 && start <= 150) {
+                    result.verses = Array.from({ length: end - start + 1 }, (_, i) => start + i)
+                }
+            }
+        }
+
         if (result.autocompleted) searchValue = result.autocompleted
 
-        if (result.book) {
-            // BOOK
-            openBook(result.book)
+        const bookChanged = result.book && result.book.toString() !== activeReference.book?.toString()
+        const chapterChanged = result.chapter && (!activeReference.chapters.length || result.chapter.toString() !== activeReference.chapters[0]?.toString())
 
+        let newVerses: (number | string)[][] | undefined = undefined
+        if (result.verses?.length) {
+            newVerses = !bookChanged && !chapterChanged && splittedVerses ? [splittedVerses.filter((a) => result.verses.includes(a.number)).map((a) => a.id)] : [result.verses]
+        }
+
+        let success = true
+        if (bookChanged) {
             // prevent inputs right after auto complete
             if (!result.chapter) {
                 freezeInput = searchValue
                 freezeTimeout = setTimeout(() => (freezeInput = null), 1500)
             }
+            success = await openBook(result.book, result.chapter ? [result.chapter] : undefined, newVerses)
+        } else if (chapterChanged) {
+            success = await openChapter([result.chapter], newVerses)
+        } else if (result.chapter) {
+            // Same book and chapter
+            if (newVerses) openVerse(newVerses)
         }
 
-        if (result.chapter) {
-            // CHAPTER
-            openChapter([result.chapter])
+        if (searchId !== currentSearchId || !success) return
 
-            // VERSES
-            if (result.verses.length) {
-                if (splittedVerses) {
-                    openVerse([splittedVerses.filter((a) => result.verses.includes(a.number)).map((a) => a.id)])
-                } else {
-                    openVerse([result.verses])
-                }
-            } else {
-                selectAllTimeout = setTimeout(selectAllVerses)
-            }
+        if (result.chapter && !newVerses) {
+            selectAllTimeout = setTimeout(selectAllVerses)
         }
     }
 
