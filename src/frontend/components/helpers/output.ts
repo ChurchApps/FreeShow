@@ -1429,8 +1429,14 @@ export function getStyleTemplate(outSlide: OutSlide | null, currentStyle: Styles
     const translations: number = outSlide?.id === "temp" ? outSlide.translations || 1 : reference?.data?.translations || reference?.data?.version?.split("+")?.length || 1
     const translationKey = translations > 1 ? `_${translations}` : ""
 
-    const templateId = isScripture ? currentStyle[`templateScripture${translationKey}`] || currentStyle.templateScripture : currentStyle.template
-    const template = get(templates)[templateId || ""] || {}
+    let templateId = isScripture ? currentStyle[`templateScripture${translationKey}`] || currentStyle.templateScripture : currentStyle.template
+    let template = get(templates)[templateId || ""] || {}
+
+    // use custom first slide template on first slide
+    if (template?.settings?.firstSlideTemplate && outSlide?.index === 0 && outSlide?.id !== "temp") {
+        templateId = template?.settings?.firstSlideTemplate
+        if (get(templates)[templateId]) template = get(templates)[templateId]
+    }
 
     return template
 }
