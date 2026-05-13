@@ -689,7 +689,7 @@ export class BlackmagicSender {
                     let convertedFrame
                     try {
                         const reusableOutputBuffer = this.getReusableConversionBuffer(outputId, data.expectedVideoFrameSize)
-                        convertedFrame = this.convertVideoFrameFormat(videoFrame, data.pixelFormat, size, reusableOutputBuffer)
+                        convertedFrame = this.convertVideoFrameFormat(videoFrame, data.pixelFormat, size, reusableOutputBuffer, data.enableKeying === true)
                         data.conversionErrorCount = 0
                     } catch (err) {
                         console.error(`Frame conversion error: ${err instanceof Error ? err.message : String(err)}`)
@@ -1313,7 +1313,7 @@ export class BlackmagicSender {
         }
     }
 
-    static convertVideoFrameFormat(frame: Buffer, format: string, size: Size, reusableOutputBuffer?: Buffer) {
+    static convertVideoFrameFormat(frame: Buffer, format: string, size: Size, reusableOutputBuffer?: Buffer, enableKeying = false) {
         // Check specific bit-depth RGB formats FIRST before generic checks
         if (format.includes("12Bit") || format.includes("12-bit") || format.includes("12 bit")) {
             const isLE = format.includes("RGBLE") || format.includes("RGB LE")
@@ -1362,7 +1362,16 @@ export class BlackmagicSender {
             if (this.devicePixelMode === "BGRA") {
                 const result = reusableOutputBuffer && reusableOutputBuffer.length >= frame.length ? reusableOutputBuffer : Buffer.allocUnsafe(frame.length)
                 frame.copy(result, 0, 0, frame.length)
+                // Un-premultiply BGRA before swizzling to ARGB for straight-alpha DeckLink keyer
+                if (enableKeying) ImageBufferConverter.unpremultiplyBGRA(result)
                 ImageBufferConverter.BGRAtoARGB(result)
+                return result
+            }
+            // devicePixelMode === "ARGB": un-premultiply in-place on a copy
+            if (enableKeying) {
+                const result = reusableOutputBuffer && reusableOutputBuffer.length >= frame.length ? reusableOutputBuffer : Buffer.allocUnsafe(frame.length)
+                frame.copy(result, 0, 0, frame.length)
+                ImageBufferConverter.unpremultiplyARGB(result)
                 return result
             }
             return frame
@@ -1370,7 +1379,16 @@ export class BlackmagicSender {
             if (this.devicePixelMode === "ARGB") {
                 const result = reusableOutputBuffer && reusableOutputBuffer.length >= frame.length ? reusableOutputBuffer : Buffer.allocUnsafe(frame.length)
                 frame.copy(result, 0, 0, frame.length)
+                // Un-premultiply ARGB before swizzling to BGRA for straight-alpha DeckLink keyer
+                if (enableKeying) ImageBufferConverter.unpremultiplyARGB(result)
                 util.ImageBufferAdjustment.ARGBtoBGRA(result)
+                return result
+            }
+            // devicePixelMode === "BGRA": un-premultiply in-place on a copy
+            if (enableKeying) {
+                const result = reusableOutputBuffer && reusableOutputBuffer.length >= frame.length ? reusableOutputBuffer : Buffer.allocUnsafe(frame.length)
+                frame.copy(result, 0, 0, frame.length)
+                ImageBufferConverter.unpremultiplyBGRA(result)
                 return result
             }
             return frame
