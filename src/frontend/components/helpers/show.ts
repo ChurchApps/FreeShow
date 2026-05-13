@@ -383,3 +383,20 @@ export function removeTemplatesFromShow(showId: string, slideId?: string, enable
 export function getLayoutRef(showId = "active", _updater?: Shows | Show) {
     return _show(showId).layouts("active").ref()[0] || []
 }
+
+export function bindSlidesToOutput(indexes: number[], outputId: string) {
+    const ref = getLayoutRef()
+    const newBindings: string[][] = []
+
+    const add = !ref[indexes[0]]?.data?.bindings?.includes(outputId)
+
+    indexes.forEach((i) => {
+        const bindings: string[] = ref[i]?.data?.bindings ? [...ref[i].data.bindings] : []
+        const existingIndex = bindings.indexOf(outputId)
+        if (add && existingIndex < 0) bindings.push(outputId)
+        else if (!add && existingIndex >= 0) bindings.splice(existingIndex, 1)
+        newBindings.push(bindings)
+    })
+
+    history({ id: "SHOW_LAYOUT", newData: { key: "bindings", data: newBindings, indexes, dataIsArray: false } })
+}

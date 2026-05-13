@@ -99,7 +99,7 @@ import { history, redo, undo } from "../helpers/history"
 import { getExtension, getFileName, getMediaLayerType, getMediaStyle, getMediaType, removeExtension, splitPath } from "../helpers/media"
 import { defaultOutput, getCurrentStyle, getFirstActiveOutput, setOutput, toggleOutput, toggleOutputs } from "../helpers/output"
 import { select } from "../helpers/select"
-import { checkName, formatToFileName, getLayoutRef, openShow, removeTemplatesFromShow, updateShowsList } from "../helpers/show"
+import { bindSlidesToOutput, checkName, formatToFileName, getLayoutRef, openShow, removeTemplatesFromShow, updateShowsList } from "../helpers/show"
 import { sendMidi } from "../helpers/showActions"
 import { _show } from "../helpers/shows"
 import { getMenuTagId, openTagManager, toggleSelectionTags, toggleTagFilter } from "../helpers/tags"
@@ -1679,24 +1679,9 @@ const clickActions = {
     },
 
     bind_slide: (obj: ObjData) => {
-        const ref = getLayoutRef()
         const outputId = obj.menu.id || ""
-
         const indexes: number[] = obj.sel?.data.map(({ index }) => index) || []
-        const newBindings: string[][] = []
-
-        const add = !ref[indexes[0]]?.data?.bindings?.includes(outputId)
-
-        indexes.forEach((i) => {
-            const bindings: string[] = ref[i]?.data?.bindings || []
-            const existingIndex = bindings.indexOf(outputId)
-            if (add && existingIndex < 0) bindings.push(outputId)
-            else if (!add && existingIndex >= 0) bindings.splice(existingIndex, 1)
-
-            newBindings.push(bindings)
-        })
-
-        history({ id: "SHOW_LAYOUT", newData: { key: "bindings", data: newBindings, indexes, dataIsArray: false } })
+        bindSlidesToOutput(indexes, outputId)
     },
     // bind item
     bind_item: (obj: ObjData) => {
