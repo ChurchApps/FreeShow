@@ -3,6 +3,7 @@
     import { Main } from "../../../types/IPC/Main"
     import { requestMain } from "../../IPC/main"
     import { cameraManager } from "../../media/cameraManager"
+    import { obsGetScenes } from "../../utils/obsTalk"
     import { actions, activePopup, audioPlaylists, audioStreams, effects, effectsLibrary, groups, outputs, overlays, popupData, projects, shows, stageShows, styles, templates, timers, triggers, variables } from "../../stores"
     import { translateText } from "../../utils/language"
     import MetronomeInputs from "../drawer/audio/MetronomeInputs.svelte"
@@ -78,6 +79,9 @@
         // screens = sortByName(screensList)
         screens = [...screenList, ...windowList]
     }
+
+    let obsScenes: string[] = []
+    if (inputId === "obs_scene") obsGetScenes().then((s) => (obsScenes = s))
 
     function convertToOptions(a) {
         const options = Object.keys(a).map((id) => ({ value: id, label: a[id].name }))
@@ -186,6 +190,8 @@
 {:else if inputId === "index"}
     <!-- run by index -->
     <MaterialNumberInput label="variables.value" value={value?.index || 0} on:change={(e) => updateValue("index", e)} />
+{:else if inputId === "obs_scene"}
+    <MaterialDropdown label="Scene" options={obsScenes.map((s) => ({ value: s, label: s }))} value={value?.id} on:change={(e) => updateValue("id", e.detail)} />
 {:else if inputId === "strval"}
     <!-- run by name -->
     <MaterialTextInput label="inputs.name" value={value?.value || ""} on:change={(e) => updateValue("value", e)} />

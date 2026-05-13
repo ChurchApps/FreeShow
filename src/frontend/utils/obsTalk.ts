@@ -177,3 +177,54 @@ export async function connectToOBS() {
     if (!obsInstance.isConnected) await obsInstance.connect()
     return obsInstance
 }
+
+// ACTIONS
+
+export async function obsGetScenes(): Promise<string[]> {
+    const obs = await connectToOBS()
+    if (!obs.isConnected) return []
+
+    return new Promise((resolve) => {
+        obs.listen((msg: any) => {
+            if (msg.op === 7 && msg.d?.requestType === "GetSceneList") {
+                resolve(
+                    (msg.d.responseData?.scenes || [])
+                        .slice()
+                        .sort((a: any, b: any) => b.sceneIndex - a.sceneIndex)
+                        .map((s: any) => s.sceneName)
+                )
+            }
+        }, "get_scenes_once")
+        obs.call("GetSceneList")
+    })
+}
+
+export async function obsSetScene(scene: string) {
+    const obs = await connectToOBS()
+    if (!obs.isConnected) return
+    obs.call("SetCurrentProgramScene", { sceneName: scene })
+}
+
+export async function obsStartLivestream() {
+    const obs = await connectToOBS()
+    if (!obs.isConnected) return
+    obs.call("StartStream")
+}
+
+export async function obsStopLivestream() {
+    const obs = await connectToOBS()
+    if (!obs.isConnected) return
+    obs.call("StopStream")
+}
+
+export async function obsStartRecording() {
+    const obs = await connectToOBS()
+    if (!obs.isConnected) return
+    obs.call("StartRecord")
+}
+
+export async function obsStopRecording() {
+    const obs = await connectToOBS()
+    if (!obs.isConnected) return
+    obs.call("StopRecord")
+}

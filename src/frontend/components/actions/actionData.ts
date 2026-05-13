@@ -95,12 +95,19 @@ export const actionData = {
     // send_rest_command: { canAddMultiple: true, name: "actions.send_rest_command", icon: "trigger", input: "rest" },
     emit_action: { SECTION: "actions.emit_data", common: true, canAddMultiple: true, name: "actions.emit_data", icon: "emitter", input: "emitter" },
 
+    // OBS Studio
+    obs_set_scene: { SECTION: "OBS Studio", name: "OBS Studio: Set scene", icon: "screen", input: "obs_scene" },
+    obs_start_livestream: { name: "OBS Studio: Start livestream", icon: "camera" },
+    obs_stop_livestream: { name: "OBS Studio: Stop livestream", icon: "camera", red: true },
+    obs_start_recording: { name: "OBS Studio: Start recording", icon: "record" },
+    obs_stop_recording: { name: "OBS Studio: Stop recording", icon: "record", red: true },
+
     // SPOTIFY
     spotify_play: { SECTION: "Spotify", name: "Spotify: media.play", icon: "play" },
-    spotify_pause: { SECTION: "Spotify", name: "Spotify: media.pause", icon: "pause" },
-    spotify_fade_out: { SECTION: "Spotify", name: "Spotify: media.fade_out", icon: "clear" },
-    spotify_next: { SECTION: "Spotify", name: "Spotify: media.next", icon: "nextFull" },
-    spotify_previous: { SECTION: "Spotify", name: "Spotify: media.previous", icon: "previousFull" },
+    spotify_pause: { name: "Spotify: media.pause", icon: "pause" },
+    spotify_fade_out: { name: "Spotify: media.fade_out", icon: "clear" },
+    spotify_next: { name: "Spotify: media.next", icon: "nextFull" },
+    spotify_previous: { name: "Spotify: media.previous", icon: "previousFull" },
 
     // OTHER
     toggle_log_song_usage: { SECTION: "settings.other", name: "settings.log_song_usage", icon: "history", input: "toggle" },

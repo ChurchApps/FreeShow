@@ -9,6 +9,7 @@ import { sendMain } from "../../IPC/main"
 import { slideTimelineSpeedMultiplier } from "../../stores"
 import { transposeText } from "../../utils/chordTranspose"
 import { triggerFunction } from "../../utils/common"
+import { obsSetScene, obsStartLivestream, obsStartRecording, obsStopLivestream, obsStopRecording } from "../../utils/obsTalk"
 import { togglePlayingMedia } from "../../utils/shortcuts"
 import { contentProviderSync } from "../../utils/startup"
 import { updateTransition } from "../../utils/transitions"
@@ -323,6 +324,13 @@ export const API_ACTIONS = {
     send_midi: (data: API_midi) => sendMidi(data), // DEPRECATED, use emit_action instead
     send_rest_command: (data: API_rest_command) => sendRestCommandSync(data), // DEPRECATED, use emit_action instead
     emit_action: (data: API_emitter) => emitData(data),
+
+    // OBS Studio
+    obs_set_scene: (data: API_id) => obsSetScene(data.id),
+    obs_start_livestream: () => obsStartLivestream(),
+    obs_stop_livestream: () => obsStopLivestream(),
+    obs_start_recording: () => obsStartRecording(),
+    obs_stop_recording: () => obsStopRecording(),
 
     // Spotify
     spotify_play: () => spotifyPlay(),
