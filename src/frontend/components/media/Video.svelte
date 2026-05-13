@@ -74,13 +74,12 @@
     })
 
     // custom end time
-    $: endTime = (mediaStyle.toTime || 0) - (mediaStyle.fromTime || 0) > 0 ? mediaStyle.toTime : 0
+    $: endTime = (mediaStyle.toTime || 0) - (mediaStyle.fromTime || 0) > 0 ? mediaStyle.toTime : 0 // || videoData.duration
     let endInterval: NodeJS.Timeout | null = null
     $: if (endTime && !mirror && !endInterval) endInterval = setInterval(checkIfEnded, 1000 * playbackRate)
     function checkIfEnded() {
-        if (!videoTime || (!endTime && !videoData.duration)) return
-        const checkEndTime = endTime || videoData.duration || 0
-        if (videoTime >= checkEndTime) {
+        if (!videoTime || !endTime) return
+        if (videoTime >= endTime) {
             if (videoData.loop) {
                 if (!softLoopValue) videoTime = mediaStyle.fromTime || 0
             } else dispatch("ended")
@@ -149,11 +148,16 @@
     let softLoopVideo: HTMLVideoElement | null = null
     let softLoopOpacity = 0
 
-    $: softLoopValue = Number(mediaStyle.softLoop) || 0
-    $: if (softLoopVideo && playbackRate) softLoopVideo.playbackRate = playbackRate
+    $: softLoopValue = Number(mediaStyle.softLoop) > 0 ? Number(mediaStyle.softLoop) : 0
+    $: if (softLoopValue > 0 && softLoopVideo && playbackRate) softLoopVideo.playbackRate = playbackRate
     $: actualEndTime = endTime || videoData.duration || 0
-    $: if (video) video.volume = volume * (1 - softLoopOpacity)
-    $: if (softLoopVideo) softLoopVideo.volume = volume * softLoopOpacity
+    $: if (softLoopValue > 0) {
+        if (video) video.volume = volume * (1 - softLoopOpacity)
+        if (softLoopVideo) softLoopVideo.volume = volume * softLoopOpacity
+    } else {
+        if (video) video.volume = volume
+        if (softLoopVideo) softLoopVideo.volume = 0
+    }
 
     $: slParams = {
         video,
