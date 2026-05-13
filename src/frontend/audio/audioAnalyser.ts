@@ -45,20 +45,13 @@ export class AudioAnalyser {
             if (audio instanceof MediaStream) source = this.ac.createMediaStreamSource(audio)
             else source = this.ac.createMediaElementSource(audio)
 
-            // detect number of channels in audio source
-            const detectedChannels = AudioMultichannel.detectChannelCount(source, audio, this.maxChannels)
-            if (detectedChannels > this.channels) this.updateChannelCount(detectedChannels)
-
             const audioChannel = get(special).audioChannel || ""
             if (audioChannel === "mono_left" || audioChannel === "mono_right") {
                 const merger = this.ac.createChannelMerger(2)
-
                 const channel = audioChannel === "mono_left" ? 0 : 1
                 source.connect(merger, 0, channel)
-
                 this.sources[id] = merger
             } else {
-                // Stereo (default)
                 this.sources[id] = source
             }
         } catch (err) {
@@ -66,46 +59,47 @@ export class AudioAnalyser {
             return
         }
 
+        // Start the pipeline immediately with the current channel count (no blocking)
         this.initAnalysers()
         this.initRecorder()
         this.customOutput(get(special).audioOutput)
 
-        // Connect through equalizer first, then to analysis chain
         const eqOutputNode = await connectAudioSourceToEqualizer(id, this.sources[id])
 
         if (eqOutputNode && this.splitter) {
-            // Add PitchShift processor
             const processor = AudioProcessor.createNode(this.ac)
             this.processors[id] = processor
 
-            // Connect: Source -> EQ -> Processor -> Sinks (Splitter, Gain, Destination)
             eqOutputNode.connect(processor.input)
             this.connectToSinks(processor)
 
-            // Sync initial state
             const mediaData = get(media)[id]
             if (mediaData) {
                 processor.pitch = mediaData.pitch ?? 0
                 processor.tempo = mediaData.tempo ?? 1
             }
 
-            console.log(`Audio source "${id}" connected to analysis chain (PitchShift ready)`)
-
-            // Perform runtime channel detection after connection and audio stabilization
-            // timeout to give more time for audio to stabilize
-            setTimeout(async () => {
-                try {
-                    const runtimeChannels = await this.detectActiveChannelCount(id)
-                    if (runtimeChannels > this.channels) {
-                        console.log(`Runtime detection found ${runtimeChannels} channels, updating from ${this.channels}`)
-                        this.updateChannelCount(runtimeChannels)
-                    }
-                } catch (err) {
-                    console.warn(`Runtime channel detection failed for ${id}:`, err)
-                }
-            }, 1500)
+            console.log(`Audio source "${id}" connected (${this.channels} channels)`)
         } else {
             console.warn(`Failed to connect audio source "${id}" to equalizer`)
+        }
+
+        // Detect true channel count in the background — upgrades the graph if the file
+        // has more channels than the current default. Does not delay playback startup.
+        this.detectAndUpgradeChannels(id, audio)
+    }
+
+    private static detectAndUpgradeChannels(id: string, audio: HTMLMediaElement | MediaStream) {
+        if (audio instanceof HTMLMediaElement && audio.src) {
+            AudioMultichannel.detectFileChannelCount(audio.src, this.maxChannels).then((channels) => {
+                if (channels > this.channels) {
+                    console.log(`Upgrading to ${channels} channels for "${id}"`)
+                    this.updateChannelCount(channels)
+                }
+            })
+        } else if (audio instanceof MediaStream) {
+            const ch = audio.getAudioTracks()[0]?.getSettings().channelCount
+            if (ch && ch > this.channels) this.updateChannelCount(ch)
         }
     }
 
@@ -179,11 +173,6 @@ export class AudioAnalyser {
     }
 
     // MULTI CHANNEL
-
-    static async detectActiveChannelCount(sourceId: string): Promise<number> {
-        const source = this.sources[sourceId]
-        return AudioMultichannel.detectActiveChannelCount(this.ac, source, sourceId, this.maxChannels)
-    }
 
     static getChannelInfo(): MultichannelInfo {
         return AudioMultichannel.getChannelInfo(this.ac, this.channels, this.maxChannels)

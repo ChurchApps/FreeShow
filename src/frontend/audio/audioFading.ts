@@ -186,10 +186,10 @@ export function fadeinAllPlayingAudio() {
     isFadingOut.set(false)
     stopFading()
 
-    let fadeToVolume = 1
+    let fadeToVolume = AudioPlayer.getVolume()
     if (get(activePlaylist)?.id) {
         const playlist = get(audioPlaylists)[get(activePlaylist).id]
-        fadeToVolume = playlist?.volume ?? 1
+        fadeToVolume = (playlist?.volume ?? 1) * fadeToVolume
     }
 
     Object.values(get(playingAudio)).forEach(({ audio }) => {

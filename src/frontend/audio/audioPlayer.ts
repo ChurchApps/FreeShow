@@ -105,7 +105,7 @@ export class AudioPlayer {
             return
         }
 
-        const newVolume = AudioPlayer.getVolume() * (options.volume || 1)
+        const newVolume = AudioPlayer.getVolume(path) * (options.volume || 1)
         audio.volume = newVolume
 
         options.startAt = AudioPlayer.getStartTime(path, options.startAt)
