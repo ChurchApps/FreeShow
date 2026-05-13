@@ -47,7 +47,7 @@ export const mediaBoxes: { [key in MediaType]?: BoxContent2 } = {
                     { id: "pitch", type: "number", value: 0, values: { label: "media.pitch", min: -12, max: 12, step: 1, defaultValue: 0, showSlider: true, sliderValues: { min: -12, max: 12, step: 1 } } },
                     { id: "fromTime", type: "number", value: 0, values: { label: "inputs.start", max: 100000, showSlider: true } },
                     { id: "toTime", type: "number", value: 0, values: { label: "inputs.end", max: 100000, showSlider: true } },
-                    { id: "softLoop", type: "number", value: 0, values: { label: "media.soft_loop", max: 50, step: 1, showSlider: true, sliderValues: { max: 10, step: 0.5 } } }
+                    { id: "softLoop", type: "number", value: 0, values: { label: "media.soft_loop (s)", max: 50, step: 1, showSlider: true, sliderValues: { max: 10, step: 0.5 } } }
                 ])
             }
         }

@@ -650,6 +650,7 @@
         "delete_slide": "Delete slide from show",
         "delete_group": "Delete group",
         "delete_all": "Delete all",
+        "delete_project_folder_tip": "Deleting this folder will also delete all projects and folders within it.",
         "close": "Close",
         "save": "Save",
         "done": "Done",

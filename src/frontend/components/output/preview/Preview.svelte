@@ -295,9 +295,9 @@
                 {/if}
             {/if}
         </div>
-    {/if}
 
-    <SpotifyController />
+        <SpotifyController />
+    {/if}
 </div>
 
 <style>

@@ -363,7 +363,7 @@
             </div>
             <div class="obs-dock-body">
                 <div class="obs-dock-row">
-                    <MaterialButton on:click={toggleStream} class="obs-btn obs-btn-control {isLive ? 'obs-btn-success' : ''}">
+                    <MaterialButton on:click={toggleStream} class="obs-btn obs-btn-control {isLive ? 'obs-btn-danger' : ''}">
                         {isLive ? "Stop Streaming" : "Start Streaming"}
                     </MaterialButton>
                 </div>
@@ -530,10 +530,10 @@
         background: #3b82f6 !important;
         border-color: #3b82f6 !important;
     }
-    :global(.obs-btn-success) {
+    /* :global(.obs-btn-success) {
         background: #22c55e !important;
         border-color: #16a34a !important;
-    }
+    } */
     :global(.obs-btn-danger) {
         background: #ef4444 !important;
         border-color: #dc2626 !important;
@@ -543,10 +543,10 @@
         border-color: #4c5468 !important;
         color: white !important;
     }
-    :global(.obs-btn-success:hover) {
+    /* :global(.obs-btn-success:hover) {
         background-color: #34d399 !important;
         border-color: #10b981 !important;
-    }
+    } */
     :global(.obs-btn-danger:hover) {
         background-color: #f87171 !important;
         border-color: #ef4444 !important;

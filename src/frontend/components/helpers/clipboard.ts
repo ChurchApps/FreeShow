@@ -951,7 +951,7 @@ const deleteActions = {
             return
         }
 
-        if (!(await confirmCustom(translateText("Deleting this folder will also delete all projects and folders within it.<br>popup.delete_show_confirmation?")))) return
+        if (!(await confirmCustom(translateText("actions.delete_project_folder_tip<br>popup.delete_show_confirmation?")))) return
 
         const projectIdsData = [...new Set(projectIds)].map((id) => ({ id }))
 

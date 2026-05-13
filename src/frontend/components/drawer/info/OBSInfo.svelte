@@ -14,6 +14,11 @@
     let previewImg: string = ""
     let cpuUsage: number = 0
     let activeFps: number = 0
+
+    const cpuUsageBuffer: number[] = []
+    const fpsBuffer: number[] = []
+    const AVERAGE_WINDOW = 10
+
     let streamDuration: string = ""
     let streamBytes: number = 0
 
@@ -117,10 +122,18 @@
                     case "GetSceneItemList":
                         getPreview()
                         break
-                    case "GetStats":
-                        cpuUsage = res?.cpuUsage || 0
-                        activeFps = res?.activeFps || 0
+                    case "GetStats": {
+                        const cpu = res?.cpuUsage || 0
+                        const fps = res?.activeFps || 0
+                        cpuUsageBuffer.push(cpu)
+                        fpsBuffer.push(fps)
+                        if (cpuUsageBuffer.length > AVERAGE_WINDOW) cpuUsageBuffer.shift()
+                        if (fpsBuffer.length > AVERAGE_WINDOW) fpsBuffer.shift()
+                        // Calculate averages
+                        cpuUsage = cpuUsageBuffer.reduce((a, b) => a + b, 0) / cpuUsageBuffer.length
+                        activeFps = fpsBuffer.reduce((a, b) => a + b, 0) / fpsBuffer.length
                         break
+                    }
                     case "GetStreamStatus":
                         isLive = Boolean(res?.outputActive)
                         streamDuration = res?.outputTimecode || ""

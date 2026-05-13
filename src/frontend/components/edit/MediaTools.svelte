@@ -41,10 +41,13 @@
             let videoDuration = video?.duration || 0
             if (!videoDuration) return
 
+            const maxSoftLoop = Math.floor(videoDuration / 2)
+
             setBoxInputValue(mediaSections, "video", "toTime", "value", currentMedia?.toTime || videoDuration)
             setBoxInputValue(mediaSections, "video", "toTime", "default", videoDuration)
             setBoxInputValue(mediaSections, "video", "fromTime", "values", { max: videoDuration })
             setBoxInputValue(mediaSections, "video", "toTime", "values", { max: videoDuration })
+            setBoxInputValue(mediaSections, "video", "softLoop", "values", { max: Math.min(50, maxSoftLoop), sliderValues: { max: Math.min(10, maxSoftLoop), step: 0.5 } })
             mediaSections = mediaSections
         }
     }

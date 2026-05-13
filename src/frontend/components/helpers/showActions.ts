@@ -1039,11 +1039,15 @@ export async function startShow(showId: string) {
 
     // slideClick() - Slides.svelte
     const slideRef = getLayoutRef(showId)
-    if (!slideRef[0]) return
 
-    setOutput("slide", { id: showId, layout: activeLayout, index: 0, line: 0 })
+    // get first non-disabled slide
+    let index = 0
+    while (slideRef[index] && slideRef[index]?.data?.disabled) index++
+    if (!slideRef[index]) return
+
+    setOutput("slide", { id: showId, layout: activeLayout, index, line: 0 })
     // timeout has to be 1200 to let output data update properly (in case slide has special actions)
-    updateOut(showId, 0, slideRef, true, "", 1200)
+    updateOut(showId, index, slideRef, true, "", 1200)
 }
 
 export function changeOutputStyle(data: API_output_style) {
