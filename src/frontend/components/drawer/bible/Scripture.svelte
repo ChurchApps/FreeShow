@@ -310,15 +310,17 @@
 
     let navigationId = 0
 
-    let pendingBookNumber: number | string | null = null
+    let pendingBookId: string | null = null
     let pendingBookPromise: any | null = null
 
-    let pendingChapterNumber: number | string | null = null
+    let pendingChapterId: string | null = null
     let pendingChapterPromise: any | null = null
 
     async function openBook(bookNumber?: number | string, chapterNumbers?: (number | string)[], verseNumbers?: (number | string)[][], navId?: number): Promise<boolean> {
         const currentNavId = navId ?? ++navigationId
+
         const targetBookNumber = bookNumber ?? activeReference.book ?? 1
+
         const currentData = data[previewBibleId]?.bibleData
         if (!currentData) return false
 
@@ -329,8 +331,9 @@
         data = data
 
         // load new data
-        if (pendingBookNumber !== targetBookNumber) {
-            pendingBookNumber = targetBookNumber
+        const bookId = `${previewBibleId}_${targetBookNumber}`
+        if (pendingBookId !== bookId) {
+            pendingBookId = bookId
             pendingBookPromise = currentData.getBook(targetBookNumber)
         }
         data[previewBibleId].bookData = await pendingBookPromise
@@ -359,9 +362,10 @@
         // load new data
         // NOTE: if chapter is not a number it does not work
         const chapterNumber = Number(targetChapterNumbers[targetChapterNumbers.length - 1])
-
-        if (pendingChapterNumber !== chapterNumber) {
-            pendingChapterNumber = chapterNumber
+        
+        const chapterId = `${previewBibleId}_${activeReference.book}_${chapterNumber}`
+        if (pendingChapterId !== chapterId) {
+            pendingChapterId = chapterId
             pendingChapterPromise = currentData.getChapter(chapterNumber)
         }
         data[previewBibleId].chapterData = await pendingChapterPromise
