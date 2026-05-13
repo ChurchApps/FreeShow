@@ -14,7 +14,7 @@
 <div class="auth-page">
     <div class="panel">
         <div class="brand">
-            <img class="logo" src="./import-logos/freeshow.webp" alt="FreeShow logo" draggable="false" />
+            <img class="logo" src="/import-logos/freeshow.webp" alt="FreeShow logo" draggable="false" />
             <h1>RemoteShow</h1>
         </div>
 

@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite'
 import { svelte } from '@sveltejs/vite-plugin-svelte'
 import sveltePreprocess from 'svelte-preprocess'
-import { resolve } from 'path'
+import { resolve, dirname } from 'path'
 import { copyFileSync, mkdirSync, existsSync, readFileSync, createReadStream } from 'fs'
 
 const production = process.env.NODE_ENV === 'production'
@@ -93,6 +93,12 @@ function copyServerFiles(id) {
     { src: `src/server/icon.png`, dest: `${dest}/icon.png` },
     { src: `src/server/sw.js`, dest: `${dest}/sw.js` },
   ]
+
+  if (id === 'remote') {
+    files.push(
+      { src: 'public/import-logos/freeshow.webp', dest: `${dest}/import-logos/freeshow.webp` }
+    )
+  }
   
   if (id === 'stage') {
     files.push(
@@ -108,6 +114,10 @@ function copyServerFiles(id) {
   
   files.forEach(({ src, dest }) => {
     try {
+      const destinationDir = dirname(dest)
+      if (!existsSync(destinationDir)) {
+        mkdirSync(destinationDir, { recursive: true })
+      }
       copyFileSync(src, dest)
     } catch (err) {
       console.warn(`Failed to copy ${src} to ${dest}:`, err.message)
