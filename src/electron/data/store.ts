@@ -15,7 +15,7 @@ import type { Overlays, Templates, TrimmedShows } from "../../types/Show"
 import type { StageLayouts } from "../../types/Stage"
 import type { ContentProviderId } from "../contentProviders/base/types"
 import { sendMain, sendToMain } from "../IPC/main"
-import { dataFolderNames, deleteFile, doesPathExist, getDataFolderPath, getDataFolderRoot, getDefaultDataFolderRoot, moveFileAsync, readFile, readFolder } from "../utils/files"
+import { dataFolderNames, deleteFile, doesPathExist, getDataFolderPath, getDataFolderRoot, getDefaultDataFolderRoot, isWritable, moveFileAsync, readFile, readFolder } from "../utils/files"
 import { clone, wait } from "../utils/helpers"
 import "./contentProviders"
 import { defaultConfig, defaultSettings, defaultSyncedSettings } from "./defaults"
@@ -126,7 +126,8 @@ export function createStores(previousLocation?: string | null, setup = false) {
 function getWritableConfigPath(previousLocation?: string | null, setup = false): string | null {
     let configFolderPath = getDataFolderPath("userData")
 
-    if (doesPathExist(configFolderPath)) return configFolderPath
+    if (doesPathExist(configFolderPath) && isWritable(configFolderPath)) return configFolderPath
+
 
     try {
         // try to create "Config" folder at current path
@@ -147,7 +148,8 @@ function getWritableConfigPath(previousLocation?: string | null, setup = false):
 
         configFolderPath = getDataFolderPath("userData")
 
-        if (doesPathExist(configFolderPath)) return configFolderPath
+        if (doesPathExist(configFolderPath) && isWritable(configFolderPath)) return configFolderPath
+
 
         try {
             if (!configFolderPath) throw new Error("No config folder path")
@@ -159,7 +161,7 @@ function getWritableConfigPath(previousLocation?: string | null, setup = false):
 
             configFolderPath = getDataFolderPath("userData")
 
-            if (doesPathExist(configFolderPath)) return configFolderPath
+            if (doesPathExist(configFolderPath) && isWritable(configFolderPath)) return configFolderPath
 
             try {
                 if (!configFolderPath) throw new Error("No config folder path")

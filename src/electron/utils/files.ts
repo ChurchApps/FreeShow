@@ -325,7 +325,20 @@ export function getDefaultDataFolderRoot() {
     if (!documentsPath) return appDataPath
 
     const appFolderName = "FreeShow"
-    return createFolder(path.join(documentsPath, appFolderName))
+    const fullPath = path.join(documentsPath, appFolderName)
+
+    try {
+        if (doesPathExist(fullPath)) {
+            fs.accessSync(fullPath, fs.constants.W_OK)
+            return fullPath
+        } else {
+            fs.mkdirSync(fullPath, { recursive: true })
+            return fullPath
+        }
+    } catch (err) {
+        console.warn("Documents folder is not writable, falling back to AppData:", err)
+        return appDataPath
+    }
 }
 export function getDataFolderRoot() {
     return config.get("dataPath") || getDefaultDataFolderRoot()
@@ -338,6 +351,15 @@ export function getDataFolderPath(id: keyof typeof dataFolderNames, subfolder?: 
 }
 
 // HELPERS
+
+export function isWritable(filePath: string): boolean {
+    try {
+        fs.accessSync(filePath, fs.constants.W_OK)
+        return true
+    } catch (err) {
+        return false
+    }
+}
 
 export function getExtension(name: string) {
     return path.extname(name).substring(1).toLowerCase()
