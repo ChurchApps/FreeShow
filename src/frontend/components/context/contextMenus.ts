@@ -384,7 +384,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
 
     // EDIT
     edit_box: ["GROUP_dynamic", "item_actions", "item_bind_to", "format", "rearrange", "transition", "SEPARATOR", "duplicate", "delete"], // "copy", "paste" (shortcut or top menubar) // "GROUP_duplicate_delete"
-    editbox_text: ["text_copy", "text_cut", "SEPARATOR", "text_paste", "SEPARATOR", "text_select_all"],
+    editbox_text: ["text_copy", "text_cut", "text_paste", "text_select_all"],
     items_list_item: ["to_front", "forward", "backward", "to_back"],
 
     // TIMELINE
