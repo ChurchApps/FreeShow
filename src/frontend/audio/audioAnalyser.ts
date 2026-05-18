@@ -1,7 +1,7 @@
 import { get } from "svelte/store"
 import type { AudioChannel } from "../../types/Audio"
 import { AUDIO, OUTPUT } from "../../types/Channels"
-import { disabledServers, media, outputs, playingAudio, playingVideos, serverData, special } from "../stores"
+import { audioEffects, disabledServers, media, outputs, playingAudio, playingVideos, serverData, special } from "../stores"
 import { isOutputWindow } from "../utils/common"
 import { send } from "../utils/request"
 import { AudioAnalyserMerger } from "./audioAnalyserMerger"
@@ -248,29 +248,57 @@ export class AudioAnalyser {
     }
 
     private static gainNode: GainNode | null = null
+    private static effectNodes: { [K: string]: { input: GainNode; output: GainNode } } = {}
+
     private static initGain() {
         if (this.gainNode) return
 
         this.gainNode = AudioMultichannel.createMultichannelGainNode(this.ac, this.channels)
-
-        // Signal chain: gainNode → filter → noiseGate → compressor → reverb → delay → limiter → stereoShaper → destination
-        const filter = initializeFilter(this.ac)
-        const noiseGate = initializeNoiseGate(this.ac)
-        const compressor = initializeCompressor(this.ac)
-        const reverb = initializeReverb(this.ac)
-        const delay = initializeDelay(this.ac)
-        const limiter = initializeLimiter(this.ac)
-        const stereoShaper = initializeStereoShaper(this.ac)
-        this.gainNode.connect(filter.input)
-        filter.output.connect(noiseGate.input)
-        noiseGate.output.connect(compressor.input)
-        compressor.output.connect(reverb.input)
-        reverb.output.connect(delay.input)
-        delay.output.connect(limiter.input)
-        limiter.output.connect(stereoShaper.input)
-        stereoShaper.output.connect(this.ac.destination)
-
         this.gainNode.gain.value = AudioPlayer.getGain()
+        this.rebuildEffectChain()
+
+        // Rebuild chain when any effect is toggled (not on param changes)
+        let prevEnabled = ""
+        audioEffects.subscribe(() => {
+            const m = get(audioEffects).main
+            const enabled = [m?.filter, m?.noiseGate, m?.compressor, m?.reverb, m?.delay, m?.limiter, m?.stereoShaper].map((e) => (e?.enabled ? 1 : 0)).join("")
+            if (enabled !== prevEnabled) {
+                prevEnabled = enabled
+                this.rebuildEffectChain()
+            }
+        })
+    }
+
+    private static rebuildEffectChain() {
+        if (!this.gainNode) return
+
+        try {
+            this.gainNode.disconnect()
+        } catch {
+            /* not yet connected */
+        }
+        for (const node of Object.values(this.effectNodes))
+            try {
+                node.output.disconnect()
+            } catch {}
+
+        const main = get(audioEffects).main
+        const chain: { input: GainNode; output: GainNode }[] = []
+
+        if (main?.filter?.enabled) chain.push((this.effectNodes.filter ??= initializeFilter(this.ac)))
+        if (main?.noiseGate?.enabled) chain.push((this.effectNodes.noiseGate ??= initializeNoiseGate(this.ac)))
+        if (main?.compressor?.enabled) chain.push((this.effectNodes.compressor ??= initializeCompressor(this.ac)))
+        if (main?.reverb?.enabled) chain.push((this.effectNodes.reverb ??= initializeReverb(this.ac)))
+        if (main?.delay?.enabled) chain.push((this.effectNodes.delay ??= initializeDelay(this.ac)))
+        if (main?.limiter?.enabled) chain.push((this.effectNodes.limiter ??= initializeLimiter(this.ac)))
+        if (main?.stereoShaper?.enabled) chain.push((this.effectNodes.stereoShaper ??= initializeStereoShaper(this.ac)))
+
+        let prev: AudioNode = this.gainNode
+        for (const seg of chain) {
+            prev.connect(seg.input)
+            prev = seg.output
+        }
+        prev.connect(this.ac.destination)
     }
 
     static setGain(value: number) {
