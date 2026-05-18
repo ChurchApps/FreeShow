@@ -5,6 +5,8 @@ import { disabledServers, media, outputs, playingAudio, playingVideos, serverDat
 import { isOutputWindow } from "../utils/common"
 import { send } from "../utils/request"
 import { AudioAnalyserMerger } from "./audioAnalyserMerger"
+import { initializeCompressor } from "./audioCompressor"
+import { initializeLimiter } from "./audioLimiter"
 import { connectAudioSourceToEqualizer, disconnectAudioSourceFromEqualizer, getConnectedSourceOutput, initializeEqualizer, setAutoInitializeCallback } from "./audioEqualizer"
 import { AudioMultichannel, MultichannelInfo } from "./audioMultichannel"
 import { AudioPlayer } from "./audioPlayer"
@@ -245,7 +247,14 @@ export class AudioAnalyser {
         if (this.gainNode) return
 
         this.gainNode = AudioMultichannel.createMultichannelGainNode(this.ac, this.channels)
-        this.gainNode.connect(this.ac.destination)
+
+        // Insert compressor then limiter as master bus effects between gainNode and destination
+        const compressor = initializeCompressor(this.ac)
+        const limiter = initializeLimiter(this.ac)
+        this.gainNode.connect(compressor.input)
+        compressor.output.connect(limiter.input)
+        limiter.output.connect(this.ac.destination)
+
         this.gainNode.gain.value = AudioPlayer.getGain()
     }
 

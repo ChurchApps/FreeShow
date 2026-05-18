@@ -21,6 +21,8 @@ import type { AudioChannel, AudioChannelData, AudioStream, Playlist } from "./..
 import type { Outputs } from "./../types/Output"
 import type { DrawerTabIds } from "./../types/Tabs"
 import type { EQBand, EqualizerConfig } from "./audio/audioEqualizer"
+import type { CompressorConfig } from "./audio/audioCompressor"
+import type { LimiterConfig } from "./audio/audioLimiter"
 import type { AudioData } from "./audio/audioPlayer"
 import type { API_metronome } from "./components/actions/api"
 
@@ -87,6 +89,7 @@ export const editingProjectTemplate: Writable<string> = writable("")
 export const showNotesActive: Writable<boolean> = writable(false)
 export const slideNotesActive: Writable<boolean> = writable(false)
 export const templateApplied: Writable<boolean> = writable(false)
+export const activeAudioEffects: Writable<string> = writable("")
 
 // TAGS
 export const activeTagFilter: Writable<string[]> = writable([])
@@ -259,6 +262,8 @@ export const metronome: Writable<API_metronome> = writable({}) // {}
 export const effectsLibrary: Writable<{ path: string; name: string }[]> = writable([]) // []
 export const equalizerConfig = writable<EqualizerConfig>({ enabled: false, bands: [] })
 export const eqPresets: Writable<{ [key: string]: { name: string; bands: EQBand[] } }> = writable({}) // {}
+export const compressorConfig = writable<CompressorConfig>({ enabled: false, threshold: -24, knee: 30, ratio: 12, attack: 0.003, release: 0.25 }) // {}
+export const limiterConfig = writable<LimiterConfig>({ enabled: false, ceiling: -3, release: 0.05 }) // {}
 
 // PLAYER
 export const playerVideos: Writable<Categories> = writable({}) // {default}

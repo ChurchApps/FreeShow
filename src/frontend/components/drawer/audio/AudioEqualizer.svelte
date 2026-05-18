@@ -672,7 +672,6 @@
 <style>
     .equalizer-container {
         border-radius: 8px;
-        padding: 10px;
         user-select: none;
     }
 
@@ -686,7 +685,7 @@
         background: var(--primary-darker);
         border: 1px solid var(--primary-lighter);
         border-radius: 4px;
-        margin-bottom: 16px;
+        margin-bottom: 3px;
         overflow: hidden;
         transition: opacity 0.2s ease;
         width: 100%;
