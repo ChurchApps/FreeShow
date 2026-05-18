@@ -110,8 +110,8 @@ export class AudioPlayer {
         let replayGainMultiplier = 1
         try {
             const audioMetadata = await requestMain(Main.READ_AUDIO_METADATA, { filePath: path })
-            if (audioMetadata?.replaygain?.track?.gain) {
-                replayGainMultiplier = Math.pow(10, audioMetadata.replaygain.track.gain / 20)
+            if (audioMetadata?.replayGainMultiplier) {
+                replayGainMultiplier = audioMetadata.replayGainMultiplier
             }
         } catch (e) {
             console.error("Failed to read ReplayGain metadata", e)
