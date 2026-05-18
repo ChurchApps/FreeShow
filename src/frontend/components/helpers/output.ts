@@ -658,13 +658,14 @@ export function checkWindowCapture(startup = false) {
     AudioAnalyser.recorderActivate()
 }
 
-// NDI | OutputShow | Stage CurrentOutput
+// NDI | OutputShow | Stage CurrentOutput | WebRTC
 export function shouldBeCaptured(outputId: string, startup = false) {
     const output = get(outputs)[outputId]
     const captures = {
         ndi: !!output.ndi,
         server: !!(get(disabledServers).output_stream === false && (get(serverData)?.output_stream?.outputId || getFirstOutput()?.id) === outputId),
-        stage: !get(disabledServers).stage && Object.keys(get(connections).STAGE || {}).length > 0 && stageHasOutput(outputId)
+        stage: !get(disabledServers).stage && Object.keys(get(connections).STAGE || {}).length > 0 && stageHasOutput(outputId),
+        webrtc: !!output.webrtc
     }
 
     // alert user that screen recording starts

@@ -2,6 +2,7 @@ import { BlackmagicSender } from "../../blackmagic/BlackmagicSender"
 import { OutputHelper } from "../../output/OutputHelper"
 import { CaptureHelper } from "../CaptureHelper"
 import { CaptureTransmitter } from "./CaptureTransmitter"
+import { WebRtcHost } from "../../webrtc/WebRtcHost"
 
 export class CaptureLifecycle {
     private static captureLoopToken: { [key: string]: number } = {}
@@ -32,6 +33,7 @@ export class CaptureLifecycle {
                 }
                 output.captureOptions.options = captureOpts
                 CaptureHelper.Transmitter.startTransmitting(id)
+                CaptureLifecycle.updateWebRtcHostState()
             }
             return
         }
@@ -80,6 +82,7 @@ export class CaptureLifecycle {
         // IMPORTANT: Only add to activeCaptures right before starting the actual loop
         // This prevents false positives from early returns
         this.activeCaptures.add(id)
+        CaptureLifecycle.updateWebRtcHostState()
 
         captureFrame()
 
@@ -183,6 +186,7 @@ export class CaptureLifecycle {
         CaptureHelper.Transmitter.stopChannel(id, "blackmagic")
         CaptureHelper.Transmitter.stopChannel(id, "server")
         CaptureHelper.Transmitter.stopChannel(id, "stage")
+        CaptureHelper.Transmitter.stopChannel(id, "webrtc")
 
         console.info("Capture - stopping: " + id)
 
@@ -195,12 +199,50 @@ export class CaptureLifecycle {
         }
 
         delete output.captureOptions
+        CaptureLifecycle.updateWebRtcHostState()
 
         function endSubscription() {
             if (!capture?.frameSubscription) return
 
             clearTimeout(capture.frameSubscription)
             capture.frameSubscription = null
+        }
+    }
+
+    private static updateWebRtcHostState() {
+        let webrtcActive = false
+        OutputHelper.getAllOutputs().forEach((o) => {
+            if (o.captureOptions?.options?.webrtc) webrtcActive = true
+        })
+
+        if (webrtcActive) {
+            const wasRunning = WebRtcHost.isRunning()
+            WebRtcHost.start()
+
+            const sendStartSignals = () => {
+                OutputHelper.getAllOutputs().forEach((o) => {
+                    if (o.id) {
+                        if (o.captureOptions?.options?.webrtc) {
+                            const url = o.webrtcData?.url || ""
+                            const token = o.webrtcData?.token || ""
+                            if (url) {
+                                WebRtcHost.startWhip(o.id, url, token)
+                            }
+                        } else {
+                            WebRtcHost.stopWhip(o.id)
+                        }
+                    }
+                })
+            }
+
+            if (!wasRunning) {
+                // Give Electron a moment to initialize the BrowserWindow
+                setTimeout(sendStartSignals, 1000)
+            } else {
+                sendStartSignals()
+            }
+        } else {
+            WebRtcHost.stop()
         }
     }
 }
