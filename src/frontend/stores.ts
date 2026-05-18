@@ -23,10 +23,12 @@ import type { DrawerTabIds } from "./../types/Tabs"
 import type { CompressorConfig } from "./audio/effects/audioCompressor"
 import type { DelayConfig } from "./audio/effects/audioDelay"
 import type { EQBand, EqualizerConfig } from "./audio/effects/audioEqualizer"
+import type { FilterConfig } from "./audio/effects/audioFilter"
 import type { LimiterConfig } from "./audio/effects/audioLimiter"
 import type { NoiseGateConfig } from "./audio/effects/audioNoiseGate"
 import type { AudioData } from "./audio/audioPlayer"
 import type { ReverbConfig } from "./audio/effects/audioReverb"
+import type { StereoShaperConfig } from "./audio/effects/audioStereoShaper"
 import type { API_metronome } from "./components/actions/api"
 
 // ----- TEMPORARY VARIABLES -----
@@ -265,11 +267,13 @@ export const metronome: Writable<API_metronome> = writable({}) // {}
 export const effectsLibrary: Writable<{ path: string; name: string }[]> = writable([]) // []
 export interface AudioEffectsConfig {
     equalizer: EqualizerConfig
+    filter: FilterConfig
+    noiseGate: NoiseGateConfig
     compressor: CompressorConfig
     limiter: LimiterConfig
-    noiseGate: NoiseGateConfig
     reverb: ReverbConfig
     delay: DelayConfig
+    stereoShaper: StereoShaperConfig
 }
 export const audioEffects = writable<Record<string, AudioEffectsConfig>>({}) // {}
 export const eqPresets: Writable<{ [key: string]: { name: string; bands: EQBand[] } }> = writable({}) // {}

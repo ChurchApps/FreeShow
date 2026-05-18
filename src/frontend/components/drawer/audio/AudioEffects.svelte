@@ -8,9 +8,11 @@
     import AudioCompressor from "./effects/AudioCompressor.svelte"
     import AudioDelay from "./effects/AudioDelay.svelte"
     import AudioEqualizer from "./effects/AudioEqualizer.svelte"
+    import AudioFilter from "./effects/AudioFilter.svelte"
     import AudioLimiter from "./effects/AudioLimiter.svelte"
     import AudioNoiseGate from "./effects/AudioNoiseGate.svelte"
     import AudioReverb from "./effects/AudioReverb.svelte"
+    import AudioStereoShaper from "./effects/AudioStereoShaper.svelte"
 
     let expanded = {}
     function toggleSection(type) {
@@ -25,11 +27,13 @@
     // WIP
     $: hasChanged = {
         equalizer: false,
+        filter: false,
         noiseGate: false,
         compressor: false,
         reverb: false,
         delay: false,
-        limiter: false
+        limiter: false,
+        stereoShaper: false
     }
 </script>
 
@@ -69,6 +73,29 @@
 
         {#if expanded["equalizer"]}
             <AudioEqualizer />
+        {/if}
+    </div>
+
+    <!-- Filter -->
+    <div class="section">
+        <div class="title">
+            <MaterialButton style="width: 100%;{hasChanged.filter ? 'padding: 4px 12px;' : 'padding: 8px 12px;'}" disabled={hasChanged.filter} on:click={() => toggleSection("filter")}>
+                <span style="display: flex;gap: 8px;align-items: center;">
+                    <p>{translateText("audio.filter")}</p>
+                </span>
+
+                {#if hasChanged.filter}
+                    <MaterialButton title="actions.reset" style="pointer-events: all;padding: 4px;" on:click={() => resetSection("filter")}>
+                        <Icon id="reset" size={0.8} white />
+                    </MaterialButton>
+                {:else}
+                    <Icon id="arrow_back_modern" class="arrow {expanded['filter'] ? 'open' : ''}" size={0.6} style="opacity: 0.5;" white />
+                {/if}
+            </MaterialButton>
+        </div>
+
+        {#if expanded["filter"]}
+            <AudioFilter />
         {/if}
     </div>
 
@@ -184,6 +211,29 @@
 
         {#if expanded["delay"]}
             <AudioDelay />
+        {/if}
+    </div>
+
+    <!-- Stereo Shaper -->
+    <div class="section">
+        <div class="title">
+            <MaterialButton style="width: 100%;{hasChanged.stereoShaper ? 'padding: 4px 12px;' : 'padding: 8px 12px;'}" disabled={hasChanged.stereoShaper} on:click={() => toggleSection("stereoShaper")}>
+                <span style="display: flex;gap: 8px;align-items: center;">
+                    <p>{translateText("audio.stereo_shaper")}</p>
+                </span>
+
+                {#if hasChanged.stereoShaper}
+                    <MaterialButton title="actions.reset" style="pointer-events: all;padding: 4px;" on:click={() => resetSection("stereoShaper")}>
+                        <Icon id="reset" size={0.8} white />
+                    </MaterialButton>
+                {:else}
+                    <Icon id="arrow_back_modern" class="arrow {expanded['stereoShaper'] ? 'open' : ''}" size={0.6} style="opacity: 0.5;" white />
+                {/if}
+            </MaterialButton>
+        </div>
+
+        {#if expanded["stereoShaper"]}
+            <AudioStereoShaper />
         {/if}
     </div>
 </div>

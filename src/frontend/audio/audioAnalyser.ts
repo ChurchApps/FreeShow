@@ -8,12 +8,14 @@ import { AudioAnalyserMerger } from "./audioAnalyserMerger"
 import { initializeCompressor } from "./effects/audioCompressor"
 import { initializeDelay } from "./effects/audioDelay"
 import { connectAudioSourceToEqualizer, disconnectAudioSourceFromEqualizer, getConnectedSourceOutput, initializeEqualizer, setAutoInitializeCallback } from "./effects/audioEqualizer"
+import { initializeFilter } from "./effects/audioFilter"
 import { initializeLimiter } from "./effects/audioLimiter"
 import { AudioMultichannel, MultichannelInfo } from "./audioMultichannel"
 import { initializeNoiseGate } from "./effects/audioNoiseGate"
 import { AudioPlayer } from "./audioPlayer"
 import { AudioProcessor, PitchShiftNode } from "./audioProcessor"
 import { initializeReverb } from "./effects/audioReverb"
+import { initializeStereoShaper } from "./effects/audioStereoShaper"
 
 export class AudioAnalyser {
     static sampleRate = 48000 // Hz
@@ -251,18 +253,22 @@ export class AudioAnalyser {
 
         this.gainNode = AudioMultichannel.createMultichannelGainNode(this.ac, this.channels)
 
-        // Signal chain: gainNode → noiseGate → compressor → reverb → delay → limiter → destination
+        // Signal chain: gainNode → filter → noiseGate → compressor → reverb → delay → limiter → stereoShaper → destination
+        const filter = initializeFilter(this.ac)
         const noiseGate = initializeNoiseGate(this.ac)
         const compressor = initializeCompressor(this.ac)
         const reverb = initializeReverb(this.ac)
         const delay = initializeDelay(this.ac)
         const limiter = initializeLimiter(this.ac)
-        this.gainNode.connect(noiseGate.input)
+        const stereoShaper = initializeStereoShaper(this.ac)
+        this.gainNode.connect(filter.input)
+        filter.output.connect(noiseGate.input)
         noiseGate.output.connect(compressor.input)
         compressor.output.connect(reverb.input)
         reverb.output.connect(delay.input)
         delay.output.connect(limiter.input)
-        limiter.output.connect(this.ac.destination)
+        limiter.output.connect(stereoShaper.input)
+        stereoShaper.output.connect(this.ac.destination)
 
         this.gainNode.gain.value = AudioPlayer.getGain()
     }
