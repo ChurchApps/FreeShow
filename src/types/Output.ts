@@ -26,6 +26,8 @@ export interface Output {
     ndiData?: any
     blackmagic?: boolean
     blackmagicData?: any
+    webrtc?: boolean
+    webrtcData?: any
     forcedResolution?: Resolution
     invisible?: boolean
     taskbar?: boolean

@@ -32,6 +32,9 @@ export class AudioAnalyser {
 
     // Expose the AudioContext for other audio systems to use the same context
     static getAudioContext(): AudioContext {
+        if (this.ac.state === "suspended") {
+            this.ac.resume().catch(() => {});
+        }
         return this.ac
     }
 
@@ -46,6 +49,10 @@ export class AudioAnalyser {
 
     static async attach(id: string, audio: HTMLMediaElement | MediaStream) {
         if (this.sources[id]) return
+
+        if (this.ac.state === "suspended") {
+            this.ac.resume().catch(() => {});
+        }
 
         let source: AudioNode
         try {
@@ -387,25 +394,33 @@ export class AudioAnalyser {
         const id = isOutputWindow() ? Object.keys(get(outputs))[0] : "main"
         // might only work in "main" for OutputShow
 
-        this.recorder = new MediaRecorder(this.destNode!.stream, {
-            mimeType: 'audio/webm; codecs="opus"'
-        })
-        this.recorder.addEventListener("dataavailable", async (ev) => {
-            const arrayBuffer = await ev.data.arrayBuffer()
-            const uint8Array = new Uint8Array(arrayBuffer)
-            // , audioDelay: 0, channels: this.channels, frameRate: this.recorderFrameRate
-            send(AUDIO, ["CAPTURE"], { id, buffer: uint8Array })
-        })
+        try {
+            this.recorder = new MediaRecorder(this.destNode!.stream, {
+                mimeType: 'audio/webm; codecs="opus"'
+            })
+            this.recorder.addEventListener("dataavailable", async (ev) => {
+                const arrayBuffer = await ev.data.arrayBuffer()
+                const uint8Array = new Uint8Array(arrayBuffer)
+                // , audioDelay: 0, channels: this.channels, frameRate: this.recorderFrameRate
+                send(AUDIO, ["CAPTURE"], { id, buffer: uint8Array })
+            })
 
-        if (this.recorder.state === "paused") this.recorder.play()
-        else if (this.recorder.state !== "recording") {
-            this.recorder.start(Math.round(1000 / this.recorderFrameRate))
+            if (this.recorder.state === "paused") this.recorder.play()
+            else if (this.recorder.state !== "recording") {
+                this.recorder.start(Math.round(1000 / this.recorderFrameRate))
+            }
+        } catch (err) {
+            console.error(`[AudioAnalyser] Failed to start MediaRecorder:`, err);
         }
     }
 
     private static recorderActive = false
     static recorderActivate() {
         if (!this.shouldBeActive()) return
+
+        if (this.ac.state === "suspended") {
+            this.ac.resume().catch(() => {});
+        }
 
         this.recorderActive = true
         this.initRecorder()
@@ -422,11 +437,14 @@ export class AudioAnalyser {
         let outputList = Object.values(get(outputs))
         if (isOutputWindow()) outputList = [Object.values(get(outputs))[0]]
 
+        // any outputs with webrtc streaming enabled
+        if (outputList.find((a) => a && a.enabled && a.webrtc)) return true
+
         // any outputs with ndi audio enabled
-        if (outputList.find((a) => a.enabled && a.ndi && a.ndiData?.audio)) return true
+        if (outputList.find((a) => a && a.enabled && a.ndi && a.ndiData?.audio)) return true
 
         // any outputs with blackmagic enabled (audio always enabled for blackmagic)
-        if (outputList.find((a) => a.enabled && a.blackmagic)) return true
+        if (outputList.find((a) => a && a.enabled && a.blackmagic)) return true
 
         return false
     }

@@ -7,6 +7,7 @@ import util from "../../ndi/vingester-util"
 import { OutputHelper } from "../../output/OutputHelper"
 import { getConnections, toServer } from "../../servers"
 import { BlackmagicSender } from "../../blackmagic/BlackmagicSender"
+import { WebRtcHost } from "../../webrtc/WebRtcHost"
 
 export type Channel = {
     key: string
@@ -34,11 +35,12 @@ export class CaptureTransmitter {
         const captureOptions = OutputHelper.getOutput(captureId)?.captureOptions
         if (!captureOptions) return
 
-        const { ndi, blackmagic, server, stage } = captureOptions.options
+        const { ndi, blackmagic, server, stage, webrtc } = captureOptions.options
         if (ndi) this.startChannel(captureId, "ndi")
         if (blackmagic) this.startChannel(captureId, "blackmagic")
         if (server) this.startChannel(captureId, "server")
         if (stage) this.startChannel(captureId, "stage")
+        if (webrtc) this.startChannel(captureId, "webrtc")
     }
 
     static startChannel(captureId: string, key: string) {
@@ -194,6 +196,9 @@ export class CaptureTransmitter {
             case "stage":
                 this.sendBufferToMain(captureId, image)
                 break
+            case "webrtc":
+                this.sendBufferToWebRtcHost(captureId, image)
+                break
         }
     }
 
@@ -318,6 +323,22 @@ export class CaptureTransmitter {
         else util.ImageBufferAdjustment.BGRAtoRGBA(buffer)
 
         toServer(OUTPUT_STREAM, { channel: "STREAM", data: { id: outputId, time: Date.now(), buffer, size } })
+    }
+
+    // WEBRTC
+    static sendBufferToWebRtcHost(outputId: string, image: NativeImage) {
+        if (!image || !WebRtcHost.isRunning()) return
+
+        const buffer = image.toBitmap()
+        const size = image.getSize()
+
+        if (this.shouldSkipUnchangedNonBlackmagicFrame("webrtc", outputId, buffer, size)) return
+
+        /*  convert from ARGB/BGRA (Electron/Chromium capture output) to RGBA (Web canvas)  */
+        if (this.IS_BIG_ENDIAN) util.ImageBufferAdjustment.ARGBtoRGBA(buffer)
+        else util.ImageBufferAdjustment.BGRAtoRGBA(buffer)
+
+        WebRtcHost.sendFrame(outputId, buffer, size)
     }
 
     static requestPreview(data: { id: string; previewId: string }) {

@@ -51,7 +51,7 @@
             setTimeout(refreshOut)
         }
 
-        if (key === "ndi") {
+        if (key === "ndi" || key === "webrtc") {
             if (value) {
                 newToast("toast.output_capture_enabled")
 
@@ -62,7 +62,8 @@
                     updateOutput("invisible", true)
                 }
 
-                ndiMenuOpened = true
+                if (key === "ndi") ndiMenuOpened = true
+                else webrtcMenuOpened = true
             }
         } else if (key === "blackmagic") {
             if (value === true) {
@@ -97,7 +98,7 @@
                     })
 
                     // delete a[outputId].ndiData
-                    if (!a[outputId].blackmagic) {
+                    if (!a[outputId].blackmagic && !a[outputId].webrtc) {
                         if (a[outputId].ndiData?.audio) delete a[outputId].ndiData.audio
                         delete a[outputId].transparent
                         delete a[outputId].invisible
@@ -113,7 +114,21 @@
                     // })
 
                     // delete a[outputId].blackmagicData
-                    if (!a[outputId].ndi) {
+                    if (!a[outputId].ndi && !a[outputId].webrtc) {
+                        delete a[outputId].transparent
+                        delete a[outputId].invisible
+                    }
+                }
+            }
+
+            if (key === "webrtc") {
+                if (value) {
+                    AudioAnalyser.recorderActivate()
+                } else {
+                    AudioAnalyser.recorderDeactivate()
+                }
+                if (!value) {
+                    if (!a[outputId].ndi && !a[outputId].blackmagic) {
                         delete a[outputId].transparent
                         delete a[outputId].invisible
                     }
@@ -137,7 +152,7 @@
 
             if (["blackmagic"].includes(key)) {
                 send(OUTPUT, ["SET_VALUE"], { id: outputId, key, value: a[outputId] })
-            } else if (["alwaysOnTop", "kioskMode", "transparent", "invisible", "ndi"].includes(key)) {
+            } else if (["alwaysOnTop", "kioskMode", "transparent", "invisible", "ndi", "webrtc"].includes(key)) {
                 send(OUTPUT, ["SET_VALUE"], { id: outputId, key, value })
             }
 
@@ -191,6 +206,24 @@
             activePopup.set("alert")
             saved.set(false)
         }
+    }
+
+    // webrtc
+    function updateWebrtcData(e: any, key: string) {
+        let id = currentOutput?.id
+        if (!id) return
+
+        let newData = $outputs[id]?.webrtcData
+        if (!newData) newData = {}
+
+        let value = e?.detail?.id ?? e
+
+        newData[key] = value
+
+        updateOutput("webrtcData", newData)
+
+        send(OUTPUT, ["SET_VALUE"], { id, key: "webrtcData", value: newData })
+        saved.set(false)
     }
 
     const framerates = [
@@ -316,6 +349,7 @@
 
     let ndiMenuOpened = false
     let bmdMenuOpened = false
+    let webrtcMenuOpened = false
 </script>
 
 {#if outputsList.filter((a) => !a.stageOutput).length > 1 || !currentOutput?.enabled || currentOutput?.stageOutput}
@@ -407,7 +441,21 @@
     </svelte:fragment>
 </InputRow>
 
-{#if currentOutput?.ndi || currentOutput?.blackmagic}
+<!-- WebRTC -->
+<Title label="WebRTC Streaming (WHIP)" icon="launch" />
+
+<InputRow arrow={currentOutput?.webrtc} bind:open={webrtcMenuOpened}>
+    <MaterialToggleSwitch label="actions.enable WebRTC" style="width: 100%;" checked={currentOutput?.webrtc} defaultValue={false} on:change={(e) => updateOutput("webrtc", e.detail)} />
+
+    <svelte:fragment slot="menu">
+        {#if currentOutput}
+            <MaterialTextInput label="WHIP Endpoint URL" value={currentOutput.webrtcData?.url || ""} placeholder="e.g. https://live.restream.io/whip/live/YOUR_KEY" on:change={(e) => updateWebrtcData(e.detail, "url")} />
+            <MaterialTextInput label="Bearer Token (Optional)" value={currentOutput.webrtcData?.token || ""} placeholder="Authorization token" on:change={(e) => updateWebrtcData(e.detail, "token")} />
+        {/if}
+    </svelte:fragment>
+</InputRow>
+
+{#if currentOutput?.ndi || currentOutput?.blackmagic || currentOutput?.webrtc}
     <br />
 
     <MaterialToggleSwitch label="settings.transparent" checked={currentOutput.transparent} defaultValue={true} on:change={(e) => updateOutput("transparent", e.detail)} />
