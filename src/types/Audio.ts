@@ -3,6 +3,7 @@ export interface Playlist {
     songs: string[]
     mode?: "default" | "shuffle"
     loop?: boolean
+    autoNext?: boolean // auto play next song when current ends, enabled by default
     crossfade?: number
     volume?: number // playlist specific volume
 }

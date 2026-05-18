@@ -1,3 +1,4 @@
+import { nativeImage } from "electron"
 import { type ICommonTagsResult, parseFile } from "music-metadata"
 import { join } from "path"
 import { ToMain } from "../../types/IPC/ToMain"
@@ -29,17 +30,27 @@ export async function setPlayingState(data: NowPlayingData) {
     const filePathCover = join(audioFolder, fileNameImage)
     const cover = metadata?.picture?.[0]
     const buffer = cover?.data
+    let coverBuffer: Buffer | undefined
     if (!buffer) {
         if (doesPathExist(filePathCover)) {
             deleteFile(filePathCover)
         }
     } else {
-        writeFile(filePathCover, buffer)
+        const img = nativeImage.createFromBuffer(buffer)
+        writeFile(filePathCover, img.toPNG())
+
+        const { width, height } = img.getSize()
+        if (width > 640 || height > 480) {
+            const scale = Math.min(640 / width, 480 / height)
+            coverBuffer = img.resize({ width: Math.round(width * scale), height: Math.round(height * scale) }).toJPEG(90)
+        } else {
+            coverBuffer = buffer
+        }
     }
 
     // format: Artist - Title - Album
     // const content = `${artist} - ${title} - ${album}`
-    const content = await convertDynamicValues(data, metadata, buffer)
+    const content = await convertDynamicValues(data, metadata, coverBuffer)
     // currentContent = content
 
     // create playing data text file
@@ -80,7 +91,7 @@ async function convertDynamicValues(data: NowPlayingData, metadata: ICommonTagsR
 
                 if (!coverBuffer) return ""
                 const base64String = coverBuffer.toString("base64")
-                return `data:image/png;base64,${base64String}`
+                return `data:image/jpeg;base64,${base64String}`
             case "{duration}":
             case "{duration_s}":
                 if (value === "{duration_s}") return data.duration.toString()

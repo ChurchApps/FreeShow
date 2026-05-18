@@ -25,6 +25,7 @@ type AudioOptions = {
     startAt?: number
     crossfade?: number // playlist
     playlistCrossfade?: boolean // playlist
+    startPaused?: boolean // playlist
     volume?: number // playlist
 }
 export type AudioData = {
@@ -114,7 +115,7 @@ export class AudioPlayer {
         playingAudio.update((a) => {
             a[path] = {
                 name: removeExtension(metadata.name || getFileName(path)),
-                paused: false,
+                paused: !!options.startPaused,
                 isMic: false,
                 audio
             }
@@ -128,7 +129,7 @@ export class AudioPlayer {
             fadeInAudio(path, options.crossfade, !!waitToPlay, newVolume)
         }
 
-        this.initAudio(path, waitToPlay)
+        this.initAudio(path, waitToPlay, !!options.startPaused)
 
         const name = removeExtension(metadata.name || getFileName(path))
         this.nowPlaying(path, name)
@@ -191,13 +192,13 @@ export class AudioPlayer {
     // private static init(id: string, audio: HTMLAudioElement, metadata: AudioMetadata) {
     // }
 
-    private static initAudio(id: string, waitToPlay = 0) {
+    private static initAudio(id: string, waitToPlay = 0, startPaused = false) {
         setTimeout(async () => {
             // audio might have been cleared
             const audio = this.getAudio(id)
             if (!audio) return
 
-            this.play(id)
+            if (!startPaused) this.play(id)
             customActionActivation("audio_start")
 
             // WIP get microphone input stream (audio will have to be muted in that case)
@@ -323,7 +324,7 @@ export class AudioPlayer {
 
         if (AudioPlaylist.getPlayingPath() === id) {
             this.stop(id) // stop existing
-            AudioPlaylist.next()
+            AudioPlaylist.next(true)
             return
         }
 

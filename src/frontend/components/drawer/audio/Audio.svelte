@@ -383,6 +383,17 @@
             <Icon size={1.1} id="loop" white={$audioPlaylists[active || ""]?.loop === false} />
         </MaterialButton>
 
+        <!-- auto play next song in playlist -->
+        <MaterialButton
+            title={`media.auto_next${$audioPlaylists[active || ""]?.autoNext !== false ? ": settings.enabled" : ""}`}
+            on:click={() => {
+                if (!active) return
+                AudioPlaylist.update(active, "autoNext", $audioPlaylists[active]?.autoNext === undefined ? false : !$audioPlaylists[active]?.autoNext)
+            }}
+        >
+            <Icon size={1.1} id="auto" white={$audioPlaylists[active || ""]?.autoNext === false} />
+        </MaterialButton>
+
         <div class="divider" />
 
         <!-- total length of playlist -->
