@@ -36,7 +36,7 @@ const loadGrandiose = async () => {
 
 export class NdiSender {
     static timeStart = BigInt(Date.now()) * BigInt(1e6) - process.hrtime.bigint()
-    static NDI: { [key: string]: { name: string; groups?: string; status?: string; previousStatus?: string; sender?: any; timer?: NodeJS.Timeout; sendAudio?: boolean } } = {}
+    static NDI: { [key: string]: { name: string; groups?: string; status?: string; previousStatus?: string; sender?: any; timer?: NodeJS.Timeout; sendAudio?: boolean; sendingVideo?: boolean; pendingVideoFrame?: any } } = {}
 
     static stopSenderNDI(id: string) {
         if (!this.NDI[id]?.timer) return
@@ -51,6 +51,28 @@ export class NdiSender {
         }
 
         delete this.NDI[id]
+    }
+
+    private static async sendQueuedVideoFrameNDI(id: string) {
+        const senderData = this.NDI[id]
+        if (!senderData?.sender || senderData.sendingVideo) return
+
+        const frame = senderData.pendingVideoFrame
+        if (!frame) return
+
+        senderData.pendingVideoFrame = undefined
+        senderData.sendingVideo = true
+
+        try {
+            await senderData.sender.video(frame)
+        } catch (err) {
+            console.error("Error sending NDI video frame:", err)
+        } finally {
+            senderData.sendingVideo = false
+            if (senderData.pendingVideoFrame) {
+                void this.sendQueuedVideoFrameNDI(id)
+            }
+        }
     }
 
     static initNameNDI(name?: string, outputName?: string) {
@@ -148,11 +170,11 @@ export class NdiSender {
             data: buffer
         }
 
-        try {
-            await this.NDI[id].sender.video(frame)
-        } catch (err) {
-            console.error("Error sending NDI video frame:", err)
-        }
+        const senderData = this.NDI[id]
+        if (!senderData?.sender) return
+
+        senderData.pendingVideoFrame = frame
+        void this.sendQueuedVideoFrameNDI(id)
     }
 
     static enableAudio(id: string) {
