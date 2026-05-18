@@ -192,15 +192,15 @@ export function fadeinAllPlayingAudio() {
         fadeToVolume = (playlist?.volume ?? 1) * fadeToVolume
     }
 
-    Object.values(get(playingAudio)).forEach(({ audio }) => {
-        fadeinAudio(audio)
+    Object.values(get(playingAudio)).forEach(({ audio, replayGainMultiplier }) => {
+        fadeinAudio(audio, replayGainMultiplier || 1)
     })
 
     isAllAudioFading = false
 
-    async function fadeinAudio(audio) {
+    async function fadeinAudio(audio: HTMLAudioElement, gainMultiplier = 1) {
         audio.play()
-        await fadeAudio(audio.src, audio, get(special).audio_fade_duration ?? 1.5, true, fadeToVolume)
+        await fadeAudio(audio.src, audio, get(special).audio_fade_duration ?? 1.5, true, Math.min(1, fadeToVolume * gainMultiplier))
         // if (faded) analyseAudio()
     }
 }

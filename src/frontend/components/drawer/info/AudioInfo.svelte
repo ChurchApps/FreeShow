@@ -70,6 +70,8 @@
         <!-- defaultValue={false}  -->
         <MaterialToggleSwitch label="audio.mute_when_video_plays" checked={$special.muteAudioWhenVideoPlays || false} on:change={(e) => updateSpecial(e.detail, "muteAudioWhenVideoPlays")} />
         <!-- <MaterialToggleSwitch label="audio.allow_gaining" checked={$special.allowGaining || false} on:change={(e) => updateSpecial(e.detail, "allowGaining")} /> -->
+        <!-- ReplayGain enabled always as it uses audio metadata info -->
+        <!-- <MaterialToggleSwitch label="ReplayGain" checked={$special.replayGain || false} on:change={(e) => updateSpecial(e.detail, "replayGain")} /> -->
 
         <MaterialDropdown label="audio.custom_output" options={audioOutputs} value={$special.audioOutput || ""} on:change={(e) => updateSpecial(e.detail, "audioOutput")} allowEmpty />
         <MaterialDropdown label="audio.channel" options={audioChannels} value={$special.audioChannel || ""} defaultValue="" on:change={(e) => updateSpecial(e.detail, "audioChannel")} />
