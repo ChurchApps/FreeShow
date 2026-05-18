@@ -2,8 +2,7 @@
 // Algorithmic reverb using ConvolverNode with a synthetically generated impulse response.
 // No IR files required — the IR is computed from roomSize and dampening parameters.
 
-import { get } from "svelte/store"
-import { audioEffects } from "../stores"
+import { getEffectConfig, setEffectEnabledInStore, subscribeEffect, updateEffectInStore } from "./audioEffectsHelpers"
 
 export interface ReverbConfig {
     enabled: boolean
@@ -131,29 +130,16 @@ let globalReverb: AudioReverb | null = null
 export function initializeReverb(ac: AudioContext): AudioReverb {
     if (globalReverb) return globalReverb
 
-    const config = get(audioEffects).main?.reverb ?? DEFAULT_REVERB_CONFIG
-    globalReverb = new AudioReverb(ac, { ...DEFAULT_REVERB_CONFIG, ...config })
-
-    audioEffects.subscribe((all) => {
-        const cfg = all.main?.reverb
-        if (cfg) globalReverb?.updateConfig(cfg)
-    })
+    globalReverb = new AudioReverb(ac, getEffectConfig("reverb", DEFAULT_REVERB_CONFIG))
+    subscribeEffect("reverb", (cfg: ReverbConfig) => globalReverb?.updateConfig(cfg))
 
     return globalReverb
 }
 
 export function updateReverbConfig(partial: Partial<ReverbConfig>) {
-    audioEffects.update((all) => {
-        const next = { ...DEFAULT_REVERB_CONFIG, ...all.main?.reverb, ...partial }
-        globalReverb?.updateConfig(next)
-        return { ...all, main: { ...all.main, reverb: next } }
-    })
+    updateEffectInStore("reverb", DEFAULT_REVERB_CONFIG, partial, globalReverb)
 }
 
 export function setReverbEnabled(enabled: boolean) {
-    audioEffects.update((all) => {
-        const next = { ...DEFAULT_REVERB_CONFIG, ...all.main?.reverb, enabled }
-        globalReverb?.setEnabled(enabled)
-        return { ...all, main: { ...all.main, reverb: next } }
-    })
+    setEffectEnabledInStore("reverb", DEFAULT_REVERB_CONFIG, enabled, globalReverb)
 }

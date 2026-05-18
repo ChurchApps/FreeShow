@@ -1,8 +1,7 @@
 // Audio Delay Engine & Integration
 // Tap-delay echo effect using DelayNode with a feedback loop and wet/dry mix.
 
-import { get } from "svelte/store"
-import { audioEffects } from "../stores"
+import { getEffectConfig, setEffectEnabledInStore, subscribeEffect, updateEffectInStore } from "./audioEffectsHelpers"
 
 export interface DelayConfig {
     enabled: boolean
@@ -118,29 +117,16 @@ let globalDelay: AudioDelay | null = null
 export function initializeDelay(ac: AudioContext): AudioDelay {
     if (globalDelay) return globalDelay
 
-    const config = get(audioEffects).main?.delay ?? DEFAULT_DELAY_CONFIG
-    globalDelay = new AudioDelay(ac, { ...DEFAULT_DELAY_CONFIG, ...config })
-
-    audioEffects.subscribe((all) => {
-        const cfg = all.main?.delay
-        if (cfg) globalDelay?.updateConfig(cfg)
-    })
+    globalDelay = new AudioDelay(ac, getEffectConfig("delay", DEFAULT_DELAY_CONFIG))
+    subscribeEffect("delay", (cfg: DelayConfig) => globalDelay?.updateConfig(cfg))
 
     return globalDelay
 }
 
 export function updateDelayConfig(partial: Partial<DelayConfig>) {
-    audioEffects.update((all) => {
-        const next = { ...DEFAULT_DELAY_CONFIG, ...all.main?.delay, ...partial }
-        globalDelay?.updateConfig(next)
-        return { ...all, main: { ...all.main, delay: next } }
-    })
+    updateEffectInStore("delay", DEFAULT_DELAY_CONFIG, partial, globalDelay)
 }
 
 export function setDelayEnabled(enabled: boolean) {
-    audioEffects.update((all) => {
-        const next = { ...DEFAULT_DELAY_CONFIG, ...all.main?.delay, enabled }
-        globalDelay?.setEnabled(enabled)
-        return { ...all, main: { ...all.main, delay: next } }
-    })
+    setEffectEnabledInStore("delay", DEFAULT_DELAY_CONFIG, enabled, globalDelay)
 }

@@ -1,8 +1,8 @@
 // Audio Equalizer Engine & Integration
 // Handles EQ band calculations, Web Audio API integration, and Svelte store management
 
-import { get } from "svelte/store"
-import { audioEffects } from "../stores"
+import { audioEffects } from "../../stores"
+import { getEffectConfig, setEffectEnabledInStore } from "./audioEffectsHelpers"
 
 export interface EQBand {
     frequency: number
@@ -15,6 +15,11 @@ export interface EQBand {
 export interface EqualizerConfig {
     bands: EQBand[]
     enabled: boolean
+}
+
+export const DEFAULT_EQUALIZER_CONFIG: EqualizerConfig = {
+    enabled: false,
+    bands: []
 }
 
 export class AudioEqualizer {
@@ -522,10 +527,7 @@ export function updateEqualizerBand(bandIndex: number, band: EQBand) {
 // Enable/disable equalizer
 export function setEqualizerEnabled(enabled: boolean) {
     // Update store immediately (this ensures UI changes are reflected)
-    audioEffects.update((all) => {
-        const existing = all.main?.equalizer ?? { enabled: false, bands: AudioEqualizer.getDefaultBands() }
-        return { ...all, main: { ...all.main, equalizer: { ...existing, enabled } } }
-    })
+    setEffectEnabledInStore("equalizer", DEFAULT_EQUALIZER_CONFIG, enabled, globalEqualizer)
 
     // Apply to equalizer if it's initialized
     if (globalEqualizer) {
@@ -535,8 +537,7 @@ export function setEqualizerEnabled(enabled: boolean) {
 
 // Get current equalizer configuration
 function getEqualizerConfig(): EqualizerConfig {
-    const stored = get(audioEffects).main?.equalizer
-    const config: EqualizerConfig = stored ?? { enabled: false, bands: [] }
+    const config = getEffectConfig("equalizer", DEFAULT_EQUALIZER_CONFIG)
     if (!config.bands?.length) config.bands = AudioEqualizer.getDefaultBands()
     // importing clone here breaks startup file reading order
     return JSON.parse(JSON.stringify(config))

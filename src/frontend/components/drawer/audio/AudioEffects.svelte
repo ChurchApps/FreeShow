@@ -5,12 +5,12 @@
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
-    import AudioCompressor from "./AudioCompressor.svelte"
-    import AudioDelay from "./AudioDelay.svelte"
-    import AudioEqualizer from "./AudioEqualizer.svelte"
-    import AudioLimiter from "./AudioLimiter.svelte"
-    import AudioNoiseGate from "./AudioNoiseGate.svelte"
-    import AudioReverb from "./AudioReverb.svelte"
+    import AudioCompressor from "./effects/AudioCompressor.svelte"
+    import AudioDelay from "./effects/AudioDelay.svelte"
+    import AudioEqualizer from "./effects/AudioEqualizer.svelte"
+    import AudioLimiter from "./effects/AudioLimiter.svelte"
+    import AudioNoiseGate from "./effects/AudioNoiseGate.svelte"
+    import AudioReverb from "./effects/AudioReverb.svelte"
 
     let expanded = {}
     function toggleSection(type) {

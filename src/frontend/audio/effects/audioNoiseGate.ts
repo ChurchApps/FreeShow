@@ -1,8 +1,7 @@
 // Audio Noise Gate Engine & Integration
 // Real-time gate using AudioWorklet. Falls back to passthrough until worklet is loaded.
 
-import { get } from "svelte/store"
-import { audioEffects } from "../stores"
+import { getEffectConfig, setEffectEnabledInStore, subscribeEffect, updateEffectInStore } from "./audioEffectsHelpers"
 
 export interface NoiseGateConfig {
     enabled: boolean
@@ -123,29 +122,16 @@ let globalNoiseGate: AudioNoiseGate | null = null
 export function initializeNoiseGate(ac: AudioContext): AudioNoiseGate {
     if (globalNoiseGate) return globalNoiseGate
 
-    const config = get(audioEffects).main?.noiseGate ?? DEFAULT_NOISE_GATE_CONFIG
-    globalNoiseGate = new AudioNoiseGate(ac, { ...DEFAULT_NOISE_GATE_CONFIG, ...config })
-
-    audioEffects.subscribe((all) => {
-        const cfg = all.main?.noiseGate
-        if (cfg) globalNoiseGate?.updateConfig(cfg)
-    })
+    globalNoiseGate = new AudioNoiseGate(ac, getEffectConfig("noiseGate", DEFAULT_NOISE_GATE_CONFIG))
+    subscribeEffect("noiseGate", (cfg: NoiseGateConfig) => globalNoiseGate?.updateConfig(cfg))
 
     return globalNoiseGate
 }
 
 export function updateNoiseGateConfig(partial: Partial<NoiseGateConfig>) {
-    audioEffects.update((all) => {
-        const next = { ...DEFAULT_NOISE_GATE_CONFIG, ...all.main?.noiseGate, ...partial }
-        globalNoiseGate?.updateConfig(next)
-        return { ...all, main: { ...all.main, noiseGate: next } }
-    })
+    updateEffectInStore("noiseGate", DEFAULT_NOISE_GATE_CONFIG, partial, globalNoiseGate)
 }
 
 export function setNoiseGateEnabled(enabled: boolean) {
-    audioEffects.update((all) => {
-        const next = { ...DEFAULT_NOISE_GATE_CONFIG, ...all.main?.noiseGate, enabled }
-        globalNoiseGate?.setEnabled(enabled)
-        return { ...all, main: { ...all.main, noiseGate: next } }
-    })
+    setEffectEnabledInStore("noiseGate", DEFAULT_NOISE_GATE_CONFIG, enabled, globalNoiseGate)
 }

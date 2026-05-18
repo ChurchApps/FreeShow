@@ -1,11 +1,10 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
-
-    import { type ReverbConfig, setReverbEnabled, updateReverbConfig } from "../../../audio/audioReverb"
-    import { audioEffects } from "../../../stores"
-    import InputRow from "../../input/InputRow.svelte"
-    import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
-    import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
+    import { subscribeEffect } from "../../../../audio/effects/audioEffectsHelpers"
+    import { type ReverbConfig, setReverbEnabled, updateReverbConfig } from "../../../../audio/effects/audioReverb"
+    import InputRow from "../../../input/InputRow.svelte"
+    import MaterialNumberInput from "../../../inputs/MaterialNumberInput.svelte"
+    import MaterialToggleSwitch from "../../../inputs/MaterialToggleSwitch.svelte"
 
     export let disabled: boolean = false
 
@@ -19,9 +18,8 @@
     let unsubscribe: (() => void) | null = null
 
     onMount(() => {
-        unsubscribe = audioEffects.subscribe((all) => {
-            const c = all.main?.reverb
-            if (c) config = { ...c }
+        unsubscribe = subscribeEffect("reverb", (c: ReverbConfig) => {
+            config = { ...c }
         })
     })
 

@@ -1,16 +1,15 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
     import { uid } from "uid"
-
-    import { AudioEqualizer, type EQBand, EqualizerCalculations, setEqualizerEnabled, updateEqualizerBands } from "../../../audio/audioEqualizer"
-    import { audioEffects, eqPresets, special } from "../../../stores"
-    import { translateText } from "../../../utils/language"
-    import { clone, keysToID } from "../../helpers/array"
-    import InputRow from "../../input/InputRow.svelte"
-    import MaterialButton from "../../inputs/MaterialButton.svelte"
-    import MaterialDropdown from "../../inputs/MaterialDropdown.svelte"
-    import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
-    import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
+    import { AudioEqualizer, type EQBand, EqualizerCalculations, setEqualizerEnabled, updateEqualizerBands } from "../../../../audio/effects/audioEqualizer"
+    import { audioEffects, eqPresets, special } from "../../../../stores"
+    import { translateText } from "../../../../utils/language"
+    import { clone, keysToID } from "../../../helpers/array"
+    import InputRow from "../../../input/InputRow.svelte"
+    import MaterialButton from "../../../inputs/MaterialButton.svelte"
+    import MaterialDropdown from "../../../inputs/MaterialDropdown.svelte"
+    import MaterialTextInput from "../../../inputs/MaterialTextInput.svelte"
+    import MaterialToggleSwitch from "../../../inputs/MaterialToggleSwitch.svelte"
 
     export let disabled: boolean = false
 

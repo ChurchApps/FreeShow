@@ -5,15 +5,15 @@ import { disabledServers, media, outputs, playingAudio, playingVideos, serverDat
 import { isOutputWindow } from "../utils/common"
 import { send } from "../utils/request"
 import { AudioAnalyserMerger } from "./audioAnalyserMerger"
-import { initializeCompressor } from "./audioCompressor"
-import { initializeDelay } from "./audioDelay"
-import { connectAudioSourceToEqualizer, disconnectAudioSourceFromEqualizer, getConnectedSourceOutput, initializeEqualizer, setAutoInitializeCallback } from "./audioEqualizer"
-import { initializeLimiter } from "./audioLimiter"
+import { initializeCompressor } from "./effects/audioCompressor"
+import { initializeDelay } from "./effects/audioDelay"
+import { connectAudioSourceToEqualizer, disconnectAudioSourceFromEqualizer, getConnectedSourceOutput, initializeEqualizer, setAutoInitializeCallback } from "./effects/audioEqualizer"
+import { initializeLimiter } from "./effects/audioLimiter"
 import { AudioMultichannel, MultichannelInfo } from "./audioMultichannel"
-import { initializeNoiseGate } from "./audioNoiseGate"
+import { initializeNoiseGate } from "./effects/audioNoiseGate"
 import { AudioPlayer } from "./audioPlayer"
 import { AudioProcessor, PitchShiftNode } from "./audioProcessor"
-import { initializeReverb } from "./audioReverb"
+import { initializeReverb } from "./effects/audioReverb"
 
 export class AudioAnalyser {
     static sampleRate = 48000 // Hz

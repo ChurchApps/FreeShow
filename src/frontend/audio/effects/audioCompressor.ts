@@ -1,8 +1,7 @@
 // Audio Compressor Engine & Integration
 // Handles dynamics compression using the Web Audio API DynamicsCompressorNode
 
-import { get } from "svelte/store"
-import { audioEffects } from "../stores"
+import { getEffectConfig, setEffectEnabledInStore, updateEffectInStore } from "./audioEffectsHelpers"
 
 export interface CompressorConfig {
     enabled: boolean
@@ -116,11 +115,6 @@ export class AudioCompressor {
 
 let globalCompressor: AudioCompressor | null = null
 
-function getStoredConfig(): CompressorConfig {
-    const stored = get(audioEffects).main?.compressor
-    return { ...DEFAULT_COMPRESSOR_CONFIG, ...stored }
-}
-
 /**
  * Create the global compressor instance for the given AudioContext.
  * Returns the input node — callers should connect their source to input
@@ -130,7 +124,7 @@ export function initializeCompressor(ac: AudioContext): AudioCompressor {
     if (globalCompressor) {
         globalCompressor.dispose()
     }
-    globalCompressor = new AudioCompressor(ac, getStoredConfig())
+    globalCompressor = new AudioCompressor(ac, getEffectConfig("compressor", DEFAULT_COMPRESSOR_CONFIG))
     return globalCompressor
 }
 
@@ -138,14 +132,12 @@ export function getGlobalCompressor(): AudioCompressor | null {
     return globalCompressor
 }
 
-export function updateCompressorConfig(config: Partial<CompressorConfig>) {
-    audioEffects.update((all) => ({ ...all, main: { ...all.main, compressor: { ...all.main?.compressor, ...config } } }))
-    globalCompressor?.updateConfig(config)
+export function updateCompressorConfig(partial: Partial<CompressorConfig>) {
+    updateEffectInStore("compressor", DEFAULT_COMPRESSOR_CONFIG, partial, globalCompressor)
 }
 
 export function setCompressorEnabled(enabled: boolean) {
-    audioEffects.update((all) => ({ ...all, main: { ...all.main, compressor: { ...DEFAULT_COMPRESSOR_CONFIG, ...all.main?.compressor, enabled } } }))
-    globalCompressor?.setEnabled(enabled)
+    setEffectEnabledInStore("compressor", DEFAULT_COMPRESSOR_CONFIG, enabled, globalCompressor)
 }
 
 export function getCompressorReduction(): number {

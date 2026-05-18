@@ -1,11 +1,10 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
-
-    import { type DelayConfig, setDelayEnabled, updateDelayConfig } from "../../../audio/audioDelay"
-    import { audioEffects } from "../../../stores"
-    import InputRow from "../../input/InputRow.svelte"
-    import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
-    import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
+    import { type DelayConfig, setDelayEnabled, updateDelayConfig } from "../../../../audio/effects/audioDelay"
+    import { subscribeEffect } from "../../../../audio/effects/audioEffectsHelpers"
+    import InputRow from "../../../input/InputRow.svelte"
+    import MaterialNumberInput from "../../../inputs/MaterialNumberInput.svelte"
+    import MaterialToggleSwitch from "../../../inputs/MaterialToggleSwitch.svelte"
 
     export let disabled: boolean = false
 
@@ -19,9 +18,8 @@
     let unsubscribe: (() => void) | null = null
 
     onMount(() => {
-        unsubscribe = audioEffects.subscribe((all) => {
-            const c = all.main?.delay
-            if (c) config = { ...c }
+        unsubscribe = subscribeEffect("delay", (c: DelayConfig) => {
+            config = { ...c }
         })
     })
 

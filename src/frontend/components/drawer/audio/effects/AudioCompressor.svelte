@@ -1,12 +1,11 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
-
-    import { type CompressorConfig, getCompressorReduction, setCompressorEnabled, updateCompressorConfig } from "../../../audio/audioCompressor"
-    import { AudioAnalyser } from "../../../audio/audioAnalyser"
-    import { audioEffects } from "../../../stores"
-    import InputRow from "../../input/InputRow.svelte"
-    import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
-    import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
+    import { AudioAnalyser } from "../../../../audio/audioAnalyser"
+    import { getCompressorReduction, setCompressorEnabled, updateCompressorConfig, type CompressorConfig } from "../../../../audio/effects/audioCompressor"
+    import { subscribeEffect } from "../../../../audio/effects/audioEffectsHelpers"
+    import InputRow from "../../../input/InputRow.svelte"
+    import MaterialNumberInput from "../../../inputs/MaterialNumberInput.svelte"
+    import MaterialToggleSwitch from "../../../inputs/MaterialToggleSwitch.svelte"
 
     export let disabled: boolean = false
 
@@ -26,9 +25,8 @@
     let unsubscribe: (() => void) | null = null
 
     onMount(() => {
-        unsubscribe = audioEffects.subscribe((all) => {
-            const c = all.main?.compressor
-            if (c) config = { ...c }
+        unsubscribe = subscribeEffect("compressor", (c: CompressorConfig) => {
+            config = { ...c }
         })
 
         // Poll gain reduction and audio level every 50 ms

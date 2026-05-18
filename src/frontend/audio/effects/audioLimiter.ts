@@ -2,8 +2,7 @@
 // Brick-wall limiter using the Web Audio API DynamicsCompressorNode
 // Fixed ratio (20:1) and attack (1 ms) — user controls ceiling and release only.
 
-import { get } from "svelte/store"
-import { audioEffects } from "../stores"
+import { getEffectConfig, setEffectEnabledInStore, subscribeEffect, updateEffectInStore } from "./audioEffectsHelpers"
 
 export interface LimiterConfig {
     enabled: boolean
@@ -118,31 +117,18 @@ let globalLimiter: AudioLimiter | null = null
 export function initializeLimiter(ac: AudioContext): AudioLimiter {
     if (globalLimiter) return globalLimiter
 
-    const config = get(audioEffects).main?.limiter ?? DEFAULT_LIMITER_CONFIG
-    globalLimiter = new AudioLimiter(ac, { ...DEFAULT_LIMITER_CONFIG, ...config })
-
-    audioEffects.subscribe((all) => {
-        const cfg = all.main?.limiter
-        if (cfg) globalLimiter?.updateConfig(cfg)
-    })
+    globalLimiter = new AudioLimiter(ac, getEffectConfig("limiter", DEFAULT_LIMITER_CONFIG))
+    subscribeEffect("limiter", (cfg: LimiterConfig) => globalLimiter?.updateConfig(cfg))
 
     return globalLimiter
 }
 
 export function updateLimiterConfig(partial: Partial<LimiterConfig>) {
-    audioEffects.update((all) => {
-        const next = { ...DEFAULT_LIMITER_CONFIG, ...all.main?.limiter, ...partial }
-        globalLimiter?.updateConfig(next)
-        return { ...all, main: { ...all.main, limiter: next } }
-    })
+    updateEffectInStore("limiter", DEFAULT_LIMITER_CONFIG, partial, globalLimiter)
 }
 
 export function setLimiterEnabled(enabled: boolean) {
-    audioEffects.update((all) => {
-        const next = { ...DEFAULT_LIMITER_CONFIG, ...all.main?.limiter, enabled }
-        globalLimiter?.setEnabled(enabled)
-        return { ...all, main: { ...all.main, limiter: next } }
-    })
+    setEffectEnabledInStore("limiter", DEFAULT_LIMITER_CONFIG, enabled, globalLimiter)
 }
 
 export function getLimiterReduction(): number {

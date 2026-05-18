@@ -1,12 +1,11 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
-
-    import { AudioAnalyser } from "../../../audio/audioAnalyser"
-    import { type LimiterConfig, getLimiterReduction, setLimiterEnabled, updateLimiterConfig } from "../../../audio/audioLimiter"
-    import { audioEffects } from "../../../stores"
-    import InputRow from "../../input/InputRow.svelte"
-    import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
-    import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
+    import { AudioAnalyser } from "../../../../audio/audioAnalyser"
+    import { subscribeEffect } from "../../../../audio/effects/audioEffectsHelpers"
+    import { type LimiterConfig, getLimiterReduction, setLimiterEnabled, updateLimiterConfig } from "../../../../audio/effects/audioLimiter"
+    import InputRow from "../../../input/InputRow.svelte"
+    import MaterialNumberInput from "../../../inputs/MaterialNumberInput.svelte"
+    import MaterialToggleSwitch from "../../../inputs/MaterialToggleSwitch.svelte"
 
     export let disabled: boolean = false
 
@@ -22,9 +21,8 @@
     let unsubscribe: (() => void) | null = null
 
     onMount(() => {
-        unsubscribe = audioEffects.subscribe((all) => {
-            const c = all.main?.limiter
-            if (c) config = { ...c }
+        unsubscribe = subscribeEffect("limiter", (c: LimiterConfig) => {
+            config = { ...c }
         })
 
         grInterval = setInterval(() => {
