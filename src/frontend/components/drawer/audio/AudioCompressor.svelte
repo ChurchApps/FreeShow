@@ -3,7 +3,7 @@
 
     import { type CompressorConfig, getCompressorReduction, setCompressorEnabled, updateCompressorConfig } from "../../../audio/audioCompressor"
     import { AudioAnalyser } from "../../../audio/audioAnalyser"
-    import { compressorConfig } from "../../../stores"
+    import { audioEffects } from "../../../stores"
     import InputRow from "../../input/InputRow.svelte"
     import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
     import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
@@ -26,8 +26,9 @@
     let unsubscribe: (() => void) | null = null
 
     onMount(() => {
-        unsubscribe = compressorConfig.subscribe((c) => {
-            config = { ...c }
+        unsubscribe = audioEffects.subscribe((all) => {
+            const c = all.main?.compressor
+            if (c) config = { ...c }
         })
 
         // Poll gain reduction and audio level every 50 ms

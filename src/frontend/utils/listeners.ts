@@ -15,6 +15,7 @@ import {
     activeTimers,
     audioChannelsData,
     audioData,
+    audioEffects,
     cachedShowsData,
     categories,
     colorbars,
@@ -25,7 +26,6 @@ import {
     drawTool,
     driveKeys,
     effects,
-    equalizerConfig,
     events,
     folders,
     gain,
@@ -354,10 +354,10 @@ export function storeSubscriber() {
         sendRemoteMixer()
     })
 
-    equalizerConfig.subscribe(async (data) => {
-        if (await hasNewerUpdate("EQUALIZER_CONFIG_CACHE", 50)) return
+    audioEffects.subscribe(async (data) => {
+        if (await hasNewerUpdate("AUDIO_EFFECTS_CACHE", 50)) return
 
-        send(OUTPUT, ["EQUALIZER_CONFIG"], data)
+        send(OUTPUT, ["AUDIO_EFFECTS"], data)
     })
 
     metronome.subscribe((data) => {

@@ -2,7 +2,7 @@
 // Handles dynamics compression using the Web Audio API DynamicsCompressorNode
 
 import { get } from "svelte/store"
-import { compressorConfig } from "../stores"
+import { audioEffects } from "../stores"
 
 export interface CompressorConfig {
     enabled: boolean
@@ -117,7 +117,7 @@ export class AudioCompressor {
 let globalCompressor: AudioCompressor | null = null
 
 function getStoredConfig(): CompressorConfig {
-    const stored = get(compressorConfig)
+    const stored = get(audioEffects).main?.compressor
     return { ...DEFAULT_COMPRESSOR_CONFIG, ...stored }
 }
 
@@ -139,12 +139,12 @@ export function getGlobalCompressor(): AudioCompressor | null {
 }
 
 export function updateCompressorConfig(config: Partial<CompressorConfig>) {
-    compressorConfig.update((c) => ({ ...c, ...config }))
+    audioEffects.update((all) => ({ ...all, main: { ...all.main, compressor: { ...all.main?.compressor, ...config } } }))
     globalCompressor?.updateConfig(config)
 }
 
 export function setCompressorEnabled(enabled: boolean) {
-    compressorConfig.update((c) => ({ ...c, enabled }))
+    audioEffects.update((all) => ({ ...all, main: { ...all.main, compressor: { ...DEFAULT_COMPRESSOR_CONFIG, ...all.main?.compressor, enabled } } }))
     globalCompressor?.setEnabled(enabled)
 }
 

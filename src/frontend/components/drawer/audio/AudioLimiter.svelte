@@ -3,7 +3,7 @@
 
     import { AudioAnalyser } from "../../../audio/audioAnalyser"
     import { type LimiterConfig, getLimiterReduction, setLimiterEnabled, updateLimiterConfig } from "../../../audio/audioLimiter"
-    import { limiterConfig } from "../../../stores"
+    import { audioEffects } from "../../../stores"
     import InputRow from "../../input/InputRow.svelte"
     import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
     import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
@@ -22,8 +22,9 @@
     let unsubscribe: (() => void) | null = null
 
     onMount(() => {
-        unsubscribe = limiterConfig.subscribe((c) => {
-            config = { ...c }
+        unsubscribe = audioEffects.subscribe((all) => {
+            const c = all.main?.limiter
+            if (c) config = { ...c }
         })
 
         grInterval = setInterval(() => {

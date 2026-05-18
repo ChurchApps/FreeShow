@@ -3,7 +3,7 @@
 // Fixed ratio (20:1) and attack (1 ms) — user controls ceiling and release only.
 
 import { get } from "svelte/store"
-import { limiterConfig } from "../stores"
+import { audioEffects } from "../stores"
 
 export interface LimiterConfig {
     enabled: boolean
@@ -118,29 +118,30 @@ let globalLimiter: AudioLimiter | null = null
 export function initializeLimiter(ac: AudioContext): AudioLimiter {
     if (globalLimiter) return globalLimiter
 
-    const config = get(limiterConfig)
-    globalLimiter = new AudioLimiter(ac, config)
+    const config = get(audioEffects).main?.limiter ?? DEFAULT_LIMITER_CONFIG
+    globalLimiter = new AudioLimiter(ac, { ...DEFAULT_LIMITER_CONFIG, ...config })
 
-    limiterConfig.subscribe((cfg) => {
-        globalLimiter?.updateConfig(cfg)
+    audioEffects.subscribe((all) => {
+        const cfg = all.main?.limiter
+        if (cfg) globalLimiter?.updateConfig(cfg)
     })
 
     return globalLimiter
 }
 
 export function updateLimiterConfig(partial: Partial<LimiterConfig>) {
-    limiterConfig.update((c) => {
-        const next = { ...c, ...partial }
+    audioEffects.update((all) => {
+        const next = { ...DEFAULT_LIMITER_CONFIG, ...all.main?.limiter, ...partial }
         globalLimiter?.updateConfig(next)
-        return next
+        return { ...all, main: { ...all.main, limiter: next } }
     })
 }
 
 export function setLimiterEnabled(enabled: boolean) {
-    limiterConfig.update((c) => {
-        const next = { ...c, enabled }
+    audioEffects.update((all) => {
+        const next = { ...DEFAULT_LIMITER_CONFIG, ...all.main?.limiter, enabled }
         globalLimiter?.setEnabled(enabled)
-        return next
+        return { ...all, main: { ...all.main, limiter: next } }
     })
 }
 

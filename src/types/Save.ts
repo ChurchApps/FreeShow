@@ -52,7 +52,7 @@ export type SaveListSettings =
     | "driveData"
     | "calendarAddShow"
     | "metronome"
-    | "equalizerConfig"
+    | "audioEffects"
     | "eqPresets"
     | "effectsLibrary"
     | "special"

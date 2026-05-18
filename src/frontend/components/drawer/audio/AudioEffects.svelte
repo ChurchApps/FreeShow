@@ -6,8 +6,11 @@
     import Button from "../../inputs/Button.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import AudioCompressor from "./AudioCompressor.svelte"
+    import AudioDelay from "./AudioDelay.svelte"
     import AudioEqualizer from "./AudioEqualizer.svelte"
     import AudioLimiter from "./AudioLimiter.svelte"
+    import AudioNoiseGate from "./AudioNoiseGate.svelte"
+    import AudioReverb from "./AudioReverb.svelte"
 
     let expanded = {}
     function toggleSection(type) {
@@ -22,7 +25,10 @@
     // WIP
     $: hasChanged = {
         equalizer: false,
+        noiseGate: false,
         compressor: false,
+        reverb: false,
+        delay: false,
         limiter: false
     }
 </script>
@@ -48,7 +54,7 @@
         <div class="title">
             <MaterialButton style="width: 100%;{hasChanged.equalizer ? 'padding: 4px 12px;' : 'padding: 8px 12px;'}" disabled={hasChanged.equalizer} on:click={() => toggleSection("equalizer")}>
                 <span style="display: flex;gap: 8px;align-items: center;">
-                    <p>{translateText("audio.equalizer")} (EQ)</p>
+                    <p>{translateText("audio.equalizer")}</p>
                 </span>
 
                 {#if hasChanged.equalizer}
@@ -63,6 +69,29 @@
 
         {#if expanded["equalizer"]}
             <AudioEqualizer />
+        {/if}
+    </div>
+
+    <!-- Noise Gate -->
+    <div class="section">
+        <div class="title">
+            <MaterialButton style="width: 100%;{hasChanged.noiseGate ? 'padding: 4px 12px;' : 'padding: 8px 12px;'}" disabled={hasChanged.noiseGate} on:click={() => toggleSection("noiseGate")}>
+                <span style="display: flex;gap: 8px;align-items: center;">
+                    <p>{translateText("audio.gate")}</p>
+                </span>
+
+                {#if hasChanged.noiseGate}
+                    <MaterialButton title="actions.reset" style="pointer-events: all;padding: 4px;" on:click={() => resetSection("noiseGate")}>
+                        <Icon id="reset" size={0.8} white />
+                    </MaterialButton>
+                {:else}
+                    <Icon id="arrow_back_modern" class="arrow {expanded['noiseGate'] ? 'open' : ''}" size={0.6} style="opacity: 0.5;" white />
+                {/if}
+            </MaterialButton>
+        </div>
+
+        {#if expanded["noiseGate"]}
+            <AudioNoiseGate />
         {/if}
     </div>
 
@@ -109,6 +138,52 @@
 
         {#if expanded["limiter"]}
             <AudioLimiter />
+        {/if}
+    </div>
+
+    <!-- Reverb -->
+    <div class="section">
+        <div class="title">
+            <MaterialButton style="width: 100%;{hasChanged.reverb ? 'padding: 4px 12px;' : 'padding: 8px 12px;'}" disabled={hasChanged.reverb} on:click={() => toggleSection("reverb")}>
+                <span style="display: flex;gap: 8px;align-items: center;">
+                    <p>{translateText("audio.reverb")}</p>
+                </span>
+
+                {#if hasChanged.reverb}
+                    <MaterialButton title="actions.reset" style="pointer-events: all;padding: 4px;" on:click={() => resetSection("reverb")}>
+                        <Icon id="reset" size={0.8} white />
+                    </MaterialButton>
+                {:else}
+                    <Icon id="arrow_back_modern" class="arrow {expanded['reverb'] ? 'open' : ''}" size={0.6} style="opacity: 0.5;" white />
+                {/if}
+            </MaterialButton>
+        </div>
+
+        {#if expanded["reverb"]}
+            <AudioReverb />
+        {/if}
+    </div>
+
+    <!-- Delay -->
+    <div class="section">
+        <div class="title">
+            <MaterialButton style="width: 100%;{hasChanged.delay ? 'padding: 4px 12px;' : 'padding: 8px 12px;'}" disabled={hasChanged.delay} on:click={() => toggleSection("delay")}>
+                <span style="display: flex;gap: 8px;align-items: center;">
+                    <p>{translateText("audio.delay")}</p>
+                </span>
+
+                {#if hasChanged.delay}
+                    <MaterialButton title="actions.reset" style="pointer-events: all;padding: 4px;" on:click={() => resetSection("delay")}>
+                        <Icon id="reset" size={0.8} white />
+                    </MaterialButton>
+                {:else}
+                    <Icon id="arrow_back_modern" class="arrow {expanded['delay'] ? 'open' : ''}" size={0.6} style="opacity: 0.5;" white />
+                {/if}
+            </MaterialButton>
+        </div>
+
+        {#if expanded["delay"]}
+            <AudioDelay />
         {/if}
     </div>
 </div>

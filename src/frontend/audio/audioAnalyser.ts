@@ -6,11 +6,14 @@ import { isOutputWindow } from "../utils/common"
 import { send } from "../utils/request"
 import { AudioAnalyserMerger } from "./audioAnalyserMerger"
 import { initializeCompressor } from "./audioCompressor"
-import { initializeLimiter } from "./audioLimiter"
+import { initializeDelay } from "./audioDelay"
 import { connectAudioSourceToEqualizer, disconnectAudioSourceFromEqualizer, getConnectedSourceOutput, initializeEqualizer, setAutoInitializeCallback } from "./audioEqualizer"
+import { initializeLimiter } from "./audioLimiter"
 import { AudioMultichannel, MultichannelInfo } from "./audioMultichannel"
+import { initializeNoiseGate } from "./audioNoiseGate"
 import { AudioPlayer } from "./audioPlayer"
 import { AudioProcessor, PitchShiftNode } from "./audioProcessor"
+import { initializeReverb } from "./audioReverb"
 
 export class AudioAnalyser {
     static sampleRate = 48000 // Hz
@@ -248,11 +251,17 @@ export class AudioAnalyser {
 
         this.gainNode = AudioMultichannel.createMultichannelGainNode(this.ac, this.channels)
 
-        // Insert compressor then limiter as master bus effects between gainNode and destination
+        // Signal chain: gainNode → noiseGate → compressor → reverb → delay → limiter → destination
+        const noiseGate = initializeNoiseGate(this.ac)
         const compressor = initializeCompressor(this.ac)
+        const reverb = initializeReverb(this.ac)
+        const delay = initializeDelay(this.ac)
         const limiter = initializeLimiter(this.ac)
-        this.gainNode.connect(compressor.input)
-        compressor.output.connect(limiter.input)
+        this.gainNode.connect(noiseGate.input)
+        noiseGate.output.connect(compressor.input)
+        compressor.output.connect(reverb.input)
+        reverb.output.connect(delay.input)
+        delay.output.connect(limiter.input)
         limiter.output.connect(this.ac.destination)
 
         this.gainNode.gain.value = AudioPlayer.getGain()

@@ -2,7 +2,7 @@
 // Handles EQ band calculations, Web Audio API integration, and Svelte store management
 
 import { get } from "svelte/store"
-import { equalizerConfig } from "../stores"
+import { audioEffects } from "../stores"
 
 export interface EQBand {
     frequency: number
@@ -475,10 +475,7 @@ export function disconnectAudioSourceFromEqualizer(id: string) {
 // Update all equalizer bands
 export function updateEqualizerBands(bands: EQBand[]) {
     // Update store immediately (this ensures UI changes are reflected)
-    equalizerConfig.update((config) => ({
-        ...config,
-        bands: [...bands]
-    }))
+    audioEffects.update((all) => ({ ...all, main: { ...all.main, equalizer: { ...all.main?.equalizer, bands: [...bands] } } }))
 
     // Apply to equalizer if it's initialized
     if (globalEqualizer) {
@@ -489,15 +486,13 @@ export function updateEqualizerBands(bands: EQBand[]) {
 // Update individual band gain (for real-time adjustments)
 export function updateEqualizerBandGain(bandIndex: number, gain: number) {
     // Update store immediately (this ensures UI changes are reflected)
-    equalizerConfig.update((config) => {
+    audioEffects.update((all) => {
+        const config = all.main?.equalizer ?? { enabled: false, bands: AudioEqualizer.getDefaultBands() }
         const newBands = [...config.bands]
         if (newBands[bandIndex]) {
             newBands[bandIndex].gain = gain
         }
-        return {
-            ...config,
-            bands: newBands
-        }
+        return { ...all, main: { ...all.main, equalizer: { ...config, bands: newBands } } }
     })
 
     // Apply to equalizer if it's initialized
@@ -509,15 +504,13 @@ export function updateEqualizerBandGain(bandIndex: number, gain: number) {
 // Update a single equalizer band
 export function updateEqualizerBand(bandIndex: number, band: EQBand) {
     // Update store immediately (this ensures UI changes are reflected)
-    equalizerConfig.update((config) => {
+    audioEffects.update((all) => {
+        const config = all.main?.equalizer ?? { enabled: false, bands: AudioEqualizer.getDefaultBands() }
         const newBands = [...config.bands]
         if (bandIndex >= 0 && bandIndex < newBands.length) {
             newBands[bandIndex] = { ...band }
         }
-        return {
-            ...config,
-            bands: newBands
-        }
+        return { ...all, main: { ...all.main, equalizer: { ...config, bands: newBands } } }
     })
 
     // Apply to equalizer if it's initialized
@@ -529,10 +522,10 @@ export function updateEqualizerBand(bandIndex: number, band: EQBand) {
 // Enable/disable equalizer
 export function setEqualizerEnabled(enabled: boolean) {
     // Update store immediately (this ensures UI changes are reflected)
-    equalizerConfig.update((config) => ({
-        ...config,
-        enabled
-    }))
+    audioEffects.update((all) => {
+        const existing = all.main?.equalizer ?? { enabled: false, bands: AudioEqualizer.getDefaultBands() }
+        return { ...all, main: { ...all.main, equalizer: { ...existing, enabled } } }
+    })
 
     // Apply to equalizer if it's initialized
     if (globalEqualizer) {
@@ -542,7 +535,8 @@ export function setEqualizerEnabled(enabled: boolean) {
 
 // Get current equalizer configuration
 function getEqualizerConfig(): EqualizerConfig {
-    const config = get(equalizerConfig)
+    const stored = get(audioEffects).main?.equalizer
+    const config: EqualizerConfig = stored ?? { enabled: false, bands: [] }
     if (!config.bands?.length) config.bands = AudioEqualizer.getDefaultBands()
     // importing clone here breaks startup file reading order
     return JSON.parse(JSON.stringify(config))
