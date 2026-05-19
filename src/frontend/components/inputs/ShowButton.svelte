@@ -108,7 +108,7 @@
         if ($focusMode) {
             let inProject = $projects[$activeProject || ""]?.shows?.find((p) => p.id === id)
             if (inProject) {
-                activeFocus.set({ id, index: pos ?? undefined })
+                activeFocus.set({ id, index: pos ?? undefined, type })
                 return
             } else {
                 focusMode.set(false)

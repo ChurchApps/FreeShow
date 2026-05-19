@@ -17,7 +17,8 @@ import { startMetronome } from "../drawer/audio/metronome"
 import { pauseAllTimers } from "../drawer/timers/timers"
 import { getSlideThumbnail, getThumbnail } from "../helpers/media"
 import { changeStageOutputLayout, startCamera, startScreen, toggleOutputs } from "../helpers/output"
-import { activateTriggerSync, changeOutputStyle, nextSlideIndividual, playSlideTimers, previousSlideIndividual, randomSlide, replaceDynamicValues, selectProjectShow, sendMidi, startShowSync } from "../helpers/showActions"
+import { OutputHelper } from "../helpers/OutputHelper"
+import { activateTriggerSync, changeOutputStyle, playSlideTimers, randomSlide, replaceDynamicValues, selectProjectShow, sendMidi, startShowSync } from "../helpers/showActions"
 import { startTimerById, startTimerByName, stopTimers } from "../helpers/timerTick"
 import { muteOutput, unmuteOutput } from "../helpers/video"
 import { clearAll, clearBackground, clearDrawing, clearOverlay, clearOverlays, clearSlide, clearTimers, restoreOutput } from "../output/clear"
@@ -222,8 +223,8 @@ export const API_ACTIONS = {
     transpose_show_down: (data: API_id) => formatText(transposeText(getPlainEditorText(data.id), -1), data.id),
 
     // PRESENTATION
-    next_slide: () => nextSlideIndividual({ key: "ArrowRight" }), // BC
-    previous_slide: () => previousSlideIndividual({ key: "ArrowLeft" }), // BC
+    next_slide: () => OutputHelper.advanceOutputs("next"), // BC
+    previous_slide: () => OutputHelper.advanceOutputs("previous"), // BC
     random_slide: () => randomSlide(),
     index_select_slide: (data: API_slide_index) => selectSlideByIndex(data), // BC
     name_select_slide: (data: API_strval) => selectSlideByName(data.value), // BC

@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
 import { getFirstActiveOutput, getFirstOutput, getOutputResolution } from "../components/helpers/output"
-import { nextSlideIndividual, previousSlideIndividual } from "../components/helpers/showActions"
+import { OutputHelper } from "../components/helpers/OutputHelper"
 import { clearAll, clearSlide } from "../components/output/clear"
 import { outputs, paintCache, serverData } from "../stores"
 import { draw, drawSettings, drawTool } from "./../stores"
@@ -9,8 +9,8 @@ let justCleared: NodeJS.Timeout | null = null
 export const receiveCONTROLLER = {
     ACTION: ({ data }) => {
         const actions = {
-            next: () => nextSlideIndividual({ key: "ArrowRight" }),
-            previous: () => previousSlideIndividual({ key: "ArrowLeft" }),
+            next: () => OutputHelper.advanceOutputs("next"),
+            previous: () => OutputHelper.advanceOutputs("previous"),
             clear: () => {
                 if (justCleared) {
                     clearTimeout(justCleared)
