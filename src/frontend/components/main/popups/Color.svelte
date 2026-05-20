@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import { activePopup, activeProject, activeShow, effects, globalTags, outputs, overlays, profiles, projects, selected, showsCache, templates } from "../../../stores"
+    import { activePopup, activeProject, activeShow, editingProjectTemplate, effects, globalTags, outputs, overlays, profiles, projects, projectTemplates, selected, showsCache, templates } from "../../../stores"
     import { history } from "../../helpers/history"
     import { getLayoutRef } from "../../helpers/show"
     import { _show } from "../../helpers/shows"
@@ -28,7 +28,7 @@
         else if (selection.id === "output") value = $outputs[selection.data[0]?.id]?.color || ""
         else if (selection.id === "profile") value = $profiles[selection.data[0]?.id]?.color || ""
         else if (selection.id === "tag") value = $globalTags[selection.data[0]?.id]?.color || ""
-        else if (selection.id === "show") value = $projects[$activeProject || ""]?.shows?.[selection.data[0]?.index]?.color || ""
+        else if (selection.id === "show") value = ($editingProjectTemplate ? $projectTemplates[$editingProjectTemplate] : $projects[$activeProject || ""])?.shows?.[selection.data[0]?.index]?.color || ""
     })
 
     const actions = {
@@ -89,9 +89,9 @@
             })
         },
         show: () => {
-            const projectId = $activeProject || ""
+            const projectId = $editingProjectTemplate ? $editingProjectTemplate : $activeProject || ""
 
-            projects.update((a) => {
+            ;($editingProjectTemplate ? projectTemplates : projects).update((a) => {
                 if (!a[projectId]) return a
 
                 selection.data.forEach(({ index }) => {
