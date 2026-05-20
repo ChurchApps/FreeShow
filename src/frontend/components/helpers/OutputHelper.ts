@@ -1,7 +1,9 @@
 import { get } from "svelte/store"
 import { Main } from "../../../types/IPC/Main"
+import type { OutData } from "../../../types/Output"
 import type { ShowRef } from "../../../types/Projects"
 import type { OutSlide, Slide } from "../../../types/Show"
+import { AudioPlayer } from "../../audio/audioPlayer"
 import { sendMain } from "../../IPC/main"
 import { activeFocus, activeProject, activeShow, focusMode, outLocked, outputs, projects, showsCache, special } from "../../stores"
 import { playFolder, togglePlayingMedia } from "../../utils/shortcuts"
@@ -10,7 +12,6 @@ import { clone } from "./array"
 import { getAllActiveOutputIds, setOutput } from "./output"
 import { checkActionTrigger, getFewestOutputLines, getItemWithMostLines, playPdf, updateOut } from "./showActions"
 import { _show } from "./shows"
-import { AudioPlayer } from "../../audio/audioPlayer"
 
 type Options = { fromActive: boolean; slideLayers: boolean; playNext: boolean }
 
@@ -121,8 +122,8 @@ export class OutputHelper {
         })
 
         if (get(focusMode)) {
-            // skip sections
-            while (projectItems[newIndex]?.type === "section") newIndex += next ? 1 : -1
+            // skip sections & skip overlays when going back
+            while (projectItems[newIndex]?.type === "section" || (next ? false : projectItems[newIndex]?.type === "overlay")) newIndex += next ? 1 : -1
             const newItem = projectItems[newIndex]
             if (!newItem) return
 
@@ -184,7 +185,7 @@ export class OutputHelper {
         const currentShow = get(showsCache)[activeItem?.id || ""]
         const activeOutShow: OutSlide | null = currentShow && !options.playNext ? { id: activeItem?.id || "", layout: projectItems[activeItem?.index ?? -1]?.layout || currentShow?.settings?.activeLayout } : null
 
-        const outSlide = this.getOut(outputId)?.slide || null
+        const outSlide = this.getOut(outputId).slide || null
 
         // force active show if it's not the same as outputted
         if (options.fromActive && !this.outShowIsSameAsActive(outSlide, activeOutShow)) return activeOutShow
@@ -210,7 +211,7 @@ export class OutputHelper {
     }
 
     private static getItem(outputId: string, next: boolean, options: Options) {
-        if (options.playNext) return this.getOut(outputId)?.slide || null // auto timer with looping (pdf)
+        if (options.playNext) return this.getOut(outputId).slide || null // auto timer with looping (pdf)
 
         const activeItem = this.getActiveItem()
         if (!activeItem) return null
@@ -220,17 +221,22 @@ export class OutputHelper {
         return activeItem
     }
 
+    // store previous in case it has been cleared after being played (e.g. when a playing video has finished)
+    private static previousOutputted: OutData | null = null
+
     private static isOutputted(outputId: string, item: ShowRef, next: boolean, options: Options) {
         const out = this.getOut(outputId)
-        if (!out) return false
 
         if (item.type === "image" || item.type === "video" || item.type === "player") {
-            const outBackground = out?.background
+            let outBackground = out.background
+            // restore previously playing video in focus mode - so we can automatically go to next even when it has been cleared
+            if (get(focusMode) && !outBackground) outBackground = this.previousOutputted?.background
+
             return (outBackground?.path || outBackground?.id) === item.id
         }
 
         if (item.type === "overlay") {
-            const outOverlays = out?.overlays || []
+            const outOverlays = out.overlays || []
             return outOverlays.includes(item.id || "")
         }
 
@@ -239,7 +245,7 @@ export class OutputHelper {
             return outAudio.includes(item.id || "")
         }
 
-        const outSlide = out?.slide || null
+        const outSlide = out.slide || null
 
         if (item.type === "pdf") {
             if (outSlide?.id !== item.id) return false
@@ -400,12 +406,14 @@ export class OutputHelper {
 
     private static getOut(outputId: string) {
         const currentOutput = get(outputs)[outputId] || {}
-        return currentOutput.out || null
+        return currentOutput.out || {}
     }
 
     /////
 
     private static playSlide(outputId: string, data: OutSlide, slideLayers: boolean = true) {
+        this.previousOutputted = null
+
         const layout = this.getShowLayout(data)
         const layoutData = layout[data.index ?? -1]?.data
 
@@ -420,6 +428,7 @@ export class OutputHelper {
     static playItem(outputId: string, item: ShowRef | OutSlide | undefined, next: boolean, options: Options) {
         if (!item || this.isOutputted(outputId, item, next, options)) return
 
+        this.previousOutputted = null
         const out = this.getOut(outputId)
 
         // Overlays
@@ -429,10 +438,11 @@ export class OutputHelper {
 
         // Media (Background & Audio)
         if (item.type === "image" || item.type === "video" || item.type === "player" || item.type === "audio") {
+            setTimeout(() => (this.previousOutputted = clone(this.getOut(outputId))))
             return togglePlayingMedia(null)
         }
 
-        let outSlide = out?.slide || null
+        let outSlide = out.slide || null
 
         // PDF
         if (item.type === "pdf") {
