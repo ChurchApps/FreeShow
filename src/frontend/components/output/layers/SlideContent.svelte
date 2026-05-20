@@ -318,7 +318,7 @@
         const interval = setInterval(() => {
             if (isClearing || !isReady || !timelineActions.length) return
             // WIP use actual slide timeline pos when available?
-            timelinePos += 10 * $slideTimelineSpeedMultiplier
+            timelinePos += 15 * $slideTimelineSpeedMultiplier
             styleActions(timelineActions)
 
             // loop back when reached last action
@@ -326,7 +326,7 @@
                 const lastActionTime = Math.max(...timelineActions.map((a) => a.time + (a.duration || 0) * 1000))
                 if (timelinePos >= lastActionTime) timelinePos = 0
             }
-        }, 10)
+        }, 15)
 
         function styleActions(actions: TimelineAction[]) {
             const itemStyleActions = actions.filter((a) => a.type === "style")
