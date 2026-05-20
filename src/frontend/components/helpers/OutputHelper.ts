@@ -13,7 +13,7 @@ import { getAllActiveOutputIds, setOutput } from "./output"
 import { checkActionTrigger, getFewestOutputLines, getItemWithMostLines, playPdf, updateOut } from "./showActions"
 import { _show } from "./shows"
 
-type Options = { fromActive: boolean; slideLayers: boolean; playNext: boolean }
+type Options = { isSpace: boolean; slideLayers: boolean; playNext: boolean }
 
 export class OutputHelper {
     static advanceOutputs(e: KeyboardEvent | "next" | "previous" = "next") {
@@ -34,7 +34,7 @@ export class OutputHelper {
         // outputId = outputId || getFirstActiveOutput()?.id
 
         let opts: Options = {
-            fromActive: triggerKey === " ", // space key
+            isSpace: triggerKey === " ",
             slideLayers: options.slideLayers !== false,
             playNext: options.playNext === true
         }
@@ -89,7 +89,16 @@ export class OutputHelper {
         }
 
         const item = this.getItem(outputId, next, options)
-        if (!item) return this.changeProjectItem(outputId, this.getActiveItem(), next, options)
+        if (!item) {
+            // don't go to next if active is video and it's currently outputted
+            const outBg = this.getOut(outputId).background
+            if ((options.isSpace && outBg?.type === "video") || (outBg?.type === "player" && outBg?.path === this.getActiveItem()?.id)) {
+                togglePlayingMedia()
+                return
+            }
+
+            return this.changeProjectItem(outputId, this.getActiveItem(), next, options)
+        }
 
         this.playItem(outputId, item, next, options)
     }
@@ -188,7 +197,7 @@ export class OutputHelper {
         const outSlide = this.getOut(outputId).slide || null
 
         // force active show if it's not the same as outputted
-        if (options.fromActive && !this.outShowIsSameAsActive(outSlide, activeOutShow)) return activeOutShow
+        if (options.isSpace && !this.outShowIsSameAsActive(outSlide, activeOutShow)) return activeOutShow
 
         // prioritize outputted show in focus mode, if not reached end
         if (get(focusMode) && outSlide && (nextCheck ? this.getSubsequent(outSlide, nextCheck) : true)) return this.isShow(outSlide) ? outSlide : null
@@ -439,7 +448,7 @@ export class OutputHelper {
         // Media (Background & Audio)
         if (item.type === "image" || item.type === "video" || item.type === "player" || item.type === "audio") {
             setTimeout(() => (this.previousOutputted = clone(this.getOut(outputId))))
-            return togglePlayingMedia(null)
+            return togglePlayingMedia()
         }
 
         let outSlide = out.slide || null
