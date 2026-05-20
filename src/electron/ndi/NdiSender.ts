@@ -36,7 +36,22 @@ const loadGrandiose = async () => {
 
 export class NdiSender {
     static timeStart = BigInt(Date.now()) * BigInt(1e6) - process.hrtime.bigint()
-    static NDI: { [key: string]: { name: string; groups?: string; status?: string; previousStatus?: string; sender?: any; timer?: NodeJS.Timeout; sendAudio?: boolean; sendingVideo?: boolean; pendingVideoFrame?: any } } = {}
+    static NDI: {
+        [key: string]: {
+            name: string
+            groups?: string
+            status?: string
+            previousStatus?: string
+            sender?: any
+            timer?: NodeJS.Timeout
+            sendAudio?: boolean
+            sendingVideo?: boolean
+            pendingVideoFrame?: any
+            paddedVideoBuffer?: Buffer
+            paddedVideoBufferStride?: number
+            paddedVideoBufferHeight?: number
+        }
+    } = {}
 
     static stopSenderNDI(id: string) {
         if (!this.NDI[id]?.timer) return
@@ -151,23 +166,47 @@ export class NdiSender {
         const now = this.timeStart + process.hrtime.bigint()
         const timecode = now / BigInt(100)
         const bytesForBGRA = 4
+        const paddedWidth = (size.width + 15) & ~15
+        const stride = paddedWidth * bytesForBGRA
+
+        let sendBuffer = buffer
+        if (paddedWidth !== size.width) {
+            const senderData = this.NDI[id]
+            if (senderData?.paddedVideoBuffer && senderData.paddedVideoBufferStride === stride && senderData.paddedVideoBufferHeight === size.height) {
+                sendBuffer = senderData.paddedVideoBuffer
+            } else {
+                sendBuffer = Buffer.alloc(stride * size.height)
+                if (senderData) {
+                    senderData.paddedVideoBuffer = sendBuffer
+                    senderData.paddedVideoBufferStride = stride
+                    senderData.paddedVideoBufferHeight = size.height
+                }
+            }
+
+            for (let y = 0; y < size.height; y++) {
+                const srcOffset = y * size.width * bytesForBGRA
+                const dstOffset = y * stride
+                buffer.copy(sendBuffer, dstOffset, srcOffset, srcOffset + size.width * bytesForBGRA)
+            }
+        }
+
         const frame = {
             /*  base information  */
             // type: "video",
             timecode,
 
             /*  type-specific information  */
-            xres: size.width,
+            xres: paddedWidth,
             yres: size.height,
             frameRateN: framerate * 1000,
             frameRateD: 1000,
-            pictureAspectRatio: ratio,
+            pictureAspectRatio: ratio, // * (paddedWidth / size.width),
             frameFormatType: grandiose.FORMAT_TYPE_PROGRESSIVE,
-            lineStrideBytes: size.width * bytesForBGRA,
+            lineStrideBytes: stride,
 
             /*  the data itself  */
             fourCC,
-            data: buffer
+            data: sendBuffer
         }
 
         const senderData = this.NDI[id]
