@@ -29,8 +29,6 @@
 
             grid: [3, 6],
             oneFile: exportType === "project",
-            includeSections: exportType === "project",
-            includeMedia: exportType === "project",
             originalTextSize: true,
             textSize: 80,
 
@@ -47,11 +45,7 @@
         }
     }
 
-    $: if (exportType === "project") {
-        pdfOptions.oneFile = true
-        pdfOptions.includeSections = true
-        pdfOptions.includeMedia = true
-    }
+    $: if (exportType === "project") pdfOptions.oneFile = true
 
     $: pdfTypeOptions = [{ value: "default", label: translateText("example.default") }, { value: "text", label: translateText("export.text") }, { value: "slides", label: translateText("export.slides") }, { value: "media", label: translateText("items.media") }, ...(showHasChords(previewShow) ? [{ value: "chordSheet", label: "Chord Sheet" }] : [])]
 
@@ -73,11 +67,6 @@
 
         {#if showCount > 1}
             <MaterialCheckbox label="export.oneFile" style="margin-bottom: 10px;" checked={pdfOptions.oneFile} on:change={(e) => updatePdfOptions(e, "oneFile")} />
-        {/if}
-
-        {#if exportType === "project"}
-            <MaterialCheckbox label="export.include_sections" style="margin-bottom: 10px;" checked={pdfOptions.includeSections} on:change={(e) => updatePdfOptions(e, "includeSections")} />
-            <MaterialCheckbox label="export.include_media" style="margin-bottom: 10px;" checked={pdfOptions.includeMedia} on:change={(e) => updatePdfOptions(e, "includeMedia")} />
         {/if}
 
         <!-- <MaterialCheckbox label="export.title" checked={pdfOptions.title} on:change={(e) => updatePdfOptions(e, "title")} /> -->

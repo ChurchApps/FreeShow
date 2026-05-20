@@ -386,7 +386,7 @@
             <!-- Normal PDF Export -->
             {#each renderedShows as show}
                 {@const showPages = getPagesForShow(show, options)}
-                <div class="show-container" style="position: relative; {options.type !== 'text' || show.type === 'section' ? `height: calc(842pt * ${showPages});` : ''} page-break-after: always;">
+                <div class="show-container" class:flow={options.type === "slides" && show.type !== "section"} style="position: relative; {options.type !== 'text' || show.type === 'section' ? `height: calc(100vh * ${showPages});` : ''} page-break-after: always;">
                     {#if show.type === "section"}
                         <div class="section-page" style="background: {show.color ? show.color : 'linear-gradient(135deg, #1e293b, #0f172a)'};">
                             <!-- Premium decorative elements -->
@@ -407,7 +407,7 @@
                             </div>
                         {/if}
                         {#each layoutSlides[show.id || ""] as slide, i}
-                            <div class="slide" class:padding={options.type !== "slides" ? i === 0 : i < options.grid[0]} style={options.type !== "text" ? `height: calc(842pt / ${options.grid[1]} - 0.1px);` + (options.type !== "slides" ? "" : `width: calc(100% / ${options.grid[0]});`) : ""}>
+                            <div class="slide" class:padding={options.type !== "slides" ? i === 0 : i < options.grid[0]} style={options.type !== "text" ? `height: calc(100vh / ${options.grid[1]} - 0.1px);` + (options.type !== "slides" ? "" : `width: calc(100% / ${options.grid[0]});`) : ""}>
                             <!-- TODO: different slide heights! -->
                             <!-- style={settings.slides ? `height: calc(842pt / ${settings.grid[1]});` : "" + settings.text ? "" : `width: calc(100% / ${settings.grid[0]});`} -->
                             {#if options.groups}
@@ -458,19 +458,19 @@
                             {/if}
                         </div>
                         {#if options.pageNumbers && i > 0 && i % options.grid[0] === 0 && i / options.grid[0] < showPages}
-                            <div class="page" style="top: calc(842pt * {i / options.grid[0] - 0.012} - 30px)">
+                            <div class="page" style="top: calc(100vh * {i / options.grid[0] - 0.012} - 30px)">
                                 {i / options.grid[0]}/{showPages}
                             </div>
                         {/if}
                     {/each}
                     {#if options.pageNumbers && (layoutSlides[show.id || ""].length - 1) / (options.type !== "slides" ? 1 : options.grid[0]) / showPages < showPages}
-                        <div class="page" style="top: calc(842pt * {showPages - 0.012} - 30px);">
+                        <div class="page" style="top: calc(100vh * {showPages - 0.012} - 30px);">
                             {showPages}/{showPages}
                         </div>
                     {/if}
                     {/if}
                     {#if options.metadata}
-                        <div style="position: absolute;top: calc(842pt * {showPages} - 25px);width: 100%;">
+                        <div style="position: absolute;top: calc(100vh * {showPages} - 25px);width: 100%;">
                             <p style="text-align: center;font-size: 12px;opacity: 0.8;">
                                 <!-- metaDisplay is only used here temporarily -->
                                 {show.metaDisplay}
@@ -485,19 +485,40 @@
 
 <style>
     main {
-        display: flex;
-        flex-direction: column;
+        display: block;
         position: relative;
         background-color: white;
         color: black;
-        /* scroll-snap-type: y mandatory; */
-        /* page-break-inside: avoid;
-    max-height: inherit; */
+        width: 100%;
+        height: auto;
+        min-height: 100%;
+        margin: 0;
+        padding: 0;
     }
 
     main.flow {
+        display: block;
+    }
+
+    .show-container {
+        width: 100%;
+        box-sizing: border-box;
+        position: relative;
+        overflow: hidden;
+        page-break-after: always;
+        page-break-inside: avoid;
+        margin: 0;
+        padding: 0;
+        flex-shrink: 0;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .show-container.flow {
+        display: flex;
         flex-direction: row;
         flex-wrap: wrap;
+        align-content: flex-start;
     }
 
     h1 {
@@ -569,6 +590,7 @@
     .section-page {
         width: 100%;
         height: 100%;
+        flex: 1;
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -593,6 +615,7 @@
         box-sizing: border-box;
         padding: 0;
         margin: 0;
+        flex-shrink: 0;
     }
 
     .header {

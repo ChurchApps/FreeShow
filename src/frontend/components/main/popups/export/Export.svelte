@@ -121,8 +121,8 @@
                     .filter((item) => {
                         const type = item.type || "show"
                         if (type === "show") return true
-                        if (type === "section" && pdfOptions.includeSections) return true
-                        if ((type === "image" || type === "video" || type === "audio") && pdfOptions.includeMedia) return true
+                        if (type === "section") return true
+                        if (type === "image" || type === "video" || type === "audio") return true
                         return false
                     })
                     .map((item) => item.id)
