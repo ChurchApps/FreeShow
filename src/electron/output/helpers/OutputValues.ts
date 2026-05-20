@@ -16,14 +16,12 @@ const setValues = {
     blackmagic: (data: Output, window: BrowserWindow, id: string) => {
         initializeSender(data, window, id)
     },
-    webrtc: (value: boolean, window: BrowserWindow, id: string) => {
-        setValues.capture({ key: "webrtc", value }, window, id)
+    webrtc: (value: boolean, _window: BrowserWindow, id: string) => {
+        if (!value) CaptureHelper.Lifecycle.startCapture(id, { webrtc: false })
     },
     webrtcData: (value: any, _window: BrowserWindow, id: string, output: OutputWindow) => {
         output.webrtcData = value
-        if (output.captureOptions?.options?.webrtc) {
-            CaptureHelper.Lifecycle.startCapture(id, { webrtc: true })
-        }
+        CaptureHelper.Lifecycle.startCapture(id, { webrtc: !!value?.streaming })
     },
     capture: (data: { key: string; value: boolean }, _window: BrowserWindow, id: string) => {
         CaptureHelper.Lifecycle.startCapture(id, { [data.key]: data.value })

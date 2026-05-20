@@ -1434,7 +1434,12 @@
         "state_locked": "Locked",
         "disabled_layers": "Disabled layers",
         "mute": "Mute output",
-        "unmute": "Unmute output"
+        "unmute": "Unmute output",
+        "start_streaming": "Start streaming",
+        "stop_streaming": "Stop streaming",
+        "confirm_stop": "Are you sure you want to stop the stream?",
+        "is_live": "LIVE",
+        "go_live": "Go live"
     },
     "profile": {
         "profile": "Profile",

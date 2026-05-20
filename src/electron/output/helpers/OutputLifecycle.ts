@@ -26,6 +26,10 @@ export class OutputLifecycle {
     static async createOutput(output: Output) {
         const id: string = output.id || ""
 
+        if (output.webrtcData && output.webrtcData.streaming) {
+            output.webrtcData.streaming = false
+        }
+
         if (OutputHelper.getOutput(id)) {
             CaptureHelper.Lifecycle.stopCapture(id)
             this.removeOutput(id, output)
@@ -49,7 +53,7 @@ export class OutputLifecycle {
             delete this.pendingCaptureStart[id]
 
             if (!CaptureHelper.Lifecycle || !OutputHelper.getOutput(id)) return // window closed before timeout finished
-            CaptureHelper.Lifecycle.startCapture(id, { ndi: output.ndi || false, blackmagic: !!output.blackmagic, webrtc: !!output.webrtc })
+            CaptureHelper.Lifecycle.startCapture(id, { ndi: output.ndi || false, blackmagic: !!output.blackmagic, webrtc: !!output.webrtcData?.streaming })
         }, 1200)
 
         // NDI

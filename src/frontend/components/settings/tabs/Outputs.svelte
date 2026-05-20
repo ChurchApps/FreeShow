@@ -10,7 +10,7 @@
     import { translateText } from "../../../utils/language"
     import { destroy, receive, send } from "../../../utils/request"
     import { clone, keysToID, sortByName, sortObject } from "../../helpers/array"
-    import { refreshOut, toggleOutput } from "../../helpers/output"
+    import { refreshOut, startStreaming, stopStreaming, toggleOutput, updateOutputWebrtcData } from "../../helpers/output"
     import InputRow from "../../input/InputRow.svelte"
     import Title from "../../input/Title.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
@@ -98,7 +98,7 @@
                     })
 
                     // delete a[outputId].ndiData
-                    if (!a[outputId].blackmagic && !a[outputId].webrtc) {
+                    if (!a[outputId].blackmagic) {
                         if (a[outputId].ndiData?.audio) delete a[outputId].ndiData.audio
                         delete a[outputId].transparent
                         delete a[outputId].invisible
@@ -114,7 +114,7 @@
                     // })
 
                     // delete a[outputId].blackmagicData
-                    if (!a[outputId].ndi && !a[outputId].webrtc) {
+                    if (!a[outputId].ndi) {
                         delete a[outputId].transparent
                         delete a[outputId].invisible
                     }
@@ -122,17 +122,7 @@
             }
 
             if (key === "webrtc") {
-                if (value) {
-                    AudioAnalyser.recorderActivate()
-                } else {
-                    AudioAnalyser.recorderDeactivate()
-                }
-                if (!value) {
-                    if (!a[outputId].ndi && !a[outputId].blackmagic) {
-                        delete a[outputId].transparent
-                        delete a[outputId].invisible
-                    }
-                }
+                if (!value) AudioAnalyser.recorderDeactivate()
             }
 
             if (key === "enabled") {
@@ -213,16 +203,10 @@
         let id = currentOutput?.id
         if (!id) return
 
-        let newData = $outputs[id]?.webrtcData
-        if (!newData) newData = {}
-
         let value = e?.detail?.id ?? e
+        const updated = updateOutputWebrtcData(id, key, value)
+        if (!updated) return
 
-        newData[key] = value
-
-        updateOutput("webrtcData", newData)
-
-        send(OUTPUT, ["SET_VALUE"], { id, key: "webrtcData", value: newData })
         saved.set(false)
     }
 
@@ -442,7 +426,7 @@
 </InputRow>
 
 <!-- WebRTC -->
-<Title label="WebRTC Streaming (WHIP)" icon="launch" />
+<Title label="WebRTC Streaming" icon="record" />
 
 <InputRow arrow={currentOutput?.webrtc} bind:open={webrtcMenuOpened}>
     <MaterialToggleSwitch label="actions.enable WebRTC" style="width: 100%;" checked={currentOutput?.webrtc} defaultValue={false} on:change={(e) => updateOutput("webrtc", e.detail)} />
@@ -455,7 +439,15 @@
     </svelte:fragment>
 </InputRow>
 
-{#if currentOutput?.ndi || currentOutput?.blackmagic || currentOutput?.webrtc}
+{#if currentOutput?.webrtc && currentOutput?.webrtcData?.url}
+    <div style="padding-bottom: 10px;">
+        <MaterialButton variant="outlined" icon={currentOutput.webrtcData?.streaming ? "stop" : "record"} style="width: 100%; justify-content: center; {currentOutput.webrtcData?.streaming ? 'background: #b60707 !important;' : ''}" on:click={() => (currentOutput?.webrtcData?.streaming ? stopStreaming(currentOutput.id, true) : startStreaming(currentOutput?.id))} white>
+            {translateText(currentOutput.webrtcData?.streaming ? "output.stop_streaming" : "output.start_streaming")}
+        </MaterialButton>
+    </div>
+{/if}
+
+{#if currentOutput?.ndi || currentOutput?.blackmagic}
     <br />
 
     <MaterialToggleSwitch label="settings.transparent" checked={currentOutput.transparent} defaultValue={true} on:change={(e) => updateOutput("transparent", e.detail)} />
