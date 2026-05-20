@@ -1,16 +1,15 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
 import type { Chords, Item, Line, Show, Slide, SlideData } from "../../../types/Show"
+import { VIRTUAL_BREAK_CHAR } from "../../show/slides"
 import { activeShow } from "../../stores"
 import { createChord } from "../edit/scripts/chords"
-import { DEFAULT_ITEM_STYLE } from "../edit/scripts/itemHelpers"
 import { getItemText, getSlideText } from "../edit/scripts/textStyle"
 import { clone, keysToID, removeDuplicates } from "../helpers/array"
 import { history } from "../helpers/history"
 import { isEmpty } from "../helpers/output"
 import { getGlobalGroup } from "../helpers/show"
 import { _show } from "../helpers/shows"
-import { VIRTUAL_BREAK_CHAR } from "../../show/slides"
 
 export function formatText(text: string, showId = "") {
     if (!showId) showId = get(activeShow)?.id || ""
@@ -336,6 +335,9 @@ function getSlide(slideText: string): Slide {
 
     return slide
 }
+
+// can't be imported from itemHelpers because: Cannot access 'DEFAULT_ITEM_STYLE' before initialization
+const DEFAULT_ITEM_STYLE = "top:88px;left:50px;height:904px;width:1820px;"
 
 export const defaultItem: Item = { type: "text", lines: [], style: DEFAULT_ITEM_STYLE }
 const textboxRegex = /\[#(\d+)(?::([^\]]+))?\]/

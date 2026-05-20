@@ -7,7 +7,7 @@
     import { historyAwait } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
     import { encodeFilePath, getExtension, getFileName, getMedia, getMediaLayerType, getMediaStyle, getMediaType, getVideoDuration, mediaSize, removeExtension } from "../helpers/media"
-    import { findMatchingOut, getActiveOutputs, setOutput } from "../helpers/output"
+    import { findMatchingOut, getActiveOutputs, setOutput, startFolderTimer } from "../helpers/output"
     import { loadShows } from "../helpers/setShow"
     import { checkName, getLayoutRef } from "../helpers/show"
     import { swichProjectItem, updateOut } from "../helpers/showActions"
@@ -108,7 +108,7 @@
         if ($focusMode) {
             let inProject = $projects[$activeProject || ""]?.shows?.find((p) => p.id === id)
             if (inProject) {
-                activeFocus.set({ id, index: pos ?? undefined })
+                activeFocus.set({ id, index: pos ?? undefined, type })
                 return
             } else {
                 focusMode.set(false)
@@ -169,6 +169,7 @@
             setOutput("background", out)
         } else if (type === "pdf") {
             // get PDF data
+            // WIP duplicate of playPdf in showActions.ts
             GlobalWorkerOptions.workerSrc = "./assets/pdf.worker.min.mjs"
             const loadingTask = getDocument(id)
             const pdfDoc = await loadingTask.promise
@@ -178,6 +179,8 @@
             let name = show.name || removeExtension(getFileName(id))
             setOutput("slide", { type: "pdf", id, page: 0, pages, name })
             clearBackground()
+
+            if (show.data?.timer) startFolderTimer(id, { type: "pdf", path: "" })
         } else if (type === "audio") AudioPlayer.start(id, { name: show.name })
         else if (type === "overlay") setOutput("overlays", show.id, false, "", true)
         else if (type === "player") setOutput("background", { id, type: "player" })
