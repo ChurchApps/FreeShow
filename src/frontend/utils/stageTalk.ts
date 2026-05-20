@@ -5,10 +5,11 @@ import { runAction } from "../components/actions/actions"
 import { clone, keysToID } from "../components/helpers/array"
 import { getBase64Path } from "../components/helpers/media"
 import { getFirstOutput } from "../components/helpers/output"
+import { getCurrentProjectIndexes, getProjectItems } from "../components/helpers/projectProgress"
 import { getGroupName, getLayoutRef } from "../components/helpers/show"
 import { _show } from "../components/helpers/shows"
 import { getCustomStageLabel } from "../components/stage/stage"
-import { actions, events, groups, media, outputs, previewBuffers, showsCache, stageShows, timeFormat, timers, variables } from "../stores"
+import { actions, activeProject, activeShow, events, groups, media, outputs, previewBuffers, projects, showsCache, stageShows, timeFormat, timers, variables } from "../stores"
 import { connections } from "./../stores"
 import { translateText } from "./language"
 import { send } from "./request"
@@ -182,7 +183,17 @@ export const receiveSTAGE = {
             return { name: name || "—", oneLetterName: (oneLetterName || "—").replace(" ", ""), index: ref.layoutIndex, child: a.type === "child" ? (currentLayoutRef[ref.layoutIndex]?.children || []).findIndex((id) => id === a.id) + 1 : 0 }
         })
 
-        data.progress = { currentShowSlide, slidesLength, layoutGroups }
+        // Project progress
+
+        const currentProjectItems = get(projects)[get(activeProject) || ""]?.shows || []
+        const activeProjectItem = get(activeShow)
+        const activeProjectItemIndex = typeof activeProjectItem?.index === "number" ? activeProjectItem.index : -1
+
+        const currentOut = get(outputs)[outputId]?.out || {}
+        const currentProjectIndexes = getCurrentProjectIndexes(currentProjectItems, currentOut, activeProjectItemIndex)
+        const projectItems = getProjectItems(currentProjectItems, get(showsCache))
+
+        data.progress = { currentShowSlide, slidesLength, layoutGroups, projectItems, currentProjectIndexes }
 
         return data
     },

@@ -4,16 +4,30 @@
     export let tracker: any
     export let autoSize: number = 0
 
-    let type: "number" | "bar" | "group" = "number"
+    let type: "number" | "bar" | "group" | "project" = "number"
     $: type = tracker.type || "number"
+    $: projectMetadata = tracker.projectMetadata || "name"
     $: accent = tracker.accent
 
     $: progress = $progressData.progress || {}
     let layoutGroups: any[] = []
     $: layoutGroups = progress.layoutGroups || []
+    let projectItems: any[] = []
+    $: projectItems = progress.projectItems || []
 
     $: currentShowSlide = progress?.currentShowSlide ?? -1
+    $: currentProjectIndexes = progress?.currentProjectIndexes || []
     $: slidesLength = progress.slidesLength || 0
+
+    function getProjectItemLabel(projectItem: any, metadataKey = "name") {
+        if (!projectItem) return ""
+        if (metadataKey === "name") return projectItem.name || "—"
+        if (projectItem.type !== "show") return ""
+
+        const value = projectItem.metadata?.[metadataKey]
+        if (value === null || value === undefined) return ""
+        return String(value)
+    }
 
     let progressElem: HTMLElement | undefined
     $: column = (progressElem?.offsetWidth || 0) < (progressElem?.offsetHeight || 0)
@@ -37,6 +51,16 @@
                         {tracker.oneLetter ? group.oneLetterName : group.name}{#if tracker.childProgress && (activeGroup?.child || nextSlide?.child)}<span style="opacity: 0.8;font-size: 0.7em;">.{activeGroup.child + 1}</span>{/if}
                     </div>
                 {/if}
+            {/each}
+        </div>
+    {:else if type === "project"}
+        <!-- project sequence -->
+        <div class="groups projectGroups autoFontSize" style={autoSize ? "font-size: " + autoSize + "px" : ""}>
+            {#each projectItems as projectItem}
+                {@const label = getProjectItemLabel(projectItem, projectMetadata)}
+                <div class="group projectItem" class:active={currentProjectIndexes.includes(projectItem.index)}>
+                    {label || "\u00A0"}
+                </div>
             {/each}
         </div>
     {/if}
@@ -78,5 +102,15 @@
     }
     .group.active {
         color: var(--accent);
+    }
+
+    .projectGroups {
+        display: block;
+        white-space: pre-wrap;
+    }
+
+    .projectItem {
+        display: block;
+        min-height: 1em;
     }
 </style>

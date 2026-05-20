@@ -544,7 +544,8 @@ export const itemBoxes: Box2 = {
                                 options: [
                                     { value: "number", label: "variables.number" },
                                     { value: "bar", label: "edit.progress_bar" },
-                                    { value: "group", label: "tools.groups" }
+                                    { value: "group", label: "tools.groups" },
+                                    { value: "project", label: "formats.project" }
                                 ],
                                 style: "flex: 4;"
                             }
@@ -562,7 +563,8 @@ export const itemBoxes: Box2 = {
                         }
                     ],
                     [{ type: "checkbox", id: "tracker.childProgress", value: false, values: { label: "edit.sub_indexes" } }],
-                    [{ type: "checkbox", id: "tracker.oneLetter", value: false, values: { label: "edit.one_letter" } }]
+                    [{ type: "checkbox", id: "tracker.oneLetter", value: false, values: { label: "edit.one_letter" } }],
+                    [{ id: "tracker.projectMetadata", type: "dropdown", value: "name", values: { label: "tools.metadata", options: [{ value: "name", label: "show.name" }] } }]
                 ]
             })
         }
