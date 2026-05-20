@@ -240,9 +240,9 @@
     // blackmagic
     let blackmagicDevices: Option[] = []
     function getUsedBlackmagicDeviceIds(excludeId = "") {
-        return Object.values($outputs)
-            .filter((o: any) => o.id !== excludeId && o.blackmagic && o.blackmagicData?.deviceId)
-            .map((o: any) => o.blackmagicData.deviceId)
+        return Object.entries($outputs)
+            .filter(([id, o]: any) => id !== excludeId && o.blackmagic && o.blackmagicData?.deviceId)
+            .map(([_id, o]: any) => String(o.blackmagicData.deviceId))
     }
 
     function updateBlackmagicData(e: any, key: string) {
@@ -255,7 +255,7 @@
 
         if (key === "deviceId") {
             const usedIds = getUsedBlackmagicDeviceIds(id)
-            if (usedIds.includes(value)) {
+            if (usedIds.includes(String(value))) {
                 newToast("Device already in use by another output.")
                 return
             }
@@ -331,7 +331,7 @@
             // auto-select first available device (not in use)
             if (blackmagicDevices.length && (!currentOutput?.blackmagicData?.deviceId || !currentOutput?.blackmagicData?.displayModes?.length)) {
                 const usedIds = getUsedBlackmagicDeviceIds(currentOutput?.id)
-                const availableDevice = blackmagicDevices.find((d) => !usedIds.includes(d.id))
+                const availableDevice = blackmagicDevices.find((d) => !usedIds.includes(String(d.id || "")))
                 if (availableDevice) updateBlackmagicData({ detail: { id: availableDevice.id } }, "deviceId")
             }
         }
@@ -420,9 +420,9 @@
             options={(() => {
                 const usedIds = getUsedBlackmagicDeviceIds(currentOutput?.id)
                 return blackmagicDevices.map((device) => ({
-                    label: usedIds.includes(device.id) ? `${device.name} (in use)` : device.name,
+                    label: usedIds.includes(String(device.id || "")) ? `${device.name} (in use)` : device.name,
                     value: device.id ? String(device.id) : "",
-                    disabled: usedIds.includes(device.id)
+                    disabled: usedIds.includes(String(device.id))
                 }))
             })()}
             on:change={(e) => updateBlackmagicData(e.detail, "deviceId")}

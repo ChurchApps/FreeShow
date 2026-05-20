@@ -115,8 +115,9 @@ export class BlackmagicSender {
     }
 
     static async initializeDevice(outputId: string, deviceIndex: number, displayModeName: string, pixelFormat: string, enableKeying: boolean, audioChannels = 2) {
+        const currentOutputDeviceIndex = this.playbackData[outputId]?.deviceIndex
         // prevent using a device if already in use by another output
-        if (this.usedDeviceIndices.has(deviceIndex)) {
+        if (this.usedDeviceIndices.has(deviceIndex) && currentOutputDeviceIndex !== deviceIndex) {
             console.error(`Device index ${deviceIndex} is already in use by another output. Initialization aborted.`)
             return false
         }
