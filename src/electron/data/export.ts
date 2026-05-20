@@ -68,7 +68,7 @@ export function startExport(_e: Electron.IpcMainEvent, msg: Message) {
 
     if (msg.data.showIds) {
         // load shows
-        msg.data.shows = getShowsFromIds(msg.data.showIds)
+        msg.data.shows = getShowsFromIds(msg.data.showIds, msg.data.projectItems)
     }
 
     if (msg.data.type === "project") exportProject(msg.data)
