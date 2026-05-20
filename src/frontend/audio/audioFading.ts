@@ -43,6 +43,8 @@ export function clearAudio(audioPath = "", options: AudioClearOptions = {}) {
     async function clear(path: string) {
         if (clearing.includes(path)) return
 
+        stopFading()
+
         clearing.push(path)
         const audio = AudioPlayer.getAudio(path)
         if (!audio) return deleteAudio(path)
@@ -70,6 +72,8 @@ export function clearAudio(audioPath = "", options: AudioClearOptions = {}) {
 
 const currentlyCrossfadingOut: string[] = []
 export function fadeOutAudio(crossfade = 0) {
+    stopFading()
+
     Object.entries(get(playingAudio)).forEach(async ([path, { audio }]) => {
         const type = AudioPlayer.getAudioType(path, audio.duration)
         if (type === "effect" || currentlyCrossfadingOut.includes(path)) return
@@ -182,7 +186,7 @@ export function fadeoutAllPlayingAudio() {
     }
 }
 export function fadeinAllPlayingAudio() {
-    if (!isAllAudioFading) return
+    if (!isAllAudioFading || audioIsFading()) return
     isFadingOut.set(false)
     stopFading()
 
