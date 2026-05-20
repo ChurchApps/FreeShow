@@ -561,7 +561,9 @@
             let currentLine = sel.findIndex((a) => a?.start !== undefined)
             let deleteKey = currentLine === lastCaretPos.line
             if (!caret && (item.lines || []).length > newLines.length) {
-                if (deleteKey) {
+                if (liveCaret) {
+                    caret = liveCaret
+                } else if (deleteKey) {
                     caret = lastCaretPos
                 } else {
                     let newLine = lastCaretPos.line > -1 ? lastCaretPos.line - 1 : newLines.length - 1
