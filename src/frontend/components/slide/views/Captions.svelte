@@ -1,9 +1,9 @@
 <script lang="ts">
     import { onMount } from "svelte"
+    import { uid } from "uid"
     import { OUTPUT } from "../../../../types/Channels"
     import { currentWindow } from "../../../stores"
     import { send } from "../../../utils/request"
-    import { uid } from "uid"
 
     export let item
     $: captionData = item?.captions || {}
@@ -16,32 +16,33 @@
     const ninjaURL = "https://caption.ninja/"
 
     // can't have more than one active per computer
-    let roomId = "freeshow" + uid(6)
-    let roomURL = ""
+    const defaultRoomId = "freeshow" + (item?.id ? item.id.replace(/[^a-zA-Z0-9]/g, "").slice(-6) : uid(6))
+    $: roomId = captionData.roomId || defaultRoomId
 
-    let showtime = 5000
-    let translate = ""
+    $: if (item && !item.captions) item.captions = {}
+    $: if (item && item.captions && !item.captions.roomId) item.captions.roomId = defaultRoomId
+
+    $: language = captionData.language || "en-US"
+    $: showtime = (captionData.showtime || 5) * 1000
+    $: translate = captionData.translate || ""
+    $: googlekey = captionData.googlekey || ""
+
+    $: fromLang = language.split("-")[0]
+
+    $: roomURL = `${ninjaURL}?room=${roomId}&lang=${language}`
+
+    let prevRoomURL = ""
+    $: if (!preview && roomURL && roomURL !== prevRoomURL) {
+        prevRoomURL = roomURL
+        send(OUTPUT, ["ALERT_MAIN"], "captions#" + roomURL)
+    }
 
     let ready = false
-    onMount(startRoom)
-    function startRoom() {
-        if (preview) return
-
-        if (captionData.roomId) roomId = captionData.roomId
-
-        let language = "en-US"
-        if (captionData.language) language = captionData.language
-
-        if (captionData.showtime) showtime = captionData.showtime * 1000
-        if (captionData.translate) translate = captionData.translate
-
-        // &label=<b>steve</b>
-        roomURL = `${ninjaURL}?room=${roomId}&lang=${language}`
-
-        send(OUTPUT, ["ALERT_MAIN"], "captions#" + roomURL)
-
-        setTimeout(loaded, 1000)
-    }
+    onMount(() => {
+        if (!preview) {
+            setTimeout(loaded, 1000)
+        }
+    })
 
     function loaded() {
         ready = true
@@ -77,7 +78,7 @@
             <iframe class="hidden" src={roomURL} frameborder="0" on:load={loaded} allow="microphone {roomURL}"></iframe>
         {/if} -->
         {#if ready}
-            <webview bind:this={webElem} class="fill" src="{ninjaURL}overlay?room={roomId}&showtime={showtime}{translate ? '&translate=' + translate : ''}" />
+            <webview bind:this={webElem} class="fill" src="{ninjaURL}overlay?room={roomId}&showtime={showtime}{translate ? '&translate=' + translate + '&fromlang=' + fromLang : ''}{googlekey ? '&googlekey=' + googlekey : ''}" />
         {/if}
     </main>
 {/if}
