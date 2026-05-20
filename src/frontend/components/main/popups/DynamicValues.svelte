@@ -114,10 +114,13 @@
         }
         if (!id) return
 
-        let isStage = !!obj.contextElem?.classList.contains("stage_item")
-        if (!obj.contextElem?.classList.contains("editItem") && !isStage) return
+        const contextElem = (obj.contextElem as HTMLElement | null) || null
+        const contextEditItem = contextElem?.closest(".editItem") as HTMLElement | null
+        let isStage = !!contextElem?.closest(".stage_item")
+        if (!contextEditItem && !isStage) return
 
         let edit = $activeEdit
+        const selectedItemIndex = edit.items?.[0] ?? Number(contextEditItem?.getAttribute("data-index") || 0)
 
         if (isStage) {
             let activeItemId = $activeStage?.items[0]
@@ -170,26 +173,29 @@
 
         function updateItemText(items) {
             let replaced = false
+            const caretLine = Number.isFinite(caret.line) ? caret.line : 0
+            let caretPos = Number.isFinite(caret.pos) ? caret.pos : 0
 
-            let lines = items[edit.items?.[0]]?.lines || []
+            let lines = items[selectedItemIndex]?.lines || []
             if (isStage) lines = items?.lines || []
+            const lineIndex = lines[caretLine]?.text ? caretLine : 0
 
-            lines[caret.line]?.text?.forEach((text) => {
+            lines[lineIndex]?.text?.forEach((text) => {
                 if (replaced) return
 
                 let value = text.value
-                if (value.length < caret.pos) {
-                    caret.pos -= value.length
+                if (value.length < caretPos) {
+                    caretPos -= value.length
                     return
                 }
 
                 let valueIdString = dynamicValueText(id)
-                let newValue = value.slice(0, caret.pos) + valueIdString + value.slice(caret.pos)
+                let newValue = value.slice(0, caretPos) + valueIdString + value.slice(caretPos)
                 text.value = newValue
                 replaced = true
 
                 // if applying multiple
-                caret.pos += valueIdString.length
+                caret.pos = caretPos + valueIdString.length
             })
 
             return items
