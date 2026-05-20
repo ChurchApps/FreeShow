@@ -5,6 +5,7 @@ export class Output {
     window!: BrowserWindow
     invisible?: boolean
     boundsLocked?: boolean
+    webrtcData?: any
     // previewWindow: BrowserWindow
     captureOptions?: CaptureOptions
     /*

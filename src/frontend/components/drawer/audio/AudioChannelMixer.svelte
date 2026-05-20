@@ -1,6 +1,6 @@
 <script lang="ts">
     import { AudioPlayer } from "../../../audio/audioPlayer"
-    import { audioChannelsData, gain, volume } from "../../../stores"
+    import { activeAudioEffects, audioChannelsData, gain, volume } from "../../../stores"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import NumberInput from "../../inputs/NumberInput.svelte"
     import Slider from "../../inputs/Slider.svelte"
@@ -71,6 +71,11 @@
         </div>
 
         <MaterialButton variant="outlined" style="padding: 8px;" icon={muted ? "muted" : "volume"} title="actions.{muted ? 'unmute' : 'mute'}" red={muted} on:click={() => updateData("isMuted", !muted)} />
+
+        <!-- only Main for now -->
+        {#if channelId === "main"}
+            <MaterialButton variant="outlined" style="padding: 8px;" icon="equalizer" title="tabs.effects" on:click={() => activeAudioEffects.set(channelId)} />
+        {/if}
     </div>
 
     <!-- <p style="font-size: 1em;margin: 10px;{volumeValue === 1 || volumeValue === 0 ? 'color: var(--secondary);' : ''}">{(volumeValue * 100).toFixed()}<span style="color: var(--text);">%</span></p> -->

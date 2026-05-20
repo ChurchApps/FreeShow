@@ -17,9 +17,13 @@
             options = a.data.options
             path = a.data.path
         } else if (a.channel === "NEXT") {
-            index++
-            if (shows.length > index) exportPDF()
-            else send(EXPORT, ["DONE"], { name: shows[index - 1]?.name || "" })
+            if (options.oneFile) {
+                send(EXPORT, ["DONE"], { name: options.name || shows[0]?.name || "Export" })
+            } else {
+                index++
+                if (shows.length > index) exportPDF()
+                else send(EXPORT, ["DONE"], { name: shows[index - 1]?.name || "" })
+            }
         }
     })
 
@@ -61,13 +65,27 @@
         if ($currentWindow === "pdf") exportPDF()
     }
 
-    let index = 0
-    function exportPDF() {
-        // give time for any media to load as well
-        setTimeout(() => send(EXPORT, ["EXPORT"], { type: "pdf", name: shows[index]?.name || "", options: { type: options.type } }), 20 * (pages + 1) + 1000)
+    function getPagesForShow(show: Show, showOptions: any) {
+        if (show && show.type === "section") return 1
+        if (!show || !layoutSlides[show.id!]) return 0
+        const slides = layoutSlides[show.id!]
+        if (!slides.length) return 0
+        const grid1 = showOptions.grid?.[1] || 6
+        const grid0 = showOptions.grid?.[0] || 3
+        const type = showOptions.type || "default"
+        const divider = type === "default" ? 1 : type !== "text" ? grid0 : 1.5
+        return Math.ceil(slides.length / grid1 / divider)
     }
 
-    $: pages = shows.length ? Math.ceil(layoutSlides[shows[0].id!].length / options.grid[1] / (options.type === "default" ? 1 : options.type !== "text" ? options.grid[0] : 1.5)) : 0
+    let index = 0
+    function exportPDF() {
+        const name = options.oneFile ? options.name || shows[0]?.name || "Export" : shows[index]?.name || ""
+        const pagesCount = options.oneFile ? shows.reduce((sum, s) => sum + getPagesForShow(s, options), 0) : getPagesForShow(shows[index], options)
+        // give time for any media to load as well
+        setTimeout(() => send(EXPORT, ["EXPORT"], { type: "pdf", name, options: { type: options.type } }), 20 * (pagesCount + 1) + 1000)
+    }
+
+    $: renderedShows = options.oneFile ? shows : shows[index] ? [shows[index]] : []
 
     // dynamic counter
     function getGroupName(show: Show, group: string, slideID: string) {
@@ -238,181 +256,269 @@
 </script>
 
 <main class:flow={options.type === "slides"} class:chord-sheet={options.type === "chordSheet"}>
-    {#if shows.length && shows[index]}
+    {#if shows.length}
         {#if options.type === "media"}
-            {#each layoutSlides[shows[index].id || ""] as slide}
-                <Zoomed style="display: flex;justify-content: center;width: 100%;" let:ratio>
-                    {#if shows[index].media?.[slide.data?.background]?.path}
-                        <div class="media" style="height: 100%;zoom: {1 / ratio};">
-                            <!-- {filter} {flipped} {fit} -->
-                            <MediaItem id="" item={{ style: "", type: "media", src: shows[index].media[slide.data.background].path }} mirror />
+            {#each renderedShows as show}
+                {#if show.type === "section"}
+                    <Zoomed style="display: flex;justify-content: center;width: 100%;" let:ratio>
+                        <div class="section-media-container" style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: white; padding: 40px; box-sizing: border-box; background: {show.color || 'linear-gradient(135deg, #1e293b, #0f172a)'}; width: 1920px; height: 1080px; zoom: {1 / ratio}; position: relative; overflow: hidden;">
+                            <div class="section-accent" style="width: 120px; height: 6px; background-color: rgba(255, 255, 255, 0.8); margin-bottom: 40px; border-radius: 3px;"></div>
+                            <h1 style="font-size: 130px; font-weight: 800; text-transform: uppercase; letter-spacing: -3px; margin: 0 0 30px 0; text-shadow: 0 8px 24px rgba(0,0,0,0.4); color: white; font-family: sans-serif; line-height: 1.1;">{show.name}</h1>
+                            {#if show.notes}
+                                <div style="width: 300px; height: 2px; background-color: rgba(255,255,255,0.25); margin: 30px 0;"></div>
+                                <p style="font-size: 50px; font-style: italic; color: rgba(255, 255, 255, 0.9); max-width: 80%; margin: 0; line-height: 1.5; text-shadow: 0 4px 12px rgba(0,0,0,0.3);">{show.notes}</p>
+                            {/if}
+                            {#if show.data?.time}
+                                <div style="margin-top: 50px; font-size: 32px; background: rgba(255,255,255,0.15); color: #ffffff; padding: 12px 36px; border-radius: 40px; font-weight: 600; text-transform: uppercase; letter-spacing: 3px; border: 2px solid rgba(255,255,255,0.25); text-shadow: 0 4px 8px rgba(0,0,0,0.2);">{show.data.time}</div>
+                            {/if}
                         </div>
-                    {/if}
+                    </Zoomed>
+                {:else}
+                    {#each layoutSlides[show.id || ""] as slide}
+                        <Zoomed style="display: flex;justify-content: center;width: 100%;" let:ratio>
+                            {#if show.media?.[slide.data?.background]?.path}
+                                <div class="media" style="height: 100%;zoom: {1 / ratio};">
+                                    <!-- {filter} {flipped} {fit} -->
+                                    <MediaItem id="" item={{ style: "", type: "media", src: show.media[slide.data.background].path }} mirror />
+                                </div>
+                            {/if}
 
-                    {#if slide.items}
-                        {#each slide.items as item}
-                            <Textbox {item} ref={{ showId: shows[index].id, id: slide.id }} chords={item.chords?.enabled} mirror />
-                        {/each}
-                    {/if}
-                </Zoomed>
+                            {#if slide.items}
+                                {#each slide.items as item}
+                                    <Textbox {item} ref={{ showId: show.id, id: slide.id }} chords={item.chords?.enabled} mirror />
+                                {/each}
+                            {/if}
+                        </Zoomed>
+                    {/each}
+                {/if}
             {/each}
         {:else if options.type === "chordSheet"}
             <!-- Chord Sheet Export - Professional layout -->
-            <div class="page chord-sheet-page" style="padding: {options.margin || 20}px; --font-size: {options.fontSize || 12}px; --chord-font-size: {options.chordFontSize || 10}px; font-size: {options.fontSize || 12}px; line-height: {options.spacing || 1.5};">
-                <!-- Header -->
-                <div class="header">
-                    {#if options.title && shows[index].name}
-                        <h1 class="title">{shows[index].name}</h1>
-                    {/if}
+            {#each renderedShows as show}
+                <div class="page chord-sheet-page" style="padding: {options.margin || 20}px; --font-size: {options.fontSize || 12}px; --chord-font-size: {options.chordFontSize || 10}px; font-size: {options.fontSize || 12}px; line-height: {options.spacing || 1.5}; {show.type === 'section' || show.type === 'image' || show.type === 'video' || show.type === 'audio' ? 'justify-content: center; align-items: center; text-align: center; background: white;' : ''}">
+                    {#if show.type === "section"}
+                        <div class="section-chord-divider" style="max-width: 80%; width: 100%;">
+                            {#if show.color}
+                                <div style="width: 80px; height: 6px; background-color: {show.color}; margin: 0 auto 30px auto; border-radius: 3px;"></div>
+                            {/if}
+                            <h1 style="font-size: 3.5em; font-weight: 800; margin: 0 0 15px 0; color: #111; letter-spacing: -1px; text-transform: uppercase;">{show.name}</h1>
+                            <div style="width: 150px; height: 1px; background-color: #ddd; margin: 25px auto;"></div>
+                            {#if show.notes}
+                                <p style="font-size: 1.2em; font-style: italic; color: #555; margin-bottom: 25px; line-height: 1.6;">{show.notes}</p>
+                            {/if}
+                            {#if show.data?.time}
+                                <span style="display: inline-block; background-color: #f0f0f0; color: #333; padding: 6px 16px; border-radius: 20px; font-size: 0.9em; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; border: 1px solid #e0e0e0;">{show.data.time}</span>
+                            {/if}
+                        </div>
+                    {:else if show.type === "image" || show.type === "video" || show.type === "audio"}
+                        <div class="chord-sheet-media-divider" style="max-width: 80%; width: 100%; text-align: center; margin: auto 0; display: flex; flex-direction: column; align-items: center;">
+                            <h1 style="font-size: 2.5em; font-weight: 700; color: #222; margin-bottom: 10px; text-transform: uppercase; letter-spacing: -0.5px;">[ {show.name} ]</h1>
+                            <div style="font-size: 0.95em; color: #777; margin-bottom: 30px; text-transform: uppercase; font-weight: 600; letter-spacing: 1px;">Media Item ({show.type})</div>
+                            {#if show.type === "image"}
+                                <div style="max-width: 100%; height: 180mm; display: flex; align-items: center; justify-content: center; border: 1px dashed #ccc; padding: 10px; border-radius: 8px; background: #fafafa; overflow: hidden; margin: 0 auto; box-sizing: border-box;">
+                                    <img src={show.media[show.id].path} alt={show.name} style="max-width: 100%; max-height: 100%; object-fit: contain;" />
+                                </div>
+                            {/if}
+                        </div>
+                    {:else}
+                        <!-- Header -->
+                        <div class="header">
+                            {#if options.title && show.name}
+                                <h1 class="title">{show.name}</h1>
+                            {/if}
 
-                    <div class="song-info">
-                        {#if options.artist && shows[index].meta?.artist}
-                            <span class="artist">by {shows[index].meta.artist}</span>
-                        {/if}
-                        {#if options.key}
-                            <span class="key">Key: {getSongKey(shows[index])}</span>
-                        {/if}
-                    </div>
-                </div>
+                            <div class="song-info">
+                                {#if options.artist && show.meta?.artist}
+                                    <span class="artist">by {show.meta.artist}</span>
+                                {/if}
+                                {#if options.key}
+                                    <span class="key">Key: {getSongKey(show)}</span>
+                                {/if}
+                            </div>
+                        </div>
 
-                <!-- Chord chart sections -->
-                <div class="chord-sections" style="columns: {options.columnsPerPage || 1}; column-gap: 25px; column-rule: 1px solid #eee;">
-                    {#each groupSlidesBySection(layoutSlides[shows[index].id] || []) as section, sectionIndex}
-                        <div class="section" style="margin-bottom: {sectionIndex === groupSlidesBySection(layoutSlides[shows[index].id] || []).length - 1 ? '8px' : '15px'};">
-                            <h3 class="section-title">{section.name}</h3>
+                        <!-- Chord chart sections -->
+                        <div class="chord-sections" style="columns: {options.columnsPerPage || 1}; column-gap: 25px; column-rule: 1px solid #eee;">
+                            {#each groupSlidesBySection(layoutSlides[show.id] || []) as section, sectionIndex}
+                                <div class="section" style="margin-bottom: {sectionIndex === groupSlidesBySection(layoutSlides[show.id] || []).length - 1 ? '8px' : '15px'};">
+                                    <h3 class="section-title">{section.name}</h3>
 
-                            {#each section.slides as slide, slideIndex}
-                                <div class="verse" style="margin-bottom: {slideIndex === section.slides.length - 1 ? '8px' : '12px'};">
-                                    {#each formatLyricsWithChords(slide) as line}
-                                        {#if line.text.trim()}
-                                            <div class="line" class:chord-line={line.isChord}>
-                                                <pre class="line-content">{line.text}</pre>
-                                            </div>
-                                        {/if}
+                                    {#each section.slides as slide, slideIndex}
+                                        <div class="verse" style="margin-bottom: {slideIndex === section.slides.length - 1 ? '8px' : '12px'};">
+                                            {#each formatLyricsWithChords(slide) as line}
+                                                {#if line.text.trim()}
+                                                    <div class="line" class:chord-line={line.isChord}>
+                                                        <pre class="line-content">{line.text}</pre>
+                                                    </div>
+                                                {/if}
+                                            {/each}
+                                        </div>
                                     {/each}
                                 </div>
                             {/each}
                         </div>
-                    {/each}
+
+                        <!-- Chord diagram area (if space permits) -->
+                        {#if options.showChords && getShowChords(show).length > 0}
+                            <div class="chord-diagrams">
+                                <h4>Chords Used:</h4>
+                                <div class="chord-list">
+                                    {#each getShowChords(show) as chord}
+                                        <span class="chord-name">{chord}</span>
+                                    {/each}
+                                </div>
+                            </div>
+                        {/if}
+
+                        <!-- Notes section -->
+                        {#if options.showNotes && (show.meta?.notes || getShowNotes(show))}
+                            <div class="notes-section">
+                                <h4>Notes:</h4>
+                                <div class="notes-content">
+                                    {show.meta?.notes || getShowNotes(show)}
+                                </div>
+                            </div>
+                        {/if}
+                    {/if}
                 </div>
-
-                <!-- Chord diagram area (if space permits) -->
-                {#if options.showChords && getShowChords(shows[index]).length > 0}
-                    <div class="chord-diagrams">
-                        <h4>Chords Used:</h4>
-                        <div class="chord-list">
-                            {#each getShowChords(shows[index]) as chord}
-                                <span class="chord-name">{chord}</span>
-                            {/each}
-                        </div>
-                    </div>
-                {/if}
-
-                <!-- Notes section -->
-                {#if options.showNotes && (shows[index].meta?.notes || getShowNotes(shows[index]))}
-                    <div class="notes-section">
-                        <h4>Notes:</h4>
-                        <div class="notes-content">
-                            {shows[index].meta?.notes || getShowNotes(shows[index])}
-                        </div>
-                    </div>
-                {/if}
-            </div>
+            {/each}
         {:else}
             <!-- Normal PDF Export -->
-            {#if options.title}
-                <div style="position: absolute;width: 100%;">
-                    <h1>{shows[index].name}</h1>
-                </div>
-            {/if}
-            {#each layoutSlides[shows[index].id || ""] as slide, i}
-                <div class="slide" class:padding={options.type !== "slides" ? i === 0 : i < options.grid[0]} style={options.type !== "text" ? `height: calc(842pt / ${options.grid[1]} - 0.1px);` + (options.type !== "slides" ? "" : `width: calc(100% / ${options.grid[0]});`) : ""}>
-                    <!-- TODO: different slide heights! -->
-                    <!-- style={settings.slides ? `height: calc(842pt / ${settings.grid[1]});` : "" + settings.text ? "" : `width: calc(100% / ${settings.grid[0]});`} -->
-                    {#if options.groups}
-                        <p class="group" style={options.type !== "text" ? "" : "padding: 0 60px;margin-top: -6px;"}>
-                            {slide.group ? getGroupName(shows[index], slide.group, slide.id) : ""}
-                        </p>
-                    {/if}
-                    {#if options.numbers}
-                        <p class="number" style={options.type !== "text" ? "" : "padding: 0 60px;margin-top: -6px;"}>
-                            {i + 1}
-                        </p>
-                    {/if}
-                    {#if options.type !== "text"}
-                        <div class="slides" class:invert={options.invert}>
-                            <Zoomed style="display: flex;justify-content: center;width: 100%;" let:ratio>
-                                {#if shows[index].media?.[slide.data?.background]?.path}
-                                    <div class="media" style="height: 100%;zoom: {1 / ratio};">
-                                        <!-- {filter} {flipped} {fit} -->
-                                        <!-- <Media path={shows[index].media[slide.data.background].path || ""} mirror /> -->
-                                        <MediaItem id="" item={{ style: "", type: "media", src: shows[index].media[slide.data.background].path }} mirror />
-                                    </div>
-                                {/if}
-
-                                {#if slide.items}
-                                    {#each slide.items as item}
-                                        <Textbox {item} ref={{ showId: shows[index].id, id: slide.id }} chords={item.chords?.enabled} mirror />
-                                    {/each}
-                                {/if}
-                            </Zoomed>
+            {#each renderedShows as show}
+                {@const showPages = getPagesForShow(show, options)}
+                <div class="show-container" class:flow={options.type === "slides" && show.type !== "section"} style="position: relative; {options.type !== 'text' || show.type === 'section' ? `height: calc(100vh * ${showPages});` : ''} page-break-after: always;">
+                    {#if show.type === "section"}
+                        <div class="section-page" style="background: {show.color ? show.color : 'linear-gradient(135deg, #1e293b, #0f172a)'};">
+                            <!-- Premium decorative elements -->
+                            <div class="section-accent" style="width: 80px; height: 4px; background-color: #ffffff; margin-bottom: 30px; border-radius: 2px; opacity: 0.8;"></div>
+                            <h1 style="font-size: 54pt; font-weight: 800; text-transform: uppercase; letter-spacing: -2px; margin: 0 0 20px 0; color: #ffffff; text-shadow: 0 4px 12px rgba(0,0,0,0.3); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.1;">{show.name}</h1>
+                            {#if show.notes}
+                                <div style="width: 200px; height: 1px; background-color: rgba(255,255,255,0.25); margin: 25px 0;"></div>
+                                <p style="font-size: 20pt; font-style: italic; color: rgba(255, 255, 255, 0.85); max-width: 80%; margin: 0; line-height: 1.5; text-shadow: 0 2px 6px rgba(0,0,0,0.2); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">{show.notes}</p>
+                            {/if}
+                            {#if show.data?.time}
+                                <div style="margin-top: 40px; font-size: 14pt; background: rgba(255,255,255,0.15); color: #ffffff; padding: 8px 24px; border-radius: 30px; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; border: 1px solid rgba(255,255,255,0.25); text-shadow: 0 2px 4px rgba(0,0,0,0.15);">{show.data.time}</div>
+                            {/if}
                         </div>
-                    {/if}
-                    {#if options.type !== "slides"}
-                        <div class="text" class:margin={options.type === "text"}>
-                            <div style="position: relative;display: flex;flex-direction: column;align-items: center;justify-content: center;flex: 1;">
-                                {#if slide.items}
-                                    {#each slide.items as item}
-                                        {#if item.type === undefined || item.type === "text" || item.type === "timer"}
-                                            <Textbox {item} ref={{ showId: shows[index].id, id: slide.id }} customFontSize={options.originalTextSize ? null : options.textSize} style={false} />
-                                        {/if}
-                                    {/each}
-                                {/if}
-
-                                {#if options.notes && slide.notes}
-                                    <p class="notes">{slide.notes}</p>
-                                {/if}
+                    {:else}
+                        {#if options.title}
+                            <div style="position: absolute;width: 100%;">
+                                <h1>{show.name}</h1>
                             </div>
+                        {/if}
+                        {#each layoutSlides[show.id || ""] as slide, i}
+                            <div class="slide" class:padding={options.type !== "slides" ? i === 0 : i < options.grid[0]} style={options.type !== "text" ? `height: calc(100vh / ${options.grid[1]} - 0.1px);` + (options.type !== "slides" ? "" : `width: calc(100% / ${options.grid[0]});`) : ""}>
+                            <!-- TODO: different slide heights! -->
+                            <!-- style={settings.slides ? `height: calc(842pt / ${settings.grid[1]});` : "" + settings.text ? "" : `width: calc(100% / ${settings.grid[0]});`} -->
+                            {#if options.groups}
+                                <p class="group" style={options.type !== "text" ? "" : "padding: 0 60px;margin-top: -6px;"}>
+                                    {slide.group ? getGroupName(show, slide.group, slide.id) : ""}
+                                </p>
+                            {/if}
+                            {#if options.numbers}
+                                <p class="number" style={options.type !== "text" ? "" : "padding: 0 60px;margin-top: -6px;"}>
+                                    {i + 1}
+                                </p>
+                            {/if}
+                            {#if options.type !== "text"}
+                                <div class="slides" class:invert={options.invert}>
+                                    <Zoomed style="display: flex;justify-content: center;width: 100%;" let:ratio>
+                                        {#if show.media?.[slide.data?.background]?.path}
+                                            <div class="media" style="height: 100%;zoom: {1 / ratio};">
+                                                <!-- {filter} {flipped} {fit} -->
+                                                <!-- <Media path={show.media[slide.data.background].path || ""} mirror /> -->
+                                                <MediaItem id="" item={{ style: "", type: "media", src: show.media[slide.data.background].path }} mirror />
+                                            </div>
+                                        {/if}
+
+                                        {#if slide.items}
+                                            {#each slide.items as item}
+                                                <Textbox {item} ref={{ showId: show.id, id: slide.id }} chords={item.chords?.enabled} mirror />
+                                            {/each}
+                                        {/if}
+                                    </Zoomed>
+                                </div>
+                            {/if}
+                            {#if options.type !== "slides"}
+                                <div class="text" class:margin={options.type === "text"}>
+                                    <div style="position: relative;display: flex;flex-direction: column;align-items: center;justify-content: center;flex: 1;">
+                                        {#if slide.items}
+                                            {#each slide.items as item}
+                                                {#if item.type === undefined || item.type === "text" || item.type === "timer"}
+                                                    <Textbox {item} ref={{ showId: show.id, id: slide.id }} customFontSize={options.originalTextSize ? null : options.textSize} style={false} />
+                                                {/if}
+                                            {/each}
+                                        {/if}
+
+                                        {#if options.notes && slide.notes}
+                                            <p class="notes">{slide.notes}</p>
+                                        {/if}
+                                    </div>
+                                </div>
+                            {/if}
+                        </div>
+                        {#if options.pageNumbers && i > 0 && i % options.grid[0] === 0 && i / options.grid[0] < showPages}
+                            <div class="page" style="top: calc(100vh * {i / options.grid[0] - 0.012} - 30px)">
+                                {i / options.grid[0]}/{showPages}
+                            </div>
+                        {/if}
+                    {/each}
+                    {#if options.pageNumbers && (layoutSlides[show.id || ""].length - 1) / (options.type !== "slides" ? 1 : options.grid[0]) / showPages < showPages}
+                        <div class="page" style="top: calc(100vh * {showPages - 0.012} - 30px);">
+                            {showPages}/{showPages}
+                        </div>
+                    {/if}
+                    {/if}
+                    {#if options.metadata}
+                        <div style="position: absolute;top: calc(100vh * {showPages} - 25px);width: 100%;">
+                            <p style="text-align: center;font-size: 12px;opacity: 0.8;">
+                                <!-- metaDisplay is only used here temporarily -->
+                                {show.metaDisplay}
+                            </p>
                         </div>
                     {/if}
                 </div>
-                {#if options.pageNumbers && i > 0 && i % options.grid[0] === 0 && i / options.grid[0] < pages}
-                    <div class="page" style="top: calc(842pt * {i / options.grid[0] - 0.012} - 30px)">
-                        {i / options.grid[0]}/{pages}
-                    </div>
-                {/if}
             {/each}
-            {#if options.pageNumbers && (layoutSlides[shows[index].id || ""].length - 1) / (options.type !== "slides" ? 1 : options.grid[0]) / pages < pages}
-                <div class="page" style="top: calc(842pt * {pages - 0.012} - 30px);">
-                    {pages}/{pages}
-                </div>
-            {/if}
-            {#if options.metadata}
-                <div style="position: absolute;top: calc(842pt * {pages} - 25px);width: 100%;">
-                    <p style="text-align: center;font-size: 12px;opacity: 0.8;">
-                        {shows[index].metaDisplay}
-                    </p>
-                </div>
-            {/if}
         {/if}
     {/if}
 </main>
 
 <style>
     main {
-        display: flex;
-        flex-direction: column;
+        display: block;
         position: relative;
         background-color: white;
         color: black;
-        /* scroll-snap-type: y mandatory; */
-        /* page-break-inside: avoid;
-    max-height: inherit; */
+        width: 100%;
+        height: auto;
+        min-height: 100%;
+        margin: 0;
+        padding: 0;
     }
 
     main.flow {
+        display: block;
+    }
+
+    .show-container {
+        width: 100%;
+        box-sizing: border-box;
+        position: relative;
+        overflow: hidden;
+        page-break-after: always;
+        page-break-inside: avoid;
+        margin: 0;
+        padding: 0;
+        flex-shrink: 0;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .show-container.flow {
+        display: flex;
         flex-direction: row;
         flex-wrap: wrap;
+        align-content: flex-start;
     }
 
     h1 {
@@ -481,6 +587,21 @@
         /* transform: translateY(-30px); */
     }
 
+    .section-page {
+        width: 100%;
+        height: 100%;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        box-sizing: border-box;
+        padding: 60px;
+        position: relative;
+        overflow: hidden;
+    }
+
     /* Professional chord sheet layout styles */
     .chord-sheet-page {
         width: 100%;
@@ -494,6 +615,7 @@
         box-sizing: border-box;
         padding: 0;
         margin: 0;
+        flex-shrink: 0;
     }
 
     .header {

@@ -4,8 +4,8 @@ import { DEFAULT_DRAWER_HEIGHT } from "../../utils/common"
 import { createDefaultShow } from "../../utils/createData"
 import { translateText } from "../../utils/language"
 import { keysToID, removeDeleted } from "../helpers/array"
+import { OutputHelper } from "../helpers/OutputHelper"
 import { loadShows } from "../helpers/setShow"
-import { nextSlide } from "../helpers/showActions"
 import { clearAll } from "../output/clear"
 
 export const guideSteps = [
@@ -138,7 +138,7 @@ export const guideSteps = [
         query: "#previewArea",
         pre: () => {
             activePage.set("show")
-            nextSlide({}, true)
+            OutputHelper.advanceOutputs()
 
             closeDrawer()
         }
@@ -154,7 +154,7 @@ export const guideSteps = [
         query: ".clear",
         pre: () => {
             activePage.set("show")
-            nextSlide({}, true)
+            OutputHelper.advanceOutputs()
         }
     },
     // WIP groups / layouts

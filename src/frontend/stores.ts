@@ -20,8 +20,15 @@ import type { BibleCategories, Categories, DrawerTabs, SettingsTabs, TopViews } 
 import type { AudioChannel, AudioChannelData, AudioStream, Playlist } from "./../types/Audio"
 import type { Outputs } from "./../types/Output"
 import type { DrawerTabIds } from "./../types/Tabs"
-import type { EQBand, EqualizerConfig } from "./audio/audioEqualizer"
+import type { CompressorConfig } from "./audio/effects/audioCompressor"
+import type { DelayConfig } from "./audio/effects/audioDelay"
+import type { EQBand, EqualizerConfig } from "./audio/effects/audioEqualizer"
+import type { FilterConfig } from "./audio/effects/audioFilter"
+import type { LimiterConfig } from "./audio/effects/audioLimiter"
+import type { NoiseGateConfig } from "./audio/effects/audioNoiseGate"
 import type { AudioData } from "./audio/audioPlayer"
+import type { ReverbConfig } from "./audio/effects/audioReverb"
+import type { StereoShaperConfig } from "./audio/effects/audioStereoShaper"
 import type { API_metronome } from "./components/actions/api"
 
 // ----- TEMPORARY VARIABLES -----
@@ -87,6 +94,7 @@ export const editingProjectTemplate: Writable<string> = writable("")
 export const showNotesActive: Writable<boolean> = writable(false)
 export const slideNotesActive: Writable<boolean> = writable(false)
 export const templateApplied: Writable<boolean> = writable(false)
+export const activeAudioEffects: Writable<string> = writable("")
 
 // TAGS
 export const activeTagFilter: Writable<string[]> = writable([])
@@ -257,7 +265,17 @@ export const gain: Writable<number> = writable(1) // DEPRECATED - only use volum
 export const audioChannelsData: Writable<{ [key: string]: AudioChannelData }> = writable({}) // {}
 export const metronome: Writable<API_metronome> = writable({}) // {}
 export const effectsLibrary: Writable<{ path: string; name: string }[]> = writable([]) // []
-export const equalizerConfig = writable<EqualizerConfig>({ enabled: false, bands: [] })
+export interface AudioEffectsConfig {
+    equalizer: EqualizerConfig
+    filter: FilterConfig
+    noiseGate: NoiseGateConfig
+    compressor: CompressorConfig
+    limiter: LimiterConfig
+    reverb: ReverbConfig
+    delay: DelayConfig
+    stereoShaper: StereoShaperConfig
+}
+export const audioEffects = writable<Record<string, AudioEffectsConfig>>({}) // {}
 export const eqPresets: Writable<{ [key: string]: { name: string; bands: EQBand[] } }> = writable({}) // {}
 
 // PLAYER

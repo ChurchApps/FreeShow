@@ -10,6 +10,8 @@
 
     export let pdfOptions: any
     export let previewShow: Show | null
+    export let showCount = 1
+    export let exportType = ""
 
     let paper: any = null
 
@@ -26,7 +28,7 @@
             invert: false,
 
             grid: [3, 6],
-            oneFile: false,
+            oneFile: exportType === "project",
             originalTextSize: true,
             textSize: 80,
 
@@ -42,6 +44,8 @@
             columnsPerPage: 2
         }
     }
+
+    $: if (exportType === "project") pdfOptions.oneFile = true
 
     $: pdfTypeOptions = [{ value: "default", label: translateText("example.default") }, { value: "text", label: translateText("export.text") }, { value: "slides", label: translateText("export.slides") }, { value: "media", label: translateText("items.media") }, ...(showHasChords(previewShow) ? [{ value: "chordSheet", label: "Chord Sheet" }] : [])]
 
@@ -60,6 +64,10 @@
 <div style="display: flex;gap: 15px;">
     <div class="options" style="flex: 0 0 300px;">
         <MaterialDropdown label="clock.type" style="margin-bottom: 10px;" options={pdfTypeOptions} value={pdfOptions.type || "default"} on:change={(e) => (pdfOptions.type = e.detail)} />
+
+        {#if showCount > 1}
+            <MaterialCheckbox label="export.oneFile" style="margin-bottom: 10px;" checked={pdfOptions.oneFile} on:change={(e) => updatePdfOptions(e, "oneFile")} />
+        {/if}
 
         <!-- <MaterialCheckbox label="export.title" checked={pdfOptions.title} on:change={(e) => updatePdfOptions(e, "title")} /> -->
 
@@ -111,16 +119,6 @@
         </div>
     </div>
 </div>
-
-<!-- all as one file ??-->
-<!-- {#if shows.length > 1 && format.id !== "project"}
-  <span>
-    <p><T id="export.oneFile" /></p>
-    <div class="alignRight">
-        <Checkbox disabled={shows.length < 2} checked={pdfOptions.oneFile} on:change={(e) => updatePdfOptions(e, "oneFile")} />
-    </div>
-  </span>
-{/if} -->
 
 <style>
     .previewBox {

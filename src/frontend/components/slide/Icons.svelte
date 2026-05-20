@@ -236,7 +236,7 @@
                     <Icon id="audio" size={0.9} white />
                 </Button>
             </div>
-            <span style="white-space: nowrap;text-overflow: ellipsis;">
+            <span style="white-space: nowrap;text-overflow: ellipsis;" data-title={layoutSlide.audio.reduce((acc, audioId) => acc + removeExtension(getFileName(_show().get()?.media?.[audioId]?.path)) + ", ", "").slice(0, -2)}>
                 {#if layoutSlide.audio.length === 1}
                     {#await AudioPlayer.getDuration(audioPath || "")}
                         <p>00:00</p>

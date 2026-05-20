@@ -13,6 +13,7 @@ export class CaptureHelper {
     private static framerates: { [key: string]: number } = {
         stage: 20, // StageShow
         server: 10, // 30 // OutputShow
+        webrtc: 30, // WebRTC (canvas stream, up to 30 fps)
         unconnected: 1,
         connected: 30 // NDI
     }
@@ -25,14 +26,15 @@ export class CaptureHelper {
             ndi: this.framerates.connected,
             blackmagic: this.framerates.unconnected,
             server: this.framerates.server,
-            stage: this.framerates.stage
+            stage: this.framerates.stage,
+            webrtc: this.framerates.webrtc
         }
 
         return {
             window,
             frameSubscription: null,
             displayFrequency: screen.displayFrequency || 60,
-            options: { ndi: false, blackmagic: false, server: false, stage: false },
+            options: { ndi: false, blackmagic: false, server: false, stage: false, webrtc: false },
             framerates: defaultFramerates,
             id
         }

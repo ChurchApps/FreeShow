@@ -128,7 +128,6 @@ function getWritableConfigPath(previousLocation?: string | null, setup = false):
 
     if (doesPathExist(configFolderPath) && isWritable(configFolderPath)) return configFolderPath
 
-
     try {
         // try to create "Config" folder at current path
         if (!configFolderPath) throw new Error("No config folder path")
@@ -149,7 +148,6 @@ function getWritableConfigPath(previousLocation?: string | null, setup = false):
         configFolderPath = getDataFolderPath("userData")
 
         if (doesPathExist(configFolderPath) && isWritable(configFolderPath)) return configFolderPath
-
 
         try {
             if (!configFolderPath) throw new Error("No config folder path")
@@ -209,7 +207,10 @@ export function getStore<T extends keyof typeof storeFilesData | "config">(id: T
     if (id === "config") return config.store
 
     const storeId = id as keyof typeof storeFilesData
-    if (!_store[storeId]) throw new Error(`Store with key ${id} does not exist.`)
+    if (!_store[storeId]) {
+        console.warn(`Store with key "${id}" does not exist, returning defaults.`)
+        return storeFilesData[storeId].defaults
+    }
 
     try {
         return _store[storeId]!.store

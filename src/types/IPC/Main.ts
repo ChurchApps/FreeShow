@@ -99,6 +99,7 @@ export enum Main {
     NOW_PLAYING = "NOW_PLAYING",
     NOW_PLAYING_UNSET = "NOW_PLAYING_UNSET",
     // MEDIA_BASE64 = "MEDIA_BASE64",
+    READ_AUDIO_METADATA = "READ_AUDIO_METADATA",
     CAPTURE_SLIDE = "CAPTURE_SLIDE",
     ACCESS_CAMERA_PERMISSION = "ACCESS_CAMERA_PERMISSION",
     ACCESS_MICROPHONE_PERMISSION = "ACCESS_MICROPHONE_PERMISSION",
@@ -159,7 +160,7 @@ export enum Main {
     TIMECODE_VALUE = "TIMECODE_VALUE",
     TIMECODE_AUDIO_DATA = "TIMECODE_AUDIO_DATA",
     TIMECODE_STATUS = "TIMECODE_STATUS",
-    // SPOTIFY
+    // Spotify
     SPOTIFY_GET_STATE = "SPOTIFY_GET_STATE",
     SPOTIFY_COMMAND = "SPOTIFY_COMMAND"
 }
@@ -199,6 +200,7 @@ export interface MainSendPayloads {
     [Main.MEDIA_IS_DOWNLOADED]: { url: string; contentFile?: any }
     [Main.NOW_PLAYING]: { filePath: string; name: string; unknownLang: string[]; format: string; duration: number }
     // [Main.MEDIA_BASE64]: { id: string; path: string }[]
+    [Main.READ_AUDIO_METADATA]: { filePath: string }
     [Main.CAPTURE_SLIDE]: { output: { [key: string]: Output }; resolution: Resolution }
     [Main.LIBREOFFICE_CONVERT]: { type: string }
     [Main.START_SLIDESHOW]: { path: string; program: string }
@@ -250,6 +252,7 @@ export interface MainSendPayloads {
     [Main.TIMECODE_VALUE]: number
     [Main.TIMECODE_STATUS]: "play" | "pause" | "stop"
     [Main.TIMECODE_AUDIO_DATA]: { mode: TimecodeMode; buffer: Uint8Array }
+    // Spotify
     [Main.SPOTIFY_GET_STATE]: undefined
     [Main.SPOTIFY_COMMAND]: { command: "playpause" | "next" | "prev" | "seek" | "setVolume" | "pause"; value?: number }
 }
@@ -307,6 +310,7 @@ export interface MainReturnPayloads {
     [Main.MEDIA_TRACKS]: Promise<{ path: string; tracks: Subtitle[] }>
     [Main.MEDIA_IS_DOWNLOADED]: Promise<{ path: string; buffer: Buffer | null; protectedUrl?: string | null; isDownloading?: boolean } | null>
     // [Main.MEDIA_BASE64]: { id: string; content: string }[]
+    [Main.READ_AUDIO_METADATA]: Promise<any>
     [Main.CAPTURE_SLIDE]: Promise<{ base64: string } | null>
     [Main.SLIDESHOW_GET_APPS]: string[]
     [Main.GET_MIDI_OUTPUTS]: { name: string }[]
@@ -340,6 +344,7 @@ export interface MainReturnPayloads {
     [Main.TIMECODE_VALUE]: number | void
     [Main.TIMECODE_AUDIO_DATA]: Buffer | void
     [Main.TIMECODE_STATUS]: "play" | "pause" | "stop" | void
+    // Spotify
     [Main.SPOTIFY_GET_STATE]: Promise<SpotifyState | null>
     [Main.SPOTIFY_COMMAND]: Promise<boolean>
 }

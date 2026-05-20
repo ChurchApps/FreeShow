@@ -1,9 +1,9 @@
 import { get } from "svelte/store"
 import { outputs, slideTimers } from "../../stores"
-import { clone } from "./array"
-import { nextSlide } from "./showActions"
 import { playFolder } from "../../utils/shortcuts"
+import { clone } from "./array"
 import { startFolderTimer } from "./output"
+import { OutputHelper } from "./OutputHelper"
 
 export function newSlideTimer(timerId: string, duration: number, folderPath = "") {
     if (duration <= 0) return
@@ -40,14 +40,14 @@ export function newSlideTimer(timerId: string, duration: number, folderPath = ""
             const isPDF = data.endsWith(".pdf")
             if (isPDF) {
                 startFolderTimer(data, { type: "pdf", path: "" })
-                nextSlide(null, false, false, true, true, id, true)
+                OutputHelper.advanceOutput(id, "", { playNext: true })
             } else {
                 playFolder(data)
             }
             return
         }
 
-        nextSlide(null, false, false, true, true, id, false, true)
+        OutputHelper.advanceOutput(id, "", { playNext: true })
     }
 }
 

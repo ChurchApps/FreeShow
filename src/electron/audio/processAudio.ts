@@ -2,6 +2,7 @@ import type { OpusEncoder as TOpusEncoder } from "@discordjs/opus"
 import { NdiSender } from "../ndi/NdiSender"
 import { BlackmagicSender } from "../blackmagic/BlackmagicSender"
 import { getServerData, toServer } from "../servers"
+import { WebRtcHost } from "../webrtc/WebRtcHost"
 
 // const isStopping = false
 const channelCount2 = 2
@@ -34,6 +35,11 @@ export async function processAudio(buffer: Buffer) {
     await NdiSender.sendAudioBufferNDI(buffer, { sampleRate: sampleRate2, channelCount: channelCount2 })
     BlackmagicSender.sendAudioBuffer(buffer, { sampleRate: sampleRate2, channelCount: channelCount2 })
     sendAudioToOutputServer(buffer, { sampleRate: sampleRate2, channelCount: channelCount2 })
+
+    // Stream system audio through WebRTC/WHIP
+    if (WebRtcHost.isRunning()) {
+        WebRtcHost.sendAudio(buffer, { sampleRate: sampleRate2, channelCount: channelCount2 })
+    }
 }
 
 export function sendAudioToOutputServer(buffer: Buffer, { sampleRate, channelCount }: { sampleRate: number; channelCount: number }) {

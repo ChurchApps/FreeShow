@@ -1,4 +1,5 @@
 import { get } from "svelte/store"
+import { uid } from "uid"
 import type { Condition, ConditionValue, Item, ItemType, Slide } from "../../../../types/Show"
 import type { StageItem } from "../../../../types/Stage"
 import { activeEdit, activeShow, activeStage, activeTimers, allOutputs, outputs, outputSlideCache, overlays, refreshEditSlide, showsCache, stageShows, templates, timers, variables } from "../../../stores"
@@ -86,7 +87,7 @@ export function addItem(type: ItemType, id: string | null = null, options: any =
     else if (type === "variable") newData.variable = { id: "" }
     else if (type === "slide_tracker") newData.auto = true
     else if (type === "web") newData.web = { url: "" }
-    else if (type === "captions") newData.captions = {}
+    else if (type === "captions") newData.captions = { roomId: "freeshow" + uid(6) }
     // else if (type === "button") {
     //     // make square, colored, rounded and center
     //     let size: number = 300

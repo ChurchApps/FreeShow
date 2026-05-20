@@ -14,23 +14,23 @@ import { requestMain, sendMain } from "../../IPC/main"
 import { isMainWindow, isOutputWindow } from "../../utils/common"
 import { send } from "../../utils/request"
 import { convertRSSToString, getRSS } from "../../utils/rss"
-import { playFolder, togglePlayingMedia } from "../../utils/shortcuts"
 import { runAction, slideHasAction } from "../actions/actions"
 import type { API_output_style } from "../actions/api"
 import { getCurrentTimerValue, getTimeUntilClock, playPauseGlobal } from "../drawer/timers/timers"
 import { getDynamicValue } from "../edit/scripts/itemHelpers"
 import { getTextLines } from "../edit/scripts/textStyle"
-import { clearBackground, clearOverlays, clearSlide, clearTimers } from "../output/clear"
-import { actions, activeEdit, activeFocus, activePage, activeProject, activeShow, allOutputs, audioData, customMetadata, dictionary, dynamicValueData, focusMode, media, outLocked, outputDisplay, outputs, outputSlideCache, overlays, playingAudio, playingMetronome, projects, shows, showsCache, slideTimers, special, stageShows, styles, templates, timers, triggers, variables, videosData, videosTime } from "./../../stores"
+import { clearBackground, clearOverlays, clearTimers } from "../output/clear"
+import { activeEdit, activeFocus, activePage, activeProject, activeShow, allOutputs, audioData, customMetadata, dictionary, dynamicValueData, focusMode, media, outLocked, outputDisplay, outputs, overlays, playingAudio, playingMetronome, projects, shows, showsCache, slideTimers, special, stageShows, styles, templates, timers, triggers, variables, videosData, videosTime } from "./../../stores"
 import { clone, keysToID, sortByName } from "./array"
-import { downloadOnlineMedia, getExtension, getFileName, getMedia, getMediaLayerType, getMediaStyle, getMediaType, removeExtension } from "./media"
-import { defaultLayers, getActiveOutputs, getAllNormalOutputs, getCurrentStyle, getFirstActiveOutput, getFirstOutput, getWindowOutputId, isOutCleared, refreshOut, setOutput } from "./output"
+import { downloadOnlineMedia, getExtension, getFileName, getMedia, getMediaStyle, getMediaType, removeExtension } from "./media"
+import { defaultLayers, getActiveOutputs, getAllNormalOutputs, getFirstActiveOutput, getFirstOutput, getWindowOutputId, isOutCleared, refreshOut, setOutput, startFolderTimer } from "./output"
 import { getSetChars } from "./randomValue"
 import { loadShows } from "./setShow"
 import { getCustomMetadata, getGroupName, getLayoutRef } from "./show"
 import { _show } from "./shows"
 import { addZero, getMonthName, getWeekday, joinTime, joinTimeBig, secondsToTime } from "./time"
 import { stopTimers } from "./timerTick"
+import { OutputHelper } from "./OutputHelper"
 
 const getProjectIndex = {
     next: (index: number | null, items: ProjectShowRef[]) => {
@@ -154,234 +154,6 @@ export function getFewestOutputLinesReveal(updater = get(outputs)) {
     return Number(currentLines)
 }
 
-const PRESENTATION_KEYS_NEXT = [" ", "ArrowRight", "PageDown"]
-const PRESENTATION_KEYS_PREV = ["ArrowLeft", "PageUp"]
-
-// this will go to next for each slide (better for multiple outputs with "Specific outputs")
-export function nextSlideIndividual(e: any, start = false, end = false) {
-    getActiveOutputs(get(outputs), true, false, true).forEach((id) => nextSlide(e, start, end, false, false, id, false, true))
-}
-
-// TODO: update next/previous logic for focus/normal mode, outputted/active, show/media types, etc.
-
-let isGoingNext = false
-export function nextSlide(e: any, start = false, end = false, loop = false, bypassLock = false, customOutputId = "", nextAfterMedia = false, advanceThroughProject: boolean = false) {
-    if (get(outLocked) && !bypassLock) return
-    // blur to remove tab highlight from slide after clicked, and using arrows
-    if (document.activeElement?.closest(".slide") && !document.activeElement?.closest(".edit")) (document.activeElement as HTMLElement).blur()
-
-    const currentShow = get(focusMode) ? get(activeFocus) : get(activeShow)
-
-    const outputId = customOutputId || getFirstActiveOutput()?.id || ""
-    const currentOutput = get(outputs)[outputId] || {}
-    let currentLayoutId = (get(focusMode) ? get(projects)[get(activeProject) || ""]?.shows?.[currentShow?.index ?? -1]?.layout : null) || get(showsCache)[currentShow?.id || ""]?.settings?.activeLayout
-    let slide: null | OutSlide = currentOutput.out?.slide || null
-    if (!slide) {
-        const cachedSlide: null | OutSlide = get(outputSlideCache)[outputId] || null
-        if (cachedSlide && cachedSlide?.id === currentShow?.id && cachedSlide?.layout === currentLayoutId) slide = cachedSlide
-    }
-    // if (slide?.layout) currentLayoutId = slide.layout
-
-    if (get(focusMode)) {
-        // get and play media items in focus mode
-        const mediaPath = currentOutput.out?.background?.path
-        if (!slide && mediaPath) {
-            const projectItems = get(projects)[get(activeProject) || ""]?.shows || []
-            const projectIndex = projectItems.findIndex((a) => a.id === mediaPath)
-            const nextProjectShowIndex = projectIndex > -1 ? projectItems.findIndex((_a, i) => i > projectIndex) : -1
-            if (nextProjectShowIndex > -1) {
-                const next = projectItems[nextProjectShowIndex]
-                if (next.type === "image" || next.type === "video" || next.type === "player") {
-                    playProjectItemMedia(next.id)
-                }
-            }
-        }
-    }
-
-    // PPT
-    if (slide?.type === "ppt") {
-        sendMain(Main.PRESENTATION_CONTROL, { action: e?.key === "PageDown" ? "last" : "next" })
-        return
-    }
-
-    // PDF
-    if (((!slide || start) && currentShow?.type === "pdf") || (!start && slide?.type === "pdf")) {
-        if (start && slide?.id !== currentShow?.id) slide = null
-        const nextPage = slide?.page !== undefined ? slide.page + 1 : 0
-        playPdf(slide, nextPage, nextAfterMedia)
-        return
-    }
-
-    // Folder
-    if (((!slide || start) && currentShow?.type === "folder") || (!start && slide?.type === "folder")) {
-        const path = slide?.type === "folder" ? slide.id : currentShow?.id || ""
-        playFolder(path)
-        return
-    }
-
-    // let layout: SlideData[] = GetLayout(slide ? slide.id : null, slide ? slide.layout : null)
-    let layout = _show(slide ? slide.id : "active")
-        .layouts(slide ? [slide.layout] : "active")
-        .ref()[0]
-    const slideIndex: number = slide?.index || 0
-    let isLastSlide: boolean = layout && slide ? slideIndex >= layout.filter((a, i) => i < slideIndex || !a?.data?.disabled).length - 1 && !layout[slideIndex]?.data?.end : false
-
-    // open next project item if previous has been opened and next is still active when going forward
-    const isFirstSlide: boolean = slide && layout ? layout.filter((a) => !a?.data?.disabled).findIndex((a) => a.layoutIndex === slide?.index) === 0 : false
-    const isFirstLine = (slide?.line || 0) === 0
-    const nextProjectItem = get(projects)[get(activeProject) || ""]?.shows?.[(currentShow?.index ?? -2) + 1]
-    const isPreviousProjectItem = slide?.id === nextProjectItem?.id && (!nextProjectItem?.layout || nextProjectItem?.layout === slide?.layout) && isFirstSlide && isFirstLine && !isLastSlide
-    if (isPreviousProjectItem && e?.key !== " " && advanceThroughProject) {
-        goToNextProjectItem()
-        return
-    }
-
-    let index: null | number = null
-
-    const showSlides = _show(slide?.id).slides([layout?.[slideIndex]?.id]).get()?.[0]
-    const showSlide: Slide | null = slide?.index !== undefined ? showSlides : null
-
-    // lines
-    const amountOfLinesToShow: number = getFewestOutputLines()
-    const linesIndex: null | number = amountOfLinesToShow && slide ? slide.line || 0 : null
-    const slideLines: null | number = showSlide ? getItemWithMostLines(showSlide) : null
-    const hasLinesEnded: boolean = slideLines === null || linesIndex === null ? true : linesIndex + amountOfLinesToShow >= slideLines
-    if (isLastSlide && !hasLinesEnded) isLastSlide = false
-
-    // item/click reveal
-    const clickRevealItems = (showSlide?.items || []).filter((a) => a?.clickReveal)
-    const itemsRevealed = clickRevealItems.length ? !!slide?.itemClickReveal : true
-    if (isLastSlide && !itemsRevealed) isLastSlide = false
-
-    // lines reveal
-    const linesRevealItems = (showSlide?.items || []).filter((a) => a?.lineReveal)
-    const shouldLinesReveal = !!linesRevealItems.length
-    const maxRevealLines = getItemWithMostLines({ items: linesRevealItems })
-    const currentReveal = slide?.revealCount ?? 0
-    const allLinesRevealed = shouldLinesReveal ? currentReveal >= maxRevealLines : true
-    if (isLastSlide && !allLinesRevealed) isLastSlide = false
-
-    // TODO: active show slide index on delete......
-
-    // go to first slide in next project show ("Next after media" feature)
-    const isNotLooping = loop && slide?.index !== undefined && !layout?.[slideIndex]?.data?.end
-    if ((isNotLooping || nextAfterMedia) && bypassLock && slide && isLastSlide) {
-        // check if it is last slide (& that slide does not loop to start)
-        if (advanceThroughProject) goToNextShowInProject(slide, customOutputId)
-        return
-    }
-
-    // go to beginning if live mode & ctrl | no output | last slide active
-    if (currentShow && (start || !slide || e?.ctrlKey || (isLastSlide && (currentShow.id !== slide?.id || currentLayoutId !== slide.layout)))) {
-        if ((currentShow?.type === "section" || !get(showsCache)[currentShow.id] || !getLayoutRef(currentShow.id).length) && advanceThroughProject) return goToNextProjectItem()
-
-        let id = loop ? slide?.id : currentShow.id
-        if (!id) return
-
-        const projectItems = get(projects)[get(activeProject) || ""]?.shows || []
-        let currentLayoutId = (get(focusMode) ? projectItems[currentShow?.index ?? -1]?.layout : null) || _show(id).get("settings.activeLayout")
-
-        // when pressing arrow right on the last slide in focus mode we should always continue from the outputted show (if any) and not the selected show
-        if (get(focusMode) && !start && !loop && currentOutput.out?.slide?.id && slide?.id !== currentShow.id && (slide?.type || "show") === "show") {
-            // get next show after current one
-            const currentId = currentOutput.out.slide.id
-            const projectIndex = projectItems.findIndex((a) => a.id === currentId && (!a.layout || a.layout === currentLayoutId) && (a.type || "show") === "show")
-            const nextProjectItemIndex = projectIndex > -1 ? projectItems.findIndex((a, i) => i > projectIndex && a.type !== "section") : -1
-            if (nextProjectItemIndex > -1) {
-                const next = projectItems[nextProjectItemIndex]
-                id = next.id || id
-
-                // play media (this only runs if the current show is not selected)
-                if ((next.type || "show") !== "show") {
-                    if (next.type === "image" || next.type === "video" || next.type === "player") {
-                        playProjectItemMedia(next.id)
-                    }
-                    return
-                }
-
-                currentLayoutId = projectItems[nextProjectItemIndex]?.layout || _show(id).get("settings.activeLayout")
-            }
-        }
-
-        // layout = GetLayout()
-        layout = getLayoutRef(id)
-        if (!layout?.filter((a) => !a.data.disabled).length) return
-
-        index = 0
-        while (layout[index]?.data.disabled || notBound(layout[index], customOutputId)) index++
-
-        const data = layout[index]?.data
-        checkActionTrigger(data, index)
-        // allow custom actions to trigger first
-        setTimeout(() => {
-            setOutput("slide", { id, layout: currentLayoutId, index }, false, customOutputId)
-            updateOut(id, index!, layout, !e?.altKey, customOutputId)
-        })
-        return
-    }
-
-    if (!slide || slide.id === "temp") return
-
-    const newSlideOut = { ...slide, line: 0, revealCount: 0, itemClickReveal: itemsRevealed }
-    if (!hasLinesEnded || !allLinesRevealed || !itemsRevealed) {
-        index = slideIndex
-        if (amountOfLinesToShow && linesIndex !== null) newSlideOut.line = linesIndex + amountOfLinesToShow
-        if (clickRevealItems.length && !itemsRevealed) newSlideOut.itemClickReveal = true
-        else if (shouldLinesReveal) newSlideOut.revealCount = currentReveal + 1
-    } else {
-        // TODO: Check for loop to beginning slide...
-        newSlideOut.itemClickReveal = false
-        index = getNextEnabled(slideIndex, end, customOutputId)
-    }
-    if (index !== null) newSlideOut.index = index
-
-    // go to next show if end
-    if (index === null && currentShow?.id === slide?.id && currentLayoutId === slide.layout) {
-        if (get(special).nextItemOnLastSlide === false && !get(focusMode)) return
-
-        if (PRESENTATION_KEYS_NEXT.includes(e?.key)) {
-            if (advanceThroughProject) goToNextProjectItem(e.key)
-
-            // skip right to next slide without requiring "double" input in focus mode
-            if (get(focusMode)) {
-                const isLastProjectItem = currentShow?.index === (get(projects)[get(activeProject) || ""]?.shows?.length || 0) - 1
-                if (isLastSlide && isLastProjectItem) return
-
-                if (isGoingNext) return
-                isGoingNext = true
-                setTimeout(() => {
-                    nextSlideIndividual(e)
-                    isGoingNext = false
-                }, 20)
-            }
-        }
-        return
-    }
-
-    if (index !== null) {
-        const data = layout[index]?.data
-        checkActionTrigger(data, index)
-        // allow custom actions to trigger first
-        setTimeout(() => {
-            setOutput("slide", newSlideOut, false, customOutputId)
-            updateOut(slide ? slide.id : "active", index!, layout, !e?.altKey, customOutputId)
-        })
-    }
-}
-
-function playProjectItemMedia(path: string) {
-    const currentOutput = getFirstActiveOutput()
-    const currentStyle = getCurrentStyle(get(styles), currentOutput?.style)
-
-    const mediaData = get(media)[path] || {}
-    const mediaStyle = getMediaStyle(mediaData, currentStyle)
-
-    const type = getMediaLayerType(path, mediaStyle)
-    if (type === "foreground" || type !== "background") clearSlide()
-
-    setOutput("background", { path: path, ...mediaStyle })
-}
-
 const triggerActionsBeforeOutput = {
     change_output_style: (actionValue: any) => {
         const layers = get(styles)[actionValue?.outputStyle]?.layers
@@ -398,348 +170,32 @@ export function checkActionTrigger(layoutData: SlideData, slideIndex = 0) {
     })
 }
 
-async function goToNextShowInProject(slide, customOutputId) {
-    if (!get(activeProject)) return
-
-    // get current project show
-    const currentProject = get(projects)[get(activeProject)!]
-    // this will get the first show in the project with this id, so it won't work properly with multiple of the same shows in a project
-    const projectIndex = currentProject?.shows?.findIndex((a) => a.id === slide.id) ?? -1
-    if (projectIndex < 0) return
-
-    const currentOutputProjectShowIndex = currentProject.shows[projectIndex]
-    if (currentOutputProjectShowIndex.id !== slide.id) return
-
-    const nextShowInProjectIndex = currentProject.shows.findIndex((a, i) => i > projectIndex && (a.type || "show") === "show")
-    if (nextShowInProjectIndex < 0) return
-
-    const nextShow = currentProject.shows[nextShowInProjectIndex]
-    await loadShows([nextShow.id])
-    const activeLayout = nextShow.layout || _show(nextShow.id).get("settings.activeLayout")
-    const layout = _show(nextShow.id).layouts([activeLayout]).ref()[0]
-
-    // let hasNextAfterMediaAction = layout[slide.index].data.actions?.nextAfterMedia
-    // if (!hasNextAfterMediaAction) return
-
-    setOutput("slide", { id: nextShow.id, layout: activeLayout, index: 0 }, false, customOutputId)
-    updateOut(nextShow.id, 0, layout, true, customOutputId)
-
-    // open next item in project (if current is open)
-    if (get(activeShow)?.index === projectIndex) {
-        if (get(focusMode)) activeFocus.set({ id: nextShow.id, index: nextShowInProjectIndex, type: nextShow.type })
-        else activeShow.set({ ...nextShow, index: nextShowInProjectIndex })
-    }
-}
-
-// only let "first" output change project item if multiple outputs
-let changeProjectItemTimeout: NodeJS.Timeout | null = null
-export function goToNextProjectItem(key = "") {
-    // play project media with arrow right if not already playing
-    const currentProjectItem = get(projects)[get(activeProject) || ""]?.shows?.[get(activeShow)?.index ?? -1]
-    if (currentProjectItem?.type === "video" || currentProjectItem?.type === "image" || currentProjectItem?.type === "player") {
-        const outBg = getFirstOutput()?.out?.background
-        if ((outBg?.path || outBg?.id) !== currentProjectItem?.id) {
-            return togglePlayingMedia()
-        }
-    }
-
-    if (changeProjectItemTimeout) return
-    changeProjectItemTimeout = setTimeout(() => {
-        changeProjectItemTimeout = null
-
-        const currentShow = get(focusMode) ? get(activeFocus) : get(activeShow)
-        if (!get(activeProject) || typeof currentShow?.index !== "number") return
-
-        let index: number = currentShow.index ?? -1
-        if (index + 1 < get(projects)[get(activeProject)!]?.shows?.length) index++
-        if (index > -1 && index !== currentShow.index && get(projects)[get(activeProject)!]?.shows?.[index]) {
-            const newShow = get(projects)[get(activeProject)!].shows[index]
-            if (get(focusMode)) activeFocus.set({ id: newShow.id, index, type: newShow.type })
-            else activeShow.set({ ...newShow, index })
-
-            // change layout
-            if ((newShow.type || "show") === "show") swichProjectItem(index, newShow.id)
-
-            // mark as played
-            projects.update((a) => {
-                if (typeof a[get(activeProject)!]?.shows?.[index - 1] !== "object") return a
-                a[get(activeProject)!].shows[index - 1].played = true
-                return a
-            })
-
-            if (newShow.type === "section" && PRESENTATION_KEYS_NEXT.includes(key) && (newShow.data?.settings?.triggerAction || get(special).sectionTriggerAction)) {
-                let actionId = newShow.data?.settings?.triggerAction
-                if (!actionId || !get(actions)[actionId]) actionId = get(special).sectionTriggerAction
-                if (actionId) runAction(get(actions)[actionId])
-                return
-            }
-
-            // skip if section is empty
-            if (newShow.type === "section" && !newShow.notes) goToNextProjectItem()
-        }
-    })
-}
-
-export function goToPreviousProjectItem(key = "") {
-    if (changeProjectItemTimeout) return
-    changeProjectItemTimeout = setTimeout(() => {
-        changeProjectItemTimeout = null
-
-        const currentShow = get(focusMode) ? get(activeFocus) : get(activeShow)
-        if (!get(activeProject) || typeof currentShow?.index !== "number") return
-
-        let index: number = currentShow.index ?? get(projects)[get(activeProject)!]?.shows?.length
-        if (index - 1 >= 0) index--
-        if (index > -1 && index !== currentShow.index && get(projects)[get(activeProject)!]?.shows?.[index]) {
-            const newShow = get(projects)[get(activeProject)!].shows[index]
-            if (get(focusMode)) activeFocus.set({ id: newShow.id, index, type: newShow.type })
-            else activeShow.set({ ...newShow, index })
-
-            // change layout
-            if ((newShow.type || "show") === "show") swichProjectItem(index, newShow.id)
-
-            if (newShow.type === "section" && get(activePage) === "edit") activeEdit.set({ items: [] })
-
-            if (newShow.type === "section" && PRESENTATION_KEYS_PREV.includes(key) && (newShow.data?.settings?.triggerAction || get(special).sectionTriggerAction)) {
-                let actionId = newShow.data?.settings?.triggerAction
-                if (!actionId || !get(actions)[actionId]) actionId = get(special).sectionTriggerAction
-                if (actionId) runAction(get(actions)[actionId])
-                return
-            }
-
-            // skip if section is empty
-            if (newShow.type === "section" && !newShow.notes) goToPreviousProjectItem()
-
-            // mark as not played
-            if (newShow.type !== "section") {
-                projects.update((a) => {
-                    if (typeof a[get(activeProject)!]?.shows?.[index] !== "object") return a
-                    a[get(activeProject)!].shows[index].played = false
-                    return a
-                })
-            }
-        }
-    })
-}
-
-// this will go to next for each slide (better for multiple outputs with "Specific outputs")
-export function previousSlideIndividual(e: any) {
-    getActiveOutputs(get(outputs), true, false, true).forEach((id) => previousSlide(e, id))
-}
-
-let isGoingPrevious = false
-export function previousSlide(e: any, customOutputId?: string) {
-    if (get(outLocked)) return
-    if (document.activeElement?.closest(".slide") && !document.activeElement?.closest(".edit")) (document.activeElement as HTMLElement).blur()
-
-    const currentShow = get(focusMode) ? get(activeFocus) : get(activeShow)
-
-    const outputId = customOutputId || getFirstActiveOutput()?.id || ""
-    const currentOutput = get(outputs)[outputId] || {}
-    let currentLayoutId = (get(focusMode) ? get(projects)[get(activeProject) || ""]?.shows?.[currentShow?.index ?? -1]?.layout : null) || get(showsCache)[currentShow?.id || ""]?.settings?.activeLayout
-    let slide = currentOutput.out?.slide || null
-    if (!slide) {
-        const cachedSlide: null | OutSlide = get(outputSlideCache)[outputId] || null
-        if (cachedSlide && cachedSlide?.id === currentShow?.id && cachedSlide?.layout === currentLayoutId) slide = cachedSlide
-    }
-    // if (slide?.layout) currentLayoutId = slide.layout
-
-    // PPT
-    if (slide?.type === "ppt") {
-        sendMain(Main.PRESENTATION_CONTROL, { action: e?.key === "PageUp" ? "first" : "previous" })
-        return
-    }
-
-    // PDF
-    if ((!slide && currentShow?.type === "pdf") || slide?.type === "pdf") {
-        const nextPage = slide?.page ? slide.page - 1 : 0
-        playPdf(slide, nextPage)
-        return
-    }
-
-    // Folder
-    if ((!slide && currentShow?.type === "folder") || slide?.type === "folder") {
-        const path = slide?.type === "folder" ? slide.id : currentShow?.id || ""
-        playFolder(path, true)
-        return
-    }
-
-    // let layout: SlideData[] = GetLayout(slide ? slide.id : null, slide ? slide.layout : null)
-    let layout =
-        _show(slide ? slide.id : "active")
-            .layouts(slide ? [slide.layout] : "active")
-            .ref()[0] || []
-    let activeLayout: string = (get(focusMode) ? get(projects)[get(activeProject) || ""]?.shows?.[currentShow?.index ?? -1]?.layout : null) || _show(slide ? slide.id : "active").get("settings.activeLayout")
-    let index: number | null = slide?.index !== undefined ? slide.index - 1 : layout.length ? layout.length - 1 : null
-    if (index === null) {
-        if (currentShow?.type === "section" || !get(showsCache)[currentShow?.id || ""]) goToPreviousProjectItem()
-        return
-    }
-
-    // lines
-    const outputWithLines = getFewestOutputLines()
-    const amountOfLinesToShow: number = outputWithLines ? outputWithLines : 0
-    const linesIndex: null | number = amountOfLinesToShow && slide ? slide.line || 0 : null
-    const hasLinesEnded: boolean = !slide || linesIndex === null || linesIndex < 1
-
-    // open previous project item if next has been opened and previous is still active when going back
-    const slideIndex: number = slide?.index || 0
-    let isLastSlide: boolean = layout.length && slide ? slideIndex >= layout.filter((a, i) => i < slideIndex || !a?.data?.disabled).length - 1 && !layout[slideIndex]?.data?.end : false
-    const showSlide: Slide | null =
-        _show(slide ? slide.id : "active")
-            .slides([layout[index]?.id])
-            .get()[0] || null
-    const isLastLine = slide?.line === undefined || !amountOfLinesToShow || !showSlide || slide.line >= Math.ceil(getItemWithMostLines(showSlide) / amountOfLinesToShow) - 1
-
-    // skip disabled slides if clicking previous when another show is selected and no enabled slide is before
-    const isFirstSlide: boolean = slide && layout.length ? layout.filter((a) => !a?.data?.disabled).findIndex((a) => a.layoutIndex === slide?.index) === 0 : false
-
-    const currentShowSlide: Slide | null =
-        _show(slide ? slide.id : "active")
-            .slides([layout[slide?.index ?? -1]?.id])
-            .get()[0] || null
-
-    // item/click reveal
-    const clickRevealItems = (currentShowSlide?.items || []).filter((a) => a?.clickReveal)
-    const itemsRevealed = !!slide?.itemClickReveal
-    const clickRevealEnded = !clickRevealItems.length || !itemsRevealed
-    if (isFirstSlide && !clickRevealEnded) isLastSlide = false
-
-    // lines reveal
-    const linesRevealItems = ((slide?.revealCount ? currentShowSlide?.items : showSlide?.items) || []).filter((a) => a?.lineReveal)
-    const shouldLinesReveal = !!linesRevealItems.length
-    let currentReveal = slide?.revealCount || 0
-    const revealEnded = !shouldLinesReveal || currentReveal === 0
-    if (isFirstSlide && !revealEnded) isLastSlide = false
-
-    const previousProjectItem = get(projects)[get(activeProject) || ""]?.shows?.[(currentShow?.index ?? -2) - 1]
-    const isNextProjectItem = slide?.id === previousProjectItem?.id && (!previousProjectItem?.layout || previousProjectItem?.layout === slide?.layout) && isLastSlide && isLastLine
-    if (isNextProjectItem) {
-        goToPreviousProjectItem()
-        return
-    }
-
-    // if (!hasLinesEnded && isFirstSlide) isFirstSlide = false
-    if (currentLayoutId !== slide?.layout && hasLinesEnded && revealEnded && (index < 0 || isFirstSlide)) {
-        slide = null
-        layout = _show("active").layouts([currentLayoutId]).ref()[0] || []
-        activeLayout = currentLayoutId
-        index = (layout.length || 0) - 1
-
-        // WIP when pressing arrow left on the first slide in focus mode we should always continue from the outputted show (if any) and not the selected show ?
-    }
-
-    let line: number = linesIndex || 0
-    let itemClickReveal = true
-    if (hasLinesEnded && revealEnded && clickRevealEnded) {
-        if (index < 0 || !layout.slice(0, index + 1).filter((a) => !a.data.disabled).length) {
-            // go to previous show if out slide at start
-            if ((currentShow?.id === slide?.id && currentLayoutId === slide?.layout) || currentShow?.type === "section" || !get(showsCache)[currentShow?.id || ""] || !layout.length) {
-                if (get(special).nextItemOnLastSlide === false && !get(focusMode)) return
-
-                if (PRESENTATION_KEYS_PREV.includes(e?.key)) {
-                    goToPreviousProjectItem(e.key)
-
-                    // skip right to previous slide without requiring "double" input in focus mode
-                    if (get(focusMode)) {
-                        const isFirstProjectItem = currentShow?.index === 0
-                        if (isFirstSlide && isFirstProjectItem) return
-
-                        if (isGoingPrevious) return
-                        isGoingPrevious = true
-                        setTimeout(() => {
-                            previousSlideIndividual(e)
-                            isGoingPrevious = false
-                        }, 20)
-                    }
-                }
-            }
-            return
-        }
-
-        while (layout[index]?.data.disabled || notBound(layout[index], customOutputId)) index--
-        if (!layout[index]) return
-
-        // get slide line
-        const slideLines: null | number = showSlide ? getItemWithMostLines(showSlide) : null
-        if (amountOfLinesToShow) {
-            const maxIndex = slideLines ? amountOfLinesToShow * Math.ceil(slideLines / amountOfLinesToShow) : 0
-            line = maxIndex ? maxIndex - amountOfLinesToShow : 0
-        }
-        if (shouldLinesReveal) {
-            const maxRevealLines = getItemWithMostLines({ items: linesRevealItems })
-            currentReveal = maxRevealLines
-        } else currentReveal = 0
-        itemClickReveal = true
-    } else {
-        index = slide!.index!
-        if (amountOfLinesToShow) line -= amountOfLinesToShow
-        if (shouldLinesReveal) currentReveal--
-        if (!shouldLinesReveal || currentReveal < 0) itemClickReveal = false
-    }
-    currentReveal = Math.max(0, currentReveal)
-
-    const data = layout[index]?.data
-    checkActionTrigger(data, index)
-    // allow custom actions to trigger first
-    setTimeout(() => {
-        if (slide) setOutput("slide", { ...slide, index, line, revealCount: currentReveal, itemClickReveal }, false, customOutputId)
-        else if (currentShow) setOutput("slide", { id: currentShow.id, layout: activeLayout, index, line, revealCount: currentReveal, itemClickReveal }, false, customOutputId)
-
-        updateOut(slide ? slide.id : "active", index!, layout, !e?.altKey, customOutputId)
-    })
-}
-
-// skip slides that are bound to specific output not customId
-function notBound(ref, outputId: string | undefined) {
-    return outputId && ref?.data?.bindings?.length && !ref?.data?.bindings.includes(outputId)
-}
-
-async function playPdf(slide: null | OutSlide, nextPage: number, loop = false) {
-    const data = slide || get(activeShow)
-    if (!data?.id) return
+export async function playPdf(data: OutSlide | null, next: boolean, loop = false) {
+    if (!data?.id || data?.type !== "pdf") return
 
     GlobalWorkerOptions.workerSrc = "./assets/pdf.worker.min.mjs"
     const loadingTask = getDocument(data.id)
     const pdfDoc = await loadingTask.promise
     const pages = pdfDoc.numPages
     loadingTask.destroy()
+
+    let nextPage = data.page
+    if (nextPage === undefined) nextPage = next ? -1 : pages
+    nextPage += next ? 1 : -1
+
     if (nextPage > pages - 1) {
         if (!loop) return
         nextPage = 0
     }
 
-    const name = data?.name || get(projects)[get(activeProject) || ""]?.shows?.[get(activeShow)?.index || 0]?.name
+    const projectItem = get(projects)[get(activeProject) || ""]?.shows?.[get(activeShow)?.index || 0]
+    const name = data?.name || projectItem?.name
 
     setOutput("slide", { type: "pdf", id: data.id, page: nextPage, pages, name })
     clearBackground()
-}
 
-function getNextEnabled(index: null | number, end = false, customOutputId = ""): null | number {
-    if (index === null || isNaN(index)) return null
-
-    index++
-
-    const outputId = customOutputId || getFirstActiveOutput()?.id || ""
-    const currentOutput = get(outputs)[outputId] || {}
-    const slide = currentOutput.out?.slide || null
-    const layout = _show(slide ? slide.id : "active")
-        .layouts(slide ? [slide.layout] : "active")
-        .ref()[0]
-
-    if (layout?.[index - 1]?.data?.end) index = 0
-    if (!layout?.[index]) return null
-    if (index >= layout.length || !layout.slice(index, layout.length).filter((a) => !a.data.disabled).length) return null
-
-    while ((layout[index]?.data.disabled || notBound(layout[index], customOutputId)) && index < layout.length) index++
-
-    if (end) {
-        index = layout.length - 1
-        while ((layout[index]?.data.disabled || notBound(layout[index], customOutputId)) && index > 0) index--
-    }
-
-    if (!layout[index]) return null
-    return index
+    const timer = projectItem?.data?.timer || 0
+    if (timer) startFolderTimer(data.id, { type: "pdf", path: "" })
 }
 
 // go to random slide in current project
@@ -1187,8 +643,7 @@ export async function checkNextAfterMedia(endedId: string, type: "media" | "audi
     if (!nextAfterMedia) return false
 
     // WIP PAUSE PLAYING VIDEO WHEN ENDED, so it does not loop to start
-    const loop = layoutSlide?.data?.end
-    nextSlide(null, false, false, loop, true, outputId, !loop, true)
+    OutputHelper.advanceOutput(outputId, "", { playNext: true })
 
     return true
 }

@@ -4,6 +4,7 @@ import type { Projects } from "../../types/Projects"
 import type { Shows } from "../../types/Show"
 import { customActionActivation } from "../components/actions/actions"
 import { clone, keysToID, removeDeleted } from "../components/helpers/array"
+import { isOutCleared } from "../components/helpers/output"
 import { sendMain } from "../IPC/main"
 import {
     actionTags,
@@ -13,6 +14,7 @@ import {
     alertMessage,
     alertUpdates,
     audioChannelsData,
+    audioEffects,
     audioFolders,
     audioPlaylists,
     autoOutput,
@@ -36,15 +38,14 @@ import {
     effectsLibrary,
     emitters,
     eqPresets,
-    equalizerConfig,
     errorHasOccurred,
     events,
     folders,
     formatNewShow,
     fullColors,
     gain,
-    globalTags,
     globalRegexes,
+    globalTags,
     groupNumbers,
     groups,
     labelsDisabled,
@@ -55,13 +56,14 @@ import {
     mediaFolders,
     mediaOptions,
     mediaTags,
-    playerTags,
     metronome,
+    obsData,
     openedFolders,
     outLocked,
     outputs,
     overlayCategories,
     overlays,
+    playerTags,
     playerVideos,
     ports,
     profiles,
@@ -103,15 +105,13 @@ import {
     variableTags,
     variables,
     videoMarkers,
-    volume,
-    obsData
+    volume
 } from "../stores"
 import type { SaveActions, SaveData, SaveList, SaveListSettings, SaveListSyncedSettings } from "./../../types/Save"
 import { audioStreams, companion } from "./../stores"
 import { socketDisconnect, syncWithCloud } from "./cloudSync"
 import { newToast, setStatus, startAutosave } from "./common"
 import { syncDrive } from "./drive"
-import { isOutCleared } from "../components/helpers/output"
 
 export function save(closeWhenFinished = false, customTriggers: SaveActions = {}) {
     startAutosave() // reset auto save timer
@@ -174,7 +174,7 @@ export function save(closeWhenFinished = false, customTriggers: SaveActions = {}
         driveData: get(driveData),
         calendarAddShow: get(calendarAddShow),
         metronome: get(metronome),
-        equalizerConfig: get(equalizerConfig),
+        audioEffects: get(audioEffects),
         eqPresets: get(eqPresets),
         effectsLibrary: get(effectsLibrary),
         special: get(special),
@@ -461,7 +461,7 @@ const saveList: { [key in SaveList]: any } = {
     driveData,
     calendarAddShow: null,
     metronome: null,
-    equalizerConfig: null,
+    audioEffects: null,
     eqPresets: null,
     effectsLibrary: null,
     special,

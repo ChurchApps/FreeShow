@@ -5,14 +5,14 @@ import { Main } from "../../types/IPC/Main"
 import { customActionActivation } from "../components/actions/actions"
 import { encodeFilePath, getFileName, locateMediaFile, removeExtension } from "../components/helpers/media"
 import { checkNextAfterMedia } from "../components/helpers/showActions"
-import { sendMain } from "../IPC/main"
+import { requestMain, sendMain } from "../IPC/main"
 import { audioChannelsData, dictionary, media, outLocked, playingAudio, playingAudioPaths, special, volume } from "../stores"
+import { addToMediaFolder } from "../utils/cloudSync"
 import { AudioAnalyser } from "./audioAnalyser"
 import { AudioAnalyserMerger } from "./audioAnalyserMerger"
 import { clearAudio, clearing, fadeInAudio, fadeOutAudio } from "./audioFading"
 import { AudioMultichannel } from "./audioMultichannel"
 import { AudioPlaylist } from "./audioPlaylist"
-import { addToMediaFolder } from "../utils/cloudSync"
 
 type AudioMetadata = {
     name: string
@@ -25,6 +25,7 @@ type AudioOptions = {
     startAt?: number
     crossfade?: number // playlist
     playlistCrossfade?: boolean // playlist
+    startPaused?: boolean // playlist
     volume?: number // playlist
 }
 export type AudioData = {
@@ -33,6 +34,7 @@ export type AudioData = {
     isMic: boolean
     audio: HTMLAudioElement
     stream?: MediaStream
+    replayGainMultiplier?: number
 }
 
 export class AudioPlayer {
@@ -105,8 +107,18 @@ export class AudioPlayer {
             return
         }
 
-        const newVolume = AudioPlayer.getVolume(path) * (options.volume || 1)
-        audio.volume = newVolume
+        let replayGainMultiplier = 1
+        try {
+            const audioMetadata = await requestMain(Main.READ_AUDIO_METADATA, { filePath: path })
+            if (audioMetadata?.replayGainMultiplier) {
+                replayGainMultiplier = audioMetadata.replayGainMultiplier
+            }
+        } catch (e) {
+            console.error("Failed to read ReplayGain metadata", e)
+        }
+
+        const newVolume = AudioPlayer.getVolume(path) * (options.volume || 1) * replayGainMultiplier
+        audio.volume = Math.min(1, Math.max(0, newVolume))
 
         options.startAt = AudioPlayer.getStartTime(path, options.startAt)
         if (options.startAt > 0) audio.currentTime = options.startAt
@@ -114,9 +126,10 @@ export class AudioPlayer {
         playingAudio.update((a) => {
             a[path] = {
                 name: removeExtension(metadata.name || getFileName(path)),
-                paused: false,
+                paused: !!options.startPaused,
                 isMic: false,
-                audio
+                audio,
+                replayGainMultiplier
             }
             return a
         })
@@ -128,7 +141,7 @@ export class AudioPlayer {
             fadeInAudio(path, options.crossfade, !!waitToPlay, newVolume)
         }
 
-        this.initAudio(path, waitToPlay)
+        this.initAudio(path, waitToPlay, !!options.startPaused)
 
         const name = removeExtension(metadata.name || getFileName(path))
         this.nowPlaying(path, name)
@@ -191,13 +204,13 @@ export class AudioPlayer {
     // private static init(id: string, audio: HTMLAudioElement, metadata: AudioMetadata) {
     // }
 
-    private static initAudio(id: string, waitToPlay = 0) {
+    private static initAudio(id: string, waitToPlay = 0, startPaused = false) {
         setTimeout(async () => {
             // audio might have been cleared
             const audio = this.getAudio(id)
             if (!audio) return
 
-            this.play(id)
+            if (!startPaused) this.play(id)
             customActionActivation("audio_start")
 
             // WIP get microphone input stream (audio will have to be muted in that case)
@@ -275,7 +288,10 @@ export class AudioPlayer {
                 newVolume *= AudioPlaylist.getActivePlaylist()?.volume || 1
             }
 
-            updateAudioStore(id, "volume", newVolume)
+            const gainMultiplier = get(playingAudio)[id]?.replayGainMultiplier || 1
+            newVolume *= gainMultiplier
+
+            updateAudioStore(id, "volume", Math.min(1, Math.max(0, newVolume)))
         })
 
         AudioAnalyser.setGain(this.getGain())
@@ -323,7 +339,7 @@ export class AudioPlayer {
 
         if (AudioPlaylist.getPlayingPath() === id) {
             this.stop(id) // stop existing
-            AudioPlaylist.next()
+            AudioPlaylist.next(true)
             return
         }
 

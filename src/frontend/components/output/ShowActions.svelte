@@ -2,9 +2,9 @@
     import type { Output } from "../../../types/Output"
     import type { LayoutRef } from "../../../types/Show"
     import { activeEdit, activePage, activePopup, activeShow, outLocked, popupData, showsCache } from "../../stores"
-    import { previewShortcuts } from "../../utils/shortcuts"
     import Icon from "../helpers/Icon.svelte"
     import { refreshOut, setOutput } from "../helpers/output"
+    import { OutputHelper } from "../helpers/OutputHelper"
     import { getLayoutRef } from "../helpers/show"
     import { updateOut } from "../helpers/showActions"
     import MaterialButton from "../inputs/MaterialButton.svelte"
@@ -85,10 +85,10 @@
 </script>
 
 <span class="group">
-    <MaterialButton title="preview._previous_slide [Arrow Left]" disabled={$outLocked || outSlide?.id === "temp" || (outSlide ? (outSlide.index || 0) < 1 && (linesIndex || 0) < 1 : !layoutLength)} on:click={() => previewShortcuts.ArrowLeft({ preview: true })}>
+    <MaterialButton title="preview._previous_slide [Arrow Left]" disabled={$outLocked || outSlide?.id === "temp" || (outSlide ? (outSlide.index || 0) < 1 && (linesIndex || 0) < 1 : !layoutLength)} on:click={() => OutputHelper.advanceOutputs("previous")}>
         <Icon id="previous" size={1.2} />
     </MaterialButton>
-    <MaterialButton title="preview._next_slide [Arrow Right]" disabled={$outLocked || outSlide?.id === "temp" || (outSlide ? (outSlide.index || 0) + 1 >= length && (linesIndex || 0) + 1 >= (maxLines || 0) : !layoutLength)} on:click={() => previewShortcuts.ArrowRight({ preview: true, key: "ArrowRight" })}>
+    <MaterialButton title="preview._next_slide [Arrow Right]" disabled={$outLocked || outSlide?.id === "temp" || (outSlide ? (outSlide.index || 0) + 1 >= length && (linesIndex || 0) + 1 >= (maxLines || 0) : !layoutLength)} on:click={() => OutputHelper.advanceOutputs("next")}>
         <Icon id="next" size={1.2} />
     </MaterialButton>
 

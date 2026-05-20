@@ -1,11 +1,25 @@
-<img align="right" width="150" height="150" src="https://github.com/ChurchApps/FreeShow/assets/17619496/02ac9807-1f47-47fc-b895-b35f857c2b57">
+<p align='center'>
+ <a href='https://freeshow.app/'>
+  <img src='https://github.com/ChurchApps/FreeShow/assets/17619496/02ac9807-1f47-47fc-b895-b35f857c2b57' width=150 />
+ </a>
+</p>
 
-[![Downloads](https://img.shields.io/github/downloads/ChurchApps/freeshow/total)](https://github.com/ChurchApps/freeshow/releases)
-[![Licence](https://img.shields.io/badge/licence-GPL-blue.svg)](https://github.com/ChurchApps/freeshow/blob/main/LICENSE)
+<h1 align='center'>
+  FreeShow
+</h1>
 
-# FreeShow
+<p align='center'>
+  FreeShow is a free software with a user-friendly interface that offers powerful features for creating and editing slideshows. 
+</p>
 
-> FreeShow is a free software with a user-friendly interface that offers powerful features for creating and editing slideshows.
+<p align='center'>
+  <a href="https://github.com/ChurchApps/freeshow/releases"><img alt="Download" src="https://img.shields.io/github/downloads/ChurchApps/FreeShow/total?style=for-the-badge" /></a>
+  &nbsp;
+  <a href="https://github.com/ChurchApps/freeshow/blob/main/LICENSE"><img alt="Licence" src="https://img.shields.io/badge/licence-GPL-blue.svg?style=for-the-badge" /></a>
+  &nbsp;
+  <a href="https://github.com/ChurchApps/FreeShow/"><img alt="GitHub Stars" src="https://img.shields.io/github/stars/ChurchApps/FreeShow?style=for-the-badge" /></a>
+</p>
+<br />
 
 ## Get Started Using FreeShow
 

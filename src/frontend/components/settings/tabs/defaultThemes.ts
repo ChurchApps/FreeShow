@@ -166,6 +166,26 @@ export const defaultThemes: { [key: string]: Themes } = {
             focus: "rgb(255 255 255 / 0.3)"
         }
     },
+    charcoal: {
+        name: "Charcoal",
+        font: {
+            family: "",
+            size: "1em"
+        },
+        colors: {
+            primary: "#292929",
+            "primary-lighter": "#303030",
+            "primary-darker": "#1e1e1e",
+            "primary-darkest": "#121212",
+            text: "#d0d0d0",
+            textInvert: "#131313",
+            "secondary-text": "#808080",
+            secondary: "#8f8f8f",
+            "secondary-opacity": "rgb(143 143 143 / 0.5)",
+            hover: "rgb(208 208 208 / 0.05)",
+            focus: "rgb(208 208 208 / 0.1)"
+        }
+    },
     papyrus: {
         name: "Papyrus",
         font: {

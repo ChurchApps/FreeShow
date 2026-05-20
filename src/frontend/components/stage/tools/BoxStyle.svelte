@@ -6,6 +6,7 @@
     import { itemBoxes, setBoxInputValue } from "../../edit/values/boxes"
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
+    import { getCustomMetadata } from "../../helpers/show"
     import { getStyles } from "../../helpers/style"
     import { updateStageShow } from "../stage"
     import { slideTextSections } from "../values/text"
@@ -86,8 +87,24 @@
     $: if (item?.type === "slide_tracker" || activeItemId?.includes("tracker")) {
         setBoxInputValue(stageSections, "default", "tracker.accent", "value", item?.tracker?.accent || $themes[$theme]?.colors?.secondary || "#F0008C")
 
+        const metadataLabelMap: Record<string, string> = {
+            number: "meta.number",
+            title: "meta.title",
+            artist: "meta.artist",
+            author: "meta.author",
+            composer: "meta.composer",
+            publisher: "meta.publisher",
+            copyright: "meta.copyright",
+            CCLI: "meta.CCLI",
+            year: "meta.year",
+            key: "meta.key"
+        }
+        const metadataOptions = [{ value: "name", label: "show.name" }, ...Object.keys(getCustomMetadata()).map((key) => ({ value: key, label: metadataLabelMap[key] || key }))]
+        setBoxInputValue(stageSections, "default", "tracker.projectMetadata", "options", metadataOptions)
+
         setBoxInputValue(stageSections, "default", "tracker.childProgress", "hidden", item?.tracker?.type !== "group")
         setBoxInputValue(stageSections, "default", "tracker.oneLetter", "hidden", item?.tracker?.type !== "group")
+        setBoxInputValue(stageSections, "default", "tracker.projectMetadata", "hidden", item?.tracker?.type !== "project")
     }
 
     $: if (item?.type === "camera") {

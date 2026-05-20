@@ -108,11 +108,27 @@
             })
             loading = false
         } else if (exportFormat === "pdf") {
-            const showNames = showIds.map((id) => $shows[id]?.name || "")
             // const ratio = getResolution() // { width: 16, height: 9 }
             // const size = { width: 1920, height: Math.round(1920 / ratio.width) * ratio.height }
             // const micronsSize = { width: Math.round((size.width / 96) * 25400), height: Math.round((size.height / 96) * 25400) }
-            send(EXPORT, ["GENERATE"], { type: exportFormat, showIds, showNames, options: pdfOptions })
+            let project = exportType === "project" && $activeProject ? $projects[$activeProject] : null
+            let finalShowIds = showIds
+            if (project) {
+                pdfOptions.oneFile = true
+                pdfOptions.name = project.name
+                const items = project.shows || []
+                finalShowIds = items
+                    .filter((item) => {
+                        const type = item.type || "show"
+                        if (type === "show") return true
+                        if (type === "section") return true
+                        if (type === "image" || type === "video" || type === "audio") return true
+                        return false
+                    })
+                    .map((item) => item.id)
+            }
+            const showNames = finalShowIds.map((id) => $shows[id]?.name || "")
+            send(EXPORT, ["GENERATE"], { type: exportFormat, showIds: finalShowIds, showNames, options: pdfOptions, projectItems: project?.shows })
         } else {
             const showNames = showIds.map((id) => $shows[id]?.name || "")
             send(EXPORT, ["GENERATE"], { type: exportFormat, showIds, showNames })
@@ -161,7 +177,7 @@
 
     {#if exportFormat === "pdf"}
         <HRule />
-        <PdfExport bind:pdfOptions {previewShow} />
+        <PdfExport bind:pdfOptions {previewShow} showCount={showIds.length} {exportType} />
     {:else if exportFormat === "project"}
         <MaterialToggleSwitch label="export.include_media" style="margin-top: 20px;" checked={$special.projectIncludeMedia ?? true} defaultValue={true} on:change={(e) => setSpecial(e, "projectIncludeMedia")} />
     {/if}

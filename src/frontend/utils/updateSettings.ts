@@ -13,6 +13,7 @@ import {
     activeProject,
     alertUpdates,
     audioChannelsData,
+    audioEffects,
     audioFolders,
     audioPlaylists,
     audioStreams,
@@ -36,12 +37,11 @@ import {
     effectsLibrary,
     emitters,
     eqPresets,
-    equalizerConfig,
     formatNewShow,
     fullColors,
     gain,
-    globalTags,
     globalRegexes,
+    globalTags,
     groupNumbers,
     groups,
     labelsDisabled,
@@ -53,6 +53,7 @@ import {
     mediaOptions,
     mediaTags,
     metronome,
+    obsData,
     openedFolders,
     os,
     outLocked,
@@ -85,8 +86,7 @@ import {
     version,
     videoMarkers,
     videosData,
-    videosTime,
-    obsData
+    videosTime
 } from "../stores"
 import { OUTPUT } from "./../../types/Channels"
 import type { SaveListSettings, SaveListSyncedSettings } from "./../../types/Save"
@@ -109,6 +109,11 @@ export function updateSyncedSettings(data: any) {
 
 export function updateSettings(data: any) {
     // pre v0.8.2 (data contains SaveListSyncedSettings, but it gets overwritten and removed on first save)
+
+    // pre v1.6.1 (equalizerConfig was not in audioEffects)
+    if (data.equalizerConfig && !data.audioEffects?.main) {
+        data.audioEffects = { main: { equalizer: data.equalizerConfig } }
+    }
 
     Object.entries(data).forEach(([key, value]: any) => {
         if (updateList[key as SaveListSettings]) updateList[key as SaveListSettings](value)
@@ -326,7 +331,7 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
     driveData: (v: any) => driveData.set(v),
     calendarAddShow: (v: any) => calendarAddShow.set(v),
     metronome: (v: any) => metronome.set(v),
-    equalizerConfig: (v: any) => equalizerConfig.set(v),
+    audioEffects: (v: any) => audioEffects.set(v),
     eqPresets: (v: any) => eqPresets.set(v),
     effectsLibrary: (v: any) => effectsLibrary.set(v),
     globalTags: (v: any) => globalTags.set(v),

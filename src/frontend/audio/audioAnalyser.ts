@@ -1,14 +1,21 @@
 import { get } from "svelte/store"
 import type { AudioChannel } from "../../types/Audio"
 import { AUDIO, OUTPUT } from "../../types/Channels"
-import { disabledServers, media, outputs, playingAudio, playingVideos, serverData, special } from "../stores"
+import { audioEffects, disabledServers, media, outputs, playingAudio, playingVideos, serverData, special } from "../stores"
 import { isOutputWindow } from "../utils/common"
 import { send } from "../utils/request"
 import { AudioAnalyserMerger } from "./audioAnalyserMerger"
-import { connectAudioSourceToEqualizer, disconnectAudioSourceFromEqualizer, getConnectedSourceOutput, initializeEqualizer, setAutoInitializeCallback } from "./audioEqualizer"
+import { initializeCompressor } from "./effects/audioCompressor"
+import { initializeDelay } from "./effects/audioDelay"
+import { connectAudioSourceToEqualizer, disconnectAudioSourceFromEqualizer, getConnectedSourceOutput, initializeEqualizer, setAutoInitializeCallback } from "./effects/audioEqualizer"
+import { initializeFilter } from "./effects/audioFilter"
+import { initializeLimiter } from "./effects/audioLimiter"
 import { AudioMultichannel, MultichannelInfo } from "./audioMultichannel"
+import { initializeNoiseGate } from "./effects/audioNoiseGate"
 import { AudioPlayer } from "./audioPlayer"
 import { AudioProcessor, PitchShiftNode } from "./audioProcessor"
+import { initializeReverb } from "./effects/audioReverb"
+import { initializeStereoShaper } from "./effects/audioStereoShaper"
 
 export class AudioAnalyser {
     static sampleRate = 48000 // Hz
@@ -25,6 +32,9 @@ export class AudioAnalyser {
 
     // Expose the AudioContext for other audio systems to use the same context
     static getAudioContext(): AudioContext {
+        if (this.ac.state === "suspended") {
+            this.ac.resume().catch(() => {});
+        }
         return this.ac
     }
 
@@ -39,6 +49,10 @@ export class AudioAnalyser {
 
     static async attach(id: string, audio: HTMLMediaElement | MediaStream) {
         if (this.sources[id]) return
+
+        if (this.ac.state === "suspended") {
+            this.ac.resume().catch(() => {});
+        }
 
         let source: AudioNode
         try {
@@ -241,12 +255,57 @@ export class AudioAnalyser {
     }
 
     private static gainNode: GainNode | null = null
+    private static effectNodes: { [K: string]: { input: GainNode; output: GainNode } } = {}
+
     private static initGain() {
         if (this.gainNode) return
 
         this.gainNode = AudioMultichannel.createMultichannelGainNode(this.ac, this.channels)
-        this.gainNode.connect(this.ac.destination)
         this.gainNode.gain.value = AudioPlayer.getGain()
+        this.rebuildEffectChain()
+
+        // Rebuild chain when any effect is toggled (not on param changes)
+        let prevEnabled = ""
+        audioEffects.subscribe(() => {
+            const m = get(audioEffects).main
+            const enabled = [m?.filter, m?.noiseGate, m?.compressor, m?.reverb, m?.delay, m?.limiter, m?.stereoShaper].map((e) => (e?.enabled ? 1 : 0)).join("")
+            if (enabled !== prevEnabled) {
+                prevEnabled = enabled
+                this.rebuildEffectChain()
+            }
+        })
+    }
+
+    private static rebuildEffectChain() {
+        if (!this.gainNode) return
+
+        try {
+            this.gainNode.disconnect()
+        } catch {
+            /* not yet connected */
+        }
+        for (const node of Object.values(this.effectNodes))
+            try {
+                node.output.disconnect()
+            } catch {}
+
+        const main = get(audioEffects).main
+        const chain: { input: GainNode; output: GainNode }[] = []
+
+        if (main?.filter?.enabled) chain.push((this.effectNodes.filter ??= initializeFilter(this.ac)))
+        if (main?.noiseGate?.enabled) chain.push((this.effectNodes.noiseGate ??= initializeNoiseGate(this.ac)))
+        if (main?.compressor?.enabled) chain.push((this.effectNodes.compressor ??= initializeCompressor(this.ac)))
+        if (main?.reverb?.enabled) chain.push((this.effectNodes.reverb ??= initializeReverb(this.ac)))
+        if (main?.delay?.enabled) chain.push((this.effectNodes.delay ??= initializeDelay(this.ac)))
+        if (main?.limiter?.enabled) chain.push((this.effectNodes.limiter ??= initializeLimiter(this.ac)))
+        if (main?.stereoShaper?.enabled) chain.push((this.effectNodes.stereoShaper ??= initializeStereoShaper(this.ac)))
+
+        let prev: AudioNode = this.gainNode
+        for (const seg of chain) {
+            prev.connect(seg.input)
+            prev = seg.output
+        }
+        prev.connect(this.ac.destination)
     }
 
     static setGain(value: number) {
@@ -335,25 +394,33 @@ export class AudioAnalyser {
         const id = isOutputWindow() ? Object.keys(get(outputs))[0] : "main"
         // might only work in "main" for OutputShow
 
-        this.recorder = new MediaRecorder(this.destNode!.stream, {
-            mimeType: 'audio/webm; codecs="opus"'
-        })
-        this.recorder.addEventListener("dataavailable", async (ev) => {
-            const arrayBuffer = await ev.data.arrayBuffer()
-            const uint8Array = new Uint8Array(arrayBuffer)
-            // , audioDelay: 0, channels: this.channels, frameRate: this.recorderFrameRate
-            send(AUDIO, ["CAPTURE"], { id, buffer: uint8Array })
-        })
+        try {
+            this.recorder = new MediaRecorder(this.destNode!.stream, {
+                mimeType: 'audio/webm; codecs="opus"'
+            })
+            this.recorder.addEventListener("dataavailable", async (ev) => {
+                const arrayBuffer = await ev.data.arrayBuffer()
+                const uint8Array = new Uint8Array(arrayBuffer)
+                // , audioDelay: 0, channels: this.channels, frameRate: this.recorderFrameRate
+                send(AUDIO, ["CAPTURE"], { id, buffer: uint8Array })
+            })
 
-        if (this.recorder.state === "paused") this.recorder.play()
-        else if (this.recorder.state !== "recording") {
-            this.recorder.start(Math.round(1000 / this.recorderFrameRate))
+            if (this.recorder.state === "paused") this.recorder.play()
+            else if (this.recorder.state !== "recording") {
+                this.recorder.start(Math.round(1000 / this.recorderFrameRate))
+            }
+        } catch (err) {
+            console.error(`[AudioAnalyser] Failed to start MediaRecorder:`, err);
         }
     }
 
     private static recorderActive = false
     static recorderActivate() {
         if (!this.shouldBeActive()) return
+
+        if (this.ac.state === "suspended") {
+            this.ac.resume().catch(() => {});
+        }
 
         this.recorderActive = true
         this.initRecorder()
@@ -370,11 +437,14 @@ export class AudioAnalyser {
         let outputList = Object.values(get(outputs))
         if (isOutputWindow()) outputList = [Object.values(get(outputs))[0]]
 
+        // any outputs with webrtc streaming enabled
+        if (outputList.find((a) => a && a.enabled && a.webrtc)) return true
+
         // any outputs with ndi audio enabled
-        if (outputList.find((a) => a.enabled && a.ndi && a.ndiData?.audio)) return true
+        if (outputList.find((a) => a && a.enabled && a.ndi && a.ndiData?.audio)) return true
 
         // any outputs with blackmagic enabled (audio always enabled for blackmagic)
-        if (outputList.find((a) => a.enabled && a.blackmagic)) return true
+        if (outputList.find((a) => a && a.enabled && a.blackmagic)) return true
 
         return false
     }

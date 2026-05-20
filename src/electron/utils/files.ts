@@ -1276,7 +1276,8 @@ export async function loadShowsAsync(returnShows = false, reCacheNames: string[]
     specialCaseFixer()
 
     // list all shows in folder
-    const filesInFolder = readFolder(showsPath)
+    const allFiles = await readFolderAsync(showsPath)
+    const filesInFolder = allFiles
         .filter((name) => name.toLowerCase().endsWith(".show"))
         .map((name) => name.slice(0, -5)) // remove .show extension
         .filter((trimmedName) => trimmedName) // remove files with no name
@@ -1285,15 +1286,21 @@ export async function loadShowsAsync(returnShows = false, reCacheNames: string[]
     const newCachedShows: TrimmedShows = {}
     const textCache: { [key: string]: string } = {}
 
+    // send already cached shows to the frontend immediately
+    if (!returnShows && !reCacheNames.length && Object.keys(cachedShows).length) {
+        sendMain(Main.SHOWS, cachedShows as TrimmedShows)
+    }
+
     // create a map for quick lookup of cached shows by name
     const cachedShowNames = new Map<string, string>()
     for (const [id, show] of Object.entries(cachedShows)) {
         if (show?.name && !reCacheNames.includes(show.name)) cachedShowNames.set(show.name, id)
     }
 
-    const BATCH_SIZE = 20
+    const BATCH_SIZE = 50
     for (let i = 0; i < filesInFolder.length; i += BATCH_SIZE) {
         const batch = filesInFolder.slice(i, i + BATCH_SIZE)
+        let hadIo = false
 
         await Promise.all(
             batch.map(async (name) => {
@@ -1303,6 +1310,7 @@ export async function loadShowsAsync(returnShows = false, reCacheNames: string[]
                     return
                 }
 
+                hadIo = true
                 const showPath: string = path.join(showsPath, `${name}.show`)
                 const jsonData = (await readFileAsync(showPath)) || "{}"
                 const show = parseShow(jsonData)
@@ -1322,8 +1330,7 @@ export async function loadShowsAsync(returnShows = false, reCacheNames: string[]
             })
         )
 
-        // Yield between batches so other IPC requests can be handled.
-        await new Promise((resolve) => setTimeout(resolve, 0))
+        if (hadIo) await new Promise((resolve) => setImmediate(resolve))
     }
 
     // send updated text cache
@@ -1335,8 +1342,7 @@ export async function loadShowsAsync(returnShows = false, reCacheNames: string[]
 
     if (returnShows) return newCachedShows
 
-    // save this (for cloud sync)
-    setStore(_store.SHOWS, newCachedShows)
+    setImmediate(() => setStore(_store.SHOWS, newCachedShows))
 
     return newCachedShows
 }
@@ -1381,12 +1387,75 @@ export function parseJSON(jsonData: string) {
 }
 
 // load shows by id (used for show export)
-export function getShowsFromIds(showIds: string[]) {
+export function getShowsFromIds(showIds: string[], projectItems?: any[]) {
     const shows: Show[] = []
     const cachedShows = getStore("SHOWS")
     const showsPath = getDataFolderPath("shows")
 
     showIds.forEach((id) => {
+        // Find if this is a project item (section/media)
+        const projectItem = projectItems?.find((item) => item.id === id)
+
+        if (projectItem && projectItem.type && projectItem.type !== "show") {
+            const type = projectItem.type
+            if (type === "section") {
+                // Synthetic show for section header
+                shows.push({
+                    id,
+                    name: projectItem.name || "Section",
+                    type: "section",
+                    color: projectItem.color || "",
+                    notes: projectItem.notes || "",
+                    data: projectItem.data || {},
+                    meta: {},
+                    settings: { activeLayout: "default" },
+                    slides: {},
+                    layouts: {},
+                    media: {}
+                } as any)
+            } else if (type === "image" || type === "video" || type === "audio") {
+                // Synthetic show for media slide
+                const filename = upath.basename(id)
+                shows.push({
+                    id,
+                    name: projectItem.name || filename,
+                    type,
+                    meta: {},
+                    settings: { activeLayout: "default" },
+                    slides: {
+                        "slide1": {
+                            group: null,
+                            color: null,
+                            settings: {},
+                            notes: "",
+                            items: []
+                        }
+                    },
+                    layouts: {
+                        "default": {
+                            id: "default",
+                            name: "Default",
+                            notes: "",
+                            slides: [
+                                {
+                                    id: "slide1",
+                                    background: id
+                                }
+                            ]
+                        }
+                    },
+                    media: {
+                        [id]: {
+                            id,
+                            path: id,
+                            type: "media"
+                        }
+                    }
+                } as any)
+            }
+            return
+        }
+
         const cachedShow = cachedShows[id]
         if (!cachedShow) return
 

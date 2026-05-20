@@ -1,6 +1,6 @@
 <script lang="ts">
     import { cameraManager } from "../../media/cameraManager"
-    import { actions, activeEdit, activeProject, activeRecording, activeShow, categories, colorbars, dictionary, disabledServers, drawerTabsData, effects, effectsLibrary, events, forceClock, globalTags, livePrepare, media, mediaFolders, os, outputs, overlayCategories, overlays, projects, redoHistory, scriptures, selected, shows, showsCache, slidesOptions, special, stageShows, styles, templateCategories, timers, topContextActive, undoHistory } from "../../stores"
+    import { actions, activeEdit, activeProject, activeRecording, activeShow, categories, colorbars, dictionary, disabledServers, drawerTabsData, effects, effectsLibrary, events, forceClock, globalTags, livePrepare, media, mediaFolders, os, outputs, overlayCategories, overlays, projects, redoHistory, scriptures, selected, shows, showsCache, slidesOptions, special, spellcheck, stageShows, styles, templateCategories, timers, topContextActive, undoHistory } from "../../stores"
     import { translateText } from "../../utils/language"
     import { closeContextMenu } from "../../utils/shortcuts"
     import { keysToID } from "../helpers/array"
@@ -169,10 +169,22 @@
             if (!$redoHistory.length) disabled = true
         },
         text_copy: () => {
-            if (!window.getSelection()?.toString()) disabled = true
+            // $spellcheck?.suggestions ||
+            if (!window.getSelection()?.toString()) hide = true
         },
         text_cut: () => {
-            if (!window.getSelection()?.toString()) disabled = true
+            // $spellcheck?.suggestions ||
+            if (!window.getSelection()?.toString()) hide = true
+        },
+        text_paste: () => {
+            setTimeout(() => {
+                if ($spellcheck?.suggestions) hide = true
+            }, 20)
+        },
+        text_select_all: () => {
+            setTimeout(() => {
+                if ($spellcheck?.suggestions) hide = true
+            }, 20)
         },
         createSlideshow: () => {
             hide = $selected.id !== "media" || $selected.data.length < 2

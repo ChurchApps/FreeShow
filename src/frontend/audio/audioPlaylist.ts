@@ -12,6 +12,7 @@ type AudioPlaylistOptions = {
 type PlaylistData = {
     crossfade?: number
     loop?: boolean
+    autoNext?: boolean
 }
 
 export class AudioPlaylist {
@@ -51,12 +52,12 @@ export class AudioPlaylist {
         if (key === "volume") AudioPlayer.updateVolume()
     }
 
-    static next() {
+    static next(isEnding: boolean = false) {
         const playlist = AudioPlaylist.getActivePlaylist()
         if (get(outLocked) || !playlist) return
 
         const crossfade = Number(playlist.crossfade) || 0
-        AudioPlaylist.nextInternal("", -1, { crossfade, loop: playlist.loop !== false })
+        AudioPlaylist.nextInternal("", -1, { crossfade, loop: playlist.loop !== false, autoNext: isEnding ? playlist.autoNext !== false : true })
     }
 
     static getPlayingPath(): string {
@@ -143,7 +144,7 @@ export class AudioPlaylist {
         })
 
         // if (crossfade) isCrossfading = true
-        AudioPlayer.start(nextSong, { name: "" }, { pauseIfPlaying: false, crossfade: data.crossfade, playlistCrossfade: true, volume: playlist.volume || 1 })
+        AudioPlayer.start(nextSong, { name: "" }, { pauseIfPlaying: false, crossfade: data.crossfade, playlistCrossfade: true, startPaused: data.autoNext === false, volume: playlist.volume || 1 })
 
         function getSongs(): string[] {
             if (previousPath && get(activePlaylist)?.songs) return get(activePlaylist).songs

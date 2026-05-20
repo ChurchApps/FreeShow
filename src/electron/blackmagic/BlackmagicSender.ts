@@ -28,15 +28,10 @@ interface PlaybackData {
     lastVideoSizeWarningTime?: number
     lastAudioSizeWarningTime?: number
     isStarted: boolean
-    monitoringInterval?: NodeJS.Timeout
-    bufferCheckInterval?: NodeJS.Timeout
     lastFrameTime?: number
     audioChannels?: number
     scheduleFailCount?: number
-    framesSinceLastCheck: number
-    lastPerformanceCheck: number
     totalFramesDropped: number
-    hardwareTimeOffset?: number
     targetBufferSize: number
     deviceIndex: number
     enableKeying?: boolean
@@ -45,16 +40,6 @@ interface PlaybackData {
     frameProcessing?: boolean
     conversionBackoffUntil?: number
     conversionErrorCount?: number
-}
-
-interface PerformanceMetrics {
-    timestamp: number
-    outputId: string
-    bufferedFrames: number
-    frameRate: number
-    droppedFrames: number
-    timingDrift?: number
-    recoveryAttempts: number
 }
 
 interface AudioQueueState {
@@ -69,6 +54,10 @@ interface AudioQueueState {
 export class BlackmagicSender {
     // Track used device indices globally, to prevent multiple outputs from trying to use the same device
     private static usedDeviceIndices: Set<number> = new Set()
+    // Global mutex: ensures only one macadam.playback() init runs at a time.
+    // Simultaneous inits on different ports of the same physical card (e.g. DeckLink Duo 2 Mini)
+    // can crash the DeckLink SDK native layer.
+    private static macadamInitMutex: Promise<void> = Promise.resolve()
     // Core state
     static playbackData: { [key: string]: PlaybackData } = {}
     static initializationInProgress: { [key: string]: Promise<boolean> | undefined } = {}
@@ -85,19 +74,6 @@ export class BlackmagicSender {
 
     // Control state
     static isPaused: { [key: string]: boolean } = {}
-    static frameSkipCounter: { [key: string]: number } = {}
-
-    // Monitoring
-    static lastDiagnosticTime = 0
-    static safetyCircuitBreaker: {
-        [outputId: string]: {
-            lastErrorTime: number
-            errorCount: number
-            isBroken: boolean
-            breakUntil: number
-        }
-    } = {}
-    static performanceLog: PerformanceMetrics[] = []
     private static readonly EMPTY_BUFFER = Buffer.alloc(0)
     private static readonly MAX_CONVERSION_BUFFER_BYTES = 128 * 1024 * 1024
     private static readonly CONVERSION_BUFFER_POOL_SIZE = 6
@@ -108,12 +84,8 @@ export class BlackmagicSender {
             index: number
         }
     } = {}
-    // Memory pressure detection is no longer needed - frames are streamed directly
-    // without storage, so memory stays minimal
-
     // Caches for parsing repeated display mode strings
     private static frameRateCache: { [displayMode: string]: { nominal: number; accurate: number } } = {}
-    private static readonly expectedFrameRateGetter = (displayMode: string) => BlackmagicSender.getExpectedFrameRate(displayMode)
 
     // Configuration constants
     private static readonly CLEANUP_INTERVAL = 30 * 1000 // 30 seconds
@@ -121,18 +93,8 @@ export class BlackmagicSender {
     // Global cleanup timer
     private static globalCleanupTimer?: NodeJS.Timeout
 
-    /**
-     * Get total audio queue length across all outputs
-     * Used to determine if audio data is available for scheduling
-     */
     static get audioQueueLength(): number {
-        let totalLength = 0
-        for (const outputId in this.audioQueuesByOutput) {
-            if (Object.prototype.hasOwnProperty.call(this.audioQueuesByOutput, outputId)) {
-                totalLength += this.audioQueuesByOutput[outputId].length
-            }
-        }
-        return totalLength
+        return Object.values(this.audioQueuesByOutput).reduce((sum, q) => sum + q.length, 0)
     }
 
     static initialize(outputId?: string, deviceIndex?: number, displayModeName?: string, pixelFormat?: string, enableKeying?: boolean, audioChannels = 2) {
@@ -153,8 +115,9 @@ export class BlackmagicSender {
     }
 
     static async initializeDevice(outputId: string, deviceIndex: number, displayModeName: string, pixelFormat: string, enableKeying: boolean, audioChannels = 2) {
+        const currentOutputDeviceIndex = this.playbackData[outputId]?.deviceIndex
         // prevent using a device if already in use by another output
-        if (this.usedDeviceIndices.has(deviceIndex)) {
+        if (this.usedDeviceIndices.has(deviceIndex) && currentOutputDeviceIndex !== deviceIndex) {
             console.error(`Device index ${deviceIndex} is already in use by another output. Initialization aborted.`)
             return false
         }
@@ -212,7 +175,6 @@ export class BlackmagicSender {
             }
         }
 
-        this.frameSkipCounter[outputId] = 0
         this.isPaused[outputId] = false
 
         // Always use at least 2 audio channels to ensure proper audio support
@@ -253,21 +215,33 @@ export class BlackmagicSender {
                             return reject(new Error("macadam module not available"))
                         }
 
-                        macadam
-                            .playback({
-                                deviceIndex,
-                                displayMode,
-                                pixelFormat: pixelFormatValue,
-                                enableKeying: enableKeying ? BlackmagicManager.isAlphaSupported(pixelFormat) : false,
-                                channels: actualAudioChannels,
-                                sampleRate: macadam.bmdAudioSampleRate48kHz,
-                                sampleType: macadam.bmdAudioSampleType16bitInteger
-                            })
+                        // Serialize macadam.playback() calls globally to prevent
+                        // simultaneous inits on the same physical card from crashing the native SDK.
+                        let mutexRelease: () => void
+                        const prevMutex = BlackmagicSender.macadamInitMutex
+                        BlackmagicSender.macadamInitMutex = new Promise<void>((res) => {
+                            mutexRelease = res
+                        })
+
+                        prevMutex
+                            .then(() =>
+                                macadam.playback({
+                                    deviceIndex,
+                                    displayMode,
+                                    pixelFormat: pixelFormatValue,
+                                    enableKeying: enableKeying ? BlackmagicManager.isAlphaSupported(pixelFormat) : false,
+                                    channels: actualAudioChannels,
+                                    sampleRate: macadam.bmdAudioSampleRate48kHz,
+                                    sampleType: macadam.bmdAudioSampleType16bitInteger
+                                })
+                            )
                             .then((result: any) => {
+                                mutexRelease()
                                 clearTimeout(timeoutId)
                                 resolve(result as PlaybackChannel)
                             })
                             .catch((error: any) => {
+                                mutexRelease()
                                 clearTimeout(timeoutId)
                                 reject(error)
                             })
@@ -302,8 +276,6 @@ export class BlackmagicSender {
                     lastAudioSizeWarningTime: 0,
                     isStarted: false,
                     audioChannels: actualAudioChannels,
-                    framesSinceLastCheck: 0,
-                    lastPerformanceCheck: Date.now(),
                     totalFramesDropped: 0,
                     targetBufferSize,
                     deviceIndex,
@@ -385,41 +357,6 @@ export class BlackmagicSender {
             return true
         }
         return false
-    }
-
-    static logPerformanceMetrics(outputId: string) {
-        if (!this.playbackData[outputId]) return
-
-        try {
-            const data = this.playbackData[outputId]
-            const metrics: PerformanceMetrics = {
-                timestamp: Date.now(),
-                outputId,
-                bufferedFrames: data.playback.bufferedFrames(),
-                frameRate: data.framesSinceLastCheck / ((Date.now() - data.lastPerformanceCheck) / 1000),
-                droppedFrames: data.totalFramesDropped || 0,
-                recoveryAttempts: data.recoveryAttempts || 0
-            }
-
-            // Try to get timing information
-            const hwTime = data.playback.hardwareTime()
-            const scheduledTime = data.playback.scheduledTime()
-            if (hwTime && scheduledTime) {
-                metrics.timingDrift = hwTime.hardwareTime - scheduledTime.streamTime
-            }
-
-            // Limit log size
-            this.performanceLog.push(metrics)
-            if (this.performanceLog.length > 1000) {
-                this.performanceLog.shift()
-            }
-
-            // Reset counters
-            data.framesSinceLastCheck = 0
-            data.lastPerformanceCheck = Date.now()
-        } catch (err) {
-            console.error(`Error logging metrics: ${err.message}`)
-        }
     }
 
     private static resolveFrameRates(displayMode: string): { nominal: number; accurate: number } {
@@ -689,7 +626,7 @@ export class BlackmagicSender {
                     let convertedFrame
                     try {
                         const reusableOutputBuffer = this.getReusableConversionBuffer(outputId, data.expectedVideoFrameSize)
-                        convertedFrame = this.convertVideoFrameFormat(videoFrame, data.pixelFormat, size, reusableOutputBuffer)
+                        convertedFrame = this.convertVideoFrameFormat(videoFrame, data.pixelFormat, size, reusableOutputBuffer, data.enableKeying === true)
                         data.conversionErrorCount = 0
                     } catch (err) {
                         console.error(`Frame conversion error: ${err instanceof Error ? err.message : String(err)}`)
@@ -750,7 +687,6 @@ export class BlackmagicSender {
 
                         // Assume scheduling was successful if no error was thrown
                         data.scheduledFrames++
-                        data.framesSinceLastCheck++
 
                         try {
                             data.playback.hardwareTime()
@@ -809,327 +745,6 @@ export class BlackmagicSender {
         }, 0) // End setTimeout - this executes the frame scheduling in a separate tick
     }
 
-    // Enhanced conversion function with proper cache management
-
-    static startFrameCallbackHandler(outputId: string) {
-        // COMPLETELY DISABLE frame callback handling since USE_FRAME_PROMISES = false
-        // This prevents the "No promise to resolve" debug messages
-        // Note: outputId parameter kept for compatibility with existing calls
-        void outputId // Explicitly mark as unused
-        return
-    }
-
-    static monitorOutputHealth(outputId: string): {
-        healthy: boolean
-        issues: string[]
-    } {
-        if (!this.playbackData[outputId]) return { healthy: false, issues: ["Output not found"] }
-
-        const data = this.playbackData[outputId]
-        const issues: string[] = []
-        let healthy = true
-
-        try {
-            // Check buffer health
-            const bufferedFrames = data.playback.bufferedFrames()
-            const criticalBufferThreshold = data.isStarted ? 1 : Math.min(2, data.targetBufferSize)
-            if (bufferedFrames < criticalBufferThreshold) {
-                issues.push("Critical buffer underrun")
-                healthy = false
-            } else if (bufferedFrames < data.targetBufferSize / 4) {
-                issues.push("Buffer running low")
-            }
-
-            // Check timing drift
-            const hwTime = data.playback.hardwareTime()
-            const scheduledTime = data.playback.scheduledTime()
-
-            if (hwTime && scheduledTime) {
-                const drift = Math.abs(hwTime.hardwareTime - scheduledTime.streamTime)
-                if (drift > 5000) {
-                    issues.push(`Severe timing drift: ${drift}`)
-                    healthy = false
-                } else if (drift > 2000) {
-                    issues.push(`Timing drift detected: ${drift}`)
-                }
-            }
-
-            // Check frame rate stability
-            if (data.framesSinceLastCheck > 0) {
-                const timeSinceLastCheck = Date.now() - data.lastPerformanceCheck
-                const calculatedFps = data.framesSinceLastCheck / (timeSinceLastCheck / 1000)
-                const expectedFps = this.getExpectedFrameRate(data.displayMode)
-
-                if (calculatedFps < expectedFps * 0.7) {
-                    issues.push(`Frame rate too low: ${calculatedFps.toFixed(1)}fps vs expected ${expectedFps}fps`)
-                    healthy = false
-                }
-            }
-        } catch (err) {
-            issues.push(`Health check error: ${err.message}`)
-            healthy = false
-        }
-
-        return { healthy, issues }
-    }
-
-    static async handlePlaybackReinitialization(outputId: string) {
-        if (!this.playbackData[outputId]) return
-
-        console.log(`Attempting to reinitialize playback for ${outputId}`)
-
-        // Pause output temporarily
-        this.isPaused[outputId] = true
-
-        try {
-            const data = this.playbackData[outputId]
-
-            // Save current state
-            const currentState = {
-                deviceIndex: data.deviceIndex,
-                pixelFormat: data.pixelFormat,
-                displayMode: data.displayMode,
-                audioChannels: data.audioChannels,
-                enableKeying: data.enableKeying
-            }
-
-            // Stop existing playback (ignore errors)
-            try {
-                if (data.playback) {
-                    data.playback.stop()
-                }
-            } catch (err) {
-                // Ignore stop errors
-            }
-
-            // Wait a bit to let hardware settle
-            await wait(500)
-
-            // Check if we still have the output
-            if (!this.playbackData[outputId]) return
-
-            // Create new playback object
-            try {
-                if (!macadam) {
-                    throw new Error("macadam module not available")
-                }
-
-                this.playbackData[outputId].playback = await macadam.playback({
-                    deviceIndex: currentState.deviceIndex,
-                    displayMode: BlackmagicManager.getDisplayMode(currentState.displayMode),
-                    pixelFormat: BlackmagicManager.getPixelFormat(currentState.pixelFormat),
-                    enableKeying: currentState.enableKeying || false,
-                    channels: currentState.audioChannels || 2,
-                    sampleRate: macadam.bmdAudioSampleRate48kHz,
-                    sampleType: macadam.bmdAudioSampleType16bitInteger
-                })
-
-                // CRITICAL: Disable frame callback immediately to prevent debug spam
-                const newPlayback = this.playbackData[outputId].playback
-                const playbackWithFrameCallback = newPlayback as PlaybackChannel & {
-                    onFramePlayed?: (callback: (frameInfo: { time: number }) => void) => void
-                }
-
-                if (typeof playbackWithFrameCallback.onFramePlayed === "function") {
-                    playbackWithFrameCallback.onFramePlayed(() => {
-                        // Do nothing - completely disable frame callbacks
-                    })
-                }
-
-                // Reset state but keep high frame number to prevent timing issues
-                this.playbackData[outputId].isStarted = false
-                this.playbackData[outputId].needsReinit = false
-
-                console.log(`Successfully reinitialized playback for ${outputId}`)
-
-                // Resume after a small delay
-                setTimeout(() => {
-                    if (this.playbackData[outputId]) {
-                        this.isPaused[outputId] = false
-                    }
-                }, 100)
-            } catch (err) {
-                console.error(`Failed to create new playback: ${err.message}`)
-                this.stop(outputId)
-            }
-        } catch (err) {
-            console.error(`Error during reinitialization: ${err.message}`)
-            this.stop(outputId)
-        }
-    }
-
-    static startPlayback(outputId: string) {
-        if (!this.playbackData[outputId]) return
-
-        const data = this.playbackData[outputId]
-
-        try {
-            console.log(`Starting BlackMagic playback with buffer of ${data.playback.bufferedFrames()} frames`)
-            data.playback.start({ startTime: 0 })
-            data.isStarted = true
-
-            // Capture hardware time offset for drift correction
-            const hwTime = data.playback.hardwareTime()
-            if (hwTime) {
-                data.hardwareTimeOffset = hwTime.hardwareTime - data.scheduledFrames * 1000
-                console.log(`Captured hardware time offset: ${data.hardwareTimeOffset}`)
-            }
-
-            // Start performance monitoring
-            this.startPerformanceMonitoring(outputId)
-        } catch (err) {
-            if (err.message !== "Already started") {
-                console.error(`Error starting playback: ${err.message}`)
-            } else {
-                data.isStarted = true
-            }
-        }
-    }
-
-    static checkPerformance(outputId: string) {
-        if (!this.playbackData[outputId]) return
-
-        const data = this.playbackData[outputId]
-        const now = Date.now()
-        const checkInterval = 5000 // Check every 5 seconds
-
-        // Only check periodically to reduce overhead
-        if (now - data.lastPerformanceCheck < checkInterval) return
-
-        try {
-            const bufferedFrames = data.playback.bufferedFrames()
-            const framesPerSecond = data.framesSinceLastCheck / ((now - data.lastPerformanceCheck) / 1000)
-
-            // Log performance metrics
-            console.log(`Performance: ${framesPerSecond.toFixed(1)} fps, buffer: ${bufferedFrames}/${data.targetBufferSize} frames`)
-
-            // Reset counters
-            data.framesSinceLastCheck = 0
-            data.lastPerformanceCheck = now
-
-            // Check for buffer health using BufferManager
-            BufferManager.monitorBufferHealth(outputId, this.playbackData, this.expectedFrameRateGetter)
-
-            if (bufferedFrames < data.targetBufferSize / 4) {
-                console.warn(`Buffer running low (${bufferedFrames} frames), may need recovery`)
-
-                const criticalBufferThreshold = data.isStarted ? 1 : Math.min(2, data.targetBufferSize)
-                if (bufferedFrames < criticalBufferThreshold) {
-                    const hwTime = data.playback.hardwareTime()
-                    if (hwTime) {
-                        this.recoverPlayback(outputId, hwTime.hardwareTime)
-                    }
-                }
-            }
-        } catch (err) {
-            console.error(`Error checking performance: ${err.message}`)
-        }
-    }
-
-    static startPerformanceMonitoring(outputId: string) {
-        if (!this.playbackData[outputId]) return
-
-        // Monitor every 10 seconds for overall performance
-        const monitoringInterval = setInterval(() => {
-            if (!this.playbackData[outputId]) {
-                clearInterval(monitoringInterval)
-                return
-            }
-
-            try {
-                // Use BufferManager for buffer health monitoring
-                BufferManager.monitorBufferHealth(outputId, this.playbackData, this.expectedFrameRateGetter)
-            } catch (err) {
-                console.error("Error in performance monitoring:", err)
-            }
-        }, 10000)
-
-        // Add more frequent buffer health checks (every 2 seconds)
-        const bufferCheckInterval = setInterval(() => {
-            if (!this.playbackData[outputId]) {
-                clearInterval(bufferCheckInterval)
-                return
-            }
-
-            BufferManager.monitorBufferHealth(outputId, this.playbackData, this.expectedFrameRateGetter)
-        }, 2000)
-
-        this.playbackData[outputId].monitoringInterval = monitoringInterval
-        this.playbackData[outputId].bufferCheckInterval = bufferCheckInterval
-    }
-
-    static async recoverPlayback(outputId: string, currentHwTime: number) {
-        if (!this.playbackData[outputId]) return
-
-        // Don't attempt multiple recoveries simultaneously
-        if (this.isPaused[outputId]) return
-
-        console.log(`Starting recovery for output ${outputId}`)
-        this.isPaused[outputId] = true
-
-        try {
-            const data = this.playbackData[outputId]
-
-            // Analyze what type of recovery is needed
-            const health = this.monitorOutputHealth(outputId)
-
-            if (health.issues.some((i) => i.includes("timing drift"))) {
-                try {
-                    // Calculate a new time base that's ahead of current hardware time
-                    const newBaseTime = Math.floor(currentHwTime / 1000) + 10 // 10 frame buffer
-                    data.scheduledFrames = newBaseTime
-
-                    console.log("Recovery: Adjusting timing only")
-
-                    // Resume scheduling with new time base
-                    setTimeout(() => {
-                        this.isPaused[outputId] = false
-                    }, 100)
-
-                    return // Skip full reinitialization
-                } catch (err) {
-                    console.log("Timing adjustment failed, proceeding with full recovery")
-                }
-            }
-
-            // If we get here, we need a full recovery
-            console.log("Recovery: Performing full reinitialization")
-
-            // Proceed with full reinitialization
-            this.reinitializePlayback(outputId, data.deviceIndex, data.displayMode, data.pixelFormat, data.enableKeying || false, data.audioChannels || 2)
-        } catch (err) {
-            console.error(`Recovery failed: ${err.message}`)
-
-            // Ensure we don't leave in paused state
-            setTimeout(() => {
-                if (this.playbackData[outputId]) {
-                    this.isPaused[outputId] = false
-                }
-            }, 500)
-        }
-    }
-
-    static checkDeviceConnection(outputId: string): boolean {
-        if (!this.playbackData[outputId]) return false
-
-        try {
-            const bufferedFrames = this.playbackData[outputId].playback.bufferedFrames()
-
-            if (bufferedFrames >= 0) {
-                return true
-            }
-            return false
-        } catch (err) {
-            if (err.message.includes("disconnected") || err.message.includes("not found") || err.message.includes("Already stopped")) {
-                console.error(`Device for ${outputId} appears disconnected: ${err.message}`)
-                return false
-            }
-
-            console.warn(`Device check error: ${err.message}`)
-            return true
-        }
-    }
-
     static async reinitializePlayback(outputId: string, deviceIndex: number, displayMode: string, pixelFormat: string, enableKeying: boolean, audioChannels = 2) {
         console.log(`Reinitializing playback for ${outputId}`)
 
@@ -1147,15 +762,6 @@ export class BlackmagicSender {
         // Clean up old playback data with defensive error handling
         if (this.playbackData[outputId]) {
             try {
-                // Clean up intervals
-                if (this.playbackData[outputId].monitoringInterval) {
-                    clearInterval(this.playbackData[outputId].monitoringInterval)
-                }
-
-                if (this.playbackData[outputId].bufferCheckInterval) {
-                    clearInterval(this.playbackData[outputId].bufferCheckInterval)
-                }
-
                 // Try to stop the playback, but ignore any errors
                 try {
                     this.playbackData[outputId].playback.stop()
@@ -1170,6 +776,9 @@ export class BlackmagicSender {
         try {
             await wait(1000)
 
+            // Release the device index before deleting playbackData so initializeDevice
+            // doesn't see it as still-in-use and refuse to reinitialize.
+            this.usedDeviceIndices.delete(deviceIndex)
             delete this.playbackData[outputId]
 
             const success = await this.initializeDevice(outputId, deviceIndex, displayMode, pixelFormat, enableKeying, audioChannels)
@@ -1313,7 +922,7 @@ export class BlackmagicSender {
         }
     }
 
-    static convertVideoFrameFormat(frame: Buffer, format: string, size: Size, reusableOutputBuffer?: Buffer) {
+    static convertVideoFrameFormat(frame: Buffer, format: string, size: Size, reusableOutputBuffer?: Buffer, enableKeying = false) {
         // Check specific bit-depth RGB formats FIRST before generic checks
         if (format.includes("12Bit") || format.includes("12-bit") || format.includes("12 bit")) {
             const isLE = format.includes("RGBLE") || format.includes("RGB LE")
@@ -1362,7 +971,16 @@ export class BlackmagicSender {
             if (this.devicePixelMode === "BGRA") {
                 const result = reusableOutputBuffer && reusableOutputBuffer.length >= frame.length ? reusableOutputBuffer : Buffer.allocUnsafe(frame.length)
                 frame.copy(result, 0, 0, frame.length)
+                // Un-premultiply BGRA before swizzling to ARGB for straight-alpha DeckLink keyer
+                if (enableKeying) ImageBufferConverter.unpremultiplyBGRA(result)
                 ImageBufferConverter.BGRAtoARGB(result)
+                return result
+            }
+            // devicePixelMode === "ARGB": un-premultiply in-place on a copy
+            if (enableKeying) {
+                const result = reusableOutputBuffer && reusableOutputBuffer.length >= frame.length ? reusableOutputBuffer : Buffer.allocUnsafe(frame.length)
+                frame.copy(result, 0, 0, frame.length)
+                ImageBufferConverter.unpremultiplyARGB(result)
                 return result
             }
             return frame
@@ -1370,7 +988,16 @@ export class BlackmagicSender {
             if (this.devicePixelMode === "ARGB") {
                 const result = reusableOutputBuffer && reusableOutputBuffer.length >= frame.length ? reusableOutputBuffer : Buffer.allocUnsafe(frame.length)
                 frame.copy(result, 0, 0, frame.length)
+                // Un-premultiply ARGB before swizzling to BGRA for straight-alpha DeckLink keyer
+                if (enableKeying) ImageBufferConverter.unpremultiplyARGB(result)
                 util.ImageBufferAdjustment.ARGBtoBGRA(result)
+                return result
+            }
+            // devicePixelMode === "BGRA": un-premultiply in-place on a copy
+            if (enableKeying) {
+                const result = reusableOutputBuffer && reusableOutputBuffer.length >= frame.length ? reusableOutputBuffer : Buffer.allocUnsafe(frame.length)
+                frame.copy(result, 0, 0, frame.length)
+                ImageBufferConverter.unpremultiplyBGRA(result)
                 return result
             }
             return frame
@@ -1392,15 +1019,6 @@ export class BlackmagicSender {
 
         try {
             // Stop all timers immediately
-            if (data.monitoringInterval) {
-                clearInterval(data.monitoringInterval)
-                data.monitoringInterval = undefined
-            }
-
-            if (data.bufferCheckInterval) {
-                clearInterval(data.bufferCheckInterval)
-                data.bufferCheckInterval = undefined
-            }
 
             // Stop the actual playback
             if (data.playback) {
@@ -1420,7 +1038,6 @@ export class BlackmagicSender {
 
             // Remove from tracking
             delete this.playbackData[outputId]
-            delete this.frameSkipCounter[outputId]
             delete this.initializationInProgress[outputId]
             delete this.conversionBufferPools[outputId]
 
@@ -1435,7 +1052,6 @@ export class BlackmagicSender {
 
             // Force cleanup even if there was an error
             delete this.playbackData[outputId]
-            delete this.frameSkipCounter[outputId]
             delete this.initializationInProgress[outputId]
             delete this.conversionBufferPools[outputId]
             delete this.audioQueuesByOutput[outputId]
@@ -1462,34 +1078,12 @@ export class BlackmagicSender {
         // Force clear all tracking data
         this.playbackData = {}
         this.isPaused = {}
-        this.frameSkipCounter = {}
         this.silentAudioBuffers = {}
         this.initializationInProgress = {}
-        this.safetyCircuitBreaker = {}
         this.conversionBufferPools = {}
         this.audioQueuesByOutput = {}
 
         console.log(`Stopped ${outputIds.length} outputs`)
-    }
-
-    // Deprecated wrapper methods for backward compatibility
-    static calculateOptimalBufferSize(displayMode: string, pixelFormat: string): number {
-        return BufferManager.calculateOptimalBufferSize(displayMode, pixelFormat)
-    }
-
-    static monitorBufferHealth(outputId: string) {
-        BufferManager.monitorBufferHealth(outputId, this.playbackData, this.getExpectedFrameRate.bind(this))
-    }
-
-    // Memory usage monitoring
-    static getMemoryUsage(): {
-        totalOutputs: number
-        audioBuffers: number
-    } {
-        return {
-            totalOutputs: Object.keys(this.playbackData).length,
-            audioBuffers: Object.keys(this.silentAudioBuffers).length
-        }
     }
 
     // Shutdown method for application exit

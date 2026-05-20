@@ -1,16 +1,15 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
     import { uid } from "uid"
-
-    import { AudioEqualizer, type EQBand, EqualizerCalculations, setEqualizerEnabled, updateEqualizerBands } from "../../../audio/audioEqualizer"
-    import { eqPresets, equalizerConfig, special } from "../../../stores"
-    import { translateText } from "../../../utils/language"
-    import { clone, keysToID } from "../../helpers/array"
-    import InputRow from "../../input/InputRow.svelte"
-    import MaterialButton from "../../inputs/MaterialButton.svelte"
-    import MaterialDropdown from "../../inputs/MaterialDropdown.svelte"
-    import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
-    import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
+    import { AudioEqualizer, type EQBand, EqualizerCalculations, setEqualizerEnabled, updateEqualizerBands } from "../../../../audio/effects/audioEqualizer"
+    import { audioEffects, eqPresets, special } from "../../../../stores"
+    import { translateText } from "../../../../utils/language"
+    import { clone, keysToID } from "../../../helpers/array"
+    import InputRow from "../../../input/InputRow.svelte"
+    import MaterialButton from "../../../inputs/MaterialButton.svelte"
+    import MaterialDropdown from "../../../inputs/MaterialDropdown.svelte"
+    import MaterialTextInput from "../../../inputs/MaterialTextInput.svelte"
+    import MaterialToggleSwitch from "../../../inputs/MaterialToggleSwitch.svelte"
 
     export let disabled: boolean = false
 
@@ -63,7 +62,9 @@
         // No need to initialize here to avoid audio interruption
 
         // Subscribe to config changes
-        equalizerConfigUnsubscribe = equalizerConfig.subscribe((config) => {
+        equalizerConfigUnsubscribe = audioEffects.subscribe((all) => {
+            const config = all.main?.equalizer
+            if (!config) return
             bands = clone(config.bands)
             enabled = config.enabled
         })
@@ -672,7 +673,6 @@
 <style>
     .equalizer-container {
         border-radius: 8px;
-        padding: 10px;
         user-select: none;
     }
 
@@ -686,7 +686,7 @@
         background: var(--primary-darker);
         border: 1px solid var(--primary-lighter);
         border-radius: 4px;
-        margin-bottom: 16px;
+        margin-bottom: 3px;
         overflow: hidden;
         transition: opacity 0.2s ease;
         width: 100%;

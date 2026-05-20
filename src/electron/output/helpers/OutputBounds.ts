@@ -32,6 +32,12 @@ export class OutputBounds {
             if (!window || window.isDestroyed()) return
             window.setBounds(data.bounds)
         }, 10)
+
+        // ensure bounds are set properly
+        setTimeout(() => {
+            if (!window || window.isDestroyed()) return
+            window.setBounds(data.bounds)
+        }, 80)
     }
 
     static moveToFront(id: string) {

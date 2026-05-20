@@ -566,6 +566,7 @@ export interface OutSlide {
     id: ID
     layout?: ID
     index?: number
+    projectIndex?: number // only used to reference back to the project item index
     tempItems?: Item[]
     previousSlides?: Item[][]
     settings?: any // settings for temp (e.g. scripture background color)

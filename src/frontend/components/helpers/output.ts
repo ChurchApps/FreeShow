@@ -12,6 +12,7 @@ import { actions, activeProject, activeRename, activeShow, activeTimers, allOutp
 import { trackScriptureUsage } from "../../utils/analytics"
 import { isMainWindow, isOutputWindow, newToast } from "../../utils/common"
 import { translateText } from "../../utils/language"
+import { confirmCustom } from "../../utils/popup"
 import { send } from "../../utils/request"
 import { sendBackgroundToStage } from "../../utils/stageTalk"
 import { TemplateHelper } from "../../utils/templates"
@@ -658,13 +659,14 @@ export function checkWindowCapture(startup = false) {
     AudioAnalyser.recorderActivate()
 }
 
-// NDI | OutputShow | Stage CurrentOutput
+// NDI | OutputShow | Stage CurrentOutput | WebRTC
 export function shouldBeCaptured(outputId: string, startup = false) {
     const output = get(outputs)[outputId]
     const captures = {
         ndi: !!output.ndi,
         server: !!(get(disabledServers).output_stream === false && (get(serverData)?.output_stream?.outputId || getFirstOutput()?.id) === outputId),
-        stage: !get(disabledServers).stage && Object.keys(get(connections).STAGE || {}).length > 0 && stageHasOutput(outputId)
+        stage: !get(disabledServers).stage && Object.keys(get(connections).STAGE || {}).length > 0 && stageHasOutput(outputId),
+        webrtc: !!output.webrtc
     }
 
     // alert user that screen recording starts
@@ -686,6 +688,48 @@ function stageHasOutput(outputId: string) {
 
         // WIP check that this stage layout is not disabled & used in a output or (web enabled (disabledServers) + has connection)!
     })
+}
+
+// Streaming
+
+export function startStreaming(outputId: string = "") {
+    const outputIds = outputId ? [outputId] : getAllActiveOutputIds()
+
+    outputIds.forEach((outputId) => updateOutputWebrtcData(outputId, "streaming", true))
+}
+
+export async function stopStreaming(outputId: string = "", confirmStop: boolean = false) {
+    if (confirmStop) {
+        const confirmed = await confirmCustom(translateText("output.confirm_stop"))
+        if (!confirmed) return
+    }
+
+    const outputIds = outputId ? [outputId] : getAllActiveOutputIds()
+
+    outputIds.forEach((outputId) => updateOutputWebrtcData(outputId, "streaming", false))
+}
+
+export function updateOutputWebrtcData(outputId: string, key: string, value: any) {
+    const output = get(outputs)[outputId]
+    if (!output) return null
+
+    const newData = { ...(output.webrtcData || {}), [key]: value }
+
+    if (key === "streaming") {
+        if (!output.webrtc || !output.webrtcData?.url) return
+
+        if (value) AudioAnalyser.recorderActivate()
+        else AudioAnalyser.recorderDeactivate()
+    }
+
+    outputs.update((a: any) => {
+        if (!a[outputId]) return a
+        a[outputId].webrtcData = newData
+        return a
+    })
+
+    send(OUTPUT, ["SET_VALUE"], { id: outputId, key: "webrtcData", value: newData })
+    return newData
 }
 
 // settings

@@ -3,7 +3,7 @@ import { CLOUD, CONTROLLER, NDI, OUTPUT, OUTPUT_STREAM, REMOTE, STAGE } from "..
 import type { ClientMessage } from "../../types/Socket"
 import { AudioAnalyser } from "../audio/audioAnalyser"
 import { AudioAnalyserMerger } from "../audio/audioAnalyserMerger"
-import { setEqualizerEnabled, updateEqualizerBands } from "../audio/audioEqualizer"
+import { setEqualizerEnabled, updateEqualizerBands } from "../audio/effects/audioEqualizer"
 import { runAction } from "../components/actions/actions"
 import { clone } from "../components/helpers/array"
 import { checkNextAfterMedia } from "../components/helpers/showActions"
@@ -19,6 +19,7 @@ import {
     allOutputs,
     audioChannelsData,
     audioData,
+    audioEffects,
     categories,
     closeAd,
     colorbars,
@@ -30,7 +31,6 @@ import {
     driveData,
     dynamicValueData,
     effects,
-    equalizerConfig,
     events,
     gain,
     groups,
@@ -329,10 +329,13 @@ export const receiveOUTPUTasOUTPUT: any = {
     GAIN: (a: any) => gain.set(a),
     AUDIO_CHANNELS_DATA: (a: any) => audioChannelsData.set(a),
 
-    EQUALIZER_CONFIG: (a: any) => {
-        equalizerConfig.set(a)
-        setEqualizerEnabled(a.enabled)
-        updateEqualizerBands(a.bands)
+    AUDIO_EFFECTS: (a: any) => {
+        audioEffects.set(a)
+
+        if (a.main?.equalizer) {
+            setEqualizerEnabled(a.main.equalizer.enabled)
+            updateEqualizerBands(a.main.equalizer.bands)
+        }
     },
 
     METRONOME: (a: any) => metronome.set(a),

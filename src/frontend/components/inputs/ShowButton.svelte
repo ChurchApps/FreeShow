@@ -2,12 +2,13 @@
     import { getDocument, GlobalWorkerOptions } from "pdfjs-dist"
     import type { ClickEvent } from "../../../types/Main"
     import { AudioPlayer } from "../../audio/audioPlayer"
-    import { activeEdit, activeFocus, activePage, activeProject, activeShow, categories, editingProjectTemplate, focusMode, globalTags, media, notFound, outLocked, outputs, overlayCategories, overlays, playerVideos, playingAudio, projects, projectTemplates, refreshEditSlide, shows, showsCache, special, styles } from "../../stores"
+    import { activeEdit, activeFocus, activePage, activeProject, activeShow, categories, focusMode, globalTags, media, notFound, outLocked, outputs, overlayCategories, overlays, playerVideos, playingAudio, projects, refreshEditSlide, shows, showsCache, special, styles } from "../../stores"
     import { getAccess } from "../../utils/profile"
+    import { customIconsColors } from "../../values/customIcons"
     import { historyAwait } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
     import { encodeFilePath, getExtension, getFileName, getMedia, getMediaLayerType, getMediaStyle, getMediaType, getVideoDuration, mediaSize, removeExtension } from "../helpers/media"
-    import { findMatchingOut, getActiveOutputs, setOutput } from "../helpers/output"
+    import { findMatchingOut, getActiveOutputs, setOutput, startFolderTimer } from "../helpers/output"
     import { loadShows } from "../helpers/setShow"
     import { checkName, getLayoutRef } from "../helpers/show"
     import { swichProjectItem, updateOut } from "../helpers/showActions"
@@ -17,7 +18,6 @@
     import HiddenInput from "./HiddenInput.svelte"
     import MaterialButton from "./MaterialButton.svelte"
     import { translateText } from "../../utils/language"
-    import { customIconsColors } from "../../values/customIcons"
 
     export let id: string
     export let show: any // ShowList | ShowRef
@@ -108,7 +108,7 @@
         if ($focusMode) {
             let inProject = $projects[$activeProject || ""]?.shows?.find((p) => p.id === id)
             if (inProject) {
-                activeFocus.set({ id, index: pos ?? undefined })
+                activeFocus.set({ id, index: pos ?? undefined, type })
                 return
             } else {
                 focusMode.set(false)
@@ -169,6 +169,7 @@
             setOutput("background", out)
         } else if (type === "pdf") {
             // get PDF data
+            // WIP duplicate of playPdf in showActions.ts
             GlobalWorkerOptions.workerSrc = "./assets/pdf.worker.min.mjs"
             const loadingTask = getDocument(id)
             const pdfDoc = await loadingTask.promise
@@ -178,6 +179,8 @@
             let name = show.name || removeExtension(getFileName(id))
             setOutput("slide", { type: "pdf", id, page: 0, pages, name })
             clearBackground()
+
+            if (show.data?.timer) startFolderTimer(id, { type: "pdf", path: "" })
         } else if (type === "audio") AudioPlayer.start(id, { name: show.name })
         else if (type === "overlay") setOutput("overlays", show.id, false, "", true)
         else if (type === "player") setOutput("background", { id, type: "player" })
@@ -243,7 +246,9 @@
         }
     }
 
-    $: showTemplateName = type === "show_placeholder" ? `${translateText("new.placeholder: formats.show")} ${index !== null ? ($editingProjectTemplate ? $projectTemplates[$editingProjectTemplate] : $projects[$activeProject || ""])?.shows?.reduce((c, show, i) => (show.type === "show_placeholder" && i < index ? c + 1 : c), 1) : ""}` : ""
+    // placeholder title with index
+    // $: showTemplateName = type === "show_placeholder" ? `${translateText("new.placeholder: formats.show")} ${index !== null ? ($editingProjectTemplate ? $projectTemplates[$editingProjectTemplate] : $projects[$activeProject || ""])?.shows?.reduce((c, show, i) => (show.type === "show_placeholder" && i < index ? c + 1 : c), 1) : ""}` : ""
+    $: showTemplateName = type === "show_placeholder" ? translateText("new.placeholder") : ""
 </script>
 
 <div id="show_{id}" class="main" class:played={show.played}>

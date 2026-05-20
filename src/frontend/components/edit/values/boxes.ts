@@ -544,7 +544,8 @@ export const itemBoxes: Box2 = {
                                 options: [
                                     { value: "number", label: "variables.number" },
                                     { value: "bar", label: "edit.progress_bar" },
-                                    { value: "group", label: "tools.groups" }
+                                    { value: "group", label: "tools.groups" },
+                                    { value: "project", label: "formats.project" }
                                 ],
                                 style: "flex: 4;"
                             }
@@ -562,7 +563,8 @@ export const itemBoxes: Box2 = {
                         }
                     ],
                     [{ type: "checkbox", id: "tracker.childProgress", value: false, values: { label: "edit.sub_indexes" } }],
-                    [{ type: "checkbox", id: "tracker.oneLetter", value: false, values: { label: "edit.one_letter" } }]
+                    [{ type: "checkbox", id: "tracker.oneLetter", value: false, values: { label: "edit.one_letter" } }],
+                    [{ id: "tracker.projectMetadata", type: "dropdown", value: "name", values: { label: "tools.metadata", options: [{ value: "name", label: "show.name" }] } }]
                 ]
             })
         }
@@ -620,8 +622,8 @@ export const itemBoxes: Box2 = {
             default: {
                 inputs: splitIntoRows([
                     { id: "captions.language", type: "dropdown", value: "en-US", values: { label: "captions.language", options: captionLanguages.map((a) => ({ value: a.id, label: a.name })) } },
-                    // this is very limited
-                    // { id: "captions.translate", type: "dropdown", value: "en-US", values: { label: "captions.translate", options: captionTranslateLanguages } },
+                    { id: "captions.translate", type: "dropdown", value: "", values: { label: "captions.translate", options: "captionTranslateLanguages" } },
+                    { id: "captions.googlekey", type: "string", value: "", values: { label: "Google Translate API Key", placeholder: "Optional: for 100+ languages" } },
                     { id: "captions.showtime", type: "number", value: 5, values: { label: "captions.showtime", min: 1, max: 60 } },
                     { id: "captions.roomId", type: "string", value: "", values: { label: "Room ID", placeholder: "empty = automatic" } },
                     { id: "", type: "tip", value: "", values: { label: "captions.powered_by", subtext: "CAPTION.Ninja" } }

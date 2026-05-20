@@ -2,10 +2,12 @@
     import { onDestroy, onMount } from "svelte"
     import { uid } from "uid"
     import { OUTPUT } from "../../../../types/Channels"
+    import { Main } from "../../../../types/IPC/Main"
     import type { MediaStyle } from "../../../../types/Main"
     import type { Styles } from "../../../../types/Settings"
     import type { OutBackground, Transition } from "../../../../types/Show"
     import { AudioAnalyser } from "../../../audio/audioAnalyser"
+    import { requestMain } from "../../../IPC/main"
     import { audioChannelsData, currentWindow, media, outputs, playerVideos, playingVideos, special, videosData, videosTime, volume } from "../../../stores"
     import { destroy, receive, send } from "../../../utils/request"
     import BmdStream from "../../drawer/live/BMDStream.svelte"
@@ -158,7 +160,22 @@
     $: isMuted = !!($audioChannelsData[outputId]?.isMuted || $audioChannelsData.main?.isMuted)
     let fadeoutVolume = 1
     $: if (!fadingOut) fadeoutVolume = 1
-    $: calculatedVolume = $volume * (isMuted ? 0 : 1) * audioChannelVolume * (($media[id]?.volume ?? currentStyle?.volume ?? 100) / 100)
+
+    let replayGainMultiplier = 1
+    $: if (id) fetchReplayGain(id)
+    async function fetchReplayGain(filePath: string) {
+        replayGainMultiplier = 1
+        try {
+            const metadata = await requestMain(Main.READ_AUDIO_METADATA, { filePath })
+            if (metadata?.replayGainMultiplier) {
+                replayGainMultiplier = metadata.replayGainMultiplier
+            }
+        } catch (e) {
+            console.error("Failed to fetch video ReplayGain:", e)
+        }
+    }
+
+    $: calculatedVolume = $volume * (isMuted ? 0 : 1) * audioChannelVolume * (($media[id]?.volume ?? currentStyle?.volume ?? 100) / 100) * replayGainMultiplier
     $: videoVolumeProp = calculatedVolume * fadeoutVolume
 
     $: if (fadingOut && !videoData.muted) fadeoutVideo()

@@ -8,7 +8,7 @@
     import { history } from "../../helpers/history"
     import { getExtension, getMediaType } from "../../helpers/media"
     import { getAllEnabledOutputs } from "../../helpers/output"
-    import { getLayoutRef } from "../../helpers/show"
+    import { getCustomMetadata, getLayoutRef, initializeMetadata } from "../../helpers/show"
     import { _show } from "../../helpers/shows"
     import { getStyles } from "../../helpers/style"
     import { MAX_FONT_SIZE } from "../scripts/autosize"
@@ -279,8 +279,13 @@
     $: if (id === "slide_tracker" && item) {
         setBoxInputValue(box, "default", "tracker.accent", "value", item.tracker?.accent || $themes[$theme]?.colors?.secondary || "#F0008C")
 
+        const defaultMetadataKeys = Object.keys(initializeMetadata({}))
+        const metadataOptions = [{ value: "name", label: "show.name" }, ...Object.keys(getCustomMetadata()).map((key) => ({ value: key, label: defaultMetadataKeys.includes(key) ? `meta.${key}` : key }))]
+        setBoxInputValue(box, "default", "tracker.projectMetadata", "options", metadataOptions)
+
         setBoxInputValue(box, "default", "tracker.childProgress", "hidden", item.tracker?.type !== "group")
         setBoxInputValue(box, "default", "tracker.oneLetter", "hidden", item.tracker?.type !== "group")
+        setBoxInputValue(box, "default", "tracker.projectMetadata", "hidden", item.tracker?.type !== "project")
     }
     $: if (id === "events" && item) {
         setBoxInputValue(box, "default", "events.startDaysFromToday", "disabled", !!item.events?.enableStartDate)

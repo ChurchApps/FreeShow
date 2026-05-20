@@ -37,6 +37,47 @@ export class ImageBufferConverter {
     }
 
     /**
+     * Un-premultiply alpha in-place for BGRA format (in-place).
+     * Electron canvas pixels are premultiplied: stored_RGB = actual_RGB * alpha/255.
+     * The DeckLink hardware keyer in straight-alpha mode expects unmultiplied RGB.
+     * Must be called on a writable copy before passing the buffer to DeckLink.
+     */
+    static unpremultiplyBGRA(data: Buffer) {
+        for (let i = 0; i < data.length; i += 4) {
+            const a = data[i + 3]
+            if (a === 0) {
+                data[i] = 0
+                data[i + 1] = 0
+                data[i + 2] = 0
+            } else if (a < 255) {
+                data[i] = Math.min(255, ((data[i] * 255) / a + 0.5) | 0)
+                data[i + 1] = Math.min(255, ((data[i + 1] * 255) / a + 0.5) | 0)
+                data[i + 2] = Math.min(255, ((data[i + 2] * 255) / a + 0.5) | 0)
+            }
+        }
+    }
+
+    /**
+     * Un-premultiply alpha in-place for ARGB format (in-place).
+     * Layout: [A, R, G, B] per pixel.
+     * Must be called on a writable copy before passing the buffer to DeckLink.
+     */
+    static unpremultiplyARGB(data: Buffer) {
+        for (let i = 0; i < data.length; i += 4) {
+            const a = data[i]
+            if (a === 0) {
+                data[i + 1] = 0
+                data[i + 2] = 0
+                data[i + 3] = 0
+            } else if (a < 255) {
+                data[i + 1] = Math.min(255, ((data[i + 1] * 255) / a + 0.5) | 0)
+                data[i + 2] = Math.min(255, ((data[i + 2] * 255) / a + 0.5) | 0)
+                data[i + 3] = Math.min(255, ((data[i + 3] * 255) / a + 0.5) | 0)
+            }
+        }
+    }
+
+    /**
      * Convert from BGRA to YUV 422 packed (UYVY format)
      * YUV422 packed format: each 2 pixels = 4 bytes (U Y V Y)
      */
