@@ -40,14 +40,14 @@ export function newSlideTimer(timerId: string, duration: number, folderPath = ""
             const isPDF = data.endsWith(".pdf")
             if (isPDF) {
                 startFolderTimer(data, { type: "pdf", path: "" })
-                OutputHelper.advanceOutput(id)
+                OutputHelper.advanceOutput(id, "", { playNext: true })
             } else {
                 playFolder(data)
             }
             return
         }
 
-        OutputHelper.advanceOutput(id)
+        OutputHelper.advanceOutput(id, "", { playNext: true })
     }
 }
 

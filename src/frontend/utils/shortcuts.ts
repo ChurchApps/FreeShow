@@ -316,41 +316,7 @@ export const previewShortcuts = {
         if (!presentationControllersKeysDisabled()) OutputHelper.advanceOutputs()
         else setOutput("transition", null)
     },
-    PageDown: (e: KeyboardEvent) => {
-        // const currentShow = get(focusMode) ? get(activeFocus) : get(activeShow)
-        // if (!get(showsCache)[currentShow?.id || ""]) {
-        //     const outSlide = get(outputs)[getActiveOutputs(get(outputs), true, true, true)[0]]?.out?.slide
-        //     if (!nooutput && outSlide?.type !== "ppt" && outSlide?.type !== "pdf") return
-        // }
-        if (presentationControllersKeysDisabled()) return
 
-        e.preventDefault()
-        OutputHelper.advanceOutputs(e)
-    },
-    PageUp: (e: KeyboardEvent) => {
-        // const currentShow = get(focusMode) ? get(activeFocus) : get(activeShow)
-        // if (!get(showsCache)[currentShow?.id || ""]) {
-        //     const outSlide = get(outputs)[getActiveOutputs(get(outputs), true, true, true)[0]]?.out?.slide
-        //     if (!nooutput && outSlide?.type !== "ppt" && outSlide?.type !== "pdf") return
-        // }
-        if (presentationControllersKeysDisabled()) return
-
-        e.preventDefault()
-        OutputHelper.advanceOutputs(e)
-    },
-
-    ArrowRight: (e: any) => {
-        if (get(outLocked) || e.ctrlKey || e.metaKey) return
-        if (!e.preview && (get(activeEdit).items.length || get(activeStage).items.length)) return
-
-        OutputHelper.advanceOutputs(e)
-    },
-    ArrowLeft: (e: any) => {
-        if (get(outLocked) || e.ctrlKey || e.metaKey) return
-        if (!e.preview && (get(activeEdit).items.length || get(activeStage).items.length)) return
-
-        OutputHelper.advanceOutputs(e)
-    },
     " ": (e: KeyboardEvent) => {
         if (get(contextActive)) return
 
@@ -365,6 +331,32 @@ export const previewShortcuts = {
 
         // space bar should toggle timeline for show when active
         if (isTimelineActive()) return
+
+        e.preventDefault()
+        OutputHelper.advanceOutputs(e)
+    },
+    ArrowRight: (e: any) => {
+        if (e.ctrlKey || e.metaKey) return
+        if (!e.preview && (get(activeEdit).items.length || get(activeStage).items.length)) return
+
+        // e.preventDefault()
+        OutputHelper.advanceOutputs(e)
+    },
+    ArrowLeft: (e: any) => {
+        if (e.ctrlKey || e.metaKey) return
+        if (!e.preview && (get(activeEdit).items.length || get(activeStage).items.length)) return
+
+        // e.preventDefault()
+        OutputHelper.advanceOutputs(e)
+    },
+    PageDown: (e: KeyboardEvent) => {
+        if (presentationControllersKeysDisabled()) return
+
+        e.preventDefault()
+        OutputHelper.advanceOutputs(e)
+    },
+    PageUp: (e: KeyboardEvent) => {
+        if (presentationControllersKeysDisabled()) return
 
         e.preventDefault()
         OutputHelper.advanceOutputs(e)

@@ -12,17 +12,19 @@ import { checkActionTrigger, getFewestOutputLines, getItemWithMostLines, playPdf
 import { _show } from "./shows"
 import { AudioPlayer } from "../../audio/audioPlayer"
 
+type Options = { fromActive: boolean; slideLayers: boolean; playNext: boolean }
+
 export class OutputHelper {
     static advanceOutputs(e: KeyboardEvent | "next" | "previous" = "next") {
         getAllActiveOutputIds().forEach((id) => {
             if (typeof e === "string") this.advanceOutput(id, e === "next" ? "ArrowRight" : "ArrowLeft")
-            else this.advanceOutput(id, e.key, !e.altKey)
+            else this.advanceOutput(id, e.key, { slideLayers: !e.altKey })
         })
     }
 
     // play next slide or item in project
     // continue from outputted, or play active
-    static advanceOutput(outputId: string, triggerKey: string = "", slideLayers: boolean = true) {
+    static advanceOutput(outputId: string, triggerKey: string = "", options: { slideLayers?: boolean; playNext?: boolean } = {}) {
         if (get(outLocked)) return
 
         // blur to remove tab highlight from slide after clicked, and using arrows
@@ -30,12 +32,17 @@ export class OutputHelper {
 
         // outputId = outputId || getFirstActiveOutput()?.id
 
+        let opts: Options = {
+            fromActive: triggerKey === " ", // space key
+            slideLayers: options.slideLayers !== false,
+            playNext: options.playNext === true
+        }
+
         if (triggerKey === "Home") return this.playFirstSlide(outputId)
         if (triggerKey === "End") return this.playLastSlide(outputId)
-        if (triggerKey === "ArrowLeft" || triggerKey === "PageUp") return this.playPrevious(outputId, { fromActive: false, slideLayers })
+        if (triggerKey === "ArrowLeft" || triggerKey === "PageUp") return this.playPrevious(outputId, opts)
 
-        const fromActive = triggerKey === " " // space key
-        this.playNext(outputId, { fromActive, slideLayers }) // ArrowRight, PageDown, Space
+        this.playNext(outputId, opts) // ArrowRight, PageDown, Space
     }
 
     /////
@@ -60,45 +67,45 @@ export class OutputHelper {
         this.playSlide(outputId, previousSlide)
     }
 
-    private static playPrevious(outputId: string, options: { fromActive: boolean; slideLayers: boolean }) {
+    private static playPrevious(outputId: string, options: Options) {
         this.play(outputId, false, options)
     }
 
-    private static playNext(outputId: string, options: { fromActive: boolean; slideLayers: boolean }) {
+    private static playNext(outputId: string, options: Options) {
         this.play(outputId, true, options)
     }
 
-    private static play(outputId: string, next: boolean, options: { fromActive: boolean; slideLayers: boolean }) {
-        const show = this.getShow(outputId, next, options.fromActive)
+    private static play(outputId: string, next: boolean, options: Options) {
+        const show = this.getShow(outputId, next, options)
         if (show) {
             const newSlide = this.getSubsequent(show, next)
-            if (!newSlide) return this.changeProjectItem(outputId, show, next, options.slideLayers)
+            if (!newSlide) return this.changeProjectItem(outputId, show, next, options)
 
-            if (this.quickChangeBack(outputId, show, next, options.slideLayers)) return
+            if (this.quickChangeBack(outputId, show, next, options)) return
 
             this.playSlide(outputId, newSlide, options.slideLayers)
             return
         }
 
-        const item = this.getItem(outputId)
-        if (!item) return this.changeProjectItem(outputId, this.getActiveItem(), next, options.slideLayers)
+        const item = this.getItem(outputId, next, options)
+        if (!item) return this.changeProjectItem(outputId, this.getActiveItem(), next, options)
 
-        this.playItem(outputId, item)
+        this.playItem(outputId, item, next, options)
     }
 
     // this allows changing back to the previous project item with keyboard instead of advancing the slide if the active show is right before/after the outputted show
-    private static quickChangeBack(outputId: string, show: OutSlide, next: boolean, slideLayers: boolean = true) {
+    private static quickChangeBack(outputId: string, show: OutSlide, next: boolean, options: Options) {
         let active = this.getActiveItem()
         let projectItems = this.getProjectItems()
         if (active?.index === undefined || active.id === show.id) return false
         if (projectItems[active.index + (next ? 1 : -1)]?.id !== show.id) return false
         if (next ? this.getPreviousSlide(show) : this.getNextSlide(show)) return false
 
-        this.changeProjectItem(outputId, active, next, slideLayers)
+        this.changeProjectItem(outputId, active, next, options)
         return true
     }
 
-    private static changeProjectItem(outputId: string, item: OutSlide | ShowRef | null = null, next: boolean, slideLayers: boolean = true) {
+    private static changeProjectItem(outputId: string, item: OutSlide | ShowRef | null = null, next: boolean, options: Options) {
         if (!get(focusMode) && get(special).nextItemOnLastSlide === false) return
 
         const projectItems = this.getProjectItems()
@@ -124,14 +131,28 @@ export class OutputHelper {
             // play directly in focus mode
             if ((newItem?.type || "show") === "show") {
                 const newOut = this.getSubsequent({ id: newItem.id, layout: newItem.layout }, next)
-                if (newOut) this.playSlide(outputId, newOut, slideLayers)
+                if (newOut) this.playSlide(outputId, newOut, options.slideLayers)
             } else {
-                this.playItem(outputId, newItem)
+                this.playItem(outputId, newItem, next, options)
             }
             return
         }
 
         openProjectItem(get(activeProject) || "", newIndex)
+
+        // play directly from "Next slide timer" & "nextAfterMedia"
+        if (options.playNext) {
+            const newItem = projectItems[newIndex]
+            if ((newItem?.type || "show") === "show") {
+                // allow show to load first
+                setTimeout(() => {
+                    const newOut = this.getSubsequent({ id: newItem.id, layout: newItem.layout }, next)
+                    if (newOut) this.playSlide(outputId, newOut, options.slideLayers)
+                }, 10)
+            } else {
+                this.playItem(outputId, newItem, next, options)
+            }
+        }
     }
 
     private static getProjectItemIndex(item: OutSlide | ShowRef | null = null) {
@@ -157,16 +178,16 @@ export class OutputHelper {
 
     /////
 
-    private static getShow(outputId: string, nextCheck: boolean | null = null, fromActive: boolean = false): OutSlide | null {
+    private static getShow(outputId: string, nextCheck: boolean | null = null, options: Partial<Options> = {}): OutSlide | null {
         const projectItems = this.getProjectItems()
         const activeItem = this.getActiveItem()
-        const activeShow = get(showsCache)[activeItem?.id || ""]
-        const activeOutShow: OutSlide | null = activeShow ? { id: activeItem?.id || "", layout: projectItems[activeItem?.index ?? -1]?.layout || activeShow?.settings?.activeLayout } : null
+        const currentShow = get(showsCache)[activeItem?.id || ""]
+        const activeOutShow: OutSlide | null = currentShow && !options.playNext ? { id: activeItem?.id || "", layout: projectItems[activeItem?.index ?? -1]?.layout || currentShow?.settings?.activeLayout } : null
 
         const outSlide = this.getOut(outputId)?.slide || null
 
         // force active show if it's not the same as outputted
-        if (fromActive && !this.outShowIsSameAsActive(outSlide, activeOutShow)) return activeOutShow
+        if (options.fromActive && !this.outShowIsSameAsActive(outSlide, activeOutShow)) return activeOutShow
 
         // prioritize outputted show in focus mode, if not reached end
         if (get(focusMode) && outSlide && (nextCheck ? this.getSubsequent(outSlide, nextCheck) : true)) return this.isShow(outSlide) ? outSlide : null
@@ -188,16 +209,18 @@ export class OutputHelper {
         return data && (data.type || "show") === "show"
     }
 
-    private static getItem(outputId: string) {
+    private static getItem(outputId: string, next: boolean, options: Options) {
+        if (options.playNext) return this.getOut(outputId)?.slide || null // auto timer with looping (pdf)
+
         const activeItem = this.getActiveItem()
         if (!activeItem) return null
         if (activeItem.type === "section") return null
-        if (this.isOutputted(outputId, activeItem)) return null
+        if (this.isOutputted(outputId, activeItem, next, options)) return null
 
         return activeItem
     }
 
-    private static isOutputted(outputId: string, item: ShowRef) {
+    private static isOutputted(outputId: string, item: ShowRef, next: boolean, options: Options) {
         const out = this.getOut(outputId)
         if (!out) return false
 
@@ -216,8 +239,17 @@ export class OutputHelper {
             return outAudio.includes(item.id || "")
         }
 
-        // WIP work with all output types
         const outSlide = out?.slide || null
+
+        if (item.type === "pdf") {
+            if (outSlide?.id !== item.id) return false
+            if (!outSlide?.pages || typeof outSlide.page !== "number") return false
+            if (options.playNext) return false // auto timer (might loop)
+            return next ? outSlide.page + 1 >= outSlide.pages : outSlide.page <= 0
+        }
+
+        // if (item.type === "folder") return false
+
         return outSlide?.id === item.id
     }
 
@@ -240,10 +272,10 @@ export class OutputHelper {
         if (!data) return null
         data = clone(data)
 
-        const show = get(showsCache)[data.id]
-        if (!show) return null
+        const currentShow = get(showsCache)[data.id]
+        if (!currentShow) return null
 
-        if (!data.layout) data.layout = show.settings?.activeLayout
+        if (!data.layout) data.layout = currentShow.settings?.activeLayout
         const layoutRef = this.getShowLayout(data)
 
         if (typeof data.index !== "number") data.index = -1
@@ -275,10 +307,10 @@ export class OutputHelper {
         if (!data) return null
         data = clone(data)
 
-        const show = get(showsCache)[data.id]
-        if (!show) return null
+        const currentShow = get(showsCache)[data.id]
+        if (!currentShow) return null
 
-        if (!data.layout) data.layout = show.settings?.activeLayout
+        if (!data.layout) data.layout = currentShow.settings?.activeLayout
         const layoutRef = this.getShowLayout(data)
 
         if (typeof data.index !== "number") data.index = layoutRef.length
@@ -385,8 +417,8 @@ export class OutputHelper {
         })
     }
 
-    static playItem(outputId: string, item: ShowRef | undefined) {
-        if (!item || this.isOutputted(outputId, item)) return
+    static playItem(outputId: string, item: ShowRef | OutSlide | undefined, next: boolean, options: Options) {
+        if (!item || this.isOutputted(outputId, item, next, options)) return
 
         const out = this.getOut(outputId)
 
@@ -400,30 +432,25 @@ export class OutputHelper {
             return togglePlayingMedia(null)
         }
 
-        // PPT
-        if (item.type === "ppt") {
-            sendMain(Main.PRESENTATION_CONTROL, { action: "next" }) // e?.key === "PageDown" ? "last" :
-            return
-        }
-
-        const outSlide = out?.slide || null
+        let outSlide = out?.slide || null
 
         // PDF
-        // if ((!outSlide && item.type === "pdf") || outSlide?.type === "pdf") {
         if (item.type === "pdf") {
-            // if (start && outSlide?.id !== item.id) outSlide = null
-            const nextPage = outSlide?.page !== undefined ? outSlide.page + 1 : 0
-            // WIP should loop on last slide if custom "Timer" is set!!
-            let loop = false
-            playPdf(outSlide, nextPage, loop)
+            if (!options.playNext && outSlide?.id !== item.id) outSlide = item
+            playPdf(outSlide, next, options.playNext)
             return
         }
 
         // Folder
-        // if ((!outSlide && item.type === "folder") || outSlide?.type === "folder") {
         if (item.type === "folder") {
             const path = outSlide?.type === "folder" ? outSlide.id : item.id || ""
             playFolder(path)
+            return
+        }
+
+        // PPT (deprecated)
+        if (item.type === "ppt") {
+            sendMain(Main.PRESENTATION_CONTROL, { action: next ? "next" : "previous" }) // e?.key === "PageDown" ? "last" :
             return
         }
     }

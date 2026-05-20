@@ -23,7 +23,7 @@ import { clearBackground, clearOverlays, clearTimers } from "../output/clear"
 import { activeEdit, activeFocus, activePage, activeProject, activeShow, allOutputs, audioData, customMetadata, dictionary, dynamicValueData, focusMode, media, outLocked, outputDisplay, outputs, overlays, playingAudio, playingMetronome, projects, shows, showsCache, slideTimers, special, stageShows, styles, templates, timers, triggers, variables, videosData, videosTime } from "./../../stores"
 import { clone, keysToID, sortByName } from "./array"
 import { downloadOnlineMedia, getExtension, getFileName, getMedia, getMediaStyle, getMediaType, removeExtension } from "./media"
-import { defaultLayers, getActiveOutputs, getAllNormalOutputs, getFirstActiveOutput, getFirstOutput, getWindowOutputId, isOutCleared, refreshOut, setOutput } from "./output"
+import { defaultLayers, getActiveOutputs, getAllNormalOutputs, getFirstActiveOutput, getFirstOutput, getWindowOutputId, isOutCleared, refreshOut, setOutput, startFolderTimer } from "./output"
 import { getSetChars } from "./randomValue"
 import { loadShows } from "./setShow"
 import { getCustomMetadata, getGroupName, getLayoutRef } from "./show"
@@ -170,24 +170,32 @@ export function checkActionTrigger(layoutData: SlideData, slideIndex = 0) {
     })
 }
 
-export async function playPdf(slide: null | OutSlide, nextPage: number, loop = false) {
-    const data = slide || get(activeShow)
-    if (!data?.id) return
+export async function playPdf(data: OutSlide | null, next: boolean, loop = false) {
+    if (!data?.id || data?.type !== "pdf") return
 
     GlobalWorkerOptions.workerSrc = "./assets/pdf.worker.min.mjs"
     const loadingTask = getDocument(data.id)
     const pdfDoc = await loadingTask.promise
     const pages = pdfDoc.numPages
     loadingTask.destroy()
+
+    let nextPage = data.page
+    if (nextPage === undefined) nextPage = next ? -1 : pages
+    nextPage += next ? 1 : -1
+
     if (nextPage > pages - 1) {
         if (!loop) return
         nextPage = 0
     }
 
-    const name = data?.name || get(projects)[get(activeProject) || ""]?.shows?.[get(activeShow)?.index || 0]?.name
+    const projectItem = get(projects)[get(activeProject) || ""]?.shows?.[get(activeShow)?.index || 0]
+    const name = data?.name || projectItem?.name
 
     setOutput("slide", { type: "pdf", id: data.id, page: nextPage, pages, name })
     clearBackground()
+
+    const timer = projectItem?.data?.timer || 0
+    if (timer) startFolderTimer(data.id, { type: "pdf", path: "" })
 }
 
 // go to random slide in current project
@@ -635,7 +643,7 @@ export async function checkNextAfterMedia(endedId: string, type: "media" | "audi
     if (!nextAfterMedia) return false
 
     // WIP PAUSE PLAYING VIDEO WHEN ENDED, so it does not loop to start
-    OutputHelper.advanceOutput(outputId)
+    OutputHelper.advanceOutput(outputId, "", { playNext: true })
 
     return true
 }
