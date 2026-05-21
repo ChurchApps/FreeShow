@@ -360,7 +360,6 @@ export type Popups =
     | "metadata_display"
     | "import_scripture"
     | "create_collection"
-    | "scripture_show"
     | "edit_event"
     | "choose_chord"
     | "choose_screen"
