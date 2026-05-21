@@ -37,10 +37,10 @@
 
     $: playlist = active && $audioPlaylists[active]
 
-    $: isDefault = ["all", "favourites", "effects_library", "microphones", "audio_streams", "metronome"].includes(active || "")
+    $: isDefault = ["all", "favourites", "effects_library", "inputs", "metronome"].includes(active || "")
     $: rootPath = isDefault || playlist ? "" : active !== null ? $audioFolders[active]?.path || "" : ""
     $: path = isDefault || playlist ? "" : rootPath
-    $: name = active === "all" ? "category.all" : active === "favourites" ? "category.favourites" : active === "effects_library" ? "category.sound_effects" : rootPath === path ? (active !== "microphones" && active !== "audio_streams" && active !== "metronome" && active !== null ? $audioFolders[active]?.name || "" : "") : splitPath(path).name
+    $: name = active === "all" ? "category.all" : active === "favourites" ? "category.favourites" : active === "effects_library" ? "category.sound_effects" : rootPath === path ? (active !== "inputs" && active !== "metronome" && active !== null ? $audioFolders[active]?.name || "" : "") : splitPath(path).name
 
     // get list of files & folders
     let prevActive: null | string = null
@@ -75,7 +75,7 @@
 
             requestFiles(path)
         } else {
-            // microphones & audio_streams & metronome
+            // inputs & metronome
             prevActive = active
         }
     }
@@ -137,7 +137,7 @@
 
     let filteredFiles: FileFolder[] = []
     function filterFiles() {
-        if (active === "microphones" || active === "audio_streams" || active === "metronome") return
+        if (active === "inputs" || active === "metronome") return
 
         let localFilteredFiles: FileFolder[] = sortFilenames(filesList)
 
@@ -278,16 +278,48 @@
     function update() {
         updater++
     }
+
+    let inputsTab = $drawerTabsData.audio?.openedSubSubTab?.microphones || "microphones"
+
+    function setSubSubTab(id: string) {
+        if (!active) return
+
+        drawerTabsData.update((a) => {
+            if (!a.audio) a.audio = { enabled: true, activeSubTab: active }
+            if (!a.audio.openedSubSubTab) a.audio.openedSubSubTab = {}
+            a.audio.openedSubSubTab[active] = id
+            return a
+        })
+
+        if (active === "inputs") inputsTab = id
+    }
 </script>
 
 <svelte:window on:keydown={keydown} />
 
-<div class="scroll" style="flex: 1;overflow-y: auto;" class:full={active === "audio_streams" || active === "effects_library"} bind:this={scrollElem}>
-    <div class="grid" style={active !== "audio_streams" && active !== "effects_library" && (playlist ? playlist.songs.length : searchedFiles.length) ? "" : "height: 100%;"}>
-        {#if active === "microphones"}
-            <Microphones />
-        {:else if active === "audio_streams"}
-            <AudioStreams />
+<!-- TABS -->
+
+{#if active === "inputs"}
+    <div class="tabs">
+        <MaterialButton style="flex: 1;" isActive={inputsTab === "microphones"} on:click={() => setSubSubTab("microphones")}>
+            <Icon size={1.2} id="microphone" white />
+            <p><T id="live.microphones" /></p>
+        </MaterialButton>
+        <MaterialButton style="flex: 1;" isActive={inputsTab === "audio_streams"} on:click={() => setSubSubTab("audio_streams")}>
+            <Icon size={1.2} id="audio_stream" white />
+            <p><T id="live.audio_streams" /></p>
+        </MaterialButton>
+    </div>
+{/if}
+
+<div class="scroll" style="flex: 1;overflow-y: auto;" class:full={active === "inputs" || active === "effects_library"} bind:this={scrollElem}>
+    <div class="grid" style={active !== "inputs" && active !== "effects_library" && (playlist ? playlist.songs.length : searchedFiles.length) ? "" : "height: 100%;"}>
+        {#if active === "inputs"}
+            {#if inputsTab === "microphones"}
+                <Microphones />
+            {:else if inputsTab === "audio_streams"}
+                <AudioStreams />
+            {/if}
         {:else if active === "metronome"}
             <Metronome />
         {:else if playlist && playlistSettings}
@@ -340,14 +372,16 @@
     </div>
 </div>
 
-{#if active === "microphones" || active === "effects_library" || active === "metronome"}
+{#if active === "effects_library" || active === "metronome"}
     <!-- nothing -->
-{:else if active === "audio_streams"}
-    <FloatingInputs onlyOne>
-        <MaterialButton icon="add" style="flex: 1;" on:click={() => activePopup.set("audio_stream")} center title="new.audio_stream">
-            {#if !$labelsDisabled}<T id="new.audio_stream" />{/if}
-        </MaterialButton>
-    </FloatingInputs>
+{:else if active === "inputs"}
+    {#if inputsTab === "audio_streams"}
+        <FloatingInputs onlyOne>
+            <MaterialButton icon="add" style="flex: 1;" on:click={() => activePopup.set("audio_stream")} center title="new.audio_stream">
+                {#if !$labelsDisabled}<T id="new.audio_stream" />{/if}
+            </MaterialButton>
+        </FloatingInputs>
+    {/if}
 {:else if playlist}
     <FloatingInputs side="left">
         <MaterialButton
@@ -451,6 +485,23 @@
 {/if}
 
 <style>
+    .tabs {
+        display: flex;
+        position: relative;
+        background-color: var(--primary-darkest);
+        align-items: center;
+    }
+
+    .tabs :global(button) {
+        border-radius: 0;
+        border: none !important;
+        border-bottom: 1px solid var(--primary-lighter) !important;
+        padding: 8px;
+    }
+    .tabs :global(button.isActive) {
+        border-bottom: 1px solid var(--secondary) !important;
+    }
+
     .scroll {
         padding-bottom: 60px;
     }
