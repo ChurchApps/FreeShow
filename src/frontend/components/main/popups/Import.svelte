@@ -249,9 +249,9 @@
             </MaterialButton>
         {/each}
 
-        <MaterialButton variant="outlined" style="flex: 1;min-height: 50px;padding: 10px;gap: 15px;" on:click={() => (openedPage = "freeshow_more")}>
-            <p>{translateText("create_show.more_options")}</p>
-            <Icon style="height: 60px;margin-right: -20px;" id="next" size={2.3} white />
+        <MaterialButton variant="outlined" style="flex: 1;min-height: 50px;padding: 10px;gap: 5px;" on:click={() => (openedPage = "freeshow_more")}>
+            <p style="opacity: 0.9;">{translateText("create_show.more_options")}</p>
+            <Icon style="opacity: 0.8;height: 60px;margin-right: -15px;" id="next" size={2} white />
         </MaterialButton>
     </div>
 
