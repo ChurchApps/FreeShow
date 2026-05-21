@@ -1321,15 +1321,79 @@ export class EffectRender {
         const outerRadius = this.height * 1.5
         const bandWidth = item.bandWidth ?? 30
 
-        const rainbowColors = ["rgba(255, 0, 0, 0.4)", "rgba(255, 165, 0, 0.4)", "rgba(255, 255, 0, 0.4)", "rgba(0, 128, 0, 0.4)", "rgba(0, 0, 255, 0.4)", "rgba(75, 0, 130, 0.4)", "rgba(238, 130, 238, 0.4)"]
+        ctx.save()
+        // Add a gentle blur to blend the colors realistically, mirroring atmospheric dispersion
+        ctx.filter = "blur(8px)"
 
-        for (let i = 0; i < rainbowColors.length; i++) {
-            ctx.beginPath()
-            ctx.strokeStyle = rainbowColors[i]
-            ctx.lineWidth = bandWidth
-            ctx.arc(centerX, centerY, outerRadius - i * bandWidth, Math.PI, 2 * Math.PI, false)
-            ctx.stroke()
-        }
+        // --- SECONDARY BOW (DOUBLE RAINBOW) ---
+        // A secondary rainbow is concentric, wider (1.25x), with reversed colors and highly muted opacity (~18% of primary)
+        const secondaryOuterRadius = outerRadius * 1.25
+        const secondaryInnerRadius = secondaryOuterRadius - 7 * bandWidth
+        const secondaryRStart = secondaryInnerRadius - 1.5 * bandWidth
+        const secondaryREnd = secondaryOuterRadius + 1.5 * bandWidth
+        const secondaryTotalSpan = secondaryREnd - secondaryRStart
+
+        const secondaryGrad = ctx.createRadialGradient(
+            centerX,
+            centerY,
+            Math.max(0, secondaryRStart),
+            centerX,
+            centerY,
+            Math.max(0, secondaryREnd)
+        )
+
+        // Double rainbow colors are reversed (Red on the inside, Violet on the outside) and very subtle
+        secondaryGrad.addColorStop(0.0, "rgba(255, 0, 0, 0)") // inner edge fade
+        secondaryGrad.addColorStop(0.15, "rgba(255, 0, 0, 0.08)") // red
+        secondaryGrad.addColorStop(0.25, "rgba(255, 127, 0, 0.07)") // orange
+        secondaryGrad.addColorStop(0.35, "rgba(255, 255, 0, 0.07)") // yellow
+        secondaryGrad.addColorStop(0.45, "rgba(0, 200, 0, 0.06)") // green
+        secondaryGrad.addColorStop(0.55, "rgba(0, 0, 255, 0.06)") // blue
+        secondaryGrad.addColorStop(0.65, "rgba(75, 0, 130, 0.07)") // indigo
+        secondaryGrad.addColorStop(0.75, "rgba(148, 0, 211, 0.07)") // violet
+        secondaryGrad.addColorStop(0.85, "rgba(148, 0, 211, 0.01)") // outer edge start fade
+        secondaryGrad.addColorStop(1.0, "rgba(148, 0, 211, 0)") // outer edge fade
+
+        ctx.beginPath()
+        ctx.strokeStyle = secondaryGrad
+        ctx.lineWidth = secondaryTotalSpan
+        ctx.arc(centerX, centerY, secondaryRStart + secondaryTotalSpan / 2, Math.PI, 2 * Math.PI, false)
+        ctx.stroke()
+
+        // --- PRIMARY BOW ---
+        const innerRadius = outerRadius - 7 * bandWidth
+        const rStart = innerRadius - 1.5 * bandWidth
+        const rEnd = outerRadius + 1.5 * bandWidth
+        const totalSpan = rEnd - rStart
+
+        const primaryGrad = ctx.createRadialGradient(
+            centerX,
+            centerY,
+            Math.max(0, rStart),
+            centerX,
+            centerY,
+            Math.max(0, rEnd)
+        )
+
+        // Primary rainbow colors: Violet on the inside, Red on the outside, with soft atmospheric fading
+        primaryGrad.addColorStop(0.0, "rgba(148, 0, 211, 0)") // inner edge fade
+        primaryGrad.addColorStop(0.15, "rgba(148, 0, 211, 0.35)") // violet
+        primaryGrad.addColorStop(0.25, "rgba(75, 0, 130, 0.35)") // indigo
+        primaryGrad.addColorStop(0.35, "rgba(0, 0, 255, 0.30)") // blue
+        primaryGrad.addColorStop(0.45, "rgba(0, 200, 0, 0.30)") // green
+        primaryGrad.addColorStop(0.55, "rgba(255, 255, 0, 0.35)") // yellow
+        primaryGrad.addColorStop(0.65, "rgba(255, 127, 0, 0.35)") // orange
+        primaryGrad.addColorStop(0.75, "rgba(255, 0, 0, 0.40)") // red
+        primaryGrad.addColorStop(0.85, "rgba(255, 0, 0, 0.10)") // outer edge start fade
+        primaryGrad.addColorStop(1.0, "rgba(255, 0, 0, 0)") // outer edge fade
+
+        ctx.beginPath()
+        ctx.strokeStyle = primaryGrad
+        ctx.lineWidth = totalSpan
+        ctx.arc(centerX, centerY, rStart + totalSpan / 2, Math.PI, 2 * Math.PI, false)
+        ctx.stroke()
+
+        ctx.restore()
     }
 
     /// SPOT LIGHT ///
@@ -1452,13 +1516,14 @@ export class EffectRender {
         const bands: any[] = []
 
         const existing = this.effectData.get(item)
-        if (existing && existing.length === bandCount) {
+        if (existing && existing.bands && existing.bands.length === bandCount) {
+            existing.bufferScale = 0.25
             for (let i = 0; i < bandCount; i++) {
-                existing[i].amplitude = item.amplitude * (0.8 + Math.random() * 0.4)
-                existing[i].wavelength = item.wavelength * (0.8 + Math.random() * 0.4)
-                existing[i].speed = item.speed * (0.5 + Math.random())
-                existing[i].colorStops = item.colorStops ?? ["#00ffcc", "#00ffb7", "#00ff88"]
-                existing[i].opacity = item.opacity ?? 0.25
+                existing.bands[i].amplitude = item.amplitude * (0.8 + Math.random() * 0.4)
+                existing.bands[i].wavelength = item.wavelength * (0.8 + Math.random() * 0.4)
+                existing.bands[i].speed = item.speed * (0.5 + Math.random())
+                existing.bands[i].colorStops = item.colorStops ?? ["#00ffcc", "#00ffb7", "#00ff88"]
+                existing.bands[i].opacity = item.opacity ?? 0.25
             }
             return
         }
@@ -1477,53 +1542,121 @@ export class EffectRender {
             })
         }
 
-        this.effectData.set(item, bands)
+        const bufferScale = 0.25
+        const bufferCanvas = document.createElement("canvas")
+        bufferCanvas.width = this.width * bufferScale
+        bufferCanvas.height = this.height * bufferScale
+        const bufferCtx = bufferCanvas.getContext("2d")!
+
+        this.effectData.set(item, {
+            bands,
+            bufferCanvas,
+            bufferCtx,
+            bufferScale
+        })
     }
 
     drawAurora(item: AuroraItem, deltaTime: number) {
         const ctx = this.ctx
-        const bands = this.effectData.get(item) || []
+        const data = this.effectData.get(item)
+        if (!data || !data.bands) return
 
-        ctx.save()
-        ctx.globalCompositeOperation = "lighter"
-        ctx.filter = "blur(8px)"
+        const { bands, bufferCanvas, bufferCtx, bufferScale } = data
 
-        for (const band of bands) {
+        // Clear the offscreen buffer on every frame
+        bufferCtx.clearRect(0, 0, bufferCanvas.width, bufferCanvas.height)
+
+        bufferCtx.save()
+        bufferCtx.globalCompositeOperation = "lighter"
+
+        for (let i = 0; i < bands.length; i++) {
+            const band = bands[i]
             if (this.running) {
                 band.phase += band.speed * 0.01 * deltaTime
                 band.bottomPhase += band.speed * 0.01 * deltaTime * 0.8 // slightly different speed for bottom wave
             }
 
-            // Horizontal gradient from left (0) to right (canvas.width)
-            const gradient = ctx.createLinearGradient(0, 0, this.width, 0)
-            for (let i = 0; i < band.colorStops.length; i++) {
-                gradient.addColorStop(i / (band.colorStops.length - 1), band.colorStops[i])
-            }
-
-            ctx.fillStyle = gradient
-            ctx.globalAlpha = band.opacity
-
-            ctx.beginPath()
+            // Calculate depth-based scaling to simulate realistic atmospheric distance layers
+            // Furthest bands (lower index) are dimmer and have narrower curtains
+            const depthProgress = (i + 1) / bands.length // scales from e.g. 0.33 to 1.0
+            const depthOpacity = 0.65 + 0.35 * depthProgress
+            const depthWidthScale = 0.75 + 0.25 * depthProgress
 
             const offsetY = band.offsetY + this.getOffsetY(item.offset ?? 0.2) - band.amplitude * 2.5
 
-            // Top edge wave (left -> right)
-            ctx.moveTo(0, offsetY)
-            for (let x = 0; x <= this.width; x += 2) {
-                const y = offsetY + band.amplitude * band.noise2D(x / band.wavelength, band.phase)
-                ctx.lineTo(x, y)
+            // Determine vertical boundaries of this band for gradient mapping
+            const minY = offsetY - band.amplitude * 1.5
+            const maxY = offsetY + band.amplitude * 3.5
+
+            // Create a vertical altitude-dependent color gradient for realistic ionization layers:
+            // 1. Extreme altitudes: ionization fades out completely into transparent deep purple/red.
+            // 2. Mid-upper altitudes: transitions to the user's primary selected color at low-to-medium opacity.
+            // 3. Low altitudes: sharp, highly ionized oxygen emission (user's final color) at full opacity.
+            const gradient = bufferCtx.createLinearGradient(0, minY * bufferScale, 0, maxY * bufferScale)
+
+            const colors = band.colorStops
+            const numStops = colors.length
+
+            // Realistic vertical color stops:
+            // Top edge (extreme altitude) fades out into a faint violet/purple ionization glow
+            gradient.addColorStop(0.0, "rgba(147, 51, 234, 0)")
+            gradient.addColorStop(0.08, "rgba(147, 51, 234, 0.35)")
+
+            // Middle bodies: distribute user's color stops organically with high opacity towards the bottom
+            for (let j = 0; j < numStops; j++) {
+                const stopPos = 0.15 + 0.7 * (j / Math.max(1, numStops - 1))
+                // Middle has robust opacity (0.7 to 1.0)
+                const opacity = 0.7 + 0.3 * (j / Math.max(1, numStops - 1))
+                gradient.addColorStop(stopPos, this.colorWithOpacity(colors[j], opacity * depthOpacity))
             }
 
-            // Bottom edge wave (right -> left), related but randomized with different phase
-            for (let x = this.width; x >= 0; x -= 2) {
-                const y = offsetY + band.amplitude * 2 + band.amplitude * band.noise2D(x / band.wavelength, band.bottomPhase)
-                ctx.lineTo(x, y)
-            }
+            // Bottom edge (lowest altitude): sharp, highly intense emission (final user color) at full opacity
+            gradient.addColorStop(1.0, this.colorWithOpacity(colors[numStops - 1], 1.0 * depthOpacity))
 
-            ctx.closePath()
-            ctx.fill()
+            // Draw shimmering vertical light curtains onto offscreen canvas using the vertical gradient
+            bufferCtx.strokeStyle = gradient
+
+            // On a 480px wide canvas, stepping by 4 gives 120 lines. Very smooth and performant.
+            const step = 4
+            for (let x = 0; x <= bufferCanvas.width; x += step) {
+                const originalX = x / bufferScale
+
+                const topY = (offsetY + band.amplitude * band.noise2D(originalX / band.wavelength, band.phase)) * bufferScale
+                const bottomY = (offsetY + band.amplitude * 2.5 + band.amplitude * band.noise2D(originalX / band.wavelength, band.bottomPhase)) * bufferScale
+
+                // 1. Slow, majestic horizontal curtain streaks
+                const rayNoise = band.noise2D(originalX / 40, band.phase * 1.2)
+
+                // 2. High-frequency micro-shimmer: dynamic particle flickers that make it feel electric and alive
+                const shimmerTime = performance.now() * 0.003 * band.speed
+                const microShimmer = band.noise2D(originalX / 15, shimmerTime) * 0.15
+
+                // Apply baseline vibrancy booster of 1.8x to prevent washed-out curtains
+                const baseOpacity = band.opacity ?? 0.25
+                const rayOpacity = Math.max(0, baseOpacity * 1.8 * (0.35 + 0.65 * rayNoise + microShimmer))
+
+                bufferCtx.globalAlpha = rayOpacity
+                // Modulate ray width organically, scaling down for offscreen and applying depth-based perspective
+                const rawWidth = 5 + 3 * band.noise2D(originalX / 20, band.phase * 0.8)
+                bufferCtx.lineWidth = rawWidth * bufferScale * depthWidthScale
+
+                bufferCtx.beginPath()
+                bufferCtx.moveTo(x, topY)
+                bufferCtx.lineTo(x, bottomY)
+                bufferCtx.stroke()
+            }
         }
 
+        bufferCtx.restore()
+
+        // Draw the scaled and blurred buffer onto the main screen
+        ctx.save()
+        ctx.globalCompositeOperation = "lighter"
+
+        // Applying the blur filter to a single scaled drawImage is extremely fast and hardware-accelerated.
+        // We use blur(8px) for an incredibly soft, realistic atmospheric aurora glow.
+        ctx.filter = "blur(8px)"
+        ctx.drawImage(bufferCanvas, 0, 0, this.width, this.height)
         ctx.restore()
     }
 
