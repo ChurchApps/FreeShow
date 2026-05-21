@@ -109,7 +109,7 @@
     }
 </script>
 
-<MaterialButton class="popup-options" icon="delete" title="actions.clear_history" on:click={clearHistory} white />
+<MaterialButton class="popup-options" icon="delete" title="actions.clear_history" disabled={!rHistory.length && uHistory.length < 2} on:click={clearHistory} white />
 
 <main class="history">
     {#if rHistory.length || uHistory.length}

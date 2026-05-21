@@ -1,8 +1,9 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
     import { uid } from "uid"
-    import { actions, activePopup, activeShow, drawerTabsData, groups, overlays, popupData, showsCache, templates, timers } from "../../../stores"
+    import { actionMoreOptionsUsed, actions, activePopup, activeShow, drawerTabsData, groups, overlays, popupData, showsCache, templates, timers } from "../../../stores"
     import { translateText } from "../../../utils/language"
+    import { imageExtensions } from "../../../values/extensions"
     import CreateAction from "../../actions/CreateAction.svelte"
     import MidiValues from "../../actions/MidiValues.svelte"
     import { actionData } from "../../actions/actionData"
@@ -13,11 +14,13 @@
     import T from "../../helpers/T.svelte"
     import { clone, keysToID, moveToPos, sortByName } from "../../helpers/array"
     import { history } from "../../helpers/history"
+    import { convertImagePathToIcon } from "../../helpers/media"
     import { getLayoutRef, updateCachedShows } from "../../helpers/show"
     import { _show } from "../../helpers/shows"
     import InputRow from "../../input/InputRow.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialDropdown from "../../inputs/MaterialDropdown.svelte"
+    import MaterialFilePicker from "../../inputs/MaterialFilePicker.svelte"
     import MaterialPopupButton from "../../inputs/MaterialPopupButton.svelte"
     import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
     import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
@@ -125,13 +128,25 @@
         // For actions that can have multiple instances, don't auto-replace
     }
 
-    function updateValue(key: string, e: any) {
+    let customIconUpdateId = 0
+    async function updateValue(key: string, e: any) {
         let value = e.detail ?? e
+
+        // downscale image to 64x64 and convert to base64
+        if (key === "customIcon" && typeof value === "string" && value) {
+            const updateId = ++customIconUpdateId
+            value = await convertImagePathToIcon(value, 64)
+            // ignore async result if user has picked another image in the meantime
+            if (updateId !== customIconUpdateId) return
+        }
 
         action[key] = value
     }
     function updateAction(key: string, value: string) {
-        if (!value) return updateValue(key, "")
+        if (!value) {
+            updateValue(key, "")
+            return
+        }
 
         actions.update((a) => {
             if (!a[id]) return a
@@ -368,7 +383,7 @@
         updateValue("customActivation", "midi_signal_received")
     }
 
-    $: showMore = action.keypressActivate || customActivation
+    $: showMore = action.keypressActivate || customActivation || $actionMoreOptionsUsed
     let showCommonActivate = false
 
     $: hasNoName = !action.name
@@ -420,13 +435,29 @@
                 full
             />
         {:else}
-            {#key hasNoName}
-                <MaterialTextInput label="midi.name" value={action.name} on:change={(e) => updateValue("name", e)} autofocus={hasNoName} />
-            {/key}
+            <InputRow>
+                {#key hasNoName}
+                    <MaterialTextInput label="midi.name" value={action.name} on:change={(e) => updateValue("name", e)} autofocus={hasNoName} />
+                {/key}
+
+                {#if showMore && !mode}
+                    <MaterialFilePicker label="items.icon" style="width: 120px;" value={action.customIcon} filter={{ name: "Image files", extensions: imageExtensions }} on:change={(e) => updateValue("customIcon", e.detail)} noLabel={action.customIcon} showThumbnail allowEmpty />
+                {/if}
+            </InputRow>
         {/if}
 
         {#if !mode && !actionSelector && !actionActivationSelector}
-            <MaterialButton class="popup-options {showMore ? 'active' : ''}" icon="options" iconSize={1.3} title={showMore ? "actions.close" : "create_show.more_options"} on:click={() => (showMore = !showMore)} white />
+            <MaterialButton
+                class="popup-options {showMore ? 'active' : ''}"
+                icon="options"
+                iconSize={1.3}
+                title={showMore ? "actions.close" : "create_show.more_options"}
+                on:click={() => {
+                    showMore = !showMore
+                    actionMoreOptionsUsed.set(showMore)
+                }}
+                white
+            />
         {/if}
 
         <!-- if not slide specific trigger action -->

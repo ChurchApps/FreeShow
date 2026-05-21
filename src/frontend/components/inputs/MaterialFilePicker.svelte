@@ -18,6 +18,8 @@
 
     export let disabled = false
     export let autoTrigger = false
+    export let noLabel = false
+    export let showThumbnail = false
     export let allowEmpty = false
 
     onMount(() => {
@@ -53,7 +55,7 @@
     }
 </script>
 
-<div class="textfield {disabled ? 'disabled' : ''}" data-title={value || translateText(title || "edit.choose_media")}>
+<div class="textfield {disabled ? 'disabled' : ''}" style={$$props.style || null} data-title={value || translateText(title || "edit.choose_media")}>
     <div class="background" />
 
     <div
@@ -67,15 +69,19 @@
         on:keydown={handleKeydown}
     >
         <span class="selected-text">
-            {#if typeof value === "string" && value.startsWith("data:")}
-                Embeded data
-            {:else if value}
-                {getFileName(value)}
+            {#if !noLabel}
+                {#if typeof value === "string" && value.startsWith("data:")}
+                    Embeded data
+                {:else if value}
+                    {getFileName(value)}
+                {/if}
             {/if}
         </span>
 
-        <div class="arrow">
-            {#if icon}
+        <div class="arrow" style={showThumbnail && value ? "height: 40px;" : ""}>
+            {#if showThumbnail && value}
+                <img src={value} alt="thumbnail" class="thumbnail" draggable="false" />
+            {:else if icon}
                 <Icon id={icon} white />
             {:else}
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
@@ -89,11 +95,13 @@
         </div>
     </div>
 
-    <label class:selected={value}>{@html translateText(label)}</label>
+    {#if !noLabel}
+        <label class:selected={value}>{@html translateText(label)}</label>
+    {/if}
     <span class="underline" />
 
     {#if allowEmpty && value}
-        <div class="remove">
+        <div class="remove" style={showThumbnail && value ? "right: 56px;" : ""}>
             <MaterialButton on:click={() => dispatch("change", "")} title="clear.general" white>
                 <Icon id="close" white />
             </MaterialButton>
@@ -172,6 +180,9 @@
         transition: transform 0.2s ease;
         color: var(--text);
         transform: translateY(-0.4rem);
+
+        display: flex;
+        align-items: center;
     }
 
     label {
@@ -222,5 +233,12 @@
     .disabled {
         pointer-events: none;
         opacity: 0.35;
+    }
+
+    .thumbnail {
+        width: 40px;
+        height: 40px;
+        border-radius: 4px;
+        object-fit: cover;
     }
 </style>

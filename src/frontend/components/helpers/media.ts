@@ -546,6 +546,37 @@ export function getVideoDuration(path: string): Promise<number> {
     })
 }
 
+// Custom Icons (Actions)
+
+export async function convertImagePathToIcon(path: string, size = 64): Promise<string> {
+    if (!path) return ""
+
+    return new Promise((resolve) => {
+        const img = new Image()
+        img.onload = () => {
+            const canvas = document.createElement("canvas")
+            canvas.width = size
+            canvas.height = size
+
+            const context = canvas.getContext("2d")
+            if (!context) return resolve(path)
+
+            const ratio = Math.min(size / img.width, size / img.height)
+            const drawWidth = img.width * ratio
+            const drawHeight = img.height * ratio
+            const x = (size - drawWidth) / 2
+            const y = (size - drawHeight) / 2
+
+            context.clearRect(0, 0, size, size)
+            context.drawImage(img, x, y, drawWidth, drawHeight)
+            resolve(canvas.toDataURL("image/png"))
+        }
+
+        img.onerror = () => resolve(path)
+        img.src = encodeFilePath(path)
+    })
+}
+
 // CACHE
 
 // const jpegQuality = 90 // 0-100

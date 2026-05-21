@@ -431,6 +431,7 @@ export interface Media {
 
 export interface Action {
     name: string
+    customIcon?: string // file path
     triggers: string[]
     actionValues?: any
     tags?: string[]
