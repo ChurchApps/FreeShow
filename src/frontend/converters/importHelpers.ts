@@ -4,7 +4,7 @@ import type { Show, Slide } from "../../types/Show"
 import type { Category } from "../../types/Tabs"
 import { history } from "../components/helpers/history"
 import { checkName } from "../components/helpers/show"
-import { activeDrawerTab, activePopup, activeProject, activeRename, activeShow, alertMessage, categories, drawerTabsData, shows } from "../stores"
+import { actionTags, activeDrawerTab, activePopup, activeProject, activeRename, activeShow, alertMessage, categories, drawerTabsData, shows } from "../stores"
 import { newToast } from "../utils/common"
 import { convertText } from "./txt"
 import { convertOldShowValues } from "../components/helpers/setShow"
@@ -126,6 +126,16 @@ export function importAction(files: { content: string; name?: string; extension?
         const parsed = JSON.parse(content)
         const action = parsed.action ? parsed.action : parsed
         if (!action.triggers) return
+
+        // create any tags that do not exist
+        action.tags?.forEach((tagId: string) => {
+            if (get(actionTags)[tagId]) return
+
+            actionTags.update((a) => {
+                a[tagId] = { name: "Tag", color: "#ffffff" }
+                return a
+            })
+        })
 
         const actionId = action.id || uid()
         delete action.id
