@@ -65,7 +65,7 @@
         dispatch("rename", { id, value: e.detail.value })
     }
 
-    const defaultFolders = ["all", "unlabeled", "number", "favourites", "effects_library", "effects", "online", "screens", "cameras", "microphones", "audio_streams"]
+    const defaultFolders = ["all", "unlabeled", "number", "favourites", "effects_library", "effects", "online", "inputs", "microphones", "audio_streams"]
     const tabsWithCategories = ["shows", "media", "audio", "overlays", "templates", "scripture"]
 
     $: noEdit = !tabsWithCategories.includes(drawerId) || defaultFolders.includes(id)

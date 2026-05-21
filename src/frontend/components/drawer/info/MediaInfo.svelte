@@ -61,7 +61,7 @@
     }
 </script>
 
-{#if subTab === "screens" || $activeRecording}
+{#if subTab === "inputs" || $activeRecording}
     <LiveInfo />
 {:else if subTab === "online"}
     <PlayerInfo />

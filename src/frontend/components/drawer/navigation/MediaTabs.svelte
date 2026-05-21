@@ -67,7 +67,7 @@
             { id: "favourites", label: "category.favourites", icon: "star", count: favoritesListLength, hidden: !favoritesListLength && activeSubTab !== "favourites" }
         ],
         ...(curriculumProviders.length ? [[{ id: "TITLE", label: "Curriculum" }, ...curriculumProviders.map((a) => ({ id: a.providerId, label: a.displayName, icon: "web" }))]] : []),
-        [{ id: "online", label: "media.online", icon: "web" }, "SEPARATOR", { id: "screens", label: "live.screens", icon: "screen" }, { id: "cameras", label: "live.cameras", icon: "camera" }].filter(Boolean),
+        [{ id: "inputs", label: "emitters.inputs", icon: "input" }, "SEPARATOR", { id: "online", label: "media.online", icon: "web" }].filter(Boolean),
         [{ id: "TITLE", label: "media.folders" }, ...convertToButton(foldersList, folderLengths)]
     ]
 

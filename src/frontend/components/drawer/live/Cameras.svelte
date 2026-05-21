@@ -18,6 +18,7 @@
 
     let dispatch = createEventDispatcher()
     function click(event, cam) {
+        cameraManager.clearBadCamera(cam.id)
         dispatch("click", { event, cam })
     }
 

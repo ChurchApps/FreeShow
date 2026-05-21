@@ -6,7 +6,7 @@
     import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
     import { mediaRecorderIsPaused, stopMediaRecorder, toggleMediaRecorder } from "./recorder"
 
-    $: active = $drawerTabsData.media?.openedSubSubTab?.screens || "screens"
+    $: active = $drawerTabsData.media?.openedSubSubTab?.cameras || "cameras"
 
     let videoElem
     $: if ($currentRecordingStream && videoElem) {
