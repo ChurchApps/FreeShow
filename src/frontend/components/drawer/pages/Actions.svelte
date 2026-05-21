@@ -11,7 +11,6 @@
     import FloatingInputs from "../../input/FloatingInputs.svelte"
     import Button from "../../inputs/Button.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
-    import MaterialCheckbox from "../../inputs/MaterialCheckbox.svelte"
     import Center from "../../system/Center.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
 
@@ -172,7 +171,9 @@
 
 {#if $activeActionTagFilter.length === 1}
     <FloatingInputs side="left">
-        <MaterialCheckbox label="show.grid" style="height: inherit;" checked={showGrid} on:change={toggleShowGrid} />
+        <MaterialButton on:click={toggleShowGrid} title="show.{showGrid ? 'grid' : 'list'}">
+            <Icon size={1.3} id={showGrid ? "grid" : "list"} white />
+        </MaterialButton>
     </FloatingInputs>
 {/if}
 

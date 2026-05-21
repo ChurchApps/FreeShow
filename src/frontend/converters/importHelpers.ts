@@ -121,6 +121,26 @@ export function importTemplate(files: { content: string; name?: string; extensio
     }
 }
 
+export function importAction(files: { content: string; name?: string; extension?: string }[]) {
+    files.forEach(({ content }) => {
+        const parsed = JSON.parse(content)
+        const action = parsed.action ? parsed.action : parsed
+        if (!action.triggers) return
+
+        const actionId = action.id || uid()
+        delete action.id
+
+        history({ id: "UPDATE", newData: { data: action }, oldData: { id: actionId }, location: { page: "drawer", id: "action" } })
+    })
+
+    if (get(activePopup)) {
+        alertMessage.set("actions.imported")
+        activePopup.set("alert")
+    } else {
+        newToast("actions.imported")
+    }
+}
+
 /// //
 
 export function importFromClipboard() {
