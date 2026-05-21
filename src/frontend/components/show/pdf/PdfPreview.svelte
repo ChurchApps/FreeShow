@@ -168,7 +168,7 @@
 
     function convertToImages() {
         newToast("actions.converting")
-        sendMain(Main.PDF_TO_IMAGE, { filePath: path })
+        sendMain(Main.PDF_TO_IMAGE, { filePath: show.id })
     }
 
     $: timer = data?.timer || 0

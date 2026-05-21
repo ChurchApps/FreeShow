@@ -22,7 +22,7 @@ import { getTextLines } from "../edit/scripts/textStyle"
 import { clearBackground, clearOverlays, clearTimers } from "../output/clear"
 import { activeEdit, activeFocus, activePage, activeProject, activeShow, allOutputs, audioData, customMetadata, dictionary, dynamicValueData, focusMode, media, outLocked, outputDisplay, outputs, overlays, playingAudio, playingMetronome, projects, shows, showsCache, slideTimers, special, stageShows, styles, templates, timers, triggers, variables, videosData, videosTime } from "./../../stores"
 import { clone, keysToID, sortByName } from "./array"
-import { downloadOnlineMedia, getExtension, getFileName, getMedia, getMediaStyle, getMediaType, removeExtension } from "./media"
+import { downloadOnlineMedia, encodeFilePath, getExtension, getFileName, getMedia, getMediaStyle, getMediaType, removeExtension } from "./media"
 import { defaultLayers, getActiveOutputs, getAllNormalOutputs, getFirstActiveOutput, getFirstOutput, getWindowOutputId, isOutCleared, refreshOut, setOutput, startFolderTimer } from "./output"
 import { getSetChars } from "./randomValue"
 import { loadShows } from "./setShow"
@@ -174,7 +174,7 @@ export async function playPdf(data: OutSlide | null, next: boolean, loop = false
     if (!data?.id || data?.type !== "pdf") return
 
     GlobalWorkerOptions.workerSrc = "./assets/pdf.worker.min.mjs"
-    const loadingTask = getDocument(data.id)
+    const loadingTask = getDocument(encodeFilePath(data.id))
     const pdfDoc = await loadingTask.promise
     const pages = pdfDoc.numPages
     loadingTask.destroy()
