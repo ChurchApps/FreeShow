@@ -1,10 +1,9 @@
 <script lang="ts">
-    import { activePopup, activeProject, calendarAddShow, popupData, shows } from "../../../stores"
+    import { activeProject, calendarAddShow, popupData } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { history } from "../../helpers/history"
-    import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
-    import Button from "../../inputs/Button.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
     import Center from "../../system/Center.svelte"
     import { createSlides } from "./calendar"
 
@@ -44,40 +43,16 @@
                     {/each}
                 </ul>
             {/each}
+
+            <MaterialButton variant="outlined" icon="slide" style="margin-top: 10px;" info={currentEvents.length > 1 ? `${currentEvents.length}` : ""} on:click={createShow}>
+                <T id="new.show_convert" />
+            </MaterialButton>
         {:else}
             <Center faded>
                 <T id="empty.events" />
             </Center>
         {/if}
     </div>
-
-    <div class="options">
-        <Button
-            on:click={() => {
-                if ($calendarAddShow) {
-                    calendarAddShow.set("")
-                    return
-                }
-
-                popupData.set({ action: "select_show", location: "calendar" })
-                activePopup.set("select_show")
-            }}
-            style="flex: 1;overflow: hidden;"
-            dark
-            center
-        >
-            <Icon id="showIcon" right />
-            <p style="white-space: normal;"><T id="calendar.add_slides_from_show" />{$calendarAddShow ? ": " + $shows[$calendarAddShow]?.name || "—" : ""}</p>
-        </Button>
-    </div>
-
-    <Button on:click={createShow} disabled={!currentEvents.length} dark center>
-        <Icon id="slide" right />
-        <T id="new.show_convert" />
-        {#if currentEvents.length > 1}
-            <span style="opacity: 0.5;margin-inline-start: 0.5em;">({currentEvents.length})</span>
-        {/if}
-    </Button>
 </div>
 
 <style>
@@ -87,12 +62,5 @@
         overflow-y: auto;
         overflow-x: hidden;
         height: 100%;
-    }
-
-    .options {
-        display: flex;
-        align-items: center;
-        flex-wrap: wrap;
-        background-color: var(--primary-darker);
     }
 </style>
