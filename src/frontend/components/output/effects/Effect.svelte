@@ -33,15 +33,6 @@
         renderer?.stop()
     })
 
-    const fullReloadTypes = ["stars", "galaxy", "bloom"]
-    const fullReloadKeys = ["count", "color", "flareDiscNum"]
-    const fullReloadKeysSpecific = {
-        rain: ["length", "width", "speed"],
-        snow: ["size", "speed", "drift"],
-        bubbles: ["size", "speed", "pulseSpeed"],
-        city: ["height", "width"],
-        grass: ["height", "speed"]
-    }
     let previousItems: any[] = []
     $: if (items) update()
     function update() {
@@ -68,15 +59,8 @@
         if (_changedKeys.length && !changedKeys.length && !$currentWindow) return
 
         previousItems = clone(items)
-        const itemType = effect.items[changedKeys[0]?.index]?.type
-        if (changedKeys.length === 1 && !fullReloadTypes.includes(itemType) && !fullReloadKeys.includes(changedKeys[0].key) && !fullReloadKeysSpecific[itemType]?.includes(changedKeys[0].key)) return
 
-        if (preview) {
-            renderer?.stop()
-            renderer = new EffectRender(canvasElem, items, preview)
-        } else {
-            renderer.updateItems(items, !changedKeys.length)
-        }
+        renderer.updateItems(items, !changedKeys.length)
     }
 
     let pressed = false

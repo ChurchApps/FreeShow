@@ -116,7 +116,10 @@
     function changed(e: any, input: any, sectionId = "", onlyTimeline = false) {
         let value = e.detail
 
-        if (input.multiplier) value = value / input.multiplier
+        if (input.multiplier) {
+            if (!value || isNaN(Number(value))) value = input.value || 0
+            value = value / input.multiplier
+        }
 
         // update on change (if another keyframe of same key exists)
         if ($special.slideTimelineActive && $activePage === "edit" && ($activeEdit.type || "show") === "show" && (onlyTimeline || SlideTimeline.hasActionWithKey(input.key || "", type))) {

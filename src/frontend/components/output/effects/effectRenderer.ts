@@ -14,6 +14,7 @@ export class EffectRender {
     height = 1080
     doublePI = Math.PI * 2
     effectData = new WeakMap<EffectItem, any>()
+    isPreview = false
 
     TYPES: Record<string, EffectDefinition> = {}
 
@@ -28,6 +29,7 @@ export class EffectRender {
         this.canvas = canvas
         this.ctx = canvas.getContext("2d")!
         this.setItems(items)
+        this.isPreview = isPreview
 
         this.autoRegisterEffects(effectTypes)
 
@@ -63,10 +65,27 @@ export class EffectRender {
     }
 
     updateItems(items: EffectItem[], _noFrameChange = false) {
+        const filteredNew = items.filter((a) => !a.hidden)
+        const filteredOld = this.items
+
+        for (let i = 0; i < Math.min(filteredOld.length, filteredNew.length); i++) {
+            const oldItem = filteredOld[i]
+            const newItem = filteredNew[i]
+            if (oldItem && newItem && oldItem.type === newItem.type) {
+                const data = this.effectData.get(oldItem)
+                if (data !== undefined) {
+                    this.effectData.set(newItem, data)
+                }
+            }
+        }
+
         this.setItems(items)
 
         // if (noFrameChange) return
         this.frame(0, true)
+        if (this.isPreview) {
+            this.frame(1)
+        }
     }
 
     frame(deltaTime: number, init = false) {
@@ -284,6 +303,15 @@ export class EffectRender {
         const maxRadius = item.size * 2
         const speed = item.speed ?? 1
 
+        const existing = this.effectData.get(item)
+        if (existing && existing.length === item.count) {
+            for (const star of existing) {
+                star.radius = this.randomNumber(minRadius, maxRadius)
+                star.alphaChange = speed * this.randomNumber(0.0001, 0.005) * (star.alphaChange < 0 ? -1 : 1)
+            }
+            return
+        }
+
         const stars = Array.from({ length: item.count }, () => ({
             x: this.getRandomPosX(),
             y: this.getRandomPosY(),
@@ -438,6 +466,16 @@ export class EffectRender {
 
     initRain(item: RainItem) {
         if (!item.color) item.color = "rgba(173,216,230,0.5)"
+
+        const existing = this.effectData.get(item)
+        if (existing && existing.length === item.count) {
+            for (const drop of existing) {
+                drop.speed = item.speed * this.randomNumber(0.5, 1)
+                drop.length = item.length * this.randomNumber(0.5, 1)
+            }
+            return
+        }
+
         const drops = Array.from({ length: item.count }, () => ({
             x: this.getRandomPosX(),
             y: this.getRandomPosY(),
@@ -475,6 +513,16 @@ export class EffectRender {
         if (!item.color) item.color = "#ffffff"
         const drift = item.drift ?? 0.5
 
+        const existing = this.effectData.get(item)
+        if (existing && existing.length === item.count) {
+            for (const flake of existing) {
+                flake.size = item.size * this.randomNumber(0.5, 1.5)
+                flake.speed = item.speed * 0.5 * this.randomNumber(0.5, 1.5)
+                flake.drift = drift * this.randomNumber(-0.5, 0.5)
+            }
+            return
+        }
+
         const snowflakes = Array.from({ length: item.count }, () => ({
             x: this.getRandomPosX(),
             y: this.getRandomPosY(),
@@ -511,6 +559,16 @@ export class EffectRender {
     /// BUBBLES ///
 
     initBubbles(item: BubbleItem) {
+        const existing = this.effectData.get(item)
+        if (existing && existing.length === item.count) {
+            for (const bubble of existing) {
+                bubble.radius = Math.random() * item.size + (item.maxSizeVariation ?? 10)
+                bubble.pulseSpeed = Math.random() * ((item.pulseSpeed || 1) * 0.0002) + 0.0001
+                bubble.speed = item.speed * this.randomNumber(0.2, 0.7)
+            }
+            return
+        }
+
         const bubbles = Array.from({ length: item.count }, () => {
             return {
                 x: this.getRandomPosX(),
@@ -560,6 +618,17 @@ export class EffectRender {
         const windStrength = item.windStrength ?? 0.5
         const windSpeed = item.speed ?? 1
 
+        const existing = this.effectData.get(item)
+        if (existing && existing.blades && existing.blades.length === item.count) {
+            for (const blade of existing.blades) {
+                blade.height = baseHeight * (1 + (Math.random() - 0.5) * heightVar)
+                blade.segments = Math.max(3, Math.floor(blade.height / 15))
+                blade.maxSway = windStrength * (blade.height / baseHeight) * 15
+                blade.windSpeed = windSpeed * (0.8 + Math.random() * 0.4)
+            }
+            return
+        }
+
         const blades = Array.from({ length: item.count }, (_, i) => {
             const x = (this.width / item.count) * i + Math.random() * (this.width / item.count)
             const height = baseHeight * (1 + (Math.random() - 0.5) * heightVar)
@@ -575,7 +644,7 @@ export class EffectRender {
             }
         })
 
-        this.effectData.set(item, { blades, time: 0 })
+        this.effectData.set(item, { blades, time: existing ? existing.time : 0 })
     }
 
     drawGrass(item: GrassItem, deltaTime: number) {
@@ -1064,6 +1133,15 @@ export class EffectRender {
         const size = item.size ?? 100
         const discs: any[] = []
 
+        const existing = this.effectData.get(item)
+        if (existing && existing.discs && existing.discs.length === flareDiscNum + 1) {
+            for (let i = 0; i < existing.discs.length; i++) {
+                const j = i - flareDiscNum / 2
+                existing.discs[i].dia = Math.pow(Math.abs(10 * (j / flareDiscNum)), 2) * 3 + (size + 10) + (Math.random() * size - size)
+            }
+            return
+        }
+
         for (let i = 0; i <= flareDiscNum; i++) {
             const j = i - flareDiscNum / 2
             const offsetRatio = (j / flareDiscNum) * 2
@@ -1177,10 +1255,11 @@ export class EffectRender {
     /// LIGHTNING ///
 
     initLightning(item: LightningItem) {
+        const existing = this.effectData.get(item)
         this.effectData.set(item, {
-            nextStrike: performance.now() + this.randomNumber(1000 / item.frequency, 2000 / item.frequency),
-            flashAlpha: 0,
-            strikePath: []
+            nextStrike: existing ? existing.nextStrike : performance.now() + this.randomNumber(1000 / item.frequency, 2000 / item.frequency),
+            flashAlpha: existing ? existing.flashAlpha : 0,
+            strikePath: existing ? existing.strikePath : []
         })
     }
 
@@ -1288,7 +1367,9 @@ export class EffectRender {
     }
 
     initSpotlight(item: SpotlightItem) {
-        this.effectData.set(item, { swayPhase: Math.random() * this.doublePI })
+        const existing = this.effectData.get(item)
+        const swayPhase = existing && !isNaN(existing.swayPhase) ? existing.swayPhase : Math.random() * this.doublePI
+        this.effectData.set(item, { swayPhase })
     }
 
     drawSpotlight(item: SpotlightItem, deltaTime: number) {
@@ -1296,9 +1377,20 @@ export class EffectRender {
         const data = this.effectData.get(item)
         if (!data) return
 
-        data.swayPhase += item.swaySpeed * deltaTime * 0.016
+        const swaySpeed = isNaN(item.swaySpeed) || item.swaySpeed === undefined || item.swaySpeed === null ? 0 : item.swaySpeed
+        const swayAmplitude = isNaN(item.swayAmplitude) || item.swayAmplitude === undefined || item.swayAmplitude === null ? 0 : item.swayAmplitude
+        const length = isNaN(item.length) || item.length === undefined || item.length === null ? 2000 : item.length
+        const baseWidth = isNaN(item.baseWidth) || item.baseWidth === undefined || item.baseWidth === null ? 1000 : item.baseWidth
+
+        if (length <= 0 || baseWidth <= 0) return
+
+        if (data.swayPhase === undefined || data.swayPhase === null || isNaN(data.swayPhase)) {
+            data.swayPhase = Math.random() * this.doublePI
+        }
+
+        data.swayPhase += swaySpeed * deltaTime * 0.016
         // pendulum sway
-        const swayAngle = Math.sin(data.swayPhase) * item.swayAmplitude
+        const swayAngle = Math.sin(data.swayPhase) * swayAmplitude
         // motor turn
         // const t = (data.swayPhase / Math.PI) % 2
         // const triangular = t < 1 ? t : 2 - t
@@ -1306,8 +1398,7 @@ export class EffectRender {
 
         const baseX = this.getOffsetX(item.x)
         const baseY = this.getOffsetY(item.y)
-        const length = item.length
-        const baseHalf = item.baseWidth / 2
+        const baseHalf = baseWidth / 2
 
         ctx.save()
         ctx.translate(baseX, baseY)
@@ -1316,7 +1407,10 @@ export class EffectRender {
         const baseColor = item.color
 
         const safeGradient = this.createSafeRadialGradient(ctx, 0, 0, 0, length * 0.9)
-        if (!safeGradient) return
+        if (!safeGradient) {
+            ctx.restore()
+            return
+        }
         const gradient = safeGradient.gradient
         this.setColorStops(gradient, [
             [0, this.colorWithOpacity(baseColor, 0.3)],
@@ -1356,6 +1450,18 @@ export class EffectRender {
         const bandCount = item.bandCount
         const maxHeight = this.height * 0.25 // top 25%
         const bands: any[] = []
+
+        const existing = this.effectData.get(item)
+        if (existing && existing.length === bandCount) {
+            for (let i = 0; i < bandCount; i++) {
+                existing[i].amplitude = item.amplitude * (0.8 + Math.random() * 0.4)
+                existing[i].wavelength = item.wavelength * (0.8 + Math.random() * 0.4)
+                existing[i].speed = item.speed * (0.5 + Math.random())
+                existing[i].colorStops = item.colorStops ?? ["#00ffcc", "#00ffb7", "#00ff88"]
+                existing[i].opacity = item.opacity ?? 0.25
+            }
+            return
+        }
 
         for (let i = 0; i < bandCount; i++) {
             bands.push({
@@ -1427,6 +1533,16 @@ export class EffectRender {
         const { width, height } = this
         const blobCount = item.blobCount ?? 10
         const speed = item.speed ?? 1
+
+        const existing = this.effectData.get(item)
+        if (existing && existing.blobs && existing.blobs.length === blobCount) {
+            existing.blurAmount = item.blurAmount ?? 50
+            for (const blob of existing.blobs) {
+                blob.speedX = (Math.random() - 0.5) * 1.5 * speed
+                blob.speedY = (Math.random() - 0.5) * 1.3 * speed
+            }
+            return
+        }
 
         const blobs = Array.from({ length: blobCount }, () => ({
             x: width / 2 + (Math.random() - 0.5) * width * 0.8,
@@ -1522,6 +1638,17 @@ export class EffectRender {
         const baseOpacity = item.opacity ?? 0.08
         const size = item.size
         const speed = item.speed
+
+        const existing = this.effectData.get(item)
+        if (existing && existing.length === item.count) {
+            for (const cloud of existing) {
+                cloud.offsetY = (Math.random() - 0.5) * spread
+                cloud.radius = size * (0.8 + Math.random() * 0.4)
+                cloud.opacity = baseOpacity * (0.8 + Math.random() * 0.4)
+                cloud.speed = -speed * (0.6 + Math.random() * 0.4)
+            }
+            return
+        }
 
         const clouds = Array.from({ length: item.count }, () => ({
             x: Math.random() * this.width,
@@ -1683,8 +1810,11 @@ export class EffectRender {
         const diameter = Math.sqrt(this.width ** 2 + this.height ** 2)
         const radius = diameter / 2
 
+        const existing = this.effectData.get(item)
+        const offset = existing ? existing.offset : 0
+
         const data = {
-            offset: 0,
+            offset,
             midX,
             midY,
             radius,
@@ -1723,9 +1853,10 @@ export class EffectRender {
     /// FIREWORKS ///
 
     initFireworks(item: FireworkItem) {
+        const existing = this.effectData.get(item)
         this.effectData.set(item, {
-            particles: [],
-            cooldown: 0
+            particles: existing ? existing.particles : [],
+            cooldown: existing ? existing.cooldown : 0
         })
     }
 
@@ -1829,8 +1960,11 @@ export class EffectRender {
         if (phases[0]?.stop > 0) phases = [{ stop: 0, color: phases[0].color }, ...phases]
         if (phases[phases.length - 1]?.stop < 1) phases.push({ stop: 1, color: phases[phases.length - 1].color })
 
+        const existing = this.effectData.get(item)
+        const cycleTime = existing ? existing.cycleTime : 0
+
         this.effectData.set(item, {
-            cycleTime: 0,
+            cycleTime,
             phases
         })
     }
