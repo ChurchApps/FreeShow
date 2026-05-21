@@ -67,7 +67,6 @@
                       }
                   ]
               ]),
-        [{ id: "triggers", label: "tabs.triggers", icon: "trigger" }],
         [{ id: "obs", label: "OBS Studio", icon: "player" }]
     ]
 </script>

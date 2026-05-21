@@ -314,7 +314,7 @@ export const API_ACTIONS = {
 
     // FUNCTIONS
     change_variable: (data: API_variable) => changeVariable(data), // BC
-    start_trigger: (data: API_id) => activateTriggerSync(data.id),
+    start_trigger: (data: API_id) => activateTriggerSync(data.id), // DEPRECATED, use emit_action instead
 
     // DRAW
     change_draw_zoom: (data: API_draw_zoom) => changeDrawZoom(data),

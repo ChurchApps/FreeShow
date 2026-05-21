@@ -88,7 +88,6 @@ export const actionData = {
 
     // FUNCTIONS
     change_variable: { SECTION: "tabs.functions", common: true, canAddMultiple: true, name: "actions.change_variable", icon: "variable", input: "variable" },
-    start_trigger: { common: true, canAddMultiple: true, slideId: "trigger", name: "actions.start_trigger", icon: "trigger", input: "id" },
 
     change_draw_zoom: { SECTION: "menu.draw", name: "actions.change_draw_zoom", icon: "zoom", input: "draw_zoom" },
 

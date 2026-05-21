@@ -1,3 +1,5 @@
+<!-- DEPRECATED: not in use anymore -->
+
 <script lang="ts">
     import { activePopup, labelsDisabled, triggers } from "../../../stores"
     import { getAccess } from "../../../utils/profile"

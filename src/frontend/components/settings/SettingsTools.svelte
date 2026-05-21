@@ -2,7 +2,7 @@
     import { Main } from "../../../types/IPC/Main"
     import type { Popups } from "../../../types/Main"
     import { sendMain } from "../../IPC/main"
-    import { activePopup, dataPath, outputs, settingsTab } from "../../stores"
+    import { activePopup, dataPath, outputs, popupData, settingsTab } from "../../stores"
     import T from "../helpers/T.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
 
@@ -11,6 +11,7 @@
     // OPEN
 
     function open(id: Popups) {
+        popupData.set({})
         activePopup.set(id)
     }
 
