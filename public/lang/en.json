@@ -514,6 +514,7 @@
         "player": "Player",
         "edit_event": "Edit event",
         "about": "About",
+        "update_manager": "Update manager",
         "history": "History",
         "action_history": "Action history",
         "manage_emitters": "Manage emitters",

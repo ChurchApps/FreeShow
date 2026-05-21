@@ -8,6 +8,7 @@ import Alert from "../components/main/popups/Alert.svelte"
 import AspectRatio from "../components/main/popups/AspectRatio.svelte"
 import AudioStream from "../components/main/popups/AudioStream.svelte"
 import CategoryAction from "../components/main/popups/CategoryAction.svelte"
+import UpdateManager from "../components/main/popups/UpdateManager.svelte"
 import ChangeIcon from "../components/main/popups/ChangeIcon.svelte"
 import ChangeOutputValues from "../components/main/popups/ChangeOutputValues.svelte"
 import ChooseCamera from "../components/main/popups/ChooseCamera.svelte"
@@ -137,6 +138,7 @@ export const popups: { [key in Popups]: ComponentType } = {
     display_duration: DisplayDuration,
     manage_tags: ManageTags,
     about: About,
+    update_manager: UpdateManager,
     shortcuts: Shortcuts,
     unsaved: Unsaved,
     restore: Restore,

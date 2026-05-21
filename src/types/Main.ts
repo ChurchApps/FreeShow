@@ -377,6 +377,7 @@ export type Popups =
     | "display_duration"
     | "manage_tags"
     | "about"
+    | "update_manager"
     | "shortcuts"
     | "unsaved"
     | "restore"
