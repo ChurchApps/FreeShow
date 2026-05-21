@@ -47,7 +47,7 @@
         {#each activeEffects as effect}
             <div class="overlay">
                 <Button style="flex: 1;" disabled={$outLocked} on:click={() => removeEffect(effect.id)} center red>
-                    <Icon id="effects" right />
+                    <Icon id="effects" right white />
                     <p>{effect.name || "—"}</p>
                 </Button>
             </div>
