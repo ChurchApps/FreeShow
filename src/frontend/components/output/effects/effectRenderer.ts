@@ -15,6 +15,9 @@ export class EffectRender {
     doublePI = Math.PI * 2
     effectData = new WeakMap<EffectItem, any>()
     isPreview = false
+    private animFrameId = 0
+    // Cache for star glow gradients: key = "radius", value = CanvasGradient
+    private glowCache = new Map<string, CanvasGradient>()
 
     TYPES: Record<string, EffectDefinition> = {}
 
@@ -47,17 +50,21 @@ export class EffectRender {
         this.frame(0, true)
 
         const loop = (time: number) => {
-            const deltaTime = this.lastTime ? time - this.lastTime : 1
+            if (!this.running) return // stop the rAF chain; stop() also calls cancelAnimationFrame
+            // Clamp deltaTime to 100ms to prevent physics explosion after tab switch
+            const rawDelta = this.lastTime ? time - this.lastTime : 16
+            const deltaTime = Math.min(rawDelta, 100)
             this.lastTime = time
 
-            if (this.running) this.frame(deltaTime / 16) // 1
-            requestAnimationFrame(loop)
+            this.frame(deltaTime / 16)
+            this.animFrameId = requestAnimationFrame(loop)
         }
-        requestAnimationFrame(loop)
+        this.animFrameId = requestAnimationFrame(loop)
     }
 
     stop() {
         this.running = false
+        cancelAnimationFrame(this.animFrameId)
     }
 
     private setItems(items: EffectItem[]) {
@@ -335,8 +342,23 @@ export class EffectRender {
 
             ctx.globalAlpha = star.alpha
 
-            this.setGlow(x, y, glowRadius)
-            this.circle(x, y, glowRadius)
+            // Cache radial gradient by radius to avoid creating thousands of gradient objects per second
+            const cacheKey = glowRadius.toFixed(1)
+            let grad = this.glowCache.get(cacheKey)
+            if (!grad) {
+                grad = ctx.createRadialGradient(0, 0, 0, 0, 0, glowRadius)
+                grad.addColorStop(0, "white")
+                grad.addColorStop(1, "transparent")
+                this.glowCache.set(cacheKey, grad)
+            }
+            // Translate so the cached gradient (centred at 0,0) lands on the star
+            ctx.save()
+            ctx.translate(x, y)
+            ctx.fillStyle = grad
+            ctx.beginPath()
+            ctx.arc(0, 0, glowRadius, 0, this.doublePI)
+            ctx.fill()
+            ctx.restore()
 
             // update star flashing
             star.alpha += star.alphaChange
@@ -450,8 +472,12 @@ export class EffectRender {
         this.ctx.globalAlpha = 1
 
         if (item.nebula) {
-            const positionedNebula = nebula.map((a) => ({ ...a, x: centerX + a.offsetX, y: centerY + a.offsetY }))
-            this.drawStaticNebula(positionedNebula)
+            // Update nebula positions in-place to avoid allocating 6 new objects every frame
+            for (const a of nebula) {
+                a.x = centerX + a.offsetX
+                a.y = centerY + a.offsetY
+            }
+            this.drawStaticNebula(nebula)
         }
     }
 
@@ -494,17 +520,18 @@ export class EffectRender {
         ctx.strokeStyle = item.color
         ctx.lineWidth = item.width
 
+        // Batch all drops into a single path + one stroke call instead of per-drop stroke
+        ctx.beginPath()
         for (const drop of drops) {
-            ctx.beginPath()
             ctx.moveTo(drop.x, drop.y)
             ctx.lineTo(drop.x, drop.y + drop.length)
-            ctx.stroke()
 
             // move
             drop.y += drop.speed * deltaTime
 
             this.checkOffscreen(drop)
         }
+        ctx.stroke()
     }
 
     /// SNOW ///
@@ -660,77 +687,60 @@ export class EffectRender {
         ctx.lineJoin = "round"
 
         const baseY = this.getOffsetY(item.offset ?? 1)
+        const baseWidth = (item.width ?? 2) * 2
+
+        // Compute gradient-related values once per frame, not once per blade.
+        // All blades share the same baseColor so darkerColor is stable across blades.
+        const rgb = this.hexToRgb(baseColor) || { r: 74, g: 124, b: 89 }
+        const darkerColor = `rgb(${Math.max(0, rgb.r - 30)}, ${Math.max(0, rgb.g - 30)}, ${Math.max(0, rgb.b - 20)})`
 
         for (const blade of blades) {
             const windSway = Math.sin(data.time * blade.windSpeed + blade.windOffset) * blade.maxSway
             const windSway2 = Math.sin(data.time * blade.windSpeed * 1.3 + blade.windOffset) * blade.maxSway * 0.3
 
-            const baseWidth = (item.width ?? 2) * 2 // Base width at bottom
-            const points: any[] = []
-
-            // Generate points for the triangular grass blade
-            for (let i = 0; i <= blade.segments; i++) {
-                const progress = i / blade.segments
-                const y = baseY - blade.height * progress
-
-                // Apply wind effect - more sway at the top
-                const swayAmount = windSway * progress * progress + windSway2 * progress
-                const x = blade.x + swayAmount
-
-                // Add slight curve for more natural look
-                const curve = Math.sin(progress * Math.PI) * 1.5
-
-                // Calculate width at this point (triangular taper)
-                const widthAtPoint = baseWidth * (1 - progress * 0.95) // Tapers to 5% at top
-
-                points.push({
-                    x: x + curve,
-                    y,
-                    width: widthAtPoint
-                })
-            }
-
-            // Create gradient from dark bottom to lighter top
+            // Create gradient per-blade (blade heights differ), but reuse the pre-computed colors
             const gradient = ctx.createLinearGradient(blade.x, baseY, blade.x, baseY - blade.height)
-
-            // Parse the base color and create darker version for bottom
-            const rgb = this.hexToRgb(baseColor) || { r: 74, g: 124, b: 89 }
-            const darkerColor = `rgb(${Math.max(0, rgb.r - 30)}, ${Math.max(0, rgb.g - 30)}, ${Math.max(0, rgb.b - 20)})`
-
             gradient.addColorStop(0, darkerColor) // Darker at bottom
-            gradient.addColorStop(1, baseColor) // Original color at top
-
+            gradient.addColorStop(1, baseColor)   // Original color at top
             ctx.fillStyle = gradient
 
-            // Draw the triangular grass blade using a path
+            // Draw the triangular grass blade using a path.
+            // Points are computed inline to avoid allocating a temporary array per blade.
             ctx.beginPath()
 
-            // Start at bottom left
+            // Left side going up
             ctx.moveTo(blade.x - baseWidth / 2, baseY)
-
-            // Draw left side going up
-            for (let i = 1; i < points.length; i++) {
-                const point = points[i]
-                ctx.lineTo(point.x - point.width / 2, point.y)
+            for (let i = 1; i <= blade.segments; i++) {
+                const progress = i / blade.segments
+                const y = baseY - blade.height * progress
+                const swayAmount = windSway * progress * progress + windSway2 * progress
+                const x = blade.x + swayAmount + Math.sin(progress * Math.PI) * 1.5
+                const halfW = baseWidth * (1 - progress * 0.95) / 2
+                ctx.lineTo(x - halfW, y)
             }
 
-            // Draw tip
-            const tip = points[points.length - 1]
-            ctx.lineTo(tip.x, tip.y - 1)
-
-            // Draw right side going down
-            for (let i = points.length - 2; i >= 1; i--) {
-                const point = points[i]
-                ctx.lineTo(point.x + point.width / 2, point.y)
+            // Tip
+            {
+                const swayAmount = windSway + windSway2
+                const tipX = blade.x + swayAmount + Math.sin(Math.PI) * 1.5
+                ctx.lineTo(tipX, baseY - blade.height - 1)
             }
 
-            // Close at bottom right
+            // Right side going down
+            for (let i = blade.segments - 1; i >= 1; i--) {
+                const progress = i / blade.segments
+                const y = baseY - blade.height * progress
+                const swayAmount = windSway * progress * progress + windSway2 * progress
+                const x = blade.x + swayAmount + Math.sin(progress * Math.PI) * 1.5
+                const halfW = baseWidth * (1 - progress * 0.95) / 2
+                ctx.lineTo(x + halfW, y)
+            }
+
             ctx.lineTo(blade.x + baseWidth / 2, baseY)
             ctx.closePath()
-
             ctx.fill()
 
-            // Optional: Add a subtle stroke for definition
+            // Subtle stroke for definition
             ctx.lineWidth = 0.5
             ctx.globalAlpha = 0.7
             ctx.stroke()
@@ -762,15 +772,18 @@ export class EffectRender {
     }
 
     wave(item: Required<WaveItem>) {
+        const ctx = this.ctx
+        // Hoist the constant factor outside the tight loop
+        const twoPIoverWL = (2 * Math.PI) / item.wavelength
         if (item.side === "left" || item.side === "right") {
+            const baseX = this.getOffsetX(item.offset, item.side)
             for (let y = 0; y <= this.height; y++) {
-                const x = this.getOffsetX(item.offset, item.side) + item.amplitude * Math.sin((y / item.wavelength) * 2 * Math.PI + item.phase)
-                this.line(x, y)
+                ctx.lineTo(baseX + item.amplitude * Math.sin(y * twoPIoverWL + item.phase), y)
             }
         } else {
+            const baseY = this.getOffsetY(item.offset, item.side)
             for (let x = 0; x <= this.width; x++) {
-                const y = this.getOffsetY(item.offset, item.side) + item.amplitude * Math.sin((x / item.wavelength) * 2 * Math.PI + item.phase)
-                this.line(x, y)
+                ctx.lineTo(x, baseY + item.amplitude * Math.sin(x * twoPIoverWL + item.phase))
             }
         }
     }
@@ -1618,6 +1631,10 @@ export class EffectRender {
 
             // On a 480px wide canvas, stepping by 4 gives 120 lines. Very smooth and performant.
             const step = 4
+            // Hoist performance.now() outside the column loop — the shimmer value is the same
+            // for all columns within a single band in a given frame.
+            const shimmerTime = performance.now() * 0.003 * band.speed
+            const baseOpacity = band.opacity ?? 0.25
             for (let x = 0; x <= bufferCanvas.width; x += step) {
                 const originalX = x / bufferScale
 
@@ -1627,12 +1644,10 @@ export class EffectRender {
                 // 1. Slow, majestic horizontal curtain streaks
                 const rayNoise = band.noise2D(originalX / 40, band.phase * 1.2)
 
-                // 2. High-frequency micro-shimmer: dynamic particle flickers that make it feel electric and alive
-                const shimmerTime = performance.now() * 0.003 * band.speed
+                // 2. High-frequency micro-shimmer
                 const microShimmer = band.noise2D(originalX / 15, shimmerTime) * 0.15
 
                 // Apply baseline vibrancy booster of 1.8x to prevent washed-out curtains
-                const baseOpacity = band.opacity ?? 0.25
                 const rayOpacity = Math.max(0, baseOpacity * 1.8 * (0.35 + 0.65 * rayNoise + microShimmer))
 
                 bufferCtx.globalAlpha = rayOpacity
@@ -2018,10 +2033,10 @@ export class EffectRender {
             p.y += p.vy
             p.life--
 
-            // Draw particle
+            // Draw particle — use cached hue string to avoid template-string allocation per particle per frame
             ctx.beginPath()
             ctx.arc(p.x, p.y, p.size, 0, this.doublePI)
-            ctx.fillStyle = `hsla(${p.hue}, 100%, 50%, ${p.alpha})`
+            ctx.fillStyle = `${p.hueStr}${p.alpha.toFixed(2)})`
             ctx.fill()
 
             // Rocket logic
@@ -2039,6 +2054,7 @@ export class EffectRender {
         const heightOffset = this.height * (item.offset ?? 0.7) + (Math.random() - 0.5) * 250
         const vy = -Math.sqrt(2 * gravity * heightOffset)
 
+        const hue = Math.floor(Math.random() * 360)
         return {
             x: this.width / 2 + (Math.random() - 0.5) * (this.width * 0.8),
             y: this.height,
@@ -2048,7 +2064,8 @@ export class EffectRender {
             life: item.speed < 1 ? 60 / (item.speed * deltaTime) : 60,
             size: (item.size ?? 1) * 1.8,
             alpha: 1,
-            hue: Math.floor(Math.random() * 360),
+            hue,
+            hueStr: `hsla(${hue}, 100%, 50%, `, // cached prefix — append alpha + ")" at draw time
             type: "rocket"
         }
     }
@@ -2072,6 +2089,7 @@ export class EffectRender {
                 size: baseSize + Math.random(),
                 alpha: 1,
                 hue,
+                hueStr: `hsla(${hue}, 100%, 50%, `, // cached prefix — append alpha + ")" at draw time
                 type: "particle"
             })
         }
