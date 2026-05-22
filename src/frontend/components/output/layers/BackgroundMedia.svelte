@@ -10,6 +10,7 @@
     import { requestMain } from "../../../IPC/main"
     import { audioChannelsData, currentWindow, media, outputs, playerVideos, playingVideos, special, videosData, videosTime, volume } from "../../../stores"
     import { destroy, receive, send } from "../../../utils/request"
+    import { videoExtensions } from "../../../values/extensions"
     import BmdStream from "../../drawer/live/BMDStream.svelte"
     import NdiStream from "../../drawer/live/NDIStream.svelte"
     import { getMediaStyle } from "../../helpers/media"
@@ -165,6 +166,14 @@
     $: if (id) fetchReplayGain(id)
     async function fetchReplayGain(filePath: string) {
         replayGainMultiplier = 1
+
+        // is online path
+        if (/^https?:\/\//i.test(filePath)) return
+
+        // is not video
+        const ext = filePath.slice(filePath.lastIndexOf(".") + 1).toLowerCase()
+        if (!videoExtensions.includes(ext)) return
+
         try {
             const metadata = await requestMain(Main.READ_AUDIO_METADATA, { filePath })
             if (metadata?.replayGainMultiplier) {
