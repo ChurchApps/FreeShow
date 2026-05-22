@@ -5,7 +5,7 @@ import { Main } from "../../types/IPC/Main"
 import type { Folders, Projects } from "../../types/Projects"
 import type { Show } from "../../types/Show"
 import { isValidJSON, startBackup } from "../data/backup"
-import { _store, setStore } from "../data/store"
+import { _store, getStore, setStore } from "../data/store"
 import { compressToZip, decompressZipStream, getZipModifiedDates } from "../data/zip"
 import { sendMain } from "../IPC/main"
 import { createFolder, deleteFile, deleteFolder, doesPathExistAsync, getDataFolderPath, getFileStatsAsync, getTimePointString, loadShows, moveFileAsync, readFileAsync, readFolderAsync, writeFileAsync } from "../utils/files"
@@ -63,10 +63,16 @@ const DEBUG_MODE = false && !isProd
 const EXTRACT_LOCATION = path.join(app.getPath("temp"), "freeshow-cloud")
 const MERGE_INDIVIDUAL = ["OVERLAYS", "PROJECTS", "STAGE", "TEMPLATES"] // "EVENTS", "THEMES"
 
+const STALE_MERGE_GUARD_MS = 1000 * 60 * 60 * 24 * 30 // 30 days
+function getMergeGuardKey(data: { id: SyncProviderId; churchId: string; teamId: string }) {
+    return `${data.id}:${data.churchId}:${data.teamId}`
+}
+
 export async function syncData(data: { id: SyncProviderId; churchId: string; teamId: string; method: "merge" | "read_only" | "upload" | "replace" }) {
-    const readOnly = data.method === "read_only" || data.method === "replace" // never write to cloud
+    let readOnly = data.method === "read_only" || data.method === "replace" // never write to cloud
     const changedFiles: string[] = [] // WIP write changes
     deletedNow = []
+    let guardCloudModifiedAt = 0
 
     const provider = getManager[data.id]()
     if (!provider) return { changedFiles }
@@ -123,6 +129,21 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
             CHANGES.devices.push(deviceId)
         } else if (isNewDevice) {
             removeDeviceRecords()
+        }
+
+        // set to read-only always initially if not synced for 30+ days
+        if (data.method === "merge" && !isNewDevice && CHANGES.devices.length > 1) {
+            const latestCloudModifiedAt = Math.max(0, ...Object.values(CHANGES.modified || {}).map((value) => Number(value) || 0))
+            const guardKey = getMergeGuardKey(data)
+            const localCloudModifiedAt = Number(CHANGES.modified?.[deviceId] || 0)
+            const acknowledgedCloudModifiedAt = Number(getStore("CACHE_SYNC")?.cloudMergeGuard?.[guardKey] || 0)
+            const shouldGuard = latestCloudModifiedAt > localCloudModifiedAt + STALE_MERGE_GUARD_MS && acknowledgedCloudModifiedAt < latestCloudModifiedAt
+
+            if (shouldGuard) {
+                readOnly = true
+                guardCloudModifiedAt = latestCloudModifiedAt
+                console.warn("Stale merge guard enabled: running this sync in read-only mode to prevent cloud overwrite.")
+            }
         }
     }
     // console.log("Devices:", CHANGES.devices)
@@ -321,7 +342,18 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
         if (result.action === "delete") deleteFile(localBiblePath)
     }
 
-    if (readOnly) return finish()
+    if (readOnly) {
+        // store the last modified cloud time, to prevent overwriting cloud data with old local data
+        if (guardCloudModifiedAt > 0) {
+            const syncCache = getStore("CACHE_SYNC") || {}
+            if (!syncCache.cloudMergeGuard) syncCache.cloudMergeGuard = {}
+            const guardKey = getMergeGuardKey(data)
+            syncCache.cloudMergeGuard[guardKey] = guardCloudModifiedAt
+            setStore(_store.CACHE_SYNC, syncCache)
+        }
+
+        return finish()
+    }
 
     const success = await uploadLocalData()
 
