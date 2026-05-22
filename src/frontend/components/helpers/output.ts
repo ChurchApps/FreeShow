@@ -61,6 +61,9 @@ let resetActionTrigger = false
 export function setOutput(type: string, data: any, toggle = false, outputId = "", add = false) {
     const ref = data?.layout ? _show(data.id).layouts([data.layout]).ref()[0] || [] : []
 
+    // stop any active break slide recording when the slide changes
+    if (type === "slide") _stopBreakRecording()
+
     customActionActivation("output_changed")
 
     const bindings = data?.bindings || (data?.layout ? ref[data.index]?.data?.bindings || [] : [])
@@ -93,6 +96,12 @@ export function setOutput(type: string, data: any, toggle = false, outputId = ""
         } else {
             const groupId = slide.globalGroup
             if (groupId) customActionActivation("group_start", groupId)
+
+            // start recording time on break slides (no items, globalGroup === "break")
+            if (slide.globalGroup === "break" && !slide.items?.length) {
+                const layoutSlideIndex = ref[data.index]?.type === "parent" ? (ref[data.index]?.index ?? -1) : -1
+                if (layoutSlideIndex >= 0) _breakRecording = { startTime: Date.now(), showId: data.id, layoutId: data.layout, slideIndex: layoutSlideIndex }
+            }
         }
 
         // store project index so we can use it for dynamic values (in case there are multiple of the same project item)
@@ -230,6 +239,23 @@ function appendShowUsage(showId: string) {
             a.all = a.all.slice(-MAX_USAGE_LOG_ENTRIES)
         }
 
+        return a
+    })
+}
+
+// break slide time recording
+let _breakRecording: { startTime: number; showId: string; layoutId: string; slideIndex: number } | null = null
+function _stopBreakRecording() {
+    if (!_breakRecording) return
+    const { startTime, showId, layoutId, slideIndex } = _breakRecording
+    _breakRecording = null
+    const elapsed = Math.round((Date.now() - startTime) / 1000)
+    if (elapsed <= 5) return
+    showsCache.update((a) => {
+        const slideData = a[showId]?.layouts?.[layoutId]?.slides?.[slideIndex]
+        if (!slideData) return a
+        slideData.breakDuration = elapsed
+        if (a[showId].timestamps) a[showId].timestamps.modified = Date.now()
         return a
     })
 }

@@ -376,6 +376,7 @@ export interface SlideData {
     }
     // actions?: {} // to begininng / index, clear (all), start timer, start audio/music ++
     bindings?: string[] // bind slide to an output
+    breakDuration?: number // seconds spent on "break" slide (used for countdown display)
 }
 
 export interface SlideAction {

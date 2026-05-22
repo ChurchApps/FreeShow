@@ -21,6 +21,7 @@
     import Effect from "../output/effects/Effect.svelte"
     import SelectElem from "../system/SelectElem.svelte"
     import Actions from "./Actions.svelte"
+    import BreakCountdown from "./BreakCountdown.svelte"
     import Icons from "./Icons.svelte"
     import Textbox from "./Textbox.svelte"
     import Zoomed from "./Zoomed.svelte"
@@ -231,6 +232,10 @@
     // slide timer
     $: slideTimer = active && $slideTimers[outputId] ? $slideTimers[outputId] : null
 
+    // "break" slide countdown helper
+    $: isBreakSlide = slide?.globalGroup === "break" && !slide?.items?.length
+    $: breakActiveKey = active && isBreakSlide ? layoutSlide.id : ""
+
     // function handleOpenInBrowserClick() {
     //     // The props showId and layoutSlide are available in this component's scope.
     //     if (!showId || !layoutSlide || !layoutSlide.id) {
@@ -370,6 +375,11 @@
                                 {/each}
                             {/if}
                         {/each}
+                    {/if}
+
+                    <!-- break slide countdown -->
+                    {#if isBreakSlide && layoutSlide.breakDuration}
+                        <BreakCountdown activeKey={breakActiveKey} breakDuration={layoutSlide.breakDuration} {ratio} />
                     {/if}
                 </Zoomed>
 
