@@ -2,6 +2,7 @@
     import { onMount } from "svelte"
     import type { ContentFile, ContentLibraryCategory, ContentProviderId } from "../../../../electron/contentProviders/base/types"
     import { Main } from "../../../../types/IPC/Main"
+    import type { SelectIds } from "../../../../types/Main"
     import { requestMain } from "../../../IPC/main"
     import { mediaOptions } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
@@ -14,13 +15,14 @@
     export let providerId: ContentProviderId
     export let columns: number = 5
     export let searchValue: string = ""
+    export let currentCategory: ContentLibraryCategory | null = null
+    export let getContentCategory: (item: ContentFileWithExtras) => ContentLibraryCategory | null = () => null
+    export let getContentDragData: (item: ContentFileWithExtras) => { id: SelectIds; data: any } | null = () => null
 
     let library: ContentLibraryCategory[] = []
     let currentPath: ContentLibraryCategory[] = []
-    let currentCategory: ContentLibraryCategory | null = null
-    // Extend ContentFile for presentation support
-    type ContentFileWithPresentation = ContentFile & { isPresentation?: boolean; slideCount?: number }
-    let content: ContentFileWithPresentation[] = []
+    type ContentFileWithExtras = ContentFile & { [key: string]: any }
+    let content: ContentFileWithExtras[] = []
     let loading = false
     let error: string | null = null
     let viewingContent = false
@@ -146,17 +148,32 @@
                 </MediaGrid>
             </div> -->
             {#each filteredContent as item}
-                {#if item.isPresentation}
-                    <SelectElem id="canva_presentation" class="context #canva_presentation" style="width: calc({100 / columns}% - 4px);" data={{ designId: item.mediaId, mediaId: item.mediaId, name: item.name || "Untitled presentation", presentationName: item.name || "Untitled presentation", providerId }} draggable>
+                {@const category = getContentCategory(item)}
+                {@const dragData = getContentDragData(item)}
+                {#if category}
+                    {#if dragData}
+                        <SelectElem id={dragData.id} style="width: calc({100 / columns}% - 4px);" data={dragData.data} draggable>
+                            <button class="category-card" style="width: 100%;" on:click={() => navigateToCategory(category)}>
+                                {#if item.thumbnail}
+                                    <img src={item.thumbnail} alt={item.name} />
+                                {:else}
+                                    <div class="placeholder">
+                                        <Icon id="folder" size={3} white />
+                                    </div>
+                                {/if}
+                                <span class="category-name">
+                                    {item.name}
+                                    {#if item.slideCount}
+                                        <span style="margin-left: 10px;opacity: 0.5;font-size: 0.9em;">{item.slideCount}</span>
+                                    {/if}
+                                </span>
+                            </button>
+                        </SelectElem>
+                    {:else}
                         <button
                             class="category-card"
-                            style="width: 100%;"
-                            on:click={() =>
-                                navigateToCategory({
-                                    name: item.name || "Untitled presentation",
-                                    thumbnail: item.thumbnail,
-                                    key: `presentation:${item.mediaId}`
-                                })}
+                            style="width: calc({100 / columns}% - 4px);"
+                            on:click={() => navigateToCategory(category)}
                         >
                             {#if item.thumbnail}
                                 <img src={item.thumbnail} alt={item.name} />
@@ -167,10 +184,12 @@
                             {/if}
                             <span class="category-name">
                                 {item.name}
-                                <span style="margin-left: 10px;opacity: 0.5;font-size: 0.9em;">{item.slideCount || 1}</span>
+                                {#if item.slideCount}
+                                    <span style="margin-left: 10px;opacity: 0.5;font-size: 0.9em;">{item.slideCount}</span>
+                                {/if}
                             </span>
                         </button>
-                    </SelectElem>
+                    {/if}
                 {:else}
                     <div class="card" style="width: {100 / columns}%;">
                         <Media credits={{}} name={item.name || ""} path={item.url} thumbnailPath={item.thumbnail || ""} type={item.type} shiftRange={[]} active="online" contentProvider={providerId} contentFileData={item} />

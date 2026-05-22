@@ -932,6 +932,10 @@
         "syncing": "Syncing to cloud",
         "sync_complete": "Sync completed"
     },
+    "canva": {
+        "design_id": "Design ID",
+        "select_presentation": "Select a Canva presentation."
+    },
     "export": {
         "export": "Export",
         "export_as": "Export {} as",
@@ -975,10 +979,8 @@
         "changeIcon": "Change icon",
         "changeGroup": "Change group",
         "createNew": "Create new",
-        "add_as_show": "Add as show",
         "create_slideshow": "Create slideshow",
         "sync_from_canva": "Sync from Canva",
-        "sync_slide_from_canva": "Sync slide from Canva",
         "selectAll": "Select all",
         "force_outputs": "Force outputs",
         "align_with_screen": "Align with screen",

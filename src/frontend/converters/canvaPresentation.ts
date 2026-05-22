@@ -155,13 +155,83 @@ async function syncCanvaShowInBatches(showId: string) {
     const currentShow = await getCanvaShow(showId)
     if (!currentShow) return
 
-    const slideCount = getLayoutRef(showId).length
-    for (let index = 0; index < slideCount; index++) {
-        await syncCanvaSlide(showId, index, { silent: true })
-    }
+    const designId = currentShow?.reference?.data?.designId
+    if (!designId) return
 
-    setStatus("synced", 3)
-    newToast("main.finished")
+    try {
+        // Get metadata to know slide count
+        const metadata = await requestMain(Main.GET_PROVIDER_CONTENT, { providerId: "canva", key: `presentation:${designId}` }, undefined, CANVA_PREVIEW_TIMEOUT)
+        if (!metadata?.length) return
+
+        const slideCount = metadata.length
+        const pageNumbers = Array.from({ length: slideCount }, (_, i) => i + 1)
+
+        // Request ONE export job for all pages
+        const exportedSlides = await requestMain(Main.GET_PROVIDER_CONTENT, { providerId: "canva", key: `presentation-export-batch:${designId}:${pageNumbers.join(",")}` }, undefined, CANVA_EXPORT_TIMEOUT)
+        if (!exportedSlides?.length) {
+            setStatus("synced", 3)
+            newToast("main.finished")
+            return
+        }
+
+        // Build updated show with all new URLs at once
+        const layoutRef = getLayoutRef(showId)
+        const updatedMedia: Show["media"] = { ...currentShow.media }
+        const updatedLayouts: Show["layouts"] = {}
+
+        Object.entries(currentShow.layouts).forEach(([layoutId, layout]) => {
+            updatedLayouts[layoutId] = { ...layout, slides: [...layout.slides] }
+        })
+
+        metadata.forEach((slide: ContentFile, index: number) => {
+            const exportedSlide = exportedSlides[index] as ContentFile | undefined
+            if (!exportedSlide?.url) return
+
+            const targetRef = layoutRef[index]
+            if (!targetRef) return
+
+            const mediaId = uid(5)
+            const name = slide.name || `Slide ${index + 1}`
+            const layoutId = targetRef.layoutId
+            const oldBackgroundId = targetRef.data?.background || updatedLayouts[layoutId]?.slides[targetRef.layoutIndex]?.background || ""
+
+            updatedMedia[mediaId] = {
+                path: exportedSlide.url,
+                name,
+                type: "image",
+                origin: "canva",
+                canva: { designId, pageId: exportedSlide.mediaId || slide.mediaId, index: index + 1, quality: "export" }
+            } as any
+
+            updatedLayouts[layoutId].slides[targetRef.layoutIndex] = {
+                ...updatedLayouts[layoutId].slides[targetRef.layoutIndex],
+                background: mediaId,
+                mediaTransition: { type: "none", duration: 0, easing: "linear" }
+            }
+
+            if (oldBackgroundId && (updatedMedia[oldBackgroundId] as any)?.origin === "canva") {
+                delete updatedMedia[oldBackgroundId]
+            }
+        })
+
+        const syncedShow: Show = {
+            ...currentShow,
+            layouts: updatedLayouts,
+            media: updatedMedia,
+            timestamps: {
+                ...currentShow.timestamps,
+                modified: Date.now()
+            }
+        }
+
+        history({ id: "UPDATE", newData: { data: syncedShow }, oldData: { id: showId }, location: { page: "show", id: "show_key" } })
+        setStatus("synced", 3)
+        newToast("main.finished")
+    } catch (error) {
+        console.error("Failed to sync Canva show in batches:", error)
+        setStatus("error", 3)
+        newToast("toast.canva_sync_failed")
+    }
 }
 
 async function getCanvaShow(showId: string) {
@@ -179,7 +249,7 @@ async function getCanvaShow(showId: string) {
 async function createCanvaShow({ designId, presentationName = "Canva presentation", providerId = "canva" }: CanvaPresentationData, showId: string, quality: "preview" | "export" = "export"): Promise<Show> {
     if (!designId) throw new Error("Missing Canva design ID")
 
-    const key = `presentation:${designId}`
+    const key = quality === "preview" ? `presentation:${designId}` : `presentation-export-batch:${designId}:all`
     let slides = await requestMain(Main.GET_PROVIDER_CONTENT, { providerId, key }, undefined, quality === "preview" ? CANVA_PREVIEW_TIMEOUT : CANVA_EXPORT_TIMEOUT)
     if (!slides?.length) throw new Error("No Canva slides returned")
 
@@ -187,7 +257,7 @@ async function createCanvaShow({ designId, presentationName = "Canva presentatio
     const show = new ShowObj(false, "presentation", layoutId, Date.now(), false)
     show.name = checkName(presentationName, showId)
     show.origin = "canva"
-    show.reference = { type: "canva", data: { designId, presentationName } }
+    show.reference = { type: "canva", data: { designId, presentationName, url: `https://www.canva.com/design/${designId}/view` } }
 
     const showSlides: { [key: string]: Slide } = {}
     const layoutSlides: SlideData[] = []
@@ -225,7 +295,7 @@ async function createCanvaShow({ designId, presentationName = "Canva presentatio
 }
 
 async function getCanvaSlide({ designId, presentationName = "Canva presentation", providerId = "canva" }: CanvaPresentationData, slideIndex: number) {
-    const slides = await requestMain(Main.GET_PROVIDER_CONTENT, { providerId, key: `presentation-export:${designId}:${slideIndex + 1}` }, undefined, CANVA_EXPORT_TIMEOUT)
+    const slides = await requestMain(Main.GET_PROVIDER_CONTENT, { providerId, key: `presentation-export-batch:${designId}:${slideIndex + 1}` }, undefined, CANVA_EXPORT_TIMEOUT)
     const slide = slides?.[0]
     if (!slide) throw new Error("No Canva slide returned")
 

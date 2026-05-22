@@ -189,14 +189,6 @@
         createSlideshow: () => {
             hide = $selected.id !== "media" || $selected.data.length < 2
         },
-        sync_canva_show: () => {
-            const showId = $selected.data[0]?.id || $activeShow?.id || ""
-            hide = $shows[showId]?.origin !== "canva"
-        },
-        sync_canva_slide: () => {
-            const currentShow = $showsCache[$activeShow?.id || ""]
-            hide = currentShow?.origin !== "canva" || !currentShow.reference?.data?.designId || $selected.id !== "slide"
-        },
         play: () => {
             if ($selected.id === "global_timer") {
                 let timer = $timers[$selected.data[0]?.id]
