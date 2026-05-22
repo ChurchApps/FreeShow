@@ -100,7 +100,7 @@ export function setOutput(type: string, data: any, toggle = false, outputId = ""
             // start recording time on break slides (no items, globalGroup === "break")
             if (slide.globalGroup === "break" && !slide.items?.length) {
                 const layoutSlideIndex = ref[data.index]?.type === "parent" ? (ref[data.index]?.index ?? -1) : -1
-                if (layoutSlideIndex >= 0) _breakRecording = { startTime: Date.now(), showId: data.id, layoutId: data.layout, slideIndex: layoutSlideIndex }
+                if (layoutSlideIndex > -1) _breakRecording = { startTime: Date.now(), showId: data.id, layoutId: data.layout, slideIndex: layoutSlideIndex }
             }
         }
 
@@ -249,13 +249,15 @@ function _stopBreakRecording() {
     if (!_breakRecording) return
     const { startTime, showId, layoutId, slideIndex } = _breakRecording
     _breakRecording = null
+
     const elapsed = Math.round((Date.now() - startTime) / 1000)
-    if (elapsed <= 5) return
+    if (elapsed <= 3) return // only save if over 3 seconds
+
     showsCache.update((a) => {
         const slideData = a[showId]?.layouts?.[layoutId]?.slides?.[slideIndex]
         if (!slideData) return a
+
         slideData.breakDuration = elapsed
-        if (a[showId].timestamps) a[showId].timestamps.modified = Date.now()
         return a
     })
 }
