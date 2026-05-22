@@ -585,6 +585,7 @@
         "one_output": "You have to have at least one active output!",
         "empty_cache": "Cache is empty.",
         "deleted_cache": "Deleted media thumbnail cache.",
+        "canva_exporting": "Exporting Canva presentation. This can take some time...",
         "no_songswords_easyworship": "Missing SongsWords.db file.",
         "delete_shows_empty": "No shows to delete.",
         "reached_end": "Reached the end!",

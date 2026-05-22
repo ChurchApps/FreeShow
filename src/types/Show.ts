@@ -16,7 +16,7 @@ export interface Show {
     category: null | ID
     quickAccess?: any
     reference?: {
-        type: "calendar" | "scripture" | "lessons"
+        type: "calendar" | "scripture" | "lessons" | "canva"
         data: any
     }
     settings: {

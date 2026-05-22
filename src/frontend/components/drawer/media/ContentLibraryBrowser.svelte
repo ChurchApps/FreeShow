@@ -13,13 +13,13 @@
     export let providerId: ContentProviderId
     export let columns: number = 5
     export let searchValue: string = ""
+    export let currentCategory: ContentLibraryCategory | null = null
+    export let getContentCategory: (item: ContentFileWithExtras) => ContentLibraryCategory | null = () => null
 
     let library: ContentLibraryCategory[] = []
     let currentPath: ContentLibraryCategory[] = []
-    let currentCategory: ContentLibraryCategory | null = null
-    // Extend ContentFile for presentation support
-    type ContentFileWithPresentation = ContentFile & { isPresentation?: boolean; slideCount?: number }
-    let content: ContentFileWithPresentation[] = []
+    type ContentFileWithExtras = ContentFile & { [key: string]: any }
+    let content: ContentFileWithExtras[] = []
     let loading = false
     let error: string | null = null
     let viewingContent = false
@@ -79,11 +79,20 @@
         loading = true
         error = null
         try {
-            requestMain(Main.GET_PROVIDER_CONTENT, { providerId, key }, (data) => {
-                if (!data) return
-                content = data
-                loading = false
-            })
+            requestMain(
+                Main.GET_PROVIDER_CONTENT,
+                { providerId, key },
+                (data) => {
+                    if (!data) {
+                        error = "Failed to load content."
+                        loading = false
+                        return
+                    }
+                    content = data
+                    loading = false
+                },
+                60000
+            )
         } catch (e) {
             error = `Failed to load content: ${e}`
             loading = false
@@ -136,16 +145,12 @@
                 </MediaGrid>
             </div> -->
             {#each filteredContent as item}
-                {#if item.isPresentation}
+                {@const category = getContentCategory(item)}
+                {#if category}
                     <button
                         class="category-card"
                         style="width: calc({100 / columns}% - 4px);"
-                        on:click={() =>
-                            navigateToCategory({
-                                name: item.name || "Untitled presentation",
-                                thumbnail: item.thumbnail,
-                                key: `presentation:${item.mediaId}`
-                            })}
+                        on:click={() => navigateToCategory(category)}
                     >
                         {#if item.thumbnail}
                             <img src={item.thumbnail} alt={item.name} />
@@ -156,7 +161,9 @@
                         {/if}
                         <span class="category-name">
                             {item.name}
-                            <span style="margin-left: 10px;opacity: 0.5;font-size: 0.9em;">{item.slideCount || 1}</span>
+                            {#if item.slideCount}
+                                <span style="margin-left: 10px;opacity: 0.5;font-size: 0.9em;">{item.slideCount}</span>
+                            {/if}
                         </span>
                     </button>
                 {:else}
