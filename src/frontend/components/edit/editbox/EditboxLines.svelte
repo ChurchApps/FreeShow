@@ -5,7 +5,7 @@
     import { VIRTUAL_BREAK_CHAR } from "../../../show/slides"
     import { activeEdit, activeShow, activeStage, activeTriggerFunction, overlays, redoHistory, refreshListBoxes, showsCache, stageShows, templates } from "../../../stores"
     import { newToast } from "../../../utils/common"
-    import { isFormattingKey } from "../../../utils/shortcuts"
+    import { getNormalizedKey, isFormattingKey } from "../../../utils/shortcuts"
     import T from "../../helpers/T.svelte"
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
@@ -625,7 +625,7 @@
             if (isFormattingKey(e)) e.preventDefault()
         }
 
-        if (e.key === "v" && (e.ctrlKey || e.metaKey)) {
+        if (getNormalizedKey(e).toLowerCase() === "v" && (e.ctrlKey || e.metaKey)) {
             e.preventDefault()
             navigator.clipboard
                 .readText()
