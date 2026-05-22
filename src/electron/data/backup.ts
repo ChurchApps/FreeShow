@@ -1,13 +1,14 @@
+import fs from "fs"
 import path from "path"
 import { Main } from "../../types/IPC/Main"
 import { ToMain } from "../../types/IPC/ToMain"
 import type { SaveActions } from "../../types/Save"
 import type { Show, Shows, TrimmedShow } from "../../types/Show"
 import { sendMain, sendToMain } from "../IPC/main"
-import { deleteFile, deleteFolder, doesPathExist, getDataFolderPath, getFileStats, getTimePointString, loadShows, makeDir, openInSystem, readFile, readFileAsync, readFolder, selectFilesDialog, writeFile } from "../utils/files"
+import { deleteFile, deleteFolder, doesPathExist, getDataFolderPath, getFileStats, getTimePointString, loadShows, makeDir, openInSystem, readFile, readFolder, selectFilesDialog, writeFile } from "../utils/files"
 import { wait } from "../utils/helpers"
-import { compressToZip, decompressZip } from "./zip"
 import { _store, getStore, setStore, storeFilesData } from "./store"
+import { compressToZip, decompressZip } from "./zip"
 
 export async function startBackup({ customTriggers, isCloudSync }: { customTriggers?: SaveActions; isCloudSync?: boolean } = {}): Promise<{ entries?: { name: string; content?: string | Buffer; filePath?: string }[]; path?: string } | void> {
     const shows = getStore("SHOWS")
@@ -77,26 +78,46 @@ export async function startBackup({ customTriggers, isCloudSync }: { customTrigg
 
         const allShows: Shows = {}
         const showsPath = getDataFolderPath("shows")
-
-        // avoid opening too many files at once (EMFILE error)
         const showEntries = Object.entries(shows)
-        const BATCH_SIZE = 20
-        for (let i = 0; i < showEntries.length; i += BATCH_SIZE) {
-            const batch = showEntries.slice(i, i + BATCH_SIZE)
-            await Promise.all(
-                batch.map(async ([id, show]: [string, TrimmedShow]) => {
-                    const fileName = (show.name || id) + ".show"
-                    const localShowPath = path.join(showsPath, fileName)
 
-                    const localContent = await readFileAsync(localShowPath)
-                    if (localContent && isValidJSON(localContent)) allShows[id] = JSON.parse(localContent)[1]
-                })
-            )
+        // avoid opening too many files at once
+        let batchSize = 100
+
+        try {
+            await readAllShows()
+        } catch (err: any) {
+            if (err.code === "EMFILE") {
+                console.warn("EMFILE encountered, retrying with smaller batch size...")
+                batchSize = 20
+                for (const key in allShows) delete allShows[key]
+                await readAllShows()
+            } else {
+                throw err
+            }
         }
 
-        // ensure all shows are added correctly
-        // https://github.com/ChurchApps/FreeShow/issues/1492
-        await wait(Object.keys(shows).length * 0.4)
+        async function readAllShows() {
+            for (let i = 0; i < showEntries.length; i += batchSize) {
+                const batch = showEntries.slice(i, i + batchSize)
+                await Promise.all(
+                    batch.map(async ([id, show]: [string, TrimmedShow]) => {
+                        const fileName = (show.name || id) + ".show"
+                        const localShowPath = path.join(showsPath, fileName)
+
+                        try {
+                            const localContent = await fs.promises.readFile(localShowPath, "utf8")
+                            if (localContent && isValidJSON(localContent)) allShows[id] = JSON.parse(localContent)[1]
+                        } catch (err: any) {
+                            if (err.code === "EMFILE") throw err
+                        }
+                    })
+                )
+
+                // ensure all shows are added correctly
+                // https://github.com/ChurchApps/FreeShow/issues/1492
+                await wait(20)
+            }
+        }
 
         const content: string = JSON.stringify(allShows)
         entries.push({ name: "SHOWS_CONTENT.json", content })
