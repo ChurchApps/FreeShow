@@ -178,6 +178,9 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     favourite: { label: "media.favourite", icon: "star", iconColor: "#fff1ad" },
     effects_library_add: { label: "media.effects_library_add", icon: "effect", iconColor: "#fff1ad" },
     createSlideshow: { label: "context.create_slideshow", icon: "slide" },
+    add_canva_as_show: { label: "context.add_as_show", icon: "slide", iconColor: "var(--secondary)" },
+    sync_canva_show: { label: "context.sync_from_canva", icon: "refresh", iconColor: "var(--secondary)" },
+    sync_canva_slide: { label: "context.sync_slide_from_canva", icon: "refresh", iconColor: "var(--secondary)" },
     system_open: { label: "main.system_open", icon: "launch" },
     media_type: { label: "clock.type", icon: "media", items: ["type_default", "type_background", "type_foreground"] },
     type_default: { label: "example.default", icon: "autofill" },
@@ -266,7 +269,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     // , "changeCategory" ? edit with rename & categories...
     // , "convertToOverlay"
     // , "SEPARATOR", "export"
-    drawer_show_button: ["GROUP_open", "tag_set", "tag_filter", "SEPARATOR", "rename", "duplicate", "delete"], // "GROUP_rename"
+    drawer_show_button: ["GROUP_open", "sync_canva_show", "tag_set", "tag_filter", "SEPARATOR", "rename", "duplicate", "delete"], // "GROUP_rename"
     drawer_show_button_readonly: ["tag_filter"],
     drawer_new_show: ["newShow"],
     // media / audio
@@ -281,6 +284,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     // show_in_explorer!!
     media: ["manage_media_tags", "media_tag_filter", "sort_media_by"],
     media_card: ["GROUP_open", "createSlideshow", "play_no_audio", "play_no_filters", "SEPARATOR", "favourite", "SEPARATOR", "media_tag_set", "media_tag_filter", "sort_media_by", "SEPARATOR", "system_open"],
+    canva_presentation: ["add_canva_as_show"],
     // "addToFirstSlide",
     drawer_overlays: ["reset_defaults"],
     overlay_card: ["GROUP_open", "overlay_actions", "display_duration", "SEPARATOR", "lock_to_output", "place_under_slide", "SEPARATOR", "rename", "recolor", "duplicate", "delete"], // "GROUP_rename_color"
@@ -324,7 +328,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     project_player: ["remove"],
     // "delete" removed as too many users thought it just removed the show from the project
     // "duplicate" removed as it was people did not get that it only duplicated the reference in project, and not the entire show (keyboard / menu bar shortcuts can be used)
-    project_show: ["GROUP_rename_only", "remove", "SEPARATOR", "mark_played", "private"],
+    project_show: ["GROUP_rename_only", "sync_canva_show", "remove", "SEPARATOR", "mark_played", "private"],
     project_show_placeholder: ["remove"], // "GROUP_rename_only"
     pco_item: ["unlink_pco"],
     project_section: ["GROUP_recolor", "remove"],
@@ -352,8 +356,8 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
 
     // SHOWS
     // , "copy", "paste"
-    slide: ["GROUP_edit", "slideGroups", "actions", "bind_to", "format", "remove_layers", "slide_transition", "disable", "SEPARATOR", "duplicate", "make_unique", "GROUP_slide_remove"],
-    slideChild: ["GROUP_edit", "slideGroups", "actions", "bind_to", "format", "remove_layers", "slide_transition", "disable", "SEPARATOR", "duplicate", "make_unique", "GROUP_slide_remove"],
+    slide: ["GROUP_edit", "sync_canva_slide", "slideGroups", "actions", "bind_to", "format", "remove_layers", "slide_transition", "disable", "SEPARATOR", "duplicate", "make_unique", "GROUP_slide_remove"],
+    slideChild: ["GROUP_edit", "sync_canva_slide", "slideGroups", "actions", "bind_to", "format", "remove_layers", "slide_transition", "disable", "SEPARATOR", "duplicate", "make_unique", "GROUP_slide_remove"],
     slideFocus: ["editSlideText"],
     group: ["GROUP_rename_recolor", "lock_group", "SEPARATOR", "selectAll", "SEPARATOR", "duplicate", "delete_group"],
     global_group: ["manage_groups"],

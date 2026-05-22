@@ -6,6 +6,7 @@ import { Main } from "../../../types/IPC/Main"
 import type { MediaStyle, Selected, SelectIds } from "../../../types/Main"
 import type { Item, LayoutRef, SlideData } from "../../../types/Show"
 import { ShowObj } from "../../classes/Show"
+import { addCanvaPresentationAsShow, syncCanvaShow, syncCanvaSlide } from "../../converters/canvaPresentation"
 import { markItemsAsPlayed } from "../../converters/project"
 import { sendMain } from "../../IPC/main"
 import { cameraManager } from "../../media/cameraManager"
@@ -643,6 +644,23 @@ const clickActions = {
         show.layouts[layoutId].slides = layoutSlides
 
         history({ id: "UPDATE", newData: { data: show, remember: { project: get(activeProject) } }, location: { page: "show", id: "show" } })
+    },
+    add_canva_as_show: (obj: ObjData) => {
+        const data = obj.sel?.data?.[0] || {}
+        addCanvaPresentationAsShow({
+            designId: data.designId || data.mediaId,
+            presentationName: data.presentationName || data.name,
+            providerId: data.providerId || "canva"
+        })
+    },
+    sync_canva_show: (obj: ObjData) => {
+        const showId = obj.sel?.data?.[0]?.id || get(activeShow)?.id || ""
+        syncCanvaShow(showId)
+    },
+    sync_canva_slide: (obj: ObjData) => {
+        const showId = get(activeShow)?.id || ""
+        const slideIndex = obj.sel?.data?.[0]?.index ?? -1
+        syncCanvaSlide(showId, slideIndex)
     },
     lock_group: (obj: ObjData) => {
         if (obj.sel?.id !== "group") return

@@ -14,6 +14,7 @@
         copied: "actions.copied",
         pasted: "actions.pasted",
         duplicated: "actions.duplicated",
+        canva_exporting: "toast.canva_exporting",
         error: "Error"
     }
 
@@ -79,6 +80,8 @@
                 <Icon id="paste" white />
             {:else if indicatorId === "duplicated"}
                 <Icon id="duplicate" white />
+            {:else if indicatorId === "canva_exporting"}
+                <Icon id="refresh" white />
             {:else if indicatorId === "error"}
                 <Icon id="close" white />
             {/if}

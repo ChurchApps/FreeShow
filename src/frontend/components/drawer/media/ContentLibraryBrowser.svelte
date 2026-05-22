@@ -8,6 +8,7 @@
     import FloatingInputs from "../../input/FloatingInputs.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import Center from "../../system/Center.svelte"
+    import SelectElem from "../../system/SelectElem.svelte"
     import Media from "./MediaCard.svelte"
 
     export let providerId: ContentProviderId
@@ -79,11 +80,20 @@
         loading = true
         error = null
         try {
-            requestMain(Main.GET_PROVIDER_CONTENT, { providerId, key }, (data) => {
-                if (!data) return
-                content = data
-                loading = false
-            })
+            requestMain(
+                Main.GET_PROVIDER_CONTENT,
+                { providerId, key },
+                (data) => {
+                    if (!data) {
+                        error = "Failed to load content."
+                        loading = false
+                        return
+                    }
+                    content = data
+                    loading = false
+                },
+                60000
+            )
         } catch (e) {
             error = `Failed to load content: ${e}`
             loading = false
@@ -137,28 +147,30 @@
             </div> -->
             {#each filteredContent as item}
                 {#if item.isPresentation}
-                    <button
-                        class="category-card"
-                        style="width: calc({100 / columns}% - 4px);"
-                        on:click={() =>
-                            navigateToCategory({
-                                name: item.name || "Untitled presentation",
-                                thumbnail: item.thumbnail,
-                                key: `presentation:${item.mediaId}`
-                            })}
-                    >
-                        {#if item.thumbnail}
-                            <img src={item.thumbnail} alt={item.name} />
-                        {:else}
-                            <div class="placeholder">
-                                <Icon id="folder" size={3} white />
-                            </div>
-                        {/if}
-                        <span class="category-name">
-                            {item.name}
-                            <span style="margin-left: 10px;opacity: 0.5;font-size: 0.9em;">{item.slideCount || 1}</span>
-                        </span>
-                    </button>
+                    <SelectElem id="canva_presentation" class="context #canva_presentation" style="width: calc({100 / columns}% - 4px);" data={{ designId: item.mediaId, mediaId: item.mediaId, name: item.name || "Untitled presentation", presentationName: item.name || "Untitled presentation", providerId }} draggable>
+                        <button
+                            class="category-card"
+                            style="width: 100%;"
+                            on:click={() =>
+                                navigateToCategory({
+                                    name: item.name || "Untitled presentation",
+                                    thumbnail: item.thumbnail,
+                                    key: `presentation:${item.mediaId}`
+                                })}
+                        >
+                            {#if item.thumbnail}
+                                <img src={item.thumbnail} alt={item.name} />
+                            {:else}
+                                <div class="placeholder">
+                                    <Icon id="folder" size={3} white />
+                                </div>
+                            {/if}
+                            <span class="category-name">
+                                {item.name}
+                                <span style="margin-left: 10px;opacity: 0.5;font-size: 0.9em;">{item.slideCount || 1}</span>
+                            </span>
+                        </button>
+                    </SelectElem>
                 {:else}
                     <div class="card" style="width: {100 / columns}%;">
                         <Media credits={{}} name={item.name || ""} path={item.url} thumbnailPath={item.thumbnail || ""} type={item.type} shiftRange={[]} active="online" contentProvider={providerId} contentFileData={item} />

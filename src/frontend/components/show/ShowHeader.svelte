@@ -1,6 +1,7 @@
 <script lang="ts">
     import { fade } from "svelte/transition"
     import { Main } from "../../../types/IPC/Main"
+    import { syncCanvaShow } from "../../converters/canvaPresentation"
     import { sendMain } from "../../IPC/main"
     import { activePopup, openToolsTab, outputs, showNotesActive, shows, showsCache, special, styles, templates } from "../../stores"
     import { translateText } from "../../utils/language"
@@ -51,6 +52,7 @@
 
     let showDropdown = false
     let listScrollY = 0
+    let syncingCanva = false
 
     function toggleShowLock() {
         const shouldBeLocked = !currentShow?.locked
@@ -67,6 +69,13 @@
             else delete a[showId].locked
             return a
         })
+    }
+
+    async function syncFromCanva() {
+        if (syncingCanva) return
+        syncingCanva = true
+        await syncCanvaShow(showId)
+        syncingCanva = false
     }
 
     // TEMPLATE
@@ -154,6 +163,15 @@
 
                     <p><T id="context.lockForChanges" /></p>
                 </MaterialButton>
+
+                {#if currentShow.origin === "canva" && currentShow.reference?.data?.designId}
+                    <div class="DIVIDER"></div>
+
+                    <MaterialButton title="context.sync_from_canva" on:click={syncFromCanva} disabled={syncingCanva}>
+                        <Icon id="refresh" white={!syncingCanva} />
+                        <p><T id="context.sync_from_canva" /></p>
+                    </MaterialButton>
+                {/if}
             </div>
         {/if}
     </div>

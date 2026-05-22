@@ -592,7 +592,11 @@
         "midi_no_project": "Received trigger to change project, but no project found at index:",
         "midi_no_show": "Received trigger to start slide, but no show active.",
         "midi_no_slide": "Received trigger to start slide, but no slide found at index:",
-        "midi_no_velocity": "Received MIDI signal, but no velocity, defaults to first index."
+        "midi_no_velocity": "Received MIDI signal, but no velocity, defaults to first index.",
+        "canva_adding": "Adding Canva presentation...",
+        "canva_exporting": "Exporting Canva presentation. This can take up to a minute...",
+        "canva_add_show_failed": "Failed to add Canva presentation as show.",
+        "canva_sync_failed": "Failed to sync from Canva."
     },
     "new": {
         "create": "Create new",
@@ -971,7 +975,10 @@
         "changeIcon": "Change icon",
         "changeGroup": "Change group",
         "createNew": "Create new",
+        "add_as_show": "Add as show",
         "create_slideshow": "Create slideshow",
+        "sync_from_canva": "Sync from Canva",
+        "sync_slide_from_canva": "Sync slide from Canva",
         "selectAll": "Select all",
         "force_outputs": "Force outputs",
         "align_with_screen": "Align with screen",
