@@ -154,7 +154,6 @@
 
                     <p><T id="context.lockForChanges" /></p>
                 </MaterialButton>
-
             </div>
         {/if}
     </div>

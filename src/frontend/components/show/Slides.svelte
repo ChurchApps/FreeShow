@@ -1,9 +1,6 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
     import { activeEdit, activeFocus, activePage, activePopup, alertMessage, cachedShowsData, categories, focusMode, lessonsLoaded, notFound, outLocked, outputs, outputSlideCache, showsCache, slidesOptions, special, templates } from "../../stores"
-    import { Main } from "../../../types/IPC/Main"
-    import { syncCanvaShow } from "../../converters/canvaPresentation"
-    import { sendMain } from "../../IPC/main"
     import { hasNewerUpdate, wait } from "../../utils/common"
     import { getAccess } from "../../utils/profile"
     import { videoExtensions } from "../../values/extensions"
@@ -16,7 +13,6 @@
     import { checkActionTrigger, getFewestOutputLines, getFewestOutputLinesReveal, getItemWithMostLines, updateOut } from "../helpers/showActions"
     import { _show } from "../helpers/shows"
     import T from "../helpers/T.svelte"
-    import FloatingInputs from "../input/FloatingInputs.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
     import Loader from "../main/Loader.svelte"
     import SkeletonSlide from "../slide/SkeletonSlide.svelte"
@@ -466,21 +462,6 @@
     }
 
     $: mode = isLessons ? "grid" : $slidesOptions.mode
-    $: isCanvaShow = currentShow?.origin === "canva" && !!currentShow.reference?.data?.designId
-    $: canvaPresentationName = currentShow?.reference?.data?.presentationName || currentShow?.name || ""
-    $: canvaUrl = currentShow?.reference?.data?.url || currentShow?.reference?.data?.designUrl || ""
-
-    let syncingCanva = false
-    async function syncFromCanva() {
-        if (!showId || syncingCanva) return
-        syncingCanva = true
-        await syncCanvaShow(showId)
-        syncingCanva = false
-    }
-
-    function openCanva() {
-        if (canvaUrl) sendMain(Main.URL, canvaUrl)
-    }
 </script>
 
 <!-- TODO: tab enter not woring -->
@@ -532,31 +513,10 @@
     </Autoscroll>
 </div>
 
-{#if !$focusMode && isCanvaShow}
-    <FloatingInputs side="left" onlyOne>
-        <MaterialButton title="Canva: {canvaPresentationName}" disabled={!canvaUrl} on:click={openCanva}>
-            <span style="opacity: 0.7;">Canva:</span>
-            <span class="canvaName">{canvaPresentationName}</span>
-        </MaterialButton>
-        <div class="divider"></div>
-        <MaterialButton title="context.sync_from_canva" icon="refresh" disabled={syncingCanva} on:click={syncFromCanva}>
-            <T id="context.sync_from_canva" />
-        </MaterialButton>
-    </FloatingInputs>
-{/if}
-
 <style>
     .grid {
         display: flex;
         flex-wrap: wrap;
         padding: 5px;
-    }
-
-    .canvaName {
-        display: block;
-        max-width: min(260px, 32vw);
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
     }
 </style>

@@ -9,7 +9,6 @@
     import FloatingInputs from "../../input/FloatingInputs.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
-    import CanvaInfo from "./CanvaInfo.svelte"
     import LiveInfo from "../live/LiveInfo.svelte"
     import InfoMetadata from "./InfoMetadata.svelte"
     import PlayerInfo from "./PlayerInfo.svelte"
@@ -64,8 +63,6 @@
 
 {#if subTab === "inputs" || $activeRecording}
     <LiveInfo />
-{:else if subTab === "online" && $drawerTabsData.media?.openedSubSubTab?.online === "canva"}
-    <CanvaInfo />
 {:else if subTab === "online"}
     <PlayerInfo />
 {:else}

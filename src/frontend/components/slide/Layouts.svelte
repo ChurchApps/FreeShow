@@ -181,7 +181,7 @@
 {#if $slidesOptions.mode !== "simple"}
     <FloatingInputs style="max-width: {referenceType ? 90 : 70}%;" side="left" onlyOne={!reference && !multipleLayouts}>
         {#if reference}
-            <Reference show={currentShow} />
+            <Reference {showId} show={currentShow} />
         {:else if layouts}
             {#if multipleLayouts}
                 <span class="layouts">
