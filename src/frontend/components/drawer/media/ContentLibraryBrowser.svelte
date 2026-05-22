@@ -2,14 +2,12 @@
     import { onMount } from "svelte"
     import type { ContentFile, ContentLibraryCategory, ContentProviderId } from "../../../../electron/contentProviders/base/types"
     import { Main } from "../../../../types/IPC/Main"
-    import type { SelectIds } from "../../../../types/Main"
     import { requestMain } from "../../../IPC/main"
     import { mediaOptions } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import FloatingInputs from "../../input/FloatingInputs.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import Center from "../../system/Center.svelte"
-    import SelectElem from "../../system/SelectElem.svelte"
     import Media from "./MediaCard.svelte"
 
     export let providerId: ContentProviderId
@@ -17,7 +15,6 @@
     export let searchValue: string = ""
     export let currentCategory: ContentLibraryCategory | null = null
     export let getContentCategory: (item: ContentFileWithExtras) => ContentLibraryCategory | null = () => null
-    export let getContentDragData: (item: ContentFileWithExtras) => { id: SelectIds; data: any } | null = () => null
 
     let library: ContentLibraryCategory[] = []
     let currentPath: ContentLibraryCategory[] = []
@@ -149,47 +146,26 @@
             </div> -->
             {#each filteredContent as item}
                 {@const category = getContentCategory(item)}
-                {@const dragData = getContentDragData(item)}
                 {#if category}
-                    {#if dragData}
-                        <SelectElem id={dragData.id} style="width: calc({100 / columns}% - 4px);" data={dragData.data} draggable>
-                            <button class="category-card" style="width: 100%;" on:click={() => navigateToCategory(category)}>
-                                {#if item.thumbnail}
-                                    <img src={item.thumbnail} alt={item.name} />
-                                {:else}
-                                    <div class="placeholder">
-                                        <Icon id="folder" size={3} white />
-                                    </div>
-                                {/if}
-                                <span class="category-name">
-                                    {item.name}
-                                    {#if item.slideCount}
-                                        <span style="margin-left: 10px;opacity: 0.5;font-size: 0.9em;">{item.slideCount}</span>
-                                    {/if}
-                                </span>
-                            </button>
-                        </SelectElem>
-                    {:else}
-                        <button
-                            class="category-card"
-                            style="width: calc({100 / columns}% - 4px);"
-                            on:click={() => navigateToCategory(category)}
-                        >
-                            {#if item.thumbnail}
-                                <img src={item.thumbnail} alt={item.name} />
-                            {:else}
-                                <div class="placeholder">
-                                    <Icon id="folder" size={3} white />
-                                </div>
+                    <button
+                        class="category-card"
+                        style="width: calc({100 / columns}% - 4px);"
+                        on:click={() => navigateToCategory(category)}
+                    >
+                        {#if item.thumbnail}
+                            <img src={item.thumbnail} alt={item.name} />
+                        {:else}
+                            <div class="placeholder">
+                                <Icon id="folder" size={3} white />
+                            </div>
+                        {/if}
+                        <span class="category-name">
+                            {item.name}
+                            {#if item.slideCount}
+                                <span style="margin-left: 10px;opacity: 0.5;font-size: 0.9em;">{item.slideCount}</span>
                             {/if}
-                            <span class="category-name">
-                                {item.name}
-                                {#if item.slideCount}
-                                    <span style="margin-left: 10px;opacity: 0.5;font-size: 0.9em;">{item.slideCount}</span>
-                                {/if}
-                            </span>
-                        </button>
-                    {/if}
+                        </span>
+                    </button>
                 {:else}
                     <div class="card" style="width: {100 / columns}%;">
                         <Media credits={{}} name={item.name || ""} path={item.url} thumbnailPath={item.thumbnail || ""} type={item.type} shiftRange={[]} active="online" contentProvider={providerId} contentFileData={item} />

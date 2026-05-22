@@ -534,13 +534,9 @@
 
 {#if !$focusMode && isCanvaShow}
     <FloatingInputs side="left" onlyOne>
-        <MaterialButton title="Canva: {canvaPresentationName}" disabled>
+        <MaterialButton title="Canva: {canvaPresentationName}" disabled={!canvaUrl} on:click={openCanva}>
             <span style="opacity: 0.7;">Canva:</span>
             <span class="canvaName">{canvaPresentationName}</span>
-        </MaterialButton>
-        <div class="divider"></div>
-        <MaterialButton title="main.open" icon="launch" disabled={!canvaUrl} on:click={openCanva}>
-            <T id="main.open" />
         </MaterialButton>
         <div class="divider"></div>
         <MaterialButton title="context.sync_from_canva" icon="refresh" disabled={syncingCanva} on:click={syncFromCanva}>

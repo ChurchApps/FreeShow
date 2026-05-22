@@ -6,7 +6,6 @@ import type { History } from "../../../types/History"
 import { Main } from "../../../types/IPC/Main"
 import type { DropData, Selected } from "../../../types/Main"
 import type { Item, Slide, SlideAction } from "../../../types/Show"
-import { addCanvaPresentationAsShow } from "../../converters/canvaPresentation"
 import { sendMain } from "../../IPC/main"
 import { changeLayout, changeSlideGroups } from "../../show/slides"
 import { activeDrawerTab, activePage, activePopup, activeProject, activeShow, alertMessage, audioFolders, audioPlaylists, audioStreams, drawerTabsData, editingProjectTemplate, media, mediaFolders, overlays, playerVideos, projects, projectTemplates, scriptureSettings, shows, showsCache, templates, timers } from "../../stores"
@@ -144,19 +143,6 @@ export const dropActions = {
         if ((drag.id === "files" || drag.id === "urls") && drop.trigger?.includes("end")) drop.index++
 
         let data = drag.data
-        if (drag.id === "canva_presentation") {
-            const presentation = data[0] || {}
-            await addCanvaPresentationAsShow(
-                {
-                    designId: presentation.designId || presentation.mediaId,
-                    presentationName: presentation.presentationName || presentation.name,
-                    providerId: presentation.providerId || "canva"
-                },
-                { projectId, index: drop.index }
-            )
-            return
-        }
-
         if (drag.id === "media" || drag.id === "files") {
             const extraFiles: string[] = []
             const pptFiles: string[] = []

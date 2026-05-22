@@ -59,26 +59,12 @@
         } as ContentLibraryCategory & { slideCount?: number }
     }
 
-    function getContentDragData(item: ContentFile & { isPresentation?: boolean }) {
-        if (!item.isPresentation || !item.mediaId) return null
-        return {
-            id: "canva_presentation" as const,
-            data: {
-                designId: item.mediaId,
-                mediaId: item.mediaId,
-                name: item.name || "Untitled presentation",
-                presentationName: item.name || "Untitled presentation",
-                providerId: "canva"
-            }
-        }
-    }
-
 </script>
 
 {#if $providerConnections.canva}
     <div style="position: relative;width: 100%; height: 100%; display: flex; flex-direction: column;">
         <div style="flex: 1; overflow: hidden;">
-            <ContentLibraryBrowser providerId="canva" columns={5} searchValue="" bind:currentCategory {getContentCategory} {getContentDragData} />
+            <ContentLibraryBrowser providerId="canva" columns={5} searchValue="" bind:currentCategory {getContentCategory} />
         </div>
     </div>
     <!-- <div style="position: absolute;bottom: 0;width: 100%;padding: 10px;display: flex;justify-content: center;">

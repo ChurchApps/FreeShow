@@ -18,7 +18,7 @@ const areas = {
     slides: ["media", "audio", "audio_effect", "overlay", "sound", "effect", "screen", "ndi", "camera", "microphone", "scripture", "trigger", "category_audio", "audio_stream", "metronome", "show", "global_timer", "variable", "midi", "action"], // group
     // slide: ["overlay", "sound", "camera"], // "media",
     // projects: ["folder"],
-    project: ["show_drawer", "media", "canva_presentation", "audio", "audio_effect", "overlay", "player", "scripture", "effect", "screen", "ndi", "camera"],
+    project: ["show_drawer", "media", "audio", "audio_effect", "overlay", "player", "scripture", "effect", "screen", "ndi", "camera"],
     overlays: ["slide"],
     templates: ["slide"],
     edit: ["media", "global_timer", "variable"]
@@ -26,7 +26,7 @@ const areas = {
 }
 const areaChildren = {
     projects: ["folder", "project"],
-    project: ["show", "media", "canva_presentation", "audio", "audio_effect", "show_drawer", "player", "action"],
+    project: ["show", "media", "audio", "audio_effect", "show_drawer", "player", "action"],
     slides: ["slide", "group", "global_group", "effect", "screen", "ndi", "camera", "microphone", "media", "audio", "audio_effect", "show"],
     all_slides: [],
     navigation: ["show", "show_drawer", "media", "audio", "audio_effect", "overlay", "template"],

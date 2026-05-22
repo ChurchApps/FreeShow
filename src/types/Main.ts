@@ -88,7 +88,6 @@ export type SelectIds =
     | "category_web"
     | "stage"
     | "media"
-    | "canva_presentation"
     | "audio"
     | "audio_effect"
     | "metronome"
