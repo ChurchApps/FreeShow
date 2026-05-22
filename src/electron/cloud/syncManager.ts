@@ -4,7 +4,7 @@ import { isProd } from ".."
 import { Main } from "../../types/IPC/Main"
 import type { Folders, Projects } from "../../types/Projects"
 import type { Show } from "../../types/Show"
-import { isValidJSON, startBackup } from "../data/backup"
+import { isValidJSON, restoreFiles, startBackup } from "../data/backup"
 import { _store, getStore, setStore } from "../data/store"
 import { compressToZip, decompressZipStream, getZipModifiedDates } from "../data/zip"
 import { sendMain } from "../IPC/main"
@@ -405,6 +405,37 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
         console.log("Sync completed!")
         isNewDevice = false
         return { success, changedFiles }
+    }
+}
+
+export async function restoreCloudBackup(data: { id: SyncProviderId; churchId: string; teamId: string }) {
+    const provider = getManager[data.id]()
+    if (!provider) return { success: false, error: "Sync provider not available" }
+
+    const restorePath = path.join(EXTRACT_LOCATION, "restore")
+    const extractPath = path.join(restorePath, "extracted")
+
+    // clear any uncleared previous data
+    if (await doesPathExistAsync(restorePath)) deleteFolder(restorePath)
+
+    try {
+        createFolder(restorePath)
+
+        const backupPath = await provider.getBackup(data.churchId, data.teamId, restorePath)
+        if (!backupPath) return { success: false, error: "No cloud backup found" }
+
+        createFolder(extractPath)
+        await decompressZipStream(backupPath, true, {
+            getOutputPath: (fileName: string) => path.join(extractPath, fileName)
+        })
+
+        restoreFiles({ path: extractPath })
+        return { success: true }
+    } catch (err) {
+        console.error("Could not restore cloud backup:", err)
+        return { success: false, error: "Failed to restore cloud backup" }
+    } finally {
+        if (await doesPathExistAsync(restorePath)) deleteFolder(restorePath)
     }
 }
 
