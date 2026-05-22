@@ -429,7 +429,7 @@ export async function restoreCloudBackup(data: { id: SyncProviderId; churchId: s
             getOutputPath: (fileName: string) => path.join(extractPath, fileName)
         })
 
-        restoreFiles({ path: extractPath })
+        await restoreFiles({ path: extractPath })
         return { success: true }
     } catch (err) {
         console.error("Could not restore cloud backup:", err)
@@ -456,13 +456,10 @@ function getLocalOnlyKeys(cloudKeys: any, localKeys: any): string[] {
 // WRITE USER DATA
 
 async function compressUserData(): Promise<string | null> {
-    const backupPath = path.join(EXTRACT_LOCATION, "Backup")
-    createFolder(backupPath)
-    await startBackup({ customOutputLocation: backupPath })
-    const filesNames = await readFolderAsync(backupPath)
-    if (!filesNames.length) return null
+    const backupResult = await startBackup({ isCloudSync: true })
+    if (!backupResult?.entries?.length) return null
 
-    const files: { name: string; content?: Buffer | string; filePath?: string }[] = filesNames.map((fileName) => ({ name: fileName, filePath: path.join(backupPath, fileName) }))
+    const files = backupResult.entries
 
     // changes.json
     files.push({ name: changes_name, content: JSON.stringify(getLatestChanges()) })
