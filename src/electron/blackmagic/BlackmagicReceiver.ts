@@ -6,14 +6,7 @@ import util from "../ndi/vingester-util"
 import { OutputHelper } from "../output/OutputHelper"
 import { BlackmagicManager } from "./BlackmagicManager"
 import { InputImageBufferConverter } from "./ImageBufferConverter"
-
-// Dynamically require macadam to handle missing dependency gracefully
-let macadam: any = null
-try {
-    macadam = require("macadam")
-} catch (err) {
-    console.warn("Blackmagic macadam module not available:", err instanceof Error ? err.message : String(err))
-}
+import { getMacadam } from "./macadamLoader"
 
 interface ReceiverData {
     receiver?: CaptureChannel
@@ -38,7 +31,7 @@ export class BlackmagicReceiver {
      * @param audioChannels Number of audio channels (0 to disable audio)
      */
     static async initialize(deviceId: string, audioChannels = 2) {
-        // Check if macadam is available
+        const macadam = getMacadam()
         if (!macadam) {
             console.error("Cannot initialize Blackmagic receiver: macadam module not available")
             return

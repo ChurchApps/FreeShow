@@ -1,19 +1,12 @@
-import type { PlaybackChannel } from "macadam"
 import type { Size } from "electron"
+import type { PlaybackChannel } from "macadam"
 import os from "os"
 import util from "../ndi/vingester-util"
 import { wait } from "../utils/helpers"
 import { BlackmagicManager } from "./BlackmagicManager"
 import { BufferManager } from "./BufferManager"
 import { ImageBufferConverter, ImageBufferConverter10Bit, ImageBufferConverter10BitRGB, ImageBufferConverter12BitRGB } from "./ImageBufferConverter"
-
-// Dynamically require macadam to handle missing dependency gracefully
-let macadam: any = null
-try {
-    macadam = require("macadam")
-} catch (err) {
-    console.warn("Blackmagic macadam module not available:", err instanceof Error ? err.message : String(err))
-}
+import { getMacadam } from "./macadamLoader"
 
 const SEGFAULT_PRONE_DEVICES: Set<string> = new Set()
 
@@ -147,7 +140,7 @@ export class BlackmagicSender {
     }
 
     static async _performInitializeDevice(outputId: string, deviceIndex: number, displayModeName: string, pixelFormat: string, enableKeying: boolean, audioChannels = 2) {
-        // Check if macadam is available
+        const macadam = getMacadam()
         if (!macadam) {
             console.error("Cannot initialize Blackmagic device: macadam module not available")
             return false
@@ -207,12 +200,6 @@ export class BlackmagicSender {
                         if (!pixelFormatValue) {
                             clearTimeout(timeoutId)
                             return reject(new Error(`Invalid pixel format: ${pixelFormat}`))
-                        }
-
-                        // Initialize macadam playback
-                        if (!macadam) {
-                            clearTimeout(timeoutId)
-                            return reject(new Error("macadam module not available"))
                         }
 
                         // Serialize macadam.playback() calls globally to prevent
@@ -769,7 +756,7 @@ export class BlackmagicSender {
                     // Ignore errors during stop
                 }
             } catch (err) {
-                console.error(`Error cleaning up old playback: ${err.message}`)
+                console.error(`Error cleaning up old playback: ${(err as Error).message}`)
             }
         }
 
@@ -790,7 +777,7 @@ export class BlackmagicSender {
                 console.error(`Failed to reinitialize playback for ${outputId}`)
             }
         } catch (err) {
-            console.error(`Error during reinitialization: ${err.message}`)
+            console.error(`Error during reinitialization: ${(err as Error).message}`)
 
             setTimeout(() => {
                 this.initializeDevice(outputId, deviceIndex, displayMode, pixelFormat, enableKeying, audioChannels).then((success) => {
