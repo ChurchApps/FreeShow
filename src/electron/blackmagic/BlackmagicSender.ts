@@ -211,17 +211,28 @@ export class BlackmagicSender {
                         })
 
                         prevMutex
-                            .then(() =>
-                                macadam.playback({
-                                    deviceIndex,
-                                    displayMode,
-                                    pixelFormat: pixelFormatValue,
-                                    enableKeying: enableKeying ? BlackmagicManager.isAlphaSupported(pixelFormat) : false,
-                                    channels: actualAudioChannels,
-                                    sampleRate: macadam.bmdAudioSampleRate48kHz,
-                                    sampleType: macadam.bmdAudioSampleType16bitInteger
-                                })
-                            )
+                            .then(() => {
+                                // Pause active senders while the DeckLink SDK initializes a new device.
+                                // Active frame scheduling on other ports of the same physical card can crash the native SDK.
+                                const pausedOthers = Object.keys(BlackmagicSender.playbackData).filter((id) => id !== outputId && !BlackmagicSender.isPaused[id])
+                                for (const otherId of pausedOthers) BlackmagicSender.isPaused[otherId] = true
+
+                                return macadam
+                                    .playback({
+                                        deviceIndex,
+                                        displayMode,
+                                        pixelFormat: pixelFormatValue,
+                                        enableKeying: enableKeying ? BlackmagicManager.isAlphaSupported(pixelFormat) : false,
+                                        channels: actualAudioChannels,
+                                        sampleRate: macadam.bmdAudioSampleRate48kHz,
+                                        sampleType: macadam.bmdAudioSampleType16bitInteger
+                                    })
+                                    .finally(() => {
+                                        for (const otherId of pausedOthers) {
+                                            if (BlackmagicSender.playbackData[otherId]) BlackmagicSender.isPaused[otherId] = false
+                                        }
+                                    })
+                            })
                             .then((result: any) => {
                                 mutexRelease()
                                 clearTimeout(timeoutId)
