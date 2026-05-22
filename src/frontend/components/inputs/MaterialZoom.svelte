@@ -24,8 +24,11 @@
     // const debouncedColumnUpdate = debounce((newValue: number) => dispatch("change", newValue), { wait: 50 })
 
     const dispatch = createEventDispatcher()
-    function update(value: number) {
-        const newValue = Math.max(min, Math.min(max, value))
+    function update(value: number, origin?: {x: number, y: number}) {
+        let newValue = Math.max(min, Math.min(max, value))
+        if (Math.abs(newValue - 1) < 0.01) newValue = 1
+
+        if (origin) dispatch("origin", origin)
         dispatch("change", newValue)
         // debouncedColumnUpdate(newValue)
     }
@@ -63,7 +66,7 @@
         if (nextScrollTimeout) return
 
         const direction = e.deltaY < 0 ? addValue * -1 : addValue
-        update(columns + direction)
+        update(columns + direction, { x: e.clientX, y: e.clientY })
 
         // don't start timeout if scrolling with mouse
         if (e.deltaY >= 100 || e.deltaY <= -100) return
