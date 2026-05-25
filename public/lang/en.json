@@ -1508,6 +1508,7 @@
         "verses_on_individual_lines": "Verses on individual lines",
         "divide_long_verses": "Split long verses",
         "split_long_verses_suffix": "Show letter suffix",
+        "smart_split": "Smart split",
         "tolerance": "Tolerance",
         "version": "Show version",
         "reference": "Show reference",

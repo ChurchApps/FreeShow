@@ -311,7 +311,8 @@ export const scriptureSettings: Writable<any> = writable({
     splitLongVerses: false,
     longVersesChars: 100,
     longVersesTolerance: 0,
-    splitLongVersesSuffix: false
+    splitLongVersesSuffix: false,
+    smartSplit: true
 }) // {default}
 
 // DRAWER

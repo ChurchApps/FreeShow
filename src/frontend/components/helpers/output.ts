@@ -1299,9 +1299,9 @@ function replaceScriptureValues(items: Item[], templateItems: Item[], customDyna
                                         newTexts.push({ value: number, style: style + numberStyle, customType: "disableTemplate" })
                                     }
 
-                                    // Add trailing space if the next item is a continuation with no verse number
+                                    // Add trailing space if there is a next item on the slide
                                     const nextItem = (value as [string, string][])[index + 1]
-                                    const needsSpace = nextItem && (!nextItem[0] || nextItem[0] === "0")
+                                    const needsSpace = !!nextItem
                                     newTexts.push({ value: needsSpace ? verseText + " " : verseText, sourceDynamicKey: key + ":" + index, style: style + ";" + baseStyle })
                                 })
                             }
