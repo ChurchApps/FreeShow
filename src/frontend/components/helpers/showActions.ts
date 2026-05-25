@@ -308,6 +308,9 @@ export function updateOut(showId: string, index: number, layout: LayoutRef[], ex
             })
         }
 
+        // nextTimer - start next slide timer immediately before any awaits
+        nextSlideTimers(outputId)
+
         // background
         if (background && (isSlideBg || _show(showId).get("media")?.[background])) {
             const bg = isSlideBg ? { path: background } : _show(showId).get("media")[background]
@@ -388,9 +391,6 @@ export function updateOut(showId: string, index: number, layout: LayoutRef[], ex
                 setOutput("overlays", data.overlays, false, outputId, true)
             }, 200)
         }
-
-        // nextTimer
-        nextSlideTimers(outputId)
 
         // DEPRECATED since <= 1.1.6, but still in use
         // actions per output
