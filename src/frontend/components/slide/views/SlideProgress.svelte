@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { LayoutRef, Show, ShowGroups, Slide } from "../../../../types/Show"
     import type { ProjectProgressItem } from "../../helpers/projectProgress"
-    import { activeProject, activeShow, allOutputs, groups, outputs, projects, showsCache } from "../../../stores"
+    import { activeProject, activeShow, allOutputs, groups, outputs, projects, shows, showsCache } from "../../../stores"
     import { getCurrentProjectIndexes, getProjectItemLabel, getProjectItems } from "../../helpers/projectProgress"
     import { translateText } from "../../../utils/language"
     import { getFirstActiveOutput } from "../../helpers/output"
@@ -63,7 +63,7 @@
     $: currentGroups = $groups
     $: progressData = getProgress(currentShowId, currentShow, currentLayoutRef, currentShowSlides, currentGroups, tracker)
     $: layoutGroups = progressData.layoutGroups
-    $: projectItems = getProjectItems($projects[$activeProject || ""]?.shows || [], $showsCache)
+    $: projectItems = getProjectItems($projects[$activeProject || ""]?.shows || [], $shows)
     $: currentProjectIndexes = getCurrentProjectIndexes($projects[$activeProject || ""]?.shows || [], currentOutput?.out || {}, typeof $activeShow?.index === "number" ? $activeShow.index : -1)
     $: slidesLength = progressData.slidesLength
 
