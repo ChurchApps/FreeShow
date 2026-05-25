@@ -98,9 +98,12 @@ export function setOutput(type: string, data: any, toggle = false, outputId = ""
             if (groupId) customActionActivation("group_start", groupId)
 
             // start recording time on break slides (no items, globalGroup === "break")
-            if (slide.globalGroup === "break" && !slide.items?.length) {
-                const layoutSlideIndex = ref[data.index]?.type === "parent" ? (ref[data.index]?.index ?? -1) : -1
-                if (layoutSlideIndex > -1) _breakRecording = { startTime: Date.now(), showId: data.id, layoutId: data.layout, slideIndex: layoutSlideIndex }
+            const layoutSlideIndex = ref[data.index]?.type === "parent" ? (ref[data.index]?.index ?? -1) : -1
+            if (slide.globalGroup === "break" && !slide.items?.length && layoutSlideIndex > -1) {
+                const previousDuration = _pausedBreakRecording?.slideIndex === layoutSlideIndex ? _pausedBreakRecording.accumulatedDuration : 0
+                _breakRecording = { startTime: Date.now(), showId: data.id, layoutId: data.layout, slideIndex: layoutSlideIndex, previousDuration }
+            } else if (_pausedBreakRecording && layoutSlideIndex > _pausedBreakRecording.slideIndex + 1) {
+                _pausedBreakRecording = null
             }
         }
 
@@ -244,20 +247,27 @@ function appendShowUsage(showId: string) {
 }
 
 // break slide time recording
-let _breakRecording: { startTime: number; showId: string; layoutId: string; slideIndex: number } | null = null
+let _breakRecording: { startTime: number; showId: string; layoutId: string; slideIndex: number; previousDuration: number } | null = null
+let _pausedBreakRecording: { slideIndex: number; accumulatedDuration: number } | null = null
 function _stopBreakRecording() {
     if (!_breakRecording) return
-    const { startTime, showId, layoutId, slideIndex } = _breakRecording
+
+    const { startTime, showId, layoutId, slideIndex, previousDuration } = _breakRecording
     _breakRecording = null
 
-    const elapsed = Math.round((Date.now() - startTime) / 1000)
-    if (elapsed <= 3) return // only save if over 3 seconds
+    const sessionElapsed = Math.round((Date.now() - startTime) / 1000)
+    const totalElapsed = previousDuration + sessionElapsed
+
+    // store accumulated time so returning to this slide resumes from here
+    _pausedBreakRecording = { slideIndex, accumulatedDuration: totalElapsed }
+
+    if (totalElapsed <= 3) return // only save if over 3 seconds
 
     showsCache.update((a) => {
         const slideData = a[showId]?.layouts?.[layoutId]?.slides?.[slideIndex]
         if (!slideData) return a
 
-        slideData.breakDuration = elapsed
+        slideData.breakDuration = totalElapsed
         return a
     })
 }
