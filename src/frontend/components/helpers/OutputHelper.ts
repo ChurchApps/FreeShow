@@ -90,17 +90,28 @@ export class OutputHelper {
 
         const item = this.getItem(outputId, next, options)
         if (!item) {
-            // don't go to next if active is video and it's currently outputted
-            const outBg = this.getOut(outputId).background
-            if ((options.isSpace && outBg?.type === "video") || (outBg?.type === "player" && outBg?.path === this.getActiveItem()?.id)) {
-                togglePlayingMedia()
-                return
-            }
-
+            if (options.isSpace && this.toggleActiveMedia(outputId)) return
             return this.changeProjectItem(outputId, this.getActiveItem(), next, options)
         }
 
         this.playItem(outputId, item, next, options)
+    }
+
+    // don't go to next if active is same as currently outputted video/audio
+    private static toggleActiveMedia(outputId: string) {
+        const outBg = this.getOut(outputId).background
+        if ((outBg?.type === "video" || outBg?.type === "player") && (outBg?.path || outBg?.id) === this.getActiveItem()?.id) {
+            togglePlayingMedia()
+            return true
+        }
+
+        const outAudio = AudioPlayer.getAllPlaying(false)
+        if (outAudio?.includes(this.getActiveItem()?.id || "")) {
+            togglePlayingMedia()
+            return true
+        }
+
+        return false
     }
 
     // this allows changing back to the previous project item with keyboard instead of advancing the slide if the active show is right before/after the outputted show

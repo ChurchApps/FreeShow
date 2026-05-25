@@ -83,9 +83,9 @@
     // WIP take off on click if already applied? - it's auto removed when slide is edited & you can remove it in the bottom right menu
     $: isShowActive = !!($activeShow && ($activeShow?.type || "show") === "show")
     let alerted = false
-    function templateClick(e: MouseEvent, templateId: string) {
-        if (e.target?.closest(".edit") || e.target?.closest(".icons")) return
-        if (!$activeShow || !isShowActive || e.ctrlKey || e.metaKey) return
+    function templateClick(e: MouseEvent | null = null, templateId: string) {
+        if (e?.target?.closest(".edit") || e?.target?.closest(".icons")) return
+        if (!$activeShow || !isShowActive || e?.ctrlKey || e?.metaKey) return
 
         if ($showsCache[$activeShow.id]?.locked) {
             alertMessage.set("show.locked")
@@ -148,7 +148,7 @@
         templateApplied.set(true)
         setTimeout(() => templateApplied.set(false), 500)
 
-        history({ id: "TEMPLATE", newData: { id: templateId, data: { createItems: true, shiftItems: e.shiftKey } }, location: { page: "none", override: "show#" + $activeShow.id } })
+        history({ id: "TEMPLATE", newData: { id: templateId, data: { createItems: true, shiftItems: e?.shiftKey } }, location: { page: "none", override: "show#" + $activeShow.id } })
 
         // alert if first output has a style template
         if ($special.styleTemplatePreview !== false) {
@@ -161,7 +161,24 @@
             }
         }
     }
+
+    function keydown(e: KeyboardEvent) {
+        if (e.key === "Enter" && searchValue.length > 1 && e.target?.closest(".search")) {
+            let template = fullFilteredTemplates[0]
+            if (!template) return
+
+            // play
+            if (e.ctrlKey || e.metaKey) {
+                templateClick(null, template.id)
+                return
+            }
+
+            // add to project (no need)
+        }
+    }
 </script>
+
+<svelte:window on:keydown={keydown} />
 
 <div style="position: relative;height: 100%;overflow-y: auto;" class="context #drawer_templates" on:wheel={wheel}>
     <DropArea id="templates">

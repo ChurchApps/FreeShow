@@ -57,7 +57,24 @@
             return a
         })
     }
+
+    function keydown(e: KeyboardEvent) {
+        if (e.key === "Enter" && searchValue.length > 1 && e.target?.closest(".search")) {
+            let action = filteredActionsSearch[0]
+            if (!action) return
+
+            // play
+            if (e.ctrlKey || e.metaKey) {
+                runAction(action)
+                return
+            }
+
+            // add to project (no need)
+        }
+    }
 </script>
+
+<svelte:window on:keydown={keydown} />
 
 <div class="context #actions{readOnly ? '_readonly' : ''}" style="position: relative;height: 100%;overflow-y: auto;display: flex;flex-direction: column;">
     {#if filteredActionsSearch.length}

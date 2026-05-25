@@ -5,17 +5,17 @@
     import type { ClickEvent, FileFolder } from "../../../../types/Main"
     import { requestMain } from "../../../IPC/main"
     import { addProjectItem } from "../../../converters/project"
-    import { activeDrawerTab, activeEdit, activeFocus, activeMediaTagFilter, activePopup, activeShow, audioFolders, drawerTabsData, focusMode, labelsDisabled, media, mediaFolders, mediaOptions, outLocked, outputs, popupData, providerConnections, selectAllMedia, selected, sorted, special } from "../../../stores"
+    import { activeDrawerTab, activeEdit, activeFocus, activeMediaTagFilter, activePopup, activeShow, audioFolders, drawerTabsData, focusMode, labelsDisabled, media, mediaFolders, mediaOptions, outLocked, outputs, popupData, providerConnections, selectAllMedia, selected, sorted, special, styles } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { clone, keysToID, sortFilenames } from "../../helpers/array"
     import { splitPath } from "../../helpers/get"
-    import { countFolderMediaItems, getExtension, getFileName, getMediaType, isMediaExtension, removeExtension } from "../../helpers/media"
+    import { countFolderMediaItems, getExtension, getFileName, getMediaLayerType, getMediaStyle, getMediaType, isMediaExtension, removeExtension } from "../../helpers/media"
     import { getFirstActiveOutput, setOutput } from "../../helpers/output"
     import FloatingInputs from "../../input/FloatingInputs.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialZoom from "../../inputs/MaterialZoom.svelte"
-    import { clearBackground } from "../../output/clear"
+    import { clearBackground, clearSlide } from "../../output/clear"
     import Center from "../../system/Center.svelte"
     import VirtualList from "../VirtualList.svelte"
     import BMDStreams from "../live/BMDStreams.svelte"
@@ -369,22 +369,39 @@
     }
 
     function keydown(e: KeyboardEvent) {
+        if (!fileCount) return
+
         if (e.key === "Enter" && searchValue.length > 1 && e.target?.closest(".search")) {
-            if (fileCount) {
-                // let file = mediaFilesOnly[0] // not updating
-                let file = searchedFiles.filter((a) => !a.isFolder)[0]
-                if (!file) return
+            // let file = mediaFilesOnly[0] // not updating
+            let file = searchedFiles.filter((a) => !a.isFolder)[0]
+            if (!file) return
 
-                // add to project
-                const data = { id: file.path, name: file.name, type: getMediaType(getExtension(file.name)) }
-                addProjectItem(data)
+            // play
+            if (e.ctrlKey || e.metaKey) {
+                const currentOutput = getFirstActiveOutput()
+                const outputStyle = $styles[currentOutput?.style || ""]
+                const mediaStyle = getMediaStyle($media[file.path], outputStyle)
 
-                activeFile = searchedFiles.findIndex((a) => a.path === file.path)
-                if (activeFile < 0) activeFile = null
+                const videoType = getMediaLayerType(file.path, mediaStyle)
+
+                // clear slide text
+                if (videoType === "foreground") clearSlide()
+
+                const type = getMediaType(getExtension(file.path))
+                setOutput("background", { path: file.path, ...mediaStyle, type, loop: false, muted: false })
+                return
             }
+
+            // add to project
+            const data = { id: file.path, name: file.name, type: getMediaType(getExtension(file.name)) }
+            addProjectItem(data)
+
+            activeFile = searchedFiles.findIndex((a) => a.path === file.path)
+            if (activeFile < 0) activeFile = null
+            return
         }
 
-        if (e.target?.closest("input") || e.target?.closest(".edit") || $activeEdit.items.length || !fileCount) return
+        if (e.target?.closest("input") || e.target?.closest(".edit") || $activeEdit.items.length) return
 
         if ((e.ctrlKey || e.metaKey) && shortcuts[e.key]) {
             // e.preventDefault()

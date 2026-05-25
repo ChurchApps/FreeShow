@@ -83,9 +83,24 @@
         clock: "timer.to_time",
         event: "timer.to_event"
     }
+
+    function keydown(e: KeyboardEvent) {
+        if (e.key === "Enter" && searchValue.length > 1 && e.target?.closest(".search")) {
+            let timer = filteredTimers[0]
+            if (!timer) return
+
+            // play
+            if (e.ctrlKey || e.metaKey) {
+                playPauseGlobal(timer.id, timer, true)
+                return
+            }
+
+            // add to project (no need)
+        }
+    }
 </script>
 
-<svelte:window on:mouseup={() => disableDragging.set(false)} />
+<svelte:window on:keydown={keydown} on:mouseup={() => disableDragging.set(false)} />
 
 {#if filteredTimers.length}
     <div class="timers" style={onlyPlaying ? "" : "padding-bottom: 60px;"}>

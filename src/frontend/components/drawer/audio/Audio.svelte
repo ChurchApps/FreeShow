@@ -5,6 +5,7 @@
     import { requestMain } from "../../../IPC/main"
     import { AudioPlayer } from "../../../audio/audioPlayer"
     import { AudioPlaylist } from "../../../audio/audioPlaylist"
+    import { addProjectItem } from "../../../converters/project"
     import { activePlaylist, activePopup, activeRename, audioFolders, audioPlaylists, drawerTabsData, effectsLibrary, labelsDisabled, media, outLocked, selectAllAudio, selected } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import Icon from "../../helpers/Icon.svelte"
@@ -192,6 +193,22 @@
     }
 
     function keydown(e: KeyboardEvent) {
+        if (e.key === "Enter" && searchValue.length > 1 && e.target?.closest(".search")) {
+            let file = searchedFiles.filter((a) => !a.isFolder)[0]
+            if (!file) return
+
+            // play
+            if (e.ctrlKey || e.metaKey) {
+                AudioPlayer.start(file.path, { name: file.name })
+                return
+            }
+
+            // add to project
+            const data = { id: file.path, name: file.name, type: "audio" as const }
+            addProjectItem(data)
+            return
+        }
+
         if (e.target?.closest("input") || e.target?.closest(".edit")) return
 
         if ((e.ctrlKey || e.metaKey) && e.key === "Backspace") {
