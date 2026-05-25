@@ -192,7 +192,7 @@
         </div>
     {:else if type === "project"}
         <!-- project sequence -->
-        <div class="align groups projectGroups autoFontSize" style="{autoSize ? 'font-size: ' + autoSize + 'px;' : ''}{item?.alignX ? '' : (item?.align || 'justify-content: center;').replaceAll('text-align', 'justify-content')}">
+        <div class="align groups projectGroups autoFontSize" style={autoSize ? "font-size: " + autoSize + "px;" : ""}>
             {#each projectItems as projectItem}
                 {@const label = getProjectItemLabel(projectItem, projectMetadata)}
                 <div class="group projectItem" class:active={currentProjectIndexes.includes(projectItem.index)}>
@@ -252,9 +252,16 @@
         color: var(--accent);
     }
 
+    .projectGroups.align {
+        align-items: var(--text-align);
+        justify-content: center;
+    }
     .projectGroups {
-        display: block;
+        flex-direction: column;
+        flex-wrap: nowrap;
+        gap: 0;
         white-space: pre-wrap;
+        text-align: var(--text-align);
     }
 
     .projectItem {
