@@ -223,6 +223,12 @@ export class BlackmagicSender {
                                         displayMode,
                                         pixelFormat: pixelFormatValue,
                                         enableKeying: enableKeying ? BlackmagicManager.isAlphaSupported(pixelFormat) : false,
+                                        isExternal: (() => {
+                                            if (!enableKeying) return false;
+                                            const devices = BlackmagicManager.getDevices();
+                                            const device = devices[deviceIndex];
+                                            return device?.supportsExternalKeying ?? true;
+                                        })(),
                                         channels: actualAudioChannels,
                                         sampleRate: macadam.bmdAudioSampleRate48kHz,
                                         sampleType: macadam.bmdAudioSampleType16bitInteger
