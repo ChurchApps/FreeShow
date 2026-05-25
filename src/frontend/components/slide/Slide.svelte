@@ -14,7 +14,7 @@
     import { clone } from "../helpers/array"
     import { getContrast, hexToRgb, splitRgb } from "../helpers/color"
     import Icon from "../helpers/Icon.svelte"
-    import { getMedia, getMediaCached, getMediaStyle, mediaSize } from "../helpers/media"
+    import { getMedia, getMediaStyle, mediaSize } from "../helpers/media"
     import { allOutputsHasStyleTemplate, getActiveOutputs, getFirstActiveOutput, getResolution, getSlideFilter, setTemplateStyle } from "../helpers/output"
     import { getGroupName } from "../helpers/show"
     import { _show } from "../helpers/shows"
@@ -97,8 +97,8 @@
             // ghost thumbnails does not need to be rendered right away
             await wait(50)
 
-            // load ghost thumbnails
-            const media = await getMediaCached(bgPath, ghostSize)
+            // load ghost thumbnails - use getMedia to create if not yet cached
+            const media = await getMedia(bgPath, ghostSize)
             if (!media) return
 
             thumbnailPath = media.thumbnail
@@ -290,7 +290,7 @@
                     relative={viewMode === "lyrics" && !noQuickEdit}
                 >
                     <!-- backgrounds -->
-                    {#if !altKeyPressed && bg && (viewMode !== "lyrics" || noQuickEdit) && (background || layers.includes("background"))}
+                    {#if !altKeyPressed && bg && (viewMode !== "lyrics" || noQuickEdit) && (background || ghostBackground || layers.includes("background"))}
                         {#key $refreshSlideThumbnails}
                             <div class="background" style="zoom: {1 / ratio};{slideFilter}" class:ghost={!background}>
                                 <MediaLoader name={translateText("error.load")} ghost={!background} path={mediaPath} {thumbnailPath} cameraGroup={bg.cameraGroup || ""} type={bg.type !== "player" ? bg.type : null} {mediaStyle} bind:duration getDuration />
