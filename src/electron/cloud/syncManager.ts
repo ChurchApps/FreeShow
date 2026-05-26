@@ -5,7 +5,7 @@ import { Main } from "../../types/IPC/Main"
 import type { Folders, Projects } from "../../types/Projects"
 import type { Show } from "../../types/Show"
 import { isValidJSON, restoreFiles, startBackup } from "../data/backup"
-import { _store, getStore, setStore } from "../data/store"
+import { _store, getStore, safeStoreSet } from "../data/store"
 import { compressToZip, decompressZipStream, getZipModifiedDates } from "../data/zip"
 import { sendMain } from "../IPC/main"
 import { createFolder, deleteFile, deleteFolderAsync, doesPathExistAsync, getDataFolderPath, getFileStatsAsync, getTimePointString, loadShows, moveFileAsync, readFileAsync, readFolderAsync, writeFileAsync } from "../utils/files"
@@ -256,7 +256,14 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
                 const localPath = localStore.path
                 // replace local file if cloud is newer or new device
                 if (data.method === "replace" || isNewDevice || (await isCloudNewerThanFile(localPath, modifiedDates[file.name]))) {
-                    await moveFileAsync(cloudPath, localPath)
+                    // try to set store directly first, otherwise move the file
+                    const cloudContent = await readFileAsync(cloudPath)
+                    if (isValidJSON(cloudContent)) {
+                        const parsedData = JSON.parse(cloudContent)
+                        await safeStoreSet(localStore, parsedData, id)
+                    } else {
+                        await moveFileAsync(cloudPath, localPath)
+                    }
 
                     // send to frontend
                     const localData = localStore.store
@@ -327,7 +334,7 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
             if (hasNoChange) return
 
             // changedFiles.push(id)
-            setStore(localStore, localData)
+            await safeStoreSet(localStore, localData, id)
             sendMain(Main[id], localData) // send to frontend
         })
     )
@@ -349,7 +356,7 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
             if (!syncCache.cloudMergeGuard) syncCache.cloudMergeGuard = {}
             const guardKey = getMergeGuardKey(data)
             syncCache.cloudMergeGuard[guardKey] = guardCloudModifiedAt
-            setStore(_store.CACHE_SYNC, syncCache)
+            if (_store.CACHE_SYNC) await safeStoreSet(_store.CACHE_SYNC, syncCache, "CACHE_SYNC")
         }
 
         return await finish()
