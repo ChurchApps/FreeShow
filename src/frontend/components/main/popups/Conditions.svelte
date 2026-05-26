@@ -26,11 +26,12 @@
     let ref = getLayoutRef(showId)
     let slideId = ref[edit.slide || 0]?.id || ""
 
-    const isStage = !!obj.contextElem?.classList.contains("stage_item")
+    const stageElem = obj.contextElem?.classList.contains("stage_item") ? obj.contextElem : obj.contextElem?.closest(".stage_item")
+    const isStage = !!stageElem
     const isOverlay = edit.type === "overlay"
     const isTemplate = edit.type === "template"
 
-    let itemIndex = isStage ? $activeStage.items[0] : Number(edit.items[0] || 0)
+    let itemIndex = isStage ? (stageElem.id || $activeStage.items[0]) : Number(edit.items[0] || 0)
     let slide = isStage ? $stageShows[$activeStage.id || ""] : isOverlay ? $overlays[edit.id!] : isTemplate ? $templates[edit.id!] : $showsCache[showId]?.slides?.[slideId]
     let item = slide?.items[itemIndex]
     let itemText = getItemText(item)
@@ -95,7 +96,7 @@
     }
 
     function updateItem() {
-        if (obj.contextElem?.classList.contains("stage_item")) {
+        if (isStage) {
             const stageId = $activeStage.id || ""
             stageShows.update((a) => {
                 if (!a[stageId]?.items[itemIndex]) return a
@@ -106,7 +107,7 @@
             return
         }
 
-        if (!obj.contextElem?.classList.contains("editItem")) return
+        if (!obj.contextElem?.classList.contains("editItem") && !obj.contextElem?.closest(".editItem")) return
         if (itemIndex === undefined) return
 
         if (isOverlay) {
