@@ -1,21 +1,21 @@
 /* custom CMG Sans */
 @font-face {
     font-family: "CMGSans";
-    src: url("./fonts/CMGSans-Medium.ttf");
+    src: url("./fonts/CMGSans-Medium.woff2") format("woff2");
 }
 @font-face {
     font-family: "CMGSans";
-    src: url("./fonts/CMGSans-Bold.ttf");
+    src: url("./fonts/CMGSans-Bold.woff2") format("woff2");
     font-weight: bold;
 }
 @font-face {
     font-family: "CMGSans";
-    src: url("./fonts/CMGSans-MediumItalic.ttf");
+    src: url("./fonts/CMGSans-MediumItalic.woff2") format("woff2");
     font-style: italic;
 }
 @font-face {
     font-family: "CMGSans";
-    src: url("./fonts/CMGSans-BoldItalic.ttf");
+    src: url("./fonts/CMGSans-BoldItalic.woff2") format("woff2");
     font-weight: bold;
     font-style: italic;
 }
