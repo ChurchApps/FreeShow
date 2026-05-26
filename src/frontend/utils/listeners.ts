@@ -59,6 +59,7 @@ import {
     triggers,
     variables,
     variableTags,
+    timerTags,
     volume
 } from "../stores"
 import { hasNewerUpdate } from "./common"
@@ -328,6 +329,10 @@ export function storeSubscriber() {
     variableTags.subscribe((data) => {
         // REMOTE
         send(REMOTE, ["VARIABLE_TAGS"], data)
+    })
+    timerTags.subscribe((data) => {
+        // REMOTE
+        send(REMOTE, ["TIMER_TAGS"], data)
     })
 
     special.subscribe((data) => {

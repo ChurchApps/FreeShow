@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
-    import { dictionary, actions, actionTags, activeActionTagFilter, variables, activeVariableTagFilter, timers, triggers, activeTimers, runningActions, functionsSubTab } from "../../../../../util/stores"
+    import { dictionary, actions, actionTags, activeActionTagFilter, variables, activeVariableTagFilter, timerTags, activeTimerTagFilter, timers, triggers, activeTimers, runningActions, functionsSubTab } from "../../../../../util/stores"
     import { translate, keysToID, sortByName, formatTime } from "../../../../../util/helpers"
     import { send } from "../../../../../util/socket"
     import Button from "../../../../../../common/components/Button.svelte"
@@ -18,6 +18,7 @@
     // Timers
     const typeOrder: { [key: string]: number } = { counter: 1, clock: 2, event: 3 }
     $: sortedTimers = sortByName(keysToID($timers), "name", true).sort((a, b) => (typeOrder[a.type] || 4) - (typeOrder[b.type] || 4))
+    $: filteredTimersTags = sortedTimers.filter((a) => !$activeTimerTagFilter.length || (a.tags?.length && !$activeTimerTagFilter.find((tagId) => !a.tags?.includes(tagId))))
 
     // Force re-render every second to update timer displays
     let tick = 0
@@ -154,9 +155,9 @@
         {/if}
     {:else if $functionsSubTab === "timer"}
         <!-- Timers Content -->
-        {#if sortedTimers.length}
+        {#if filteredTimersTags.length}
             <div class="timers">
-                {#each sortedTimers as timer}
+                {#each filteredTimersTags as timer}
                     {@const isPlaying = timer.type !== "counter" || $activeTimers.find((a) => a.id === timer.id && a.paused !== true)}
                     {@const currentValue = getCurrentTimerValue(timer, tick)}
                     {@const timeRemaining = getTimeRemaining(timer, currentValue)}
@@ -173,6 +174,19 @@
                             <span class="time">
                                 {formatTime(totalDuration)}
                             </span>
+
+                            {#if $activeTimerTagFilter.length && timer.tags?.length}
+                                <span class="tags">
+                                    {#each timer.tags as tagId}
+                                        {@const tag = $timerTags[tagId] || {}}
+                                        {#if !$activeTimerTagFilter.includes(tagId)}
+                                            <span class="tag" style="--color: {tag.color || 'white'};">
+                                                {tag.name}
+                                            </span>
+                                        {/if}
+                                    {/each}
+                                </span>
+                            {/if}
                         </div>
 
                         {#if timer.type === "counter"}

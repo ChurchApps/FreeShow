@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activeActionTagFilter, activeDrawerTab, activeEdit, activeVariableTagFilter, dictionary, drawerTabsData, labelsDisabled } from "../../../stores"
+    import { activeActionTagFilter, activeDrawerTab, activeEdit, activeVariableTagFilter, activeTimerTagFilter, dictionary, drawerTabsData, labelsDisabled } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import MaterialDrawerTab from "../MaterialDrawerTab.svelte"
 
@@ -29,6 +29,7 @@
         // tag submenus will close on keyboard navigation
         activeActionTagFilter.set([])
         activeVariableTagFilter.set([])
+        activeTimerTagFilter.set([])
     }
 
     function notATab(tab: any) {

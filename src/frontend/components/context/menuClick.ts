@@ -76,7 +76,9 @@ import {
     textEditActive,
     themes,
     toggleOutputEnabled,
-    variables
+    variables,
+    timers,
+    activeTimerTagFilter
 } from "../../stores"
 import { hideDisplay, isOutputWindow, newToast, triggerFunction, wait } from "../../utils/common"
 import { setExampleEffects, setExampleOverlays, setExampleTemplates } from "../../utils/createData"
@@ -576,6 +578,34 @@ const clickActions = {
     },
     variable_tag_filter: (obj: ObjData) => {
         toggleTagFilter(activeVariableTagFilter, getMenuTagId(obj.menu))
+    },
+    manage_timer_tags: () => {
+        openTagManager("timer")
+    },
+    timer_tag_set: (obj: ObjData) => {
+        const tagId = getMenuTagId(obj.menu)
+        if (tagId === "create") {
+            clickActions.manage_timer_tags()
+            return
+        }
+
+        const disable = get(timers)[get(selected).data[0]?.id]?.tags?.includes(tagId)
+
+        toggleSelectionTags({
+            data: obj.sel?.data,
+            tagId,
+            disable: !!disable,
+            getTags: ({ id }) => get(timers)[id]?.tags,
+            applyTags: ({ id }, tags) => {
+                timers.update((a) => {
+                    if (a[id]) a[id].tags = tags
+                    return a
+                })
+            }
+        })
+    },
+    timer_tag_filter: (obj: ObjData) => {
+        toggleTagFilter(activeTimerTagFilter, getMenuTagId(obj.menu))
     },
     action_history: () => {
         activePopup.set("action_history")

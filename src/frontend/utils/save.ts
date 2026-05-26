@@ -103,6 +103,7 @@ import {
     undoHistory,
     usageLog,
     variableTags,
+    timerTags,
     variables,
     videoMarkers,
     volume
@@ -252,6 +253,7 @@ export function getSyncedSettings(): { [key in SaveListSyncedSettings]: any } {
         playerTags,
         actionTags,
         variableTags,
+        timerTags,
         customizedIcons,
         companion,
         globalTags,
@@ -455,6 +457,7 @@ const saveList: { [key in SaveList]: any } = {
     playerTags,
     actionTags,
     variableTags,
+    timerTags,
     customizedIcons,
     driveKeys,
     cloudSyncData,

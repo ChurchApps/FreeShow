@@ -201,6 +201,8 @@ export interface Timer {
     overflowColor?: string
     overflowFlash?: boolean
 
+    tags?: string[]
+
     // format?: string
     // paused?: boolean
 }

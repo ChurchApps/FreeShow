@@ -158,6 +158,7 @@ export const defaultSyncedSettings: { [key in SaveListSyncedSettings]: any } = {
     playerTags: {},
     actionTags: {},
     variableTags: {},
+    timerTags: {},
     customizedIcons: { disabled: [], svg: [] },
     companion: {},
     globalTags: {},

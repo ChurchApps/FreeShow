@@ -103,6 +103,7 @@ export const activeMediaTagFilter: Writable<string[]> = writable([])
 export const activePlayerTagFilter: Writable<string[]> = writable([])
 export const activeActionTagFilter: Writable<string[]> = writable([])
 export const activeVariableTagFilter: Writable<string[]> = writable([])
+export const activeTimerTagFilter: Writable<string[]> = writable([])
 
 // CALENDAR
 export const activeDays: Writable<number[]> = writable([])
@@ -326,6 +327,7 @@ export const mediaTags: Writable<{ [key: string]: Tag }> = writable({}) // {}
 export const playerTags: Writable<{ [key: string]: Tag }> = writable({}) // {}
 export const actionTags: Writable<{ [key: string]: Tag }> = writable({}) // {}
 export const variableTags: Writable<{ [key: string]: Tag }> = writable({}) // {}
+export const timerTags: Writable<{ [key: string]: Tag }> = writable({}) // {}
 
 // OTHER
 export const resized: Writable<NumberObject> = writable({ leftPanel: 290, rightPanel: 290, leftPanelDrawer: 290, rightPanelDrawer: 290 }) // {default}
