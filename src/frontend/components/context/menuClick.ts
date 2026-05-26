@@ -172,38 +172,38 @@ const clickActions = {
     history: () => activePopup.set("history"),
     cut: () => cut(),
     copy: () => copy(),
-    text_copy: () => copy(),
+    text_copy: (obj: ObjData) => {
+        const editElem = obj.contextElem?.closest(".edit") as HTMLElement | null
+        if (!editElem) return
+
+        focusAndRestoreSelection(editElem)
+        document.execCommand("copy")
+    },
     text_cut: (obj: ObjData) => {
         const editElem = obj.contextElem?.closest(".edit") as HTMLElement | null
-        if (!editElem || !savedTextRange) return
-        const text = savedTextRange.toString()
-        if (!text) return
-        navigator.clipboard.writeText(text).then(() => {
-            editElem.focus()
-            const sel = window.getSelection()
-            if (sel) {
-                sel.removeAllRanges()
-                sel.addRange(savedTextRange!)
-                document.execCommand("delete")
-            }
-        })
+        if (!editElem) return
+
+        focusAndRestoreSelection(editElem)
+        document.execCommand("cut")
+        if (editElem instanceof HTMLTextAreaElement) {
+            editElem.dispatchEvent(new Event("input", { bubbles: true }))
+            editElem.dispatchEvent(new Event("change", { bubbles: true }))
+        }
     },
     text_paste: (obj: ObjData) => {
         const editElem = obj.contextElem?.closest(".edit") as HTMLElement | null
         if (!editElem) return
+
         navigator.clipboard
             .readText()
             .then((text) => {
                 if (!text) return
-                editElem.focus()
-                if (savedTextRange) {
-                    const sel = window.getSelection()
-                    if (sel) {
-                        sel.removeAllRanges()
-                        sel.addRange(savedTextRange)
-                    }
-                }
+                focusAndRestoreSelection(editElem)
                 document.execCommand("insertText", false, text)
+                if (editElem instanceof HTMLTextAreaElement) {
+                    editElem.dispatchEvent(new Event("input", { bubbles: true }))
+                    editElem.dispatchEvent(new Event("change", { bubbles: true }))
+                }
             })
             .catch(() => {})
     },
@@ -1677,7 +1677,13 @@ const clickActions = {
     text_select_all: (obj: ObjData) => {
         const editElem = obj.contextElem?.closest(".edit") as HTMLElement | null
         if (!editElem) return
+
         editElem.focus()
+        if (editElem instanceof HTMLTextAreaElement) {
+            editElem.select()
+            return
+        }
+
         const range = document.createRange()
         range.selectNodeContents(editElem)
         const selection = window.getSelection()
@@ -1896,6 +1902,17 @@ export function saveTextSelectionRange() {
         savedTextRange = sel.getRangeAt(0).cloneRange()
     } else {
         savedTextRange = null
+    }
+}
+
+function focusAndRestoreSelection(editElem: HTMLElement) {
+    editElem.focus()
+    if (!(editElem instanceof HTMLTextAreaElement) && savedTextRange) {
+        const sel = window.getSelection()
+        if (sel) {
+            sel.removeAllRanges()
+            sel.addRange(savedTextRange)
+        }
     }
 }
 
