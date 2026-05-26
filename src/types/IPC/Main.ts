@@ -143,6 +143,7 @@ export enum Main {
     CLOUD_DATA = "CLOUD_DATA",
     CLOUD_CHANGED = "CLOUD_CHANGED",
     CLOUD_SYNC = "CLOUD_SYNC",
+    RESTORE_CLOUD_BACKUP = "RESTORE_CLOUD_BACKUP",
     GET_CONVERSATION_ID = "GET_CONVERSATION_ID",
     SEND_SOCKET_MESSAGE = "SEND_SOCKET_MESSAGE",
     // Provider-based routing
@@ -237,6 +238,7 @@ export interface MainSendPayloads {
     [Main.CLOUD_DATA]: { id: SyncProviderId; churchId: string; teamId: string }
     [Main.CLOUD_CHANGED]: { id: SyncProviderId; churchId: string; teamId: string }
     [Main.CLOUD_SYNC]: { id: SyncProviderId; churchId: string; teamId: string; method: "merge" | "read_only" | "upload" | "replace" }
+    [Main.RESTORE_CLOUD_BACKUP]: { id: SyncProviderId; churchId: string; teamId: string }
     [Main.GET_CONVERSATION_ID]: { teamId: string }
     [Main.SEND_SOCKET_MESSAGE]: { churchId: string; teamId: string; displayName: string; content: string }
     // Provider-based routing
@@ -318,6 +320,7 @@ export interface MainReturnPayloads {
     [Main.GET_LYRICS]: Promise<{ lyrics: string; source: string; title: string; artist: string }>
     [Main.SEARCH_LYRICS]: Promise<LyricSearchResult[]>
     [Main.GET_SIMILAR]: { path: string; name: string }[]
+    [Main.RESTORE_CLOUD_BACKUP]: Promise<{ success: boolean; error?: string }>
     [Main.MEDIA_FOLDER_COPY]: Promise<boolean>
     [Main.LOCATE_MEDIA_FILE]: Promise<{ path: string; hasChanged: boolean } | null>
     [Main.GET_MEDIA_FOLDER_PATH]: string

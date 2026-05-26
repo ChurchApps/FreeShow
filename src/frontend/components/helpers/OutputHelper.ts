@@ -90,17 +90,28 @@ export class OutputHelper {
 
         const item = this.getItem(outputId, next, options)
         if (!item) {
-            // don't go to next if active is video and it's currently outputted
-            const outBg = this.getOut(outputId).background
-            if ((options.isSpace && outBg?.type === "video") || (outBg?.type === "player" && outBg?.path === this.getActiveItem()?.id)) {
-                togglePlayingMedia()
-                return
-            }
-
+            if (options.isSpace && this.toggleActiveMedia(outputId)) return
             return this.changeProjectItem(outputId, this.getActiveItem(), next, options)
         }
 
         this.playItem(outputId, item, next, options)
+    }
+
+    // don't go to next if active is same as currently outputted video/audio
+    private static toggleActiveMedia(outputId: string) {
+        const outBg = this.getOut(outputId).background
+        if ((outBg?.type === "video" || outBg?.type === "player") && (outBg?.path || outBg?.id) === this.getActiveItem()?.id) {
+            togglePlayingMedia()
+            return true
+        }
+
+        const outAudio = AudioPlayer.getAllPlaying(false)
+        if (outAudio?.includes(this.getActiveItem()?.id || "")) {
+            togglePlayingMedia()
+            return true
+        }
+
+        return false
     }
 
     // this allows changing back to the previous project item with keyboard instead of advancing the slide if the active show is right before/after the outputted show
@@ -205,8 +216,8 @@ export class OutputHelper {
         // must be a show item
         if (!this.isShow(outSlide)) return activeOutShow
 
-        // Home & End keys
-        if (nextCheck === null) return outSlide
+        // auto advance | Home & End keys
+        if (options.playNext || nextCheck === null) return outSlide
 
         // outputted show if not reached end, or if active show is the same
         if (this.getSubsequent(outSlide, nextCheck) || this.outShowIsSameAsActive(outSlide, activeOutShow)) return outSlide
@@ -409,8 +420,16 @@ export class OutputHelper {
         return get(projects)[get(activeProject) || ""]?.shows || []
     }
 
+    // store active show so we can reference it in case we have multiple outputs and the first changes the active show
+    private static currentActiveShow: { time: number; show: ShowRef | null } = { time: 0, show: null }
     private static getActiveItem() {
-        return (get(focusMode) ? get(activeFocus) : get(activeShow)) as ShowRef | null
+        // use the last active if less than 50ms ago
+        if (this.currentActiveShow.time > Date.now() - 50) return this.currentActiveShow.show
+
+        const active: ShowRef | null = get(focusMode) ? get(activeFocus) : get(activeShow)
+        this.currentActiveShow = { time: Date.now(), show: active }
+
+        return active
     }
 
     private static getOut(outputId: string) {

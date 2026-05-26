@@ -65,6 +65,9 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     manage_variable_tags: { label: "popup.manage_tags", icon: "edit", iconColor: "#97c7ff" },
     variable_tag_set: { label: "context.setTag", icon: "tag", iconColor: "#979aff", items: ["LOAD_variable_tag_set"] },
     variable_tag_filter: { label: "context.filterByTags", icon: "tag", iconColor: "#979aff", items: ["LOAD_variable_tag_filter"] },
+    manage_timer_tags: { label: "popup.manage_tags", icon: "edit", iconColor: "#97c7ff" },
+    timer_tag_set: { label: "context.setTag", icon: "tag", iconColor: "#979aff", items: ["LOAD_timer_tag_set"] },
+    timer_tag_filter: { label: "context.filterByTags", icon: "tag", iconColor: "#979aff", items: ["LOAD_timer_tag_filter"] },
     reset_defaults: { label: "actions.reset_defaults", icon: "reset", iconColor: "#ff6b54" },
     action_history: { label: "popup.action_history", icon: "history", iconColor: "var(--secondary)" },
     newCategory: { label: "context.newCategory", icon: "add", iconColor: "var(--secondary)" },
@@ -304,7 +307,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     // actions
     actions: ["manage_action_tags", "action_tag_filter", "SEPARATOR", "action_history"],
     actions_readonly: ["action_tag_filter"],
-    action: ["GROUP_edit", "disable", "action_tag_set", "action_tag_filter", "SEPARATOR", "duplicate", "delete"], // GROUP_duplicate_delete
+    action: ["GROUP_edit", "disable", "action_tag_set", "action_tag_filter", "SEPARATOR", "export", "SEPARATOR", "duplicate", "delete"], // GROUP_duplicate_delete
     action_readonly: ["action_tag_filter"],
     scripture_verse: ["create_show", "SEPARATOR", "selectAll", "SEPARATOR", "route_bible"],
     scripture_chapter: ["create_show"],
@@ -338,15 +341,15 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     shows: ["newSlide", "selectAll"],
     // TIMER
     // timer: ["GROUP_edit", "play"], // , "reset"
-    global_timer: ["GROUP_edit", "play", "SEPARATOR", "duplicate", "delete"], // , "reset" // "GROUP_duplicate_delete"
-    global_timer_readonly: ["play"], // , "reset"
+    timers: ["manage_timer_tags", "timer_tag_filter"],
+    timers_readonly: ["timer_tag_filter"],
+    global_timer: ["GROUP_edit", "play", "timer_tag_set", "timer_tag_filter", "SEPARATOR", "duplicate", "delete"], // , "reset" // "GROUP_duplicate_delete"
+    global_timer_readonly: ["play", "timer_tag_filter"], // , "reset"
     // VARIABLE
     variables: ["manage_variable_tags", "variable_tag_filter"],
     variables_readonly: ["variable_tag_filter"],
     variable: ["GROUP_edit", "variable_tag_set", "variable_tag_filter", "SEPARATOR", "duplicate", "delete"], // "GROUP_duplicate_delete"
     variable_readonly: ["variable_tag_filter"],
-    // TRIGGER
-    trigger: ["GROUP_edit", "delete"],
     // AUDIO STREAM
     audio_stream: ["GROUP_edit", "delete"],
 

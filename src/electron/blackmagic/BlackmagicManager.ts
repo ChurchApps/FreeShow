@@ -1,20 +1,14 @@
-// Dynamically require macadam to handle missing dependency gracefully
-let macadam: any = null
-try {
-    macadam = require("macadam")
-} catch (err) {
-    console.warn("Blackmagic macadam module not available:", err instanceof Error ? err.message : String(err))
-}
-
-import { bmdDisplayModes, bmdPixelFormats } from "./bmdFormats"
-import type { DeviceConfig, DeviceData } from "./TypeData"
 import { BlackmagicSender } from "./BlackmagicSender"
+import { getBmdDisplayModes, getBmdPixelFormats } from "./bmdFormats"
+import { getMacadam } from "./macadamLoader"
+import type { DeviceConfig, DeviceData } from "./TypeData"
 
-function safeMacadamCall<T>(fallback: T, fn: () => T): T {
-    if (!macadam) return fallback
+function safeMacadamCall<T>(fallback: T, fn: (m: NonNullable<ReturnType<typeof getMacadam>>) => T): T {
+    const m = getMacadam()
+    if (!m) return fallback
 
     try {
-        return fn()
+        return fn(m)
     } catch (err) {
         console.warn(`Blackmagic error: ${err instanceof Error ? err.message : String(err)}`)
         return fallback
@@ -26,12 +20,12 @@ function safeMacadamCall<T>(fallback: T, fn: () => T): T {
  */
 export class BlackmagicManager {
     static getFirstDeviceName(): string | undefined {
-        return safeMacadamCall(undefined, () => macadam.getFirstDevice())
+        return safeMacadamCall(undefined, (m) => m.getFirstDevice())
     }
 
     static getDevices(): DeviceData[] {
-        return safeMacadamCall([], () => {
-            let deviceInfo: any = macadam.getDeviceInfo()
+        return safeMacadamCall([], (m) => {
+            let deviceInfo: any = m.getDeviceInfo()
             if (typeof deviceInfo === "object") deviceInfo = Object.values(deviceInfo)
             return deviceInfo
         })
@@ -49,8 +43,8 @@ export class BlackmagicManager {
         const deviceIndex = this.getIndexById(deviceHandle)
         if (deviceIndex < 0) return undefined
 
-        return safeMacadamCall(undefined, () => {
-            const config: DeviceConfig = macadam.getDeviceConfig(deviceIndex)
+        return safeMacadamCall(undefined, (m) => {
+            const config: DeviceConfig = m.getDeviceConfig(deviceIndex)
             return config
         })
     }
@@ -59,15 +53,15 @@ export class BlackmagicManager {
         const deviceIndex = this.getIndexById(deviceHandle)
         if (deviceIndex < 0) return false
 
-        return safeMacadamCall(false, () => {
-            macadam.setDeviceConfig({ ...newData, deviceIndex })
+        return safeMacadamCall(false, (m) => {
+            m.setDeviceConfig({ ...newData, deviceIndex })
             return true
         })
     }
 
     static getDisplayMode(displayModeName: string) {
         // First try direct lookup
-        let mode = bmdDisplayModes.get(displayModeName)
+        let mode = getBmdDisplayModes().get(displayModeName)
         if (mode !== undefined) return mode
 
         // Try normalizing the display mode name
@@ -78,12 +72,12 @@ export class BlackmagicManager {
             .replace(/p$/i, "") // Remove trailing 'p'
             .replace(/i$/i, "") // Remove trailing 'i'
 
-        mode = bmdDisplayModes.get(normalized)
+        mode = getBmdDisplayModes().get(normalized)
         if (mode !== undefined) return mode
 
         // Try with different case variations
         const lowerNormalized = normalized.toLowerCase()
-        for (const [key, value] of bmdDisplayModes) {
+        for (const [key, value] of getBmdDisplayModes()) {
             if (key.toLowerCase() === lowerNormalized) {
                 return value
             }
@@ -94,10 +88,10 @@ export class BlackmagicManager {
 
     static getPixelFormat(pixelFormat: string) {
         // Compatibility mapping for 12-bit RGB
-        if ((pixelFormat === "12-bit RGB" || pixelFormat === "12BitRGB") && bmdPixelFormats.has("12-bit RGBLE")) {
-            return bmdPixelFormats.get("12-bit RGBLE")
+        if ((pixelFormat === "12-bit RGB" || pixelFormat === "12BitRGB") && getBmdPixelFormats().has("12-bit RGBLE")) {
+            return getBmdPixelFormats().get("12-bit RGBLE")
         }
-        return bmdPixelFormats.get(pixelFormat)
+        return getBmdPixelFormats().get(pixelFormat)
     }
 
     /**

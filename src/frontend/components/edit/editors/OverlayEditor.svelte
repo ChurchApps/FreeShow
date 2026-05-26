@@ -3,7 +3,9 @@
     import { OUTPUT } from "../../../../types/Channels"
     import type { ItemType } from "../../../../types/Show"
     import { activeEdit, outputs, overlays, styles } from "../../../stores"
+    import { translateText } from "../../../utils/language"
     import { send } from "../../../utils/request"
+    import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
@@ -15,12 +17,11 @@
     import Zoomed from "../../slide/Zoomed.svelte"
     import { getStyleResolution } from "../../slide/getStyleResolution"
     import Center from "../../system/Center.svelte"
+    import DropArea from "../../system/DropArea.svelte"
     import Snaplines from "../../system/Snaplines.svelte"
     import Editbox from "../editbox/Editbox.svelte"
-    import Icon from "../../helpers/Icon.svelte"
     import { addItem } from "../scripts/itemHelpers"
-    import { translateText } from "../../../utils/language"
-    import DropArea from "../../system/DropArea.svelte"
+    import { centerZoom } from "../scripts/zoom"
 
     const update = () => (Slide = clone($overlays[currentId]))
     $: currentId = $activeEdit.id!
@@ -70,23 +71,12 @@
     // ZOOM
     let scrollElem: HTMLDivElement | undefined
     let zoom = 1
+    let zoomOrigin: { x: number; y: number } | null = null
     function updateZoom(e: any) {
         zoom = e.detail
-        centerZoom()
-    }
-
-    function centerZoom() {
-        if (zoom >= 1) return
-        // allow elem to update after zooming
-
-        setTimeout(() => {
-            if (!scrollElem) return
-
-            const centerX = (scrollElem.scrollWidth - scrollElem.clientWidth) / 2
-            const centerY = (scrollElem.scrollHeight - scrollElem.clientHeight) / 2
-
-            scrollElem.scrollTo({ left: centerX, top: centerY })
-        })
+        const origin = zoomOrigin
+        zoomOrigin = null
+        centerZoom(zoom, origin, scrollElem, ".droparea")
     }
 
     const shortcutItems: { id: ItemType; icon?: string }[] = [{ id: "text" }, { id: "media", icon: "image" }, { id: "timer" }]
@@ -130,7 +120,7 @@
     {/if}
 
     <FloatingInputs>
-        <MaterialZoom columns={zoom} min={0.2} max={4} defaultValue={1} addValue={0.1} on:change={updateZoom} />
+        <MaterialZoom columns={zoom} min={0.2} max={4} defaultValue={1} addValue={0.1} on:change={updateZoom} on:origin={(e) => (zoomOrigin = e.detail)} />
     </FloatingInputs>
 </div>
 

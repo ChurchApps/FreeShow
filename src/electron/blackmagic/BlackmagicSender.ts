@@ -1,19 +1,12 @@
-import type { PlaybackChannel } from "macadam"
 import type { Size } from "electron"
+import type { PlaybackChannel } from "macadam"
 import os from "os"
 import util from "../ndi/vingester-util"
 import { wait } from "../utils/helpers"
 import { BlackmagicManager } from "./BlackmagicManager"
 import { BufferManager } from "./BufferManager"
 import { ImageBufferConverter, ImageBufferConverter10Bit, ImageBufferConverter10BitRGB, ImageBufferConverter12BitRGB } from "./ImageBufferConverter"
-
-// Dynamically require macadam to handle missing dependency gracefully
-let macadam: any = null
-try {
-    macadam = require("macadam")
-} catch (err) {
-    console.warn("Blackmagic macadam module not available:", err instanceof Error ? err.message : String(err))
-}
+import { getMacadam } from "./macadamLoader"
 
 const SEGFAULT_PRONE_DEVICES: Set<string> = new Set()
 
@@ -147,7 +140,7 @@ export class BlackmagicSender {
     }
 
     static async _performInitializeDevice(outputId: string, deviceIndex: number, displayModeName: string, pixelFormat: string, enableKeying: boolean, audioChannels = 2) {
-        // Check if macadam is available
+        const macadam = getMacadam()
         if (!macadam) {
             console.error("Cannot initialize Blackmagic device: macadam module not available")
             return false
@@ -209,12 +202,6 @@ export class BlackmagicSender {
                             return reject(new Error(`Invalid pixel format: ${pixelFormat}`))
                         }
 
-                        // Initialize macadam playback
-                        if (!macadam) {
-                            clearTimeout(timeoutId)
-                            return reject(new Error("macadam module not available"))
-                        }
-
                         // Serialize macadam.playback() calls globally to prevent
                         // simultaneous inits on the same physical card from crashing the native SDK.
                         let mutexRelease: () => void
@@ -224,17 +211,34 @@ export class BlackmagicSender {
                         })
 
                         prevMutex
-                            .then(() =>
-                                macadam.playback({
-                                    deviceIndex,
-                                    displayMode,
-                                    pixelFormat: pixelFormatValue,
-                                    enableKeying: enableKeying ? BlackmagicManager.isAlphaSupported(pixelFormat) : false,
-                                    channels: actualAudioChannels,
-                                    sampleRate: macadam.bmdAudioSampleRate48kHz,
-                                    sampleType: macadam.bmdAudioSampleType16bitInteger
-                                })
-                            )
+                            .then(() => {
+                                // Pause active senders while the DeckLink SDK initializes a new device.
+                                // Active frame scheduling on other ports of the same physical card can crash the native SDK.
+                                const pausedOthers = Object.keys(BlackmagicSender.playbackData).filter((id) => id !== outputId && !BlackmagicSender.isPaused[id])
+                                for (const otherId of pausedOthers) BlackmagicSender.isPaused[otherId] = true
+
+                                return macadam
+                                    .playback({
+                                        deviceIndex,
+                                        displayMode,
+                                        pixelFormat: pixelFormatValue,
+                                        enableKeying: enableKeying ? BlackmagicManager.isAlphaSupported(pixelFormat) : false,
+                                        isExternal: (() => {
+                                            if (!enableKeying) return false;
+                                            const devices = BlackmagicManager.getDevices();
+                                            const device = devices[deviceIndex];
+                                            return device?.supportsExternalKeying ?? true;
+                                        })(),
+                                        channels: actualAudioChannels,
+                                        sampleRate: macadam.bmdAudioSampleRate48kHz,
+                                        sampleType: macadam.bmdAudioSampleType16bitInteger
+                                    })
+                                    .finally(() => {
+                                        for (const otherId of pausedOthers) {
+                                            if (BlackmagicSender.playbackData[otherId]) BlackmagicSender.isPaused[otherId] = false
+                                        }
+                                    })
+                            })
                             .then((result: any) => {
                                 mutexRelease()
                                 clearTimeout(timeoutId)
@@ -769,7 +773,7 @@ export class BlackmagicSender {
                     // Ignore errors during stop
                 }
             } catch (err) {
-                console.error(`Error cleaning up old playback: ${err.message}`)
+                console.error(`Error cleaning up old playback: ${(err as Error).message}`)
             }
         }
 
@@ -790,7 +794,7 @@ export class BlackmagicSender {
                 console.error(`Failed to reinitialize playback for ${outputId}`)
             }
         } catch (err) {
-            console.error(`Error during reinitialization: ${err.message}`)
+            console.error(`Error during reinitialization: ${(err as Error).message}`)
 
             setTimeout(() => {
                 this.initializeDevice(outputId, deviceIndex, displayMode, pixelFormat, enableKeying, audioChannels).then((success) => {

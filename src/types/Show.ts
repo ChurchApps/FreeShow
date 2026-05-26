@@ -16,7 +16,7 @@ export interface Show {
     category: null | ID
     quickAccess?: any
     reference?: {
-        type: "calendar" | "scripture" | "lessons"
+        type: "calendar" | "scripture" | "lessons" | "canva"
         data: any
     }
     settings: {
@@ -201,6 +201,8 @@ export interface Timer {
     overflowColor?: string
     overflowFlash?: boolean
 
+    tags?: string[]
+
     // format?: string
     // paused?: boolean
 }
@@ -376,6 +378,7 @@ export interface SlideData {
     }
     // actions?: {} // to begininng / index, clear (all), start timer, start audio/music ++
     bindings?: string[] // bind slide to an output
+    breakDuration?: number // seconds spent on "break" slide (used for countdown display)
 }
 
 export interface SlideAction {
@@ -431,6 +434,7 @@ export interface Media {
 
 export interface Action {
     name: string
+    customIcon?: string // file path
     triggers: string[]
     actionValues?: any
     tags?: string[]

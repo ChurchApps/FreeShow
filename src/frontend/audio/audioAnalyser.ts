@@ -5,15 +5,15 @@ import { audioEffects, disabledServers, media, outputs, playingAudio, playingVid
 import { isOutputWindow } from "../utils/common"
 import { send } from "../utils/request"
 import { AudioAnalyserMerger } from "./audioAnalyserMerger"
+import { AudioMultichannel, MultichannelInfo } from "./audioMultichannel"
+import { AudioPlayer } from "./audioPlayer"
+import { AudioProcessor, PitchShiftNode } from "./audioProcessor"
 import { initializeCompressor } from "./effects/audioCompressor"
 import { initializeDelay } from "./effects/audioDelay"
 import { connectAudioSourceToEqualizer, disconnectAudioSourceFromEqualizer, getConnectedSourceOutput, initializeEqualizer, setAutoInitializeCallback } from "./effects/audioEqualizer"
 import { initializeFilter } from "./effects/audioFilter"
 import { initializeLimiter } from "./effects/audioLimiter"
-import { AudioMultichannel, MultichannelInfo } from "./audioMultichannel"
 import { initializeNoiseGate } from "./effects/audioNoiseGate"
-import { AudioPlayer } from "./audioPlayer"
-import { AudioProcessor, PitchShiftNode } from "./audioProcessor"
 import { initializeReverb } from "./effects/audioReverb"
 import { initializeStereoShaper } from "./effects/audioStereoShaper"
 
@@ -33,7 +33,7 @@ export class AudioAnalyser {
     // Expose the AudioContext for other audio systems to use the same context
     static getAudioContext(): AudioContext {
         if (this.ac.state === "suspended") {
-            this.ac.resume().catch(() => {});
+            this.ac.resume().catch(() => {})
         }
         return this.ac
     }
@@ -51,7 +51,7 @@ export class AudioAnalyser {
         if (this.sources[id]) return
 
         if (this.ac.state === "suspended") {
-            this.ac.resume().catch(() => {});
+            this.ac.resume().catch(() => {})
         }
 
         let source: AudioNode
@@ -402,7 +402,9 @@ export class AudioAnalyser {
                 const arrayBuffer = await ev.data.arrayBuffer()
                 const uint8Array = new Uint8Array(arrayBuffer)
                 // , audioDelay: 0, channels: this.channels, frameRate: this.recorderFrameRate
-                send(AUDIO, ["CAPTURE"], { id, buffer: uint8Array })
+                const icecast = { enabled: !!get(special).icecastEnabled, host: get(special).icecastHost, port: get(special).icecastPort, mount: get(special).icecastMount, password: get(special).icecastPassword }
+
+                send(AUDIO, ["CAPTURE"], { id, buffer: uint8Array, icecast })
             })
 
             if (this.recorder.state === "paused") this.recorder.play()
@@ -410,7 +412,7 @@ export class AudioAnalyser {
                 this.recorder.start(Math.round(1000 / this.recorderFrameRate))
             }
         } catch (err) {
-            console.error(`[AudioAnalyser] Failed to start MediaRecorder:`, err);
+            console.error(`[AudioAnalyser] Failed to start MediaRecorder:`, err)
         }
     }
 
@@ -419,7 +421,7 @@ export class AudioAnalyser {
         if (!this.shouldBeActive()) return
 
         if (this.ac.state === "suspended") {
-            this.ac.resume().catch(() => {});
+            this.ac.resume().catch(() => {})
         }
 
         this.recorderActive = true
@@ -445,6 +447,9 @@ export class AudioAnalyser {
 
         // any outputs with blackmagic enabled (audio always enabled for blackmagic)
         if (outputList.find((a) => a && a.enabled && a.blackmagic)) return true
+
+        // Icecast streaming enabled
+        if (get(special).icecastEnabled) return true
 
         return false
     }

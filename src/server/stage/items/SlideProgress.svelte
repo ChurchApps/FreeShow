@@ -105,8 +105,14 @@
     }
 
     .projectGroups {
-        display: block;
+        width: 100%;
+        height: 100%;
+
+        flex-direction: column;
+        flex-wrap: nowrap;
+        gap: 0;
         white-space: pre-wrap;
+        text-align: var(--text-align);
     }
 
     .projectItem {

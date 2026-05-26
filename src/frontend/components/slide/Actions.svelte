@@ -14,7 +14,7 @@
     import { getLayoutRef } from "../helpers/show"
     import Button from "../inputs/Button.svelte"
 
-    export let slide: Slide
+    export let slide: Slide | null = null
     export let columns: number
     export let index = -1
     export let templateId = ""

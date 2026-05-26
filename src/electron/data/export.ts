@@ -20,7 +20,8 @@ import { compressToZip } from "./zip"
 // SHOW: .show, PROJECT: .project, BIBLE: .fsb
 const customJSONExtensions = {
     TEMPLATE: ".fstemplate",
-    THEME: ".fstheme"
+    THEME: ".fstheme",
+    ACTION: ".fsaction"
 }
 
 export function startExport(_e: Electron.IpcMainEvent, msg: Message) {

@@ -36,6 +36,7 @@
     import { getUsedChords } from "../scripts/chords"
     import { addItem } from "../scripts/itemHelpers"
     import { getSlideText, setCaretAtEnd } from "../scripts/textStyle"
+    import { centerZoom } from "../scripts/zoom"
 
     $: currentShowId = $activeShow?.id || $activeEdit.showId || ""
     $: currentShow = $showsCache[currentShowId]
@@ -206,25 +207,12 @@
     // ZOOM
     let scrollElem: HTMLDivElement | undefined
     let zoom = 1
+    let zoomOrigin: { x: number; y: number } | null = null
     function updateZoom(e: any) {
         zoom = e.detail
-        centerZoom()
-    }
-
-    function centerZoom() {
-        // always center scroll when zooming
-        if (zoom >= 1) return
-
-        // allow elem to update after zooming
-        setTimeout(() => {
-            const elem = scrollElem?.querySelector(".droparea")
-            if (!elem) return
-
-            const centerX = (elem.scrollWidth - elem.clientWidth) / 2
-            const centerY = (elem.scrollHeight - elem.clientHeight) / 2
-
-            elem.scrollTo({ left: centerX, top: centerY })
-        })
+        const origin = zoomOrigin
+        zoomOrigin = null
+        centerZoom(zoom, origin, scrollElem, ".droparea")
     }
 
     // CHORDS
@@ -434,7 +422,7 @@
         {/if}
 
         <FloatingInputs bottom={notesVisible ? bottomHeight : 10} arrow let:open>
-            <MaterialZoom hidden={!open} columns={zoom} min={0.2} max={4} defaultValue={1} addValue={0.1} on:change={updateZoom} />
+            <MaterialZoom hidden={!open} columns={zoom} min={0.2} max={4} defaultValue={1} addValue={0.1} on:change={updateZoom} on:origin={(e) => (zoomOrigin = e.detail)} />
 
             {#if open}
                 <div class="divider"></div>
@@ -504,7 +492,7 @@
     {/if}
 
     {#if $special.slideTimelineActive}
-        <MaterialZoom hidden columns={zoom} min={0.2} max={4} defaultValue={1} addValue={0.1} on:change={updateZoom} />
+        <MaterialZoom hidden columns={zoom} min={0.2} max={4} defaultValue={1} addValue={0.1} on:change={updateZoom} on:origin={(e) => (zoomOrigin = e.detail)} />
 
         <Resizeable id="slide_timeline" side="bottom" maxWidth={DEFAULT_WIDTH} minWidth={40}>
             {#key currentShowId + "-" + $activeEdit.slide}

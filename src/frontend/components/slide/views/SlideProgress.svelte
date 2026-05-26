@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { LayoutRef, Show, ShowGroups, Slide } from "../../../../types/Show"
     import type { ProjectProgressItem } from "../../helpers/projectProgress"
-    import { activeProject, activeShow, allOutputs, groups, outputs, projects, showsCache } from "../../../stores"
+    import { activeProject, activeShow, allOutputs, groups, outputs, projects, shows, showsCache } from "../../../stores"
     import { getCurrentProjectIndexes, getProjectItemLabel, getProjectItems } from "../../helpers/projectProgress"
     import { translateText } from "../../../utils/language"
     import { getFirstActiveOutput } from "../../helpers/output"
@@ -63,7 +63,7 @@
     $: currentGroups = $groups
     $: progressData = getProgress(currentShowId, currentShow, currentLayoutRef, currentShowSlides, currentGroups, tracker)
     $: layoutGroups = progressData.layoutGroups
-    $: projectItems = getProjectItems($projects[$activeProject || ""]?.shows || [], $showsCache)
+    $: projectItems = getProjectItems($projects[$activeProject || ""]?.shows || [], $shows)
     $: currentProjectIndexes = getCurrentProjectIndexes($projects[$activeProject || ""]?.shows || [], currentOutput?.out || {}, typeof $activeShow?.index === "number" ? $activeShow.index : -1)
     $: slidesLength = progressData.slidesLength
 
@@ -192,7 +192,7 @@
         </div>
     {:else if type === "project"}
         <!-- project sequence -->
-        <div class="align groups projectGroups autoFontSize" style="{autoSize ? 'font-size: ' + autoSize + 'px;' : ''}{item?.alignX ? '' : (item?.align || 'justify-content: center;').replaceAll('text-align', 'justify-content')}">
+        <div class="align groups projectGroups autoFontSize" style={autoSize ? "font-size: " + autoSize + "px;" : ""}>
             {#each projectItems as projectItem}
                 {@const label = getProjectItemLabel(projectItem, projectMetadata)}
                 <div class="group projectItem" class:active={currentProjectIndexes.includes(projectItem.index)}>
@@ -252,9 +252,16 @@
         color: var(--accent);
     }
 
+    .projectGroups.align {
+        align-items: var(--text-align);
+        justify-content: center;
+    }
     .projectGroups {
-        display: block;
+        flex-direction: column;
+        flex-wrap: nowrap;
+        gap: 0;
         white-space: pre-wrap;
+        text-align: var(--text-align);
     }
 
     .projectItem {

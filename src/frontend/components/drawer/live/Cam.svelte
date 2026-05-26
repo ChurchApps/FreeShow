@@ -24,13 +24,21 @@
     let error: null | string = null
     let retryTimeout: NodeJS.Timeout | null = null
 
+    let isDestroyed = false
+
     onMount(capture)
     async function capture() {
         if (disablePreview) return
+        if (($special.cameraBad || []).includes(cam.id)) {
+            loaded = true
+            return
+        }
 
         error = ""
 
-        const cameraStream = await cameraManager.getCameraStream(cam.id, cam.group)
+        const cameraStream = await cameraManager.getCameraStream(cam.id, cam.group, { preview: true })
+        if (isDestroyed) return
+
         if (typeof cameraStream === "string") {
             error = cameraStream
             loaded = true
@@ -47,6 +55,8 @@
     }
 
     onDestroy(() => {
+        isDestroyed = true
+
         if (retryTimeout) clearTimeout(retryTimeout)
 
         if (!videoElem) return

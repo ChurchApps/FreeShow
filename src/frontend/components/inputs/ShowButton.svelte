@@ -171,7 +171,7 @@
             // get PDF data
             // WIP duplicate of playPdf in showActions.ts
             GlobalWorkerOptions.workerSrc = "./assets/pdf.worker.min.mjs"
-            const loadingTask = getDocument(id)
+            const loadingTask = getDocument(encodeFilePath(id))
             const pdfDoc = await loadingTask.promise
             const pages = pdfDoc.numPages
             loadingTask.destroy()

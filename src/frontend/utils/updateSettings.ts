@@ -1,4 +1,5 @@
 import { get } from "svelte/store"
+import { uid } from "uid"
 import { Main } from "../../types/IPC/Main"
 import type { Output } from "../../types/Output"
 import type { Metadata, Themes } from "../../types/Settings"
@@ -79,8 +80,8 @@ import {
     timeFormat,
     timecode,
     timeline,
+    timerTags,
     timers,
-    triggers,
     variableTags,
     variables,
     version,
@@ -99,6 +100,9 @@ import { send } from "./request"
 export function updateSyncedSettings(data: any) {
     if (!data || !Object.keys(data).length) return
 
+    // pre v1.6.1 (triggers are now actions)
+    data = convertTriggersToActions(data)
+
     Object.entries(data).forEach(([key, value]: any) => {
         if (updateList[key as SaveListSyncedSettings]) updateList[key as SaveListSyncedSettings](value)
         else console.info("RECEIVED UNKNOWN SETTINGS KEY:", key)
@@ -112,7 +116,8 @@ export function updateSettings(data: any) {
 
     // pre v1.6.1 (equalizerConfig was not in audioEffects)
     if (data.equalizerConfig && !data.audioEffects?.main) {
-        data.audioEffects = { main: { equalizer: data.equalizerConfig } }
+        data.audioEffects = { main: { equalizer: clone(data.equalizerConfig) } }
+        delete data.equalizerConfig
     }
 
     Object.entries(data).forEach(([key, value]: any) => {
@@ -166,6 +171,43 @@ export function updateSettings(data: any) {
     loaded.set(true)
 
     window.api.send("LOADED")
+}
+
+// pre v1.6.1
+function convertTriggersToActions(data: any) {
+    const triggers: { [key: string]: { name: string; type: "http"; value: string } } = data.triggers || {}
+    if (!Object.keys(triggers).length) return data
+
+    let tagId = "triggertag"
+    if (typeof data.actionTags === "object") {
+        data.actionTags[tagId] = { name: "Triggers", color: "#abb4e6" }
+
+        // update store as this is non-synced settings
+        setTimeout(() => {
+            special.update((a) => {
+                a["actions_grid" + tagId] = true
+                return a
+            })
+        }, 1000)
+    }
+
+    const actions = data.midiIn || {}
+    Object.entries(triggers).forEach(([key, trigger]) => {
+        let emitterId = uid()
+        data.emitters[emitterId] = { name: "Trigger: " + trigger.name, type: "http", signal: { url: trigger.value, method: "GET", contentType: "", payload: "" } }
+        let triggerId = "emit_action:" + uid(5)
+
+        actions[key] = {
+            name: trigger.name,
+            triggers: [triggerId],
+            actionValues: { [triggerId]: { emitter: emitterId } },
+            tags: [tagId]
+        }
+    })
+
+    delete data.triggers
+    data.midiIn = actions
+    return data
 }
 
 let videoDataUpdating = false
@@ -311,7 +353,6 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
     templateCategories: (v: any) => templateCategories.set(v),
     timers: (v: any) => timers.set(v),
     variables: (v: any) => variables.set(v),
-    triggers: (v: any) => triggers.set(v),
     audioStreams: (v: any) => audioStreams.set(v),
     audioPlaylists: (v: any) => audioPlaylists.set(v),
     theme: (v: any) => theme.set(v),
@@ -326,6 +367,7 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
     playerTags: (v: any) => playerTags.set(v),
     actionTags: (v: any) => actionTags.set(v),
     variableTags: (v: any) => variableTags.set(v),
+    timerTags: (v: any) => timerTags.set(v),
     customizedIcons: (v: any) => customizedIcons.set(v),
     cloudSyncData: (v: any) => cloudSyncData.set(v),
     driveData: (v: any) => driveData.set(v),

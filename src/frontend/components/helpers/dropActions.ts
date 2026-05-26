@@ -8,13 +8,14 @@ import type { DropData, Selected } from "../../../types/Main"
 import type { Item, Slide, SlideAction } from "../../../types/Show"
 import { sendMain } from "../../IPC/main"
 import { changeLayout, changeSlideGroups } from "../../show/slides"
-import { activeDrawerTab, activePage, activePopup, activeProject, activeShow, alertMessage, audioFolders, audioPlaylists, audioStreams, drawerTabsData, editingProjectTemplate, media, mediaFolders, overlays, playerVideos, projects, projectTemplates, scriptureSettings, shows, showsCache, templates, timers } from "../../stores"
+import { activeDrawerTab, activeEdit, activePage, activePopup, activeProject, activeShow, alertMessage, audioFolders, audioPlaylists, audioStreams, drawerTabsData, editingProjectTemplate, media, mediaFolders, overlays, playerVideos, projects, projectTemplates, scriptureSettings, shows, showsCache, templates, timers } from "../../stores"
 import { newToast } from "../../utils/common"
 import { getAccess } from "../../utils/profile"
 import { audioExtensions, imageExtensions, mediaExtensions, presentationExtensions, videoExtensions } from "../../values/extensions"
 import { actionData } from "../actions/actionData"
 import { addSlideAction, getActionTriggerId } from "../actions/actions"
 import { getActiveScripturesContent, getReferenceText, getScriptureShow, getScriptureSlidesNew } from "../drawer/bible/scripture"
+import { getVimeoName, getYouTubeName, trimPlayerId } from "../drawer/player/playerHelper"
 import { addItem, DEFAULT_ITEM_STYLE } from "../edit/scripts/itemHelpers"
 import { clone, removeDuplicates } from "./array"
 import { projectDropFolders } from "./drop"
@@ -24,7 +25,6 @@ import { addToPos, getIndexes, mover } from "./mover"
 import { getLayoutRef } from "./show"
 import { getVariableNameId } from "./showActions"
 import { _show } from "./shows"
-import { getVimeoName, getYouTubeName, trimPlayerId } from "../drawer/player/playerHelper"
 
 function getId(drag: Selected): string {
     const id = ""
@@ -228,16 +228,42 @@ export const dropActions = {
             const show = await getScriptureShow(biblesContent)
             if (!show) return
 
-            let index = drop.index
-            if (drop.trigger?.includes("end")) index++
+            const activeShowObj = get(activeShow)
+            const isReplacingPlaceholderArea = !drop.data?.id && activeShowObj?.type === "show_placeholder"
+            const isReplacing = (drop.data?.type === "show_placeholder" && drop.center) || isReplacingPlaceholderArea
+            const replaceIndex = isReplacing ? (drop.data?.index !== undefined ? drop.data.index : activeShowObj?.index) : undefined
+            let index = isReplacing ? replaceIndex : drop.index
+            if (!isReplacing && drop.trigger?.includes("end")) index++
 
-            history({ id: "UPDATE", newData: { data: show, remember: { project: projectId, index } }, location: { page: "show", id: "show" } })
+            history({ id: "UPDATE", newData: { data: show, remember: { project: projectId, index, replacePlaceholder: isReplacing } }, location: { page: "show", id: "show" } })
             return
         }
 
         h.newData = { key: "shows", data: [] }
-        if (drag.id === "show") h.newData.data = mover(projectShows, getIndexes(data), drop.index)
-        else h.newData.data = addToPos(projectShows, data, drop.index)
+        const activeShowObj = get(activeShow)
+        const isReplacingPlaceholderArea = !drop.data?.id && activeShowObj?.type === "show_placeholder"
+        const isReplacing = (drop.data?.type === "show_placeholder" && drop.center) || isReplacingPlaceholderArea
+        if (isReplacing) {
+            const replaceIndex = drop.data?.index !== undefined ? drop.data.index : activeShowObj?.index
+            const indexes = drag.id === "show" ? getIndexes(data) : []
+            const itemsToInsert = drag.id === "show" ? indexes.map((i) => projectShows[i]).filter(Boolean) : data
+            h.newData.data = projectShows
+                .map((show, i) => (i === replaceIndex ? itemsToInsert : indexes.includes(i) ? null : show))
+                .flat()
+                .filter(Boolean)
+
+            const newShowId = itemsToInsert[0]?.id
+            const newShowType = itemsToInsert[0]?.type || "show"
+            if (newShowId && replaceIndex !== undefined) {
+                setTimeout(() => {
+                    activeShow.set({ id: newShowId, type: newShowType, index: replaceIndex })
+                    activeEdit.set({ type: "show", slide: 0, items: [], showId: newShowId })
+                })
+            }
+        } else {
+            if (drag.id === "show") h.newData.data = mover(projectShows, getIndexes(data), drop.index)
+            else h.newData.data = addToPos(projectShows, data, drop.index)
+        }
 
         return h
     },
@@ -887,17 +913,6 @@ const slideDrop = {
 
         history.newData = { slides, layout }
         history.location!.layout = layoutId
-        return history
-    },
-    trigger: ({ drag, drop }: Data, history: History) => {
-        if (drop.index === undefined) return
-        history.id = "SHOW_LAYOUT"
-
-        const data = drag.data[0]
-        const actions = createSlideAction("start_trigger", drop.index, data)
-        if (!actions) return
-
-        history.newData = { key: "actions", data: actions, indexes: [drop.index] }
         return history
     },
     audio_stream: ({ drag, drop }: Data, history: History) => {

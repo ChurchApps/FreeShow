@@ -75,20 +75,18 @@ export function encodeFilePath(path: string): string {
     if (typeof path !== "string") return ""
     if (!isLocalFile(path)) return path
 
-    // already encoded
-    if (path.match(/%\d+/g)) {
-        if (path.startsWith("/")) path = `file://${path}`
-        return path
-    }
+    if (path.startsWith("file://")) path = path.replace("file://", "")
+    try {
+        if (path.match(/%[0-9a-fA-F]{2}/)) path = decodeURIComponent(path)
+    } catch (e) {}
 
-    const splittedPath = splitPath(path)
-    const fileName = splittedPath.pop() || ""
-    const encodedName = encodeURIComponent(fileName)
-    let joinedPath = joinPath([...splittedPath, encodedName])
+    // encode each path segment except for drive letter (e.g. C:) to avoid issues with ":" in file names on Windows
+    const encoded = splitPath(path).map((seg, i) => (i === 0 && /^[a-zA-Z]:$/.test(seg) ? seg : encodeURIComponent(seg)))
+    let joined = joinPath(encoded)
 
     // path starting at "/" auto completes to app root, but should be file://
-    if (joinedPath.startsWith("/")) joinedPath = `file://${joinedPath}`
-    return joinedPath
+    if (joined.startsWith("/")) joined = `file://${joined}`
+    return joined
 }
 
 // decode only file name in path (not full path)
@@ -545,6 +543,37 @@ export function getVideoDuration(path: string): Promise<number> {
             console.error(new Error("Failed to load video. Check the path or file format."))
             resolve(0)
         }
+    })
+}
+
+// Custom Icons (Actions)
+
+export async function convertImagePathToIcon(path: string, size = 64): Promise<string> {
+    if (!path) return ""
+
+    return new Promise((resolve) => {
+        const img = new Image()
+        img.onload = () => {
+            const canvas = document.createElement("canvas")
+            canvas.width = size
+            canvas.height = size
+
+            const context = canvas.getContext("2d")
+            if (!context) return resolve(path)
+
+            const ratio = Math.min(size / img.width, size / img.height)
+            const drawWidth = img.width * ratio
+            const drawHeight = img.height * ratio
+            const x = (size - drawWidth) / 2
+            const y = (size - drawHeight) / 2
+
+            context.clearRect(0, 0, size, size)
+            context.drawImage(img, x, y, drawWidth, drawHeight)
+            resolve(canvas.toDataURL("image/png"))
+        }
+
+        img.onerror = () => resolve(path)
+        img.src = encodeFilePath(path)
     })
 }
 

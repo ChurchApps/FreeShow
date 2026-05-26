@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
 import type { Media } from "../../../types/Show"
-import { actions, actionTags, activeActionTagFilter, activeEdit, activeMediaTagFilter, activePlayerTagFilter, activeTagFilter, activeVariableTagFilter, contextData, drawerTabsData, globalTags, groups, media, mediaTags, outputs, overlays, playerTags, playerVideos, selected, shows, sorted, variables, variableTags } from "../../stores"
+import { actions, actionTags, activeActionTagFilter, activeEdit, activeMediaTagFilter, activePlayerTagFilter, activeTagFilter, activeVariableTagFilter, activeTimerTagFilter, contextData, drawerTabsData, globalTags, groups, media, mediaTags, outputs, overlays, playerTags, playerVideos, selected, shows, sorted, variables, variableTags, timers, timerTags } from "../../stores"
 import { translateText } from "../../utils/language"
 import { drawerTabs } from "../../values/tabs"
 import { actionData } from "../actions/actionData"
@@ -76,6 +76,16 @@ const loadActions = {
         let sortedTags = createTagItems(variableTags, get(activeVariableTagFilter))
         sortedTags = sortedTags.filter((a) => typeof a === "string" || a.id !== get(drawerTabsData).functions?.activeSubmenu)
         setContextData("variable_tags", sortedTags.length)
+        return sortedTags
+    },
+    timer_tag_set: () => {
+        const selectedTags = getSelectedTagIds<{ id?: string }>(get(selected), (item) => get(timers)[item.id || ""]?.tags)
+        return createTagItems(timerTags, selectedTags, true)
+    },
+    timer_tag_filter: () => {
+        let sortedTags = createTagItems(timerTags, get(activeTimerTagFilter))
+        sortedTags = sortedTags.filter((a) => typeof a === "string" || a.id !== get(drawerTabsData).functions?.activeSubmenu)
+        setContextData("timer_tags", sortedTags.length)
         return sortedTags
     },
 

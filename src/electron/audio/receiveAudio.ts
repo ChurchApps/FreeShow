@@ -6,6 +6,8 @@ import { processAudio } from "./processAudio"
 // let sampleRate = 48000 // Hz
 // let audioDelay = 0
 
+let latestIcecastConfig: any = null
+
 export function receiveAudio(_e: Electron.IpcMainEvent, msg: Message) {
     if (msg.channel !== "CAPTURE") {
         console.error("Unknown AUDIO channel:", msg.channel)
@@ -26,6 +28,8 @@ export function receiveAudio(_e: Electron.IpcMainEvent, msg: Message) {
     // if (msg.data.channels) channelCount = msg.data.channels
     // if (msg.data.sampleRate) sampleRate = msg.data.sampleRate
     // if (msg.data.audioDelay) audioDelay = msg.data.audioDelay
+
+    latestIcecastConfig = data.icecast
 
     const decoder = createDecoder(data.id || "main")
     try {
@@ -85,7 +89,7 @@ function createDecoder(id: string) {
         }
 
         // { channelCount, sampleRate, audioDelay }
-        processAudio(block.payload)
+        processAudio(block.payload, latestIcecastConfig)
     })
 
     return decoder

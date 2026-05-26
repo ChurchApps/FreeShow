@@ -151,8 +151,8 @@ class ChurchAppsSyncManager {
         const presigned = await this.getWriteToken(teamId, fileName)
         if (!presigned?.url) return false
 
-        const fileBuffer = fs.readFileSync(filePath)
-        const blob = new Blob([fileBuffer], { type: ZIP_TYPE })
+        const fileBuffer = await fs.promises.readFile(filePath)
+        const blob = new Blob([new Uint8Array(fileBuffer)], { type: ZIP_TYPE })
 
         const formData = new FormData()
         formData.append("acl", "public-read")

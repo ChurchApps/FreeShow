@@ -28,6 +28,7 @@ import {
     activeStyle,
     activeTagFilter,
     activeTimers,
+    activeTimerTagFilter,
     activeVariableTagFilter,
     audioFolders,
     categories,
@@ -75,6 +76,7 @@ import {
     templates,
     textEditActive,
     themes,
+    timers,
     toggleOutputEnabled,
     variables
 } from "../../stores"
@@ -172,38 +174,38 @@ const clickActions = {
     history: () => activePopup.set("history"),
     cut: () => cut(),
     copy: () => copy(),
-    text_copy: () => copy(),
+    text_copy: (obj: ObjData) => {
+        const editElem = obj.contextElem?.closest(".edit") as HTMLElement | null
+        if (!editElem) return
+
+        focusAndRestoreSelection(editElem)
+        document.execCommand("copy")
+    },
     text_cut: (obj: ObjData) => {
         const editElem = obj.contextElem?.closest(".edit") as HTMLElement | null
-        if (!editElem || !savedTextRange) return
-        const text = savedTextRange.toString()
-        if (!text) return
-        navigator.clipboard.writeText(text).then(() => {
-            editElem.focus()
-            const sel = window.getSelection()
-            if (sel) {
-                sel.removeAllRanges()
-                sel.addRange(savedTextRange!)
-                document.execCommand("delete")
-            }
-        })
+        if (!editElem) return
+
+        focusAndRestoreSelection(editElem)
+        document.execCommand("cut")
+        if (editElem instanceof HTMLTextAreaElement) {
+            editElem.dispatchEvent(new Event("input", { bubbles: true }))
+            editElem.dispatchEvent(new Event("change", { bubbles: true }))
+        }
     },
     text_paste: (obj: ObjData) => {
         const editElem = obj.contextElem?.closest(".edit") as HTMLElement | null
         if (!editElem) return
+
         navigator.clipboard
             .readText()
             .then((text) => {
                 if (!text) return
-                editElem.focus()
-                if (savedTextRange) {
-                    const sel = window.getSelection()
-                    if (sel) {
-                        sel.removeAllRanges()
-                        sel.addRange(savedTextRange)
-                    }
-                }
+                focusAndRestoreSelection(editElem)
                 document.execCommand("insertText", false, text)
+                if (editElem instanceof HTMLTextAreaElement) {
+                    editElem.dispatchEvent(new Event("input", { bubbles: true }))
+                    editElem.dispatchEvent(new Event("change", { bubbles: true }))
+                }
             })
             .catch(() => {})
     },
@@ -577,6 +579,34 @@ const clickActions = {
     variable_tag_filter: (obj: ObjData) => {
         toggleTagFilter(activeVariableTagFilter, getMenuTagId(obj.menu))
     },
+    manage_timer_tags: () => {
+        openTagManager("timer")
+    },
+    timer_tag_set: (obj: ObjData) => {
+        const tagId = getMenuTagId(obj.menu)
+        if (tagId === "create") {
+            clickActions.manage_timer_tags()
+            return
+        }
+
+        const disable = get(timers)[get(selected).data[0]?.id]?.tags?.includes(tagId)
+
+        toggleSelectionTags({
+            data: obj.sel?.data,
+            tagId,
+            disable: !!disable,
+            getTags: ({ id }) => get(timers)[id]?.tags,
+            applyTags: ({ id }, tags) => {
+                timers.update((a) => {
+                    if (a[id]) a[id].tags = tags
+                    return a
+                })
+            }
+        })
+    },
+    timer_tag_filter: (obj: ObjData) => {
+        toggleTagFilter(activeTimerTagFilter, getMenuTagId(obj.menu))
+    },
     action_history: () => {
         activePopup.set("action_history")
     },
@@ -880,6 +910,15 @@ const clickActions = {
 
             return
         }
+
+        if (obj.sel?.id === "action") {
+            const id = obj.sel.data[0]?.id
+            const action = get(actions)[id]
+            if (!action) return
+            send(EXPORT, ["ACTION"], { content: { ...action, id } })
+
+            return
+        }
     },
     close: (obj: ObjData) => {
         if (isOutputWindow()) {
@@ -1144,8 +1183,6 @@ const clickActions = {
             activePopup.set("timer")
         } else if (obj.sel.id === "variable") {
             activePopup.set("variable")
-        } else if (obj.sel.id === "trigger") {
-            activePopup.set("trigger")
         } else if (obj.sel.id === "audio_stream") {
             activePopup.set("audio_stream")
         } else if (obj.contextElem?.classList?.contains("#project_template")) {
@@ -1668,7 +1705,13 @@ const clickActions = {
     text_select_all: (obj: ObjData) => {
         const editElem = obj.contextElem?.closest(".edit") as HTMLElement | null
         if (!editElem) return
+
         editElem.focus()
+        if (editElem instanceof HTMLTextAreaElement) {
+            editElem.select()
+            return
+        }
+
         const range = document.createRange()
         range.selectNodeContents(editElem)
         const selection = window.getSelection()
@@ -1887,6 +1930,17 @@ export function saveTextSelectionRange() {
         savedTextRange = sel.getRangeAt(0).cloneRange()
     } else {
         savedTextRange = null
+    }
+}
+
+function focusAndRestoreSelection(editElem: HTMLElement) {
+    editElem.focus()
+    if (!(editElem instanceof HTMLTextAreaElement) && savedTextRange) {
+        const sel = window.getSelection()
+        if (sel) {
+            sel.removeAllRanges()
+            sel.addRange(savedTextRange)
+        }
     }
 }
 

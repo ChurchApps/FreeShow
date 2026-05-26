@@ -1,8 +1,9 @@
 import type { OpusEncoder as TOpusEncoder } from "@discordjs/opus"
-import { NdiSender } from "../ndi/NdiSender"
 import { BlackmagicSender } from "../blackmagic/BlackmagicSender"
+import { NdiSender } from "../ndi/NdiSender"
 import { getServerData, toServer } from "../servers"
 import { WebRtcHost } from "../webrtc/WebRtcHost"
+import { IcecastSender } from "./IcecastSender"
 
 // const isStopping = false
 const channelCount2 = 2
@@ -17,8 +18,11 @@ try {
 }
 
 // , { audioDelay }
-export async function processAudio(buffer: Buffer) {
+export async function processAudio(buffer: Buffer, icecast?: any) {
     if (!opusEncoder) return
+
+    // Stream raw OPUS packet directly to Icecast
+    IcecastSender.sendAudio(buffer, icecast)
 
     // const offset = audioDelay
     // if (offset > 0) await new Promise((resolve) => setTimeout(resolve, offset))

@@ -3,7 +3,7 @@
     import { EXPORT } from "../../../../types/Channels"
     import { Main } from "../../../../types/IPC/Main"
     import { destroyMain, receiveMain, requestMain, sendMain } from "../../../IPC/main"
-    import { activePage, activePopup, alertMessage, alertUpdates, deletedShows, popupData, shows, showsCache, special, usageLog, version } from "../../../stores"
+    import { activePage, activePopup, alertMessage, deletedShows, popupData, shows, showsCache, special, usageLog } from "../../../stores"
     import { send } from "../../../utils/request"
     import T from "../../helpers/T.svelte"
     import InputRow from "../../input/InputRow.svelte"
@@ -169,20 +169,12 @@
         usageLog.set({ all: [] })
         usageLogExported = false
     }
-
-    $: isBeta = $version.includes("-beta")
 </script>
 
-<MaterialToggleSwitch label="settings.auto_updates" checked={$special.autoUpdates} on:change={(e) => updateSpecial(e.detail, "autoUpdates")} />
-
-<!-- <InputRow arrow={$alertUpdates}> -->
-<MaterialToggleSwitch style="flex: 1;" label="settings.alert_updates" checked={$alertUpdates} defaultValue={true} on:change={(e) => alertUpdates.set(e.detail)} />
-<!-- <div slot="menu"> -->
-{#if $alertUpdates}
-    <MaterialToggleSwitch label="settings.alert_updates_beta" disabled={isBeta} checked={isBeta ? $alertUpdates : $special.betaVersionAlert} defaultValue={false} on:change={(e) => updateSpecial(e.detail, "betaVersionAlert")} />
-{/if}
-<!-- </div> -->
-<!-- </InputRow> -->
+<MaterialButton variant="outlined" style="width: 100%;margin-bottom: 20px;" icon="loop" on:click={() => activePopup.set("update_manager")}>
+    <T id="about.check_updates" />
+    <!-- <T id="popup.update_manager" /> -->
+</MaterialButton>
 
 <MaterialToggleSwitch label="settings.popup_before_close" checked={$special.showClosePopup || false} defaultValue={false} on:change={(e) => updateSpecial(e.detail, "showClosePopup")} />
 

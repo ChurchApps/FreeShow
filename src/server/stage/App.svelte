@@ -4,9 +4,11 @@
     import Center from "../common/components/Center.svelte"
     import Icon from "../common/components/Icon.svelte"
     import Slide from "./components/Slide.svelte"
+    import TtsSettings from "./components/TtsSettings.svelte"
     import { openLayout } from "./util/helpers"
+    import { getCurrentSlideText, speakText, stopSpeech } from "./util/tts"
     import { initSocket } from "./util/socket"
-    import { _set, dictionary, errors, layouts, selectedLayout, stageLayout } from "./util/stores"
+    import { _set, dictionary, errors, layouts, output, selectedLayout, stageLayout } from "./util/stores"
     import { requestWakeLock } from "../common/util/wakeLock"
 
     initSocket()
@@ -67,6 +69,29 @@
         window.addEventListener("click", handler, { once: true })
         window.addEventListener("touchstart", handler, { once: true })
     })
+
+    // Text-to-speech
+    let ttsEnabled: boolean = false
+    let lastSpokenSlideKey: string = ""
+    let showTtsSettings: boolean = false
+    function toggleTts() {
+        if (!ttsEnabled) {
+            ttsEnabled = true
+            showTtsSettings = true
+        } else {
+            ttsEnabled = false
+            stopSpeech()
+        }
+    }
+    $: if (ttsEnabled && $output) {
+        const slide = $output?.out?.slide
+        const key = slide ? `${slide.id}-${slide.index}` : ""
+        if (key && key !== lastSpokenSlideKey) {
+            lastSpokenSlideKey = key
+            const text = getCurrentSlideText()
+            if (text) speakText(text)
+        }
+    }
 </script>
 
 <svelte:window on:click={click} />
@@ -104,12 +129,19 @@
 {:else if $stageLayout}
     <Slide />
 
+    {#if showTtsSettings}
+        <TtsSettings on:close={() => (showTtsSettings = false)} />
+    {/if}
+
     {#if clicked}
         <div class="clicked">
             <h5 style="text-align: center;">{$stageLayout.name || "—"}</h5>
             <div style="display: flex;gap: 10px;">
                 <Button on:click={goHome} style="flex: 1;" center>
                     <Icon id="home" />
+                </Button>
+                <Button on:click={toggleTts} center class={ttsEnabled ? "active" : ""}>
+                    <Icon id={ttsEnabled ? "volume" : "muted"} />
                 </Button>
                 <Button on:click={toggleFullscreen} center>
                     <Icon id={isFullscreen ? "exitFullscreen" : "fullscreen"} />

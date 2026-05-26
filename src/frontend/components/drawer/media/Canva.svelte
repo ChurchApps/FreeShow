@@ -1,8 +1,9 @@
 <script lang="ts">
-    import { onMount } from "svelte"
+    import { onDestroy, onMount } from "svelte"
+    import type { ContentFile, ContentLibraryCategory } from "../../../../electron/contentProviders/base/types"
     import { Main } from "../../../../types/IPC/Main"
     import { requestMain, sendMain } from "../../../IPC/main"
-    import { providerConnections } from "../../../stores"
+    import { activeCanvaPresentation, providerConnections } from "../../../stores"
     import T from "../../helpers/T.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import Center from "../../system/Center.svelte"
@@ -18,18 +19,52 @@
         }
     })
 
+    onDestroy(() => {
+        activeCanvaPresentation.set(null)
+    })
+
     function handleConnect() {
         sendMain(Main.PROVIDER_LOAD_SERVICES, { providerId: "canva", data: { canvaClientId, canvaClientSecret } })
     }
 
     let canvaClientId = ""
     let canvaClientSecret = ""
+    let currentCategory: ContentLibraryCategory | null = null
+
+    $: activeCanvaPresentation.set(getPresentationData(currentCategory))
+
+    function getPresentationData(category: ContentLibraryCategory | null) {
+        const key = category?.key || ""
+        if (!key.startsWith("presentation:")) return null
+
+        const designId = key.replace("presentation:", "")
+        if (!designId) return null
+
+        return {
+            designId,
+            presentationName: category?.name || "Untitled presentation",
+            slideCount: (category as any)?.slideCount,
+            thumbnail: category?.thumbnail,
+            providerId: "canva" as const
+        }
+    }
+
+    function getContentCategory(item: ContentFile & { isPresentation?: boolean; slideCount?: number }) {
+        if (!item.isPresentation || !item.mediaId) return null
+        return {
+            name: item.name || "Untitled presentation",
+            thumbnail: item.thumbnail,
+            slideCount: item.slideCount,
+            key: `presentation:${item.mediaId}`
+        } as ContentLibraryCategory & { slideCount?: number }
+    }
+
 </script>
 
 {#if $providerConnections.canva}
-    <div style="width: 100%; height: 100%; display: flex; flex-direction: column;">
+    <div style="position: relative;width: 100%; height: 100%; display: flex; flex-direction: column;">
         <div style="flex: 1; overflow: hidden;">
-            <ContentLibraryBrowser providerId="canva" columns={5} searchValue="" />
+            <ContentLibraryBrowser providerId="canva" columns={5} searchValue="" bind:currentCategory {getContentCategory} />
         </div>
     </div>
     <!-- <div style="position: absolute;bottom: 0;width: 100%;padding: 10px;display: flex;justify-content: center;">
