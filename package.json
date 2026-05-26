@@ -111,7 +111,8 @@
         "pdfjs-dist": "^5.4.296",
         "qrcode-generator": "^1.5.2",
         "socket.io-client": "^4.8.1",
-        "youtube-player": "^5.6.0"
+        "youtube-player": "^5.6.0",
+        "xml2js": "^0.6.2"
     },
     "dependencies": {
         "@discordjs/opus": "^0.10.0",
@@ -144,7 +145,6 @@
         "uid": "^2.0.2",
         "upath": "^2.0.1",
         "word-extractor": "^1.0.4",
-        "xml2js": "^0.6.2",
         "yauzl": "^3.2.0",
         "yazl": "^3.3.1"
     },
