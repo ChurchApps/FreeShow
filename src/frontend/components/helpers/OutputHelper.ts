@@ -420,8 +420,16 @@ export class OutputHelper {
         return get(projects)[get(activeProject) || ""]?.shows || []
     }
 
+    // store active show so we can reference it in case we have multiple outputs and the first changes the active show
+    private static currentActiveShow: { time: number; show: ShowRef | null } = { time: 0, show: null }
     private static getActiveItem() {
-        return (get(focusMode) ? get(activeFocus) : get(activeShow)) as ShowRef | null
+        // use the last active if less than 50ms ago
+        if (this.currentActiveShow.time > Date.now() - 50) return this.currentActiveShow.show
+
+        const active: ShowRef | null = get(focusMode) ? get(activeFocus) : get(activeShow)
+        this.currentActiveShow = { time: Date.now(), show: active }
+
+        return active
     }
 
     private static getOut(outputId: string) {
