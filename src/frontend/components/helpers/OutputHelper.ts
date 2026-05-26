@@ -216,8 +216,8 @@ export class OutputHelper {
         // must be a show item
         if (!this.isShow(outSlide)) return activeOutShow
 
-        // Home & End keys
-        if (nextCheck === null) return outSlide
+        // auto advance | Home & End keys
+        if (options.playNext || nextCheck === null) return outSlide
 
         // outputted show if not reached end, or if active show is the same
         if (this.getSubsequent(outSlide, nextCheck) || this.outShowIsSameAsActive(outSlide, activeOutShow)) return outSlide
