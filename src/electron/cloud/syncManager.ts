@@ -8,7 +8,7 @@ import { isValidJSON, restoreFiles, startBackup } from "../data/backup"
 import { _store, getStore, setStore } from "../data/store"
 import { compressToZip, decompressZipStream, getZipModifiedDates } from "../data/zip"
 import { sendMain } from "../IPC/main"
-import { createFolder, deleteFile, deleteFolder, doesPathExistAsync, getDataFolderPath, getFileStatsAsync, getTimePointString, loadShows, moveFileAsync, readFileAsync, readFolderAsync, writeFileAsync } from "../utils/files"
+import { createFolder, deleteFile, deleteFolderAsync, doesPathExistAsync, getDataFolderPath, getFileStatsAsync, getTimePointString, loadShows, moveFileAsync, readFileAsync, readFolderAsync, writeFileAsync } from "../utils/files"
 import { clone, getMachineId } from "../utils/helpers"
 import { getChurchAppsSyncManager } from "./ChurchAppsSyncManager"
 
@@ -45,7 +45,7 @@ export async function hasDataChanged({ id, churchId, teamId }: { id: SyncProvide
     return await provider.hasChanged(churchId, teamId)
 }
 
-function deleteLocalFiles() {
+async function deleteLocalFiles() {
     // reset syncable (portable) Config files
     // no need, these will get auto replaced by the downloaded files
     // Object.entries(storeFilesData).forEach(([id, data]) => {
@@ -55,7 +55,7 @@ function deleteLocalFiles() {
 
     // delete all show files
     const showsPath = getDataFolderPath("shows")
-    deleteFolder(showsPath)
+    await deleteFolderAsync(showsPath)
 }
 
 const DEBUG_MODE = false && !isProd
@@ -77,22 +77,22 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
     const provider = getManager[data.id]()
     if (!provider) return { changedFiles }
 
-    if (data.method === "replace") deleteLocalFiles()
+    if (data.method === "replace") await deleteLocalFiles()
 
     console.log("Syncing to cloud")
 
     if (data.method === "upload") {
         await uploadLocalData()
-        return finish()
+        return await finish()
     }
 
     // clear any uncleared previous data
-    if (!DEBUG_MODE && (await doesPathExistAsync(EXTRACT_LOCATION))) deleteFolder(EXTRACT_LOCATION)
+    if (!DEBUG_MODE && (await doesPathExistAsync(EXTRACT_LOCATION))) await deleteFolderAsync(EXTRACT_LOCATION)
 
     const cloudDataPath = await provider.getData(data.churchId, data.teamId, EXTRACT_LOCATION)
     if (!cloudDataPath) {
         await uploadLocalData()
-        return finish()
+        return await finish()
     }
 
     // extract cloud data
@@ -108,7 +108,7 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
         modifiedDates = await getZipModifiedDates(cloudDataPath)
     } catch (err) {
         console.error("Could not decompress cloud sync zip:", cloudDataPath, err)
-        return finish(false)
+        return await finish(false)
     }
 
     console.log("Files:", extractedFiles.length)
@@ -352,7 +352,7 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
             setStore(_store.CACHE_SYNC, syncCache)
         }
 
-        return finish()
+        return await finish()
     }
 
     const success = await uploadLocalData()
@@ -361,11 +361,11 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
     setTimeout(async () => {
         if (DEBUG_MODE) return
         await uploadBackupData()
-        deleteFolder(EXTRACT_LOCATION)
+        await deleteFolderAsync(EXTRACT_LOCATION)
         console.log("Backup sync completed!")
     }, 1000)
 
-    return finish(success)
+    return await finish(success)
 
     async function uploadLocalData() {
         const zipPath = await compressUserData()
@@ -400,8 +400,8 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
         }
     }
 
-    function finish(success = true) {
-        if (!DEBUG_MODE) deleteFolder(EXTRACT_LOCATION)
+    async function finish(success = true) {
+        if (!DEBUG_MODE) await deleteFolderAsync(EXTRACT_LOCATION)
         console.log("Sync completed!")
         isNewDevice = false
         return { success, changedFiles }
@@ -416,7 +416,7 @@ export async function restoreCloudBackup(data: { id: SyncProviderId; churchId: s
     const extractPath = path.join(restorePath, "extracted")
 
     // clear any uncleared previous data
-    if (await doesPathExistAsync(restorePath)) deleteFolder(restorePath)
+    if (await doesPathExistAsync(restorePath)) await deleteFolderAsync(restorePath)
 
     try {
         createFolder(restorePath)
@@ -435,7 +435,7 @@ export async function restoreCloudBackup(data: { id: SyncProviderId; churchId: s
         console.error("Could not restore cloud backup:", err)
         return { success: false, error: "Failed to restore cloud backup" }
     } finally {
-        if (await doesPathExistAsync(restorePath)) deleteFolder(restorePath)
+        if (await doesPathExistAsync(restorePath)) await deleteFolderAsync(restorePath)
     }
 }
 
