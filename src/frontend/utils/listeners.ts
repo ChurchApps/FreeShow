@@ -1,5 +1,6 @@
 import { get } from "svelte/store"
 import { OUTPUT, REMOTE, STAGE } from "../../types/Channels"
+import { AudioAnalyser } from "../audio/audioAnalyser"
 import { AudioPlayer } from "../audio/audioPlayer"
 import { midiInListen } from "../components/actions/midi"
 import { getAllActiveOutputIds, getAllNormalOutputs } from "../components/helpers/output"
@@ -336,6 +337,9 @@ export function storeSubscriber() {
 
     special.subscribe((data) => {
         send(OUTPUT, ["SPECIAL"], data)
+
+        if (data.icecastEnabled) AudioAnalyser.recorderActivate()
+        else AudioAnalyser.recorderDeactivate()
     })
 
     slideTimelineSpeedMultiplier.subscribe((data) => {
