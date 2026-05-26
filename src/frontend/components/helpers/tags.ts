@@ -6,7 +6,7 @@ import { closeContextMenu } from "../../utils/shortcuts"
 import { keysToID, sortByName, sortObject } from "./array"
 import type { ContextMenuItem } from "../context/contextMenus"
 
-type TagPopupType = "show" | "media" | "player" | "action" | "variable"
+type TagPopupType = "show" | "media" | "player" | "action" | "variable" | "timer"
 type TagMenuItem = ContextMenuItem | "SEPARATOR"
 
 interface ToggleSelectionTagsOptions<T> {

@@ -9,8 +9,8 @@
     import { presentationExtensions } from "../../../values/extensions"
     import Icon from "../../helpers/Icon.svelte"
     import HRule from "../../input/HRule.svelte"
-    import MaterialButton from "../../inputs/MaterialButton.svelte"
     import InputRow from "../../input/InputRow.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
 
     let mode = $popupData.mode
     popupData.set({})
@@ -18,11 +18,13 @@
     const freeshow_formats = [
         { name: "formats.show", title: "FreeShow Song/Presentation File", icon: "slide", extensions: ["show", "json"], id: "freeshow" },
         { name: "formats.project", title: "FreeShow Project File", icon: "project", extensions: ["project", "shows", "json", "zip"], id: "freeshow_project" }, // , "fsproject", "fsp"
-        { name: "formats.template", title: "FreeShow Template File", icon: "templates", extensions: ["fstemplate", "fst", "template", "json", "zip"], id: "freeshow_template" }
-        // { name: "formats.theme", extensions: ["fstheme", "theme", "json"], id: "freeshow_theme" } // moved to settings
-        // { name: "Calendar", extensions: ["ics"], id: "calendar" }, // calendar drawer tab
-        // { name: "Scripture", id: "scripture" }, // scripture drawer tab
+        { name: "formats.template", title: "FreeShow Template File", icon: "templates", extensions: ["fstemplate", "fst", "template", "json", "zip"], id: "freeshow_template" },
+        { name: "formats.action", title: "FreeShow Action File", icon: "actions", extensions: ["fsaction", "action", "json"], id: "freeshow_action" },
+        { name: "formats.theme", title: "FreeShow Theme File", icon: "theme", extensions: ["fstheme", "theme", "json"], id: "freeshow_theme" }
     ]
+
+    const freeshow_primary_formats = freeshow_formats.filter((format) => ["freeshow", "freeshow_project"].includes(format.id))
+    const freeshow_more_formats = freeshow_formats.filter((format) => ["freeshow_template", "freeshow_action", "freeshow_theme"].includes(format.id))
 
     const text_formats: { name: string; extensions: string[]; id: string; shortcut?: string; tutorial?: string; popup?: Popups }[] = [
         { name: "formats.text", extensions: ["txt"], id: "txt" },
@@ -91,6 +93,22 @@
         activePopup.set("alert")
     }
 
+    function importFreeshowFormat(format: any) {
+        const name = translateText(format.name)
+        sendMain(Main.IMPORT, { channel: format.id, format: { ...format, name } })
+        displayTutorial(format)
+    }
+
+    // function openCalendar() {
+    //     activeDrawerTab.set("calendar")
+    //     activePage.set("show")
+    //     activePopup.set(null)
+    // }
+
+    // function openScripture() {
+    //     activePopup.set("import_scripture")
+    // }
+
     let openedPage = ""
 </script>
 
@@ -113,6 +131,40 @@
     </div>
 
     <!-- <p class="tip" style="padding-top: 20px;">Making/maintaining our own PPT converter that keeps all of the formatting would be too much work.</p> -->
+{:else if openedPage === "freeshow_more"}
+    <MaterialButton class="popup-back" icon="back" iconSize={1.3} title="actions.back" on:click={() => (openedPage = "")} />
+
+    <div style="display: flex;gap: 5px;">
+        {#each freeshow_more_formats as format}
+            <MaterialButton
+                variant="outlined"
+                title={format.title}
+                style="flex: 1;min-height: 50px;min-width: 280px;padding: 10px;gap: 15px;"
+                on:click={() => {
+                    importFreeshowFormat(format)
+                }}
+            >
+                <Icon style="height: 60px;" id={format.icon} size={2.5} white />
+                <p>{translateText(format.name)}</p>
+
+                <div class="freeshow">
+                    <img style="height: 18px;padding: 0;" src="./import-logos/freeshow.webp" alt="FreeShow-logo" draggable={false} />
+                </div>
+            </MaterialButton>
+        {/each}
+    </div>
+
+    <!-- <div style="display: flex;gap: 5px;margin-top: 10px;">
+        <MaterialButton variant="outlined" style="flex: 1;min-height: 50px;padding: 10px;gap: 15px;" on:click={openCalendar}>
+            <Icon style="height: 60px;" id="calendar" size={2.5} white />
+            <p>{translateText("tabs.calendar")}</p>
+        </MaterialButton>
+
+        <MaterialButton variant="outlined" style="flex: 1;min-height: 50px;padding: 10px;gap: 15px;" on:click={openScripture}>
+            <Icon style="height: 60px;" id="scripture" size={2.5} white />
+            <p>{translateText("tabs.scripture")}</p>
+        </MaterialButton>
+    </div> -->
 {:else if mode === "project"}
     <div style="display: flex;gap: 5px;">
         {#each media_formats.filter((a) => ["pdf", "powerpoint"].includes(a.id)) as format}
@@ -179,15 +231,13 @@
     </MaterialButton>
 {:else}
     <div style="display: flex;gap: 5px;">
-        {#each freeshow_formats as format}
+        {#each freeshow_primary_formats as format}
             <MaterialButton
                 variant="outlined"
                 title={format.title}
                 style="flex: 1;min-height: 50px;padding: 10px;gap: 15px;"
                 on:click={() => {
-                    let name = translateText(format.name)
-                    sendMain(Main.IMPORT, { channel: format.id, format: { ...format, name } })
-                    displayTutorial(format)
+                    importFreeshowFormat(format)
                 }}
             >
                 <Icon style="height: 60px;" id={format.icon} size={2.5} white />
@@ -198,6 +248,11 @@
                 </div>
             </MaterialButton>
         {/each}
+
+        <MaterialButton variant="outlined" style="flex: 1;min-height: 50px;padding: 10px;gap: 5px;" on:click={() => (openedPage = "freeshow_more")}>
+            <p style="opacity: 0.9;">{translateText("create_show.more_options")}</p>
+            <Icon style="opacity: 0.8;height: 60px;margin-right: -15px;" id="next" size={2} white />
+        </MaterialButton>
     </div>
 
     <MaterialButton

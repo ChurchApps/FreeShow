@@ -4,6 +4,8 @@
     import { send } from "../util/socket"
     import { _get, _update, dictionary, password } from "../util/stores"
 
+    const freeshowLogo = new URL("../../../../public/import-logos/freeshow.webp", import.meta.url).href
+
     function submit() {
         const password = _get("password").stored
         _update("password", "stored", password)
@@ -14,7 +16,7 @@
 <div class="auth-page">
     <div class="panel">
         <div class="brand">
-            <img class="logo" src="./import-logos/freeshow.webp" alt="FreeShow logo" draggable="false" />
+            <img class="logo" src={freeshowLogo} alt="FreeShow logo" draggable="false" />
             <h1>RemoteShow</h1>
         </div>
 

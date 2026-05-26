@@ -248,12 +248,38 @@ export function keydown(e: KeyboardEvent) {
  * This ensures shortcuts like Ctrl+Z, Ctrl+C, Ctrl+V work consistently across all keyboard layouts
  */
 const cyrillicRegex = /[\u0400-\u04FF]/
+const latinShortcutRegex = /^[a-z]$/i
+const keyCodeMap: { [code: string]: string } = { KeyA: "a", KeyB: "b", KeyC: "c", KeyD: "d", KeyE: "e", KeyF: "f", KeyG: "g", KeyH: "h", KeyI: "i", KeyJ: "j", KeyK: "k", KeyL: "l", KeyM: "m", KeyN: "n", KeyO: "o", KeyP: "p", KeyQ: "q", KeyR: "r", KeyS: "s", KeyT: "t", KeyU: "u", KeyV: "v", KeyW: "w", KeyX: "x", KeyY: "y", KeyZ: "z" }
+
+type KeyboardNavigator = Navigator & {
+    keyboard?: {
+        getLayoutMap?: () => Promise<{ get(code: string): string | undefined }>
+    }
+}
+
+let keyboardLayoutMap: { get(code: string): string | undefined } | null = null
+const keyboard = typeof navigator === "undefined" ? undefined : (navigator as KeyboardNavigator).keyboard
+keyboard
+    ?.getLayoutMap?.()
+    .then((layoutMap) => (keyboardLayoutMap = layoutMap))
+    .catch(() => null)
+
+function getLayoutMappedShortcutKey(e: KeyboardEvent): string | null {
+    const layoutKey = keyboardLayoutMap?.get(e.code)
+    if (!layoutKey || layoutKey.length !== 1) return null
+
+    if (!latinShortcutRegex.test(layoutKey)) return null
+    return e.shiftKey ? layoutKey.toUpperCase() : layoutKey.toLowerCase()
+}
+
 function shouldNormalizeShortcutKey(e: KeyboardEvent): boolean {
     return e.key.length === 1 && cyrillicRegex.test(e.key)
 }
 
-const keyCodeMap: { [code: string]: string } = { KeyA: "a", KeyB: "b", KeyC: "c", KeyD: "d", KeyE: "e", KeyF: "f", KeyG: "g", KeyH: "h", KeyI: "i", KeyJ: "j", KeyK: "k", KeyL: "l", KeyM: "m", KeyN: "n", KeyO: "o", KeyP: "p", KeyQ: "q", KeyR: "r", KeyS: "s", KeyT: "t", KeyU: "u", KeyV: "v", KeyW: "w", KeyX: "x", KeyY: "y", KeyZ: "z" }
 export function getNormalizedKey(e: KeyboardEvent): string {
+    const layoutMappedKey = getLayoutMappedShortcutKey(e)
+    if (layoutMappedKey) return layoutMappedKey
+
     if (!shouldNormalizeShortcutKey(e)) return e.key
 
     if (!keyCodeMap[e.code]) return e.key
@@ -413,7 +439,7 @@ function createNew() {
     } else if (selectId === "overlay") history({ id: "UPDATE", location: { page: "drawer", id: "overlay" } })
     else if (selectId === "template") history({ id: "UPDATE", location: { page: "drawer", id: "template" } })
     else if (selectId === "global_timer") activePopup.set("timer")
-    else if (["action", "variable", "trigger"].includes(selectId)) activePopup.set(selectId as any)
+    else if (["action", "variable"].includes(selectId)) activePopup.set(selectId as any)
     else if (get(activePage) === "edit") addItem("text")
     else if (get(activePage) === "stage") history({ id: "UPDATE", location: { page: "stage", id: "stage" } })
     else {

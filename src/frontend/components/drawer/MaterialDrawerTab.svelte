@@ -1,7 +1,7 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte"
     import type { SelectIds } from "../../../types/Main"
-    import { actions, activeActionTagFilter, activeDrawerTab, activePlaylist, activeVariableTagFilter, audioPlaylists, drawerTabsData, outputs, templates } from "../../stores"
+    import { actions, activeActionTagFilter, activeDrawerTab, activePlaylist, activeVariableTagFilter, activeTimerTagFilter, audioPlaylists, drawerTabsData, outputs, templates } from "../../stores"
     import { translateText } from "../../utils/language"
     import { customIconsColors } from "../../values/customIcons"
     import { getActionIcon } from "../actions/actions"
@@ -33,7 +33,7 @@
 
     export let active: string
 
-    $: submenuActive = isSubmenu ? (active === "actions" ? $activeActionTagFilter.includes(id) : active === "variables" ? $activeVariableTagFilter.includes(id) : false) : false
+    $: submenuActive = isSubmenu ? (active === "actions" ? $activeActionTagFilter.includes(id) : active === "variables" ? $activeVariableTagFilter.includes(id) : active === "timer" ? $activeTimerTagFilter.includes(id) : false) : false
     $: isActive = submenuActive || active === id
 
     $: output = getFirstActiveOutput($outputs)
@@ -53,6 +53,7 @@
         drawerTabsData.update((a) => {
             a[drawerId].activeSubTab = parentId || id
             if (isSubmenu) a[drawerId].activeSubmenu = id
+            else delete a[drawerId].activeSubmenu
             return a
         })
     }
@@ -65,7 +66,7 @@
         dispatch("rename", { id, value: e.detail.value })
     }
 
-    const defaultFolders = ["all", "unlabeled", "number", "favourites", "effects_library", "effects", "online", "screens", "cameras", "microphones", "audio_streams"]
+    const defaultFolders = ["all", "unlabeled", "number", "favourites", "effects_library", "effects", "online", "inputs"]
     const tabsWithCategories = ["shows", "media", "audio", "overlays", "templates", "scripture"]
 
     $: noEdit = !tabsWithCategories.includes(drawerId) || defaultFolders.includes(id)

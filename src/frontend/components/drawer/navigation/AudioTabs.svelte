@@ -5,7 +5,7 @@
     import { ToMain } from "../../../../types/IPC/ToMain"
     import { AudioPlaylist } from "../../../audio/audioPlaylist"
     import { destroyMain, receiveToMain, requestMain, sendMain } from "../../../IPC/main"
-    import { activeRename, audioFolders, audioPlaylists, audioStreams, drawerTabsData, effectsLibrary, labelsDisabled, media } from "../../../stores"
+    import { activeRename, audioFolders, audioPlaylists, drawerTabsData, effectsLibrary, labelsDisabled, media } from "../../../stores"
     import { getAccess } from "../../../utils/profile"
     import { keysToID, sortObject } from "../../helpers/array"
     import { addDrawerFolder } from "../../helpers/dropActions"
@@ -23,7 +23,6 @@
     $: foldersList = keysToID($audioFolders)
     $: favoritesListLength = Object.values($media).filter((a) => a.audio && a.favourite).length
     $: effectsLength = $effectsLibrary.length
-    $: audioStreamsLength = Object.keys($audioStreams).length
 
     let allCount = 0
     let folderLengths: { [key: string]: number } = {}
@@ -52,7 +51,7 @@
             { id: "all", label: "category.all", icon: "all", count: allCount },
             { id: "favourites", label: "category.favourites", icon: "star", count: favoritesListLength, hidden: !favoritesListLength && activeSubTab !== "favourites" }
         ],
-        [{ id: "microphones", label: "live.microphones", icon: "microphone" }, { id: "audio_streams", label: "live.audio_streams", icon: "audio_stream", count: audioStreamsLength }, "SEPARATOR", { id: "metronome", label: "audio.metronome", icon: "metronome" }],
+        [{ id: "inputs", label: "emitters.inputs", icon: "input" }, "SEPARATOR", { id: "metronome", label: "audio.metronome", icon: "metronome" }],
         [{ id: "effects_library", label: "category.sound_effects", icon: "effect", count: effectsLength, hidden: !effectsLength && activeSubTab !== "effects_library" }],
         [{ id: "TITLE", label: "audio.playlists" }, ...getAudioPlaylists($audioPlaylists)],
         [{ id: "TITLE", label: "media.folders" }, ...convertToButton(foldersList, folderLengths)]

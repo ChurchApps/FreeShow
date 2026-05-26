@@ -61,7 +61,6 @@ import RegexManager from "../components/main/popups/RegexManager.svelte"
 import Rename from "../components/main/popups/Rename.svelte"
 import ResetAll from "../components/main/popups/ResetAll.svelte"
 import Restore from "../components/main/popups/Restore.svelte"
-import ScriptureShow from "../components/main/popups/ScriptureShow.svelte"
 import SelectShow from "../components/main/popups/SelectShow.svelte"
 import SelectStageLayout from "../components/main/popups/SelectStageLayout.svelte"
 import SelectStyle from "../components/main/popups/SelectStyle.svelte"
@@ -71,16 +70,16 @@ import Shortcuts from "../components/main/popups/Shortcuts.svelte"
 import SlideMidi from "../components/main/popups/SlideMidi.svelte"
 import SlideShortcut from "../components/main/popups/SlideShortcut.svelte"
 import SongbeamerImport from "../components/main/popups/SongbeamerImport.svelte"
+import TemplateInfo from "../components/main/popups/TemplateInfo.svelte"
 import TemplateStyleOverrides from "../components/main/popups/TemplateStyleOverrides.svelte"
 import Timecode from "../components/main/popups/Timecode.svelte"
 import TimelineSettings from "../components/main/popups/TimelineSettings.svelte"
 import Timer from "../components/main/popups/Timer.svelte"
 import Transition from "../components/main/popups/Transition.svelte"
-import Trigger from "../components/main/popups/Trigger.svelte"
 import Unsaved from "../components/main/popups/Unsaved.svelte"
+import UpdateManager from "../components/main/popups/UpdateManager.svelte"
 import Variable from "../components/main/popups/Variable.svelte"
 import { activePopup, popupData } from "../stores"
-import TemplateInfo from "../components/main/popups/TemplateInfo.svelte"
 
 export const popups: { [key in Popups]: ComponentType } = {
     initialize: Initialize,
@@ -113,7 +112,6 @@ export const popups: { [key in Popups]: ComponentType } = {
     find_replace: FindReplace,
     timer: Timer,
     variable: Variable,
-    trigger: Trigger,
     audio_stream: AudioStream,
     now_playing: NowPlaying,
     aspect_ratio: AspectRatio,
@@ -123,7 +121,6 @@ export const popups: { [key in Popups]: ComponentType } = {
     metadata_display: MetadataDisplay,
     import_scripture: ImportScripture,
     create_collection: CreateCollection,
-    scripture_show: ScriptureShow,
     edit_event: EditEvent,
     choose_screen: ChooseScreen,
     choose_output: ChooseOutput,
@@ -139,6 +136,7 @@ export const popups: { [key in Popups]: ComponentType } = {
     display_duration: DisplayDuration,
     manage_tags: ManageTags,
     about: About,
+    update_manager: UpdateManager,
     shortcuts: Shortcuts,
     unsaved: Unsaved,
     restore: Restore,

@@ -62,13 +62,14 @@ export let actions: Writable<{ [key: string]: any }> = writable({})
 export let actionTags: Writable<{ [key: string]: any }> = writable({})
 export let variables: Writable<{ [key: string]: any }> = writable({})
 export let variableTags: Writable<{ [key: string]: any }> = writable({})
+export let timerTags: Writable<{ [key: string]: any }> = writable({})
 export let timers: Writable<{ [key: string]: any }> = writable({})
-export let triggers: Writable<{ [key: string]: any }> = writable({})
 export let activeTimers: Writable<any[]> = writable([])
 export let runningActions: Writable<string[]> = writable([])
 
 export let activeActionTagFilter: Writable<string[]> = writable([])
 export let activeVariableTagFilter: Writable<string[]> = writable([])
+export let activeTimerTagFilter: Writable<string[]> = writable([])
 export let functionsSubTab: Writable<string> = writable("actions")
 
 export type CurrentScriptureState = {
@@ -172,12 +173,13 @@ export const _ = {
     actionTags,
     variables,
     variableTags,
+    timerTags,
     timers,
-    triggers,
     activeTimers,
     runningActions,
     activeActionTagFilter,
     activeVariableTagFilter,
+    activeTimerTagFilter,
     functionsSubTab
 }
 

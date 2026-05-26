@@ -269,7 +269,7 @@
                             {#if show.type === "DIVIDER"}
                                 <div style="border-top: 1px solid var(--primary-lighter);margin: 5px 0;"></div>
                             {:else}
-                                <SelectElem id="show" dropAbove={isFirst} triggerOnHover data={{ ...show, name: show.name || removeExtension(getFileName(show.id)), index }} {fileOver} borders="edges" trigger="column" draggable={!isLocked} selectable={!isLocked}>
+                                <SelectElem id="show" dropAbove={isFirst} triggerOnHover data={{ ...show, name: show.name || removeExtension(getFileName(show.id)), index }} {fileOver} borders={show.type === "show_placeholder" ? "all" : "edges"} trigger="column" draggable={!isLocked} selectable={!isLocked}>
                                     {#if show.type === "section"}
                                         <MaterialButton
                                             {isActive}

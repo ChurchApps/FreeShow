@@ -76,7 +76,7 @@
     }
 
     function keyup(e: KeyboardEvent) {
-        if (e.key.includes("Arrow") || e.key === "Home" || e.key === "End" || e.key.toUpperCase() === "A") getTextSelection(e)
+        if (e.key.includes("Arrow") || e.key === "Home" || e.key === "End" || getNormalizedKey(e).toUpperCase() === "A") getTextSelection(e)
     }
 
     const formatting = {

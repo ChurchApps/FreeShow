@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { DrawerTabIds } from "../../../types/Tabs"
-    import { activeDrawerTab, activeEdit, activePage, activePopup, activeProject, activeShow, activeTriggerFunction, dictionary, drawer, drawerOpenedInEdit, drawerTabsData, focusMode, labelsDisabled, os, previousShow, projects, quickTextCache, scriptureSettings, selected } from "../../stores"
+    import { activeDrawerTab, activeEdit, activePage, activePopup, activeProject, activeShow, activeTriggerFunction, dictionary, drawer, drawerOpenedInEdit, drawerTabsData, focusMode, labelsDisabled, os, previousShow, projects, quickTextCache, scriptureSettings, selected, showsCache } from "../../stores"
     import { DEFAULT_DRAWER_HEIGHT, DEFAULT_WIDTH, MENU_BAR_HEIGHT } from "../../utils/common"
     import { translateText } from "../../utils/language"
     import { getAccess } from "../../utils/profile"
@@ -12,6 +12,10 @@
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
     import { selectTextOnFocus } from "../helpers/inputActions"
+    import { setOutput } from "../helpers/output"
+    import { loadShows } from "../helpers/setShow"
+    import { getLayoutRef } from "../helpers/show"
+    import { updateOut } from "../helpers/showActions"
     import T from "../helpers/T.svelte"
     import Button from "../inputs/Button.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
@@ -132,7 +136,7 @@
 
     let firstMatch: null | any = null
     let searchElem: HTMLInputElement | undefined
-    function keydown(e: KeyboardEvent) {
+    async function keydown(e: KeyboardEvent) {
         if ((e.ctrlKey || e.metaKey) && e.key === "f") {
             if ($activePopup === "show" || shouldOpenReplace()) return
             focusSearch()
@@ -150,6 +154,18 @@
             if ($activeDrawerTab !== "shows") return
 
             let match = $activeShow?.data?.searchInput === true ? { id: $activeShow.id } : firstMatch
+
+            // play
+            if (e.ctrlKey || e.metaKey) {
+                const showId = match.id
+                await loadShows([showId])
+                let layoutRef = getLayoutRef(showId)
+                let firstEnabledIndex = layoutRef.findIndex((a) => !a.data.disabled)
+                if (firstEnabledIndex === -1) return
+                updateOut("active", firstEnabledIndex, layoutRef)
+                setOutput("slide", { id: showId, layout: $showsCache[showId].settings.activeLayout, index: firstEnabledIndex })
+                return
+            }
 
             // create from search
             if (match === "SEARCH_CREATE") {

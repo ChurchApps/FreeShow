@@ -1,6 +1,7 @@
 <script>
     import { os } from "../../../stores"
-    import T from "../../helpers/T.svelte"
+    import { translateText } from "../../../utils/language"
+    import HRule from "../../input/HRule.svelte"
 
     const ctrl = $os.platform === "darwin" ? "cmd" : "ctrl"
     const alt = $os.platform === "darwin" ? "option" : "alt"
@@ -74,23 +75,22 @@
         "actions.change_slide": "← / →",
         "actions.change_project_item": "↑ / ↓",
         "actions.change_drawer_item": `${ctrl} + ← / →`,
-        "actions.change_drawer_category": `${ctrl} + ↑ / ↓`
+        "actions.change_drawer_category": `${ctrl} + ↑ / ↓`,
+
+        "tabs.search_tip": "SEPARATOR",
+
+        "context.addToProject": `Enter`,
+        "media.play": `${ctrl} + Enter`
     }
 </script>
 
 <main>
     {#each Object.entries(shortcuts) as [id, shortcut]}
         {#if shortcut === "SEPARATOR"}
-            <hr />
+            <HRule title={id.includes(".") ? translateText(id) : ""} />
         {:else}
             <div>
-                <p>
-                    {#if id.includes(".")}
-                        <T {id} />
-                    {:else}
-                        {id}
-                    {/if}
-                </p>
+                <p>{translateText(id)}</p>
                 <span class="shortcut">{shortcut}</span>
             </div>
         {/if}
@@ -113,16 +113,6 @@
     }
     main div:nth-child(odd) {
         background-color: rgb(0 0 20 / 0.08);
-    }
-
-    hr {
-        background-color: var(--primary-lighter);
-
-        height: 3px;
-        border: none;
-        margin: 10px 0;
-
-        opacity: 0.7;
     }
 
     .shortcut {

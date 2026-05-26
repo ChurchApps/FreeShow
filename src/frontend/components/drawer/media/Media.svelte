@@ -5,17 +5,17 @@
     import type { ClickEvent, FileFolder } from "../../../../types/Main"
     import { requestMain } from "../../../IPC/main"
     import { addProjectItem } from "../../../converters/project"
-    import { activeDrawerTab, activeEdit, activeFocus, activeMediaTagFilter, activePopup, activeShow, audioFolders, drawerTabsData, focusMode, labelsDisabled, media, mediaFolders, mediaOptions, outLocked, outputs, popupData, providerConnections, selectAllMedia, selected, sorted, special } from "../../../stores"
+    import { activeDrawerTab, activeEdit, activeFocus, activeMediaTagFilter, activePopup, activeShow, audioFolders, drawerTabsData, focusMode, labelsDisabled, media, mediaFolders, mediaOptions, outLocked, outputs, popupData, providerConnections, selectAllMedia, selected, sorted, special, styles } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { clone, keysToID, sortFilenames } from "../../helpers/array"
     import { splitPath } from "../../helpers/get"
-    import { countFolderMediaItems, getExtension, getFileName, getMediaType, isMediaExtension, removeExtension } from "../../helpers/media"
+    import { countFolderMediaItems, getExtension, getFileName, getMediaLayerType, getMediaStyle, getMediaType, isMediaExtension, removeExtension } from "../../helpers/media"
     import { getFirstActiveOutput, setOutput } from "../../helpers/output"
     import FloatingInputs from "../../input/FloatingInputs.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialZoom from "../../inputs/MaterialZoom.svelte"
-    import { clearBackground } from "../../output/clear"
+    import { clearBackground, clearSlide } from "../../output/clear"
     import Center from "../../system/Center.svelte"
     import VirtualList from "../VirtualList.svelte"
     import BMDStreams from "../live/BMDStreams.svelte"
@@ -40,7 +40,7 @@
     // type File = { path: string; favourite: boolean; name: string; extension: string; audio: boolean; folder?: boolean; stat?: any }
     // let files: File[] = []
 
-    let specialTabs = ["online", "screens", "cameras"]
+    let specialTabs = ["online", "inputs"]
     $: isProviderSection = contentProviders.some((p) => p.providerId === active)
     $: notFolders = ["all", ...specialTabs, ...contentProviders.map((p) => p.providerId)]
     $: rootPath = notFolders.includes(active || "") ? "" : active !== null ? $mediaFolders[active]?.path || "" : ""
@@ -75,7 +75,7 @@
             return a
         })
 
-        if (active === "screens") screenTab = id
+        if (active === "inputs") inputsTab = id
         else if (active === "online") onlineTab = id
     }
 
@@ -98,7 +98,7 @@
 
     $: activeProviderId = (isProviderSection && active ? active : null) as ContentProviderId | null
 
-    let screenTab = $drawerTabsData.media?.openedSubSubTab?.screens || "screens"
+    let inputsTab = $drawerTabsData.media?.openedSubSubTab?.cameras || "cameras"
     let onlineTab = $drawerTabsData.media?.openedSubSubTab?.online || "youtube"
     $: if (active === "online" && onlineTab === "pixabay" && (searchValue !== null || activeView)) loadFilesAsync()
     $: if (active === "online" && onlineTab === "unsplash" && (searchValue !== null || activeView)) loadFilesAsync()
@@ -268,7 +268,7 @@
 
     let filteredFiles: FileFolder[] = []
     function filterFiles() {
-        if (active === "online" || active === "screens" || active === "cameras" || isProviderSection) return
+        if (active === "online" || active === "inputs" || isProviderSection) return
 
         let localFilteredFiles: FileFolder[] = []
 
@@ -369,22 +369,39 @@
     }
 
     function keydown(e: KeyboardEvent) {
+        if (!fileCount) return
+
         if (e.key === "Enter" && searchValue.length > 1 && e.target?.closest(".search")) {
-            if (fileCount) {
-                // let file = mediaFilesOnly[0] // not updating
-                let file = searchedFiles.filter((a) => !a.isFolder)[0]
-                if (!file) return
+            // let file = mediaFilesOnly[0] // not updating
+            let file = searchedFiles.filter((a) => !a.isFolder)[0]
+            if (!file) return
 
-                // add to project
-                const data = { id: file.path, name: file.name, type: getMediaType(getExtension(file.name)) }
-                addProjectItem(data)
+            // play
+            if (e.ctrlKey || e.metaKey) {
+                const currentOutput = getFirstActiveOutput()
+                const outputStyle = $styles[currentOutput?.style || ""]
+                const mediaStyle = getMediaStyle($media[file.path], outputStyle)
 
-                activeFile = searchedFiles.findIndex((a) => a.path === file.path)
-                if (activeFile < 0) activeFile = null
+                const videoType = getMediaLayerType(file.path, mediaStyle)
+
+                // clear slide text
+                if (videoType === "foreground") clearSlide()
+
+                const type = getMediaType(getExtension(file.path))
+                setOutput("background", { path: file.path, ...mediaStyle, type, loop: false, muted: false })
+                return
             }
+
+            // add to project
+            const data = { id: file.path, name: file.name, type: getMediaType(getExtension(file.name)) }
+            addProjectItem(data)
+
+            activeFile = searchedFiles.findIndex((a) => a.path === file.path)
+            if (activeFile < 0) activeFile = null
+            return
         }
 
-        if (e.target?.closest("input") || e.target?.closest(".edit") || $activeEdit.items.length || !fileCount) return
+        if (e.target?.closest("input") || e.target?.closest(".edit") || $activeEdit.items.length) return
 
         if ((e.ctrlKey || e.metaKey) && shortcuts[e.key]) {
             // e.preventDefault()
@@ -461,21 +478,25 @@
 
 <!-- TABS -->
 
-{#if active === "screens"}
+{#if active === "inputs"}
     <div class="tabs">
-        <MaterialButton style="flex: 1;" isActive={screenTab === "screens"} on:click={() => setSubSubTab("screens")}>
+        <MaterialButton style="flex: 1;" isActive={inputsTab === "cameras"} on:click={() => setSubSubTab("cameras")}>
+            <Icon size={1.2} id="camera" white />
+            <p><T id="live.cameras" /></p>
+        </MaterialButton>
+        <MaterialButton style="flex: 1;" isActive={inputsTab === "screens"} on:click={() => setSubSubTab("screens")}>
             <Icon size={1.2} id="screen" white />
             <p><T id="live.screens" /></p>
         </MaterialButton>
-        <MaterialButton style="flex: 1;" isActive={screenTab === "windows"} on:click={() => setSubSubTab("windows")}>
+        <!-- <MaterialButton style="flex: 1;" isActive={inputsTab === "windows"} on:click={() => setSubSubTab("windows")}>
             <Icon size={1.2} id="window" white />
             <p><T id="live.windows" /></p>
-        </MaterialButton>
-        <MaterialButton style="flex: 1;" isActive={screenTab === "ndi"} on:click={() => setSubSubTab("ndi")}>
+        </MaterialButton> -->
+        <MaterialButton style="flex: 1;" isActive={inputsTab === "ndi"} on:click={() => setSubSubTab("ndi")}>
             <Icon size={1.1} id="ndi" white />
             <p>NDI</p>
         </MaterialButton>
-        <MaterialButton style="flex: 1;" isActive={screenTab === "blackmagic"} on:click={() => setSubSubTab("blackmagic")}>
+        <MaterialButton style="flex: 1;" isActive={inputsTab === "blackmagic"} on:click={() => setSubSubTab("blackmagic")}>
             <Icon size={1.2} id="blackmagic" white />
             <p>Blackmagic</p>
         </MaterialButton>
@@ -522,30 +543,28 @@
             </div>
         {:else if active === "online" && onlineTab === "canva"}
             <Canva />
-        {:else if active === "screens"}
+        {:else if active === "inputs"}
             <div class="gridgap">
-                {#if screenTab === "screens"}
-                    <Screens bind:streams />
-                {:else if screenTab === "ndi"}
-                    <NDIStreams />
-                {:else if screenTab === "blackmagic"}
-                    <BMDStreams />
-                {:else}
-                    <Windows bind:streams {searchValue} />
-                {/if}
-            </div>
-        {:else if active === "cameras"}
-            <div class="gridgap">
-                <Cameras
-                    on:click={({ detail }) => {
-                        let e = detail.event
-                        let cam = detail.cam
+                {#if inputsTab === "cameras"}
+                    <Cameras
+                        on:click={({ detail }) => {
+                            let e = detail.event
+                            let cam = detail.cam
 
-                        if ($outLocked || e.ctrlKey || e.metaKey) return
-                        if (currentOutput?.out?.background?.id === cam.id) clearBackground()
-                        else setOutput("background", { name: cam.name, id: cam.id, cameraGroup: cam.cameraGroup, type: "camera" })
-                    }}
-                />
+                            if ($outLocked || e.ctrlKey || e.metaKey) return
+                            if (currentOutput?.out?.background?.id === cam.id) clearBackground()
+                            else setOutput("background", { name: cam.name, id: cam.id, cameraGroup: cam.cameraGroup, type: "camera" })
+                        }}
+                    />
+                {:else if inputsTab === "screens"}
+                    <Screens bind:streams />
+                    <div style="width: 100%;height: 10px;" />
+                    <Windows bind:streams {searchValue} />
+                {:else if inputsTab === "ndi"}
+                    <NDIStreams />
+                {:else if inputsTab === "blackmagic"}
+                    <BMDStreams />
+                {/if}
             </div>
         {:else if searchedFiles.length}
             <div class="context #media" style="display: contents;">
@@ -644,7 +663,7 @@
     {/if}
 
     <MaterialZoom hidden columns={$mediaOptions.columns} defaultValue={5} on:change={(e) => mediaOptions.set({ ...$mediaOptions, columns: e.detail })} />
-{:else if active === "screens" || active === "cameras"}
+{:else if active === "inputs"}
     <!-- nothing -->
 
     <MaterialZoom hidden columns={$mediaOptions.columns} defaultValue={5} on:change={(e) => mediaOptions.set({ ...$mediaOptions, columns: e.detail })} />

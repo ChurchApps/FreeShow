@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { AccessType, Profile } from "../../../../types/Main"
     import { SettingsTabs } from "../../../../types/Tabs"
-    import { actions, actionTags, activeProfile, categories, folders, overlayCategories, profiles, selectedProfile, special, stageShows, templateCategories, variableTags } from "../../../stores"
+    import { actions, actionTags, activeProfile, categories, folders, overlayCategories, profiles, selectedProfile, special, stageShows, templateCategories, variableTags, timerTags } from "../../../stores"
     import { newToast } from "../../../utils/common"
     import { translateText } from "../../../utils/language"
     import { promptCustom } from "../../../utils/popup"
@@ -117,12 +117,11 @@
     $: actionsList = sortByName(keysToID($actionTags)).filter((a) => a.name)
     $: actionsAccess = currentProfile.access.actions || {}
 
+    $: timersList = sortByName(keysToID($timerTags)).filter((a) => a.name)
     $: timersAccess = currentProfile.access.timers || {}
 
     $: variablesList = sortByName(keysToID($variableTags)).filter((a) => a.name)
     $: variablesAccess = currentProfile.access.variables || {}
-
-    $: triggersAccess = currentProfile.access.triggers || {}
 
     $: stageList = sortByName(keysToID($stageShows)).filter((a) => a.name)
     $: stageAccess = currentProfile.access.stage || {}
@@ -143,10 +142,8 @@
         // WIP SCRIPTURE?
         // WIP CALENDAR?
         { id: "actions", label: "tabs.actions", icon: "actions", access: actionsAccess, options: accessInputsRW, list: actionsList },
-        // WIP TIMERS (TAGS)
-        { id: "timers", label: "tabs.timers", icon: "timer", access: timersAccess, options: accessInputsRW, list: [] },
+        { id: "timers", label: "tabs.timers", icon: "timer", access: timersAccess, options: accessInputsRW, list: timersList },
         { id: "variables", label: "tabs.variables", icon: "variable", access: variablesAccess, options: accessInputsRW, list: variablesList },
-        { id: "triggers", label: "tabs.triggers", icon: "trigger", access: triggersAccess, options: accessInputsRW, list: [] },
         { id: "stage", label: "menu.stage", icon: "stage", access: stageAccess, options: accessInputsRW, list: stageList },
         { id: "settings", label: "menu.settings", icon: "settings", access: settingsAccess, options: [], list: settingsList }
     ]

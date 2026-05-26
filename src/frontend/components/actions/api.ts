@@ -18,7 +18,7 @@ import { pauseAllTimers } from "../drawer/timers/timers"
 import { getSlideThumbnail, getThumbnail } from "../helpers/media"
 import { changeStageOutputLayout, startCamera, startScreen, startStreaming, stopStreaming, toggleOutputs } from "../helpers/output"
 import { OutputHelper } from "../helpers/OutputHelper"
-import { activateTriggerSync, changeOutputStyle, playSlideTimers, randomSlide, replaceDynamicValues, selectProjectShow, sendMidi, startShowSync } from "../helpers/showActions"
+import { changeOutputStyle, playSlideTimers, randomSlide, replaceDynamicValues, selectProjectShow, sendMidi, startShowSync } from "../helpers/showActions"
 import { startTimerById, startTimerByName, stopTimers } from "../helpers/timerTick"
 import { muteOutput, unmuteOutput } from "../helpers/video"
 import { clearAll, clearBackground, clearDrawing, clearOverlay, clearOverlays, clearSlide, clearTimers, restoreOutput } from "../output/clear"
@@ -314,7 +314,6 @@ export const API_ACTIONS = {
 
     // FUNCTIONS
     change_variable: (data: API_variable) => changeVariable(data), // BC
-    start_trigger: (data: API_id) => activateTriggerSync(data.id),
 
     // DRAW
     change_draw_zoom: (data: API_draw_zoom) => changeDrawZoom(data),

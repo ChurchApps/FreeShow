@@ -34,6 +34,17 @@ const DEFAULT_CAMERA_CONSTRAINTS: MediaTrackConstraints = {
     // facingMode: { exact: "user" }
 }
 
+const PREVIEW_CAMERA_CONSTRAINTS: MediaTrackConstraints = {
+    ...DEFAULT_CAMERA_CONSTRAINTS,
+    width: { ideal: 640 },
+    height: { ideal: 360 },
+    frameRate: { ideal: 15, max: 24 }
+}
+
+interface CameraStreamOptions {
+    preview?: boolean
+}
+
 class CameraManager {
     private activeCameras: Map<string, ActiveCamera> = new Map()
     private readonly MAX_RETRIES = 3
@@ -51,6 +62,28 @@ class CameraManager {
 
     getStartupCameras(): string[] {
         return get(special).startupCameras || []
+    }
+
+    private updateBadCameras(update: (cameraIds: string[]) => string[]) {
+        special.update((a) => {
+            const badCameras = Array.isArray(a.cameraBad) ? a.cameraBad : []
+            a.cameraBad = update(badCameras)
+            return a
+        })
+    }
+
+    markBadCamera(cameraId: string) {
+        if (!cameraId) return
+        this.updateBadCameras((badCameras) => (badCameras.includes(cameraId) ? badCameras : [...badCameras, cameraId]))
+    }
+
+    clearBadCamera(cameraId: string) {
+        if (!cameraId) return
+        this.updateBadCameras((badCameras) => badCameras.filter((id) => id !== cameraId))
+    }
+
+    private isTimeoutErrorMessage(message: string) {
+        return /timeout/i.test(message || "")
     }
 
     private async getCameraFromId(cameraId: string) {
@@ -73,9 +106,7 @@ class CameraManager {
         }
 
         const camerasToWarm = allCameras.filter((camera) => selectedCameraIds.includes(camera.id))
-        for (const camera of camerasToWarm) {
-            await this.warmUpCamera(camera)
-        }
+        await Promise.allSettled(camerasToWarm.map((camera) => this.warmUpCamera(camera)))
 
         this.startKeepaliveMonitor()
     }
@@ -200,15 +231,19 @@ class CameraManager {
         await this.warmUpCamera(camera, { retryCount, lastError })
     }
 
-    async getCameraStream(cameraId: string, groupId?: string) {
+    async getCameraStream(cameraId: string, groupId?: string, { preview = false }: CameraStreamOptions = {}) {
         // get existing "warmed" camera
         const warmStream = this.getWarmCamera(cameraId)
-        if (warmStream) return warmStream
+        if (warmStream) {
+            this.clearBadCamera(cameraId)
+            return warmStream
+        }
 
         groupId = groupId || (await this.getCameraFromId(cameraId))?.group
+        const constraints = preview ? PREVIEW_CAMERA_CONSTRAINTS : DEFAULT_CAMERA_CONSTRAINTS
         const cameraProperties = {
             video: {
-                ...DEFAULT_CAMERA_CONSTRAINTS,
+                ...constraints,
                 deviceId: { exact: cameraId },
                 groupId
             }
@@ -216,6 +251,7 @@ class CameraManager {
 
         try {
             const stream = await navigator.mediaDevices.getUserMedia(cameraProperties)
+            this.clearBadCamera(cameraId)
             return stream
         } catch (err) {
             let msg: string = err.message
@@ -225,6 +261,7 @@ class CameraManager {
             }
 
             const error = err.name + ":<br />" + msg
+            if (this.isTimeoutErrorMessage(error)) this.markBadCamera(cameraId)
             return error
         }
     }

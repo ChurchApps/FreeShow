@@ -7,6 +7,7 @@
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
     import Link from "../../inputs/Link.svelte"
+    import CanvaInfo from "./CanvaInfo.svelte"
     import InfoMetadata from "./InfoMetadata.svelte"
 
     $: active = $drawerTabsData.media?.openedSubSubTab?.online || "youtube"
@@ -36,6 +37,8 @@
             <T id="inputs.close_ad" />
         </Button>
     {/if}
+{:else if active === "canva"}
+    <CanvaInfo />
 {:else if active === $photoApiCredits.type}
     {#if $photoApiCredits.photo !== undefined}
         <div style="flex: 1;margin-bottom: 25px;">

@@ -92,13 +92,14 @@ export async function exportProject(project: Project, projectId: string, savePat
         }
     }
 
-    const projectItems = project.shows
+    const projectItems = clone(project.shows || [])
+    projectItems.forEach((showRef) => delete showRef.played)
 
     // load shows
     const showIds = projectItems.filter((a) => (a.type || "show") === "show").map((a) => a.id)
     await loadShows(showIds)
 
-    projectItems.map(getItem)
+    projectItems.forEach(getItem)
 
     // remove duplicates
     files = [...new Set(files)]

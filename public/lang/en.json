@@ -20,6 +20,7 @@
         "show": "Show",
         "project": "Project",
         "template": "Template",
+        "action": "Action",
         "theme": "Theme",
         "clipboard": "Clipboard",
         "text": "Text file"
@@ -84,7 +85,6 @@
     },
     "tips": {
         "show_add_project": "Press enter to add to project",
-        "trigger": "Triggers are commonly used to send a HTTP request to change the preset of cameras.",
         "global_options": "These options are applied globally.",
         "consider_templates": "You made the same changes to multiple slides. Consider using a template.",
         "category_template": "This show is in a category that has a template set, which will overwrite any changes you make.",
@@ -514,6 +514,7 @@
         "player": "Player",
         "edit_event": "Edit event",
         "about": "About",
+        "update_manager": "Update manager",
         "history": "History",
         "action_history": "Action history",
         "manage_emitters": "Manage emitters",
@@ -584,6 +585,7 @@
         "one_output": "You have to have at least one active output!",
         "empty_cache": "Cache is empty.",
         "deleted_cache": "Deleted media thumbnail cache.",
+        "canva_exporting": "Exporting Canva presentation. This can take some time...",
         "no_songswords_easyworship": "Missing SongsWords.db file.",
         "delete_shows_empty": "No shows to delete.",
         "reached_end": "Reached the end!",
@@ -925,7 +927,8 @@
         "replace_tip": "Replace local data with cloud data initially, merge normally afterwards.",
         "local": "Local",
         "syncing": "Syncing to cloud",
-        "sync_complete": "Sync completed"
+        "sync_complete": "Sync completed",
+        "restore_weekly_backup": "Restore sync state from a week ago"
     },
     "export": {
         "export": "Export",
@@ -1505,6 +1508,7 @@
         "verses_on_individual_lines": "Verses on individual lines",
         "divide_long_verses": "Split long verses",
         "split_long_verses_suffix": "Show letter suffix",
+        "smart_split": "Smart split",
         "tolerance": "Tolerance",
         "version": "Show version",
         "reference": "Show reference",

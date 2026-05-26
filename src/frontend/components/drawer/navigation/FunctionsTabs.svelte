@@ -1,12 +1,13 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import { actions, actionTags, activeActionTagFilter, activeVariableTagFilter, drawerTabsData, variables, variableTags } from "../../../stores"
+    import { actions, actionTags, activeActionTagFilter, activeVariableTagFilter, drawerTabsData, variables, variableTags, timers, timerTags, activeTimerTagFilter } from "../../../stores"
     import { getAccess } from "../../../utils/profile"
     import { keysToID, sortByName, sortObject } from "../../helpers/array"
     import NavigationSections from "./NavigationSections.svelte"
 
     const actionsAccess = getAccess("actions")
     const variablesAccess = getAccess("variables")
+    const timersAccess = getAccess("timers")
 
     $: activeSubTab = $drawerTabsData.functions?.activeSubTab || ""
 
@@ -30,12 +31,23 @@
         count: variablesTagsOnly.filter((b) => b.includes(a.id)).length
     }))
 
+    $: timersTagsOnly = Object.values($timers).map((a) => a?.tags || [])
+    $: visibleTimerTags = sortObject(sortByName(keysToID($timerTags)), "color").filter((a) => timersAccess[a.id] !== "none")
+    $: sortedTimers = visibleTimerTags.map((a) => ({
+        ...a,
+        label: a.name,
+        icon: "tag",
+        openTrigger: (id, add) => activeTimerTagFilter.set([...(add ? $activeTimerTagFilter : []), id]),
+        count: timersTagsOnly.filter((b) => b.includes(a.id)).length
+    }))
+
     onMount(() => {
         // const hiddenActionTags = new Set(keysToID($actionTags).filter((a) => actionsAccess[a.id] === "none").map((a) => a.id))
         // const hiddenVariableTags = new Set(keysToID($variableTags).filter((a) => variablesAccess[a.id] === "none").map((a) => a.id))
 
         if ($activeActionTagFilter.length) activeActionTagFilter.set($activeActionTagFilter.filter((tagId) => visibleActionTags.some((tag) => tag.id === tagId)))
         if ($activeVariableTagFilter.length) activeVariableTagFilter.set($activeVariableTagFilter.filter((tagId) => visibleVariableTags.some((tag) => tag.id === tagId)))
+        if ($activeTimerTagFilter.length) activeTimerTagFilter.set($activeTimerTagFilter.filter((tagId) => visibleTimerTags.some((tag) => tag.id === tagId)))
     })
 
     let sections: any[] = []
@@ -53,7 +65,19 @@
                       }
                   ]
               ]),
-        [{ id: "timer", label: "tabs.timers", icon: "timer" }],
+        ...(timersAccess.global === "none"
+            ? []
+            : [
+                  [
+                      {
+                          id: "timer",
+                          label: "tabs.timers",
+                          icon: "timer",
+                          openTrigger: () => activeTimerTagFilter.set([]),
+                          submenu: { options: sortedTimers }
+                      }
+                  ]
+              ]),
         ...(variablesAccess.global === "none"
             ? []
             : [
@@ -67,7 +91,6 @@
                       }
                   ]
               ]),
-        [{ id: "triggers", label: "tabs.triggers", icon: "trigger" }],
         [{ id: "obs", label: "OBS Studio", icon: "player" }]
     ]
 </script>

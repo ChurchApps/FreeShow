@@ -15,7 +15,7 @@ import { ondrop } from "../helpers/drop"
 import { dropActions } from "../helpers/dropActions"
 import { history } from "../helpers/history"
 import { setDrawerTabData } from "../helpers/historyHelpers"
-import { getExtension, getFileName, getMediaLayerType, getMediaStyle, getMediaType, removeExtension } from "../helpers/media"
+import { encodeFilePath, getExtension, getFileName, getMediaLayerType, getMediaStyle, getMediaType, removeExtension } from "../helpers/media"
 import { getActiveOutputs, getAllActiveOutputs, getAllEnabledOutputs, getCurrentStyle, getFirstActiveOutput, isOutCleared, setOutput } from "../helpers/output"
 import { setRandomValue } from "../helpers/randomValue"
 import { loadShows, setShow } from "../helpers/setShow"
@@ -160,7 +160,7 @@ export async function startProjectItemByName(name: string) {
     } else if (item.type === "pdf") {
         // get PDF data
         GlobalWorkerOptions.workerSrc = "./assets/pdf.worker.min.mjs"
-        const loadingTask = getDocument(item.id)
+        const loadingTask = getDocument(encodeFilePath(item.id))
         const pdfDoc = await loadingTask.promise
         const pages = pdfDoc.numPages
         loadingTask.destroy()
@@ -898,7 +898,7 @@ export async function getPDFThumbnails({ path }: API_media) {
     const totalPercent = 100
 
     GlobalWorkerOptions.workerSrc = "./assets/pdf.worker.min.mjs"
-    const loadingTask = getDocument(path)
+    const loadingTask = getDocument(encodeFilePath(path))
     const pdfDoc = await loadingTask.promise
     const pageCount = pdfDoc.numPages
 

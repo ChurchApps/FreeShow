@@ -547,11 +547,9 @@ function getMenubarItems() {
 const drawerSubmenus = [
     // media
     { id: "online", name: "media.online", icon: "web" },
-    { id: "screens", name: "live.screens", icon: "screen", aliases: ["live.windows", "NDI®"] },
-    { id: "cameras", name: "live.cameras", icon: "camera" },
+    { id: "media_inputs", name: "emitters.inputs", icon: "input", aliases: ["live.screens", "live.windows", "NDI®", "live.cameras"] },
     // audio
-    { id: "microphones", name: "live.microphones", icon: "microphone" },
-    { id: "audio_streams", name: "live.audio_streams", icon: "audio_stream" },
+    { id: "audio_inputs", name: "emitters.inputs", icon: "input", aliases: ["live.microphones", "live.audio_streams"] },
     // overlays
     { id: "effects", name: "tabs.effects", icon: "effect" },
     // calendar
@@ -559,8 +557,7 @@ const drawerSubmenus = [
     // functions
     { id: "actions", name: "tabs.actions", icon: "actions", aliases: ["-Macros"] },
     { id: "timer", name: "tabs.timers", icon: "timer" },
-    { id: "variables", name: "tabs.variables", icon: "variable" },
-    { id: "triggers", name: "tabs.triggers", icon: "trigger" }
+    { id: "variables", name: "tabs.variables", icon: "variable" }
 ]
 
 function getDrawerSubmenus() {
@@ -583,8 +580,7 @@ const popups = [
     { id: "action", name: "new.action", icon: "add", data: { drawerTab: "actions" }, aliases: ["-New macro"] },
     { id: "timer", name: "new.timer", icon: "add", data: { drawerTab: "timer" } },
     { id: "variable", name: "new.variable", icon: "add", data: { drawerTab: "variables" } },
-    { id: "trigger", name: "new.trigger", icon: "add", data: { drawerTab: "triggers" } },
-    { id: "audio_stream", name: "new.audio_stream", icon: "add", data: { drawerTab: "audio_streams" } },
+    { id: "audio_stream", name: "new.audio_stream", icon: "add", data: { drawerTab: "audio_inputs" } },
     { id: "output", name: "settings.new_output", icon: "add", data: { settingsTab: "display_settings" } },
     { id: "style", name: "new.style", icon: "add", data: { settingsTab: "styles" } },
     { id: "profile", name: "new.profile", icon: "add", data: { settingsTab: "profiles" } },

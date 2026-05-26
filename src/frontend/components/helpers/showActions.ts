@@ -20,17 +20,17 @@ import { getCurrentTimerValue, getTimeUntilClock, playPauseGlobal } from "../dra
 import { getDynamicValue } from "../edit/scripts/itemHelpers"
 import { getTextLines } from "../edit/scripts/textStyle"
 import { clearBackground, clearOverlays, clearTimers } from "../output/clear"
-import { activeEdit, activeFocus, activePage, activeProject, activeShow, allOutputs, audioData, customMetadata, dictionary, dynamicValueData, focusMode, media, outLocked, outputDisplay, outputs, overlays, playingAudio, playingMetronome, projects, shows, showsCache, slideTimers, special, stageShows, styles, templates, timers, triggers, variables, videosData, videosTime } from "./../../stores"
+import { activeEdit, activeFocus, activePage, activeProject, activeShow, allOutputs, audioData, customMetadata, dictionary, dynamicValueData, focusMode, media, outLocked, outputDisplay, outputs, overlays, playingAudio, playingMetronome, projects, shows, showsCache, slideTimers, special, stageShows, styles, templates, timers, variables, videosData, videosTime } from "./../../stores"
 import { clone, keysToID, sortByName } from "./array"
-import { downloadOnlineMedia, getExtension, getFileName, getMedia, getMediaStyle, getMediaType, removeExtension } from "./media"
+import { downloadOnlineMedia, encodeFilePath, getExtension, getFileName, getMedia, getMediaStyle, getMediaType, removeExtension } from "./media"
 import { defaultLayers, getActiveOutputs, getAllNormalOutputs, getFirstActiveOutput, getFirstOutput, getWindowOutputId, isOutCleared, refreshOut, setOutput, startFolderTimer } from "./output"
+import { OutputHelper } from "./OutputHelper"
 import { getSetChars } from "./randomValue"
 import { loadShows } from "./setShow"
 import { getCustomMetadata, getGroupName, getLayoutRef } from "./show"
 import { _show } from "./shows"
 import { addZero, getMonthName, getWeekday, joinTime, joinTimeBig, secondsToTime } from "./time"
 import { stopTimers } from "./timerTick"
-import { OutputHelper } from "./OutputHelper"
 
 const getProjectIndex = {
     next: (index: number | null, items: ProjectShowRef[]) => {
@@ -174,7 +174,7 @@ export async function playPdf(data: OutSlide | null, next: boolean, loop = false
     if (!data?.id || data?.type !== "pdf") return
 
     GlobalWorkerOptions.workerSrc = "./assets/pdf.worker.min.mjs"
-    const loadingTask = getDocument(data.id)
+    const loadingTask = getDocument(encodeFilePath(data.id))
     const pdfDoc = await loadingTask.promise
     const pages = pdfDoc.numPages
     loadingTask.destroy()
@@ -308,6 +308,9 @@ export function updateOut(showId: string, index: number, layout: LayoutRef[], ex
             })
         }
 
+        // nextTimer - start next slide timer immediately before any awaits
+        nextSlideTimers(outputId)
+
         // background
         if (background && (isSlideBg || _show(showId).get("media")?.[background])) {
             const bg = isSlideBg ? { path: background } : _show(showId).get("media")[background]
@@ -389,9 +392,6 @@ export function updateOut(showId: string, index: number, layout: LayoutRef[], ex
             }, 200)
         }
 
-        // nextTimer
-        nextSlideTimers(outputId)
-
         // DEPRECATED since <= 1.1.6, but still in use
         // actions per output
         if (data.actions) {
@@ -408,7 +408,6 @@ export function updateOut(showId: string, index: number, layout: LayoutRef[], ex
         if (data.actions.clearAudio) clearAudio()
 
         // startShow is at the top
-        if (data.actions.trigger) activateTrigger(data.actions.trigger)
         if (data.actions.audioStream) AudioPlayer.start(data.actions.audioStream, { name: "" })
         // if (data.actions.sendMidi) sendMidi(_show(showId).get("midi")[data.actions.sendMidi])
         // if (data.actions.nextAfterMedia) // go to next when video/audio is finished
@@ -678,40 +677,6 @@ export function playSlideTimers({ showId = "active", slideId = "", overlayIds = 
 
 export function sendMidi(data: any) {
     sendMain(Main.SEND_MIDI, data)
-}
-
-export function activateTriggerSync(triggerId: string) {
-    activateTrigger(triggerId)
-}
-
-export async function activateTrigger(triggerId: string): Promise<string> {
-    const trigger = get(triggers)[triggerId]
-    if (!trigger) return ""
-
-    if (!customTriggers[trigger.type]) {
-        console.error("Missing trigger:", trigger.type)
-        return "error"
-    }
-
-    return customTriggers[trigger.type](trigger.value)
-}
-
-const customTriggers = {
-    http: (value: string): Promise<string> => {
-        return new Promise((resolve) => {
-            fetch(value, { method: "GET" })
-                .then((r) => {
-                    if (!r.ok) return resolve("error")
-                    resolve("success")
-                })
-                // .then((response) => response.json())
-                // .then((json) => console.log(json))
-                .catch((err) => {
-                    console.error("Could not send HTTP request:", err)
-                    resolve("error")
-                })
-        })
-    }
 }
 
 // DYNAMIC VALUES

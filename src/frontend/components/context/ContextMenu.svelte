@@ -143,6 +143,7 @@
         if (id === "player_tag_filter") return $contextData.player_tags
         if (id === "action_tag_filter") return $contextData.action_tags
         if (id === "variable_tag_filter") return $contextData.variable_tags
+        if (id === "timer_tag_filter") return $contextData.timer_tags
 
         return true
     }

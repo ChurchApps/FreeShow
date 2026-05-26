@@ -17,8 +17,6 @@ export function getLikelyPosition(currentItems: (Item | StageItem)[], defaultSty
     const resolution = getOutputResolution(outputId)
     const SLIDE_WIDTH = resolution.width
     const SLIDE_HEIGHT = resolution.height
-    const ALIGN_THRESHOLD = 80
-
     const rects = (currentItems || [])
         .map((it) => {
             const style = getStyles(it?.style || defaultStyleStr)
@@ -73,30 +71,13 @@ export function getLikelyPosition(currentItems: (Item | StageItem)[], defaultSty
     const MIN_W = 80
     const MIN_H = 40
 
-    // unified helper: given a candidate, try to place it, snap-align if close, or find orthogonal gaps and resize to fit
+    // unified helper: given a candidate, try to place it, or find gaps on its axis and resize to fit
     function tryPlaceCandidate(c: { x: number; y: number; w: number; h: number; axis: "x" | "y" }, r: { left: number; top: number; width: number; height: number }) {
         const cx = Math.max(margin, Math.min(SLIDE_WIDTH - c.w - margin, c.x))
         const cy = Math.max(margin, Math.min(SLIDE_HEIGHT - c.h - margin, c.y))
 
-        const centerXOfR = r.left + Math.floor(r.width / 2)
-        const centerYOfR = r.top + Math.floor(r.height / 2)
-
-        const centeredX = Math.abs(cx + c.w / 2 - centerXOfR) <= ALIGN_THRESHOLD
-        const centeredY = Math.abs(cy + c.h / 2 - centerYOfR) <= ALIGN_THRESHOLD
-
-        // snap to exact alignment if close
-        if (centeredX) {
-            const alignedY = Math.max(margin, Math.min(SLIDE_HEIGHT - c.h - margin, c.y))
-            if (!overlaps(cx, alignedY, c.w, c.h)) return `top:${alignedY}px;left:${cx}px;height:${c.h}px;width:${c.w}px;`
-        }
-        if (centeredY) {
-            const alignedX = Math.max(margin, Math.min(SLIDE_WIDTH - c.w - margin, c.x))
-            if (!overlaps(alignedX, cy, c.w, c.h)) return `top:${cy}px;left:${alignedX}px;height:${c.h}px;width:${c.w}px;`
-        }
-
         if (!overlaps(cx, cy, c.w, c.h)) return `top:${cy}px;left:${cx}px;height:${c.h}px;width:${c.w}px;`
 
-        // find orthogonal gaps and try to resize to fit
         const blocked = blockedIntervalsForSpan(c.axis === "x" ? cy : cx, c.axis === "x" ? cy + c.h : cx + c.w, c.axis)
         let last = 0
         const gaps: { s: number; e: number }[] = []
@@ -110,10 +91,12 @@ export function getLikelyPosition(currentItems: (Item | StageItem)[], defaultSty
 
         if (!gaps.length) return null
 
-        // WIP this should prioritize the center of the other items instead of just aligning to the corners often
-
+        const centerXOfR = r.left + Math.floor(r.width / 2)
+        const centerYOfR = r.top + Math.floor(r.height / 2)
         const centerOfR = c.axis === "x" ? centerXOfR : centerYOfR
+        
         gaps.sort((a, b) => Math.abs((a.s + a.e) / 2 - centerOfR) - Math.abs((b.s + b.e) / 2 - centerOfR))
+        
         for (const g of gaps) {
             const span = g.e - g.s
             if (span >= MIN) {
@@ -137,10 +120,10 @@ export function getLikelyPosition(currentItems: (Item | StageItem)[], defaultSty
         const desiredW = r.width || defaultW
         const desiredH = r.height || defaultH
         const candidates = [
-            { x: Math.round(r.left + (r.width - desiredW) / 2), y: r.top + r.height + margin, w: desiredW, h: desiredH, axis: "x" as const },
-            { x: Math.round(r.left + (r.width - desiredW) / 2), y: r.top - desiredH - margin, w: desiredW, h: desiredH, axis: "x" as const },
-            { x: r.left + r.width + margin, y: Math.round(r.top + (r.height - desiredH) / 2), w: desiredW, h: desiredH, axis: "y" as const },
-            { x: r.left - desiredW - margin, y: Math.round(r.top + (r.height - desiredH) / 2), w: desiredW, h: desiredH, axis: "y" as const }
+            { x: Math.round(r.left + (r.width - desiredW) / 2), y: r.top + r.height + margin, w: desiredW, h: desiredH, axis: "y" as const },
+            { x: Math.round(r.left + (r.width - desiredW) / 2), y: r.top - desiredH - margin, w: desiredW, h: desiredH, axis: "y" as const },
+            { x: r.left + r.width + margin, y: Math.round(r.top + (r.height - desiredH) / 2), w: desiredW, h: desiredH, axis: "x" as const },
+            { x: r.left - desiredW - margin, y: Math.round(r.top + (r.height - desiredH) / 2), w: desiredW, h: desiredH, axis: "x" as const }
         ]
 
         for (const c of candidates) {

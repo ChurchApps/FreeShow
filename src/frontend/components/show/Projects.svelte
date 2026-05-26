@@ -317,7 +317,7 @@
     }
 </script>
 
-<svelte:window on:keydown={checkInput} on:mousedown={mousedown} on:dragenter={dragStart} on:dragstart={dragStart} on:dragend={dragEnd} on:drop={dragEnd} />
+<svelte:window on:keydown={checkInput} on:mousedown={mousedown} on:dragenter={dragStart} on:dragstart={dragStart} on:dragend={dragEnd} on:drop={dragEnd} on:mouseup={dragEnd} />
 
 <div class="main" class:focusMode={$focusMode}>
     <span class="tabs">

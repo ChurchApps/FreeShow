@@ -10,7 +10,7 @@ import type { Event } from "../types/Calendar"
 import type { Draw, DrawLine, DrawSettings, DrawTools } from "../types/Draw"
 import type { Effects } from "../types/Effects"
 import type { History, HistoryNew } from "../types/History"
-import type { ActiveEdit, Clipboard, Media, MediaOptions, NumberObject, OS, Popups, Profiles, Selected, SlidesOptions, Trigger, Variable } from "../types/Main"
+import type { ActiveEdit, Clipboard, Media, MediaOptions, NumberObject, OS, Popups, Profiles, Selected, SlidesOptions, Variable } from "../types/Main"
 import type { Folders, Projects, ShowRef } from "../types/Projects"
 import type { Dictionary, Styles, Themes } from "../types/Settings"
 import type { Action, Emitter, ID, Overlays, ShowGroups, ShowList, Shows, ShowType, SlideTimer, Tag, Templates, Timer, Transition, TrimmedShows } from "../types/Show"
@@ -20,13 +20,13 @@ import type { BibleCategories, Categories, DrawerTabs, SettingsTabs, TopViews } 
 import type { AudioChannel, AudioChannelData, AudioStream, Playlist } from "./../types/Audio"
 import type { Outputs } from "./../types/Output"
 import type { DrawerTabIds } from "./../types/Tabs"
+import type { AudioData } from "./audio/audioPlayer"
 import type { CompressorConfig } from "./audio/effects/audioCompressor"
 import type { DelayConfig } from "./audio/effects/audioDelay"
 import type { EQBand, EqualizerConfig } from "./audio/effects/audioEqualizer"
 import type { FilterConfig } from "./audio/effects/audioFilter"
 import type { LimiterConfig } from "./audio/effects/audioLimiter"
 import type { NoiseGateConfig } from "./audio/effects/audioNoiseGate"
-import type { AudioData } from "./audio/audioPlayer"
 import type { ReverbConfig } from "./audio/effects/audioReverb"
 import type { StereoShaperConfig } from "./audio/effects/audioStereoShaper"
 import type { API_metronome } from "./components/actions/api"
@@ -77,6 +77,7 @@ export const focusedArea: Writable<string> = writable("")
 export const activeAnimate: Writable<any> = writable({ slide: -1, index: -1 })
 export const allOutputs: Writable<Outputs> = writable({}) // stage data in output windows
 export const activeScripture: Writable<{ id?: string; reference?: { book: number | string; chapters: (number | string)[]; verses: (number | string)[][] } }> = writable({})
+export const activeCanvaPresentation: Writable<{ designId: string; presentationName: string; slideCount?: number; thumbnail?: string; providerId?: ContentProviderId } | null> = writable(null)
 export const activeTriggerFunction: Writable<string> = writable("")
 export const guideActive: Writable<boolean> = writable(false)
 export const runningActions: Writable<string[]> = writable([])
@@ -102,6 +103,7 @@ export const activeMediaTagFilter: Writable<string[]> = writable([])
 export const activePlayerTagFilter: Writable<string[]> = writable([])
 export const activeActionTagFilter: Writable<string[]> = writable([])
 export const activeVariableTagFilter: Writable<string[]> = writable([])
+export const activeTimerTagFilter: Writable<string[]> = writable([])
 
 // CALENDAR
 export const activeDays: Writable<number[]> = writable([])
@@ -163,6 +165,7 @@ export const audioData: Writable<{ [key: string]: { metadata: ICommonTagsResult 
 export const customScriptureBooks: Writable<{ [key: string]: string[] }> = writable({})
 export const scriptureHistoryUsed: Writable<boolean> = writable(false)
 export const actionRevealUsed: Writable<boolean> = writable(false)
+export const actionMoreOptionsUsed: Writable<boolean> = writable(false)
 export const dynamicValuesRevealUsed: Writable<boolean> = writable(false)
 export const groupsMoreOptionsEnabled: Writable<boolean> = writable(false)
 
@@ -241,9 +244,6 @@ export const timers: Writable<{ [key: string]: Timer }> = writable({}) // {}
 // VARIABLES
 export const variables: Writable<{ [key: string]: Variable }> = writable({}) // {}
 
-// TRIGGERS
-export const triggers: Writable<{ [key: string]: Trigger }> = writable({}) // {}
-
 // MEDIA
 export const media: Writable<Media> = writable({}) // {}
 export const mediaFolders: Writable<Categories> = writable({}) // {default}
@@ -309,7 +309,8 @@ export const scriptureSettings: Writable<any> = writable({
     splitLongVerses: false,
     longVersesChars: 100,
     longVersesTolerance: 0,
-    splitLongVersesSuffix: false
+    splitLongVersesSuffix: false,
+    smartSplit: true
 }) // {default}
 
 // DRAWER
@@ -323,6 +324,7 @@ export const mediaTags: Writable<{ [key: string]: Tag }> = writable({}) // {}
 export const playerTags: Writable<{ [key: string]: Tag }> = writable({}) // {}
 export const actionTags: Writable<{ [key: string]: Tag }> = writable({}) // {}
 export const variableTags: Writable<{ [key: string]: Tag }> = writable({}) // {}
+export const timerTags: Writable<{ [key: string]: Tag }> = writable({}) // {}
 
 // OTHER
 export const resized: Writable<NumberObject> = writable({ leftPanel: 290, rightPanel: 290, leftPanelDrawer: 290, rightPanelDrawer: 290 }) // {default}
@@ -438,7 +440,6 @@ export const $ = {
     folders,
     timers,
     variables,
-    triggers,
     media,
     mediaFolders,
     effects,

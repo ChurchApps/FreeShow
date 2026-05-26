@@ -3,6 +3,7 @@
     import type { Transition } from "../../../../types/Show"
     import OutputTransition from "../transitions/OutputTransition.svelte"
     import { onDestroy } from "svelte"
+    import { encodeFilePath } from "../../helpers/media"
 
     export let slide
     export let currentStyle
@@ -29,7 +30,7 @@
 
         if (loadedPath !== path) {
             if (loadingTask) loadingTask.destroy()
-            loadingTask = getDocument(path)
+            loadingTask = getDocument(encodeFilePath(path))
             loadedDoc = await loadingTask.promise
         }
         if (!loadedDoc) return

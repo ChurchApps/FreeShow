@@ -14,6 +14,10 @@ export class EffectRender {
     height = 1080
     doublePI = Math.PI * 2
     effectData = new WeakMap<EffectItem, any>()
+    isPreview = false
+    private animFrameId = 0
+    // Cache for star glow gradients: key = "radius", value = CanvasGradient
+    private glowCache = new Map<string, CanvasGradient>()
 
     TYPES: Record<string, EffectDefinition> = {}
 
@@ -28,6 +32,7 @@ export class EffectRender {
         this.canvas = canvas
         this.ctx = canvas.getContext("2d")!
         this.setItems(items)
+        this.isPreview = isPreview
 
         this.autoRegisterEffects(effectTypes)
 
@@ -45,17 +50,21 @@ export class EffectRender {
         this.frame(0, true)
 
         const loop = (time: number) => {
-            const deltaTime = this.lastTime ? time - this.lastTime : 1
+            if (!this.running) return // stop the rAF chain; stop() also calls cancelAnimationFrame
+            // Clamp deltaTime to 100ms to prevent physics explosion after tab switch
+            const rawDelta = this.lastTime ? time - this.lastTime : 16
+            const deltaTime = Math.min(rawDelta, 100)
             this.lastTime = time
 
-            if (this.running) this.frame(deltaTime / 16) // 1
-            requestAnimationFrame(loop)
+            this.frame(deltaTime / 16)
+            this.animFrameId = requestAnimationFrame(loop)
         }
-        requestAnimationFrame(loop)
+        this.animFrameId = requestAnimationFrame(loop)
     }
 
     stop() {
         this.running = false
+        cancelAnimationFrame(this.animFrameId)
     }
 
     private setItems(items: EffectItem[]) {
@@ -63,10 +72,27 @@ export class EffectRender {
     }
 
     updateItems(items: EffectItem[], _noFrameChange = false) {
+        const filteredNew = items.filter((a) => !a.hidden)
+        const filteredOld = this.items
+
+        for (let i = 0; i < Math.min(filteredOld.length, filteredNew.length); i++) {
+            const oldItem = filteredOld[i]
+            const newItem = filteredNew[i]
+            if (oldItem && newItem && oldItem.type === newItem.type) {
+                const data = this.effectData.get(oldItem)
+                if (data !== undefined) {
+                    this.effectData.set(newItem, data)
+                }
+            }
+        }
+
         this.setItems(items)
 
         // if (noFrameChange) return
         this.frame(0, true)
+        if (this.isPreview) {
+            this.frame(1)
+        }
     }
 
     frame(deltaTime: number, init = false) {
@@ -284,6 +310,15 @@ export class EffectRender {
         const maxRadius = item.size * 2
         const speed = item.speed ?? 1
 
+        const existing = this.effectData.get(item)
+        if (existing && existing.length === item.count) {
+            for (const star of existing) {
+                star.radius = this.randomNumber(minRadius, maxRadius)
+                star.alphaChange = speed * this.randomNumber(0.0001, 0.005) * (star.alphaChange < 0 ? -1 : 1)
+            }
+            return
+        }
+
         const stars = Array.from({ length: item.count }, () => ({
             x: this.getRandomPosX(),
             y: this.getRandomPosY(),
@@ -307,8 +342,23 @@ export class EffectRender {
 
             ctx.globalAlpha = star.alpha
 
-            this.setGlow(x, y, glowRadius)
-            this.circle(x, y, glowRadius)
+            // Cache radial gradient by radius to avoid creating thousands of gradient objects per second
+            const cacheKey = glowRadius.toFixed(1)
+            let grad = this.glowCache.get(cacheKey)
+            if (!grad) {
+                grad = ctx.createRadialGradient(0, 0, 0, 0, 0, glowRadius)
+                grad.addColorStop(0, "white")
+                grad.addColorStop(1, "transparent")
+                this.glowCache.set(cacheKey, grad)
+            }
+            // Translate so the cached gradient (centred at 0,0) lands on the star
+            ctx.save()
+            ctx.translate(x, y)
+            ctx.fillStyle = grad
+            ctx.beginPath()
+            ctx.arc(0, 0, glowRadius, 0, this.doublePI)
+            ctx.fill()
+            ctx.restore()
 
             // update star flashing
             star.alpha += star.alphaChange
@@ -422,8 +472,12 @@ export class EffectRender {
         this.ctx.globalAlpha = 1
 
         if (item.nebula) {
-            const positionedNebula = nebula.map((a) => ({ ...a, x: centerX + a.offsetX, y: centerY + a.offsetY }))
-            this.drawStaticNebula(positionedNebula)
+            // Update nebula positions in-place to avoid allocating 6 new objects every frame
+            for (const a of nebula) {
+                a.x = centerX + a.offsetX
+                a.y = centerY + a.offsetY
+            }
+            this.drawStaticNebula(nebula)
         }
     }
 
@@ -438,6 +492,16 @@ export class EffectRender {
 
     initRain(item: RainItem) {
         if (!item.color) item.color = "rgba(173,216,230,0.5)"
+
+        const existing = this.effectData.get(item)
+        if (existing && existing.length === item.count) {
+            for (const drop of existing) {
+                drop.speed = item.speed * this.randomNumber(0.5, 1)
+                drop.length = item.length * this.randomNumber(0.5, 1)
+            }
+            return
+        }
+
         const drops = Array.from({ length: item.count }, () => ({
             x: this.getRandomPosX(),
             y: this.getRandomPosY(),
@@ -456,17 +520,18 @@ export class EffectRender {
         ctx.strokeStyle = item.color
         ctx.lineWidth = item.width
 
+        // Batch all drops into a single path + one stroke call instead of per-drop stroke
+        ctx.beginPath()
         for (const drop of drops) {
-            ctx.beginPath()
             ctx.moveTo(drop.x, drop.y)
             ctx.lineTo(drop.x, drop.y + drop.length)
-            ctx.stroke()
 
             // move
             drop.y += drop.speed * deltaTime
 
             this.checkOffscreen(drop)
         }
+        ctx.stroke()
     }
 
     /// SNOW ///
@@ -474,6 +539,16 @@ export class EffectRender {
     initSnow(item: SnowItem) {
         if (!item.color) item.color = "#ffffff"
         const drift = item.drift ?? 0.5
+
+        const existing = this.effectData.get(item)
+        if (existing && existing.length === item.count) {
+            for (const flake of existing) {
+                flake.size = item.size * this.randomNumber(0.5, 1.5)
+                flake.speed = item.speed * 0.5 * this.randomNumber(0.5, 1.5)
+                flake.drift = drift * this.randomNumber(-0.5, 0.5)
+            }
+            return
+        }
 
         const snowflakes = Array.from({ length: item.count }, () => ({
             x: this.getRandomPosX(),
@@ -511,6 +586,16 @@ export class EffectRender {
     /// BUBBLES ///
 
     initBubbles(item: BubbleItem) {
+        const existing = this.effectData.get(item)
+        if (existing && existing.length === item.count) {
+            for (const bubble of existing) {
+                bubble.radius = Math.random() * item.size + (item.maxSizeVariation ?? 10)
+                bubble.pulseSpeed = Math.random() * ((item.pulseSpeed || 1) * 0.0002) + 0.0001
+                bubble.speed = item.speed * this.randomNumber(0.2, 0.7)
+            }
+            return
+        }
+
         const bubbles = Array.from({ length: item.count }, () => {
             return {
                 x: this.getRandomPosX(),
@@ -560,6 +645,17 @@ export class EffectRender {
         const windStrength = item.windStrength ?? 0.5
         const windSpeed = item.speed ?? 1
 
+        const existing = this.effectData.get(item)
+        if (existing && existing.blades && existing.blades.length === item.count) {
+            for (const blade of existing.blades) {
+                blade.height = baseHeight * (1 + (Math.random() - 0.5) * heightVar)
+                blade.segments = Math.max(3, Math.floor(blade.height / 15))
+                blade.maxSway = windStrength * (blade.height / baseHeight) * 15
+                blade.windSpeed = windSpeed * (0.8 + Math.random() * 0.4)
+            }
+            return
+        }
+
         const blades = Array.from({ length: item.count }, (_, i) => {
             const x = (this.width / item.count) * i + Math.random() * (this.width / item.count)
             const height = baseHeight * (1 + (Math.random() - 0.5) * heightVar)
@@ -575,7 +671,7 @@ export class EffectRender {
             }
         })
 
-        this.effectData.set(item, { blades, time: 0 })
+        this.effectData.set(item, { blades, time: existing ? existing.time : 0 })
     }
 
     drawGrass(item: GrassItem, deltaTime: number) {
@@ -591,77 +687,60 @@ export class EffectRender {
         ctx.lineJoin = "round"
 
         const baseY = this.getOffsetY(item.offset ?? 1)
+        const baseWidth = (item.width ?? 2) * 2
+
+        // Compute gradient-related values once per frame, not once per blade.
+        // All blades share the same baseColor so darkerColor is stable across blades.
+        const rgb = this.hexToRgb(baseColor) || { r: 74, g: 124, b: 89 }
+        const darkerColor = `rgb(${Math.max(0, rgb.r - 30)}, ${Math.max(0, rgb.g - 30)}, ${Math.max(0, rgb.b - 20)})`
 
         for (const blade of blades) {
             const windSway = Math.sin(data.time * blade.windSpeed + blade.windOffset) * blade.maxSway
             const windSway2 = Math.sin(data.time * blade.windSpeed * 1.3 + blade.windOffset) * blade.maxSway * 0.3
 
-            const baseWidth = (item.width ?? 2) * 2 // Base width at bottom
-            const points: any[] = []
-
-            // Generate points for the triangular grass blade
-            for (let i = 0; i <= blade.segments; i++) {
-                const progress = i / blade.segments
-                const y = baseY - blade.height * progress
-
-                // Apply wind effect - more sway at the top
-                const swayAmount = windSway * progress * progress + windSway2 * progress
-                const x = blade.x + swayAmount
-
-                // Add slight curve for more natural look
-                const curve = Math.sin(progress * Math.PI) * 1.5
-
-                // Calculate width at this point (triangular taper)
-                const widthAtPoint = baseWidth * (1 - progress * 0.95) // Tapers to 5% at top
-
-                points.push({
-                    x: x + curve,
-                    y,
-                    width: widthAtPoint
-                })
-            }
-
-            // Create gradient from dark bottom to lighter top
+            // Create gradient per-blade (blade heights differ), but reuse the pre-computed colors
             const gradient = ctx.createLinearGradient(blade.x, baseY, blade.x, baseY - blade.height)
-
-            // Parse the base color and create darker version for bottom
-            const rgb = this.hexToRgb(baseColor) || { r: 74, g: 124, b: 89 }
-            const darkerColor = `rgb(${Math.max(0, rgb.r - 30)}, ${Math.max(0, rgb.g - 30)}, ${Math.max(0, rgb.b - 20)})`
-
             gradient.addColorStop(0, darkerColor) // Darker at bottom
-            gradient.addColorStop(1, baseColor) // Original color at top
-
+            gradient.addColorStop(1, baseColor)   // Original color at top
             ctx.fillStyle = gradient
 
-            // Draw the triangular grass blade using a path
+            // Draw the triangular grass blade using a path.
+            // Points are computed inline to avoid allocating a temporary array per blade.
             ctx.beginPath()
 
-            // Start at bottom left
+            // Left side going up
             ctx.moveTo(blade.x - baseWidth / 2, baseY)
-
-            // Draw left side going up
-            for (let i = 1; i < points.length; i++) {
-                const point = points[i]
-                ctx.lineTo(point.x - point.width / 2, point.y)
+            for (let i = 1; i <= blade.segments; i++) {
+                const progress = i / blade.segments
+                const y = baseY - blade.height * progress
+                const swayAmount = windSway * progress * progress + windSway2 * progress
+                const x = blade.x + swayAmount + Math.sin(progress * Math.PI) * 1.5
+                const halfW = baseWidth * (1 - progress * 0.95) / 2
+                ctx.lineTo(x - halfW, y)
             }
 
-            // Draw tip
-            const tip = points[points.length - 1]
-            ctx.lineTo(tip.x, tip.y - 1)
-
-            // Draw right side going down
-            for (let i = points.length - 2; i >= 1; i--) {
-                const point = points[i]
-                ctx.lineTo(point.x + point.width / 2, point.y)
+            // Tip
+            {
+                const swayAmount = windSway + windSway2
+                const tipX = blade.x + swayAmount + Math.sin(Math.PI) * 1.5
+                ctx.lineTo(tipX, baseY - blade.height - 1)
             }
 
-            // Close at bottom right
+            // Right side going down
+            for (let i = blade.segments - 1; i >= 1; i--) {
+                const progress = i / blade.segments
+                const y = baseY - blade.height * progress
+                const swayAmount = windSway * progress * progress + windSway2 * progress
+                const x = blade.x + swayAmount + Math.sin(progress * Math.PI) * 1.5
+                const halfW = baseWidth * (1 - progress * 0.95) / 2
+                ctx.lineTo(x + halfW, y)
+            }
+
             ctx.lineTo(blade.x + baseWidth / 2, baseY)
             ctx.closePath()
-
             ctx.fill()
 
-            // Optional: Add a subtle stroke for definition
+            // Subtle stroke for definition
             ctx.lineWidth = 0.5
             ctx.globalAlpha = 0.7
             ctx.stroke()
@@ -693,15 +772,18 @@ export class EffectRender {
     }
 
     wave(item: Required<WaveItem>) {
+        const ctx = this.ctx
+        // Hoist the constant factor outside the tight loop
+        const twoPIoverWL = (2 * Math.PI) / item.wavelength
         if (item.side === "left" || item.side === "right") {
+            const baseX = this.getOffsetX(item.offset, item.side)
             for (let y = 0; y <= this.height; y++) {
-                const x = this.getOffsetX(item.offset, item.side) + item.amplitude * Math.sin((y / item.wavelength) * 2 * Math.PI + item.phase)
-                this.line(x, y)
+                ctx.lineTo(baseX + item.amplitude * Math.sin(y * twoPIoverWL + item.phase), y)
             }
         } else {
+            const baseY = this.getOffsetY(item.offset, item.side)
             for (let x = 0; x <= this.width; x++) {
-                const y = this.getOffsetY(item.offset, item.side) + item.amplitude * Math.sin((x / item.wavelength) * 2 * Math.PI + item.phase)
-                this.line(x, y)
+                ctx.lineTo(x, baseY + item.amplitude * Math.sin(x * twoPIoverWL + item.phase))
             }
         }
     }
@@ -1064,6 +1146,15 @@ export class EffectRender {
         const size = item.size ?? 100
         const discs: any[] = []
 
+        const existing = this.effectData.get(item)
+        if (existing && existing.discs && existing.discs.length === flareDiscNum + 1) {
+            for (let i = 0; i < existing.discs.length; i++) {
+                const j = i - flareDiscNum / 2
+                existing.discs[i].dia = Math.pow(Math.abs(10 * (j / flareDiscNum)), 2) * 3 + (size + 10) + (Math.random() * size - size)
+            }
+            return
+        }
+
         for (let i = 0; i <= flareDiscNum; i++) {
             const j = i - flareDiscNum / 2
             const offsetRatio = (j / flareDiscNum) * 2
@@ -1177,10 +1268,11 @@ export class EffectRender {
     /// LIGHTNING ///
 
     initLightning(item: LightningItem) {
+        const existing = this.effectData.get(item)
         this.effectData.set(item, {
-            nextStrike: performance.now() + this.randomNumber(1000 / item.frequency, 2000 / item.frequency),
-            flashAlpha: 0,
-            strikePath: []
+            nextStrike: existing ? existing.nextStrike : performance.now() + this.randomNumber(1000 / item.frequency, 2000 / item.frequency),
+            flashAlpha: existing ? existing.flashAlpha : 0,
+            strikePath: existing ? existing.strikePath : []
         })
     }
 
@@ -1242,15 +1334,79 @@ export class EffectRender {
         const outerRadius = this.height * 1.5
         const bandWidth = item.bandWidth ?? 30
 
-        const rainbowColors = ["rgba(255, 0, 0, 0.4)", "rgba(255, 165, 0, 0.4)", "rgba(255, 255, 0, 0.4)", "rgba(0, 128, 0, 0.4)", "rgba(0, 0, 255, 0.4)", "rgba(75, 0, 130, 0.4)", "rgba(238, 130, 238, 0.4)"]
+        ctx.save()
+        // Add a gentle blur to blend the colors realistically, mirroring atmospheric dispersion
+        ctx.filter = "blur(8px)"
 
-        for (let i = 0; i < rainbowColors.length; i++) {
-            ctx.beginPath()
-            ctx.strokeStyle = rainbowColors[i]
-            ctx.lineWidth = bandWidth
-            ctx.arc(centerX, centerY, outerRadius - i * bandWidth, Math.PI, 2 * Math.PI, false)
-            ctx.stroke()
-        }
+        // --- SECONDARY BOW (DOUBLE RAINBOW) ---
+        // A secondary rainbow is concentric, wider (1.25x), with reversed colors and highly muted opacity (~18% of primary)
+        const secondaryOuterRadius = outerRadius * 1.25
+        const secondaryInnerRadius = secondaryOuterRadius - 7 * bandWidth
+        const secondaryRStart = secondaryInnerRadius - 1.5 * bandWidth
+        const secondaryREnd = secondaryOuterRadius + 1.5 * bandWidth
+        const secondaryTotalSpan = secondaryREnd - secondaryRStart
+
+        const secondaryGrad = ctx.createRadialGradient(
+            centerX,
+            centerY,
+            Math.max(0, secondaryRStart),
+            centerX,
+            centerY,
+            Math.max(0, secondaryREnd)
+        )
+
+        // Double rainbow colors are reversed (Red on the inside, Violet on the outside) and very subtle
+        secondaryGrad.addColorStop(0.0, "rgba(255, 0, 0, 0)") // inner edge fade
+        secondaryGrad.addColorStop(0.15, "rgba(255, 0, 0, 0.08)") // red
+        secondaryGrad.addColorStop(0.25, "rgba(255, 127, 0, 0.07)") // orange
+        secondaryGrad.addColorStop(0.35, "rgba(255, 255, 0, 0.07)") // yellow
+        secondaryGrad.addColorStop(0.45, "rgba(0, 200, 0, 0.06)") // green
+        secondaryGrad.addColorStop(0.55, "rgba(0, 0, 255, 0.06)") // blue
+        secondaryGrad.addColorStop(0.65, "rgba(75, 0, 130, 0.07)") // indigo
+        secondaryGrad.addColorStop(0.75, "rgba(148, 0, 211, 0.07)") // violet
+        secondaryGrad.addColorStop(0.85, "rgba(148, 0, 211, 0.01)") // outer edge start fade
+        secondaryGrad.addColorStop(1.0, "rgba(148, 0, 211, 0)") // outer edge fade
+
+        ctx.beginPath()
+        ctx.strokeStyle = secondaryGrad
+        ctx.lineWidth = secondaryTotalSpan
+        ctx.arc(centerX, centerY, secondaryRStart + secondaryTotalSpan / 2, Math.PI, 2 * Math.PI, false)
+        ctx.stroke()
+
+        // --- PRIMARY BOW ---
+        const innerRadius = outerRadius - 7 * bandWidth
+        const rStart = innerRadius - 1.5 * bandWidth
+        const rEnd = outerRadius + 1.5 * bandWidth
+        const totalSpan = rEnd - rStart
+
+        const primaryGrad = ctx.createRadialGradient(
+            centerX,
+            centerY,
+            Math.max(0, rStart),
+            centerX,
+            centerY,
+            Math.max(0, rEnd)
+        )
+
+        // Primary rainbow colors: Violet on the inside, Red on the outside, with soft atmospheric fading
+        primaryGrad.addColorStop(0.0, "rgba(148, 0, 211, 0)") // inner edge fade
+        primaryGrad.addColorStop(0.15, "rgba(148, 0, 211, 0.35)") // violet
+        primaryGrad.addColorStop(0.25, "rgba(75, 0, 130, 0.35)") // indigo
+        primaryGrad.addColorStop(0.35, "rgba(0, 0, 255, 0.30)") // blue
+        primaryGrad.addColorStop(0.45, "rgba(0, 200, 0, 0.30)") // green
+        primaryGrad.addColorStop(0.55, "rgba(255, 255, 0, 0.35)") // yellow
+        primaryGrad.addColorStop(0.65, "rgba(255, 127, 0, 0.35)") // orange
+        primaryGrad.addColorStop(0.75, "rgba(255, 0, 0, 0.40)") // red
+        primaryGrad.addColorStop(0.85, "rgba(255, 0, 0, 0.10)") // outer edge start fade
+        primaryGrad.addColorStop(1.0, "rgba(255, 0, 0, 0)") // outer edge fade
+
+        ctx.beginPath()
+        ctx.strokeStyle = primaryGrad
+        ctx.lineWidth = totalSpan
+        ctx.arc(centerX, centerY, rStart + totalSpan / 2, Math.PI, 2 * Math.PI, false)
+        ctx.stroke()
+
+        ctx.restore()
     }
 
     /// SPOT LIGHT ///
@@ -1288,7 +1444,9 @@ export class EffectRender {
     }
 
     initSpotlight(item: SpotlightItem) {
-        this.effectData.set(item, { swayPhase: Math.random() * this.doublePI })
+        const existing = this.effectData.get(item)
+        const swayPhase = existing && !isNaN(existing.swayPhase) ? existing.swayPhase : Math.random() * this.doublePI
+        this.effectData.set(item, { swayPhase })
     }
 
     drawSpotlight(item: SpotlightItem, deltaTime: number) {
@@ -1296,9 +1454,20 @@ export class EffectRender {
         const data = this.effectData.get(item)
         if (!data) return
 
-        data.swayPhase += item.swaySpeed * deltaTime * 0.016
+        const swaySpeed = isNaN(item.swaySpeed) || item.swaySpeed === undefined || item.swaySpeed === null ? 0 : item.swaySpeed
+        const swayAmplitude = isNaN(item.swayAmplitude) || item.swayAmplitude === undefined || item.swayAmplitude === null ? 0 : item.swayAmplitude
+        const length = isNaN(item.length) || item.length === undefined || item.length === null ? 2000 : item.length
+        const baseWidth = isNaN(item.baseWidth) || item.baseWidth === undefined || item.baseWidth === null ? 1000 : item.baseWidth
+
+        if (length <= 0 || baseWidth <= 0) return
+
+        if (data.swayPhase === undefined || data.swayPhase === null || isNaN(data.swayPhase)) {
+            data.swayPhase = Math.random() * this.doublePI
+        }
+
+        data.swayPhase += swaySpeed * deltaTime * 0.016
         // pendulum sway
-        const swayAngle = Math.sin(data.swayPhase) * item.swayAmplitude
+        const swayAngle = Math.sin(data.swayPhase) * swayAmplitude
         // motor turn
         // const t = (data.swayPhase / Math.PI) % 2
         // const triangular = t < 1 ? t : 2 - t
@@ -1306,8 +1475,7 @@ export class EffectRender {
 
         const baseX = this.getOffsetX(item.x)
         const baseY = this.getOffsetY(item.y)
-        const length = item.length
-        const baseHalf = item.baseWidth / 2
+        const baseHalf = baseWidth / 2
 
         ctx.save()
         ctx.translate(baseX, baseY)
@@ -1316,7 +1484,10 @@ export class EffectRender {
         const baseColor = item.color
 
         const safeGradient = this.createSafeRadialGradient(ctx, 0, 0, 0, length * 0.9)
-        if (!safeGradient) return
+        if (!safeGradient) {
+            ctx.restore()
+            return
+        }
         const gradient = safeGradient.gradient
         this.setColorStops(gradient, [
             [0, this.colorWithOpacity(baseColor, 0.3)],
@@ -1357,6 +1528,19 @@ export class EffectRender {
         const maxHeight = this.height * 0.25 // top 25%
         const bands: any[] = []
 
+        const existing = this.effectData.get(item)
+        if (existing && existing.bands && existing.bands.length === bandCount) {
+            existing.bufferScale = 0.25
+            for (let i = 0; i < bandCount; i++) {
+                existing.bands[i].amplitude = item.amplitude * (0.8 + Math.random() * 0.4)
+                existing.bands[i].wavelength = item.wavelength * (0.8 + Math.random() * 0.4)
+                existing.bands[i].speed = item.speed * (0.5 + Math.random())
+                existing.bands[i].colorStops = item.colorStops ?? ["#00ffcc", "#00ffb7", "#00ff88"]
+                existing.bands[i].opacity = item.opacity ?? 0.25
+            }
+            return
+        }
+
         for (let i = 0; i < bandCount; i++) {
             bands.push({
                 phase: Math.random() * this.doublePI,
@@ -1371,53 +1555,123 @@ export class EffectRender {
             })
         }
 
-        this.effectData.set(item, bands)
+        const bufferScale = 0.25
+        const bufferCanvas = document.createElement("canvas")
+        bufferCanvas.width = this.width * bufferScale
+        bufferCanvas.height = this.height * bufferScale
+        const bufferCtx = bufferCanvas.getContext("2d")!
+
+        this.effectData.set(item, {
+            bands,
+            bufferCanvas,
+            bufferCtx,
+            bufferScale
+        })
     }
 
     drawAurora(item: AuroraItem, deltaTime: number) {
         const ctx = this.ctx
-        const bands = this.effectData.get(item) || []
+        const data = this.effectData.get(item)
+        if (!data || !data.bands) return
 
-        ctx.save()
-        ctx.globalCompositeOperation = "lighter"
-        ctx.filter = "blur(8px)"
+        const { bands, bufferCanvas, bufferCtx, bufferScale } = data
 
-        for (const band of bands) {
+        // Clear the offscreen buffer on every frame
+        bufferCtx.clearRect(0, 0, bufferCanvas.width, bufferCanvas.height)
+
+        bufferCtx.save()
+        bufferCtx.globalCompositeOperation = "lighter"
+
+        for (let i = 0; i < bands.length; i++) {
+            const band = bands[i]
             if (this.running) {
                 band.phase += band.speed * 0.01 * deltaTime
                 band.bottomPhase += band.speed * 0.01 * deltaTime * 0.8 // slightly different speed for bottom wave
             }
 
-            // Horizontal gradient from left (0) to right (canvas.width)
-            const gradient = ctx.createLinearGradient(0, 0, this.width, 0)
-            for (let i = 0; i < band.colorStops.length; i++) {
-                gradient.addColorStop(i / (band.colorStops.length - 1), band.colorStops[i])
-            }
-
-            ctx.fillStyle = gradient
-            ctx.globalAlpha = band.opacity
-
-            ctx.beginPath()
+            // Calculate depth-based scaling to simulate realistic atmospheric distance layers
+            // Furthest bands (lower index) are dimmer and have narrower curtains
+            const depthProgress = (i + 1) / bands.length // scales from e.g. 0.33 to 1.0
+            const depthOpacity = 0.65 + 0.35 * depthProgress
+            const depthWidthScale = 0.75 + 0.25 * depthProgress
 
             const offsetY = band.offsetY + this.getOffsetY(item.offset ?? 0.2) - band.amplitude * 2.5
 
-            // Top edge wave (left -> right)
-            ctx.moveTo(0, offsetY)
-            for (let x = 0; x <= this.width; x += 2) {
-                const y = offsetY + band.amplitude * band.noise2D(x / band.wavelength, band.phase)
-                ctx.lineTo(x, y)
+            // Determine vertical boundaries of this band for gradient mapping
+            const minY = offsetY - band.amplitude * 1.5
+            const maxY = offsetY + band.amplitude * 3.5
+
+            // Create a vertical altitude-dependent color gradient for realistic ionization layers:
+            // 1. Extreme altitudes: ionization fades out completely into transparent deep purple/red.
+            // 2. Mid-upper altitudes: transitions to the user's primary selected color at low-to-medium opacity.
+            // 3. Low altitudes: sharp, highly ionized oxygen emission (user's final color) at full opacity.
+            const gradient = bufferCtx.createLinearGradient(0, minY * bufferScale, 0, maxY * bufferScale)
+
+            const colors = band.colorStops
+            const numStops = colors.length
+
+            // Realistic vertical color stops:
+            // Top edge (extreme altitude) fades out into a faint violet/purple ionization glow
+            gradient.addColorStop(0.0, "rgba(147, 51, 234, 0)")
+            gradient.addColorStop(0.08, "rgba(147, 51, 234, 0.35)")
+
+            // Middle bodies: distribute user's color stops organically with high opacity towards the bottom
+            for (let j = 0; j < numStops; j++) {
+                const stopPos = 0.15 + 0.7 * (j / Math.max(1, numStops - 1))
+                // Middle has robust opacity (0.7 to 1.0)
+                const opacity = 0.7 + 0.3 * (j / Math.max(1, numStops - 1))
+                gradient.addColorStop(stopPos, this.colorWithOpacity(colors[j], opacity * depthOpacity))
             }
 
-            // Bottom edge wave (right -> left), related but randomized with different phase
-            for (let x = this.width; x >= 0; x -= 2) {
-                const y = offsetY + band.amplitude * 2 + band.amplitude * band.noise2D(x / band.wavelength, band.bottomPhase)
-                ctx.lineTo(x, y)
-            }
+            // Bottom edge (lowest altitude): sharp, highly intense emission (final user color) at full opacity
+            gradient.addColorStop(1.0, this.colorWithOpacity(colors[numStops - 1], 1.0 * depthOpacity))
 
-            ctx.closePath()
-            ctx.fill()
+            // Draw shimmering vertical light curtains onto offscreen canvas using the vertical gradient
+            bufferCtx.strokeStyle = gradient
+
+            // On a 480px wide canvas, stepping by 4 gives 120 lines. Very smooth and performant.
+            const step = 4
+            // Hoist performance.now() outside the column loop — the shimmer value is the same
+            // for all columns within a single band in a given frame.
+            const shimmerTime = performance.now() * 0.003 * band.speed
+            const baseOpacity = band.opacity ?? 0.25
+            for (let x = 0; x <= bufferCanvas.width; x += step) {
+                const originalX = x / bufferScale
+
+                const topY = (offsetY + band.amplitude * band.noise2D(originalX / band.wavelength, band.phase)) * bufferScale
+                const bottomY = (offsetY + band.amplitude * 2.5 + band.amplitude * band.noise2D(originalX / band.wavelength, band.bottomPhase)) * bufferScale
+
+                // 1. Slow, majestic horizontal curtain streaks
+                const rayNoise = band.noise2D(originalX / 40, band.phase * 1.2)
+
+                // 2. High-frequency micro-shimmer
+                const microShimmer = band.noise2D(originalX / 15, shimmerTime) * 0.15
+
+                // Apply baseline vibrancy booster of 1.8x to prevent washed-out curtains
+                const rayOpacity = Math.max(0, baseOpacity * 1.8 * (0.35 + 0.65 * rayNoise + microShimmer))
+
+                bufferCtx.globalAlpha = rayOpacity
+                // Modulate ray width organically, scaling down for offscreen and applying depth-based perspective
+                const rawWidth = 5 + 3 * band.noise2D(originalX / 20, band.phase * 0.8)
+                bufferCtx.lineWidth = rawWidth * bufferScale * depthWidthScale
+
+                bufferCtx.beginPath()
+                bufferCtx.moveTo(x, topY)
+                bufferCtx.lineTo(x, bottomY)
+                bufferCtx.stroke()
+            }
         }
 
+        bufferCtx.restore()
+
+        // Draw the scaled and blurred buffer onto the main screen
+        ctx.save()
+        ctx.globalCompositeOperation = "lighter"
+
+        // Applying the blur filter to a single scaled drawImage is extremely fast and hardware-accelerated.
+        // We use blur(8px) for an incredibly soft, realistic atmospheric aurora glow.
+        ctx.filter = "blur(8px)"
+        ctx.drawImage(bufferCanvas, 0, 0, this.width, this.height)
         ctx.restore()
     }
 
@@ -1427,6 +1681,16 @@ export class EffectRender {
         const { width, height } = this
         const blobCount = item.blobCount ?? 10
         const speed = item.speed ?? 1
+
+        const existing = this.effectData.get(item)
+        if (existing && existing.blobs && existing.blobs.length === blobCount) {
+            existing.blurAmount = item.blurAmount ?? 50
+            for (const blob of existing.blobs) {
+                blob.speedX = (Math.random() - 0.5) * 1.5 * speed
+                blob.speedY = (Math.random() - 0.5) * 1.3 * speed
+            }
+            return
+        }
 
         const blobs = Array.from({ length: blobCount }, () => ({
             x: width / 2 + (Math.random() - 0.5) * width * 0.8,
@@ -1522,6 +1786,17 @@ export class EffectRender {
         const baseOpacity = item.opacity ?? 0.08
         const size = item.size
         const speed = item.speed
+
+        const existing = this.effectData.get(item)
+        if (existing && existing.length === item.count) {
+            for (const cloud of existing) {
+                cloud.offsetY = (Math.random() - 0.5) * spread
+                cloud.radius = size * (0.8 + Math.random() * 0.4)
+                cloud.opacity = baseOpacity * (0.8 + Math.random() * 0.4)
+                cloud.speed = -speed * (0.6 + Math.random() * 0.4)
+            }
+            return
+        }
 
         const clouds = Array.from({ length: item.count }, () => ({
             x: Math.random() * this.width,
@@ -1683,8 +1958,11 @@ export class EffectRender {
         const diameter = Math.sqrt(this.width ** 2 + this.height ** 2)
         const radius = diameter / 2
 
+        const existing = this.effectData.get(item)
+        const offset = existing ? existing.offset : 0
+
         const data = {
-            offset: 0,
+            offset,
             midX,
             midY,
             radius,
@@ -1723,9 +2001,10 @@ export class EffectRender {
     /// FIREWORKS ///
 
     initFireworks(item: FireworkItem) {
+        const existing = this.effectData.get(item)
         this.effectData.set(item, {
-            particles: [],
-            cooldown: 0
+            particles: existing ? existing.particles : [],
+            cooldown: existing ? existing.cooldown : 0
         })
     }
 
@@ -1754,10 +2033,10 @@ export class EffectRender {
             p.y += p.vy
             p.life--
 
-            // Draw particle
+            // Draw particle — use cached hue string to avoid template-string allocation per particle per frame
             ctx.beginPath()
             ctx.arc(p.x, p.y, p.size, 0, this.doublePI)
-            ctx.fillStyle = `hsla(${p.hue}, 100%, 50%, ${p.alpha})`
+            ctx.fillStyle = `${p.hueStr}${p.alpha.toFixed(2)})`
             ctx.fill()
 
             // Rocket logic
@@ -1775,6 +2054,7 @@ export class EffectRender {
         const heightOffset = this.height * (item.offset ?? 0.7) + (Math.random() - 0.5) * 250
         const vy = -Math.sqrt(2 * gravity * heightOffset)
 
+        const hue = Math.floor(Math.random() * 360)
         return {
             x: this.width / 2 + (Math.random() - 0.5) * (this.width * 0.8),
             y: this.height,
@@ -1784,7 +2064,8 @@ export class EffectRender {
             life: item.speed < 1 ? 60 / (item.speed * deltaTime) : 60,
             size: (item.size ?? 1) * 1.8,
             alpha: 1,
-            hue: Math.floor(Math.random() * 360),
+            hue,
+            hueStr: `hsla(${hue}, 100%, 50%, `, // cached prefix — append alpha + ")" at draw time
             type: "rocket"
         }
     }
@@ -1808,6 +2089,7 @@ export class EffectRender {
                 size: baseSize + Math.random(),
                 alpha: 1,
                 hue,
+                hueStr: `hsla(${hue}, 100%, 50%, `, // cached prefix — append alpha + ")" at draw time
                 type: "particle"
             })
         }
@@ -1829,8 +2111,11 @@ export class EffectRender {
         if (phases[0]?.stop > 0) phases = [{ stop: 0, color: phases[0].color }, ...phases]
         if (phases[phases.length - 1]?.stop < 1) phases.push({ stop: 1, color: phases[phases.length - 1].color })
 
+        const existing = this.effectData.get(item)
+        const cycleTime = existing ? existing.cycleTime : 0
+
         this.effectData.set(item, {
-            cycleTime: 0,
+            cycleTime,
             phases
         })
     }

@@ -12,7 +12,7 @@ import { ShowObj } from "../../../classes/Show"
 import { createCategory } from "../../../converters/importHelpers"
 import { requestMain, sendMain } from "../../../IPC/main"
 import { splitTextContentInHalf } from "../../../show/slides"
-import { activeProject, activeScripture, drawerTabsData, media, notFound, outLocked, overlays, scriptureHistory, scriptures, scripturesCache, scriptureSettings, styles, templates } from "../../../stores"
+import { activeProject, activeScripture, activeShow, drawerTabsData, media, notFound, outLocked, overlays, scriptureHistory, scriptures, scripturesCache, scriptureSettings, styles, templates } from "../../../stores"
 import { trackScriptureUsage } from "../../../utils/analytics"
 import { TemplateHelper } from "../../../utils/templates"
 import { getKey } from "../../../values/keys"
@@ -319,9 +319,9 @@ export async function playScripture() {
 
     const tempItems: Item[] = slides[0] || []
     const categoryId = get(drawerTabsData).scripture?.activeSubTab || ""
-    
+
     const [previousSlides, nextSlides] = await Promise.all([getPreviousSlides(), getNextSlides()])
-    
+
     setOutput("slide", { id: "temp", categoryId, tempItems, previousSlides, nextSlides, attributionString, translations: biblesContent.length, settings, customDynamicValues: slideDynamicValues[0] })
 
     // track
@@ -353,7 +353,7 @@ export async function playScripture() {
         const promises: any[] = []
         for (let i = 1; i <= includeCount; i++) {
             const verseIndex = lowestIndex - i
-            promises.push(getScriptureSlidesNew({ biblesContent: biblesContent!, selectedChapters, selectedVerses: [[verseIndex]] }, true, true).then(res => res.slides[0]))
+            promises.push(getScriptureSlidesNew({ biblesContent: biblesContent!, selectedChapters, selectedVerses: [[verseIndex]] }, true, true).then((res) => res.slides[0]))
         }
 
         return Promise.all(promises)
@@ -364,7 +364,7 @@ export async function playScripture() {
         const promises: any[] = []
         for (let i = 1; i <= includeCount; i++) {
             const verseIndex = highestIndex + i
-            promises.push(getScriptureSlidesNew({ biblesContent: biblesContent!, selectedChapters, selectedVerses: [[verseIndex]] }, true, true).then(res => res.slides[0]))
+            promises.push(getScriptureSlidesNew({ biblesContent: biblesContent!, selectedChapters, selectedVerses: [[verseIndex]] }, true, true).then((res) => res.slides[0]))
         }
 
         return Promise.all(promises)
@@ -525,7 +525,6 @@ export function buildFullReferenceRange(chapters: (number | string)[], versesPer
             else normalized.push(`${chapter}${divider}${value}`)
         })
     })
-
     if (!normalized.length) return ""
     return joinRange(normalized)
 }
@@ -549,12 +548,21 @@ function splitContent(content: BibleContent[], perSlide: number): BibleContent[]
         return []
     }
 
-    const slidesCount = Math.ceil(totalVerses / perSlide)
+    const smartSplit = get(scriptureSettings).smartSplit !== false
+    let slidesVerseContexts: { chapter: number | string; verse: number | string }[][] = []
+
+    if (smartSplit) {
+        slidesVerseContexts = groupVersesSmartly(allVersesInOrder, content)
+    } else {
+        const slidesCount = Math.ceil(totalVerses / perSlide)
+        for (let i = 0; i < slidesCount; i++) {
+            slidesVerseContexts.push(allVersesInOrder.slice(i * perSlide, (i + 1) * perSlide))
+        }
+    }
+
     const slidesContent: BibleContent[][] = []
 
-    for (let i = 0; i < slidesCount; i++) {
-        const slideVerseContexts = allVersesInOrder.slice(i * perSlide, (i + 1) * perSlide)
-
+    slidesVerseContexts.forEach((slideVerseContexts) => {
         const slideContentForTranslations: BibleContent[] = content.map((bible) => {
             // For the current slide, we need to build the `activeVerses` and `verses` properties
             // that match the expected structure (an array per chapter).
@@ -582,9 +590,99 @@ function splitContent(content: BibleContent[], perSlide: number): BibleContent[]
         })
 
         slidesContent.push(slideContentForTranslations)
-    }
+    })
 
     return slidesContent
+}
+
+// SMART SPLIT VERSES TO FIT ON SLIDES
+export function getSmartSplitLimitFromTemplate(templateId: string): number {
+    const _template = new TemplateHelper(templateId)
+    const textbox = _template.getItems().find((a) => a.lines)
+    const itemStyle = textbox?.style || ""
+    const textStyle = textbox?.lines
+        ?.flatMap((line) => line.text || [])
+        .find((t) => t.value?.includes("_text}"))?.style || textbox?.lines?.[0]?.text?.[0]?.style || ""
+
+    const screenWidth = 1920
+    const screenHeight = 1080
+
+    const width = parseStyleDimension(itemStyle, /width:\s*([\d.]+)(px|%)?/, 1820, screenWidth)
+    const height = parseStyleDimension(itemStyle, /height:\s*([\d.]+)(px|%)?/, 780, screenHeight)
+
+    const paddingMatch = itemStyle.match(/padding:\s*([\d.]+)px/)
+    const padding = paddingMatch ? parseFloat(paddingMatch[1]) * 2 : 0
+    const usableWidth = Math.max(100, width - padding)
+    const usableHeight = Math.max(50, height - padding)
+
+    let fontSize = 80
+    const fontSizeMatch = textStyle.match(/font-size:\s*([\d.]+)(px)?/) || itemStyle.match(/font-size:\s*([\d.]+)(px)?/)
+    if (fontSizeMatch) fontSize = parseFloat(fontSizeMatch[1])
+
+    const lineHeightMatch = textStyle.match(/line-height:\s*([\d.]+)/) || itemStyle.match(/line-height:\s*([\d.]+)/)
+    const lineHeightRatio = lineHeightMatch ? parseFloat(lineHeightMatch[1]) : 1.35
+
+    const charWidth = fontSize * 0.5
+    const lineHeight = fontSize * lineHeightRatio
+
+    const charsPerLine = Math.floor(usableWidth / charWidth)
+    const linesCount = Math.floor(usableHeight / lineHeight)
+
+    return charsPerLine > 0 && linesCount > 0 ? charsPerLine * linesCount : 400
+}
+
+function parseStyleDimension(style: string, regex: RegExp, defaultValue: number, viewportValue: number): number {
+    const match = style.match(regex)
+    if (!match) return defaultValue
+    const val = parseFloat(match[1])
+    const unit = match[2]
+    if (unit === "%") {
+        return (val / 100) * viewportValue
+    }
+    return val
+}
+
+export function groupVersesSmartly(allVersesInOrder: { chapter: number | string; verse: number | string }[], biblesContent: BibleContent[]): { chapter: number | string; verse: number | string }[][] {
+    const templateId = getScriptureTemplateId()
+    const limit = getSmartSplitLimitFromTemplate(templateId)
+    const groups: { chapter: number | string; verse: number | string }[][] = []
+    let currentGroup: { chapter: number | string; verse: number | string }[] = []
+    let currentLength = 0
+
+    allVersesInOrder.forEach((verseContext) => {
+        let maxVerseLength = 0
+        biblesContent.forEach((bible) => {
+            const chapterIndex = bible.chapters.findIndex((c) => c == verseContext.chapter)
+            if (chapterIndex !== -1) {
+                const verseKey = String(verseContext.verse)
+                const text = bible?.verses[chapterIndex]?.[verseKey] || ""
+                const cleanText = formatBibleText(text)
+                if (cleanText.length > maxVerseLength) {
+                    maxVerseLength = cleanText.length
+                }
+            }
+        })
+
+        if (currentGroup.length === 0) {
+            currentGroup.push(verseContext)
+            currentLength = maxVerseLength
+        } else {
+            if (currentLength + maxVerseLength + 1 <= limit) {
+                currentGroup.push(verseContext)
+                currentLength += maxVerseLength + 1
+            } else {
+                groups.push(currentGroup)
+                currentGroup = [verseContext]
+                currentLength = maxVerseLength
+            }
+        }
+    })
+
+    if (currentGroup.length > 0) {
+        groups.push(currentGroup)
+    }
+
+    return groups
 }
 
 // use old formatting if old scripture template type
@@ -606,13 +704,25 @@ export async function getScriptureSlidesNew(data: any, onlyOne = false, disableR
     const biblesContent = (await getActiveScripturesContent(selectedVerses)) || []
     if (!biblesContent?.length || !biblesContent[0]) return { slides: [], groupNames: [], attributions: [], slideDynamicValues: [] }
 
-    let perSlide = get(scriptureSettings).versesPerSlide || 3
-    // Count total verses across all chapters
     const totalVerses = selectedVerses.reduce((sum, chapterVerses) => sum + (chapterVerses?.length || 0), 0)
-    const slidesCount = onlyOne ? 1 : Math.ceil(totalVerses / perSlide)
+    const smartSplit = get(scriptureSettings).smartSplit !== false
+    let perSlide = get(scriptureSettings).versesPerSlide || 3
+    let slidesCount = 1
 
-    // divide evenly if two slides
-    if (slidesCount === 2) perSlide = Math.ceil(totalVerses / 2)
+    if (smartSplit) {
+        const allVersesInOrder: { chapter: number | string; verse: number | string }[] = []
+        biblesContent[0].chapters.forEach((chapterNum, chapterIndex) => {
+            const chapterVerses = sortScriptureSelection(biblesContent[0].activeVerses[chapterIndex] || [])
+            chapterVerses.forEach((verseNum) => {
+                allVersesInOrder.push({ chapter: chapterNum, verse: verseNum })
+            })
+        })
+        const smartGroups = groupVersesSmartly(allVersesInOrder, biblesContent)
+        slidesCount = onlyOne ? 1 : smartGroups.length
+    } else {
+        slidesCount = onlyOne ? 1 : Math.ceil(totalVerses / perSlide)
+        if (slidesCount === 2) perSlide = Math.ceil(totalVerses / 2)
+    }
 
     let slides = _template.createSlides(slidesCount, onlyOne)
 
@@ -1627,7 +1737,8 @@ export async function createScriptureShow() {
     const show = await getScriptureShow(biblesContent)
     if (!show) return
 
-    history({ id: "UPDATE", newData: { data: show, remember: { project: get(activeProject) } }, location: { page: "show", id: "show" } })
+    const selectedIndex = get(activeShow)?.index === undefined ? undefined : get(activeShow)!.index! + 1
+    history({ id: "UPDATE", newData: { data: show, remember: { project: get(activeProject), index: selectedIndex } }, location: { page: "show", id: "show" } })
 }
 
 export async function getScriptureShow(biblesContent: BibleContent[] | null) {

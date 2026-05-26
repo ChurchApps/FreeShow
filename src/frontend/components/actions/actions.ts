@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
-import { actionHistory, actions, audioPlaylists, audioStreams, runningActions, shows, stageShows, styles, triggers } from "../../stores"
+import { actionHistory, actions, audioPlaylists, audioStreams, runningActions, shows, stageShows, styles } from "../../stores"
 import { newToast, wait } from "../../utils/common"
 import { getShowBPM } from "../drawer/audio/metronome"
 import { getDynamicValue } from "../edit/scripts/itemHelpers"
@@ -215,7 +215,6 @@ export function getActionTriggerId(id: string) {
 const namedObjects = {
     run_action: () => get(actions),
     start_show: () => get(shows),
-    start_trigger: () => get(triggers),
     start_audio_stream: () => get(audioStreams),
     start_playlist: () => get(audioPlaylists),
     id_select_stage_layout: () => get(stageShows)

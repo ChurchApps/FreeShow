@@ -61,6 +61,9 @@ let resetActionTrigger = false
 export function setOutput(type: string, data: any, toggle = false, outputId = "", add = false) {
     const ref = data?.layout ? _show(data.id).layouts([data.layout]).ref()[0] || [] : []
 
+    // stop any active break slide recording when the slide changes
+    if (type === "slide") _stopBreakRecording()
+
     customActionActivation("output_changed")
 
     const bindings = data?.bindings || (data?.layout ? ref[data.index]?.data?.bindings || [] : [])
@@ -93,6 +96,15 @@ export function setOutput(type: string, data: any, toggle = false, outputId = ""
         } else {
             const groupId = slide.globalGroup
             if (groupId) customActionActivation("group_start", groupId)
+
+            // start recording time on break slides (no items, globalGroup === "break")
+            const layoutSlideIndex = ref[data.index]?.type === "parent" ? (ref[data.index]?.index ?? -1) : -1
+            if (slide.globalGroup === "break" && !slide.items?.length && layoutSlideIndex > -1) {
+                const previousDuration = _pausedBreakRecording?.slideIndex === layoutSlideIndex ? _pausedBreakRecording.accumulatedDuration : 0
+                _breakRecording = { startTime: Date.now(), showId: data.id, layoutId: data.layout, slideIndex: layoutSlideIndex, previousDuration }
+            } else if (_pausedBreakRecording && layoutSlideIndex > _pausedBreakRecording.slideIndex + 1) {
+                _pausedBreakRecording = null
+            }
         }
 
         // store project index so we can use it for dynamic values (in case there are multiple of the same project item)
@@ -230,6 +242,32 @@ function appendShowUsage(showId: string) {
             a.all = a.all.slice(-MAX_USAGE_LOG_ENTRIES)
         }
 
+        return a
+    })
+}
+
+// break slide time recording
+let _breakRecording: { startTime: number; showId: string; layoutId: string; slideIndex: number; previousDuration: number } | null = null
+let _pausedBreakRecording: { slideIndex: number; accumulatedDuration: number } | null = null
+function _stopBreakRecording() {
+    if (!_breakRecording) return
+
+    const { startTime, showId, layoutId, slideIndex, previousDuration } = _breakRecording
+    _breakRecording = null
+
+    const sessionElapsed = Math.round((Date.now() - startTime) / 1000)
+    const totalElapsed = previousDuration + sessionElapsed
+
+    // store accumulated time so returning to this slide resumes from here
+    _pausedBreakRecording = { slideIndex, accumulatedDuration: totalElapsed }
+
+    if (totalElapsed <= 3) return // only save if over 3 seconds
+
+    showsCache.update((a) => {
+        const slideData = a[showId]?.layouts?.[layoutId]?.slides?.[slideIndex]
+        if (!slideData) return a
+
+        slideData.breakDuration = totalElapsed
         return a
     })
 }
@@ -1261,9 +1299,9 @@ function replaceScriptureValues(items: Item[], templateItems: Item[], customDyna
                                         newTexts.push({ value: number, style: style + numberStyle, customType: "disableTemplate" })
                                     }
 
-                                    // Add trailing space if the next item is a continuation with no verse number
+                                    // Add trailing space if there is a next item on the slide
                                     const nextItem = (value as [string, string][])[index + 1]
-                                    const needsSpace = nextItem && (!nextItem[0] || nextItem[0] === "0")
+                                    const needsSpace = !!nextItem
                                     newTexts.push({ value: needsSpace ? verseText + " " : verseText, sourceDynamicKey: key + ":" + index, style: style + ";" + baseStyle })
                                 })
                             }

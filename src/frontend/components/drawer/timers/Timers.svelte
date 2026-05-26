@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onDestroy } from "svelte"
-    import { activePopup, activeTimers, disableDragging, labelsDisabled, timers } from "../../../stores"
+    import { activePopup, activeTimers, disableDragging, labelsDisabled, timers, activeTimerTagFilter } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { getAccess } from "../../../utils/profile"
     import Icon from "../../helpers/Icon.svelte"
@@ -15,6 +15,7 @@
     import Center from "../../system/Center.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
     import { getCurrentTimerValue, getTimerDynamicValue, playPauseGlobal, resetTimer } from "./timers"
+    import { openDrawer } from "../../edit/scripts/edit"
 
     export let searchValue
     export let onlyPlaying: boolean = false
@@ -27,7 +28,8 @@
     $: sortedTimers = sortByName(keysToID(clone($timers)), "name", true)
         .filter((a) => (onlyPlaying ? a.type === "counter" && $activeTimers.some((at) => a.id === at.id) : true))
         .sort((a, b) => typeOrder[a.type] - typeOrder[b.type])
-    $: sortedTimersWithProject = sortedTimers.sort((a, b) => (list.includes(a.id) && !list.includes(b.id) ? -1 : 1))
+    $: filteredTimersTags = sortedTimers.filter((a) => !$activeTimerTagFilter.length || (a.tags?.length && !$activeTimerTagFilter.find((tagId) => !a.tags?.includes(tagId)))).filter((a) => !a.tags?.some((tagId) => profile[tagId] === "none"))
+    $: sortedTimersWithProject = filteredTimersTags.sort((a, b) => (list.includes(a.id) && !list.includes(b.id) ? -1 : 1))
     $: filteredTimers = searchValue.length > 1 ? sortedTimersWithProject.filter((a) => a.name.toLowerCase().includes(searchValue.toLowerCase())) : sortedTimersWithProject
 
     // place timers in shows in project first
@@ -48,6 +50,17 @@
         return currentTime
     }
 
+    function adjustTimer(delta: number, ref: any, minVal: number, maxVal: number) {
+        activeTimers.update((a) => {
+            let index = a.findIndex((t) => (ref.showId ? ref.showId === t.showId && ref.slideId === t.slideId && ref.id === t.id : t.id === ref.id))
+            if (index < 0) return a
+            let current = a[index].currentTime ?? minVal
+            a[index].currentTime = Math.max(minVal, Math.min(maxVal, current + delta))
+            delete a[index].startTime
+            return a
+        })
+    }
+
     function updateActiveTimer(e: any, ref: any, timer: any) {
         let time = Number(e.target.value)
         activeTimers.update((a) => {
@@ -62,19 +75,40 @@
         })
     }
 
+    function openTimers() {
+        if (onlyPlaying) openDrawer("timer")
+    }
+
     const timerTypeNames = {
         counter: "timer.from_to",
         clock: "timer.to_time",
         event: "timer.to_event"
     }
+
+    function keydown(e: KeyboardEvent) {
+        if (e.key === "Enter" && searchValue.length > 1 && e.target?.closest(".search")) {
+            let timer = filteredTimers[0]
+            if (!timer) return
+
+            // play
+            if (e.ctrlKey || e.metaKey) {
+                playPauseGlobal(timer.id, timer, true)
+                return
+            }
+
+            // add to project (no need)
+        }
+    }
 </script>
 
-<svelte:window on:mouseup={() => disableDragging.set(false)} />
+<svelte:window on:keydown={keydown} on:mouseup={() => disableDragging.set(false)} />
 
 {#if filteredTimers.length}
-    <div class="timers" style={onlyPlaying ? "" : "padding-bottom: 60px;"}>
+    <div class="timers context #timers{readOnly ? '_readonly' : ''}" style={onlyPlaying ? "" : "padding-bottom: 60px;"}>
         {#each filteredTimers as timer, i}
+            {@const isReadOnly = readOnly || timer.tags?.some((tagId) => profile[tagId] === "read")}
             {@const title = timer.type === filteredTimers[i - 1]?.type ? "" : timer.type}
+            {@const isActive = $activeTimers.find((a) => a.id === timer.id)}
             {@const isPlaying = timer.type !== "counter" || $activeTimers.find((a) => a.id === timer.id && a.paused !== true)}
             {@const startTime = timer.startDynamic !== undefined ? (getTimerDynamicValue(timer.startDynamic) ?? 0) : timer.start || 0}
             {@const endTime = timer.endDynamic !== undefined ? (getTimerDynamicValue(timer.endDynamic) ?? 0) : timer.end || 0}
@@ -85,11 +119,10 @@
                 <h5><T id={timerTypeNames[title]} /></h5>
             {/if}
 
-            <!-- {@const playing = $activeTimers.find((a) => a.id === id && a.paused !== true)} -->
             <SelectElem id="global_timer" data={timer} draggable={!onlyPlaying} selectable={!onlyPlaying}>
-                <div class:outline={!onlyPlaying && $activeTimers.find((a) => a.id === timer.id)} class:project={list.includes(timer.id)} class={onlyPlaying ? "" : `context #global_timer${readOnly ? "_readonly" : ""}`} style="display: flex;justify-content: space-between;padding: 3px;">
+                <div class:outline={!onlyPlaying && isActive} class:project={list.includes(timer.id)} class={onlyPlaying ? "" : `context #global_timer${isReadOnly ? "_readonly" : ""}`} style="display: flex;justify-content: space-between;padding: 3px;">
                     <div style="display: flex;{onlyPlaying ? '' : 'width: 50%;'}">
-                        <Button disabled={timer.type !== "counter"} on:click={() => playPauseGlobal(timer.id, timer)} title={translateText($activeTimers.find((a) => a.id === timer.id && a.paused !== true) ? "media.pause" : "media.play")}>
+                        <Button disabled={isReadOnly || timer.type !== "counter"} on:click={() => playPauseGlobal(timer.id, timer)} title={translateText(isPlaying ? "media.pause" : "media.play")}>
                             <Icon id={isPlaying ? "pause" : "play"} white={!isPlaying} />
                         </Button>
                         {#if !onlyPlaying}
@@ -106,11 +139,11 @@
                     </div>
 
                     {#if timer.type === "counter"}
-                        <Slider style="background: var(--primary);align-self: center;margin: 0 10px;" on:input={(e) => updateActiveTimer(e, { id: timer.id }, timer)} on:mousedown={() => disableDragging.set(true)} value={getCurrentValue(timer, { id: timer.id }, $activeTimers)} min={Math.min(startTime, endTime)} max={Math.max(startTime, endTime)} invert={endTime < startTime} />
+                        <Slider disabled={isReadOnly} style="background: var(--primary);align-self: center;margin: 0 10px;" on:input={(e) => updateActiveTimer(e, { id: timer.id }, timer)} on:mousedown={() => disableDragging.set(true)} value={getCurrentValue(timer, { id: timer.id }, $activeTimers)} min={Math.min(startTime, endTime)} max={Math.max(startTime, endTime)} invert={endTime < startTime} />
                     {/if}
 
-                    <div style="display: flex;justify-content: end;{onlyPlaying ? '' : 'min-width: 125px;'}">
-                        <span style="display: flex;align-self: center;padding: 0 5px;">
+                    <div style="display: flex;justify-content: end;flex-shrink: 0;{onlyPlaying ? '' : 'min-width: 220px;'}">
+                        <span style="display: flex;align-self: center;padding: 0 5px;" role="none" on:click={openTimers}>
                             <Timer id={timer.id} {today} />
                             <!-- {getTimes(list[active].timer.start, list[active].timer.format)} -->
 
@@ -120,23 +153,22 @@
                                 </span>
                             {/if}
                         </span>
-                        <!-- <Button
-        on:click={() => {
-            select("timer", { id })
-            activePopup.set("timer")
-        }}
-        title={translateText("menu.edit")}
-        >
-        <Icon id="edit" />
-        </Button> -->
-                        {#if timer.type === "counter"}
-                            <Button on:click={() => resetTimer(timer.id)} title={translateText("media.stop")} disabled={!$activeTimers.find((a) => a.id === timer.id)}>
+
+                        {#if timer.type === "counter" && isActive}
+                            {@const currentVal = getCurrentValue(timer, { id: timer.id }, $activeTimers)}
+                            {@const minVal = Math.min(startTime, endTime)}
+                            {@const maxVal = Math.max(startTime, endTime)}
+                            {@const delta = currentVal < 60 ? 10 : 60}
+
+                            {#if !onlyPlaying}
+                                <Button disabled={isReadOnly || currentVal >= maxVal} on:click={() => adjustTimer(delta, { id: timer.id }, minVal, maxVal)} title={delta === 10 ? "-10 sec" : "-1 min"}>{delta === 10 ? "-10s" : "-1m"}</Button>
+                                <Button disabled={isReadOnly || currentVal <= minVal} on:click={() => adjustTimer(-delta, { id: timer.id }, minVal, maxVal)} title={delta === 10 ? "+10 sec" : "+1 min"}>{delta === 10 ? "+10s" : "+1m"}</Button>
+                            {/if}
+
+                            <Button on:click={() => resetTimer(timer.id)} title={translateText("media.stop")} disabled={isReadOnly || !isActive}>
                                 <Icon id="stop" white={!isPlaying} />
                             </Button>
                         {/if}
-                        <!-- <Button on:click={() => deleteTimer(id)}>
-        <Icon id="delete" title={translateText("actions.delete")} />
-        </Button> -->
                     </div>
                 </div>
             </SelectElem>

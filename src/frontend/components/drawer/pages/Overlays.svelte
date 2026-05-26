@@ -89,7 +89,26 @@
         if (isActive) timelineRecordingAction.set({ id: "clear_overlay", data: { id } })
         else timelineRecordingAction.set({ id: "id_select_overlay", data: { id } })
     }
+
+    function keydown(e: KeyboardEvent) {
+        if (e.key === "Enter" && searchValue.length > 1 && e.target?.closest(".search")) {
+            let overlay = fullFilteredOverlays[0]
+            if (!overlay) return
+
+            // play
+            if (e.ctrlKey || e.metaKey) {
+                overlayClick({}, overlay.id)
+                return
+            }
+
+            // add to project
+            const data = { id: overlay.id, name: overlay.name, type: "overlay" as const }
+            addProjectItem(data)
+        }
+    }
 </script>
+
+<svelte:window on:keydown={keydown} />
 
 <div style="position: relative;height: 100%;overflow-y: auto;" class="context #drawer_overlays" on:wheel={wheel}>
     {#if active === "effects"}

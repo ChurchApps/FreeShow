@@ -69,18 +69,15 @@ const drawerPages: { [key: string]: DrawerTabIds } = {
     functions: "functions",
 
     online: "media",
-    screens: "media",
-    cameras: "media",
+    media_inputs: "media",
 
-    microphones: "audio",
-    audio_streams: "audio",
+    audio_inputs: "audio",
 
     action: "calendar",
 
     actions: "functions",
     timer: "functions",
-    variables: "functions",
-    triggers: "functions"
+    variables: "functions"
 }
 export function openDrawer(id: string, openPopup = false) {
     activePage.set("show")
@@ -95,6 +92,7 @@ export function openDrawer(id: string, openPopup = false) {
     else if (id === "scripture")
         id = "" // Object.keys(get(scriptures))[0]
     else if (id === drawerPageId) id = "all"
+    else if (id === "media_inputs" || id === "audio_inputs") id = "inputs"
 
     if (id) {
         drawerTabsData.update((a) => {

@@ -3,7 +3,7 @@
     import type { ContentProviderId } from "../../../../electron/contentProviders/base/types"
     import { Main } from "../../../../types/IPC/Main"
     import { requestMain, sendMain } from "../../../IPC/main"
-    import { activePopup, autosave, cloudSyncData, dataPath, driveData, driveKeys, providerConnections, saved, special, statusIndicator } from "../../../stores"
+    import { activePopup, alertMessage, autosave, cloudSyncData, dataPath, driveData, driveKeys, providerConnections, saved, special, statusIndicator } from "../../../stores"
     import { changeTeam, setupCloudSync, socketDisconnect } from "../../../utils/cloudSync"
     import { previousAutosave, startAutosave, wait } from "../../../utils/common"
     import { validateKeys } from "../../../utils/drive"
@@ -233,6 +233,15 @@
         save(false, { autosave: true })
     }
 
+    async function restoreCloudBackupState() {
+        if (!$cloudSyncData.id || !$cloudSyncData.team?.churchId || !$cloudSyncData.team?.id) return
+
+        const result = await requestMain(Main.RESTORE_CLOUD_BACKUP, { id: "churchApps", churchId: $cloudSyncData.team.churchId, teamId: $cloudSyncData.team.id })
+
+        alertMessage.set(result?.success ? "Cloud backup restored." : result?.error || "Could not restore cloud backup.")
+        activePopup.set("alert")
+    }
+
     // function deleteCloudData() {
     //     console.log(1)
     // }
@@ -320,6 +329,10 @@
             {/if}
 
             <!-- <MaterialButton variant="outlined" icon="delete" on:click={deleteCloudData} red white>Delete cloud data</MaterialButton> -->
+
+            <MaterialButton variant="outlined" icon="import" disabled={$statusIndicator === "syncing"} on:click={restoreCloudBackupState}>
+                <p><T id="cloud.restore_weekly_backup" /></p>
+            </MaterialButton>
         </svelte:fragment>
     </InputRow>
 {/if}

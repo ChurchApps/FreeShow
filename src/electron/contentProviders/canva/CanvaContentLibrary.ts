@@ -17,12 +17,74 @@ type ListItemsResponse = {
     continuation?: string
 }
 
+type CacheEntry<T> = {
+    data: T
+    expiresAt: number
+}
+
+type PageMetadata = {
+    items: any[]
+}
+
+type ExportJobResult = {
+    jobId: string
+    urls: string[]
+    expiresAt: number
+}
+
 export class CanvaContentLibrary {
     private static contentLibraryCache: ContentLibraryCategory[] | null = null
     public static urlToContentIdMap: Record<string, string> = {}
+    private static pageMetadataCache: Map<string, CacheEntry<PageMetadata>> = new Map()
+    private static exportJobCache: Map<string, CacheEntry<ExportJobResult>> = new Map()
+
+    private static readonly PAGE_METADATA_TTL = 60 * 60 * 1000 // 1 hour
+    private static readonly EXPORT_URL_TTL = 24 * 60 * 60 * 1000 // 24 hours
 
     public static clearCache(): void {
         this.contentLibraryCache = null
+        this.pageMetadataCache.clear()
+        this.exportJobCache.clear()
+    }
+
+    private static getCachedEntry<T>(cache: Map<string, CacheEntry<T>>, key: string): T | null {
+        const entry = cache.get(key)
+        if (!entry) return null
+        if (entry.expiresAt < Date.now()) {
+            cache.delete(key)
+            return null
+        }
+        return entry.data
+    }
+
+    private static setCachedEntry<T>(cache: Map<string, CacheEntry<T>>, key: string, data: T, ttl: number): void {
+        cache.set(key, {
+            data,
+            expiresAt: Date.now() + ttl
+        })
+    }
+
+    /**
+     * Fetches page metadata for a design (preview-only, fast).
+     * Returns cached result if available, otherwise fetches from API.
+     */
+    public static async getPageMetadata(designId: string): Promise<PageMetadata | null> {
+        const cacheKey = `pages:${designId}`
+        const cached = this.getCachedEntry(this.pageMetadataCache, cacheKey)
+        if (cached) return cached
+
+        try {
+            const path = `/v1/designs/${encodeURIComponent(designId)}/pages?limit=100`
+            const response = await this.request(path)
+            if (!response || !Array.isArray(response.items)) return null
+
+            const metadata: PageMetadata = { items: response.items }
+            this.setCachedEntry(this.pageMetadataCache, cacheKey, metadata, this.PAGE_METADATA_TTL)
+            return metadata
+        } catch (e) {
+            console.error("Failed to fetch page metadata:", e)
+            return null
+        }
     }
 
     private static async request(path: string): Promise<any> {
@@ -42,6 +104,35 @@ export class CanvaContentLibrary {
                     accept: "application/json"
                 },
                 {},
+                (err, data) => {
+                    if (err) {
+                        reject(err)
+                        return
+                    }
+                    resolve(data)
+                }
+            )
+        })
+    }
+
+    private static async post(path: string, body: any): Promise<any> {
+        const accessToken = await CanvaConnect.ensureValidToken(DEFAULT_SCOPE)
+        if (!accessToken) {
+            return null
+        }
+
+        return new Promise((resolve, reject) => {
+            const url = new URL(CANVA_API_URL + path)
+            httpsRequest(
+                url.hostname,
+                url.pathname + (url.search ? url.search : ""),
+                "POST",
+                {
+                    Authorization: `Bearer ${accessToken}`,
+                    accept: "application/json",
+                    "content-type": "application/json"
+                },
+                body,
                 (err, data) => {
                     if (err) {
                         reject(err)
@@ -92,20 +183,30 @@ export class CanvaContentLibrary {
 
     /**
      * Returns content for a folder or a presentation (design).
-     * If folderId starts with 'presentation:', treat as a presentation and fetch slides.
+     * If folderId starts with 'presentation-export-batch:', fetch all pages with high-res exports.
+     * If folderId starts with 'presentation:', treat as a presentation and fetch page metadata with thumbnails.
      */
     public static async getContent(folderId: string): Promise<ContentFile[]> {
-        // If folderId is a presentation, fetch slides
+        if (folderId.startsWith("presentation-export-batch:")) {
+            const match = folderId.match(/^presentation-export-batch:(.*):(.+)$/)
+            const designId = match?.[1] || ""
+            const pagesStr = match?.[2] || ""
+            if (!designId || !pagesStr) return []
+            const pages = pagesStr === "all" ? undefined : pagesStr.split(",").map(Number).filter((page) => Number.isFinite(page) && page > 0)
+            return await this.getPresentationSlides(designId, true, pages)
+        }
+
+        // If folderId is a presentation, fetch slides with thumbnails (no export wait)
         if (folderId.startsWith("presentation:")) {
             const designId = folderId.replace("presentation:", "")
-            return await this.getPresentationSlides(designId)
+            return await this.getPresentationSlides(designId, false)
         }
 
         // Otherwise, fetch normal folder content
         const items = await this.listFolderItems(folderId, ["image", "design"])
 
         // Always return files, but for presentations, add isPresentation and slideCount
-        const files = items
+        const files: ContentFile[] = items
             .map((item): ContentFile | null => {
                 if (item.type === "image" && item.image) {
                     const url = item.image.url || item.image.thumbnail?.url
@@ -119,10 +220,10 @@ export class CanvaContentLibrary {
                         url,
                         thumbnail: item.image.thumbnail?.url || url,
                         fileSize: 0,
-                        type: "image",
+                        type: "image" as const,
                         name: item.image.name || "Canva Image",
                         mediaId: item.image.id
-                    }
+                    } as ContentFile
                 }
 
                 // Designs (including presentations)
@@ -139,14 +240,14 @@ export class CanvaContentLibrary {
                         url,
                         thumbnail: item.design.thumbnail?.url || url,
                         fileSize: 0,
-                        type: "image",
+                        type: "image" as const,
                         name: item.design.title || "Canva Design",
                         mediaId: item.design.id,
                         // @ts-ignore
                         isPresentation,
                         // @ts-ignore
                         slideCount: item.design.page_count
-                    }
+                    } as ContentFile
                 }
                 return null
             })
@@ -158,109 +259,99 @@ export class CanvaContentLibrary {
     /**
      * Fetches slides for a given presentation (design).
      * Returns each slide as a ContentFile (image).
+     * @param designId - Canva design ID
+     * @param exportFullQuality - If true, requests high-res exports; if false, returns thumbnail URLs only
+     * @param pages - Optional 1-based page indexes to fetch. If omitted, fetches all pages.
      */
-    private static async getPresentationSlides(designId: string): Promise<ContentFile[]> {
-        // Canva API: /v1/designs/{design_id}/pages
-        const path = `/v1/designs/${encodeURIComponent(designId)}/pages?limit=100`
-        const response = await this.request(path)
-        // Debug log the response to diagnose structure
-        console.log("Canva getPresentationSlides response:", JSON.stringify(response, null, 2))
-        if (!response || !Array.isArray(response.items)) return []
+    private static async getPresentationSlides(designId: string, exportFullQuality = true, pages?: number[]): Promise<ContentFile[]> {
+        const metadata = await this.getPageMetadata(designId)
+        if (!metadata) return []
 
-        // Each item (slide) should have a thumbnail or image URL
-        return response.items
-            .map((item: any, idx: number) => {
-                const url = item.url || item.thumbnail?.url || null
+        const pageItems = pages?.length ? pages.map((page) => metadata.items[page - 1]).filter(Boolean) : metadata.items
+        const pagesToExport = pages || pageItems.map((_item: any, idx: number) => idx + 1)
+
+        let exportedUrls: string[] = []
+        if (exportFullQuality) {
+            exportedUrls = await this.exportDesignAsPngs(designId, pagesToExport)
+        }
+
+        // Use full-quality export URLs when available. Page URLs are thumbnails and only used as fallback.
+        const slides: ContentFile[] = pageItems
+            .map((item: any, idx: number): ContentFile | null => {
+                const pageIndex = pages?.[idx] || idx + 1
+                const fallbackUrl = item.url || item.thumbnail?.url || null
+                const url = exportedUrls[idx] || fallbackUrl
                 if (!url) return null
                 return {
                     url,
-                    thumbnail: item.thumbnail?.url || url,
+                    thumbnail: item.thumbnail?.url || fallbackUrl || url,
                     fileSize: 0,
-                    type: "image",
-                    name: `Slide ${item.index ?? idx + 1}`,
-                    mediaId: item.index?.toString() || (idx + 1).toString()
-                }
+                    type: "image" as const,
+                    name: `Slide ${item.index ?? pageIndex}`,
+                    mediaId: item.index?.toString() || pageIndex.toString()
+                } as ContentFile
             })
-            .filter((file: ContentFile | null) => !!file)
+            .filter((file): file is ContentFile => !!file)
+
+        return slides
     }
 
-    // TODO: download full quality image
-    // this is seemingly not possible at the moment
     /**
-     * Requests a high-res PNG export for a specific slide (page) of a design using Canva's resizes API.
+     * Requests high-quality PNG exports for one or more pages of a design.
+     * Batches all pages into a single export job.
+     * Caches export URLs for 24 hours.
      * @param designIdOrUrl Canva design ID or URL
-     * @param pageIndex 1-based index of the slide/page
+     * @param pages 1-based page indexes. If omitted, Canva exports all pages.
      */
-    public static async exportDesignAsPng(designIdOrUrl: string, pageIndex: number): Promise<string | null> {
+    public static async exportDesignAsPngs(designIdOrUrl: string, pages?: number[]): Promise<string[]> {
         let designId = designIdOrUrl
         if (designIdOrUrl.startsWith("http://") || designIdOrUrl.startsWith("https://")) {
             designId = this.urlToContentIdMap[designIdOrUrl]
-            if (!designId) return null
+            if (!designId) return []
         }
 
-        // --- Canva resizes API (seemingly not available for public use) ---
-        const resizeReqPath = `/v1/resizes`
-        const resizeReqBody = {
+        // Check cache first
+        const cacheKey = `export:${designId}:${pages?.join(",") || "all"}`
+        const cached = this.getCachedEntry(this.exportJobCache, cacheKey)
+        if (cached) return cached.urls
+
+        const exportBody: any = {
             design_id: designId,
-            format: "png",
-            page_indexes: [pageIndex],
-            quality: 100
+            format: {
+                type: "png",
+                lossless: true,
+                as_single_image: false
+            }
         }
+        if (pages?.length) exportBody.format.pages = pages
 
-        const accessToken = await CanvaConnect.ensureValidToken(DEFAULT_SCOPE)
-        if (!accessToken) return null
+        const exportResponse = await this.post("/v1/exports", exportBody).catch(() => null)
+        const jobId = exportResponse?.job?.id
+        if (!jobId) return []
 
-        const resizeUrl = new URL(CANVA_API_URL + resizeReqPath)
-        let resizeResponse: any
-        try {
-            resizeResponse = await new Promise((resolve, reject) => {
-                httpsRequest(
-                    resizeUrl.hostname,
-                    resizeUrl.pathname + (resizeUrl.search ? resizeUrl.search : ""),
-                    "POST",
-                    {
-                        Authorization: `Bearer ${accessToken}`,
-                        accept: "application/json",
-                        "content-type": "application/json"
-                    },
-                    resizeReqBody,
-                    (err, data) => {
-                        if (err) reject(err)
-                        else resolve(data)
-                    }
-                )
-            })
-        } catch (e) {
-            return null
-        }
-
-        const jobId = resizeResponse?.id
-        if (!jobId) return null
-
-        let status = "pending"
-        let downloadUrl: string | null = null
-        for (let i = 0; i < 20; ++i) {
+        let urls: string[] = []
+        for (let i = 0; i < 60; ++i) {
             await new Promise((res) => setTimeout(res, 1000))
 
-            const pollPath = `/v1/resizes/${encodeURIComponent(jobId)}`
-            let pollResponse: any
+            const pollPath = `/v1/exports/${encodeURIComponent(jobId)}`
+            let pollResponse: any = null
             try {
                 pollResponse = await this.request(pollPath)
             } catch (e) {
                 continue
             }
 
-            status = pollResponse?.status
+            const job = pollResponse?.job || {}
 
-            if (status === "completed" && Array.isArray(pollResponse.files) && pollResponse.files[0]?.url) {
-                downloadUrl = pollResponse.files[0].url
+            if (job.status === "success" && Array.isArray(job.urls)) {
+                urls = job.urls
+                this.setCachedEntry(this.exportJobCache, cacheKey, { jobId, urls, expiresAt: Date.now() + this.EXPORT_URL_TTL }, this.EXPORT_URL_TTL)
                 break
             }
 
-            if (status === "failed") break
+            if (job.status === "failed") break
         }
 
-        if (!downloadUrl) return null
-        return downloadUrl
+        return urls
     }
 }

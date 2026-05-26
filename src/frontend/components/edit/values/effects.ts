@@ -108,6 +108,12 @@ export const effectSections: { [key: string]: EditBoxSection } = {
         ])
     },
 
+    rainbow: {
+        inputs: splitIntoRows([
+            { id: "bandWidth", type: "number", value: 30, values: { label: "edit.width", min: 5, max: 200, showSlider: true, sliderValues: { min: 10, max: 100 } } }
+        ])
+    },
+
     spotlight: {
         inputs: splitIntoRows([
             { id: "length", type: "number", value: 2000, multiplier: 0.01, values: { label: "edit.length", max: 40, showSlider: true, sliderValues: { max: 20 } } },
