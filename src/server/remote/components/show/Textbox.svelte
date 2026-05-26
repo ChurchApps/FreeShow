@@ -128,6 +128,10 @@
         text-wrap: balance;
     }
 
+    .break span {
+        font-size: 100px;
+    }
+
     /* span {
     display: inline;
     white-space: initial;
