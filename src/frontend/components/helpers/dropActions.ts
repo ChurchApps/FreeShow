@@ -915,17 +915,6 @@ const slideDrop = {
         history.location!.layout = layoutId
         return history
     },
-    trigger: ({ drag, drop }: Data, history: History) => {
-        if (drop.index === undefined) return
-        history.id = "SHOW_LAYOUT"
-
-        const data = drag.data[0]
-        const actions = createSlideAction("start_trigger", drop.index, data)
-        if (!actions) return
-
-        history.newData = { key: "actions", data: actions, indexes: [drop.index] }
-        return history
-    },
     audio_stream: ({ drag, drop }: Data, history: History) => {
         if (drop.index === undefined) return
         history.id = "SHOW_LAYOUT"

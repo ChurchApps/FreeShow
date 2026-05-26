@@ -55,11 +55,10 @@ import {
     templates,
     timeFormat,
     timers,
+    timerTags,
     transitionData,
-    triggers,
     variables,
     variableTags,
-    timerTags,
     volume
 } from "../stores"
 import { hasNewerUpdate } from "./common"
@@ -422,10 +421,6 @@ export function storeSubscriber() {
     actionTags.subscribe((data) => {
         // REMOTE
         send(REMOTE, ["ACTION_TAGS"], data)
-    })
-    triggers.subscribe((data) => {
-        // REMOTE
-        send(REMOTE, ["TRIGGERS"], data)
     })
     runningActions.subscribe((data) => {
         // REMOTE

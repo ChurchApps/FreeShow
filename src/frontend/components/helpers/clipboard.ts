@@ -52,7 +52,6 @@ import {
     templates,
     themes,
     timers,
-    triggers,
     variables,
     videoMarkers
 } from "../../stores"
@@ -889,15 +888,6 @@ const deleteActions = {
     // TODO: history
     variable: (data: any) => {
         variables.update((a) => {
-            data.forEach(({ id }) => {
-                delete a[id]
-            })
-
-            return a
-        })
-    },
-    trigger: (data: any) => {
-        triggers.update((a) => {
             data.forEach(({ id }) => {
                 delete a[id]
             })

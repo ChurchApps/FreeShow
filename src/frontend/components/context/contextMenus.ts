@@ -350,8 +350,6 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     variables_readonly: ["variable_tag_filter"],
     variable: ["GROUP_edit", "variable_tag_set", "variable_tag_filter", "SEPARATOR", "duplicate", "delete"], // "GROUP_duplicate_delete"
     variable_readonly: ["variable_tag_filter"],
-    // TRIGGER
-    trigger: ["GROUP_edit", "delete"],
     // AUDIO STREAM
     audio_stream: ["GROUP_edit", "delete"],
 

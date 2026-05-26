@@ -31,8 +31,7 @@ export const DEFAULT_DICTIONARY = {
         functions: "Functions",
         actions: "Actions",
         timers: "Timers",
-        variables: "Variables",
-        triggers: "Triggers"
+        variables: "Variables"
     },
     guide_title: {
         categories: "Categories"

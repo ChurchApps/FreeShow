@@ -439,7 +439,7 @@ function createNew() {
     } else if (selectId === "overlay") history({ id: "UPDATE", location: { page: "drawer", id: "overlay" } })
     else if (selectId === "template") history({ id: "UPDATE", location: { page: "drawer", id: "template" } })
     else if (selectId === "global_timer") activePopup.set("timer")
-    else if (["action", "variable", "trigger"].includes(selectId)) activePopup.set(selectId as any)
+    else if (["action", "variable"].includes(selectId)) activePopup.set(selectId as any)
     else if (get(activePage) === "edit") addItem("text")
     else if (get(activePage) === "stage") history({ id: "UPDATE", location: { page: "stage", id: "stage" } })
     else {

@@ -557,8 +557,7 @@ const drawerSubmenus = [
     // functions
     { id: "actions", name: "tabs.actions", icon: "actions", aliases: ["-Macros"] },
     { id: "timer", name: "tabs.timers", icon: "timer" },
-    { id: "variables", name: "tabs.variables", icon: "variable" },
-    { id: "triggers", name: "tabs.triggers", icon: "trigger" }
+    { id: "variables", name: "tabs.variables", icon: "variable" }
 ]
 
 function getDrawerSubmenus() {
@@ -581,7 +580,6 @@ const popups = [
     { id: "action", name: "new.action", icon: "add", data: { drawerTab: "actions" }, aliases: ["-New macro"] },
     { id: "timer", name: "new.timer", icon: "add", data: { drawerTab: "timer" } },
     { id: "variable", name: "new.variable", icon: "add", data: { drawerTab: "variables" } },
-    { id: "trigger", name: "new.trigger", icon: "add", data: { drawerTab: "triggers" } },
     { id: "audio_stream", name: "new.audio_stream", icon: "add", data: { drawerTab: "audio_inputs" } },
     { id: "output", name: "settings.new_output", icon: "add", data: { settingsTab: "display_settings" } },
     { id: "style", name: "new.style", icon: "add", data: { settingsTab: "styles" } },

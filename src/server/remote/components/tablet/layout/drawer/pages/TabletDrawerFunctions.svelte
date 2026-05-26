@@ -1,11 +1,11 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
-    import { dictionary, actions, actionTags, activeActionTagFilter, variables, activeVariableTagFilter, timerTags, activeTimerTagFilter, timers, triggers, activeTimers, runningActions, functionsSubTab } from "../../../../../util/stores"
-    import { translate, keysToID, sortByName, formatTime } from "../../../../../util/helpers"
-    import { send } from "../../../../../util/socket"
     import Button from "../../../../../../common/components/Button.svelte"
-    import Icon from "../../../../../../common/components/Icon.svelte"
     import Center from "../../../../../../common/components/Center.svelte"
+    import Icon from "../../../../../../common/components/Icon.svelte"
+    import { formatTime, keysToID, sortByName, translate } from "../../../../../util/helpers"
+    import { send } from "../../../../../util/socket"
+    import { actions, actionTags, activeActionTagFilter, activeTimers, activeTimerTagFilter, activeVariableTagFilter, dictionary, functionsSubTab, runningActions, timers, timerTags, variables } from "../../../../../util/stores"
 
     // Actions
     $: sortedActions = sortByName(keysToID($actions), "name", true)
@@ -88,26 +88,6 @@
     function resetVariable(variable: any) {
         const defaultValue = Number(variable.default) || 0
         updateVariable(variable.id, "number", defaultValue)
-    }
-
-    // Triggers
-    $: sortedTriggers = sortByName(keysToID($triggers))
-
-    let triggerStatus: { [key: string]: string } = {}
-
-    async function activateTrigger(triggerId: string) {
-        triggerStatus[triggerId] = "pending"
-        triggerStatus = triggerStatus
-
-        send("API:start_trigger", { id: triggerId })
-
-        // Auto-clear status after 2 seconds
-        setTimeout(() => {
-            if (triggerStatus[triggerId] === "pending") {
-                triggerStatus[triggerId] = ""
-                triggerStatus = triggerStatus
-            }
-        }, 2000)
     }
 </script>
 
@@ -270,25 +250,6 @@
                         {/each}
                     </div>
                 {/if}
-            </div>
-        {:else}
-            <Center>
-                <p style="opacity: 0.5;">{translate("empty.general", $dictionary)}</p>
-            </Center>
-        {/if}
-    {:else if $functionsSubTab === "triggers"}
-        <!-- Triggers Content -->
-        {#if sortedTriggers.length}
-            <div class="triggers" class:center={sortedTriggers.length <= 10}>
-                {#each sortedTriggers as trigger}
-                    <div class="trigger" class:pending={triggerStatus[trigger.id] === "pending"} class:success={triggerStatus[trigger.id] === "success"} class:error={triggerStatus[trigger.id] === "error"}>
-                        <Button on:click={() => activateTrigger(trigger.id)} style="width: 100%; height: 100%; padding: 5px;">
-                            <p>
-                                {trigger.name || translate("main.unnamed", $dictionary)}
-                            </p>
-                        </Button>
-                    </div>
-                {/each}
             </div>
         {:else}
             <Center>
@@ -525,57 +486,5 @@
     .var-value {
         opacity: 0.8;
         font-style: italic;
-    }
-
-    /* Triggers styles */
-    .triggers {
-        display: flex;
-        flex-wrap: wrap;
-        align-content: flex-start;
-        justify-content: space-evenly;
-        gap: 8px;
-        padding: 8px;
-        flex: 1;
-        overflow: auto;
-    }
-
-    .triggers.center {
-        align-content: center;
-    }
-
-    .trigger {
-        width: 100px;
-        height: 100px;
-        border: 2px solid rgb(255 255 255 / 0.4);
-        border-radius: 8px;
-        background-color: var(--primary-darkest);
-        transition: 0.2s border;
-        overflow: hidden;
-    }
-
-    .trigger.pending {
-        border-color: var(--secondary);
-    }
-
-    .trigger.success {
-        border-color: rgb(35, 175, 35);
-    }
-
-    .trigger.error {
-        border-color: rgb(255, 35, 35);
-    }
-
-    .trigger p {
-        font-size: 1em;
-        font-weight: normal;
-        color: var(--text);
-        width: 100%;
-        height: 100%;
-        white-space: normal;
-        word-break: break-word;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        text-align: center;
     }
 </style>

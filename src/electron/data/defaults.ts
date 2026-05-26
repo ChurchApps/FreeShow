@@ -114,7 +114,6 @@ export const defaultSyncedSettings: { [key in SaveListSyncedSettings]: any } = {
     variables: {
         default: { name: "Counter", type: "number" }
     },
-    triggers: {},
     audioStreams: {},
     audioPlaylists: {},
     scriptures: {

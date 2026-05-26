@@ -77,8 +77,7 @@ const drawerPages: { [key: string]: DrawerTabIds } = {
 
     actions: "functions",
     timer: "functions",
-    variables: "functions",
-    triggers: "functions"
+    variables: "functions"
 }
 export function openDrawer(id: string, openPopup = false) {
     activePage.set("show")

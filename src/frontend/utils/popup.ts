@@ -8,7 +8,6 @@ import Alert from "../components/main/popups/Alert.svelte"
 import AspectRatio from "../components/main/popups/AspectRatio.svelte"
 import AudioStream from "../components/main/popups/AudioStream.svelte"
 import CategoryAction from "../components/main/popups/CategoryAction.svelte"
-import UpdateManager from "../components/main/popups/UpdateManager.svelte"
 import ChangeIcon from "../components/main/popups/ChangeIcon.svelte"
 import ChangeOutputValues from "../components/main/popups/ChangeOutputValues.svelte"
 import ChooseCamera from "../components/main/popups/ChooseCamera.svelte"
@@ -77,8 +76,8 @@ import Timecode from "../components/main/popups/Timecode.svelte"
 import TimelineSettings from "../components/main/popups/TimelineSettings.svelte"
 import Timer from "../components/main/popups/Timer.svelte"
 import Transition from "../components/main/popups/Transition.svelte"
-import Trigger from "../components/main/popups/Trigger.svelte"
 import Unsaved from "../components/main/popups/Unsaved.svelte"
+import UpdateManager from "../components/main/popups/UpdateManager.svelte"
 import Variable from "../components/main/popups/Variable.svelte"
 import { activePopup, popupData } from "../stores"
 
@@ -113,7 +112,6 @@ export const popups: { [key in Popups]: ComponentType } = {
     find_replace: FindReplace,
     timer: Timer,
     variable: Variable,
-    trigger: Trigger,
     audio_stream: AudioStream,
     now_playing: NowPlaying,
     aspect_ratio: AspectRatio,

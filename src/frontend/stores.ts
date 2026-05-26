@@ -10,7 +10,7 @@ import type { Event } from "../types/Calendar"
 import type { Draw, DrawLine, DrawSettings, DrawTools } from "../types/Draw"
 import type { Effects } from "../types/Effects"
 import type { History, HistoryNew } from "../types/History"
-import type { ActiveEdit, Clipboard, Media, MediaOptions, NumberObject, OS, Popups, Profiles, Selected, SlidesOptions, Trigger, Variable } from "../types/Main"
+import type { ActiveEdit, Clipboard, Media, MediaOptions, NumberObject, OS, Popups, Profiles, Selected, SlidesOptions, Variable } from "../types/Main"
 import type { Folders, Projects, ShowRef } from "../types/Projects"
 import type { Dictionary, Styles, Themes } from "../types/Settings"
 import type { Action, Emitter, ID, Overlays, ShowGroups, ShowList, Shows, ShowType, SlideTimer, Tag, Templates, Timer, Transition, TrimmedShows } from "../types/Show"
@@ -20,13 +20,13 @@ import type { BibleCategories, Categories, DrawerTabs, SettingsTabs, TopViews } 
 import type { AudioChannel, AudioChannelData, AudioStream, Playlist } from "./../types/Audio"
 import type { Outputs } from "./../types/Output"
 import type { DrawerTabIds } from "./../types/Tabs"
+import type { AudioData } from "./audio/audioPlayer"
 import type { CompressorConfig } from "./audio/effects/audioCompressor"
 import type { DelayConfig } from "./audio/effects/audioDelay"
 import type { EQBand, EqualizerConfig } from "./audio/effects/audioEqualizer"
 import type { FilterConfig } from "./audio/effects/audioFilter"
 import type { LimiterConfig } from "./audio/effects/audioLimiter"
 import type { NoiseGateConfig } from "./audio/effects/audioNoiseGate"
-import type { AudioData } from "./audio/audioPlayer"
 import type { ReverbConfig } from "./audio/effects/audioReverb"
 import type { StereoShaperConfig } from "./audio/effects/audioStereoShaper"
 import type { API_metronome } from "./components/actions/api"
@@ -244,9 +244,6 @@ export const timers: Writable<{ [key: string]: Timer }> = writable({}) // {}
 // VARIABLES
 export const variables: Writable<{ [key: string]: Variable }> = writable({}) // {}
 
-// TRIGGERS
-export const triggers: Writable<{ [key: string]: Trigger }> = writable({}) // {}
-
 // MEDIA
 export const media: Writable<Media> = writable({}) // {}
 export const mediaFolders: Writable<Categories> = writable({}) // {default}
@@ -443,7 +440,6 @@ export const $ = {
     folders,
     timers,
     variables,
-    triggers,
     media,
     mediaFolders,
     effects,

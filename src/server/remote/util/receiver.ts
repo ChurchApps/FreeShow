@@ -2,7 +2,7 @@ import { sanitizeVerseText } from "../../../common/scripture/sanitizeVerseText"
 import type { Item, Show } from "../../../types/Show"
 import { setError, translate } from "./helpers"
 import { send } from "./socket"
-import { _, _get, _set, _update, activeTimers, currentScriptureState, mixer, overlays, runningActions, scriptureCache, scriptures, timers, triggers } from "./stores"
+import { _, _get, _set, _update, activeTimers, currentScriptureState, mixer, overlays, runningActions, scriptureCache, scriptures, timers } from "./stores"
 
 function sanitizeBiblePayload(bible: any) {
     if (!bible || !Array.isArray(bible.books)) return bible
@@ -277,9 +277,6 @@ export const receiver = {
     TIMERS: (data: any) => {
         timers.set(data)
     },
-    TRIGGERS: (data: any) => {
-        triggers.set(data)
-    },
     ACTIVE_TIMERS: (data: any) => {
         activeTimers.set(data)
     },
@@ -302,7 +299,6 @@ export const receiver = {
         _set("variableTags", data.variableTags)
         _set("timerTags", data.timerTags)
         timers.set(data.timers)
-        triggers.set(data.triggers)
         activeTimers.set(data.activeTimers)
         runningActions.set(data.runningActions)
     },

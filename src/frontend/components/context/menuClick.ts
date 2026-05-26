@@ -28,6 +28,7 @@ import {
     activeStyle,
     activeTagFilter,
     activeTimers,
+    activeTimerTagFilter,
     activeVariableTagFilter,
     audioFolders,
     categories,
@@ -75,10 +76,9 @@ import {
     templates,
     textEditActive,
     themes,
-    toggleOutputEnabled,
-    variables,
     timers,
-    activeTimerTagFilter
+    toggleOutputEnabled,
+    variables
 } from "../../stores"
 import { hideDisplay, isOutputWindow, newToast, triggerFunction, wait } from "../../utils/common"
 import { setExampleEffects, setExampleOverlays, setExampleTemplates } from "../../utils/createData"
@@ -1183,8 +1183,6 @@ const clickActions = {
             activePopup.set("timer")
         } else if (obj.sel.id === "variable") {
             activePopup.set("variable")
-        } else if (obj.sel.id === "trigger") {
-            activePopup.set("trigger")
         } else if (obj.sel.id === "audio_stream") {
             activePopup.set("audio_stream")
         } else if (obj.contextElem?.classList?.contains("#project_template")) {

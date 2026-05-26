@@ -3,9 +3,9 @@
     import { Main } from "../../../types/IPC/Main"
     import { requestMain } from "../../IPC/main"
     import { cameraManager } from "../../media/cameraManager"
-    import { obsGetScenes } from "../../utils/obsTalk"
-    import { actions, activePopup, audioPlaylists, audioStreams, effects, effectsLibrary, groups, outputs, overlays, popupData, projects, shows, stageShows, styles, templates, timers, triggers, variables } from "../../stores"
+    import { actions, activePopup, audioPlaylists, audioStreams, effects, effectsLibrary, groups, outputs, overlays, popupData, projects, shows, stageShows, styles, templates, timers, variables } from "../../stores"
     import { translateText } from "../../utils/language"
+    import { obsGetScenes } from "../../utils/obsTalk"
     import MetronomeInputs from "../drawer/audio/MetronomeInputs.svelte"
     import T from "../helpers/T.svelte"
     import { keysToID, sortByName } from "../helpers/array"
@@ -109,7 +109,6 @@
         change_output_style: () => convertToOptions($styles),
         id_start_timer: () => convertToOptions($timers),
         variable: () => convertToOptions($variables), // .map((a) => ({...a, type: $variables[a.id]?.type}))
-        start_trigger: () => convertToOptions($triggers),
         // WIP remove all actions that reference this action and so on - to prevent infinite loop
         run_action: () => convertToOptions($actions).filter((a) => a.label && a.value !== mainId),
         set_template: () => convertToOptions($templates),
