@@ -38,6 +38,9 @@ export class OutputLifecycle {
 
         this.clearPendingCaptureStart(id)
 
+        // disable move/resize listeners during initialization
+        OutputHelper.Bounds.disableWindowMoveListener()
+
         const outputWindow = this.createOutputWindow({ ...output.bounds, alwaysOnTop: output.alwaysOnTop !== false, kiosk: output.kioskMode === true, backgroundColor: output.transparent ? "#00000000" : "#000000" }, id, output.name, output)
         // const previewWindow = this.createPreviewWindow({ ...output.bounds, backgroundColor: "#000000" })
 
