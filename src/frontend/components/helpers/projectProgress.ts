@@ -1,6 +1,7 @@
 import { get } from "svelte/store"
 import { shows } from "../../stores"
 import { getFileName, removeExtension } from "./media"
+import { loadShows } from "./setShow"
 
 export interface ProjectProgressItem {
     name: string
@@ -36,6 +37,7 @@ function isOutputMatch(projectItem: any, outData: any) {
 export function getProjectItems(projectItems: any[], showsStore: Record<string, any>): ProjectProgressItem[] {
     return (projectItems || []).map((projectItem, index) => {
         const type = projectItem?.type || "show"
+        if (type === "show" && !showsStore?.[projectItem.id]) loadShows([projectItem.id])
         const show = type === "show" ? showsStore?.[projectItem.id] || get(shows)[projectItem.id] : null
 
         let name = projectItem?.name || ""
