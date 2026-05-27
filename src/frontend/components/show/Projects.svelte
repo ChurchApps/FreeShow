@@ -8,6 +8,7 @@
     import { translateText } from "../../utils/language"
     import { getAccess } from "../../utils/profile"
     import { exportProject } from "../export/project"
+    import { shareProjectLink } from "../export/projectLink"
     import { clone, keysToID, removeDuplicateValues, sortByName } from "../helpers/array"
     import { history } from "../helpers/history"
     import { getDefaultProjectName, getProjectName, projectReplacers } from "../helpers/historyHelpers"
@@ -360,6 +361,10 @@
                                     <!-- WIP set sourcePath to export path -->
                                     <MaterialButton title="actions.export" icon="export" on:click={() => exportProject(currentProject, $activeProject || "")} white>
                                         <T id="actions.export" />
+                                    </MaterialButton>
+
+                                    <MaterialButton title="export.data_link" icon="bind" on:click={() => shareProjectLink(currentProject, $activeProject || "")} white>
+                                        <T id="export.data_link" />
                                     </MaterialButton>
 
                                     <div class="DIVIDER"></div>

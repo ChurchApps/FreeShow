@@ -941,6 +941,7 @@
         "all_shows": "All shows",
         "all_projects": "All projects",
         "project": "Project",
+        "data_link": "Copy Data URL",
         "option_type": "What would you like to export?",
         "option_format": "What format would you like?",
         "include_media": "Include media files",
