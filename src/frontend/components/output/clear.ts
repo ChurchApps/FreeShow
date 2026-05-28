@@ -130,6 +130,7 @@ export function clearSlide(shouldClearAll = false) {
         ;(document.activeElement as any)?.blur()
     }
 
+    clearTimers("", false) // clear "Next slide timers"
     setOutput("slide", null)
     customActionActivation("slide_cleared")
 }

@@ -5,7 +5,7 @@ import type { ShowRef } from "../../../types/Projects"
 import type { OutSlide, Slide } from "../../../types/Show"
 import { AudioPlayer } from "../../audio/audioPlayer"
 import { sendMain } from "../../IPC/main"
-import { activeFocus, activeProject, activeShow, focusMode, outLocked, outputs, projects, showsCache, special } from "../../stores"
+import { activeFocus, activeProject, activeShow, focusMode, outLocked, outputs, outputSlideCache, projects, showsCache, special } from "../../stores"
 import { playFolder, togglePlayingMedia } from "../../utils/shortcuts"
 import { openProjectItem } from "../show/project"
 import { clone } from "./array"
@@ -82,7 +82,7 @@ export class OutputHelper {
             const newSlide = this.getSubsequent(show, next)
             if (!newSlide) return this.changeProjectItem(outputId, show, next, options)
 
-            if (this.quickChangeBack(outputId, show, next, options)) return
+            if (!options.playNext && this.quickChangeBack(outputId, show, next, options)) return
 
             this.playSlide(outputId, newSlide, options.slideLayers)
             return
@@ -434,7 +434,16 @@ export class OutputHelper {
 
     private static getOut(outputId: string) {
         const currentOutput = get(outputs)[outputId] || {}
-        return currentOutput.out || {}
+        let out = currentOutput.out || {}
+
+        // restore cleared slide position (only if active show is the same as outputted)
+        const clearedSlide = get(outputSlideCache)[outputId]
+        if (!out.slide && clearedSlide) {
+            const active = this.getActiveItem()
+            if (active?.id === clearedSlide.id) out.slide = clearedSlide
+        }
+
+        return out
     }
 
     /////
