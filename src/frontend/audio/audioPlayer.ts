@@ -468,6 +468,7 @@ function updateAudioStore(id: string, key: string, value: any) {
     playingAudio.update((a) => {
         if (!a[id]?.audio) return a
         a[id].audio[key] = value
+        if (key === "volume") AudioAnalyser.setSourceVolume(id, value)
         return a
     })
 }
