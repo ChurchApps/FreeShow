@@ -5,8 +5,10 @@
     import { Show } from "../../../../../types/Show"
     import { sendMain } from "../../../../IPC/main"
     import { activePopup, activeProject, projects, shows, showsCache, special } from "../../../../stores"
+    import { wait } from "../../../../utils/common"
     import { translateText } from "../../../../utils/language"
     import { send } from "../../../../utils/request"
+    import { save } from "../../../../utils/save"
     import { exportProject } from "../../../export/project"
     import { clone } from "../../../helpers/array"
     import { loadShows } from "../../../helpers/setShow"
@@ -74,6 +76,10 @@
 
     async function exportClick() {
         if (loading) return
+
+        // save all shows before exporting
+        save()
+        await wait(500)
 
         if (exportType === "all_shows") {
             loading = true
