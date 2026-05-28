@@ -60,7 +60,7 @@ export function waitUntilValueIsDefined(value: () => any, intervalTime = 50, tim
 export function getMachineId(): string {
     try {
         const { config } = require("../data/store")
-        let id = config.get("machineId")
+        let id = config?.get ? config.get("machineId") : undefined
         if (id) return id
 
         try {
@@ -72,7 +72,7 @@ export function getMachineId(): string {
             id = crypto.randomUUID()
         }
 
-        config.set("machineId", id)
+        if (config?.set) config.set("machineId", id)
         return id
     } catch (err) {
         console.warn("Could not get machine ID from config store:", err)
