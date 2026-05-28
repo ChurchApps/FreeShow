@@ -45,30 +45,7 @@ export function sortByName<T extends Record<string, any>>(arr: T[], key: keyof T
         .filter((a) => typeof a[key] === "string")
         .sort((a, b) => {
             if (!numberSort) return a[key].localeCompare(b[key])
-
-            const regex = /(\d+|\D+)/g
-
-            const segmentsA = a[key].match(regex) || []
-            const segmentsB = b[key].match(regex) || []
-
-            const len = Math.min(segmentsA.length, segmentsB.length)
-
-            for (let i = 0; i < len; i++) {
-                const partA = segmentsA[i]
-                const partB = segmentsB[i]
-
-                const numA = parseInt(partA, 10)
-                const numB = parseInt(partB, 10)
-
-                if (!isNaN(numA) && !isNaN(numB)) {
-                    if (numA !== numB) return numA - numB
-                } else {
-                    const cmp = partA.localeCompare(partB)
-                    if (cmp !== 0) return cmp
-                }
-            }
-
-            return segmentsA.length - segmentsB.length
+            return a[key].localeCompare(b[key], undefined, { numeric: true, sensitivity: "base" })
         })
 }
 
