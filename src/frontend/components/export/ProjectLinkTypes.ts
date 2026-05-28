@@ -1,17 +1,17 @@
 export interface ProjectLink {
-    id: string
+    id?: string
     name: string
     sharedAt: number
     items: (LinkShowItem | LinkOverlayItem | LinkGenericItem | null)[]
 }
 
 export interface LinkItem {
-    id: string
+    id?: string
     name: string
 }
 
 export type LinkShowItem = LinkItem & {
-    type: "show"
+    type?: "show"
     data: {
         slides: LinkSlide[]
     }
@@ -29,8 +29,8 @@ export type LinkGenericItem = LinkItem & {
 }
 
 export type LinkSlide = {
-    group: string | null
-    color?: string | null
+    group?: string
+    color?: string
     notes?: string
     items: LinkSlideItem[]
 }
@@ -40,7 +40,7 @@ export type LinkSlideItem = {
     style: string
 }
 export type LinkSlideTextItem = LinkSlideItem & {
-    type: "text"
+    type?: "text"
     lines: LinkSlideLine[]
     align?: string
 }
@@ -55,7 +55,7 @@ export type LinkSlideGenericItem = LinkSlideItem & {
 }
 
 export type LinkSlideLine = {
-    align: string
+    align?: string
     text: {
         value: string
         style: string

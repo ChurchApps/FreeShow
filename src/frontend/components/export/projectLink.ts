@@ -4,7 +4,7 @@ import { overlays, showsCache } from "../../stores"
 import { newToast } from "../../utils/common"
 import { loadShows } from "../helpers/setShow"
 import { _show } from "../helpers/shows"
-import { LinkGenericItem, LinkOverlayItem, LinkShowItem, LinkSlide, LinkSlideGenericItem, LinkSlideItems, LinkSlideMediaItem, LinkSlideTextItem, ProjectLink } from "./ProjectLinkTypes"
+import { LinkGenericItem, LinkOverlayItem, LinkShowItem, LinkSlide, LinkSlideGenericItem, LinkSlideItems, LinkSlideLine, LinkSlideMediaItem, LinkSlideTextItem, ProjectLink } from "./ProjectLinkTypes"
 
 export async function exportProjectAsData(project: Project, projectId: string): Promise<ProjectLink | null> {
     if (!project) return null
@@ -18,8 +18,9 @@ export async function exportProjectAsData(project: Project, projectId: string): 
     const cachedShows = get(showsCache)
     const cachedOverlays = get(overlays)
 
+    console.log("Compressing project:", projectId)
     const projectLink: ProjectLink = {
-        id: projectId,
+        // id: projectId,
         name: project.name,
         sharedAt: Date.now(),
         items: items
@@ -42,7 +43,8 @@ export async function exportProjectAsData(project: Project, projectId: string): 
 
                         const items = mapSlideItems(slide.items || [])
 
-                        let data: LinkSlide = { group, items }
+                        let data: LinkSlide = { items }
+                        if (group !== null) data.group = group
                         if (color) data.color = color
                         if (notes) data.notes = notes
 
@@ -50,9 +52,9 @@ export async function exportProjectAsData(project: Project, projectId: string): 
                     })
 
                     return {
-                        id: item.id,
+                        // id: item.id,
                         name: show?.name || item.name,
-                        type,
+                        // type, // no type = "show"
                         data: { slides }
                     } as LinkShowItem
                 }
@@ -61,7 +63,7 @@ export async function exportProjectAsData(project: Project, projectId: string): 
                     const overlay = cachedOverlays[item.id]
 
                     return {
-                        id: item.id,
+                        // id: item.id,
                         name: overlay?.name || item.name,
                         type,
                         data: { items: mapSlideItems(overlay?.items || []) }
@@ -69,7 +71,7 @@ export async function exportProjectAsData(project: Project, projectId: string): 
                 }
 
                 return {
-                    id: item.id,
+                    // id: item.id,
                     name: item.name,
                     type
                 } as LinkGenericItem
@@ -86,15 +88,19 @@ function mapSlideItems(slideItems: any[] = []): LinkSlideItems {
 
         if (type === "text") {
             let item: LinkSlideTextItem = {
-                type: "text",
-                style: slideItem.style,
-                lines: (slideItem.lines || []).map((line) => ({
-                    align: line.align,
-                    text: (line.text || []).map((t) => ({
-                        value: t.value,
-                        style: t.style
-                    }))
-                }))
+                // type: "text",
+                style: encodeStyle(slideItem.style),
+                lines: (slideItem.lines || []).map((line) => {
+                    let newLine: LinkSlideLine = {
+                        text: (line.text || []).map((t) => ({
+                            value: t.value,
+                            style: encodeStyle(t.style)
+                        }))
+                    }
+                    if (line.align && line.align.replaceAll(";", "") !== "") newLine.align = line.align
+
+                    return newLine
+                })
             }
             if (slideItem.align) item.align = slideItem.align
 
@@ -104,16 +110,58 @@ function mapSlideItems(slideItems: any[] = []): LinkSlideItems {
         if (type === "media" || type === "icon") {
             return {
                 type,
-                style: slideItem.style,
+                style: encodeStyle(slideItem.style),
                 src: slideItem.customSvg || slideItem.src
             } as LinkSlideMediaItem
         }
 
         return {
             type: slideItem.type,
-            style: slideItem.style
+            style: encodeStyle(slideItem.style)
         } as LinkSlideGenericItem
     }) as LinkSlideItems
+}
+
+const keyMap = {
+    "font-weight": "fw",
+    "font-style": "fs",
+    "text-decoration": "td",
+
+    "line-height": "lh",
+    "letter-spacing": "ls",
+    "font-size": "fz",
+    "font-family": "ff",
+    "text-shadow": "ts",
+
+    "border-width": "bw",
+    "border-color": "brc",
+    "border-radius": "br",
+
+    "background-color": "bc",
+    background: "bg",
+    color: "c",
+
+    width: "w",
+    height: "h",
+    top: "t",
+    left: "l"
+}
+
+function encodeStyle(style: string | undefined): string {
+    if (!style) return ""
+
+    style = style.replaceAll(": ", ":").replaceAll("; ", ";").replaceAll(";;;", ";").replaceAll(";;", ";").trim()
+
+    // remove any style values without any values
+    // example: "font-size:100px;color:;" -> "font-size:100px;"
+    style = style.replace(/[^:;]+:\s*;/g, "")
+
+    // replace common keys with _{shortkey}_
+    for (const [fullKey, shortKey] of Object.entries(keyMap)) {
+        style = style.replaceAll(fullKey, `_${shortKey}_`)
+    }
+
+    return style
 }
 
 // SHARE
