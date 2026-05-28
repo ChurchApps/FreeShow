@@ -362,7 +362,7 @@
         // load new data
         // NOTE: if chapter is not a number it does not work
         const chapterNumber = Number(targetChapterNumbers[targetChapterNumbers.length - 1])
-        
+
         const chapterId = `${previewBibleId}_${activeReference.book}_${chapterNumber}`
         if (pendingChapterId !== chapterId) {
             pendingChapterId = chapterId
@@ -573,6 +573,7 @@
             }
         }
 
+        const autocompleteChanged = result.autocompleted && result.autocompleted !== searchValue
         if (result.autocompleted) searchValue = result.autocompleted
 
         const bookChanged = result.book && result.book.toString() !== activeReference.book?.toString()
@@ -591,6 +592,10 @@
                 freezeTimeout = setTimeout(() => (freezeInput = null), 1500)
             }
             success = await openBook(result.book, result.chapter ? [result.chapter] : undefined, newVerses)
+        } else if (autocompleteChanged && !result.chapter) {
+            // prevent inputs right after auto complete to already opened book
+            freezeInput = searchValue
+            freezeTimeout = setTimeout(() => (freezeInput = null), 1500)
         } else if (chapterChanged) {
             success = await openChapter([result.chapter], newVerses)
         } else if (result.chapter) {
