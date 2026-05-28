@@ -40,6 +40,7 @@
 
     let isPlaying = false
     let isFading = false
+    let isFirstRun = true
 
     $: {
         const nextPlaying = !!$spotifyState?.isPlaying
@@ -48,11 +49,11 @@
         if (nextPlaying || nextFading) {
             clearTimeout(pauseTimer)
             isMinimized = false
-        } else if ($spotifyState && (isPlaying || isFading)) {
+        } else if ($spotifyState) {
             clearTimeout(pauseTimer)
-            if (isFading) {
+            if (isFirstRun || isFading) {
                 isMinimized = true
-            } else {
+            } else if (isPlaying) {
                 pauseTimer = setTimeout(() => {
                     isMinimized = true
                 }, 1500)
@@ -62,6 +63,7 @@
             isMinimized = false
         }
 
+        if ($spotifyState) isFirstRun = false
         isPlaying = nextPlaying
         isFading = nextFading
     }
