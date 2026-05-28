@@ -34,6 +34,8 @@
     export let ratio: number
     export let preview = false
     export let edit = false
+    export let isMirrorItem = false
+    export let disableStagePreview = false
 
     $: currentShow = stageLayout === null ? ($activeStage.id ? $stageShows[$activeStage.id] : null) : stageLayout
 
@@ -321,7 +323,9 @@
                     <!-- {#if $currentWindow === "output" && !$special.optimizedMode} -->
                     <!-- <PreviewCanvas capture={$previewBuffers[outputWindowId]} id={outputWindowId} fullscreen /> -->
                     {#if ($outputs[outputWindowId] || $allOutputs[outputWindowId])?.stageOutput}
-                        <StageLayout outputId={outputWindowId} stageId={($outputs[outputWindowId] || $allOutputs[outputWindowId])?.stageOutput} edit={false} />
+                        {#if !disableStagePreview}
+                            <StageLayout outputId={outputWindowId} stageId={($outputs[outputWindowId] || $allOutputs[outputWindowId])?.stageOutput} edit={false} disableStagePreview={true} />
+                        {/if}
                     {:else}
                         <Output outputId={outputWindowId} mirror style="width: 100%; height: 100%;" />
                     {/if}
@@ -363,7 +367,7 @@
                     {/if}
                 {:else if item.type}
                     {#if newItem}
-                        <SlideItems item={stageItemToItem(newItem)} ref={{ type: "stage", id }} fontSize={item.auto !== false || item.textFit !== "none" ? autoSize : fontSize} {preview} outputId={stageOutputId} />
+                        <SlideItems item={stageItemToItem(newItem)} ref={{ type: "stage", id }} fontSize={item.auto !== false || item.textFit !== "none" ? autoSize : fontSize} {preview} {isMirrorItem} outputId={stageOutputId} />
                     {/if}
                 {:else}
                     <!-- OLD CODE -->
