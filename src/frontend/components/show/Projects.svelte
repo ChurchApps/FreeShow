@@ -324,7 +324,7 @@
     <span class="tabs">
         {#if projectActive || recentlyUsedList.length}
             {#if !$focusMode}
-                <div class="header {recentlyUsedList.length ? '' : 'context #projectTab'}" class:shadow={listScrollY > 0} class:isScrollbarVisible class:passThrough={isDragging} data-title={translateText("remote.project: ") + `<b>${currentProject?.name || ""}</b>`}>
+                <div class="header {recentlyUsedList.length ? '' : 'context #projectTab'}" class:shadow={listScrollY > 0} class:isScrollbarVisible class:passThrough={isDragging} data-title={translateText("remote.project: ", $dictionary) + `<b>${currentProject?.name || ""}</b>`}>
                     <div class="left context">
                         <MaterialButton style="width: 42px;height: 100%;padding: 0.3em 0.5em;" icon="back" iconSize={1.1} title="remote.projects" on:click={back} />
                     </div>
