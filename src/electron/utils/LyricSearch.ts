@@ -216,7 +216,7 @@ export class LyricSearch {
             const html = await LyricSearch.ugFetch(song.key)
             const store = LyricSearch.parseUGStore(html)
             const content: string = store?.store?.page?.data?.tab_view?.wiki_tab?.content
-            if (content) return content.replace(/(\[\/ch\]|\[\/tab\]|\[tab\]|\[ch\])/gi, "").replace(/^[ \t]+/gm, "")
+            if (content) return LyricSearch.decodeHtmlEntities(content.replace(/(\[\/ch\]|\[\/tab\]|\[tab\]|\[ch\])/gi, "").replace(/^[ \t]+/gm, ""))
             return ""
         } catch (err) {
             console.error(err)
@@ -232,6 +232,33 @@ export class LyricSearch {
             title: ultimateGuitarResult.song_name || ultimateGuitarResult.title || "",
             originalQuery
         } as LyricSearchResult
+    }
+
+    private static decodeHtmlEntities(text: string) {
+        const namedEntities: Record<string, string> = {
+            amp: "&",
+            apos: "'",
+            nbsp: " ",
+            quot: '"',
+            lt: "<",
+            gt: ">",
+            lsquo: "'",
+            rsquo: "'",
+            ldquo: '"',
+            rdquo: '"',
+            hellip: "...",
+            ndash: "-",
+            mdash: "-",
+        }
+
+        return text.replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);?/gi, (_, entity: string) => {
+            if (entity[0] === "#") {
+                const codePoint = entity[1].toLowerCase() === "x" ? Number.parseInt(entity.slice(2), 16) : Number.parseInt(entity.slice(1), 10)
+                return Number.isFinite(codePoint) ? String.fromCodePoint(codePoint) : _
+            }
+
+            return namedEntities[entity.toLowerCase()] || _
+        })
     }
 
     // ref: http://stackoverflow.com/a/1293163/2343
