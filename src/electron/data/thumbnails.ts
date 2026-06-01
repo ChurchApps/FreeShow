@@ -172,6 +172,20 @@ export function filePathHashCode(str: string) {
     return "a" + hash.toString()
 }
 
+// Sanitize a file/folder name for use on disk
+function sanitizeFileName(name: string) {
+    if (!name || typeof name !== "string") return ""
+
+    // Remove ASCII control chars and reserved characters
+    name = name.replace(/[<>:\"/\\|?*\x00-\x1F]/g, "")
+    // Collapse whitespace and trim
+    name = name.replace(/\s+/g, " ").trim()
+    // Remove trailing dots/spaces (Windows disallows these)
+    name = name.replace(/[.\s]+$/g, "")
+
+    return name
+}
+
 /// // GENERATE /////
 
 interface Config {
@@ -270,7 +284,8 @@ export function saveImage(data: { id?: string; path?: string; base64?: string; b
 export async function pdfToImage({ filePath }: { filePath: string }) {
     // normalize filePath to handle special characters robustly
     filePath = path.normalize(filePath)
-    const pdfName = path.basename(filePath, path.extname(filePath))
+    const rawPdfName = path.basename(filePath, path.extname(filePath))
+    const pdfName = sanitizeFileName(rawPdfName)
     const pdfImportPath = getDataFolderPath("imports", "PDF")
     const pathName = createFolder(path.join(pdfImportPath, pdfName))
     const renderPhasePercent = 80
