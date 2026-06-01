@@ -71,7 +71,8 @@ export class BlackmagicReceiver {
         const receiver = await this.initialize(deviceId)
         if (!receiver) return
 
-        const frameRate = (receiver.frameRate[1] || 30000) / (receiver.frameRate[0] || 1001)
+        let frameRate = (receiver.frameRate[1] || 30000) / (receiver.frameRate[0] || 1001)
+        if (!isFinite(frameRate) || frameRate <= 0) frameRate = 30 // fallback to 30fps for safety
 
         let gettingFrame = false
         this.BMD_RECEIVERS[deviceId].interval = setInterval(
@@ -90,7 +91,8 @@ export class BlackmagicReceiver {
 
                 gettingFrame = false
             },
-            Math.round(1000 / frameRate)
+            // ensure a sane minimum interval to avoid flooding the event loop
+            Math.max(10, Math.round(1000 / frameRate))
         )
     }
 
@@ -115,14 +117,22 @@ export class BlackmagicReceiver {
      * Send a captured frame to all registered outputs
      */
     static sendFrame(id: string, frame: CaptureFrame, size: Size) {
-        if (!frame) return
+        const receiverData = this.BMD_RECEIVERS[id]
+        if (!receiverData) return
+        if (!frame?.video?.data) return
 
         // Skip frames if system is overloaded (lagging below 10 fps)
         const timeSinceLastFrame = Date.now() - this.lastFrameTime
         if (timeSinceLastFrame > 100 && timeSinceLastFrame < 200) return
 
-        const pixelFormat = this.BMD_RECEIVERS[id].pixelFormat
-        frame.video.data = this.convertVideoFrameFormat(frame.video.data, pixelFormat, size)
+        const pixelFormat = receiverData.pixelFormat || ""
+        try {
+            const converted = this.convertVideoFrameFormat(frame.video.data, pixelFormat, size)
+            if (converted) frame.video.data = converted
+        } catch (err) {
+            console.error("Error converting Blackmagic frame format:", err)
+            return
+        }
 
         const msg = { channel: "RECEIVE_STREAM", data: { id, frame, time: Date.now() } }
         toApp(BLACKMAGIC, msg)
@@ -168,9 +178,9 @@ export class BlackmagicReceiver {
             } else this.sendToOutputs = [] // error
 
             if (!this.sendToOutputs.length) {
-                clearInterval(this.BMD_RECEIVERS[data.id].interval)
+                clearInterval(this.BMD_RECEIVERS[data.id]?.interval)
                 try {
-                    this.BMD_RECEIVERS[data.id].receiver?.stop()
+                    this.BMD_RECEIVERS[data.id]?.receiver?.stop()
                 } catch (err) {
                     console.error("Error stopping Blackmagic receiver: ", err)
                 }
