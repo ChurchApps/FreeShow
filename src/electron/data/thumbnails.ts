@@ -9,7 +9,7 @@ import type { Output } from "../../types/Output"
 import type { Resolution } from "../../types/Settings"
 import { requestToMain, sendToMain } from "../IPC/main"
 import { OutputHelper } from "../output/OutputHelper"
-import { createFolder, deleteFile, doesPathExist, doesPathExistAsync, getDataFolderPath, getFileStatsAsync, makeDir, openInSystem } from "../utils/files"
+import { createFolder, deleteFile, doesPathExist, doesPathExistAsync, getDataFolderPath, getFileStatsAsync, makeDir, openInSystem, sanitizeFileName } from "../utils/files"
 import { waitUntilValueIsDefined } from "../utils/helpers"
 import { captureOptions } from "../utils/windowOptions"
 import { imageExtensions, videoExtensions } from "./media"
@@ -170,20 +170,6 @@ export function filePathHashCode(str: string) {
 
     if (hash < 0) return "i" + hash.toString().slice(1)
     return "a" + hash.toString()
-}
-
-// Sanitize a file/folder name for use on disk
-function sanitizeFileName(name: string) {
-    if (!name || typeof name !== "string") return ""
-
-    // Remove ASCII control chars and reserved characters
-    name = name.replace(/[<>:\"/\\|?*\x00-\x1F]/g, "")
-    // Collapse whitespace and trim
-    name = name.replace(/\s+/g, " ").trim()
-    // Remove trailing dots/spaces (Windows disallows these)
-    name = name.replace(/[.\s]+$/g, "")
-
-    return name
 }
 
 /// // GENERATE /////

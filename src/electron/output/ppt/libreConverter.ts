@@ -6,7 +6,7 @@ import { isWindows } from "../.."
 import { ToMain } from "../../../types/IPC/ToMain"
 import { sendToMain } from "../../IPC/main"
 import { openURL } from "../../IPC/responsesMain"
-import { getDataFolderPath, selectFilesDialog } from "../../utils/files"
+import { getDataFolderPath, selectFilesDialog, sanitizeFileName } from "../../utils/files"
 
 const execFileAsync = promisify(execFile)
 
@@ -33,7 +33,9 @@ export function libreConvert(data: { type: string }) {
 
     const pptPath = files[0]
     const outputFolder = getDataFolderPath("imports", "PowerPoint")
-    const pdfPath = path.join(outputFolder, path.basename(pptPath, path.extname(pptPath)) + ".pdf")
+    const rawName = path.basename(pptPath, path.extname(pptPath))
+    const safeName = sanitizeFileName(rawName)
+    const pdfPath = path.join(outputFolder, safeName + ".pdf")
 
     convertPptToPdf(pptPath, pdfPath, outputFolder)
 }

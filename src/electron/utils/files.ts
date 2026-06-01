@@ -244,6 +244,19 @@ export function getFileStats(filePath: string, disableLog = false) {
     }
 }
 
+export function sanitizeFileName(name: string) {
+    if (!name || typeof name !== "string") return ""
+
+    // Remove ASCII control chars and reserved characters
+    name = name.replace(/[<>:\"/\\|?*\x00-\x1F]/g, "")
+    // Collapse whitespace and trim
+    name = name.replace(/\s+/g, " ").trim()
+    // Remove trailing dots/spaces (Windows disallows these)
+    name = name.replace(/[.\s]+$/g, "")
+
+    return name
+}
+
 export function getFileStatsAsync(filePath: string): Promise<null | Stats> {
     return new Promise((resolve) => {
         if (!filePath) return resolve(null)
@@ -1423,7 +1436,7 @@ export function getShowsFromIds(showIds: string[], projectItems?: any[]) {
                     meta: {},
                     settings: { activeLayout: "default" },
                     slides: {
-                        "slide1": {
+                        slide1: {
                             group: null,
                             color: null,
                             settings: {},
@@ -1432,7 +1445,7 @@ export function getShowsFromIds(showIds: string[], projectItems?: any[]) {
                         }
                     },
                     layouts: {
-                        "default": {
+                        default: {
                             id: "default",
                             name: "Default",
                             notes: "",
