@@ -197,13 +197,26 @@ export function keydown(e: KeyboardEvent) {
         }
 
         const preventDefaults = ["z", "y"]
-        if (ctrlKeys[key]) {
-            ctrlKeys[key](e)
-            if (preventDefaults.includes(key) || macShortcutDebug) {
+        const invokeCtrlShortcut = (k: string) => {
+            if (!k) return false
+
+            const handler = ctrlKeys[k]
+            if (!handler) return false
+            handler(e)
+
+            if (preventDefaults.includes(k) || macShortcutDebug) {
                 e.preventDefault()
                 if (get(activePage) === "edit") refreshEditSlide.set(true)
             }
+
+            return true
         }
+
+        if (invokeCtrlShortcut(key)) return
+
+        // fallback for macOS/Option-produced dead keys: try physical key code mapping
+        const phys = keyCodeMap[e.code]
+        if (phys) invokeCtrlShortcut(phys)
         return
     }
 
