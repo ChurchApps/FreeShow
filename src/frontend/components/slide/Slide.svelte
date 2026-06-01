@@ -335,6 +335,7 @@
                                     backdropFilter={layoutSlide["backdrop-filter"] || ""}
                                     disableListTransition
                                     {item}
+                                    isOutputted={!!output?.color}
                                     revealed={output?.line ?? -1}
                                     itemIndex={i}
                                     {ratio}

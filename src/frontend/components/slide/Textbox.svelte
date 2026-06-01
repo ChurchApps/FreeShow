@@ -9,7 +9,7 @@
     import autosize from "../edit/scripts/autosize"
     import { getItemText } from "../edit/scripts/textStyle"
     import { clone } from "../helpers/array"
-    import { getActiveOutputs, getFirstActiveOutput, getOutputResolution, percentageStylePos } from "../helpers/output"
+    import { getActiveOutputs, getAllActiveOutputs, getFirstActiveOutput, getOutputLines, getOutputResolution, percentageStylePos } from "../helpers/output"
     import { getNumberVariables } from "../helpers/showActions"
     import { getStyles } from "../helpers/style"
     import SlideItems from "./SlideItems.svelte"
@@ -24,6 +24,7 @@
     export let isTemplatePreview = false
     export let mirror = true
     export let isMirrorItem = false
+    export let isOutputted = false
     export let ratio = 1
     export let outputId = ""
     export let filter = ""
@@ -778,6 +779,32 @@
     $: noTextMode = ref?.type === "template" && $templates[ref?.id]?.settings?.mode === "item"
 
     $: normalWrap = ref?.origin === "powerpoint"
+
+    // style Lines selection in center preview
+    let highlighedLines: any[] = []
+    $: if (centerPreview && isOutputted && $outputs) {
+        let b: any[] = []
+        const outputs = getAllActiveOutputs()
+        outputs.forEach((o) => {
+            const outSlide = o.out?.slide
+            if (!outSlide) return
+
+            const style = $styles[o.style || ""]
+            const amount = style?.lines || 0
+            if (amount === 0) return
+
+            const visibleLines = getOutputLines(outSlide, amount)
+            const from = visibleLines.start
+            if (from === null) return
+
+            b.push({ from, to: from + amount, color: o.color, styleLines: amount })
+        })
+
+        // output with fewest style lines on top
+        highlighedLines = b.sort((a, b) => b.styleLines - a.styleLines)
+    } else {
+        highlighedLines = []
+    }
 </script>
 
 <!-- lyrics view must have "width: 100%;height: 100%;" set -->
@@ -799,7 +826,37 @@
     on:mouseup={release}
 >
     {#if lines && !noTextMode}
-        <TextboxLines {item} {slideIndex} {key} {smallFontSize} {animationStyle} {dynamicValues} {isStage} {customFontSize} {outputStyle} {ref} {style} {customStyle} {stageItem} {chords} {linesStart} {linesEnd} fontSize={smallFontSize ? 20 : fontSize} {customTypeRatio} {maxLines} {maxLinesInvert} {centerPreview} {revealed} styleOverrides={templateStyleOverrides} {useOriginalTextColor} hideContent={hideUntilAutosized} {normalWrap} on:updateAutoSize={calculateAutosize} {updateDynamicValues} />
+        <TextboxLines
+            {item}
+            {slideIndex}
+            {key}
+            {smallFontSize}
+            {animationStyle}
+            {dynamicValues}
+            {isStage}
+            {customFontSize}
+            {outputStyle}
+            {ref}
+            {style}
+            {customStyle}
+            {stageItem}
+            {chords}
+            {linesStart}
+            {linesEnd}
+            fontSize={smallFontSize ? 20 : fontSize}
+            {customTypeRatio}
+            {maxLines}
+            {maxLinesInvert}
+            {centerPreview}
+            {revealed}
+            styleOverrides={templateStyleOverrides}
+            {useOriginalTextColor}
+            hideContent={hideUntilAutosized}
+            {normalWrap}
+            {highlighedLines}
+            on:updateAutoSize={calculateAutosize}
+            {updateDynamicValues}
+        />
     {:else}
         <SlideItems {item} {slideIndex} {preview} {isTemplatePreview} {mirror} {isMirrorItem} {ratio} {disableListTransition} {smallFontSize} {ref} {fontSize} {outputId} />
     {/if}
