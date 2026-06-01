@@ -1,4 +1,4 @@
-import { ChildProcess, exec, fork } from "child_process"
+import { type ChildProcess, exec, fork } from "child_process"
 import os from "os"
 import type { SpotifyState } from "../../types/Main"
 
@@ -148,14 +148,15 @@ export async function executeSpotifyCommand(cmd: string, val?: number): Promise<
             initSpotify()
             setTimeout(() => bridge?.send({ type: "command", command: cmd, value: val }), 500)
         } else if (isLinux) {
-            const dest = "--dest=org.mpris.MediaPlayer2.spotify /org/mpris/MediaPlayer2",
-                mpris = "org.mpris.MediaPlayer2.Player"
-            const run = (c: string) => exec(`dbus-send ${dest} ${c}`, (e) => {
-                if (e) {
-                    const isServiceUnknown = e.message?.includes("org.freedesktop.DBus.Error.ServiceUnknown") || e.message?.includes("ServiceUnknown")
-                    if (!isServiceUnknown) console.error("[Spotify] Linux command error:", e)
-                }
-            })
+            const dest = "--dest=org.mpris.MediaPlayer2.spotify /org/mpris/MediaPlayer2"
+            const mpris = "org.mpris.MediaPlayer2.Player"
+            const run = (c: string) =>
+                exec(`dbus-send ${dest} ${c}`, (e) => {
+                    if (e) {
+                        const isServiceUnknown = e.message?.includes("org.freedesktop.DBus.Error.ServiceUnknown") || e.message?.includes("ServiceUnknown")
+                        if (!isServiceUnknown) console.error("[Spotify] Linux command error:", e)
+                    }
+                })
             if (cmd === "playpause") run(`${mpris}.PlayPause`)
             else if (cmd === "next") run(`${mpris}.Next`)
             else if (cmd === "prev") run(`${mpris}.Previous`)

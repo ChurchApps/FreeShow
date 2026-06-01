@@ -52,6 +52,6 @@ export class OutputValues {
         }
 
         if (!output.window || output.window.isDestroyed()) return
-        setValues[key as keyof typeof setValues](value as any, output.window, id, output)
+        setValues[key as keyof typeof setValues](value, output.window, id, output)
     }
 }

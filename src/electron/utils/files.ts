@@ -1301,7 +1301,7 @@ export async function loadShowsAsync(returnShows = false, reCacheNames: string[]
 
     // send already cached shows to the frontend immediately
     if (!returnShows && !reCacheNames.length && Object.keys(cachedShows).length) {
-        sendMain(Main.SHOWS, cachedShows as TrimmedShows)
+        sendMain(Main.SHOWS, cachedShows)
     }
 
     // create a map for quick lookup of cached shows by name

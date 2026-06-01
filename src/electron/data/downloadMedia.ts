@@ -240,7 +240,7 @@ export async function downloadMedia({ url, contentFile }: { url: string; content
 
     try {
         let downloadedSize = 0
-        let totalSize = 0
+        const totalSize = 0
 
         await streamDownload(url, outputPath, (chunk) => {
             downloadedSize += chunk.length

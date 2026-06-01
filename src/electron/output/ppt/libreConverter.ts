@@ -12,7 +12,7 @@ const execFileAsync = promisify(execFile)
 
 function getSofficePath(): string {
     const defaultPaths: Record<string, string[]> = {
-        win32: [path.join(process.env["PROGRAMFILES"] || "C:\\Program Files", "LibreOffice", "program", "soffice.exe"), path.join(process.env["PROGRAMFILES(X86)"] || "C:\\Program Files (x86)", "LibreOffice", "program", "soffice.exe")],
+        win32: [path.join(process.env.PROGRAMFILES || "C:\\Program Files", "LibreOffice", "program", "soffice.exe"), path.join(process.env["PROGRAMFILES(X86)"] || "C:\\Program Files (x86)", "LibreOffice", "program", "soffice.exe")],
         darwin: ["/Applications/LibreOffice.app/Contents/MacOS/soffice"],
         linux: ["/usr/bin/soffice", "/usr/bin/libreoffice"]
     }

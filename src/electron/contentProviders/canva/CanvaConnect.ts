@@ -32,8 +32,8 @@ export class CanvaConnect {
             }
 
             this.oauthHelper = new OAuth2Helper<CanvaAuthData>({
-                clientId: clientId,
-                clientSecret: clientSecret,
+                clientId,
+                clientSecret,
                 authUrl: CANVA_OAUTH_AUTHORIZE_URL,
                 tokenUrl: CANVA_OAUTH_TOKEN_URL,
                 redirectUri: AUTH_REDIRECT_URL,

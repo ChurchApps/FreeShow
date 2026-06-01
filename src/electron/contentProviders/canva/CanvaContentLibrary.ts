@@ -192,7 +192,13 @@ export class CanvaContentLibrary {
             const designId = match?.[1] || ""
             const pagesStr = match?.[2] || ""
             if (!designId || !pagesStr) return []
-            const pages = pagesStr === "all" ? undefined : pagesStr.split(",").map(Number).filter((page) => Number.isFinite(page) && page > 0)
+            const pages =
+                pagesStr === "all"
+                    ? undefined
+                    : pagesStr
+                          .split(",")
+                          .map(Number)
+                          .filter((page) => Number.isFinite(page) && page > 0)
             return await this.getPresentationSlides(designId, true, pages)
         }
 
@@ -259,6 +265,7 @@ export class CanvaContentLibrary {
     /**
      * Fetches slides for a given presentation (design).
      * Returns each slide as a ContentFile (image).
+     *
      * @param designId - Canva design ID
      * @param exportFullQuality - If true, requests high-res exports; if false, returns thumbnail URLs only
      * @param pages - Optional 1-based page indexes to fetch. If omitted, fetches all pages.
@@ -300,6 +307,7 @@ export class CanvaContentLibrary {
      * Requests high-quality PNG exports for one or more pages of a design.
      * Batches all pages into a single export job.
      * Caches export URLs for 24 hours.
+     *
      * @param designIdOrUrl Canva design ID or URL
      * @param pages 1-based page indexes. If omitted, Canva exports all pages.
      */
