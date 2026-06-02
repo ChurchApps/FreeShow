@@ -27,8 +27,9 @@ const setValues = {
         CaptureHelper.Lifecycle.startCapture(id, { [data.key]: data.value })
         // if (data.value) sendFrames(id, storedFrames[id], {[data.key]: true})
     },
-    transparent: (value: boolean, window: BrowserWindow) => {
+    transparent: (value: boolean, window: BrowserWindow, _id: string, output: OutputWindow) => {
         window.setBackgroundColor(value ? "#00000000" : "#000000")
+        output.transparent = value
     },
     alwaysOnTop: (value: boolean, window: BrowserWindow, _id: string, output: OutputWindow) => {
         window.setAlwaysOnTop(value, "pop-up-menu", 1)

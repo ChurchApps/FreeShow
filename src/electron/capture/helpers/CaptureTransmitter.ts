@@ -211,7 +211,10 @@ export class CaptureTransmitter {
 
         if (this.shouldSkipUnchangedNonBlackmagicFrame("ndi", captureId, buffer, size)) return
 
-        NdiSender.sendVideoBufferNDI(captureId, buffer, { size, ratio, framerate: OutputHelper.getOutput(captureId)?.captureOptions?.framerates?.ndi || 30 })
+        const output = OutputHelper.getOutput(captureId)
+        const transparent = output?.transparent !== false
+
+        NdiSender.sendVideoBufferNDI(captureId, buffer, { size, ratio, framerate: output?.captureOptions?.framerates?.ndi || 30, transparent })
     }
 
     static resizeImage(image: NativeImage, initialSize: Size, newSize: Size) {

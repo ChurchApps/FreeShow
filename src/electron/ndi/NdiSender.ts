@@ -139,7 +139,7 @@ export class NdiSender {
     }
 
     // static frames = 0
-    static async sendVideoBufferNDI(id: string, buffer: Buffer, { size = { width: 1280, height: 720 }, ratio = 16 / 9, framerate = 1 }) {
+    static async sendVideoBufferNDI(id: string, buffer: Buffer, { size = { width: 1280, height: 720 }, ratio = 16 / 9, framerate = 1, transparent = true }) {
         // DEBUG log fps
         // this.frames++
         // setTimeout(() => this.frames--, 1000)
@@ -156,11 +156,11 @@ export class NdiSender {
         const grandiose = await loadGrandiose()
         if (!grandiose) return
 
-        const fourCC = grandiose.FOURCC_BGRA
-        // if (!this.cfg.v) {
-        //     util.ImageBufferAdjustment.BGRAtoBGRX(buffer)
-        //     fourCC = grandiose.FOURCC_BGRX
-        // }
+        let fourCC = grandiose.FOURCC_BGRA
+        if (!transparent) {
+            util.ImageBufferAdjustment.BGRAtoBGRX(buffer)
+            fourCC = grandiose.FOURCC_BGRX
+        }
 
         /*  send NDI video frame  */
         const now = this.timeStart + process.hrtime.bigint()
