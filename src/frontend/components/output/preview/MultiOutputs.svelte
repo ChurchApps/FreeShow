@@ -188,7 +188,7 @@ aria-label={fullscreen ? "Exit fullscreen preview" : "Toggle fullscreen preview"
 
                     <!-- style template -->
                     {#if styleTemplate && $templates[styleTemplate]}
-                        {#if layers.length}<div class="divider"></div>{/if}
+                        {#if layers.length < 3}<div class="divider"></div>{/if}
 
                         <div class="icon" data-title={`<b>${translateText(`settings.override${isScriptureOutput ? "_scripture" : ""}_with_template`)}</b>:<br>${$templates[styleTemplate].name}`}>
                             <Icon id="templates" size={0.8} white />
@@ -197,7 +197,7 @@ aria-label={fullscreen ? "Exit fullscreen preview" : "Toggle fullscreen preview"
 
                     <!-- muted -->
                     {#if isMuted}
-                        {#if layers.length || styleTemplate}<div class="divider"></div>{/if}
+                        {#if layers.length < 3 || styleTemplate}<div class="divider"></div>{/if}
 
                         <div class="icon muted" data-title={translateText("output.mute")}>
                             <Icon id="muted" size={0.8} white />
