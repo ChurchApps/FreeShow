@@ -44,6 +44,16 @@ export class CaptureHelper {
 
     static storedFrames: { [key: string]: NativeImage } = {}
 
+    static getMaxActiveFramerate(framerates: { [key: string]: number }, activeOptions: { [key: string]: boolean }): number {
+        const activeRates: number[] = []
+        if (activeOptions.ndi) activeRates.push(framerates.ndi || 1)
+        if (activeOptions.blackmagic) activeRates.push(framerates.blackmagic || 1)
+        if (activeOptions.server) activeRates.push(framerates.server || 1)
+        if (activeOptions.stage) activeRates.push(framerates.stage || 1)
+        if (activeOptions.webrtc) activeRates.push(framerates.webrtc || 1)
+        return activeRates.length > 0 ? Math.max(...activeRates) : 1
+    }
+
     static updateFramerate(id: string) {
         const output = OutputHelper.getOutput(id)
         const captureOptions = output?.captureOptions
