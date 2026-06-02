@@ -251,6 +251,18 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
                 return
             }
 
+            // SYNCED_SETTINGS bundles many item-collections; deep-merge it instead of
+            // replacing the whole file, so items unique to either side aren't lost (#3038)
+            if (id === "SYNCED_SETTINGS" && data.method !== "replace" && !isNewDevice) {
+                const cloudIsNewer = await isCloudNewerThanFile(localStore.path, modifiedDates[file.name])
+                const merged = mergeSyncedSettings(localStore.store, cloudFileData, cloudIsNewer)
+                if (JSON.stringify(merged) !== JSON.stringify(localStore.store)) {
+                    await safeStoreSet(localStore, merged, id)
+                    sendMain(Main[id], merged) // send to frontend
+                }
+                return
+            }
+
             // replace full files
             if (data.method === "replace" || !MERGE_INDIVIDUAL.includes(id)) {
                 const localPath = localStore.path
@@ -520,6 +532,37 @@ async function deleteUnusedZips(folderPath: string, excludeZip: string) {
             deleteFile(file.path)
         }
     }
+}
+
+// SYNCED_SETTINGS is a single file bundling many independent item-collections
+// (scriptures, categories, styles, profiles, variables, timers...). The default
+// full-file replace lets the newest device overwrite the whole file, deleting items
+// the other side never had — e.g. locally imported bibles — see #3038 / #2621 / #834.
+// Deep-merge instead: union items from both sides so nothing unique is lost; on a
+// conflicting key the newer file wins. NOTE: deletions are not propagated here (a
+// deleted item present in the cloud is restored). A per-item modified/ledger model
+// would handle deletions too — left for a follow-up redesign of the sync module.
+function mergeSyncedSettings(localData: any, cloudData: any, cloudIsNewer: boolean) {
+    const merged = clone(localData) || {}
+    for (const [collectionKey, cloudCollection] of Object.entries(cloudData || {})) {
+        const isCollection = cloudCollection && typeof cloudCollection === "object" && !Array.isArray(cloudCollection)
+        if (!isCollection) {
+            // top-level scalar/array setting: newest wins
+            if (!(collectionKey in merged) || cloudIsNewer) merged[collectionKey] = clone(cloudCollection)
+            continue
+        }
+        const localCollection = merged[collectionKey]
+        if (!localCollection || typeof localCollection !== "object" || Array.isArray(localCollection)) {
+            merged[collectionKey] = clone(cloudCollection)
+            continue
+        }
+        for (const [itemKey, cloudItem] of Object.entries(cloudCollection)) {
+            if (!(itemKey in localCollection)) merged[collectionKey][itemKey] = clone(cloudItem) // cloud-only: add
+            else if (cloudIsNewer) merged[collectionKey][itemKey] = clone(cloudItem) // conflict: newest wins
+            // local-only items are kept untouched (never dropped)
+        }
+    }
+    return merged
 }
 
 async function checkCloudEntry(id: ChangeId, key: string, cloudData: any, getLocalData: () => Promise<any> | any, isCloudNewer?: () => Promise<boolean>) {
