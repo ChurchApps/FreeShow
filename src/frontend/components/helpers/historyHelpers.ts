@@ -377,6 +377,10 @@ export const _updaters = {
                         showRef.index = p[data.remember.project].shows.length - 1
                     }
 
+                    // cloud sync update: bump project modified so adding a show
+                    // to a project (e.g. scripture verses) is detected by the merge
+                    p[data.remember.project].modified = Date.now()
+
                     return p
                 })
             }
