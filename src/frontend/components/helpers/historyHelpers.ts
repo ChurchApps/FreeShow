@@ -377,6 +377,9 @@ export const _updaters = {
                         showRef.index = p[data.remember.project].shows.length - 1
                     }
 
+                    // update project modified so changes work with cloud sync
+                    p[data.remember.project].modified = Date.now()
+
                     return p
                 })
             }
