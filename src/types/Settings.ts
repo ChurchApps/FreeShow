@@ -25,6 +25,8 @@ export interface Styles {
     aspectRatio?: AspectRatio
     cropping?: Cropping // pre 1.3.3
     lines?: number
+    showAsFaded?: boolean
+    lineOpacity?: number // default is 50%
     skipVirtualBreaks?: boolean // break on [_VB] chars only for templates with this option
     template?: string // slide
     templateScripture?: string

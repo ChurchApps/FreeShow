@@ -287,8 +287,9 @@
                         {#each renderedLines as line, i}
                             <!-- set div height if chords, not last line, and no text content -->
                             {@const height = chords && chordLines[i] && i < renderedLines.length - 1 && !line.text?.reduce((value, t) => (value += t.value || ""), "")?.trim()?.length ? 80 : 0}
+                            {@const lineHidden = (linesStart !== null && linesEnd !== null && (i < linesStart || i >= linesEnd)) || (maxLines && (maxLinesInvert ? i <= lines.length - maxLines - 1 : i >= maxLines))}
 
-                            {#if (linesStart === null || linesEnd === null || (i >= linesStart && i < linesEnd)) && (!maxLines || (maxLinesInvert ? i > lines.length - maxLines - 1 : i < maxLines))}
+                            {#if !lineHidden || outputStyle?.showAsFaded}
                                 {#if chords && chordLines[i]}
                                     <div class:first={i === 0} class="break chords" class:stageChords={!!stageItem} style="--offsetY: {(stageItem?.chords ? stageItem.chords.offsetY : item?.chords?.offsetY) || 0}px;{style ? line.align : ''}">
                                         {@html chordLines[i]}
@@ -301,7 +302,7 @@
                                     class:normalWrap={normalWrap || (isStage ? typeof stageItem?.style === "string" && (stageItem?.style.includes("justify") || stageItem?.style.includes("nowrap")) : line.align?.includes("justify") || line.align?.includes("left") || JSON.stringify(line).includes("nowrap"))}
                                     class:reveal={(centerPreview || isStage) && item?.lineReveal && revealed < i}
                                     class:smallFontSize={smallFontSize || customFontSize || textAnimation.includes("font-size")}
-                                    style="position: relative;{style ? lineStyle : ''}{style ? line.align : ''}{height ? `height: ${height}px;` : ''}{item?.list?.enabled && line.text?.reduce((value, t) => (value += t.value || ''), '')?.length ? listStyle : ''}{item?.list?.enabled ? `color: ${getStyles(line.text[0]?.style).color || ''};` : ''}"
+                                    style="position: relative;{style ? lineStyle : ''}{style ? line.align : ''}{height ? `height: ${height}px;` : ''}{item?.list?.enabled && line.text?.reduce((value, t) => (value += t.value || ''), '')?.length ? listStyle : ''}{item?.list?.enabled ? `color: ${getStyles(line.text[0]?.style).color || ''};` : ''}{lineHidden && outputStyle?.showAsFaded ? `opacity: ${(outputStyle.lineOpacity ?? 50) / 100};` : ''}"
                                 >
                                     <!-- style Lines selection in center preview -->
                                     {#each highlighedLines || [] as box}
@@ -334,8 +335,9 @@
             {#each renderedLines as line, i}
                 <!-- set div height if chords, not last line, and no text content -->
                 {@const height = chords && chordLines[i] && i < renderedLines.length - 1 && !line.text?.reduce((value, t) => (value += t.value || ""), "")?.trim()?.length ? 80 : 0}
+                {@const lineHidden = (linesStart !== null && linesEnd !== null && (i < linesStart || i >= linesEnd)) || (maxLines && (maxLinesInvert ? i <= lines.length - maxLines - 1 : i >= maxLines))}
 
-                {#if (linesStart === null || linesEnd === null || (i >= linesStart && i < linesEnd)) && (!maxLines || (maxLinesInvert ? i > lines.length - maxLines - 1 : i < maxLines))}
+                {#if !lineHidden || outputStyle?.showAsFaded}
                     {#if chords && chordLines[i]}
                         <div class:first={i === 0} class="break chords" class:stageChords={!!stageItem} style="--offsetY: {(stageItem?.chords ? stageItem.chords.offsetY : item?.chords?.offsetY) || 0}px;{style ? line.align : ''}">
                             {@html chordLines[i]}
@@ -348,7 +350,7 @@
                         class:normalWrap={normalWrap || (isStage ? typeof stageItem?.style === "string" && (stageItem?.style.includes("justify") || stageItem?.style.includes("nowrap")) : line.align?.includes("justify") || line.align?.includes("left") || JSON.stringify(line).includes("nowrap"))}
                         class:reveal={(centerPreview || isStage) && item?.lineReveal && revealed < i}
                         class:smallFontSize={smallFontSize || customFontSize || textAnimation.includes("font-size")}
-                        style="position: relative;{style ? lineStyle : ''}{style ? line.align : ''}{height ? `height: ${height}px;` : ''}{item?.list?.enabled && line.text?.reduce((value, t) => (value += t.value || ''), '')?.length ? listStyle : ''}{item?.list?.enabled ? `color: ${getStyles(line.text[0]?.style).color || ''};` : ''}"
+                        style="position: relative;{style ? lineStyle : ''}{style ? line.align : ''}{height ? `height: ${height}px;` : ''}{item?.list?.enabled && line.text?.reduce((value, t) => (value += t.value || ''), '')?.length ? listStyle : ''}{item?.list?.enabled ? `color: ${getStyles(line.text[0]?.style).color || ''};` : ''}{lineHidden && outputStyle?.showAsFaded ? `opacity: ${(outputStyle.lineOpacity ?? 50) / 100};` : ''}"
                     >
                         <!-- style Lines selection in center preview -->
                         {#each highlighedLines || [] as box}
