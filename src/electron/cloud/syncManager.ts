@@ -61,7 +61,13 @@ async function deleteLocalFiles() {
 const DEBUG_MODE = false && !isProd
 
 const EXTRACT_LOCATION = path.join(app.getPath("temp"), "freeshow-cloud")
-const MERGE_INDIVIDUAL = ["OVERLAYS", "PROJECTS", "STAGE", "TEMPLATES"] // "EVENTS", "THEMES"
+const MERGE_INDIVIDUAL = ["OVERLAYS", "PROJECTS", "STAGE", "TEMPLATES", "SYNCED_SETTINGS"] // "EVENTS", "THEMES"
+
+// SYNCED_SETTINGS sub-keys that are item-collections: merged per-item via the created/deleted
+// ledger (like PROJECTS), so items unique to a device aren't lost and deletions propagate.
+// Other keys (e.g. drawSettings, scriptureSettings, deletedDefaults) are atomic settings and
+// keep the previous newest-file-wins behavior.
+const SYNCED_SETTINGS_COLLECTIONS = ["categories", "overlayCategories", "templateCategories", "styles", "profiles", "timers", "variables", "audioStreams", "audioPlaylists", "scriptures", "groups", "midiIn", "emitters", "playerVideos", "videoMarkers", "mediaTags", "playerTags", "actionTags", "variableTags", "timerTags", "customizedIcons", "globalTags", "globalRegexes", "customMetadata", "effects"]
 
 const STALE_MERGE_GUARD_MS = 1000 * 60 * 60 * 24 * 30 // 30 days
 function getMergeGuardKey(data: { id: SyncProviderId; churchId: string; teamId: string }) {
@@ -308,6 +314,41 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
                         }
                     })
                 )
+            } else if (id === "SYNCED_SETTINGS") {
+                // SYNCED_SETTINGS bundles item-collections (scriptures, categories, styles…) plus a
+                // few atomic settings. Merge the collections per-item via the ledger (like PROJECTS),
+                // so items unique to either device survive and deletions propagate. See #3335.
+                const cloudFileIsNewer = isNewDevice || (await isCloudNewerThanFile(localStore.path, modifiedDates[file.name]))
+                await Promise.all(
+                    Object.entries<{ [key: string]: any }>(cloudFileData).map(async ([type, object]) => {
+                        const isCollection = SYNCED_SETTINGS_COLLECTIONS.includes(type) && !!object && typeof object === "object" && !Array.isArray(object)
+                        if (!isCollection) {
+                            // atomic setting (e.g. drawSettings): keep newest-file-wins
+                            if (cloudFileIsNewer) localData[type] = object
+                            return
+                        }
+
+                        if (!localData[type] || typeof localData[type] !== "object") localData[type] = {}
+
+                        await Promise.all(
+                            Object.entries(object).map(async ([key, value]) => {
+                                const getLocalData = () => localData[type][key]
+                                // items have no per-item "modified" → resolve by the ledger (requireModifiedTime = false)
+                                const result = await checkCloudEntry(id, `${type}/${key}`, value, getLocalData, undefined, false)
+
+                                if (result.action === "delete") delete localData[type][key]
+                                else if (result.action === "create" || result.action === "download") localData[type][key] = value
+                            })
+                        )
+
+                        // check any local item not in cloud
+                        const localKeys = getLocalOnlyKeys(object, localData[type])
+                        for (const key of localKeys) {
+                            const result = checkLocalEntry(id, `${type}/${key}`)
+                            if (result.action === "delete") delete localData[type][key]
+                        }
+                    })
+                )
             } else {
                 // promises not needed here, but keeps the code consistent
                 await Promise.all(
@@ -523,9 +564,11 @@ async function deleteUnusedZips(folderPath: string, excludeZip: string) {
     }
 }
 
-async function checkCloudEntry(id: ChangeId, key: string, cloudData: any, getLocalData: () => Promise<any> | any, isCloudNewer?: () => Promise<boolean>) {
+async function checkCloudEntry(id: ChangeId, key: string, cloudData: any, getLocalData: () => Promise<any> | any, isCloudNewer?: () => Promise<boolean>, requireModifiedTime = true) {
     const cloudModTime = getModifiedDate(cloudData)
-    if (cloudData !== null && !cloudModTime) return { action: "skip" } // invalid: no modified time
+    // some collections (e.g. SYNCED_SETTINGS items) have no per-item "modified" → don't treat that
+    // as invalid; fall back to the created/deleted ledger to decide.
+    if (requireModifiedTime && cloudData !== null && !cloudModTime) return { action: "skip" } // invalid: no modified time
 
     const localValue = await getLocalData()
 
@@ -561,7 +604,7 @@ async function checkCloudEntry(id: ChangeId, key: string, cloudData: any, getLoc
     if (isCreated(id, key)) markAsCreated(id, key) // just in case it's marked as created when it already exists
 
     let localModTime = getModifiedDate(localValue)
-    if (cloudData !== null && !localModTime) localModTime = setModifiedDate()
+    if (requireModifiedTime && cloudData !== null && !localModTime) localModTime = setModifiedDate()
 
     // exists both locally and in cloud
     const cloudIsNewer = isCloudNewer ? await isCloudNewer() : cloudModTime > localModTime
