@@ -183,6 +183,18 @@ function getDefaultEffects() {
         items: [{ type: "fireworks", speed: 0.5, count: 50, size: 1.5 }] as any[]
     }
 
+    a.bubbles = {
+        name: "Bubbles",
+        isDefault: true,
+        color: null,
+        style: "",
+        background: "",
+        items: [
+            { type: "snow", color: "rgb(255 255 255 / 0.15)", count: 50, drift: 1, size: 25, speed: 0.4 },
+            { type: "snow", color: "rgb(255 255 255 / 0.1)", count: 50, drift: 1, size: 20, speed: -0.3 }
+        ] as any[]
+    }
+
     return a
 }
 
