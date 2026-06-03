@@ -34,6 +34,17 @@ const DEFAULT_CAMERA_CONSTRAINTS: MediaTrackConstraints = {
     // facingMode: { exact: "user" }
 }
 
+const PREVIEW_CAMERA_CONSTRAINTS: MediaTrackConstraints = {
+    ...DEFAULT_CAMERA_CONSTRAINTS,
+    width: { ideal: 640 },
+    height: { ideal: 360 },
+    frameRate: { ideal: 15, max: 24 }
+}
+
+interface CameraStreamOptions {
+    preview?: boolean
+}
+
 class CameraManager {
     private activeCameras: Map<string, ActiveCamera> = new Map()
     private readonly MAX_RETRIES = 3
@@ -220,7 +231,7 @@ class CameraManager {
         await this.warmUpCamera(camera, { retryCount, lastError })
     }
 
-    async getCameraStream(cameraId: string, groupId?: string) {
+    async getCameraStream(cameraId: string, groupId?: string, { preview = false }: CameraStreamOptions = {}) {
         // get existing "warmed" camera
         const warmStream = this.getWarmCamera(cameraId)
         if (warmStream) {
@@ -230,7 +241,7 @@ class CameraManager {
 
         const cameraProperties = {
             video: {
-                ...DEFAULT_CAMERA_CONSTRAINTS,
+                ...constraints,
                 deviceId: { exact: cameraId },
                 groupId: groupId || (await this.getCameraFromId(cameraId))?.group
             }
