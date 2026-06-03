@@ -923,15 +923,6 @@ const clickActions = {
             })
             return
         }
-
-        if (obj.sel?.id === "action") {
-            const id = obj.sel.data[0]?.id
-            const action = get(actions)[id]
-            if (!action) return
-            send(EXPORT, ["ACTION"], { content: { ...action, id } })
-
-            return
-        }
     },
     close: (obj: ObjData) => {
         if (isOutputWindow()) {
