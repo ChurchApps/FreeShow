@@ -4,7 +4,7 @@ import type { MainFilePaths } from "../../types/Main"
 import type { Overlay, Template } from "../../types/Show"
 import { DEFAULT_ITEM_STYLE } from "../components/edit/scripts/itemHelpers"
 import { setShow } from "../components/helpers/setShow"
-import { activePopup, audioFolders, deletedDefaults, effects, folders, mediaFolders, outputs, overlays, projects, remotePassword, shows, templates, variables } from "../stores"
+import { activePopup, audioFolders, deletedDefaults, effects, folders, language, mediaFolders, outputs, overlays, projects, remotePassword, scriptures, shows, templates, variables } from "../stores"
 import { stageShows, templateCategories } from "./../stores"
 import { translateText } from "./language"
 import { save } from "./save"
@@ -78,6 +78,24 @@ export function createData(paths: MainFilePaths) {
     if (get(variables).default?.name === "Counter") {
         variables.update((a) => {
             a.default.name = translateText("variables.number")
+            return a
+        })
+    }
+
+    // region specific
+    if (get(language) === "no") {
+        scriptures.update((a) => {
+            a = {}
+            a.nb11 = {
+                api: true,
+                id: "eea18ccd2ca05dde-01",
+                name: "Bibel 2011 Bokmål"
+            }
+            a.nn11 = {
+                api: true,
+                id: "7bcaa2f2e77739d5-01",
+                name: "Bibel 2011 Nynorsk"
+            }
             return a
         })
     }

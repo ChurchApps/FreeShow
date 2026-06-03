@@ -103,7 +103,7 @@
                             style={showGrid ? "width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 6px 4px 4px;" : ""}
                         >
                             <span style={showGrid ? "display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%; gap: 6px;" : "display: flex;align-items: center;justify-content: space-between;width: 100%;"}>
-                                <span style={showGrid ? "display: flex; flex-direction: column; gap: 8px; align-items: center; justify-content: center; width: 100%; height: 100%;" : "display: flex; align-items: center; gap: 8px; width: 100%;"}>
+                                <span style={showGrid ? "display: flex; flex-direction: column; gap: 8px; align-items: center; justify-content: center; width: 100%; height: 100%;" : "display: flex; align-items: center; gap: 8px;"}>
                                     <span style={showGrid ? "display: flex; align-items: center; justify-content: center; width: 100%; min-height: 2.8em;" : "display: flex; align-items: center; justify-content: center;"}>
                                         {#if action.shows?.length}
                                             <Icon id="slide" size={showGrid ? 4 : 1} white />

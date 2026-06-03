@@ -109,6 +109,7 @@ import { clearSlide } from "../output/clear"
 import { defaultThemes } from "../settings/tabs/defaultThemes"
 import { activeProject } from "./../../stores"
 import type { ContextMenuItem } from "./contextMenus"
+import { midiInListen } from "../actions/midi"
 
 interface ObjData {
     sel: Selected | null
@@ -1106,6 +1107,7 @@ const clickActions = {
                 })
                 return a
             })
+            midiInListen()
             return
         }
     },

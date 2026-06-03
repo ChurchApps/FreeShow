@@ -69,6 +69,7 @@
         cursor: pointer;
         outline: none;
         border-bottom: 1.2px solid var(--primary-lighter);
+        min-height: 45px;
         height: 50px;
         overflow: hidden;
     }
