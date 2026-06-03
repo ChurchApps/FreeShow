@@ -1,5 +1,6 @@
 import { Main } from "../../../types/IPC/Main"
 import { sendMain } from "../../IPC/main"
+import { getDynamicValue } from "../edit/scripts/itemHelpers"
 
 // Examples: /show/<id>/start | /slide/next | /clear/all
 const oscActions = {
@@ -86,5 +87,6 @@ function parsePath(path) {
 
 export type OSC_SIGNAL = { url?: string; port?: string }
 export function emitOSC(signal: OSC_SIGNAL, data: string) {
+    data = getDynamicValue(data)
     sendMain(Main.EMIT_OSC, { signal, data })
 }

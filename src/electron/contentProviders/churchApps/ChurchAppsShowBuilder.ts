@@ -69,7 +69,7 @@ export class ChurchAppsShowBuilder {
 
         const slideDedupMap = new Map<string, string>()
         sections.forEach((section) => {
-            let children: string[] = []
+            const children: string[] = []
             let parentId: string | undefined
 
             section.lyrics.forEach((slideText, i) => {

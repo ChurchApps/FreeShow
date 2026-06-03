@@ -9,7 +9,7 @@ import type { Output } from "../../types/Output"
 import type { Resolution } from "../../types/Settings"
 import { requestToMain, sendToMain } from "../IPC/main"
 import { OutputHelper } from "../output/OutputHelper"
-import { createFolder, deleteFile, doesPathExist, doesPathExistAsync, getDataFolderPath, getFileStatsAsync, makeDir, openInSystem } from "../utils/files"
+import { createFolder, deleteFile, doesPathExist, doesPathExistAsync, getDataFolderPath, getFileStatsAsync, makeDir, openInSystem, sanitizeFileName } from "../utils/files"
 import { waitUntilValueIsDefined } from "../utils/helpers"
 import { captureOptions } from "../utils/windowOptions"
 import { imageExtensions, videoExtensions } from "./media"
@@ -270,7 +270,8 @@ export function saveImage(data: { id?: string; path?: string; base64?: string; b
 export async function pdfToImage({ filePath }: { filePath: string }) {
     // normalize filePath to handle special characters robustly
     filePath = path.normalize(filePath)
-    const pdfName = path.basename(filePath, path.extname(filePath))
+    const rawPdfName = path.basename(filePath, path.extname(filePath))
+    const pdfName = sanitizeFileName(rawPdfName)
     const pdfImportPath = getDataFolderPath("imports", "PDF")
     const pathName = createFolder(path.join(pdfImportPath, pdfName))
     const renderPhasePercent = 80

@@ -35,7 +35,12 @@ const loadGrandiose = async () => {
 // https://github.com/rse/vingester
 
 export class NdiSender {
-    static timeStart = BigInt(Date.now()) * BigInt(1e6) - process.hrtime.bigint()
+    private static readonly BYTES_PER_PIXEL = 4
+    private static readonly BYTES_PER_FLOAT32 = 4
+    private static readonly PADDING_ALIGNMENT = 16
+    private static readonly CONNECTION_POLL_INTERVAL_MS = 1000
+    private static readonly TIMECODE_DIVISOR = BigInt(100)
+
     static NDI: {
         [key: string]: {
             name: string
@@ -50,6 +55,9 @@ export class NdiSender {
             paddedVideoBuffer?: Buffer
             paddedVideoBufferStride?: number
             paddedVideoBufferHeight?: number
+            timeStart?: bigint
+            frameNumber?: number
+            lastFramerate?: number
         }
     } = {}
 
@@ -90,6 +98,15 @@ export class NdiSender {
         }
     }
 
+    private static calculateTimeStart(): bigint {
+        return BigInt(Date.now()) * BigInt(1e6) - process.hrtime.bigint()
+    }
+
+    private static calculateTimecode(timeStart: bigint, frameNumber: number, framerate: number): bigint {
+        const frameIntervalNs = BigInt(Math.round((1000 / framerate) * 1e6))
+        return (timeStart + BigInt(frameNumber) * frameIntervalNs) / this.TIMECODE_DIVISOR
+    }
+
     static initNameNDI(name?: string, outputName?: string) {
         return name || `FreeShow NDI${outputName ? ` - ${outputName}` : ""}`
     }
@@ -97,7 +114,13 @@ export class NdiSender {
     static async createSenderNDI(id: string, name = "", groups?: string) {
         if (this.NDI[id]) return
 
-        this.NDI[id] = { name, groups }
+        this.NDI[id] = {
+            name,
+            groups,
+            timeStart: this.calculateTimeStart(),
+            frameNumber: 0,
+            lastFramerate: 0
+        }
         console.info("NDI - creating sender: " + this.NDI[id].name, groups ? `; In group: ${groups}` : "")
 
         try {
@@ -130,90 +153,80 @@ export class NdiSender {
                 this.NDI[id].previousStatus = newStatus
 
                 if (this.NDI[id].status === "connected") {
-                    // Force a frame update when NDI reconnects
-                    // (frames now stream directly, so just log reconnection)
                     console.log(`[NDI] Reconnected for ${id}`)
                 }
             }
-        }, 1000)
+        }, this.CONNECTION_POLL_INTERVAL_MS)
     }
 
-    // static frames = 0
-    static async sendVideoBufferNDI(id: string, buffer: Buffer, { size = { width: 1280, height: 720 }, ratio = 16 / 9, framerate = 1 }) {
-        // DEBUG log fps
-        // this.frames++
-        // setTimeout(() => this.frames--, 1000)
-        // console.log(`NDI FPS ${id}:`, this.frames)
+    static async sendVideoBufferNDI(id: string, buffer: Buffer, { size = { width: 1280, height: 720 }, ratio = 16 / 9, framerate = 1, transparent = true }) {
+        const senderData = this.NDI[id]
+        if (!senderData?.timeStart || !senderData.sender) return
 
-        /*  convert from ARGB (Electron/Chromium on big endian CPU)
-        to BGRA (supported input of NDI SDK). On little endian
-        CPU the input is already BGRA.  */
-        if (os.endianness() === "BE") {
-            util.ImageBufferAdjustment.ARGBtoBGRA(buffer)
-        }
-
-        /*  optionally convert from BGRA to BGRX (no alpha channel)  */
         const grandiose = await loadGrandiose()
         if (!grandiose) return
 
-        const fourCC = grandiose.FOURCC_BGRA
-        // if (!this.cfg.v) {
-        //     util.ImageBufferAdjustment.BGRAtoBGRX(buffer)
-        //     fourCC = grandiose.FOURCC_BGRX
-        // }
+        // Convert buffer format for NDI
+        if (os.endianness() === "BE") util.ImageBufferAdjustment.ARGBtoBGRA(buffer)
 
-        /*  send NDI video frame  */
-        const now = this.timeStart + process.hrtime.bigint()
-        const timecode = now / BigInt(100)
-        const bytesForBGRA = 4
-        const paddedWidth = (size.width + 15) & ~15
-        const stride = paddedWidth * bytesForBGRA
+        const fourCC = transparent ? grandiose.FOURCC_BGRA : grandiose.FOURCC_BGRX
+        if (!transparent) util.ImageBufferAdjustment.BGRAtoBGRX(buffer)
 
-        let sendBuffer = buffer
-        if (paddedWidth !== size.width) {
-            const senderData = this.NDI[id]
-            if (senderData?.paddedVideoBuffer && senderData.paddedVideoBufferStride === stride && senderData.paddedVideoBufferHeight === size.height) {
-                sendBuffer = senderData.paddedVideoBuffer
-            } else {
-                sendBuffer = Buffer.alloc(stride * size.height)
-                if (senderData) {
-                    senderData.paddedVideoBuffer = sendBuffer
-                    senderData.paddedVideoBufferStride = stride
-                    senderData.paddedVideoBufferHeight = size.height
-                }
-            }
-
-            for (let y = 0; y < size.height; y++) {
-                const srcOffset = y * size.width * bytesForBGRA
-                const dstOffset = y * stride
-                buffer.copy(sendBuffer, dstOffset, srcOffset, srcOffset + size.width * bytesForBGRA)
-            }
+        // reset frame counter on framerate change to prevent accumulated delay
+        if (senderData.lastFramerate !== framerate) {
+            senderData.frameNumber = 0
+            senderData.lastFramerate = framerate
+            senderData.timeStart = this.calculateTimeStart()
         }
 
-        const frame = {
-            /*  base information  */
-            // type: "video",
-            timecode,
+        const timecode = this.calculateTimecode(senderData.timeStart, senderData.frameNumber ?? 0, framerate)
+        senderData.frameNumber = (senderData.frameNumber ?? 0) + 1
 
-            /*  type-specific information  */
+        // Pad width to 16-byte alignment for NDI
+        const paddedWidth = (size.width + this.PADDING_ALIGNMENT - 1) & ~(this.PADDING_ALIGNMENT - 1)
+        const stride = paddedWidth * this.BYTES_PER_PIXEL
+        const sendBuffer = this.getPaddedBuffer(senderData, buffer, size, stride, paddedWidth)
+
+        senderData.pendingVideoFrame = {
+            timecode,
             xres: paddedWidth,
             yres: size.height,
             frameRateN: framerate * 1000,
             frameRateD: 1000,
-            pictureAspectRatio: ratio, // * (paddedWidth / size.width),
+            pictureAspectRatio: ratio,
             frameFormatType: grandiose.FORMAT_TYPE_PROGRESSIVE,
             lineStrideBytes: stride,
-
-            /*  the data itself  */
             fourCC,
             data: sendBuffer
         }
 
-        const senderData = this.NDI[id]
-        if (!senderData?.sender) return
-
-        senderData.pendingVideoFrame = frame
         void this.sendQueuedVideoFrameNDI(id)
+    }
+
+    private static getPaddedBuffer(senderData: any, buffer: Buffer, size: { width: number; height: number }, stride: number, paddedWidth: number): Buffer {
+        if (paddedWidth === size.width) return buffer
+
+        // reuse cached buffer if dimensions match
+        if (senderData.paddedVideoBuffer && senderData.paddedVideoBufferStride === stride && senderData.paddedVideoBufferHeight === size.height) {
+            const cachedBuffer = senderData.paddedVideoBuffer
+            this.copyRowsToPaddedBuffer(buffer, cachedBuffer, size, stride)
+            return cachedBuffer
+        }
+
+        const paddedBuffer = Buffer.alloc(stride * size.height)
+        senderData.paddedVideoBuffer = paddedBuffer
+        senderData.paddedVideoBufferStride = stride
+        senderData.paddedVideoBufferHeight = size.height
+
+        this.copyRowsToPaddedBuffer(buffer, paddedBuffer, size, stride)
+        return paddedBuffer
+    }
+
+    private static copyRowsToPaddedBuffer(source: Buffer, dest: Buffer, size: { width: number; height: number }, stride: number): void {
+        const rowBytes = size.width * this.BYTES_PER_PIXEL
+        for (let y = 0; y < size.height; y++) {
+            source.copy(dest, y * stride, y * rowBytes, (y + 1) * rowBytes)
+        }
     }
 
     static enableAudio(id: string) {
@@ -226,9 +239,9 @@ export class NdiSender {
         this.NDI[id].sendAudio = false
     }
 
-    static bytesForFloat32 = 4
     static async sendAudioBufferNDI(buffer: Buffer, { sampleRate, channelCount }: { sampleRate: number; channelCount: number }) {
-        if (!Object.values(this.NDI).find((a) => a?.sendAudio)) return
+        const activeSender = Object.values(this.NDI).find((s) => s?.sendAudio && s?.timeStart)
+        if (!activeSender?.timeStart) return
 
         const ndiAudioBuffer = convertPCMtoPlanarFloat32(buffer, channelCount)
         if (!ndiAudioBuffer) return
@@ -236,18 +249,13 @@ export class NdiSender {
         const grandiose = await loadGrandiose()
         if (!grandiose) return
 
-        const now = this.timeStart + process.hrtime.bigint()
+        const timecode = (activeSender.timeStart + process.hrtime.bigint()) / this.TIMECODE_DIVISOR
         const frame = {
-            /*  base information  */
-            timecode: now / BigInt(100),
-
-            /*  type-specific information  */
+            timecode,
             sampleRate,
             noChannels: channelCount,
-            noSamples: Math.trunc(ndiAudioBuffer.byteLength / channelCount / this.bytesForFloat32),
+            noSamples: Math.trunc(ndiAudioBuffer.byteLength / channelCount / this.BYTES_PER_FLOAT32),
             channelStrideBytes: Math.trunc(ndiAudioBuffer.byteLength / channelCount),
-
-            /*  the data itself  */
             fourCC: grandiose.FOURCC_FLTp,
             data: ndiAudioBuffer
         }

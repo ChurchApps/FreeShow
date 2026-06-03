@@ -1,4 +1,2 @@
 declare module "word-extractor"
-declare module "node-machine-id"
 declare module "MP4Box"
-declare module "pcm-converter"

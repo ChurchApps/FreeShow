@@ -873,9 +873,10 @@ export const historyActions = ({ obj, undo = null }: any) => {
                         if (globalGroup && get(groups)[globalGroup]?.template) {
                             slideTemplate = clone(get(templates)[get(groups)[globalGroup]?.template || ""]) || template
                             templateMode = "group"
+
+                            // always create items in group template
+                            createItems = true
                         }
-                        // always create items in group template
-                        createItems = true
                     }
 
                     // first slide template

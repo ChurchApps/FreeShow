@@ -1,6 +1,7 @@
 <script lang="ts">
     import { activePopup, popupData, styles } from "../../../stores"
     import T from "../../helpers/T.svelte"
+    import InputRow from "../../input/InputRow.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
     import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
@@ -29,9 +30,11 @@
             a[styleId][key] = value
             return a
         })
+
+        style[key] = value
     }
 
-    let showMore = !!style?.skipVirtualBreaks || active > 4
+    let showMore = !!style?.showAsFaded || !!style?.skipVirtualBreaks || active > 4
 </script>
 
 <MaterialButton class="popup-options {showMore ? 'active' : ''}" icon="options" iconSize={1.3} title={showMore ? "actions.close" : "create_show.more_options"} on:click={() => (showMore = !showMore)} white />
@@ -59,6 +62,14 @@
 
 {#if showMore}
     <MaterialNumberInput style="margin-top: 20px;" label="actions.custom_key" value={active} min={0} max={99} on:change={(e) => setValue(e.detail)} />
+
+    <InputRow arrow={style?.showAsFaded}>
+        <MaterialToggleSwitch label="edit.show_as_faded" style="width: 100%;" checked={!!style?.showAsFaded} defaultValue={false} on:change={(e) => updateStyle("showAsFaded", e.detail)} />
+
+        <div slot="menu">
+            <MaterialNumberInput label="edit.opacity (%)" value={style?.lineOpacity ?? 50} min={0} max={99} on:change={(e) => updateStyle("lineOpacity", e.detail)} />
+        </div>
+    </InputRow>
 
     {#if styleId}
         <MaterialToggleSwitch label="edit.skip_virtual_breaks" checked={!!style?.skipVirtualBreaks} defaultValue={false} on:change={(e) => updateStyle("skipVirtualBreaks", e.detail)} />

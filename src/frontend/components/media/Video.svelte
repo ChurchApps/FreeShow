@@ -4,6 +4,7 @@
     import { media } from "../../stores"
     import { enableSubtitle, encodeFilePath, isVideoSupported } from "../helpers/media"
     import { SoftLoopManager } from "./softLoop"
+    import { AudioAnalyser } from "../../audio/audioAnalyser"
 
     export let path: string
     export let video: HTMLVideoElement | null = null
@@ -152,11 +153,23 @@
     $: if (softLoopValue > 0 && softLoopVideo && playbackRate) softLoopVideo.playbackRate = playbackRate
     $: actualEndTime = endTime || videoData.duration || 0
     $: if (softLoopValue > 0) {
-        if (video) video.volume = volume * (1 - softLoopOpacity)
-        if (softLoopVideo) softLoopVideo.volume = volume * softLoopOpacity
+        if (video) {
+            video.volume = volume * (1 - softLoopOpacity)
+            AudioAnalyser.setSourceVolume(path, video.volume)
+        }
+        if (softLoopVideo) {
+            softLoopVideo.volume = volume * softLoopOpacity
+            AudioAnalyser.setSourceVolume(path + "_softloop", softLoopVideo.volume)
+        }
     } else {
-        if (video) video.volume = volume
-        if (softLoopVideo) softLoopVideo.volume = 0
+        if (video) {
+            video.volume = volume
+            AudioAnalyser.setSourceVolume(path, volume)
+        }
+        if (softLoopVideo) {
+            softLoopVideo.volume = 0
+            AudioAnalyser.setSourceVolume(path + "_softloop", 0)
+        }
     }
 
     $: slParams = {
@@ -185,13 +198,13 @@
     {#if mediaStyle.fit === "blur" && !perfectFit}
         <video class="media" style={mediaStyleBlurString} src={encodeFilePath(path)} bind:playbackRate bind:this={blurVideo} bind:paused={blurPausedState} muted loop={videoData.loop || false} />
     {/if}
-    <video class="media" style={mediaStyleString} bind:this={video} on:loadedmetadata={loaded} on:playing={playing} on:ended={handleEnded} on:error on:timeupdate={handleTimeUpdate} bind:playbackRate bind:currentTime={videoTime} bind:paused={videoData.paused} bind:duration={videoData.duration} muted={mirror ? true : (videoData.muted ?? true)} src={encodeFilePath(path)} autoplay loop={videoData.loop && !softLoopValue}>
+    <video class="media" style={mediaStyleString} bind:this={video} on:loadedmetadata={loaded} on:playing={playing} on:ended={handleEnded} on:error on:timeupdate={handleTimeUpdate} bind:playbackRate bind:currentTime={videoTime} bind:paused={videoData.paused} bind:duration={videoData.duration} muted={mirror ? true : (videoData.muted ?? true)} src={encodeFilePath(path)} autoplay loop={videoData.loop && !softLoopValue} volume={softLoopValue > 0 ? volume * (1 - softLoopOpacity) : volume}>
         <!-- bind:volume={audioVolume} -->
         {#each tracks as track}
             <track label={track.name} srclang={track.lang} kind="subtitles" src="data:text/vtt;charset=utf-8,{encodeURI(track.vtt)}" />
         {/each}
     </video>
     {#if softLoopValue > 0 && videoData.loop}
-        <video class="media" style="{mediaStyleString} position: absolute; top: 0; left: 0; opacity: {softLoopOpacity}; pointer-events: none;" bind:this={softLoopVideo} bind:paused={videoData.paused} src={encodeFilePath(path)} muted={mirror ? true : (videoData.muted ?? true)} bind:playbackRate />
+        <video class="media" style="{mediaStyleString} position: absolute; top: 0; left: 0; opacity: {softLoopOpacity}; pointer-events: none;" bind:this={softLoopVideo} bind:paused={videoData.paused} src={encodeFilePath(path)} muted={mirror ? true : (videoData.muted ?? true)} bind:playbackRate volume={softLoopValue > 0 ? volume * softLoopOpacity : 0} />
     {/if}
 </div>

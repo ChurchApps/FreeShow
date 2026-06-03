@@ -966,10 +966,7 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
 
         // custom - only from external source (Companion)
         // or used to set variable value: https://github.com/ChurchApps/FreeShow/issues/1720
-        if (dynamicId === "slide_text_current") {
-            if (outSlide?.id === "temp" ? !outSlide?.previousSlides?.[0] : !show?.slides?.[ref[slideIndex]?.id]) return ""
-            return getTextLines(outSlide?.id === "temp" ? { items: outSlide.previousSlides![0] } : show!.slides[ref[slideIndex]?.id]).join("<br>")
-        } else if (dynamicId === "active_layers") {
+        if (dynamicId === "active_layers") {
             const backgroundActive = !isOutCleared("background")
             const slideActive = !isOutCleared("slide")
             const overlaysActive = !isOutCleared("overlays")
@@ -992,7 +989,8 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
 
         if (!dynamicValues[dynamicId]) return ""
 
-        const value = (dynamicValues[dynamicId]({ show, ref, slideIndex, layout, projectRef, outSlide, bgPath, videoTime, videoDuration, audioTime, audioDuration, audioPath }) ?? "").toString()
+        const rawValue = dynamicValues[dynamicId]({ show, ref, slideIndex, layout, projectRef, outSlide, bgPath, videoTime, videoDuration, audioTime, audioDuration, audioPath }) ?? ""
+        const value = Array.isArray(rawValue) ? rawValue : rawValue.toString()
 
         if (dynamicId === "show_name_next" && !value && isOutputWin) {
             send(OUTPUT, ["MAIN_SHOWS_DATA"])
@@ -1066,8 +1064,9 @@ const dynamicValues = {
     slide_notes_next: ({ show, ref, slideIndex }) => show?.slides?.[ref[slideIndex + 1]?.id]?.notes || "",
 
     // text
-    slide_text_previous: ({ show, ref, slideIndex, outSlide }) => getTextLines(outSlide?.id === "temp" ? { items: outSlide?.previousSlides } : show?.slides?.[ref[slideIndex - 1]?.id]).join("<br>"),
-    slide_text_next: ({ show, ref, slideIndex, outSlide }) => getTextLines(outSlide?.id === "temp" ? { items: outSlide?.nextSlides } : show?.slides?.[ref[slideIndex + 1]?.id]).join("<br>"),
+    slide_text_previous: ({ show, ref, slideIndex, outSlide }) => getSlideText({ outSlide, show, ref }, slideIndex - 1),
+    slide_text_current: ({ show, ref, slideIndex, outSlide }) => getSlideText({ outSlide, show, ref }, slideIndex),
+    slide_text_next: ({ show, ref, slideIndex, outSlide }) => getSlideText({ outSlide, show, ref }, slideIndex + 1),
     show_text_full: ({ show, ref }) => ref.map((a) => getTextLines(show?.slides?.[a.id]).join("<br>")).join("<br><br>"),
 
     // image (exif)
@@ -1127,6 +1126,21 @@ const scriptureDynamicValues = {
     // not replaced directly, but the style is used:
     scripture_number: () => "1",
     scripture_red_jesus: () => "Words"
+}
+
+function getSlideText({ outSlide, show, ref }, slideIndex: number = 0) {
+    let slideItemLines: string[] = []
+    if (outSlide?.id === "temp") {
+        if (slideIndex < 0) slideItemLines = getTextLines({ items: outSlide?.previousSlides[0] }, true)
+        else if (slideIndex > 0) slideItemLines = getTextLines({ items: outSlide?.nextSlides[0] }, true)
+        else slideItemLines = getTextLines({ items: outSlide?.tempItems }, true)
+    } else {
+        const slide = show?.slides?.[ref[slideIndex]?.id]
+        slideItemLines = getTextLines(slide, true)
+    }
+
+    // return all items first, then each individual to make it work with the #index system
+    return [slideItemLines.join("<br><br>"), ...slideItemLines]
 }
 
 export function getVariableNameId(name: string) {

@@ -600,9 +600,7 @@ export function getSmartSplitLimitFromTemplate(templateId: string): number {
     const _template = new TemplateHelper(templateId)
     const textbox = _template.getItems().find((a) => a.lines)
     const itemStyle = textbox?.style || ""
-    const textStyle = textbox?.lines
-        ?.flatMap((line) => line.text || [])
-        .find((t) => t.value?.includes("_text}"))?.style || textbox?.lines?.[0]?.text?.[0]?.style || ""
+    const textStyle = textbox?.lines?.flatMap((line) => line.text || []).find((t) => t.value?.includes("_text}"))?.style || textbox?.lines?.[0]?.text?.[0]?.style || ""
 
     const screenWidth = 1920
     const screenHeight = 1080
@@ -2041,12 +2039,16 @@ export function swapPreviewBible(collectionId: string) {
 // Custom range selection for scripture verses that handles split verses (e.g., "1_1", "5_2")
 export function scriptureRangeSelect(e: any, currentlySelected: (number | string)[], newSelection: number | string, availableVerses: { id: string }[]): (number | string)[] {
     if (!e.ctrlKey && !e.metaKey && !e.shiftKey) {
-        // When clicking a verse without modifier keys, select all parts of that verse
-        const baseVerseNumber = newSelection.toString().split("_")[0]
+        // If clicking a specific subverse (e.g. "1_2"), select only that subverse.
+        const newSelStr = newSelection.toString()
+        if (newSelStr.includes("_")) return [newSelStr]
+
+        // When clicking a base verse without modifier keys, select all parts of that verse
+        const baseVerseNumber = newSelStr.split("_")[0]
         const allParts = availableVerses.filter((v) => v.id.split("_")[0] === baseVerseNumber).map((v) => v.id)
 
         // If this verse has multiple parts, return all of them; otherwise just the clicked verse
-        return allParts.length > 1 ? allParts : [newSelection]
+        return allParts.length > 1 ? allParts : [newSelStr]
     }
 
     currentlySelected = currentlySelected.map((id) => id.toString())

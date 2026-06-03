@@ -25,24 +25,13 @@ const HALF_MINUTE = 30000
 // https://stackoverflow.com/questions/33761770/what-constraints-should-i-pass-to-getusermedia-in-order-to-get-two-video-media
 // https://blog.addpipe.com/getusermedia-video-constraints/
 const DEFAULT_CAMERA_CONSTRAINTS: MediaTrackConstraints = {
-    deviceId: { exact: "" },
-    groupId: "",
+    // deviceId: { exact: "" },
+    // groupId: "",
     width: { ideal: 1920 }, // 1280
     height: { ideal: 1080 } // 720
     // aspectRatio: 1.777777778,
-    // frameRate: { max: 30 },
+    // frameRate: { ideal: 30, max: 60 },
     // facingMode: { exact: "user" }
-}
-
-const PREVIEW_CAMERA_CONSTRAINTS: MediaTrackConstraints = {
-    ...DEFAULT_CAMERA_CONSTRAINTS,
-    width: { ideal: 640 },
-    height: { ideal: 360 },
-    frameRate: { ideal: 15, max: 24 }
-}
-
-interface CameraStreamOptions {
-    preview?: boolean
 }
 
 class CameraManager {
@@ -231,7 +220,7 @@ class CameraManager {
         await this.warmUpCamera(camera, { retryCount, lastError })
     }
 
-    async getCameraStream(cameraId: string, groupId?: string, { preview = false }: CameraStreamOptions = {}) {
+    async getCameraStream(cameraId: string, groupId?: string) {
         // get existing "warmed" camera
         const warmStream = this.getWarmCamera(cameraId)
         if (warmStream) {
@@ -239,13 +228,11 @@ class CameraManager {
             return warmStream
         }
 
-        groupId = groupId || (await this.getCameraFromId(cameraId))?.group
-        const constraints = preview ? PREVIEW_CAMERA_CONSTRAINTS : DEFAULT_CAMERA_CONSTRAINTS
         const cameraProperties = {
             video: {
-                ...constraints,
+                ...DEFAULT_CAMERA_CONSTRAINTS,
                 deviceId: { exact: cameraId },
-                groupId
+                groupId: groupId || (await this.getCameraFromId(cameraId))?.group
             }
         }
 
@@ -254,13 +241,14 @@ class CameraManager {
             this.clearBadCamera(cameraId)
             return stream
         } catch (err) {
-            let msg: string = err.message
-            if (err.name === "NotReadableError") {
+            let msg: string = err?.message || String(err)
+
+            if (err?.name === "NotReadableError") {
                 msg += "<br />Maybe it's in use by another program."
                 sendMain(Main.ACCESS_CAMERA_PERMISSION)
             }
 
-            const error = err.name + ":<br />" + msg
+            const error = err?.name + ":<br />" + msg
             if (this.isTimeoutErrorMessage(error)) this.markBadCamera(cameraId)
             return error
         }

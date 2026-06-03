@@ -6,6 +6,7 @@
     import { activePopup, emitters, popupData } from "../../../stores"
     import { emitterData, formatData } from "../../actions/emitters"
     import MidiValues from "../../actions/MidiValues.svelte"
+    import { getDynamicValue } from "../../edit/scripts/itemHelpers"
     import { clone, keysToID, sortByName } from "../../helpers/array"
     import T from "../../helpers/T.svelte"
     import DynamicList from "../../input/DynamicList.svelte"
@@ -198,7 +199,7 @@
 
     {#if dataPreview}
         <div class="preview">
-            {dataPreview}
+            {getDynamicValue(dataPreview)}
         </div>
     {/if}
 {:else if editEmitter && emitter}

@@ -1,6 +1,6 @@
-import { https } from "follow-redirects"
 import fs from "fs"
 import path from "path"
+import { Readable } from "stream"
 import { ToMain } from "../../types/IPC/ToMain"
 import type { LessonFile, LessonsData } from "../../types/Main"
 import { ContentProviderFactory } from "../contentProviders/base/ContentProvider"
@@ -126,8 +126,36 @@ async function initDownload() {
 let downloadCount = 0
 let failedDownloads = 0
 let errorCount = 0
-function startDownload(data: DownloadFile) {
-    // download the media
+
+// Shared streaming downloader
+async function streamDownload(url: string, outputPath: string, onData?: (chunk: any) => void) {
+    const response = await fetch(url)
+    if (!response.ok) throw new Error(`Status code: ${response.status}`)
+    if (!response.body) throw new Error("Response body is empty")
+
+    const fileStream = fs.createWriteStream(outputPath)
+    const body = Readable.fromWeb(response.body as any)
+
+    if (onData) body.on("data", onData)
+    body.pipe(fileStream)
+
+    return new Promise<void>((resolve, reject) => {
+        body.on("error", (err) => {
+            fileStream.close()
+            reject(err)
+        })
+        fileStream.on("error", (err) => {
+            fs.unlink(outputPath, () => {})
+            reject(err)
+        })
+        fileStream.on("finish", () => {
+            fileStream.close()
+            resolve()
+        })
+    })
+}
+
+async function startDownload(data: DownloadFile) {
     const file = data.file
     const url = file.url
 
@@ -138,54 +166,18 @@ function startDownload(data: DownloadFile) {
     }
 
     makeDir(path.dirname(data.path))
-    const fileStream = fs.createWriteStream(data.path)
-    console.info(`Downloading lessons media: ${file.name}`)
-    console.info(url)
-    https
-        .get(url, (res) => {
-            if (res.statusCode !== 200) {
-                fileStream.close()
-                fs.unlink(data.path, (err) => console.error(err))
+    console.info(`Downloading lessons media: ${file.name}\n${url}`)
 
-                console.error(`Failed to download file, status code: ${String(res.statusCode)}`)
-                failedDownloads++
-                sendToMain(ToMain.LESSONS_DONE, { showId: data.showId, status: { finished: downloadCount, failed: failedDownloads } })
-
-                next()
-                return
-            }
-
-            res.pipe(fileStream)
-
-            res.on("error", (err) => {
-                fileStream.close()
-                console.error(`Response error: ${err.message}`)
-
-                retry()
-            })
-
-            fileStream.on("error", (err1) => {
-                fs.unlink(data.path, (err2) => console.error(err2))
-                console.error(`File error: ${err1.message}`)
-
-                retry()
-            })
-
-            fileStream.on("finish", () => {
-                fileStream.close()
-                downloadCount++
-                console.error(`Finished downloading file: ${file.name}`)
-                sendToMain(ToMain.LESSONS_DONE, { showId: data.showId, status: { finished: downloadCount, failed: failedDownloads } })
-
-                next()
-            })
-        })
-        .on("error", (err) => {
-            fileStream.close()
-            console.error(`Request error: ${err.message}`)
-
-            retry()
-        })
+    try {
+        await streamDownload(url, data.path)
+        downloadCount++
+        console.info(`Finished downloading file: ${file.name}`)
+        sendToMain(ToMain.LESSONS_DONE, { showId: data.showId, status: { finished: downloadCount, failed: failedDownloads } })
+        next()
+    } catch (err: any) {
+        console.error(`Request error: ${err.message}`)
+        retry()
+    }
 
     function next() {
         clearTimeout(timeout)
@@ -209,7 +201,6 @@ function startDownload(data: DownloadFile) {
 
     const timeout = setTimeout(
         () => {
-            fileStream.close()
             console.error(`File timed out: ${file.name}`)
             next()
         },
@@ -220,7 +211,7 @@ function startDownload(data: DownloadFile) {
 /// //
 
 const downloading = new Set<string>()
-export function downloadMedia({ url, contentFile }: { url: string; contentFile?: any }) {
+export async function downloadMedia({ url, contentFile }: { url: string; contentFile?: any }) {
     if (!url?.startsWith("http") || url?.startsWith("blob:")) return
 
     if (downloading.has(url)) return
@@ -231,18 +222,6 @@ export function downloadMedia({ url, contentFile }: { url: string; contentFile?:
     console.info("Downloading online media: " + url)
 
     const outputPath = getMediaThumbnailPath(url, contentFile)
-
-    // not working at the moment:
-    // if (url.includes("canva.com")) {
-    //     const canvaDownloadUrl = await CanvaContentLibrary.exportDesignAsPng(url, 1)
-    //     if (!canvaDownloadUrl) {
-    //         console.error("Failed to get Canva download URL from source:", url)
-    //         removeFromDownloading()
-    //         return
-    //     }
-
-    //     url = canvaDownloadUrl
-    // }
 
     // Check if provider-based encryption is needed
     if (contentFile?.providerId) {
@@ -259,76 +238,32 @@ export function downloadMedia({ url, contentFile }: { url: string; contentFile?:
         }
     }
 
-    const fileStream = fs.createWriteStream(outputPath)
-    https
-        .get(url, (res) => {
-            if (res.statusCode !== 200) {
-                fileStream.close()
-                fs.unlink(outputPath, (err) => err && console.error(err))
-                console.error(`Failed to download file, status code: ${String(res.statusCode)}`)
-                error()
-                return
-            }
+    try {
+        let downloadedSize = 0
+        const totalSize = 0
 
-            // track download progress
-            const totalSize = parseInt(res.headers["content-length"] || "0", 10)
-            let downloadedSize = 0
-            res.on("data", (chunk) => {
-                downloadedSize += chunk.length
-                if (totalSize > 0) sendToMain(ToMain.MEDIA_DOWNLOAD_PROGRESS, { url, progress: downloadedSize, total: totalSize, status: "downloading" })
-            })
-
-            res.pipe(fileStream)
-
-            res.on("error", (err) => {
-                fileStream.close()
-                console.error(`Response error: ${err.message}`)
-                error()
-            })
-
-            fileStream.on("error", (err1) => {
-                fs.unlink(outputPath, (err2) => err2 && console.error(err2))
-                console.error(`File error: ${err1.message}`)
-                error()
-            })
-
-            fileStream.on("finish", async () => {
-                fileStream.close()
-                removeFromDownloading()
-                console.info(`Finished downloading file: ${url}`)
-                sendToMain(ToMain.MEDIA_DOWNLOAD_PROGRESS, { url, progress: totalSize, total: totalSize, status: "complete" })
-            })
-        })
-        .on("error", (err) => {
-            fileStream.close()
-            console.error(`Request error: ${err.message}`)
-            error()
+        await streamDownload(url, outputPath, (chunk) => {
+            downloadedSize += chunk.length
+            if (totalSize > 0) sendToMain(ToMain.MEDIA_DOWNLOAD_PROGRESS, { url, progress: downloadedSize, total: totalSize, status: "downloading" })
         })
 
-    function error() {
+        removeFromDownloading()
+        console.info(`Finished downloading file: ${url}`)
+        sendToMain(ToMain.MEDIA_DOWNLOAD_PROGRESS, { url, progress: totalSize, total: totalSize, status: "complete" })
+    } catch (err: any) {
+        console.error(`Request error: ${err.message}`)
         sendToMain(ToMain.MEDIA_DOWNLOAD_PROGRESS, { url, progress: 0, total: 0, status: "error" })
         removeFromDownloading()
     }
-
-    // const timeout = setTimeout(
-    //     () => {
-    //         fileStream.close()
-    //         console.error(`File timed out: ${url}`)
-    //     },
-    //     60 * 8 * 1000
-    // ) // 8 minutes timeout
 }
 
 export async function checkIfMediaDownloaded({ url, contentFile }: { url: string; contentFile?: any }) {
     if (!url?.startsWith("http")) return null
-
-    // still being downloaded
     if (downloading.has(url)) return { path: url, buffer: null, isDownloading: true }
 
     const outputPath = getMediaThumbnailPath(url, contentFile)
     if (!doesPathExist(outputPath)) return null
 
-    // Check if provider-based encryption is needed
     if (contentFile?.providerId) {
         const provider = ContentProviderFactory.getProvider(contentFile.providerId)
         if (provider?.shouldEncrypt?.(url, contentFile.pingbackUrl)) {
@@ -338,11 +273,7 @@ export async function checkIfMediaDownloaded({ url, contentFile }: { url: string
                     providerId: contentFile.providerId,
                     mimeType: getMimeTypeFromContentFile(contentFile, outputPath)
                 })
-                if (!protectedUrl) {
-                    console.error(`Failed to register protected media for ${url}`)
-                    return null
-                }
-                return { path: outputPath, buffer: null, protectedUrl }
+                return protectedUrl ? { path: outputPath, buffer: null, protectedUrl } : null
             } catch (err) {
                 console.error(`Failed to prepare protected media: ${url}`, err)
                 return null
@@ -357,9 +288,7 @@ function getMediaThumbnailPath(url: string, contentFile?: any) {
     // Check if provider-based encryption is needed
     if (contentFile?.providerId) {
         const provider = ContentProviderFactory.getProvider(contentFile.providerId)
-        if (provider?.shouldEncrypt?.(url, contentFile.pingbackUrl)) {
-            return getProtectedPath(url)
-        }
+        if (provider?.shouldEncrypt?.(url, contentFile.pingbackUrl)) return getProtectedPath(url)
     }
 
     const urlWithoutQuery = url.split("?")[0]

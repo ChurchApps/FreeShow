@@ -123,6 +123,7 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
         if (CHANGES.version !== version) CHANGES = clone(DEFAULT_CHANGES)
         cloudChanges = clone(CHANGES)
 
+        const deviceId = getDeviceId()
         const deviceExists = CHANGES.devices.find((id) => id === deviceId)
         if (!deviceExists) {
             markAsNewSync()
@@ -627,6 +628,7 @@ let isNewDevice = false
 
 // keep track of last changed time so we can know which devices to ignore eventually
 function getLatestChanges() {
+    const deviceId = getDeviceId()
     if (!CHANGES.modified) CHANGES.modified = {}
     CHANGES.modified[deviceId] = Date.now()
     return CHANGES
@@ -651,7 +653,12 @@ function markAsCreated(storeId: ChangeId, key: string) {
     markAs("created", instanceId)
 }
 
-const deviceId = getMachineId()
+let _deviceId = ""
+function getDeviceId() {
+    if (!_deviceId) _deviceId = getMachineId()
+    return _deviceId
+}
+
 function markAs(type: "deleted" | "created", instanceId: string) {
     // if just one device, no need to keep track of changes
     if (CHANGES.devices.length < 2) return
@@ -659,6 +666,8 @@ function markAs(type: "deleted" | "created", instanceId: string) {
     // init
     if (!CHANGES[type]) CHANGES[type] = {}
     if (!CHANGES[type][instanceId]) CHANGES[type][instanceId] = []
+
+    const deviceId = getDeviceId()
 
     // already marked for this device
     if (CHANGES[type][instanceId].includes(deviceId)) return
@@ -698,11 +707,13 @@ function isCreated(storeId: ChangeId, key: string): boolean {
 function isDeletedLocally(storeId: ChangeId, key: string): boolean {
     const instanceId = getInstanceId(storeId, key)
     if (deletedNow.includes(instanceId)) return false
+    const deviceId = getDeviceId()
     return !!cloudChanges?.deleted?.[instanceId]?.includes(deviceId)
 }
 
 function isCreatedLocally(storeId: ChangeId, key: string): boolean {
     const instanceId = getInstanceId(storeId, key)
+    const deviceId = getDeviceId()
     return !!cloudChanges?.created?.[instanceId]?.includes(deviceId)
 }
 
@@ -712,6 +723,8 @@ export function markAsNewSync() {
 
 // remove deleted/created when it's connected again after being disconnected
 function removeDeviceRecords() {
+    const deviceId = getDeviceId()
+
     Object.values(CHANGES.deleted || {}).forEach((deviceIds) => {
         const index = deviceIds.indexOf(deviceId)
         if (index !== -1) deviceIds.splice(index, 1)

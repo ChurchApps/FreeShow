@@ -2,8 +2,31 @@
     import { onDestroy, onMount } from "svelte"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
+    import { Main } from "../../../../types/IPC/Main"
+    import { sendMain } from "../../../IPC/main"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import { destroySpotifyManager, fadePause, initSpotifyManager, seekTo, skipNext, skipPrev, spotifyIsFading, spotifyState, togglePlay } from "./SpotifyManager"
+
+    let isHovering = false
+    let isMinimized = false
+    let pauseTimer: any
+    let hoverTimer: any
+
+    function openSpotify() {
+        sendMain(Main.URL, "spotify:")
+    }
+
+    function handleMouseEnter() {
+        clearTimeout(hoverTimer)
+        isHovering = true
+    }
+
+    function handleMouseLeave() {
+        clearTimeout(hoverTimer)
+        hoverTimer = setTimeout(() => {
+            isHovering = false
+        }, 500) // Delay of 0.5 seconds before collapsing/hiding controls
+    }
 
     onMount(() => {
         initSpotifyManager()
@@ -11,7 +34,39 @@
 
     onDestroy(() => {
         destroySpotifyManager()
+        clearTimeout(pauseTimer)
+        clearTimeout(hoverTimer)
     })
+
+    let isPlaying = false
+    let isFading = false
+    let isFirstRun = true
+
+    $: {
+        const nextPlaying = !!$spotifyState?.isPlaying
+        const nextFading = $spotifyIsFading
+
+        if (nextPlaying || nextFading) {
+            clearTimeout(pauseTimer)
+            isMinimized = false
+        } else if ($spotifyState) {
+            clearTimeout(pauseTimer)
+            if (isFirstRun || isFading) {
+                isMinimized = true
+            } else if (isPlaying) {
+                pauseTimer = setTimeout(() => {
+                    isMinimized = true
+                }, 1500)
+            }
+        } else if (!$spotifyState) {
+            clearTimeout(pauseTimer)
+            isMinimized = false
+        }
+
+        if ($spotifyState) isFirstRun = false
+        isPlaying = nextPlaying
+        isFading = nextFading
+    }
 
     let isDragging = false
     let dragPercentage = 0
@@ -59,8 +114,8 @@
 </script>
 
 {#if $spotifyState}
-    <div class="spotify-controller" class:fading={$spotifyIsFading} style="--dynamic-bg: {$spotifyState.bgColor || 'transparent'}">
-        <div class="header">
+    <div class="spotify-controller" class:fading={$spotifyIsFading} class:minimized={isMinimized && !isHovering} on:mouseenter={handleMouseEnter} on:mouseleave={handleMouseLeave} style="--dynamic-bg: {$spotifyState.bgColor || 'transparent'}">
+        <div class="header" on:click={openSpotify}>
             {#if $spotifyState.albumArt}
                 <img class="album-art" src={$spotifyState.albumArt} alt="Album Art" draggable="false" />
             {:else}
@@ -94,11 +149,13 @@
         </div>
 
         {#if $spotifyState.isPlaying}
-            <MaterialButton variant="outlined" on:click={fadePause} style="padding: 4px 8px;margin-top: 5px;background: none;" title="media.fade_out" disabled={$spotifyIsFading}>
-                <!-- <Icon id="volume_down" white /> -->
-                <Icon id="clear" white />
-                <p><T id="media.fade_out" /></p>
-            </MaterialButton>
+            <div class="fade-btn-wrap" class:show-fade={isHovering || $spotifyIsFading}>
+                <MaterialButton variant="outlined" on:click={fadePause} style="padding: 4px 8px;margin-top: 5px;background: none;" title="media.fade_out" disabled={$spotifyIsFading}>
+                    <!-- <Icon id="volume_down" white /> -->
+                    <Icon id="clear" white />
+                    <p><T id="media.fade_out" /></p>
+                </MaterialButton>
+            </div>
         {/if}
     </div>
 {/if}
@@ -121,7 +178,16 @@
         -webkit-user-drag: none;
         transition:
             background-image 0.5s ease,
-            opacity 0.3s ease;
+            opacity 0.3s ease,
+            max-height 0.3s ease,
+            padding 0.3s ease;
+        max-height: 250px;
+        overflow: hidden;
+    }
+
+    .spotify-controller.minimized {
+        max-height: 68px;
+        padding-bottom: 9px;
     }
 
     .spotify-controller.fading {
@@ -138,6 +204,20 @@
         gap: 12px;
         margin-bottom: 6px;
         width: 100%;
+        transition:
+            margin-bottom 0.3s ease,
+            opacity 0.2s ease;
+    }
+
+    .header:hover {
+        opacity: 0.98;
+    }
+    .header:active {
+        opacity: 0.9;
+    }
+
+    .spotify-controller.minimized .header {
+        margin-bottom: 0;
     }
 
     .album-art {
@@ -188,6 +268,52 @@
         font-size: 11px;
         color: var(--text-2, #aaa);
         font-variant-numeric: tabular-nums;
+    }
+
+    .controls,
+    .progress {
+        transition:
+            opacity 0.3s ease,
+            max-height 0.3s ease,
+            margin 0.3s ease,
+            padding 0.3s ease,
+            transform 0.3s ease;
+        opacity: 1;
+        max-height: 100px;
+        transform: translateY(0);
+    }
+
+    .spotify-controller.minimized .controls,
+    .spotify-controller.minimized .progress {
+        opacity: 0;
+        max-height: 0;
+        margin: 0 !important;
+        padding: 0 !important;
+        transform: translateY(-10px);
+        pointer-events: none;
+    }
+
+    .fade-btn-wrap {
+        opacity: 0;
+        max-height: 0;
+        overflow: hidden;
+        margin: 0 !important;
+        padding: 0 !important;
+        transform: translateY(-5px);
+        pointer-events: none;
+        transition:
+            opacity 0.3s ease,
+            max-height 0.3s ease,
+            margin 0.3s ease,
+            transform 0.3s ease;
+    }
+
+    .fade-btn-wrap.show-fade {
+        opacity: 1;
+        max-height: 50px;
+        margin-top: 5px !important;
+        pointer-events: auto;
+        transform: translateY(0);
     }
 
     .progress.disabled {

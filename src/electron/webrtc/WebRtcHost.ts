@@ -9,13 +9,7 @@ ipcMain.on("WEBRTC_LOG", (_event, { type, message }) => {
         console.warn(prefix, message)
     } else {
         // Only print success or high-level events, suppress verbose inner-loop/ice debug logs
-        if (
-            message.includes("Completed Successfully") || 
-            message.includes("Stopping stream") || 
-            message.includes("WHIP DELETE") || 
-            message.includes("AudioCtx State") || 
-            message.includes("Audio Frames Received")
-        ) {
+        if (message.includes("Completed Successfully") || message.includes("Stopping stream") || message.includes("WHIP DELETE") || message.includes("AudioCtx State") || message.includes("Audio Frames Received")) {
             console.log(prefix, message)
         }
     }
@@ -29,7 +23,7 @@ ipcMain.on("DO_WHIP_POST", async (event, { outputId, url, token, sdp }) => {
             "User-Agent": "OBS/30.0.0"
         }
         if (token) {
-            headers["Authorization"] = `Bearer ${token}`
+            headers.Authorization = `Bearer ${token}`
         }
 
         const res = await fetch(url, {
@@ -70,7 +64,7 @@ ipcMain.on("DO_WHIP_DELETE", async (_event, { outputId, url, token }) => {
             "User-Agent": "OBS/30.0.0"
         }
         if (token) {
-            headers["Authorization"] = `Bearer ${token}`
+            headers.Authorization = `Bearer ${token}`
         }
 
         const res = await fetch(url, {

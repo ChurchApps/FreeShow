@@ -27,11 +27,13 @@ const setValues = {
         CaptureHelper.Lifecycle.startCapture(id, { [data.key]: data.value })
         // if (data.value) sendFrames(id, storedFrames[id], {[data.key]: true})
     },
-    transparent: (value: boolean, window: BrowserWindow) => {
+    transparent: (value: boolean, window: BrowserWindow, _id: string, output: OutputWindow) => {
         window.setBackgroundColor(value ? "#00000000" : "#000000")
+        output.transparent = value
     },
     alwaysOnTop: (value: boolean, window: BrowserWindow, _id: string, output: OutputWindow) => {
         window.setAlwaysOnTop(value, "pop-up-menu", 1)
+        // show in taskbar if not always on top, because this will also show it in Alt+Tab menu
         window.setSkipTaskbar(value)
         if (output.boundsLocked !== true) window.setResizable(!value)
     },
@@ -51,6 +53,6 @@ export class OutputValues {
         }
 
         if (!output.window || output.window.isDestroyed()) return
-        setValues[key as keyof typeof setValues](value as any, output.window, id, output)
+        setValues[key as keyof typeof setValues](value, output.window, id, output)
     }
 }

@@ -25,6 +25,7 @@
     export let stageId = ""
     export let preview = false
     export let edit = true
+    export let disableStagePreview = false
 
     const profile = getAccess("stage")
     $: readOnly = profile.global === "read" || profile[stageLayoutId || ""] === "read" || profile[stageLayoutId || ""] === "none"
@@ -152,7 +153,7 @@
                 {#key stageLayoutId}
                     {#each stageItems as item, index}
                         {#if (item.type || item.enabled !== false) && (edit || checkVisibility(index, conditionsUpdater))}
-                            <Stagebox edit={edit && !readOnly} stageLayout={edit ? null : layout} id={item.id} item={clone(item)} {ratio} {preview} bind:mouse />
+                            <Stagebox edit={edit && !readOnly} stageLayout={edit ? null : layout} id={item.id} item={clone(item)} {ratio} {preview} {disableStagePreview} bind:mouse />
                         {/if}
                     {/each}
                 {/key}

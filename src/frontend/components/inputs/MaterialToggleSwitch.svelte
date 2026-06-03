@@ -33,7 +33,7 @@
     }
 </script>
 
-<div style={$$props.style || null} class="togglefield {center ? 'centered' : ''} {disabled ? 'disabled' : ''}" data-title={translateText(title)} role="switch" aria-checked={checkedValue} tabindex={disabled ? undefined : 0} on:click={toggle} on:keydown={onKeyDown}>
+<div style={$$props.style || null} class="togglefield {center ? 'centered' : ''} {disabled ? 'disabled' : ''}" data-title={translateText(title || label)} role="switch" aria-checked={checkedValue} tabindex={disabled ? undefined : 0} on:click={toggle} on:keydown={onKeyDown}>
     <div class="background" />
     <div class="hover" />
 
@@ -41,7 +41,7 @@
 
     {#if label}
         <label for={id} class="toggle-label">
-            <span style="display: flex;align-items: center;gap: 10px;">
+            <span class="label-text">
                 {translateText(label, $dictionary)}
 
                 {#if data}<span class="data">{data}</span>{/if}
@@ -103,6 +103,17 @@
         z-index: 1;
         user-select: none;
         pointer-events: none;
+
+        flex: 1 1 auto;
+        min-width: 0;
+        overflow: hidden;
+    }
+
+    .toggle-label .label-text {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        gap: 10px;
     }
 
     .switch {
@@ -181,8 +192,7 @@
         align-items: center;
         justify-content: space-between;
         gap: 10px;
-
-        width: 100%;
+        width: auto;
     }
 
     .changed {

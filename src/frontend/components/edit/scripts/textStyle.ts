@@ -234,13 +234,15 @@ export function getLastLineAlign(item: Item, selection: any): string {
     return last
 }
 
-export function getTextLines(slide: Slide | { items: Item[] }) {
-    const lines: string[] = []
-    if (!slide?.items) return lines
+// normally returns array of text lines: ["Line 1", "Line 2", "", "Line 1"]
+// itemSeperated: ["Line 1<br>Line 2", "Line 1"]
+export function getTextLines(slide: Slide | { items: Item[] }, itemSeperated: boolean = false) {
+    if (!slide?.items) return []
 
-    slide.items.forEach((item, i) => {
+    const items: string[][] = []
+    slide.items.forEach((item) => {
         if (!getItemText(item)?.length) return
-        if (i > 0) lines.push("")
+        const lines: string[] = []
 
         let fullText = ""
         item.lines?.forEach((line) => {
@@ -257,9 +259,19 @@ export function getTextLines(slide: Slide | { items: Item[] }) {
         })
 
         if (!fullText.length) lines.pop()
+        if (lines.length) items.push(lines.map((a) => replaceVirtualBreaks(a)))
     })
 
-    return lines.map((a) => replaceVirtualBreaks(a))
+    if (itemSeperated) {
+        // convert [["Line 1, Line 2"], ["Line 1"]] to ["Line 1<br>Line 2", "Line 1"]
+        return items.map((a) => a.join("<br>"))
+    }
+
+    // flatten and push "" in between
+    return items.reduce((value, item) => {
+        if (value.length && item.length) value.push("")
+        return [...value, ...item]
+    }, [] as string[])
 }
 
 // get text of slides

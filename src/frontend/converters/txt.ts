@@ -8,6 +8,7 @@ import { history } from "../components/helpers/history"
 import { checkName, getCustomMetadata, getLabelId } from "../components/helpers/show"
 import { _show } from "../components/helpers/shows"
 import { linesToTextboxes } from "../components/show/formatTextEditor"
+import { VIRTUAL_BREAK_CHAR } from "../show/slides"
 import { activePopup, activeProject, activeShow, alertMessage, dictionary, drawerTabsData, formatNewShow, groupNumbers, groups, special, splitLines } from "../stores"
 import { translateText } from "../utils/language"
 import { setTempShows } from "./importHelpers"
@@ -419,6 +420,17 @@ function createSlides(labeled: { type: string; text: string }[], noFormatting) {
                         let newValue = ""
                         text.value?.split("").forEach((char) => {
                             if ((char === "[" || char === "]") && !text.value.slice(0, -2).includes(":")) {
+                                if (char === "]" && isChord && chords.length > 0) {
+                                    // Check if this is a virtual break marker, not a chord
+                                    if (chords[chords.length - 1].key === "_VB") {
+                                        // Remove the virtual break from chords array and add it to text
+                                        chords.pop()
+                                        newValue += VIRTUAL_BREAK_CHAR
+                                        isChord = false
+                                        return
+                                    }
+                                }
+
                                 isChord = char === "["
                                 if (isChord) chords.push({ id: uid(5), pos: letterIndex, key: "" })
                                 return

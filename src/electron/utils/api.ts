@@ -222,7 +222,7 @@ async function receivedData(data: any = {}, log: (...msg: any[]) => void): Promi
 
     if (!data.returnId) return
 
-    const returnData = await waitUntilValueIsDefined(() => returnDataObj[data.returnId], 50, 1000)
+    const returnData = await waitUntilValueIsDefined(() => returnDataObj[data.returnId], 50, 10000)
     delete returnDataObj[data.returnId]
     log(`Sending data ${String(data.action)}`)
     return returnData

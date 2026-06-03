@@ -12,6 +12,11 @@ files:
     - build/types/**
     - public/**
     - "!node_modules/@napi-rs"
+    - "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,test,tests}"
+    - "!**/node_modules/*/{*.d.ts,*.ts,*.map}"
+    - "!**/node_modules/{@types,typescript}/**"
+    - "!**/node_modules/**/*.pdb"
+    - "!**/node_modules/**/obj/**"
 
 extraResources:
     - from: node_modules/slideshow/

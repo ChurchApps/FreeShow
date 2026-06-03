@@ -301,10 +301,10 @@ export function formatText(text: string, showId = "") {
     // this is to ensure correct "Verse 1", "Verse 2" order with multiple layouts
     const newSlidesOrdered: typeof newSlides = {}
     allUsedSlidesIds.forEach((id) => {
-        newSlidesOrdered[id] = newSlides[id]
+        if (newSlides[id]) newSlidesOrdered[id] = newSlides[id]
     })
     Object.keys(newSlides).forEach((id) => {
-        if (!newSlidesOrdered[id]) newSlidesOrdered[id] = newSlides[id]
+        if (!newSlidesOrdered[id] && newSlides[id]) newSlidesOrdered[id] = newSlides[id]
     })
 
     show.slides = newSlidesOrdered

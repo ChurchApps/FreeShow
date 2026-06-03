@@ -8,6 +8,7 @@
     import { translateText } from "../../utils/language"
     import { getAccess } from "../../utils/profile"
     import { exportProject } from "../export/project"
+    import { shareProjectLink } from "../export/projectLink"
     import { clone, keysToID, removeDuplicateValues, sortByName } from "../helpers/array"
     import { history } from "../helpers/history"
     import { getDefaultProjectName, getProjectName, projectReplacers } from "../helpers/historyHelpers"
@@ -323,7 +324,7 @@
     <span class="tabs">
         {#if projectActive || recentlyUsedList.length}
             {#if !$focusMode}
-                <div class="header {recentlyUsedList.length ? '' : 'context #projectTab'}" class:shadow={listScrollY > 0} class:isScrollbarVisible class:passThrough={isDragging} data-title={translateText("remote.project: ") + `<b>${currentProject?.name || ""}</b>`}>
+                <div class="header {recentlyUsedList.length ? '' : 'context #projectTab'}" class:shadow={listScrollY > 0} class:isScrollbarVisible class:passThrough={isDragging} data-title={translateText("remote.project: ", $dictionary) + `<b>${currentProject?.name || ""}</b>`}>
                     <div class="left context">
                         <MaterialButton style="width: 42px;height: 100%;padding: 0.3em 0.5em;" icon="back" iconSize={1.1} title="remote.projects" on:click={back} />
                     </div>
@@ -360,6 +361,10 @@
                                     <!-- WIP set sourcePath to export path -->
                                     <MaterialButton title="actions.export" icon="export" on:click={() => exportProject(currentProject, $activeProject || "")} white>
                                         <T id="actions.export" />
+                                    </MaterialButton>
+
+                                    <MaterialButton title="export.data_link" icon="bind" on:click={() => shareProjectLink(currentProject, $activeProject || "")} white>
+                                        <T id="export.data_link" />
                                     </MaterialButton>
 
                                     <div class="DIVIDER"></div>

@@ -1,5 +1,4 @@
-import { machineIdSync } from "node-machine-id"
-import os from "os"
+import crypto from "crypto"
 
 // clone objects
 export function clone<T>(object: T): T {
@@ -60,13 +59,23 @@ export function waitUntilValueIsDefined(value: () => any, intervalTime = 50, tim
 
 export function getMachineId(): string {
     try {
-        return machineIdSync()
-    } catch (err) {
-        console.warn("Could not get machine ID:", err)
+        const { config } = require("../data/store")
+        let id = config?.get ? config.get("machineId") : undefined
+        if (id) return id
 
-        // fallback to a hash of hostname + username + platform
-        const crypto = require("crypto")
-        const fallbackId = `${os.hostname()}-${os.userInfo().username}-${os.platform()}`
-        return crypto.createHash("sha256").update(fallbackId).digest("hex")
+        try {
+            // we need to store this value for now, because it's already used, but we can remove eventually once it's stored in the config for most users
+            const { machineIdSync } = require("node-machine-id")
+            id = machineIdSync()
+        } catch (machineIdErr) {
+            console.warn("Could not retrieve legacy hardware machine ID, generating UUID instead:", machineIdErr)
+            id = crypto.randomUUID()
+        }
+
+        if (config?.set) config.set("machineId", id)
+        return id
+    } catch (err) {
+        console.warn("Could not get machine ID from config store:", err)
+        return "fallback-machine-id"
     }
 }

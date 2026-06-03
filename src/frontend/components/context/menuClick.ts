@@ -109,6 +109,7 @@ import { clearSlide } from "../output/clear"
 import { defaultThemes } from "../settings/tabs/defaultThemes"
 import { activeProject } from "./../../stores"
 import type { ContextMenuItem } from "./contextMenus"
+import { midiInListen } from "../actions/midi"
 
 interface ObjData {
     sel: Selected | null
@@ -904,19 +905,22 @@ const clickActions = {
         }
 
         if (obj.sel?.id === "theme") {
-            const theme = get(themes)[obj.sel.data[0]?.id]
-            if (!theme) return
-            send(EXPORT, ["THEME"], { content: theme })
+            obj.sel.data.forEach(({ id }) => {
+                const theme = clone(get(themes)[id])
+                if (!theme) return
 
+                send(EXPORT, ["THEME"], { content: theme })
+            })
             return
         }
 
         if (obj.sel?.id === "action") {
-            const id = obj.sel.data[0]?.id
-            const action = get(actions)[id]
-            if (!action) return
-            send(EXPORT, ["ACTION"], { content: { ...action, id } })
+            obj.sel.data.forEach(({ id }) => {
+                const action = clone(get(actions)[id])
+                if (!action) return
 
+                send(EXPORT, ["ACTION"], { content: { ...action, id } })
+            })
             return
         }
     },
@@ -1106,6 +1110,7 @@ const clickActions = {
                 })
                 return a
             })
+            midiInListen()
             return
         }
     },

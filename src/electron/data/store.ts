@@ -15,7 +15,7 @@ import type { Overlays, Templates, TrimmedShows } from "../../types/Show"
 import type { StageLayouts } from "../../types/Stage"
 import type { ContentProviderId } from "../contentProviders/base/types"
 import { sendMain, sendToMain } from "../IPC/main"
-import { dataFolderNames, deleteFile, doesPathExist, getDataFolderPath, getDataFolderRoot, getDefaultDataFolderRoot, isWritable, moveFileAsync, readFile, readFolder } from "../utils/files"
+import { dataFolderNames, deleteFile, doesPathExist, getDataFolderPath, getDefaultDataFolderRoot, isWritable, moveFileAsync, readFile, readFolder } from "../utils/files"
 import { clone, wait } from "../utils/helpers"
 import "./contentProviders"
 import { defaultConfig, defaultSettings, defaultSyncedSettings } from "./defaults"
@@ -56,11 +56,25 @@ export async function setupStores() {
     const oldLocation = await migrateConfig()
     createStores(oldLocation, true)
 
-    checkStores(getDataFolderRoot())
+    checkStores(getDataFolderPath("userData"))
 }
 
 // Check that files are parsed properly!
 function checkStores(dataPath: string) {
+    // remove any leftover .tmp files that could cause permission issues
+    try {
+        if (doesPathExist(dataPath)) {
+            const files = readFolder(dataPath)
+            files.forEach((file) => {
+                if (file.includes(".json.tmp-")) {
+                    if (deleteFile(path.join(dataPath, file))) console.info(`Deleted stale temp file: ${file}`)
+                }
+            })
+        }
+    } catch (err) {
+        console.error("Failed to clean up stale temp files in: " + dataPath, err)
+    }
+
     Object.values(storeFilesData).forEach(({ fileName }) => {
         const filePath = path.join(dataPath, fileName + ".json")
         if (!doesPathExist(filePath)) return
@@ -70,8 +84,7 @@ function checkStores(dataPath: string) {
             const MAX_BYTES = 30 * 1024 * 1024 // 30 MB
             const stats = statSync(filePath)
             if (stats.size > MAX_BYTES) {
-                deleteFile(filePath)
-                console.info(`DELETED ${fileName + ".json"} file as it exceeded 30 MB!`)
+                if (deleteFile(filePath)) console.info(`DELETED ${fileName + ".json"} file as it exceeded 30 MB!`)
                 return
             }
         }
@@ -181,8 +194,7 @@ function getWritableConfigPath(previousLocation?: string | null, setup = false):
 export async function safeStoreSet(store: any, newData: any, key: string): Promise<void> {
     for (let attempt = 0; attempt < 3; attempt++) {
         try {
-            store.clear()
-            store.set(newData)
+            store.store = newData
             await wait(100)
             return
         } catch (err: any) {
@@ -233,8 +245,7 @@ export function setStoreValue(data: { file: "config" | keyof typeof _store; key:
 
 export function setStore(store: Store<any> | undefined, newData: any) {
     try {
-        store?.clear()
-        store?.set(newData)
+        if (store) store.store = newData
     } catch (err) {
         console.warn("Failed to write store:", err)
     }
@@ -264,9 +275,7 @@ function moveStore(key: keyof typeof storeFilesData, previousLocation: string, s
     if (!fileData) return
 
     try {
-        store.clear()
-        store.set(JSON.parse(fileData))
-
+        store.store = JSON.parse(fileData)
         console.info(`Moved ${storeFilesData[key].fileName}.json to data folder`)
     } catch (err) {
         console.error("Could not read the " + filePathOld + ".json settings file, probably wrong JSON format!", err)

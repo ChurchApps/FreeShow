@@ -1,7 +1,7 @@
 import { get } from "svelte/store"
 import type { AudioChannel } from "../../types/Audio"
 import { AUDIO, OUTPUT } from "../../types/Channels"
-import { audioEffects, disabledServers, media, outputs, playingAudio, playingVideos, serverData, special } from "../stores"
+import { audioEffects, disabledServers, media, outputs, playingAudio, playingVideos, serverData, special, videosData } from "../stores"
 import { isOutputWindow } from "../utils/common"
 import { send } from "../utils/request"
 import { AudioAnalyserMerger } from "./audioAnalyserMerger"
@@ -29,6 +29,8 @@ export class AudioAnalyser {
     private static analysers: AnalyserNode[] = []
     private static sources: { [key: string]: AudioNode } = {}
     private static processors: { [key: string]: PitchShiftNode } = {}
+    private static gainNodes: { [key: string]: GainNode } = {}
+    private static timeDomainArray = new Uint8Array(256)
 
     // Expose the AudioContext for other audio systems to use the same context
     static getAudioContext(): AudioContext {
@@ -45,6 +47,10 @@ export class AudioAnalyser {
                 await this.refreshEqualizerConnections()
             })
         })
+
+        playingAudio.subscribe(() => this.updateScales())
+        playingVideos.subscribe(() => this.updateScales())
+        videosData.subscribe(() => this.updateScales())
     }
 
     static async attach(id: string, audio: HTMLMediaElement | MediaStream) {
@@ -84,7 +90,14 @@ export class AudioAnalyser {
             const processor = AudioProcessor.createNode(this.ac)
             this.processors[id] = processor
 
-            eqOutputNode.connect(processor.input)
+            // Create individual gain node to control this source's volume in Web Audio
+            const sourceGain = this.ac.createGain()
+            this.gainNodes[id] = sourceGain
+            const initialVolume = audio instanceof HTMLMediaElement ? audio.volume : 1.0
+            sourceGain.gain.setValueAtTime(initialVolume, this.ac.currentTime)
+
+            eqOutputNode.connect(sourceGain)
+            sourceGain.connect(processor.input)
             this.connectToSinks(processor)
 
             const mediaData = get(media)[id]
@@ -93,7 +106,9 @@ export class AudioAnalyser {
                 processor.tempo = mediaData.tempo ?? 1
             }
 
-            console.log(`Audio source "${id}" connected (${this.channels} channels)`)
+            this.updateScales()
+
+            console.log(`Audio source "${id}" connected (${this.channels} channels, volume: ${initialVolume})`)
         } else {
             console.warn(`Failed to connect audio source "${id}" to equalizer`)
         }
@@ -101,6 +116,38 @@ export class AudioAnalyser {
         // Detect true channel count in the background — upgrades the graph if the file
         // has more channels than the current default. Does not delay playback startup.
         this.detectAndUpgradeChannels(id, audio)
+    }
+
+    static setSourceVolume(id: string, volume: number) {
+        if (this.ac.state === "suspended") {
+            this.ac.resume().catch(() => {})
+        }
+        const gainNode = this.gainNodes[id]
+        if (gainNode) {
+            const activeCount = Object.values(get(playingAudio)).filter((a) => !a.paused).length + Object.values(get(playingVideos)).filter((v) => !v.video?.paused && !v.video?.muted).length
+            const scale = activeCount > 0 ? 1 / Math.sqrt(activeCount) : 1
+            gainNode.gain.setValueAtTime(volume * scale, this.ac.currentTime)
+        }
+    }
+
+    private static updateScales() {
+        const activeCount = Object.values(get(playingAudio)).filter((a) => !a.paused).length + Object.values(get(playingVideos)).filter((v) => !v.video?.paused && !v.video?.muted).length
+        const scale = activeCount > 0 ? 1 / Math.sqrt(activeCount) : 1
+
+        Object.keys(this.gainNodes).forEach((id) => {
+            const gainNode = this.gainNodes[id]
+            if (gainNode) {
+                let baseVolume = 1.0
+                const audioPlaying = get(playingAudio)[id]
+                if (audioPlaying) {
+                    baseVolume = audioPlaying.audio?.volume ?? 1.0
+                } else {
+                    const videoPlaying = get(playingVideos).find((v) => v.id === id)
+                    baseVolume = videoPlaying?.video?.volume ?? 1.0
+                }
+                gainNode.gain.setValueAtTime(baseVolume * scale, this.ac.currentTime)
+            }
+        })
     }
 
     private static detectAndUpgradeChannels(id: string, audio: HTMLMediaElement | MediaStream) {
@@ -132,6 +179,14 @@ export class AudioAnalyser {
             delete this.processors[id]
         }
 
+        const sourceGain = this.gainNodes[id]
+        if (sourceGain) {
+            try {
+                sourceGain.disconnect()
+            } catch (e) {}
+            delete this.gainNodes[id]
+        }
+
         // Disconnect from equalizer
         disconnectAudioSourceFromEqualizer(id)
 
@@ -155,7 +210,7 @@ export class AudioAnalyser {
         return !!Object.values(get(playingAudio)).filter((a) => !a.paused).length
     }
     private static getActiveVideos() {
-        return !!Object.values(get(playingVideos)).filter((a) => !a.paused && !a.muted).length
+        return !!Object.values(get(playingVideos)).filter((a) => !a.video?.paused && !a.video?.muted).length
     }
     private static sendOutputShowAudio() {
         return get(disabledServers).output_stream === false && get(serverData)?.output_stream?.sendAudio
@@ -470,7 +525,11 @@ export class AudioAnalyser {
     // CHANNEL
 
     static getChannelsVolume() {
-        return [...Array(this.channels)].map((_, channel) => this.getChannelVolume(channel))
+        const volumes: AudioChannel[] = []
+        for (let channel = 0; channel < this.channels; channel++) {
+            volumes.push(this.getChannelVolume(channel))
+        }
+        return volumes
     }
 
     private static getChannelVolume(channelIndex: number): AudioChannel {
@@ -481,23 +540,27 @@ export class AudioAnalyser {
         analyser.maxDecibels = AudioAnalyserMerger.dBmax
 
         const size = analyser.fftSize // 256
-        const array = new Uint8Array(size)
+        if (this.timeDomainArray.length !== size) {
+            this.timeDomainArray = new Uint8Array(size)
+        }
+        const array = this.timeDomainArray
 
         // analyze amplitude values in time domain
         analyser.getByteTimeDomainData(array)
 
         // calculate RMS value to represent perceived volume
-        const sumOfSquares = array.reduce((sum, value) => {
-            const normalizedValue = (value - 128) / 128 // Normalize between -1 and 1
-            return sum + normalizedValue * normalizedValue
-        }, 0)
+        let sumOfSquares = 0
+        const len = array.length
+        for (let i = 0; i < len; i++) {
+            const normalizedValue = (array[i] - 128) / 128 // Normalize between -1 and 1
+            sumOfSquares += normalizedValue * normalizedValue
+        }
 
-        const rms = Math.sqrt(sumOfSquares / array.length)
+        const rms = Math.sqrt(sumOfSquares / len)
 
         // map RMS to dB scale & protect against log(0)
         const dB = 20 * Math.log10(rms || 0.0001)
 
-        // const volume = rms
         return { dB: { value: dB } }
     }
 

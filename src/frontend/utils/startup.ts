@@ -6,7 +6,7 @@ import { checkStartupActions } from "../components/actions/actions"
 import { getTimeFromInterval } from "../components/helpers/time"
 import { requestMain, requestMainMultiple, sendMain, sendMainMultiple } from "../IPC/main"
 import { cameraManager } from "../media/cameraManager"
-import { activePopup, alertMessage, cachePath, cloudSyncData, contentProviderData, currentWindow, deviceId, driveKeys, isDev, language, loaded, loadedState, os, providerConnections, scriptures, shows, special, version, windowState } from "../stores"
+import { activePopup, alertMessage, cachePath, cloudSyncData, contentProviderData, currentWindow, deviceId, driveKeys, isDev, loaded, loadedState, os, providerConnections, shows, special, version, windowState } from "../stores"
 import { startTracking } from "./analytics"
 import { wait, waitUntilValueIsDefined } from "./common"
 import { getDefaultElements } from "./createData"
@@ -73,10 +73,10 @@ async function startupMain() {
     contentProviderSync()
 
     // custom alert
-    if (get(language) === "no" && !get(activePopup) && !Object.values(get(scriptures)).find((a) => ["eea18ccd2ca05dde-01", "7bcaa2f2e77739d5-01"].includes(a.id || "")) && Math.random() < 0.001) {
-        alertMessage.set('Bibel 2011 Bokmål/Nynorsk er tilgjengelig som API i "Bibel"-menyen!')
-        activePopup.set("alert")
-    }
+    // if (Math.random() < 0.01) {
+    //     alertMessage.set("")
+    //     activePopup.set("alert")
+    // }
 
     await wait(2000)
     autoBackup()

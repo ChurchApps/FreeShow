@@ -56,7 +56,7 @@
     let background: OutBackground | null = null
     let clonedOverlays: TOverlays | null = null
 
-    $: effectsIds = clone(out.effects || [])
+    let effectsIds: string[] = []
     $: allEffects = $effects
     $: effectsUnderSlide = effectsIds.filter((id) => allEffects[id]?.placeUnderSlide === true)
     $: effectsOverSlide = effectsIds.filter((id) => !allEffects[id]?.placeUnderSlide)
@@ -95,6 +95,14 @@
         if (newBgStr !== cachedBgStr) {
             cachedBgStr = newBgStr
             updateOutData("background")
+        }
+    }
+    let cachedEffectsStr = ""
+    $: {
+        const newEffectsStr = JSON.stringify(out.effects || [])
+        if (newEffectsStr !== cachedEffectsStr) {
+            cachedEffectsStr = newEffectsStr
+            effectsIds = clone(out.effects || [])
         }
     }
 

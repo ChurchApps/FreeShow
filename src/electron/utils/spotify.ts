@@ -1,4 +1,4 @@
-import { ChildProcess, exec, fork } from "child_process"
+import { type ChildProcess, exec, fork } from "child_process"
 import os from "os"
 import type { SpotifyState } from "../../types/Main"
 
@@ -118,7 +118,8 @@ export async function getSpotifyState(): Promise<SpotifyState | null> {
                 const dbus = "dbus-send --print-reply --dest=org.mpris.MediaPlayer2.spotify /org/mpris/MediaPlayer2 org.freedesktop.DBus.Properties.Get string:'org.mpris.MediaPlayer2.Player'"
                 exec(`${dbus} string:'Metadata' && ${dbus} string:'PlaybackStatus' && ${dbus} string:'Position' && ${dbus} string:'Volume'`, (e, out) => {
                     if (e) {
-                        if (!out.includes("org.mpris.MediaPlayer2.spotify")) console.error("[Spotify] Linux error:", e)
+                        const isServiceUnknown = e.message?.includes("org.freedesktop.DBus.Error.ServiceUnknown") || e.message?.includes("ServiceUnknown")
+                        if (!isServiceUnknown) console.error("[Spotify] Linux error:", e)
                         return res(null)
                     }
                     const title = out.match(/string\s+"xesam:title"\s+variant\s+string\s+"([^"]+)"/)?.[1]
@@ -147,9 +148,15 @@ export async function executeSpotifyCommand(cmd: string, val?: number): Promise<
             initSpotify()
             setTimeout(() => bridge?.send({ type: "command", command: cmd, value: val }), 500)
         } else if (isLinux) {
-            const dest = "--dest=org.mpris.MediaPlayer2.spotify /org/mpris/MediaPlayer2",
-                mpris = "org.mpris.MediaPlayer2.Player"
-            const run = (c: string) => exec(`dbus-send ${dest} ${c}`, (e) => e && console.error("[Spotify] Linux command error:", e))
+            const dest = "--dest=org.mpris.MediaPlayer2.spotify /org/mpris/MediaPlayer2"
+            const mpris = "org.mpris.MediaPlayer2.Player"
+            const run = (c: string) =>
+                exec(`dbus-send ${dest} ${c}`, (e) => {
+                    if (e) {
+                        const isServiceUnknown = e.message?.includes("org.freedesktop.DBus.Error.ServiceUnknown") || e.message?.includes("ServiceUnknown")
+                        if (!isServiceUnknown) console.error("[Spotify] Linux command error:", e)
+                    }
+                })
             if (cmd === "playpause") run(`${mpris}.PlayPause`)
             else if (cmd === "next") run(`${mpris}.Next`)
             else if (cmd === "prev") run(`${mpris}.Previous`)
@@ -157,7 +164,11 @@ export async function executeSpotifyCommand(cmd: string, val?: number): Promise<
             else if (cmd === "setVolume" && val !== undefined) run(`org.freedesktop.DBus.Properties.Set string:${mpris} string:'Volume' variant:double:${val}`)
             else if (cmd === "seek" && val !== undefined) {
                 exec(`dbus-send --print-reply ${dest} org.freedesktop.DBus.Properties.Get string:${mpris} string:'Metadata'`, (e, out) => {
-                    if (e) return console.error("[Spotify] Linux seek error:", e)
+                    if (e) {
+                        const isServiceUnknown = e.message?.includes("org.freedesktop.DBus.Error.ServiceUnknown") || e.message?.includes("ServiceUnknown")
+                        if (!isServiceUnknown) console.error("[Spotify] Linux seek error:", e)
+                        return
+                    }
                     const id = out?.match(/string\s+"mpris:trackid"\s+variant\s+string\s+"([^"]+)"/)?.[1]
                     if (id) run(`${mpris}.SetPosition objpath:${id} x64:${Math.round(val * 1000000)}`)
                 })

@@ -5,63 +5,48 @@ import { CaptureTransmitter } from "./CaptureTransmitter"
 import { WebRtcHost } from "../../webrtc/WebRtcHost"
 
 export class CaptureLifecycle {
+    private static readonly BACKPRESSURE_LOOKUP = [
+        { threshold: 6144, maxFps: 4 },
+        { threshold: 5120, maxFps: 6 },
+        { threshold: 4096, maxFps: 8 },
+        { threshold: 3072, maxFps: 10 }
+    ]
+    private static readonly FALLBACK_FPS = 60
+    private static readonly MIN_DELAY_MS = 1
+    private static readonly WEBRTC_START_DELAY_MS = 1000
+    private static readonly BYTES_PER_MB = 1048576
+
     private static captureLoopToken: { [key: string]: number } = {}
     private static activeCaptures: Set<string> = new Set()
+    private static lastFrameSignatures: { [captureId: string]: { signature: number; sizeKey: string } } = {}
 
     static startCapture(id: string, toggle: { [key: string]: boolean } = {}) {
         const output = OutputHelper.getOutput(id)
         if (!output) return
 
-        // CRITICAL FIX: If capture is already active, just update toggles without restarting
-        // Restarting the loop causes performance issues and potential memory leaks
-        const isAlreadyActive = this.activeCaptures.has(id)
-        const hasToggleChanges = Object.keys(toggle).length > 0
-
-        if (isAlreadyActive) {
-            if (!hasToggleChanges) {
-                return
-            }
-
-            // Just update the toggle options without stopping the capture loop
-            if (output.captureOptions) {
-                const captureOpts = output.captureOptions.options || {}
-                for (const key of Object.keys(toggle)) {
-                    // turn off capture
-                    if (captureOpts[key] && !toggle[key]) CaptureTransmitter.stopChannel(id, key)
-                    // set capture on/off
-                    captureOpts[key] = toggle[key]
-                }
-                output.captureOptions.options = captureOpts
+        // already active - toggle values
+        if (this.activeCaptures.has(id)) {
+            if (Object.keys(toggle).length > 0 && output.captureOptions) {
+                this.updateCaptureToggles(id, output.captureOptions, toggle)
                 CaptureHelper.Transmitter.startTransmitting(id)
-                CaptureLifecycle.updateWebRtcHostState()
+                this.updateWebRtcHostState()
             }
             return
         }
 
-        const window = output.window
-        const windowIsRemoved = !window || window.isDestroyed()
-        if (windowIsRemoved) {
+        if (!output.window || output.window.isDestroyed()) {
             this.activeCaptures.delete(id)
             delete output.captureOptions
             return
         }
 
-        if (!output.captureOptions) output.captureOptions = CaptureHelper.getDefaultCapture(window, id)
+        if (!output.captureOptions) output.captureOptions = CaptureHelper.getDefaultCapture(output.window, id)
 
-        if (output.captureOptions) {
-            const captureOpts = output.captureOptions?.options || {}
-            for (const key of Object.keys(toggle)) {
-                // turn off capture
-                if (captureOpts[key] && !toggle[key]) CaptureTransmitter.stopChannel(id, key)
-                // set capture on/off
-                captureOpts[key] = toggle[key]
-            }
-            output.captureOptions.options = captureOpts
-        }
+        // toggle values
+        if (output.captureOptions && Object.keys(toggle).length > 0) this.updateCaptureToggles(id, output.captureOptions, toggle)
 
-        const hasEnabledCapture = !!output.captureOptions?.options && Object.values(output.captureOptions.options).some(Boolean)
-        if (!output.captureOptions?.options || !hasEnabledCapture || output.captureOptions.window.isDestroyed()) {
-            // Ensure any existing capture loop is stopped when capture is disabled.
+        const hasEnabledCapture = output.captureOptions?.options && Object.values(output.captureOptions.options).some(Boolean)
+        if (!hasEnabledCapture || output.captureOptions?.window.isDestroyed()) {
             if (output.captureOptions?.frameSubscription) {
                 clearTimeout(output.captureOptions.frameSubscription)
                 output.captureOptions.frameSubscription = null
@@ -79,93 +64,124 @@ export class CaptureLifecycle {
         const token = (this.captureLoopToken[id] || 0) + 1
         this.captureLoopToken[id] = token
 
-        // IMPORTANT: Only add to activeCaptures right before starting the actual loop
-        // This prevents false positives from early returns
         this.activeCaptures.add(id)
-        CaptureLifecycle.updateWebRtcHostState()
+        this.updateWebRtcHostState()
 
-        captureFrame()
+        this.runCaptureLoop(id, token, output)
+    }
 
-        async function captureFrame() {
-            const loopStartedAt = Date.now()
+    private static updateCaptureToggles(id: string, captureOptions: any, toggle: { [key: string]: boolean }) {
+        const captureOpts = captureOptions.options || {}
+        for (const key of Object.keys(toggle)) {
+            if (captureOpts[key] && !toggle[key]) CaptureTransmitter.stopChannel(id, key)
+            captureOpts[key] = toggle[key]
+        }
+        captureOptions.options = captureOpts
+    }
 
-            if (CaptureLifecycle.captureLoopToken[id] !== token) {
-                CaptureLifecycle.activeCaptures.delete(id)
+    private static runCaptureLoop(id: string, token: number, output: any) {
+        const captureFrame = async () => {
+            const captureOpts = output.captureOptions
+
+            if (!this.shouldContinueCapture(id, token, captureOpts)) {
+                this.activeCaptures.delete(id)
                 return
             }
 
-            // Check window and webContents validity before every use
-            if (!output?.captureOptions?.window || output.captureOptions.window.isDestroyed() || !output.captureOptions.window.webContents || output.captureOptions.window.webContents.isDestroyed?.()) {
-                CaptureLifecycle.activeCaptures.delete(id)
-                return
-            }
-
-            // If Blackmagic is active but can't accept frames, skip capture entirely
-            // This includes checking if previous frame is still being processed
-            const isBMD = output.captureOptions?.options?.blackmagic
-            if (isBMD && !BlackmagicSender.canAcceptFrame(id)) {
-                // Skip this frame - Blackmagic is still processing previous frame or queue is full
-                const ms = Math.max(1, Math.round(1000 / 60))
-                output.captureOptions.frameSubscription = setTimeout(captureFrame, ms)
+            // Blackmagic only - skip frames
+            if (captureOpts.options?.blackmagic && !BlackmagicSender.canAcceptFrame(id)) {
+                captureOpts.frameSubscription = setTimeout(captureFrame, 1000 / this.FALLBACK_FPS)
                 return
             }
 
             try {
-                let image = await output.captureOptions.window.webContents.capturePage()
+                const image = await this.captureAndProcessFrame(id, captureOpts)
 
-                // Resize to target resolution for Blackmagic outputs (if screen scaling is not 100%)
-                let finalImage = image
-
-                if (isBMD) {
-                    const targetSize = BlackmagicSender.getTargetDimensions(id)
-                    const currentSize = image.getSize()
-                    if (currentSize.width !== targetSize.width || currentSize.height !== targetSize.height) {
-                        // Resize and immediately replace original to release it
-                        finalImage = image.resize({ width: targetSize.width, height: targetSize.height })
-                        image = null as any // Release original large frame
-                    }
+                // skip transmitting if frame is unchanged (except for blackmagic which needs continuous frames)
+                if (captureOpts.options?.blackmagic || !this.isFrameUnchanged(id, image)) {
+                    this.transmitFrame(id, image)
                 }
-
-                // Send frame to all active channels immediately
-                CaptureTransmitter.transmitFrame(id, finalImage)
-
-                // CRITICAL: Release the NativeImage after transmission to prevent memory accumulation
-                finalImage = null as any
             } catch (error) {
                 console.warn(`Capture failed for output ${id}:`, error)
             }
 
-            if (CaptureLifecycle.captureLoopToken[id] !== token) {
-                CaptureLifecycle.activeCaptures.delete(id)
-                return
-            }
-            if (!output.captureOptions) {
-                CaptureLifecycle.activeCaptures.delete(id)
-                return
-            }
-            // Use highest frame rate among active channels.
-            const frameRates = output.captureOptions.framerates || {}
-            const maxOutputRate = Math.max(frameRates.ndi || 1, frameRates.blackmagic || 1, frameRates.server || 1, frameRates.stage || 1)
-            const baseCaptureFrameRate = Math.max(1, maxOutputRate)
-
-            // Adaptive backpressure: reduce capture FPS only at high memory levels.
-            const externalMB = process.memoryUsage().external / (1024 * 1024)
-            let captureFrameRate = baseCaptureFrameRate
-            if (isBMD) {
-                if (externalMB > 6144) captureFrameRate = Math.min(baseCaptureFrameRate, 4)
-                else if (externalMB > 5120) captureFrameRate = Math.min(baseCaptureFrameRate, 6)
-                else if (externalMB > 4096) captureFrameRate = Math.min(baseCaptureFrameRate, 8)
-                else if (externalMB > 3072) captureFrameRate = Math.min(baseCaptureFrameRate, 10)
-            }
-
-            const targetIntervalMs = Math.max(1, Math.round(1000 / Math.max(1, captureFrameRate)))
-            const loopElapsedMs = Date.now() - loopStartedAt
-            const ms = Math.max(1, targetIntervalMs - loopElapsedMs)
-            output.captureOptions.frameSubscription = setTimeout(captureFrame, ms)
+            const delay = this.calculateFrameDelay(id, captureOpts)
+            output.captureOptions.frameSubscription = setTimeout(captureFrame, delay)
         }
+
+        captureFrame()
     }
 
-    // STOP
+    private static shouldContinueCapture(id: string, token: number, captureOpts: any): boolean {
+        if (!captureOpts) return false
+        if (this.captureLoopToken[id] !== token) return false
+        if (!captureOpts.window || captureOpts.window.isDestroyed()) return false
+        if (!captureOpts.window.webContents || captureOpts.window.webContents.isDestroyed?.()) return false
+        return true
+    }
+
+    private static async captureAndProcessFrame(id: string, captureOpts: any) {
+        let image = await captureOpts.window.webContents.capturePage()
+
+        // Blackmagic only - resize if needed
+        if (captureOpts.options?.blackmagic) {
+            const targetSize = BlackmagicSender.getTargetDimensions(id)
+            const currentSize = image.getSize()
+            if (currentSize.width !== targetSize.width || currentSize.height !== targetSize.height) {
+                image = image.resize({ width: targetSize.width, height: targetSize.height })
+            }
+        }
+
+        return image
+    }
+
+    private static isFrameUnchanged(id: string, image: any): boolean {
+        const size = image.getSize()
+        const buffer = image.toBitmap()
+        const signature = CaptureTransmitter.computeFrameSignature(buffer, size)
+        const sizeKey = `${size.width}x${size.height}`
+
+        const previous = this.lastFrameSignatures[id]
+        const unchanged = previous && previous.signature === signature && previous.sizeKey === sizeKey
+
+        this.lastFrameSignatures[id] = { signature, sizeKey } // , lastSentTime: previous?.lastSentTime || 0
+        return unchanged
+    }
+
+    private static transmitFrame(id: string, image: any) {
+        CaptureTransmitter.transmitFrame(id, image, performance.now())
+    }
+
+    private static calculateFrameDelay(id: string, captureOpts: any): number {
+        const output = OutputHelper.getOutput(id)
+        if (!output?.captureOptions) return this.MIN_DELAY_MS
+
+        const captureFrameRate = this.getAdaptiveFrameRate(id, captureOpts)
+        const targetIntervalMs = 1000 / captureFrameRate
+
+        return Math.max(this.MIN_DELAY_MS, Math.round(targetIntervalMs))
+    }
+
+    private static getAdaptiveFrameRate(id: string, captureOpts: any): number {
+        const output = OutputHelper.getOutput(id)
+        const frameRates = output?.captureOptions?.framerates || {}
+        const options = captureOpts.options || {}
+
+        const baseCaptureFrameRate = CaptureHelper.getMaxActiveFramerate(frameRates, options)
+
+        // Blackmagic only - reduce frame rate if memory exceeds thresholds
+        if (captureOpts.options?.blackmagic) {
+            const externalMB = process.memoryUsage().external / this.BYTES_PER_MB
+            for (const { threshold, maxFps } of this.BACKPRESSURE_LOOKUP) {
+                if (externalMB > threshold) {
+                    return Math.min(baseCaptureFrameRate, maxFps)
+                }
+            }
+        }
+
+        return baseCaptureFrameRate
+    }
+
     static stopAllCaptures() {
         OutputHelper.getAllOutputs().forEach((output) => {
             if (output.captureOptions) this.stopCapture(output.id)
@@ -180,66 +196,57 @@ export class CaptureLifecycle {
         this.captureLoopToken[id] = (this.captureLoopToken[id] || 0) + 1
         this.activeCaptures.delete(id)
 
-        endSubscription()
-
-        CaptureHelper.Transmitter.stopChannel(id, "ndi")
-        CaptureHelper.Transmitter.stopChannel(id, "blackmagic")
-        CaptureHelper.Transmitter.stopChannel(id, "server")
-        CaptureHelper.Transmitter.stopChannel(id, "stage")
-        CaptureHelper.Transmitter.stopChannel(id, "webrtc")
-
-        console.info("Capture - stopping: " + id)
-
-        // remove listeners
-        if (capture.window && !capture.window.isDestroyed()) {
-            capture.window.removeAllListeners()
-            if (capture.window.webContents && !capture.window.webContents.isDestroyed?.()) {
-                capture.window.webContents.removeAllListeners()
-            }
-        }
-
-        delete output.captureOptions
-        CaptureLifecycle.updateWebRtcHostState()
-
-        function endSubscription() {
-            if (!capture?.frameSubscription) return
-
+        if (capture.frameSubscription) {
             clearTimeout(capture.frameSubscription)
             capture.frameSubscription = null
+        }
+
+        const channels = ["ndi", "blackmagic", "server", "stage", "webrtc"]
+        channels.forEach((channel) => CaptureHelper.Transmitter.stopChannel(id, channel))
+
+        delete this.lastFrameSignatures[id]
+        console.info("Capture - stopping: " + id)
+
+        this.cleanupListeners(capture.window)
+        delete output.captureOptions
+        this.updateWebRtcHostState()
+    }
+
+    private static cleanupListeners(window: any) {
+        if (!window || window.isDestroyed()) return
+
+        window.removeAllListeners()
+        if (window.webContents && !window.webContents.isDestroyed?.()) {
+            window.webContents.removeAllListeners()
         }
     }
 
     private static updateWebRtcHostState() {
-        let webrtcActive = false
-        OutputHelper.getAllOutputs().forEach((o) => {
-            if (o.captureOptions?.options?.webrtc) webrtcActive = true
-        })
+        const allOutputs = OutputHelper.getAllOutputs()
+        const webrtcActive = allOutputs.some((o) => o.captureOptions?.options?.webrtc)
 
         if (webrtcActive) {
             const wasRunning = WebRtcHost.isRunning()
             WebRtcHost.start()
 
             const sendStartSignals = () => {
-                OutputHelper.getAllOutputs().forEach((o) => {
-                    if (o.id) {
-                        if (o.captureOptions?.options?.webrtc) {
-                            const url = o.webrtcData?.url || ""
-                            const token = o.webrtcData?.token || ""
-                            if (url) {
-                                WebRtcHost.startWhip(o.id, url, token)
-                            }
-                        } else {
-                            WebRtcHost.stopWhip(o.id)
-                        }
+                allOutputs.forEach((o) => {
+                    if (!o.id) return
+
+                    if (o.captureOptions?.options?.webrtc) {
+                        const url = o.webrtcData?.url || ""
+                        const token = o.webrtcData?.token || ""
+                        if (url) WebRtcHost.startWhip(o.id, url, token)
+                    } else {
+                        WebRtcHost.stopWhip(o.id)
                     }
                 })
             }
 
-            if (!wasRunning) {
-                // Give Electron a moment to initialize the BrowserWindow
-                setTimeout(sendStartSignals, 1000)
-            } else {
+            if (wasRunning) {
                 sendStartSignals()
+            } else {
+                setTimeout(sendStartSignals, this.WEBRTC_START_DELAY_MS)
             }
         } else {
             WebRtcHost.stop()

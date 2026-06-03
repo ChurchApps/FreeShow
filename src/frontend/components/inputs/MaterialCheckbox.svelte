@@ -38,8 +38,13 @@
     <input type="checkbox" bind:checked={checkedValue} {id} {disabled} class="hidden-input" tabindex="-1" aria-hidden="true" />
 
     <label for={id} class="checkbox-label">
-        <div class="custom-checkbox" aria-hidden="true"></div>
-        {@html translateText(label)}
+        <div class="custom-checkbox" aria-hidden="true">
+            <svg class="checkmark" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M4.5 12.5l4 4L19 6.5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+        </div>
+
+        <span class="label-text">{@html translateText(label)}</span>
 
         {#if data}
             <span class="data">{data}</span>
@@ -64,7 +69,9 @@
         cursor: pointer;
         outline: none;
         border-bottom: 1.2px solid var(--primary-lighter);
+        min-height: 45px;
         height: 50px;
+        overflow: hidden;
     }
     .checkboxfield.centered {
         justify-content: center;
@@ -99,13 +106,11 @@
         display: flex;
         align-items: center;
         gap: 0.75rem;
-        width: 100%;
         pointer-events: none; /* prevents clicks on label text directly */
 
-        white-space: nowrap;
-        /* text-overflow: ellipsis;
+        flex: 1 1 auto;
+        min-width: 0;
         overflow: hidden;
-        max-width: 100px; */
     }
     .small .checkbox-label {
         gap: 3px;
@@ -113,6 +118,7 @@
     }
 
     .custom-checkbox {
+        position: relative;
         width: 20px;
         height: 20px;
         border: 2px solid var(--primary-lighter);
@@ -122,8 +128,6 @@
             background-color 0.2s ease,
             border-color 0.2s ease;
         flex-shrink: 0;
-
-        margin: 0 5px;
     }
     .small .custom-checkbox {
         width: 16px;
@@ -135,25 +139,19 @@
         border-color: var(--secondary);
     }
 
-    .checkboxfield:has(.hidden-input:checked) .custom-checkbox::after {
-        content: "";
+    .custom-checkbox .checkmark {
         position: absolute;
-        width: 6px;
-        height: 12px;
-        /* var(--secondary-text) */
-        border-right: 2px solid var(--primary-darkest);
-        border-bottom: 2px solid var(--primary-darkest);
-        transform: rotate(45deg);
-        left: 6px;
-        top: 3px;
-
-        margin: 0 5px;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        color: var(--primary-darkest); /* var(--secondary-text) */
+        opacity: 0;
+        transition: opacity 0.12s ease;
     }
-    .checkboxfield.small:has(.hidden-input:checked) .custom-checkbox::after {
-        width: 5px;
-        height: 10px;
-        left: 5px;
-        top: 1px;
+    .checkboxfield:has(.hidden-input:checked) .custom-checkbox .checkmark {
+        opacity: 1;
+        transform: scale(1.1);
     }
 
     .underline {
@@ -190,6 +188,17 @@
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
+        flex: 0 0 auto;
+    }
+
+    .label-text {
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        flex: 1 1 0;
+        min-width: 0;
+        max-width: 100%;
     }
 
     .changed {

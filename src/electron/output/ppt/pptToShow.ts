@@ -3,14 +3,15 @@ import path from "path"
 import { toApp } from "../.."
 import { MAIN } from "../../../types/Channels"
 import { decompressZipStream } from "../../data/zip"
-import { createFolder, getDataFolderPath } from "../../utils/files"
+import { createFolder, getDataFolderPath, sanitizeFileName } from "../../utils/files"
 
 // Extract .pptx contents (zip) and convert XML files to JSON
 // Media and fonts are streamed directly to disk to avoid OOM with large embedded videos.
 export async function pptToShow(filePath: string) {
     try {
         console.info("Starting PPT importing...")
-        const fileName = path.basename(filePath, path.extname(filePath))
+        const rawName = path.basename(filePath, path.extname(filePath))
+        const fileName = sanitizeFileName(rawName)
         const importsFolder = getDataFolderPath("imports", "PowerPoint")
         const contentFolder = createFolder(path.join(importsFolder, fileName))
 

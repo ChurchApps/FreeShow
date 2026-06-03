@@ -1,54 +1,60 @@
+import { execFile } from "child_process"
 import fs from "fs"
-import libre from "libreoffice-convert"
 import path from "path"
 import { promisify } from "util"
 import { isWindows } from "../.."
 import { ToMain } from "../../../types/IPC/ToMain"
 import { sendToMain } from "../../IPC/main"
 import { openURL } from "../../IPC/responsesMain"
-import { getDataFolderPath, selectFilesDialog } from "../../utils/files"
+import { getDataFolderPath, selectFilesDialog, sanitizeFileName } from "../../utils/files"
 
-const convertAsync = promisify(libre.convert)
+const execFileAsync = promisify(execFile)
 
-export function libreConvert(data: { type: string }) {
-    if (data.type === "powerpoint") {
-        const files: string[] = selectFilesDialog("", { name: "PowerPoint", extensions: ["ppt", "pptx"] }, false)
-        if (!files.length) return
-
-        const pptPath = files[0]
-
-        const ext = path.extname(pptPath)
-        const fileName = path.basename(pptPath, ext)
-        const outputFolder = getDataFolderPath("imports", "PowerPoint")
-        const pdfPath = path.join(outputFolder, fileName + ".pdf")
-
-        convertPptToPdf(pptPath, pdfPath)
+function getSofficePath(): string {
+    const defaultPaths: Record<string, string[]> = {
+        win32: [path.join(process.env.PROGRAMFILES || "C:\\Program Files", "LibreOffice", "program", "soffice.exe"), path.join(process.env["PROGRAMFILES(X86)"] || "C:\\Program Files (x86)", "LibreOffice", "program", "soffice.exe")],
+        darwin: ["/Applications/LibreOffice.app/Contents/MacOS/soffice"],
+        linux: ["/usr/bin/soffice", "/usr/bin/libreoffice"]
     }
+
+    const standardPaths = defaultPaths[process.platform] || []
+    for (const p of standardPaths) {
+        if (fs.existsSync(p)) return p
+    }
+
+    return "soffice"
 }
 
-async function convertPptToPdf(inputPath: string, outputPath: string) {
-    const ext = ".pdf"
-    const file = fs.readFileSync(inputPath)
+export function libreConvert(data: { type: string }) {
+    if (data.type !== "powerpoint") return
 
+    const files = selectFilesDialog("", { name: "PowerPoint", extensions: ["ppt", "pptx"] }, false)
+    if (!files.length) return
+
+    const pptPath = files[0]
+    const outputFolder = getDataFolderPath("imports", "PowerPoint")
+    const rawName = path.basename(pptPath, path.extname(pptPath))
+    const safeName = sanitizeFileName(rawName)
+    const pdfPath = path.join(outputFolder, safeName + ".pdf")
+
+    convertPptToPdf(pptPath, pdfPath, outputFolder)
+}
+
+async function convertPptToPdf(inputPath: string, outputPath: string, outputFolder: string) {
     try {
-        const pdfBuf = await convertAsync(file, ext, undefined)
         sendToMain(ToMain.ALERT, "popup.importing")
 
-        fs.writeFileSync(outputPath, pdfBuf)
+        await execFileAsync(getSofficePath(), ["--headless", "--convert-to", "pdf", "--outdir", outputFolder, inputPath])
+        if (!fs.existsSync(outputPath)) throw new Error("Could not find soffice binary")
+
         sendToMain(ToMain.IMPORT2, { channel: "pdf", data: [outputPath] })
-    } catch (err) {
-        if (err.message === "Could not find soffice binary") {
-            if (isWindows) {
-                sendToMain(ToMain.ALERT, "LibreOffice is not installed or not found in default location.<br>Upon installation, it's recommended to enable the 'Add to PATH' option.")
-            } else {
-                sendToMain(ToMain.TOAST, "LibreOffice is not installed or not found")
-            }
-
+    } catch (err: any) {
+        if (err.code === "ENOENT" || err.message?.includes("soffice")) {
+            sendToMain(ToMain.ALERT, isWindows ? "LibreOffice is not installed or not found in default location.<br>Upon installation, it's recommended to enable the 'Add to PATH' option." : "LibreOffice is not installed or not found")
             setTimeout(() => openURL("https://www.libreoffice.org/download/download-libreoffice/"), 500)
-            return
+        } else {
+            console.error("Error converting file:", err)
+            sendToMain(ToMain.TOAST, err.message || "Failed to convert file")
         }
-
-        console.error("Error converting file:", err)
-        sendToMain(ToMain.TOAST, err.message)
     }
 }

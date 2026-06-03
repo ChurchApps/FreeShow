@@ -6,6 +6,7 @@ import { stopMetronome } from "../components/drawer/audio/metronome"
 import { activePlaylist, audioPlaylists, isFadingOut, playingAudio, special } from "../stores"
 import { AudioPlayer } from "./audioPlayer"
 import { AudioPlaylist } from "./audioPlaylist"
+import { AudioAnalyser } from "./audioAnalyser"
 
 type AudioClearOptions = {
     clearPlaylist?: boolean
@@ -137,9 +138,11 @@ async function fadeAudio(id: string, audio: HTMLAudioElement, duration = 1, incr
 
             if (increment) {
                 audio.volume = Math.min(fadeToVolume, Number((audio.volume + currentSpeed).toFixed(3)))
+                AudioAnalyser.setSourceVolume(id, audio.volume)
                 if (audio.volume >= fadeToVolume) finished()
             } else {
                 audio.volume = Math.max(0, Number((audio.volume - currentSpeed).toFixed(3)))
+                AudioAnalyser.setSourceVolume(id, audio.volume)
                 if (audio.volume <= 0) finished()
             }
         }, time)
