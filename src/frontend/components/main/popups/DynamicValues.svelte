@@ -36,10 +36,11 @@
         let list = getDynamicIds(false, mode, showAll).map((id) => ({ id }))
 
         const isStage = $activePage === "stage"
+        const hidden = ["slide_text_current"]
         const nonStageHidden = ["show_text_full"]
         const stageHidden = ["slide_text_previous", "slide_text_next"]
-        if (isStage) list = list.filter((a) => !stageHidden.includes(a.id))
-        else list = list.filter((a) => !nonStageHidden.includes(a.id))
+        if (isStage) list = list.filter((a) => !hidden.includes(a.id) && !stageHidden.includes(a.id))
+        else list = list.filter((a) => !hidden.includes(a.id) && !nonStageHidden.includes(a.id))
 
         let separatorId = ""
         // the ones that can have a custom name should be first (to prevent it from overwriting a category)
