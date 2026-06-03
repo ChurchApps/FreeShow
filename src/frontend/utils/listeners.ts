@@ -30,6 +30,7 @@ import {
     events,
     folders,
     gain,
+    globalRegexes,
     groups,
     livePrepare,
     media,
@@ -90,14 +91,7 @@ function hasShowsListChanged(prevData: any, newData: any): boolean {
         const prevShow = prevData[key]
         const newShow = newData[key]
 
-        if (!prevShow ||
-            newShow.name !== prevShow.name ||
-            newShow.category !== prevShow.category ||
-            newShow.private !== prevShow.private ||
-            newShow.locked !== prevShow.locked ||
-            newShow.origin !== prevShow.origin ||
-            (newShow.quickAccess ? JSON.stringify(newShow.quickAccess) : "") !== prevShow.quickAccess
-        ) {
+        if (!prevShow || newShow.name !== prevShow.name || newShow.category !== prevShow.category || newShow.private !== prevShow.private || newShow.locked !== prevShow.locked || newShow.origin !== prevShow.origin || (newShow.quickAccess ? JSON.stringify(newShow.quickAccess) : "") !== prevShow.quickAccess) {
             return true
         }
     }
@@ -381,6 +375,10 @@ export function storeSubscriber() {
     timerTags.subscribe((data) => {
         // REMOTE
         send(REMOTE, ["TIMER_TAGS"], data)
+    })
+
+    globalRegexes.subscribe((data) => {
+        send(OUTPUT, ["GLOBAL_REGEXES"], data)
     })
 
     special.subscribe((data) => {
