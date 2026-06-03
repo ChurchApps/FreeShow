@@ -11,6 +11,7 @@
     import HRule from "../../input/HRule.svelte"
     import InputRow from "../../input/InputRow.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
+    import Tip from "../Tip.svelte"
 
     let mode = $popupData.mode
     popupData.set({})
@@ -115,8 +116,6 @@
 {#if openedPage === "powerpoint"}
     <MaterialButton class="popup-back" icon="back" iconSize={1.3} title="actions.back" on:click={() => (openedPage = "")} />
 
-    <p class="tip" style="padding-bottom: 20px;">The best option would generally be to get a hold of the presentation as PDF format in the first place.</p>
-
     <div style="display: flex;flex-direction: column;gap: 5px;">
         {#each powerpoint_options as option}
             <MaterialButton variant="outlined" style="justify-content: start;flex: 1;min-height: 50px;font-weight: normal;" on:click={() => option.click()}>
@@ -130,7 +129,7 @@
         {/each}
     </div>
 
-    <!-- <p class="tip" style="padding-top: 20px;">Making/maintaining our own PPT converter that keeps all of the formatting would be too much work.</p> -->
+    <Tip value="The best option would generally be to get a hold of the presentation as PDF format in the first place." top={20} />
 {:else if openedPage === "freeshow_more"}
     <MaterialButton class="popup-back" icon="back" iconSize={1.3} title="actions.back" on:click={() => (openedPage = "")} />
 
@@ -356,10 +355,5 @@
         position: absolute;
         bottom: 7px;
         right: 10px;
-    }
-
-    .tip {
-        opacity: 0.7;
-        font-size: 0.85em;
     }
 </style>

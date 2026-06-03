@@ -5,7 +5,9 @@ import { translateText } from "../../utils/language"
 const dictionary = [
     { fallback: "dynamic values", key: "popup.dynamic_values", tip: "Text that can change dynamically.<br>Right click any textbox to add." },
     { fallback: "metadata", key: "tools.metadata", tip: "Information about the current show.<br>Often song attribution/source." },
-    { fallback: "category", key: "info.category", tip: "Used in the drawer to organize content." }
+    { fallback: "category", key: "info.category", tip: "Used in the drawer to organize content." },
+    { fallback: "show", key: "guide_title.show", tip: "A show is the main presentation. It can be song lyrics, presentations, media, and more." },
+    { fallback: "action", key: "popup.action", tip: "An action is used to automate tasks in the program. Mainly created in Functions>Actions." }
 ]
 
 type TipData = { tip: string }

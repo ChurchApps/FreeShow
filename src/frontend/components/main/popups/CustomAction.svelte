@@ -1,8 +1,8 @@
 <script lang="ts">
     import { actions, activeShow, showsCache } from "../../../stores"
-    import T from "../../helpers/T.svelte"
     import { _show } from "../../helpers/shows"
     import MaterialDropdown from "../../inputs/MaterialDropdown.svelte"
+    import Tip from "../Tip.svelte"
 
     let currentAction = _show().get("settings.customAction") || ""
 
@@ -22,14 +22,6 @@
     }
 </script>
 
-<p class="tip"><T id="show.custom_action_tip" /></p>
+<Tip type="info" value="show.custom_action_tip" bottom={20} />
 
 <MaterialDropdown label="midi.start_action" options={actionOptions.map((a) => ({ label: a.name, value: a.id }))} value={currentAction} allowEmpty on:change={(e) => updateValue(e.detail)} />
-
-<style>
-    .tip {
-        margin-bottom: 10px;
-        opacity: 0.7;
-        font-size: 0.9em;
-    }
-</style>

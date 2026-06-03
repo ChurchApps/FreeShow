@@ -15,6 +15,7 @@
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialDropdown from "../../inputs/MaterialDropdown.svelte"
     import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
+    import Tip from "../../main/Tip.svelte"
 
     let ip = "localhost"
 
@@ -275,7 +276,7 @@
     <MaterialDropdown label="Song origin" options={providerOriginOptions} value={$contentProviderData.churchApps?.songOrigin || ""} on:change={(e) => updateProvider("churchApps", "songOrigin", e.detail)} />
 
     {#if $cloudSyncData.enabled}
-        <p class="tip">Note: This is unrelated to the Cloud sync found in "Files". This is for the content manager / curriculum.</p>
+        <Tip type="warning" value="This is unrelated to the Cloud sync found in 'Files'. This is for the content manager / curriculum." top={20} />
     {/if}
 {:else if $providerConnections.amazinglife}
     <!-- APlay connected -->
@@ -308,11 +309,3 @@
   <p><T id="settings.allowed_connections" /></p>
   <span>(all, only phones, (laptops), ...)</span>
 </div> -->
-
-<style>
-    .tip {
-        font-size: 0.8em;
-        opacity: 0.6;
-        margin: 10px 0;
-    }
-</style>
