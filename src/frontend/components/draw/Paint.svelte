@@ -14,7 +14,7 @@
 
     // WIP only works when output resolution ratio is the same as the style ratio
     $: outputId = getFirstActiveOutput($outputs)?.id || ""
-    $: resolution = getOutputResolution(outputId, $outputs)
+    $: resolution = getOutputResolution(outputId, $outputs, true)
 
     $: outSlide = $outputs[outputId]?.out?.slide
     $: outSlideId = (outSlide?.id || "") + (outSlide?.index || 0) + (outSlide?.layout || "")
