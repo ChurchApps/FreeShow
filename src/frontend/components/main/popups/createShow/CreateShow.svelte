@@ -47,8 +47,8 @@
         ).map((cat) => ({
             id: cat.id,
             name: cat.name,
-            icon: cat.icon || "song",
-            iconColor: customIconsColors[cat.icon || "song"]
+            icon: cat.icon || "unlabeled",
+            iconColor: cat.icon ? customIconsColors[cat.icon] : "#FFFFFF"
         }))
     ]
 
@@ -195,7 +195,7 @@
     function addNewCategory(e: any) {
         const name = e.detail
         const id = uid()
-        history({ id: "UPDATE", newData: { data: { name } }, oldData: { id }, location: { page: "drawer", id: "category_shows" } })
+        history({ id: "UPDATE", newData: { data: { name, icon: "song" } }, oldData: { id }, location: { page: "drawer", id: "category_shows" } })
 
         cats.push({ id, name, icon: "song", iconColor: customIconsColors["song"] })
         cats = cats
