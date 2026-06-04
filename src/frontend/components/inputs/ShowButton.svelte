@@ -161,7 +161,10 @@
             const shouldLoop = videoType === "background" ? show.loop || true : false
             const shouldBeMuted = videoType === "background" ? show.muted || true : false
 
-            let out = { path: id, muted: shouldBeMuted, loop: shouldLoop, startAt: 0, type: type, ...mediaStyle }
+            const located = await getMedia(id)
+            if (!located) return
+
+            let out = { path: located.path, muted: shouldBeMuted, loop: shouldLoop, startAt: 0, type, ...mediaStyle }
 
             // clear slide
             if (videoType === "foreground" || (videoType !== "background" && (type === "image" || !shouldLoop))) clearSlide()
