@@ -1,10 +1,8 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
-    import { EXPORT } from "../../../../types/Channels"
     import { Main } from "../../../../types/IPC/Main"
     import { destroyMain, receiveMain, requestMain, sendMain } from "../../../IPC/main"
-    import { activePage, activePopup, alertMessage, deletedShows, popupData, shows, showsCache, special, usageLog } from "../../../stores"
-    import { send } from "../../../utils/request"
+    import { activePage, activePopup, alertMessage, deletedShows, popupData, shows, showsCache, special } from "../../../stores"
     import T from "../../helpers/T.svelte"
     import InputRow from "../../input/InputRow.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
@@ -152,23 +150,6 @@
     function bundleMediaFiles() {
         sendMain(Main.BUNDLE_MEDIA_FILES, { openFolder: true })
     }
-
-    // usage log
-
-    let exportingUsageLog = false
-    let usageLogExported = false
-    function exportUsageLog() {
-        exportingUsageLog = true
-        setTimeout(() => {
-            usageLogExported = true
-            exportingUsageLog = false
-        }, 1000)
-        send(EXPORT, ["USAGE"], { content: $usageLog })
-    }
-    function resetUsageLog() {
-        usageLog.set({ all: [] })
-        usageLogExported = false
-    }
 </script>
 
 <MaterialButton variant="outlined" style="width: 100%;margin-bottom: 20px;" icon="loop" on:click={() => activePopup.set("update_manager")}>
@@ -177,8 +158,6 @@
 </MaterialButton>
 
 <MaterialToggleSwitch label="settings.popup_before_close" checked={$special.showClosePopup || false} defaultValue={false} on:change={(e) => updateSpecial(e.detail, "showClosePopup")} />
-
-<MaterialToggleSwitch label="settings.log_song_usage" checked={$special.logSongUsage || false} defaultValue={false} on:change={(e) => updateSpecial(e.detail, "logSongUsage")} />
 
 <MaterialToggleSwitch label="settings.auto_error_reporting" checked={autoErrorReporting} defaultValue={true} on:change={toggleAutoErrorReporting} />
 
@@ -262,14 +241,6 @@
     <InputRow>
         <MaterialButton title="media.bundle_media_files_tip" style="width: 100%;justify-content: left;" icon="image" on:click={bundleMediaFiles}>
             <T id="media.bundle_media_files" />
-        </MaterialButton>
-    </InputRow>
-{/if}
-
-{#if $special.logSongUsage && $usageLog.all?.length}
-    <InputRow>
-        <MaterialButton disabled={exportingUsageLog} style="width: 100%;justify-content: left;" icon={usageLogExported ? "reset" : "export"} on:click={() => (usageLogExported ? resetUsageLog() : exportUsageLog())}>
-            <T id="actions.{usageLogExported ? 'reset' : 'export'}_usage_log" />
         </MaterialButton>
     </InputRow>
 {/if}
