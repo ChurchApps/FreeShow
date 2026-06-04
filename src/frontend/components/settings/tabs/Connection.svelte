@@ -14,10 +14,10 @@
     import Title from "../../input/Title.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialDropdown from "../../inputs/MaterialDropdown.svelte"
+    import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
+    import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
     import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
     import Tip from "../../main/Tip.svelte"
-    import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
-    import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
 
     let ip = "localhost"
 
@@ -160,18 +160,6 @@
         { value: "online", label: "Always use online instance" }
     ]
 
-    // TEMP solution
-    let showAll = false
-    let taps = 0
-    function tap() {
-        taps++
-        setTimeout(() => {
-            taps = 0
-        }, 1500)
-
-        if (taps >= 3) showAll = true
-    }
-
     // OBS Controller
 
     let obsWasDisabled = !$obsData.enabled
@@ -224,9 +212,7 @@
 
 {#if !$providerConnections.planningcenter && (!$providerConnections.churchApps || cloudOnly.churchApps) && !$providerConnections.amazinglife}
     <!-- No provider connected - show connection options -->
-    <div class="tapping" on:click={tap}>
-        <Title label="settings.content_provider" icon="list" />
-    </div>
+    <Title label="settings.content_provider" icon="list" />
 
     <InputRow>
         <MaterialButton on:click={() => contentProviderConnect("planningcenter")} style="flex: 1;" icon="login">
@@ -240,13 +226,11 @@
         </MaterialButton>
     </InputRow>
 
-    {#if showAll}
-        <InputRow>
-            <MaterialButton on:click={() => contentProviderConnect("amazinglife")} style="flex: 1;" icon="login">
-                <T id="settings.connect_to" replace={["APlay"]} />
-            </MaterialButton>
-        </InputRow>
-    {/if}
+    <InputRow>
+        <MaterialButton on:click={() => contentProviderConnect("amazinglife")} style="flex: 1;" icon="login">
+            <T id="settings.connect_to" replace={["APlay"]} />
+        </MaterialButton>
+    </InputRow>
 {:else if $providerConnections.planningcenter}
     <!-- Planning Center connected -->
     <Title label="Content Provider: Planning Center" icon="list" />

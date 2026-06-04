@@ -317,6 +317,7 @@
     >
         {#if !onlyArrow}
             <span class="selected-text" style={selected?.style ?? null}>
+                {#if selected?.icon}<Icon id={selected.icon} style="margin-right: 5px;" color={selected?.iconColor} boxed={!!selected?.iconColor} white />{/if}
                 {#if selected?.prefix}<span class="prefix">{selected.prefix}</span>{/if}
                 <!-- show value if options list has not loaded yet (e.g. fonts) -->
                 {#if selected?.value !== undefined}{selected?.label || "—"}{:else if value}{value}{/if}
@@ -358,6 +359,8 @@
             <div class="dropdown virtual" style="max-height: {maxHeight}px" transition:flyFade>
                 <VirtualList items={options} height="{maxHeight}px" activeIndex={highlightedIndex} let:item={option}>
                     <li style="{option.data ? 'justify-content: space-between;' : ''}{option.style || ''}" role="option" aria-selected={option.value === value} class:selected={option.value === value} class:highlighted={options.indexOf(option) === highlightedIndex} on:click={(e) => selectOption(e, option.value)}>
+                        {#if option.icon}<Icon id={option.icon} style="margin-right: 5px;" color={option.iconColor} boxed={!!option.iconColor} white />{/if}
+
                         {#if option.prefix}<span class="prefix">{option.prefix}</span>{/if}
                         {option.label || "—"}
 
@@ -399,6 +402,8 @@
 
                 {#each options as option, i}
                     <li style="{option.data ? 'justify-content: space-between;' : ''}{option.style || ''}" role="option" aria-selected={option.value === value} class:selected={option.value === value} class:highlighted={i === highlightedIndex} on:click={(e) => selectOption(e, option.value)}>
+                        {#if option.icon}<Icon id={option.icon} style="margin-right: 5px;" color={option.iconColor} boxed={!!option.iconColor} white />{/if}
+
                         {#if option.prefix}<span class="prefix">{option.prefix}</span>{/if}
                         {option.label || "—"}
 
@@ -522,6 +527,9 @@
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
+
+        display: flex;
+        align-items: center;
     }
 
     .arrow {
