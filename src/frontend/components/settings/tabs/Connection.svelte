@@ -3,7 +3,7 @@
     import type { ContentProviderId } from "../../../../electron/contentProviders/base/types"
     import { Main } from "../../../../types/IPC/Main"
     import { requestMain, sendMain } from "../../../IPC/main"
-    import { activePage, activePopup, activeShow, activeTriggerFunction, cloudSyncData, companion, connections, contentProviderData, disabledServers, maxConnections, notFound, outputs, popupData, ports, projectTemplates, providerConnections, serverData, special } from "../../../stores"
+    import { activePage, activePopup, activeShow, activeTriggerFunction, cloudSyncData, companion, connections, contentProviderData, disabledServers, maxConnections, notFound, obsData, outputs, popupData, ports, projectTemplates, providerConnections, serverData, special } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { contentProviderSync } from "../../../utils/startup"
     import { keysToID, sortByName } from "../../helpers/array"
@@ -16,6 +16,8 @@
     import MaterialDropdown from "../../inputs/MaterialDropdown.svelte"
     import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
     import Tip from "../../main/Tip.svelte"
+    import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
+    import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
 
     let ip = "localhost"
 
@@ -169,6 +171,14 @@
 
         if (taps >= 3) showAll = true
     }
+
+    // OBS Controller
+
+    let obsWasDisabled = !$obsData.enabled
+
+    let obsIP = $obsData.ip || "localhost"
+    let obsPort = $obsData.port || 4455
+    $: if (obsIP || obsPort) obsData.update((d) => ({ ...d, ip: obsIP, port: obsPort }))
 </script>
 
 {#each servers as server}
@@ -293,19 +303,27 @@
     </InputRow>
 {/if}
 
-<!-- <CombinedInput>
-    <Button style="width: 100%;" on:click={restart} center>
-        <Icon id="refresh" right />
-        <T id="settings.restart" />
-    </Button>
-</CombinedInput> -->
+<!-- OBS Studio Controller -->
+<Title label="OBS Studio" icon="record" />
 
-<!-- <div>
-  <p><T id="settings.device_name" /></p>
-  <TextInput style="max-width: 50%;" value={$os.name} light />
-</div> -->
+<InputRow arrow={$obsData.enabled}>
+    <MaterialToggleSwitch
+        label="OBS Studio Controller"
+        style="width: 100%;"
+        checked={$obsData.enabled}
+        defaultValue={false}
+        on:change={(e) => {
+            if (!e.detail) obsWasDisabled = true
+            obsData.update((a) => ({ ...a, enabled: e.detail }))
+        }}
+    />
 
-<!-- <div>
-  <p><T id="settings.allowed_connections" /></p>
-  <span>(all, only phones, (laptops), ...)</span>
-</div> -->
+    <div slot="menu">
+        <MaterialTextInput label="IP" value={obsIP} defaultValue="localhost" placeholder="localhost" on:change={(e) => (obsIP = e.detail)} />
+        <MaterialNumberInput label="settings.port" value={obsPort} defaultValue={4455} placeholder="4455" on:change={(e) => (obsPort = e.detail)} />
+    </div>
+</InputRow>
+
+{#if $obsData.enabled && obsWasDisabled}
+    <Tip value="edit.position: guide_title.drawer > tabs.functions > OBS Studio" top={15} />
+{/if}

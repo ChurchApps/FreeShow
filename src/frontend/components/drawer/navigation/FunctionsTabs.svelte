@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import { actions, actionTags, activeActionTagFilter, activeVariableTagFilter, drawerTabsData, variables, variableTags, timers, timerTags, activeTimerTagFilter } from "../../../stores"
+    import { actions, actionTags, activeActionTagFilter, activeVariableTagFilter, drawerTabsData, variables, variableTags, timers, timerTags, activeTimerTagFilter, obsData } from "../../../stores"
     import { getAccess } from "../../../utils/profile"
     import { keysToID, sortByName, sortObject } from "../../helpers/array"
     import NavigationSections from "./NavigationSections.svelte"
@@ -91,7 +91,8 @@
                       }
                   ]
               ]),
-        [{ id: "obs", label: "OBS Studio", icon: "player" }]
+
+        ...($obsData.enabled ? [[{ id: "obs", label: "OBS Studio", icon: "player" }]] : [])
     ]
 </script>
 

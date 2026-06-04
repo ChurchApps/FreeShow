@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activeShow, forceClock } from "../../../stores"
+    import { activeShow, focusMode, forceClock } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import FloatingInputs from "../../input/FloatingInputs.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
@@ -45,7 +45,7 @@
         </Center>
     {/if}
 
-    {#if !$forceClock && hasOptions.includes(id)}
+    {#if !$forceClock && hasOptions.includes(id) && !$focusMode}
         <FloatingInputs round>
             <MaterialButton isActive={optionsOpen} title="edit.options" on:click={() => (optionsOpen = !optionsOpen)}>
                 <Icon size={1.1} id="options" white={!optionsOpen} />

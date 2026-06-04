@@ -205,7 +205,7 @@
     {#if !alwaysVisible}
         <div class="background" on:click={togglePicker} />
 
-        <div class="color-display" data-title={noLabel ? translateText(label) : ""} style="background:{value || 'transparent'};{noLabel ? 'margin-left: var(--margin);' : ''}" on:click={togglePicker}></div>
+        <div class="color-display" data-title="{noLabel ? translateText(label) + (value ? ': ' : '') : ''}<i>{value}</i>" style="background:{value || 'transparent'};{noLabel ? 'margin-left: var(--margin);' : ''}" on:click={togglePicker}></div>
 
         {#if !noLabel || value === ""}
             <label>{@html translateText(label)}</label>

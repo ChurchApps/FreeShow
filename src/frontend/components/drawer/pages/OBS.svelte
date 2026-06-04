@@ -3,13 +3,11 @@
     import { obsData } from "../../../stores"
     import { connectToOBS } from "../../../utils/obsTalk"
     import Icon from "../../helpers/Icon.svelte"
-    import MaterialButton from "../../inputs/MaterialButton.svelte"
-    import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
-    import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
-    import Center from "../../system/Center.svelte"
     import T from "../../helpers/T.svelte"
-    import Link from "../../inputs/Link.svelte"
     import FloatingInputs from "../../input/FloatingInputs.svelte"
+    import Link from "../../inputs/Link.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
+    import Center from "../../system/Center.svelte"
 
     export let searchValue: string
     console.log(searchValue)
@@ -25,14 +23,6 @@
     let transitions: string[] = []
     let currentTransition: string = ""
     let audioInputs: any[] = []
-
-    let showSettings = false
-    let ip = $obsData.ip || "localhost"
-    let port = $obsData.port || 4455
-
-    $: if (ip || port) {
-        obsData.update((d) => ({ ...d, ip, port }))
-    }
 
     $: if (connected && obs) {
         obs.call("GetSceneTransitionList")
@@ -398,18 +388,6 @@
             <Icon id="bind" white />
             <T id="settings.connect_to" replace={["OBS Studio"]} />
         </MaterialButton>
-
-        <MaterialButton on:click={() => (showSettings = !showSettings)} style="padding: 0.5em;font-size: 0.85em;border: none;font-weight: normal;margin-top: 0.5em;opacity: 0.7;">
-            <Icon id="options" style="opacity: 0.7;" white />
-            <T id="edit.options" />
-        </MaterialButton>
-
-        {#if showSettings}
-            <div style="display: flex; flex-direction: column; background: #2b303c; border-radius: 6px; width: 100%; max-width: 320px;">
-                <MaterialTextInput label="IP" value={ip} placeholder="localhost" on:change={(e) => (ip = e.detail)} />
-                <MaterialNumberInput label="settings.port" value={port} placeholder="4455" on:change={(e) => (port = e.detail)} />
-            </div>
-        {/if}
     </Center>
 {/if}
 
