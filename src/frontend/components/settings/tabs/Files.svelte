@@ -85,7 +85,7 @@
         checkTimes()
         updater = setInterval(checkTimes, 1000)
 
-        if ($special.cloudSyncMediaFolder) mediaFolderPath = (await requestMain(Main.GET_MEDIA_FOLDER_PATH)) || ""
+        if ($cloudSyncData.enabled && $special.cloudSyncMediaFolder) mediaFolderPath = (await requestMain(Main.GET_MEDIA_FOLDER_PATH)) || ""
     })
     onDestroy(() => {
         if (updater) clearInterval(updater)

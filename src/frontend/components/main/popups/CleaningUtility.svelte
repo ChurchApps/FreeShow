@@ -87,7 +87,7 @@
     <div class="list">
         <!-- USED TO DELETE "BROKEN" SHOWS -->
         {#if allShowsInFolder.length > Object.keys($shows).length}
-            <InputRow arrow>
+            <InputRow>
                 <MaterialButton style="width: 100%;" icon="delete" info={"" + (allShowsInFolder.length - Object.keys($shows).length)} on:click={deleteBrokenShows} red white>
                     <T id="actions.delete_shows_not_indexed" />
                 </MaterialButton>

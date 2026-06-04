@@ -798,7 +798,6 @@ export function addOutput(onlyFirst = false, styleId = "") {
         if (onlyFirst) output[id].name = translateText("theme.primary")
 
         // show
-        // , rate: get(special).previewRate || "auto"
         if (!onlyFirst) send(OUTPUT, ["CREATE"], { id, ...output[id] })
         if (!onlyFirst && get(outputDisplay)) toggleOutput(id)
 
