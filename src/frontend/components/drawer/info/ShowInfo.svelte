@@ -1,7 +1,7 @@
 <script lang="ts">
     import { EXPORT } from "../../../../types/Channels"
     import type { Line, Show, TrimmedShow } from "../../../../types/Show"
-    import { activeShow, activeTagFilter, categories, globalTags, shows, showsCache, special, templates, usageLog } from "../../../stores"
+    import { activePopup, activeShow, activeTagFilter, categories, globalTags, popupData, shows, showsCache, special, templates, usageLog } from "../../../stores"
     import { hasNewerUpdate } from "../../../utils/common"
     import { send } from "../../../utils/request"
     import { keysToID, sortByName } from "../../helpers/array"
@@ -111,6 +111,19 @@
                     </MaterialButton>
                 </InputRow>
             {/if}
+
+            <MaterialButton
+                variant="outlined"
+                icon="autofill"
+                title="popup.cleaning_utility"
+                style="margin-top: 5px;width: 100%;"
+                on:click={() => {
+                    popupData.set({ type: "shows" })
+                    activePopup.set("cleaning_utility")
+                }}
+            >
+                <T id="popup.cleaning_utility" />
+            </MaterialButton>
         </main>
     {:else if $activeShow !== null && ($activeShow.type || "show") === "show"}
         <InfoMetadata title={show?.name} {info} />

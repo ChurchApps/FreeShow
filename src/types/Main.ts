@@ -399,6 +399,7 @@ export type Popups =
     | "timecode"
     | "drawer_search_options"
     | "template_info"
+    | "cleaning_utility"
 
 export type DefaultProjectNames = "date" | "today" | "sunday" | "week" | "custom" | "blank"
 

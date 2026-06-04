@@ -1,8 +1,8 @@
 <script lang="ts">
-    import { onDestroy, onMount } from "svelte"
+    import { onMount } from "svelte"
     import { Main } from "../../../../types/IPC/Main"
-    import { destroyMain, receiveMain, requestMain, sendMain } from "../../../IPC/main"
-    import { activePage, activePopup, alertMessage, deletedShows, popupData, shows, showsCache, special } from "../../../stores"
+    import { requestMain, sendMain } from "../../../IPC/main"
+    import { activePopup, alertMessage, special } from "../../../stores"
     import T from "../../helpers/T.svelte"
     import InputRow from "../../input/InputRow.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
@@ -11,17 +11,12 @@
     onMount(() => {
         // getCacheSize()
         // getAudioOutputs()
-        sendMain(Main.FULL_SHOWS_LIST)
         requestMain(Main.GET_STORE_VALUE, { file: "config", key: "autoErrorReporting" }, (value) => {
             autoErrorReporting = value !== false
         })
         requestMain(Main.GET_STORE_VALUE, { file: "config", key: "disableHardwareAcceleration" }, (value) => {
             disableHardwareAcceleration = !!value
         })
-        requestMain(Main.GET_EMPTY_SHOWS, { cached: $showsCache }, (a) => {
-            if (a) emptyShows = a
-        })
-        getDuplicatedShows()
     })
 
     // const previewRates = [
@@ -60,78 +55,6 @@
 
         alertMessage.set("settings.restart_for_change")
         activePopup.set("alert")
-    }
-
-    // shows in folder
-    let hiddenShows: string[] = []
-    // let brokenShows = 0
-
-    // $: if (hiddenShows?.length) getBrokenShows()
-    // function getBrokenShows() {
-    //     brokenShows = 0
-
-    //     Object.entries($shows).forEach(([id, { name }]) => {
-    //         if (!hiddenShows.includes(name + ".show") && !hiddenShows.includes(id + ".show")) brokenShows++
-    //     })
-    // }
-
-    // get all shows inside current shows folder (and remove missing)
-    // function refreshShows() {
-    //     sendMain(Main.REFRESH_SHOWS)
-
-    //     setTimeout(() => {
-    //         sendMain(Main.FULL_SHOWS_LIST)
-    //     }, 800)
-    // }
-
-    // delete shows from folder that are not indexed
-    function deleteShows() {
-        sendMain(Main.DELETE_SHOWS_NI, { shows: $shows })
-
-        setTimeout(() => {
-            // this will not include newly created shows not saved yet, but it should not be an issue.
-            sendMain(Main.FULL_SHOWS_LIST)
-        }, 800)
-    }
-
-    let listenerId = receiveMain(Main.FULL_SHOWS_LIST, (data) => {
-        hiddenShows = data || []
-        let deletedShowNames = $deletedShows.map((a) => a.name + ".show")
-        hiddenShows = hiddenShows.filter((name) => !deletedShowNames.includes(name))
-    })
-    onDestroy(() => destroyMain(listenerId))
-
-    let emptyShows: { id: string; name: string }[] = []
-    function deleteEmptyShows() {
-        sendMain(Main.DELETE_SHOWS, { shows: emptyShows })
-        // emptyShows = []
-        activePage.set("show")
-    }
-
-    let duplicatedShows: { ids: string[] }[] = []
-    function getDuplicatedShows() {
-        let names: { [key: string]: string[] } = {}
-        Object.entries($shows).forEach(([id, show]) => {
-            if (!show?.name) return
-            // remove any numbers (less than 4 chars) at the end of name (but not if "1-3"|"-5" in case of scripture)
-            let trimmedName = show.name
-                .toLowerCase()
-                .replace(/(?<![-\d])\d{1,3}$/, "")
-                .trim()
-            if (!trimmedName.length) return
-
-            if (names[trimmedName]) names[trimmedName].push(id)
-            else names[trimmedName] = [id]
-        })
-
-        duplicatedShows = Object.values(names)
-            .filter((a) => a.length > 1)
-            .map((ids) => ({ ids }))
-    }
-    function deleteDuplicatedShows() {
-        popupData.set({ id: "delete_duplicated_shows", data: duplicatedShows })
-        activePopup.set("delete_duplicated_shows")
-        // duplicatedShows = []
     }
 
     // delete media thumbnail cache
@@ -182,49 +105,6 @@
         <p><T id="popup.custom_metadata_order" /></p>
     </Button>
 </CombinedInput> -->
-
-<!-- USED TO REFRESH SHOWS WITHOUT RESTARTING -->
-<!-- WIP this could be used to refresh shows list from folder without restarting the program, but I don't think its necessary -->
-<!-- {#if brokenShows > 0 || hiddenShows.length > Object.keys($shows).length}
-    <CombinedInput>
-        <Button style="width: 100%;" on:click={refreshShows}>
-            <Icon id="refresh" style="margin-left: 0.5em;" right />
-            <p>
-                <T id="actions.refresh_all_shows" />
-                <span style="display: flex;align-items: center;margin-left: 10px;opacity: 0.5;">({brokenShows || hiddenShows.length - Object.keys($shows).length})</span>
-            </p>
-        </Button>
-    </CombinedInput>
-{/if} -->
-<!-- USED TO DELETE "BROKEN" SHOWS -->
-{#if hiddenShows.length > Object.keys($shows).length}
-    <InputRow>
-        <MaterialButton style="width: 100%;justify-content: left;" icon="delete" on:click={deleteShows}>
-            <T id="actions.delete_shows_not_indexed" />
-            <span style="opacity: 0.5;">({hiddenShows.length - Object.keys($shows).length})</span>
-        </MaterialButton>
-    </InputRow>
-{/if}
-
-<!-- DELETE EMPTY SHOWS -->
-{#if emptyShows.length}
-    <InputRow>
-        <MaterialButton style="width: 100%;justify-content: left;" icon="delete" on:click={deleteEmptyShows}>
-            <T id="actions.delete_empty_shows" />
-            <span style="opacity: 0.5;">({emptyShows.length})</span>
-        </MaterialButton>
-    </InputRow>
-{/if}
-
-<!-- REMOVE DUPLICATED SHOWS -->
-{#if duplicatedShows.length}
-    <InputRow>
-        <MaterialButton style="width: 100%;justify-content: left;" icon="delete" on:click={deleteDuplicatedShows}>
-            <T id="popup.delete_duplicated_shows" />
-            <span style="opacity: 0.5;">({duplicatedShows.length})</span>
-        </MaterialButton>
-    </InputRow>
-{/if}
 
 <!-- <CombinedInput>
     <Button style="width: 100%;" on:click={deleteCache}>
