@@ -70,9 +70,13 @@
         if (!show || !layoutSlides[show.id!]) return 0
         const slides = layoutSlides[show.id!]
         if (!slides.length) return 0
+
+        const type = showOptions.type || "default"
+
+        if (type === "media") return slides.length
+
         const grid1 = showOptions.grid?.[1] || 6
         const grid0 = showOptions.grid?.[0] || 3
-        const type = showOptions.type || "default"
         const divider = type === "default" ? 1 : type !== "text" ? grid0 : 1.5
         return Math.ceil(slides.length / grid1 / divider)
     }
@@ -260,8 +264,8 @@
         {#if options.type === "media"}
             {#each renderedShows as show}
                 {#if show.type === "section"}
-                    <Zoomed style="display: flex;justify-content: center;width: 100%;" let:ratio>
-                        <div class="section-media-container" style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: white; padding: 40px; box-sizing: border-box; background: {show.color || 'linear-gradient(135deg, #1e293b, #0f172a)'}; width: 1920px; height: 1080px; zoom: {1 / ratio}; position: relative; overflow: hidden;">
+                    <div class="media-page" style="width: 100%; height: 100vh; display: flex; align-items: center; justify-content: center; page-break-after: always; background: {show.color || 'linear-gradient(135deg, #1e293b, #0f172a)'};">
+                        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: white; padding: 40px; box-sizing: border-box; width: 100%; height: 100%;">
                             <div class="section-accent" style="width: 120px; height: 6px; background-color: rgba(255, 255, 255, 0.8); margin-bottom: 40px; border-radius: 3px;"></div>
                             <h1 style="font-size: 130px; font-weight: 800; text-transform: uppercase; letter-spacing: -3px; margin: 0 0 30px 0; text-shadow: 0 8px 24px rgba(0,0,0,0.4); color: white; font-family: sans-serif; line-height: 1.1;">{show.name}</h1>
                             {#if show.notes}
@@ -272,23 +276,25 @@
                                 <div style="margin-top: 50px; font-size: 32px; background: rgba(255,255,255,0.15); color: #ffffff; padding: 12px 36px; border-radius: 40px; font-weight: 600; text-transform: uppercase; letter-spacing: 3px; border: 2px solid rgba(255,255,255,0.25); text-shadow: 0 4px 8px rgba(0,0,0,0.2);">{show.data.time}</div>
                             {/if}
                         </div>
-                    </Zoomed>
+                    </div>
                 {:else}
                     {#each layoutSlides[show.id || ""] as slide}
-                        <Zoomed style="display: flex;justify-content: center;width: 100%;" let:ratio>
-                            {#if show.media?.[slide.data?.background]?.path}
-                                <div class="media" style="height: 100%;zoom: {1 / ratio};">
-                                    <!-- {filter} {flipped} {fit} -->
-                                    <MediaItem id="" item={{ style: "", type: "media", src: show.media[slide.data.background].path }} mirror />
-                                </div>
-                            {/if}
+                        <div class="media-page" style="width: 100%; height: 100vh; display: flex; align-items: center; justify-content: center; page-break-after: always;">
+                            <Zoomed style="display: flex;justify-content: center;width: 100%; height: 100%;" let:ratio>
+                                {#if show.media?.[slide.data?.background]?.path}
+                                    <div class="media" style="height: 100%;zoom: {1 / ratio};">
+                                        <!-- {filter} {flipped} {fit} -->
+                                        <MediaItem id="" item={{ style: "", type: "media", src: show.media[slide.data.background].path }} mirror />
+                                    </div>
+                                {/if}
 
-                            {#if slide.items}
-                                {#each slide.items as item}
-                                    <Textbox {item} ref={{ showId: show.id, id: slide.id }} chords={item.chords?.enabled} mirror />
-                                {/each}
-                            {/if}
-                        </Zoomed>
+                                {#if slide.items}
+                                    {#each slide.items as item}
+                                        <Textbox {item} ref={{ showId: show.id, id: slide.id }} chords={item.chords?.enabled} mirror />
+                                    {/each}
+                                {/if}
+                            </Zoomed>
+                        </div>
                     {/each}
                 {/if}
             {/each}
@@ -408,66 +414,66 @@
                         {/if}
                         {#each layoutSlides[show.id || ""] as slide, i}
                             <div class="slide" class:padding={options.type !== "slides" ? i === 0 : i < options.grid[0]} style={options.type !== "text" ? `height: calc(100vh / ${options.grid[1]} - 0.1px);` + (options.type !== "slides" ? "" : `width: calc(100% / ${options.grid[0]});`) : ""}>
-                            <!-- TODO: different slide heights! -->
-                            <!-- style={settings.slides ? `height: calc(842pt / ${settings.grid[1]});` : "" + settings.text ? "" : `width: calc(100% / ${settings.grid[0]});`} -->
-                            {#if options.groups}
-                                <p class="group" style={options.type !== "text" ? "" : "padding: 0 60px;margin-top: -6px;"}>
-                                    {slide.group ? getGroupName(show, slide.group, slide.id) : ""}
-                                </p>
-                            {/if}
-                            {#if options.numbers}
-                                <p class="number" style={options.type !== "text" ? "" : "padding: 0 60px;margin-top: -6px;"}>
-                                    {i + 1}
-                                </p>
-                            {/if}
-                            {#if options.type !== "text"}
-                                <div class="slides" class:invert={options.invert}>
-                                    <Zoomed style="display: flex;justify-content: center;width: 100%;" let:ratio>
-                                        {#if show.media?.[slide.data?.background]?.path}
-                                            <div class="media" style="height: 100%;zoom: {1 / ratio};">
-                                                <!-- {filter} {flipped} {fit} -->
-                                                <!-- <Media path={show.media[slide.data.background].path || ""} mirror /> -->
-                                                <MediaItem id="" item={{ style: "", type: "media", src: show.media[slide.data.background].path }} mirror />
-                                            </div>
-                                        {/if}
+                                <!-- TODO: different slide heights! -->
+                                <!-- style={settings.slides ? `height: calc(842pt / ${settings.grid[1]});` : "" + settings.text ? "" : `width: calc(100% / ${settings.grid[0]});`} -->
+                                {#if options.groups}
+                                    <p class="group" style={options.type !== "text" ? "" : "padding: 0 60px;margin-top: -6px;"}>
+                                        {slide.group ? getGroupName(show, slide.group, slide.id) : ""}
+                                    </p>
+                                {/if}
+                                {#if options.numbers}
+                                    <p class="number" style={options.type !== "text" ? "" : "padding: 0 60px;margin-top: -6px;"}>
+                                        {i + 1}
+                                    </p>
+                                {/if}
+                                {#if options.type !== "text"}
+                                    <div class="slides" class:invert={options.invert}>
+                                        <Zoomed style="display: flex;justify-content: center;width: 100%;" let:ratio>
+                                            {#if show.media?.[slide.data?.background]?.path}
+                                                <div class="media" style="height: 100%;zoom: {1 / ratio};">
+                                                    <!-- {filter} {flipped} {fit} -->
+                                                    <!-- <Media path={show.media[slide.data.background].path || ""} mirror /> -->
+                                                    <MediaItem id="" item={{ style: "", type: "media", src: show.media[slide.data.background].path }} mirror />
+                                                </div>
+                                            {/if}
 
-                                        {#if slide.items}
-                                            {#each slide.items as item}
-                                                <Textbox {item} ref={{ showId: show.id, id: slide.id }} chords={item.chords?.enabled} mirror />
-                                            {/each}
-                                        {/if}
-                                    </Zoomed>
-                                </div>
-                            {/if}
-                            {#if options.type !== "slides"}
-                                <div class="text" class:margin={options.type === "text"}>
-                                    <div style="position: relative;display: flex;flex-direction: column;align-items: center;justify-content: center;flex: 1;">
-                                        {#if slide.items}
-                                            {#each slide.items as item}
-                                                {#if item.type === undefined || item.type === "text" || item.type === "timer"}
-                                                    <Textbox {item} ref={{ showId: show.id, id: slide.id }} customFontSize={options.originalTextSize ? null : options.textSize} style={false} />
-                                                {/if}
-                                            {/each}
-                                        {/if}
-
-                                        {#if options.notes && slide.notes}
-                                            <p class="notes">{slide.notes}</p>
-                                        {/if}
+                                            {#if slide.items}
+                                                {#each slide.items as item}
+                                                    <Textbox {item} ref={{ showId: show.id, id: slide.id }} chords={item.chords?.enabled} mirror />
+                                                {/each}
+                                            {/if}
+                                        </Zoomed>
                                     </div>
+                                {/if}
+                                {#if options.type !== "slides"}
+                                    <div class="text" class:margin={options.type === "text"}>
+                                        <div style="position: relative;display: flex;flex-direction: column;align-items: center;justify-content: center;flex: 1;">
+                                            {#if slide.items}
+                                                {#each slide.items as item}
+                                                    {#if item.type === undefined || item.type === "text" || item.type === "timer"}
+                                                        <Textbox {item} ref={{ showId: show.id, id: slide.id }} customFontSize={options.originalTextSize ? null : options.textSize} style={false} />
+                                                    {/if}
+                                                {/each}
+                                            {/if}
+
+                                            {#if options.notes && slide.notes}
+                                                <p class="notes">{slide.notes}</p>
+                                            {/if}
+                                        </div>
+                                    </div>
+                                {/if}
+                            </div>
+                            {#if options.pageNumbers && i > 0 && i % options.grid[0] === 0 && i / options.grid[0] < showPages}
+                                <div class="page" style="top: calc(100vh * {i / options.grid[0] - 0.012} - 30px)">
+                                    {i / options.grid[0]}/{showPages}
                                 </div>
                             {/if}
-                        </div>
-                        {#if options.pageNumbers && i > 0 && i % options.grid[0] === 0 && i / options.grid[0] < showPages}
-                            <div class="page" style="top: calc(100vh * {i / options.grid[0] - 0.012} - 30px)">
-                                {i / options.grid[0]}/{showPages}
+                        {/each}
+                        {#if options.pageNumbers && (layoutSlides[show.id || ""].length - 1) / (options.type !== "slides" ? 1 : options.grid[0]) / showPages < showPages}
+                            <div class="page" style="top: calc(100vh * {showPages - 0.012} - 30px);">
+                                {showPages}/{showPages}
                             </div>
                         {/if}
-                    {/each}
-                    {#if options.pageNumbers && (layoutSlides[show.id || ""].length - 1) / (options.type !== "slides" ? 1 : options.grid[0]) / showPages < showPages}
-                        <div class="page" style="top: calc(100vh * {showPages - 0.012} - 30px);">
-                            {showPages}/{showPages}
-                        </div>
-                    {/if}
                     {/if}
                     {#if options.metadata}
                         <div style="position: absolute;top: calc(100vh * {showPages} - 25px);width: 100%;">
@@ -498,6 +504,16 @@
 
     main.flow {
         display: block;
+    }
+
+    .media-page {
+        box-sizing: border-box;
+        position: relative;
+        overflow: hidden;
+        page-break-inside: avoid;
+        margin: 0;
+        padding: 0;
+        flex-shrink: 0;
     }
 
     .show-container {
