@@ -1,10 +1,11 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
 import type { Show, Slide } from "../../types/Show"
+import type { StageLayout } from "../../types/Stage"
 import type { Category } from "../../types/Tabs"
 import { history } from "../components/helpers/history"
 import { checkName } from "../components/helpers/show"
-import { actionTags, activeDrawerTab, activePopup, activeProject, activeRename, activeShow, alertMessage, categories, drawerTabsData, shows } from "../stores"
+import { actionTags, activeDrawerTab, activePopup, activeProject, activeRename, activeShow, alertMessage, categories, drawerTabsData, shows, stageShows } from "../stores"
 import { newToast } from "../utils/common"
 import { convertText } from "./txt"
 import { convertOldShowValues } from "../components/helpers/setShow"
@@ -149,6 +150,72 @@ export function importAction(files: { content: string; name?: string; extension?
     } else {
         newToast("actions.imported")
     }
+}
+
+export function importStage(files: { content: string; name?: string; extension?: string }[]) {
+    let imported = 0
+
+    files.forEach(({ content, name }) => {
+        let parsed: any
+        try {
+            parsed = JSON.parse(content)
+        } catch (err) {
+            console.error("Failed to import stage layout:", name, err)
+            return
+        }
+
+        getStageLayouts(parsed, name).forEach(({ id, layout }) => {
+            if (!isStageLayout(layout)) return
+
+            const stageId = id && !get(stageShows)[id] ? id : uid()
+            const data: StageLayout = {
+                ...layout,
+                name: layout.name || name || "Stage Layout",
+                disabled: layout.disabled ?? false,
+                password: layout.password || "",
+                settings: layout.settings || {},
+                items: layout.items || {},
+                modified: Date.now()
+            }
+
+            delete (data as any).id
+            history({ id: "UPDATE", newData: { data }, oldData: { id: stageId }, location: { page: "stage", id: "stage" } })
+            imported++
+        })
+    })
+
+    if (!imported) {
+        newToast("error.import")
+        return
+    }
+
+    if (get(activePopup)) {
+        alertMessage.set("actions.imported")
+        activePopup.set("alert")
+    } else {
+        newToast("actions.imported")
+    }
+}
+
+function getStageLayouts(parsed: any, name = ""): { id?: string; layout: any }[] {
+    if (Array.isArray(parsed)) return [{ id: parsed[0], layout: parsed[1] }]
+
+    const wrappedLayout = parsed.stage || parsed.layout
+    if (wrappedLayout) return [{ id: wrappedLayout.id || parsed.id, layout: wrappedLayout }]
+
+    if (isStageLayout(parsed)) return [{ id: parsed.id, layout: parsed }]
+
+    if (parsed && typeof parsed === "object") {
+        return Object.entries(parsed)
+            .filter(([, layout]) => isStageLayout(layout))
+            .map(([id, layout]) => ({ id, layout: { ...(layout as object), name: (layout as StageLayout).name || name } }))
+    }
+
+    return []
+}
+
+function isStageLayout(value: any): value is StageLayout {
+    return !!value && typeof value === "object" && !!value.settings && !!value.items && typeof value.items === "object"
 }
 
 /// //
