@@ -11,6 +11,7 @@ import { sendMain } from "../IPC/main"
 import { createFolder, deleteFile, deleteFolderAsync, doesPathExistAsync, getDataFolderPath, getFileStatsAsync, getTimePointString, loadShows, moveFileAsync, readFileAsync, readFolderAsync, writeFileAsync } from "../utils/files"
 import { clone, getMachineId } from "../utils/helpers"
 import { getChurchAppsSyncManager } from "./ChurchAppsSyncManager"
+import { SyncLedger, type Changes } from "./syncLedger"
 
 export type SyncProviderId = "churchApps"
 const getManager = {
@@ -77,7 +78,6 @@ function getMergeGuardKey(data: { id: SyncProviderId; churchId: string; teamId: 
 export async function syncData(data: { id: SyncProviderId; churchId: string; teamId: string; method: "merge" | "read_only" | "upload" | "replace" }) {
     let readOnly = data.method === "read_only" || data.method === "replace" // never write to cloud
     const changedFiles: string[] = [] // WIP write changes
-    deletedNow = []
     let guardCloudModifiedAt = 0
 
     const provider = getManager[data.id]()
@@ -154,6 +154,9 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
         }
     }
     // console.log("Devices:", CHANGES.devices)
+
+    // the ledger owns all created/deleted reconciliation; build it once per run from the resolved state
+    ledger = new SyncLedger({ changes: CHANGES, cloudChanges, deviceId: getDeviceId(), isNewDevice })
 
     // MERGE
     const cloudBibleNames: string[] = []
@@ -318,37 +321,19 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
                 // SYNCED_SETTINGS bundles item-collections (scriptures, categories, styles…) plus a
                 // few atomic settings. Merge the collections per-item via the ledger (like PROJECTS),
                 // so items unique to either device survive and deletions propagate. See #3335.
+                // The per-item logic lives in the pure, unit-tested SyncLedger module (syncLedger.ts).
                 const cloudFileIsNewer = isNewDevice || (await isCloudNewerThanFile(localStore.path, modifiedDates[file.name]))
-                await Promise.all(
-                    Object.entries<{ [key: string]: any }>(cloudFileData).map(async ([type, object]) => {
-                        const isCollection = SYNCED_SETTINGS_COLLECTIONS.includes(type) && !!object && typeof object === "object" && !Array.isArray(object)
-                        if (!isCollection) {
-                            // atomic setting (e.g. drawSettings): keep newest-file-wins
-                            if (cloudFileIsNewer) localData[type] = object
-                            return
-                        }
+                for (const [type, object] of Object.entries<{ [key: string]: any }>(cloudFileData)) {
+                    const isCollection = SYNCED_SETTINGS_COLLECTIONS.includes(type) && !!object && typeof object === "object" && !Array.isArray(object)
+                    if (!isCollection) {
+                        // atomic setting (e.g. drawSettings): keep newest-file-wins
+                        if (cloudFileIsNewer) localData[type] = object
+                        continue
+                    }
 
-                        if (!localData[type] || typeof localData[type] !== "object") localData[type] = {}
-
-                        await Promise.all(
-                            Object.entries(object).map(async ([key, value]) => {
-                                const getLocalData = () => localData[type][key]
-                                // items have no per-item "modified" → resolve by the ledger (requireModifiedTime = false)
-                                const result = await checkCloudEntry(id, `${type}/${key}`, value, getLocalData, undefined, false)
-
-                                if (result.action === "delete") delete localData[type][key]
-                                else if (result.action === "create" || result.action === "download") localData[type][key] = value
-                            })
-                        )
-
-                        // check any local item not in cloud
-                        const localKeys = getLocalOnlyKeys(object, localData[type])
-                        for (const key of localKeys) {
-                            const result = checkLocalEntry(id, `${type}/${key}`)
-                            if (result.action === "delete") delete localData[type][key]
-                        }
-                    })
-                )
+                    if (!localData[type] || typeof localData[type] !== "object") localData[type] = {}
+                    localData[type] = ledger.mergeCollection(id, type, object, localData[type])
+                }
             } else {
                 // promises not needed here, but keeps the code consistent
                 await Promise.all(
@@ -564,53 +549,27 @@ async function deleteUnusedZips(folderPath: string, excludeZip: string) {
     }
 }
 
-async function checkCloudEntry(id: ChangeId, key: string, cloudData: any, getLocalData: () => Promise<any> | any, isCloudNewer?: () => Promise<boolean>, requireModifiedTime = true) {
+async function checkCloudEntry(id: ChangeId, key: string, cloudData: any, getLocalData: () => Promise<any> | any, isCloudNewer?: () => Promise<boolean>) {
     const cloudModTime = getModifiedDate(cloudData)
-    // some collections (e.g. SYNCED_SETTINGS items) have no per-item "modified" → don't treat that
-    // as invalid; fall back to the created/deleted ledger to decide.
-    if (requireModifiedTime && cloudData !== null && !cloudModTime) return { action: "skip" } // invalid: no modified time
+    // entries here are expected to carry a per-item "modified" time; without one the cloud copy is
+    // invalid → skip. (Item-collections with no per-item "modified" are merged via ledger.mergeCollection.)
+    if (cloudData !== null && !cloudModTime) return { action: "skip" } // invalid: no modified time
 
     const localValue = await getLocalData()
 
-    // exists only in cloud
-    if (!localValue) {
-        if (isNewDevice) return { action: "create" }
+    // exists only in cloud → the ledger decides (create / skip)
+    if (!localValue) return ledger.resolveCloudEntry(id, key, false)
 
-        if (isCreated(id, key) && isCreatedLocally(id, key)) {
-            // mark as deleted when it has previously been created, but is now missing
-            markAsDeleted(id, key)
-            return { action: "skip" } // already deleted
-        }
-
-        // if marked as created and not yet created locally
-        if (isCreated(id, key)) {
-            markAsCreated(id, key)
-            return { action: "create" }
-        }
-
-        if (isDeleted(id, key)) {
-            markAsDeleted(id, key)
-            return { action: "skip" } // already deleted
-        }
-
-        markAsDeleted(id, key)
-        return { action: "skip" } // deleted locally
-    }
-
-    if (isDeleted(id, key) && !isNewDevice) {
-        markAsDeleted(id, key)
-        return { action: "delete" }
-    }
-    if (isCreated(id, key)) markAsCreated(id, key) // just in case it's marked as created when it already exists
+    // exists both locally and in cloud → the ledger decides delete/keep; "upload" means keep local,
+    // so break the tie by modified time (newest wins)
+    const decision = ledger.resolveCloudEntry(id, key, true)
+    if (decision.action !== "upload") return decision
 
     let localModTime = getModifiedDate(localValue)
-    if (requireModifiedTime && cloudData !== null && !localModTime) localModTime = setModifiedDate()
+    if (cloudData !== null && !localModTime) localModTime = setModifiedDate()
 
-    // exists both locally and in cloud
     const cloudIsNewer = isCloudNewer ? await isCloudNewer() : cloudModTime > localModTime
-    if (cloudIsNewer) return { action: "download" }
-
-    return { action: "upload" }
+    return { action: cloudIsNewer ? "download" : "upload" }
 
     function getModifiedDate(data: any): number {
         if (!data) return 0
@@ -629,27 +588,9 @@ async function checkCloudEntry(id: ChangeId, key: string, cloudData: any, getLoc
     }
 }
 
-// exists only locally
+// exists only locally → the ledger decides (upload / delete / revive)
 function checkLocalEntry(id: ChangeId, key: string) {
-    if (isNewDevice) return { action: "upload" }
-
-    // marked as deleted in general
-    if (isDeleted(id, key)) {
-        // marked as already deleted for this device
-        if (isDeletedLocally(id, key)) {
-            // revert deletion when local file is restored
-            markAsCreated(id, key)
-            return { action: "upload" }
-        }
-
-        // delete local file/instance
-        markAsDeleted(id, key)
-        return { action: "delete" }
-    }
-
-    // mark as created, for other devices to download
-    markAsCreated(id, key)
-    return { action: "upload" }
+    return ledger.resolveLocalEntry(id, key)
 }
 
 // SYNC LOGIC
@@ -661,13 +602,18 @@ function checkLocalEntry(id: ChangeId, key: string) {
 // if found locally and in cloud: use newest version
 // if marked as deleted locally in cloud, but exists locally: unmark as deleted and mark as created
 
-type Changes = { version: string; devices: string[]; modified: { [key: string]: number }; deleted: { [key: string]: string[] }; created: { [key: string]: string[] } }
 const changes_name = "changes.json"
 const version = "0.1.1"
 const DEFAULT_CHANGES: Changes = { version, devices: [], modified: {}, deleted: {}, created: {} }
 let CHANGES: Changes = clone(DEFAULT_CHANGES)
 let cloudChanges: Changes | null = null
 let isNewDevice = false
+
+// the per-item created/deleted ledger lives in the pure, unit-tested SyncLedger module (syncLedger.ts).
+// it's rebuilt once per sync run (see syncData), so checkCloudEntry/checkLocalEntry delegate to it.
+let ledger = new SyncLedger({ changes: CHANGES, deviceId: "" })
+
+type ChangeId = keyof typeof _store | "SHOWS_CONTENT" | "BIBLES"
 
 // keep track of last changed time so we can know which devices to ignore eventually
 function getLatestChanges() {
@@ -677,87 +623,10 @@ function getLatestChanges() {
     return CHANGES
 }
 
-function getInstanceId(storeId: ChangeId, key: string) {
-    return `${storeId}_${key}`
-}
-
-type ChangeId = keyof typeof _store | "SHOWS_CONTENT" | "BIBLES"
-let deletedNow: string[] = []
-function markAsDeleted(storeId: ChangeId, key: string) {
-    const instanceId = getInstanceId(storeId, key)
-    unmarkAsCreated(storeId, key)
-    markAs("deleted", instanceId)
-    deletedNow.push(instanceId)
-}
-
-function markAsCreated(storeId: ChangeId, key: string) {
-    const instanceId = getInstanceId(storeId, key)
-    unmarkAsDeleted(storeId, key)
-    markAs("created", instanceId)
-}
-
 let _deviceId = ""
 function getDeviceId() {
     if (!_deviceId) _deviceId = getMachineId()
     return _deviceId
-}
-
-function markAs(type: "deleted" | "created", instanceId: string) {
-    // if just one device, no need to keep track of changes
-    if (CHANGES.devices.length < 2) return
-
-    // init
-    if (!CHANGES[type]) CHANGES[type] = {}
-    if (!CHANGES[type][instanceId]) CHANGES[type][instanceId] = []
-
-    const deviceId = getDeviceId()
-
-    // already marked for this device
-    if (CHANGES[type][instanceId].includes(deviceId)) return
-
-    CHANGES[type][instanceId].push(deviceId)
-
-    // remove entry if all devices have the instance
-    if (CHANGES[type][instanceId].length >= CHANGES.devices.length) {
-        delete CHANGES[type][instanceId]
-    }
-}
-
-function unmarkAsDeleted(storeId: ChangeId, key: string) {
-    if (!CHANGES.deleted) return
-
-    const instanceId = getInstanceId(storeId, key)
-    delete CHANGES.deleted[instanceId]
-}
-
-function unmarkAsCreated(storeId: ChangeId, key: string) {
-    if (!CHANGES.created) return
-
-    const instanceId = getInstanceId(storeId, key)
-    delete CHANGES.created[instanceId]
-}
-
-function isDeleted(storeId: ChangeId, key: string): boolean {
-    const instanceId = getInstanceId(storeId, key)
-    return !!CHANGES.deleted?.[instanceId]
-}
-
-function isCreated(storeId: ChangeId, key: string): boolean {
-    const instanceId = getInstanceId(storeId, key)
-    return !!CHANGES.created?.[instanceId]
-}
-
-function isDeletedLocally(storeId: ChangeId, key: string): boolean {
-    const instanceId = getInstanceId(storeId, key)
-    if (deletedNow.includes(instanceId)) return false
-    const deviceId = getDeviceId()
-    return !!cloudChanges?.deleted?.[instanceId]?.includes(deviceId)
-}
-
-function isCreatedLocally(storeId: ChangeId, key: string): boolean {
-    const instanceId = getInstanceId(storeId, key)
-    const deviceId = getDeviceId()
-    return !!cloudChanges?.created?.[instanceId]?.includes(deviceId)
 }
 
 export function markAsNewSync() {
