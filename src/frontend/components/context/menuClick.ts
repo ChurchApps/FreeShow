@@ -923,6 +923,16 @@ const clickActions = {
             })
             return
         }
+
+        if (obj.sel?.id === "stage") {
+            obj.sel.data.forEach(({ id }) => {
+                const stage = clone(get(stageShows)[id])
+                if (!stage) return
+
+                send(EXPORT, ["STAGE_LAYOUT"], { content: { ...stage, id }, name: formatToFileName(stage.name || id) })
+            })
+            return
+        }
     },
     close: (obj: ObjData) => {
         if (isOutputWindow()) {
