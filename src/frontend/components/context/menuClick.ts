@@ -929,7 +929,7 @@ const clickActions = {
                 const stage = clone(get(stageShows)[id])
                 if (!stage) return
 
-                send(EXPORT, ["STAGE_LAYOUT"], { content: { stage: { ...stage, id } }, name: formatToFileName(stage.name || id) })
+                send(EXPORT, ["STAGE_LAYOUT"], { content: { ...stage, id }, name: formatToFileName(stage.name || id) })
             })
             return
         }
