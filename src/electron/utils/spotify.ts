@@ -126,7 +126,7 @@ export async function getSpotifyState(): Promise<SpotifyState | null> {
                     const artist = out.match(/string\s+"xesam:artist"\s+variant\s+array\s+\[\s+string\s+"([^"]+)"/)?.[1]
                     const len = parseInt(out.match(/string\s+"mpris:length"\s+variant\s+uint64\s+(\d+)/)?.[1] || "0")
                     const art = out.match(/string\s+"mpris:artUrl"\s+variant\s+string\s+"([^"]+)"/)?.[1]
-                    const pos = parseInt(out.match(/uint64\s+(\d+)/)?.[1] || "0")
+                    const pos = parseInt(out.match(/\bint64\s+(\d+)/)?.[1] || "0")
                     const vol = parseFloat(out.match(/double\s+([\d.]+)/)?.[1] || "1")
                     res(title ? { isPlaying: out.includes("Playing"), title, artist: artist || "Unknown", positionSec: pos / 1000000, durationSec: len / 1000000, albumArt: art, volume: vol, platform: "linux" } : null)
                 })
@@ -151,7 +151,7 @@ export async function executeSpotifyCommand(cmd: string, val?: number): Promise<
             const dest = "--dest=org.mpris.MediaPlayer2.spotify /org/mpris/MediaPlayer2"
             const mpris = "org.mpris.MediaPlayer2.Player"
             const run = (c: string) =>
-                exec(`dbus-send ${dest} ${c}`, (e) => {
+                exec(`dbus-send --type=method_call ${dest} ${c}`, (e) => {
                     if (e) {
                         const isServiceUnknown = e.message?.includes("org.freedesktop.DBus.Error.ServiceUnknown") || e.message?.includes("ServiceUnknown")
                         if (!isServiceUnknown) console.error("[Spotify] Linux command error:", e)
@@ -170,7 +170,7 @@ export async function executeSpotifyCommand(cmd: string, val?: number): Promise<
                         return
                     }
                     const id = out?.match(/string\s+"mpris:trackid"\s+variant\s+string\s+"([^"]+)"/)?.[1]
-                    if (id) run(`${mpris}.SetPosition objpath:${id} x64:${Math.round(val * 1000000)}`)
+                    if (id) run(`${mpris}.SetPosition objpath:${id} int64:${Math.round(val * 1000000)}`)
                 })
             }
         }
