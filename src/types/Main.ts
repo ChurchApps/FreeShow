@@ -104,6 +104,7 @@ export type SelectIds =
     | "timer"
     | "global_timer"
     | "variable"
+    | "interaction"
     | "audio_stream"
     | "chord"
     | "midi"
@@ -280,6 +281,32 @@ export interface Variable {
     textSets?: { [key: string]: string }[]
 }
 
+export interface Interaction {
+    name: string
+    inputs: InteractionInput[]
+}
+type InteractionInput = TextQuestion | NumberQuestion | MultipleChoiceQuestion
+interface QuestionBase {
+    question: string
+}
+interface TextQuestion extends QuestionBase {
+    type: "text"
+    inputType: "input" // "textarea"
+    answer?: string // text does not need a precise answer
+}
+interface NumberQuestion extends QuestionBase {
+    type: "number"
+    inputType: "input" | "slider" | "number_range" | "time_range"
+    answer?: number
+    min?: number // 0
+    max?: number // 1000
+}
+interface MultipleChoiceQuestion extends QuestionBase {
+    type: "multi_choice"
+    inputType: "buttons" | "checkbox" | "dropdown" | "radio"
+    options?: { value: string; isAnswer?: boolean }[]
+}
+
 export interface Trigger {
     name: string
     type: "http"
@@ -349,6 +376,7 @@ export type Popups =
     | "find_replace"
     | "timer"
     | "variable"
+    | "interaction_input"
     | "audio_stream"
     | "now_playing"
     | "aspect_ratio"

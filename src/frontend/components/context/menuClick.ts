@@ -48,6 +48,7 @@ import {
     livePrepare,
     media,
     mediaFolders,
+    openedInteractionId,
     outLocked,
     outputs,
     overlayCategories,
@@ -226,7 +227,7 @@ const clickActions = {
         if (!id) return
         const data = obj.sel?.data?.[0] || {}
 
-        const renameById = ["show_drawer", "project", "folder", "stage", "theme", "style", "output", "tag", "profile"]
+        const renameById = ["show_drawer", "project", "folder", "stage", "theme", "style", "output", "tag", "profile", "interaction"]
         const renameByIdDirect = ["overlay", "template", "player", "layout", "effect"]
 
         if (renameById.includes(id)) activeRename.set(id + "_" + data.id)
@@ -317,6 +318,10 @@ const clickActions = {
         }
         if (obj.contextElem?.classList.value.includes("#event")) {
             deleteAction({ id: "event", data: { id: obj.contextElem.id } })
+            return
+        }
+        if (obj.contextElem?.classList.value.includes("#interaction_input")) {
+            deleteAction({ id: "interaction_input", data: { index: Number(obj.contextElem.id?.slice(1)) } })
             return
         }
 
@@ -1188,6 +1193,12 @@ const clickActions = {
             activePopup.set("timer")
         } else if (obj.sel.id === "variable") {
             activePopup.set("variable")
+        } else if (obj.sel.id === "interaction") {
+            openedInteractionId.set(obj.sel.data[0]?.id)
+        } else if (obj.contextElem?.classList?.contains("#interaction_input")) {
+            const id = (obj.contextElem.id || "").slice(1)
+            popupData.set({ id: get(openedInteractionId), inputIndex: Number(id) })
+            activePopup.set("interaction_input")
         } else if (obj.sel.id === "audio_stream") {
             activePopup.set("audio_stream")
         } else if (obj.contextElem?.classList?.contains("#project_template")) {
