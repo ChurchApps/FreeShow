@@ -259,7 +259,7 @@ export function getTextLines(slide: Slide | { items: Item[] }, itemSeperated: bo
         })
 
         if (!fullText.length) lines.pop()
-        if (lines.length) items.push(lines.map((a) => replaceVirtualBreaks(a)))
+        if (lines.length || itemSeperated) items.push(lines.map((a) => replaceVirtualBreaks(a)))
     })
 
     if (itemSeperated) {
