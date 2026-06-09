@@ -28,11 +28,12 @@ export class CaptureTransmitter {
     private static readonly DEFAULT_SERVER_SCALE = 0.8
     private static readonly FPS_EPSILON_HIGH = 10.0
     private static readonly FPS_EPSILON_LOW = 1.0
-    private static readonly SIGNATURE_GRID_X = 24
-    private static readonly SIGNATURE_GRID_Y = 14
+    private static readonly SIGNATURE_GRID_X = 64
+    private static readonly SIGNATURE_GRID_Y = 36
     private static readonly FNV_OFFSET_BASIS = 2166136261
     private static readonly FNV_PRIME = 16777619
     private static readonly SIGNATURE_FALLBACK_SAMPLES = 128
+    private static readonly SIGNATURE_JITTER_STEPS = 4
 
     static stageWindows: string[] = []
     static requestList: string[] = []
@@ -75,10 +76,24 @@ export class CaptureTransmitter {
         const xStep = Math.max(1, Math.floor(width / this.SIGNATURE_GRID_X))
         const yStep = Math.max(1, Math.floor(height / this.SIGNATURE_GRID_Y))
 
+        // Basic grid
         for (let y = Math.floor(yStep / 2); y < height; y += yStep) {
             const rowOffset = y * stride
             for (let x = Math.floor(xStep / 2); x < width; x += xStep) {
                 offsets.push(rowOffset + x * 4)
+            }
+        }
+
+        // Add additional sample points for jitter/interlacing
+        // This samples slightly different locations that rotate over time
+        for (let i = 1; i < this.SIGNATURE_JITTER_STEPS; i++) {
+            const xOffset = Math.floor((xStep * i) / this.SIGNATURE_JITTER_STEPS)
+            const yOffset = Math.floor((yStep * i) / this.SIGNATURE_JITTER_STEPS)
+            for (let y = yOffset; y < height; y += yStep * 2) {
+                const rowOffset = y * stride
+                for (let x = xOffset; x < width; x += xStep * 2) {
+                    offsets.push(rowOffset + x * 4)
+                }
             }
         }
 
@@ -121,9 +136,10 @@ export class CaptureTransmitter {
         let hash = this.FNV_OFFSET_BASIS
         const offsets = this.getSignatureOffsets(width, height)
 
+        // Calculate hash using all pre-calculated offsets.
+        // Given we increased the count with jittered sampling, using all is safest for detection.
         for (const pixelOffset of offsets) {
             if (pixelOffset + 2 >= len) break
-            // Sample B, G and R bytes (alpha is often constant)
             hash ^= buffer[pixelOffset]
             hash = Math.imul(hash, this.FNV_PRIME)
             hash ^= buffer[pixelOffset + 1]
@@ -132,6 +148,8 @@ export class CaptureTransmitter {
             hash = Math.imul(hash, this.FNV_PRIME)
         }
 
+        // Add a salt based on dimensions to ensure that even if pixel content matches,
+        // a resize is detected as a change (though sizeKey also handles this).
         hash ^= width
         hash = Math.imul(hash, this.FNV_PRIME)
         hash ^= height
@@ -146,7 +164,6 @@ export class CaptureTransmitter {
         const now = performance.now()
         const previous = this.lastFrameState[channelId]
 
-        // Skip unchanged frames for still content, but keep low-rate keepalive frames.
         if (previous && previous.sizeKey === sizeKey && now - previous.lastSentAt < this.UNCHANGED_KEEPALIVE_MS) {
             const signature = this.getQuickSignature(buffer, size)
             if (previous.signature === signature) {

@@ -18,7 +18,6 @@ export class CaptureLifecycle {
 
     private static captureLoopToken: { [key: string]: number } = {}
     private static activeCaptures: Set<string> = new Set()
-    private static lastFrameSignatures: { [captureId: string]: { signature: number; sizeKey: string } } = {}
 
     static startCapture(id: string, toggle: { [key: string]: boolean } = {}) {
         const output = OutputHelper.getOutput(id)
@@ -97,10 +96,8 @@ export class CaptureLifecycle {
             try {
                 const image = await this.captureAndProcessFrame(id, captureOpts)
 
-                // skip transmitting if frame is unchanged (except for blackmagic which needs continuous frames)
-                if (captureOpts.options?.blackmagic || !this.isFrameUnchanged(id, image)) {
-                    this.transmitFrame(id, image)
-                }
+                // transmit frame (CaptureTransmitter handles skipping unchanged frames with keepalive)
+                this.transmitFrame(id, image)
             } catch (error) {
                 console.warn(`Capture failed for output ${id}:`, error)
             }
@@ -133,19 +130,6 @@ export class CaptureLifecycle {
         }
 
         return image
-    }
-
-    private static isFrameUnchanged(id: string, image: any): boolean {
-        const size = image.getSize()
-        const buffer = image.toBitmap()
-        const signature = CaptureTransmitter.computeFrameSignature(buffer, size)
-        const sizeKey = `${size.width}x${size.height}`
-
-        const previous = this.lastFrameSignatures[id]
-        const unchanged = previous && previous.signature === signature && previous.sizeKey === sizeKey
-
-        this.lastFrameSignatures[id] = { signature, sizeKey } // , lastSentTime: previous?.lastSentTime || 0
-        return unchanged
     }
 
     private static transmitFrame(id: string, image: any) {
@@ -204,7 +188,6 @@ export class CaptureLifecycle {
         const channels = ["ndi", "blackmagic", "server", "stage", "webrtc"]
         channels.forEach((channel) => CaptureHelper.Transmitter.stopChannel(id, channel))
 
-        delete this.lastFrameSignatures[id]
         console.info("Capture - stopping: " + id)
 
         this.cleanupListeners(capture.window)
