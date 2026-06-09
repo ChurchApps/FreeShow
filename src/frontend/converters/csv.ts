@@ -23,7 +23,8 @@ export function convertCSV(data: any) {
             const content: string = file.content
 
             const slides: Slide[] = []
-            content.split("\n").forEach(createSlide)
+            // normalize CRLF/CR line endings so no stray "\r" is left in the last field of each row
+            content.replace(/\r\n?/g, "\n").split("\n").forEach(createSlide)
             function createSlide(csvLine: string) {
                 const items: Item[] = []
 

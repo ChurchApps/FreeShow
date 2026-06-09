@@ -7,6 +7,9 @@
     "repository": "git@github.com:ChurchApps/FreeShow.git",
     "author": "ChurchApps <support@livecs.org>",
     "license": "GPL-3.0",
+    "engines": {
+        "node": ">=20"
+    },
     "scripts": {
         "postinstall": "electron-builder install-app-deps",
         "---DEVELOPMENT---": "",

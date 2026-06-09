@@ -36,31 +36,61 @@ createServers()
 function createServers() {
     const serverList = Object.keys(serverPorts) as ServerName[]
     serverList.forEach((id) => {
-        const app = express()
-        const server = http.createServer(app)
+        createServerInstance(id)
+        // the app -> client IPC bridge is registered once and always emits via the current io instance
+        registerIpcBridge(id)
+    })
+}
 
-        if (id === "STAGE") {
-            // app.get('/show/:showId/:slideId', handleShowSlideHtmlRequest);
-            // Serve media files
-            // app.get('/media/:token', handleMediaRequest);
+// (re)create a fresh express app + http server + socket.io instance.
+// a closed http.Server cannot be re-listened, so this is called again on every (re)start.
+function createServerInstance(id: ServerName) {
+    const app = express()
+    const server = http.createServer(app)
+
+    if (id === "STAGE") {
+        // app.get('/show/:showId/:slideId', handleShowSlideHtmlRequest);
+        // Serve media files
+        // app.get('/media/:token', handleMediaRequest);
+    }
+
+    // The join import from 'path' is still needed for this part
+    app.get("/", (_req, res: Response) => res.sendFile(join(__dirname, id.toLowerCase(), "index.html")))
+    // The join import from 'path' is still needed for this part
+    app.use(express.static(join(__dirname, id.toLowerCase())))
+
+    const io = new Server(server)
+
+    servers[id] = {
+        ...servers[id],
+        port: serverPorts[id],
+        server,
+        io,
+        max: servers[id]?.max ?? 10,
+        connections: {}, // always start with a clean connection map
+        data: servers[id]?.data ?? {}
+    }
+    ioServers[id] = io
+
+    // RECEIVE CONNECTION FROM CLIENT
+    io.on("connection", (socket) => {
+        if (Object.keys(servers[id]!.connections).length >= servers[id]!.max) {
+            io.emit(id, { channel: "ERROR", id: "overLimit", data: servers[id]!.max })
+            socket.disconnect()
+            return
         }
 
-        // The join import from 'path' is still needed for this part
-        app.get("/", (_req, res: Response) => res.sendFile(join(__dirname, id.toLowerCase(), "index.html")))
-        // The join import from 'path' is still needed for this part
-        app.use(express.static(join(__dirname, id.toLowerCase())))
+        initialize(id, socket)
+    })
+}
 
-        servers[id] = {
-            ...servers[id],
-            port: serverPorts[id],
-            server,
-            io: new Server(server),
-            max: 10,
-            connections: {},
-            data: {}
-        }
-
-        createBridge(id, servers[id]!)
+function registerIpcBridge(id: ServerName) {
+    // SEND DATA FROM APP TO CLIENT (uses the current io instance via ioServers, so it survives server recreation)
+    ipcMain.on(id, (_e: IpcMainEvent, msg: Message) => {
+        const io = ioServers[id]
+        if (!io) return
+        if (msg?.id) io.to(msg.id).emit(id, msg)
+        else io.emit(id, msg)
     })
 }
 
@@ -73,6 +103,9 @@ export function startServers({ ports, max, disabled, data }: MainSendPayloads[Ma
     serverList.forEach((id: ServerName) => {
         if (!servers[id] || disabled[id.toLowerCase()] !== false) return
 
+        // recreate a fresh, listenable instance (the previous http.Server may have been closed)
+        createServerInstance(id)
+
         servers[id]!.max = max
         if (ports[id.toLowerCase()]) servers[id]!.port = ports[id.toLowerCase()]
 
@@ -80,7 +113,10 @@ export function startServers({ ports, max, disabled, data }: MainSendPayloads[Ma
 
         servers[id]!.server.listen(servers[id]!.port, onStarted)
         servers[id]!.server.once("error", (err: Error) => {
-            if ((err as any).code === "EADDRINUSE") servers[id]!.server.close()
+            if ((err as any).code === "EADDRINUSE") {
+                servers[id]!.server.close()
+                console.error(`${id} server port ${servers[id]!.port} already in use`)
+            }
         })
 
         function onStarted() {
@@ -108,27 +144,10 @@ export function closeServers() {
     const serverList = Object.keys(servers) as ServerName[]
     serverList.forEach((id: ServerName) => {
         if (!servers[id]?.server) return
-        servers[id]!.server.close()
-    })
-}
-
-function createBridge(id: ServerName, server: ServerValues) {
-    // RECEIVE CONNECTION FROM CLIENT
-    server.io.on("connection", (socket) => {
-        if (Object.keys(server.connections).length >= server.max) {
-            server.io.emit(id, { channel: "ERROR", id: "overLimit", data: server.max })
-            socket.disconnect()
-            return
-        }
-
-        initialize(id, socket)
-    })
-
-    // SEND DATA FROM APP TO CLIENT
-    ioServers[id] = server.io
-    ipcMain.on(id, (_e: IpcMainEvent, msg: Message) => {
-        if (msg?.id) server.io.to(msg.id).emit(id, msg)
-        else server.io.emit(id, msg)
+        // close socket.io (disconnects clients and closes the underlying http server)
+        servers[id]!.io.close()
+        // clear connection state so reconnect counts / max limit don't drift across restarts
+        servers[id]!.connections = {}
     })
 }
 

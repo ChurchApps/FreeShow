@@ -2,7 +2,8 @@
 
 **Repo:** `/home/user/freeshow` · **Version:** `1.6.2-beta.1` · **Date:** 2026-06-09
 **Scope:** Security, Bugs & correctness, Code quality, Dependencies & build.
-**Note:** This is a review-only audit. No application code was changed.
+
+> **Remediation status:** A first round of fixes has been applied — see [Remediation Status](#remediation-status) at the end. Items that change on-disk formats, public signatures, or product behavior (or that contradict a documented maintainer decision) were intentionally **not** changed blindly and are listed as deferred with reasons.
 
 Threat model note: FreeShow is a desktop Electron app that *also runs network servers* (Remote 5510, Stage 5511, Controller 5512, Output Stream 5513) reachable by any device on the local network, and imports/syncs untrusted files (shows, projects, cloud zips, PPTX). Those two facts drive most of the high-severity findings below.
 
@@ -171,3 +172,43 @@ On `^37.10.3`; advisories affect `<=39.8.4`. Electron is the app's actual sandbo
 10. **135 untracked TODOs** (plus a `DEPERACTED` typo at `updateSettings.ts:432`). Adopt `TODO(#issue):` and triage into tracked issues.
 
 **Highest-ROI:** (1) bulk-delete commented-out code, (2) split the two 2,200-line god-files, (3) type the IPC receiver/talk `any` cluster.
+
+---
+
+## Remediation Status
+
+Fixes applied in this pass (additive/guarding only — no code was deleted, per request). Verified: electron `tsc` type-check passes; production `npm run build` succeeds; edited files pass Prettier. (`test:svelte` has a 198-error pre-existing backlog unrelated to these changes.)
+
+### Fixed
+
+| ID | Fix | File(s) |
+|---|---|---|
+| **S1** | Zip-slip guard — `sanitizeZipPath()` neutralizes `..`/absolute segments before any extraction path is built | `electron/data/zip.ts` |
+| **S2/S3** | REMOTE auth gate — control/API messages are ignored unless the connection has authenticated (`entered`) when a password is set; closes the API password-bypass | `frontend/utils/sendData.ts` |
+| **S5** | WebRTC host window hardened with `will-navigate`/`setWindowOpenHandler` deny guards | `electron/webrtc/WebRtcHost.ts` |
+| **S6** | Export window `contextIsolation: true` made explicit | `electron/utils/windowOptions.ts` |
+| **B1** | `readExifData` now always resolves (error/catch paths) — fixes the IPC hang | `electron/utils/files.ts`, `types/IPC/Main.ts` |
+| **B2** | `save()` queues the latest pending save instead of dropping concurrent saves | `electron/data/save.ts` |
+| **B3** | `requestMain` registers its listener before sending and resolves immediately when the IPC bridge is absent | `frontend/IPC/main.ts` |
+| **B4** | Companion servers recreate fresh listenable instances on (re)start and clear connection state on close; IPC bridge registered once | `electron/servers.ts` |
+| **B5** | `requestToMain` uses one shared dispatcher keyed by listenerId instead of a global listener per request | `electron/IPC/main.ts` |
+| **B6** | `getThumbnail` releases the generation lock if it times out | `electron/data/thumbnails.ts` |
+| **B10** | `convertDynamicValues` does single-pass token replacement (no re-substitution) | `electron/audio/nowPlaying.ts` |
+| **B11** | `detectNewFiles` closes any previous `fs.watch` before re-watching | `electron/utils/files.ts` |
+| **B12** | `getMachineId` fallback uses a per-process random UUID instead of a shared constant | `electron/utils/helpers.ts` |
+| **B13** | `checkIfMatching` uses an order-independent deep `stableStringify` compare | `electron/utils/helpers.ts` |
+| **B16** | Empty catches now log at debug | `frontend/components/helpers/media.ts`, `frontend/utils/save.ts` |
+| **B17** | CSV import normalizes CRLF/CR line endings | `frontend/converters/csv.ts` |
+| **Build** | Added `.nvmrc` (22), `engines.node >=20`, and a PR CI workflow (build = blocking gate; format + svelte-check = report-only until their backlog is cleared) | `.nvmrc`, `package.json`, `.github/workflows/ci.yml` |
+
+### Deferred (need a decision or carry breakage risk)
+
+- **S4 — `new Function()` expression eval:** renderer-sandboxed in production (`contextIsolation`), and the network-reachable variable-expression path is now additionally behind the REMOTE auth gate (S2). Replacing the calculator evaluator outright risks changing input behavior — recommend a dedicated safe-math parser as a focused change.
+- **S7 — Electron upgrade:** highest-value dependency bump but requires native-module rebuilds and full regression testing; not safe to do unverified.
+- **B7 — show files keyed by display name:** fixing means changing on-disk naming; risks existing user data and needs a migration plan.
+- **B8 — OUTPUT_STREAM `responded` global:** affects live screen streaming; needs a runtime streaming test to change safely.
+- **B9 — `parseJSON` repair heuristic:** altering recovery risks real corrupt-file data; needs validation work.
+- **B14/B15 — timeout sentinel / `null` returns:** change widely-consumed signatures; risk breaking callers.
+- **Stage/Controller auth:** Stage's password check is commented out (`frontend/utils/stageTalk.ts:84`) and Controller has no password by design — both are product decisions, not bugs to patch unilaterally.
+- **Lockfile commit:** `.gitignore` documents `package-lock.json` exclusion as a deliberate workaround for the `@rollup/rollup-x-gnu` npm optional-deps bug. Committing it could break contributor installs — needs a maintainer decision (proper fix: clean lockfile on a patched npm).
+- **Code-quality refactors** (reduce `any`, split god-files, regroup `stores.ts`): large refactors; the "remove dead/commented code" item is intentionally skipped per the no-deletion constraint.

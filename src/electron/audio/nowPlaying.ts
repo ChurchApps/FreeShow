@@ -67,9 +67,9 @@ const dynamicValues = ["{artist}", "{title}", "{album}", "{year}", "{artwork_pat
 async function convertDynamicValues(data: NowPlayingData, metadata: ICommonTagsResult | null, coverBuffer: Buffer | undefined) {
     if (!data.format) data.format = `{artist} - {title} - {album}`
 
-    dynamicValues.forEach((value) => {
-        data.format = data.format.replaceAll(value, replaceValue(value))
-    })
+    // single-pass replacement: a substituted value (e.g. a title containing "{album}") must not be re-substituted
+    const tokenPattern = new RegExp(dynamicValues.map((token) => token.replace(/[{}]/g, "\\$&")).join("|"), "g")
+    data.format = data.format.replace(tokenPattern, (match) => replaceValue(match))
 
     return data.format
 
