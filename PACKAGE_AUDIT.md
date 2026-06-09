@@ -1,14 +1,27 @@
 # FreeShow — Package / Dependency Audit
 
 **Repo:** `/home/user/freeshow` · **Version:** `1.6.2-beta.1` · **Date:** 2026-06-09
-**Method:** `npm audit` + `npm outdated` + dependency-tree tracing against the installed tree (493 prod / 744 dev / 92 optional deps). No package was changed.
+**Method:** `npm audit` + `npm outdated` + dependency-tree tracing against the installed tree (493 prod / 744 dev / 92 optional deps).
+
+## Applied fixes (this pass)
+
+The low-risk subset (items 1–4 below) has been applied to `package.json` and verified (electron `tsc` + production `npm run build` both pass):
+
+- **`tmp` → `^0.2.7`** + `overrides.tmp ^0.2.7` — forces every copy (direct, `grandiose`, `electron-builder`) to the patched version. Clears the `tmp` High.
+- **`fast-xml-parser` `"5.4.1"` → `"^5.8.0"`** — un-pinned and patched. Clears the `fast-xml-parser` High.
+- **`overrides.shell-quote ^1.8.4`** — `shell-quote@1.8.4` (the fix) exists; npm was resolving to `1.8.3` without a lockfile. Forcing it clears the **entire critical chain** (`shell-quote` / `@generalov/open-in-editor` / `svelte-inspector`).
+- **`npm-run-all` → `npm-run-all2@^9.0.1`** — drop-in (same `run-s`/`run-p`/`npm-run-all` bins), replaces the abandoned package with its maintained successor.
+
+**Result: 27 → 21 vulnerabilities — all 3 criticals eliminated, highs 10 → 7.** The remaining 7 highs are the major/breaking upgrades deferred below (electron, vite, `@discordjs/opus`→tar, music-metadata, serialize-javascript).
 
 ## Vulnerability totals (`npm audit`)
 
 | Scope | Critical | High | Moderate | Low | Total |
 |---|---|---|---|---|---|
-| **Production** (`--omit=dev`) | 0 | 7 | 5 | 0 | **12** |
-| **Full** (incl. dev) | 3 | 10 | 14 | 0 | **27** |
+| **Before this pass** | 3 | 10 | 14 | 0 | **27** |
+| **After this pass** | **0** | **7** | 14 | 0 | **21** |
+
+*(Production-scope subset before this pass: 0 critical / 7 high / 5 moderate.)*
 
 ## Severity-ranked findings (with real fix paths)
 
@@ -72,10 +85,13 @@ Also: **`npm-run-all@4.1.5`** (direct devDep, drives every build script) is effe
 
 ## Recommended order of action
 
-1. **`tmp` → `^0.2.7`** — safe patch, clears a High for 3 consumers. *(I can apply this now.)*
-2. **Un-pin `fast-xml-parser`** `"5.4.1"` → `"^5.8.0"` — minor, runtime High.
-3. **`gaxios`** non-major fix + `npm update` sweep for the ~30 within-range laggards.
-4. **`npm-run-all` → `npm-run-all2`** — clears a dev High and de-risks the build scripts.
-5. **Electron 37 → 42** — highest-value but breaking: schedule with native-module rebuild + a Playwright/manual regression pass.
-6. **Vendor/mirror the git-fork deps** under the org; plan the Svelte 3→5 / Vite / ESLint-9 toolchain upgrade as one coordinated effort.
-7. **Commit a lockfile** (maintainer decision) to make all of the above reproducible and Dependabot-trackable.
+1. ✅ **`tmp` → `^0.2.7`** (+ override) — done. Clears a High across all 3 consumers.
+2. ✅ **Un-pin `fast-xml-parser`** `"5.4.1"` → `"^5.8.0"` — done. Runtime High cleared.
+3. ✅ **`shell-quote` override `^1.8.4`** — done (replaces the planned `gaxios`/sweep item with the higher-value fix that the data revealed). Eliminated all 3 criticals.
+4. ✅ **`npm-run-all` → `npm-run-all2`** — done. Replaces the abandoned package; build scripts verified green.
+5. **Electron 37 → 42** — highest-value remaining, but breaking: schedule with native-module rebuild + a Playwright/manual regression pass.
+6. **Vite 4 → 8 / Svelte 3 → 5 / ESLint 9 / `@discordjs/opus` / `music-metadata`** — the rest of the remaining highs/moderates are major upgrades; plan as coordinated toolchain efforts.
+7. **Vendor/mirror the git-fork deps** under the org (`grandiose`, `macadam`, `libltc-wrapper`, `slideshow`, `svelte-inspector`).
+8. **Commit a lockfile** (maintainer decision) to make all of the above reproducible and Dependabot-trackable.
+
+> Note on `gaxios`/within-range laggards: without a committed lockfile, a `npm update` sweep has no persistable effect (the next install re-resolves anyway), so it was not pursued as a committed change. The `overrides` mechanism was used instead because it *does* persist in `package.json`.
