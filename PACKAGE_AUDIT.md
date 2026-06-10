@@ -9,7 +9,7 @@ The low-risk subset (items 1–4 below) has been applied to `package.json` and v
 
 - **`tmp` → `^0.2.7`** + `overrides.tmp ^0.2.7` — forces every copy (direct, `grandiose`, `electron-builder`) to the patched version. Clears the `tmp` High.
 - **`fast-xml-parser` `"5.4.1"` → `"^5.8.0"`** — un-pinned and patched. Clears the `fast-xml-parser` High.
-- **`overrides.shell-quote ^1.8.4`** — `shell-quote@1.8.4` (the fix) exists; npm was resolving to `1.8.3` without a lockfile. Forcing it clears the **entire critical chain** (`shell-quote` / `@generalov/open-in-editor` / `svelte-inspector`).
+- **`overrides.shell-quote ^1.8.4`** — `shell-quote@1.8.4` (the fix) exists; the dependency ranges were resolving the nested copies to vulnerable `1.6.1`/`1.8.3`. An `overrides` entry forces the patched version across the whole tree, clearing the **entire critical chain** (`shell-quote` / `@generalov/open-in-editor` / `svelte-inspector`).
 - **`npm-run-all` → `npm-run-all2@^9.0.1`** — drop-in (same `run-s`/`run-p`/`npm-run-all` bins), replaces the abandoned package with its maintained successor.
 
 **Result: 27 → 21 vulnerabilities — all 3 criticals eliminated, highs 10 → 7.** The remaining 7 highs are the major/breaking upgrades deferred below (electron, vite, `@discordjs/opus`→tar, music-metadata, serialize-javascript).
@@ -79,9 +79,13 @@ Plus ~30 dependencies that are merely behind within their range (better-sqlite3,
 
 Also: **`npm-run-all@4.1.5`** (direct devDep, drives every build script) is effectively unmaintained and pulls **`shell-quote@1.8.3`** (top of the vulnerable range). The maintained drop-in `npm-run-all2` resolves both the staleness and the advisory.
 
-## Reproducibility — now demonstrated
+## Reproducibility — lockfile IS committed (earlier claim corrected)
 
-`package-lock.json` is git-ignored (documented workaround for the `@rollup/rollup-x-gnu` npm bug). This audit's fresh install resolved several dependencies to versions **older than their ranges now allow** (e.g. `better-sqlite3` 12.4.6 installed vs 12.10.0 available, `electron-builder` 26.8.1 vs 26.15.2, `rollup` 4.59 vs 4.61) — concrete evidence that two installs of the same `package.json` do not produce the same tree. Without a committed lockfile there is no `npm ci`, no Dependabot, and no reproducible builds. (Commit decision is the maintainer's — see note in `AUDIT.md`.)
+A `package-lock.json` **is committed and tracked**. The `.gitignore` line `# package-lock.json` is a **commented-out (inactive)** entry — an earlier draft of this report misread it as an active ignore rule and wrongly concluded there was "no lockfile." That is corrected here.
+
+The observation that several installed versions sit **below the latest allowed by their range** (e.g. `better-sqlite3` 12.4.6 vs 12.10.0 available, `rollup` 4.59 vs 4.61) is exactly what a working lockfile produces — it pins the resolved tree, so `npm outdated`'s "Wanted" can exceed "Current." That is reproducibility *functioning*, not failing.
+
+The real gaps: `build.yml`/`release.yml` install with `npm install` rather than `npm ci` (release.yml even carries a stale "requires package-lock.json" comment), so CI doesn't install strictly from the lockfile. The new `ci.yml` uses `npm ci`; the other workflows should follow. `npm ci --dry-run` confirms the committed lockfile is in sync with `package.json` after this pass's changes.
 
 ## Recommended order of action
 
@@ -92,6 +96,6 @@ Also: **`npm-run-all@4.1.5`** (direct devDep, drives every build script) is effe
 5. **Electron 37 → 42** — highest-value remaining, but breaking: schedule with native-module rebuild + a Playwright/manual regression pass.
 6. **Vite 4 → 8 / Svelte 3 → 5 / ESLint 9 / `@discordjs/opus` / `music-metadata`** — the rest of the remaining highs/moderates are major upgrades; plan as coordinated toolchain efforts.
 7. **Vendor/mirror the git-fork deps** under the org (`grandiose`, `macadam`, `libltc-wrapper`, `slideshow`, `svelte-inspector`).
-8. **Commit a lockfile** (maintainer decision) to make all of the above reproducible and Dependabot-trackable.
+8. **Standardize CI on `npm ci`** (the committed lockfile already supports it; `ci.yml` does this — update `build.yml`/`release.yml` and drop the stale "requires package-lock.json" comment).
 
-> Note on `gaxios`/within-range laggards: without a committed lockfile, a `npm update` sweep has no persistable effect (the next install re-resolves anyway), so it was not pursued as a committed change. The `overrides` mechanism was used instead because it *does* persist in `package.json`.
+> Note on `gaxios`/within-range laggards: these are transitive and pinned by their parents, so the right lever is the committed lockfile (bump + commit the lockfile) or `overrides`. This pass used `overrides` for the security-critical pins (`shell-quote`, `tmp`) because it forces a version regardless of nested parent ranges, which `npm update` cannot do for transitive deps.

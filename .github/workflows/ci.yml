@@ -26,7 +26,7 @@ jobs:
                   sudo apt-get install -y libfontconfig1-dev uuid-dev libltc-dev --fix-missing
 
             - name: Install dependencies
-              run: npm install
+              run: npm ci
 
             # Formatting and svelte type-check currently have a pre-existing backlog, so they are
             # reported but non-blocking for now. Flip continue-on-error off once the backlog is cleared.

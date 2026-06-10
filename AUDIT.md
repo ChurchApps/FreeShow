@@ -77,14 +77,14 @@ On `^37.10.3`; advisories affect `<=39.8.4`. Electron is the app's actual sandbo
 
 ### Build & CI findings
 - **No PR CI gate (HIGH process risk):** both `build.yml` and `playwright.yml` are `workflow_dispatch`-only (Playwright disabled with a comment: "Process failed to launch"). Only `release.yml` runs automatically. PRs get zero automated build/test verification.
-- **`package-lock.json` is gitignored** (`.gitignore:3`) — no committed lockfile → non-reproducible installs, no `npm ci`, no Dependabot/lockfile auditing. Appears to be a workaround for the documented `@rollup/rollup-x-gnu` optional-dep npm bug; the proper fix is a clean lockfile on a patched npm, not deletion.
+- **`package-lock.json` confusion (corrected):** a committed `package-lock.json` **does** exist and is tracked. The `.gitignore:3` entry `# package-lock.json` is a **commented-out** line (inactive), so the lockfile is not actually ignored. (An earlier draft of this report misread that comment as an active rule — corrected here.) The real issue is that the comment, the inactive `.gitignore` line, and the `release.yml` note below send mixed signals; the lockfile should be kept and CI standardized on `npm ci`.
 - **Node version drift:** build/release use Node 22, Playwright uses Node 20; no `.nvmrc`/`.node-version` and no `engines` field pins local dev.
-- **All CI uses `npm install`, not `npm ci`** (release.yml even notes ci "requires package-lock.json"). Non-reproducible.
+- **CI uses `npm install`, not `npm ci`** in `build.yml`/`release.yml` (release.yml's comment "npm ci is better, but requires package-lock.json" is stale — the lockfile is present, so `npm ci` is usable). The new `ci.yml` added in this pass uses `npm ci`.
 - **Native-build fragility:** `postinstall: electron-builder install-app-deps` rebuilds 6 native modules per Electron bump; release CI carries `sleep 180`/`sleep 90` workarounds and manual Python/node-gyp steps — signs of an unstable native pipeline. Git-fork native modules can't fall back to npm prebuilds.
 
 ### Top dependency/build priorities
 1. Upgrade **Electron** (runtime security boundary).
-2. **Commit a lockfile + add PR CI** (build + tests) — reproducibility and quality gates are both currently absent.
+2. **Add PR CI** (build + tests) — a quality gate was absent. (A committed lockfile already exists; standardize CI on `npm ci`.)
 3. Address the **git-fork supply chain** (vendor/mirror the forks under the org; the `svelte-inspector` dev chain is *critical*-rated).
 4. Unpin **`fast-xml-parser`** and bump **`music-metadata`** (runtime highs).
 5. Replace **EOL eslint 8 / deprecated `eslint-plugin-svelte3`**; plan the Svelte 3→ upgrade.
@@ -210,5 +210,5 @@ Fixes applied in this pass (additive/guarding only — no code was deleted, per 
 - **B9 — `parseJSON` repair heuristic:** altering recovery risks real corrupt-file data; needs validation work.
 - **B14/B15 — timeout sentinel / `null` returns:** change widely-consumed signatures; risk breaking callers.
 - **Stage/Controller auth:** Stage's password check is commented out (`frontend/utils/stageTalk.ts:84`) and Controller has no password by design — both are product decisions, not bugs to patch unilaterally.
-- **Lockfile commit:** `.gitignore` documents `package-lock.json` exclusion as a deliberate workaround for the `@rollup/rollup-x-gnu` npm optional-deps bug. Committing it could break contributor installs — needs a maintainer decision (proper fix: clean lockfile on a patched npm).
+- **Electron 37 → 42 and the other major upgrades** (vite, `@discordjs/opus`, music-metadata, etc.) — breaking; need native rebuilds + regression testing. (See `PACKAGE_AUDIT.md`.)
 - **Code-quality refactors** (reduce `any`, split god-files, regroup `stores.ts`): large refactors; the "remove dead/commented code" item is intentionally skipped per the no-deletion constraint.
