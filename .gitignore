@@ -1,6 +1,5 @@
-# NPM issue with build on GitHub Actions
-# Error: Cannot find module @rollup/rollup-x-gnu. npm has a bug related to optional dependencies.
-# package-lock.json
+# package-lock.json is committed for reproducible installs (npm ci). The old
+# @rollup/rollup-x-gnu optional-deps bug that prompted ignoring it was fixed in npm 10.
 
 /node_modules/
 /public/build/

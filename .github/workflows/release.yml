@@ -20,8 +20,7 @@ jobs:
           node-version: 22
 
       - name: Install dependencies
-        # npm ci is better, but requires package-lock.json file
-        run: npm install
+        run: npm ci
 
       - name: Build and release app
         env:
@@ -51,7 +50,7 @@ jobs:
           sudo apt-get install -y libfontconfig1-dev uuid-dev libltc-dev --fix-missing
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Build and release app
         env:
@@ -84,7 +83,7 @@ jobs:
       #   run: npm run replace-electron
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Install FPM
         run:
@@ -127,7 +126,7 @@ jobs:
         run: npm install -g node-gyp
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Install dmg-license
         run: npm i dmg-license
