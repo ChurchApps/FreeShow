@@ -1,0 +1,2 @@
+# Collapse generated files in GitHub diffs (still tracked and diffable, just hidden by default)
+package-lock.json linguist-generated=true
