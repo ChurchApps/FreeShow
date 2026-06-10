@@ -1,2 +1,4 @@
-# Collapse generated files in GitHub diffs (still tracked and diffable, just hidden by default)
-package-lock.json linguist-generated=true
+# Treat the lockfile as generated/binary so it's excluded from rendered diffs and +/- line
+# counts on GitHub (it's still tracked and validated by `npm ci`). Use `git diff -- package-lock.json`
+# with `--text` if you ever need to read it.
+package-lock.json -diff linguist-generated=true
