@@ -12,8 +12,10 @@ if (process.env.SPOTIFY_BRIDGE === "true") {
                 try {
                     const isProd = process.env.NODE_ENV === "production" || !/[\\/]electron/.exec(process.execPath)
                     const mPath = isProd ? require("path").join(process.resourcesPath, "app.asar.unpacked/node_modules/libspotifyctl") : "libspotifyctl"
-                    client = new (require(mPath).SpotifyClient)()
-                    client.start()
+                    if (!client) {
+                        client = new (require(mPath).SpotifyClient)()
+                        client.start()
+                    }
                     process.send?.({ type: "ready" })
                 } catch (e: any) {
                     process.send?.({ type: "error", error: `Failed to load libspotifyctl: ${e.message}` })
@@ -23,14 +25,17 @@ if (process.env.SPOTIFY_BRIDGE === "true") {
                 if (s) {
                     if (s.albumArt?.length) s.albumArtBase64 = `data:image/jpeg;base64,${s.albumArt.toString("base64")}`
                     delete s.albumArt
-                    s.positionMs = client.positionSmoothMs
-                    s.appVolume = client.appVolume
                 }
                 process.send?.({ type: "state", state: s })
             } else if (msg.type === "command" && client) {
                 const { command: c, value: v } = msg
-                if (c === "playpause") client.latestState().statusName === "PLAYING" ? client.pause() : client.play()
-                else if (c === "next") client.next()
+                if (c === "playpause") {
+                    const s = client.latestState()
+                    if (s) {
+                        if (s.statusName === "PLAYING") client.pause()
+                        else client.play()
+                    }
+                } else if (c === "next") client.next()
                 else if (c === "prev") client.previous()
                 else if (c === "seek") client.seekMs(v * 1000)
                 else if (c === "setVolume") {
@@ -40,6 +45,15 @@ if (process.env.SPOTIFY_BRIDGE === "true") {
             }
         } catch (e: any) {
             process.send?.({ type: "error", error: e.message })
+        }
+    })
+
+    process.on("exit", () => {
+        if (client) {
+            try {
+                client.stop()
+                client.close()
+            } catch {}
         }
     })
 }
