@@ -166,7 +166,7 @@
         <Icon id="arrow_right" size={1.3} white />
     {/if}
 
-    <slot {width} />
+    <slot {width}></slot>
 </div>
 
 <style>

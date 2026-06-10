@@ -84,7 +84,7 @@
 
                     {#if data.status !== "error"}
                         <div class="progress-bar">
-                            <div class="progress-fill" style="width: {getPercent(data.progress, data.total)}%" />
+                            <div class="progress-fill" style="width: {getPercent(data.progress, data.total)}%"></div>
                         </div>
                     {/if}
                 </div>
@@ -106,7 +106,7 @@
 
                     {#if data.status === "importing"}
                         <div class="progress-bar">
-                            <div class="progress-fill" style="width: {getPercent(data.progress, data.total)}%" />
+                            <div class="progress-fill" style="width: {getPercent(data.progress, data.total)}%"></div>
                         </div>
                     {:else if data.status === "error"}
                         <div class="progress-text error-text" title={data.message}>{data.message || translateText("error.import")}</div>

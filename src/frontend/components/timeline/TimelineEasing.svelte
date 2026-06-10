@@ -216,10 +216,10 @@
             {#each points as p, i}
                 {#if selectedActionIds.includes(p.id)}
                     {#if i > 0}
-                        <div class="easing-line" style={getLineStyle(easingCurvesPx[i - 1].x2, easingCurvesPx[i - 1].y2 - Y_OFFSET, points[i].x, points[i].y - Y_OFFSET)} />
+                        <div class="easing-line" style={getLineStyle(easingCurvesPx[i - 1].x2, easingCurvesPx[i - 1].y2 - Y_OFFSET, points[i].x, points[i].y - Y_OFFSET)}></div>
                     {/if}
                     {#if i < points.length - 1}
-                        <div class="easing-line" style={getLineStyle(easingCurvesPx[i].x1, easingCurvesPx[i].y1 - Y_OFFSET, points[i].x, points[i].y - Y_OFFSET)} />
+                        <div class="easing-line" style={getLineStyle(easingCurvesPx[i].x1, easingCurvesPx[i].y1 - Y_OFFSET, points[i].x, points[i].y - Y_OFFSET)}></div>
                     {/if}
                 {/if}
             {/each}
@@ -247,7 +247,7 @@
                                 e.preventDefault()
                                 e.stopPropagation()
                             }}
-                        />
+                        ></div>
                     {/if}
                     {#if i < points.length - 1}
                         <div
@@ -270,7 +270,7 @@
                                 e.preventDefault()
                                 e.stopPropagation()
                             }}
-                        />
+                        ></div>
                     {/if}
                 {/if}
             {/each}

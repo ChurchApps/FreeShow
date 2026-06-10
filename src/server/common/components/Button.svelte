@@ -11,7 +11,7 @@
 </script>
 
 <button id={$$props.id} style={$$props.style} class:active class:center class:border class:bold class:dark class:red class:contained={variant === "contained"} class:outlined={variant === "outlined"} class:text={variant === "text"} class:compact class={$$props.class} on:click on:dblclick disabled={disabled || $$props.disabled} tabindex={active ? -1 : 0} title={$$props.title}>
-    <slot />
+    <slot></slot>
 </button>
 
 <style>

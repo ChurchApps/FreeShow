@@ -129,7 +129,7 @@
 <div class="compressor-container" style="--accent: #ad6852;" class:disabled>
     <MaterialToggleSwitch label="settings.enabled" checked={config.enabled} on:change={handleEnable} />
 
-    <div style="height: 5px;" />
+    <div style="height: 5px;"></div>
 
     <!-- Transfer curve visualisation -->
     <div class="curve-wrap" class:curve-disabled={!config.enabled}>
@@ -167,13 +167,13 @@
 
         <!-- GR meter -->
         <div class="gr-meter" title="Gain Reduction">
-            <div class="gr-bar" style="height: {grBarHeight}px;" />
+            <div class="gr-bar" style="height: {grBarHeight}px;"></div>
             <span class="gr-label">{grDisplay} dB</span>
             <span class="gr-title">GR</span>
         </div>
     </div>
 
-    <div style="height: 8px;" />
+    <div style="height: 8px;"></div>
 
     <!-- Parameter inputs -->
     <InputRow>

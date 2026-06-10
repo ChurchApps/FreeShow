@@ -29,7 +29,7 @@
 </script>
 
 <div class={$$props.class} bind:this={container}>
-    <slot {intersecting} />
+    <slot {intersecting}></slot>
 </div>
 
 <style>

@@ -77,7 +77,7 @@
             {/if}
         </p>
 
-        <div class="divider" />
+        <div class="divider"></div>
 
         <MaterialButton on:click={updateCalendar} style="white-space: nowrap;min-width: 100px;">
             <Icon id="calendar" />
@@ -86,7 +86,7 @@
     {:else if show?.reference?.type === "scripture"}
         <p data-title={data.version || ""}><T id="tabs.scripture" />: {data.version || ""}</p>
 
-        <div class="divider" />
+        <div class="divider"></div>
 
         <MaterialButton on:click={openTab} style="white-space: nowrap;min-width: 100px;">
             <Icon id="scripture" />
@@ -102,7 +102,7 @@
             {/if}
         </p>
 
-        <div class="divider" />
+        <div class="divider"></div>
 
         <MaterialButton title="Open Lessons.church Website" on:click={() => openURL("https://lessons.church")} style="white-space: nowrap;min-width: 150px;">
             <Icon id="book" />
@@ -113,7 +113,7 @@
             Canva: {data.presentationName || show.name || ""}
         </p>
 
-        <div class="divider" />
+        <div class="divider"></div>
 
         <MaterialButton title="show.update" icon="refresh" disabled={syncingCanva} on:click={refreshCanva}>
             <T id="show.update" />

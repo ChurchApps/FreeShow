@@ -1207,14 +1207,14 @@
             <Icon size={isActiveInOutput ? 1.1 : 1.3} id={isActiveInOutput ? "refresh" : "play"} white={!isActiveInOutput} />
         </MaterialButton>
 
-        <div class="divider" />
+        <div class="divider"></div>
 
         <MaterialButton disabled={historyOpened} on:click={() => scriptureMode.set($scriptureMode === "list" ? "grid" : "list")} title="show.{[$scriptureMode === 'grid' ? 'grid' : 'list']}">
             <Icon size={1.3} id={$scriptureMode === "grid" ? "grid" : "list"} white />
         </MaterialButton>
 
         {#if open || $scriptureHistoryUsed}
-            <div class="divider" />
+            <div class="divider"></div>
 
             <MaterialButton
                 disabled={!currentHistory.length && !historyOpened}

@@ -203,14 +203,14 @@
 
 <div id={pickerId} bind:this={colorElem} class="textfield {disabled ? 'disabled' : ''}" aria-disabled={disabled} tabindex={disabled ? -1 : 0} style="--outline-color: {getContrast(hexValue)};{$$props.style || ''}" on:keydown={handleKey}>
     {#if !alwaysVisible}
-        <div class="background" on:click={togglePicker} />
+        <div class="background" on:click={togglePicker}></div>
 
         <div class="color-display" data-title="{noLabel ? translateText(label) + (value ? ': ' : '') : ''}<i>{value}</i>" style="background:{value || 'transparent'};{noLabel ? 'margin-left: var(--margin);' : ''}" on:click={togglePicker}></div>
 
         {#if !noLabel || value === ""}
             <label>{@html translateText(label)}</label>
         {/if}
-        <span class="underline" />
+        <span class="underline"></span>
     {/if}
 
     {#if pickerOpen || alwaysVisible}

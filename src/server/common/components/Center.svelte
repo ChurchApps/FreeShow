@@ -4,7 +4,7 @@
 </script>
 
 <div style="font-size: {size}em;" class:faded>
-    <slot />
+    <slot></slot>
 </div>
 
 <style>

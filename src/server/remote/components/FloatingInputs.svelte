@@ -4,7 +4,7 @@
 </script>
 
 <div class="row {side}" style="bottom: {bottom}px;">
-    <slot />
+    <slot></slot>
 </div>
 
 <style>

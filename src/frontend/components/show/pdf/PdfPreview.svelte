@@ -193,7 +193,7 @@
             </div>
 
             <div class="slide" style={transparentOutput ? "" : `background-color: ${currentStyle.background};`} tabindex={0} role="button" on:click={(e) => outputPdf(e, i)} on:keydown={triggerClickOnEnterSpace}>
-                <canvas bind:this={canvases[i]} />
+                <canvas bind:this={canvases[i]}></canvas>
             </div>
         </div>
     {/each}

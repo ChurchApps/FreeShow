@@ -6,7 +6,7 @@
 </script>
 
 <div class="list" style="margin-bottom: {bottom}px;margin-top: {top}px;{$$props.style || ''}">
-    <slot />
+    <slot></slot>
 </div>
 
 <style>

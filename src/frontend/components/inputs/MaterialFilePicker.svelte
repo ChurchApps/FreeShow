@@ -56,7 +56,7 @@
 </script>
 
 <div class="textfield {disabled ? 'disabled' : ''}" style={$$props.style || null} data-title={value || translateText(title || "edit.choose_media")}>
-    <div class="background" />
+    <div class="background"></div>
 
     <div
         class="input edit button-trigger"
@@ -98,7 +98,7 @@
     {#if !noLabel}
         <label class:selected={value}>{@html translateText(label)}</label>
     {/if}
-    <span class="underline" />
+    <span class="underline"></span>
 
     {#if allowEmpty && value}
         <div class="remove" style={showThumbnail && value ? "right: 56px;" : ""}>

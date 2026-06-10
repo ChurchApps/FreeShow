@@ -137,14 +137,14 @@
     {#each items as item, i}
         {#if i === 0}
             <div bind:this={customCard} class="card" style="width: {100 / columns}%;">
-                <slot {item} />
+                <slot {item}></slot>
             </div>
         {:else if i > lazyLoader || i < firstItemIndex || i > lastItemIndex}
             <div style="width: {100 / columns}%;height: {cardHeight}px;"></div>
         {:else}
             <!-- WIP fade in -->
             <div class="card" style="width: {100 / columns}%;">
-                <slot {item} />
+                <slot {item}></slot>
             </div>
         {/if}
     {/each}

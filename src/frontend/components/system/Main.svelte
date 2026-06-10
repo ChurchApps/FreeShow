@@ -11,7 +11,7 @@
 </script>
 
 <div class="main" bind:offsetWidth={width} bind:offsetHeight={height}>
-    <slot {width} {height} {resolution} />
+    <slot {width} {height} {resolution}></slot>
 </div>
 
 <style>

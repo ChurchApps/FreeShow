@@ -113,7 +113,7 @@
 <div class="filter-container" style="--accent: #ad8652;" class:disabled>
     <MaterialToggleSwitch label="settings.enabled" checked={config.enabled} on:change={handleEnable} />
 
-    <div style="height: 5px;" />
+    <div style="height: 5px;"></div>
 
     <!-- Frequency response visualisation -->
     <div class="viz-wrap" class:viz-disabled={!config.enabled}>
@@ -144,7 +144,7 @@
         </div>
     </div>
 
-    <div style="height: 8px;" />
+    <div style="height: 8px;"></div>
 
     <InputRow>
         <MaterialDropdown label="audio.filter_type" value={config.type} options={filterTypeOptions} on:change={handleTypeChange} {disabled} />

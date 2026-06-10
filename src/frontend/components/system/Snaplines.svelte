@@ -98,7 +98,7 @@
 <svelte:window on:mousemove={mousemove} on:mouseup={mouseup} />
 
 {#each lines as line}
-    <div class="line {line[0]}" style="{line[0].includes('x') ? 'left' : 'top'}: {line[1]}px;transform:translate{line[0].includes('x') ? 'X' : 'Y'}(-50%);" />
+    <div class="line {line[0]}" style="{line[0].includes('x') ? 'left' : 'top'}: {line[1]}px;transform:translate{line[0].includes('x') ? 'X' : 'Y'}(-50%);"></div>
 {/each}
 
 <style>

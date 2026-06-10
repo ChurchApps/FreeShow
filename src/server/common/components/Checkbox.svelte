@@ -2,7 +2,7 @@
 
 <label class="switch" class:disabled={$$props.disabled}>
     <input id={$$props.id} type="checkbox" style={$$props.style} checked={$$props.checked || false} disabled={$$props.disabled} on:change />
-    <div class:on={$$props.checked || false} />
+    <div class:on={$$props.checked || false}></div>
 </label>
 
 <style>

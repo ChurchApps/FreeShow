@@ -125,7 +125,7 @@
         {#if context}
             <span class="meter">
                 <!-- <p>L</p> -->
-                <div style="width: {100 - soundLevel}%" />
+                <div style="width: {100 - soundLevel}%"></div>
             </span>
         {/if}
     </Button>

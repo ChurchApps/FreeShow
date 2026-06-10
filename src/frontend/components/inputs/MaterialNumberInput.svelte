@@ -153,7 +153,7 @@
 </script>
 
 <div class="textfield numberfield {center ? 'centered' : ''} {disabled ? 'disabled' : ''}" style={$$props.style || null}>
-    <div class="background" />
+    <div class="background"></div>
 
     <div class="input-wrapper">
         <input bind:this={inputElem} value={rawInput} type="text" {id} {placeholder} {disabled} {autofocus} {step} {min} {max} class="input edit" class:noValue={hideWhenZero && !padLength && !numberValue} on:keydown={handleKeyDown} on:input={handleInput} on:change={handleChange} inputmode="decimal" autocomplete="off" />
@@ -174,7 +174,7 @@
 
     <label for={id} class:value-filled={!hideWhenZero || padLength || (numberValue !== null && numberValue !== undefined && numberValue !== 0)}>{@html translateText(label)}</label>
 
-    <span class="underline" style={currentProgress ? `width: ${currentProgress}%;transform: initial;` : ""} />
+    <span class="underline" style={currentProgress ? `width: ${currentProgress}%;transform: initial;` : ""}></span>
 
     {#if showSlider}
         <div class="slider-wrapper" style="padding-right: {defaultValue === null ? 40 : 70}px;">

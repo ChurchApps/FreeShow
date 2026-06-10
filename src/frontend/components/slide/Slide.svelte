@@ -263,7 +263,7 @@
 <div class="main" class:active class:focused style="{output?.color ? 'outline: 2px solid ' + getOutputColor(output.color) + ';' : ''}width: {viewMode === 'grid' || viewMode === 'simple' || viewMode === 'groups' || noQuickEdit ? 100 / columns : 100}%;">
     <!-- group box -->
     {#if $fullColors}
-        <div class="group_box" style="background-color: {color};" />
+        <div class="group_box" style="background-color: {color};"></div>
     {/if}
     <!-- icons -->
     {#if icons && !altKeyPressed && viewMode !== "simple" && !$focusMode}
@@ -272,7 +272,7 @@
     {/if}
     <!-- content -->
     <div class="slide context #{isLocked ? 'default' : $focusMode ? 'slideFocus' : name === null ? 'slideChild' : 'slide'}" class:disabled={layoutSlide.disabled} class:afterEnd={endIndex !== null && index > endIndex} {style} role="none" on:click>
-        <div class="hover overlay" />
+        <div class="hover overlay"></div>
         <!-- <DropArea id="slide" hoverTimeout={0} file> -->
         <div style="width: 100%;height: 100%;">
             <SelectElem style={colorStyle} id="slide" data={{ index, showId }} draggable={!$focusMode && !isLocked} shiftRange={layoutSlides.map((_, index) => ({ index, showId }))} onlyRightClickSelect={$focusMode} selectable={!isLocked} trigger={list ? "column" : "row"}>
@@ -392,21 +392,21 @@
                     {#if output?.maxLines}
                         <div class="lineProgress">
                             <!-- WIP line custom cleared slide cache color does not work -->
-                            <div class="fill" style="width: {((output.line + 1) / output.maxLines) * 100}%;background-color: {getOutputColor(output.color)};" />
+                            <div class="fill" style="width: {((output.line + 1) / output.maxLines) * 100}%;background-color: {getOutputColor(output.color)};"></div>
                         </div>
                     {/if}
 
-                    <div data-title={name || ""} style="height: 2px;" />
+                    <div data-title={name || ""} style="height: 2px;"></div>
                 {:else if viewMode !== "lyrics" || noQuickEdit}
                     <!-- style="width: {resolution.width * zoom}px;" -->
                     <div class="label" data-title={removeTagsAndContent(name || "")} style={$fullColors ? `background-color: ${color};color: ${getContrast(color || "")};` : `border-bottom: 2px solid ${color || "var(--primary-darkest)"};`}>
                         {#if name === null && $fullColors && $activePage === "show"}
                             <!-- WIP this works fine without full colors, but is it neccesary? (UI vs UX) -->
-                            <div class="childLink" style="background-color: {color};" class:full={$fullColors} />
+                            <div class="childLink" style="background-color: {color};" class:full={$fullColors}></div>
                         {/if}
                         {#if output?.maxLines}
                             <div class="lineProgress">
-                                <div class="fill" style="width: {((output.line + 1) / output.maxLines) * 100}%;background-color: {getOutputColor(output.color)};" />
+                                <div class="fill" style="width: {((output.line + 1) / output.maxLines) * 100}%;background-color: {getOutputColor(output.color)};"></div>
                             </div>
                         {/if}
                         {#if slideTimer && output}

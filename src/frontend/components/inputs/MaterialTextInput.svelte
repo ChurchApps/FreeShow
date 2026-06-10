@@ -77,7 +77,7 @@
 </script>
 
 <div class="textfield {center ? 'centered' : ''} {disabled ? 'disabled' : ''}" data-title={translateText(title)} style={$$props.style || null}>
-    <div class="background" />
+    <div class="background"></div>
 
     {#if type === "password" && !showText}
         <input bind:value type="password" {id} {placeholder} {disabled} {autofocus} use:select use:blurOnEnter class="input edit" on:input={input} on:change={change} on:keydown />
@@ -87,7 +87,7 @@
 
     <label for={id}>{@html translateText(label, $dictionary)}</label>
 
-    <span class="underline" />
+    <span class="underline"></span>
 
     {#if autofill}
         <div class="remove">

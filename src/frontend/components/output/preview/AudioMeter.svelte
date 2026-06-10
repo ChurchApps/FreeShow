@@ -50,10 +50,10 @@
             <div style="height: {100 - ($audioChannels.volume?.right || 0)}%" />
         </span> -->
     <span class="left">
-        <div style="height: {100 - getDBValue($audioChannels[0]?.dB)}%" />
+        <div style="height: {100 - getDBValue($audioChannels[0]?.dB)}%"></div>
     </span>
     <span class="right">
-        <div style="height: {100 - getDBValue($audioChannels[1]?.dB)}%" />
+        <div style="height: {100 - getDBValue($audioChannels[1]?.dB)}%"></div>
     </span>
 </div>
 

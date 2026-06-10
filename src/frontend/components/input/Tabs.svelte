@@ -61,7 +61,7 @@
 
                 <SelectElem {id} data={{ id: tab.id }} fill>
                     <button {style} class="tab {getTabClass(tab)}" class:active on:click={() => open(tab.id)}>
-                        <slot {tab} />
+                        <slot {tab}></slot>
                     </button>
                 </SelectElem>
             {/each}

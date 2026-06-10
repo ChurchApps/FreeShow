@@ -33,10 +33,10 @@
 </script>
 
 <div class="textfield {center ? 'centered' : ''} {disabled ? 'disabled' : ''} {$$props.class || ''}">
-    <div class="background" />
-    <textarea bind:value {id} {placeholder} {disabled} {autofocus} use:select class="input edit" on:input={input} on:change={change} {rows} />
+    <div class="background"></div>
+    <textarea bind:value {id} {placeholder} {disabled} {autofocus} use:select class="input edit" on:input={input} on:change={change} {rows}></textarea>
     <label for={id}>{translateText(label)}</label>
-    <span class="underline" />
+    <span class="underline"></span>
 </div>
 
 <style>
