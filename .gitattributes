@@ -1,0 +1,6 @@
+# Mark the lockfile as generated so GitHub collapses it in diffs.
+# NOTE: GitHub reads this from the repository's DEFAULT branch, so it only takes
+# effect for PRs once this file is merged to the default branch — not within the PR that adds it.
+# It collapses the rendered diff; it does NOT remove the file from a PR's +/- line counts
+# (GitHub has no supported way to do that).
+package-lock.json linguist-generated=true

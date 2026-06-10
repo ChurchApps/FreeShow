@@ -13,8 +13,22 @@ import { checkIfMatching, clone, wait } from "../utils/helpers"
 import { renameShows } from "../utils/shows"
 
 let isSaving = false
+let pendingSave: SaveData | null = null
+// when a save is requested while one is already running, keep the latest data and run it afterwards
+// (previously concurrent saves were silently dropped, which could lose newer data)
+function finishSave() {
+    isSaving = false
+    if (pendingSave) {
+        const next = pendingSave
+        pendingSave = null
+        void save(next)
+    }
+}
 export async function save(data: SaveData) {
-    if (isSaving) return
+    if (isSaving) {
+        pendingSave = data
+        return
+    }
     isSaving = true
 
     // auto backup right after startup does not need to write again
@@ -22,7 +36,7 @@ export async function save(data: SaveData) {
     if (isAutoBackupOnly) {
         startBackup({ customTriggers: data.customTriggers })
         sendToMain(ToMain.SAVE2, { closeWhenFinished: false, customTriggers: data.customTriggers })
-        isSaving = false
+        finishSave()
         return
     }
 
@@ -103,7 +117,7 @@ export async function save(data: SaveData) {
     if (data.closeWhenFinished) await wait(300) // make sure files are written before closing
     if (!reset) sendToMain(ToMain.SAVE2, { closeWhenFinished: data.closeWhenFinished, customTriggers: data.customTriggers })
 
-    isSaving = false
+    finishSave()
 }
 
 function isValidJSON(object: any) {

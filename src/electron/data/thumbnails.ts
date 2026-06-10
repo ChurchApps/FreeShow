@@ -74,6 +74,9 @@ export async function getThumbnail(data: { input: string; size: number }) {
 
     await waitUntilValueIsDefined(() => !currentlyGenerating.has(mediaId), 50, 10000)
 
+    // safety net: if generation timed out without clearing the lock, release it so this media isn't blocked forever
+    if (currentlyGenerating.has(mediaId)) currentlyGenerating.delete(mediaId)
+
     return finish(outputPath)
 
     function finish(output: string) {
