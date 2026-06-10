@@ -36,7 +36,7 @@
 
     $: existingActionsFiltered = choosePopup ? existingActions : existingActions.filter((a) => a !== actionId)
 
-    let dispatch = createEventDispatcher()
+    const dispatch = createEventDispatcher()
     function changeAction(data: any) {
         dispatch("change", data)
         pickAction = false
@@ -77,10 +77,10 @@
     $: ACTIONS = [
         ...Object.keys(API_ACTIONS)
             .map((id) => {
-                let data = actionData[id] || {}
-                let name = translateText(data.name || "") || id
-                let icon = data.icon || "actions"
-                let common = !!data.common
+                const data = actionData[id] || {}
+                const name = translateText(data.name || "") || id
+                const icon = data.icon || "actions"
+                const common = !!data.common
 
                 if (data.SECTION) previousSection = data.SECTION
                 return { id, name, icon, common, section: previousSection }
@@ -153,7 +153,7 @@
     }
 
     $: dataInputs = !!(input && actionId && !pickAction && !full)
-    let dataOpened = !Object.keys(actionValue).length || !existingActions?.length // || existingActions.length < 2
+    const dataOpened = !Object.keys(actionValue).length || !existingActions?.length // || existingActions.length < 2
     let dataMenuOpened = false
 
     // $: isLast = actionNameIndex >= existingActionsFiltered.length
@@ -172,14 +172,14 @@
 
         searchValue = formatSearch(value || "")
 
-        let actionsList = clone(ACTIONS) //.filter((a) => (commonOnly ? a.common : true))
+        const actionsList = clone(ACTIONS) // .filter((a) => (commonOnly ? a.common : true))
 
         if (searchValue.length < 2) {
             searchedActions = actionsList
             return
         }
 
-        let currentActionsList = actionsList // searchedActions
+        const currentActionsList = actionsList // searchedActions
         // reset if search value changed
         // if (!searchValue.includes(previousSearchValue)) currentActionsList = list
 

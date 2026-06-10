@@ -8,7 +8,7 @@
     export let item
     $: captionData = item?.captions || {}
 
-    let preview = $currentWindow !== "output"
+    const preview = $currentWindow !== "output"
 
     // custom audio input... (has to be changed in browser)
 
@@ -56,9 +56,9 @@
         let customStyle = captionData.style || ""
 
         let background = "" // "black"
-        let bgIndex = customStyle.lastIndexOf("background")
+        const bgIndex = customStyle.lastIndexOf("background")
         if (bgIndex > -1) {
-            let bgEnd = customStyle.indexOf(";", bgIndex)
+            const bgEnd = customStyle.indexOf(";", bgIndex)
             background = customStyle.slice(bgIndex, bgEnd)
             customStyle = customStyle.slice(0, bgIndex) + customStyle.slice(bgEnd + 1)
         }

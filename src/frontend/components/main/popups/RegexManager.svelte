@@ -28,7 +28,7 @@
     }
 
     function goBack() {
-        let previousPopup = $popupData.previousPopup
+        const previousPopup = $popupData.previousPopup
         if ($popupData.previousData) popupData.set($popupData.previousData)
         if (previousPopup) activePopup.set(previousPopup)
     }

@@ -60,7 +60,7 @@
         }, timeout + 400)
     }
 
-    let dispatch = createEventDispatcher()
+    const dispatch = createEventDispatcher()
     function wheel(event: any) {
         dispatch("wheel", { event })
         t = null

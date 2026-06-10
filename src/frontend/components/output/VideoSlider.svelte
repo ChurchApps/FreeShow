@@ -32,9 +32,9 @@
     let time = "00:00"
 
     function move(e: any) {
-        let padding = 3.5
-        let width: number = e.target.offsetWidth - padding * 2
-        let offset: number = e.offsetX - padding
+        const padding = 3.5
+        const width: number = e.target.offsetWidth - padding * 2
+        const offset: number = e.offsetX - padding
         let percentage: number = offset / width
 
         if (percentage < 0) percentage = 0
@@ -53,7 +53,7 @@
 
         if (!toOutput) return
 
-        let timeValues: any = {}
+        const timeValues: any = {}
         activeOutputIds.forEach((id) => {
             timeValues[id] = videoTime
         })
@@ -64,12 +64,12 @@
     const sendToOutput = (e: any = null) => {
         if (!movePause || !videoData.paused) return
 
-        let value = e?.target?.value
+        const value = e?.target?.value
 
         if (value !== undefined) {
             videoTime = Number(value)
             if (toOutput) {
-                let timeValues: any = {}
+                const timeValues: any = {}
                 activeOutputIds.forEach((id) => {
                     timeValues[id] = videoTime
                 })
@@ -89,7 +89,7 @@
 
         if (!toOutput) return
 
-        let dataValues: any = {}
+        const dataValues: any = {}
         activeOutputIds.forEach((id) => {
             dataValues[id] = { ...videoData, muted: id !== unmutedId ? true : videoData.muted }
         })

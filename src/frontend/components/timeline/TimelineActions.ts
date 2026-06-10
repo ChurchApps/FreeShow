@@ -1,4 +1,5 @@
-import { get, Unsubscriber } from "svelte/store"
+import type { Unsubscriber } from "svelte/store"
+import { get } from "svelte/store"
 import { uid } from "uid"
 import type { TimelineAction } from "../../../types/Show"
 import { activeEdit, activeProject, activeShow, projects, selected, shows, showsCache } from "../../stores"
@@ -258,7 +259,7 @@ export class TimelineActions {
             for (let i = 0; i < files.length; i++) {
                 const file = files[i]
 
-                let audioFiles: { path: string; name: string }[] = []
+                const audioFiles: { path: string; name: string }[] = []
                 if (file.type.startsWith("audio/") || getMediaType(getExtension(file.name)) === "audio") {
                     const path = window.api.showFilePath(file)
                     audioFiles.push({ path, name: file.name })

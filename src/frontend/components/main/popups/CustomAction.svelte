@@ -6,7 +6,7 @@
 
     let currentAction = _show().get("settings.customAction") || ""
 
-    let actionOptions = Object.entries($actions)
+    const actionOptions = Object.entries($actions)
         .map(([id, a]) => ({ id, name: a.name }))
         .sort((a, b) => a.name?.localeCompare(b.name))
 

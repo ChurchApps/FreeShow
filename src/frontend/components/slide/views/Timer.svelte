@@ -26,7 +26,7 @@
     // $: currentTime = getCurrentTime()
     $: timeValue = joinTimeBig(typeof currentTime === "number" ? currentTime : 0, item?.timer?.showHours !== false)
 
-    let ms = 0
+    const ms = 0
     // let msInterval: NodeJS.Timeout | null = null
     // $: if (showMs && timeValue && mounted) runMs()
     // function runMs() {
@@ -75,8 +75,8 @@
             return time <= offset
         }
 
-        let start = timer.start || 0
-        let end = timer.end || 0
+        const start = timer.start || 0
+        const end = timer.end || 0
 
         if (start < end) return time + offset > end
         return time - offset < end

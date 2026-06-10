@@ -36,7 +36,7 @@
         if (searchValue.length > 1) fullFilteredVideos = fullFilteredVideos.filter((a) => filter(a.name).includes(searchValue))
     }
 
-    let loaded: { [key: string]: boolean } = {}
+    const loaded: { [key: string]: boolean } = {}
 
     // thumbnail
     // https://stackoverflow.com/a/20542029

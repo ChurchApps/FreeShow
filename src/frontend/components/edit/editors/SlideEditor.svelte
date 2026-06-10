@@ -59,7 +59,7 @@
     $: layoutSlide = ref?.[$activeEdit.slide!]?.data || {}
     // get backgruond
     $: bgId = layoutSlide.background || null
-    let loadFullImage = false // true
+    const loadFullImage = false // true
 
     // get ghost background
     $: if (!bgId && !Slide?.settings?.backgroundImage) {
@@ -122,12 +122,12 @@
         //     updateStyles()
         // }, CHANGE_POS_TIME)
 
-        let items = currentShow?.slides?.[ref[$activeEdit.slide || 0]?.id]?.items || []
-        let values: string[] = []
+        const items = currentShow?.slides?.[ref[$activeEdit.slide || 0]?.id]?.items || []
+        const values: string[] = []
         active.forEach((id) => {
-            let item = items[id]
+            const item = items[id]
             if (item) {
-                let styles = getStyles(item.style)
+                const styles = getStyles(item.style)
                 let textStyles = ""
 
                 Object.entries(newStyles).forEach(([key, value]) => (styles[key] = value.toString()))
@@ -137,10 +137,10 @@
             }
         })
 
-        let slideId = ref[$activeEdit.slide || 0]?.id
+        const slideId = ref[$activeEdit.slide || 0]?.id
         if (!slideId) return
 
-        let activeItems = [...active]
+        const activeItems = [...active]
 
         let historyShow = $activeShow
         // focus mode
@@ -266,12 +266,12 @@
         })
     )
 
-    let profile = getAccess("shows")
+    const profile = getAccess("shows")
     $: isGroupLocked = !!Slide?.locked // WIP get group slide
     $: isLocked = currentShow?.locked || isGroupLocked || profile.global === "read" || profile[currentShow?.category || ""] === "read"
 
     // remove overflow if scrollbars are flickering over 25 times per second
-    let hideOverflow = false
+    const hideOverflow = false
     // let changedTimes: number = 0
     // $: if (ratio) changedTimes++
     // $: if (!ratioTimeout && changedTimes > 2) startTimeout()
@@ -295,7 +295,7 @@
 
     // NOTES
 
-    let bottomHeight = 40
+    const bottomHeight = 40
 
     $: notes = Slide?.notes?.replaceAll("\n", "&nbsp;")
     $: notesVisible = !!notes // && !chordsMode

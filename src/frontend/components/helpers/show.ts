@@ -66,14 +66,14 @@ export function openShow(showId: string) {
     // set active show in project
     let pos: number | null = null
     if (get(activeProject) !== null) {
-        let i = get(projects)[get(activeProject) || ""]?.shows?.findIndex((p) => p.id === showId) ?? -1
+        const i = get(projects)[get(activeProject) || ""]?.shows?.findIndex((p) => p.id === showId) ?? -1
         if (i > -1) pos = i
     }
 
-    let newShow: any = { id: showId, type: "show" }
+    const newShow: any = { id: showId, type: "show" }
 
     if (get(focusMode)) {
-        let inProject = get(projects)[get(activeProject) || ""]?.shows?.find((p) => p.id === showId)
+        const inProject = get(projects)[get(activeProject) || ""]?.shows?.find((p) => p.id === showId)
         if (inProject) {
             activeFocus.set({ id: showId, index: pos ?? undefined })
             return

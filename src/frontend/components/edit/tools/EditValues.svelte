@@ -82,8 +82,8 @@
         if (!style) return ""
 
         // sort alphabetically
-        let split = style.split(";").filter((a) => a)
-        let sorted = split.sort((a, b) => a.localeCompare(b))
+        const split = style.split(";").filter((a) => a)
+        const sorted = split.sort((a, b) => a.localeCompare(b))
         style = sorted.join(";") + ";"
 
         style = style.replaceAll(";", ";\n").replaceAll(": ", ":").replaceAll(":", ": ").trim()
@@ -95,7 +95,7 @@
     function toggle(input: any) {
         let value = styles[input.key || ""] || ""
 
-        let exists: number = value.indexOf(input.value)
+        const exists: number = value.indexOf(input.value)
         if (exists > -1) value = value.slice(0, exists) + value.substring(exists + input.value.length)
         else value = value + " " + input.value
         value = value.trim()
@@ -106,7 +106,7 @@
     }
 
     function radio(input: any) {
-        let value = input.value
+        const value = input.value
         input.values.value = value
         dispatch("change", clone(input))
     }
@@ -143,7 +143,7 @@
                 const allKeyValues = sections[sectionId]?.inputs.flat().filter((a) => a.key === input.key)
                 const sortedKeys = allKeyValues.sort((a, b) => a.valueIndex! - b.valueIndex!)
 
-                let currentValue = styles[input.key || ""] || ""
+                const currentValue = styles[input.key || ""] || ""
                 let arr
                 if (input.key === "box-shadow" || input.key === "text-shadow") arr = parseShadowValue(currentValue)
                 else arr = currentValue.split(" ").filter(Boolean)
@@ -169,7 +169,7 @@
 
         // reset text shadow if unchanged & setting text color to gradient
         // there is also a different check to remove it if gradient & shadow does not exist (but only in the output)
-        if (input.key === "color" && item.lines && sections["shadow"] && !hasChangedValues("shadow") && value.includes("gradient")) {
+        if (input.key === "color" && item.lines && sections.shadow && !hasChangedValues("shadow") && value.includes("gradient")) {
             toggleSection("shadow")
         }
 
@@ -190,8 +190,8 @@
     function hasChangedValues(id, _updater: any = null) {
         if (!sections[id]) return
 
-        let allInputsToCheck: EditInput2[] = []
-        let filterOut: string[] = []
+        const allInputsToCheck: EditInput2[] = []
+        const filterOut: string[] = []
 
         sections[id].inputs.flat().forEach((input) => {
             if (filterOut.includes(input.key || "")) return

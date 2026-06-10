@@ -24,7 +24,7 @@
         // byline: false,
     }
 
-    let dispatch = createEventDispatcher()
+    const dispatch = createEventDispatcher()
     let iframe = null
     let player = null
     let loaded = false
@@ -76,7 +76,7 @@
 
     let seeking = false
     function seekTo(time) {
-        let isPlaying = !videoData.paused
+        const isPlaying = !videoData.paused
         videoData.paused = true
         seeking = true
         setTimeout(() => {

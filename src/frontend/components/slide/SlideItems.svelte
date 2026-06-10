@@ -23,7 +23,7 @@
     export let item: Item
 
     export let edit = false
-    export let itemElem: HTMLElement | undefined = undefined
+    export let itemElem: HTMLElement | undefined
 
     export let slideIndex = 0
     export let preview = false
@@ -70,7 +70,7 @@
             loopStop = null
         }, 200)
 
-        let textQuery = item.type === "slide_tracker" ? ".progress div" : ""
+        const textQuery = item.type === "slide_tracker" ? ".progress div" : ""
         // timeout to update size after content change (e.g. Clock seconds)
         setTimeout(() => {
             // item.textFit || (always growToFit)

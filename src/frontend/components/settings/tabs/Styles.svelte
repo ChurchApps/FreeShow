@@ -43,9 +43,9 @@
     if (!Object.keys($styles).length) createStylesFromOutputs()
     function createStylesFromOutputs() {
         Object.keys($outputs).forEach((outputId) => {
-            let output = $outputs[outputId]
+            const output = $outputs[outputId]
 
-            let currentOutputStyle = output.show || {}
+            const currentOutputStyle = output.show || {}
             if (!Object.keys(currentOutputStyle)?.length) return
 
             currentOutputStyle.name = output.name
@@ -76,9 +76,9 @@
     function getAspectRatio(resolution: Resolution | undefined): AspectRatio {
         if (!resolution || (resolution.width === 1920 && resolution.height === 1080)) return { width: 16, height: 9 }
 
-        let ratio = resolution
+        const ratio = resolution
         if (ratio.width > 100 || ratio.height > 100) {
-            let width = Number((ratio.width / ratio.height).toFixed(2))
+            const width = Number((ratio.width / ratio.height).toFixed(2))
             if (width === 1.78) return { width: 16, height: 9 }
             if (width === 1.33) return { width: 4, height: 3 }
             return { width, height: 1 }
@@ -154,7 +154,7 @@
     function useStyle() {
         outputs.update((a) => {
             Object.keys(a).forEach((outputId) => {
-                let output = a[outputId]
+                const output = a[outputId]
                 if (output.stageOutput || !output.enabled) return
 
                 output.style = styleId

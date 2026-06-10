@@ -45,7 +45,7 @@
     }
 
     function setQuickAccess(key: string, value: string | number, asMetadata = false) {
-        let quickAccess = $showsCache[$activeShow!.id].quickAccess || {}
+        const quickAccess = $showsCache[$activeShow!.id].quickAccess || {}
 
         if (asMetadata) {
             if (!quickAccess.metadata) quickAccess.metadata = {}
@@ -65,7 +65,7 @@
     }
 
     function updateData(data, key) {
-        let override = "show#" + ($activeShow?.id || "") + "_" + key
+        const override = "show#" + ($activeShow?.id || "") + "_" + key
         history({ id: "UPDATE", newData: { data, key }, oldData: { id: $activeShow?.id || "" }, location: { page: "show", id: "show_key", override } })
     }
 

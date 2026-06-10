@@ -166,7 +166,7 @@ async function toDataURL(url: string): Promise<string> {
 // download any online media
 // get located media path & generated thumbnail
 const replacedPaths = new Map<string, { path: string; altPath?: string; thumbnail: string }>()
-let currentlyGetting: string[] = []
+const currentlyGetting: string[] = []
 export async function getMedia(path: string, size: number = mediaSize.drawerSize) {
     if (typeof path !== "string") return null
 
@@ -398,7 +398,7 @@ export function getMediaLayerType(path: string, style: MediaStyle | null): "" | 
     if (style?.videoType) return style.videoType as "background" | "foreground"
 
     // get multiple matching folder paths if children are added
-    let allMatchingFolderPaths: string[] = []
+    const allMatchingFolderPaths: string[] = []
     const mediaFolderPaths = Object.values(get(mediaFolders)).map((a) => a.path || "")
     mediaFolderPaths.forEach((folderPath) => {
         if (path.startsWith(folderPath)) allMatchingFolderPaths.push(folderPath)
@@ -892,7 +892,7 @@ function compressImage(dataUrl: string, maxWidth = 1920, maxHeight = 1080, quali
 
 export function countFolderMediaItems(folderPath: string, folderContents: FileFolder[]) {
     const folderFiles = (folderContents.find((a) => a.path === folderPath) as any)?.files || []
-    let count = { folder: 0, audio: 0, video: 0, image: 0 }
+    const count = { folder: 0, audio: 0, video: 0, image: 0 }
 
     folderFiles.forEach((filePath: string) => {
         if (filePath === folderPath) return

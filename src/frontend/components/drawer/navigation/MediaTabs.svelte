@@ -83,7 +83,7 @@
     function addFolder() {
         sendMain(Main.OPEN_FOLDER, { channel: PICK_ID })
     }
-    let listenerId = receiveToMain(ToMain.OPEN_FOLDER2, (data) => {
+    const listenerId = receiveToMain(ToMain.OPEN_FOLDER2, (data) => {
         if (data.channel !== PICK_ID || !data.path) return
         addDrawerFolder(data, "media")
     })

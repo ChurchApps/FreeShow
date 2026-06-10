@@ -67,7 +67,8 @@
     function angleFromEvent(e: MouseEvent | TouchEvent, rect: DOMRect) {
         const cx = rect.left + rect.width / 2
         const cy = rect.top + rect.height / 2
-        let clientX, clientY
+        let clientX
+        let clientY
         if (e instanceof MouseEvent) {
             clientX = e.clientX
             clientY = e.clientY
@@ -130,7 +131,7 @@
         if (!e.ctrlKey && !e.metaKey) return
         e.preventDefault()
 
-        let stepAmount = step * (e.shiftKey ? 10 : 1)
+        const stepAmount = step * (e.shiftKey ? 10 : 1)
 
         e.deltaY < 0 ? increment(stepAmount) : decrement(stepAmount)
 

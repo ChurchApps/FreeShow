@@ -16,13 +16,13 @@
     let value = $popupData.value || ""
     if (!value.includes("gradient")) value = DEFAULT
 
-    let parsedValue = splitGradientValue(value)
+    const parsedValue = splitGradientValue(value)
 
     let newValue = ""
     function setNewValue() {
-        let currentType = activeType
-        let currentDeg = currentType === "radial-gradient" ? activeShape : `${parsedValue.deg}deg`
-        let currentColors = parsedValue.colors?.map(({ color, pos }) => `${color} ${pos}%`)
+        const currentType = activeType
+        const currentDeg = currentType === "radial-gradient" ? activeShape : `${parsedValue.deg}deg`
+        const currentColors = parsedValue.colors?.map(({ color, pos }) => `${color} ${pos}%`)
         newValue = `${currentType}(${currentDeg},${currentColors.join(",")})`
     }
     $: if (activeType || activeShape || parsedValue) setNewValue()
@@ -46,7 +46,7 @@
     let activeShape = parsedValue.shape || "circle"
 
     function moveUp(index: number) {
-        let currentColor = parsedValue.colors[index].color
+        const currentColor = parsedValue.colors[index].color
         parsedValue.colors[index].color = parsedValue.colors[index - 1].color
         parsedValue.colors[index - 1].color = currentColor
     }

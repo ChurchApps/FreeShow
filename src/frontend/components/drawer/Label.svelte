@@ -42,9 +42,9 @@
     }
 
     function changeName(e: any, categoryId: string) {
-        let idSplit = categoryId.split("_")
-        let id: string = idSplit[0]
-        let elemId: string = idSplit[1]
+        const idSplit = categoryId.split("_")
+        const id: string = idSplit[0]
+        const elemId: string = idSplit[1]
 
         if (nameCategories[id]) nameCategories[id]({ name: e.detail.value, id: elemId })
         else console.log("Trying to rename unadded type: " + id)

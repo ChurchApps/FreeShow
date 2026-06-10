@@ -8,7 +8,7 @@
 
     let dismissed = false
     let seenUrls = new Set<string>()
-    let errorPaths = new Set<string>()
+    const errorPaths = new Set<string>()
 
     $: rawMediaEntries = Array.from($mediaDownloads.entries())
     $: mediaEntries = rawMediaEntries.filter(([url, data]) => !(data.status === "error" && errorPaths.has(url)))

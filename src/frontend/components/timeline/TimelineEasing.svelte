@@ -57,7 +57,7 @@
                     id: action.id,
                     x: (action.time / 1000) * zoomLevel,
                     y: top,
-                    action: action
+                    action
                 } as EasingPoint
             })
             .filter((p): p is EasingPoint => p !== null)

@@ -43,7 +43,7 @@
         if (disabled) return
 
         // convert , to .
-        let normalizedVal = typeof newVal === "string" ? newVal.replace(/,/g, ".") : newVal
+        const normalizedVal = typeof newVal === "string" ? newVal.replace(/,/g, ".") : newVal
 
         let calcVal: number
         if (!padLength) {
@@ -95,7 +95,7 @@
         if (!e.ctrlKey && !e.metaKey) return
         e.preventDefault()
 
-        let stepAmount = step * (e.shiftKey ? 10 : 1)
+        const stepAmount = step * (e.shiftKey ? 10 : 1)
 
         e.deltaY < 0 ? increment(stepAmount) : decrement(stepAmount)
 

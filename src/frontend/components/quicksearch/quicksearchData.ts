@@ -26,7 +26,7 @@ export function showResult(show: ShowList, rawSearchValue: string) {
     return { ...show, description }
 }
 
-let mediaCache = new Map<string, any>()
+const mediaCache = new Map<string, any>()
 export async function getMediaResults(searchValue: string, folderPaths: string[]) {
     if (!searchValue || searchValue.length < 2) return []
 
@@ -115,7 +115,7 @@ export async function getBibleResults(searchValue: string) {
 
         results.push({
             id: activeBibleId, // We use the bible ID, data will contain the reference
-            name: name,
+            name,
             icon: "scripture",
             type: "bible",
             description: versePreview,

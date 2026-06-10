@@ -93,7 +93,7 @@
         currentDepth = depth
 
         requesting++
-        let currentRequest = requesting
+        const currentRequest = requesting
         const data = await requestMain(Main.READ_FOLDER, { path, depth })
         if (!data || requesting !== currentRequest) return
 
@@ -194,7 +194,7 @@
 
     function keydown(e: KeyboardEvent) {
         if (e.key === "Enter" && searchValue.length > 1 && e.target?.closest(".search")) {
-            let file = searchedFiles.filter((a) => !a.isFolder)[0]
+            const file = searchedFiles.filter((a) => !a.isFolder)[0]
             if (!file) return
 
             // play
@@ -242,7 +242,7 @@
             if (name.includes(".")) playlistName = translateText(`category.${name.slice(name.indexOf(".") + 1)}`)
         }
 
-        let playlistId = uid()
+        const playlistId = uid()
         audioPlaylists.update((a) => {
             a[playlistId] = {
                 name: playlistName,
@@ -266,7 +266,7 @@
     $: if ($selectAllAudio) selectAll()
     function selectAll() {
         if (playlist) {
-            let data = playlist.songs.map((file, index) => {
+            const data = playlist.songs.map((file, index) => {
                 return { path: file, name: getFileName(file), index }
             })
 
@@ -275,7 +275,7 @@
             return
         }
 
-        let data = filteredFiles
+        const data = filteredFiles
             .filter((a) => getExtension(a.name))
             .map((file) => {
                 return { path: file.path, name: file.name, index: -1 }

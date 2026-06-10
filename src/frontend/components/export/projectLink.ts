@@ -4,7 +4,7 @@ import { overlays, showsCache } from "../../stores"
 import { newToast } from "../../utils/common"
 import { loadShows } from "../helpers/setShow"
 import { _show } from "../helpers/shows"
-import { LinkGenericItem, LinkOverlayItem, LinkShowItem, LinkSlide, LinkSlideGenericItem, LinkSlideItems, LinkSlideLine, LinkSlideMediaItem, LinkSlideTextItem, ProjectLink } from "./ProjectLinkTypes"
+import type { LinkGenericItem, LinkOverlayItem, LinkShowItem, LinkSlide, LinkSlideGenericItem, LinkSlideItems, LinkSlideLine, LinkSlideMediaItem, LinkSlideTextItem, ProjectLink } from "./ProjectLinkTypes"
 
 export async function exportProjectAsData(project: Project, projectId: string): Promise<ProjectLink | null> {
     if (!project) return null
@@ -43,7 +43,7 @@ export async function exportProjectAsData(project: Project, projectId: string): 
 
                         const items = mapSlideItems(slide.items || [])
 
-                        let data: LinkSlide = { items }
+                        const data: LinkSlide = { items }
                         if (group !== null) data.group = group
                         if (color) data.color = color
                         if (notes) data.notes = notes
@@ -87,11 +87,11 @@ function mapSlideItems(slideItems: any[] = []): LinkSlideItems {
         const type = slideItem.type || "text"
 
         if (type === "text") {
-            let item: LinkSlideTextItem = {
+            const item: LinkSlideTextItem = {
                 // type: "text",
                 style: encodeStyle(slideItem.style),
                 lines: (slideItem.lines || []).map((line) => {
-                    let newLine: LinkSlideLine = {
+                    const newLine: LinkSlideLine = {
                         text: (line.text || []).map((t) => ({
                             value: t.value,
                             style: encodeStyle(t.style)

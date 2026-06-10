@@ -27,7 +27,7 @@
     function setCanvas() {
         if (!canvas) return
 
-        let ctx = canvas.getContext("2d")
+        const ctx = canvas.getContext("2d")
 
         const WIDTH = frame.width
         const HEIGHT = frame.height
@@ -44,7 +44,7 @@
             if (data.id !== screen.id || !data.frame.video) return
             loaded = true
 
-            let timeSinceSent = Date.now() - data.time
+            const timeSinceSent = Date.now() - data.time
             if (timeSinceSent > 100) return // skip frames if overloaded
 
             // WIP play audio? (data.audio.data ...)

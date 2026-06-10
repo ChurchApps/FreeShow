@@ -28,7 +28,7 @@
 
     const dispatch = createEventDispatcher()
     function change(e) {
-        let value = e.detail
+        const value = e.detail
         fontStyleValue = ""
         dispatch("change", value)
     }

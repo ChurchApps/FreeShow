@@ -2,7 +2,7 @@
     import { EXPORT } from "../../../../../types/Channels"
     import { Main } from "../../../../../types/IPC/Main"
     import type { Project } from "../../../../../types/Projects"
-    import { Show } from "../../../../../types/Show"
+    import type { Show } from "../../../../../types/Show"
     import { sendMain } from "../../../../IPC/main"
     import { activePopup, activeProject, projects, shows, showsCache, special } from "../../../../stores"
     import { wait } from "../../../../utils/common"
@@ -117,7 +117,7 @@
             // const ratio = getResolution() // { width: 16, height: 9 }
             // const size = { width: 1920, height: Math.round(1920 / ratio.width) * ratio.height }
             // const micronsSize = { width: Math.round((size.width / 96) * 25400), height: Math.round((size.height / 96) * 25400) }
-            let project = exportType === "project" && $activeProject ? $projects[$activeProject] : null
+            const project = exportType === "project" && $activeProject ? $projects[$activeProject] : null
             let finalShowIds = showIds
             if (project) {
                 pdfOptions.oneFile = true
@@ -146,7 +146,7 @@
     let pdfOptions: any = {}
 
     function setSpecial(e: any, key: string) {
-        let value = e.detail
+        const value = e.detail
         special.update((a) => {
             a[key] = value
             return a

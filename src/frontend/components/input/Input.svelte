@@ -15,9 +15,9 @@
 
     $: label = input.label ?? input.name ?? ""
 
-    let dispatch = createEventDispatcher()
+    const dispatch = createEventDispatcher()
     function changed(e: any) {
-        let value = e.detail
+        const value = e.detail
         dispatch("change", value)
     }
 

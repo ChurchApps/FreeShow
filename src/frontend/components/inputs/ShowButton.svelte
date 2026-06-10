@@ -32,8 +32,8 @@
     $: showNumber = isProject ? "" : show?.quickAccess?.number || show?.meta?.number || ""
     $: showDuration = isProject ? $shows[show.id]?.quickAccess?.duration || show?.scheduleLength || 0 : 0
 
-    let profile = getAccess("shows")
-    let readOnly = profile.global === "read" || profile[show.category] === "read"
+    const profile = getAccess("shows")
+    const readOnly = profile.global === "read" || profile[show.category] === "read"
 
     // search
     $: style = match !== null ? `background: linear-gradient(to right, var(--primary-lighter) ${match}%, transparent ${match}%);` : ""
@@ -99,14 +99,14 @@
         // set active show
         let pos = index
         if (index === null && $activeProject !== null) {
-            let i = $projects[$activeProject]?.shows?.findIndex((p) => p.id === id) ?? -1
+            const i = $projects[$activeProject]?.shows?.findIndex((p) => p.id === id) ?? -1
             if (i > -1) pos = i
         }
 
-        let newShow: any = { id, type }
+        const newShow: any = { id, type }
 
         if ($focusMode) {
-            let inProject = $projects[$activeProject || ""]?.shows?.find((p) => p.id === id)
+            const inProject = $projects[$activeProject || ""]?.shows?.find((p) => p.id === id)
             if (inProject) {
                 activeFocus.set({ id, index: pos ?? undefined, type })
                 return
@@ -140,20 +140,20 @@
         if (type === "show_placeholder") return
         if (editActive || $outLocked || e.detail.target.closest("input")) return
 
-        let outputId: string = getActiveOutputs($outputs, false, true, true)[0]
-        let currentOutput = $outputs[outputId] || {}
+        const outputId: string = getActiveOutputs($outputs, false, true, true)[0]
+        const currentOutput = $outputs[outputId] || {}
 
         if (type === "show" && $showsCache[id]?.settings && $showsCache[id].layouts[$showsCache[id].settings.activeLayout]?.slides?.length) {
-            let layoutRef = getLayoutRef()
-            let firstEnabledIndex = layoutRef.findIndex((a) => !a.data.disabled)
+            const layoutRef = getLayoutRef()
+            const firstEnabledIndex = layoutRef.findIndex((a) => !a.data.disabled)
             updateOut("active", firstEnabledIndex, layoutRef, !e.detail.alt)
 
-            let slide = currentOutput.out?.slide || null
+            const slide = currentOutput.out?.slide || null
             if (slide?.id === id && slide?.index === firstEnabledIndex && slide?.layout === $showsCache[id].settings.activeLayout) return
 
             setOutput("slide", { id, layout: $showsCache[id].settings.activeLayout, index: firstEnabledIndex })
         } else if (type === "image" || type === "video") {
-            let outputStyle = $styles[currentOutput.style || ""]
+            const outputStyle = $styles[currentOutput.style || ""]
             const mediaData = $media[id] || {}
             const mediaStyle = getMediaStyle(mediaData, outputStyle)
 
@@ -164,7 +164,7 @@
             const located = await getMedia(id)
             if (!located) return
 
-            let out = { path: located.path, muted: shouldBeMuted, loop: shouldLoop, startAt: 0, type, ...mediaStyle }
+            const out = { path: located.path, muted: shouldBeMuted, loop: shouldLoop, startAt: 0, type, ...mediaStyle }
 
             // clear slide
             if (videoType === "foreground" || (videoType !== "background" && (type === "image" || !shouldLoop))) clearSlide()
@@ -179,7 +179,7 @@
             const pages = pdfDoc.numPages
             loadingTask.destroy()
 
-            let name = show.name || removeExtension(getFileName(id))
+            const name = show.name || removeExtension(getFileName(id))
             setOutput("slide", { type: "pdf", id, page: 0, pages, name })
             clearBackground()
 

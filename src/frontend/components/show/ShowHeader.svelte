@@ -29,7 +29,7 @@
                 .filter((a) => a?.length)
                 .join(divider)
                 .replaceAll("<br>", " ")
-            notes = { text: text, id: "metadata", title: "tools.metadata", icon: "info", tab: "metadata" }
+            notes = { text, id: "metadata", title: "tools.metadata", icon: "info", tab: "metadata" }
             return
         }
     }
@@ -50,7 +50,7 @@
     }
 
     let showDropdown = false
-    let listScrollY = 0
+    const listScrollY = 0
 
     function toggleShowLock() {
         const shouldBeLocked = !currentShow?.locked

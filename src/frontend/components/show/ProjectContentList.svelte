@@ -2,7 +2,7 @@
     import { createEventDispatcher, onDestroy, onMount } from "svelte"
     import { fade } from "svelte/transition"
     import type { ProjectShowRef, Tree } from "../../../types/Projects"
-    import { ShowType } from "../../../types/Show"
+    import type { ShowType } from "../../../types/Show"
     import { addProjectItem, addToProject, updateRecentlyAddedFiles } from "../../converters/project"
     import { actions, activeFocus, activePopup, activeProject, activeShow, contextActive, drawer, drawerTabsData, editingProjectTemplate, focusMode, fullColors, playerVideos, popupData, projects, projectTemplates, projectView, recentFiles, selected, shows, special } from "../../stores"
     import { triggerFunction } from "../../utils/common"
@@ -30,14 +30,14 @@
     export let recentlyUsedList: any[] = []
     export let isTemplate: boolean = false
 
-    let profile = getAccess("projects")
-    let readOnly = profile.global === "read"
+    const profile = getAccess("projects")
+    const readOnly = profile.global === "read"
 
     // autoscroll
     let scrollElem: HTMLElement | undefined
     let offset = -1
     $: if (scrollElem) {
-        let time = tree.length * 0.5 + 20
+        const time = tree.length * 0.5 + 20
         setTimeout(() => {
             if (!scrollElem) return
             const projectElements = [...(scrollElem.querySelectorAll(".listSection") || [])].map((a) => a?.querySelectorAll("button") || [])
@@ -64,8 +64,8 @@
     function findShowInProject() {
         if (!currentProject?.shows) return
 
-        let i = currentProject.shows.findIndex((p) => p.id === $activeShow?.id)
-        let pos: number = i > -1 ? i : ($activeShow?.index ?? -1)
+        const i = currentProject.shows.findIndex((p) => p.id === $activeShow?.id)
+        const pos: number = i > -1 ? i : ($activeShow?.index ?? -1)
 
         // ($activeShow?.type !== "video" && $activeShow?.type !== "image")
         if (pos < 0 || $activeShow?.index === pos) return
@@ -83,14 +83,14 @@
     }
 
     function addSection() {
-        let activeShowIndex = $activeShow?.index !== undefined ? $activeShow?.index + 1 : null
-        let index: number = activeShowIndex ?? projectItemsList.length ?? 0
+        const activeShowIndex = $activeShow?.index !== undefined ? $activeShow?.index + 1 : null
+        const index: number = activeShowIndex ?? projectItemsList.length ?? 0
         history({ id: "UPDATE", newData: { key: "shows", index }, oldData: { id: projectId }, location: { page: "show", id: "section" + (isTemplate ? "_template" : "") } })
     }
 
     function addShowPlaceholder() {
-        let activeShowIndex = $activeShow?.index !== undefined ? $activeShow?.index + 1 : null
-        let index: number = activeShowIndex ?? projectItemsList.length ?? 0
+        const activeShowIndex = $activeShow?.index !== undefined ? $activeShow?.index + 1 : null
+        const index: number = activeShowIndex ?? projectItemsList.length ?? 0
         history({ id: "UPDATE", newData: { key: "shows", index }, oldData: { id: projectId }, location: { page: "show", id: "project_show_placeholder" } })
     }
 

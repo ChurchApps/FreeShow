@@ -50,7 +50,7 @@
         timelineRecordingAction.set({ id: "clear_" + key })
     }
 
-    let dispatch = createEventDispatcher()
+    const dispatch = createEventDispatcher()
     function openPreview(key: string) {
         if (activeClear === key) {
             autoChange = true

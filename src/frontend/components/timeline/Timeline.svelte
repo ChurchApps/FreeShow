@@ -144,7 +144,7 @@
     let isScrubbing = false
     let draggingActionId: string | null = null
     let dragTimeOffset = 0
-    let dragInitialTimes = new Map<string, number>()
+    const dragInitialTimes = new Map<string, number>()
 
     let isSelecting = false
     let selectedActionIds: string[] = []
@@ -152,7 +152,7 @@
     let selectionRect: { x: number; y: number; w: number; h: number } | null = null
     let selectionStart = { x: 0, y: 0 }
 
-    let usedHeaderWidth = 120
+    const usedHeaderWidth = 120
 
     $: timeString = formatTime(currentTime, type, $timelineStore)
     $: tickInterval = getTickInterval(zoomLevel)

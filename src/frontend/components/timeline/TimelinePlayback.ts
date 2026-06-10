@@ -1,4 +1,5 @@
-import { get, Unsubscriber } from "svelte/store"
+import type { Unsubscriber } from "svelte/store"
+import { get } from "svelte/store"
 import { Main } from "../../../types/IPC/Main"
 import type { TimelineAction } from "../../../types/Show"
 import { sendMain } from "../../IPC/main"
@@ -13,7 +14,7 @@ import { loadShows } from "../helpers/setShow"
 import { _show } from "../helpers/shows"
 import { ShowTimeline } from "./ShowTimeline"
 import { SlideTimeline } from "./SlideTimeline"
-import { TimelineType } from "./TimelineActions"
+import type { TimelineType } from "./TimelineActions"
 import { startListeningLTC, stopListeningLTC } from "./timecode"
 import { getProjectShowDurations } from "./timeline"
 
@@ -592,7 +593,7 @@ export class TimelinePlayback {
     private outputsUnsubscriber: Unsubscriber | null = null
     private startListeners() {
         if (this.type === "show") {
-            let firstOutputId = getFirstActiveOutput()?.id || ""
+            const firstOutputId = getFirstActiveOutput()?.id || ""
             if (!firstOutputId) return
 
             let skippedFirst = false
@@ -603,11 +604,11 @@ export class TimelinePlayback {
                 }
                 if (ShowTimeline.isRecording()) return
 
-                let outSlide = a[firstOutputId]?.out?.slide
+                const outSlide = a[firstOutputId]?.out?.slide
                 if (!outSlide || outSlide.id !== this.ref?.id || outSlide.layout !== this.ref?.layoutId || outSlide.index === undefined) return
 
                 const layoutRef = _show(outSlide.id).layouts([outSlide.layout]).ref()[0] || []
-                let layoutSlide = layoutRef[outSlide.index]
+                const layoutSlide = layoutRef[outSlide.index]
                 if (!layoutSlide) return
                 if (this.previousSlide.id === layoutSlide.id && this.previousSlide.index === outSlide.index) return
 

@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { MediaStyle } from "../../../../types/Main"
-    import { ProjectShowRef } from "../../../../types/Projects"
+    import type { ProjectShowRef } from "../../../../types/Projects"
     import { activeShow, media, outLocked, outputs, styles } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import Image from "../../drawer/media/Image.svelte"

@@ -192,7 +192,7 @@ export async function getActiveScripturesContent(selectedVerses: (number | strin
                     return vs
                 })
 
-                let allVersesText: { [key: string]: string }[] = []
+                const allVersesText: { [key: string]: string }[] = []
                 selected.forEach((verses, i) => {
                     const versesText: { [key: string]: string } = {}
                     const expansions: Map<string, string[]> = new Map()
@@ -775,8 +775,8 @@ export async function getScriptureSlidesNew(data: any, onlyOne = false, disableR
 
     // extra styles
     let verseNumberSize = 50 // get(scriptureSettings).numberSize || 50 // %
-    let verseNumberStyle = `color: ${get(scriptureSettings).numberColor || "#919191"};text-shadow: none;`
-    let verseNumberStyles: string[] = []
+    const verseNumberStyle = `color: ${get(scriptureSettings).numberColor || "#919191"};text-shadow: none;`
+    const verseNumberStyles: string[] = []
     let redJesusStyle = `color: ${get(scriptureSettings).jesusColor || "#FF4136"};`
     let baseStyle = ""
 
@@ -803,23 +803,23 @@ export async function getScriptureSlidesNew(data: any, onlyOne = false, disableR
     })
 
     // extract text size from baseStyle & verseNumberStyle & calculate percentage difference
-    let verseNumberFontSize = (verseNumberStyles[0] || verseNumberStyle).match(/font-size:\s*(\d+)px/)
-    let baseFontSize = baseStyle.match(/font-size:\s*(\d+)px/)
-    let percentageDiff = verseNumberFontSize && baseFontSize ? Number(verseNumberFontSize[1]) / Number(baseFontSize[1]) : 1
+    const verseNumberFontSize = (verseNumberStyles[0] || verseNumberStyle).match(/font-size:\s*(\d+)px/)
+    const baseFontSize = baseStyle.match(/font-size:\s*(\d+)px/)
+    const percentageDiff = verseNumberFontSize && baseFontSize ? Number(verseNumberFontSize[1]) / Number(baseFontSize[1]) : 1
     if (Number(baseFontSize?.[1])) verseNumberSize = Number(baseFontSize?.[1]) * percentageDiff
 
     // slide > translation > verse
-    let scriptureVerseContent: { number: string; text: string; verseId: string }[][][] = []
+    const scriptureVerseContent: { number: string; text: string; verseId: string }[][][] = []
 
     const fullVerses = buildFullReferenceRange(selectedChapters, selectedVerses)
     const fullReference = `${biblesContent[0]?.book} ${fullVerses}`.trim()
     const divider = getReferenceDivider()
 
-    let groupNames: string[] = []
+    const groupNames: string[] = []
     if (_template.getSetting("firstSlideTemplate")) groupNames.push(fullReference)
 
     // store values in slide for use in a different template
-    let globalCustomDynamicValues: { [key: string]: string } = {}
+    const globalCustomDynamicValues: { [key: string]: string } = {}
     let slideDynamicValues: { [key: string]: string | [string, string][] }[] = []
 
     for (let i = 0; i < splittedSlidesContent.length; i++) {
@@ -990,7 +990,7 @@ export async function getScriptureSlidesNew(data: any, onlyOne = false, disableR
 
                         const keyTextObj = line.text[keyIndex]
                         const parts = keyTextObj.value.split(itemKey)
-                        let newLineText: any[] = []
+                        const newLineText: any[] = []
 
                         // Add text objects before the key
                         newLineText.push(...line.text.slice(0, keyIndex))
@@ -1792,7 +1792,7 @@ export async function getScriptureShow(biblesContent: BibleContent[] | null) {
         const id = uid()
         const referenceText = getReferenceText(biblesContent)
 
-        let settings: any = {}
+        const settings: any = {}
         if (backgroundColor) settings.color = backgroundColor
 
         slides2[id] = { group: groupNames[i] || referenceText, color: null, settings, notes: "", items: fixHTMLTags(items) }

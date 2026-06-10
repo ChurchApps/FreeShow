@@ -1,6 +1,6 @@
 <script lang="ts">
     import { uid } from "uid"
-    import { Item } from "../../../../types/Show"
+    import type { Item } from "../../../../types/Show"
     import type { StageItem } from "../../../../types/Stage"
     import { activeStage, dictionary, labelsDisabled, selected, stageShows, timers } from "../../../stores"
     import { translateText } from "../../../utils/language"
@@ -58,7 +58,7 @@
     function addItem(itemType: string, textValue = "") {
         if (!stageId) return
 
-        let itemId = uid(5)
+        const itemId = uid(5)
         stageShows.update((a) => {
             if (!a[stageId]?.items) return a
 
@@ -75,7 +75,7 @@
                 style = getLikelyPosition(Object.values(a[stageId].items), style)
             }
 
-            let item: StageItem = { type: itemType, style, align: "" }
+            const item: StageItem = { type: itemType, style, align: "" }
 
             if (itemType === "text") item.lines = [{ align: "", text: [{ style: "", value: textValue || "" }] }]
             else if (itemType === "slide_text") {
@@ -114,16 +114,16 @@
 
     const getIdentifier = {
         text: (item: StageItem) => {
-            let text = getItemText(item as Item)
+            const text = getItemText(item as Item)
             return text.slice(0, 10)
         },
         media: (item: StageItem) => {
-            let path = item.src
+            const path = item.src
             return getFileName(path || "")
         },
         timer: (item: StageItem) => {
             if (!item.timer?.id) return ""
-            let timerName = $timers[item.timer.id]?.name || ""
+            const timerName = $timers[item.timer.id]?.name || ""
             return timerName
         },
         clock: () => ""

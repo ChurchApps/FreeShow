@@ -62,7 +62,7 @@
         // style hash
         let s = ""
         clone(item?.lines)?.forEach((line) => {
-            let align = (line.align || "").replaceAll(lineStyleBg, "").replaceAll(lineStyleRadius, "") + ";"
+            const align = (line.align || "").replaceAll(lineStyleBg, "").replaceAll(lineStyleRadius, "") + ";"
             s += align + lineStyleBg + lineStyleRadius // + line.chords?.map((a) => a.key)
             if (!line?.text) return
             if (!Array.isArray(line.text)) line.text = []
@@ -79,7 +79,7 @@
     let previousChords = ""
     $: {
         // chords updated! (needed to save chords so they don't get reset when changing the lines)
-        let newChords = JSON.stringify(item?.lines?.map((a) => a.chords?.map((a) => a.key)))
+        const newChords = JSON.stringify(item?.lines?.map((a) => a.chords?.map((a) => a.key)))
         if (previousChords !== newChords) {
             previousChords = newChords
             getStyle()
@@ -95,7 +95,7 @@
 
     function getStyle() {
         if (!plain && $activeEdit.slide === null) return
-        let result = EditboxHelper.getStyleHtml(item, plain, currentStyle, ref.origin === "powerpoint")
+        const result = EditboxHelper.getStyleHtml(item, plain, currentStyle, ref.origin === "powerpoint")
         html = result.html
         currentStyle = result.currentStyle
         previousHTML = html
@@ -138,16 +138,16 @@
             if (!e.target.closest(".quickEdit") && !$activeEdit.items.includes(index)) return
 
             // split
-            let sel = getSelectionRange()
+            const sel = getSelectionRange()
             if (!sel?.length || (sel.length === 1 && !Object.keys(sel[0]).length)) return
 
             // WIP auto add • or - if on line and pressing Enter
 
             // if (sel.start === sel.end) {
-            let lines: Line[] = getNewLines()
-            let currentIndex = 0,
-                textPos = 0
-            let start = -1
+            const lines: Line[] = getNewLines()
+            const currentIndex = 0
+            const textPos = 0
+            const start = -1
 
             // TODO: auto bullets
             if (!e.altKey) {
@@ -170,17 +170,17 @@
 
     function cutInTwo({ e, sel, lines, currentIndex, textPos, start }) {
         if ((ref.type || "show") !== "show") return
-        let { firstLines, secondLines } = EditboxHelper.cutLinesInTwo({ sel, lines, currentIndex, textPos, start })
+        const { firstLines, secondLines } = EditboxHelper.cutLinesInTwo({ sel, lines, currentIndex, textPos, start })
 
         if (typeof $activeEdit.slide === "number") editIndex = $activeEdit.slide
-        let editItemIndex: number = $activeEdit.items[0] ?? Number(e?.target?.closest(".editItem")?.getAttribute("data-index")) ?? 0
+        const editItemIndex: number = $activeEdit.items[0] ?? Number(e?.target?.closest(".editItem")?.getAttribute("data-index")) ?? 0
 
-        let layoutRef = getLayoutRef()
-        let slideRef = layoutRef[editIndex]
+        const layoutRef = getLayoutRef()
+        const slideRef = layoutRef[editIndex]
         if (!slideRef) return
 
         // create new slide
-        let newSlide = clone(_show().slides([ref.id]).get()[0]) || {}
+        const newSlide = clone(_show().slides([ref.id]).get()[0]) || {}
         if (!newSlide.items?.[editItemIndex]) return
         newSlide.items[editItemIndex].lines = secondLines
         delete newSlide.id
@@ -191,7 +191,7 @@
         // update scripture dynamic values
         // WIP duplicate of splitItemInTwo
         // TODO: use "sourceDynamicKey" from text instead
-        let numbersAdded: string[] = []
+        const numbersAdded: string[] = []
         // newSlide here is a clone of "oldSlide"
         if (newSlide.customDynamicValues?.scripture_text) {
             const texts = firstLines
@@ -224,7 +224,7 @@
                 newSlide.customDynamicValues.scripture_text[i][1] = t
                 newSlide.customDynamicValues.scripture1_text[i][1] = t
 
-                let removeNumber = numbersAdded.find((a) => a === newSlide.customDynamicValues.scripture_text[i][0])
+                const removeNumber = numbersAdded.find((a) => a === newSlide.customDynamicValues.scripture_text[i][0])
                 if (removeNumber) {
                     newSlide.customDynamicValues.scripture_text[i][0] = "0"
                     newSlide.customDynamicValues.scripture1_text[i][0] = "0"
@@ -233,7 +233,7 @@
         }
 
         // add new slide
-        let id = uid()
+        const id = uid()
         _show()
             .slides([id])
             .add([clone(newSlide)])
@@ -242,15 +242,15 @@
         updateLines(firstLines)
 
         // set child
-        let parentId = slideRef.type === "child" ? slideRef.parent!.id : slideRef.id
+        const parentId = slideRef.type === "child" ? slideRef.parent!.id : slideRef.id
         let children = _show().slides([parentId]).get("children")[0] || []
-        let slideIndex = slideRef.type === "child" ? slideRef.index + 1 : 0
+        const slideIndex = slideRef.type === "child" ? slideRef.index + 1 : 0
         children = addToPos(children, [id], slideIndex)
         _show().slides([parentId]).set({ key: "children", value: children })
 
-        let parentIndex = slideRef.type === "child" ? slideRef.parent!.layoutIndex : slideRef.layoutIndex
-        let parentsBefore = layoutRef.filter((a, i) => i < parentIndex && a.id === parentId)?.length
-        let newIndex = $activeEdit.slide! + (parentsBefore + 1)
+        const parentIndex = slideRef.type === "child" ? slideRef.parent!.layoutIndex : slideRef.layoutIndex
+        const parentsBefore = layoutRef.filter((a, i) => i < parentIndex && a.id === parentId)?.length
+        const newIndex = $activeEdit.slide! + (parentsBefore + 1)
 
         if (!e?.target?.closest(".item")) {
             getStyle()
@@ -265,7 +265,7 @@
             if (elem) (elem as HTMLElement).focus()
 
             // set caret at the end
-            let sel = getSelectionRange()
+            const sel = getSelectionRange()
             const caret = { line: sel.length - 1, pos: 999 }
             setCaret(elem, caret)
         })
@@ -289,18 +289,18 @@
             })
         } else if (ref.id) {
             // dont override history when undoing
-            let lastRedo = $redoHistory[$redoHistory.length - 1]
+            const lastRedo = $redoHistory[$redoHistory.length - 1]
             if (lastRedo?.id === "SHOW_ITEMS") {
-                let previousData = lastRedo.oldData.previousData
+                const previousData = lastRedo.oldData.previousData
 
-                let historyText = previousData[index]?.lines.reduce((text, line) => (text += getLineText(line)), "")
-                let linesText = newLines.reduce((text, line) => (text += getLineText(line)), "")
+                const historyText = previousData[index]?.lines.reduce((text, line) => (text += getLineText(line)), "")
+                const linesText = newLines.reduce((text, line) => (text += getLineText(line)), "")
 
                 if (historyText === linesText) return
             }
 
             // only reset caret when lines are added/removed, not when line content changes
-            let lastChangedLine = EditboxHelper.determineCaretLine(item?.lines || [], newLines)
+            const lastChangedLine = EditboxHelper.determineCaretLine(item?.lines || [], newLines)
             const keyboardLineMutation = Date.now() - recentKeyboardLineMutationAt < 250
             const domSelection = window.getSelection()
             const anchorElem = (domSelection?.anchorNode as Element)?.nodeType === Node.ELEMENT_NODE ? (domSelection?.anchorNode as Element) : domSelection?.anchorNode?.parentElement
@@ -311,7 +311,7 @@
                 HISTORY_UPDATE_KEY++
                 updates = 0
             }
-            let itemRef = ref.showId + ref.id + "_" + index + "_" + HISTORY_UPDATE_KEY
+            const itemRef = ref.showId + ref.id + "_" + index + "_" + HISTORY_UPDATE_KEY
 
             // WIP I guess this (undo/redo) is also controlled by the default text input method..
 
@@ -410,7 +410,7 @@
             itemFontSize = Number(getStyles(item?.style, true)?.["font-size"] || "")
         }
 
-        let type = item?.textFit || "shrinkToFit"
+        const type = item?.textFit || "shrinkToFit"
         let defaultFontSize = itemFontSize
         let maxFontSize
 
@@ -442,8 +442,8 @@
             pos++
             currentStyle += align + lineStyleBg + lineStyleRadius
 
-            let newLine = { align, text: [] as any[] }
-            let lineChords: any[] = []
+            const newLine = { align, text: [] as any[] }
+            const lineChords: any[] = []
 
             newLines.push(newLine)
 
@@ -451,9 +451,9 @@
                 if (child.nodeName === "#text") {
                     // add "floating" text to previous node (e.g. pressing backspace at the start of a line)
                     // preserve style when merging lines with different styling (macOS issue)
-                    let lastNode = newLines[pos].text.length - 1
-                    let originalLineStyle = item.lines?.[i]?.text?.[0]?.style || ""
-                    let lastNodeStyle = lastNode >= 0 ? newLines[pos].text[lastNode]?.style || "" : ""
+                    const lastNode = newLines[pos].text.length - 1
+                    const originalLineStyle = item.lines?.[i]?.text?.[0]?.style || ""
+                    const lastNodeStyle = lastNode >= 0 ? newLines[pos].text[lastNode]?.style || "" : ""
 
                     // Create new segment if no previous node or styles differ
                     if (lastNode < 0 || !newLines[pos].text[lastNode] || (originalLineStyle && originalLineStyle !== lastNodeStyle)) {
@@ -480,12 +480,12 @@
                 }
 
                 // remove custom font size
-                let customIndex = style.indexOf("--custom")
+                const customIndex = style.indexOf("--custom")
                 if (customIndex > -1) style = style.slice(0, customIndex)
 
                 // GET custom values
-                let customType = child.getAttribute("data-customtype") || undefined
-                let sourceDynamicKey = child.getAttribute("data-sourcedynamickey") || undefined
+                const customType = child.getAttribute("data-customtype") || undefined
+                const sourceDynamicKey = child.getAttribute("data-sourcedynamickey") || undefined
 
                 const text: any = { style, value: lineText }
                 if (customType) text.customType = customType
@@ -513,7 +513,7 @@
 
                 // UPDATE/FIX CHORDS ON LINE BREAK
                 if (pos > 0 && JSON.stringify(newLines[pos].chords) === JSON.stringify(newLines[pos - 1].chords)) {
-                    let breakPoint = newLines[pos - 1].text.reduce((textLength, text) => (textLength += text.value.length), 0)
+                    const breakPoint = newLines[pos - 1].text.reduce((textLength, text) => (textLength += text.value.length), 0)
 
                     newLines[pos - 1].chords = newLines[pos - 1].chords!.filter((a) => a.pos < breakPoint)
                     newLines[pos].chords = newLines[pos].chords!.filter((a) => a.pos >= breakPoint).map((a) => ({ ...a, pos: a.pos - breakPoint }))
@@ -527,22 +527,22 @@
 
         if (updateHTML && !keyboardLineMutation) {
             // get caret pos
-            let sel = getSelectionRange()
-            let lineIndex = sel.findIndex((a) => a?.start !== undefined)
+            const sel = getSelectionRange()
+            const lineIndex = sel.findIndex((a) => a?.start !== undefined)
             if (lineIndex >= 0) {
-                let caret = { line: lineIndex || 0, pos: sel[lineIndex]?.start || 0 }
+                const caret = { line: lineIndex || 0, pos: sel[lineIndex]?.start || 0 }
                 void refreshStyleAndRestoreCaret(caret)
             }
         }
 
         // fix removing all text in a line
         let caret: any = null
-        let liveSel = getSelectionRange()
-        let liveSelLine = liveSel.findIndex((a) => a?.start !== undefined)
+        const liveSel = getSelectionRange()
+        const liveSelLine = liveSel.findIndex((a) => a?.start !== undefined)
         const liveCaret = liveSelLine > -1 ? { line: liveSelLine, pos: liveSel[liveSelLine]?.start || 0 } : null
 
-        let align = item.lines?.[0]?.align || ""
-        let textStyle = item.lines?.[0]?.text?.[0]?.style || ""
+        const align = item.lines?.[0]?.align || ""
+        const textStyle = item.lines?.[0]?.text?.[0]?.style || ""
 
         if (!newLines.length) {
             newLines = [{ align, text: [{ style: textStyle, value: "" }] }]
@@ -557,17 +557,17 @@
             })
 
             // set to last caret pos (if backspace)
-            let sel = getSelectionRange()
-            let currentLine = sel.findIndex((a) => a?.start !== undefined)
-            let deleteKey = currentLine === lastCaretPos.line
+            const sel = getSelectionRange()
+            const currentLine = sel.findIndex((a) => a?.start !== undefined)
+            const deleteKey = currentLine === lastCaretPos.line
             if (!caret && (item.lines || []).length > newLines.length) {
                 if (liveCaret) {
                     caret = liveCaret
                 } else if (deleteKey) {
                     caret = lastCaretPos
                 } else {
-                    let newLine = lastCaretPos.line > -1 ? lastCaretPos.line - 1 : newLines.length - 1
-                    let newPos = lastCaretPos.pos > -1 ? getLineText(newLines[lastCaretPos.line - 1]).length - lastCaretPos.lineLength : getLineText(newLines[newLines.length - 1]).length
+                    const newLine = lastCaretPos.line > -1 ? lastCaretPos.line - 1 : newLines.length - 1
+                    const newPos = lastCaretPos.pos > -1 ? getLineText(newLines[lastCaretPos.line - 1]).length - lastCaretPos.lineLength : getLineText(newLines[newLines.length - 1]).length
                     caret = { line: newLine, pos: newPos }
                 }
             }
@@ -595,8 +595,8 @@
 
     let lastCaretPos: { line: number; pos: number; lineLength: number } = { line: -1, pos: -1, lineLength: 0 }
     function storeCurrentCaretPos() {
-        let sel = getSelectionRange()
-        let caretLineIndex = sel.findIndex((line) => line.start !== undefined)
+        const sel = getSelectionRange()
+        const caretLineIndex = sel.findIndex((line) => line.start !== undefined)
         if (caretLineIndex > -1) lastCaretPos = { line: caretLineIndex, pos: sel[caretLineIndex]?.start ?? -1, lineLength: getHTMLLineText(caretLineIndex).length }
     }
 
@@ -605,7 +605,7 @@
 
         let text = ""
 
-        let lineElem = textElem.children[lineIndex]
+        const lineElem = textElem.children[lineIndex]
         if (!lineElem) return ""
         new Array(...lineElem.childNodes).forEach((child: any) => {
             if (child.nodeName === "#text") text += child.textContent
@@ -657,7 +657,7 @@
     // paste
     let pasting = false
     function paste(e: any, clipboardText = "") {
-        let clipboard: string = clipboardText || e.clipboardData?.getData("text/plain") || ""
+        const clipboard: string = clipboardText || e.clipboardData?.getData("text/plain") || ""
         if (!clipboard) return
 
         pasting = true
@@ -669,10 +669,10 @@
             sel = [...Array(linesLength)].map((_, i) => (i === lastCaretPos.line ? { start: lastCaretPos.pos, end: lastCaretPos.pos } : ({} as any)))
         }
         let caret = { line: 0, pos: 0 }
-        let emptySelection = !sel.filter((a) => Object.keys(a).length).length
+        const emptySelection = !sel.filter((a) => Object.keys(a).length).length
 
         let lines: Line[] = getNewLines()
-        let newLines: any[] = []
+        const newLines: any[] = []
         let pastingIndex = -1
         sel.forEach((lineSel, lineIndex) => {
             if (!lines[lineIndex]) return
@@ -683,20 +683,20 @@
 
             if (pastingIndex < 0) {
                 pastingIndex = lineIndex
-                let splitted = clipboard.split("\n")
-                let lastPastedLine = pastingIndex + (splitted.length - 1)
+                const splitted = clipboard.split("\n")
+                const lastPastedLine = pastingIndex + (splitted.length - 1)
                 let pos = lineSel.start + clipboard.length
                 if (splitted.length > 1) pos = splitted[splitted.length - 1].trim().length
                 caret = { line: lastPastedLine, pos }
             }
 
-            let lineText: any[] = []
+            const lineText: any[] = []
             let linePos = 0
             let pasteOverflow = 0
             // move multi line select to one line
             lines[lineIndex].text?.forEach((text) => {
-                let value = text.value
-                let newLinePos = linePos + value.length
+                const value = text.value
+                const newLinePos = linePos + value.length
                 if (newLinePos < lineSel.start || linePos > lineSel.end) {
                     lineText.push(text)
                     linePos = newLinePos
@@ -705,7 +705,7 @@
 
                 // selected more text (different styles) on one line
                 if (pasteOverflow > 0) {
-                    let newValue = value.slice(pasteOverflow)
+                    const newValue = value.slice(pasteOverflow)
                     pasteOverflow = pasteOverflow - value.length
                     if (!newValue.length) return
 
@@ -714,12 +714,12 @@
                     return
                 }
 
-                let caretPos = lineSel.start - linePos
+                const caretPos = lineSel.start - linePos
                 let removeText = lineSel.end - lineSel.start
                 removeText = removeText > 0 ? removeText : 0
                 pasteOverflow = caretPos + removeText - value.length
 
-                let newValue = value.slice(0, caretPos) + (pastingIndex === lineIndex ? clipboard : "") + value.slice(caretPos + removeText)
+                const newValue = value.slice(0, caretPos) + (pastingIndex === lineIndex ? clipboard : "") + value.slice(caretPos + removeText)
                 if (!newValue.length) return
 
                 text.value = newValue

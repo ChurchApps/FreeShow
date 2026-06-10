@@ -26,7 +26,7 @@
         // store text if popup is closed
         quickTextCache.set({ name: values.name, text: values.text })
     }
-    let storedCache = $quickTextCache.text.length > 20 || $quickTextCache.fromSearch
+    const storedCache = $quickTextCache.text.length > 20 || $quickTextCache.fromSearch
     let values = {
         text: storedCache ? $quickTextCache.text : "",
         name: storedCache ? $quickTextCache.name : "",
@@ -108,7 +108,7 @@
     // WEB SEARCH
 
     function updateLyrics(e: any) {
-        let data = e.detail || {}
+        const data = e.detail || {}
         if (!data.lyrics) {
             selectedOption = ""
             return
@@ -138,16 +138,16 @@
         let text = values.text
         if (typeof text !== "string") text = ""
 
-        let sections = text.split("\n\n").filter((a) => a.length)
+        const sections = text.split("\n\n").filter((a) => a.length)
 
         // let metaData: string = ""
         // if (sections[1] && sections[0]?.split("\n").length < 3) metaData = sections.splice(0, 1)[0]
-        let category = selectedCategory?.id?.length ? selectedCategory.id : null
+        const category = selectedCategory?.id?.length ? selectedCategory.id : null
 
         if (sections.length) {
             convertText({ name: values.name, category, text, origin: values.origin })
         } else {
-            let show = new ShowObj(false, category)
+            const show = new ShowObj(false, category)
             show.name = checkName(values.name)
             const selectedIndex = $activeShow?.index === undefined ? undefined : $activeShow.index + 1
             history({ id: "UPDATE", newData: { data: show, remember: { project: $activeProject, index: selectedIndex } }, location: { page: "show", id: "show" } })
@@ -197,7 +197,7 @@
         const id = uid()
         history({ id: "UPDATE", newData: { data: { name, icon: "song" } }, oldData: { id }, location: { page: "drawer", id: "category_shows" } })
 
-        cats.push({ id, name, icon: "song", iconColor: customIconsColors["song"] })
+        cats.push({ id, name, icon: "song", iconColor: customIconsColors.song })
         cats = cats
         selectedCategory = cats.find((a) => a.id === id)
     }

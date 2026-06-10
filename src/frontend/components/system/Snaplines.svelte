@@ -15,7 +15,7 @@
     function mousemove(e: any) {
         if (!mouse?.item || mouse.rightClick) return
 
-        let notTextBox: boolean = mouse.item.type !== undefined && mouse.item.type !== "text"
+        const notTextBox: boolean = mouse.item.type !== undefined && mouse.item.type !== "text"
         if (!notTextBox && !e.ctrlKey && !e.metaKey && !mouse.e.target.closest(".line") && !mouse.e.target.closest(".square") && !mouse.e.target.closest(".rotate") && !mouse.e.target.closest(".radius")) return
 
         e?.preventDefault()
@@ -23,18 +23,18 @@
 
         // TODO: move multiple!
 
-        let control = mouse.e.ctrlKey || mouse.e.metaKey
-        let moveCondition: boolean = mouse.e.target.closest(".line") || ((!mouse.e.target.closest(".edit") || notTextBox || mouse.e.altKey) && !mouse.e.target.closest(".square")) || (control && !mouse.e.target.closest(".square")) || mouse.e.buttons === 4
+        const control = mouse.e.ctrlKey || mouse.e.metaKey
+        const moveCondition: boolean = mouse.e.target.closest(".line") || ((!mouse.e.target.closest(".edit") || notTextBox || mouse.e.altKey) && !mouse.e.target.closest(".square")) || (control && !mouse.e.target.closest(".square")) || mouse.e.buttons === 4
 
-        let keepAspectRatio = e.shiftKey
+        const keepAspectRatio = e.shiftKey
         // WIP square option currently not working well (also custom SVG icons can be any ratio)
         const square = false // mouse.item.type === "icon"
 
         if (mouse.e.target.closest(".rotate")) {
-            let rotation = rotateBox(e, mouse, ratio)
+            const rotation = rotateBox(e, mouse, ratio)
             styles = { transform: `rotate(${rotation.toFixed(2)}deg);` }
         } else if (mouse.e.target.closest(".radius")) {
-            let radius = getRadius(e, mouse, ratio)
+            const radius = getRadius(e, mouse, ratio)
             styles = { "border-radius": `${radius.toFixed(2)}px;` }
         } else if (moveCondition) {
             const moved = moveBox(e, mouse, ratio, active, lines)
@@ -62,13 +62,13 @@
 
         // show max 3 lines of each orientation at once
         const MAX_LINES = 3
-        let xLines = lines.filter((line) => line[0] === "x" || line[0] === "xc").slice(0, MAX_LINES)
-        let yLines = lines.filter((line) => line[0] === "y" || line[0] === "yc").slice(0, MAX_LINES)
+        const xLines = lines.filter((line) => line[0] === "x" || line[0] === "xc").slice(0, MAX_LINES)
+        const yLines = lines.filter((line) => line[0] === "y" || line[0] === "yc").slice(0, MAX_LINES)
         lines = [...xLines, ...yLines]
 
         // percentage scale
-        let outputId = isStage ? "" : getActiveOutputs($outputs, true, true, true)[0]
-        let outputResolution = isStage ? getStageResolution() : getOutputResolution(outputId, $outputs, true)
+        const outputId = isStage ? "" : getActiveOutputs($outputs, true, true, true)[0]
+        const outputResolution = isStage ? getStageResolution() : getOutputResolution(outputId, $outputs, true)
         const aspectRatio = outputResolution.width / outputResolution.height
         const width = DEFAULT_BOUNDS.width
         const height = DEFAULT_BOUNDS.width / aspectRatio

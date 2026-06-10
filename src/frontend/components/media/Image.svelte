@@ -6,7 +6,7 @@
     export let path: string
     export let mediaStyle: MediaStyle = {}
 
-    let dispatch = createEventDispatcher()
+    const dispatch = createEventDispatcher()
     function loaded() {
         dispatch("loaded", true)
     }

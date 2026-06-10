@@ -5,11 +5,11 @@
     const subTab = $drawerTabsData.overlays?.activeSubTab
     const isEffect = subTab === "effects"
 
-    let ids = $selected.data
+    const ids = $selected.data
     let currentValue = (isEffect ? $effects : $overlays)[ids[0]]?.displayDuration || 0
 
     function updateValue(e: any) {
-        let value = e.detail
+        const value = e.detail
         currentValue = value
 
         // WIP history

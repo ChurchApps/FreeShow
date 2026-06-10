@@ -29,7 +29,7 @@
     $: mode = $popupData.mode || ""
 
     let action: any = { name: "", triggers: [] }
-    let actionMidi: API_midi = { type: "noteon", values: { note: 0, velocity: mode === "slide" ? 0 : -1, channel: 1 }, defaultValues: true }
+    const actionMidi: API_midi = { type: "noteon", values: { note: 0, velocity: mode === "slide" ? 0 : -1, channel: 1 }, defaultValues: true }
 
     let loaded = false
     onMount(setAction)
@@ -47,10 +47,10 @@
             // old
             let showMidi = _show().get("midi")?.[id]
             if (mode === "slide" && ($popupData.index !== undefined || $popupData.indexes?.length)) {
-                let ref = getLayoutRef()
-                let layoutSlide = ref[$popupData.index ?? $popupData.indexes[0]] || {}
-                let slideActions = layoutSlide.data?.actions?.slideActions || []
-                let existingAction = slideActions.find((a) => a.id === id)
+                const ref = getLayoutRef()
+                const layoutSlide = ref[$popupData.index ?? $popupData.indexes[0]] || {}
+                const slideActions = layoutSlide.data?.actions?.slideActions || []
+                const existingAction = slideActions.find((a) => a.id === id)
                 if (existingAction) showMidi = existingAction
             }
             action = $actions[id] || showMidi || action
@@ -66,17 +66,17 @@
     // saveSlide(true)
     onDestroy(removeEmptyAction)
     function removeEmptyAction(actionId = "") {
-        let ref = getLayoutRef()
-        let indexes = $popupData.index !== undefined ? [$popupData.index] : $popupData.indexes
+        const ref = getLayoutRef()
+        const indexes = $popupData.index !== undefined ? [$popupData.index] : $popupData.indexes
         if (!indexes) return
 
-        let newActions: any[] = []
+        const newActions: any[] = []
         let changed = false
         indexes.forEach((i) => {
-            let layoutSlide = ref[i] || {}
-            let slideDataActions = layoutSlide.data?.actions || {}
-            let slideActions = slideDataActions.slideActions || []
-            let existingActionIndex = slideActions.findIndex((a) => a.id === (actionId || id))
+            const layoutSlide = ref[i] || {}
+            const slideDataActions = layoutSlide.data?.actions || {}
+            const slideActions = slideDataActions.slideActions || []
+            const existingActionIndex = slideActions.findIndex((a) => a.id === (actionId || id))
 
             // if actionId is set remove action regardless, else remove if empty
             if (existingActionIndex < 0 || (!actionId && slideActions[existingActionIndex].triggers?.[0])) {
@@ -101,9 +101,9 @@
         if (mode !== "slide" || ($popupData.index === undefined && !$popupData.indexes?.length) || existingSearched) return
         existingSearched = true
 
-        let ref = getLayoutRef()
-        let layoutSlide = ref[$popupData.index ?? $popupData.indexes[0]] || {}
-        let slideActions = layoutSlide.data?.actions?.slideActions || []
+        const ref = getLayoutRef()
+        const layoutSlide = ref[$popupData.index ?? $popupData.indexes[0]] || {}
+        const slideActions = layoutSlide.data?.actions?.slideActions || []
 
         // find any action with the same trigger type
         const triggerId = action.triggers?.[0]
@@ -115,7 +115,7 @@
 
         // For actions that can't have multiple instances, find and replace existing
         if (!canAddMultiple) {
-            let existingAction = slideActions.find((a) => a.triggers?.[0] === triggerId && (!id || a.id !== id))
+            const existingAction = slideActions.find((a) => a.triggers?.[0] === triggerId && (!id || a.id !== id))
             if (!existingAction) return
 
             // remove new action if already existing
@@ -245,36 +245,36 @@
         if (action.midiEnabled && !action.midi) action.midi = actionMidi
 
         if (mode === "overlay") {
-            let overlayId = $popupData.overlayId
-            let overlay = $overlays[overlayId]
+            const overlayId = $popupData.overlayId
+            const overlay = $overlays[overlayId]
             if (!overlay) return activePopup.set(null)
             if (!action.triggers?.length) return
 
-            let overlayActions = overlay?.actions || []
-            let existingIndex = overlayActions.findIndex((a) => a.id === id || a.triggers?.[0] === action.triggers?.[0])
+            const overlayActions = overlay?.actions || []
+            const existingIndex = overlayActions.findIndex((a) => a.id === id || a.triggers?.[0] === action.triggers?.[0])
             if (existingIndex > -1) overlayActions[existingIndex] = action
             else overlayActions.push(action)
 
-            let newData = { key: "actions", data: overlayActions }
+            const newData = { key: "actions", data: overlayActions }
             history({ id: "UPDATE", newData, oldData: { id: overlayId }, location: { page: "drawer", id: "overlay_key", override: `actions_${overlayId}` } })
         } else if (mode === "template") {
-            let templateId = $popupData.templateId
-            let template = $templates[templateId]
+            const templateId = $popupData.templateId
+            const template = $templates[templateId]
             if (!template) return activePopup.set(null)
             if (!action.triggers?.length) return
 
-            let templateSettings = template?.settings || {}
+            const templateSettings = template?.settings || {}
 
-            let templateActions = templateSettings.actions || []
-            let existingIndex = templateActions.findIndex((a) => a.id === id || a.triggers?.[0] === action.triggers?.[0])
+            const templateActions = templateSettings.actions || []
+            const existingIndex = templateActions.findIndex((a) => a.id === id || a.triggers?.[0] === action.triggers?.[0])
             if (existingIndex > -1) templateActions[existingIndex] = action
             else templateActions.push(action)
 
             templateSettings.actions = templateActions
-            let newData = { key: "settings", data: templateSettings }
+            const newData = { key: "settings", data: templateSettings }
             history({ id: "UPDATE", newData, oldData: { id: templateId }, location: { page: "drawer", id: "template_settings", override: `actions_${templateId}` } })
         } else if (mode !== "slide") {
-            let exists = !!$actions[id]
+            const exists = !!$actions[id]
             actions.update((a) => {
                 // set tag
                 if (!exists && $drawerTabsData.functions?.activeSubTab === "actions" && $drawerTabsData.functions?.activeSubmenu) {
@@ -289,7 +289,7 @@
             midiInListen()
         } else if ($activeShow) {
             // WIP move this from show to action
-            let showMidi = _show().get("midi") || {}
+            const showMidi = _show().get("midi") || {}
             if (showMidi[id]) {
                 if (JSON.stringify(showMidi[id] || {}) === JSON.stringify(action)) return
                 showMidi[id] = action
@@ -305,17 +305,17 @@
     }
 
     function saveSlide(remove = false) {
-        let ref = getLayoutRef()
-        let indexes = $popupData.index !== undefined ? [$popupData.index] : $popupData.indexes
+        const ref = getLayoutRef()
+        const indexes = $popupData.index !== undefined ? [$popupData.index] : $popupData.indexes
         if (!Array.isArray(indexes)) return
 
-        let newActions: any[] = []
+        const newActions: any[] = []
         let changed = false
         indexes.forEach((i) => {
-            let slideDataActions = clone(ref[i]?.data?.actions) || {}
+            const slideDataActions = clone(ref[i]?.data?.actions) || {}
             if (!slideDataActions.slideActions) slideDataActions.slideActions = []
 
-            let currentSlideActionIndex = slideDataActions.slideActions.findIndex((a) => a.id === id)
+            const currentSlideActionIndex = slideDataActions.slideActions.findIndex((a) => a.id === id)
             if (currentSlideActionIndex < 0) {
                 changed = true
                 newActions.push(slideDataActions)
@@ -337,7 +337,7 @@
 
     // set show when selected
     $: if (action.triggers?.find((a) => a === "start_show") && $popupData.showId) {
-        let setShow = { id: "start_show", actionValue: { id: $popupData.showId } }
+        const setShow = { id: "start_show", actionValue: { id: $popupData.showId } }
         changeAction({ detail: setShow }, $popupData.actionIndex)
     }
 

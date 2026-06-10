@@ -24,7 +24,7 @@
             scrollYPos = scrollTop
 
             // update if scrolling more than 0.4 card up/down
-            let extraMargin = cardHeight * 0.4
+            const extraMargin = cardHeight * 0.4
             if (scrollYPos > lastUpdate + extraMargin || scrollYPos < lastUpdate - extraMargin) {
                 lastUpdate = scrollYPos
 
@@ -54,12 +54,12 @@
     // update on ready, items changed, or columns changed
     $: if (ready && items && columns) updateVisibleItems(true)
     function updateVisibleItems(update = false) {
-        let top = Math.max(0, scrollYPos - margin)
-        let firstVerticalItemIndex = Math.floor(top / cardHeight)
-        let lastVerticalItemIndex = firstVerticalItemIndex + verticalCardsVisible
+        const top = Math.max(0, scrollYPos - margin)
+        const firstVerticalItemIndex = Math.floor(top / cardHeight)
+        const lastVerticalItemIndex = firstVerticalItemIndex + verticalCardsVisible
 
-        let newFirst = firstVerticalItemIndex * columns
-        let newLast = lastVerticalItemIndex * columns + columns
+        const newFirst = firstVerticalItemIndex * columns
+        const newLast = lastVerticalItemIndex * columns + columns
 
         if (update) {
             firstItemIndex = newFirst

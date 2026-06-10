@@ -56,7 +56,7 @@
             return ae
         })
 
-        let target = e.target.closest(".stage_item")
+        const target = e.target.closest(".stage_item")
         if (!target) return
 
         mouse = {
@@ -73,7 +73,7 @@
                 height: e.clientY / ratio - target.offsetHeight
             },
             item: { type: "stage", ...item },
-            e: e
+            e
         }
     }
 
@@ -123,7 +123,7 @@
     let alignElem
     let size = 100
     // Track previous slide to reset retry counter when slide changes
-    let prevSlideForAutoSize: any = undefined
+    let prevSlideForAutoSize: any
     // currentSlide & timeout to update auto size properly if slide notes
     $: if (alignElem && item && currentSlide !== undefined && autoSizeEnabled) {
         // Reset retry counter when slide changes
@@ -157,10 +157,10 @@
             // Reset retry count on successful measurement
             autoSizeRetryCount = 0
 
-            let itemFontSize = Number(getStyles(item?.style, true)?.["font-size"] || "") || 100
+            const itemFontSize = Number(getStyles(item?.style, true)?.["font-size"] || "") || 100
 
             const type = item?.textFit || "growToFit"
-            let defaultFontSize = itemFontSize
+            const defaultFontSize = itemFontSize
             let maxFontSize = type ? itemFontSize : 0
 
             const isTextItem = item?.type === "slide_text" || (item?.type || "text") === "text"
@@ -190,8 +190,8 @@
     async function getCurrentBackground() {
         if (item?.type ? !item.includeMedia : !id.includes("slide")) return
 
-        let currentOutputs = $currentWindow ? $allOutputs : $outputs
-        let bg = await sendBackgroundToStage(stageOutputId, currentOutputs, true)
+        const currentOutputs = $currentWindow ? $allOutputs : $outputs
+        const bg = await sendBackgroundToStage(stageOutputId, currentOutputs, true)
 
         currentBackground = bg
     }
@@ -229,7 +229,7 @@
     }
 
     function getCustomStyle(style: string) {
-        let outputResolution = getStageResolution()
+        const outputResolution = getStageResolution()
         style = percentageStylePos(style, outputResolution)
         return style
     }

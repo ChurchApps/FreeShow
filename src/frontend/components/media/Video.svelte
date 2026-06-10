@@ -17,7 +17,7 @@
     export let mirror = false
     export let volume = 1
 
-    let dispatch = createEventDispatcher()
+    const dispatch = createEventDispatcher()
 
     // values for deciding whether we need the blurred video overlay
     let container: HTMLDivElement | null = null
@@ -61,7 +61,7 @@
         const pingbackUrl = $media[path]?.pingbackUrl
         if (!pingbackUrl) return
 
-        console.log(`[Provider] Sending pingback after 30s playback:`, { url: pingbackUrl, method: "GET", path: path })
+        console.log(`[Provider] Sending pingback after 30s playback:`, { url: pingbackUrl, method: "GET", path })
         fetch(pingbackUrl, { method: "GET", mode: "no-cors" })
             .then(() => console.log(`[Provider] Pingback sent successfully to: ${pingbackUrl}`))
             .catch((error) => {

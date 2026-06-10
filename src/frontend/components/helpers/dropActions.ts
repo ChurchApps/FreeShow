@@ -724,7 +724,7 @@ const slideDrop = {
         const slides: { [key: string]: Slide } = _show(showId).get()?.slides || {}
 
         // remove locked slide groups
-        let data: any[] = []
+        const data: any[] = []
         drag.data.forEach((a: any) => {
             const slideId = ref[a.index]?.parent?.id ?? ref[a.index]?.id
             if (!slides?.[slideId]?.locked) data.push(a)

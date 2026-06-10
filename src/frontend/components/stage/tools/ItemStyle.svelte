@@ -17,7 +17,7 @@
 
     $: item = activeItemId ? stageItems[activeItemId] : null
 
-    let currentItemSections = clone(itemSections)
+    const currentItemSections = clone(itemSections)
 
     let data: { [key: string]: any } = {}
     $: if (item?.style || item === null) updateData()
@@ -34,7 +34,7 @@
 
         // setBoxInputValue({ icon: "", edit: itemEditValues }, "default", "background-opacity", "hidden", isGradient || !data["background-color"])
 
-        const transform = data["transform"] || ""
+        const transform = data.transform || ""
         const showPerspective = transform.includes("rotateX") && !transform.includes("rotateX(0deg)")
         setBoxInputValue(currentItemSections, "transform", "perspective", "hidden", !showPerspective)
 
@@ -49,7 +49,7 @@
         input = percentageToAspectRatio(input)
 
         if (input.id === "backdrop-filter" || input.id === "transform") {
-            let oldString = input.id === "backdrop-filter" ? itemBackFilters : data[input.id]
+            const oldString = input.id === "backdrop-filter" ? itemBackFilters : data[input.id]
             input.value = addFilterString(oldString || "", [input.key, input.value])
             input.key = input.id
         }
@@ -70,9 +70,9 @@
         if (!value) return
 
         // only update changed value
-        let styles: { [key: string]: string } = {}
+        const styles: { [key: string]: string } = {}
         activeItemIds.forEach((itemId) => {
-            let item = stageItems[itemId]
+            const item = stageItems[itemId]
             if (!item) return
 
             styles[itemId] = input.id.includes("CSS") ? value : addStyleString(item.style, [input.key, input.value])

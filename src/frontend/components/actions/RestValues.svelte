@@ -57,12 +57,12 @@
         change()
     }
 
-    let dispatch = createEventDispatcher()
+    const dispatch = createEventDispatcher()
     function change() {
         dispatch("change", rest)
     }
 
-    let dropdownInputs = [
+    const dropdownInputs = [
         { value: "GET", label: "GET" },
         { value: "POST", label: "POST" },
         { value: "PUT", label: "PUT" },

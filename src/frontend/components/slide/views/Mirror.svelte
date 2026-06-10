@@ -32,11 +32,11 @@
     function getMirroredItem(index: number, _updater: any = null) {
         if (!_updater && _updater !== null) return
 
-        let showId = item.mirror.show || ref.showId
+        const showId = item.mirror.show || ref.showId
         if (!nextSlide && showId === ref.showId) return
 
         let slideIndex = item.mirror.useSlideIndex !== false ? index : item.mirror.index || 0
-        let layoutRef = getLayoutRef(showId)
+        const layoutRef = getLayoutRef(showId)
 
         if (nextSlide) {
             slideIndex = index + 1
@@ -44,11 +44,11 @@
             while (layoutRef[slideIndex]?.data?.disabled) slideIndex++
         }
 
-        let newSlideRef: any = layoutRef[slideIndex]
+        const newSlideRef: any = layoutRef[slideIndex]
         if (!newSlideRef) return
 
         slideId = newSlideRef.id
-        let slideItems = _show(showId).slides([slideId]).items().get()[0] || []
+        const slideItems = _show(showId).slides([slideId]).items().get()[0] || []
 
         // has to be textbox item!
         let newItem = slideItems.find((a) => (a.type || "text") === "text")
@@ -68,8 +68,8 @@
     // request preview capture
     let previewRequestInterval: any = null
     $: if ($currentWindow === "output" && stageEnabled && $stageShows[item.mirror?.stage]?.items?.["output#current_output"]?.enabled) {
-        let id = Object.keys($outputs)[0]
-        let previewId = $stageShows[item.mirror?.stage]?.settings?.output
+        const id = Object.keys($outputs)[0]
+        const previewId = $stageShows[item.mirror?.stage]?.settings?.output
 
         previewRequestInterval = setInterval(() => {
             send(OUTPUT, ["REQUEST_PREVIEW"], { id, previewId })

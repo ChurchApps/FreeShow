@@ -37,7 +37,7 @@ export function changeSlideGroups(obj: { sel: { data: { index: number }[] }; men
     newData = updated.newData
     const newParents = updated.newParents
 
-    let childrenLayoutData: { [key: string]: { [key: string]: any } } = {}
+    const childrenLayoutData: { [key: string]: { [key: string]: any } } = {}
 
     // set new children
     groups.forEach(({ slides }) => {
@@ -50,7 +50,7 @@ export function changeSlideGroups(obj: { sel: { data: { index: number }[] }; men
             const newChildren = slides.slice(1).map(({ id }) => id)
             newData.slides[slideId].children!.push(...newChildren)
 
-            let childLayoutData: { [key: string]: any } = {}
+            const childLayoutData: { [key: string]: any } = {}
             newChildren.forEach((childId, childIndex) => {
                 childLayoutData[childId] = slides[childIndex + 1].data || {}
             })
@@ -652,7 +652,7 @@ export function splitItemInTwo(slideRef: LayoutRef, itemIndex: number, sel: { st
     slides[slideRef.id].items[itemIndex].lines = firstLines
 
     // update scripture dynamic values
-    let numbersAdded: string[] = []
+    const numbersAdded: string[] = []
     if (slides[slideRef.id].customDynamicValues?.scripture_text) {
         const texts = firstLines
             .flat()[0]
@@ -677,7 +677,7 @@ export function splitItemInTwo(slideRef: LayoutRef, itemIndex: number, sel: { st
             slides[slideId].customDynamicValues.scripture_text[i][1] = t
             slides[slideId].customDynamicValues.scripture1_text[i][1] = t
 
-            let removeNumber = numbersAdded.find((a) => a === slides[slideId].customDynamicValues.scripture_text[i][0])
+            const removeNumber = numbersAdded.find((a) => a === slides[slideId].customDynamicValues.scripture_text[i][0])
             if (removeNumber) {
                 slides[slideId].customDynamicValues.scripture_text[i][0] = "0"
                 slides[slideId].customDynamicValues.scripture1_text[i][0] = "0"

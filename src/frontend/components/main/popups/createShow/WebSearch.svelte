@@ -20,8 +20,8 @@
     // let loadTimeout: NodeJS.Timeout | null = null
     onMount(searchLyrics)
     function searchLyrics() {
-        let artist = ""
-        let title = query
+        const artist = ""
+        const title = query
         if (!title) {
             newToast("toast.no_name")
             return
@@ -44,7 +44,7 @@
     // encode using btoa()
     const blockedWords = ["ZnVjaw==", "Yml0Y2g=", "bmlnZ2E="]
     const blockedArtists = ["R2hvc3Q=", "R2VuZXNpcw==", "QUMvREM=", "RGlzdHVyYmVk", "Qm9iIFJpdmVycw==", "Q2FyeSBBbm4gSGVhcnN0"]
-    let listenerIdSearch = receiveMain(Main.SEARCH_LYRICS, (data) => {
+    const listenerIdSearch = receiveMain(Main.SEARCH_LYRICS, (data) => {
         data = filterBadArtists(data)
 
         if (!data.length) {
@@ -55,12 +55,12 @@
         loading = false
         songs = data
     })
-    let listenerIdLyrics = receiveMain(Main.GET_LYRICS, (data) => {
+    const listenerIdLyrics = receiveMain(Main.GET_LYRICS, (data) => {
         loading = false
 
         // filter out songs with bad words
         blockedWords.forEach((eWord) => {
-            let word = atob(eWord)
+            const word = atob(eWord)
             if (data.lyrics.includes(word)) data.lyrics = ""
         })
 
@@ -88,7 +88,7 @@
         )
     }
 
-    let dispatch = createEventDispatcher()
+    const dispatch = createEventDispatcher()
     function setValue(data: any) {
         dispatch("update", data)
     }

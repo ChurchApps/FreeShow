@@ -11,7 +11,7 @@
     $: id = $popupData.id || ""
 
     let action: any = { name: "", triggers: [] }
-    let actionMidi: API_midi = { type: "noteon", values: { note: 0, velocity: -1, channel: 1 }, defaultValues: true }
+    const actionMidi: API_midi = { type: "noteon", values: { note: 0, velocity: -1, channel: 1 }, defaultValues: true }
 
     let loaded = false
     onMount(setAction)
@@ -28,7 +28,7 @@
     }
 
     function updateValue(key: string, e: any) {
-        let value = e.detail ?? e
+        const value = e.detail ?? e
 
         action[key] = value
 
@@ -39,8 +39,8 @@
         if (!loaded) return
 
         actions.update((a) => {
-            let shows = a[id]?.shows || []
-            let showId = $popupData.index === undefined && !$popupData.indexes?.length ? "" : $activeShow?.id || ""
+            const shows = a[id]?.shows || []
+            const showId = $popupData.index === undefined && !$popupData.indexes?.length ? "" : $activeShow?.id || ""
             if (showId && !shows.find((a) => a.id === showId)) shows.push({ id: showId })
             action.shows = shows
 

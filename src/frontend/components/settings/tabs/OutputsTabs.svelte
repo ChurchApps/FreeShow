@@ -16,12 +16,12 @@
     $: updatedOutputs = $outputs
     let currentOutputs = clone($outputs)
     $: {
-        let newOutputs = clone(updatedOutputs)
+        const newOutputs = clone(updatedOutputs)
         Object.values(newOutputs).map((a) => {
             delete a.out
             return a
         })
-        let currOutputs = clone(currentOutputs)
+        const currOutputs = clone(currentOutputs)
         Object.values(currOutputs).map((a) => {
             delete a.out
             return a
@@ -75,7 +75,7 @@
         // TODO: history
         outputs.update((a: any) => {
             if (key.includes(".")) {
-                let split = key.split(".")
+                const split = key.split(".")
                 a[outputId][split[0]][split[1]] = value
                 if (split[1] === "lines" && !Number(value)) delete a[outputId][split[0]][split[1]]
             } else {
@@ -140,19 +140,19 @@
     $: if ($activeTriggerFunction === "create_output") createOutput()
     async function createOutput(e?: ClickEvent) {
         const skipPopup = e?.detail.ctrl
-        let stageLayouts = keysToID($stageShows)
-        let type = stageLayouts.length && !skipPopup ? await waitForPopupData("choose_output") : "normal"
+        const stageLayouts = keysToID($stageShows)
+        const type = stageLayouts.length && !skipPopup ? await waitForPopupData("choose_output") : "normal"
         if (!type) return
 
         if (type === "stage") {
-            let firstStageLayoutId = sortByName(stageLayouts)[0]?.id || ""
-            let stageId = stageLayouts.length > 1 ? (await waitForPopupData("select_stage_layout")) || firstStageLayoutId : firstStageLayoutId
+            const firstStageLayoutId = sortByName(stageLayouts)[0]?.id || ""
+            const stageId = stageLayouts.length > 1 ? (await waitForPopupData("select_stage_layout")) || firstStageLayoutId : firstStageLayoutId
 
-            let stageLayout = $stageShows[stageId]
+            const stageLayout = $stageShows[stageId]
 
             toggleOutputEnabled.set(true) // disable preview output transitions (to prevent visual svelte bug)
             setTimeout(() => {
-                let id = enableStageOutput({ stageOutput: stageId, name: stageLayout?.name || "" })
+                const id = enableStageOutput({ stageOutput: stageId, name: stageLayout?.name || "" })
                 currentOutputSettings.set(id)
             }, 100)
         } else if (type === "normal") {

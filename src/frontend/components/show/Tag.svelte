@@ -11,7 +11,7 @@
     let editActive = false
 
     function rename(e: any, tagId: string) {
-        let value = e.detail?.value
+        const value = e.detail?.value
 
         if ($globalTags[tagId]?.name) {
             if (!value) {
@@ -37,16 +37,16 @@
     function toggleTag(tagId: string) {
         if (editActive) return
 
-        let quickAccess = _show().get("quickAccess") || {}
+        const quickAccess = _show().get("quickAccess") || {}
 
-        let tags = quickAccess.tags || []
-        let existingIndex = tags.indexOf(tagId)
+        const tags = quickAccess.tags || []
+        const existingIndex = tags.indexOf(tagId)
         if (existingIndex < 0) tags.push(tagId)
         else tags.splice(existingIndex, 1)
 
         quickAccess.tags = tags
 
-        let showId: string = $activeShow!.id
+        const showId: string = $activeShow!.id
         history({ id: "UPDATE", newData: { data: quickAccess, key: "quickAccess" }, oldData: { id: showId }, location: { page: "show", id: "show_key", override: "toggle_tag" } })
     }
 </script>

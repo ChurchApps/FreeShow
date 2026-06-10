@@ -16,7 +16,7 @@
     function openTab() {
         if ($activePage !== "show" && manuallyChanged) return
 
-        let tabId = $openToolsTab
+        const tabId = $openToolsTab
         openToolsTab.set("")
 
         if (!tabs[tabId]) return

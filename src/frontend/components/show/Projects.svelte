@@ -33,8 +33,8 @@
         projects.set(removeDuplicateValues($projects))
     }
 
-    let profile = getAccess("projects")
-    let readOnly = profile.global === "read"
+    const profile = getAccess("projects")
+    const readOnly = profile.global === "read"
 
     $: f = Object.entries($folders)
         .filter(([id, a]) => !a.deleted && profile[id] !== "none")
@@ -45,7 +45,7 @@
     $: templates = sortByName(keysToID($projectTemplates)).filter((a) => !a.deleted)
 
     $: {
-        let sortType = $sorted.projects?.type || "name"
+        const sortType = $sorted.projects?.type || "name"
         // sort by name regardless because project folders <= 0.9.5 doesn't have created date
         let sortedFolders = sortByName(f)
         let sortedProjects = sortByName(p)
@@ -74,7 +74,7 @@
 
     let folderSorted: Tree[] = []
     function sortFolders(parent = "/", index = 0, path = "") {
-        let filtered = tree.filter((a) => a.parent === parent).map((a) => ({ ...a, index, path }))
+        const filtered = tree.filter((a) => a.parent === parent).map((a) => ({ ...a, index, path }))
         filtered.forEach((folder) => {
             const rootParentId = path.split("/")[0] || folder.id
             if (profile[rootParentId] === "none") return
@@ -111,7 +111,7 @@
     let listScrollElem: HTMLElement | undefined
     let listOffset = -1
     $: if (listScrollElem) {
-        let time = tree.length * 0.5 + 20
+        const time = tree.length * 0.5 + 20
         setTimeout(() => {
             if (!listScrollElem) return
             const projectElements = [...(listScrollElem.querySelector(".fullTree")?.querySelectorAll("button") || [])]
@@ -160,11 +160,11 @@
 
     function createFromTemplate(e: any, id: string) {
         // prevent extra single click on (template) double click
-        let { ctrl, doubleClick, target } = e.detail
+        const { ctrl, doubleClick, target } = e.detail
 
         if (target.closest(".edit") || target.querySelector(".edit") || editActive || doubleClick) return
 
-        let project = clone($projectTemplates[id])
+        const project = clone($projectTemplates[id])
         if (!project) return
 
         project.parent = interactedFolder || ($folders[currentProject?.parent || ""] ? currentProject?.parent || "/" : "/")
@@ -173,7 +173,7 @@
             project.name = getProjectName({ default_project_name: project.name }) // replace actual name values
         else project.name = getProjectName() // use default (auto) project name
 
-        let projectId = uid()
+        const projectId = uid()
         history({ id: "UPDATE", newData: { data: project }, oldData: { id: projectId }, location: { page: "show", id: "project" } })
         setTimeout(() => activeRename.set("project_" + projectId))
     }
@@ -296,9 +296,9 @@
 
     $: projectName = $special.default_project_name ?? getDefaultProjectName()
 
-    let projectReplacerTitle = getReplacerTitle()
+    const projectReplacerTitle = getReplacerTitle()
     function getReplacerTitle() {
-        let titles: string[] = []
+        const titles: string[] = []
         projectReplacers.forEach((a) => {
             if (a.id === "D0") titles.push("")
             else titles.push(`• <b>${a.title}:</b> {${a.id}}`)

@@ -83,9 +83,9 @@
     function openSubMenu() {
         drawerTabsData.update((a) => {
             if (!a[drawerId]) return a
-            let opened = clone(openedSubmenus)
+            const opened = clone(openedSubmenus)
 
-            let existingIndex = opened.findIndex((menuId) => menuId === id) ?? -1
+            const existingIndex = opened.findIndex((menuId) => menuId === id) ?? -1
             if (existingIndex < 0) opened.push(id)
             else {
                 opened.splice(existingIndex, 1)

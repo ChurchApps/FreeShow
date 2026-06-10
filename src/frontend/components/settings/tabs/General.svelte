@@ -16,7 +16,7 @@
         })
     }
 
-    /////
+    /// //
 
     // WIP set calendar starting day
     // WIP change date format (DD.MM.YYYY, YYYY-MM-DD)

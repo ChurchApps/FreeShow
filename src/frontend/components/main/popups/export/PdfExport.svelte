@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Show } from "../../../../../types/Show"
+    import type { Show } from "../../../../../types/Show"
     import { translateText } from "../../../../utils/language"
     import Pdf from "../../../export/Pdf.svelte"
     import T from "../../../helpers/T.svelte"

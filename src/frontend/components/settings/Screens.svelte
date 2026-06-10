@@ -32,7 +32,7 @@
 
     // find matching screen
     $: if (!currentScreen.screen && screens.length) {
-        let match = screens.find((screen) => JSON.stringify(screen.bounds) === JSON.stringify(currentScreen.bounds))
+        const match = screens.find((screen) => JSON.stringify(screen.bounds) === JSON.stringify(currentScreen.bounds))
         if (match?.id) {
             outputs.update((a: any) => {
                 a[screenId!].screen = match.id.toString()
@@ -48,7 +48,7 @@
 
     onMount(async () => {
         const displays = (await requestMain(Main.GET_DISPLAYS)) || []
-        let sortedScreens = displays.sort(sortScreensByPosition)
+        const sortedScreens = displays.sort(sortScreensByPosition)
         screens = sortedScreens.sort(internalFirst)
 
         // get min/max bounds
@@ -104,8 +104,8 @@
         return b.internal - a.internal
     }
     function sortScreensByPosition(a, b) {
-        let aX = a.bounds.x
-        let bX = b.bounds.x
+        const aX = a.bounds.x
+        const bX = b.bounds.x
 
         return aX - bX
     }
@@ -113,9 +113,9 @@
     function changeOutputScreen(e: any) {
         if (!currentScreen || !screenId) return
 
-        let alreadySelected = $outputs[screenId]?.screen === e.detail.id.toString()
+        const alreadySelected = $outputs[screenId]?.screen === e.detail.id.toString()
 
-        let bounds = e.detail.bounds
+        const bounds = e.detail.bounds
         outputs.update((a) => {
             if (!a[screenId]) return a
 

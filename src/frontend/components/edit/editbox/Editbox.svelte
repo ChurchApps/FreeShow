@@ -65,7 +65,7 @@
             return ae
         })
 
-        let target = e.target.closest(".item")
+        const target = e.target.closest(".item")
         if (!target) return
 
         mouse = {
@@ -82,7 +82,7 @@
                 height: e.clientY / ratio - target.offsetHeight
             },
             item,
-            e: e,
+            e,
             rightClick
         }
     }
@@ -137,7 +137,7 @@
     $: customOutputId = getFirstActiveOutput($outputs)?.id || ""
     function getCustomStyle(style: string, outputId = "") {
         if (outputId) {
-            let outputResolution = getOutputResolution(outputId, $outputs, true)
+            const outputResolution = getOutputResolution(outputId, $outputs, true)
             style = percentageStylePos(style, outputResolution)
         }
 
@@ -175,7 +175,7 @@
 
     $: isDisabledVariable = item?.type === "variable" && $variables[item.variable?.id]?.enabled === false
     // SHOW IS LOCKED FOR EDITING
-    let profile = getAccess("shows")
+    const profile = getAccess("shows")
     $: currentSlide = (ref.type || "show") === "show" ? $showsCache[active || ""]?.slides?.[ref.id] : null // WIP get group slide
     $: isLocked = (ref.type || "show") !== "show" ? false : $showsCache[active || ""]?.locked || currentSlide?.locked || profile.global === "read" || profile[$showsCache[active || ""]?.category || ""] === "read"
 

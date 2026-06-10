@@ -8,7 +8,7 @@
     import Button from "../inputs/Button.svelte"
     import { guideSteps } from "./guideSteps"
 
-    let steps = guideSteps
+    const steps = guideSteps
     $: active = $guideActive
 
     let stepIndex = 0
@@ -26,11 +26,11 @@
     let flip = false
     async function findElementPos({ pre, query, timeout = 10 }: { pre?: () => void; query: string; timeout?: number }) {
         if (pre) pre()
-        let timeIndex = stepIndex
+        const timeIndex = stepIndex
         await wait(timeout)
         if (timeIndex !== stepIndex) return
 
-        let elem = document.querySelector(query)
+        const elem = document.querySelector(query)
         if (!elem) {
             console.log("Could not find element for step", stepIndex)
             stepIndex++

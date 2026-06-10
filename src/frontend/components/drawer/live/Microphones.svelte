@@ -11,7 +11,7 @@
         }
     }
 
-    let mics: Mics = {}
+    const mics: Mics = {}
     AudioMicrophone.getList()?.then((devices) => {
         devices?.forEach((d) => {
             if (!mics[d.groupId]) mics[d.groupId] = {}

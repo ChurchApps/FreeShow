@@ -52,7 +52,7 @@
         if (disabled) return
         pickerOpen = !pickerOpen
     }
-    let pickerId: string = "picker_" + uid()
+    const pickerId: string = "picker_" + uid()
     function mousedown(e: any) {
         if (e.target.closest("#" + pickerId) || (e.target.closest(".colorpicker") && !e.target.closest(".pickColor"))) return
         if (e.target.closest(".color")) return
@@ -84,7 +84,7 @@
     }
 
     function selectColor(c: string, close = true, clicked = false) {
-        let actualValue = colorUpdate(c, clicked)
+        const actualValue = colorUpdate(c, clicked)
 
         dispatch("change", actualValue)
         dispatch("input", actualValue)

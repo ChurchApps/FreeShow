@@ -15,7 +15,7 @@
     export let allSlideItems: Item[]
     export let item: Item | null
 
-    let currentItemSections = clone(itemSections)
+    const currentItemSections = clone(itemSections)
 
     let data: { [key: string]: string } = {}
 
@@ -34,7 +34,7 @@
 
         // setBoxInputValue({ icon: "", edit: itemEditValues }, "default", "background-opacity", "hidden", isGradient || !data["background-color"])
 
-        const transform = data["transform"] || ""
+        const transform = data.transform || ""
         const showPerspective = transform.includes("rotateX") && !transform.includes("rotateX(0deg)")
         setBoxInputValue(currentItemSections, "transform", "perspective", "hidden", !showPerspective)
 
@@ -59,7 +59,7 @@
         input = percentageToAspectRatio(input)
 
         if (input.id === "backdrop-filter" || input.id === "transform") {
-            let oldString = input.id === "backdrop-filter" ? itemBackFilters : data[input.id]
+            const oldString = input.id === "backdrop-filter" ? itemBackFilters : data[input.id]
             input.value = addFilterString(oldString || "", [input.key, input.value])
             input.key = input.id
         }
@@ -81,16 +81,16 @@
         // update all items if nothing is selected
         if (!allItems.length) allSlideItems.forEach((_item, i) => allItems.push(i))
 
-        /////
+        /// //
 
-        let ref = getLayoutRef()
-        let slides: string[] = [ref[$activeEdit.slide ?? ""]?.id]
-        let slideItems: number[][] = [allItems]
-        let showSlides = $showsCache[$activeShow?.id || ""]?.slides || {}
+        const ref = getLayoutRef()
+        const slides: string[] = [ref[$activeEdit.slide ?? ""]?.id]
+        const slideItems: number[][] = [allItems]
+        const showSlides = $showsCache[$activeShow?.id || ""]?.slides || {}
 
         // get all selected slides
         if ($selected.id === "slide" && Array.isArray($selected.data)) {
-            let selectedSlides = $selected.data.filter(({ index }) => index !== $activeEdit.slide!)
+            const selectedSlides = $selected.data.filter(({ index }) => index !== $activeEdit.slide!)
             slides.push(...selectedSlides.map(({ index }) => ref[index]?.id))
 
             slides.forEach((id, i) => {
@@ -100,22 +100,22 @@
                     return
                 }
 
-                let currentItems = showSlides[id].items
-                let currentItemIndexes = currentItems.map((_item, i) => i)
+                const currentItems = showSlides[id].items
+                const currentItemIndexes = currentItems.map((_item, i) => i)
                 slideItems.push(currentItemIndexes)
             })
         }
 
-        /////
+        /// //
 
         let values: { [key: string]: string[] } = {}
 
         // get relative value
         let relativeValue = 0
         if (input.relative) {
-            let items = showSlides[slides[0]]?.items || allSlideItems
-            let firstItemStyle = items?.[allItems[0]]?.style || ""
-            let previousValue = Number(getStyles(firstItemStyle, true)?.[input.key] || "0")
+            const items = showSlides[slides[0]]?.items || allSlideItems
+            const firstItemStyle = items?.[allItems[0]]?.style || ""
+            const previousValue = Number(getStyles(firstItemStyle, true)?.[input.key] || "0")
             relativeValue = Number(input.value.replace("px", "")) - previousValue
         }
 
@@ -125,12 +125,12 @@
 
             // loop through all items
             slideItems[i].forEach((itemIndex) => {
-                let currentSlideItem = showSlides[slide]?.items?.[itemIndex] || allSlideItems[itemIndex]
+                const currentSlideItem = showSlides[slide]?.items?.[itemIndex] || allSlideItems[itemIndex]
                 if (!currentSlideItem) return
 
                 let newValue = input.value
                 if (input.relative) {
-                    let previousItemValue = Number(getStyles(currentSlideItem.style, true)?.[input.key] || "0")
+                    const previousItemValue = Number(getStyles(currentSlideItem.style, true)?.[input.key] || "0")
                     newValue = previousItemValue + relativeValue + "px"
                 }
 

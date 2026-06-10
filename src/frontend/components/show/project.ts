@@ -8,7 +8,7 @@ import { similarity } from "../../converters/txt"
 export function openProject(id: string, openFirstItem: boolean = true) {
     projectView.set(false)
 
-    let alreadyActive = get(activeProject) === id
+    const alreadyActive = get(activeProject) === id
     if (!get(showRecentlyUsedProjects) && alreadyActive) return
 
     showRecentlyUsedProjects.set(false)
@@ -33,7 +33,7 @@ export function openProjectItem(id: string, index: number = 0) {
     const projectItems = get(projects)[id]?.shows || []
     if (!projectItems.length) return
 
-    let item = projectItems[index]
+    const item = projectItems[index]
     if (!item) return
 
     activeShow.set({ ...item, index })
@@ -50,7 +50,7 @@ export function openProjectItem(id: string, index: number = 0) {
         }, 50)
     }
 
-    let type = item.type
+    const type = item.type
     // same as ShowButton
     if (type === "image" || type === "video") activeEdit.set({ id: item.id, type: "media", items: [] })
     else if (get(activeEdit).id) activeEdit.set({ type: "show", slide: 0, items: [], showId: item.id })
@@ -96,7 +96,7 @@ export function clipboardToProject() {
 function textToProjectItems(text: string) {
     if (typeof text !== "string") return []
 
-    let items: ProjectShowRef[] = []
+    const items: ProjectShowRef[] = []
 
     // account for bullet/number points
     // know when there's lyrics

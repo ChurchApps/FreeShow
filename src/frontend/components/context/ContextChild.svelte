@@ -3,7 +3,8 @@
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import ContextItem from "./ContextItem.svelte"
-    import { ContextMenuItem, contextMenuItems } from "./contextMenus"
+    import type { ContextMenuItem } from "./contextMenus"
+    import { contextMenuItems } from "./contextMenus"
     import { loadItems } from "./loadItems"
 
     export let contextElem: HTMLDivElement | null = null
@@ -19,7 +20,7 @@
     let open = false
     let elem: HTMLDivElement
     let timeout: NodeJS.Timeout | null = null
-    let duration = 180
+    const duration = 180
 
     $: highlighted = highlightedPath.length > 0 && highlightedPath[0] === id
 

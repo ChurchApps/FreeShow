@@ -50,9 +50,9 @@
     function redraw() {
         if (!ctx) return
 
-        for (var i = 1; i < lines.length; i++) {
+        for (let i = 1; i < lines.length; i++) {
             let previous = lines[i - 1]
-            let current = lines[i]
+            const current = lines[i]
             if (current !== "mouseup") {
                 if (previous === "mouseup") previous = current
 
@@ -115,9 +115,9 @@
     }
 
     function store(x: number, y: number) {
-        let line = {
-            x: x,
-            y: y,
+        const line = {
+            x,
+            y,
             size: settings.size || 10,
             color: settings.color || "#ffffff"
         }

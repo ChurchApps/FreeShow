@@ -24,7 +24,7 @@
     $: currentStyle = $styles[styleId] || clone(defaultStyle)
 
     function updateStyle(e: any, key: string, currentId = "") {
-        let value = e?.detail ?? e?.target?.value ?? e
+        const value = e?.detail ?? e?.target?.value ?? e
 
         if (!currentId) currentId = styleId || "default"
 
@@ -45,7 +45,7 @@
     $: if ($activeTriggerFunction === "create_style") createStyle()
     async function createStyle(e?: ClickEvent) {
         const skipPopup = e?.detail.ctrl
-        let type = skipPopup ? "normal" : await waitForPopupData("choose_style")
+        const type = skipPopup ? "normal" : await waitForPopupData("choose_style")
         if (!type) return
 
         // create default if no styles

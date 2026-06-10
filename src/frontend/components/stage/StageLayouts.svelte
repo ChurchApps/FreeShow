@@ -21,8 +21,8 @@
 
     $: if ($activeStage.id === null && Object.keys($stageShows).length) setActiveStage()
     function setActiveStage() {
-        let activeStageOutput = Object.values($outputs).find((a) => a.enabled && a.stageOutput)?.stageOutput
-        let firstStageLayout = activeStageOutput || sortedStageSlides[0]?.id
+        const activeStageOutput = Object.values($outputs).find((a) => a.enabled && a.stageOutput)?.stageOutput
+        const firstStageLayout = activeStageOutput || sortedStageSlides[0]?.id
         activeStage.set({ id: firstStageLayout, items: [] })
     }
 
@@ -33,7 +33,7 @@
         // CHANGE STAGE LAYOUT
 
         let nextTab = -1
-        let currentTabIndex = sortedStageSlides.findIndex((a) => a.id === $activeStage.id)
+        const currentTabIndex = sortedStageSlides.findIndex((a) => a.id === $activeStage.id)
 
         if (e.key === "ArrowDown") {
             nextTab = Math.min(sortedStageSlides.length - 1, currentTabIndex + 1)

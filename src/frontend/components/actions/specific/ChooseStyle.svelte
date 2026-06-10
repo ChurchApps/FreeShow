@@ -14,19 +14,19 @@
 
     let styleOutputs = value.styleOutputs || { type: "active" }
 
-    let outputsOptions = [
+    const outputsOptions = [
         { value: "active", label: translateText("actions.active_outputs") },
         { value: "all", label: translateText("actions.all_outputs") },
         { value: "specific", label: translateText("actions.specific_outputs") }
     ]
-    let outputsList = getList($outputs).filter((a) => !a.stageOutput)
-    let stylesList = getList($styles).map((a) => ({ value: a.id, label: a.name }))
+    const outputsList = getList($outputs).filter((a) => !a.stageOutput)
+    const stylesList = getList($styles).map((a) => ({ value: a.id, label: a.name }))
 
     function getList(list) {
         return sortByName(keysToID(list))
     }
 
-    let dispatch = createEventDispatcher()
+    const dispatch = createEventDispatcher()
     function updateStyle(key: string, newValue: any) {
         value[key] = newValue
 
@@ -37,7 +37,7 @@
     }
 
     function setOutputStyle(outputId: string, styleId: string) {
-        let newOutputs = styleOutputs.outputs || {}
+        const newOutputs = styleOutputs.outputs || {}
 
         newOutputs[outputId] = styleId
         if (!styleId) delete newOutputs[outputId]

@@ -23,7 +23,7 @@
         if (updaterInterval) return
 
         updaterInterval = setInterval(() => {
-            let audio = AudioPlayer.getAudio(path)
+            const audio = AudioPlayer.getAudio(path)
             if (!audio) return
 
             currentTime = audio.currentTime

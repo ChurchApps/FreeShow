@@ -56,7 +56,7 @@
             if (e.target.closest(".menus") || e.target.closest(".popup") || e.target.closest(".drawer") || e.target.closest(".chords") || e.target.closest(".contextMenu") || e.target.closest(".editTools")) return
         }
 
-        let sel = window.getSelection()
+        const sel = window.getSelection()
 
         if (sel?.type === "None") {
             if ((document.activeElement as HTMLElement | null)?.closest(".tools")) return
@@ -183,7 +183,7 @@
         const currentDomSelection = window.getSelection()
         const backwardSelection = currentDomSelection ? isSelectionBackward(currentDomSelection) : false
 
-        let value = shortcut()
+        const value = shortcut()
         // WIP line-through is removed
         if (styles[value.key]?.includes(value.value)) value.value = ""
 
@@ -238,7 +238,7 @@
     }
 
     $: if (id === "text") {
-        setBoxInputValue(box, "default", "font-family", "styleValue", getStyles(style)["font"] || "")
+        setBoxInputValue(box, "default", "font-family", "styleValue", getStyles(style).font || "")
         // setBoxInputValue(box2, "default", "textFit", "hidden", !item?.auto)
         setBoxInputValue(box, "text", "nowrap", "value", !!styles["white-space"]?.includes("nowrap"))
         setBoxInputValue(box, "lines", "specialStyle.lineRadius", "hidden", !item?.specialStyle?.lineRadius && !item?.specialStyle?.lineBg)
@@ -303,8 +303,8 @@
 
         // set nested value
         if (input.id.includes(".")) {
-            let splitted = input.id.split(".")
-            let item = getSelectedItem()
+            const splitted = input.id.split(".")
+            const item = getSelectedItem()
             if (!item) return
 
             input.id = splitted[0]
@@ -321,8 +321,8 @@
                 }
             }
 
-            let slideId = getLayoutRef()[$activeEdit.slide!]?.id
-            let slide = clone(_show().slides([slideId]).get()[0]) as Slide
+            const slideId = getLayoutRef()[$activeEdit.slide!]?.id
+            const slide = clone(_show().slides([slideId]).get()[0]) as Slide
 
             return slide.items[allItems[0]]
         }
@@ -374,7 +374,7 @@
                     return
                 }
 
-                let splitted = input.id.split(".")
+                const splitted = input.id.split(".")
                 if (!a[$activeEdit.id!].items[i][splitted[0]]) a[$activeEdit.id!].items[i][splitted[0]] = {}
                 a[$activeEdit.id!].items[i][splitted[0]][splitted[1]] = value
             })
@@ -403,7 +403,7 @@
         if (($activeEdit.type || "show") === "show") allItems = allItems.reverse()
 
         // only same type
-        let currentType = id || allSlideItems[allItems[0]].type || "text"
+        const currentType = id || allSlideItems[allItems[0]].type || "text"
         allItems = allItems.filter((index) => (allSlideItems[index].type || "text") === currentType)
 
         if (input.id === "nowrap") input = { ...input, id: "style", key: "white-space", value: input.value ? "nowrap" : undefined }
@@ -413,21 +413,21 @@
             return
         }
 
-        let aligns: boolean = input.key === "align-items" || input.key === "text-align"
+        const aligns: boolean = input.key === "align-items" || input.key === "text-align"
 
         if (input.id.includes("CSS")) allItems = [allItems[0]]
 
-        /////
+        /// //
 
         // this is only for show slides
-        let ref = getLayoutRef()
-        let slides: string[] = [ref[$activeEdit.slide ?? ""]?.id || "other"]
-        let slideItems: number[][] = [allItems]
-        let showSlides = $showsCache[$activeShow?.id || ""]?.slides || {}
+        const ref = getLayoutRef()
+        const slides: string[] = [ref[$activeEdit.slide ?? ""]?.id || "other"]
+        const slideItems: number[][] = [allItems]
+        const showSlides = $showsCache[$activeShow?.id || ""]?.slides || {}
 
         // get all selected slides
         if (slides[0] && $selected.id === "slide" && Array.isArray($selected.data)) {
-            let selectedSlides = $selected.data.filter(({ index }) => index !== $activeEdit.slide!)
+            const selectedSlides = $selected.data.filter(({ index }) => index !== $activeEdit.slide!)
             slides.push(...selectedSlides.map(({ index }) => ref[index]?.id))
 
             slides.forEach((id, i) => {
@@ -437,7 +437,7 @@
                     return
                 }
 
-                let currentItems = showSlides[id].items
+                const currentItems = showSlides[id].items
                 let currentItemIndexes = currentItems.map((_item, i) => i)
 
                 // only same type
@@ -446,12 +446,12 @@
             })
         }
 
-        /////
+        /// //
 
         // WIP get relative value
         // ItemStyle.svelte
 
-        let values: { [key: string]: any[] } = {}
+        const values: { [key: string]: any[] } = {}
         slides.forEach((slide, i) => {
             if (!slideItems[i]?.length) return
             values[slide] = []
@@ -470,7 +470,7 @@
             }
 
             if (input.key === "text-align") {
-                let newAligns: any[] = []
+                const newAligns: any[] = []
                 currentSlideItem.lines?.forEach((line, linePos) => {
                     if (!selection?.length || selection[linePos]?.start !== undefined) newAligns.push(`${input.key}: ${input.value};`)
                     else newAligns.push(line.align)
@@ -518,7 +518,7 @@
             allItems.forEach((_itemIndex, i) => {
                 if (!currentItems[i]) return
 
-                let allValues: any = Object.values(values)[0]
+                const allValues: any = Object.values(values)[0]
                 let currentValue: any = allValues[i] ?? allValues[0]
                 // some textboxes don't have lines, this will break things, so make sure it has lines!
                 if (currentItems[i].lines && typeof currentValue === "string") currentValue = allValues.find((a) => typeof a !== "string") || allValues[0]
@@ -526,7 +526,7 @@
                 if (input.key === "align-items") currentItems[i].align = currentValue
                 else if (currentType !== "text") currentItems[i].style = currentValue
                 else {
-                    let lines = currentItems[i].lines
+                    const lines = currentItems[i].lines
                     lines?.forEach((_a, j) => {
                         currentItems[i].lines![j][aligns ? "align" : "text"] = currentValue[j]
                     })
@@ -537,14 +537,14 @@
 
             // no text
             if (currentItems[0]?.lines) {
-                let textLength = currentItems.reduce((length, item) => (length += getItemText(item).length), 0)
+                const textLength = currentItems.reduce((length, item) => (length += getItemText(item).length), 0)
                 if (!textLength) {
                     newToast("empty.text")
                     return
                 }
             }
 
-            let override = $activeEdit.id + "#" + allItems.join(",")
+            const override = $activeEdit.id + "#" + allItems.join(",")
             history({
                 id: "UPDATE",
                 oldData: { id: $activeEdit.id },
@@ -572,13 +572,13 @@
 
         // no text
         // values: {key: [[[]]]}
-        let textLength = Object.values(values).reduce((length: number, value: any) => length + value.flat(2).reduce((value, text) => value + (text?.value || ""), "").length, 0)
+        const textLength = Object.values(values).reduce((length: number, value: any) => length + value.flat(2).reduce((value, text) => value + (text?.value || ""), "").length, 0)
         if (input.key !== "text-align" && !aligns && !textLength) {
             newToast("empty.text")
             return
         }
 
-        let key: string = input.key === "text-align" || aligns ? "align" : "text"
+        const key: string = input.key === "text-align" || aligns ? "align" : "text"
         slides.forEach((slide, i) => {
             if (!slideItems[i].length) return
             history({

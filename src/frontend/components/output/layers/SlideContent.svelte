@@ -87,17 +87,17 @@
     // do not update if only line has changed
     $: currentOutSlide = "{}"
     $: if (outSlide) {
-        let newOutSlide = clone(outSlide)
+        const newOutSlide = clone(outSlide)
         delete newOutSlide.line
         delete newOutSlide.revealCount
         delete newOutSlide.itemClickReveal
-        let outSlideString = JSON.stringify(newOutSlide)
+        const outSlideString = JSON.stringify(newOutSlide)
         if (outSlideString !== currentOutSlide) currentOutSlide = outSlideString
     }
     // do not update if lines has no changes for this output
     $: currentLines = "{}"
     $: if (lines) {
-        let outLinesString = JSON.stringify(lines)
+        const outLinesString = JSON.stringify(lines)
         if (outLinesString !== currentLines) currentLines = outLinesString
     }
     // only update if changed (no update when another output changes)
@@ -160,7 +160,7 @@
 
     let isClearingToEmpty = false
     async function updateItems() {
-        let betweenClearingTransition = transition.between || transition
+        const betweenClearingTransition = transition.between || transition
         if (betweenClearingTransition?.type === "none") betweenClearingTransition.duration = 0
 
         if (!currentSlideItems?.length) {
@@ -191,8 +191,8 @@
         scheduleAutoSizePrecompute(currentSlide.items)
 
         // get any items with no transition between the two slides
-        let oldItemTransition = currentItems.find((a) => a.actions?.transition)?.actions?.transition
-        let newItemTransition = currentSlide.items.find((a) => a.actions?.transition)?.actions?.transition
+        const oldItemTransition = currentItems.find((a) => a.actions?.transition)?.actions?.transition
+        const newItemTransition = currentSlide.items.find((a) => a.actions?.transition)?.actions?.transition
         let itemTransitionDuration: number | null = null
         if (oldItemTransition && JSON.stringify(oldItemTransition) === JSON.stringify(newItemTransition)) {
             itemTransitionDuration = oldItemTransition.duration ?? null
@@ -201,11 +201,11 @@
             else if (currentSlide.items.find((a) => a.actions?.transition?.duration === 0 || a.actions?.transition?.type === "none")) itemTransitionDuration = 0
         }
 
-        let currentTransition = transition.between || transition.in || transition
+        const currentTransition = transition.between || transition.in || transition
         if (currentTransition?.type === "none") currentTransition.duration = 0
 
-        let currentTransitionDuration = transitionEnabled ? (itemTransitionDuration ?? currentTransition?.duration ?? 0) : 0
-        let waitToShow = currentTransitionDuration * ((currentTransition?.fadeInOffset ?? 50) / 100)
+        const currentTransitionDuration = transitionEnabled ? (itemTransitionDuration ?? currentTransition?.duration ?? 0) : 0
+        const waitToShow = currentTransitionDuration * ((currentTransition?.fadeInOffset ?? 50) / 100)
 
         // Identify items that are unchanged and have no real transition (to skip redraw)
         const newPersistentIndexes: number[] = []

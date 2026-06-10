@@ -32,11 +32,11 @@
     $: layoutSlides = layouts?.[activeLayout]?.slides || []
     $: if (layoutSlides.length) getTotalTime()
     function getTotalTime() {
-        let ref = _show()
+        const ref = _show()
             .layouts("active")
             .ref()[0]
             .filter((a) => !a.data.disabled)
-        let total = ref.reduce((value, slide) => (value += Number(slide.data.nextTimer || 0)), 0)
+        const total = ref.reduce((value, slide) => (value += Number(slide.data.nextTimer || 0)), 0)
 
         totalTime = total ? (total > 59 ? joinTime(secondsToTime(total)) : total + "s") : "0s"
 
@@ -59,7 +59,7 @@
     }
 
     function changeName(e: any) {
-        let currentLayout = e.detail?.id?.slice("layout_".length)
+        const currentLayout = e.detail?.id?.slice("layout_".length)
         if (!currentLayout || isLocked) return
 
         const newName = e.detail.value
@@ -109,7 +109,7 @@
         runAction($actions[customAction])
     }
 
-    let profile = getAccess("shows")
+    const profile = getAccess("shows")
     $: isLocked = currentShow?.locked || profile.global === "read" || profile[currentShow?.category || ""] === "read"
 
     $: referenceType = currentShow?.reference?.type

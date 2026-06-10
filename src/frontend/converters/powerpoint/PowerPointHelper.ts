@@ -86,7 +86,7 @@ export class PartResolver {
     }
 }
 
-/////
+/// //
 
 class PresentationPart extends OpcPart {
     private get slideIds(): { ":@": { id?: string; ["r:id"]?: string }; "p:sldId": [] }[] {
@@ -257,7 +257,7 @@ class ThemePart extends OpcPart {
 //     }
 // }
 
-/////
+/// //
 
 export class PowerPointPackage {
     public readonly parts: Map<string, any> = new Map()
@@ -390,9 +390,9 @@ export class PowerPointPackage {
         const slide = this.resolveSlide(presentation, target)
         if (!slide) return null
 
-        let layout = slide?.layout || null
-        let master = layout?.master || null
-        let theme = master?.theme || null
+        const layout = slide?.layout || null
+        const master = layout?.master || null
+        const theme = master?.theme || null
 
         const colors = this.getColorScheme(theme, master, layout, slide)
 
@@ -419,7 +419,7 @@ export class PowerPointPackage {
         const sldSlide = getValue(slide?.json, "p:sld")
         const sldLayout = getValue(layout?.json, "p:sldLayout")
         const sldMaster = getValue(master?.json, "p:sldMaster")
-        let fill = getFirstAvailable([sldSlide, sldLayout, sldMaster], ["p:cSld", "p:bg", "p:bgPr", "a:solidFill"], ["p:cSld", "p:bg", "p:bgRef"])
+        const fill = getFirstAvailable([sldSlide, sldLayout, sldMaster], ["p:cSld", "p:bg", "p:bgPr", "a:solidFill"], ["p:cSld", "p:bg", "p:bgRef"])
         let bgColor = resolveColor(fill, colors)
 
         // slide gradient
@@ -431,10 +431,10 @@ export class PowerPointPackage {
         const bgImgId = getAttribute(bgFill, "r:embed", "a:blip")
         const bgImage = this.getMediaPath(bgImgId, { slide, layout, master })
         if (bgImage) {
-            let imageItem: Item = { type: "media", style: "width:1920px;height:1080px;top:0;left:0;", src: bgImage, fit: "fill" }
+            const imageItem: Item = { type: "media", style: "width:1920px;height:1080px;top:0;left:0;", src: bgImage, fit: "fill" }
 
             const alpha = getAttribute(getValue(bgFill, "a:blip"), "amt", "a:alphaModFix")
-            let a = parseInt(alpha || "100000") / 100000
+            const a = parseInt(alpha || "100000") / 100000
             if (a < 1) imageItem.style += `opacity: ${a};`
 
             const stretch = getValue(bgFill, "a:stretch")
@@ -613,7 +613,7 @@ export class PowerPointPackage {
             const underline = getPrioritizedStyle(r, pPrL, pPrM, tx, "u")
             const isStrikethrough = getPrioritizedStyle(r, pPrL, pPrM, tx, "strike") === "1"
 
-            let color = resolveColor(getValue(rPr, "a:solidFill"), ctx.colors) || resolveColor(getValue(pPrL, "a:defRPr", "a:solidFill"), ctx.colors) || resolveColor(getValue(pPrM, "a:defRPr", "a:solidFill"), ctx.colors) || resolveColor(getValue(tx, "a:defRPr", "a:solidFill"), ctx.colors)
+            const color = resolveColor(getValue(rPr, "a:solidFill"), ctx.colors) || resolveColor(getValue(pPrL, "a:defRPr", "a:solidFill"), ctx.colors) || resolveColor(getValue(pPrM, "a:defRPr", "a:solidFill"), ctx.colors) || resolveColor(getValue(tx, "a:defRPr", "a:solidFill"), ctx.colors)
             // if (!color) color = resolveColor(getValue(ctx.colors, "a:lt1"), ctx.colors) || resolveColor(getValue(ctx.colors, "a:tx1"), ctx.colors)
 
             // outline
@@ -653,7 +653,7 @@ export class PowerPointPackage {
             const baseline = getAttribute(r, "baseline") || "0"
             // const subscript = getAttribute(rPr, "val", "a:sub") === "1"
             // const superscript = getAttribute(rPr, "val", "a:sup") === "1"
-            let blEm = Number(baseline) / 100000
+            const blEm = Number(baseline) / 100000
 
             let style = ""
             style += `font-family: ${typeface ? typeface + ", " : ""}Calibri;`
@@ -735,8 +735,8 @@ export class PowerPointPackage {
                     const autoNum = getAttribute(pPr, "type", "a:buAutoNum") || getAttribute(pPrL, "type", "a:buAutoNum") || getAttribute(pPrM, "type", "a:buAutoNum")
                     // const blip = getAttribute(pPr, "embed", "a:buBlip")
                     // let bulletPadding = `margin-left: ${marL - indent - 5}px;margin-right: ${indent}px;`
-                    let bulletPadding = "padding-left: 38px;padding-right: 45px;"
-                    let bullet = buChar || autoNum ? { value: buChar, style: `text-shadow: 0 0 0 rgb(0 0 0 / 0);font-family: ${buFont};font-size: ${ptsToPx(buSize) || 24}px;color: ${buClr || "#000000"};${bulletPadding}` } : null
+                    const bulletPadding = "padding-left: 38px;padding-right: 45px;"
+                    const bullet = buChar || autoNum ? { value: buChar, style: `text-shadow: 0 0 0 rgb(0 0 0 / 0);font-family: ${buFont};font-size: ${ptsToPx(buSize) || 24}px;color: ${buClr || "#000000"};${bulletPadding}` } : null
 
                     // WIP split "a:br" properly as it breaks when style is changed
 
@@ -844,7 +844,7 @@ export class PowerPointPackage {
         if (rotate) transform += ` rotate(${rotate}deg);`
         if (transform) style += `transform: ${transform};`
 
-        let item: Item = {
+        const item: Item = {
             type: type2,
             style
         }
@@ -1273,7 +1273,7 @@ export class PowerPointPackage {
     }
 }
 
-/////////
+/// //////
 type Position = { left: number; top: number; width: number; height: number }
 function getPosition(psp: any, scale: { x: number; y: number; factor: number } | null = null) {
     // common path: p:spPr -> a:xfrm -> a:off/@x,y and a:ext/@cx,cy
@@ -1296,7 +1296,7 @@ function getPosition(psp: any, scale: { x: number; y: number; factor: number } |
 
 function resolveOpcPath(fromPath: string, target: string) {
     // If target is absolute-ish, trim any leading slash
-    let t = target.replace(/^\/+/, "")
+    const t = target.replace(/^\/+/, "")
     if (/^[a-zA-Z]:\\/.test(t) || t.startsWith("ppt/")) {
         return t
     }
@@ -1602,7 +1602,7 @@ function resolveColor(solidFill: any[], colors: { [key: string]: any }[], { lumM
         if (!lumOff) lumOff = getAttribute(getValue(solidFill, "a:srgbClr"), "val", "a:lumOff")
         if (lumMod) {
             // parse from percentages of 100,000
-            let mod = lumMod ? parseInt(lumMod, 10) / 100000 : 1
+            const mod = lumMod ? parseInt(lumMod, 10) / 100000 : 1
             let off = lumOff ? parseInt(lumOff, 10) / 100000 : 0
 
             const hsl = hexToHSL("#" + srgb)
@@ -1666,7 +1666,7 @@ function resolveGradient(gradFill: any[], colors: { [key: string]: any }[]) {
     if (!gradFill?.length) return null
 
     const stops = getValue(gradFill, "a:gsLst")
-    let gradientStops: string[] = []
+    const gradientStops: string[] = []
 
     for (const stop of stops) {
         const color = resolveColor(stop["a:gs"], colors) || "#000"
@@ -1686,7 +1686,7 @@ function resolveGradient(gradFill: any[], colors: { [key: string]: any }[]) {
     return `linear-gradient(${angle}deg, ${gradientStops.join(", ")})`
 }
 
-///// XML
+/// // XML
 
 function getValue(data: any[], ...path: string[]): any[] {
     if (!Array.isArray(data)) return []
@@ -1703,7 +1703,7 @@ function getValue(data: any[], ...path: string[]): any[] {
 function getValues(data: any[], ...path: string[]): any[][] {
     if (!Array.isArray(data)) return []
 
-    let lastPath = path.pop()!
+    const lastPath = path.pop()!
 
     let current = data
     for (const key of path) {
@@ -1730,7 +1730,7 @@ function getFirstAvailable(datas: any[][], ...paths: string[][]): any[] {
 function getAttribute(data: any[], key: string, tagName: string = ""): string {
     if (!Array.isArray(data)) return fixValue(data?.[":@"]?.[key] || "")
 
-    let index = data.findIndex((n: any) => (tagName ? n.hasOwnProperty(tagName) : n[":@"]?.[key]))
+    const index = data.findIndex((n: any) => (tagName ? n.hasOwnProperty(tagName) : n[":@"]?.[key]))
     if (index === -1) return ""
 
     return fixValue(data?.[index]?.[":@"]?.[key] || "")

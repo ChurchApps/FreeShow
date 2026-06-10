@@ -19,7 +19,7 @@
     let initial: ["x" | "y", number] = ["y", 0]
     let parent: HTMLElement | undefined
     function onMouseMove(e: any) {
-        let slide = e.target.closest(".slide")
+        const slide = e.target.closest(".slide")
 
         if ($drawTool === "zoom" && $drawSettings[$drawTool]?.hold) {
             if (!slide || slide?.closest(".previewOutput")) return
@@ -30,7 +30,7 @@
             }
 
             const MOVE_SPEED = e.ctrlKey || e.metaKey ? 3 : 1.5
-            let mouseMoveDiff = { x: (mouseStartPos.x - e.clientX) * MOVE_SPEED, y: (mouseStartPos.y - e.clientY) * MOVE_SPEED }
+            const mouseMoveDiff = { x: (mouseStartPos.x - e.clientX) * MOVE_SPEED, y: (mouseStartPos.y - e.clientY) * MOVE_SPEED }
 
             const inverted = $drawSettings[$drawTool]?.size < 100
             const newX = Math.min(Math.max(inverted ? mouseStartPos.drawX - mouseMoveDiff.x : mouseStartPos.drawX + mouseMoveDiff.x, 0), slide.offsetWidth / ratio)
@@ -46,13 +46,13 @@
             return
         }
 
-        let centerElem = slide.closest(".parent")?.closest(".center")
+        const centerElem = slide.closest(".parent")?.closest(".center")
 
         let x = (e.clientX - slide.offsetLeft - (centerElem?.offsetLeft || 0)) / ratio
         let y = (e.clientY - slide.offsetTop - (centerElem?.offsetTop || 0)) / ratio
 
         // straight
-        let mode: "x" | "y" = e.shiftKey ? "x" : "y"
+        const mode: "x" | "y" = e.shiftKey ? "x" : "y"
         if (!initial[1] || initial[0] !== mode) initial = [mode, mode === "x" ? x : y]
         if ($drawSettings[$drawTool]?.straight) {
             if (mode === "x") x = initial[1]
@@ -60,7 +60,7 @@
         }
 
         if ($drawTool === "pointer" || $drawTool === "focus") {
-            let size = $drawSettings[$drawTool]?.size
+            const size = $drawSettings[$drawTool]?.size
             x -= size / 2
             y -= size / 2
         }
@@ -76,7 +76,7 @@
             if (e.altKey) newSize = 1
             if (e.ctrlKey || e.metaKey) newSize = 25
 
-            let direction: number = e.deltaY > 0 ? 1 : -1
+            const direction: number = e.deltaY > 0 ? 1 : -1
             const previousSize = a[$drawTool].size
             newSize = Math.max(1, Math.min(2000, previousSize - newSize * direction))
 

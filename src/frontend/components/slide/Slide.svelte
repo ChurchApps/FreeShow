@@ -80,7 +80,7 @@
     let thumbnailPath = ""
     let mediaStyle: MediaStyle = {}
 
-    let ghostSize = $special.optimizedMode || index + 1 > 28 ? mediaSize.small : mediaSize.drawerSize
+    const ghostSize = $special.optimizedMode || index + 1 > 28 ? mediaSize.small : mediaSize.drawerSize
 
     $: bg = clone(background || ghostBackground)
     $: bgPath = bg?.path || bg?.id || ""
@@ -187,7 +187,7 @@
 
     function getOutputColor(color: string) {
         if (output?.cached) {
-            let rgb = color.includes("rgb") ? splitRgb(color) : hexToRgb(color)
+            const rgb = color.includes("rgb") ? splitRgb(color) : hexToRgb(color)
             return "rgb(" + [rgb.r, rgb.g, rgb.b].join(" ") + " / 0.5);"
         }
 
@@ -208,7 +208,7 @@
         }, 100)
     }
 
-    let profile = getAccess("shows")
+    const profile = getAccess("shows")
     $: isGroupLocked = !!slide?.locked // WIP get group slide
     $: isLocked = show?.locked || isGroupLocked || profile.global === "read" || profile[show?.category || ""] === "read"
 

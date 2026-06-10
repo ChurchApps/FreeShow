@@ -41,7 +41,7 @@
         layoutActions = []
 
         if (show) {
-            let refs = _show().layouts().ref()
+            const refs = _show().layouts().ref()
             refs.forEach((slides) => {
                 layoutBackgrounds.push(...slides.map((a) => a.data.background).filter((a) => a !== undefined))
                 layoutAudio.push(
@@ -68,15 +68,15 @@
 
     let bgs: (Media & { count: number })[] = []
     $: if (layoutBackgrounds.length) {
-        let tempBackgrounds: { [key: string]: Media & { count: number } } = {}
+        const tempBackgrounds: { [key: string]: Media & { count: number } } = {}
         layoutBackgrounds.forEach((a) => {
             if (!show.media?.[a]) return
 
-            let path: string = show.media[a].path || show.media[a].id || ""
+            const path: string = show.media[a].path || show.media[a].id || ""
 
-            let type = (show.media[a].type || getMediaType(getExtension(path))) as MediaType
+            const type = (show.media[a].type || getMediaType(getExtension(path))) as MediaType
 
-            let pathId = path.slice(0, 150)
+            const pathId = path.slice(0, 150)
             if (tempBackgrounds[pathId]) tempBackgrounds[pathId].count++
             else tempBackgrounds[pathId] = { id: a, name: "—", ...show.media[a], path, type, count: 1 }
         })
@@ -85,13 +85,13 @@
 
     let audio: (Media & { count: number })[] = []
     $: if (layoutAudio.length) {
-        let tempAudio: { [key: string]: Media & { count: number } } = {}
+        const tempAudio: { [key: string]: Media & { count: number } } = {}
         layoutAudio.forEach((a) => {
             if (!show.media?.[a]) return
 
-            let path = show.media[a].path!
+            const path = show.media[a].path!
 
-            let type: MediaType = "audio"
+            const type: MediaType = "audio"
 
             if (tempAudio[path]) tempAudio[path].count++
             else tempAudio[path] = { id: a, ...show.media[a], path, type, count: 1 }
@@ -102,9 +102,9 @@
 
     let mics: { id: string; name: string; count: number }[] = []
     $: if (layoutMics.length) {
-        let tempMics: { [key: string]: { id: string; name: string; count: number } } = {}
+        const tempMics: { [key: string]: { id: string; name: string; count: number } } = {}
         layoutMics.forEach((a) => {
-            let id = a.id
+            const id = a.id
 
             if (tempMics[id]) tempMics[id].count++
             else tempMics[id] = { ...a, count: 1 }
@@ -129,7 +129,7 @@
         }
 
         showsCache.update((a) => {
-            let bgs = a[$activeShow!.id].media
+            const bgs = a[$activeShow!.id].media
             if (!bgs[id]) return a // old media
             if (value) delete bgs[id][key]
             else bgs[id][key] = value
@@ -158,11 +158,11 @@
         })
     }
 
-    let newMedia: { [key: string]: { path: string; thumbnail: string; data: MediaStyle } } = {}
+    const newMedia: { [key: string]: { path: string; thumbnail: string; data: MediaStyle } } = {}
     $: if (bgs) loadBackgrounds()
     function loadBackgrounds() {
         bgs.forEach(async (bgMedia) => {
-            let bgPath = bgMedia.path || ""
+            const bgPath = bgMedia.path || ""
 
             const media = await getMedia(bgPath, mediaSize.small)
             if (media) newMedia[bgPath] = media
@@ -188,7 +188,7 @@
                             size={3}
                             on:click={() => {
                                 if (!$outLocked) {
-                                    let style = clone(mediaStyle)
+                                    const style = clone(mediaStyle)
                                     style.fit = media.data?.fit || ""
                                     delete style.fitOptions
 

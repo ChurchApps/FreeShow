@@ -71,15 +71,15 @@
         let style = ""
         if (!cropping || mirror) return ""
 
-        let minusHeight = cropping.top + cropping.bottom
-        let minusWidth = cropping.right + cropping.left
+        const minusHeight = cropping.top + cropping.bottom
+        const minusWidth = cropping.right + cropping.left
 
-        let newHeight = outputRes.height - minusHeight
-        let newWidth = outputRes.width - minusWidth
-        let heightRatio = newHeight / outputRes.height
-        let widthRatio = newWidth / outputRes.width
-        let paddingSides = (outputRes.width - minusWidth - outputRes.width * heightRatio) / 2
-        let paddingTops = (outputRes.height - minusHeight - outputRes.height * widthRatio) / 2
+        const newHeight = outputRes.height - minusHeight
+        const newWidth = outputRes.width - minusWidth
+        const heightRatio = newHeight / outputRes.height
+        const widthRatio = newWidth / outputRes.width
+        const paddingSides = (outputRes.width - minusWidth - outputRes.width * heightRatio) / 2
+        const paddingTops = (outputRes.height - minusHeight - outputRes.height * widthRatio) / 2
 
         // if (minusHeight) style += `height: calc(100% - ${minusHeight}px);`
         style += `margin-top: ${cropping.top + paddingTops}px;`

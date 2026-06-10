@@ -63,7 +63,7 @@
         // // console.log(buffer)
         // // yuv.render(buffer)
 
-        ///////////////////
+        /// ////////////////
 
         try {
             const arr = new Uint8ClampedArray(capture.buffer)

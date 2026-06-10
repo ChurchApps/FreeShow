@@ -21,7 +21,7 @@
         timer: () => timerTags
     }
 
-    let type: keyof typeof store = $popupData.type || "show"
+    const type: keyof typeof store = $popupData.type || "show"
     let tags: (Tag & { id: string })[] = []
 
     let emptyTag = false

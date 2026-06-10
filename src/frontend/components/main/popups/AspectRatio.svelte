@@ -40,7 +40,7 @@
             $popupData.trigger(value)
         }
 
-        let previousActive = JSON.stringify(active)
+        const previousActive = JSON.stringify(active)
         active = value
         if (previousActive !== JSON.stringify(value)) return
         // if (value.width === 1 || value.height === 1 || value.width === 100 || value.height === 100) return

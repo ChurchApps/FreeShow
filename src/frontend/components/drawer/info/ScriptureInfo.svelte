@@ -54,7 +54,7 @@
     function checkTemplate() {
         if (!isDefault || !biblesContent.length) return
 
-        let newTemplateId = "scripture_" + biblesContent.length
+        const newTemplateId = "scripture_" + biblesContent.length
         scriptureSettings.update((a) => {
             a.template = $templates[newTemplateId] ? newTemplateId : "scripture"
             return a
@@ -102,7 +102,7 @@
         return text
     }
     function updateCustomText(id: string, value: boolean) {
-        let key = textKeys[id]
+        const key = textKeys[id]
 
         if (value) {
             if (customText.includes(key)) return
@@ -175,10 +175,10 @@
     function setTemplateSettings(key: string, value: any) {
         if (!templateId) return
 
-        let settings = template.settings || {}
+        const settings = template.settings || {}
         settings[key] = value
 
-        let newData = { key: "settings", data: clone(settings) }
+        const newData = { key: "settings", data: clone(settings) }
 
         history({ id: "UPDATE", newData, oldData: { id: templateId }, location: { page: "edit", id: "template_settings", override: templateId } })
     }

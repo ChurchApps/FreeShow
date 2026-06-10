@@ -55,7 +55,7 @@
 
         // choose specific categories with colon or space syntax
         // SearchCategory ids with a few excluded, including singular forms
-        let categoryMatch = value.match(/^(settings?|stage|overlays?|projects?|actions?|faq|shows?|media|audio|bible)[:| ]\s*/i)
+        const categoryMatch = value.match(/^(settings?|stage|overlays?|projects?|actions?|faq|shows?|media|audio|bible)[:| ]\s*/i)
         if (categoryMatch) {
             let matchedCategory = categoryMatch[1].toLowerCase()
 
@@ -104,7 +104,7 @@
 
     function keydown(e: KeyboardEvent) {
         // CTRL + G or F8
-        let key = getNormalizedKey(e)
+        const key = getNormalizedKey(e)
         if (((e.ctrlKey || e.metaKey) && key === "g") || e.key === "F8") {
             // toggle quick search
             quickSearchActive.set(!$quickSearchActive)
@@ -135,7 +135,7 @@
     let rgb = { r: 35, g: 35, b: 45 }
     $: if ($theme) updateColor()
     function updateColor() {
-        const color = $themes[$theme]?.colors?.["primary"]
+        const color = $themes[$theme]?.colors?.primary
         if (!color) return
 
         const newRgb = hexToRgb(color)

@@ -23,7 +23,7 @@
 
         recorderActive = true
 
-        let options = clone($activeRecording)
+        const options = clone($activeRecording)
         // https://stackoverflow.com/questions/27420581/get-maximum-video-resolution-with-getusermedia
         // can be 4k if the screen supports it
         options.maxWidth = 4096

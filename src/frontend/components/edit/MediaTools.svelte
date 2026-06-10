@@ -13,7 +13,7 @@
     import { setBoxInputValue } from "./values/boxes"
     import { filterSections, mediaBoxes } from "./values/media"
 
-    let tabs: TabsObj = {
+    const tabs: TabsObj = {
         media: { name: "items.media", icon: "image" },
         filters: { name: "edit.filters", icon: "filter" }
         // options: { name: "", icon: "options" },
@@ -33,12 +33,12 @@
     $: isVideo = mediaType === "video"
     $: if (mediaId && isVideo) getVideoDuration()
     function getVideoDuration() {
-        let video = document.createElement("video")
+        const video = document.createElement("video")
         video.setAttribute("src", mediaId)
         video.addEventListener("loadedmetadata", loaded)
 
         function loaded() {
-            let videoDuration = video?.duration || 0
+            const videoDuration = video?.duration || 0
             if (!videoDuration) return
 
             const maxSoftLoop = Math.floor(videoDuration / 2)
@@ -61,8 +61,8 @@
         deleteKeys.forEach((key) => removeStore("media", { keys: [mediaId, key] }))
 
         // update output
-        let currentOutput: any = getFirstActiveOutput()
-        let bg = currentOutput?.out?.background
+        const currentOutput: any = getFirstActiveOutput()
+        const bg = currentOutput?.out?.background
         if (!bg) return
         deleteKeys.forEach((key) => delete bg[key])
         setOutput("background", bg)
@@ -80,10 +80,10 @@
         updateStore("media", { keys: [mediaId, ...input.id.split(".")], value })
 
         // update output filters
-        let currentOutput = getFirstActiveOutput()
+        const currentOutput = getFirstActiveOutput()
         if (!currentOutput?.out?.background || currentOutput?.out?.background?.path !== mediaId) return
 
-        let bg = currentOutput?.out.background
+        const bg = currentOutput?.out.background
         bg[input.id] = value
         setOutput("background", bg)
     }

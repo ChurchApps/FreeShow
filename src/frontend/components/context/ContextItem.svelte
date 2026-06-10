@@ -9,7 +9,8 @@
     import { getLayoutRef } from "../helpers/show"
     import { _show } from "../helpers/shows"
     import T from "../helpers/T.svelte"
-    import { ContextMenuItem, contextMenuItems } from "./contextMenus"
+    import type { ContextMenuItem } from "./contextMenus"
+    import { contextMenuItems } from "./contextMenus"
     import { menuClick } from "./menuClick"
 
     export let contextElem: HTMLDivElement | null = null
@@ -22,7 +23,7 @@
 
     let hide = false
     let enabled: boolean = menu?.enabled ? true : false
-    let customTitle: string = ""
+    const customTitle: string = ""
 
     const conditions = {
         // slide views
@@ -38,7 +39,7 @@
             hide = !!$shows[$selected.data[0]?.id]?.locked
         },
         private: () => {
-            let show = $shows[$selected.data[0]?.id]
+            const show = $shows[$selected.data[0]?.id]
             if (!show) return
 
             enabled = !!show.private
@@ -56,7 +57,7 @@
         },
         archive: () => {
             const projectId = $selected.data?.[0]?.id
-            let project = $projects[projectId]
+            const project = $projects[projectId]
             enabled = !!project?.archived
         },
         edit: () => {
@@ -64,7 +65,7 @@
             disabled = !!$shows[$selected.data[0].id].locked
         },
         change_style: () => {
-            let outputId = contextElem?.id || ""
+            const outputId = contextElem?.id || ""
             const styleId = $outputs[outputId]?.style || ""
             const stageId = $outputs[outputId]?.stageOutput || ""
 
@@ -82,7 +83,7 @@
             menu.label += `: ${styleId ? $styles[styleId]?.name || "error.not_found" : "main.none"}`
         },
         edit_style: () => {
-            let outputId = contextElem?.id || ""
+            const outputId = contextElem?.id || ""
             const styleId = $outputs[outputId]?.style || ""
             const stageId = $outputs[outputId]?.stageOutput || ""
 
@@ -108,12 +109,12 @@
         disable: () => {
             let isEnabled = false
             if ($selected.id === "slide" && $activeShow) {
-                let ref = getLayoutRef()
+                const ref = getLayoutRef()
                 isEnabled = ref[$selected.data[0]?.index]?.data?.disabled || false
             } else if ($selected.id === "stage") {
                 isEnabled = $stageShows[$selected.data[0]?.id]?.disabled
             } else if ($selected.id === "action") {
-                let action = $actions[$selected.data[0]?.id] || {}
+                const action = $actions[$selected.data[0]?.id] || {}
                 if (!action.customActivation) hide = true
                 else isEnabled = action.enabled === false
             }
@@ -130,15 +131,15 @@
         },
         slide_transition: () => {
             if ($selected.id === "slide" && $activeShow) {
-                let ref = getLayoutRef()
+                const ref = getLayoutRef()
                 enabled = !!(ref[$selected.data[0]?.index]?.data?.transition || false)
             }
         },
         transition: () => {
             if ($activeShow && $showsCache[$activeShow.id] && $activeEdit.items.length) {
-                let ref = getLayoutRef()
-                let slideId = ref[$activeEdit.slide || 0]?.id
-                let item = $showsCache[$activeShow.id].slides?.[slideId]?.items?.[$activeEdit.items[0]] || {}
+                const ref = getLayoutRef()
+                const slideId = ref[$activeEdit.slide || 0]?.id
+                const item = $showsCache[$activeShow.id].slides?.[slideId]?.items?.[$activeEdit.items[0]] || {}
                 enabled = item.actions?.transition
                 console.log(item)
                 // console.log($activeShow, $activeEdit)
@@ -191,41 +192,41 @@
         },
         play: () => {
             if ($selected.id === "global_timer") {
-                let timer = $timers[$selected.data[0]?.id]
+                const timer = $timers[$selected.data[0]?.id]
                 if (timer?.type !== "counter") disabled = true
             }
         },
         play_no_audio: () => {
-            let path = $selected.data[0]?.path || $selected.data[0]?.id
+            const path = $selected.data[0]?.path || $selected.data[0]?.id
             const type = getMediaType(getExtension(path))
             if (type !== "video") hide = true
         },
         play_no_filters: () => {
-            let path = $selected.data[0]?.path || $selected.data[0]?.id
+            const path = $selected.data[0]?.path || $selected.data[0]?.id
             if (!path || !$media[path]?.filter) disabled = true
         },
         delete_all: () => {
             if (!contextElem?.classList.value.includes("#event")) return
 
-            let group = $events[contextElem.id].group
+            const group = $events[contextElem.id].group
             if (group && Object.entries($events).find(([id, event]) => id !== contextElem.id && event.group === group)) return
 
             disabled = true
         },
         favourite: () => {
             if ($selected.id?.includes("category_scripture")) {
-                let id = $selected.data[0]
+                const id = $selected.data[0]
                 enabled = !!$scriptures[id]?.favorite
             } else {
-                let path = $selected.data[0]?.path || $selected.data[0]?.id
+                const path = $selected.data[0]?.path || $selected.data[0]?.id
                 enabled = !!$media[path]?.favourite
             }
         },
         effects_library_add: () => {
             // WIP don't show this if not an effect
             let isEnabled = false
-            let path = $selected.data[0]?.path || $selected.data[0]?.id
-            let existing = $effectsLibrary.find((a) => a.path === path)
+            const path = $selected.data[0]?.path || $selected.data[0]?.id
+            const existing = $effectsLibrary.find((a) => a.path === path)
             if (path && existing) isEnabled = true
 
             enabled = isEnabled
@@ -237,13 +238,13 @@
             enabled = camId && startupCameras.includes(camId)
         },
         lock_to_output: () => {
-            let id = $selected.data[0]
+            const id = $selected.data[0]
             if ($overlays[id]?.displayDuration) disabled = true
             else if ($overlays[id]?.locked) enabled = true
         },
         display_duration: () => {
             const subTab = $drawerTabsData.overlays?.activeSubTab
-            let id = $selected.data[0]
+            const id = $selected.data[0]
             if (subTab === "effects") {
                 if ($effects[id]?.displayDuration) enabled = true
             } else {
@@ -252,18 +253,18 @@
             }
         },
         toggle_output: () => {
-            let outputId = contextElem?.id || ""
+            const outputId = contextElem?.id || ""
             disabled = !!$outputs[outputId]?.invisible
         },
         move_to_front: () => {
-            let previewOutputs = keysToID($outputs).filter((a) => a.enabled) //  && !a.invisible
+            const previewOutputs = keysToID($outputs).filter((a) => a.enabled) //  && !a.invisible
             // WIP check currently selected against the other outputs...
             if (previewOutputs.length !== 2) {
                 disabled = false
                 return
             }
 
-            let outputId = contextElem?.id || ""
+            const outputId = contextElem?.id || ""
             if ($outputs[outputId]?.invisible) {
                 disabled = true
                 return
@@ -276,7 +277,7 @@
         },
         hide_from_preview: () => {
             let isEnabled = false
-            let outputId = contextElem?.id || ""
+            const outputId = contextElem?.id || ""
             if ($outputs[outputId]?.hideFromPreview) isEnabled = true
 
             enabled = isEnabled
@@ -291,7 +292,7 @@
             enabled = !!$livePrepare[outputId]
         },
         place_under_slide: () => {
-            let id = $selected.data[0]
+            const id = $selected.data[0]
             if ($overlays[id]?.placeUnderSlide || $effects[id]?.placeUnderSlide) enabled = true
         },
         toggle_clock: () => {
@@ -399,8 +400,8 @@
     function contextItemClick() {
         if (disabled) return
 
-        let actionItem: HTMLElement | null = contextElem?.classList.contains("_" + id) ? contextElem : contextElem?.querySelector("._" + id) || null
-        let sel = $selected
+        const actionItem: HTMLElement | null = contextElem?.classList.contains("_" + id) ? contextElem : contextElem?.querySelector("._" + id) || null
+        const sel = $selected
 
         menuClick(id, enabled, menu, contextElem, actionItem, sel)
 

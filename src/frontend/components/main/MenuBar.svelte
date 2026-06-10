@@ -21,7 +21,7 @@
     $: maximized = !!$windowState.maximized
 
     function menu(e: any) {
-        let id: string = e.target.id
+        const id: string = e.target.id
         topContextActive.set(activeID !== id)
         activeID = activeID === id ? null : id
 

@@ -36,7 +36,7 @@
             let langCode = window.navigator.language.slice(-2).toLowerCase()
             // if it needs attribution, it's probably more in demand!
             bibleList = sortByName(bibleList).sort((a, b) => ((b.attributionRequired || b.attributionString) as any) - ((a.attributionRequired || a.attributionString) as any))
-            let newSorted: any[] = []
+            const newSorted: any[] = []
             bibleList.forEach((bible) => {
                 let lang = bible.language
                 if (lang === "nob" || lang === "nor" || lang === "nno") lang = "no"
@@ -80,7 +80,7 @@
     }
 
     function search(e: any) {
-        let value = e.detail.toLowerCase()
+        const value = e.detail.toLowerCase()
 
         if (value.length < 2) {
             searchedBibles = bibles

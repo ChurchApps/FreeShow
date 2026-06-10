@@ -3,8 +3,8 @@
     import T from "../../helpers/T.svelte"
     import Screens from "../../settings/Screens.svelte"
 
-    let error = $alertMessage === "error.display"
-    let activateOutput = $popupData.activateOutput
+    const error = $alertMessage === "error.display"
+    const activateOutput = $popupData.activateOutput
 
     $: if ($alertMessage || $popupData.activateOutput) {
         alertMessage.set("")

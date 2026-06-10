@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
     import { Main } from "../../../../types/IPC/Main"
-    import { ShowRef } from "../../../../types/Projects"
+    import type { ShowRef } from "../../../../types/Projects"
     import { requestMain, sendMain } from "../../../IPC/main"
     import { activeShow, os, outLocked, outputs, presentationApps, presentationData, special } from "../../../stores"
     import { translateText } from "../../../utils/language"
@@ -51,11 +51,11 @@
 
     $: if (opening && $presentationData?.id === show.id) start()
     function start() {
-        let name = show.name || removeExtension(getFileName(show.id))
+        const name = show.name || removeExtension(getFileName(show.id))
         setOutput("slide", { type: "ppt", id: show.id, name, page: $presentationData.stat?.position - 1, pages: $presentationData.stat?.slides })
 
         // update current out slide manually
-        let outputId = getActiveOutputs($outputs, false, true, true)[0]
+        const outputId = getActiveOutputs($outputs, false, true, true)[0]
         outSlide = $outputs[outputId]?.out?.slide
 
         clearBackground()

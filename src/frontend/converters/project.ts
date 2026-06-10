@@ -158,8 +158,8 @@ export function addSection() {
 }
 
 export function getProjectsInFolder(id: string) {
-    let projectIds: string[] = []
-    let folderIds: string[] = []
+    const projectIds: string[] = []
+    const folderIds: string[] = []
 
     const projectsList = keysToID(get(projects))
     const foldersList = keysToID(get(folders))
@@ -192,8 +192,8 @@ export async function updateRecentlyAddedFiles(paths: string[] | null = null) {
     const cleared = get(recentFiles).cleared || []
     const filteredPaths = paths.filter((a) => !cleared.includes(a))
 
-    let projectFiles: { path: string; name: string }[] = []
-    let projectMedia: string[] = []
+    const projectFiles: { path: string; name: string }[] = []
+    const projectMedia: string[] = []
 
     filteredPaths.forEach((a) => {
         const ext = getExtension(a)

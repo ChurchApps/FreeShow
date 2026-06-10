@@ -28,7 +28,7 @@
     function setCanvas() {
         if (!canvas) return
 
-        let ctx = canvas.getContext("2d")
+        const ctx = canvas.getContext("2d")
 
         const WIDTH = frame.xres
         const HEIGHT = frame.yres
@@ -44,7 +44,7 @@
             if (data.id !== screen.id) return
             loaded = true
 
-            let timeSinceSent = Date.now() - data.time
+            const timeSinceSent = Date.now() - data.time
             if (timeSinceSent > 100) return // skip frames if overloaded
 
             frame = data.frame

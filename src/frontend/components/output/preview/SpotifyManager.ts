@@ -86,8 +86,8 @@ async function extractColor(url: string) {
     img.crossOrigin = "Anonymous"
     img.src = url
     img.onload = () => {
-        const canvas = document.createElement("canvas"),
-            ctx = canvas.getContext("2d")
+        const canvas = document.createElement("canvas")
+        const ctx = canvas.getContext("2d")
         if (!ctx) return
         canvas.width = canvas.height = 10
         ctx.drawImage(img, 0, 0, 10, 10)
@@ -95,9 +95,9 @@ async function extractColor(url: string) {
         let best = { r: 0, g: 0, b: 0, score: -1 }
 
         for (let i = 0; i < data.length; i += 4) {
-            const r = data[i],
-                g = data[i + 1],
-                b = data[i + 2]
+            const r = data[i]
+            const g = data[i + 1]
+            const b = data[i + 2]
             const { s, l } = rgbToHsl(r, g, b)
             let score = s * (1 - Math.abs(l - 0.5) * 2)
             if (l < 0.2 || l > 0.8) score *= 0.1
@@ -113,11 +113,11 @@ function rgbToHsl(r: number, g: number, b: number) {
     r /= 255
     g /= 255
     b /= 255
-    const max = Math.max(r, g, b),
-        min = Math.min(r, g, b),
-        l = (max + min) / 2
-    let h = 0,
-        s = 0
+    const max = Math.max(r, g, b)
+    const min = Math.min(r, g, b)
+    const l = (max + min) / 2
+    let h = 0
+    let s = 0
     if (max !== min) {
         const d = max - min
         s = l > 0.5 ? d / (2 - max - min) : d / (max + min)
@@ -175,8 +175,8 @@ export async function fadePause() {
         startVol = fresh.volume
     }
 
-    const steps = 20,
-        duration = 3000
+    const steps = 20
+    const duration = 3000
     for (let i = 1; i <= steps; i++) {
         await runCmd("setVolume", Math.max(0, startVol - (startVol / steps) * i))
         await new Promise((r) => setTimeout(r, duration / steps))

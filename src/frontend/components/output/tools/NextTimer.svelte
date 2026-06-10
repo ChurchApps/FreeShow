@@ -22,7 +22,7 @@
 
         const outputIds = getAllActiveOutputIds()
         outputIds.forEach((id) => {
-            let timer = $slideTimers[id]
+            const timer = $slideTimers[id]
             if (timer) updateTime(e.target.value, timer)
         })
     }
@@ -40,7 +40,7 @@
         if (autoPause) {
             const outputIds = getAllActiveOutputIds()
             outputIds.forEach((id) => {
-                let timer = $slideTimers[id]
+                const timer = $slideTimers[id]
                 if (timer) timer.timer.resume()
             })
 
@@ -51,7 +51,7 @@
     function playPause(isPaused: boolean) {
         const outputIds = getAllActiveOutputIds()
         outputIds.forEach((id) => {
-            let timer = $slideTimers[id]
+            const timer = $slideTimers[id]
             if (timer) {
                 if (isPaused) timer.timer.resume()
                 else timer.timer.pause()
@@ -60,7 +60,7 @@
     }
 
     function round(value: number, step = 1) {
-        var inv = 1 / step
+        const inv = 1 / step
         return Math.floor(value * inv) / inv
     }
 </script>

@@ -53,7 +53,7 @@
         // find first group after the current output index
         const outIndex = outSlide?.index ?? -1
         let nextGroupIndex = ref.findIndex((a) => {
-            let slideGroup = show.slides?.[a.id]?.globalGroup
+            const slideGroup = show.slides?.[a.id]?.globalGroup
             if (!slideGroup || slideGroup !== currentSlideGroup) return false
             return a.layoutIndex > outIndex
         })
@@ -61,7 +61,7 @@
         // if no group after index, get the first
         if (nextGroupIndex === -1) {
             nextGroupIndex = ref.findIndex((a) => {
-                let slideGroup = show.slides?.[a.id]?.globalGroup
+                const slideGroup = show.slides?.[a.id]?.globalGroup
                 return slideGroup && slideGroup === currentSlideGroup
             })
         }
@@ -96,7 +96,7 @@
         if (!hasAccess()) return
         if (templateId) return
 
-        let data = { ...actions, [id]: actions[id] ? !actions[id] : true }
+        const data = { ...actions, [id]: actions[id] ? !actions[id] : true }
 
         if (id === "slide_shortcut") delete data[id]
         else if (id === "outputStyle" && !data[id]) delete data.styleOutputs
@@ -108,22 +108,22 @@
         if (!hasAccess()) return
         e.preventDefault()
 
-        let slideActions = clone(actions.slideActions)
-        let actionIndex = slideActions.findIndex((a) => a.id === id || getActionTriggerId(a.triggers?.[0]) === id)
+        const slideActions = clone(actions.slideActions)
+        const actionIndex = slideActions.findIndex((a) => a.id === id || getActionTriggerId(a.triggers?.[0]) === id)
         if (actionIndex < 0) return
         slideActions.splice(actionIndex, 1)
 
         if (templateId) {
-            let templateSettings = $templates[templateId]?.settings || {}
+            const templateSettings = $templates[templateId]?.settings || {}
             templateSettings.actions = slideActions
 
-            let newData = { key: "settings", data: templateSettings }
+            const newData = { key: "settings", data: templateSettings }
             history({ id: "UPDATE", newData, oldData: { id: templateId }, location: { page: "drawer", id: "template_settings", override: `actions_${templateId}` } })
 
             return
         }
 
-        let data = { ...actions, slideActions }
+        const data = { ...actions, slideActions }
 
         history({ id: "SHOW_LAYOUT", newData: { key: "actions", data, indexes: [index] } })
     }

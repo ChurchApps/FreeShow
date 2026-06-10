@@ -60,7 +60,7 @@
 
     function keydown(e: KeyboardEvent) {
         if (e.key === "Enter" && searchValue.length > 1 && e.target?.closest(".search")) {
-            let action = filteredActionsSearch[0]
+            const action = filteredActionsSearch[0]
             if (!action) return
 
             // play

@@ -78,9 +78,9 @@
 
         // show last possible lines if no text at current line
         if (!lines[linesStart]) {
-            let linesCount = linesEnd - linesStart
-            let length = lines.length - 1
-            let index = length - (length % linesCount)
+            const linesCount = linesEnd - linesStart
+            const length = lines.length - 1
+            const index = length - (length % linesCount)
             linesStart = index
             linesEnd = index + linesCount
         }
@@ -88,7 +88,7 @@
 
     // timer updater
     let loaded = false
-    let dateInterval: NodeJS.Timeout | null = null
+    const dateInterval: NodeJS.Timeout | null = null
     // track readiness to avoid duplicate events for the same render cycle
     let autoSizeReady = false
     // hold onto whether the visible output should stay hidden until autosize finishes
@@ -129,7 +129,7 @@
 
     function getCustomStyle(currentStyle: string, outputId = "", styleIdOverride = "", _updater: any = null) {
         if (outputId && !isMirrorItem && !isStage) {
-            let outputResolution = getOutputResolution(outputId, $outputs, true, styleIdOverride)
+            const outputResolution = getOutputResolution(outputId, $outputs, true, styleIdOverride)
             currentStyle = percentageStylePos(currentStyle, outputResolution)
         }
 
@@ -139,12 +139,12 @@
         }
 
         if (!key) return currentStyle
-        let styles = getStyles(currentStyle)
+        const styles = getStyles(currentStyle)
 
         // alpha style
         let alphaStyles = ";"
-        let bgAlpha = getAlphaValues(styles["background-color"])
-        let textAlpha = getAlphaValues(styles["color"]) || 1
+        const bgAlpha = getAlphaValues(styles["background-color"])
+        const textAlpha = getAlphaValues(styles.color) || 1
         if (bgAlpha) alphaStyles += "background-color: rgb(255 255 255 / " + bgAlpha + ");"
         alphaStyles += "color: rgb(255 255 255 / " + textAlpha + ");"
 
@@ -161,8 +161,8 @@
         return alpha || 0
     }
     function alphaFromHex(colorValue: string) {
-        let rx = /^#([0-9a-f]{2})[0-9a-f]{6}$/i
-        let m = colorValue.match(rx)
+        const rx = /^#([0-9a-f]{2})[0-9a-f]{6}$/i
+        const m = colorValue.match(rx)
         if (!m) return 1
         return parseInt(m[1], 16) / 255
     }
@@ -347,7 +347,7 @@
     function deriveCustomTypeRatio() {
         if (isStage) {
             // Search all lines to find disableTemplate items (verse numbers may not be in first line)
-            let allText: any[] = []
+            const allText: any[] = []
             stageItem?.lines?.forEach((line) => {
                 if (line?.text) allText.push(...line.text)
             })
@@ -360,7 +360,7 @@
         }
 
         // Search all lines to find disableTemplate items (verse numbers may not be in first line)
-        let allText: any[] = []
+        const allText: any[] = []
         item?.lines?.forEach((line) => {
             if (line?.text) allText.push(...line.text)
         })
@@ -453,7 +453,7 @@
             if (stageItem?.type !== "text") textFit = stageItem?.textFit || "growToFit"
 
             // const textItem = isTextItem ? item?.lines?.[0]?.text || [] : stageItem
-            let itemFontSize = Number(getStyles(stageItem?.style, true)?.["font-size"] || "") || 100
+            const itemFontSize = Number(getStyles(stageItem?.style, true)?.["font-size"] || "") || 100
 
             defaultFontSize = itemFontSize
             if (textFit === "growToFit" && itemFontSize !== 100) maxFontSize = itemFontSize
@@ -464,12 +464,12 @@
             }
 
             // Search all lines to find disableTemplate items and regular text (verse numbers may not be in first line)
-            let allText: any[] = []
+            const allText: any[] = []
             item?.lines?.forEach((line) => {
                 if (line?.text && Array.isArray(line.text)) allText.push(...line.text)
             })
             const itemText = allText.filter((a) => !a.customType?.includes("disableTemplate")) || []
-            let itemFontSize = Number(getStyles(itemText[0]?.style, true)?.["font-size"] || "") || 100
+            const itemFontSize = Number(getStyles(itemText[0]?.style, true)?.["font-size"] || "") || 100
 
             // get scripture verse ratio
             const verseItemText = allText.filter((a) => a.customType?.includes("disableTemplate")) || []
@@ -714,10 +714,10 @@
         let result = ""
         if (typeof stageItem?.style !== "string") return ""
         if (stageItem.style.indexOf("padding") > -1) {
-            let styles = stageItem.style.split(";")
+            const styles = stageItem.style.split(";")
             styles.forEach((s: string) => {
                 if (s.indexOf("padding") === 0) {
-                    let padding = parseInt(s.split(":")[1].replace("px", "").trim(), 0) * 2
+                    const padding = parseInt(s.split(":")[1].replace("px", "").trim(), 0) * 2
                     if (padding > 0) result = "width: calc(100% - " + padding + "px); height: calc(100% - " + padding + "px);"
                 }
             })
@@ -752,7 +752,7 @@
 
     // initialize default filter values to get the transition working (should use animation)
     // https://stackoverflow.com/questions/68632554/css-backdrop-filter-does-not-work-with-transition
-    let noTransition = !transition || (transition.type || "none") === "none" || transition.duration === 0
+    const noTransition = !transition || (transition.type || "none") === "none" || transition.duration === 0
     // const defaultValues = "opacity(1) saturate(1) contrast(1) brightness(1) blur(0px) invert(0) hue-rotate(0deg)"
     // let foregroundFiltersValues = `${filter ? "filter: " + filter + ";" : ""}${backdropFilter ? "backdrop-filter: " + backdropFilter + ";" : ""}`
     // let foregroundFiltersDefault = `${filter ? "filter: " + defaultValues + ";" : ""}${backdropFilter ? "backdrop-filter: " + defaultValues + ";" : ""}`
@@ -783,7 +783,7 @@
     // style Lines selection in center preview
     let highlighedLines: any[] = []
     $: if (centerPreview && isOutputted && $outputs) {
-        let b: any[] = []
+        const b: any[] = []
         const outputs = getAllActiveOutputs()
         outputs.forEach((o) => {
             const outSlide = o.out?.slide

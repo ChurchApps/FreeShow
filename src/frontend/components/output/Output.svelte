@@ -3,7 +3,7 @@
 <script lang="ts">
     import { onDestroy } from "svelte"
     import { uid } from "uid"
-    import { OutData } from "../../../types/Output"
+    import type { OutData } from "../../../types/Output"
     import type { Styles } from "../../../types/Settings"
     import type { AnimationData, Item, LayoutRef, OutBackground, OutSlide, Slide, SlideData, Template, Overlays as TOverlays } from "../../../types/Show"
     import { allOutputs, colorbars, currentWindow, drawSettings, drawTool, effects, media, outputs, overlays, showsCache, styles, templates, transitionData } from "../../stores"
@@ -110,9 +110,9 @@
     $: if (outputId || refreshOutput) updateOutData()
     function updateOutData(type = "") {
         if (!type || type === "slide") {
-            let noLineCurrent = clone(slide)
+            const noLineCurrent = clone(slide)
             if (noLineCurrent) delete noLineCurrent.line
-            let noLineNew = clone(out?.slide)
+            const noLineNew = clone(out?.slide)
             if (noLineNew) delete noLineNew.line
 
             // don't refresh if changing lines on another slide & content is unchanged
@@ -166,7 +166,7 @@
         slideData = currentLayout[slide?.index]?.data || null
 
         // don't refresh content unless it changes
-        let newCurrentSlide = getCurrentSlide()
+        const newCurrentSlide = getCurrentSlide()
         const newSlideFormatStr = JSON.stringify(formatSlide(newCurrentSlide))
         const curSlideStr = JSON.stringify(currentSlide)
         if (newSlideFormatStr !== curSlideStr) currentSlide = newCurrentSlide
@@ -176,14 +176,14 @@
             if (slide.id === "temp" || slide.id === "tempText") return { items: slide.tempItems }
             if (!currentLayout) return null
 
-            let slideId: string = currentLayout[slide?.index]?.id || ""
+            const slideId: string = currentLayout[slide?.index]?.id || ""
             return clone(_show(slide.id).slides([slideId]).get()[0] || {})
         }
 
         // add template item keys to not update item when no changes is made (when custom style template is set)
         function formatSlide(currentSlide) {
             if (!currentSlide) return null
-            let newSlide = clone(currentSlide)
+            const newSlide = clone(currentSlide)
             newSlide.items = setTemplateStyle(slide, currentStyle, newSlide.items, outputId, newSlide.customDynamicValues)
             return newSlide
         }
@@ -209,7 +209,7 @@
     $: templateBackground = styleTemplate?.settings?.backgroundPath || ""
 
     // lines
-    let lines: { [key: string]: { start: number | null; end: number | null; linesStart?: number | null; linesEnd?: number | null; clickRevealed?: boolean } } = {}
+    const lines: { [key: string]: { start: number | null; end: number | null; linesStart?: number | null; linesEnd?: number | null; clickRevealed?: boolean } } = {}
     $: currentLineId = slide?.id
     const updateLinesTime = $currentWindow === "output" ? 50 : 10
     $: if (currentLineId) {
@@ -262,8 +262,8 @@
         let duration = 50
         if (transitions.text?.type !== "none" && transitions.text?.duration) duration = Math.max(duration, transitions.text.duration / 2)
 
-        let currentId = uid()
-        let animation = clone(slideAnimation) || { actions: [] }
+        const currentId = uid()
+        const animation = clone(slideAnimation) || { actions: [] }
         animationData = { id: currentId, animation }
 
         await wait(duration)
@@ -316,7 +316,7 @@
     let actualSlide: OutSlide | null = null
     let actualSlideData: SlideData | null = null
     let actualCurrentSlide: Slide | null = null
-    let actualCurrentLineId: string | undefined = undefined
+    let actualCurrentLineId: string | undefined
     let isSlideClearing = false
     function updateSlide() {
         // update clearing variable before setting slide value (used for conditions to not show up again while clearing)

@@ -116,9 +116,9 @@
         })
 
         if (side === "left") {
-            let gap = maxWidth - defaultWidth
-            let triple = defaultWidth + gap * 0.8
-            let double = defaultWidth + gap * 0.4
+            const gap = maxWidth - defaultWidth
+            const triple = defaultWidth + gap * 0.8
+            const double = defaultWidth + gap * 0.4
             if (width > triple && $editColumns === 2) {
                 editColumns.set(3)
             } else if (width > double && width < triple && ($editColumns === 1 || $editColumns === 3)) {

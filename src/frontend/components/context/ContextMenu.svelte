@@ -30,10 +30,10 @@
         spellcheck.set(null)
         saveTextSelectionRange()
 
-        let target: any = e.target
+        const target: any = e.target
         if (!target || closingMenuTimeout) return
 
-        let input = ["text", "textarea"].includes(target.type) && !target.closest(".numberInput")
+        const input = ["text", "textarea"].includes(target.type) && !target.closest(".numberInput")
         if ((!input && (target.closest(".contextMenu") || $activePopup)) || target.closest(".nocontext")) {
             closeContextMenu()
             return
@@ -59,7 +59,7 @@
 
         activeMenu = getContextMenu(id) || contextMenuLayouts.default
 
-        let contextHeight = activeMenu.reduce((acc, id) => acc + (id.includes("GROUP") ? 73.6 : id === "SEPARATOR" ? 17 : 33.6), 0) + 16
+        const contextHeight = activeMenu.reduce((acc, id) => acc + (id.includes("GROUP") ? 73.6 : id === "SEPARATOR" ? 17 : 33.6), 0) + 16
         // if ($spellcheck?.suggestions?.length) contextHeight += $spellcheck.suggestions.length * 33.6 + 33.6
         if (x + 250 > window.innerWidth) x -= 250
         if (y + contextHeight > window.innerHeight) translate = 100
@@ -77,15 +77,15 @@
         if (!id) return
         if (id.includes("__")) return combineMenus(id)
 
-        let menu = contextMenuLayouts[id.slice(1, id.length)]
+        const menu = contextMenuLayouts[id.slice(1, id.length)]
         if (id && menu) return menu
 
         return
     }
 
     function combineMenus(id: string) {
-        let menus = id.slice(1, id.length).split("__")
-        let menu: string[] = []
+        const menus = id.slice(1, id.length).split("__")
+        const menu: string[] = []
 
         menus.forEach((c2: string, i: number) => {
             if (contextMenuLayouts[c2]) menu.push(...contextMenuLayouts[c2])
@@ -123,10 +123,10 @@
     $: if (activeMenu) loadData()
     function loadData() {
         activeMenu.forEach((id) => {
-            let items = contextMenuItems[id]?.items || []
+            const items = contextMenuItems[id]?.items || []
             if (!items[0]?.includes("LOAD")) return
 
-            let firstId = items[0].slice(5, items[0].length)
+            const firstId = items[0].slice(5, items[0].length)
             quickLoadItems(firstId)
         })
     }
@@ -164,7 +164,7 @@
     let rgb = { r: 35, g: 35, b: 45 }
     $: if ($theme) updateColor()
     function updateColor() {
-        const color = $themes[$theme]?.colors?.["primary"]
+        const color = $themes[$theme]?.colors?.primary
         if (!color) return
 
         const newRgb = hexToRgb(color)

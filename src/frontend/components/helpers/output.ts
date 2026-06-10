@@ -1121,7 +1121,7 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
         const hasDynamicValue = templateItem?.lines?.some((line) => line?.text?.some((text) => text.value?.includes("{")))
 
         item.lines?.forEach((line, j) => {
-            let templateLine = templateItem?.lines?.[j] || templateItem?.lines?.[0]
+            const templateLine = templateItem?.lines?.[j] || templateItem?.lines?.[0]
             if (!templateLine) return
 
             // remove empty text parts (if not completely empty)
@@ -1231,9 +1231,9 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
 function replaceScriptureValues(items: Item[], templateItems: Item[], customDynamicValues: { [key: string]: string | [string, string][] } = {}) {
     if (Object.keys(customDynamicValues).length) {
         // extra styles
-        let verseNumberSize = 50 // get(scriptureSettings).numberSize || 50 // %
-        let verseNumberStyle = `color: ${get(scriptureSettings).numberColor || "#919191"};text-shadow: none;`
-        let verseNumberStyles: string[] = []
+        const verseNumberSize = 50 // get(scriptureSettings).numberSize || 50 // %
+        const verseNumberStyle = `color: ${get(scriptureSettings).numberColor || "#919191"};text-shadow: none;`
+        const verseNumberStyles: string[] = []
         let baseStyle = ""
 
         // find any text object with {scripture_number} and get the style

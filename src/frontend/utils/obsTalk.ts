@@ -76,7 +76,7 @@ class OBSWebSocket {
 
                 // Hello
                 if (data.op === 0) {
-                    let authPayload: any = { rpcVersion: 1, eventSubscriptions: (1 << 0) | (1 << 2) | (1 << 3) | (1 << 4) | (1 << 6) | (1 << 7) | (1 << 10) | (1 << 16) } // General, Scenes, Inputs, Transitions, Outputs, SceneItems, UI, InputVolumeMeters
+                    const authPayload: any = { rpcVersion: 1, eventSubscriptions: (1 << 0) | (1 << 2) | (1 << 3) | (1 << 4) | (1 << 6) | (1 << 7) | (1 << 10) | (1 << 16) } // General, Scenes, Inputs, Transitions, Outputs, SceneItems, UI, InputVolumeMeters
 
                     if (data.d.authentication) {
                         if (!this.password) {

@@ -39,7 +39,7 @@
         if (!renderer || !canvasElem || !mounted) return
 
         // find out which key has changed
-        let _changedKeys = getChangedKeys(
+        const _changedKeys = getChangedKeys(
             items.filter((a) => !a.hidden),
             previousItems.filter((a) => !a.hidden)
         )

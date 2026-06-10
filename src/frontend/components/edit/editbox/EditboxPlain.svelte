@@ -35,8 +35,8 @@
     ]
 
     function removeItemValue(valueId: string) {
-        let layoutRef = getLayoutRef()
-        let slideRef = layoutRef[$activeEdit.slide!] || {}
+        const layoutRef = getLayoutRef()
+        const slideRef = layoutRef[$activeEdit.slide!] || {}
         let slideItems = _show().get("slides")?.[slideRef.id]?.items || []
 
         if ($activeEdit.id) getItems()
@@ -76,8 +76,8 @@
     // actions
     function removeAction(action) {
         // TODO: this is a duplicate of SetTime and other places
-        let layoutRef = getLayoutRef()
-        let slideRef = layoutRef[$activeEdit.slide!] || {}
+        const layoutRef = getLayoutRef()
+        const slideRef = layoutRef[$activeEdit.slide!] || {}
         let slideItems = _show().get("slides")?.[slideRef.id]?.items || []
 
         if ($activeEdit.id) getItems()
@@ -91,7 +91,7 @@
 
         if (!slideItems?.[index]) return
 
-        let actions = clone(slideItems[index].actions)
+        const actions = clone(slideItems[index].actions)
         delete actions[action]
 
         if ($activeEdit.type === "overlay" || $activeEdit.type === "template") {

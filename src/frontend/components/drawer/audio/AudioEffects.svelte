@@ -14,7 +14,7 @@
     import AudioReverb from "./effects/AudioReverb.svelte"
     import AudioStereoShaper from "./effects/AudioStereoShaper.svelte"
 
-    let expanded = {}
+    const expanded = {}
     function toggleSection(type) {
         expanded[type] = !expanded[type]
     }
@@ -66,12 +66,12 @@
                         <Icon id="reset" size={0.8} white />
                     </MaterialButton>
                 {:else}
-                    <Icon id="arrow_back_modern" class="arrow {expanded['equalizer'] ? 'open' : ''}" size={0.6} style="opacity: 0.5;" white />
+                    <Icon id="arrow_back_modern" class="arrow {expanded.equalizer ? 'open' : ''}" size={0.6} style="opacity: 0.5;" white />
                 {/if}
             </MaterialButton>
         </div>
 
-        {#if expanded["equalizer"]}
+        {#if expanded.equalizer}
             <AudioEqualizer />
         {/if}
     </div>
@@ -89,12 +89,12 @@
                         <Icon id="reset" size={0.8} white />
                     </MaterialButton>
                 {:else}
-                    <Icon id="arrow_back_modern" class="arrow {expanded['filter'] ? 'open' : ''}" size={0.6} style="opacity: 0.5;" white />
+                    <Icon id="arrow_back_modern" class="arrow {expanded.filter ? 'open' : ''}" size={0.6} style="opacity: 0.5;" white />
                 {/if}
             </MaterialButton>
         </div>
 
-        {#if expanded["filter"]}
+        {#if expanded.filter}
             <AudioFilter />
         {/if}
     </div>
@@ -112,12 +112,12 @@
                         <Icon id="reset" size={0.8} white />
                     </MaterialButton>
                 {:else}
-                    <Icon id="arrow_back_modern" class="arrow {expanded['noiseGate'] ? 'open' : ''}" size={0.6} style="opacity: 0.5;" white />
+                    <Icon id="arrow_back_modern" class="arrow {expanded.noiseGate ? 'open' : ''}" size={0.6} style="opacity: 0.5;" white />
                 {/if}
             </MaterialButton>
         </div>
 
-        {#if expanded["noiseGate"]}
+        {#if expanded.noiseGate}
             <AudioNoiseGate />
         {/if}
     </div>
@@ -135,12 +135,12 @@
                         <Icon id="reset" size={0.8} white />
                     </MaterialButton>
                 {:else}
-                    <Icon id="arrow_back_modern" class="arrow {expanded['compressor'] ? 'open' : ''}" size={0.6} style="opacity: 0.5;" white />
+                    <Icon id="arrow_back_modern" class="arrow {expanded.compressor ? 'open' : ''}" size={0.6} style="opacity: 0.5;" white />
                 {/if}
             </MaterialButton>
         </div>
 
-        {#if expanded["compressor"]}
+        {#if expanded.compressor}
             <AudioCompressor />
         {/if}
     </div>
@@ -158,12 +158,12 @@
                         <Icon id="reset" size={0.8} white />
                     </MaterialButton>
                 {:else}
-                    <Icon id="arrow_back_modern" class="arrow {expanded['limiter'] ? 'open' : ''}" size={0.6} style="opacity: 0.5;" white />
+                    <Icon id="arrow_back_modern" class="arrow {expanded.limiter ? 'open' : ''}" size={0.6} style="opacity: 0.5;" white />
                 {/if}
             </MaterialButton>
         </div>
 
-        {#if expanded["limiter"]}
+        {#if expanded.limiter}
             <AudioLimiter />
         {/if}
     </div>
@@ -181,12 +181,12 @@
                         <Icon id="reset" size={0.8} white />
                     </MaterialButton>
                 {:else}
-                    <Icon id="arrow_back_modern" class="arrow {expanded['reverb'] ? 'open' : ''}" size={0.6} style="opacity: 0.5;" white />
+                    <Icon id="arrow_back_modern" class="arrow {expanded.reverb ? 'open' : ''}" size={0.6} style="opacity: 0.5;" white />
                 {/if}
             </MaterialButton>
         </div>
 
-        {#if expanded["reverb"]}
+        {#if expanded.reverb}
             <AudioReverb />
         {/if}
     </div>
@@ -204,12 +204,12 @@
                         <Icon id="reset" size={0.8} white />
                     </MaterialButton>
                 {:else}
-                    <Icon id="arrow_back_modern" class="arrow {expanded['delay'] ? 'open' : ''}" size={0.6} style="opacity: 0.5;" white />
+                    <Icon id="arrow_back_modern" class="arrow {expanded.delay ? 'open' : ''}" size={0.6} style="opacity: 0.5;" white />
                 {/if}
             </MaterialButton>
         </div>
 
-        {#if expanded["delay"]}
+        {#if expanded.delay}
             <AudioDelay />
         {/if}
     </div>
@@ -227,12 +227,12 @@
                         <Icon id="reset" size={0.8} white />
                     </MaterialButton>
                 {:else}
-                    <Icon id="arrow_back_modern" class="arrow {expanded['stereoShaper'] ? 'open' : ''}" size={0.6} style="opacity: 0.5;" white />
+                    <Icon id="arrow_back_modern" class="arrow {expanded.stereoShaper ? 'open' : ''}" size={0.6} style="opacity: 0.5;" white />
                 {/if}
             </MaterialButton>
         </div>
 
-        {#if expanded["stereoShaper"]}
+        {#if expanded.stereoShaper}
             <AudioStereoShaper />
         {/if}
     </div>

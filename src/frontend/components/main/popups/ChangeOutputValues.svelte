@@ -21,7 +21,7 @@
 
         outputs.update((a) => {
             if (key.includes(".")) {
-                let split = key.split(".")
+                const split = key.split(".")
                 a[currentOutput!.id][split[0]][split[1]] = value
                 if (split[1] === "lines" && !Number(value)) delete a[currentOutput!.id][split[0]][split[1]]
             } else {

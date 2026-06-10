@@ -78,7 +78,7 @@ async function XMLtoObject(xml: string) {
     const booksWithNoName = books.filter((a) => !a.name)
     if (booksWithNoName.length > 0) {
         if (await confirmCustom("Books are missing names, and are defaulting to English.<br>Would you like to translate them?")) {
-            let newBooks: Book[] = []
+            const newBooks: Book[] = []
 
             // prompt each book with no name
             for (const book of booksWithNoName) {

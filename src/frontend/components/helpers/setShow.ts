@@ -99,7 +99,7 @@ export async function convertOldShowValues(show: Show): Promise<Show> {
             const rec = layout.recording?.[0]
             if (!rec) return
 
-            let actions: TimelineAction[] = []
+            const actions: TimelineAction[] = []
             // let maxTime: number = 0
 
             // get any audio on first slide
