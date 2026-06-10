@@ -171,7 +171,7 @@
 
 {#each servers as server}
     {@const disabled = server.id === "companion" ? $companion?.enabled !== true : server.enabledByDefault ? $disabledServers[server.id] === true : $disabledServers[server.id] !== false}
-    {@const connections = Object.keys($connections[server.id.toUpperCase()] || {})?.length || 0}
+    {@const connectionCount = Object.keys($connections[server.id.toUpperCase()] || {})?.length || 0}
 
     <InputRow>
         <MaterialButton
@@ -190,8 +190,8 @@
                 {#if server.id === "companion"}
                     <span style="opacity: 0.5;font-size: 0.7em;margin-left: 5px;">WebSocket/REST/OSC/Companion</span>
                 {/if}
-                {#if connections}
-                    <span style="opacity: 0.5;font-size: 0.7em;margin-left: 5px;">{connections}</span>
+                {#if connectionCount}
+                    <span style="opacity: 0.5;font-size: 0.7em;margin-left: 5px;">{connectionCount}</span>
                 {/if}
             </span>
 

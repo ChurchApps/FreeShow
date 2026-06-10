@@ -1,11 +1,5 @@
-import sveltePreprocess from "svelte-preprocess"
-
-const production = process.env.NODE_ENV === "production"
+import { vitePreprocess } from "@sveltejs/vite-plugin-svelte"
 
 export default {
-    preprocess: sveltePreprocess({
-        typescript: {
-            tsconfigFile: `./config/typescript/tsconfig.svelte${production ? ".prod" : ""}.json`
-        }
-    })
+    preprocess: vitePreprocess()
 }
