@@ -14,6 +14,7 @@
     import AudioEffects from "../audio/AudioEffects.svelte"
     import AudioMixers from "../audio/AudioMixers.svelte"
 
+    // export let optionsOpen: boolean
     let settingsOpened = false
 
     function updateSpecial(value, key) {

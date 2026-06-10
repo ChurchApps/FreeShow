@@ -1,12 +1,12 @@
 <script lang="ts">
     import { special } from "../../../stores"
-    import Icon from "../../helpers/Icon.svelte"
-    import FloatingInputs from "../../input/FloatingInputs.svelte"
-    import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
     import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
+    import Center from "../../system/Center.svelte"
+    import Clock from "../../system/Clock.svelte"
+    import Date from "../../system/Date.svelte"
 
-    let settingsOpened = false
+    export let optionsOpen: boolean
 
     function updateSpecial(value: any, key: string, allowEmpty = false) {
         special.update((a) => {
@@ -19,7 +19,7 @@
 </script>
 
 <div class="scroll">
-    {#if settingsOpened}
+    {#if optionsOpen}
         <main style="overflow-x: hidden;padding: 10px;">
             <MaterialTextInput label="settings.capitalize_words" title="settings.comma_seperated" value={$special.capitalize_words || ""} defaultValue="Jesus, Lord" on:change={(e) => updateSpecial(e.detail, "capitalize_words", true)} />
             <!-- "text_can_overflow": "Allow text outside of the textbox bounds", -->
@@ -27,14 +27,13 @@
 
             <MaterialToggleSwitch label="settings.style_template_preview" checked={$special.styleTemplatePreview !== false} defaultValue={true} on:change={(e) => updateSpecial(e.detail, "styleTemplatePreview", true)} />
         </main>
+    {:else}
+        <Center>
+            <Clock />
+            <Date />
+        </Center>
     {/if}
 </div>
-
-<FloatingInputs round>
-    <MaterialButton isActive={settingsOpened} title="edit.options" on:click={() => (settingsOpened = !settingsOpened)}>
-        <Icon size={1.1} id="options" white={!settingsOpened} />
-    </MaterialButton>
-</FloatingInputs>
 
 <style>
     .scroll {

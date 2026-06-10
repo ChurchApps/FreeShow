@@ -221,7 +221,7 @@
     function updateItemsList(_updater: any = null) {
         // WIP show scripture style preview as well
         if (!allOutputsHasStyleTemplate(show?.reference?.type === "scripture")) return
-        itemsList = setTemplateStyle(null, currentStyle, itemsList, outputId, slide?.customDynamicValues)
+        itemsList = setTemplateStyle({ id: showId, index }, currentStyle, itemsList, outputId, slide?.customDynamicValues)
     }
 
     // $: styleTemplate = getStyleTemplate(null, currentStyle)

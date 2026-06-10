@@ -8,6 +8,7 @@ import { setDataNDI } from "../../ndi/talk"
 import { wait } from "../../utils/helpers"
 import { outputOptions } from "../../utils/windowOptions"
 import { OutputHelper } from "../OutputHelper"
+import { setOutputAlwaysOnTop } from "./OutputAlwaysOnTop"
 import { OutputVisibility } from "./OutputVisibility"
 import { initializeSender } from "../../blackmagic/bmdTalk"
 import { BlackmagicSender } from "../../blackmagic/BlackmagicSender"
@@ -112,7 +113,7 @@ export class OutputLifecycle {
         if (isMac) window.minimize() // hide on mac
 
         window.once("show", () => {
-            if (options.alwaysOnTop) window?.setAlwaysOnTop(true, "pop-up-menu", 1)
+            if (options.alwaysOnTop) setOutputAlwaysOnTop(window, true)
         })
         // window.setVisibleOnAllWorkspaces(true)
 

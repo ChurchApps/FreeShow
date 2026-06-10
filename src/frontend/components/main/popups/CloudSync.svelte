@@ -2,6 +2,7 @@
     import { activePopup, popupData } from "../../../stores"
     import { chooseTeam } from "../../../utils/cloudSync"
     import MaterialMultiChoice from "../../inputs/MaterialMultiChoice.svelte"
+    import Tip from "../Tip.svelte"
 
     const type = $popupData.type
     const teams = $popupData.teams || []
@@ -18,7 +19,8 @@
 </script>
 
 {#if type === "choose_team"}
-    <p class="tip">Select a team where you want to sync the data.</p>
+    <Tip type="info" value="Select a team where you want to sync the data." bottom={20} />
+
     <MaterialMultiChoice options={teams} on:click={teamChosen} highlightFirst={false} />
 
     <!-- <CombinedInput style="margin-top: 10px;width: initial;">
@@ -27,12 +29,3 @@
         </MaterialButton>
     </CombinedInput> -->
 {/if}
-
-<style>
-    .tip {
-        margin-bottom: 10px;
-
-        opacity: 0.7;
-        font-size: 0.8em;
-    }
-</style>

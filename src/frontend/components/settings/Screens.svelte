@@ -15,6 +15,7 @@
     import MaterialNumberInput from "../inputs/MaterialNumberInput.svelte"
     import MaterialRadialPicker from "../inputs/MaterialRadialPicker.svelte"
     import MaterialToggleSwitch from "../inputs/MaterialToggleSwitch.svelte"
+    import Tip from "../main/Tip.svelte"
 
     export let activateOutput = false
 
@@ -205,7 +206,7 @@
 {#if editCropping}
     <MaterialButton class="popup-back" icon="back" iconSize={1.3} title="actions.back" on:click={() => (editCropping = false)} />
 
-    <p class="tip"><T id="screen.cropping_tip" /></p>
+    <Tip value="screen.cropping_tip" bottom={20} />
 
     <MaterialNumberInput label="screen.top" value={cropping.top || 0} defaultValue={0} max={currentScreen.bounds?.height * 0.9 - (cropping.bottom || 0)} on:change={(e) => updateCropping(e.detail, "top")} />
     <MaterialNumberInput label="screen.right" value={cropping.right || 0} defaultValue={0} max={currentScreen.bounds?.width * 0.9 - (cropping.left || 0)} on:change={(e) => updateCropping(e.detail, "right")} />
@@ -223,7 +224,7 @@
 {:else if editEdgeBlending}
     <MaterialButton class="popup-back" icon="back" iconSize={1.3} title="actions.back" on:click={() => (editEdgeBlending = false)} />
 
-    <p class="tip"><T id="screen.edge_blending_tip" /></p>
+    <Tip value="screen.edge_blending_tip" bottom={20} />
 
     <MaterialNumberInput label="screen.left" value={blending.left || 0} defaultValue={0} max={500} on:change={(e) => updateBlending(e.detail, "left")} />
     <MaterialNumberInput label="screen.right" value={blending.right || 0} defaultValue={0} max={100} on:change={(e) => updateBlending(e.detail, "right")} />
@@ -248,7 +249,10 @@
         <MaterialButton class="popup-options {showMore ? 'active' : ''}" icon="options" iconSize={1.3} title={showMore ? "actions.close" : "create_show.more_options"} on:click={() => (showMore = !showMore)} white />
     {/if}
 
-    <p class="tip"><T id="settings.{currentScreen.boundsLocked ? 'output_locked' : 'select_display'}" /></p>
+    {#key currentScreen.boundsLocked}
+        <Tip value="settings.{currentScreen.boundsLocked ? 'output_locked' : 'select_display'}" bottom={20} />
+    {/key}
+
     <MaterialButton variant="outlined" style="width: 100%;" icon="edit" disabled={currentScreen.boundsLocked} on:click={() => activePopup.set("change_output_values")} title={activateOutput ? "popup.change_output_values" : "settings.manual_input_hint"}>
         <p><T id={activateOutput ? "settings.manual_input_hint" : "popup.change_output_values"} /></p>
     </MaterialButton>
@@ -320,14 +324,6 @@
 {/if}
 
 <style>
-    .tip {
-        margin-bottom: 10px;
-
-        opacity: 0.7;
-        font-size: 0.8em;
-        /* text-align: center; */
-    }
-
     .content {
         width: 100%;
         display: flex;

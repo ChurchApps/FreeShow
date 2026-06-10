@@ -4,14 +4,14 @@
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { joinTimeBig } from "../../helpers/time"
-    import FloatingInputs from "../../input/FloatingInputs.svelte"
     import Button from "../../inputs/Button.svelte"
-    import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialDropdown from "../../inputs/MaterialDropdown.svelte"
     import MaterialPopupButton from "../../inputs/MaterialPopupButton.svelte"
     import CreateCalendarShow from "../calendar/CreateCalendarShow.svelte"
     import Day from "../calendar/Day.svelte"
     import { getSelectedEvents } from "../calendar/calendar"
+
+    export let optionsOpen: boolean
 
     let type = "event"
     $: type = $drawerTabsData.calendar?.activeSubTab || "event"
@@ -20,8 +20,6 @@
     $: if ($activeDays || $events) currentEvents = getSelectedEvents()
 
     // $: currentEvents = currentEvents.filter((a) => a.type === type)
-
-    let settingsOpened = false
 
     function updateSpecial(value, key) {
         special.update((a) => {
@@ -44,7 +42,7 @@
     }
 </script>
 
-{#if settingsOpened}
+{#if optionsOpen}
     <main style="flex: 1;overflow-x: hidden;padding: 10px;">
         <MaterialDropdown label="calendar.first_day" options={firstWeekDayOptions} value={$special.firstDayOfWeek || "1"} on:change={(e) => updateSpecial(e.detail, "firstDayOfWeek")} />
 
@@ -73,9 +71,3 @@
         </Button>
     {/if}
 {/if}
-
-<FloatingInputs round>
-    <MaterialButton isActive={settingsOpened} title="edit.options" on:click={() => (settingsOpened = !settingsOpened)}>
-        <Icon size={1.1} id="options" white={!settingsOpened} />
-    </MaterialButton>
-</FloatingInputs>

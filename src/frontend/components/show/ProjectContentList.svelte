@@ -11,7 +11,7 @@
     import { getTimeUntilClock } from "../drawer/timers/timers"
     import { openDrawer } from "../edit/scripts/edit"
     import { clone } from "../helpers/array"
-    import { getContrast } from "../helpers/color"
+    import { brightenDarkColor, fadeColor, getContrast } from "../helpers/color"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
     import { getExtension, getFileName, getMediaType, removeExtension } from "../helpers/media"
@@ -274,7 +274,7 @@
                                         <MaterialButton
                                             {isActive}
                                             class="section {projectReadOnly || isLocked ? '' : `context #project_section ${show.color ? 'color-border' : ''}`}"
-                                            style="{borderRadiusStyle}justify-content: left;background-color: var(--primary-darkest);border-top: 1px solid var(--primary-lighter);padding: 0.1em 1em;{$fullColors ? `background-color: ${show.color || 'var(--primary-darker)'} !important;color: ${getContrast(show.color || '')};` : `border-bottom: 1px solid ${show.color || 'transparent'} !important;`}"
+                                            style="{borderRadiusStyle}justify-content: left;background-color: var(--primary-darkest);border-top: 1px solid var(--primary-lighter);padding: 0.1em 1em;{$fullColors ? `background-color: ${show.color || 'var(--primary-darker)'} !important;color: ${getContrast(show.color || '')};` : `background-color: ${fadeColor(show.color || '', 0.2)} !important;color: ${show.color ? brightenDarkColor(show.color) : ''};`}"
                                             on:click={(e) => {
                                                 if (e.detail.ctrl) return
                                                 if ($focusMode) activeFocus.set({ id: show.id, index, type: show.type })

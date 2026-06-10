@@ -11,6 +11,7 @@
     import HRule from "../../input/HRule.svelte"
     import InputRow from "../../input/InputRow.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
+    import Tip from "../Tip.svelte"
 
     let mode = $popupData.mode
     popupData.set({})
@@ -20,11 +21,12 @@
         { name: "formats.project", title: "FreeShow Project File", icon: "project", extensions: ["project", "shows", "json", "zip"], id: "freeshow_project" }, // , "fsproject", "fsp"
         { name: "formats.template", title: "FreeShow Template File", icon: "templates", extensions: ["fstemplate", "fst", "template", "json", "zip"], id: "freeshow_template" },
         { name: "formats.action", title: "FreeShow Action File", icon: "actions", extensions: ["fsaction", "action", "json"], id: "freeshow_action" },
+        { name: "stage.stage_layout", title: "FreeShow Stage Layout File", icon: "stage", extensions: ["fsstage", "stage", "json"], id: "freeshow_stage" },
         { name: "formats.theme", title: "FreeShow Theme File", icon: "theme", extensions: ["fstheme", "theme", "json"], id: "freeshow_theme" }
     ]
 
     const freeshow_primary_formats = freeshow_formats.filter((format) => ["freeshow", "freeshow_project"].includes(format.id))
-    const freeshow_more_formats = freeshow_formats.filter((format) => ["freeshow_template", "freeshow_action", "freeshow_theme"].includes(format.id))
+    const freeshow_more_formats = freeshow_formats.filter((format) => ["freeshow_template", "freeshow_action", "freeshow_stage", "freeshow_theme"].includes(format.id))
 
     const text_formats: { name: string; extensions: string[]; id: string; shortcut?: string; tutorial?: string; popup?: Popups }[] = [
         { name: "formats.text", extensions: ["txt"], id: "txt" },
@@ -115,8 +117,6 @@
 {#if openedPage === "powerpoint"}
     <MaterialButton class="popup-back" icon="back" iconSize={1.3} title="actions.back" on:click={() => (openedPage = "")} />
 
-    <p class="tip" style="padding-bottom: 20px;">The best option would generally be to get a hold of the presentation as PDF format in the first place.</p>
-
     <div style="display: flex;flex-direction: column;gap: 5px;">
         {#each powerpoint_options as option}
             <MaterialButton variant="outlined" style="justify-content: start;flex: 1;min-height: 50px;font-weight: normal;" on:click={() => option.click()}>
@@ -130,7 +130,7 @@
         {/each}
     </div>
 
-    <!-- <p class="tip" style="padding-top: 20px;">Making/maintaining our own PPT converter that keeps all of the formatting would be too much work.</p> -->
+    <Tip value="The best option would generally be to get a hold of the presentation as PDF format in the first place." top={20} />
 {:else if openedPage === "freeshow_more"}
     <MaterialButton class="popup-back" icon="back" iconSize={1.3} title="actions.back" on:click={() => (openedPage = "")} />
 
@@ -356,10 +356,5 @@
         position: absolute;
         bottom: 7px;
         right: 10px;
-    }
-
-    .tip {
-        opacity: 0.7;
-        font-size: 0.85em;
     }
 </style>

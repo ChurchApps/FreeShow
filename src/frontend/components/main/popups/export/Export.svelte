@@ -194,7 +194,7 @@
         </Center>
     {/if}
 
-    <MaterialButton variant="contained" style="margin-top: 20px;" icon="export" info={showIds.length > 1 && exportFormat !== "project" ? showIds.length.toString() : ""} disabled={exportType === "project" ? !$projects[$activeProject || ""]?.shows?.length : !showIds.length && exportType !== "all_shows"} on:click={exportClick}>
+    <MaterialButton variant="contained" style="margin-top: 20px;" icon="export" info={showIds.length > 1 && exportFormat !== "project" && !(exportType === "project" && exportFormat === "pdf") ? showIds.length.toString() : ""} disabled={exportType === "project" ? !$projects[$activeProject || ""]?.shows?.length : !showIds.length && exportType !== "all_shows"} on:click={exportClick}>
         <T id="export.export" />
     </MaterialButton>
 {/if}

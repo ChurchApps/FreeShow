@@ -35,6 +35,7 @@ import { correctSpelling } from "../utils/spellcheck"
 import { executeSpotifyCommand, getSpotifyState } from "../utils/spotify"
 import checkForUpdates from "../utils/updater"
 
+// no need to await Promise returns here
 export const mainResponses: MainResponses = {
     // DEV
     [Main.LOG]: (data) => console.info(data),

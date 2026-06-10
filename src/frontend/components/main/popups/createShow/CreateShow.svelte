@@ -5,6 +5,7 @@
     import { activePopup, activeProject, activeShow, categories, drawerTabsData, formatNewShow, quickTextCache, shows, special, splitLines } from "../../../../stores"
     import { newToast } from "../../../../utils/common"
     import { translateText } from "../../../../utils/language"
+    import { customIconsColors } from "../../../../values/customIcons"
     import { clone, sortObject } from "../../../helpers/array"
     import { history } from "../../../helpers/history"
     import { checkName } from "../../../helpers/show"
@@ -45,7 +46,9 @@
             "name"
         ).map((cat) => ({
             id: cat.id,
-            name: cat.name
+            name: cat.name,
+            icon: cat.icon || "unlabeled",
+            iconColor: cat.icon ? customIconsColors[cat.icon] : "#FFFFFF"
         }))
     ]
 
@@ -192,9 +195,9 @@
     function addNewCategory(e: any) {
         const name = e.detail
         const id = uid()
-        history({ id: "UPDATE", newData: { data: { name } }, oldData: { id }, location: { page: "drawer", id: "category_shows" } })
+        history({ id: "UPDATE", newData: { data: { name, icon: "song" } }, oldData: { id }, location: { page: "drawer", id: "category_shows" } })
 
-        cats.push({ id, name })
+        cats.push({ id, name, icon: "song", iconColor: customIconsColors["song"] })
         cats = cats
         selectedCategory = cats.find((a) => a.id === id)
     }
@@ -205,7 +208,7 @@
 {#if !selectedOption}
     <List bottom={20}>
         <MaterialTextInput id="name" label="show.name" autofocus value={values.name} autofill={values.name ? "" : getName(values)} on:input={(e) => changeValue(e, "name")} />
-        <MaterialDropdown label="show.category" value={selectedCategory?.id} options={cats.map((a) => ({ label: translateText(a.name || "main.unnamed"), value: a.id }))} on:change={(e) => (selectedCategory = cats.find((a) => a.id === e.detail))} addNew="new.category" on:new={addNewCategory} />
+        <MaterialDropdown label="show.category" value={selectedCategory?.id} options={cats.map((a) => ({ label: translateText(a.name || "main.unnamed"), value: a.id, icon: a.icon, iconColor: a.iconColor }))} on:change={(e) => (selectedCategory = cats.find((a) => a.id === e.detail))} addNew="new.category" on:new={addNewCategory} />
     </List>
 
     <MaterialMultiChoice options={resolvedCreateOptions} on:click={(e) => selectOption(e.detail)} />

@@ -3,8 +3,8 @@
     import { activePopup, popupData } from "../../../stores"
     import { history } from "../../helpers/history"
     import { getLayoutRef } from "../../helpers/show"
-    import T from "../../helpers/T.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
+    import Tip from "../Tip.svelte"
 
     let index = $popupData.index
     let mode = $popupData.mode
@@ -60,13 +60,11 @@
     <MaterialButton class="popup-back" icon="back" iconSize={1.3} title="actions.back" on:click={() => activePopup.set(revert)} />
 {/if}
 
-<p style="text-align: center;opacity: 0.7;" class:existing>
-    {#if existing}
-        <T id="actions.shortcut_existing" />
-    {:else}
-        <T id="actions.press_to_assign" />
-    {/if}
-</p>
+{#if existing}
+    <Tip type="warning" value="actions.shortcut_existing" />
+{:else}
+    <Tip value="actions.press_to_assign" />
+{/if}
 
 {#if currentShortcut}
     <div class="shortcut">
@@ -81,11 +79,5 @@
         font-weight: bold;
         text-transform: capitalize;
         text-align: center;
-    }
-
-    .existing {
-        opacity: 0.9 !important;
-        font-size: 1.1em;
-        /* font-weight: bold; */
     }
 </style>

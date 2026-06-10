@@ -1,9 +1,9 @@
 <script lang="ts">
-    import { keysToID, sortByName } from "../../helpers/array"
-    import T from "../../helpers/T.svelte"
     import { categories, contentProviderData, shows } from "../../../stores"
     import { translateText } from "../../../utils/language"
+    import { keysToID, sortByName } from "../../helpers/array"
     import MaterialCheckbox from "../../inputs/MaterialCheckbox.svelte"
+    import Tip from "../Tip.svelte"
 
     const mappedCategories = keysToID($categories)
         .filter((a) => !a.isArchive && a.name)
@@ -30,7 +30,7 @@
     }
 </script>
 
-<p class="tip"><T id="settings.sync_categories_tip" /></p>
+<Tip type="info" value="settings.sync_categories_tip" bottom={20} />
 
 <div class="categories">
     {#each categoryOptions as { id, name, count }}
@@ -39,13 +39,6 @@
 </div>
 
 <style>
-    .tip {
-        margin-bottom: 10px;
-
-        opacity: 0.7;
-        font-size: 0.8em;
-    }
-
     .categories {
         display: flex;
         flex-direction: column;

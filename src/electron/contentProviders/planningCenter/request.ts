@@ -106,7 +106,7 @@ function parseChordChartIntoSections(chordChart: string): SongSection[] {
 
         // Detect section headers (VERSE, CHORUS, BRIDGE, etc.)
         // Order matters: longer patterns first (PRECORO before PRE, INSTRUMENTAL before INTRO)
-        const sectionMatch = trimmed.match(/^(PRECORO|ESTRIBILLO|INSTRUMENTAL|PUENTE|VERSE|CHORUS|VERSO|CORO|BRIDGE|INTRO|OUTRO|FINAL|PRE|BREAK|TAG|VAMP|INTERLUDE|BREAKDOWN|TURNAROUND|REFRAIN)(\s*\d+)?(?:\s|$)/i)
+        const sectionMatch = trimmed.match(/^\[?(PRE-CHORUS|PRECHORUS|PRECORO|ESTRIBILLO|INSTRUMENTAL|PUENTE|VERSE|CHORUS|VERSO|CORO|BRIDGE|INTRO|OUTRO|FINAL|PRE|BREAK|TAG|VAMP|INTERLUDE|BREAKDOWN|TURNAROUND|REFRAIN)(\s*\d+)?\]?(?:\s|$)/i)
         if (sectionMatch) {
             // Save previous section if exists (including sections with only chords)
             if (currentSectionLabel) {
@@ -118,7 +118,7 @@ function parseChordChartIntoSections(chordChart: string): SongSection[] {
                     })
                 }
             }
-            currentSectionLabel = sectionMatch[0].trim()
+            currentSectionLabel = sectionMatch[0].trim().replace(/[\[\]]/g, "")
             currentSectionContent = []
             continue
         }
@@ -691,9 +691,14 @@ function parseSectionLines(lyrics: string): ParsedSectionLine[] {
         }
 
         const inline = parseInlineBracketLine(currentLine)
-        if (inline && inline.text.trim()) {
-            parsedLines.push(toParsedSectionLine(currentEntry, { text: inline.text.trim(), chords: inline.chords, hidden: false }))
-            continue
+        if (inline) {
+            if (inline.text.trim()) {
+                parsedLines.push(toParsedSectionLine(currentEntry, { text: inline.text.trim(), chords: inline.chords, hidden: false }))
+                continue
+            } else {
+                parsedLines.push(toParsedSectionLine(currentEntry, { text: "", chords: inline.chords, hidden: false }))
+                continue
+            }
         }
 
         const chordLineData = getChordLineData(currentLine)

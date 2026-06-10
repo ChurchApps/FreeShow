@@ -3,6 +3,7 @@
     import { translateText } from "../../utils/language"
     import Icon from "../helpers/Icon.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
+    import Tip from "../main/Tip.svelte"
     import Connection from "./tabs/Connection.svelte"
     import Files from "./tabs/Files.svelte"
     import FilesButtons from "./tabs/FilesButtons.svelte"
@@ -43,7 +44,7 @@
 
         <div style="display: flex;align-items: center;gap: 8px;">
             {#if hints[tabId]}
-                <p class="hint">{translateText(hints[tabId])}</p>
+                <Tip type="info" value={translateText(hints[tabId])} style="opacity: 0.7;" hiddenText white />
             {/if}
 
             {#if tabId === "theme"}
@@ -127,18 +128,6 @@
 
         overflow: visible;
         margin-right: 20px;
-    }
-
-    .hint {
-        font-style: italic;
-        font-size: 0.8em;
-        opacity: 0.4;
-
-        white-space: initial;
-
-        text-align: right;
-        max-width: 300px;
-        /* align-self: flex-end; */
     }
 
     .scroll {

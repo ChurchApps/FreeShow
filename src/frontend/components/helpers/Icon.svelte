@@ -31,9 +31,9 @@
 
     // smaller change
     $: hsl = hexToHSL(baseColor)
-    $: colorStart = gradient ? hslToHex(340, hsl.s, Math.min(hsl.l + 15, 100)) : hslToHex(hsl.h, hsl.s, Math.min(hsl.l + 6, 100)) // lighter
+    $: colorStart = gradient ? (gradientColor ? hslToHex(hsl.h, hsl.s, Math.min(hsl.l + 15, 100)) : hslToHex(340, hsl.s, Math.min(hsl.l + 15, 100))) : hslToHex(hsl.h, hsl.s, Math.min(hsl.l + 6, 100)) // lighter
     $: colorMid = baseColor
-    $: colorEnd = gradient ? hslToHex(270, hsl.s, Math.max(hsl.l - 30, 0)) : hslToHex(hsl.h, hsl.s, Math.max(hsl.l - 6, 0)) // darker
+    $: colorEnd = gradient ? (gradientColor ? hslToHex(hsl.h, hsl.s, Math.max(hsl.l - 30, 0)) : hslToHex(270, hsl.s, Math.max(hsl.l - 30, 0))) : hslToHex(hsl.h, hsl.s, Math.max(hsl.l - 6, 0)) // darker
 
     $: width = size * (boxed ? 1.2 : 1) + "rem"
     $: height = size * (boxed ? 1.2 : 1) + "rem"

@@ -1139,6 +1139,10 @@ function getSlideText({ outSlide, show, ref }, slideIndex: number = 0) {
         slideItemLines = getTextLines(slide, true)
     }
 
+    // correct order
+    slideItemLines = clone(slideItemLines)
+    slideItemLines.reverse()
+
     // return all items first, then each individual to make it work with the #index system
     return [slideItemLines.join("<br><br>"), ...slideItemLines]
 }
