@@ -20,11 +20,16 @@ The low-risk subset (items 1–4 below) has been applied to `package.json` and v
 
 > **E2E smoke test repaired.** The single test (`config/testing/start.test.ts`) had drifted from the current UI and was failing on stale selectors (the old 3-step setup is now one `Initialize.svelte` welcome popup; group labels moved from `title` to `data-title`; the right-click "Save" menu became "Quick search"). It now: picks the **main** window (not the splash) by URL; guards the first-run setup popup + onboarding guide so it's **idempotent** (passes whether or not user data already exists); drives the welcome popup, project/show creation, lyric entry, group change; and saves via **Ctrl+S**. Verified passing on both a fresh profile and an already-initialized one. Note: the test's `FS_MOCK_STORE_PATH` env var is **not honored** by the app (`electron/data/store.ts` ignores it), so the test writes to the real userData dir — harmless in fresh CI, but a follow-up if true isolation is wanted.
 
-**Result: 27 → 18 vulnerabilities — all 3 criticals + 5 highs eliminated (incl. electron and serialize-javascript).** The remaining 5 highs are blocked/breaking upgrades still deferred (vite, `@discordjs/opus`→tar, music-metadata).
+**Result: 27 → 16 vulnerabilities — all 3 criticals + 6 highs eliminated (incl. electron, serialize-javascript, music-metadata).** The remaining 4 highs are blocked/breaking upgrades still deferred (vite, `@discordjs/opus`→tar).
 
 ### `serialize-javascript` High (third pass)
 
 - **`@rollup/plugin-terser` `^0.4.4` → `^1.0.0`** — pulls a patched `serialize-javascript` (7.0.5), clearing the RCE High (GHSA-5c6j-…) plus a `@rollup/plugin-terser` moderate. Zero-risk: the only consumer (`config/building/rollup.config.mjs`) is **not referenced by any build script** (the active build uses Vite + tsc), and the plugin's `terser({...})` API is unchanged across the bump (peer `rollup ^4` ✓). Build verified green.
+
+### `music-metadata` High (fourth pass)
+
+- **`music-metadata` `^7.14.0` → `^11.13.0`** — clears the ASF-parser DoS High (GHSA-v6c2-…) and the transitive `file-type` moderate. v8+ is **ESM-only**, but this turned out **not** to require converting to dynamic `import()`: Electron 40 bundles Node ≥22.12, which supports `require()` of ESM modules (music-metadata exposes a `module-sync` export condition and has no top-level await), so the existing static imports work as-is. The only code change was a v11 API shift — `IPicture.data` is now `Uint8Array` instead of `Buffer`, so cover-art handling in `nowPlaying.ts` wraps it with `Buffer.from(...)`.
+- **Verified:** electron `tsc` passes; svelte-check unchanged (no new frontend type errors — `ICommonTagsResult` still exported); production build passes; and the **E2E smoke test passes** — decisive here because `music-metadata` is `require()`d at startup (`responsesMain.ts`), so a failed ESM load would crash the launch the test exercises.
 
 ## Vulnerability totals (`npm audit`)
 
@@ -33,7 +38,8 @@ The low-risk subset (items 1–4 below) has been applied to `package.json` and v
 | **Before any fixes** | 3 | 10 | 14 | 0 | **27** |
 | **After low-risk subset** | 0 | 7 | 14 | 0 | **21** |
 | **After Electron 37→40** | 0 | 6 | 14 | 0 | **20** |
-| **After `@rollup/plugin-terser` bump** | **0** | **5** | 13 | 0 | **18** |
+| **After `@rollup/plugin-terser` bump** | 0 | 5 | 13 | 0 | **18** |
+| **After `music-metadata` 7→11** | **0** | **4** | 12 | 0 | **16** |
 
 *(Production-scope subset before any fixes: 0 critical / 7 high / 5 moderate.)*
 
@@ -108,7 +114,7 @@ The real gaps: `build.yml`/`release.yml` install with `npm install` rather than 
 3. ✅ **`shell-quote` override `^1.8.4`** — done (replaces the planned `gaxios`/sweep item with the higher-value fix that the data revealed). Eliminated all 3 criticals.
 4. ✅ **`npm-run-all` → `npm-run-all2`** — done. Replaces the abandoned package; build scripts verified green.
 5. ✅ **Electron 37 → 40** — done (clears the electron High). **41/42 are blocked** by `better-sqlite3` not yet supporting Electron's V8 14; revisit when `better-sqlite3` ships a compatible release, then bump to the latest Electron.
-6. **Vite 4 → 8 / Svelte 3 → 5 / ESLint 9 / `@discordjs/opus` / `music-metadata`** — the rest of the remaining highs/moderates are major upgrades; plan as coordinated toolchain efforts. Notes: `music-metadata` 8+ is **ESM-only**, so it needs the Electron call sites converted to dynamic `import()` first; the `@discordjs/opus`→`tar` "fix" is a regressive downgrade to `@discordjs/opus@0.2.1`, so wait for an upstream release instead.
+6. **Vite 4 → 8 / Svelte 3 → 5 / ESLint 9 / `@discordjs/opus`** — the remaining highs/moderates are major upgrades; plan as coordinated toolchain efforts. Note: the `@discordjs/opus`→`tar` "fix" is a regressive downgrade to `@discordjs/opus@0.2.1`, so wait for an upstream release instead.
 7. **Vendor/mirror the git-fork deps** under the org (`grandiose`, `macadam`, `libltc-wrapper`, `slideshow`, `svelte-inspector`).
 8. **Standardize CI on `npm ci`** (the committed lockfile already supports it; `ci.yml` does this — update `build.yml`/`release.yml` and drop the stale "requires package-lock.json" comment).
 

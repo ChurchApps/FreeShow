@@ -142,7 +142,7 @@
         "macadam": "github:vassbo/macadam#d40f0a3",
         "mdb-reader": "^1.2.1",
         "mp4box": "^0.6.5",
-        "music-metadata": "^7.14.0",
+        "music-metadata": "^11.13.0",
         "node-machine-id": "^1.1.12",
         "osc-js": "^2.4.1",
         "pcm-convert": "^1.6.5",
