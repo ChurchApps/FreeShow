@@ -280,12 +280,12 @@ export function updateSortedStageItems() {
 
 export function shouldItemBeShown(item: Item, allItems: Item[] = [], { outputId, type }: any = { type: "default" }, _updater: any = null, preview = false) {
     // check bindings
-    if (!preview && item.bindings?.length && !item.bindings.includes(outputId)) return false
+    if (!preview && item.bindings?.length && Array.isArray(item.bindings) && !item.bindings.includes(outputId)) return false
 
     if (type === "stage") allItems = getTempItems(item, allItems)
 
     if (!allItems.length) allItems = [item]
-    const slideItems = allItems.filter((a) => !a?.bindings?.length || a.bindings.includes(outputId))
+    const slideItems = allItems.filter((a) => !a?.bindings?.length || (Array.isArray(a.bindings) && a.bindings.includes(outputId)))
     const itemsText = slideItems.reduce((value, currentItem) => (value += getItemText(currentItem)), "")
     // set dynamic values
     // const ref = { showId: get(activeShow)?.id, layoutId: _show().get("settings.activeLayout"), slideIndex: get(activeEdit).slide, type: get(activePage) === "stage" ? "stage" : get(activeEdit).type || "show", id: get(activeEdit).id }
@@ -428,6 +428,7 @@ export function _getVariableValue(dynamicId: string) {
 }
 
 export function getDynamicValue(id: string, type: "default" | "stage" = "default") {
+    if (typeof id !== "string") return ""
     const outSlide = getFirstActiveOutput()?.out?.slide
 
     const ref = {

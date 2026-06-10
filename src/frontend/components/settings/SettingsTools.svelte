@@ -18,9 +18,6 @@
     function openLog() {
         sendMain(Main.OPEN_LOG)
     }
-    function openCache() {
-        sendMain(Main.OPEN_CACHE)
-    }
     function openAppData() {
         sendMain(Main.OPEN_APPDATA)
     }
@@ -59,9 +56,6 @@
     <div class="bottom">
         <MaterialButton variant="outlined" icon="document" on:click={openLog} small>
             <T id="actions.open_error_log" />
-        </MaterialButton>
-        <MaterialButton variant="outlined" icon="folder" on:click={openCache} small>
-            <T id="actions.open_cache_folder" />
         </MaterialButton>
         <MaterialButton variant="outlined" icon="folder" on:click={openAppData} small>
             <T id="actions.open_app_data_folder" />

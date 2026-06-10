@@ -85,7 +85,7 @@
         checkTimes()
         updater = setInterval(checkTimes, 1000)
 
-        if ($special.cloudSyncMediaFolder) mediaFolderPath = (await requestMain(Main.GET_MEDIA_FOLDER_PATH)) || ""
+        if ($cloudSyncData.enabled && $special.cloudSyncMediaFolder) mediaFolderPath = (await requestMain(Main.GET_MEDIA_FOLDER_PATH)) || ""
     })
     onDestroy(() => {
         if (updater) clearInterval(updater)
@@ -313,7 +313,7 @@
         </InputRow>
 
         <svelte:fragment slot="menu">
-            <MaterialTextInput label="inputs.name" value={$cloudSyncData.deviceName || ""} on:change={(e) => updateCloudData("deviceName", e.detail)} />
+            <MaterialTextInput label="settings.device_name" value={$cloudSyncData.deviceName || ""} on:change={(e) => updateCloudData("deviceName", e.detail)} />
 
             <!-- changing team directly without toggling "Enable sync" off/on -->
             <MaterialToggleSwitch label="cloud.read_only" title="cloud.readonly_tip" checked={$cloudSyncData.cloudMethod === "read_only"} defaultValue={false} on:change={(e) => updateCloudData("cloudMethod", e.detail ? "read_only" : "merge")} />

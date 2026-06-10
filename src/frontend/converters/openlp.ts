@@ -54,6 +54,8 @@ export function convertOpenLP(data: any) {
     }, 10)
 
     function addShow(song: Song) {
+        if (!song) return
+
         const layoutID = uid()
         let show = new ShowObj(false, categoryId, layoutID)
         show.origin = "openlyrics"
@@ -89,12 +91,12 @@ const OLPgroups: any = { V: "verse", C: "chorus", P: "pre_chorus", B: "bridge", 
 function createSlides({ verseOrder, lyrics }: Song) {
     const slides: any = {}
     let layout: any[] = []
-    const sequence: string[] = verseOrder.split(" ").filter((a) => a)
+    const sequence: string[] = verseOrder?.split(" ").filter((a) => a) || []
     const sequences: any = {}
 
     // split into multiple sub slides (https://github.com/ChurchApps/FreeShow/issues/1743)
     const slidesList: ((typeof lyrics)[number] & { isChild: boolean })[] = []
-    lyrics.forEach((lyricSlide) => {
+    lyrics?.forEach((lyricSlide) => {
         const currentSlides = lyricSlide.lines.join("__BREAK__").split(/<p\s*style=["']page-break-after:\s*always;["']\s*\/?>/i)
         currentSlides.forEach((slideData, i) => {
             const mergedLines = slideData.trim().split("__BREAK__").filter(Boolean)

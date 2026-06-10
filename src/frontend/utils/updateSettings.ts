@@ -222,7 +222,6 @@ export function restartOutputs(specificId = "") {
         const output: Output = get(outputs)[id]
         if (!output) return
 
-        // , rate: get(special).previewRate || "auto"
         send(OUTPUT, ["CREATE"], { ...output, id })
     })
 

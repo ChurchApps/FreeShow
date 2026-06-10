@@ -128,29 +128,36 @@ export function refreshAllShows() {
     sendToMain(ToMain.REFRESH_SHOWS2, newShows)
 }
 
+const BATCH_SIZE = 100
 export async function getEmptyShows(data: { cached: Shows }) {
     const showsPath = getDataFolderPath("shows")
 
     // list all shows in folder
     const filesInFolder: string[] = await readFolderAsync(showsPath)
-    if (!filesInFolder.length || filesInFolder.length > 1000) return []
+    if (!filesInFolder.length) return []
 
     const emptyShows: { id: string; name: string }[] = []
 
-    for (const name of filesInFolder) await loadFile(name)
-    async function loadFile(name: string) {
-        if (!name.includes(".show")) return
+    // process files in batches to avoid memory issues with thousands of files
+    for (let i = 0; i < filesInFolder.length; i += BATCH_SIZE) {
+        const batch = filesInFolder.slice(i, i + BATCH_SIZE)
+        const results = await Promise.all(batch.map(loadFile))
+        emptyShows.push(...results.filter((result): result is { id: string; name: string } => result !== null))
+    }
+
+    async function loadFile(name: string): Promise<{ id: string; name: string } | null> {
+        if (!name.includes(".show")) return null
 
         const showPath: string = path.join(showsPath, name)
         const show = parseShow(await readFileAsync(showPath))
-        if (!show || !show[1]) return
+        if (!show || !show[1]) return null
 
         // replace stored data with new unsaved cached data
         if (data.cached?.[show[0]]) show[1] = data.cached[show[0]]
         // check that it is empty
-        if (showHasLayoutContent(show[1]) || getShowTextContent(show[1]).length) return
+        if (showHasLayoutContent(show[1]) || getShowTextContent(show[1]).length) return null
 
-        emptyShows.push({ id: show[0], name: name.replace(".show", "") })
+        return { id: show[0], name: name.replace(".show", "") }
     }
 
     return emptyShows

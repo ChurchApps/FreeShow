@@ -18,12 +18,29 @@ export class AudioMultichannel {
      * Returns DEFAULT_CHANNELS on any failure.
      */
     static async detectFileChannelCount(filePath: string, maxChannels: number): Promise<number> {
+        if (!filePath || filePath.startsWith("blob:") || filePath.startsWith("data:")) return this.DEFAULT_CHANNELS
+
         try {
+            // Use a short timeout for network files to avoid hanging
+            const controller = new AbortController()
+            const timeoutId = setTimeout(() => controller.abort(), 3000)
+
             // First 256 KB is enough for any codec header + initial frames
-            const response = await fetch(filePath, { headers: { Range: "bytes=0-262143" } })
-            if (!response.ok && response.status !== 206) throw new Error(`HTTP ${response.status}`)
+            const response = await fetch(filePath, {
+                headers: { Range: "bytes=0-262143" },
+                signal: controller.signal
+            })
+            clearTimeout(timeoutId)
+
+            if (!response.ok && response.status !== 206) {
+                // If Range is not supported, we don't want to download the whole file
+                // for detection, so we just return default
+                return this.DEFAULT_CHANNELS
+            }
 
             const arrayBuffer = await response.arrayBuffer()
+            if (arrayBuffer.byteLength === 0) return this.DEFAULT_CHANNELS
+
             const offlineCtx = new OfflineAudioContext(maxChannels, 1, 48000)
             const audioBuffer = await offlineCtx.decodeAudioData(arrayBuffer)
 
@@ -31,7 +48,8 @@ export class AudioMultichannel {
             console.log(`File channel detection: "${filePath}" → ${channels} channels`)
             return Math.min(channels, maxChannels)
         } catch (err) {
-            console.warn("Could not detect file channel count:", err)
+            // AggregateError or AbortError are possible here
+            console.warn(`Channel detection for "${filePath}" failed:`, err instanceof Error ? err.message : err)
             return this.DEFAULT_CHANNELS
         }
     }

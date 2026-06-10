@@ -45,7 +45,9 @@
         }
     }
 
-    $: if (exportType === "project") pdfOptions.oneFile = true
+    // always one file if project type
+    $: pdfOptions.oneFile = exportType === "project"
+    console.log("Shows:", showCount)
 
     $: pdfTypeOptions = [{ value: "default", label: translateText("example.default") }, { value: "text", label: translateText("export.text") }, { value: "slides", label: translateText("export.slides") }, { value: "media", label: translateText("items.media") }, ...(showHasChords(previewShow) ? [{ value: "chordSheet", label: "Chord Sheet" }] : [])]
 
@@ -65,9 +67,9 @@
     <div class="options" style="flex: 0 0 300px;">
         <MaterialDropdown label="clock.type" style="margin-bottom: 10px;" options={pdfTypeOptions} value={pdfOptions.type || "default"} on:change={(e) => (pdfOptions.type = e.detail)} />
 
-        {#if showCount > 1}
-            <MaterialCheckbox label="export.oneFile" style="margin-bottom: 10px;" checked={pdfOptions.oneFile} on:change={(e) => updatePdfOptions(e, "oneFile")} />
-        {/if}
+        <!-- {#if showCount > 1}
+            <MaterialCheckbox label="export.oneFile" style="margin-bottom: 10px;" checked={pdfOptions.oneFile} disabled={exportType === "project"} on:change={(e) => updatePdfOptions(e, "oneFile")} />
+        {/if} -->
 
         <!-- <MaterialCheckbox label="export.title" checked={pdfOptions.title} on:change={(e) => updatePdfOptions(e, "title")} /> -->
 
@@ -108,7 +110,7 @@
             <!-- <h4 style="text-align: center;"><T id="export.preview" /></h4> -->
             <!-- <div class="label">{translateText("export.preview")}</div> -->
 
-            <div class="paper" bind:this={paper}>
+            <div class="paper" bind:this={paper} style="--paper-aspect-ratio: {pdfOptions.type === 'media' ? '1920/1080' : '210/297'};">
                 <Pdf shows={previewShow ? [previewShow] : []} options={pdfOptions} />
             </div>
         </div>
@@ -155,7 +157,7 @@
         max-width: 900px;
         zoom: 0.4;
         overflow: auto;
-        aspect-ratio: 210/297;
+        aspect-ratio: var(--paper-aspect-ratio, 210/297);
         align-self: center;
     }
 

@@ -4,6 +4,9 @@
     import { markTipString } from "./tipWordDictionary"
 
     export let value: string
+    export let type: "tip" | "info" | "warning" = "tip"
+    export let hiddenText: boolean = false
+    export let white: boolean = false
     export let style: string = ""
     export let top: number = 0
     export let bottom: number = 0
@@ -12,9 +15,9 @@
     const markedValue = markTipString(translatedValue)
 </script>
 
-<div class="tip" style="{style}margin-top: {top}px;margin-bottom: {bottom}px;">
-    <Icon id="tip" size={1.2} gradient />
-    <p>{@html markedValue}</p>
+<div class="tip {type}" style="{style}margin-top: {top}px;margin-bottom: {bottom}px;{hiddenText ? 'cursor: help;' : ''}" data-title={hiddenText ? translatedValue : ""}>
+    <Icon id={type} size={hiddenText ? 1 : 1.2} gradient gradientColor={type === "warning" ? "#FFA500" : type === "info" ? "#00BFFF" : null} {white} />
+    {#if !hiddenText}<p>{@html markedValue}</p>{/if}
 </div>
 
 <style>

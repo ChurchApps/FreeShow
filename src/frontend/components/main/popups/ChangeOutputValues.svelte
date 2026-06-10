@@ -3,12 +3,12 @@
     import type { Output } from "../../../../types/Output"
     import { activePopup, currentOutputSettings, outputs, special } from "../../../stores"
     import { send } from "../../../utils/request"
-    import T from "../../helpers/T.svelte"
     import HRule from "../../input/HRule.svelte"
     import InputRow from "../../input/InputRow.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
     import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
+    import Tip from "../Tip.svelte"
 
     let currentOutput: (Output & { id: string }) | null = null
     $: if ($currentOutputSettings) getCurrentOutput($currentOutputSettings)
@@ -48,7 +48,7 @@
 <div style="min-width: 650px;">
     {#if !currentOutput?.invisible}
         {#if !$special.hideCursor}
-            <p class="tip"><T id="settings.manual_drag_hint" /></p>
+            <Tip value="settings.manual_drag_hint" bottom={20} />
         {/if}
 
         <!-- This also makes the output never "auto position" itself if there is just 1 output and 1 extra screen -->
@@ -80,12 +80,3 @@
         <p><T id="context.force_outputs" /></p>
     </Button>
 {/if} -->
-
-<style>
-    .tip {
-        margin-bottom: 10px;
-
-        opacity: 0.7;
-        font-size: 0.8em;
-    }
-</style>

@@ -32,20 +32,23 @@
     $: layoutSlides = layouts?.[activeLayout]?.slides || []
     $: if (layoutSlides.length) getTotalTime()
     function getTotalTime() {
-        let ref = _show()
-            .layouts("active")
-            .ref()[0]
-            .filter((a) => !a.data.disabled)
-        let total = ref.reduce((value, slide) => (value += Number(slide.data.nextTimer || 0)), 0)
+        let ref =
+            _show()
+                .layouts("active")
+                .ref()[0]
+                ?.filter((a) => a?.data && !a.data.disabled) || []
+        let total = ref.reduce((value, slide) => (value += Number(slide?.data?.nextTimer || 0)), 0)
 
         totalTime = total ? (total > 59 ? joinTime(secondsToTime(total)) : total + "s") : "0s"
 
-        isTranslated = !!layoutSlides.find((a) =>
-            _show()
-                .slides([a.id])
-                .get("items")
-                .flat()
-                .find((a) => a?.language)
+        isTranslated = !!layoutSlides.find(
+            (a) =>
+                a?.id &&
+                _show()
+                    .slides([a.id])
+                    .get("items")
+                    ?.flat()
+                    ?.find((item) => item?.language)
         )
     }
 
@@ -65,9 +68,13 @@
         const newName = e.detail.value
         history({ id: "UPDATE", newData: { key: "layouts", keys: [currentLayout], subkey: "name", data: newName }, oldData: { id: showId }, location: { page: "show", id: "show_key" } })
 
-        if ($projects[$activeProject!]?.shows?.[$activeShow?.index ?? -1]?.layout === currentLayout) {
+        const project = $projects[$activeProject!]
+        const showIndex = $activeShow?.index
+        if (project?.shows?.[showIndex ?? -1]?.layout === currentLayout) {
             projects.update((a) => {
-                a[$activeProject!].shows[$activeShow!.index!].layoutInfo = { name: newName }
+                if (a[$activeProject!]?.shows?.[showIndex!]) {
+                    a[$activeProject!].shows[showIndex!].layoutInfo = { name: newName }
+                }
                 return a
             })
         }
@@ -77,17 +84,22 @@
         if (!$showsCache[showId]) return
 
         showsCache.update((a) => {
-            if (!a[showId].settings) a[showId].settings = { activeLayout: "", template: null }
-            a[showId].settings.activeLayout = id
+            if (a[showId]) {
+                if (!a[showId].settings) a[showId].settings = { activeLayout: "", template: null }
+                a[showId].settings.activeLayout = id
+            }
             return a
         })
 
         // set active layout in project
         if (sortedLayouts?.length < 2) return
-        if (($activeShow?.type === undefined || $activeShow?.type === "show") && $activeShow?.index !== undefined && $activeProject && $projects[$activeProject]?.shows?.[$activeShow.index]) {
+        const showIndex = $activeShow?.index
+        if (($activeShow?.type === undefined || $activeShow?.type === "show") && showIndex !== undefined && $activeProject && $projects[$activeProject]?.shows?.[showIndex]) {
             projects.update((a) => {
-                a[$activeProject!].shows[$activeShow!.index!].layout = id
-                a[$activeProject!].shows[$activeShow!.index!].layoutInfo = layoutInfo
+                if (a[$activeProject!]?.shows?.[showIndex]) {
+                    a[$activeProject!].shows[showIndex].layout = id
+                    a[$activeProject!].shows[showIndex].layoutInfo = layoutInfo
+                }
                 return a
             })
         }
@@ -201,7 +213,7 @@
                 </span>
             {/if}
 
-            <MaterialButton disabled={!layoutSlides.length || isLocked || !layoutSlides?.some((a) => currentShow?.slides?.[a.id]?.group && currentShow?.slides?.[a.id]?.group !== ".")} on:click={addLayout} style="white-space: nowrap;" title="show.new_layout" center>
+            <MaterialButton disabled={!layoutSlides.length || isLocked || !layoutSlides?.some((a) => a && currentShow?.slides?.[a.id]?.group && currentShow?.slides?.[a.id]?.group !== ".")} on:click={addLayout} style="white-space: nowrap;" title="show.new_layout" center>
                 <Icon id="add" size={1.1} white={multipleLayouts} />
                 {#if !multipleLayouts && !$labelsDisabled}<T id="show.new_layout" />{/if}
             </MaterialButton>

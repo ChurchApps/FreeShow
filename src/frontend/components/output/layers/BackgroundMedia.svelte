@@ -13,7 +13,7 @@
     import { videoExtensions } from "../../../values/extensions"
     import BmdStream from "../../drawer/live/BMDStream.svelte"
     import NdiStream from "../../drawer/live/NDIStream.svelte"
-    import { getMediaStyle } from "../../helpers/media"
+    import { getExtension, getMediaStyle } from "../../helpers/media"
     import Player from "../../system/Player.svelte"
     import Camera from "../Camera.svelte"
     import OutputTransition from "../transitions/OutputTransition.svelte"
@@ -167,11 +167,13 @@
     async function fetchReplayGain(filePath: string) {
         replayGainMultiplier = 1
 
+        if (typeof filePath !== "string") return
+
         // is online path
         if (/^https?:\/\//i.test(filePath)) return
 
         // is not video
-        const ext = filePath.slice(filePath.lastIndexOf(".") + 1).toLowerCase()
+        const ext = getExtension(filePath)
         if (!videoExtensions.includes(ext)) return
 
         try {

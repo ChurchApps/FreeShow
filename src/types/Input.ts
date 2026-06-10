@@ -29,7 +29,7 @@ type InputDropdown = {
     value: string
     options: DropdownOptions
 }
-export type DropdownOptions = { label: string; value: string; prefix?: string; style?: string; data?: string }[]
+export type DropdownOptions = { label: string; value: string; icon?: string; iconColor?: string; prefix?: string; style?: string; data?: string }[]
 
 type InputMidi = {
     type: "midi"

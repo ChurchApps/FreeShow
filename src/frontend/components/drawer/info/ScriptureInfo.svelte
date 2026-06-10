@@ -5,12 +5,10 @@
     import { setDefaultScriptureTemplates } from "../../../utils/createData"
     import { confirmCustom } from "../../../utils/popup"
     import { mediaExtensions } from "../../../values/extensions"
-    import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import { getAllNormalOutputs, getFirstActiveOutput } from "../../helpers/output"
-    import FloatingInputs from "../../input/FloatingInputs.svelte"
     import InputRow from "../../input/InputRow.svelte"
     import Link from "../../inputs/Link.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
@@ -23,6 +21,8 @@
     import Textbox from "../../slide/Textbox.svelte"
     import Zoomed from "../../slide/Zoomed.svelte"
     import { createScriptureShow, getActiveScripturesContent, getMergedAttribution, getScriptureSlidesNew, textKeys, useOldScriptureSystem } from "../bible/scripture"
+
+    export let optionsOpen: boolean
 
     let biblesContent: BibleContent[] = []
     let selectedChapters: number[] = []
@@ -182,8 +182,6 @@
 
         history({ id: "UPDATE", newData, oldData: { id: templateId }, location: { page: "edit", id: "template_settings", override: templateId } })
     }
-
-    let settingsOpened = false
 </script>
 
 <!-- scripture is for focusedArea -->
@@ -209,7 +207,7 @@
 
     <!-- settings -->
     <div class="settings border">
-        {#if settingsOpened}
+        {#if optionsOpen}
             <!-- Verse numbers -->
             <MaterialToggleSwitch label="scripture.verse_numbers" style="width: 100%;" checked={$scriptureSettings.verseNumbers} on:change={(e) => update("verseNumbers", e.detail)} />
             <!-- DEPRECATED -->
@@ -284,12 +282,6 @@
         {/if}
     </div>
 </div>
-
-<FloatingInputs round>
-    <MaterialButton isActive={settingsOpened} title="edit.options" on:click={() => (settingsOpened = !settingsOpened)}>
-        <Icon size={1.1} id="options" white={!settingsOpened} />
-    </MaterialButton>
-</FloatingInputs>
 
 <style>
     .scroll {

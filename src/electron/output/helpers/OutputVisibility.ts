@@ -4,6 +4,7 @@ import { mainWindow, toApp } from "../.."
 import { MAIN, OUTPUT } from "../../../types/Channels"
 import type { Output } from "../../../types/Output"
 import { OutputHelper } from "../OutputHelper"
+import { setOutputAlwaysOnTop } from "./OutputAlwaysOnTop"
 import { OutputBounds } from "./OutputBounds"
 
 export class OutputVisibility {
@@ -43,7 +44,7 @@ export class OutputVisibility {
         const windowNotCoveringMain = this.amountCovered(bounds, mainWindow!.getBounds()) < 0.5
 
         if (state === true && (force || window.isAlwaysOnTop() === false || windowNotCoveringMain)) {
-            this.showWindow(window)
+            this.showWindow(window, output.alwaysOnTop !== false)
 
             OutputHelper.Bounds.updateBounds({ id: output.id, bounds })
             return true
@@ -95,10 +96,11 @@ export class OutputVisibility {
     // https://github.com/electron/electron/issues/1415
     // https://github.com/electron/electron/issues/1054
 
-    static showWindow(window: BrowserWindow) {
+    static showWindow(window: BrowserWindow, alwaysOnTop = true) {
         if (!window || window.isDestroyed()) return
 
         window.showInactive()
+        if (alwaysOnTop) setOutputAlwaysOnTop(window, true)
         window.moveTop()
     }
 

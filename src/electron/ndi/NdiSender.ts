@@ -58,6 +58,7 @@ export class NdiSender {
             timeStart?: bigint
             frameNumber?: number
             lastFramerate?: number
+            audioSamplesSent?: bigint
         }
     } = {}
 
@@ -177,6 +178,7 @@ export class NdiSender {
             senderData.frameNumber = 0
             senderData.lastFramerate = framerate
             senderData.timeStart = this.calculateTimeStart()
+            senderData.audioSamplesSent = BigInt(0)
         }
 
         const timecode = this.calculateTimecode(senderData.timeStart, senderData.frameNumber ?? 0, framerate)
@@ -249,7 +251,13 @@ export class NdiSender {
         const grandiose = await loadGrandiose()
         if (!grandiose) return
 
-        const timecode = (activeSender.timeStart + process.hrtime.bigint()) / this.TIMECODE_DIVISOR
+        const noSamples = Math.trunc(ndiAudioBuffer.byteLength / channelCount / this.BYTES_PER_FLOAT32)
+
+        if (activeSender.audioSamplesSent === undefined) activeSender.audioSamplesSent = BigInt(0)
+
+        const timecode = (activeSender.timeStart + (activeSender.audioSamplesSent * BigInt(1000000000)) / BigInt(sampleRate)) / this.TIMECODE_DIVISOR
+        activeSender.audioSamplesSent += BigInt(noSamples)
+
         const frame = {
             timecode,
             sampleRate,

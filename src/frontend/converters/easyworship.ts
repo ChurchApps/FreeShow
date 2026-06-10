@@ -40,8 +40,8 @@ interface Words {
 export function convertEasyWorship(data: any) {
     const categoryId = createCategory("EasyWorship")
 
-    const songs = data.find((a: any) => a.content.song)?.content.song
-    const songsWords = data.find((a: any) => a.content.word)?.content.word
+    const songs = data?.find((a: any) => a.content?.song)?.content?.song
+    const songsWords = data?.find((a: any) => a.content?.word)?.content?.word
     if (!songsWords) {
         newToast("toast.no_songswords_easyworship")
         return

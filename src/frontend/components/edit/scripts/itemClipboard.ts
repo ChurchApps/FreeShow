@@ -23,7 +23,8 @@ export function getBoxStyle(item: Item): StyleClipboard {
     if (!item) return { keys: {}, style: {} }
 
     // skip scripture verse numbers (customType)
-    const normalText = item.lines?.[0]?.text?.filter((a) => !a.customType) || []
+    const text = item.lines?.[0]?.text
+    const normalText = Array.isArray(text) ? text.filter((a) => !a.customType) : []
     const style = normalText[0]?.style || item.style
     const linesAlign = item.lines?.[0]?.align || ""
 
@@ -202,9 +203,10 @@ export async function setBoxStyle(styles: StyleClipboard[], slides: any, type: I
             if (!item.lines) return
 
             const newLines = item.lines.map((line) => {
-                if (!line.text) return
+                const textArr = line.text
+                if (!Array.isArray(textArr)) return
 
-                return line.text.map((text) => {
+                return textArr.map((text) => {
                     // don't style scripture verses
                     if (text.customType && !text.customType.includes("jw")) return text
 

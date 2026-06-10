@@ -72,7 +72,7 @@ export function convertText({ name = "", origin = "", category = null, text, noF
             }
 
             const meta = line.split("=")
-            const metaKey = meta[0].toLowerCase().replaceAll(" ", "").trim()
+            const metaKey = meta[0]?.toString().toLowerCase().replaceAll(" ", "").trim() || ""
             if (metaKey === "notes") {
                 plainNotes = meta[1]
                 return
@@ -398,8 +398,10 @@ function createSlides(labeled: { type: string; text: string }[], noFormatting) {
                 items = items
                     // .filter((a) => !a.type || a.type === "text" || a.lines)
                     .map((item) => {
-                        item.lines?.forEach((_, index) => {
-                            item.lines![index].text[0].style = activeItems?.[0]?.lines?.[0]?.text?.[0]?.style || ""
+                        item.lines?.forEach((line) => {
+                            if (line.text?.[0]) {
+                                line.text[0].style = activeItems?.[0]?.lines?.[0]?.text?.[0]?.style || ""
+                            }
                         })
                         return item
                     })
@@ -520,14 +522,20 @@ function linesToItems(lines: string) {
 function checkRepeats(labeled: { type: string; text: string }[]) {
     const newLabels: { type: string; text: string }[] = []
     labeled.forEach((a) => {
-        const match = a.text.match(/\nx[0-9]/)
+        const match = a.text.match(/\nx[0-9]+/)
         if (match !== null && match.index !== undefined) {
-            const repeatNumber = a.text.slice(match.index + 2, match.index + 4).replace(/[A-Z]/gi, "")
-            // remove
-            a.text = a.text.slice(0, match.index + 1) + a.text.slice(match.index + match[0].length + 1, a.text.length)
-            ;[...Array(Number(repeatNumber))].map(() => {
+            const repeatNumber = parseInt(match[0].slice(2))
+
+            if (!isNaN(repeatNumber) && repeatNumber > 0 && repeatNumber < 10) {
+                // remove original repeat marker from text
+                a.text = a.text.slice(0, match.index + 1) + a.text.slice(match.index + match[0].length).trim()
+
+                for (let i = 0; i < repeatNumber; i++) {
+                    newLabels.push({ ...a })
+                }
+            } else {
                 newLabels.push(a)
-            })
+            }
         } else newLabels.push(a)
     })
     return newLabels

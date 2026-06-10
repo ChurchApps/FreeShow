@@ -114,7 +114,6 @@
             }
 
             if (key === "enabled") {
-                // , rate: $special.previewRate || "auto"
                 if (value) send(OUTPUT, ["CREATE"], currentOutput)
                 else {
                     send(OUTPUT, ["REMOVE"], { id: outputId })

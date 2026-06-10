@@ -146,6 +146,7 @@
 
     let usedNames: string[] = []
     function getShortName(name: string, i: number) {
+        if (!name || typeof name !== "string") return ""
         let shortName = isNaN(parseInt(name[0])) ? name.slice(0, 3) : name.replace(" ", "").slice(0, 4)
 
         // use four characters if same short name ("Jud"ges="Jud"e)
@@ -527,7 +528,8 @@
     function removeTags(text: string) {
         return text.replace(/(<([^>]+)>)/gi, "")
     }
-    function stripMarkdown(input: string) {
+    function stripMarkdown(input: any) {
+        if (!input || typeof input !== "string") return ""
         input = input.replace(/#\s*(.*?)\s*#/g, "")
         input = input.replace(/\*\{(.*?)\}\*/g, "")
         input = input.replace(/!\{(.*?)\}!/g, "$1")

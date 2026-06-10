@@ -173,12 +173,32 @@ export class AudioPlayer {
 
     private static async createAudio(path: string): Promise<HTMLAudioElement | null> {
         const audio = new Audio(encodeFilePath(path))
+        audio.addEventListener("play", () => {
+            updatePlayingStore(path, "paused", false)
+            AudioAnalyserMerger.init()
+        })
+        audio.addEventListener("pause", () => {
+            updatePlayingStore(path, "paused", true)
+            if (!AudioAnalyser.shouldAnalyse()) {
+                AudioAnalyserMerger.stop()
+            }
+        })
         return await this.waitForAudio(path, audio)
     }
 
     private static async createAudioFromStream(id: string, stream: MediaStream): Promise<HTMLAudioElement | null> {
         const audio = new Audio()
         audio.srcObject = stream
+        audio.addEventListener("play", () => {
+            updatePlayingStore(id, "paused", false)
+            AudioAnalyserMerger.init()
+        })
+        audio.addEventListener("pause", () => {
+            updatePlayingStore(id, "paused", true)
+            if (!AudioAnalyser.shouldAnalyse()) {
+                AudioAnalyserMerger.stop()
+            }
+        })
         return await this.waitForAudio(id, audio)
     }
 

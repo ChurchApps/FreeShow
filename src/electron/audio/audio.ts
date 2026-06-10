@@ -57,6 +57,9 @@ export async function getAudioMetadata(filePath: string) {
 
         return returnData
     } catch (err: any) {
+        // ignore known unsupported formats like QuickTime video
+        if (err.message?.includes("video/quicktime")) return null
+
         console.error("Error parsing audio metadata:", err.message)
         return null
     }

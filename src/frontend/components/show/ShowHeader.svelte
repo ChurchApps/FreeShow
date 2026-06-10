@@ -84,12 +84,14 @@
 <svelte:window on:mousedown={mousedown} />
 
 <div class="header" class:shadow={listScrollY > 0}>
-    <p style="width: 100%;max-width: 98%;display: flex;align-items: center;gap: 0.5em;font-size: 0.9em;" data-title={currentShow?.name}>
-        {#if currentShow?.name}
-            {currentShow.name}
-        {:else}
-            <span style="opacity: 0.5;font-style: italic;"><T id="main.unnamed" /></span>
-        {/if}
+    <div class="name-notes" data-title={currentShow?.name}>
+        <div class="name">
+            {#if currentShow?.name}
+                {currentShow.name}
+            {:else}
+                <span style="opacity: 0.5;font-style: italic;"><T id="main.unnamed" /></span>
+            {/if}
+        </div>
 
         {#if notes}
             <span class="notes" role="none" data-title={translateText(notes.title)} on:click={(e) => openTab(e, notes?.tab || "")}>
@@ -97,7 +99,7 @@
                 <p>{@html notes.text}</p>
             </span>
         {/if}
-    </p>
+    </div>
 
     <div class="right">
         <!-- template icon -->
@@ -168,7 +170,8 @@
         left: 0;
         width: 100%;
 
-        padding: 0.2em 0.8em;
+        padding: 0.2em;
+        padding-left: 0.8em;
         font-weight: 600;
 
         height: 30px;
@@ -192,14 +195,32 @@
     }
 
     .header .right {
-        position: absolute;
-        top: 0;
         height: 100%;
 
         display: flex;
+        flex-shrink: 0;
+        margin-left: auto;
     }
-    .header .right {
-        right: 0;
+
+    /* name and notes */
+
+    .name-notes {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        gap: 0.5em;
+        font-size: 0.9em;
+        min-width: 0;
+        overflow: hidden;
+    }
+
+    .name-notes .name {
+        flex-shrink: 0;
+        max-width: 90%;
+
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
     /* notes */
@@ -215,7 +236,14 @@
         opacity: 0.7;
         font-size: 0.7em;
         font-weight: normal;
-        max-width: 78%;
+        flex: 1;
+        min-width: 0;
+    }
+
+    .notes p {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
     .notes p :global(*) {

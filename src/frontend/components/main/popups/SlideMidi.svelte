@@ -5,8 +5,8 @@
     import MidiValues from "../../actions/MidiValues.svelte"
     import type { API_midi } from "../../actions/api"
     import { midiInListen } from "../../actions/midi"
-    import T from "../../helpers/T.svelte"
     import { clone } from "../../helpers/array"
+    import Tip from "../Tip.svelte"
 
     $: id = $popupData.id || ""
 
@@ -55,6 +55,6 @@
     }
 </script>
 
-<p style="opacity: 0.8;font-size: 0.8em;text-align: center;margin-bottom: 20px;"><T id="actions.play_on_midi_tip" /></p>
+<Tip type="info" value="actions.play_on_midi_tip" bottom={20} />
 
 <MidiValues value={clone(action.midi || actionMidi)} firstActionId={action.triggers?.[0]} on:change={(e) => updateValue("midi", e)} playSlide />

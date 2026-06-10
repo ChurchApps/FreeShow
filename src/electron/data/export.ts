@@ -21,7 +21,8 @@ import { compressToZip } from "./zip"
 const customJSONExtensions = {
     TEMPLATE: ".fstemplate",
     THEME: ".fstheme",
-    ACTION: ".fsaction"
+    ACTION: ".fsaction",
+    STAGE_LAYOUT: ".fsstage"
 }
 
 export function startExport(_e: Electron.IpcMainEvent, msg: Message) {
@@ -50,7 +51,7 @@ export function startExport(_e: Electron.IpcMainEvent, msg: Message) {
     const customExt = customJSONExtensions[msg.channel as keyof typeof customJSONExtensions]
     if (customExt) {
         const exportFolder = getDataFolderPath("exports")
-        exportJSON(msg.data.content, customExt, exportFolder)
+        exportJSON(msg.data.content, customExt, exportFolder, msg.data.name)
         return
     }
 
@@ -117,7 +118,7 @@ export function generatePDF(path: string, options: any = {}) {
             width: 297000 / 10000 / 3.6, // 297mm
             height: 167062 / 10000 / 3.6 // ~167mm
         }
-        pageOptions.landscape = true
+        // pageOptions.landscape = true
     } else {
         pageOptions.pageSize = "A4"
         pageOptions.landscape = false
@@ -152,12 +153,14 @@ export function createPDFWindow(data: any) {
     const windowWidth = isLandscape ? 1123 : 794
     const windowHeight = isLandscape ? 631 : 1123
 
-    exportWindow = new BrowserWindow({
-        ...exportOptions,
-        width: windowWidth,
-        height: windowHeight,
-        useContentSize: true
-    })
+    let options = { ...exportOptions }
+    if (!isLandscape) {
+        options.width = windowWidth
+        options.height = windowHeight
+        options.useContentSize = true
+    }
+
+    exportWindow = new BrowserWindow(options)
 
     // load path
     if (isProd) exportWindow.loadFile("public/index.html")

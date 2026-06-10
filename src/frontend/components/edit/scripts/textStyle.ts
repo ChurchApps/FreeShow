@@ -3,11 +3,13 @@ import { replaceVirtualBreaks } from "../../../show/slides"
 
 // add new style to text by selection
 export function addStyle(selection: { start: number; end: number }[], item: Item, style: string | any[]): Item {
-    item.lines?.forEach((line, i) => {
+    if (!Array.isArray(item.lines)) return item
+
+    item.lines.forEach((line, i) => {
         const newText: any[] = []
         let pos = 0
-        if (selection[i]?.start !== undefined) {
-            line.text?.forEach((text) => {
+        if (selection[i]?.start !== undefined && Array.isArray(line.text)) {
+            line.text.forEach((text) => {
                 const value = text.value || ""
                 const length = value.length
 
@@ -42,8 +44,11 @@ export function addStyle(selection: { start: number; end: number }[], item: Item
 
 // combine duplicate styles
 function combine(item: Item): Item {
-    item.lines?.forEach((line) => {
-        const a = [...(line.text || [])]
+    if (!Array.isArray(item.lines)) return item
+
+    item.lines.forEach((line) => {
+        if (!Array.isArray(line.text)) return
+        const a = [...line.text]
         for (let i = 0; i < a.length; i++) {
             if (a[i + 1]) {
                 const d1: any[] = []
@@ -199,9 +204,15 @@ export function getSelectionRange(): { start: number; end: number }[] {
 // return item style at text length pos
 export function getItemStyleAtPos(lines: Line[], pos: null | { start: number; end: number }[]) {
     let style = ""
-    ;(pos || lines).forEach((_a: any, i: number) => {
+    const iter = pos || lines
+    if (!Array.isArray(iter)) return style
+
+    iter.forEach((_a: any, i: number) => {
         let currentPos = 0
-        lines[i]?.text?.some((text) => {
+        const textArr = lines[i]?.text
+        if (!Array.isArray(textArr)) return
+
+        textArr.some((text) => {
             const value = text.value || ""
 
             // if (pos) console.log(currentPos, pos[i].end, currentPos <= pos[i].end, currentPos + value.length >= pos[i].end)
@@ -228,16 +239,18 @@ export function getLastLineAlign(item: Item, selection: any): string {
     if (!selection?.length) return item?.lines?.[0]?.align || ""
 
     let last = ""
-    item?.lines?.forEach((line, i) => {
-        if (!selection || selection[i]?.start !== undefined) last = line.align
-    })
+    if (Array.isArray(item?.lines)) {
+        item.lines.forEach((line, i) => {
+            if (!selection || selection[i]?.start !== undefined) last = line.align
+        })
+    }
     return last
 }
 
 // normally returns array of text lines: ["Line 1", "Line 2", "", "Line 1"]
 // itemSeperated: ["Line 1<br>Line 2", "Line 1"]
 export function getTextLines(slide: Slide | { items: Item[] }, itemSeperated: boolean = false) {
-    if (!slide?.items) return []
+    if (!Array.isArray(slide?.items)) return []
 
     const items: string[][] = []
     slide.items.forEach((item) => {
@@ -259,7 +272,7 @@ export function getTextLines(slide: Slide | { items: Item[] }, itemSeperated: bo
         })
 
         if (!fullText.length) lines.pop()
-        if (lines.length) items.push(lines.map((a) => replaceVirtualBreaks(a)))
+        if (lines.length || itemSeperated) items.push(lines.map((a) => replaceVirtualBreaks(a)))
     })
 
     if (itemSeperated) {
@@ -289,9 +302,15 @@ export function getSlideText(slide: Slide) {
 export function getItemText(item: Item | null): string {
     let text = ""
 
-    for (const line of item?.lines ?? []) {
-        for (const t of line.text ?? []) {
-            if (t.value) text += t.value
+    const lines = item?.lines
+    if (Array.isArray(lines)) {
+        for (const line of lines) {
+            const textArr = line.text
+            if (Array.isArray(textArr)) {
+                for (const t of textArr) {
+                    if (t.value) text += t.value
+                }
+            }
         }
     }
 
@@ -300,7 +319,7 @@ export function getItemText(item: Item | null): string {
 
 export function getItemTextArray(item: Item): string[] {
     const text: string[] = []
-    if (!item?.lines) return []
+    if (!Array.isArray(item?.lines)) return []
 
     item.lines.forEach((line) => {
         if (!Array.isArray(line?.text)) return
@@ -315,8 +334,9 @@ export function getItemTextArray(item: Item): string[] {
 
 export function getLineText(line: Line): string {
     let text = ""
-    if (!Array.isArray(line?.text)) return ""
-    line.text.forEach((content) => {
+    const textArr = line?.text
+    if (!Array.isArray(textArr)) return ""
+    textArr.forEach((content) => {
         text += content.value
     })
     return text

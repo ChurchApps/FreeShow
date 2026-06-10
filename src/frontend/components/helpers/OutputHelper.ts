@@ -470,13 +470,15 @@ export class OutputHelper {
 
         // Overlays
         if (item.type === "overlay") {
-            return setOutput("overlays", item.id, false, "", true)
+            setOutput("overlays", item.id, false, "", true)
+            return
         }
 
         // Media (Background & Audio)
         if (item.type === "image" || item.type === "video" || item.type === "player" || item.type === "audio") {
             setTimeout(() => (this.previousOutputted = clone(this.getOut(outputId))))
-            return togglePlayingMedia()
+            togglePlayingMedia()
+            return
         }
 
         let outSlide = out.slide || null

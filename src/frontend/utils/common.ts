@@ -174,7 +174,6 @@ export function toggleRemoteStream() {
     if (get(disabledServers).output_stream === false) value.value = true
 
     setTimeout(() => {
-        // , rate: get(special).previewRate || "auto"
         send(OUTPUT, ["SET_VALUE"], { id: captureOutputId, key: "capture", value })
     }, 1800)
 }

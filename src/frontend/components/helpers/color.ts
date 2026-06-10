@@ -94,6 +94,16 @@ export function fadeColor(hex: string, alpha: number = 0.5) {
     return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha})`
 }
 
+// make color brighter only if it's close to black
+export function brightenDarkColor(hex: string) {
+    const hsl = hexToHSL(hex)
+
+    // all colors should be minimum 50% bright
+    if (hsl.l < 50) hsl.l = 50
+
+    return hslToHex(hsl.h, hsl.s, hsl.l)
+}
+
 // CONTRAST
 
 export function getContrast(hex: string) {

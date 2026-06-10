@@ -126,7 +126,6 @@
             }
 
             if (key === "enabled") {
-                // , rate: $special.previewRate || "auto"
                 if (value) send(OUTPUT, ["CREATE"], currentOutput)
                 else {
                     send(OUTPUT, ["REMOVE"], { id: outputId })
@@ -373,7 +372,7 @@
 {/if}
 
 <!-- NDI -->
-<Title label="NDI®" icon="companion" />
+<Title label="NDI®" icon="ndi" />
 
 <InputRow arrow={currentOutput?.ndi} bind:open={ndiMenuOpened}>
     <MaterialToggleSwitch label="actions.enable NDI®" style="width: 100%;" checked={currentOutput?.ndi} defaultValue={false} data={$ndiData[currentOutput?.id || ""]?.connections || null} on:change={(e) => updateOutput("ndi", e.detail)} />

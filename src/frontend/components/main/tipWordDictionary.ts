@@ -5,7 +5,9 @@ import { translateText } from "../../utils/language"
 const dictionary = [
     { fallback: "dynamic values", key: "popup.dynamic_values", tip: "Text that can change dynamically.<br>Right click any textbox to add." },
     { fallback: "metadata", key: "tools.metadata", tip: "Information about the current show.<br>Often song attribution/source." },
-    { fallback: "category", key: "info.category", tip: "Used in the drawer to organize content." }
+    { fallback: "category", key: "info.category", tip: "Used in the drawer to organize content." },
+    { fallback: "show", key: "guide_title.show", tip: "tabs.shows_info" },
+    { fallback: "action", key: "popup.action", tip: "An action is used to automate tasks in the program. Mainly created in Functions>Actions." }
 ]
 
 type TipData = { tip: string }
@@ -25,7 +27,7 @@ function ensureCompiled() {
 
         for (const w of [word, entry.fallback]) {
             const lower = w.toLowerCase()
-            map.set(lower, { tip: entry.tip })
+            map.set(lower, { tip: translateText(entry.tip) })
             words.push(escapeRegex(w))
         }
     }

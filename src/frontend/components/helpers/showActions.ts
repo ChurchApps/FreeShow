@@ -162,7 +162,7 @@ const triggerActionsBeforeOutput = {
     }
 }
 function shouldTriggerBefore(action: any) {
-    return action.triggers?.find((trigger) => triggerActionsBeforeOutput[trigger]?.(action.actionValues?.[trigger]))
+    return action?.triggers?.find((trigger) => triggerActionsBeforeOutput[trigger]?.(action.actionValues?.[trigger]))
 }
 export function checkActionTrigger(layoutData: SlideData, slideIndex = 0) {
     layoutData?.actions?.slideActions?.forEach((a) => {
@@ -246,7 +246,7 @@ export function updateOut(showId: string, index: number, layout: LayoutRef[], ex
     if (!extra || !data) return
 
     // trigger start show action first
-    const startShowId = data.actions?.startShow?.id || data.actions?.slideActions?.find((a) => a.actionValues?.start_show)?.actionValues?.start_show?.id
+    const startShowId = data.actions?.startShow?.id || data.actions?.slideActions?.find((a) => a && a.actionValues?.start_show)?.actionValues?.start_show?.id
     if (startShowId) {
         startShow(startShowId)
         return
@@ -444,7 +444,7 @@ function playSlideActions(slideActions: SlideAction[], outputIds: string[] = [],
     // run these actions on each active output
     if (outputIds.length > 1) {
         runPerOutput.forEach((id) => {
-            const existingIndex = slideActions.findIndex((a) => a.triggers?.[0] === id)
+            const existingIndex = slideActions.findIndex((a) => a && a.triggers?.[0] === id)
             if (existingIndex < 0) return
 
             outputIds.forEach((outputId) => {
@@ -1037,7 +1037,7 @@ const dynamicValues = {
 
     // show
     show_name: ({ show }) => show?.name || "",
-    show_name_next: ({ projectRef }) => get(shows)[get(projects)[projectRef.id]?.shows?.find((a, i) => a.type !== "section" && i > projectRef.index)?.id ?? -1]?.name || "",
+    show_name_next: ({ projectRef }) => get(shows)[get(projects)[projectRef.id]?.shows?.find((a, i) => a && a.type !== "section" && i > projectRef.index)?.id ?? -1]?.name || "",
 
     layout_slides: ({ ref }) => ref.length,
     layout_notes: ({ layout }) => layout.notes || "",
@@ -1139,6 +1139,10 @@ function getSlideText({ outSlide, show, ref }, slideIndex: number = 0) {
         slideItemLines = getTextLines(slide, true)
     }
 
+    // correct order
+    slideItemLines = clone(slideItemLines)
+    slideItemLines.reverse()
+
     // return all items first, then each individual to make it work with the #index system
     return [slideItemLines.join("<br><br>"), ...slideItemLines]
 }
@@ -1149,7 +1153,7 @@ export function getVariableNameId(name: string) {
 }
 
 export function getNumberVariables(variableUpdater = get(variables), _dynamicUpdaters: any = null) {
-    const numberVariables = Object.values(variableUpdater).filter((a) => a.type === "number" || a.type === "random_number" || (a.type === "text" && a.text?.includes("{")))
+    const numberVariables = Object.values(variableUpdater || {}).filter((a) => a && (a.type === "number" || a.type === "random_number" || (a.type === "text" && a.text?.includes("{"))))
     return numberVariables.reduce((css, v) => (css += `--variable-${getVariableNameId(v.name)}: ${v.type === "text" ? getDynamicValue(v.text || "") : (v.number ?? (v.default || 0))};`), "")
 }
 
@@ -1159,19 +1163,19 @@ function getActiveProjectSection(data: any = {}, next = false): ProjectShowRef |
     const project = get(projects)[get(activeProject) || ""]
     if (!project?.shows) return null
 
-    const hasTime = project.shows.find((a) => a.data?.time)
+    const hasTime = project.shows.find((a) => a?.data?.time)
     if (!hasTime) {
         // get active outputted if any
         const showId = data.outSlide?.id
-        let showIndex = project.shows.findIndex((a, i) => a.id === showId && (data.outSlide?.projectIndex === undefined || i === data.outSlide.projectIndex))
-        if (showIndex < 0) showIndex = project.shows.findIndex((a) => a.id === showId)
+        let showIndex = project.shows.findIndex((a, i) => a && a.id === showId && (data.outSlide?.projectIndex === undefined || i === data.outSlide.projectIndex))
+        if (showIndex < 0) showIndex = project.shows.findIndex((a) => a && a.id === showId)
 
-        if (next) return project.shows.find((a, i) => i > showIndex && a.type === "section") || null
-        return project.shows.findLast((a, i) => i <= showIndex && a.type === "section") || null
+        if (next) return project.shows.find((a, i) => i > showIndex && a?.type === "section") || null
+        return project.shows.findLast((a, i) => i <= showIndex && a?.type === "section") || null
     }
 
     const active = getClosestProjectSectionByTime()
-    return project.shows.find((a) => a.id === (next ? active?.closestUpcommingId : active?.closestPassedId)) || null
+    return project.shows.find((a) => a && a.id === (next ? active?.closestUpcommingId : active?.closestPassedId)) || null
 }
 
 function getClosestProjectSectionByTime() {
@@ -1183,8 +1187,8 @@ function getClosestProjectSectionByTime() {
     let closestPassedId = ""
     let closestUpcommingId = ""
     project.shows.forEach((a) => {
-        const time = a.data?.time
-        if (!time || a.type !== "section") return
+        const time = a?.data?.time
+        if (!time || a?.type !== "section") return
 
         const timeUntil = getTimeUntilClock(time)
         if (timeUntil < 0 && (!closestPassedTime || timeUntil > closestPassedTime)) {

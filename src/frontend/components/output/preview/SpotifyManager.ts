@@ -2,6 +2,8 @@ import { get, writable } from "svelte/store"
 import { Main } from "../../../../types/IPC/Main"
 import type { SpotifyState } from "../../../../types/Main"
 import { requestMain } from "../../../IPC/main"
+import { wait } from "../../../utils/common"
+import { special } from "../../../stores"
 
 export const spotifyState = writable<SpotifyState | null>(null)
 export const spotifyIsFading = writable(false)
@@ -175,15 +177,17 @@ export async function fadePause() {
         startVol = fresh.volume
     }
 
-    const steps = 20,
-        duration = 3000
+    const duration_s = get(special).audio_fade_duration ?? 1.5
+    const duration = Math.max(duration_s, 3) * 1000 // fade out time in ms (minimum 3 seconds)
+    const stepMs = 50 // time between volume changes
+    const steps = duration / stepMs
     for (let i = 1; i <= steps; i++) {
         await runCmd("setVolume", Math.max(0, startVol - (startVol / steps) * i))
-        await new Promise((r) => setTimeout(r, duration / steps))
+        await wait(stepMs)
     }
 
     await runCmd("pause")
-    await new Promise((r) => setTimeout(r, 500))
+    await wait(500)
     await runCmd("setVolume", startVol)
     spotifyIsFading.set(false)
 }

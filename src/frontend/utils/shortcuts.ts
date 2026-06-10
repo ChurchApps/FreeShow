@@ -12,7 +12,7 @@ import { addItem } from "../components/edit/scripts/itemHelpers"
 import { keysToID, sortByName } from "../components/helpers/array"
 import { copy, cut, deleteAction, duplicate, paste, selectAll } from "../components/helpers/clipboard"
 import { history, redo, undo } from "../components/helpers/history"
-import { getExtension, getMediaLayerType, getMediaStyle, getMediaType } from "../components/helpers/media"
+import { getExtension, getMedia, getMediaLayerType, getMediaStyle, getMediaType } from "../components/helpers/media"
 import { getAllNormalOutputs, getFirstActiveOutput, refreshOut, setOutput, startFolderTimer, toggleOutputs } from "../components/helpers/output"
 import { OutputHelper } from "../components/helpers/OutputHelper"
 import { clearAll, clearBackground, clearSlide } from "../components/output/clear"
@@ -462,7 +462,7 @@ function createNew() {
 }
 
 // this only works if opened in preview - if not api
-export function togglePlayingMedia(e: Event | null = null, back = false, api = false) {
+export async function togglePlayingMedia(e: Event | null = null, back = false, api = false) {
     if (get(outLocked)) return
     // if ($focusMode || e.target?.closest(".edit") || e.target?.closest("input")) return
     let item = get(focusMode) ? get(activeFocus) : get(activeShow)
@@ -512,7 +512,10 @@ export function togglePlayingMedia(e: Event | null = null, back = false, api = f
         // clear slide
         if (videoType === "foreground" || (videoType !== "background" && (type === "image" || !shouldLoop))) clearSlide()
 
-        setOutput("background", { type, path: item.id, muted: shouldBeMuted, loop: shouldLoop, ...mediaStyle })
+        const located = await getMedia(item.id)
+        if (!located) return
+
+        setOutput("background", { type, path: located.path, muted: shouldBeMuted, loop: shouldLoop, ...mediaStyle })
     } else if (type === "audio") {
         AudioPlayer.start(item.id, { name: (item as any).name || "" }, { pauseIfPlaying: true })
     } else if (type === "folder") {

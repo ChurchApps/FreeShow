@@ -70,7 +70,7 @@
 </script>
 
 <MaterialFontDropdown label="settings.font_family" value={$theme === "default" ? "" : $themes[$theme]?.font?.family || ""} on:change={(e) => updateTheme(e.detail || "", "family", "font")} allowEmpty />
-<MaterialNumberInput label="settings.font_size" value={Number($themes[$theme]?.font?.size.replace("em", "") ?? 1) * 10} min={5} max={20} on:change={(e) => updateTheme(e.detail / 10 + "em", "size", "font")} />
+<MaterialNumberInput label="settings.font_size" value={Number(($themes[$theme]?.font?.size || "1em").replace("em", "") ?? 1) * 10} min={5} max={20} on:change={(e) => updateTheme(e.detail / 10 + "em", "size", "font")} />
 
 <Title label="settings.colors" icon="color" />
 

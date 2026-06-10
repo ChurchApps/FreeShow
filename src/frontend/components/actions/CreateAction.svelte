@@ -1,6 +1,6 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte"
-    import { actionRevealUsed, actions, activePopup, audioPlaylists, audioStreams, categories, effects, emitters, outputs, overlays, popupData, projects, shows, stageShows, styles, templates, timers, variables } from "../../stores"
+    import { actionRevealUsed, actions, activePopup, audioPlaylists, audioStreams, categories, effects, emitters, obsData, outputs, overlays, popupData, projects, shows, stageShows, styles, templates, timers, variables } from "../../stores"
     import { translateText } from "../../utils/language"
     import { formatSearch } from "../../utils/search"
     import Icon from "../helpers/Icon.svelte"
@@ -21,6 +21,7 @@
     import { actionData } from "./actionData"
     import { getActionTriggerId } from "./actions"
     import { API_ACTIONS } from "./api"
+    import { spotifyState } from "../output/preview/SpotifyManager"
 
     export let list = false
     export let full = false
@@ -69,6 +70,9 @@
 
     let usedSections: string[] = []
 
+    const obsEnabled = !!$obsData.enabled
+    const spotifyEnabled = !!$spotifyState
+
     let previousSection = ""
     $: ACTIONS = [
         ...Object.keys(API_ACTIONS)
@@ -92,6 +96,11 @@
                 if (!existingActionsFiltered.find((a) => a.includes("wait")) && actionData[id].incompatible?.find((id) => existingActionsFiltered.includes(id))) return false
                 // don't display GET actions
                 if (id.includes("get_")) return false
+
+                // remove any OBS ones if not enabled
+                if (id.startsWith("obs_") && !obsEnabled) return false
+                // remove any Spotify ones if not active
+                if (id.startsWith("spotify_") && !spotifyEnabled) return false
 
                 // WIP MIDI multiple of the same (needs a new way of setting the id)
                 // show if it has an input (because you probably want to have multiple)
