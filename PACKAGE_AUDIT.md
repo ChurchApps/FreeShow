@@ -12,16 +12,23 @@ The low-risk subset (items 1–4 below) has been applied to `package.json` and v
 - **`overrides.shell-quote ^1.8.4`** — `shell-quote@1.8.4` (the fix) exists; the dependency ranges were resolving the nested copies to vulnerable `1.6.1`/`1.8.3`. An `overrides` entry forces the patched version across the whole tree, clearing the **entire critical chain** (`shell-quote` / `@generalov/open-in-editor` / `svelte-inspector`).
 - **`npm-run-all` → `npm-run-all2@^9.0.1`** — drop-in (same `run-s`/`run-p`/`npm-run-all` bins), replaces the abandoned package with its maintained successor.
 
-**Result: 27 → 21 vulnerabilities — all 3 criticals eliminated, highs 10 → 7.** The remaining 7 highs are the major/breaking upgrades deferred below (electron, vite, `@discordjs/opus`→tar, music-metadata, serialize-javascript).
+### Electron major upgrade (second pass): **37 → 40**
+
+- **`electron` `^37.10.3` → `^40.10.3`** (+ `electron-builder` `^26.15.2`, `electron-updater` `^6.8.9`, `better-sqlite3` `^12.10.0`, `engines.node` `>=22.12.0`). Clears the **electron High** (all ~17 advisories are `≤39.8.4`; 40.10.3 is past that).
+- **Why 40, not 42:** Electron 41/42 ship V8 ~14, which removed/changed `v8::External::Value()` / `External::New()`. `better-sqlite3@12.10.0` (latest) still uses the old V8 C++ API and **fails to source-compile** against 41/42 (`electron-builder install-app-deps` → node-gyp error). `better-sqlite3` only ships **prebuilt** binaries up to Electron 40's ABI, so 40 installs cleanly (`buildFromSource=false`). Going higher is blocked on an upstream `better-sqlite3` release that supports V8 14 — a tracked follow-up, not a code change we can force.
+- **Verified:** `npm audit` no longer flags electron; electron `tsc` type-check passes (no API breakage in our code vs Electron 40's types); production `npm run build` passes; the app **launches and fully renders** under xvfb (main UI + welcome popup — screenshot captured). The single Playwright E2E test fails only on a **stale selector** for the welcome-popup language picker (`.main .dropdownElem` no longer matches the current markup) — unrelated to Electron, and that test is already disabled in CI.
+
+**Result: 27 → 20 vulnerabilities — all 3 criticals + 4 highs eliminated (incl. electron).** The remaining 6 highs are breaking upgrades still deferred (vite, `@discordjs/opus`→tar, music-metadata, serialize-javascript).
 
 ## Vulnerability totals (`npm audit`)
 
 | Scope | Critical | High | Moderate | Low | Total |
 |---|---|---|---|---|---|
-| **Before this pass** | 3 | 10 | 14 | 0 | **27** |
-| **After this pass** | **0** | **7** | 14 | 0 | **21** |
+| **Before any fixes** | 3 | 10 | 14 | 0 | **27** |
+| **After low-risk subset** | 0 | 7 | 14 | 0 | **21** |
+| **After Electron 37→40** | **0** | **6** | 14 | 0 | **20** |
 
-*(Production-scope subset before this pass: 0 critical / 7 high / 5 moderate.)*
+*(Production-scope subset before any fixes: 0 critical / 7 high / 5 moderate.)*
 
 ## Severity-ranked findings (with real fix paths)
 
@@ -93,7 +100,7 @@ The real gaps: `build.yml`/`release.yml` install with `npm install` rather than 
 2. ✅ **Un-pin `fast-xml-parser`** `"5.4.1"` → `"^5.8.0"` — done. Runtime High cleared.
 3. ✅ **`shell-quote` override `^1.8.4`** — done (replaces the planned `gaxios`/sweep item with the higher-value fix that the data revealed). Eliminated all 3 criticals.
 4. ✅ **`npm-run-all` → `npm-run-all2`** — done. Replaces the abandoned package; build scripts verified green.
-5. **Electron 37 → 42** — highest-value remaining, but breaking: schedule with native-module rebuild + a Playwright/manual regression pass.
+5. ✅ **Electron 37 → 40** — done (clears the electron High). **41/42 are blocked** by `better-sqlite3` not yet supporting Electron's V8 14; revisit when `better-sqlite3` ships a compatible release, then bump to the latest Electron.
 6. **Vite 4 → 8 / Svelte 3 → 5 / ESLint 9 / `@discordjs/opus` / `music-metadata`** — the rest of the remaining highs/moderates are major upgrades; plan as coordinated toolchain efforts.
 7. **Vendor/mirror the git-fork deps** under the org (`grandiose`, `macadam`, `libltc-wrapper`, `slideshow`, `svelte-inspector`).
 8. **Standardize CI on `npm ci`** (the committed lockfile already supports it; `ci.yml` does this — update `build.yml`/`release.yml` and drop the stale "requires package-lock.json" comment).
