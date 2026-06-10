@@ -27,7 +27,7 @@ Run a single Playwright test: `npx playwright test --config config/testing/playw
 
 There is essentially **one E2E test** (`config/testing/start.test.ts`) that boots the app — there is no unit-test framework. "Tests" in this repo means: it launches, it type-checks, and it's formatted.
 
-**Prerequisites:** Node.js, Python 3.12 + `setuptools` (for native module builds via node-pre-gyp), and platform build tools. On Linux: `sudo apt-get install libfontconfig1-dev`. Several dependencies are native/prebuilt (`better-sqlite3`, `grandiose` for NDI, `macadam` for Blackmagic, `libltc-wrapper`), so `npm install` compiles native code.
+**Prerequisites:** Node.js ≥ 22.12, Python 3 + `setuptools` (3.12, but 3.11 on macOS), and platform C/C++ build tools. On Linux: `sudo apt-get install libfontconfig1-dev uuid-dev libltc-dev`. Several dependencies are native (`better-sqlite3`, `@discordjs/opus`, `grandiose` for NDI, `macadam` for Blackmagic, `libltc-wrapper`), so `npm install` compiles native code (via `electron-builder install-app-deps`). Full per-platform build/test/packaging instructions are in **`BUILDING.md`**.
 
 ## Architecture
 
