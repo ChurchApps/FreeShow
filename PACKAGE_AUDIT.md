@@ -114,7 +114,9 @@ The real gaps: `build.yml`/`release.yml` install with `npm install` rather than 
 3. ✅ **`shell-quote` override `^1.8.4`** — done (replaces the planned `gaxios`/sweep item with the higher-value fix that the data revealed). Eliminated all 3 criticals.
 4. ✅ **`npm-run-all` → `npm-run-all2`** — done. Replaces the abandoned package; build scripts verified green.
 5. ✅ **Electron 37 → 40** — done (clears the electron High). **41/42 are blocked** by `better-sqlite3` not yet supporting Electron's V8 14; revisit when `better-sqlite3` ships a compatible release, then bump to the latest Electron.
-6. **Vite 4 → 8 / Svelte 3 → 5 / ESLint 9 / `@discordjs/opus`** — the remaining highs/moderates are major upgrades; plan as coordinated toolchain efforts. Note: the `@discordjs/opus`→`tar` "fix" is a regressive downgrade to `@discordjs/opus@0.2.1`, so wait for an upstream release instead.
+6. **Vite 4 → 8 / Svelte 3 → 5 / ESLint 9 / `@discordjs/opus`** — the remaining highs/moderates are major upgrades; plan as coordinated toolchain efforts.
+   - **`@discordjs/opus`→`tar` (3 of the 4 remaining highs):** not safely fixable now. The vulnerable copy is `@discordjs/opus@0.10.0` (latest) → `@discordjs/node-pre-gyp@0.4.5` → `tar@^6.1.11`. The tar advisories are fixed only in **7.5.11+**; the v6 line has no patched release, and an `overrides` to tar v7 would risk breaking node-pre-gyp's install-time extraction (tar v7 has a changed API). Reachability is **install-time only** (prebuild download), and the npm-suggested "fix" is a regressive downgrade to `@discordjs/opus@0.2.1`. Wait for `@discordjs` to move node-pre-gyp onto tar v7.
+   - **`vite` 4 → 8 (1 high + several moderates):** drags the whole Svelte-3-era toolchain (`@sveltejs/vite-plugin-svelte`, `svelte-preprocess`, `esbuild`, `svelte-hmr`); do it together with the Svelte 3→5 migration.
 7. **Vendor/mirror the git-fork deps** under the org (`grandiose`, `macadam`, `libltc-wrapper`, `slideshow`, `svelte-inspector`).
 8. **Standardize CI on `npm ci`** (the committed lockfile already supports it; `ci.yml` does this — update `build.yml`/`release.yml` and drop the stale "requires package-lock.json" comment).
 
