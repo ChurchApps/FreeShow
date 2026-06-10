@@ -26,7 +26,11 @@ export function convertEasyslides(data: any) {
     // set timeout to allow popup to open
     setTimeout(() => {
         data?.forEach(({ content }: any) => {
+            if (!content) return
+
             const json = xml2json(content)
+            if (!json) return
+
             const songs = json.Easyslides?.Item || json.EasiSlides?.Item || []
             if (!Array.isArray(songs) || !songs.length) return
 

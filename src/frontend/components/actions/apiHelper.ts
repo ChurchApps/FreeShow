@@ -100,15 +100,15 @@ export function selectProjectByName(name: string) {
 
 export async function startProjectItemByName(name: string) {
     const activeProjectItems = get(projects)[get(activeProject) || ""]?.shows || []
-    if (!activeProjectItems.length) return
+    if (!activeProjectItems.length || !name) return
 
-    name = name.toLowerCase().trim()
+    const normalizedName = name.toLowerCase().trim()
 
     const checkName = (item: any) => {
         let itemName = item.name
         if (!itemName && (item.type || "show") === "show") itemName = get(shows)[item.id]?.name
         if (!itemName) return false
-        return itemName.toLowerCase().trim() === name
+        return itemName.toString().toLowerCase().trim() === normalizedName
     }
 
     // check for any match after the active first

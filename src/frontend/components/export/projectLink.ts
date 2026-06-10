@@ -97,7 +97,7 @@ function mapSlideItems(slideItems: any[] = []): LinkSlideItems {
                             style: encodeStyle(t.style)
                         }))
                     }
-                    if (line.align && line.align.replaceAll(";", "") !== "") newLine.align = line.align
+                    if (typeof line.align === "string" && line.align.replaceAll(";", "") !== "") newLine.align = line.align
 
                     return newLine
                 })

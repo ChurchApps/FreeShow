@@ -40,15 +40,16 @@ export class CaptureLifecycle {
         }
 
         if (!output.captureOptions) output.captureOptions = CaptureHelper.getDefaultCapture(output.window, id)
+        const captureOptions = output.captureOptions
 
         // toggle values
-        if (output.captureOptions && Object.keys(toggle).length > 0) this.updateCaptureToggles(id, output.captureOptions, toggle)
+        if (captureOptions && Object.keys(toggle).length > 0) this.updateCaptureToggles(id, captureOptions, toggle)
 
-        const hasEnabledCapture = output.captureOptions?.options && Object.values(output.captureOptions.options).some(Boolean)
-        if (!hasEnabledCapture || output.captureOptions?.window.isDestroyed()) {
-            if (output.captureOptions?.frameSubscription) {
-                clearTimeout(output.captureOptions.frameSubscription)
-                output.captureOptions.frameSubscription = null
+        const hasEnabledCapture = captureOptions?.options && Object.values(captureOptions.options).some(Boolean)
+        if (!hasEnabledCapture || captureOptions?.window.isDestroyed()) {
+            if (captureOptions?.frameSubscription) {
+                clearTimeout(captureOptions.frameSubscription)
+                captureOptions.frameSubscription = null
             }
             return
         }
@@ -56,8 +57,8 @@ export class CaptureLifecycle {
         CaptureHelper.updateFramerate(id)
         CaptureHelper.Transmitter.startTransmitting(id)
 
-        if (output.captureOptions.frameSubscription) {
-            clearTimeout(output.captureOptions.frameSubscription)
+        if (captureOptions.frameSubscription) {
+            clearTimeout(captureOptions.frameSubscription)
         }
 
         const token = (this.captureLoopToken[id] || 0) + 1
@@ -102,8 +103,10 @@ export class CaptureLifecycle {
                 console.warn(`Capture failed for output ${id}:`, error)
             }
 
+            if (!this.shouldContinueCapture(id, token, captureOpts)) return
+
             const delay = this.calculateFrameDelay(id, captureOpts)
-            output.captureOptions.frameSubscription = setTimeout(captureFrame, delay)
+            captureOpts.frameSubscription = setTimeout(captureFrame, delay)
         }
 
         captureFrame()

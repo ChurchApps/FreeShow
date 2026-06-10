@@ -297,7 +297,7 @@
 
     function toggleChapter(e: any, id: string) {
         if (e.ctrlKey || e.metaKey) {
-            if (activeReference.chapters.find((cid) => cid?.toString() === id)) {
+            if (activeReference.chapters?.find((cid) => cid?.toString() === id)) {
                 // remove chapter
                 const newChapters = activeReference.chapters.filter((cid) => cid.toString() !== id)
                 const newVerses = activeReference.verses.filter((_, i) => i < newChapters.length)
@@ -333,11 +333,16 @@
 
         // load new data
         const bookId = `${previewBibleId}_${targetBookNumber}`
-        if (pendingBookId !== bookId) {
-            pendingBookId = bookId
-            pendingBookPromise = currentData.getBook(targetBookNumber)
+        try {
+            if (pendingBookId !== bookId) {
+                pendingBookId = bookId
+                pendingBookPromise = currentData.getBook(targetBookNumber)
+            }
+            data[previewBibleId].bookData = await pendingBookPromise
+        } catch (err) {
+            console.error(err)
+            return false
         }
-        data[previewBibleId].bookData = await pendingBookPromise
 
         if (currentNavId !== navigationId) return false
 
@@ -365,11 +370,16 @@
         const chapterNumber = Number(targetChapterNumbers[targetChapterNumbers.length - 1])
 
         const chapterId = `${previewBibleId}_${activeReference.book}_${chapterNumber}`
-        if (pendingChapterId !== chapterId) {
-            pendingChapterId = chapterId
-            pendingChapterPromise = currentData.getChapter(chapterNumber)
+        try {
+            if (pendingChapterId !== chapterId) {
+                pendingChapterId = chapterId
+                pendingChapterPromise = currentData.getChapter(chapterNumber)
+            }
+            data[previewBibleId].chapterData = await pendingChapterPromise
+        } catch (err) {
+            console.error(err)
+            return false
         }
-        data[previewBibleId].chapterData = await pendingChapterPromise
 
         if (currentNavId !== navigationId) return false
 
@@ -471,13 +481,13 @@
         const selectedVerses = clone(activeReference.verses)
 
         if (isClick) {
-            if (previousSelection.find((a) => a.toString() === verseNumber)) {
+            if (previousSelection?.find((a) => a.toString() === verseNumber)) {
                 return [[verseNumber]]
             }
             return selectedVerses
         }
 
-        previousSelection = clone(selectedVerses[selectedVerses.length - 1])
+        previousSelection = clone(selectedVerses[selectedVerses.length - 1]) || []
 
         isSelected = true
         if (selectedTimeout) clearTimeout(selectedTimeout)
@@ -500,7 +510,7 @@
 
             // deselecting a verse
             if (!selectedVerses[selectedVerses.length - 1]?.find((id) => id.toString() === verseNumber)) {
-                previousSelection = clone(selectedVerses[selectedVerses.length - 1])
+                previousSelection = clone(selectedVerses[selectedVerses.length - 1]) || []
             }
         }
 
@@ -714,17 +724,27 @@
 
     // Get the final verse number for a chapter so we can include the whole section when needed.
     async function getChapterLastVerse(bookNumber: number, chapterNumber: number, bibleData: any) {
-        const bookData = await bibleData.getBook(bookNumber)
-        const chapterData = await bookData.getChapter(chapterNumber)
-        const verseEntries = chapterData?.data?.verses || []
-        return Number(verseEntries[verseEntries.length - 1]?.number || verseEntries.length || 0)
+        try {
+            const bookData = await bibleData.getBook(bookNumber)
+            const chapterData = await bookData.getChapter(chapterNumber)
+            const verseEntries = chapterData?.data?.verses || []
+            return Number(verseEntries[verseEntries.length - 1]?.number || verseEntries.length || 0)
+        } catch (err) {
+            console.error(err)
+            return 0
+        }
     }
 
     // Return every verse index for a chapter when no explicit range was provided.
     async function getEntireChapterVerses(bookNumber: number, chapterNumber: number, bibleData: any) {
-        const bookData = await bibleData.getBook(bookNumber)
-        const chapterData = await bookData.getChapter(chapterNumber)
-        return (chapterData?.data?.verses || []).map((verse) => Number(verse.number)).filter(Boolean)
+        try {
+            const bookData = await bibleData.getBook(bookNumber)
+            const chapterData = await bookData.getChapter(chapterNumber)
+            return (chapterData?.data?.verses || []).map((verse) => Number(verse.number)).filter(Boolean)
+        } catch (err) {
+            console.error(err)
+            return []
+        }
     }
 
     // Format the combined reference so the UI shows "Book 1:1-12 ; 2:1-10".
@@ -764,10 +784,14 @@
             return
         }
 
-        const result = await currentBibleData?.bibleData?.textSearch(contentSearchValue)
-        if (!result) return
+        try {
+            const result = await currentBibleData?.bibleData?.textSearch(contentSearchValue)
+            if (!result) return
 
-        contentSearchResults = result
+            contentSearchResults = result
+        } catch (err) {
+            console.error(err)
+        }
     }
 
     // reset if another reference is loaded
@@ -1048,7 +1072,7 @@
                         {#if chapters?.length}
                             {#each chapters as chapter}
                                 {@const id = chapter.number.toString()}
-                                {@const isActive = activeReference.chapters.find((cid) => cid?.toString() === id)}
+                                {@const isActive = activeReference.chapters?.find((cid) => cid?.toString() === id)}
 
                                 <span
                                     {id}
@@ -1195,10 +1219,10 @@
 {:else if $scriptureMode !== "grid" || $resized.rightPanelDrawer > 5}
     <FloatingInputs arrow let:open>
         {#if open || isActiveInOutput}
-            <MaterialButton disabled={activeReference.book?.toString() === "1" && !!activeReference.chapters.find((a) => a.toString() === "1") && !!activeReference.verses[0]?.find((a) => a.toString() === "1")} title="{translateText('preview._previous_slide')} [Ctrl+Arrow Left]" on:click={() => _moveSelection(true)}>
+            <MaterialButton disabled={activeReference.book?.toString() === "1" && !!activeReference.chapters?.find((a) => a.toString() === "1") && !!activeReference.verses[0]?.find((a) => a.toString() === "1")} title="{translateText('preview._previous_slide')} [Ctrl+Arrow Left]" on:click={() => _moveSelection(true)}>
                 <Icon size={1.3} id="previous" white={!isActiveInOutput} />
             </MaterialButton>
-            <MaterialButton disabled={activeReference.book?.toString() === books?.length.toString() && activeReference.chapters.includes(chapters ? chapters.length : 1) && activeReference.verses[0]?.includes(verses ? verses.length : 1)} title="{translateText('preview._next_slide')} [Ctrl+Arrow Right]" on:click={() => _moveSelection(false)}>
+            <MaterialButton disabled={activeReference.book?.toString() === books?.length.toString() && activeReference.chapters?.includes(chapters ? chapters.length : 1) && activeReference.verses[0]?.includes(verses ? verses.length : 1)} title="{translateText('preview._next_slide')} [Ctrl+Arrow Right]" on:click={() => _moveSelection(false)}>
                 <Icon size={1.3} id="next" white={!isActiveInOutput} />
             </MaterialButton>
         {/if}
