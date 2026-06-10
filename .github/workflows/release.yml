@@ -9,8 +9,6 @@ jobs:
   publish_windows:
     name: "Publish Windows"
     runs-on: windows-latest
-    env:
-      GYP_MSVS_VERSION: 2022
 
     steps:
       - name: Check out Git repository
@@ -20,6 +18,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+
+      - name: Configure MSVS version
+        run: npm config set msvs_version 2022
 
       - name: Install dependencies
         # npm ci is better, but requires package-lock.json file
