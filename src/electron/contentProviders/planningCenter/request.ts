@@ -57,42 +57,6 @@ type SectionSourceLine = RepeatDelimiterData & {
 
 const chordTokenRegex = /^[A-G](?:#|b)?(?:m|maj|min|sus|add|aug|dim)?\d*(?:\/[A-G](?:#|b)?)?$/i
 
-function isChordProgressionLine(line: string): boolean {
-    const trimmed = line.trim()
-    if (!trimmed) return false
-
-    const withoutLabel = trimmed.replace(/^[A-ZÁÉÍÓÚÑ_ ]+:\s*/i, "").trim()
-    if (!withoutLabel) return false
-
-    const tokens = withoutLabel.split(/\s+/).filter(Boolean)
-    if (!tokens.length) return false
-
-    let chordCount = 0
-    for (const rawToken of tokens) {
-        // Strip trailing punctuation, then strip surrounding parentheses used as grouping markers
-        const token = rawToken
-            .replace(/[.,;:]+$/, "")
-            .replace(/^\(+/, "")
-            .replace(/\)+$/, "")
-
-        // Token was composed entirely of parentheses (grouping markers like a lone "(" or ")")
-        if (!token) continue
-
-        if (chordTokenRegex.test(token)) {
-            chordCount++
-            continue
-        }
-
-        if (/^x\d+$/i.test(token) || /^\(x\d+\)$/i.test(token) || /^\|+$/.test(token) || /^-+$/.test(token) || /^\/+$/i.test(token)) {
-            continue
-        }
-
-        return false
-    }
-
-    return chordCount >= 2
-}
-
 function parseChordChartIntoSections(chordChart: string): SongSection[] {
     const sections: SongSection[] = []
     const lines = chordChart.split(/\r?\n/)
@@ -562,7 +526,7 @@ function toParsedSectionLine(source: SectionSourceLine, overrides: Partial<Parse
 }
 
 function canAlignChordLineWithLyricLine(line: string): boolean {
-    return Boolean(line.trim() && !isChordProgressionLine(line) && !getChordLineData(line) && !parseInlineBracketLine(line))
+    return Boolean(line.trim() && !getChordLineData(line) && !parseInlineBracketLine(line))
 }
 
 function copyChords(chords?: Chords[], generateIds = false): Chords[] | undefined {
@@ -590,10 +554,13 @@ function parseInlineBracketLine(line: string): { text: string; chords: Chords[] 
             break
         }
 
-        const chord = line.slice(start + 1, end).trim()
-        if (chord) {
-            chords.push({ id: uid(5), pos: text.length, key: chord })
+        const content = line.slice(start + 1, end).trim()
+        const cleanContent = content.replace(/^\(+/, "").replace(/\)+$/, "")
+        
+        if (chordTokenRegex.test(cleanContent)) {
+            chords.push({ id: uid(5), pos: text.length, key: content })
         }
+        // Non-chord content (like ||:) is intentionally ignored and not added to text
 
         cursor = end + 1
     }
@@ -608,12 +575,14 @@ function parsePlainChordLine(line: string): Chords[] | null {
 
     const chords: Chords[] = []
     for (const match of matches) {
-        // Strip surrounding parentheses used as grouping markers, e.g. "(G)" -> "G", "G)" -> "G"
         const token = match[0].replace(/^\(+/, "").replace(/\)+$/, "")
         const pos = match.index ?? 0
 
-        // Token was just parentheses, or a separator character — skip without rejecting the line
-        if (!token || /^\|+$/.test(token) || /^-+$/.test(token) || /^\/+$/i.test(token)) continue
+        // Ignore common musical markers and repeats so they don't cause the line to be rejected
+        if (!token || /^\|+$/.test(token) || /^-+$/.test(token) || /^\/+$/i.test(token) || 
+            /^[:|]+$/.test(token) || /^x\d+$/i.test(token)) {
+            continue
+        }
 
         if (!chordTokenRegex.test(token)) return null
         chords.push({ id: uid(5), pos, key: token })
@@ -623,8 +592,6 @@ function parsePlainChordLine(line: string): Chords[] | null {
 }
 
 function getChordLineData(line: string): Chords[] | null {
-    const inline = parseInlineBracketLine(line)
-    if (inline && !inline.text.trim()) return inline.chords
     return parsePlainChordLine(line)
 }
 
@@ -657,8 +624,6 @@ function alignChordsToLyricLine(chords: Chords[], rawLyricLine: string, sectionB
 function parseSectionLines(lyrics: string): ParsedSectionLine[] {
     const sourceLines = filterPlanningCenterKeywordLines(lyrics).split("\n").map(toSectionSourceLine)
 
-    // Planning Center often includes a common left indent in chord-only lines.
-    // Remove that shared baseline so chord positions match lyric content columns.
     const sectionBaseOffset = sourceLines.reduce(
         (minOffset, entry, i) => {
             const line = entry.line
@@ -686,10 +651,6 @@ function parseSectionLines(lyrics: string): ParsedSectionLine[] {
             continue
         }
 
-        if (isChordProgressionLine(currentLine)) {
-            continue
-        }
-
         const inline = parseInlineBracketLine(currentLine)
         if (inline) {
             if (inline.text.trim()) {
@@ -702,15 +663,21 @@ function parseSectionLines(lyrics: string): ParsedSectionLine[] {
         }
 
         const chordLineData = getChordLineData(currentLine)
-        if (chordLineData && i + 1 < sourceLines.length) {
-            const nextEntry = sourceLines[i + 1]
-            const nextLine = nextEntry.line
-            if (canAlignChordLineWithLyricLine(nextLine)) {
-                const alignedLine = alignChordsToLyricLine(chordLineData, nextLine, sectionBaseOffset || 0)
-                parsedLines.push(toParsedSectionLine(nextEntry, { text: alignedLine.text, chords: alignedLine.chords }))
-                i++
-                continue
+        if (chordLineData) {
+            if (i + 1 < sourceLines.length) {
+                const nextEntry = sourceLines[i + 1]
+                const nextLine = nextEntry.line
+                if (canAlignChordLineWithLyricLine(nextLine)) {
+                    const alignedLine = alignChordsToLyricLine(chordLineData, nextLine, sectionBaseOffset || 0)
+                    parsedLines.push(toParsedSectionLine(nextEntry, { text: alignedLine.text, chords: alignedLine.chords }))
+                    i++
+                    continue
+                }
             }
+            
+            const blankText = currentLine.replace(/[^\s]/g, " ")
+            parsedLines.push(toParsedSectionLine(currentEntry, { text: blankText, chords: chordLineData }))
+            continue
         }
 
         parsedLines.push(toParsedSectionLine(currentEntry))
