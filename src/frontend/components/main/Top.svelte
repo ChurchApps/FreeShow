@@ -1,4 +1,4 @@
-<script type="ts">
+<script lang="ts">
     import { slide } from "svelte/transition"
     import { activeEdit, activePage, activeProfile, activeProject, activeShow, cloudUsers, dictionary, drawSettings, drawTool, os, outputDisplay, outputs, paintCache, profiles, saved, settingsTab, shows } from "../../stores"
     import { getCloudUsers } from "../../utils/cloudSync"

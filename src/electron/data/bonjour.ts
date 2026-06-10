@@ -1,4 +1,4 @@
-import Bonjour, { type Service } from "bonjour-service"
+import Bonjour, { Service } from "bonjour-service"
 import { type ChildProcess, spawn } from "child_process"
 import crypto from "crypto"
 import os from "os"
@@ -19,7 +19,7 @@ const bonjour = isMac
 const ips = getLocalIPs()
 
 const instanceID = crypto.randomBytes(3).toString("hex")
-const publishedServices: Partial<Record<string, Service>> = {}
+const publishedServices: Partial<Record<string, InstanceType<typeof Service>>> = {}
 const dnsSdProcesses: Partial<Record<string, ChildProcess>> = {}
 
 // check for existing freeshow services before publishing

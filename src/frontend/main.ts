@@ -2,7 +2,7 @@
 // Svelte app entry point
 
 import * as Sentry from "@sentry/electron/renderer"
-import "svelte"
+import { mount } from "svelte"
 import App from "./App.svelte"
 import { ERROR_FILTER } from "./utils/common"
 
@@ -17,6 +17,7 @@ Sentry.init({
     }
 })
 
-const app = new App({ target: document.body })
+// Svelte 5: components are instantiated with mount() instead of `new App()`
+const app = mount(App, { target: document.body })
 
 export default app
