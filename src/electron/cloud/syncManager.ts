@@ -560,16 +560,13 @@ async function checkCloudEntry(id: ChangeId, key: string, cloudData: any, getLoc
     // exists only in cloud → the ledger decides (create / skip)
     if (!localValue) return ledger.resolveCloudEntry(id, key, false)
 
-    // exists both locally and in cloud → the ledger decides delete/keep; "upload" means keep local,
-    // so break the tie by modified time (newest wins)
-    const decision = ledger.resolveCloudEntry(id, key, true)
-    if (decision.action !== "upload") return decision
-
+    // exists both locally and in cloud → resolve the tie by modified time (newest wins) and let the
+    // ledger apply it — it still forces delete/skip first if the item is marked deleted/created.
     let localModTime = getModifiedDate(localValue)
     if (cloudData !== null && !localModTime) localModTime = setModifiedDate()
 
     const cloudIsNewer = isCloudNewer ? await isCloudNewer() : cloudModTime > localModTime
-    return { action: cloudIsNewer ? "download" : "upload" }
+    return ledger.resolveCloudEntry(id, key, true, cloudIsNewer)
 
     function getModifiedDate(data: any): number {
         if (!data) return 0

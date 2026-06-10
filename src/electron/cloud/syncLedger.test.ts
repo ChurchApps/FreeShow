@@ -52,12 +52,37 @@ describe("SyncLedger — per-item merge (#3335)", () => {
 
             expect(b.resolveCloudEntry(ID, KEY, /* localExists */ false).action).toBe("skip")
         })
+    })
 
-        it("an item that exists on both sides and is not deleted is kept (upload) for the caller to tie-break by date", () => {
+    describe("entries with a per-item modified time (shows / projects / stage — newest wins)", () => {
+        // these stores carry a per-item "modified"; checkCloudEntry computes cloudIsNewer and passes it here
+        it("downloads when the cloud copy is newer", () => {
             const changes = makeChanges(["A", "B"])
             const b = new SyncLedger({ changes, deviceId: "B" })
 
-            expect(b.resolveCloudEntry(ID, KEY, /* localExists */ true).action).toBe("upload")
+            expect(b.resolveCloudEntry("SHOWS_CONTENT", "show1", /* localExists */ true, /* cloudIsNewer */ true).action).toBe("download")
+        })
+
+        it("keeps the local copy (upload) when it is not older than the cloud", () => {
+            const changes = makeChanges(["A", "B"])
+            const b = new SyncLedger({ changes, deviceId: "B" })
+
+            expect(b.resolveCloudEntry("PROJECTS", "proj1", /* localExists */ true, /* cloudIsNewer */ false).action).toBe("upload")
+        })
+
+        it("a tombstoned item is deleted regardless of the date (the ledger wins over newest)", () => {
+            const changes = makeChanges(["A", "B"], { deleted: { STAGE_stage1: ["A"] } })
+            const b = new SyncLedger({ changes, deviceId: "B" })
+
+            // even with a newer cloud copy, a deleted item is removed, not downloaded
+            expect(b.resolveCloudEntry("STAGE", "stage1", /* localExists */ true, /* cloudIsNewer */ true).action).toBe("delete")
+        })
+
+        it("a brand-new device downloads the newer cloud copy and ignores tombstones", () => {
+            const changes = makeChanges(["A", "B"], { deleted: { SHOWS_CONTENT_show1: ["A"] } })
+            const fresh = new SyncLedger({ changes, deviceId: "C", isNewDevice: true })
+
+            expect(fresh.resolveCloudEntry("SHOWS_CONTENT", "show1", /* localExists */ true, /* cloudIsNewer */ true).action).toBe("download")
         })
     })
 
