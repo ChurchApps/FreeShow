@@ -155,6 +155,7 @@
     <div class="background"></div>
 
     <div class="input-wrapper">
+        <!-- svelte-ignore a11y_autofocus -->
         <input bind:value={numberValue} type="number" {id} {placeholder} {disabled} {autofocus} {step} min="0" max="360" class="input edit" class:noValue={!numberValue} on:keydown={handleKeyDown} on:input={handleInput} on:focus={togglePopup} on:wheel={handleWheel} />
 
         <svg class="mini-indicator" viewBox="-8 -8 16 16">

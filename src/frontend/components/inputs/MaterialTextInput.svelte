@@ -80,8 +80,10 @@
     <div class="background"></div>
 
     {#if type === "password" && !showText}
+        <!-- svelte-ignore a11y_autofocus -->
         <input bind:value type="password" {id} {placeholder} {disabled} {autofocus} use:select use:blurOnEnter class="input edit" on:input={input} on:change={change} on:keydown />
     {:else}
+        <!-- svelte-ignore a11y_autofocus -->
         <input bind:value type="text" {id} {placeholder} {disabled} {autofocus} use:select use:blurOnEnter class="input edit" on:input={input} on:change={change} on:keydown />
     {/if}
 

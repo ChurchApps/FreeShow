@@ -156,6 +156,7 @@
     <div class="background"></div>
 
     <div class="input-wrapper">
+        <!-- svelte-ignore a11y_autofocus -->
         <input bind:this={inputElem} value={rawInput} type="text" {id} {placeholder} {disabled} {autofocus} {step} {min} {max} class="input edit" class:noValue={hideWhenZero && !padLength && !numberValue} on:keydown={handleKeyDown} on:input={handleInput} on:change={handleChange} inputmode="decimal" autocomplete="off" />
 
         <div class="buttons">

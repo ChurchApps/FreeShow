@@ -29,6 +29,7 @@
 </script>
 
 <div class="paper">
+    <!-- svelte-ignore a11y_autofocus -->
     <textarea placeholder={placeholder || translateText("empty.text...")} class="edit {$$props.class}" name="" id="" cols="1" rows={lines} style={$$props.style || ""} bind:value on:input={input} on:change={change} on:keydown {disabled} {autofocus}></textarea>
 </div>
 

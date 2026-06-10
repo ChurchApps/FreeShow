@@ -62,8 +62,10 @@
     <div class="background"></div>
 
     {#if isDate}
+        <!-- svelte-ignore a11y_autofocus -->
         <input bind:value type="date" {id} {disabled} {autofocus} use:blurOnEnter class="input edit" on:input={onInput} on:change={onChange} on:keydown />
     {:else}
+        <!-- svelte-ignore a11y_autofocus -->
         <input bind:value type="time" {id} {disabled} {autofocus} use:blurOnEnter class="input edit" on:input={onInput} on:change={onChange} on:keydown />
     {/if}
 
