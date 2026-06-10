@@ -1,4 +1,6 @@
-# Treat the lockfile as generated/binary so it's excluded from rendered diffs and +/- line
-# counts on GitHub (it's still tracked and validated by `npm ci`). Use `git diff -- package-lock.json`
-# with `--text` if you ever need to read it.
-package-lock.json -diff linguist-generated=true
+# Mark the lockfile as generated so GitHub collapses it in diffs.
+# NOTE: GitHub reads this from the repository's DEFAULT branch, so it only takes
+# effect for PRs once this file is merged to the default branch — not within the PR that adds it.
+# It collapses the rendered diff; it does NOT remove the file from a PR's +/- line counts
+# (GitHub has no supported way to do that).
+package-lock.json linguist-generated=true
