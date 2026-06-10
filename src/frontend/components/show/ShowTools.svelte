@@ -21,7 +21,7 @@
     // || $actions
     $: if (currentShow) checkMedia()
     function checkMedia() {
-        let refs = _show().layouts().ref()
+        const refs = _show().layouts().ref()
 
         let disableMedia = true
 

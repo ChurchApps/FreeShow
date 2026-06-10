@@ -378,8 +378,8 @@ const clickActions = {
             // delete newSlide.id // should not be there
 
             // group children
-            let newChildren: string[] = []
-            let newChildIds = new Map()
+            const newChildren: string[] = []
+            const newChildIds = new Map()
             const children = newSlide.children || []
             children.forEach((childId) => {
                 const newChildId = uid()

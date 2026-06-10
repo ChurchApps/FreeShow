@@ -5,7 +5,7 @@
 
     let videoElem: HTMLVideoElement | undefined
 
-    let constraints: any = {
+    const constraints: any = {
         video: {
             // https://developer.mozilla.org/en-US/docs/Web/API/MediaTrackSettings/cursor
             // hiding the cursor is not yet supported
@@ -42,7 +42,7 @@
         videoElem.srcObject = null
     }
 
-    let dispatch = createEventDispatcher()
+    const dispatch = createEventDispatcher()
     function loaded() {
         // WIP not working!!!
         console.log("window loaded")

@@ -28,10 +28,9 @@
 
     function edit(e: any) {
         if (section.notes === e.detail || !projectId) return
-
         ;(isTemplate ? projectTemplates : projects).update((a) => {
             if (!a[projectId!]?.shows) return a
-            let index = a[projectId!].shows.findIndex((a) => a.id === section.id)
+            const index = a[projectId!].shows.findIndex((a) => a.id === section.id)
             if (index >= 0) a[projectId!].shows[index].notes = e.detail
             a[projectId!].modified = Date.now()
             return a
@@ -44,10 +43,9 @@
 
     function updateSection(key: string, value: any) {
         if (!projectId) return
-
         ;(isTemplate ? projectTemplates : projects).update((a) => {
             if (!a[projectId!]?.shows) return a
-            let index = a[projectId!].shows.findIndex((a) => a.id === section.id)
+            const index = a[projectId!].shows.findIndex((a) => a.id === section.id)
             if (index >= 0) a[projectId!].shows[index][key] = value
             a[projectId!].modified = Date.now()
             return a
@@ -69,7 +67,7 @@
     }
 
     function updateTriggerLocal(e: any) {
-        let actionId = e.detail
+        const actionId = e.detail
         updateSectionData("settings", { triggerAction: actionId })
     }
 

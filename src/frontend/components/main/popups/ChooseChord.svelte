@@ -49,7 +49,7 @@
             return
         }
 
-        let bassKey = chordData.bass !== chordData.key ? "/" + chordData.bass : ""
+        const bassKey = chordData.bass !== chordData.key ? "/" + chordData.bass : ""
         combinedChord = chordData.key + chordData.type + chordData.tension + bassKey
 
         if (chordData.romanKeysActive) {

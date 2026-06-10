@@ -88,7 +88,7 @@
         eventCountdown = secondsToTime(eventTime.getTime() > today.getTime() ? (eventTime.getTime() - today.getTime()) / 1000 : 0)
     }
 
-    let timerNames: any = {
+    const timerNames: any = {
         counter: translateText("timer.counter"),
         clock: translateText("timer.time"),
         event: translateText("timer.event")
@@ -146,7 +146,7 @@
     }
 
     function getNewTimer() {
-        let newTimer: Timer = { name: timer.name, type: timer.type }
+        const newTimer: Timer = { name: timer.name, type: timer.type }
 
         // if (!newTimer.name && timer.type) newTimer.name = timerNames[timer.type] || $dictionary.timer?.counter || "Timer"
 

@@ -32,7 +32,7 @@
     function update() {
         if (!editSlide) return
 
-        let newData = { style: clone(settings) }
+        const newData = { style: clone(settings) }
 
         history({
             id: "slideStyle",

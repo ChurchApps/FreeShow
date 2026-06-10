@@ -15,8 +15,8 @@
     import Loader from "../Loader.svelte"
     import Icon from "../../helpers/Icon.svelte"
 
-    let revert = $popupData.revert
-    let allowEmpty = !!$popupData.allowEmpty
+    const revert = $popupData.revert
+    const allowEmpty = !!$popupData.allowEmpty
 
     $: hideIds = $popupData.hideIds || []
     $: sortedTemplates = sortByName(keysToID($templates).filter((a) => !hideIds.includes(a.id) && a?.settings?.mode !== "text"))
@@ -65,7 +65,7 @@
             return
         }
 
-        let currentTemplatesList = clone(defaultTemplates) // searchedTemplates
+        const currentTemplatesList = clone(defaultTemplates) // searchedTemplates
         // reset if search value changed
         // if (!searchValue.includes(previousSearchValue)) currentTemplatesList = clone(defaultTemplates)
 
@@ -77,7 +77,7 @@
     function selectTemplate(template: any, keyboard = false) {
         // if ($popupData.action !== "select_template") return
 
-        let previousValue = value
+        const previousValue = value
         // update before closing
         value = template.id
 
@@ -96,7 +96,7 @@
         })
     }
 
-    let resolution = getResolution(null, { $outputs, $styles })
+    const resolution = getResolution(null, { $outputs, $styles })
 
     function chooseTemplate(e: any) {
         if (e.key !== "Enter" || !searchValue.length || !searchedTemplates.length) return

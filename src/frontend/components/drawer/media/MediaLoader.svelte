@@ -92,7 +92,7 @@
         }
         loaded = false
 
-        let time = 500 * (retryCount + 1)
+        const time = 500 * (retryCount + 1)
         setTimeout(() => {
             retryCount++
         }, time)
@@ -106,7 +106,7 @@
         if (ghost) return
 
         setTimeout(() => {
-            let video = document.createElement("video")
+            const video = document.createElement("video")
             video.onloadeddata = () => {
                 const loadedDuration = video.duration
                 duration = Number.isFinite(loadedDuration) ? loadedDuration : 0

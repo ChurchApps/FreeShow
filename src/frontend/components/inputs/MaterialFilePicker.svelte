@@ -35,7 +35,7 @@
 
     const PICK_ID = uid()
     const dispatch = createEventDispatcher()
-    let listenerId = receiveToMain(ToMain.OPEN_FILE2, (data) => {
+    const listenerId = receiveToMain(ToMain.OPEN_FILE2, (data) => {
         if (data.id !== PICK_ID || data.channel !== "MEDIA" || !data.files?.length) return
 
         dispatch("change", multiple ? data.files : data.files[0])

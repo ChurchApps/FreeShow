@@ -290,7 +290,7 @@ export const receiveREMOTE: any = {
                         type: "reference",
                         autocompleted: result.autocompleted || undefined,
                         book: result.book || null,
-                        bookName: bookName,
+                        bookName,
                         chapter: result.chapter || null,
                         verses: result.verses || []
                     }
@@ -409,7 +409,7 @@ export async function convertBackgrounds(show: Show, noLoad = false, init = fals
         })
     })
     ;[...mediaIds].forEach((id) => {
-        let path = show.media[id]?.path || show.media[id]?.id || ""
+        const path = show.media[id]?.path || show.media[id]?.id || ""
         if (!path) return
 
         if (noLoad) {

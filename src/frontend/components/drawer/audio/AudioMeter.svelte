@@ -8,7 +8,7 @@
 
     const numbers: number[] = [-80, -64, -50, -35, -20, -15, -12, -9, -6, -3, 0]
 
-    let highestDB: { timeout: NodeJS.Timeout; value: number }[] = []
+    const highestDB: { timeout: NodeJS.Timeout; value: number }[] = []
 
     function getDBValue(channelIndex: number, _updater: any) {
         const dB = channelId === "main" ? $audioChannels[channelIndex]?.dB : AudioAnalyserMerger.getChannels()[channelId]?.[channelIndex]?.dB

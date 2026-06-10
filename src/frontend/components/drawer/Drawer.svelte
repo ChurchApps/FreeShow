@@ -153,14 +153,14 @@
             if (document.activeElement !== searchElem || !searchValue.length || !firstMatch || !$activeProject || $focusMode) return
             if ($activeDrawerTab !== "shows") return
 
-            let match = $activeShow?.data?.searchInput === true ? { id: $activeShow.id } : firstMatch
+            const match = $activeShow?.data?.searchInput === true ? { id: $activeShow.id } : firstMatch
 
             // play
             if (e.ctrlKey || e.metaKey) {
                 const showId = match.id
                 await loadShows([showId])
-                let layoutRef = getLayoutRef(showId)
-                let firstEnabledIndex = layoutRef.findIndex((a) => !a.data.disabled)
+                const layoutRef = getLayoutRef(showId)
+                const firstEnabledIndex = layoutRef.findIndex((a) => !a.data.disabled)
                 if (firstEnabledIndex === -1) return
                 updateOut("active", firstEnabledIndex, layoutRef)
                 setOutput("slide", { id: showId, layout: $showsCache[showId].settings.activeLayout, index: firstEnabledIndex })
@@ -175,7 +175,7 @@
             }
 
             searchElem.select()
-            let newIndex = ($activeShow?.index ?? $projects[$activeProject]?.shows?.length - 1) + 1
+            const newIndex = ($activeShow?.index ?? $projects[$activeProject]?.shows?.length - 1) + 1
             if ($activePage === "show") history({ id: "UPDATE", newData: { key: "shows", index: newIndex, data: { id: match.id } }, oldData: { id: $activeProject }, location: { page: "show", id: "project_ref" } })
             activeShow.set({ ...match, index: newIndex })
             searchValue = ""

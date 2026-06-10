@@ -33,7 +33,7 @@
     $: filteredTimers = searchValue.length > 1 ? sortedTimersWithProject.filter((a) => a.name.toLowerCase().includes(searchValue.toLowerCase())) : sortedTimersWithProject
 
     // place timers in shows in project first
-    let list: string[] = []
+    const list: string[] = []
     // $: projectShows = $projects[$activeProject!]?.shows || []
     // $: if (projectShows.length || $showsCache || $timers) getList()
     // async function getList() {
@@ -45,16 +45,16 @@
     onDestroy(() => clearInterval(interval))
 
     function getCurrentValue(timer: any, ref: any, _updater: any) {
-        let currentTime = getCurrentTimerValue(timer, ref, today)
+        const currentTime = getCurrentTimerValue(timer, ref, today)
         // if (timer.end < timer.start) currentTime = timer.start - currentTime
         return currentTime
     }
 
     function adjustTimer(delta: number, ref: any, minVal: number, maxVal: number) {
         activeTimers.update((a) => {
-            let index = a.findIndex((t) => (ref.showId ? ref.showId === t.showId && ref.slideId === t.slideId && ref.id === t.id : t.id === ref.id))
+            const index = a.findIndex((t) => (ref.showId ? ref.showId === t.showId && ref.slideId === t.slideId && ref.id === t.id : t.id === ref.id))
             if (index < 0) return a
-            let current = a[index].currentTime ?? minVal
+            const current = a[index].currentTime ?? minVal
             a[index].currentTime = Math.max(minVal, Math.min(maxVal, current + delta))
             delete a[index].startTime
             return a
@@ -62,9 +62,9 @@
     }
 
     function updateActiveTimer(e: any, ref: any, timer: any) {
-        let time = Number(e.target.value)
+        const time = Number(e.target.value)
         activeTimers.update((a) => {
-            let index = a.findIndex((timer) => (ref.showId ? ref.showId === timer.showId && ref.slideId === timer.slideId && ref.id === timer.id : timer.id === ref.id))
+            const index = a.findIndex((timer) => (ref.showId ? ref.showId === timer.showId && ref.slideId === timer.slideId && ref.id === timer.id : timer.id === ref.id))
             if (index < 0) a.push({ ...timer, ...ref, currentTime: time, paused: true })
             else {
                 a[index].currentTime = time
@@ -87,7 +87,7 @@
 
     function keydown(e: KeyboardEvent) {
         if (e.key === "Enter" && searchValue.length > 1 && e.target?.closest(".search")) {
-            let timer = filteredTimers[0]
+            const timer = filteredTimers[0]
             if (!timer) return
 
             // play

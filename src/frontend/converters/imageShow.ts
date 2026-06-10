@@ -19,7 +19,7 @@ export function createImageShow({ images, name }: { images: string[]; name: stri
     const backgrounds: any[] = []
     const slides: { [key: string]: Slide } = {}
     const layoutShows: SlideData[] = []
-    let parentSlideId: string = uid()
+    const parentSlideId: string = uid()
     images.forEach((path, i) => {
         const slideId = i === 0 ? parentSlideId : uid()
         slides[slideId] = {

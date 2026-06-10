@@ -60,7 +60,7 @@
             if (($selected.id === "slide" || $selected.id === "group" || $selected.id === "global_group") && (data.type || "show") === "show") {
                 // copy slide data
                 if (($selected.id === "slide" || $selected.id === "group") && !$selected.hoverActive) {
-                    let slides = convertDataToSlide(clone($selected.data))
+                    const slides = convertDataToSlide(clone($selected.data))
                     selected.set({ ...$selected, hoverActive: true })
 
                     // select after show is opened (because a slide is selected in the new show)
@@ -76,16 +76,16 @@
     }
 
     function convertDataToSlide(slideRef: { index?: number; id?: string }[]) {
-        let currentSlides: { [key: string]: Slide } = _show().get("slides")
-        let currentMedia: Media = _show().get("media") || {}
-        let currentLayoutRef = getLayoutRef()
+        const currentSlides: { [key: string]: Slide } = _show().get("slides")
+        const currentMedia: Media = _show().get("media") || {}
+        const currentLayoutRef = getLayoutRef()
 
-        let slideData = slideRef.map(({ index, id }) => {
+        const slideData = slideRef.map(({ index, id }) => {
             let layout
             if (id) layout = currentLayoutRef.find((a) => a.id === id) || {}
             else if (index !== undefined) layout = currentLayoutRef[index] || {}
 
-            let layoutMedia: { [key: string]: Media } = {}
+            const layoutMedia: { [key: string]: Media } = {}
             if (layout.data?.background) layoutMedia[layout.data.background] = currentMedia[layout.data?.background]
             if (layout.data?.audio) {
                 layout.data.audio.forEach((audioId) => {
@@ -134,7 +134,7 @@
 
         // this affects the cursor
         // https://developer.mozilla.org/en-US/docs/Web/API/DataTransfer/dropEffect
-        let type: "copy" | "move" | "link" = "move"
+        const type: "copy" | "move" | "link" = "move"
         if (e.dataTransfer) e.dataTransfer.effectAllowed = type
         // e.dataTransfer.dropEffect = type
         // e.dataTransfer.setData("text", data)
@@ -154,13 +154,13 @@
         // shift select range
         if (e.shiftKey && ((shiftRange.length && $selected.data[0]) || $selected.data[0]?.index !== undefined)) {
             const searchKeys = ["id", "index", "path"]
-            let lastSelected = $selected.data[$selected.data.length - 1]
+            const lastSelected = $selected.data[$selected.data.length - 1]
             if (!lastSelected) return
 
-            let lastSelectedIndex: number = shiftRange.length ? shiftRange.findLastIndex((a) => searchKeys.find((key) => lastSelected[key] !== undefined && lastSelected[key] === a[key])) : lastSelected.index || 0
-            let newIndex: number = shiftRange.length ? shiftRange.findIndex((a) => searchKeys.find((key) => data[key] !== undefined && data[key] === a[key])) : data.index || 0
-            let lowestNumber = Math.min(lastSelectedIndex, newIndex) + 1
-            let highestNumber = Math.max(lastSelectedIndex, newIndex) - 1
+            const lastSelectedIndex: number = shiftRange.length ? shiftRange.findLastIndex((a) => searchKeys.find((key) => lastSelected[key] !== undefined && lastSelected[key] === a[key])) : lastSelected.index || 0
+            const newIndex: number = shiftRange.length ? shiftRange.findIndex((a) => searchKeys.find((key) => data[key] !== undefined && data[key] === a[key])) : data.index || 0
+            const lowestNumber = Math.min(lastSelectedIndex, newIndex) + 1
+            const highestNumber = Math.max(lastSelectedIndex, newIndex) - 1
 
             let selectedBetween: number[] = range(lowestNumber, highestNumber)
             function range(start: number, end: number) {
@@ -172,17 +172,17 @@
             // nothing in between
             if (newIndex - 1 === lastSelectedIndex || newIndex + 1 === lastSelectedIndex) selectedBetween = [selectedBetween[0]]
 
-            let dataBetween = selectedBetween.map((index) => (shiftRange.length ? shiftRange[index] : { index }))
+            const dataBetween = selectedBetween.map((index) => (shiftRange.length ? shiftRange[index] : { index }))
             let allNewData = [...$selected.data, ...dataBetween, data]
 
-            let keys = Object.keys(data)
+            const keys = Object.keys(data)
             // add all previous keys to new data
             if (shiftRange) {
                 allNewData = allNewData
                     .map((data) => {
                         if (!data) return null
 
-                        let newData: any = {}
+                        const newData: any = {}
                         keys.forEach((key) => {
                             newData[key] = data[key]
                         })
@@ -193,9 +193,9 @@
             }
 
             // remove duplicates
-            let alreadyAdded: string[] = []
+            const alreadyAdded: string[] = []
             newData = allNewData.filter((data) => {
-                let dataString = JSON.stringify(data)
+                const dataString = JSON.stringify(data)
                 if (alreadyAdded.find((a) => JSON.stringify(a) === dataString)) return false
 
                 alreadyAdded.push(dataString)
@@ -238,8 +238,8 @@
             }
         }
 
-        let alreadySelected: boolean = $selected.id === id && arrayHasData($selected.data, data)
-        let selectMultiple: boolean = e.ctrlKey || e.metaKey || e.shiftKey || e.buttons === 4 // middle mouse button
+        const alreadySelected: boolean = $selected.id === id && arrayHasData($selected.data, data)
+        const selectMultiple: boolean = e.ctrlKey || e.metaKey || e.shiftKey || e.buttons === 4 // middle mouse button
 
         if (dragged) {
             if (alreadySelected) return
@@ -295,7 +295,7 @@
         if ($selected.id !== id) selected.set({ id, data: [] })
     }
 
-    let thisId = "_" + uid(5)
+    const thisId = "_" + uid(5)
     $: if ($activeDropId !== thisId) dragover = null
     function stopDrag(e) {
         if (e.target?.classList.contains("TriggerBlock") && e.target?.closest("#" + thisId)) return

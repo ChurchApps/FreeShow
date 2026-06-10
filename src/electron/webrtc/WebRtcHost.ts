@@ -157,7 +157,6 @@ export class WebRtcHost {
     }
 
     private static buildHostHtml(): string {
-        /* eslint-disable no-useless-escape */
         return `<!DOCTYPE html>
 <html>
 <head><meta charset="UTF-8"><title>FreeShow WebRTC WHIP Host</title></head>
@@ -397,6 +396,5 @@ async function stopStream(outputId) {
 <\/script>
 </body>
 </html>`
-        /* eslint-enable no-useless-escape */
     }
 }

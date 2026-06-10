@@ -61,7 +61,7 @@
     }
     // draw
 
-    //Without the second if, the preview videos don't actually play but just skip ahead when kept in sync with the setTimeout()
+    // Without the second if, the preview videos don't actually play but just skip ahead when kept in sync with the setTimeout()
     $: if (mirror && !styleBackground && $videosData[outputId]?.paused) videoData.paused = true
     $: if (mirror && !styleBackground && $videosData[outputId]?.paused === false) videoData.paused = false
 
@@ -88,7 +88,7 @@
     $: if (!mirror && !fadingOut) sendVideoTime(videoTime)
 
     let sendingTimeout: NodeJS.Timeout | null = null
-    let timeUpdateTimeout = 220
+    const timeUpdateTimeout = 220
     function sendVideoTime(time: number) {
         if (sendingTimeout) return
 
@@ -103,13 +103,13 @@
 
     const videoReceiver = {
         TIME: (data: any) => {
-            let outputData = data[outputId]
+            const outputData = data[outputId]
             if (!outputData || fadingOut) return
 
             videoTime = outputData
         },
         DATA: (data: any) => {
-            let outputData = data[outputId]
+            const outputData = data[outputId]
             if (!outputData || fadingOut) return
 
             videoData = { ...outputData, duration: videoData.duration || 0 }
@@ -193,7 +193,7 @@
     function fadeoutVideo() {
         if (mirror || !video || !fadingOut || !duration) return
 
-        let time = duration * speed * margin
+        const time = duration * speed * margin
         setTimeout(() => {
             fadeoutVolume = Math.max(0, Number((fadeoutVolume - speed).toFixed(3)))
             fadeoutVideo()
@@ -212,7 +212,7 @@
 
         // playingVideos.set([])
         playingVideos.update((a) => {
-            let videoIndex = a.findIndex((a) => a.id === previousPath)
+            const videoIndex = a.findIndex((a) => a.id === previousPath)
             if (videoIndex > -1) a.splice(videoIndex, 1)
             return a
         })

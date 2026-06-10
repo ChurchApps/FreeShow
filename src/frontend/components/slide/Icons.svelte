@@ -90,9 +90,9 @@
     function removeSlideSetting(key: string) {
         if (!slide || currentShow.locked) return
 
-        let settings = clone(slide.settings || {})
+        const settings = clone(slide.settings || {})
         delete settings[key]
-        let newData = { style: settings }
+        const newData = { style: settings }
 
         history({
             id: "slideStyle",

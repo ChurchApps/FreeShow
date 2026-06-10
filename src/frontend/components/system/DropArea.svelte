@@ -1,7 +1,8 @@
 <script lang="ts">
     import { selected } from "../../stores"
     import { mediaExtensions } from "../../values/extensions"
-    import { DropAreas, ondrop, validateDrop } from "../helpers/drop"
+    import type { DropAreas } from "../helpers/drop"
+    import { ondrop, validateDrop } from "../helpers/drop"
     import { deselect } from "../helpers/select"
     import T from "../helpers/T.svelte"
 
@@ -74,7 +75,7 @@
     }
 
     function getFiles(e: any): any[] {
-        let files: any[] = []
+        const files: any[] = []
 
         // DataTransferItemList interface
         if (e.dataTransfer.items) {
@@ -97,7 +98,7 @@
     }
 
     function getUrls(e: any): string[] {
-        let urls: string[] = []
+        const urls: string[] = []
 
         // try to get any URL data
         const urlData = e.dataTransfer.getData("text/uri-list") || e.dataTransfer.getData("text/plain")

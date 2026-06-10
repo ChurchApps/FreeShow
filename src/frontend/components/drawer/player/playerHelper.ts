@@ -35,7 +35,7 @@ export function trimPlayerId(id: string, type: "youtube" | "vimeo") {
 
     if (type === "vimeo") {
         if (id.includes("?")) id = id.slice(0, id.indexOf("?"))
-        let slash = id.lastIndexOf("/")
+        const slash = id.lastIndexOf("/")
         id = id.slice(slash >= 0 ? slash + 1 : 0)
         return id
     }

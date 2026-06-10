@@ -263,7 +263,7 @@ function extractFontInfo(arrayBuffer) {
     }
 
     // get weight (OS/2 usWeightClass)
-    let weight = tables["OS/2"] ? view.getUint16(hOff + tables["OS/2"].offset + 4) : getWeightFromStyle((sub || full || "").toLowerCase())
+    const weight = tables["OS/2"] ? view.getUint16(hOff + tables["OS/2"].offset + 4) : getWeightFromStyle((sub || full || "").toLowerCase())
 
     return { type: sfnt.type, offset: hOff, family: normFamily, subfamily: sub, fullName: full, weight: String(weight) }
 }

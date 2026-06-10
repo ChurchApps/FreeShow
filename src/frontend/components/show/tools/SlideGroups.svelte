@@ -26,7 +26,7 @@
 
     $: layoutSlides = currentShow?.layouts?.[_show().get("settings.activeLayout")]?.slides || []
     function countGroupsInLayout(slideId) {
-        let count = layoutSlides.reduce((count, slide) => (slide.id === slideId ? count + 1 : count), 0)
+        const count = layoutSlides.reduce((count, slide) => (slide.id === slideId ? count + 1 : count), 0)
         return count
     }
 
@@ -38,7 +38,7 @@
 
     $: sortedGroups = sortByName(globalGroups, "group")
 
-    let profile = getAccess("shows")
+    const profile = getAccess("shows")
     $: isLocked = currentShow?.locked || profile.global === "read" || profile[currentShow?.category || ""] === "read"
 
     $: displayGlobalGroups = $globalGroupViewEnabled

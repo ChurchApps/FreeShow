@@ -741,12 +741,12 @@ export const historyActions = ({ obj, undo = null }: any) => {
                 data.remember = { showId: get(activeShow)?.id, layout: _show().get("settings.activeLayout") }
             }
 
-            let show = get(showsCache)[data.remember.showId]
+            const show = get(showsCache)[data.remember.showId]
             if (!show) return
             const previousShow: string = JSON.stringify(show)
             let slides = show.slides || {}
 
-            let ref = _show(data.remember.showId).layouts([data.remember.layout]).ref()[0] || []
+            const ref = _show(data.remember.showId).layouts([data.remember.layout]).ref()[0] || []
             const slideId: string = data.indexes ? ref[data.indexes[0]]?.id : ""
 
             let createItems = !!data.data?.createItems
@@ -800,7 +800,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                 const newSlides: { [key: string]: Slide } = {}
 
                 Object.entries(currentSlides).forEach(([id, slide]) => {
-                    let childrenIds: string[] = []
+                    const childrenIds: string[] = []
 
                     const totalLines = getItemWithMostLines(slide)
                     const splitLines = Math.max(totalLines, 1)

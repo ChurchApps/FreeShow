@@ -44,11 +44,11 @@
     }
 
     function setStyles() {
-        let items = $stageShows[$activeStage.id!].items
-        let newData: { [key: string]: string } = {}
+        const items = $stageShows[$activeStage.id!].items
+        const newData: { [key: string]: string } = {}
 
         active.forEach((id) => {
-            let styles = getStyles(items[id].style)
+            const styles = getStyles(items[id].style)
             Object.entries(newStyles).forEach(([key, value]) => (styles[key] = value.toString()))
 
             let textStyles = ""
@@ -132,7 +132,7 @@
     function createStageOutput() {
         toggleOutputEnabled.set(true)
         setTimeout(() => {
-            let id = enableStageOutput({ stageOutput: stageLayoutId, name: layout?.name || "" })
+            const id = enableStageOutput({ stageOutput: stageLayoutId, name: layout?.name || "" })
             currentOutputSettings.set(id)
             settingsTab.set("display_settings")
             activePage.set("settings")

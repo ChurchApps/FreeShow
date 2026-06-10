@@ -18,7 +18,7 @@
         if (!weather) return
 
         updated = weather.properties.meta.updated_at
-        let units = weather.properties.meta.units
+        const units = weather.properties.meta.units
         if (data.useFahrenheit) units.air_temperature = "fahrenheit"
         const u_wind_speed = " " + units.wind_speed
         const u_temp = "° " + ({ celsius: "C", fahrenheit: "F" }[units.air_temperature] || "C")
@@ -37,7 +37,7 @@
         times = timestamps
             .map((a, i) => {
                 const currentTime = new Date(a)
-                let dayIndex = currentTime.getDay() === 0 ? 7 : currentTime.getDay()
+                const dayIndex = currentTime.getDay() === 0 ? 7 : currentTime.getDay()
                 const dayname = translateText(i < 2 ? `calendar.${i === 0 ? "today" : "tomorrow"}` : `weekday.${dayIndex}`)
                 const isoTime = toGlobalISO(a)
                 let timedata = weather.properties.timeseries.find((a) => a.time === isoTime)

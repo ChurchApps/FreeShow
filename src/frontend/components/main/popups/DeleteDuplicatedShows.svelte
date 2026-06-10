@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Show } from "../../../../types/Show"
+    import type { Show } from "../../../../types/Show"
     import { activePage, activePopup, popupData, shows, showsCache } from "../../../stores"
     import { getSlideText } from "../../edit/scripts/textStyle"
     import { history } from "../../helpers/history"
@@ -18,14 +18,14 @@
     let loading = false
     async function deleteMatching() {
         loading = true
-        let deleteIds: string[] = []
+        const deleteIds: string[] = []
 
         await Promise.all(
             data.map(async ({ ids }) => {
                 await loadShows(ids)
-                let compareShowText = getShowText($showsCache[ids[0]])
+                const compareShowText = getShowText($showsCache[ids[0]])
                 if (!compareShowText) return
-                let dIds: string[] = []
+                const dIds: string[] = []
 
                 ids.forEach((id, i) => {
                     if (i === 0) {
@@ -33,7 +33,7 @@
                         return
                     }
 
-                    let showText = getShowText($showsCache[id])
+                    const showText = getShowText($showsCache[id])
                     if (compareShowText === showText) dIds.push(id)
                 })
 
@@ -55,16 +55,16 @@
         activePage.set("show")
     }
     function getOldestShows() {
-        let deleteIds: string[] = []
+        const deleteIds: string[] = []
 
         data.forEach(({ ids }) => {
             let keepId = ""
 
             ids.forEach((id) => {
-                let show = $shows[id]
+                const show = $shows[id]
                 if (!show) return
 
-                let compareShow = $shows[keepId]
+                const compareShow = $shows[keepId]
                 if (!compareShow) {
                     keepId = id
                     return
@@ -89,16 +89,16 @@
         activePage.set("show")
     }
     function getNewestShows() {
-        let deleteIds: string[] = []
+        const deleteIds: string[] = []
 
         data.forEach(({ ids }) => {
             let keepId = ""
 
             ids.forEach((id) => {
-                let show = $shows[id]
+                const show = $shows[id]
                 if (!show) return
 
-                let compareShow = $shows[keepId]
+                const compareShow = $shows[keepId]
                 if (!compareShow) {
                     keepId = id
                     return
@@ -126,13 +126,13 @@
     // let loading: boolean = false
     async function loadContent() {
         // loading = true
-        let ids = getIds(manualIndex)
+        const ids = getIds(manualIndex)
         await loadShows(ids)
 
         // loading = false
         ids.forEach((id) => {
-            let show = $showsCache[id]
-            let text = getShowText(show)
+            const show = $showsCache[id]
+            const text = getShowText(show)
             loadedTexts.push(text)
         })
 
@@ -153,7 +153,7 @@
     }
 
     function deleteAtIndex(index: number) {
-        let ids = getIds(manualIndex)
+        const ids = getIds(manualIndex)
         deleteShows([ids[index]])
         data[manualIndex].ids.splice(index, 1)
         loadedTexts.splice(index, 1)
@@ -162,21 +162,21 @@
         else data = data
     }
 
-    /////
+    /// //
 
     function getIds(index: number, _updater = null): string[] {
         return data[index]?.ids || []
     }
 
     function deleteShows(ids: string[]) {
-        let data = ids.map((id) => ({ id }))
+        const data = ids.map((id) => ({ id }))
         history({ id: "SHOWS", oldData: { data }, location: { page: "drawer" } })
     }
 
     function getShowText(show: Show) {
         if (!show) return ""
 
-        let texts: string[] = []
+        const texts: string[] = []
         Object.values(show.slides || {}).forEach((slide) => {
             texts.push(getSlideText(slide))
         })

@@ -64,7 +64,7 @@
         videoElem.srcObject = null
     })
 
-    let dispatch = createEventDispatcher()
+    const dispatch = createEventDispatcher()
     function click(e) {
         if (iconClicked) return
         dispatch("click", e)

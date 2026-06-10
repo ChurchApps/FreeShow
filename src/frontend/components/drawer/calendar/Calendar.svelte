@@ -17,7 +17,7 @@
 
     $: sundayFirstDay = $special.firstDayOfWeek === "7"
 
-    let today = new Date()
+    const today = new Date()
     $: current = new Date(today.getFullYear(), today.getMonth())
     $: year = current.getFullYear()
     $: month = current.getMonth()
@@ -31,7 +31,7 @@
         let daysList: any = []
         for (let i = 1; i <= getDaysInMonth(year, month); i++) daysList.push(new Date(year, month, i))
 
-        let before: Date[] = getDaysBefore(daysList[0].getDay())
+        const before: Date[] = getDaysBefore(daysList[0].getDay())
 
         daysList = [...before, ...daysList]
         days = []
@@ -43,7 +43,7 @@
     function getDaysBefore(firstDay: number): Date[] {
         if (!sundayFirstDay && firstDay < 1 && firstDay <= 1 && firstDay !== 0) return []
 
-        let before: Date[] = []
+        const before: Date[] = []
         let i = (sundayFirstDay ? firstDay : firstDay === 0 ? 6 : firstDay - 1) - 1
         for (i; i >= 0; i--) before.push(new Date(year, month, -i))
 
@@ -57,14 +57,14 @@
         if (!days[0]) return
 
         currentEvents = []
-        let first = days[0][0].getTime()
-        let last = days[5][days.length - 1].getTime()
+        const first = days[0][0].getTime()
+        const last = days[5][days.length - 1].getTime()
 
         Object.entries(events).forEach(([id, event]: any) => {
-            let from = new Date(event.from).getTime()
-            let to = new Date(event.to)?.getTime() || 0
+            const from = new Date(event.from).getTime()
+            const to = new Date(event.to)?.getTime() || 0
 
-            let startOrEndIsInMonth = from > first || from < last || to > first || to < last
+            const startOrEndIsInMonth = from > first || from < last || to > first || to < last
             if (startOrEndIsInMonth) currentEvents.push({ id, ...event })
         })
 
@@ -75,7 +75,7 @@
     $: {
         weekdays = []
         for (let i = 0; i < 7; i++) {
-            let index = sundayFirstDay ? (i === 0 ? 7 : i) : i + 1
+            const index = sundayFirstDay ? (i === 0 ? 7 : i) : i + 1
             weekdays.push(translateText("weekday." + index))
         }
     }
@@ -85,11 +85,11 @@
     function wheel(e: any) {
         if (nextScrollTimeout || !calendarElem) return
 
-        let scrollDown = e.deltaY > 0
+        const scrollDown = e.deltaY > 0
         if (scrollDown) nextMonth(true)
         else previousMonth(true)
 
-        let isMouseAndNotTrackpad = e.deltaY >= 100 || e.deltaY <= -100
+        const isMouseAndNotTrackpad = e.deltaY >= 100 || e.deltaY <= -100
         if (isMouseAndNotTrackpad) return
 
         nextScrollTimeout = setTimeout(() => {
@@ -99,14 +99,14 @@
 
     function nextMonth(checkScroll = false) {
         if (!calendarElem) return
-        let scrolledToBottom = calendarElem.scrollTop + 1 + calendarElem.offsetHeight >= calendarElem.scrollHeight
+        const scrolledToBottom = calendarElem.scrollTop + 1 + calendarElem.offsetHeight >= calendarElem.scrollHeight
         if (checkScroll && !scrolledToBottom) return
 
         current = new Date(year, month, 33)
     }
 
     function previousMonth(checkScroll = false) {
-        let scrolledToTop = calendarElem?.scrollTop === 0
+        const scrolledToTop = calendarElem?.scrollTop === 0
         if (checkScroll && !scrolledToTop) return
 
         current = new Date(year, month, 0)
@@ -115,7 +115,7 @@
     function getEvents(day: Date, currentEvents: any[], type: string) {
         let events: any[] = []
         currentEvents.forEach((a) => {
-            let eventIsAtDayOrGoingThrough = a.to ? isBetween(new Date(a.from), new Date(a.to), copyDate(day)) : isSameDay(new Date(a.from), day)
+            const eventIsAtDayOrGoingThrough = a.to ? isBetween(new Date(a.from), new Date(a.to), copyDate(day)) : isSameDay(new Date(a.from), day)
             if (eventIsAtDayOrGoingThrough) events.push(a)
         })
         events.sort(sortByTime)
@@ -135,7 +135,7 @@
 
     function toggleCurrentDay(day: Date) {
         activeDays.update((a) => {
-            let alreadySelected = a.includes(day.getTime())
+            const alreadySelected = a.includes(day.getTime())
             if (!alreadySelected) return [...a, day.getTime()]
 
             if (a.length < 2) return a
@@ -148,7 +148,7 @@
     function selectRange(day: Date) {
         let first = $activeDays[0] || day.getTime()
         let last = day.getTime()
-        let timeDifference = day.getTime() - first
+        const timeDifference = day.getTime() - first
         if (timeDifference === 0) return
 
         // invert
@@ -157,11 +157,11 @@
             last = $activeDays[$activeDays.length - 1]
         }
 
-        let newActiveDays: number[] = []
+        const newActiveDays: number[] = []
         let count = 0
 
         do {
-            let newDay = copyDate(new Date(first + count * MILLISECONDS_IN_A_DAY)).getTime()
+            const newDay = copyDate(new Date(first + count * MILLISECONDS_IN_A_DAY)).getTime()
             newActiveDays.push(newDay)
             count++
         } while (!isSameDay(new Date(newActiveDays[newActiveDays.length - 1]), new Date(last)))

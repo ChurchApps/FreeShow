@@ -41,21 +41,21 @@
         context = new AudioContext()
         source = context.createMediaStreamSource(stream)
 
-        var analyser = context.createAnalyser()
+        const analyser = context.createAnalyser()
         analyser.smoothingTimeConstant = 0.2
         analyser.fftSize = 1024
 
-        var node = context.createScriptProcessor(2048, 1, 1)
+        const node = context.createScriptProcessor(2048, 1, 1)
 
-        var values = 0
-        var average
+        let values = 0
+        let average
         node.onaudioprocess = function () {
             // bitcount is fftsize / 2
-            var array = new Uint8Array(analyser.frequencyBinCount)
+            const array = new Uint8Array(analyser.frequencyBinCount)
             analyser.getByteFrequencyData(array)
 
-            var length = array.length
-            for (var i = 0; i < length; i++) {
+            const length = array.length
+            for (let i = 0; i < length; i++) {
                 values += array[i]
             }
 

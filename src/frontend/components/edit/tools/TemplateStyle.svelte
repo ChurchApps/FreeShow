@@ -30,13 +30,13 @@
     function update() {
         if (!template) return
 
-        let newData = { key: "settings", data: clone(settings) }
+        const newData = { key: "settings", data: clone(settings) }
 
         history({ id: "UPDATE", newData, oldData: { id: templateId }, location: { page: "edit", id: "template_settings", override: templateId } })
     }
 
     function setValue(e: any, key: string) {
-        let value = e?.detail ?? e
+        const value = e?.detail ?? e
         settings[key] = value
 
         update()

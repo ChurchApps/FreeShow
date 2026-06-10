@@ -27,9 +27,9 @@
     }
 
     let existing: boolean = $selected.id === "variable" && $selected.data[0]?.id
-    let variableId = existing ? $selected.data[0].id : uid()
+    const variableId = existing ? $selected.data[0].id : uid()
     let currentVariable = clone($variables[variableId] || DEFAULT_VARIABLE)
-    let created = !existing
+    const created = !existing
 
     function updateValue(e: any, key: string) {
         let value = e?.target?.value ?? e
@@ -74,7 +74,7 @@
     }
 
     function updateSet(index: number, e: any, key: string) {
-        let value = e?.target?.value ?? e
+        const value = e?.target?.value ?? e
         if (!value) return
 
         if (!currentVariable.sets) currentVariable.sets = []

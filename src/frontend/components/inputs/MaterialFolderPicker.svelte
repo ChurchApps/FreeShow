@@ -30,7 +30,7 @@
     }
 
     const dispatch = createEventDispatcher()
-    let listenerId = receiveToMain(ToMain.OPEN_FOLDER2, (data) => {
+    const listenerId = receiveToMain(ToMain.OPEN_FOLDER2, (data) => {
         if (data.channel !== PICK_ID || !data.path) return
         dispatch("change", data.path)
     })

@@ -16,7 +16,7 @@
     export let addDisabled = false
     export let nothingText = true
 
-    let dispatch = createEventDispatcher()
+    const dispatch = createEventDispatcher()
     function openItem(id: string) {
         if (!allowOpen) return
         dispatch("open", id)

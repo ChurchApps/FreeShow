@@ -222,7 +222,7 @@
             <MaterialButton
                 title={"media._loop" + ($media[path]?.loop ? ": settings.enabled" : "")}
                 on:click={() => {
-                    let loop = !$media[path]?.loop
+                    const loop = !$media[path]?.loop
                     media.update((a) => {
                         if (!a[path]) a[path] = {}
                         a[path].loop = loop

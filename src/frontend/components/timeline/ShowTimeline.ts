@@ -71,7 +71,7 @@ export class ShowTimeline {
     private static outputListenerUnsubscribe: Unsubscriber | null = null
     private static actionUnsubscribe: Unsubscriber | null = null
     private static outputListener(callback?: (s: TimelineActionPass) => void) {
-        let firstOutputId = getFirstActiveOutput()?.id || ""
+        const firstOutputId = getFirstActiveOutput()?.id || ""
         if (!firstOutputId) return
 
         ShowTimeline.clearOutputListener()
@@ -80,16 +80,16 @@ export class ShowTimeline {
         ShowTimeline.outputListenerUnsubscribe = outputs.subscribe((a) => {
             if (!ShowTimeline.recordingActive) return
 
-            let outSlide = a[firstOutputId]?.out?.slide
+            const outSlide = a[firstOutputId]?.out?.slide
             if (!outSlide || outSlide.id !== ShowTimeline.showRef?.id || outSlide.layout !== ShowTimeline.showRef?.layoutId || outSlide.index === undefined) return
 
             // if (!currentSequence.length) newToast("toast.recording_started")
 
             const layoutRef = _show(outSlide.id).layouts([outSlide.layout]).ref()[0] || []
-            let layoutSlide = layoutRef[outSlide.index]
+            const layoutSlide = layoutRef[outSlide.index]
             if (!layoutSlide) return
 
-            let slideRef = { id: layoutSlide.id, index: outSlide.index }
+            const slideRef = { id: layoutSlide.id, index: outSlide.index }
 
             const newRef = JSON.stringify(slideRef)
             if (previousRef === newRef) return

@@ -33,7 +33,7 @@ export class OutputHelper {
 
         // outputId = outputId || getFirstActiveOutput()?.id
 
-        let opts: Options = {
+        const opts: Options = {
             isSpace: triggerKey === " ",
             slideLayers: options.slideLayers !== false,
             playNext: options.playNext === true
@@ -46,7 +46,7 @@ export class OutputHelper {
         this.playNext(outputId, opts) // ArrowRight, PageDown, Space
     }
 
-    /////
+    /// //
 
     private static playFirstSlide(outputId: string) {
         const show = this.getShow(outputId)
@@ -116,8 +116,8 @@ export class OutputHelper {
 
     // this allows changing back to the previous project item with keyboard instead of advancing the slide if the active show is right before/after the outputted show
     private static quickChangeBack(outputId: string, show: OutSlide, next: boolean, options: Options) {
-        let active = this.getActiveItem()
-        let projectItems = this.getProjectItems()
+        const active = this.getActiveItem()
+        const projectItems = this.getProjectItems()
         if (active?.index === undefined || active.id === show.id) return false
         if (projectItems[active.index + (next ? 1 : -1)]?.id !== show.id) return false
         if (next ? this.getPreviousSlide(show) : this.getNextSlide(show)) return false
@@ -197,7 +197,7 @@ export class OutputHelper {
         return index
     }
 
-    /////
+    /// //
 
     private static getShow(outputId: string, nextCheck: boolean | null = null, options: Partial<Options> = {}): OutSlide | null {
         const projectItems = this.getProjectItems()
@@ -308,7 +308,7 @@ export class OutputHelper {
 
         const showSlide: Slide | null = _show(data.id).slides([layoutRef?.[data.index]?.id]).get()?.[0] || null
 
-        let outSlideData: OutSlide = { id: data.id }
+        const outSlideData: OutSlide = { id: data.id }
 
         const styleLines = this.checkStyleLines(data, showSlide)
         const clickReveal = this.checkClickReveal(data, showSlide)
@@ -343,7 +343,7 @@ export class OutputHelper {
 
         const showSlide: Slide | null = _show(data.id).slides([layoutRef?.[data.index]?.id]).get()?.[0] || null
 
-        let outSlideData: OutSlide = { id: data.id }
+        const outSlideData: OutSlide = { id: data.id }
 
         const styleLines = this.checkStyleLines(data, showSlide)
         const clickReveal = this.checkClickReveal(data, showSlide)
@@ -434,7 +434,7 @@ export class OutputHelper {
 
     private static getOut(outputId: string) {
         const currentOutput = get(outputs)[outputId] || {}
-        let out = currentOutput.out || {}
+        const out = currentOutput.out || {}
 
         // restore cleared slide position (only if active show is the same as outputted)
         const clearedSlide = get(outputSlideCache)[outputId]
@@ -446,7 +446,7 @@ export class OutputHelper {
         return out
     }
 
-    /////
+    /// //
 
     private static playSlide(outputId: string, data: OutSlide, slideLayers: boolean = true) {
         this.previousOutputted = null

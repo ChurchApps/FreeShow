@@ -1,5 +1,6 @@
 <script lang="ts">
     import { createEventDispatcher, onMount } from "svelte"
+    import { evaluateExpression } from "../../utils/expression"
     import { translateText } from "../../utils/language"
     import Icon from "../helpers/Icon.svelte"
     import MaterialButton from "./MaterialButton.svelte"
@@ -42,12 +43,12 @@
         if (disabled) return
 
         // convert , to .
-        let normalizedVal = typeof newVal === "string" ? newVal.replace(/,/g, ".") : newVal
+        const normalizedVal = typeof newVal === "string" ? newVal.replace(/,/g, ".") : newVal
 
         let calcVal: number
         if (!padLength) {
             try {
-                calcVal = typeof normalizedVal === "string" ? new Function(`return ${normalizedVal}`)() : normalizedVal
+                calcVal = typeof normalizedVal === "string" ? evaluateExpression(normalizedVal) : normalizedVal
             } catch {
                 // invalid expression
                 return
@@ -94,7 +95,7 @@
         if (!e.ctrlKey && !e.metaKey) return
         e.preventDefault()
 
-        let stepAmount = step * (e.shiftKey ? 10 : 1)
+        const stepAmount = step * (e.shiftKey ? 10 : 1)
 
         e.deltaY < 0 ? increment(stepAmount) : decrement(stepAmount)
 

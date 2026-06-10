@@ -39,11 +39,11 @@
     function updateStyles() {
         if (!Object.keys(newStyles).length) return
 
-        let items = Slide.items
-        let values: string[] = []
+        const items = Slide.items
+        const values: string[] = []
         active.forEach((id) => {
-            let item = items[id]
-            let styles = getStyles(item.style)
+            const item = items[id]
+            const styles = getStyles(item.style)
             let textStyles = ""
 
             Object.entries(newStyles).forEach(([key, value]) => (styles[key] = value.toString()))
@@ -53,7 +53,7 @@
             values.push(textStyles)
         })
 
-        let override = "template_items#" + $activeEdit.id + "indexes#" + active.join(",")
+        const override = "template_items#" + $activeEdit.id + "indexes#" + active.join(",")
         history({ id: "UPDATE", newData: { key: "items", indexes: active, subkey: "style", data: values }, oldData: { id: $activeEdit.id }, location: { page: "edit", id: "template_items", override } })
     }
 

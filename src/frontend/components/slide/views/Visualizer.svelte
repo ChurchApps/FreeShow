@@ -54,8 +54,8 @@
             ctx = canvas.getContext("2d")
         }
 
-        let WIDTH = canvas.width
-        let HEIGHT = canvas.height
+        const WIDTH = canvas.width
+        const HEIGHT = canvas.height
 
         let bufferLength = $visualizerData?.buffers ?? analysers[0]?.frequencyBinCount // 128
         if (!bufferLength && edit) bufferLength = 128
@@ -106,7 +106,7 @@
             x = 0
 
             if ($visualizerData) {
-                let bars = $visualizerData.bars
+                const bars = $visualizerData.bars
                 for (let i = 0; i < $visualizerData.buffers; i++) {
                     generateBar(bars[i])
                 }
@@ -122,7 +122,7 @@
             // update frequency data for all analysers
             analysers.forEach((analyser, i) => analyser.getByteFrequencyData(dataArrays[i]))
 
-            let bars: { height: number; percentage: number }[] = []
+            const bars: { height: number; percentage: number }[] = []
             for (let i = 0; i < bufferLength; i++) {
                 const sum = dataArrays[0][i] + dataArrays[1][i]
                 const percentage = Math.round(sum / dataArrays.length) / maxHeightValue

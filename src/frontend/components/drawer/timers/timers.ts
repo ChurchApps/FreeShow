@@ -2,6 +2,7 @@ import { get } from "svelte/store"
 import { uid } from "uid"
 import type { Timer } from "../../../../types/Show"
 import { activeTimers, events, timers } from "../../../stores"
+import { evaluateExpression } from "../../../utils/expression"
 import { clone, keysToID, sortByName } from "../../helpers/array"
 import { _show } from "../../helpers/shows"
 import { showsCache } from "./../../../stores"
@@ -128,14 +129,15 @@ export function getTimerDynamicValue(val: string | undefined, _updater: any = nu
     if (val.startsWith("{")) val = getDynamicValue(val)
     if (val.startsWith("{")) return 0
 
+    let result: number
     try {
-        val = new Function(`return ${val}`)()
+        result = evaluateExpression(val)
     } catch {
         // invalid expression
-        return isNaN(Number(val)) ? 0 : Number(val)
+        result = Number(val)
     }
 
-    return isNaN(Number(val)) ? 0 : Number(val)
+    return isNaN(result) ? 0 : result
 }
 
 function getClosestUpcommingEvent(eventGroup: string) {

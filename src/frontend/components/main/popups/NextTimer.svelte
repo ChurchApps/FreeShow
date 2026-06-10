@@ -10,17 +10,17 @@
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
 
-    let type = $popupData.type || "show"
+    const type = $popupData.type || "show"
 
     let value = $popupData.value || 0
-    let layoutRef = getLayoutRef()
-    let allActiveSlides = layoutRef.filter((a) => !a.data.disabled)
-    let indexes = $popupData.indexes || layoutRef.map((_, i) => i)
-    let allSlides = !$popupData.indexes?.length
+    const layoutRef = getLayoutRef()
+    const allActiveSlides = layoutRef.filter((a) => !a.data.disabled)
+    const indexes = $popupData.indexes || layoutRef.map((_, i) => i)
+    const allSlides = !$popupData.indexes?.length
 
-    let isProjectItem = type === "folder" || type === "pdf"
+    const isProjectItem = type === "folder" || type === "pdf"
 
-    let count = isProjectItem ? $popupData.count || 0 : allActiveSlides.length
+    const count = isProjectItem ? $popupData.count || 0 : allActiveSlides.length
 
     onMount(() => {
         popupData.set({})
@@ -57,12 +57,12 @@
 
         if (allSlides) {
             // remove existing go to start if just one applied to any slide
-            let goToStartRefs = allActiveSlides.reduce((value, ref) => (ref.data?.end ? [...value, ref] : value), [] as LayoutRef[])
+            const goToStartRefs = allActiveSlides.reduce((value, ref) => (ref.data?.end ? [...value, ref] : value), [] as LayoutRef[])
             if (goToStartRefs.length === 1) {
-                let showId = $activeShow?.id || ""
-                let layoutId = _show().get("settings.activeLayout")
+                const showId = $activeShow?.id || ""
+                const layoutId = _show().get("settings.activeLayout")
                 showsCache.update((a) => {
-                    let ref = goToStartRefs[0]
+                    const ref = goToStartRefs[0]
                     if (!ref) return a
 
                     if (ref.type === "parent") delete a[showId].layouts[layoutId]?.slides?.[ref.index]?.end
@@ -82,7 +82,7 @@
     function getTotalTime() {
         totalTime = allActiveSlides.reduce((value, ref) => (value += Number(ref.data.nextTimer || 0)), 0)
 
-        let allValues = allActiveSlides.map((ref) => Number(ref.data.nextTimer || 0))
+        const allValues = allActiveSlides.map((ref) => Number(ref.data.nextTimer || 0))
         appliedToSlides = [...new Set(allValues)].length === 1 && allValues[0] === allTime ? allTime : 0
     }
 

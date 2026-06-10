@@ -40,7 +40,7 @@
     // type File = { path: string; favourite: boolean; name: string; extension: string; audio: boolean; folder?: boolean; stat?: any }
     // let files: File[] = []
 
-    let specialTabs = ["online", "inputs"]
+    const specialTabs = ["online", "inputs"]
     $: isProviderSection = contentProviders.some((p) => p.providerId === active)
     $: notFolders = ["all", ...specialTabs, ...contentProviders.map((p) => p.providerId)]
     $: rootPath = notFolders.includes(active || "") ? "" : active !== null ? $mediaFolders[active]?.path || "" : ""
@@ -181,7 +181,7 @@
         // WIP only list folders with any recursive media content?
 
         requesting++
-        let currentRequest = requesting
+        const currentRequest = requesting
         const data = await requestMain(Main.READ_FOLDER, { path, depth, captureFolderContent })
         if (!data || requesting !== currentRequest) return
 
@@ -285,7 +285,7 @@
         hightlightActive()
 
         // sort
-        let sortType = $sorted.media?.type || "name"
+        const sortType = $sorted.media?.type || "name"
         if (sortType === "name") localFilteredFiles = sortFilenames(localFilteredFiles)
         else if (sortType === "name_des") localFilteredFiles = localFilteredFiles.reverse()
         else if (sortType === "created") localFilteredFiles = localFilteredFiles.sort((a, b) => (a.isFolder || b.isFolder ? 1 : b.stats.birthtimeMs - a.stats.birthtimeMs))
@@ -357,12 +357,12 @@
     function selectMedia() {
         if (activeFile === null) return
 
-        let path = mediaFilesOnly[activeFile]?.path || ""
+        const path = mediaFilesOnly[activeFile]?.path || ""
         if (!path) return
 
         activeEdit.set({ id: path, type: "media", items: [] })
-        let name = removeExtension(getFileName(path))
-        let type = getMediaType(getExtension(path))
+        const name = removeExtension(getFileName(path))
+        const type = getMediaType(getExtension(path))
 
         if ($focusMode) activeFocus.set({ id: path, type })
         else activeShow.set({ id: path, name, type })
@@ -373,7 +373,7 @@
 
         if (e.key === "Enter" && searchValue.length > 1 && e.target?.closest(".search")) {
             // let file = mediaFilesOnly[0] // not updating
-            let file = searchedFiles.filter((a) => !a.isFolder)[0]
+            const file = searchedFiles.filter((a) => !a.isFolder)[0]
             if (!file) return
 
             // play
@@ -446,10 +446,10 @@
     // select all
     $: if ($selectAllMedia) selectAll()
     function selectAll() {
-        let data = searchedFiles
+        const data = searchedFiles
             .filter((a) => !a.isFolder)
             .map((file) => {
-                let type = getMediaType(getExtension(file.name))
+                const type = getMediaType(getExtension(file.name))
                 return { name: file.name, path: file.path, type, contentProvider: false }
             })
 
@@ -548,8 +548,8 @@
                 {#if inputsTab === "cameras"}
                     <Cameras
                         on:click={({ detail }) => {
-                            let e = detail.event
-                            let cam = detail.cam
+                            const e = detail.event
+                            const cam = detail.cam
 
                             if ($outLocked || e.ctrlKey || e.metaKey) return
                             if (currentOutput?.out?.background?.id === cam.id) clearBackground()

@@ -7,12 +7,12 @@
     import { _show } from "../../helpers/shows"
     import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
 
-    let action = $popupData.action
-    let type = $activeEdit.type
-    let indexes: number[] = $activeEdit.items
+    const action = $popupData.action
+    const type = $activeEdit.type
+    const indexes: number[] = $activeEdit.items
 
-    let layoutRef = getLayoutRef()
-    let slideRef = layoutRef[$activeEdit.slide!] || {}
+    const layoutRef = getLayoutRef()
+    const slideRef = layoutRef[$activeEdit.slide!] || {}
     let slideItems: Item[] = _show().get("slides")?.[slideRef.id]?.items || []
 
     if ($activeEdit.id) getItems()
@@ -44,7 +44,7 @@
         })
 
         if (indexes.some((i) => !slideItems[i])) return
-        let actions = indexes.map((i) => slideItems[i].actions)
+        const actions = indexes.map((i) => slideItems[i].actions)
 
         if (type === "overlay" || type === "template") {
             history({

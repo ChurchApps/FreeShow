@@ -8,6 +8,7 @@ import { AudioPlayer } from "../../audio/audioPlayer"
 import { AudioPlaylist } from "../../audio/audioPlaylist"
 import { activeDrawerTab, activeEdit, activePage, activeProject, activeShow, activeTimers, audioPlaylists, draw, drawSettings, drawTool, folders, groupNumbers, groups, media, openScripture, outLocked, outputs, overlays, pdfImports, playingAudio, playingMetronome, projects, refreshEditSlide, selected, shows, showsCache, sortedShowsList, special, styles, timers, variables, volume } from "../../stores"
 import { newToast } from "../../utils/common"
+import { evaluateExpression } from "../../utils/expression"
 import { send } from "../../utils/request"
 import { getDynamicValue } from "../edit/scripts/itemHelpers"
 import { keysToID, removeDeleted, sortByName } from "../helpers/array"
@@ -129,21 +130,21 @@ export async function startProjectItemByName(name: string) {
     selectProjectShow(match)
 
     // play
-    let outputId: string = getActiveOutputs(get(outputs), false, true, true)[0]
-    let currentOutput = get(outputs)[outputId] || {}
+    const outputId: string = getActiveOutputs(get(outputs), false, true, true)[0]
+    const currentOutput = get(outputs)[outputId] || {}
 
     // WIP duplicate of ShowButton.svelte doubleClick() & missing other types
     if ((item.type || "show") === "show" && get(showsCache)[item.id]?.settings && get(showsCache)[item.id].layouts[get(showsCache)[item.id].settings.activeLayout]?.slides?.length) {
-        let layoutRef = getLayoutRef()
-        let firstEnabledIndex = layoutRef.findIndex((a) => !a.data.disabled)
+        const layoutRef = getLayoutRef()
+        const firstEnabledIndex = layoutRef.findIndex((a) => !a.data.disabled)
         updateOut("active", firstEnabledIndex, layoutRef)
 
-        let slide = currentOutput.out?.slide || null
+        const slide = currentOutput.out?.slide || null
         if (slide?.id === item.id && slide?.index === firstEnabledIndex && slide?.layout === get(showsCache)[item.id].settings.activeLayout) return
 
         setOutput("slide", { id: item.id, layout: get(showsCache)[item.id].settings.activeLayout, index: firstEnabledIndex })
     } else if (item.type === "image" || item.type === "video") {
-        let outputStyle = get(styles)[currentOutput.style || ""]
+        const outputStyle = get(styles)[currentOutput.style || ""]
         const mediaData = get(media)[item.id] || {}
         const mediaStyle = getMediaStyle(mediaData, outputStyle)
 
@@ -151,7 +152,7 @@ export async function startProjectItemByName(name: string) {
         const shouldLoop = videoType === "background" ? item.loop || true : false
         const shouldBeMuted = videoType === "background" ? item.muted || true : false
 
-        let out = { path: item.id, muted: shouldBeMuted, loop: shouldLoop, startAt: 0, type: item.type, ...mediaStyle }
+        const out = { path: item.id, muted: shouldBeMuted, loop: shouldLoop, startAt: 0, type: item.type, ...mediaStyle }
 
         // clear slide
         if (videoType === "foreground" || (videoType !== "background" && (item.type === "image" || !shouldLoop))) clearSlide()
@@ -165,7 +166,7 @@ export async function startProjectItemByName(name: string) {
         const pages = pdfDoc.numPages
         loadingTask.destroy()
 
-        let name = item.name || removeExtension(getFileName(item.id))
+        const name = item.name || removeExtension(getFileName(item.id))
         setOutput("slide", { type: "pdf", id: item.id, page: 0, pages, name })
         clearBackground()
     } else if (item.type === "audio") AudioPlayer.start(item.id, { name: item.name || "" })
@@ -359,8 +360,12 @@ export function changeVariable(data: API_variable) {
     if (key === "expression") {
         const stringValue = (data.value || "").toString()
         const replacedValues = stringValue.includes("{") ? getDynamicValue(stringValue) : stringValue
-        // eslint-disable-next-line
-        const calculated = new Function(`return ${replacedValues}`)()
+        let calculated = 0
+        try {
+            calculated = evaluateExpression(replacedValues)
+        } catch {
+            calculated = 0
+        }
         value = Number(calculated)
         key = "number"
     } else if (data.variableAction || variable.type === "number") {
@@ -549,13 +554,13 @@ export function setNextSlideTimer(time: number) {
     // GO TO START
 
     // remove existing go to start if just one applied to any slide
-    let goToStartRefs = allActiveSlides.reduce((value, ref) => (ref.data?.end ? [...value, ref] : value), [] as any[])
+    const goToStartRefs = allActiveSlides.reduce((value, ref) => (ref.data?.end ? [...value, ref] : value), [] as any[])
     if (goToStartRefs.length === 1) {
         const showId = get(activeShow)?.id || ""
         const layoutId = _show().get("settings.activeLayout")
 
         showsCache.update((a) => {
-            let ref = goToStartRefs[0]
+            const ref = goToStartRefs[0]
             if (!ref) return a
 
             if (ref.type === "parent") delete a[showId].layouts[layoutId]?.slides?.[ref.index]?.end
@@ -827,7 +832,6 @@ export function sortByClosestMatch(array: any[], value: string, key = "name") {
         }
     })
 
-    // eslint-disable-next-line
     return array.sort((a, b) => b._similarityScore - a._similarityScore).map(({ _similarityScore, ...rest }) => rest)
 }
 

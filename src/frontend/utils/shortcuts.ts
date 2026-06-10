@@ -474,7 +474,7 @@ export async function togglePlayingMedia(e: Event | null = null, back = false, a
 
     if (api) {
         // get playing audio
-        let audioId = AudioPlayer.getAllPlaying(false)[0]
+        const audioId = AudioPlayer.getAllPlaying(false)[0]
         if (audioId) item = { id: audioId, type: "audio" }
         else if (currentlyPlaying) item = { id: currentlyPlaying, type: backgroundType === "player" ? "player" : "video" }
     }

@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { AccessType, Profile } from "../../../../types/Main"
-    import { SettingsTabs } from "../../../../types/Tabs"
+    import type { SettingsTabs } from "../../../../types/Tabs"
     import { actions, actionTags, activeProfile, categories, folders, overlayCategories, profiles, selectedProfile, special, stageShows, templateCategories, variableTags, timerTags } from "../../../stores"
     import { newToast } from "../../../utils/common"
     import { translateText } from "../../../utils/language"
@@ -39,7 +39,7 @@
     function updateAccess(key: string, id: string, accessType: AccessType) {
         if (!isAdmin) return
 
-        let data = currentProfile.access
+        const data = currentProfile.access
 
         let accessData = data[key] || {}
         if (id === "global" && accessType === "write" && !accessData[id]) accessData = {}
@@ -100,7 +100,7 @@
         return currentLocalLevel
     }
 
-    /////
+    /// //
 
     $: projectsList = sortByName(keysToID($folders).filter((a) => a.name && a.parent === "/"))
     $: projectsAccess = currentProfile.access.projects || {}
@@ -198,7 +198,7 @@
     }
 
     $: currentAction = currentProfile?.action || ""
-    let actionOptions = Object.entries($actions)
+    const actionOptions = Object.entries($actions)
         .map(([id, a]) => ({ id, name: a.name }))
         .sort((a, b) => a.name?.localeCompare(b.name))
 </script>

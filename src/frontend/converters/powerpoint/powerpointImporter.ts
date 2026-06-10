@@ -41,8 +41,8 @@ export function convertPowerpoint(files: any[]) {
             const fonts = getAllFontNames(contentPaths)
 
             const convertedSlides = pkg.getSlides()
-            let slides: { [key: string]: Slide } = {}
-            let layouts: SlideData[] = []
+            const slides: { [key: string]: Slide } = {}
+            const layouts: SlideData[] = []
             let firstSlideId = ""
             convertedSlides.forEach((slide) => {
                 if (!slide) return

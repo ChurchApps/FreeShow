@@ -36,12 +36,12 @@
     function removeAction(e: any, id: string) {
         e.preventDefault()
 
-        let actions = clone(overlay.actions || [])
-        let actionIndex = actions.findIndex((a) => a.id === id || getActionTriggerId(a.triggers?.[0]) === id)
+        const actions = clone(overlay.actions || [])
+        const actionIndex = actions.findIndex((a) => a.id === id || getActionTriggerId(a.triggers?.[0]) === id)
         if (actionIndex < 0) return
         actions.splice(actionIndex, 1)
 
-        let newData = { key: "actions", data: actions }
+        const newData = { key: "actions", data: actions }
         history({ id: "UPDATE", newData, oldData: { id: overlayId }, location: { page: "drawer", id: "overlay_key", override: `actions_${overlayId}` } })
     }
 </script>

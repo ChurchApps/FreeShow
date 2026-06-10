@@ -26,27 +26,27 @@
     // WIP image is flashing a bit in scripture transition none
 
     function startTransition() {
-        let itemTransition = item.actions?.transition ? clone(item.actions.transition) : null
+        const itemTransition = item.actions?.transition ? clone(item.actions.transition) : null
         if (itemTransition?.type === "none") itemTransition.duration = 0
 
         // SET TRANSITION
         // globalTransition also has style & slide transition
         // priority: item > slide > style > global
-        let transition = itemTransition || globalTransition
+        const transition = itemTransition || globalTransition
         if (transition?.type === "none") transition.duration = 0
 
         let inTransition = clone(transition.in || transition)
         let outTransition = clone(transition.out || transition)
-        let transitionBetween = clone(transition.between || transition)
+        const transitionBetween = clone(transition.between || transition)
         if (transitioningBetween) inTransition = clone(transitionBetween)
 
         let inDelay = 0
         let outDelay = 0
 
         // ITEM IN/OUT DELAY
-        let showDuration = $currentWindow === "output" || preview ? item?.actions?.showTimer || 0 : 0
+        const showDuration = $currentWindow === "output" || preview ? item?.actions?.showTimer || 0 : 0
         inDelay = showDuration ? showDuration * 1000 : 0
-        let hideDuration = $currentWindow === "output" || preview ? item?.actions?.hideTimer || 0 : 0
+        const hideDuration = $currentWindow === "output" || preview ? item?.actions?.hideTimer || 0 : 0
         outDelay = hideDuration ? hideDuration * 1000 : 0
 
         // EXTRA DELAY
@@ -87,8 +87,8 @@
 
         // SET
 
-        let stateId = uid(5)
-        let state = {
+        const stateId = uid(5)
+        const state = {
             item: clone(item),
             lines: clone(lines),
             outSlide: clone(outSlide),

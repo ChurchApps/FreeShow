@@ -35,7 +35,7 @@
 
     function getTempSlides(slideOffset: number) {
         if (slideOffset < 0) {
-            let includeLength = (currentSlide.previousSlides || [])?.length
+            const includeLength = (currentSlide.previousSlides || [])?.length
             return { items: currentSlide.previousSlides?.[includeLength - (slideOffset + 1 + includeLength)] }
         }
         if (slideOffset > 0) {
@@ -57,11 +57,11 @@
             .forEach((item, i) => {
                 if (itemNumber && itemNumber - 1 !== i) return
 
-                let text = getItemText(item)
+                const text = getItemText(item)
                 if (itemNumber || text.length) {
                     if (!oneItem) oneItem = item
                     else {
-                        let EMPTY_LINE: Line = { align: "", text: [{ style: "", value: "" }] }
+                        const EMPTY_LINE: Line = { align: "", text: [{ style: "", value: "" }] }
                         oneItem.lines!.push(EMPTY_LINE, ...(item.lines || []))
                     }
                 }
@@ -88,7 +88,7 @@
         if (firstActive) items2 = clone(items)
         else items1 = clone(items)
 
-        let currentlyLoading = !firstActive
+        const currentlyLoading = !firstActive
 
         if (timeout) clearTimeout(timeout)
 

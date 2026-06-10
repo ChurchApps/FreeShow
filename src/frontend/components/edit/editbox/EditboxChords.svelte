@@ -21,13 +21,13 @@
 
     let chordButtons: { item: Item; showRef: any; itemIndex: number; chord: any; lineIndex: number }[] = []
     async function chordClick(e: any) {
-        let add = e.target.closest(".add")
+        const add = e.target.closest(".add")
         if (add) {
             // only left click
             if (e.button !== 0) return
             if (e.ctrlKey || e.metaKey) storedChordsData.set({ romanKeysActive: !!$storedChordsData.romanKeysActive })
 
-            let pos = add.id.split("_")
+            const pos = add.id.split("_")
             let key = chordsAction
             if (!key) key = await waitForPopupData("choose_chord")
             if (!key) return
@@ -36,10 +36,10 @@
             return
         }
 
-        let btn = e.target.closest(".button")
+        const btn = e.target.closest(".button")
         if (!btn) return
 
-        let data = chordButtons[btn.id]
+        const data = chordButtons[btn.id]
         if (!data) return
 
         // for right click or rename click
@@ -65,7 +65,7 @@
         item.lines!.forEach((line, i) => {
             if (!line.text) return
 
-            let chords = clone(line.chords || [])
+            const chords = clone(line.chords || [])
 
             let html = ""
             let currentIndex = 0
@@ -75,15 +75,15 @@
                     return
                 }
 
-                let value = text.value.replaceAll("\n", "").replaceAll("&nbsp;", " ") || ""
+                const value = text.value.replaceAll("\n", "").replaceAll("&nbsp;", " ") || ""
 
-                let letters = value.split("")
+                const letters = value.split("")
                 letters.forEach((letter) => {
-                    let chordIndex = chords.findIndex((a) => a.pos === currentIndex)
+                    const chordIndex = chords.findIndex((a) => a.pos === currentIndex)
                     if (chordIndex >= 0) {
-                        let chord = chords[chordIndex]
+                        const chord = chords[chordIndex]
                         chordButtons.push({ item, showRef: ref, itemIndex: index, chord, lineIndex: i })
-                        let buttonIndex = chordButtons.length - 1
+                        const buttonIndex = chordButtons.length - 1
                         html += `<span id="${buttonIndex}" class="context #chord chord button">${chord.key}</span>`
                         chords.splice(chordIndex, 1)
                     }
@@ -102,7 +102,7 @@
 
             chords.forEach((chord, ci) => {
                 chordButtons.push({ item, showRef: ref, itemIndex: index, chord, lineIndex: i })
-                let buttonIndex = chordButtons.length - 1
+                const buttonIndex = chordButtons.length - 1
                 html += `<span id="${buttonIndex}" class="context #chord chord button" style="transform: translate(${60 * (ci + 1)}px, -80%);">${chord.key}</span>`
             })
 

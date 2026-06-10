@@ -2,7 +2,7 @@
     import { onDestroy } from "svelte"
     import { uid } from "uid"
     import { BLACKMAGIC, NDI, OUTPUT } from "../../../../types/Channels"
-    import { Option } from "../../../../types/Main"
+    import type { Option } from "../../../../types/Main"
     import type { Output } from "../../../../types/Output"
     import { AudioAnalyser } from "../../../audio/audioAnalyser"
     import { activePage, activePopup, activeStage, activeStyle, alertMessage, currentOutputSettings, ndiData, os, outputDisplay, outputs, saved, settingsTab, stageShows, styles, toggleOutputEnabled } from "../../../stores"
@@ -29,7 +29,7 @@
 
     const autoRevert: string[] = ["kioskMode"] // changing these settings could break some things in some cases
     const revertTime = 5 // seconds
-    let reverted: string[] = []
+    const reverted: string[] = []
 
     function updateOutput(key: string, value: any, outputId = "") {
         if (!outputId) outputId = currentOutput?.id || ""
@@ -83,7 +83,7 @@
         // TODO: history
         outputs.update((a: any) => {
             if (key.includes(".")) {
-                let split = key.split(".")
+                const split = key.split(".")
                 a[outputId][split[0]][split[1]] = value
                 if (split[1] === "lines" && !Number(value)) delete a[outputId][split[0]][split[1]]
             } else {
@@ -171,13 +171,13 @@
 
     // ndi
     function updateNdiData(e: any, key: string) {
-        let id = currentOutput?.id
+        const id = currentOutput?.id
         if (!id) return
 
         let newData = $outputs[id]?.ndiData
         if (!newData) newData = {}
 
-        let value = e?.detail?.id ?? e
+        const value = e?.detail?.id ?? e
 
         newData[key] = value
 
@@ -199,10 +199,10 @@
 
     // webrtc
     function updateWebrtcData(e: any, key: string) {
-        let id = currentOutput?.id
+        const id = currentOutput?.id
         if (!id) return
 
-        let value = e?.detail?.id ?? e
+        const value = e?.detail?.id ?? e
         const updated = updateOutputWebrtcData(id, key, value)
         if (!updated) return
 
@@ -229,12 +229,12 @@
     }
 
     function updateBlackmagicData(e: any, key: string) {
-        let id = currentOutput?.id
+        const id = currentOutput?.id
         if (!id) return
 
         let newData = $outputs[id]?.blackmagicData
         if (!newData) newData = {}
-        let value = e?.detail?.id || e?.detail?.name || e
+        const value = e?.detail?.id || e?.detail?.name || e
 
         if (key === "deviceId") {
             const usedIds = getUsedBlackmagicDeviceIds(id)
@@ -252,25 +252,25 @@
         // wait for current value to update
         setTimeout(() => {
             if (key === "deviceId") {
-                let device = blackmagicDevices.find((a) => a.id === value)
+                const device = blackmagicDevices.find((a) => a.id === value)
                 if (!device) return
 
-                let displayModes = device.data?.displayModes || []
+                const displayModes = device.data?.displayModes || []
                 updateBlackmagicData(displayModes, "displayModes")
                 if (displayModes.length) {
                     // try setting to "preferred" modes, or set to first available
                     updateBlackmagicData(displayModes.find((a) => a.name === "1080i59.94" || a.name === "1080p29.97")?.name || displayModes[0]?.name, "displayMode")
                 }
             } else if (key === "displayMode") {
-                let device = blackmagicDevices.find((a) => a.id === currentOutput?.blackmagicData?.deviceId)
+                const device = blackmagicDevices.find((a) => a.id === currentOutput?.blackmagicData?.deviceId)
                 if (!device) return
 
-                let displayModes = device.data?.displayModes || []
-                let modeData = displayModes.find((a) => a.name === value) || {}
+                const displayModes = device.data?.displayModes || []
+                const modeData = displayModes.find((a) => a.name === value) || {}
                 if (!modeData.width) return
 
                 // pixel format
-                let pixelFormats = (modeData.videoModes || []).map((format) => ({ name: format }))
+                const pixelFormats = (modeData.videoModes || []).map((format) => ({ name: format }))
                 updateBlackmagicData(pixelFormats, "pixelFormats")
                 updateBlackmagicData(pixelFormats[0]?.name, "pixelFormat")
 
@@ -297,7 +297,7 @@
 
     // RECEIVE BLACKMAGIC DEVICES
 
-    let listenerId = uid()
+    const listenerId = uid()
     onDestroy(() => destroy(BLACKMAGIC, listenerId))
     const receiveBMD = {
         GET_DEVICES: (data) => {

@@ -29,7 +29,7 @@
     }
 
     function reset() {
-        let deleteKeys: string[] = ["audioType", "volume", "pitch", "tempo", "fromTime", "toTime"]
+        const deleteKeys: string[] = ["audioType", "volume", "pitch", "tempo", "fromTime", "toTime"]
 
         if (currentMedia.volume) setTimeout(() => AudioPlayer.updateVolume(audioId))
         if (currentMedia.pitch) setTimeout(() => AudioPlayer.setPitch(audioId, 0))

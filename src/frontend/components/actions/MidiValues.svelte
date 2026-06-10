@@ -34,12 +34,12 @@
         change()
     }
 
-    let dispatch = createEventDispatcher()
+    const dispatch = createEventDispatcher()
     function change() {
         dispatch("change", midi)
     }
 
-    let types = [
+    const types = [
         { value: "noteon", label: "noteon" },
         { value: "noteoff", label: "noteoff" },
         { value: "control", label: "control" }
@@ -76,7 +76,7 @@
         setTimeout(() => setValues("note", 0), 50)
     }
 
-    let listenerId = receiveToMain(ToMain.RECEIVE_MIDI2, (data) => {
+    const listenerId = receiveToMain(ToMain.RECEIVE_MIDI2, (data) => {
         if (!autoValues || !data) return
         if (data.id === $popupData.id && data.type === midi.type) {
             midi.values = data.values

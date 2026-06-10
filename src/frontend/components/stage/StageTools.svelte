@@ -58,24 +58,24 @@
     }
 
     function resetStageStyle() {
-        let stageOutputId = getStageOutputId($outputs)
-        let resolution = getStageResolution(stageOutputId, $outputs)
-        let defaultItemStyle = {
+        const stageOutputId = getStageOutputId($outputs)
+        const resolution = getStageResolution(stageOutputId, $outputs)
+        const defaultItemStyle = {
             width: `${resolution.width / 2}px`,
             height: `${resolution.height / 2}px`,
             left: `${resolution.width / 4}px`,
             top: `${resolution.height / 4}px`
         }
 
-        let stageId = $activeStage.id
+        const stageId = $activeStage.id
         if (!stageId) return
 
         const itemKeys = getItemKeys()
         const activeItems = $activeStage.items?.length ? $activeStage.items : Object.keys($stageShows[stageId].items)
-        let textStyles: { [key: string]: string } = {}
-        let itemStyles: { [key: string]: string } = {}
+        const textStyles: { [key: string]: string } = {}
+        const itemStyles: { [key: string]: string } = {}
         activeItems.forEach((key) => {
-            let item = $stageShows[stageId].items[key]
+            const item = $stageShows[stageId].items[key]
             const styles = getStyles(item.style)
 
             let textStyle = ""
@@ -128,8 +128,8 @@
     function keydown(e: KeyboardEvent) {
         if (document.activeElement?.closest(".edit")) return
 
-        let stageId = $activeStage.id
-        let activeItems = $activeStage.items
+        const stageId = $activeStage.id
+        const activeItems = $activeStage.items
 
         if (!stageId || !activeItems.length) return
 
@@ -149,15 +149,15 @@
         let value = ["ArrowLeft", "ArrowUp"].includes(e.key) ? -1 : 1
         if (e.ctrlKey || e.metaKey) value *= 10
 
-        let itemStyles: { [key: string]: string } = {}
+        const itemStyles: { [key: string]: string } = {}
 
         activeItems.forEach((itemId) => {
-            let item = $stageShows[stageId]?.items?.[itemId] || {}
-            let style = item.style
+            const item = $stageShows[stageId]?.items?.[itemId] || {}
+            const style = item.style
             // if (Array.isArray(style)) style = style[0]
             console.log(style)
-            let previousItemValue = Number(getStyles(style, true)?.[key] || "0")
-            let newValue = previousItemValue + value + "px"
+            const previousItemValue = Number(getStyles(style, true)?.[key] || "0")
+            const newValue = previousItemValue + value + "px"
 
             itemStyles[itemId] = addStyleString(style, [key, newValue])
         })

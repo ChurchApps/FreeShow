@@ -17,7 +17,7 @@
     }
 
     let showDropdown = false
-    let listScrollY = 0
+    const listScrollY = 0
 
     // TEMPLATE
 

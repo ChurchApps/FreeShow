@@ -7,15 +7,15 @@
     import T from "../../helpers/T.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
 
-    let colors = true
+    const colors = true
 
     function click(icon: string) {
-        let isDefault = customIcons[icon]
+        const isDefault = customIcons[icon]
 
         customizedIcons.update((a) => {
             if (isDefault) {
-                let disabledIcons = a.disabled
-                let iconIndex = disabledIcons.indexOf(icon)
+                const disabledIcons = a.disabled
+                const iconIndex = disabledIcons.indexOf(icon)
                 if (iconIndex >= 0) disabledIcons.splice(iconIndex, 1)
                 else disabledIcons.push(icon)
                 a.disabled = disabledIcons
@@ -42,14 +42,14 @@
 
     function deleteCustom(iconId: string) {
         customizedIcons.update((a) => {
-            let iconIndex = a.svg.findIndex((a) => a.id === iconId)
+            const iconIndex = a.svg.findIndex((a) => a.id === iconId)
             if (iconIndex >= 0) a.svg.splice(iconIndex, 1)
 
             return a
         })
     }
 
-    let back: Popups | null = $popupData.back || null
+    const back: Popups | null = $popupData.back || null
     popupData.set({})
 </script>
 

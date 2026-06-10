@@ -59,7 +59,7 @@
     function updateScroll() {
         if (skipScrolling) return
 
-        let index = $activeEdit.slide! - 1
+        const index = $activeEdit.slide! - 1
         setTimeout(() => {
             if (index >= 0 && scrollElem) offset = (scrollElem.querySelector(".grid")?.children?.[index] as HTMLElement)?.offsetTop || 5 - 5
         }, 10)

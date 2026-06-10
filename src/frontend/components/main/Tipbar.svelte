@@ -15,13 +15,13 @@
         // update: "FreeShow has been updated to the latest version! Check out the new features and improvements we've made for a better experience."
     }
 
-    let activeMessage = "donate"
-    let message = messages[activeMessage]
-    let key = `tipbar_${activeMessage}`
+    const activeMessage = "donate"
+    const message = messages[activeMessage]
+    const key = `tipbar_${activeMessage}`
 
-    let lastClosed = $special[`${key}_closed`] || 0
-    let lastInteracted = $special[`${key}_interacted`] || 0
-    let now = Date.now()
+    const lastClosed = $special[`${key}_closed`] || 0
+    const lastInteracted = $special[`${key}_interacted`] || 0
+    const now = Date.now()
     // show again after 7 days (or 14 days if interacted) & 30% chance & until the end of 2025 (for now)
     let isClosed = (lastInteracted ? now - lastInteracted < ONE_DAY * 14 : now - lastClosed < ONE_DAY * 7) || Math.random() > 0.3 || new Date().getFullYear() !== 2025
 

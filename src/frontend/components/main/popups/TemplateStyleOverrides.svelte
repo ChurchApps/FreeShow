@@ -16,7 +16,7 @@
     import Tip from "../Tip.svelte"
 
     const initialData = $popupData
-    let templateId: string = initialData.templateId || ""
+    const templateId: string = initialData.templateId || ""
 
     $: template = $templates[templateId] || {}
     $: overrides = clone(template.settings?.styleOverrides || [])

@@ -11,8 +11,8 @@
     function drawParticle() {
         if (drawTimeout) return
 
-        let particle: any = { ...$draw }
-        let size = settings.size || 100
+        const particle: any = { ...$draw }
+        const size = settings.size || 100
         particle.size = Math.floor(Math.random() * 100) + size / 2
         particles = [...particles, particle]
 

@@ -62,7 +62,7 @@
         videoData = { ...$videosData[outputId], muted: true }
     }
 
-    let prevId: string | undefined = undefined
+    let prevId: string | undefined
     $: if (mediaPath !== prevId) {
         videoTime = 0
         autoPause = true
@@ -189,10 +189,10 @@
     function playVideo(startAt = 0) {
         if ($outLocked) return
 
-        let loop = shouldLoop
-        let muted = shouldBeMuted
+        const loop = shouldLoop
+        const muted = shouldBeMuted
         if (videoType === "foreground" || (videoType !== "background" && !shouldLoop)) clearSlide()
-        let bg: any = { type, startAt, muted, loop, ...mediaStyle, ignoreLayer: videoType === "foreground" }
+        const bg: any = { type, startAt, muted, loop, ...mediaStyle, ignoreLayer: videoType === "foreground" }
 
         if (type === "player") bg.id = mediaPath
         else {
@@ -234,8 +234,8 @@
     // SUBTITLE
 
     function changeSubtitleName(e: any) {
-        let subtitleIndex = e.detail?.id?.slice("subtitle_".length)
-        let value = e.detail.value
+        const subtitleIndex = e.detail?.id?.slice("subtitle_".length)
+        const value = e.detail.value
         if (subtitleIndex === undefined || !value) return
 
         media.update((a) => {
@@ -248,11 +248,11 @@
     }
 
     async function subtitlePicked(e: any) {
-        let path = e.detail || ""
+        const path = e.detail || ""
         let content = (await requestMain(Main.READ_FILE, { path }))?.content
         if (!content) return
 
-        let extension = getExtension(path)
+        const extension = getExtension(path)
         if (extension === "srt") {
             content = SRTtoVTT(content)
         }
@@ -263,8 +263,8 @@
             if (!a[mediaPath]) a[mediaPath] = {}
             if (!a[mediaPath].tracks) a[mediaPath].tracks = []
 
-            let name = removeExtension(getFileName(path)).replaceAll(" ", "_")
-            let id = name || uid(5)
+            const name = removeExtension(getFileName(path)).replaceAll(" ", "_")
+            const id = name || uid(5)
             a[mediaPath].tracks!.push({ lang: id, name, vtt: content })
 
             activeRename.set("subtitle_" + (a[mediaPath].tracks!.length - 1))
@@ -304,7 +304,7 @@
             // sort by time
             a[showId] = a[showId].sort((a, b) => a.time - b.time)
 
-            let markerIndex = a[showId].findIndex((a) => a.time === newMarker.time)
+            const markerIndex = a[showId].findIndex((a) => a.time === newMarker.time)
             activeRename.set("marker_" + markerIndex)
 
             return a
@@ -312,7 +312,7 @@
     }
 
     function changeName(e: any) {
-        let currentMarker = e.detail?.id?.slice("marker_".length)
+        const currentMarker = e.detail?.id?.slice("marker_".length)
         if (currentMarker === undefined) return
 
         videoMarkers.update((a) => {

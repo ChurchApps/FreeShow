@@ -8,9 +8,9 @@
     export let inputs: TInput[]
     export let title = ""
 
-    let dispatch = createEventDispatcher()
+    const dispatch = createEventDispatcher()
     function changed(e: any, input: TInput) {
-        let value = e.detail
+        const value = e.detail
         dispatch("change", clone({ ...input, value }))
     }
 </script>

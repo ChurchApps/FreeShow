@@ -156,7 +156,7 @@
 
     $: playbackRate = item.speed ?? 1
 
-    let shouldLoop = item.loop !== false
+    const shouldLoop = item.loop !== false
 </script>
 
 {#if mediaPath}

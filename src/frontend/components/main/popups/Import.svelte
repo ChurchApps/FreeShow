@@ -1,7 +1,7 @@
 <script lang="ts">
     import { tick } from "svelte"
     import { Main } from "../../../../types/IPC/Main"
-    import { Popups } from "../../../../types/Main"
+    import type { Popups } from "../../../../types/Main"
     import { importFromClipboard } from "../../../converters/importHelpers"
     import { sendMain } from "../../../IPC/main"
     import { activePopup, alertMessage, popupData } from "../../../stores"
@@ -13,7 +13,7 @@
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import Tip from "../Tip.svelte"
 
-    let mode = $popupData.mode
+    const mode = $popupData.mode
     popupData.set({})
 
     const freeshow_formats = [
@@ -204,7 +204,7 @@
                             }
                         })
                     } else {
-                        let name = translateText(format.name)
+                        const name = translateText(format.name)
                         sendMain(Main.IMPORT, { channel: format.id, format: { ...format, name } })
                         displayTutorial(format)
                     }
@@ -323,7 +323,7 @@
                             }
                         })
                     } else {
-                        let name = translateText(format.name)
+                        const name = translateText(format.name)
                         sendMain(Main.IMPORT, { channel: format.id, format: { ...format, name } })
                         displayTutorial(format)
                     }

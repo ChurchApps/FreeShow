@@ -23,7 +23,7 @@
 
         // check that current edit slide exists
         if ($activeEdit?.slide !== null && $activeEdit?.slide !== undefined) {
-            let ref = getLayoutRef()
+            const ref = getLayoutRef()
             if (ref[$activeEdit?.slide]) index = $activeEdit.slide + 1
         }
 
@@ -46,11 +46,11 @@
         editHistory.update((a) => {
             if (!$activeEdit.id && currentShowId && !$shows[currentShowId]) return a
 
-            let edit: any = { edit: clone($activeEdit) }
+            const edit: any = { edit: clone($activeEdit) }
             edit.id = edit.edit.id || currentShowId
             if (!edit.id) return a
 
-            let type = edit.edit.type || "show"
+            const type = edit.edit.type || "show"
             edit.icon = type === "show" ? "slide" : type // showIcon
             if (edit.icon === "media") edit.icon = getMediaType(getExtension(edit.id))
             else if (edit.icon === "audio") edit.icon = "music"
@@ -73,7 +73,7 @@
             a.push(edit)
 
             // remove duplicates
-            let ids: string[] = []
+            const ids: string[] = []
             a = a
                 .reverse()
                 .filter((a) => {
@@ -100,7 +100,7 @@
         }
     }
 
-    let profile = getAccess("shows")
+    const profile = getAccess("shows")
     $: isLocked = $shows[currentShowId]?.locked || profile.global === "read" || profile[$shows[currentShowId]?.category || ""] === "read"
 </script>
 

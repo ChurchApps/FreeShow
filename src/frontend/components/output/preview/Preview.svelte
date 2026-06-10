@@ -60,8 +60,8 @@
         // group shortcuts
         if ((outSlide?.id || $activeShow) && !e.ctrlKey && !e.metaKey && !$outLocked) {
             // play slide with custom shortcut key
-            let layoutRef = getLayoutRef(outSlide?.id || "active")
-            let slideShortcutMatch = layoutRef.findIndex((ref) => ref.data?.actions?.slide_shortcut?.key === e.key)
+            const layoutRef = getLayoutRef(outSlide?.id || "active")
+            const slideShortcutMatch = layoutRef.findIndex((ref) => ref.data?.actions?.slide_shortcut?.key === e.key)
             if (slideShortcutMatch > -1 && !e.altKey && !e.shiftKey) {
                 playSlideAtIndex(slideShortcutMatch)
                 e.preventDefault()
@@ -81,7 +81,7 @@
 
                 if (numberKeyTimeout) clearTimeout(numberKeyTimeout)
                 numberKeyTimeout = setTimeout(() => {
-                    let slideIndex = Number(previousNumberKey) - 1
+                    const slideIndex = Number(previousNumberKey) - 1
                     playSlideAtIndex(slideIndex)
 
                     numberKeyTimeout = null
@@ -132,19 +132,19 @@
     }
 
     function checkGroupShortcuts(e: any) {
-        let currentShowId = outSlide?.id || ($activeShow !== null ? ($activeShow.type === undefined || $activeShow.type === "show" ? $activeShow.id : null) : null)
+        const currentShowId = outSlide?.id || ($activeShow !== null ? ($activeShow.type === undefined || $activeShow.type === "show" ? $activeShow.id : null) : null)
         if (!currentShowId) return
 
-        let showRef = getLayoutRef(currentShowId)
-        let groupIds = showRef.map((a) => a.id)
-        let showGroups = groupIds.length ? _show(currentShowId).slides(groupIds).get() : []
+        const showRef = getLayoutRef(currentShowId)
+        const groupIds = showRef.map((a) => a.id)
+        const showGroups = groupIds.length ? _show(currentShowId).slides(groupIds).get() : []
         if (!showGroups.length) return
 
         // Get both the actual key and normalized key to support all keyboard layouts
         const actualKey = e.key
         const normalizedKey = getNormalizedKey(e)
 
-        let globalGroupIds: string[] = []
+        const globalGroupIds: string[] = []
         Object.entries($groups).forEach(([groupId, group]) => {
             if (typeof group.shortcut !== "string") return
 
@@ -162,7 +162,7 @@
     }
 
     function playSlideAtIndex(index: number) {
-        let slideRef = getLayoutRef()
+        const slideRef = getLayoutRef()
         if (index === -1) index = slideRef.length - 1
         if (!slideRef[index]) return
 
@@ -175,7 +175,7 @@
     let autoChange = true
     $: if (outputId) autoChange = true
     $: if (autoChange && ($outputs || $overlayTimers || $activeTimers || $playingMetronome)) {
-        let active = getActiveClear(!isOutCleared("transition"), Object.keys($playingAudio).length || $playingMetronome, !isOutCleared("overlays") || !isOutCleared("effects"), !isOutCleared("slide") && (outputSlideHasContent(currentOutput) || isOutCleared("background")), !isOutCleared("background"))
+        const active = getActiveClear(!isOutCleared("transition"), Object.keys($playingAudio).length || $playingMetronome, !isOutCleared("overlays") || !isOutCleared("effects"), !isOutCleared("slide") && (outputSlideHasContent(currentOutput) || isOutCleared("background")), !isOutCleared("background"))
         if (active !== activeClear) activeClear = active
     }
     // enable autochange again if active has no value

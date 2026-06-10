@@ -51,7 +51,7 @@
         if (!listElem) return
 
         let currentId = active.id
-        let slideIndex = active.id === outputShowId ? outputIndex || 0 : 0
+        const slideIndex = active.id === outputShowId ? outputIndex || 0 : 0
         let currentType = active.type
 
         let index = active.index
@@ -66,12 +66,12 @@
         if (!outputShowId && previousId && previousId === currentId) return
         previousId = currentId
 
-        let id = "id_" + getId(currentId) + "_" + index
-        let elem = listElem.querySelector("#" + id) as HTMLElement
+        const id = "id_" + getId(currentId) + "_" + index
+        const elem = listElem.querySelector("#" + id) as HTMLElement
         if (!elem) return
-        let elemTop = elem?.offsetTop || 0
+        const elemTop = elem?.offsetTop || 0
         const slide = elem?.querySelector(".grid")?.children[slideIndex] as HTMLElement
-        let slideTop = slide ? elemTop + slide.offsetTop : elemTop
+        const slideTop = slide ? elemTop + slide.offsetTop : elemTop
 
         // don't scroll if already visible
         const currentScrollPos = listElem.closest(".center")?.scrollTop || 0
@@ -130,20 +130,20 @@
 
         if (sidebarClosed) return
 
-        let scrollTop = e.target.scrollTop
+        const scrollTop = e.target.scrollTop
 
         let focusedId = ""
-        let items = listElem.querySelectorAll(".focusId")
+        const items = listElem.querySelectorAll(".focusId")
         ;[...items].forEach((a) => {
-            let top = (a as HTMLElement).offsetTop - fromTop
+            const top = (a as HTMLElement).offsetTop - fromTop
             if (top <= scrollTop) focusedId = a.id
         })
 
         if (!focusedId) return
 
         // set to activeFocus
-        let index = Number(focusedId.split("_")[2])
-        let projectItem = project.shows[index]
+        const index = Number(focusedId.split("_")[2])
+        const projectItem = project.shows[index]
         if (!projectItem) return
 
         activeFocus.set({ id: projectItem.id, index, type: projectItem.type })

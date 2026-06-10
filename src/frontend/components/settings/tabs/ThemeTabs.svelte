@@ -12,7 +12,7 @@
     $: themeNames = getThemesArray($themes)
 
     function getThemesArray(themes: { [key: string]: Themes }) {
-        let names: any[] = []
+        const names: any[] = []
         Object.entries(themes).forEach(([id, obj]) => {
             names.push({ name: obj.default ? `themes.${obj.name}` : obj.name, id, default: obj.default })
         })
@@ -28,16 +28,16 @@
     }
 
     function updateTheme(e: any, id: null | string, key = "colors") {
-        let value: string = e.target?.value ?? e
+        const value: string = e.target?.value ?? e
 
-        let themeId = $selected.data[0]?.id || $theme
+        const themeId = $selected.data[0]?.id || $theme
 
         if (themeId === "default") {
             if (!value) return
 
             // duplicate
-            let thisTheme = clone($themes[themeId])
-            let data = {
+            const thisTheme = clone($themes[themeId])
+            const data = {
                 ...thisTheme,
                 default: false,
                 name: (key === "name" ? value : thisTheme.name) + " 2"

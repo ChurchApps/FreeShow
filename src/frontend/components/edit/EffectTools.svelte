@@ -14,7 +14,7 @@
     import EditValues from "./tools/EditValues.svelte"
     import { effectSections } from "./values/effects"
 
-    let tabs: TabsObj = {
+    const tabs: TabsObj = {
         effect: { name: "items.effect", icon: "effects" },
         // filters: { name: "edit.filters", icon: "filter" },
         options: { name: "edit.options", icon: "options", overflow: true }
@@ -41,7 +41,7 @@
 
     function deleteItem(index: number) {
         // not tested:
-        let newOpenedMenus: number[] = []
+        const newOpenedMenus: number[] = []
         Object.keys(openedMenus).forEach((menuIndex: string | number) => {
             menuIndex = Number(menuIndex)
             if (!openedMenus[menuIndex] || menuIndex === index) return

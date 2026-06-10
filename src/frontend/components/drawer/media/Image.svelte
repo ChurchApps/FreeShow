@@ -27,7 +27,7 @@
         }
         loaded = false
 
-        let time = 500 * (retryCount + 1)
+        const time = 500 * (retryCount + 1)
         setTimeout(() => {
             retryCount++
         }, time)

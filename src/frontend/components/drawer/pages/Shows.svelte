@@ -143,7 +143,7 @@
             if (e.key === "ArrowDown" || e.key === "ArrowUp") {
                 e.preventDefault()
                 createFromSearch = false
-                let currentIndex = filteredShows.findIndex((a) => a.id === $activeShow?.id)
+                const currentIndex = filteredShows.findIndex((a) => a.id === $activeShow?.id)
                 let newIndex = 0
                 if (currentIndex < 0) newIndex = e.key === "ArrowDown" ? 0 : filteredShows.length - 1
                 else newIndex = e.key === "ArrowDown" ? currentIndex + 1 : currentIndex - 1
@@ -164,13 +164,13 @@
         if (e.key === "ArrowRight") {
             if (!$activeShow || ($activeShow.type !== undefined && $activeShow.type !== "show")) id = filteredShows[0].id
             else {
-                let currentIndex: number = filteredShows.findIndex((a) => a.id === $activeShow!.id)
+                const currentIndex: number = filteredShows.findIndex((a) => a.id === $activeShow!.id)
                 if (currentIndex < filteredShows.length - 1) id = filteredShows[currentIndex + 1].id
             }
         } else if (e.key === "ArrowLeft") {
             if (!$activeShow || ($activeShow.type !== undefined && $activeShow.type !== "show")) id = filteredShows[filteredShows.length - 1].id
             else {
-                let currentIndex: number = filteredShows.findIndex((a) => a.id === $activeShow!.id)
+                const currentIndex: number = filteredShows.findIndex((a) => a.id === $activeShow!.id)
                 if (currentIndex > 0) id = filteredShows[currentIndex - 1].id
             }
         }
@@ -210,7 +210,7 @@
 
         const { ctrl } = e.detail
         if (ctrl) {
-            let show = new ShowObj()
+            const show = new ShowObj()
             const selectedIndex = $activeShow?.index === undefined ? undefined : $activeShow.index + 1
             history({ id: "UPDATE", newData: { data: show, remember: { project: $activeProject, index: selectedIndex } }, location: { page: "show", id: "show" } })
         } else {

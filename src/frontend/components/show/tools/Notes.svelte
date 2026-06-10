@@ -9,7 +9,7 @@
     export let autofocus = false
 
     const TIME = 100
-    let dispatch = createEventDispatcher()
+    const dispatch = createEventDispatcher()
     let timeout: NodeJS.Timeout | null = null
 
     function input() {

@@ -34,9 +34,9 @@
         else if (inputId === "volume" && value?.volume === undefined) updateValue("volume", 1)
     })
 
-    let dispatch = createEventDispatcher()
+    const dispatch = createEventDispatcher()
     function updateValue(key: string, e) {
-        let newValue = e?.detail ?? e?.target?.value ?? e
+        const newValue = e?.detail ?? e?.target?.value ?? e
         if (key) value = { ...value, [key]: newValue }
         else value = newValue
 
@@ -74,8 +74,8 @@
     let screens: { name: string; id: string }[] = []
     if (inputId === "screen") getScreens()
     async function getScreens() {
-        let screenList = (await requestMain(Main.GET_SCREENS)) || []
-        let windowList = (await requestMain(Main.GET_WINDOWS)) || []
+        const screenList = (await requestMain(Main.GET_SCREENS)) || []
+        const windowList = (await requestMain(Main.GET_WINDOWS)) || []
         // screens = sortByName(screensList)
         screens = [...screenList, ...windowList]
     }

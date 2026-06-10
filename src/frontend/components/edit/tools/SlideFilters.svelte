@@ -4,7 +4,7 @@
     import { history } from "../../helpers/history"
     import { getLayoutRef } from "../../helpers/show"
     import { addFilterString } from "../scripts/textStyle"
-    import { EditInput2 } from "../values/boxes"
+    import type { EditInput2 } from "../values/boxes"
     import { slideFilterSections } from "../values/filters"
     import EditValues from "./EditValues.svelte"
 
@@ -39,8 +39,8 @@
         //     return
         // }
 
-        let indexes = [currentSlideNumber]
-        let override = [currentId, currentSlideNumber, input.id, input.key].join("_")
+        const indexes = [currentSlideNumber]
+        const override = [currentId, currentSlideNumber, input.id, input.key].join("_")
         history({ id: "SHOW_LAYOUT", newData: { key: input.id, data: value, indexes }, location: { page: "edit", override } })
     }
 </script>

@@ -46,14 +46,14 @@
 
         // Ctrl + Arrow Up/Down = change active drawer sub tab
         if (e.key === "ArrowDown") {
-            let index = flatSections.findIndex((a) => a.id === active)
+            const index = flatSections.findIndex((a) => a.id === active)
             let nextIndex = index + 1
 
             while (nextIndex < flatSections.length && notATab(flatSections[nextIndex])) nextIndex++
 
             if (nextIndex < flatSections.length) setSubTab(flatSections[nextIndex].id)
         } else if (e.key === "ArrowUp") {
-            let index = flatSections.findIndex((a) => a.id === active)
+            const index = flatSections.findIndex((a) => a.id === active)
             let nextIndex = index - 1
 
             while (nextIndex >= 0 && notATab(flatSections[nextIndex])) nextIndex--

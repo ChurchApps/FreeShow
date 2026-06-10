@@ -25,7 +25,7 @@
     import TemplateStyle from "./tools/TemplateStyle.svelte"
     import { itemBoxes } from "./values/boxes"
 
-    let tabs: TabsObj = {
+    const tabs: TabsObj = {
         text: { name: "items.text", icon: "text" },
         item: { name: "tools.item", icon: "item" },
         items: { name: "tools.items", icon: "items" },
@@ -89,7 +89,7 @@
             return
         }
 
-        let currentCount = allSlideItems.length
+        const currentCount = allSlideItems.length
         if (previousCount === currentCount) return
         previousCount = currentCount
 
@@ -153,7 +153,7 @@
     // PASTE
 
     function pasteStyle(applyToAll = false, applyToFollowing = false) {
-        let styles = $copyPasteEdit[type]
+        const styles = $copyPasteEdit[type]
         if (!Array.isArray(styles)) return
 
         // get selected slide(s)
@@ -207,7 +207,7 @@
             if (active === "slide") {
                 if ($activeEdit.type !== "template") return
 
-                let id = $activeEdit?.id || ""
+                const id = $activeEdit?.id || ""
                 history({ id: "UPDATE", newData: { key: "settings", data: {} }, oldData: { id }, location: { page: "edit", id: "template_settings", override: id } })
                 return
             }
@@ -237,8 +237,8 @@
             return
         }
 
-        let ref = getLayoutRef()
-        let slideId = ref[activeSlide]?.id
+        const ref = getLayoutRef()
+        const slideId = ref[activeSlide]?.id
         if (!slideId) return
 
         storedEditMenuState.set({})
@@ -253,7 +253,7 @@
         }
 
         if (active === "filters") {
-            let indexes = [activeSlide]
+            const indexes = [activeSlide]
             if (typeof indexes[0] !== "number") return
 
             history({ id: "SHOW_LAYOUT", newData: { key: "filterEnabled", data: undefined, indexes } }) // pre 1.4.4
@@ -274,10 +274,10 @@
 
         if (active !== "text") return
 
-        let values: any = []
+        const values: any = []
         items.forEach((item) => {
             if (item.lines) {
-                let text = item.lines.map((a) => {
+                const text = item.lines.map((a) => {
                     return a.text.map((a) => {
                         a.style = ""
                         return a
@@ -327,17 +327,17 @@
             let value = ["ArrowLeft", "ArrowUp"].includes(e.key) ? -1 : 1
             if (e.ctrlKey || e.metaKey) value *= 10
 
-            let selectedItems: number[] = $activeEdit.items || allSlideItems.map((_, i) => i)
+            const selectedItems: number[] = $activeEdit.items || allSlideItems.map((_, i) => i)
             if (!selectedItems.length) return
 
-            let values: string[] = []
+            const values: string[] = []
 
             selectedItems.forEach((index) => {
-                let item = allSlideItems[index]
+                const item = allSlideItems[index]
                 if (!item) return
 
-                let previousItemValue = Number(getStyles(item.style, true)?.[key] || "0")
-                let newValue = previousItemValue + value + "px"
+                const previousItemValue = Number(getStyles(item.style, true)?.[key] || "0")
+                const newValue = previousItemValue + value + "px"
 
                 values.push(addStyleString(item.style, [key, newValue]))
             })
@@ -352,8 +352,8 @@
                 return
             }
 
-            let ref = getLayoutRef()
-            let slideId = ref[activeSlide ?? ""]?.id
+            const ref = getLayoutRef()
+            const slideId = ref[activeSlide ?? ""]?.id
 
             history({
                 id: "setItems",
@@ -364,7 +364,7 @@
     }
 
     $: slideActive = !!((slides?.length && showIsActive && activeSlide !== null) || activeId)
-    let profile = getAccess("shows")
+    const profile = getAccess("shows")
 
     $: currentShow = $showsCache[$activeShow?.id || ""]
     $: isSlideLockedFn = () => {

@@ -24,7 +24,7 @@
         videoElem.srcObject = null
     }
 
-    let dispatch = createEventDispatcher()
+    const dispatch = createEventDispatcher()
     function loaded() {
         videoElem?.play()
         dispatch("loaded", true)

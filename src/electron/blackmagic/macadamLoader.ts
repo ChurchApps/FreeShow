@@ -1,4 +1,3 @@
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 let _macadam: any // undefined = not yet tried; null = unavailable
 
 // lazy-load macadam to avoid COM initialization at startup on Windows

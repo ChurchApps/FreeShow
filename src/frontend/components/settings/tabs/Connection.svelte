@@ -36,7 +36,7 @@
     // const randomNumber = (from: number, to: number): number => Math.floor(Math.random() * (to - from)) + from
 
     function toggleServer(e: any, id: string) {
-        let value = e.detail
+        const value = e.detail
 
         disabledServers.update((a) => {
             a[id] = !value
@@ -61,7 +61,7 @@
     }
 
     function toggleCompanion(e: any) {
-        let value = e.detail
+        const value = e.detail
 
         companion.update((a) => {
             a.enabled = value
@@ -77,7 +77,7 @@
     }
 
     // restart servers on toggle on/off
-    let initialServerState = JSON.stringify($disabledServers)
+    const initialServerState = JSON.stringify($disabledServers)
     $: if (JSON.stringify($disabledServers) !== initialServerState) restart()
 
     $: if ($activeTriggerFunction.includes("open_connection_") && ip !== "localhost") openConnection()

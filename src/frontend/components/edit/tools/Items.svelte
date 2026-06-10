@@ -30,30 +30,30 @@
 
     const getIdentifier = {
         text: (item: Item) => {
-            let text = getItemText(item)
+            const text = getItemText(item)
             return text.slice(0, 10)
         },
         list: (item: Item) => {
-            let text = item.list?.items?.[0]?.text || ""
+            const text = item.list?.items?.[0]?.text || ""
             return text.slice(0, 10)
         },
         media: (item: Item) => {
-            let path = item.src
+            const path = item.src
             return getFileName(path || "")
         },
         timer: (item: Item) => {
             const timerId = item.timer?.id || item.timerId
             if (!timerId) return ""
-            let timerName = $timers[timerId]?.name || ""
+            const timerName = $timers[timerId]?.name || ""
             return timerName
         },
         clock: () => "",
         mirror: (item: Item) => {
-            let showName = $showsCache[item.mirror?.show || ""]?.name || ""
+            const showName = $showsCache[item.mirror?.show || ""]?.name || ""
             return showName
         },
         variable: (item: Item) => {
-            let name = $variables[item.variable?.id]?.name || ""
+            const name = $variables[item.variable?.id]?.name || ""
             return name
         }
     }

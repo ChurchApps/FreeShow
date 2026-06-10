@@ -1,5 +1,6 @@
 <script lang="ts">
     import { createEventDispatcher, onDestroy } from "svelte"
+    import { evaluateExpression } from "../../utils/expression"
     import Icon from "../helpers/Icon.svelte"
     import Button from "./Button.svelte"
     import TextInput from "./TextInput.svelte"
@@ -26,12 +27,12 @@
     const input = (e: any) => {
         let inputValue = e.target.value || 0
         try {
-            inputValue = new Function(`return ${inputValue}`)() // calculate without eval()
+            inputValue = evaluateExpression(inputValue) // calculate without eval()
         } catch (err) {
             inputValue = value
         }
 
-        let newVaule = Math.max(Math.min(inputValue, max * inputMultiplier), min * inputMultiplier) / inputMultiplier
+        const newVaule = Math.max(Math.min(inputValue, max * inputMultiplier), min * inputMultiplier) / inputMultiplier
         dispatch("change", newVaule !== null ? newVaule.toFixed(decimals) : value)
     }
 
@@ -72,7 +73,7 @@
         if (!e.ctrlKey && !e.metaKey) return
         e.preventDefault()
 
-        let stepAmount = step * (e.shiftKey ? 10 : 1)
+        const stepAmount = step * (e.shiftKey ? 10 : 1)
 
         if (e.deltaY > 0) decrement(stepAmount)
         else increment(stepAmount)

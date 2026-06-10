@@ -87,8 +87,8 @@
                 if (!ref?.parent) return
                 // make child a parent
 
-                let children = _show().slides([ref.parent.id]).get("children")[0]
-                let offsetIndex: number = ref.parent.index - children.indexOf(ref.id)
+                const children = _show().slides([ref.parent.id]).get("children")[0]
+                const offsetIndex: number = ref.parent.index - children.indexOf(ref.id)
 
                 // remove renamed child
                 history({
@@ -98,12 +98,12 @@
                     location: { page: "show", id: "show_key" }
                 })
 
-                let currentLayouts: SlideData[][] = _show().layouts().get("slides")
-                let layoutIds: string[] = Object.keys($showsCache[showId].layouts)
-                let newLayouts: { [key: string]: SlideData[] } = {}
+                const currentLayouts: SlideData[][] = _show().layouts().get("slides")
+                const layoutIds: string[] = Object.keys($showsCache[showId].layouts)
+                const newLayouts: { [key: string]: SlideData[] } = {}
 
                 currentLayouts.forEach((layout, i: number) => {
-                    let l: SlideData[] = []
+                    const l: SlideData[] = []
 
                     let added = false
                     layout.forEach((slide, index: number) => {
@@ -133,13 +133,13 @@
             })
         },
         chord: () => {
-            let chord = $selected.data[0]
-            let lines: Line[] = _show().slides([chord.slideId]).items([chord.itemIndex]).get("lines")[0][0]
+            const chord = $selected.data[0]
+            const lines: Line[] = _show().slides([chord.slideId]).items([chord.itemIndex]).get("lines")[0][0]
 
             // create first
             if (!chord.chord) return
 
-            let newLines = clone(lines)
+            const newLines = clone(lines)
             let chords = newLines[chord.index].chords
             if (!Array.isArray(chords)) chords = []
             chords.forEach((a, i: number) => {
@@ -152,9 +152,9 @@
                 .set({ key: "lines", values: [newLines] })
         },
         audio_effect: () => {
-            let selectedPath = $selected.data?.[0]?.path
+            const selectedPath = $selected.data?.[0]?.path
             effectsLibrary.update((a) => {
-                let index = a.findIndex((a) => a.path === selectedPath)
+                const index = a.findIndex((a) => a.path === selectedPath)
                 if (index > -1) a[index].name = groupName
                 return a
             })

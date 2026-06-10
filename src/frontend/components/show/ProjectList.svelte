@@ -65,7 +65,7 @@
     $: if (tree) splitRootFoldersToSections()
     function splitRootFoldersToSections() {
         splittedTree = [[]]
-        let rootProjects: Tree[] = []
+        const rootProjects: Tree[] = []
 
         tree.forEach((a) => {
             if (a.parent === "/" && a.type !== "folder") {
@@ -111,7 +111,7 @@
         if (editActive || e.detail.ctrl || e.detail.target.classList.contains("name") || e.detail.target.classList.contains("add")) return
 
         if (opened) {
-            let spliced = $openedFolders
+            const spliced = $openedFolders
             if (spliced.indexOf(project.id) > -1) {
                 spliced.splice(spliced.indexOf(project.id), 1)
                 openedFolders.set(spliced)
@@ -128,7 +128,7 @@
     let pathToActive = ""
     $: if ($activeProject || tree) updateActivePath()
     function updateActivePath() {
-        let paths: string[] = []
+        const paths: string[] = []
         let currentParent = $projects[$activeProject!]?.parent
 
         let loopstop = 0

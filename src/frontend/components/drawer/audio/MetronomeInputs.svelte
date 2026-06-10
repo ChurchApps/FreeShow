@@ -8,7 +8,7 @@
     export let values: API_metronome = {}
     export let action = false
 
-    let dispatch = createEventDispatcher()
+    const dispatch = createEventDispatcher()
     function updateValue(key, value: number | undefined) {
         if (typeof value === "number") value = Number(value.toFixed(3))
 

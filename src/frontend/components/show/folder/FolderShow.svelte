@@ -64,9 +64,9 @@
 
         const mediaStyle = getMediaStyle($media[file.path], currentStyle)
 
-        let videoType = getMediaLayerType(file.path, mediaStyle)
-        let loop = videoType === "foreground" ? false : true
-        let muted = videoType === "background" ? true : false
+        const videoType = getMediaLayerType(file.path, mediaStyle)
+        const loop = videoType === "foreground" ? false : true
+        const muted = videoType === "background" ? true : false
         if (videoType === "foreground") clearSlide()
         setOutput("background", { path: file.path, type: file.type, loop, muted, startAt: 0, ...mediaStyle, ignoreLayer: videoType === "foreground" })
 

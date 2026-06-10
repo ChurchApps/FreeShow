@@ -303,7 +303,7 @@
         })
         // Preset 1, Preset 2, ...
         const label = translateText("audio.preset")
-        let existingWithDefaultName = Object.values(presets)
+        const existingWithDefaultName = Object.values(presets)
             .map(({ name }) => {
                 const match = name.match(new RegExp(`^${label} (\\d+)$`))
                 return match ? parseInt(match[1], 10) : null
@@ -352,7 +352,7 @@
 
         // Convert the raw delta into a sensible step for Q.
         const baseSensitivity = 0.02
-        let step = Math.sign(raw) * Math.max(0.01, Math.min(0.5, Math.abs(raw) * baseSensitivity))
+        const step = Math.sign(raw) * Math.max(0.01, Math.min(0.5, Math.abs(raw) * baseSensitivity))
 
         // Apply and clamp Q between sensible bounds
         bands[bandIndex].q = Math.max(0.1, Math.min(30, +(bands[bandIndex].q + step).toFixed(2)))
@@ -389,7 +389,8 @@
         const zeroY = getGainY(0)
 
         // Extend frequency range so curves naturally approach 0dB at edges
-        let minWaveFreq: number, maxWaveFreq: number
+        let minWaveFreq: number
+        let maxWaveFreq: number
 
         if (band.type === "peaking") {
             // For peaking, extend range based on Q factor for smooth decay

@@ -46,7 +46,7 @@
         // the ones that can have a custom name should be first (to prevent it from overwriting a category)
         const separators = ["$", "timer_", "meta_", "rss_", "project_", "time_", "show_", "slide_text_", "exif_", "video_", "audio_", "scripture_"]
 
-        let newList: { [key: string]: typeof list } = {}
+        const newList: { [key: string]: typeof list } = {}
         list.forEach((value) => {
             const separator = separators.find((a) => value.id.includes(a)) || ""
             if (separator && separatorId !== separator && separatorId !== "$" && !newList[separator]?.length) {
@@ -95,7 +95,7 @@
             return
         }
 
-        let currentValuesList = clone(defaultValues) // searchedValues
+        const currentValuesList = clone(defaultValues) // searchedValues
         // reset if search value changed
         // if (!searchValue.includes(previousSearchValue)) currentValuesList = clone(defaultValues)
 
@@ -117,14 +117,14 @@
 
         const contextElem = (obj.contextElem as HTMLElement | null) || null
         const contextEditItem = contextElem?.closest(".editItem") as HTMLElement | null
-        let isStage = !!contextElem?.closest(".stage_item")
+        const isStage = !!contextElem?.closest(".stage_item")
         if (!contextEditItem && !isStage) return
 
-        let edit = $activeEdit
+        const edit = $activeEdit
         const selectedItemIndex = edit.items?.[0] ?? Number(contextEditItem?.getAttribute("data-index") || 0)
 
         if (isStage) {
-            let activeItemId = $activeStage?.items[0]
+            const activeItemId = $activeStage?.items[0]
             if (!$stageShows[$activeStage.id!] || !activeItemId) return
 
             stageShows.update((a) => {
@@ -158,9 +158,9 @@
             return
         }
 
-        let showId = $activeShow?.id || ""
-        let ref = getLayoutRef(showId)
-        let slideId = ref[edit.slide || 0]?.id || ""
+        const showId = $activeShow?.id || ""
+        const ref = getLayoutRef(showId)
+        const slideId = ref[edit.slide || 0]?.id || ""
 
         showsCache.update((a) => {
             if (!a[showId]?.slides?.[slideId]) return a
@@ -184,14 +184,14 @@
             lines[lineIndex]?.text?.forEach((text) => {
                 if (replaced) return
 
-                let value = text.value
+                const value = text.value
                 if (value.length < caretPos) {
                     caretPos -= value.length
                     return
                 }
 
-                let valueIdString = dynamicValueText(id)
-                let newValue = value.slice(0, caretPos) + valueIdString + value.slice(caretPos)
+                const valueIdString = dynamicValueText(id)
+                const newValue = value.slice(0, caretPos) + valueIdString + value.slice(caretPos)
                 text.value = newValue
                 replaced = true
 

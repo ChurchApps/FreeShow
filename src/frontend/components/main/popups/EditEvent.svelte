@@ -23,7 +23,7 @@
 
     let stored = ""
 
-    let defaultRepeatData: any = {
+    const defaultRepeatData: any = {
         type: "day",
         ending: "date",
         count: 1,
@@ -57,8 +57,8 @@
     })
 
     function edit(event: any) {
-        let from: Date = new Date(event.from)
-        let to: Date = new Date(event.to)
+        const from: Date = new Date(event.from)
+        const to: Date = new Date(event.to)
 
         editEvent = { ...event, id: $eventEdit, isoFrom: getISO(from), isoTo: getISO(to), fromTime: getTime(from), toTime: getTime(to) }
         if (!editEvent.repeatData) editEvent.repeatData = defaultRepeatData
@@ -70,7 +70,7 @@
 
     $: if (!$eventEdit && selectedType) resetEdit()
     function resetEdit() {
-        let selectedDate = new Date($activeDays[0])
+        const selectedDate = new Date($activeDays[0])
 
         editEvent = {
             type: "event",
@@ -110,15 +110,15 @@
     }
 
     function saveAll() {
-        let { data } = updateEventData(editEvent, stored, { type: selectedType, action: actionData })
+        const { data } = updateEventData(editEvent, stored, { type: selectedType, action: actionData })
         if (!data) return
 
-        let updatedData: any = {}
+        const updatedData: any = {}
         Object.entries($events).forEach(([eventId, event]: any) => {
             if (event.group !== editEvent.group) return
 
-            let newFromTime = changeTime(event.from, data.from).toString()
-            let newToTime = changeTime(event.to, data.to).toString()
+            const newFromTime = changeTime(event.from, data.from).toString()
+            const newToTime = changeTime(event.to, data.to).toString()
             updatedData[eventId] = {
                 ...data,
                 from: newFromTime,
@@ -142,7 +142,7 @@
         if (selectedType === "action" && !actionData) return activePopup.set(null)
         if (selectedType === "action") editEvent.isoTo = editEvent.isoFrom
 
-        let { data, id } = updateEventData(editEvent, stored, { type: selectedType, action: actionData })
+        const { data, id } = updateEventData(editEvent, stored, { type: selectedType, action: actionData })
         if (!data) return
 
         if (data.repeat && !data.group) {
@@ -158,8 +158,8 @@
     }
 
     const setDate = (date: Date, options: any): Date => {
-        let newDate = [options.year ?? date.getFullYear(), (options.month ?? date.getMonth()) + 1, options.date ?? date.getDate()]
-        let time = date.getHours() + ":" + date.getMinutes()
+        const newDate = [options.year ?? date.getFullYear(), (options.month ?? date.getMonth()) + 1, options.date ?? date.getDate()]
+        const time = date.getHours() + ":" + date.getMinutes()
         return new Date([...newDate, time].join(" "))
     }
 
@@ -190,7 +190,7 @@
 
     let actionData: any = {}
     function changeAction(e) {
-        let value = e.detail
+        const value = e.detail
 
         if (value.actionValue) {
             actionData.data = value.actionValue
@@ -213,8 +213,8 @@
         if (!isSameDay(new Date(editEvent.isoFrom), new Date(editEvent.isoTo))) return
         if (!editEvent.fromTime || !editEvent.toTime) return
 
-        let from = Number(editEvent.fromTime.replace(":", ""))
-        let to = Number(editEvent.toTime.replace(":", ""))
+        const from = Number(editEvent.fromTime.replace(":", ""))
+        const to = Number(editEvent.toTime.replace(":", ""))
 
         if (changed === "to" && editEvent.toTime[0] === "0") return
         if (changed === "from" ? from <= to : to >= from) return
@@ -222,12 +222,12 @@
         if (changed === "from") {
             let newTime = from + 100
             if (newTime >= 2400) newTime = 2359
-            let sliced = newTime.toString() + "000"
+            const sliced = newTime.toString() + "000"
             editEvent.toTime = sliced.slice(0, 2) + ":" + sliced.slice(2, 4)
         } else if (changed === "to") {
             let newTime = to - 100
             if (newTime < 0) newTime = 0
-            let sliced = newTime.toString() + "000"
+            const sliced = newTime.toString() + "000"
             editEvent.fromTime = sliced.slice(0, 2) + ":" + sliced.slice(2, 4)
         }
     }

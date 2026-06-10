@@ -24,7 +24,7 @@
 
     let ripples: { x: number; y: number; size: number; id: number }[] = []
 
-    let dispatch = createEventDispatcher()
+    const dispatch = createEventDispatcher()
     function click(e, double = false) {
         if (e.target?.closest(".edit")) return
         if (e.target?.closest("button") !== button) return

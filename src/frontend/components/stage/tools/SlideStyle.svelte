@@ -12,7 +12,7 @@
     $: settings = currentStage?.settings || {}
 
     function updateStageSettings(e: any, key: string) {
-        let value = e.target?.value || e
+        const value = e.target?.value || e
         if (value === settings[key]) return
 
         history({ id: "UPDATE", newData: { data: value, key: "settings", subkey: key }, oldData: { id: $activeStage.id }, location: { page: "stage", id: "stage" } })

@@ -26,7 +26,7 @@
     }
 
     // TS issue https://github.com/electron/electron/issues/27139
-    let constraints: any = {
+    const constraints: any = {
         video: {
             mandatory: {
                 chromeMediaSource: "desktop",
@@ -59,7 +59,7 @@
                 }
             })
             .catch(function (err) {
-                let msg: string = err.message
+                const msg: string = err.message
                 console.error(err.name + ": " + msg)
 
                 // if (err.name === "NotReadableError") {

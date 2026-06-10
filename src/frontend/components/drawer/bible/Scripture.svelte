@@ -1,6 +1,6 @@
 <script lang="ts">
-    import JSONBible from "json-bible"
-    import { ApiBible } from "json-bible/lib/api"
+    import type JSONBible from "json-bible"
+    import type { ApiBible } from "json-bible/lib/api"
     import type { Verse } from "json-bible/lib/Bible"
     import type { VerseReference } from "json-bible/lib/reference"
     import { onMount } from "svelte"
@@ -451,10 +451,10 @@
     function scrollToActive(scrollElem) {
         if (!scrollElem || isSelected) return
 
-        let selectedElemTop = scrollElem.querySelector(".isActive")?.offsetTop || 0
+        const selectedElemTop = scrollElem.querySelector(".isActive")?.offsetTop || 0
 
         // don't scroll if elem is in view
-        let visibleElemPos = selectedElemTop - scrollElem.scrollTop
+        const visibleElemPos = selectedElemTop - scrollElem.scrollTop
         if (visibleElemPos > 0 && visibleElemPos < scrollElem.offsetHeight) return
 
         scrollElem.scrollTo(0, Math.max(0, selectedElemTop - 70))
@@ -580,7 +580,7 @@
         const bookChanged = result.book && result.book.toString() !== activeReference.book?.toString()
         const chapterChanged = result.chapter && (!activeReference.chapters.length || result.chapter.toString() !== activeReference.chapters[0]?.toString())
 
-        let newVerses: (number | string)[][] | undefined = undefined
+        let newVerses: (number | string)[][] | undefined
         if (result.verses?.length) {
             newVerses = !bookChanged && !chapterChanged && splittedVerses ? [splittedVerses.filter((a) => result.verses.includes(a.number)).map((a) => a.id)] : [result.verses]
         }
@@ -820,7 +820,7 @@
                 searchValue += ":"
 
                 // move caret
-                let searchInput: any = document.activeElement
+                const searchInput: any = document.activeElement
                 setTimeout(() => (searchInput.selectionStart = searchInput.selectionEnd = 100))
             }
 
@@ -858,13 +858,13 @@
         if ($activeEdit.items.length) return
 
         // go to next/previous verse
-        let left = e.key.includes("Left")
+        const left = e.key.includes("Left")
         _moveSelection(left)
     }
 
     /// MOVE SELECTION ///
 
-    let chapterLengths: { [key: number]: number } = {}
+    const chapterLengths: { [key: number]: number } = {}
     $: if ($activeTriggerFunction === "scripture_next") _moveSelection(false)
     $: if ($activeTriggerFunction === "scripture_previous") _moveSelection(true)
     async function _moveSelection(moveLeft: boolean) {

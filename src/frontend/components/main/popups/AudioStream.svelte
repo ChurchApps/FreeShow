@@ -12,18 +12,18 @@
 
     const DEFAULT_STREAM = { name: "", value: "" }
 
-    let dropdown = $popupData?.dropdown
-    let slideIndex = $popupData?.index
+    const dropdown = $popupData?.dropdown
+    const slideIndex = $popupData?.index
     onMount(() => {
         popupData.set({})
     })
 
-    let existing: boolean = $selected.id === "audio_stream" && $selected.data[0]?.id
+    const existing: boolean = $selected.id === "audio_stream" && $selected.data[0]?.id
     let streamId = existing ? $selected.data[0].id : uid()
-    let currentStream = clone($audioStreams[streamId] || DEFAULT_STREAM)
+    const currentStream = clone($audioStreams[streamId] || DEFAULT_STREAM)
 
-    let globalList = Object.entries($audioStreams).map(([id, a]) => ({ ...a, id }))
-    let sortedStreams = sortByName(globalList)
+    const globalList = Object.entries($audioStreams).map(([id, a]) => ({ ...a, id }))
+    const sortedStreams = sortByName(globalList)
 
     function updateValue(value: string, key: string) {
         if (!value) return
@@ -40,8 +40,8 @@
         streamId = e.detail.id
         // let stream = $audioStreams[streamId]
 
-        let ref = getLayoutRef()[slideIndex]
-        let data = ref?.data?.actions || {}
+        const ref = getLayoutRef()[slideIndex]
+        const data = ref?.data?.actions || {}
 
         // TODO: is this correct?
         data.audioStream = streamId

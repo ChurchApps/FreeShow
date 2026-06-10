@@ -27,17 +27,17 @@
         }
     })
 
-    let layoutSlides: any = {}
+    const layoutSlides: any = {}
 
     $: if (shows.length) getRefs()
 
     // WIP get ref...
     function getRefs() {
         shows.forEach((show: any) => {
-            let a: any[] = []
+            const a: any[] = []
 
             show.layouts?.[show.settings?.activeLayout]?.slides?.forEach((layoutSlide: any) => {
-                let slide = show.slides[layoutSlide.id]
+                const slide = show.slides[layoutSlide.id]
                 if (!slide) return
 
                 slide.data = layoutSlide
@@ -45,7 +45,7 @@
                 if (!slide.children) return
 
                 slide.children.forEach((childId: string) => {
-                    let slide = show.slides[childId]
+                    const slide = show.slides[childId]
                     slide.data = layoutSlide
                     a.push(slide)
                 })
@@ -95,7 +95,7 @@
     function getGroupName(show: Show, group: string, slideID: string) {
         let name = group
         if (name) {
-            let added: any = {}
+            const added: any = {}
             Object.entries(show.slides).forEach(([id, a]: any) => {
                 if (added[a.group]) {
                     added[a.group]++
