@@ -385,7 +385,7 @@
 
                 {#if addNew}
                     <div class="add-new-button">
-                        <li style="font-style: italic;opacity: 0.9;" role="option" on:click={createNew}>
+                        <li style="font-style: italic;opacity: 0.9;" role="option" aria-selected={false} on:click={createNew}>
                             <Icon id="add" />
                             {translateText(addNew)}
                         </li>
@@ -427,7 +427,7 @@
                 {/each}
 
                 {#if addNew}
-                    <li style="font-style: italic;opacity: 0.9;" role="option" on:click={createNew}>
+                    <li style="font-style: italic;opacity: 0.9;" role="option" aria-selected={false} on:click={createNew}>
                         <Icon id="add" />
                         {translateText(addNew)}
                     </li>

@@ -25,7 +25,7 @@
                 {#if mode === "grid" && previewPaths.length}
                     <div class="images">
                         {#each previewPaths.slice(0, 4) as path}
-                            <img loading="lazy" src={encodeFilePath(path)} on:error={removeBrokenImg} />
+                            <img loading="lazy" src={encodeFilePath(path)} on:error={removeBrokenImg} alt="" />
                         {/each}
                     </div>
                 {/if}
