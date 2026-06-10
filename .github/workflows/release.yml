@@ -9,6 +9,8 @@ jobs:
   publish_windows:
     name: "Publish Windows"
     runs-on: windows-latest
+    env:
+      GYP_MSVS_VERSION: 2022
 
     steps:
       - name: Check out Git repository
