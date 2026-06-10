@@ -8,6 +8,7 @@ import { AudioPlayer } from "../../audio/audioPlayer"
 import { AudioPlaylist } from "../../audio/audioPlaylist"
 import { activeDrawerTab, activeEdit, activePage, activeProject, activeShow, activeTimers, audioPlaylists, draw, drawSettings, drawTool, folders, groupNumbers, groups, media, openScripture, outLocked, outputs, overlays, pdfImports, playingAudio, playingMetronome, projects, refreshEditSlide, selected, shows, showsCache, sortedShowsList, special, styles, timers, variables, volume } from "../../stores"
 import { newToast } from "../../utils/common"
+import { evaluateExpression } from "../../utils/expression"
 import { send } from "../../utils/request"
 import { getDynamicValue } from "../edit/scripts/itemHelpers"
 import { keysToID, removeDeleted, sortByName } from "../helpers/array"
@@ -359,8 +360,12 @@ export function changeVariable(data: API_variable) {
     if (key === "expression") {
         const stringValue = (data.value || "").toString()
         const replacedValues = stringValue.includes("{") ? getDynamicValue(stringValue) : stringValue
-        // eslint-disable-next-line
-        const calculated = new Function(`return ${replacedValues}`)()
+        let calculated = 0
+        try {
+            calculated = evaluateExpression(replacedValues)
+        } catch {
+            calculated = 0
+        }
         value = Number(calculated)
         key = "number"
     } else if (data.variableAction || variable.type === "number") {

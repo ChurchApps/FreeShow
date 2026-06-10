@@ -1,5 +1,6 @@
 <script lang="ts">
     import { createEventDispatcher, onDestroy } from "svelte"
+    import { evaluateExpression } from "../../utils/expression"
     import Icon from "../helpers/Icon.svelte"
     import Button from "./Button.svelte"
     import TextInput from "./TextInput.svelte"
@@ -26,7 +27,7 @@
     const input = (e: any) => {
         let inputValue = e.target.value || 0
         try {
-            inputValue = new Function(`return ${inputValue}`)() // calculate without eval()
+            inputValue = evaluateExpression(inputValue) // calculate without eval()
         } catch (err) {
             inputValue = value
         }
