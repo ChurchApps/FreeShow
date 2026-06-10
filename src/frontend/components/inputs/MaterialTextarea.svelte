@@ -33,10 +33,11 @@
 </script>
 
 <div class="textfield {center ? 'centered' : ''} {disabled ? 'disabled' : ''} {$$props.class || ''}">
-    <div class="background" />
-    <textarea bind:value {id} {placeholder} {disabled} {autofocus} use:select class="input edit" on:input={input} on:change={change} {rows} />
+    <div class="background"></div>
+    <!-- svelte-ignore a11y_autofocus -->
+    <textarea bind:value {id} {placeholder} {disabled} {autofocus} use:select class="input edit" on:input={input} on:change={change} {rows}></textarea>
     <label for={id}>{translateText(label)}</label>
-    <span class="underline" />
+    <span class="underline"></span>
 </div>
 
 <style>

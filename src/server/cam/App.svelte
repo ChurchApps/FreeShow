@@ -130,7 +130,7 @@
         <track kind="captions" />
     </video>
 </div>
-<canvas bind:this={canvas} style="display: none;" />
+<canvas bind:this={canvas} style="display: none;"></canvas>
 
 <!-- <svelte:window on:click={click} /> -->
 

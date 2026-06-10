@@ -69,7 +69,7 @@
 </script>
 
 <div class="scroll {$$props.class}" on:wheel|passive={wheel} bind:this={scrollElem} style={$$props.style || ""} class:instantScroll>
-    <slot />
+    <slot></slot>
 </div>
 
 <style>

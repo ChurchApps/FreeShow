@@ -335,25 +335,25 @@
     {#if trigger && (dragActive || fileOver)}
         <div id={thisId} class="trigger {trigger} {dragover ? dragover : ''}" style="flex-direction: {trigger};" on:dragleave={stopDrag}>
             {#if dropAbove}
-                <span id="start" class="TriggerBlock over" />
+                <span id="start" class="TriggerBlock over"></span>
             {/if}
 
             {#if borders === "all" || borders === "edges"}
-                <span id="start" class="TriggerBlock" on:dragover={() => dragOver("start")} />
+                <span id="start" class="TriggerBlock" on:dragover={() => dragOver("start")}></span>
             {/if}
             {#if borders === "all" || borders === "center"}
-                <span id="start_center" class="TriggerBlock" on:dragover={() => dragOver("center")} />
-                <span id="end_center" class="TriggerBlock" on:dragover={() => dragOver("center")} />
+                <span id="start_center" class="TriggerBlock" on:dragover={() => dragOver("center")}></span>
+                <span id="end_center" class="TriggerBlock" on:dragover={() => dragOver("center")}></span>
             {/if}
             {#if borders === "all" || borders === "edges"}
-                <span id="end" class="TriggerBlock" on:dragover={() => dragOver("end")} />
+                <span id="end" class="TriggerBlock" on:dragover={() => dragOver("end")}></span>
             {/if}
 
             <!-- center drop -->
-            <span id="end" class="TriggerBlock between" />
+            <span id="end" class="TriggerBlock between"></span>
         </div>
     {/if}
-    <slot {elem} />
+    <slot {elem}></slot>
 </div>
 
 <style>

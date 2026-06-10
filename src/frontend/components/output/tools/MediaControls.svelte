@@ -91,11 +91,11 @@
                     <Icon id={videoData.paused ? "play" : "pause"} white={videoData.paused} size={1.5} />
                 </MaterialButton>
 
-                <div class="divider" />
+                <div class="divider"></div>
 
                 <VideoSlider disabled={$outLocked} {activeOutputIds} bind:videoData bind:videoTime bind:changeValue unmutedId={outputId} toOutput big />
 
-                <div class="divider" />
+                <div class="divider"></div>
 
                 <MaterialButton
                     title="media.back10"
@@ -114,7 +114,7 @@
                     <Icon id="forward_10" white size={1.3} />
                 </MaterialButton>
 
-                <div class="divider" />
+                <div class="divider"></div>
 
                 <MaterialButton
                     title={"media._loop" + (videoData.loop !== false ? ": settings.enabled" : "")}

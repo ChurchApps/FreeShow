@@ -7,7 +7,7 @@
 </script>
 
 <div style="font-size: {size}em;padding: {padding}px;{style}" class="loader {$$props.class}" class:faded class:absolute>
-    <slot />
+    <slot></slot>
 </div>
 
 <style>

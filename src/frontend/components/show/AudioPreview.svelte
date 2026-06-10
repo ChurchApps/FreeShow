@@ -153,7 +153,7 @@
 
 {#if !$focusMode}
     <!-- analyzer -->
-    <canvas bind:this={canvas} />
+    <canvas bind:this={canvas}></canvas>
 {/if}
 
 <div class="main media context #media_preview" bind:this={mediaElem}>

@@ -72,7 +72,7 @@
 <div class="gate-container" style="--accent: #52ad7a;" class:disabled>
     <MaterialToggleSwitch label="settings.enabled" checked={config.enabled} on:change={handleEnable} />
 
-    <div style="height: 5px;" />
+    <div style="height: 5px;"></div>
 
     <!-- Gate visualisation -->
     <div class="viz-wrap" class:viz-disabled={!config.enabled}>
@@ -111,7 +111,7 @@
         </div>
     </div>
 
-    <div style="height: 8px;" />
+    <div style="height: 8px;"></div>
 
     <InputRow>
         <MaterialNumberInput label="audio.threshold" value={config.threshold} min={-100} max={0} step={1} maxDecimals={0} showSlider sliderValues={{ min: -80, max: 0, step: 1 }} {disabled} on:change={(e) => handleChange("threshold", e.detail)} />

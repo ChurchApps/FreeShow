@@ -213,7 +213,7 @@
     on:touchend={onTouchEnd}
 >
     <span class="ParentBlock">
-        <slot {fileOver} />
+        <slot {fileOver}></slot>
     </span>
 </div>
 {#if hover}

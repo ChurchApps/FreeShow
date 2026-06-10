@@ -354,7 +354,7 @@
             {:else if mediaPath}
                 <!-- TODO: on:error={videoError} - ERR_FILE_NOT_FOUND -->
                 {#if mediaStyle.fit === "blur"}
-                    <video style={mediaStyleBlurString} src={encodeFilePath(mediaPath)} bind:this={blurVideo} bind:paused={blurPausedState} loop={videoData.loop} muted />
+                    <video style={mediaStyleBlurString} src={encodeFilePath(mediaPath)} bind:this={blurVideo} bind:paused={blurPausedState} loop={videoData.loop} muted></video>
                 {/if}
                 <video style={mediaStyleString} src={encodeFilePath(mediaPath)} on:loadedmetadata={onLoad} on:playing={onPlay} bind:this={video} bind:currentTime={videoTime} bind:paused={videoData.paused} bind:duration={videoData.duration} bind:muted={videoData.muted} bind:volume={$volume} loop={videoData.loop}>
                     <track kind="captions" src="" label="No captions available" />
@@ -399,7 +399,7 @@
             {/if}
 
             {#if !playingInOutput}
-                <div class="divider" />
+                <div class="divider"></div>
 
                 <MediaPicker id="subtitles" title={translateText("scripture.local")} filter={{ name: "Video Text Track", extensions: ["vtt", "srt"] }} on:picked={subtitlePicked} dark={false}>
                     <Icon id="add" right={!tracks.length} />
@@ -437,7 +437,7 @@
             {/if}
 
             {#if !playingInOutput}
-                <div class="diviver" />
+                <div class="diviver"></div>
 
                 <MaterialButton icon="add" title="actions.add_time_marker" on:click={addMarker}>
                     {#if !$videoMarkers[showId]?.length}<T id="actions.add_time_marker" />{/if}

@@ -4,7 +4,7 @@
 </script>
 
 <div class="main" bind:offsetWidth={width} bind:offsetHeight={height}>
-    <slot {width} {height} />
+    <slot {width} {height}></slot>
 </div>
 
 <style>

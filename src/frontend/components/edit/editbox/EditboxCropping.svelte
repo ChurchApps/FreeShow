@@ -171,20 +171,20 @@
 {#if cropActive}
     <div class="cropOverlay" on:mousedown={startCropMove}></div>
 
-    <div class="cropMask top" style="height: {cropPreview.top}%;" />
-    <div class="cropMask right" style="width: {cropPreview.right}%;" />
-    <div class="cropMask bottom" style="height: {cropPreview.bottom}%;" />
-    <div class="cropMask left" style="width: {cropPreview.left}%;" />
+    <div class="cropMask top" style="height: {cropPreview.top}%;"></div>
+    <div class="cropMask right" style="width: {cropPreview.right}%;"></div>
+    <div class="cropMask bottom" style="height: {cropPreview.bottom}%;"></div>
+    <div class="cropMask left" style="width: {cropPreview.left}%;"></div>
 
-    <div class="cropHandle top" style="top: {cropPreview.top}%;left: {cropCenterX}%;" on:mousedown={(e) => startCropDrag("top", e)} />
-    <div class="cropHandle right" style="right: {cropPreview.right}%;top: {cropCenterY}%;" on:mousedown={(e) => startCropDrag("right", e)} />
-    <div class="cropHandle bottom" style="bottom: {cropPreview.bottom}%;left: {cropCenterX}%;" on:mousedown={(e) => startCropDrag("bottom", e)} />
-    <div class="cropHandle left" style="left: {cropPreview.left}%;top: {cropCenterY}%;" on:mousedown={(e) => startCropDrag("left", e)} />
+    <div class="cropHandle top" style="top: {cropPreview.top}%;left: {cropCenterX}%;" on:mousedown={(e) => startCropDrag("top", e)}></div>
+    <div class="cropHandle right" style="right: {cropPreview.right}%;top: {cropCenterY}%;" on:mousedown={(e) => startCropDrag("right", e)}></div>
+    <div class="cropHandle bottom" style="bottom: {cropPreview.bottom}%;left: {cropCenterX}%;" on:mousedown={(e) => startCropDrag("bottom", e)}></div>
+    <div class="cropHandle left" style="left: {cropPreview.left}%;top: {cropCenterY}%;" on:mousedown={(e) => startCropDrag("left", e)}></div>
 
-    <div class="cropHandle corner topLeft" style="top: {cropPreview.top}%;left: {cropPreview.left}%;" on:mousedown={(e) => startCropDrag("topLeft", e)} />
-    <div class="cropHandle corner topRight" style="top: {cropPreview.top}%;right: {cropPreview.right}%;" on:mousedown={(e) => startCropDrag("topRight", e)} />
-    <div class="cropHandle corner bottomRight" style="bottom: {cropPreview.bottom}%;right: {cropPreview.right}%;" on:mousedown={(e) => startCropDrag("bottomRight", e)} />
-    <div class="cropHandle corner bottomLeft" style="bottom: {cropPreview.bottom}%;left: {cropPreview.left}%;" on:mousedown={(e) => startCropDrag("bottomLeft", e)} />
+    <div class="cropHandle corner topLeft" style="top: {cropPreview.top}%;left: {cropPreview.left}%;" on:mousedown={(e) => startCropDrag("topLeft", e)}></div>
+    <div class="cropHandle corner topRight" style="top: {cropPreview.top}%;right: {cropPreview.right}%;" on:mousedown={(e) => startCropDrag("topRight", e)}></div>
+    <div class="cropHandle corner bottomRight" style="bottom: {cropPreview.bottom}%;right: {cropPreview.right}%;" on:mousedown={(e) => startCropDrag("bottomRight", e)}></div>
+    <div class="cropHandle corner bottomLeft" style="bottom: {cropPreview.bottom}%;left: {cropPreview.left}%;" on:mousedown={(e) => startCropDrag("bottomLeft", e)}></div>
 {/if}
 
 <style>

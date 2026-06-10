@@ -169,7 +169,7 @@
 <svelte:window on:click={click} />
 
 <div class="center" bind:offsetWidth={width} bind:offsetHeight={height}>
-    <canvas class:imgHeight style="aspect-ratio: {capture?.size?.width || 16}/{capture?.size?.height || 9};" class:height={width / height < (capture?.size?.width || 16) / (capture?.size?.height || 9)} class="previewCanvas" bind:this={canvas} />
+    <canvas class:imgHeight style="aspect-ratio: {capture?.size?.width || 16}/{capture?.size?.height || 9};" class:height={width / height < (capture?.size?.width || 16) / (capture?.size?.height || 9)} class="previewCanvas" bind:this={canvas}></canvas>
 </div>
 
 {#if clicked}

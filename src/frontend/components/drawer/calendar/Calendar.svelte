@@ -225,7 +225,7 @@
                                 {@const eventIcon = getEventIcon(event.type, { actionId: event.action?.id })}
 
                                 {#if dayEvents.length > 3 && i > 1}
-                                    <span class="dot" style="background-color: {event.color || 'white'}" data-title={event.name} />
+                                    <span class="dot" style="background-color: {event.color || 'white'}" data-title={event.name}></span>
                                 {:else}
                                     <div class="event" style="color: {event.color || 'white'}" data-title={event.name}>
                                         <Icon id={eventIcon} right white />

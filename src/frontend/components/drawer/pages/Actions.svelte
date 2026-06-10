@@ -108,7 +108,7 @@
                                         {#if action.shows?.length}
                                             <Icon id="slide" size={showGrid ? 4 : 1} white />
                                         {:else if action.customIcon}
-                                            <img src={action.customIcon} style="width: {showGrid ? 4 : 1}rem; height: {showGrid ? 4 : 1}rem; object-fit: contain;border-radius: 2px;" />
+                                            <img alt="" src={action.customIcon} style="width: {showGrid ? 4 : 1}rem; height: {showGrid ? 4 : 1}rem; object-fit: contain;border-radius: 2px;" />
                                         {:else if action.triggers?.length !== 1}
                                             <Icon id="actions" size={showGrid ? 4 : 1} />
                                         {:else}

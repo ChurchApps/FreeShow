@@ -196,7 +196,7 @@
 
 <div bind:this={container} style="display: flex;width: 100%;height: 100%;place-content: center;{animationStyle}">
     {#if mediaStyle.fit === "blur" && !perfectFit}
-        <video class="media" style={mediaStyleBlurString} src={encodeFilePath(path)} bind:playbackRate bind:this={blurVideo} bind:paused={blurPausedState} muted loop={videoData.loop || false} />
+        <video class="media" style={mediaStyleBlurString} src={encodeFilePath(path)} bind:playbackRate bind:this={blurVideo} bind:paused={blurPausedState} muted loop={videoData.loop || false}></video>
     {/if}
     <video class="media" style={mediaStyleString} bind:this={video} on:loadedmetadata={loaded} on:playing={playing} on:ended={handleEnded} on:error on:timeupdate={handleTimeUpdate} bind:playbackRate bind:currentTime={videoTime} bind:paused={videoData.paused} bind:duration={videoData.duration} muted={mirror ? true : (videoData.muted ?? true)} src={encodeFilePath(path)} autoplay loop={videoData.loop && !softLoopValue} volume={softLoopValue > 0 ? volume * (1 - softLoopOpacity) : volume}>
         <!-- bind:volume={audioVolume} -->
@@ -205,6 +205,6 @@
         {/each}
     </video>
     {#if softLoopValue > 0 && videoData.loop}
-        <video class="media" style="{mediaStyleString} position: absolute; top: 0; left: 0; opacity: {softLoopOpacity}; pointer-events: none;" bind:this={softLoopVideo} bind:paused={videoData.paused} src={encodeFilePath(path)} muted={mirror ? true : (videoData.muted ?? true)} bind:playbackRate volume={softLoopValue > 0 ? volume * softLoopOpacity : 0} />
+        <video class="media" style="{mediaStyleString} position: absolute; top: 0; left: 0; opacity: {softLoopOpacity}; pointer-events: none;" bind:this={softLoopVideo} bind:paused={videoData.paused} src={encodeFilePath(path)} muted={mirror ? true : (videoData.muted ?? true)} bind:playbackRate volume={softLoopValue > 0 ? volume * softLoopOpacity : 0}></video>
     {/if}
 </div>

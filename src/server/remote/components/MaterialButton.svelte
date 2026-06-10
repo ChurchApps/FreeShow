@@ -102,14 +102,14 @@
         <Icon id={icon} size={iconSize} white={white || isActive || variant === "contained"} />
     {/if}
 
-    <slot />
+    <slot></slot>
 
     {#if info}
         <span class="info">{info}</span>
     {/if}
 
     {#each ripples as { x, y, size, id } (id)}
-        <span class="ripple" style="top: {y}px; left: {x}px; width: {size}px; height: {size}px;" on:animationend={() => handleAnimationEnd(id)} />
+        <span class="ripple" style="top: {y}px; left: {x}px; width: {size}px; height: {size}px;" on:animationend={() => handleAnimationEnd(id)}></span>
     {/each}
 </button>
 

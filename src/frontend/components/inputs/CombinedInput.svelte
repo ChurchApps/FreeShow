@@ -7,7 +7,7 @@
 </script>
 
 <div class="input" data-title={title} style={customStyle}>
-    <slot />
+    <slot></slot>
 </div>
 
 <style>

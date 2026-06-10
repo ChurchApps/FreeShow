@@ -125,7 +125,7 @@
                     <Icon size={1.1} id="actions" white={!customAction} />
                 </MaterialButton>
 
-                <div class="divider" />
+                <div class="divider"></div>
             {/if}
 
             <MaterialButton on:click={() => activePopup.set("translate")} title="popup.translate">
@@ -139,7 +139,7 @@
                 <p>{$actions[customAction].name}</p>
             </MaterialButton>
 
-            <div class="divider" />
+            <div class="divider"></div>
         {/if}
 
         {#if isLocked}

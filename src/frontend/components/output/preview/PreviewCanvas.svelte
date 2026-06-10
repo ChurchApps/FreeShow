@@ -82,7 +82,7 @@
 </script>
 
 <div class="center" class:fullscreen class:disabled {style} bind:offsetWidth={width} bind:offsetHeight={height}>
-    <canvas {id} class:hide={!capture} style="aspect-ratio: {capture?.size?.width || 16}/{capture?.size?.height || 9};" class="previewCanvas" bind:this={canvas} />
+    <canvas {id} class:hide={!capture} style="aspect-ratio: {capture?.size?.width || 16}/{capture?.size?.height || 9};" class="previewCanvas" bind:this={canvas}></canvas>
 </div>
 
 <style>

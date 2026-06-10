@@ -12,11 +12,11 @@
 <!-- svelte transition bug!!! -->
 {#if disableTransition && !inTransition && !outTransition}
     <div class="transitioner">
-        <slot />
+        <slot></slot>
     </div>
 {:else}
     <div class="transitioner" in:custom={inTransition || transition || {}} out:custom={outTransition || transition || {}} on:outrostart>
-        <slot />
+        <slot></slot>
     </div>
 {/if}
 

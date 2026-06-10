@@ -77,15 +77,15 @@
                             {#if $labelsDisabled}
                                 <div class="add_button">
                                     {#if index === 0}
-                                        <slot name="section_0" />
+                                        <slot name="section_0"></slot>
                                     {:else if index === 1}
-                                        <slot name="section_1" />
+                                        <slot name="section_1"></slot>
                                     {:else if index === 2}
-                                        <slot name="section_2" />
+                                        <slot name="section_2"></slot>
                                     {:else if index === 3}
-                                        <slot name="section_3" />
+                                        <slot name="section_3"></slot>
                                     {:else if index === 4}
-                                        <slot name="section_4" />
+                                        <slot name="section_4"></slot>
                                     {/if}
                                 </div>
                             {/if}
@@ -106,15 +106,15 @@
 
                 {#if !$labelsDisabled}
                     {#if index === 0}
-                        <slot name="section_0" />
+                        <slot name="section_0"></slot>
                     {:else if index === 1}
-                        <slot name="section_1" />
+                        <slot name="section_1"></slot>
                     {:else if index === 2}
-                        <slot name="section_2" />
+                        <slot name="section_2"></slot>
                     {:else if index === 3}
-                        <slot name="section_3" />
+                        <slot name="section_3"></slot>
                     {:else if index === 4}
-                        <slot name="section_4" />
+                        <slot name="section_4"></slot>
                     {/if}
                 {/if}
             </div>

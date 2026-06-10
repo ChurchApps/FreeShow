@@ -17,7 +17,7 @@
 {#key path}
     <div style="height: 100%;">
         {#if !errorLoading}
-            <img src={path} on:error={error} style={mediaStyleString} />
+            <img src={path} on:error={error} style={mediaStyleString} alt="" />
         {/if}
     </div>
 {/key}

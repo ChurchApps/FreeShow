@@ -97,7 +97,7 @@
     {/if} -->
     <span style="width: var(--navigation-width);">
         {#if !$saved && $os.platform !== "win32"}
-            <div class="unsaved" />
+            <div class="unsaved"></div>
         {/if}
         <!-- logo -->
         <h1 style="align-self: center;width: 100%;padding: 0px 10px;text-align: center;font-size: 1.8em;">FreeShow</h1>
@@ -152,7 +152,7 @@
             {/if}
         </Button>
         {#if !$outputDisplay && !physicalOutputWindows.length}
-            <div data-title={translateText("No physical outputs!<br>'settings.invisible_window' is turned on in the outputs settings.")} style="position: absolute;top: 0;inset-inline-end: 0;height: 100%;width: 60px;" role="none" on:click={openOutputSettings} />
+            <div data-title={translateText("No physical outputs!<br>'settings.invisible_window' is turned on in the outputs settings.")} style="position: absolute;top: 0;inset-inline-end: 0;height: 100%;width: 60px;" role="none" on:click={openOutputSettings}></div>
         {/if}
     </span>
 </div>

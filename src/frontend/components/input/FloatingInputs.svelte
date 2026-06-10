@@ -29,14 +29,14 @@
         {#if open}
             <!-- transition:slide={{ duration: 500, axis: "x" }} -->
             <div class="menu">
-                <slot name="menu" />
+                <slot name="menu"></slot>
             </div>
 
             <!-- <div class="divider"></div> -->
         {/if}
     {/if}
 
-    <slot {open} />
+    <slot {open}></slot>
 </div>
 
 <style>

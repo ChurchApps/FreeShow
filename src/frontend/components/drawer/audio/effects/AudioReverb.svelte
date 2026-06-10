@@ -68,7 +68,7 @@
 <div class="reverb-container" style="--accent: #9952ad;" class:disabled>
     <MaterialToggleSwitch label="settings.enabled" checked={config.enabled} on:change={handleEnable} />
 
-    <div style="height: 5px;" />
+    <div style="height: 5px;"></div>
 
     <!-- Decay envelope visualisation -->
     <div class="viz-wrap" class:viz-disabled={!config.enabled}>
@@ -101,7 +101,7 @@
         </div>
     </div>
 
-    <div style="height: 8px;" />
+    <div style="height: 8px;"></div>
 
     <InputRow>
         <MaterialNumberInput label="audio.room_size" value={Math.round(config.roomSize * 100)} min={0} max={100} step={1} maxDecimals={0} showSlider sliderValues={{ min: 0, max: 100, step: 1 }} {disabled} on:change={(e) => handleChange("roomSize", e.detail / 100)} />

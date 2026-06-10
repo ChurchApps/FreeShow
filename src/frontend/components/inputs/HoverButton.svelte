@@ -20,7 +20,7 @@
 
 <!-- on:keydown={triggerClickOnEnterSpace} tabindex="0" role="button" -->
 <div style={$$props.style} role="none" on:click data-title={hide ? "" : translateText(title)}>
-    <slot />
+    <slot></slot>
 
     <div class="overlay" class:reveal class:hidden={hide}>
         <Icon id={icon} {size} white />

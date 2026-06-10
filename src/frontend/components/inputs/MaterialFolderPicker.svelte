@@ -50,7 +50,7 @@
 </script>
 
 <div class="textfield {disabled ? 'disabled' : ''}" data-title={value || translateText("inputs.change_folder")}>
-    <div class="background" />
+    <div class="background"></div>
 
     <div
         class="input edit button-trigger"
@@ -72,7 +72,7 @@
     </div>
 
     <label class:selected={value}>{@html translateText(label)}</label>
-    <span class="underline" />
+    <span class="underline"></span>
 
     {#if openButton}
         <div class="button">

@@ -67,15 +67,15 @@
     <div class="main">
         <!-- WIP volume dots!!! instead of transition.. -->
         <span class="meter left" class:isMuted style="height: 6px;">
-            <div style="right: 0;position: absolute;height: inherit;width: {100 - getDBValue(0, $audioChannels)}%" />
-            <span class="meter left" style="right: 0;position: absolute;height: inherit;width: 100%;opacity: 0.08;" />
-            <div class="highest" style="right: {100 - (highestDB[0]?.value || 0)}%;" />
+            <div style="right: 0;position: absolute;height: inherit;width: {100 - getDBValue(0, $audioChannels)}%"></div>
+            <span class="meter left" style="right: 0;position: absolute;height: inherit;width: 100%;opacity: 0.08;"></span>
+            <div class="highest" style="right: {100 - (highestDB[0]?.value || 0)}%;"></div>
         </span>
         <div style="height: 1px;width: 100%;"></div>
         <span class="meter right" class:isMuted style="height: 6px;">
-            <div style="right: 0;position: absolute;height: inherit;width: {100 - getDBValue(1, $audioChannels)}%" />
-            <span class="meter right" style="right: 0;position: absolute;height: inherit;width: 100%;opacity: 0.08;" />
-            <div class="highest" style="right: {100 - (highestDB[1]?.value || 0)}%;" />
+            <div style="right: 0;position: absolute;height: inherit;width: {100 - getDBValue(1, $audioChannels)}%"></div>
+            <span class="meter right" style="right: 0;position: absolute;height: inherit;width: 100%;opacity: 0.08;"></span>
+            <div class="highest" style="right: {100 - (highestDB[1]?.value || 0)}%;"></div>
         </span>
 
         <div class="lines" style="padding: 3px 0;">

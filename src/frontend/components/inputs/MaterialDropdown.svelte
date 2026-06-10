@@ -299,7 +299,7 @@
 </script>
 
 <div class="textfield {disabled ? 'disabled' : ''}" style={$$props.style || null} class:flags class:onlyArrow bind:this={dropdownEl}>
-    <div class="background" />
+    <div class="background"></div>
 
     <div
         class="input edit dropdown-trigger"
@@ -331,7 +331,7 @@
     {#if !onlyArrow}
         <label for={id} class:selected={hasValue}>{@html translateText(label, $dictionary)}</label>
     {/if}
-    <span class="underline" />
+    <span class="underline"></span>
 
     {#if allowEmpty && hasValue}
         <div class="remove">
@@ -385,7 +385,7 @@
 
                 {#if addNew}
                     <div class="add-new-button">
-                        <li style="font-style: italic;opacity: 0.9;" role="option" on:click={createNew}>
+                        <li style="font-style: italic;opacity: 0.9;" role="option" aria-selected={false} on:click={createNew}>
                             <Icon id="add" />
                             {translateText(addNew)}
                         </li>
@@ -427,7 +427,7 @@
                 {/each}
 
                 {#if addNew}
-                    <li style="font-style: italic;opacity: 0.9;" role="option" on:click={createNew}>
+                    <li style="font-style: italic;opacity: 0.9;" role="option" aria-selected={false} on:click={createNew}>
                         <Icon id="add" />
                         {translateText(addNew)}
                     </li>

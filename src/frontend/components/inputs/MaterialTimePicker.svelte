@@ -59,17 +59,19 @@
 
 <!-- class:filled={!!value} -->
 <div class="textfield filled" class:disabled data-title={translateText(title)} style={$$props.style || null}>
-    <div class="background" />
+    <div class="background"></div>
 
     {#if isDate}
+        <!-- svelte-ignore a11y_autofocus -->
         <input bind:value type="date" {id} {disabled} {autofocus} use:blurOnEnter class="input edit" on:input={onInput} on:change={onChange} on:keydown />
     {:else}
+        <!-- svelte-ignore a11y_autofocus -->
         <input bind:value type="time" {id} {disabled} {autofocus} use:blurOnEnter class="input edit" on:input={onInput} on:change={onChange} on:keydown />
     {/if}
 
     <label for={id}>{@html translateText(label, $dictionary)}</label>
 
-    <span class="underline" />
+    <span class="underline"></span>
 
     {#if defaultValue !== null}
         <div class="remove">

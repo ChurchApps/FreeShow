@@ -78,7 +78,7 @@
             <iframe class="hidden" src={roomURL} frameborder="0" on:load={loaded} allow="microphone {roomURL}"></iframe>
         {/if} -->
         {#if ready}
-            <webview bind:this={webElem} class="fill" src="{ninjaURL}overlay?room={roomId}&showtime={showtime}{translate ? '&translate=' + translate + '&fromlang=' + fromLang : ''}{googlekey ? '&googlekey=' + googlekey : ''}" />
+            <webview bind:this={webElem} class="fill" src="{ninjaURL}overlay?room={roomId}&showtime={showtime}{translate ? '&translate=' + translate + '&fromlang=' + fromLang : ''}{googlekey ? '&googlekey=' + googlekey : ''}"></webview>
         {/if}
     </main>
 {/if}

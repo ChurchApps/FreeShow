@@ -34,9 +34,9 @@
 <div class="main" style="{outlineColor ? 'outline: 2px solid ' + outlineColor + ';' : ''}flex-direction: {mode === 'grid' ? 'column' : 'row'};width: {mainWidth}%;" class:preview class:active>
     <div class="over" style="flex-direction: {mode === 'grid' ? 'column' : 'row'};width: 100%;" on:mousedown on:click on:dblclick on:keydown={triggerClickOnEnterSpace} tabindex="0" role="button">
         {#if preview}
-            <div class="overlay" />
+            <div class="overlay"></div>
         {:else}
-            <div class="hover overlay" />
+            <div class="hover overlay"></div>
         {/if}
         <div data-title={showPlayOnHover ? translateText(active ? "clear.general" : "media.play") : ""} data-media={mediaData} class="card {$$props.class || ''}" class:checkered style="{$$props.style || ''};aspect-ratio: {resolution.width}/{resolution.height};" on:mouseenter on:mouseleave on:mousemove>
             {#if !loaded}
@@ -52,7 +52,7 @@
                     <Icon id="export" size={2} white />
                 </div>
             {/if}
-            <slot />
+            <slot></slot>
         </div>
         <Label {label} {count} {renameId} {title} {icon} {white} {color} {mode} />
     </div>

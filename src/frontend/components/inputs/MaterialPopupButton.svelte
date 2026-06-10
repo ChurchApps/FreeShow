@@ -63,7 +63,7 @@
 </script>
 
 <div {id} class="textfield {disabled ? 'disabled' : ''}" data-title={translateText(`popup.${popupId}`)} style={$$props.style || null}>
-    <div class="background" />
+    <div class="background"></div>
 
     <div
         class="input edit button-trigger"
@@ -108,7 +108,7 @@
     </div>
 
     <label class:selected={value}>{translateText(label)}</label>
-    <span class="underline" />
+    <span class="underline"></span>
 
     {#if allowEmpty && value && !disabled}
         <div class="remove">

@@ -10,6 +10,7 @@
 
 import prettier from "eslint-config-prettier"
 import jsdoc from "eslint-plugin-jsdoc"
+import svelte from "eslint-plugin-svelte"
 import svelteParser from "svelte-eslint-parser"
 import tseslint from "typescript-eslint"
 import globals from "globals"
@@ -145,13 +146,14 @@ export default tseslint.config(
     // SVELTE components — parse with svelte-eslint-parser, lint script with the frontend rules
     {
         files: ["src/frontend/**/*.svelte"],
-        plugins: { jsdoc },
+        plugins: { jsdoc, svelte },
         languageOptions: {
             parser: svelteParser,
             globals: { ...globals.browser, ...globals.node },
             parserOptions: { parser: tseslint.parser, project: "config/typescript/tsconfig.svelte.json", tsconfigRootDir: import.meta.dirname + "/../..", extraFileExtensions: [".svelte"] }
         },
-        rules: frontendRules
+        // Svelte 5: disallow self-closing non-void HTML elements (autofixable). Other svelte rules stay off to match the prior behaviour.
+        rules: { ...frontendRules, "svelte/html-self-closing": ["error", { void: "ignore", normal: "never", svg: "ignore", math: "ignore", component: "ignore", svelte: "ignore" }] }
     },
 
     // Prettier last: turn off all formatting-related rules

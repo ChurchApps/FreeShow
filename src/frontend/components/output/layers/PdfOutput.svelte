@@ -53,7 +53,7 @@
 
 {#key update}
     <OutputTransition {transition} inTransition={transition.in} outTransition={transition.out}>
-        <canvas bind:this={canvasElem} />
+        <canvas bind:this={canvasElem}></canvas>
     </OutputTransition>
 {/key}
 
