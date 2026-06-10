@@ -21,6 +21,8 @@ jobs:
 
       - name: Setup MSVC Environment
         uses: ilammy/msvc-dev-cmd@v1
+        with:
+          vsversion: '2022'
 
       - name: Install dependencies
         # npm ci is better, but requires package-lock.json file
