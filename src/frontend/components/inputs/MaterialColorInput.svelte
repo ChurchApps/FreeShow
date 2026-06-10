@@ -1,6 +1,7 @@
 <script lang="ts">
     import { createEventDispatcher, onMount } from "svelte"
     import { uid } from "uid"
+    import { triggerClickOnEnterSpace } from "../../utils/clickable"
     import { activePopup, popupData, special } from "../../stores"
     import { translateText } from "../../utils/language"
     import { addOpacityToGradient, getGradientOpacity } from "../edit/scripts/edit"
@@ -227,7 +228,7 @@
                         {#if color === "BREAK"}
                             <div style="display: block;margin: 10px;width: 100%;"></div>
                         {:else}
-                            <div class="pickColor" class:active={!editMode && hexValue === color.value} class:disabled={disabledGradientColors.includes(color.value)} data-title={color.name} style="background: {color.value};" tabindex="0" aria-label="Select gradient {color.name || color.value}" on:click={() => selectColor(color.value, true, true)}>
+                            <div class="pickColor" class:active={!editMode && hexValue === color.value} class:disabled={disabledGradientColors.includes(color.value)} data-title={color.name} style="background: {color.value};" tabindex="0" aria-label="Select gradient {color.name || color.value}" on:keydown={triggerClickOnEnterSpace} on:click={() => selectColor(color.value, true, true)}>
                                 {#if editMode}
                                     <div class="hover" class:visible={disabledGradientColors.includes(color.value)}>
                                         <Icon id={isCustom ? "delete" : "disable"} white style="fill: {getContrast(color.value)};" />
@@ -281,7 +282,7 @@
                         {#if color === "BREAK"}
                             <div style="display: block;margin: 10px;width: 100%;"></div>
                         {:else}
-                            <div data-value={color.value} class="pickColor" class:active={!editMode && hexValue.toLowerCase() === color.value?.toLowerCase()} class:disabled={disabledColors.includes(color.value)} data-title={color.name} tabindex="0" style="background:{color.value};--outline-color: {getContrast(color.value)};" on:click={() => selectColor(color.value, true, true)}>
+                            <div data-value={color.value} class="pickColor" class:active={!editMode && hexValue.toLowerCase() === color.value?.toLowerCase()} class:disabled={disabledColors.includes(color.value)} data-title={color.name} tabindex="0" style="background:{color.value};--outline-color: {getContrast(color.value)};" on:keydown={triggerClickOnEnterSpace} on:click={() => selectColor(color.value, true, true)}>
                                 {#if editMode}
                                     <div class="hover" class:visible={disabledColors.includes(color.value)}>
                                         <Icon id={isCustom ? "delete" : "disable"} white style="fill: {getContrast(color.value)};" />
