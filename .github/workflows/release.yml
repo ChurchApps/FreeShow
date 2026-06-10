@@ -19,9 +19,8 @@ jobs:
         with:
           node-version: 22
 
-      - name: Configure MSVS version
-        shell: powershell
-        run: Add-Content -Path "$env:USERPROFILE\.npmrc" -Value "msvs_version=2022"
+      - name: Setup MSVC Environment
+        uses: ilammy/msvc-dev-cmd@v1
 
       - name: Install dependencies
         # npm ci is better, but requires package-lock.json file
