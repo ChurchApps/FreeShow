@@ -145,7 +145,28 @@ electron-builder configs are in `config/building/` (`electron-builder.yaml`, `el
 
 ---
 
-## 8. Notes & gotchas
+## 8. Reproducible builds with Docker (Linux)
+
+A `Dockerfile` is provided for a consistent, traceable **Linux** build environment (it pins the OS toolchain + Node 22.12). Electron builds per-platform, so this can't produce macOS/Windows binaries — use a native machine or CI for those.
+
+```bash
+# Build the app inside a pinned environment
+docker build -t freeshow-build .
+
+# Produce the unpacked Linux app into ./out (electron-builder --dir)
+docker run --rm -v "$PWD/out:/app/dist" freeshow-build npm run pack
+
+# Interactive shell (mount your working tree)
+docker run --rm -it -v "$PWD":/app freeshow-build bash
+
+# Run the headless E2E test in the container
+docker run --rm freeshow-build \
+  xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run test:playwright
+```
+
+> **Traceability caveat:** the image pins the OS, Node, Python, and system libs, but **npm package versions still float without a committed lockfile** (this repo gitignores `package-lock.json`). When a lockfile is present, the Dockerfile uses `npm ci` (fully reproducible); otherwise it uses `npm install`. To capture the exact versions a build resolved: `docker run --rm freeshow-build cat package-lock.json > package-lock.json`. For byte-for-byte image reproducibility, pin the base image to a digest in the `Dockerfile`.
+
+## 9. Notes & gotchas
 
 - **Native modules rebuild on every install.** `postinstall` runs `electron-builder install-app-deps`, which rebuilds the native modules against Electron's ABI — so a missing platform toolchain (section 2) is the most common cause of a failed `npm install`.
 - **macOS Python:** use 3.11, not 3.12 (node-gyp issue above).
