@@ -142,17 +142,26 @@
         destroy(OUTPUT, listenerId)
     }
 
+    $: isVideo = videoExtensions.includes(getExtension(id))
+
     // call end just before (to make room for transition) - this also triggers video ended on loop
-    $: if (videoData.duration && videoTime >= videoData.duration - (duration / 1000 + 0.1) && !mediaStyle.softLoop) videoEnded()
+    $: if (isVideo && videoData.duration && videoTime >= videoData.duration - (duration / 1000 + 0.1) && !mediaStyle.softLoop) {
+        videoEnded()
+    }
 
     let endedCalled = false
+    $: if (id) endedCalled = false
+
     function videoEnded() {
         if (fadingOut || mirror || endedCalled) return
-
         endedCalled = true
-        setTimeout(() => (endedCalled = false), duration || 1000)
 
         send(OUTPUT, ["MAIN_VIDEO_ENDED"], { id: outputId, loop: videoData.loop, duration })
+
+        // Only reset if looping, otherwise keep endedCalled true for the remainder of this media's life
+        if (videoData.loop) {
+            setTimeout(() => (endedCalled = false), Math.max(duration, 2000))
+        }
     }
 
     // FADE OUT AUDIO
