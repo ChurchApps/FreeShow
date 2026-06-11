@@ -198,7 +198,7 @@
             const texts = (Array.isArray(firstLine?.text) ? firstLine.text : []).filter((a) => !a.customType).map((a) => a.value)
             showsCache.update((a) => {
                 const showId = ref.showId || $activeShow?.id || ""
-                const slide = a[showId]?.slides[ref.id]
+                const slide = a[showId]?.slides?.[ref.id]
                 if (!slide?.customDynamicValues?.scripture_text) return a
 
                 texts.forEach((t, i) => {
@@ -334,8 +334,9 @@
                             if (text.sourceDynamicKey?.includes("scripture_text")) {
                                 const key = text.sourceDynamicKey.split(":")[0]
                                 const index = text.sourceDynamicKey.split(":")[1] || "0"
-                                if (!a[ref.showId!].slides[ref.id].customDynamicValues![key]?.[index]?.[1]) return
-                                a[ref.showId!].slides[ref.id].customDynamicValues![key][index][1] = text.value
+                                const storage = a[ref.showId!]?.slides?.[ref.id]?.customDynamicValues
+                                if (!storage?.[key]?.[index]) return
+                                storage[key][index][1] = text.value
                             }
                         })
                     })

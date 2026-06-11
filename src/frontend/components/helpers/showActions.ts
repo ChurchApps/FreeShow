@@ -108,8 +108,9 @@ export function swichProjectItem(pos: number, id: string) {
 
 export function getItemWithMostLines(slide: Slide | { items: Item[] }) {
     let amount = 0
-    slide.items?.forEach((item) => {
-        const lines: number = item?.lines?.filter((line) => line.text?.filter((text) => text.value !== undefined)?.length)?.length || 0
+    if (!Array.isArray(slide.items)) return 0
+    slide.items.forEach((item) => {
+        const lines: number = (Array.isArray(item?.lines) ? item.lines.filter((line) => Array.isArray(line.text) && line.text.filter((text) => text.value !== undefined).length > 0) : [])?.length || 0
         if (lines > amount) amount = lines
     })
     return amount
@@ -165,9 +166,11 @@ function shouldTriggerBefore(action: any) {
     return action?.triggers?.find((trigger) => triggerActionsBeforeOutput[trigger]?.(action.actionValues?.[trigger]))
 }
 export function checkActionTrigger(layoutData: SlideData, slideIndex = 0) {
-    layoutData?.actions?.slideActions?.forEach((a) => {
-        if (shouldTriggerBefore(a)) runAction(a, { slideIndex })
-    })
+    if (Array.isArray(layoutData?.actions?.slideActions)) {
+        layoutData.actions.slideActions.forEach((a) => {
+            if (shouldTriggerBefore(a)) runAction(a, { slideIndex })
+        })
+    }
 }
 
 export async function playPdf(data: OutSlide | null, next: boolean, loop = false) {
@@ -358,7 +361,7 @@ export function updateOut(showId: string, index: number, layout: LayoutRef[], ex
         }
 
         // audio
-        if (data.audio) {
+        if (Array.isArray(data.audio)) {
             // let clear action trigger first
             setTimeout(() => {
                 data.audio?.forEach((audio: string) => {
@@ -474,10 +477,10 @@ function playOutputStyleTemplateActions(outputIds: string[]) {
         const styleTemplateId = get(styles)[outputStyleId]?.template || ""
         if (!styleTemplateId) return
 
-        const templateSettings = get(templates)[styleTemplateId]?.settings?.actions || []
-        if (!templateSettings?.length) return
+        const templateSettings = get(templates)[styleTemplateId]?.settings?.actions
+        if (!Array.isArray(templateSettings) || !templateSettings.length) return
 
-        templateSettings?.forEach((action) => runAction(action))
+        templateSettings.forEach((action) => runAction(action))
     })
 }
 

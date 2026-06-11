@@ -60,15 +60,28 @@
             let goToStartRefs = allActiveSlides.reduce((value, ref) => (ref.data?.end ? [...value, ref] : value), [] as LayoutRef[])
             if (goToStartRefs.length === 1) {
                 let showId = $activeShow?.id || ""
-                let layoutId = _show().get("settings.activeLayout")
-                showsCache.update((a) => {
-                    let ref = goToStartRefs[0]
-                    if (!ref) return a
+                if (showId) {
+                    let layoutId = _show(showId).get("settings.activeLayout")
+                    showsCache.update((a) => {
+                        const ref = goToStartRefs[0]
+                        const show = a[showId]
+                        if (!ref || !show) return a
 
-                    if (ref.type === "parent") delete a[showId].layouts[layoutId]?.slides?.[ref.index]?.end
-                    else delete a[showId].layouts[layoutId]?.slides?.[ref.parent?.index ?? -1]?.children?.[ref.id]?.end
-                    return a
-                })
+                        const layout = show.layouts?.[layoutId]
+                        if (!layout) return a
+
+                        if (ref.type === "parent") {
+                            const slide = layout.slides?.[ref.index]
+                            if (slide) delete slide.end
+                        } else {
+                            const parentIndex = ref.parent?.index ?? -1
+                            const parentSlide = layout.slides?.[parentIndex]
+                            const child = parentSlide?.children?.[ref.id]
+                            if (child) delete child.end
+                        }
+                        return a
+                    })
+                }
             }
 
             history({ id: "SHOW_LAYOUT", newData: { key: "end", data: !!value, indexes: [indexes[indexes.length - 1]] }, location: { page: "show", override: "change_slide_action_loop" } })

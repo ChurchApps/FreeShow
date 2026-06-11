@@ -122,7 +122,11 @@
         //     updateStyles()
         // }, CHANGE_POS_TIME)
 
-        let items = currentShow?.slides?.[ref[$activeEdit.slide || 0]?.id]?.items || []
+        const slideIndex = $activeEdit.slide ?? 0
+        const slideId = ref[slideIndex]?.id
+        if (!slideId) return
+
+        let items = currentShow?.slides?.[slideId]?.items || []
         let values: string[] = []
         active.forEach((id) => {
             let item = items[id]
@@ -137,14 +141,11 @@
             }
         })
 
-        let slideId = ref[$activeEdit.slide || 0]?.id
-        if (!slideId) return
-
         let activeItems = [...active]
 
         let historyShow = $activeShow
         // focus mode
-        if (!historyShow && currentShowId) historyShow = { type: "show", id: currentShowId, index: $activeEdit.slide || 0 }
+        if (!historyShow && currentShowId) historyShow = { type: "show", id: currentShowId, index: slideIndex }
         else if (!historyShow) return
 
         history({
@@ -255,7 +256,7 @@
         // timeout to prevent number 2 from getting typed if changing with shortcuts
         setTimeout(() => {
             // set focus to textbox if only one
-            if (Slide?.items.length === 1 && !$activeEdit.items.length) {
+            if (Slide?.items?.length === 1 && !$activeEdit.items.length) {
                 activeEdit.update((a) => ({ ...(a || {}), items: [0] }))
                 const elem = document.querySelector(".editItem")?.querySelector(".edit")
                 if (elem && !$special.slideTimelineActive) {
@@ -328,9 +329,9 @@
 
     function edit(e: any) {
         const slideId = ref[$activeEdit.slide!]?.id
-        if (Slide.notes === e.detail || !slideId) return
+        if (!Slide || Slide.notes === e.detail || !slideId) return
 
-        _show($activeShow!.id).slides([slideId]).set({ key: "notes", value: e.detail })
+        _show(currentShowId).slides([slideId]).set({ key: "notes", value: e.detail })
     }
 </script>
 

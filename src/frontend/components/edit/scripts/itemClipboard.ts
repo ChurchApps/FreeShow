@@ -150,12 +150,16 @@ export async function setBoxStyle(styles: StyleClipboard[], slides: any, type: I
             //     location: { page: "edit", show: get(activeShow)!, slide: slide.id, items },
             // })
             showsCache.update((a) => {
-                ;(a[get(activeShow)!.id]?.slides[slide.id || ""]?.items || [])
+                const showId = get(activeShow)?.id
+                if (!showId || !a[showId]?.slides) return a
+                ;(a[showId].slides[slide.id || ""]?.items || [])
                     .filter((_, i) => items.includes(i))
                     .forEach((item) => {
-                        item.lines?.forEach((line) => {
-                            line.align = style.linesAlign!
-                        })
+                        if (Array.isArray(item.lines)) {
+                            item.lines.forEach((line) => {
+                                line.align = style.linesAlign!
+                            })
+                        }
                     })
                 return a
             })

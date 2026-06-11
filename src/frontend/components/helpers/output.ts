@@ -1317,7 +1317,7 @@ function replaceScriptureValues(items: Item[], templateItems: Item[], customDyna
         // remove empty values
         items.forEach((item) => {
             item.lines?.forEach((line) => {
-                line.text = line.text?.filter((text) => text.value) || []
+                line.text = Array.isArray(line.text) ? line.text.filter((text) => text.value) : []
             })
         })
     }

@@ -200,9 +200,9 @@ function getSong(song: any, content: any) {
         lyrics = lyrics.song?.lyrics?.verse || []
         if (!Array.isArray(lyrics)) lyrics = [lyrics]
 
-        lyrics = lyrics.map((a) => {
+        lyrics = lyrics.filter(Boolean).map((a) => {
             const { lines, chords } = extractChordLines(a["#cdata"] || "")
-            return { name: a["@type"] + a["@label"], lines, chords }
+            return { name: (a["@type"] || "") + (a["@label"] || ""), lines, chords }
         })
 
         return lyrics
@@ -217,7 +217,19 @@ function XMLtoObject(xml: string) {
     let lyrics = song.lyrics || {}
     const properties = song.properties || {}
 
-    const notes = song["#comment"] || (Array.isArray(properties.comments) ? properties.comments?.map((comment) => comment["#text"] || "").join("\n") : typeof properties.comments?.comment === "string" ? properties.comments.comment : typeof properties.comments === "string" ? properties.comments : "") || ""
+    const notes =
+        song["#comment"] ||
+        (Array.isArray(properties.comments)
+            ? properties.comments
+                  .filter(Boolean)
+                  .map((comment) => comment["#text"] || "")
+                  .join("\n")
+            : typeof properties.comments?.comment === "string"
+              ? properties.comments.comment
+              : typeof properties.comments === "string"
+                ? properties.comments
+                : "") ||
+        ""
 
     const newSong: Song = {
         title: getTitle(),
@@ -277,17 +289,17 @@ function XMLtoObject(xml: string) {
     }
 
     function getLines(lines: string | any) {
-        if (lines.tag) lines = lines.tag.tag?.["#text"]
+        if (lines?.tag) lines = lines.tag.tag?.["#text"]
         if (!lines) return { lines: [], chords: [] }
 
         // might be <lines break="optional">
-        if (lines["#text"]) lines = lines["#text"]
+        if (lines && lines["#text"]) lines = lines["#text"]
         // some openlyrics verses can have multiple <lines> tags
         if (Array.isArray(lines)) {
             const convertedLines: string[] = lines.map(convertToText)
             function convertToText(line: any) {
-                if (line["#text"]) return line["#text"]
-                return line
+                if (line && line["#text"]) return line["#text"]
+                return line || ""
             }
             lines = convertedLines.join("\n")
         }
