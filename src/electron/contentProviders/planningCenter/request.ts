@@ -716,13 +716,10 @@ function parseSectionLines(lyrics: string): ParsedSectionLine[] {
 
         const inline = parseInlineBracketLine(currentLine)
         if (inline) {
-            if (inline.text.trim()) {
-                parsedLines.push(toParsedSectionLine(currentEntry, { text: inline.text.trim(), chords: inline.chords, hidden: false }))
-                continue
-            } else {
-                parsedLines.push(toParsedSectionLine(currentEntry, { text: "", chords: inline.chords, hidden: false }))
-                continue
-            }
+            // Skip if text is blank (markers only)
+            if (!inline.text.trim()) continue
+            parsedLines.push(toParsedSectionLine(currentEntry, { text: inline.text, chords: inline.chords, hidden: false }))
+            continue
         }
 
         const chordLineData = getChordLineData(currentLine)
