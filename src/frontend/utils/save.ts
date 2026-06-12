@@ -3,6 +3,7 @@ import { Main } from "../../types/IPC/Main"
 import type { Projects } from "../../types/Projects"
 import type { Shows } from "../../types/Show"
 import { customActionActivation } from "../components/actions/actions"
+import { stopAllInteractions } from "../components/drawer/pages/interactions"
 import { clone, keysToID, removeDeleted } from "../components/helpers/array"
 import { isOutCleared } from "../components/helpers/output"
 import { sendMain } from "../IPC/main"
@@ -316,7 +317,13 @@ export function initializeClosing(skipPopup = false) {
     else save(true)
 }
 
-export function closeApp() {
+export async function closeApp() {
+    try {
+        await stopAllInteractions()
+    } catch {
+        console.error("Could not stop interactions before closing!")
+    }
+
     sendMain(Main.CLOSE)
 }
 

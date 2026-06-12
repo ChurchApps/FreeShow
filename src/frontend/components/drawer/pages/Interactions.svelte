@@ -2,13 +2,15 @@
     import { uid } from "uid"
     import { activePopup, activeRename, interactions, labelsDisabled, openedInteractionId, popupData } from "../../../stores"
     import { translateText } from "../../../utils/language"
+    import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
+    import { clone, keysToID, sortByName } from "../../helpers/array"
     import FloatingInputs from "../../input/FloatingInputs.svelte"
     import HiddenInput from "../../inputs/HiddenInput.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
-    import Icon from "../../helpers/Icon.svelte"
-    import { clone, keysToID, sortByName } from "../../helpers/array"
+    import { getInteraction, getActiveInteractions, startInteraction, stopInteraction } from "./interactions"
+    import InputRow from "../../input/InputRow.svelte"
 
     export let searchValue: string
     console.log(searchValue)
@@ -28,6 +30,8 @@
 
     $: openedId = $openedInteractionId
     $: openedInteraction = $interactions[openedId] || null
+
+    let activeInteractions = getActiveInteractions()
 
     function updateInteractionName(id: string, value: string) {
         if (!value) return
@@ -77,12 +81,29 @@
         number_range: "ruler"
     }
 
-    function startGame() {
-        alert("OPEN FOR INTERACTIONS!")
+    let answers: { [key: string]: any }[] = []
+    let clients: { [key: string]: any } = {}
+    async function start() {
+        const interaction = await startInteraction(openedId)
+        interaction?.onUpdate((data) => {
+            answers = data.answers
+            clients = data.clients
+        })
+
+        activeInteractions = getActiveInteractions()
     }
+    $: if (openedId && activeInteractions.includes(openedId)) {
+        const interaction = getInteraction(openedId)
+        interaction?.onUpdate((data) => {
+            answers = data.answers
+            clients = data.clients
+        })
+    }
+
+    $: console.log("Answers updated:", answers)
 </script>
 
-<!-- WIP what is it? Polls / Quizzes / Word Clouds / Game Shows / etc. -->
+<!-- WIP what is it? Polls / Quizzes / Q&A / Word Clouds / Game Shows / etc. -->
 
 <!-- WIP Game options -->
 <!-- show all inputs at once? = forms & no timer  -->
@@ -96,46 +117,96 @@
     <div class="header">
         <MaterialButton style="padding: 6px;" icon="back" title="actions.back" on:click={() => openedInteractionId.set("")} />
 
-        <p style={openedInteraction.name ? "" : "font-style: italic;opacity: 0.7;"}>
+        <p style="flex: 1;{openedInteraction.name ? '' : 'font-style: italic;opacity: 0.7;'}">
             {openedInteraction.name || translateText("main.unnamed")}
         </p>
+
+        {#if activeInteractions.includes(openedId)}
+            <div style="display: flex;align-items: center;gap: 4px;opacity: 0.7;margin-right: 8px;">
+                <Icon id="people" white />
+                {Object.keys(clients).length}
+            </div>
+        {/if}
     </div>
 
     <div class="inputs">
         {#each openedInteraction.inputs as input, i}
-            <div
-                class="input context #interaction_input"
-                id="#{i}"
-                on:click={(e) => {
-                    if (e.target?.closest(".rearrange")) return
+            <InputRow arrow={activeInteractions.includes(openedId) && Object.keys(answers[i] || {}).length > 0}>
+                <div
+                    class="input context #interaction_input"
+                    style="width: 100%;"
+                    id="#{i}"
+                    on:click={(e) => {
+                        if (e.target?.closest(".rearrange")) return
 
-                    popupData.set({ id: openedId, inputIndex: i })
-                    activePopup.set("interaction_input")
-                }}
-                role="none"
-            >
-                <Icon id={input.type} size={1.5} gradient />
-                <Icon id={inputTypeIcons[input.inputType]} white />
+                        popupData.set({ id: openedId, inputIndex: i })
+                        activePopup.set("interaction_input")
+                    }}
+                    role="none"
+                >
+                    <Icon id={input.type} size={1.5} gradient />
+                    <Icon id={inputTypeIcons[input.inputType]} white />
 
-                <p style="flex: 1;{input.question ? '' : 'font-style: italic;opacity: 0.7;'}">
-                    {input.question || translateText("main.unnamed")}
-                </p>
+                    <p style="flex: 1;{input.question ? '' : 'font-style: italic;opacity: 0.7;'}">
+                        {input.question || translateText("main.unnamed")}
+                    </p>
 
-                <span>
-                    <MaterialButton class="rearrange" disabled={i === openedInteraction.inputs.length - 1} icon="down" title="actions.backward" style="padding: 8px;" on:click={() => rearrangeInputs("forward", i)} />
-                    <MaterialButton class="rearrange" disabled={i === 0} icon="up" title="actions.forward" style="padding: 8px;" on:click={() => rearrangeInputs("backward", i)} />
-                </span>
-            </div>
+                    {#if activeInteractions.includes(openedId)}
+                        ({Object.keys(answers[i] || {}).length || 0})
+                    {:else}
+                        <span>
+                            <MaterialButton class="rearrange" disabled={i === openedInteraction.inputs.length - 1} icon="down" title="actions.backward" style="padding: 8px;" on:click={() => rearrangeInputs("forward", i)} />
+                            <MaterialButton class="rearrange" disabled={i === 0} icon="up" title="actions.forward" style="padding: 8px;" on:click={() => rearrangeInputs("backward", i)} />
+                        </span>
+                    {/if}
+                </div>
+
+                <div slot="menu">
+                    {#each Object.entries(answers[i] || {}) as [clientId, answer]}
+                        <p>
+                            {#if clients[clientId]?.name}<span>{clients[clientId].name}:</span>{/if}
+                            <span>{answer}</span>
+                        </p>
+                    {/each}
+                </div>
+            </InputRow>
         {/each}
 
-        <MaterialButton variant="outlined" icon="add" on:click={addInput}>
-            <T id="New input" />
-        </MaterialButton>
+        {#if !activeInteractions.includes(openedId)}
+            <MaterialButton variant="outlined" icon="add" on:click={addInput}>
+                <T id="New input" />
+            </MaterialButton>
+        {/if}
     </div>
 
-    <MaterialButton variant="contained" disabled={!openedInteraction.inputs.length} style="background-color: green;" on:click={startGame}>
-        <T id="Start/Open" />
-    </MaterialButton>
+    {#if activeInteractions.includes(openedId)}
+        <!-- current index... -->
+
+        <!-- go to next/previous index -->
+        <InputRow>
+            <MaterialButton variant="outlined" style="flex: 1;" on:click={() => getInteraction(openedId)?.previous()}>
+                <T id="Previous" />
+            </MaterialButton>
+            <MaterialButton variant="outlined" style="flex: 1;" on:click={() => getInteraction(openedId)?.next()}>
+                <T id="Next" />
+            </MaterialButton>
+        </InputRow>
+
+        <MaterialButton
+            variant="contained"
+            style="background-color: red;"
+            on:click={async () => {
+                await stopInteraction(openedId)
+                activeInteractions = getActiveInteractions()
+            }}
+        >
+            <T id="Stop/Close" />
+        </MaterialButton>
+    {:else}
+        <MaterialButton variant="contained" disabled={!openedInteraction.inputs.length} style="background-color: green;" on:click={start}>
+            <T id="Start/Open" />
+        </MaterialButton>
+    {/if}
 {:else}
     <div class="interactions">
         {#each sortByName(keysToID($interactions)) as interaction}

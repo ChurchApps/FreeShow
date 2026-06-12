@@ -127,6 +127,7 @@
         "exif": "^0.6.0",
         "express": "^4.21.2",
         "fast-xml-parser": "5.4.1",
+        "firebase": "^12.14.0",
         "genius-lyrics": "^4.4.7",
         "grandiose": "github:ChurchApps/grandiose#4e02dea",
         "json-bible": "^1.1.9",

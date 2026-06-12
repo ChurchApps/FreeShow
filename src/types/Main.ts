@@ -284,6 +284,7 @@ export interface Variable {
 export interface Interaction {
     name: string
     inputs: InteractionInput[]
+    lastConnection?: { id: string; secret: string }
 }
 type InteractionInput = TextQuestion | NumberQuestion | MultipleChoiceQuestion
 interface QuestionBase {
