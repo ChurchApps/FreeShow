@@ -57,42 +57,6 @@ type SectionSourceLine = RepeatDelimiterData & {
 
 const chordTokenRegex = /^[A-G](?:#|b)?(?:m|maj|min|sus|add|aug|dim)?\d*(?:\/[A-G](?:#|b)?)?$/i
 
-function isChordProgressionLine(line: string): boolean {
-    const trimmed = line.trim()
-    if (!trimmed) return false
-
-    const withoutLabel = trimmed.replace(/^[A-ZÁÉÍÓÚÑ_ ]+:\s*/i, "").trim()
-    if (!withoutLabel) return false
-
-    const tokens = withoutLabel.split(/\s+/).filter(Boolean)
-    if (!tokens.length) return false
-
-    let chordCount = 0
-    for (const rawToken of tokens) {
-        // Strip trailing punctuation, then strip surrounding parentheses used as grouping markers
-        const token = rawToken
-            .replace(/[.,;:]+$/, "")
-            .replace(/^\(+/, "")
-            .replace(/\)+$/, "")
-
-        // Token was composed entirely of parentheses (grouping markers like a lone "(" or ")")
-        if (!token) continue
-
-        if (chordTokenRegex.test(token)) {
-            chordCount++
-            continue
-        }
-
-        if (/^x\d+$/i.test(token) || /^\(x\d+\)$/i.test(token) || /^\|+$/.test(token) || /^-+$/.test(token) || /^\/+$/i.test(token)) {
-            continue
-        }
-
-        return false
-    }
-
-    return chordCount >= 2
-}
-
 function parseChordChartIntoSections(chordChart: string): SongSection[] {
     const sections: SongSection[] = []
     const lines = chordChart.split(/\r?\n/)
@@ -306,7 +270,8 @@ async function fetchServicePlans(serviceType: ServiceType) {
         endpoint: plansEndpoint,
         params: {
             order: "sort_date",
-            filter: "future"
+            filter: "future",
+            per_page: "100"
         }
     })
 
@@ -445,30 +410,30 @@ function getOrderedSections(sections: SongSection[], sequence: any[]): SongSecti
     sections.forEach((section) => {
         const lowerLabel = section.label.toLowerCase()
         const normalizedLabel = lowerLabel.replace(/\s+/g, " ").trim()
-        const nospaceLabel = normalizedLabel.replace(/\s+/g, "")
+        const cleanLabel = lowerLabel.replace(/[^a-z0-9]/g, "")
 
         // Store by all possible variations
         sectionMap[section.label] = section
         sectionMap[lowerLabel] = section
         sectionMap[normalizedLabel] = section
-        sectionMap[nospaceLabel] = section
+        sectionMap[cleanLabel] = section
     })
 
     const orderedSections: SongSection[] = []
     const notFoundLabels: Set<string> = new Set()
 
     sequence.forEach((label) => {
-        const normalizedSeqLabel = String(label).toLowerCase().replace(/\s+/g, " ").trim()
-        const nospaceSeqLabel = normalizedSeqLabel.replace(/\s+/g, "")
+        const labelStr = String(label).toLowerCase()
+        const cleanSeqLabel = labelStr.replace(/[^a-z0-9]/g, "")
 
         // Try to find matching section with multiple strategies
-        let foundSection = sectionMap[label] || sectionMap[normalizedSeqLabel] || sectionMap[nospaceSeqLabel]
+        let foundSection = sectionMap[label] || sectionMap[labelStr] || sectionMap[cleanSeqLabel]
 
-        // Try flexible matching for variations like "PRECORO 2" vs "PRECORO2"
+        // Try flexible matching for variations like "PreChorus" vs "Pre-Chorus"
         if (!foundSection) {
             const matchedKey = Object.keys(sectionMap).find((key) => {
-                const keyNormalized = key.toLowerCase().replace(/\s+/g, "")
-                return keyNormalized === nospaceSeqLabel
+                const keyClean = key.toLowerCase().replace(/[^a-z0-9]/g, "")
+                return keyClean === cleanSeqLabel
             })
             if (matchedKey) {
                 foundSection = sectionMap[matchedKey]
@@ -562,7 +527,7 @@ function toParsedSectionLine(source: SectionSourceLine, overrides: Partial<Parse
 }
 
 function canAlignChordLineWithLyricLine(line: string): boolean {
-    return Boolean(line.trim() && !isChordProgressionLine(line) && !getChordLineData(line) && !parseInlineBracketLine(line))
+    return Boolean(line.trim() && !getChordLineData(line) && !parseInlineBracketLine(line))
 }
 
 function copyChords(chords?: Chords[], generateIds = false): Chords[] | undefined {
@@ -572,34 +537,46 @@ function copyChords(chords?: Chords[], generateIds = false): Chords[] | undefine
 function parseInlineBracketLine(line: string): { text: string; chords: Chords[] } | null {
     if (!line.includes("[") || !line.includes("]")) return null
 
-    let text = ""
-    const chords: Chords[] = []
+    let rawText = ""
+    const rawChords: Chords[] = []
     let cursor = 0
+    let hasBrackets = false
 
     while (cursor < line.length) {
         const start = line.indexOf("[", cursor)
         if (start < 0) {
-            text += line.slice(cursor)
+            rawText += line.slice(cursor)
             break
         }
 
-        text += line.slice(cursor, start)
+        hasBrackets = true
+        rawText += line.slice(cursor, start)
         const end = line.indexOf("]", start + 1)
         if (end < 0) {
-            text += line.slice(start)
+            rawText += line.slice(start)
             break
         }
 
-        const chord = line.slice(start + 1, end).trim()
-        if (chord) {
-            chords.push({ id: uid(5), pos: text.length, key: chord })
+        const content = line.slice(start + 1, end).trim()
+        const cleanContent = content.replace(/^\(+/, "").replace(/\)+$/, "")
+
+        if (chordTokenRegex.test(cleanContent)) {
+            rawChords.push({ id: uid(5), pos: rawText.length, key: content })
         }
+        // Non-chord content (like ||:) is intentionally ignored and not added to text
 
         cursor = end + 1
     }
 
-    if (!chords.length) return null
-    return { text, chords }
+    if (!hasBrackets) return null
+
+    const { cleanText, mapping } = cleanLyricLine(rawText)
+    const chords = rawChords.map((c) => ({
+        ...c,
+        pos: mapping[c.pos] ?? cleanText.length
+    }))
+
+    return { text: cleanText, chords }
 }
 
 function parsePlainChordLine(line: string): Chords[] | null {
@@ -608,12 +585,14 @@ function parsePlainChordLine(line: string): Chords[] | null {
 
     const chords: Chords[] = []
     for (const match of matches) {
-        // Strip surrounding parentheses used as grouping markers, e.g. "(G)" -> "G", "G)" -> "G"
         const token = match[0].replace(/^\(+/, "").replace(/\)+$/, "")
         const pos = match.index ?? 0
 
-        // Token was just parentheses, or a separator character — skip without rejecting the line
-        if (!token || /^\|+$/.test(token) || /^-+$/.test(token) || /^\/+$/i.test(token)) continue
+        // Ignore common musical markers and repeats so they don't cause the line to be rejected
+        if (!token || /^\|+$/.test(token) || /^-+$/.test(token) || /^\/+$/i.test(token) || 
+            /^[:|]+$/.test(token) || /^x\d+$/i.test(token)) {
+            continue
+        }
 
         if (!chordTokenRegex.test(token)) return null
         chords.push({ id: uid(5), pos, key: token })
@@ -623,21 +602,69 @@ function parsePlainChordLine(line: string): Chords[] | null {
 }
 
 function getChordLineData(line: string): Chords[] | null {
-    const inline = parseInlineBracketLine(line)
-    if (inline && !inline.text.trim()) return inline.chords
     return parsePlainChordLine(line)
 }
 
+function cleanLyricLine(text: string): { cleanText: string; mapping: number[] } {
+    let cleanText = ""
+    const mapping: number[] = new Array(text.length + 1)
+
+    let i = 0
+    while (i < text.length) {
+        // 1. Handle alignment dashes and syllable breaks: 
+        // e.g., "  -  ", " --- ", " - ", " -", "- ", "-"
+        // In song charts, dashes are almost always syllable separators.
+        const dashMatch = text.slice(i).match(/^(\s*-+\s*)/)
+        if (dashMatch) {
+            const match = dashMatch[0]
+            // We strip any sequence with a dash. 
+            // If it's just a hyphen in a word (no spaces), we still strip it for PCO consistency.
+            for (let k = 0; k < match.length; k++) {
+                mapping[i + k] = cleanText.length
+            }
+            i += match.length
+            continue
+        }
+
+        // 2. Handle multiple spaces (collapse to one)
+        const spaceMatch = text.slice(i).match(/^(\s{2,})/)
+        if (spaceMatch) {
+            cleanText += " "
+            for (let k = 0; k < spaceMatch[0].length; k++) {
+                mapping[i + k] = cleanText.length - 1
+            }
+            i += spaceMatch[0].length
+            continue
+        }
+
+        mapping[i] = cleanText.length
+        cleanText += text[i]
+        i++
+    }
+    mapping[text.length] = cleanText.length
+
+    return { cleanText, mapping }
+}
+
 function alignChordsToLyricLine(chords: Chords[], rawLyricLine: string, sectionBaseOffset: number): { text: string; chords: Chords[] } {
-    const lyricText = rawLyricLine.trim()
-    const leadingWhitespace = rawLyricLine.length - rawLyricLine.trimStart().length
+    const { cleanText, mapping } = cleanLyricLine(rawLyricLine)
+    const lyricText = cleanText.trim()
+    const leadingWhitespace = cleanText.length - cleanText.trimStart().length
     const alignedChords: Chords[] = []
 
     chords
         .slice()
         .sort((a, b) => a.pos - b.pos)
         .forEach((chord) => {
-            let pos = chord.pos - sectionBaseOffset - leadingWhitespace
+            const originalPosInLine = chord.pos - sectionBaseOffset
+            if (originalPosInLine < 0) {
+                alignedChords.push({ id: chord.id, key: chord.key, pos: 0 })
+                return
+            }
+
+            // Map original position to clean position
+            let pos = (mapping[originalPosInLine] ?? cleanText.length) - leadingWhitespace
+
             if (!lyricText.length) pos = 0
             else {
                 if (pos < 0) pos = 0
@@ -657,8 +684,6 @@ function alignChordsToLyricLine(chords: Chords[], rawLyricLine: string, sectionB
 function parseSectionLines(lyrics: string): ParsedSectionLine[] {
     const sourceLines = filterPlanningCenterKeywordLines(lyrics).split("\n").map(toSectionSourceLine)
 
-    // Planning Center often includes a common left indent in chord-only lines.
-    // Remove that shared baseline so chord positions match lyric content columns.
     const sectionBaseOffset = sourceLines.reduce(
         (minOffset, entry, i) => {
             const line = entry.line
@@ -682,38 +707,45 @@ function parseSectionLines(lyrics: string): ParsedSectionLine[] {
         const currentLine = currentEntry.line
 
         if (!currentLine.trim()) {
-            parsedLines.push(toParsedSectionLine(currentEntry, { text: "" }))
-            continue
-        }
-
-        if (isChordProgressionLine(currentLine)) {
+            // Only add empty line if it's between text lines within a section
+            if (i > 0 && i < sourceLines.length - 1) {
+                 parsedLines.push(toParsedSectionLine(currentEntry, { text: "" }))
+            }
             continue
         }
 
         const inline = parseInlineBracketLine(currentLine)
         if (inline) {
-            if (inline.text.trim()) {
-                parsedLines.push(toParsedSectionLine(currentEntry, { text: inline.text.trim(), chords: inline.chords, hidden: false }))
-                continue
-            } else {
-                parsedLines.push(toParsedSectionLine(currentEntry, { text: "", chords: inline.chords, hidden: false }))
-                continue
-            }
+            // Skip if text is blank (markers only)
+            if (!inline.text.trim()) continue
+            parsedLines.push(toParsedSectionLine(currentEntry, { text: inline.text, chords: inline.chords, hidden: false }))
+            continue
         }
 
         const chordLineData = getChordLineData(currentLine)
-        if (chordLineData && i + 1 < sourceLines.length) {
-            const nextEntry = sourceLines[i + 1]
-            const nextLine = nextEntry.line
-            if (canAlignChordLineWithLyricLine(nextLine)) {
-                const alignedLine = alignChordsToLyricLine(chordLineData, nextLine, sectionBaseOffset || 0)
-                parsedLines.push(toParsedSectionLine(nextEntry, { text: alignedLine.text, chords: alignedLine.chords }))
-                i++
-                continue
+        if (chordLineData) {
+            if (i + 1 < sourceLines.length) {
+                const nextEntry = sourceLines[i + 1]
+                const nextLine = nextEntry.line
+                if (canAlignChordLineWithLyricLine(nextLine)) {
+                    const alignedLine = alignChordsToLyricLine(chordLineData, nextLine, sectionBaseOffset || 0)
+                    if (alignedLine.text) {
+                        parsedLines.push(toParsedSectionLine(nextEntry, { text: alignedLine.text, chords: alignedLine.chords }))
+                        i++
+                        continue
+                    }
+                }
             }
+
+            // Skip chord-only lines entirely to avoid blank slides
+            continue
         }
 
-        parsedLines.push(toParsedSectionLine(currentEntry))
+        const { cleanText } = cleanLyricLine(currentLine)
+        const finalLineText = cleanText.trim()
+        if (finalLineText) {
+            parsedLines.push(toParsedSectionLine(currentEntry, { text: finalLineText }))
+        }
     }
 
     return parsedLines
@@ -870,44 +902,55 @@ function getDateTitle(dateString: string) {
 }
 
 const itemStyle = "left:50px;top:120px;width:1820px;height:840px;"
+const MAX_LINES_PER_SLIDE = 4
 
 function getShow(SONG_DATA: any, SONG: any, SECTIONS: any[]) {
     const slides: { [key: string]: Slide } = {}
     const layoutSlides: SlideData[] = []
+    
+    // Sections that should be skipped if they don't have lyrics (even if they have chords)
+    const silentSectionRegex = /^(INSTRUMENTAL|INTERLUDE|VAMP|SOLO|BREAKDOWN|TURNAROUND|VAMP|BRIDGE|INTRO|OUTRO|TAG)/i
+
     SECTIONS.forEach((section) => {
         const sectionLines = parseSectionLines(section.lyrics || "")
         const wholeSectionRepeatCount = getWholeSectionRepeatCount(sectionLines)
         const parsedLines = wholeSectionRepeatCount > 1 ? sectionLines.filter((line) => !line.hidden) : expandRepeatedSectionLines(sectionLines)
 
-        // Skip sections with no lyrics content
-        if (!parsedLines.some((line) => line.text.trim())) return
+        const hasText = parsedLines.some((line) => line.text.trim().length > 0)
+        
+        if (!hasText) return
+        if (silentSectionRegex.test(section.label) && !hasText) return
 
         for (let repeatIndex = 0; repeatIndex < wholeSectionRepeatCount; repeatIndex++) {
-            const slideId = uid()
+            // Split parsedLines into chunks of MAX_LINES_PER_SLIDE
+            for (let i = 0; i < parsedLines.length; i += MAX_LINES_PER_SLIDE) {
+                const chunk = parsedLines.slice(i, i + MAX_LINES_PER_SLIDE)
+                const slideId = uid()
 
-            const items = [
-                {
-                    style: itemStyle,
-                    lines: parsedLines.map((line) => {
-                        const parsedLine: { align: string; text: { style: string; value: string }[]; chords?: Chords[] } = {
-                            align: "",
-                            text: [{ style: "", value: line.text }]
-                        }
-                        if (line.chords?.length) parsedLine.chords = line.chords
-                        return parsedLine
-                    })
+                const items = [
+                    {
+                        style: itemStyle,
+                        lines: chunk.map((line) => {
+                            const parsedLine: { align: string; text: { style: string; value: string }[]; chords?: Chords[] } = {
+                                align: "",
+                                text: [{ style: "", value: line.text }]
+                            }
+                            if (line.chords?.length) parsedLine.chords = line.chords
+                            return parsedLine
+                        })
+                    }
+                ]
+
+                slides[slideId] = {
+                    group: section.label,
+                    globalGroup: section.label.toLowerCase(),
+                    color: null,
+                    settings: {},
+                    notes: "",
+                    items
                 }
-            ]
-
-            slides[slideId] = {
-                group: section.label,
-                globalGroup: section.label.toLowerCase(),
-                color: null,
-                settings: {},
-                notes: "",
-                items
+                layoutSlides.push({ id: slideId })
             }
-            layoutSlides.push({ id: slideId })
         }
     })
 
