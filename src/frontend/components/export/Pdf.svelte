@@ -7,7 +7,10 @@
     import MediaItem from "../slide/views/MediaItem.svelte"
     import Zoomed from "../slide/Zoomed.svelte"
 
-    export let shows: Show[] = []
+    // export items can be shows, project sections, or media items, plus display fields added in getRefs()
+    type ExportShow = Show & { type?: string; color?: string; notes?: string; data?: any; metaDisplay?: string; meta?: Show["meta"] & { notes?: string } }
+
+    export let shows: ExportShow[] = []
     export let options: any = {}
     export let path = ""
 
@@ -65,7 +68,7 @@
         if ($currentWindow === "pdf") exportPDF()
     }
 
-    function getPagesForShow(show: Show, showOptions: any) {
+    function getPagesForShow(show: ExportShow, showOptions: any) {
         if (show && show.type === "section") return 1
         if (!show || !layoutSlides[show.id!]) return 0
         const slides = layoutSlides[show.id!]
@@ -169,7 +172,7 @@
                 slide.items?.forEach((item) => {
                     item.lines?.forEach((line) => {
                         line.chords?.forEach((chord) => {
-                            const key = chord.key || chord.chord || ""
+                            const key = chord.key || (chord as any).chord || ""
                             if (key) {
                                 chordCounts[key] = (chordCounts[key] || 0) + 1
                             }
@@ -322,7 +325,7 @@
                             <div style="font-size: 0.95em; color: #777; margin-bottom: 30px; text-transform: uppercase; font-weight: 600; letter-spacing: 1px;">Media Item ({show.type})</div>
                             {#if show.type === "image"}
                                 <div style="max-width: 100%; height: 180mm; display: flex; align-items: center; justify-content: center; border: 1px dashed #ccc; padding: 10px; border-radius: 8px; background: #fafafa; overflow: hidden; margin: 0 auto; box-sizing: border-box;">
-                                    <img src={show.media[show.id].path} alt={show.name} style="max-width: 100%; max-height: 100%; object-fit: contain;" />
+                                    <img src={show.media[show.id || ""].path} alt={show.name} style="max-width: 100%; max-height: 100%; object-fit: contain;" />
                                 </div>
                             {/if}
                         </div>
@@ -345,8 +348,8 @@
 
                         <!-- Chord chart sections -->
                         <div class="chord-sections" style="columns: {options.columnsPerPage || 1}; column-gap: 25px; column-rule: 1px solid #eee;">
-                            {#each groupSlidesBySection(layoutSlides[show.id] || []) as section, sectionIndex}
-                                <div class="section" style="margin-bottom: {sectionIndex === groupSlidesBySection(layoutSlides[show.id] || []).length - 1 ? '8px' : '15px'};">
+                            {#each groupSlidesBySection(layoutSlides[show.id || ""] || []) as section, sectionIndex}
+                                <div class="section" style="margin-bottom: {sectionIndex === groupSlidesBySection(layoutSlides[show.id || ""] || []).length - 1 ? '8px' : '15px'};">
                                     <h3 class="section-title">{section.name}</h3>
 
                                     {#each section.slides as slide, slideIndex}
