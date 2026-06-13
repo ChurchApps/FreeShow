@@ -95,7 +95,7 @@
     $: currentChapter = chapters[activeChapter]?.number != null ? String(chapters[activeChapter].number) : ""
     $: currentVerse = activeVerse > 0 ? String(activeVerse) : ""
 
-    async function maybeSyncToDisplayed(source: string) {
+    async function maybeSyncToDisplayed(_source: string) {
         if (!pendingSyncToDisplayed || syncScheduled) return
         if (!books.length || displayedBookIndex < 0 || displayedChapterIndex < 0) return
 

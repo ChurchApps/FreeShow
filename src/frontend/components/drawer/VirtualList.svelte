@@ -8,7 +8,8 @@
     // props
     export let items
     export let height = "100%"
-    export let itemHeight
+    /** @type number | null */
+    export let itemHeight = null
     /** @type number | null */
     export let activeIndex = null
 

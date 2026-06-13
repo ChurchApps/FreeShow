@@ -2,7 +2,6 @@
     import { onDestroy, onMount } from "svelte"
     import { subscribeEffect } from "../../../../audio/effects/audioEffectsHelpers"
     import { GAIN_FILTER_TYPES, type FilterConfig, type FilterType, setFilterEnabled, updateFilterConfig } from "../../../../audio/effects/audioFilter"
-    import { translateText } from "../../../../utils/language"
     import InputRow from "../../../input/InputRow.svelte"
     import MaterialDropdown from "../../../inputs/MaterialDropdown.svelte"
     import MaterialNumberInput from "../../../inputs/MaterialNumberInput.svelte"
@@ -91,7 +90,7 @@
             const phaseResp = new Float32Array(N)
             node.getFrequencyResponse(freqs, magResp, phaseResp)
 
-            return magResp
+            return Array.from(magResp)
                 .map((mag, i) => {
                     const db = 20 * Math.log10(Math.max(0.00001, mag))
                     const x = (i / (N - 1)) * w
