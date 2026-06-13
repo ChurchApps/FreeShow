@@ -316,6 +316,7 @@ export class EqualizerCalculations {
 // Global equalizer instance
 let globalEqualizer: AudioEqualizer | null = null
 let audioContext: AudioContext | null = null
+let isInitializing = false
 
 // Connected audio sources
 const connectedSources = new Map<
@@ -328,6 +329,9 @@ const connectedSources = new Map<
 
 // Initialize the audio equalizer system
 export async function initializeEqualizer(externalAudioContext?: AudioContext, onEqualizerReinitialized?: () => void): Promise<void> {
+    if (isInitializing) return
+    isInitializing = true
+
     try {
         // Use external context if provided, otherwise create our own
         if (externalAudioContext) {
@@ -373,6 +377,8 @@ export async function initializeEqualizer(externalAudioContext?: AudioContext, o
         console.log("Audio equalizer initialized successfully")
     } catch (err) {
         console.error("Failed to initialize audio equalizer:", err)
+    } finally {
+        isInitializing = false
     }
 }
 

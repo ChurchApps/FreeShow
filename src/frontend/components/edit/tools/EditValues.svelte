@@ -69,7 +69,7 @@
         if (input.multiplier) value *= input.multiplier
 
         // pre 1.5.0 dropdowns
-        if (input.type === "fontDropdown") value = value.replaceAll("'", "")
+        if (input.type === "fontDropdown" && typeof value === "string") value = value.replaceAll("'", "")
 
         return value
     }

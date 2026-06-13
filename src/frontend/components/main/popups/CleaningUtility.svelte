@@ -9,7 +9,7 @@
     import Center from "../../system/Center.svelte"
     import Loader from "../Loader.svelte"
 
-    const type = $popupData.type
+    let type = $popupData.type
 
     let loadingEmpty = false
     onMount(() => {
@@ -32,9 +32,9 @@
     })
 
     let allShowsInFolder: string[] = []
-    const listenerId = receiveMain(Main.FULL_SHOWS_LIST, (data) => {
+    let listenerId = receiveMain(Main.FULL_SHOWS_LIST, (data) => {
         allShowsInFolder = data || []
-        const deletedShowNames = $deletedShows.map((a) => a.name + ".show")
+        let deletedShowNames = $deletedShows.map((a) => a.name + ".show")
         allShowsInFolder = allShowsInFolder.filter((name) => !deletedShowNames.includes(name))
     })
     onDestroy(() => destroyMain(listenerId))
@@ -58,11 +58,11 @@
 
     let duplicatedShows: { ids: string[] }[] = []
     function getDuplicatedShows() {
-        const names: { [key: string]: string[] } = {}
+        let names: { [key: string]: string[] } = {}
         Object.entries($shows).forEach(([id, show]) => {
             if (!show?.name) return
             // remove any numbers (less than 4 chars) at the end of name (but not if "1-3"|"-5" in case of scripture)
-            const trimmedName = show.name
+            let trimmedName = show.name
                 .toLowerCase()
                 .replace(/(?<![-\d])\d{1,3}$/, "")
                 .trim()

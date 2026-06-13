@@ -8,7 +8,7 @@ on:
 jobs:
   publish_windows:
     name: "Publish Windows"
-    runs-on: windows-latest
+    runs-on: windows-2022
 
     steps:
       - name: Check out Git repository

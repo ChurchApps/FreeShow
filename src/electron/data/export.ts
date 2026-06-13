@@ -153,7 +153,7 @@ export function createPDFWindow(data: any) {
     const windowWidth = isLandscape ? 1123 : 794
     const windowHeight = isLandscape ? 631 : 1123
 
-    const options = { ...exportOptions }
+    let options = { ...exportOptions }
     if (!isLandscape) {
         options.width = windowWidth
         options.height = windowHeight

@@ -101,15 +101,15 @@ export function selectProjectByName(name: string) {
 
 export async function startProjectItemByName(name: string) {
     const activeProjectItems = get(projects)[get(activeProject) || ""]?.shows || []
-    if (!activeProjectItems.length) return
+    if (!activeProjectItems.length || !name) return
 
-    name = name.toLowerCase().trim()
+    const normalizedName = name.toLowerCase().trim()
 
     const checkName = (item: any) => {
         let itemName = item.name
         if (!itemName && (item.type || "show") === "show") itemName = get(shows)[item.id]?.name
         if (!itemName) return false
-        return itemName.toLowerCase().trim() === name
+        return itemName.toString().toLowerCase().trim() === normalizedName
     }
 
     // check for any match after the active first
@@ -561,10 +561,21 @@ export function setNextSlideTimer(time: number) {
 
         showsCache.update((a) => {
             const ref = goToStartRefs[0]
-            if (!ref) return a
+            const show = a[showId]
+            if (!ref || !show) return a
 
-            if (ref.type === "parent") delete a[showId].layouts[layoutId]?.slides?.[ref.index]?.end
-            else delete a[showId].layouts[layoutId]?.slides?.[ref.parent?.index ?? -1]?.children?.[ref.id]?.end
+            const layout = show.layouts?.[layoutId]
+            if (!layout) return a
+
+            if (ref.type === "parent") {
+                const slide = layout.slides?.[ref.index]
+                if (slide) delete slide.end
+            } else {
+                const parentIndex = ref.parent?.index ?? -1
+                const parentSlide = layout.slides?.[parentIndex]
+                const child = parentSlide?.children?.[ref.id]
+                if (child) delete child.end
+            }
             return a
         })
     }

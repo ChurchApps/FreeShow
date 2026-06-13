@@ -55,7 +55,7 @@
         activePage.set("show")
     }
     function getOldestShows() {
-        const deleteIds: string[] = []
+        let deleteIds: string[] = []
 
         data.forEach(({ ids }) => {
             let keepId = ""
@@ -89,7 +89,7 @@
         activePage.set("show")
     }
     function getNewestShows() {
-        const deleteIds: string[] = []
+        let deleteIds: string[] = []
 
         data.forEach(({ ids }) => {
             let keepId = ""

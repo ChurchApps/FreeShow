@@ -197,7 +197,7 @@
         const id = uid()
         history({ id: "UPDATE", newData: { data: { name, icon: "song" } }, oldData: { id }, location: { page: "drawer", id: "category_shows" } })
 
-        cats.push({ id, name, icon: "song", iconColor: customIconsColors.song })
+        cats.push({ id, name, icon: "song", iconColor: customIconsColors["song"] })
         cats = cats
         selectedCategory = cats.find((a) => a.id === id)
     }

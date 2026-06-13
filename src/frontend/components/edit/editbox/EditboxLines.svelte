@@ -62,7 +62,7 @@
         // style hash
         let s = ""
         clone(item?.lines)?.forEach((line) => {
-            const align = (line.align || "").replaceAll(lineStyleBg, "").replaceAll(lineStyleRadius, "") + ";"
+            let align = (typeof line.align === "string" ? line.align : "").replaceAll(lineStyleBg, "").replaceAll(lineStyleRadius, "") + ";"
             s += align + lineStyleBg + lineStyleRadius // + line.chords?.map((a) => a.key)
             if (!line?.text) return
             if (!Array.isArray(line.text)) line.text = []
@@ -194,13 +194,11 @@
         const numbersAdded: string[] = []
         // newSlide here is a clone of "oldSlide"
         if (newSlide.customDynamicValues?.scripture_text) {
-            const texts = firstLines
-                .flat()[0]
-                ?.text.filter((a) => !a.customType)
-                .map((a) => a.value)
+            const firstLine = firstLines.flat()[0]
+            const texts = (Array.isArray(firstLine?.text) ? firstLine.text : []).filter((a) => !a.customType).map((a) => a.value)
             showsCache.update((a) => {
                 const showId = ref.showId || $activeShow?.id || ""
-                const slide = a[showId]?.slides[ref.id]
+                const slide = a[showId]?.slides?.[ref.id]
                 if (!slide?.customDynamicValues?.scripture_text) return a
 
                 texts.forEach((t, i) => {
@@ -214,10 +212,8 @@
             })
         }
         if (newSlide.customDynamicValues?.scripture_text) {
-            const texts = secondLines
-                .flat()[0]
-                ?.text.filter((a) => !a.customType)
-                .map((a) => a.value)
+            const secondLine = secondLines.flat()[0]
+            const texts = (Array.isArray(secondLine?.text) ? secondLine.text : []).filter((a) => !a.customType).map((a) => a.value)
             texts.forEach((t, i) => {
                 if (!newSlide.customDynamicValues.scripture_text[i]) return
 
@@ -318,12 +314,12 @@
             // fix lineBg/Radius style
             if (lineStyleBg) {
                 newLines.forEach((line) => {
-                    line.align = (line.align || "").replace(lineStyleBg, "")
+                    line.align = (typeof line.align === "string" ? line.align : "").replace(lineStyleBg, "")
                 })
             }
             if (lineStyleRadius) {
                 newLines.forEach((line) => {
-                    line.align = (line.align || "").replace(lineStyleRadius, "")
+                    line.align = (typeof line.align === "string" ? line.align : "").replace(lineStyleRadius, "")
                 })
             }
 
@@ -338,8 +334,9 @@
                             if (text.sourceDynamicKey?.includes("scripture_text")) {
                                 const key = text.sourceDynamicKey.split(":")[0]
                                 const index = text.sourceDynamicKey.split(":")[1] || "0"
-                                if (!a[ref.showId!].slides[ref.id].customDynamicValues![key]?.[index]?.[1]) return
-                                a[ref.showId!].slides[ref.id].customDynamicValues![key][index][1] = text.value
+                                const storage = a[ref.showId!]?.slides?.[ref.id]?.customDynamicValues
+                                if (!storage?.[key]?.[index]) return
+                                storage[key][index][1] = text.value
                             }
                         })
                     })
@@ -436,8 +433,8 @@
         currentStyle = ""
         let updateHTML = false
 
-        new Array(...textElem.children).forEach((line, i) => {
-            let align: string = plain ? item.lines?.[i]?.align || "" : line.getAttribute("style") || ""
+        new Array(...textElem.children).forEach((line: any, i) => {
+            let align: string = plain ? (typeof item.lines?.[i]?.align === "string" ? (item.lines?.[i]?.align as string) : "") : line.getAttribute("style") || ""
             align = align.replaceAll(lineStyleBg, "").replaceAll(lineStyleRadius, "") + ";"
             pos++
             currentStyle += align + lineStyleBg + lineStyleRadius
@@ -787,7 +784,7 @@
                 contenteditable
                 on:keydown={textElemKeydown}
                 bind:innerHTML={html}
-                style="{plain || !item.auto ? '' : `--auto-size: ${autoSize}px;`}{!plain ? lineStyleBox : ''}{plain ? '' : item.align ? item.align.replace('align-items', 'justify-content') : ''}"
+                style="{plain || !item.auto ? '' : `--auto-size: ${autoSize}px;`}{!plain ? lineStyleBox : ''}{plain ? '' : typeof item.align === 'string' ? item.align.replace('align-items', 'justify-content') : ''}"
                 class:height={item.lines?.length < 2 && !item.lines?.[0]?.text[0]?.value.length}
                 class:tallLines={chordsMode}
             ></div>

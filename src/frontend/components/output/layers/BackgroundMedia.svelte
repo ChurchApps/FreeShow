@@ -13,7 +13,7 @@
     import { videoExtensions } from "../../../values/extensions"
     import BmdStream from "../../drawer/live/BMDStream.svelte"
     import NdiStream from "../../drawer/live/NDIStream.svelte"
-    import { getMediaStyle } from "../../helpers/media"
+    import { getExtension, getMediaStyle } from "../../helpers/media"
     import Player from "../../system/Player.svelte"
     import Camera from "../Camera.svelte"
     import OutputTransition from "../transitions/OutputTransition.svelte"
@@ -142,17 +142,26 @@
         destroy(OUTPUT, listenerId)
     }
 
+    $: isVideo = videoExtensions.includes(getExtension(id))
+
     // call end just before (to make room for transition) - this also triggers video ended on loop
-    $: if (videoData.duration && videoTime >= videoData.duration - (duration / 1000 + 0.1) && !mediaStyle.softLoop) videoEnded()
+    $: if (isVideo && videoData.duration && videoTime >= videoData.duration - (duration / 1000 + 0.1) && !mediaStyle.softLoop) {
+        videoEnded()
+    }
 
     let endedCalled = false
+    $: if (id) endedCalled = false
+
     function videoEnded() {
         if (fadingOut || mirror || endedCalled) return
-
         endedCalled = true
-        setTimeout(() => (endedCalled = false), duration || 1000)
 
         send(OUTPUT, ["MAIN_VIDEO_ENDED"], { id: outputId, loop: videoData.loop, duration })
+
+        // Only reset if looping, otherwise keep endedCalled true for the remainder of this media's life
+        if (videoData.loop) {
+            setTimeout(() => (endedCalled = false), Math.max(duration, 2000))
+        }
     }
 
     // FADE OUT AUDIO
@@ -167,11 +176,13 @@
     async function fetchReplayGain(filePath: string) {
         replayGainMultiplier = 1
 
+        if (typeof filePath !== "string") return
+
         // is online path
         if (/^https?:\/\//i.test(filePath)) return
 
         // is not video
-        const ext = filePath.slice(filePath.lastIndexOf(".") + 1).toLowerCase()
+        const ext = getExtension(filePath)
         if (!videoExtensions.includes(ext)) return
 
         try {

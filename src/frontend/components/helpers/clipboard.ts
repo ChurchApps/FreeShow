@@ -81,7 +81,7 @@ export function copy(clip: Clipboard | null = null, getData = true, shouldDuplic
     }
 
     if (get(selected).id) copyData = get(selected)
-    else if (get(activeEdit).items.length) copyData = { id: "item", data: get(activeEdit) }
+    else if (get(activeEdit).items?.length) copyData = { id: "item", data: get(activeEdit) }
     else if (get(activePage) === "stage" && get(activeStage).items?.length) {
         copyData = { id: "stage_item", data: get(activeStage) }
     }
@@ -287,12 +287,12 @@ const selectActions = {
             const ref = getLayoutRef()
             const editSlide = ref[get(activeEdit).slide!]
             const showItems = _show().slides([editSlide?.id]).get()[0]?.items
-            itemCount = showItems.length
+            itemCount = showItems?.length || 0
         } else if (get(activeEdit).id) {
             if (get(activeEdit).type === "overlay") {
-                itemCount = get(overlays)[get(activeEdit).id!].items.length
+                itemCount = get(overlays)[get(activeEdit).id!]?.items?.length || 0
             } else if (get(activeEdit).type === "template") {
-                itemCount = get(templates)[get(activeEdit).id!].items.length
+                itemCount = get(templates)[get(activeEdit).id!]?.items?.length || 0
             }
         }
 
@@ -303,7 +303,7 @@ const selectActions = {
         return
     },
     stage_items: () => {
-        const items: string[] = Object.keys(get(stageShows)[get(activeStage).id!].items)
+        const items: string[] = Object.keys(get(stageShows)[get(activeStage).id!]?.items || {})
 
         activeStage.set({ ...get(activeStage), items })
         return
@@ -406,11 +406,11 @@ const copyActions = {
 
         if (data.id) {
             if (data.type === "overlay") {
-                items = get(overlays)[data.id!].items
+                items = get(overlays)[data.id!]?.items || []
             }
 
             if (data.type === "template") {
-                items = get(templates)[data.id!].items
+                items = get(templates)[data.id!]?.items || []
             }
         } else {
             const ref = _show(data.id || "active")
@@ -418,13 +418,14 @@ const copyActions = {
                 .ref()?.[0]?.[data.slide!]
             if (!ref) return null
 
-            items = _show(data.id || "active")
-                .slides([ref.id])
-                .items()
-                .get(null, false)[0]
+            items =
+                _show(data.id || "active")
+                    .slides([ref.id])
+                    .items()
+                    .get(null, false)[0] || []
         }
 
-        items = items.filter((_a, i) => data.items.includes(i))
+        items = items.filter((_a, i) => data.items?.includes(i))
         return [...items]
     },
     slide: (data: any, fullGroup = false) => {
@@ -434,6 +435,8 @@ const copyActions = {
 
         // dont know why this is like this when ctrl + c
         if (data.slides) data = data.slides
+
+        if (!Array.isArray(data)) return { slides: [], layouts: [], media: {} }
 
         const sortedData = data.sort((a, b) => (a.index < b.index ? -1 : 1))
 
@@ -494,12 +497,15 @@ const copyActions = {
     },
     group: (data: any) => copyActions.slide(data, true),
     overlay: (data: any) => {
+        if (!Array.isArray(data)) return []
         return data.map((id: string) => clone(get(overlays)[id]))
     },
     template: (data: any) => {
+        if (!Array.isArray(data)) return []
         return data.map((id: string) => clone(get(templates)[id]))
     },
     effect: (data: any) => {
+        if (!Array.isArray(data)) return []
         return data.map((id: string) => clone(get(effects)[id]))
     },
     media: (data: any) => {
@@ -526,7 +532,7 @@ const copyActions = {
         const selectedItemIds: string[] = data.items || []
         const stage = get(stageShows)[stageId]
 
-        if (!stage || !selectedItemIds.length) return []
+        if (!stage || !stage.items || !selectedItemIds.length) return []
 
         const copiedItems = selectedItemIds.map((itemId) => {
             const item = clone(stage.items[itemId])
@@ -767,14 +773,17 @@ const deleteActions = {
         if (editId) {
             // overlay / template
             let currentItems: Item[] = []
-            if (get(activeEdit).type === "overlay") currentItems = clone(get(overlays)[editId].items)
-            if (get(activeEdit).type === "template") currentItems = clone(get(templates)[editId].items)
+            if (get(activeEdit).type === "overlay") currentItems = clone(get(overlays)[editId]?.items || [])
+            if (get(activeEdit).type === "template") currentItems = clone(get(templates)[editId]?.items || [])
 
-            get(activeEdit).items.forEach((i: number) => {
-                if (currentItems[i]) currentItems.splice(i, 1)
-            })
+            const itemsToDelete = get(activeEdit).items || []
+            itemsToDelete
+                .sort((a, b) => b - a)
+                .forEach((i: number) => {
+                    if (currentItems[i]) currentItems.splice(i, 1)
+                })
 
-            const override = editId + "_delete#" + get(activeEdit).items?.join(",")
+            const override = editId + "_delete#" + itemsToDelete.join(",")
             history({
                 id: "UPDATE",
                 oldData: { id: editId },
@@ -1256,7 +1265,7 @@ const duplicateActions = {
         const layoutId = data?.[0] || get(showsCache)[showId]?.settings?.activeLayout
         if (!layoutId) return
 
-        const newLayout = clone(get(showsCache)[showId].layouts[layoutId])
+        const newLayout = clone(get(showsCache)[showId]?.layouts?.[layoutId])
         if (!newLayout) return
 
         newLayout.name += " 2"

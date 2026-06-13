@@ -13,8 +13,8 @@
     const trigger = $popupData.trigger
     const existingShortcuts = $popupData.existingShortcuts || []
 
-    const layoutRef = mode === "slide_shortcut" ? getLayoutRef() : []
-    const slideDataActions = mode === "slide_shortcut" ? layoutRef[index].data?.actions || {} : {}
+    let layoutRef = mode === "slide_shortcut" ? getLayoutRef() : []
+    let slideDataActions = mode === "slide_shortcut" ? layoutRef[index]?.data?.actions || {} : {}
     let currentShortcut = mode === "slide_shortcut" ? (slideDataActions.slide_shortcut || {}).key : value
 
     onMount(() => {
@@ -25,7 +25,7 @@
 
     function keydown(e: KeyboardEvent) {
         if (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) return
-        if (e.key.trim().length !== 1 || !isNaN(e.key as any)) return
+        if (!e.key || e.key.trim().length !== 1 || !isNaN(e.key as any)) return
 
         const isSpecial = [".", ",", "-", "+", "/", "*", "<", ">", "|", "\\", "¨", "'"].includes(e.key)
         if (isSpecial) return
@@ -35,7 +35,7 @@
 
     let existing = false
     function updateValue(key: string) {
-        if (existingShortcuts.find((a) => a.toLowerCase() === key)) {
+        if (existingShortcuts.find((a) => a?.toString().toLowerCase() === key)) {
             existing = true
             return
         }

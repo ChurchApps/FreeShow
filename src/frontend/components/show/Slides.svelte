@@ -49,13 +49,18 @@
     function fixBrokenMedia() {
         if (!currentShow) return
         showsCache.update((a) => {
+            if (!a[showId]) return a
             Object.entries(currentShow.layouts || {}).forEach(([layoutId, layout]) => {
-                layout.slides.forEach((slide, i) => {
-                    const backgroundId = slide.background
-                    if (backgroundId && !currentShow.media[backgroundId]) {
-                        delete a[showId].layouts[layoutId].slides[i].background
-                    }
-                })
+                if (Array.isArray(layout.slides)) {
+                    layout.slides.forEach((slide, i) => {
+                        let backgroundId = slide.background
+                        if (backgroundId && !currentShow.media[backgroundId]) {
+                            if (a[showId].layouts?.[layoutId]?.slides?.[i]) {
+                                delete a[showId].layouts[layoutId].slides[i].background
+                            }
+                        }
+                    })
+                }
             })
             return a
         })

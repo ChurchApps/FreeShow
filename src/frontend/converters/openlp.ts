@@ -54,6 +54,8 @@ export function convertOpenLP(data: any) {
     }, 10)
 
     function addShow(song: Song) {
+        if (!song) return
+
         const layoutID = uid()
         let show = new ShowObj(false, categoryId, layoutID)
         show.origin = "openlyrics"
@@ -89,12 +91,12 @@ const OLPgroups: any = { V: "verse", C: "chorus", P: "pre_chorus", B: "bridge", 
 function createSlides({ verseOrder, lyrics }: Song) {
     const slides: any = {}
     let layout: any[] = []
-    const sequence: string[] = verseOrder.split(" ").filter((a) => a)
+    const sequence: string[] = verseOrder?.split(" ").filter((a) => a) || []
     const sequences: any = {}
 
     // split into multiple sub slides (https://github.com/ChurchApps/FreeShow/issues/1743)
     const slidesList: ((typeof lyrics)[number] & { isChild: boolean })[] = []
-    lyrics.forEach((lyricSlide) => {
+    lyrics?.forEach((lyricSlide) => {
         const currentSlides = lyricSlide.lines.join("__BREAK__").split(/<p\s*style=["']page-break-after:\s*always;["']\s*\/?>/i)
         currentSlides.forEach((slideData, i) => {
             const mergedLines = slideData.trim().split("__BREAK__").filter(Boolean)
@@ -198,9 +200,9 @@ function getSong(song: any, content: any) {
         lyrics = lyrics.song?.lyrics?.verse || []
         if (!Array.isArray(lyrics)) lyrics = [lyrics]
 
-        lyrics = lyrics.map((a) => {
+        lyrics = lyrics.filter(Boolean).map((a) => {
             const { lines, chords } = extractChordLines(a["#cdata"] || "")
-            return { name: a["@type"] + a["@label"], lines, chords }
+            return { name: (a["@type"] || "") + (a["@label"] || ""), lines, chords }
         })
 
         return lyrics
@@ -215,7 +217,19 @@ function XMLtoObject(xml: string) {
     let lyrics = song.lyrics || {}
     const properties = song.properties || {}
 
-    const notes = song["#comment"] || (Array.isArray(properties.comments) ? properties.comments?.map((comment) => comment["#text"] || "").join("\n") : typeof properties.comments?.comment === "string" ? properties.comments.comment : typeof properties.comments === "string" ? properties.comments : "") || ""
+    const notes =
+        song["#comment"] ||
+        (Array.isArray(properties.comments)
+            ? properties.comments
+                  .filter(Boolean)
+                  .map((comment) => comment["#text"] || "")
+                  .join("\n")
+            : typeof properties.comments?.comment === "string"
+              ? properties.comments.comment
+              : typeof properties.comments === "string"
+                ? properties.comments
+                : "") ||
+        ""
 
     const newSong: Song = {
         title: getTitle(),
@@ -275,17 +289,17 @@ function XMLtoObject(xml: string) {
     }
 
     function getLines(lines: string | any) {
-        if (lines.tag) lines = lines.tag.tag?.["#text"]
+        if (lines?.tag) lines = lines.tag.tag?.["#text"]
         if (!lines) return { lines: [], chords: [] }
 
         // might be <lines break="optional">
-        if (lines["#text"]) lines = lines["#text"]
+        if (lines && lines["#text"]) lines = lines["#text"]
         // some openlyrics verses can have multiple <lines> tags
         if (Array.isArray(lines)) {
             const convertedLines: string[] = lines.map(convertToText)
             function convertToText(line: any) {
-                if (line["#text"]) return line["#text"]
-                return line
+                if (line && line["#text"]) return line["#text"]
+                return line || ""
             }
             lines = convertedLines.join("\n")
         }

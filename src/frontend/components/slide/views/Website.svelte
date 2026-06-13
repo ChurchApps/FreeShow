@@ -64,14 +64,29 @@
             if (!webview) return
             loaded = true
 
-            if ($currentWindow !== "output") webview.setAudioMuted(true)
+            if ($currentWindow !== "output") {
+                try {
+                    webview.setAudioMuted(true)
+                } catch (err) {
+                    console.debug("Failed to mute webview audio:", err)
+                }
+            }
 
-            webview.executeJavaScript(`
-            document.body.style.transform = 'scale(${isFullscreen ? 1 : ratio})';
-            document.body.style.transformOrigin = '0 0';
-            document.body.style.width = '${inverse}%';  // Scale factor inverse to maintain full width
-            document.body.style.height = '${inverse}%';  // Scale factor inverse to maintain full height
-        `)
+            webview
+                .executeJavaScript(
+                    `
+                if (document.body) {
+                    document.body.style.transform = 'scale(${isFullscreen ? 1 : ratio})';
+                    document.body.style.transformOrigin = '0 0';
+                    const scaleFactor = ${inverse};
+                    document.body.style.width = scaleFactor + '%';
+                    document.body.style.height = scaleFactor + '%';
+                }
+            `
+                )
+                .catch((err: any) => {
+                    console.debug("Webview executeJavaScript failed:", err)
+                })
         }
     }
 
@@ -110,8 +125,12 @@
             return
         }
 
-        backDisabled = !webview.canGoBack()
-        forwardDisabled = !webview.canGoForward()
+        try {
+            backDisabled = !webview.canGoBack()
+            forwardDisabled = !webview.canGoForward()
+        } catch (err) {
+            console.debug("Webview navigation check failed:", err)
+        }
     }
 
     $: url = parsedSrc

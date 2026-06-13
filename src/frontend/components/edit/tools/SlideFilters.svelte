@@ -11,7 +11,7 @@
     let currentSlideFilterSections = clone(slideFilterSections)
     $: if (currentSlideNumber) currentSlideFilterSections = clone(slideFilterSections)
 
-    $: if (!filterData["backdrop-filter"]) {
+    $: if (!filterData?.["backdrop-filter"]) {
         delete currentSlideFilterSections.backdrop_filters
     }
 
@@ -23,9 +23,10 @@
     $: currentSlideData = ref?.[currentSlideNumber]?.data || null
 
     $: isTemplate = $activeEdit.type === "template"
-    $: filterData = isTemplate ? $templates[currentId] : currentSlideData
+    $: filterData = (isTemplate ? $templates[currentId] : currentSlideData) || {}
 
     export function valueChanged(input: EditInput2) {
+        if (!currentSlideData) return
         let value = input.values.value
         value = addFilterString(currentSlideData[input.id] || "", [input.key, value])
 

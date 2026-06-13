@@ -315,16 +315,16 @@
         function getSelectedItem() {
             if ($activeEdit.id) {
                 if ($activeEdit.type === "overlay") {
-                    return clone($overlays[$activeEdit.id].items[allItems[0]])
+                    return clone($overlays[$activeEdit.id]?.items?.[allItems[0]])
                 } else if ($activeEdit.type === "template") {
-                    return clone($templates[$activeEdit.id].items[allItems[0]])
+                    return clone($templates[$activeEdit.id]?.items?.[allItems[0]])
                 }
             }
 
             const slideId = getLayoutRef()[$activeEdit.slide!]?.id
             const slide = clone(_show().slides([slideId]).get()[0]) as Slide
 
-            return slide.items[allItems[0]]
+            return slide?.items?.[allItems[0]]
         }
 
         if (id === "text") {
@@ -518,17 +518,19 @@
             allItems.forEach((_itemIndex, i) => {
                 if (!currentItems[i]) return
 
-                const allValues: any = Object.values(values)[0]
+                let allValues: any = Object.values(values)[0] || []
                 let currentValue: any = allValues[i] ?? allValues[0]
                 // some textboxes don't have lines, this will break things, so make sure it has lines!
-                if (currentItems[i].lines && typeof currentValue === "string") currentValue = allValues.find((a) => typeof a !== "string") || allValues[0]
+                if (currentItems[i].lines && typeof currentValue === "string") currentValue = allValues.find((a: any) => typeof a !== "string") || allValues[0]
 
                 if (input.key === "align-items") currentItems[i].align = currentValue
                 else if (currentType !== "text") currentItems[i].style = currentValue
                 else {
                     const lines = currentItems[i].lines
                     lines?.forEach((_a, j) => {
-                        currentItems[i].lines![j][aligns ? "align" : "text"] = currentValue[j]
+                        if (currentItems[i].lines?.[j] && currentValue) {
+                            currentItems[i].lines![j][aligns ? "align" : "text"] = currentValue[j]
+                        }
                     })
                 }
             })

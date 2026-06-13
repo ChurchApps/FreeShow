@@ -50,6 +50,7 @@ export function doesPathExist(filePath: string): boolean {
 
 export function readFile(filePath: string, encoding: BufferEncoding = "utf8", disableLog = false): string {
     try {
+        if (!fs.existsSync(filePath) || fs.lstatSync(filePath).isDirectory()) return ""
         const buffer = fs.readFileSync(filePath)
         return safeBufferToString(buffer, encoding, filePath)
     } catch (err) {
@@ -126,7 +127,7 @@ export function readFileBufferAsync(filePath: string): Promise<Buffer> {
     return new Promise((resolve) =>
         fs.readFile(filePath, (err, buffer) => {
             if (err) console.error(err)
-            resolve(err ? Buffer.of(0) : buffer)
+            resolve(err ? Buffer.alloc(0) : buffer)
         })
     )
 }
@@ -379,7 +380,10 @@ export function getExtension(name: string) {
 }
 
 export function createFolder(folderPath: string) {
-    if (doesPathExist(folderPath)) return folderPath
+    if (doesPathExist(folderPath)) {
+        if (fs.lstatSync(folderPath).isDirectory()) return folderPath
+        // exists but is a file
+    }
     makeDir(folderPath)
     return folderPath
 }

@@ -50,7 +50,7 @@
 
     $: lines = createVirtualBreaks(clone(item?.lines || []), outputStyle?.skipVirtualBreaks)
     $: if (linesStart !== null && linesEnd !== null && lines.length) {
-        lines = lines.filter((a) => a.text.filter((a) => a.value !== undefined)?.length)
+        lines = lines.filter((a) => Array.isArray(a.text) && a.text.filter((a) => a.value !== undefined)?.length)
 
         // show last possible lines if no text at current line
         if (!lines[linesStart]) {
@@ -177,7 +177,7 @@
         item.lines.forEach((line, i) => {
             if (!line.chords?.length || !line.text) return
 
-            const chords = clone(line.chords || [])
+            let chords = clone(line.chords || [])
             const lineText = getLineText(line)
             const autosizeRatio = getChordSizeRatio()
 
