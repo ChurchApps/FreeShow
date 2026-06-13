@@ -14,7 +14,8 @@ All tooling configs live under `config/` (non-default locations), so commands mu
 npm start              # Full dev environment (see "Dev startup flow" below)
 npm run build          # Production build: frontend → servers → electron
 
-npm test               # Full check: playwright + format check + svelte-check
+npm test               # Full check: unit (vitest) + playwright + format check + svelte-check
+npm run test:unit         # Vitest unit tests (config/testing/vitest.config.ts; src/**/*.test.ts)
 npm run test:playwright   # E2E smoke test (launches the Electron app)
 npm run test:svelte       # Type-check Svelte/TS via svelte-check
 npm run test:format       # Prettier check (does not modify files)
@@ -24,8 +25,9 @@ npm run format:prettier   # Apply Prettier formatting to src + scripts
 ```
 
 Run a single Playwright test: `npx playwright test --config config/testing/playwright.config.ts -g "<test name>"`.
+Run a single Vitest file: `npx vitest run --config config/testing/vitest.config.ts <path/to/file.test.ts>`.
 
-There is essentially **one E2E test** (`config/testing/start.test.ts`) that boots the app — there is no unit-test framework. "Tests" in this repo means: it launches, it type-checks, and it's formatted.
+Testing is two layers: **one E2E test** (`config/testing/start.test.ts`) that boots the app, plus **Vitest unit tests** colocated as `src/**/*.test.ts`. Unit tests target pure, dependency-light logic (importing UI files that pull in `stores.ts`/IPC won't load under the `node` test environment) — e.g. `src/frontend/utils/expression.ts`, `src/frontend/components/helpers/color.ts`, `src/common/scripture/sanitizeVerseText.ts`, `src/electron/cloud/syncLedger.ts`. "Tests" in this repo means: unit tests pass, it launches, it type-checks, and it's formatted.
 
 **Prerequisites:** Node.js ≥ 22.12, Python 3 + `setuptools` (3.12, but 3.11 on macOS), and platform C/C++ build tools. On Linux: `sudo apt-get install libfontconfig1-dev uuid-dev libltc-dev`. Several dependencies are native (`better-sqlite3`, `@discordjs/opus`, `grandiose` for NDI, `macadam` for Blackmagic, `libltc-wrapper`), so `npm install` compiles native code (via `electron-builder install-app-deps`). Full per-platform build/test/packaging instructions are in **`BUILDING.md`**.
 
