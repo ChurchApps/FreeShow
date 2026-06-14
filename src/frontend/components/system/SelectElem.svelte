@@ -297,7 +297,7 @@
 
     const thisId = "_" + uid(5)
     $: if ($activeDropId !== thisId) dragover = null
-    function stopDrag(e) {
+    function stopDrag(e: any) {
         if (e.target?.classList.contains("TriggerBlock") && e.target?.closest("#" + thisId)) return
 
         // TODO: allow dropping over borders (edges)

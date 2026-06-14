@@ -105,7 +105,7 @@
         }
     }
 
-    function update(e) {
+    function update(e: any) {
         value = e.detail
         if (selection.id && actions[selection.id]) actions[selection.id]()
     }

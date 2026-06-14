@@ -89,7 +89,7 @@
         return angle
     }
 
-    function startDrag(e) {
+    function startDrag(e: any) {
         if (!(e.target as SVGElement).closest("svg")) return
 
         dragging = true
@@ -101,7 +101,7 @@
         window.addEventListener("touchend", stopDrag)
     }
 
-    function onDrag(e) {
+    function onDrag(e: any) {
         if (!dragging) return
         const rect = document.getElementById("degree-picker")!.getBoundingClientRect()
         updateValue(angleFromEvent(e, rect))
@@ -118,7 +118,7 @@
     $: handleX = Math.cos((numberValue - 90) * (Math.PI / 180)) * radius
     $: handleY = Math.sin((numberValue - 90) * (Math.PI / 180)) * radius
 
-    function togglePopup(e) {
+    function togglePopup(e: any) {
         if (e.target?.tagName === "BUTTON") return
         if (!disabled) showPopup = !showPopup
     }

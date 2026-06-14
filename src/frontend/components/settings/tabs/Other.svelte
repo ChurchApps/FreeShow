@@ -16,7 +16,7 @@
         })
     })
 
-    function updateSpecial(value, key) {
+    function updateSpecial(value: any, key: any) {
         special.update((a) => {
             if (!value) delete a[key]
             else a[key] = value

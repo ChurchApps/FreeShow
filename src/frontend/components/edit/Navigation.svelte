@@ -91,7 +91,7 @@
     // don't change order when changing edits
     $: if ($editHistory.length !== clonedHistory.length || (!$activeEdit.id && !$activeShow?.id)) setTimeout(() => (clonedHistory = clone($editHistory).reverse()))
 
-    function openRecent(edited) {
+    function openRecent(edited: any) {
         activeEdit.set(edited.edit)
         if (edited.edit?.type !== "audio") refreshEditSlide.set(true)
         if (edited.show) {

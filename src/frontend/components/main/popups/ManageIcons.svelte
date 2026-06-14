@@ -42,7 +42,7 @@
 
     function deleteCustom(iconId: string) {
         customizedIcons.update((a) => {
-            const iconIndex = a.svg.findIndex((a) => a.id === iconId)
+            const iconIndex = a.svg.findIndex((a: any) => a.id === iconId)
             if (iconIndex >= 0) a.svg.splice(iconIndex, 1)
 
             return a

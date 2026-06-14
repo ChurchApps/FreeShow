@@ -55,10 +55,10 @@
         })
     })
 
-    function internalFirst(a, b) {
+    function internalFirst(a: any, b: any) {
         return b.internal - a.internal
     }
-    function sortScreensByPosition(a, b) {
+    function sortScreensByPosition(a: any, b: any) {
         const aX = a.bounds.x
         const bX = b.bounds.x
 

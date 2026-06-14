@@ -65,7 +65,7 @@
     })
 
     const dispatch = createEventDispatcher()
-    function click(e) {
+    function click(e: any) {
         if (iconClicked) return
         dispatch("click", e)
     }

@@ -33,7 +33,7 @@
 
         const savedScreen = $projects[$activeProject || ""]?.shows?.find((a) => a.id === path)?.data?.screenName
         if (savedScreen) {
-            const window = a.find((a) => a.name === savedScreen)
+            const window = a.find((a: any) => a.name === savedScreen)
             if (window) {
                 selectWindow(window)
                 return
@@ -43,9 +43,9 @@
         const fileName = getFileName(path)
         const appName = ($special.presentationApp || "PowerPoint").split(" ")[0]
 
-        let windows = a.filter((a) => a.name.includes(appName) && a.name.includes(fileName) && !a.name.includes(fileName + " - " + appName))
-        if (!windows.length) windows = a.filter((a) => a.name.includes(removeExtension(fileName)) && a.name.includes(appName))
-        if (!windows.length) windows = a.filter((a) => a.name.toLowerCase().includes(appName.toLowerCase()) || a.name.toLowerCase().includes(removeExtension(fileName).toLowerCase()))
+        let windows = a.filter((a: any) => a.name.includes(appName) && a.name.includes(fileName) && !a.name.includes(fileName + " - " + appName))
+        if (!windows.length) windows = a.filter((a: any) => a.name.includes(removeExtension(fileName)) && a.name.includes(appName))
+        if (!windows.length) windows = a.filter((a: any) => a.name.toLowerCase().includes(appName.toLowerCase()) || a.name.toLowerCase().includes(removeExtension(fileName).toLowerCase()))
 
         if (windows.length === 1) {
             selectWindow(windows[0])

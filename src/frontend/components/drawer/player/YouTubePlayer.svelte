@@ -39,13 +39,13 @@
     const dispatch = createEventDispatcher()
 
     // https://developers.google.com/youtube/iframe_api_reference#onReady
-    function onPlayerReady(e) {
+    function onPlayerReady(e: any) {
         dispatch("ready", e)
         play(videoId)
     }
 
     // https://developers.google.com/youtube/iframe_api_reference#onError
-    function onPlayerError(e) {
+    function onPlayerError(e: any) {
         dispatch("error", e)
     }
 
@@ -58,7 +58,7 @@
         BUFFERING: 3,
         CUED: 5
     }
-    function onPlayerStateChange(e) {
+    function onPlayerStateChange(e: any) {
         dispatch("stateChange", e)
 
         switch (e.data) {

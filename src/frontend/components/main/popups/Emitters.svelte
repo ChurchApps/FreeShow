@@ -26,8 +26,8 @@
     $: template = emitter?.templates?.[editTemplate]
     $: templateInputs = (template?.inputs || []).map((a, i) => ({ ...a, id: i.toString() }))
     $: dataPreview = templateInputs.length ? formatData[emitter?.type]?.(setEmptyValues(templateInputs), emitter.data) : ""
-    function setEmptyValues(object) {
-        return clone(object).map((a) => ({ ...a, value: a.value || (a.name ? `{${a.name.toLowerCase()}}` : "") }))
+    function setEmptyValues(object: any) {
+        return clone(object).map((a: any) => ({ ...a, value: a.value || (a.name ? `{${a.name.toLowerCase()}}` : "") }))
     }
 
     const emitterTypes = [

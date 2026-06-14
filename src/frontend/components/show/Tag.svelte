@@ -29,7 +29,7 @@
         }
     }
 
-    function select(e, id) {
+    function select(e: any, id: any) {
         if (e.button !== 2) return
         selected.set({ id: "tag", data: [{ id }] })
     }

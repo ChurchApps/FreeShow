@@ -34,7 +34,7 @@
 
     let scrolled = false
     $: if (popupId === null) scrolled = false
-    function scroll(e) {
+    function scroll(e: any) {
         scrolled = e.target.scrollTop > 0
     }
 

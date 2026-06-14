@@ -33,10 +33,10 @@
         project: ["show", "txt", "image"],
         all_shows: ["project", "pdf", "image"]
     }
-    function filterFormats(exportFormats) {
+    function filterFormats(exportFormats: any) {
         return clone(exportFormats)
-            .filter((a) => !(excludedFormats[exportType] || []).find((id) => id === a.id))
-            .map((a) => {
+            .filter((a: any) => !(excludedFormats[exportType] || []).find((id: any) => id === a.id))
+            .map((a: any) => {
                 a.name = translateText(a.name)
                 a.icon = `./import-logos/${formatIcons[a.id]}.webp`
                 return a

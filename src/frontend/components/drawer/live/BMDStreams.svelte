@@ -14,10 +14,10 @@
     $: currentOutput = getFirstActiveOutput($outputs)
 
     const receiveBMD: any = {
-        GET_DEVICES: (msg) => {
+        GET_DEVICES: (msg: any) => {
             if (!msg || sources.length) return
 
-            sources = JSON.parse(msg).map((a) => ({ id: a.deviceHandle, name: a.displayName || a.modelName, data: { displayModes: a.inputDisplayModes } }))
+            sources = JSON.parse(msg).map((a: any) => ({ id: a.deviceHandle, name: a.displayName || a.modelName, data: { displayModes: a.inputDisplayModes } }))
         }
     }
 

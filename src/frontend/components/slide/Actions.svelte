@@ -109,7 +109,7 @@
         e.preventDefault()
 
         const slideActions = clone(actions.slideActions)
-        const actionIndex = slideActions.findIndex((a) => a.id === id || getActionTriggerId(a.triggers?.[0]) === id)
+        const actionIndex = slideActions.findIndex((a: any) => a.id === id || getActionTriggerId(a.triggers?.[0]) === id)
         if (actionIndex < 0) return
         slideActions.splice(actionIndex, 1)
 

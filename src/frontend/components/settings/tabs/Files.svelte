@@ -21,7 +21,7 @@
     import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
     import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
 
-    function updateSpecial(value, key) {
+    function updateSpecial(value: any, key: any) {
         special.update((a) => {
             if (!value) delete a[key]
             else a[key] = value
@@ -143,14 +143,14 @@
         })
     }
 
-    function toggleData(checked: boolean, key, invert = false) {
+    function toggleData(checked: boolean, key: any, invert = false) {
         driveData.update((a) => {
             a[key] = invert ? !checked : checked
             return a
         })
     }
 
-    function updateAutosave(e) {
+    function updateAutosave(e: any) {
         autosave.set(e.detail)
         startAutosave()
     }

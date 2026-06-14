@@ -22,7 +22,7 @@
     const outputsList = getList($outputs).filter((a) => !a.stageOutput)
     const stylesList = getList($styles).map((a) => ({ value: a.id, label: a.name }))
 
-    function getList(list) {
+    function getList(list: any) {
         return sortByName(keysToID(list))
     }
 

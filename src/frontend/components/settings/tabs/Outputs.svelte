@@ -259,18 +259,18 @@
                 updateBlackmagicData(displayModes, "displayModes")
                 if (displayModes.length) {
                     // try setting to "preferred" modes, or set to first available
-                    updateBlackmagicData(displayModes.find((a) => a.name === "1080i59.94" || a.name === "1080p29.97")?.name || displayModes[0]?.name, "displayMode")
+                    updateBlackmagicData(displayModes.find((a: any) => a.name === "1080i59.94" || a.name === "1080p29.97")?.name || displayModes[0]?.name, "displayMode")
                 }
             } else if (key === "displayMode") {
                 const device = blackmagicDevices.find((a) => a.id === currentOutput?.blackmagicData?.deviceId)
                 if (!device) return
 
                 const displayModes = device.data?.displayModes || []
-                const modeData = displayModes.find((a) => a.name === value) || {}
+                const modeData = displayModes.find((a: any) => a.name === value) || {}
                 if (!modeData.width) return
 
                 // pixel format
-                const pixelFormats = (modeData.videoModes || []).map((format) => ({ name: format }))
+                const pixelFormats = (modeData.videoModes || []).map((format: any) => ({ name: format }))
                 updateBlackmagicData(pixelFormats, "pixelFormats")
                 updateBlackmagicData(pixelFormats[0]?.name, "pixelFormat")
 
@@ -300,9 +300,9 @@
     const listenerId = uid()
     onDestroy(() => destroy(BLACKMAGIC, listenerId))
     const receiveBMD = {
-        GET_DEVICES: (data) => {
+        GET_DEVICES: (data: any) => {
             const parsedData = JSON.parse(data)
-            blackmagicDevices = parsedData.map((a) => ({
+            blackmagicDevices = parsedData.map((a: any) => ({
                 id: a.deviceHandle,
                 name: a.displayName || a.modelName,
                 data: {
@@ -413,8 +413,8 @@
 
         {#if currentOutput?.blackmagicData?.deviceId}
             <InputRow>
-                <MaterialDropdown label="settings.display_mode" value={currentOutput.blackmagicData?.displayMode} options={currentOutput.blackmagicData?.displayModes?.map((mode) => ({ label: mode.name, value: mode.name })) || []} on:change={(e) => updateBlackmagicData(e.detail, "displayMode")} />
-                <MaterialDropdown label="settings.pixel_format" value={currentOutput.blackmagicData?.pixelFormat} options={currentOutput.blackmagicData?.pixelFormats?.map((format) => ({ label: format.name, value: format.name })) || []} on:change={(e) => updateBlackmagicData(e.detail, "pixelFormat")} />
+                <MaterialDropdown label="settings.display_mode" value={currentOutput.blackmagicData?.displayMode} options={currentOutput.blackmagicData?.displayModes?.map((mode: any) => ({ label: mode.name, value: mode.name })) || []} on:change={(e) => updateBlackmagicData(e.detail, "displayMode")} />
+                <MaterialDropdown label="settings.pixel_format" value={currentOutput.blackmagicData?.pixelFormat} options={currentOutput.blackmagicData?.pixelFormats?.map((format: any) => ({ label: format.name, value: format.name })) || []} on:change={(e) => updateBlackmagicData(e.detail, "pixelFormat")} />
             </InputRow>
 
             {#if isAlphaSupported()}

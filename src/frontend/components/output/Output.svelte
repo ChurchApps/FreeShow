@@ -154,7 +154,7 @@
     let currentSlide: Slide | null = null
 
     $: updateSlideData(slide, outputId)
-    function updateSlideData(slide, _outputChanged) {
+    function updateSlideData(slide: any, _outputChanged: any) {
         if (!slide) {
             currentLayout = []
             slideData = null
@@ -181,7 +181,7 @@
         }
 
         // add template item keys to not update item when no changes is made (when custom style template is set)
-        function formatSlide(currentSlide) {
+        function formatSlide(currentSlide: any) {
             if (!currentSlide) return null
             const newSlide = clone(currentSlide)
             newSlide.items = setTemplateStyle(slide, currentStyle, newSlide.items, outputId, newSlide.customDynamicValues)

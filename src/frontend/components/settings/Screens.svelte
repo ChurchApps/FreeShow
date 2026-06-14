@@ -100,10 +100,10 @@
     //     internal: false,
     // }
 
-    function internalFirst(a, b) {
+    function internalFirst(a: any, b: any) {
         return b.internal - a.internal
     }
-    function sortScreensByPosition(a, b) {
+    function sortScreensByPosition(a: any, b: any) {
         const aX = a.bounds.x
         const bX = b.bounds.x
 
@@ -172,7 +172,7 @@
             return a
         })
     }
-    function getCroppedStyle(cropping) {
+    function getCroppedStyle(cropping: any) {
         let style = ""
         Object.keys(cropping).forEach((key) => {
             if (cropping[key]) style += `padding-${key}: ${cropping[key] * previewSize}px;`
@@ -191,7 +191,7 @@
             return a
         })
     }
-    function getBlendingStyle(blending) {
+    function getBlendingStyle(blending: any) {
         if (!blending.left && !blending.right) return ""
 
         const opacity = (blending.opacity ?? 50) / 100

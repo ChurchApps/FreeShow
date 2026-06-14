@@ -127,7 +127,7 @@
         activeEdit.set({ type: "template", id, items: [] })
         activePage.set("edit")
     }
-    function updateScriptureTemplate(e) {
+    function updateScriptureTemplate(e: any) {
         const type = e.detail?.type || ""
         const value = e.detail?.value ?? e.detail
 

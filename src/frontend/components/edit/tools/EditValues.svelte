@@ -187,7 +187,7 @@
         input.values.value = e.detail
     }
 
-    function hasChangedValues(id, _updater: any = null) {
+    function hasChangedValues(id: any, _updater: any = null) {
         if (!sections[id]) return
 
         const allInputsToCheck: EditInput2[] = []

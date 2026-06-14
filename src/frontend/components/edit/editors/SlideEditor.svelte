@@ -188,7 +188,7 @@
             }, 300)
         }
     }
-    function keyup(e) {
+    function keyup(e: any) {
         if (e.altKey) return
 
         altTemp = false

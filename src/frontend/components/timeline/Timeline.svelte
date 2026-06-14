@@ -594,7 +594,7 @@
         scrollLeft = trackWrapper.scrollLeft
     }
 
-    function keydown(e) {
+    function keydown(e: any) {
         const target = e.target as HTMLElement
         if (["INPUT", "TEXTAREA"].includes(target.tagName) || target.isContentEditable) return
 

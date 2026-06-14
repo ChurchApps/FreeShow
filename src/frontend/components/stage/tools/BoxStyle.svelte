@@ -150,7 +150,7 @@
         })
     }
 
-    function updateAlign(input) {
+    function updateAlign(input: any) {
         let id = "align"
         if (input.key === "text-align") id = "alignX"
 

@@ -458,7 +458,7 @@
     $: if (activeScriptureId && activeReference.book) setTimeout(() => scrollToActive(booksScrollElem))
     $: if (activeScriptureId && activeReference.chapters.length) setTimeout(() => scrollToActive(chaptersScrollElem))
     $: if (activeScriptureId && activeReference.verses[0]?.length) setTimeout(() => scrollToActive(versesScrollElem))
-    function scrollToActive(scrollElem) {
+    function scrollToActive(scrollElem: any) {
         if (!scrollElem || isSelected) return
 
         const selectedElemTop = scrollElem.querySelector(".isActive")?.offsetTop || 0
@@ -740,7 +740,7 @@
         try {
             const bookData = await bibleData.getBook(bookNumber)
             const chapterData = await bookData.getChapter(chapterNumber)
-            return (chapterData?.data?.verses || []).map((verse) => Number(verse.number)).filter(Boolean)
+            return (chapterData?.data?.verses || []).map((verse: any) => Number(verse.number)).filter(Boolean)
         } catch (err) {
             console.error(err)
             return []

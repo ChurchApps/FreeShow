@@ -80,7 +80,7 @@
         }
     }
 
-    function setLayout(id: string, layoutInfo) {
+    function setLayout(id: string, layoutInfo: any) {
         if (!$showsCache[showId]) return
 
         showsCache.update((a) => {

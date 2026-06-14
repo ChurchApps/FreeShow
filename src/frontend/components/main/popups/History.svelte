@@ -74,7 +74,7 @@
         showAudio: "Added audio to show"
     }
 
-    function callUndo(index) {
+    function callUndo(index: any) {
         for (let i = 0; i <= index; i++) {
             setTimeout(() => {
                 undo()
@@ -82,7 +82,7 @@
         }
     }
 
-    function callRedo(index) {
+    function callRedo(index: any) {
         for (let i = rHistory.length - 1; i >= index; i--) {
             setTimeout(() => {
                 redo()
@@ -95,7 +95,7 @@
         redoHistory.set([])
     }
 
-    function getItemId(item) {
+    function getItemId(item: any) {
         if (item.version === 1) return getName[item.type]?.(item.value) || item.type
         if (item.id === "UPDATE") return item.id + "_" + item.location?.id
 

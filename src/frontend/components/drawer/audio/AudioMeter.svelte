@@ -42,7 +42,7 @@
     const compressionFactor = threshold / newRange
     const expansionFactor = (1 - newRange) / (1 - threshold)
 
-    function transformRange(value) {
+    function transformRange(value: any) {
         if (value <= threshold) {
             return value / compressionFactor
         } else {

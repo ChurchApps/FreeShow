@@ -192,13 +192,13 @@
 
         // get any items with no transition between the two slides
         const oldItemTransition = currentItems.find((a) => a.actions?.transition)?.actions?.transition
-        const newItemTransition = currentSlide.items.find((a) => a.actions?.transition)?.actions?.transition
+        const newItemTransition = currentSlide.items.find((a: any) => a.actions?.transition)?.actions?.transition
         let itemTransitionDuration: number | null = null
         if (oldItemTransition && JSON.stringify(oldItemTransition) === JSON.stringify(newItemTransition)) {
             itemTransitionDuration = oldItemTransition.duration ?? null
             if (oldItemTransition.type === "none") itemTransitionDuration = 0
             // find any item that should have no transition!
-            else if (currentSlide.items.find((a) => a.actions?.transition?.duration === 0 || a.actions?.transition?.type === "none")) itemTransitionDuration = 0
+            else if (currentSlide.items.find((a: any) => a.actions?.transition?.duration === 0 || a.actions?.transition?.type === "none")) itemTransitionDuration = 0
         }
 
         const currentTransition = transition.between || transition.in || transition

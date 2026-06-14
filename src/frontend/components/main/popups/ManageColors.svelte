@@ -6,7 +6,7 @@
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialColorInput from "../../inputs/MaterialColorInput.svelte"
 
-    function changeColor(e, key = "") {
+    function changeColor(e: any, key = "") {
         const color = e.detail || e.target?.value || ""
 
         if (color.includes("gradient")) key = defaultGradients.find((a) => a.value === color) ? "disabledColorsGradient" : "customColorsGradient"
@@ -48,7 +48,7 @@
                 console.warn("Could not read clipboard:", e)
             })
 
-        function isValidColor(color) {
+        function isValidColor(color: any) {
             const s = new Option().style
             s.color = color
             return s.color !== ""

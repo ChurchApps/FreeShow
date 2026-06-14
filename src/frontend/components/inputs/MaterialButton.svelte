@@ -25,7 +25,7 @@
     let ripples: { x: number; y: number; size: number; id: number }[] = []
 
     const dispatch = createEventDispatcher()
-    function click(e, double = false) {
+    function click(e: any, double = false) {
         if (e.target?.closest(".edit")) return
         if (e.target?.closest("button") !== button) return
 
@@ -47,7 +47,7 @@
         click(e, true)
     }
 
-    function triggerRipple(e) {
+    function triggerRipple(e: any) {
         if (disabled) return
         if (e.target?.closest(".edit")) return
         if (e.target?.closest("button") !== button) return
@@ -67,7 +67,7 @@
         ripples = [...ripples, ripple]
     }
 
-    function handleKey(e) {
+    function handleKey(e: any) {
         if (disabled) return
         if (e.target?.closest("button") !== button) return
 
@@ -76,7 +76,7 @@
         }
     }
 
-    function handleAnimationEnd(id) {
+    function handleAnimationEnd(id: any) {
         ripples = ripples.filter((r) => r.id !== id)
     }
 </script>

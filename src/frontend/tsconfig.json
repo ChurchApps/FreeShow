@@ -6,8 +6,6 @@
         "target": "ESNext",
         "stripInternal": true,
         "strict": true,
-        // noImplicitAny deferred: enabling it surfaces ~500 errors (untyped params + index access) across the legacy code — a separate migration
-        "noImplicitAny": false,
         "strictNullChecks": true,
         "strictFunctionTypes": true,
         "noImplicitThis": true,

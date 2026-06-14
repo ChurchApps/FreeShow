@@ -16,7 +16,7 @@
 
     let loading = true
     const receiveNDI = {
-        RECEIVE_LIST: (msg) => {
+        RECEIVE_LIST: (msg: any) => {
             loading = false
             if (!msg || sources.length) return
 

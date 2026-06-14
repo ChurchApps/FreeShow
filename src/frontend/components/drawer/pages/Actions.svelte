@@ -25,7 +25,7 @@
     }
 
     $: sortedActions = sortByName(keysToID($actions), "name", true).map(convertOldMidiToNewAction)
-    $: filteredActionsTags = sortedActions.filter((a) => !$activeActionTagFilter.length || (a.tags?.length && !$activeActionTagFilter.some((tagId) => !a.tags?.includes(tagId)))).filter((a) => !a.tags?.some((tagId) => profile[tagId] === "none"))
+    $: filteredActionsTags = sortedActions.filter((a) => !$activeActionTagFilter.length || (a.tags?.length && !$activeActionTagFilter.some((tagId) => !a.tags?.includes(tagId)))).filter((a) => !a.tags?.some((tagId: any) => profile[tagId] === "none"))
     $: filteredActionsSearch = searchValue.length > 1 ? filteredActionsTags.filter((a) => a.name.toLowerCase().includes(searchValue.toLowerCase())) : filteredActionsTags
 
     // GRID VIEW
@@ -80,7 +80,7 @@
     {#if filteredActionsSearch.length}
         <div class="actions{showGrid ? ' grid' : ''}{showGrid && gridCentered ? ' grid-centered' : ''}">
             {#each filteredActionsSearch as action}
-                {@const isReadOnly = readOnly || action.tags?.some((tagId) => profile[tagId] === "read")}
+                {@const isReadOnly = readOnly || action.tags?.some((tagId: any) => profile[tagId] === "read")}
 
                 <div class="action context #action{isReadOnly ? '_readonly' : ''}{showGrid ? ' grid-item' : ''}">
                     <SelectElem id="action" data={action} style={showGrid ? "display: block; width: 100%; height: 100%;" : "display: flex; flex: 1;"} draggable>

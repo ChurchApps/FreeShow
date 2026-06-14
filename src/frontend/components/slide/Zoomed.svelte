@@ -67,7 +67,7 @@
     $: ratio = Math.max(0.01, shouldUseHeightRatio ? slideHeight / outputRes.height : slideWidth / outputRes.width) / customZoom
 
     $: croppedStyle = getCropping(cropping)
-    function getCropping(cropping) {
+    function getCropping(cropping: any) {
         let style = ""
         if (!cropping || mirror) return ""
 

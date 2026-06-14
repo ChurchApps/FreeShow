@@ -48,7 +48,7 @@
     }
 
     let qrImg = ""
-    function generateQR(text) {
+    function generateQR(text: any) {
         if ((!useHostname && ip === "localhost") || id === "companion") return
 
         const qr = qrcode(0, "L")
@@ -74,7 +74,7 @@
 
     // output
     $: outputsList = getList(clone($outputs))
-    function getList(outputs) {
+    function getList(outputs: any) {
         const list = keysToID(outputs).filter((a) => a.enabled === true)
         return sortByName(list).map((a) => ({ label: a.name, value: a.id }))
     }

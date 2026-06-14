@@ -9,7 +9,7 @@
     export let action = false
 
     const dispatch = createEventDispatcher()
-    function updateValue(key, value: number | undefined) {
+    function updateValue(key: any, value: number | undefined) {
         if (typeof value === "number") value = Number(value.toFixed(3))
 
         dispatch("change", { ...values, [key]: value })

@@ -74,7 +74,7 @@
     }
 
     // actions
-    function removeAction(action) {
+    function removeAction(action: any) {
         // TODO: this is a duplicate of SetTime and other places
         const layoutRef = getLayoutRef()
         const slideRef = layoutRef[$activeEdit.slide!] || {}

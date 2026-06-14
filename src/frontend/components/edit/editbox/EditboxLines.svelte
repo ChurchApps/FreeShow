@@ -289,7 +289,7 @@
             if (lastRedo?.id === "SHOW_ITEMS") {
                 const previousData = lastRedo.oldData.previousData
 
-                const historyText = previousData[index]?.lines.reduce((text, line) => (text += getLineText(line)), "")
+                const historyText = previousData[index]?.lines.reduce((text: any, line: any) => (text += getLineText(line)), "")
                 const linesText = newLines.reduce((text, line) => (text += getLineText(line)), "")
 
                 if (historyText === linesText) return

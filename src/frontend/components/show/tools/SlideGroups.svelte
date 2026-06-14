@@ -20,12 +20,12 @@
 
     $: showId = $activeShow?.id || ""
     $: allShowGroups = getSlideGroups(showId, $showsCache, $cachedShowsData)
-    $: showGroups = allShowGroups.filter((a) => a.group !== ".")
+    $: showGroups = allShowGroups.filter((a: any) => a.group !== ".")
 
     $: currentShow = $showsCache[showId]
 
     $: layoutSlides = currentShow?.layouts?.[_show().get("settings.activeLayout")]?.slides || []
-    function countGroupsInLayout(slideId) {
+    function countGroupsInLayout(slideId: any) {
         const count = layoutSlides.reduce((count, slide) => (slide.id === slideId ? count + 1 : count), 0)
         return count
     }

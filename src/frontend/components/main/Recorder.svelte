@@ -11,7 +11,7 @@
     let currentStream
     function toggleRecording() {
         if (!$activeRecording) {
-            currentStream?.getTracks().forEach((track) => {
+            currentStream?.getTracks().forEach((track: any) => {
                 track.stop()
             })
 

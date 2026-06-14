@@ -25,7 +25,7 @@
     skipSmooth()
     $: if (shouldSkipSmooth) skipSmooth()
 
-    function scroll(index) {
+    function scroll(index: any) {
         if (t !== null || disabled) return
 
         let elem = scrollElem

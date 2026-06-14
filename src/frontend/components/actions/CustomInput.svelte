@@ -21,7 +21,7 @@
     import VariableInputs from "./specific/VariableInputs.svelte"
 
     export let inputId: string
-    export let value
+    export let value: any
     export let actionId: string
     export let actionIndex = 0
     export let mainId = ""
@@ -35,7 +35,7 @@
     })
 
     const dispatch = createEventDispatcher()
-    function updateValue(key: string, e) {
+    function updateValue(key: string, e: any) {
         const newValue = e?.detail ?? e?.target?.value ?? e
         if (key) value = { ...value, [key]: newValue }
         else value = newValue
@@ -83,7 +83,7 @@
     let obsScenes: string[] = []
     if (inputId === "obs_scene") obsGetScenes().then((s) => (obsScenes = s))
 
-    function convertToOptions(a) {
+    function convertToOptions(a: any) {
         const options = Object.keys(a).map((id) => ({ value: id, label: a[id].name }))
         return sortByName(options, "label")
     }
@@ -119,7 +119,7 @@
         stop_webrtc_stream: () => [{ value: "", label: translateText("actions.all_outputs") }, ...sortByName(keysToID($outputs)).map((a) => ({ value: a.id, label: a.name }), "label")]
     }
 
-    $: options = getOptions[actionId]?.() || []
+    $: options = (getOptions as any)[actionId]?.() || []
 </script>
 
 {#if inputId === "output_style" || value?.outputStyle || value?.styleOutputs}
@@ -206,7 +206,7 @@
     <MaterialDropdown label="stage.output" options={getOptions.output_lock()} value={value?.outputId || ""} on:change={(e) => updateValue("outputId", e.detail)} />
     <MaterialDropdown label="variables.value" options={stateOptions} value={typeof value?.value === "boolean" ? (value.value ? "on" : "off") : ""} on:change={textStateChange} />
 {:else if inputId === "id"}
-    {#if options.length || getOptions[actionId]}
+    {#if options.length || (getOptions as any)[actionId]}
         <MaterialDropdown label="variables.value" {options} value={value?.id} on:change={(e) => updateValue("id", e.detail)} />
     {/if}
 {:else if inputId === "volume"}

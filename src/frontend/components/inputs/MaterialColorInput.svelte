@@ -112,7 +112,7 @@
         resetFromValue = ""
     }
 
-    function handleKey(event) {
+    function handleKey(event: any) {
         if (disabled) return
 
         if (event.key === "Escape") {
@@ -160,11 +160,11 @@
     $: disabledColors = $special.disabledColors || []
     $: disabledGradientColors = $special.disabledColorsGradient || []
 
-    $: customColors = ($special.customColors || []).map((value) => ({ name: "", value }))
+    $: customColors = ($special.customColors || []).map((value: any) => ({ name: "", value }))
     $: colorsList = editMode ? [...defaultColors, "BREAK", ...customColors] : [...defaultColors, ...customColors]
     $: if (!editMode) colorsList = colorsList.filter((a) => !disabledColors.includes(a.value))
 
-    $: customGradients = ($special.customColorsGradient || []).map((value) => ({ name: "", value }))
+    $: customGradients = ($special.customColorsGradient || []).map((value: any) => ({ name: "", value }))
     $: gradientColorsList = editMode ? [...defaultGradients, "BREAK", ...customGradients] : [...defaultGradients, ...customGradients]
     $: if (!editMode) gradientColorsList = gradientColorsList.filter((a) => !disabledGradientColors.includes(a.value))
 
@@ -223,7 +223,7 @@
             <div class="pickerContent">
                 {#if selectedMode === "gradient"}
                     {#each gradientColorsList as color}
-                        {@const isCustom = editMode && customGradients.find((a) => a.value === color.value)}
+                        {@const isCustom = editMode && customGradients.find((a: any) => a.value === color.value)}
 
                         {#if color === "BREAK"}
                             <div style="display: block;margin: 10px;width: 100%;"></div>
@@ -249,7 +249,7 @@
                         on:click={() => {
                             popupData.set({
                                 value: hexValue,
-                                trigger: (newValue) => {
+                                trigger: (newValue: any) => {
                                     selectColor(newValue)
                                     if (editMode) setTimeout(() => activePopup.set("manage_colors"))
                                 }
@@ -277,7 +277,7 @@
                         </div>
                     {/if}
                     {#each colorsList as color}
-                        {@const isCustom = editMode && customColors.find((a) => a.value === color.value)}
+                        {@const isCustom = editMode && customColors.find((a: any) => a.value === color.value)}
 
                         {#if color === "BREAK"}
                             <div style="display: block;margin: 10px;width: 100%;"></div>

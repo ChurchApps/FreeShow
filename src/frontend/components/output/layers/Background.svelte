@@ -127,7 +127,7 @@
     let animation1 = ""
     let animation2 = ""
     $: updateAnimation(animationStyle)
-    function updateAnimation(animation) {
+    function updateAnimation(animation: any) {
         setTimeout(
             () => {
                 if (background1 && !(loading && !firstActive)) animation1 = animation

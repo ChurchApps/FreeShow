@@ -72,7 +72,7 @@
 
         const newActions: any[] = []
         let changed = false
-        indexes.forEach((i) => {
+        indexes.forEach((i: any) => {
             const layoutSlide = ref[i] || {}
             const slideDataActions = layoutSlide.data?.actions || {}
             const slideActions = slideDataActions.slideActions || []
@@ -156,7 +156,7 @@
     }
 
     let autoActionName = ""
-    function changeAction(e, index = -1) {
+    function changeAction(e: any, index = -1) {
         let actionId = e.detail.id || ""
         if (!actionId) return
 
@@ -200,7 +200,7 @@
 
         if (!action.triggers) action.triggers = []
         // can't set if it exists already
-        if (!canAddMultiple && action.triggers.find((id) => id === actionId)) return
+        if (!canAddMultiple && action.triggers.find((id: any) => id === actionId)) return
 
         if (index > -1) action.triggers[index] = actionId
         else action.triggers.push(actionId)
@@ -336,7 +336,7 @@
     let addTrigger = false
 
     // set show when selected
-    $: if (action.triggers?.find((a) => a === "start_show") && $popupData.showId) {
+    $: if (action.triggers?.find((a: any) => a === "start_show") && $popupData.showId) {
         const setShow = { id: "start_show", actionValue: { id: $popupData.showId } }
         changeAction({ detail: setShow }, $popupData.actionIndex)
     }
@@ -360,7 +360,7 @@
         }
     }
     // .map((a) => ({ ...a, value: `${customActivation}__${a.value}` }))
-    function getSpecificActivation(customActivation) {
+    function getSpecificActivation(customActivation: any) {
         return [{ value: "", label: translateText("actions.any") }, ...specificActivations[customActivation].list()]
     }
 

@@ -45,7 +45,7 @@
         openToolsTab.set(id)
     }
 
-    function mousedown(e) {
+    function mousedown(e: any) {
         if (!e.target.closest(".showDropdown") && !e.target.closest(".header .right")) showDropdown = false
     }
 

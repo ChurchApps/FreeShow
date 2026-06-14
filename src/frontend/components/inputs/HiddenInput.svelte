@@ -53,7 +53,7 @@
         if (timeout) clearTimeout(timeout)
     }
 
-    function keydown(e) {
+    function keydown(e: any) {
         if (e.key === "Enter" || e.key === "Tab") {
             if ($activeRename?.includes("project_") && $activeProject === $activeRename.slice($activeRename.indexOf("_") + 1)) {
                 setTimeout(() => projectView.set(false), 20)

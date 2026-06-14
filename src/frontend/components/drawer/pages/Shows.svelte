@@ -128,10 +128,10 @@
         }
     }
 
-    function filterByTags(shows, tags: string[]) {
+    function filterByTags(shows: any, tags: string[]) {
         if (!tags.length) return shows
 
-        return shows.filter((a) => {
+        return shows.filter((a: any) => {
             return !tags.find((tagId) => !a.quickAccess?.tags?.includes(tagId))
         })
     }

@@ -88,8 +88,8 @@
             return
         }
 
-        searchedBibles = bibles.filter((a) => value.split(" ").find((value) => a.name.toLowerCase().includes(value)))
-        searchedRecommendedBibles = clone(recommended).filter((a) => value.split(" ").find((value) => a.name.toLowerCase().includes(value)))
+        searchedBibles = bibles.filter((a) => value.split(" ").find((value: any) => a.name.toLowerCase().includes(value)))
+        searchedRecommendedBibles = clone(recommended).filter((a) => value.split(" ").find((value: any) => a.name.toLowerCase().includes(value)))
     }
 
     let importType = ""

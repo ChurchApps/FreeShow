@@ -67,7 +67,7 @@
 
         if (type === "show_category") {
             categories.update((a) => {
-                ids.forEach((id) => {
+                ids.forEach((id: any) => {
                     if (!a[id]) return
 
                     if (key === "display" && value === "never") {

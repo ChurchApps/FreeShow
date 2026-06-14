@@ -172,7 +172,7 @@
         refreshEditSlide.set(true)
         finish()
 
-        function updateItemText(items) {
+        function updateItemText(items: any) {
             let replaced = false
             const caretLine = Number.isFinite(caret.line) ? caret.line : 0
             let caretPos = Number.isFinite(caret.pos) ? caret.pos : 0
@@ -181,7 +181,7 @@
             if (isStage) lines = items?.lines || []
             const lineIndex = lines[caretLine]?.text ? caretLine : 0
 
-            lines[lineIndex]?.text?.forEach((text) => {
+            lines[lineIndex]?.text?.forEach((text: any) => {
                 if (replaced) return
 
                 const value = text.value

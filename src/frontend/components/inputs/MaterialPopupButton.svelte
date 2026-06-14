@@ -29,7 +29,7 @@
             return
         }
 
-        popupData.set({ ...(data || {}), active: value, id, trigger: (value) => dispatch("change", value) })
+        popupData.set({ ...(data || {}), active: value, id, trigger: (value: any) => dispatch("change", value) })
         activePopup.set(popupId)
     }
 

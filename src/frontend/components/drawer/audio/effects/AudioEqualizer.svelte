@@ -500,7 +500,7 @@
             return a
         })
 
-        bands = clone(preset.bands.map((band) => ({ ...band })))
+        bands = clone(preset.bands.map((band: any) => ({ ...band })))
         updateBands()
     }
 

@@ -117,7 +117,7 @@
             }
 
             // get item click reveal
-            const clickRevealItems = (showSlide?.items || []).filter((a) => a?.clickReveal)
+            const clickRevealItems = (showSlide?.items || []).filter((a: any) => a?.clickReveal)
             const isRevealed = clickRevealItems.length ? !!outSlide?.itemClickReveal : true
             let itemClickReveal = false
             if (outSlide && outSlide.id === showId && outSlide.layout === activeLayout && outSlide.index === index && clickRevealItems.length) {
@@ -126,7 +126,7 @@
             }
 
             // get lines reveal
-            const linesRevealItems = (showSlide?.items || []).filter((a) => a?.lineReveal)
+            const linesRevealItems = (showSlide?.items || []).filter((a: any) => a?.lineReveal)
             let revealCount = outSlide?.revealCount ?? 0
             if (outSlide && outSlide.id === showId && outSlide.layout === activeLayout && outSlide.index === index && linesRevealItems.length && isRevealed) {
                 revealCount++
@@ -162,7 +162,7 @@
     let endIndex: null | number = null
     $: {
         if (layoutSlides.length) {
-            const index = layoutSlides.findIndex((a) => a.end === true && a.disabled !== true)
+            const index = layoutSlides.findIndex((a: any) => a.end === true && a.disabled !== true)
             if (index >= 0) endIndex = index
             else endIndex = null
         } else endIndex = null
@@ -198,13 +198,13 @@
         Object.keys(slides).forEach((slideId) => {
             const slide = slides[slideId]
 
-            slide?.items?.forEach((item) => {
+            slide?.items?.forEach((item: any) => {
                 if (!item?.lines) return
 
-                item.lines.forEach((line) => {
+                item.lines.forEach((line: any) => {
                     if (!Array.isArray(line?.text)) return
 
-                    line.text.forEach((text) => {
+                    line.text.forEach((text: any) => {
                         const newValue = capitalize(text.value)
                         if (text.value !== newValue) capitalized = true
                         text.value = newValue
@@ -221,7 +221,7 @@
         })
 
         function capitalize(value: string) {
-            $special.capitalize_words.split(",").forEach((word) => {
+            $special.capitalize_words.split(",").forEach((word: any) => {
                 const newWord = word.trim()
                 if (!newWord.length) return
 
@@ -256,7 +256,7 @@
             }, 300)
         }
     }
-    function keyup(e) {
+    function keyup(e: any) {
         if (e.altKey) return
 
         altTemp = false
@@ -302,7 +302,7 @@
             }
 
             // lines reveal
-            const linesRevealItems = (showSlide?.items || []).filter((a) => a?.lineReveal)
+            const linesRevealItems = (showSlide?.items || []).filter((a: any) => a?.lineReveal)
             if (linesRevealItems.length) {
                 lineIndex = getFewestOutputLinesReveal($outputs) - 1
                 maxLines = getItemWithMostLines({ items: linesRevealItems })

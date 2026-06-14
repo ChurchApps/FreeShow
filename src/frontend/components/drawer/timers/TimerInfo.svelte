@@ -12,7 +12,7 @@
         else allPaused = false
     }
 
-    function actionOnAllTimers(key, value) {
+    function actionOnAllTimers(key: any, value: any) {
         activeTimers.update((a) => {
             return a.map((timer) => {
                 timer[key] = value

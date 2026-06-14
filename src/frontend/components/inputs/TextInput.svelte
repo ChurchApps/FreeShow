@@ -11,7 +11,7 @@
     export let autofocus = false
     export let autoselect = false
 
-    function select(elem) {
+    function select(elem: any) {
         if (autoselect) elem.select()
     }
 </script>

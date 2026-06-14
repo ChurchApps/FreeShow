@@ -257,7 +257,7 @@
     }
 
     $: showUpdate($activeShow)
-    function showUpdate(a) {
+    function showUpdate(a: any) {
         if (a?.type !== "video" && a?.type !== "image") activeFile = null
     }
 
@@ -577,7 +577,7 @@
                                     path={item.path}
                                     mode={$mediaOptions.mode}
                                     previewPaths={item.files
-                                        .map((path) => (allRelevantFiles.find((a) => a.path === path) as any)?.thumbnailPath)
+                                        .map((path: any) => (allRelevantFiles.find((a) => a.path === path) as any)?.thumbnailPath)
                                         .filter(Boolean)
                                         .slice(0, 4)}
                                     folderFilesCount={countFolderMediaItems(item.path, allRelevantFiles)}

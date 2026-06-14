@@ -22,7 +22,7 @@
      * This is a TextInput, so `e.target.value`
      * @param e onChange Event
      */
-    function updateUrl(e) {
+    function updateUrl(e: any) {
         rest.url = e.detail
         change()
     }
@@ -32,7 +32,7 @@
      * This is a Dropdown, so `e.detail.name`
      * @param e onChange Event
      */
-    function updateMethod(e) {
+    function updateMethod(e: any) {
         rest.method = e.detail
         change()
     }
@@ -42,7 +42,7 @@
      * This is a TextInput, so `e.target.value`
      * @param e onChange Event
      */
-    function updatePayload(e) {
+    function updatePayload(e: any) {
         rest.payload = e.detail
         change()
     }
@@ -52,7 +52,7 @@
      * This is a TextInput, so `e.target.value`
      * @param e onChange Event
      */
-    function updateContentType(e) {
+    function updateContentType(e: any) {
         rest.contentType = e.detail
         change()
     }

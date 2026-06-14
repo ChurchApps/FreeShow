@@ -189,7 +189,7 @@
     ]
 
     let actionData: any = {}
-    function changeAction(e) {
+    function changeAction(e: any) {
         const value = e.detail
 
         if (value.actionValue) {
@@ -247,7 +247,7 @@
     }
 
     $: updatePopup(editEvent)
-    function updatePopup(event) {
+    function updatePopup(event: any) {
         if ($popupData.showId) return
 
         popupData.update((a) => {

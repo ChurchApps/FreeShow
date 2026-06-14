@@ -11,7 +11,7 @@
 
     export let value
 
-    function convertToOptions(a) {
+    function convertToOptions(a: any) {
         const options = Object.keys(a).map((id) => ({ value: id, label: a[id].name, data: translateText(`variables.${a[id].type}`) }))
         return sortByName(options, "label")
     }
@@ -48,7 +48,7 @@
     }
 
     const dispatch = createEventDispatcher()
-    function updateValue(key: string, e) {
+    function updateValue(key: string, e: any) {
         const value = e?.detail ?? e?.target?.value ?? e
         dispatch("update", { key, value })
 

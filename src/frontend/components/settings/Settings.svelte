@@ -25,7 +25,7 @@
 
     let scrolled = false
     $: if (tabId === null) scrolled = false
-    function scroll(e) {
+    function scroll(e: any) {
         scrolled = e.target.scrollTop > 0
     }
 

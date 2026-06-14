@@ -27,12 +27,12 @@
     }
 
     const dispatch = createEventDispatcher()
-    function change(e) {
+    function change(e: any) {
         const value = e.detail
         fontStyleValue = ""
         dispatch("change", value)
     }
-    function styleChange(e) {
+    function styleChange(e: any) {
         fontStyleValue = e.detail
         dispatch("fontStyle", fontStyleValue)
     }

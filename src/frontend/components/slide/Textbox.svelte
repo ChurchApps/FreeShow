@@ -287,7 +287,7 @@
         if (!reference?.data) return 1
         if (reference.data.translations) return Number(reference.data.translations) || 1
         const versionList = typeof reference.data.version === "string" ? reference.data.version.split("+") : []
-        return versionList.filter((value) => value.trim().length).length || 1
+        return versionList.filter((value: any) => value.trim().length).length || 1
     }
 
     // AUTO SIZE
@@ -348,7 +348,7 @@
         if (isStage) {
             // Search all lines to find disableTemplate items (verse numbers may not be in first line)
             const allText: any[] = []
-            stageItem?.lines?.forEach((line) => {
+            stageItem?.lines?.forEach((line: any) => {
                 if (line?.text) allText.push(...line.text)
             })
             if (!allText.length) return 1
@@ -644,7 +644,7 @@
         return true
     }
 
-    function setItemAutoFontSize(fontSize) {
+    function setItemAutoFontSize(fontSize: any) {
         if (isStage || itemIndex < 0 || $currentWindow || ref.showId === "temp") return
 
         if (ref.type === "overlay") {
@@ -669,7 +669,7 @@
         }
     }
 
-    function setItemPreviewAutoFontSize(fontSize) {
+    function setItemPreviewAutoFontSize(fontSize: any) {
         if (isStage || itemIndex < 0 || $currentWindow || ref.showId === "temp") return
 
         if (ref.type === "overlay") {

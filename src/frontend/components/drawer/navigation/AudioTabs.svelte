@@ -57,7 +57,7 @@
         [{ id: "TITLE", label: "media.folders" }, ...convertToButton(foldersList, folderLengths)]
     ]
 
-    function getAudioPlaylists(playlistUpdater) {
+    function getAudioPlaylists(playlistUpdater: any) {
         if (!Object.keys(playlistUpdater).length) return []
 
         let playlists = sortObject(keysToID(playlistUpdater), "name")

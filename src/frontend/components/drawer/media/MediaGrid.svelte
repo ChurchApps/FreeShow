@@ -38,7 +38,7 @@
         { wait: 32 }
     ) // ~30fps debouncing for smooth scrolling
 
-    function scroll(e) {
+    function scroll(e: any) {
         debouncedScroll(e.target.scrollTop)
     }
 

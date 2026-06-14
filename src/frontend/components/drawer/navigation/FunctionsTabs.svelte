@@ -17,7 +17,7 @@
         ...a,
         label: a.name,
         icon: "tag",
-        openTrigger: (id, add) => activeActionTagFilter.set([...(add ? $activeActionTagFilter : []), id]),
+        openTrigger: (id: any, add: any) => activeActionTagFilter.set([...(add ? $activeActionTagFilter : []), id]),
         count: actionsTagsOnly.filter((b) => b.includes(a.id)).length
     }))
 
@@ -27,7 +27,7 @@
         ...a,
         label: a.name,
         icon: "tag",
-        openTrigger: (id, add) => activeVariableTagFilter.set([...(add ? $activeVariableTagFilter : []), id]),
+        openTrigger: (id: any, add: any) => activeVariableTagFilter.set([...(add ? $activeVariableTagFilter : []), id]),
         count: variablesTagsOnly.filter((b) => b.includes(a.id)).length
     }))
 
@@ -37,7 +37,7 @@
         ...a,
         label: a.name,
         icon: "tag",
-        openTrigger: (id, add) => activeTimerTagFilter.set([...(add ? $activeTimerTagFilter : []), id]),
+        openTrigger: (id: any, add: any) => activeTimerTagFilter.set([...(add ? $activeTimerTagFilter : []), id]),
         count: timersTagsOnly.filter((b) => b.includes(a.id)).length
     }))
 

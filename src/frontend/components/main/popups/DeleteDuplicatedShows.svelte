@@ -27,7 +27,7 @@
                 if (!compareShowText) return
                 const dIds: string[] = []
 
-                ids.forEach((id, i) => {
+                ids.forEach((id: any, i: any) => {
                     if (i === 0) {
                         dIds.push(id)
                         return
@@ -60,7 +60,7 @@
         data.forEach(({ ids }) => {
             let keepId = ""
 
-            ids.forEach((id) => {
+            ids.forEach((id: any) => {
                 const show = $shows[id]
                 if (!show) return
 
@@ -75,7 +75,7 @@
                 if (first > second) keepId = id
             })
 
-            ids = ids.filter((id) => id !== keepId)
+            ids = ids.filter((id: any) => id !== keepId)
             deleteIds.push(...ids)
         })
 
@@ -94,7 +94,7 @@
         data.forEach(({ ids }) => {
             let keepId = ""
 
-            ids.forEach((id) => {
+            ids.forEach((id: any) => {
                 const show = $shows[id]
                 if (!show) return
 
@@ -107,7 +107,7 @@
                 if (show.timestamps?.created < compareShow.timestamps?.created) keepId = id
             })
 
-            ids = ids.filter((id) => id !== keepId)
+            ids = ids.filter((id: any) => id !== keepId)
             deleteIds.push(...ids)
         })
 
@@ -219,7 +219,7 @@
         <Loader />
     </Center>
 {:else}
-    <MaterialButton variant="outlined" icon="launch" info="{data.length} ({data.map((d) => d.ids.length).reduce((a, b) => a + b, 0)})" on:click={deleteManual} white>
+    <MaterialButton variant="outlined" icon="launch" info="{data.length} ({data.map((d: any) => d.ids.length).reduce((a: any, b: any) => a + b, 0)})" on:click={deleteManual} white>
         <T id="show.delete_manual" />
     </MaterialButton>
 

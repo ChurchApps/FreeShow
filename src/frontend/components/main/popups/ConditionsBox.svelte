@@ -54,7 +54,7 @@
         // , text.includes("{scripture") ? "scripture" : null
         dynamicValue: getDynamicIds(true).map((a) => ({ value: a, label: a }))
     }
-    export function convertToOptions(object) {
+    export function convertToOptions(object: any) {
         const options = Object.keys(object).map((id) => ({ value: id, label: object[id].name }))
         return sortByName(options, "label")
     }
@@ -85,7 +85,7 @@
     {#each Object.entries(conditionValues) as [conditionId, condition]}
         {#if (conditionId === "element" || input.element) && (conditionId !== "data" || !noData.includes(operatorId))}
             {@const options = conditionId === "operator" ? operatorOptions : conditionId === "data" && customData[elementId] ? customData[elementId] : condition}
-            {@const value = options.find((a) => a.value === input[conditionId]) || options[0]}
+            {@const value = options.find((a: any) => a.value === input[conditionId]) || options[0]}
             {@const label = conditionId === "operator" ? "actions.mode" : conditionId === "data" ? "variables.value" : "sort.type"}
 
             {#if conditionId !== "data" || options.length > 1}

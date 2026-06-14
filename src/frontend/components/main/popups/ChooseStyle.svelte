@@ -8,7 +8,7 @@
         { id: "live", name: translateText("tabs.live"), icon: "camera" }
     ]
 
-    function selectStyle(id) {
+    function selectStyle(id: any) {
         popupData.set({ id: "choose_style", value: id })
     }
 </script>

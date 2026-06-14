@@ -93,7 +93,7 @@
                 // show if it is the currently selected
                 if (id === actionId) return true
                 // don't show action if incompatible with any existing action (and no wait action is added)
-                if (!existingActionsFiltered.find((a) => a.includes("wait")) && actionData[id].incompatible?.find((id) => existingActionsFiltered.includes(id))) return false
+                if (!existingActionsFiltered.find((a) => a.includes("wait")) && actionData[id].incompatible?.find((id: any) => existingActionsFiltered.includes(id))) return false
                 // don't display GET actions
                 if (id.includes("get_")) return false
 
@@ -193,7 +193,7 @@
         changeAction({ ...searchedActions[0], index: full ? undefined : 0 })
     }
 
-    const getName = (object) => object[actionValue.id]?.name || ""
+    const getName = (object: any) => object[actionValue.id]?.name || ""
     function getActionInfo(actionId: string): string {
         const id = actionId.split(":")[0]
         // console.log(id, actionValue)
