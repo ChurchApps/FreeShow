@@ -58,7 +58,7 @@
             bibles = newSorted
             recommended = recommended
         } catch (err) {
-            error = err
+            error = String(err)
         }
     }
 
