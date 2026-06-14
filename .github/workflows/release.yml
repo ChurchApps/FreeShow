@@ -28,7 +28,22 @@ jobs:
           AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
           AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
           AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
-        run: npm run release
+        shell: bash
+        run: |
+          # azureSignOptions is kept out of electron-builder.yaml so it can be omitted when
+          # Azure Trusted Signing creds are absent (e.g. fork/dev test releases). With the
+          # block present electron-builder always tries to sign and fails; without it, it
+          # falls back to signtool, finds no cert, and skips signing (unsigned build). These
+          # publisher/endpoint values are public config, not secrets, so they live here.
+          if [ -n "$AZURE_CLIENT_ID" ]; then
+            npm run release -- \
+              -c.win.azureSignOptions.publisherName="Live Church Solutions" \
+              -c.win.azureSignOptions.endpoint="https://wus2.codesigning.azure.net/" \
+              -c.win.azureSignOptions.certificateProfileName="FreeShow" \
+              -c.win.azureSignOptions.codeSigningAccountName="FreeShow"
+          else
+            npm run release
+          fi
 
   publish_linux:
     name: "Publish Linux x64"
@@ -144,4 +159,10 @@ jobs:
           APPLE_ID: ${{ secrets.APPLEID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLEIDPASS }}
           APPLE_TEAM_ID: ${{ secrets.APPLETEAMID }}
-        run: npm run release
+        run: |
+          # When CSC_LINK isn't set as a repo secret, GitHub still exports it as an empty
+          # string. electron-builder treats "" as a certificate path, resolves it to the
+          # project dir, and fails with "<projectDir> not a file". Drop the empty signing
+          # vars so the build runs unsigned when no certificate is configured.
+          if [ -z "$CSC_LINK" ]; then unset CSC_LINK CSC_KEY_PASSWORD; fi
+          npm run release

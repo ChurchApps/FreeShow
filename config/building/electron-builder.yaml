@@ -32,11 +32,12 @@ win:
     asarUnpack:
         - "**/node_modules/macadam/**/*.node"
         - "**/node_modules/libspotifyctl/**/*"
-    azureSignOptions:
-        publisherName: Live Church Solutions
-        endpoint: https://wus2.codesigning.azure.net/
-        certificateProfileName: FreeShow
-        codeSigningAccountName: FreeShow
+    # NOTE: win.azureSignOptions is intentionally NOT set here. electron-builder always
+    # tries to Azure-sign whenever this block is present, and it can't be disabled from the
+    # CLI (the "null" override isn't coerced for this key). The release workflow injects
+    # these (public, non-secret) values via -c.win.azureSignOptions.* only when the Azure
+    # Trusted Signing creds exist; without them the build falls back to signtool and skips
+    # signing gracefully, producing an unsigned installer instead of failing.
 
 # linux
 
