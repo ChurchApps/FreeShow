@@ -2,7 +2,7 @@
     import type { Transition } from "../../../../types/Show"
     import { custom } from "../../../utils/transitions"
 
-    export let transition: Transition | undefined
+    export let transition: Transition | undefined = undefined
     export let inTransition: Transition | null = null
     export let outTransition: Transition | null = null
 

@@ -285,7 +285,7 @@
             })
         } else if (ref.id) {
             // dont override history when undoing
-            const lastRedo = $redoHistory[$redoHistory.length - 1]
+            const lastRedo: any = $redoHistory[$redoHistory.length - 1]
             if (lastRedo?.id === "SHOW_ITEMS") {
                 const previousData = lastRedo.oldData.previousData
 

@@ -95,7 +95,7 @@
         const maxHeightValue = analysers[0].fftSize // 256
         if (!bufferLength || !maxHeightValue) return
 
-        const dataArrays: Uint8Array[] = analysers.map(() => new Uint8Array(bufferLength))
+        const dataArrays = analysers.map(() => new Uint8Array(bufferLength))
 
         // const padding = -0.5
         // const barWidth = bufferLength ? (WIDTH / bufferLength - padding) * 1.3 : 0

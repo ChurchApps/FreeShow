@@ -220,7 +220,7 @@ class CameraManager {
         await this.warmUpCamera(camera, { retryCount, lastError })
     }
 
-    async getCameraStream(cameraId: string, groupId?: string) {
+    async getCameraStream(cameraId: string, groupId?: string, _options?: { preview?: boolean }) {
         // get existing "warmed" camera
         const warmStream = this.getWarmCamera(cameraId)
         if (warmStream) {

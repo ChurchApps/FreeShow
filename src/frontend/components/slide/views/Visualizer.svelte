@@ -89,7 +89,7 @@
         const maxHeightValue = analysers[0]?.fftSize // 256
         if (!maxHeightValue) return
 
-        const dataArrays: Uint8Array[] = analysers.map(() => new Uint8Array(bufferLength))
+        const dataArrays = analysers.map(() => new Uint8Array(bufferLength))
 
         function renderFrame() {
             if (!$visualizerData && !analysers?.length) {

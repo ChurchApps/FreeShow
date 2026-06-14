@@ -23,7 +23,7 @@
     export let item: Item
 
     export let edit = false
-    export let itemElem: HTMLElement | undefined
+    export let itemElem: HTMLElement | undefined = undefined
 
     export let slideIndex = 0
     export let preview = false

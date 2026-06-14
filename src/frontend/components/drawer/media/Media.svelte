@@ -577,7 +577,7 @@
                                     path={item.path}
                                     mode={$mediaOptions.mode}
                                     previewPaths={item.files
-                                        .map((path) => allRelevantFiles.find((a) => a.path === path)?.thumbnailPath)
+                                        .map((path) => (allRelevantFiles.find((a) => a.path === path) as any)?.thumbnailPath)
                                         .filter(Boolean)
                                         .slice(0, 4)}
                                     folderFilesCount={countFolderMediaItems(item.path, allRelevantFiles)}

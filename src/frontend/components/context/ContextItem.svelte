@@ -112,7 +112,7 @@
                 const ref = getLayoutRef()
                 isEnabled = ref[$selected.data[0]?.index]?.data?.disabled || false
             } else if ($selected.id === "stage") {
-                isEnabled = $stageShows[$selected.data[0]?.id]?.disabled
+                isEnabled = $stageShows[$selected.data[0]?.id]?.disabled || false
             } else if ($selected.id === "action") {
                 const action = $actions[$selected.data[0]?.id] || {}
                 if (!action.customActivation) hide = true

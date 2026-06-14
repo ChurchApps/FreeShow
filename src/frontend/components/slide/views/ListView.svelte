@@ -15,7 +15,7 @@
         timeout = setTimeout(
             () => {
                 currentItem++
-                if (currentItem >= list.items.length) currentItem = 0
+                if (currentItem >= (list.items?.length ?? 0)) currentItem = 0
 
                 timeout = null
                 if (list.interval) startInterval()

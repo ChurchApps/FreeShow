@@ -86,8 +86,8 @@
             </span>
         </div>
 
-        <MaterialNumberInput label="edit.max_lines_per_slide" value={settings?.maxLinesPerSlide || 0} max={100} on:change={(e) => setValue(e, "maxLinesPerSlide")} />
-        <MaterialNumberInput label="edit.break_long_lines_tip" value={settings?.breakLongLines || 0} max={100} on:change={(e) => setValue(e, "breakLongLines")} />
+        <MaterialNumberInput label="edit.max_lines_per_slide" value={Number(settings?.maxLinesPerSlide) || 0} max={100} on:change={(e) => setValue(e, "maxLinesPerSlide")} />
+        <MaterialNumberInput label="edit.break_long_lines_tip" value={Number(settings?.breakLongLines) || 0} max={100} on:change={(e) => setValue(e, "breakLongLines")} />
     </div>
 
     <div>

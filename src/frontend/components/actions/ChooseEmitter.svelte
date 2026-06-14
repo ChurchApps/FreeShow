@@ -150,7 +150,8 @@
 
         {#if emitter?.type !== "midi"}
             {#each templateInputs as input, i}
-                {@const stringValue = typeof (value.templateValues?.[i] || input).value === "string" ? (value.templateValues?.[i] || input).value : ""}
+                {@const rawValue = (value.templateValues?.[i] || input).value}
+                {@const stringValue = typeof rawValue === "string" ? rawValue : ""}
 
                 <MaterialTextInput label={input.name} disabled={!!input.value} placeholder={translateText("variables.value")} value={stringValue} on:change={(e) => setTemplateValue(i, e)} />
             {/each}
