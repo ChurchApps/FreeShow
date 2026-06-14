@@ -75,7 +75,7 @@ export async function pptToShow(filePath: string) {
     } catch (err) {
         console.error("PPT convertion failed for", filePath, err)
 
-        if (err.message.includes("Invalid or unsupported zip format")) {
+        if ((err as Error).message.includes("Invalid or unsupported zip format")) {
             toApp(MAIN, { channel: "ALERT", data: "Invalid format" })
         }
 

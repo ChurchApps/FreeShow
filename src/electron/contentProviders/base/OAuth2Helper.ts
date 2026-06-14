@@ -132,7 +132,7 @@ export class OAuth2Helper<TAuthData extends BaseAuthData = BaseAuthData> {
                         scope
                     } as TAuthData)
                 } catch (error) {
-                    reject(new ContentProviderError(ContentProviderErrorType.NETWORK_ERROR, `Token refresh failed: ${error.message}`))
+                    reject(new ContentProviderError(ContentProviderErrorType.NETWORK_ERROR, `Token refresh failed: ${(error as Error).message}`))
                 }
             })
         })
@@ -200,7 +200,7 @@ export class OAuth2Helper<TAuthData extends BaseAuthData = BaseAuthData> {
                         scope: data.scope || scope
                     } as TAuthData)
                 } catch (error) {
-                    reject(new ContentProviderError(ContentProviderErrorType.AUTHENTICATION_FAILED, `Token exchange failed: ${error.message}`))
+                    reject(new ContentProviderError(ContentProviderErrorType.AUTHENTICATION_FAILED, `Token exchange failed: ${(error as Error).message}`))
                 }
             })
         })
