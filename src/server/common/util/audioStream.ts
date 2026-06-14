@@ -1,5 +1,5 @@
 export let audioContext: AudioContext | null = null
-const bufferQueue: { channels: Float32Array[]; sampleRate: number }[] = []
+const bufferQueue: { channels: Float32Array<ArrayBuffer>[]; sampleRate: number }[] = []
 let isPlaying = false
 
 let gainNode: GainNode | null = null

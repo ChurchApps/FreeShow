@@ -1,7 +1,7 @@
 import { app as electronApp } from "electron"
 import type { Request, Response } from "express"
 import path from "path"
-import { stores } from "../../../electron/data/store"
+import { _store as stores } from "../../../electron/data/store"
 import { readFile } from "../../../electron/utils/files"
 import type { Media as ItemMedia, Show, Slide, SlideData, TrimmedShow } from "../../../types/Show"
 import { getMediaUrl } from "./MediaHelper"
@@ -317,7 +317,7 @@ export async function handleShowSlideHtmlRequest(req: Request, res: Response): P
     const { showId, slideId } = req.params
 
     try {
-        const trimmedShow = stores.SHOWS.get(showId) as TrimmedShow | undefined
+        const trimmedShow = stores.SHOWS?.get(showId) as TrimmedShow | undefined
 
         if (!trimmedShow) {
             res.status(404).send(`Show metadata not found for ID: ${showId}`)
@@ -332,7 +332,7 @@ export async function handleShowSlideHtmlRequest(req: Request, res: Response): P
 
         const showFileName = showNameFromStore + ".show"
 
-        let showsPath = stores.SETTINGS.get("showsPath") as string | undefined
+        let showsPath = stores.SETTINGS?.get("showsPath") as string | undefined
         if (!showsPath) {
             showsPath = path.join(electronApp.getPath("userData"), "Shows")
         }

@@ -294,8 +294,8 @@ export class BlackmagicSender {
                 this.audioQueuesByOutput[outputId] = { queue: [], offset: 0, length: 0 }
 
                 // CRITICAL: Disable frame callback immediately to prevent debug spam
-                if (typeof playback.onFramePlayed === "function") {
-                    playback.onFramePlayed(() => {
+                if (typeof (playback as any).onFramePlayed === "function") {
+                    ;(playback as any).onFramePlayed(() => {
                         // Do nothing - completely disable frame callbacks
                     })
                 }
