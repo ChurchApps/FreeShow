@@ -349,7 +349,7 @@
                         <!-- Chord chart sections -->
                         <div class="chord-sections" style="columns: {options.columnsPerPage || 1}; column-gap: 25px; column-rule: 1px solid #eee;">
                             {#each groupSlidesBySection(layoutSlides[show.id || ""] || []) as section, sectionIndex}
-                                <div class="section" style="margin-bottom: {sectionIndex === groupSlidesBySection(layoutSlides[show.id || ""] || []).length - 1 ? '8px' : '15px'};">
+                                <div class="section" style="margin-bottom: {sectionIndex === groupSlidesBySection(layoutSlides[show.id || ''] || []).length - 1 ? '8px' : '15px'};">
                                     <h3 class="section-title">{section.name}</h3>
 
                                     {#each section.slides as slide, slideIndex}

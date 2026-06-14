@@ -16,13 +16,7 @@
 <div class="tabSection">
     <!-- All & Unlabeled Section -->
     <div class="section">
-        <MaterialButton
-            class="tab {activeItem === 'all' ? 'active' : ''}"
-            on:click={() => onSelect("all")}
-            style="width: 100%; font-weight: normal; padding: 0.2em 0.8em;"
-            isActive={activeItem === "all"}
-            tab
-        >
+        <MaterialButton class="tab {activeItem === 'all' ? 'active' : ''}" on:click={() => onSelect("all")} style="width: 100%; font-weight: normal; padding: 0.2em 0.8em;" isActive={activeItem === "all"} tab>
             <div style="max-width: 85%;" data-title={translate(showAllLabel, $dictionary)}>
                 <Icon id="all" size={1} white={activeItem === "all"} />
                 <p style="margin: 5px;">{translate(showAllLabel, $dictionary)}</p>
@@ -31,13 +25,7 @@
         </MaterialButton>
 
         {#if categoryData.uncategorizedCount}
-            <MaterialButton
-                class="tab {activeItem === 'unlabeled' ? 'active' : ''}"
-                on:click={() => onSelect("unlabeled")}
-                style="width: 100%; font-weight: normal; padding: 0.2em 0.8em;"
-                isActive={activeItem === "unlabeled"}
-                tab
-            >
+            <MaterialButton class="tab {activeItem === 'unlabeled' ? 'active' : ''}" on:click={() => onSelect("unlabeled")} style="width: 100%; font-weight: normal; padding: 0.2em 0.8em;" isActive={activeItem === "unlabeled"} tab>
                 <div style="max-width: 85%;" data-title={translate(showUnlabeledLabel, $dictionary)}>
                     <Icon id="noIcon" size={1} white={activeItem === "unlabeled"} />
                     <p style="margin: 5px;">{translate(showUnlabeledLabel, $dictionary)}</p>
@@ -53,13 +41,7 @@
             <div class="title">{translate(showCategoriesLabel, $dictionary)}</div>
             {#each sortByName(categoryData.unarchivedCategories, "name") as cat}
                 {@const count = categoryData.allItems.filter((s) => s.category === cat.id).length}
-                <MaterialButton
-                    class="tab {activeItem === cat.id ? 'active' : ''}"
-                    on:click={() => onSelect(cat.id)}
-                    style="width: 100%; font-weight: normal; padding: 0.2em 0.8em;"
-                    isActive={activeItem === cat.id}
-                    tab
-                >
+                <MaterialButton class="tab {activeItem === cat.id ? 'active' : ''}" on:click={() => onSelect(cat.id)} style="width: 100%; font-weight: normal; padding: 0.2em 0.8em;" isActive={activeItem === cat.id} tab>
                     <div style="max-width: 85%;" data-title={translate(cat.name, $dictionary) || cat.name}>
                         <Icon id={cat.icon || "folder"} size={1} white={activeItem === cat.id} />
                         <p style="margin: 5px;">{translate(cat.name, $dictionary) || cat.name}</p>
@@ -79,13 +61,7 @@
             </div>
             {#each sortByName(categoryData.archivedCategories, "name") as cat}
                 {@const count = categoryData.allItems.filter((s) => s.category === cat.id).length}
-                <MaterialButton
-                    class="tab {activeItem === cat.id ? 'active' : ''}"
-                    on:click={() => onSelect(cat.id)}
-                    style="width: 100%; font-weight: normal; padding: 0.2em 0.8em;"
-                    isActive={activeItem === cat.id}
-                    tab
-                >
+                <MaterialButton class="tab {activeItem === cat.id ? 'active' : ''}" on:click={() => onSelect(cat.id)} style="width: 100%; font-weight: normal; padding: 0.2em 0.8em;" isActive={activeItem === cat.id} tab>
                     <div style="max-width: 85%;" data-title={translate(cat.name, $dictionary) || cat.name}>
                         <Icon id={cat.icon || "folder"} size={1} white={activeItem === cat.id} />
                         <p style="margin: 5px;">{translate(cat.name, $dictionary) || cat.name}</p>

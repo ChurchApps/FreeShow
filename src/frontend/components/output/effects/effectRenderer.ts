@@ -701,7 +701,7 @@ export class EffectRender {
             // Create gradient per-blade (blade heights differ), but reuse the pre-computed colors
             const gradient = ctx.createLinearGradient(blade.x, baseY, blade.x, baseY - blade.height)
             gradient.addColorStop(0, darkerColor) // Darker at bottom
-            gradient.addColorStop(1, baseColor)   // Original color at top
+            gradient.addColorStop(1, baseColor) // Original color at top
             ctx.fillStyle = gradient
 
             // Draw the triangular grass blade using a path.
@@ -715,7 +715,7 @@ export class EffectRender {
                 const y = baseY - blade.height * progress
                 const swayAmount = windSway * progress * progress + windSway2 * progress
                 const x = blade.x + swayAmount + Math.sin(progress * Math.PI) * 1.5
-                const halfW = baseWidth * (1 - progress * 0.95) / 2
+                const halfW = (baseWidth * (1 - progress * 0.95)) / 2
                 ctx.lineTo(x - halfW, y)
             }
 
@@ -732,7 +732,7 @@ export class EffectRender {
                 const y = baseY - blade.height * progress
                 const swayAmount = windSway * progress * progress + windSway2 * progress
                 const x = blade.x + swayAmount + Math.sin(progress * Math.PI) * 1.5
-                const halfW = baseWidth * (1 - progress * 0.95) / 2
+                const halfW = (baseWidth * (1 - progress * 0.95)) / 2
                 ctx.lineTo(x + halfW, y)
             }
 
@@ -1346,14 +1346,7 @@ export class EffectRender {
         const secondaryREnd = secondaryOuterRadius + 1.5 * bandWidth
         const secondaryTotalSpan = secondaryREnd - secondaryRStart
 
-        const secondaryGrad = ctx.createRadialGradient(
-            centerX,
-            centerY,
-            Math.max(0, secondaryRStart),
-            centerX,
-            centerY,
-            Math.max(0, secondaryREnd)
-        )
+        const secondaryGrad = ctx.createRadialGradient(centerX, centerY, Math.max(0, secondaryRStart), centerX, centerY, Math.max(0, secondaryREnd))
 
         // Double rainbow colors are reversed (Red on the inside, Violet on the outside) and very subtle
         secondaryGrad.addColorStop(0.0, "rgba(255, 0, 0, 0)") // inner edge fade
@@ -1379,14 +1372,7 @@ export class EffectRender {
         const rEnd = outerRadius + 1.5 * bandWidth
         const totalSpan = rEnd - rStart
 
-        const primaryGrad = ctx.createRadialGradient(
-            centerX,
-            centerY,
-            Math.max(0, rStart),
-            centerX,
-            centerY,
-            Math.max(0, rEnd)
-        )
+        const primaryGrad = ctx.createRadialGradient(centerX, centerY, Math.max(0, rStart), centerX, centerY, Math.max(0, rEnd))
 
         // Primary rainbow colors: Violet on the inside, Red on the outside, with soft atmospheric fading
         primaryGrad.addColorStop(0.0, "rgba(148, 0, 211, 0)") // inner edge fade

@@ -149,10 +149,10 @@
     // Auto-navigate to Genesis 1:1 if there's no scripture output
     function autoNavigateToGenesis() {
         if (books.length === 0) return
-        
+
         // Check if there's truly no scripture output (no valid book/chapter/verse)
         const hasNoOutput = displayedBookIndex < 0 || displayedChapterIndex < 0 || displayedVerseNumber <= 0
-        
+
         if (hasNoOutput && activeBook < 0 && activeChapter < 0) {
             // Navigate to Genesis (book 1, chapter 1)
             activeBook = 0
@@ -171,16 +171,14 @@
             autoNavigateToGenesis()
             return
         }
-        
+
         const bookIndex = state.bookId
         const chapterIndex = state.chapterId
         const verseList = state.activeVerses
         const latestVerse = Array.isArray(verseList) && verseList.length > 0 ? parseInt(String(verseList[verseList.length - 1]), 10) : 0
 
         // Check if we have valid scripture output
-        const hasValidOutput = Number.isInteger(bookIndex) && bookIndex >= 0 && 
-                               Number.isInteger(chapterIndex) && chapterIndex >= 0 && 
-                               Number.isFinite(latestVerse) && latestVerse > 0
+        const hasValidOutput = Number.isInteger(bookIndex) && bookIndex >= 0 && Number.isInteger(chapterIndex) && chapterIndex >= 0 && Number.isFinite(latestVerse) && latestVerse > 0
 
         if (hasValidOutput) {
             if (Number.isInteger(bookIndex) && bookIndex >= 0) displayedBookIndex = bookIndex
@@ -202,14 +200,11 @@
     $: if (openedScriptureId && openedScriptureId !== lastOpenedScriptureId) {
         lastOpenedScriptureId = openedScriptureId
         pendingSyncToDisplayed = true
-        
+
         // Check current scripture state to see if there's valid output
         const currentState = get(currentScriptureState)
-        const hasValidOutput = currentState && 
-                               Number.isInteger(currentState.bookId) && currentState.bookId >= 0 && 
-                               Number.isInteger(currentState.chapterId) && currentState.chapterId >= 0 && 
-                               Array.isArray(currentState.activeVerses) && currentState.activeVerses.length > 0
-        
+        const hasValidOutput = currentState && Number.isInteger(currentState.bookId) && currentState.bookId >= 0 && Number.isInteger(currentState.chapterId) && currentState.chapterId >= 0 && Array.isArray(currentState.activeVerses) && currentState.activeVerses.length > 0
+
         if (hasValidOutput) {
             // Sync to displayed output
             void maybeSyncToDisplayed("openedScripture")
@@ -271,11 +266,11 @@
     // Uses HSL to create evenly distributed, vibrant colors on dark background
     const GOLDEN_ANGLE = 137.508
     const BASE_HUE = 330 // FreeShow's pink
-    
+
     function getVersionHue(index: number): number {
         return (BASE_HUE + index * GOLDEN_ANGLE) % 360
     }
-    
+
     function getVersionColor(index: number): string {
         return `hsl(${getVersionHue(index)}, 75%, 65%)`
     }
@@ -488,12 +483,7 @@
             })
 
         const exactMatch = matches.find((item) => item.name === normalizedBookName)
-        const broadMatch =
-            exactMatch ||
-            matches.find((item) => item.name.startsWith(normalizedBookName)) ||
-            matches.find((item) => normalizedBookName.startsWith(item.name)) ||
-            matches.find((item) => item.name.includes(normalizedBookName)) ||
-            matches.find((item) => normalizedBookName.includes(item.name))
+        const broadMatch = exactMatch || matches.find((item) => item.name.startsWith(normalizedBookName)) || matches.find((item) => normalizedBookName.startsWith(item.name)) || matches.find((item) => item.name.includes(normalizedBookName)) || matches.find((item) => normalizedBookName.includes(item.name))
 
         const bookIndex = broadMatch ? broadMatch.index : -1
         return bookIndex === -1 ? null : { bookIndex, chapterIndex: chapterNumber - 1, verseNumber }
@@ -548,7 +538,7 @@
     // Helper to get book/chapter numbers from displayed indices
     function getDisplayedReference(): { bookNumber: number; chapterNumber: number } | null {
         if (displayedBookIndex < 0 || displayedChapterIndex < 0) return null
-        
+
         const displayedBook = books[displayedBookIndex]
         if (!displayedBook) return null
 
@@ -697,7 +687,7 @@
                         <span
                             id={String(verseNumber)}
                             class="verse"
-                            class:checkMode={checkMode}
+                            class:checkMode
                             class:isActive
                             class:isDisplayed
                             class:isSelected={$scriptureMultiSelect && isSelected}
@@ -874,7 +864,7 @@
     .main .list span.verse .verse-content :global(span) {
         padding: 0;
     }
-    
+
     /* Checkbox styling */
     .verse-checkbox {
         width: 20px;
@@ -883,7 +873,7 @@
         cursor: pointer;
         accent-color: var(--secondary);
     }
-    
+
     /* Wrap text mode - allows verses to have different heights */
     .main span.verse.wrapText {
         white-space: normal;
@@ -894,7 +884,6 @@
     .main span.verse.wrapText .v {
         flex-shrink: 0;
     }
-
 
     /* Red letter text */
     .main :global(.wj) {
