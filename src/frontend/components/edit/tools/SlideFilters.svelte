@@ -20,7 +20,7 @@
     $: currentSlideNumber = $activeEdit.slide || 0
     $: ref = $showsCache[currentId] ? getLayoutRef(currentId) : {}
 
-    $: currentSlideData = ref?.[currentSlideNumber]?.data || null
+    $: currentSlideData = (ref as any)?.[currentSlideNumber]?.data || null
 
     $: isTemplate = $activeEdit.type === "template"
     $: filterData = (isTemplate ? $templates[currentId] : currentSlideData) || {}

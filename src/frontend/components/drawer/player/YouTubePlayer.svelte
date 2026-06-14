@@ -1,5 +1,6 @@
 <script lang="ts">
     import { createEventDispatcher, onMount } from "svelte"
+    // @ts-ignore - youtube-player ships no type declarations
     import YoutubePlayer from "youtube-player"
 
     export let videoId: string

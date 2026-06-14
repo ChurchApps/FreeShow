@@ -23,7 +23,7 @@
 
     function setValues(key: string, value: any) {
         if (!midi.values) midi.values = { note: 0, velocity: type === "input" ? -1 : 0, channel: 1 }
-        midi.values[key] = value
+        ;(midi.values as any)[key] = value
         change()
     }
     function setMidi(key: string, value: any) {

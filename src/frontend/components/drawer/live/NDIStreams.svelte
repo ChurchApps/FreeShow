@@ -20,7 +20,7 @@
             loading = false
             if (!msg || sources.length) return
 
-            sources = JSON.parse(msg).map(({ name, urlAddress }) => ({ name, id: urlAddress }))
+            sources = JSON.parse(msg).map(({ name, urlAddress }: any) => ({ name, id: urlAddress }))
         }
     }
 

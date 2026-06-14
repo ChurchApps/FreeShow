@@ -137,7 +137,7 @@
         if (input.id.includes(".")) {
             const splitted = input.id.split(".")
             input.id = splitted[0]
-            const newValue = item?.[input.id] || {}
+            const newValue = (item as any)?.[input.id] || {}
             if (typeof newValue === "string") return // something is wrong
             newValue[splitted[1]] = value
             value = newValue

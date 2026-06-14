@@ -152,7 +152,7 @@
                 // add any extensions
                 for (let i = 0; i < sortedKeys.length; i++) {
                     if (sortedKeys[i].extension && arr[i] !== undefined && arr[i] !== "") {
-                        if (!arr[i].toString().endsWith(sortedKeys[i].extension)) {
+                        if (!arr[i].toString().endsWith(sortedKeys[i].extension || "")) {
                             arr[i] = arr[i].toString().replace(/[^0-9.\-]+$/, "") + sortedKeys[i].extension
                         }
                     }

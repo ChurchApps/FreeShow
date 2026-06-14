@@ -110,9 +110,8 @@
     function updateTemplateValue(index: string, key: string, e: any) {
         const value = e.detail
         const templates = emitter?.templates || {}
-        if (!templates[editTemplate]?.inputs?.[index]) return
-
-        templates[editTemplate].inputs[index][key] = value
+        if (!templates[editTemplate]?.inputs?.[index as any]) return
+        ;(templates[editTemplate].inputs as any)[index][key] = value
         updateValue("templates", templates)
     }
 

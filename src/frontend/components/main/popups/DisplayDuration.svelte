@@ -13,7 +13,7 @@
         currentValue = value
 
         // WIP history
-        ;(isEffect ? effects : overlays).update((a) => {
+        ;((isEffect ? effects : overlays) as any).update((a: any) => {
             ids.forEach((id) => {
                 if (!a[id]) return
 

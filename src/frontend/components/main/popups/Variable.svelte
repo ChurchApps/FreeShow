@@ -79,8 +79,7 @@
 
         if (!currentVariable.sets) currentVariable.sets = []
         if (!currentVariable.sets[index]) currentVariable.sets[index] = clone(DEFAULT_SET)
-
-        currentVariable.sets[index][key] = value
+        ;(currentVariable.sets[index] as any)[key] = value
 
         variables.update((a) => {
             a[variableId] = currentVariable

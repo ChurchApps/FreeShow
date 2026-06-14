@@ -33,7 +33,7 @@
 
     let itemIndex = isStage ? stageElem.id || $activeStage.items[0] : Number(edit.items[0] || 0)
     let slide = isStage ? $stageShows[$activeStage.id || ""] : isOverlay ? $overlays[edit.id!] : isTemplate ? $templates[edit.id!] : $showsCache[showId]?.slides?.[slideId]
-    let item = slide?.items[itemIndex]
+    let item = (slide?.items as any)?.[itemIndex]
     let itemText = getItemText(item)
 
     let conditions = item?.conditions || clone(DEFAULT_CONDITIONS)
@@ -42,7 +42,7 @@
     function updateItemIndex(e: any) {
         itemIndex = isStage ? e.detail : Number(e.detail)
         slide = isStage ? $stageShows[$activeStage.id || ""] : isOverlay ? $overlays[edit.id!] : isTemplate ? $templates[edit.id!] : $showsCache[showId]?.slides?.[slideId]
-        item = slide?.items[itemIndex]
+        item = (slide?.items as any)?.[itemIndex]
         itemText = getItemText(item)
 
         conditions = item?.conditions || clone(DEFAULT_CONDITIONS)

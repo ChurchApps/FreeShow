@@ -181,7 +181,7 @@
         setTimeout(() => activePopup.set("edit_event"), 300)
     }
 
-    function getEventIcon(type: string, { actionId }) {
+    function getEventIcon(type: string, { actionId }: any) {
         if (type === "event") return "calendar"
         if (type === "action") return (actionData as any)[actionId]?.icon || "actions"
         return type

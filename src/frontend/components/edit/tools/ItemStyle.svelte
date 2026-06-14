@@ -84,7 +84,7 @@
         /// //
 
         const ref = getLayoutRef()
-        const slides: string[] = [ref[$activeEdit.slide ?? ""]?.id]
+        const slides: string[] = [ref[($activeEdit.slide ?? "") as any]?.id]
         const slideItems: number[][] = [allItems]
         const showSlides = $showsCache[$activeShow?.id || ""]?.slides || {}
 

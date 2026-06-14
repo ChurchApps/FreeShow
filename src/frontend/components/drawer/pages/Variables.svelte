@@ -178,7 +178,7 @@
             {#each otherVariables as variable, i}
                 {@const title = variable.type === otherVariables[i - 1]?.type ? "" : variable.type}
                 {#if title && i > 0}
-                    <h5><T id={typeNames[title]} /></h5>
+                    <h5><T id={(typeNames as any)[title]} /></h5>
                 {/if}
 
                 <SelectElem id="variable" data={variable} draggable>

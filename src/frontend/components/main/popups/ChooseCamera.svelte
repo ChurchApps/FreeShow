@@ -4,7 +4,7 @@
 
     // const active = $popupData.active || ""
 
-    function selectCamera({ detail }) {
+    function selectCamera({ detail }: any) {
         const camera = detail.cam
 
         if ($popupData.trigger) $popupData.trigger(camera)

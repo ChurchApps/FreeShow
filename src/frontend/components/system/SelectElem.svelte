@@ -80,14 +80,14 @@
         const currentLayoutRef = getLayoutRef()
 
         const slideData = slideRef.map(({ index, id }) => {
-            let layout
+            let layout: any
             if (id) layout = currentLayoutRef.find((a) => a.id === id) || {}
             else if (index !== undefined) layout = currentLayoutRef[index] || {}
 
             const layoutMedia: { [key: string]: Media } = {}
             if (layout.data?.background) layoutMedia[layout.data.background] = (currentMedia as any)[layout.data?.background]
             if (layout.data?.audio) {
-                layout.data.audio.forEach((audioId) => {
+                layout.data.audio.forEach((audioId: any) => {
                     layoutMedia[audioId] = (currentMedia as any)[audioId]
                 })
             }

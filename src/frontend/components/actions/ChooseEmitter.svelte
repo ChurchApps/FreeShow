@@ -48,8 +48,8 @@
         if (!value.templateValues) value.templateValues = clone(emitter?.templates?.[v]?.inputs || [])
 
         const templateValues = value.templateValues || []
-        if (!templateValues[index]) templateValues[index] = { name: "", value: "" }
-        templateValues[index][key] = v
+        if (!templateValues[index as any]) templateValues[index as any] = { name: "", value: "" }
+        ;(templateValues as any)[index][key] = v
         updateValue("templateValues", templateValues)
     }
     function setMidiTemplateValue(e: any) {

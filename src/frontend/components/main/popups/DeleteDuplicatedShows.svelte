@@ -21,7 +21,7 @@
         const deleteIds: string[] = []
 
         await Promise.all(
-            data.map(async ({ ids }) => {
+            data.map(async ({ ids }: any) => {
                 await loadShows(ids)
                 const compareShowText = getShowText($showsCache[ids[0]])
                 if (!compareShowText) return
@@ -57,7 +57,7 @@
     function getOldestShows() {
         let deleteIds: string[] = []
 
-        data.forEach(({ ids }) => {
+        data.forEach(({ ids }: any) => {
             let keepId = ""
 
             ids.forEach((id: any) => {
@@ -91,7 +91,7 @@
     function getNewestShows() {
         let deleteIds: string[] = []
 
-        data.forEach(({ ids }) => {
+        data.forEach(({ ids }: any) => {
             let keepId = ""
 
             ids.forEach((id: any) => {

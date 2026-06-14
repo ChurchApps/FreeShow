@@ -168,7 +168,7 @@
         storeCurrentCaretPos()
     }
 
-    function cutInTwo({ e, sel, lines, currentIndex, textPos, start }) {
+    function cutInTwo({ e, sel, lines, currentIndex, textPos, start }: any) {
         if ((ref.type || "show") !== "show") return
         const { firstLines, secondLines } = EditboxHelper.cutLinesInTwo({ sel, lines, currentIndex, textPos, start })
 
@@ -335,8 +335,8 @@
                                 const key = text.sourceDynamicKey.split(":")[0]
                                 const index = text.sourceDynamicKey.split(":")[1] || "0"
                                 const storage = a[ref.showId!]?.slides?.[ref.id]?.customDynamicValues
-                                if (!storage?.[key]?.[index]) return
-                                storage[key][index][1] = text.value
+                                if (!storage?.[key]?.[index as any]) return
+                                ;(storage as any)[key][index][1] = text.value
                             }
                         })
                     })

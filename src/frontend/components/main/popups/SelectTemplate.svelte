@@ -43,7 +43,7 @@
         const currentStyle = $styles[$activeStyle]
 
         types = scriptureTemplateTypes
-        values = scriptureTemplateTypes.map((a) => currentStyle?.["templateScripture" + a.value] || "")
+        values = scriptureTemplateTypes.map((a) => (currentStyle as any)?.["templateScripture" + a.value] || "")
     }
 
     let selectedType = types[0]?.value || ""
