@@ -126,7 +126,7 @@
             <T id="clear.drawing" />
         </MaterialButton>
 
-        <div class="divider" />
+        <div class="divider"></div>
     {/if}
 
     <MaterialButton icon="reset" title="actions.reset" on:click={reset} />

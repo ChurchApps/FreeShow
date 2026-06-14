@@ -44,8 +44,8 @@
         {/each}
     </div>
 
-    <div class="trim left" style="width: {startPercentage * 100}%;" />
-    <div class="trim right" style="width: {endPercentage * 100}%;" />
+    <div class="trim left" style="width: {startPercentage * 100}%;"></div>
+    <div class="trim right" style="width: {endPercentage * 100}%;"></div>
     <!-- <div class="trim" style="margin-left: {startPercentage * 100}%;width: calc(100% + {(endPercentage - startPercentage) * 100}%);"></div> -->
 </div>
 

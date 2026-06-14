@@ -92,7 +92,7 @@
 
     function keydown(e: KeyboardEvent) {
         if (e.key === "Enter" && searchValue.length > 1 && e.target?.closest(".search")) {
-            let overlay = fullFilteredOverlays[0]
+            const overlay = fullFilteredOverlays[0]
             if (!overlay) return
 
             // play

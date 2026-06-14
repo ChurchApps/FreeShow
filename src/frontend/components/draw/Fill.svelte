@@ -25,7 +25,7 @@
     }
 </script>
 
-<div class="fill" style="background-color: {rainbow || settings?.color};opacity: {settings?.opacity};" />
+<div class="fill" style="background-color: {rainbow || settings?.color};opacity: {settings?.opacity};"></div>
 
 <style>
     .fill {

@@ -54,9 +54,9 @@
 
         // show last possible lines if no text at current line
         if (!lines[linesStart]) {
-            let linesCount = linesEnd - linesStart
-            let length = lines.length - 1
-            let index = length - (length % linesCount)
+            const linesCount = linesEnd - linesStart
+            const length = lines.length - 1
+            const index = length - (length % linesCount)
             linesStart = index
             linesEnd = index + linesCount
         }
@@ -77,7 +77,7 @@
 
         const gradientCount = (style.match(/-gradient/g) || []).length
         if (style.includes("-gradient") && (gradientCount > 1 || !style.includes("-webkit-mask-image: linear-gradient"))) {
-            let styles = getStyles(style)
+            const styles = getStyles(style)
             const gradient = styles.color
             style += `background-image: ${gradient};color: transparent;background-clip: text;`
             // shadow will show over the gradient (this can be a cool effect, but has to be explicitly set)
@@ -87,19 +87,19 @@
 
         // alpha key output (not in use anymore)
         if (!key) return style
-        let styles = getStyles(style)
+        const styles = getStyles(style)
 
         // alpha style
         let alphaStyles = ";"
-        let bgAlpha = getAlphaValues(styles["background-color"])
-        let textAlpha = getAlphaValues(styles["color"]) || 1
+        const bgAlpha = getAlphaValues(styles["background-color"])
+        const textAlpha = getAlphaValues(styles.color) || 1
         if (bgAlpha) alphaStyles += "background-color: rgb(255 255 255 / " + bgAlpha + ");"
         alphaStyles += "color: rgb(255 255 255 / " + textAlpha + ");"
 
         return style + alphaStyles
     }
 
-    //CONTINUOUS SCROLLING
+    // CONTINUOUS SCROLLING
     let contentWidth = 0
     let alignWidth = 0
     let contentHeight = 0
@@ -125,8 +125,8 @@
         return alpha || 0
     }
     function alphaFromHex(colorValue: string) {
-        let rx = /^#([0-9a-f]{2})[0-9a-f]{6}$/i
-        let m = colorValue.match(rx)
+        const rx = /^#([0-9a-f]{2})[0-9a-f]{6}$/i
+        const m = colorValue.match(rx)
         if (!m) return 1
         return parseInt(m[1], 16) / 255
     }
@@ -190,18 +190,18 @@
 
             let index = 0
             line.text.forEach((text) => {
-                let value = text.value.trim().replaceAll("\n", "") || ""
+                const value = text.value.trim().replaceAll("\n", "") || ""
 
-                let letters = value.split("")
+                const letters = value.split("")
                 letters.forEach((letter) => {
-                    let chordIndex = chords.findIndex((a) => a.pos === index)
+                    const chordIndex = chords.findIndex((a) => a.pos === index)
                     if (chordIndex >= 0) {
                         html += `<span class="chord" data-autosize-ratio="${autosizeRatio}">${chords[chordIndex].key}</span>`
                         chords.splice(chordIndex, 1)
                     }
 
                     // let size = fontSizeValue
-                    let size = fontSize || 0
+                    const size = fontSize || 0
                     html += `<span class="invisible" style="${style ? getCustomStyle(text.style) : ""}${size ? `font-size: ${size}px;` : ""}">${letter}</span>`
 
                     index++
@@ -218,15 +218,15 @@
         })
     }
 
-    function getLineText(line) {
-        return line.text?.reduce((value, text) => (value += text.value || ""), "") || ""
+    function getLineText(line: any) {
+        return line.text?.reduce((value: any, text: any) => (value += text.value || ""), "") || ""
     }
 
-    function getChordOnlyHtml(chords) {
+    function getChordOnlyHtml(chords: any) {
         const autosizeRatio = getChordSizeRatio()
         return chords
-            .sort((a, b) => a.pos - b.pos)
-            .map((chord, i, sorted) => {
+            .sort((a: any, b: any) => a.pos - b.pos)
+            .map((chord: any, i: any, sorted: any) => {
                 const previousPos = sorted[i - 1]?.pos ?? 0
                 const gap = i === 0 ? Math.max(0, chord.pos) : Math.max(1, chord.pos - previousPos)
 
@@ -319,7 +319,7 @@
                         {#each renderedLines as line, i}
                             <!-- set div height if chords, not last line, and no text content -->
                             {@const chordOnly = chords && chordOnlyLines[i]}
-                            {@const height = chords && chordLines[i] && !chordOnly && i < renderedLines.length - 1 && !line.text?.reduce((value, t) => (value += t.value || ""), "")?.trim()?.length ? 80 : 0}
+                            {@const height = chords && chordLines[i] && !chordOnly && i < renderedLines.length - 1 && !line.text?.reduce((value: any, t: any) => (value += t.value || ""), "")?.trim()?.length ? 80 : 0}
                             {@const lineHidden = (linesStart !== null && linesEnd !== null && (i < linesStart || i >= linesEnd)) || (maxLines && (maxLinesInvert ? i <= lines.length - maxLines - 1 : i >= maxLines))}
 
                             {#if !lineHidden || outputStyle?.showAsFaded}
@@ -336,7 +336,7 @@
                                         class:normalWrap={normalWrap || (isStage ? typeof stageItem?.style === "string" && (stageItem?.style.includes("justify") || stageItem?.style.includes("nowrap")) : line.align?.includes("justify") || line.align?.includes("left") || JSON.stringify(line).includes("nowrap"))}
                                         class:reveal={(centerPreview || isStage) && item?.lineReveal && revealed < i}
                                         class:smallFontSize={smallFontSize || customFontSize || textAnimation.includes("font-size")}
-                                        style="position: relative;{style ? lineStyle : ''}{style ? line.align : ''}{height ? `height: ${height}px;` : ''}{item?.list?.enabled && line.text?.reduce((value, t) => (value += t.value || ''), '')?.length ? listStyle : ''}{item?.list?.enabled ? `color: ${getStyles(line.text[0]?.style).color || ''};` : ''}{lineHidden && outputStyle?.showAsFaded ? `opacity: ${(outputStyle.lineOpacity ?? 50) / 100};` : ''}"
+                                        style="position: relative;{style ? lineStyle : ''}{style ? line.align : ''}{height ? `height: ${height}px;` : ''}{item?.list?.enabled && line.text?.reduce((value: any, t: any) => (value += t.value || ''), '')?.length ? listStyle : ''}{item?.list?.enabled ? `color: ${getStyles(line.text[0]?.style).color || ''};` : ''}{lineHidden && outputStyle?.showAsFaded ? `opacity: ${(outputStyle.lineOpacity ?? 50) / 100};` : ''}"
                                     >
                                         <!-- style Lines selection in center preview -->
                                         {#each highlighedLines || [] as box}
@@ -370,7 +370,7 @@
             {#each renderedLines as line, i}
                 <!-- set div height if chords, not last line, and no text content -->
                 {@const chordOnly = chords && chordOnlyLines[i]}
-                {@const height = chords && chordLines[i] && !chordOnly && i < renderedLines.length - 1 && !line.text?.reduce((value, t) => (value += t.value || ""), "")?.trim()?.length ? 80 : 0}
+                {@const height = chords && chordLines[i] && !chordOnly && i < renderedLines.length - 1 && !line.text?.reduce((value: any, t: any) => (value += t.value || ""), "")?.trim()?.length ? 80 : 0}
                 {@const lineHidden = (linesStart !== null && linesEnd !== null && (i < linesStart || i >= linesEnd)) || (maxLines && (maxLinesInvert ? i <= lines.length - maxLines - 1 : i >= maxLines))}
 
                 {#if !lineHidden || outputStyle?.showAsFaded}
@@ -387,7 +387,7 @@
                             class:normalWrap={normalWrap || (isStage ? typeof stageItem?.style === "string" && (stageItem?.style.includes("justify") || stageItem?.style.includes("nowrap")) : line.align?.includes("justify") || line.align?.includes("left") || JSON.stringify(line).includes("nowrap"))}
                             class:reveal={(centerPreview || isStage) && item?.lineReveal && revealed < i}
                             class:smallFontSize={smallFontSize || customFontSize || textAnimation.includes("font-size")}
-                            style="position: relative;{style ? lineStyle : ''}{style ? line.align : ''}{height ? `height: ${height}px;` : ''}{item?.list?.enabled && line.text?.reduce((value, t) => (value += t.value || ''), '')?.length ? listStyle : ''}{item?.list?.enabled ? `color: ${getStyles(line.text[0]?.style).color || ''};` : ''}{lineHidden && outputStyle?.showAsFaded ? `opacity: ${(outputStyle.lineOpacity ?? 50) / 100};` : ''}"
+                            style="position: relative;{style ? lineStyle : ''}{style ? line.align : ''}{height ? `height: ${height}px;` : ''}{item?.list?.enabled && line.text?.reduce((value: any, t: any) => (value += t.value || ''), '')?.length ? listStyle : ''}{item?.list?.enabled ? `color: ${getStyles(line.text[0]?.style).color || ''};` : ''}{lineHidden && outputStyle?.showAsFaded ? `opacity: ${(outputStyle.lineOpacity ?? 50) / 100};` : ''}"
                         >
                             <!-- style Lines selection in center preview -->
                             {#each highlighedLines || [] as box}

@@ -44,13 +44,13 @@
 
     $: if (active) scrollToActive()
     function scrollToActive() {
-        let id = formatId(value)
+        const id = formatId(value)
         if (!id) return
 
         setTimeout(() => {
             // dropdown does not have a scroll bar if not much content, return so parent is not scrolled!
             if (!self || options.length < 10) return
-            let activeElem = self.querySelector("#" + id)
+            const activeElem = self.querySelector("#" + id)
             activeElem?.scrollIntoView()
         }, 10)
     }

@@ -67,7 +67,8 @@
     function angleFromEvent(e: MouseEvent | TouchEvent, rect: DOMRect) {
         const cx = rect.left + rect.width / 2
         const cy = rect.top + rect.height / 2
-        let clientX, clientY
+        let clientX
+        let clientY
         if (e instanceof MouseEvent) {
             clientX = e.clientX
             clientY = e.clientY
@@ -88,7 +89,7 @@
         return angle
     }
 
-    function startDrag(e) {
+    function startDrag(e: any) {
         if (!(e.target as SVGElement).closest("svg")) return
 
         dragging = true
@@ -100,7 +101,7 @@
         window.addEventListener("touchend", stopDrag)
     }
 
-    function onDrag(e) {
+    function onDrag(e: any) {
         if (!dragging) return
         const rect = document.getElementById("degree-picker")!.getBoundingClientRect()
         updateValue(angleFromEvent(e, rect))
@@ -117,7 +118,7 @@
     $: handleX = Math.cos((numberValue - 90) * (Math.PI / 180)) * radius
     $: handleY = Math.sin((numberValue - 90) * (Math.PI / 180)) * radius
 
-    function togglePopup(e) {
+    function togglePopup(e: any) {
         if (e.target?.tagName === "BUTTON") return
         if (!disabled) showPopup = !showPopup
     }
@@ -130,7 +131,7 @@
         if (!e.ctrlKey && !e.metaKey) return
         e.preventDefault()
 
-        let stepAmount = step * (e.shiftKey ? 10 : 1)
+        const stepAmount = step * (e.shiftKey ? 10 : 1)
 
         e.deltaY < 0 ? increment(stepAmount) : decrement(stepAmount)
 
@@ -151,9 +152,10 @@
 
 <!-- Number input styled like your original -->
 <div class="textfield numberfield {disabled ? 'disabled' : ''}" tabindex="-1" on:focusout={handleFocusOut}>
-    <div class="background" />
+    <div class="background"></div>
 
     <div class="input-wrapper">
+        <!-- svelte-ignore a11y_autofocus -->
         <input bind:value={numberValue} type="number" {id} {placeholder} {disabled} {autofocus} {step} min="0" max="360" class="input edit" class:noValue={!numberValue} on:keydown={handleKeyDown} on:input={handleInput} on:focus={togglePopup} on:wheel={handleWheel} />
 
         <svg class="mini-indicator" viewBox="-8 -8 16 16">
@@ -164,12 +166,12 @@
         </svg>
 
         <div class="buttons">
-            <button type="button" class="inc" on:click={(e) => increment(e.shiftKey ? step * 10 : step)} tabindex="-1" {disabled}>
+            <button type="button" class="inc" aria-label="increment" on:click={(e) => increment(e.shiftKey ? step * 10 : step)} tabindex="-1" {disabled}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M7 14l5-5 5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                 </svg>
             </button>
-            <button type="button" class="dec" on:click={(e) => decrement(e.shiftKey ? step * 10 : step)} tabindex="-1" {disabled}>
+            <button type="button" class="dec" aria-label="decrement" on:click={(e) => decrement(e.shiftKey ? step * 10 : step)} tabindex="-1" {disabled}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M7 10l5 5 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                 </svg>
@@ -179,7 +181,7 @@
 
     <label for={id} class:value-filled={numberValue !== 0}>{translateText(label)}</label>
 
-    <span class="underline" />
+    <span class="underline"></span>
 
     <!-- Radial Popup -->
     {#if showPopup}

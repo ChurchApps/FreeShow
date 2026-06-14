@@ -178,7 +178,7 @@ function convertTriggersToActions(data: any) {
     const triggers: { [key: string]: { name: string; type: "http"; value: string } } = data.triggers || {}
     if (!Object.keys(triggers).length) return data
 
-    let tagId = "triggertag"
+    const tagId = "triggertag"
     if (typeof data.actionTags === "object") {
         data.actionTags[tagId] = { name: "Triggers", color: "#abb4e6" }
 
@@ -193,9 +193,9 @@ function convertTriggersToActions(data: any) {
 
     const actions = data.midiIn || {}
     Object.entries(triggers).forEach(([key, trigger]) => {
-        let emitterId = uid()
+        const emitterId = uid()
         data.emitters[emitterId] = { name: "Trigger: " + trigger.name, type: "http", signal: { url: trigger.value, method: "GET", contentType: "", payload: "" } }
-        let triggerId = "emit_action:" + uid(5)
+        const triggerId = "emit_action:" + uid(5)
 
         actions[key] = {
             name: trigger.name,
@@ -409,7 +409,7 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
         v.customUserDataLocation = true
 
         // DEPRECATED (migrate)
-        let deletedDefaultsValue = get(deletedDefaults)
+        const deletedDefaultsValue = get(deletedDefaults)
         if (v.deletedTemplates) {
             deletedDefaultsValue.templates = v.deletedTemplates
             delete v.deletedTemplates

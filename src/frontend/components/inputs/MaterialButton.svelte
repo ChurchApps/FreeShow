@@ -17,15 +17,15 @@
     export let small = false
     export let tab = false
     export let red = false
-    let button
+    let button: any
 
     // automatically do white icon if no content
     if (!$$slots.default) white = true
 
     let ripples: { x: number; y: number; size: number; id: number }[] = []
 
-    let dispatch = createEventDispatcher()
-    function click(e, double = false) {
+    const dispatch = createEventDispatcher()
+    function click(e: any, double = false) {
         if (e.target?.closest(".edit")) return
         if (e.target?.closest("button") !== button) return
 
@@ -47,7 +47,7 @@
         click(e, true)
     }
 
-    function triggerRipple(e) {
+    function triggerRipple(e: any) {
         if (disabled) return
         if (e.target?.closest(".edit")) return
         if (e.target?.closest("button") !== button) return
@@ -67,7 +67,7 @@
         ripples = [...ripples, ripple]
     }
 
-    function handleKey(e) {
+    function handleKey(e: any) {
         if (disabled) return
         if (e.target?.closest("button") !== button) return
 
@@ -76,7 +76,7 @@
         }
     }
 
-    function handleAnimationEnd(id) {
+    function handleAnimationEnd(id: any) {
         ripples = ripples.filter((r) => r.id !== id)
     }
 </script>
@@ -111,14 +111,14 @@
         <Icon id={icon} size={iconSize} white={white || isActive || variant === "contained"} />
     {/if}
 
-    <slot />
+    <slot></slot>
 
     {#if info}
         <span class="info">{info}</span>
     {/if}
 
     {#each ripples as { x, y, size, id } (id)}
-        <span class="ripple" style="top: {y}px; left: {x}px; width: {size}px; height: {size}px;" on:animationend={() => handleAnimationEnd(id)} />
+        <span class="ripple" style="top: {y}px; left: {x}px; width: {size}px; height: {size}px;" on:animationend={() => handleAnimationEnd(id)}></span>
     {/each}
 </button>
 

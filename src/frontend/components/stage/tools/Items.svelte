@@ -1,6 +1,6 @@
 <script lang="ts">
     import { uid } from "uid"
-    import { Item } from "../../../../types/Show"
+    import type { Item } from "../../../../types/Show"
     import type { StageItem } from "../../../../types/Stage"
     import { activeStage, dictionary, labelsDisabled, selected, stageShows, timers } from "../../../stores"
     import { translateText } from "../../../utils/language"
@@ -58,7 +58,7 @@
     function addItem(itemType: string, textValue = "") {
         if (!stageId) return
 
-        let itemId = uid(5)
+        const itemId = uid(5)
         stageShows.update((a) => {
             if (!a[stageId]?.items) return a
 
@@ -75,7 +75,7 @@
                 style = getLikelyPosition(Object.values(a[stageId].items), style)
             }
 
-            let item: StageItem = { type: itemType, style, align: "" }
+            const item: StageItem = { type: itemType, style, align: "" }
 
             if (itemType === "text") item.lines = [{ align: "", text: [{ style: "", value: textValue || "" }] }]
             else if (itemType === "slide_text") {
@@ -114,16 +114,16 @@
 
     const getIdentifier = {
         text: (item: StageItem) => {
-            let text = getItemText(item as Item)
+            const text = getItemText(item as Item)
             return text.slice(0, 10)
         },
         media: (item: StageItem) => {
-            let path = item.src
+            const path = item.src
             return getFileName(path || "")
         },
         timer: (item: StageItem) => {
             if (!item.timer?.id) return ""
-            let timerName = $timers[item.timer.id]?.name || ""
+            const timerName = $timers[item.timer.id]?.name || ""
             return timerName
         },
         clock: () => ""
@@ -220,9 +220,9 @@
                     >
                         <span style="display: flex;align-items: center;max-width: 70%;">
                             <p style="opacity: 0.7;margin-inline-end: 10px;">{i + 1}</p>
-                            <Icon id={type === "icon" ? id || "" : itemBoxes[type]?.icon || "text"} custom={type === "icon"} size={0.8} />
+                            <Icon id={type === "icon" ? id || "" : (itemBoxes as any)[type]?.icon || "text"} custom={type === "icon"} size={0.8} />
                             <p style="opacity: 0.9;margin-inline-start: 10px;;">{getCustomStageLabel(currentItem.type || id, currentItem, $dictionary) || translateText("items." + type)}</p>
-                            {#if getIdentifier[type]}<p style="margin-inline-start: 10px;max-width: 120px;opacity: 0.5;font-size: 0.8em;max-width: 40%;">{getIdentifier[type](currentItem)}</p>{/if}
+                            {#if (getIdentifier as any)[type]}<p style="margin-inline-start: 10px;max-width: 120px;opacity: 0.5;font-size: 0.8em;max-width: 40%;">{(getIdentifier as any)[type](currentItem)}</p>{/if}
                         </span>
                         <span>
                             <MaterialButton disabled={i === allItems.length - 1} icon="down" title="actions.backward" style="padding: 8px;" on:click={() => rearrangeStageItems("backward", id)} />

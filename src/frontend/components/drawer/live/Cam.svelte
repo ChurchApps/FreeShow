@@ -64,8 +64,8 @@
         videoElem.srcObject = null
     })
 
-    let dispatch = createEventDispatcher()
-    function click(e) {
+    const dispatch = createEventDispatcher()
+    function click(e: any) {
         if (iconClicked) return
         dispatch("click", e)
     }
@@ -89,7 +89,7 @@
                 delete a[cam.id].filter
                 delete a[cam.id].cropping
             } else {
-                delete a[cam.id][key]
+                delete (a as any)[cam.id][key]
             }
 
             return a

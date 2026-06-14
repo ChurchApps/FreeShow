@@ -95,7 +95,7 @@
         const maxHeightValue = analysers[0].fftSize // 256
         if (!bufferLength || !maxHeightValue) return
 
-        const dataArrays: Uint8Array[] = analysers.map(() => new Uint8Array(bufferLength))
+        const dataArrays = analysers.map(() => new Uint8Array(bufferLength))
 
         // const padding = -0.5
         // const barWidth = bufferLength ? (WIDTH / bufferLength - padding) * 1.3 : 0
@@ -153,7 +153,7 @@
 
 {#if !$focusMode}
     <!-- analyzer -->
-    <canvas bind:this={canvas} />
+    <canvas bind:this={canvas}></canvas>
 {/if}
 
 <div class="main media context #media_preview" bind:this={mediaElem}>
@@ -222,7 +222,7 @@
             <MaterialButton
                 title={"media._loop" + ($media[path]?.loop ? ": settings.enabled" : "")}
                 on:click={() => {
-                    let loop = !$media[path]?.loop
+                    const loop = !$media[path]?.loop
                     media.update((a) => {
                         if (!a[path]) a[path] = {}
                         a[path].loop = loop

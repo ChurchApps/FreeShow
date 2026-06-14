@@ -19,7 +19,7 @@
             return
         }
 
-        let obj = $popupData
+        const obj = $popupData
         popupData.set({})
 
         format("find_replace", obj, { findValue, replaceValue, caseSentitive })

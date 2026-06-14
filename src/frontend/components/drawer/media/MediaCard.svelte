@@ -69,9 +69,9 @@
             return
         }
 
-        let percentage: number = e.offsetX / e.target.offsetWidth
+        const percentage: number = e.offsetX / e.target.offsetWidth
 
-        let time = Math.floor(duration * ((Math.floor(percentage * steps) * steps + steps) / 100))
+        const time = Math.floor(duration * ((Math.floor(percentage * steps) * steps + steps) / 100))
         if (time && videoElem.currentTime === time) return
         if (!isFinite(time)) return
 
@@ -122,9 +122,9 @@
             return
         }
 
-        let videoType = getMediaLayerType(path, mediaStyle)
-        let loop = contentProvider || videoType === "foreground" ? false : true
-        let muted = videoType === "background" ? true : false
+        const videoType = getMediaLayerType(path, mediaStyle)
+        const loop = contentProvider || videoType === "foreground" ? false : true
+        const muted = videoType === "background" ? true : false
         if (videoType === "foreground") clearSlide()
 
         // get style per output
@@ -162,7 +162,7 @@
     }
 
     // fixed resolution
-    let resolution = { width: 16, height: 9 }
+    const resolution = { width: 16, height: 9 }
     // $: resolution = getResolution(null, { $outputs, $styles })
 
     // Memoized computed properties
@@ -193,7 +193,7 @@
             } else if (key === "tags") {
                 a[path].tags = []
             } else {
-                delete a[path][key]
+                delete (a as any)[path][key]
             }
 
             return a

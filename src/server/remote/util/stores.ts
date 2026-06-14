@@ -1,11 +1,11 @@
-import { get, Writable, writable } from "svelte/store"
+import { get, type Writable, writable } from "svelte/store"
 import type { Bible } from "../../../types/Bible"
 import type { OutData } from "../../../types/Output"
 import type { Dictionary } from "../../../types/Settings"
 import type { Overlays, Show, ShowList } from "../../../types/Show"
 import type { BibleCategories } from "../../../types/Tabs"
 import { clone } from "../../common/util/helpers"
-import { __update, DeepKey, DeepNested, Inferred, Nested } from "../../common/util/stores"
+import { __update, type DeepKey, type DeepNested, type Inferred, type Nested } from "../../common/util/stores"
 import type { Project, ProjectShowRef } from "./../../../types/Projects"
 import { DEFAULT_DICTIONARY } from "./dictionary"
 

@@ -6,7 +6,7 @@
     export let options: { id: string; name: string; title?: string; icon: string; disabled?: boolean; colored?: boolean }[] = []
     export let highlightFirst = true
 
-    let dispatch = createEventDispatcher()
+    const dispatch = createEventDispatcher()
     function click(id: string) {
         dispatch("click", id)
     }

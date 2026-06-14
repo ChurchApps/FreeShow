@@ -21,7 +21,7 @@
     import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
     import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
 
-    function updateSpecial(value, key) {
+    function updateSpecial(value: any, key: any) {
         special.update((a) => {
             if (!value) delete a[key]
             else a[key] = value
@@ -96,7 +96,7 @@
         // autosave
         const as = $autosave || "15min"
         if (previousAutosave && as !== "never") {
-            const saveInterval = convertAutosave[as]
+            const saveInterval = (convertAutosave as any)[as]
             nextAutosave = now - previousAutosave - saveInterval
         } else {
             nextAutosave = 0
@@ -143,14 +143,14 @@
         })
     }
 
-    function toggleData(checked: boolean, key, invert = false) {
+    function toggleData(checked: boolean, key: any, invert = false) {
         driveData.update((a) => {
             a[key] = invert ? !checked : checked
             return a
         })
     }
 
-    function updateAutosave(e) {
+    function updateAutosave(e: any) {
         autosave.set(e.detail)
         startAutosave()
     }
@@ -180,7 +180,7 @@
 
     function updateCloudData(key: string, value: any) {
         cloudSyncData.update((a) => {
-            a[key] = value
+            ;(a as any)[key] = value
             return a
         })
     }

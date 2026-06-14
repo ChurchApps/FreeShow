@@ -108,6 +108,11 @@ export class WebRtcHost {
             }
         })
 
+        // this window runs with nodeIntegration; it only ever hosts the static page above and talks over IPC.
+        // harden it by refusing any navigation or new-window attempt to external/attacker content.
+        this.window.webContents.on("will-navigate", (event) => event.preventDefault())
+        this.window.webContents.setWindowOpenHandler(() => ({ action: "deny" }))
+
         this.window.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(this.buildHostHtml())}`)
 
         this.window.once("closed", () => {
@@ -152,7 +157,6 @@ export class WebRtcHost {
     }
 
     private static buildHostHtml(): string {
-        /* eslint-disable no-useless-escape */
         return `<!DOCTYPE html>
 <html>
 <head><meta charset="UTF-8"><title>FreeShow WebRTC WHIP Host</title></head>
@@ -392,6 +396,5 @@ async function stopStream(outputId) {
 <\/script>
 </body>
 </html>`
-        /* eslint-enable no-useless-escape */
     }
 }

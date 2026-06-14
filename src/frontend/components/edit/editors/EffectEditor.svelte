@@ -17,7 +17,7 @@
     let height = 0
     $: resolution = getResolution(null, { $outputs, $styles })
 
-    let zoom = 1
+    const zoom = 1
 </script>
 
 {#if effect?.isDefault}

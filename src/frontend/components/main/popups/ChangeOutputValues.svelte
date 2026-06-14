@@ -21,11 +21,11 @@
 
         outputs.update((a) => {
             if (key.includes(".")) {
-                let split = key.split(".")
-                a[currentOutput!.id][split[0]][split[1]] = value
-                if (split[1] === "lines" && !Number(value)) delete a[currentOutput!.id][split[0]][split[1]]
+                const split = key.split(".")
+                ;(a as any)[currentOutput!.id][split[0]][split[1]] = value
+                if (split[1] === "lines" && !Number(value)) delete (a as any)[currentOutput!.id][split[0]][split[1]]
             } else {
-                a[currentOutput!.id][key] = value
+                ;(a as any)[currentOutput!.id][key] = value
             }
 
             return a

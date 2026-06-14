@@ -40,7 +40,7 @@
     // type File = { path: string; favourite: boolean; name: string; extension: string; audio: boolean; folder?: boolean; stat?: any }
     // let files: File[] = []
 
-    let specialTabs = ["online", "inputs"]
+    const specialTabs = ["online", "inputs"]
     $: isProviderSection = contentProviders.some((p) => p.providerId === active)
     $: notFolders = ["all", ...specialTabs, ...contentProviders.map((p) => p.providerId)]
     $: rootPath = notFolders.includes(active || "") ? "" : active !== null ? $mediaFolders[active]?.path || "" : ""
@@ -181,7 +181,7 @@
         // WIP only list folders with any recursive media content?
 
         requesting++
-        let currentRequest = requesting
+        const currentRequest = requesting
         const data = await requestMain(Main.READ_FOLDER, { path, depth, captureFolderContent })
         if (!data || requesting !== currentRequest) return
 
@@ -257,7 +257,7 @@
     }
 
     $: showUpdate($activeShow)
-    function showUpdate(a) {
+    function showUpdate(a: any) {
         if (a?.type !== "video" && a?.type !== "image") activeFile = null
     }
 
@@ -285,7 +285,7 @@
         hightlightActive()
 
         // sort
-        let sortType = $sorted.media?.type || "name"
+        const sortType = $sorted.media?.type || "name"
         if (sortType === "name") localFilteredFiles = sortFilenames(localFilteredFiles)
         else if (sortType === "name_des") localFilteredFiles = localFilteredFiles.reverse()
         else if (sortType === "created") localFilteredFiles = localFilteredFiles.sort((a, b) => (a.isFolder || b.isFolder ? 1 : b.stats.birthtimeMs - a.stats.birthtimeMs))
@@ -357,12 +357,12 @@
     function selectMedia() {
         if (activeFile === null) return
 
-        let path = mediaFilesOnly[activeFile]?.path || ""
+        const path = mediaFilesOnly[activeFile]?.path || ""
         if (!path) return
 
         activeEdit.set({ id: path, type: "media", items: [] })
-        let name = removeExtension(getFileName(path))
-        let type = getMediaType(getExtension(path))
+        const name = removeExtension(getFileName(path))
+        const type = getMediaType(getExtension(path))
 
         if ($focusMode) activeFocus.set({ id: path, type })
         else activeShow.set({ id: path, name, type })
@@ -373,7 +373,7 @@
 
         if (e.key === "Enter" && searchValue.length > 1 && e.target?.closest(".search")) {
             // let file = mediaFilesOnly[0] // not updating
-            let file = searchedFiles.filter((a) => !a.isFolder)[0]
+            const file = searchedFiles.filter((a) => !a.isFolder)[0]
             if (!file) return
 
             // play
@@ -403,9 +403,9 @@
 
         if (e.target?.closest("input") || e.target?.closest(".edit") || $activeEdit.items.length) return
 
-        if ((e.ctrlKey || e.metaKey) && shortcuts[e.key]) {
+        if ((e.ctrlKey || e.metaKey) && (shortcuts as any)[e.key]) {
             // e.preventDefault()
-            shortcuts[e.key]()
+            ;(shortcuts as any)[e.key]()
         }
     }
 
@@ -446,10 +446,10 @@
     // select all
     $: if ($selectAllMedia) selectAll()
     function selectAll() {
-        let data = searchedFiles
+        const data = searchedFiles
             .filter((a) => !a.isFolder)
             .map((file) => {
-                let type = getMediaType(getExtension(file.name))
+                const type = getMediaType(getExtension(file.name))
                 return { name: file.name, path: file.path, type, contentProvider: false }
             })
 
@@ -548,8 +548,8 @@
                 {#if inputsTab === "cameras"}
                     <Cameras
                         on:click={({ detail }) => {
-                            let e = detail.event
-                            let cam = detail.cam
+                            const e = detail.event
+                            const cam = detail.cam
 
                             if ($outLocked || e.ctrlKey || e.metaKey) return
                             if (currentOutput?.out?.background?.id === cam.id) clearBackground()
@@ -558,7 +558,7 @@
                     />
                 {:else if inputsTab === "screens"}
                     <Screens bind:streams />
-                    <div style="width: 100%;height: 10px;" />
+                    <div style="width: 100%;height: 10px;"></div>
                     <Windows bind:streams {searchValue} />
                 {:else if inputsTab === "ndi"}
                     <NDIStreams />
@@ -577,7 +577,7 @@
                                     path={item.path}
                                     mode={$mediaOptions.mode}
                                     previewPaths={item.files
-                                        .map((path) => allRelevantFiles.find((a) => a.path === path)?.thumbnailPath)
+                                        .map((path: any) => (allRelevantFiles.find((a) => a.path === path) as any)?.thumbnailPath)
                                         .filter(Boolean)
                                         .slice(0, 4)}
                                     folderFilesCount={countFolderMediaItems(item.path, allRelevantFiles)}
@@ -712,7 +712,7 @@
 
             <div class="divider"></div>
         {:else}
-            <MaterialButton title="media.{activeView}" on:click={() => (activeView = nextActiveView[activeView])}>
+            <MaterialButton title="media.{activeView}" on:click={() => (activeView = (nextActiveView as any)[activeView])}>
                 <Icon size={1.2} id={activeView === "all" ? "media" : activeView} white={activeView === "all"} />
             </MaterialButton>
         {/if}

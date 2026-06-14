@@ -32,7 +32,7 @@
 
     // find matching screen
     $: if (!currentScreen.screen && screens.length) {
-        let match = screens.find((screen) => JSON.stringify(screen.bounds) === JSON.stringify(currentScreen.bounds))
+        const match = screens.find((screen) => JSON.stringify(screen.bounds) === JSON.stringify(currentScreen.bounds))
         if (match?.id) {
             outputs.update((a: any) => {
                 a[screenId!].screen = match.id.toString()
@@ -48,7 +48,7 @@
 
     onMount(async () => {
         const displays = (await requestMain(Main.GET_DISPLAYS)) || []
-        let sortedScreens = displays.sort(sortScreensByPosition)
+        const sortedScreens = displays.sort(sortScreensByPosition)
         screens = sortedScreens.sort(internalFirst)
 
         // get min/max bounds
@@ -100,12 +100,12 @@
     //     internal: false,
     // }
 
-    function internalFirst(a, b) {
+    function internalFirst(a: any, b: any) {
         return b.internal - a.internal
     }
-    function sortScreensByPosition(a, b) {
-        let aX = a.bounds.x
-        let bX = b.bounds.x
+    function sortScreensByPosition(a: any, b: any) {
+        const aX = a.bounds.x
+        const bX = b.bounds.x
 
         return aX - bX
     }
@@ -113,9 +113,9 @@
     function changeOutputScreen(e: any) {
         if (!currentScreen || !screenId) return
 
-        let alreadySelected = $outputs[screenId]?.screen === e.detail.id.toString()
+        const alreadySelected = $outputs[screenId]?.screen === e.detail.id.toString()
 
-        let bounds = e.detail.bounds
+        const bounds = e.detail.bounds
         outputs.update((a) => {
             if (!a[screenId]) return a
 
@@ -168,11 +168,11 @@
                 else a[screenId].cropping = { top: 0, right: 0, bottom: 0, left: 0 }
             }
 
-            a[screenId].cropping![side] = Number(value)
+            ;(a as any)[screenId].cropping![side] = Number(value)
             return a
         })
     }
-    function getCroppedStyle(cropping) {
+    function getCroppedStyle(cropping: any) {
         let style = ""
         Object.keys(cropping).forEach((key) => {
             if (cropping[key]) style += `padding-${key}: ${cropping[key] * previewSize}px;`
@@ -187,11 +187,11 @@
 
         outputs.update((a) => {
             if (!a[screenId].blending) a[screenId].blending = { left: 0, right: 0, rotate: 90, opacity: 50, centered: false, offset: 0 }
-            a[screenId].blending![side] = Number(value)
+            ;(a as any)[screenId].blending![side] = Number(value)
             return a
         })
     }
-    function getBlendingStyle(blending) {
+    function getBlendingStyle(blending: any) {
         if (!blending.left && !blending.right) return ""
 
         const opacity = (blending.opacity ?? 50) / 100

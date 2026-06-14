@@ -24,7 +24,7 @@
         // byline: false,
     }
 
-    let dispatch = createEventDispatcher()
+    const dispatch = createEventDispatcher()
     let iframe = null
     let player = null
     let loaded = false
@@ -76,7 +76,7 @@
 
     let seeking = false
     function seekTo(time) {
-        let isPlaying = !videoData.paused
+        const isPlaying = !videoData.paused
         videoData.paused = true
         seeking = true
         setTimeout(() => {
@@ -108,7 +108,7 @@
 <div class="main" class:hide={!id}>
     {#if id}
         <!-- TODO: looping vimeo video will reload the video -->
-        <iframe bind:this={iframe} on:load={iframeLoaded} data-vimeo-title="0" data-vimeo-autopause="0" data-vimeo-dnt="0" allow="autoplay;" {id} title="video" src="https://player.vimeo.com/video/{id}?autopause=0&controls=0&loop={videoData.loop}" width="640" height="360" />
+        <iframe bind:this={iframe} on:load={iframeLoaded} data-vimeo-title="0" data-vimeo-autopause="0" data-vimeo-dnt="0" allow="autoplay;" {id} title="video" src="https://player.vimeo.com/video/{id}?autopause=0&controls=0&loop={videoData.loop}" width="640" height="360"></iframe>
     {/if}
 </div>
 

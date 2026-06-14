@@ -29,7 +29,7 @@
                 .filter((a) => a?.length)
                 .join(divider)
                 .replaceAll("<br>", " ")
-            notes = { text: text, id: "metadata", title: "tools.metadata", icon: "info", tab: "metadata" }
+            notes = { text, id: "metadata", title: "tools.metadata", icon: "info", tab: "metadata" }
             return
         }
     }
@@ -45,12 +45,12 @@
         openToolsTab.set(id)
     }
 
-    function mousedown(e) {
+    function mousedown(e: any) {
         if (!e.target.closest(".showDropdown") && !e.target.closest(".header .right")) showDropdown = false
     }
 
     let showDropdown = false
-    let listScrollY = 0
+    const listScrollY = 0
 
     function toggleShowLock() {
         const shouldBeLocked = !currentShow?.locked

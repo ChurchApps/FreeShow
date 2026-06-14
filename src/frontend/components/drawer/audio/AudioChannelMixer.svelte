@@ -14,7 +14,7 @@
     function updateData(key: string, value: any) {
         audioChannelsData.update((a) => {
             if (!a[channelId]) a[channelId] = {}
-            a[channelId][key] = value
+            ;(a as any)[channelId][key] = value
             return a
         })
 

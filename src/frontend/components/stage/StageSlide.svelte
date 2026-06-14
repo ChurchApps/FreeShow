@@ -21,7 +21,7 @@
     export let selectable = true
 
     const profile = getAccess("stage")
-    let readOnly = profile.global === "read" || profile[id] === "read"
+    const readOnly = profile.global === "read" || profile[id] === "read"
 
     let ratio = 1
     $: stageOutputId = getStageOutputId($outputs)
@@ -30,7 +30,7 @@
     function edit(e: any) {
         if (readOnly) return
 
-        let name = e.detail.value
+        const name = e.detail.value
         stageShows.update((a) => {
             a[id].name = name
             a[id].modified = Date.now()

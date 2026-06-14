@@ -47,7 +47,7 @@
             {#key resizeKey}
                 <Zoomed show={$stageLayout} style={getStyleResolution(resolution, width, height) + ";" + `background-color: ${$stageLayout.settings.color || "#000000"};`} dynamicResolution disableStyle>
                     {#each Object.entries($stageLayout.items) as [id, item]}
-                        {#if (item.type || item.enabled !== false) && shouldItemBeShown(item, item.type === "slide_text" ? getSlideTextItems($stageLayout, item, $output) : [], { type: "stage" }, conditionsUpdater)}
+                        {#if (item.type || item.enabled !== false) && shouldItemBeShown(item as any, item.type === "slide_text" ? getSlideTextItems($stageLayout, item, $output) : [], { type: "stage" }, conditionsUpdater)}
                             {#key $stageLayout}
                                 <Stagebox stageLayout={$stageLayout} {id} item={clone(item)} />
                             {/key}

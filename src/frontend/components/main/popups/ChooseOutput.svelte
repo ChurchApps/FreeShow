@@ -8,7 +8,7 @@
         { id: "stage", name: translateText("menu.stage"), icon: "stage" }
     ]
 
-    function selectOutput(id) {
+    function selectOutput(id: any) {
         popupData.set({ id: "choose_output", value: id })
     }
 </script>

@@ -38,8 +38,14 @@ test("Launch electron app", async () => {
     })
     console.log(appPath)
 
-    // Get the first window that the app opens, wait if necessary.
-    const window = await electronApp.firstWindow()
+    // The app opens a small loading/splash window first, then the main window.
+    // firstWindow() can return the splash, so explicitly pick the main window (it loads index.html).
+    let window = electronApp.windows().find((w) => w.url().includes("index.html"))
+    for (let i = 0; i < 20 && !window; i++) {
+        await delay(500)
+        window = electronApp.windows().find((w) => w.url().includes("index.html"))
+    }
+    if (!window) window = await electronApp.firstWindow()
 
     // Direct Electron console to Node terminal.
     window.on("console", console.log)
@@ -50,30 +56,39 @@ test("Launch electron app", async () => {
         // Capture a screenshot.
         // await window.screenshot({ path: "intro.png" })
 
-        // Initial setup
-        // Set language to English
-        await window.locator(".main .dropdownElem").getByRole("button").click({ timeout: 5 * timeoutMs })
-        await window.locator(".main .dropdownElem .dropdown #id_English").click({ timeout: timeoutMs })
-        // This triggers the Electron open dialog, mocked above
-        await window.locator(".main .showElem").getByRole("button").click()
-        await window.getByText("Get Started!").click({ timeout: timeoutMs })
-        // This depends on whether there is existing shows to be loaded.
-        // As the existing show folder is also mocked to be a tmp folder,
-        // this is not expected.
-        // await window.getByTestId("alert.ack.check").click({ timeout: timeoutMs })
+        // Wait for the app UI to be interactive: either the first-run setup popup or the main top bar.
+        await window.locator(".popup button.start, .top").first().waitFor({ timeout: 10 * timeoutMs })
 
-        // Give time to save initial state
-        // await delay(4_000)
+        // First-run setup popup (Initialize.svelte) — only shown when the app isn't initialized yet.
+        // It can be absent if a previous run already initialized the user data, so guard it.
+        const setupStart = window.locator(".popup button.start")
+        let didSetup = false
+        if ((await setupStart.count()) > 0) {
+            const setupPopup = window.locator(".popup")
 
-        // skip onboarding flow
-        await window.locator("#guideButtons").getByText("Skip").click({ timeout: timeoutMs })
+            // Set language to English (it is the default, but select it explicitly so the English text selectors below stay stable)
+            await setupPopup.locator(".dropdown-trigger").first().click({ timeout: 5 * timeoutMs })
+            await setupPopup.locator("li[role=option]").filter({ hasText: "English" }).first().click({ timeout: timeoutMs })
+
+            // Set the data location via the folder picker; this triggers the Electron open dialog, mocked above
+            await setupPopup.locator(".button-trigger").first().click({ timeout: timeoutMs })
+
+            // Finish setup ("Get started!")
+            await setupStart.click({ timeout: timeoutMs })
+            didSetup = true
+        }
+
+        // skip the onboarding guide (it opens right after a fresh setup; its overlay otherwise intercepts clicks)
+        const skipGuide = window.locator("#guideButtons").getByText("Skip")
+        if (didSetup) await skipGuide.waitFor({ timeout: 5 * timeoutMs })
+        if ((await skipGuide.count()) > 0) await skipGuide.click({ timeout: timeoutMs })
 
         // Create a new project, then try creating a new show under the project
-        await window.locator("#leftPanel").getByText("New project").click({ timeout: timeoutMs })
+        await window.getByText("New project").first().click({ timeout: timeoutMs })
         await window.getByText("New show").first().click({ timeout: timeoutMs })
 
-        // Expect the pop up to be visible
-        await expect(window.getByText("Name")).toBeVisible({ timeout: timeoutMs })
+        // Expect the create-show popup to be visible (the name input is part of it)
+        await expect(window.locator("#name")).toBeVisible({ timeout: timeoutMs })
 
         // Fill name of show
         await window.locator("#name").fill("New Test Show", { timeout: timeoutMs })
@@ -91,19 +106,17 @@ test("Launch electron app", async () => {
         // Click new show
         await window.getByTestId("create.show.popup.new.show").click({ timeout: timeoutMs })
 
-        // Try changing group for Chorus
-        await window.locator("#group").getByTitle("Chorus").click({ timeout: timeoutMs })
+        // Try changing group for Chorus (group names render as text in the #group list)
+        await window.locator("#group").getByText("Chorus").first().click({ timeout: timeoutMs })
         //await window.getByText("Change group").hover({ timeout: timeoutMs })
-        await window.locator("#group").getByText("Verse").click({ timeout: 5 * timeoutMs })
+        await window.locator("#group").getByText("Verse").first().click({ timeout: 5 * timeoutMs })
 
         // Verify the group changing was successful
-        await expect(window.locator("#group").getByTitle("Verse")).toBeVisible({ timeout: timeoutMs })
+        await expect(window.locator("#group").getByText("Verse").first()).toBeVisible({ timeout: timeoutMs })
 
-        // Manual save!
-        await window.locator(".top").getByText("FreeShow").click({ button: "right", timeout: timeoutMs })
-        await window.getByText("Save", { exact: true }).click({ timeout: timeoutMs })
-        // await window.keyboard.press("Control+S")
-        // await window.keyboard.press("Meta+S")
+        // Manual save via keyboard shortcut (Ctrl+S) — robust across menu changes; the app also auto-saves
+        await window.keyboard.press("Escape")
+        await window.keyboard.press("Control+s")
         await delay(5_000)
     } catch (ex) {
         console.log("Taking screenshot")

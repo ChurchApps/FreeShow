@@ -21,12 +21,12 @@
     import WebSearch from "./WebSearch.svelte"
 
     const changeValue = (e: any, key = "text") => {
-        values[key] = e.target?.value || e.detail || ""
+        ;(values as any)[key] = e.target?.value || e.detail || ""
 
         // store text if popup is closed
         quickTextCache.set({ name: values.name, text: values.text })
     }
-    let storedCache = $quickTextCache.text.length > 20 || $quickTextCache.fromSearch
+    const storedCache = $quickTextCache.text.length > 20 || $quickTextCache.fromSearch
     let values = {
         text: storedCache ? $quickTextCache.text : "",
         name: storedCache ? $quickTextCache.name : "",
@@ -48,7 +48,7 @@
             id: cat.id,
             name: cat.name,
             icon: cat.icon || "unlabeled",
-            iconColor: cat.icon ? customIconsColors[cat.icon] : "#FFFFFF"
+            iconColor: cat.icon ? (customIconsColors as any)[cat.icon] : "#FFFFFF"
         }))
     ]
 
@@ -108,7 +108,7 @@
     // WEB SEARCH
 
     function updateLyrics(e: any) {
-        let data = e.detail || {}
+        const data = e.detail || {}
         if (!data.lyrics) {
             selectedOption = ""
             return
@@ -138,16 +138,16 @@
         let text = values.text
         if (typeof text !== "string") text = ""
 
-        let sections = text.split("\n\n").filter((a) => a.length)
+        const sections = text.split("\n\n").filter((a) => a.length)
 
         // let metaData: string = ""
         // if (sections[1] && sections[0]?.split("\n").length < 3) metaData = sections.splice(0, 1)[0]
-        let category = selectedCategory?.id?.length ? selectedCategory.id : null
+        const category = selectedCategory?.id?.length ? selectedCategory.id : null
 
         if (sections.length) {
             convertText({ name: values.name, category, text, origin: values.origin })
         } else {
-            let show = new ShowObj(false, category)
+            const show = new ShowObj(false, category)
             show.name = checkName(values.name)
             const selectedIndex = $activeShow?.index === undefined ? undefined : $activeShow.index + 1
             history({ id: "UPDATE", newData: { data: show, remember: { project: $activeProject, index: selectedIndex } }, location: { page: "show", id: "show" } })
@@ -185,7 +185,7 @@
         }
     }
 
-    function getName(values) {
+    function getName(values: any) {
         if (values.name) return values.name
         // WIP get from "title" metadata
         if (values.text.trim().length) return trimNameFromString(values.text)

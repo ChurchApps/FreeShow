@@ -8,8 +8,8 @@
     export let values: API_metronome = {}
     export let action = false
 
-    let dispatch = createEventDispatcher()
-    function updateValue(key, value: number | undefined) {
+    const dispatch = createEventDispatcher()
+    function updateValue(key: any, value: number | undefined) {
         if (typeof value === "number") value = Number(value.toFixed(3))
 
         dispatch("change", { ...values, [key]: value })

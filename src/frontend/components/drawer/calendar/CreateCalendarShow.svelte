@@ -10,7 +10,7 @@
     export let currentEvents: any[] = []
 
     async function createShow() {
-        let { show } = await createSlides(currentEvents)
+        const { show } = await createSlides(currentEvents)
         // new calendar shows are private
         history({ id: "UPDATE", newData: { data: show, remember: { project: $activeProject } }, location: { page: "show", id: "show" } })
     }

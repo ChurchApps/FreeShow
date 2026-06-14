@@ -9,13 +9,13 @@
     export let seconds = true
 
     // define and set the initial tweening function
-    let sweep = tweened(parseInt(((date.getTime() / 1000) % 60).toString()), {
+    const sweep = tweened(parseInt(((date.getTime() / 1000) % 60).toString()), {
         duration: 1000,
         easing: linear // elasticOut
     })
 
     // for a smooth transition between 59 and 0 seconds
-    let start = date.getTime() / 1000 - ((date.getTime() / 1000) % 60)
+    const start = date.getTime() / 1000 - ((date.getTime() / 1000) % 60)
     // + 0.4
     $: if (date) sweep.set(parseInt((date.getTime() / 1000 - start).toString()))
 

@@ -7,12 +7,12 @@
     let allPaused = false
     $: if ($activeTimers?.length > 1) checkPaused()
     function checkPaused() {
-        let playing = $activeTimers.filter((timer) => !timer.paused)
+        const playing = $activeTimers.filter((timer) => !timer.paused)
         if (playing.length === 0) allPaused = true
         else allPaused = false
     }
 
-    function actionOnAllTimers(key, value) {
+    function actionOnAllTimers(key: any, value: any) {
         activeTimers.update((a) => {
             return a.map((timer) => {
                 timer[key] = value

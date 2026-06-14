@@ -22,8 +22,8 @@
     }
 
     function updateCustom(name: string, e: any) {
-        let value = e.detail
-        let index = customMetadataValues.findIndex((a) => a === name)
+        const value = e.detail
+        const index = customMetadataValues.findIndex((a) => a === name)
         if (index < 0) return
 
         customMetadataValues[index] = value
@@ -31,7 +31,7 @@
     }
 
     function removeCustom(name: string) {
-        let index = customMetadataValues.findIndex((a) => a === name)
+        const index = customMetadataValues.findIndex((a) => a === name)
         if (index < 0) return
 
         customMetadataValues.splice(index, 1)

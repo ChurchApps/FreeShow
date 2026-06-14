@@ -10,7 +10,7 @@
 </script>
 
 <a href="#void" on:click={openURL}>
-    <slot />
+    <slot></slot>
 </a>
 
 <style>

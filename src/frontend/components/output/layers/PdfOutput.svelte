@@ -24,7 +24,7 @@
 
     let loadingTask: PDFDocumentLoadingTask | null = null
     let loadedDoc: PDFDocumentProxy | null = null
-    let loadedPath = ""
+    const loadedPath = ""
     async function loadPage(pageNumber: number) {
         if (!canvasElem) return
 
@@ -53,7 +53,7 @@
 
 {#key update}
     <OutputTransition {transition} inTransition={transition.in} outTransition={transition.out}>
-        <canvas bind:this={canvasElem} />
+        <canvas bind:this={canvasElem}></canvas>
     </OutputTransition>
 {/key}
 

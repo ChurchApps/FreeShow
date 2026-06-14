@@ -23,23 +23,22 @@
 
     function setValues(key: string, value: any) {
         if (!midi.values) midi.values = { note: 0, velocity: type === "input" ? -1 : 0, channel: 1 }
-        midi.values[key] = value
+        ;(midi.values as any)[key] = value
         change()
     }
     function setMidi(key: string, value: any) {
         // fix: https://github.com/ChurchApps/FreeShow/issues/1672
         if (value === "input") return
-
-        midi[key] = value
+        ;(midi as any)[key] = value
         change()
     }
 
-    let dispatch = createEventDispatcher()
+    const dispatch = createEventDispatcher()
     function change() {
         dispatch("change", midi)
     }
 
-    let types = [
+    const types = [
         { value: "noteon", label: "noteon" },
         { value: "noteoff", label: "noteoff" },
         { value: "control", label: "control" }
@@ -76,7 +75,7 @@
         setTimeout(() => setValues("note", 0), 50)
     }
 
-    let listenerId = receiveToMain(ToMain.RECEIVE_MIDI2, (data) => {
+    const listenerId = receiveToMain(ToMain.RECEIVE_MIDI2, (data) => {
         if (!autoValues || !data) return
         if (data.id === $popupData.id && data.type === midi.type) {
             midi.values = data.values
@@ -95,14 +94,14 @@
     function toggleDefaultValues(e: any) {
         midi.defaultValues = e.detail
 
-        if (midi.defaultValues && defaultMidiActionChannels[firstActionId]) {
-            midi = { ...midi, ...defaultMidiActionChannels[firstActionId] }
+        if (midi.defaultValues && (defaultMidiActionChannels as any)[firstActionId]) {
+            midi = { ...midi, ...(defaultMidiActionChannels as any)[firstActionId] }
         }
 
         change()
     }
 
-    $: noActionOrDefaultValues = type !== "emitter" && (!hasActions || (midi.defaultValues && defaultMidiActionChannels[firstActionId]))
+    $: noActionOrDefaultValues = type !== "emitter" && (!hasActions || (midi.defaultValues && (defaultMidiActionChannels as any)[firstActionId]))
 </script>
 
 {#if type !== "emitter"}
@@ -118,7 +117,7 @@
 {/if}
 
 {#if hasActions && midi.type !== "control"}
-    <MaterialToggleSwitch label="midi.use_default_values" disabled={midi.defaultValues && !defaultMidiActionChannels[firstActionId]} checked={midi.defaultValues} on:change={toggleDefaultValues} />
+    <MaterialToggleSwitch label="midi.use_default_values" disabled={midi.defaultValues && !(defaultMidiActionChannels as any)[firstActionId]} checked={midi.defaultValues} on:change={toggleDefaultValues} />
 {/if}
 
 {#if !noActionOrDefaultValues}

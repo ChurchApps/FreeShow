@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Show } from "../../../../types/Show"
+    import type { Show } from "../../../../types/Show"
     import { activePage, activePopup, popupData, shows, showsCache } from "../../../stores"
     import { getSlideText } from "../../edit/scripts/textStyle"
     import { history } from "../../helpers/history"
@@ -18,22 +18,22 @@
     let loading = false
     async function deleteMatching() {
         loading = true
-        let deleteIds: string[] = []
+        const deleteIds: string[] = []
 
         await Promise.all(
-            data.map(async ({ ids }) => {
+            data.map(async ({ ids }: any) => {
                 await loadShows(ids)
-                let compareShowText = getShowText($showsCache[ids[0]])
+                const compareShowText = getShowText($showsCache[ids[0]])
                 if (!compareShowText) return
-                let dIds: string[] = []
+                const dIds: string[] = []
 
-                ids.forEach((id, i) => {
+                ids.forEach((id: any, i: any) => {
                     if (i === 0) {
                         dIds.push(id)
                         return
                     }
 
-                    let showText = getShowText($showsCache[id])
+                    const showText = getShowText($showsCache[id])
                     if (compareShowText === showText) dIds.push(id)
                 })
 
@@ -57,14 +57,14 @@
     function getOldestShows() {
         let deleteIds: string[] = []
 
-        data.forEach(({ ids }) => {
+        data.forEach(({ ids }: any) => {
             let keepId = ""
 
-            ids.forEach((id) => {
-                let show = $shows[id]
+            ids.forEach((id: any) => {
+                const show = $shows[id]
                 if (!show) return
 
-                let compareShow = $shows[keepId]
+                const compareShow = $shows[keepId]
                 if (!compareShow) {
                     keepId = id
                     return
@@ -75,7 +75,7 @@
                 if (first > second) keepId = id
             })
 
-            ids = ids.filter((id) => id !== keepId)
+            ids = ids.filter((id: any) => id !== keepId)
             deleteIds.push(...ids)
         })
 
@@ -91,14 +91,14 @@
     function getNewestShows() {
         let deleteIds: string[] = []
 
-        data.forEach(({ ids }) => {
+        data.forEach(({ ids }: any) => {
             let keepId = ""
 
-            ids.forEach((id) => {
-                let show = $shows[id]
+            ids.forEach((id: any) => {
+                const show = $shows[id]
                 if (!show) return
 
-                let compareShow = $shows[keepId]
+                const compareShow = $shows[keepId]
                 if (!compareShow) {
                     keepId = id
                     return
@@ -107,7 +107,7 @@
                 if (show.timestamps?.created < compareShow.timestamps?.created) keepId = id
             })
 
-            ids = ids.filter((id) => id !== keepId)
+            ids = ids.filter((id: any) => id !== keepId)
             deleteIds.push(...ids)
         })
 
@@ -126,13 +126,13 @@
     // let loading: boolean = false
     async function loadContent() {
         // loading = true
-        let ids = getIds(manualIndex)
+        const ids = getIds(manualIndex)
         await loadShows(ids)
 
         // loading = false
         ids.forEach((id) => {
-            let show = $showsCache[id]
-            let text = getShowText(show)
+            const show = $showsCache[id]
+            const text = getShowText(show)
             loadedTexts.push(text)
         })
 
@@ -153,7 +153,7 @@
     }
 
     function deleteAtIndex(index: number) {
-        let ids = getIds(manualIndex)
+        const ids = getIds(manualIndex)
         deleteShows([ids[index]])
         data[manualIndex].ids.splice(index, 1)
         loadedTexts.splice(index, 1)
@@ -162,21 +162,21 @@
         else data = data
     }
 
-    /////
+    /// //
 
     function getIds(index: number, _updater = null): string[] {
         return data[index]?.ids || []
     }
 
     function deleteShows(ids: string[]) {
-        let data = ids.map((id) => ({ id }))
+        const data = ids.map((id) => ({ id }))
         history({ id: "SHOWS", oldData: { data }, location: { page: "drawer" } })
     }
 
     function getShowText(show: Show) {
         if (!show) return ""
 
-        let texts: string[] = []
+        const texts: string[] = []
         Object.values(show.slides || {}).forEach((slide) => {
             texts.push(getSlideText(slide))
         })
@@ -219,7 +219,7 @@
         <Loader />
     </Center>
 {:else}
-    <MaterialButton variant="outlined" icon="launch" info="{data.length} ({data.map((d) => d.ids.length).reduce((a, b) => a + b, 0)})" on:click={deleteManual} white>
+    <MaterialButton variant="outlined" icon="launch" info="{data.length} ({data.map((d: any) => d.ids.length).reduce((a: any, b: any) => a + b, 0)})" on:click={deleteManual} white>
         <T id="show.delete_manual" />
     </MaterialButton>
 

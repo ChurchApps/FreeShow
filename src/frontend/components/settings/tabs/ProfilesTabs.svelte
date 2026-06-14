@@ -28,7 +28,7 @@
     // UPDATE
 
     function updateProfile(e: any, key: string, currentId = "") {
-        let value = e?.detail ?? e?.target?.value ?? e
+        const value = e?.detail ?? e?.target?.value ?? e
 
         if (!currentId) currentId = profileId || "default"
 

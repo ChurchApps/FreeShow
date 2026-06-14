@@ -20,13 +20,13 @@
 
     $: showId = $activeShow?.id || ""
     $: allShowGroups = getSlideGroups(showId, $showsCache, $cachedShowsData)
-    $: showGroups = allShowGroups.filter((a) => a.group !== ".")
+    $: showGroups = allShowGroups.filter((a: any) => a.group !== ".")
 
     $: currentShow = $showsCache[showId]
 
     $: layoutSlides = currentShow?.layouts?.[_show().get("settings.activeLayout")]?.slides || []
-    function countGroupsInLayout(slideId) {
-        let count = layoutSlides.reduce((count, slide) => (slide.id === slideId ? count + 1 : count), 0)
+    function countGroupsInLayout(slideId: any) {
+        const count = layoutSlides.reduce((count, slide) => (slide.id === slideId ? count + 1 : count), 0)
         return count
     }
 
@@ -38,7 +38,7 @@
 
     $: sortedGroups = sortByName(globalGroups, "group")
 
-    let profile = getAccess("shows")
+    const profile = getAccess("shows")
     $: isLocked = currentShow?.locked || profile.global === "read" || profile[currentShow?.category || ""] === "read"
 
     $: displayGlobalGroups = $globalGroupViewEnabled
@@ -126,7 +126,7 @@
         </div>
 
         {#if displayGlobalGroups}
-            <div class="separator" />
+            <div class="separator"></div>
 
             <div class="main" style={displayGlobalGroups ? "width: 50%;" : ""}>
                 <h4><T id="groups.global" /></h4>

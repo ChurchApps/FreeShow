@@ -27,7 +27,7 @@
 
     $: isWindows = !$currentWindow && $os.platform === "win32"
 
-    ///// UPDATERS /////
+    /// // UPDATERS /////
 
     // countdown timer tick
     $: if ($activeTimers.length) startTimer()

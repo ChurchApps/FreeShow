@@ -26,7 +26,7 @@
     // $: currentTime = getCurrentTime()
     $: timeValue = joinTimeBig(typeof currentTime === "number" ? currentTime : 0, item?.timer?.showHours !== false)
 
-    let ms = 0
+    const ms = 0
     // let msInterval: NodeJS.Timeout | null = null
     // $: if (showMs && timeValue && mounted) runMs()
     // function runMs() {
@@ -75,8 +75,8 @@
             return time <= offset
         }
 
-        let start = timer.start || 0
-        let end = timer.end || 0
+        const start = timer.start || 0
+        const end = timer.end || 0
 
         if (start < end) return time + offset > end
         return time - offset < end
@@ -148,11 +148,11 @@
 </script>
 
 {#if item?.timer?.viewType === "line"}
-    <div class="line" style="width: {percentage}%;background-color: {itemColor};" on:dblclick={openInDrawer} />
+    <div class="line" style="width: {percentage}%;background-color: {itemColor};" on:dblclick={openInDrawer}></div>
 {:else if item?.timer?.viewType === "circle"}
-    <div class="circle" class:mask={item?.timer?.circleMask} style="--percentage: {percentage};--color: {itemColor};" on:dblclick={openInDrawer} />
+    <div class="circle" class:mask={item?.timer?.circleMask} style="--percentage: {percentage};--color: {itemColor};" on:dblclick={openInDrawer}></div>
 {:else}
-    <div class="align autoFontSize" style="{style}{item?.alignX ? '' : (item?.align || 'justify-content: center;').replaceAll('text-align', 'justify-content')}" on:dblclick={openInDrawer}>
+    <div class="align autoFontSize" style="{style}{(item as any)?.alignX ? '' : (item?.align || 'justify-content: center;').replaceAll('text-align', 'justify-content')}" on:dblclick={openInDrawer}>
         <div style="display: flex;white-space: nowrap;{overflow ? 'color: ' + (timer.overflowColor || '#FF4136') + ';' : shouldWarn ? 'color: ' + (timer.warnColor || '#FF8000') + ';' : ''}">
             {#if !shouldWarn || isPaused || !blinkingOff}
                 {#if overflow && negative}

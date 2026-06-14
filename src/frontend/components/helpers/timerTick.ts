@@ -74,8 +74,8 @@ function increment(timer: { id: string; start: number; end: number; [key: string
         return timer
     }
 
-    const startTime = timer.startDynamic !== undefined ? getTimerDynamicValue(timer.startDynamic) ?? 0 : timer.start || 0
-    const endTime = timer.endDynamic !== undefined ? getTimerDynamicValue(timer.endDynamic) ?? 0 : timer.end || 0
+    const startTime = timer.startDynamic !== undefined ? (getTimerDynamicValue(timer.startDynamic) ?? 0) : timer.start || 0
+    const endTime = timer.endDynamic !== undefined ? (getTimerDynamicValue(timer.endDynamic) ?? 0) : timer.end || 0
 
     if (startTime < endTime ? timer.currentTime >= endTime && timer.currentTime < endTime + 1 : timer.currentTime <= endTime && timer.currentTime > endTime - 1) {
         if (!timer.overflow) timer.paused = true

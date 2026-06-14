@@ -17,7 +17,7 @@
         if (e.target?.closest(".edit") || e.ctrlKey || e.metaKey) return
 
         let nextTab = -1
-        let currentTabIndex = activeTabs.findIndex((tab) => tab === $settingsTab)
+        const currentTabIndex = activeTabs.findIndex((tab) => tab === $settingsTab)
 
         if (e.key === "ArrowDown") {
             e.preventDefault()

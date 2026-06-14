@@ -41,16 +41,15 @@
     }
 
     function clear(key: string) {
-        if ($outLocked || !clearActions[key]) return
+        if ($outLocked || !(clearActions as any)[key]) return
         autoChange = true
-
-        clearActions[key]()
+        ;(clearActions as any)[key]()
 
         if (key === "nextTimer") key = "next_timer"
         timelineRecordingAction.set({ id: "clear_" + key })
     }
 
-    let dispatch = createEventDispatcher()
+    const dispatch = createEventDispatcher()
     function openPreview(key: string) {
         if (activeClear === key) {
             autoChange = true

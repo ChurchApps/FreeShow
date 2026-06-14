@@ -24,7 +24,7 @@
     const compressionFactor = threshold / newRange
     const expansionFactor = (1 - newRange) / (1 - threshold)
 
-    function transformRange(value) {
+    function transformRange(value: any) {
         if (value <= threshold) {
             return value / compressionFactor
         } else {
@@ -50,10 +50,10 @@
             <div style="height: {100 - ($audioChannels.volume?.right || 0)}%" />
         </span> -->
     <span class="left">
-        <div style="height: {100 - getDBValue($audioChannels[0]?.dB)}%" />
+        <div style="height: {100 - getDBValue($audioChannels[0]?.dB)}%"></div>
     </span>
     <span class="right">
-        <div style="height: {100 - getDBValue($audioChannels[1]?.dB)}%" />
+        <div style="height: {100 - getDBValue($audioChannels[1]?.dB)}%"></div>
     </span>
 </div>
 

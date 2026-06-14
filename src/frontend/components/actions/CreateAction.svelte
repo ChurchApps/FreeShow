@@ -36,7 +36,7 @@
 
     $: existingActionsFiltered = choosePopup ? existingActions : existingActions.filter((a) => a !== actionId)
 
-    let dispatch = createEventDispatcher()
+    const dispatch = createEventDispatcher()
     function changeAction(data: any) {
         dispatch("change", data)
         pickAction = false
@@ -77,23 +77,23 @@
     $: ACTIONS = [
         ...Object.keys(API_ACTIONS)
             .map((id) => {
-                let data = actionData[id] || {}
-                let name = translateText(data.name || "") || id
-                let icon = data.icon || "actions"
-                let common = !!data.common
+                const data = (actionData as any)[id] || {}
+                const name = translateText(data.name || "") || id
+                const icon = data.icon || "actions"
+                const common = !!data.common
 
                 if (data.SECTION) previousSection = data.SECTION
                 return { id, name, icon, common, section: previousSection }
             })
             .filter(({ id }) => {
                 // don't show actions with no custom data
-                if (!actionData[id]) return false
+                if (!(actionData as any)[id]) return false
                 // remove uncommon
-                if (commonOnly && !actionData[id].common) return false
+                if (commonOnly && !(actionData as any)[id].common) return false
                 // show if it is the currently selected
                 if (id === actionId) return true
                 // don't show action if incompatible with any existing action (and no wait action is added)
-                if (!existingActionsFiltered.find((a) => a.includes("wait")) && actionData[id].incompatible?.find((id) => existingActionsFiltered.includes(id))) return false
+                if (!existingActionsFiltered.find((a) => a.includes("wait")) && (actionData as any)[id].incompatible?.find((id: any) => existingActionsFiltered.includes(id))) return false
                 // don't display GET actions
                 if (id.includes("get_")) return false
 
@@ -106,7 +106,7 @@
                 // show if it has an input (because you probably want to have multiple)
                 // if (actionData[actionId]?.input) return true
                 // remove already added or custom ones
-                if (removeActions.includes(id) || (!actionData[id].canAddMultiple && existingActionsFiltered.includes(id))) return false
+                if (removeActions.includes(id) || (!(actionData as any)[id].canAddMultiple && existingActionsFiltered.includes(id))) return false
                 // custom slide actions list
                 if (list && !full && !slideActions.includes(id)) return false
                 // if (list && id.includes("index_select")) return false
@@ -130,7 +130,7 @@
     let input = ""
     $: if (actionId && !pickAction) loadInputs()
     function loadInputs() {
-        input = actionData[getActionTriggerId(actionId)]?.input || ""
+        input = (actionData as any)[getActionTriggerId(actionId)]?.input || ""
 
         if (!list || full) return
 
@@ -153,7 +153,7 @@
     }
 
     $: dataInputs = !!(input && actionId && !pickAction && !full)
-    let dataOpened = !Object.keys(actionValue).length || !existingActions?.length // || existingActions.length < 2
+    const dataOpened = !Object.keys(actionValue).length || !existingActions?.length // || existingActions.length < 2
     let dataMenuOpened = false
 
     // $: isLast = actionNameIndex >= existingActionsFiltered.length
@@ -172,14 +172,14 @@
 
         searchValue = formatSearch(value || "")
 
-        let actionsList = clone(ACTIONS) //.filter((a) => (commonOnly ? a.common : true))
+        const actionsList = clone(ACTIONS) // .filter((a) => (commonOnly ? a.common : true))
 
         if (searchValue.length < 2) {
             searchedActions = actionsList
             return
         }
 
-        let currentActionsList = actionsList // searchedActions
+        const currentActionsList = actionsList // searchedActions
         // reset if search value changed
         // if (!searchValue.includes(previousSearchValue)) currentActionsList = list
 
@@ -193,7 +193,7 @@
         changeAction({ ...searchedActions[0], index: full ? undefined : 0 })
     }
 
-    const getName = (object) => object[actionValue.id]?.name || ""
+    const getName = (object: any) => object[actionValue.id]?.name || ""
     function getActionInfo(actionId: string): string {
         const id = actionId.split(":")[0]
         // console.log(id, actionValue)
@@ -234,7 +234,7 @@
     {#if actionId && !pickAction && !full}
         <CombinedInput textWidth={38}>
             <Button on:click={() => (pickAction = true)} style="width: 100%;" center dark>
-                <Icon id={actionData[actionId]?.icon || "actions"} right />
+                <Icon id={(actionData as any)[actionId]?.icon || "actions"} right />
                 <p style="display: contents;">{findName(actionId)}</p>
             </Button>
         </CombinedInput>

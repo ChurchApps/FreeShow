@@ -1,12 +1,13 @@
 <script lang="ts">
     import { createEventDispatcher, onMount } from "svelte"
+    // @ts-ignore - youtube-player ships no type declarations
     import YoutubePlayer from "youtube-player"
 
     export let videoId: string
     export let options: any = {}
 
     let playerElem: HTMLDivElement | undefined
-    let player // YT player API instance
+    let player: any // YT player API instance
 
     onMount(() => createPlayer())
 
@@ -39,13 +40,13 @@
     const dispatch = createEventDispatcher()
 
     // https://developers.google.com/youtube/iframe_api_reference#onReady
-    function onPlayerReady(e) {
+    function onPlayerReady(e: any) {
         dispatch("ready", e)
         play(videoId)
     }
 
     // https://developers.google.com/youtube/iframe_api_reference#onError
-    function onPlayerError(e) {
+    function onPlayerError(e: any) {
         dispatch("error", e)
     }
 
@@ -58,7 +59,7 @@
         BUFFERING: 3,
         CUED: 5
     }
-    function onPlayerStateChange(e) {
+    function onPlayerStateChange(e: any) {
         dispatch("stateChange", e)
 
         switch (e.data) {

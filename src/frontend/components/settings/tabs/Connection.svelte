@@ -36,7 +36,7 @@
     // const randomNumber = (from: number, to: number): number => Math.floor(Math.random() * (to - from)) + from
 
     function toggleServer(e: any, id: string) {
-        let value = e.detail
+        const value = e.detail
 
         disabledServers.update((a) => {
             a[id] = !value
@@ -61,7 +61,7 @@
     }
 
     function toggleCompanion(e: any) {
-        let value = e.detail
+        const value = e.detail
 
         companion.update((a) => {
             a.enabled = value
@@ -77,7 +77,7 @@
     }
 
     // restart servers on toggle on/off
-    let initialServerState = JSON.stringify($disabledServers)
+    const initialServerState = JSON.stringify($disabledServers)
     $: if (JSON.stringify($disabledServers) !== initialServerState) restart()
 
     $: if ($activeTriggerFunction.includes("open_connection_") && ip !== "localhost") openConnection()
@@ -103,7 +103,7 @@
 
     $: cloudOnly = { churchApps: !!$special.churchAppsCloudOnly }
     function contentProviderConnect(providerId: ContentProviderId) {
-        if (!$providerConnections[providerId] || cloudOnly[providerId]) {
+        if (!$providerConnections[providerId] || (cloudOnly as any)[providerId]) {
             if (providerId === "churchApps") {
                 special.update((a) => {
                     delete a.churchAppsCloudOnly
@@ -115,7 +115,7 @@
                 }
             }
 
-            sendMain(Main.PROVIDER_LOAD_SERVICES, { providerId, cloudOnly: cloudOnly[providerId] || false })
+            sendMain(Main.PROVIDER_LOAD_SERVICES, { providerId, cloudOnly: (cloudOnly as any)[providerId] || false })
         } else {
             if ($cloudSyncData.enabled && providerId === $cloudSyncData.id) {
                 // should remain connected to cloud
@@ -171,7 +171,7 @@
 
 {#each servers as server}
     {@const disabled = server.id === "companion" ? $companion?.enabled !== true : server.enabledByDefault ? $disabledServers[server.id] === true : $disabledServers[server.id] !== false}
-    {@const connections = Object.keys($connections[server.id.toUpperCase()] || {})?.length || 0}
+    {@const connectionCount = Object.keys($connections[server.id.toUpperCase()] || {})?.length || 0}
 
     <InputRow>
         <MaterialButton
@@ -190,8 +190,8 @@
                 {#if server.id === "companion"}
                     <span style="opacity: 0.5;font-size: 0.7em;margin-left: 5px;">WebSocket/REST/OSC/Companion</span>
                 {/if}
-                {#if connections}
-                    <span style="opacity: 0.5;font-size: 0.7em;margin-left: 5px;">{connections}</span>
+                {#if connectionCount}
+                    <span style="opacity: 0.5;font-size: 0.7em;margin-left: 5px;">{connectionCount}</span>
                 {/if}
             </span>
 

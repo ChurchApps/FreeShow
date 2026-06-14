@@ -4,7 +4,7 @@
     import { history } from "../../helpers/history"
     import { getLayoutRef } from "../../helpers/show"
     import { addFilterString } from "../scripts/textStyle"
-    import { EditInput2 } from "../values/boxes"
+    import type { EditInput2 } from "../values/boxes"
     import { slideFilterSections } from "../values/filters"
     import EditValues from "./EditValues.svelte"
 
@@ -20,7 +20,7 @@
     $: currentSlideNumber = $activeEdit.slide || 0
     $: ref = $showsCache[currentId] ? getLayoutRef(currentId) : {}
 
-    $: currentSlideData = ref?.[currentSlideNumber]?.data || null
+    $: currentSlideData = (ref as any)?.[currentSlideNumber]?.data || null
 
     $: isTemplate = $activeEdit.type === "template"
     $: filterData = (isTemplate ? $templates[currentId] : currentSlideData) || {}
@@ -40,8 +40,8 @@
         //     return
         // }
 
-        let indexes = [currentSlideNumber]
-        let override = [currentId, currentSlideNumber, input.id, input.key].join("_")
+        const indexes = [currentSlideNumber]
+        const override = [currentId, currentSlideNumber, input.id, input.key].join("_")
         history({ id: "SHOW_LAYOUT", newData: { key: input.id, data: value, indexes }, location: { page: "edit", override } })
     }
 </script>

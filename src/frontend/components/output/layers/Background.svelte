@@ -58,10 +58,10 @@
             return
         }
 
-        let newData = clone(data)
+        const newData = clone(data)
 
         // update existing background, if same
-        let activeId = firstActive ? background1?.path || background1?.id : background2?.path || background2?.id
+        const activeId = firstActive ? background1?.path || background1?.id : background2?.path || background2?.id
         if (activeId === (data.path || data.id)) {
             if (firstActive) {
                 background1 = newData
@@ -76,7 +76,7 @@
         timeout = setTimeout(
             () => {
                 loading = true
-                let loadingFirst = !background1 // && background2?.path ? background2?.path !== data.path : background2?.id !== data.id
+                const loadingFirst = !background1 // && background2?.path ? background2?.path !== data.path : background2?.id !== data.id
                 currentlyLoadingFirst = loadingFirst
                 firstFadingOut = !loadingFirst
 
@@ -127,7 +127,7 @@
     let animation1 = ""
     let animation2 = ""
     $: updateAnimation(animationStyle)
-    function updateAnimation(animation) {
+    function updateAnimation(animation: any) {
         setTimeout(
             () => {
                 if (background1 && !(loading && !firstActive)) animation1 = animation

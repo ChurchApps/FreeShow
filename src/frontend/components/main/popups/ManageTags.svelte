@@ -21,7 +21,7 @@
         timer: () => timerTags
     }
 
-    let type: keyof typeof store = $popupData.type || "show"
+    const type: keyof typeof store = $popupData.type || "show"
     let tags: (Tag & { id: string })[] = []
 
     let emptyTag = false
@@ -61,7 +61,7 @@
 
     function updateKey(value: string, tagId: string, key: string) {
         store[type]().update((a) => {
-            a[tagId][key] = value
+            ;(a as any)[tagId][key] = value
             return a
         })
 

@@ -28,7 +28,7 @@
 
     $: isSlideText = item?.type === "slide_text" // || activeItemId?.includes("slide_text")
     $: isTextItem = item?.type === "slide_text" || item?.type === "text"
-    $: stageSections = item ? clone(isSlideText ? slideTextSections : itemBoxes[item.type || ""]?.sections) || {} : {}
+    $: stageSections = item ? clone(isSlideText ? slideTextSections : (itemBoxes as any)[item.type || ""]?.sections) || {} : {}
 
     $: if (item?.type === "text" && stageSections) {
         delete stageSections.chords
@@ -73,9 +73,9 @@
     }
 
     $: if (item && type === "text") {
-        let sectionId = stageSections?.font ? "font" : "default"
+        const sectionId = stageSections?.font ? "font" : "default"
         setBoxInputValue(stageSections, sectionId, "font-family", "default", "Arial")
-        setBoxInputValue(stageSections, sectionId, "font-family", "styleValue", styles["font"] || "")
+        setBoxInputValue(stageSections, sectionId, "font-family", "styleValue", styles.font || "")
         // setBoxInputValue(stageSections, sectionId, "font-size", "disabled", item.type === "text" ? item.auto === true : item.auto !== false)
         // setBoxInputValue(edits, sectionId, "textFit", "hidden", item?.auto !== false)
     }
@@ -135,9 +135,9 @@
         // else if (input.key) value = { ...((item as any)?.[input.key] || {}), [input.key]: value }
 
         if (input.id.includes(".")) {
-            let splitted = input.id.split(".")
+            const splitted = input.id.split(".")
             input.id = splitted[0]
-            let newValue = item?.[input.id] || {}
+            const newValue = (item as any)?.[input.id] || {}
             if (typeof newValue === "string") return // something is wrong
             newValue[splitted[1]] = value
             value = newValue
@@ -150,11 +150,11 @@
         })
     }
 
-    function updateAlign(input) {
+    function updateAlign(input: any) {
         let id = "align"
         if (input.key === "text-align") id = "alignX"
 
-        let value = input.value
+        const value = input.value
 
         history({
             id: "UPDATE",
@@ -188,12 +188,12 @@
         if (!value) return
 
         // only update items with same type
-        let updateType = item?.type
+        const updateType = item?.type
 
         // only update changed value
-        let styles: { [key: string]: string } = {}
+        const styles: { [key: string]: string } = {}
         activeItemIds.forEach((itemId) => {
-            let item = stageItems[itemId]
+            const item = stageItems[itemId]
             if (!item || (!$activeStage.items?.length && item.type !== updateType)) return
 
             styles[itemId] = input.id.includes("CSS") ? value : addStyleString(item.style, [input.key, input.value])

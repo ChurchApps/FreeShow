@@ -30,10 +30,10 @@
     {#each format.split(",") as key}
         <span>
             {#key d}
-                {#if data[key].toString().includes("T: ")}
-                    <T id={data[key].slice(3, data[key].length)} />
+                {#if (data as any)[key].toString().includes("T: ")}
+                    <T id={(data as any)[key].slice(3, (data as any)[key].length)} />
                 {:else}
-                    {data[key]}
+                    {(data as any)[key]}
                 {/if}
                 {" "}
             {/key}

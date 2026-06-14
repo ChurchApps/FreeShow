@@ -30,30 +30,30 @@
 
     const getIdentifier = {
         text: (item: Item) => {
-            let text = getItemText(item)
+            const text = getItemText(item)
             return text.slice(0, 10)
         },
         list: (item: Item) => {
-            let text = item.list?.items?.[0]?.text || ""
+            const text = item.list?.items?.[0]?.text || ""
             return text.slice(0, 10)
         },
         media: (item: Item) => {
-            let path = item.src
+            const path = item.src
             return getFileName(path || "")
         },
         timer: (item: Item) => {
             const timerId = item.timer?.id || item.timerId
             if (!timerId) return ""
-            let timerName = $timers[timerId]?.name || ""
+            const timerName = $timers[timerId]?.name || ""
             return timerName
         },
         clock: () => "",
         mirror: (item: Item) => {
-            let showName = $showsCache[item.mirror?.show || ""]?.name || ""
+            const showName = $showsCache[item.mirror?.show || ""]?.name || ""
             return showName
         },
         variable: (item: Item) => {
-            let name = $variables[item.variable?.id]?.name || ""
+            const name = $variables[item.variable?.id]?.name || ""
             return name
         }
     }
@@ -156,7 +156,7 @@
                             <p style="opacity: 0.7;margin-inline-end: 10px;">{i + 1}</p>
                             <Icon id={type === "icon" ? currentItem.id || "" : itemBoxes[type]?.icon || "text"} custom={type === "icon"} size={0.8} />
                             <p style="opacity: 0.9;margin-inline-start: 10px;">{translateText("items." + type)}</p>
-                            {#if getIdentifier[type]}<p style="margin-inline-start: 10px;max-width: 120px;opacity: 0.5;font-size: 0.8em;max-width: 40%;">{getIdentifier[type](currentItem)}</p>{/if}
+                            {#if (getIdentifier as any)[type]}<p style="margin-inline-start: 10px;max-width: 120px;opacity: 0.5;font-size: 0.8em;max-width: 40%;">{(getIdentifier as any)[type](currentItem)}</p>{/if}
                         </span>
                         <span>
                             <MaterialButton disabled={i === allSlideItems.length - 1} icon="down" title="actions.backward" style="padding: 8px;" on:click={() => rearrangeItems("backward", index)} />

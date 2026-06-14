@@ -11,7 +11,7 @@
         category_media: (icon: string) => mediaFolders.update((a) => changeIcon(a, icon)),
         category_overlays: (icon: string) => overlayCategories.update((a) => changeIcon(a, icon)),
         category_templates: (icon: string) => templateCategories.update((a) => changeIcon(a, icon)),
-        slide_icon: (icon: string, path: string) => addItem("icon", icon, path ? { path } : { color: customIconsColors[icon] })
+        slide_icon: (icon: string, path: string) => addItem("icon", icon, path ? { path } : { color: (customIconsColors as any)[icon] })
     }
 
     const boxed = $selected.id !== "slide_icon"
@@ -26,7 +26,7 @@
     }
 
     function click(icon: string, path = "") {
-        if ($selected.id && names[$selected.id]) names[$selected.id](icon, path)
+        if ($selected.id && (names as any)[$selected.id]) (names as any)[$selected.id](icon, path)
         else console.log("change icon " + $selected.id)
 
         activePopup.set(null)
@@ -45,7 +45,7 @@
 <div class="grid" style={boxed ? "gap: 8px;" : ""}>
     {#each filteredIcons as icon}
         <MaterialButton style="padding: {boxed ? 0 : 8}px;" showOutline={activeIcon === icon} on:click={() => click(icon)}>
-            <Icon id={icon} size={2} custom white color={customIconsColors[icon]} {boxed} />
+            <Icon id={icon} size={2} custom white color={(customIconsColors as any)[icon]} {boxed} />
         </MaterialButton>
     {/each}
 </div>

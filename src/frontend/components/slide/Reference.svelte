@@ -17,26 +17,26 @@
     $: data = show?.reference?.data || {}
 
     async function updateCalendar() {
-        let currentEvents = getSelectedEvents(data.days)
+        const currentEvents = getSelectedEvents(data.days)
 
-        let showId: string = $activeShow?.id || ""
-        let slidesData = await createSlides(currentEvents, showId)
+        const showId: string = $activeShow?.id || ""
+        const slidesData = await createSlides(currentEvents, showId)
 
         history({ id: "UPDATE", newData: { data: slidesData.show }, oldData: { id: showId }, location: { page: "show", id: "show_key" } })
     }
 
     function getDaysString() {
-        let { sortedDays, from, to } = sortDays(data.days)
+        const { sortedDays, from, to } = sortDays(data.days)
         let string = getDateString(from)
         if (sortedDays[0] - sortedDays[1] < 0) string += " - " + getDateString(to)
         return string
     }
 
     function openTab() {
-        let collection = data.collection
+        const collection = data.collection
         if (!collection || !show) return
 
-        let scriptureId = $scriptures[collection] ? collection : Object.values($scriptures).find((a) => a.id === collection)
+        const scriptureId = $scriptures[collection] ? collection : Object.values($scriptures).find((a) => a.id === collection)
         if (!scriptureId) return
 
         openScripture.set(show.reference!.data)
@@ -77,7 +77,7 @@
             {/if}
         </p>
 
-        <div class="divider" />
+        <div class="divider"></div>
 
         <MaterialButton on:click={updateCalendar} style="white-space: nowrap;min-width: 100px;">
             <Icon id="calendar" />
@@ -86,7 +86,7 @@
     {:else if show?.reference?.type === "scripture"}
         <p data-title={data.version || ""}><T id="tabs.scripture" />: {data.version || ""}</p>
 
-        <div class="divider" />
+        <div class="divider"></div>
 
         <MaterialButton on:click={openTab} style="white-space: nowrap;min-width: 100px;">
             <Icon id="scripture" />
@@ -102,7 +102,7 @@
             {/if}
         </p>
 
-        <div class="divider" />
+        <div class="divider"></div>
 
         <MaterialButton title="Open Lessons.church Website" on:click={() => openURL("https://lessons.church")} style="white-space: nowrap;min-width: 150px;">
             <Icon id="book" />
@@ -113,7 +113,7 @@
             Canva: {data.presentationName || show.name || ""}
         </p>
 
-        <div class="divider" />
+        <div class="divider"></div>
 
         <MaterialButton title="show.update" icon="refresh" disabled={syncingCanva} on:click={refreshCanva}>
             <T id="show.update" />

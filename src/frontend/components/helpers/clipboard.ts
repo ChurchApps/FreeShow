@@ -620,7 +620,7 @@ const pasteActions = {
             newSlides.push(slide)
 
             // has children
-            let childrenLayouts: any = {}
+            const childrenLayouts: any = {}
             if (slide.children) {
                 // clone selected children
                 const clonedChildren: string[] = []
@@ -976,7 +976,7 @@ const deleteActions = {
 
         // check if template is used anywhere
         // STYLES
-        let styleTemplates: string[] = []
+        const styleTemplates: string[] = []
         Object.values(get(styles)).forEach((a) => {
             if (a.template) styleTemplates.push(a.template)
             if (a.templateScripture) styleTemplates.push(a.templateScripture)
@@ -989,7 +989,7 @@ const deleteActions = {
             if (!(await confirmCustom(translateText("This template is in use by Scripture.<br>popup.delete_show_confirmation?")))) return
         }
         // TEMPLATE (First slide template)
-        let firstSlideTemplateIds: string[] = []
+        const firstSlideTemplateIds: string[] = []
         Object.values(get(templates)).forEach((a) => {
             if (a.settings?.firstSlideTemplate) firstSlideTemplateIds.push(a.settings.firstSlideTemplate)
         })

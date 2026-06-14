@@ -34,7 +34,7 @@
     $: totalTrackHeight = TIMELINE_SECTION_TOP + maxTrackIndex * (SECTION_HEIGHT + SECTION_GAP) - SECTION_GAP + TIMELINE_SECTION_TOP
 
     function getTrackData(index: number, _updater: any) {
-        return sections[tabIds[index]] || { name: "Unknown", icon: "unknown" }
+        return (sections as any)[tabIds[index]] || { name: "Unknown", icon: "unknown" }
     }
     function getActionTrack(action: TimelineAction): number {
         if (type === "slide") return groupedActions.findIndex((group) => group[0].data?.type === action.data?.type && group[0].data?.key === action.data?.key)
@@ -144,7 +144,7 @@
     let isScrubbing = false
     let draggingActionId: string | null = null
     let dragTimeOffset = 0
-    let dragInitialTimes = new Map<string, number>()
+    const dragInitialTimes = new Map<string, number>()
 
     let isSelecting = false
     let selectedActionIds: string[] = []
@@ -152,7 +152,7 @@
     let selectionRect: { x: number; y: number; w: number; h: number } | null = null
     let selectionStart = { x: 0, y: 0 }
 
-    let usedHeaderWidth = 120
+    const usedHeaderWidth = 120
 
     $: timeString = formatTime(currentTime, type, $timelineStore)
     $: tickInterval = getTickInterval(zoomLevel)
@@ -594,7 +594,7 @@
         scrollLeft = trackWrapper.scrollLeft
     }
 
-    function keydown(e) {
+    function keydown(e: any) {
         const target = e.target as HTMLElement
         if (["INPUT", "TEXTAREA"].includes(target.tagName) || target.isContentEditable) return
 
@@ -741,7 +741,7 @@
                             <div class="action-marker {action.type} context #timeline_node" class:selected={selectedActionIds.includes(action.id)} style="left: {(action.time / 1000) * zoomLevel}px; top: 50%;transform: translate(-50%, -50%);" data-title={translateText(action.name)}>
                                 <div class="action-head">
                                     {#if action.type === "action"}
-                                        <Icon id={action.data.triggers?.length === 1 ? actionData[action.data.triggers[0]]?.icon : "actions"} size={0.9} white />
+                                        <Icon id={action.data.triggers?.length === 1 ? (actionData as any)[action.data.triggers[0]]?.icon : "actions"} size={0.9} white />
                                     {:else if typeof action.data?.index === "number"}
                                         {action.data.index + 1}
                                     {/if}
@@ -875,7 +875,7 @@
                             >
                                 <div class="action-head">
                                     {#if action.type === "action"}
-                                        <Icon id={action.data.triggers?.length === 1 ? actionData[action.data.triggers[0]]?.icon : "actions"} size={0.9} white />
+                                        <Icon id={action.data.triggers?.length === 1 ? (actionData as any)[action.data.triggers[0]]?.icon : "actions"} size={0.9} white />
                                     {:else if typeof action.data?.index === "number"}
                                         {action.data.index + 1}
                                     {/if}

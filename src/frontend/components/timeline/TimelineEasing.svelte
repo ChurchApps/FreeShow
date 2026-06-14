@@ -57,7 +57,7 @@
                     id: action.id,
                     x: (action.time / 1000) * zoomLevel,
                     y: top,
-                    action: action
+                    action
                 } as EasingPoint
             })
             .filter((p): p is EasingPoint => p !== null)
@@ -216,10 +216,10 @@
             {#each points as p, i}
                 {#if selectedActionIds.includes(p.id)}
                     {#if i > 0}
-                        <div class="easing-line" style={getLineStyle(easingCurvesPx[i - 1].x2, easingCurvesPx[i - 1].y2 - Y_OFFSET, points[i].x, points[i].y - Y_OFFSET)} />
+                        <div class="easing-line" style={getLineStyle(easingCurvesPx[i - 1].x2, easingCurvesPx[i - 1].y2 - Y_OFFSET, points[i].x, points[i].y - Y_OFFSET)}></div>
                     {/if}
                     {#if i < points.length - 1}
-                        <div class="easing-line" style={getLineStyle(easingCurvesPx[i].x1, easingCurvesPx[i].y1 - Y_OFFSET, points[i].x, points[i].y - Y_OFFSET)} />
+                        <div class="easing-line" style={getLineStyle(easingCurvesPx[i].x1, easingCurvesPx[i].y1 - Y_OFFSET, points[i].x, points[i].y - Y_OFFSET)}></div>
                     {/if}
                 {/if}
             {/each}
@@ -247,7 +247,7 @@
                                 e.preventDefault()
                                 e.stopPropagation()
                             }}
-                        />
+                        ></div>
                     {/if}
                     {#if i < points.length - 1}
                         <div
@@ -270,7 +270,7 @@
                                 e.preventDefault()
                                 e.stopPropagation()
                             }}
-                        />
+                        ></div>
                     {/if}
                 {/if}
             {/each}
@@ -280,7 +280,7 @@
             <div class="action-marker {p.action.type} context #timeline_node" class:selected={selectedActionIds.includes(p.action.id)} style="left: {p.x}px;top: {p.y}px;transform: translate(-50%, -50%);" on:mousedown|stopPropagation={(e) => e.button === 0 && onActionDrag(e, p.action.id)}>
                 <div class="action-head">
                     {#if p.action.type === "action"}
-                        <Icon id={p.action.data.triggers?.length === 1 ? actionData[p.action.data.triggers[0]]?.icon : "actions"} size={0.9} white />
+                        <Icon id={p.action.data.triggers?.length === 1 ? (actionData as any)[p.action.data.triggers[0]]?.icon : "actions"} size={0.9} white />
                     {:else if typeof p.action.data?.index === "number"}
                         {p.action.data.index + 1}
                     {/if}

@@ -21,19 +21,19 @@
 
     const DEFAULT_CONDITIONS: { [key: string]: Condition } = { showItem: [] }
 
-    let edit = $activeEdit
-    let showId = $activeShow?.id || ""
-    let ref = getLayoutRef(showId)
-    let slideId = ref[edit.slide || 0]?.id || ""
+    const edit = $activeEdit
+    const showId = $activeShow?.id || ""
+    const ref = getLayoutRef(showId)
+    const slideId = ref[edit.slide || 0]?.id || ""
 
     const stageElem = obj.contextElem?.classList.contains("stage_item") ? obj.contextElem : obj.contextElem?.closest(".stage_item")
     const isStage = !!stageElem
     const isOverlay = edit.type === "overlay"
     const isTemplate = edit.type === "template"
 
-    let itemIndex = isStage ? (stageElem.id || $activeStage.items[0]) : Number(edit.items[0] || 0)
+    let itemIndex = isStage ? stageElem.id || $activeStage.items[0] : Number(edit.items[0] || 0)
     let slide = isStage ? $stageShows[$activeStage.id || ""] : isOverlay ? $overlays[edit.id!] : isTemplate ? $templates[edit.id!] : $showsCache[showId]?.slides?.[slideId]
-    let item = slide?.items[itemIndex]
+    let item = (slide?.items as any)?.[itemIndex]
     let itemText = getItemText(item)
 
     let conditions = item?.conditions || clone(DEFAULT_CONDITIONS)
@@ -42,7 +42,7 @@
     function updateItemIndex(e: any) {
         itemIndex = isStage ? e.detail : Number(e.detail)
         slide = isStage ? $stageShows[$activeStage.id || ""] : isOverlay ? $overlays[edit.id!] : isTemplate ? $templates[edit.id!] : $showsCache[showId]?.slides?.[slideId]
-        item = slide?.items[itemIndex]
+        item = (slide?.items as any)?.[itemIndex]
         itemText = getItemText(item)
 
         conditions = item?.conditions || clone(DEFAULT_CONDITIONS)
@@ -69,7 +69,7 @@
             const isVariable = text.includes("{$") || text.includes("{variable_")
             setLikelyValue(isVariable ? "variable" : "dynamicValue", "element")
 
-            let valueId = text.replace("{", "").replace("}", "")
+            const valueId = text.replace("{", "").replace("}", "")
             // if (isVariable) valueId = valueId.replace("$", "").replace("variable_", "")
             // const variableId = keysToID($variables).find((a) => getVariableNameId(a.name) === valueId)?.id || ""
             // setLikelyValue(isVariable ? variableId : valueId, "elementId")

@@ -623,7 +623,7 @@ export async function checkNextAfterMedia(endedId: string, type: "media" | "audi
     if (type === "media" || type === "audio") {
         const showMedia = _show(slideOut.id).media().get()
         // find all matching paths because some slides with same background might have different media ids
-        let allMediaIds: string[] = []
+        const allMediaIds: string[] = []
         for (const m of showMedia) {
             const localPath = await downloadOnlineMedia(m.path)
             if (localPath === endedId) allMediaIds.push(m.key)
@@ -867,8 +867,8 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
         }
 
         if (dynamicId.startsWith("timer_")) {
-            let min = dynamicId.startsWith("timer_m_")
-            let sec = dynamicId.startsWith("timer_s_")
+            const min = dynamicId.startsWith("timer_m_")
+            const sec = dynamicId.startsWith("timer_s_")
             const nameId = dynamicId.slice(min || sec ? 8 : 6)
             const timer = keysToID(get(timers)).find((a) => getVariableNameId(a.name) === nameId)
             if (!timer) return min || sec ? "00" : "00:00"
@@ -900,8 +900,8 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
                 if (!timer?.overflow) return false
                 if (currentTime < 0) return true
                 if (timer.type !== "counter") return false
-                let start = timer.start || 0
-                let end = timer.end || 0
+                const start = timer.start || 0
+                const end = timer.end || 0
                 if (start < end) return currentTime > end
                 return currentTime < end
             }
@@ -961,7 +961,7 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
         const audioTime = (isOutputWin ? get(dynamicValueData).audioTime : activeAudio?.currentTime) || 0
         const audioDuration = (isOutputWin ? get(dynamicValueData).audioDuration : activeAudio?.duration) || 0
 
-        let projectIndex = get(projects)[get(activeProject) || ""]?.shows?.findIndex((a) => a.id === showId) ?? -1
+        const projectIndex = get(projects)[get(activeProject) || ""]?.shows?.findIndex((a) => a.id === showId) ?? -1
         // if (projectIndex < 0) projectIndex = get(activeShow)?.index ?? -2
         const projectRef = { id: get(activeProject) || "", index: projectIndex }
 

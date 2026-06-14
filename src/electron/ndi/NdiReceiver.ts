@@ -7,7 +7,7 @@ const loadGrandiose = async () => {
     try {
         return await import("grandiose")
     } catch (err) {
-        if (!warned) console.warn("NDI not available:", err.message)
+        if (!warned) console.warn("NDI not available:", (err as Error).message)
         warned = true
         return null
     }

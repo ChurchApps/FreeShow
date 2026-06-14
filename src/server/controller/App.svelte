@@ -33,10 +33,10 @@
     let thumbnailInterval: any = null
     let frameReceived = true
     $: if (draw && !thumbnailInterval) thumbnailInterval = setInterval(requestThumbnail, 800)
-        else if (thumbnailInterval) {
-            clearInterval(thumbnailInterval)
-            thumbnailInterval = null
-        } 
+    else if (thumbnailInterval) {
+        clearInterval(thumbnailInterval)
+        thumbnailInterval = null
+    }
 
     function requestThumbnail() {
         if (!outputId || !frameReceived) return

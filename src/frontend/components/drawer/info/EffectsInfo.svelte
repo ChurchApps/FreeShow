@@ -1,7 +1,7 @@
 <script lang="ts">
 </script>
 
-<div class="scroll" />
+<div class="scroll"></div>
 
 <!-- <Button style="width: 100%;" on:click={setExampleEffects} center dark>
     <Icon id="reset" right />

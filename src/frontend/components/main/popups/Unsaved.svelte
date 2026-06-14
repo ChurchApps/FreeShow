@@ -11,9 +11,9 @@
     }
 
     function keydown(e: KeyboardEvent) {
-        if (actions[e.key]) {
+        if ((actions as any)[e.key]) {
             e.preventDefault()
-            actions[e.key]()
+            ;(actions as any)[e.key]()
         }
     }
 

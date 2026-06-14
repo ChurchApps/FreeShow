@@ -29,7 +29,8 @@ export async function setPlayingState(data: NowPlayingData) {
     // create album art cover BEFORE converting dynamic values
     const filePathCover = join(audioFolder, fileNameImage)
     const cover = metadata?.picture?.[0]
-    const buffer = cover?.data
+    // music-metadata v11 returns picture data as Uint8Array; wrap it so the Buffer-based image handling below is unchanged
+    const buffer = cover?.data ? Buffer.from(cover.data) : undefined
     let coverBuffer: Buffer | undefined
     if (!buffer) {
         if (doesPathExist(filePathCover)) {
@@ -67,9 +68,9 @@ const dynamicValues = ["{artist}", "{title}", "{album}", "{year}", "{artwork_pat
 async function convertDynamicValues(data: NowPlayingData, metadata: ICommonTagsResult | null, coverBuffer: Buffer | undefined) {
     if (!data.format) data.format = `{artist} - {title} - {album}`
 
-    dynamicValues.forEach((value) => {
-        data.format = data.format.replaceAll(value, replaceValue(value))
-    })
+    // single-pass replacement: a substituted value (e.g. a title containing "{album}") must not be re-substituted
+    const tokenPattern = new RegExp(dynamicValues.map((token) => token.replace(/[{}]/g, "\\$&")).join("|"), "g")
+    data.format = data.format.replace(tokenPattern, (match) => replaceValue(match))
 
     return data.format
 

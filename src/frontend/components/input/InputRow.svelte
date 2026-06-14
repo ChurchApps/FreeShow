@@ -8,7 +8,7 @@
 </script>
 
 <div class="row" style={$$props.style || null}>
-    <slot />
+    <slot></slot>
 
     {#if arrow}
         <MaterialButton style="padding: 0.75rem;min-width: 50px;" title={open ? "actions.close" : "main.open"} on:click={() => (open = !open)}>
@@ -23,7 +23,7 @@
 
 {#if arrow && open}
     <div class="menu">
-        <slot name="menu" />
+        <slot name="menu"></slot>
     </div>
 {/if}
 

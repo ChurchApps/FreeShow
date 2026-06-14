@@ -67,12 +67,14 @@ Head over to [FreeShow on Transifex](https://app.transifex.com/nettbiter/freesho
 You are welcome to contribute to the code!
 
 1. Clone the code in this repo
-2. Install [Node.js](https://nodejs.org/en/download/)
-3. Install [Python 3.12](https://www.python.org/downloads/), and the [`setuptools`](https://pypi.org/project/setuptools/) package
-4. On Windows, download [Visual Studio](https://visualstudio.microsoft.com/downloads/) and install "Desktop development with C++", also select the "Windows 10 SDK"
-5. On Linux, install the following library: `sudo apt-get install libfontconfig1-dev`
+2. Install [Node.js](https://nodejs.org/en/download/) (v22.12 or newer)
+3. Install [Python 3.12](https://www.python.org/downloads/), and the [`setuptools`](https://pypi.org/project/setuptools/) package (on **macOS** use Python 3.11)
+4. On Windows, download [Visual Studio](https://visualstudio.microsoft.com/downloads/) and install "Desktop development with C++", also select the "Windows 10/11 SDK"
+5. On Linux, install the required libraries: `sudo apt-get install libfontconfig1-dev uuid-dev libltc-dev`
 6. In the terminal, run: `npm install`
 7. To start the app, run: `npm start`
+
+For full per-platform build, testing, and packaging instructions (Linux / macOS / Windows 10/11), see **[BUILDING.md](BUILDING.md)**.
 
 ## Join us on Slack
 

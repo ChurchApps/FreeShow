@@ -8,7 +8,8 @@
     // props
     export let items
     export let height = "100%"
-    export let itemHeight = undefined
+    /** @type number | null */
+    export let itemHeight = null
     /** @type number | null */
     export let activeIndex = null
 
@@ -43,7 +44,7 @@
     export let end = 0
 
     // local state
-    let height_map = []
+    const height_map = []
     let rows
     let viewport
     let contents

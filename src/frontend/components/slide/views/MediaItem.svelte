@@ -156,13 +156,13 @@
 
     $: playbackRate = item.speed ?? 1
 
-    let shouldLoop = item.loop !== false
+    const shouldLoop = item.loop !== false
 </script>
 
 {#if mediaPath}
     {#if ($currentWindow || preview) && getMediaType(getExtension(mediaPath)) === "video"}
         {#if item.fit === "blur"}
-            <video bind:this={videoBlurElem} src={encodeFilePath(mediaPath)} style="{mediaStyleBlurString}{mediaStyleCombinedString}" bind:playbackRate muted autoplay loop={shouldLoop} />
+            <video bind:this={videoBlurElem} src={encodeFilePath(mediaPath)} style="{mediaStyleBlurString}{mediaStyleCombinedString}" bind:playbackRate muted autoplay loop={shouldLoop}></video>
         {/if}
         <video bind:this={videoElem} src={encodeFilePath(mediaPath)} style="{mediaStyleString}{mediaStyleCombinedString}" bind:playbackRate muted={mirror || item.muted} volume={AudioPlayer.getVolume(null, $volume)} autoplay loop={shouldLoop}>
             <track kind="captions" />

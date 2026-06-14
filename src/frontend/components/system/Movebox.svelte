@@ -94,11 +94,11 @@
 
 <section bind:this={moveboxElem} class="hideFromAutosize">
     {#each sides as line}
-        <div class="line {line}l" class:active style="{line === 'n' || line === 's' ? 'height' : 'width'}: {active ? 25 : 50}px;" />
+        <div class="line {line}l" class:active style="{line === 'n' || line === 's' ? 'height' : 'width'}: {active ? 25 : 50}px;"></div>
     {/each}
     {#each corners as square}
         {#if !onlyCorners || square.length > 1}
-            <div on:mousedown={() => openToolsTab.set("item")} on:mouseenter={(e) => syncHandleCursor(e, square)} on:mousemove={(e) => syncHandleCursor(e, square)} class="square {square}" class:active style="width: {10 / ratio}px; cursor: {getResizeCursor(square)};" />
+            <div on:mousedown={() => openToolsTab.set("item")} on:mouseenter={(e) => syncHandleCursor(e, square)} on:mousemove={(e) => syncHandleCursor(e, square)} class="square {square}" class:active style="width: {10 / ratio}px; cursor: {getResizeCursor(square)};"></div>
         {/if}
     {/each}
     <div class="rotate" style="width: {8 / ratio}px;--line-width: {3 / ratio}px;" class:active></div>

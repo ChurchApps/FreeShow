@@ -102,7 +102,7 @@ export function convertProPresenter(data: any) {
             })
 
             layouts.forEach((layout: any, i: number) => {
-                let layoutId = i === 0 ? layoutID : layout.id
+                const layoutId = i === 0 ? layoutID : layout.id
                 show.layouts[layoutId] = {
                     name: layout.name || translateText("example.default"),
                     notes: i === 0 ? song["@notes"] || "" : "",
@@ -562,7 +562,7 @@ function convertProToSlides(song: any) {
     const tempSlides: any[] = getSlides(song.cues || [])
     // console.log(tempArrangements, tempGroups, tempSlides)
 
-    let idMap = new Map<string, string>()
+    const idMap = new Map<string, string>()
 
     if (!tempArrangements.length) {
         tempArrangements.push({ groups: Object.keys(tempGroups), name: "" })
@@ -640,7 +640,7 @@ function convertProToSlides(song: any) {
     // TIMELINE
     const timelineCues = song.timeline?.cues || []
     if (timelineCues.length) {
-        let slideIndexMap: string[] = []
+        const slideIndexMap: string[] = []
         layouts[0].slides.forEach((slide) => {
             slideIndexMap.push(slide.id)
             if (slides[slide.id].children) slideIndexMap.push(...(slides[slide.id].children || []))

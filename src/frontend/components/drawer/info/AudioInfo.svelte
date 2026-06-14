@@ -17,7 +17,7 @@
     // export let optionsOpen: boolean
     let settingsOpened = false
 
-    function updateSpecial(value, key) {
+    function updateSpecial(value: any, key: any) {
         special.update((a) => {
             a[key] = value
             return a

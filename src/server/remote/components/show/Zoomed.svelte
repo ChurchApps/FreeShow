@@ -23,7 +23,7 @@
     <div bind:offsetWidth={slideWidth} bind:offsetHeight={slideHeight} class="slide" class:hideOverflow class:checkered style="{$$props.style || ''}background-color: {background};aspect-ratio: {resolution.width}/{resolution.height};">
         <!-- Use transform scale for cross-browser support (Safari/Firefox do not support CSS zoom) -->
         <span style="display: inline-block; width: {baseWidth}px; height: {baseHeight}px; transform: scale({isFinite(ratio) && ratio > 0 ? ratio : 1}); transform-origin: top left; will-change: transform;">
-            <slot />
+            <slot></slot>
         </span>
     </div>
 </div>

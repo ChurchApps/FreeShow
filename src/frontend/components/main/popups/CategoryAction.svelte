@@ -4,14 +4,14 @@
     import MaterialDropdown from "../../inputs/MaterialDropdown.svelte"
     import Tip from "../Tip.svelte"
 
-    let selectedCategory = $popupData?.id
+    const selectedCategory = $popupData?.id
     onMount(() => {
         popupData.set({})
     })
 
     let currentAction = $categories[selectedCategory]?.action || ""
 
-    let actionOptions = Object.entries($actions)
+    const actionOptions = Object.entries($actions)
         .map(([id, a]) => ({ id, name: a.name }))
         .sort((a, b) => a.name?.localeCompare(b.name))
 

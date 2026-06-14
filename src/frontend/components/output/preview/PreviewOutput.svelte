@@ -1,7 +1,7 @@
 <script lang="ts">
     import { livePrepare, outputs, styles } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
-    //import { currentWindow, outputs, styles } from "../../../stores"
+    // import { currentWindow, outputs, styles } from "../../../stores"
     import { getResolution } from "../../helpers/output"
     import { getStyleResolution } from "../../slide/getStyleResolution"
     import StageLayout from "../../stage/StageLayout.svelte"

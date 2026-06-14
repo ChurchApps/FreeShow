@@ -46,7 +46,7 @@
 
         if (isItem) {
             // WIP duplicate of SetTime.svelte ++
-            let indexes = $activeEdit.items
+            const indexes = $activeEdit.items
 
             value = updateSpecific(slideItemTransition, key, value, reset)
             slideItemTransition = value
@@ -59,7 +59,7 @@
             })
 
             if (indexes.some((i) => !slideItems[i])) return
-            let actions = indexes.map((i) => slideItems[i].actions)
+            const actions = indexes.map((i) => slideItems[i].actions)
 
             if ($activeEdit.type === "overlay" || $activeEdit.type === "template") {
                 history({
@@ -85,12 +85,12 @@
             if (id === "text") slideTextTransition = value
             else slideMediaTransition = value
 
-            let globalValues = $transitionData[id]
+            const globalValues = $transitionData[id]
             if (value.type === globalValues.type && value.duration === globalValues.duration && value.easing === globalValues.easing && !specificScenatios.find((a) => value[a])) value = undefined
 
-            let type = id === "text" ? "transition" : "mediaTransition"
-            let indexes = $selected.data.map((a) => a.index)
-            let override = "show#" + $activeShow?.id + "layout#" + _show().get("settings.activeLayout") + "indexes#" + indexes.join(",") + type
+            const type = id === "text" ? "transition" : "mediaTransition"
+            const indexes = $selected.data.map((a) => a.index)
+            const override = "show#" + $activeShow?.id + "layout#" + _show().get("settings.activeLayout") + "indexes#" + indexes.join(",") + type
             history({ id: "SHOW_LAYOUT", newData: { key: type, data: value, indexes }, location: { page: "show", override } })
 
             setTimeout(() => {
@@ -118,22 +118,22 @@
         }
 
         // change all matches if changing "in"
-        let changeSpecific = [selectedSpecific]
+        const changeSpecific = [selectedSpecific]
         if (selectedSpecific === "in") {
             specificScenatios
                 .filter((a) => a !== selectedSpecific)
                 .forEach((sKey) => {
-                    if (!data[sKey] || JSON.stringify(data[sKey]) === JSON.stringify(data[selectedSpecific])) changeSpecific.push(sKey)
+                    if (!(data as any)[sKey] || JSON.stringify((data as any)[sKey]) === JSON.stringify((data as any)[selectedSpecific])) changeSpecific.push(sKey)
                 })
         }
 
         // set data
         changeSpecific.forEach((sKey) => {
             if (reset) {
-                delete data[sKey]
+                delete (data as any)[sKey]
             } else {
-                if (!data[sKey]) data[sKey] = copyTransition(data)
-                data[sKey][key] = value
+                if (!(data as any)[sKey]) (data as any)[sKey] = copyTransition(data)
+                ;(data as any)[sKey][key] = value
             }
         })
 
@@ -150,17 +150,17 @@
     }
 
     function copyTransition(data: Transition) {
-        let delay = data.delay
+        const delay = data.delay
         data = { type: data.type, duration: data.duration, easing: data.easing }
         if (delay) data.delay = delay
         return clone(data)
     }
 
-    let isItem: boolean = $popupData.action === "transition"
-    let isStyle: boolean = $popupData.action === "style_transition" || $popupData.id === "style"
-    let popupDataId: string = $popupData.id
-    let isSlide: boolean = $selected.id === "slide"
-    let ref = isSlide || isItem ? getLayoutRef() : []
+    const isItem: boolean = $popupData.action === "transition"
+    const isStyle: boolean = $popupData.action === "style_transition" || $popupData.id === "style"
+    const popupDataId: string = $popupData.id
+    const isSlide: boolean = $selected.id === "slide"
+    const ref = isSlide || isItem ? getLayoutRef() : []
 
     onMount(() => {
         if ($popupData.trigger) return
@@ -169,8 +169,8 @@
 
     // SLIDE/ITEM TRANSITION
 
-    let slideIndex = isItem ? $activeEdit.slide : $selected.data?.[0]?.index
-    let slideRef = ref?.[slideIndex] || {}
+    const slideIndex = isItem ? $activeEdit.slide : $selected.data?.[0]?.index
+    const slideRef = ref?.[slideIndex] || {}
 
     let slideItems: any[] = []
     if (isItem) {
@@ -178,10 +178,10 @@
         else if ($activeEdit.type === "template") slideItems = $templates[$activeEdit.id || ""]?.items || []
         else slideItems = _show().get("slides")?.[slideRef.id]?.items || []
     }
-    let firstItem = slideItems[$activeEdit.items[0]] || {}
+    const firstItem = slideItems[$activeEdit.items[0]] || {}
     $: slideItemTransition = isItem ? clone(firstItem.actions?.transition || $transitionData.text || clone(DEFAULT_TRANSITIONS.text)) : {}
 
-    let firstSlide = slideRef.data || {}
+    const firstSlide = slideRef.data || {}
     $: slideTextTransition = isSlide ? clone(firstSlide.transition || $transitionData.text || clone(DEFAULT_TRANSITIONS.text)) : {}
     $: slideMediaTransition = isSlide ? clone(firstSlide.mediaTransition || $transitionData.media || clone(DEFAULT_TRANSITIONS.media)) : {}
 
@@ -252,7 +252,7 @@
         const defaults = DEFAULT_TRANSITIONS[selectedType]
 
         Object.keys(defaults).forEach((key) => {
-            let defaultValue = defaults[key]
+            const defaultValue = (defaults as any)[key]
             // @ts-ignore
             changeTransition(selectedType, key, isSlide || isItem ? $transitionData[selectedType][key] || defaultValue : defaultValue, true)
         })
@@ -311,7 +311,7 @@
         {@const isActive = type.id === currentTransition.type}
         <MaterialButton showOutline={isActive} {isActive} style={type.id === "none" ? "font-style: italic;" : ""} on:click={() => changeTransition(selectedType, "type", type.id)}>
             <svg viewBox="0 0 100 100" width="{iconSize}pt" height="{iconSize}pt">
-                {@html icons[type.id]}
+                {@html (icons as any)[type.id]}
             </svg>
             <T id={type.name} />
         </MaterialButton>

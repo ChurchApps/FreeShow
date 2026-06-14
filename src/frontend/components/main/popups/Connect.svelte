@@ -48,10 +48,10 @@
     }
 
     let qrImg = ""
-    function generateQR(text) {
+    function generateQR(text: any) {
         if ((!useHostname && ip === "localhost") || id === "companion") return
 
-        var qr = qrcode(0, "L")
+        const qr = qrcode(0, "L")
         qr.addData(text)
         qr.make()
         qrImg = qr.createImgTag(8, 8)
@@ -74,23 +74,23 @@
 
     // output
     $: outputsList = getList(clone($outputs))
-    function getList(outputs) {
-        let list = keysToID(outputs).filter((a) => a.enabled === true)
+    function getList(outputs: any) {
+        const list = keysToID(outputs).filter((a) => a.enabled === true)
         return sortByName(list).map((a) => ({ label: a.name, value: a.id }))
     }
 
     function toggleAudio(e: any) {
-        let value = e.detail
+        const value = e.detail
         updateData(value, "sendAudio")
         if (value) AudioAnalyser.recorderActivate()
     }
 
     function updateData(e: any, key: string) {
-        let value = e.detail ?? e
+        const value = e.detail ?? e
 
         serverData.update((a) => {
             if (!a[id]) a[id] = {}
-            a[id][key] = value
+            ;(a as any)[id][key] = value
 
             return a
         })

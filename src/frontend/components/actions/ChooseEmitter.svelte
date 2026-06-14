@@ -11,7 +11,7 @@
     import MaterialButton from "../inputs/MaterialButton.svelte"
     import MaterialDropdown from "../inputs/MaterialDropdown.svelte"
     import MaterialTextInput from "../inputs/MaterialTextInput.svelte"
-    import { API_emitter } from "./api"
+    import type { API_emitter } from "./api"
     import { formatData } from "./emitters"
     import MidiValues from "./MidiValues.svelte"
 
@@ -26,48 +26,48 @@
 
     $: emitter = $emitters[value.emitter]
 
-    let dispatch = createEventDispatcher()
+    const dispatch = createEventDispatcher()
     function updateValue(key: string, v: any) {
         if (key === "emitter") {
             value.templateValues = []
             value.template = ""
         } else if (key === "template") {
-            let inputs = clone(emitter?.templates?.[v]?.inputs || [])
+            const inputs = clone(emitter?.templates?.[v]?.inputs || [])
             value.templateValues = inputs
         } else if (key === "data") {
             v = v.detail
         }
 
-        value[key] = v
+        ;(value as any)[key] = v
         dispatch("change", value)
     }
 
     function setTemplateValue(index: string | number, e: any, key = "value") {
-        let v = e.detail
+        const v = e.detail
 
         if (!value.templateValues) value.templateValues = clone(emitter?.templates?.[v]?.inputs || [])
 
-        let templateValues = value.templateValues || []
-        if (!templateValues[index]) templateValues[index] = { name: "", value: "" }
-        templateValues[index][key] = v
+        const templateValues = value.templateValues || []
+        if (!templateValues[index as any]) templateValues[index as any] = { name: "", value: "" }
+        ;(templateValues as any)[index][key] = v
         updateValue("templateValues", templateValues)
     }
     function setMidiTemplateValue(e: any) {
-        let values = e.detail?.values
+        const values = e.detail?.values
 
-        let templateValues = value.templateValues || []
+        const templateValues = value.templateValues || []
         if (!templateValues[0]) templateValues[0] = { name: "", value: "" }
         templateValues[0].value = values
         updateValue("templateValues", templateValues)
     }
 
     function createTemplateValue() {
-        let templateValues = value.templateValues || []
+        const templateValues = value.templateValues || []
         templateValues.push({ name: "", value: "" })
         updateValue("templateValues", templateValues)
     }
     function removeTemplateValue(index: string) {
-        let templateValues = value.templateValues || []
+        const templateValues = value.templateValues || []
         templateValues.slice(Number(index), 1)
         updateValue("templateValues", templateValues)
     }
@@ -150,7 +150,8 @@
 
         {#if emitter?.type !== "midi"}
             {#each templateInputs as input, i}
-                {@const stringValue = typeof (value.templateValues?.[i] || input).value === "string" ? (value.templateValues?.[i] || input).value : ""}
+                {@const rawValue = (value.templateValues?.[i] || input).value}
+                {@const stringValue = typeof rawValue === "string" ? rawValue : ""}
 
                 <MaterialTextInput label={input.name} disabled={!!input.value} placeholder={translateText("variables.value")} value={stringValue} on:change={(e) => setTemplateValue(i, e)} />
             {/each}

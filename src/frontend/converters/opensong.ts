@@ -95,7 +95,7 @@ function createSlides({ lyrics, presentation, backgrounds }: Song) {
     // split into groups: if square-bracket group markers exist, split at each '[' (keep '[' with group)
     let splittedgroups = lyrics.includes("[") ? lyrics.split(/(?=\[)/) : [lyrics]
 
-    // Mimic Opensong handling of duplicate [] tags. 
+    // Mimic Opensong handling of duplicate [] tags.
     // Combine groups with identical [] tags into the first occurrence (remove extra [] markers and later groups)
     if (splittedgroups.length > 1) {
         const seen: Record<string, number> = {}
@@ -133,10 +133,10 @@ function createSlides({ lyrics, presentation, backgrounds }: Song) {
     splittedgroups.forEach((slide) => {
         // Trim each line and remove empty lines (keep significant content only)
         const groupText = slide
-            .split('\n')
+            .split("\n")
             .map((l) => l.trim())
             .filter((l) => l.length)
-            .join('\n')
+            .join("\n")
             .replaceAll("|", "\n")
 
         // Determine group from first line: take text between '[' and ']', or from '[' to end-of-line if no closing ']'.
@@ -161,9 +161,7 @@ function createSlides({ lyrics, presentation, backgrounds }: Song) {
             if (i === 0 && lines[0].includes("[")) lines.shift()
 
             // extract comment lines (starting with ';'), to add as slide notes
-            const commentData = lines
-                .filter((l: string) => l.trim().startsWith(";"))
-                .map((l: string) => l.trim().slice(1).trim())
+            const commentData = lines.filter((l: string) => l.trim().startsWith(";")).map((l: string) => l.trim().slice(1).trim())
 
             const contentLines = lines.filter((l) => !l.trim().startsWith(";"))
 

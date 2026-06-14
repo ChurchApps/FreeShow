@@ -16,8 +16,8 @@
         cams = sortByName(cameras)
     })
 
-    let dispatch = createEventDispatcher()
-    function click(event, cam) {
+    const dispatch = createEventDispatcher()
+    function click(event: any, cam: any) {
         cameraManager.clearBadCamera(cam.id)
         dispatch("click", { event, cam })
     }

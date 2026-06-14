@@ -25,11 +25,11 @@
             })
         }
 
-        let value = e?.target?.value || e
+        const value = e?.target?.value || e
         // if (key === "shortcut") value = e.detail.name
         // if (value === "—") value = ""
 
-        history({ id: "UPDATE", newData: { key, data: value }, oldData: { id: id }, location: { page: "none", id: "global_group", override: "group_" + key } })
+        history({ id: "UPDATE", newData: { key, data: value }, oldData: { id }, location: { page: "none", id: "global_group", override: "group_" + key } })
 
         // if name ends with space and a single digit, alert that numbers are auto assigned
         if (key === "name" && $groupNumbers && /\s\d$/.test(value)) {
@@ -54,7 +54,7 @@
         //     return
         // }
 
-        let value = { group: "", groupColor: "#ffffff" }
+        const value = { group: "", groupColor: "#ffffff" }
         history({ id: "UPDATE", newData: { data: { name: value.group, color: value.groupColor } }, location: { page: "none", id: "global_group" } })
         // value.group = ""
     }

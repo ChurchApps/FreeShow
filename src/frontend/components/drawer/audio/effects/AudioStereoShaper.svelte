@@ -75,7 +75,7 @@
 <div class="shaper-container" style="--accent: #52adad;" class:disabled>
     <MaterialToggleSwitch label="settings.enabled" checked={config.enabled} on:change={handleEnable} />
 
-    <div style="height: 5px;" />
+    <div style="height: 5px;"></div>
 
     <!-- Stereo field visualisation -->
     <div class="viz-wrap" class:viz-disabled={!config.enabled}>
@@ -105,7 +105,7 @@
         </div>
     </div>
 
-    <div style="height: 8px;" />
+    <div style="height: 8px;"></div>
 
     <InputRow>
         <MaterialNumberInput label="audio.width" value={config.width} min={0} max={200} step={1} maxDecimals={0} showSlider sliderValues={{ min: 0, max: 200, step: 1 }} {disabled} on:change={(e) => handleChange("width", e.detail)} />

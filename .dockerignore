@@ -1,0 +1,21 @@
+# Keep the Docker build context small and force a clean install/build in the image.
+.git
+node_modules
+build
+dist
+out
+public/build
+public/*.js.map
+snap
+
+# generated tsconfigs (created by scripts/preBuild.js)
+config/typescript/tsconfig.*.prod.json
+
+# local + CI noise
+*.log
+test-output
+test-results
+.DS_Store
+.idea
+.vscode
+*.env

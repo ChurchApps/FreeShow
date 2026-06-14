@@ -43,7 +43,7 @@
 
         // if preview is fullscreen, don't set ratio
         // temporary set to always fullscreen as the scaling does not always work in the preview, if there's video streams, etc.
-        let isFullscreen = true || (webview.closest(".previewOutput")?.offsetWidth || 0) > 450
+        const isFullscreen = true || (webview.closest(".previewOutput")?.offsetWidth || 0) > 450
         const inverse = isFullscreen ? 100 : Math.round(100 / ratio)
 
         if (loaded) setStyle()
@@ -157,7 +157,7 @@
             <p class="url" style="zoom: {ratio};">{formatUrl(url)}</p>
         </div>
     {/if}
-    <webview id="webview" src={parsedSrc} bind:this={webview} />
+    <webview id="webview" src={parsedSrc} bind:this={webview}></webview>
 </div>
 
 <style>

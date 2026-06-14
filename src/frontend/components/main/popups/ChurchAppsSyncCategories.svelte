@@ -22,7 +22,7 @@
             if (currentlySelected.indexOf(id) === -1) {
                 a.churchApps = { ...a.churchApps, syncCategories: [...currentlySelected, id] }
             } else {
-                a.churchApps = { ...a.churchApps, syncCategories: currentlySelected.filter((c) => c !== id) }
+                a.churchApps = { ...a.churchApps, syncCategories: currentlySelected.filter((c: any) => c !== id) }
             }
 
             return a

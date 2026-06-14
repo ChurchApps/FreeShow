@@ -53,7 +53,7 @@
         if (timeout) clearTimeout(timeout)
     }
 
-    function keydown(e) {
+    function keydown(e: any) {
         if (e.key === "Enter" || e.key === "Tab") {
             if ($activeRename?.includes("project_") && $activeProject === $activeRename.slice($activeRename.indexOf("_") + 1)) {
                 setTimeout(() => projectView.set(false), 20)
@@ -72,15 +72,15 @@
 
     const dispatch = createEventDispatcher()
     function change(e: any) {
-        let value = (e.target?.value || "").trim()
+        const value = (e.target?.value || "").trim()
         if (allowEmpty || value.length) dispatch("edit", { value, id })
 
         if (!initiallyEmpty || id.includes("category")) return
 
-        let objectId = id.slice(id.indexOf("_") + 1)
+        const objectId = id.slice(id.indexOf("_") + 1)
         // open editor if no name (probably just created)
         if (id.includes("template") || id.includes("overlay") || id.includes("effect")) {
-            let type: any = id.slice(0, id.indexOf("_"))
+            const type: any = id.slice(0, id.indexOf("_"))
             activeEdit.set({ type, id: objectId, items: [] })
             activePage.set("edit")
         }

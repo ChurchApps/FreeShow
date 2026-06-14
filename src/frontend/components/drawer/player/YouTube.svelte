@@ -30,7 +30,7 @@
         }
     }
 
-    let dispatch = createEventDispatcher()
+    const dispatch = createEventDispatcher()
     let player = null
     let loaded = false
     let getDurationInterval = null

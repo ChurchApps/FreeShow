@@ -79,10 +79,10 @@
         if (!scrollElem) return
         if (await hasNewerUpdate("SHOWS_SCROLL_OFFSET", 10)) return
 
-        let output = $outputs[activeOutputs[0]] || {}
+        const output = $outputs[activeOutputs[0]] || {}
         if (showId === output.out?.slide?.id && activeLayout === output.out?.slide?.layout) {
-            let columns = mode === "grid" ? ($slidesOptions.columns > 2 ? $slidesOptions.columns : 0) : 1
-            let index = Math.max(0, (output.out.slide.index || 0) - columns)
+            const columns = mode === "grid" ? ($slidesOptions.columns > 2 ? $slidesOptions.columns : 0) : 1
+            const index = Math.max(0, (output.out.slide.index || 0) - columns)
             offset = ((scrollElem?.querySelector(".grid")?.children[index] as HTMLElement)?.offsetTop || 5) - 5
         }
     }
@@ -95,29 +95,29 @@
 
         customActionActivation("slide_click")
 
-        let slideRef = _show(showId).layouts([activeLayout]).ref()[0] || []
+        const slideRef = _show(showId).layouts([activeLayout]).ref()[0] || []
 
-        let data = slideRef[index]?.data
+        const data = slideRef[index]?.data
         checkActionTrigger(data, index)
         // allow custom actions to trigger first
         setTimeout(() => {
             // get line
-            let outputId = getActiveOutputs($outputs, true, true, true)[0]
-            let currentOutput = $outputs[outputId] || {}
-            let outSlide = currentOutput.out?.slide || null
-            let amountOfLinesToShow = getFewestOutputLines()
-            let showSlide = _show(showId).slides([slideRef[index]?.id]).get()?.[0]
+            const outputId = getActiveOutputs($outputs, true, true, true)[0]
+            const currentOutput = $outputs[outputId] || {}
+            const outSlide = currentOutput.out?.slide || null
+            const amountOfLinesToShow = getFewestOutputLines()
+            const showSlide = _show(showId).slides([slideRef[index]?.id]).get()?.[0]
             let line = 0
             if (outSlide && outSlide.id === showId && outSlide.layout === activeLayout && outSlide.index === index && amountOfLinesToShow > 0) {
                 line = (outSlide.line || 0) + amountOfLinesToShow
 
-                let slideLines = showSlide ? getItemWithMostLines(showSlide) : 0
+                const slideLines = showSlide ? getItemWithMostLines(showSlide) : 0
                 // loop back to line start
                 if (line >= slideLines) line = 0
             }
 
             // get item click reveal
-            const clickRevealItems = (showSlide?.items || []).filter((a) => a?.clickReveal)
+            const clickRevealItems = (showSlide?.items || []).filter((a: any) => a?.clickReveal)
             const isRevealed = clickRevealItems.length ? !!outSlide?.itemClickReveal : true
             let itemClickReveal = false
             if (outSlide && outSlide.id === showId && outSlide.layout === activeLayout && outSlide.index === index && clickRevealItems.length) {
@@ -126,13 +126,13 @@
             }
 
             // get lines reveal
-            const linesRevealItems = (showSlide?.items || []).filter((a) => a?.lineReveal)
+            const linesRevealItems = (showSlide?.items || []).filter((a: any) => a?.lineReveal)
             let revealCount = outSlide?.revealCount ?? 0
             if (outSlide && outSlide.id === showId && outSlide.layout === activeLayout && outSlide.index === index && linesRevealItems.length && isRevealed) {
                 revealCount++
 
                 // loop back to start
-                let maxLines = getItemWithMostLines({ items: linesRevealItems })
+                const maxLines = getItemWithMostLines({ items: linesRevealItems })
                 if (revealCount > maxLines) revealCount = 0
             } else revealCount = 0
 
@@ -162,7 +162,7 @@
     let endIndex: null | number = null
     $: {
         if (layoutSlides.length) {
-            let index = layoutSlides.findIndex((a) => a.end === true && a.disabled !== true)
+            const index = layoutSlides.findIndex((a: any) => a.end === true && a.disabled !== true)
             if (index >= 0) endIndex = index
             else endIndex = null
         } else endIndex = null
@@ -194,18 +194,18 @@
         // const regEx = /[^a-zA-Z\s]+/
 
         let capitalized = false
-        let slides = _show(showId).get("slides") || {}
+        const slides = _show(showId).get("slides") || {}
         Object.keys(slides).forEach((slideId) => {
-            let slide = slides[slideId]
+            const slide = slides[slideId]
 
-            slide?.items?.forEach((item) => {
+            slide?.items?.forEach((item: any) => {
                 if (!item?.lines) return
 
-                item.lines.forEach((line) => {
+                item.lines.forEach((line: any) => {
                     if (!Array.isArray(line?.text)) return
 
-                    line.text.forEach((text) => {
-                        let newValue = capitalize(text.value)
+                    line.text.forEach((text: any) => {
+                        const newValue = capitalize(text.value)
                         if (text.value !== newValue) capitalized = true
                         text.value = newValue
                     })
@@ -221,8 +221,8 @@
         })
 
         function capitalize(value: string) {
-            $special.capitalize_words.split(",").forEach((word) => {
-                let newWord = word.trim()
+            $special.capitalize_words.split(",").forEach((word: any) => {
+                const newWord = word.trim()
                 if (!newWord.length) return
 
                 // match whole words, respecting Unicode letters (accented characters)
@@ -256,7 +256,7 @@
             }, 300)
         }
     }
-    function keyup(e) {
+    function keyup(e: any) {
         if (e.altKey) return
 
         altTemp = false
@@ -273,36 +273,36 @@
     $: {
         activeSlides = []
         activeOutputs.forEach((a) => {
-            let currentOutput = $outputs[a]
+            const currentOutput = $outputs[a]
             if (!currentOutput || currentOutput.stageOutput) return
 
             // let currentStyle = $styles[currentOutput?.style || ""] || {}
-            let outSlide = currentOutput.out?.slide || $outputSlideCache[a] || {}
+            const outSlide = currentOutput.out?.slide || $outputSlideCache[a] || {}
 
             if (activeSlides[outSlide.index] || outSlide.id !== showId || outSlide.layout !== activeLayout) return
 
-            let ref = outSlide?.id === "temp" ? [{ temp: true, items: outSlide.tempItems, id: "" }] : _show(outSlide.id).layouts([outSlide.layout]).ref()[0] || []
-            let showSlide = outSlide.index !== undefined ? _show(outSlide.id).slides([ref[outSlide.index]?.id]).get()?.[0] : null
+            const ref = outSlide?.id === "temp" ? [{ temp: true, items: outSlide.tempItems, id: "" }] : _show(outSlide.id).layouts([outSlide.layout]).ref()[0] || []
+            const showSlide = outSlide.index !== undefined ? _show(outSlide.id).slides([ref[outSlide.index]?.id]).get()?.[0] : null
 
             // get progress of current line division
             // let amountOfLinesToShow: number = currentStyle.lines !== undefined ? Number(currentStyle.lines) : 0
-            let amountOfLinesToShow: number = getFewestOutputLines($outputs)
+            const amountOfLinesToShow: number = getFewestOutputLines($outputs)
             let lineIndex = 0
             let maxLines = 0
             if (amountOfLinesToShow > 0) {
-                let slideLines = showSlide ? getItemWithMostLines(showSlide) : null
+                const slideLines = showSlide ? getItemWithMostLines(showSlide) : null
 
                 maxLines = slideLines && amountOfLinesToShow < slideLines ? Math.ceil(slideLines / amountOfLinesToShow) : 0
 
-                let outputLine = amountOfLinesToShow && outSlide ? outSlide.line || 0 : null
-                let linesPercentage = slideLines && outputLine !== null ? outputLine / slideLines : 0
+                const outputLine = amountOfLinesToShow && outSlide ? outSlide.line || 0 : null
+                const linesPercentage = slideLines && outputLine !== null ? outputLine / slideLines : 0
                 lineIndex = maxLines !== null ? Math.floor(maxLines * linesPercentage) : 0
 
                 if (!maxLines) maxLines = 1
             }
 
             // lines reveal
-            const linesRevealItems = (showSlide?.items || []).filter((a) => a?.lineReveal)
+            const linesRevealItems = (showSlide?.items || []).filter((a: any) => a?.lineReveal)
             if (linesRevealItems.length) {
                 lineIndex = getFewestOutputLinesReveal($outputs) - 1
                 maxLines = getItemWithMostLines({ items: linesRevealItems })
@@ -318,7 +318,7 @@
         })
     }
 
-    let profile = getAccess("shows")
+    const profile = getAccess("shows")
     $: isLocked = currentShow?.locked || profile.global === "read" || profile[currentShow?.category || ""] === "read"
 
     function createSlide() {
@@ -368,13 +368,13 @@
             timeout = true
             if (lessonsTimeout) clearTimeout(lessonsTimeout)
 
-            let count = $lessonsLoaded[showId]
+            const count = $lessonsLoaded[showId]
             if (count === undefined) {
                 lessonsTimeout = setTimeout(async () => {
                     // might already be done (check first slide)
-                    let mediaId = layoutSlides[lazyLoader]?.background
-                    let mediaPath = currentShow.media?.[mediaId]?.path || ""
-                    let exists = await checkImage(mediaPath)
+                    const mediaId = layoutSlides[lazyLoader]?.background
+                    const mediaPath = currentShow.media?.[mediaId]?.path || ""
+                    const exists = await checkImage(mediaPath)
 
                     if (exists) {
                         // it exists before it's fully downloaded
@@ -397,7 +397,7 @@
                 return
             }
 
-            let downloaded = count.finished + count.failed
+            const downloaded = count.finished + count.failed
 
             // ensure media is loaded before initializing cache loading
             lazyLoader = downloaded
@@ -431,7 +431,7 @@
     }
 
     function checkImage(src: string) {
-        let isVideo = videoExtensions.includes(getExtension(src))
+        const isVideo = videoExtensions.includes(getExtension(src))
         let media: HTMLImageElement | HTMLVideoElement = new Image()
         if (isVideo) media = document.createElement("video")
 

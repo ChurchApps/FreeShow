@@ -170,14 +170,19 @@ export class LyricSearch {
     // ULTIMATE GUITAR
     private static ugHeaders = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
     }
 
     private static parseUGStore = (html: string) => {
         const match = html.match(/class=['"]js-store['"][^>]*data-content=['"]([^'"]+)['"]/)
         if (!match) return null
         try {
-            return JSON.parse(match[1].replace(/&quot;/g, '"').replace(/&#039;/g, "'").replace(/&amp;/g, "&"))
+            return JSON.parse(
+                match[1]
+                    .replace(/&quot;/g, '"')
+                    .replace(/&#039;/g, "'")
+                    .replace(/&amp;/g, "&")
+            )
         } catch {
             return null
         }
@@ -248,7 +253,7 @@ export class LyricSearch {
             rdquo: '"',
             hellip: "...",
             ndash: "-",
-            mdash: "-",
+            mdash: "-"
         }
 
         return text.replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);?/gi, (_, entity: string) => {

@@ -59,7 +59,7 @@
     $: layoutSlide = ref?.[$activeEdit.slide!]?.data || {}
     // get backgruond
     $: bgId = layoutSlide.background || null
-    let loadFullImage = false // true
+    const loadFullImage = false // true
 
     // get ghost background
     $: if (!bgId && !Slide?.settings?.backgroundImage) {
@@ -129,9 +129,9 @@
         let items = currentShow?.slides?.[slideId]?.items || []
         let values: string[] = []
         active.forEach((id) => {
-            let item = items[id]
+            const item = items[id]
             if (item) {
-                let styles = getStyles(item.style)
+                const styles = getStyles(item.style)
                 let textStyles = ""
 
                 Object.entries(newStyles).forEach(([key, value]) => (styles[key] = value.toString()))
@@ -188,7 +188,7 @@
             }, 300)
         }
     }
-    function keyup(e) {
+    function keyup(e: any) {
         if (e.altKey) return
 
         altTemp = false
@@ -267,12 +267,12 @@
         })
     )
 
-    let profile = getAccess("shows")
+    const profile = getAccess("shows")
     $: isGroupLocked = !!Slide?.locked // WIP get group slide
     $: isLocked = currentShow?.locked || isGroupLocked || profile.global === "read" || profile[currentShow?.category || ""] === "read"
 
     // remove overflow if scrollbars are flickering over 25 times per second
-    let hideOverflow = false
+    const hideOverflow = false
     // let changedTimes: number = 0
     // $: if (ratio) changedTimes++
     // $: if (!ratioTimeout && changedTimes > 2) startTimeout()
@@ -296,7 +296,7 @@
 
     // NOTES
 
-    let bottomHeight = 40
+    const bottomHeight = 40
 
     $: notes = Slide?.notes?.replaceAll("\n", "&nbsp;")
     $: notesVisible = !!notes // && !chordsMode
@@ -381,7 +381,7 @@
                         {#each Slide.items as item, index}
                             <!-- filter={layoutSlide.filterEnabled?.includes("foreground") ? layoutSlide.filter : ""} -->
                             <!-- backdropFilter={layoutSlide.filterEnabled?.includes("foreground") ? layoutSlide["backdrop-filter"] : ""} -->
-                            <Editbox backdropFilter={layoutSlide["backdrop-filter"] || ""} {item} {chordsMode} {chordsAction} ref={{ showId: currentShowId, id: Slide.id, origin: currentShow.origin }} {index} {ratio} bind:mouse />
+                            <Editbox backdropFilter={(layoutSlide as any)["backdrop-filter"] || ""} {item} {chordsMode} {chordsAction} ref={{ showId: currentShowId, id: Slide.id, origin: currentShow.origin }} {index} {ratio} bind:mouse />
                         {/each}
                     {/key}
                 </Zoomed>

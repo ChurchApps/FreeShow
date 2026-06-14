@@ -16,7 +16,7 @@
     export let addDisabled = false
     export let nothingText = true
 
-    let dispatch = createEventDispatcher()
+    const dispatch = createEventDispatcher()
     function openItem(id: string) {
         if (!allowOpen) return
         dispatch("open", id)
@@ -34,10 +34,10 @@
         <InputRow>
             {#if allowOpen}
                 <MaterialButton style="width: 100%;font-weight: normal;" title={translateText("titlebar.edit")} on:click={() => openItem(item.id)}>
-                    <slot {item} />
+                    <slot {item}></slot>
                 </MaterialButton>
             {:else}
-                <slot {item} />
+                <slot {item}></slot>
             {/if}
 
             <MaterialButton icon="delete" style="width: 40px;" title={translateText("actions.delete")} on:click={() => deleteItem(item.id)} white />

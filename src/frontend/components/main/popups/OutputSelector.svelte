@@ -24,7 +24,7 @@
 
     onMount(async () => {
         const displays = (await requestMain(Main.GET_DISPLAYS)) || []
-        let sortedScreens = displays.sort(sortScreensByPosition)
+        const sortedScreens = displays.sort(sortScreensByPosition)
         screens = sortedScreens.sort(internalFirst)
 
         // get min/max bounds
@@ -55,12 +55,12 @@
         })
     })
 
-    function internalFirst(a, b) {
+    function internalFirst(a: any, b: any) {
         return b.internal - a.internal
     }
-    function sortScreensByPosition(a, b) {
-        let aX = a.bounds.x
-        let bX = b.bounds.x
+    function sortScreensByPosition(a: any, b: any) {
+        const aX = a.bounds.x
+        const bX = b.bounds.x
 
         return aX - bX
     }

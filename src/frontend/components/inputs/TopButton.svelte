@@ -21,8 +21,8 @@
     }
 
     function openActiveShow() {
-        let showIsActive = $activeShow && ($activeShow.type || "show") === "show"
-        let noEditSlide = $activeEdit.slide === null || $activeEdit.slide === undefined
+        const showIsActive = $activeShow && ($activeShow.type || "show") === "show"
+        const noEditSlide = $activeEdit.slide === null || $activeEdit.slide === undefined
         if (showIsActive && !$activeEdit.id) openEdit()
         else if (showIsActive && noEditSlide) updateEditItem()
         else if (showIsActive && $activeEdit.showId && $activeEdit.showId !== $activeShow?.id) openEdit()
@@ -43,7 +43,7 @@
 </script>
 
 <!-- border-top-left-radius: 12px;border-top-right-radius: 12px; -->
-<MaterialButton style="border-radius: 0;border-bottom: 2px solid var(--primary);{label ? 'padding: 0.3em 1.2em;' : ''}" title={translateText(`menu._title_${id}${$special.numberKeys ? "" : ` [${keys[id]}]`}`, $dictionary)} isActive={$activePage === id} {disabled} on:click={openPage} {red}>
+<MaterialButton style="border-radius: 0;border-bottom: 2px solid var(--primary);{label ? 'padding: 0.3em 1.2em;' : ''}" title={translateText(`menu._title_${id}${$special.numberKeys ? "" : ` [${(keys as any)[id]}]`}`, $dictionary)} isActive={$activePage === id} {disabled} on:click={openPage} {red}>
     <Icon {id} size={1.5} white={$activePage === id} />
     {#if label}<span><T id="menu.{id}" /></span>{/if}
 </MaterialButton>

@@ -15,7 +15,7 @@
 
         $popupData.trigger(value)
 
-        let previousActive = JSON.stringify(active)
+        const previousActive = JSON.stringify(active)
         active = value
         if (previousActive !== JSON.stringify(value)) return
 
@@ -23,15 +23,14 @@
         activePopup.set(null)
     }
 
-    let styleId = $popupData.styleId || ""
-    let style = $styles[styleId]
+    const styleId = $popupData.styleId || ""
+    const style = $styles[styleId]
     function updateStyle(key: string, value: any) {
         styles.update((a) => {
-            a[styleId][key] = value
+            ;(a as any)[styleId][key] = value
             return a
         })
-
-        style[key] = value
+        ;(style as any)[key] = value
     }
 
     let showMore = !!style?.showAsFaded || !!style?.skipVirtualBreaks || active > 4

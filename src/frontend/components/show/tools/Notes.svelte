@@ -9,7 +9,7 @@
     export let autofocus = false
 
     const TIME = 100
-    let dispatch = createEventDispatcher()
+    const dispatch = createEventDispatcher()
     let timeout: NodeJS.Timeout | null = null
 
     function input() {
@@ -29,7 +29,8 @@
 </script>
 
 <div class="paper">
-    <textarea placeholder={placeholder || translateText("empty.text...")} class="edit {$$props.class}" name="" id="" cols="1" rows={lines} style={$$props.style || ""} bind:value on:input={input} on:change={change} on:keydown {disabled} {autofocus} />
+    <!-- svelte-ignore a11y_autofocus -->
+    <textarea placeholder={placeholder || translateText("empty.text...")} class="edit {$$props.class}" name="" id="" cols="1" rows={lines} style={$$props.style || ""} bind:value on:input={input} on:change={change} on:keydown {disabled} {autofocus}></textarea>
 </div>
 
 <style>

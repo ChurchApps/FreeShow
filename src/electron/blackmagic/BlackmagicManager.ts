@@ -44,7 +44,7 @@ export class BlackmagicManager {
         if (deviceIndex < 0) return undefined
 
         return safeMacadamCall(undefined, (m) => {
-            const config: DeviceConfig = m.getDeviceConfig(deviceIndex)
+            const config = m.getDeviceConfig(deviceIndex) as unknown as DeviceConfig
             return config
         })
     }

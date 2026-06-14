@@ -35,8 +35,8 @@
     ]
 
     function removeItemValue(valueId: string) {
-        let layoutRef = getLayoutRef()
-        let slideRef = layoutRef[$activeEdit.slide!] || {}
+        const layoutRef = getLayoutRef()
+        const slideRef = layoutRef[$activeEdit.slide!] || {}
         let slideItems = _show().get("slides")?.[slideRef.id]?.items || []
 
         if ($activeEdit.id) getItems()
@@ -45,7 +45,7 @@
             if ($activeEdit.type === "overlay") slide = $overlays
             else if ($activeEdit.type === "template") slide = $templates
 
-            slideItems = slide[$activeEdit.id!]?.items
+            slideItems = (slide as any)[$activeEdit.id!]?.items
         }
 
         if (!slideItems) return
@@ -74,10 +74,10 @@
     }
 
     // actions
-    function removeAction(action) {
+    function removeAction(action: any) {
         // TODO: this is a duplicate of SetTime and other places
-        let layoutRef = getLayoutRef()
-        let slideRef = layoutRef[$activeEdit.slide!] || {}
+        const layoutRef = getLayoutRef()
+        const slideRef = layoutRef[$activeEdit.slide!] || {}
         let slideItems = _show().get("slides")?.[slideRef.id]?.items || []
 
         if ($activeEdit.id) getItems()
@@ -86,12 +86,12 @@
             if ($activeEdit.type === "overlay") slide = $overlays
             else if ($activeEdit.type === "template") slide = $templates
 
-            slideItems = slide[$activeEdit.id!]?.items
+            slideItems = (slide as any)[$activeEdit.id!]?.items
         }
 
         if (!slideItems?.[index]) return
 
-        let actions = clone(slideItems[index].actions)
+        const actions = clone(slideItems[index].actions)
         delete actions[action]
 
         if ($activeEdit.type === "overlay" || $activeEdit.type === "template") {
@@ -204,7 +204,7 @@
 
     <!-- actions -->
     {#each actions as action}
-        {@const actionValue = item ? (action.direct ? item[action.id] : item.actions?.[action.id]) : null}
+        {@const actionValue = item ? (action.direct ? (item as any)[action.id] : item.actions?.[action.id]) : null}
         {#if actionValue}
             <div data-title={action ? translateText(action.label) : ""} class="actionButton" style="zoom: {1 / ratio};left: 0;inset-inline-end: unset;">
                 <Button on:click={() => (action.direct ? removeItemValue(action.id) : removeAction(action.id))} redHover>

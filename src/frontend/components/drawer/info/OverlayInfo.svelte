@@ -11,7 +11,7 @@
 {#if subTab === "effects"}
     <EffectsInfo />
 {:else}
-    <div class="scroll" />
+    <div class="scroll"></div>
 
     <!-- {#if !readOnly}
         <Button style="width: 100%;" title="This will reset the defaults (shield icon). And pull in any new ones." on:click={setExampleOverlays} center dark>

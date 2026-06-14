@@ -76,7 +76,7 @@
         return `${num}/${den}`
 
         function iterate() {
-            var R = num / den
+            const R = num / den
             if (Math.abs((R - x) / x) < tolerance) return
 
             if (R < x) num++

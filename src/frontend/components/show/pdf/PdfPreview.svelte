@@ -17,7 +17,7 @@
     import Loader from "../../main/Loader.svelte"
     import { clearBackground } from "../../output/clear"
 
-    export let show
+    export let show: any
     export let index: number
 
     let data: { timer?: number } | undefined
@@ -43,7 +43,7 @@
     function outputPdf(e: any, page: number) {
         if ($outLocked || e.ctrlKey || e.metaKey || e.shiftKey) return
 
-        let name = show.name || removeExtension(getFileName(path))
+        const name = show.name || removeExtension(getFileName(path))
         setOutput("slide", { type: "pdf", id: path, page, pages: pageCount, name })
 
         clearBackground()
@@ -75,13 +75,13 @@
         return text.replace(/[^a-zA-Z0-9]+/g, "")
     }
 
-    /////
+    /// //
 
     // GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
     GlobalWorkerOptions.workerSrc = "./assets/pdf.worker.min.mjs"
 
     let pageCount = 0
-    let canvases: (HTMLCanvasElement | undefined)[] = []
+    const canvases: (HTMLCanvasElement | undefined)[] = []
 
     let loading = true
     let loadingTask: PDFDocumentLoadingTask | null = null
@@ -193,7 +193,7 @@
             </div>
 
             <div class="slide" style={transparentOutput ? "" : `background-color: ${currentStyle.background};`} tabindex={0} role="button" on:click={(e) => outputPdf(e, i)} on:keydown={triggerClickOnEnterSpace}>
-                <canvas bind:this={canvases[i]} />
+                <canvas bind:this={canvases[i]}></canvas>
             </div>
         </div>
     {/each}

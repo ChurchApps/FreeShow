@@ -42,8 +42,31 @@ export interface ChurchAppsSongData {
 }
 
 // Venue feed types
-export interface FeedFile { name?: string; url?: string; streamUrl?: string; seconds?: number; fileType?: string; loopVideo?: boolean }
-export interface FeedAction { id?: string; actionType?: string; content?: string; files?: FeedFile[] }
-export interface FeedSection { id?: string; name?: string; actions?: FeedAction[] }
-export interface FeedAddOn { id?: string; name?: string; files?: FeedFile[] }
-export interface VenueFeed { sections?: FeedSection[]; files?: FeedAddOn[] }
+export interface FeedFile {
+    name?: string
+    url?: string
+    streamUrl?: string
+    seconds?: number
+    fileType?: string
+    loopVideo?: boolean
+}
+export interface FeedAction {
+    id?: string
+    actionType?: string
+    content?: string
+    files?: FeedFile[]
+}
+export interface FeedSection {
+    id?: string
+    name?: string
+    actions?: FeedAction[]
+}
+export interface FeedAddOn {
+    id?: string
+    name?: string
+    files?: FeedFile[]
+}
+export interface VenueFeed {
+    sections?: FeedSection[]
+    files?: FeedAddOn[]
+}

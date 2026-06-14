@@ -102,22 +102,22 @@
         }
 
         // one selected slides
-        let ref = getLayoutRef()
+        const ref = getLayoutRef()
         if ($selected.id === "slide" && $selected.data.length < ref.length) {
             $selected.data.forEach(({ index, showId }) => {
-                let slideId = ref[index]?.id
+                const slideId = ref[index]?.id
 
                 // check if locked
-                let groupSlide = _show(showId || "active")
+                const groupSlide = _show(showId || "active")
                     .slides([ref[index]?.parent?.id || ref[index]?.id])
                     .get()[0]
                 if (groupSlide?.locked) return
 
-                let slideSettings = _show(showId || "active")
+                const slideSettings = _show(showId || "active")
                     .slides([slideId])
                     .get("settings")
-                let oldData = { style: clone(slideSettings) }
-                let newData = { style: { ...clone(slideSettings), template: templateId } }
+                const oldData = { style: clone(slideSettings) }
+                const newData = { style: { ...clone(slideSettings), template: templateId } }
 
                 // WIP apply to all slides at once...
                 history({
@@ -164,7 +164,7 @@
 
     function keydown(e: KeyboardEvent) {
         if (e.key === "Enter" && searchValue.length > 1 && e.target?.closest(".search")) {
-            let template = fullFilteredTemplates[0]
+            const template = fullFilteredTemplates[0]
             if (!template) return
 
             // play

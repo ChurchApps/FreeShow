@@ -25,10 +25,10 @@
     }
 
     function enableTag(tagId: string) {
-        let quickAccess = _show().get("quickAccess") || {}
+        const quickAccess = _show().get("quickAccess") || {}
         quickAccess.tags = [...(quickAccess.tags || []), tagId]
 
-        let showId: string = $activeShow!.id
+        const showId: string = $activeShow!.id
         history({ id: "UPDATE", newData: { data: quickAccess, key: "quickAccess" }, oldData: { id: showId }, location: { page: "show", id: "show_key", override: "toggle_tag" } })
     }
 </script>

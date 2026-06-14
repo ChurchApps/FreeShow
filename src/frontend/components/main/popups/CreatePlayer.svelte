@@ -5,8 +5,8 @@
     import { clone } from "../../helpers/array"
     import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
 
-    let active: "youtube" | "vimeo" = $popupData.active
-    let editId: string = $popupData.id || ""
+    const active: "youtube" | "vimeo" = $popupData.active
+    const editId: string = $popupData.id || ""
     $: if (active) popupData.set({})
 
     const currentId = editId || uid()

@@ -62,7 +62,7 @@
     }
 
     function changeName(e: any) {
-        let currentLayout = e.detail?.id?.slice("layout_".length)
+        const currentLayout = e.detail?.id?.slice("layout_".length)
         if (!currentLayout || isLocked) return
 
         const newName = e.detail.value
@@ -80,7 +80,7 @@
         }
     }
 
-    function setLayout(id: string, layoutInfo) {
+    function setLayout(id: string, layoutInfo: any) {
         if (!$showsCache[showId]) return
 
         showsCache.update((a) => {
@@ -121,7 +121,7 @@
         runAction($actions[customAction])
     }
 
-    let profile = getAccess("shows")
+    const profile = getAccess("shows")
     $: isLocked = currentShow?.locked || profile.global === "read" || profile[currentShow?.category || ""] === "read"
 
     $: referenceType = currentShow?.reference?.type
@@ -137,7 +137,7 @@
                     <Icon size={1.1} id="actions" white={!customAction} />
                 </MaterialButton>
 
-                <div class="divider" />
+                <div class="divider"></div>
             {/if}
 
             <MaterialButton on:click={() => activePopup.set("translate")} title="popup.translate">
@@ -151,7 +151,7 @@
                 <p>{$actions[customAction].name}</p>
             </MaterialButton>
 
-            <div class="divider" />
+            <div class="divider"></div>
         {/if}
 
         {#if isLocked}

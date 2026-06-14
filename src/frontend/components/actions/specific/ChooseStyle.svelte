@@ -14,21 +14,21 @@
 
     let styleOutputs = value.styleOutputs || { type: "active" }
 
-    let outputsOptions = [
+    const outputsOptions = [
         { value: "active", label: translateText("actions.active_outputs") },
         { value: "all", label: translateText("actions.all_outputs") },
         { value: "specific", label: translateText("actions.specific_outputs") }
     ]
-    let outputsList = getList($outputs).filter((a) => !a.stageOutput)
-    let stylesList = getList($styles).map((a) => ({ value: a.id, label: a.name }))
+    const outputsList = getList($outputs).filter((a) => !a.stageOutput)
+    const stylesList = getList($styles).map((a) => ({ value: a.id, label: a.name }))
 
-    function getList(list) {
+    function getList(list: any) {
         return sortByName(keysToID(list))
     }
 
-    let dispatch = createEventDispatcher()
+    const dispatch = createEventDispatcher()
     function updateStyle(key: string, newValue: any) {
-        value[key] = newValue
+        ;(value as any)[key] = newValue
 
         if (key === "outputStyle") styleId = newValue
         else styleOutputs = newValue
@@ -37,7 +37,7 @@
     }
 
     function setOutputStyle(outputId: string, styleId: string) {
-        let newOutputs = styleOutputs.outputs || {}
+        const newOutputs = styleOutputs.outputs || {}
 
         newOutputs[outputId] = styleId
         if (!styleId) delete newOutputs[outputId]
@@ -46,11 +46,11 @@
     }
 </script>
 
-<MaterialDropdown label="settings.display_settings" options={outputsOptions} value={styleOutputs.type} on:change={(e) => updateStyle("styleOutputs", { type: e.detail, outputs: styleOutputs.outputs || {} })} />
+<MaterialDropdown label="settings.display_settings" options={outputsOptions} value={styleOutputs.type || "active"} on:change={(e) => updateStyle("styleOutputs", { type: e.detail, outputs: styleOutputs.outputs || {} })} />
 
 {#if styleOutputs.type === "specific"}
     {#each outputsList as output}
-        <MaterialDropdown label={output.name} options={stylesList} value={styleOutputs.outputs[output.id]} on:change={(e) => setOutputStyle(output.id, e.detail)} allowEmpty />
+        <MaterialDropdown label={output.name} options={stylesList} value={styleOutputs.outputs?.[output.id] || ""} on:change={(e) => setOutputStyle(output.id, e.detail)} allowEmpty />
     {/each}
 {:else}
     <MaterialDropdown label="edit.style" options={stylesList} value={styleId} on:change={(e) => updateStyle("outputStyle", e.detail)} allowEmpty />

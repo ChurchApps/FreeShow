@@ -23,7 +23,7 @@
 
         // check that current edit slide exists
         if ($activeEdit?.slide !== null && $activeEdit?.slide !== undefined) {
-            let ref = getLayoutRef()
+            const ref = getLayoutRef()
             if (ref[$activeEdit?.slide]) index = $activeEdit.slide + 1
         }
 
@@ -46,11 +46,11 @@
         editHistory.update((a) => {
             if (!$activeEdit.id && currentShowId && !$shows[currentShowId]) return a
 
-            let edit: any = { edit: clone($activeEdit) }
+            const edit: any = { edit: clone($activeEdit) }
             edit.id = edit.edit.id || currentShowId
             if (!edit.id) return a
 
-            let type = edit.edit.type || "show"
+            const type = edit.edit.type || "show"
             edit.icon = type === "show" ? "slide" : type // showIcon
             if (edit.icon === "media") edit.icon = getMediaType(getExtension(edit.id))
             else if (edit.icon === "audio") edit.icon = "music"
@@ -58,8 +58,8 @@
             else if (edit.icon === "overlay") edit.icon = "overlays"
             else if (edit.icon === "effect") edit.icon = "effects"
 
-            if (!names[type]) return a
-            edit.name = names[type](edit.id)
+            if (!(names as any)[type]) return a
+            edit.name = (names as any)[type](edit.id)
             if (edit.name === undefined) return a
 
             if (type === "show") {
@@ -73,7 +73,7 @@
             a.push(edit)
 
             // remove duplicates
-            let ids: string[] = []
+            const ids: string[] = []
             a = a
                 .reverse()
                 .filter((a) => {
@@ -91,7 +91,7 @@
     // don't change order when changing edits
     $: if ($editHistory.length !== clonedHistory.length || (!$activeEdit.id && !$activeShow?.id)) setTimeout(() => (clonedHistory = clone($editHistory).reverse()))
 
-    function openRecent(edited) {
+    function openRecent(edited: any) {
         activeEdit.set(edited.edit)
         if (edited.edit?.type !== "audio") refreshEditSlide.set(true)
         if (edited.show) {
@@ -100,7 +100,7 @@
         }
     }
 
-    let profile = getAccess("shows")
+    const profile = getAccess("shows")
     $: isLocked = $shows[currentShowId]?.locked || profile.global === "read" || profile[$shows[currentShowId]?.category || ""] === "read"
 </script>
 

@@ -18,7 +18,7 @@
         setTimeout(() => {
             // WIP history
             overlays.update((a) => {
-                delete a[overlayId][actionId]
+                delete (a as any)[overlayId][actionId]
                 a[overlayId].modified = Date.now()
                 return a
             })
@@ -36,12 +36,12 @@
     function removeAction(e: any, id: string) {
         e.preventDefault()
 
-        let actions = clone(overlay.actions || [])
-        let actionIndex = actions.findIndex((a) => a.id === id || getActionTriggerId(a.triggers?.[0]) === id)
+        const actions = clone(overlay.actions || [])
+        const actionIndex = actions.findIndex((a) => a.id === id || getActionTriggerId(a.triggers?.[0]) === id)
         if (actionIndex < 0) return
         actions.splice(actionIndex, 1)
 
-        let newData = { key: "actions", data: actions }
+        const newData = { key: "actions", data: actions }
         history({ id: "UPDATE", newData, oldData: { id: overlayId }, location: { page: "drawer", id: "overlay_key", override: `actions_${overlayId}` } })
     }
 </script>
@@ -52,7 +52,7 @@
         {#each overlay.actions as action}
             <!-- should be always just one trigger on each action when on a slide -->
             {@const actionId = getActionTriggerId(action.triggers?.[0])}
-            {@const customData = actionData[actionId] || {}}
+            {@const customData = (actionData as any)[actionId] || {}}
             {@const actionValue = action?.actionValues?.[actionId] || action?.actionValues?.[action.triggers?.[0]] || {}}
             {@const customName = getActionName(actionId, actionValue) || (action.name !== translateText(customData.name) ? action.name : "")}
 
@@ -66,7 +66,7 @@
     {/if}
 
     {#each actionsList as action}
-        {#if overlay[action.id]}
+        {#if (overlay as any)[action.id]}
             <div>
                 <div class="button white">
                     <Button style="padding: 3px;" redHover title="{translateText('actions.remove')}: {action.title}" {zoom} on:click={() => changeAction(action.id)}>

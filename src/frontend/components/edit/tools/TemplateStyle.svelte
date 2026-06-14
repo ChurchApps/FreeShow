@@ -30,14 +30,14 @@
     function update() {
         if (!template) return
 
-        let newData = { key: "settings", data: clone(settings) }
+        const newData = { key: "settings", data: clone(settings) }
 
         history({ id: "UPDATE", newData, oldData: { id: templateId }, location: { page: "edit", id: "template_settings", override: templateId } })
     }
 
     function setValue(e: any, key: string) {
-        let value = e?.detail ?? e
-        settings[key] = value
+        const value = e?.detail ?? e
+        ;(settings as any)[key] = value
 
         update()
     }
@@ -86,8 +86,8 @@
             </span>
         </div>
 
-        <MaterialNumberInput label="edit.max_lines_per_slide" value={settings?.maxLinesPerSlide || 0} max={100} on:change={(e) => setValue(e, "maxLinesPerSlide")} />
-        <MaterialNumberInput label="edit.break_long_lines_tip" value={settings?.breakLongLines || 0} max={100} on:change={(e) => setValue(e, "breakLongLines")} />
+        <MaterialNumberInput label="edit.max_lines_per_slide" value={Number(settings?.maxLinesPerSlide) || 0} max={100} on:change={(e) => setValue(e, "maxLinesPerSlide")} />
+        <MaterialNumberInput label="edit.break_long_lines_tip" value={Number(settings?.breakLongLines) || 0} max={100} on:change={(e) => setValue(e, "breakLongLines")} />
     </div>
 
     <div>

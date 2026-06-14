@@ -25,7 +25,7 @@
     skipSmooth()
     $: if (shouldSkipSmooth) skipSmooth()
 
-    function scroll(index) {
+    function scroll(index: any) {
         if (t !== null || disabled) return
 
         let elem = scrollElem
@@ -60,7 +60,7 @@
         }, timeout + 400)
     }
 
-    let dispatch = createEventDispatcher()
+    const dispatch = createEventDispatcher()
     function wheel(event: any) {
         dispatch("wheel", { event })
         t = null
@@ -69,7 +69,7 @@
 </script>
 
 <div class="scroll {$$props.class}" on:wheel|passive={wheel} bind:this={scrollElem} style={$$props.style || ""} class:instantScroll>
-    <slot />
+    <slot></slot>
 </div>
 
 <style>

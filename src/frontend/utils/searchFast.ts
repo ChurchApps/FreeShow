@@ -1,5 +1,5 @@
 import { get } from "svelte/store"
-import { ShowList } from "../../types/Show"
+import type { ShowList } from "../../types/Show"
 import { categories, drawerTabsData, textCache } from "../stores"
 import { formatSearch, tokenize } from "./search"
 import { sortObjectNumbers } from "../components/helpers/array"
@@ -168,7 +168,7 @@ export async function buildBibleIndex(bibleId: string, bibleData: any) {
                     chapter: chapterIndex,
                     verse: verseIndex,
                     reference: `${bookName} ${chapterIndex}:${verseIndex}`,
-                    text: text
+                    text
                 }
 
                 // Index each unique word in the verse

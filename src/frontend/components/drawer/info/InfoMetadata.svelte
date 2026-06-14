@@ -9,7 +9,7 @@
     // remove part after ? in URL
     function removeExtra(link: string) {
         link = link.replace("https://", "")
-        let extra = link.indexOf("?")
+        const extra = link.indexOf("?")
         if (extra > -1) link = link.slice(0, extra)
         if (link.endsWith("/")) link = link.slice(0, link.length - 1)
         return link

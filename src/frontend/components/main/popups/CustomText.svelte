@@ -4,7 +4,7 @@
     import { translateText } from "../../../utils/language"
     import MaterialTextarea from "../../inputs/MaterialTextarea.svelte"
 
-    let id = "splash"
+    const id = "splash"
 
     const getValue = {
         splash: () => $special.splashText || ""

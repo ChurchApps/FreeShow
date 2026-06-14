@@ -6,8 +6,8 @@
     import HRule from "../../input/HRule.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
 
-    let changelog = ($popupData.changelog || "").replaceAll("\r\n", "<br>").replaceAll("-", "•")
-    let latestVersion = $popupData.latestVersion
+    const changelog = ($popupData.changelog || "").replaceAll("\r\n", "<br>").replaceAll("-", "•")
+    const latestVersion = $popupData.latestVersion
 
     function download() {
         const isBeta = latestVersion.includes("-beta")

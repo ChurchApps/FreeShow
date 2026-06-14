@@ -10,10 +10,10 @@
     import { isoLanguages } from "./isoLanguages"
     import { getIsoLanguages, removeTranslationFromShow, translateShow } from "./translation"
 
-    let languageList = getIsoLanguages()
+    const languageList = getIsoLanguages()
 
     function updateLanguage(e: any) {
-        let value = e.detail
+        const value = e.detail
         special.update((a) => {
             a.translationLanguage = value
             return a
@@ -40,7 +40,7 @@
         }
     }
 
-    let showId = $activeShow?.id || ""
+    const showId = $activeShow?.id || ""
 
     let translatedLangs: string[] = []
     onMount(() => {

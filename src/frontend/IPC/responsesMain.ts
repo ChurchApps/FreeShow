@@ -430,7 +430,7 @@ export const mainResponses: MainResponses = {
             if (!templateId) return projectBase
 
             let templateItems = clone(get(projectTemplates)[templateId]?.shows || [])
-            let pcoItems = clone(projectBase.shows || [])
+            const pcoItems = clone(projectBase.shows || [])
 
             // project template first, then append the synced items (first to any placeholders, then to the end)
             templateItems = templateItems.map((item) => {

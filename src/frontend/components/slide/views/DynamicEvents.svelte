@@ -32,11 +32,11 @@
     $: [updateEvents(), $events, maxEvents, startDaysFromToday, justOneDay, enableStartDate, startDate, startTime]
 
     function updateEvents() {
-        let startFromDate = enableStartDate ? combineDateAndTime(startDate, startTime) : getXDaysFromToday(Number(startDaysFromToday || 0))
+        const startFromDate = enableStartDate ? combineDateAndTime(startDate, startTime) : getXDaysFromToday(Number(startDaysFromToday || 0))
         let eventsList = keysToID($events).filter((a) => a.type === "event" && new Date(a.to) >= startFromDate)
 
         if (justOneDay) {
-            let tomorrow = new Date(startFromDate).setHours(24, 0, 0, 0)
+            const tomorrow = new Date(startFromDate).setHours(24, 0, 0, 0)
             eventsList = eventsList.filter((a) => new Date(a.from).getTime() <= tomorrow)
         }
 
@@ -45,7 +45,7 @@
     }
 
     function getXDaysFromToday(startDaysFromToday = 0) {
-        let date = new Date()
+        const date = new Date()
         if (startDaysFromToday) date.setHours(0, 0, 0, 0)
         date.setDate(date.getDate() + startDaysFromToday)
         return date
@@ -56,7 +56,7 @@
         let html = "<p>"
 
         if (event.time) {
-            let time = getTime(new Date(event.from))
+            const time = getTime(new Date(event.from))
             html += `<span style="font-weight: bold;font-size:${textSize * 0.8}px;font-family:Arial;">${time} </span>`
         }
         html += `<span style="font-size:${textSize}px;">${event.name}`

@@ -7,6 +7,7 @@
         "stripInternal": true,
         "lib": ["es2015", "esnext", "dom"],
         "moduleResolution": "node",
+        "strict": true,
         "noImplicitAny": true,
         "strictNullChecks": true,
         "strictFunctionTypes": true,

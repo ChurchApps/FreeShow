@@ -380,7 +380,7 @@ export function setCaret(element: any, { line = 0, pos = 0 }, toEnd = false) {
     // get end child elem
     const lastEndChild = lastLineElem.childNodes[lastLineElem.childNodes.length - 1]
     if (!lastEndChild) return
-    let currentEndTextLength = lastEndChild.innerText?.length ?? 0
+    const currentEndTextLength = lastEndChild.innerText?.length ?? 0
 
     const breakElem = lastEndChild.childNodes[0]?.nodeName === "BR"
     if (line === 0 && breakElem) return

@@ -30,21 +30,21 @@
     onDestroy(unsubscribe)
 
     function updateTheme(e: any, id: null | string, key = "colors") {
-        let value: string = e.target?.value ?? e
+        const value: string = e.target?.value ?? e
 
-        let themeId = $selected.data[0]?.id || $theme
+        const themeId = $selected.data[0]?.id || $theme
 
         if (themeId === "default") {
             if (!value) return
 
             // duplicate
-            let thisTheme = clone($themes[themeId])
-            let data = {
+            const thisTheme = clone($themes[themeId])
+            const data = {
                 ...thisTheme,
                 default: false,
                 name: (key === "name" ? value : thisTheme.name) + " 2"
             }
-            if (key !== "name") data[key] = { ...thisTheme[key], [id!]: value }
+            if (key !== "name") (data as any)[key] = { ...(thisTheme as any)[key], [id!]: value }
 
             history({ id: "UPDATE", newData: { data }, location: { page: "settings", id: "settings_theme" } })
             updateThemeValues(data)
@@ -59,7 +59,7 @@
         // update output outline color if just one output
         if (key !== "colors" || id !== "secondary") return
 
-        let colorKeys = Object.keys($outputs)
+        const colorKeys = Object.keys($outputs)
         if (colorKeys.length !== 1) return
 
         outputs.update((a) => {

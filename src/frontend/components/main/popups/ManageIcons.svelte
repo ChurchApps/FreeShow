@@ -7,15 +7,15 @@
     import T from "../../helpers/T.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
 
-    let colors = true
+    const colors = true
 
     function click(icon: string) {
-        let isDefault = customIcons[icon]
+        const isDefault = (customIcons as any)[icon]
 
         customizedIcons.update((a) => {
             if (isDefault) {
-                let disabledIcons = a.disabled
-                let iconIndex = disabledIcons.indexOf(icon)
+                const disabledIcons = a.disabled
+                const iconIndex = disabledIcons.indexOf(icon)
                 if (iconIndex >= 0) disabledIcons.splice(iconIndex, 1)
                 else disabledIcons.push(icon)
                 a.disabled = disabledIcons
@@ -42,14 +42,14 @@
 
     function deleteCustom(iconId: string) {
         customizedIcons.update((a) => {
-            let iconIndex = a.svg.findIndex((a) => a.id === iconId)
+            const iconIndex = a.svg.findIndex((a: any) => a.id === iconId)
             if (iconIndex >= 0) a.svg.splice(iconIndex, 1)
 
             return a
         })
     }
 
-    let back: Popups | null = $popupData.back || null
+    const back: Popups | null = $popupData.back || null
     popupData.set({})
 </script>
 
@@ -63,7 +63,7 @@
 
 <div class="grid">
     {#each Object.keys(customIcons) as icon}
-        {@const color = colors && customIconsColors[icon] ? "color: " + customIconsColors[icon] + ";" : ""}
+        {@const color = colors && (customIconsColors as any)[icon] ? "color: " + (customIconsColors as any)[icon] + ";" : ""}
         {@const disabled = $customizedIcons.disabled.includes(icon)}
         <MaterialButton style="padding: 8px;" on:click={() => click(icon)} title={disabled ? "actions.enable" : "actions.disable"}>
             <Icon id={icon} size={2} custom white style={disabled ? "opacity: 0.2;" : color} />

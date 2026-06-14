@@ -1,0 +1,43 @@
+name: CI
+
+# Fast checks on every PR and on pushes to main, so type errors and formatting
+# regressions are caught before merge (the full Playwright/build workflows are manual).
+on:
+    pull_request:
+    push:
+        branches: [main]
+
+jobs:
+    checks:
+        name: Format & type-check
+        runs-on: ubuntu-latest
+        steps:
+            - name: Check out Git repository
+              uses: actions/checkout@v4
+
+            - name: Install Node.js and NPM
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 22
+
+            - name: Install libraries
+              run: |
+                  sudo apt-get update
+                  sudo apt-get install -y libfontconfig1-dev uuid-dev libltc-dev --fix-missing
+
+            - name: Install dependencies
+              run: npm ci
+
+            # Formatting and svelte type-check currently have a pre-existing backlog, so they are
+            # reported but non-blocking for now. Flip continue-on-error off once the backlog is cleared.
+            - name: Check formatting
+              run: npm run test:format
+              continue-on-error: true
+
+            - name: Type-check (svelte)
+              run: npm run test:svelte
+              continue-on-error: true
+
+            # Blocking gate: a broken build fails the PR.
+            - name: Build
+              run: npm run build

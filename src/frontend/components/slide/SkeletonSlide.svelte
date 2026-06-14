@@ -19,7 +19,7 @@
         <div class="label" style="color: {color};margin-bottom: 5px;">
             <span style="color: var(--text);opacity: 0.85;font-size: 0.9em;">{index + 1}</span>
             <span class="text">{@html name === null ? "" : name === "." ? "" : name || "—"}</span>
-            <div class="alignment" />
+            <div class="alignment"></div>
         </div>
     {/if}
 
@@ -30,12 +30,12 @@
     </div>
 
     {#if viewMode === "simple"}
-        <div data-title={name || ""} style="height: 2px;" />
+        <div data-title={name || ""} style="height: 2px;"></div>
     {:else if viewMode !== "lyrics"}
         <div class="label" style="color: {color};border-bottom: 2px solid {color || 'var(--primary-darkest)'};">
             <span style="color: var(--text);opacity: 0.85;font-size: 0.9em;">{index + 1}</span>
             <span class="text" style={name === null ? "opacity: 0;" : ""}>{@html name === null ? "-" : name === "." ? "" : name || "—"}</span>
-            <div class="alignment" />
+            <div class="alignment"></div>
         </div>
     {/if}
 </div>

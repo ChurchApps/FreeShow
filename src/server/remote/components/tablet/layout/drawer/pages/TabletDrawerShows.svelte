@@ -5,6 +5,7 @@
     import { _set } from "../../../../../util/stores"
     import MaterialButton from "../../../../MaterialButton.svelte"
     import Icon from "../../../../../../common/components/Icon.svelte"
+    // @ts-ignore - svelte-check doesn't resolve the plain-JS VirtualList.svelte types under the server config
     import VirtualList from "../VirtualList.svelte"
     import Center from "../../../../../../common/components/Center.svelte"
 

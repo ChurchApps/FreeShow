@@ -26,8 +26,8 @@
     $: template = emitter?.templates?.[editTemplate]
     $: templateInputs = (template?.inputs || []).map((a, i) => ({ ...a, id: i.toString() }))
     $: dataPreview = templateInputs.length ? formatData[emitter?.type]?.(setEmptyValues(templateInputs), emitter.data) : ""
-    function setEmptyValues(object) {
-        return clone(object).map((a) => ({ ...a, value: a.value || (a.name ? `{${a.name.toLowerCase()}}` : "") }))
+    function setEmptyValues(object: any) {
+        return clone(object).map((a: any) => ({ ...a, value: a.value || (a.name ? `{${a.name.toLowerCase()}}` : "") }))
     }
 
     const emitterTypes = [
@@ -52,7 +52,7 @@
     }
 
     function createEmitter() {
-        let id = createId || uid()
+        const id = createId || uid()
         emitters.update((a) => {
             a[id] = clone(DEFAULT_EMITTER)
             return a
@@ -68,31 +68,30 @@
     }
 
     function createTemplate() {
-        let id = uid()
-        let templates = emitter?.templates || {}
+        const id = uid()
+        const templates = emitter?.templates || {}
         templates[id] = clone(DEFAULT_TEMPLATE)
         updateValue("templates", templates)
 
         editTemplate = id
     }
     function deleteTemplate(id: string) {
-        let templates = emitter?.templates || {}
+        const templates = emitter?.templates || {}
         if (!templates[id]) return
 
         delete templates[id]
         updateValue("templates", templates)
     }
     function updateTemplate(key: string, e: any) {
-        let value = e.detail
-        let templates = emitter?.templates || {}
+        const value = e.detail
+        const templates = emitter?.templates || {}
         if (!templates[editTemplate]) return
-
-        templates[editTemplate][key] = value
+        ;(templates as any)[editTemplate][key] = value
         updateValue("templates", templates)
     }
 
     function createTemplateValue() {
-        let templates = emitter?.templates || {}
+        const templates = emitter?.templates || {}
         if (!templates[editTemplate]) return
 
         if (!templates[editTemplate].inputs) templates[editTemplate].inputs = []
@@ -101,7 +100,7 @@
         updateValue("templates", templates)
     }
     function removeTemplateValue(index: string) {
-        let templates = emitter?.templates || {}
+        const templates = emitter?.templates || {}
         if (!templates[editTemplate]?.inputs) return
 
         templates[editTemplate].inputs.splice(Number(index), 1)
@@ -109,18 +108,17 @@
         updateValue("templates", templates)
     }
     function updateTemplateValue(index: string, key: string, e: any) {
-        let value = e.detail
-        let templates = emitter?.templates || {}
-        if (!templates[editTemplate]?.inputs?.[index]) return
-
-        templates[editTemplate].inputs[index][key] = value
+        const value = e.detail
+        const templates = emitter?.templates || {}
+        if (!templates[editTemplate]?.inputs?.[index as any]) return
+        ;(templates[editTemplate].inputs as any)[index][key] = value
         updateValue("templates", templates)
     }
 
     function updateMidiTemplateValue(e: any) {
-        let values = e.detail?.values
+        const values = e.detail?.values
 
-        let templates = emitter?.templates || {}
+        const templates = emitter?.templates || {}
         if (!templates[editTemplate]?.inputs?.[0]) createTemplateValue()
 
         templates[editTemplate].inputs[0] = { name: "", value: values }
@@ -137,7 +135,7 @@
     }
 
     function changed(e: any, key: keyof Emitter) {
-        let input = e.detail
+        const input = e.detail
 
         let previousValue = emitter[key]
         if (typeof previousValue !== "object") previousValue = {}

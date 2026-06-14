@@ -87,12 +87,12 @@ export function parseTime(str: string): number {
         .split(":")
         .reverse()
         .map((p) => parseInt(p) || 0)
-    let s = parts[0] || 0
-    let m = parts[1] || 0
-    let h = parts[2] || 0
+    const s = parts[0] || 0
+    const m = parts[1] || 0
+    const h = parts[2] || 0
 
     // calculate total ms
-    let ms = (h * 3600 + m * 60 + s) * 1000 + cs * 10
+    const ms = (h * 3600 + m * 60 + s) * 1000 + cs * 10
 
     // Offset logic
     // If >= 1 hour (start offset), assume absolute. Subtract offset.
@@ -115,7 +115,7 @@ export function getActionsAtPosition(e: MouseEvent, trackWrapper: HTMLElement, a
     const currentActionIds: string[] = []
     for (const action of actions) {
         let ax = (action.time / 1000) * zoomLevel
-        let baseY = getActionBaseY(action)
+        const baseY = getActionBaseY(action)
         let ay = baseY
         let aw = 0
         let ah = 60 // default clip H
@@ -163,7 +163,7 @@ export function getProjectShowDurations(actions: TimelineAction[], _updater: any
     const durations: Record<string, number> = {}
     const showActions = actions.filter((a) => a.type === "show") || []
 
-    let shouldLoad: string[] = []
+    const shouldLoad: string[] = []
     for (const item of showActions) {
         const showId = item.data?.id
         if (!showId) continue

@@ -41,9 +41,9 @@
                 {#each slides[layoutSlide.id]?.items || [] as item, itemIndex (item.id ? `${layoutSlide.id}-item-${item.id}` : `${layoutSlide.id}-item-${i}-${itemIndex}`)}
                     {#if item.lines}
                         <div class="lyric">
-                            {#each item.lines as line, lineIndex (line.id ? `${layoutSlide.id}-line-${line.id}` : `${layoutSlide.id}-line-${i}-${lineIndex}`)}
+                            {#each item.lines as line, lineIndex ((line as any).id ? `${layoutSlide.id}-line-${(line as any).id}` : `${layoutSlide.id}-line-${i}-${lineIndex}`)}
                                 <div class="break">
-                                    {#each line.text || [] as text, textIndex (text.id ? `${layoutSlide.id}-text-${text.id}` : `${layoutSlide.id}-text-${i}-${textIndex}`)}
+                                    {#each line.text || [] as text, textIndex ((text as any).id ? `${layoutSlide.id}-text-${(text as any).id}` : `${layoutSlide.id}-text-${i}-${textIndex}`)}
                                         <span>{@html text.value}</span>
                                     {/each}
                                 </div>

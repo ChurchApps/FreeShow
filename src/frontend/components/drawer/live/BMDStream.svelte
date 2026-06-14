@@ -27,7 +27,7 @@
     function setCanvas() {
         if (!canvas) return
 
-        let ctx = canvas.getContext("2d")
+        const ctx = canvas.getContext("2d")
 
         const WIDTH = frame.width
         const HEIGHT = frame.height
@@ -39,12 +39,12 @@
     }
 
     const receiveBlackmagic: any = {
-        RECEIVE_STREAM: (data) => {
+        RECEIVE_STREAM: (data: any) => {
             //  || data.frame?.type !== "frame"
             if (data.id !== screen.id || !data.frame.video) return
             loaded = true
 
-            let timeSinceSent = Date.now() - data.time
+            const timeSinceSent = Date.now() - data.time
             if (timeSinceSent > 100) return // skip frames if overloaded
 
             // WIP play audio? (data.audio.data ...)
@@ -63,10 +63,10 @@
 </script>
 
 {#if background}
-    <canvas bind:this={canvas} />
+    <canvas bind:this={canvas}></canvas>
 {:else}
     <Card outlineColor={findMatchingOut(screen.id, $outputs)} active={findMatchingOut(screen.id, $outputs) !== null} on:click label={screen.name} {loaded} icon="blackmagic" white showPlayOnHover>
-        <canvas bind:this={canvas} />
+        <canvas bind:this={canvas}></canvas>
     </Card>
 {/if}
 

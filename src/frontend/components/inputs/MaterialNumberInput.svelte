@@ -1,5 +1,6 @@
 <script lang="ts">
     import { createEventDispatcher, onMount } from "svelte"
+    import { evaluateExpression } from "../../utils/expression"
     import { translateText } from "../../utils/language"
     import Icon from "../helpers/Icon.svelte"
     import MaterialButton from "./MaterialButton.svelte"
@@ -42,12 +43,12 @@
         if (disabled) return
 
         // convert , to .
-        let normalizedVal = typeof newVal === "string" ? newVal.replace(/,/g, ".") : newVal
+        const normalizedVal = typeof newVal === "string" ? newVal.replace(/,/g, ".") : newVal
 
         let calcVal: number
         if (!padLength) {
             try {
-                calcVal = typeof normalizedVal === "string" ? new Function(`return ${normalizedVal}`)() : normalizedVal
+                calcVal = typeof normalizedVal === "string" ? evaluateExpression(normalizedVal) : normalizedVal
             } catch {
                 // invalid expression
                 return
@@ -94,7 +95,7 @@
         if (!e.ctrlKey && !e.metaKey) return
         e.preventDefault()
 
-        let stepAmount = step * (e.shiftKey ? 10 : 1)
+        const stepAmount = step * (e.shiftKey ? 10 : 1)
 
         e.deltaY < 0 ? increment(stepAmount) : decrement(stepAmount)
 
@@ -152,18 +153,19 @@
 </script>
 
 <div class="textfield numberfield {center ? 'centered' : ''} {disabled ? 'disabled' : ''}" style={$$props.style || null}>
-    <div class="background" />
+    <div class="background"></div>
 
     <div class="input-wrapper">
+        <!-- svelte-ignore a11y_autofocus -->
         <input bind:this={inputElem} value={rawInput} type="text" {id} {placeholder} {disabled} {autofocus} {step} {min} {max} class="input edit" class:noValue={hideWhenZero && !padLength && !numberValue} on:keydown={handleKeyDown} on:input={handleInput} on:change={handleChange} inputmode="decimal" autocomplete="off" />
 
         <div class="buttons">
-            <button type="button" class="inc" on:click={(e) => increment(e.shiftKey ? step * 10 : step)} tabindex="-1" disabled={disabled || (max !== null && numberValue >= max)}>
+            <button type="button" class="inc" aria-label="increment" on:click={(e) => increment(e.shiftKey ? step * 10 : step)} tabindex="-1" disabled={disabled || (max !== null && numberValue >= max)}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M7 14l5-5 5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                 </svg>
             </button>
-            <button type="button" class="dec" on:click={(e) => decrement(e.shiftKey ? step * 10 : step)} tabindex="-1" disabled={disabled || (min !== null && numberValue <= min)}>
+            <button type="button" class="dec" aria-label="decrement" on:click={(e) => decrement(e.shiftKey ? step * 10 : step)} tabindex="-1" disabled={disabled || (min !== null && numberValue <= min)}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M7 10l5 5 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                 </svg>
@@ -173,7 +175,7 @@
 
     <label for={id} class:value-filled={!hideWhenZero || padLength || (numberValue !== null && numberValue !== undefined && numberValue !== 0)}>{@html translateText(label)}</label>
 
-    <span class="underline" style={currentProgress ? `width: ${currentProgress}%;transform: initial;` : ""} />
+    <span class="underline" style={currentProgress ? `width: ${currentProgress}%;transform: initial;` : ""}></span>
 
     {#if showSlider}
         <div class="slider-wrapper" style="padding-right: {defaultValue === null ? 40 : 70}px;">

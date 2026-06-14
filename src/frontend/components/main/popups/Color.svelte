@@ -8,13 +8,13 @@
     import MaterialColorInput from "../../inputs/MaterialColorInput.svelte"
 
     let value = "#FFFFFF"
-    let allowEmpty = $selected.id === "show" // || $selected.id === "slide"
+    const allowEmpty = $selected.id === "show" // || $selected.id === "slide"
 
     const selection = $selected
 
     onMount(() => {
         if (selection.id === "slide") {
-            let firstSelected = selection.data[0]
+            const firstSelected = selection.data[0]
             let ref: any = getLayoutRef()[firstSelected.index]
             if (!ref) return
 
@@ -82,7 +82,7 @@
         },
         tag: () => {
             globalTags.update((a) => {
-                let id = selection.data[0]?.id || ""
+                const id = selection.data[0]?.id || ""
                 if (a[id]) a[id].color = value
 
                 return a
@@ -105,9 +105,9 @@
         }
     }
 
-    function update(e) {
+    function update(e: any) {
         value = e.detail
-        if (selection.id && actions[selection.id]) actions[selection.id]()
+        if (selection.id && (actions as any)[selection.id]) (actions as any)[selection.id]()
     }
 </script>
 

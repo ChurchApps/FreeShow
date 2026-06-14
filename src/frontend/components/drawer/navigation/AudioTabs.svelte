@@ -57,7 +57,7 @@
         [{ id: "TITLE", label: "media.folders" }, ...convertToButton(foldersList, folderLengths)]
     ]
 
-    function getAudioPlaylists(playlistUpdater) {
+    function getAudioPlaylists(playlistUpdater: any) {
         if (!Object.keys(playlistUpdater).length) return []
 
         let playlists = sortObject(keysToID(playlistUpdater), "name")
@@ -80,7 +80,7 @@
     function addFolder() {
         sendMain(Main.OPEN_FOLDER, { channel: PICK_ID })
     }
-    let listenerId = receiveToMain(ToMain.OPEN_FOLDER2, (data) => {
+    const listenerId = receiveToMain(ToMain.OPEN_FOLDER2, (data) => {
         if (data.channel !== PICK_ID || !data.path) return
         addDrawerFolder(data, "audio")
     })
@@ -105,7 +105,7 @@
     }
 
     function createPlaylist() {
-        let playlistId = uid()
+        const playlistId = uid()
         audioPlaylists.update((a) => {
             a[playlistId] = { name: "", songs: [] }
             return a

@@ -16,7 +16,7 @@
 </script>
 
 <div style={$$props.style} on:click title={$$props.title}>
-    <slot />
+    <slot></slot>
     <div class="overlay" class:reveal>
         <Icon id={icon} {size} white />
     </div>

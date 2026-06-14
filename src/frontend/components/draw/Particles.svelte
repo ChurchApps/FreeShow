@@ -11,8 +11,8 @@
     function drawParticle() {
         if (drawTimeout) return
 
-        let particle: any = { ...$draw }
-        let size = settings.size || 100
+        const particle: any = { ...$draw }
+        const size = settings.size || 100
         particle.size = Math.floor(Math.random() * 100) + size / 2
         particles = [...particles, particle]
 
@@ -28,7 +28,7 @@
 </script>
 
 {#each particles as p}
-    <div class="particle" style="--color: {settings.color || '#1e1eb4'};opacity: {settings.opacity || 0.8};border-radius: {settings.radius}%;top: {p.y}px;left: {p.x}px;height: {p.size}px;width: {p.size}px;" class:glow={settings.glow === true} class:hollow={settings.hollow === true} />
+    <div class="particle" style="--color: {settings.color || '#1e1eb4'};opacity: {settings.opacity || 0.8};border-radius: {settings.radius}%;top: {p.y}px;left: {p.x}px;height: {p.size}px;width: {p.size}px;" class:glow={settings.glow === true} class:hollow={settings.hollow === true}></div>
 {/each}
 
 <style>

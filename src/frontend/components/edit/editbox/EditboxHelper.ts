@@ -196,7 +196,7 @@ export class EditboxHelper {
                 textIndex = textEnd
 
                 const textStyle = a.style || listStyle ? 'style="' + this.getCustomTextStyle(a.style) + listStyle + '"' : ""
-                let value = a.value?.replaceAll("\n", "<br>") || "<br>"
+                const value = a.value?.replaceAll("\n", "<br>") || "<br>"
                 // if (value === " ") value = "&nbsp;"
 
                 // this will "hide" any HTML tags if any in the actual text content (not chords or text editor)

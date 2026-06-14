@@ -15,11 +15,11 @@
     import { getStyleResolution } from "../../slide/getStyleResolution"
     import Center from "../../system/Center.svelte"
 
-    let outputStyles = sortByName(keysToID($styles))
+    const outputStyles = sortByName(keysToID($styles))
 
     let active: string = $popupData.active || ""
-    let outputId: string = $currentOutputSettings || ""
-    let skip = !!$popupData.skip
+    const outputId: string = $currentOutputSettings || ""
+    const skip = !!$popupData.skip
 
     function select(selectedId: string) {
         active = selectedId
@@ -44,7 +44,7 @@
     }
     const text = "Lorem ipsum dolor sit amet,\nconsectetur adipiscing elit.\nDonec eget condimentum diam,\na sollicitudin lorem."
     function getOverride(style: Styles) {
-        let override = clone(outOverride)
+        const override = clone(outOverride)
         const lines = text.split("\n").map((a) => ({ align: "", text: [{ value: a, style: "" }] }))
         override.slide!.tempItems![0].lines = lines.slice(0, style.lines || 10)
         return override

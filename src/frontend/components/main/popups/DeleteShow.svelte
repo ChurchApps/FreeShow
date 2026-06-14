@@ -5,7 +5,7 @@
     import MaterialButton from "../../inputs/MaterialButton.svelte"
 
     function deleteSelected() {
-        let shows = $selected.data
+        const shows = $selected.data
         history({ id: "SHOWS", oldData: { data: shows }, location: { page: "drawer" } })
 
         selected.set({ id: null, data: [] })

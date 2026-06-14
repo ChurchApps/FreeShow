@@ -60,7 +60,7 @@
         activePopup.set($popupData.revert || null)
     }
 
-    let showPrivate = false
+    const showPrivate = false
 </script>
 
 <MaterialTextInput label="main.search" value="" on:input={(e) => search(e.detail)} autofocus />

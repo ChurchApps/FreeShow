@@ -6,12 +6,12 @@
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import Tip from "../Tip.svelte"
 
-    let index = $popupData.index
-    let mode = $popupData.mode
-    let revert = $popupData.revert
-    let value = $popupData.active || $popupData.value || ""
-    let trigger = $popupData.trigger
-    let existingShortcuts = $popupData.existingShortcuts || []
+    const index = $popupData.index
+    const mode = $popupData.mode
+    const revert = $popupData.revert
+    const value = $popupData.active || $popupData.value || ""
+    const trigger = $popupData.trigger
+    const existingShortcuts = $popupData.existingShortcuts || []
 
     let layoutRef = mode === "slide_shortcut" ? getLayoutRef() : []
     let slideDataActions = mode === "slide_shortcut" ? layoutRef[index]?.data?.actions || {} : {}
@@ -35,7 +35,7 @@
 
     let existing = false
     function updateValue(key: string) {
-        if (existingShortcuts.find((a) => a?.toString().toLowerCase() === key)) {
+        if (existingShortcuts.find((a: any) => a?.toString().toLowerCase() === key)) {
             existing = true
             return
         }

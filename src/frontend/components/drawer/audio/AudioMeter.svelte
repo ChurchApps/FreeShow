@@ -8,7 +8,7 @@
 
     const numbers: number[] = [-80, -64, -50, -35, -20, -15, -12, -9, -6, -3, 0]
 
-    let highestDB: { timeout: NodeJS.Timeout; value: number }[] = []
+    const highestDB: { timeout: NodeJS.Timeout; value: number }[] = []
 
     function getDBValue(channelIndex: number, _updater: any) {
         const dB = channelId === "main" ? $audioChannels[channelIndex]?.dB : AudioAnalyserMerger.getChannels()[channelId]?.[channelIndex]?.dB
@@ -42,7 +42,7 @@
     const compressionFactor = threshold / newRange
     const expansionFactor = (1 - newRange) / (1 - threshold)
 
-    function transformRange(value) {
+    function transformRange(value: any) {
         if (value <= threshold) {
             return value / compressionFactor
         } else {
@@ -67,15 +67,15 @@
     <div class="main">
         <!-- WIP volume dots!!! instead of transition.. -->
         <span class="meter left" class:isMuted style="height: 6px;">
-            <div style="right: 0;position: absolute;height: inherit;width: {100 - getDBValue(0, $audioChannels)}%" />
-            <span class="meter left" style="right: 0;position: absolute;height: inherit;width: 100%;opacity: 0.08;" />
-            <div class="highest" style="right: {100 - (highestDB[0]?.value || 0)}%;" />
+            <div style="right: 0;position: absolute;height: inherit;width: {100 - getDBValue(0, $audioChannels)}%"></div>
+            <span class="meter left" style="right: 0;position: absolute;height: inherit;width: 100%;opacity: 0.08;"></span>
+            <div class="highest" style="right: {100 - (highestDB[0]?.value || 0)}%;"></div>
         </span>
         <div style="height: 1px;width: 100%;"></div>
         <span class="meter right" class:isMuted style="height: 6px;">
-            <div style="right: 0;position: absolute;height: inherit;width: {100 - getDBValue(1, $audioChannels)}%" />
-            <span class="meter right" style="right: 0;position: absolute;height: inherit;width: 100%;opacity: 0.08;" />
-            <div class="highest" style="right: {100 - (highestDB[1]?.value || 0)}%;" />
+            <div style="right: 0;position: absolute;height: inherit;width: {100 - getDBValue(1, $audioChannels)}%"></div>
+            <span class="meter right" style="right: 0;position: absolute;height: inherit;width: 100%;opacity: 0.08;"></span>
+            <div class="highest" style="right: {100 - (highestDB[1]?.value || 0)}%;"></div>
         </span>
 
         <div class="lines" style="padding: 3px 0;">
