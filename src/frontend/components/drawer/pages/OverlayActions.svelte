@@ -18,7 +18,7 @@
         setTimeout(() => {
             // WIP history
             overlays.update((a) => {
-                delete a[overlayId][actionId]
+                delete (a as any)[overlayId][actionId]
                 a[overlayId].modified = Date.now()
                 return a
             })
@@ -52,7 +52,7 @@
         {#each overlay.actions as action}
             <!-- should be always just one trigger on each action when on a slide -->
             {@const actionId = getActionTriggerId(action.triggers?.[0])}
-            {@const customData = actionData[actionId] || {}}
+            {@const customData = (actionData as any)[actionId] || {}}
             {@const actionValue = action?.actionValues?.[actionId] || action?.actionValues?.[action.triggers?.[0]] || {}}
             {@const customName = getActionName(actionId, actionValue) || (action.name !== translateText(customData.name) ? action.name : "")}
 
@@ -66,7 +66,7 @@
     {/if}
 
     {#each actionsList as action}
-        {#if overlay[action.id]}
+        {#if (overlay as any)[action.id]}
             <div>
                 <div class="button white">
                     <Button style="padding: 3px;" redHover title="{translateText('actions.remove')}: {action.title}" {zoom} on:click={() => changeAction(action.id)}>

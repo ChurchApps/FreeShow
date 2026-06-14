@@ -37,7 +37,7 @@
     $: type = item?.type || "text"
     $: if (type === "slide_text" || type === "slide_notes") type = "text"
     $: tabs.text.name = "items." + type
-    $: tabs.text.icon = itemBoxes[type]?.icon || "text"
+    $: tabs.text.icon = (itemBoxes as any)[type]?.icon || "text"
 
     $: if (item !== undefined) updateTabs()
     function updateTabs() {
@@ -84,7 +84,7 @@
 
             // split text/item styles
             Object.entries(styles).forEach(([key, value]) => {
-                if (Object.keys(defaultItemStyle).includes(key) && active === "item") defaultStyle += `${key}: ${defaultItemStyle[key]};`
+                if (Object.keys(defaultItemStyle).includes(key) && active === "item") defaultStyle += `${key}: ${(defaultItemStyle as any)[key]};`
                 else if (!itemKeys.includes(key)) textStyle += `${key}: ${value};`
                 else itemStyle += `${key}: ${value};`
             })

@@ -34,7 +34,7 @@
     $: totalTrackHeight = TIMELINE_SECTION_TOP + maxTrackIndex * (SECTION_HEIGHT + SECTION_GAP) - SECTION_GAP + TIMELINE_SECTION_TOP
 
     function getTrackData(index: number, _updater: any) {
-        return sections[tabIds[index]] || { name: "Unknown", icon: "unknown" }
+        return (sections as any)[tabIds[index]] || { name: "Unknown", icon: "unknown" }
     }
     function getActionTrack(action: TimelineAction): number {
         if (type === "slide") return groupedActions.findIndex((group) => group[0].data?.type === action.data?.type && group[0].data?.key === action.data?.key)
@@ -741,7 +741,7 @@
                             <div class="action-marker {action.type} context #timeline_node" class:selected={selectedActionIds.includes(action.id)} style="left: {(action.time / 1000) * zoomLevel}px; top: 50%;transform: translate(-50%, -50%);" data-title={translateText(action.name)}>
                                 <div class="action-head">
                                     {#if action.type === "action"}
-                                        <Icon id={action.data.triggers?.length === 1 ? actionData[action.data.triggers[0]]?.icon : "actions"} size={0.9} white />
+                                        <Icon id={action.data.triggers?.length === 1 ? (actionData as any)[action.data.triggers[0]]?.icon : "actions"} size={0.9} white />
                                     {:else if typeof action.data?.index === "number"}
                                         {action.data.index + 1}
                                     {/if}
@@ -875,7 +875,7 @@
                             >
                                 <div class="action-head">
                                     {#if action.type === "action"}
-                                        <Icon id={action.data.triggers?.length === 1 ? actionData[action.data.triggers[0]]?.icon : "actions"} size={0.9} white />
+                                        <Icon id={action.data.triggers?.length === 1 ? (actionData as any)[action.data.triggers[0]]?.icon : "actions"} size={0.9} white />
                                     {:else if typeof action.data?.index === "number"}
                                         {action.data.index + 1}
                                     {/if}

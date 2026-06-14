@@ -32,7 +32,7 @@
 
     function getEventIcon(type: string, { actionId }) {
         if (type === "event") return "calendar"
-        if (type === "action") return actionData[actionId]?.icon || "actions"
+        if (type === "action") return (actionData as any)[actionId]?.icon || "actions"
         return type
     }
 </script>

@@ -27,11 +27,10 @@
     const style = $styles[styleId]
     function updateStyle(key: string, value: any) {
         styles.update((a) => {
-            a[styleId][key] = value
+            ;(a as any)[styleId][key] = value
             return a
         })
-
-        style[key] = value
+        ;(style as any)[key] = value
     }
 
     let showMore = !!style?.showAsFaded || !!style?.skipVirtualBreaks || active > 4

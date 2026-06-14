@@ -220,9 +220,9 @@
                     >
                         <span style="display: flex;align-items: center;max-width: 70%;">
                             <p style="opacity: 0.7;margin-inline-end: 10px;">{i + 1}</p>
-                            <Icon id={type === "icon" ? id || "" : itemBoxes[type]?.icon || "text"} custom={type === "icon"} size={0.8} />
+                            <Icon id={type === "icon" ? id || "" : (itemBoxes as any)[type]?.icon || "text"} custom={type === "icon"} size={0.8} />
                             <p style="opacity: 0.9;margin-inline-start: 10px;;">{getCustomStageLabel(currentItem.type || id, currentItem, $dictionary) || translateText("items." + type)}</p>
-                            {#if getIdentifier[type]}<p style="margin-inline-start: 10px;max-width: 120px;opacity: 0.5;font-size: 0.8em;max-width: 40%;">{getIdentifier[type](currentItem)}</p>{/if}
+                            {#if (getIdentifier as any)[type]}<p style="margin-inline-start: 10px;max-width: 120px;opacity: 0.5;font-size: 0.8em;max-width: 40%;">{(getIdentifier as any)[type](currentItem)}</p>{/if}
                         </span>
                         <span>
                             <MaterialButton disabled={i === allItems.length - 1} icon="down" title="actions.backward" style="padding: 8px;" on:click={() => rearrangeStageItems("backward", id)} />

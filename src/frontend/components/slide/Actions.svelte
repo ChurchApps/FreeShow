@@ -170,7 +170,7 @@
         {#each actions.slideActions as action}
             <!-- should be always just one trigger on each action when on a slide -->
             {@const actionId = getActionTriggerId(action.triggers?.[0])}
-            {@const customData = actionData[actionId] || {}}
+            {@const customData = (actionData as any)[actionId] || {}}
             {@const actionValue = action?.actionValues?.[actionId] || action?.actionValues?.[action.triggers?.[0]] || {}}
             {@const specialData = action?.customData?.[actionId] || action?.customData?.[action.triggers?.[0]] || {}}
             {@const customName = getActionName(actionId, actionValue) || (action.name !== translateText(customData.name) ? action.name : "")}

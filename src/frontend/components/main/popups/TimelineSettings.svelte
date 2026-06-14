@@ -8,7 +8,7 @@
 
     function update(key: string, value: any) {
         timeline.update((a) => {
-            a[key] = value
+            ;(a as any)[key] = value
             return a
         })
     }

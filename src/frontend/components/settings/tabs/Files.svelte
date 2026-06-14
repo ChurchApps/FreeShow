@@ -96,7 +96,7 @@
         // autosave
         const as = $autosave || "15min"
         if (previousAutosave && as !== "never") {
-            const saveInterval = convertAutosave[as]
+            const saveInterval = (convertAutosave as any)[as]
             nextAutosave = now - previousAutosave - saveInterval
         } else {
             nextAutosave = 0
@@ -180,7 +180,7 @@
 
     function updateCloudData(key: string, value: any) {
         cloudSyncData.update((a) => {
-            a[key] = value
+            ;(a as any)[key] = value
             return a
         })
     }

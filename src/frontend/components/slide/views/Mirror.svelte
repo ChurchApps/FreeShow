@@ -12,7 +12,7 @@
     import Textbox from "../Textbox.svelte"
     import Zoomed from "../Zoomed.svelte"
 
-    export let item
+    export let item: any
     export let index: number
     export let ratio = 1
     export let edit = false

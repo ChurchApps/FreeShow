@@ -35,10 +35,10 @@
     }
     function filterFormats(exportFormats: any) {
         return clone(exportFormats)
-            .filter((a: any) => !(excludedFormats[exportType] || []).find((id: any) => id === a.id))
+            .filter((a: any) => !((excludedFormats as any)[exportType] || []).find((id: any) => id === a.id))
             .map((a: any) => {
                 a.name = translateText(a.name)
-                a.icon = `./import-logos/${formatIcons[a.id]}.webp`
+                a.icon = `./import-logos/${(formatIcons as any)[a.id]}.webp`
                 return a
             })
     }
@@ -59,7 +59,7 @@
     $: if (exportType && exportFormat) updateActive()
     async function updateActive() {
         loading = true
-        showIds = getShowIdsFromType[exportType]?.() || []
+        showIds = (getShowIdsFromType as any)[exportType]?.() || []
 
         let showId = showIds[0]
         if (!showId && !previewShow) showId = getActiveShowId()
@@ -155,7 +155,7 @@
 
     $: exportTypesList = clone(exportTypes).map((a: any) => {
         a.name = translateText(a.name)
-        if (!getShowIdsFromType[a.id || ""]?.(false)?.length) a.disabled = true
+        if (!(getShowIdsFromType as any)[a.id || ""]?.(false)?.length) a.disabled = true
         return a
     })
 </script>

@@ -6,7 +6,7 @@
     export let options: any = {}
 
     let playerElem: HTMLDivElement | undefined
-    let player // YT player API instance
+    let player: any // YT player API instance
 
     onMount(() => createPlayer())
 

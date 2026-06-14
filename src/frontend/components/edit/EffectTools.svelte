@@ -29,7 +29,7 @@
         if (!effectId) return
 
         effects.update((a) => {
-            a[effectId].items[itemIndex][input.id] = input.values.value
+            ;(a as any)[effectId].items[itemIndex][input.id] = input.values.value
             return a
         })
     }

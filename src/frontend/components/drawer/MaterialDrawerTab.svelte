@@ -102,7 +102,7 @@
 <SelectElem style="width: 100%;" id={selectId} selectable={!noEdit} {draggable} borders="center" trigger="column" data={id}>
     <MaterialButton class={className} style="width: 100%;font-weight: normal;padding: 0.2em {boxedIcon ? 0.64 : 0.8}em;" {isActive} {showOutline} on:click={click} on:dblclick={dblclick} tab>
         <div style="max-width: 85%;{boxedIcon ? 'gap: 9px;' : ''}" data-title={translateText(label)}>
-            <Icon id={icon} size={isSubmenu ? 0.85 : 1} color={isSubmenu ? category.color : boxedIcon ? customIconsColors[icon] || "" : ""} white custom={customIcon} boxed={isSubmenu || boxedIcon} />
+            <Icon id={icon} size={isSubmenu ? 0.85 : 1} color={isSubmenu ? category.color : boxedIcon ? (customIconsColors as any)[icon] || "" : ""} white custom={customIcon} boxed={isSubmenu || boxedIcon} />
 
             {#if noEdit || isSubmenu}
                 <p style="margin: {isSubmenu ? 3 : 5}px;">

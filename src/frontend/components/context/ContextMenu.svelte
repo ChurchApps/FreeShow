@@ -185,7 +185,7 @@
     }
 
     function getGroupItems(id: string) {
-        const groupList: string[] | undefined = contextMenuGroups[id.slice(6)]
+        const groupList: string[] | undefined = (contextMenuGroups as any)[id.slice(6)]
         if (!groupList) return []
 
         return groupList

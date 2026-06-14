@@ -30,9 +30,9 @@
 <div style="position: relative;height: 100%;width: calc(100vw - (var(--navigation-width) + 20px) * 2);overflow-y: auto;">
     <div class="grid">
         {#each Object.keys(effectItems) as type, i}
-            {@const data = { type, ...effectItems[type].default }}
+            {@const data = { type, ...(effectItems as any)[type].default }}
 
-            <Card label={translateText(`effect.${effectItems[type].default?.type || type}`)} width={100 / 4} on:click={() => selectEffect(data)} checkered>
+            <Card label={translateText(`effect.${(effectItems as any)[type].default?.type || type}`)} width={100 / 4} on:click={() => selectEffect(data)} checkered>
                 {#if slowLoader > i}
                     <Effect effect={{ name: "", style: "", background: "", color: null, items: [data] }} preview />
                 {/if}

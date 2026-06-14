@@ -84,8 +84,8 @@
         {#each Object.entries(values) as [key, value]}
             {@const isDefault = !!$dictionary.meta?.[key]}
             {@const label = isDefault ? translateText(`meta.${key}`) : `<span style="text-transform: capitalize;">${key}</span>`}
-            {@const shouldAutofill = (!value || (key === "number" && !currentShow?.quickAccess?.number)) && (autofillValues[key]?.() || (key === "number" && value))}
-            {@const autofillValue = shouldAutofill ? autofillValues[key]?.() || "" : ""}
+            {@const shouldAutofill = (!value || (key === "number" && !currentShow?.quickAccess?.number)) && ((autofillValues as any)[key]?.() || (key === "number" && value))}
+            {@const autofillValue = shouldAutofill ? (autofillValues as any)[key]?.() || "" : ""}
             {@const numberStored = key === "number" && currentShow?.quickAccess?.number}
 
             <MaterialTextInput {label} style={numberStored ? "border-bottom: 1px solid var(--secondary);" : ""} {value} autofill={autofillValue} on:change={(e) => changeValue(e.detail, key)} />

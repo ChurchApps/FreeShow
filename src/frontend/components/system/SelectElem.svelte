@@ -49,9 +49,8 @@
         triggerTimeout = setTimeout(() => {
             triggerTimeout = null
             if (!dragover) return
-            if (!triggerHoverActions[id]) return console.log("MISSING HOVER TRIGGER:", id)
-
-            triggerHoverActions[id]()
+            if (!(triggerHoverActions as any)[id]) return console.log("MISSING HOVER TRIGGER:", id)
+            ;(triggerHoverActions as any)[id]()
         }, TRIGGER_TIMEOUT)
     }
 
@@ -86,10 +85,10 @@
             else if (index !== undefined) layout = currentLayoutRef[index] || {}
 
             const layoutMedia: { [key: string]: Media } = {}
-            if (layout.data?.background) layoutMedia[layout.data.background] = currentMedia[layout.data?.background]
+            if (layout.data?.background) layoutMedia[layout.data.background] = (currentMedia as any)[layout.data?.background]
             if (layout.data?.audio) {
                 layout.data.audio.forEach((audioId) => {
-                    layoutMedia[audioId] = currentMedia[audioId]
+                    layoutMedia[audioId] = (currentMedia as any)[audioId]
                 })
             }
 

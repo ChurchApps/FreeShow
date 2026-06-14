@@ -110,7 +110,7 @@
         if (!triggerId) return
 
         // Check if this action type can have multiple instances
-        const data = actionData[triggerId.split(":")[0]] // remove unique suffix if present
+        const data = (actionData as any)[triggerId.split(":")[0]] // remove unique suffix if present
         const canAddMultiple = data?.canAddMultiple
 
         // For actions that can't have multiple instances, find and replace existing
@@ -150,7 +150,7 @@
 
         actions.update((a) => {
             if (!a[id]) return a
-            a[id][key] = value
+            ;(a as any)[id][key] = value
             return a
         })
     }
@@ -160,7 +160,7 @@
         let actionId = e.detail.id || ""
         if (!actionId) return
 
-        const canAddMultiple = actionData[actionId]?.canAddMultiple
+        const canAddMultiple = (actionData as any)[actionId]?.canAddMultiple
         if (canAddMultiple && !actionId.includes(":")) actionId += ":" + uid(5)
 
         if (e.detail.index !== undefined) index = e.detail.index
@@ -206,13 +206,13 @@
         else action.triggers.push(actionId)
 
         // set all MIDI values
-        if (action.midiEnabled && action.midi?.defaultValues && defaultMidiActionChannels[actionId]) {
-            action.midi = { ...action.midi, ...defaultMidiActionChannels[actionId] }
+        if (action.midiEnabled && action.midi?.defaultValues && (defaultMidiActionChannels as any)[actionId]) {
+            action.midi = { ...action.midi, ...(defaultMidiActionChannels as any)[actionId] }
         }
 
         // auto name (if empty or not changed by user)
         if ((action.name || "") === autoActionName && action.triggers.length === 1) {
-            autoActionName = translateText(actionData[e.detail.id]?.name || "") || e.detail.id
+            autoActionName = translateText((actionData as any)[e.detail.id]?.name || "") || e.detail.id
             if (autoActionName) action.name = autoActionName
         }
 
@@ -361,7 +361,7 @@
     }
     // .map((a) => ({ ...a, value: `${customActivation}__${a.value}` }))
     function getSpecificActivation(customActivation: any) {
-        return [{ value: "", label: translateText("actions.any") }, ...specificActivations[customActivation].list()]
+        return [{ value: "", label: translateText("actions.any") }, ...(specificActivations as any)[customActivation].list()]
     }
 
     // keys
@@ -504,7 +504,7 @@
 
                 <div slot="menu">
                     {#if ["timer_end", "timer_start", "group_start"].includes(customActivation)}
-                        <MaterialDropdown label={specificActivations[customActivation]?.name} options={getSpecificActivation(customActivation)} value={specificActivation} on:change={(e) => updateValue("specificActivation", `${customActivation}__${e.detail}`)} />
+                        <MaterialDropdown label={(specificActivations as any)[customActivation]?.name} options={getSpecificActivation(customActivation)} value={specificActivation} on:change={(e) => updateValue("specificActivation", `${customActivation}__${e.detail}`)} />
                     {:else if customActivation === "midi_signal_received"}
                         <MidiValues value={clone(action.midi || actionMidi)} firstActionId={action.triggers?.[0]} on:change={(e) => updateValue("midi", e)} simple />
                     {/if}

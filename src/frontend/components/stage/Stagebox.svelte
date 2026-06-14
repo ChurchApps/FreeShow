@@ -120,7 +120,7 @@
     // Stagebox autosize is for SlideNotes, SlideProgress, VideoTime, etc.
     $: autoSizeEnabled = item?.type === "current_output" || item?.type === "slide_text" ? false : item?.type?.includes("text") ? item?.auto || (item?.textFit && item?.textFit !== "none") : item?.auto !== false || item?.textFit !== "none"
 
-    let alignElem
+    let alignElem: any
     let size = 100
     // Track previous slide to reset retry counter when slide changes
     let prevSlideForAutoSize: any

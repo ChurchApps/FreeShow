@@ -17,7 +17,7 @@
     export let small = false
     export let tab = false
     export let red = false
-    let button
+    let button: any
 
     // automatically do white icon if no content
     if (!$$slots.default) white = true

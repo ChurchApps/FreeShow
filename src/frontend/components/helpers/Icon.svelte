@@ -38,7 +38,7 @@
     $: width = size * (boxed ? 1.2 : 1) + "rem"
     $: height = size * (boxed ? 1.2 : 1) + "rem"
 
-    $: icon = custom || !icons[id] ? customIcons[id] : icons[id]
+    $: icon = custom || !icons[id] ? (customIcons as any)[id] : icons[id]
 
     const iconsToBeFlipped = ["back"] // Add more icons that need to be flipped horizontally if needed
     const flip = $localeDirection === "rtl" && iconsToBeFlipped.includes(id)

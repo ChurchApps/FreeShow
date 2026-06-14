@@ -28,7 +28,7 @@
 
     const dispatch = createEventDispatcher()
     function updateStyle(key: string, newValue: any) {
-        value[key] = newValue
+        ;(value as any)[key] = newValue
 
         if (key === "outputStyle") styleId = newValue
         else styleOutputs = newValue

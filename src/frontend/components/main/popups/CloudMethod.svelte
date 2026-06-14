@@ -22,7 +22,7 @@
 
     function updateData(key: string, value: any) {
         cloudSyncData.update((a) => {
-            a[key] = value
+            ;(a as any)[key] = value
             return a
         })
     }

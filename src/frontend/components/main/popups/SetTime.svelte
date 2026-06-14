@@ -21,7 +21,7 @@
         if (type === "overlay") slide = $overlays
         else if (type === "template") slide = $templates
 
-        slideItems = slide[$activeEdit.id!]?.items
+        slideItems = (slide as any)[$activeEdit.id!]?.items
     }
 
     let value: number = slideItems?.[indexes[0]]?.actions?.[action] || 0

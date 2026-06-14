@@ -168,7 +168,7 @@
                 else a[screenId].cropping = { top: 0, right: 0, bottom: 0, left: 0 }
             }
 
-            a[screenId].cropping![side] = Number(value)
+            ;(a as any)[screenId].cropping![side] = Number(value)
             return a
         })
     }
@@ -187,7 +187,7 @@
 
         outputs.update((a) => {
             if (!a[screenId].blending) a[screenId].blending = { left: 0, right: 0, rotate: 90, opacity: 50, centered: false, offset: 0 }
-            a[screenId].blending![side] = Number(value)
+            ;(a as any)[screenId].blending![side] = Number(value)
             return a
         })
     }

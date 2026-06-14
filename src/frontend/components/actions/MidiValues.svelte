@@ -29,8 +29,7 @@
     function setMidi(key: string, value: any) {
         // fix: https://github.com/ChurchApps/FreeShow/issues/1672
         if (value === "input") return
-
-        midi[key] = value
+        ;(midi as any)[key] = value
         change()
     }
 
@@ -95,14 +94,14 @@
     function toggleDefaultValues(e: any) {
         midi.defaultValues = e.detail
 
-        if (midi.defaultValues && defaultMidiActionChannels[firstActionId]) {
-            midi = { ...midi, ...defaultMidiActionChannels[firstActionId] }
+        if (midi.defaultValues && (defaultMidiActionChannels as any)[firstActionId]) {
+            midi = { ...midi, ...(defaultMidiActionChannels as any)[firstActionId] }
         }
 
         change()
     }
 
-    $: noActionOrDefaultValues = type !== "emitter" && (!hasActions || (midi.defaultValues && defaultMidiActionChannels[firstActionId]))
+    $: noActionOrDefaultValues = type !== "emitter" && (!hasActions || (midi.defaultValues && (defaultMidiActionChannels as any)[firstActionId]))
 </script>
 
 {#if type !== "emitter"}
@@ -118,7 +117,7 @@
 {/if}
 
 {#if hasActions && midi.type !== "control"}
-    <MaterialToggleSwitch label="midi.use_default_values" disabled={midi.defaultValues && !defaultMidiActionChannels[firstActionId]} checked={midi.defaultValues} on:change={toggleDefaultValues} />
+    <MaterialToggleSwitch label="midi.use_default_values" disabled={midi.defaultValues && !(defaultMidiActionChannels as any)[firstActionId]} checked={midi.defaultValues} on:change={toggleDefaultValues} />
 {/if}
 
 {#if !noActionOrDefaultValues}

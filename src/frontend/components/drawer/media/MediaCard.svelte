@@ -193,7 +193,7 @@
             } else if (key === "tags") {
                 a[path].tags = []
             } else {
-                delete a[path][key]
+                delete (a as any)[path][key]
             }
 
             return a

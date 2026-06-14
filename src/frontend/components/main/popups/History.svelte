@@ -96,7 +96,7 @@
     }
 
     function getItemId(item: any) {
-        if (item.version === 1) return getName[item.type]?.(item.value) || item.type
+        if (item.version === 1) return (getName as any)[item.type]?.(item.value) || item.type
         if (item.id === "UPDATE") return item.id + "_" + item.location?.id
 
         return item.id
@@ -118,8 +118,8 @@
                 {@const itemId = getItemId(item)}
                 <MaterialButton style="opacity: 0.5;padding: 10px 20px;" on:click={() => callRedo(i)}>
                     <p>
-                        <span style={historyIdToString[itemId] ? "" : "opacity: 0.3;font-style: italic;"}>
-                            {historyIdToString[itemId] || itemId}
+                        <span style={(historyIdToString as any)[itemId] ? "" : "opacity: 0.3;font-style: italic;"}>
+                            {(historyIdToString as any)[itemId] || itemId}
                         </span>
                         <span class="time" data-title={getDateAndTimeString(item.time || 0)}>{timeAgo(item.time || 0)}</span>
                     </p>
@@ -129,8 +129,8 @@
                 {@const itemId = getItemId(item)}
                 <MaterialButton style="padding: 10px 20px;" on:click={() => callUndo(i - 1)} showOutline={i === 0}>
                     <p>
-                        <span style={item.version || historyIdToString[itemId] ? "" : "opacity: 0.3;font-style: italic;"}>
-                            {historyIdToString[itemId] || itemId}
+                        <span style={item.version || (historyIdToString as any)[itemId] ? "" : "opacity: 0.3;font-style: italic;"}>
+                            {(historyIdToString as any)[itemId] || itemId}
                         </span>
                         <span class="time" data-title={getDateAndTimeString(item.time || 0)}>{timeAgo(item.time || 0)}</span>
                     </p>

@@ -21,7 +21,7 @@
     import WebSearch from "./WebSearch.svelte"
 
     const changeValue = (e: any, key = "text") => {
-        values[key] = e.target?.value || e.detail || ""
+        ;(values as any)[key] = e.target?.value || e.detail || ""
 
         // store text if popup is closed
         quickTextCache.set({ name: values.name, text: values.text })
@@ -48,7 +48,7 @@
             id: cat.id,
             name: cat.name,
             icon: cat.icon || "unlabeled",
-            iconColor: cat.icon ? customIconsColors[cat.icon] : "#FFFFFF"
+            iconColor: cat.icon ? (customIconsColors as any)[cat.icon] : "#FFFFFF"
         }))
     ]
 

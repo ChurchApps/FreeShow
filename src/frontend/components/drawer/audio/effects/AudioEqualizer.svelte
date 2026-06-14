@@ -492,7 +492,7 @@
 
     function selectPreset(value: string) {
         selectedPreset = value
-        const preset = presets[value]
+        const preset = (presets as any)[value]
         if (!preset) return
 
         special.update((a) => {

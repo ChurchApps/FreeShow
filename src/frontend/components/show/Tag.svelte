@@ -5,7 +5,7 @@
     import { _show } from "../helpers/shows"
     import HiddenInput from "../inputs/HiddenInput.svelte"
 
-    export let tag
+    export let tag: any
     export let active = false
 
     let editActive = false

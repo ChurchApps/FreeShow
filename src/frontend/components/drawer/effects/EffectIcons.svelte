@@ -13,7 +13,7 @@
         // don't update until overlay display click has finished
         setTimeout(() => {
             effects.update((a) => {
-                delete a[effectId][actionId]
+                delete (a as any)[effectId][actionId]
                 return a
             })
         })
@@ -29,7 +29,7 @@
 
 <div class="icons" style="zoom: {zoom};">
     {#each actionsList as action}
-        {#if effect[action.id]}
+        {#if (effect as any)[action.id]}
             <div>
                 <div class="button white">
                     <Button style="padding: 3px;" redHover title="{translateText('actions.remove')}: {action.title}" {zoom} on:click={() => changeAction(action.id)}>

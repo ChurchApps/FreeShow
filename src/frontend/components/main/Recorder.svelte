@@ -7,8 +7,8 @@
 
     let recorderActive = false
 
-    let videoElem
-    let currentStream
+    let videoElem: any
+    let currentStream: any
     function toggleRecording() {
         if (!$activeRecording) {
             currentStream?.getTracks().forEach((track: any) => {

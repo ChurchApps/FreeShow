@@ -24,7 +24,7 @@
 
     function updateValue(key: string, value: any) {
         timecode.update((a) => {
-            a[key] = value
+            ;(a as any)[key] = value
             return a
         })
     }

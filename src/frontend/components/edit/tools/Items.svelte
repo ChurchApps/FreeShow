@@ -156,7 +156,7 @@
                             <p style="opacity: 0.7;margin-inline-end: 10px;">{i + 1}</p>
                             <Icon id={type === "icon" ? currentItem.id || "" : itemBoxes[type]?.icon || "text"} custom={type === "icon"} size={0.8} />
                             <p style="opacity: 0.9;margin-inline-start: 10px;">{translateText("items." + type)}</p>
-                            {#if getIdentifier[type]}<p style="margin-inline-start: 10px;max-width: 120px;opacity: 0.5;font-size: 0.8em;max-width: 40%;">{getIdentifier[type](currentItem)}</p>{/if}
+                            {#if (getIdentifier as any)[type]}<p style="margin-inline-start: 10px;max-width: 120px;opacity: 0.5;font-size: 0.8em;max-width: 40%;">{(getIdentifier as any)[type](currentItem)}</p>{/if}
                         </span>
                         <span>
                             <MaterialButton disabled={i === allSlideItems.length - 1} icon="down" title="actions.backward" style="padding: 8px;" on:click={() => rearrangeItems("backward", index)} />

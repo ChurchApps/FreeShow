@@ -11,7 +11,7 @@
     function update(key: string, value: string) {
         globalRegexes.update((a) => {
             if (!a[regexId]) a[regexId] = { label: "", value: "" }
-            a[regexId][key] = value
+            ;(a as any)[regexId][key] = value
             return a
         })
     }

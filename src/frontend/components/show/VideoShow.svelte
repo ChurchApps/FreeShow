@@ -23,7 +23,7 @@
     import { formatVTT, SRTtoVTT } from "./media/subtitles"
 
     export let mediaPath: string
-    export let show
+    export let show: any
 
     $: showId = show?.id
     $: type = show?.type
@@ -222,7 +222,7 @@
         if (!projectItem || projectItem.id !== showId) return
 
         projects.update((a) => {
-            a[$activeProject || ""].shows[show.index][key] = value
+            ;(a as any)[$activeProject || ""].shows[show.index][key] = value
             return a
         })
     }

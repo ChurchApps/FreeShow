@@ -22,7 +22,7 @@
     const readOnly = profile.global === "read"
 
     const typeOrder = { number: 1, text: 2 }
-    $: sortedVariables = sortByName(keysToID($variables), "name", true).sort((a, b) => typeOrder[a.type] - typeOrder[b.type])
+    $: sortedVariables = sortByName(keysToID($variables), "name", true).sort((a, b) => (typeOrder as any)[a.type] - (typeOrder as any)[b.type])
     $: filteredVariablesTags = sortedVariables.filter((a) => !$activeVariableTagFilter.length || (a.tags?.length && !$activeVariableTagFilter.find((tagId) => !a.tags?.includes(tagId)))).filter((a) => !a.tags?.some((tagId) => profile[tagId] === "none"))
     $: filteredVariablesSearch = searchValue.length > 1 ? filteredVariablesTags.filter((a) => a.name.toLowerCase().includes(searchValue.toLowerCase())) : filteredVariablesTags
 
@@ -31,7 +31,7 @@
         if (key === "enabled") value = e?.detail || false
 
         variables.update((a) => {
-            a[id][key] = value
+            ;(a as any)[id][key] = value
 
             return a
         })

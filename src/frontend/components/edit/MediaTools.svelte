@@ -26,7 +26,7 @@
 
     $: mediaType = $activeEdit.type === "camera" ? "camera" : getMediaType(getExtension(mediaId))
 
-    $: mediaSections = clone(mediaBoxes[mediaType]?.sections || {})
+    $: mediaSections = clone((mediaBoxes as any)[mediaType]?.sections || {})
 
     // WIP camera / video cropping ??
 
@@ -67,7 +67,7 @@
         deleteKeys.forEach((key) => delete bg[key])
         setOutput("background", bg)
 
-        mediaSections = clone(mediaBoxes[mediaType]?.sections || {})
+        mediaSections = clone((mediaBoxes as any)[mediaType]?.sections || {})
     }
 
     export function valueChanged(input: any) {
@@ -84,7 +84,7 @@
         if (!currentOutput?.out?.background || currentOutput?.out?.background?.path !== mediaId) return
 
         const bg = currentOutput?.out.background
-        bg[input.id] = value
+        ;(bg as any)[input.id] = value
         setOutput("background", bg)
     }
 

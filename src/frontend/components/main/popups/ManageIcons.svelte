@@ -10,7 +10,7 @@
     const colors = true
 
     function click(icon: string) {
-        const isDefault = customIcons[icon]
+        const isDefault = (customIcons as any)[icon]
 
         customizedIcons.update((a) => {
             if (isDefault) {
@@ -63,7 +63,7 @@
 
 <div class="grid">
     {#each Object.keys(customIcons) as icon}
-        {@const color = colors && customIconsColors[icon] ? "color: " + customIconsColors[icon] + ";" : ""}
+        {@const color = colors && (customIconsColors as any)[icon] ? "color: " + (customIconsColors as any)[icon] + ";" : ""}
         {@const disabled = $customizedIcons.disabled.includes(icon)}
         <MaterialButton style="padding: 8px;" on:click={() => click(icon)} title={disabled ? "actions.enable" : "actions.disable"}>
             <Icon id={icon} size={2} custom white style={disabled ? "opacity: 0.2;" : color} />

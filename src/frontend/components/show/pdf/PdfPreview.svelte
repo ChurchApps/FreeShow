@@ -17,7 +17,7 @@
     import Loader from "../../main/Loader.svelte"
     import { clearBackground } from "../../output/clear"
 
-    export let show
+    export let show: any
     export let index: number
 
     let data: { timer?: number } | undefined

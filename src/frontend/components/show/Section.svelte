@@ -46,7 +46,7 @@
         ;(isTemplate ? projectTemplates : projects).update((a) => {
             if (!a[projectId!]?.shows) return a
             const index = a[projectId!].shows.findIndex((a) => a.id === section.id)
-            if (index >= 0) a[projectId!].shows[index][key] = value
+            if (index >= 0) (a as any)[projectId!].shows[index][key] = value
             a[projectId!].modified = Date.now()
             return a
         })

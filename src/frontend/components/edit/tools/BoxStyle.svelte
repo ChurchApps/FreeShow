@@ -87,7 +87,7 @@
 
     function getFormattingShortcut(e: KeyboardEvent) {
         if (!isFormattingKey(e)) return null
-        return formatting[getNormalizedKey(e).toLowerCase()] || null
+        return (formatting as any)[getNormalizedKey(e).toLowerCase()] || null
     }
 
     function getSelectionPoint(editElem: Element, line: number, pos: number) {
@@ -308,7 +308,7 @@
             if (!item) return
 
             input.id = splitted[0]
-            value = item[splitted[0]] || {}
+            value = (item as any)[splitted[0]] || {}
             value[splitted[1]] = input.value
         }
 

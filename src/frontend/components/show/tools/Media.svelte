@@ -131,8 +131,8 @@
         showsCache.update((a) => {
             const bgs = a[$activeShow!.id].media
             if (!bgs[id]) return a // old media
-            if (value) delete bgs[id][key]
-            else bgs[id][key] = value
+            if (value) delete (bgs as any)[id][key]
+            else (bgs as any)[id][key] = value
             return a
         })
     }
@@ -296,7 +296,7 @@
             <h5><T id="tabs.actions" /></h5>
             {#each actions as action}
                 {@const actionId = getActionTriggerId(action.triggers?.[0])}
-                {@const customData = actionData[actionId] || {}}
+                {@const customData = (actionData as any)[actionId] || {}}
                 {@const actionValue = action?.actionValues?.[actionId] || action?.actionValues?.[action.triggers?.[0]] || {}}
                 {@const customName = getActionName(actionId, actionValue) || (action.name !== translateText(customData.name) ? action.name : "")}
 

@@ -190,7 +190,7 @@
     $: overflowMenuOpened = false
 
     function updateTimerValue(key: string, value: any) {
-        timer[key] = value
+        ;(timer as any)[key] = value
 
         if (key === "warn") warningMenuOpened = !!value
         else if (key === "overflow") overflowMenuOpened = !!value

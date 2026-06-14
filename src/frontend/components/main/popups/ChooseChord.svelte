@@ -34,8 +34,7 @@
         if (key === "key" && (chordData.bass === chordData[key] || chordData[key] === value)) chordData.bass = value
         // reset to no value if clicking on the active value
         if ((key === "type" || key === "tension") && chordData[key] === value) value = ""
-
-        chordData[key] = value
+        ;(chordData as any)[key] = value
     }
 
     let combinedChord = "C"

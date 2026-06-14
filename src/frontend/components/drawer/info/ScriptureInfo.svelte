@@ -93,7 +93,7 @@
             if (key === "showVersion" && biblesContent.find((a) => a?.attributionRequired)) isEnabled = true
             if (isEnabled) {
                 if (text.length) text += "\n"
-                text += textKeys[key]
+                text += (textKeys as any)[key]
             }
         })
 
@@ -102,7 +102,7 @@
         return text
     }
     function updateCustomText(id: string, value: boolean) {
-        const key = textKeys[id]
+        const key = (textKeys as any)[id]
 
         if (value) {
             if (customText.includes(key)) return
@@ -176,7 +176,7 @@
         if (!templateId) return
 
         const settings = template.settings || {}
-        settings[key] = value
+        ;(settings as any)[key] = value
 
         const newData = { key: "settings", data: clone(settings) }
 

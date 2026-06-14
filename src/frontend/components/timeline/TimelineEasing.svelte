@@ -280,7 +280,7 @@
             <div class="action-marker {p.action.type} context #timeline_node" class:selected={selectedActionIds.includes(p.action.id)} style="left: {p.x}px;top: {p.y}px;transform: translate(-50%, -50%);" on:mousedown|stopPropagation={(e) => e.button === 0 && onActionDrag(e, p.action.id)}>
                 <div class="action-head">
                     {#if p.action.type === "action"}
-                        <Icon id={p.action.data.triggers?.length === 1 ? actionData[p.action.data.triggers[0]]?.icon : "actions"} size={0.9} white />
+                        <Icon id={p.action.data.triggers?.length === 1 ? (actionData as any)[p.action.data.triggers[0]]?.icon : "actions"} size={0.9} white />
                     {:else if typeof p.action.data?.index === "number"}
                         {p.action.data.index + 1}
                     {/if}

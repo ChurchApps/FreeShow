@@ -10,7 +10,7 @@
     import MaterialPopupButton from "../../inputs/MaterialPopupButton.svelte"
     import Tip from "../Tip.svelte"
 
-    let data
+    let data: any
     if ($popupData.type === "show_category" || $popupData.type === "style") {
         data = clone($popupData)
         currentMetadataPopupData.set(data)
@@ -63,7 +63,7 @@
             value = ""
         }
 
-        currentValue[key] = value
+        ;(currentValue as any)[key] = value
 
         if (type === "show_category") {
             categories.update((a) => {
@@ -76,7 +76,7 @@
                     }
 
                     if (!a[id].metadata) a[id].metadata = {}
-                    a[id].metadata[key] = value
+                    ;(a as any)[id].metadata[key] = value
                 })
                 return a
             })
@@ -94,7 +94,7 @@
                 }
 
                 if (!a[id].metadata) a[id].metadata = {}
-                a[id].metadata[key] = value
+                ;(a as any)[id].metadata[key] = value
 
                 return a
             })
@@ -125,7 +125,7 @@
                 <Icon id="shows" style="height: {iconSize}pt;opacity: 0.8;" size={2} white />
             {:else}
                 <svg viewBox="0 0 100 100" width="{iconSize}pt" height="{iconSize}pt">
-                    {@html icons[data.id]}
+                    {@html (icons as any)[data.id]}
                 </svg>
             {/if}
 

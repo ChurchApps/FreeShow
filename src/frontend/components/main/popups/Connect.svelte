@@ -90,7 +90,7 @@
 
         serverData.update((a) => {
             if (!a[id]) a[id] = {}
-            a[id][key] = value
+            ;(a as any)[id][key] = value
 
             return a
         })

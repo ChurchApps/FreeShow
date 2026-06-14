@@ -403,9 +403,9 @@
 
         if (e.target?.closest("input") || e.target?.closest(".edit") || $activeEdit.items.length) return
 
-        if ((e.ctrlKey || e.metaKey) && shortcuts[e.key]) {
+        if ((e.ctrlKey || e.metaKey) && (shortcuts as any)[e.key]) {
             // e.preventDefault()
-            shortcuts[e.key]()
+            ;(shortcuts as any)[e.key]()
         }
     }
 
@@ -712,7 +712,7 @@
 
             <div class="divider"></div>
         {:else}
-            <MaterialButton title="media.{activeView}" on:click={() => (activeView = nextActiveView[activeView])}>
+            <MaterialButton title="media.{activeView}" on:click={() => (activeView = (nextActiveView as any)[activeView])}>
                 <Icon size={1.2} id={activeView === "all" ? "media" : activeView} white={activeView === "all"} />
             </MaterialButton>
         {/if}

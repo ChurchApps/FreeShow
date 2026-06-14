@@ -61,7 +61,7 @@
 
     function updateKey(value: string, tagId: string, key: string) {
         store[type]().update((a) => {
-            a[tagId][key] = value
+            ;(a as any)[tagId][key] = value
             return a
         })
 

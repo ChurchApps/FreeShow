@@ -303,7 +303,7 @@
 
         let deleteKeys = ["auto", "textFit", "specialStyle", "scrolling"]
         // reset timer/icon/media/mirror etc. style
-        if (item && item[item.type || ""]) deleteKeys = [item.type!]
+        if (item && (item as any)[item.type || ""]) deleteKeys = [item.type!]
 
         deleteKeys.forEach((key) => {
             history({

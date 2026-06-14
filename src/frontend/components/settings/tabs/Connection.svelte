@@ -103,7 +103,7 @@
 
     $: cloudOnly = { churchApps: !!$special.churchAppsCloudOnly }
     function contentProviderConnect(providerId: ContentProviderId) {
-        if (!$providerConnections[providerId] || cloudOnly[providerId]) {
+        if (!$providerConnections[providerId] || (cloudOnly as any)[providerId]) {
             if (providerId === "churchApps") {
                 special.update((a) => {
                     delete a.churchAppsCloudOnly
@@ -115,7 +115,7 @@
                 }
             }
 
-            sendMain(Main.PROVIDER_LOAD_SERVICES, { providerId, cloudOnly: cloudOnly[providerId] || false })
+            sendMain(Main.PROVIDER_LOAD_SERVICES, { providerId, cloudOnly: (cloudOnly as any)[providerId] || false })
         } else {
             if ($cloudSyncData.enabled && providerId === $cloudSyncData.id) {
                 // should remain connected to cloud

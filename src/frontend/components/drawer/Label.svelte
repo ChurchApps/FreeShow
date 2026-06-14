@@ -46,7 +46,7 @@
         const id: string = idSplit[0]
         const elemId: string = idSplit[1]
 
-        if (nameCategories[id]) nameCategories[id]({ name: e.detail.value, id: elemId })
+        if ((nameCategories as any)[id]) (nameCategories as any)[id]({ name: e.detail.value, id: elemId })
         else console.log("Trying to rename unadded type: " + id)
     }
 

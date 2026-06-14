@@ -12,7 +12,7 @@
     export let input: { [key: string]: string }
 
     $: elementId = input.element ?? conditionValues.element[0]?.value
-    $: operatorOptions = customOperators[elementId] ? customOperators[elementId] : conditionValues.operator
+    $: operatorOptions = (customOperators as any)[elementId] ? (customOperators as any)[elementId] : conditionValues.operator
     $: operatorId = input.operator ? input.operator : operatorOptions[0]?.value
 
     const conditionValues = {
@@ -84,7 +84,7 @@
 <div class="box">
     {#each Object.entries(conditionValues) as [conditionId, condition]}
         {#if (conditionId === "element" || input.element) && (conditionId !== "data" || !noData.includes(operatorId))}
-            {@const options = conditionId === "operator" ? operatorOptions : conditionId === "data" && customData[elementId] ? customData[elementId] : condition}
+            {@const options = conditionId === "operator" ? operatorOptions : conditionId === "data" && (customData as any)[elementId] ? (customData as any)[elementId] : condition}
             {@const value = options.find((a: any) => a.value === input[conditionId]) || options[0]}
             {@const label = conditionId === "operator" ? "actions.mode" : conditionId === "data" ? "variables.value" : "sort.type"}
 
@@ -92,8 +92,8 @@
                 <MaterialDropdown {label} {options} value={conditionId === "element" ? input[conditionId] : value?.value} on:change={(e) => setValue(conditionId, e)} />
             {/if}
 
-            {#if conditionId === "element" && elementOptions[value.value]}
-                <MaterialDropdown label="tools.item" options={elementOptions[value.value]} value={input.elementId} on:change={(e) => setValue("elementId", e)} />
+            {#if conditionId === "element" && (elementOptions as any)[value.value]}
+                <MaterialDropdown label="tools.item" options={(elementOptions as any)[value.value]} value={input.elementId} on:change={(e) => setValue("elementId", e)} />
 
                 {#if input.element === "variable" && input.elementId?.includes("__")}
                     <!-- 0 = active -->

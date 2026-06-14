@@ -28,7 +28,7 @@
 
     $: isSlideText = item?.type === "slide_text" // || activeItemId?.includes("slide_text")
     $: isTextItem = item?.type === "slide_text" || item?.type === "text"
-    $: stageSections = item ? clone(isSlideText ? slideTextSections : itemBoxes[item.type || ""]?.sections) || {} : {}
+    $: stageSections = item ? clone(isSlideText ? slideTextSections : (itemBoxes as any)[item.type || ""]?.sections) || {} : {}
 
     $: if (item?.type === "text" && stageSections) {
         delete stageSections.chords

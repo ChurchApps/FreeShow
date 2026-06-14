@@ -46,7 +46,7 @@
                 // eng <> en
                 if (lang.includes(langCode)) match = true
                 else {
-                    langCode = replace[langCode] ? langCode : Object.entries(replace).find(([_id, r]) => r.includes(langCode))?.[0] || ""
+                    langCode = (replace as any)[langCode] ? langCode : Object.entries(replace).find(([_id, r]) => r.includes(langCode))?.[0] || ""
                     if (lang.includes(langCode)) match = true
                 }
 

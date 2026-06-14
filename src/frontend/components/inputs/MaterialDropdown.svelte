@@ -275,7 +275,7 @@
 
     let addNewTextbox = false
     function createNew() {
-        if (newDropdown[addNew!]) return newDropdown[addNew!]()
+        if ((newDropdown as any)[addNew!]) return (newDropdown as any)[addNew!]()
 
         open = false
         addNewTextbox = true

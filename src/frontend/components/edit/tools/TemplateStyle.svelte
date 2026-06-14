@@ -37,7 +37,7 @@
 
     function setValue(e: any, key: string) {
         const value = e?.detail ?? e
-        settings[key] = value
+        ;(settings as any)[key] = value
 
         update()
     }

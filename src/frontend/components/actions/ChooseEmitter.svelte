@@ -38,7 +38,7 @@
             v = v.detail
         }
 
-        value[key] = v
+        ;(value as any)[key] = v
         dispatch("change", value)
     }
 

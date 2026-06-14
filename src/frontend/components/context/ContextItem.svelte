@@ -52,7 +52,7 @@
                 category_templates: () => $templateCategories
             }
 
-            const isArchive = !!categoryStores[$selected.id || ""]?.()[$selected.data[0]]?.isArchive
+            const isArchive = !!(categoryStores as any)[$selected.id || ""]?.()[$selected.data[0]]?.isArchive
             enabled = isArchive
         },
         archive: () => {
@@ -395,7 +395,7 @@
         })
     }
 
-    if (conditions[id]) conditions[id]()
+    if ((conditions as any)[id]) (conditions as any)[id]()
 
     function contextItemClick() {
         if (disabled) return

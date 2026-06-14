@@ -58,8 +58,8 @@
             else if (edit.icon === "overlay") edit.icon = "overlays"
             else if (edit.icon === "effect") edit.icon = "effects"
 
-            if (!names[type]) return a
-            edit.name = names[type](edit.id)
+            if (!(names as any)[type]) return a
+            edit.name = (names as any)[type](edit.id)
             if (edit.name === undefined) return a
 
             if (type === "show") {

@@ -179,7 +179,7 @@
     }
 
     function rename() {
-        if ($selected.id && renameAction[$selected.id]) renameAction[$selected.id]()
+        if ($selected.id && (renameAction as any)[$selected.id]) (renameAction as any)[$selected.id]()
         activePopup.set(null)
         groupName = ""
         selected.set({ id: null, data: [] })

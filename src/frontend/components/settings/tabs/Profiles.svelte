@@ -166,7 +166,7 @@
         if (!profileId) return
         profiles.update((a) => {
             if (!a[profileId]) a[profileId] = clone(currentProfile)
-            a[profileId][key] = value
+            ;(a as any)[profileId][key] = value
             return a
         })
     }

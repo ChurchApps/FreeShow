@@ -60,7 +60,7 @@
 </script>
 
 {#if indicatorId}
-    <div class="status" style={isWindows ? "transform: translateY(25px);" : ""} role="none" data-title={translateText(titles[indicatorId] || "")} on:click={onClick} transition:slide={{ axis: "x", duration: 300 }}>
+    <div class="status" style={isWindows ? "transform: translateY(25px);" : ""} role="none" data-title={translateText((titles as any)[indicatorId] || "")} on:click={onClick} transition:slide={{ axis: "x", duration: 300 }}>
         <div class={indicatorId}>
             {#if indicatorId === "saving"}
                 <Icon id="save" white />

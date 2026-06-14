@@ -45,7 +45,7 @@
             if ($activeEdit.type === "overlay") slide = $overlays
             else if ($activeEdit.type === "template") slide = $templates
 
-            slideItems = slide[$activeEdit.id!]?.items
+            slideItems = (slide as any)[$activeEdit.id!]?.items
         }
 
         if (!slideItems) return
@@ -86,7 +86,7 @@
             if ($activeEdit.type === "overlay") slide = $overlays
             else if ($activeEdit.type === "template") slide = $templates
 
-            slideItems = slide[$activeEdit.id!]?.items
+            slideItems = (slide as any)[$activeEdit.id!]?.items
         }
 
         if (!slideItems?.[index]) return
@@ -204,7 +204,7 @@
 
     <!-- actions -->
     {#each actions as action}
-        {@const actionValue = item ? (action.direct ? item[action.id] : item.actions?.[action.id]) : null}
+        {@const actionValue = item ? (action.direct ? (item as any)[action.id] : item.actions?.[action.id]) : null}
         {#if actionValue}
             <div data-title={action ? translateText(action.label) : ""} class="actionButton" style="zoom: {1 / ratio};left: 0;inset-inline-end: unset;">
                 <Button on:click={() => (action.direct ? removeItemValue(action.id) : removeAction(action.id))} redHover>

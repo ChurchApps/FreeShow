@@ -43,8 +43,8 @@
         <h2>{translateText(`settings.${tabId}`, $dictionary)}</h2>
 
         <div style="display: flex;align-items: center;gap: 8px;">
-            {#if hints[tabId]}
-                <Tip type="info" value={translateText(hints[tabId])} style="opacity: 0.7;" hiddenText white />
+            {#if (hints as any)[tabId]}
+                <Tip type="info" value={translateText((hints as any)[tabId])} style="opacity: 0.7;" hiddenText white />
             {/if}
 
             {#if tabId === "theme"}

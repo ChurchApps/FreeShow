@@ -91,7 +91,7 @@
         if (!slide || currentShow.locked) return
 
         const settings = clone(slide.settings || {})
-        delete settings[key]
+        delete (settings as any)[key]
         const newData = { style: settings }
 
         history({

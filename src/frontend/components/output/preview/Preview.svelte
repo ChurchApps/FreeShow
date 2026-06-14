@@ -42,9 +42,9 @@
     function keydown(e: KeyboardEvent) {
         if ($contextActive) return
         if ($guideActive || $activePopup === "assign_shortcut") return
-        if ((e.ctrlKey || e.metaKey || e.altKey) && previewCtrlShortcuts[e.key]) {
+        if ((e.ctrlKey || e.metaKey || e.altKey) && (previewCtrlShortcuts as any)[e.key]) {
             e.preventDefault()
-            previewCtrlShortcuts[e.key]()
+            ;(previewCtrlShortcuts as any)[e.key]()
         }
 
         const functionKey = /^F(?:[1-9]|1[0-9]|2[0-4])$/
@@ -110,8 +110,8 @@
             }
         }
 
-        if (previewShortcuts[e.key]) {
-            if (previewShortcuts[e.key](e)) e.preventDefault()
+        if ((previewShortcuts as any)[e.key]) {
+            if ((previewShortcuts as any)[e.key](e)) e.preventDefault()
             return
         }
     }

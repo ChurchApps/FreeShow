@@ -275,7 +275,7 @@
         captionTranslateLanguages: item?.captions?.googlekey ? [{ value: "", label: "—" }, ...getIsoLanguages()] : captionTranslateLanguages.map((a) => ({ value: a.id, label: a.name }))
     }
     function getOptions(options: string | any[]): any[] {
-        if (typeof options === "string") return optionsLists[options] || []
+        if (typeof options === "string") return (optionsLists as any)[options] || []
         return options
     }
 
@@ -308,7 +308,7 @@
                                 <Icon id="code" white />
                                 <p>CSS</p>
                             {:else}
-                                <Icon {id} style="color: {sectionColors[id]};" white />
+                                <Icon {id} style="color: {(sectionColors as any)[id]};" white />
                                 <p>{translateText(section.name || "edit." + id)}</p>
                             {/if}
                         </span>

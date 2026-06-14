@@ -123,17 +123,17 @@
             specificScenatios
                 .filter((a) => a !== selectedSpecific)
                 .forEach((sKey) => {
-                    if (!data[sKey] || JSON.stringify(data[sKey]) === JSON.stringify(data[selectedSpecific])) changeSpecific.push(sKey)
+                    if (!(data as any)[sKey] || JSON.stringify((data as any)[sKey]) === JSON.stringify((data as any)[selectedSpecific])) changeSpecific.push(sKey)
                 })
         }
 
         // set data
         changeSpecific.forEach((sKey) => {
             if (reset) {
-                delete data[sKey]
+                delete (data as any)[sKey]
             } else {
-                if (!data[sKey]) data[sKey] = copyTransition(data)
-                data[sKey][key] = value
+                if (!(data as any)[sKey]) (data as any)[sKey] = copyTransition(data)
+                ;(data as any)[sKey][key] = value
             }
         })
 
@@ -252,7 +252,7 @@
         const defaults = DEFAULT_TRANSITIONS[selectedType]
 
         Object.keys(defaults).forEach((key) => {
-            const defaultValue = defaults[key]
+            const defaultValue = (defaults as any)[key]
             // @ts-ignore
             changeTransition(selectedType, key, isSlide || isItem ? $transitionData[selectedType][key] || defaultValue : defaultValue, true)
         })
@@ -311,7 +311,7 @@
         {@const isActive = type.id === currentTransition.type}
         <MaterialButton showOutline={isActive} {isActive} style={type.id === "none" ? "font-style: italic;" : ""} on:click={() => changeTransition(selectedType, "type", type.id)}>
             <svg viewBox="0 0 100 100" width="{iconSize}pt" height="{iconSize}pt">
-                {@html icons[type.id]}
+                {@html (icons as any)[type.id]}
             </svg>
             <T id={type.name} />
         </MaterialButton>

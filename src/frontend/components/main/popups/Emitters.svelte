@@ -86,8 +86,7 @@
         const value = e.detail
         const templates = emitter?.templates || {}
         if (!templates[editTemplate]) return
-
-        templates[editTemplate][key] = value
+        ;(templates as any)[editTemplate][key] = value
         updateValue("templates", templates)
     }
 

@@ -42,7 +42,7 @@
                 default: false,
                 name: (key === "name" ? value : thisTheme.name) + " 2"
             }
-            if (key !== "name") data[key] = { ...thisTheme[key], [id!]: value }
+            if (key !== "name") (data as any)[key] = { ...(thisTheme as any)[key], [id!]: value }
 
             history({ id: "UPDATE", newData: { data }, location: { page: "settings", id: "settings_theme" } })
             updateThemeValues(data)

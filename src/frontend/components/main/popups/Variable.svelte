@@ -56,7 +56,7 @@
             } while (existing)
         }
 
-        currentVariable[key] = value
+        ;(currentVariable as any)[key] = value
 
         if (key === "type") return
 

@@ -52,7 +52,7 @@
         {@const isActive = fit.value === currentValue}
         <MaterialButton showOutline={isActive} {isActive} on:click={() => changeFit(fit.value)}>
             <svg viewBox="0 0 100 100" width="{iconSize}pt" height="{iconSize}pt">
-                {@html icons[fit.value]}
+                {@html (icons as any)[fit.value]}
             </svg>
             <T id={fit.label} />
         </MaterialButton>

@@ -27,8 +27,7 @@
 
     function updateValue(value: string, key: string) {
         if (!value) return
-
-        currentStream[key] = value
+        ;(currentStream as any)[key] = value
 
         audioStreams.update((a) => {
             a[streamId] = currentStream

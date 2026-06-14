@@ -107,7 +107,7 @@
 
     function update(e: any) {
         value = e.detail
-        if (selection.id && actions[selection.id]) actions[selection.id]()
+        if (selection.id && (actions as any)[selection.id]) (actions as any)[selection.id]()
     }
 </script>
 

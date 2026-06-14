@@ -216,7 +216,7 @@
                         {#each values as value, i}
                             {#if i === 0 || values[i - 1].category !== value.category}
                                 <div class="category-header" role="none" on:click={() => openCategory(value.category)}>
-                                    {translateText(quickSearchCategoryNames[value.category])}
+                                    {translateText((quickSearchCategoryNames as any)[value.category])}
                                 </div>
                             {/if}
 

@@ -89,7 +89,7 @@
                 delete a[cam.id].filter
                 delete a[cam.id].cropping
             } else {
-                delete a[cam.id][key]
+                delete (a as any)[cam.id][key]
             }
 
             return a
