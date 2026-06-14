@@ -52,9 +52,12 @@ sudo apt-get install -y build-essential python3 python3-setuptools \
 ### Windows 10 / 11
 
 - **Visual Studio** (or Build Tools) with the **"Desktop development with C++"** workload, including the **Windows 10/11 SDK**. Download: <https://visualstudio.microsoft.com/downloads/>
-- **Python 3.12** + `setuptools`.
+  - Via `winget`: `winget install Microsoft.VisualStudio.2022.BuildTools --override "--quiet --wait --add Microsoft.VisualStudio.Workload.VCTools --includeRecommended"`
+- **Python 3.12** + `setuptools` (`python -m pip install setuptools` — Python 3.12 removed the bundled `distutils` that `node-gyp` relies on).
 
 > Both Windows 10 and 11 use the same toolchain/SDK — no separate steps.
+
+> **Windows Defender "Controlled folder access".** If ransomware protection is enabled, Defender can block the app from writing to its data folder (FreeShow defaults this to **Documents**), which makes the app — and the E2E test — appear to hang on first launch. Either **allow the app** through *Windows Security → Virus & threat protection → Ransomware protection → Allow an app through Controlled folder access* (in dev, allow `node_modules\electron\dist\electron.exe`; for an installed build, allow `FreeShow.exe`), or choose a **data folder outside Documents** on the first-run setup screen.
 
 ---
 
@@ -81,18 +84,21 @@ Builds in order: frontend (Vite → `public/build/bundle.js`) → web companion 
 ## 5. Testing
 
 ```bash
-npm test            # full check: playwright (E2E) + prettier (format) + svelte-check (types)
+npm test            # full check, in order: vitest (unit) → playwright (E2E) → prettier (format) → svelte-check (types)
 ```
 
 Individual checks:
 
 ```bash
+npm run test:unit         # Vitest unit tests (config/testing/vitest.config.ts; src/**/*.test.ts)
 npm run test:playwright   # E2E smoke test — boots the packaged app (see note below)
 npm run test:svelte       # type-check Svelte/TS via svelte-check
 npm run test:format       # Prettier check (does not modify files)
 ```
 
-There is essentially **one E2E test** (`config/testing/start.test.ts`) that launches the app and walks a basic flow; there is no unit-test framework. "Tests passing" means: it builds, it type-checks, and it's formatted.
+Testing is two layers: **Vitest unit tests** colocated as `src/**/*.test.ts` (pure, dependency-light logic — importing UI files that pull in `stores.ts`/IPC won't load under the `node` test environment), plus **one E2E test** (`config/testing/start.test.ts`) that launches the app and walks a basic flow. "Tests passing" means: unit tests pass, it builds, it launches, it type-checks, and it's formatted.
+
+> `npm test` runs the stages **serially and stops at the first failure** (`npm-run-all -s`). A `test:format` failure therefore prevents `test:svelte` from running — run the individual checks (above) to see the full picture, or `npm run format:prettier` to clear formatting issues first.
 
 **Running the E2E test:**
 
@@ -106,6 +112,15 @@ npm run test:playwright
 # 3b) Linux (headless — needs xvfb):
 xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run test:playwright
 ```
+
+Run a single test:
+
+```bash
+npx vitest run --config config/testing/vitest.config.ts <path/to/file.test.ts>
+npx playwright test --config config/testing/playwright.config.ts -g "<test name>"
+```
+
+> **Windows:** the first cold launch can be slow (JIT + antivirus scanning the freshly built binaries), and Defender **Controlled folder access** can block the app's data folder — see the Windows setup note above. If the E2E test times out only on the first run, allow the Electron exe (or pick a non-Documents data folder) and re-run.
 
 ---
 
