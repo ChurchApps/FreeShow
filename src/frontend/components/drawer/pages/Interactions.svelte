@@ -328,7 +328,7 @@
                         {#each Object.entries(answers[i] || {}).sort((a, b) => (a[1]?.time || 0) - (b[1]?.time || 0)) as [clientId, answerValue]}
                             <p style="display: flex; gap: 8px;padding: 4px 8px;">
                                 <span style="font-weight: bold; opacity: 0.9;">{clients[clientId]?.name || `User #${Object.keys(clients).indexOf(clientId) + 1}`}:</span>
-                                <span style="flex: 1;">
+                                <span style="flex: 1;white-space: normal;">
                                     {#each Array.isArray(answerValue?.value) ? answerValue.value : [answerValue?.value] as value, i}
                                         {i > 0 ? ", " : ""}
                                         <span style={isCorrect(input, value) ? "color: #31ed31; font-weight: bold;" : ""}>{value}</span>

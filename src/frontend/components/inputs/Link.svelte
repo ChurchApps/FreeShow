@@ -21,6 +21,7 @@
         display: inline-flex;
         gap: 5px;
         align-items: flex-end;
+        max-width: 100%;
 
         -webkit-user-drag: none;
     }

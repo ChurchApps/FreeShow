@@ -171,8 +171,11 @@ class Interaction {
         const input = clone(data.inputs[this.inputIndex])
         if (!input) return null
 
-        // randomize options order
         if (input.type === "multi_choice" && input.options) {
+            // remove answers
+            input.options = input.options.map((o: any) => ({ value: o.value }))
+
+            // randomize options order
             const shuffledOptions = [...input.options]
             for (let i = shuffledOptions.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1))
@@ -258,6 +261,17 @@ class Interaction {
         console.info(`Interaction successfully provisioned at ID: ${this.dbid}`)
 
         this.unsubscribe = subscribeInteraction(this.dbid, this.dbsecret, (raw) => {
+            // Controller
+            if (raw.action === "next") {
+                updateInteractionDb(this.dbid, this.dbsecret, { action: null })
+                this.next()
+                return
+            } else if (raw.action === "prev") {
+                updateInteractionDb(this.dbid, this.dbsecret, { action: null })
+                this.previous()
+                return
+            }
+
             if (raw) {
                 this.currentAnswer = raw.public?.currentAnswer || null
                 this.closed = raw.public?.closed || false

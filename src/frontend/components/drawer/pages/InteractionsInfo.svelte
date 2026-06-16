@@ -18,23 +18,36 @@
     else interaction = null
 
     $: url = interaction?.dbid ? `https://freeshow.net/interaction#id=${interaction.dbid}` : null
+    $: controllerUrl = interaction?.dbid && interaction?.dbsecret ? `https://freeshow.net/interaction_controller#id=${interaction.dbsecret}` : null
 </script>
 
 <div class="padding">
-    {#if openedId && openedInteraction?.inputs?.length}
-        {#if url}
-            <div style="padding: 4px 2px;text-align: center;margin-bottom: 10px;">
-                <Link {url}>
-                    {url.replace("https://", "")}
+    {#if openedId}
+        {#if openedInteraction?.inputs?.length}
+            {#if url}
+                <div style="padding: 4px 2px;text-align: center;margin-bottom: 10px; max-width: 100%; display: flex; justify-content: center; align-items: center;">
+                    <Link {url}>
+                        <span style="text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">{url.replace("https://", "")}</span>
+                        <Icon id="launch" white />
+                    </Link>
+                </div>
+            {/if}
+
+            <!-- Generate slides -->
+            <MaterialButton variant="outlined" icon="slide" style="width: 100%;" on:click={() => generateSlide("join")} white><T id="interaction.generate_slide" />: Join</MaterialButton>
+            <MaterialButton variant="outlined" icon="slide" style="width: 100%;" on:click={() => generateSlide("players")} white><T id="interaction.generate_slide" />: Players</MaterialButton>
+            <MaterialButton variant="outlined" icon="slide" style="width: 100%;" on:click={() => generateSlide("question")} white><T id="interaction.generate_slide" />: Question</MaterialButton>
+        {/if}
+
+        {#if controllerUrl}
+            <div style="flex: 1;" />
+            <div style="padding: 4px 2px;text-align: center;margin-top: 10px; max-width: 100%; display: flex; justify-content: center; align-items: center;">
+                <Link url={controllerUrl}>
+                    <span style="text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">{controllerUrl.replace("https://", "").replace(/id=[^&]+/g, "id=...")}</span>
                     <Icon id="launch" white />
                 </Link>
             </div>
         {/if}
-
-        <!-- Generate slides -->
-        <MaterialButton variant="outlined" icon="slide" style="width: 100%;" on:click={() => generateSlide("join")} white><T id="interaction.generate_slide" />: Join</MaterialButton>
-        <MaterialButton variant="outlined" icon="slide" style="width: 100%;" on:click={() => generateSlide("players")} white><T id="interaction.generate_slide" />: Players</MaterialButton>
-        <MaterialButton variant="outlined" icon="slide" style="width: 100%;" on:click={() => generateSlide("question")} white><T id="interaction.generate_slide" />: Question</MaterialButton>
     {/if}
 </div>
 
@@ -45,5 +58,7 @@
         display: flex;
         flex-direction: column;
         align-items: center;
+        flex: 1;
+        box-sizing: border-box;
     }
 </style>
