@@ -285,7 +285,7 @@ export interface Interaction {
     name: string
     inputs: InteractionInput[]
     options?: Options
-    history?: { time: number; inputs: {question: string; answers: {name: string; value: any}[] }[] }[]
+    history?: { time: number; inputs: { question: string; answers: { name: string; value: any }[] }[] }[]
     lastConnection?: { id: string; secret: string }
 }
 type Options = {
@@ -307,6 +307,7 @@ interface TextQuestion extends QuestionBase {
     type: "text"
     inputType: "input" // "textarea"
     answer?: string // text does not need a precise answer
+    allowMultiple?: boolean
 }
 interface NumberQuestion extends QuestionBase {
     type: "number"

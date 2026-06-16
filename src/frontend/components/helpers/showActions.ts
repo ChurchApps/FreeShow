@@ -1120,8 +1120,12 @@ const dynamicValues = {
 
     // interaction
     interaction_players: ({ show }) => getInteractionPlayers(show),
+    interaction_players_count: ({ show }) => getInteractionPlayersCount(show),
     interaction_question: ({ show }) => getInteractionQuestion(show),
-    interaction_answer: ({ show }) => getInteractionAnswer(show)
+    interaction_time: ({ show }) => getInteractionTime(show),
+    interaction_answer: ({ show }) => getInteractionAnswer(show),
+    interaction_player_answers: ({ show }) => getInteractionPlayerAnswers(show),
+    interaction_player_answer_latest: ({ show }) => getInteractionPlayerAnswerLatest(show)
 }
 
 // placeholder values
@@ -1267,11 +1271,15 @@ function getInteractionId(show: Show | null): string | null {
     return interactionId || null
 }
 
-function getInteractionPlayers(show: Show | null) {
-    let interactionId = getInteractionId(show)
-    if (!interactionId) return ""
+function _getInteraction(show: Show | null) {
+    const interactionId = getInteractionId(show)
+    if (!interactionId) return null
 
-    const interaction = getInteraction(interactionId)
+    return getInteraction(interactionId) || null
+}
+
+function getInteractionPlayers(show: Show | null) {
+    const interaction = _getInteraction(show)
     if (!interaction) return ""
 
     return interaction
@@ -1280,22 +1288,45 @@ function getInteractionPlayers(show: Show | null) {
         .join(", ")
 }
 
-function getInteractionQuestion(show: Show | null) {
-    let interactionId = getInteractionId(show)
-    if (!interactionId) return ""
+function getInteractionPlayersCount(show: Show | null) {
+    const interaction = _getInteraction(show)
+    if (!interaction) return ""
 
-    const interaction = getInteraction(interactionId)
+    return String(interaction.getClientsCount())
+}
+
+function getInteractionQuestion(show: Show | null) {
+    const interaction = _getInteraction(show)
     if (!interaction) return ""
 
     return interaction.getQuestion()
 }
 
-function getInteractionAnswer(show: Show | null) {
-    let interactionId = getInteractionId(show)
-    if (!interactionId) return ""
+function getInteractionTime(show: Show | null) {
+    const interaction = _getInteraction(show)
+    if (!interaction) return ""
 
-    const interaction = getInteraction(interactionId)
+    return interaction.getTime()
+}
+
+function getInteractionAnswer(show: Show | null) {
+    const interaction = _getInteraction(show)
     if (!interaction) return ""
 
     return interaction.getAnswer()
+}
+
+function getInteractionPlayerAnswers(show: Show | null) {
+    const interaction = _getInteraction(show)
+    if (!interaction) return ""
+
+    const answers = interaction.getPlayerAnswers()
+    return [answers.join(", "), ...answers]
+}
+
+function getInteractionPlayerAnswerLatest(show: Show | null) {
+    const interaction = _getInteraction(show)
+    if (!interaction) return ""
+
+    return interaction.getPlayerAnswerLatest()
 }

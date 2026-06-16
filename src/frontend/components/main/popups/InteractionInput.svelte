@@ -8,6 +8,7 @@
     import MaterialMultiChoice from "../../inputs/MaterialMultiChoice.svelte"
     import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
     import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
+    import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
 
     let chosenType = ""
     const types = [
@@ -185,6 +186,8 @@
     {:else if currentInput.type === "text"}
         <!-- optional - for polls we don't need answers -->
         <MaterialTextInput label="interaction.answer (interaction.optional)" value={currentInput.answer || ""} on:change={(e) => updateValue(e.detail, "answer")} />
+
+        <MaterialToggleSwitch label="interaction.allow_multiple" checked={currentInput.allowMultiple} defaultValue={false} on:change={(e) => updateValue(e.detail, "allowMultiple")} />
     {:else if currentInput.type === "number"}
         <MaterialNumberInput label="interaction.answer (interaction.optional)" type="number" value={currentInput.answer ?? -1} min={currentInput.min ?? 0} max={currentInput.max ?? 1000} on:change={(e) => updateValue(e.detail, "answer")} />
 

@@ -74,10 +74,10 @@ function generateJoinSlide(id: string) {
         notes: "",
         items: [
             BG_item,
-            { type: "media", style: "left:710.00px;top:290.50px;width: 500px;height: 500px;border-radius: 20px;border-color: #000000;border-width: 10px;", src: qrData },
-            { type: "text", style: "top:72.50px;left:461.00px;height:152.67px;width:998.00px;", lines: [{ align: "", text: [{ style: "font-weight:bold;text-transform:uppercase;font-size:120px;text-shadow:0 0 0 rgb(0 0 0 / 0);-webkit-text-stroke-width:15px;", value: "Join now!" }] }] },
+            { type: "media", style: "left:710.00px;top:340.50px;width: 500px;height: 500px;border-radius: 20px;border-color: #000000;border-width: 10px;", src: qrData },
+            { type: "text", style: "top:100px;left:461.00px;height:152.67px;width:998.00px;", lines: [{ align: "", text: [{ style: "font-weight:bold;text-transform:uppercase;font-size:120px;text-shadow:0 0 0 rgb(0 0 0 / 0);-webkit-text-stroke-width:15px;", value: "Join now!" }] }] },
             // Use your phone to scan the QR code or go to freeshow.net/interaction and enter the code:
-            { type: "text", style: "top:800px;left:380px;height:75px;width:1160px;", lines: [{ align: "", text: [{ style: "font-size:28px;color:rgb(255 255 255 / 0.8);text-shadow:0 0 0 rgb(0 0 0 / 0);", value: "Scan the QR Code with your phone!" }] }] },
+            { type: "text", style: "top:850px;left:380px;height:75px;width:1160px;", lines: [{ align: "", text: [{ style: "font-size:28px;color:rgb(255 255 255 / 0.8);text-shadow:0 0 0 rgb(0 0 0 / 0);", value: "Scan the QR Code with your phone!" }] }] },
             { type: "icon", style: "height:130px;width:130px;color:#FFFFFF;left:1375px;top:403.5px;", id: "phone" },
             { type: "media", style: "top:509.50px;left:1196.00px;height:280.65px;width:279.00px;", src: `data:image/png;base64,${arrowImage}` }
         ]
@@ -104,7 +104,8 @@ function generatePlayersSlide() {
             { type: "text", style: "top:72.50px;left:461.00px;height:152.67px;width:998.00px;", lines: [{ align: "", text: [{ style: "font-weight:bold;font-size:120px;text-shadow:0 0 0 rgb(0 0 0 / 0);-webkit-text-stroke-width:15px;", value: "Players" }] }] },
 
             // these dynamic values use the show reference to get the correct interaction id - otherwise fallback to first active
-            { type: "text", style: "top:285.02px;left:50.00px;height:706.98px;width:1820.00px;", lines: [{ align: "", text: [{ style: "font-size:80px;text-shadow:0 0 0 rgb(0 0 0 / 0);-webkit-text-stroke-width:10px;", value: "{interaction_players}" }] }] }
+            { type: "text", style: "top:285.02px;left:50.00px;height:706.98px;width:1820.00px;", lines: [{ align: "", text: [{ style: "font-size:80px;text-shadow:0 0 0 rgb(0 0 0 / 0);-webkit-text-stroke-width:10px;", value: "{interaction_players|Waiting...}" }] }] },
+            { type: "text", style: "top:55.17px;height:170.00px;width:245.38px;left:1625.00px;", lines: [{ align: "", text: [{ style: "font-feature-settings: 'tnum' 1;font-family:monospace;font-weight:bold;text-shadow:0 0 0 rgb(0 0 0 / 0);-webkit-text-stroke-width: 4px;font-size:90px;", value: "{interaction_players_count}" }] }] }
         ]
     }
 
@@ -120,7 +121,8 @@ function generateQuestionSlide() {
         items: [
             BG_item,
             { type: "text", style: "top:117.50px;left:194.50px;height:846.00px;width:1534.08px;", lines: [{ align: "", text: [{ style: "font-weight:bold;font-size:120px;text-shadow:0 0 0 rgb(0 0 0 / 0);-webkit-text-stroke-width:15px;", value: "{interaction_question}" }] }] },
-            { type: "text", style: "top:800px;left:194.50px;height:100px;width:1534.08px;", lines: [{ align: "", text: [{ style: "font-size:90px;text-shadow:0 0 0 rgb(0 0 0 / 0);-webkit-text-stroke-width:15px;", value: "Answer: {interaction_answer}" }] }], conditions: { showItem: [[[[{ element: "dynamicValue", elementId: "interaction_answer", operator: "isNot", value: "" }]]]] } }
+            { type: "text", style: "top:800px;left:194.50px;height:100px;width:1534.08px;", lines: [{ align: "", text: [{ style: "font-size:90px;text-shadow:0 0 0 rgb(0 0 0 / 0);-webkit-text-stroke-width:15px;", value: "Answer: {interaction_answer}" }] }], conditions: { showItem: [[[[{ element: "dynamicValue", elementId: "interaction_answer", operator: "isNot", value: "" }]]]] } },
+            { type: "text", style: "top:79.64px;left:1406.85px;height:197.02px;width:451.60px;", lines: [{ align: "", text: [{ style: "font-feature-settings: 'tnum' 1;font-family:monospace;font-weight:bold;text-shadow:0 0 0 rgb(0 0 0 / 0);-webkit-text-stroke-width: 4px;color:linear-gradient(120deg, #FF851B 0%, #b91533 70%);font-size:120px;", value: "{interaction_time}" }] }] }
         ]
     }
 

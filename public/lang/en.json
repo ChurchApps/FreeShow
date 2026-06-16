@@ -1674,6 +1674,7 @@
         "mark_as_correct": "Mark as correct",
         "mark_as_incorrect": "Mark as incorrect",
         "reveal_answer": "Reveal answer",
+        "allow_multiple": "Allow multiple answers",
         "optional": "Optional",
         "min": "Min",
         "max": "Max",

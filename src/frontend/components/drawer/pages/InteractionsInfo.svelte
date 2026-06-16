@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activeInteractions, openedInteractionId } from "../../../stores"
+    import { activeInteractions, interactions, openedInteractionId } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import Link from "../../inputs/Link.svelte"
     import { getInteraction } from "./interactions"
@@ -8,7 +8,7 @@
     import T from "../../helpers/T.svelte"
 
     $: openedId = $openedInteractionId
-    // $: openedInteraction = $interactions[openedId] || null
+    $: openedInteraction = $interactions[openedId] || null
     // console.log(openedInteraction)
 
     $: isActive = $activeInteractions.includes(openedId)
@@ -21,7 +21,7 @@
 </script>
 
 <div class="padding">
-    {#if openedId}
+    {#if openedId && openedInteraction?.inputs?.length}
         {#if url}
             <div style="padding: 4px 2px;text-align: center;margin-bottom: 10px;">
                 <Link {url}>

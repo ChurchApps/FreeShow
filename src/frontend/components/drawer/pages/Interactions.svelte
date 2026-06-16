@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { onDestroy } from "svelte"
     import { uid } from "uid"
     import { activeInteractions, activePopup, activeRename, interactions, labelsDisabled, openedInteractionId, popupData } from "../../../stores"
     import { translateText } from "../../../utils/language"
@@ -10,7 +11,7 @@
     import HiddenInput from "../../inputs/HiddenInput.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
-    import { getInteraction, initConnection, startInteraction, stopInteraction } from "./interactions"
+    import { formatTimeInteraction, getInteraction, initConnection, startInteraction, stopInteraction } from "./interactions"
     import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
     import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
 
@@ -91,14 +92,6 @@
     let seconds = 0
     let startTime = 0
 
-    function formatTime(s: number) {
-        const sign = s < 0 ? "-" : ""
-        s = Math.abs(s)
-        const min = Math.floor(s / 60)
-        const sec = s % 60
-        return `${sign}${min}:${sec < 10 ? "0" : ""}${sec}`
-    }
-
     function hasAnswer(input: any) {
         if (!input) return false
         if (input.type === "text" || input.type === "number") return input.answer !== undefined && input.answer !== ""
@@ -128,34 +121,47 @@
     }
 
     async function start() {
-        const interaction = await startInteraction(openedId)
-        interaction?.onUpdate((data) => {
-            answers = data.answers
-            clients = data.clients
-            currentAnswer = data.currentAnswer
-            inputIndex = data.inputIndex
-            closed = data.closed
-        })
-        interaction?.onTick((data) => {
-            seconds = data.seconds
-            startTime = data.startTime
-            closed = data.closed
-        })
+        await startInteraction(openedId)
     }
-    $: if (openedId && $activeInteractions.includes(openedId)) {
-        const interaction = getInteraction(openedId)
-        interaction?.onUpdate((data) => {
-            answers = data.answers
-            clients = data.clients
-            currentAnswer = data.currentAnswer
-            inputIndex = data.inputIndex
-            closed = data.closed
-        })
-        interaction?.onTick((data) => {
-            seconds = data.seconds
-            startTime = data.startTime
-            closed = data.closed
-        })
+
+    let unsubscribes: (() => void)[] = []
+
+    function unsubscribeAll() {
+        unsubscribes.forEach((unsub) => unsub())
+        unsubscribes = []
+    }
+
+    onDestroy(unsubscribeAll)
+
+    $: {
+        unsubscribeAll()
+        if (openedId && $activeInteractions.includes(openedId)) {
+            const interaction = getInteraction(openedId)
+            if (interaction) {
+                unsubscribes = [
+                    interaction.onUpdate((data) => {
+                        answers = data.answers
+                        clients = data.clients
+                        currentAnswer = data.currentAnswer
+                        inputIndex = data.inputIndex
+                        closed = data.closed
+                    }),
+                    interaction.onTick((data) => {
+                        seconds = data.seconds
+                        startTime = data.startTime
+                        closed = data.closed
+                    })
+                ]
+            }
+        } else {
+            answers = []
+            clients = {}
+            currentAnswer = null
+            inputIndex = -1
+            closed = false
+            seconds = 0
+            startTime = 0
+        }
     }
 
     let showPlayers = false
@@ -213,7 +219,7 @@
                     <p style="font-size: 0.8em;opacity: 0.7;margin-bottom: 8px;">{new Date(entry.time).toLocaleString()}</p>
                     <ol style="margin: 0;padding: 0 0 0 24px;">
                         {#each entry.inputs as input}
-                            <li style="margin-bottom: 8px;">
+                            <li style="margin-bottom: 8px;" class="list">
                                 <p style="font-weight: bold;margin-bottom: 4px;">{input.question || translateText("main.unnamed")}</p>
                                 <ul style="margin: 0;padding: 0 0 0 24px;list-style-type: disc;">
                                     {#each input.answers as answer}
@@ -263,7 +269,7 @@
                         class:active={$activeInteractions.includes(openedId) && (i === inputIndex || openedInteraction?.options?.allAtOnce)}
                         style="width: 100%;"
                         id="#{i}"
-                        data-title={$activeInteractions.includes(openedId) && !openedInteraction?.options?.allAtOnce ? "Go to this input" : ""}
+                        data-title={$activeInteractions.includes(openedId) && !openedInteraction?.options?.allAtOnce && i !== inputIndex ? "Go to this input" : ""}
                         on:click={(e) => {
                             if ($activeInteractions.includes(openedId)) {
                                 if (openedInteraction?.options?.allAtOnce) return
@@ -298,9 +304,9 @@
                                         {#if closed}
                                             CLOSED
                                         {:else if openedInteraction?.options?.maxTime && openedInteraction.options.maxTime > 0}
-                                            {formatTime(openedInteraction.options.maxTime - seconds)}
+                                            {formatTimeInteraction(openedInteraction.options.maxTime - seconds)}
                                         {:else}
-                                            {formatTime(seconds)}
+                                            {formatTimeInteraction(seconds)}
                                         {/if}
                                     </span>
                                 {/if}
@@ -364,7 +370,7 @@
             {#if !openedInteraction?.options?.allAtOnce}
                 <FloatingInputs side="right">
                     <!-- go to next/previous index -->
-                    <MaterialButton disabled={inputIndex < 0} title="media.previous" on:click={() => getInteraction(openedId)?.previous()}>
+                    <MaterialButton disabled={inputIndex < ((openedInteraction?.inputs?.length || 0) < 2 ? 1 : 0)} title="media.previous" on:click={() => getInteraction(openedId)?.previous()}>
                         <Icon size={1.3} id="previous" white />
                     </MaterialButton>
 
@@ -538,5 +544,9 @@
         gap: 8px;
         padding: 4px 8px;
         background-color: var(--primary-darkest);
+    }
+
+    .list * {
+        user-select: text;
     }
 </style>

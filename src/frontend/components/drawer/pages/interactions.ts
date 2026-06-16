@@ -89,11 +89,17 @@ class Interaction {
         if (this.lastData !== null) {
             callback(this.lastData)
         }
+        return () => {
+            this.callbacks = this.callbacks.filter((cb) => cb !== callback)
+        }
     }
 
     onTick(callback: (data: { seconds: number; startTime: number; closed: boolean }) => void) {
         this.tickCallbacks.push(callback)
         callback({ seconds: this.seconds, startTime: this.startTime, closed: this.closed })
+        return () => {
+            this.tickCallbacks = this.tickCallbacks.filter((cb) => cb !== callback)
+        }
     }
 
     private getData() {
@@ -182,6 +188,11 @@ class Interaction {
         let isIdValid = false
 
         const data = this.getData()
+        if (data?.inputs?.length === 1) {
+            this.inputIndex = 0
+            this.startTime = Date.now()
+            this.startTimer()
+        }
         let lastConnection = data.lastConnection || null
 
         // Keep generating IDs until we successfully write to a unique, non-existent slot
@@ -421,16 +432,59 @@ class Interaction {
         return clients.sort((a, b) => (a.time || 0) - (b.time || 0))
     }
 
+    getClientsCount() {
+        return Object.keys(this.lastData?.clients || {}).length
+    }
+
     getQuestion() {
         const data = this.getData()
         const input = data.inputs[this.inputIndex]
         return input?.question || ""
     }
 
+    getTime() {
+        if (this.closed || this.inputIndex < 0) return ""
+
+        const data = this.getData()
+        if (data.options?.allAtOnce) return ""
+
+        if (data.options?.maxTime) {
+            const elapsed = Math.floor((Date.now() - this.startTime) / 1000)
+            return formatTimeInteraction(Math.max(0, (data.options.maxTime || 0) - elapsed))
+        }
+
+        return formatTimeInteraction(this.seconds)
+    }
+
     getAnswer() {
         if (Array.isArray(this.currentAnswer)) {
             return this.currentAnswer.join(", ")
         }
-        return this.currentAnswer
+
+        if (this.currentAnswer === null || this.currentAnswer === undefined) return ""
+        return String(this.currentAnswer)
     }
+
+    getPlayerAnswers() {
+        const answers = clone(this.lastData?.answers || [])
+        return Object.values(answers[this.inputIndex] || {}).map((a: any) => (Array.isArray(a.value) ? a.value.join(", ") : String(a.value))) as string[]
+    }
+
+    getPlayerAnswerLatest() {
+        const answers = clone(this.lastData?.answers || [])
+
+        // sort by time
+        const sortedAnswers = Object.values(answers[this.inputIndex] || {}).sort((a: any, b: any) => (a.time || 0) - (b.time || 0))
+
+        const latestAnswers = sortedAnswers.map((a: any) => String(Array.isArray(a.value) ? a.value.at(-1) : a.value)) as string[]
+        return latestAnswers[latestAnswers.length - 1] || ""
+    }
+}
+
+export function formatTimeInteraction(s: number) {
+    const sign = s < 0 ? "-" : ""
+    s = Math.abs(s)
+    const min = Math.floor(s / 60)
+    const sec = s % 60
+    return `${sign}${min}:${sec < 10 ? "0" : ""}${sec}`
 }
