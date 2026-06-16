@@ -1685,7 +1685,9 @@
         "slider": "Slider",
         "range": "Range",
         "kick": "Kick",
+        "generate_slide": "Generate slide",
         "require_name": "Request names",
+        "all_at_once": "All inputs at once",
         "max_time": "Max time per input"
     },
     "info": {

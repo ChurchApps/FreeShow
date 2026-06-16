@@ -97,6 +97,7 @@ export const slideNotesActive: Writable<boolean> = writable(false)
 export const templateApplied: Writable<boolean> = writable(false)
 export const activeAudioEffects: Writable<string> = writable("")
 export const openedInteractionId: Writable<string> = writable("")
+export const activeInteractions: Writable<string[]> = writable([])
 
 // TAGS
 export const activeTagFilter: Writable<string[]> = writable([])
@@ -208,6 +209,7 @@ export const disableDragging: Writable<boolean> = writable(false)
 export const activeDropId: Writable<string> = writable("")
 export const randomNumberVariable: Writable<{ [key: string]: boolean }> = writable({})
 export const dynamicValueData: Writable<{ [key: string]: any }> = writable({})
+export const cachedDynamicValues: Writable<{ [key: string]: string }> = writable({})
 export const recentFiles: Writable<{ all: string[]; cleared: string[]; projectMedia: string[] }> = writable({ all: [], cleared: [], projectMedia: [] })
 export const statusIndicator: Writable<string> = writable("")
 

@@ -285,10 +285,12 @@ export interface Interaction {
     name: string
     inputs: InteractionInput[]
     options?: Options
+    history?: { time: number; inputs: {question: string; answers: {name: string; value: any}[] }[] }[]
     lastConnection?: { id: string; secret: string }
 }
 type Options = {
     requireName?: boolean // default = true
+    allAtOnce?: boolean // default = false
     maxTime?: number // seconds, default = no limit
 }
 

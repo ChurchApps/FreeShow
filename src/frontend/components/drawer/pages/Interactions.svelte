@@ -1,6 +1,6 @@
 <script lang="ts">
     import { uid } from "uid"
-    import { activePopup, activeRename, interactions, labelsDisabled, openedInteractionId, popupData } from "../../../stores"
+    import { activeInteractions, activePopup, activeRename, interactions, labelsDisabled, openedInteractionId, popupData } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -10,7 +10,7 @@
     import HiddenInput from "../../inputs/HiddenInput.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
-    import { getActiveInteractions, getInteraction, startInteraction, stopInteraction } from "./interactions"
+    import { getInteraction, initConnection, startInteraction, stopInteraction } from "./interactions"
     import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
     import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
 
@@ -22,7 +22,8 @@
         interactions.update((a) => {
             a[id] = {
                 name: "",
-                inputs: []
+                inputs: [],
+                lastConnection: initConnection() // init id for qr slide
             }
             return a
         })
@@ -33,7 +34,6 @@
     $: openedId = $openedInteractionId
 
     $: openedInteraction = $interactions[openedId] || null
-    let activeInteractions = getActiveInteractions()
 
     function updateInteractionName(id: string, value: string) {
         if (!value) return
@@ -66,7 +66,6 @@
             if (direction === "forward") index = Math.min(index + 1, items.length)
             else if (direction === "backward") index = Math.max(index - 1, 0)
 
-            console.log(index, items, currentItem)
             a[openedId].inputs = [...items.slice(0, index), currentItem, ...items.slice(index)]
 
             return a
@@ -142,10 +141,8 @@
             startTime = data.startTime
             closed = data.closed
         })
-
-        activeInteractions = getActiveInteractions()
     }
-    $: if (openedId && activeInteractions.includes(openedId)) {
+    $: if (openedId && $activeInteractions.includes(openedId)) {
         const interaction = getInteraction(openedId)
         interaction?.onUpdate((data) => {
             answers = data.answers
@@ -161,9 +158,6 @@
         })
     }
 
-    $: console.log("Answers updated:", answers)
-    $: console.log("Clients updated:", clients)
-
     let showPlayers = false
     function kick(clientId: string) {
         const interaction = getInteraction(openedId)
@@ -171,15 +165,8 @@
     }
 
     let showOptions = false
+    let showHistory = false
 </script>
-
-<!-- WIP what is it? Polls / Quizzes / Q&A / Word Clouds / Game Shows / etc. -->
-
-<!-- WIP Game options -->
-<!-- show all inputs at once? = forms & no timer  -->
-<!-- otherwise have X seconds timer? or manually go to next -->
-
-<!-- WIP run custom actions in between each input -->
 
 {#if openedId}
     <div class="banner">EXPERIMENTAL!</div>
@@ -191,15 +178,20 @@
             {openedInteraction?.name || translateText("main.unnamed")}
         </p>
 
-        {#if activeInteractions.includes(openedId)}
+        {#if $activeInteractions.includes(openedId)}
             <!-- game id -->
             {#if getInteraction(openedId)?.dbid}
                 <span style="font-family: monospace; opacity: 0.8;">ID: <span style="user-select: text;">{getInteraction(openedId)?.dbid}</span></span>
             {/if}
 
             <!-- players count -->
-            <MaterialButton style="padding: 6px;" icon="people" on:click={() => (showPlayers = !showPlayers)} white>
+            <MaterialButton style="padding: 6px;" icon="people" on:click={() => (showPlayers = !showPlayers)} white={!showPlayers}>
                 <span style="font-family: monospace; opacity: 0.8;">{Object.keys(clients).length}</span>
+            </MaterialButton>
+        {:else if !showOptions && openedInteraction?.history?.length}
+            <!-- history -->
+            <MaterialButton style="padding: 6px;" icon="history" on:click={() => (showHistory = !showHistory)} white={!showHistory}>
+                <span style="font-family: monospace; opacity: 0.8;">{openedInteraction.history.length}</span>
             </MaterialButton>
         {/if}
     </div>
@@ -208,36 +200,74 @@
         <div class="options">
             <MaterialToggleSwitch label="interaction.require_name" checked={openedInteraction?.options?.requireName ?? true} defaultValue={true} on:change={(e) => setOption("requireName", e.detail)} />
 
-            <MaterialNumberInput label="interaction.max_time (conditions.seconds)" value={openedInteraction?.options?.maxTime ?? 0} defaultValue={0} on:change={(e) => setOption("maxTime", e.detail)} />
+            <MaterialToggleSwitch label="interaction.all_at_once" checked={openedInteraction?.options?.allAtOnce ?? false} defaultValue={false} disabled={openedInteraction?.inputs?.length <= 1} on:change={(e) => setOption("allAtOnce", e.detail)} />
+
+            {#if !openedInteraction?.options?.allAtOnce}
+                <MaterialNumberInput label="interaction.max_time (conditions.seconds)" value={openedInteraction?.options?.maxTime ?? 0} defaultValue={0} on:change={(e) => setOption("maxTime", e.detail)} />
+            {/if}
         </div>
-    {:else if showPlayers && activeInteractions.includes(openedId)}
-        <div class="players">
-            {#each Object.entries(clients) as [clientId, client], i}
-                <div class="player">
-                    <Icon id="profiles" white />
-                    <p style="flex: 1;">{client.name || `User #${i + 1}`}</p>
-                    <MaterialButton style="padding: 4px;" red on:click={() => kick(clientId)}><T id="interaction.kick" /></MaterialButton>
+    {:else if showHistory && !$activeInteractions.includes(openedId)}
+        <div class="history" style="display: flex;flex-direction: column;gap: 8px;padding: 10px;overflow: auto;">
+            {#each clone(openedInteraction?.history || []).reverse() as entry}
+                <div style="background-color: var(--primary-darkest);padding: 10px;border-radius: 6px;">
+                    <p style="font-size: 0.8em;opacity: 0.7;margin-bottom: 8px;">{new Date(entry.time).toLocaleString()}</p>
+                    <ol style="margin: 0;padding: 0 0 0 24px;">
+                        {#each entry.inputs as input}
+                            <li style="margin-bottom: 8px;">
+                                <p style="font-weight: bold;margin-bottom: 4px;">{input.question || translateText("main.unnamed")}</p>
+                                <ul style="margin: 0;padding: 0 0 0 24px;list-style-type: disc;">
+                                    {#each input.answers as answer}
+                                        <li style="margin-bottom: 4px;">
+                                            <div style="display: flex;gap: 8px;">
+                                                <span style="font-weight: bold;opacity: 0.9;">{answer.name}:</span>
+                                                <span style="flex: 1;">
+                                                    {#each Array.isArray(answer.value) ? answer.value : [answer.value] as value, i}
+                                                        {i > 0 ? ", " : ""}
+                                                        <span>{value}</span>
+                                                    {/each}
+                                                </span>
+                                            </div>
+                                        </li>
+                                    {/each}
+                                </ul>
+                            </li>
+                        {/each}
+                    </ol>
                 </div>
             {/each}
-            {#if Object.keys(clients).length === 0}
-                <p style="text-align: center;opacity: 0.5;padding: 10px;font-style: italic;"><T id="settings.connections" /></p>
-            {/if}
+        </div>
+    {:else if showPlayers && $activeInteractions.includes(openedId)}
+        <div class="players">
+            {#key clients}
+                {#each getInteraction(openedId)?.getClients() || [] as client, i}
+                    <div class="player">
+                        <Icon id="profiles" white />
+                        <p style="flex: 1;">{client.name || `User #${i + 1}`}</p>
+                        <MaterialButton style="padding: 4px;" red on:click={() => kick(client.id)}><T id="interaction.kick" /></MaterialButton>
+                    </div>
+                {/each}
+                {#if Object.keys(clients).length === 0}
+                    <p style="text-align: center;opacity: 0.5;padding: 10px;font-style: italic;"><T id="settings.connections" /></p>
+                {/if}
+            {/key}
         </div>
     {:else}
         <div class="inputs">
-            {#if inputIndex === -1}<div style="border: 1px solid var(--secondary);"></div>{/if}
+            {#if $activeInteractions.includes(openedId) && inputIndex === -1 && openedInteraction?.options?.allAtOnce !== true}<div style="border: 1px solid var(--secondary);"></div>{/if}
             <!-- <div style="border: 1px solid {inputIndex === -1 ? 'var(--secondary)' : 'transparent'};"></div> -->
 
             {#each openedInteraction?.inputs || [] as input, i}
-                <InputRow arrow={activeInteractions.includes(openedId) && Object.keys(answers[i] || {}).length > 0}>
+                <InputRow arrow={$activeInteractions.includes(openedId) && Object.keys(answers[i] || {}).length > 0}>
                     <div
-                        class="input {activeInteractions.includes(openedId) ? '' : 'context #interaction_input'}"
-                        class:active={activeInteractions.includes(openedId) && i === inputIndex}
+                        class="input {$activeInteractions.includes(openedId) ? '' : 'context #interaction_input'}"
+                        class:active={$activeInteractions.includes(openedId) && (i === inputIndex || openedInteraction?.options?.allAtOnce)}
                         style="width: 100%;"
                         id="#{i}"
-                        data-title="Go to this input"
+                        data-title={$activeInteractions.includes(openedId) && !openedInteraction?.options?.allAtOnce ? "Go to this input" : ""}
                         on:click={(e) => {
-                            if (activeInteractions.includes(openedId)) {
+                            if ($activeInteractions.includes(openedId)) {
+                                if (openedInteraction?.options?.allAtOnce) return
+
                                 getInteraction(openedId)?.goto(i)
                                 return
                             }
@@ -258,7 +288,7 @@
                             {input.question || translateText("main.unnamed")}
                         </p>
 
-                        {#if activeInteractions.includes(openedId)}
+                        {#if $activeInteractions.includes(openedId)}
                             {#if input.type === "heading"}
                                 <!-- show nothing -->
                             {:else}
@@ -283,7 +313,7 @@
                         {:else}
                             <span>
                                 <MaterialButton class="rearrange" disabled={i === openedInteraction?.inputs.length - 1} icon="down" title="actions.backward" style="padding: 8px;" on:click={() => rearrangeInputs("forward", i)} />
-                                <MaterialButton class="rearrange" disabled={i === 0} icon="up" title="actions.forward" style="padding: 8px;" on:click={() => rearrangeInputs("backward", i)} />
+                                <MaterialButton class="rearrange" disabled={i === 0} icon="up" title="actions.forward" style="padding: 8px;border-left: none !important;" on:click={() => rearrangeInputs("backward", i)} />
                             </span>
                         {/if}
                     </div>
@@ -292,7 +322,12 @@
                         {#each Object.entries(answers[i] || {}).sort((a, b) => (a[1]?.time || 0) - (b[1]?.time || 0)) as [clientId, answerValue]}
                             <p style="display: flex; gap: 8px;padding: 4px 8px;">
                                 <span style="font-weight: bold; opacity: 0.9;">{clients[clientId]?.name || `User #${Object.keys(clients).indexOf(clientId) + 1}`}:</span>
-                                <span style="flex: 1;{isCorrect(input, answerValue?.value) ? 'color: #31ed31; font-weight: bold;' : ''}">{answerValue?.value}</span>
+                                <span style="flex: 1;">
+                                    {#each Array.isArray(answerValue?.value) ? answerValue.value : [answerValue?.value] as value, i}
+                                        {i > 0 ? ", " : ""}
+                                        <span style={isCorrect(input, value) ? "color: #31ed31; font-weight: bold;" : ""}>{value}</span>
+                                    {/each}
+                                </span>
 
                                 {#if startTime && answerValue?.time}
                                     <span style="font-family: monospace; opacity: 0.7;">
@@ -305,20 +340,19 @@
                 </InputRow>
             {/each}
 
-            {#if !activeInteractions.includes(openedId)}
-                <MaterialButton variant="outlined" icon="add" on:click={addInput}>
+            {#if !$activeInteractions.includes(openedId)}
+                <MaterialButton variant="outlined" icon="add" style="min-height: 45px;" on:click={addInput}>
                     <T id="interaction.add_input" />
                 </MaterialButton>
             {/if}
         </div>
 
-        {#if activeInteractions.includes(openedId)}
+        {#if $activeInteractions.includes(openedId)}
             <FloatingInputs side="left">
                 <MaterialButton
                     icon="stop"
                     on:click={async () => {
                         await stopInteraction(openedId)
-                        activeInteractions = getActiveInteractions()
                     }}
                     white
                     red
@@ -327,24 +361,26 @@
                 </MaterialButton>
             </FloatingInputs>
 
-            <FloatingInputs side="right">
-                <!-- go to next/previous index -->
-                <MaterialButton disabled={inputIndex < 0} title="media.previous" on:click={() => getInteraction(openedId)?.previous()}>
-                    <Icon size={1.3} id="previous" white />
-                </MaterialButton>
+            {#if !openedInteraction?.options?.allAtOnce}
+                <FloatingInputs side="right">
+                    <!-- go to next/previous index -->
+                    <MaterialButton disabled={inputIndex < 0} title="media.previous" on:click={() => getInteraction(openedId)?.previous()}>
+                        <Icon size={1.3} id="previous" white />
+                    </MaterialButton>
 
-                {#if hasAnswer(openedInteraction?.inputs[inputIndex]) && !currentAnswer}
-                    <div class="divider" />
-                    <MaterialButton on:click={() => getInteraction(openedId)?.revealAnswer()}>
-                        <!-- <Icon size={1.3} id="next" white /> -->
-                        <T id="interaction.reveal_answer" />
-                    </MaterialButton>
-                {:else}
-                    <MaterialButton disabled={inputIndex === (openedInteraction?.inputs?.length || 0) - 1} title="media.next" on:click={() => getInteraction(openedId)?.next()}>
-                        <Icon size={1.3} id="next" white />
-                    </MaterialButton>
-                {/if}
-            </FloatingInputs>
+                    {#if hasAnswer(openedInteraction?.inputs[inputIndex]) && !currentAnswer}
+                        <div class="divider" />
+                        <MaterialButton on:click={() => getInteraction(openedId)?.revealAnswer()}>
+                            <!-- <Icon size={1.3} id="next" white /> -->
+                            <T id="interaction.reveal_answer" />
+                        </MaterialButton>
+                    {:else}
+                        <MaterialButton disabled={inputIndex === (openedInteraction?.inputs?.length || 0) - 1} title="media.next" on:click={() => getInteraction(openedId)?.next()}>
+                            <Icon size={1.3} id="next" white />
+                        </MaterialButton>
+                    {/if}
+                </FloatingInputs>
+            {/if}
         {:else}
             <FloatingInputs side="left" gradient>
                 <MaterialButton icon="play" disabled={!(openedInteraction?.inputs?.length || 0)} on:click={start} white>
@@ -354,7 +390,7 @@
         {/if}
     {/if}
 
-    {#if !activeInteractions.includes(openedId)}
+    {#if !$activeInteractions.includes(openedId) && !showHistory}
         <FloatingInputs round>
             <MaterialButton isActive={showOptions} title="create_show.more_options" on:click={() => (showOptions = !showOptions)}>
                 <Icon size={1.1} id="options" white={!showOptions} />
@@ -367,7 +403,7 @@
             <SelectElem id="interaction" data={{ id: interaction.id }}>
                 <div
                     class="interaction context #interaction"
-                    class:active={activeInteractions.includes(interaction.id)}
+                    class:active={$activeInteractions.includes(interaction.id)}
                     on:click={(e) => {
                         if (e.target?.closest(".edit")) return
                         openedInteractionId.set(interaction.id)
@@ -457,6 +493,8 @@
         gap: 4px;
         padding: 10px;
         overflow: auto;
+
+        padding-bottom: 60px;
     }
 
     .input {

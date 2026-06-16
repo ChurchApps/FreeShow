@@ -16,11 +16,12 @@ import { send } from "../../utils/request"
 import { convertRSSToString, getRSS } from "../../utils/rss"
 import { runAction, slideHasAction } from "../actions/actions"
 import type { API_output_style } from "../actions/api"
+import { getInteraction } from "../drawer/pages/interactions"
 import { getCurrentTimerValue, getTimeUntilClock, playPauseGlobal } from "../drawer/timers/timers"
 import { getDynamicValue } from "../edit/scripts/itemHelpers"
 import { getTextLines } from "../edit/scripts/textStyle"
 import { clearBackground, clearOverlays, clearTimers } from "../output/clear"
-import { activeEdit, activeFocus, activePage, activeProject, activeShow, allOutputs, audioData, customMetadata, dictionary, dynamicValueData, focusMode, media, outLocked, outputDisplay, outputs, overlays, playingAudio, playingMetronome, projects, shows, showsCache, slideTimers, special, stageShows, styles, templates, timers, variables, videosData, videosTime } from "./../../stores"
+import { activeEdit, activeFocus, activeInteractions, activePage, activeProject, activeShow, allOutputs, audioData, cachedDynamicValues, customMetadata, dictionary, dynamicValueData, focusMode, media, outLocked, outputDisplay, outputs, overlays, playingAudio, playingMetronome, projects, shows, showsCache, slideTimers, special, stageShows, styles, templates, timers, variables, videosData, videosTime } from "./../../stores"
 import { clone, keysToID, sortByName } from "./array"
 import { downloadOnlineMedia, encodeFilePath, getExtension, getFileName, getMedia, getMediaStyle, getMediaType, removeExtension } from "./media"
 import { defaultLayers, getActiveOutputs, getAllNormalOutputs, getFirstActiveOutput, getFirstOutput, getWindowOutputId, isOutCleared, refreshOut, setOutput, startFolderTimer } from "./output"
@@ -858,6 +859,11 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
     }
 
     function getDynamicValueText(dynamicId: string, show: Show | null): string | string[] {
+        // request from frontend
+        if (isOutputWin && dynamicId.startsWith("interaction_")) {
+            return requestDynamicValue(dynamicId)
+        }
+
         // VARIABLE
         if (dynamicId.startsWith("variable_set_") || dynamicId.startsWith("$") || dynamicId.startsWith("variable_")) {
             return getVariableValue(dynamicId, { showId, layoutId, slideIndex, type, id: dynamicId })
@@ -1006,6 +1012,11 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
     }
 }
 
+function requestDynamicValue(id: string) {
+    send(OUTPUT, ["MAIN_REQUEST_DYNAMIC_VALUE"], { dynamicId: id })
+    return get(cachedDynamicValues)[id] || ""
+}
+
 const dynamicValues = {
     // time
     time_date: () => addZero(new Date().getDate()),
@@ -1105,7 +1116,12 @@ const dynamicValues = {
     audio_time: ({ audioTime }) => joinTime(secondsToTime(audioTime)),
     audio_countdown: ({ audioTime, audioDuration }) => joinTime(secondsToTime(audioDuration > 0 ? audioDuration - audioTime : 0)),
     audio_duration: ({ audioDuration }) => joinTime(secondsToTime(audioDuration)),
-    audio_volume: () => AudioPlayer.getVolume() * 100
+    audio_volume: () => AudioPlayer.getVolume() * 100,
+
+    // interaction
+    interaction_players: ({ show }) => getInteractionPlayers(show),
+    interaction_question: ({ show }) => getInteractionQuestion(show),
+    interaction_answer: ({ show }) => getInteractionAnswer(show)
 }
 
 // placeholder values
@@ -1236,4 +1252,50 @@ function getMetadata(audioPath: string) {
 function getArtist(metadata: ICommonTagsResult) {
     const artists = [metadata.originalartist, metadata.artist, metadata.albumartist, ...(metadata.artists || [])].filter(Boolean)
     return [...new Set(artists)].join(", ")
+}
+
+// INTERACTION
+
+function getInteractionId(show: Show | null): string | null {
+    if (!show) return null
+
+    let interactionId = show?.reference?.data?.id
+
+    // get any active ones
+    if (!interactionId) interactionId = get(activeInteractions)[0]
+
+    return interactionId || null
+}
+
+function getInteractionPlayers(show: Show | null) {
+    let interactionId = getInteractionId(show)
+    if (!interactionId) return ""
+
+    const interaction = getInteraction(interactionId)
+    if (!interaction) return ""
+
+    return interaction
+        .getClients()
+        .map((p) => p.name)
+        .join(", ")
+}
+
+function getInteractionQuestion(show: Show | null) {
+    let interactionId = getInteractionId(show)
+    if (!interactionId) return ""
+
+    const interaction = getInteraction(interactionId)
+    if (!interaction) return ""
+
+    return interaction.getQuestion()
+}
+
+function getInteractionAnswer(show: Show | null) {
+    let interactionId = getInteractionId(show)
+    if (!interactionId) return ""
+
+    const interaction = getInteraction(interactionId)
+    if (!interaction) return ""
+
+    return interaction.getAnswer()
 }

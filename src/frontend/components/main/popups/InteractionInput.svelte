@@ -9,8 +9,6 @@
     import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
     import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
 
-    // WIP translate all text
-
     let chosenType = ""
     const types = [
         { id: "multi_choice", name: translateText("interaction.multi_choice"), icon: "multi_choice" },
@@ -125,19 +123,6 @@
         <div class="options">
             {#each currentInput.options || [] as option, i}
                 <InputRow>
-                    <MaterialTextInput
-                        label="interaction.option"
-                        value={option?.value}
-                        on:change={(e) => {
-                            if (!currentInput.options) currentInput.options = []
-                            if (!currentInput.options[i]) currentInput.options[i] = { value: "" }
-
-                            currentInput.options[i].value = e.detail
-
-                            updateInput()
-                        }}
-                        autofocus={!!currentInput.question && !option?.value}
-                    />
                     <MaterialButton
                         title={option?.isAnswer ? "interaction.mark_as_incorrect" : "interaction.mark_as_correct"}
                         icon={option?.isAnswer ? "check" : "close"}
@@ -151,6 +136,20 @@
 
                             updateInput()
                         }}
+                    />
+
+                    <MaterialTextInput
+                        label="interaction.option"
+                        value={option?.value}
+                        on:change={(e) => {
+                            if (!currentInput.options) currentInput.options = []
+                            if (!currentInput.options[i]) currentInput.options[i] = { value: "" }
+
+                            currentInput.options[i].value = e.detail
+
+                            updateInput()
+                        }}
+                        autofocus={!!currentInput.question && !option?.value}
                     />
                     <MaterialButton
                         icon="delete"
@@ -169,6 +168,7 @@
             <MaterialButton
                 variant="outlined"
                 icon="add"
+                disabled={currentInput.options && currentInput.options.length > 0 && currentInput.options.some((a) => !a.value)}
                 on:click={() => {
                     if (!currentInput.options) currentInput.options = []
                     currentInput.options.push({ value: "" })
@@ -180,13 +180,13 @@
                 <T id="interaction.add_option" />
             </MaterialButton>
 
-            <!-- TIP order will be random -->
+            <!-- Display tip?: order will be random -->
         </div>
     {:else if currentInput.type === "text"}
         <!-- optional - for polls we don't need answers -->
         <MaterialTextInput label="interaction.answer (interaction.optional)" value={currentInput.answer || ""} on:change={(e) => updateValue(e.detail, "answer")} />
     {:else if currentInput.type === "number"}
-        <MaterialNumberInput label="interaction.answer (interaction.optional)" type="number" value={currentInput.answer} on:change={(e) => updateValue(e.detail, "answer")} />
+        <MaterialNumberInput label="interaction.answer (interaction.optional)" type="number" value={currentInput.answer ?? -1} min={currentInput.min ?? 0} max={currentInput.max ?? 1000} on:change={(e) => updateValue(e.detail, "answer")} />
 
         <InputRow>
             <MaterialNumberInput label="interaction.min" type="number" value={currentInput.min ?? 0} min={-10000000} on:change={(e) => updateValue(e.detail, "min")} />

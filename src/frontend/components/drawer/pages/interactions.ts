@@ -1,8 +1,13 @@
 import { get } from "svelte/store"
-import { interactions } from "../../../stores"
+import { activeInteractions, interactions } from "../../../stores"
+import { clone, keysToID } from "../../helpers/array"
 import { createInteractionDb, deleteInteractionDb, getInteractionDb, subscribeInteraction, updateInteractionDb } from "./firebaseUtils"
 
 let existingInteractions = new Map<string, Interaction>()
+
+function updateActiveInteractions() {
+    activeInteractions.set(Array.from(existingInteractions.keys()))
+}
 
 export function getInteraction(id: string): Interaction | undefined {
     return existingInteractions.get(id)
@@ -17,12 +22,14 @@ export async function startInteraction(id: string) {
     }
 
     existingInteractions.set(id, interactionClass)
+    updateActiveInteractions()
     return interactionClass
 }
 
 export async function stopInteraction(id: string) {
     await existingInteractions.get(id)?.destroy()
     existingInteractions.delete(id)
+    updateActiveInteractions()
 }
 
 export async function stopAllInteractions() {
@@ -30,6 +37,7 @@ export async function stopAllInteractions() {
         await interaction.destroy()
     }
     existingInteractions.clear()
+    updateActiveInteractions()
 }
 
 export function getActiveInteractions() {
@@ -51,6 +59,12 @@ function generateSecret(id: string, length = 16) {
     return `${id}-${result.substring(0, length)}`
 }
 
+export function initConnection() {
+    const id = generateId()
+    const secret = generateSecret(id)
+    return { id, secret }
+}
+
 class Interaction {
     id: string
     dbid: string
@@ -62,15 +76,15 @@ class Interaction {
     startTime: number = 0
     private timer: any = null
     private unsubscribe: (() => void) | null = null
-    private callbacks: ((data: { answers: any; clients: any; currentAnswer: any; inputIndex: number; closed: boolean }) => void)[] = []
+    private callbacks: ((data: { answers: any[]; clients: any; currentAnswer: any; inputIndex: number; closed: boolean }) => void)[] = []
     private tickCallbacks: ((data: { seconds: number; startTime: number; closed: boolean }) => void)[] = []
-    private lastData: { answers: any; clients: any; currentAnswer: any; inputIndex: number; closed: boolean } | null = null
+    private lastData: { answers: any[]; clients: any; currentAnswer: any; inputIndex: number; closed: boolean } | null = null
 
     constructor(id: string) {
         this.id = id
     }
 
-    onUpdate(callback: (data: { answers: any; clients: any; currentAnswer: any; inputIndex: number; closed: boolean }) => void) {
+    onUpdate(callback: (data: { answers: any[]; clients: any; currentAnswer: any; inputIndex: number; closed: boolean }) => void) {
         this.callbacks.push(callback)
         if (this.lastData !== null) {
             callback(this.lastData)
@@ -128,15 +142,40 @@ class Interaction {
                     maxTime: data.options?.maxTime ?? 0
                 },
                 name: data.name,
-                inputIndex: this.inputIndex,
+                inputIndex: this.inputIndex, // does not matter if allAtOnce is enabled
                 inputCount: data.inputs.length,
                 startTime: this.startTime,
                 closed: this.closed,
-                // If inputIndex is valid, upload the specific input data, otherwise null
-                currentInput: this.inputIndex >= 0 && data.inputs[this.inputIndex] ? data.inputs[this.inputIndex] : null,
+
+                currentInputs: this.getCurrentInputs(),
                 currentAnswer: this.currentAnswer
             }
         }
+    }
+
+    private getCurrentInputs() {
+        const data = this.getData()
+
+        if (data.options?.allAtOnce) {
+            return clone(data.inputs)
+        }
+
+        if (this.inputIndex < 0) return null
+
+        const input = clone(data.inputs[this.inputIndex])
+        if (!input) return null
+
+        // randomize options order
+        if (input.type === "multi_choice" && input.options) {
+            const shuffledOptions = [...input.options]
+            for (let i = shuffledOptions.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1))
+                ;[shuffledOptions[i], shuffledOptions[j]] = [shuffledOptions[j], shuffledOptions[i]]
+            }
+            input.options = shuffledOptions
+        }
+
+        return [input]
     }
 
     async init() {
@@ -205,7 +244,7 @@ class Interaction {
             return a
         })
 
-        console.log(`Interaction successfully provisioned at ID: ${this.dbid}`)
+        console.info(`Interaction successfully provisioned at ID: ${this.dbid}`)
 
         this.unsubscribe = subscribeInteraction(this.dbid, this.dbsecret, (raw) => {
             if (raw) {
@@ -230,6 +269,8 @@ class Interaction {
     }
 
     async destroy() {
+        this.saveHistory()
+
         this.stopTimer()
 
         if (this.unsubscribe) {
@@ -240,6 +281,33 @@ class Interaction {
         if (!this.dbid || !this.dbsecret) return
 
         await deleteInteractionDb(this.dbid, this.dbsecret)
+    }
+
+    private saveHistory() {
+        if (!this.lastData || !(this.lastData.answers || []).length) return
+
+        const clients = this.getClients()
+        const historyData = {
+            time: Date.now(),
+            inputs: this.getData().inputs.map((a, i) => ({
+                question: a.question,
+                answers: keysToID(this.lastData?.answers[i]).map((a) => {
+                    return {
+                        name: clients.find((c) => c.id === a.id)?.name || "",
+                        value: a.value
+                    }
+                })
+            }))
+        }
+
+        interactions.update((a) => {
+            if (!a[this.id]) return a
+
+            if (!a[this.id].history) a[this.id].history = []
+            a[this.id].history!.push(historyData)
+
+            return a
+        })
     }
 
     private resetTimer() {
@@ -337,5 +405,32 @@ class Interaction {
         }
 
         await updateInteractionDb(this.dbid, this.dbsecret, updatePayload)
+    }
+
+    ///
+
+    getClients(): { id: string; name?: string; time?: number; connected?: boolean }[] {
+        const clients = keysToID(this.lastData?.clients || {})
+
+        // ensure name is set
+        clients.forEach((a, i) => {
+            a.name = a.name || `User #${i + 1}`
+        })
+
+        // joined order
+        return clients.sort((a, b) => (a.time || 0) - (b.time || 0))
+    }
+
+    getQuestion() {
+        const data = this.getData()
+        const input = data.inputs[this.inputIndex]
+        return input?.question || ""
+    }
+
+    getAnswer() {
+        if (Array.isArray(this.currentAnswer)) {
+            return this.currentAnswer.join(", ")
+        }
+        return this.currentAnswer
     }
 }

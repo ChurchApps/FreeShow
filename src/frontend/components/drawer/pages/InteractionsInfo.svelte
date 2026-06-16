@@ -1,0 +1,49 @@
+<script lang="ts">
+    import { activeInteractions, openedInteractionId } from "../../../stores"
+    import Icon from "../../helpers/Icon.svelte"
+    import Link from "../../inputs/Link.svelte"
+    import { getInteraction } from "./interactions"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
+    import { generateSlide } from "./interactionSlides"
+    import T from "../../helpers/T.svelte"
+
+    $: openedId = $openedInteractionId
+    // $: openedInteraction = $interactions[openedId] || null
+    // console.log(openedInteraction)
+
+    $: isActive = $activeInteractions.includes(openedId)
+
+    let interaction = getInteraction(openedId) || null
+    $: if (isActive) interaction = getInteraction(openedId) || null
+    else interaction = null
+
+    $: url = interaction?.dbid ? `https://freeshow.net/interaction#id=${interaction.dbid}` : null
+</script>
+
+<div class="padding">
+    {#if openedId}
+        {#if url}
+            <div style="padding: 4px 2px;text-align: center;margin-bottom: 10px;">
+                <Link {url}>
+                    {url.replace("https://", "")}
+                    <Icon id="launch" white />
+                </Link>
+            </div>
+        {/if}
+
+        <!-- Generate slides -->
+        <MaterialButton variant="outlined" icon="slide" style="width: 100%;" on:click={() => generateSlide("join")} white><T id="interaction.generate_slide" />: Join</MaterialButton>
+        <MaterialButton variant="outlined" icon="slide" style="width: 100%;" on:click={() => generateSlide("players")} white><T id="interaction.generate_slide" />: Players</MaterialButton>
+        <MaterialButton variant="outlined" icon="slide" style="width: 100%;" on:click={() => generateSlide("question")} white><T id="interaction.generate_slide" />: Question</MaterialButton>
+    {/if}
+</div>
+
+<style>
+    .padding {
+        padding: 10px;
+
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+</style>
