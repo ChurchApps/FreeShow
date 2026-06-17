@@ -1,5 +1,5 @@
 import { get } from "svelte/store"
-import { ShowList } from "../../types/Show"
+import type { ShowList } from "../../types/Show"
 import { categories, drawerTabsData, textCache } from "../stores"
 import { formatSearch, tokenize } from "./search"
 import { sortObjectNumbers } from "../components/helpers/array"

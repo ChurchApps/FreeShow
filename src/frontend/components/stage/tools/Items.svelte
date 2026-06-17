@@ -1,6 +1,6 @@
 <script lang="ts">
     import { uid } from "uid"
-    import { Item } from "../../../../types/Show"
+    import type { Item } from "../../../../types/Show"
     import type { StageItem } from "../../../../types/Stage"
     import { activeStage, dictionary, labelsDisabled, selected, stageShows, timers } from "../../../stores"
     import { translateText } from "../../../utils/language"
@@ -132,7 +132,7 @@
     $: allItems = getSortedStageItems(stageId, $stageShows)
     $: invertedItemList = Array.isArray(allItems) ? clone(allItems).reverse() : []
 
-    const excludeValues = ["project_", "time_", "exif_", "audio_", "meta_", "slide_text_", "show_text_full"]
+    const excludeValues = ["project_", "time_", "exif_", "audio_", "meta_", "slide_text_", "show_text_full", "slide_group_color", "slide_group_next_color", "slide_group_upcoming_color"]
     const ref = { type: "stage" }
     const dynamicValues = getDynamicIds()
         .filter((id) => !excludeValues.find((v) => id.includes(v))) // || id.startsWith("project_")

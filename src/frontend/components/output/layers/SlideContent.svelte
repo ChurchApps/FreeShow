@@ -48,6 +48,9 @@
     let currentItems: Item[] = []
     let current: any = {}
     let show = false
+    // Unique id per reveal so each {#key} block gets its own identity; keying on the boolean
+    // `show` would orphan the outgoing slide's text during the |global outro.
+    let transitionId = 0
 
     // Track items that are unchanged between slides and have no transition (to avoid redraw flicker)
     let persistentItems: Item[] = []
@@ -287,6 +290,9 @@
                 // wait until half transition duration of previous items have passed as it looks better visually
                 timeout = setTimeout(() => {
                     if (gen !== updateGeneration) return
+                    // bump before revealing so the incoming instance gets a fresh key, distinct
+                    // from the outgoing instance that is still completing its |global outro
+                    transitionId++
                     show = true
 
                     // wait for between to set in transition
@@ -416,7 +422,7 @@
             />
         {:else}
             <!-- Transitioning item: render with animation wrapper inside {#key} -->
-            {#key show}
+            {#key transitionId}
                 {#if show}
                     <SlideItemTransition {preview} {transitionEnabled} {transitioningBetween} globalTransition={transition} currentSlide={current.currentSlide} {item} outSlide={current.outSlide} lines={current.lines} currentStyle={current.currentStyle} let:customSlide let:customItem let:customLines let:customOut let:transition>
                         <Textbox

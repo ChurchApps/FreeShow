@@ -1,6 +1,6 @@
 import { io } from "socket.io-client"
 import { _get, _update } from "./stores"
-import { receiver, ReceiverKey } from "./receiver"
+import { receiver, type ReceiverKey } from "./receiver"
 
 const socket = io()
 let id: string = ""

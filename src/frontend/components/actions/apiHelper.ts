@@ -555,11 +555,22 @@ export function setNextSlideTimer(time: number) {
         const layoutId = _show().get("settings.activeLayout")
 
         showsCache.update((a) => {
-            let ref = goToStartRefs[0]
-            if (!ref) return a
+            const ref = goToStartRefs[0]
+            const show = a[showId]
+            if (!ref || !show) return a
 
-            if (ref.type === "parent") delete a[showId].layouts[layoutId]?.slides?.[ref.index]?.end
-            else delete a[showId].layouts[layoutId]?.slides?.[ref.parent?.index ?? -1]?.children?.[ref.id]?.end
+            const layout = show.layouts?.[layoutId]
+            if (!layout) return a
+
+            if (ref.type === "parent") {
+                const slide = layout.slides?.[ref.index]
+                if (slide) delete slide.end
+            } else {
+                const parentIndex = ref.parent?.index ?? -1
+                const parentSlide = layout.slides?.[parentIndex]
+                const child = parentSlide?.children?.[ref.id]
+                if (child) delete child.end
+            }
             return a
         })
     }

@@ -5,7 +5,7 @@ import { audioEffects, disabledServers, media, outputs, playingAudio, playingVid
 import { isOutputWindow } from "../utils/common"
 import { send } from "../utils/request"
 import { AudioAnalyserMerger } from "./audioAnalyserMerger"
-import { AudioMultichannel, MultichannelInfo } from "./audioMultichannel"
+import { AudioMultichannel, type MultichannelInfo } from "./audioMultichannel"
 import { AudioPlayer } from "./audioPlayer"
 import { AudioProcessor, PitchShiftNode } from "./audioProcessor"
 import { initializeCompressor } from "./effects/audioCompressor"

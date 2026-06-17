@@ -3,8 +3,8 @@
     import { translate } from "../util/helpers"
     import { send } from "../util/socket"
     import { _get, _update, dictionary, password } from "../util/stores"
-
-    const freeshowLogo = new URL("../../../../public/import-logos/freeshow.webp", import.meta.url).href
+    // direct import → Vite inlines as a data URI; avoids `import.meta.url` (blanked to {} in the iife companion build)
+    import freeshowLogo from "../../../../public/import-logos/freeshow.webp"
 
     function submit() {
         const password = _get("password").stored

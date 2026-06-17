@@ -1,0 +1,2 @@
+# Collapse the generated lockfile in diffs.
+package-lock.json linguist-generated=true

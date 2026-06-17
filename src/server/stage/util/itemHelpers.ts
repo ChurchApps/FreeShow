@@ -1,7 +1,7 @@
 import { get } from "svelte/store"
 import type { Variable } from "../../../types/Main"
 import type { Condition, ConditionValue, Item, LayoutRef } from "../../../types/Show"
-import { StageItem, StageLayout } from "../../../types/Stage"
+import type { StageItem, StageLayout } from "../../../types/Stage"
 import { keysToID, sortByName } from "../../common/util/helpers"
 import { getCurrentTimerValue } from "../../common/util/time"
 import { getDynamicValue, getLayoutRef, replaceDynamicValues } from "../helpers/show"

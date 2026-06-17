@@ -7,7 +7,7 @@
     import { history } from "../../helpers/history"
     import { getExtension, getFileName, getMediaType } from "../../helpers/media"
     import { getFirstActiveOutput, getOutputResolution, percentageStylePos } from "../../helpers/output"
-    import { getNumberVariables } from "../../helpers/showActions"
+    import { createCSSVariables } from "../../helpers/showActions"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import SlideItems from "../../slide/SlideItems.svelte"
     import EditboxCropping from "./EditboxCropping.svelte"
@@ -179,8 +179,8 @@
     $: currentSlide = (ref.type || "show") === "show" ? $showsCache[active || ""]?.slides?.[ref.id] : null // WIP get group slide
     $: isLocked = (ref.type || "show") !== "show" ? false : $showsCache[active || ""]?.locked || currentSlide?.locked || profile.global === "read" || profile[$showsCache[active || ""]?.category || ""] === "read"
 
-    // give CSS access to number variable values
-    $: cssVariables = getNumberVariables($variables)
+    // give CSS access to certain dynamic values
+    $: cssVariables = createCSSVariables($variables)
 
     const isOptimized = $special.optimizedMode
     let previewCropType: "clip" | "ppt" = "clip"

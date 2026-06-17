@@ -5,7 +5,8 @@
         "sourceMap": true,
         "target": "ESNext",
         "stripInternal": true,
-        // "strict": true,
+        // @tsconfig/svelte v5 enables "strict" (incl. noImplicitAny); the project intentionally opts into only the flags below, so disable the umbrella and keep the explicit opt-ins
+        "strict": false,
         // "noImplicitAny": true,
         "strictNullChecks": true,
         "strictFunctionTypes": true,

@@ -60,7 +60,7 @@ function getItems(items: Item[]) {
             plainText += textboxId + "\n"
         }
 
-        const filteredLines = item.lines?.filter((line) => line.text?.filter((lineText) => lineText.value.length).length) || []
+        const filteredLines = (Array.isArray(item.lines) ? item.lines.filter((line) => Array.isArray(line.text) && line.text.filter((lineText) => lineText.value.length).length) : []) || []
         filteredLines.forEach((line, lineIndex) => {
             let tempText = ""
             line.text?.forEach((txt) => {

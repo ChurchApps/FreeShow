@@ -1,23 +1,18 @@
 import { defineConfig } from "vite"
-import { svelte } from "@sveltejs/vite-plugin-svelte"
-import sveltePreprocess from "svelte-preprocess"
+import { svelte, vitePreprocess } from "@sveltejs/vite-plugin-svelte"
 
 const production = process.env.NODE_ENV === "production"
 
 export default defineConfig({
     plugins: [
         svelte({
-            preprocess: sveltePreprocess({
-                typescript: {
-                    tsconfigFile: "config/typescript/tsconfig.svelte.json"
-                }
-            }),
+            preprocess: vitePreprocess(),
             compilerOptions: {
                 dev: !production
             },
             onwarn: (warning, handler) => {
-                // disable A11y warnings
-                if (warning.code.startsWith("a11y-")) return
+                // disable A11y warnings (Svelte 5 renamed the codes to a11y_*)
+                if (warning.code.startsWith("a11y_")) return
                 handler(warning)
             }
         })
@@ -37,10 +32,12 @@ export default defineConfig({
               rollupOptions: {
                   output: {
                       assetFileNames: (assetInfo) => {
-                          if (assetInfo.name.endsWith(".css")) {
+                          // Vite 8 / Rollup 4: asset name comes from names[]
+                          const name = assetInfo.names?.[0] ?? ""
+                          if (name.endsWith(".css")) {
                               return "bundle.css"
                           }
-                          return assetInfo.name
+                          return name
                       }
                   }
               }

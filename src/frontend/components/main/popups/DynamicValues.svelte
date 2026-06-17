@@ -35,8 +35,11 @@
     function getValues() {
         let list = getDynamicIds(false, mode, showAll).map((id) => ({ id }))
 
+        // WIP organize better - and don't hide any values
+        // _color is only for CSS "var(--slide-group-color)", but we should show them in a seperate way
+
         const isStage = $activePage === "stage"
-        const hidden = ["slide_text_current"]
+        const hidden = ["slide_text_current", "slide_group_color", "slide_group_next_color", "slide_group_upcoming_color"]
         const nonStageHidden = ["show_text_full"]
         const stageHidden = ["slide_text_previous", "slide_text_next"]
         if (isStage) list = list.filter((a) => !hidden.includes(a.id) && !stageHidden.includes(a.id))

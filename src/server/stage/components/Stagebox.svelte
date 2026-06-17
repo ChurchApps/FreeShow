@@ -11,6 +11,7 @@
     import SlideProgress from "../items/SlideProgress.svelte"
     import SlideText from "../items/SlideText.svelte"
     import VideoTime from "../items/VideoTime.svelte"
+    import { _getDynamicValue } from "../util/itemHelpers"
     import { activeTimers, background, media, output, outputSlideCache, progressData, stream, timers, variables } from "../util/stores"
     import MediaOutput from "./MediaOutput.svelte"
     import PreviewCanvas from "./PreviewCanvas.svelte"
@@ -30,7 +31,11 @@
     // timer
     let today = new Date()
     const dateInterval = setInterval(() => (today = new Date()), 1000)
-    onDestroy(() => clearInterval(dateInterval))
+
+    onDestroy(() => {
+        clearInterval(dateInterval)
+        clearInterval(cssInterval)
+    })
 
     let itemStyles: any = getStyles(item.style, true)
     $: fontSize = Number(itemStyles?.["font-size"] || 0) || 100 // item.autoFontSize ||
@@ -107,11 +112,33 @@
 
     // fixed letter width
     $: fixedWidth = item?.type === "timer" || item?.type === "clock" ? "font-feature-settings: 'tnum' 1;" : ""
+
+    function getVariableNameId(name: string) {
+        if (typeof name !== "string") return ""
+        return name.toLowerCase().trim().replaceAll(" ", "_")
+    }
+
+    function createCSSVariables(variableUpdater: any, _updateTrigger: any = null) {
+        if (!variableUpdater) return ""
+        const numberVariables = Object.values(variableUpdater).filter((a: any) => a && (a.type === "number" || a.type === "random_number" || (a.type === "text" && a.text?.includes("{"))))
+        let css = numberVariables.reduce((css: string, v: any) => (css += `--variable-${getVariableNameId(v.name)}: ${v.type === "text" ? _getDynamicValue(v.text || "") : (v.number ?? (v.default || 0))};`), "")
+
+        css += `--slide-group-color: ${_getDynamicValue("slide_group_color")};`
+        css += `--slide-group-next-color: ${_getDynamicValue("slide_group_next_color")};`
+        css += `--slide-group-upcoming-color: ${_getDynamicValue("slide_group_upcoming_color")};`
+
+        return css
+    }
+
+    let updateTrigger = 0
+    const cssInterval = setInterval(() => updateTrigger++, 1000)
+
+    $: cssVariables = createCSSVariables($variables, updateTrigger)
 </script>
 
 <!-- style + (id.includes("current_output") ? "" : newSizes) -->
 <!-- {show.settings.autoStretch === false ? '' : newSizes} -->
-<div class="item" class:border={stageLayout?.settings.labels} class:isDisabledVariable style="{itemStyle}{id.includes('slide') && !id.includes('tracker') ? '' : textStyle}{newSizes}--labelColor: {stageLayout?.settings?.labelColor || '#d0a853'};{fixedWidth}">
+<div class="item" class:border={stageLayout?.settings.labels} class:isDisabledVariable style="{itemStyle}{id.includes('slide') && !id.includes('tracker') ? '' : textStyle}{newSizes}--labelColor: {stageLayout?.settings?.labelColor || '#d0a853'};{fixedWidth}{cssVariables}">
     {#if stageLayout?.settings.labels}
         <div class="label">{item.label || ""}</div>
     {/if}

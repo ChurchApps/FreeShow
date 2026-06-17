@@ -200,7 +200,11 @@
         return `-webkit-mask-image: linear-gradient(${blending.rotate ?? 90}deg, rgba(0, 0, 0, ${opacity}) 0%, rgb(0, 0, 0) ${blending.left}%, rgb(0, 0, 0) ${100 - blending.right}%, rgba(0, 0, 0, ${opacity}) 100%);`
     }
 
+    $: isCropped = (cropping.left || 0) + (cropping.right || 0) + (cropping.top || 0) + (cropping.bottom || 0) > 0
+    $: isEdgeBlending = blending.left || blending.right
+
     let showMore = false
+    $: showMore = isCropped || isEdgeBlending
 </script>
 
 {#if editCropping}

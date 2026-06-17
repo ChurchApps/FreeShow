@@ -356,7 +356,9 @@ export function unsavedUpdater() {
             store = customSavedListener[id](clone(store))
             try {
                 cachedValues[id] = JSON.stringify(store)
-            } catch {}
+            } catch (e) {
+                console.debug("Could not cache custom listener value for:", id, e)
+            }
         }
     })
 

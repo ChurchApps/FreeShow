@@ -304,7 +304,9 @@ function changeOutputBackground(data, { output, id, mute, videoOutputId }) {
         if (!data.muted && muteAudio && isVideo) fadeoutAllPlayingAudio()
         else fadeinAllPlayingAudio()
 
-        if (isVideo) videoStarting()
+        const type = data.muted && data.loop ? "background" : !data.muted && !data.loop ? "foreground" : null
+
+        if (isVideo) videoStarting(type)
         else if (previousWasVideo) videoEnding()
     }
 
@@ -323,8 +325,11 @@ function videoEnding() {
         customActionActivation("video_end")
     })
 }
-function videoStarting() {
+function videoStarting(type: "foreground" | "background" | null) {
     customActionActivation("video_start")
+
+    if (type === "foreground") customActionActivation("video_start_foreground")
+    else if (type === "background") customActionActivation("video_start_background")
 }
 
 export function startCamera(cam: API_camera) {
@@ -1317,7 +1322,7 @@ function replaceScriptureValues(items: Item[], templateItems: Item[], customDyna
         // remove empty values
         items.forEach((item) => {
             item.lines?.forEach((line) => {
-                line.text = line.text?.filter((text) => text.value) || []
+                line.text = Array.isArray(line.text) ? line.text.filter((text) => text.value) : []
             })
         })
     }

@@ -10,7 +10,7 @@
     import { getItemText } from "../edit/scripts/textStyle"
     import { clone } from "../helpers/array"
     import { getActiveOutputs, getAllActiveOutputs, getFirstActiveOutput, getOutputLines, getOutputResolution, percentageStylePos } from "../helpers/output"
-    import { getNumberVariables } from "../helpers/showActions"
+    import { createCSSVariables } from "../helpers/showActions"
     import { getStyles } from "../helpers/style"
     import SlideItems from "./SlideItems.svelte"
     import TextboxLines from "./TextboxLines.svelte"
@@ -120,6 +120,7 @@
         if (dateInterval) clearInterval(dateInterval)
         if (loopStop) clearTimeout(loopStop)
         if (paddingCorrTimeout) clearTimeout(paddingCorrTimeout)
+        if (cssInterval) clearInterval(cssInterval)
     })
 
     // $: if (item.type === "timer") ref.id = item.timer!.id!
@@ -648,21 +649,26 @@
         if (isStage || itemIndex < 0 || $currentWindow || ref.showId === "temp") return
 
         if (ref.type === "overlay") {
+            const currentOverlays = $overlays
+            if (!currentOverlays[ref.id]?.items?.[itemIndex] || currentOverlays[ref.id].items[itemIndex].autoFontSize === fontSize) return
+
             overlays.update((a) => {
-                if (!a[ref.id]?.items?.[itemIndex]) return a
                 a[ref.id].items[itemIndex].autoFontSize = fontSize
                 return a
             })
         } else if (ref.type === "template") {
+            const currentTemplates = $templates
+            if (!currentTemplates[ref.id]?.items?.[itemIndex] || currentTemplates[ref.id].items[itemIndex].autoFontSize === fontSize) return
+
             templates.update((a) => {
-                if (!a[ref.id]?.items?.[itemIndex]) return a
                 a[ref.id].items[itemIndex].autoFontSize = fontSize
                 return a
             })
         } else if (ref.showId) {
-            showsCache.update((a) => {
-                if (!a[ref.showId!]?.slides?.[ref.id]?.items?.[itemIndex]) return a
+            const currentShows = $showsCache
+            if (!currentShows[ref.showId]?.slides?.[ref.id]?.items?.[itemIndex] || currentShows[ref.showId].slides[ref.id].items[itemIndex].autoFontSize === fontSize) return
 
+            showsCache.update((a) => {
                 a[ref.showId!].slides[ref.id].items[itemIndex].autoFontSize = fontSize
                 return a
             })
@@ -673,21 +679,26 @@
         if (isStage || itemIndex < 0 || $currentWindow || ref.showId === "temp") return
 
         if (ref.type === "overlay") {
+            const currentOverlays = $overlays
+            if (!currentOverlays[ref.id]?.items?.[itemIndex] || currentOverlays[ref.id].items[itemIndex].previewAutoFontSize === fontSize) return
+
             overlays.update((a) => {
-                if (!a[ref.id]?.items?.[itemIndex]) return a
                 a[ref.id].items[itemIndex].previewAutoFontSize = fontSize
                 return a
             })
         } else if (ref.type === "template") {
+            const currentTemplates = $templates
+            if (!currentTemplates[ref.id]?.items?.[itemIndex] || currentTemplates[ref.id].items[itemIndex].previewAutoFontSize === fontSize) return
+
             templates.update((a) => {
-                if (!a[ref.id]?.items?.[itemIndex]) return a
                 a[ref.id].items[itemIndex].previewAutoFontSize = fontSize
                 return a
             })
         } else if (ref.showId) {
-            showsCache.update((a) => {
-                if (!a[ref.showId!]?.slides?.[ref.id]?.items?.[itemIndex]) return a
+            const currentShows = $showsCache
+            if (!currentShows[ref.showId]?.slides?.[ref.id]?.items?.[itemIndex] || currentShows[ref.showId].slides[ref.id].items[itemIndex].previewAutoFontSize === fontSize) return
 
+            showsCache.update((a) => {
                 a[ref.showId!].slides[ref.id].items[itemIndex].previewAutoFontSize = fontSize
                 return a
             })
@@ -747,8 +758,11 @@
         send(OUTPUT, ["ACTION_MAIN"], { id: item.button.release })
     }
 
-    // give CSS access to number variable values
-    $: cssVariables = getNumberVariables($variables, $outputs)
+    let updateTrigger = 0
+    let cssInterval = setInterval(() => updateTrigger++, 1000)
+
+    // give CSS access to certain dynamic values
+    $: cssVariables = createCSSVariables($variables, $outputs, isStage ? "stage" : "default", updateTrigger)
 
     // initialize default filter values to get the transition working (should use animation)
     // https://stackoverflow.com/questions/68632554/css-backdrop-filter-does-not-work-with-transition

@@ -4,7 +4,7 @@
     import { history } from "../../helpers/history"
     import { getLayoutRef } from "../../helpers/show"
     import { addFilterString } from "../scripts/textStyle"
-    import { EditInput2 } from "../values/boxes"
+    import type { EditInput2 } from "../values/boxes"
     import { slideFilterSections } from "../values/filters"
     import EditValues from "./EditValues.svelte"
 

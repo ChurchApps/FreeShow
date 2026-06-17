@@ -604,15 +604,17 @@ export function getFileInfo(filePath: string) {
 }
 
 // READ EXIF
-export function readExifData({ id }: { id: string }): Promise<{ id: string; exif: ExifData }> {
+export function readExifData({ id }: { id: string }): Promise<{ id: string; exif: ExifData | undefined }> {
     return new Promise((resolve) => {
         try {
             new ExifImage({ image: id }, (err, exifData) => {
                 actionComplete(err, "Error getting EXIF data")
-                if (!err) resolve({ id, exif: exifData })
+                // always settle the promise, otherwise an awaiting IPC request hangs until it times out
+                resolve({ id, exif: err ? undefined : exifData })
             })
         } catch (err) {
             actionComplete(err as Error, "Error loading EXIF image")
+            resolve({ id, exif: undefined })
         }
     })
 }
@@ -1234,6 +1236,7 @@ export function loadShows(returnShows = false, reCacheNames: string[] = []) {
     const cachedShows = getStore("SHOWS") || {}
     const newCachedShows: TrimmedShows = {}
     const textCache: { [key: string]: string } = {}
+    const existingCacheText: { [key: string]: string } = getStore("CACHE")?.text || {}
 
     // create a map for quick lookup of cached shows by name
     const cachedShowNames = new Map<string, string>()
@@ -1251,6 +1254,12 @@ export function loadShows(returnShows = false, reCacheNames: string[] = []) {
         const matchingShowId = cachedShowNames.get(name)
         if (matchingShowId && !newCachedShows[matchingShowId]) {
             newCachedShows[matchingShowId] = cachedShows[matchingShowId]
+            // backfill: build text for an already-cached show that was never text-cached (e.g. it existed before the text cache)
+            if (!existingCacheText[matchingShowId]) {
+                const cachedShowData = parseShow(readFile(path.join(showsPath, `${name}.show`)) || "{}")
+                const cachedTxt = cachedShowData?.[1] ? getTextCacheString(cachedShowData[1]) : ""
+                if (cachedTxt) textCache[matchingShowId] = cachedTxt
+            }
             return
         }
 
@@ -1302,6 +1311,7 @@ export async function loadShowsAsync(returnShows = false, reCacheNames: string[]
     const cachedShows = getStore("SHOWS") || {}
     const newCachedShows: TrimmedShows = {}
     const textCache: { [key: string]: string } = {}
+    const existingCacheText: { [key: string]: string } = getStore("CACHE")?.text || {}
 
     // send already cached shows to the frontend immediately
     if (!returnShows && !reCacheNames.length && Object.keys(cachedShows).length) {
@@ -1324,6 +1334,13 @@ export async function loadShowsAsync(returnShows = false, reCacheNames: string[]
                 const matchingShowId = cachedShowNames.get(name)
                 if (matchingShowId && !newCachedShows[matchingShowId]) {
                     newCachedShows[matchingShowId] = cachedShows[matchingShowId]
+                    // backfill: build text for an already-cached show that was never text-cached
+                    if (!existingCacheText[matchingShowId]) {
+                        hadIo = true
+                        const cachedShowData = parseShow((await readFileAsync(path.join(showsPath, `${name}.show`))) || "{}")
+                        const cachedTxt = cachedShowData?.[1] ? getTextCacheString(cachedShowData[1]) : ""
+                        if (cachedTxt) textCache[matchingShowId] = cachedTxt
+                    }
                     return
                 }
 

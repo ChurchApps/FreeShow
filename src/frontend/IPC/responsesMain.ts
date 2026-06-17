@@ -12,7 +12,7 @@ import { _getVariableValue, getDynamicValue } from "../components/edit/scripts/i
 import { clone, keysToID } from "../components/helpers/array"
 import { addDrawerFolder } from "../components/helpers/dropActions"
 import { history } from "../components/helpers/history"
-import { captureCanvas, setMediaTracks } from "../components/helpers/media"
+import { captureCanvas, getExtension, getFileName, removeExtension, setMediaTracks } from "../components/helpers/media"
 import { getActiveOutputs } from "../components/helpers/output"
 import { loadShows, saveTextCache } from "../components/helpers/setShow"
 import { checkName, getGlobalGroup, getLabelId } from "../components/helpers/show"
@@ -77,6 +77,7 @@ import {
     theme,
     themes,
     timers,
+    recentFiles,
     undoHistory,
     usageLog,
     variables,
@@ -489,9 +490,17 @@ export const mainResponses: MainResponses = {
         const receiveFilePathIMPORT = {
             // Media
             pdf: () => {
-                // convert to images directly - drag and drop to keep as PDF
-                ;(mainData as string[]).forEach((path) => sendMain(Main.PDF_TO_IMAGE, { filePath: path }))
-                // addToProject("pdf", mainData as string[])
+                const paths = mainData as string[]
+                paths.forEach((path) => sendMain(Main.PDF_TO_IMAGE, { filePath: path }))
+
+                // remove any PDFs with the same name from the Recommended project items list
+                const importedNames = paths.map((p) => removeExtension(getFileName(p)).toLowerCase())
+                recentFiles.update((a) => {
+                    const toClear = a.all.filter((p) => getExtension(p) === "pdf" && importedNames.includes(removeExtension(getFileName(p)).toLowerCase()))
+                    if (toClear.length) a.cleared = [...a.cleared, ...toClear]
+                    return a
+                })
+                updateRecentlyAddedFiles()
             },
             powerkey: () => addToProject("ppt", mainData as string[])
         }

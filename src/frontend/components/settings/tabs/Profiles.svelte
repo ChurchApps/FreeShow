@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { AccessType, Profile } from "../../../../types/Main"
-    import { SettingsTabs } from "../../../../types/Tabs"
+    import type { SettingsTabs } from "../../../../types/Tabs"
     import { actions, actionTags, activeProfile, categories, folders, overlayCategories, profiles, selectedProfile, special, stageShows, templateCategories, variableTags, timerTags } from "../../../stores"
     import { newToast } from "../../../utils/common"
     import { translateText } from "../../../utils/language"

@@ -108,11 +108,12 @@ export class SyncLedger {
 
     // ----- merge decisions (item-collections with no per-item "modified") -----
 
-    // Item present in the cloud snapshot; decide create/skip/delete/keep given whether it exists locally.
-    // Single source of truth for the ledger decision: syncManager.checkCloudEntry delegates here.
-    // An "upload" result means "keep local for now" — for entries that carry a per-item "modified",
-    // the caller then breaks the tie by date (download if the cloud copy is newer).
-    resolveCloudEntry(storeId: string, key: string, localExists: boolean): { action: EntryAction } {
+    // Item present in the cloud snapshot; decide create/skip/delete/download/upload given whether it
+    // exists locally. Single source of truth for the cloud-side decision: syncManager.checkCloudEntry
+    // delegates here. When the item exists on both sides and the ledger doesn't force delete, the
+    // newest copy wins: entries that carry a per-item "modified" pass `cloudIsNewer` (shows, projects,
+    // stage, …); item-collections have no per-item "modified" and omit it → keep local (upload).
+    resolveCloudEntry(storeId: string, key: string, localExists: boolean, cloudIsNewer = false): { action: EntryAction } {
         // exists only in cloud
         if (!localExists) {
             if (this.isNewDevice) return { action: "create" }
@@ -142,9 +143,8 @@ export class SyncLedger {
         }
         if (this.isCreated(storeId, key)) this.markAsCreated(storeId, key)
 
-        // exists on both sides and not deleted → keep local; the caller may override to "download"
-        // by modified time (collections have no per-item "modified", so they stay as upload)
-        return { action: "upload" }
+        // exists on both sides and not deleted → newest wins (collections pass cloudIsNewer=false → keep local)
+        return { action: cloudIsNewer ? "download" : "upload" }
     }
 
     // Item present only locally (not in the cloud snapshot).

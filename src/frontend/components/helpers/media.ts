@@ -78,7 +78,10 @@ export function encodeFilePath(path: string): string {
     if (path.startsWith("file://")) path = path.replace("file://", "")
     try {
         if (path.match(/%[0-9a-fA-F]{2}/)) path = decodeURIComponent(path)
-    } catch (e) {}
+    } catch (e) {
+        // malformed percent-encoding: keep the original path
+        console.debug("Could not decode media path:", path, e)
+    }
 
     // encode each path segment except for drive letter (e.g. C:) to avoid issues with ":" in file names on Windows
     const encoded = splitPath(path).map((seg, i) => (i === 0 && /^[a-zA-Z]:$/.test(seg) ? seg : encodeURIComponent(seg)))

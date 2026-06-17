@@ -371,21 +371,24 @@ const clickActions = {
 
         // WIP history
         showsCache.update((a) => {
-            if (!a[showId]) return a
+            if (!a[showId]?.slides) return a
 
             const newId = uid()
             const newSlide = clone(a[showId].slides[groupId])
+            if (!newSlide) return a
             // delete newSlide.id // should not be there
 
             // group children
             let newChildren: string[] = []
             let newChildIds = new Map()
-            const children = newSlide.children || []
+            const children = Array.isArray(newSlide.children) ? newSlide.children : []
             children.forEach((childId) => {
                 const newChildId = uid()
-                a[showId].slides[newChildId] = clone(a[showId].slides[childId])
-                newChildren.push(newChildId)
-                newChildIds.set(childId, newChildId)
+                if (a[showId].slides[childId]) {
+                    a[showId].slides[newChildId] = clone(a[showId].slides[childId])
+                    newChildren.push(newChildId)
+                    newChildIds.set(childId, newChildId)
+                }
             })
 
             if (newChildren.length) newSlide.children = newChildren
@@ -393,16 +396,19 @@ const clickActions = {
 
             // layout
             const activeLayout = a[showId].settings?.activeLayout
-            a[showId].layouts[activeLayout].slides[groupIndex].id = newId
-            // children data
-            if (a[showId].layouts[activeLayout].slides[groupIndex].children) {
-                Object.keys(a[showId].layouts[activeLayout].slides[groupIndex].children).forEach((childId) => {
-                    const newChildId = newChildIds.get(childId)
-                    if (newChildId) {
-                        a[showId].layouts[activeLayout].slides[groupIndex].children![newChildId] = clone(a[showId].layouts[activeLayout].slides[groupIndex].children![childId])
-                        delete a[showId].layouts[activeLayout].slides[groupIndex].children![childId]
-                    }
-                })
+            const layoutSlide = a[showId].layouts?.[activeLayout || ""]?.slides?.[groupIndex]
+            if (layoutSlide) {
+                layoutSlide.id = newId
+                // children data
+                if (layoutSlide.children) {
+                    Object.keys(layoutSlide.children).forEach((childId) => {
+                        const newChildId = newChildIds.get(childId)
+                        if (newChildId) {
+                            layoutSlide.children![newChildId] = clone(layoutSlide.children![childId])
+                            delete layoutSlide.children![childId]
+                        }
+                    })
+                }
             }
 
             return a
