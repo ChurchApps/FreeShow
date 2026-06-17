@@ -1,7 +1,7 @@
 import { get } from "svelte/store"
 import { Main } from "../../../types/IPC/Main"
 import type { OutData } from "../../../types/Output"
-import type { ShowRef } from "../../../types/Projects"
+import type { ProjectShowRef, ShowRef } from "../../../types/Projects"
 import type { LayoutRef, OutSlide, Slide } from "../../../types/Show"
 import { AudioPlayer } from "../../audio/audioPlayer"
 import { sendMain } from "../../IPC/main"
@@ -12,6 +12,7 @@ import { clone } from "./array"
 import { getAllActiveOutputIds, setOutput } from "./output"
 import { checkActionTrigger, getFewestOutputLines, getItemWithMostLines, playPdf, updateOut } from "./showActions"
 import { _show } from "./shows"
+import { runActionId } from "../actions/actions"
 
 type Options = { isSpace: boolean; slideLayers: boolean; playNext: boolean }
 
@@ -143,7 +144,10 @@ export class OutputHelper {
 
         if (get(focusMode)) {
             // skip sections & skip overlays when going back
-            while (projectItems[newIndex]?.type === "section" || (next ? false : projectItems[newIndex]?.type === "overlay")) newIndex += next ? 1 : -1
+            while (projectItems[newIndex]?.type === "section" || (next ? false : projectItems[newIndex]?.type === "overlay")) {
+                this.runSectionAction(projectItems[newIndex])
+                newIndex += next ? 1 : -1
+            }
             const newItem = projectItems[newIndex]
             if (!newItem) return
 
@@ -159,11 +163,13 @@ export class OutputHelper {
             return
         }
 
+        const newItem = projectItems[newIndex]
+        this.runSectionAction(newItem)
+
         openProjectItem(get(activeProject) || "", newIndex)
 
         // play directly from "Next slide timer" & "nextAfterMedia"
         if (options.playNext) {
-            const newItem = projectItems[newIndex]
             if ((newItem?.type || "show") === "show") {
                 // allow show to load first
                 setTimeout(() => {
@@ -174,6 +180,14 @@ export class OutputHelper {
                 this.playItem(outputId, newItem, next, options)
             }
         }
+    }
+
+    private static runSectionAction(item: ProjectShowRef | undefined) {
+        if (item?.type !== "section") return
+
+        const itemSettings = item.data?.settings
+        const actionId = itemSettings?.triggerAction || get(special).sectionTriggerAction
+        if (actionId) runActionId(actionId)
     }
 
     private static getProjectItemIndex(item: OutSlide | ShowRef | null = null) {
