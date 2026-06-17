@@ -5,11 +5,13 @@
     import { history } from "../../helpers/history"
     import { getCustomMetadata, initializeMetadata } from "../../helpers/show"
     import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
+    import MaterialFilePicker from "../../inputs/MaterialFilePicker.svelte"
     import Tip from "../../main/Tip.svelte"
     import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
 
     $: currentShow = $showsCache[$activeShow!.id]
     $: meta = currentShow.meta
+    $: chordImage = currentShow?.metadata?.chordImage || ""
     let values: { [key: string]: string } = {}
 
     onMount(getValues)
@@ -27,10 +29,6 @@
         })
     }
 
-    // duration = quickaccess only
-    // number = quickaccess & metadata
-    // CCLI = quickaccess (metadata) & metadata
-    // others = metadata only
     const changeValue = (value: string, key: string) => {
         if (key === "duration") {
             setQuickAccess(key, value)
@@ -69,13 +67,13 @@
         history({ id: "UPDATE", newData: { data, key }, oldData: { id: $activeShow?.id || "" }, location: { page: "show", id: "show_key", override } })
     }
 
-    // AUTOFILL
-
     const autofillValues = {
-        // get only numbers at the start or end
         number: () => values.number || currentShow.name?.match(/^\d+/)?.[0] || currentShow.name?.match(/\d+$/)?.[0],
-        // remove numbers
         title: () => (currentShow.name || "").replace(/[0-9\-.,!:;]/g, "").trim()
+    }
+
+    function setChordImage(path: string) {
+        updateData({ ...(currentShow.metadata || {}), chordImage: path }, "metadata")
     }
 </script>
 
@@ -91,16 +89,22 @@
             <MaterialTextInput {label} style={numberStored ? "border-bottom: 1px solid var(--secondary);" : ""} {value} autofill={autofillValue} on:change={(e) => changeValue(e.detail, key)} />
         {/each}
 
-        <!-- not visible as metadata (only in project) -->
         <MaterialNumberInput label="transition.duration (s)" value={currentShow?.quickAccess?.duration} on:change={(e) => changeValue(e.detail, "duration")} hideWhenZero />
     </div>
 
-    <Tip value="tips.display_metadata" style="margin: 0 10px;" bottom={10} />
+    <div style="padding: 10px; display: flex; flex-direction: column; gap: 8px;">
+        <p style="font-size: 0.85em; opacity: 0.7; margin: 0;">Akkordogramm</p>
+        <MaterialFilePicker
+            label="Akkordogramm auswählen"
+            value={chordImage}
+            filter={{ name: "Bilder", extensions: ["jpg", "jpeg", "png"] }}
+            allowEmpty={true}
+            showThumbnail={!!chordImage}
+            on:change={(e) => setChordImage(e.detail)}
+        />
+    </div>
 
-    <!-- <h5><T id="meta.tags" /></h5>
-    <div class="tags" style="display: flex;flex-direction: column;">
-        <Tags />
-    </div> -->
+    <Tip value="tips.display_metadata" style="margin: 0 10px;" bottom={10} />
 </section>
 
 <style>

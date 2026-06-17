@@ -36,6 +36,7 @@ export interface Show {
         // display: string
         // template: string
         tags?: string[]
+        chordImage?: string // Pfad zum Akkordogramm-JPG
     }
     meta: {
         number?: string
