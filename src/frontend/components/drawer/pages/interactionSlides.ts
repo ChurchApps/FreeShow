@@ -9,7 +9,7 @@ import { checkName } from "../../helpers/show"
 import { uid } from "uid"
 import { clone } from "../../helpers/array"
 
-type SlideTypes = "join" | "players" | "question" | "score"
+type SlideTypes = "join" | "players" | "question" | "leaderboard"
 
 export async function generateSlide(type: SlideTypes) {
     const id = get(openedInteractionId)
@@ -18,10 +18,13 @@ export async function generateSlide(type: SlideTypes) {
     const showId = await createInteractionShow(id)
     if (!showId) return
 
+    if (get(activeShow)?.id !== showId) activeShow.set({ id: showId })
+
     let slide: Slide | null = null
     if (type === "join") slide = generateJoinSlide(id)
     else if (type === "players") slide = generatePlayersSlide()
     else if (type === "question") slide = generateQuestionSlide()
+    else if (type === "leaderboard") slide = generateLeaderboardSlide()
 
     if (!slide) return
 
@@ -81,6 +84,7 @@ function generateJoinSlide(id: string) {
             { type: "icon", style: "height:130px;width:130px;color:#FFFFFF;left:1375px;top:403.5px;", id: "phone" },
             { type: "media", style: "top:509.50px;left:1196.00px;height:280.65px;width:279.00px;", src: `data:image/png;base64,${arrowImage}` }
         ]
+        // optionally add an action to start the interaction
     }
 
     return clone(slide)
@@ -123,6 +127,22 @@ function generateQuestionSlide() {
             { type: "text", style: "top:117.50px;left:194.50px;height:846.00px;width:1534.08px;", lines: [{ align: "", text: [{ style: "font-weight:bold;font-size:120px;text-shadow:0 0 0 rgb(0 0 0 / 0);-webkit-text-stroke-width:15px;", value: "{interaction_question}" }] }] },
             { type: "text", style: "top:800px;left:194.50px;height:100px;width:1534.08px;", lines: [{ align: "", text: [{ style: "font-size:90px;text-shadow:0 0 0 rgb(0 0 0 / 0);-webkit-text-stroke-width:15px;", value: "Answer: {interaction_answer}" }] }], conditions: { showItem: [[[[{ element: "dynamicValue", elementId: "interaction_answer", operator: "isNot", value: "" }]]]] } },
             { type: "text", style: "top:79.64px;left:1406.85px;height:197.02px;width:451.60px;", lines: [{ align: "", text: [{ style: "font-feature-settings: 'tnum' 1;font-family:monospace;font-weight:bold;text-shadow:0 0 0 rgb(0 0 0 / 0);-webkit-text-stroke-width: 4px;color:linear-gradient(120deg, #FF851B 0%, #b91533 70%);font-size:120px;", value: "{interaction_time}" }] }] }
+        ]
+    }
+
+    return clone(slide)
+}
+
+function generateLeaderboardSlide() {
+    const slide: Slide = {
+        group: "Leaderboard",
+        color: null,
+        settings: {},
+        notes: "",
+        items: [
+            BG_item,
+            { type: "text", style: "top:72.50px;left:461.00px;height:152.67px;width:998.00px;", lines: [{ align: "", text: [{ style: "font-weight:bold;font-size:120px;text-shadow:0 0 0 rgb(0 0 0 / 0);-webkit-text-stroke-width:15px;", value: "Leaderboard" }] }] },
+            { type: "text", style: "top:285.02px;left:80.00px;height:706.98px;width:1760.00px;", align: "align-items:flex-start;", lines: [{ align: "text-align: left;", text: [{ style: "font-size:80px;text-shadow:0 0 0 rgb(0 0 0 / 0);-webkit-text-stroke-width:10px;", value: "{interaction_leaderboard}" }] }] }
         ]
     }
 

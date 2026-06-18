@@ -14,6 +14,11 @@ export function getInteraction(id: string): Interaction | undefined {
 }
 
 export async function startInteraction(id: string) {
+    if (existingInteractions.has(id)) {
+        console.warn(`Interaction with ID: ${id} is already started`)
+        return existingInteractions.get(id)!
+    }
+
     const interactionClass = new Interaction(id)
     const success = await interactionClass.init() // Adjusted to be async because DB initialization is network-bound
     if (!success) {
@@ -312,7 +317,14 @@ class Interaction {
         if (!this.lastData || !(this.lastData.answers || []).length) return
 
         const clients = this.getClients()
-        const historyData = {
+        const leaderboard = clients
+            .map((c) => ({
+                name: c.name || "",
+                score: c.score || 0
+            }))
+            .sort((a, b) => b.score - a.score)
+
+        const historyData: any = {
             time: Date.now(),
             inputs: this.getData().inputs.map((a, i) => ({
                 question: a.question,
@@ -323,6 +335,10 @@ class Interaction {
                     }
                 })
             }))
+        }
+
+        if (leaderboard.some((p) => p.score > 0)) {
+            historyData.leaderboard = leaderboard
         }
 
         interactions.update((a) => {
@@ -405,8 +421,79 @@ class Interaction {
         if (!this.currentAnswer) return
         this.closed = true
 
-        const updatePayload = this.getDbPayload()
+        const scoreUpdates = this.getScoreUpdates()
+
+        const updatePayload = {
+            ...this.getDbPayload(),
+            ...scoreUpdates
+        }
         await updateInteractionDb(this.dbid, this.dbsecret, updatePayload)
+    }
+
+    private scoredPlayers: Set<string> = new Set()
+    getScoreUpdates() {
+        const data = this.getData()
+        if (!data || !this.lastData) return {}
+
+        const input = data.inputs[this.inputIndex]
+        if (!input || !hasAnswer(input)) return {}
+
+        const scoreSystem = data.options?.scoreSystem || "incremental"
+        const scorePoints = data.options?.scorePoints ?? (scoreSystem === "falloff" ? 10 : scoreSystem === "speed" ? 100 : 1)
+
+        const inputAnswers = this.lastData.answers?.[this.inputIndex] || {}
+
+        // find all correct answers and the times
+        const correctAnswers = Object.entries(inputAnswers)
+            .filter(([_clientId, ans]: [string, any]) => ans && isCorrect(input, ans.value))
+            .map(([clientId, ans]: [string, any]) => ({ clientId, time: ans.time || 0 }))
+            .sort((a, b) => a.time - b.time)
+
+        const updatePayload: any = {}
+
+        correctAnswers.forEach((ans, index) => {
+            const key = `${this.inputIndex}-${ans.clientId}`
+
+            // don't count twice for the same player on the same question
+            if (this.scoredPlayers.has(key)) return
+
+            let points = 0
+            if (scoreSystem === "incremental") {
+                points = scorePoints
+            } else if (scoreSystem === "falloff") {
+                points = Math.max(1, scorePoints - index)
+            } else if (scoreSystem === "speed") {
+                let elapsed = 0
+                if (this.startTime && ans.time) {
+                    elapsed = Math.max(0, (ans.time - this.startTime) / 1000)
+                } else {
+                    const times = Object.values(inputAnswers)
+                        .map((a: any) => a?.time)
+                        .filter(Boolean) as number[]
+                    if (times.length > 0) {
+                        const firstAnswerTime = Math.min(...times)
+                        elapsed = Math.max(0, (ans.time - firstAnswerTime) / 1000)
+                    } else {
+                        elapsed = 0
+                    }
+                }
+                const limit = data.options?.maxTime && data.options.maxTime > 0 ? data.options.maxTime : 30
+                const ratio = Math.max(0, Math.min(1, elapsed / limit))
+                points = Math.round(scorePoints * (1 - ratio))
+            }
+
+            // Get current score of the client from lastData
+            const clientObj = this.lastData?.clients?.[ans.clientId]
+            const currentScore = clientObj?.score || 0
+            const newScore = currentScore + points
+
+            // Add update to DB payload
+            updatePayload[`clients/${ans.clientId}/score`] = newScore
+
+            this.scoredPlayers.add(key)
+        })
+
+        return updatePayload
     }
 
     async kick(clientId: string) {
@@ -432,14 +519,21 @@ class Interaction {
         await updateInteractionDb(this.dbid, this.dbsecret, updatePayload)
     }
 
+    async setScore(clientId: string, score: number) {
+        await updateInteractionDb(this.dbid, this.dbsecret, {
+            [`clients/${clientId}/score`]: score
+        })
+    }
+
     ///
 
-    getClients(): { id: string; name?: string; time?: number; connected?: boolean }[] {
+    getClients(): { id: string; name?: string; time?: number; connected?: boolean; score?: number }[] {
         const clients = keysToID(this.lastData?.clients || {})
 
-        // ensure name is set
+        // ensure name and score is set
         clients.forEach((a, i) => {
             a.name = a.name || `User #${i + 1}`
+            a.score = a.score || 0
         })
 
         // joined order
@@ -493,6 +587,17 @@ class Interaction {
         const latestAnswers = sortedAnswers.map((a: any) => String(Array.isArray(a.value) ? a.value.at(-1) : a.value)) as string[]
         return latestAnswers[latestAnswers.length - 1] || ""
     }
+
+    getLeaderboard() {
+        const clients = this.getClients()
+        return clients
+            .map((c) => ({
+                name: c.name || "",
+                score: c.score || 0
+            }))
+            .sort((a, b) => b.score - a.score)
+            .map((c) => `${c.name}: ${c.score}`)
+    }
 }
 
 export function formatTimeInteraction(s: number) {
@@ -501,4 +606,27 @@ export function formatTimeInteraction(s: number) {
     const min = Math.floor(s / 60)
     const sec = s % 60
     return `${sign}${min}:${sec < 10 ? "0" : ""}${sec}`
+}
+
+function hasAnswer(input: any) {
+    if (!input) return false
+    if (input.type === "text" || input.type === "number") return input.answer !== undefined && input.answer !== ""
+    if (input.type === "multi_choice") return input.options?.some((o: any) => o.isAnswer)
+    return false
+}
+
+function isCorrect(input: any, value: any) {
+    if (!input) return false
+    if (input.type === "text" || input.type === "number") {
+        if (input.answer === undefined || input.answer === "") return false
+        return String(value).toLowerCase().trim() === String(input.answer).toLowerCase().trim()
+    }
+    if (input.type === "multi_choice") {
+        const correctValues = input.options?.filter((o: any) => o.isAnswer).map((o: any) => o.value) || []
+        const clientValues = Array.isArray(value) ? value : [value]
+        if (correctValues.length === 0 || clientValues.length === 0) return false
+        if (clientValues.length !== correctValues.length) return false
+        return clientValues.every((v: any) => correctValues.includes(v))
+    }
+    return false
 }

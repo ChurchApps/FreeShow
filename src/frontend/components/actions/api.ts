@@ -14,6 +14,7 @@ import { togglePlayingMedia } from "../../utils/shortcuts"
 import { contentProviderSync } from "../../utils/startup"
 import { updateTransition } from "../../utils/transitions"
 import { startMetronome } from "../drawer/audio/metronome"
+import { getInteraction, startInteraction, stopInteraction } from "../drawer/pages/interactions"
 import { pauseAllTimers } from "../drawer/timers/timers"
 import { getSlideThumbnail, getThumbnail } from "../helpers/media"
 import { changeStageOutputLayout, startCamera, startScreen, startStreaming, stopStreaming, toggleOutputs } from "../helpers/output"
@@ -326,6 +327,12 @@ export const API_ACTIONS = {
     send_midi: (data: API_midi) => sendMidi(data), // DEPRECATED, use emit_action instead
     send_rest_command: (data: API_rest_command) => sendRestCommandSync(data), // DEPRECATED, use emit_action instead
     emit_action: (data: API_emitter) => emitData(data),
+
+    // Interactions
+    interaction_start: (data: API_id) => startInteraction(data.id),
+    interaction_stop: (data: API_id) => stopInteraction(data.id),
+    interaction_next: (data: API_id) => getInteraction(data.id)?.next(),
+    interaction_previous: (data: API_id) => getInteraction(data.id)?.previous(),
 
     // OBS Studio
     obs_set_scene: (data: API_id) => obsSetScene(data.id),

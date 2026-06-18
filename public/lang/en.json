@@ -1689,7 +1689,9 @@
         "generate_slide": "Generate slide",
         "require_name": "Request names",
         "all_at_once": "All inputs at once",
-        "max_time": "Max time per input"
+        "max_time": "Max time per input",
+        "score_system": "Score system",
+        "points": "Points"
     },
     "info": {
         "created": "Created",

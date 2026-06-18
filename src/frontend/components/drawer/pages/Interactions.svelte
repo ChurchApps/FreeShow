@@ -14,6 +14,7 @@
     import { formatTimeInteraction, getInteraction, initConnection, startInteraction, stopInteraction } from "./interactions"
     import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
     import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
+    import MaterialDropdown from "../../inputs/MaterialDropdown.svelte"
 
     export let searchValue: string
     console.log(searchValue)
@@ -115,6 +116,12 @@
         interactions.update((a) => {
             if (!a[openedId]) return a
             a[openedId].options = a[openedId].options || {}
+
+            if (key === "scorePoints" && value === defaultScorePoints) {
+                delete a[openedId].options[key]
+                return a
+            }
+
             a[openedId].options[key] = value
             return a
         })
@@ -164,6 +171,13 @@
         }
     }
 
+    const scoreSystems = [
+        { value: "incremental", label: "Incremental", data: "Points to each player with correct answer." },
+        { value: "falloff", label: "Falloff", data: "Max points to first with correct answer, decreasing for subsequent correct answers." },
+        { value: "speed", label: "Speed", data: "Points based on response speed, decreasing over time." }
+    ]
+    $: defaultScorePoints = openedInteraction?.options?.scoreSystem === "falloff" ? 10 : openedInteraction?.options?.scoreSystem === "speed" ? 100 : 1
+
     let showPlayers = false
     function kick(clientId: string) {
         const interaction = getInteraction(openedId)
@@ -210,6 +224,11 @@
 
             {#if !openedInteraction?.options?.allAtOnce}
                 <MaterialNumberInput label="interaction.max_time (conditions.seconds)" value={openedInteraction?.options?.maxTime ?? 0} defaultValue={0} on:change={(e) => setOption("maxTime", e.detail)} />
+
+                <InputRow>
+                    <MaterialDropdown label="interaction.score_system" value={openedInteraction?.options?.scoreSystem || "incremental"} options={scoreSystems} on:change={(e) => setOption("scoreSystem", e.detail)} />
+                    <MaterialNumberInput label="interaction.points" value={openedInteraction?.options?.scorePoints ?? defaultScorePoints} defaultValue={defaultScorePoints} on:change={(e) => setOption("scorePoints", e.detail)} />
+                </InputRow>
             {/if}
         </div>
     {:else if showHistory && !$activeInteractions.includes(openedId)}
@@ -217,6 +236,20 @@
             {#each clone(openedInteraction?.history || []).reverse() as entry}
                 <div style="background-color: var(--primary-darkest);padding: 10px;border-radius: 6px;">
                     <p style="font-size: 0.8em;opacity: 0.7;margin-bottom: 8px;">{new Date(entry.time).toLocaleString()}</p>
+
+                    {#if entry.leaderboard?.length}
+                        <div style="margin-bottom: 12px; padding: 8px; background-color: rgba(255, 255, 255, 0.05); border-radius: 4px;">
+                            <p style="font-weight: bold; font-size: 0.9em; margin-bottom: 6px; opacity: 0.9;">Leaderboard:</p>
+                            <ol style="margin: 0; padding-left: 20px;">
+                                {#each entry.leaderboard as player}
+                                    <li style="margin-bottom: 4px; font-size: 0.9em;">
+                                        <span style="font-weight: bold;">{player.name}</span>: {player.score} pts
+                                    </li>
+                                {/each}
+                            </ol>
+                        </div>
+                    {/if}
+
                     <ol style="margin: 0;padding: 0 0 0 24px;">
                         {#each entry.inputs as input}
                             <li style="margin-bottom: 8px;" class="list">
@@ -246,9 +279,15 @@
         <div class="players">
             {#key clients}
                 {#each getInteraction(openedId)?.getClients() || [] as client, i}
+                    {@const hasScore = (getInteraction(openedId)?.getClients() || []).some((c) => (c.score || 0) > 0)}
+
                     <div class="player">
                         <Icon id="profiles" white />
                         <p style="flex: 1;">{client.name || `User #${i + 1}`}</p>
+
+                        {#if hasScore}
+                            <MaterialNumberInput label="interaction.points" value={client.score ?? 0} style="width: 100px;" on:change={(e) => getInteraction(openedId)?.setScore(client.id, e.detail)} />
+                        {/if}
                         <MaterialButton style="padding: 4px;" red on:click={() => kick(client.id)}><T id="interaction.kick" /></MaterialButton>
                     </div>
                 {/each}
@@ -467,6 +506,14 @@
         padding: 4px 8px;
 
         cursor: pointer;
+
+        /* custom style */
+        margin: 10px;
+        padding: 12px 16px;
+        background-color: var(--primary-darkest);
+        border-radius: 12px;
+        font-size: 1.1em;
+        font-weight: bold;
     }
     .interaction.active {
         outline: 2px solid var(--secondary);

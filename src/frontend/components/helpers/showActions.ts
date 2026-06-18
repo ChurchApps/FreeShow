@@ -1125,7 +1125,8 @@ const dynamicValues = {
     interaction_time: ({ show }) => getInteractionTime(show),
     interaction_answer: ({ show }) => getInteractionAnswer(show),
     interaction_player_answers: ({ show }) => getInteractionPlayerAnswers(show),
-    interaction_player_answer_latest: ({ show }) => getInteractionPlayerAnswerLatest(show)
+    interaction_player_answer_latest: ({ show }) => getInteractionPlayerAnswerLatest(show),
+    interaction_leaderboard: ({ show }) => getInteractionLeaderboard(show)
 }
 
 // placeholder values
@@ -1329,4 +1330,12 @@ function getInteractionPlayerAnswerLatest(show: Show | null) {
     if (!interaction) return ""
 
     return interaction.getPlayerAnswerLatest()
+}
+
+function getInteractionLeaderboard(show: Show | null) {
+    const interaction = _getInteraction(show)
+    if (!interaction) return ""
+
+    const leaderboard = interaction.getLeaderboard()
+    return [leaderboard.join("<br>"), ...leaderboard]
 }
