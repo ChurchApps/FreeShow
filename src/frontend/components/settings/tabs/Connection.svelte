@@ -237,7 +237,7 @@
         <span style="display: flex;align-items: center;justify-content: center;gap: 15px;">
             <Icon id="web" size={1.1} />
 
-            Remote Control
+            Remote Clicker
         </span>
     </MaterialButton>
 
