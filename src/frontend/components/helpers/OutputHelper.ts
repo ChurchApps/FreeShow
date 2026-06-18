@@ -143,7 +143,7 @@ export class OutputHelper {
         })
 
         if (get(focusMode)) {
-            // skip sections & skip overlays when going back
+            // skip all sections & skip overlays when going back
             while (projectItems[newIndex]?.type === "section" || (next ? false : projectItems[newIndex]?.type === "overlay")) {
                 this.runSectionAction(projectItems[newIndex])
                 newIndex += next ? 1 : -1
@@ -161,6 +161,12 @@ export class OutputHelper {
                 this.playItem(outputId, newItem, next, options)
             }
             return
+        }
+
+        // skip empty sections
+        while (projectItems[newIndex]?.type === "section" && !projectItems[newIndex]?.notes) {
+            this.runSectionAction(projectItems[newIndex])
+            newIndex += next ? 1 : -1
         }
 
         const newItem = projectItems[newIndex]
