@@ -11,7 +11,8 @@ export const timelineSections = {
     show: {
         action: { name: "tabs.actions", icon: "actions", hasData: false },
         slide: { name: "tools.slide", icon: "slide", hasData: false },
-        audio: { name: "tabs.audio", icon: "audio", hasData: false }
+        audio: { name: "tabs.audio", icon: "audio", hasData: false },
+        video: { name: "items.video", icon: "video", hasData: false }
     },
     project: {
         action: { name: "tabs.actions", icon: "actions", hasData: false },

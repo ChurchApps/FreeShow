@@ -5,7 +5,7 @@ import { activeEdit, activeProject, activeShow, projects, selected, shows, shows
 import { hasNewerUpdate, waitUntilValueIsDefined } from "../../utils/common"
 import { clone } from "../helpers/array"
 import { _show } from "../helpers/shows"
-import { getExtension, getMediaType } from "../helpers/media"
+import { getExtension, getMediaType, getVideoDuration } from "../helpers/media"
 import { getLayoutRef } from "../helpers/show"
 import { AudioPlayer } from "../../audio/audioPlayer"
 import { timelineSections } from "./timeline"
@@ -249,8 +249,11 @@ export class TimelineActions {
 
     handleDrop(e: DragEvent, dropTime: number) {
         const existingAudioActions = this.actions.some((a) => a.type === "audio")
+        const existingVideoActions = this.actions.some((a) => a.type === "video")
 
-        let selection = get(selected)
+        const selection = get(selected)
+        let id: string = selection.id || ""
+        let dataToProcess = selection.data || []
 
         // external files
         const files = e.dataTransfer?.files
@@ -258,26 +261,36 @@ export class TimelineActions {
             for (let i = 0; i < files.length; i++) {
                 const file = files[i]
 
-                let audioFiles: { path: string; name: string }[] = []
                 if (file.type.startsWith("audio/") || getMediaType(getExtension(file.name)) === "audio") {
                     const path = window.api.showFilePath(file)
-                    audioFiles.push({ path, name: file.name })
+                    id = "audio"
+                    dataToProcess = [{ path, name: file.name }]
+                } else if (file.type.startsWith("video/") || getMediaType(getExtension(file.name)) === "video") {
+                    const path = window.api.showFilePath(file)
+                    id = "video"
+                    dataToProcess = [{ path, name: file.name }]
                 }
-
-                selection = { id: "audio", data: audioFiles }
             }
         }
 
-        let id = selection.id
         if (id === "show_drawer") id = "show"
+        if (id === "media") {
+            const firstItem = dataToProcess[0]
+            if (firstItem) {
+                const type = firstItem.type || getMediaType(getExtension(firstItem.path || firstItem.name || ""))
+                if (type === "video") {
+                    id = "video"
+                }
+            }
+        }
 
         const supportedTypes = Object.keys(timelineSections[this.type] || {})
-        if (!id || !selection.data?.length || !supportedTypes.includes(id)) return
+        if (!id || !dataToProcess.length || !supportedTypes.includes(id)) return
 
         const layoutRef = getLayoutRef()
 
-        selection.data.forEach(async (item) => {
-            const time = id === "audio" && !existingAudioActions ? 0 : dropTime
+        dataToProcess.forEach(async (item) => {
+            const time = (id === "audio" && !existingAudioActions) || (id === "video" && !existingVideoActions) ? 0 : dropTime
             const type = id
             const data = await getData()
             const name = getName() || id
@@ -286,6 +299,7 @@ export class TimelineActions {
 
             const action: TimelineAction = { id: uid(6), time, type, data, name }
             if (id === "audio") action.duration = await AudioPlayer.getDuration(item.path)
+            else if (id === "video") action.duration = await getVideoDuration(item.path)
 
             this.addAction(action)
 

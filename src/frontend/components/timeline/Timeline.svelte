@@ -858,7 +858,7 @@
                         {#if duration}
                             <div class="action-clip context #timeline_node" class:selected={selectedActionIds.includes(action.id)} style="left: {(action.time / 1000) * zoomLevel}px; width: {duration * zoomLevel}px; top: {baseY}px;height: {SECTION_HEIGHT + 4}px;" data-title="{formatTime(action.time, type, $timelineStore)}-{formatTime(duration * 1000, type, $timelineStore)}: {action.name}" on:mousedown|stopPropagation={(e) => startActionDrag(e, action.id)}>
                                 <div class="action-clip-content">
-                                    {#if action.type === "audio"}
+                                    {#if action.type === "audio" || action.type === "video"}
                                         <div class="waveform-container" use:useWaveform={action.data.path || ""}></div>
                                     {/if}
                                     <div class="clip-label">{action.name}</div>
