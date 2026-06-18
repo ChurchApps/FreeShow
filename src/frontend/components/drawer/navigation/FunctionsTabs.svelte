@@ -92,6 +92,8 @@
                   ]
               ]),
 
+        [{ id: "interactions", label: "tabs.interactions", icon: "game" }],
+
         ...($obsData.enabled ? [[{ id: "obs", label: "OBS Studio", icon: "player" }]] : [])
     ]
 </script>

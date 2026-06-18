@@ -16,6 +16,7 @@ import ChooseOutput from "../components/main/popups/ChooseOutput.svelte"
 import ChooseScreen from "../components/main/popups/ChooseScreen.svelte"
 import ChooseStyle from "../components/main/popups/ChooseStyle.svelte"
 import ChurchAppsSyncCategories from "../components/main/popups/ChurchAppsSyncCategories.svelte"
+import CleaningUtility from "../components/main/popups/CleaningUtility.svelte"
 import CloudMethod from "../components/main/popups/CloudMethod.svelte"
 import CloudSync from "../components/main/popups/CloudSync.svelte"
 import CloudUpdate from "../components/main/popups/CloudUpdate.svelte"
@@ -43,6 +44,7 @@ import History from "../components/main/popups/History.svelte"
 import Import from "../components/main/popups/Import.svelte"
 import ImportScripture from "../components/main/popups/ImportScripture.svelte"
 import Initialize from "../components/main/popups/Initialize.svelte"
+import InteractionInput from "../components/main/popups/InteractionInput.svelte"
 import Translate from "../components/main/popups/localization/Translate.svelte"
 import ManageColors from "../components/main/popups/ManageColors.svelte"
 import ManageDynamicValues from "../components/main/popups/ManageDynamicValues.svelte"
@@ -113,6 +115,7 @@ export const popups: { [key in Popups]: ComponentType } = {
     find_replace: FindReplace,
     timer: Timer,
     variable: Variable,
+    interaction_input: InteractionInput,
     audio_stream: AudioStream,
     now_playing: NowPlaying,
     aspect_ratio: AspectRatio,

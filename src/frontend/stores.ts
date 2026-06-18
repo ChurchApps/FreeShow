@@ -10,7 +10,7 @@ import type { Event } from "../types/Calendar"
 import type { Draw, DrawLine, DrawSettings, DrawTools } from "../types/Draw"
 import type { Effects } from "../types/Effects"
 import type { History, HistoryNew } from "../types/History"
-import type { ActiveEdit, Clipboard, Media, MediaOptions, NumberObject, OS, Popups, Profiles, Selected, SlidesOptions, Variable } from "../types/Main"
+import type { ActiveEdit, Clipboard, Interaction, Media, MediaOptions, NumberObject, OS, Popups, Profiles, Selected, SlidesOptions, Variable } from "../types/Main"
 import type { Folders, Projects, ShowRef } from "../types/Projects"
 import type { Dictionary, Styles, Themes } from "../types/Settings"
 import type { Action, Emitter, ID, Overlays, ShowGroups, ShowList, Shows, ShowType, SlideTimer, Tag, Templates, Timer, Transition, TrimmedShows } from "../types/Show"
@@ -96,6 +96,8 @@ export const showNotesActive: Writable<boolean> = writable(false)
 export const slideNotesActive: Writable<boolean> = writable(false)
 export const templateApplied: Writable<boolean> = writable(false)
 export const activeAudioEffects: Writable<string> = writable("")
+export const openedInteractionId: Writable<string> = writable("")
+export const activeInteractions: Writable<string[]> = writable([])
 
 // TAGS
 export const activeTagFilter: Writable<string[]> = writable([])
@@ -207,6 +209,7 @@ export const disableDragging: Writable<boolean> = writable(false)
 export const activeDropId: Writable<string> = writable("")
 export const randomNumberVariable: Writable<{ [key: string]: boolean }> = writable({})
 export const dynamicValueData: Writable<{ [key: string]: any }> = writable({})
+export const cachedDynamicValues: Writable<{ [key: string]: string }> = writable({})
 export const recentFiles: Writable<{ all: string[]; cleared: string[]; projectMedia: string[] }> = writable({ all: [], cleared: [], projectMedia: [] })
 export const statusIndicator: Writable<string> = writable("")
 
@@ -243,6 +246,9 @@ export const timers: Writable<{ [key: string]: Timer }> = writable({}) // {}
 
 // VARIABLES
 export const variables: Writable<{ [key: string]: Variable }> = writable({}) // {}
+
+// INTERACTIONS
+export const interactions: Writable<{ [key: string]: Interaction }> = writable({}) // {}
 
 // MEDIA
 export const media: Writable<Media> = writable({}) // {}

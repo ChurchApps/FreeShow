@@ -3,6 +3,7 @@
     import { actionHistory, activeTimers, drawerTabsData } from "../../../stores"
     import TimerInfo from "../timers/TimerInfo.svelte"
     import OBSInfo from "./OBSInfo.svelte"
+    import InteractionsInfo from "../pages/InteractionsInfo.svelte"
 
     $: type = $drawerTabsData.functions?.activeSubTab || ""
 
@@ -35,6 +36,8 @@
     {/if}
 {:else if type === "variables"}
     <!-- VARIABLE -->
+{:else if type === "interactions"}
+    <InteractionsInfo />
 {:else if type === "obs"}
     <OBSInfo />
 {/if}

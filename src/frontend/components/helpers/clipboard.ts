@@ -29,8 +29,10 @@ import {
     events,
     focusedArea,
     folders,
+    interactions,
     media,
     mediaFolders,
+    openedInteractionId,
     outputs,
     overlayCategories,
     overlays,
@@ -900,6 +902,25 @@ const deleteActions = {
             data.forEach(({ id }) => {
                 delete a[id]
             })
+
+            return a
+        })
+    },
+    interaction: (data: any) => {
+        // WIP history
+        interactions.update((a) => {
+            data.forEach(({ id }) => {
+                delete a[id]
+            })
+            return a
+        })
+    },
+    interaction_input: (data: any) => {
+        const id = get(openedInteractionId)
+        interactions.update((a) => {
+            if (!a[id]?.inputs) return a
+
+            a[id].inputs.splice(data.index, 1)
 
             return a
         })

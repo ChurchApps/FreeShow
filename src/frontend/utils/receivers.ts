@@ -5,6 +5,7 @@ import { AudioAnalyser } from "../audio/audioAnalyser"
 import { AudioAnalyserMerger } from "../audio/audioAnalyserMerger"
 import { setEqualizerEnabled, updateEqualizerBands } from "../audio/effects/audioEqualizer"
 import { runAction } from "../components/actions/actions"
+import { getDynamicValue } from "../components/edit/scripts/itemHelpers"
 import { clone } from "../components/helpers/array"
 import { checkNextAfterMedia } from "../components/helpers/showActions"
 import { clearBackground } from "../components/output/clear"
@@ -20,6 +21,7 @@ import {
     audioChannelsData,
     audioData,
     audioEffects,
+    cachedDynamicValues,
     categories,
     closeAd,
     colorbars,
@@ -236,6 +238,11 @@ const receiveOUTPUTasMAIN: any = {
             a[data.id][data.path] = data.data
             return a
         })
+    },
+
+    MAIN_REQUEST_DYNAMIC_VALUE: (data: { dynamicId: string }) => {
+        if (!data?.dynamicId) return
+        send(OUTPUT, ["REQUEST_DYNAMIC_VALUE"], { dynamicId: data.dynamicId, value: getDynamicValue(data.dynamicId) })
     }
 }
 
@@ -347,6 +354,12 @@ export const receiveOUTPUTasOUTPUT: any = {
     PLAYING_AUDIO: (a: any) => playingAudioPaths.set(a),
     AUDIO_DATA: (a: any) => audioData.set(a),
     DYNAMIC_VALUE_DATA: (a: any) => dynamicValueData.set(a),
+    REQUEST_DYNAMIC_VALUE: (data: { dynamicId: string; value: string }) => {
+        cachedDynamicValues.update((a) => {
+            a[data.dynamicId] = data.value
+            return a
+        })
+    },
 
     COLORBARS: (a: any) => colorbars.set(a),
     LIVE_PREPARE: (a: any) => livePrepare.set(a)
