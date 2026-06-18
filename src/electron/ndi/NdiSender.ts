@@ -41,6 +41,9 @@ export class NdiSender {
     private static readonly CONNECTION_POLL_INTERVAL_MS = 1000
     private static readonly TIMECODE_DIVISOR = BigInt(100)
 
+    static timeStart = BigInt(Date.now()) * BigInt(1e6) - process.hrtime.bigint()
+    static audioSamplesSent: bigint | null = null
+
     static NDI: {
         [key: string]: {
             name: string
@@ -55,9 +58,6 @@ export class NdiSender {
             paddedVideoBuffer?: Buffer
             paddedVideoBufferStride?: number
             paddedVideoBufferHeight?: number
-            timeStart?: bigint
-            frameNumber?: number
-            lastFramerate?: number
         }
     } = {}
 
@@ -98,15 +98,6 @@ export class NdiSender {
         }
     }
 
-    private static calculateTimeStart(): bigint {
-        return BigInt(Date.now()) * BigInt(1e6) - process.hrtime.bigint()
-    }
-
-    private static calculateTimecode(timeStart: bigint, frameNumber: number, framerate: number): bigint {
-        const frameIntervalNs = BigInt(Math.round((1000 / framerate) * 1e6))
-        return (timeStart + BigInt(frameNumber) * frameIntervalNs) / this.TIMECODE_DIVISOR
-    }
-
     static initNameNDI(name?: string, outputName?: string) {
         return name || `FreeShow NDI${outputName ? ` - ${outputName}` : ""}`
     }
@@ -116,10 +107,7 @@ export class NdiSender {
 
         this.NDI[id] = {
             name,
-            groups,
-            timeStart: this.calculateTimeStart(),
-            frameNumber: 0,
-            lastFramerate: 0
+            groups
         }
         console.info("NDI - creating sender: " + this.NDI[id].name, groups ? `; In group: ${groups}` : "")
 
@@ -161,7 +149,7 @@ export class NdiSender {
 
     static async sendVideoBufferNDI(id: string, buffer: Buffer, { size = { width: 1280, height: 720 }, ratio = 16 / 9, framerate = 1, transparent = true }) {
         const senderData = this.NDI[id]
-        if (!senderData?.timeStart || !senderData.sender) return
+        if (!senderData?.sender) return
 
         const grandiose = await loadGrandiose()
         if (!grandiose) return
@@ -172,15 +160,7 @@ export class NdiSender {
         const fourCC = transparent ? grandiose.FOURCC_BGRA : grandiose.FOURCC_BGRX
         if (!transparent) util.ImageBufferAdjustment.BGRAtoBGRX(buffer)
 
-        // reset frame counter on framerate change to prevent accumulated delay
-        if (senderData.lastFramerate !== framerate) {
-            senderData.frameNumber = 0
-            senderData.lastFramerate = framerate
-            senderData.timeStart = this.calculateTimeStart()
-        }
-
-        const timecode = this.calculateTimecode(senderData.timeStart, senderData.frameNumber ?? 0, framerate)
-        senderData.frameNumber = (senderData.frameNumber ?? 0) + 1
+        const timecode = (this.timeStart + process.hrtime.bigint()) / this.TIMECODE_DIVISOR
 
         // Pad width to 16-byte alignment for NDI
         const paddedWidth = (size.width + this.PADDING_ALIGNMENT - 1) & ~(this.PADDING_ALIGNMENT - 1)
@@ -240,8 +220,8 @@ export class NdiSender {
     }
 
     static async sendAudioBufferNDI(buffer: Buffer, { sampleRate, channelCount }: { sampleRate: number; channelCount: number }) {
-        const activeSender = Object.values(this.NDI).find((s) => s?.sendAudio && s?.timeStart)
-        if (!activeSender?.timeStart) return
+        const activeSender = Object.values(this.NDI).find((s) => s?.sendAudio)
+        if (!activeSender) return
 
         const ndiAudioBuffer = convertPCMtoPlanarFloat32(buffer, channelCount)
         if (!ndiAudioBuffer) return
@@ -249,12 +229,30 @@ export class NdiSender {
         const grandiose = await loadGrandiose()
         if (!grandiose) return
 
-        const timecode = (activeSender.timeStart + process.hrtime.bigint()) / this.TIMECODE_DIVISOR
+        const noSamples = Math.trunc(ndiAudioBuffer.byteLength / channelCount / this.BYTES_PER_FLOAT32)
+
+        const currentHrTime = process.hrtime.bigint()
+
+        if (this.audioSamplesSent === null || this.audioSamplesSent === undefined) {
+            this.audioSamplesSent = (currentHrTime * BigInt(sampleRate)) / BigInt(1e9)
+        } else {
+            const expectedHrTime = (this.audioSamplesSent * BigInt(1e9)) / BigInt(sampleRate)
+            const driftNs = currentHrTime - expectedHrTime
+            const driftMs = Number(driftNs) / 1e6
+
+            if (Math.abs(driftMs) > 500) {
+                this.audioSamplesSent = (currentHrTime * BigInt(sampleRate)) / BigInt(1e9)
+            }
+        }
+
+        const timecode = (this.timeStart + (this.audioSamplesSent * BigInt(1e9)) / BigInt(sampleRate)) / this.TIMECODE_DIVISOR
+        this.audioSamplesSent += BigInt(noSamples)
+
         const frame = {
             timecode,
             sampleRate,
             noChannels: channelCount,
-            noSamples: Math.trunc(ndiAudioBuffer.byteLength / channelCount / this.BYTES_PER_FLOAT32),
+            noSamples,
             channelStrideBytes: Math.trunc(ndiAudioBuffer.byteLength / channelCount),
             fourCC: grandiose.FOURCC_FLTp,
             data: ndiAudioBuffer

@@ -19,7 +19,11 @@ function getSofficePath(): string {
 
     const standardPaths = defaultPaths[process.platform] || []
     for (const p of standardPaths) {
-        if (fs.existsSync(p)) return p
+        try {
+            if (fs.existsSync(p) && fs.lstatSync(p).isFile()) return p
+        } catch (err) {
+            // ignore
+        }
     }
 
     return "soffice"
@@ -42,14 +46,22 @@ export function libreConvert(data: { type: string }) {
 
 async function convertPptToPdf(inputPath: string, outputPath: string, outputFolder: string) {
     try {
+        if (!fs.existsSync(inputPath) || !fs.lstatSync(inputPath).isFile()) {
+            throw new Error("Input file does not exist or is a directory")
+        }
+
         sendToMain(ToMain.ALERT, "popup.importing")
 
-        await execFileAsync(getSofficePath(), ["--headless", "--convert-to", "pdf", "--outdir", outputFolder, inputPath])
-        if (!fs.existsSync(outputPath)) throw new Error("Could not find soffice binary")
+        const sofficePath = getSofficePath()
+        await execFileAsync(sofficePath, ["--headless", "--convert-to", "pdf", "--outdir", outputFolder, inputPath])
+
+        if (!fs.existsSync(outputPath)) {
+            throw new Error("Conversion failed: Output PDF not found")
+        }
 
         sendToMain(ToMain.IMPORT2, { channel: "pdf", data: [outputPath] })
     } catch (err: any) {
-        if (err.code === "ENOENT" || err.message?.includes("soffice")) {
+        if (err.code === "ENOENT" || (err.message && (err.message.includes("soffice") || err.message.includes("not found")))) {
             sendToMain(ToMain.ALERT, isWindows ? "LibreOffice is not installed or not found in default location.<br>Upon installation, it's recommended to enable the 'Add to PATH' option." : "LibreOffice is not installed or not found")
             setTimeout(() => openURL("https://www.libreoffice.org/download/download-libreoffice/"), 500)
         } else {

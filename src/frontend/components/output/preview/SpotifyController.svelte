@@ -48,18 +48,22 @@
 
         if (nextPlaying || nextFading) {
             clearTimeout(pauseTimer)
+            pauseTimer = null
             isMinimized = false
         } else if ($spotifyState) {
-            clearTimeout(pauseTimer)
             if (isFirstRun || isFading) {
+                clearTimeout(pauseTimer)
+                pauseTimer = null
                 isMinimized = true
-            } else if (isPlaying) {
+            } else if (isPlaying && !pauseTimer) {
                 pauseTimer = setTimeout(() => {
                     isMinimized = true
+                    pauseTimer = null
                 }, 1500)
             }
         } else if (!$spotifyState) {
             clearTimeout(pauseTimer)
+            pauseTimer = null
             isMinimized = false
         }
 

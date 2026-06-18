@@ -124,6 +124,7 @@ export function _show(id = "active") {
                 showsCache.update((a) => {
                     if (!a[id]) return a
 
+                    if (!a[id].slides) a[id].slides = {}
                     slideIds.forEach((slideId: string, i: number) => {
                         a[id].slides[slideId] = slides![i] || slides![0]
                     })
@@ -225,6 +226,7 @@ export function _show(id = "active") {
                         slideIds.forEach((slideId) => {
                             items.forEach((item: any) => {
                                 if (!a[id]?.slides?.[slideId]) return
+                                if (!a[id].slides[slideId].items) a[id].slides[slideId].items = []
                                 a[id].slides[slideId].items.push(item)
                             })
                         })
@@ -323,7 +325,8 @@ export function _show(id = "active") {
                             slideIds.forEach((slideId) => {
                                 indexes.forEach((index) => {
                                     items.forEach((item: any, i: number) => {
-                                        if (!a[id].slides[slideId]?.items?.[index]?.lines) return
+                                        if (!a[id].slides[slideId]?.items?.[index]) return
+                                        if (!a[id].slides[slideId].items[index].lines) a[id].slides[slideId].items[index].lines = []
                                         a[id].slides[slideId].items[index].lines![lineIndexes[i]] = item
                                     })
                                 })
@@ -474,9 +477,10 @@ export function _show(id = "active") {
                 showsCache.update((a) => {
                     if (!a[id]) return a
 
+                    if (!a[id].layouts) a[id].layouts = {}
                     a[id].layouts[layoutId] = layout || { name: "", notes: "", slides: [] }
 
-                    if (!a[id]?.timestamps) a[id].timestamps.modified = new Date().getTime()
+                    if (a[id]?.timestamps) a[id].timestamps.modified = new Date().getTime()
                     return a
                 })
                 return layoutId
@@ -666,6 +670,7 @@ export function _show(id = "active") {
                 showsCache.update((a) => {
                     if (!a[id]) return a
 
+                    if (!a[id].media) a[id].media = {}
                     if (!mediaIds.length) mediaIds = Object.keys(a[id].media)
                     mediaIds.forEach((mediaId) => {
                         // if (i === 0) prev[i] = []
@@ -674,7 +679,7 @@ export function _show(id = "active") {
                         else if (a[id].media?.[mediaId]) a[id].media[mediaId][key] = value
                     })
 
-                    if (!a[id]?.timestamps) a[id].timestamps.modified = new Date().getTime()
+                    if (a[id]?.timestamps) a[id].timestamps.modified = new Date().getTime()
                     return a
                 })
                 // return prev
@@ -685,9 +690,10 @@ export function _show(id = "active") {
                 showsCache.update((a) => {
                     if (!a[id]) return a
 
+                    if (!a[id].media) a[id].media = {}
                     a[id].media[bgid] = object
 
-                    if (!a[id]?.timestamps) a[id].timestamps.modified = new Date().getTime()
+                    if (a[id]?.timestamps) a[id].timestamps.modified = new Date().getTime()
                     return a
                 })
                 return bgid
@@ -698,6 +704,7 @@ export function _show(id = "active") {
                 showsCache.update((a) => {
                     if (!a[id]) return a
 
+                    if (!a[id].media) a[id].media = {}
                     if (!mediaIds.length) mediaIds = Object.keys(a[id].media)
                     mediaIds.forEach((mediaId, i) => {
                         if (i === 0) media[i] = []
@@ -705,7 +712,7 @@ export function _show(id = "active") {
                         delete a[id].media[mediaId]
                     })
 
-                    if (!a[id]?.timestamps) a[id].timestamps.modified = new Date().getTime()
+                    if (a[id]?.timestamps) a[id].timestamps.modified = new Date().getTime()
                     return a
                 })
                 return media

@@ -12,8 +12,10 @@ if (process.env.SPOTIFY_BRIDGE === "true") {
                 try {
                     const isProd = process.env.NODE_ENV === "production" || !/[\\/]electron/.exec(process.execPath)
                     const mPath = isProd ? require("path").join(process.resourcesPath, "app.asar.unpacked/node_modules/libspotifyctl") : "libspotifyctl"
-                    client = new (require(mPath).SpotifyClient)()
-                    client.start()
+                    if (!client) {
+                        client = new (require(mPath).SpotifyClient)()
+                        client.start()
+                    }
                     process.send?.({ type: "ready" })
                 } catch (e: any) {
                     process.send?.({ type: "error", error: `Failed to load libspotifyctl: ${e.message}` })
@@ -23,14 +25,17 @@ if (process.env.SPOTIFY_BRIDGE === "true") {
                 if (s) {
                     if (s.albumArt?.length) s.albumArtBase64 = `data:image/jpeg;base64,${s.albumArt.toString("base64")}`
                     delete s.albumArt
-                    s.positionMs = client.positionSmoothMs
-                    s.appVolume = client.appVolume
                 }
                 process.send?.({ type: "state", state: s })
             } else if (msg.type === "command" && client) {
                 const { command: c, value: v } = msg
-                if (c === "playpause") client.latestState().statusName === "PLAYING" ? client.pause() : client.play()
-                else if (c === "next") client.next()
+                if (c === "playpause") {
+                    const s = client.latestState()
+                    if (s) {
+                        if (s.statusName === "PLAYING") client.pause()
+                        else client.play()
+                    }
+                } else if (c === "next") client.next()
                 else if (c === "prev") client.previous()
                 else if (c === "seek") client.seekMs(v * 1000)
                 else if (c === "setVolume") {
@@ -40,6 +45,15 @@ if (process.env.SPOTIFY_BRIDGE === "true") {
             }
         } catch (e: any) {
             process.send?.({ type: "error", error: e.message })
+        }
+    })
+
+    process.on("exit", () => {
+        if (client) {
+            try {
+                client.stop()
+                client.close()
+            } catch {}
         }
     })
 }
@@ -126,7 +140,7 @@ export async function getSpotifyState(): Promise<SpotifyState | null> {
                     const artist = out.match(/string\s+"xesam:artist"\s+variant\s+array\s+\[\s+string\s+"([^"]+)"/)?.[1]
                     const len = parseInt(out.match(/string\s+"mpris:length"\s+variant\s+uint64\s+(\d+)/)?.[1] || "0")
                     const art = out.match(/string\s+"mpris:artUrl"\s+variant\s+string\s+"([^"]+)"/)?.[1]
-                    const pos = parseInt(out.match(/uint64\s+(\d+)/)?.[1] || "0")
+                    const pos = parseInt(out.match(/\bint64\s+(\d+)/)?.[1] || "0")
                     const vol = parseFloat(out.match(/double\s+([\d.]+)/)?.[1] || "1")
                     res(title ? { isPlaying: out.includes("Playing"), title, artist: artist || "Unknown", positionSec: pos / 1000000, durationSec: len / 1000000, albumArt: art, volume: vol, platform: "linux" } : null)
                 })
@@ -151,7 +165,7 @@ export async function executeSpotifyCommand(cmd: string, val?: number): Promise<
             const dest = "--dest=org.mpris.MediaPlayer2.spotify /org/mpris/MediaPlayer2"
             const mpris = "org.mpris.MediaPlayer2.Player"
             const run = (c: string) =>
-                exec(`dbus-send ${dest} ${c}`, (e) => {
+                exec(`dbus-send --type=method_call ${dest} ${c}`, (e) => {
                     if (e) {
                         const isServiceUnknown = e.message?.includes("org.freedesktop.DBus.Error.ServiceUnknown") || e.message?.includes("ServiceUnknown")
                         if (!isServiceUnknown) console.error("[Spotify] Linux command error:", e)
@@ -170,7 +184,7 @@ export async function executeSpotifyCommand(cmd: string, val?: number): Promise<
                         return
                     }
                     const id = out?.match(/string\s+"mpris:trackid"\s+variant\s+string\s+"([^"]+)"/)?.[1]
-                    if (id) run(`${mpris}.SetPosition objpath:${id} x64:${Math.round(val * 1000000)}`)
+                    if (id) run(`${mpris}.SetPosition objpath:${id} int64:${Math.round(val * 1000000)}`)
                 })
             }
         }

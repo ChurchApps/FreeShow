@@ -1,8 +1,8 @@
 import { get } from "svelte/store"
 import { Main } from "../../../types/IPC/Main"
 import type { OutData } from "../../../types/Output"
-import type { ShowRef } from "../../../types/Projects"
-import type { OutSlide, Slide } from "../../../types/Show"
+import type { ProjectShowRef, ShowRef } from "../../../types/Projects"
+import type { LayoutRef, OutSlide, Slide } from "../../../types/Show"
 import { AudioPlayer } from "../../audio/audioPlayer"
 import { sendMain } from "../../IPC/main"
 import { activeFocus, activeProject, activeShow, focusMode, outLocked, outputs, outputSlideCache, projects, showsCache, special } from "../../stores"
@@ -12,6 +12,7 @@ import { clone } from "./array"
 import { getAllActiveOutputIds, setOutput } from "./output"
 import { checkActionTrigger, getFewestOutputLines, getItemWithMostLines, playPdf, updateOut } from "./showActions"
 import { _show } from "./shows"
+import { runActionId } from "../actions/actions"
 
 type Options = { isSpace: boolean; slideLayers: boolean; playNext: boolean }
 
@@ -52,7 +53,7 @@ export class OutputHelper {
         const show = this.getShow(outputId)
         if (!show) return
 
-        const nextSlide = this.getNextSlide({ ...show, index: undefined })
+        const nextSlide = this.getNextSlide(outputId, { ...show, index: undefined })
         if (!nextSlide) return
 
         this.playSlide(outputId, nextSlide)
@@ -62,7 +63,7 @@ export class OutputHelper {
         const show = this.getShow(outputId)
         if (!show) return
 
-        const previousSlide = this.getPreviousSlide({ ...show, index: undefined })
+        const previousSlide = this.getPreviousSlide(outputId, { ...show, index: undefined })
         if (!previousSlide) return
 
         this.playSlide(outputId, previousSlide)
@@ -79,7 +80,7 @@ export class OutputHelper {
     private static play(outputId: string, next: boolean, options: Options) {
         const show = this.getShow(outputId, next, options)
         if (show) {
-            const newSlide = this.getSubsequent(show, next)
+            const newSlide = this.getSubsequent(outputId, show, next)
             if (!newSlide) return this.changeProjectItem(outputId, show, next, options)
 
             if (!options.playNext && this.quickChangeBack(outputId, show, next, options)) return
@@ -120,7 +121,7 @@ export class OutputHelper {
         let projectItems = this.getProjectItems()
         if (active?.index === undefined || active.id === show.id) return false
         if (projectItems[active.index + (next ? 1 : -1)]?.id !== show.id) return false
-        if (next ? this.getPreviousSlide(show) : this.getNextSlide(show)) return false
+        if (next ? this.getPreviousSlide(outputId, show) : this.getNextSlide(outputId, show)) return false
 
         this.changeProjectItem(outputId, active, next, options)
         return true
@@ -143,7 +144,10 @@ export class OutputHelper {
 
         if (get(focusMode)) {
             // skip sections & skip overlays when going back
-            while (projectItems[newIndex]?.type === "section" || (next ? false : projectItems[newIndex]?.type === "overlay")) newIndex += next ? 1 : -1
+            while (projectItems[newIndex]?.type === "section" || (next ? false : projectItems[newIndex]?.type === "overlay")) {
+                this.runSectionAction(projectItems[newIndex])
+                newIndex += next ? 1 : -1
+            }
             const newItem = projectItems[newIndex]
             if (!newItem) return
 
@@ -151,7 +155,7 @@ export class OutputHelper {
 
             // play directly in focus mode
             if ((newItem?.type || "show") === "show") {
-                const newOut = this.getSubsequent({ id: newItem.id, layout: newItem.layout }, next)
+                const newOut = this.getSubsequent(outputId, { id: newItem.id, layout: newItem.layout }, next)
                 if (newOut) this.playSlide(outputId, newOut, options.slideLayers)
             } else {
                 this.playItem(outputId, newItem, next, options)
@@ -159,21 +163,31 @@ export class OutputHelper {
             return
         }
 
+        const newItem = projectItems[newIndex]
+        this.runSectionAction(newItem)
+
         openProjectItem(get(activeProject) || "", newIndex)
 
         // play directly from "Next slide timer" & "nextAfterMedia"
         if (options.playNext) {
-            const newItem = projectItems[newIndex]
             if ((newItem?.type || "show") === "show") {
                 // allow show to load first
                 setTimeout(() => {
-                    const newOut = this.getSubsequent({ id: newItem.id, layout: newItem.layout }, next)
+                    const newOut = this.getSubsequent(outputId, { id: newItem.id, layout: newItem.layout }, next)
                     if (newOut) this.playSlide(outputId, newOut, options.slideLayers)
                 }, 10)
             } else {
                 this.playItem(outputId, newItem, next, options)
             }
         }
+    }
+
+    private static runSectionAction(item: ProjectShowRef | undefined) {
+        if (item?.type !== "section") return
+
+        const itemSettings = item.data?.settings
+        const actionId = itemSettings?.triggerAction || get(special).sectionTriggerAction
+        if (actionId) runActionId(actionId)
     }
 
     private static getProjectItemIndex(item: OutSlide | ShowRef | null = null) {
@@ -211,7 +225,7 @@ export class OutputHelper {
         if (options.isSpace && !this.outShowIsSameAsActive(outSlide, activeOutShow)) return activeOutShow
 
         // prioritize outputted show in focus mode, if not reached end
-        if (get(focusMode) && outSlide && (nextCheck ? this.getSubsequent(outSlide, nextCheck) : true)) return this.isShow(outSlide) ? outSlide : null
+        if (get(focusMode) && outSlide && (nextCheck ? this.getSubsequent(outputId, outSlide, nextCheck) : true)) return this.isShow(outSlide) ? outSlide : null
 
         // must be a show item
         if (!this.isShow(outSlide)) return activeOutShow
@@ -220,7 +234,7 @@ export class OutputHelper {
         if (options.playNext || nextCheck === null) return outSlide
 
         // outputted show if not reached end, or if active show is the same
-        if (this.getSubsequent(outSlide, nextCheck) || this.outShowIsSameAsActive(outSlide, activeOutShow)) return outSlide
+        if (this.getSubsequent(outputId, outSlide, nextCheck) || this.outShowIsSameAsActive(outSlide, activeOutShow)) return outSlide
 
         // active show if any
         return activeOutShow
@@ -243,6 +257,7 @@ export class OutputHelper {
 
     // store previous in case it has been cleared after being played (e.g. when a playing video has finished)
     private static previousOutputted: OutData | null = null
+    private static pendingSlides: Record<string, OutSlide> = {}
 
     private static isOutputted(outputId: string, item: ShowRef, next: boolean, options: Options) {
         const out = this.getOut(outputId)
@@ -290,11 +305,11 @@ export class OutputHelper {
     // 2. Any slides in outputted show
     // 3. Next project item when reached end
     // 4. Active show/item
-    private static getSubsequent(data: OutSlide | null, next: boolean): OutSlide | null {
-        return next ? this.getNextSlide(data) : this.getPreviousSlide(data)
+    private static getSubsequent(outputId: string, data: OutSlide | null, next: boolean): OutSlide | null {
+        return next ? this.getNextSlide(outputId, data) : this.getPreviousSlide(outputId, data)
     }
 
-    private static getNextSlide(data: OutSlide | null): OutSlide | null {
+    private static getNextSlide(outputId: string, data: OutSlide | null): OutSlide | null {
         if (!data) return null
         data = clone(data)
 
@@ -323,13 +338,13 @@ export class OutputHelper {
             if (layoutRef[data.index]?.data?.end) data.index = -1
 
             data.index++
-            while (layoutRef[data.index]?.data?.disabled) data.index++
+            while (layoutRef[data.index] && this.slideCannotBeOutputted(outputId, layoutRef[data.index])) data.index++
         }
 
         return layoutRef[data.index] ? { layout: data.layout, index: data.index, ...outSlideData } : null
     }
 
-    private static getPreviousSlide(data: OutSlide | null): OutSlide | null {
+    private static getPreviousSlide(outputId: string, data: OutSlide | null): OutSlide | null {
         if (!data) return null
         data = clone(data)
 
@@ -355,7 +370,7 @@ export class OutputHelper {
             if (linesReveal.previousReveal > -1 && clickReveal._isRevealed) outSlideData.itemClickReveal = true
         } else {
             data.index--
-            while (layoutRef[data.index]?.data?.disabled) data.index--
+            while (layoutRef[data.index] && this.slideCannotBeOutputted(outputId, layoutRef[data.index])) data.index--
 
             const newShowSlide: Slide | null = _show(data.id).slides([layoutRef?.[data.index]?.id]).get()?.[0] || null
             const styleLines = this.checkStyleLines(data, newShowSlide)
@@ -368,6 +383,19 @@ export class OutputHelper {
         }
 
         return layoutRef[data.index] ? { layout: data.layout, index: data.index, ...outSlideData } : null
+    }
+
+    private static slideCannotBeOutputted(outputId: string, ref: LayoutRef) {
+        if (!ref) return false // should always exist - but this breaks the loop if not
+
+        // disabled
+        if (ref.data?.disabled) return true
+
+        // bound to specific outputs, but not this one
+        const bindings = ref.data?.bindings || []
+        if (bindings.length && !bindings.includes(outputId)) return true
+
+        return false
     }
 
     private static checkStyleLines(data: OutSlide, slide: Slide | null) {
@@ -434,7 +462,11 @@ export class OutputHelper {
 
     private static getOut(outputId: string) {
         const currentOutput = get(outputs)[outputId] || {}
-        let out = currentOutput.out || {}
+        let out = currentOutput.out ? { ...currentOutput.out } : {}
+
+        if (this.pendingSlides[outputId]) {
+            out.slide = this.pendingSlides[outputId]
+        }
 
         // restore cleared slide position (only if active show is the same as outputted)
         const clearedSlide = get(outputSlideCache)[outputId]
@@ -455,8 +487,15 @@ export class OutputHelper {
         const layoutData = layout[data.index ?? -1]?.data
 
         checkActionTrigger(layoutData, data.index)
+
+        this.pendingSlides[outputId] = data
+
         // allow custom actions to trigger first
         setTimeout(() => {
+            if (this.pendingSlides[outputId] === data) {
+                delete this.pendingSlides[outputId]
+            }
+
             setOutput("slide", data, false, outputId)
             updateOut(data.id, data.index!, layout, slideLayers, outputId)
         })

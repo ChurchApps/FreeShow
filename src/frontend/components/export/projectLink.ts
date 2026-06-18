@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
 import type { Project } from "../../../types/Projects"
-import { overlays, showsCache } from "../../stores"
+import { overlays, playerVideos, showsCache } from "../../stores"
 import { newToast } from "../../utils/common"
 import { loadShows } from "../helpers/setShow"
 import { _show } from "../helpers/shows"
@@ -70,6 +70,15 @@ export async function exportProjectAsData(project: Project, projectId: string): 
                     } as LinkOverlayItem
                 }
 
+                if (type === "player") {
+                    const data = get(playerVideos)[item.id]
+
+                    return {
+                        name: data?.name || item.name,
+                        type
+                    } as LinkGenericItem
+                }
+
                 return {
                     // id: item.id,
                     name: item.name,
@@ -97,7 +106,7 @@ function mapSlideItems(slideItems: any[] = []): LinkSlideItems {
                             style: encodeStyle(t.style)
                         }))
                     }
-                    if (line.align && line.align.replaceAll(";", "") !== "") newLine.align = line.align
+                    if (typeof line.align === "string" && line.align.replaceAll(";", "") !== "") newLine.align = line.align
 
                     return newLine
                 })

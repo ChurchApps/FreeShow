@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Show } from "../../../../types/Show"
-    import { activePage, activePopup, popupData, shows, showsCache } from "../../../stores"
+    import { activePopup, popupData, shows, showsCache } from "../../../stores"
     import { getSlideText } from "../../edit/scripts/textStyle"
     import { history } from "../../helpers/history"
     import { loadShows } from "../../helpers/setShow"
@@ -44,15 +44,13 @@
 
         deleteShows(deleteIds)
         // loading = false
-        activePopup.set(null)
-        activePage.set("show")
+        close()
     }
 
     const oldest = getOldestShows()
     function deleteOldest() {
         deleteShows(oldest)
-        activePopup.set(null)
-        activePage.set("show")
+        close()
     }
     function getOldestShows() {
         let deleteIds: string[] = []
@@ -85,8 +83,7 @@
     const newest = getNewestShows()
     function deleteNewest() {
         deleteShows(newest)
-        activePopup.set(null)
-        activePage.set("show")
+        close()
     }
     function getNewestShows() {
         let deleteIds: string[] = []
@@ -112,6 +109,15 @@
         })
 
         return deleteIds
+    }
+
+    function close() {
+        // activePage.set("show")
+
+        // give time for deletion to run
+        setTimeout(() => {
+            if ($activePopup === "delete_duplicated_shows") activePopup.set(null)
+        }, 500)
     }
 
     // MANUAL
@@ -142,8 +148,7 @@
     let loadedTexts: string[] = []
     function next() {
         if (!data[manualIndex + 1]) {
-            activePopup.set(null)
-            activePage.set("show")
+            close()
             return
         }
 

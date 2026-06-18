@@ -132,7 +132,7 @@
                                         {#if action.customActivation || action.startupEnabled}
                                             <span>
                                                 {#key action.customActivation}
-                                                    <T id={customActionActivations.find((a) => a.id === action.customActivation)?.name || "actions.custom_activation"} />
+                                                    {translateText(customActionActivations.find((a) => a.id === action.customActivation)?.name || "actions.custom_activation")}
                                                 {/key}
                                             </span>
                                         {/if}

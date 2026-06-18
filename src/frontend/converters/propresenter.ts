@@ -1,3 +1,4 @@
+import { _updaters } from "./../components/helpers/historyHelpers"
 import { get } from "svelte/store"
 import { uid } from "uid"
 import type { Item, Layout, Line, Slide, SlideData, Timeline } from "../../types/Show"
@@ -201,10 +202,10 @@ function convertJSONToSlides(song: any) {
 
 function convertToSlides(song: any, extension: string) {
     let slideGroups: any = []
-    if (extension === "pro4") slideGroups = song.slides.RVDisplaySlide || []
-    if (extension === "pro5") slideGroups = song.groups.RVSlideGrouping || []
-    if (extension === "pro6") slideGroups = song.array[0].RVSlideGrouping || []
-    if (!Array.isArray(slideGroups)) slideGroups = [slideGroups]
+    if (extension === "pro4") slideGroups = song.slides?.RVDisplaySlide || []
+    if (extension === "pro5") slideGroups = song.groups?.RVSlideGrouping || []
+    if (extension === "pro6") slideGroups = song.array?.[0]?.RVSlideGrouping || []
+    if (!Array.isArray(slideGroups)) slideGroups = slideGroups ? [slideGroups] : []
     const arrangements = song.arrangements || song.array?.[1]?.RVSongArrangement || []
 
     // console.log(song)
@@ -294,7 +295,7 @@ function getSlideItems(slide: any) {
 
     let elements: any = null
     if (slide.displayElements) elements = slide.displayElements
-    else elements = slide.array.find((a) => a["@rvXMLIvarName"] === "displayElements")
+    else elements = Array.isArray(slide.array) ? slide.array.find((a: any) => a["@rvXMLIvarName"] === "displayElements") : null
     if (!elements) return []
 
     if (!elements.RVTextElement) {
@@ -368,6 +369,7 @@ function arrangeLayouts(arrangements, sequences) {
 /// //
 
 function splitTextToLines(text: string) {
+    if (typeof text !== "string") return []
     let lines: Line[] = []
     const data = text.replaceAll("\n\n", "<br>").split("<br>")
     lines = data.map((lineText: string) => ({ align: "", text: [{ style: "", value: lineText.trim() }] }))
@@ -536,9 +538,10 @@ function decodeHex(input: string) {
 }
 
 function rgbStringToHex(rgbaString: string) {
-    const [r, g, b, a]: any = rgbaString.split(" ")
+    if (typeof rgbaString !== "string") return ""
+    const [r, g, b, _updatersa]: any = rgbaString.split(" ")
     // TODO: alpha
-    if (isNaN(r) || isNaN(g) || isNaN(b)) console.warn(r, g, b, a)
+    if (isNaN(r) || isNaN(g) || isNaN(b)) return ""
 
     return `#${toHex(r * 255)}${toHex(g * 255)}${toHex(b * 255)}`
 }
@@ -698,28 +701,28 @@ function convertItem(item: any) {
 }
 
 function getArrangements(arrangements: any) {
-    if (!arrangements) return []
+    if (!Array.isArray(arrangements)) return []
 
     const newArrangements: any = []
     arrangements.forEach((arr) => {
         newArrangements.push({
             name: arr.name,
-            groups: arr.groupIdentifiers?.map((a) => a.string) || []
+            groups: arr.groupIdentifiers?.map((a: any) => a.string) || []
         })
     })
 
-    return newArrangements.filter((a) => a.groups.length)
+    return newArrangements.filter((a: any) => a.groups.length)
 }
 
-function getGroups(cueGroups) {
-    if (!cueGroups) return {}
+function getGroups(cueGroups: any) {
+    if (!Array.isArray(cueGroups)) return {}
 
     const newGroups: any = {}
-    cueGroups.forEach(({ group, cueIdentifiers }) => {
+    cueGroups.forEach(({ group, cueIdentifiers }: any) => {
         newGroups[group.uuid.string] = {
             name: group.name,
             color: getColorValue(group.color),
-            slides: cueIdentifiers?.map((a) => a.string) || []
+            slides: cueIdentifiers?.map((a: any) => a.string) || []
         }
     })
 
@@ -728,15 +731,16 @@ function getGroups(cueGroups) {
 
 function getSlides(cues: any) {
     const slides: any = {}
+    if (!Array.isArray(cues)) return slides
 
-    cues.forEach((slide) => {
-        const baseSlide = slide.actions.find((a) => a.slide?.presentation)?.slide?.presentation?.baseSlide || {}
+    cues.forEach((slide: any) => {
+        const baseSlide = slide.actions?.find((a: any) => a.slide?.presentation)?.slide?.presentation?.baseSlide || {}
         if (!baseSlide) return
 
         slides[slide.uuid.string] = {
             name: slide.name,
             disabled: !slide.isEnabled,
-            media: slide.actions.find((a) => a.media?.element)?.media?.element?.url?.absoluteString,
+            media: slide.actions?.find((a: any) => a.media?.element)?.media?.element?.url?.absoluteString,
             backgroundColor: getColorValue(baseSlide.backgroundColor),
             size: baseSlide.size,
             items: baseSlide.elements?.map(getItem) || []

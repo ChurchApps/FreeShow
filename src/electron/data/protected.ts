@@ -36,7 +36,7 @@ export async function cleanupProtectedCache() {
                 const filePath = path.join(dir, name)
                 try {
                     const stats = await fs.promises.stat(filePath)
-                    if (now - stats.mtimeMs > PROTECTED_CACHE_MAX_AGE_MS) {
+                    if (now - (stats.atimeMs || stats.mtimeMs) > PROTECTED_CACHE_MAX_AGE_MS) {
                         await fs.promises.unlink(filePath)
                     }
                 } catch {

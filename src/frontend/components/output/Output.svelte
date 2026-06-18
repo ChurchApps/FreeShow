@@ -328,7 +328,7 @@
             actualSlideData = clone(slideData)
             actualCurrentSlide = clone(currentSlide)
             actualCurrentLineId = clone(currentLineId)
-        })
+        }, slide ? updateLinesTime : 0)
     }
 </script>
 

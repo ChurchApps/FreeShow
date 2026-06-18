@@ -243,7 +243,8 @@
         persistentItems = newPersistentItems
 
         // between
-        if (currentItems.length && currentSlide.items.length) transitioningBetween = true
+        const isDifferentSlide = current.currentSlide?.id !== currentSlide?.id || current.outSlide?.index !== outSlide?.index || current.outSlide?.id !== outSlide?.id
+        if (isDifferentSlide && currentItems.length && currentSlide.items.length) transitioningBetween = true
 
         if (timeout) clearTimeout(timeout)
 

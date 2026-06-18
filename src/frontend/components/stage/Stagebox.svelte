@@ -11,6 +11,7 @@
     import { clone, keysToID, sortByName } from "../helpers/array"
     import Icon from "../helpers/Icon.svelte"
     import { getActiveOutputs, getStageResolution, percentageStylePos } from "../helpers/output"
+    import { createCSSVariables } from "../helpers/showActions"
     import { getStyles } from "../helpers/style"
     import Button from "../inputs/Button.svelte"
     import Media from "../output/layers/Media.svelte"
@@ -264,14 +265,21 @@
     $: contextId = item?.type === "text" ? "stage_text_item" : item?.type === "current_output" ? "stage_item_output" : "stage_item"
 
     let conditionsUpdater = 0
+    let updateTrigger = 0
     const updaterInterval = setInterval(() => conditionsUpdater++, 3000)
-    onDestroy(() => clearInterval(updaterInterval))
+    const cssInterval = setInterval(() => updateTrigger++, 1000)
+    onDestroy(() => {
+        clearInterval(updaterInterval)
+        clearInterval(cssInterval)
+    })
 
     $: currentItemText = item ? (item.type === "slide_text" ? getSlideTextItems(stageLayout!, item).map(getItemText).join("") : getItemText(stageItemToItem(item))) : ""
     $: showItemState = edit ? isConditionMet(item?.conditions?.showItem, currentItemText, "stage", conditionsUpdater) : false
 
     // fixed letter width
     $: fixedWidth = item?.type === "timer" || item?.type === "clock" ? "font-feature-settings: 'tnum' 1;" : ""
+
+    $: cssVariables = createCSSVariables($variables, $outputs, "stage", updateTrigger)
 </script>
 
 <svelte:window on:keydown={keydown} on:mousedown={deselect} />
@@ -284,7 +292,7 @@
     class:selected={edit && $activeStage.items.includes(id)}
     class:isDisabledVariable
     class:isOutput={!!$currentWindow}
-    style="{getCustomStyle(itemStyle)}{id.includes('slide') && !id.includes('tracker') ? '' : textStyle}{edit ? `outline: ${3 / ratio}px solid rgb(255 255 255 / 0.2);` : ''}--labelColor: {currentShow?.settings?.labelColor || '#d0a853'};{fixedWidth}"
+    style="{getCustomStyle(itemStyle)}{id.includes('slide') && !id.includes('tracker') ? '' : textStyle}{edit ? `outline: ${3 / ratio}px solid rgb(255 255 255 / 0.2);` : ''}--labelColor: {currentShow?.settings?.labelColor || '#d0a853'};{fixedWidth}{cssVariables}"
     on:mousedown={mousedown}
 >
     {#if currentShow?.settings?.labels && id && item}

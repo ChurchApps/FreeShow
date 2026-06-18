@@ -11,6 +11,7 @@
     import { send } from "../util/socket"
     import { dictionary, updateTransposed, variables } from "../util/stores"
     import ListView from "./ListView.svelte"
+    import { _getDynamicValue } from "../util/itemHelpers"
     import { getItemText } from "../helpers/textStyle"
 
     export let showId: string
@@ -259,10 +260,12 @@
         if (!hasDynamicValues) return
         updateDynamic++
     }
+
     onDestroy(() => {
         stopInterval()
         if (eventTimeout) clearTimeout(eventTimeout)
         if (blockTimeout) clearTimeout(blockTimeout)
+        clearInterval(cssInterval)
     })
 
     $: chordFontSize = chordLines.length ? (stageItem?.chords?.size || stageItem?.chordsData?.size || 60) * 0.65 : 0
@@ -416,6 +419,28 @@
             release()
         }
     }
+
+    function getVariableNameId(name: string) {
+        if (typeof name !== "string") return ""
+        return name.toLowerCase().trim().replaceAll(" ", "_")
+    }
+
+    function createCSSVariables(variableUpdater: any, _updateTrigger: any = null) {
+        if (!variableUpdater) return ""
+        const numberVariables = Object.values(variableUpdater).filter((a: any) => a && (a.type === "number" || a.type === "random_number" || (a.type === "text" && a.text?.includes("{"))))
+        let css = numberVariables.reduce((css: string, v: any) => (css += `--variable-${getVariableNameId(v.name)}: ${v.type === "text" ? _getDynamicValue(v.text || "") : (v.number ?? (v.default || 0))};`), "")
+
+        css += `--slide-group-color: ${_getDynamicValue("slide_group_color")};`
+        css += `--slide-group-next-color: ${_getDynamicValue("slide_group_next_color")};`
+        css += `--slide-group-upcoming-color: ${_getDynamicValue("slide_group_upcoming_color")};`
+
+        return css
+    }
+
+    let updateTrigger = 0
+    const cssInterval = setInterval(() => updateTrigger++, 1000)
+
+    $: cssVariables = createCSSVariables($variables, updateTrigger)
 </script>
 
 <svelte:window on:click={closeActions} />
@@ -425,7 +450,7 @@
     bind:this={thisElem}
     class="item"
     class:clicked={item.button?.press || item.button?.release}
-    style={style ? getCustomStyle(itemStyle) : null}
+    style={style ? (getCustomStyle(itemStyle) || "") + cssVariables : null}
     class:chords={chordLines.length}
     class:clickable={item.button?.press || item.button?.release}
     class:reveal={item.clickReveal && !clickRevealed}
@@ -618,8 +643,8 @@
         /* line-break: after-white-space;
     -webkit-line-break: after-white-space; */
 
-        /* balanced breaking, looks much cleaner */
-        text-wrap: balance;
+        text-wrap: balance; /* balanced breaking, looks much cleaner */
+        white-space: pre; /* preserve special spaces from Text edit */
     }
 
     /* span {

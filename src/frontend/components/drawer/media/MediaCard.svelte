@@ -24,11 +24,12 @@
     export let shiftRange: any[] = []
     export let thumbnailPath = ""
     export let thumbnail = true
+    export let loadFullImage = false
     export let contentProvider: ContentProviderId | false = false
     export let contentFileData: ContentFile | null = null
 
     let failed = false
-    if (thumbnail && !thumbnailPath) getThumbnail()
+    $: if (thumbnail && !thumbnailPath && !loadFullImage) getThumbnail()
     async function getThumbnail() {
         failed = false
         thumbnailPath = await loadThumbnail(path)
@@ -203,7 +204,7 @@
 <SelectElem id="media" class="context #media_card" data={{ name, path, type, contentProvider }} {shiftRange} draggable fill>
     <Card
         resolution={{ width: 16, height: 9 }}
-        loaded={(loaded && ($mediaOptions.mode === "grid" ? thumbnailPath !== "" : true)) || failed}
+        loaded={(loaded && ($mediaOptions.mode === "grid" ? thumbnailPath !== "" || loadFullImage : true)) || failed}
         style={thumbnail ? `width: ${$mediaOptions.mode === "grid" ? 100 : 100 / $mediaOptions.columns}%;` : ""}
         mode={$mediaOptions.mode}
         width={100}
@@ -271,8 +272,8 @@
                 <Icon size={2.5} id="close" style="color: var(--disconnected);" white />
             </div>
         {:else if thumbnail}
-            {#if thumbnailPath}
-                <MediaLoader bind:loaded bind:hover bind:duration bind:videoElem {resolution} {type} {path} {thumbnailPath} {name} {mediaStyle} />
+            {#if thumbnailPath || loadFullImage}
+                <MediaLoader bind:loaded bind:hover bind:duration bind:videoElem {resolution} {type} {path} {thumbnailPath} {name} {mediaStyle} {loadFullImage} />
             {/if}
         {:else}
             <div class="icon">

@@ -3,10 +3,9 @@ import path from "path"
 import { Main } from "../../types/IPC/Main"
 import { ToMain } from "../../types/IPC/ToMain"
 import type { SaveActions } from "../../types/Save"
-import type { Show, Shows, TrimmedShow } from "../../types/Show"
+import type { Show, Shows } from "../../types/Show"
 import { sendMain, sendToMain } from "../IPC/main"
 import { deleteFile, deleteFolder, doesPathExist, getDataFolderPath, getFileStats, getTimePointString, loadShows, makeDir, openInSystem, readFile, readFolder, selectFilesDialog, writeFile } from "../utils/files"
-import { wait } from "../utils/helpers"
 import { _store, getStore, setStore, storeFilesData } from "./store"
 import { compressToZip, decompressZip } from "./zip"
 
@@ -52,75 +51,39 @@ export async function startBackup({ customTriggers, isCloudSync }: { customTrigg
     /// //
 
     async function syncStores(id: keyof typeof _store) {
-        const currentData = getStore(id)
-        if (!currentData) return
+        const store = _store[id]
+        if (!store) return
 
         const name = id + ".json"
-        const content: string = JSON.stringify(currentData)
-        entries.push({ name, content })
+        entries.push({ name, filePath: store.path })
     }
 
     async function syncBibles() {
         const biblesPath = getDataFolderPath("scriptures")
+        if (!fs.existsSync(biblesPath)) return
+
         const bibleFiles = readFolder(biblesPath)
 
-        await Promise.all(
-            bibleFiles.map(async (fileName) => {
-                const sourcePath = path.join(biblesPath, fileName)
-                const destPath = `BIBLE_${fileName}`
-                entries.push({ name: destPath, filePath: sourcePath })
-            })
-        )
+        bibleFiles.forEach((fileName) => {
+            const sourcePath = path.join(biblesPath, fileName)
+            const destPath = `BIBLE_${fileName}`
+            entries.push({ name: destPath, filePath: sourcePath })
+        })
     }
 
     async function syncAllShows() {
         if (!shows) return
 
-        const allShows: Shows = {}
         const showsPath = getDataFolderPath("shows")
         const showEntries = Object.entries(shows)
+        const showFilesOnDisk = new Set(readFolder(showsPath))
 
-        // avoid opening too many files at once
-        let batchSize = 100
-
-        try {
-            await readAllShows()
-        } catch (err: any) {
-            if (err.code === "EMFILE") {
-                console.warn("EMFILE encountered, retrying with smaller batch size...")
-                batchSize = 20
-                for (const key in allShows) delete allShows[key]
-                await readAllShows()
-            } else {
-                throw err
+        for (const [id, show] of showEntries) {
+            const fileName = (show.name || id) + ".show"
+            if (showFilesOnDisk.has(fileName)) {
+                entries.push({ name: "SHOWS/" + fileName, filePath: path.join(showsPath, fileName) })
             }
         }
-
-        async function readAllShows() {
-            for (let i = 0; i < showEntries.length; i += batchSize) {
-                const batch = showEntries.slice(i, i + batchSize)
-                await Promise.all(
-                    batch.map(async ([id, show]: [string, TrimmedShow]) => {
-                        const fileName = (show.name || id) + ".show"
-                        const localShowPath = path.join(showsPath, fileName)
-
-                        try {
-                            const localContent = await fs.promises.readFile(localShowPath, "utf8")
-                            if (localContent && isValidJSON(localContent)) allShows[id] = JSON.parse(localContent)[1]
-                        } catch (err: any) {
-                            if (err.code === "EMFILE") throw err
-                        }
-                    })
-                )
-
-                // ensure all shows are added correctly
-                // https://github.com/ChurchApps/FreeShow/issues/1492
-                await wait(20)
-            }
-        }
-
-        const content: string = JSON.stringify(allShows)
-        entries.push({ name: "SHOWS_CONTENT.json", content })
     }
 }
 
@@ -196,12 +159,20 @@ export async function restoreFiles(data?: { path: string }) {
         .filter(([_, data]) => data.portable)
         .map(([key, _]) => key)
 
+    let showsRestored = false
     files.forEach((file: { name: string; content: string | Buffer }) => {
         if (typeof file.content !== "string") return
         const filePath = file.name
 
         if (filePath.includes("SHOWS_CONTENT")) {
             restoreShows(file.content)
+            showsRestored = true
+            return
+        }
+
+        if (filePath.startsWith("SHOWS/")) {
+            restoreSingleShow(file.name, file.content)
+            showsRestored = true
             return
         }
 
@@ -215,6 +186,8 @@ export async function restoreFiles(data?: { path: string }) {
         if (!storeId) return
         restoreStore(file.content, storeId as keyof typeof _store)
     })
+
+    if (showsRestored) sendMain(Main.SHOWS, loadShows())
 
     sendToMain(ToMain.RESTORE2, { finished: true })
     return
@@ -250,8 +223,16 @@ export async function restoreFiles(data?: { path: string }) {
             const showPath: string = path.resolve(showsPath, (value.name || id) + ".show")
             writeFile(showPath, JSON.stringify([id, value]), id)
         }
+    }
 
-        sendMain(Main.SHOWS, loadShows())
+    function restoreSingleShow(name: string, content: string) {
+        if (!content || !isValidJSON(content)) return
+
+        const fileName = path.basename(name)
+        const showPath = path.resolve(showsPath, fileName)
+
+        if (!doesPathExist(showsPath)) makeDir(showsPath)
+        writeFile(showPath, content)
     }
 }
 

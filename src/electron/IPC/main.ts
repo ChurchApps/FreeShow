@@ -38,21 +38,32 @@ export async function receiveMain(e: Electron.IpcMainEvent, msg: MainReceiveValu
 }
 
 const currentlyAwaiting: string[] = []
+// single shared MAIN listener that routes each reply to its awaiting request by listenerId
+const pendingToMain = new Map<string, (msg: ToMainReceiveValue) => void>()
+let toMainDispatcherRegistered = false
+function ensureToMainDispatcher() {
+    if (toMainDispatcherRegistered) return
+    toMainDispatcherRegistered = true
+    ipcMain.on(MAIN, (_e: IpcMainEvent, msg: ToMainReceiveValue, listenId: string) => {
+        if (!listenId) return
+        const resolver = pendingToMain.get(listenId)
+        if (resolver) resolver(msg)
+    })
+}
+
 // @ts-ignore
 export async function requestToMain<ID extends ToMain, R = Awaited<ToMainReturnPayloads[ID]>>(id: ID, value: ToMainSendValue<ID>, callback?: (data: R | null) => void, timeoutMs = 15000) {
     const listenerId = id + uid(5)
     currentlyAwaiting.push(listenerId)
-
-    sendToMain(id, value, listenerId)
+    ensureToMainDispatcher()
 
     // LISTENER
     const waitingTimeout = timeoutMs
     let timeout: NodeJS.Timeout | null = null
     let settled = false
-    let receive: null | ((_e: IpcMainEvent, msg: ToMainReceiveValue, listenId: string) => void) = null
     const cleanup = () => {
         if (timeout) clearTimeout(timeout)
-        if (receive) ipcMain.removeListener(MAIN, receive)
+        pendingToMain.delete(listenerId)
 
         const waitIndex = currentlyAwaiting.indexOf(listenerId)
         if (waitIndex > -1) currentlyAwaiting.splice(waitIndex, 1)
@@ -68,16 +79,16 @@ export async function requestToMain<ID extends ToMain, R = Awaited<ToMainReturnP
             resolve(null)
         }, waitingTimeout)
 
-        receive = (_e: IpcMainEvent, msg: ToMainReceiveValue, listenId: string) => {
+        pendingToMain.set(listenerId, (msg: ToMainReceiveValue) => {
             if (settled) return
-            if (msg.channel !== id || listenId !== listenerId) return
+            if (msg.channel !== id) return
 
             settled = true
             cleanup()
             resolve(msg.data as R)
-        }
+        })
 
-        ipcMain.on(MAIN, receive)
+        sendToMain(id, value, listenerId)
     })
 
     if (callback) callback(returnData)

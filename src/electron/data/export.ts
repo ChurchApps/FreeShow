@@ -21,7 +21,8 @@ import { compressToZip } from "./zip"
 const customJSONExtensions = {
     TEMPLATE: ".fstemplate",
     THEME: ".fstheme",
-    ACTION: ".fsaction"
+    ACTION: ".fsaction",
+    STAGE_LAYOUT: ".fsstage"
 }
 
 export function startExport(_e: Electron.IpcMainEvent, msg: Message) {
@@ -50,7 +51,7 @@ export function startExport(_e: Electron.IpcMainEvent, msg: Message) {
     const customExt = customJSONExtensions[msg.channel as keyof typeof customJSONExtensions]
     if (customExt) {
         const exportFolder = getDataFolderPath("exports")
-        exportJSON(msg.data.content, customExt, exportFolder)
+        exportJSON(msg.data.content, customExt, exportFolder, msg.data.name)
         return
     }
 

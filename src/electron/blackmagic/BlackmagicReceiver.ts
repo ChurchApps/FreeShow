@@ -75,7 +75,10 @@ export class BlackmagicReceiver {
         if (!isFinite(frameRate) || frameRate <= 0) frameRate = 30 // fallback to 30fps for safety
 
         let gettingFrame = false
-        this.BMD_RECEIVERS[deviceId].interval = setInterval(
+        const currentReceiver = this.BMD_RECEIVERS[deviceId]
+        if (!currentReceiver) return
+
+        currentReceiver.interval = setInterval(
             async () => {
                 if (gettingFrame) return
                 gettingFrame = true

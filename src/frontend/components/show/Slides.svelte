@@ -49,13 +49,18 @@
     function fixBrokenMedia() {
         if (!currentShow) return
         showsCache.update((a) => {
+            if (!a[showId]) return a
             Object.entries(currentShow.layouts || {}).forEach(([layoutId, layout]) => {
-                layout.slides.forEach((slide, i) => {
-                    let backgroundId = slide.background
-                    if (backgroundId && !currentShow.media[backgroundId]) {
-                        delete a[showId].layouts[layoutId].slides[i].background
-                    }
-                })
+                if (Array.isArray(layout.slides)) {
+                    layout.slides.forEach((slide, i) => {
+                        let backgroundId = slide.background
+                        if (backgroundId && !currentShow.media[backgroundId]) {
+                            if (a[showId].layouts?.[layoutId]?.slides?.[i]) {
+                                delete a[showId].layouts[layoutId].slides[i].background
+                            }
+                        }
+                    })
+                }
             })
             return a
         })
@@ -418,7 +423,9 @@
         timeout = setTimeout(next, 10)
 
         function next() {
-            lazyLoader += $focusMode ? 20 : 4
+            // start small (e.g. 4) and double each step up to a max batch size of 32 (or 128 in focusMode)
+            const currentBatch = lazyLoader === 0 ? 4 : Math.min($focusMode ? 128 : 32, lazyLoader * 2)
+            lazyLoader += currentBatch
             clearTimeout(timeout as NodeJS.Timeout)
             timeout = null
             startLazyLoader()

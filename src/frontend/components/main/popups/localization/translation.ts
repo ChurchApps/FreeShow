@@ -32,14 +32,16 @@ export function getIsoLanguages() {
 
 export async function translateShow(showId: string, languageCode: string) {
     const show = get(showsCache)[showId]
+    if (!show?.slides) return
+
     const slides = clone(show.slides)
     let changed = false
     let onlyOneTextbox = true
 
     await Promise.all(
         Object.keys(slides).map(async (slideId) => {
-            const items = slides[slideId].items
-            const untranslatedItems = items.filter((a) => !a.language)
+            const items = slides[slideId]?.items || []
+            const untranslatedItems = items.filter((a) => !a?.language)
             if (onlyOneTextbox && (untranslatedItems.length > 1 || (untranslatedItems[0]?.type || "text") !== "text")) onlyOneTextbox = false
 
             const toRemove = new Set<number>()
@@ -106,12 +108,15 @@ export async function translateShow(showId: string, languageCode: string) {
 
 export function removeTranslationFromShow(showId: string, langId = "") {
     const show = get(showsCache)[showId]
+    if (!show?.slides) return
+
     const slides = clone(show.slides)
     let changed = false
 
     Object.keys(slides).forEach((slideId) => {
-        const previousSize = slides[slideId].items.length
-        slides[slideId].items = slides[slideId].items.filter((item) => !item.language || (langId ? item.language !== langId : false))
+        const items = slides[slideId]?.items || []
+        const previousSize = items.length
+        slides[slideId].items = items.filter((item) => !item?.language || (langId ? item.language !== langId : false))
         if (slides[slideId].items.length < previousSize) changed = true
     })
 

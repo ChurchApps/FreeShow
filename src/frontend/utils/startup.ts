@@ -106,12 +106,6 @@ function autoBackup() {
     const minTimeToBackup = getTimeFromInterval(interval)
 
     if (now - lastBackup > minTimeToBackup) {
-        special.update((a) => {
-            // subtract one hour from time to keep it relatively the same with each backup
-            a.autoBackupPrevious = now - 3600000
-            return a
-        })
-
         // 20% chance of backing up all shows as well (just in case)
         save(false, { backup: true, isAutoBackup: true, backupShows: Math.random() < 0.2 })
     }

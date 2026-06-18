@@ -108,7 +108,7 @@ export class AudioAnalyser {
 
             this.updateScales()
 
-            console.log(`Audio source "${id}" connected (${this.channels} channels, volume: ${initialVolume})`)
+            console.log(`Audio source "${id}" connected to equalizer and analysis chain (${this.channels} channels, volume: ${initialVolume.toFixed(2)})`)
         } else {
             console.warn(`Failed to connect audio source "${id}" to equalizer`)
         }
@@ -152,12 +152,16 @@ export class AudioAnalyser {
 
     private static detectAndUpgradeChannels(id: string, audio: HTMLMediaElement | MediaStream) {
         if (audio instanceof HTMLMediaElement && audio.src) {
-            AudioMultichannel.detectFileChannelCount(audio.src, this.maxChannels).then((channels) => {
-                if (channels > this.channels) {
-                    console.log(`Upgrading to ${channels} channels for "${id}"`)
-                    this.updateChannelCount(channels)
-                }
-            })
+            AudioMultichannel.detectFileChannelCount(audio.src, this.maxChannels)
+                .then((channels) => {
+                    if (channels > this.channels) {
+                        console.log(`Upgrading to ${channels} channels for "${id}"`)
+                        this.updateChannelCount(channels)
+                    }
+                })
+                .catch((err) => {
+                    console.debug(`Channel detection skipped for "${id}":`, err)
+                })
         } else if (audio instanceof MediaStream) {
             const ch = audio.getAudioTracks()[0]?.getSettings().channelCount
             if (ch && ch > this.channels) this.updateChannelCount(ch)

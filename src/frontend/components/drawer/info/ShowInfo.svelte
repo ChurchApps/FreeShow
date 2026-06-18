@@ -49,10 +49,12 @@
 
     function getWords() {
         words = 0
+        if (!Array.isArray(allLines)) return
         allLines.forEach((lines) => {
             if (!Array.isArray(lines)) return
             lines.forEach((line) => {
-                line?.text?.forEach((text) => (words += text.value?.split(" ").length))
+                if (!Array.isArray(line?.text)) return
+                line.text.forEach((text) => (words += text.value?.split(" ").length || 0))
             })
         })
     }

@@ -217,27 +217,29 @@ export class BlackmagicSender {
                                 const pausedOthers = Object.keys(BlackmagicSender.playbackData).filter((id) => id !== outputId && !BlackmagicSender.isPaused[id])
                                 for (const otherId of pausedOthers) BlackmagicSender.isPaused[otherId] = true
 
-                                return macadam
-                                    .playback({
-                                        deviceIndex,
-                                        displayMode,
-                                        pixelFormat: pixelFormatValue,
-                                        enableKeying: enableKeying ? BlackmagicManager.isAlphaSupported(pixelFormat) : false,
-                                        isExternal: (() => {
-                                            if (!enableKeying) return false;
-                                            const devices = BlackmagicManager.getDevices();
-                                            const device = devices[deviceIndex];
-                                            return device?.supportsExternalKeying ?? true;
-                                        })(),
-                                        channels: actualAudioChannels,
-                                        sampleRate: macadam.bmdAudioSampleRate48kHz,
-                                        sampleType: macadam.bmdAudioSampleType16bitInteger
-                                    })
-                                    .finally(() => {
-                                        for (const otherId of pausedOthers) {
-                                            if (BlackmagicSender.playbackData[otherId]) BlackmagicSender.isPaused[otherId] = false
-                                        }
-                                    })
+                                const actualEnableKeying = enableKeying ? BlackmagicManager.isAlphaSupported(pixelFormat) : false
+
+                                const playbackOptions: any = {
+                                    deviceIndex,
+                                    displayMode,
+                                    pixelFormat: pixelFormatValue,
+                                    channels: actualAudioChannels,
+                                    sampleRate: macadam.bmdAudioSampleRate48kHz,
+                                    sampleType: macadam.bmdAudioSampleType16bitInteger
+                                }
+
+                                if (actualEnableKeying) {
+                                    playbackOptions.enableKeying = true
+                                    const devices = BlackmagicManager.getDevices()
+                                    const device = devices[deviceIndex]
+                                    playbackOptions.isExternal = device?.supportsExternalKeying ?? true
+                                }
+
+                                return macadam.playback(playbackOptions).finally(() => {
+                                    for (const otherId of pausedOthers) {
+                                        if (BlackmagicSender.playbackData[otherId]) BlackmagicSender.isPaused[otherId] = false
+                                    }
+                                })
                             })
                             .then((result: any) => {
                                 mutexRelease()
@@ -305,8 +307,8 @@ export class BlackmagicSender {
                 console.error(`Failed to initialize playback (attempt ${attempts}): ${errorMessage}`)
 
                 // If keying is not supported, retry without keying
-                if (enableKeying && errorMessage.includes("keyer") && errorMessage.toLowerCase().includes("keying")) {
-                    console.warn(`Keying not supported on this hardware, retrying without keying...`)
+                if (enableKeying && (errorMessage.toLowerCase().includes("keying") || errorMessage.toLowerCase().includes("keyer"))) {
+                    console.warn(`Blackmagic initialization failed due to keying issues. Retrying with keying disabled. Error: ${errorMessage}`)
                     enableKeying = false
                     attempts-- // Don't count this as a full attempt
                 }

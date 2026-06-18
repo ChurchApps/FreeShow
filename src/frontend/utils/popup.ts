@@ -82,6 +82,7 @@ import Unsaved from "../components/main/popups/Unsaved.svelte"
 import UpdateManager from "../components/main/popups/UpdateManager.svelte"
 import Variable from "../components/main/popups/Variable.svelte"
 import { activePopup, popupData } from "../stores"
+import CleaningUtility from "../components/main/popups/CleaningUtility.svelte"
 
 export const popups: { [key in Popups]: ComponentType } = {
     initialize: Initialize,

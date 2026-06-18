@@ -5,6 +5,7 @@ import { NdiSender } from "../../ndi/NdiSender"
 import type { Output as OutputWindow } from "../Output"
 import { OutputHelper } from "../OutputHelper"
 import type { Output } from "../../../types/Output"
+import { setOutputAlwaysOnTop } from "./OutputAlwaysOnTop"
 
 const setValues = {
     ndi: async (value: boolean, window: BrowserWindow, id: string) => {
@@ -32,7 +33,7 @@ const setValues = {
         output.transparent = value
     },
     alwaysOnTop: (value: boolean, window: BrowserWindow, _id: string, output: OutputWindow) => {
-        window.setAlwaysOnTop(value, "pop-up-menu", 1)
+        setOutputAlwaysOnTop(window, value)
         // show in taskbar if not always on top, because this will also show it in Alt+Tab menu
         window.setSkipTaskbar(value)
         if (output.boundsLocked !== true) window.setResizable(!value)

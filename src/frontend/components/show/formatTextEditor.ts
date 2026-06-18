@@ -266,10 +266,10 @@ export function formatText(text: string, showId = "") {
                 items = [...removeEmptyTextboxes(oldItems).filter((a) => (a.type || "text") === "text"), ...newItems]
             } else {
                 textboxItemIndexes
-                    .sort((a, b) => b - a)
+                    .sort((a, b) => a - b)
                     .forEach((index) => {
                         // set to default if text has been removed
-                        items[index] = newItems.splice(index, 1)[0] || clone(defaultItem)
+                        items[index] = newItems.shift() || clone(defaultItem)
                     })
 
                 // new items added

@@ -93,8 +93,15 @@ export class IcecastSender {
         ogg.writeUInt32LE(oggCrc32(ogg), 22)
 
         try {
-            this.req.write(ogg)
-        } catch {
+            if (this.req && !this.req.destroyed) {
+                this.req.write(ogg, (err) => {
+                    if (err) {
+                        console.error("Icecast write error:", err.message)
+                        this.disconnect()
+                    }
+                })
+            }
+        } catch (err) {
             this.disconnect()
         }
     }

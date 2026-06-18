@@ -108,14 +108,15 @@ export const historyActions = ({ obj, undo = null }: any) => {
                 if (key) {
                     if (!a[id]) return a
 
-                    data = { ...data, data: filterIndexes(clone(a[id][key]), subkey, { indexes, keys }) }
+                    const keyContent = a[id][key]
+                    data = { ...data, data: filterIndexes(clone(keyContent), subkey, { indexes, keys }) }
 
                     // reverting value with array index will restore the whole array
                     if (previousData && index !== undefined) index = undefined
 
                     if (previousData !== undefined) return updateKeyData(a, previousData)
                     else {
-                        if (subkey) delete a[id][key][subkey]
+                        if (subkey && keyContent) delete keyContent[subkey]
                         else delete a[id][key]
                     }
 
@@ -167,7 +168,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
                     a[id] = data.data
                 }
 
-                if (subkey && index !== undefined && index > -1 && !Array.isArray(a[id][key][subkey])) delete data.previousData
+                if (subkey && index !== undefined && index > -1 && !Array.isArray(a[id]?.[key]?.[subkey])) delete data.previousData
 
                 if (updater.timestamp && a[id]) a[id].modified = Date.now() // cloud sync
                 if (data.previousData === data.data) console.warn(obj.id, "HISTORY:", "Previous data is the same as current data. Try using clone()!")
@@ -208,8 +209,10 @@ export const historyActions = ({ obj, undo = null }: any) => {
 
                         if (subkey) {
                             if (!keyData[id][key]?.[currentKey]) return
-                            if (index === -1) keyData[id][key][currentKey][subkey].push(...replacerValue)
-                            else keyData[id][key][currentKey][subkey] = replacerValue
+                            if (index === -1) {
+                                if (!Array.isArray(keyData[id][key][currentKey][subkey])) keyData[id][key][currentKey][subkey] = []
+                                keyData[id][key][currentKey][subkey].push(...replacerValue)
+                            } else keyData[id][key][currentKey][subkey] = replacerValue
                             return
                         }
 
@@ -1118,7 +1121,8 @@ export const historyActions = ({ obj, undo = null }: any) => {
 }
 
 function filterIndexes(data: any, subkey = "", { indexes, keys }) {
-    if (!indexes?.length && !keys?.length) return subkey ? data[subkey] : data
+    if (!data) return data
+    if (!indexes?.length && !keys?.length) return subkey && data ? data[subkey] : data
 
     let filteredData: any = null
 
@@ -1130,15 +1134,17 @@ function filterIndexes(data: any, subkey = "", { indexes, keys }) {
 
         filteredData = data.filter((_, i) => indexes.includes(i))
 
-        if (subkey) filteredData = filteredData.map((a) => a[subkey])
+        if (subkey) filteredData = filteredData.map((a) => a?.[subkey])
     }
 
     if (keys?.length) {
         filteredData = {}
 
         keys.forEach((key) => {
-            if (subkey) filteredData[key] = data[key]?.[subkey] === undefined ? data[key] : data[key][subkey]
-            else filteredData[key] = data[key]
+            if (subkey) {
+                const subValue = data[key]?.[subkey]
+                filteredData[key] = subValue === undefined ? data[key] : subValue
+            } else filteredData[key] = data[key]
         })
     }
 

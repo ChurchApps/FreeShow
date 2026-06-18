@@ -132,10 +132,22 @@ export async function decompressZipStream(file: string, asBuffer = false, option
     })
 }
 
+// neutralise path-traversal/absolute segments so a crafted archive can't write outside the extraction directory (zip-slip)
+// legitimate nested names (e.g. "ppt/media/img.png") are left unchanged
+function sanitizeZipPath(name: string): string {
+    return name
+        .replace(/\\/g, "/")
+        .split("/")
+        .filter((segment) => segment && segment !== "." && segment !== "..")
+        .join("/")
+}
+
 function processEntry(entry: yauzl.Entry, zipfile: yauzl.ZipFile, data: { content: Buffer | string; name: string; extension: string }[], asBuffer: boolean, options: DecompressStreamOptions | undefined) {
     const name = entry.fileName
+    const safeName = sanitizeZipPath(name)
     const extension = getExtension(name)
-    const outputPath = options?.getOutputPath?.(name)
+    // pass the sanitized name to callers that build a destination path, so "../" entries can't escape the target folder
+    const outputPath = options?.getOutputPath?.(safeName)
 
     zipfile.openReadStream(entry, (err, readStream) => {
         if (err || !readStream) {

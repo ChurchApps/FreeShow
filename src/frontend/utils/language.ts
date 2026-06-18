@@ -80,18 +80,23 @@ function setLanguage(locale = "", init = false) {
 
 // new translate function
 // can take a "main.yes" into "Yes", or "main.yes [y]" into "Yes [y]"
-export function translateText(text: string, _updater: any = null) {
+export function translateText(text: string, _updater: any = null, replaceValues: string[] = []) {
     if (typeof text !== "string" || !text) return ""
 
     const dict = get(dictionary)
 
-    return text.replace(/\$?([a-zA-Z0-9_-]+)\.([a-zA-Z0-9_-]+)/g, (match, key1, key2) => {
-        if (dict[key1] && dict[key1][key2]) {
-            return dict[key1][key2]
-        }
+    return text
+        .replace(/\$?([a-zA-Z0-9_-]+)\.([a-zA-Z0-9_-]+)/g, (match, key1, key2) => {
+            if (dict[key1] && dict[key1][key2]) {
+                return dict[key1][key2]
+            }
 
-        return match
-    })
+            return match
+        })
+        .replace(/\$(\d+)/g, (match, index) => {
+            const value = replaceValues[Number(index) - 1]
+            return value !== undefined ? value : match
+        })
 }
 
 export { setLanguage }

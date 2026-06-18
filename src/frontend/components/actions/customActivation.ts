@@ -23,7 +23,9 @@ export const customActionActivations = [
 
     { id: "scripture_start", common: true, name: "actions.activate_scripture_start", icon: "scripture" },
 
-    { id: "video_start", common: true, name: "actions.activate_video_starting", icon: "video" },
+    { id: "video_start", common: true, name: "actions.activate_video_starting: actions.any", icon: "video" },
+    { id: "video_start_foreground", name: "actions.activate_video_starting: preview.foreground", icon: "video" },
+    { id: "video_start_background", name: "actions.activate_video_starting: preview.background", icon: "video" },
     { id: "video_end", common: true, name: "actions.activate_video_ending", icon: "video" },
 
     { id: "audio_start", common: true, name: "actions.activate_audio_starting", icon: "music" },

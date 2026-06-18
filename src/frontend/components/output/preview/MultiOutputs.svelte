@@ -111,7 +111,7 @@
     }
     function handleDragLeave(e: DragEvent, outputId: string) {
         const related = e.relatedTarget as HTMLElement | null
-        if (related?.closest(`#${outputId}`)) return
+        if (related?.closest(`#${CSS.escape(outputId)}`)) return
         if (dragOverOutputId === outputId) dragOverOutputId = null
     }
     function handleDrop(e: DragEvent, outputId: string) {

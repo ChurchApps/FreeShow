@@ -109,8 +109,9 @@ export function swichProjectItem(pos: number, id: string) {
 
 export function getItemWithMostLines(slide: Slide | { items: Item[] }) {
     let amount = 0
-    slide.items?.forEach((item) => {
-        const lines: number = item?.lines?.filter((line) => line.text?.filter((text) => text.value !== undefined)?.length)?.length || 0
+    if (!Array.isArray(slide.items)) return 0
+    slide.items.forEach((item) => {
+        const lines: number = (Array.isArray(item?.lines) ? item.lines.filter((line) => Array.isArray(line.text) && line.text.filter((text) => text.value !== undefined).length > 0) : [])?.length || 0
         if (lines > amount) amount = lines
     })
     return amount
@@ -163,12 +164,14 @@ const triggerActionsBeforeOutput = {
     }
 }
 function shouldTriggerBefore(action: any) {
-    return action.triggers?.find((trigger) => triggerActionsBeforeOutput[trigger]?.(action.actionValues?.[trigger]))
+    return action?.triggers?.find((trigger) => triggerActionsBeforeOutput[trigger]?.(action.actionValues?.[trigger]))
 }
 export function checkActionTrigger(layoutData: SlideData, slideIndex = 0) {
-    layoutData?.actions?.slideActions?.forEach((a) => {
-        if (shouldTriggerBefore(a)) runAction(a, { slideIndex })
-    })
+    if (Array.isArray(layoutData?.actions?.slideActions)) {
+        layoutData.actions.slideActions.forEach((a) => {
+            if (shouldTriggerBefore(a)) runAction(a, { slideIndex })
+        })
+    }
 }
 
 export async function playPdf(data: OutSlide | null, next: boolean, loop = false) {
@@ -247,7 +250,7 @@ export function updateOut(showId: string, index: number, layout: LayoutRef[], ex
     if (!extra || !data) return
 
     // trigger start show action first
-    const startShowId = data.actions?.startShow?.id || data.actions?.slideActions?.find((a) => a.actionValues?.start_show)?.actionValues?.start_show?.id
+    const startShowId = data.actions?.startShow?.id || data.actions?.slideActions?.find((a) => a && a.actionValues?.start_show)?.actionValues?.start_show?.id
     if (startShowId) {
         startShow(startShowId)
         return
@@ -359,7 +362,7 @@ export function updateOut(showId: string, index: number, layout: LayoutRef[], ex
         }
 
         // audio
-        if (data.audio) {
+        if (Array.isArray(data.audio)) {
             // let clear action trigger first
             setTimeout(() => {
                 data.audio?.forEach((audio: string) => {
@@ -445,7 +448,7 @@ function playSlideActions(slideActions: SlideAction[], outputIds: string[] = [],
     // run these actions on each active output
     if (outputIds.length > 1) {
         runPerOutput.forEach((id) => {
-            const existingIndex = slideActions.findIndex((a) => a.triggers?.[0] === id)
+            const existingIndex = slideActions.findIndex((a) => a && a.triggers?.[0] === id)
             if (existingIndex < 0) return
 
             outputIds.forEach((outputId) => {
@@ -475,10 +478,10 @@ function playOutputStyleTemplateActions(outputIds: string[]) {
         const styleTemplateId = get(styles)[outputStyleId]?.template || ""
         if (!styleTemplateId) return
 
-        const templateSettings = get(templates)[styleTemplateId]?.settings?.actions || []
-        if (!templateSettings?.length) return
+        const templateSettings = get(templates)[styleTemplateId]?.settings?.actions
+        if (!Array.isArray(templateSettings) || !templateSettings.length) return
 
-        templateSettings?.forEach((action) => runAction(action))
+        templateSettings.forEach((action) => runAction(action))
     })
 }
 
@@ -877,7 +880,7 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
             if (!timer) return min || sec ? "00" : "00:00"
 
             const today = new Date()
-            const currentTime = getCurrentTimerValue(timer, { id: timer.id }, today)
+            const currentTime = Math.floor(getCurrentTimerValue(timer, { id: timer.id }, today))
 
             const overflow = !!timer.overflow
             const isOverflowing = getTimerOverflow()
@@ -1048,7 +1051,7 @@ const dynamicValues = {
 
     // show
     show_name: ({ show }) => show?.name || "",
-    show_name_next: ({ projectRef }) => get(shows)[get(projects)[projectRef.id]?.shows?.find((a, i) => a.type !== "section" && i > projectRef.index)?.id ?? -1]?.name || "",
+    show_name_next: ({ projectRef }) => get(shows)[get(projects)[projectRef.id]?.shows?.find((a, i) => a && a.type !== "section" && i > projectRef.index)?.id ?? -1]?.name || "",
 
     layout_slides: ({ ref }) => ref.length,
     layout_notes: ({ layout }) => layout.notes || "",
@@ -1059,10 +1062,20 @@ const dynamicValues = {
         const group = show?.slides?.[ref[parentIndex]?.id]?.group || ""
         return getGroupName({ show, showId: outSlide?.id }, ref[parentIndex]?.id, group, parentIndex, false, false)
     },
+    slide_group_color: ({ show, ref, slideIndex }) => {
+        const parentIndex = ref[slideIndex]?.parent?.layoutIndex ?? slideIndex
+        const groupColor = show?.slides?.[ref[parentIndex]?.id]?.color || ""
+        return groupColor
+    },
     slide_group_next: ({ show, ref, slideIndex, outSlide }) => {
         const parentIndex = ref[slideIndex + 1]?.parent?.layoutIndex ?? slideIndex + 1
         const group = show?.slides?.[ref[parentIndex]?.id]?.group || ""
         return getGroupName({ show, showId: outSlide?.id }, ref[parentIndex]?.id, group, parentIndex, false, false)
+    },
+    slide_group_next_color: ({ show, ref, slideIndex }) => {
+        const parentIndex = ref[slideIndex + 1]?.parent?.layoutIndex ?? slideIndex + 1
+        const groupColor = show?.slides?.[ref[parentIndex]?.id]?.color || ""
+        return groupColor
     },
     slide_group_upcoming: ({ show, ref, slideIndex, outSlide }) => {
         if (slideIndex < 0) return ""
@@ -1070,6 +1083,13 @@ const dynamicValues = {
         while (ref[nextParentIndex]?.type !== "parent" && nextParentIndex < ref.length) nextParentIndex++
         const group = show?.slides?.[ref[nextParentIndex]?.id]?.group || ""
         return getGroupName({ show, showId: outSlide?.id }, ref[nextParentIndex]?.id, group, nextParentIndex, false, false)
+    },
+    slide_group_upcoming_color: ({ show, ref, slideIndex }) => {
+        if (slideIndex < 0) return ""
+        let nextParentIndex = slideIndex + 1
+        while (ref[nextParentIndex]?.type !== "parent" && nextParentIndex < ref.length) nextParentIndex++
+        const groupColor = show?.slides?.[ref[nextParentIndex]?.id]?.color || ""
+        return groupColor
     },
     slide_notes: ({ show, ref, slideIndex }) => show?.slides?.[ref[slideIndex]?.id]?.notes || "",
     slide_notes_next: ({ show, ref, slideIndex }) => show?.slides?.[ref[slideIndex + 1]?.id]?.notes || "",
@@ -1116,7 +1136,7 @@ const dynamicValues = {
     audio_time: ({ audioTime }) => joinTime(secondsToTime(audioTime)),
     audio_countdown: ({ audioTime, audioDuration }) => joinTime(secondsToTime(audioDuration > 0 ? audioDuration - audioTime : 0)),
     audio_duration: ({ audioDuration }) => joinTime(secondsToTime(audioDuration)),
-    audio_volume: () => AudioPlayer.getVolume() * 100,
+    audio_volume: () => Math.round(AudioPlayer.getVolume() * 100),
 
     // interaction
     interaction_players: ({ show }) => getInteractionPlayers(show),
@@ -1160,6 +1180,10 @@ function getSlideText({ outSlide, show, ref }, slideIndex: number = 0) {
         slideItemLines = getTextLines(slide, true)
     }
 
+    // correct order
+    slideItemLines = clone(slideItemLines)
+    slideItemLines.reverse()
+
     // return all items first, then each individual to make it work with the #index system
     return [slideItemLines.join("<br><br>"), ...slideItemLines]
 }
@@ -1169,9 +1193,17 @@ export function getVariableNameId(name: string) {
     return name.toLowerCase().trim().replaceAll(" ", "_")
 }
 
-export function getNumberVariables(variableUpdater = get(variables), _dynamicUpdaters: any = null) {
-    const numberVariables = Object.values(variableUpdater).filter((a) => a.type === "number" || a.type === "random_number" || (a.type === "text" && a.text?.includes("{")))
-    return numberVariables.reduce((css, v) => (css += `--variable-${getVariableNameId(v.name)}: ${v.type === "text" ? getDynamicValue(v.text || "") : (v.number ?? (v.default || 0))};`), "")
+export function createCSSVariables(variableUpdater = get(variables), _dynamicUpdaters: any = null, type: "default" | "stage" = "default", _updateTrigger: any = null) {
+    // add all number variables
+    const numberVariables = Object.values(variableUpdater || {}).filter((a) => a && (a.type === "number" || a.type === "random_number" || (a.type === "text" && a.text?.includes("{"))))
+    let css = numberVariables.reduce((css, v) => (css += `--variable-${getVariableNameId(v.name)}: ${v.type === "text" ? getDynamicValue(v.text || "", type) : (v.number ?? (v.default || 0))};`), "")
+
+    // add color dynamic values
+    css += `--slide-group-color: ${getDynamicValue("slide_group_color", type)};`
+    css += `--slide-group-next-color: ${getDynamicValue("slide_group_next_color", type)};`
+    css += `--slide-group-upcoming-color: ${getDynamicValue("slide_group_upcoming_color", type)};`
+
+    return css
 }
 
 // PROJECT SECTION DATA
@@ -1180,19 +1212,19 @@ function getActiveProjectSection(data: any = {}, next = false): ProjectShowRef |
     const project = get(projects)[get(activeProject) || ""]
     if (!project?.shows) return null
 
-    const hasTime = project.shows.find((a) => a.data?.time)
+    const hasTime = project.shows.find((a) => a?.data?.time)
     if (!hasTime) {
         // get active outputted if any
         const showId = data.outSlide?.id
-        let showIndex = project.shows.findIndex((a, i) => a.id === showId && (data.outSlide?.projectIndex === undefined || i === data.outSlide.projectIndex))
-        if (showIndex < 0) showIndex = project.shows.findIndex((a) => a.id === showId)
+        let showIndex = project.shows.findIndex((a, i) => a && a.id === showId && (data.outSlide?.projectIndex === undefined || i === data.outSlide.projectIndex))
+        if (showIndex < 0) showIndex = project.shows.findIndex((a) => a && a.id === showId)
 
-        if (next) return project.shows.find((a, i) => i > showIndex && a.type === "section") || null
-        return project.shows.findLast((a, i) => i <= showIndex && a.type === "section") || null
+        if (next) return project.shows.find((a, i) => i > showIndex && a?.type === "section") || null
+        return project.shows.findLast((a, i) => i <= showIndex && a?.type === "section") || null
     }
 
     const active = getClosestProjectSectionByTime()
-    return project.shows.find((a) => a.id === (next ? active?.closestUpcommingId : active?.closestPassedId)) || null
+    return project.shows.find((a) => a && a.id === (next ? active?.closestUpcommingId : active?.closestPassedId)) || null
 }
 
 function getClosestProjectSectionByTime() {
@@ -1204,8 +1236,8 @@ function getClosestProjectSectionByTime() {
     let closestPassedId = ""
     let closestUpcommingId = ""
     project.shows.forEach((a) => {
-        const time = a.data?.time
-        if (!time || a.type !== "section") return
+        const time = a?.data?.time
+        if (!time || a?.type !== "section") return
 
         const timeUntil = getTimeUntilClock(time)
         if (timeUntil < 0 && (!closestPassedTime || timeUntil > closestPassedTime)) {

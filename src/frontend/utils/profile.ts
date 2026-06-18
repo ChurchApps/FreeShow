@@ -14,7 +14,8 @@ export function openProfileByName(profileName: string) {
     }
 
     // find profile by name (case-insensitive)
-    const profileId = Object.keys(get(profiles)).find((id) => (get(profiles)[id].name || "").toLowerCase() === profileName.toLowerCase())
+    const normalizedName = profileName.toLowerCase()
+    const profileId = Object.keys(get(profiles)).find((id) => (get(profiles)[id]?.name?.toString() || "").toLowerCase() === normalizedName)
     if (!profileId) return
 
     activeProfile.set(profileId)

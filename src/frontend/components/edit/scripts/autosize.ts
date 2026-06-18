@@ -94,10 +94,21 @@ export default function autosize(elem: HTMLElement, { type, textQuery, defaultFo
     }
 
     function addStyleToElemText(currentFontSize: number) {
+        for (const elemWithChordSize of Array.from(boxElem!.querySelectorAll("[data-chord-size-ratio]"))) {
+            const htmlElem = elemWithChordSize as HTMLElement
+            const chordSizeRatio = Number(htmlElem.dataset.chordSizeRatio || "") || 0
+            if (!chordSizeRatio) continue
+
+            htmlElem.style.setProperty("--font-size", `${currentFontSize}px`)
+            htmlElem.style.setProperty("--chord-size", `${currentFontSize * chordSizeRatio}px`)
+        }
+
         let i = 0
         for (const textElem of Array.from(textChildren)) {
-            if (!styles[i]) styles[i] = textElem.getAttribute("style") || ""
-            textElem.setAttribute("style", styles[i] + `;overflow:visible;font-size: ${currentFontSize}px !important;`)
+            const htmlTextElem = textElem as HTMLElement
+            if (!styles[i]) styles[i] = htmlTextElem.getAttribute("style") || ""
+            const autosizeRatio = Number(htmlTextElem.dataset.autosizeRatio || "") || 1
+            htmlTextElem.setAttribute("style", styles[i] + `;overflow:visible;font-size: ${currentFontSize * autosizeRatio}px !important;`)
             i++
         }
     }
