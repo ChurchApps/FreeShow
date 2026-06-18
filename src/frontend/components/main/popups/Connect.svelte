@@ -14,9 +14,25 @@
     import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
     import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
     import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
+    import { startRemoteController, stopRemoteController } from "../../../utils/remoteController"
+    import Tip from "../Tip.svelte"
 
     let id: keyof typeof defaultPorts = "stage"
     let ip = "localhost"
+
+    let remoteController = $popupData.remoteController
+    let controllerId = $special.remoteControllerId
+    if (!controllerId) setRemoteId()
+    function setRemoteId() {
+        if (controllerId) stopRemoteController(controllerId)
+
+        // a string of 6 random characters
+        let id = Math.random().toString(36).substring(2, 8)
+        controllerId = id
+        special.update((a) => ({ ...a, remoteControllerId: id }))
+
+        startRemoteController(id)
+    }
 
     $: useHostname = $special.connectionHostname
 
@@ -40,7 +56,7 @@
 
     $: port = $ports[id] || defaultPorts[id]
     $: hostname = `${$os.name.toLowerCase()}${$os.platform === "win32" ? ".local" : ""}`
-    $: url = `http://${useHostname ? hostname : ip}:${port}`
+    $: url = remoteController ? `https://freeshow.net/control?id=${controllerId}` : `http://${useHostname ? hostname : ip}:${port}`
     $: if (url) generateQR(url)
 
     function mouseup(e: any) {
@@ -49,7 +65,7 @@
 
     let qrImg = ""
     function generateQR(text) {
-        if ((!useHostname && ip === "localhost") || id === "companion") return
+        if (remoteController ? !controllerId : (!useHostname && ip === "localhost") || id === "companion") return
 
         var qr = qrcode(0, "L")
         qr.addData(text)
@@ -108,9 +124,13 @@
     // $: enableOutputSelector = ($serverData?.output_stream?.outputId && $outputs[$serverData.output_stream.outputId]) || getActiveOutputs($outputs, false, true).length > 1
 </script>
 
-<MaterialButton class="popup-options {options ? 'active' : ''}" icon="options" iconSize={1.3} title={options ? "actions.close" : "create_show.more_options"} on:click={() => (options = !options)} white />
+{#if remoteController}
+    <MaterialButton class="popup-options" icon="reset" iconSize={1.1} title="actions.reset" on:click={() => setRemoteId()} white />
+{:else}
+    <MaterialButton class="popup-options {options ? 'active' : ''}" icon="options" iconSize={1.3} title={options ? "actions.close" : "create_show.more_options"} on:click={() => (options = !options)} white />
 
-<MaterialButton class="popup-reset" icon="help" iconSize={1.1} title="titlebar.help" on:click={() => sendMain(Main.URL, "https://freeshow.app/docs/connecting")} white />
+    <MaterialButton class="popup-reset" icon="help" iconSize={1.1} title="titlebar.help" on:click={() => sendMain(Main.URL, "https://freeshow.app/docs/connecting")} white />
+{/if}
 
 {#if options}
     <div class="reserved" class:isReserved>
@@ -166,6 +186,8 @@
 
         {#if id === "remote" && $remotePassword}
             <p style="padding-top: 10px;font-size: 0.9em;"><T id="remote.password" />: <b>{$remotePassword}</b></p>
+        {:else if remoteController}
+            <Tip value="With this you don't need to connect to the same router." top={15} />
         {/if}
     </div>
 {/if}
