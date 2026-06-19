@@ -310,27 +310,56 @@
             /* width: 55vh; */
         }
     }
-    /* (orientation: landscape) */
-    @media (min-width: 600px) and (max-height: 700px) {
+    @media (max-height: 700px) {
         .controller {
             top: 45%;
-            height: 70vh;
-            width: 70vh;
+            height: 60vh;
+            width: 60vh;
+        }
+        .controller :global(svg) {
+            width: 2.5rem !important;
+            height: 2.5rem !important;
+            min-width: 2.5rem !important;
         }
         .draw {
             top: 45%;
         }
         .pad {
-            height: 45vh;
-            /* width: 65vh; */
+            height: 40vh;
         }
         .toggles {
             bottom: 20px;
-            height: 30px;
-            width: 60vw;
+            height: 35px;
+            width: 80vw;
+        }
+        .toggles button,
+        select {
+            padding: 5px;
+            font-size: 0.7em;
         }
         .toggles :global(svg) {
             height: 1.5rem;
+            width: 1.5rem !important;
+            min-width: 1.5rem !important;
+        }
+    }
+
+    /* (orientation: landscape) for wider devices */
+    @media (min-width: 600px) and (max-height: 700px) {
+        .controller {
+            height: 70vh;
+            width: 70vh;
+        }
+        .controller :global(svg) {
+            width: 3.5rem !important;
+            height: 3.5rem !important;
+            min-width: 3.5rem !important;
+        }
+        .pad {
+            height: 45vh;
+        }
+        .toggles {
+            width: 60vw;
         }
     }
 
