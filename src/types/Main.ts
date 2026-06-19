@@ -266,6 +266,8 @@ export interface Variable {
 
     // random number
     animate?: boolean
+    animateTowardsResult?: boolean
+    animationDuration?: number
     eachNumberOnce?: boolean
     sets?: { name: string; minValue?: number; maxValue?: number }[]
     setName?: string // chosen random set

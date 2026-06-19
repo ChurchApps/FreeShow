@@ -58,13 +58,17 @@ export function setRandomValue(id: string) {
 
     updateVariable(id, "setName", "")
 
-    if (variable.animate) animateValue(id, getSetChars(variable.sets), randomValue)
-    else setRandom(id, randomValue)
+    if (variable.animate) {
+        const rawDur = variable.animationDuration ?? 3
+        const duration = rawDur > 100 ? rawDur : rawDur * 1000
+        animateValue(id, getSetChars(variable.sets), randomValue, variable.animateTowardsResult ?? false, duration)
+    } else {
+        setRandom(id, randomValue)
+    }
 }
 
-const steps = 15
 let lastNums: number[] = []
-async function animateValue(id: string, chars: number, finalValue: { name: string; number: number }, currentStep = 0) {
+async function animateValue(id: string, chars: number, finalValue: { name: string; number: number }, animateTowardsResult: boolean, duration: number, currentStep = 0) {
     if (currentStep === 0) {
         randomNumberVariable.update((a) => {
             a[id] = true
@@ -72,29 +76,54 @@ async function animateValue(id: string, chars: number, finalValue: { name: strin
         })
     }
 
-    const start = finalValue.number.toString().padStart(chars, "0").slice(0, currentStep)
+    if (animateTowardsResult) {
+        const startVal = Number(get(variables)[id]?.number) || 0
+        const totalSteps = Math.abs(finalValue.number - startVal)
 
-    for (let i = 0; i < steps; i++) {
-        let randomNumber = start
-        ;[...Array(chars - currentStep)].forEach((_, step) => {
-            // never display the same int twice in a row
-            let num = -1
-            do {
-                num = Math.floor(Math.random() * 10) // 0-9
-            } while (lastNums[step] === num)
+        if (totalSteps > 0) {
+            const startTime = Date.now()
+            let lastVal = startVal
 
-            lastNums[step] = num
-            randomNumber += num
-        })
+            while (true) {
+                const elapsed = Date.now() - startTime
+                if (elapsed >= duration) break
 
-        updateVariable(id, "number", Number(randomNumber))
+                const progress = elapsed / duration
+                const currentVal = Math.round(startVal + (finalValue.number - startVal) * progress)
 
-        await wait(60)
-    }
+                if (currentVal !== lastVal) {
+                    updateVariable(id, "number", currentVal)
+                    lastVal = currentVal
+                }
+                await wait(16)
+            }
+        }
+    } else {
+        const speed = 60
+        const stepsPerDigit = Math.max(1, Math.round(duration / (chars * speed)))
+        const start = finalValue.number.toString().padStart(chars, "0").slice(0, currentStep)
 
-    if (currentStep < chars - 1) {
-        animateValue(id, chars, finalValue, currentStep + 1)
-        return
+        for (let i = 0; i < stepsPerDigit; i++) {
+            let randomNumber = start
+            ;[...Array(chars - currentStep)].forEach((_, step) => {
+                // never display the same int twice in a row
+                let num = -1
+                do {
+                    num = Math.floor(Math.random() * 10)
+                } while (lastNums[step] === num)
+
+                lastNums[step] = num
+                randomNumber += num
+            })
+
+            updateVariable(id, "number", Number(randomNumber))
+            await wait(speed)
+        }
+
+        if (currentStep < chars - 1) {
+            animateValue(id, chars, finalValue, animateTowardsResult, duration, currentStep + 1)
+            return
+        }
     }
 
     lastNums = []

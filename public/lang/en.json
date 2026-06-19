@@ -1124,6 +1124,7 @@
         "disable_navigation": "Disable navigation controls",
         "progress_bar": "Progress bar",
         "each_number_once": "Each number only once",
+        "towards_result": "Towards result",
         "side": "Side",
         "count": "Count",
         "speed": "Speed",
