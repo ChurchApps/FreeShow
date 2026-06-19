@@ -192,7 +192,7 @@
     <div class="banner">EXPERIMENTAL!</div>
 
     <div class="header">
-        <MaterialButton style="padding: 6px;" icon="back" title="actions.back" on:click={() => openedInteractionId.set("")} />
+        <MaterialButton disabled={showOptions || showHistory || showPlayers} style="padding: 6px;" icon="back" title="actions.back" on:click={() => openedInteractionId.set("")} />
 
         <p style="flex: 1;{openedInteraction?.name ? '' : 'font-style: italic;opacity: 0.7;'}">
             {openedInteraction?.name || translateText("main.unnamed")}
