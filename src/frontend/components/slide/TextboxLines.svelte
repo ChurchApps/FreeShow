@@ -459,7 +459,7 @@
         -webkit-line-break: after-white-space; */
 
         text-wrap: balance; /* balanced breaking, looks much cleaner */
-        white-space: pre; /* preserve special spaces from Text edit */
+        white-space: pre-wrap; /* preserve special spaces from Text edit */
     }
 
     /* normal wrap if "Text on one line (nowrap)" or Justify aligned */
