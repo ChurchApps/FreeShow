@@ -19,6 +19,7 @@ import { SlideTimeline } from "./SlideTimeline"
 import { TimelineType } from "./TimelineActions"
 import { startListeningLTC, stopListeningLTC } from "./timecode"
 import { getProjectShowDurations } from "./timeline"
+import { locateMediaFile } from "../helpers/media"
 
 let activePlayback: TimelinePlayback | null = null
 export function getActiveTimelinePlayback(type: TimelineType | null = null) {
@@ -187,6 +188,18 @@ export class TimelinePlayback {
     setActions(actions: TimelineAction[]) {
         this.actions = actions
         this.updateDuration()
+        this.resolveMediaPaths(actions)
+    }
+
+    private async resolveMediaPaths(actions: TimelineAction[]) {
+        for (const action of actions) {
+            if (action.data?.path && (action.type === "audio" || action.type === "video")) {
+                const located = await locateMediaFile(action.data.path)
+                if (located?.path) {
+                    action.data.path = located.path
+                }
+            }
+        }
     }
 
     private shouldLoop: boolean = false
