@@ -1332,7 +1332,8 @@ function getInteractionQuestion(show: Show | null) {
     const interaction = _getInteraction(show)
     if (!interaction) return ""
 
-    return interaction.getQuestion()
+    const questions = interaction.getQuestion()
+    return [questions.join("<br>"), ...questions]
 }
 
 function getInteractionTime(show: Show | null) {

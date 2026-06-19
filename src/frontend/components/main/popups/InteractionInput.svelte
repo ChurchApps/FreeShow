@@ -181,7 +181,7 @@
                 <T id="interaction.add_option" />
             </MaterialButton>
 
-            <!-- Display tip?: order will be random -->
+            <MaterialToggleSwitch label="variables.randomize" style="margin-top: 10px;" checked={currentInput.randomize} defaultValue={false} on:change={(e) => updateValue(e.detail, "randomize")} />
         </div>
     {:else if currentInput.type === "text"}
         <!-- optional - for polls we don't need answers -->

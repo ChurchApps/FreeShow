@@ -180,13 +180,15 @@ class Interaction {
             // remove answers
             input.options = input.options.map((o: any) => ({ value: o.value }))
 
-            // randomize options order
-            const shuffledOptions = [...input.options]
-            for (let i = shuffledOptions.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1))
-                ;[shuffledOptions[i], shuffledOptions[j]] = [shuffledOptions[j], shuffledOptions[i]]
+            if (input.randomize) {
+                // randomize options order
+                const shuffledOptions = [...input.options]
+                for (let i = shuffledOptions.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1))
+                    ;[shuffledOptions[i], shuffledOptions[j]] = [shuffledOptions[j], shuffledOptions[i]]
+                }
+                input.options = shuffledOptions
             }
-            input.options = shuffledOptions
         }
 
         return [input]
@@ -544,10 +546,15 @@ class Interaction {
         return Object.keys(this.lastData?.clients || {}).length
     }
 
-    getQuestion() {
+    getQuestion(): string[] {
         const data = this.getData()
+
+        if (data.options?.allAtOnce) {
+            return (data.inputs || []).map((input: any) => input.question || "")
+        }
+
         const input = data.inputs[this.inputIndex]
-        return input?.question || ""
+        return input ? [input.question || ""] : []
     }
 
     getTime() {

@@ -324,6 +324,7 @@ interface MultipleChoiceQuestion extends QuestionBase {
     type: "multi_choice"
     inputType: "buttons" | "checkbox" | "dropdown" | "radio"
     options?: { value: string; isAnswer?: boolean }[]
+    randomize?: boolean
 }
 
 export interface Trigger {
