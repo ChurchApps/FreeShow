@@ -30,7 +30,7 @@
         opacity = 100
 
         if (value.includes("gradient")) {
-            if (!pickerOpen) opacity = getGradientOpacity(value) * 100
+            opacity = getGradientOpacity(value) * 100
             return value
         }
 
@@ -69,7 +69,7 @@
         hexValue = color
         let actualValue = hexValue
 
-        if (opacity === 0) opacity = 100
+        if (opacity === 0 && clicked) opacity = 100
         if (allowOpacity && opacity < 100) {
             if (hexValue.includes("gradient")) actualValue = addOpacityToGradient(hexValue, opacity / 100)
             else {
@@ -179,7 +179,7 @@
         mounted = false
         setTimeout(() => (mounted = true))
     }
-    $: if (opacity) opacityChanged()
+    $: if (opacity !== undefined) opacityChanged()
     function opacityChanged() {
         if (!allowOpacity || !mounted) return
 
@@ -237,7 +237,7 @@
                         {/if}
                     {/each}
 
-                    {#if allowOpacity}
+                    {#if allowOpacity && value && hexValue.includes("gradient")}
                         <div class="opacity">
                             <MaterialNumberInput label="edit.opacity" value={Math.round(opacity)} max={100} on:change={(e) => (opacity = Math.round(e.detail))} showSlider />
                         </div>
@@ -291,7 +291,7 @@
                         {/if}
                     {/each}
 
-                    {#if allowOpacity}
+                    {#if allowOpacity && value && !hexValue.includes("gradient")}
                         <div class="opacity">
                             <MaterialNumberInput label="edit.opacity" value={Math.round(opacity)} max={100} on:change={(e) => (opacity = Math.round(e.detail))} showSlider />
                         </div>
