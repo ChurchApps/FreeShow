@@ -1,17 +1,20 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import { activeShow, customMetadata, dictionary, shows, showsCache } from "../../../stores"
+    import { activeShow, customMetadata, dictionary, outputs, shows, showsCache } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { history } from "../../helpers/history"
     import { getCustomMetadata, initializeMetadata } from "../../helpers/show"
+    import { keysToID, sortByName } from "../../helpers/array"
     import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
     import MaterialFilePicker from "../../inputs/MaterialFilePicker.svelte"
+    import MaterialDropdown from "../../inputs/MaterialDropdown.svelte"
     import Tip from "../../main/Tip.svelte"
     import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
 
     $: currentShow = $showsCache[$activeShow!.id]
     $: meta = currentShow.meta
     $: chordImage = currentShow?.metadata?.chordImage || ""
+    $: chordOutputId = currentShow?.metadata?.chordOutputId || ""
     let values: { [key: string]: string } = {}
 
     onMount(getValues)
@@ -75,6 +78,12 @@
     function setChordImage(path: string) {
         updateData({ ...(currentShow.metadata || {}), chordImage: path }, "metadata")
     }
+
+    function setChordOutput(outputId: string) {
+        updateData({ ...(currentShow.metadata || {}), chordOutputId: outputId }, "metadata")
+    }
+
+    $: outputOptions = [{ value: "", label: translateText("actions.all_outputs") }, ...sortByName(keysToID($outputs).filter((a) => !a.stageOutput)).map((a) => ({ value: a.id, label: a.name }))]
 </script>
 
 <section>
@@ -92,8 +101,8 @@
         <MaterialNumberInput label="transition.duration (s)" value={currentShow?.quickAccess?.duration} on:change={(e) => changeValue(e.detail, "duration")} hideWhenZero />
     </div>
 
-    <div style="padding: 10px; display: flex; flex-direction: column; gap: 8px;">
-        <p style="font-size: 0.85em; opacity: 0.7; margin: 0;">Akkordogramm</p>
+    <div class="chord-section">
+        <h5>Akkordogramm</h5>
         <MaterialFilePicker
             label="Akkordogramm auswählen"
             value={chordImage}
@@ -102,6 +111,7 @@
             showThumbnail={!!chordImage}
             on:change={(e) => setChordImage(e.detail)}
         />
+        <MaterialDropdown label="Akkorde-Output" options={outputOptions} value={chordOutputId} on:change={(e) => setChordOutput(e.detail)} />
     </div>
 
     <Tip value="tips.display_metadata" style="margin: 0 10px;" bottom={10} />
@@ -115,5 +125,19 @@
 
     section :global(.title) {
         margin: 5px 0;
+    }
+
+    .chord-section {
+        padding: 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .chord-section h5 {
+        margin: 0 0 4px 0;
+        font-size: 0.85em;
+        opacity: 0.7;
+        font-weight: 500;
     }
 </style>

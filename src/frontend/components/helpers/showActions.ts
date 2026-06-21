@@ -307,21 +307,18 @@ export function updateOut(showId: string, index: number, layout: LayoutRef[], ex
                 }
             })
         }
-// AKKORDOGRAMM - send chord image to NDI output if set
+// AKKORDOGRAMM - send chord image to selected output
 const chordImage = _show(showId).get("metadata")?.chordImage
-if (chordImage) {
-    const allOutputs = get(outputs)
-    const chordOutputId = Object.keys(allOutputs).find((id) => allOutputs[id]?.name?.toLowerCase().includes("ndi") || allOutputs[id]?.name?.toLowerCase().includes("akkord"))
-    if (chordOutputId) {
-        setOutput("background", {
-            name: "Akkordogramm",
-            type: "image",
-            path: chordImage,
-            loop: false,
-            muted: true,
-            fit: "contain"
-        }, false, chordOutputId)
-    }
+const chordOutputId = _show(showId).get("metadata")?.chordOutputId
+if (chordImage && chordOutputId && get(outputs)[chordOutputId]) {
+    setOutput("background", {
+        name: "Akkordogramm",
+        type: "image",
+        path: chordImage,
+        loop: false,
+        muted: true,
+        fit: "contain"
+    }, false, chordOutputId)
 }
         // nextTimer - start next slide timer immediately before any awaits
         nextSlideTimers(outputId)
