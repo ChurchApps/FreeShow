@@ -225,7 +225,7 @@ export interface MainSendPayloads {
     [Main.LOCATE_MEDIA_FILE]: { filePath: string; folders: string[] }
     [Main.SET_MEDIA_FOLDER_PATH]: string
     [Main.GET_SIMILAR]: { paths: string[] }
-    [Main.BUNDLE_MEDIA_FILES]: { openFolder?: boolean }
+    [Main.BUNDLE_MEDIA_FILES]: { openFolder?: boolean; outputPath?: string }
     [Main.MEDIA_FOLDER_COPY]: { paths: string[] }
     [Main.FILE_INFO]: string
     [Main.READ_FOLDER]: { path: string | string[]; depth?: number; generateThumbnails?: boolean; captureFolderContent?: boolean }

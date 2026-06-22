@@ -599,8 +599,6 @@ async function deleteUnusedZips(folderPath: string, excludeZip: string) {
 
 async function checkCloudEntry(id: ChangeId, key: string, cloudData: any, getLocalData: () => Promise<any> | any, isCloudNewer?: () => Promise<boolean>) {
     const cloudModTime = getModifiedDate(cloudData)
-    // entries here are expected to carry a per-item "modified" time; without one the cloud copy is
-    // invalid → skip. (Item-collections with no per-item "modified" are merged via ledger.mergeCollection.)
     if (cloudData !== null && !cloudModTime) return { action: "skip" } // invalid: no modified time
 
     const localValue = await getLocalData()

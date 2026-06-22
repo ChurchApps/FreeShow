@@ -6,12 +6,10 @@ import type { SaveActions } from "../../types/Save"
 import type { Show, Shows } from "../../types/Show"
 import { sendMain, sendToMain } from "../IPC/main"
 import { deleteFile, deleteFolder, doesPathExist, getDataFolderPath, getFileStats, getTimePointString, loadShows, makeDir, openInSystem, readFile, readFolder, selectFilesDialog, writeFile } from "../utils/files"
-import { _store, getStore, setStore, storeFilesData } from "./store"
+import { _store, setStore, storeFilesData } from "./store"
 import { compressToZip, decompressZip } from "./zip"
 
 export async function startBackup({ customTriggers, isCloudSync }: { customTriggers?: SaveActions; isCloudSync?: boolean } = {}): Promise<{ entries?: { name: string; content?: string | Buffer; filePath?: string }[]; path?: string } | void> {
-    const shows = getStore("SHOWS")
-
     // no need to backup shows on auto backup (as that just takes a lot of space)
     const isAutoBackup = !!customTriggers?.isAutoBackup
 
@@ -72,15 +70,13 @@ export async function startBackup({ customTriggers, isCloudSync }: { customTrigg
     }
 
     async function syncAllShows() {
-        if (!shows) return
-
         const showsPath = getDataFolderPath("shows")
-        const showEntries = Object.entries(shows)
-        const showFilesOnDisk = new Set(readFolder(showsPath))
+        if (!fs.existsSync(showsPath)) return
 
-        for (const [id, show] of showEntries) {
-            const fileName = (show.name || id) + ".show"
-            if (showFilesOnDisk.has(fileName)) {
+        const showFilesOnDisk = readFolder(showsPath)
+
+        for (const fileName of showFilesOnDisk) {
+            if (fileName.toLowerCase().endsWith(".show")) {
                 entries.push({ name: "SHOWS/" + fileName, filePath: path.join(showsPath, fileName) })
             }
         }

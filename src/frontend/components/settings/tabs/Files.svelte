@@ -74,6 +74,7 @@
 
         // get default path again if reset
         if (!mediaFolderPath) mediaFolderPath = (await requestMain(Main.GET_MEDIA_FOLDER_PATH)) || ""
+        else sendMain(Main.BUNDLE_MEDIA_FILES, { outputPath: mediaFolderPath })
     }
 
     // get times
@@ -257,8 +258,8 @@
             // alertMessage.set("media.media_sync_folder_tip")
             // activePopup.set("alert")
 
-            sendMain(Main.BUNDLE_MEDIA_FILES, { openFolder: true })
-            mediaFolderPath = (await requestMain(Main.GET_MEDIA_FOLDER_PATH)) || ""
+            if (!mediaFolderPath) mediaFolderPath = (await requestMain(Main.GET_MEDIA_FOLDER_PATH)) || ""
+            sendMain(Main.BUNDLE_MEDIA_FILES, { openFolder: true, outputPath: mediaFolderPath })
         }
     }
 </script>
