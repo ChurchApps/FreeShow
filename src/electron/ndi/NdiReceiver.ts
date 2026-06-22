@@ -15,20 +15,16 @@ const loadGrandiose = async () => {
 
 export class NdiReceiver {
     static ndiDisabled = false
-    static NDI_RECEIVERS: { [key: string]: { frameRate: number; isReceiving?: boolean; shouldStop?: boolean; fetchInProgress?: boolean } } = {}
+    static NDI_RECEIVERS: { [key: string]: { frameRate: number; isReceiving?: boolean; shouldStop?: boolean; fetchInProgress?: boolean; source?: { name: string; urlAddress: string; id: string }; lowbandwidth?: boolean } } = {}
 
-    private static isCreatingReceiver = false
     private static findSourcesInterval: NodeJS.Timeout | null = null
     static allActiveReceivers: { [key: string]: any } = {}
     static sendToOutputs: string[] = []
 
     private static async createReceiver(source: { name: string; urlAddress: string }, lowbandwidth = false) {
-        while (this.isCreatingReceiver) await new Promise((resolve) => setTimeout(resolve, 50))
-        this.isCreatingReceiver = true
-
         try {
             const grandiose = await loadGrandiose()
-            if (!grandiose) return
+            if (!grandiose) return null
 
             const config: any = { source, colorFormat: grandiose.COLOR_FORMAT_RGBX_RGBA, allowVideoFields: false }
             if (lowbandwidth) config.bandwidth = grandiose.BANDWIDTH_LOWEST
@@ -45,8 +41,9 @@ export class NdiReceiver {
             } finally {
                 if (timeout) clearTimeout(timeout)
             }
-        } finally {
-            this.isCreatingReceiver = false
+        } catch (err) {
+            console.error("Failed to create NDI receiver:", err)
+            return null
         }
     }
 
@@ -88,9 +85,9 @@ export class NdiReceiver {
 
             // For NDI-HX sources, start continuous reception for thumbnail generation
             if (!this.NDI_RECEIVERS[source.id]) {
-                this.NDI_RECEIVERS[source.id] = { frameRate: 0.1, isReceiving: true, shouldStop: false, fetchInProgress: false }
+                this.NDI_RECEIVERS[source.id] = { frameRate: 0.1, isReceiving: true, shouldStop: false, fetchInProgress: false, source, lowbandwidth: true }
                 // Start lightweight frame loop for thumbnails only
-                this.thumbnailLoop(source.id, receiver, this.NDI_RECEIVERS[source.id])
+                this.thumbnailLoop(source.id, this.NDI_RECEIVERS[source.id])
             }
 
             let rawFrame: any = null
@@ -153,7 +150,7 @@ export class NdiReceiver {
         return { newTimes: processingTimes, newDelay: adaptiveDelay }
     }
 
-    private static async frameLoop(sourceId: string, receiver: any, receiverData: any) {
+    private static async frameLoop(sourceId: string, receiverData: any) {
         let consecutiveErrors = 0
         let processingTimes: number[] = []
         let adaptiveDelay = 16
@@ -166,6 +163,18 @@ export class NdiReceiver {
                 if (receiverData.fetchInProgress) {
                     await new Promise((resolve) => setTimeout(resolve, 8))
                     continue
+                }
+
+                let receiver = this.allActiveReceivers[sourceId]
+                if (!receiver) {
+                    const source = receiverData.source
+                    if (source) {
+                        receiver = this.allActiveReceivers[sourceId] = await this.createReceiver({ name: source.name, urlAddress: source.urlAddress || source.id }, receiverData.lowbandwidth)
+                    }
+                }
+                if (!receiver?.video) {
+                    delete this.allActiveReceivers[sourceId]
+                    throw new Error("No video data received")
                 }
 
                 receiverData.fetchInProgress = true
@@ -201,7 +210,7 @@ export class NdiReceiver {
         }
     }
 
-    private static async thumbnailLoop(sourceId: string, receiver: any, receiverData: any) {
+    private static async thumbnailLoop(sourceId: string, receiverData: any) {
         let consecutiveErrors = 0
 
         while (receiverData && !receiverData.shouldStop) {
@@ -210,6 +219,18 @@ export class NdiReceiver {
                 if (receiverData.fetchInProgress) {
                     await new Promise((resolve) => setTimeout(resolve, 50))
                     continue
+                }
+
+                let receiver = this.allActiveReceivers[sourceId]
+                if (!receiver) {
+                    const source = receiverData.source
+                    if (source) {
+                        receiver = this.allActiveReceivers[sourceId] = await this.createReceiver({ name: source.name, urlAddress: source.urlAddress || source.id }, receiverData.lowbandwidth)
+                    }
+                }
+                if (!receiver?.video) {
+                    delete this.allActiveReceivers[sourceId]
+                    throw new Error("No video data received")
                 }
 
                 receiverData.fetchInProgress = true
@@ -263,10 +284,10 @@ export class NdiReceiver {
         }
 
         // Start full capture loop
-        this.NDI_RECEIVERS[source.id] = { frameRate: 0.1, isReceiving: true, shouldStop: false }
+        this.NDI_RECEIVERS[source.id] = { frameRate: 0.1, isReceiving: true, shouldStop: false, source, lowbandwidth: false }
         const receiverData = this.NDI_RECEIVERS[source.id]
 
-        this.frameLoop(source.id, receiver, receiverData).catch((err) => {
+        this.frameLoop(source.id, receiverData).catch((err) => {
             console.error(`NDI reception error for ${source.id}:`, err)
             this.stopReceiversNDI({ id: source.id })
         })
