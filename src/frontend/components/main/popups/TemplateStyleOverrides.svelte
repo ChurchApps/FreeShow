@@ -118,7 +118,7 @@
     }
 </script>
 
-<section style="width: clamp(500px, 75vw, 900px);">
+<section>
     <Tip type="info" value="edit.style_overrides_tip" bottom={20} />
 
     {#if overrides.length}

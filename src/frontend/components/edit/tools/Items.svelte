@@ -25,7 +25,8 @@
         // we could have a way to show the capture of an output screen.., but again, might be useless.
         // { id: "mirror" },
         { id: "visualizer", maxAmount: 1 },
-        { id: "captions", maxAmount: 1 } // max one because there can't be multiple translations at this point
+        { id: "captions", maxAmount: 1 }, // max one because there can't be multiple translations at this point
+        { id: "chart", icon: "charts" }
     ]
 
     const getIdentifier = {
@@ -55,6 +56,9 @@
         variable: (item: Item) => {
             let name = $variables[item.variable?.id]?.name || ""
             return name
+        },
+        chart: (item: Item) => {
+            return item.chart?.type || ""
         }
     }
 

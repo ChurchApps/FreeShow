@@ -292,6 +292,10 @@
         setBoxInputValue(box, "default", "events.startDate", "hidden", !item.events?.enableStartDate)
         setBoxInputValue(box, "default", "events.startTime", "hidden", !item.events?.enableStartDate)
     }
+    $: if (id === "chart" && item) {
+        setBoxInputValue(box, "default", "chart.holeSize", "hidden", item.chart?.type !== "pie")
+        setBoxInputValue(box, "default", "chart.holeSize", "value", item.chart?.holeSize ?? 0)
+    }
 
     ///
 

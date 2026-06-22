@@ -407,6 +407,7 @@ export type Popups =
     | "import_scripture"
     | "create_collection"
     | "edit_event"
+    | "edit_chart"
     | "choose_chord"
     | "choose_screen"
     | "choose_camera"
