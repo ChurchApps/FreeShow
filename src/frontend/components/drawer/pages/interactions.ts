@@ -150,7 +150,8 @@ class Interaction {
             public: {
                 options: {
                     requireName: data.options?.requireName ?? true,
-                    maxTime: data.options?.maxTime ?? 0
+                    allAtOnce: data.options?.allAtOnce || false,
+                    maxTime: data.options?.allAtOnce ? 0 : (data.options?.maxTime ?? 0)
                 },
                 name: data.name,
                 inputIndex: this.inputIndex, // does not matter if allAtOnce is enabled
@@ -420,7 +421,7 @@ class Interaction {
             this.currentAnswer = input.options?.filter((o: any) => o.isAnswer).map((o: any) => o.value)
         }
 
-        if (this.currentAnswer === null || this.currentAnswer === undefined) return
+        if (this.currentAnswer === null || this.currentAnswer === undefined || this.currentAnswer === "") return
         this.closed = true
 
         const scoreUpdates = this.getScoreUpdates()
