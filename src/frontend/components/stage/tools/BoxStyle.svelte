@@ -34,19 +34,18 @@
         delete stageSections.chords
         delete stageSections.scrolling
 
-        // stage messenger: append the Flash toggle + color/count inputs.
-        // Values are bound directly to item fields so they reflect the persisted state when the file is reopened.
-        // Each input has no `key`, so BoxStyle.updateStyle routes them through setValue -> history UPDATE,
-        // writing to item.flash / item.flashColor / item.flashCount.
-        if (stageSections.text) {
-            stageSections.text = {
-                ...stageSections.text,
+        // stage messenger: flash toggle in "special"; color/count only when enabled.
+        // dot-notation ids route through setValue -> history UPDATE into item.flash.{enabled,color,count}.
+        if (stageSections.special) {
+            const flashEnabled = !!item.flash?.enabled
+            stageSections.special = {
+                ...stageSections.special,
                 inputs: [
-                    ...stageSections.text.inputs,
-                    [{ id: "flash", type: "checkbox", value: !!item.flash, values: { label: "timer.flash" } }],
+                    ...stageSections.special.inputs,
+                    [{ id: "flash.enabled", type: "checkbox", value: flashEnabled, values: { label: "timer.flash" } }],
                     [
-                        { id: "flashColor", type: "color", value: item.flashColor || "#FF0000", values: { label: "edit.color", style: "flex: 1;" } },
-                        { id: "flashCount", type: "number", value: item.flashCount ?? 3, values: { label: "edit.count", style: "flex: 1;", min: 1, max: 20 } }
+                        { id: "flash.color", type: "color", value: item.flash?.color || "#FF0000", hidden: !flashEnabled, values: { label: "edit.color", style: "flex: 1;" } },
+                        { id: "flash.count", type: "number", value: item.flash?.count ?? 3, hidden: !flashEnabled, values: { label: "edit.count", style: "flex: 1;", min: 1, max: 20 } }
                     ]
                 ]
             }

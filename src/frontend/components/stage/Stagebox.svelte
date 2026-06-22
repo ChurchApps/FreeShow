@@ -1,12 +1,3 @@
-<script context="module" lang="ts">
-    // Module-level cache of the last `enabled` state of every text variable referenced by a stage text
-    // item. Stays outside the component lifecycle so it survives the {#key stageLayoutId} remounts that
-    // happen in src/frontend/components/stage/StageLayout.svelte; otherwise we would treat the first
-    // reading after a remount as a "false -> true" transition and fire the flash by mistake.
-    // Key format: `${stageLayoutKey}#${itemId}#${variableId}`.
-    const lastEnabledByItem = new Map<string, boolean>()
-</script>
-
 <script lang="ts">
     import { onDestroy } from "svelte"
     import type { StageItem, StageLayout as TStageLayout } from "../../../types/Stage"
@@ -283,16 +274,15 @@
     // fixed letter width
     $: fixedWidth = item?.type === "timer" || item?.type === "clock" ? "font-feature-settings: 'tnum' 1;" : ""
 
-    // STAGE MESSENGER: fire the FlashBackground pulse when a text variable referenced by this item
-    // transitions enabled: false -> true, and cancel it when any referenced variable transitions
-    // enabled: true -> false. The item.flash checkbox acts as the on/off switch ("this is a stage
-    // messenger"). We bump flashBurstId / flashStopId, which are observed by FlashBackground.
+    // STAGE MESSENGER: bump burst/stop ids on referenced variable enabled transitions.
+    // Per-instance map; first reading of each variable just seeds (undefined -> value) so
+    // mount / {#key} remount with the variable already enabled never fires a false burst.
     let flashBurstId = 0
     let flashStopId = 0
-    $: stageLayoutKey = $activeStage.id || stageLayout?.name || ""
-    $: handleVariableTransitions($variables, item, stageLayoutKey, id)
+    const lastEnabledByVar = new Map<string, boolean>()
+    $: handleVariableTransitions($variables, item)
 
-    function handleVariableTransitions(vars: any, currentItem: StageItem | undefined, layoutKey: string, itemId: string) {
+    function handleVariableTransitions(vars: any, currentItem: StageItem | undefined) {
         if (!currentItem || currentItem.type !== "text") return
 
         const referenced = getReferencedVariableIds(currentItem, vars)
@@ -300,32 +290,25 @@
         let shouldStop = false
 
         referenced.forEach((varId) => {
-            const key = `${layoutKey}#${itemId}#${varId}`
             const newEnabled = vars[varId]?.enabled !== false // text variables default to enabled
-            const prev = lastEnabledByItem.get(key)
+            const prev = lastEnabledByVar.get(varId)
 
             if (prev === undefined) {
-                // First time we see this variable for this item: seed cache without firing.
-                lastEnabledByItem.set(key, newEnabled)
+                lastEnabledByVar.set(varId, newEnabled)
                 return
             }
 
             if (prev === false && newEnabled === true) {
-                // Off -> on transition: trigger the burst (debounced to once per tick below).
-                lastEnabledByItem.set(key, true)
+                lastEnabledByVar.set(varId, true)
                 shouldBurst = true
             } else if (prev === true && newEnabled === false) {
-                // On -> off transition: kill any running pulse (text just disappeared).
-                lastEnabledByItem.set(key, false)
+                lastEnabledByVar.set(varId, false)
                 shouldStop = true
-            } else if (prev !== newEnabled) {
-                lastEnabledByItem.set(key, newEnabled)
             }
         })
 
-        if (!!currentItem.flash) {
-            // Stop wins over burst in the same tick: if any referenced variable was just disabled,
-            // the text is gone and the flash must die with it, even if another came on simultaneously.
+        if (currentItem.flash?.enabled) {
+            // stop wins over burst in the same tick (text gone -> kill any pulse)
             if (shouldStop) flashStopId++
             else if (shouldBurst) flashBurstId++
         }
@@ -336,7 +319,6 @@
         if (!text || !text.includes("{$")) return []
 
         const ids: string[] = []
-        // Matches dynamic refs like {$nameId}, {$nameId#2}, {$nameId|fallback}
         const regex = /\{\$([a-z0-9_]+)(?:#\d+)?(?:\|[^}]*)?\}/gi
         let match: RegExpExecArray | null
         while ((match = regex.exec(text)) !== null) {
@@ -356,15 +338,6 @@
         if (typeof name !== "string") return ""
         return name.toLowerCase().trim().replaceAll(" ", "_")
     }
-
-    // Clear this item's entries from the module-level cache when the component is destroyed
-    // (avoids leaking keys for items that get removed or renamed).
-    onDestroy(() => {
-        const prefix = `${stageLayoutKey}#${id}#`
-        for (const key of Array.from(lastEnabledByItem.keys())) {
-            if (key.startsWith(prefix)) lastEnabledByItem.delete(key)
-        }
-    })
 </script>
 
 <svelte:window on:keydown={keydown} on:mousedown={deselect} />
@@ -383,9 +356,8 @@
     {#if currentShow?.settings?.labels && id && item}
         <div class="label">{getCustomStageLabel(item.type || id, item, $dictionary)}</div>
     {/if}
-    <!-- stage messenger flash background (shared component, deterministic Web Animations API restart) -->
-    <!-- burstId fires on var false->true, stopId cancels on var true->false -->
-    <FlashBackground flash={item?.flash} flashColor={item?.flashColor} flashCount={item?.flashCount} burstId={flashBurstId} stopId={flashStopId} />
+    <!-- stage messenger flash background -->
+    <FlashBackground flash={item?.flash?.enabled} flashColor={item?.flash?.color} flashCount={item?.flash?.count} burstId={flashBurstId} stopId={flashStopId} />
     {#if edit && item}
         <Movebox {ratio} itemStyle={item.style} active={$activeStage.items.includes(id)} />
 
@@ -528,8 +500,7 @@
         overflow: visible;
     }
 
-    /* stage messenger flash background lives in FlashBackground.svelte;
-       the .align / .label z-indexes below keep text and label rendered above the absolute flash layer */
+    /* .align/.label z-index keep content above the flash background layer */
 
     .align {
         /* height: 100%; */
@@ -537,7 +508,6 @@
         text-align: center;
         align-items: center;
 
-        /* keep text content above the flash background */
         position: relative;
         z-index: 1;
     }
