@@ -165,9 +165,9 @@ function processEntry(entry: yauzl.Entry, zipfile: yauzl.ZipFile, data: { conten
         }
 
         if (outputPath) {
-            streamToDisk(readStream, outputPath, name, extension, data, zipfile)
+            streamToDisk(readStream, outputPath, safeName, extension, data, zipfile)
         } else {
-            bufferInMemory(readStream, name, extension, asBuffer, data, zipfile)
+            bufferInMemory(readStream, safeName, extension, asBuffer, data, zipfile)
         }
     })
 }
@@ -245,7 +245,7 @@ export function getZipModifiedDates(filePath: string): Promise<{ [key: string]: 
             const modified: { [key: string]: Date } = {}
 
             zipfile.on("entry", (entry: yauzl.Entry) => {
-                modified[entry.fileName] = entry.getLastModDate()
+                modified[sanitizeZipPath(entry.fileName)] = entry.getLastModDate()
                 zipfile.readEntry()
             })
 

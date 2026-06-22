@@ -200,8 +200,8 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
                 return
             }
 
-            // download new/modified shows (new format)
-            if (file.name.startsWith("SHOWS/") && file.name.endsWith(".show")) {
+            const normalizedName = file.name.replace(/\\/g, "/")
+            if (normalizedName.startsWith("SHOWS/") && normalizedName.endsWith(".show")) {
                 showsFound = true
                 try {
                     const cloudFile = await readFileAsync(cloudPath)
