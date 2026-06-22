@@ -128,7 +128,7 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
         const parsedChanges = safeParseJSON(changesContent)
         const deviceId = getDeviceId()
 
-        if (parsedChanges) {
+        if (parsedChanges && data.method !== "replace") {
             CHANGES = parsedChanges
             if (CHANGES.version !== version) CHANGES = clone(DEFAULT_CHANGES)
             cloudChanges = clone(CHANGES)
