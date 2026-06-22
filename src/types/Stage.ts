@@ -51,6 +51,9 @@ export interface StageItem {
     // textbox
     chords?: { enabled?: boolean; color?: string; size?: number }
     auto?: boolean
+    flash?: boolean // blink a colored background behind the text on the stage output (stage messenger)
+    flashColor?: string // color of the background that pulses during the flash sequence (e.g. "#FF0000")
+    flashCount?: number // how many times the background pulses before stopping (default 3, capped on the renderer)
     textFit?: AutosizeTypes // auto size text fix option (default: growToFit)
     button?: { press?: string; release?: string } // click actions
 
