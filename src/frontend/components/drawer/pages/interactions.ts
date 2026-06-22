@@ -420,7 +420,7 @@ class Interaction {
             this.currentAnswer = input.options?.filter((o: any) => o.isAnswer).map((o: any) => o.value)
         }
 
-        if (!this.currentAnswer) return
+        if (this.currentAnswer === null || this.currentAnswer === undefined) return
         this.closed = true
 
         const scoreUpdates = this.getScoreUpdates()
