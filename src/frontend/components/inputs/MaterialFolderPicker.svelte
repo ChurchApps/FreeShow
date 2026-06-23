@@ -74,7 +74,7 @@
     <label class:selected={value}>{@html translateText(label)}</label>
     <span class="underline" />
 
-    {#if openButton}
+    {#if openButton && value}
         <div class="button">
             <MaterialButton on:click={() => sendMain(Main.OPEN_FOLDER_PATH, value)} title="main.system_open" white>
                 <Icon id="launch" white />
