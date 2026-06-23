@@ -43,6 +43,14 @@ export async function setShow(id: string, value: "delete" | Show): Promise<Show>
         }
     }
 
+    // remove from not found list
+    if (value !== "delete" && get(notFound).show.includes(id)) {
+        notFound.update((a) => {
+            a.show = a.show.filter((x) => x !== id)
+            return a
+        })
+    }
+
     showsCache.update((a) => {
         previousValue = a[id]
         if (value === "delete") delete a[id]
@@ -161,61 +169,75 @@ export async function convertOldShowValues(show: Show): Promise<Show> {
     return show
 }
 
+const currentlyLoading = new Set<string>()
 export async function loadShows(s: string[], deleting = false) {
     const savedBeforeLoading: boolean = !deleting && get(saved)
 
     const notLoaded: string[] = []
     s.forEach((id) => {
         if (!get(shows)[id]) {
-            notFound.update((a) => {
-                a.show.push(id)
-                return a
-            })
-        } else if (!get(showsCache)[id]) {
+            if (!get(notFound).show.includes(id)) {
+                notFound.update((a) => {
+                    a.show.push(id)
+                    return a
+                })
+            }
+        } else if (!get(showsCache)[id] && !get(notFound).show.includes(id) && !currentlyLoading.has(id)) {
             notLoaded.push(id)
         }
     })
 
     if (!notLoaded.length) return
 
+    notLoaded.forEach((id) => currentlyLoading.add(id))
+
     await Promise.all(
         notLoaded.map(async (showId) => {
-            const data = await requestMain(Main.SHOW, { name: get(shows)[showId]?.name, id: showId })
-            if (!data) return
+            try {
+                const data = await requestMain(Main.SHOW, { name: get(shows)[showId]?.name, id: showId })
+                if (!data) return
 
-            if (data.error || !data.content) {
-                notFound.update((a) => {
-                    a.show.push(data.id)
-                    return a
-                })
-                return
-            }
-
-            // has been loaded in the meantime
-            if (get(showsCache)[data.id]) return
-
-            // remove from not found
-            if (get(notFound).show.includes(data.id)) {
-                notFound.update((a) => {
-                    a.show.splice(a.show.indexOf(data.id), 1)
-                    return a
-                })
-            }
-
-            // might have been saved wrongly
-            if (typeof data.content[1] === "string") {
-                try {
-                    data.content[1] = JSON.parse(data.content[1])
-                    if (data.content[1]?.[1]?.name) data.content[1] = data.content[1][1]
-                } catch (err) {
+                if (data.error || !data.content) {
+                    const targetId = data?.id || showId
+                    if (!get(notFound).show.includes(targetId)) {
+                        notFound.update((a) => {
+                            a.show.push(targetId)
+                            return a
+                        })
+                    }
                     return
                 }
+
+                // has been loaded in the meantime
+                if (get(showsCache)[data.id]) return
+
+                // remove from not found
+                if (get(notFound).show.includes(data.id)) {
+                    notFound.update((a) => {
+                        a.show.splice(a.show.indexOf(data.id), 1)
+                        return a
+                    })
+                }
+
+                // might have been saved wrongly
+                if (typeof data.content[1] === "string") {
+                    try {
+                        data.content[1] = JSON.parse(data.content[1])
+                        if (data.content[1]?.[1]?.name) data.content[1] = data.content[1][1]
+                    } catch (err) {
+                        return
+                    }
+                }
+
+                const show = fixShowIssues(data.content[1])
+                if (!show) return
+
+                await setShow(data.id || data.content[0], show)
+            } catch (err) {
+                console.error("Error loading show:", showId, err)
+            } finally {
+                currentlyLoading.delete(showId)
             }
-
-            const show = fixShowIssues(data.content[1])
-            if (!show) return
-
-            await setShow(data.id || data.content[0], show)
         })
     )
 
