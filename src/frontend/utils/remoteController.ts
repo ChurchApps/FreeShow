@@ -1,7 +1,7 @@
 import { initializeApp } from "firebase/app"
 import { get, getDatabase, onValue, ref, remove, set } from "firebase/database"
 import { get as getStore } from "svelte/store"
-import { special } from "../stores"
+import { activePopup, alertMessage, special } from "../stores"
 import { OutputHelper } from "../components/helpers/OutputHelper"
 
 // same config as firebaseUtils.ts
@@ -29,7 +29,12 @@ export async function startRemoteController(id?: string) {
             await set(controlRef, { isOpen: true })
         }
     } catch (error) {
+        alertMessage.set("Remote Clicker: Failed to connect to Firebase. Please check your internet connection, or might be too many active users.")
+        activePopup.set("alert")
+
         console.error("Error initializing remote controller db path:", error)
+        special.update((a) => ({ ...a, remoteController: false }))
+        return
     }
 
     unsubscribe = onValue(controlRef, (snapshot) => {

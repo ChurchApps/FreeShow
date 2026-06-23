@@ -25,11 +25,12 @@
     let tags: (Tag & { id: string })[] = []
 
     let emptyTag = false
-    onMount(getTags)
-    function getTags() {
+    onMount(() => getTags(true))
+    function getTags(sort = false) {
         if (!store[type]) return
 
-        tags = sortByName(keysToID(get(store[type]())))
+        tags = keysToID(get(store[type]()))
+        if (sort) tags = sortByName(tags)
 
         emptyTag = !!tags.find((a) => !a.name)
     }

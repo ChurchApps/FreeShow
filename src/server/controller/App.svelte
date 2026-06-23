@@ -313,8 +313,8 @@
     @media (max-height: 700px) {
         .controller {
             top: 45%;
-            height: 60vh;
-            width: 60vh;
+            height: 75vmin;
+            width: 75vmin;
         }
         .controller :global(svg) {
             width: 2.5rem !important;
@@ -347,8 +347,8 @@
     /* (orientation: landscape) for wider devices */
     @media (min-width: 600px) and (max-height: 700px) {
         .controller {
-            height: 70vh;
-            width: 70vh;
+            height: 70vmin;
+            width: 70vmin;
         }
         .controller :global(svg) {
             width: 3.5rem !important;
