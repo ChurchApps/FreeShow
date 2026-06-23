@@ -1,24 +1,25 @@
 <script lang="ts">
-    import { onDestroy } from "svelte"
-    import type { StageItem, StageLayout } from "../../../types/Stage"
+    import { getContext, onDestroy } from "svelte"
+    import type { StageLayout } from "../../../types/Stage"
     import Center from "../../common/components/Center.svelte"
     import Icon from "../../common/components/Icon.svelte"
     import autosize from "../../common/util/autosize"
     import { keysToID, sortByName } from "../../common/util/helpers"
     import { getStyles } from "../../common/util/style"
-    import { getItemText } from "../helpers/textStyle"
     import Clock from "../items/Clock.svelte"
     import SlideNotes from "../items/SlideNotes.svelte"
     import SlideProgress from "../items/SlideProgress.svelte"
     import SlideText from "../items/SlideText.svelte"
     import VideoTime from "../items/VideoTime.svelte"
+    import { _getDynamicValue } from "../util/itemHelpers"
     import { activeTimers, background, media, output, outputSlideCache, progressData, stream, timers, variables } from "../util/stores"
-    import FlashBackground from "./FlashBackground.svelte"
+    import { getDynamicValue, replaceDynamicValues } from "../helpers/show"
     import MediaOutput from "./MediaOutput.svelte"
     import PreviewCanvas from "./PreviewCanvas.svelte"
     import Textbox from "./Textbox.svelte"
     import Timer from "./Timer.svelte"
     import Variable from "./Variable.svelte"
+    import { getItemText } from "../helpers/textStyle"
 
     export let stageLayout: StageLayout
     export let id: string
@@ -32,7 +33,11 @@
     // timer
     let today = new Date()
     const dateInterval = setInterval(() => (today = new Date()), 1000)
-    onDestroy(() => clearInterval(dateInterval))
+
+    onDestroy(() => {
+        clearInterval(dateInterval)
+        clearInterval(cssInterval)
+    })
 
     let itemStyles: any = getStyles(item.style, true)
     $: fontSize = Number(itemStyles?.["font-size"] || 0) || 100 // item.autoFontSize ||
@@ -110,77 +115,69 @@
     // fixed letter width
     $: fixedWidth = item?.type === "timer" || item?.type === "clock" ? "font-feature-settings: 'tnum' 1;" : ""
 
-    // STAGE MESSENGER: bump burst/stop ids on referenced variable enabled transitions.
-    // Per-instance map; first reading of each variable just seeds (undefined -> value) so
-    // mount / {#key} remount with the variable already enabled never fires a false burst.
-    let flashBurstId = 0
-    let flashStopId = 0
-    const lastEnabledByVar = new Map<string, boolean>()
-    $: handleVariableTransitions($variables, item as StageItem)
-
-    function handleVariableTransitions(vars: any, currentItem: StageItem | undefined) {
-        if (!currentItem || currentItem.type !== "text") return
-
-        const referenced = getReferencedVariableIds(currentItem, vars)
-        let shouldBurst = false
-        let shouldStop = false
-
-        referenced.forEach((varId) => {
-            const newEnabled = vars[varId]?.enabled !== false // text variables default to enabled
-            const prev = lastEnabledByVar.get(varId)
-
-            if (prev === undefined) {
-                lastEnabledByVar.set(varId, newEnabled)
-                return
-            }
-
-            if (prev === false && newEnabled === true) {
-                lastEnabledByVar.set(varId, true)
-                shouldBurst = true
-            } else if (prev === true && newEnabled === false) {
-                lastEnabledByVar.set(varId, false)
-                shouldStop = true
-            }
-        })
-
-        if (currentItem.flash?.enabled) {
-            // stop wins over burst in the same tick (text gone -> kill any pulse)
-            if (shouldStop) flashStopId++
-            else if (shouldBurst) flashBurstId++
-        }
-    }
-
-    function getReferencedVariableIds(currentItem: StageItem, allVariables: any): string[] {
-        const text = getItemText(currentItem as any)
-        if (!text || !text.includes("{$")) return []
-
-        const ids: string[] = []
-        const regex = /\{\$([a-z0-9_]+)(?:#\d+)?(?:\|[^}]*)?\}/gi
-        let match: RegExpExecArray | null
-        while ((match = regex.exec(text)) !== null) {
-            const nameId = match[1].toLowerCase()
-            for (const [varId, v] of Object.entries(allVariables) as [string, any][]) {
-                if (v?.type !== "text") continue
-                if (variableNameId(v.name) === nameId && !ids.includes(varId)) {
-                    ids.push(varId)
-                    break
-                }
-            }
-        }
-        return ids
-    }
-
-    function variableNameId(name: string): string {
+    function getVariableNameId(name: string) {
         if (typeof name !== "string") return ""
         return name.toLowerCase().trim().replaceAll(" ", "_")
+    }
+
+    function createCSSVariables(variableUpdater: any, _updateTrigger: any = null) {
+        if (!variableUpdater) return ""
+        const numberVariables = Object.values(variableUpdater).filter((a: any) => a && (a.type === "number" || a.type === "random_number" || (a.type === "text" && a.text?.includes("{"))))
+        let css = numberVariables.reduce((css: string, v: any) => (css += `--variable-${getVariableNameId(v.name)}: ${v.type === "text" ? _getDynamicValue(v.text || "") : (v.number ?? (v.default || 0))};`), "")
+
+        css += `--slide-group-color: ${_getDynamicValue("slide_group_color")};`
+        css += `--slide-group-next-color: ${_getDynamicValue("slide_group_next_color")};`
+        css += `--slide-group-upcoming-color: ${_getDynamicValue("slide_group_upcoming_color")};`
+
+        return css
+    }
+
+    let updateTrigger = 0
+    const cssInterval = setInterval(() => updateTrigger++, 1000)
+
+    $: cssVariables = createCSSVariables($variables, updateTrigger)
+
+    // flash background (on mount & text changes)
+    $: currentItemText = item ? getItemText(item) : ""
+
+    $: flashColor = item?.flash?.color || "#FF0000"
+    $: flashCount = (() => {
+        let value = Number(item?.flash?.count)
+        return !value || !Number.isFinite(value) || value < 1 ? 3 : Math.floor(value)
+    })()
+
+    const getLayoutMounted = getContext<() => boolean>("layoutMounted")
+
+    let evaluatedText = ""
+    $: {
+        if (currentItemText) {
+            replaceDynamicValues(currentItemText, ($variables ? 0 : 0) + ($timers ? 0 : 0) + updateTrigger)
+            evaluatedText = getDynamicValue(currentItemText)
+        } else {
+            evaluatedText = ""
+        }
+    }
+
+    let lastText = ""
+    let flashTriggerId = 0
+    $: if (item?.flash?.enabled) {
+        const currentText = evaluatedText || ""
+        const parentIsMounting = getLayoutMounted ? !getLayoutMounted() : false
+
+        if (lastText !== currentText && currentText.trim() && !parentIsMounting) flashTriggerId++
+        lastText = currentText
     }
 </script>
 
 <!-- style + (id.includes("current_output") ? "" : newSizes) -->
 <!-- {show.settings.autoStretch === false ? '' : newSizes} -->
-<div class="item" class:border={stageLayout?.settings.labels} class:isDisabledVariable style="{itemStyle}{id.includes('slide') && !id.includes('tracker') ? '' : textStyle}{newSizes}--labelColor: {stageLayout?.settings?.labelColor || '#d0a853'};{fixedWidth}">
-    <!-- stage messenger flash background -->
-    <FlashBackground flash={item?.flash?.enabled} flashColor={item?.flash?.color} flashCount={item?.flash?.count} burstId={flashBurstId} stopId={flashStopId} />
+<div class="item" class:border={stageLayout?.settings.labels} class:isDisabledVariable style="{itemStyle}{id.includes('slide') && !id.includes('tracker') ? '' : textStyle}{newSizes}--labelColor: {stageLayout?.settings?.labelColor || '#d0a853'};{fixedWidth}{cssVariables}">
+    <!-- flash background -->
+    {#if item?.flash?.enabled && flashTriggerId > 0}
+        {#key flashTriggerId}
+            <div class="flashBackground" style="background-color: {flashColor};animation-iteration-count: {flashCount};"></div>
+        {/key}
+    {/if}
 
     {#if stageLayout?.settings.labels}
         <div class="label">{item.label || ""}</div>
@@ -265,16 +262,11 @@
         outline-offset: 0;
     }
 
-    /* .align/.label z-index keep content above the flash background layer */
-
     .align {
         height: 100%;
         display: flex;
         text-align: center;
         align-items: center;
-
-        position: relative;
-        z-index: 1;
     }
 
     .align div,
@@ -294,7 +286,6 @@
         top: 0;
         transform: translateY(calc(-100% - 3px));
         width: 100%;
-        z-index: 2;
 
         background: rgb(0 0 0 / 0.4);
         color: var(--labelColor);
@@ -333,5 +324,27 @@
         .label {
             font-size: 18px;
         }
+    }
+    @keyframes stage-flash {
+        0% {
+            opacity: 0;
+        }
+        15% {
+            opacity: 1;
+        }
+        100% {
+            opacity: 0;
+        }
+    }
+    .flashBackground {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        pointer-events: none;
+        z-index: 0;
+        animation-name: stage-flash;
+        animation-duration: 600ms;
+        animation-timing-function: ease-out;
+        animation-fill-mode: forwards;
     }
 </style>

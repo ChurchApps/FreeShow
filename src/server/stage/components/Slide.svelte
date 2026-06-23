@@ -6,7 +6,7 @@
     import Stagebox from "./Stagebox.svelte"
     import Zoomed from "./Zoomed.svelte"
 
-    import { onDestroy, onMount } from "svelte"
+    import { onDestroy, onMount, setContext } from "svelte"
 
     let width: number = 0
     let height: number = 0
@@ -37,6 +37,15 @@
             clearInterval(interval)
         }
     })
+
+    let layoutMounted = false
+    setContext("layoutMounted", () => layoutMounted)
+    $: if ($stageLayout || resizeKey) {
+        layoutMounted = false
+        setTimeout(() => {
+            layoutMounted = true
+        }, 100)
+    }
 </script>
 
 <div class="main" bind:offsetWidth={width} bind:offsetHeight={height}>

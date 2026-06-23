@@ -1,17 +1,17 @@
 <script lang="ts">
-    import { onDestroy } from "svelte"
+    import { getContext, onDestroy } from "svelte"
     import type { StageItem, StageLayout as TStageLayout } from "../../../types/Stage"
     import { activePopup, activeStage, activeTimers, allOutputs, currentWindow, dictionary, outputs, outputSlideCache, refreshEditSlide, stageShows, timers, variables } from "../../stores"
     import { translateText } from "../../utils/language"
     import { sendBackgroundToStage } from "../../utils/stageTalk"
     import EditboxLines from "../edit/editbox/EditboxLines.svelte"
-    import FlashBackground from "./FlashBackground.svelte"
     import autosize from "../edit/scripts/autosize"
     import { isConditionMet } from "../edit/scripts/itemHelpers"
     import { getItemText } from "../edit/scripts/textStyle"
     import { clone, keysToID, sortByName } from "../helpers/array"
     import Icon from "../helpers/Icon.svelte"
     import { getActiveOutputs, getStageResolution, percentageStylePos } from "../helpers/output"
+    import { createCSSVariables, replaceDynamicValues } from "../helpers/showActions"
     import { getStyles } from "../helpers/style"
     import Button from "../inputs/Button.svelte"
     import Media from "../output/layers/Media.svelte"
@@ -265,8 +265,13 @@
     $: contextId = item?.type === "text" ? "stage_text_item" : item?.type === "current_output" ? "stage_item_output" : "stage_item"
 
     let conditionsUpdater = 0
+    let updateTrigger = 0
     const updaterInterval = setInterval(() => conditionsUpdater++, 3000)
-    onDestroy(() => clearInterval(updaterInterval))
+    const cssInterval = setInterval(() => updateTrigger++, 1000)
+    onDestroy(() => {
+        clearInterval(updaterInterval)
+        clearInterval(cssInterval)
+    })
 
     $: currentItemText = item ? (item.type === "slide_text" ? getSlideTextItems(stageLayout!, item).map(getItemText).join("") : getItemText(stageItemToItem(item))) : ""
     $: showItemState = edit ? isConditionMet(item?.conditions?.showItem, currentItemText, "stage", conditionsUpdater) : false
@@ -274,69 +279,26 @@
     // fixed letter width
     $: fixedWidth = item?.type === "timer" || item?.type === "clock" ? "font-feature-settings: 'tnum' 1;" : ""
 
-    // STAGE MESSENGER: bump burst/stop ids on referenced variable enabled transitions.
-    // Per-instance map; first reading of each variable just seeds (undefined -> value) so
-    // mount / {#key} remount with the variable already enabled never fires a false burst.
-    let flashBurstId = 0
-    let flashStopId = 0
-    const lastEnabledByVar = new Map<string, boolean>()
-    $: handleVariableTransitions($variables, item)
+    $: cssVariables = createCSSVariables($variables, $outputs, "stage", updateTrigger)
 
-    function handleVariableTransitions(vars: any, currentItem: StageItem | undefined) {
-        if (!currentItem || currentItem.type !== "text") return
+    // flash background (on mount & text changes)
+    $: flashColor = item?.flash?.color || "#FF0000"
+    $: flashCount = (() => {
+        if (edit) return 0
+        let value = Number(item?.flash?.count)
+        return !value || !Number.isFinite(value) || value < 1 ? 3 : Math.floor(value)
+    })()
 
-        const referenced = getReferencedVariableIds(currentItem, vars)
-        let shouldBurst = false
-        let shouldStop = false
+    const getLayoutMounted = getContext<() => boolean>("layoutMounted")
+    $: evaluatedText = replaceDynamicValues(currentItemText, { type: "stage", id }, ($variables ? 0 : 0) + updateTrigger)
+    let lastText = ""
+    let flashTriggerId = 0
+    $: if (item?.flash?.enabled) {
+        const currentText = evaluatedText || ""
+        const parentIsMounting = getLayoutMounted ? !getLayoutMounted() : false
 
-        referenced.forEach((varId) => {
-            const newEnabled = vars[varId]?.enabled !== false // text variables default to enabled
-            const prev = lastEnabledByVar.get(varId)
-
-            if (prev === undefined) {
-                lastEnabledByVar.set(varId, newEnabled)
-                return
-            }
-
-            if (prev === false && newEnabled === true) {
-                lastEnabledByVar.set(varId, true)
-                shouldBurst = true
-            } else if (prev === true && newEnabled === false) {
-                lastEnabledByVar.set(varId, false)
-                shouldStop = true
-            }
-        })
-
-        if (currentItem.flash?.enabled) {
-            // stop wins over burst in the same tick (text gone -> kill any pulse)
-            if (shouldStop) flashStopId++
-            else if (shouldBurst) flashBurstId++
-        }
-    }
-
-    function getReferencedVariableIds(currentItem: StageItem, allVariables: any): string[] {
-        const text = getItemText(currentItem as any)
-        if (!text || !text.includes("{$")) return []
-
-        const ids: string[] = []
-        const regex = /\{\$([a-z0-9_]+)(?:#\d+)?(?:\|[^}]*)?\}/gi
-        let match: RegExpExecArray | null
-        while ((match = regex.exec(text)) !== null) {
-            const nameId = match[1].toLowerCase()
-            for (const [varId, v] of Object.entries(allVariables) as [string, any][]) {
-                if (v?.type !== "text") continue
-                if (variableNameId(v.name) === nameId && !ids.includes(varId)) {
-                    ids.push(varId)
-                    break
-                }
-            }
-        }
-        return ids
-    }
-
-    function variableNameId(name: string): string {
-        if (typeof name !== "string") return ""
-        return name.toLowerCase().trim().replaceAll(" ", "_")
+        if (lastText !== currentText && currentText.trim() && !parentIsMounting) flashTriggerId++
+        lastText = currentText
     }
 </script>
 
@@ -350,14 +312,20 @@
     class:selected={edit && $activeStage.items.includes(id)}
     class:isDisabledVariable
     class:isOutput={!!$currentWindow}
-    style="{getCustomStyle(itemStyle)}{id.includes('slide') && !id.includes('tracker') ? '' : textStyle}{edit ? `outline: ${3 / ratio}px solid rgb(255 255 255 / 0.2);` : ''}--labelColor: {currentShow?.settings?.labelColor || '#d0a853'};{fixedWidth}"
+    style="{getCustomStyle(itemStyle)}{id.includes('slide') && !id.includes('tracker') ? '' : textStyle}{edit ? `outline: ${3 / ratio}px solid rgb(255 255 255 / 0.2);` : ''}--labelColor: {currentShow?.settings?.labelColor || '#d0a853'};{fixedWidth}{cssVariables}"
     on:mousedown={mousedown}
 >
     {#if currentShow?.settings?.labels && id && item}
         <div class="label">{getCustomStageLabel(item.type || id, item, $dictionary)}</div>
     {/if}
-    <!-- stage messenger flash background -->
-    <FlashBackground flash={item?.flash?.enabled} flashColor={item?.flash?.color} flashCount={item?.flash?.count} burstId={flashBurstId} stopId={flashStopId} />
+
+    <!-- flash background -->
+    {#if item?.flash?.enabled && flashTriggerId > 0}
+        {#key flashTriggerId}
+            <div class="flashBackground" style="background-color: {flashColor};animation-iteration-count: {flashCount};"></div>
+        {/key}
+    {/if}
+
     {#if edit && item}
         <Movebox {ratio} itemStyle={item.style} active={$activeStage.items.includes(id)} />
 
@@ -500,16 +468,11 @@
         overflow: visible;
     }
 
-    /* .align/.label z-index keep content above the flash background layer */
-
     .align {
         /* height: 100%; */
         display: flex;
         text-align: center;
         align-items: center;
-
-        position: relative;
-        z-index: 1;
     }
 
     .align div,
@@ -532,7 +495,6 @@
         top: 0;
         transform: translateY(calc(-100% - 3px));
         width: 100%;
-        z-index: 2;
 
         background: rgb(0 0 0 / 0.4);
         color: var(--labelColor);
@@ -594,5 +556,28 @@
     .actionButton :global(button) {
         padding: 5px !important;
         z-index: 3;
+    }
+
+    @keyframes stage-flash {
+        0% {
+            opacity: 0;
+        }
+        15% {
+            opacity: 1;
+        }
+        100% {
+            opacity: 0;
+        }
+    }
+    .flashBackground {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        pointer-events: none;
+        z-index: 0;
+        animation-name: stage-flash;
+        animation-duration: 600ms;
+        animation-timing-function: ease-out;
+        animation-fill-mode: forwards;
     }
 </style>

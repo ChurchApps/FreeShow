@@ -34,8 +34,7 @@
         delete stageSections.chords
         delete stageSections.scrolling
 
-        // stage messenger: flash toggle in "special"; color/count only when enabled.
-        // dot-notation ids route through setValue -> history UPDATE into item.flash.{enabled,color,count}.
+        // item background flash
         if (stageSections.special) {
             const flashEnabled = !!item.flash?.enabled
             stageSections.special = {
@@ -44,8 +43,8 @@
                     ...stageSections.special.inputs,
                     [{ id: "flash.enabled", type: "checkbox", value: flashEnabled, values: { label: "timer.flash" } }],
                     [
-                        { id: "flash.color", type: "color", value: item.flash?.color || "#FF0000", hidden: !flashEnabled, values: { label: "edit.color", style: "flex: 1;" } },
-                        { id: "flash.count", type: "number", value: item.flash?.count ?? 3, hidden: !flashEnabled, values: { label: "edit.count", style: "flex: 1;", min: 1, max: 20 } }
+                        { id: "flash.color", type: "color", value: item.flash?.color || "#FF0000", hidden: !flashEnabled, values: { label: "edit.color" } },
+                        { id: "flash.count", type: "number", value: item.flash?.count ?? 3, hidden: !flashEnabled, values: { label: "edit.count", min: 1, max: 20 } }
                     ]
                 ]
             }
