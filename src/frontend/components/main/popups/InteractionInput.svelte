@@ -150,6 +150,15 @@
 
                             updateInput()
                         }}
+                        on:keydown={(e) => {
+                            if (e.key === "Enter" && i === (currentInput.options?.length || 0) - 1) {
+                                if (!currentInput.options) currentInput.options = []
+                                currentInput.options.push({ value: "" })
+
+                                currentInput.options = currentInput.options
+                                updateInput()
+                            }
+                        }}
                         autofocus={!!currentInput.question && !option?.value}
                     />
                     <MaterialButton

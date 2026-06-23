@@ -99,8 +99,8 @@ export const actionData = {
     // Interactions
     interaction_start: { SECTION: "tabs.interactions", name: "tabs.interactions: inputs.start", icon: "game", input: "interactions" },
     interaction_stop: { name: "tabs.interactions: media.stop", icon: "game", input: "interactions" },
-    interaction_next: { name: "tabs.interactions: media.next", icon: "game", input: "interactions" },
-    interaction_previous: { name: "tabs.interactions: media.previous", icon: "game", input: "interactions" },
+    interaction_next: { canAddMultiple: true, name: "tabs.interactions: media.next", icon: "game", input: "interactions" },
+    interaction_previous: { canAddMultiple: true, name: "tabs.interactions: media.previous", icon: "game", input: "interactions" },
 
     // OBS Studio
     obs_set_scene: { SECTION: "OBS Studio", name: "OBS Studio: Set scene", icon: "screen", input: "obs_scene" },

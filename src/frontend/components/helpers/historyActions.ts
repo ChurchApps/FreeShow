@@ -706,12 +706,12 @@ export const historyActions = ({ obj, undo = null }: any) => {
                         _show(showId)
                             .slides([ref[index - 1].id])
                             .items()
-                            .get()[0]
+                            .get(null, false)[0]
                     )
                     items = removeItemValues(items)
                 }
 
-                const slide: Slide = { ...EMPTY_SHOW_SLIDE, items }
+                const slide: Slide = clone({ ...EMPTY_SHOW_SLIDE, items })
                 if (isParent) slide.globalGroup = "verse"
                 else slide.group = null
 

@@ -1,5 +1,5 @@
 import { get } from "svelte/store"
-import { activeInteractions, interactions } from "../../../stores"
+import { activeInteractions, activePopup, alertMessage, interactions } from "../../../stores"
 import { clone, keysToID } from "../../helpers/array"
 import { createInteractionDb, deleteInteractionDb, getInteractionDb, subscribeInteraction, updateInteractionDb } from "./firebaseUtils"
 
@@ -22,6 +22,9 @@ export async function startInteraction(id: string) {
     const interactionClass = new Interaction(id)
     const success = await interactionClass.init() // Adjusted to be async because DB initialization is network-bound
     if (!success) {
+        alertMessage.set("Failed to connect to Firebase. Please check your internet connection, or might be too many active users.")
+        activePopup.set("alert")
+
         console.error(`Failed to start interaction with ID: ${id}`)
         return null
     }
@@ -70,6 +73,25 @@ export function initConnection() {
     return { id, secret }
 }
 
+const ADJECTIVES = ["Flying", "Dancing", "Happy", "Clever", "Swift", "Silent", "Golden", "Bright", "Sneaky", "Jolly", "Brave", "Calm", "Witty", "Lively", "Roaring", "Chubby", "Silly", "Gentle", "Sleepy", "Hungry", "Mighty", "Lucky"]
+const NOUNS = ["Pigeon", "Panda", "Fox", "Koala", "Eagle", "Lion", "Tiger", "Dolphin", "Otter", "Rabbit", "Owl", "Squirrel", "Falcon", "Panther", "Badger", "Cheetah", "Penguin", "Wolf", "Beaver", "Monkey", "Giraffe", "Elephant", "Kangaroo"]
+
+function generateRandomName(usedNames: Set<string>): string {
+    let name = ""
+    let attempts = 0
+    do {
+        const adj = ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)]
+        const noun = NOUNS[Math.floor(Math.random() * NOUNS.length)]
+        name = `${adj}${noun}`
+        attempts++
+    } while (usedNames.has(name) && attempts < 100)
+
+    if (usedNames.has(name)) {
+        name = `${name}${Math.floor(Math.random() * 1000)}`
+    }
+    return name
+}
+
 class Interaction {
     id: string
     dbid: string
@@ -79,10 +101,12 @@ class Interaction {
     closed: boolean = false
     seconds: number = 0
     startTime: number = 0
+    startTimes: Record<number, number> = {}
+    usedRandomNames: Set<string> = new Set()
     private timer: any = null
     private unsubscribe: (() => void) | null = null
     private callbacks: ((data: { answers: any[]; clients: any; currentAnswer: any; inputIndex: number; closed: boolean }) => void)[] = []
-    private tickCallbacks: ((data: { seconds: number; startTime: number; closed: boolean }) => void)[] = []
+    private tickCallbacks: ((data: { seconds: number; startTime: number; startTimes: Record<number, number>; closed: boolean }) => void)[] = []
     private lastData: { answers: any[]; clients: any; currentAnswer: any; inputIndex: number; closed: boolean } | null = null
 
     constructor(id: string) {
@@ -99,9 +123,9 @@ class Interaction {
         }
     }
 
-    onTick(callback: (data: { seconds: number; startTime: number; closed: boolean }) => void) {
+    onTick(callback: (data: { seconds: number; startTime: number; startTimes: Record<number, number>; closed: boolean }) => void) {
         this.tickCallbacks.push(callback)
-        callback({ seconds: this.seconds, startTime: this.startTime, closed: this.closed })
+        callback({ seconds: this.seconds, startTime: this.startTime, startTimes: this.startTimes, closed: this.closed })
         return () => {
             this.tickCallbacks = this.tickCallbacks.filter((cb) => cb !== callback)
         }
@@ -121,7 +145,7 @@ class Interaction {
             if (maxTime > 0 && this.seconds >= maxTime) {
                 this.closed = true
                 this.stopTimer()
-                this.tickCallbacks.forEach((cb) => cb({ seconds: this.seconds, startTime: this.startTime, closed: this.closed }))
+                this.tickCallbacks.forEach((cb) => cb({ seconds: this.seconds, startTime: this.startTime, startTimes: this.startTimes, closed: this.closed }))
                 if (this.lastData) {
                     this.lastData.closed = true
                     this.callbacks.forEach((cb) => cb(this.lastData!))
@@ -130,7 +154,7 @@ class Interaction {
                 const updatePayload = this.getDbPayload()
                 await updateInteractionDb(this.dbid, this.dbsecret, updatePayload)
             } else {
-                this.tickCallbacks.forEach((cb) => cb({ seconds: this.seconds, startTime: this.startTime, closed: this.closed }))
+                this.tickCallbacks.forEach((cb) => cb({ seconds: this.seconds, startTime: this.startTime, startTimes: this.startTimes, closed: this.closed }))
             }
         }, 1000)
     }
@@ -202,6 +226,7 @@ class Interaction {
         if (data?.inputs?.length === 1) {
             this.inputIndex = 0
             this.startTime = Date.now()
+            this.startTimes[0] = this.startTime
             this.startTimer()
         }
         let lastConnection = data.lastConnection || null
@@ -221,6 +246,7 @@ class Interaction {
                         this.inputIndex = existingData.public.inputIndex
                         if (this.inputIndex >= 0) {
                             this.startTime = existingData.public.startTime || Date.now()
+                            this.startTimes[this.inputIndex] = this.startTime
                             this.closed = existingData.public.closed || false
                             this.seconds = Math.floor((Date.now() - this.startTime) / 1000)
                             if (!this.closed) this.startTimer()
@@ -255,6 +281,11 @@ class Interaction {
 
         if (!isIdValid) {
             console.error(`Failed to provision interaction after ${MAX_ATTEMPTS} attempts`)
+            this.stopTimer()
+            if (this.unsubscribe) {
+                this.unsubscribe()
+                this.unsubscribe = null
+            }
             return false
         }
 
@@ -283,9 +314,13 @@ class Interaction {
             if (raw) {
                 this.currentAnswer = raw.public?.currentAnswer || null
                 this.closed = raw.public?.closed || false
+
+                const clientsObj = raw.clients || {}
+                this.handleRandomNames(clientsObj)
+
                 const data = {
                     answers: raw.answers || [],
-                    clients: raw.clients || {},
+                    clients: clientsObj,
                     currentAnswer: this.currentAnswer,
                     inputIndex: raw.public?.inputIndex ?? -1,
                     closed: this.closed
@@ -299,6 +334,32 @@ class Interaction {
         })
 
         return true
+    }
+
+    private handleRandomNames(clientsObj: any) {
+        const clientKeys = Object.keys(clientsObj)
+
+        const dataConfig = this.getData()
+        const requireName = dataConfig?.options?.requireName ?? true
+        const randomNames = dataConfig?.options?.randomNames ?? false
+
+        if (!requireName && randomNames) {
+            for (const clientId of clientKeys) {
+                const clientData = clientsObj[clientId]
+                if (!clientData.name || !this.usedRandomNames.has(clientData.name)) {
+                    const hasValidRandomName = clientData.name && ADJECTIVES.some((adj) => clientData.name.startsWith(adj)) && NOUNS.some((n) => clientData.name.endsWith(n))
+
+                    if (hasValidRandomName) {
+                        this.usedRandomNames.add(clientData.name)
+                    } else {
+                        const newName = generateRandomName(this.usedRandomNames)
+                        this.usedRandomNames.add(newName)
+                        this.setClientName(clientId, newName)
+                        clientData.name = newName
+                    }
+                }
+            }
+        }
     }
 
     async destroy() {
@@ -358,15 +419,16 @@ class Interaction {
         if (this.inputIndex >= 0) {
             this.seconds = 0
             this.startTime = Date.now()
+            this.startTimes[this.inputIndex] = this.startTime
             this.closed = false
-            this.tickCallbacks.forEach((cb) => cb({ seconds: this.seconds, startTime: this.startTime, closed: this.closed }))
+            this.tickCallbacks.forEach((cb) => cb({ seconds: this.seconds, startTime: this.startTime, startTimes: this.startTimes, closed: this.closed }))
             this.startTimer()
         } else {
             this.stopTimer()
             this.seconds = 0
             this.startTime = 0
             this.closed = false
-            this.tickCallbacks.forEach((cb) => cb({ seconds: this.seconds, startTime: this.startTime, closed: this.closed }))
+            this.tickCallbacks.forEach((cb) => cb({ seconds: this.seconds, startTime: this.startTime, startTimes: this.startTimes, closed: this.closed }))
         }
     }
 
@@ -384,6 +446,13 @@ class Interaction {
 
     async next() {
         const data = this.getData()
+
+        const input = data.inputs[this.inputIndex]
+        if (hasAnswer(input) && (this.currentAnswer === null || this.currentAnswer === undefined || this.currentAnswer === "")) {
+            await this.revealAnswer()
+            return
+        }
+
         // Prevent going out of bounds
         if (this.inputIndex < data.inputs.length - 1) {
             this.inputIndex++
@@ -528,19 +597,39 @@ class Interaction {
         })
     }
 
+    async setClientName(clientId: string, name: string) {
+        await updateInteractionDb(this.dbid, this.dbsecret, {
+            [`clients/${clientId}/name`]: name
+        })
+    }
+
     ///
 
     getClients(): { id: string; name?: string; time?: number; connected?: boolean; score?: number }[] {
         const clients = keysToID(this.lastData?.clients || {})
 
+        const data = this.getData()
+        const requireName = data?.options?.requireName ?? true
+        const randomNames = data?.options?.randomNames ?? false
+
+        // joined order
+        clients.sort((a, b) => (a.time || 0) - (b.time || 0))
+
         // ensure name and score is set
         clients.forEach((a, i) => {
-            a.name = a.name || `User #${i + 1}`
+            if (!requireName) {
+                if (randomNames && a.name) {
+                    // keep a.name (the random name)
+                } else {
+                    a.name = `User #${i + 1}`
+                }
+            } else {
+                a.name = a.name || `User #${i + 1}`
+            }
             a.score = a.score || 0
         })
 
-        // joined order
-        return clients.sort((a, b) => (a.time || 0) - (b.time || 0))
+        return clients
     }
 
     getClientsCount() {
@@ -556,6 +645,17 @@ class Interaction {
 
         const input = data.inputs[this.inputIndex]
         return input ? [input.question || ""] : []
+    }
+
+    getInputOptions(): string[] {
+        const data = this.getData()
+        if (data.options?.allAtOnce) return []
+
+        const input = data.inputs[this.inputIndex]
+        if (input && input.type === "multi_choice" && input.options) {
+            return input.options.map((o: any) => o.value || "")
+        }
+        return []
     }
 
     getTime() {

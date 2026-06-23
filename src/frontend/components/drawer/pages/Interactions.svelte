@@ -92,6 +92,7 @@
 
     let seconds = 0
     let startTime = 0
+    let startTimes: Record<number, number> = {}
 
     function hasAnswer(input: any) {
         if (!input) return false
@@ -156,6 +157,7 @@
                     interaction.onTick((data) => {
                         seconds = data.seconds
                         startTime = data.startTime
+                        startTimes = data.startTimes || {}
                         closed = data.closed
                     })
                 ]
@@ -168,6 +170,7 @@
             closed = false
             seconds = 0
             startTime = 0
+            startTimes = {}
         }
     }
 
@@ -219,6 +222,9 @@
     {#if showOptions}
         <div class="options">
             <MaterialToggleSwitch label="interaction.require_name" checked={openedInteraction?.options?.requireName ?? true} defaultValue={true} on:change={(e) => setOption("requireName", e.detail)} />
+            {#if openedInteraction?.options?.requireName === false}
+                <MaterialToggleSwitch label="interaction.random_names" checked={openedInteraction?.options?.randomNames ?? false} defaultValue={false} on:change={(e) => setOption("randomNames", e.detail)} />
+            {/if}
 
             <MaterialToggleSwitch label="interaction.all_at_once" checked={openedInteraction?.options?.allAtOnce ?? false} defaultValue={false} disabled={openedInteraction?.inputs?.length <= 1} on:change={(e) => setOption("allAtOnce", e.detail)} />
 
@@ -279,15 +285,15 @@
         <div class="players">
             {#key clients}
                 {#each getInteraction(openedId)?.getClients() || [] as client, i}
-                    {@const hasScore = (getInteraction(openedId)?.getClients() || []).some((c) => (c.score || 0) > 0)}
+                    <!-- {@const hasScore = (getInteraction(openedId)?.getClients() || []).some((c) => (c.score || 0) > 0)} -->
 
                     <div class="player">
                         <Icon id="profiles" white />
                         <p style="flex: 1;">{client.name || `User #${i + 1}`}</p>
 
-                        {#if hasScore}
-                            <MaterialNumberInput label="interaction.points" value={client.score ?? 0} style="width: 100px;" on:change={(e) => getInteraction(openedId)?.setScore(client.id, e.detail)} />
-                        {/if}
+                        <!-- {#if hasScore} -->
+                        <MaterialNumberInput label="interaction.points" value={client.score ?? 0} style="width: 100px;" on:change={(e) => getInteraction(openedId)?.setScore(client.id, e.detail)} />
+                        <!-- {/if} -->
                         <MaterialButton style="padding: 4px;" red on:click={() => kick(client.id)}><T id="interaction.kick" /></MaterialButton>
                     </div>
                 {/each}
@@ -365,6 +371,7 @@
 
                     <div slot="menu">
                         {#each Object.entries(answers[i] || {}).sort((a, b) => (a[1]?.time || 0) - (b[1]?.time || 0)) as [clientId, answerValue]}
+                            {@const questionStartTime = startTimes[i] || startTime}
                             <p style="display: flex; gap: 8px;padding: 4px 8px;">
                                 <span style="font-weight: bold; opacity: 0.9;">{clients[clientId]?.name || `User #${Object.keys(clients).indexOf(clientId) + 1}`}:</span>
                                 <span style="flex: 1;white-space: normal;">
@@ -374,9 +381,9 @@
                                     {/each}
                                 </span>
 
-                                {#if startTime && answerValue?.time}
+                                {#if questionStartTime && answerValue?.time}
                                     <span style="font-family: monospace; opacity: 0.7;">
-                                        {Math.max(0, (answerValue.time - startTime) / 1000).toFixed(1)}s
+                                        {Math.max(0, (answerValue.time - questionStartTime) / 1000).toFixed(1)}s
                                     </span>
                                 {/if}
                             </p>
