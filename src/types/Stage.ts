@@ -51,6 +51,7 @@ export interface StageItem {
     // textbox
     chords?: { enabled?: boolean; color?: string; size?: number }
     auto?: boolean
+    flash?: { enabled?: boolean; color?: string; count?: number } // item background flash
     textFit?: AutosizeTypes // auto size text fix option (default: growToFit)
     button?: { press?: string; release?: string } // click actions
 

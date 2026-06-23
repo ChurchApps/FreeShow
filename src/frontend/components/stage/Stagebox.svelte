@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onDestroy } from "svelte"
+    import { getContext, onDestroy } from "svelte"
     import type { StageItem, StageLayout as TStageLayout } from "../../../types/Stage"
     import { activePopup, activeStage, activeTimers, allOutputs, currentWindow, dictionary, outputs, outputSlideCache, refreshEditSlide, stageShows, timers, variables } from "../../stores"
     import { translateText } from "../../utils/language"
@@ -11,7 +11,7 @@
     import { clone, keysToID, sortByName } from "../helpers/array"
     import Icon from "../helpers/Icon.svelte"
     import { getActiveOutputs, getStageResolution, percentageStylePos } from "../helpers/output"
-    import { createCSSVariables } from "../helpers/showActions"
+    import { createCSSVariables, replaceDynamicValues } from "../helpers/showActions"
     import { getStyles } from "../helpers/style"
     import Button from "../inputs/Button.svelte"
     import Media from "../output/layers/Media.svelte"
@@ -280,6 +280,26 @@
     $: fixedWidth = item?.type === "timer" || item?.type === "clock" ? "font-feature-settings: 'tnum' 1;" : ""
 
     $: cssVariables = createCSSVariables($variables, $outputs, "stage", updateTrigger)
+
+    // flash background (on mount & text changes)
+    $: flashColor = item?.flash?.color || "#FF0000"
+    $: flashCount = (() => {
+        if (edit) return 0
+        let value = Number(item?.flash?.count)
+        return !value || !Number.isFinite(value) || value < 1 ? 3 : Math.floor(value)
+    })()
+
+    const getLayoutMounted = getContext<() => boolean>("layoutMounted")
+    $: evaluatedText = replaceDynamicValues(currentItemText, { type: "stage", id }, ($variables ? 0 : 0) + updateTrigger)
+    let lastText = ""
+    let flashTriggerId = 0
+    $: if (item?.flash?.enabled) {
+        const currentText = evaluatedText || ""
+        const parentIsMounting = getLayoutMounted ? !getLayoutMounted() : false
+
+        if (lastText !== currentText && currentText.trim() && !parentIsMounting) flashTriggerId++
+        lastText = currentText
+    }
 </script>
 
 <svelte:window on:keydown={keydown} on:mousedown={deselect} />
@@ -298,6 +318,14 @@
     {#if currentShow?.settings?.labels && id && item}
         <div class="label">{getCustomStageLabel(item.type || id, item, $dictionary)}</div>
     {/if}
+
+    <!-- flash background -->
+    {#if item?.flash?.enabled && flashTriggerId > 0}
+        {#key flashTriggerId}
+            <div class="flashBackground" style="background-color: {flashColor};animation-iteration-count: {flashCount};"></div>
+        {/key}
+    {/if}
+
     {#if edit && item}
         <Movebox {ratio} itemStyle={item.style} active={$activeStage.items.includes(id)} />
 
@@ -528,5 +556,28 @@
     .actionButton :global(button) {
         padding: 5px !important;
         z-index: 3;
+    }
+
+    @keyframes stage-flash {
+        0% {
+            opacity: 0;
+        }
+        15% {
+            opacity: 1;
+        }
+        100% {
+            opacity: 0;
+        }
+    }
+    .flashBackground {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        pointer-events: none;
+        z-index: 0;
+        animation-name: stage-flash;
+        animation-duration: 600ms;
+        animation-timing-function: ease-out;
+        animation-fill-mode: forwards;
     }
 </style>

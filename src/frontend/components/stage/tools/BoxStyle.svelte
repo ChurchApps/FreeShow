@@ -33,6 +33,22 @@
     $: if (item?.type === "text" && stageSections) {
         delete stageSections.chords
         delete stageSections.scrolling
+
+        // item background flash
+        if (stageSections.special) {
+            const flashEnabled = !!item.flash?.enabled
+            stageSections.special = {
+                ...stageSections.special,
+                inputs: [
+                    ...stageSections.special.inputs,
+                    [{ id: "flash.enabled", type: "checkbox", value: flashEnabled, values: { label: "timer.flash" } }],
+                    [
+                        { id: "flash.color", type: "color", value: item.flash?.color || "#FF0000", hidden: !flashEnabled, values: { label: "edit.color" } },
+                        { id: "flash.count", type: "number", value: item.flash?.count ?? 3, hidden: !flashEnabled, values: { label: "edit.count", min: 1, max: 20 } }
+                    ]
+                ]
+            }
+        }
     }
     $: if (isSlideText) {
         stageSections = clone(item?.keepStyle ? { default: slideTextSections.default, chords: slideTextSections.chords, special: slideTextSections.special } : slideTextSections)

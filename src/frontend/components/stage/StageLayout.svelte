@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onDestroy } from "svelte"
+    import { onDestroy, setContext } from "svelte"
     import { OUTPUT } from "../../../types/Channels"
     import { activePage, activeStage, allOutputs, currentOutputSettings, currentWindow, outputs, settingsTab, stageShows, toggleOutputEnabled } from "../../stores"
     import { getAccess } from "../../utils/profile"
@@ -29,6 +29,16 @@
 
     const profile = getAccess("stage")
     $: readOnly = profile.global === "read" || profile[stageLayoutId || ""] === "read" || profile[stageLayoutId || ""] === "none"
+
+    // item flash
+    let layoutMounted = false
+    setContext("layoutMounted", () => layoutMounted)
+    $: if (stageLayoutId) {
+        layoutMounted = false
+        setTimeout(() => {
+            layoutMounted = true
+        }, 100)
+    }
 
     let lines: [string, number][] = []
     let mouse: any = null

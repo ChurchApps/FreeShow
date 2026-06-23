@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onDestroy } from "svelte"
+    import { getContext, onDestroy } from "svelte"
     import type { StageLayout } from "../../../types/Stage"
     import Center from "../../common/components/Center.svelte"
     import Icon from "../../common/components/Icon.svelte"
@@ -13,11 +13,13 @@
     import VideoTime from "../items/VideoTime.svelte"
     import { _getDynamicValue } from "../util/itemHelpers"
     import { activeTimers, background, media, output, outputSlideCache, progressData, stream, timers, variables } from "../util/stores"
+    import { getDynamicValue, replaceDynamicValues } from "../helpers/show"
     import MediaOutput from "./MediaOutput.svelte"
     import PreviewCanvas from "./PreviewCanvas.svelte"
     import Textbox from "./Textbox.svelte"
     import Timer from "./Timer.svelte"
     import Variable from "./Variable.svelte"
+    import { getItemText } from "../helpers/textStyle"
 
     export let stageLayout: StageLayout
     export let id: string
@@ -134,11 +136,49 @@
     const cssInterval = setInterval(() => updateTrigger++, 1000)
 
     $: cssVariables = createCSSVariables($variables, updateTrigger)
+
+    // flash background (on mount & text changes)
+    $: currentItemText = item ? getItemText(item) : ""
+
+    $: flashColor = item?.flash?.color || "#FF0000"
+    $: flashCount = (() => {
+        let value = Number(item?.flash?.count)
+        return !value || !Number.isFinite(value) || value < 1 ? 3 : Math.floor(value)
+    })()
+
+    const getLayoutMounted = getContext<() => boolean>("layoutMounted")
+
+    let evaluatedText = ""
+    $: {
+        if (currentItemText) {
+            replaceDynamicValues(currentItemText, ($variables ? 0 : 0) + ($timers ? 0 : 0) + updateTrigger)
+            evaluatedText = getDynamicValue(currentItemText)
+        } else {
+            evaluatedText = ""
+        }
+    }
+
+    let lastText = ""
+    let flashTriggerId = 0
+    $: if (item?.flash?.enabled) {
+        const currentText = evaluatedText || ""
+        const parentIsMounting = getLayoutMounted ? !getLayoutMounted() : false
+
+        if (lastText !== currentText && currentText.trim() && !parentIsMounting) flashTriggerId++
+        lastText = currentText
+    }
 </script>
 
 <!-- style + (id.includes("current_output") ? "" : newSizes) -->
 <!-- {show.settings.autoStretch === false ? '' : newSizes} -->
 <div class="item" class:border={stageLayout?.settings.labels} class:isDisabledVariable style="{itemStyle}{id.includes('slide') && !id.includes('tracker') ? '' : textStyle}{newSizes}--labelColor: {stageLayout?.settings?.labelColor || '#d0a853'};{fixedWidth}{cssVariables}">
+    <!-- flash background -->
+    {#if item?.flash?.enabled && flashTriggerId > 0}
+        {#key flashTriggerId}
+            <div class="flashBackground" style="background-color: {flashColor};animation-iteration-count: {flashCount};"></div>
+        {/key}
+    {/if}
+
     {#if stageLayout?.settings.labels}
         <div class="label">{item.label || ""}</div>
     {/if}
@@ -284,5 +324,27 @@
         .label {
             font-size: 18px;
         }
+    }
+    @keyframes stage-flash {
+        0% {
+            opacity: 0;
+        }
+        15% {
+            opacity: 1;
+        }
+        100% {
+            opacity: 0;
+        }
+    }
+    .flashBackground {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        pointer-events: none;
+        z-index: 0;
+        animation-name: stage-flash;
+        animation-duration: 600ms;
+        animation-timing-function: ease-out;
+        animation-fill-mode: forwards;
     }
 </style>

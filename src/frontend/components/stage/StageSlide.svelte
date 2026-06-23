@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onDestroy } from "svelte"
+    import { onDestroy, setContext } from "svelte"
     import type { StageLayout } from "../../../types/Stage"
     import { allOutputs, outputs, stageShows } from "../../stores"
     import { triggerClickOnEnterSpace } from "../../utils/clickable"
@@ -48,6 +48,16 @@
         if (stageItems.some((a) => a?.conditions)) conditionsUpdater++
     }, 1000)
     onDestroy(() => clearInterval(updaterInterval))
+
+    // item flash
+    let layoutMounted = false
+    setContext("layoutMounted", () => layoutMounted)
+    $: if (id) {
+        layoutMounted = false
+        setTimeout(() => {
+            layoutMounted = true
+        }, 100)
+    }
 </script>
 
 <!-- WIP duplicate of StageLayout.svelte (pretty much) -->
