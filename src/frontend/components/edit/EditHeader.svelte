@@ -32,13 +32,13 @@
 <svelte:window on:mousedown={mousedown} />
 
 <div class="header" class:shadow={listScrollY > 0}>
-    <p style="width: 100%;max-width: 98%;display: flex;align-items: center;gap: 0.5em;font-size: 0.9em;" data-title={currentShow?.name}>
+    <div class="name" data-title={currentShow?.name}>
         {#if currentShow?.name}
             {currentShow.name}
         {:else}
             <span style="opacity: 0.5;font-style: italic;"><T id="main.unnamed" /></span>
         {/if}
-    </p>
+    </div>
 
     <div class="right">
         {#if templateId}
@@ -103,7 +103,8 @@
         width: 100%;
         height: 30px;
 
-        padding: 0.2em 0.8em;
+        padding: 0.2em;
+        padding-left: 0.8em;
         font-weight: 600;
 
         display: flex;
@@ -125,12 +126,18 @@
     }
 
     .header .right {
-        position: absolute;
-        top: 0;
         height: 100%;
+        display: flex;
+        flex-shrink: 0;
+        margin-left: auto;
     }
-    .header .right {
-        right: 0;
+
+    .name {
+        flex: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-size: 0.9em;
     }
 
     /* dropdown */
