@@ -399,7 +399,7 @@
                             </span>
                         {/key}
                     {:else}
-                        <Textbox item={stageItemToItem(item)} stageItem={item} ref={{ type: "stage", id }} {fontSize} stageAutoSize={item.auto || item.textFit !== "none"} isStage />
+                        <Textbox item={stageItemToItem(item)} stageItem={item} ref={{ type: "stage", id }} {fontSize} stageAutoSize={item.auto || (item.textFit && item.textFit !== "none")} isStage />
                     {/if}
                 {:else if item.type}
                     {#if newItem}
