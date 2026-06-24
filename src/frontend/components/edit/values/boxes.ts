@@ -656,5 +656,41 @@ export const itemBoxes: Box2 = {
                 inputs: [[{ id: "button.press", type: "dropdown", value: "", values: { label: "edit.press_action", options: "actions", allowEmpty: true } }], [{ id: "button.release", type: "dropdown", value: "", values: { label: "edit.release_action", options: "actions", allowEmpty: true } }]]
             }
         }
+    },
+    chart: {
+        icon: "charts",
+        sections: {
+            default: {
+                inputs: [
+                    [
+                        {
+                            type: "dropdown",
+                            id: "chart.type",
+                            value: "bar",
+                            values: {
+                                label: "sort.type",
+                                options: [
+                                    { value: "bar", label: "Bar" },
+                                    { value: "line", label: "Line" },
+                                    { value: "pie", label: "Pie" }
+                                ]
+                            }
+                        }
+                    ],
+                    [{ type: "number", id: "chart.holeSize", value: 0, values: { label: "edit.size", defaultValue: 0, step: 1, max: 100, min: 0, showSlider: true } }],
+                    [{ type: "popup", id: "chart.data", value: "", values: { label: "popup.edit_chart", name: "emitters.data", icon: "grid", popupId: "edit_chart", allowEmpty: false } }]
+                ]
+            }
+        }
+    },
+    table: {
+        icon: "grid",
+        sections: (() => {
+            const sections = nonTextboxTextStyle({
+                inputs: [[{ type: "color", id: "table.borderColor", value: "", values: { label: "edit.border", allowEmpty: true, allowOpacity: true } }], [{ type: "number", id: "table.borderWidth", value: 1, values: { label: "edit.width", min: 0, max: 50, showSlider: true } }]]
+            })
+            sections.align = { defaultValues: ["center", "center"], inputs: [alignX, alignY] }
+            return sections
+        })()
     }
 }

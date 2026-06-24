@@ -351,7 +351,7 @@
                                 {:else if input.type === "media"}
                                     <MaterialFilePicker label={(value ? values.label : "") || "edit.choose_media"} {value} filter={{ name: "Media files", extensions: mediaExtensions }} on:change={(e) => changed(e, input, id)} autoTrigger={$activeEdit.type !== "template"} allowEmpty />
                                 {:else if input.type === "popup"}
-                                    <MaterialPopupButton {...values} {value} on:change={(e) => changed(e, input, id)} allowEmpty />
+                                    <MaterialPopupButton {...values} {value} on:change={(e) => changed(e, input, id)} allowEmpty={values.allowEmpty !== false} />
                                 {:else if input.type === "tip"}
                                     <p class="tip">
                                         {#if values.label}{translateText(values.label)}{/if}

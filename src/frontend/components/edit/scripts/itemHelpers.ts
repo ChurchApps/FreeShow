@@ -88,6 +88,19 @@ export function addItem(type: ItemType, id: string | null = null, options: any =
     else if (type === "slide_tracker") newData.auto = true
     else if (type === "web") newData.web = { url: "" }
     else if (type === "captions") newData.captions = { roomId: "freeshow" + uid(6) }
+    else if (type === "chart") newData.chart = { type: "bar", data: "" }
+    else if (type === "table") {
+        newData.table = {
+            borderColor: "rgba(255,255,255,0.2)",
+            borderWidth: 1,
+            rows: [
+                { cells: [{ text: "", style: "font-weight: bold; background-color: rgba(255, 255, 255, 0.05);" }, { text: "", style: "font-weight: bold; background-color: rgba(255, 255, 255, 0.05);" }, { text: "", style: "font-weight: bold; background-color: rgba(255, 255, 255, 0.05);" }] },
+                { cells: [{ text: "" }, { text: "" }, { text: "" }] },
+                { cells: [{ text: "" }, { text: "" }, { text: "" }] }
+            ]
+        }
+        newData.textFit = "none"
+    }
     // else if (type === "button") {
     //     // make square, colored, rounded and center
     //     let size: number = 300

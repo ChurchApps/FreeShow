@@ -24,6 +24,8 @@
 
     // selection
     let selection: null | { start: number; end: number }[] = null
+    let activeRowIdx = -1
+    let activeColIdx = -1
     const unsubscribe = activeEdit.subscribe((a) => {
         if (!a.items.length) {
             selection = null
@@ -61,11 +63,22 @@
         if (sel?.type === "None") {
             if ((document.activeElement as HTMLElement | null)?.closest(".tools")) return
             selection = null
+            activeRowIdx = -1
+            activeColIdx = -1
             return
         }
 
         const anchorElem = (sel?.anchorNode as Element)?.nodeType === Node.ELEMENT_NODE ? (sel?.anchorNode as Element) : sel?.anchorNode?.parentElement
-        if (!anchorElem?.closest(".edit")) return
+        if (!anchorElem?.closest(".edit")) {
+            activeRowIdx = -1
+            activeColIdx = -1
+            return
+        }
+
+        const cellEditElem = anchorElem?.closest(".cell-content.edit")
+        const td = cellEditElem?.closest("td")
+        activeRowIdx = td ? parseInt(td.getAttribute("data-row") || "") : -1
+        activeColIdx = td ? parseInt(td.getAttribute("data-col") || "") : -1
 
         selection = getSelectionRange() // range
     }
@@ -201,14 +214,18 @@
 
     // -----
 
-    const setItemStyle = ["list", "timer", "clock", "icon", "events", "camera", "variable", "web", "slide_tracker"]
+    const setItemStyle = ["list", "timer", "clock", "icon", "events", "camera", "variable", "web", "slide_tracker", "table"]
 
     const setBox = () => clone(itemBoxes[id])!
     let box = setBox()
     $: if ($activeEdit.id || $activeShow?.id || $activeEdit.slide) box = setBox()
 
     // get item values
-    $: style = item?.lines ? getItemStyleAtPos(item.lines, selection) : item?.style || ""
+    $: style = item?.lines
+        ? getItemStyleAtPos(item.lines, selection)
+        : (item?.type === "table" && activeRowIdx >= 0 && activeColIdx >= 0 && item.table?.rows?.[activeRowIdx]?.cells?.[activeColIdx])
+            ? item.table.rows[activeRowIdx].cells[activeColIdx].style || ""
+            : item?.style || ""
     let styles: any = {}
     $: if (style !== undefined) styles = getStyles(style, true)
 
@@ -233,7 +250,7 @@
 
     $: if (box?.sections?.font) {
         setBoxInputValue(box, "font", "font-size", "disabled", item?.textFit !== "none")
-        setBoxInputValue(box, "font", "textFit", "value", item?.textFit || "growToFit") // other items (like clock, timer)
+        setBoxInputValue(box, "font", "textFit", "value", item?.textFit || (id === "table" ? "none" : "growToFit")) // other items (like clock, timer)
         // setBoxInputValue(box2, "font", "auto", "value", item.auto ?? true)
     }
 
@@ -292,12 +309,17 @@
         setBoxInputValue(box, "default", "events.startDate", "hidden", !item.events?.enableStartDate)
         setBoxInputValue(box, "default", "events.startTime", "hidden", !item.events?.enableStartDate)
     }
+    $: if (id === "chart" && item) {
+        setBoxInputValue(box, "default", "chart.holeSize", "hidden", item.chart?.type !== "pie")
+        setBoxInputValue(box, "default", "chart.holeSize", "value", item.chart?.holeSize ?? 0)
+    }
 
     ///
 
     function setValue(input: any, allItems: any[]) {
         let value: any = input.value
         if (input.id === "filter") value = addFilterString(item?.filter || "", [input.key, value])
+        else if (input.id === "align" && item?.type === "table") value = addStyleString(item?.align || "", [input.key, value])
         else if (input.key === "text-align") value = `text-align: ${value};`
         else if (input.key) value = { ...((item as any)?.[input.key] || {}), [input.key]: value }
 
@@ -387,6 +409,23 @@
     function updateValue(e: any) {
         let input = e.detail
         console.log("BOX INPUT:", input)
+
+        const sel = window.getSelection()
+        const anchorNode = sel?.anchorNode
+        const cellEditElem = anchorNode && (anchorNode.nodeType === Node.ELEMENT_NODE ? (anchorNode as Element) : anchorNode.parentElement)?.closest(".cell-content.edit")
+        const td = cellEditElem?.closest("td")
+        const rowIdx = td ? parseInt(td.getAttribute("data-row") || "") : -1
+        const colIdx = td ? parseInt(td.getAttribute("data-col") || "") : -1
+
+        if (item?.type === "table" && rowIdx >= 0 && colIdx >= 0 && input.key && item.table?.rows?.[rowIdx]?.cells?.[colIdx]) {
+            let allItems: number[] = $activeEdit.items
+            if (!allItems.length) allSlideItems.forEach((_item, i) => allItems.push(i))
+            let cellStyle = item.table.rows[rowIdx].cells[colIdx].style || ""
+            cellStyle = addStyleString(cellStyle, [input.key, input.value])
+            item.table.rows[rowIdx].cells[colIdx].style = cellStyle
+            setValue({ id: "table", value: item.table }, allItems)
+            return
+        }
 
         // does not work for partial text when auto size is enabled
         // WIP doesn't need to show if disabled works correctly

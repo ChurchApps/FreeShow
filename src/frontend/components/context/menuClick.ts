@@ -352,6 +352,8 @@ const clickActions = {
             history({ id: "UPDATE", newData: { id: "keys" }, oldData: { keys: eventIds }, location: { page: "drawer", id: "event" } })
         }
     },
+    delete_row: () => window.dispatchEvent(new CustomEvent("delete-row")),
+    delete_col: () => window.dispatchEvent(new CustomEvent("delete-col")),
     duplicate: (obj: ObjData) => {
         if (duplicate(obj.sel)) return
 

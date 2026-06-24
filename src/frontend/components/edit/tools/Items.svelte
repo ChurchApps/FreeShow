@@ -16,9 +16,10 @@
     const commonItems: ItemRef[] = [{ id: "media", icon: "image" }, { id: "web" }, { id: "timer" }, { id: "clock" }]
 
     const specialItems: ItemRef[] = [
-        // { id: "table" },
         { id: "camera" },
         { id: "slide_tracker", icon: "percentage" },
+        { id: "table", icon: "grid" },
+        { id: "chart", icon: "charts" },
         { id: "events", icon: "calendar" },
         { id: "weather", icon: "cloud" },
         // mirror item is probably never used anymore, as we have a dedicated stage output, and dynamic values for next/previous slide
@@ -55,7 +56,11 @@
         variable: (item: Item) => {
             let name = $variables[item.variable?.id]?.name || ""
             return name
-        }
+        },
+        chart: (item: Item) => {
+            return item.chart?.type || ""
+        },
+        table: () => ""
     }
 
     export let allSlideItems: Item[]
