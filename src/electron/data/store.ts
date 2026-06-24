@@ -15,7 +15,7 @@ import type { Overlays, Templates, TrimmedShows } from "../../types/Show"
 import type { StageLayouts } from "../../types/Stage"
 import type { ContentProviderId } from "../contentProviders/base/types"
 import { sendMain, sendToMain } from "../IPC/main"
-import { dataFolderNames, deleteFile, doesPathExist, getDataFolderPath, getDefaultDataFolderRoot, isWritable, moveFileAsync, readFile, readFolder } from "../utils/files"
+import { dataFolderNames, deleteFile, doesPathExist, getDataFolderPath, getDefaultDataFolderRoot, isWritable, moveFileAsync, readFile, readFolder, specialCaseFixer } from "../utils/files"
 import { clone, wait } from "../utils/helpers"
 import "./contentProviders"
 import { defaultConfig, defaultSettings, defaultSyncedSettings } from "./defaults"
@@ -57,6 +57,8 @@ export async function setupStores() {
     createStores(oldLocation, true)
 
     checkStores(getDataFolderPath("userData"))
+
+    specialCaseFixer()
 }
 
 // Check that files are parsed properly!

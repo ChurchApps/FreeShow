@@ -1228,8 +1228,6 @@ function getFileParentFolderId(filePath: string) {
 export function loadShows(returnShows = false, reCacheNames: string[] = []) {
     const showsPath = getDataFolderPath("shows")
 
-    specialCaseFixer()
-
     // list all shows in folder
     let filesInFolder: string[] = readFolder(showsPath)
 
@@ -1298,8 +1296,6 @@ export function loadShows(returnShows = false, reCacheNames: string[] = []) {
 
 export async function loadShowsAsync(returnShows = false, reCacheNames: string[] = []) {
     const showsPath = getDataFolderPath("shows")
-
-    specialCaseFixer()
 
     // list all shows in folder
     const allFiles = await readFolderAsync(showsPath)
@@ -1524,7 +1520,7 @@ const FIXES = {
         setAutoProfile("admin")
     }
 }
-function specialCaseFixer() {
+export function specialCaseFixer() {
     const defaultDataFolder = getDefaultDataFolderRoot()
     if (!doesPathExist(defaultDataFolder)) return
 
