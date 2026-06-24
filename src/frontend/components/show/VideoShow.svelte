@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { onDestroy } from "svelte"
     import { uid } from "uid"
     import { Main } from "../../../types/IPC/Main"
     import type { MediaStyle } from "../../../types/Main"
@@ -341,6 +342,21 @@
     $: if (blurVideo && (videoTime < blurVideo.currentTime - 0.3 || videoTime > blurVideo.currentTime + 0.3)) blurVideo.currentTime = videoTime
     $: if (!videoData.paused && blurVideo?.paused) blurVideo.play()
     $: blurPausedState = videoData.paused
+
+    onDestroy(() => {
+        const cleanupVideo = (el: HTMLVideoElement | null | undefined) => {
+            if (!el) return
+            try {
+                el.pause()
+                el.removeAttribute("src")
+                el.load()
+            } catch (e) {
+                console.error("Error cleaning up video element in VideoShow:", e)
+            }
+        }
+        cleanupVideo(video)
+        cleanupVideo(blurVideo)
+    })
 
     // WIP if paused on mount, blur video does not get paused
 </script>

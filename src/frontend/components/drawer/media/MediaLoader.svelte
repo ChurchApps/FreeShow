@@ -26,6 +26,7 @@
     export let getDuration = false
     export let ghost = false
     export let videoElem: HTMLVideoElement | null = null
+    let videoBlurElem: HTMLVideoElement | null = null
 
     $: if (path) loaded = false
 
@@ -50,6 +51,19 @@
     })
     onDestroy(() => {
         if (resizeObserver && mainElem) resizeObserver.unobserve(mainElem)
+
+        const cleanupVideo = (el: HTMLVideoElement | null | undefined) => {
+            if (!el) return
+            try {
+                el.pause()
+                el.removeAttribute("src")
+                el.load()
+            } catch (e) {
+                console.error("Error cleaning up video element in MediaLoader:", e)
+            }
+        }
+        cleanupVideo(videoElem)
+        cleanupVideo(videoBlurElem)
     })
 
     // type
@@ -158,7 +172,7 @@
             {/if}
             {#if type === "video" && useOriginal && !ghost}
                 {#if mediaStyle.fit === "blur"}
-                    <video style={mediaStyleBlurString} src={encodeFilePath(path)} muted>
+                    <video bind:this={videoBlurElem} style={mediaStyleBlurString} src={encodeFilePath(path)} muted>
                         <track kind="captions" />
                     </video>
                 {/if}

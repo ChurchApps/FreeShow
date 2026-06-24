@@ -72,6 +72,21 @@
     onDestroy(() => {
         if (endInterval) clearInterval(endInterval)
         if (pingbackInterval) clearInterval(pingbackInterval)
+
+        const cleanupVideo = (el: HTMLVideoElement | null | undefined) => {
+            if (!el) return
+            try {
+                el.pause()
+                el.removeAttribute("src")
+                el.load()
+            } catch (e) {
+                console.error("Error cleaning up video element:", e)
+            }
+        }
+
+        cleanupVideo(video)
+        cleanupVideo(blurVideo)
+        cleanupVideo(softLoopVideo)
     })
 
     // custom end time

@@ -52,6 +52,20 @@
     }
     onDestroy(() => {
         if (updateInterval) clearInterval(updateInterval)
+
+        const cleanupVideo = (el: HTMLVideoElement | null | undefined) => {
+            if (!el) return
+            try {
+                el.pause()
+                el.removeAttribute("src")
+                el.load()
+            } catch (e) {
+                console.error("Error cleaning up video element:", e)
+            }
+        }
+
+        cleanupVideo(videoElem)
+        cleanupVideo(videoBlurElem)
     })
 
     // LOAD MEDIA ITEM
