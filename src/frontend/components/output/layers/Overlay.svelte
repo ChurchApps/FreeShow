@@ -39,10 +39,20 @@
     // $: videoTime = $videosTime[outputId] || 0
     // $: if ($activeTimers || $variables || $playingAudio || $playingAudioPaths || videoTime) updateValues()
     let conditionsUpdater = 0
-    const updaterInterval = setInterval(() => {
-        if (isClearing) return
-        if (currentItems.find((a) => a?.conditions)) conditionsUpdater++
-    }, 300)
+    let isMic = false
+    $: isMic = JSON.stringify(currentItems.map((a) => a?.conditions) || "").includes('"element":"volume"')
+
+    let updaterInterval: NodeJS.Timeout
+    $: {
+        clearInterval(updaterInterval)
+        updaterInterval = setInterval(
+            () => {
+                if (isClearing) return
+                if (currentItems.find((a) => a?.conditions)) conditionsUpdater++
+            },
+            isMic ? 100 : 300
+        )
+    }
     onDestroy(() => clearInterval(updaterInterval))
 </script>
 

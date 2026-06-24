@@ -52,7 +52,7 @@
 
         let newList: { [key: string]: typeof list } = {}
         list.forEach((value) => {
-            const separator = separators.find((a) => value.id.includes(a)) || ""
+            const separator = separators.find((a) => value.id.startsWith(a)) || ""
             if (separator && separatorId !== separator && separatorId !== "$" && !newList[separator]?.length) {
                 separatorId = separator
                 newList[separatorId] = []
@@ -256,15 +256,12 @@
                                 {#if preview}{@html preview}{:else}—{/if}
                             </p>
 
-                            <p style="display: inline-flex;">
+                            <p style="display: inline-flex;" data-title={value.id}>
                                 <span style="color: var(--secondary);">{"{"}</span>
                                 {#if value.id.startsWith("$")}
                                     <span style="color: var(--secondary);">{"$"}</span>
                                     {value.id.slice(1)}
                                 {:else}
-                                    <!-- variable_set_ -->
-                                    <!-- <span style="color: var(--secondary);">{value.id.slice(0, value.id.indexOf("_") + 1)}</span> -->
-                                    <!-- {value.id.slice(value.id.indexOf("_") + 1)} -->
                                     {value.id}
                                 {/if}
                                 <span style="color: var(--secondary);">{"}"}</span>
@@ -312,7 +309,7 @@
         background-color: var(--primary-darkest);
         padding: 10px;
 
-        max-width: 600px;
+        max-width: 500px;
     }
 
     .value.active {

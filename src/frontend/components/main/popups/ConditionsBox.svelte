@@ -8,6 +8,7 @@
     import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
     import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
     import { newToast } from "../../../utils/common"
+    import { AudioMicrophone } from "../../../audio/audioMicrophone"
 
     export let input: { [key: string]: string }
 
@@ -20,7 +21,8 @@
             { value: "text", label: translateText("edit.text") },
             { value: "timer", label: translateText("items.timer") },
             { value: "variable", label: translateText("items.variable") },
-            { value: "dynamicValue", label: translateText("actions.dynamic_value") }
+            { value: "dynamicValue", label: translateText("actions.dynamic_value") },
+            { value: "volume", label: translateText("media.volume") }
         ],
         operator: [
             { value: "is", label: translateText("conditions.is") },
@@ -40,19 +42,33 @@
             { value: "isBelow", label: translateText("conditions.is_below") },
             { value: "is", label: translateText("conditions.is") },
             { value: "isNot", label: translateText("conditions.is_not") }
-        ]
+        ],
         // text: [{ value: "has_text", name: translateText("conditions.has_text") }, ...conditions.operator],
+        volume: [
+            { value: "isAbove", label: translateText("conditions.is_above") },
+            { value: "isBelow", label: translateText("conditions.is_below") },
+            { value: "is", label: translateText("conditions.is") },
+            { value: "isNot", label: translateText("conditions.is_not") }
+        ]
     }
     const customData = {
         timer: [{ value: "seconds", label: translateText("conditions.seconds") }]
     }
     const noData: string[] = ["isRunning"] // ["has_text"]
 
-    const elementOptions = {
+    let micsList: { value: string; label: string }[] = []
+    $: if (elementId === "volume") {
+        AudioMicrophone.getList()?.then((devices) => {
+            micsList = devices?.map((d) => ({ value: d.deviceId, label: d.label })) || []
+        })
+    }
+
+    $: elementOptions = {
         timer: [{ value: "", label: translateText("stage.first_active_timer") }, ...convertToOptions($timers)],
         variable: getVariables(),
         // , text.includes("{scripture") ? "scripture" : null
-        dynamicValue: getDynamicIds(true).map((a) => ({ value: a, label: a }))
+        dynamicValue: getDynamicIds(true).map((a) => ({ value: a, label: a })),
+        volume: [{ value: "main", label: translateText("audio.main") }, ...micsList]
     }
     export function convertToOptions(object) {
         const options = Object.keys(object).map((id) => ({ value: id, label: object[id].name }))

@@ -31,7 +31,7 @@
     const isOverlay = edit.type === "overlay"
     const isTemplate = edit.type === "template"
 
-    let itemIndex = isStage ? (stageElem.id || $activeStage.items[0]) : Number(edit.items[0] || 0)
+    let itemIndex = isStage ? stageElem.id || $activeStage.items[0] : Number(edit.items[0] || 0)
     let slide = isStage ? $stageShows[$activeStage.id || ""] : isOverlay ? $overlays[edit.id!] : isTemplate ? $templates[edit.id!] : $showsCache[showId]?.slides?.[slideId]
     let item = slide?.items[itemIndex]
     let itemText = getItemText(item)
@@ -188,7 +188,14 @@
     $: addMoreOuter = showItemValues?.[0]?.length > 1 || showItemValues?.length > 1
 
     let conditionsUpdater = 0
-    const updaterInterval = setInterval(() => conditionsUpdater++, 2000)
+    let isMic = false
+    $: isMic = JSON.stringify(OUTER_OR || "").includes('"element":"volume"')
+
+    let updaterInterval: NodeJS.Timeout
+    $: {
+        clearInterval(updaterInterval)
+        updaterInterval = setInterval(() => conditionsUpdater++, isMic ? 100 : 2000)
+    }
     onDestroy(() => clearInterval(updaterInterval))
 
     $: currentItemText =
