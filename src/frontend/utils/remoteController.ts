@@ -54,6 +54,7 @@ export async function startRemoteController(id?: string) {
 
 export async function stopRemoteController(id?: string) {
     id = id ?? getStore(special).remoteControllerId
+    if (!id) return
 
     if (unsubscribe) {
         unsubscribe()

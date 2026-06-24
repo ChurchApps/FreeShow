@@ -329,10 +329,13 @@ export function initializeClosing(skipPopup = false) {
 
 export async function closeApp() {
     try {
-        await stopAllInteractions()
-        await stopRemoteController()
-    } catch {
-        console.error("Could not stop interactions before closing!")
+        const timeout = <T>(promise: Promise<T>, ms: number): Promise<T | void> => {
+            return Promise.race([promise, new Promise<void>((resolve) => setTimeout(resolve, ms))])
+        }
+        await timeout(stopAllInteractions(), 500)
+        await timeout(stopRemoteController(), 500)
+    } catch (e) {
+        console.error("Could not stop interactions before closing!", e)
     }
 
     sendMain(Main.CLOSE)
