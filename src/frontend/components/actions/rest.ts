@@ -34,7 +34,7 @@ export async function sendRestCommand(data: API_rest_command) {
     // If a Payload is provoded, add it to the requests body
     if (data.payload && (data.method === "POST" || data.method === "PUT")) {
         // options.body = JSON.stringify(data.payload);
-        options.body = getDynamicValue(data.payload)
+        options.body = data.payload.includes("{") ? getDynamicValue(data.payload) : data.payload
     }
 
     if (!data.url) return

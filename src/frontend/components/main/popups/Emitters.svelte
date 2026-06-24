@@ -199,7 +199,7 @@
 
     {#if dataPreview}
         <div class="preview">
-            {getDynamicValue(dataPreview)}
+            {dataPreview.includes("{") ? getDynamicValue(dataPreview) : dataPreview}
         </div>
     {/if}
 {:else if editEmitter && emitter}

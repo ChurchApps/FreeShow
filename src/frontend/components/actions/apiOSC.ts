@@ -87,6 +87,6 @@ function parsePath(path) {
 
 export type OSC_SIGNAL = { url?: string; port?: string }
 export function emitOSC(signal: OSC_SIGNAL, data: string) {
-    data = getDynamicValue(data)
+    data = data.includes("{") ? getDynamicValue(data) : data
     sendMain(Main.EMIT_OSC, { signal, data })
 }
