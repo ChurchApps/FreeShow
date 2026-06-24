@@ -1,15 +1,15 @@
 import qrcode from "qrcode-generator"
 import { get } from "svelte/store"
+import { uid } from "uid"
 import type { Item, Slide } from "../../../../types/Show"
 import { ShowObj } from "../../../classes/Show"
 import { activeProject, activeShow, interactions, openedInteractionId, shows, showsCache } from "../../../stores"
+import { clone } from "../../helpers/array"
 import { history } from "../../helpers/history"
 import { loadShows } from "../../helpers/setShow"
 import { checkName } from "../../helpers/show"
-import { uid } from "uid"
-import { clone } from "../../helpers/array"
 
-type SlideTypes = "join" | "players" | "question" | "leaderboard"
+type SlideTypes = "join" | "players" | "question" | "leaderboard" | "chart"
 
 export async function generateSlide(type: SlideTypes) {
     const id = get(openedInteractionId)
@@ -25,6 +25,7 @@ export async function generateSlide(type: SlideTypes) {
     else if (type === "players") slide = generatePlayersSlide()
     else if (type === "question") slide = generateQuestionSlide()
     else if (type === "leaderboard") slide = generateLeaderboardSlide()
+    else if (type === "chart") slide = generateChartSlide(id)
 
     if (!slide) return
 
@@ -144,6 +145,35 @@ function generateLeaderboardSlide() {
             { type: "text", style: "top:72.50px;left:461.00px;height:152.67px;width:998.00px;", lines: [{ align: "", text: [{ style: "font-weight:bold;font-size:120px;text-shadow:0 0 0 rgb(0 0 0 / 0);-webkit-text-stroke-width:15px;", value: "Leaderboard" }] }] },
             { type: "text", style: "top:285.02px;left:80.00px;height:706.98px;width:1760.00px;", align: "align-items:flex-start;", lines: [{ align: "text-align: left;", text: [{ style: "font-size:80px;text-shadow:0 0 0 rgb(0 0 0 / 0);-webkit-text-stroke-width:10px;", value: "{interaction_leaderboard}" }] }] }
         ]
+    }
+
+    return clone(slide)
+}
+
+function generateChartSlide(id: string) {
+    const interaction = get(interactions)[id]
+    let optionsCount = 4
+    if (interaction && interaction.inputs) {
+        const mcInput = interaction.inputs.find((inp: any) => inp.type === "multi_choice") as any
+        if (mcInput && mcInput.options) {
+            optionsCount = mcInput.options.length
+        }
+    }
+
+    const defaultColors = ["#3b82f6", "#10b981", "#f59e0b", "#ec4899", "#8b5cf6", "#f43f5e", "#06b6d4", "#14b8a6"]
+    const grid: string[][] = []
+    for (let i = 0; i < optionsCount; i++) {
+        const optionIdx = i + 1
+        const color = defaultColors[i % defaultColors.length]
+        grid.push([`{interaction_input_options#${optionIdx}|}`, `{interaction_option_percentages#${optionIdx}}`, color])
+    }
+
+    const slide: Slide = {
+        group: "Chart",
+        color: null,
+        settings: {},
+        notes: "",
+        items: [BG_item, { type: "text", style: "top:60px;left:194.50px;height:120.00px;width:1534.08px;", lines: [{ align: "", text: [{ style: "font-weight:bold;font-size:80px;text-shadow:0 0 0 rgb(0 0 0 / 0);-webkit-text-stroke-width:10px;", value: "{interaction_question}" }] }] }, { type: "chart", style: "top:220.00px;left:194.50px;height:760.00px;width:1534.08px;", chart: { type: "pie", data: JSON.stringify(grid) } }]
     }
 
     return clone(slide)

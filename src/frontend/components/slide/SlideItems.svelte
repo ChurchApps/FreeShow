@@ -122,7 +122,7 @@
     <!-- moved to textbox in 1.3.3 -->
     <Variable {item} style={variableStyleString} ref={{ ...ref, slideIndex }} hideText={edit ? false : (ref.type === "stage" && !!$currentWindow) || preview} {edit} />
 {:else if item.type === "chart"}
-    <Chart {item} />
+    <Chart {item} ref={{ ...ref, slideIndex }} />
 {:else if item.type === "table"}
     <Table {item} {edit} {ref} {ratio} />
 {/if}

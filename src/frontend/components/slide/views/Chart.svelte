@@ -1,7 +1,10 @@
 <script lang="ts">
+    import { onDestroy } from "svelte"
     import type { Item } from "../../../../types/Show"
+    import { replaceDynamicValues } from "../../helpers/showActions"
 
     export let item: Item
+    export let ref: any = {}
 
     $: type = item.chart?.type || "bar"
 
@@ -18,15 +21,48 @@
         }
     }
 
+    $: hasDynamicValues = item.chart?.data?.includes("{")
+
+    $: if (hasDynamicValues) startInterval()
+    else stopInterval()
+
+    let dynamicInterval: NodeJS.Timeout | null = null
+    function startInterval() {
+        stopInterval()
+        dynamicInterval = setInterval(update, 1000)
+    }
+    function stopInterval() {
+        if (dynamicInterval) clearInterval(dynamicInterval)
+        dynamicInterval = null
+    }
+
+    let updateDynamic = 0
+    function update() {
+        if (!hasDynamicValues) return
+        updateDynamic++
+    }
+
+    onDestroy(() => stopInterval())
+
+    $: evaluatedGrid = grid.map((row) => {
+        const label = replaceDynamicValues(row[0] || "", ref, updateDynamic) as string
+        const valStr = replaceDynamicValues(row[1] || "0", ref, updateDynamic) as string
+        return [label, valStr, row[2] || ""]
+    })
+
     // SVG Chart Data
     $: data = (() => {
         const fallbackColors = ["#3b82f6", "#10b981", "#f59e0b", "#ec4899", "#8b5cf6", "#f43f5e", "#06b6d4", "#14b8a6"]
-        if (grid && grid.length > 0) {
-            const hasHeader = grid[0] && isNaN(parseFloat(grid[0][1]))
-            const dataRows = hasHeader ? grid.slice(1) : grid
+        if (evaluatedGrid && evaluatedGrid.length > 0) {
+            const hasHeader = evaluatedGrid[0] && evaluatedGrid[0][0] === "Label" && isNaN(parseFloat(evaluatedGrid[0][1]))
+            const dataRows = hasHeader ? evaluatedGrid.slice(1) : evaluatedGrid
             const parsed = dataRows.map((row, idx) => {
                 const label = row[0] || ""
-                const val = parseFloat(row[1] || "0")
+                let rawVal = (row[1] || "0").trim()
+                if (rawVal.endsWith("%")) {
+                    rawVal = rawVal.slice(0, -1)
+                }
+                const val = parseFloat(rawVal)
                 const colorHex = row[2] || fallbackColors[idx % fallbackColors.length]
                 return {
                     label,
@@ -67,13 +103,14 @@
     $: areaD = points.length ? `${pathD} L ${points[points.length - 1].x},${yAxis} L ${points[0].x},${yAxis} Z` : ""
 
     // Pie / Doughnut slice calculations
-    $: itemsPerRow = data.length > 4 ? 4 : data.length
-    $: numRows = Math.ceil(data.length / itemsPerRow)
+    $: itemsPerRow = data.length > 4 ? 4 : data.length || 1
+    $: numRows = Math.ceil(data.length / itemsPerRow) || 1
     $: rowGap = Math.max(16, fontSize * 0.75)
     $: legendHeight = (numRows - 1) * rowGap + Math.max(20, fontSize * 0.5) + 10
     $: usablePieHeight = height - legendHeight
 
     $: total = data.reduce((sum, d) => sum + d.value, 0) || 1
+    $: allZero = data.every((d) => d.value === 0)
     $: pieRadius = Math.min(width * 0.4, usablePieHeight * 0.45)
     $: centerX = width / 2
     $: centerY = usablePieHeight / 2
@@ -81,8 +118,9 @@
         let currentAngle = -90 // Start at top (12 o'clock)
         const colors = ["#3b82f6", "#10b981", "#f59e0b", "#ec4899", "#8b5cf6", "#f43f5e", "#06b6d4", "#14b8a6"]
         return data.map((item, idx) => {
-            const val = item.value
-            const angleDegrees = (val / total) * 360
+            const val = allZero ? 1 : item.value
+            const segmentTotal = allZero ? data.length : total
+            const angleDegrees = (val / segmentTotal) * 360
             const nextAngle = currentAngle + angleDegrees
 
             // Convert angles to radians for calculation
@@ -95,11 +133,14 @@
             const x2 = r * Math.cos(rad2)
             const y2 = r * Math.sin(rad2)
 
-            // Large arc flag: 1 if slice is > 180 degrees, else 0
+            const isFull = angleDegrees >= 359.9
             const largeArcFlag = angleDegrees > 180 ? 1 : 0
 
             // SVG path: Move to center (0,0), Line to start point (x1, y1), Arc to end point (x2, y2), Close (Z)
-            const d = `M 0 0 L ${x1.toFixed(2)} ${y1.toFixed(2)} A ${r} ${r} 0 ${largeArcFlag} 1 ${x2.toFixed(2)} ${y2.toFixed(2)} Z`
+            // If it's a full circle, use a two-arc path to prevent browser rendering collapse
+            const d = isFull
+                ? `M 0 ${-r.toFixed(2)} A ${r.toFixed(2)} ${r.toFixed(2)} 0 1 1 0 ${r.toFixed(2)} A ${r.toFixed(2)} ${r.toFixed(2)} 0 1 1 0 ${-r.toFixed(2)} Z`
+                : `M 0 0 L ${x1.toFixed(2)} ${y1.toFixed(2)} A ${r} ${r} 0 ${largeArcFlag} 1 ${x2.toFixed(2)} ${y2.toFixed(2)} Z`
 
             const colorHex = item.colorHex || colors[idx % colors.length]
 
@@ -107,10 +148,10 @@
             const midAngle = currentAngle + angleDegrees / 2
             const midRad = (midAngle * Math.PI) / 180
             const textR = r * 0.6
-            const textX = textR * Math.cos(midRad)
-            const textY = textR * Math.sin(midRad)
+            const textX = isFull ? 0 : textR * Math.cos(midRad)
+            const textY = isFull ? 0 : textR * Math.sin(midRad)
 
-            const rawPercent = (val / total) * 100
+            const rawPercent = (item.value / total) * 100
             // Keep up to 1 decimal place, but drop trailing .0 if integer
             const percentage = parseFloat(rawPercent.toFixed(1))
             const showInside = angleDegrees >= 25
@@ -119,14 +160,14 @@
 
             return {
                 label: item.label,
-                value: val,
+                value: item.value,
                 d,
                 colorHex,
-                isFull: angleDegrees >= 360,
+                percentage,
+                showInside,
                 textX,
                 textY,
-                percentage,
-                showInside
+                isFull
             }
         })
     })()
@@ -208,7 +249,7 @@
         {:else if type === "pie"}
             <svg viewBox="0 0 {width} {height}" class="chart-svg">
                 <defs>
-                    <mask id="doughnut-mask">
+                    <mask id="doughnut-mask" maskContentUnits="userSpaceOnUse">
                         <!-- Everything under white stays visible -->
                         <circle cx="0" cy="0" r={pieRadius + 1} fill="white" />
                         <!-- Everything under black becomes transparent -->
@@ -216,21 +257,17 @@
                     </mask>
                 </defs>
                 <g transform="translate({centerX}, {centerY})" mask={(item.chart?.holeSize ?? 0) > 0 ? "url(#doughnut-mask)" : ""}>
-                    {#if pieSegments.length === 1 || (pieSegments.length > 0 && pieSegments[0].isFull)}
-                        <!-- Single full slice -->
-                        <circle cx="0" cy="0" r={pieRadius} fill={pieSegments[0].colorHex} />
-                        {#if pieSegments[0].percentage > 1}
-                            {#if pieSegments[0].label && !((item.chart?.holeSize ?? 0) > 0)}
-                                <text x="0" y={-fontSize * 0.4} class="chart-text val-text" text-anchor="middle" dominant-baseline="middle" style="font-size: calc(var(--chart-font-size) * 1.1); fill: #ffffff; text-shadow: 0 1px 2px rgba(0,0,0,0.5); font-weight: bold;">{pieSegments[0].label}</text>
-                                <text x="0" y={fontSize * 0.6} class="chart-text val-text" text-anchor="middle" dominant-baseline="middle" style="font-size: calc(var(--chart-font-size) * 1.25); fill: #ffffff; text-shadow: 0 1px 2px rgba(0,0,0,0.5); font-weight: 500;">100%</text>
+                    {#each pieSegments as segment}
+                        <path d={segment.d} fill={segment.colorHex} />
+                        {#if segment.percentage > 1}
+                            {#if segment.isFull}
+                                {#if segment.label && !((item.chart?.holeSize ?? 0) > 0)}
+                                    <text x="0" y={-fontSize * 0.4} class="chart-text val-text" text-anchor="middle" dominant-baseline="middle" style="font-size: calc(var(--chart-font-size) * 1.1); fill: #ffffff; text-shadow: 0 1px 2px rgba(0,0,0,0.5); font-weight: bold;">{segment.label}</text>
+                                    <text x="0" y={fontSize * 0.6} class="chart-text val-text" text-anchor="middle" dominant-baseline="middle" style="font-size: calc(var(--chart-font-size) * 1.25); fill: #ffffff; text-shadow: 0 1px 2px rgba(0,0,0,0.5); font-weight: 500;">100%</text>
+                                {:else}
+                                    <text x="0" y="4" class="chart-text val-text" text-anchor="middle" dominant-baseline="middle" style="font-size: calc(var(--chart-font-size) * 1.25); fill: #ffffff; text-shadow: 0 1px 2px rgba(0,0,0,0.5);">100%</text>
+                                {/if}
                             {:else}
-                                <text x="0" y="4" class="chart-text val-text" text-anchor="middle" dominant-baseline="middle" style="font-size: calc(var(--chart-font-size) * 1.25); fill: #ffffff; text-shadow: 0 1px 2px rgba(0,0,0,0.5);">100%</text>
-                            {/if}
-                        {/if}
-                    {:else}
-                        {#each pieSegments as segment}
-                            <path d={segment.d} fill={segment.colorHex} />
-                            {#if segment.percentage > 1}
                                 {#if segment.showInside && segment.label && !((item.chart?.holeSize ?? 0) > 0)}
                                     <text x={segment.textX} y={segment.textY - fontSize * 0.4} class="chart-text val-text" text-anchor="middle" dominant-baseline="middle" style="font-size: calc(var(--chart-font-size) * 0.75); fill: #ffffff; text-shadow: 0 1px 2px rgba(0,0,0,0.5); font-weight: bold;">
                                         {segment.label.length > 8 ? segment.label.slice(0, 7) + ".." : segment.label}
@@ -245,12 +282,12 @@
                                     </text>
                                 {/if}
                             {/if}
-                        {/each}
-                    {/if}
+                        {/if}
+                    {/each}
                 </g>
                 <!-- Legend underneath (multi-row wrapped grid) -->
-                {#if (item.chart?.holeSize ?? 0) > 0 || pieSegments.filter((segment) => segment.label && (segment.percentage <= 1 || (!(segment.showInside && segment.percentage > 1) && !(pieSegments.length === 1 || (pieSegments.length > 0 && pieSegments[0].isFull))))).length > 0}
-                    {@const visibleSegments = ((item.chart?.holeSize ?? 0) > 0 ? pieSegments : pieSegments.filter((segment) => segment.percentage <= 1 || (!(segment.showInside && segment.label && segment.percentage > 1) && !(pieSegments.length === 1 || (pieSegments.length > 0 && pieSegments[0].isFull && pieSegments[0].label))))).filter(s => s.label)}
+                {#if (item.chart?.holeSize ?? 0) > 0 || pieSegments.filter((segment) => segment.label && (segment.percentage <= 1 || (!(segment.showInside && segment.percentage > 1) && !segment.isFull))).length > 0}
+                    {@const visibleSegments = ((item.chart?.holeSize ?? 0) > 0 ? pieSegments : pieSegments.filter((segment) => segment.percentage <= 1 || (!(segment.showInside && segment.label && segment.percentage > 1) && !segment.isFull))).filter((s) => s.label)}
                     {@const visibleItemsPerRow = visibleSegments.length > 4 ? 4 : visibleSegments.length}
                     {@const visibleNumRows = Math.ceil(visibleSegments.length / visibleItemsPerRow)}
                     <g transform="translate(0, {height - (visibleNumRows - 1) * rowGap - Math.max(20, fontSize * 0.5)})" class="chart-legend">

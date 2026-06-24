@@ -4,7 +4,6 @@
     import InputRow from "../../input/InputRow.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialColorInput from "../../inputs/MaterialColorInput.svelte"
-    import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
     import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
 
     const defaultColors = ["#3b82f6", "#10b981", "#f59e0b", "#ec4899", "#8b5cf6", "#f43f5e", "#06b6d4", "#14b8a6"]
@@ -81,13 +80,11 @@
                     grid = grid
                 }}
             />
-            <MaterialNumberInput
+            <MaterialTextInput
                 label="variables.value"
-                value={grid[rowIdx][1] === "" || grid[rowIdx][1] === undefined ? 0 : Number(grid[rowIdx][1])}
-                min={0}
-                step={0.1}
+                value={grid[rowIdx][1] || ""}
                 on:input={(e) => {
-                    grid[rowIdx][1] = String(e.detail)
+                    grid[rowIdx][1] = e.detail
                     grid = grid
                 }}
             />

@@ -706,6 +706,31 @@ class Interaction {
             .sort((a, b) => b.score - a.score)
             .map((c) => `${c.name}: ${c.score}`)
     }
+
+    getOptionPercentages(): string[] {
+        const data = this.getData()
+        if (data.options?.allAtOnce) return []
+
+        const input = data.inputs[this.inputIndex]
+        if (input && input.type === "multi_choice" && input.options) {
+            const inputAnswers = this.lastData?.answers?.[this.inputIndex] || {}
+            const answersList = Object.values(inputAnswers)
+            const totalAnswers = answersList.length
+
+            const percentages = input.options.map((o: any) => {
+                if (totalAnswers === 0) return "0%"
+                const chosenCount = answersList.filter((ans: any) => {
+                    if (!ans || ans.value === undefined) return false
+                    const clientValues = Array.isArray(ans.value) ? ans.value : [ans.value]
+                    return clientValues.includes(o.value)
+                }).length
+                const percent = Math.round((chosenCount / totalAnswers) * 100)
+                return `${percent}%`
+            })
+            return [percentages.join("<br>"), ...percentages]
+        }
+        return []
+    }
 }
 
 export function formatTimeInteraction(s: number) {
