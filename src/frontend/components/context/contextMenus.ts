@@ -44,6 +44,8 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     delete: { label: "actions.delete", icon: "delete", iconColor: "#ff5454", shortcuts: ["Del"] },
     delete_remove: { label: "actions.remove", icon: "delete", iconColor: "#ff6b54", shortcuts: ["Del"] },
     delete_all: { label: "actions.delete_all", icon: "delete", iconColor: "#ff5454" },
+    delete_row: { label: "actions.delete_row", icon: "delete", iconColor: "#ff5454" },
+    delete_col: { label: "actions.delete_col", icon: "delete", iconColor: "#ff5454" },
     import: { label: "actions.import", icon: "import" },
     export: { label: "actions.export", icon: "export" },
     custom_text: { label: "popup.custom_text", icon: "rename", iconColor: "#6effbe" },
@@ -391,6 +393,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     edit_box: ["GROUP_dynamic", "item_actions", "item_bind_to", "format", "rearrange", "transition", "SEPARATOR", "duplicate", "delete"], // "copy", "paste" (shortcut or top menubar) // "GROUP_duplicate_delete"
     editbox_text: ["text_copy", "text_cut", "text_paste", "text_select_all"],
     items_list_item: ["to_front", "forward", "backward", "to_back"],
+    table_context: ["delete_row", "delete_col"],
 
     // TIMELINE
     timeline_node: ["delete"],

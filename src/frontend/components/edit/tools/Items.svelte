@@ -16,17 +16,17 @@
     const commonItems: ItemRef[] = [{ id: "media", icon: "image" }, { id: "web" }, { id: "timer" }, { id: "clock" }]
 
     const specialItems: ItemRef[] = [
-        // { id: "table" },
         { id: "camera" },
         { id: "slide_tracker", icon: "percentage" },
+        { id: "table", icon: "grid" },
+        { id: "chart", icon: "charts" },
         { id: "events", icon: "calendar" },
         { id: "weather", icon: "cloud" },
         // mirror item is probably never used anymore, as we have a dedicated stage output, and dynamic values for next/previous slide
         // we could have a way to show the capture of an output screen.., but again, might be useless.
         // { id: "mirror" },
         { id: "visualizer", maxAmount: 1 },
-        { id: "captions", maxAmount: 1 }, // max one because there can't be multiple translations at this point
-        { id: "chart", icon: "charts" }
+        { id: "captions", maxAmount: 1 } // max one because there can't be multiple translations at this point
     ]
 
     const getIdentifier = {
@@ -59,7 +59,8 @@
         },
         chart: (item: Item) => {
             return item.chart?.type || ""
-        }
+        },
+        table: () => ""
     }
 
     export let allSlideItems: Item[]

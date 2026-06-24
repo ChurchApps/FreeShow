@@ -15,6 +15,7 @@
     import MediaItem from "./views/MediaItem.svelte"
     import Mirror from "./views/Mirror.svelte"
     import SlideProgress from "./views/SlideProgress.svelte"
+    import Table from "./views/Table.svelte"
     import Timer from "./views/Timer.svelte"
     import Variable from "./views/Variable.svelte"
     import Visualizer from "./views/Visualizer.svelte"
@@ -122,4 +123,6 @@
     <Variable {item} style={variableStyleString} ref={{ ...ref, slideIndex }} hideText={edit ? false : (ref.type === "stage" && !!$currentWindow) || preview} {edit} />
 {:else if item.type === "chart"}
     <Chart {item} />
+{:else if item.type === "table"}
+    <Table {item} {edit} {ref} {ratio} />
 {/if}

@@ -249,8 +249,8 @@
                     {/if}
                 </g>
                 <!-- Legend underneath (multi-row wrapped grid) -->
-                {#if (item.chart?.holeSize ?? 0) > 0 || pieSegments.filter((segment) => segment.percentage <= 1 || (!(segment.showInside && segment.label && segment.percentage > 1) && !(pieSegments.length === 1 || (pieSegments.length > 0 && pieSegments[0].isFull && pieSegments[0].label)))).length > 0}
-                    {@const visibleSegments = (item.chart?.holeSize ?? 0) > 0 ? pieSegments : pieSegments.filter((segment) => segment.percentage <= 1 || (!(segment.showInside && segment.label && segment.percentage > 1) && !(pieSegments.length === 1 || (pieSegments.length > 0 && pieSegments[0].isFull && pieSegments[0].label))))}
+                {#if (item.chart?.holeSize ?? 0) > 0 || pieSegments.filter((segment) => segment.label && (segment.percentage <= 1 || (!(segment.showInside && segment.percentage > 1) && !(pieSegments.length === 1 || (pieSegments.length > 0 && pieSegments[0].isFull))))).length > 0}
+                    {@const visibleSegments = ((item.chart?.holeSize ?? 0) > 0 ? pieSegments : pieSegments.filter((segment) => segment.percentage <= 1 || (!(segment.showInside && segment.label && segment.percentage > 1) && !(pieSegments.length === 1 || (pieSegments.length > 0 && pieSegments[0].isFull && pieSegments[0].label))))).filter(s => s.label)}
                     {@const visibleItemsPerRow = visibleSegments.length > 4 ? 4 : visibleSegments.length}
                     {@const visibleNumRows = Math.ceil(visibleSegments.length / visibleItemsPerRow)}
                     <g transform="translate(0, {height - (visibleNumRows - 1) * rowGap - Math.max(20, fontSize * 0.5)})" class="chart-legend">
@@ -268,8 +268,10 @@
                             {@const totalWidth = boxSize + 6 + textWidth}
                             {@const offset = totalWidth / 2}
                             <g transform="translate({itemX - offset}, {rowIdx * rowGap})">
-                                <rect x="0" y={-boxSize / 2} width={boxSize} height={boxSize} fill={segment.colorHex} rx="2" />
-                                <text x={boxSize + 6} y={boxSize / 2 - 1} class="chart-text legend-text" text-anchor="start">{labelText}</text>
+                                {#if segment.label}
+                                    <rect x="0" y={-boxSize / 2} width={boxSize} height={boxSize} fill={segment.colorHex} rx="2" />
+                                    <text x={boxSize + 6} y={boxSize / 2 - 1} class="chart-text legend-text" text-anchor="start">{labelText}</text>
+                                {/if}
                             </g>
                         {/each}
                     </g>

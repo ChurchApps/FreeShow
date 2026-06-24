@@ -38,7 +38,12 @@
     export let mouse: any = {}
     function mousedown(e: any) {
         if (e.target.closest(".chords") || e.target.closest(".editTools")) return
-        if (!e.target.closest(".line") && !e.target.closest(".square") && !e.target.closest(".rotate") && !e.target.closest(".radius") && !e.target.closest(".cropHandle") && !e.target.closest(".cropOverlay")) openToolsTab.set("text")
+        if (!e.target.closest(".line") && !e.target.closest(".square") && !e.target.closest(".rotate") && !e.target.closest(".radius") && !e.target.closest(".cropHandle") && !e.target.closest(".cropOverlay")) {
+            openToolsTab.set("text")
+
+            // Table shouldn't be draggable from the center
+            if (item?.type === "table") return
+        }
 
         const rightClick: boolean = e.button === 2 || e.buttons === 2 || ($os.platform === "darwin" && e.ctrlKey)
 
@@ -198,8 +203,6 @@
 
 <!-- WIP item with opacity 0 is completely hidden! Even the align elements! -->
 
-<!-- bind:offsetHeight={height}
-bind:offsetWidth={width} -->
 <div
     bind:this={itemElem}
     class={plain ? "editItem" : `editItem item ${isLocked ? "" : "context #edit_box"}`}
@@ -208,6 +211,7 @@ bind:offsetWidth={width} -->
     class:isDisabledVariable
     class:chords={chordsMode}
     class:isOptimized
+    class:showOverflow={item?.type === "table" || cropActive}
     style="{plain ? 'width: 100%;' : `${getCustomStyle(item?.style || '', customOutputId)}; outline: ${3 / ratio}px solid rgb(255 255 255 / 0.2);z-index: ${index + 1 + ($activeEdit.items.includes(index) ? 100 : 0)};${filter ? 'filter: ' + filter + ';' : ''}${backdropFilter ? 'backdrop-filter: ' + backdropFilter + ';' : ''}`}{cssVariables}{fixedWidth}"
     data-index={index}
     on:mousedown={mousedown}
@@ -223,6 +227,8 @@ bind:offsetWidth={width} -->
             <div class="mediaFrame" class:showOverflow={cropActive}>
                 <SlideItems item={previewItem} {ratio} {ref} {itemElem} slideIndex={$activeEdit.slide || 0} edit cropPreviewMode={cropActive} />
             </div>
+        {:else if previewItem.type === "table"}
+            <SlideItems item={previewItem} {ratio} {ref} {itemElem} slideIndex={$activeEdit.slide || 0} edit />
         {:else}
             <SlideItems item={previewItem} {ratio} {ref} {itemElem} slideIndex={$activeEdit.slide || 0} edit />
         {/if}
@@ -250,6 +256,9 @@ bind:offsetWidth={width} -->
     }
     .item.selected {
         overflow: visible;
+    }
+    .item.showOverflow {
+        overflow: visible !important;
     }
     .item.selected :global(.align) {
         outline: 5px solid var(--secondary-opacity);
