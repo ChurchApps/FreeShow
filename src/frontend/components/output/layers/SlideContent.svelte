@@ -105,6 +105,16 @@
     $: if (currentSlide?.items !== 0) {
         if (JSON.stringify(currentSlide?.items) !== JSON.stringify(currentSlideItems)) currentSlideItems = clone(currentSlide?.items || null)
     }
+    $: if (current && outSlide) {
+        if (current.outSlide) {
+            current.outSlide.itemClickReveal = outSlide.itemClickReveal
+            current.outSlide.revealCount = outSlide.revealCount
+            current.outSlide.line = outSlide.line
+        }
+    }
+    $: if (current && lines) {
+        current.lines = clone(lines)
+    }
 
     $: if (currentSlideItems !== undefined || currentOutSlide || currentLines) updateItems()
     let timeout: NodeJS.Timeout | null = null
