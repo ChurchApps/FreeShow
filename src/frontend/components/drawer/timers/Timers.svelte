@@ -117,7 +117,7 @@
             {#if i === 0 && list.length}
                 <h5><T id="remote.project" /></h5>
             {:else if title && i > 0}
-                <h5><T id={timerTypeNames[title]} /></h5>
+                <h5>{translateText(timerTypeNames[title])}</h5>
             {/if}
 
             <SelectElem id="global_timer" data={timer} draggable={!onlyPlaying} selectable={!onlyPlaying}>

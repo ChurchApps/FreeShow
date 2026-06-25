@@ -559,24 +559,34 @@ async function processSongItem(item: ProjectItem, itemsEndpoint: string) {
 
     let sections: SongSection[] = []
 
-    // Use chord_chart as primary source since it contains repeat markers (//)
-    if (song.chord_chart) {
-        sections = parseChordChartIntoSections(song.chord_chart)
-    } else {
-        // Fallback to sections endpoint if no chord_chart
-        sections =
-            (
-                await pcoRequest({
-                    scope: "services",
-                    endpoint: `${arrangementEndpoint}/sections`
-                })
-            )[0]?.attributes.sections || []
+    // Get sections from API first
+    const apiSections: SongSection[] = (
+        await pcoRequest({
+            scope: "services",
+            endpoint: `${arrangementEndpoint}/sections`
+        })
+    )[0]?.attributes.sections || []
 
-        if (!sections.length) {
-            sections = sequence.map((id: any) => ({ label: id, lyrics: "" }))
-        } else {
-            sections = sections.map(normalizeSongSection)
+    // Parse sections from chord chart if available (contains repeat markers etc.)
+    const chordChartSections = song.chord_chart ? parseChordChartIntoSections(song.chord_chart) : []
+
+    // Merge API sections with chord chart sections
+    const mergedSections = apiSections.map((apiSec) => {
+        const found = findSectionByLabel(apiSec.label, chordChartSections)
+        return normalizeSongSection(found || apiSec)
+    })
+
+    // Append chord chart sections that aren't represented in the API sections
+    chordChartSections.forEach((ccSec) => {
+        if (!findSectionByLabel(ccSec.label, apiSections)) {
+            mergedSections.push(normalizeSongSection(ccSec))
         }
+    })
+
+    sections = mergedSections
+
+    if (!sections.length) {
+        sections = sequence.map((id: any) => ({ label: id, lyrics: "" }))
     }
 
     // Order sections according to the arrangement sequence
@@ -598,68 +608,31 @@ async function processSongItem(item: ProjectItem, itemsEndpoint: string) {
     }
 }
 
-function getOrderedSections(sections: SongSection[], sequence: any[]): SongSection[] {
-    // Reorder sections according to the arrangement sequence
-    // Create a comprehensive section map with multiple keys for flexible matching
-    const sectionMap: { [key: string]: SongSection } = {}
+function findSectionByLabel(label: string, sections: SongSection[]): SongSection | undefined {
+    const search = label.toLowerCase().replace(/\s+/g, "")
+    // Exact or normalized/no-space match
+    const found = sections.find((s) => s.label.toLowerCase().replace(/\s+/g, "") === search)
+    if (found) return found
 
-    sections.forEach((section) => {
-        const lowerLabel = section.label.toLowerCase()
-        const normalizedLabel = lowerLabel.replace(/\s+/g, " ").trim()
-        const nospaceLabel = normalizedLabel.replace(/\s+/g, "")
-
-        // Store by all possible variations
-        sectionMap[section.label] = section
-        sectionMap[lowerLabel] = section
-        sectionMap[normalizedLabel] = section
-        sectionMap[nospaceLabel] = section
+    // Partial/prefix match
+    return sections.find((s) => {
+        const sLower = s.label.toLowerCase()
+        const labelLower = label.toLowerCase()
+        return sLower.startsWith(labelLower) || labelLower.startsWith(sLower)
     })
+}
 
+function getOrderedSections(sections: SongSection[], sequence: any[]): SongSection[] {
     const orderedSections: SongSection[] = []
-    const notFoundLabels: Set<string> = new Set()
 
     sequence.forEach((label) => {
-        const normalizedSeqLabel = String(label).toLowerCase().replace(/\s+/g, " ").trim()
-        const nospaceSeqLabel = normalizedSeqLabel.replace(/\s+/g, "")
-
-        // Try to find matching section with multiple strategies
-        let foundSection = sectionMap[label] || sectionMap[normalizedSeqLabel] || sectionMap[nospaceSeqLabel]
-
-        // Try flexible matching for variations like "PRECORO 2" vs "PRECORO2"
-        if (!foundSection) {
-            const matchedKey = Object.keys(sectionMap).find((key) => {
-                const keyNormalized = key.toLowerCase().replace(/\s+/g, "")
-                return keyNormalized === nospaceSeqLabel
-            })
-            if (matchedKey) {
-                foundSection = sectionMap[matchedKey]
-            }
-        }
-
-        // Try partial match (useful for variations)
-        if (!foundSection) {
-            const matchedKey = Object.keys(sectionMap).find((key) => {
-                const keyLower = key.toLowerCase()
-                const labelLower = label.toLowerCase()
-                return keyLower.startsWith(labelLower) || labelLower.startsWith(keyLower)
-            })
-            if (matchedKey) {
-                foundSection = sectionMap[matchedKey]
-            }
-        }
-
+        const foundSection = findSectionByLabel(String(label), sections)
         if (foundSection) {
-            // Allow same section to appear multiple times in sequence
-            orderedSections.push(foundSection)
+            orderedSections.push({ ...foundSection })
         } else {
-            notFoundLabels.add(label)
+            orderedSections.push({ label: String(label), lyrics: "" })
         }
     })
-
-    if (notFoundLabels.size > 0) {
-        const availableSections = Array.from(new Set(sections.map((s) => s.label))).join(", ")
-        console.warn(`Planning Center: Could not find sections for sequence labels: ${Array.from(notFoundLabels).join(", ")}. Available sections: ${availableSections}`)
-    }
 
     return orderedSections
 }
