@@ -6,6 +6,7 @@
     import { currentWindow, visualizerData } from "../../../stores"
     import { send } from "../../../utils/request"
     import { drawKaleidoscope } from "./visualizerKaleidoscope"
+    import { drawParticles } from "./visualizerParticles"
 
     export let item: Item
     export let preview = false
@@ -50,9 +51,8 @@
     function visualizer() {
         if (!canvas || rendering) return
 
-        const rect = canvas.getBoundingClientRect()
-        const targetWidth = Math.ceil(rect.width) || window.innerWidth
-        const targetHeight = Math.ceil(rect.height) || window.innerHeight
+        const targetWidth = Math.ceil(canvas.clientWidth) || window.innerWidth
+        const targetHeight = Math.ceil(canvas.clientHeight) || window.innerHeight
 
         if (!ctx || canvas.width !== targetWidth || canvas.height !== targetHeight) {
             canvas.width = targetWidth
@@ -70,7 +70,8 @@
         let barWidth = WIDTH / bufferLength - padding
 
         let x = 0
-        const isKaleidoscope = item.visualizer?.type === "kaleidoscope"
+        let frameCounter = 0
+        const visualizerType = item.visualizer?.type || "bars"
 
         if (edit) {
             // wait for color/padding to update
@@ -83,8 +84,10 @@
                     mockBars.push({ height: barHeight, percentage: sineFactor })
                 }
 
-                if (isKaleidoscope) {
+                if (visualizerType === "kaleidoscope") {
                     drawKaleidoscope({ ctx: ctx!, bars: mockBars, width: WIDTH, height: HEIGHT, color, padding, edit })
+                } else if (visualizerType === "particles") {
+                    drawParticles({ ctx: ctx!, bars: mockBars, width: WIDTH, height: HEIGHT, color, padding, edit })
                 } else {
                     x = 0
                     for (let i = 0; i < bufferLength; i++) {
@@ -107,8 +110,9 @@
         if (!maxHeightValue) return
 
         const dataArrays: any[] = analysers.map(() => new Uint8Array(bufferLength))
+        let lastTime = 0
 
-        function renderFrame() {
+        function renderFrame(timestamp: number = 0) {
             if (!$visualizerData && !analysers?.length) {
                 ctx!.clearRect(0, 0, WIDTH, HEIGHT)
                 cancelAnimationFrame(rendering)
@@ -119,16 +123,35 @@
                 return
             }
 
-            ctx!.clearRect(0, 0, WIDTH, HEIGHT)
-            x = 0
+            if (!$currentWindow) {
+                // Throttle main window analyzer and IPC send to ~30fps
+                if (timestamp - lastTime < 30) {
+                    rendering = requestAnimationFrame(renderFrame)
+                    return
+                }
+                lastTime = timestamp
+            }
+
+            // Limit drawing visual updates in the preview window to save performance (draw every 5th frame, ~12fps)
+            const shouldDraw = $currentWindow || edit || (frameCounter % 5 === 0)
+            frameCounter++
+
+            if (shouldDraw) {
+                ctx!.clearRect(0, 0, WIDTH, HEIGHT)
+                x = 0
+            }
 
             if ($visualizerData) {
                 let bars = $visualizerData.bars
-                if (isKaleidoscope) {
-                    drawKaleidoscope({ ctx: ctx!, bars, width: WIDTH, height: HEIGHT, color, padding, edit })
-                } else {
-                    for (let i = 0; i < $visualizerData.buffers; i++) {
-                        generateBar(bars[i])
+                if (shouldDraw) {
+                    if (visualizerType === "kaleidoscope") {
+                        drawKaleidoscope({ ctx: ctx!, bars, width: WIDTH, height: HEIGHT, color, padding, edit })
+                    } else if (visualizerType === "particles") {
+                        drawParticles({ ctx: ctx!, bars, width: WIDTH, height: HEIGHT, color, padding, edit })
+                    } else {
+                        for (let i = 0; i < $visualizerData.buffers; i++) {
+                            generateBar(bars[i])
+                        }
                     }
                 }
 
@@ -150,13 +173,17 @@
                 const barHeight = HEIGHT * percentage
 
                 bars.push({ height: barHeight, percentage })
-                if (!isKaleidoscope) {
+                if (shouldDraw && visualizerType === "bars") {
                     generateBar({ height: barHeight, percentage })
                 }
             }
 
-            if (isKaleidoscope) {
-                drawKaleidoscope({ ctx: ctx!, bars, width: WIDTH, height: HEIGHT, color, padding, edit })
+            if (shouldDraw) {
+                if (visualizerType === "kaleidoscope") {
+                    drawKaleidoscope({ ctx: ctx!, bars, width: WIDTH, height: HEIGHT, color, padding, edit })
+                } else if (visualizerType === "particles") {
+                    drawParticles({ ctx: ctx!, bars, width: WIDTH, height: HEIGHT, color, padding, edit })
+                }
             }
 
             send(OUTPUT, ["VISUALIZER_DATA"], { bars, buffers: bufferLength })
@@ -165,14 +192,16 @@
         if (rendering) cancelAnimationFrame(rendering)
         renderFrame()
 
-        function generateBar({ height, percentage }: { height: number; percentage: number }) {
+        function generateBar({ percentage }: { height: number; percentage: number }) {
             const r = 255 * percentage
             const g = 5
             const b = 150
 
+            const barHeight = HEIGHT * percentage
+
             if (color === "rgb(0 0 0 / 0)") color = ""
             ctx!.fillStyle = color || `rgb(${r}, ${g}, ${b})`
-            ctx!.fillRect(x, HEIGHT - height, barWidth, height)
+            ctx!.fillRect(x, HEIGHT - barHeight, barWidth, barHeight)
 
             x += barWidth + padding
         }

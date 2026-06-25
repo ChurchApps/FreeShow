@@ -97,9 +97,10 @@ export function drawKaleidoscope({ ctx, bars, width, height, color, padding, edi
     }
 
     particles = particles.filter((p) => {
-        p.x += p.vx
-        p.y += p.vy
-        p.alpha -= 0.02
+        // Compensate movement and fade speeds for the 30fps frame rate (multiply by 2)
+        p.x += p.vx * 2
+        p.y += p.vy * 2
+        p.alpha -= 0.04
 
         if (p.alpha <= 0 || (p.x * p.x + p.y * p.y) > maxRadiusSq) {
             return false

@@ -618,6 +618,7 @@ export const itemBoxes: Box2 = {
                                 defaultValue: "bars",
                                 options: [
                                     { value: "bars", label: "Lines" },
+                                    { value: "particles", label: "Particles" },
                                     { value: "kaleidoscope", label: "Kaleidoscope" }
                                 ]
                             }
