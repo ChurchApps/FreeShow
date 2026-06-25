@@ -5,6 +5,7 @@
     import { AudioAnalyser } from "../../../audio/audioAnalyser"
     import { currentWindow, visualizerData } from "../../../stores"
     import { send } from "../../../utils/request"
+    import { drawKaleidoscope } from "./visualizerKaleidoscope"
 
     export let item: Item
     export let preview = false
@@ -48,9 +49,14 @@
     let rendering = 0
     function visualizer() {
         if (!canvas || rendering) return
-        if (!ctx) {
-            canvas.width = window.innerWidth
-            canvas.height = window.innerHeight
+
+        const rect = canvas.getBoundingClientRect()
+        const targetWidth = Math.ceil(rect.width) || window.innerWidth
+        const targetHeight = Math.ceil(rect.height) || window.innerHeight
+
+        if (!ctx || canvas.width !== targetWidth || canvas.height !== targetHeight) {
+            canvas.width = targetWidth
+            canvas.height = targetHeight
             ctx = canvas.getContext("2d")
         }
 
@@ -64,21 +70,32 @@
         let barWidth = WIDTH / bufferLength - padding
 
         let x = 0
+        const isKaleidoscope = item.visualizer?.type === "kaleidoscope"
 
         if (edit) {
             // wait for color/padding to update
             setTimeout(() => {
                 ctx!.clearRect(0, 0, WIDTH, HEIGHT)
+                const mockBars: any[] = []
                 for (let i = 0; i < bufferLength; i++) {
                     const sineFactor = Math.abs(Math.sin((1 - i / bufferLength) * Math.PI * 8))
                     const barHeight = HEIGHT * (0.5 * sineFactor + 0.5) * ((bufferLength - i) / bufferLength)
-                    generateBar({ height: barHeight, percentage: sineFactor })
+                    mockBars.push({ height: barHeight, percentage: sineFactor })
+                }
+
+                if (isKaleidoscope) {
+                    drawKaleidoscope({ ctx: ctx!, bars: mockBars, width: WIDTH, height: HEIGHT, color, padding, edit })
+                } else {
+                    x = 0
+                    for (let i = 0; i < bufferLength; i++) {
+                        generateBar(mockBars[i])
+                    }
                 }
             })
             return
         }
 
-        // don't show highest frequenzies as they are often flat
+        // don't show highest frequencies as they are often flat
         barWidth *= 1.42 // 1.3
 
         if ($currentWindow) {
@@ -89,7 +106,7 @@
         const maxHeightValue = analysers[0]?.fftSize // 256
         if (!maxHeightValue) return
 
-        const dataArrays: Uint8Array[] = analysers.map(() => new Uint8Array(bufferLength))
+        const dataArrays: any[] = analysers.map(() => new Uint8Array(bufferLength))
 
         function renderFrame() {
             if (!$visualizerData && !analysers?.length) {
@@ -107,8 +124,12 @@
 
             if ($visualizerData) {
                 let bars = $visualizerData.bars
-                for (let i = 0; i < $visualizerData.buffers; i++) {
-                    generateBar(bars[i])
+                if (isKaleidoscope) {
+                    drawKaleidoscope({ ctx: ctx!, bars, width: WIDTH, height: HEIGHT, color, padding, edit })
+                } else {
+                    for (let i = 0; i < $visualizerData.buffers; i++) {
+                        generateBar(bars[i])
+                    }
                 }
 
                 return
@@ -122,14 +143,20 @@
             // update frequency data for all analysers
             analysers.forEach((analyser, i) => analyser.getByteFrequencyData(dataArrays[i]))
 
-            let bars: { height: number; percentage: number }[] = []
+            let bars: any[] = []
             for (let i = 0; i < bufferLength; i++) {
                 const sum = dataArrays[0][i] + dataArrays[1][i]
                 const percentage = Math.round(sum / dataArrays.length) / maxHeightValue
                 const barHeight = HEIGHT * percentage
 
                 bars.push({ height: barHeight, percentage })
-                generateBar({ height: barHeight, percentage })
+                if (!isKaleidoscope) {
+                    generateBar({ height: barHeight, percentage })
+                }
+            }
+
+            if (isKaleidoscope) {
+                drawKaleidoscope({ ctx: ctx!, bars, width: WIDTH, height: HEIGHT, color, padding, edit })
             }
 
             send(OUTPUT, ["VISUALIZER_DATA"], { bars, buffers: bufferLength })
@@ -161,5 +188,7 @@
         left: 0;
         width: 100%;
         height: 100%;
+        overflow: hidden;
+        border-radius: inherit;
     }
 </style>

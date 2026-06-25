@@ -609,6 +609,21 @@ export const itemBoxes: Box2 = {
             default: {
                 inputs: [
                     [
+                        {
+                            id: "visualizer.type",
+                            type: "dropdown",
+                            value: "bars",
+                            values: {
+                                label: "sort.type",
+                                defaultValue: "bars",
+                                options: [
+                                    { value: "bars", label: "Lines" },
+                                    { value: "kaleidoscope", label: "Kaleidoscope" }
+                                ]
+                            }
+                        }
+                    ],
+                    [
                         { id: "visualizer.padding", type: "number", value: 0, values: { label: "edit.padding", style: "flex: 4;" } },
                         { id: "visualizer.color", type: "color", value: "", values: { label: "edit.color", allowEmpty: true, allowOpacity: true, noLabel: true, style: "flex: 1;" } }
                     ]
