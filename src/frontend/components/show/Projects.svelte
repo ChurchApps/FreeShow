@@ -4,7 +4,7 @@
     import { Main } from "../../../types/IPC/Main"
     import type { Project, Tree } from "../../../types/Projects"
     import { sendMain } from "../../IPC/main"
-    import { activeProject, activeRename, dictionary, drawer, editingProjectTemplate, focusMode, folders, openedFolders, projects, projectTemplates, projectView, showRecentlyUsedProjects, sorted, special } from "../../stores"
+    import { activePopup, activeProject, activeRename, contentProviderData, dictionary, drawer, editingProjectTemplate, focusMode, folders, openedFolders, projects, projectTemplates, projectView, providerConnections, showRecentlyUsedProjects, sorted, special } from "../../stores"
     import { translateText } from "../../utils/language"
     import { getAccess } from "../../utils/profile"
     import { exportProject } from "../export/project"
@@ -91,6 +91,7 @@
 
     $: projectActive = !$projectView && $activeProject !== null
     $: currentProject = $activeProject ? $projects[$activeProject] : null
+    $: currentProjectPcoFolderId = $activeProject ? ($contentProviderData?.planningcenter?.availablePlans as { planId: string; serviceTypeId: string }[] | undefined)?.find((p) => p.planId === $activeProject)?.serviceTypeId : undefined
 
     function createProject(folder = false) {
         let parent = interactedFolder || ($folders[currentProject?.parent || ""] ? currentProject?.parent || "/" : "/")
@@ -316,6 +317,17 @@
             return a
         })
     }
+
+    // PCO Live
+
+    function openPcoPicker() {
+        addMenuOpen = false
+        activePopup.set("pco_picker")
+    }
+
+    function refreshPcoProject(serviceTypeId: string, planId: string) {
+        sendMain(Main.PCO_LOAD_PLAN, { serviceTypeId, planId })
+    }
 </script>
 
 <svelte:window on:keydown={checkInput} on:mousedown={mousedown} on:dragenter={dragStart} on:dragstart={dragStart} on:dragend={dragEnd} on:drop={dragEnd} on:mouseup={dragEnd} />
@@ -351,6 +363,14 @@
                             {#if showProjectDropdown && currentProject}
                                 <!-- WIP use context menu style -->
                                 <div class="projectDropdown" transition:fade={{ duration: 100 }} role="none" on:click={() => (showProjectDropdown = false)}>
+                                    {#if currentProjectPcoFolderId && $activeProject}
+                                        <MaterialButton title="Sync with Planning Center" icon="refresh" on:click={() => refreshPcoProject(currentProjectPcoFolderId, $activeProject)} white>
+                                            <T id="cloud.sync" />
+                                        </MaterialButton>
+
+                                        <div class="DIVIDER"></div>
+                                    {/if}
+
                                     {#if currentProject.sourcePath}
                                         <MaterialButton title="actions.save_to_file" icon="save" on:click={() => exportProject(currentProject, $activeProject || "", currentProject.sourcePath)} white>
                                             <T id="actions.save_to_file" />
@@ -496,6 +516,10 @@
                             <Icon id="folder" size={0.7} white />
                         </div>
                     </MaterialButton>
+
+                    {#if $providerConnections.planningcenter}
+                        <MaterialButton variant="outlined" icon="list" title="Planning Center" on:click={openPcoPicker} white>Planning Center</MaterialButton>
+                    {/if}
                 </div>
             {/if}
 

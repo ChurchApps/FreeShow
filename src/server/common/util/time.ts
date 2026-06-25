@@ -76,9 +76,9 @@ export function dateToString(date: Date, full: boolean = false): string {
 export function getCurrentTimerValue(timer: Timer, ref: any, today: Date, updater = get(activeTimers)) {
     let currentTime: number = 0
 
-    if (timer.type === "counter") {
+    if (timer.type === "counter" || timer.type === "pco_live") {
         currentTime = updater.filter((a) => a.id === ref.id)[0]?.currentTime
-        if (typeof currentTime !== "number") currentTime = timer.start!
+        if (typeof currentTime !== "number") currentTime = timer.type === "pco_live" ? 0 : timer.start!
     } else if (timer.type === "clock") {
         let todayTime = new Date([today.getMonth() + 1, today.getDate(), today.getFullYear(), timer.time].join(" "))
         currentTime = (todayTime.getTime() - today.getTime()) / 1000

@@ -2,7 +2,7 @@
     import { createEventDispatcher } from "svelte"
     import { timers } from "../../../stores"
     import { translateText } from "../../../utils/language"
-    import { sortByName } from "../../helpers/array"
+    import { clone, sortByName } from "../../helpers/array"
     import { getDynamicIds, getVariablesIds } from "../../helpers/showActions"
     import MaterialDropdown from "../../inputs/MaterialDropdown.svelte"
     import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
@@ -32,18 +32,31 @@
         ],
         data: [{ value: "value", label: translateText("conditions.value") }] // { id: "state" }
     }
+    const numberOperators = [
+        { value: "isAbove", label: translateText("conditions.is_above") },
+        { value: "isBelow", label: translateText("conditions.is_below") }
+    ]
 
     // WIP time_hours/video_time etc. should be treated as number like timer, instead of string
 
     const customOperators = {
         timer: [
             { value: "isRunning", label: translateText("conditions.is_running") },
-            { value: "isAbove", label: translateText("conditions.is_above") },
-            { value: "isBelow", label: translateText("conditions.is_below") },
+            ...clone(numberOperators), //
             { value: "is", label: translateText("conditions.is") },
             { value: "isNot", label: translateText("conditions.is_not") }
         ],
         // text: [{ value: "has_text", name: translateText("conditions.has_text") }, ...conditions.operator],
+        variable: [
+            ...clone(conditionValues.operator),
+            // only valid for values that can be converted into a valid number
+            ...clone(numberOperators)
+        ],
+        dynamicValue: [
+            ...clone(conditionValues.operator),
+            // only valid for values that can be converted into a valid number
+            ...clone(numberOperators)
+        ],
         volume: [
             { value: "isAbove", label: translateText("conditions.is_above") },
             { value: "isBelow", label: translateText("conditions.is_below") },

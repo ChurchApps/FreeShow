@@ -1,10 +1,12 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte"
     import { translateText } from "../../utils/language"
+    import Icon from "../helpers/Icon.svelte"
 
     export let checked = false
     export let defaultValue: boolean | null = null
     export let label: string
+    export let icon: string = ""
     export let title = ""
     export let data: any = null
     export let id = ""
@@ -43,6 +45,10 @@
                 <path d="M4.5 12.5l4 4L19 6.5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
             </svg>
         </div>
+
+        {#if icon}
+            <Icon id={icon} style="margin: 0 2px 0 6px;" white />
+        {/if}
 
         <span class="label-text">{@html translateText(label)}</span>
 

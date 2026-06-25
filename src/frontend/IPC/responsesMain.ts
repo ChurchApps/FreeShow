@@ -472,8 +472,21 @@ export const mainResponses: MainResponses = {
         })
 
         // open closest to today
-        activeProject.set(data.projects.sort((a, b) => a.scheduledTo - b.scheduledTo)[0]?.id)
-        projectView.set(false)
+        const nextProjectId = data.projects.sort((a, b) => a.scheduledTo - b.scheduledTo)[0]?.id
+        if (nextProjectId) {
+            activeProject.set(nextProjectId)
+            projectView.set(false)
+        }
+
+        // store available PCO plans for Live timer setup
+        if (data.providerId === "planningcenter" && data.pcoPlans?.length) {
+            contentProviderData.update((a) => {
+                if (!a.planningcenter) a.planningcenter = {}
+                const existing = a.planningcenter.availablePlans || []
+                a.planningcenter.availablePlans = [...existing.filter((e) => !data.pcoPlans!.some((i) => i.planId === e.planId)), ...data.pcoPlans!]
+                return a
+            })
+        }
     },
     [ToMain.OPEN_FOLDER2]: (a) => {
         const receiveFOLDER = {

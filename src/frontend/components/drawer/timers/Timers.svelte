@@ -24,9 +24,9 @@
     const readOnly = profile.global === "read"
 
     // $: sortedTimers = getSortedTimers($timers)
-    const typeOrder = { counter: 1, clock: 2, event: 3 }
+    const typeOrder = { counter: 1, clock: 2, event: 3, pco_live: 4 }
     $: sortedTimers = sortByName(keysToID(clone($timers)), "name", true)
-        .filter((a) => (onlyPlaying ? a.type === "counter" && $activeTimers.some((at) => a.id === at.id) : true))
+        .filter((a) => (onlyPlaying ? (a.type === "counter" || a.type === "pco_live") && $activeTimers.some((at) => a.id === at.id) : true))
         .sort((a, b) => typeOrder[a.type] - typeOrder[b.type])
     $: filteredTimersTags = sortedTimers.filter((a) => !$activeTimerTagFilter.length || (a.tags?.length && !$activeTimerTagFilter.find((tagId) => !a.tags?.includes(tagId)))).filter((a) => !a.tags?.some((tagId) => profile[tagId] === "none"))
     $: sortedTimersWithProject = filteredTimersTags.sort((a, b) => (list.includes(a.id) && !list.includes(b.id) ? -1 : 1))
@@ -82,7 +82,8 @@
     const timerTypeNames = {
         counter: "timer.from_to",
         clock: "timer.to_time",
-        event: "timer.to_event"
+        event: "timer.to_event",
+        pco_live: "PCO Live"
     }
 
     function keydown(e: KeyboardEvent) {

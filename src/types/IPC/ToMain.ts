@@ -51,7 +51,7 @@ export interface ToMainSendPayloads {
     [ToMain.PDF_IMPORT_PROGRESS]: { filePath: string; name: string; progress: number; total: number; status: "importing" | "complete" | "error"; message?: string }
     // Unified provider callbacks
     [ToMain.PROVIDER_CONNECT]: { providerId: ContentProviderId; success: boolean; isFirstConnection?: boolean }
-    [ToMain.PROVIDER_PROJECTS]: { providerId: ContentProviderId; categoryName: string; shows: any; projects: any }
+    [ToMain.PROVIDER_PROJECTS]: { providerId: ContentProviderId; categoryName: string; shows: any; projects: any; pcoPlans?: { planId: string; serviceTypeId: string; name: string; date: string }[] }
     [ToMain.WEBSOCKET]: "connected"
     [ToMain.AUDIO_METADATA]: { filePath: string; metadata: ICommonTagsResult }
     [ToMain.GET_DYNAMIC_VALUES]: string[]

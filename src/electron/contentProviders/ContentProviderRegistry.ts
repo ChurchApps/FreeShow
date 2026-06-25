@@ -6,6 +6,8 @@ import { ContentProviderFactory } from "./base/ContentProvider"
 import type { ContentProviderId } from "./base/types"
 import { ChurchAppsProvider } from "./churchApps/ChurchAppsProvider"
 import { PlanningCenterProvider } from "./planningCenter/PlanningCenterProvider"
+import type { PCOFolderTreeNode } from "./planningCenter/request"
+import type { PCOLiveData } from "./planningCenter/live"
 
 /**
  * Registry for all content providers in the application.
@@ -137,6 +139,46 @@ export class ContentProviderRegistry {
         } catch (error) {
             console.error(`Failed to perform startup load for ${providerId}:`, error)
         }
+    }
+
+    /**
+     * Fetch the folder/service-type tree for a provider (Planning Center only for now)
+     */
+    static async fetchFolderTree(providerId: ContentProviderId): Promise<PCOFolderTreeNode[]> {
+        this.ensureInitialized()
+        return this.getProvider<PlanningCenterProvider>(providerId)?.fetchFolderTree?.() ?? []
+    }
+
+    /**
+     * Fetch the full folder/service-type/plan tree for selecting a specific PCO plan
+     */
+    static async fetchServiceTree(providerId: ContentProviderId): Promise<PCOFolderTreeNode[]> {
+        this.ensureInitialized()
+        return this.getProvider<PlanningCenterProvider>(providerId)?.fetchServiceTree?.() ?? []
+    }
+
+    /**
+     * Load a single PCO plan by service type and plan ID
+     */
+    static async loadSinglePlan(serviceTypeId: string, planId: string): Promise<void> {
+        this.ensureInitialized()
+        return this.getProvider<PlanningCenterProvider>("planningcenter")?.loadSinglePlan?.(serviceTypeId, planId)
+    }
+
+    /**
+     * Get PCO Live countdown data for a specific plan
+     */
+    static async getPcoLiveData(serviceTypeId: string, planId: string): Promise<PCOLiveData | null> {
+        this.ensureInitialized()
+        return this.getProvider<PlanningCenterProvider>("planningcenter")?.getLiveData?.(serviceTypeId, planId) ?? null
+    }
+
+    /**
+     * Authorize a Pusher channel subscription for PCO Live real-time updates
+     */
+    static async getPcoPusherAuth(socketId: string, channelName: string, serviceTypeId: string): Promise<{ auth: string; channel_data?: string } | null> {
+        this.ensureInitialized()
+        return this.getProvider<PlanningCenterProvider>("planningcenter")?.getPusherAuth?.(socketId, channelName, serviceTypeId) ?? null
     }
 
     /**

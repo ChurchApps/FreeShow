@@ -280,6 +280,14 @@
             <Icon id="launch" white />
         </MaterialButton>
     </InputRow>
+
+    <InputRow>
+        <!-- <MaterialPopupButton label="popup.sync_folders" value="" name="" icon="folder" popupId="sync_folders" on:click={() => activePopup.set("sync_folders")} style="flex: 1;" /> -->
+        <MaterialButton icon="folder" on:click={() => activePopup.set("sync_folders")} style="flex: 1;">
+            <T id="popup.sync_folders" />
+        </MaterialButton>
+    </InputRow>
+
     <MaterialDropdown label="Song origin" options={providerOriginOptions} value={$contentProviderData.planningcenter?.songOrigin || ""} on:change={(e) => updateProvider("planningcenter", "songOrigin", e.detail)} />
     {#if Object.keys($projectTemplates).length}
         <MaterialDropdown label="actions.project_template" options={projectTemplateOptions} value={$contentProviderData.planningcenter?.projectTemplate || ""} on:change={(e) => updateProvider("planningcenter", "projectTemplate", e.detail)} />

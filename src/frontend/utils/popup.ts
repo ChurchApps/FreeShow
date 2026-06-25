@@ -60,6 +60,7 @@ import NewUpdate from "../components/main/popups/NewUpdate.svelte"
 import NextTimer from "../components/main/popups/NextTimer.svelte"
 import NowPlaying from "../components/main/popups/NowPlaying.svelte"
 import OutputSelector from "../components/main/popups/OutputSelector.svelte"
+import PcoServicePicker from "../components/main/popups/PcoServicePicker.svelte"
 import RegexManager from "../components/main/popups/RegexManager.svelte"
 import Rename from "../components/main/popups/Rename.svelte"
 import ResetAll from "../components/main/popups/ResetAll.svelte"
@@ -73,6 +74,7 @@ import Shortcuts from "../components/main/popups/Shortcuts.svelte"
 import SlideMidi from "../components/main/popups/SlideMidi.svelte"
 import SlideShortcut from "../components/main/popups/SlideShortcut.svelte"
 import SongbeamerImport from "../components/main/popups/SongbeamerImport.svelte"
+import SyncFolders from "../components/main/popups/SyncFolders.svelte"
 import TemplateInfo from "../components/main/popups/TemplateInfo.svelte"
 import TemplateStyleOverrides from "../components/main/popups/TemplateStyleOverrides.svelte"
 import Timecode from "../components/main/popups/Timecode.svelte"
@@ -165,7 +167,9 @@ export const popups: { [key in Popups]: ComponentType } = {
     timecode: Timecode,
     drawer_search_options: DrawerSearchOptions,
     template_info: TemplateInfo,
-    cleaning_utility: CleaningUtility
+    cleaning_utility: CleaningUtility,
+    pco_picker: PcoServicePicker,
+    sync_folders: SyncFolders
 }
 
 export function waitForPopupData(popupId: Popups): Promise<any> {

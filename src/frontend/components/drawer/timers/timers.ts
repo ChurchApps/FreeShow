@@ -9,7 +9,7 @@ import { customActionActivation } from "../../actions/actions"
 import { joinTimeBig } from "../../helpers/time"
 import { getDynamicValue } from "../../edit/scripts/itemHelpers"
 
-const typeOrder = { counter: 1, clock: 2, event: 3 }
+const typeOrder = { counter: 1, clock: 2, event: 3, pco_live: 4 }
 export function getSortedTimers(updater = get(timers), options: { showHours?: boolean; firstActive?: boolean }) {
     const today = new Date()
 
@@ -98,10 +98,10 @@ export function getCurrentTimerValue(timer: Timer, ref: any, today: Date, update
     let currentTime = 0
     if (!timer) return currentTime
 
-    if (timer.type === "counter") {
+    if (timer.type === "counter" || timer.type === "pco_live") {
         currentTime = updater.filter((a) => a.id === ref.id)[0]?.currentTime
         if (typeof currentTime !== "number") {
-            currentTime = timer.startDynamic !== undefined ? (getTimerDynamicValue(timer.startDynamic) ?? 0) : timer.start || 0
+            currentTime = timer.type === "pco_live" ? 0 : timer.startDynamic !== undefined ? (getTimerDynamicValue(timer.startDynamic) ?? 0) : timer.start || 0
         }
     } else if (timer.type === "clock") {
         currentTime = getTimeUntilClock(timer.time!, today)

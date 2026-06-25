@@ -209,9 +209,9 @@ export function pcoDisconnect(scope: PCOScopes = "services") {
     return { success: true }
 }
 
-export async function pcoStartupLoad(scope: PCOScopes = "services") {
+export async function pcoStartupLoad(scope: PCOScopes = "services", syncFolderIds?: string[]) {
     if (!getContentProviderAccess("planningcenter", scope)) return
-    await pcoLoadServices()
+    await pcoLoadServices(syncFolderIds)
 }
 
 function connectionInitialized(isFirstConnection = false): void {

@@ -185,9 +185,12 @@ export const mainResponses: MainResponses = {
         ContentProviderRegistry.disconnect(data.providerId, data.scope)
         return { success: true }
     },
-    [Main.PROVIDER_STARTUP_LOAD]: async (data) => {
-        await ContentProviderRegistry.startupLoad(data.providerId, data.scope || "", data.data, data.cloudOnly)
-    },
+    [Main.PROVIDER_STARTUP_LOAD]: (data) => ContentProviderRegistry.startupLoad(data.providerId, data.scope || "", data.data, data.cloudOnly),
+    [Main.PROVIDER_FETCH_FOLDERS]: (data) => ContentProviderRegistry.fetchFolderTree(data.providerId),
+    [Main.PCO_FETCH_SERVICE_TREE]: () => ContentProviderRegistry.fetchServiceTree("planningcenter"),
+    [Main.PCO_LOAD_PLAN]: (data) => ContentProviderRegistry.loadSinglePlan(data.serviceTypeId, data.planId),
+    [Main.PCO_LIVE_GET]: (data) => ContentProviderRegistry.getPcoLiveData(data.serviceTypeId, data.planId).catch(() => null),
+    [Main.PCO_PUSHER_AUTH]: (data) => ContentProviderRegistry.getPcoPusherAuth(data.socketId, data.channelName, data.serviceTypeId),
     // Content Library
     [Main.GET_CONTENT_PROVIDERS]: () => {
         const providers = ContentProviderRegistry.getAvailableProviders()

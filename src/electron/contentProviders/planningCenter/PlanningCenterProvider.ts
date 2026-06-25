@@ -1,7 +1,8 @@
 import { ContentProvider } from "../base/ContentProvider"
 import { getKey } from "../../utils/keys"
 import { pcoConnect, pcoDisconnect, pcoInitialize, pcoStartupLoad, type PCOScopes } from "./connect"
-import { pcoRequest, pcoLoadServices } from "./request"
+import { pcoRequest, pcoLoadServices, pcoFetchFolderTree, pcoFetchServiceTree, pcoLoadSinglePlan, type PCOFolderTreeNode } from "./request"
+import { pcoGetLiveData, pcoGetPusherAuth, type PCOLiveData } from "./live"
 
 // Re-export types from connect file
 export type { PCOScopes } from "./connect"
@@ -54,13 +55,33 @@ export class PlanningCenterProvider extends ContentProvider<PCOScopes, PCOAuthDa
         return pcoRequest(data)
     }
 
-    async loadServices(): Promise<void> {
-        return pcoLoadServices()
+    async loadServices(data?: { syncFolderIds?: string[] }): Promise<void> {
+        return pcoLoadServices(data?.syncFolderIds)
     }
 
-    async startupLoad(scope: PCOScopes): Promise<void> {
+    async fetchFolderTree(): Promise<PCOFolderTreeNode[]> {
+        return pcoFetchFolderTree()
+    }
+
+    async fetchServiceTree(): Promise<PCOFolderTreeNode[]> {
+        return pcoFetchServiceTree()
+    }
+
+    async loadSinglePlan(serviceTypeId: string, planId: string): Promise<void> {
+        return pcoLoadSinglePlan(serviceTypeId, planId)
+    }
+
+    async getLiveData(serviceTypeId: string, planId: string): Promise<PCOLiveData | null> {
+        return pcoGetLiveData(serviceTypeId, planId)
+    }
+
+    async getPusherAuth(socketId: string, channelName: string, serviceTypeId: string): Promise<{ auth: string; channel_data?: string } | null> {
+        return pcoGetPusherAuth(socketId, channelName, serviceTypeId)
+    }
+
+    async startupLoad(scope: PCOScopes, data?: { syncFolderIds?: string[] }): Promise<void> {
         pcoInitialize()
-        return pcoStartupLoad(scope)
+        return pcoStartupLoad(scope, data?.syncFolderIds)
     }
 
     protected handleAuthCallback(_req: any, _res: any): void {

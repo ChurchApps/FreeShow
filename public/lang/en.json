@@ -542,6 +542,7 @@
         "regex_manager": "Regex manager",
         "choose_camera": "Choose camera",
         "manage_tags": "Manage tags",
+        "sync_folders": "Sync folders",
         "sync_categories": "Sync categories",
         "effect_items": "Effect items",
         "timeline": "Timeline",
@@ -1206,7 +1207,7 @@
         "to": "To",
         "warn_early": "Early warning",
         "warn_offset": "Seconds before end",
-        "overflow": "Overflow when reached end",
+        "overflow": "Show overtime",
         "flash": "Flash",
         "preview": "Preview",
         "clock": "Clock",
@@ -1215,7 +1216,10 @@
         "edit": "Edit",
         "create": "Create",
         "line": "Line",
-        "mask": "Mask"
+        "mask": "Mask",
+        "end_on_time": "End item on time",
+        "full_length": "Full item length",
+        "end_service": "End service on time"
     },
     "clock": {
         "type": "Type",

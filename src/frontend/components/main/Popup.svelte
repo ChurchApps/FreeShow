@@ -54,6 +54,8 @@
                                 <h2 style="font-size: 1.3em;margin-top: -2px;">
                                     {#if popupId === "new_update"}
                                         <T id="about.new_update" />: <span style="color: var(--secondary);">v{$popupData.latestVersion}</span>
+                                    {:else if popupId === "pco_picker"}
+                                        Planning Center
                                     {:else}
                                         <T id="popup.{popupId}" />
                                     {/if}
