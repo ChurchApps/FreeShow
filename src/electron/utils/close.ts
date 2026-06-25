@@ -21,7 +21,11 @@ export function saveAndClose() {
     sendMain(Main.CLOSE, true)
 }
 
+let isExiting = false
 export async function exitApp() {
+    if (isExiting) return
+    isExiting = true
+
     console.info("Closing app!")
 
     dialogClose = false
@@ -60,6 +64,7 @@ export async function exitApp() {
         }, 500)
     } catch (err) {
         console.error("Failed closing app:", err)
+        isExiting = false
     }
 }
 
