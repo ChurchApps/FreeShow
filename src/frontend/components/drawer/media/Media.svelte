@@ -178,8 +178,6 @@
             captureFolderContent = false
         }
 
-        // WIP only list folders with any recursive media content?
-
         requesting++
         let currentRequest = requesting
         const data = await requestMain(Main.READ_FOLDER, { path, depth, captureFolderContent })
@@ -199,7 +197,7 @@
 
         allRelevantFiles = Object.values(data).filter((a) => {
             // remove folders with no content
-            if (a.isFolder) return a.files.length > 0
+            if (a.isFolder) return !a.noMedia && a.files.length > 0
             // only image/video files
             return isMediaExtension(getExtension(a.name))
         })
@@ -470,9 +468,6 @@
         })
     }
 </script>
-
-<!-- TODO: download pixabay images!!! -->
-<!-- TODO: pexels images ? -->
 
 <svelte:window on:keydown={keydown} on:mouseup={mousepress} />
 

@@ -459,19 +459,33 @@ export async function readFolderContent(data: { path: string | string[]; depth?:
 
     async function getFolderContentRecursive(folderPath: string, currentDepth = 0) {
         const exceededDepth = currentDepth > data.depth!
-        if ((data.captureFolderContent && currentDepth < 2 ? false : exceededDepth) || folderContent.has(folderPath)) {
-            let filePaths: string[] = []
-            if (currentDepth === 1) {
-                const fileList = await readFolderAsync(folderPath)
-                filePaths = fileList.map((name) => path.join(folderPath, name))
-            }
 
-            folderContent.set(folderPath, { isFolder: true, path: folderPath, name: path.basename(folderPath), files: filePaths })
+        if (folderContent.has(folderPath)) return
+
+        if (data.captureFolderContent && currentDepth >= 2 && exceededDepth) {
+            folderContent.set(folderPath, { isFolder: true, path: folderPath, name: path.basename(folderPath), files: [] })
             return
         }
 
         const fileList = await readFolderAsync(folderPath)
         const filePaths: string[] = fileList.map((name) => path.join(folderPath, name))
+
+        let noMedia = false
+        if (data.captureFolderContent) {
+            // check if any of the files in the current folder are media files and no folders (because they might contain media files)
+            const results = await Promise.all(
+                filePaths.map(async (p) => {
+                    const stats = await getFileStatsAsync(p)
+                    return stats?.isDirectory() || isMedia(getExtension(p))
+                })
+            )
+            noMedia = !results.some((res) => res)
+        }
+
+        if (data.captureFolderContent && currentDepth < 2 ? false : exceededDepth) {
+            folderContent.set(folderPath, { isFolder: true, path: folderPath, name: path.basename(folderPath), files: filePaths, noMedia: noMedia ? true : undefined })
+            return
+        }
 
         const captureThumbnailPaths = data.captureFolderContent && currentDepth === 1 ? getFirstMediaFiles(filePaths, 4) : []
         const currentPaths = data.captureFolderContent && exceededDepth ? captureThumbnailPaths : filePaths
@@ -485,7 +499,7 @@ export async function readFolderContent(data: { path: string | string[]; depth?:
                     await getFolderContentRecursive(filePath, currentDepth + 1)
                 } else {
                     let thumbnailPath = ""
-                    if (captureThumbnailPaths.includes(filePath) || (data.generateThumbnails && currentDepth === 0 && isMedia(path.extname(filePath).substring(1)))) {
+                    if (captureThumbnailPaths.includes(filePath) || (data.generateThumbnails && currentDepth === 0 && isMedia(getExtension(filePath)))) {
                         try {
                             thumbnailPath = createThumbnail(filePath)
                         } catch (err) {
@@ -498,7 +512,7 @@ export async function readFolderContent(data: { path: string | string[]; depth?:
             })
         )
 
-        folderContent.set(folderPath, { isFolder: true, path: folderPath, name: path.basename(folderPath), files: filePaths })
+        folderContent.set(folderPath, { isFolder: true, path: folderPath, name: path.basename(folderPath), files: filePaths, noMedia: noMedia ? true : undefined })
     }
 
     return Object.fromEntries(folderContent)
