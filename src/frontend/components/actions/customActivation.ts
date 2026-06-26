@@ -37,9 +37,3 @@ export const customActionActivations = [
 
     { id: "midi_signal_received", common: true, name: "midi.activate", icon: "companion", inputs: true }
 ]
-
-// WIP Custom activations
-// background_start
-// slide_start
-// overlay_start
-// overlay_cleared

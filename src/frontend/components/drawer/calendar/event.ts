@@ -92,7 +92,6 @@ export function createRepeatedEvents(event: Event, onlyMissing = false, skipDate
     }
 
     // get dates array
-    // WIP repeat on weekdays...
     if (data.ending === "date") {
         while (currentFromDate.getTime() <= endingDate.getTime()) {
             advanceDates()

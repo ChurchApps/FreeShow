@@ -373,8 +373,6 @@ function sortItems(items: ContextMenuItem[], id: "shows" | "projects" | "media")
     ]
     if (id === "shows") {
         items.push({ id: "used", label: "info.used", icon: "calendar", enabled: type === "used" })
-
-        // WIP load used metadata values...
     }
 
     return items

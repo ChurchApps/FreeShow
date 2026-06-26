@@ -1,5 +1,5 @@
 import { formatSearch } from "../../utils/search"
-import type { ContextMenuItem } from "./contextMenus"
+import { contextMenuItems, type ContextMenuItem } from "./contextMenus"
 import { loadItems } from "./loadItems"
 import { closeContextMenu } from "../../utils/shortcuts"
 
@@ -42,7 +42,7 @@ export function handleKeydown(e: KeyboardEvent, contextActive: boolean, searchQu
         const targetElement = Array.from(menuElement.querySelectorAll(".highlighted")).find((el) => el instanceof HTMLElement && !el.querySelector(".submenu")) as HTMLElement | undefined
 
         if (targetElement) targetElement.click()
-        return null
+        return { searchQuery: "", highlightedItemId: null, highlightedPath: [] }
     }
 
     if (e.key === "Backspace") {
@@ -116,20 +116,24 @@ export function searchMenuItems(query: string, flatMenuItems: FlatMenuItem[], tr
     const lowerQuery = formatSearch(query, true)
     const enabledItems = flatMenuItems.filter((item) => !item.disabled)
 
-    // WIP this doesn't get the actual replaced text from ContextItem.svelte
+    const getLabel = (item: FlatMenuItem) => {
+        // contextMenuItems.label may have been updated in ContextItem.svelte
+        const latestMenu = contextMenuItems[item.id]
+        return latestMenu?.label || item.label
+    }
 
     // Find best match - exact match first, then prefix, then partial
     const match =
         enabledItems.find((item) => {
-            const label = formatSearch(translateText(item.label, dictionary), true)
+            const label = formatSearch(translateText(getLabel(item), dictionary), true)
             return label === lowerQuery
         }) ||
         enabledItems.find((item) => {
-            const label = formatSearch(translateText(item.label, dictionary), true)
+            const label = formatSearch(translateText(getLabel(item), dictionary), true)
             return label.startsWith(lowerQuery)
         }) ||
         enabledItems.find((item) => {
-            const label = formatSearch(translateText(item.label, dictionary), true)
+            const label = formatSearch(translateText(getLabel(item), dictionary), true)
             return label.includes(lowerQuery)
         })
 

@@ -436,7 +436,6 @@
     let shortcut = ""
     $: if (menu?.shortcuts) getShortcuts()
     function getShortcuts() {
-        // WIP multiple
         let s = menu.shortcuts![0]
         if ($os.platform === "darwin") s = s.replaceAll("Ctrl", "Cmd") // .replaceAll("Alt", "Option")
         shortcut = s

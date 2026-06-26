@@ -2137,8 +2137,6 @@ export async function format(id: string, obj: ObjData, data: any = null) {
     const editing = get(activeEdit)
     const items = editing.items || []
 
-    // WIP let slide = getEditSlide()
-
     if (editing.id) {
         let currentItems: Item[] = []
         if (editing.type === "overlay") currentItems = get(overlays)[editing.id]?.items || []

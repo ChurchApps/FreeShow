@@ -158,8 +158,6 @@ export async function getActiveScripturesContent(selectedVerses: (number | strin
                 if (scriptureData?.copyright) metadata.copyright = scriptureData.copyright
                 if (scriptureData?.name && !metadata.title) metadata.title = scriptureData.name
 
-                // WIP custom verse number offset per scripture (for collections)
-
                 // add the three prior and next verse numbers to selected for the stage display next slide
                 const selected = clone(selectedVerses)
                 const includeCount = 3
@@ -1323,7 +1321,6 @@ export function getScriptureSlides({ biblesContent, selectedChapters, selectedVe
                 // auto size
                 if (!templateTextItems[j]?.auto || !slides[i][j].lines?.[0]?.text) return
 
-                // WIP historyActions - TEMPLATE...
                 slides[i][j].auto = true
                 if (templateTextItems[j]?.textFit) slides[i][j].textFit = templateTextItems[j]?.textFit
                 // slides[i][j].lines![0].text.forEach((_, k) => {
@@ -1346,8 +1343,6 @@ export function getScriptureSlides({ biblesContent, selectedChapters, selectedVe
         if (!biblesContent[0]) return
 
         const lines: any[] = []
-
-        // WIP itemIndex is mostly correct if combineWithText
 
         // if (combineWithText) itemIndex = 0
         const metaTemplate = templateTextItems[itemIndex] || templateTextItems[0]
@@ -1925,8 +1920,6 @@ export async function getScriptureShow(biblesContent: BibleContent[] | null) {
             attributionString: biblesContent[0].attributionString
         }
     }
-
-    // WIP add template background?
 
     return show
 }
