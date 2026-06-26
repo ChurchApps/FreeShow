@@ -45,7 +45,7 @@ export class AudioMultichannel {
             const audioBuffer = await offlineCtx.decodeAudioData(arrayBuffer)
 
             const channels = audioBuffer.numberOfChannels
-            console.log(`File channel detection: "${filePath}" → ${channels} channels`)
+
             return Math.min(channels, maxChannels)
         } catch (err) {
             // AggregateError or AbortError are possible here
@@ -111,45 +111,5 @@ export class AudioMultichannel {
 
     static validateChannelCount(channelCount: number): number {
         return Math.max(this.DEFAULT_CHANNELS, Math.min(channelCount, this.MAX_CHANNELS))
-    }
-
-    // DEBUG
-
-    static debugChannelInfo(audioContext: AudioContext, currentChannels: number, maxChannels: number) {
-        console.group("🎵 Multichannel Audio Debug Info")
-        console.log(`Current channels: ${currentChannels}`)
-        console.log(`Max supported by system: ${audioContext.destination.maxChannelCount}`)
-        console.log(`Max configured: ${maxChannels}`)
-        console.log(`Supports multichannel: ${this.supportsMultichannel(audioContext)}`)
-        console.log(`Audio context destination channels: ${audioContext.destination.channelCount}`)
-        console.log(`Audio context sample rate: ${audioContext.sampleRate}`)
-        console.log(`Audio context state: ${audioContext.state}`)
-        console.groupEnd()
-    }
-
-    static async testMultichannelCapability(audioContext: AudioContext, channelCount: number): Promise<boolean> {
-        try {
-            const merger = this.createChannelMerger(audioContext, channelCount)
-
-            for (let i = 0; i < channelCount; i++) {
-                const osc = audioContext.createOscillator()
-                const gain = audioContext.createGain()
-                osc.frequency.value = 440 + i * 110
-                gain.gain.value = 0.1
-                osc.connect(gain)
-                gain.connect(merger, 0, i)
-                osc.start()
-            }
-
-            merger.connect(audioContext.destination)
-            await new Promise((resolve) => setTimeout(resolve, 100))
-            merger.disconnect()
-
-            console.log(`✅ ${channelCount}-channel test successful`)
-            return true
-        } catch (err) {
-            console.warn(`❌ ${channelCount}-channel test failed:`, err)
-            return false
-        }
     }
 }

@@ -411,7 +411,7 @@ export function captureSlide(data: { output: { [key: string]: Output }; resoluti
                 if (window.isDestroyed()) return resolve(null)
 
                 window.webContents.send(OUTPUT, { channel: "OUTPUTS", data: data.output })
-                // WIP mute videos
+                window.webContents.setAudioMuted(true)
 
                 // wait for content load
                 setTimeout(async () => {

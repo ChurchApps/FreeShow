@@ -81,13 +81,3 @@
 {#if !emitter}
     <MaterialTextInput label="inputs.payload" disabled={emitter} value={rest.payload || ""} placeholder={"{}"} on:change={updatePayload} />
 {/if}
-
-<!--
-TODO: Better Namings
-? Send WebRequest 
-
-- URL
-- Method
-- Content Type <-- einstellbar machen
-- Payload
--->

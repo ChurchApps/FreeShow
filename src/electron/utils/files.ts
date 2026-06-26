@@ -1140,7 +1140,7 @@ export function bundleMediaFiles({ openFolder = false, outputPath = "" }: { open
             if (["image", "video", "audio", "pdf", "ppt"].includes(type)) {
                 addFile(show.id)
             } else if (type === "folder") {
-                // WIP handle project media folders?
+                // skip media folder items, because it's a fixed folder path, regardless of the media inside
             }
         })
     }

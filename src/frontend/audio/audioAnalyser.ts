@@ -107,8 +107,6 @@ export class AudioAnalyser {
             }
 
             this.updateScales()
-
-            console.log(`Audio source "${id}" connected to equalizer and analysis chain (${this.channels} channels, volume: ${initialVolume.toFixed(2)})`)
         } else {
             console.warn(`Failed to connect audio source "${id}" to equalizer`)
         }
@@ -155,7 +153,6 @@ export class AudioAnalyser {
             AudioMultichannel.detectFileChannelCount(audio.src, this.maxChannels)
                 .then((channels) => {
                     if (channels > this.channels) {
-                        console.log(`Upgrading to ${channels} channels for "${id}"`)
                         this.updateChannelCount(channels)
                     }
                 })
@@ -262,15 +259,7 @@ export class AudioAnalyser {
     // update channel count and reinitialize audio nodes
     static updateChannelCount(newChannelCount: number) {
         const validatedChannelCount = AudioMultichannel.validateChannelCount(newChannelCount)
-        if (!AudioMultichannel.shouldUpdateChannelCount(this.channels, validatedChannelCount)) {
-            console.log(`Channel count update skipped: current=${this.channels}, requested=${newChannelCount}, validated=${validatedChannelCount}`)
-            return
-        }
-
-        console.log(`🔄 Updating channel count from ${this.channels} to ${validatedChannelCount}`)
-
-        // Log debug info before update
-        AudioMultichannel.debugChannelInfo(this.ac, this.channels, this.maxChannels)
+        if (!AudioMultichannel.shouldUpdateChannelCount(this.channels, validatedChannelCount)) return
 
         // disconnect existing connections
         if (this.splitter) {
@@ -289,8 +278,6 @@ export class AudioAnalyser {
         if (this.gainNode) AudioMultichannel.configureNodeForMultichannel(this.gainNode, this.channels)
 
         this.reconnectAllSources()
-
-        console.log(`✅ Channel count updated to ${this.channels}`)
     }
 
     private static reconnectAllSources() {
