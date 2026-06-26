@@ -7,6 +7,7 @@ import type { Show, Slide } from "../../types/Show"
 import { API_ACTIONS, triggerAction } from "../components/actions/api"
 import { receivedMidi } from "../components/actions/midi"
 import { menuClick } from "../components/context/menuClick"
+import { generateScriptureShowFromReference } from "../components/drawer/bible/scripture"
 import { getCurrentTimerValue } from "../components/drawer/timers/timers"
 import { _getVariableValue, getDynamicValue } from "../components/edit/scripts/itemHelpers"
 import { clone, keysToID } from "../components/helpers/array"
@@ -67,6 +68,7 @@ import {
     projectTemplates,
     projectView,
     providerConnections,
+    recentFiles,
     redoHistory,
     shows,
     showsCache,
@@ -77,7 +79,6 @@ import {
     theme,
     themes,
     timers,
-    recentFiles,
     undoHistory,
     usageLog,
     variables,
@@ -368,7 +369,18 @@ export const mainResponses: MainResponses = {
         for (const show of data.shows) {
             const id = show.id
 
-            // TODO: check if name contains scripture reference (and is empty), and load from active scripture
+            // if empty content and name is a scripture reference, generate slides from the active scripture
+            const isEmptyContent = Object.keys(show.slides || {}).length === 0
+            if (isEmptyContent) {
+                const scriptureShow = await generateScriptureShowFromReference(show.name)
+                if (scriptureShow) {
+                    const originalId = show.id
+                    const originalQuickAccess = show.quickAccess
+                    Object.assign(show, scriptureShow)
+                    show.id = originalId
+                    if (originalQuickAccess) show.quickAccess = originalQuickAccess
+                }
+            }
 
             // first find any shows linked to the id
             const linkedShow = linkKey && allShows.find(({ quickAccess }) => quickAccess?.[linkKey] === id)

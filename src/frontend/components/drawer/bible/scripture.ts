@@ -648,11 +648,7 @@ function parseStyleDimension(style: string, regex: RegExp, defaultValue: number,
     return val
 }
 
-function estimateLinesForVerses(
-    verses: { text: string; verseId: string }[],
-    charsPerLine: number,
-    versesOnIndividualLines: boolean
-): number {
+function estimateLinesForVerses(verses: { text: string; verseId: string }[], charsPerLine: number, versesOnIndividualLines: boolean): number {
     let lines = 1
     let currentLineLength = 0
 
@@ -2195,4 +2191,42 @@ function buildRouteBibleUrl(referenceLabel: string, translation = "") {
     }
 
     return url.toString()
+}
+
+export async function generateScriptureShowFromReference(referenceText: string) {
+    if (typeof referenceText !== "string" || !referenceText.trim()) return null
+
+    const activeScriptureId = get(drawerTabsData).scripture?.activeSubTab || ""
+    if (!activeScriptureId) return null
+
+    try {
+        const activeBible = await loadJsonBible(activeScriptureId)
+        if (!activeBible) return null
+
+        const bookResult = activeBible.bookSearch(referenceText)
+        if (!bookResult?.book) return null
+
+        const bookNum = bookResult.book
+        const chapterNum = bookResult.chapter ? Number(bookResult.chapter) : 1
+        let verses = bookResult.verses || []
+        if (!verses.length) {
+            const bookData = await activeBible.getBook(bookNum)
+            const chapterData = await bookData.getChapter(chapterNum)
+            verses = (chapterData?.data?.verses || []).map((v) => Number(v.number)).filter(Boolean)
+        }
+
+        activeScripture.set({ id: activeScriptureId, reference: { book: bookNum, chapters: [chapterNum], verses: [verses] } })
+
+        const biblesContent = await getActiveScripturesContent()
+        if (!biblesContent?.length) return null
+
+        const scriptureShow = await getScriptureShow(biblesContent)
+        if (!scriptureShow?.slides) return null
+
+        return scriptureShow
+    } catch (err) {
+        console.error("Error generating scripture show from reference:", err)
+    }
+
+    return null
 }
