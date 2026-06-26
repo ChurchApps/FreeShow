@@ -12,8 +12,14 @@
     export let active: string | null
     export let searchValue = ""
 
-    // WIP search for events
-    $: console.log(searchValue)
+    // filter events based on search value
+    $: filteredEvents =
+        searchValue && searchValue.length >= 2
+            ? currentEvents.filter((event) => {
+                  const search = searchValue.toLowerCase()
+                  return event.name?.toLowerCase().includes(search) || event.notes?.toLowerCase().includes(search) || event.location?.toLowerCase().includes(search)
+              })
+            : [...currentEvents]
 
     $: sundayFirstDay = $special.firstDayOfWeek === "7"
 
@@ -25,19 +31,22 @@
     activeDays.set([copyDate(today).getTime()])
 
     let days: Date[][] = []
-    $: getDays(month, sundayFirstDay)
+    $: days = getDays(month, year, sundayFirstDay)
 
-    function getDays(month: number, _updater: any) {
+    function getDays(month: number, year: number, _updater: any) {
+        if (year === undefined || month === undefined) return []
         let daysList: any = []
         for (let i = 1; i <= getDaysInMonth(year, month); i++) daysList.push(new Date(year, month, i))
+        if (!daysList[0]) return []
 
         let before: Date[] = getDaysBefore(daysList[0].getDay())
 
         daysList = [...before, ...daysList]
-        days = []
+        let tempDays: Date[][] = []
 
         while (daysList.length < 42) daysList.push(copyDate(daysList[daysList.length - 1], 1))
-        while (daysList.length) days.push(daysList.splice(0, 7))
+        while (daysList.length) tempDays.push(daysList.splice(0, 7))
+        return tempDays
     }
 
     function getDaysBefore(firstDay: number): Date[] {
@@ -50,25 +59,24 @@
         return before
     }
 
-    let currentEvents: any[] = []
-    $: updateEvents($events, { month })
+    $: currentEvents = getMonthEvents($events, days)
 
-    function updateEvents(events: any, _updater: any) {
-        if (!days[0]) return
+    function getMonthEvents(allEvents: any, daysList: Date[][]) {
+        if (!daysList || !daysList[0]) return []
 
-        currentEvents = []
-        let first = days[0][0].getTime()
-        let last = days[5][days.length - 1].getTime()
+        let tempEvents: any[] = []
+        let first = daysList[0][0].getTime()
+        let last = daysList[5][daysList[5].length - 1].getTime()
 
-        Object.entries(events).forEach(([id, event]: any) => {
+        Object.entries(allEvents).forEach(([id, event]: any) => {
             let from = new Date(event.from).getTime()
             let to = new Date(event.to)?.getTime() || 0
 
             let startOrEndIsInMonth = from > first || from < last || to > first || to < last
-            if (startOrEndIsInMonth) currentEvents.push({ id, ...event })
+            if (startOrEndIsInMonth) tempEvents.push({ id, ...event })
         })
 
-        currentEvents = currentEvents.sort((a, b) => a.from - b.from)
+        return tempEvents.sort((a, b) => a.from - b.from)
     }
 
     let weekdays: string[] = []
@@ -216,7 +224,7 @@
                 </span>
 
                 {#each week as day}
-                    {@const dayEvents = getEvents(day, currentEvents, active || "event")}
+                    {@const dayEvents = getEvents(day, filteredEvents, active || "event")}
                     <div class="day" class:today={isSameDay(day, today)} class:faded={day.getMonth() !== month || day.getFullYear() !== year} class:active={$activeDays?.includes(copyDate(day).getTime())} on:mousedown={(e) => dayClick(e, day)} on:mousemove={(e) => move(e, day)}>
                         <!-- // isSameDay(day, new Date($activeDays[0]))} -->
                         <span style="font-size: 1.5em;font-weight: 600;">{day.getDate()}</span>
