@@ -26,18 +26,6 @@
         // if (!value && key === "allowGaining") AudioPlayer.updateVolume()
     }
 
-    // WIP add once electron is updated to >24
-    // let audioOutputs = []
-    // async function getAudioOutputs() {
-    //     const devices = await navigator.mediaDevices.enumerateDevices()
-    //     let outputs = devices.filter((device) => device.kind === "audiooutput")
-
-    //     let defaultGroupId = outputs.find((a) => a.deviceId === "default")?.groupId
-    //     if (defaultGroupId) outputs = outputs.filter((a) => a.groupId !== defaultGroupId || a.deviceId === "default")
-
-    //     audioOutputs = [{ id: "", name: "—" }, ...outputs.map((device) => ({ id: device.deviceId, name: device.label }))]
-    // }
-
     // audio outputs
     let audioOutputs: { value: string; label: string }[] = []
     onMount(async () => {
@@ -50,8 +38,6 @@
         { value: "mono_right", label: "Mono right" }
     ]
 </script>
-
-<!-- TODO: effects?: https://alemangui.github.io/pizzicato/ -->
 
 {#if settingsOpened}
     <main style="flex: 1;overflow-x: hidden;padding: 10px;">

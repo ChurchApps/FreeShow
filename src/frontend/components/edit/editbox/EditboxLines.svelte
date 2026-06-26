@@ -141,26 +141,13 @@
             let sel = getSelectionRange()
             if (!sel?.length || (sel.length === 1 && !Object.keys(sel[0]).length)) return
 
-            // WIP auto add • or - if on line and pressing Enter
-
             // if (sel.start === sel.end) {
             let lines: Line[] = getNewLines()
             let currentIndex = 0,
                 textPos = 0
             let start = -1
 
-            // TODO: auto bullets
-            if (!e.altKey) {
-                // console.log(lines, textPos, start, currentIndex, sel)
-                // let lastLine = lines[lines.length - 1]
-                // let lineText = lastLine.text?.[lastLine.text?.length - 1]?.value
-                // if (!lineText?.includes("\n") || !lineText?.includes("• ")) return
-                // lines[lines.length - 1].text[lastLine.text.length - 1].value += "• "
-
-                // updateLines(lines)
-
-                return
-            }
+            if (!e.altKey) return
 
             cutInTwo({ e, sel, lines: clone(lines), currentIndex, textPos, start })
         }
@@ -756,7 +743,6 @@
 <svelte:window on:keydown={keydown} />
 
 {#if item?.lines}
-    <!-- TODO: remove align..... -->
     <div bind:this={alignElem} class="align" class:chords={chordsMode} class:plain style={plain ? null : item.align || null}>
         {#if item.lines?.length < 2 && !getItemText(item).length}
             <span class="placeholder">

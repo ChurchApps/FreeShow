@@ -109,18 +109,9 @@
         else newStyles = {}
     }
 
-    // const CHANGE_POS_TIME = 2000
-    // let changePosTimeout = null
     let updateTimeout: NodeJS.Timeout | null = null
     function updateStyles() {
-        // || changePosTimeout
         if (!Object.keys(newStyles).length) return
-
-        // WIP nice to timeout here to reduce lag (but textbox position need to update!!)
-        // changePosTimeout = setTimeout(() => {
-        //     changePosTimeout = null
-        //     updateStyles()
-        // }, CHANGE_POS_TIME)
 
         const slideIndex = $activeEdit.slide ?? 0
         const slideId = ref[slideIndex]?.id
@@ -312,8 +303,8 @@
     $: currentBackgroundPath = currentShow?.media?.[ref[$activeEdit.slide || 0]?.data.background || ""]?.path || ""
     $: hasBackground = !!currentBackgroundPath
     function convertBackgroundToMedia() {
-        // WIP add to back
-        addItem("media", null, { src: currentBackgroundPath }, "", { left: "0px", top: "0px", width: "1920px", height: "1080px" })
+        // add behind all other items
+        addItem("media", null, { src: currentBackgroundPath }, "", { left: "0px", top: "0px", width: "1920px", height: "1080px" }, 0)
 
         showsCache.update((a) => {
             if (!a[currentShowId]?.layouts?.[currentShow?.settings?.activeLayout || ""]?.slides?.[$activeEdit.slide || 0]?.background) return a

@@ -15,17 +15,18 @@
 
     let currentAudioSections = clone(audioSections)
 
-    $: if (audioId) getAudioDuration()
-    async function getAudioDuration() {
+    $: if (audioId) getAudioDuration(currentMedia.fromTime, currentMedia.toTime)
+    async function getAudioDuration(fromTime?: number, toTime?: number) {
         const duration = await AudioPlayer.getDuration(audioId)
 
-        setBoxInputValue(currentAudioSections, "default", "toTime", "value", currentMedia?.toTime || duration)
-        setBoxInputValue(currentAudioSections, "default", "toTime", "default", duration)
-        setBoxInputValue(currentAudioSections, "default", "fromTime", "values", { max: duration })
-        setBoxInputValue(currentAudioSections, "default", "toTime", "values", { max: duration })
-        currentAudioSections = currentAudioSections
+        const from = fromTime ?? 0
+        const to = toTime ?? duration
 
-        // WIP set min/max based on each other
+        setBoxInputValue(currentAudioSections, "default", "toTime", "value", to)
+        setBoxInputValue(currentAudioSections, "default", "toTime", "default", duration)
+        setBoxInputValue(currentAudioSections, "default", "fromTime", "values", { min: 0, max: to })
+        setBoxInputValue(currentAudioSections, "default", "toTime", "values", { min: from, max: duration })
+        currentAudioSections = currentAudioSections
     }
 
     function reset() {

@@ -47,9 +47,6 @@
 
         videoTime = startAt
 
-        // WIP captions ?
-        // player.setOption("captions", "fontSize", -1)
-
         loaded = true
 
         videoData.paused = $focusMode

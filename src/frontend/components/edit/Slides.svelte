@@ -4,11 +4,11 @@
     import T from "../helpers/T.svelte"
     import { findMatchingOut } from "../helpers/output"
     import { getShowCacheId } from "../helpers/show"
+    import SkeletonSlide from "../slide/SkeletonSlide.svelte"
     import Slide from "../slide/Slide.svelte"
     import Autoscroll from "../system/Autoscroll.svelte"
     import Center from "../system/Center.svelte"
     import DropArea from "../system/DropArea.svelte"
-    import SkeletonSlide from "../slide/SkeletonSlide.svelte"
 
     $: showId = $activeShow?.id || $activeEdit.showId || ""
     $: currentShow = $showsCache[showId]
@@ -63,8 +63,6 @@
         setTimeout(() => {
             if (index >= 0 && scrollElem) offset = (scrollElem.querySelector(".grid")?.children?.[index] as HTMLElement)?.offsetTop || 5 - 5
         }, 10)
-
-        // WIP scroll on click if not 100% visible (Intersection Observer?)
     }
 
     let nextScrollTimeout: NodeJS.Timeout | null = null

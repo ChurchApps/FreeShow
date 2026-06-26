@@ -84,7 +84,6 @@
 
                 <div class="action context #action{isReadOnly ? '_readonly' : ''}{showGrid ? ' grid-item' : ''}">
                     <SelectElem id="action" data={action} style={showGrid ? "display: block; width: 100%; height: 100%;" : "display: flex; flex: 1;"} draggable>
-                        <!-- WIP MIDI if slide action.action ... -->
                         <Button
                             title="{translateText('media.play')}: <b>{action.name}</b>"
                             on:click={(e) => {

@@ -197,8 +197,17 @@
         const backwardSelection = currentDomSelection ? isSelectionBackward(currentDomSelection) : false
 
         let value = shortcut()
-        // WIP line-through is removed
-        if (styles[value.key]?.includes(value.value)) value.value = ""
+
+        if (value.key === "text-decoration") {
+            // don't remove line-through if underline is toggled
+            const currentVal = styles[value.key] || ""
+            let parts = currentVal.split(" ").filter((p: string) => p)
+            if (parts.includes(value.value)) parts = parts.filter((p: string) => p !== value.value)
+            else parts.push(value.value)
+            value.value = parts.join(" ")
+        } else if (styles[value.key]?.includes(value.value)) {
+            value.value = ""
+        }
 
         updateValue({ detail: value })
 
@@ -221,11 +230,7 @@
     $: if ($activeEdit.id || $activeShow?.id || $activeEdit.slide) box = setBox()
 
     // get item values
-    $: style = item?.lines
-        ? getItemStyleAtPos(item.lines, selection)
-        : (item?.type === "table" && activeRowIdx >= 0 && activeColIdx >= 0 && item.table?.rows?.[activeRowIdx]?.cells?.[activeColIdx])
-            ? item.table.rows[activeRowIdx].cells[activeColIdx].style || ""
-            : item?.style || ""
+    $: style = item?.lines ? getItemStyleAtPos(item.lines, selection) : item?.type === "table" && activeRowIdx >= 0 && activeColIdx >= 0 && item.table?.rows?.[activeRowIdx]?.cells?.[activeColIdx] ? item.table.rows[activeRowIdx].cells[activeColIdx].style || "" : item?.style || ""
     let styles: any = {}
     $: if (style !== undefined) styles = getStyles(style, true)
 

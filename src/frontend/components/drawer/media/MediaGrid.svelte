@@ -129,8 +129,6 @@
             lazyLoadFrame = requestAnimationFrame(() => lazyLoad())
         }
     }
-
-    // TODO: lagging a bit on scroll when rendering new components
 </script>
 
 <div class="grid" on:scroll={scroll} bind:clientHeight={viewHeight}>

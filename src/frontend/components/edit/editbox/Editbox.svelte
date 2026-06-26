@@ -146,21 +146,33 @@
             style = percentageStylePos(style, outputResolution)
         }
 
+        // minimum of 50% opacity on all items in the editor
+        if (style.includes("opacity:")) {
+            style = style.replace(/opacity:\s*([0-9.]+)/, (match, p1) => {
+                if (parseFloat(p1) < 0.5) return "opacity: 0.5"
+                return match
+            })
+        }
+
         return style
     }
 
     // check if media fills entire slide, if it does it might be intended as a background
-    $: if (item?.type === "media") checkMedia()
-    else mediaShouldBeBackground = false
     let mediaShouldBeBackground = false
+    $: if (item?.type === "media" && checkMedia()) mediaShouldBeBackground = true
+    else mediaShouldBeBackground = false
     function checkMedia() {
-        // WIP return if background exists
-        if (!item?.src || (ref?.type || "show") !== "show" || !item.style?.includes("width:1920") || !item.style?.includes("height:1080")) {
-            mediaShouldBeBackground = false
-            return
-        }
+        if (!item?.src) return false
+        if ((ref?.type || "show") !== "show") return false
 
-        mediaShouldBeBackground = true
+        // item fills entire width and height
+        if (!item.style?.includes("width:1920") || !item.style?.includes("height:1080")) return false
+
+        const currentLayoutSlide = $showsCache[active || ""]?.layouts?.[layout]?.slides?.[$activeEdit.slide ?? -1]
+        // background is already set
+        if (currentLayoutSlide?.background) return false
+
+        return true
     }
     function convertToBackground() {
         if (!item?.src) return
@@ -200,8 +212,6 @@
 
 <!-- on:mouseup={() => chordUp({ showRef: ref, itemIndex: index, item })} -->
 <svelte:window on:mousedown={deselect} on:keydown={keydown} />
-
-<!-- WIP item with opacity 0 is completely hidden! Even the align elements! -->
 
 <div
     bind:this={itemElem}
@@ -307,6 +317,7 @@
         text-shadow: none;
 
         /* if parent is flipped, this will apply the same flip, so it's flipped back */
+        /* WIP rotate means this also rotates on top */
         transform: inherit;
     }
 </style>

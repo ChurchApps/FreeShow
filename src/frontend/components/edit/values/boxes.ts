@@ -133,9 +133,9 @@ export const textSections: { [key: string]: EditBoxSection } = {
                 }
             ],
             [
-                { id: "style", key: "font-weight", type: "toggle", value: "bold", values: { label: "edit._title_bold", icon: "bold" } },
-                { id: "style", key: "font-style", type: "toggle", value: "italic", values: { label: "edit._title_italic", icon: "italic" } },
-                { id: "style", key: "text-decoration", type: "toggle", value: "underline", values: { label: "edit._title_underline", icon: "underline" } },
+                { id: "style", key: "font-weight", type: "toggle", value: "bold", values: { label: "edit._title_bold [Ctrl+B]", icon: "bold" } },
+                { id: "style", key: "font-style", type: "toggle", value: "italic", values: { label: "edit._title_italic [Ctrl+I]", icon: "italic" } },
+                { id: "style", key: "text-decoration", type: "toggle", value: "underline", values: { label: "edit._title_underline [Ctrl+U]", icon: "underline" } },
                 { id: "style", key: "text-decoration", type: "toggle", value: "line-through", values: { label: "edit._title_strikethrough", icon: "strikethrough" } }
             ]
         ]
