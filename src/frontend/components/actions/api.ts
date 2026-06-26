@@ -428,7 +428,3 @@ export async function triggerAction(data: API) {
 
     sendMain(Main.API_TRIGGER, { ...data, returnId, data: returnData })
 }
-
-// export function sendDataAPI(data: any) {
-//     send("API_DATA", data)
-// }
