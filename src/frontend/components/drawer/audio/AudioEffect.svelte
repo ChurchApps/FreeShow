@@ -47,7 +47,7 @@
         {outline}
         active={$activeShow?.id === path}
         border
-        style="width: 100%;height: 100px;border: 2px solid var(--primary-lighter);"
+        style="width: 100%;height: 100px;border: 2px solid var(--primary-lighter);border-radius: 8px;"
         title={getFileName(path)}
         bold={false}
         on:click={(e) => {
