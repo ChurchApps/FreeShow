@@ -107,8 +107,6 @@ const alignY = [
 
 export const textSections: { [key: string]: EditBoxSection } = {
     default: {
-        // WIP icon color..?
-
         inputs: [
             [
                 { id: "style", key: "font-family", type: "fontDropdown", value: "CMGSans", styleValue: "", values: { label: "edit.family", style: "flex: 4;max-width: 80%;" } },

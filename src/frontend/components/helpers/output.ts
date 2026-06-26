@@ -25,7 +25,7 @@ import { clearBackground, clearSlide } from "../output/clear"
 import { areObjectsEqual, clone, keysToID, removeDuplicates, sortByName, sortObject } from "./array"
 import { getExtension, getFileName, getMediaLayerType, removeExtension } from "./media"
 import { getLayoutRef } from "./show"
-import { getFewestOutputLines, getItemWithMostLines, replaceDynamicValues } from "./showActions"
+import { getFewestOutputLines, getItemWithMostLines } from "./showActions"
 import { _show } from "./shows"
 import { getStyles } from "./style"
 import { getFirstOutputIdWithAudableBackground } from "./video"
@@ -56,7 +56,6 @@ export function toggleOutput(id: string) {
 // slide: null,
 // overlays: [],
 // transition: null,
-// TODO: updating a output when a "next slide timer" is active, will "reset/remove" the "next slide timer"
 let resetActionTrigger = false
 export function setOutput(type: string, data: any, toggle = false, outputId = "", add = false) {
     const ref = data?.layout ? _show(data.id).layouts([data.layout]).ref()[0] || [] : []
@@ -292,7 +291,6 @@ function changeOutputBackground(data, { output, id, mute, videoOutputId }) {
     }
 
     // mute videos in the other output windows if more than one
-    // WIP fix multiple outputs: if an output with style without background is first the video will be muted... even if another output should not be muted
     data.muted = data.muted || false
     if (mute) data.muted = true
 
@@ -451,11 +449,6 @@ export function getFirstActiveOutput(_updater: any = null) {
 // DEPRECATED
 let sortedOutputs: (Output & { id: string })[] = []
 export function getActiveOutputs(updater: Outputs = get(outputs), hasToBeActive = true, removeKeyOutput = false, shouldRemoveStageOutput = false) {
-    // keyOutput is not in use anymore
-    // WIP cache outputs
-    // if (JSON.stringify(sortedOutputs.map(({ id }) => id)) !== JSON.stringify(Object.keys(updater))) {
-    //     sortedOutputs = sortByName(keysToID(updater || {}))
-    // }
     sortedOutputs = sortByName(keysToID(updater || {}))
 
     let enabled = sortedOutputs.filter((a) => a.enabled === true && (removeKeyOutput ? !(a as any).isKeyOutput : true) && (shouldRemoveStageOutput ? !a.stageOutput : true))
@@ -475,23 +468,15 @@ export function getActiveOutputs(updater: Outputs = get(outputs), hasToBeActive 
 export function findMatchingOut(id: string, updater: Outputs = get(outputs)): string | null {
     let match: string | null = null
 
-    // TODO: more than one active
-
     getActiveOutputs(updater, false, true, true).forEach((outputId: string) => {
         const output = updater[outputId]
         if (match === null && output.enabled) {
-            // TODO: index & layout: $outSlide?.index === i && $outSlide?.id === $activeShow?.id && $outSlide?.layout === activeLayout
-            // slides (edit) + slides
             if (output.out?.slide?.id === id) match = output.color
             else if ((output.out?.background?.path || output.out?.background?.id) === id) match = output.color
             else if (output.out?.overlays?.includes(id)) match = output.color
             else if (output.out?.effects?.includes(id)) match = output.color
         }
     })
-
-    // if (match && match === "#F0008C" && get(themes)[get(theme)]?.colors?.secondary) {
-    //   match = get(themes)[get(theme)]?.colors?.secondary
-    // }
 
     return match
 }
@@ -576,8 +561,6 @@ export function outputSlideHasContent(output) {
 
     return !!getSlideText(currentSlide)?.length
 }
-
-// WIP style should override any slide resolution & color ? (it does not)
 
 // this actually gets aspect ratio
 export function getResolution(initial: Resolution | undefined | null = null, _updater: any = null, _getSlideRes = false, outputId = "", styleIdOverride = ""): Resolution {
@@ -1645,20 +1628,6 @@ function getHighestOutputLinePos() {
 
 // METADATA
 
-// WIP dynamic placeholder values??: {meta_title?No title}
-export const DEFAULT_META_LAYOUT = "Title: {meta_title?No title}; {meta_artist}; {meta_author}; {meta_year};\n{meta_copyright}"
-export function createMetadataLayout(layout: string, ref: any, _updater = 0) {
-    return replaceDynamicValues(layout, ref)
-}
-
-export interface OutputMetadata {
-    display?: string
-    style?: string
-    transition?: any
-    value?: string
-    media?: boolean
-    condition?: any
-}
 const defaultMetadataItemStyle = "top: 910px;left: 30px;width: 1860px;height: 150px;"
 const defaultMetadataTextStyle = "font-size: 30px;color: rgb(255 255 255 / 0.8);text-shadow: 2px 2px 4px rgb(0 0 0 / 80%);"
 export function getMetadata(show: Show | undefined, currentStyle: Styles, outSlide: OutSlide | null, _updater = get(templates)) {

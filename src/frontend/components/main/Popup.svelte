@@ -44,7 +44,6 @@
 {#if popupId !== null}
     {#key popupId}
         <div style={isWindows ? `height: calc(100% - ${MENU_BAR_HEIGHT}px);` : null} class="popup" class:isOptimized transition:fade={{ duration: isOptimized ? 20 : 100 }} on:mousedown={mousedown}>
-            <!-- class:fill={popupId === "import_scripture"} -->
             <div class="card" transition:scale={{ duration: isOptimized ? 50 : 200 }}>
                 {#if popupId !== "alert"}
                     <div class="headerContent" style="border-bottom: 1px solid var(--primary-lighter);{scrolled ? 'box-shadow: 2px 2px 4px 5px rgb(0 0 0 / 0.1);' : ''}">
@@ -168,18 +167,6 @@
         margin: 20px;
         min-width: 38vw;
     }
-
-    /* .fill {
-        width: 100%;
-        height: 100%;
-    } */
-
-    /* WIP dropdown */
-    /* .popup :global(.dropdown) {
-        position: fixed !important;
-        width: fit-content;
-        max-height: 150px;
-    } */
 
     .card :global(.popup-close),
     .card :global(.popup-back),

@@ -78,7 +78,6 @@
 
         <InputRow>
             <MaterialColorInput style="min-width: 50%;" label="edit.color" value={colorPart.color} on:input={(e) => (colorPart.color = e.detail)} allowOpacity />
-            <!-- WIP also change background opacity -->
             <MaterialNumberInput label="settings.position" value={pos} min={prevPos} max={nextPos} on:change={(e) => (colorPart.pos = e.detail)} currentProgress={pos} showSlider />
             {#if i > 0}
                 <MaterialButton icon="up" on:click={() => moveUp(i)} />

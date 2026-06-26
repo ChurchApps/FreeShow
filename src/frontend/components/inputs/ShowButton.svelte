@@ -197,7 +197,6 @@
 
         const name = checkName(e.detail.value, id)
         historyAwait([id], { id: "SHOWS", newData: { data: [{ id, show: { name } }], replace: true }, location: { page: "drawer" } })
-        // WIP this does not update in the shows drawer before refresh (if checkName updates the name)
     }
 
     let activeOutput: string | null = null

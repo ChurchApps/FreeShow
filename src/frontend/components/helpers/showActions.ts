@@ -117,7 +117,6 @@ export function getItemWithMostLines(slide: Slide | { items: Item[] }) {
     return amount
 }
 
-// TODO: multiple outputs with different lines!
 // get output with fewest lines
 export function getFewestOutputLines(updater = get(outputs)) {
     const outs = getActiveOutputs(updater, true, true, true)

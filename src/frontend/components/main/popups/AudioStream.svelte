@@ -41,9 +41,8 @@
         // let stream = $audioStreams[streamId]
 
         let ref = getLayoutRef()[slideIndex]
-        let data = ref?.data?.actions || {}
+        let data = clone(ref?.data?.actions || {})
 
-        // TODO: is this correct?
         data.audioStream = streamId
 
         history({ id: "SHOW_LAYOUT", newData: { key: "actions", data, indexes: [slideIndex] }, location: { page: "show", override: "audio_stream" } })

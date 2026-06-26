@@ -570,8 +570,6 @@ const slideDrop = {
         let data = clone(drag.data)
         if (!data.length) return
 
-        // TODO: move multiple add to possible slides
-
         // check files
         if (drag.id === "files") {
             data = []
@@ -689,7 +687,6 @@ const slideDrop = {
         h.location!.layoutSlide = drop.index
 
         data.forEach((audio) => {
-            // TODO: drop both audio & video files...
             h.newData = { name: audio.name || audio.path || audio.id, path: audio.path || audio.id, type: "audio" }
             history(h)
         })
@@ -771,12 +768,8 @@ const slideDrop = {
                 return false
             })
         } else if (drag.id === "group") {
-            // WIP this does not work on children
-
             if (drop.center) {
                 if (drop.trigger?.includes("end")) newIndex--
-                // ref.splice(drop.index, 1)
-                // WIP adding to children will not remove old children
             }
 
             moved = data.map(({ index, id }) => ref[index] || { type: "parent", id })
@@ -785,9 +778,6 @@ const slideDrop = {
 
         // sort layout ref
         const newLayoutRef = addToPos(ref, moved, newIndex)
-
-        // TODO: dragging a current group on child will not remove old children
-        // TODO: dragging a parent slide over its own childs will not change children
 
         // check if first slide child
         if (newLayoutRef[0]?.type === "child") newLayoutRef[0].newType = "parent"

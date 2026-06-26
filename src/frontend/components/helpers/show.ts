@@ -268,8 +268,6 @@ export function getCachedShow(id: string, layout = "", updater = get(cachedShows
 
 // update cached show
 export function updateCachedShow(showId: string, show: Show, layoutId = "") {
-    // WIP looped many times when show not loading
-    // console.log(id, show)
     if (!show) return
 
     const layout = GetLayout(showId, layoutId)
