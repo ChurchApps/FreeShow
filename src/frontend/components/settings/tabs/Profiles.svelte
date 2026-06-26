@@ -1,11 +1,12 @@
 <script lang="ts">
     import type { AccessType, Profile } from "../../../../types/Main"
     import { SettingsTabs } from "../../../../types/Tabs"
-    import { actions, actionTags, activeProfile, categories, folders, groups, overlayCategories, profiles, selectedProfile, special, stageShows, templateCategories, variableTags, timerTags } from "../../../stores"
+    import { actions, actionTags, activeProfile, categories, folders, groups, overlayCategories, profiles, selectedProfile, special, stageShows, templateCategories, timerTags, variableTags } from "../../../stores"
     import { newToast } from "../../../utils/common"
     import { translateText } from "../../../utils/language"
     import { promptCustom } from "../../../utils/popup"
     import { checkPassword, encodePassword } from "../../../utils/profile"
+    import { customIconsColors } from "../../../values/customIcons"
     import { runActionId } from "../../actions/actions"
     import { clone, keysToID, sortByName } from "../../helpers/array"
     import { history } from "../../helpers/history"
@@ -109,25 +110,37 @@
 
     /////
 
-    $: projectsList = sortByName(keysToID($folders).filter((a) => a.name && a.parent === "/"))
+    $: projectsList = sortByName(keysToID($folders).filter((a) => a.name && a.parent === "/")).map((a) => ({ ...a, icon: "folder" }))
     $: projectsAccess = currentProfile.access.projects || {}
 
-    $: showsCategoryList = sortByName(keysToID($categories)).filter((a) => a.name && !a.isArchive) //  && !a.default
+    $: showsCategoryList = sortByName(keysToID($categories))
+        .filter((a) => a.name && !a.isArchive)
+        .map((a) => ({ ...a, color: customIconsColors[a.icon || ""] })) //  && !a.default
     $: showsCategoryAccess = currentProfile.access.shows || {}
 
-    $: overlayCategoryList = sortByName(keysToID($overlayCategories)).filter((a) => a.name)
+    $: overlayCategoryList = sortByName(keysToID($overlayCategories))
+        .filter((a) => a.name)
+        .map((a) => ({ ...a, color: customIconsColors[a.icon || ""] }))
     $: overlayCategoryAccess = currentProfile.access.overlays || {}
 
-    $: templateCategoryList = sortByName(keysToID($templateCategories)).filter((a) => a.name)
+    $: templateCategoryList = sortByName(keysToID($templateCategories))
+        .filter((a) => a.name)
+        .map((a) => ({ ...a, color: customIconsColors[a.icon || ""] }))
     $: templateCategoryAccess = currentProfile.access.templates || {}
 
-    $: actionsList = sortByName(keysToID($actionTags)).filter((a) => a.name)
+    $: actionsList = sortByName(keysToID($actionTags))
+        .filter((a) => a.name)
+        .map((a) => ({ ...a, icon: "tag" }))
     $: actionsAccess = currentProfile.access.actions || {}
 
-    $: timersList = sortByName(keysToID($timerTags)).filter((a) => a.name)
+    $: timersList = sortByName(keysToID($timerTags))
+        .filter((a) => a.name)
+        .map((a) => ({ ...a, icon: "tag" }))
     $: timersAccess = currentProfile.access.timers || {}
 
-    $: variablesList = sortByName(keysToID($variableTags)).filter((a) => a.name)
+    $: variablesList = sortByName(keysToID($variableTags))
+        .filter((a) => a.name)
+        .map((a) => ({ ...a, icon: "tag" }))
     $: variablesAccess = currentProfile.access.variables || {}
 
     $: stageList = sortByName(keysToID($stageShows)).filter((a) => a.name)
@@ -136,13 +149,13 @@
     $: groupsList = sortByName(keysToID($groups)).map((a) => {
         let name = a.name
         if (a.default) name = translateText("groups." + a.name)
-        return { id: a.id, name }
+        return { id: a.id, name, color: a.color }
     })
     $: groupsAccess = currentProfile.access.groups || {}
 
     // "display_settings" (can change position still), "connection" (can use still)
     const tabs: SettingsTabs[] = ["general", "display_settings", "styles", "connection", "files", "profiles", "theme", "other"]
-    $: settingsList = tabs.map((id) => ({ id, name: `settings.${id}` }))
+    $: settingsList = tabs.map((id) => ({ id, name: `settings.${id}`, icon: id }))
     $: settingsAccess = currentProfile.access.settings || {}
 
     ///
@@ -242,8 +255,8 @@
 
             <div slot="menu">
                 {#each a.list as item}
-                    <InputRow>
-                        <MaterialMultiButtons label={item.name} value={getAccessLevel(a.access, item.id)} options={getInputs(a.access.global, a.id)} on:click={(e) => updateAccess(a.id, item.id, e.detail)} noLabels />
+                    <InputRow style={item["color"] && !item["icon"] ? `border-left: 2px solid ${item["color"]};` : ""}>
+                        <MaterialMultiButtons label={item.name} icon={item["icon"] || ""} iconColor={item["color"] || ""} value={getAccessLevel(a.access, item.id)} options={getInputs(a.access.global, a.id)} on:click={(e) => updateAccess(a.id, item.id, e.detail)} noLabels />
                     </InputRow>
                 {/each}
             </div>

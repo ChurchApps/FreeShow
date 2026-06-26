@@ -7,6 +7,7 @@
 
     export let label: string
     export let icon = ""
+    export let iconColor = ""
     export let value: string
     export let options: { value: string; label: string; icon?: string; disabled?: boolean }[]
     export let noLabels = false
@@ -19,7 +20,7 @@
 
 <div class="toggles">
     <label class:selected={value}>
-        {#if icon}<Icon id={icon} white />{/if}
+        {#if icon}<Icon id={icon} color={iconColor} boxed={!!iconColor} white />{/if}
         {translateText(label)}
     </label>
 
