@@ -7,7 +7,24 @@ import { actionData } from "../../actions/actionData"
 import { clone } from "../../helpers/array"
 import { history } from "../../helpers/history"
 
-export function createRepeatedEvents(event: Event, onlyMissing = false) {
+function getOrdinalWeekdayOfMonth(year: number, month: number, weekday: number, ordinal: string): number {
+    const dates: number[] = []
+    const daysInMonth = new Date(year, month + 1, 0).getDate()
+    for (let d = 1; d <= daysInMonth; d++) {
+        const date = new Date(year, month, d)
+        if (date.getDay() === weekday) {
+            dates.push(d)
+        }
+    }
+    if (ordinal === "1st") return dates[0]
+    if (ordinal === "2nd") return dates[1]
+    if (ordinal === "3rd") return dates[2]
+    if (ordinal === "4th") return dates[3]
+    if (ordinal === "last") return dates[dates.length - 1]
+    return dates[0]
+}
+
+export function createRepeatedEvents(event: Event, onlyMissing = false, skipDates: string[] = []) {
     // <!-- REPEAT EVERY: {1-10000}, {day, week, month, year} -->
     // <!-- REPEAT ON: {MO,TH,WE,TH,FR,SA,SU} (if "week") -->
     // <!-- ENDING: {date, after {10} times, never} -->
@@ -19,6 +36,12 @@ export function createRepeatedEvents(event: Event, onlyMissing = false) {
     let currentToDate = new Date(event.to)
     let endingDate = new Date(data.endingDate || "")
     endingDate = setDate(currentFromDate, { date: endingDate.getDate(), month: endingDate.getMonth(), year: endingDate.getFullYear() })
+
+    const isCalendarRepeat = ["1st", "2nd", "3rd", "4th", "last"].includes(data.type)
+    const originalFromDate = new Date(event.from)
+    const originalToDate = new Date(event.to)
+    const durationMs = originalToDate.getTime() - originalFromDate.getTime()
+    const weekday = originalFromDate.getDay()
 
     const increment = {
         day: () => [currentFromDate.getDate() + Number(data.count), currentToDate.getDate() + Number(data.count)],
@@ -38,11 +61,19 @@ export function createRepeatedEvents(event: Event, onlyMissing = false) {
         year: () => [currentFromDate.getFullYear() + Number(data.count), currentToDate.getFullYear() + Number(data.count)]
     }
 
-    // get dates array
-    // WIP repeat on weekdays...
-    if (data.ending === "date") {
-        while (currentFromDate.getTime() <= endingDate.getTime()) {
-            const incremented = increment[data.type]()
+    const advanceDates = () => {
+        if (isCalendarRepeat) {
+            let targetMonth = currentFromDate.getMonth() + 1
+            let targetYear = currentFromDate.getFullYear()
+            if (targetMonth > 11) {
+                targetYear += Math.floor(targetMonth / 12)
+                targetMonth = targetMonth % 12
+            }
+            const targetDay = getOrdinalWeekdayOfMonth(targetYear, targetMonth, weekday, data.type)
+            currentFromDate = setDate(currentFromDate, { year: targetYear, month: targetMonth, date: targetDay })
+            currentToDate = new Date(currentFromDate.getTime() + durationMs)
+        } else {
+            const incremented = increment[data.type as keyof typeof increment]()
 
             if (data.type === "day" || data.type === "week") {
                 currentFromDate.setDate(incremented[0])
@@ -51,27 +82,39 @@ export function createRepeatedEvents(event: Event, onlyMissing = false) {
                 currentFromDate = setDate(currentFromDate, { [data.type]: incremented[0] })
                 currentToDate = setDate(currentToDate, { [data.type]: incremented[1] })
             }
+        }
+    }
+
+    const getISO = (date: Date) => {
+        const offset = date.getTimezoneOffset()
+        const localDate = new Date(date.getTime() - offset * 60 * 1000)
+        return localDate.toISOString().substring(0, 10)
+    }
+
+    // get dates array
+    // WIP repeat on weekdays...
+    if (data.ending === "date") {
+        while (currentFromDate.getTime() <= endingDate.getTime()) {
+            advanceDates()
 
             if (currentFromDate.getTime() <= endingDate.getTime()) {
-                dates.push([currentFromDate.toString(), currentToDate.toString()])
+                const iso = getISO(currentFromDate)
+                if (!skipDates.includes(iso)) {
+                    dates.push([currentFromDate.toString(), currentToDate.toString()])
+                }
             }
         }
     } else if (data.ending === "after") {
         let count = 0
         while (count < data.afterRepeats!) {
             count++
-            const incremented = increment[data.type]()
-
-            if (data.type === "day" || data.type === "week") {
-                currentFromDate.setDate(incremented[0])
-                currentToDate.setDate(incremented[1])
-            } else {
-                currentFromDate = setDate(currentFromDate, { [data.type]: incremented[0] })
-                currentToDate = setDate(currentToDate, { [data.type]: incremented[1] })
-            }
+            advanceDates()
 
             if (count < data.afterRepeats!) {
-                dates.push([currentFromDate.toString(), currentToDate.toString()])
+                const iso = getISO(currentFromDate)
+                if (!skipDates.includes(iso)) {
+                    dates.push([currentFromDate.toString(), currentToDate.toString()])
+                }
             }
         }
     }

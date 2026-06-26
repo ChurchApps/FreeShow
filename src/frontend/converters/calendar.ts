@@ -36,14 +36,15 @@ interface VEvent {
 }
 
 export function convertCalendar(data: any) {
-    data.forEach(({ content }: any) => {
+    data.forEach(({ content, name }: any) => {
         const object: any = convertToJSON(content)
         // TODO: convert timezone
 
         const icaEvents: VEvent[] = object.VCALENDAR?.[0]?.VEVENT || []
         if (!icaEvents.length) return
 
-        const newEvents: Event[] = icaEvents.map((event) => {
+        const newEvents: Event[] = []
+        icaEvents.forEach((event) => {
             let fullDay = false
             const startKey: string = Object.keys(event).find((a) => a.includes("DTSTART")) || ""
             const endKey: string = Object.keys(event).find((a) => a.includes("DTEND")) || ""
@@ -69,6 +70,18 @@ export function convertCalendar(data: any) {
             const from = splitDate(new Date(startDate))
             const to = splitDate(new Date(endDate))
 
+            const exdateKey: string = Object.keys(event).find((a) => a.includes("EXDATE")) || ""
+            const exdateVal: string = event[exdateKey] || ""
+            const exdates = exdateVal
+                ? exdateVal
+                      .split(",")
+                      .map((d) => {
+                          const clean = d.trim()
+                          return clean.length >= 8 ? `${clean.slice(0, 4)}-${clean.slice(4, 6)}-${clean.slice(6, 8)}` : ""
+                      })
+                      .filter(Boolean)
+                : []
+
             const newEvent: Event = {
                 type: "event",
                 name: event.SUMMARY,
@@ -79,7 +92,8 @@ export function convertCalendar(data: any) {
                 repeat: false,
                 notes: event.DESCRIPTION?.trim() || "",
                 location: event.LOCATION || "",
-                id: event.UID
+                id: event.UID,
+                origin: name
             }
             if (!fullDay) {
                 newEvent.fromTime = from.hours.toString() + ":" + from.minutes.toString()
@@ -104,25 +118,57 @@ export function convertCalendar(data: any) {
 
                 const types = { DAILY: "day", WEEKLY: "week", MONTHLY: "month", YEARLY: "year" }
                 if (types[repeatData.FREQ || ""]) {
-                    newEvent.repeat = true
-                    newEvent.repeatData = {
-                        type: types[repeatData.FREQ || ""],
-                        // weekday: weekdays[BYDAY], // MO TU WE TH FR SA SU 4SU
-                        ending: repeatData.UNTIL ? "date" : "after",
-                        count: Number(repeatData.INTERVAL || 1),
-                        endingDate: date || "",
-                        afterRepeats: Number(repeatData.COUNT || 10)
+                    let repeatTypes = [types[repeatData.FREQ || ""]]
+
+                    if (repeatData.FREQ === "MONTHLY" && repeatData.BYDAY) {
+                        const map: Record<string, string> = {
+                            "1": "1st",
+                            "+1": "1st",
+                            "2": "2nd",
+                            "+2": "2nd",
+                            "3": "3rd",
+                            "+3": "3rd",
+                            "4": "4th",
+                            "+4": "4th",
+                            "-1": "last"
+                        }
+                        const resolvedTypes = repeatData.BYDAY.split(",")
+                            .map((byday) => byday.match(/^([-+]?\d)([A-Z]{2})$/))
+                            .map((m) => m && map[m[1]])
+                            .filter(Boolean) as string[]
+                        if (resolvedTypes.length > 0) {
+                            repeatTypes = resolvedTypes
+                        }
                     }
 
-                    // create repeated events
-                    // WIP this does not account for "deleted" repeating events
-                    setTimeout(() => {
-                        createRepeatedEvents(clone(newEvent), true)
-                    }, 100)
-                }
-            }
+                    repeatTypes.forEach((repType, idx) => {
+                        const ev = clone(newEvent)
+                        if (idx > 0) {
+                            ev.id = uid()
+                        }
+                        ev.repeat = true
+                        ev.repeatData = {
+                            type: repType,
+                            ending: repeatData.UNTIL ? "date" : "after",
+                            count: Number(repeatData.INTERVAL || 1),
+                            endingDate: date || "",
+                            afterRepeats: Number(repeatData.COUNT || 10)
+                        }
 
-            return newEvent
+                        newEvents.push(ev)
+
+                        // create repeated events
+                        // WIP this does not account for "deleted" repeating events
+                        setTimeout(() => {
+                            createRepeatedEvents(clone(ev), true, exdates)
+                        }, 100)
+                    })
+                } else {
+                    newEvents.push(newEvent)
+                }
+            } else {
+                newEvents.push(newEvent)
+            }
         })
 
         // add events

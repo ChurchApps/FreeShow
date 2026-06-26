@@ -24,4 +24,5 @@ export interface Event {
         afterRepeats?: number
     }
     group?: string
+    origin?: string // .ics origin name
 }

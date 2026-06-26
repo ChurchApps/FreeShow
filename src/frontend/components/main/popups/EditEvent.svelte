@@ -109,6 +109,12 @@
         return date.toISOString().substring(0, 10)
     }
 
+    const parseISODate = (isoStr: string) => {
+        if (!isoStr) return new Date()
+        const [year, month, day] = isoStr.split("-").map(Number)
+        return new Date(year, month - 1, day)
+    }
+
     function saveAll() {
         let { data } = updateEventData(editEvent, stored, { type: selectedType, action: actionData })
         if (!data) return
@@ -163,11 +169,18 @@
         return new Date([...newDate, time].join(" "))
     }
 
-    const repeats = [
+    $: weekdayIndex = editEvent.isoFrom ? parseISODate(editEvent.isoFrom).getDay() : 1
+    $: weekdayName = translateText("weekday." + (weekdayIndex === 0 ? 7 : weekdayIndex))
+    $: repeats = [
         { value: "day", label: translateText("calendar.day") },
         { value: "week", label: translateText("calendar.week") },
         { value: "month", label: translateText("calendar.month") },
-        { value: "year", label: translateText("calendar.year") }
+        { value: "year", label: translateText("calendar.year") },
+        { value: "1st", label: "1st " + weekdayName },
+        { value: "2nd", label: "2nd " + weekdayName },
+        { value: "3rd", label: "3rd " + weekdayName },
+        { value: "4th", label: "4th " + weekdayName },
+        { value: "last", label: "last " + weekdayName }
     ]
 
     // "repeat_on": "on",
@@ -323,8 +336,12 @@
 
     {#if editEvent.repeat}
         <InputRow style="background-color: var(--primary-darker);border-radius: 4px;">
-            <span style="display: flex;align-items: center;font-size: 0.9em;padding: 0 10px;"><T id="calendar.repeat_every" /></span>
-            <MaterialNumberInput label="edit.count" disabled={!!editEvent.group} style="width: 80px;" value={editEvent.repeatData.count} min={1} on:change={(e) => (editEvent.repeatData.count = e.detail)} />
+            {#if ["1st", "2nd", "3rd", "4th", "last"].includes(editEvent.repeatData.type)}
+                <span style="display: flex;align-items: center;font-size: 0.9em;padding: 0 10px;">Repeat monthly on the</span>
+            {:else}
+                <span style="display: flex;align-items: center;font-size: 0.9em;padding: 0 10px;"><T id="calendar.repeat_every" /></span>
+                <MaterialNumberInput label="edit.count" disabled={!!editEvent.group} style="width: 80px;" value={editEvent.repeatData.count} min={1} on:change={(e) => (editEvent.repeatData.count = e.detail)} />
+            {/if}
             <MaterialDropdown label="edit.interval" disabled={!!editEvent.group} style="width: 100px;" options={repeats} value={editEvent.repeatData.type} on:change={(e) => (editEvent.repeatData.type = e.detail)} />
             <!-- TODO: select weekdays? -->
             <!-- {#if selectedRepeat.id === "week"}
