@@ -47,3 +47,13 @@ export function checkPassword(password: string, encoded: string) {
 }
 const k = "bw46feskw4"
 const encrypt = (text) => Array.from(text, (char: string, i) => ("0" + (char.charCodeAt(0) ^ k.charCodeAt(i % k.length)).toString(16)).slice(-2)).join("")
+
+export function isGroupHidden(groupId: string): boolean {
+    const profile = getAccess("groups")
+    const currentLocalLevel = profile[groupId] || "write"
+    const currentGlobalLevel = profile.global || "write"
+
+    if (currentGlobalLevel === "none") return true
+    return currentLocalLevel === "none"
+}
+

@@ -2,6 +2,7 @@
     import { activePopup, groupNumbers, groups, groupsMoreOptionsEnabled, special, templates } from "../../../stores"
     import { newToast } from "../../../utils/common"
     import { translateText } from "../../../utils/language"
+    import { isGroupHidden } from "../../../utils/profile"
     import T from "../../helpers/T.svelte"
     import { clone, sortByName } from "../../helpers/array"
     import { history } from "../../helpers/history"
@@ -12,7 +13,11 @@
     import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
     import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
 
-    $: g = sortByName(Object.entries($groups).map(([id, a]) => ({ ...a, id, name: a.default ? translateText("groups." + a.name) || a.name : a.name })))
+    $: g = sortByName(
+        Object.entries($groups)
+            .filter(([id]) => !isGroupHidden(id))
+            .map(([id, a]) => ({ ...a, id, name: a.default ? translateText("groups." + a.name) || a.name : a.name }))
+    )
 
     function changeGroup(e: any, id: string, key = "name") {
         // remove default tag if name is changed (used for translation)

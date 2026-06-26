@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { AccessType, Profile } from "../../../../types/Main"
     import { SettingsTabs } from "../../../../types/Tabs"
-    import { actions, actionTags, activeProfile, categories, folders, overlayCategories, profiles, selectedProfile, special, stageShows, templateCategories, variableTags, timerTags } from "../../../stores"
+    import { actions, actionTags, activeProfile, categories, folders, groups, overlayCategories, profiles, selectedProfile, special, stageShows, templateCategories, variableTags, timerTags } from "../../../stores"
     import { newToast } from "../../../utils/common"
     import { translateText } from "../../../utils/language"
     import { promptCustom } from "../../../utils/popup"
@@ -76,7 +76,14 @@
         if (globalAccess === "none") inputs[1].disabled = true
 
         // remove "read"
-        if (id === "settings") inputs.splice(1, 1)
+        if (id === "settings" || id === "groups") inputs.splice(1, 1)
+
+        // Hide/Show instead of None/Write
+        if (id === "settings" || id === "groups") {
+            inputs[0].label = "profile.hide"
+            inputs[1].label = "profile.show"
+            inputs[1].icon = "eye"
+        }
 
         // only admin can change access
         if (!isAdmin) inputs.forEach((input) => (input.disabled = true))
@@ -126,6 +133,13 @@
     $: stageList = sortByName(keysToID($stageShows)).filter((a) => a.name)
     $: stageAccess = currentProfile.access.stage || {}
 
+    $: groupsList = sortByName(keysToID($groups)).map((a) => {
+        let name = a.name
+        if (a.default) name = translateText("groups." + a.name)
+        return { id: a.id, name }
+    })
+    $: groupsAccess = currentProfile.access.groups || {}
+
     // "display_settings" (can change position still), "connection" (can use still)
     const tabs: SettingsTabs[] = ["general", "display_settings", "styles", "connection", "files", "profiles", "theme", "other"]
     $: settingsList = tabs.map((id) => ({ id, name: `settings.${id}` }))
@@ -145,6 +159,7 @@
         { id: "timers", label: "tabs.timers", icon: "timer", access: timersAccess, options: accessInputsRW, list: timersList },
         { id: "variables", label: "tabs.variables", icon: "variable", access: variablesAccess, options: accessInputsRW, list: variablesList },
         { id: "stage", label: "menu.stage", icon: "stage", access: stageAccess, options: accessInputsRW, list: stageList },
+        { id: "groups", label: "tools.groups", icon: "groups", access: groupsAccess, options: [], list: groupsList },
         { id: "settings", label: "menu.settings", icon: "settings", access: settingsAccess, options: [], list: settingsList }
     ]
 

@@ -2,6 +2,7 @@ import { get } from "svelte/store"
 import type { Media } from "../../../types/Show"
 import { actions, actionTags, activeActionTagFilter, activeEdit, activeMediaTagFilter, activePlayerTagFilter, activeTagFilter, activeVariableTagFilter, activeTimerTagFilter, contextData, drawerTabsData, globalTags, groups, media, mediaTags, outputs, overlays, playerTags, playerVideos, selected, shows, sorted, variables, variableTags, timers, timerTags } from "../../stores"
 import { translateText } from "../../utils/language"
+import { isGroupHidden } from "../../utils/profile"
 import { drawerTabs } from "../../values/tabs"
 import { actionData } from "../actions/actionData"
 import { getActionName, getActionTriggerId } from "../actions/actions"
@@ -103,12 +104,14 @@ const loadActions = {
         const noGroup = currentSlide.group === "." || currentGroup === "none"
         const isParent = slideRef.type === "parent"
 
-        items = Object.entries(get(groups)).map(([id, a]) => {
-            // strange bug, where name is { "isTrusted": true }, maybe an old issue
-            // https://www.reddit.com/r/freeshowapp/comments/1j0w6mt/freeshow_keeps_on_freezing
-            if (typeof a.name !== "string") a.name = ""
-            return { id, color: a.color, label: a.default ? "groups." + a.name : a.name, translate: !!a.default, enabled: id === currentGroup }
-        })
+        items = Object.entries(get(groups))
+            .filter(([id]) => !isGroupHidden(id))
+            .map(([id, a]) => {
+                // strange bug, where name is { "isTrusted": true }, maybe an old issue
+                // https://www.reddit.com/r/freeshowapp/comments/1j0w6mt/freeshow_keeps_on_freezing
+                if (typeof a.name !== "string") a.name = ""
+                return { id, color: a.color, label: a.default ? "groups." + a.name : a.name, translate: !!a.default, enabled: id === currentGroup }
+            })
 
         if (!isParent && !items.length) return [{ label: "empty.general", disabled: true }]
 

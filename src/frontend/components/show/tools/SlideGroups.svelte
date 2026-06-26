@@ -3,7 +3,7 @@
     import { activePopup, activeShow, alertMessage, cachedShowsData, fullColors, globalGroupViewEnabled, groups, selected, showsCache, templates } from "../../../stores"
     import { createKeydownHandler } from "../../../utils/clickable"
     import { translateText } from "../../../utils/language"
-    import { getAccess } from "../../../utils/profile"
+    import { getAccess, isGroupHidden } from "../../../utils/profile"
     import { sortByName } from "../../helpers/array"
     import { ondrop } from "../../helpers/drop"
     import { history } from "../../helpers/history"
@@ -30,11 +30,13 @@
         return count
     }
 
-    $: globalGroups = Object.entries($groups).map(([id, group]) => {
-        let name = group.name
-        if (group.default) name = translateText(`groups.${group.name}`)
-        return { id, group: name, color: group.color || null, globalGroup: id, settings: {}, notes: "", items: [] }
-    })
+    $: globalGroups = Object.entries($groups)
+        .filter(([id]) => !isGroupHidden(id))
+        .map(([id, group]) => {
+            let name = group.name
+            if (group.default) name = translateText(`groups.${group.name}`)
+            return { id, group: name, color: group.color || null, globalGroup: id, settings: {}, notes: "", items: [] }
+        })
 
     $: sortedGroups = sortByName(globalGroups, "group")
 

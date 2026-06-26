@@ -60,7 +60,7 @@
     let edit: any
 </script>
 
-<Tabs id="profile" tabs={profilesList} value={$selectedProfile || ""} newLabel="new.profile" class="context #profile_tab" on:open={(e) => selectedProfile.set(e.detail)} on:create={createProfile} let:tab>
+<Tabs id="profile" tabs={profilesList} value={$selectedProfile || ""} newLabel="new.profile" class={$activeProfile ? "" : "context #profile_tab"} on:open={(e) => selectedProfile.set(e.detail)} on:create={createProfile} let:tab>
     {#if !tab.id}
         <Icon id="admin" right white />
     {:else}
