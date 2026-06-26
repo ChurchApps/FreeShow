@@ -56,8 +56,6 @@ let encoder: LTCEncoder | null = null
 let currentFramerate: number | null = null
 let lastTimeMs = -1
 
-// WIP can't send frames past sent time
-
 let encoderFailed = false
 export function sendLTC(timeMs: number, framerate: number) {
     if (encoderFailed) return
@@ -100,4 +98,5 @@ export function sendLTC(timeMs: number, framerate: number) {
 
 export function stopSendLTC() {
     encoder = null
+    lastTimeMs = -1
 }

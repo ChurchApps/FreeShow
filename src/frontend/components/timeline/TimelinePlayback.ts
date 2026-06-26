@@ -104,6 +104,7 @@ export class TimelinePlayback {
         this.playingAudio = []
         this.playingVideoPaths = []
 
+        this.lastSentFrame = -1
         this.setAsPlayer()
         isTimelinePlaying.set(true)
         this.initTimecode()
@@ -141,6 +142,7 @@ export class TimelinePlayback {
     }
 
     stop() {
+        this.lastSentFrame = -1
         if (activePlayback === this) {
             activePlayback = null
             isTimelinePlaying.set(false)
@@ -177,6 +179,7 @@ export class TimelinePlayback {
     }
 
     reset() {
+        this.lastSentFrame = -1
         this.updateDuration()
         this.setTime(0)
         this.stop()
@@ -699,7 +702,7 @@ export class TimelinePlayback {
         const frameDuration = 1000 / framerate
         const currentFrame = Math.floor(this.currentTime / frameDuration)
 
-        if (currentFrame <= this.lastSentFrame) return
+        if (currentFrame === this.lastSentFrame) return
         this.lastSentFrame = currentFrame
 
         sendMain(Main.TIMECODE_VALUE, this.currentTime)
