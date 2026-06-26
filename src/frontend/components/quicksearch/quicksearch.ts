@@ -314,7 +314,7 @@ const triggerActions = {
     },
     action: (id: string) => {
         const action = get(actions)[id]
-        runAction(action)
+        runAction(action, { source: "quicksearch" })
     },
     main_page: (id: string) => {
         if (id === "projects") {

@@ -169,7 +169,7 @@ function shouldTriggerBefore(action: any) {
 export function checkActionTrigger(layoutData: SlideData, slideIndex = 0) {
     if (Array.isArray(layoutData?.actions?.slideActions)) {
         layoutData.actions.slideActions.forEach((a) => {
-            if (shouldTriggerBefore(a)) runAction(a, { slideIndex })
+            if (shouldTriggerBefore(a)) runAction(a, { slideIndex, source: "slide" })
         })
     }
 }
@@ -463,7 +463,7 @@ function playSlideActions(slideActions: SlideAction[], outputIds: string[] = [],
         // no need to "re-run" actions triggered right before output
         if (shouldTriggerBefore(a)) return
 
-        runAction(a, { slideIndex })
+        runAction(a, { slideIndex, source: "slide" })
     })
 
     playOutputStyleTemplateActions(outputIds)
@@ -481,7 +481,7 @@ function playOutputStyleTemplateActions(outputIds: string[]) {
         const templateSettings = get(templates)[styleTemplateId]?.settings?.actions
         if (!Array.isArray(templateSettings) || !templateSettings.length) return
 
-        templateSettings.forEach((action) => runAction(action))
+        templateSettings.forEach((action) => runAction(action, { source: "slide" }))
     })
 }
 

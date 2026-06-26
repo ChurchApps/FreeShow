@@ -22,7 +22,7 @@ export function openProfileByName(profileName: string) {
 
     // run action
     const actionId = get(profiles)[profileId]?.action
-    if (actionId) runActionId(actionId)
+    if (actionId) runActionId(actionId, "profile")
 }
 
 export function autoOpenLastUsedProfile() {

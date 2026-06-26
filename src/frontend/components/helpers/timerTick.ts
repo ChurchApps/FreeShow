@@ -215,7 +215,7 @@ export function startEventTimer() {
             if (timeLeft <= 0 && timeLeft > 0 - INTERVAL) {
                 newToast(`${toast.starting_action} "${actionName}" ${toast.now}`)
 
-                runAction(convertEventAction(event.action))
+                runAction(convertEventAction(event.action), { source: "event" })
             }
         })
 

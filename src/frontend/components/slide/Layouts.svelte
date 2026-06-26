@@ -118,7 +118,7 @@
             return
         }
 
-        runAction($actions[customAction])
+        runAction($actions[customAction], { source: "click" })
     }
 
     let profile = getAccess("shows")

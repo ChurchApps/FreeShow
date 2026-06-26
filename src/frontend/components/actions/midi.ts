@@ -123,7 +123,7 @@ export function receivedMidi(msg) {
     // 0 & 1 = 0
     if (index > 0) index--
 
-    runAction(action, { midiIndex: index })
+    runAction(action, { midiIndex: index, source: "midi" })
 
     const actionShows = action?.shows || []
     if (!actionShows?.length) return

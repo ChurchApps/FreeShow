@@ -52,7 +52,7 @@ export class TemplateHelper {
 
     runActions() {
         const actions = this.template.settings?.actions || []
-        actions.forEach((a) => runAction(a))
+        actions.forEach((a) => runAction(a, { source: "template" }))
     }
 
     // used for scripture slides

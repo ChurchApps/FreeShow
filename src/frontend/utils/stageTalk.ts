@@ -209,7 +209,7 @@ export const receiveSTAGE = {
     },
 
     RUN_ACTION: (a: { id: string }) => {
-        runAction(get(actions)[a.id])
+        runAction(get(actions)[a.id], { source: "remote" })
     }
 
     // REQUEST_VIDEO_DATA: (data: any) => {

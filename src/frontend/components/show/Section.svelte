@@ -28,7 +28,6 @@
 
     function edit(e: any) {
         if (section.notes === e.detail || !projectId) return
-
         ;(isTemplate ? projectTemplates : projects).update((a) => {
             if (!a[projectId!]?.shows) return a
             let index = a[projectId!].shows.findIndex((a) => a.id === section.id)
@@ -44,7 +43,6 @@
 
     function updateSection(key: string, value: any) {
         if (!projectId) return
-
         ;(isTemplate ? projectTemplates : projects).update((a) => {
             if (!a[projectId!]?.shows) return a
             let index = a[projectId!].shows.findIndex((a) => a.id === section.id)
@@ -121,7 +119,7 @@
 
 {#if currentAction && !settingsOpened}
     <FloatingInputs side="left" onlyOne>
-        <MaterialButton title="actions.run_action" on:click={() => runAction(currentAction)}>
+        <MaterialButton title="actions.run_action" on:click={() => runAction(currentAction, { source: "section" })}>
             <Icon id={getActionIcon(currentActionId)} />
             {currentAction.name}
         </MaterialButton>

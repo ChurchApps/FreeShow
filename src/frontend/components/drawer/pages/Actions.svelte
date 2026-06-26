@@ -65,7 +65,7 @@
 
             // play
             if (e.ctrlKey || e.metaKey) {
-                runAction(action)
+                runAction(action, { source: "click" })
                 return
             }
 
@@ -94,7 +94,7 @@
                                     return
                                 }
 
-                                runAction(action)
+                                runAction(action, { source: "click" })
                                 timelineRecordingAction.set({ id: "run_action", data: { id: action.id } })
                             }}
                             outline={$runningActions.includes(action.id)}

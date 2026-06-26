@@ -20,6 +20,7 @@
                     <span>
                         {item.action[0].toUpperCase() + item.action.slice(1).replaceAll("_", " ")}
                         {#if item.count > 1}<span style="opacity: 0.5;">({item.count})</span>{/if}
+                        {#if item.source}<span class="source-badge">{item.source}</span>{/if}
                     </span>
                     <span class="time" data-title={getDateAndTimeString(item.time || 0)}>{timeAgo(item.time || 0)}</span>
                 </p>
@@ -69,5 +70,12 @@
         opacity: 0.5;
         font-size: 0.8em;
         font-style: italic;
+    }
+
+    .source-badge {
+        font-size: 0.75em;
+        opacity: 0.6;
+        padding: 1px 5px;
+        text-transform: uppercase;
     }
 </style>

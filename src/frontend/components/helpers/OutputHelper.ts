@@ -193,7 +193,7 @@ export class OutputHelper {
 
         const itemSettings = item.data?.settings
         const actionId = itemSettings?.triggerAction || get(special).sectionTriggerAction
-        if (actionId) runActionId(actionId)
+        if (actionId) runActionId(actionId, "section")
     }
 
     private static getProjectItemIndex(item: OutSlide | ShowRef | null = null) {

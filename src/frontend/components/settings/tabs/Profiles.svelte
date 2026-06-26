@@ -216,7 +216,7 @@
 
         // run action
         const actionId = currentProfile.action
-        if (actionId) runActionId(actionId)
+        if (actionId) runActionId(actionId, "profile")
 
         // store last used profile
         special.update((a) => {

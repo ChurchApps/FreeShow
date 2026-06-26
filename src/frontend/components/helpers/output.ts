@@ -133,7 +133,7 @@ export function setOutput(type: string, data: any, toggle = false, outputId = ""
             if (currentOutSlideId !== data?.id || resetActionTrigger) {
                 const category = get(showsCache)[data.id]?.category || ""
                 const categoryActionId = get(categories)[category]?.action
-                if (!overrideCategoryAction && categoryActionId) runAction(get(actions)[categoryActionId], {}, true)
+                if (!overrideCategoryAction && categoryActionId) runAction(get(actions)[categoryActionId], { source: "slide" }, true)
             }
 
             if (overrideCategoryAction) resetActionTrigger = true

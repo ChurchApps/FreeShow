@@ -357,7 +357,7 @@ export class TimelinePlayback {
     private previousSlide: { id?: string; index?: number } = {}
     private playAction(action: TimelineAction, ref: typeof this.ref) {
         if (action.type === "action") {
-            runAction({ id: action.id, ...action.data })
+            runAction({ id: action.id, ...action.data }, { source: "timeline" })
         } else if (action.type === "slide") {
             this.previousSlide = action.data
             ShowTimeline.playSlide(action.data, ref)

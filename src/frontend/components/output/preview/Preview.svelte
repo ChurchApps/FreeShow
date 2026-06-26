@@ -123,7 +123,7 @@
             // can become [object Object] in some rare cases
             if (typeof action.keypressActivate !== "string") return
             if (action.keypressActivate.toUpperCase() === key) {
-                runAction(action)
+                runAction(action, { source: "keypress" })
                 actionTriggered = true
             }
         })

@@ -140,7 +140,7 @@ const receiveOUTPUTasMAIN: any = {
             return a
         })
     },
-    ACTION_MAIN: (a: { id: string }) => runAction(get(actions)[a.id]),
+    ACTION_MAIN: (a: { id: string }) => runAction(get(actions)[a.id], { source: "remote" }),
     AUDIO_MAIN: (data: any) => {
         if (!data.id) return
 
