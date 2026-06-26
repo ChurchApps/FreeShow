@@ -9,27 +9,6 @@ import { captionLanguages } from "./captionLanguages"
 dayjs.extend(localizedFormat)
 dayjs.extend(extendedFormat)
 
-export type EditInput = {
-    name?: string
-    id?: string
-    icon?: string
-    key?: string
-    input: string
-    value?: string | number | boolean | any[]
-    extension?: string
-    hidden?: boolean
-    disabled?: string | boolean
-    valueIndex?: number
-    values?: any
-    popup?: string
-    slider?: boolean // include number slider
-    sliderValues?: any // custom number slider values
-    styleValue?: string // custom css styling
-    title?: string // custom hover title
-    relative?: boolean // updated values should be relative to each selected item (only for number px values)
-    placeholder?: string
-}
-
 export function setBoxInputValue(box: BoxContent2 | { [key: string]: EditBoxSection }, sectionId: string, inputId: string, key: keyof EditInput | string, value: any) {
     const newBox = (box?.sections ? box.sections : box) as { [key: string]: EditBoxSection }
 
@@ -63,14 +42,14 @@ export type BoxContent2 = {
 }
 export type EditBoxSection = {
     // openApplyValue?: boolean // show apply value button
-    inputs: EditInput2[][]
+    inputs: EditInput[][]
     name?: string
     noReset?: boolean
     alwaysOpen?: boolean
     defaultValues?: any[]
     expandAutoValue?: { [key: string]: any }
 }
-export type EditInput2 = {
+export type EditInput = {
     id: string
     key?: string
     valueIndex?: number // css key subvalue (e.g. box-shadow)
@@ -350,7 +329,7 @@ const mediaSections: { [key: string]: EditBoxSection } = {
 
 ///
 
-export function splitIntoRows(inputs: EditInput2[]) {
+export function splitIntoRows(inputs: EditInput[]) {
     return inputs.map((a) => [a])
 }
 

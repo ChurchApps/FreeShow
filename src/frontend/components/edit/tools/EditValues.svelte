@@ -19,7 +19,7 @@
     import { SlideTimeline } from "../../timeline/SlideTimeline"
     import { parseShadowValue } from "../scripts/edit"
     import { filterItemStyle, mergeWithStyle } from "../scripts/itemClipboard"
-    import type { EditBoxSection, EditInput2 } from "../values/boxes"
+    import type { EditBoxSection, EditInput } from "../values/boxes"
     import { captionTranslateLanguages } from "../values/captionLanguages"
     import { sectionColors } from "../values/item"
 
@@ -30,7 +30,7 @@
     export let isStage = false
     export let type: string = ""
 
-    function getValue(input: EditInput2, _updater: any = null) {
+    function getValue(input: EditInput, _updater: any = null) {
         if (!item) return ""
 
         if (input.type === "toggle") return styles[input.key || ""] || ""
@@ -43,7 +43,9 @@
             value = getFilters(item[input.id] || getStyles(item.style)[input.id])?.[input.key || ""] || input.values.value || input.value
         } else if (input.key) {
             value = styles[input.key || ""]
-            if (input.valueIndex !== undefined) {
+            if (input.type === "checkbox" && (input.key === "box-shadow" || input.key === "text-shadow")) {
+                value = value?.includes("inset") || false
+            } else if (input.valueIndex !== undefined) {
                 if (input.key === "box-shadow" || input.key === "text-shadow") {
                     const arr = parseShadowValue(value)
                     value = arr[input.valueIndex]
@@ -51,7 +53,7 @@
                     value = value?.split(" ")[input.valueIndex]
                 }
             }
-            if (input.extension && value !== "") value = Number(value?.toString().replace(input.extension, ""))
+            if (input.extension && value !== "" && typeof value !== "boolean") value = Number(value?.toString().replace(input.extension, ""))
         } else {
             const parts = input.id.split(".")
             if (parts.length > 1) value = item[parts[0]]?.[parts[1]]
@@ -74,7 +76,7 @@
         return value
     }
 
-    function getStyleString(input: EditInput2) {
+    function getStyleString(input: EditInput) {
         let style = ""
         const isItem = input.id === "CSS_item"
         const currentStyle = isItem ? item?.style : input.values?.value
@@ -144,6 +146,7 @@
                 const sortedKeys = allKeyValues.sort((a, b) => a.valueIndex! - b.valueIndex!)
 
                 let currentValue = styles[input.key || ""] || ""
+                const isInset = (input.key === "box-shadow" || input.key === "text-shadow") && currentValue.includes("inset")
                 let arr
                 if (input.key === "box-shadow" || input.key === "text-shadow") arr = parseShadowValue(currentValue)
                 else arr = currentValue.split(" ").filter(Boolean)
@@ -159,10 +162,17 @@
                 }
 
                 value = arr.join(" ")
+                if (isInset) value = "inset " + value
             } else {
                 // reset
                 value = ""
             }
+        } else if (input.type === "checkbox" && (input.key === "box-shadow" || input.key === "text-shadow")) {
+            let currentValue = styles[input.key || ""] || ""
+            const isInset = value
+            currentValue = currentValue.replace(/\binset\b/gi, "").trim()
+            if (isInset) value = "inset " + currentValue
+            else value = currentValue
         }
 
         /// CUSTOM
@@ -180,17 +190,20 @@
 
         ///
 
-        input.values.value = value
-        const inputKey = `${input.id}${input.key || ""}${input.valueIndex || ""}`
-        throttle(inputKey, clone(input), (value) => dispatch("change", value), 20)
+        const dispatchedInput = clone(input)
+        if (!dispatchedInput.values) dispatchedInput.values = {}
+        dispatchedInput.values.value = value
 
-        input.values.value = e.detail
+        const inputKey = `${input.id}${input.key || ""}${input.valueIndex || ""}`
+        throttle(inputKey, dispatchedInput, (val) => dispatch("change", val), 20)
+
+        if (input.values) input.values.value = e.detail
     }
 
     function hasChangedValues(id, _updater: any = null) {
         if (!sections[id]) return
 
-        let allInputsToCheck: EditInput2[] = []
+        let allInputsToCheck: EditInput[] = []
         let filterOut: string[] = []
 
         sections[id].inputs.flat().forEach((input) => {
@@ -204,7 +217,7 @@
         return hasChanged
     }
 
-    function isDefaultValue(input: EditInput2, defaultValue: any) {
+    function isDefaultValue(input: EditInput, defaultValue: any) {
         if (!defaultValue) defaultValue = input.value
         const currentValue = getValue(input)
 

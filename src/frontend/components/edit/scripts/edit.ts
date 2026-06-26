@@ -38,14 +38,17 @@ export function parseShadowValue(value): string[] {
     // Returns: [10px, 10px, 4px, #ff0000, 65, 54, /, 0.47]
     if (!value) return []
 
+    // Remove "inset" first so it doesn't mess up color or other regex checks
+    let cleanValue = value.replace(/\binset\b/gi, "").trim()
+
     // Regex for color (hex, rgb[a], hsl[a], named)
     const colorRegex = /(#[0-9a-fA-F]{3,8}|rgba?\([^)]*\)|hsla?\([^)]*\)|\b[a-zA-Z]+\b)/
-    const match = value.match(colorRegex)
-    if (!match) return value.split(/\s+/).filter(Boolean)
+    const match = cleanValue.match(colorRegex)
+    if (!match) return cleanValue.split(/\s+/).filter(Boolean)
 
     const color = match[0]
-    const before = value.slice(0, match.index).trim()
-    const after = value.slice(match.index + color.length).trim()
+    const before = cleanValue.slice(0, match.index).trim()
+    const after = cleanValue.slice(match.index + color.length).trim()
 
     let arr: string[] = []
     if (before) arr = arr.concat(before.split(/\s+/).filter(Boolean))
