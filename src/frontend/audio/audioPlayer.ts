@@ -183,6 +183,9 @@ export class AudioPlayer {
                 AudioAnalyserMerger.stop()
             }
         })
+        audio.addEventListener("ended", () => {
+            AudioPlayer.checkIfEnding(path, true)
+        })
         return await this.waitForAudio(path, audio)
     }
 
@@ -340,15 +343,15 @@ export class AudioPlayer {
         return true
     }
 
-    static checkIfEnding(id: string) {
+    static checkIfEnding(id: string, force = false) {
         const playing = this.getPlaying(id)
-        if (!playing || playing.paused) return
+        if (!playing || (playing.paused && !force)) return
 
         const audio = this.getAudio(id)
         if (!audio) return
 
         const endingTime = AudioPlayer.getEndTime(id, audio.duration)
-        if (audio.currentTime < endingTime) return
+        if (audio.currentTime < endingTime && !force) return
 
         // loop single audio
         if (get(media)[id]?.loop) {
