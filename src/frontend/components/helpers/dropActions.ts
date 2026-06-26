@@ -215,6 +215,8 @@ export const dropActions = {
             data = data.map((a) => ({ id: a.path, name: removeExtension(a.name), type: "audio" }))
         } else if (drag.id === "overlay") {
             data = data.map((a) => ({ id: a, type: "overlay" }))
+        } else if (drag.id === "effect") {
+            data = data.map((a) => ({ id: a, type: "effect" }))
         } else if (drag.id === "player") {
             data = data.map((a) => {
                 // store actual player data in project

@@ -6,6 +6,7 @@
     import FolderShow from "../folder/FolderShow.svelte"
     import MediaPreview from "../media/MediaPreview.svelte"
     import OverlayPreview from "../overlay/OverlayPreview.svelte"
+    import EffectPreview from "../effect/EffectPreview.svelte"
     import PdfPreview from "../pdf/PdfPreview.svelte"
     import Slides from "../Slides.svelte"
 
@@ -29,6 +30,10 @@
 {:else if show.type === "overlay"}
     <div class="outline" style="height: 250px;" class:active={currentOutput?.out?.overlays?.includes(show.id)}>
         <OverlayPreview {show} />
+    </div>
+{:else if show.type === "effect"}
+    <div class="outline" style="height: 250px;" class:active={currentOutput?.out?.effects?.includes(show.id)}>
+        <EffectPreview {show} />
     </div>
 {:else if type === "pdf"}
     <PdfPreview {show} index={show.index || 0} />

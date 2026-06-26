@@ -1,6 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import { effects, mediaOptions, outLocked, outputs, styles } from "../../../stores"
+    import { activeEdit, activePage, activeShow, effects, mediaOptions, outLocked, outputs, styles } from "../../../stores"
+    import { addProjectItem } from "../../../converters/project"
     import T from "../../helpers/T.svelte"
     import { clone, keysToID, sortByName } from "../../helpers/array"
     import { findMatchingOut, getResolution, setOutput } from "../../helpers/output"
@@ -56,6 +57,7 @@
                 <Card
                     class="context #effect_card{effect.isDefault ? '_default' : ''}"
                     resolution={{ width: 16, height: 9 }}
+                    preview={$activePage === "edit" ? $activeEdit.type === "effect" && $activeEdit.id === effect.id : $activeShow?.type === "effect" && $activeShow?.id === effect.id}
                     outlineColor={findMatchingOut(effect.id, $outputs)}
                     active={findMatchingOut(effect.id, $outputs) !== null}
                     label={effect.name}
@@ -69,13 +71,18 @@
 
                         setOutput("effects", effect.id, true)
                     }}
+                    on:dblclick={(e) => {
+                        if (e.ctrlKey || e.metaKey) return
+                        if (e.target?.closest(".edit") || e.target?.closest(".icons")) return
+
+                        addProjectItem({ id: effect.id, name: effect.name || "", type: "effect" })
+                    }}
                     on:mouseenter={(e) => mouseenter(e, i)}
                     on:mouseleave={() => (hover = null)}
                 >
                     <!-- icons -->
                     <EffectIcons columns={$mediaOptions.columns} effectId={effect.id} />
 
-                    <!-- WIP dblclick open preview -->
                     <SelectElem id="effect" data={effect.id} fill draggable>
                         <Zoomed {resolution} background={effect.items?.length ? "var(--primary);" : effect.color || "var(--primary);"} checkered={!!effect.items?.length}>
                             {#if slowLoader < 0 || slowLoader > i}

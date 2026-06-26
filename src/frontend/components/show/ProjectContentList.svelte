@@ -209,7 +209,7 @@
     let canAddToProject = false
     $: if ($contextActive && $selected) checkCanAddToProject()
     else canAddToProject = false
-    const validIds = ["show_drawer", "player", "media", "audio", "overlay"]
+    const validIds = ["show_drawer", "player", "media", "audio", "overlay", "effect"]
 
     function checkCanAddToProject() {
         canAddToProject = false
@@ -224,6 +224,7 @@
         if (!data?.length) return
 
         if ($selected.id === "overlay") data = data.map((id: string) => ({ id, type: "overlay" }))
+        else if ($selected.id === "effect") data = data.map((id: string) => ({ id, type: "effect" }))
         else if ($selected.id === "player") data = data.map((id: string) => ({ id, type: "player", data: { type: $playerVideos[id]?.type, id: $playerVideos[id]?.id, name: $playerVideos[id]?.name } }))
         else if ($selected.id === "audio") data = data.filter((a) => a.path).map(({ path, name }) => ({ id: path, name, type: "audio" }))
         else if ($selected.id === "media")

@@ -15,6 +15,7 @@
     import FolderShow from "./folder/FolderShow.svelte"
     import MediaPreview from "./media/MediaPreview.svelte"
     import OverlayPreview from "./overlay/OverlayPreview.svelte"
+    import EffectPreview from "./effect/EffectPreview.svelte"
     import PdfPreview from "./pdf/PdfPreview.svelte"
     import ProjectShowPlaceholder from "./placeholder/ProjectShowPlaceholder.svelte"
     import PowerPointPreview from "./ppt/PowerPointPreview.svelte"
@@ -46,6 +47,8 @@
                 {/key}
             {:else if show.type === "overlay"}
                 <OverlayPreview {show} />
+            {:else if show.type === "effect"}
+                <EffectPreview {show} />
             {:else if show.type === "pdf"}
                 {#key show}
                     <PdfPreview {show} index={show.index || 0} />

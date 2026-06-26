@@ -2,7 +2,7 @@
     import { getDocument, GlobalWorkerOptions } from "pdfjs-dist"
     import type { ClickEvent } from "../../../types/Main"
     import { AudioPlayer } from "../../audio/audioPlayer"
-    import { activeEdit, activeFocus, activePage, activeProject, activeShow, categories, focusMode, globalTags, media, notFound, outLocked, outputs, overlayCategories, overlays, playerVideos, playingAudio, projects, refreshEditSlide, shows, showsCache, special, styles } from "../../stores"
+    import { activeEdit, activeFocus, activePage, activeProject, activeShow, categories, effects, focusMode, globalTags, media, notFound, outLocked, outputs, overlayCategories, overlays, playerVideos, playingAudio, projects, refreshEditSlide, shows, showsCache, special, styles } from "../../stores"
     import { getAccess } from "../../utils/profile"
     import { customIconsColors } from "../../values/customIcons"
     import { historyAwait } from "../helpers/history"
@@ -26,7 +26,7 @@
     export let isFirst: boolean = false
     export let isProject: boolean = false
     $: type = show.type || "show"
-    $: name = type === "show" ? $shows[show.id]?.name : type === "overlay" ? $overlays[show.id]?.name : type === "player" ? ($playerVideos[id] || show.data?.id ? $playerVideos[id]?.name || show.data?.name || show.data?.id : setNotFound(id)) : show.name
+    $: name = type === "show" ? $shows[show.id]?.name : type === "overlay" ? $overlays[show.id]?.name : type === "effect" ? $effects[show.id]?.name : type === "player" ? ($playerVideos[id] || show.data?.id ? $playerVideos[id]?.name || show.data?.name || show.data?.id : setNotFound(id)) : show.name
     // export let page: "side" | "drawer" = "drawer"
     export let match: null | number = null
     $: showNumber = isProject ? "" : show?.quickAccess?.number || show?.meta?.number || ""
@@ -81,6 +81,8 @@
                 }
                 // } else if (type === "image" || type === "video") {
                 //     subicon = type
+            } else if (type === "effect") {
+                iconID = "effects"
             }
             // else if (type === "player") iconID = "live"
             else iconID = type
@@ -186,6 +188,7 @@
             if (show.data?.timer) startFolderTimer(id, { type: "pdf", path: "" })
         } else if (type === "audio") AudioPlayer.start(id, { name: show.name })
         else if (type === "overlay") setOutput("overlays", show.id, false, "", true)
+        else if (type === "effect") setOutput("effects", show.id, false, "", true)
         else if (type === "player") setOutput("background", { id, type: "player" })
     }
 
