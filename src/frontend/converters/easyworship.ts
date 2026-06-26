@@ -155,7 +155,12 @@ function createSlides({ words }: Words) {
         // let sliced: string = text.slice(text.indexOf("t ") + 2, text.lastIndexOf("par"))
         // <SIDESKIFT>
         // sdewtemplatestyle101
-        const sliced: string = text.slice(text.indexOf(" "), text.indexOf("par")).replaceAll("plainf1fntnamaut ", "").trim()
+        let sliced: string = text
+        if (/^(plain|sdfsauto|sdew)/.test(text)) {
+            const spaceIdx = text.indexOf(" ")
+            if (spaceIdx > -1) sliced = text.slice(spaceIdx)
+        }
+        sliced = sliced.slice(0, sliced.indexOf("par")).replaceAll("plainf1fntnamaut ", "").trim()
 
         // console.log(text.includes("plainf") && sliced.length, sliced)
         if (sliced.length) {
@@ -164,7 +169,12 @@ function createSlides({ words }: Words) {
                 if (line.includes("templatestyle")) return
 
                 // console.log(line, line.slice(line.indexOf(" ") + 1, line.length))
-                if (i > 0) line = line.slice(line.indexOf(" ", 2) + 1, line.length)
+                if (i > 0) {
+                    if (/^(plain|sdfsauto|sdew)/.test(line)) {
+                        const spaceIdx = line.indexOf(" ", 2)
+                        if (spaceIdx > -1) line = line.slice(spaceIdx + 1, line.length)
+                    }
+                }
                 let plainIndex = line.indexOf("plainf")
                 while (plainIndex > -1) {
                     line = line.slice(0, plainIndex) + line.slice(line.indexOf(" ", plainIndex), line.length)
