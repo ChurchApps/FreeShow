@@ -14,6 +14,7 @@
             currentStream?.getTracks().forEach((track) => {
                 track.stop()
             })
+            currentStream = null
 
             if (videoElem) videoElem.srcObject = null
             recorderActive = false
@@ -35,7 +36,12 @@
             .getUserMedia(options)
             .then((stream) => {
                 if (!stream) return console.error("Error getting media stream!")
-                if (!videoElem) return
+                if (!videoElem || !$activeRecording) {
+                    stream.getTracks().forEach((track) => {
+                        track.stop()
+                    })
+                    return
+                }
 
                 currentStream = stream
 

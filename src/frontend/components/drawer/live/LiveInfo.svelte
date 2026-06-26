@@ -9,9 +9,11 @@
     $: active = $drawerTabsData.media?.openedSubSubTab?.cameras || "cameras"
 
     let videoElem
-    $: if ($currentRecordingStream && videoElem) {
+    $: if (videoElem) {
         videoElem.srcObject = $currentRecordingStream
-        paused = mediaRecorderIsPaused() || false
+        if ($currentRecordingStream) {
+            paused = mediaRecorderIsPaused() || false
+        }
     }
 
     let paused = false
