@@ -8,6 +8,7 @@
     import MaterialColorInput from "../../inputs/MaterialColorInput.svelte"
     import MaterialFontDropdown from "../../inputs/MaterialFontDropdown.svelte"
     import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
+    import InputRow from "../../input/InputRow.svelte"
 
     const colors: string[] = [
         "primary",
@@ -69,8 +70,10 @@
     }
 </script>
 
-<MaterialFontDropdown label="settings.font_family" value={$theme === "default" ? "" : $themes[$theme]?.font?.family || ""} on:change={(e) => updateTheme(e.detail || "", "family", "font")} allowEmpty />
-<MaterialNumberInput label="settings.font_size" value={Number(($themes[$theme]?.font?.size || "1em").replace("em", "") ?? 1) * 10} min={5} max={20} on:change={(e) => updateTheme(e.detail / 10 + "em", "size", "font")} />
+<InputRow>
+    <MaterialFontDropdown label="settings.font_family" style="flex: 1;" value={$theme === "default" ? "" : $themes[$theme]?.font?.family || ""} on:change={(e) => updateTheme(e.detail || "", "family", "font")} allowEmpty />
+    <MaterialNumberInput label="settings.font_size" style="max-width: 120px;" value={Number(($themes[$theme]?.font?.size || "1em").replace("em", "") ?? 1) * 10} min={5} max={20} on:change={(e) => updateTheme(e.detail / 10 + "em", "size", "font")} />
+</InputRow>
 
 <Title label="settings.colors" icon="color" />
 

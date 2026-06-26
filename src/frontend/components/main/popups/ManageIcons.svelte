@@ -6,6 +6,7 @@
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
+    import Tip from "../Tip.svelte"
 
     let colors = true
 
@@ -57,9 +58,7 @@
     <MaterialButton class="popup-back" icon="back" iconSize={1.3} title="actions.back" on:click={() => activePopup.set(back)} />
 {/if}
 
-<div class="info">
-    <p><T id="actions.click_disable" /></p>
-</div>
+<Tip value="actions.click_disable" bottom={20} />
 
 <div class="grid">
     {#each Object.keys(customIcons) as icon}
@@ -87,16 +86,6 @@
 </div>
 
 <style>
-    .info {
-        display: flex;
-        justify-content: center;
-
-        margin-bottom: 10px;
-        font-style: italic;
-        opacity: 0.7;
-        font-size: 0.9em;
-    }
-
     .grid {
         display: flex;
         flex-wrap: wrap;

@@ -5,6 +5,7 @@
     import T from "../../helpers/T.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialColorInput from "../../inputs/MaterialColorInput.svelte"
+    import Tip from "../Tip.svelte"
 
     function changeColor(e, key = "") {
         let color = e.detail || e.target?.value || ""
@@ -61,9 +62,7 @@
     }
 </script>
 
-<div class="info">
-    <p><T id="actions.click_disable" /></p>
-</div>
+<Tip value="actions.click_disable" bottom={20} />
 
 <MaterialColorInput label="" value="" on:change={changeColor} alwaysVisible editMode />
 
@@ -73,15 +72,3 @@
         <T id="actions.paste" />
     </MaterialButton>
 {/if}
-
-<style>
-    .info {
-        display: flex;
-        justify-content: center;
-
-        margin-bottom: 10px;
-        font-style: italic;
-        opacity: 0.7;
-        font-size: 0.9em;
-    }
-</style>

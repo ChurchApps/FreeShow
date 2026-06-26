@@ -60,6 +60,7 @@
         <MaterialButton variant="outlined" icon="folder" on:click={openAppData} small>
             <T id="actions.open_app_data_folder" />
         </MaterialButton>
+        <!-- in settings>Files we can press "Open in system" on the user data folder, so we don't need this! - but it makes sense to have it next to "Open app data folder" -->
         <MaterialButton variant="outlined" icon="folder" on:click={openUserData} small>
             <T id="actions.open_user_data_folder" />
         </MaterialButton>

@@ -8,7 +8,6 @@
     import MidiValues from "../../actions/MidiValues.svelte"
     import { getDynamicValue } from "../../edit/scripts/itemHelpers"
     import { clone, keysToID, sortByName } from "../../helpers/array"
-    import T from "../../helpers/T.svelte"
     import DynamicList from "../../input/DynamicList.svelte"
     import HRule from "../../input/HRule.svelte"
     import { getValues } from "../../input/inputs"
@@ -16,6 +15,7 @@
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialDropdown from "../../inputs/MaterialDropdown.svelte"
     import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
+    import Tip from "../Tip.svelte"
 
     $: emittersList = sortByName(sortByName(keysToID($emitters)), "type")
 
@@ -225,7 +225,7 @@
     </DynamicList>
 {:else}
     {#if !emittersList.length}
-        <p style="opacity: 0.8;font-size: 0.8em;text-align: center;margin-bottom: 20px;"><T id="emitters.tip" /></p>
+        <Tip type="info" value="emitters.tip" bottom={20} />
     {/if}
 
     <DynamicList items={emittersList} let:item={emitter} on:open={(e) => (editEmitter = e.detail)} on:delete={(e) => deleteEmitter(e.detail)} on:add={createEmitter}>
