@@ -4,7 +4,7 @@
     import { Main } from "../../../../types/IPC/Main"
     import { requestMain, sendMain } from "../../../IPC/main"
     import { activePopup, alertMessage, autosave, cloudSyncData, dataPath, driveData, driveKeys, providerConnections, saved, special, statusIndicator } from "../../../stores"
-    import { changeTeam, setupCloudSync, socketDisconnect } from "../../../utils/cloudSync"
+    import { changeTeam, setupCloudSync, socketDisconnect, updateCloudDeviceName } from "../../../utils/cloudSync"
     import { previousAutosave, startAutosave, wait } from "../../../utils/common"
     import { validateKeys } from "../../../utils/drive"
     import { translateText } from "../../../utils/language"
@@ -184,6 +184,8 @@
             a[key] = value
             return a
         })
+
+        if (key === "deviceName") updateCloudDeviceName()
     }
 
     let disconnecting = false

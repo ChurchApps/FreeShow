@@ -253,7 +253,9 @@ function broadcastPresence(action: string = "update") {
 
 export function getCloudUsers(updater = get(cloudUsers)) {
     const name = get(cloudSyncData).deviceName || ""
-    return updater.filter((a) => a.displayName !== name)
+    const timeout = 60 * 3000 // 3 minutes
+    const now = Date.now()
+    return updater.filter((a) => a.displayName !== name && now - (a.lastUpdate || 0) < timeout)
 }
 
 export function isActiveShowInUseByCloudUser(_updater: any = null) {
@@ -382,4 +384,11 @@ function settingsListener(key: string, data: any) {
     })
 
     previousData.set(key, clone(data))
+}
+
+export async function updateCloudDeviceName() {
+    if (!get(cloudSyncData).enabled) return
+
+    await socketDisconnect()
+    await socketConnect()
 }
