@@ -39,6 +39,7 @@
     export let outputId = ""
 
     export let ratio = 1
+    export let index = -1
     export let ref: {
         type?: "show" | "stage" | "overlay" | "template"
         showId?: string
@@ -124,5 +125,5 @@
 {:else if item.type === "chart"}
     <Chart {item} ref={{ ...ref, slideIndex }} />
 {:else if item.type === "table"}
-    <Table {item} {edit} {ref} {ratio} />
+    <Table {item} {edit} {ref} {ratio} {index} />
 {/if}

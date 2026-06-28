@@ -10,6 +10,7 @@
     export let edit = false
     export let ref: any = {}
     export let ratio = 1
+    export let index = -1
 
     $: tableData = item.table || {
         borderColor: "rgba(255,255,255,0.2)",
@@ -43,8 +44,8 @@
             const slide = show.slides[ref.id]
             if (!slide) return cache
             const items = slide.items
-            const itemIndex = items.findIndex((i) => i.id === item.id)
-            if (itemIndex > -1) {
+            const itemIndex = index
+            if (itemIndex > -1 && items[itemIndex]) {
                 items[itemIndex].table = clone(tableData)
             }
             return cache
@@ -175,7 +176,7 @@
             {#each rows as row, rIdx}
                 <tr style="border-bottom: {borderWidth}px solid {borderColor};">
                     {#each row.cells as cell, cIdx}
-                        <td class={edit ? "context #edit_box__table_context" : ""} data-row={rIdx} data-col={cIdx} on:contextmenu={() => handleContextMenu(rIdx, cIdx)} style="border-right: {borderWidth}px solid {borderColor}; position: relative; padding: 0; text-align: {textAlign}; --vertical-align: {verticalAlign}; {cell.style || ''}">
+                        <td class={edit ? "edit context #edit_box__table_context" : ""} data-row={rIdx} data-col={cIdx} on:contextmenu={() => handleContextMenu(rIdx, cIdx)} style="border-right: {borderWidth}px solid {borderColor}; position: relative; padding: 0; text-align: {textAlign}; --vertical-align: {verticalAlign}; {cell.style || ''}">
                             {#if edit}
                                 <div class="cell-content edit" contenteditable="true" bind:textContent={cell.text} on:input={updateItem} on:keydown={(e) => handleCellKeydown(e, rIdx, cIdx)} style="padding: 8px 12px; width: 100%; height: 100%; outline: none; box-sizing: border-box; min-height: 38px;"></div>
                             {:else}
