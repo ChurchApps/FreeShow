@@ -98,8 +98,28 @@
             transitionBetween
         }
 
+        // Identify outgoing states (all currently active states before we add the new one)
+        const outgoingStateIds = Object.keys(currentlyTransitioning)
+
         currentlyTransitioning[stateId] = state
         currentlyTransitioning = currentlyTransitioning
+
+        // Clean up the OUTGOING transition states after their outro transition completes
+        // this fixes duplicated "Scrolling" text when refreshed
+        let outroDuration = transitionEnabled ? (outTransition.duration ?? 300) + (outTransition.delay ?? 0) : 0
+        outgoingStateIds.forEach((oldId) => {
+            setTimeout(() => {
+                removeState(oldId)
+            }, outroDuration + 100)
+        })
+    }
+
+    function removeState(stateId: string) {
+        if (!currentlyTransitioning[stateId]) return
+        delete currentlyTransitioning[stateId]
+        currentlyTransitioning = currentlyTransitioning
+        currentOut = clone(currentlyTransitioning)
+        currentIds = Object.keys(currentlyTransitioning)
     }
 
     // only update if new ID! Previous is removed, but output should not update until a new value is set
