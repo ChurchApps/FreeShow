@@ -779,14 +779,14 @@ export async function downloadOnlineMedia(url: string) {
     const needsLicense = !!(providerId && mediaId)
 
     if (downloadedPath?.protectedUrl) {
-        if (!needsLicense || isLicenseValid(mediaData)) return downloadedPath.protectedUrl
+        if (!needsLicense || isLicenseValid(mediaData) || !navigator.onLine) return downloadedPath.protectedUrl
         const refreshed = await refreshMediaLicense(url, providerId, mediaId)
         if (refreshed) return downloadedPath.protectedUrl
         return url
     }
     if (downloadedPath?.path) return downloadedPath.path
 
-    if (needsLicense && !isLicenseValid(mediaData)) await refreshMediaLicense(url, providerId, mediaId)
+    if (needsLicense && !isLicenseValid(mediaData) && navigator.onLine) await refreshMediaLicense(url, providerId, mediaId)
 
     const updatedMediaData = get(media)[url]
     sendMain(Main.MEDIA_DOWNLOAD, { url, contentFile: updatedMediaData?.contentFile })
