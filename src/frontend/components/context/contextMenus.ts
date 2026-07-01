@@ -385,7 +385,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     stage_slide: ["GROUP_rename_only", "move_connections", "disable", "SEPARATOR", "export", "SEPARATOR", "duplicate", "delete"], // "GROUP_duplicate_delete"
     stage_slide_readonly: ["move_connections"],
     stage_item: ["GROUP_conditions", "rearrange_stage", "SEPARATOR", "duplicate", "delete"], // "GROUP_duplicate_delete"
-    stage_item_output: ["rearrange_stage", "SEPARATOR", "delete"],
+    stage_item_output: ["GROUP_conditions", "rearrange_stage", "SEPARATOR", "delete"],
     stage_text_item: ["GROUP_dynamic", "rearrange_stage", "SEPARATOR", "duplicate", "delete"], // "GROUP_duplicate_delete"
     items_list_item_stage: ["to_front_stage", "forward_stage", "backward_stage", "to_back_stage"],
 
