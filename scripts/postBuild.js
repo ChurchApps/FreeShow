@@ -54,7 +54,7 @@ async function copyPublicFolderAndMinify(folderPath, destinationPath) {
         // if (/\.html$/.exec(curPath)) return minifyHTML(curPath, newPath)
         // if (/\.css$/.exec(curPath)) return minifyCSS(curPath, newPath)
 
-        if (/\.png|\.ico|\.icns|\.html|\.css|\.ttf|\.woff|\.woff2|\.json|\.svg$/.exec(curPath)) {
+        if (/\.png|\.ico|\.icns|\.html|\.css|\.ttf|\.woff|\.woff2|\.json|\.svg|\.exe$/.exec(curPath)) {
             const fileContent = readFileSync(curPath)
             writeFileSync(newPath, fileContent)
         }
