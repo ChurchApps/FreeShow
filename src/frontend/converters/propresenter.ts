@@ -304,35 +304,40 @@ function getSlideItems(slide: any) {
 
     const items: Item[] = []
 
-    const textElement = elements.RVTextElement
-    let itemStrings = elements.RVTextElement.NSString
-    if (!itemStrings && Array.isArray(textElement)) itemStrings = textElement.map((a) => a.NSString)
-    if (!itemStrings) itemStrings = [elements.RVTextElement["@RTFData"]]
-    else if (itemStrings["#text"]) itemStrings = [itemStrings]
+    // Handle multiple RVTextElement items (common in Pro6)
+    const textElements = Array.isArray(elements.RVTextElement) ? elements.RVTextElement : [elements.RVTextElement]
 
-    itemStrings = itemStrings.filter(Boolean)
+    textElements.forEach((textElement: any) => {
+        if (!textElement) return
 
-    const rtf = itemStrings.find((a) => a["@rvXMLIvarName"] === "RTFData")
-    const plain = itemStrings.find((a) => a["@rvXMLIvarName"] === "PlainText")
-    // rtf includes line breaks
-    if (rtf) itemStrings = [rtf]
-    else if (plain) itemStrings = [plain]
+        let itemStrings = textElement.NSString
+        if (!itemStrings) itemStrings = [textElement["@RTFData"]]
+        else if (itemStrings["#text"]) itemStrings = [itemStrings]
 
-    itemStrings.forEach((content: any) => {
-        if (!content) return
-        if (Array.isArray(content)) content = content[0]
+        itemStrings = itemStrings.filter(Boolean)
 
-        let text = decodeBase64(content["#text"] || content)
-        // console.log(text)
+        const rtf = itemStrings.find((a) => a["@rvXMLIvarName"] === "RTFData")
+        const plain = itemStrings.find((a) => a["@rvXMLIvarName"] === "PlainText")
+        // rtf includes line breaks
+        if (rtf) itemStrings = [rtf]
+        else if (plain) itemStrings = [plain]
 
-        const type = content["@rvXMLIvarName"]
-        if (type && type !== "RTFData" && type !== "PlainText") return
-        // text = convertFromRTFToPlain(text)
-        text = decodeHex(text)
-        // console.log(text)
+        itemStrings.forEach((content: any) => {
+            if (!content) return
+            if (Array.isArray(content)) content = content[0]
 
-        if (text === "Double-click to edit") text = ""
-        items.push({ style: DEFAULT_ITEM_STYLE, lines: splitTextToLines(text) })
+            let text = decodeBase64(content["#text"] || content)
+            // console.log(text)
+
+            const type = content["@rvXMLIvarName"]
+            if (type && type !== "RTFData" && type !== "PlainText") return
+            // text = convertFromRTFToPlain(text)
+            text = decodeHex(text)
+            // console.log(text)
+
+            if (text === "Double-click to edit") text = ""
+            items.push({ style: DEFAULT_ITEM_STYLE, lines: splitTextToLines(text) })
+        })
     })
 
     return items
