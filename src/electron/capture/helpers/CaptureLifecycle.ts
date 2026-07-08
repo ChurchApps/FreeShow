@@ -15,6 +15,9 @@ export class CaptureLifecycle {
     private static readonly MIN_DELAY_MS = 1
     private static readonly WEBRTC_START_DELAY_MS = 1000
     private static readonly BYTES_PER_MB = 1048576
+    // reduce capture rate when output content has not changed for a while (static slide/idle)
+    private static readonly IDLE_AFTER_MS = 2000
+    private static readonly IDLE_FPS = 3
 
     private static captureLoopToken: { [key: string]: number } = {}
     private static activeCaptures: Set<string> = new Set()
@@ -103,7 +106,10 @@ export class CaptureLifecycle {
                 console.warn(`Capture failed for output ${id}:`, error)
             }
 
-            if (!this.shouldContinueCapture(id, token, captureOpts)) return
+            if (!this.shouldContinueCapture(id, token, captureOpts)) {
+                this.activeCaptures.delete(id)
+                return
+            }
 
             const delay = this.calculateFrameDelay(id, captureOpts)
             captureOpts.frameSubscription = setTimeout(captureFrame, delay)
@@ -117,6 +123,8 @@ export class CaptureLifecycle {
         if (this.captureLoopToken[id] !== token) return false
         if (!captureOpts.window || captureOpts.window.isDestroyed()) return false
         if (!captureOpts.window.webContents || captureOpts.window.webContents.isDestroyed?.()) return false
+        // stop the loop when every channel has been toggled off
+        if (!captureOpts.options || !Object.values(captureOpts.options).some(Boolean)) return false
         return true
     }
 
@@ -164,6 +172,12 @@ export class CaptureLifecycle {
                     return Math.min(baseCaptureFrameRate, maxFps)
                 }
             }
+        }
+
+        // static content - capture at a low rate until a change is detected
+        // (Blackmagic frames bypass change detection, so skip the backoff when it's active)
+        if (!options.blackmagic && CaptureTransmitter.getTimeSinceLastChange(id) > this.IDLE_AFTER_MS) {
+            return Math.min(baseCaptureFrameRate, this.IDLE_FPS)
         }
 
         return baseCaptureFrameRate

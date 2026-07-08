@@ -19,7 +19,8 @@ export type Channel = {
 export class CaptureTransmitter {
     private static readonly AUDIO_PRESENT_MARKER = Buffer.from([1])
     private static readonly IS_BIG_ENDIAN = os.endianness() === "BE"
-    private static readonly UNCHANGED_KEEPALIVE_MS = 250
+    private static readonly UNCHANGED_KEEPALIVE_MS = 1000
+    private static readonly REQUEST_LIST_MAX = 100
     private static readonly SERVER_RESIZE_THRESHOLDS = [
         { connections: 20, scale: 0.3 },
         { connections: 10, scale: 0.5 },
@@ -35,11 +36,12 @@ export class CaptureTransmitter {
     private static readonly SIGNATURE_FALLBACK_SAMPLES = 128
     private static readonly SIGNATURE_JITTER_STEPS = 4
 
-    static stageWindows: string[] = []
     static requestList: string[] = []
     static channels: { [key: string]: Channel } = {}
     private static lastFrameState: { [channelId: string]: { signature: number; sizeKey: string; lastSentAt: number } } = {}
     private static signatureOffsetCache: { [sizeKey: string]: number[] } = {}
+    // last time any channel of a capture observed changed frame content (used for idle frame rate backoff)
+    private static lastChangeTimes: { [captureId: string]: number } = {}
 
     static startTransmitting(captureId: string) {
         const captureOptions = OutputHelper.getOutput(captureId)?.captureOptions
@@ -56,6 +58,8 @@ export class CaptureTransmitter {
         if (this.channels[combinedKey]) return
 
         this.channels[combinedKey] = { key, captureId, lastFrameTime: 0 }
+        // start at full frame rate until content proves static
+        this.lastChangeTimes[captureId] = performance.now()
     }
 
     static stopChannel(captureId: string, key: string) {
@@ -64,6 +68,15 @@ export class CaptureTransmitter {
 
         delete this.channels[combinedKey]
         if (key !== "blackmagic") delete this.lastFrameState[combinedKey]
+
+        const hasRemainingChannels = Object.keys(this.channels).some((k) => k.startsWith(`${captureId}-`))
+        if (!hasRemainingChannels) delete this.lastChangeTimes[captureId]
+    }
+
+    static getTimeSinceLastChange(captureId: string): number {
+        const lastChange = this.lastChangeTimes[captureId]
+        if (lastChange === undefined) return 0
+        return performance.now() - lastChange
     }
 
     private static getSignatureOffsets(width: number, height: number): number[] {
@@ -164,18 +177,14 @@ export class CaptureTransmitter {
         const now = performance.now()
         const previous = this.lastFrameState[channelId]
 
-        if (previous && previous.sizeKey === sizeKey && now - previous.lastSentAt < this.UNCHANGED_KEEPALIVE_MS) {
-            const signature = this.getQuickSignature(buffer, size)
-            if (previous.signature === signature) {
-                return true
-            }
+        const signature = this.getQuickSignature(buffer, size)
+        const changed = !previous || previous.sizeKey !== sizeKey || previous.signature !== signature
+        if (changed) this.lastChangeTimes[captureId] = now
 
-            this.lastFrameState[channelId] = { signature, sizeKey, lastSentAt: now }
-        } else {
-            const signature = this.getQuickSignature(buffer, size)
-            this.lastFrameState[channelId] = { signature, sizeKey, lastSentAt: now }
-        }
+        // skip unchanged frames, but still send a keepalive frame at a regular interval
+        if (!changed && previous && now - previous.lastSentAt < this.UNCHANGED_KEEPALIVE_MS) return true
 
+        this.lastFrameState[channelId] = { signature, sizeKey, lastSentAt: now }
         return false
     }
 
@@ -270,15 +279,6 @@ export class CaptureTransmitter {
         return image
     }
 
-    static sendToStageOutputs(msg: any, excludeId = "") {
-        const seen = new Set<string>()
-        for (const id of this.stageWindows) {
-            if (id === excludeId || seen.has(id)) continue
-            seen.add(id)
-            OutputHelper.Send.sendToWindow(id, msg)
-        }
-    }
-
     static sendToRequested(msg: any) {
         const newList: string[] = []
 
@@ -328,7 +328,6 @@ export class CaptureTransmitter {
 
         const msg = { channel: "BUFFER", data: { id: captureId, time: Date.now(), buffer, size } }
         toApp(OUTPUT, msg)
-        this.sendToStageOutputs(msg, captureId)
         this.sendToRequested(msg)
     }
 
@@ -364,6 +363,8 @@ export class CaptureTransmitter {
 
     static requestPreview(data: { id: string; previewId: string }) {
         this.requestList.push(JSON.stringify(data))
+        // prevent unbounded growth if requested frames never arrive (e.g. capture not running)
+        if (this.requestList.length > this.REQUEST_LIST_MAX) this.requestList = this.requestList.slice(-this.REQUEST_LIST_MAX)
     }
 
     static removeAllChannels(captureId: string) {

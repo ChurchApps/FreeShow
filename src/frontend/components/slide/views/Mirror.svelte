@@ -67,7 +67,7 @@
 
     // request preview capture
     let previewRequestInterval: any = null
-    $: if ($currentWindow === "output" && stageEnabled && $stageShows[item.mirror?.stage]?.items?.["output#current_output"]?.enabled) {
+    $: if ($currentWindow === "output" && stageEnabled && $stageShows[item.mirror?.stage]?.items?.["output#current_output"]?.enabled && !previewRequestInterval) {
         let id = Object.keys($outputs)[0]
         let previewId = $stageShows[item.mirror?.stage]?.settings?.output
 

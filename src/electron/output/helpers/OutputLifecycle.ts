@@ -51,8 +51,6 @@ export class OutputLifecycle {
 
         // OutputHelper.Bounds.updatePreviewBounds()
 
-        if (output.stageOutput && !CaptureHelper.Transmitter.stageWindows.includes(id)) CaptureHelper.Transmitter.stageWindows.push(id)
-
         this.pendingCaptureStart[id] = setTimeout(() => {
             delete this.pendingCaptureStart[id]
 
