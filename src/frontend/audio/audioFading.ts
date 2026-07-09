@@ -20,7 +20,7 @@ export const clearing: string[] = []
 let forceClear = false
 export function clearAudio(audioPath = "", options: AudioClearOptions = {}) {
     // turn off any playlist
-    if (options.clearPlaylist && (!audioPath || AudioPlaylist.getPlayingPath() === audioPath)) activePlaylist.set(null)
+    if (options.clearPlaylist && (!audioPath || AudioPlaylist.getPlayingKey() === audioPath)) activePlaylist.set(null)
 
     // stop playing metronome
     if (!options.isPlayingNew && options.clearPlaylist !== false && !audioPath) stopMetronome()
