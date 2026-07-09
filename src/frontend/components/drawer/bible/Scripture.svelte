@@ -21,6 +21,7 @@
     import Loader from "../../main/Loader.svelte"
     import Center from "../../system/Center.svelte"
     import { createScriptureShow, formatBibleText, getVerseIdParts, getVersePartLetter, joinRange, loadJsonBible, moveSelection, outputIsScripture, playScripture, scriptureRangeSelect, sortScriptureSelection, splitText, swapPreviewBible } from "./scripture"
+    import { normalizeVerseSeparators, parseMultiBookReference } from "./referenceParser"
     import { brightenDarkColor, fadeColor } from "../../helpers/color"
 
     export let active: string | null
@@ -167,12 +168,14 @@
 
     type Reference = {
         book: number | string | null
+        books?: (number | string)[] // book per chapter (multiple books can be selected at once)
         chapters: (number | string)[] // can have multiple chapters open
         verses: (number | string)[][] // can have multiple verses open per chapter
     }
 
     let activeReference: Reference = {
         book: $activeScripture.reference?.book || null,
+        books: $activeScripture.reference?.books,
         chapters: $activeScripture.reference?.chapters || [],
         verses: $activeScripture.reference?.verses || []
     }
@@ -317,9 +320,10 @@
     let pendingChapterId: string | null = null
     let pendingChapterPromise: any | null = null
 
-    async function openBook(bookNumber?: number | string, chapterNumbers?: (number | string)[], verseNumbers?: (number | string)[][], navId?: number): Promise<boolean> {
+    async function openBook(bookNumber?: number | string, chapterNumbers?: (number | string)[], verseNumbers?: (number | string)[][], navId?: number, bookNumbers?: (number | string)[]): Promise<boolean> {
         const currentNavId = navId ?? ++navigationId
 
+        // display the last selected book (matching the chapter display), the full selection is kept in "books"
         const targetBookNumber = bookNumber ?? activeReference.book ?? 1
 
         const currentData = data[previewBibleId]?.bibleData
@@ -351,10 +355,10 @@
         if (bookNumber && !verseNumbers) activeReference.verses = []
         activeReference.book = targetBookNumber
 
-        return await openChapter(chapterNumbers, verseNumbers, currentNavId)
+        return await openChapter(chapterNumbers, verseNumbers, currentNavId, bookNumbers)
     }
 
-    async function openChapter(chapterNumbers?: (number | string)[], verseNumbers?: (number | string)[][], navId?: number): Promise<boolean> {
+    async function openChapter(chapterNumbers?: (number | string)[], verseNumbers?: (number | string)[][], navId?: number, bookNumbers?: (number | string)[]): Promise<boolean> {
         const currentNavId = navId ?? ++navigationId
         const targetChapterNumbers = chapterNumbers?.length ? chapterNumbers : activeReference.chapters?.length ? activeReference.chapters : [1]
         const currentData = data[previewBibleId]?.bookData
@@ -386,6 +390,8 @@
         // reset verse when changing chapter
         if (chapterNumbers && !verseNumbers) activeReference.verses = []
         activeReference.chapters = targetChapterNumbers
+        // per-chapter books only apply while a multi-book selection is active
+        activeReference.books = bookNumbers
 
         openVerse(verseNumbers)
         return true
@@ -419,6 +425,7 @@
             id: previewBibleId,
             reference: {
                 book: activeReference.book,
+                books: activeReference.books,
                 chapters: activeReference.chapters,
                 verses: activeReference.verses
             }
@@ -558,23 +565,26 @@
             return
         }
 
-        const multiReference = await parseMultiChapterReference(searchValue)
+        const multiReference = await parseMultiBookReference(currentBibleData?.bibleData as any, searchValue, books || [])
 
         if (searchId !== currentSearchId) return
 
         if (multiReference) {
             // normalize the search box so it reflects the exact selection the user will get
             searchValue = multiReference.referenceLabel
-            await openBook(multiReference.bookNumber, multiReference.chapters, multiReference.verses)
+            const displayBook = multiReference.books[multiReference.books.length - 1] ?? multiReference.bookNumber
+            await openBook(displayBook, multiReference.chapters, multiReference.verses, undefined, multiReference.books)
             return
         }
 
-        const result = currentBibleData?.bibleData?.bookSearch(searchValue)
+        // support comma separated verse lists like "91:1-3,10" (json-bible uses "+")
+        const searchTarget = normalizeVerseSeparators(searchValue)
+        const result = currentBibleData?.bibleData?.bookSearch(searchTarget)
         if (!result) return
 
         // json-bible returns empty verses when chapter is not loaded, this fixes search issues
         if (result.chapter && !result.verses?.length) {
-            const verseMatch = searchValue.match(/[:.,]\s*(\d+)(?:-(\d+))?[^a-zA-Z]*$/)
+            const verseMatch = searchTarget.match(/[:.,]\s*(\d+)(?:-(\d+))?[^a-zA-Z]*$/)
             if (verseMatch) {
                 const start = parseInt(verseMatch[1])
                 const end = verseMatch[2] ? parseInt(verseMatch[2]) : start
@@ -584,8 +594,9 @@
             }
         }
 
-        const autocompleteChanged = result.autocompleted && result.autocompleted !== searchValue
-        if (result.autocompleted) searchValue = result.autocompleted
+        // keep typed commas as is (the normalized value is just for parsing)
+        const autocompleteChanged = result.autocompleted && result.autocompleted !== searchTarget
+        if (autocompleteChanged) searchValue = result.autocompleted
 
         const bookChanged = result.book && result.book.toString() !== activeReference.book?.toString()
         const chapterChanged = result.chapter && (!activeReference.chapters.length || result.chapter.toString() !== activeReference.chapters[0]?.toString())
@@ -619,148 +630,6 @@
         if (result.chapter && !newVerses) {
             selectAllTimeout = setTimeout(selectAllVerses)
         }
-    }
-
-    type MultiReference = {
-        bookNumber: number
-        referenceLabel: string
-        chapters: (number | string)[]
-        verses: (number | string)[][]
-    }
-
-    // Parse references like "Genesis 1:1-12;2:1-10" into discrete chapter/verse selections.
-    async function parseMultiChapterReference(value: string): Promise<MultiReference | null> {
-        const bibleData = currentBibleData?.bibleData
-        if (!bibleData) return null
-
-        const sanitizedValue = value?.replace(/\s+/g, " ").trim()
-        if (!sanitizedValue) return null
-
-        const rawSegments = sanitizedValue
-            .split(";")
-            .map((segment) => segment.trim())
-            .filter(Boolean)
-        const segmentsToProcess = rawSegments.length ? rawSegments : [sanitizedValue]
-
-        const firstSegment = segmentsToProcess[0]
-        let baseResult = bibleData.bookSearch(firstSegment)
-        if (!baseResult?.book && firstSegment.includes("-")) {
-            const fallbackTarget = firstSegment.split("-")[0]?.trim()
-            if (fallbackTarget) baseResult = bibleData.bookSearch(fallbackTarget)
-        }
-        if (!baseResult?.book) return null
-
-        const bookNumber = Number(baseResult.book)
-        const canonicalBookName = books?.find((book) => Number(book.number) === bookNumber)?.name || firstSegment
-
-        const resolvedSegments: string[] = []
-        for (let i = 0; i < segmentsToProcess.length; i++) {
-            const rawSegment = segmentsToProcess[i]
-            const normalizedSegment = normalizeSegment(rawSegment, canonicalBookName, bookNumber, bibleData)
-            const expandedSegments = await expandCrossChapterSegment(normalizedSegment, canonicalBookName, bookNumber, bibleData)
-            resolvedSegments.push(...expandedSegments)
-        }
-
-        const hasExplicitSplit = rawSegments.length > 1
-        if (!hasExplicitSplit && resolvedSegments.length <= 1) return null
-
-        const chapters: (number | string)[] = []
-        const verses: (number | string)[][] = []
-        for (const segment of resolvedSegments) {
-            const parsed = bibleData.bookSearch(segment)
-            if (!parsed?.chapter) return null
-
-            const chapterNumber = Number(parsed.chapter)
-            const verseList = parsed.verses?.length ? parsed.verses : await getEntireChapterVerses(bookNumber, chapterNumber, bibleData)
-            if (!verseList?.length) return null
-
-            chapters.push(chapterNumber)
-            verses.push(verseList)
-        }
-
-        return {
-            bookNumber,
-            referenceLabel: buildReferenceLabel(canonicalBookName, resolvedSegments),
-            chapters,
-            verses
-        }
-    }
-
-    // Ensure a reference chunk includes the book name so bookSearch can resolve it reliably.
-    function normalizeSegment(segment: string, bookName: string, bookNumber: number, bibleData: any) {
-        const trimmed = segment?.trim()
-        if (!trimmed) return bookName
-
-        const attempt = bibleData.bookSearch(trimmed)
-        if (attempt?.book === bookNumber) return trimmed
-
-        return `${bookName} ${trimmed}`.replace(/\s+/g, " ").trim()
-    }
-
-    // Break a cross-chapter span (e.g. "1:1-2:10") into per-chapter segments.
-    async function expandCrossChapterSegment(segment: string, bookName: string, bookNumber: number, bibleData: any) {
-        const escapedBook = escapeRegExp(bookName)
-        const remainder = segment.replace(new RegExp(`^${escapedBook}\\s*`, "i"), "").trim()
-        const multiChapterMatch = remainder.match(/^(\d+):(\d+)\s*-\s*(\d+):(\d+)/)
-        if (!multiChapterMatch) return [segment]
-
-        const [_, startChapterStr, startVerseStr, endChapterStr, endVerseStr] = multiChapterMatch
-        const startChapter = Number(startChapterStr)
-        const startVerse = Number(startVerseStr)
-        const endChapter = Number(endChapterStr)
-        const endVerse = Number(endVerseStr)
-        if (!startChapter || !endChapter || startChapter === endChapter) return [segment]
-
-        const expanded: string[] = []
-        for (let chapter = startChapter; chapter <= endChapter; chapter++) {
-            const chapterStart = chapter === startChapter ? startVerse : 1
-            const chapterEnd = chapter === endChapter ? endVerse : await getChapterLastVerse(bookNumber, chapter, bibleData)
-            if (!chapterEnd) return [segment]
-            expanded.push(`${bookName} ${chapter}:${chapterStart}-${chapterEnd}`)
-        }
-
-        return expanded
-    }
-
-    // Get the final verse number for a chapter so we can include the whole section when needed.
-    async function getChapterLastVerse(bookNumber: number, chapterNumber: number, bibleData: any) {
-        try {
-            const bookData = await bibleData.getBook(bookNumber)
-            const chapterData = await bookData.getChapter(chapterNumber)
-            const verseEntries = chapterData?.data?.verses || []
-            return Number(verseEntries[verseEntries.length - 1]?.number || verseEntries.length || 0)
-        } catch (err) {
-            console.error(err)
-            return 0
-        }
-    }
-
-    // Return every verse index for a chapter when no explicit range was provided.
-    async function getEntireChapterVerses(bookNumber: number, chapterNumber: number, bibleData: any) {
-        try {
-            const bookData = await bibleData.getBook(bookNumber)
-            const chapterData = await bookData.getChapter(chapterNumber)
-            return (chapterData?.data?.verses || []).map((verse) => Number(verse.number)).filter(Boolean)
-        } catch (err) {
-            console.error(err)
-            return []
-        }
-    }
-
-    // Format the combined reference so the UI shows "Book 1:1-12 ; 2:1-10".
-    function buildReferenceLabel(bookName: string, segments: string[]) {
-        const escapedBook = escapeRegExp(bookName)
-        const bookRegex = new RegExp(`^${escapedBook}\\s*`, "i")
-        const [firstSegment, ...rest] = segments
-        const firstLabel = firstSegment.replace(bookRegex, "").trim() || firstSegment
-        const restLabels = rest.map((segment) => segment.replace(bookRegex, "").trim())
-        const suffix = restLabels.length ? restLabels.map((label) => ` ; ${label}`).join("") : ""
-        return `${bookName} ${firstLabel}${suffix}`.trim()
-    }
-
-    // Escape user-facing book names before building regular expressions.
-    function escapeRegExp(value: string) {
-        return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
     }
 
     let contentSearchFieldActive = false

@@ -139,7 +139,13 @@ export async function getActiveScripturesContent(selectedVerses: (number | strin
                 const BibleData = await loadJsonBible(id)
                 if (!BibleData) return null
 
-                const Book = await BibleData.getBook(active?.book)
+                const selectedChapters = active?.chapters.map((c) => Number(c)) || []
+                // each chapter can belong to a different book (multi-book reference search)
+                const chapterBooks = active?.books?.length === selectedChapters.length ? active.books : selectedChapters.map(() => active?.book)
+                const primaryBook = chapterBooks[0] ?? active?.book
+
+                const Book = await BibleData.getBook(primaryBook)
+                const Books = await Promise.all(chapterBooks.map((b) => (b === primaryBook ? Book : BibleData.getBook(b))))
 
                 const scriptureData = get(scriptures)[id]
                 const version = scriptureData?.customName || scriptureData?.name || ""
@@ -148,8 +154,8 @@ export async function getActiveScripturesContent(selectedVerses: (number | strin
 
                 const bookName = Book.name
                 const bookAbbr = Book.getAbbreviation()
-                const selectedChapters = active?.chapters.map((c) => Number(c)) || []
-                const Chapters = await Promise.all(selectedChapters.map((c) => Book.getChapter(c)))
+                const bookNames = Books.map((b) => b.name)
+                const Chapters = await Promise.all(selectedChapters.map((c, i) => (Books[i] || Book).getChapter(c)))
 
                 const metadata = BibleData.data.metadata || {}
                 Object.entries(scriptureData?.metadata || {}).forEach(([key, value]) => {
@@ -237,7 +243,7 @@ export async function getActiveScripturesContent(selectedVerses: (number | strin
 
                 // const reference = Chapter.getVerse(selectedVerses[0]).getReference()
 
-                return { id, isApi: !!scriptureData?.api, version, metadata, book: bookName, bookAbbr, bookId: active?.book || "", chapters: selectedChapters, verses: allVersesText, activeVerses: expandedSelectedVerses, attributionString, attributionRequired } as BibleContent
+                return { id, isApi: !!scriptureData?.api, version, metadata, book: bookName, bookAbbr, bookId: primaryBook || "", chapters: selectedChapters, bookNames, verses: allVersesText, activeVerses: expandedSelectedVerses, attributionString, attributionRequired } as BibleContent
             })
             .filter(Boolean)
     )) as BibleContent[]
@@ -274,7 +280,7 @@ export async function playScripture() {
 
     const { slides, attributions, slideDynamicValues } = await getScriptureSlidesNew({ biblesContent, selectedChapters, selectedVerses }, true)
 
-    const fullReferenceRange = buildFullReferenceRange(selectedChapters, selectedVerses)
+    const fullReferenceRange = buildFullReferenceRange(selectedChapters, selectedVerses, biblesContent[0].bookNames)
     // include every selected chapter/verse in the displayed reference label
     const { id, subverse } = getVerseIdParts(selectedVerses[0]?.[0])
     const showSplitSuffix = get(scriptureSettings).splitLongVersesSuffix
@@ -507,36 +513,58 @@ export function joinRange(array: (number | string)[]) {
 }
 
 // Combine multiple chapter selections into a single "1:1-4 ; 2:1-10" style reference.
-export function buildFullReferenceRange(chapters: (number | string)[], versesPerChapter: (number | string)[][]) {
+// With multiple books selected, the book name is included when it changes: "91:1-3 ; Psalms 23:1-5"
+export function buildFullReferenceRange(chapters: (number | string)[], versesPerChapter: (number | string)[][], bookNames?: string[]) {
     if (!Array.isArray(chapters) || !Array.isArray(versesPerChapter)) return ""
 
     const divider = getReferenceDivider()
 
-    const normalized: (number | string)[] = []
+    // group consecutive chapters by book (a single/unknown book is one group), preserving the given order
+    type BookGroup = { book: string; normalized: (number | string)[] }
+    const groups: BookGroup[] = []
+
     chapters.forEach((chapter, index) => {
+        const book = bookNames?.[index] || ""
+        let group = groups[groups.length - 1]
+        if (!group || group.book !== book) {
+            group = { book, normalized: [] }
+            groups.push(group)
+        }
+
         const chapterVerses = versesPerChapter[index] || []
         chapterVerses.forEach((verse) => {
             const value = String(verse)
             if (!value || value === "NaN") return
 
-            if (value.includes(divider)) normalized.push(value)
-            else normalized.push(`${chapter}${divider}${value}`)
+            if (value.includes(divider)) group.normalized.push(value)
+            else group.normalized.push(`${chapter}${divider}${value}`)
         })
     })
-    if (!normalized.length) return ""
-    return joinRange(normalized)
+
+    const labels = groups.map((group, index) => {
+        const range = joinRange(group.normalized)
+        if (!range) return ""
+        // groups only split when the book changes - the first book name is added by callers ("<book> <range>")
+        const includeBook = index > 0 && !!group.book
+        return includeBook ? `${group.book} ${range}` : range
+    })
+
+    return labels.filter(Boolean).join(" ; ")
 }
+
+// a selected verse with its chapter - chapterIndex points into BibleContent.chapters (chapter numbers can repeat across books)
+type VerseContext = { chapter: number | string; verse: number | string; chapterIndex?: number }
 
 // return array with length of slidesCount containing the content with splitted verses
 function splitContent(content: BibleContent[], perSlide: number): BibleContent[][] {
     // Create a flat list of all verse references, preserving chapter order.
     // This uses the first translation as the authority for verse structure.
-    const allVersesInOrder: { chapter: number | string; verse: number | string }[] = []
+    const allVersesInOrder: VerseContext[] = []
     if (content.length > 0) {
         content[0].chapters.forEach((chapterNum, chapterIndex) => {
             const chapterVerses = sortScriptureSelection(content[0].activeVerses[chapterIndex] || [])
             chapterVerses.forEach((verseNum) => {
-                allVersesInOrder.push({ chapter: chapterNum, verse: verseNum })
+                allVersesInOrder.push({ chapter: chapterNum, verse: verseNum, chapterIndex })
             })
         })
     }
@@ -547,7 +575,7 @@ function splitContent(content: BibleContent[], perSlide: number): BibleContent[]
     }
 
     const smartSplit = get(scriptureSettings).smartSplit !== false
-    let slidesVerseContexts: { chapter: number | string; verse: number | string }[][] = []
+    let slidesVerseContexts: VerseContext[][] = []
 
     if (smartSplit) {
         slidesVerseContexts = groupVersesSmartly(allVersesInOrder, content)
@@ -568,8 +596,9 @@ function splitContent(content: BibleContent[], perSlide: number): BibleContent[]
             const slideVersesText: { [key: string]: string }[] = bible.chapters.map(() => ({}))
 
             slideVerseContexts.forEach((verseContext) => {
-                const chapterIndex = bible.chapters.findIndex((c) => c == verseContext.chapter)
-                if (chapterIndex !== -1) {
+                // prefer the exact index (chapter numbers can repeat when multiple books are selected)
+                const chapterIndex = verseContext.chapterIndex ?? bible.chapters.findIndex((c) => c == verseContext.chapter)
+                if (chapterIndex !== -1 && chapterIndex < bible.chapters.length) {
                     slideActiveVerses[chapterIndex].push(verseContext.verse)
 
                     // Copy the verse text for the active verse
@@ -691,13 +720,13 @@ function estimateLinesForVerses(verses: { text: string; verseId: string }[], cha
     return lines
 }
 
-export function groupVersesSmartly(allVersesInOrder: { chapter: number | string; verse: number | string }[], biblesContent: BibleContent[]): { chapter: number | string; verse: number | string }[][] {
+export function groupVersesSmartly(allVersesInOrder: VerseContext[], biblesContent: BibleContent[]): VerseContext[][] {
     const templateId = getScriptureTemplateId()
     const { charsPerLine, linesCount } = getSmartSplitDimensionsFromTemplate(templateId)
     const versesOnIndividualLines = get(scriptureSettings).versesOnIndividualLines
 
-    const groups: { chapter: number | string; verse: number | string }[][] = []
-    let currentGroup: { chapter: number | string; verse: number | string }[] = []
+    const groups: VerseContext[][] = []
+    let currentGroup: VerseContext[] = []
 
     allVersesInOrder.forEach((verseContext) => {
         if (currentGroup.length === 0) {
@@ -707,7 +736,8 @@ export function groupVersesSmartly(allVersesInOrder: { chapter: number | string;
             for (let b = 0; b < biblesContent.length; b++) {
                 const bible = biblesContent[b]
                 const proposedVerses = [...currentGroup, verseContext].map((vContext) => {
-                    const chapterIndex = bible.chapters.findIndex((c) => c == vContext.chapter)
+                    // prefer the exact index (chapter numbers can repeat when multiple books are selected)
+                    const chapterIndex = vContext.chapterIndex ?? bible.chapters.findIndex((c) => c == vContext.chapter)
                     const verseKey = String(vContext.verse)
                     const text = bible?.verses[chapterIndex]?.[verseKey] || ""
                     const divider = getReferenceDivider()
@@ -763,11 +793,11 @@ export async function getScriptureSlidesNew(data: any, onlyOne = false, disableR
     let slidesCount = 1
 
     if (smartSplit) {
-        const allVersesInOrder: { chapter: number | string; verse: number | string }[] = []
+        const allVersesInOrder: { chapter: number | string; verse: number | string; chapterIndex?: number }[] = []
         biblesContent[0].chapters.forEach((chapterNum, chapterIndex) => {
             const chapterVerses = sortScriptureSelection(biblesContent[0].activeVerses[chapterIndex] || [])
             chapterVerses.forEach((verseNum) => {
-                allVersesInOrder.push({ chapter: chapterNum, verse: verseNum })
+                allVersesInOrder.push({ chapter: chapterNum, verse: verseNum, chapterIndex })
             })
         })
         const smartGroups = groupVersesSmartly(allVersesInOrder, biblesContent)
@@ -866,7 +896,7 @@ export async function getScriptureSlidesNew(data: any, onlyOne = false, disableR
     // slide > translation > verse
     let scriptureVerseContent: { number: string; text: string; verseId: string }[][][] = []
 
-    const fullVerses = buildFullReferenceRange(selectedChapters, selectedVerses)
+    const fullVerses = buildFullReferenceRange(selectedChapters, selectedVerses, biblesContent[0]?.bookNames)
     const fullReference = `${biblesContent[0]?.book} ${fullVerses}`.trim()
     const divider = getReferenceDivider()
 
@@ -929,7 +959,7 @@ export async function getScriptureSlidesNew(data: any, onlyOne = false, disableR
                 })
             })
 
-            const verses = buildFullReferenceRange(bible.chapters, bible.activeVerses)
+            const verses = buildFullReferenceRange(bible.chapters, bible.activeVerses, bible.bookNames)
             const justVerses = verses.split(divider)[1] || ""
             if (j === 0) {
                 const mergedBooks = removeDuplicates(biblesContent.map((a) => a?.book).filter(Boolean)).join(" / ")
@@ -1809,7 +1839,7 @@ export async function getScriptureShow(biblesContent: BibleContent[] | null) {
         groupNames = data.groupNames
         slideDynamicValues = data.slideDynamicValues
     }
-    const fullReferenceRange = buildFullReferenceRange(selectedChapters, selectedVerses)
+    const fullReferenceRange = buildFullReferenceRange(selectedChapters, selectedVerses, biblesContent[0].bookNames)
     // use the combined range so slide names show multi-chapter selections
 
     // DEPRECATED
@@ -1961,7 +1991,7 @@ export function getReferenceText(biblesContent: BibleContent[]) {
 
     const books = removeDuplicates(biblesContent.map((a) => a?.book).filter(Boolean)).join(" / ")
     // reflect all selected chapters when labeling slides/previews
-    const range = buildFullReferenceRange(biblesContent[0].chapters, biblesContent[0].activeVerses)
+    const range = buildFullReferenceRange(biblesContent[0].chapters, biblesContent[0].activeVerses, biblesContent[0].bookNames)
     const reference = `${books} ${range || biblesContent[0].chapters[0]}`.trim()
     return reference
 
