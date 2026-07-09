@@ -434,7 +434,7 @@ function removeSlideFromLayout(showId, layout, slideId, slideIndex, isParent, ty
                 }
                 if (isParent) {
                     if (!currentSlide.children?.length) return
-                    newSlides = promoteFirstChildInLayout(layoutSlides, slideId, currentSlide, a[showId].slides)
+                    newSlides = promoteFirstChildInLayout(layoutSlides, slideId, currentSlide, a[showId].slides, newSlides)
                 }
             })
         }
@@ -444,7 +444,7 @@ function removeSlideFromLayout(showId, layout, slideId, slideIndex, isParent, ty
     })
 }
 
-function promoteFirstChildInLayout(layoutSlides, slideId, currentSlide, slides) {
+function promoteFirstChildInLayout(layoutSlides, slideId, currentSlide, slides, newSlides) {
     const firstChildId = currentSlide.children[0]
     const newChildren = clone(currentSlide.children.slice(1))
     if (!slides[firstChildId]) return newSlides
