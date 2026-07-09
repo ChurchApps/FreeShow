@@ -74,9 +74,18 @@ export const receiver = {
         if (data.timeFormat) timeFormat.set(data.timeFormat)
     },
 
+    // legacy polled response (kept as fallback for the REQUEST_STREAM path)
     REQUEST_STREAM: (data: any) => {
         stream.update((a) => {
             a[data.alpha ? "alpha" : "default"] = data.stream
+            return a
+        })
+    },
+    // push-driven frames from the app - keyed per output id so multiple mirrored outputs don't clobber each other
+    STREAM_FRAME: (data: any) => {
+        if (!data?.id || !data.jpeg) return
+        stream.update((a) => {
+            a[data.id] = { jpeg: data.jpeg, size: data.size }
             return a
         })
     },

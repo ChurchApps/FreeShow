@@ -5,7 +5,7 @@ import { OUTPUT, OUTPUT_STREAM } from "../../../types/Channels"
 import { NdiSender } from "../../ndi/NdiSender"
 import util from "../../ndi/vingester-util"
 import { OutputHelper } from "../../output/OutputHelper"
-import { getConnections, toServer } from "../../servers"
+import { getConnections, getStageStreamSubscriberIds, toServer, toStageStreamSubscribers } from "../../servers"
 import { BlackmagicSender } from "../../blackmagic/BlackmagicSender"
 import { WebRtcHost } from "../../webrtc/WebRtcHost"
 import { CaptureHelper } from "../CaptureHelper"
@@ -21,6 +21,12 @@ export class CaptureTransmitter {
     private static readonly IS_BIG_ENDIAN = os.endianness() === "BE"
     private static readonly UNCHANGED_KEEPALIVE_MS = 1000
     private static readonly REQUEST_LIST_MAX = 100
+    // web StageShow "current output" mirrors: push JPEG frames directly to connected clients
+    private static readonly STAGE_PUSH_MIN_INTERVAL_MS = 100 // max 10fps
+    private static readonly STAGE_FRAME_MAX_WIDTH = 1280
+    private static readonly STAGE_FRAME_JPEG_QUALITY = 70
+    // raw frames to the main window are only needed for legacy stage clients polling REQUEST_STREAM at 2fps
+    private static readonly MAIN_BUFFER_MIN_INTERVAL_MS = 500
     private static readonly SERVER_RESIZE_THRESHOLDS = [
         { connections: 20, scale: 0.3 },
         { connections: 10, scale: 0.5 },
@@ -42,6 +48,8 @@ export class CaptureTransmitter {
     private static signatureOffsetCache: { [sizeKey: string]: number[] } = {}
     // last time any channel of a capture observed changed frame content (used for idle frame rate backoff)
     private static lastChangeTimes: { [captureId: string]: number } = {}
+    private static lastStagePushTimes: { [captureId: string]: number } = {}
+    private static lastMainBufferSendTimes: { [captureId: string]: number } = {}
 
     static startTransmitting(captureId: string) {
         const captureOptions = OutputHelper.getOutput(captureId)?.captureOptions
@@ -68,6 +76,10 @@ export class CaptureTransmitter {
 
         delete this.channels[combinedKey]
         if (key !== "blackmagic") delete this.lastFrameState[combinedKey]
+        if (key === "stage") {
+            delete this.lastStagePushTimes[captureId]
+            delete this.lastMainBufferSendTimes[captureId]
+        }
 
         const hasRemainingChannels = Object.keys(this.channels).some((k) => k.startsWith(`${captureId}-`))
         if (!hasRemainingChannels) delete this.lastChangeTimes[captureId]
@@ -317,18 +329,47 @@ export class CaptureTransmitter {
     // MAIN (STAGE OUTPUT)
     static sendBufferToMain(captureId: string, image: NativeImage) {
         if (!image) return
-        // image = this.resizeImage(image, options.size, previewSize)
 
         const buffer = image.toBitmap()
         const size = image.getSize()
         if (this.shouldSkipUnchangedNonBlackmagicFrame("stage", captureId, buffer, size)) return
 
+        // push compressed frames directly to connected web StageShow clients ("current output" mirrors)
+        this.sendFrameToStageClients(captureId, image, size)
+
+        const now = performance.now()
+        const mainSendDue = now - (this.lastMainBufferSendTimes[captureId] || 0) >= this.MAIN_BUFFER_MIN_INTERVAL_MS
+        const hasPreviewRequests = this.requestList.length > 0
+        if (!mainSendDue && !hasPreviewRequests) return
+
         /*  convert from ARGB/BGRA (Electron/Chromium capture output) to RGBA (Web canvas)  */
         this.convertToRGBA(buffer)
 
         const msg = { channel: "BUFFER", data: { id: captureId, time: Date.now(), buffer, size } }
-        toApp(OUTPUT, msg)
-        this.sendToRequested(msg)
+        if (mainSendDue) {
+            this.lastMainBufferSendTimes[captureId] = now
+            // only needed for legacy stage clients polling REQUEST_STREAM (2fps), so send at that rate
+            toApp(OUTPUT, msg)
+        }
+        if (hasPreviewRequests) this.sendToRequested(msg)
+    }
+
+    // push a downscaled JPEG frame to subscribed web StageShow clients (replaces client-side REQUEST_STREAM polling)
+    // clients without a visible "current output" mirror never subscribe, so text-only stage displays receive nothing
+    private static sendFrameToStageClients(captureId: string, image: NativeImage, size: Size) {
+        if (getConnections("STAGE") === 0 || getStageStreamSubscriberIds().length === 0) return
+
+        const now = performance.now()
+        if (now - (this.lastStagePushTimes[captureId] || 0) < this.STAGE_PUSH_MIN_INTERVAL_MS) return
+        this.lastStagePushTimes[captureId] = now
+
+        let frameImage = image
+        if (size.width > this.STAGE_FRAME_MAX_WIDTH) {
+            frameImage = image.resize({ width: this.STAGE_FRAME_MAX_WIDTH, quality: "good" })
+        }
+
+        const jpeg = frameImage.toJPEG(this.STAGE_FRAME_JPEG_QUALITY)
+        toStageStreamSubscribers({ channel: "STREAM_FRAME", data: { id: captureId, jpeg, size: frameImage.getSize(), time: Date.now() } })
     }
 
     // SERVER

@@ -9,11 +9,13 @@ import { getCurrentProjectIndexes, getProjectItems } from "../components/helpers
 import { getGroupName, getLayoutRef } from "../components/helpers/show"
 import { _show } from "../components/helpers/shows"
 import { getCustomStageLabel } from "../components/stage/stage"
+import { checkWindowCapture } from "../components/helpers/output"
 import { actions, activeProject, activeShow, events, groups, media, outputs, previewBuffers, projects, showsCache, stageShows, timeFormat, timers, variables } from "../stores"
 import { connections } from "./../stores"
 import { translateText } from "./language"
 import { send } from "./request"
 import { arrayToObject, filterObjectArray, sendData, setConnectedState } from "./sendData"
+import { addStageStreamViewer, removeStageStreamViewer } from "./stageStreamViewers"
 
 // WIP loading different paths, might cause returned base64 to be different than it should if previous thumbnail finishes after
 export async function sendBackgroundToStage(outputId, updater = get(outputs), returnPath = false) {
@@ -197,15 +199,26 @@ export const receiveSTAGE = {
 
         return data
     },
-    REQUEST_STREAM: (data: any) => {
+    // legacy clients poll this - treat polls as an active mirror viewer so capture runs for them
+    REQUEST_STREAM: (data: any, connectionId = "") => {
         let id = data.outputId
         if (!id) id = getFirstOutput()?.id
 
         if (!id) return
 
+        if (addStageStreamViewer(connectionId, data.outputId)) checkWindowCapture()
+
         data.stream = get(previewBuffers)[id]
 
         return data
+    },
+    // sent by clients with a visible "current output" mirror item (renewed while visible)
+    STREAM_SUBSCRIBE: (data: any, connectionId = "") => {
+        if (addStageStreamViewer(connectionId, data?.outputId)) checkWindowCapture()
+    },
+    STREAM_UNSUBSCRIBE: (_data: any, connectionId = "") => {
+        removeStageStreamViewer(connectionId)
+        checkWindowCapture()
     },
 
     RUN_ACTION: (a: { id: string }) => {

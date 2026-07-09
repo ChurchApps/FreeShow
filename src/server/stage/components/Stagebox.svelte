@@ -28,6 +28,19 @@
     $: currentOutput = $output
     $: currentSlide = currentOutput?.out?.slide || (slideOffset !== 0 ? $outputSlideCache[currentOutput?.id || ""] || null : null)
 
+    // pick the pushed frame for this layout's output, falling back deterministically
+    // (legacy "alpha"/"default" keys come from the polled REQUEST_STREAM path)
+    function getStreamCapture(streamMap: any, outputId: string | undefined, alpha: boolean) {
+        if (outputId && streamMap[outputId]) return streamMap[outputId]
+
+        const outputKeys = Object.keys(streamMap)
+            .filter((key) => key !== "alpha" && key !== "default")
+            .sort()
+        if (outputKeys.length) return streamMap[outputKeys[0]]
+
+        return streamMap[alpha ? "alpha" : "default"]
+    }
+
     $: currentBackground = $background
 
     // timer
@@ -187,7 +200,7 @@
         <span style="pointer-events: none;width: 100%;height: 100%;">
             {#if item.type === "current_output" || id.includes("current_output")}
                 <!-- width gets squished when resized -->
-                <PreviewCanvas alpha={id.includes("_alpha")} id={stageLayout?.settings?.output} capture={$stream[id.includes("_alpha") ? "alpha" : "default"]} />
+                <PreviewCanvas outputId={stageLayout?.settings?.output} capture={getStreamCapture($stream, stageLayout?.settings?.output, id.includes("_alpha"))} />
             {:else if item.type === "slide_text" || id.includes("slide")}
                 {@const slideBackground = slideOffset === 0 ? currentBackground : slideOffset === 1 ? currentBackground.next : null}
 

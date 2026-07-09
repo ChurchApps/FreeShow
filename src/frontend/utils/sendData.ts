@@ -42,6 +42,9 @@ export function client(id: Clients, msg: ClientMessage) {
             return c
         })
         console.info("SERVER: " + msgId + " disconnected")
+
+        // stop output capture when the last mirror viewer disconnects
+        if (id === "STAGE") checkWindowCapture()
     } else sendData(id, msg)
 }
 

@@ -5,7 +5,7 @@ vi.mock("../..", () => ({ toApp: vi.fn() }))
 vi.mock("../../ndi/NdiSender", () => ({ NdiSender: { NDI: {} } }))
 vi.mock("../../ndi/vingester-util", () => ({ default: { ImageBufferAdjustment: { ARGBtoRGBA: vi.fn(), BGRAtoRGBA: vi.fn() } } }))
 vi.mock("../../output/OutputHelper", () => ({ OutputHelper: { getOutput: vi.fn(), getAllOutputs: vi.fn(() => []), Send: { sendToWindow: vi.fn() } } }))
-vi.mock("../../servers", () => ({ getConnections: vi.fn(() => 0), toServer: vi.fn() }))
+vi.mock("../../servers", () => ({ getConnections: vi.fn(() => 0), toServer: vi.fn(), getStageStreamSubscriberIds: vi.fn(() => [] as string[]), toStageStreamSubscribers: vi.fn() }))
 vi.mock("../../blackmagic/BlackmagicSender", () => ({ BlackmagicSender: { canAcceptFrame: vi.fn(() => true), audioQueueLength: 0 } }))
 vi.mock("../../webrtc/WebRtcHost", () => ({ WebRtcHost: { isRunning: vi.fn(() => false), start: vi.fn(), stop: vi.fn() } }))
 vi.mock("../CaptureHelper", () => ({
@@ -19,7 +19,9 @@ vi.mock("../CaptureHelper", () => ({
     }
 }))
 
+import { toApp } from "../.."
 import { OutputHelper } from "../../output/OutputHelper"
+import { getConnections, getStageStreamSubscriberIds, toStageStreamSubscribers } from "../../servers"
 import { CaptureLifecycle } from "./CaptureLifecycle"
 import { CaptureTransmitter } from "./CaptureTransmitter"
 
@@ -47,8 +49,19 @@ afterEach(() => {
     CaptureTransmitter.stopChannel(CAPTURE_ID, "stage") // clears lastChangeTimes when no channels remain
     ;(CaptureTransmitter as any).lastFrameState = {}
     ;(CaptureTransmitter as any).lastChangeTimes = {}
+    ;(CaptureTransmitter as any).lastStagePushTimes = {}
+    ;(CaptureTransmitter as any).lastMainBufferSendTimes = {}
     vi.restoreAllMocks()
+    vi.mocked(getConnections).mockReturnValue(0)
+    vi.mocked(getStageStreamSubscriberIds).mockReturnValue([])
+    vi.mocked(toStageStreamSubscribers).mockClear()
+    vi.mocked(toApp).mockClear()
 })
+
+function mockStageViewer() {
+    vi.mocked(getConnections).mockReturnValue(1)
+    vi.mocked(getStageStreamSubscriberIds).mockReturnValue(["socket1"])
+}
 
 describe("CaptureTransmitter — unchanged frame skipping & change tracking", () => {
     it("sends the first frame and records a content change", () => {
@@ -117,6 +130,98 @@ describe("CaptureTransmitter — unchanged frame skipping & change tracking", ()
         // newest requests are kept
         expect(CaptureTransmitter.requestList[CaptureTransmitter.requestList.length - 1]).toContain("win149")
         CaptureTransmitter.requestList = []
+    })
+})
+
+// minimal NativeImage stand-in for sendBufferToMain
+function makeImage(fill: number, w = 4, h = 4): any {
+    return {
+        toBitmap: () => Buffer.alloc(w * h * 4, fill),
+        getSize: () => ({ width: w, height: h }),
+        isEmpty: () => false,
+        getAspectRatio: () => w / h,
+        resize: (opts: { width: number }) => makeImage(fill, opts.width, Math.max(1, Math.round((opts.width * h) / w))),
+        toJPEG: () => Buffer.from([0xff, 0xd8, fill])
+    }
+}
+
+describe("CaptureTransmitter — web stage frame push & legacy buffer throttle", () => {
+    it("pushes a JPEG frame to subscribed stage clients, throttled to the push interval", () => {
+        mockStageViewer()
+
+        CaptureTransmitter.sendBufferToMain(CAPTURE_ID, makeImage(10))
+        expect(toStageStreamSubscribers).toHaveBeenCalledTimes(1)
+        const msg = vi.mocked(toStageStreamSubscribers).mock.calls[0][0]
+        expect(msg.channel).toBe("STREAM_FRAME")
+        expect(msg.data.id).toBe(CAPTURE_ID)
+        expect(msg.data.jpeg).toBeInstanceOf(Buffer)
+
+        // changed frame within the throttle window is not pushed
+        now += 50
+        CaptureTransmitter.sendBufferToMain(CAPTURE_ID, makeImage(20))
+        expect(toStageStreamSubscribers).toHaveBeenCalledTimes(1)
+
+        // after the interval it is
+        now += 100
+        CaptureTransmitter.sendBufferToMain(CAPTURE_ID, makeImage(30))
+        expect(toStageStreamSubscribers).toHaveBeenCalledTimes(2)
+    })
+
+    it("does no stage push work when no clients are connected", () => {
+        CaptureTransmitter.sendBufferToMain(CAPTURE_ID, makeImage(10))
+        expect(toStageStreamSubscribers).not.toHaveBeenCalled()
+    })
+
+    it("does no stage push work for connected clients without a mirror subscription (text-only stage displays)", () => {
+        vi.mocked(getConnections).mockReturnValue(3)
+
+        CaptureTransmitter.sendBufferToMain(CAPTURE_ID, makeImage(10))
+        expect(toStageStreamSubscribers).not.toHaveBeenCalled()
+    })
+
+    it("downscales pushed frames wider than the max width", () => {
+        mockStageViewer()
+
+        CaptureTransmitter.sendBufferToMain(CAPTURE_ID, makeImage(10, 1920, 1080))
+        const msg = vi.mocked(toStageStreamSubscribers).mock.calls[0][0]
+        expect(msg.data.size.width).toBe(1280)
+    })
+
+    it("skips unchanged frames entirely (no push, no main buffer)", () => {
+        mockStageViewer()
+
+        CaptureTransmitter.sendBufferToMain(CAPTURE_ID, makeImage(10))
+        now += 200
+        CaptureTransmitter.sendBufferToMain(CAPTURE_ID, makeImage(10))
+        expect(toStageStreamSubscribers).toHaveBeenCalledTimes(1)
+        expect(toApp).toHaveBeenCalledTimes(1)
+    })
+
+    it("throttles raw buffers to the main window to the legacy poll rate", () => {
+        CaptureTransmitter.sendBufferToMain(CAPTURE_ID, makeImage(10))
+        expect(toApp).toHaveBeenCalledTimes(1)
+
+        // changed frames keep arriving, but raw IPC is capped
+        now += 200
+        CaptureTransmitter.sendBufferToMain(CAPTURE_ID, makeImage(20))
+        expect(toApp).toHaveBeenCalledTimes(1)
+
+        now += 400
+        CaptureTransmitter.sendBufferToMain(CAPTURE_ID, makeImage(30))
+        expect(toApp).toHaveBeenCalledTimes(2)
+    })
+
+    it("still serves one-shot preview requests between legacy sends", () => {
+        CaptureTransmitter.sendBufferToMain(CAPTURE_ID, makeImage(10))
+        expect(toApp).toHaveBeenCalledTimes(1)
+
+        CaptureTransmitter.requestPreview({ id: "someWindow", previewId: CAPTURE_ID })
+        now += 100 // within legacy throttle window
+        CaptureTransmitter.sendBufferToMain(CAPTURE_ID, makeImage(20))
+        // no extra main send, but the request was answered
+        expect(toApp).toHaveBeenCalledTimes(1)
+        expect(OutputHelper.Send.sendToWindow).toHaveBeenCalledWith("someWindow", expect.objectContaining({ channel: "BUFFER" }))
+        expect(CaptureTransmitter.requestList.length).toBe(0)
     })
 })
 
