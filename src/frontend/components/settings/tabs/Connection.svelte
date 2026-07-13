@@ -78,8 +78,12 @@
     }
 
     // restart servers on toggle on/off
-    let initialServerState = JSON.stringify($disabledServers)
-    $: if (JSON.stringify($disabledServers) !== initialServerState) restart()
+    let initial = true
+    $: {
+        $disabledServers
+        if (initial) initial = false
+        else restart()
+    }
 
     $: if ($activeTriggerFunction.includes("open_connection_") && ip !== "localhost") openConnection()
     function openConnection() {
