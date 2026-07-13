@@ -18,6 +18,7 @@
     export let item: Item
     export let stageItem: any = {}
     export let style: boolean = true
+    export let originalStyle: boolean = false // keep the slide item's own box/position/text styles ("Keep Style")
     export let autoStage: boolean = true
     export let chords: boolean = false
     export let fontSize: number = 0
@@ -39,7 +40,8 @@
     width: ${Math.min(itemStyles.width, (itemStyles.width / 1920) * resolution.width)}px;
     height: ${Math.min(itemStyles.height, (itemStyles.height / 1080) * resolution.height)}px;
   `
-    if (autoStage) itemStyle = itemStyle + newSizes
+    // keep the item's original bounds when rendering inside a slide-resolution canvas ("Keep Style")
+    if (autoStage && !originalStyle) itemStyle = itemStyle + newSizes
 
     $: lineGap = item?.specialStyle?.lineGap
     $: lineRadius = item?.specialStyle?.lineRadius || 0
@@ -166,8 +168,8 @@
     function getCustomStyle(style: string) {
         if (!style) return
 
-        // reset item styles (as it's set in parent item)
-        style += "display: contents;"
+        // reset item styles (as it's set in parent item) - unless keeping the slide item's own layout
+        if (!originalStyle) style += "display: contents;"
 
         return style
     }
