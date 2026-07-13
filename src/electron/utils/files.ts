@@ -448,14 +448,12 @@ export async function readFolderContent(data: { path: string | string[]; depth?:
     if (!Array.isArray(data.path)) data.path = [data.path]
     if (data.depth === undefined) data.depth = 0
 
-    await Promise.all(
-        data.path.map(async (folderPath) => {
-            const stats = await getFileStatsAsync(folderPath)
-            if (!stats?.isDirectory()) return
+    await asyncPool(8, data.path, async (folderPath) => {
+        const stats = await getFileStatsAsync(folderPath)
+        if (!stats?.isDirectory()) return
 
-            await getFolderContentRecursive(folderPath)
-        })
-    )
+        await getFolderContentRecursive(folderPath)
+    })
 
     async function getFolderContentRecursive(folderPath: string, currentDepth = 0) {
         const exceededDepth = currentDepth > data.depth!
@@ -473,13 +471,12 @@ export async function readFolderContent(data: { path: string | string[]; depth?:
         let noMedia = false
         if (data.captureFolderContent) {
             // check if any of the files in the current folder are media files and no folders (because they might contain media files)
-            const results = await Promise.all(
-                filePaths.map(async (p) => {
-                    const stats = await getFileStatsAsync(p)
-                    return stats?.isDirectory() || isMedia(getExtension(p))
-                })
-            )
-            noMedia = !results.some((res) => res)
+            noMedia = true
+            await asyncPool(32, filePaths, async (p) => {
+                if (!noMedia) return
+                const stats = await getFileStatsAsync(p)
+                if (stats?.isDirectory() || isMedia(getExtension(p))) noMedia = false
+            })
         }
 
         if (data.captureFolderContent && currentDepth < 2 ? false : exceededDepth) {
@@ -490,27 +487,25 @@ export async function readFolderContent(data: { path: string | string[]; depth?:
         const captureThumbnailPaths = data.captureFolderContent && currentDepth === 1 ? getFirstMediaFiles(filePaths, 4) : []
         const currentPaths = data.captureFolderContent && exceededDepth ? captureThumbnailPaths : filePaths
 
-        await Promise.all(
-            currentPaths.map(async (filePath) => {
-                const stats = await getFileStatsAsync(filePath)
-                if (!stats) return
+        await asyncPool(32, currentPaths, async (filePath) => {
+            const stats = await getFileStatsAsync(filePath)
+            if (!stats) return
 
-                if (stats.isDirectory()) {
-                    await getFolderContentRecursive(filePath, currentDepth + 1)
-                } else {
-                    let thumbnailPath = ""
-                    if (captureThumbnailPaths.includes(filePath) || (data.generateThumbnails && currentDepth === 0 && isMedia(getExtension(filePath)))) {
-                        try {
-                            thumbnailPath = createThumbnail(filePath)
-                        } catch (err) {
-                            console.error("Thumbnail creation failed:", err)
-                        }
+            if (stats.isDirectory()) {
+                await getFolderContentRecursive(filePath, currentDepth + 1)
+            } else {
+                let thumbnailPath = ""
+                if (captureThumbnailPaths.includes(filePath) || (data.generateThumbnails && currentDepth === 0 && isMedia(getExtension(filePath)))) {
+                    try {
+                        thumbnailPath = createThumbnail(filePath)
+                    } catch (err) {
+                        console.error("Thumbnail creation failed:", err)
                     }
-
-                    folderContent.set(filePath, { isFolder: false, path: filePath, name: path.basename(filePath), thumbnailPath, stats })
                 }
-            })
-        )
+
+                folderContent.set(filePath, { isFolder: false, path: filePath, name: path.basename(filePath), thumbnailPath, stats })
+            }
+        })
 
         folderContent.set(folderPath, { isFolder: true, path: folderPath, name: path.basename(folderPath), files: filePaths, noMedia: noMedia ? true : undefined })
     }
@@ -993,7 +988,7 @@ export async function locateMediaFile({ filePath, folders }: { filePath: string;
 }
 
 // poolLimit = number of concurrent promises
-async function asyncPool<T>(poolLimit: number, array: T[], iteratorFn: (item: T) => Promise<void>) {
+export async function asyncPool<T>(poolLimit: number, array: T[], iteratorFn: (item: T) => Promise<void>) {
     const ret: Promise<void>[] = []
     const executing: Promise<void>[] = []
 
@@ -1196,36 +1191,34 @@ export async function addToMediaFolder(mediaPaths: string[], outputFolder?: stri
     const mediaFolderPath = outputFolder || getMediaSyncFolderPath()
     let changed = false
 
-    await Promise.all(
-        mediaPaths.map(async (mediaPath) => {
-            // if media path is already in media folder, skip
-            if (mediaPath.startsWith(mediaFolderPath)) return
+    await asyncPool(50, mediaPaths, async (mediaPath) => {
+        // if media path is already in media folder, skip
+        if (mediaPath.startsWith(mediaFolderPath)) return
 
-            // make sure original media exists
-            if (!(await doesPathExistAsync(mediaPath))) return
+        // make sure original media exists
+        if (!(await doesPathExistAsync(mediaPath))) return
 
-            // ensure folder name is matching path in case files with the same name has the same parent folder name
-            const folderId = getFileParentFolderId(mediaPath)
+        // ensure folder name is matching path in case files with the same name has the same parent folder name
+        const folderId = getFileParentFolderId(mediaPath)
 
-            const newFolderPath = path.join(mediaFolderPath, folderId)
-            createFolder(newFolderPath)
+        const newFolderPath = path.join(mediaFolderPath, folderId)
+        createFolder(newFolderPath)
 
-            const fileName = path.basename(mediaPath)
-            const newMediaPath = path.join(newFolderPath, fileName)
+        const fileName = path.basename(mediaPath)
+        const newMediaPath = path.join(newFolderPath, fileName)
 
-            const alreadyExists = await doesPathExistAsync(newMediaPath)
-            if (alreadyExists) {
-                // no need when we have the folder name path id
-                // double check that it's actually different
-                // const matches = await fileContentMatchesAsync(await readFileAsync(mediaPath), newMediaPath)
-                // if (matches) return
-                return
-            }
+        const alreadyExists = await doesPathExistAsync(newMediaPath)
+        if (alreadyExists) {
+            // no need when we have the folder name path id
+            // double check that it's actually different
+            // const matches = await fileContentMatchesAsync(await readFileAsync(mediaPath), newMediaPath)
+            // if (matches) return
+            return
+        }
 
-            changed = true
-            await copyFileAsync(mediaPath, newMediaPath)
-        })
-    )
+        changed = true
+        await copyFileAsync(mediaPath, newMediaPath)
+    })
 
     return changed
 }
@@ -1339,40 +1332,38 @@ export async function loadShowsAsync(returnShows = false, reCacheNames: string[]
         const batch = filesInFolder.slice(i, i + BATCH_SIZE)
         let hadIo = false
 
-        await Promise.all(
-            batch.map(async (name) => {
-                const matchingShowId = cachedShowNames.get(name)
-                if (matchingShowId && !newCachedShows[matchingShowId]) {
-                    newCachedShows[matchingShowId] = cachedShows[matchingShowId]
-                    // backfill: build text for an already-cached show that was never text-cached
-                    if (!existingCacheText[matchingShowId]) {
-                        hadIo = true
-                        const cachedShowData = parseShow((await readFileAsync(path.join(showsPath, `${name}.show`))) || "{}")
-                        const cachedTxt = cachedShowData?.[1] ? getTextCacheString(cachedShowData[1]) : ""
-                        if (cachedTxt) textCache[matchingShowId] = cachedTxt
-                    }
-                    return
+        await asyncPool(20, batch, async (name) => {
+            const matchingShowId = cachedShowNames.get(name)
+            if (matchingShowId && !newCachedShows[matchingShowId]) {
+                newCachedShows[matchingShowId] = cachedShows[matchingShowId]
+                // backfill: build text for an already-cached show that was never text-cached
+                if (!existingCacheText[matchingShowId]) {
+                    hadIo = true
+                    const cachedShowData = parseShow((await readFileAsync(path.join(showsPath, `${name}.show`))) || "{}")
+                    const cachedTxt = cachedShowData?.[1] ? getTextCacheString(cachedShowData[1]) : ""
+                    if (cachedTxt) textCache[matchingShowId] = cachedTxt
                 }
+                return
+            }
 
-                hadIo = true
-                const showPath: string = path.join(showsPath, `${name}.show`)
-                const jsonData = (await readFileAsync(showPath)) || "{}"
-                const show = parseShow(jsonData)
+            hadIo = true
+            const showPath: string = path.join(showsPath, `${name}.show`)
+            const jsonData = (await readFileAsync(showPath)) || "{}"
+            const show = parseShow(jsonData)
 
-                if (!show || !show[1]) return
+            if (!show || !show[1]) return
 
-                let id = show[0]
-                // some old duplicated shows might have the same id
-                if (newCachedShows[id]) id = uid()
+            let id = show[0]
+            // some old duplicated shows might have the same id
+            if (newCachedShows[id]) id = uid()
 
-                const trimmedShow = trimShow({ ...show[1], name })
-                if (trimmedShow) newCachedShows[id] = trimmedShow
+            const trimmedShow = trimShow({ ...show[1], name })
+            if (trimmedShow) newCachedShows[id] = trimmedShow
 
-                // cache text content
-                const txt = getTextCacheString(show[1])
-                if (txt) textCache[id] = txt
-            })
-        )
+            // cache text content
+            const txt = getTextCacheString(show[1])
+            if (txt) textCache[id] = txt
+        })
 
         if (hadIo) await new Promise((resolve) => setImmediate(resolve))
     }
