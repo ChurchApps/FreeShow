@@ -209,7 +209,7 @@
             return
         }
 
-        if (e.target?.closest("input") || e.target?.closest(".edit")) return
+        if (e.target?.closest?.("input") || e.target?.closest?.(".edit")) return
 
         if ((e.ctrlKey || e.metaKey) && e.key === "Backspace") {
             if (rootPath === path) return

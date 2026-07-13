@@ -457,7 +457,7 @@
                     class="interaction context #interaction"
                     class:active={$activeInteractions.includes(interaction.id)}
                     on:click={(e) => {
-                        if (e.target?.closest(".edit")) return
+                        if (e.target?.closest?.(".edit")) return
                         openedInteractionId.set(interaction.id)
                     }}
                     role="none"

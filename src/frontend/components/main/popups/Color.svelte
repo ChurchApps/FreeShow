@@ -15,6 +15,8 @@
     onMount(() => {
         if (selection.id === "slide") {
             let firstSelected = selection.data[0]
+            if (!firstSelected) return
+
             let ref: any = getLayoutRef()[firstSelected.index]
             if (!ref) return
 

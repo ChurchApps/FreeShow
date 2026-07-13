@@ -416,10 +416,13 @@ function arrangeLayouts(arrangements: any[], sequences: Record<string, string>):
 
 function splitTextToLines(text: string): Line[] {
     if (typeof text !== "string") return []
-    return text.replaceAll("\n\n", "<br>").split("<br>").map((lineText) => ({
-        align: "",
-        text: [{ style: "", value: lineText.trim() }]
-    }))
+    return text
+        .replaceAll("\n\n", "<br>")
+        .split("<br>")
+        .map((lineText) => ({
+            align: "",
+            text: [{ style: "", value: lineText.trim() }]
+        }))
 }
 
 // Replace all RTF hex codes (e.g., \'e5) with their latin1 character (e.g., å).
@@ -515,7 +518,11 @@ function RTFToText(input: string): string {
 
     cleaned = cleaned.replace(/\s+/g, " ").trim()
 
-    return cleaned.split("__BREAK__").filter((a) => a.trim()).join("\n").trim()
+    return cleaned
+        .split("__BREAK__")
+        .filter((a) => a.trim())
+        .join("\n")
+        .trim()
 }
 
 function decodeHex(input: string): string {
@@ -656,6 +663,7 @@ function convertProToSlides(song: any): ConvertedShow {
         idMap.set(id, slideId)
 
         const tempSlide = tempSlides[id]
+        if (!tempSlide) return layoutSlide
 
         if (tempSlide.disabled) layoutSlide.disabled = true
 

@@ -419,6 +419,7 @@ function createSlides(labeled: { type: string; text: string }[], noFormatting) {
                     let isChord = false
 
                     line?.text?.forEach((text) => {
+                        if (typeof text !== "object" || text === null) return
                         let newValue = ""
                         text.value?.split("").forEach((char) => {
                             if ((char === "[" || char === "]") && !text.value.slice(0, -2).includes(":")) {

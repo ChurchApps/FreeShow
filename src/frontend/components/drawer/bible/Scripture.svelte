@@ -833,7 +833,7 @@
             }
 
             // Ctrl+Enter to play
-            if (e.target?.closest(".edit")) return
+            if (e.target?.closest?.(".edit")) return
             if (e.ctrlKey || e.metaKey) playScripture()
             return
         }

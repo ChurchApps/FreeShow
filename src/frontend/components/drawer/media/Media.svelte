@@ -399,7 +399,7 @@
             return
         }
 
-        if (e.target?.closest("input") || e.target?.closest(".edit") || $activeEdit.items.length) return
+        if (e.target?.closest?.("input") || e.target?.closest?.(".edit") || $activeEdit.items.length) return
 
         if ((e.ctrlKey || e.metaKey) && shortcuts[e.key]) {
             // e.preventDefault()

@@ -49,7 +49,7 @@ const getProjectIndex = {
 }
 
 export function checkInput(e: any) {
-    if (e.target?.closest(".edit") || e.ctrlKey || e.metaKey) return
+    if (e.target?.closest?.(".edit") || e.ctrlKey || e.metaKey) return
     // TODO: combine with ShowButton.svelte click()
 
     if (!["ArrowDown", "ArrowUp"].includes(e.key)) return

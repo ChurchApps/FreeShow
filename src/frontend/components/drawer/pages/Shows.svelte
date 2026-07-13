@@ -138,7 +138,7 @@
 
     let showLoading = false
     function keydown(e: KeyboardEvent) {
-        if (e.target?.closest(".drawer_search")) {
+        if (e.target?.closest?.(".drawer_search")) {
             // get preview of shows
             if (e.key === "ArrowDown" || e.key === "ArrowUp") {
                 e.preventDefault()
@@ -157,7 +157,7 @@
             return
         }
 
-        if (e.target?.closest("input") || e.target?.closest(".edit") || (!e.ctrlKey && !e.metaKey) || !filteredShows?.length) return
+        if (e.target?.closest?.("input") || e.target?.closest?.(".edit") || (!e.ctrlKey && !e.metaKey) || !filteredShows?.length) return
         if ($activeEdit.items.length) return
 
         let id = ""

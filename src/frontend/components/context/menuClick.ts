@@ -177,14 +177,14 @@ const clickActions = {
     cut: () => cut(),
     copy: () => copy(),
     text_copy: (obj: ObjData) => {
-        const editElem = obj.contextElem?.closest(".edit") as HTMLElement | null
+        const editElem = obj.contextElem?.closest?.(".edit") as HTMLElement | null
         if (!editElem) return
 
         focusAndRestoreSelection(editElem)
         document.execCommand("copy")
     },
     text_cut: (obj: ObjData) => {
-        const editElem = obj.contextElem?.closest(".edit") as HTMLElement | null
+        const editElem = obj.contextElem?.closest?.(".edit") as HTMLElement | null
         if (!editElem) return
 
         focusAndRestoreSelection(editElem)
@@ -195,7 +195,7 @@ const clickActions = {
         }
     },
     text_paste: (obj: ObjData) => {
-        const editElem = obj.contextElem?.closest(".edit") as HTMLElement | null
+        const editElem = obj.contextElem?.closest?.(".edit") as HTMLElement | null
         if (!editElem) return
 
         navigator.clipboard
@@ -1427,7 +1427,7 @@ const clickActions = {
         if (!obj.sel || !obj.menu.id) return
 
         const type: null | "image" | "overlays" | "music" | "microphone" | "action" = obj.menu.type || (obj.menu.icon as any) || null
-        const slide: number = obj.sel.data[0].index
+        const slide: number = obj.sel.data[0]?.index
         const indexes: number[] = obj.sel.data.map(({ index }) => index)
         let newData: any = null
 
@@ -1737,7 +1737,7 @@ const clickActions = {
 
     selectAll: (obj: ObjData) => selectAll(obj.sel),
     text_select_all: (obj: ObjData) => {
-        const editElem = obj.contextElem?.closest(".edit") as HTMLElement | null
+        const editElem = obj.contextElem?.closest?.(".edit") as HTMLElement | null
         if (!editElem) return
 
         editElem.focus()
@@ -2146,6 +2146,7 @@ export async function format(id: string, obj: ObjData, data: any = null) {
         currentItems.forEach((item) => {
             item.lines?.forEach((line, j: number) => {
                 line.text?.forEach((text, k: number) => {
+                    if (typeof text !== "object" || text === null) return
                     if (item.lines?.[j]?.text?.[k]) item.lines[j].text[k].value = formatting[id](text.value, data)
                 })
             })
@@ -2191,6 +2192,7 @@ export async function format(id: string, obj: ObjData, data: any = null) {
         slideItems.forEach((item) => {
             item.lines?.forEach((line, j: number) => {
                 line.text?.forEach((text, k: number) => {
+                    if (typeof text !== "object" || text === null) return
                     if (item.lines?.[j]?.text?.[k]) item.lines[j].text[k].value = formatting[id](text.value, data)
                 })
             })

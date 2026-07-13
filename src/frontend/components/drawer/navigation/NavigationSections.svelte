@@ -40,7 +40,7 @@
     }
     function keydown(e: KeyboardEvent) {
         if ($activeEdit.items.length) return
-        if (e.target?.closest(".edit") || !(e.ctrlKey || e.metaKey)) return
+        if (e.target?.closest?.(".edit") || !(e.ctrlKey || e.metaKey)) return
 
         const flatSections = sections.flat().filter((a) => !a.hidden)
 

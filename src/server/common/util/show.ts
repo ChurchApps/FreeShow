@@ -85,6 +85,8 @@ export function createVirtualBreaks(lines: Line[], skip: boolean = false) {
         if (!Array.isArray(line?.text)) return
 
         line.text.forEach((text) => {
+            if (typeof text !== "object" || text === null) return
+            if (!text.value) text.value = ""
             text.value = replaceVirtualBreaks(text.value, replaceWith)
         })
     })

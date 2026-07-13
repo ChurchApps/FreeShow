@@ -27,7 +27,7 @@
     }
 
     function keydown(e: KeyboardEvent) {
-        if (e.target?.closest(".edit") || e.ctrlKey || e.metaKey) return
+        if (e.target?.closest?.(".edit") || e.ctrlKey || e.metaKey) return
         if ($activeStage.items.length) return
 
         // CHANGE STAGE LAYOUT
@@ -72,7 +72,7 @@
                         layout={show}
                         active={$activeStage.id === show.id}
                         on:click={(e) => {
-                            if (!e.ctrlKey && !e.metaKey && !document.activeElement?.closest(".edit"))
+                            if (!e.ctrlKey && !e.metaKey && !document.activeElement?.closest?.(".edit"))
                                 activeStage.update((as) => {
                                     as.id = show.id
                                     return as

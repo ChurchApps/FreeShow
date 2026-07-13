@@ -917,7 +917,7 @@ export function breakLongLines(showId: string, breakPoint: number) {
                 item.lines?.forEach((line) => {
                     // merge all text styles into one, if multiple!
                     const lineText = line.text[0]
-                    if (!lineText) return
+                    if (typeof lineText !== "object" || lineText === null) return
 
                     lineText.value = getLineText(line)
 
@@ -954,6 +954,7 @@ export function createVirtualBreaks(lines: Line[], skip = false) {
         if (!Array.isArray(line?.text)) return
 
         line.text.forEach((text) => {
+            if (typeof text !== "object" || text === null) return
             if (!text.value) text.value = ""
             text.value = replaceVirtualBreaks(text.value, replaceWith)
         })

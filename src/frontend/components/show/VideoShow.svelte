@@ -275,7 +275,7 @@
     }
 
     function setActiveSubtitle(e: any, lang: string) {
-        if (e.target?.closest(".edit")) return
+        if (e.target?.closest?.(".edit")) return
 
         media.update((a) => {
             if (!a[mediaPath]) a[mediaPath] = {}

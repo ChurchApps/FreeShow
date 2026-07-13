@@ -1,4 +1,5 @@
 import { get } from "svelte/store"
+import type { Interaction as InteractionData } from "../../../../types/Main"
 import { activeInteractions, activePopup, alertMessage, interactions } from "../../../stores"
 import { clone, keysToID } from "../../helpers/array"
 import { createInteractionDb, deleteInteractionDb, getInteractionDb, subscribeInteraction, updateInteractionDb } from "./firebaseUtils"
@@ -131,8 +132,8 @@ class Interaction {
         }
     }
 
-    private getData() {
-        return get(interactions)[this.id]
+    private getData(): InteractionData | null {
+        return get(interactions)[this.id] || null
     }
 
     private startTimer() {
@@ -141,7 +142,7 @@ class Interaction {
             this.seconds++
 
             const data = this.getData()
-            const maxTime = data.options?.maxTime ?? 0
+            const maxTime = data?.options?.maxTime ?? 0
             if (maxTime > 0 && this.seconds >= maxTime) {
                 this.closed = true
                 this.stopTimer()
@@ -173,13 +174,13 @@ class Interaction {
             lastUpdate: Date.now(),
             public: {
                 options: {
-                    requireName: data.options?.requireName ?? true,
-                    allAtOnce: data.options?.allAtOnce || false,
-                    maxTime: data.options?.allAtOnce ? 0 : (data.options?.maxTime ?? 0)
+                    requireName: data?.options?.requireName ?? true,
+                    allAtOnce: data?.options?.allAtOnce || false,
+                    maxTime: data?.options?.allAtOnce ? 0 : (data?.options?.maxTime ?? 0)
                 },
-                name: data.name,
+                name: data?.name,
                 inputIndex: this.inputIndex, // does not matter if allAtOnce is enabled
-                inputCount: data.inputs.length,
+                inputCount: data?.inputs?.length || 0,
                 startTime: this.startTime,
                 closed: this.closed,
 
@@ -191,6 +192,7 @@ class Interaction {
 
     private getCurrentInputs() {
         const data = this.getData()
+        if (!data) return null
 
         if (data.options?.allAtOnce) {
             return clone(data.inputs)
@@ -223,7 +225,9 @@ class Interaction {
         let isIdValid = false
 
         const data = this.getData()
-        if (data?.inputs?.length === 1) {
+        if (!data) return false
+
+        if (data.inputs?.length === 1) {
             this.inputIndex = 0
             this.startTime = Date.now()
             this.startTimes[0] = this.startTime
@@ -300,6 +304,11 @@ class Interaction {
         console.info(`Interaction successfully provisioned at ID: ${this.dbid}`)
 
         this.unsubscribe = subscribeInteraction(this.dbid, this.dbsecret, (raw) => {
+            if (!raw) {
+                this.lastData = null
+                return
+            }
+
             // Controller
             if (raw.action === "next") {
                 updateInteractionDb(this.dbid, this.dbsecret, { action: null })
@@ -311,26 +320,21 @@ class Interaction {
                 return
             }
 
-            if (raw) {
-                this.currentAnswer = raw.public?.currentAnswer || null
-                this.closed = raw.public?.closed || false
+            this.currentAnswer = raw.public?.currentAnswer || null
+            this.closed = raw.public?.closed || false
 
-                const clientsObj = raw.clients || {}
-                this.handleRandomNames(clientsObj)
+            const clientsObj = raw.clients || {}
+            this.handleRandomNames(clientsObj)
 
-                const data = {
-                    answers: raw.answers || [],
-                    clients: clientsObj,
-                    currentAnswer: this.currentAnswer,
-                    inputIndex: raw.public?.inputIndex ?? -1,
-                    closed: this.closed
-                }
-                this.lastData = data
-                this.callbacks.forEach((cb) => cb(data))
-            } else {
-                this.lastData = null
-                // Maybe notify callbacks about null data if needed
+            const data = {
+                answers: raw.answers || [],
+                clients: clientsObj,
+                currentAnswer: this.currentAnswer,
+                inputIndex: raw.public?.inputIndex ?? -1,
+                closed: this.closed
             }
+            this.lastData = data
+            this.callbacks.forEach((cb) => cb(data))
         })
 
         return true
@@ -379,6 +383,8 @@ class Interaction {
 
     private saveHistory() {
         if (!this.lastData || !(this.lastData.answers || []).length) return
+        const data = this.getData()
+        if (!data) return
 
         const clients = this.getClients()
         const leaderboard = clients
@@ -390,7 +396,7 @@ class Interaction {
 
         const historyData: any = {
             time: Date.now(),
-            inputs: this.getData().inputs.map((a, i) => ({
+            inputs: data.inputs.map((a, i) => ({
                 question: a.question,
                 answers: keysToID(this.lastData?.answers[i]).map((a) => {
                     return {
@@ -446,6 +452,7 @@ class Interaction {
 
     async next() {
         const data = this.getData()
+        if (!data) return
 
         const input = data.inputs[this.inputIndex]
         if (hasAnswer(input) && (this.currentAnswer === null || this.currentAnswer === undefined || this.currentAnswer === "")) {
@@ -468,7 +475,7 @@ class Interaction {
 
     async goto(index: number) {
         const data = this.getData()
-        if (index < 0 || index >= data.inputs.length) return
+        if (!data || index < 0 || index >= data.inputs.length) return
 
         this.inputIndex = index
         this.currentAnswer = null
@@ -481,6 +488,7 @@ class Interaction {
 
     async revealAnswer() {
         const data = this.getData()
+        if (!data) return
         const input = data.inputs[this.inputIndex]
         if (!input) return
 
@@ -638,6 +646,7 @@ class Interaction {
 
     getQuestion(): string[] {
         const data = this.getData()
+        if (!data) return []
 
         if (data.options?.allAtOnce) {
             return (data.inputs || []).map((input: any) => input.question || "")
@@ -649,7 +658,7 @@ class Interaction {
 
     getInputOptions(): string[] {
         const data = this.getData()
-        if (data.options?.allAtOnce) return []
+        if (!data || data.options?.allAtOnce) return []
 
         const input = data.inputs[this.inputIndex]
         if (input && input.type === "multi_choice" && input.options) {
@@ -662,7 +671,7 @@ class Interaction {
         if (this.closed || this.inputIndex < 0) return ""
 
         const data = this.getData()
-        if (data.options?.allAtOnce) return ""
+        if (!data || data.options?.allAtOnce) return ""
 
         if (data.options?.maxTime) {
             const elapsed = Math.floor((Date.now() - this.startTime) / 1000)
@@ -709,7 +718,7 @@ class Interaction {
 
     getOptionPercentages(): string[] {
         const data = this.getData()
-        if (data.options?.allAtOnce) return []
+        if (!data || data.options?.allAtOnce) return []
 
         const input = data.inputs[this.inputIndex]
         if (input && input.type === "multi_choice" && input.options) {

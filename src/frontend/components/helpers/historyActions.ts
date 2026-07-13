@@ -29,7 +29,7 @@ export const historyActions = ({ obj, undo = null }: any) => {
         SLIDES: () => handleSlides(obj, data, initializing),
         TEMPLATE: () => handleTemplate(obj, data, initializing),
         SHOW_LAYOUT: () => handleShowLayout(obj, data, initializing),
-        SHOW_ITEMS: () => handleShowItems(obj, data, initializing),
+        SHOW_ITEMS: () => handleShowItems(obj, data, initializing)
     }
 
     if (obj) console.info("HISTORY " + (initializing ? "INIT" : undo ? "UNDO" : "REDO") + ` [${obj.id}]:`, clone(obj))
@@ -167,7 +167,10 @@ function handleUpdate(obj, data, initializing) {
                 if (indexes?.length && !indexes.includes(i)) return value
                 const currentIndex = indexes.findIndex((a) => a === i)
                 const replacerValue = Array.isArray(newValue) ? newValue[currentIndex] : newValue
-                if (subkey) { value[subkey] = replacerValue; return value }
+                if (subkey) {
+                    value[subkey] = replacerValue
+                    return value
+                }
                 return replacerValue
             })
             keyData[id][key] = keyData[id][key].filter((a) => a !== undefined)
@@ -236,7 +239,10 @@ async function handleShows(obj, data, initializing) {
             showsList[i].show.name = name
             const deletedIndex = get(deletedShows).findIndex((a) => a.name === name)
             if (deletedIndex > -1) {
-                deletedShows.update((a) => { a.splice(deletedIndex, 1); return a })
+                deletedShows.update((a) => {
+                    a.splice(deletedIndex, 1)
+                    return a
+                })
             }
         })
         notFound.set({ show: [], bible: [] })
@@ -247,13 +253,19 @@ async function handleShows(obj, data, initializing) {
     const rename: { [key: string]: { name: string; oldName: string } } = {}
 
     if (deleting && showsList.length < 20) {
-        await loadShows(showsList.map((a) => a.id), true)
+        await loadShows(
+            showsList.map((a) => a.id),
+            true
+        )
     }
 
     showsCache.update((a) => {
         showsList.forEach(({ show, id }, i: number) => {
             if (deleting) {
-                if (replace && show) { a[id] = show; return }
+                if (replace && show) {
+                    a[id] = show
+                    return
+                }
                 if (!a[id]) return
                 oldShows[id] = clone(a[id])
                 delete a[id]
@@ -332,13 +344,18 @@ async function handleShows(obj, data, initializing) {
 
     if (!deleting && Object.keys(get(showsCache)).length >= 100) {
         if (initializing) save()
-        setTimeout(() => { showsCache.set({}); activeShow.set(null) }, 2000)
+        setTimeout(() => {
+            showsCache.set({})
+            activeShow.set(null)
+        }, 2000)
     }
 
     if (deleting && initializing && get(activeProject)) {
         const projectItems = get(projects)[get(activeProject)!]?.shows || []
         let newShows = projectItems
-        showsList.forEach(({ id }) => { newShows = newShows.filter((a) => a.id !== id) })
+        showsList.forEach(({ id }) => {
+            newShows = newShows.filter((a) => a.id !== id)
+        })
         if (showsList.length < projectItems.length) {
             history({ id: "UPDATE", newData: { key: "shows", data: newShows }, oldData: { id: get(activeProject) }, location: { page: "show", id: "project_key" } })
         }
@@ -395,10 +412,19 @@ function handleSlides(obj, data, initializing) {
 
     if (deleting) {
         if (type === "delete" || type === "delete_group") {
-            _show(showId).slides(data.data.map((a) => a.id)).remove()
+            _show(showId)
+                .slides(data.data.map((a) => a.id))
+                .remove()
         }
     } else {
-        setTimeout(() => activeEdit.update((a) => { a.slide = index; return a }), 10)
+        setTimeout(
+            () =>
+                activeEdit.update((a) => {
+                    a.slide = index
+                    return a
+                }),
+            10
+        )
     }
 
     if (!initializing) return
@@ -412,7 +438,9 @@ function processSlide(slide, i, { deleting, data, showId, layout, ref, index, ty
     const slideIndex = slide.index ?? index
     delete slide.index
     const isParent = slide.group !== null
-    if (!slideId) { slideId = uid() }
+    if (!slideId) {
+        slideId = uid()
+    }
 
     if (deleting) removeSlideFromLayout(showId, layout, slideId, slideIndex, isParent, type)
     else addSlideToLayout(slide, slideId, slideIndex, i, showId, layout, ref, data, index, isParent)
@@ -427,6 +455,8 @@ function removeSlideFromLayout(showId, layout, slideId, slideIndex, isParent, ty
         if (type === "delete") {
             Object.keys(a[showId].slides).forEach((currentSlideId) => {
                 const currentSlide = a[showId].slides[currentSlideId]
+                if (!currentSlide) return
+
                 if (currentSlideId !== slideId) {
                     const childIndex = currentSlide.children?.indexOf(slideId) ?? -1
                     if (childIndex >= 0) currentSlide.children!.splice(childIndex, 1)
@@ -494,7 +524,10 @@ function addSlideToLayout(slide, slideId, slideIndex, i, showId, layout, ref, da
             _show(showId).slides([parent.id]).set({ key: "children", value: newChildren })
         } else {
             _show(showId).slides([slideId]).set({ key: "group", value: "" })
-            _show(showId).layouts([layout]).slides().add([{ ...layoutValue, id: slideId }])
+            _show(showId)
+                .layouts([layout])
+                .slides()
+                .add([{ ...layoutValue, id: slideId }])
         }
     }
 }
@@ -516,7 +549,12 @@ function createNewSlide(showId, layout, ref, data, index) {
 
     let items: any[] = data.replace?.items || []
     if (!items.length && ref.length && index - 1 >= 0) {
-        items = clone(_show(showId).slides([ref[index - 1].id]).items().get(null, false)[0])
+        items = clone(
+            _show(showId)
+                .slides([ref[index - 1].id])
+                .items()
+                .get(null, false)[0]
+        )
         items = removeItemValues(items)
     }
 
@@ -593,12 +631,18 @@ function handleTemplate(obj, data, initializing) {
             for (let i = 0; i < splitLines; i += maxLines) {
                 const newItems: Item[] = []
                 slide.items.forEach((item) => {
-                    if (!item.lines) { newItems.push(item); return }
+                    if (!item.lines) {
+                        newItems.push(item)
+                        return
+                    }
                     const lines = clone(item.lines).slice(i, i + maxLines)
                     newItems.push({ ...item, lines })
                 })
                 const newSlide = { ...clone(slide), group: i === 0 ? slide.group : null, color: i === 0 ? slide.color : null, items: newItems }
-                if (i > 0) { delete newSlide.globalGroup; delete newSlide.children }
+                if (i > 0) {
+                    delete newSlide.globalGroup
+                    delete newSlide.children
+                }
                 const currentId = i === 0 ? id : uid()
                 newSlides[currentId] = newSlide
                 if (i > 0) childrenIds.push(currentId)
@@ -629,7 +673,7 @@ function handleTemplate(obj, data, initializing) {
                 const isChild = slide.group === null
                 let globalGroup = slide.globalGroup
                 if (isChild) {
-                    const parent = Object.values(show.slides || {}).find((a) => a.children?.includes(id))
+                    const parent = Object.values(show.slides || {}).find((a) => a?.children?.includes(id))
                     globalGroup = parent?.globalGroup
                 }
                 if (globalGroup && get(groups)[globalGroup]?.template) {
@@ -672,14 +716,17 @@ function handleTemplate(obj, data, initializing) {
             if (changeOverflowItems) {
                 const templateItemCount = getItemsCountByType(slideTemplate.items)
                 const slideItemCount = getItemsCountByType(newItems)
-                newItems = newItems.reverse().filter((a) => {
-                    const type = a.type || "text"
-                    if (templateItemCount[type] - slideItemCount[type] >= 0) return true
-                    if (type === "text" && !isEmptyOrSpecial(a)) return true
-                    if (type === "media" && a.src) return true
-                    slideItemCount[type]--
-                    return false
-                }).reverse()
+                newItems = newItems
+                    .reverse()
+                    .filter((a) => {
+                        const type = a.type || "text"
+                        if (templateItemCount[type] - slideItemCount[type] >= 0) return true
+                        if (type === "text" && !isEmptyOrSpecial(a)) return true
+                        if (type === "media" && a.src) return true
+                        slideItemCount[type]--
+                        return false
+                    })
+                    .reverse()
             }
 
             show.slides[id].items = clone(newItems)
@@ -700,7 +747,10 @@ function handleTemplate(obj, data, initializing) {
         })
 
         if (obj.save === false && JSON.stringify(show) === previousShow) return
-        showsCache.update((a) => { a[data.remember.showId] = show; return a })
+        showsCache.update((a) => {
+            a[data.remember.showId] = show
+            return a
+        })
     }
 }
 
@@ -733,7 +783,10 @@ function handleShowLayout(obj, data, initializing) {
             let currentIndex = -1
             layoutSlides.forEach((l, i) => {
                 if (!l) return
-                if (!a[data.remember.showId].slides[l.id]) { console.error("MISSING SLIDE"); return }
+                if (!a[data.remember.showId].slides[l.id]) {
+                    console.error("MISSING SLIDE")
+                    return
+                }
                 currentIndex++
                 l = updateValues(l, currentIndex)
                 const children = a[data.remember.showId].slides[l.id]?.children
