@@ -168,29 +168,24 @@ export function toServer(id: ServerName, msg: any) {
     ioServers[id]?.emit(id, msg)
 }
 
+export function getConnections(id: ServerName) {
+    return Object.keys(servers[id]?.connections || {}).length
+}
+
+// Stage Stream
 function updateStageStreamSubscription(socketId: string, channel: string) {
     if (channel === "STREAM_SUBSCRIBE") stageStreamSubscribers[socketId] = Date.now() + STAGE_STREAM_SUBSCRIPTION_TTL
     else if (channel === "STREAM_UNSUBSCRIBE") delete stageStreamSubscribers[socketId]
 }
-
 export function getStageStreamSubscriberIds(): string[] {
     const now = Date.now()
-    Object.keys(stageStreamSubscribers).forEach((socketId) => {
-        if (stageStreamSubscribers[socketId] < now) delete stageStreamSubscribers[socketId]
-    })
+    for (const id in stageStreamSubscribers) if (stageStreamSubscribers[id] < now) delete stageStreamSubscribers[id]
     return Object.keys(stageStreamSubscribers)
 }
-
 // send only to subscribed sockets - text-only stage clients should never receive frame data
 export function toStageStreamSubscribers(msg: any) {
     const io = ioServers.STAGE
-    if (!io) return
-
-    getStageStreamSubscriberIds().forEach((socketId) => io.to(socketId).emit("STAGE", msg))
-}
-
-export function getConnections(id: ServerName) {
-    return Object.keys(servers[id]?.connections || {}).length
+    if (io) getStageStreamSubscriberIds().forEach((id) => io.to(id).emit("STAGE", msg))
 }
 
 // FUNCTIONS

@@ -4,18 +4,16 @@ import type { OutSlide } from "../../types/Show"
 import { runAction } from "../components/actions/actions"
 import { clone, keysToID } from "../components/helpers/array"
 import { getBase64Path } from "../components/helpers/media"
-import { getFirstOutput } from "../components/helpers/output"
+import { checkWindowCapture, getFirstOutput } from "../components/helpers/output"
 import { getCurrentProjectIndexes, getProjectItems } from "../components/helpers/projectProgress"
 import { getGroupName, getLayoutRef } from "../components/helpers/show"
 import { _show } from "../components/helpers/shows"
 import { getCustomStageLabel } from "../components/stage/stage"
-import { checkWindowCapture } from "../components/helpers/output"
-import { actions, activeProject, activeShow, events, groups, media, outputs, previewBuffers, projects, showsCache, stageShows, timeFormat, timers, variables } from "../stores"
+import { actions, activeProject, activeShow, events, groups, media, outputs, projects, showsCache, stageShows, timeFormat, timers, variables } from "../stores"
 import { connections } from "./../stores"
 import { translateText } from "./language"
 import { send } from "./request"
 import { arrayToObject, filterObjectArray, sendData, setConnectedState } from "./sendData"
-import { addStageStreamViewer, removeStageStreamViewer } from "./stageStreamViewers"
 
 // WIP loading different paths, might cause returned base64 to be different than it should if previous thumbnail finishes after
 export async function sendBackgroundToStage(outputId, updater = get(outputs), returnPath = false) {
@@ -199,19 +197,7 @@ export const receiveSTAGE = {
 
         return data
     },
-    // legacy clients poll this - treat polls as an active mirror viewer so capture runs for them
-    REQUEST_STREAM: (data: any, connectionId = "") => {
-        let id = data.outputId
-        if (!id) id = getFirstOutput()?.id
 
-        if (!id) return
-
-        if (addStageStreamViewer(connectionId, data.outputId)) checkWindowCapture()
-
-        data.stream = get(previewBuffers)[id]
-
-        return data
-    },
     // sent by clients with a visible "current output" mirror item (renewed while visible)
     STREAM_SUBSCRIBE: (data: any, connectionId = "") => {
         if (addStageStreamViewer(connectionId, data?.outputId)) checkWindowCapture()
@@ -250,4 +236,29 @@ export const receiveSTAGE = {
     // case "OVERLAYS":
     //   data = getOutOverlays()
     //   break
+}
+
+// tracks StageShow connections actively viewing an "Output window" item
+const viewers: { [socketId: string]: { expires: number; outputId?: string } } = {}
+const VIEWER_TTL = 10000 // subscriptions are renewed by a client heartbeat
+export function addStageStreamViewer(socketId: string, outputId?: string): boolean {
+    if (!socketId) return false
+
+    const isNew = !viewers[socketId]
+    viewers[socketId] = { expires: Date.now() + VIEWER_TTL, outputId: outputId || viewers[socketId]?.outputId }
+    return isNew
+}
+export function removeStageStreamViewer(socketId: string) {
+    delete viewers[socketId]
+}
+
+export function hasStageStreamViewers(connectedIds: string[], outputId: string): boolean {
+    const connected = new Set(connectedIds)
+    const now = Date.now()
+    Object.keys(viewers).forEach((socketId) => {
+        if (!connected.has(socketId) || viewers[socketId].expires < now) delete viewers[socketId]
+    })
+
+    // a viewer without a specific output (no stage layout output set) matches any output
+    return Object.values(viewers).some((viewer) => !viewer.outputId || viewer.outputId === outputId)
 }

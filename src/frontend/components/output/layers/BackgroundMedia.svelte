@@ -123,7 +123,6 @@
     onMount(() => (mounted = true))
     $: if (id && !fadingOut && mounted) startReceiver()
     function startReceiver() {
-        // stage output windows render mirrors that need video time sync, but previews in the main window do not
         const isStage = $currentWindow === "output" && !!Object.values($outputs)[0]?.stageOutput
         if ((mirror && !isStage) || receiving) return
         receiving = true
@@ -137,7 +136,6 @@
     onDestroy(removeReceiver)
     $: if (fadingOut || id) removeReceiver()
     function removeReceiver() {
-        // remove whenever a receiver was registered (mirrors in stage output windows register too)
         if (!receiving || !mounted) return
         receiving = false
 
@@ -216,7 +214,6 @@
     // AUDIO
 
     $: videoExists = !!video
-    // mirrors (e.g. stage output windows) are always muted, so skip audio analysis there
     $: if ($currentWindow === "output" && !mirror && videoExists) analyseVideo()
 
     onDestroy(() => {
