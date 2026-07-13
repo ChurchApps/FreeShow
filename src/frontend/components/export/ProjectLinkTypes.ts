@@ -50,7 +50,7 @@ export type LinkSlideMediaItem = LinkSlideItem & {
 }
 
 export type LinkSlideGenericItem = LinkSlideItem & {
-    type: "camera" | "timer" | "clock" | "events" | "weather" | "variable" | "web" | "mirror" | "icon" | "slide_tracker" | "visualizer" | "captions" | "metronome"
+    type: "camera" | "timer" | "clock" | "events" | "weather" | "variable" | "web" | "icon" | "slide_tracker" | "visualizer" | "captions" | "metronome"
     src: string
 }
 

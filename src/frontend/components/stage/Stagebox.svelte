@@ -35,7 +35,6 @@
     export let ratio: number
     export let preview = false
     export let edit = false
-    export let isMirrorItem = false
     export let disableStagePreview = false
 
     $: currentShow = stageLayout === null ? ($activeStage.id ? $stageShows[$activeStage.id] : null) : stageLayout
@@ -403,7 +402,7 @@
                     {/if}
                 {:else if item.type}
                     {#if newItem}
-                        <SlideItems item={stageItemToItem(newItem)} ref={{ type: "stage", id }} fontSize={item.auto !== false || item.textFit !== "none" ? autoSize : fontSize} {preview} {isMirrorItem} outputId={stageOutputId} />
+                        <SlideItems item={stageItemToItem(newItem)} ref={{ type: "stage", id }} fontSize={item.auto !== false || item.textFit !== "none" ? autoSize : fontSize} {preview} outputId={stageOutputId} />
                     {/if}
                 {:else}
                     <!-- OLD CODE -->

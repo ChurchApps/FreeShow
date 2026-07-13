@@ -528,8 +528,6 @@
         <DynamicEvents {...item.events} /> -->
         <!-- {:else if item?.type === "variable"}
         <Variable {item} style="font-size: {fontSize}px;" /> -->
-        <!-- {:else if item?.type === "mirror"}
-        <Mirror {item} {ref} {ratio} index={slideIndex} /> -->
     {:else if item?.type === "icon"}
         {#if item.customSvg}
             <div class="customIcon">

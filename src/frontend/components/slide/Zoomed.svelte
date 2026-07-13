@@ -12,7 +12,6 @@
     export let center = false
     export let zoom = true
     export let mirror = false
-    export let showMirror = false
     export let disableStyle = false
     export let isStage = false
     export let checkered = false
@@ -120,7 +119,6 @@
         class:hideOverflow
         class:canOverflow
         class:disableStyle
-        class:showMirror
         class:relative
         class:checkered
         class:border
@@ -180,22 +178,6 @@
 
         height: 150px;
         width: 400px;
-    }
-    /* enable styling for stage mirrors */
-    .slide.showMirror :global(.item) {
-        color: unset;
-        font-size: unset;
-        font-family: unset;
-        line-height: unset;
-        -webkit-text-stroke-color: unset;
-        text-shadow: unset;
-
-        border-style: unset;
-        border-width: unset;
-        border-color: unset;
-
-        height: 100%;
-        width: 100%;
     }
 
     .hideOverflow {
