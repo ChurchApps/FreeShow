@@ -35,10 +35,10 @@
     let itemStyles: any = getStyles(item.style, true)
     // custom dynamic size
     let newSizes = `;
-    top: ${Math.min(itemStyles.top, (itemStyles.top / 1080) * resolution.height)}px;
-    left: ${Math.min(itemStyles.left, (itemStyles.left / 1920) * resolution.width)}px;
-    width: ${Math.min(itemStyles.width, (itemStyles.width / 1920) * resolution.width)}px;
-    height: ${Math.min(itemStyles.height, (itemStyles.height / 1080) * resolution.height)}px;
+    top: ${(itemStyles.top / 1080) * resolution.height}px;
+    left: ${(itemStyles.left / 1920) * resolution.width}px;
+    width: ${(itemStyles.width / 1920) * resolution.width}px;
+    height: ${(itemStyles.height / 1080) * resolution.height}px;
   `
     // keep the item's original bounds when rendering inside a slide-resolution canvas ("Keep Style")
     if (autoStage && !originalStyle) itemStyle = itemStyle + newSizes
