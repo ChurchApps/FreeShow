@@ -10,7 +10,6 @@
     import Clock from "../items/Clock.svelte"
     import { send } from "../util/socket"
     import { dictionary, updateTransposed, variables } from "../util/stores"
-    import ListView from "./ListView.svelte"
     import { _getDynamicValue } from "../util/itemHelpers"
     import { getItemText } from "../helpers/textStyle"
 
@@ -509,8 +508,6 @@
                 {/each}
             </div>
         </div>
-    {:else if item?.type === "list"}
-        <ListView list={item.list} />
         <!-- {:else if item?.type === "media"}
         {#if item.src}
             {#if getMediaType(getExtension(item.src)) === "video"}

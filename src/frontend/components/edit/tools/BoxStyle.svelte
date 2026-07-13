@@ -223,7 +223,7 @@
 
     // -----
 
-    const setItemStyle = ["list", "timer", "clock", "icon", "events", "camera", "variable", "web", "slide_tracker", "table"]
+    const setItemStyle = ["timer", "clock", "icon", "events", "camera", "variable", "web", "slide_tracker", "table"]
 
     const setBox = () => clone(itemBoxes[id])!
     let box = setBox()

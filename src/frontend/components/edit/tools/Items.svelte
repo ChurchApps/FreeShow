@@ -31,10 +31,6 @@
             let text = getItemText(item)
             return text.slice(0, 10)
         },
-        list: (item: Item) => {
-            let text = item.list?.items?.[0]?.text || ""
-            return text.slice(0, 10)
-        },
         media: (item: Item) => {
             let path = item.src
             return getFileName(path || "")
