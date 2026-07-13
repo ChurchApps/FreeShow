@@ -13,7 +13,7 @@ type PlaylistData = {
     crossfade?: number
     loop?: boolean
     autoNext?: boolean
-    skipAttempts?: number // songs skipped in a row because their file could not be played
+    cannotPlay?: number // songs skipped in a row because their file could not be played
 }
 
 export class AudioPlaylist {
@@ -61,12 +61,12 @@ export class AudioPlaylist {
         AudioPlaylist.nextInternal("", -1, { crossfade, loop: playlist.loop !== false, autoNext: isEnding ? playlist.autoNext !== false : true })
     }
 
-    // the song path as stored in the playlist (used to find the position in the song list)
+    // the file path as stored in the playlist (used to find the position in the song list)
     static getPlayingPath(): string {
         return get(activePlaylist)?.active || ""
     }
 
-    // the actually playing file path - can differ from the stored path when a moved file is auto-located
+    // the actually playing file path - might be different if auto located to a new path
     static getPlayingKey(): string {
         return get(activePlaylist)?.activeKey || AudioPlaylist.getPlayingPath()
     }
@@ -146,7 +146,7 @@ export class AudioPlaylist {
         activePlaylist.update((a) => {
             if (!a) a = {}
             a.active = nextSong
-            a.activeKey = nextSong // updated by AudioPlayer if the file resolves to a different path
+            a.activeKey = nextSong // might be changed into an auto located path
             a.index = nextIndex
             return a
         })
@@ -155,11 +155,12 @@ export class AudioPlaylist {
         const started = await AudioPlayer.start(nextSong, { name: "" }, { pauseIfPlaying: false, crossfade: data.crossfade, playlistCrossfade: true, startPaused: data.autoNext === false, volume: playlist.volume || 1 })
 
         // skip songs that can't be played (e.g. moved/deleted files), so one missing file does not stop the playlist
-        if (started === false) {
-            const skipAttempts = (data.skipAttempts || 0) + 1
-            if (skipAttempts >= songs.length) return
+        if (!started) {
+            const cannotPlay = (data.cannotPlay || 0) + 1
+            if (cannotPlay >= songs.length) return
+
             console.error("Could not play playlist audio, skipping:", nextSong)
-            AudioPlaylist.nextInternal("", -1, { ...data, skipAttempts })
+            AudioPlaylist.nextInternal("", -1, { ...data, cannotPlay: cannotPlay })
         }
 
         function getSongs(): string[] {

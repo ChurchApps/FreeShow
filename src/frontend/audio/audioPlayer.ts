@@ -60,20 +60,19 @@ export class AudioPlayer {
 
     // INIT
 
-    /** returns false when the audio file could not be found or loaded */
+    // returns false when the audio file can't be found or loaded
     static async start(path: string, metadata: AudioMetadata, options: AudioOptions = {}): Promise<boolean> {
         if (get(outLocked) || clearing.includes(path) || this.isLoading(path)) return true
-        const requestedPath = path
-        this.setLoading(requestedPath)
+        const pathId = path
+        this.setLoading(pathId)
 
         const located = await locateMediaFile(path)
         if (!located) {
-            this.clearLoading(requestedPath)
+            this.clearLoading(pathId)
             return false
         }
 
-        // playlist songs are tracked by their stored path - remember the actual path if the file resolved somewhere else,
-        // so playlist checks (auto next/crossfade) still recognize the playing audio
+        // update active playlist file if it's located to a new path
         if (located.path !== path && get(activePlaylist)?.active === path) {
             activePlaylist.update((a) => {
                 if (a) a.activeKey = located.path
@@ -92,18 +91,18 @@ export class AudioPlayer {
         if (this.audioExists(path)) {
             if (options.pauseIfPlaying === false) {
                 updateAudioStore(path, "currentTime", 0)
-                this.clearLoading(requestedPath)
+                this.clearLoading(pathId)
                 return true
             }
             if (options.stopIfPlaying) {
                 if (options.clearTime) clearAudio(path, { clearTime: options.clearTime })
                 else AudioPlayer.stop(path)
-                this.clearLoading(requestedPath)
+                this.clearLoading(pathId)
                 return true
             }
 
             this.togglePausedState(path)
-            this.clearLoading(requestedPath)
+            this.clearLoading(pathId)
             return true
         }
 
@@ -113,12 +112,12 @@ export class AudioPlayer {
 
         const audio = await this.createAudio(path)
         if (!audio) {
-            this.clearLoading(requestedPath)
+            this.clearLoading(pathId)
             return false
         }
         // another audio might have been started while awaiting (if played rapidly)
         if (this.audioExists(path)) {
-            this.clearLoading(requestedPath)
+            this.clearLoading(pathId)
             return true
         }
 
@@ -160,7 +159,7 @@ export class AudioPlayer {
 
         const name = removeExtension(metadata.name || getFileName(path))
         this.nowPlaying(path, name)
-        this.clearLoading(requestedPath)
+        this.clearLoading(pathId)
         return true
     }
 
@@ -376,7 +375,6 @@ export class AudioPlayer {
             return
         }
 
-        // compare with the playing key as the playlist path might have resolved to a different file path
         if (AudioPlaylist.getPlayingKey() === id) {
             this.stop(id) // stop existing
             AudioPlaylist.next(true)
