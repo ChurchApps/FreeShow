@@ -251,6 +251,7 @@
     let conditionsUpdater = 0
     onMount(() => {
         const interval = setInterval(() => {
+            if (!Array.isArray(itemsList)) return
             if (itemsList.find((a) => a?.conditions)) conditionsUpdater++
         }, 3000)
 

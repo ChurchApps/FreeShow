@@ -47,7 +47,7 @@
         clearInterval(updaterInterval)
         updaterInterval = setInterval(
             () => {
-                if (isClearing) return
+                if (isClearing || !Array.isArray(currentItems)) return
                 if (currentItems.find((a) => a?.conditions)) conditionsUpdater++
             },
             isMic ? 100 : 300

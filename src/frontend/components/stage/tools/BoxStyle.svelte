@@ -153,8 +153,11 @@
         if (input.id.includes(".")) {
             let splitted = input.id.split(".")
             input.id = splitted[0]
-            let newValue = item?.[input.id] || {}
-            if (typeof newValue === "string") return // something is wrong
+
+            let newValue = item?.[input.id]
+            if (typeof newValue !== "object" || newValue === null) newValue = {}
+            else newValue = clone(newValue)
+
             newValue[splitted[1]] = value
             value = newValue
         }

@@ -335,8 +335,13 @@
             if (!item) return
 
             input.id = splitted[0]
-            value = item[splitted[0]] || {}
-            value[splitted[1]] = input.value
+
+            let newValue = item[splitted[0]]
+            if (typeof newValue !== "object" || newValue === null) newValue = {}
+            else newValue = clone(newValue)
+
+            newValue[splitted[1]] = input.value
+            value = newValue
         }
 
         function getSelectedItem() {
@@ -402,7 +407,10 @@
                 }
 
                 let splitted = input.id.split(".")
-                if (!a[$activeEdit.id!].items[i][splitted[0]]) a[$activeEdit.id!].items[i][splitted[0]] = {}
+                let nested = a[$activeEdit.id!].items[i][splitted[0]]
+                if (typeof nested !== "object" || nested === null) {
+                    a[$activeEdit.id!].items[i][splitted[0]] = {}
+                }
                 a[$activeEdit.id!].items[i][splitted[0]][splitted[1]] = value
             })
 
