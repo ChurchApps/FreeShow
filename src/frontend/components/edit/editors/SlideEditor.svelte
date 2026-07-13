@@ -355,10 +355,10 @@
                         {#if !altKeyPressed && layoutSlide.overlays?.length}
                             {#each layoutSlide.overlays as id}
                                 {#if $overlays[id]}
-                                    {#each $overlays[id].items as item}
+                                    {#each $overlays[id]?.items || [] as item}
                                         <Textbox {item} ref={{ type: "overlay", id }} />
                                     {/each}
-                                {/if}
+                                  {/if}
                             {/each}
                         {/if}
                     </div>

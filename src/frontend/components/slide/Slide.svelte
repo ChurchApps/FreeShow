@@ -318,7 +318,7 @@
                     {#if !altKeyPressed && layoutSlide.overlays?.length && (viewMode !== "lyrics" || noQuickEdit)}
                         {#each layoutSlide.overlays as id}
                             {#if $overlays[id]?.placeUnderSlide === true}
-                                {#each $overlays[id].items as item}
+                                {#each $overlays[id]?.items || [] as item}
                                     <Textbox {item} ref={{ type: "overlay", id }} />
                                 {/each}
                             {/if}
@@ -372,7 +372,7 @@
                     {#if !altKeyPressed && layoutSlide.overlays?.length && (viewMode !== "lyrics" || noQuickEdit)}
                         {#each layoutSlide.overlays as id}
                             {#if $overlays[id] && !$overlays[id]?.placeUnderSlide}
-                                {#each $overlays[id].items as item}
+                                {#each $overlays[id]?.items || [] as item}
                                     <Textbox {item} ref={{ type: "overlay", id }} />
                                 {/each}
                             {/if}
