@@ -25,7 +25,14 @@
             isScrolling = null
             projectUpdating = null
             // scrollToActive()
-            if ($activeFocus.id) activeFocus.set({ ...active, index: getProjectItemIndex(active.id, active.type, outputShowLayout) })
+            if ($activeFocus.id) {
+                const shows = project?.shows || []
+                if (active.index !== undefined && shows[active.index]?.id === active.id) {
+                    activeFocus.set(active)
+                } else {
+                    activeFocus.set({ ...active, index: getProjectItemIndex(active.id, active.type, outputShowLayout) })
+                }
+            }
         }, 100)
     }
 
@@ -36,6 +43,7 @@
     $: output = $outputs[outputId]
     $: outputShowId = output?.out?.slide?.id
     $: outputShowLayout = output?.out?.slide?.layout
+    $: outputShowProjectIndex = output?.out?.slide?.projectIndex
     $: outputIndex = output?.out?.slide?.index
 
     $: active = $activeFocus
@@ -56,9 +64,13 @@
 
         let index = active.index
         if (index === undefined) {
-            if (outputShowId) currentId = outputShowId
-            if (outputShowId) currentType = undefined
-            index = getProjectItemIndex(currentId, currentType, outputShowLayout)
+            if (outputShowProjectIndex !== undefined) {
+                index = outputShowProjectIndex
+            } else {
+                if (outputShowId) currentId = outputShowId
+                if (outputShowId) currentType = undefined
+                index = getProjectItemIndex(currentId, currentType, outputShowLayout)
+            }
         }
 
         if (index < 0) return
