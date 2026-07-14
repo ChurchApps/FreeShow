@@ -30,7 +30,6 @@
     export let backdropFilter = ""
     export let key = false
     export let transition: Transition | null = null
-    export let disableListTransition = false
     export let smallFontSize = false
     export let animationStyle: any = {}
     export let dynamicValues = true
@@ -871,7 +870,7 @@
             {updateDynamicValues}
         />
     {:else}
-        <SlideItems {item} {slideIndex} {preview} {isTemplatePreview} {mirror} {ratio} {disableListTransition} {smallFontSize} {ref} {fontSize} {outputId} />
+        <SlideItems {item} {slideIndex} {preview} {isTemplatePreview} {mirror} {ratio} {smallFontSize} {ref} {fontSize} {outputId} />
     {/if}
 </div>
 

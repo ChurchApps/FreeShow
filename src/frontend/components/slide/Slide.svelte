@@ -334,7 +334,6 @@
                                 <!-- backdropFilter={layoutSlide.filterEnabled?.includes("foreground") ? layoutSlide["backdrop-filter"] : ""} -->
                                 <Textbox
                                     backdropFilter={layoutSlide["backdrop-filter"] || ""}
-                                    disableListTransition
                                     {item}
                                     isOutputted={!!output?.color}
                                     revealed={output?.line ?? -1}

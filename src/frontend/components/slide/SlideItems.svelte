@@ -12,7 +12,6 @@
     import DynamicEvents from "./views/DynamicEvents.svelte"
     import IconItem from "./views/IconItem.svelte"
     import MediaItem from "./views/MediaItem.svelte"
-
     import SlideProgress from "./views/SlideProgress.svelte"
     import Table from "./views/Table.svelte"
     import Timer from "./views/Timer.svelte"
@@ -31,7 +30,6 @@
     export let cropPreviewMode = false
     export let isTemplatePreview = false
     export let mirror = true
-    export let disableListTransition = false
     export let smallFontSize = false
     export let fontSize = 0
     export let outputId = ""

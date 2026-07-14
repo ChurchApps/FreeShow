@@ -2062,10 +2062,10 @@ export function getShortBibleName(name: string) {
     name = name
         .replace(/[^a-zA-Z ]+/g, "")
         .trim()
-        .replaceAll("  ", " ")
+        .replaceAll(/\s+/g, " ")
 
     if (name.split(" ").length < 2) name = name.slice(0, 3)
-    else name = name.split(" ").reduce((current, word) => (current += word[0]), "")
+    else name = name.split(" ").reduce((current, word) => (current += word[0] || ""), "")
 
     return name || "B"
 }
