@@ -67,7 +67,9 @@ async function fetchState() {
             if (curr && lastFetched && res.title === curr.title) {
                 const diff = Math.abs(res.positionSec - curr.positionSec)
                 if (Date.now() < lock) res.isPlaying = curr.isPlaying
-                if (diff < 1.5 && res.isPlaying === curr.isPlaying) {
+
+                const isStale = res.isPlaying && lastFetched.isPlaying && res.positionSec === lastFetched.positionSec
+                if ((isStale || diff < 1.5) && res.isPlaying === curr.isPlaying) {
                     newState = { ...curr, isPlaying: res.isPlaying, durationSec: res.durationSec, volume: res.volume }
                 }
             }
