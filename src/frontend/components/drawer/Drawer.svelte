@@ -141,12 +141,17 @@
             if ($activePopup === "show" || shouldOpenReplace()) return
             focusSearch()
 
-            // change to "Show" and "All" when searching when drawer is closed
-            // (not needed now as there is Quick search)
-            // if ($drawer.height <= minHeight) {
-            //     setDrawerTabData("shows", "all")
-            //     activeDrawerTab.set("shows")
-            // }
+            // auto change to "Shows" tab, when closed on a "Media" tab, as commonly people don't change back after adding backgrounds
+            // (not really needed as we have Quick search)
+            const isClosed = $drawer.height <= minHeight
+            const mediaTab = ["media", "audio"].includes($activeDrawerTab)
+            if (isClosed && mediaTab) {
+                activeDrawerTab.set("shows")
+                drawerTabsData.update((a) => {
+                    a.shows.activeSubTab = "all"
+                    return a
+                })
+            }
         } else if ((e.ctrlKey || e.metaKey) && e.key === "d") {
             if (!$selected?.id && !$activeEdit.items.length) click(null)
         } else if (e.key === "Enter") {

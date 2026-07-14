@@ -202,7 +202,7 @@
 
     // remove files already in project - max 5
     $: recommended = $recentFiles.projectMedia
-        .filter((a) => !projectItemsList.find((b) => b.id === a))
+        .filter((a) => !projectItemsList.find((b) => b.id === a || b.name === removeExtension(getFileName(a))))
         .sort((a, b) => a.localeCompare(b))
         .slice(0, 5)
 
@@ -330,7 +330,7 @@
 
                 <!-- suggestions -->
                 {#if recommended.length}
-                    <div class="section" style="margin-top: 50px;border-top: 1px solid var(--primary-lighter);background-color: var(--primary-darkest);padding: 2px 18px;display: flex;justify-content: space-between;align-items: center;">
+                    <div class="section" style="margin-top: 80px;border-top: 1px solid var(--primary-lighter);background-color: var(--primary-darkest);padding: 2px 18px;display: flex;justify-content: space-between;align-items: center;">
                         <T id="media.recommended" />
 
                         <MaterialButton
@@ -350,33 +350,35 @@
                         </MaterialButton>
                     </div>
 
-                    <div class="listSection">
-                        {#each recommended as path, i}
-                            {@const name = getFileName(path)}
-                            {@const type = getMediaType(getExtension(name))}
-                            {@const isFirst = i === 0}
-                            {@const isLast = i === recommended.length - 1}
-                            {@const borderRadiusStyle = `${isFirst ? "border-top-right-radius: 10px;" : ""}${isLast ? "border-bottom-right-radius: 10px;" : ""}`}
-                            {@const icon = type === "audio" ? "music" : type}
+                    <div class="recommended">
+                        <div class="listSection">
+                            {#each recommended as path, i}
+                                {@const name = getFileName(path)}
+                                {@const type = getMediaType(getExtension(name))}
+                                {@const isFirst = i === 0}
+                                {@const isLast = i === recommended.length - 1}
+                                {@const borderRadiusStyle = `${isFirst ? "border-top-right-radius: 10px;" : ""}${isLast ? "border-bottom-right-radius: 10px;" : ""}`}
+                                {@const icon = type === "audio" ? "music" : type}
 
-                            <MaterialButton
-                                class="show context #recent_file__project"
-                                style="justify-content: space-between;padding: 0.35em 0.8em;font-weight: normal;{borderRadiusStyle}"
-                                on:click={() => {
-                                    // convert to image? - probably better not to, this can be done via import
-                                    // if (type === "pdf") sendMain(Main.PDF_TO_IMAGE, { filePath: path })
-                                    addToProject(null, [path])
-                                }}
-                                title="context.addToProject: <b>{name}</b>"
-                                tab
-                            >
-                                <span style="display: flex;align-items: center;gap: 8px;">
-                                    <Icon id={icon} size={0.9} white right />
-                                    <p style="min-height: 10px;">{removeExtension(name)}</p>
-                                </span>
-                                <Icon id="add" size={0.9} white right />
-                            </MaterialButton>
-                        {/each}
+                                <MaterialButton
+                                    class="show context #recent_file__project"
+                                    style="justify-content: space-between;padding: 0.35em 0.8em;font-weight: normal;{borderRadiusStyle}"
+                                    on:click={() => {
+                                        // convert to image? - probably better not to, this can be done via import
+                                        // if (type === "pdf") sendMain(Main.PDF_TO_IMAGE, { filePath: path })
+                                        addToProject(null, [path])
+                                    }}
+                                    title="context.addToProject: <b>{name}</b>"
+                                    tab
+                                >
+                                    <span style="display: flex;align-items: center;gap: 8px;">
+                                        <Icon id={icon} size={0.9} white right />
+                                        <p style="min-height: 10px;">{removeExtension(name)}</p>
+                                    </span>
+                                    <Icon id="add" size={0.9} white right />
+                                </MaterialButton>
+                            {/each}
+                        </div>
                     </div>
                 {/if}
             {:else}
@@ -634,5 +636,12 @@
         align-items: center;
 
         opacity: 0.2;
+    }
+
+    .recommended {
+        display: flex;
+        flex-direction: column;
+
+        background-color: var(--primary-darker);
     }
 </style>

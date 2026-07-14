@@ -140,7 +140,7 @@
             </FloatingInputs>
         {/if}
     {:else}
-        <span class="name" role="button" tabindex="0" on:click={openPreview} on:keydown={triggerClickOnEnterSpace}>
+        <span class="name" style="font-size: 0.9em;" role="button" tabindex="0" on:click={openPreview} on:keydown={triggerClickOnEnterSpace}>
             {#if background?.type === "player"}
                 <p>{$playerVideos[background?.id || ""]?.name || "—"}</p>
             {:else}
@@ -205,9 +205,10 @@
     .name {
         display: flex;
         justify-content: center;
-        padding: 5px 10px;
+        padding: 3px 10px;
         opacity: 0.8;
 
+        outline: none !important;
         cursor: pointer;
     }
 

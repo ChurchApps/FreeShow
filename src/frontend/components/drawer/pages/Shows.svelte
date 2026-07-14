@@ -251,14 +251,14 @@
 <Autoscroll style="overflow-y: auto;flex: 1;">
     <!-- bind:this={listElem} -->
     <div class="column {readOnly ? '' : 'context #drawer_show'}" on:mouseup={() => focusedArea.set("show_drawer")}>
-        {#if filteredShows.length}
-            {#if createFromSearch && searchValue.length && typeof searchValue === "string" && activeIsSearch}
-                <div class="warning">
-                    <!-- role="none" on:click={createNew} -->
-                    <p style="padding: 6px 8px;"><T id="show.enter_create" />: <span style="color: var(--secondary);font-weight: bold;">{searchValue[0]?.toUpperCase() + searchValue.slice(1)}</span></p>
-                </div>
-            {/if}
+        {#if createFromSearch && searchValue.length && typeof searchValue === "string" && activeIsSearch}
+            <div class="warning">
+                <!-- role="none" on:click={createNew} -->
+                <p style="padding: 6px 8px;"><T id="show.enter_create" />: <span style="color: var(--secondary);font-weight: bold;">{searchValue[0]?.toUpperCase() + searchValue.slice(1)}</span></p>
+            </div>
+        {/if}
 
+        {#if filteredShows.length}
             <div class="sort-header" role="group">
                 {#each sortHeaders as header}
                     {@const direction = sortType === header.asc ? "asc" : sortType === header.desc ? "desc" : ""}

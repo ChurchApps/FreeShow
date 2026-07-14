@@ -55,7 +55,7 @@
 
 {#if slide}
     <span class="name" style="justify-content: space-between;" role="button" tabindex="0" on:click={openShow} on:keydown={triggerClickOnEnterSpace}>
-        <p>
+        <p style="font-size: 0.9em;">
             {#if name.length}
                 {name}
             {:else}
@@ -63,7 +63,7 @@
             {/if}
         </p>
         {#if totalLength}
-            <span style="opacity: 0.6;white-space: nowrap;">
+            <span style="opacity: 0.6;white-space: nowrap;font-size: 0.9em;">
                 {currentIndex}/{totalLength}
                 {#if linesIndex !== null && maxLines !== null}
                     <span style="opacity: 0.8;font-size: 0.8em;">({linesIndex + 1}/{maxLines})</span>

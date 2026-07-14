@@ -1028,7 +1028,7 @@ export async function detectNewFiles() {
         return
     }
 
-    const MAX_TIME = 16 * 60 * 60 * 1000 // 16 hours
+    const MAX_TIME = 8 * 60 * 60 * 1000 // 8 hours
     const ONE_MINUTE = 60 * 1000
     const WRITE_WAIT_MS = 2000
     const temporaryExtensions = [".crdownload", ".part", ".download", ".tmp"]

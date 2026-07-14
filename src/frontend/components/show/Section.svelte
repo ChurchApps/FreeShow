@@ -83,7 +83,7 @@
 
     let settingsOpened = false
 
-    $: sectionUpdated = currentProject?.shows?.[section.index] || {}
+    $: sectionUpdated = currentProject?.shows?.[section.index] || section || {}
     $: localAction = currentProject?.shows?.[section.index]?.data?.settings?.triggerAction || ""
 
     $: currentActionId = localAction || $special.sectionTriggerAction
@@ -105,12 +105,12 @@
 {:else}
     {#key section}
         <InputRow>
-            <h4 id="sectionTitle" class:empty={!sectionUpdated?.name} style="flex: 6;border-bottom: 2px solid {sectionUpdated.color || 'var(--primary-darker);'}">
+            <h4 id="sectionTitle" class:empty={!sectionUpdated?.name} style="flex: 6;border-bottom: 1.2px solid {sectionUpdated.color || 'var(--primary-lighter)'};">
                 <TextInput value={section?.name || ""} placeholder={translateText("main.unnamed")} disabled={isLocked} on:input={updateName} on:keydown={keydown} />
             </h4>
             <!-- WIP suggest titles based on previous titles? (maybe not needed as we have project templates) -->
 
-            <MaterialTimePicker label="calendar.time" value={section?.data?.time} disabled={isLocked} style="flex: 1;" on:change={(e) => updateSectionData("time", e.detail)} />
+            <MaterialTimePicker label="calendar.time" value={section?.data?.time} disabled={isLocked} style="flex: 1;height: 100%;" on:change={(e) => updateSectionData("time", e.detail)} />
         </InputRow>
 
         <Notes value={note} disabled={isLocked} on:edit={edit} />
