@@ -16,6 +16,7 @@
     },
     "scripts": {
         "postinstall": "electron-builder install-app-deps",
+        "rebuild-opus": "electron-rebuild -f -w @discordjs/opus",
         "---DEVELOPMENT---": "",
         "start": "node scripts/start.js",
         "start:old": "npx cross-env NODE_ENV=development npm-run-all -p -r build:frontend:dev start:electron",
