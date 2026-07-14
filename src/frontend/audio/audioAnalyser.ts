@@ -135,15 +135,15 @@ export class AudioAnalyser {
         Object.keys(this.gainNodes).forEach((id) => {
             const gainNode = this.gainNodes[id]
             if (gainNode) {
-                let baseVolume = 1.0
+                let baseVolume: number | null = null
                 const audioPlaying = get(playingAudio)[id]
                 if (audioPlaying) {
                     baseVolume = audioPlaying.audio?.volume ?? 1.0
                 } else {
                     const videoPlaying = get(playingVideos).find((v) => v.id === id)
-                    baseVolume = videoPlaying?.video?.volume ?? 1.0
+                    if (videoPlaying) baseVolume = videoPlaying.video?.volume ?? 1.0
                 }
-                gainNode.gain.setValueAtTime(baseVolume * scale, this.ac.currentTime)
+                if (baseVolume !== null) gainNode.gain.setValueAtTime(baseVolume * scale, this.ac.currentTime)
             }
         })
     }
