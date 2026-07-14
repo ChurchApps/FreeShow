@@ -18,7 +18,13 @@ if (process.env.SPOTIFY_BRIDGE === "true") {
                     }
                     process.send?.({ type: "ready" })
                 } catch (e: any) {
-                    process.send?.({ type: "error", error: `Failed to load libspotifyctl: ${e.message}` })
+                    let error = e.message
+
+                    if (e.message.includes("Failed to load shared library")) {
+                        error += "\n\nYou are likely missing the Visual C++ Redistributable. You can download and install it from here: https://aka.ms/vs/17/release/vc_redist.x64.exe"
+                    }
+
+                    process.send?.({ type: "error", error: `Failed to init Spotify Controller: ${error}` })
                 }
             } else if (msg.type === "getState") {
                 const s = client?.latestState()
