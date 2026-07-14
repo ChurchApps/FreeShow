@@ -59,7 +59,7 @@
         }
 
         const activeEl = document.activeElement as HTMLElement | null
-        if (activeEl?.closest(".tools") || activeEl?.closest(".menus") || activeEl?.closest(".popup") || activeEl?.closest(".drawer") || activeEl?.closest(".chords") || activeEl?.closest(".contextMenu") || activeEl?.closest(".editTools")) return
+        if (activeEl?.closest(".tools") || activeEl?.closest(".menus") || activeEl?.closest(".popup") || activeEl?.closest(".drawer") || activeEl?.closest(".chords") || activeEl?.closest(".contextMenu") || activeEl?.closest(".editTools") || document.querySelector(".editTools:hover")) return
 
         let sel = window.getSelection()
 
