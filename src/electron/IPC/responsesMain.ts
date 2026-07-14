@@ -468,6 +468,13 @@ export function autoErrorReport() {
     if (!isProd) return
     if (config.get("autoErrorReporting") === false) return
 
+    // prevent random forks from sending error reports
+    // dots to prevent auto find/replace
+    const originalName = "f.r.e.e.s.h.o.w".replace(/\./g, "")
+    if (app.name !== originalName) return
+
+    console.info("Starting Sentry error reporting...")
+
     Sentry.init({
         dsn: "https://5d1069c3cb6faaa6e7ad0d9dc0145361@o4510419080445952.ingest.us.sentry.io/4510419082346496",
         beforeSend(event) {
