@@ -554,6 +554,10 @@ export const itemBoxes: Box2 = {
                     [{ id: "events.maxEvents", type: "number", value: 5, values: { label: "edit.max_events", max: 20 } }],
                     [{ id: "events.startDaysFromToday", type: "number", value: 0, values: { label: "edit.start_days_from_today", max: 10000 } }],
                     [{ id: "events.justOneDay", type: "checkbox", value: false, values: { label: "edit.just_one_day" } }],
+                    [
+                        { id: "events.fromTime", type: "time", hidden: true, value: "00:00", values: { label: "calendar.from_time" } },
+                        { id: "events.toTime", type: "time", hidden: true, value: "00:00", values: { label: "calendar.to_time" } }
+                    ],
                     [{ id: "events.enableStartDate", type: "checkbox", value: false, values: { label: "edit.enable_start_date" } }],
                     [
                         { id: "events.startDate", type: "date", hidden: true, value: "", values: { label: "calendar.from_date" } },

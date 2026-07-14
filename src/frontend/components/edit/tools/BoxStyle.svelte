@@ -313,6 +313,8 @@
         setBoxInputValue(box, "default", "events.startDaysFromToday", "disabled", !!item.events?.enableStartDate)
         setBoxInputValue(box, "default", "events.startDate", "hidden", !item.events?.enableStartDate)
         setBoxInputValue(box, "default", "events.startTime", "hidden", !item.events?.enableStartDate)
+        setBoxInputValue(box, "default", "events.fromTime", "hidden", !item.events?.justOneDay)
+        setBoxInputValue(box, "default", "events.toTime", "hidden", !item.events?.justOneDay)
     }
     $: if (id === "chart" && item) {
         setBoxInputValue(box, "default", "chart.holeSize", "hidden", item.chart?.type !== "pie")

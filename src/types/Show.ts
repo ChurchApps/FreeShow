@@ -244,6 +244,8 @@ export interface DynamicEvent {
     enableStartDate: boolean
     startDate?: string
     startTime?: string
+    fromTime?: string
+    toTime?: string
 }
 
 export interface Scrolling {
