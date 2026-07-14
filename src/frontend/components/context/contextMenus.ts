@@ -314,7 +314,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     scripture_verse: ["create_show", "SEPARATOR", "selectAll", "SEPARATOR", "route_bible"],
     scripture_chapter: ["create_show"],
     interaction: ["GROUP_edit", "rename", "delete"],
-    interaction_input: ["GROUP_edit", "delete"],
+    interaction_input: ["GROUP_edit", "duplicate", "delete"],
 
     // PROJECT
     projects: ["newProject", "newFolder", "SEPARATOR", "sort_projects_by"],

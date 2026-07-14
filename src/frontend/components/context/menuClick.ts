@@ -45,6 +45,7 @@ import {
     focusMode,
     forceClock,
     guideActive,
+    interactions,
     livePrepare,
     media,
     mediaFolders,
@@ -359,6 +360,20 @@ const clickActions = {
 
         if (obj.contextElem?.classList.value.includes("#event")) {
             duplicate({ id: "event", data: { id: obj.contextElem.id } })
+            return
+        }
+
+        if (obj.contextElem?.classList.value.includes("#interaction_input")) {
+            const index = parseInt(obj.contextElem.id.slice(1))
+            const interactionId = get(openedInteractionId)
+            if (!interactionId) return
+
+            interactions.update((a) => {
+                if (!a[interactionId]) return a
+                const input = clone(a[interactionId].inputs[index])
+                a[interactionId].inputs.splice(index + 1, 0, { ...input, question: input.question + " 2" })
+                return a
+            })
             return
         }
 

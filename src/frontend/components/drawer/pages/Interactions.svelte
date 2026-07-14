@@ -192,8 +192,6 @@
 </script>
 
 {#if openedId}
-    <div class="banner">EXPERIMENTAL!</div>
-
     <div class="header">
         <MaterialButton disabled={showOptions || showHistory || showPlayers} style="padding: 6px;" icon="back" title="actions.back" on:click={() => openedInteractionId.set("")} />
 
@@ -486,18 +484,6 @@
 {/if}
 
 <style>
-    .banner {
-        width: 100%;
-        background-color: #8b0000;
-        color: white;
-
-        text-align: center;
-        font-weight: bold;
-        font-size: 0.8em;
-
-        padding: 4px 8px;
-    }
-
     .interactions {
         flex: 1;
         overflow: auto;
