@@ -58,10 +58,13 @@
             if (e.target.closest(".menus") || e.target.closest(".popup") || e.target.closest(".drawer") || e.target.closest(".chords") || e.target.closest(".contextMenu") || e.target.closest(".editTools")) return
         }
 
+        const activeEl = document.activeElement as HTMLElement | null
+        if (activeEl?.closest(".tools") || activeEl?.closest(".menus") || activeEl?.closest(".popup") || activeEl?.closest(".drawer") || activeEl?.closest(".chords") || activeEl?.closest(".contextMenu") || activeEl?.closest(".editTools")) return
+
         let sel = window.getSelection()
 
         if (sel?.type === "None") {
-            if ((document.activeElement as HTMLElement | null)?.closest(".tools")) return
+            if (activeEl === document.body) return
             selection = null
             activeRowIdx = -1
             activeColIdx = -1
@@ -85,7 +88,7 @@
 
     function mousedown(e: any) {
         // store if going to a text input in the tools
-        if (e.target.closest(".tools")) getTextSelection(e)
+        if (e.target.closest(".tools") || e.target.closest(".menus") || e.target.closest(".popup") || e.target.closest(".drawer") || e.target.closest(".chords") || e.target.closest(".contextMenu") || e.target.closest(".editTools")) getTextSelection(e)
     }
 
     function keyup(e: KeyboardEvent) {
