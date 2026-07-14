@@ -745,11 +745,14 @@ export function splitTextContentInHalf(text: string) {
 export function mergeSlides(indexes: { index: number }[]) {
     const layoutRef = getLayoutRef()
 
+    // merge in slide order, instead of selection order
+    indexes.sort((a, b) => a.index - b.index)
+
     const allMergedSlideIds: string[] = []
     const firstSlideIndex = indexes[0].index
     const firstSlideId: string = layoutRef[firstSlideIndex]?.id
     const newSlide: Slide = clone(_show().slides([firstSlideId]).get()[0])
-    const previousTextboxStyles = newSlide.items.filter((a) => (a.type || "text") === "text").map((a) => a.style || "")
+    const previousTextboxes = newSlide.items.filter((a) => (a.type || "text") === "text").map((a) => clone(a))
 
     if (newSlide.group === null) {
         newSlide.group = ""
@@ -792,7 +795,11 @@ export function mergeSlides(indexes: { index: number }[]) {
     // add textbox
     newSlide.items = [...getTextItems(), ...newSlide.items]
     function getTextItems() {
-        return newLines.map((lines, i) => ({ type: "text", lines, style: previousTextboxStyles[i] }) as Item)
+        return newLines.map((lines, i) => {
+            const item: Item = previousTextboxes[i] || { type: "text", style: "" }
+            item.lines = lines
+            return item
+        })
     }
 
     const newShow: Show = clone(_show().get())
