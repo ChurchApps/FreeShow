@@ -70,7 +70,7 @@ async function startupMain() {
     remoteListen()
     checkStartupActions()
     startTracking()
-    contentProviderSync()
+    contentProviderSync(true)
 
     // custom alert
     // if (Math.random() < 0.01) {
@@ -111,14 +111,16 @@ function autoBackup() {
     }
 }
 
-export function contentProviderSync() {
+export function contentProviderSync(startup = false) {
     const providers = [
-        { providerId: "planningcenter" as ContentProviderId, scope: "services", data: get(contentProviderData).planningcenter?.syncFolderIds || [] },
+        { providerId: "planningcenter" as ContentProviderId, scope: "services", data: get(contentProviderData).planningcenter?.syncFolderIds || [], autoSync: get(contentProviderData).planningcenter?.autoSync !== false },
         { providerId: "churchApps" as ContentProviderId, scope: "plans", data: { shows: get(shows), categories: get(contentProviderData).churchApps?.syncCategories || [] } },
         { providerId: "amazinglife" as ContentProviderId, scope: "openid profile email" }
     ]
 
-    providers.forEach(({ providerId, scope, data }) => {
+    providers.forEach(({ providerId, scope, data, autoSync }) => {
+        if (startup && autoSync === false) return
+
         const cloudOnly = providerId === "churchApps" && get(special).churchAppsCloudOnly
         sendMain(Main.PROVIDER_STARTUP_LOAD, { providerId, scope, data, cloudOnly })
     })

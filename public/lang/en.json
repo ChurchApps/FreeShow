@@ -1422,6 +1422,7 @@
         "content_provider": "Content provider",
         "connect_to": "Connect to $1",
         "disconnect_from": "Disconnect from $1",
+        "auto_sync_startup": "Auto sync on startup",
         "sync_categories_tip": "Select which categories to upload as songs",
         "reset_all": "Reset everything",
         "reset_theme": "Reset theme",
