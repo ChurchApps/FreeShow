@@ -1005,6 +1005,18 @@ const slideDrop = {
         drag.data.forEach((action) => {
             if (!action?.triggers) return
 
+            const isSelfTrigger = action.triggers.some((trigger) => {
+                const triggerId = getActionTriggerId(trigger)
+                if (triggerId !== "index_select_slide") return false
+                const targetIndex = action.actionValues?.[trigger]?.index ?? action.actionValues?.index_select_slide?.index
+                return targetIndex !== undefined && Number(targetIndex) === Number(drop.index)
+            })
+            if (isSelfTrigger) {
+                alertMessage.set("The action can't be added to this slide because it is set to trigger the same slide which will cause an infinite loop!")
+                activePopup.set("alert")
+                return
+            }
+
             if (action.triggers.length > 1) {
                 const existingRunActionIndex = slideActions.findIndex((a) => a.actionValues?.run_action?.id === action.id)
                 if (existingRunActionIndex > -1) return

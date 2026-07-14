@@ -11,6 +11,7 @@
     import MaterialDropdown from "../inputs/MaterialDropdown.svelte"
     import MaterialTimePicker from "../inputs/MaterialTimePicker.svelte"
     import TextInput from "../inputs/TextInput.svelte"
+    import Tip from "../main/Tip.svelte"
     import Notes from "./tools/Notes.svelte"
 
     export let section: any
@@ -95,7 +96,7 @@
 {#if settingsOpened}
     <div class="settings">
         <Title label="popup.action" icon="actions" />
-        <div class="info">{translateText("settings.section_trigger_action")}</div>
+        <Tip type="info" value="settings.section_trigger_action" style="justify-content: left;" bottom={10} />
 
         <InputRow>
             <MaterialDropdown label="groups.global" disabled={localAction && $actions[localAction]} options={actionOptions} value={$special.sectionTriggerAction} on:change={updateTrigger} allowEmpty />
@@ -153,11 +154,5 @@
         margin-block-end: auto;
         border: 1px solid var(--primary-lighter);
         border-radius: 8px;
-    }
-
-    .settings .info {
-        opacity: 0.8;
-        font-size: 0.9em;
-        margin-bottom: 10px;
     }
 </style>
