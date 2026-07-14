@@ -69,7 +69,7 @@
         }
 
         const anchorElem = (sel?.anchorNode as Element)?.nodeType === Node.ELEMENT_NODE ? (sel?.anchorNode as Element) : sel?.anchorNode?.parentElement
-        if (!anchorElem?.closest(".edit")) {
+        if (!anchorElem?.closest?.(".edit")) {
             activeRowIdx = -1
             activeColIdx = -1
             return
