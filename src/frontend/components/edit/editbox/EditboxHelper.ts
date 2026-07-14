@@ -200,7 +200,7 @@ export class EditboxHelper {
                 // if (value === " ") value = "&nbsp;"
 
                 // this will "hide" any HTML tags if any in the actual text content (not chords or text editor)
-                html += `<span class="${a.customType && !a.customType.includes("jw") ? "custom" : ""}" ${plain ? "" : textStyle} data-customtype='${a.customType || ""}' data-sourcedynamickey='${a.sourceDynamicKey || ""}' data-chords='${JSON.stringify(textChords)}'>` + value + "</span>"
+                html += `<span data-freeshow-text="true" class="${a.customType && !a.customType.includes("jw") ? "custom" : ""}" ${plain ? "" : textStyle} data-customtype='${a.customType || ""}' data-sourcedynamickey='${a.sourceDynamicKey || ""}' data-chords='${JSON.stringify(textChords)}'>` + value + "</span>"
             })
             html += "</div>"
         })
