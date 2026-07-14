@@ -343,7 +343,7 @@
                     <InputRow>
                         {#each inputRow as input}
                             {#if !input.hidden}
-                                {@const value = getValue(input, { styles, item })}
+                                {@const value = getValue(input, { styles, item, customValues })}
                                 {@const values = getValues(input, optionsLists)}
                                 {@const hasTimelineAction = $special.slideTimelineActive && $activePage === "edit" && ($activeEdit.type || "show") === "show" && SlideTimeline.hasActionAtTime(input.key || "", type, $activeEdit?.items?.length ? $activeEdit.items : [0], timelineUpdater)}
 

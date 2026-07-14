@@ -1,7 +1,7 @@
 <script lang="ts">
     import { Show } from "../../../../types/Show"
     import { activePopup, popupData, shows, showsCache } from "../../../stores"
-    import { getSlideText } from "../../edit/scripts/textStyle"
+    import { getTextLines } from "../../edit/scripts/textStyle"
     import { history } from "../../helpers/history"
     import { loadShows } from "../../helpers/setShow"
     import T from "../../helpers/T.svelte"
@@ -183,7 +183,7 @@
 
         let texts: string[] = []
         Object.values(show.slides || {}).forEach((slide) => {
-            texts.push(getSlideText(slide))
+            texts.push(getTextLines(slide).join("\n"))
         })
 
         return texts.join("\n\n")

@@ -396,7 +396,7 @@
                         </div>
                     {/if}
 
-                    <div data-title={name || ""} style="height: 2px;" />
+                    <div data-title={name || ""} style="height: 2px;background-color: {color};" />
                 {:else if viewMode !== "lyrics" || noQuickEdit}
                     <!-- style="width: {resolution.width * zoom}px;" -->
                     <div class="label" data-title={removeTagsAndContent(name || "")} style={$fullColors ? `background-color: ${color};color: ${getContrast(color || "")};` : `border-bottom: 2px solid ${color || "var(--primary-darkest)"};`}>

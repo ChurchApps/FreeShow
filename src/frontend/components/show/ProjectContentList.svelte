@@ -126,16 +126,18 @@
             if (typeof a !== "object") return
 
             const previousItem = projectItemsList[index - 1]
+            const nextItem = projectItemsList[index + 1]
 
             let previousType = previousItem?.type || "show"
             let currentType = a.type || "show"
+            let nextType = nextItem?.type || "show"
 
             // media as same type
             if (previousType === "image" || previousType === "video") previousType = "image"
             if (currentType === "image" || currentType === "video") currentType = "image"
 
             if (!splittedProjectsList.at(-1)) newSection()
-            else if (currentType === "section" && (a.color || previousType === "section")) newSection()
+            else if (currentType === "section" && (a.color || previousType === "section" || nextType === "section")) newSection()
             else if (currentType !== "section" && previousType !== "section" && projectItemsList[index - 2]?.type !== "section" && currentType !== previousType) {
                 if (splittedProjectsList.at(-1)?.color === "") newSection()
                 else splittedProjectsList.at(-1)!.items.push({ type: "DIVIDER", id: "" })

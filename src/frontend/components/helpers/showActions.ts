@@ -21,7 +21,7 @@ import { getCurrentTimerValue, getTimeUntilClock, playPauseGlobal } from "../dra
 import { getDynamicValue } from "../edit/scripts/itemHelpers"
 import { getTextLines } from "../edit/scripts/textStyle"
 import { clearBackground, clearOverlays, clearTimers } from "../output/clear"
-import { activeEdit, activeFocus, activeInteractions, activePage, activeProject, activeShow, allOutputs, audioData, cachedDynamicValues, customMetadata, dictionary, dynamicValueData, focusMode, interactions, media, outLocked, outputDisplay, outputs, overlays, playingAudio, playingMetronome, projects, shows, showsCache, slideTimers, special, stageShows, styles, templates, timers, variables, videosData, videosTime } from "./../../stores"
+import { activeEdit, activeFocus, activeInteractions, activePage, activeProject, activeShow, allOutputs, audioData, cachedDynamicValues, customMetadata, dictionary, dynamicValueData, editingProjectTemplate, focusMode, interactions, media, outLocked, outputDisplay, outputs, overlays, playingAudio, playingMetronome, projects, projectTemplates, shows, showsCache, slideTimers, special, stageShows, styles, templates, timers, variables, videosData, videosTime } from "./../../stores"
 import { clone, keysToID, sortByName } from "./array"
 import { downloadOnlineMedia, encodeFilePath, getExtension, getFileName, getMedia, getMediaStyle, getMediaType, removeExtension } from "./media"
 import { defaultLayers, getActiveOutputs, getAllNormalOutputs, getFirstActiveOutput, getFirstOutput, getWindowOutputId, isOutCleared, refreshOut, setOutput, startFolderTimer } from "./output"
@@ -84,8 +84,12 @@ export function selectProjectShow(select: number | "next" | "previous") {
 }
 
 export function swichProjectItem(pos: number, id: string) {
-    if (!get(showsCache)[id]?.layouts || !get(projects)[get(activeProject)!]?.shows?.[pos] || get(focusMode)) return
-    let projectLayout: string = get(projects)[get(activeProject)!].shows[pos].layout || ""
+    const isTemplate = !!get(editingProjectTemplate)
+    const projectId = isTemplate ? get(editingProjectTemplate) : get(activeProject)
+    const store = isTemplate ? projectTemplates : projects
+
+    if (!get(showsCache)[id]?.layouts || !get(store)[projectId!]?.shows?.[pos] || get(focusMode)) return
+    let projectLayout: string = get(store)[projectId!].shows[pos].layout || ""
 
     // set active layout from project if it exists
     if (projectLayout) {
@@ -99,9 +103,9 @@ export function swichProjectItem(pos: number, id: string) {
 
     // set project layout
     if (Object.keys(get(showsCache)[id].layouts)?.length > 1) {
-        projects.update((a) => {
-            if (Object.keys(get(showsCache)[id].layouts)?.length < 2) delete a[get(activeProject)!].shows[pos].layout
-            else a[get(activeProject)!].shows[pos].layout = get(showsCache)[id].settings?.activeLayout || ""
+        store.update((a) => {
+            if (Object.keys(get(showsCache)[id].layouts)?.length < 2) delete a[projectId!].shows[pos].layout
+            else a[projectId!].shows[pos].layout = get(showsCache)[id].settings?.activeLayout || ""
             return a
         })
     }

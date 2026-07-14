@@ -180,7 +180,7 @@
                 <!-- TODO: cameras -->
                 {@const mediaStyle = getMediaStyle(media.data, outputStyle)}
 
-                <SelectElem id="media" data={{ ...background }} draggable>
+                <SelectElem id="media" data={{ ...background, path: media.path || background.path }} draggable>
                     <div class="media_item item context #show_media" class:active={findMatchingOut(media.path || "", $outputs)}>
                         <HoverButton
                             style="flex: 2;height: 50px;max-width: 100px;"
