@@ -113,7 +113,7 @@
         zoom = e.detail
         const origin = zoomOrigin
         zoomOrigin = null
-        centerZoom(zoom, origin, scrollElem, "")
+        centerZoom(origin, scrollElem, "")
     }
 
     $: currentOutput = $outputs[outputId] || $allOutputs[outputId] || {}
@@ -155,7 +155,7 @@
     <div class="parent" class:noOverflow={zoom >= 1} bind:this={scrollElem} bind:offsetWidth={width} bind:offsetHeight={height}>
         {#if stageLayoutId}
             <!-- TODO: stage resolution... -->
-            <Zoomed background={backgroundColor} style={getStyleResolution(resolution, width, height, "fit", { zoom })} {resolution} id={stageOutputId} bind:ratio isStage disableStyle hideOverflow={!edit} center={zoom >= 1}>
+            <Zoomed background={backgroundColor} style={getStyleResolution(resolution, width, height, "fit", { zoom })} {resolution} id={stageOutputId} bind:ratio isStage disableStyle hideOverflow={!edit} center>
                 <!-- TODO: snapping to top left... -->
                 {#if edit && !readOnly}
                     <Snaplines bind:lines bind:newStyles bind:mouse {ratio} {active} isStage />

@@ -204,7 +204,7 @@
         zoom = e.detail
         const origin = zoomOrigin
         zoomOrigin = null
-        centerZoom(zoom, origin, scrollElem, ".droparea")
+        centerZoom(origin, scrollElem, ".droparea")
     }
 
     // CHORDS
@@ -329,7 +329,7 @@
     <div class="parent" class:noOverflow={zoom >= 1} bind:this={scrollElem} bind:offsetWidth={width} bind:offsetHeight={height}>
         {#if Slide}
             <DropArea id="edit" file>
-                <Zoomed background={(transparentOutput || $special.transparentSlides) && !background ? "transparent" : background ? "black" : Slide?.settings?.color || currentStyle.background || "black"} {checkered} border={checkered} {resolution} style={widthOrHeight} bind:ratio {hideOverflow} center={zoom >= 1}>
+                <Zoomed background={(transparentOutput || $special.transparentSlides) && !background ? "transparent" : background ? "black" : Slide?.settings?.color || currentStyle.background || "black"} {checkered} border={checkered} {resolution} style={widthOrHeight} bind:ratio {hideOverflow} center>
                     <!-- background -->
                     {#if !altKeyPressed && background}
                         <div class="background" style="zoom: {1 / ratio};opacity: 0.5;{slideFilter};height: 100%;width: 100%;">

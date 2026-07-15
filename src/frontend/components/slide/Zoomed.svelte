@@ -111,7 +111,7 @@
     $: canOverflow = false // $special.textCanOverflow !== false
 </script>
 
-<div id={outputId} class:center class:disabled class="zoomed" style="width: 100%;height: 100%;{outline ? `border: 2px solid ${outline};` : ''}{alignStyle}" bind:offsetWidth={elemWidth} bind:offsetHeight={elemHeight}>
+<div id={outputId} class:center class:disabled class="zoomed" style="width: 100%;height: 100%;{outline ? `border: 2px solid ${outline};` : ''}{alignStyle}{center ? 'display: flex;justify-content: safe center;align-items: safe center;overflow: visible;' : ''}" bind:offsetWidth={elemWidth} bind:offsetHeight={elemHeight}>
     <div
         bind:this={slideElem}
         class="slide"
@@ -184,10 +184,9 @@
         overflow: hidden;
     }
 
-    .center {
-        display: flex;
-        justify-content: center;
-        align-items: center;
+    .center .slide {
+        margin: auto;
+        flex: 0 0 auto;
     }
 
     /* .zoom {

@@ -68,7 +68,7 @@
         zoom = e.detail
         const origin = zoomOrigin
         zoomOrigin = null
-        centerZoom(zoom, origin, scrollElem, ".droparea")
+        centerZoom(origin, scrollElem, ".droparea")
     }
 
     const shortcutItems: { id: ItemType; icon?: string }[] = [{ id: "text" }, { id: "media", icon: "image" }, { id: "timer" }]
