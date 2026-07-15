@@ -153,6 +153,7 @@ export interface SlidesOptions {
 export interface MediaOptions {
     columns: number
     mode: "grid" | "list"
+    view?: "all" | "image" | "video" | "folder"
 }
 
 export interface ActiveEdit {

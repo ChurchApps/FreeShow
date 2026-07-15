@@ -2,8 +2,7 @@
     import { onMount, tick } from "svelte"
     import { uid } from "uid"
     import type { Item, Line } from "../../../../types/Show"
-    import { VIRTUAL_BREAK_CHAR } from "../../../show/slides"
-    import { activeEdit, activeShow, activeStage, activeTriggerFunction, overlays, redoHistory, refreshListBoxes, showsCache, stageShows, templates } from "../../../stores"
+    import { activeEdit, activeShow, activeStage, overlays, redoHistory, refreshListBoxes, showsCache, stageShows, templates } from "../../../stores"
     import { newToast } from "../../../utils/common"
     import { getNormalizedKey, isFormattingKey } from "../../../utils/shortcuts"
     import T from "../../helpers/T.svelte"
@@ -644,8 +643,6 @@
             newToast("Note: < is treated as HTML")
         }
     }
-
-    $: if ($activeTriggerFunction === "insert_virtual_break") paste({}, VIRTUAL_BREAK_CHAR)
 
     function handleCopy(e: ClipboardEvent) {
         EditboxPaste.handleCopy(e, getNewLines())

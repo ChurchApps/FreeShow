@@ -6,10 +6,11 @@
     import { onMount } from "svelte"
     import { sanitizeVerseText } from "../../../../common/scripture/sanitizeVerseText"
     import { defaultBibleBookNames } from "../../../converters/bebliaBible"
-    import { activeEdit, activeScripture, activeTriggerFunction, customScriptureBooks, notFound, openScripture, outLocked, outputs, resized, scriptureHistory, scriptureHistoryUsed, scriptureMode, scriptures, scriptureSettings, selected } from "../../../stores"
+    import { activeEdit, activeScripture, activeTriggerFunction, customScriptureBooks, notFound, openScripture, outLocked, outputs, resized, scriptureHistory, scriptureMode, scriptures, scriptureSettings, selected } from "../../../stores"
     import { wait } from "../../../utils/common"
     import { translateText } from "../../../utils/language"
     import { clone } from "../../helpers/array"
+    import { brightenDarkColor, fadeColor } from "../../helpers/color"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import FloatingInputs from "../../input/FloatingInputs.svelte"
@@ -21,7 +22,6 @@
     import Loader from "../../main/Loader.svelte"
     import Center from "../../system/Center.svelte"
     import { createScriptureShow, formatBibleText, getVerseIdParts, getVersePartLetter, joinRange, loadJsonBible, moveSelection, outputIsScripture, playScripture, scriptureRangeSelect, sortScriptureSelection, splitText, swapPreviewBible } from "./scripture"
-    import { brightenDarkColor, fadeColor } from "../../helpers/color"
 
     export let active: string | null
     export let searchValue: string
@@ -867,7 +867,6 @@
         if (e.key === "h") {
             e.preventDefault()
             historyOpened = !historyOpened
-            scriptureHistoryUsed.set(true)
             return
         }
 
@@ -1217,13 +1216,13 @@
         <TextInput placeholder={translateText("scripture.search")} value={contentSearchValue} on:input={searchValueChanged} on:change={searchInBible} style="width: 300px;border-radius: 20px;" autofocus />
     </FloatingInputs>
 {:else if $scriptureMode !== "grid" || $resized.rightPanelDrawer > 5}
-    <FloatingInputs arrow let:open>
-        {#if open || isActiveInOutput}
+    <FloatingInputs>
+        {#if isActiveInOutput}
             <MaterialButton disabled={activeReference.book?.toString() === "1" && !!activeReference.chapters?.find((a) => a.toString() === "1") && !!activeReference.verses[0]?.find((a) => a.toString() === "1")} title="{translateText('preview._previous_slide')} [Ctrl+Arrow Left]" on:click={() => _moveSelection(true)}>
-                <Icon size={1.3} id="previous" white={!isActiveInOutput} />
+                <Icon size={1.3} id="previous" />
             </MaterialButton>
             <MaterialButton disabled={activeReference.book?.toString() === books?.length.toString() && activeReference.chapters?.includes(chapters ? chapters.length : 1) && activeReference.verses[0]?.includes(verses ? verses.length : 1)} title="{translateText('preview._next_slide')} [Ctrl+Arrow Right]" on:click={() => _moveSelection(false)}>
-                <Icon size={1.3} id="next" white={!isActiveInOutput} />
+                <Icon size={1.3} id="next" />
             </MaterialButton>
         {/if}
 
@@ -1237,19 +1236,11 @@
             <Icon size={1.3} id={$scriptureMode === "grid" ? "grid" : "list"} white />
         </MaterialButton>
 
-        {#if open || $scriptureHistoryUsed}
+        {#if currentHistory.length}
             <div class="divider" />
 
-            <MaterialButton
-                disabled={!currentHistory.length && !historyOpened}
-                isActive={historyOpened}
-                on:click={() => {
-                    historyOpened = !historyOpened
-                    scriptureHistoryUsed.set(true)
-                }}
-                title="popup.history [Ctrl+H]"
-            >
-                <Icon size={1.2} id="history" white={!currentHistory.length} />
+            <MaterialButton disabled={!currentHistory.length && !historyOpened} isActive={historyOpened} on:click={() => (historyOpened = !historyOpened)} title="popup.history [Ctrl+H]">
+                <Icon size={1.2} id="history" white />
             </MaterialButton>
         {/if}
 

@@ -1,14 +1,19 @@
 <script lang="ts">
     import { OUTPUT } from "../../../../types/Channels"
-    import { drawerTabsData, photoApiCredits, playerVideos } from "../../../stores"
+    import { Main } from "../../../../types/IPC/Main"
+    import { requestMain } from "../../../IPC/main"
+    import { drawerTabsData, photoApiCredits, playerVideos, providerConnections } from "../../../stores"
     import { send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import { getAllNormalOutputs } from "../../helpers/output"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
     import Link from "../../inputs/Link.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
     import CanvaInfo from "./CanvaInfo.svelte"
     import InfoMetadata from "./InfoMetadata.svelte"
+
+    export let optionsOpen: boolean
 
     $: active = $drawerTabsData.media?.openedSubSubTab?.online || "youtube"
 
@@ -24,6 +29,17 @@
         const bg = output.out?.background
         return bg?.type === "player" && $playerVideos[bg?.id || ""]?.type === "youtube"
     })
+
+    function canvaDisconnect() {
+        requestMain(Main.PROVIDER_DISCONNECT, { providerId: "canva" }, (result) => {
+            if (result?.success) {
+                providerConnections.update((c) => {
+                    c.canva = false
+                    return c
+                })
+            }
+        })
+    }
 </script>
 
 {#if active === "youtube"}
@@ -38,7 +54,17 @@
         </Button>
     {/if}
 {:else if active === "canva"}
-    <CanvaInfo />
+    {#if optionsOpen}
+        <div class="scroll">
+            {#if $providerConnections.canva}
+                <MaterialButton variant="outlined" icon="logout" on:click={canvaDisconnect}>
+                    <T id="settings.disconnect_from" replace={["Canva"]} />
+                </MaterialButton>
+            {/if}
+        </div>
+    {:else}
+        <CanvaInfo />
+    {/if}
 {:else if active === $photoApiCredits.type}
     {#if $photoApiCredits.photo !== undefined}
         <div style="flex: 1;margin-bottom: 25px;">

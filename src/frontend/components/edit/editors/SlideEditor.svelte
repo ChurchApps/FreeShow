@@ -2,9 +2,9 @@
     import { onMount } from "svelte"
     import type { MediaStyle } from "../../../../types/Main"
     import type { ItemType } from "../../../../types/Show"
-    import { activeEdit, activePopup, activeShow, alertMessage, focusMode, labelsDisabled, media, outputs, overlays, refreshEditSlide, resized, showsCache, slideNotesActive, special, styles, textEditActive } from "../../../stores"
+    import { activeEdit, activePopup, activeShow, alertMessage, focusMode, media, outputs, overlays, refreshEditSlide, resized, showsCache, slideNotesActive, special, styles, textEditActive } from "../../../stores"
     import { transposeText } from "../../../utils/chordTranspose"
-    import { DEFAULT_WIDTH, triggerFunction } from "../../../utils/common"
+    import { DEFAULT_WIDTH } from "../../../utils/common"
     import { translateText } from "../../../utils/language"
     import { getAccess } from "../../../utils/profile"
     import { slideHasAction } from "../../actions/actions"
@@ -358,7 +358,7 @@
                                     {#each $overlays[id]?.items || [] as item}
                                         <Textbox {item} ref={{ type: "overlay", id }} />
                                     {/each}
-                                  {/if}
+                                {/if}
                             {/each}
                         {/if}
                     </div>
@@ -413,56 +413,37 @@
             </FloatingInputs>
         {/if}
 
-        <FloatingInputs bottom={notesVisible ? bottomHeight : 10} arrow let:open>
-            <MaterialZoom hidden={!open} columns={zoom} min={0.2} max={4} defaultValue={1} addValue={0.1} on:change={updateZoom} on:origin={(e) => (zoomOrigin = e.detail)} />
+        <FloatingInputs bottom={notesVisible ? bottomHeight : 10}>
+            <MaterialZoom columns={zoom} min={0.2} max={4} defaultValue={1} addValue={0.1} on:change={updateZoom} on:origin={(e) => (zoomOrigin = e.detail)} />
 
-            {#if open}
-                <div class="divider"></div>
-
-                {#if hasTextContent}
-                    <MaterialButton title="edit.insert_virtual_break" on:click={() => triggerFunction("insert_virtual_break")}>
-                        <Icon id="add" white />
-                        {#if !$labelsDisabled}<T id="edit.insert_virtual_break" />{/if}
-                    </MaterialButton>
-
-                    <div class="divider"></div>
-                {/if}
-            {/if}
+            <div class="divider"></div>
 
             <!-- no need to add chords on scripture/events -->
             {#if !currentShow?.reference?.type && Slide && !isLocked && hasTextContent}
-                <!-- {#if open || slideChords.length} -->
                 <MaterialButton isActive={chordsMode} on:click={toggleChords} title="edit.chords">
                     <Icon id="chords" white={!slideChords.length} />
-                    <!-- {#if open && !$labelsDisabled}<T id="edit.chords" />{/if} -->
+                    <!-- {#if !$labelsDisabled}<T id="edit.chords" />{/if} -->
                 </MaterialButton>
-                <!-- {/if} -->
 
-                {#if open}
-                    <div class="divider"></div>
-                {/if}
+                <div class="divider"></div>
             {/if}
 
             <MaterialButton title="show.text [Ctrl+Shift+T]" on:click={() => textEditActive.set(true)}>
                 <Icon id="text_edit" white />
-                <!-- {#if open && !$labelsDisabled}<p><T id="show.text" /></p>{/if} -->
+                <!-- {#if !$labelsDisabled}<p><T id="show.text" /></p>{/if} -->
             </MaterialButton>
         </FloatingInputs>
 
         {#if chordsMode}
-            <FloatingInputs side="left" bottom={notesVisible ? bottomHeight : 10} arrow let:open>
-                <div slot="menu">
-                    <MaterialButton on:click={transposeUp} title="edit.transpose_up">
-                        <Icon id="arrow_up" size={1.3} white />
-                    </MaterialButton>
-                    <MaterialButton on:click={transposeDown} title="edit.transpose_down">
-                        <Icon id="arrow_down" size={1.3} white />
-                    </MaterialButton>
-                </div>
+            <FloatingInputs side="left" bottom={notesVisible ? bottomHeight : 10}>
+                <MaterialButton on:click={transposeUp} title="edit.transpose_up">
+                    <Icon id="arrow_up" size={1.3} white />
+                </MaterialButton>
+                <MaterialButton on:click={transposeDown} title="edit.transpose_down">
+                    <Icon id="arrow_down" size={1.3} white />
+                </MaterialButton>
 
-                {#if open}
-                    <div class="divider"></div>
-                {/if}
+                <div class="divider"></div>
 
                 <MaterialButton isActive={!chordsAction} on:click={setDefaultChordsAction}>
                     <p><T id="popup.choose_chord" /></p>
