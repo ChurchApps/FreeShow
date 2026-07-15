@@ -39,7 +39,7 @@
     function mousedown(e: any) {
         if (e.target.closest(".chords") || e.target.closest(".editTools")) return
         if (!e.target.closest(".line") && !e.target.closest(".square") && !e.target.closest(".rotate") && !e.target.closest(".radius") && !e.target.closest(".cropHandle") && !e.target.closest(".cropOverlay")) {
-            if (!chordsMode) openToolsTab.set("text")
+            openToolsTab.set("text")
 
             // Table shouldn't be draggable from the center
             if (item?.type === "table") return

@@ -232,7 +232,7 @@ const triggerActions = {
         }
 
         if (id === "textedit") {
-            editMode.set(get(editMode) === "text" ? "default" : "text")
+            editMode.set(get(editMode) === "text_edit" ? "default" : "text_edit")
             return
         }
 

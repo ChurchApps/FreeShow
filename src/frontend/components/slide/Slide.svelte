@@ -195,7 +195,7 @@
     }
 
     function openNotes() {
-        if ($editMode === "text") editMode.set("default")
+        if ($editMode === "text_edit") editMode.set("default")
         slideNotesActive.set(true)
 
         activeEdit.set({ slide: index, items: [], showId })

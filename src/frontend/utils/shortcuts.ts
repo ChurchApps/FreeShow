@@ -57,13 +57,13 @@ const shiftCtrlKeys = {
     t: () => {
         // toggle text edit
         if (get(activeShow)?.type !== "show") return
-        if (get(activePage) === "edit" && get(editMode) === "text") {
+        if (get(activePage) === "edit" && get(editMode) === "text_edit") {
             activePage.set("show")
             editMode.set("default")
             return
         }
         if (!get(activeEdit)?.showId) activeEdit.set({ slide: 0, items: [], showId: get(activeShow)?.id })
-        editMode.set("text")
+        editMode.set("text_edit")
         activePage.set("edit")
     },
     f: () => menuClick("focus_mode"),
