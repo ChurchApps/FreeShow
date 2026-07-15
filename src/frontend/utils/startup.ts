@@ -111,7 +111,9 @@ function autoBackup() {
     }
 }
 
-export function contentProviderSync(startup = false) {
+export function contentProviderSync(startup = false, remainingOnly = false) {
+    const isCloudSyncEnabled = get(cloudSyncData).enabled && get(cloudSyncData).id
+
     const providers = [
         { providerId: "planningcenter" as ContentProviderId, scope: "services", data: get(contentProviderData).planningcenter?.syncFolderIds || [], autoSync: get(contentProviderData).planningcenter?.autoSync !== false },
         { providerId: "churchApps" as ContentProviderId, scope: "plans", data: { shows: get(shows), categories: get(contentProviderData).churchApps?.syncCategories || [] } },
@@ -120,6 +122,9 @@ export function contentProviderSync(startup = false) {
 
     providers.forEach(({ providerId, scope, data, autoSync }) => {
         if (startup && autoSync === false) return
+
+        // don't run this right away on startup if cloud sync is enabled
+        if (startup && isCloudSyncEnabled && !remainingOnly) return
 
         const cloudOnly = providerId === "churchApps" && get(special).churchAppsCloudOnly
         sendMain(Main.PROVIDER_STARTUP_LOAD, { providerId, scope, data, cloudOnly })

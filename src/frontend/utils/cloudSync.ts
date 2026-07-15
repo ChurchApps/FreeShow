@@ -10,14 +10,30 @@ import { hasNewerUpdate, isMainWindow, newToast, setStatus, wait } from "./commo
 import { confirmCustom } from "./popup"
 import { getSyncedSettings, save } from "./save"
 import { SocketHelper } from "./SocketHelper"
+import { contentProviderSync } from "./startup"
+
+let startupSyncDone = false
+function syncFinished() {
+    if (!startupSyncDone) {
+        startupSyncDone = true
+        // sync providers after startup cloud sync has finished
+        contentProviderSync(true, true)
+    }
+}
 
 export async function setupCloudSync(auto: boolean = false) {
-    if (get(cloudSyncData).enabled === false) return
+    if (get(cloudSyncData).enabled === false) {
+        syncFinished()
+        return
+    }
     if (auto && get(cloudSyncData).id) {
         syncWithCloud()
         return
     }
-    if (!(await requestMain(Main.CAN_SYNC))) return
+    if (!(await requestMain(Main.CAN_SYNC))) {
+        syncFinished()
+        return
+    }
 
     const teams = (await requestMain(Main.GET_TEAMS)) || []
     if (!teams.length) {
@@ -25,10 +41,14 @@ export async function setupCloudSync(auto: boolean = false) {
         const msg = auto ? "You can setup cloud sync with ChurchApps, but no teams were found in your account. " + addTeam : "No teams were found in your account. " + addTeam
         alertMessage.set(msg + "<br><br>If you already did, try disconnecting and connecting again!")
         activePopup.set("alert")
+        syncFinished()
         return
     }
 
-    if (auto && !(await confirmCustom("You can sync your data with FreeShow Cloud! Do you want to enable cloud sync now?"))) return
+    if (auto && !(await confirmCustom("You can sync your data with FreeShow Cloud! Do you want to enable cloud sync now?"))) {
+        syncFinished()
+        return
+    }
 
     if (teams.length === 1) {
         chooseTeam({ id: teams[0].id, churchId: teams[0].churchId, name: teams[0].name, count: 1 })
@@ -38,6 +58,7 @@ export async function setupCloudSync(auto: boolean = false) {
     const teamsOptions = teams.map((a) => ({ id: a.id, churchId: a.churchId, name: a.name, icon: "people" }))
     popupData.set({ type: "choose_team", teams: teamsOptions })
     activePopup.set("cloud_sync")
+    syncFinished()
 }
 
 export async function changeTeam() {
@@ -73,20 +94,27 @@ export async function chooseTeam(team: { id: string; churchId: string; name: str
 let isSyncing = false
 // let lastSync = 0
 export async function syncWithCloud(initialize: boolean = false, isClosing: boolean = false) {
-    if (!get(providerConnections).churchApps) return false
+    if (!get(providerConnections).churchApps) {
+        syncFinished()
+        return false
+    }
 
     if (isSyncing) return false
     // skip if synced less than half a minute ago
     // if (!initialize && Date.now() - lastSync < 30000) return false
 
     const data = get(cloudSyncData)
-    if (!data.enabled || !data.id || !data.team) return false
+    if (!data.enabled || !data.id || !data.team) {
+        syncFinished()
+        return false
+    }
 
     const method = data.cloudMethod || "merge"
 
     if (initialize) {
         // save & backup
         save(false, { autosave: true, backup: true, isAutoBackup: true, backupShows: true })
+        syncFinished()
         return false
     }
 
@@ -107,7 +135,10 @@ export async function syncWithCloud(initialize: boolean = false, isClosing: bool
 
     const timeout = 5 * 60 * 1000 // 5 minutes
     const status = await requestMain(Main.CLOUD_SYNC, { id: data.id as any, churchId: data.team.churchId, teamId: data.team.id, method }, () => {}, timeout)
-    if (!status) return
+    if (!status) {
+        syncFinished()
+        return
+    }
 
     isSyncing = false
 
@@ -122,6 +153,7 @@ export async function syncWithCloud(initialize: boolean = false, isClosing: bool
     if (!status.success) {
         newToast("Error: " + (status.error || "Sync failed"))
         setStatus("error", 1)
+        syncFinished()
         return false
     }
 
@@ -150,6 +182,7 @@ export async function syncWithCloud(initialize: boolean = false, isClosing: bool
     // console.log(status.changedFiles)
 
     // lastSync = Date.now()
+    syncFinished()
     return true
 }
 
