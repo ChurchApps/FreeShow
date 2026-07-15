@@ -111,7 +111,13 @@ function autoBackup() {
     }
 }
 
+let lastContentProviderSync = 0
 export function contentProviderSync(startup = false, remainingOnly = false) {
+    // make sure this does not run multiple times at once
+    const now = Date.now()
+    if (now - lastContentProviderSync < 5000) return
+    lastContentProviderSync = now
+
     const isCloudSyncEnabled = get(cloudSyncData).enabled && get(cloudSyncData).id
 
     const providers = [
