@@ -1,10 +1,10 @@
 import fs from "fs"
 import path from "path"
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest"
-import { _store, createStores, getStore } from "../data/store"
-import { getDataFolderPath, writeFileAsync } from "../utils/files"
-import { syncData, resetSyncManagerModule } from "./syncManager"
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest"
+import { _store, createStores } from "../data/store"
 import { compressToZip, decompressZipStream } from "../data/zip"
+import { getDataFolderPath, writeFileAsync } from "../utils/files"
+import { resetSyncManagerModule, syncData } from "./syncManager"
 
 // 1. Host the temporary folder setup so it runs before imports are resolved
 const h = vi.hoisted(() => {
@@ -80,7 +80,9 @@ vi.mock("electron-store", () => {
             }
             private getFilePath() {
                 const path = require("path")
-                return path.join(h.userDataDir, h.currentMachineId, this.name + ".json")
+                // local stores are lowercase, while the cloud files are uppercase (store.ts)
+                const fileName = this.name.toLowerCase()
+                return path.join(h.userDataDir, h.currentMachineId, fileName + ".json")
             }
             private readData() {
                 const fs = require("fs")
@@ -107,7 +109,7 @@ vi.mock("electron-store", () => {
             }
             get(key: string) {
                 if (key === "dataPath") {
-                     const path = require("path")
+                    const path = require("path")
                     return path.join(h.userDataDir, h.currentMachineId)
                 }
                 return this.getNestedValue(this.readData(), key)
@@ -270,10 +272,7 @@ describe("syncManager tests", () => {
         createStores()
     })
 
-    async function createCloudState(
-        files: { name: string; content: string }[],
-        changesOverrides: any = {}
-    ) {
+    async function createCloudState(files: { name: string; content: string }[], changesOverrides: any = {}) {
         const initialCreated: any = {}
         for (const file of files) {
             if (file.name.startsWith("SHOWS/")) {
@@ -289,10 +288,7 @@ describe("syncManager tests", () => {
             created: initialCreated,
             ...changesOverrides
         }
-        const entries = [
-            ...files.map(f => ({ name: f.name, content: f.content })),
-            { name: "changes.json", content: JSON.stringify(changes) }
-        ]
+        const entries = [...files.map((f) => ({ name: f.name, content: f.content })), { name: "changes.json", content: JSON.stringify(changes) }]
         const cloudZipPath = path.join(h.tempRoot, "cloud_test_" + Math.random().toString(36).substring(7) + ".zip")
         await compressToZip(entries, cloudZipPath)
         mockProviderInstance.mockCloudZipPath = cloudZipPath
@@ -468,35 +464,31 @@ describe("syncManager tests", () => {
     describe("explicit sync logic scenarios from comments", () => {
         it("Scenario 1: if not found locally, and marked as 'deleted' in cloud: skip", async () => {
             const showsDir = getDataFolderPath("shows")
-            
+
             const dummyShowContent = JSON.stringify(["dummy-id", { name: "Dummy Show", slides: [], timestamps: { modified: Date.now() } }])
             // Set up cloud state where show is marked deleted, and not present in zip
-            await createCloudState([
-                { name: "SHOWS/dummy.show", content: dummyShowContent }
-            ], {
+            await createCloudState([{ name: "SHOWS/dummy.show", content: dummyShowContent }], {
                 deleted: { "SHOWS_CONTENT_show-deleted.show": ["other-device-id"] }
             })
-            
+
             // Run merge sync
             await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "merge" })
-            
+
             // The file should NOT exist locally
             expect(fs.existsSync(path.join(showsDir, "show-deleted.show"))).toBe(false)
         })
 
         it("Scenario 2: if not found locally, and marked as 'created' in cloud: download", async () => {
             const showsDir = getDataFolderPath("shows")
-            
+
             const showContent = JSON.stringify(["show-created-id", { name: "Show Created", slides: [], timestamps: { modified: Date.now() } }])
-            await createCloudState([
-                { name: "SHOWS/show-created.show", content: showContent }
-            ], {
+            await createCloudState([{ name: "SHOWS/show-created.show", content: showContent }], {
                 created: { "SHOWS_CONTENT_show-created.show": ["other-device-id"] }
             })
-            
+
             // Run merge sync
             await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "merge" })
-            
+
             // The file should be downloaded locally
             expect(fs.existsSync(path.join(showsDir, "show-created.show"))).toBe(true)
         })
@@ -504,10 +496,10 @@ describe("syncManager tests", () => {
         it("Scenario 3 & 4: if not found locally, but not marked in cloud: mark as 'deleted' / if found locally only, and not marked in cloud: mark as 'created'", async () => {
             const showsDir = getDataFolderPath("shows")
             await writeFileAsync(path.join(showsDir, "show-local-only.show"), JSON.stringify(["show-local-only-id", { name: "Show Local Only", slides: [], timestamps: { modified: Date.now() } }]))
-            
+
             await createCloudState([], {})
             await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "merge" })
-            
+
             // The local file should remain
             expect(fs.existsSync(path.join(showsDir, "show-local-only.show"))).toBe(true)
         })
@@ -515,34 +507,30 @@ describe("syncManager tests", () => {
         it("Scenario 5: if found locally, but marked as 'deleted' in cloud: delete locally", async () => {
             const showsDir = getDataFolderPath("shows")
             await writeFileAsync(path.join(showsDir, "show-to-delete.show"), JSON.stringify(["show-to-delete-id", { name: "Show To Delete", slides: [], timestamps: { modified: Date.now() } }]))
-            
+
             const dummyShowContent = JSON.stringify(["dummy-id", { name: "Dummy Show", slides: [], timestamps: { modified: Date.now() } }])
-            await createCloudState([
-                { name: "SHOWS/dummy.show", content: dummyShowContent }
-            ], {
+            await createCloudState([{ name: "SHOWS/dummy.show", content: dummyShowContent }], {
                 deleted: { "SHOWS_CONTENT_show-to-delete.show": ["other-device-id"] }
             })
-            
+
             await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "merge" })
-            
+
             expect(fs.existsSync(path.join(showsDir, "show-to-delete.show"))).toBe(false)
         })
 
         it("Scenario 6: if found locally and in cloud: use newest version", async () => {
             const showsDir = getDataFolderPath("shows")
-            
+
             // Local has old modified date
             const oldShow = ["show-mod-id", { name: "Show Old Version", slides: [], timestamps: { modified: 1000 } }]
             await writeFileAsync(path.join(showsDir, "show-mod.show"), JSON.stringify(oldShow))
-            
+
             // Cloud has newer modified date
             const newShow = ["show-mod-id", { name: "Show New Version", slides: [], timestamps: { modified: 5000 } }]
-            await createCloudState([
-                { name: "SHOWS/show-mod.show", content: JSON.stringify(newShow) }
-            ], {})
-            
+            await createCloudState([{ name: "SHOWS/show-mod.show", content: JSON.stringify(newShow) }], {})
+
             await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "merge" })
-            
+
             // Local version should be updated to the cloud version (new version)
             const content = fs.readFileSync(path.join(showsDir, "show-mod.show"), "utf-8")
             expect(content).toContain("Show New Version")
@@ -551,16 +539,14 @@ describe("syncManager tests", () => {
         it("Scenario 7: if marked as deleted locally in cloud, but exists locally: unmark as deleted and mark as created", async () => {
             const showsDir = getDataFolderPath("shows")
             await writeFileAsync(path.join(showsDir, "show-revive.show"), JSON.stringify(["show-revive-id", { name: "Show Revive", slides: [], timestamps: { modified: Date.now() } }]))
-            
+
             const dummyShowContent = JSON.stringify(["dummy-id", { name: "Dummy Show", slides: [], timestamps: { modified: Date.now() } }])
-            await createCloudState([
-                { name: "SHOWS/dummy.show", content: dummyShowContent }
-            ], {
+            await createCloudState([{ name: "SHOWS/dummy.show", content: dummyShowContent }], {
                 deleted: { "SHOWS_CONTENT_show-revive.show": ["test-device-id"] }
             })
-            
+
             await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "merge" })
-            
+
             // The file should survive locally
             expect(fs.existsSync(path.join(showsDir, "show-revive.show"))).toBe(true)
         })
@@ -572,52 +558,50 @@ describe("syncManager tests", () => {
             h.currentMachineId = "device-A"
             resetSyncManagerModule()
             createStores()
-            
+
             const showsDirA = getDataFolderPath("shows")
             const showContent = JSON.stringify(["multi-show-id", { name: "Multi Show", slides: [], timestamps: { modified: 1000 } }])
             await writeFileAsync(path.join(showsDirA, "multi-show.show"), showContent)
-            
+
             await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "merge" })
-            
+
             // Verify cloud ZIP is created
             expect(mockProviderInstance.mockCloudZipPath).not.toBeNull()
-            
+
             // 2. Device B syncs with the cloud and downloads Device A's show
             h.currentMachineId = "device-B"
             resetSyncManagerModule()
             createStores()
-            
+
             const showsDirB = getDataFolderPath("shows")
             // Initially, Device B does not have the show
             expect(fs.existsSync(path.join(showsDirB, "multi-show.show"))).toBe(false)
-            
+
             await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "merge" })
-            
+
             // Now Device B should have downloaded the show
             expect(fs.existsSync(path.join(showsDirB, "multi-show.show"))).toBe(true)
-            
+
             // 3. Device B modifies the show locally and uploads
             const updatedShowContent = JSON.stringify(["multi-show-id", { name: "Multi Show Updated", slides: [], timestamps: { modified: 5000 } }])
             await writeFileAsync(path.join(showsDirB, "multi-show.show"), updatedShowContent)
-            
+
             await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "merge" })
-            
+
             // 4. Device A syncs and receives Device B's updates
             h.currentMachineId = "device-A"
             resetSyncManagerModule()
             createStores()
-            
+
             await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "merge" })
-            
+
             const contentOnA = fs.readFileSync(path.join(showsDirA, "multi-show.show"), "utf8")
             expect(contentOnA).toContain("Multi Show Updated")
         })
 
         it("should successfully sync projects (create, modify, delete) between Device A and Device B", async () => {
             // Register devices in the ledger
-            await createCloudState([
-                { name: "SHOWS/dummy.show", content: JSON.stringify(["dummy", { name: "Dummy", slides: [], timestamps: { modified: Date.now() } }]) }
-            ], {
+            await createCloudState([{ name: "SHOWS/dummy.show", content: JSON.stringify(["dummy", { name: "Dummy", slides: [], timestamps: { modified: Date.now() } }]) }], {
                 devices: ["device-A", "device-B", "test-device-id"],
                 modified: {
                     "device-A": Date.now(),
@@ -626,32 +610,32 @@ describe("syncManager tests", () => {
                 }
             })
 
-            const fileA = path.join(h.userDataDir, "device-A", "PROJECTS.json")
-            const fileB = path.join(h.userDataDir, "device-B", "PROJECTS.json")
+            const fileA = path.join(h.userDataDir, "device-A", "projects.json")
+            const fileB = path.join(h.userDataDir, "device-B", "projects.json")
 
             // 1. Device A creates a project and uploads
             h.currentMachineId = "device-A"
             resetSyncManagerModule()
             createStores()
-            
+
             const projectStoreA = { projects: { "proj-1": { id: "proj-1", name: "Project A", modified: 1000 } }, folders: {}, projectTemplates: {} }
             fs.mkdirSync(path.dirname(fileA), { recursive: true })
             fs.writeFileSync(fileA, JSON.stringify(projectStoreA))
-            
+
             await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "merge" })
 
             // 2. Device B syncs and downloads the project
             h.currentMachineId = "device-B"
             resetSyncManagerModule()
             createStores()
-            
+
             // Initially, Device B does not have the project
             const projectStoreB = { projects: {}, folders: {}, projectTemplates: {} }
             fs.mkdirSync(path.dirname(fileB), { recursive: true })
             fs.writeFileSync(fileB, JSON.stringify(projectStoreB))
 
             await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "merge" })
-            
+
             // Verify downloaded state on disk for B
             const projectStoreB_updated = JSON.parse(fs.readFileSync(fileB, "utf8"))
             expect(projectStoreB_updated.projects["proj-1"]).toEqual({ id: "proj-1", name: "Project A", modified: 1000 })
@@ -665,7 +649,7 @@ describe("syncManager tests", () => {
             h.currentMachineId = "device-A"
             resetSyncManagerModule()
             createStores()
-            
+
             await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "merge" })
             const projectStoreA_updated = JSON.parse(fs.readFileSync(fileA, "utf8"))
             expect(projectStoreA_updated.projects["proj-1"]).toEqual({ id: "proj-1", name: "Project B Modified", modified: 5000 })
@@ -679,13 +663,13 @@ describe("syncManager tests", () => {
             h.currentMachineId = "device-B"
             resetSyncManagerModule()
             createStores()
-            
+
             // Restore Device B to its modified state before B's sync runs to verify deletion
             const projectStoreB_preDelete = { projects: { "proj-1": { id: "proj-1", name: "Project B Modified", modified: 5000 } }, folders: {}, projectTemplates: {} }
             fs.writeFileSync(fileB, JSON.stringify(projectStoreB_preDelete))
 
             await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "merge" })
-            
+
             const projectStoreB_final = JSON.parse(fs.readFileSync(fileB, "utf8"))
             expect(projectStoreB_final.projects["proj-1"]).toBeUndefined()
         })
@@ -693,15 +677,13 @@ describe("syncManager tests", () => {
         it("should force read-only mode if device's local state is stale relative to the cloud ledger (30+ days)", async () => {
             const now = Date.now()
             const staleTime = now - 32 * 24 * 60 * 60 * 1000 // 32 days ago
-            
+
             // Register devices in the cloud ledger
-            await createCloudState([
-                { name: "SHOWS/dummy.show", content: JSON.stringify(["dummy", { name: "Dummy", slides: [], timestamps: { modified: now } }]) }
-            ], {
+            await createCloudState([{ name: "SHOWS/dummy.show", content: JSON.stringify(["dummy", { name: "Dummy", slides: [], timestamps: { modified: now } }]) }], {
                 devices: ["device-A", "device-B"],
                 modified: {
                     "device-A": staleTime, // Device A last synced 32 days ago
-                    "device-B": now        // Device B synced just now (latest cloud modified)
+                    "device-B": now // Device B synced just now (latest cloud modified)
                 }
             })
 
@@ -723,24 +705,22 @@ describe("syncManager tests", () => {
             // We can check if Device A's local-show.show exists in the cloud zip (it should not)
             const zipPath = mockProviderInstance.mockCloudZipPath
             expect(zipPath).not.toBeNull()
-            
+
             // Decompress the cloud zip to inspect
             const extractPath = path.join(h.tempRoot, "inspect_stale_zip")
             const files = await decompressZipStream(zipPath!, false, {
                 getOutputPath: (fileName: string) => path.join(extractPath, fileName)
             })
 
-            const hasLocalShow = files.some(f => f.name.includes("local-show.show"))
+            const hasLocalShow = files.some((f) => f.name.includes("local-show.show"))
             expect(hasLocalShow).toBe(false) // Stale device should not have uploaded local changes
         })
 
         it("should download cloud updates but not upload local modifications when method is 'read_only'", async () => {
             const now = Date.now()
-            
+
             // 1. Initial cloud state has a show (cloud-show)
-            await createCloudState([
-                { name: "SHOWS/cloud-show.show", content: JSON.stringify(["cloud-show-id", { name: "Cloud Show", slides: [], timestamps: { modified: now } }]) }
-            ], {
+            await createCloudState([{ name: "SHOWS/cloud-show.show", content: JSON.stringify(["cloud-show-id", { name: "Cloud Show", slides: [], timestamps: { modified: now } }]) }], {
                 devices: ["device-A"],
                 modified: {
                     "device-A": now
@@ -766,13 +746,13 @@ describe("syncManager tests", () => {
             // 5. Verify Device A did NOT upload its local-show.show to the cloud
             const zipPath = mockProviderInstance.mockCloudZipPath
             expect(zipPath).not.toBeNull()
-            
+
             const extractPath = path.join(h.tempRoot, "inspect_readonly_zip")
             const files = await decompressZipStream(zipPath!, false, {
                 getOutputPath: (fileName: string) => path.join(extractPath, fileName)
             })
 
-            const hasLocalShow = files.some(f => f.name.includes("local-show.show"))
+            const hasLocalShow = files.some((f) => f.name.includes("local-show.show"))
             expect(hasLocalShow).toBe(false) // Read-only sync should not push changes to the cloud
         })
     })
@@ -780,9 +760,7 @@ describe("syncManager tests", () => {
     describe("multiple machines sync scenarios", () => {
         it("Scenario 1: if not found locally, and marked as 'deleted' in cloud: skip", async () => {
             // Register devices in the cloud ledger
-            await createCloudState([
-                { name: "SHOWS/dummy.show", content: JSON.stringify(["dummy", { name: "Dummy", slides: [], timestamps: { modified: Date.now() } }]) }
-            ], {
+            await createCloudState([{ name: "SHOWS/dummy.show", content: JSON.stringify(["dummy", { name: "Dummy", slides: [], timestamps: { modified: Date.now() } }]) }], {
                 devices: ["device-A", "device-B", "device-C", "test-device-id"],
                 modified: {
                     "device-A": Date.now(),
@@ -823,9 +801,7 @@ describe("syncManager tests", () => {
 
         it("Scenario 2: if not found locally, and marked as 'created' in cloud: download", async () => {
             // Register devices in the cloud ledger
-            await createCloudState([
-                { name: "SHOWS/dummy.show", content: JSON.stringify(["dummy", { name: "Dummy", slides: [], timestamps: { modified: Date.now() } }]) }
-            ], {
+            await createCloudState([{ name: "SHOWS/dummy.show", content: JSON.stringify(["dummy", { name: "Dummy", slides: [], timestamps: { modified: Date.now() } }]) }], {
                 devices: ["device-A", "device-B", "device-C", "test-device-id"],
                 modified: {
                     "device-A": Date.now(),
@@ -855,9 +831,7 @@ describe("syncManager tests", () => {
 
         it("Scenario 3 & 4: if found locally only, and not marked in cloud: mark as 'created' / if not found locally, but not marked in cloud: mark as 'deleted'", async () => {
             // Register devices in the cloud ledger
-            await createCloudState([
-                { name: "SHOWS/dummy.show", content: JSON.stringify(["dummy", { name: "Dummy", slides: [], timestamps: { modified: Date.now() } }]) }
-            ], {
+            await createCloudState([{ name: "SHOWS/dummy.show", content: JSON.stringify(["dummy", { name: "Dummy", slides: [], timestamps: { modified: Date.now() } }]) }], {
                 devices: ["device-A", "device-B", "device-C", "test-device-id"],
                 modified: {
                     "device-A": Date.now(),
@@ -873,7 +847,7 @@ describe("syncManager tests", () => {
             createStores()
             const showsDirA = getDataFolderPath("shows")
             await writeFileAsync(path.join(showsDirA, "scenario-3-4.show"), JSON.stringify(["scen-3-4", { name: "Scen 3-4", slides: [], timestamps: { modified: Date.now() } }]))
-            
+
             // Syncing will mark it as created in the ledger because it exists locally only
             await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "merge" })
 
@@ -888,9 +862,7 @@ describe("syncManager tests", () => {
 
         it("Scenario 5: if found locally, but marked as 'deleted' in cloud: delete locally", async () => {
             // Register devices in the cloud ledger
-            await createCloudState([
-                { name: "SHOWS/dummy.show", content: JSON.stringify(["dummy", { name: "Dummy", slides: [], timestamps: { modified: Date.now() } }]) }
-            ], {
+            await createCloudState([{ name: "SHOWS/dummy.show", content: JSON.stringify(["dummy", { name: "Dummy", slides: [], timestamps: { modified: Date.now() } }]) }], {
                 devices: ["device-A", "device-B", "device-C", "test-device-id"],
                 modified: {
                     "device-A": Date.now(),
@@ -936,9 +908,7 @@ describe("syncManager tests", () => {
 
         it("Scenario 6: if found locally and in cloud: use newest version", async () => {
             // Register devices in the cloud ledger
-            await createCloudState([
-                { name: "SHOWS/dummy.show", content: JSON.stringify(["dummy", { name: "Dummy", slides: [], timestamps: { modified: Date.now() } }]) }
-            ], {
+            await createCloudState([{ name: "SHOWS/dummy.show", content: JSON.stringify(["dummy", { name: "Dummy", slides: [], timestamps: { modified: Date.now() } }]) }], {
                 devices: ["device-A", "device-B", "device-C", "test-device-id"],
                 modified: {
                     "device-A": Date.now(),
@@ -981,9 +951,7 @@ describe("syncManager tests", () => {
 
         it("Scenario 7: if marked as deleted locally in cloud, but exists locally: unmark as deleted and mark as created", async () => {
             // Register devices in the cloud ledger
-            await createCloudState([
-                { name: "SHOWS/dummy.show", content: JSON.stringify(["dummy", { name: "Dummy", slides: [], timestamps: { modified: Date.now() } }]) }
-            ], {
+            await createCloudState([{ name: "SHOWS/dummy.show", content: JSON.stringify(["dummy", { name: "Dummy", slides: [], timestamps: { modified: Date.now() } }]) }], {
                 devices: ["device-A", "device-B", "device-C", "test-device-id"],
                 modified: {
                     "device-A": Date.now(),
@@ -1025,9 +993,7 @@ describe("syncManager tests", () => {
 
         it("Scenario 8: if Device A deletes all shows, Device B should delete all local shows upon sync (prevent resurrection)", async () => {
             // Register devices in the cloud ledger
-            await createCloudState([
-                { name: "SHOWS/dummy.show", content: JSON.stringify(["dummy", { name: "Dummy", slides: [], timestamps: { modified: Date.now() } }]) }
-            ], {
+            await createCloudState([{ name: "SHOWS/dummy.show", content: JSON.stringify(["dummy", { name: "Dummy", slides: [], timestamps: { modified: Date.now() } }]) }], {
                 devices: ["device-A", "device-B", "device-C", "test-device-id"],
                 modified: {
                     "device-A": Date.now(),
